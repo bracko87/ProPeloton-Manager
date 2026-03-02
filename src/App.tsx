@@ -273,6 +273,15 @@ export default function App(): JSX.Element {
             <Route path="finance" element={<FinancePage />} />
             <Route path="transfers" element={<TransfersPage />} />
             <Route path="statistics" element={<StatisticsPage />} />
+            <Route path="inbox" element={<InboxPage />} />
+            <Route path="my-profile" element={<MyProfilePage />} />
+            <Route path="customize-team" element={<CustomizeTeamPage />} />
+            <Route path="forum" element={<ForumPage />} />
+            <Route path="preferences" element={<PreferencesPage />} />
+            <Route path="help" element={<HelpPage />} />
+            <Route path="contact-us" element={<ContactUsPage />} />
+            <Route path="pro-packages" element={<ProPackagesPage />} />
+            <Route path="invite-friends" element={<InviteFriendsPage />} />
           </Route>
 
           <Route path="*" element={<Navigate to="/" replace />} />

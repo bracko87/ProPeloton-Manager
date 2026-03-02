@@ -4,7 +4,7 @@
  */
 
 import React, { useEffect, useState } from 'react'
-import { Outlet } from 'react-router'
+import { Outlet, useNavigate } from 'react-router'
 import Sidebar from './Sidebar'
 import Header from './Header'
 import Footer from './Footer'
@@ -33,6 +33,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
     countryName: '',
     logoUrl: null
   })
+  const navigate = useNavigate()
 
   useEffect(() => {
     let mounted = true
@@ -67,19 +68,26 @@ export default function MainLayout({ children }: MainLayoutProps) {
       let logoUrl: string | null = null
 
       if (club.logo_path) {
-        const { data: signedData, error: signedError } = await supabase.storage
-          .from('club-logos')
-          .createSignedUrl(club.logo_path, 60 * 60)
-
-        if (!signedError && signedData?.signedUrl) {
-          logoUrl = signedData.signedUrl
+        if (
+          club.logo_path.startsWith('http://') ||
+          club.logo_path.startsWith('https://')
+        ) {
+          logoUrl = club.logo_path
         } else {
-          const { data: publicData } = supabase.storage
+          const { data: signedData, error: signedError } = await supabase.storage
             .from('club-logos')
-            .getPublicUrl(club.logo_path)
+            .createSignedUrl(club.logo_path, 60 * 60)
 
-          if (publicData?.publicUrl) {
-            logoUrl = publicData.publicUrl
+          if (!signedError && signedData?.signedUrl) {
+            logoUrl = signedData.signedUrl
+          } else {
+            const { data: publicData } = supabase.storage
+              .from('club-logos')
+              .getPublicUrl(club.logo_path)
+
+            if (publicData?.publicUrl) {
+              logoUrl = publicData.publicUrl
+            }
           }
         }
       }
@@ -112,6 +120,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
           clubCountryCode={clubUi.countryCode}
           clubCountryName={clubUi.countryName}
           clubLogoUrl={clubUi.logoUrl}
+          onNavigate={(path) => navigate(path)}
         />
 
         <main className="p-6 lg:p-8 flex-1 overflow-auto">
