@@ -60,8 +60,22 @@ type BadgeSymbol =
   | 'wheel'
   | 'wing'
   | 'flame'
+  | 'shield-mark'
+  | 'sword'
+  | 'anchor'
+  | 'heart'
+  | 'sun'
+  | 'moon'
+  | 'eagle'
+  | 'wolf'
+  | 'leaf'
+  | 'cross'
+  | 'clover'
+  | 'gem'
+  | 'torch'
 
 type OverlayMode = 'none' | 'symbol' | 'letter'
+type CustomizationSection = 'shape' | 'pattern' | 'symbol' | 'letter'
 
 const badgeOptions: BadgeShape[] = [
   'circle',
@@ -99,10 +113,21 @@ const symbolOptions: BadgeSymbol[] = [
   'mountain',
   'wheel',
   'wing',
-  'flame'
+  'flame',
+  'shield-mark',
+  'sword',
+  'anchor',
+  'heart',
+  'sun',
+  'moon',
+  'eagle',
+  'wolf',
+  'leaf',
+  'cross',
+  'clover',
+  'gem',
+  'torch'
 ]
-
-const letterPresets = ['A', 'B', 'C', 'H', 'M', 'P', 'R', 'S', 'T', 'Z']
 
 const shapeLabels: Record<BadgeShape, string> = {
   circle: 'Circle',
@@ -140,7 +165,20 @@ const symbolLabels: Record<BadgeSymbol, string> = {
   mountain: 'Mountain',
   wheel: 'Wheel',
   wing: 'Wing',
-  flame: 'Flame'
+  flame: 'Flame',
+  'shield-mark': 'Shield',
+  sword: 'Sword',
+  anchor: 'Anchor',
+  heart: 'Heart',
+  sun: 'Sun',
+  moon: 'Moon',
+  eagle: 'Eagle',
+  wolf: 'Wolf',
+  leaf: 'Leaf',
+  cross: 'Cross',
+  clover: 'Clover',
+  gem: 'Gem',
+  torch: 'Torch'
 }
 
 /**
@@ -346,42 +384,113 @@ function getPatternSvgMarkup(
 function getSvgSymbolMarkup(symbol: Exclude<BadgeSymbol, 'none'>, color: string): string {
   switch (symbol) {
     case 'star':
-      return `<polygon points="50,10 61,38 91,38 67,56 76,86 50,68 24,86 33,56 9,38 39,38" fill="${color}" />`
+      return `<polygon points="50,8 62,36 92,36 68,54 78,88 50,68 22,88 32,54 8,36 38,36" fill="${color}" />`
 
     case 'bolt':
-      return `<polygon points="58,8 24,54 46,54 38,92 76,42 54,42" fill="${color}" />`
+      return `<polygon points="58,8 22,56 46,56 38,92 78,40 54,40" fill="${color}" />`
 
     case 'crown':
       return `
-        <polygon points="12,70 24,28 46,50 62,24 78,50 90,34 88,70" fill="${color}" />
-        <rect x="12" y="70" width="76" height="12" fill="${color}" rx="3" />
+        <polygon points="10,72 24,28 45,52 62,22 79,52 92,34 90,72" fill="${color}" />
+        <rect x="10" y="72" width="80" height="13" fill="${color}" rx="3" />
       `
 
     case 'mountain':
       return `
-        <polygon points="10,78 34,42 52,66 70,36 90,78" fill="${color}" />
-        <polygon points="58,36 66,48 76,36" fill="#ffffff" opacity="0.75" />
+        <polygon points="8,80 34,40 50,64 70,34 92,80" fill="${color}" />
+        <polygon points="58,34 66,46 76,34" fill="#ffffff" opacity="0.75" />
       `
 
     case 'wheel':
       return `
-        <circle cx="50" cy="50" r="28" fill="none" stroke="${color}" stroke-width="8" />
-        <circle cx="50" cy="50" r="6" fill="${color}" />
-        <line x1="50" y1="22" x2="50" y2="78" stroke="${color}" stroke-width="5" />
-        <line x1="22" y1="50" x2="78" y2="50" stroke="${color}" stroke-width="5" />
-        <line x1="30" y1="30" x2="70" y2="70" stroke="${color}" stroke-width="4" />
-        <line x1="70" y1="30" x2="30" y2="70" stroke="${color}" stroke-width="4" />
+        <circle cx="50" cy="50" r="30" fill="none" stroke="${color}" stroke-width="9" />
+        <circle cx="50" cy="50" r="7" fill="${color}" />
+        <line x1="50" y1="20" x2="50" y2="80" stroke="${color}" stroke-width="6" />
+        <line x1="20" y1="50" x2="80" y2="50" stroke="${color}" stroke-width="6" />
+        <line x1="29" y1="29" x2="71" y2="71" stroke="${color}" stroke-width="5" />
+        <line x1="71" y1="29" x2="29" y2="71" stroke="${color}" stroke-width="5" />
       `
 
     case 'wing':
-      return `
-        <polygon points="12,58 54,26 84,36 60,48 88,54 58,64 82,72 48,76 24,70" fill="${color}" />
-      `
+      return `<polygon points="10,58 52,24 84,36 60,48 90,54 60,66 84,74 48,78 22,70" fill="${color}" />`
 
     case 'flame':
       return `
-        <path d="M50 10 C70 26 78 44 72 58 C67 72 58 82 50 90 C42 82 28 72 28 54 C28 36 38 24 50 10 Z" fill="${color}" />
-        <path d="M50 34 C58 44 60 52 58 60 C56 66 53 72 50 76 C47 72 42 66 42 58 C42 50 45 42 50 34 Z" fill="#ffffff" opacity="0.42" />
+        <path d="M50 8 C72 24 82 44 74 62 C68 76 58 86 50 94 C42 86 26 74 26 54 C26 34 38 20 50 8 Z" fill="${color}" />
+        <path d="M50 32 C60 44 62 54 60 62 C58 69 54 74 50 79 C46 74 40 68 40 60 C40 50 44 41 50 32 Z" fill="#ffffff" opacity="0.45" />
+      `
+
+    case 'shield-mark':
+      return `<path d="M50 12 L82 24 L76 62 L50 88 L24 62 L18 24 Z" fill="${color}" />`
+
+    case 'sword':
+      return `
+        <polygon points="50,10 58,22 54,58 46,58 42,22" fill="${color}" />
+        <rect x="36" y="58" width="28" height="8" fill="${color}" rx="2" />
+        <rect x="46" y="66" width="8" height="20" fill="${color}" rx="2" />
+      `
+
+    case 'anchor':
+      return `
+        <circle cx="50" cy="24" r="8" fill="none" stroke="${color}" stroke-width="6" />
+        <line x1="50" y1="32" x2="50" y2="74" stroke="${color}" stroke-width="8" />
+        <path d="M22 56 Q22 82 50 84 Q78 82 78 56" fill="none" stroke="${color}" stroke-width="8" />
+        <line x1="34" y1="68" x2="22" y2="56" stroke="${color}" stroke-width="8" />
+        <line x1="66" y1="68" x2="78" y2="56" stroke="${color}" stroke-width="8" />
+      `
+
+    case 'heart':
+      return `<path d="M50 86 L18 54 C10 42 16 24 32 22 C40 22 46 26 50 34 C54 26 60 22 68 22 C84 24 90 42 82 54 Z" fill="${color}" />`
+
+    case 'sun':
+      return `
+        <circle cx="50" cy="50" r="16" fill="${color}" />
+        <g stroke="${color}" stroke-width="7" stroke-linecap="round">
+          <line x1="50" y1="12" x2="50" y2="26" />
+          <line x1="50" y1="74" x2="50" y2="88" />
+          <line x1="12" y1="50" x2="26" y2="50" />
+          <line x1="74" y1="50" x2="88" y2="50" />
+          <line x1="22" y1="22" x2="32" y2="32" />
+          <line x1="68" y1="68" x2="78" y2="78" />
+          <line x1="68" y1="32" x2="78" y2="22" />
+          <line x1="22" y1="78" x2="32" y2="68" />
+        </g>
+      `
+
+    case 'moon':
+      return `<path d="M66 18 C50 22 38 36 38 52 C38 68 50 82 66 86 C46 90 24 76 20 54 C16 32 30 14 50 10 C56 9 62 11 66 18 Z" fill="${color}" />`
+
+    case 'eagle':
+      return `<path d="M10 52 L34 40 L50 54 L66 40 L90 52 L68 58 L80 72 L58 68 L50 84 L42 68 L20 72 L32 58 Z" fill="${color}" />`
+
+    case 'wolf':
+      return `<path d="M24 80 L32 30 L46 40 L54 22 L66 42 L80 34 L76 80 Z" fill="${color}" />`
+
+    case 'leaf':
+      return `<path d="M50 88 C74 70 82 46 74 22 C50 28 30 44 26 66 C24 78 36 90 50 88 Z" fill="${color}" />`
+
+    case 'cross':
+      return `
+        <rect x="42" y="16" width="16" height="68" fill="${color}" rx="2" />
+        <rect x="24" y="36" width="52" height="16" fill="${color}" rx="2" />
+      `
+
+    case 'clover':
+      return `
+        <circle cx="38" cy="38" r="14" fill="${color}" />
+        <circle cx="62" cy="38" r="14" fill="${color}" />
+        <circle cx="38" cy="62" r="14" fill="${color}" />
+        <circle cx="62" cy="62" r="14" fill="${color}" />
+        <rect x="46" y="66" width="8" height="20" fill="${color}" rx="2" />
+      `
+
+    case 'gem':
+      return `<polygon points="50,10 76,28 66,76 34,76 24,28" fill="${color}" />`
+
+    case 'torch':
+      return `
+        <rect x="44" y="44" width="12" height="40" fill="${color}" rx="3" />
+        <path d="M50 10 C62 20 66 34 58 44 C54 48 50 52 50 52 C50 52 46 48 42 44 C34 34 38 20 50 10 Z" fill="${color}" />
       `
 
     default:
@@ -667,27 +776,41 @@ function BadgePreview({
 
 /**
  * SelectionCard
- * Reusable right-side customization card.
+ * Collapsible customization card where only one section can remain open at a time.
  */
 function SelectionCard({
+  id,
   title,
   subtitle,
+  isOpen,
+  onToggle,
   children
 }: {
+  id: CustomizationSection
   title: string
   subtitle: string
+  isOpen: boolean
+  onToggle: (id: CustomizationSection) => void
   children: React.ReactNode
 }): JSX.Element {
   return (
     <div className="rounded-xl border border-gray-200 bg-white p-4 text-left shadow-sm">
-      <div className="flex items-start justify-between gap-3">
+      <button
+        type="button"
+        onClick={() => onToggle(id)}
+        className="w-full flex items-start justify-between gap-4 text-left"
+      >
         <div>
           <div className="text-sm font-semibold text-gray-900">{title}</div>
           <div className="mt-1 text-xs text-gray-500">{subtitle}</div>
         </div>
-      </div>
 
-      <div className="mt-4">{children}</div>
+        <span className="inline-flex h-7 min-w-7 items-center justify-center rounded-full border border-gray-300 text-sm font-bold text-gray-600 px-2">
+          {isOpen ? '−' : '+'}
+        </span>
+      </button>
+
+      {isOpen ? <div className="mt-4">{children}</div> : null}
     </div>
   )
 }
@@ -717,11 +840,15 @@ export default function CreateClubPage(): JSX.Element {
   const [badgeSymbol, setBadgeSymbol] = useState<BadgeSymbol>('none')
   const [overlayMode, setOverlayMode] = useState<OverlayMode>('none')
   const [badgeLetter, setBadgeLetter] = useState<string>('')
-
+  const [openSection, setOpenSection] = useState<CustomizationSection | null>(null)
   const [flagImageError, setFlagImageError] = useState(false)
 
   function updateField(key: keyof typeof form, value: string): void {
     setForm(prev => ({ ...prev, [key]: value }))
+  }
+
+  function toggleSection(section: CustomizationSection): void {
+    setOpenSection(prev => (prev === section ? null : section))
   }
 
   function selectSymbol(symbol: BadgeSymbol): void {
@@ -926,352 +1053,351 @@ export default function CreateClubPage(): JSX.Element {
         />
       </div>
 
-      <div className="relative z-10 max-w-7xl w-full bg-white rounded-xl shadow-2xl overflow-hidden">
-        <div className="grid grid-cols-1 lg:grid-cols-[1.05fr_0.95fr]">
-          <div className="p-8 lg:p-10 flex flex-col h-full">
-            <h2 className="text-2xl font-bold text-gray-900">Create Your Team</h2>
-            <p className="text-sm text-gray-600 mt-2">
-              Design your team identity and enter the ProPeloton world.
-            </p>
-
-            <form onSubmit={handleSubmit} className="mt-8 flex flex-col flex-1">
-              <div className="space-y-5">
-                <div>
-                  <label className="text-sm font-medium text-gray-700">Team Name</label>
-                  <input
-                    value={form.name}
-                    onChange={e => updateField('name', e.target.value)}
-                    className="mt-1 block w-full border rounded-md px-3 py-2"
-                    placeholder="e.g. Horizon Racing"
-                    required
-                    disabled={submitting}
-                  />
-                </div>
-
-                <div>
-                  <label className="text-sm font-medium text-gray-700">Team Country</label>
-                  <div className="mt-1 flex items-center gap-3">
-                    <div className="w-14 h-11 rounded-md border border-gray-300 bg-white overflow-hidden flex items-center justify-center shrink-0">
-                      {!flagImageError && flagUrl ? (
-                        <img
-                          src={flagUrl}
-                          alt={selectedCountry ? `${selectedCountry.name} flag` : 'Country flag'}
-                          className="w-full h-full object-cover"
-                          onError={() => setFlagImageError(true)}
-                        />
-                      ) : (
-                        <span className="text-2xl">{flagEmojiFromCode(form.countryCode)}</span>
-                      )}
-                    </div>
-
-                    <select
-                      value={form.countryCode}
-                      onChange={e => updateField('countryCode', e.target.value)}
-                      className="block w-full border rounded-md px-3 py-2"
-                      disabled={loadingCountries || submitting}
-                    >
-                      {countries.length === 0 ? (
-                        <option value="">No countries available</option>
-                      ) : (
-                        countries.map(c => (
-                          <option key={c.code} value={c.code}>
-                            {c.name}
-                          </option>
-                        ))
-                      )}
-                    </select>
-                  </div>
-
-                  {loadingCountries && (
-                    <div className="text-xs text-gray-500 mt-1">Loading countries...</div>
-                  )}
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-sm font-medium text-gray-700">Primary Color</label>
-                    <input
-                      type="color"
-                      value={form.primary}
-                      onChange={e => updateField('primary', e.target.value)}
-                      className="mt-2 w-20 h-10 p-0 border rounded"
-                      disabled={submitting}
-                    />
-                  </div>
-
-                  <div>
-                    <label className="text-sm font-medium text-gray-700">Secondary Color</label>
-                    <input
-                      type="color"
-                      value={form.secondary}
-                      onChange={e => updateField('secondary', e.target.value)}
-                      className="mt-2 w-20 h-10 p-0 border rounded"
-                      disabled={submitting}
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="text-sm font-medium text-gray-700">Team Motto (optional)</label>
-                  <input
-                    value={form.motto}
-                    onChange={e => updateField('motto', e.target.value)}
-                    className="mt-1 block w-full border rounded-md px-3 py-2"
-                    placeholder="e.g. Ride as one"
-                    disabled={submitting}
-                  />
-                </div>
-              </div>
-
-              <div className="mt-auto pt-8">
-                {error && (
-                  <div
-                    className="rounded-md px-4 py-3 text-sm font-medium bg-red-50 border border-red-200 text-red-700"
-                    role="alert"
-                  >
-                    {error}
-                  </div>
-                )}
-
-                <div className="flex items-center gap-4 mt-4">
-                  <button
-                    type="submit"
-                    className="bg-yellow-400 px-6 py-2 rounded-md font-semibold disabled:opacity-70"
-                    disabled={submitting}
-                  >
-                    {submitting ? 'Creating...' : 'Create Team'}
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => navigate('/')}
-                    className="px-4 py-2 rounded-md border border-gray-300"
-                    disabled={submitting}
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </div>
-            </form>
-          </div>
-
-          <div className="border-t lg:border-t-0 lg:border-l border-gray-200 bg-gradient-to-b from-slate-50 to-white p-8 lg:p-10 h-full">
-            <div className="flex flex-col items-center justify-start text-center">
-              <h3 className="text-2xl font-bold text-gray-900">Team Preview</h3>
+      <div className="relative z-10 max-w-7xl w-full bg-white rounded-xl shadow-2xl overflow-hidden p-6 lg:p-8 space-y-6">
+        <div className="rounded-xl border-2 border-emerald-400 bg-white/95 overflow-hidden">
+          <div className="grid grid-cols-1 lg:grid-cols-[1.05fr_0.95fr]">
+            <div className="p-8 lg:p-10 flex flex-col h-full">
+              <h2 className="text-2xl font-bold text-gray-900">Create Your Team</h2>
               <p className="text-sm text-gray-600 mt-2">
-                Shape, interior layout, symbol and letter all update live.
+                Design your team identity and enter the ProPeloton world.
               </p>
 
-              <div className="mt-6">
-                <BadgePreview
-                  shape={badgeShape}
-                  pattern={badgePattern}
-                  overlayMode={overlayMode}
-                  symbol={badgeSymbol}
-                  letter={badgeLetter}
-                  primary={form.primary}
-                  secondary={form.secondary}
-                  size="large"
-                />
-              </div>
+              <form onSubmit={handleSubmit} className="mt-8 flex flex-col flex-1">
+                <div className="space-y-5">
+                  <div>
+                    <label className="text-sm font-medium text-gray-700">Team Name</label>
+                    <input
+                      value={form.name}
+                      onChange={e => updateField('name', e.target.value)}
+                      className="mt-1 block w-full border rounded-md px-3 py-2"
+                      placeholder="e.g. Horizon Racing"
+                      required
+                      disabled={submitting}
+                    />
+                  </div>
 
-              <div className="mt-4 text-lg font-semibold text-gray-900">
-                {form.name || 'My Team'}
-              </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-700">Team Country</label>
+                    <div className="mt-1 flex items-center gap-3">
+                      <div className="w-14 h-11 rounded-md border border-gray-300 bg-white overflow-hidden flex items-center justify-center shrink-0">
+                        {!flagImageError && flagUrl ? (
+                          <img
+                            src={flagUrl}
+                            alt={selectedCountry ? `${selectedCountry.name} flag` : 'Country flag'}
+                            className="w-full h-full object-cover"
+                            onError={() => setFlagImageError(true)}
+                          />
+                        ) : (
+                          <span className="text-2xl">{flagEmojiFromCode(form.countryCode)}</span>
+                        )}
+                      </div>
 
-              <div className="mt-1 text-sm text-gray-500 flex items-center gap-2">
-                <span>{flagEmojiFromCode(form.countryCode)}</span>
-                <span>{selectedCountry?.name || 'Selected country'}</span>
-              </div>
-
-              <div className="mt-2 text-xs text-gray-500">{overlaySummary}</div>
-
-              <div className="mt-8 w-full space-y-4">
-                <SelectionCard
-                  title="1. Badge Shape"
-                  subtitle="Choose the outer shape of your badge."
-                >
-                  <div className="grid grid-cols-5 gap-2">
-                    {badgeOptions.map(shape => (
-                      <button
-                        key={shape}
-                        type="button"
-                        onClick={() => setBadgeShape(shape)}
-                        className={`rounded-lg border p-2 flex flex-col items-center justify-center transition ${
-                          badgeShape === shape
-                            ? 'border-blue-500 bg-blue-50'
-                            : 'border-gray-200 bg-white hover:border-gray-300'
-                        }`}
-                        aria-label={`Select ${shapeLabels[shape]} shape`}
-                        title={shapeLabels[shape]}
+                      <select
+                        value={form.countryCode}
+                        onChange={e => updateField('countryCode', e.target.value)}
+                        className="block w-full border rounded-md px-3 py-2"
+                        disabled={loadingCountries || submitting}
                       >
-                        <BadgePreview
-                          shape={shape}
-                          pattern={badgePattern}
-                          overlayMode={overlayMode}
-                          symbol={badgeSymbol}
-                          letter={badgeLetter}
-                          primary={form.primary}
-                          secondary={form.secondary}
-                          size="small"
-                        />
-                      </button>
-                    ))}
+                        {countries.length === 0 ? (
+                          <option value="">No countries available</option>
+                        ) : (
+                          countries.map(c => (
+                            <option key={c.code} value={c.code}>
+                              {c.name}
+                            </option>
+                          ))
+                        )}
+                      </select>
+                    </div>
+
+                    {loadingCountries ? (
+                      <div className="text-xs text-gray-500 mt-1">Loading countries...</div>
+                    ) : null}
                   </div>
-                </SelectionCard>
 
-                <SelectionCard
-                  title="2. Interior Style"
-                  subtitle="Choose how the primary and secondary colors are divided inside the badge."
-                >
-                  <div className="grid grid-cols-4 gap-2">
-                    {patternOptions.map(pattern => (
-                      <button
-                        key={pattern}
-                        type="button"
-                        onClick={() => setBadgePattern(pattern)}
-                        className={`rounded-lg border p-2 flex flex-col items-center justify-center transition ${
-                          badgePattern === pattern
-                            ? 'border-blue-500 bg-blue-50'
-                            : 'border-gray-200 bg-white hover:border-gray-300'
-                        }`}
-                        aria-label={`Select ${patternLabels[pattern]} pattern`}
-                        title={patternLabels[pattern]}
-                      >
-                        <BadgePreview
-                          shape={badgeShape}
-                          pattern={pattern}
-                          overlayMode="none"
-                          symbol="none"
-                          letter=""
-                          primary={form.primary}
-                          secondary={form.secondary}
-                          size="small"
-                        />
-                      </button>
-                    ))}
-                  </div>
-                </SelectionCard>
-
-                <SelectionCard
-                  title="3. Symbol (optional)"
-                  subtitle="Choose a symbol. This replaces the letter if selected."
-                >
-                  <div className="grid grid-cols-4 gap-2">
-                    {symbolOptions.map(symbol => {
-                      const isActive = symbol === 'none'
-                        ? overlayMode === 'none' || (overlayMode === 'symbol' && badgeSymbol === 'none')
-                        : overlayMode === 'symbol' && badgeSymbol === symbol
-
-                      return (
-                        <button
-                          key={symbol}
-                          type="button"
-                          onClick={() => selectSymbol(symbol)}
-                          className={`rounded-lg border px-2 py-3 flex flex-col items-center justify-center gap-2 transition ${
-                            isActive
-                              ? 'border-blue-500 bg-blue-50'
-                              : 'border-gray-200 bg-white hover:border-gray-300'
-                          }`}
-                          aria-label={`Select ${symbolLabels[symbol]} symbol`}
-                        >
-                          <div className="w-8 h-8 rounded-full bg-slate-900/90 flex items-center justify-center">
-                            {symbol === 'none' ? (
-                              <span className="text-[10px] font-semibold text-white">Ø</span>
-                            ) : (
-                              <svg
-                                viewBox="0 0 100 100"
-                                className="w-5 h-5"
-                                aria-hidden="true"
-                                dangerouslySetInnerHTML={{
-                                  __html: getSvgSymbolMarkup(
-                                    symbol as Exclude<BadgeSymbol, 'none'>,
-                                    '#ffffff'
-                                  )
-                                }}
-                              />
-                            )}
-                          </div>
-                          <span className="text-[10px] font-medium text-gray-700 leading-none">
-                            {symbolLabels[symbol]}
-                          </span>
-                        </button>
-                      )
-                    })}
-                  </div>
-                </SelectionCard>
-
-                <SelectionCard
-                  title="4. Letter (optional)"
-                  subtitle="Use one letter instead of a symbol. Selecting a letter overrides the symbol."
-                >
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-3">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-sm font-medium text-gray-700">Primary Color</label>
                       <input
-                        value={badgeLetter}
-                        onChange={e => setLetterValue(e.target.value)}
-                        maxLength={1}
-                        className="w-16 rounded-md border border-gray-300 px-3 py-2 text-center text-lg font-bold uppercase"
-                        placeholder="A"
+                        type="color"
+                        value={form.primary}
+                        onChange={e => updateField('primary', e.target.value)}
+                        className="mt-2 w-20 h-10 p-0 border rounded"
                         disabled={submitting}
                       />
-
-                      <button
-                        type="button"
-                        onClick={clearOverlay}
-                        className="rounded-md border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
-                      >
-                        Clear
-                      </button>
-
-                      <div className="text-xs text-gray-500">
-                        Current: {overlayMode === 'letter' && badgeLetter ? `Letter ${badgeLetter}` : 'No letter'}
-                      </div>
                     </div>
 
-                    <div className="grid grid-cols-5 gap-2">
-                      {letterPresets.map(letter => {
-                        const isActive = overlayMode === 'letter' && badgeLetter === letter
-
-                        return (
-                          <button
-                            key={letter}
-                            type="button"
-                            onClick={() => setLetterValue(letter)}
-                            className={`rounded-lg border py-2 text-sm font-bold transition ${
-                              isActive
-                                ? 'border-blue-500 bg-blue-50 text-blue-700'
-                                : 'border-gray-200 bg-white text-gray-800 hover:border-gray-300'
-                            }`}
-                            aria-label={`Use letter ${letter}`}
-                          >
-                            {letter}
-                          </button>
-                        )
-                      })}
+                    <div>
+                      <label className="text-sm font-medium text-gray-700">Secondary Color</label>
+                      <input
+                        type="color"
+                        value={form.secondary}
+                        onChange={e => updateField('secondary', e.target.value)}
+                        className="mt-2 w-20 h-10 p-0 border rounded"
+                        disabled={submitting}
+                      />
                     </div>
                   </div>
-                </SelectionCard>
-              </div>
 
-              <div className="mt-8 w-full grid grid-cols-2 gap-3">
-                <div className="rounded-lg border border-gray-200 p-3 bg-white">
-                  <div className="text-xs font-medium text-gray-500">Primary</div>
-                  <div
-                    className="mt-2 h-8 rounded-md border border-black/10"
-                    style={{ backgroundColor: form.primary }}
+                  <div>
+                    <label className="text-sm font-medium text-gray-700">
+                      Team Motto (optional)
+                    </label>
+                    <input
+                      value={form.motto}
+                      onChange={e => updateField('motto', e.target.value)}
+                      className="mt-1 block w-full border rounded-md px-3 py-2"
+                      placeholder="e.g. Ride as one"
+                      disabled={submitting}
+                    />
+                  </div>
+                </div>
+
+                <div className="mt-auto pt-8">
+                  {error ? (
+                    <div
+                      className="rounded-md px-4 py-3 text-sm font-medium bg-red-50 border border-red-200 text-red-700"
+                      role="alert"
+                    >
+                      {error}
+                    </div>
+                  ) : null}
+
+                  <div className="flex items-center gap-4 mt-4">
+                    <button
+                      type="submit"
+                      className="bg-yellow-400 px-6 py-2 rounded-md font-semibold disabled:opacity-70"
+                      disabled={submitting}
+                    >
+                      {submitting ? 'Creating...' : 'Create Team'}
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => navigate('/')}
+                      className="px-4 py-2 rounded-md border border-gray-300"
+                      disabled={submitting}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              </form>
+            </div>
+
+            <div className="border-t lg:border-t-0 lg:border-l border-gray-200 bg-gradient-to-b from-slate-50 to-white p-8 lg:p-10 h-full">
+              <div className="flex flex-col items-center justify-start text-center">
+                <h3 className="text-2xl font-bold text-gray-900">Team Preview</h3>
+                <p className="text-sm text-gray-600 mt-2">
+                  Shape, interior layout, symbol and letter all update live.
+                </p>
+
+                <div className="mt-6">
+                  <BadgePreview
+                    shape={badgeShape}
+                    pattern={badgePattern}
+                    overlayMode={overlayMode}
+                    symbol={badgeSymbol}
+                    letter={badgeLetter}
+                    primary={form.primary}
+                    secondary={form.secondary}
+                    size="large"
                   />
                 </div>
 
-                <div className="rounded-lg border border-gray-200 p-3 bg-white">
-                  <div className="text-xs font-medium text-gray-500">Secondary</div>
-                  <div
-                    className="mt-2 h-8 rounded-md border border-black/10"
-                    style={{ backgroundColor: form.secondary }}
-                  />
+                <div className="mt-4 text-lg font-semibold text-gray-900">
+                  {form.name || 'My Team'}
+                </div>
+
+                <div className="mt-1 text-sm text-gray-500 flex items-center gap-2">
+                  <span>{flagEmojiFromCode(form.countryCode)}</span>
+                  <span>{selectedCountry?.name || 'Selected country'}</span>
+                </div>
+
+                <div className="mt-2 text-xs text-gray-500">{overlaySummary}</div>
+
+                <div className="mt-8 w-full grid grid-cols-2 gap-3">
+                  <div className="rounded-lg border border-gray-200 p-3 bg-white">
+                    <div className="text-xs font-medium text-gray-500">Primary</div>
+                    <div
+                      className="mt-2 h-8 rounded-md border border-black/10"
+                      style={{ backgroundColor: form.primary }}
+                    />
+                  </div>
+
+                  <div className="rounded-lg border border-gray-200 p-3 bg-white">
+                    <div className="text-xs font-medium text-gray-500">Secondary</div>
+                    <div
+                      className="mt-2 h-8 rounded-md border border-black/10"
+                      style={{ backgroundColor: form.secondary }}
+                    />
+                  </div>
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+
+        <div className="rounded-xl border-2 border-red-300 bg-red-50/40 p-4 lg:p-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <SelectionCard
+              id="shape"
+              title="1. Badge Shape"
+              subtitle="Choose the outer shape of your badge."
+              isOpen={openSection === 'shape'}
+              onToggle={toggleSection}
+            >
+              <div className="grid grid-cols-5 gap-2">
+                {badgeOptions.map(shape => (
+                  <button
+                    key={shape}
+                    type="button"
+                    onClick={() => setBadgeShape(shape)}
+                    className={`rounded-lg border p-2 flex flex-col items-center justify-center transition ${
+                      badgeShape === shape
+                        ? 'border-blue-500 bg-blue-50'
+                        : 'border-gray-200 bg-white hover:border-gray-300'
+                    }`}
+                    aria-label={`Select ${shapeLabels[shape]} shape`}
+                    title={shapeLabels[shape]}
+                  >
+                    <BadgePreview
+                      shape={shape}
+                      pattern={badgePattern}
+                      overlayMode={overlayMode}
+                      symbol={badgeSymbol}
+                      letter={badgeLetter}
+                      primary={form.primary}
+                      secondary={form.secondary}
+                      size="small"
+                    />
+                  </button>
+                ))}
+              </div>
+            </SelectionCard>
+
+            <SelectionCard
+              id="pattern"
+              title="2. Interior Style"
+              subtitle="Choose how the primary and secondary colors are divided."
+              isOpen={openSection === 'pattern'}
+              onToggle={toggleSection}
+            >
+              <div className="grid grid-cols-4 gap-2">
+                {patternOptions.map(pattern => (
+                  <button
+                    key={pattern}
+                    type="button"
+                    onClick={() => setBadgePattern(pattern)}
+                    className={`rounded-lg border p-2 flex flex-col items-center justify-center transition ${
+                      badgePattern === pattern
+                        ? 'border-blue-500 bg-blue-50'
+                        : 'border-gray-200 bg-white hover:border-gray-300'
+                    }`}
+                    aria-label={`Select ${patternLabels[pattern]} pattern`}
+                    title={patternLabels[pattern]}
+                  >
+                    <BadgePreview
+                      shape={badgeShape}
+                      pattern={pattern}
+                      overlayMode="none"
+                      symbol="none"
+                      letter=""
+                      primary={form.primary}
+                      secondary={form.secondary}
+                      size="small"
+                    />
+                  </button>
+                ))}
+              </div>
+            </SelectionCard>
+
+            <SelectionCard
+              id="symbol"
+              title="3. Symbol (optional)"
+              subtitle="20 stronger symbol options. Selecting one overrides letter."
+              isOpen={openSection === 'symbol'}
+              onToggle={toggleSection}
+            >
+              <div className="grid grid-cols-5 gap-2">
+                {symbolOptions.map(symbol => {
+                  const isActive =
+                    symbol === 'none'
+                      ? overlayMode === 'none' ||
+                        (overlayMode === 'symbol' && badgeSymbol === 'none')
+                      : overlayMode === 'symbol' && badgeSymbol === symbol
+
+                  return (
+                    <button
+                      key={symbol}
+                      type="button"
+                      onClick={() => selectSymbol(symbol)}
+                      className={`rounded-lg border px-2 py-3 flex flex-col items-center justify-center gap-2 transition ${
+                        isActive
+                          ? 'border-blue-500 bg-blue-50'
+                          : 'border-gray-200 bg-white hover:border-gray-300'
+                      }`}
+                      aria-label={`Select ${symbolLabels[symbol]} symbol`}
+                    >
+                      <div className="w-9 h-9 rounded-full bg-slate-900 flex items-center justify-center">
+                        {symbol === 'none' ? (
+                          <span className="text-[10px] font-semibold text-white">Ø</span>
+                        ) : (
+                          <svg
+                            viewBox="0 0 100 100"
+                            className="w-6 h-6"
+                            aria-hidden="true"
+                            dangerouslySetInnerHTML={{
+                              __html: getSvgSymbolMarkup(
+                                symbol as Exclude<BadgeSymbol, 'none'>,
+                                '#ffffff'
+                              )
+                            }}
+                          />
+                        )}
+                      </div>
+                      <span className="text-[10px] font-medium text-gray-700 leading-none">
+                        {symbolLabels[symbol]}
+                      </span>
+                    </button>
+                  )
+                })}
+              </div>
+            </SelectionCard>
+
+            <SelectionCard
+              id="letter"
+              title="4. Letter (optional)"
+              subtitle="Write one letter only. Preset letter buttons removed."
+              isOpen={openSection === 'letter'}
+              onToggle={toggleSection}
+            >
+              <div className="flex flex-wrap items-center gap-3">
+                <input
+                  value={badgeLetter}
+                  onChange={e => setLetterValue(e.target.value)}
+                  maxLength={1}
+                  className="w-16 rounded-md border border-gray-300 px-3 py-2 text-center text-lg font-bold uppercase"
+                  placeholder="A"
+                  disabled={submitting}
+                />
+
+                <button
+                  type="button"
+                  onClick={clearOverlay}
+                  className="rounded-md border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                >
+                  Clear
+                </button>
+
+                <div className="text-xs text-gray-500">
+                  Current:{' '}
+                  {overlayMode === 'letter' && badgeLetter
+                    ? `Letter ${badgeLetter}`
+                    : 'No letter'}
+                </div>
+              </div>
+            </SelectionCard>
           </div>
         </div>
       </div>
