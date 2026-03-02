@@ -1,18 +1,24 @@
-<!DOCTYPE html>
+<!--
+  index.html
+  Purpose:
+  - Root HTML file for the Vite/React app.
+  - Ensures the favicon is declared so browsers pick it up (favicon.ico recommended).
+  - Loads the app entry at /src/main.tsx.
+-->
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Web Creator</title>
-    <link href="main.css" rel="stylesheet">
+    <title>ProPeloton Manager</title>
+
+    <!-- Favicon (place /public/favicon.ico) -->
+    <link rel="icon" href="/favicon.ico" />
+    <!-- Optional Apple touch icon (place /public/apple-touch-icon.png) -->
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
   </head>
-  <script>
-    new EventSource('/esbuild').addEventListener('change', () =>
-      location.reload()
-    )
-  </script>
   <body>
-    <div id="app"></div>
-    <script src="main.js"></script>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
