@@ -93,7 +93,7 @@ export default function LoginPage(): JSX.Element {
       {/* Background image */}
       <div className="absolute inset-0 z-0 pointer-events-none" aria-hidden="true">
         <img
-          src="https://i.ibb.co/XfV1n7J9/Chat-GPT-Image-Mar-1-2026-08-31-42-PM.png"
+          src="https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/ChatGPT%20Image%20Mar%201,%202026,%2008_31_42%20PM.png"
           alt="background"
           className="object-cover w-full h-full"
           style={

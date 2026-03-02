@@ -132,7 +132,7 @@ export default function RegisterPage(): JSX.Element {
       {/* Background image */}
       <div className="absolute inset-0 z-0 pointer-events-none" aria-hidden="true">
         <img
-          src="https://i.ibb.co/HfgDDdRM/Chat-GPT-Image-Mar-1-2026-08-23-55-PM.png"
+          src="https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/ChatGPT%20Image%20Mar%201,%202026,%2010_14_29%20PM.png"
           alt="background"
           className="object-cover w-full h-full"
           style={

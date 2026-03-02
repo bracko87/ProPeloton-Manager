@@ -18,11 +18,11 @@ export default function CalendarPage() {
   ]
 
   return (
-    <div className="max-w-7xl mx-auto">
+    <div className="w-full">
       <h2 className="text-xl font-semibold mb-4">Race Calendar</h2>
 
-      <div className="bg-white rounded-lg p-6 shadow">
-        <div className="grid grid-cols-7 gap-2 text-sm text-gray-600">
+      <div className="bg-white rounded-lg p-6 shadow w-full">
+        <div className="grid grid-cols-7 gap-2 text-sm text-gray-600 w-full">
           {Array.from({ length: 30 }).map((_, idx) => (
             <div key={idx} className="p-3 border rounded-md min-h-[72px]">
               <div className="text-xs text-gray-400">Mar {idx + 1}</div>

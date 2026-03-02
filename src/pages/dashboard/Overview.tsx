@@ -14,8 +14,8 @@ import StatCard from '../../components/ui/StatCard'
  */
 export default function OverviewPage() {
   return (
-    <div className="max-w-7xl mx-auto">
-      <div className="grid grid-cols-12 gap-6">
+    <div className="w-full">
+      <div className="grid grid-cols-12 gap-6 w-full">
         <div className="col-span-8">
           <div className="bg-white rounded-lg p-6 shadow">
             <h3 className="text-lg font-semibold">Club Summary</h3>
@@ -63,7 +63,9 @@ export default function OverviewPage() {
               <div className="mt-2"><strong>Season:</strong> Season 1</div>
             </div>
             <div className="mt-6">
-              <button className="w-full bg-yellow-400 text-black px-4 py-2 rounded-md font-semibold">Quick Actions</button>
+              <button className="w-full bg-yellow-400 text-black px-4 py-2 rounded-md font-semibold">
+                Quick Actions
+              </button>
             </div>
           </div>
 

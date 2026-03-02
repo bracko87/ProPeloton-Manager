@@ -1,39 +1,97 @@
 /**
  * Footer.tsx
- * Global footer showing game time and quick links.
+ * Global footer showing live game time and quick links.
  */
 
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { Link } from 'react-router'
+import { supabase } from '../../lib/supabase'
+
+/**
+ * GameTimeRow
+ * Shape returned by public.get_game_time().
+ */
+interface GameTimeRow {
+  season_number: number
+  month_name: string
+  day_number: number
+  hour_24: number
+  minute_2: number
+  display_text: string
+}
 
 /**
  * GameTimeProps
- * Props for game time display (placeholder).
+ * Optional refresh interval override.
  */
 interface GameTimeProps {
-  /* Reserved for dynamic time binding from Supabase */
+  refreshIntervalMs?: number
 }
 
 /**
  * Footer
  * Displays global game-time and simple footer navigation.
  *
- * Note: Game-time should be sourced from the centralized backend (Supabase).
+ * Game-time is sourced from the centralized backend (Supabase)
+ * using public.get_game_time().
  */
-export default function Footer(_: GameTimeProps) {
+export default function Footer({
+  refreshIntervalMs = 30000
+}: GameTimeProps): JSX.Element {
+  const [gameTimeText, setGameTimeText] = useState('Loading game time...')
+
+  useEffect(() => {
+    let cancelled = false
+
+    async function loadGameTime(): Promise<void> {
+      const { data, error } = await supabase.rpc('get_game_time')
+
+      if (cancelled) return
+
+      if (error) {
+        setGameTimeText(prev =>
+          prev === 'Loading game time...' ? 'Game time unavailable' : prev
+        )
+        return
+      }
+
+      const rows = data as GameTimeRow[] | null
+      const nextText = rows?.[0]?.display_text
+
+      if (nextText) {
+        setGameTimeText(nextText)
+      } else {
+        setGameTimeText(prev =>
+          prev === 'Loading game time...' ? 'Game time unavailable' : prev
+        )
+      }
+    }
+
+    loadGameTime()
+
+    const interval = window.setInterval(loadGameTime, refreshIntervalMs)
+
+    return () => {
+      cancelled = true
+      window.clearInterval(interval)
+    }
+  }, [refreshIntervalMs])
+
   return (
-    <footer className="border-t border-gray-200 bg-white/90 py-3 px-6 flex items-center justify-between">
-      <div className="text-sm text-gray-600">
-        {/* Placeholder game time — should be replaced by Supabase-driven time */}
-        Season 1 · March 14 · 18:00
+    <footer className="border-t border-yellow-500 bg-yellow-400 py-3 px-6 flex items-center justify-between">
+      <div className="text-sm font-semibold text-black">
+        {gameTimeText}
       </div>
 
       <div className="flex items-center gap-4">
-        <Link to="/dashboard/overview" className="text-sm text-gray-700 hover:text-gray-900">
+        <Link
+          to="/dashboard/overview"
+          className="text-sm font-semibold text-black hover:opacity-80"
+        >
           Dashboard
         </Link>
-        <a className="text-sm text-gray-500">Support</a>
-        <a className="text-sm text-gray-500">Terms</a>
+        <a className="text-sm font-semibold text-black hover:opacity-80">Support</a>
+        <a className="text-sm font-semibold text-black hover:opacity-80">Terms</a>
       </div>
     </footer>
   )

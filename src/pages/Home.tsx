@@ -251,7 +251,7 @@ export default function HomePage(): JSX.Element {
           {/* background image overlay */}
           <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
             <img
-              src="https://i.ibb.co/QFd0kxb4/Chat-GPT-Image-Mar-1-2026-08-28-06-PM.png"
+              src="https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/ChatGPT%20Image%20Mar%201,%202026,%2008_28_06%20PM.png"
               alt=""
               className="w-full h-full object-cover"
               style={{

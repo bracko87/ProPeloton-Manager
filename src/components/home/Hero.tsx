@@ -85,7 +85,7 @@ const Hero: React.FC = () => {
         <div className="col-span-12 lg:col-span-5">
           <div className="rounded-xl overflow-hidden shadow-2xl">
             <img
-              src="https://i.ibb.co/QFQY9JgB/Chat-GPT-Image-Mar-1-2026-08-26-26-PM.png"
+     src="https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/ChatGPT%20Image%20Mar%201,%202026,%2010_24_31%20PM.png"
               alt="hero"
               className="object-cover w-full h-80 sm:h-96"
             />

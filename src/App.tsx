@@ -20,10 +20,23 @@ import OverviewPage from './pages/dashboard/Overview'
 import SquadPage from './pages/dashboard/Squad'
 import CalendarPage from './pages/dashboard/CalendarPage'
 import TeamSchedulePage from './pages/dashboard/TeamSchedule'
+import TrainingPage from './pages/dashboard/Training'
+import EquipmentPage from './pages/dashboard/Equipment'
 import InfrastructurePage from './pages/dashboard/Infrastructure'
 import FinancePage from './pages/dashboard/Finance'
 import TransfersPage from './pages/dashboard/Transfers'
 import StatisticsPage from './pages/dashboard/Statistics'
+
+/* Additional pages for profile/menu */
+import InboxPage from './pages/Inbox'
+import MyProfilePage from './pages/MyProfile'
+import CustomizeTeamPage from './pages/CustomizeTeam'
+import ForumPage from './pages/Forum'
+import PreferencesPage from './pages/Preferences'
+import HelpPage from './pages/Help'
+import ContactUsPage from './pages/ContactUs'
+import ProPackagesPage from './pages/ProPackages'
+import InviteFriendsPage from './pages/InviteFriends'
 import { AuthProvider, useAuth } from './context/AuthProvider'
 import { supabase } from './lib/supabase'
 
@@ -254,6 +267,8 @@ export default function App(): JSX.Element {
             <Route path="squad" element={<SquadPage />} />
             <Route path="calendar" element={<CalendarPage />} />
             <Route path="team-schedule" element={<TeamSchedulePage />} />
+            <Route path="training" element={<TrainingPage />} />
+            <Route path="equipment" element={<EquipmentPage />} />
             <Route path="infrastructure" element={<InfrastructurePage />} />
             <Route path="finance" element={<FinancePage />} />
             <Route path="transfers" element={<TransfersPage />} />

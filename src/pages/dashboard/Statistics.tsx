@@ -11,13 +11,15 @@ import React from 'react'
  */
 export default function StatisticsPage() {
   return (
-    <div className="max-w-7xl mx-auto">
+    <div className="w-full">
       <h2 className="text-xl font-semibold mb-4">Statistics</h2>
 
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-3 gap-4 w-full">
         <div className="bg-white p-4 rounded shadow">
           <div className="font-semibold">Season Performance</div>
-          <div className="mt-3 text-sm text-gray-600">Chart placeholder (connect to charting library or custom canvas).</div>
+          <div className="mt-3 text-sm text-gray-600">
+            Chart placeholder (connect to charting library or custom canvas).
+          </div>
         </div>
 
         <div className="bg-white p-4 rounded shadow">
@@ -27,7 +29,9 @@ export default function StatisticsPage() {
 
         <div className="bg-white p-4 rounded shadow">
           <div className="font-semibold">Club History</div>
-          <div className="mt-3 text-sm text-gray-600">Season-by-season blocks will appear here.</div>
+          <div className="mt-3 text-sm text-gray-600">
+            Season-by-season blocks will appear here.
+          </div>
         </div>
       </div>
     </div>

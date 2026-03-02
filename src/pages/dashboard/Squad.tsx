@@ -17,18 +17,18 @@ export default function SquadPage() {
   ]
 
   return (
-    <div className="max-w-7xl mx-auto">
+    <div className="w-full">
       <h2 className="text-xl font-semibold mb-4">Squad</h2>
 
-      <div className="bg-white rounded-lg p-4 shadow">
+      <div className="bg-white rounded-lg p-4 shadow w-full">
         <table className="w-full text-sm">
           <thead>
             <tr className="text-left text-gray-600">
               <th className="p-2">#</th>
-              <th>Name</th>
-              <th>Role</th>
-              <th>Fitness</th>
-              <th></th>
+              <th className="p-2">Name</th>
+              <th className="p-2">Role</th>
+              <th className="p-2">Fitness</th>
+              <th className="p-2"></th>
             </tr>
           </thead>
           <tbody>
@@ -47,11 +47,13 @@ export default function SquadPage() {
         </table>
       </div>
 
-      <div className="mt-6 grid grid-cols-3 gap-4">
+      <div className="mt-6 grid grid-cols-3 gap-4 w-full">
         {riders.map(r => (
           <div key={r.id} className="bg-white p-4 rounded-lg shadow">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center font-bold">R</div>
+              <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center font-bold">
+                R
+              </div>
               <div>
                 <div className="font-semibold">{r.name}</div>
                 <div className="text-sm text-gray-500">{r.role}</div>

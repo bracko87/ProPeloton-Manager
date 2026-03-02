@@ -16,10 +16,10 @@ export default function TransfersPage() {
   ]
 
   return (
-    <div className="max-w-7xl mx-auto">
+    <div className="w-full">
       <h2 className="text-xl font-semibold mb-4">Transfers</h2>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 gap-4 w-full">
         <div className="bg-white p-4 rounded shadow">
           <h4 className="font-semibold">Scouting List</h4>
           <ul className="mt-3 text-sm text-gray-600 space-y-2">
@@ -37,7 +37,9 @@ export default function TransfersPage() {
 
         <div className="bg-white p-4 rounded shadow">
           <h4 className="font-semibold">Negotiations</h4>
-          <div className="mt-3 text-sm text-gray-600">No active negotiations. Offers and contract flows will appear here.</div>
+          <div className="mt-3 text-sm text-gray-600">
+            No active negotiations. Offers and contract flows will appear here.
+          </div>
         </div>
       </div>
     </div>

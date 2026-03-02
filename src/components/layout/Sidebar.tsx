@@ -16,98 +16,162 @@ import {
   DollarSign,
   LogOut
 } from 'lucide-react'
+import { supabase } from '../../lib/supabase'
 
-/**
- * SidebarProps
- * Props for Sidebar component.
- */
 interface SidebarProps {
   collapsed?: boolean
-  onToggle?: () => void
 }
+
+const GAME_LOGO_URL = 'https://i.ibb.co/k28T2XbC/5c3417dc-3924-4423-948a-745ae5902ed0.png'
+
+const navItems = [
+  {
+    to: '/dashboard/overview',
+    label: 'Overview',
+    description: 'Club snapshot and updates',
+    icon: Home
+  },
+  {
+    to: '/dashboard/squad',
+    label: 'Squad',
+    description: 'Manage riders and roster',
+    icon: Users
+  },
+  {
+    to: '/dashboard/calendar',
+    label: 'Calendar',
+    description: 'Upcoming races and events',
+    icon: Calendar
+  },
+  {
+    to: '/dashboard/team-schedule',
+    label: 'Team Schedule',
+    description: 'Training and assignments',
+    icon: List
+  },
+  {
+    to: '/dashboard/training',
+    label: 'Training',
+    description: 'Rider training and sessions',
+    icon: List
+  },
+  {
+    to: '/dashboard/equipment',
+    label: 'Equipment',
+    description: 'Bikes, wheels and gear',
+    icon: Grid
+  },
+  {
+    to: '/dashboard/infrastructure',
+    label: 'Infrastructure',
+    description: 'Facilities and development',
+    icon: Grid
+  },
+  {
+    to: '/dashboard/finance',
+    label: 'Finance',
+    description: 'Budget, income and costs',
+    icon: DollarSign
+  },
+  {
+    to: '/dashboard/transfers',
+    label: 'Transfers',
+    description: 'Buy, sell and negotiate',
+    icon: ShoppingCart
+  },
+  {
+    to: '/dashboard/statistics',
+    label: 'Statistics',
+    description: 'Performance and analytics',
+    icon: BarChart2
+  }
+]
 
 /**
  * Sidebar
- * Black sidebar with yellow active state and white text.
+ * Black sidebar with yellow active state and larger menu text.
  */
-export default function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
+export default function Sidebar({ collapsed = false }: SidebarProps) {
   const navigate = useNavigate()
 
-  /**
-   * signOut
-   * Placeholder sign-out handler. Redirects user to the home page.
-   * In future this should call Supabase auth signOut before redirecting.
-   */
-  const signOut = () => {
-    // TODO: Integrate Supabase signOut here
+  const signOut = async () => {
+    await supabase.auth.signOut()
     navigate('/')
   }
 
-  const base = 'flex items-center gap-3 px-3 py-2 rounded-md transition-colors'
   const linkClass = ({ isActive }: { isActive: boolean }) =>
-    `${base} ${isActive ? 'bg-yellow-400/20 text-yellow-400' : 'text-white/90 hover:bg-white/5'}`
+    [
+      'rounded-md transition-colors w-full',
+      collapsed
+        ? 'flex items-center justify-center px-2 py-3'
+        : 'flex items-start gap-3 px-3 py-3',
+      isActive
+        ? 'bg-yellow-400/20 text-yellow-400'
+        : 'text-white/90 hover:bg-white/5'
+    ].join(' ')
 
   return (
     <aside
-      className={`flex-shrink-0 bg-[#0b0f14] text-white w-72 ${collapsed ? 'w-20' : 'w-72'} transition-[width]`}
+      className={`flex-shrink-0 bg-[#0b0f14] text-white ${
+        collapsed ? 'w-24' : 'w-80'
+      } transition-all duration-300`}
     >
       <div className="h-full flex flex-col">
-        <div className="px-4 py-6 flex items-center justify-between border-b border-white/5">
-          <div className="flex items-center gap-3">
-            <div className="bg-yellow-400 w-10 h-10 rounded-md flex items-center justify-center text-black font-bold">
-              P
+        <div className="px-4 py-6 flex items-center border-b border-white/5">
+          <div className={`flex items-center ${collapsed ? 'justify-center w-full' : 'gap-3'}`}>
+            <div className="h-12 w-12 rounded-md overflow-hidden bg-black flex items-center justify-center">
+              <img
+                src={GAME_LOGO_URL}
+                alt="ProPeloton Manager"
+                className="h-full w-full object-contain"
+              />
             </div>
-            {!collapsed && <div className="text-lg font-semibold">ProPeloton</div>}
+
+            {!collapsed && (
+              <div className="min-w-0">
+                <div className="text-lg font-bold text-white leading-tight">
+                  ProPeloton Manager
+                </div>
+                <div className="text-xs text-white/60">
+                  Multiplayer cycling management
+                </div>
+              </div>
+            )}
           </div>
-          <button
-            onClick={onToggle}
-            className="text-white/70 hover:text-white p-2"
-            aria-label="Toggle sidebar"
-          >
-            ☰
-          </button>
         </div>
 
-        <nav className="p-4 space-y-1">
-          <NavLink to="/dashboard/overview" className={linkClass}>
-            <Home size={18} />
-            {!collapsed && <span>Overview</span>}
-          </NavLink>
-          <NavLink to="/dashboard/squad" className={linkClass}>
-            <Users size={18} />
-            {!collapsed && <span>Squad</span>}
-          </NavLink>
-          <NavLink to="/dashboard/calendar" className={linkClass}>
-            <Calendar size={18} />
-            {!collapsed && <span>Calendar</span>}
-          </NavLink>
-          <NavLink to="/dashboard/team-schedule" className={linkClass}>
-            <List size={18} />
-            {!collapsed && <span>Team Schedule</span>}
-          </NavLink>
-          <NavLink to="/dashboard/infrastructure" className={linkClass}>
-            <Grid size={18} />
-            {!collapsed && <span>Infrastructure</span>}
-          </NavLink>
-          <NavLink to="/dashboard/finance" className={linkClass}>
-            <DollarSign size={18} />
-            {!collapsed && <span>Finance</span>}
-          </NavLink>
-          <NavLink to="/dashboard/transfers" className={linkClass}>
-            <ShoppingCart size={18} />
-            {!collapsed && <span>Transfers</span>}
-          </NavLink>
-          <NavLink to="/dashboard/statistics" className={linkClass}>
-            <BarChart2 size={18} />
-            {!collapsed && <span>Statistics</span>}
-          </NavLink>
+        <nav className="p-4 space-y-2">
+          {navItems.map(item => {
+            const Icon = item.icon
+
+            return (
+              <NavLink key={item.to} to={item.to} className={linkClass}>
+                <Icon size={18} className="mt-0.5 flex-shrink-0" />
+
+                {!collapsed && (
+                  <div className="min-w-0">
+                    <div className="text-base font-semibold leading-tight">
+                      {item.label}
+                    </div>
+                    <div className="text-xs text-white/55 mt-1 leading-tight">
+                      {item.description}
+                    </div>
+                  </div>
+                )}
+              </NavLink>
+            )
+          })}
         </nav>
 
-        <div className="mt-auto p-4 border-t border-white/5 space-y-2">
+        <div className="mt-auto p-4 border-t border-white/5 space-y-3">
           <button
             onClick={signOut}
             aria-label="Sign out"
-            className="flex items-center gap-3 px-3 py-2 rounded-md text-white/90 hover:bg-white/5 w-full text-left"
+            className={`w-full rounded-md font-semibold transition-colors ${
+              collapsed
+                ? 'flex items-center justify-center px-3 py-3 bg-yellow-400 text-black hover:bg-yellow-300'
+                : 'flex items-center gap-3 px-3 py-3 bg-yellow-400 text-black hover:bg-yellow-300'
+            }`}
           >
             <LogOut size={16} />
             {!collapsed && <span>Sign Out</span>}

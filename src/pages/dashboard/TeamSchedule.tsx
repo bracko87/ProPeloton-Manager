@@ -16,10 +16,10 @@ export default function TeamSchedulePage() {
   ]
 
   return (
-    <div className="max-w-7xl mx-auto">
+    <div className="w-full">
       <h2 className="text-xl font-semibold mb-4">Team Schedule</h2>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 gap-4 w-full">
         {blocks.map(b => (
           <div key={b.id} className="bg-white rounded-lg p-4 shadow">
             <div className="font-semibold">{b.title}</div>
