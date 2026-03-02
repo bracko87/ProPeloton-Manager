@@ -66,9 +66,9 @@ export default function RegisterPage(): JSX.Element {
         email: form.email,
         password: form.password,
         options: {
-          // emailRedirectTo ensures that after confirmation, Supabase
-          // sends the user back to the app root, where Home decides routing.
-          emailRedirectTo: window.location.origin,
+          // Send users to the production create-club flow after email confirmation.
+          // Replace this domain if you deploy under a different production URL.
+          emailRedirectTo: 'https://propelotonmanager.com/create-club',
           data: {
             username: form.username
           }
