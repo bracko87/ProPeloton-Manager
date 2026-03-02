@@ -34,6 +34,34 @@ type BadgeShape =
   | 'square'
   | 'banner'
   | 'crest'
+  | 'octagon'
+  | 'pennant'
+
+type BadgePattern =
+  | 'solid'
+  | 'horizontal-band'
+  | 'double-horizontal'
+  | 'vertical-split'
+  | 'horizontal-split'
+  | 'diagonal-sash'
+  | 'diagonal-split'
+  | 'stripes-vertical'
+  | 'stripes-horizontal'
+  | 'chevron'
+  | 'center-band'
+  | 'quartered'
+
+type BadgeSymbol =
+  | 'none'
+  | 'star'
+  | 'bolt'
+  | 'crown'
+  | 'mountain'
+  | 'wheel'
+  | 'wing'
+  | 'flame'
+
+type OverlayMode = 'none' | 'symbol' | 'letter'
 
 const badgeOptions: BadgeShape[] = [
   'circle',
@@ -43,8 +71,77 @@ const badgeOptions: BadgeShape[] = [
   'triangle',
   'square',
   'banner',
-  'crest'
+  'crest',
+  'octagon',
+  'pennant'
 ]
+
+const patternOptions: BadgePattern[] = [
+  'solid',
+  'horizontal-band',
+  'double-horizontal',
+  'vertical-split',
+  'horizontal-split',
+  'diagonal-sash',
+  'diagonal-split',
+  'stripes-vertical',
+  'stripes-horizontal',
+  'chevron',
+  'center-band',
+  'quartered'
+]
+
+const symbolOptions: BadgeSymbol[] = [
+  'none',
+  'star',
+  'bolt',
+  'crown',
+  'mountain',
+  'wheel',
+  'wing',
+  'flame'
+]
+
+const letterPresets = ['A', 'B', 'C', 'H', 'M', 'P', 'R', 'S', 'T', 'Z']
+
+const shapeLabels: Record<BadgeShape, string> = {
+  circle: 'Circle',
+  shield: 'Shield',
+  diamond: 'Diamond',
+  hexagon: 'Hexagon',
+  triangle: 'Triangle',
+  square: 'Square',
+  banner: 'Banner',
+  crest: 'Crest',
+  octagon: 'Octagon',
+  pennant: 'Pennant'
+}
+
+const patternLabels: Record<BadgePattern, string> = {
+  solid: 'Solid',
+  'horizontal-band': 'Band',
+  'double-horizontal': 'Double Band',
+  'vertical-split': 'Vertical Split',
+  'horizontal-split': 'Horizontal Split',
+  'diagonal-sash': 'Diagonal Sash',
+  'diagonal-split': 'Diagonal Split',
+  'stripes-vertical': 'Vertical Stripes',
+  'stripes-horizontal': 'Horizontal Stripes',
+  chevron: 'Chevron',
+  'center-band': 'Center Stripe',
+  quartered: 'Quartered'
+}
+
+const symbolLabels: Record<BadgeSymbol, string> = {
+  none: 'None',
+  star: 'Star',
+  bolt: 'Bolt',
+  crown: 'Crown',
+  mountain: 'Mountain',
+  wheel: 'Wheel',
+  wing: 'Wing',
+  flame: 'Flame'
+}
 
 /**
  * getBadgeClipPath
@@ -68,6 +165,10 @@ function getBadgeClipPath(shape: BadgeShape): string {
       return 'polygon(12% 8%, 88% 8%, 88% 72%, 50% 92%, 12% 72%)'
     case 'crest':
       return 'polygon(50% 4%, 90% 22%, 76% 92%, 24% 92%, 10% 22%)'
+    case 'octagon':
+      return 'polygon(30% 4%, 70% 4%, 96% 30%, 96% 70%, 70% 96%, 30% 96%, 4% 70%, 4% 30%)'
+    case 'pennant':
+      return 'polygon(14% 8%, 86% 8%, 86% 58%, 66% 58%, 66% 80%, 50% 94%, 34% 80%, 34% 58%, 14% 58%)'
     default:
       return 'circle(50% at 50% 50%)'
   }
@@ -93,6 +194,19 @@ function slugify(value: string): string {
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '')
+}
+
+/**
+ * escapeXml
+ * Makes text safe inside generated SVG.
+ */
+function escapeXml(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;')
 }
 
 /**
@@ -141,8 +255,137 @@ function getSvgShapeMarkup(shape: BadgeShape, fill: string, inset = false): stri
         ? `<polygon points="128,24 218,62 192,228 64,228 38,62" fill="${fill}" />`
         : `<polygon points="128,10 236,54 206,246 50,246 20,54" fill="${fill}" />`
 
+    case 'octagon':
+      return inset
+        ? `<polygon points="82,24 174,24 232,82 232,174 174,232 82,232 24,174 24,82" fill="${fill}" />`
+        : `<polygon points="72,10 184,10 246,72 246,184 184,246 72,246 10,184 10,72" fill="${fill}" />`
+
+    case 'pennant':
+      return inset
+        ? `<polygon points="44,26 212,26 212,148 162,148 162,190 128,224 94,190 94,148 44,148" fill="${fill}" />`
+        : `<polygon points="28,12 228,12 228,164 176,164 176,208 128,246 80,208 80,164 28,164" fill="${fill}" />`
+
     default:
       return `<circle cx="128" cy="128" r="118" fill="${fill}" />`
+  }
+}
+
+/**
+ * getPatternSvgMarkup
+ * Returns SVG markup for interior color layout clipped inside the badge.
+ */
+function getPatternSvgMarkup(
+  pattern: BadgePattern,
+  primary: string,
+  secondary: string
+): string {
+  switch (pattern) {
+    case 'solid':
+      return ''
+
+    case 'horizontal-band':
+      return `<rect x="0" y="104" width="256" height="48" fill="${secondary}" />`
+
+    case 'double-horizontal':
+      return `
+        <rect x="0" y="76" width="256" height="34" fill="${secondary}" />
+        <rect x="0" y="146" width="256" height="34" fill="${secondary}" />
+      `
+
+    case 'vertical-split':
+      return `<rect x="128" y="0" width="128" height="256" fill="${secondary}" />`
+
+    case 'horizontal-split':
+      return `<rect x="0" y="128" width="256" height="128" fill="${secondary}" />`
+
+    case 'diagonal-sash':
+      return `<rect x="-46" y="104" width="348" height="34" fill="${secondary}" transform="rotate(-18 128 128)" />`
+
+    case 'diagonal-split':
+      return `<polygon points="256,0 256,256 0,256" fill="${secondary}" />`
+
+    case 'stripes-vertical':
+      return `
+        <rect x="0" y="0" width="34" height="256" fill="${secondary}" />
+        <rect x="68" y="0" width="34" height="256" fill="${secondary}" />
+        <rect x="136" y="0" width="34" height="256" fill="${secondary}" />
+        <rect x="204" y="0" width="34" height="256" fill="${secondary}" />
+      `
+
+    case 'stripes-horizontal':
+      return `
+        <rect x="0" y="0" width="256" height="34" fill="${secondary}" />
+        <rect x="0" y="68" width="256" height="34" fill="${secondary}" />
+        <rect x="0" y="136" width="256" height="34" fill="${secondary}" />
+        <rect x="0" y="204" width="256" height="34" fill="${secondary}" />
+      `
+
+    case 'chevron':
+      return `
+        <polygon points="48,64 128,158 208,64 230,84 128,200 26,84" fill="${secondary}" />
+      `
+
+    case 'center-band':
+      return `<rect x="92" y="0" width="72" height="256" fill="${secondary}" />`
+
+    case 'quartered':
+      return `
+        <rect x="128" y="0" width="128" height="128" fill="${secondary}" />
+        <rect x="0" y="128" width="128" height="128" fill="${secondary}" />
+      `
+
+    default:
+      return ''
+  }
+}
+
+/**
+ * getSvgSymbolMarkup
+ * Returns a central symbol for the badge in SVG coordinates (0..100 viewBox).
+ */
+function getSvgSymbolMarkup(symbol: Exclude<BadgeSymbol, 'none'>, color: string): string {
+  switch (symbol) {
+    case 'star':
+      return `<polygon points="50,10 61,38 91,38 67,56 76,86 50,68 24,86 33,56 9,38 39,38" fill="${color}" />`
+
+    case 'bolt':
+      return `<polygon points="58,8 24,54 46,54 38,92 76,42 54,42" fill="${color}" />`
+
+    case 'crown':
+      return `
+        <polygon points="12,70 24,28 46,50 62,24 78,50 90,34 88,70" fill="${color}" />
+        <rect x="12" y="70" width="76" height="12" fill="${color}" rx="3" />
+      `
+
+    case 'mountain':
+      return `
+        <polygon points="10,78 34,42 52,66 70,36 90,78" fill="${color}" />
+        <polygon points="58,36 66,48 76,36" fill="#ffffff" opacity="0.75" />
+      `
+
+    case 'wheel':
+      return `
+        <circle cx="50" cy="50" r="28" fill="none" stroke="${color}" stroke-width="8" />
+        <circle cx="50" cy="50" r="6" fill="${color}" />
+        <line x1="50" y1="22" x2="50" y2="78" stroke="${color}" stroke-width="5" />
+        <line x1="22" y1="50" x2="78" y2="50" stroke="${color}" stroke-width="5" />
+        <line x1="30" y1="30" x2="70" y2="70" stroke="${color}" stroke-width="4" />
+        <line x1="70" y1="30" x2="30" y2="70" stroke="${color}" stroke-width="4" />
+      `
+
+    case 'wing':
+      return `
+        <polygon points="12,58 54,26 84,36 60,48 88,54 58,64 82,72 48,76 24,70" fill="${color}" />
+      `
+
+    case 'flame':
+      return `
+        <path d="M50 10 C70 26 78 44 72 58 C67 72 58 82 50 90 C42 82 28 72 28 54 C28 36 38 24 50 10 Z" fill="${color}" />
+        <path d="M50 34 C58 44 60 52 58 60 C56 66 53 72 50 76 C47 72 42 66 42 58 C42 50 45 42 50 34 Z" fill="#ffffff" opacity="0.42" />
+      `
+
+    default:
+      return ''
   }
 }
 
@@ -150,9 +393,54 @@ function getSvgShapeMarkup(shape: BadgeShape, fill: string, inset = false): stri
  * buildBadgeSvg
  * Builds the generated team badge as SVG text so it can be uploaded to Supabase Storage.
  */
-function buildBadgeSvg(shape: BadgeShape, primary: string, secondary: string): string {
+function buildBadgeSvg(
+  shape: BadgeShape,
+  pattern: BadgePattern,
+  overlayMode: OverlayMode,
+  badgeSymbol: BadgeSymbol,
+  badgeLetter: string,
+  primary: string,
+  secondary: string
+): string {
   const outerShape = getSvgShapeMarkup(shape, secondary, false)
   const innerShape = getSvgShapeMarkup(shape, primary, true)
+  const patternMarkup = getPatternSvgMarkup(pattern, primary, secondary)
+  const cleanLetter = badgeLetter.trim().toUpperCase().slice(0, 1)
+  const safeLetter = cleanLetter ? escapeXml(cleanLetter) : ''
+
+  let overlayMarkup = ''
+
+  if (overlayMode === 'symbol' && badgeSymbol !== 'none') {
+    overlayMarkup = `
+      <g clip-path="url(#innerClip)">
+        <circle cx="128" cy="128" r="54" fill="#000000" opacity="0.12" />
+        <circle cx="128" cy="128" r="46" fill="#ffffff" opacity="0.12" />
+        <g transform="translate(70 70) scale(1.16)">
+          ${getSvgSymbolMarkup(badgeSymbol, '#ffffff')}
+        </g>
+      </g>
+    `
+  }
+
+  if (overlayMode === 'letter' && safeLetter) {
+    overlayMarkup = `
+      <g clip-path="url(#innerClip)">
+        <circle cx="128" cy="128" r="54" fill="#000000" opacity="0.12" />
+        <circle cx="128" cy="128" r="46" fill="#ffffff" opacity="0.10" />
+        <text
+          x="128"
+          y="148"
+          text-anchor="middle"
+          font-size="78"
+          font-family="Inter, Arial, sans-serif"
+          font-weight="800"
+          fill="#ffffff"
+        >
+          ${safeLetter}
+        </text>
+      </g>
+    `
+  }
 
   return `
     <svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256">
@@ -167,25 +455,163 @@ function buildBadgeSvg(shape: BadgeShape, primary: string, secondary: string): s
       ${innerShape}
 
       <g clip-path="url(#innerClip)">
-        <rect x="0" y="104" width="256" height="46" fill="${secondary}" />
-        <rect x="30" y="116" width="196" height="20" fill="${primary}" opacity="0.92" />
-        <rect x="-20" y="38" width="124" height="42" fill="rgba(255,255,255,0.15)" transform="rotate(-12 42 59)" />
+        ${patternMarkup}
+        <rect
+          x="-20"
+          y="38"
+          width="124"
+          height="42"
+          fill="#ffffff"
+          opacity="0.15"
+          transform="rotate(-12 42 59)"
+        />
       </g>
+
+      ${overlayMarkup}
     </svg>
   `.trim()
 }
 
 /**
+ * PatternOverlay
+ * Renders interior pattern layers in the live preview.
+ */
+function PatternOverlay({
+  pattern,
+  secondary
+}: {
+  pattern: BadgePattern
+  secondary: string
+}): JSX.Element | null {
+  const fill = { backgroundColor: secondary } as React.CSSProperties
+
+  switch (pattern) {
+    case 'solid':
+      return null
+
+    case 'horizontal-band':
+      return <div className="absolute left-0 right-0 top-[42%] h-[18%]" style={fill} />
+
+    case 'double-horizontal':
+      return (
+        <>
+          <div className="absolute left-0 right-0 top-[28%] h-[13%]" style={fill} />
+          <div className="absolute left-0 right-0 top-[60%] h-[13%]" style={fill} />
+        </>
+      )
+
+    case 'vertical-split':
+      return <div className="absolute top-0 bottom-0 right-0 w-1/2" style={fill} />
+
+    case 'horizontal-split':
+      return <div className="absolute left-0 right-0 bottom-0 h-1/2" style={fill} />
+
+    case 'diagonal-sash':
+      return (
+        <div
+          className="absolute left-[-12%] top-[40%] h-[16%] w-[124%] -rotate-[18deg]"
+          style={fill}
+        />
+      )
+
+    case 'diagonal-split':
+      return (
+        <div
+          className="absolute inset-0"
+          style={{
+            background: `linear-gradient(135deg, transparent 0 49%, ${secondary} 49% 100%)`
+          }}
+        />
+      )
+
+    case 'stripes-vertical':
+      return (
+        <>
+          <div className="absolute top-0 bottom-0 left-0 w-[14%]" style={fill} />
+          <div className="absolute top-0 bottom-0 left-[28%] w-[14%]" style={fill} />
+          <div className="absolute top-0 bottom-0 left-[56%] w-[14%]" style={fill} />
+          <div className="absolute top-0 bottom-0 left-[84%] w-[14%]" style={fill} />
+        </>
+      )
+
+    case 'stripes-horizontal':
+      return (
+        <>
+          <div className="absolute left-0 right-0 top-0 h-[14%]" style={fill} />
+          <div className="absolute left-0 right-0 top-[28%] h-[14%]" style={fill} />
+          <div className="absolute left-0 right-0 top-[56%] h-[14%]" style={fill} />
+          <div className="absolute left-0 right-0 top-[84%] h-[14%]" style={fill} />
+        </>
+      )
+
+    case 'chevron':
+      return (
+        <>
+          <div
+            className="absolute left-[14%] top-[34%] h-[14%] w-[38%] -rotate-45"
+            style={fill}
+          />
+          <div
+            className="absolute right-[14%] top-[34%] h-[14%] w-[38%] rotate-45"
+            style={fill}
+          />
+        </>
+      )
+
+    case 'center-band':
+      return <div className="absolute top-0 bottom-0 left-[36%] w-[28%]" style={fill} />
+
+    case 'quartered':
+      return (
+        <>
+          <div className="absolute top-0 right-0 h-1/2 w-1/2" style={fill} />
+          <div className="absolute bottom-0 left-0 h-1/2 w-1/2" style={fill} />
+        </>
+      )
+
+    default:
+      return null
+  }
+}
+
+/**
+ * SymbolGraphic
+ * Renders an inline symbol icon in the live preview.
+ */
+function SymbolGraphic({
+  symbol
+}: {
+  symbol: Exclude<BadgeSymbol, 'none'>
+}): JSX.Element {
+  return (
+    <svg
+      viewBox="0 0 100 100"
+      className="w-full h-full"
+      aria-hidden="true"
+      dangerouslySetInnerHTML={{ __html: getSvgSymbolMarkup(symbol, '#ffffff') }}
+    />
+  )
+}
+
+/**
  * BadgePreview
- * Renders a simple preview badge using primary / secondary colors only.
+ * Renders a flexible preview badge using selected shape, pattern and overlay.
  */
 function BadgePreview({
   shape,
+  pattern,
+  overlayMode,
+  symbol,
+  letter,
   primary,
   secondary,
   size = 'large'
 }: {
   shape: BadgeShape
+  pattern: BadgePattern
+  overlayMode: OverlayMode
+  symbol: BadgeSymbol
+  letter: string
   primary: string
   secondary: string
   size?: 'large' | 'small'
@@ -193,6 +619,9 @@ function BadgePreview({
   const clipPath = getBadgeClipPath(shape)
   const outerSize = size === 'large' ? 'w-56 h-56' : 'w-12 h-12'
   const innerInset = size === 'large' ? 'inset-[10px]' : 'inset-[3px]'
+  const overlaySize = size === 'large' ? 'w-[38%] h-[38%]' : 'w-[46%] h-[46%]'
+  const letterSize = size === 'large' ? 'text-5xl' : 'text-base'
+  const cleanLetter = letter.trim().toUpperCase().slice(0, 1)
 
   return (
     <div className={`relative ${outerSize}`} aria-hidden="true">
@@ -207,18 +636,58 @@ function BadgePreview({
       >
         <div className="absolute inset-0" style={{ backgroundColor: primary }} />
 
-        <div
-          className="absolute left-0 right-0 top-[44%] h-[18%]"
-          style={{ backgroundColor: secondary }}
-        />
-
-        <div
-          className="absolute left-[12%] right-[12%] top-[48%] h-[8%]"
-          style={{ backgroundColor: primary, opacity: 0.92 }}
-        />
+        <PatternOverlay pattern={pattern} secondary={secondary} />
 
         <div className="absolute -left-[8%] top-[14%] h-[18%] w-[48%] -rotate-12 bg-white/15" />
+
+        {overlayMode !== 'none' ? (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="absolute w-[40%] h-[40%] rounded-full bg-black/10" />
+            <div className="absolute w-[34%] h-[34%] rounded-full bg-white/10" />
+
+            <div className={`relative ${overlaySize} flex items-center justify-center`}>
+              {overlayMode === 'symbol' && symbol !== 'none' ? (
+                <SymbolGraphic symbol={symbol as Exclude<BadgeSymbol, 'none'>} />
+              ) : null}
+
+              {overlayMode === 'letter' && cleanLetter ? (
+                <span
+                  className={`${letterSize} font-extrabold text-white leading-none select-none`}
+                >
+                  {cleanLetter}
+                </span>
+              ) : null}
+            </div>
+          </div>
+        ) : null}
       </div>
+    </div>
+  )
+}
+
+/**
+ * SelectionCard
+ * Reusable right-side customization card.
+ */
+function SelectionCard({
+  title,
+  subtitle,
+  children
+}: {
+  title: string
+  subtitle: string
+  children: React.ReactNode
+}): JSX.Element {
+  return (
+    <div className="rounded-xl border border-gray-200 bg-white p-4 text-left shadow-sm">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <div className="text-sm font-semibold text-gray-900">{title}</div>
+          <div className="mt-1 text-xs text-gray-500">{subtitle}</div>
+        </div>
+      </div>
+
+      <div className="mt-4">{children}</div>
     </div>
   )
 }
@@ -243,11 +712,46 @@ export default function CreateClubPage(): JSX.Element {
   const [loadingCountries, setLoadingCountries] = useState<boolean>(true)
   const [submitting, setSubmitting] = useState<boolean>(false)
   const [error, setError] = useState<string | null>(null)
-  const [badgeShape, setBadgeShape] = useState<BadgeShape>('circle')
+  const [badgeShape, setBadgeShape] = useState<BadgeShape>('shield')
+  const [badgePattern, setBadgePattern] = useState<BadgePattern>('horizontal-band')
+  const [badgeSymbol, setBadgeSymbol] = useState<BadgeSymbol>('none')
+  const [overlayMode, setOverlayMode] = useState<OverlayMode>('none')
+  const [badgeLetter, setBadgeLetter] = useState<string>('')
+
   const [flagImageError, setFlagImageError] = useState(false)
 
   function updateField(key: keyof typeof form, value: string): void {
     setForm(prev => ({ ...prev, [key]: value }))
+  }
+
+  function selectSymbol(symbol: BadgeSymbol): void {
+    setBadgeSymbol(symbol)
+
+    if (symbol === 'none') {
+      if (overlayMode === 'symbol') {
+        setOverlayMode('none')
+      }
+      return
+    }
+
+    setOverlayMode('symbol')
+  }
+
+  function setLetterValue(value: string): void {
+    const clean = value.replace(/[^a-z0-9]/gi, '').toUpperCase().slice(0, 1)
+    setBadgeLetter(clean)
+
+    if (clean) {
+      setOverlayMode('letter')
+    } else if (overlayMode === 'letter') {
+      setOverlayMode('none')
+    }
+  }
+
+  function clearOverlay(): void {
+    setOverlayMode('none')
+    setBadgeSymbol('none')
+    setBadgeLetter('')
   }
 
   useEffect(() => {
@@ -319,7 +823,16 @@ export default function CreateClubPage(): JSX.Element {
     let uploadedLogoPath: string | null = null
 
     try {
-      const svg = buildBadgeSvg(badgeShape, form.primary, form.secondary)
+      const svg = buildBadgeSvg(
+        badgeShape,
+        badgePattern,
+        overlayMode,
+        badgeSymbol,
+        badgeLetter,
+        form.primary,
+        form.secondary
+      )
+
       const svgBlob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' })
 
       const safeName = slugify(form.name) || 'team'
@@ -333,7 +846,12 @@ export default function CreateClubPage(): JSX.Element {
         })
 
       if (uploadError) {
-        setError(uploadError.message || 'Failed to save team badge')
+        const message =
+          /bucket not found/i.test(uploadError.message ?? '')
+            ? 'Storage bucket "club-logos" was not found. Please create it in Supabase Storage first.'
+            : uploadError.message || 'Failed to save team badge'
+
+        setError(message)
         return
       }
 
@@ -372,6 +890,13 @@ export default function CreateClubPage(): JSX.Element {
     ? `https://flagcdn.com/w40/${form.countryCode.toLowerCase()}.png`
     : ''
 
+  const overlaySummary =
+    overlayMode === 'symbol' && badgeSymbol !== 'none'
+      ? `Symbol: ${symbolLabels[badgeSymbol]}`
+      : overlayMode === 'letter' && badgeLetter
+        ? `Letter: ${badgeLetter}`
+        : 'No symbol / letter selected'
+
   return (
     <div className="relative isolate min-h-screen bg-[#081224] flex items-center justify-center p-6 overflow-hidden">
       <div className="absolute inset-0 z-0 pointer-events-none" aria-hidden="true">
@@ -401,8 +926,8 @@ export default function CreateClubPage(): JSX.Element {
         />
       </div>
 
-      <div className="relative z-10 max-w-6xl w-full bg-white rounded-xl shadow-2xl overflow-hidden">
-        <div className="grid grid-cols-1 lg:grid-cols-[1.15fr_0.85fr]">
+      <div className="relative z-10 max-w-7xl w-full bg-white rounded-xl shadow-2xl overflow-hidden">
+        <div className="grid grid-cols-1 lg:grid-cols-[1.05fr_0.95fr]">
           <div className="p-8 lg:p-10 flex flex-col h-full">
             <h2 className="text-2xl font-bold text-gray-900">Create Your Team</h2>
             <p className="text-sm text-gray-600 mt-2">
@@ -534,12 +1059,16 @@ export default function CreateClubPage(): JSX.Element {
             <div className="flex flex-col items-center justify-start text-center">
               <h3 className="text-2xl font-bold text-gray-900">Team Preview</h3>
               <p className="text-sm text-gray-600 mt-2">
-                Live preview reacts to selected colors and badge style.
+                Shape, interior layout, symbol and letter all update live.
               </p>
 
               <div className="mt-6">
                 <BadgePreview
                   shape={badgeShape}
+                  pattern={badgePattern}
+                  overlayMode={overlayMode}
+                  symbol={badgeSymbol}
+                  letter={badgeLetter}
                   primary={form.primary}
                   secondary={form.secondary}
                   size="large"
@@ -555,30 +1084,174 @@ export default function CreateClubPage(): JSX.Element {
                 <span>{selectedCountry?.name || 'Selected country'}</span>
               </div>
 
-              <div className="mt-8 w-full">
-                <div className="text-sm font-semibold text-gray-900">Badge Style</div>
-                <div className="mt-3 grid grid-cols-4 gap-3">
-                  {badgeOptions.map(shape => (
-                    <button
-                      key={shape}
-                      type="button"
-                      onClick={() => setBadgeShape(shape)}
-                      className={`rounded-lg border p-2 flex items-center justify-center transition ${
-                        badgeShape === shape
-                          ? 'border-blue-500 bg-blue-50'
-                          : 'border-gray-200 bg-white hover:border-gray-300'
-                      }`}
-                      aria-label={`Select ${shape} badge style`}
-                    >
-                      <BadgePreview
-                        shape={shape}
-                        primary={form.primary}
-                        secondary={form.secondary}
-                        size="small"
+              <div className="mt-2 text-xs text-gray-500">{overlaySummary}</div>
+
+              <div className="mt-8 w-full space-y-4">
+                <SelectionCard
+                  title="1. Badge Shape"
+                  subtitle="Choose the outer shape of your badge."
+                >
+                  <div className="grid grid-cols-5 gap-2">
+                    {badgeOptions.map(shape => (
+                      <button
+                        key={shape}
+                        type="button"
+                        onClick={() => setBadgeShape(shape)}
+                        className={`rounded-lg border p-2 flex flex-col items-center justify-center transition ${
+                          badgeShape === shape
+                            ? 'border-blue-500 bg-blue-50'
+                            : 'border-gray-200 bg-white hover:border-gray-300'
+                        }`}
+                        aria-label={`Select ${shapeLabels[shape]} shape`}
+                        title={shapeLabels[shape]}
+                      >
+                        <BadgePreview
+                          shape={shape}
+                          pattern={badgePattern}
+                          overlayMode={overlayMode}
+                          symbol={badgeSymbol}
+                          letter={badgeLetter}
+                          primary={form.primary}
+                          secondary={form.secondary}
+                          size="small"
+                        />
+                      </button>
+                    ))}
+                  </div>
+                </SelectionCard>
+
+                <SelectionCard
+                  title="2. Interior Style"
+                  subtitle="Choose how the primary and secondary colors are divided inside the badge."
+                >
+                  <div className="grid grid-cols-4 gap-2">
+                    {patternOptions.map(pattern => (
+                      <button
+                        key={pattern}
+                        type="button"
+                        onClick={() => setBadgePattern(pattern)}
+                        className={`rounded-lg border p-2 flex flex-col items-center justify-center transition ${
+                          badgePattern === pattern
+                            ? 'border-blue-500 bg-blue-50'
+                            : 'border-gray-200 bg-white hover:border-gray-300'
+                        }`}
+                        aria-label={`Select ${patternLabels[pattern]} pattern`}
+                        title={patternLabels[pattern]}
+                      >
+                        <BadgePreview
+                          shape={badgeShape}
+                          pattern={pattern}
+                          overlayMode="none"
+                          symbol="none"
+                          letter=""
+                          primary={form.primary}
+                          secondary={form.secondary}
+                          size="small"
+                        />
+                      </button>
+                    ))}
+                  </div>
+                </SelectionCard>
+
+                <SelectionCard
+                  title="3. Symbol (optional)"
+                  subtitle="Choose a symbol. This replaces the letter if selected."
+                >
+                  <div className="grid grid-cols-4 gap-2">
+                    {symbolOptions.map(symbol => {
+                      const isActive = symbol === 'none'
+                        ? overlayMode === 'none' || (overlayMode === 'symbol' && badgeSymbol === 'none')
+                        : overlayMode === 'symbol' && badgeSymbol === symbol
+
+                      return (
+                        <button
+                          key={symbol}
+                          type="button"
+                          onClick={() => selectSymbol(symbol)}
+                          className={`rounded-lg border px-2 py-3 flex flex-col items-center justify-center gap-2 transition ${
+                            isActive
+                              ? 'border-blue-500 bg-blue-50'
+                              : 'border-gray-200 bg-white hover:border-gray-300'
+                          }`}
+                          aria-label={`Select ${symbolLabels[symbol]} symbol`}
+                        >
+                          <div className="w-8 h-8 rounded-full bg-slate-900/90 flex items-center justify-center">
+                            {symbol === 'none' ? (
+                              <span className="text-[10px] font-semibold text-white">Ø</span>
+                            ) : (
+                              <svg
+                                viewBox="0 0 100 100"
+                                className="w-5 h-5"
+                                aria-hidden="true"
+                                dangerouslySetInnerHTML={{
+                                  __html: getSvgSymbolMarkup(
+                                    symbol as Exclude<BadgeSymbol, 'none'>,
+                                    '#ffffff'
+                                  )
+                                }}
+                              />
+                            )}
+                          </div>
+                          <span className="text-[10px] font-medium text-gray-700 leading-none">
+                            {symbolLabels[symbol]}
+                          </span>
+                        </button>
+                      )
+                    })}
+                  </div>
+                </SelectionCard>
+
+                <SelectionCard
+                  title="4. Letter (optional)"
+                  subtitle="Use one letter instead of a symbol. Selecting a letter overrides the symbol."
+                >
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-3">
+                      <input
+                        value={badgeLetter}
+                        onChange={e => setLetterValue(e.target.value)}
+                        maxLength={1}
+                        className="w-16 rounded-md border border-gray-300 px-3 py-2 text-center text-lg font-bold uppercase"
+                        placeholder="A"
+                        disabled={submitting}
                       />
-                    </button>
-                  ))}
-                </div>
+
+                      <button
+                        type="button"
+                        onClick={clearOverlay}
+                        className="rounded-md border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                      >
+                        Clear
+                      </button>
+
+                      <div className="text-xs text-gray-500">
+                        Current: {overlayMode === 'letter' && badgeLetter ? `Letter ${badgeLetter}` : 'No letter'}
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-5 gap-2">
+                      {letterPresets.map(letter => {
+                        const isActive = overlayMode === 'letter' && badgeLetter === letter
+
+                        return (
+                          <button
+                            key={letter}
+                            type="button"
+                            onClick={() => setLetterValue(letter)}
+                            className={`rounded-lg border py-2 text-sm font-bold transition ${
+                              isActive
+                                ? 'border-blue-500 bg-blue-50 text-blue-700'
+                                : 'border-gray-200 bg-white text-gray-800 hover:border-gray-300'
+                            }`}
+                            aria-label={`Use letter ${letter}`}
+                          >
+                            {letter}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
+                </SelectionCard>
               </div>
 
               <div className="mt-8 w-full grid grid-cols-2 gap-3">

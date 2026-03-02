@@ -379,8 +379,9 @@ export default function Header({
             ) : null}
 
             <div>
-              <div className="text-lg font-normal text-black leading-tight">
-                Team Name: {displayName}
+              <div className="text-lg text-black leading-tight">
+                <span className="font-normal">Team Name: </span>
+                <span className="font-bold">{displayName}</span>
               </div>
 
               <div className="text-sm text-black/85 flex items-center gap-2 leading-tight">
