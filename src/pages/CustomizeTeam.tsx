@@ -30,7 +30,7 @@ type PersistableClubPatch = Partial<
 type JerseyMode = 'style' | 'upload'
 
 const MAX_FILE_SIZE = 512 * 1024 // 0.5 MB
-const LOGO_BUCKET = 'club-assets' // change if your bucket name is different
+const LOGO_BUCKET = 'club-logos'
 
 const JERSEY_STYLES = [
   'solid',
@@ -232,7 +232,10 @@ function HeaderLogo({
   const initials = useMemo(() => {
     const words = teamName.trim().split(/\s+/).filter(Boolean)
     if (words.length === 0) return 'TC'
-    return words.slice(0, 2).map(w => w[0]?.toUpperCase()).join('')
+    return words
+      .slice(0, 2)
+      .map(word => word[0]?.toUpperCase())
+      .join('')
   }, [teamName])
 
   if (logoSrc) {
@@ -259,6 +262,7 @@ export default function CustomizeTeamPage(): JSX.Element {
   const [secondaryColor, setSecondaryColor] = useState('#0369a1')
   const [logoPath, setLogoPath] = useState<string | null>(null)
   const [logoPreview, setLogoPreview] = useState<string | null>(null)
+  const [logoUrlInput, setLogoUrlInput] = useState('')
 
   const [jerseyMode, setJerseyMode] = useState<JerseyMode>('style')
   const [selectedJerseyStyle, setSelectedJerseyStyle] = useState<JerseyStyle>('solid')
@@ -274,6 +278,10 @@ export default function CustomizeTeamPage(): JSX.Element {
   const resolvedLogoUrl = useMemo(() => {
     if (logoPreview) return logoPreview
     if (!logoPath) return null
+
+    if (logoPath.startsWith('http://') || logoPath.startsWith('https://')) {
+      return logoPath
+    }
 
     const { data } = supabase.storage.from(LOGO_BUCKET).getPublicUrl(logoPath)
     return data.publicUrl
@@ -309,6 +317,10 @@ export default function CustomizeTeamPage(): JSX.Element {
         setPrimaryColor(club.primary_color)
         setSecondaryColor(club.secondary_color)
         setLogoPath(club.logo_path)
+
+        if (club.logo_path && (club.logo_path.startsWith('http://') || club.logo_path.startsWith('https://'))) {
+          setLogoUrlInput(club.logo_path)
+        }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load club.')
       } finally {
@@ -387,8 +399,7 @@ export default function CustomizeTeamPage(): JSX.Element {
       const previewUrl = await fileToDataUrl(file)
       setLogoPreview(previewUrl)
 
-      const fileExt = 'jpg'
-      const filePath = `logos/${clubId}-${Date.now()}.${fileExt}`
+      const filePath = `logos/${clubId}-${Date.now()}.jpg`
 
       const { error: uploadError } = await supabase.storage
         .from(LOGO_BUCKET)
@@ -399,6 +410,7 @@ export default function CustomizeTeamPage(): JSX.Element {
 
       if (uploadError) throw uploadError
 
+      setLogoUrlInput('')
       await persistClub({ logo_path: filePath })
       setLogoPath(filePath)
     } catch (err) {
@@ -407,6 +419,31 @@ export default function CustomizeTeamPage(): JSX.Element {
     } finally {
       setSaving(false)
       event.target.value = ''
+    }
+  }
+
+  async function handleLogoUrlSave(): Promise<void> {
+    const trimmedUrl = logoUrlInput.trim()
+
+    if (!trimmedUrl) {
+      setError('Please enter an image URL first.')
+      return
+    }
+
+    try {
+      const parsed = new URL(trimmedUrl)
+
+      if (!['http:', 'https:'].includes(parsed.protocol)) {
+        setError('Logo URL must start with http:// or https://')
+        return
+      }
+
+      setError(null)
+      setLogoPreview(null)
+      setLogoPath(trimmedUrl)
+      await persistClub({ logo_path: trimmedUrl })
+    } catch {
+      setError('Please provide a valid image URL.')
     }
   }
 
@@ -457,24 +494,6 @@ export default function CustomizeTeamPage(): JSX.Element {
 
   return (
     <div className="w-full min-h-[calc(100vh-4rem)] bg-gray-100">
-      {/* Header preview so logo changes are visible immediately in both top circles */}
-      <div className="w-full bg-yellow-400 border-b border-gray-300 px-6 py-3">
-        <div className="flex items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <HeaderLogo logoSrc={resolvedLogoUrl} teamName={teamName} />
-            <div>
-              <div className="text-lg font-semibold">
-                Team Name: <span className="font-bold">{teamName || 'My Club'}</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <HeaderLogo logoSrc={resolvedLogoUrl} teamName={teamName} />
-          </div>
-        </div>
-      </div>
-
       <div className="px-8 py-8">
         <h2 className="text-2xl font-semibold mb-6">Customize Team</h2>
 
@@ -537,22 +556,58 @@ export default function CustomizeTeamPage(): JSX.Element {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-800 mb-2">Team logo</label>
-                  <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-                    <div className="flex-shrink-0">
-                      <HeaderLogo logoSrc={resolvedLogoUrl} teamName={teamName} />
+
+                  <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
+                    <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
+                      <div className="flex-shrink-0 rounded-lg border border-gray-200 bg-white p-3">
+                        <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">
+                          Current logo
+                        </div>
+                        <div className="flex items-center justify-center">
+                          <HeaderLogo logoSrc={resolvedLogoUrl} teamName={teamName} />
+                        </div>
+                      </div>
+
+                      <div className="flex-1 space-y-3">
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                          <label className="inline-flex items-center justify-center px-4 py-2 rounded-md border border-gray-300 bg-white cursor-pointer hover:bg-gray-50">
+                            <span className="text-sm font-medium">Upload JPG logo</span>
+                            <input
+                              type="file"
+                              accept=".jpg,.jpeg,image/jpeg"
+                              className="hidden"
+                              onChange={handleLogoUpload}
+                            />
+                          </label>
+
+                          <div className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-900">
+                            JPG only. Maximum file size: 0.5 MB
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-2">
+                          <input
+                            value={logoUrlInput}
+                            onChange={event => setLogoUrlInput(event.target.value)}
+                            placeholder="Or insert logo image URL (https://...)"
+                            className="w-full border border-gray-300 px-3 py-2 rounded-md text-sm"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              void handleLogoUrlSave()
+                            }}
+                            className="px-4 py-2 rounded-md border border-slate-900 bg-slate-900 text-white text-sm font-medium hover:bg-slate-800"
+                          >
+                            Use image URL
+                          </button>
+                        </div>
+
+                        <div className="text-xs text-gray-500">
+                          Uploaded JPG and image URL both save into the same team logo field.
+                        </div>
+                      </div>
                     </div>
-
-                    <label className="inline-flex items-center justify-center px-4 py-2 rounded-md border border-gray-300 bg-white cursor-pointer hover:bg-gray-50">
-                      <span className="text-sm font-medium">Upload JPG logo</span>
-                      <input
-                        type="file"
-                        accept=".jpg,.jpeg,image/jpeg"
-                        className="hidden"
-                        onChange={handleLogoUpload}
-                      />
-                    </label>
-
-                    <div className="text-xs text-gray-500">JPG only, max 0.5 MB</div>
                   </div>
                 </div>
               </div>
@@ -592,18 +647,20 @@ export default function CustomizeTeamPage(): JSX.Element {
                           key={style}
                           type="button"
                           onClick={() => setSelectedJerseyStyle(style)}
-                          className={`rounded-lg border p-3 transition ${
+                          className={`rounded-xl border bg-gradient-to-b from-white to-slate-50 p-3 shadow-sm transition ${
                             selectedJerseyStyle === style
-                              ? 'border-slate-900 ring-2 ring-slate-200'
-                              : 'border-gray-300 hover:border-gray-400'
+                              ? 'border-slate-900 ring-2 ring-blue-200 shadow-md -translate-y-0.5'
+                              : 'border-gray-300 hover:border-slate-500 hover:shadow'
                           }`}
                         >
-                          <JerseySvg
-                            style={style}
-                            primary={primaryColor}
-                            secondary={secondaryColor}
-                            className="w-full h-24"
-                          />
+                          <div className="rounded-lg border border-slate-100 bg-white p-2">
+                            <JerseySvg
+                              style={style}
+                              primary={primaryColor}
+                              secondary={secondaryColor}
+                              className="w-full h-24"
+                            />
+                          </div>
                           <div className="mt-2 text-xs font-medium text-center text-gray-700 capitalize">
                             {style.replace(/-/g, ' ')}
                           </div>
@@ -633,7 +690,9 @@ export default function CustomizeTeamPage(): JSX.Element {
                       />
                     </label>
 
-                    <div className="text-xs text-gray-500">JPG only, max 0.5 MB</div>
+                    <div className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-900 inline-block">
+                      JPG only. Maximum file size: 0.5 MB
+                    </div>
 
                     {jerseyUploadPreview && (
                       <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
@@ -707,13 +766,6 @@ export default function CustomizeTeamPage(): JSX.Element {
                   {error && <div className="text-sm text-red-600">{error}</div>}
                 </div>
               )}
-
-              <div className="bg-white p-4 rounded-lg shadow">
-                <div className="text-xs text-gray-500">
-                  Name, colors and logo are saved directly to <span className="font-mono">public.clubs</span>.
-                  Jersey preview is included, but your current schema needs a jersey column if you want to persist it.
-                </div>
-              </div>
             </div>
           </div>
         )}

@@ -4,7 +4,7 @@
  */
 
 import React, { useCallback, useEffect, useRef, useState } from 'react'
-import { Bell, ChevronDown, X } from 'lucide-react'
+import { Bell, Settings, X } from 'lucide-react'
 // Adjust this import path to match your project structure.
 import { supabase } from '@/lib/supabase'
 
@@ -435,20 +435,10 @@ export default function Header({
               aria-label="Open profile menu"
               aria-haspopup="menu"
               aria-expanded={isProfileMenuOpen}
-              className="flex items-center gap-2 rounded-full pl-1 pr-2 py-1 hover:bg-black/10"
+              className="flex items-center gap-2 rounded-md px-3 py-2 hover:bg-black/10"
             >
-              <TeamAvatar
-                clubLogoUrl={clubLogoUrl}
-                alt={displayName}
-                fallbackLetter={fallbackLetter}
-                sizeClass="h-9 w-9"
-              />
-              <ChevronDown
-                size={16}
-                className={`text-black transition-transform ${
-                  isProfileMenuOpen ? 'rotate-180' : ''
-                }`}
-              />
+              <Settings size={18} className="text-black" />
+              <span className="text-sm font-medium text-black">Menu</span>
             </button>
 
             {isProfileMenuOpen && (
