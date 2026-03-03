@@ -10,7 +10,7 @@
  *   because the provided schema has no jersey column.
  */
 
-import React, { useEffect, useMemo, useRef, useState } from 'react'
+import React, { useEffect, useId, useMemo, useRef, useState } from 'react'
 import { supabase } from '@/lib/supabase' // <-- adjust if your path differs
 
 type ClubRow = {
@@ -89,21 +89,25 @@ function JerseySvg({
   secondary: string
   className?: string
 }): JSX.Element {
-  const body = '#ffffff'
   const stroke = '#0f172a'
+  const clipId = useId().replace(/:/g, '-')
+  const torsoPath =
+    'M44 22h40l12 8c-5 8-7 15-7 24v50H39V54c0-9-2-16-7-24l12-8z'
+  const outlinePath =
+    'M34 18l12 8h36l12-8 16 10-9 19v59H27V47l-9-19 16-10z'
 
   const pattern = (() => {
     switch (style) {
       case 'solid':
-        return <path d="M30 18h68v92H30z" fill={primary} />
+        return <rect x="24" y="20" width="80" height="92" fill={primary} />
 
       case 'vertical-stripes':
         return (
           <>
             <path d="M30 18h68v92H30z" fill={primary} />
-            <rect x="40" y="18" width="10" height="92" fill={secondary} />
-            <rect x="59" y="18" width="10" height="92" fill={secondary} />
-            <rect x="78" y="18" width="10" height="92" fill={secondary} />
+            <rect x="38" y="16" width="8" height="96" fill={secondary} />
+            <rect x="56" y="16" width="8" height="96" fill={secondary} />
+            <rect x="74" y="16" width="8" height="96" fill={secondary} />
           </>
         )
 
@@ -111,64 +115,64 @@ function JerseySvg({
         return (
           <>
             <path d="M30 18h68v92H30z" fill={primary} />
-            <rect x="30" y="34" width="68" height="12" fill={secondary} />
-            <rect x="30" y="58" width="68" height="12" fill={secondary} />
-            <rect x="30" y="82" width="68" height="12" fill={secondary} />
+            <rect x="24" y="34" width="80" height="10" fill={secondary} />
+            <rect x="24" y="56" width="80" height="10" fill={secondary} />
+            <rect x="24" y="78" width="80" height="10" fill={secondary} />
           </>
         )
 
       case 'sash':
         return (
           <>
-            <path d="M30 18h68v92H30z" fill={primary} />
-            <polygon points="25,30 45,18 103,98 83,110" fill={secondary} />
+            <rect x="24" y="20" width="80" height="92" fill={primary} />
+            <polygon points="30,24 48,18 98,96 80,108" fill={secondary} />
           </>
         )
 
       case 'center-band':
         return (
           <>
-            <path d="M30 18h68v92H30z" fill={primary} />
-            <rect x="53" y="18" width="22" height="92" fill={secondary} />
+            <rect x="24" y="20" width="80" height="92" fill={primary} />
+            <rect x="54" y="18" width="20" height="96" fill={secondary} />
           </>
         )
 
       case 'split':
         return (
           <>
-            <rect x="30" y="18" width="34" height="92" fill={primary} />
-            <rect x="64" y="18" width="34" height="92" fill={secondary} />
+            <rect x="24" y="20" width="40" height="92" fill={primary} />
+            <rect x="64" y="20" width="40" height="92" fill={secondary} />
           </>
         )
 
       case 'sleeve-contrast':
         return (
           <>
-            <path d="M30 18h68v92H30z" fill={primary} />
-            <polygon points="14,26 30,18 30,42 14,38" fill={secondary} />
-            <polygon points="98,18 114,26 114,38 98,42" fill={secondary} />
+            <rect x="24" y="20" width="80" height="92" fill={primary} />
+            <polygon points="18,28 34,18 36,44 20,40" fill={secondary} />
+            <polygon points="94,18 110,28 108,40 92,44" fill={secondary} />
           </>
         )
 
       case 'chest-stripe':
         return (
           <>
-            <path d="M30 18h68v92H30z" fill={primary} />
-            <rect x="30" y="42" width="68" height="16" fill={secondary} />
+            <rect x="24" y="20" width="80" height="92" fill={primary} />
+            <rect x="24" y="44" width="80" height="14" fill={secondary} />
           </>
         )
 
       case 'pinstripes':
         return (
           <>
-            <path d="M30 18h68v92H30z" fill={primary} />
-            {Array.from({ length: 8 }).map((_, i) => (
+            <rect x="24" y="20" width="80" height="92" fill={primary} />
+            {Array.from({ length: 10 }).map((_, i) => (
               <rect
                 key={i}
-                x={36 + i * 8}
+                x={29 + i * 8}
                 y="18"
                 width="2"
-                height="92"
+                height="96"
                 fill={secondary}
                 opacity="0.95"
               />
@@ -179,15 +183,15 @@ function JerseySvg({
       case 'quartered':
         return (
           <>
-            <rect x="30" y="18" width="34" height="46" fill={primary} />
-            <rect x="64" y="18" width="34" height="46" fill={secondary} />
-            <rect x="30" y="64" width="34" height="46" fill={secondary} />
-            <rect x="64" y="64" width="34" height="46" fill={primary} />
+            <rect x="24" y="20" width="40" height="46" fill={primary} />
+            <rect x="64" y="20" width="40" height="46" fill={secondary} />
+            <rect x="24" y="66" width="40" height="46" fill={secondary} />
+            <rect x="64" y="66" width="40" height="46" fill={primary} />
           </>
         )
 
       default:
-        return <path d="M30 18h68v92H30z" fill={primary} />
+        return <rect x="24" y="20" width="80" height="92" fill={primary} />
     }
   })()
 
@@ -198,22 +202,62 @@ function JerseySvg({
       aria-hidden="true"
       role="img"
     >
+      <defs>
+        <clipPath id={clipId}>
+          <path d={torsoPath} />
+        </clipPath>
+      </defs>
+
       <path
-        d="M40 14l9 8h30l9-8 18 10-8 18v68H30V42l-8-18 18-10z"
-        fill={body}
+        d={outlinePath}
+        fill="#ffffff"
         stroke={stroke}
         strokeWidth="3"
         strokeLinejoin="round"
       />
-      {pattern}
+
+      <g clipPath={`url(#${clipId})`}>
+        {pattern}
+        <path
+          d="M44 27c-4 7-6 14-6 25v52h8c-1-27 1-52 6-74z"
+          fill="#ffffff"
+          opacity="0.92"
+        />
+        <path
+          d="M84 27c5 22 7 47 6 74h8V52c0-11-2-18-6-25z"
+          fill="#ffffff"
+          opacity="0.92"
+        />
+        <path
+          d="M50 28c-4 8-6 15-7 26v50"
+          stroke="#111827"
+          strokeWidth="1.5"
+          opacity="0.32"
+          fill="none"
+        />
+        <path
+          d="M78 28c4 8 6 15 7 26v50"
+          stroke="#111827"
+          strokeWidth="1.5"
+          opacity="0.32"
+          fill="none"
+        />
+      </g>
+
       <path
-        d="M40 14l9 8h30l9-8 18 10-8 18v68H30V42l-8-18 18-10z"
+        d={outlinePath}
         fill="none"
         stroke={stroke}
         strokeWidth="3"
         strokeLinejoin="round"
       />
-      <path d="M52 14h24v12H52z" fill={secondary} stroke={stroke} strokeWidth="2" />
+      <path
+        d="M52 18h24l-4 10H56l-4-10z"
+        fill={secondary}
+        stroke={stroke}
+        strokeWidth="2"
+        strokeLinejoin="round"
+      />
     </svg>
   )
 }
@@ -262,6 +306,7 @@ function HeaderLogo({
 
 export default function CustomizeTeamPage(): JSX.Element {
   const [clubId, setClubId] = useState<string | null>(null)
+  const [ownerUserId, setOwnerUserId] = useState<string | null>(null)
 
   const [teamNameInput, setTeamNameInput] = useState('My Club')
   const [appliedTeamName, setAppliedTeamName] = useState('My Club')
@@ -276,6 +321,7 @@ export default function CustomizeTeamPage(): JSX.Element {
   const [logoUrlInput, setLogoUrlInput] = useState('')
   const [pendingLogoFile, setPendingLogoFile] = useState<File | null>(null)
   const [pendingLogoUrl, setPendingLogoUrl] = useState<string | null>(null)
+  const [logoVersion, setLogoVersion] = useState(0)
 
   const [jerseyMode, setJerseyMode] = useState<JerseyMode>('style')
   const [selectedJerseyStyle, setSelectedJerseyStyle] = useState<JerseyStyle>('solid')
@@ -299,8 +345,8 @@ export default function CustomizeTeamPage(): JSX.Element {
     }
 
     const { data } = supabase.storage.from(LOGO_BUCKET).getPublicUrl(logoPath)
-    return data.publicUrl
-  }, [logoPath, logoPreview])
+    return `${data.publicUrl}?v=${logoVersion}`
+  }, [logoPath, logoPreview, logoVersion])
 
   function clearSuccessTimer(): void {
     if (successTimerRef.current) {
@@ -316,6 +362,27 @@ export default function CustomizeTeamPage(): JSX.Element {
       setSuccess(null)
       successTimerRef.current = null
     }, 1800)
+  }
+
+  function syncClubState(club: ClubRow): void {
+    setClubId(club.id)
+
+    setTeamNameInput(club.name)
+    setAppliedTeamName(club.name)
+
+    setPrimaryColor(club.primary_color)
+    setSecondaryColor(club.secondary_color)
+    setAppliedPrimaryColor(club.primary_color)
+    setAppliedSecondaryColor(club.secondary_color)
+
+    setLogoPath(club.logo_path)
+    setLogoVersion(Date.now())
+
+    if (club.logo_path && (club.logo_path.startsWith('http://') || club.logo_path.startsWith('https://'))) {
+      setLogoUrlInput(club.logo_path)
+    } else {
+      setLogoUrlInput('')
+    }
   }
 
   useEffect(() => {
@@ -334,6 +401,9 @@ export default function CustomizeTeamPage(): JSX.Element {
         if (userError) throw userError
         if (!user) throw new Error('You must be logged in to customize your club.')
 
+        if (!active) return
+        setOwnerUserId(user.id)
+
         const { data: club, error: clubError } = await supabase
           .from('clubs')
           .select('id, owner_user_id, name, country_code, primary_color, secondary_color, logo_path')
@@ -343,21 +413,7 @@ export default function CustomizeTeamPage(): JSX.Element {
         if (clubError) throw clubError
         if (!active || !club) return
 
-        setClubId(club.id)
-
-        setTeamNameInput(club.name)
-        setAppliedTeamName(club.name)
-
-        setPrimaryColor(club.primary_color)
-        setSecondaryColor(club.secondary_color)
-        setAppliedPrimaryColor(club.primary_color)
-        setAppliedSecondaryColor(club.secondary_color)
-
-        setLogoPath(club.logo_path)
-
-        if (club.logo_path && (club.logo_path.startsWith('http://') || club.logo_path.startsWith('https://'))) {
-          setLogoUrlInput(club.logo_path)
-        }
+        syncClubState(club)
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load club.')
       } finally {
@@ -375,26 +431,55 @@ export default function CustomizeTeamPage(): JSX.Element {
     }
   }, [])
 
-  async function persistClub(patch: PersistableClubPatch): Promise<boolean> {
-    if (!clubId) return false
+  async function persistClub(patch: PersistableClubPatch): Promise<ClubRow | null> {
+    if (!ownerUserId) {
+      setError('You must be logged in to update your club.')
+      return null
+    }
 
     setSaving(true)
     setError(null)
     setSuccess(null)
 
-    const { error: updateError } = await supabase
+    const normalizedPatch: PersistableClubPatch = { ...patch }
+
+    if (typeof normalizedPatch.name === 'string') {
+      normalizedPatch.name = sanitizeTeamName(normalizedPatch.name)
+    }
+
+    if (typeof normalizedPatch.primary_color === 'string') {
+      normalizedPatch.primary_color = normalizedPatch.primary_color.trim()
+    }
+
+    if (typeof normalizedPatch.secondary_color === 'string') {
+      normalizedPatch.secondary_color = normalizedPatch.secondary_color.trim()
+    }
+
+    const { data, error: updateError } = await supabase
       .from('clubs')
-      .update(patch)
-      .eq('id', clubId)
+      .update(normalizedPatch)
+      .eq('owner_user_id', ownerUserId)
+      .select('id, owner_user_id, name, country_code, primary_color, secondary_color, logo_path')
 
     setSaving(false)
 
     if (updateError) {
       setError(updateError.message)
-      return false
+      return null
     }
 
-    return true
+    const updatedRows = (data ?? []) as ClubRow[]
+    const updatedClub = updatedRows[0] ?? null
+
+    if (!updatedClub) {
+      setError(
+        'No club row was updated. This usually means your UPDATE RLS policy on public.clubs is missing or blocking this user.',
+      )
+      return null
+    }
+
+    syncClubState(updatedClub)
+    return updatedClub
   }
 
   async function handleApplyTeamName(): Promise<void> {
@@ -405,11 +490,9 @@ export default function CustomizeTeamPage(): JSX.Element {
       return
     }
 
-    const ok = await persistClub({ name: cleanName })
-    if (!ok) return
+    const updatedClub = await persistClub({ name: cleanName })
+    if (!updatedClub) return
 
-    setAppliedTeamName(cleanName)
-    setTeamNameInput(cleanName)
     showSuccess('Team name updated.')
   }
 
@@ -424,15 +507,13 @@ export default function CustomizeTeamPage(): JSX.Element {
       return
     }
 
-    const ok = await persistClub({
+    const updatedClub = await persistClub({
       primary_color: primaryColor,
       secondary_color: secondaryColor,
     })
 
-    if (!ok) return
+    if (!updatedClub) return
 
-    setAppliedPrimaryColor(primaryColor)
-    setAppliedSecondaryColor(secondaryColor)
     showSuccess('Team colors updated.')
   }
 
@@ -487,18 +568,21 @@ export default function CustomizeTeamPage(): JSX.Element {
   }
 
   async function handleApplyLogo(): Promise<void> {
-    if (!clubId) return
+    if (!clubId) {
+      setError('Club not found.')
+      return
+    }
 
     if (pendingLogoUrl) {
-      const ok = await persistClub({ logo_path: pendingLogoUrl })
-      if (!ok) return
+      const updatedClub = await persistClub({ logo_path: pendingLogoUrl })
+      if (!updatedClub) return
 
-      setLogoPath(pendingLogoUrl)
       setPendingLogoUrl(null)
       setPendingLogoFile(null)
       setLogoPreview(null)
-      setLogoUrlInput(pendingLogoUrl)
-      showSuccess('Logo URL applied.')
+      setLogoUrlInput(updatedClub.logo_path ?? '')
+      setLogoVersion(Date.now())
+      showSuccess('Logo applied.')
       return
     }
 
@@ -512,6 +596,7 @@ export default function CustomizeTeamPage(): JSX.Element {
       setSaving(true)
 
       const filePath = `logos/${clubId}-${Date.now()}.jpg`
+
       const { error: uploadError } = await supabase.storage
         .from(LOGO_BUCKET)
         .upload(filePath, pendingLogoFile, {
@@ -521,20 +606,33 @@ export default function CustomizeTeamPage(): JSX.Element {
 
       if (uploadError) throw uploadError
 
-      const ok = await persistClub({ logo_path: filePath })
-      if (!ok) return
+      setSaving(false)
 
-      setLogoPath(filePath)
+      const updatedClub = await persistClub({ logo_path: filePath })
+      if (!updatedClub) return
+
       setPendingLogoFile(null)
       setPendingLogoUrl(null)
       setLogoPreview(null)
       setLogoUrlInput('')
-      showSuccess('Uploaded logo applied.')
+      setLogoVersion(Date.now())
+      showSuccess('Logo applied.')
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to apply uploaded logo.')
-    } finally {
       setSaving(false)
+      setError(err instanceof Error ? err.message : 'Failed to apply uploaded logo.')
     }
+  }
+
+  async function handleRemoveLogo(): Promise<void> {
+    const updatedClub = await persistClub({ logo_path: null })
+    if (!updatedClub) return
+
+    setLogoPreview(null)
+    setLogoUrlInput('')
+    setPendingLogoFile(null)
+    setPendingLogoUrl(null)
+    setLogoVersion(Date.now())
+    showSuccess('Custom logo removed.')
   }
 
   async function handleJerseyUpload(event: React.ChangeEvent<HTMLInputElement>): Promise<void> {
@@ -605,7 +703,7 @@ export default function CustomizeTeamPage(): JSX.Element {
                   }}
                   className="h-10 px-4 rounded-md border border-slate-900 bg-slate-900 text-white text-sm font-medium hover:bg-slate-800"
                 >
-                  Apply team name
+                  Apply Name
                 </button>
               </div>
               <div className="mt-1 text-xs text-gray-500">3 to 40 characters</div>
@@ -716,7 +814,17 @@ export default function CustomizeTeamPage(): JSX.Element {
                     </button>
                   </div>
 
-                  <div className="flex justify-end">
+                  <div className="flex flex-col sm:flex-row sm:justify-end gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        void handleRemoveLogo()
+                      }}
+                      className="h-10 px-4 rounded-md border border-gray-300 bg-white text-slate-900 text-sm font-medium hover:bg-gray-50"
+                    >
+                      Remove Logo
+                    </button>
+
                     <button
                       type="button"
                       onClick={() => {
