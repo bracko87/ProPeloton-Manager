@@ -3,34 +3,58 @@
 /**
  * Inbox.tsx
  * Real inbox page connected to Supabase RPCs.
- * Safe against missing env vars and works with Vite or Next-style public env names.
+ * This version avoids import.meta entirely to prevent preview/runtime crashes.
  */
 
 import React from 'react'
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 
-function buildSupabaseClient(): SupabaseClient | null {
-  let viteEnv: Record<string, string | undefined> | undefined
+type RuntimeEnv = Record<string, string | undefined>
 
-  try {
-    viteEnv = (import.meta as { env?: Record<string, string | undefined> })?.env
-  } catch {
-    viteEnv = undefined
+type GlobalWithEnv = typeof globalThis & {
+  __ENV__?: RuntimeEnv
+  ENV?: RuntimeEnv
+  __APP_ENV__?: RuntimeEnv
+  __SUPABASE__?: SupabaseClient
+  supabase?: SupabaseClient
+  process?: {
+    env?: RuntimeEnv
   }
+}
 
-  const nextEnv = (globalThis as { process?: { env?: Record<string, string | undefined> } })
-    ?.process?.env
+function getRuntimeEnv(): RuntimeEnv {
+  const g = globalThis as GlobalWithEnv
+
+  return (
+    g.__ENV__ ??
+    g.ENV ??
+    g.__APP_ENV__ ??
+    g.process?.env ??
+    {}
+  )
+}
+
+function buildSupabaseClient(): SupabaseClient | null {
+  const g = globalThis as GlobalWithEnv
+
+  // Reuse an existing global client if your app already attached one somewhere
+  if (g.__SUPABASE__) return g.__SUPABASE__
+  if (g.supabase) return g.supabase
+
+  const env = getRuntimeEnv()
 
   const url =
-    viteEnv?.VITE_SUPABASE_URL ??
-    nextEnv?.NEXT_PUBLIC_SUPABASE_URL ??
-    nextEnv?.VITE_SUPABASE_URL ??
+    env.VITE_SUPABASE_URL ??
+    env.NEXT_PUBLIC_SUPABASE_URL ??
+    (g as unknown as Record<string, string | undefined>).VITE_SUPABASE_URL ??
+    (g as unknown as Record<string, string | undefined>).NEXT_PUBLIC_SUPABASE_URL ??
     null
 
   const anonKey =
-    viteEnv?.VITE_SUPABASE_ANON_KEY ??
-    nextEnv?.NEXT_PUBLIC_SUPABASE_ANON_KEY ??
-    nextEnv?.VITE_SUPABASE_ANON_KEY ??
+    env.VITE_SUPABASE_ANON_KEY ??
+    env.NEXT_PUBLIC_SUPABASE_ANON_KEY ??
+    (g as unknown as Record<string, string | undefined>).VITE_SUPABASE_ANON_KEY ??
+    (g as unknown as Record<string, string | undefined>).NEXT_PUBLIC_SUPABASE_ANON_KEY ??
     null
 
   if (!url || !anonKey) {
@@ -38,7 +62,9 @@ function buildSupabaseClient(): SupabaseClient | null {
   }
 
   try {
-    return createClient(url, anonKey)
+    const client = createClient(url, anonKey)
+    g.__SUPABASE__ = client
+    return client
   } catch {
     return null
   }
@@ -132,7 +158,7 @@ export default function InboxPage(): JSX.Element {
   const loadThreads = React.useCallback(async () => {
     if (!supabase) {
       setError(
-        'Supabase environment variables are missing. Configure VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY or NEXT_PUBLIC_SUPABASE_URL / NEXT_PUBLIC_SUPABASE_ANON_KEY.'
+        'Supabase client is not available in this runtime. Use your shared Supabase client or expose public env values before connecting the inbox.'
       )
       setLoadingThreads(false)
       return
@@ -146,7 +172,6 @@ export default function InboxPage(): JSX.Element {
 
       if (rpcError) {
         setError(rpcError.message)
-        setLoadingThreads(false)
         return
       }
 
@@ -180,7 +205,6 @@ export default function InboxPage(): JSX.Element {
 
       if (rpcError) {
         setError(rpcError.message)
-        setLoadingMessages(false)
         return
       }
 
@@ -210,10 +234,6 @@ export default function InboxPage(): JSX.Element {
     void (async () => {
       if (!supabase) {
         if (!mounted) return
-
-        setError(
-          'Supabase environment variables are missing. Configure VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY or NEXT_PUBLIC_SUPABASE_URL / NEXT_PUBLIC_SUPABASE_ANON_KEY.'
-        )
         setLoadingThreads(false)
         return
       }
@@ -236,7 +256,6 @@ export default function InboxPage(): JSX.Element {
         await loadThreads()
       } catch (err) {
         if (!mounted) return
-
         setError(err instanceof Error ? err.message : 'Failed to initialize inbox.')
         setLoadingThreads(false)
       }
@@ -269,22 +288,18 @@ export default function InboxPage(): JSX.Element {
     setSending(true)
     setError(null)
 
-    const messageBody = draft.trim()
-
     try {
       const { error: rpcError } = await supabase.rpc('inbox_send_message', {
         p_conversation_id: activeThread.conversation_id,
-        p_body: messageBody
+        p_body: draft.trim()
       })
 
       if (rpcError) {
         setError(rpcError.message)
-        setSending(false)
         return
       }
 
       setDraft('')
-
       await loadMessages(activeThread.conversation_id)
       await loadThreads()
     } catch (err) {
@@ -310,7 +325,6 @@ export default function InboxPage(): JSX.Element {
       ) : null}
 
       <div className="grid min-h-[calc(100vh-180px)] grid-cols-1 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm lg:grid-cols-[340px_1fr]">
-        {/* Sidebar */}
         <aside className="border-r border-slate-200 bg-slate-50/80">
           <div className="border-b border-slate-200 p-4">
             <input
@@ -388,7 +402,6 @@ export default function InboxPage(): JSX.Element {
           </div>
         </aside>
 
-        {/* Main */}
         <section className="flex min-h-[calc(100vh-180px)] flex-col">
           {!activeThread ? (
             <div className="flex flex-1 items-center justify-center p-8 text-center">

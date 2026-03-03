@@ -6,8 +6,8 @@
  * - This file assumes you have a configured Supabase client export.
  * - Adjust the supabase import path if needed.
  * - This persists name, colors and logo_path directly to public.clubs.
- * - Jersey UI is included, but jersey cannot be persisted in public.clubs
- *   because the provided schema has no jersey column.
+ * - The header/topbar should listen for the `club-updated` event (and/or read
+ *   localStorage['ppm-active-club']) to update instantly across the app.
  */
 
 import React, { useEffect, useId, useMemo, useRef, useState } from 'react'
@@ -28,6 +28,13 @@ type PersistableClubPatch = Partial<
 >
 
 type JerseyMode = 'style' | 'upload'
+
+type KitDesignerProps = {
+  supabase: typeof supabase
+  teamId: string
+  primaryColor: string
+  secondaryColor: string
+}
 
 const MAX_FILE_SIZE = 512 * 1024 // 0.5 MB
 const LOGO_BUCKET = 'club-logos'
@@ -304,6 +311,182 @@ function HeaderLogo({
   )
 }
 
+function KitDesigner({
+  teamId,
+  primaryColor,
+  secondaryColor,
+}: KitDesignerProps): JSX.Element {
+  const [jerseyMode, setJerseyMode] = useState<JerseyMode>('style')
+  const [selectedJerseyStyle, setSelectedJerseyStyle] = useState<JerseyStyle>('solid')
+  const [appliedJerseyStyle, setAppliedJerseyStyle] = useState<JerseyStyle>('solid')
+  const [jerseyUploadPreview, setJerseyUploadPreview] = useState<string | null>(null)
+  const [appliedJerseyUploadPreview, setAppliedJerseyUploadPreview] = useState<string | null>(null)
+  const [kitNotice, setKitNotice] = useState<string | null>(null)
+
+  async function handleJerseyUpload(event: React.ChangeEvent<HTMLInputElement>): Promise<void> {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    const validationError = validateJpgFile(file)
+    if (validationError) {
+      setKitNotice(validationError)
+      event.target.value = ''
+      return
+    }
+
+    try {
+      const previewUrl = await fileToDataUrl(file)
+      setJerseyMode('upload')
+      setJerseyUploadPreview(previewUrl)
+      setKitNotice('Jersey image ready to apply.')
+    } catch {
+      setKitNotice('Failed to preview jersey image.')
+    } finally {
+      event.target.value = ''
+    }
+  }
+
+  function handleApplyJersey(): void {
+    if (jerseyMode === 'upload') {
+      if (!jerseyUploadPreview) {
+        setKitNotice('Please upload a jersey image first.')
+        return
+      }
+
+      setAppliedJerseyUploadPreview(jerseyUploadPreview)
+      setKitNotice('Jersey image applied.')
+      return
+    }
+
+    setAppliedJerseyStyle(selectedJerseyStyle)
+    setAppliedJerseyUploadPreview(null)
+    setKitNotice('Jersey style applied.')
+  }
+
+  return (
+    <div className="space-y-4" data-team-id={teamId}>
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+        <div className="text-sm text-gray-600">
+          Build a custom team kit using your applied club colors.
+        </div>
+
+        <div className="inline-flex rounded-md border border-gray-300 overflow-hidden">
+          <button
+            type="button"
+            onClick={() => setJerseyMode('style')}
+            className={`px-4 py-2 text-sm font-medium ${
+              jerseyMode === 'style' ? 'bg-slate-900 text-white' : 'bg-white text-slate-700'
+            }`}
+          >
+            Use style
+          </button>
+          <button
+            type="button"
+            onClick={() => setJerseyMode('upload')}
+            className={`px-4 py-2 text-sm font-medium border-l border-gray-300 ${
+              jerseyMode === 'upload' ? 'bg-slate-900 text-white' : 'bg-white text-slate-700'
+            }`}
+          >
+            Upload image
+          </button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 xl:grid-cols-[2fr_1fr] gap-4 items-start">
+        <div>
+          {jerseyMode === 'style' ? (
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+              {JERSEY_STYLES.map(style => (
+                <button
+                  key={style}
+                  type="button"
+                  onClick={() => setSelectedJerseyStyle(style)}
+                  className={`rounded-xl border bg-gradient-to-b from-white to-slate-50 p-3 shadow-sm transition ${
+                    selectedJerseyStyle === style
+                      ? 'border-slate-900 ring-2 ring-blue-200 shadow-md -translate-y-0.5'
+                      : 'border-gray-300 hover:border-slate-500 hover:shadow'
+                  }`}
+                >
+                  <div className="rounded-lg border border-slate-100 bg-white p-2">
+                    <JerseySvg
+                      style={style}
+                      primary={primaryColor}
+                      secondary={secondaryColor}
+                      className="w-full h-24"
+                    />
+                  </div>
+                  <div className="mt-2 text-xs font-medium text-center text-gray-700 capitalize">
+                    {style.replace(/-/g, ' ')}
+                  </div>
+                </button>
+              ))}
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <label className="inline-flex items-center justify-center px-4 py-2 rounded-md border border-gray-300 bg-white cursor-pointer hover:bg-gray-50">
+                <span className="text-sm font-medium">Upload JPG jersey</span>
+                <input
+                  type="file"
+                  accept=".jpg,.jpeg,image/jpeg"
+                  className="hidden"
+                  onChange={handleJerseyUpload}
+                />
+              </label>
+
+              <div className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-900 inline-block">
+                JPG only. Maximum file size: 0.5 MB
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
+          <div className="text-sm font-medium mb-3">Jersey preview</div>
+
+          <div className="flex items-center justify-center min-h-[220px]">
+            {jerseyMode === 'upload' && jerseyUploadPreview ? (
+              <img
+                src={jerseyUploadPreview}
+                alt="Draft jersey preview"
+                className="max-h-56 rounded-md border border-gray-200 object-contain bg-white"
+              />
+            ) : appliedJerseyUploadPreview ? (
+              <img
+                src={appliedJerseyUploadPreview}
+                alt="Applied jersey"
+                className="max-h-56 rounded-md border border-gray-200 object-contain bg-white"
+              />
+            ) : (
+              <JerseySvg
+                style={jerseyMode === 'style' ? selectedJerseyStyle : appliedJerseyStyle}
+                primary={primaryColor}
+                secondary={secondaryColor}
+                className="w-44 h-44"
+              />
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div className="flex justify-end">
+        <button
+          type="button"
+          onClick={handleApplyJersey}
+          className="h-10 px-4 rounded-md border border-slate-900 bg-slate-900 text-white text-sm font-medium hover:bg-slate-800"
+        >
+          Apply jersey
+        </button>
+      </div>
+
+      {kitNotice ? (
+        <div className="rounded-md border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-700">
+          {kitNotice}
+        </div>
+      ) : null}
+    </div>
+  )
+}
+
 export default function CustomizeTeamPage(): JSX.Element {
   const [clubId, setClubId] = useState<string | null>(null)
   const [ownerUserId, setOwnerUserId] = useState<string | null>(null)
@@ -323,18 +506,18 @@ export default function CustomizeTeamPage(): JSX.Element {
   const [pendingLogoUrl, setPendingLogoUrl] = useState<string | null>(null)
   const [logoVersion, setLogoVersion] = useState(0)
 
-  const [jerseyMode, setJerseyMode] = useState<JerseyMode>('style')
-  const [selectedJerseyStyle, setSelectedJerseyStyle] = useState<JerseyStyle>('solid')
-  const [appliedJerseyStyle, setAppliedJerseyStyle] = useState<JerseyStyle>('solid')
-  const [jerseyUploadPreview, setJerseyUploadPreview] = useState<string | null>(null)
-  const [appliedJerseyUploadPreview, setAppliedJerseyUploadPreview] = useState<string | null>(null)
-
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
 
+  const [topNotice, setTopNotice] = useState<{
+    type: 'success' | 'error'
+    message: string
+  } | null>(null)
+
   const successTimerRef = useRef<number | null>(null)
+  const topNoticeTimerRef = useRef<number | null>(null)
 
   const resolvedLogoUrl = useMemo(() => {
     if (logoPreview) return logoPreview
@@ -362,6 +545,41 @@ export default function CustomizeTeamPage(): JSX.Element {
       setSuccess(null)
       successTimerRef.current = null
     }, 1800)
+  }
+
+  function clearTopNotice(): void {
+    if (topNoticeTimerRef.current) {
+      window.clearTimeout(topNoticeTimerRef.current)
+      topNoticeTimerRef.current = null
+    }
+  }
+
+  function showTopNotice(type: 'success' | 'error', message: string): void {
+    clearTopNotice()
+    setTopNotice({ type, message })
+    topNoticeTimerRef.current = window.setTimeout(() => {
+      setTopNotice(null)
+      topNoticeTimerRef.current = null
+    }, 2500)
+  }
+
+  function broadcastClubUpdate(club: ClubRow): void {
+    const payload = {
+      id: club.id,
+      owner_user_id: club.owner_user_id,
+      name: club.name,
+      primary_color: club.primary_color,
+      secondary_color: club.secondary_color,
+      logo_path: club.logo_path,
+    }
+
+    localStorage.setItem('ppm-active-club', JSON.stringify(payload))
+
+    window.dispatchEvent(
+      new CustomEvent('club-updated', {
+        detail: payload,
+      }),
+    )
   }
 
   function syncClubState(club: ClubRow): void {
@@ -414,6 +632,7 @@ export default function CustomizeTeamPage(): JSX.Element {
         if (!active || !club) return
 
         syncClubState(club)
+        broadcastClubUpdate(club)
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load club.')
       } finally {
@@ -428,12 +647,15 @@ export default function CustomizeTeamPage(): JSX.Element {
     return () => {
       active = false
       clearSuccessTimer()
+      clearTopNotice()
     }
   }, [])
 
   async function persistClub(patch: PersistableClubPatch): Promise<ClubRow | null> {
     if (!ownerUserId) {
-      setError('You must be logged in to update your club.')
+      const message = 'You must be logged in to update your club.'
+      setError(message)
+      showTopNotice('error', message)
       return null
     }
 
@@ -465,6 +687,7 @@ export default function CustomizeTeamPage(): JSX.Element {
 
     if (updateError) {
       setError(updateError.message)
+      showTopNotice('error', updateError.message)
       return null
     }
 
@@ -472,13 +695,15 @@ export default function CustomizeTeamPage(): JSX.Element {
     const updatedClub = updatedRows[0] ?? null
 
     if (!updatedClub) {
-      setError(
-        'No club row was updated. This usually means your UPDATE RLS policy on public.clubs is missing or blocking this user.',
-      )
+      const message =
+        'No club row was updated. This usually means your UPDATE RLS policy on public.clubs is missing or blocking this user.'
+      setError(message)
+      showTopNotice('error', message)
       return null
     }
 
     syncClubState(updatedClub)
+    broadcastClubUpdate(updatedClub)
     return updatedClub
   }
 
@@ -486,7 +711,9 @@ export default function CustomizeTeamPage(): JSX.Element {
     const cleanName = sanitizeTeamName(teamNameInput)
 
     if (cleanName.length < 3 || cleanName.length > 40) {
-      setError('Team name must be between 3 and 40 characters.')
+      const message = 'Team name must be between 3 and 40 characters.'
+      setError(message)
+      showTopNotice('error', message)
       return
     }
 
@@ -494,16 +721,21 @@ export default function CustomizeTeamPage(): JSX.Element {
     if (!updatedClub) return
 
     showSuccess('Team name updated.')
+    showTopNotice('success', `Team name changed to "${updatedClub.name}".`)
   }
 
   async function handleApplyTeamColors(): Promise<void> {
     if (!isValidHexColor(primaryColor) || !isValidHexColor(secondaryColor)) {
-      setError('Please use valid HEX colors like #ff0000.')
+      const message = 'Please use valid HEX colors like #ff0000.'
+      setError(message)
+      showTopNotice('error', message)
       return
     }
 
     if (primaryColor.toLowerCase() === secondaryColor.toLowerCase()) {
-      setError('Primary and secondary colors must be different.')
+      const message = 'Primary and secondary colors must be different.'
+      setError(message)
+      showTopNotice('error', message)
       return
     }
 
@@ -515,6 +747,10 @@ export default function CustomizeTeamPage(): JSX.Element {
     if (!updatedClub) return
 
     showSuccess('Team colors updated.')
+    showTopNotice(
+      'success',
+      `Team colors changed to ${updatedClub.primary_color} and ${updatedClub.secondary_color}.`,
+    )
   }
 
   async function handleLogoUpload(event: React.ChangeEvent<HTMLInputElement>): Promise<void> {
@@ -635,48 +871,6 @@ export default function CustomizeTeamPage(): JSX.Element {
     showSuccess('Custom logo removed.')
   }
 
-  async function handleJerseyUpload(event: React.ChangeEvent<HTMLInputElement>): Promise<void> {
-    const file = event.target.files?.[0]
-    if (!file) return
-
-    const validationError = validateJpgFile(file)
-    if (validationError) {
-      setError(validationError)
-      event.target.value = ''
-      return
-    }
-
-    try {
-      setError(null)
-      const previewUrl = await fileToDataUrl(file)
-      setJerseyMode('upload')
-      setJerseyUploadPreview(previewUrl)
-    } catch {
-      setError('Failed to preview jersey image.')
-    } finally {
-      event.target.value = ''
-    }
-  }
-
-  function handleApplyJersey(): void {
-    setError(null)
-
-    if (jerseyMode === 'upload') {
-      if (!jerseyUploadPreview) {
-        setError('Please upload a jersey image first.')
-        return
-      }
-
-      setAppliedJerseyUploadPreview(jerseyUploadPreview)
-      showSuccess('Jersey image preview applied.')
-      return
-    }
-
-    setAppliedJerseyStyle(selectedJerseyStyle)
-    setAppliedJerseyUploadPreview(null)
-    showSuccess('Jersey style applied.')
-  }
-
   return (
     <div className="w-full">
       <h2 className="text-xl font-semibold mb-4">Customize Team</h2>
@@ -758,6 +952,20 @@ export default function CustomizeTeamPage(): JSX.Element {
                 >
                   Apply team colors
                 </button>
+              </div>
+
+              <div className="min-h-[52px]">
+                {topNotice ? (
+                  <div
+                    className={`mt-4 rounded-md border px-4 py-3 text-sm font-medium ${
+                      topNotice.type === 'success'
+                        ? 'border-green-300 bg-green-50 text-green-800'
+                        : 'border-red-300 bg-red-50 text-red-700'
+                    }`}
+                  >
+                    {topNotice.message}
+                  </div>
+                ) : null}
               </div>
             </div>
           </div>
@@ -841,116 +1049,17 @@ export default function CustomizeTeamPage(): JSX.Element {
           </div>
 
           <div className="bg-white p-4 rounded-lg shadow space-y-4">
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-              <h3 className="text-lg font-semibold">Jersey Creator</h3>
-
-              <div className="inline-flex rounded-md border border-gray-300 overflow-hidden">
-                <button
-                  type="button"
-                  onClick={() => setJerseyMode('style')}
-                  className={`px-4 py-2 text-sm font-medium ${
-                    jerseyMode === 'style' ? 'bg-slate-900 text-white' : 'bg-white text-slate-700'
-                  }`}
-                >
-                  Use style
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setJerseyMode('upload')}
-                  className={`px-4 py-2 text-sm font-medium border-l border-gray-300 ${
-                    jerseyMode === 'upload' ? 'bg-slate-900 text-white' : 'bg-white text-slate-700'
-                  }`}
-                >
-                  Upload image
-                </button>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 xl:grid-cols-[2fr_1fr] gap-4 items-start">
-              <div>
-                {jerseyMode === 'style' ? (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
-                    {JERSEY_STYLES.map(style => (
-                      <button
-                        key={style}
-                        type="button"
-                        onClick={() => setSelectedJerseyStyle(style)}
-                        className={`rounded-xl border bg-gradient-to-b from-white to-slate-50 p-3 shadow-sm transition ${
-                          selectedJerseyStyle === style
-                            ? 'border-slate-900 ring-2 ring-blue-200 shadow-md -translate-y-0.5'
-                            : 'border-gray-300 hover:border-slate-500 hover:shadow'
-                        }`}
-                      >
-                        <div className="rounded-lg border border-slate-100 bg-white p-2">
-                          <JerseySvg
-                            style={style}
-                            primary={primaryColor}
-                            secondary={secondaryColor}
-                            className="w-full h-24"
-                          />
-                        </div>
-                        <div className="mt-2 text-xs font-medium text-center text-gray-700 capitalize">
-                          {style.replace(/-/g, ' ')}
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    <label className="inline-flex items-center justify-center px-4 py-2 rounded-md border border-gray-300 bg-white cursor-pointer hover:bg-gray-50">
-                      <span className="text-sm font-medium">Upload JPG jersey</span>
-                      <input
-                        type="file"
-                        accept=".jpg,.jpeg,image/jpeg"
-                        className="hidden"
-                        onChange={handleJerseyUpload}
-                      />
-                    </label>
-
-                    <div className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-900 inline-block">
-                      JPG only. Maximum file size: 0.5 MB
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
-                <div className="text-sm font-medium mb-3">Jersey preview</div>
-
-                <div className="flex items-center justify-center min-h-[220px]">
-                  {jerseyMode === 'upload' && jerseyUploadPreview ? (
-                    <img
-                      src={jerseyUploadPreview}
-                      alt="Draft jersey preview"
-                      className="max-h-56 rounded-md border border-gray-200 object-contain bg-white"
-                    />
-                  ) : appliedJerseyUploadPreview ? (
-                    <img
-                      src={appliedJerseyUploadPreview}
-                      alt="Applied jersey"
-                      className="max-h-56 rounded-md border border-gray-200 object-contain bg-white"
-                    />
-                  ) : (
-                    <JerseySvg
-                      style={jerseyMode === 'style' ? selectedJerseyStyle : appliedJerseyStyle}
-                      primary={jerseyMode === 'style' ? primaryColor : appliedPrimaryColor}
-                      secondary={jerseyMode === 'style' ? secondaryColor : appliedSecondaryColor}
-                      className="w-44 h-44"
-                    />
-                  )}
-                </div>
-              </div>
-            </div>
-
-            <div className="flex justify-end">
-              <button
-                type="button"
-                onClick={handleApplyJersey}
-                className="h-10 px-4 rounded-md border border-slate-900 bg-slate-900 text-white text-sm font-medium hover:bg-slate-800"
-              >
-                Apply jersey
-              </button>
-            </div>
+            <h3 className="text-lg font-semibold">Jersey Creator</h3>
+            {clubId ? (
+              <KitDesigner
+                supabase={supabase}
+                teamId={clubId}
+                primaryColor={appliedPrimaryColor}
+                secondaryColor={appliedSecondaryColor}
+              />
+            ) : (
+              <div className="text-sm text-gray-600">Team not loaded yet.</div>
+            )}
           </div>
 
           {(error || success || saving) && (
