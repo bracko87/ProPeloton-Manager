@@ -105,19 +105,24 @@ function TeamAvatar({
   fallbackLetter: string
   sizeClass: string
 }) {
-  return (
-    <div
-      className={`${sizeClass} rounded-full overflow-hidden border border-black/10 bg-black/10 flex items-center justify-center font-semibold text-black shrink-0`}
-    >
-      {clubLogoUrl ? (
+  if (clubLogoUrl) {
+    return (
+      <div className={`${sizeClass} shrink-0 flex items-center justify-center`}>
         <img
           src={clubLogoUrl}
           alt={alt}
-          className="h-full w-full object-cover"
+          className="h-full w-full object-contain"
+          draggable={false}
         />
-      ) : (
-        <span>{fallbackLetter}</span>
-      )}
+      </div>
+    )
+  }
+
+  return (
+    <div
+      className={`${sizeClass} rounded-full border border-black/10 bg-black/10 flex items-center justify-center font-semibold text-black shrink-0`}
+    >
+      <span>{fallbackLetter}</span>
     </div>
   )
 }
@@ -169,7 +174,7 @@ export default function Header({
     [onNavigate]
   )
 
-  const handleLogoutClick = useCallback(() => {
+  const handleLogoutClick = useCallback(async () => {
     setIsProfileMenuOpen(false)
 
     if (onLogout) {
@@ -177,8 +182,10 @@ export default function Header({
       return
     }
 
+    await supabase.auth.signOut()
+
     if (typeof window !== 'undefined') {
-      window.location.href = '/login'
+      window.location.href = '/'
     }
   }, [onLogout])
 
@@ -466,7 +473,9 @@ export default function Header({
                         key={item.label}
                         type="button"
                         role="menuitem"
-                        onClick={handleLogoutClick}
+                        onClick={() => {
+                          void handleLogoutClick()
+                        }}
                         className="w-full px-4 py-2.5 text-left text-sm text-red-600 hover:bg-red-50"
                       >
                         {item.label}
