@@ -37,6 +37,7 @@ import HelpPage from './pages/Help'
 import ContactUsPage from './pages/ContactUs'
 import ProPackagesPage from './pages/ProPackages'
 import InviteFriendsPage from './pages/InviteFriends'
+import ReferralCapturePage from './pages/ReferralCapture'
 import { AuthProvider, useAuth } from './context/AuthProvider'
 import { supabase } from './lib/supabase'
 
@@ -240,6 +241,7 @@ export default function App(): JSX.Element {
           <Route path="/" element={<HomePage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
+          <Route path="/referral/:code" element={<ReferralCapturePage />} />
 
           <Route
             path="/create-club"

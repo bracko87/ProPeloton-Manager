@@ -1,15 +1,19 @@
 /**
  * InviteFriends.tsx
  * Referral / invite UI page.
+ *
+ * Updated:
+ * - Loads the authenticated club's real referral_code from Supabase (clubs by owner_user_id)
+ * - Generates an app link using the current origin (/#/referral/:code)
  */
 
 import React, { useEffect, useMemo, useState } from 'react'
-
-type ReferralResponse = {
-  referralCode: string
-}
+import { useAuth } from '../context/AuthProvider'
+import { supabase } from '../lib/supabase'
 
 export default function InviteFriendsPage(): JSX.Element {
+  const { user, loading } = useAuth()
+
   const [referralCode, setReferralCode] = useState('')
   const [isLoading, setIsLoading] = useState(true)
   const [loadError, setLoadError] = useState('')
@@ -21,29 +25,31 @@ export default function InviteFriendsPage(): JSX.Element {
 
     const loadReferralCode = async (): Promise<void> => {
       try {
+        if (loading) return
+
+        if (!user?.id) {
+          throw new Error('You must be signed in to view your invite link.')
+        }
+
         setIsLoading(true)
         setLoadError('')
 
-        const response = await fetch('/api/clubs/my-referral', {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        })
+        const { data, error } = await supabase
+          .from('clubs')
+          .select('referral_code')
+          .eq('owner_user_id', user.id)
+          .single()
 
-        if (!response.ok) {
+        if (error) {
           throw new Error('Failed to load referral code.')
         }
 
-        const data = (await response.json()) as ReferralResponse
-
-        if (!data?.referralCode) {
+        if (!data?.referral_code) {
           throw new Error('Referral code is missing.')
         }
 
         if (!isMounted) return
-
-        setReferralCode(data.referralCode)
+        setReferralCode(data.referral_code)
       } catch {
         if (!isMounted) return
         setLoadError('Unable to load your invite link right now.')
@@ -58,13 +64,13 @@ export default function InviteFriendsPage(): JSX.Element {
     return () => {
       isMounted = false
     }
-  }, [])
+  }, [loading, user?.id])
 
   const referral = useMemo(() => {
     if (!referralCode) return ''
 
-    // Replace with your real frontend/game domain when wired up
-    return `https://example.com/referral/${referralCode}`
+    const baseUrl = window.location.origin
+    return `${baseUrl}/#/referral/${referralCode}`
   }, [referralCode])
 
   const handleCopy = async (): Promise<void> => {
@@ -93,7 +99,7 @@ export default function InviteFriendsPage(): JSX.Element {
         await navigator.share({
           title: 'Join me in the game',
           text: 'Use my invite link to join the game:',
-          url: referral,
+          url: referral
         })
         setMessage('')
         return

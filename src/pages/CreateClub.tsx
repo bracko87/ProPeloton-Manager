@@ -15,6 +15,7 @@ import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthProvider'
+import { applyPendingReferral, getPendingReferralCode } from '../lib/referrals'
 
 /**
  * CountryOption
@@ -925,6 +926,7 @@ export default function CreateClubPage(): JSX.Element {
   /**
    * handleSubmit
    * Generates the selected badge, uploads it to Supabase Storage, then creates the club via RPC.
+   * If a pending referral exists, it is applied after successful club creation.
    */
   async function handleSubmit(e: React.FormEvent): Promise<void> {
     e.preventDefault()
@@ -982,7 +984,7 @@ export default function CreateClubPage(): JSX.Element {
         return
       }
 
-      const { error: rpcError } = await supabase.rpc('create_club', {
+      const { data: createClubData, error: rpcError } = await supabase.rpc('create_club', {
         p_name: form.name.trim(),
         p_country_code: form.countryCode,
         p_primary_color: form.primary,
@@ -998,6 +1000,37 @@ export default function CreateClubPage(): JSX.Element {
 
         setError(rpcError.message ?? 'Failed to create team')
         return
+      }
+
+      const pendingReferralCode = getPendingReferralCode()
+
+      if (pendingReferralCode) {
+        const createdClubIdFromRpc = typeof createClubData === 'string' ? createClubData : null
+        let createdClubId = createdClubIdFromRpc
+
+        if (!createdClubId) {
+          const { data: createdClub } = await supabase
+            .from('clubs')
+            .select('id')
+            .eq('owner_user_id', user.id)
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .maybeSingle()
+
+          createdClubId = createdClub?.id ?? null
+        }
+
+        if (createdClubId) {
+          try {
+            await applyPendingReferral({
+              referralCode: pendingReferralCode,
+              referredUserId: user.id,
+              referredClubId: createdClubId
+            })
+          } catch (referralError) {
+            console.warn('Unable to save referral', referralError)
+          }
+        }
       }
 
       navigate('/dashboard/overview')
