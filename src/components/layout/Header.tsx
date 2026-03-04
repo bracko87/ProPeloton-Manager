@@ -9,11 +9,19 @@
  * - browser "storage" event (cross-tab sync)
  *
  * It also includes a light fallback sync interval.
+ *
+ * Notification behavior is now filtered against saved user preferences before
+ * items are displayed or counted in the frontend.
  */
 
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { Bell, Settings, X } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
+import {
+  canReceiveNotification,
+  getNotificationTypeFromEvent,
+  readNotificationPreferences,
+} from '@/lib/notificationPreferences'
 
 interface HeaderProps {
   onToggle?: () => void
@@ -50,6 +58,7 @@ type NotificationItem = {
   notification_created_at: string
   type_code: string
   icon_name: string | null
+  preference_group: string | null
 }
 
 type InboxThreadRow = {
@@ -77,7 +86,7 @@ const profileMenuItems: MenuItem[] = [
   { label: 'Contact Us', path: '/dashboard/contact-us' },
   { label: 'Pro Packages', path: '/dashboard/pro-packages' },
   { label: 'Invite Friends', path: '/dashboard/invite-friends' },
-  { label: 'Logout', action: 'logout' }
+  { label: 'Logout', action: 'logout' },
 ]
 
 function getFlagImageUrl(countryCode?: string) {
@@ -134,7 +143,7 @@ function TeamAvatar({
   clubLogoUrl,
   alt,
   fallbackLetter,
-  sizeClass
+  sizeClass,
 }: {
   clubLogoUrl?: string | null
   alt: string
@@ -172,12 +181,11 @@ export default function Header({
   clubLogoUrl,
   userName,
   onNavigate,
-  onLogout
+  onLogout,
 }: HeaderProps) {
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false)
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false)
-  const [activeNotificationTab, setActiveNotificationTab] =
-    useState<NotificationTab>('unread')
+  const [activeNotificationTab, setActiveNotificationTab] = useState<NotificationTab>('unread')
   const [unreadCount, setUnreadCount] = useState(0)
   const [inboxUnreadCount, setInboxUnreadCount] = useState(0)
   const [unreadItems, setUnreadItems] = useState<NotificationItem[]>([])
@@ -186,15 +194,9 @@ export default function Header({
   const [isLoadingRead, setIsLoadingRead] = useState(false)
   const [isMarkingAllRead, setIsMarkingAllRead] = useState(false)
 
-  const [liveClubName, setLiveClubName] = useState(
-    clubName || title || 'ProPeloton Manager'
-  )
-  const [liveClubCountryName, setLiveClubCountryName] = useState(
-    clubCountryName || 'Club country'
-  )
-  const [liveClubCountryCode, setLiveClubCountryCode] = useState<string | undefined>(
-    clubCountryCode
-  )
+  const [liveClubName, setLiveClubName] = useState(clubName || title || 'ProPeloton Manager')
+  const [liveClubCountryName, setLiveClubCountryName] = useState(clubCountryName || 'Club country')
+  const [liveClubCountryCode, setLiveClubCountryCode] = useState<string | undefined>(clubCountryCode)
   const [liveLogoPath, setLiveLogoPath] = useState<string | null>(clubLogoUrl ?? null)
   const [logoCacheKey, setLogoCacheKey] = useState(() => Date.now())
 
@@ -283,10 +285,7 @@ export default function Header({
   const displayName = liveClubName || clubName || title || 'ProPeloton Manager'
   const displayCountry = liveClubCountryName || clubCountryName || 'Club country'
   const effectiveCountryCode = liveClubCountryCode || clubCountryCode
-  const effectiveLogoUrl = resolveClubLogoUrl(
-    liveLogoPath ?? clubLogoUrl ?? null,
-    logoCacheKey
-  )
+  const effectiveLogoUrl = resolveClubLogoUrl(liveLogoPath ?? clubLogoUrl ?? null, logoCacheKey)
 
   const displayUserName = userName || 'Manager'
   const flagUrl = getFlagImageUrl(effectiveCountryCode)
@@ -324,16 +323,37 @@ export default function Header({
     }
   }, [onLogout])
 
+  // UPDATED: prefer item.preference_group when present, fallback to legacy mapping.
+  const shouldDisplayNotification = useCallback((item: NotificationItem) => {
+    const preferences = readNotificationPreferences()
+
+    // BEST: DB tells us the group explicitly
+    const pg = item.preference_group as any
+    if (pg && pg in preferences) {
+      return canReceiveNotification(preferences, pg)
+    }
+
+    // fallback for older rows
+    const notificationType = getNotificationTypeFromEvent(item.type_code, item.source)
+    if (!notificationType) return true
+    return canReceiveNotification(preferences, notificationType)
+  }, [])
+
   const loadUnreadCount = useCallback(async () => {
-    const { data, error } = await supabase.rpc('get_my_unread_notification_count')
+    const { data, error } = await supabase.rpc('get_my_notifications', {
+      p_status: 'unread',
+      p_page: 1,
+      p_page_size: 200,
+    })
 
     if (error) {
       console.error('Failed to load unread notification count:', error)
       return
     }
 
-    setUnreadCount(Number(data ?? 0))
-  }, [])
+    const unread = ((data ?? []) as NotificationItem[]).filter(shouldDisplayNotification)
+    setUnreadCount(unread.length)
+  }, [shouldDisplayNotification])
 
   const loadInboxUnreadCount = useCallback(async () => {
     const { data, error } = await supabase.rpc('inbox_list_threads')
@@ -344,18 +364,14 @@ export default function Header({
     }
 
     const threads = (data ?? []) as InboxThreadRow[]
-    const unread = threads.reduce(
-      (sum, thread) => sum + Math.max(Number(thread.unread_count ?? 0), 0),
-      0
-    )
+    const unread = threads.reduce((sum, thread) => sum + Math.max(Number(thread.unread_count ?? 0), 0), 0)
 
     setInboxUnreadCount(unread)
   }, [])
 
   const loadNotifications = useCallback(
     async (tab: NotificationTab) => {
-      const setLoading =
-        tab === 'unread' ? setIsLoadingUnread : setIsLoadingRead
+      const setLoading = tab === 'unread' ? setIsLoadingUnread : setIsLoadingRead
       const setItems = tab === 'unread' ? setUnreadItems : setReadItems
 
       setLoading(true)
@@ -363,7 +379,7 @@ export default function Header({
       const { data, error } = await supabase.rpc('get_my_notifications', {
         p_status: tab,
         p_page: 1,
-        p_page_size: 20
+        p_page_size: 20,
       })
 
       if (error) {
@@ -372,10 +388,11 @@ export default function Header({
         return
       }
 
-      setItems((data ?? []) as NotificationItem[])
+      const filteredItems = ((data ?? []) as NotificationItem[]).filter(shouldDisplayNotification)
+      setItems(filteredItems)
       setLoading(false)
     },
-    []
+    [shouldDisplayNotification]
   )
 
   const openNotifications = useCallback(async () => {
@@ -402,7 +419,7 @@ export default function Header({
     async (item: NotificationItem) => {
       if (item.status === 'unread') {
         const { data, error } = await supabase.rpc('mark_my_notification_read', {
-          p_user_notification_id: item.user_notification_id
+          p_user_notification_id: item.user_notification_id,
         })
 
         if (error) {
@@ -411,14 +428,11 @@ export default function Header({
           const readItem: NotificationItem = {
             ...item,
             status: 'read',
-            read_at: new Date().toISOString()
+            read_at: new Date().toISOString(),
           }
 
           setUnreadItems((prev) =>
-            prev.filter(
-              (notification) =>
-                notification.user_notification_id !== item.user_notification_id
-            )
+            prev.filter((notification) => notification.user_notification_id !== item.user_notification_id)
           )
 
           setReadItems((prev) => [readItem, ...prev])
@@ -444,11 +458,7 @@ export default function Header({
       return
     }
 
-    await Promise.all([
-      loadUnreadCount(),
-      loadNotifications('unread'),
-      loadNotifications('read')
-    ])
+    await Promise.all([loadUnreadCount(), loadNotifications('unread'), loadNotifications('read')])
 
     setIsMarkingAllRead(false)
   }, [loadNotifications, loadUnreadCount])
@@ -513,8 +523,7 @@ export default function Header({
   }, [isNotificationsOpen])
 
   const activeItems = activeNotificationTab === 'unread' ? unreadItems : readItems
-  const isActiveTabLoading =
-    activeNotificationTab === 'unread' ? isLoadingUnread : isLoadingRead
+  const isActiveTabLoading = activeNotificationTab === 'unread' ? isLoadingUnread : isLoadingRead
 
   return (
     <>
@@ -602,12 +611,8 @@ export default function Header({
                 className="absolute right-0 mt-2 w-64 overflow-hidden rounded-xl border border-black/10 bg-white shadow-xl z-50"
               >
                 <div className="px-4 py-3 border-b border-gray-200 bg-gray-50">
-                  <div className="text-sm font-semibold text-black">
-                    {displayUserName}
-                  </div>
-                  <div className="text-xs text-black/70">
-                    Team: {displayName}
-                  </div>
+                  <div className="text-sm font-semibold text-black">{displayUserName}</div>
+                  <div className="text-xs text-black/70">Team: {displayName}</div>
                 </div>
 
                 <div className="py-1">
@@ -677,12 +682,8 @@ export default function Header({
           >
             <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200">
               <div>
-                <h2 className="text-lg font-semibold text-black">
-                  Notifications
-                </h2>
-                <p className="text-xs text-gray-500">
-                  Game and admin messages
-                </p>
+                <h2 className="text-lg font-semibold text-black">Notifications</h2>
+                <p className="text-xs text-gray-500">Game and admin messages</p>
               </div>
 
               <div className="flex items-center gap-2">
@@ -743,14 +744,10 @@ export default function Header({
 
             <div className="max-h-[70vh] overflow-y-auto">
               {isActiveTabLoading ? (
-                <div className="px-5 py-10 text-sm text-gray-500">
-                  Loading notifications...
-                </div>
+                <div className="px-5 py-10 text-sm text-gray-500">Loading notifications...</div>
               ) : activeItems.length === 0 ? (
                 <div className="px-5 py-10 text-sm text-gray-500">
-                  {activeNotificationTab === 'unread'
-                    ? 'No unread notifications.'
-                    : 'No read notifications yet.'}
+                  {activeNotificationTab === 'unread' ? 'No unread notifications.' : 'No read notifications yet.'}
                 </div>
               ) : (
                 <div className="divide-y divide-gray-100">
@@ -778,25 +775,17 @@ export default function Header({
                           <div className="min-w-0 flex-1">
                             <div className="flex items-start justify-between gap-3">
                               <div
-                                className={`text-sm ${
-                                  isUnread
-                                    ? 'font-semibold text-black'
-                                    : 'font-medium text-black'
-                                }`}
+                                className={`text-sm ${isUnread ? 'font-semibold text-black' : 'font-medium text-black'}`}
                               >
                                 {item.title}
                               </div>
 
                               <div className="shrink-0 text-xs text-gray-500">
-                                {formatNotificationTime(
-                                  item.notification_created_at
-                                )}
+                                {formatNotificationTime(item.notification_created_at)}
                               </div>
                             </div>
 
-                            <div className="mt-1 text-sm text-gray-600 line-clamp-2">
-                              {item.message}
-                            </div>
+                            <div className="mt-1 text-sm text-gray-600 line-clamp-2">{item.message}</div>
 
                             <div className="mt-2 flex items-center gap-2 text-xs text-gray-500">
                               <span className="capitalize">{item.source}</span>
