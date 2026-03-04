@@ -61,7 +61,7 @@ export default function ProfileDropdown({ clubLogoUrl, clubName }: ProfileDropdo
     { key: 'username', label: username, displayOnly: true },
     { key: 'inbox', label: 'Inbox', to: '/inbox' },
     { key: 'profile', label: 'My Profile', to: '/profile' },
-    { key: 'customize', label: 'Customize Team', to: '/customize-team' },
+    { key: 'customize', label: 'Customize Team', to: '/dashboard/customize-team' },
     { key: 'forum', label: 'Forum', to: '/forum' },
     { key: 'prefs', label: 'Preferences', to: '/preferences' },
     { key: 'help', label: 'Help', to: '/help' },

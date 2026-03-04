@@ -1,13 +1,13 @@
 /**
  * CustomizeTeam.tsx
- * Team branding and settings page with direct persistence to public.clubs.
+ * Team branding and settings page with direct persistence to public.clubs
+ * and jersey persistence to public.team_kits.
  *
  * NOTE:
  * - This file assumes you have a configured Supabase client export.
  * - Adjust the supabase import path if needed.
- * - This persists name, colors and logo_path directly to public.clubs.
- * - The header/topbar should listen for the `club-updated` event (and/or read
- *   localStorage['ppm-active-club']) to update instantly across the app.
+ * - Club branding persists to public.clubs.
+ * - Jersey config persists to public.team_kits using the `config` jsonb column.
  */
 
 import React, { useEffect, useId, useMemo, useRef, useState } from 'react'
@@ -27,32 +27,36 @@ type PersistableClubPatch = Partial<
   Pick<ClubRow, 'name' | 'primary_color' | 'secondary_color' | 'logo_path'>
 >
 
-type JerseyMode = 'style' | 'upload'
-
 type KitDesignerProps = {
-  supabase: typeof supabase
   teamId: string
   primaryColor: string
   secondaryColor: string
 }
 
+type TeamKitMode = 'generic' | 'image_url' | 'uploaded_image'
+
+type TeamKitConfig = {
+  version: 1
+  template: 'striped-tshirt'
+  mode: TeamKitMode
+  image_url: string | null
+  image_data_url: string | null
+}
+
+type TeamKitRow = {
+  id: string
+  team_id: string
+  name: string
+  config: unknown
+  updated_at: string
+}
+
 const MAX_FILE_SIZE = 512 * 1024 // 0.5 MB
 const LOGO_BUCKET = 'club-logos'
 
-const JERSEY_STYLES = [
-  'solid',
-  'vertical-stripes',
-  'horizontal-hoops',
-  'sash',
-  'center-band',
-  'split',
-  'sleeve-contrast',
-  'chest-stripe',
-  'pinstripes',
-  'quartered',
-] as const
-
-type JerseyStyle = (typeof JERSEY_STYLES)[number]
+const MAX_JERSEY_FILE_SIZE = 1024 * 1024 // 1 MB
+const MAX_JERSEY_DIMENSION = 512
+const DEFAULT_TEAM_KIT_NAME = 'default'
 
 function isValidHexColor(value: string): boolean {
   return /^#[0-9A-Fa-f]{6}$/.test(value)
@@ -81,194 +85,190 @@ function validateJpgFile(file: File): string | null {
   return null
 }
 
+function validateJerseyUploadFile(file: File): Promise<string | null> {
+  const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp']
+
+  if (!validTypes.includes(file.type)) {
+    return Promise.resolve('Only JPG, PNG, or WEBP images are allowed for jerseys.')
+  }
+
+  if (file.size > MAX_JERSEY_FILE_SIZE) {
+    return Promise.resolve('Jersey image must be no larger than 1 MB.')
+  }
+
+  return new Promise(resolve => {
+    const objectUrl = window.URL.createObjectURL(file)
+    const image = new Image()
+
+    image.onload = () => {
+      const tooLarge =
+        image.naturalWidth > MAX_JERSEY_DIMENSION ||
+        image.naturalHeight > MAX_JERSEY_DIMENSION
+
+      window.URL.revokeObjectURL(objectUrl)
+
+      if (tooLarge) {
+        resolve('Uploaded jersey image must be 512 × 512 px or smaller.')
+        return
+      }
+
+      resolve(null)
+    }
+
+    image.onerror = () => {
+      window.URL.revokeObjectURL(objectUrl)
+      resolve('Failed to read jersey image.')
+    }
+
+    image.src = objectUrl
+  })
+}
+
+/**
+ * For remote jersey URLs, we only verify that the image can load.
+ * We intentionally do NOT enforce remote dimensions here, because the URL
+ * is not being stored as file bytes in our backend. The UI always renders
+ * it with object-contain + max bounds so it fits safely in-game.
+ */
+function validateRemoteJerseyImage(url: string): Promise<string | null> {
+  return new Promise(resolve => {
+    const image = new Image()
+
+    image.onload = () => {
+      resolve(null)
+    }
+
+    image.onerror = () => {
+      resolve('Could not load jersey image from URL.')
+    }
+
+    image.src = url
+  })
+}
+
 function sanitizeTeamName(value: string): string {
   return value.replace(/\s+/g, ' ').trim()
 }
 
-function JerseySvg({
-  style,
-  primary,
-  secondary,
+function createGenericKitConfig(): TeamKitConfig {
+  return {
+    version: 1,
+    template: 'striped-tshirt',
+    mode: 'generic',
+    image_url: null,
+    image_data_url: null,
+  }
+}
+
+function normalizeTeamKitConfig(value: unknown): TeamKitConfig {
+  const fallback = createGenericKitConfig()
+
+  if (!value || typeof value !== 'object') {
+    return fallback
+  }
+
+  const raw = value as Partial<TeamKitConfig>
+
+  const mode: TeamKitMode =
+    raw.mode === 'image_url' || raw.mode === 'uploaded_image' || raw.mode === 'generic'
+      ? raw.mode
+      : 'generic'
+
+  return {
+    version: 1,
+    template: 'striped-tshirt',
+    mode,
+    image_url: typeof raw.image_url === 'string' ? raw.image_url : null,
+    image_data_url: typeof raw.image_data_url === 'string' ? raw.image_data_url : null,
+  }
+}
+
+function getKitImageSrc(config: TeamKitConfig): string | null {
+  if (config.mode === 'image_url') {
+    return config.image_url
+  }
+
+  if (config.mode === 'uploaded_image') {
+    return config.image_data_url
+  }
+
+  return null
+}
+
+function areKitConfigsEqual(a: TeamKitConfig, b: TeamKitConfig): boolean {
+  return (
+    a.version === b.version &&
+    a.template === b.template &&
+    a.mode === b.mode &&
+    a.image_url === b.image_url &&
+    a.image_data_url === b.image_data_url
+  )
+}
+
+function GenericJerseySvg({
+  primaryColor,
+  secondaryColor,
   className = '',
 }: {
-  style: JerseyStyle
-  primary: string
-  secondary: string
+  primaryColor: string
+  secondaryColor: string
   className?: string
 }): JSX.Element {
-  const stroke = '#0f172a'
   const clipId = useId().replace(/:/g, '-')
-  const torsoPath =
-    'M44 22h40l12 8c-5 8-7 15-7 24v50H39V54c0-9-2-16-7-24l12-8z'
-  const outlinePath =
-    'M34 18l12 8h36l12-8 16 10-9 19v59H27V47l-9-19 16-10z'
+  const stroke = '#111827'
 
-  const pattern = (() => {
-    switch (style) {
-      case 'solid':
-        return <rect x="24" y="20" width="80" height="92" fill={primary} />
-
-      case 'vertical-stripes':
-        return (
-          <>
-            <path d="M30 18h68v92H30z" fill={primary} />
-            <rect x="38" y="16" width="8" height="96" fill={secondary} />
-            <rect x="56" y="16" width="8" height="96" fill={secondary} />
-            <rect x="74" y="16" width="8" height="96" fill={secondary} />
-          </>
-        )
-
-      case 'horizontal-hoops':
-        return (
-          <>
-            <path d="M30 18h68v92H30z" fill={primary} />
-            <rect x="24" y="34" width="80" height="10" fill={secondary} />
-            <rect x="24" y="56" width="80" height="10" fill={secondary} />
-            <rect x="24" y="78" width="80" height="10" fill={secondary} />
-          </>
-        )
-
-      case 'sash':
-        return (
-          <>
-            <rect x="24" y="20" width="80" height="92" fill={primary} />
-            <polygon points="30,24 48,18 98,96 80,108" fill={secondary} />
-          </>
-        )
-
-      case 'center-band':
-        return (
-          <>
-            <rect x="24" y="20" width="80" height="92" fill={primary} />
-            <rect x="54" y="18" width="20" height="96" fill={secondary} />
-          </>
-        )
-
-      case 'split':
-        return (
-          <>
-            <rect x="24" y="20" width="40" height="92" fill={primary} />
-            <rect x="64" y="20" width="40" height="92" fill={secondary} />
-          </>
-        )
-
-      case 'sleeve-contrast':
-        return (
-          <>
-            <rect x="24" y="20" width="80" height="92" fill={primary} />
-            <polygon points="18,28 34,18 36,44 20,40" fill={secondary} />
-            <polygon points="94,18 110,28 108,40 92,44" fill={secondary} />
-          </>
-        )
-
-      case 'chest-stripe':
-        return (
-          <>
-            <rect x="24" y="20" width="80" height="92" fill={primary} />
-            <rect x="24" y="44" width="80" height="14" fill={secondary} />
-          </>
-        )
-
-      case 'pinstripes':
-        return (
-          <>
-            <rect x="24" y="20" width="80" height="92" fill={primary} />
-            {Array.from({ length: 10 }).map((_, i) => (
-              <rect
-                key={i}
-                x={29 + i * 8}
-                y="18"
-                width="2"
-                height="96"
-                fill={secondary}
-                opacity="0.95"
-              />
-            ))}
-          </>
-        )
-
-      case 'quartered':
-        return (
-          <>
-            <rect x="24" y="20" width="40" height="46" fill={primary} />
-            <rect x="64" y="20" width="40" height="46" fill={secondary} />
-            <rect x="24" y="66" width="40" height="46" fill={secondary} />
-            <rect x="64" y="66" width="40" height="46" fill={primary} />
-          </>
-        )
-
-      default:
-        return <rect x="24" y="20" width="80" height="92" fill={primary} />
-    }
-  })()
+  const shirtPath =
+    'M56 24h48l14 10 18 22-9 15-18-10v86H51V61L33 71 24 56l18-22 14-10z'
 
   return (
     <svg
-      viewBox="0 0 128 128"
+      viewBox="0 0 160 180"
       className={className}
       aria-hidden="true"
       role="img"
     >
       <defs>
         <clipPath id={clipId}>
-          <path d={torsoPath} />
+          <path d={shirtPath} />
         </clipPath>
       </defs>
 
-      <path
-        d={outlinePath}
-        fill="#ffffff"
-        stroke={stroke}
-        strokeWidth="3"
-        strokeLinejoin="round"
-      />
-
       <g clipPath={`url(#${clipId})`}>
-        {pattern}
+        <rect x="0" y="0" width="160" height="180" fill={primaryColor} />
+
+        {/* secondary vertical lines */}
+        <rect x="64" y="20" width="6" height="140" fill={secondaryColor} opacity="0.95" />
+        <rect x="77" y="20" width="6" height="140" fill={secondaryColor} opacity="0.95" />
+        <rect x="90" y="20" width="6" height="140" fill={secondaryColor} opacity="0.95" />
+
+        {/* subtle center seam */}
+        <rect x="79" y="22" width="2" height="138" fill="#ffffff" opacity="0.55" />
+
+        {/* collar */}
         <path
-          d="M44 27c-4 7-6 14-6 25v52h8c-1-27 1-52 6-74z"
+          d="M66 24h28l-5 10H71l-5-10z"
           fill="#ffffff"
-          opacity="0.92"
-        />
-        <path
-          d="M84 27c5 22 7 47 6 74h8V52c0-11-2-18-6-25z"
-          fill="#ffffff"
-          opacity="0.92"
-        />
-        <path
-          d="M50 28c-4 8-6 15-7 26v50"
-          stroke="#111827"
-          strokeWidth="1.5"
-          opacity="0.32"
-          fill="none"
-        />
-        <path
-          d="M78 28c4 8 6 15 7 26v50"
-          stroke="#111827"
-          strokeWidth="1.5"
-          opacity="0.32"
-          fill="none"
+          stroke={stroke}
+          strokeWidth="1.8"
+          strokeLinejoin="round"
         />
       </g>
 
       <path
-        d={outlinePath}
+        d={shirtPath}
         fill="none"
         stroke={stroke}
         strokeWidth="3"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M52 18h24l-4 10H56l-4-10z"
-        fill={secondary}
-        stroke={stroke}
-        strokeWidth="2"
         strokeLinejoin="round"
       />
     </svg>
   )
 }
 
+/**
+ * Used on the Customize Team page "Current logo" box.
+ * This intentionally shows the full logo inside a square box (not circle-cropped).
+ */
 function HeaderLogo({
   logoSrc,
   teamName,
@@ -291,17 +291,19 @@ function HeaderLogo({
 
   if (logoSrc) {
     return (
-      <img
-        src={logoSrc}
-        alt="Club logo"
-        className="h-12 w-12 rounded-full border-2 border-black object-cover bg-white"
-      />
+      <div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-md border border-gray-200 bg-white p-2">
+        <img
+          src={logoSrc}
+          alt="Club logo"
+          className="max-h-full max-w-full object-contain"
+        />
+      </div>
     )
   }
 
   return (
     <div
-      className="h-12 w-12 rounded-full border-2 border-black text-white flex items-center justify-center text-sm font-bold"
+      className="flex h-24 w-24 items-center justify-center rounded-md border border-gray-200 text-white text-lg font-bold"
       style={{
         background: `linear-gradient(135deg, ${primaryColor} 0%, ${primaryColor} 58%, ${secondaryColor} 58%, ${secondaryColor} 100%)`,
       }}
@@ -316,18 +318,79 @@ function KitDesigner({
   primaryColor,
   secondaryColor,
 }: KitDesignerProps): JSX.Element {
-  const [jerseyMode, setJerseyMode] = useState<JerseyMode>('style')
-  const [selectedJerseyStyle, setSelectedJerseyStyle] = useState<JerseyStyle>('solid')
-  const [appliedJerseyStyle, setAppliedJerseyStyle] = useState<JerseyStyle>('solid')
-  const [jerseyUploadPreview, setJerseyUploadPreview] = useState<string | null>(null)
-  const [appliedJerseyUploadPreview, setAppliedJerseyUploadPreview] = useState<string | null>(null)
+  const [loaded, setLoaded] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [appliedKitConfig, setAppliedKitConfig] = useState<TeamKitConfig>(createGenericKitConfig())
+  const [draftKitConfig, setDraftKitConfig] = useState<TeamKitConfig>(createGenericKitConfig())
+  const [jerseyUrlInput, setJerseyUrlInput] = useState('')
   const [kitNotice, setKitNotice] = useState<string | null>(null)
+
+  useEffect(() => {
+    let active = true
+
+    async function loadTeamKit(): Promise<void> {
+      try {
+        setLoaded(false)
+        setKitNotice(null)
+
+        const { data, error } = await supabase
+          .from('team_kits')
+          .select('id, team_id, name, config, updated_at')
+          .eq('team_id', teamId)
+          .eq('name', DEFAULT_TEAM_KIT_NAME)
+          .maybeSingle()
+
+        if (!active) return
+
+        if (error) {
+          setAppliedKitConfig(createGenericKitConfig())
+          setDraftKitConfig(createGenericKitConfig())
+          setJerseyUrlInput('')
+          setKitNotice(`Failed to load saved jersey: ${error.message}`)
+          setLoaded(true)
+          return
+        }
+
+        const savedRow = (data ?? null) as TeamKitRow | null
+
+        if (!savedRow) {
+          const fallback = createGenericKitConfig()
+          setAppliedKitConfig(fallback)
+          setDraftKitConfig(fallback)
+          setJerseyUrlInput('')
+          setLoaded(true)
+          return
+        }
+
+        const normalized = normalizeTeamKitConfig(savedRow.config)
+        setAppliedKitConfig(normalized)
+        setDraftKitConfig(normalized)
+        setJerseyUrlInput(normalized.mode === 'image_url' ? normalized.image_url ?? '' : '')
+        setLoaded(true)
+      } catch {
+        if (!active) return
+
+        const fallback = createGenericKitConfig()
+        setAppliedKitConfig(fallback)
+        setDraftKitConfig(fallback)
+        setJerseyUrlInput('')
+        setKitNotice('Failed to load saved jersey.')
+        setLoaded(true)
+      }
+    }
+
+    void loadTeamKit()
+
+    return () => {
+      active = false
+    }
+  }, [teamId])
 
   async function handleJerseyUpload(event: React.ChangeEvent<HTMLInputElement>): Promise<void> {
     const file = event.target.files?.[0]
     if (!file) return
 
-    const validationError = validateJpgFile(file)
+    const validationError = await validateJerseyUploadFile(file)
     if (validationError) {
       setKitNotice(validationError)
       event.target.value = ''
@@ -336,9 +399,17 @@ function KitDesigner({
 
     try {
       const previewUrl = await fileToDataUrl(file)
-      setJerseyMode('upload')
-      setJerseyUploadPreview(previewUrl)
-      setKitNotice('Jersey image ready to apply.')
+
+      setDraftKitConfig({
+        version: 1,
+        template: 'striped-tshirt',
+        mode: 'uploaded_image',
+        image_url: null,
+        image_data_url: previewUrl,
+      })
+
+      setJerseyUrlInput('')
+      setKitNotice('Jersey image ready. Click Apply jersey to save it.')
     } catch {
       setKitNotice('Failed to preview jersey image.')
     } finally {
@@ -346,143 +417,225 @@ function KitDesigner({
     }
   }
 
-  function handleApplyJersey(): void {
-    if (jerseyMode === 'upload') {
-      if (!jerseyUploadPreview) {
-        setKitNotice('Please upload a jersey image first.')
+  async function handleJerseyUrlCommit(): Promise<boolean> {
+    const trimmedUrl = jerseyUrlInput.trim()
+
+    if (!trimmedUrl) {
+      return false
+    }
+
+    try {
+      const parsed = new URL(trimmedUrl)
+
+      if (!['http:', 'https:'].includes(parsed.protocol)) {
+        setKitNotice('Jersey image URL must start with http:// or https://')
+        return false
+      }
+
+      const validationError = await validateRemoteJerseyImage(trimmedUrl)
+      if (validationError) {
+        setKitNotice(validationError)
+        return false
+      }
+
+      setDraftKitConfig({
+        version: 1,
+        template: 'striped-tshirt',
+        mode: 'image_url',
+        image_url: trimmedUrl,
+        image_data_url: null,
+      })
+
+      setKitNotice('Jersey URL accepted. It will be fitted in preview and in-game. Click Apply jersey.')
+      return true
+    } catch {
+      setKitNotice('Please provide a valid jersey image URL.')
+      return false
+    }
+  }
+
+  function handleRemoveJersey(): void {
+    setDraftKitConfig(createGenericKitConfig())
+    setJerseyUrlInput('')
+    setKitNotice('Generic jersey selected. Click Apply jersey to save it.')
+  }
+
+  async function handleApplyJersey(): Promise<void> {
+    let nextConfig = draftKitConfig
+
+    const typedUrl = jerseyUrlInput.trim()
+
+    if (
+      typedUrl &&
+      (draftKitConfig.mode !== 'image_url' || draftKitConfig.image_url !== typedUrl)
+    ) {
+      const committed = await handleJerseyUrlCommit()
+      if (!committed) return
+
+      nextConfig = {
+        version: 1,
+        template: 'striped-tshirt',
+        mode: 'image_url',
+        image_url: typedUrl,
+        image_data_url: null,
+      }
+    }
+
+    try {
+      setSaving(true)
+      setKitNotice(null)
+
+      const payload = {
+        team_id: teamId,
+        name: DEFAULT_TEAM_KIT_NAME,
+        config: {
+          version: 1,
+          template: 'striped-tshirt',
+          mode: nextConfig.mode,
+          image_url: nextConfig.mode === 'image_url' ? nextConfig.image_url : null,
+          image_data_url:
+            nextConfig.mode === 'uploaded_image' ? nextConfig.image_data_url : null,
+        } satisfies TeamKitConfig,
+        updated_at: new Date().toISOString(),
+      }
+
+      const { data, error } = await supabase
+        .from('team_kits')
+        .upsert(payload, { onConflict: 'team_id,name' })
+        .select('id, team_id, name, config, updated_at')
+        .single()
+
+      setSaving(false)
+
+      if (error) {
+        setKitNotice(`Failed to save jersey: ${error.message}`)
         return
       }
 
-      setAppliedJerseyUploadPreview(jerseyUploadPreview)
-      setKitNotice('Jersey image applied.')
-      return
-    }
+      const savedRow = data as TeamKitRow
+      const normalized = normalizeTeamKitConfig(savedRow.config)
 
-    setAppliedJerseyStyle(selectedJerseyStyle)
-    setAppliedJerseyUploadPreview(null)
-    setKitNotice('Jersey style applied.')
+      setAppliedKitConfig(normalized)
+      setDraftKitConfig(normalized)
+      setJerseyUrlInput(normalized.mode === 'image_url' ? normalized.image_url ?? '' : '')
+      setKitNotice('Jersey applied and saved.')
+    } catch (err) {
+      setSaving(false)
+      setKitNotice(err instanceof Error ? err.message : 'Failed to save jersey.')
+    }
   }
 
+  const previewConfig = draftKitConfig
+  const previewSrc = getKitImageSrc(previewConfig)
+  const hasUnsavedChanges = !areKitConfigsEqual(draftKitConfig, appliedKitConfig)
+
   return (
-    <div className="space-y-4" data-team-id={teamId}>
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-        <div className="text-sm text-gray-600">
-          Build a custom team kit using your applied club colors.
+    <div className="grid grid-cols-1 xl:grid-cols-[220px_1fr] gap-4" data-team-id={teamId}>
+      <div className="rounded-xl border border-gray-200 bg-white p-4">
+        <div className="text-sm font-medium mb-3">Generic jersey</div>
+
+        <div className="flex items-center justify-center min-h-[220px] rounded-lg border border-gray-100 bg-gray-50">
+          <GenericJerseySvg
+            primaryColor={primaryColor}
+            secondaryColor={secondaryColor}
+            className="w-36 h-auto"
+          />
         </div>
 
-        <div className="inline-flex rounded-md border border-gray-300 overflow-hidden">
-          <button
-            type="button"
-            onClick={() => setJerseyMode('style')}
-            className={`px-4 py-2 text-sm font-medium ${
-              jerseyMode === 'style' ? 'bg-slate-900 text-white' : 'bg-white text-slate-700'
-            }`}
-          >
-            Use style
-          </button>
-          <button
-            type="button"
-            onClick={() => setJerseyMode('upload')}
-            className={`px-4 py-2 text-sm font-medium border-l border-gray-300 ${
-              jerseyMode === 'upload' ? 'bg-slate-900 text-white' : 'bg-white text-slate-700'
-            }`}
-          >
-            Upload image
-          </button>
+        <div className="mt-3 text-xs text-center text-gray-500">
+          Default team jersey
         </div>
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-[2fr_1fr] gap-4 items-start">
-        <div>
-          {jerseyMode === 'style' ? (
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
-              {JERSEY_STYLES.map(style => (
-                <button
-                  key={style}
-                  type="button"
-                  onClick={() => setSelectedJerseyStyle(style)}
-                  className={`rounded-xl border bg-gradient-to-b from-white to-slate-50 p-3 shadow-sm transition ${
-                    selectedJerseyStyle === style
-                      ? 'border-slate-900 ring-2 ring-blue-200 shadow-md -translate-y-0.5'
-                      : 'border-gray-300 hover:border-slate-500 hover:shadow'
-                  }`}
-                >
-                  <div className="rounded-lg border border-slate-100 bg-white p-2">
-                    <JerseySvg
-                      style={style}
-                      primary={primaryColor}
-                      secondary={secondaryColor}
-                      className="w-full h-24"
-                    />
-                  </div>
-                  <div className="mt-2 text-xs font-medium text-center text-gray-700 capitalize">
-                    {style.replace(/-/g, ' ')}
-                  </div>
-                </button>
-              ))}
-            </div>
-          ) : (
-            <div className="space-y-4">
-              <label className="inline-flex items-center justify-center px-4 py-2 rounded-md border border-gray-300 bg-white cursor-pointer hover:bg-gray-50">
-                <span className="text-sm font-medium">Upload JPG jersey</span>
-                <input
-                  type="file"
-                  accept=".jpg,.jpeg,image/jpeg"
-                  className="hidden"
-                  onChange={handleJerseyUpload}
-                />
-              </label>
+      <div className="rounded-xl border border-gray-200 bg-gray-50 p-4 space-y-4">
+        <div className="flex flex-col lg:flex-row gap-3">
+          <label className="inline-flex items-center justify-center px-4 py-2 rounded-md border border-gray-300 bg-white cursor-pointer hover:bg-gray-50">
+            <span className="text-sm font-medium">Upload image</span>
+            <input
+              type="file"
+              accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
+              className="hidden"
+              onChange={handleJerseyUpload}
+            />
+          </label>
 
-              <div className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-900 inline-block">
-                JPG only. Maximum file size: 0.5 MB
-              </div>
-            </div>
-          )}
+          <input
+            value={jerseyUrlInput}
+            onChange={event => setJerseyUrlInput(event.target.value)}
+            onBlur={() => {
+              void handleJerseyUrlCommit()
+            }}
+            onKeyDown={event => {
+              if (event.key === 'Enter') {
+                event.preventDefault()
+                void handleJerseyUrlCommit()
+              }
+            }}
+            placeholder="Paste jersey image URL and press Enter"
+            className="flex-1 border border-gray-300 px-3 py-2 rounded-md text-sm bg-white"
+          />
+
+          <button
+            type="button"
+            onClick={handleRemoveJersey}
+            className="px-4 py-2 rounded-md border border-gray-300 bg-white text-slate-900 text-sm font-medium hover:bg-gray-50"
+          >
+            Use generic jersey
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              void handleApplyJersey()
+            }}
+            disabled={saving}
+            className="px-4 py-2 rounded-md border border-slate-900 bg-slate-900 text-white text-sm font-medium hover:bg-slate-800 disabled:opacity-60"
+          >
+            {saving ? 'Applying...' : 'Apply jersey'}
+          </button>
         </div>
 
-        <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
-          <div className="text-sm font-medium mb-3">Jersey preview</div>
+        <div className="rounded-xl border border-gray-200 bg-white p-4">
+          <div className="flex items-center justify-between gap-3 mb-3">
+            <div className="text-sm font-medium">Current jersey preview</div>
+            {loaded && hasUnsavedChanges ? (
+              <div className="text-xs font-medium text-amber-700">Unsaved changes</div>
+            ) : null}
+          </div>
 
-          <div className="flex items-center justify-center min-h-[220px]">
-            {jerseyMode === 'upload' && jerseyUploadPreview ? (
+          <div className="flex items-center justify-center min-h-[280px] rounded-lg border border-gray-100 bg-gray-50 overflow-hidden p-4">
+            {previewSrc ? (
               <img
-                src={jerseyUploadPreview}
-                alt="Draft jersey preview"
-                className="max-h-56 rounded-md border border-gray-200 object-contain bg-white"
-              />
-            ) : appliedJerseyUploadPreview ? (
-              <img
-                src={appliedJerseyUploadPreview}
-                alt="Applied jersey"
-                className="max-h-56 rounded-md border border-gray-200 object-contain bg-white"
+                src={previewSrc}
+                alt="Current jersey"
+                className="max-h-full max-w-full rounded-md object-contain"
+                style={{
+                  maxWidth: 512,
+                  maxHeight: 512,
+                  width: 'auto',
+                  height: 'auto',
+                }}
               />
             ) : (
-              <JerseySvg
-                style={jerseyMode === 'style' ? selectedJerseyStyle : appliedJerseyStyle}
-                primary={primaryColor}
-                secondary={secondaryColor}
-                className="w-44 h-44"
+              <GenericJerseySvg
+                primaryColor={primaryColor}
+                secondaryColor={secondaryColor}
+                className="w-44 h-auto"
               />
             )}
           </div>
         </div>
-      </div>
 
-      <div className="flex justify-end">
-        <button
-          type="button"
-          onClick={handleApplyJersey}
-          className="h-10 px-4 rounded-md border border-slate-900 bg-slate-900 text-white text-sm font-medium hover:bg-slate-800"
-        >
-          Apply jersey
-        </button>
-      </div>
-
-      {kitNotice ? (
-        <div className="rounded-md border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-700">
-          {kitNotice}
+        <div className="inline-flex self-start rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-900">
+          URL images can be any size. Preview fits to max 512 × 512. Uploads max 1 MB.
         </div>
-      ) : null}
+
+        {kitNotice ? (
+          <div className="rounded-md border border-gray-200 bg-white px-4 py-3 text-sm text-gray-700">
+            {kitNotice}
+          </div>
+        ) : null}
+      </div>
     </div>
   )
 }
@@ -524,7 +677,13 @@ export default function CustomizeTeamPage(): JSX.Element {
     if (!logoPath) return null
 
     if (logoPath.startsWith('http://') || logoPath.startsWith('https://')) {
-      return logoPath
+      try {
+        const url = new URL(logoPath)
+        url.searchParams.set('v', String(logoVersion))
+        return url.toString()
+      } catch {
+        return logoPath
+      }
     }
 
     const { data } = supabase.storage.from(LOGO_BUCKET).getPublicUrl(logoPath)
@@ -583,6 +742,8 @@ export default function CustomizeTeamPage(): JSX.Element {
   }
 
   function syncClubState(club: ClubRow): void {
+    const nextLogoVersion = Date.now()
+
     setClubId(club.id)
 
     setTeamNameInput(club.name)
@@ -594,7 +755,7 @@ export default function CustomizeTeamPage(): JSX.Element {
     setAppliedSecondaryColor(club.secondary_color)
 
     setLogoPath(club.logo_path)
-    setLogoVersion(Date.now())
+    setLogoVersion(nextLogoVersion)
 
     if (club.logo_path && (club.logo_path.startsWith('http://') || club.logo_path.startsWith('https://'))) {
       setLogoUrlInput(club.logo_path)
@@ -798,6 +959,7 @@ export default function CustomizeTeamPage(): JSX.Element {
       setPendingLogoFile(null)
       setPendingLogoUrl(trimmedUrl)
       setLogoPreview(trimmedUrl)
+      setLogoVersion(Date.now())
     } catch {
       setError('Please provide a valid image URL.')
     }
@@ -1052,7 +1214,6 @@ export default function CustomizeTeamPage(): JSX.Element {
             <h3 className="text-lg font-semibold">Jersey Creator</h3>
             {clubId ? (
               <KitDesigner
-                supabase={supabase}
                 teamId={clubId}
                 primaryColor={appliedPrimaryColor}
                 secondaryColor={appliedSecondaryColor}

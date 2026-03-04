@@ -1,11 +1,18 @@
 /**
  * Header.tsx
  * Top header inside the in-game layout.
+ *
+ * This version updates the logo/name immediately after Customize Team applies
+ * changes by listening to:
+ * - window "club-updated" custom event (same-tab instant update)
+ * - localStorage "ppm-active-club"
+ * - browser "storage" event (cross-tab sync)
+ *
+ * It also includes a light fallback sync interval.
  */
 
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { Bell, Settings, X } from 'lucide-react'
-// Adjust this import path to match your project structure.
 import { supabase } from '@/lib/supabase'
 
 interface HeaderProps {
@@ -45,6 +52,21 @@ type NotificationItem = {
   icon_name: string | null
 }
 
+type InboxThreadRow = {
+  unread_count: number
+}
+
+type ClubUpdatePayload = {
+  id?: string
+  owner_user_id?: string
+  name?: string
+  primary_color?: string
+  secondary_color?: string
+  logo_path?: string | null
+}
+
+const LOGO_BUCKET = 'club-logos'
+
 const profileMenuItems: MenuItem[] = [
   { label: 'Inbox', path: '/dashboard/inbox' },
   { label: 'My Profile', path: '/dashboard/my-profile' },
@@ -58,9 +80,6 @@ const profileMenuItems: MenuItem[] = [
   { label: 'Logout', action: 'logout' }
 ]
 
-/**
- * Builds a small flag image URL from ISO country code.
- */
 function getFlagImageUrl(countryCode?: string) {
   if (!countryCode || countryCode.length !== 2) return null
   return `https://flagcdn.com/w40/${countryCode.toLowerCase()}.png`
@@ -94,6 +113,23 @@ function formatNotificationTime(dateString?: string | null) {
   return date.toLocaleDateString()
 }
 
+function resolveClubLogoUrl(logoPath: string | null | undefined, cacheKey: number): string | null {
+  if (!logoPath) return null
+
+  if (logoPath.startsWith('http://') || logoPath.startsWith('https://')) {
+    try {
+      const url = new URL(logoPath)
+      url.searchParams.set('v', String(cacheKey))
+      return url.toString()
+    } catch {
+      return logoPath
+    }
+  }
+
+  const { data } = supabase.storage.from(LOGO_BUCKET).getPublicUrl(logoPath)
+  return `${data.publicUrl}?v=${cacheKey}`
+}
+
 function TeamAvatar({
   clubLogoUrl,
   alt,
@@ -107,11 +143,11 @@ function TeamAvatar({
 }) {
   if (clubLogoUrl) {
     return (
-      <div className={`${sizeClass} shrink-0 flex items-center justify-center`}>
+      <div className={`${sizeClass} shrink-0 flex items-center justify-center overflow-hidden rounded-md bg-white p-1`}>
         <img
           src={clubLogoUrl}
           alt={alt}
-          className="h-full w-full object-contain"
+          className="max-h-full max-w-full object-contain"
           draggable={false}
         />
       </div>
@@ -120,7 +156,7 @@ function TeamAvatar({
 
   return (
     <div
-      className={`${sizeClass} rounded-full border border-black/10 bg-black/10 flex items-center justify-center font-semibold text-black shrink-0`}
+      className={`${sizeClass} rounded-md border border-black/10 bg-black/10 flex items-center justify-center font-semibold text-black shrink-0`}
     >
       <span>{fallbackLetter}</span>
     </div>
@@ -143,18 +179,117 @@ export default function Header({
   const [activeNotificationTab, setActiveNotificationTab] =
     useState<NotificationTab>('unread')
   const [unreadCount, setUnreadCount] = useState(0)
+  const [inboxUnreadCount, setInboxUnreadCount] = useState(0)
   const [unreadItems, setUnreadItems] = useState<NotificationItem[]>([])
   const [readItems, setReadItems] = useState<NotificationItem[]>([])
   const [isLoadingUnread, setIsLoadingUnread] = useState(false)
   const [isLoadingRead, setIsLoadingRead] = useState(false)
   const [isMarkingAllRead, setIsMarkingAllRead] = useState(false)
 
+  const [liveClubName, setLiveClubName] = useState(
+    clubName || title || 'ProPeloton Manager'
+  )
+  const [liveClubCountryName, setLiveClubCountryName] = useState(
+    clubCountryName || 'Club country'
+  )
+  const [liveClubCountryCode, setLiveClubCountryCode] = useState<string | undefined>(
+    clubCountryCode
+  )
+  const [liveLogoPath, setLiveLogoPath] = useState<string | null>(clubLogoUrl ?? null)
+  const [logoCacheKey, setLogoCacheKey] = useState(() => Date.now())
+
   const profileMenuRef = useRef<HTMLDivElement>(null)
 
-  const displayName = clubName || title || 'ProPeloton Manager'
-  const displayCountry = clubCountryName || 'Club country'
+  const applyClubUpdatePayload = useCallback((payload: ClubUpdatePayload | null) => {
+    if (!payload) return
+
+    if (typeof payload.name === 'string' && payload.name.trim()) {
+      setLiveClubName(payload.name)
+    }
+
+    if (Object.prototype.hasOwnProperty.call(payload, 'logo_path')) {
+      setLiveLogoPath(payload.logo_path ?? null)
+      setLogoCacheKey(Date.now())
+    }
+  }, [])
+
+  const loadLiveClubFromStorage = useCallback(() => {
+    if (typeof window === 'undefined') return
+
+    const raw = window.localStorage.getItem('ppm-active-club')
+    if (!raw) return
+
+    try {
+      const parsed = JSON.parse(raw) as ClubUpdatePayload
+      applyClubUpdatePayload(parsed)
+    } catch {
+      // ignore invalid localStorage payload
+    }
+  }, [applyClubUpdatePayload])
+
+  useEffect(() => {
+    setLiveClubName(clubName || title || 'ProPeloton Manager')
+  }, [clubName, title])
+
+  useEffect(() => {
+    setLiveClubCountryName(clubCountryName || 'Club country')
+  }, [clubCountryName])
+
+  useEffect(() => {
+    setLiveClubCountryCode(clubCountryCode)
+  }, [clubCountryCode])
+
+  useEffect(() => {
+    setLiveLogoPath(clubLogoUrl ?? null)
+    setLogoCacheKey(Date.now())
+  }, [clubLogoUrl])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+
+    loadLiveClubFromStorage()
+
+    function handleClubUpdated(event: Event) {
+      const customEvent = event as CustomEvent<ClubUpdatePayload>
+      applyClubUpdatePayload(customEvent.detail ?? null)
+    }
+
+    function handleStorage(event: StorageEvent) {
+      if (event.key !== 'ppm-active-club') return
+      if (!event.newValue) return
+
+      try {
+        const parsed = JSON.parse(event.newValue) as ClubUpdatePayload
+        applyClubUpdatePayload(parsed)
+      } catch {
+        // ignore invalid storage payload
+      }
+    }
+
+    window.addEventListener('club-updated', handleClubUpdated as EventListener)
+    window.addEventListener('storage', handleStorage)
+
+    const intervalId = window.setInterval(() => {
+      loadLiveClubFromStorage()
+    }, 10000)
+
+    return () => {
+      window.removeEventListener('club-updated', handleClubUpdated as EventListener)
+      window.removeEventListener('storage', handleStorage)
+      window.clearInterval(intervalId)
+    }
+  }, [applyClubUpdatePayload, loadLiveClubFromStorage])
+
+  const displayName = liveClubName || clubName || title || 'ProPeloton Manager'
+  const displayCountry = liveClubCountryName || clubCountryName || 'Club country'
+  const effectiveCountryCode = liveClubCountryCode || clubCountryCode
+  const effectiveLogoUrl = resolveClubLogoUrl(
+    liveLogoPath ?? clubLogoUrl ?? null,
+    logoCacheKey
+  )
+
   const displayUserName = userName || 'Manager'
-  const flagUrl = getFlagImageUrl(clubCountryCode)
+  const flagUrl = getFlagImageUrl(effectiveCountryCode)
   const fallbackLetter = getFallbackLetter(displayName)
 
   const handleNavigate = useCallback(
@@ -198,6 +333,23 @@ export default function Header({
     }
 
     setUnreadCount(Number(data ?? 0))
+  }, [])
+
+  const loadInboxUnreadCount = useCallback(async () => {
+    const { data, error } = await supabase.rpc('inbox_list_threads')
+
+    if (error) {
+      console.error('Failed to load inbox unread count:', error)
+      return
+    }
+
+    const threads = (data ?? []) as InboxThreadRow[]
+    const unread = threads.reduce(
+      (sum, thread) => sum + Math.max(Number(thread.unread_count ?? 0), 0),
+      0
+    )
+
+    setInboxUnreadCount(unread)
   }, [])
 
   const loadNotifications = useCallback(
@@ -302,19 +454,21 @@ export default function Header({
   }, [loadNotifications, loadUnreadCount])
 
   useEffect(() => {
-    void loadUnreadCount()
+    void Promise.all([loadUnreadCount(), loadInboxUnreadCount()])
 
     const intervalId = window.setInterval(() => {
-      void loadUnreadCount()
+      void Promise.all([loadUnreadCount(), loadInboxUnreadCount()])
     }, 60000)
 
     return () => {
       window.clearInterval(intervalId)
     }
-  }, [loadUnreadCount])
+  }, [loadUnreadCount, loadInboxUnreadCount])
 
   useEffect(() => {
     if (!isProfileMenuOpen) return
+
+    void loadInboxUnreadCount()
 
     function handleClickOutside(event: MouseEvent) {
       const target = event.target as Node
@@ -336,7 +490,7 @@ export default function Header({
       document.removeEventListener('mousedown', handleClickOutside)
       document.removeEventListener('keydown', handleEscape)
     }
-  }, [isProfileMenuOpen])
+  }, [isProfileMenuOpen, loadInboxUnreadCount])
 
   useEffect(() => {
     if (!isNotificationsOpen) return
@@ -376,9 +530,9 @@ export default function Header({
           </button>
 
           <div className="flex items-center gap-3">
-            {clubLogoUrl ? (
+            {effectiveLogoUrl ? (
               <TeamAvatar
-                clubLogoUrl={clubLogoUrl}
+                clubLogoUrl={effectiveLogoUrl}
                 alt={displayName}
                 fallbackLetter={fallbackLetter}
                 sizeClass="h-12 w-12"
@@ -457,20 +611,26 @@ export default function Header({
                 </div>
 
                 <div className="py-1">
-                  {profileMenuItems.map((item) =>
-                    item.action === 'logout' ? (
-                      <button
-                        key={item.label}
-                        type="button"
-                        role="menuitem"
-                        onClick={() => {
-                          void handleLogoutClick()
-                        }}
-                        className="w-full px-4 py-2.5 text-left text-sm text-red-600 hover:bg-red-50"
-                      >
-                        {item.label}
-                      </button>
-                    ) : (
+                  {profileMenuItems.map((item) => {
+                    const isInboxItem = item.path === '/dashboard/inbox'
+
+                    if (item.action === 'logout') {
+                      return (
+                        <button
+                          key={item.label}
+                          type="button"
+                          role="menuitem"
+                          onClick={() => {
+                            void handleLogoutClick()
+                          }}
+                          className="w-full px-4 py-2.5 text-left text-sm text-red-600 hover:bg-red-50"
+                        >
+                          {item.label}
+                        </button>
+                      )
+                    }
+
+                    return (
                       <button
                         key={item.label}
                         type="button"
@@ -478,10 +638,18 @@ export default function Header({
                         onClick={() => handleNavigate(item.path!)}
                         className="w-full px-4 py-2.5 text-left text-sm text-black hover:bg-gray-100"
                       >
-                        {item.label}
+                        <span className="inline-flex items-center">
+                          {item.label}
+
+                          {isInboxItem && inboxUnreadCount > 0 ? (
+                            <span className="ml-2 inline-flex min-w-[18px] h-[18px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold leading-none text-white">
+                              {inboxUnreadCount > 99 ? '99+' : inboxUnreadCount}
+                            </span>
+                          ) : null}
+                        </span>
                       </button>
                     )
-                  )}
+                  })}
                 </div>
               </div>
             )}
