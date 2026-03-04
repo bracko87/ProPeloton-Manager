@@ -39,7 +39,7 @@ const makeDefaultConfig = (primary: string, secondary: string): JerseyConfig => 
   pattern: 'stripes',
   sponsorText: 'YOUR CLUB',
   number: '10',
-  numberColor: '#ffffff'
+  numberColor: '#ffffff',
 })
 
 /**
@@ -50,16 +50,16 @@ export function KitDesigner({
   supabase,
   teamId,
   primaryColor,
-  secondaryColor
+  secondaryColor,
 }: {
   supabase: SupabaseClient
   teamId: string
   primaryColor: string
   secondaryColor: string
-}) {
+}): JSX.Element {
   const [name, setName] = useState('Home')
   const [config, setConfig] = useState<JerseyConfig>(
-    makeDefaultConfig(primaryColor, secondaryColor)
+    makeDefaultConfig(primaryColor, secondaryColor),
   )
   const [saving, setSaving] = useState(false)
   const [loading, setLoading] = useState(true)
@@ -69,15 +69,15 @@ export function KitDesigner({
    * keep jersey defaults in sync with team identity when those props change
    */
   useEffect(() => {
-    setConfig((prev) => ({ ...prev, primaryColor, secondaryColor }))
+    setConfig(prev => ({ ...prev, primaryColor, secondaryColor }))
   }, [primaryColor, secondaryColor])
 
   /**
    * update
    * Helper to update a single config key.
    */
-  function update<K extends keyof JerseyConfig>(key: K, value: JerseyConfig[K]) {
-    setConfig((prev) => ({ ...prev, [key]: value }))
+  function update<K extends keyof JerseyConfig>(key: K, value: JerseyConfig[K]): void {
+    setConfig(prev => ({ ...prev, [key]: value }))
   }
 
   const canSave = useMemo(() => {
@@ -130,7 +130,7 @@ export function KitDesigner({
    * saveKit
    * Persists the kit via upsert on (team_id, name).
    */
-  async function saveKit() {
+  async function saveKit(): Promise<void> {
     setSaving(true)
     setMessage(null)
 
@@ -139,11 +139,11 @@ export function KitDesigner({
         team_id: teamId,
         name: name.trim(),
         config,
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
       },
       {
-        onConflict: 'team_id,name'
-      }
+        onConflict: 'team_id,name',
+      },
     )
 
     setSaving(false)
@@ -153,31 +153,27 @@ export function KitDesigner({
   return (
     <div className="grid gap-6 lg:grid-cols-[320px_minmax(0,1fr)]">
       <form
-        onSubmit={(e) => {
+        onSubmit={e => {
           e.preventDefault()
           void saveKit()
         }}
         className="space-y-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
       >
         <div>
-          <label className="mb-1 block text-sm font-medium text-slate-700">
-            Kit name
-          </label>
+          <label className="mb-1 block text-sm font-medium text-slate-700">Kit name</label>
           <input
             value={name}
-            onChange={(e) => setName(e.target.value)}
+            onChange={e => setName(e.target.value)}
             className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none ring-0 focus:border-slate-500"
             placeholder="Home"
           />
         </div>
 
         <div>
-          <label className="mb-1 block text-sm font-medium text-slate-700">
-            Pattern
-          </label>
+          <label className="mb-1 block text-sm font-medium text-slate-700">Pattern</label>
           <select
             value={config.pattern}
-            onChange={(e) => update('pattern', e.target.value as JerseyPattern)}
+            onChange={e => update('pattern', e.target.value as JerseyPattern)}
             className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-500"
           >
             <option value="solid">Solid</option>
@@ -193,7 +189,7 @@ export function KitDesigner({
             <input
               type="color"
               value={config.primaryColor}
-              onChange={(e) => update('primaryColor', e.target.value)}
+              onChange={e => update('primaryColor', e.target.value)}
               className="mt-1 h-10 w-full cursor-pointer rounded-lg border border-slate-300 bg-white p-1"
             />
           </label>
@@ -203,7 +199,7 @@ export function KitDesigner({
             <input
               type="color"
               value={config.secondaryColor}
-              onChange={(e) => update('secondaryColor', e.target.value)}
+              onChange={e => update('secondaryColor', e.target.value)}
               className="mt-1 h-10 w-full cursor-pointer rounded-lg border border-slate-300 bg-white p-1"
             />
           </label>
@@ -213,7 +209,7 @@ export function KitDesigner({
             <input
               type="color"
               value={config.sleeveColor}
-              onChange={(e) => update('sleeveColor', e.target.value)}
+              onChange={e => update('sleeveColor', e.target.value)}
               className="mt-1 h-10 w-full cursor-pointer rounded-lg border border-slate-300 bg-white p-1"
             />
           </label>
@@ -223,7 +219,7 @@ export function KitDesigner({
             <input
               type="color"
               value={config.collarColor}
-              onChange={(e) => update('collarColor', e.target.value)}
+              onChange={e => update('collarColor', e.target.value)}
               className="mt-1 h-10 w-full cursor-pointer rounded-lg border border-slate-300 bg-white p-1"
             />
           </label>
@@ -233,7 +229,7 @@ export function KitDesigner({
             <input
               type="color"
               value={config.trimColor}
-              onChange={(e) => update('trimColor', e.target.value)}
+              onChange={e => update('trimColor', e.target.value)}
               className="mt-1 h-10 w-full cursor-pointer rounded-lg border border-slate-300 bg-white p-1"
             />
           </label>
@@ -243,19 +239,17 @@ export function KitDesigner({
             <input
               type="color"
               value={config.numberColor}
-              onChange={(e) => update('numberColor', e.target.value)}
+              onChange={e => update('numberColor', e.target.value)}
               className="mt-1 h-10 w-full cursor-pointer rounded-lg border border-slate-300 bg-white p-1"
             />
           </label>
         </div>
 
         <div>
-          <label className="mb-1 block text-sm font-medium text-slate-700">
-            Sponsor text
-          </label>
+          <label className="mb-1 block text-sm font-medium text-slate-700">Sponsor text</label>
           <input
             value={config.sponsorText ?? ''}
-            onChange={(e) => update('sponsorText', e.target.value)}
+            onChange={e => update('sponsorText', e.target.value)}
             className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-500"
             placeholder="YOUR CLUB"
             maxLength={18}
@@ -263,14 +257,10 @@ export function KitDesigner({
         </div>
 
         <div>
-          <label className="mb-1 block text-sm font-medium text-slate-700">
-            Shirt number
-          </label>
+          <label className="mb-1 block text-sm font-medium text-slate-700">Shirt number</label>
           <input
             value={config.number ?? ''}
-            onChange={(e) =>
-              update('number', e.target.value.replace(/\D/g, '').slice(0, 2))
-            }
+            onChange={e => update('number', e.target.value.replace(/\D/g, '').slice(0, 2))}
             className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-500"
             placeholder="10"
           />
@@ -291,9 +281,7 @@ export function KitDesigner({
         <div className="mb-4 flex items-center justify-between">
           <div>
             <div className="text-sm font-medium text-slate-700">Live preview</div>
-            <div className="text-xs text-slate-500">
-              How your kit will appear in-game
-            </div>
+            <div className="text-xs text-slate-500">How your kit will appear in-game</div>
           </div>
           <div className="text-xs text-slate-400">Name: {name}</div>
         </div>

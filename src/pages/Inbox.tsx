@@ -3,7 +3,8 @@
 /**
  * Inbox.tsx
  * Real inbox page connected to Supabase RPCs.
- * This version avoids import.meta entirely to prevent preview/runtime crashes.
+ * Updated to resolve the Supabase client at runtime (not at module load),
+ * which is safer in preview/build environments.
  */
 
 import React from 'react'
@@ -22,22 +23,37 @@ type GlobalWithEnv = typeof globalThis & {
   }
 }
 
+type Thread = {
+  conversation_id: string
+  conversation_type: 'direct' | 'admin_direct'
+  subject: string | null
+  display_name: string
+  other_user_id: string | null
+  last_message_preview: string | null
+  last_message_at: string
+  unread_count: number
+  can_reply: boolean
+}
+
+type InboxMessage = {
+  id: string
+  conversation_id: string
+  sender_user_id: string | null
+  sender_kind: 'user' | 'admin' | 'system'
+  sender_display_name: string
+  body: string
+  created_at: string
+}
+
 function getRuntimeEnv(): RuntimeEnv {
   const g = globalThis as GlobalWithEnv
 
-  return (
-    g.__ENV__ ??
-    g.ENV ??
-    g.__APP_ENV__ ??
-    g.process?.env ??
-    {}
-  )
+  return g.__ENV__ ?? g.ENV ?? g.__APP_ENV__ ?? g.process?.env ?? {}
 }
 
 function buildSupabaseClient(): SupabaseClient | null {
   const g = globalThis as GlobalWithEnv
 
-  // Reuse an existing global client if your app already attached one somewhere
   if (g.__SUPABASE__) return g.__SUPABASE__
   if (g.supabase) return g.supabase
 
@@ -70,30 +86,6 @@ function buildSupabaseClient(): SupabaseClient | null {
   }
 }
 
-const supabase = buildSupabaseClient()
-
-type Thread = {
-  conversation_id: string
-  conversation_type: 'direct' | 'admin_direct'
-  subject: string | null
-  display_name: string
-  other_user_id: string | null
-  last_message_preview: string | null
-  last_message_at: string
-  unread_count: number
-  can_reply: boolean
-}
-
-type InboxMessage = {
-  id: string
-  conversation_id: string
-  sender_user_id: string | null
-  sender_kind: 'user' | 'admin' | 'system'
-  sender_display_name: string
-  body: string
-  created_at: string
-}
-
 function formatDateTime(value?: string | null): string {
   if (!value) return ''
 
@@ -123,6 +115,8 @@ function getInitials(name: string): string {
 
 export default function InboxPage(): JSX.Element {
   const [currentUserId, setCurrentUserId] = React.useState<string | null>(null)
+  const [clientReady, setClientReady] = React.useState(false)
+  const [authChecked, setAuthChecked] = React.useState(false)
 
   const [threads, setThreads] = React.useState<Thread[]>([])
   const [activeThreadId, setActiveThreadId] = React.useState<string | null>(null)
@@ -135,6 +129,12 @@ export default function InboxPage(): JSX.Element {
   const [loadingMessages, setLoadingMessages] = React.useState(false)
   const [sending, setSending] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)
+
+  const getClient = React.useCallback((): SupabaseClient | null => {
+    const client = buildSupabaseClient()
+    setClientReady(!!client)
+    return client
+  }, [])
 
   const activeThread = React.useMemo(
     () => threads.find(t => t.conversation_id === activeThreadId) ?? null,
@@ -156,9 +156,11 @@ export default function InboxPage(): JSX.Element {
   }, [threads, search])
 
   const loadThreads = React.useCallback(async () => {
-    if (!supabase) {
+    const client = getClient()
+
+    if (!client) {
       setError(
-        'Supabase client is not available in this runtime. Use your shared Supabase client or expose public env values before connecting the inbox.'
+        'Supabase client is not available in this runtime. This page should use the same shared Supabase client as your app auth.'
       )
       setLoadingThreads(false)
       return
@@ -168,10 +170,12 @@ export default function InboxPage(): JSX.Element {
     setError(null)
 
     try {
-      const { data, error: rpcError } = await supabase.rpc('inbox_list_threads')
+      const { data, error: rpcError } = await client.rpc('inbox_list_threads')
 
       if (rpcError) {
         setError(rpcError.message)
+        setThreads([])
+        setActiveThreadId(null)
         return
       }
 
@@ -187,54 +191,71 @@ export default function InboxPage(): JSX.Element {
       })
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load conversations.')
+      setThreads([])
+      setActiveThreadId(null)
     } finally {
       setLoadingThreads(false)
     }
-  }, [])
+  }, [getClient])
 
-  const loadMessages = React.useCallback(async (conversationId: string) => {
-    if (!supabase) return
+  const loadMessages = React.useCallback(
+    async (conversationId: string) => {
+      const client = getClient()
 
-    setLoadingMessages(true)
-    setError(null)
-
-    try {
-      const { data, error: rpcError } = await supabase.rpc('inbox_get_messages', {
-        p_conversation_id: conversationId
-      })
-
-      if (rpcError) {
-        setError(rpcError.message)
+      if (!client) {
         return
       }
 
-      setMessages((data ?? []) as InboxMessage[])
+      setLoadingMessages(true)
+      setError(null)
 
-      await supabase.rpc('inbox_mark_conversation_read', {
-        p_conversation_id: conversationId
-      })
+      try {
+        const { data, error: rpcError } = await client.rpc('inbox_get_messages', {
+          p_conversation_id: conversationId
+        })
 
-      setThreads(current =>
-        current.map(thread =>
-          thread.conversation_id === conversationId
-            ? { ...thread, unread_count: 0 }
-            : thread
+        if (rpcError) {
+          setError(rpcError.message)
+          setMessages([])
+          return
+        }
+
+        setMessages((data ?? []) as InboxMessage[])
+
+        await client.rpc('inbox_mark_conversation_read', {
+          p_conversation_id: conversationId
+        })
+
+        setThreads(current =>
+          current.map(thread =>
+            thread.conversation_id === conversationId
+              ? { ...thread, unread_count: 0 }
+              : thread
+          )
         )
-      )
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load messages.')
-    } finally {
-      setLoadingMessages(false)
-    }
-  }, [])
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to load messages.')
+        setMessages([])
+      } finally {
+        setLoadingMessages(false)
+      }
+    },
+    [getClient]
+  )
 
   React.useEffect(() => {
     let mounted = true
 
     void (async () => {
-      if (!supabase) {
+      const client = getClient()
+
+      if (!client) {
         if (!mounted) return
+        setError(
+          'Supabase client not detected. Use your existing shared Supabase client in this page so auth/session is shared.'
+        )
         setLoadingThreads(false)
+        setAuthChecked(true)
         return
       }
 
@@ -242,29 +263,34 @@ export default function InboxPage(): JSX.Element {
         const {
           data: { user },
           error: userError
-        } = await supabase.auth.getUser()
+        } = await client.auth.getUser()
 
         if (!mounted) return
 
         if (userError || !user) {
+          setCurrentUserId(null)
           setError('You must be signed in to view your inbox.')
           setLoadingThreads(false)
+          setAuthChecked(true)
           return
         }
 
         setCurrentUserId(user.id)
+        setAuthChecked(true)
         await loadThreads()
       } catch (err) {
         if (!mounted) return
+        setCurrentUserId(null)
         setError(err instanceof Error ? err.message : 'Failed to initialize inbox.')
         setLoadingThreads(false)
+        setAuthChecked(true)
       }
     })()
 
     return () => {
       mounted = false
     }
-  }, [loadThreads])
+  }, [getClient, loadThreads])
 
   React.useEffect(() => {
     if (!activeThreadId) {
@@ -279,17 +305,29 @@ export default function InboxPage(): JSX.Element {
     setActiveThreadId(threadId)
   }
 
+  async function handleRefresh() {
+    await loadThreads()
+  }
+
   async function handleSendMessage(e: React.FormEvent) {
     e.preventDefault()
 
-    if (!supabase) return
-    if (!activeThread || !activeThread.can_reply || !draft.trim() || sending) return
+    const client = getClient()
+
+    if (!client) {
+      setError('Supabase client is not available.')
+      return
+    }
+
+    if (!activeThread || !activeThread.can_reply || !draft.trim() || sending) {
+      return
+    }
 
     setSending(true)
     setError(null)
 
     try {
-      const { error: rpcError } = await supabase.rpc('inbox_send_message', {
+      const { error: rpcError } = await client.rpc('inbox_send_message', {
         p_conversation_id: activeThread.conversation_id,
         p_body: draft.trim()
       })
@@ -311,11 +349,48 @@ export default function InboxPage(): JSX.Element {
 
   return (
     <div className="w-full">
-      <div className="mb-5">
-        <h1 className="text-2xl font-semibold text-slate-900">Inbox</h1>
-        <p className="mt-1 text-sm text-slate-500">
-          Private conversations and admin inbox messages.
-        </p>
+      <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold text-slate-900">Inbox</h1>
+          <p className="mt-1 text-sm text-slate-500">
+            Private conversations and admin inbox messages.
+          </p>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => void handleRefresh()}
+          className="inline-flex items-center rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50"
+        >
+          Refresh
+        </button>
+      </div>
+
+      <div className="mb-4 grid gap-3 md:grid-cols-3">
+        <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
+          <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+            Client
+          </div>
+          <div className="mt-1 text-sm font-medium text-slate-900">
+            {clientReady ? 'Available' : 'Not detected'}
+          </div>
+        </div>
+
+        <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
+          <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+            Auth user
+          </div>
+          <div className="mt-1 break-all text-sm font-medium text-slate-900">
+            {authChecked ? currentUserId ?? 'Not signed in' : 'Checking...'}
+          </div>
+        </div>
+
+        <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
+          <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+            Loaded threads
+          </div>
+          <div className="mt-1 text-sm font-medium text-slate-900">{threads.length}</div>
+        </div>
       </div>
 
       {error ? (
@@ -341,7 +416,13 @@ export default function InboxPage(): JSX.Element {
               <div className="p-5 text-sm text-slate-500">Loading conversations...</div>
             ) : filteredThreads.length === 0 ? (
               <div className="p-5 text-sm text-slate-500">
-                {search.trim() ? 'No conversations found.' : 'No conversations yet.'}
+                {!clientReady
+                  ? 'Supabase client not detected.'
+                  : !currentUserId
+                  ? 'No authenticated user in this page.'
+                  : search.trim()
+                  ? 'No conversations found.'
+                  : 'No conversations for this account yet.'}
               </div>
             ) : (
               filteredThreads.map(thread => {
@@ -410,7 +491,9 @@ export default function InboxPage(): JSX.Element {
                   No conversation selected
                 </div>
                 <div className="mt-1 text-sm text-slate-500">
-                  Choose a thread from the left sidebar.
+                  {threads.length > 0
+                    ? 'Choose a thread from the left sidebar.'
+                    : 'Once a thread is visible on the left, open it here.'}
                 </div>
               </div>
             </div>
