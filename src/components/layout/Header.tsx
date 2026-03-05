@@ -16,6 +16,10 @@
  * FIX: Club-sync updates from localStorage/events are only applied when they
  * match the active club + signed-in user, preventing cross-team name/logo bleed
  * from stale "ppm-active-club" data.
+ *
+ * UPDATE: Wallet support (refactor)
+ * - Header keeps the Coins UI pill, but coinBalance is now received as a prop
+ * - Header no longer queries user_wallets / no loadCoinBalance
  */
 
 import React, { useCallback, useEffect, useRef, useState } from 'react'
@@ -39,6 +43,7 @@ interface HeaderProps {
   userName?: string
   onNavigate?: (path: string) => void
   onLogout?: () => void
+  coinBalance?: number
 }
 
 type MenuItem = {
@@ -188,6 +193,7 @@ export default function Header({
   userName,
   onNavigate,
   onLogout,
+  coinBalance = 0,
 }: HeaderProps) {
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false)
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false)
@@ -522,6 +528,7 @@ export default function Header({
     setIsMarkingAllRead(false)
   }, [loadNotifications, loadUnreadCount])
 
+  // UPDATED: periodic refresh cycle now only covers notifications + inbox counters (coins come from props)
   useEffect(() => {
     void Promise.all([loadUnreadCount(), loadInboxUnreadCount()])
 
@@ -628,6 +635,11 @@ export default function Header({
         </div>
 
         <div className="flex items-center gap-3">
+          {/* Coins pill (now driven by prop) */}
+          <div className="rounded-md border border-black/35 bg-yellow-300/70 px-3 py-1.5 text-sm font-semibold text-black min-w-[130px] text-center">
+            ◎ {coinBalance.toLocaleString()} Coins
+          </div>
+
           <button
             className="relative text-black hover:opacity-80 p-2 rounded-md hover:bg-black/10"
             aria-label="Notifications"
@@ -833,7 +845,11 @@ export default function Header({
 
                           <div className="min-w-0 flex-1">
                             <div className="flex items-start justify-between gap-3">
-                              <div className={`text-sm ${isUnread ? 'font-semibold text-black' : 'font-medium text-black'}`}>
+                              <div
+                                className={`text-sm ${
+                                  isUnread ? 'font-semibold text-black' : 'font-medium text-black'
+                                }`}
+                              >
                                 {item.title}
                               </div>
 

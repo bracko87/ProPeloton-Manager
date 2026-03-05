@@ -1,6 +1,11 @@
 /**
  * MainLayout.tsx
  * Layout used for in-game pages: retractable sidebar, header, content, and footer with game-time.
+ *
+ * UPDATE:
+ * - Adds coin-status check in dashboard load flow via supabase.rpc('get_my_coin_status')
+ * - Stores coinBalance + canPlayToday in MainLayout state for app-wide gating
+ * - Adds gameplay paywall modal + blocks interactions when canPlayToday is false
  */
 
 import React, { useEffect, useState } from 'react'
@@ -22,12 +27,21 @@ interface ClubUiState {
   logoUrl: string | null
 }
 
+interface CoinStatusRow {
+  balance: number
+  can_play: boolean
+}
+
+const COINS_NEEDED_TO_PLAY = 2
+
 /**
  * MainLayout
  * Wraps dashboard pages with consistent header, sidebar and footer.
  */
 export default function MainLayout({ children }: MainLayoutProps) {
   const [collapsed, setCollapsed] = useState(false)
+  const [coinBalance, setCoinBalance] = useState(0)
+  const [canPlayToday, setCanPlayToday] = useState(true)
   const [clubUi, setClubUi] = useState<ClubUiState>({
     id: undefined,
     name: 'ProPeloton Manager',
@@ -35,6 +49,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
     countryName: '',
     logoUrl: null,
   })
+
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -100,7 +115,28 @@ export default function MainLayout({ children }: MainLayoutProps) {
       })
     }
 
-    loadClubUi()
+    const loadCoinStatus = async () => {
+      const { data, error } = await supabase.rpc('get_my_coin_status')
+
+      if (error) {
+        console.error('Failed to load coin status:', error)
+
+        if (!mounted) return
+
+        setCoinBalance(0)
+        setCanPlayToday(false)
+        return
+      }
+
+      const row = ((data ?? []) as CoinStatusRow[])[0] ?? { balance: 0, can_play: false }
+
+      if (!mounted) return
+
+      setCoinBalance(Math.max(Number(row.balance ?? 0), 0))
+      setCanPlayToday(Boolean(row.can_play))
+    }
+
+    void Promise.all([loadClubUi(), loadCoinStatus()])
 
     return () => {
       mounted = false
@@ -122,10 +158,44 @@ export default function MainLayout({ children }: MainLayoutProps) {
           onNavigate={(path) => navigate(path)}
         />
 
-        <main className="p-6 lg:p-8 flex-1 overflow-auto">{children ?? <Outlet />}</main>
+        <main className={`p-6 lg:p-8 flex-1 overflow-auto ${!canPlayToday ? 'pointer-events-none select-none' : ''}`}>
+          {children ?? <Outlet />}
+        </main>
 
         <Footer />
       </div>
+
+      {!canPlayToday ? (
+        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/45 backdrop-blur-[2px] p-4">
+          <div className="w-full max-w-md rounded-xl border border-black/10 bg-white p-6 shadow-2xl">
+            <h2 className="text-xl font-bold text-black">You need more Coins to play today</h2>
+            <p className="mt-2 text-sm text-gray-600">
+              Your balance is <span className="font-semibold">◎ {coinBalance.toLocaleString()} Coins</span>.
+            </p>
+            <p className="mt-1 text-sm text-gray-600">
+              At least <span className="font-semibold">{COINS_NEEDED_TO_PLAY} Coins</span> are required to continue
+              gameplay.
+            </p>
+
+            <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => navigate('/dashboard/pro')}
+                className="rounded-md bg-yellow-400 px-4 py-2 text-sm font-semibold text-black hover:bg-yellow-300"
+              >
+                Buy Coins
+              </button>
+              <button
+                type="button"
+                disabled
+                className="rounded-md border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-400 cursor-not-allowed"
+              >
+                Watch Video (Soon)
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   )
 }

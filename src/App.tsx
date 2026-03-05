@@ -288,7 +288,11 @@ export default function App(): JSX.Element {
             <Route path="preferences" element={<PreferencesPage />} />
             <Route path="help" element={<HelpPage />} />
             <Route path="contact-us" element={<ContactUsPage />} />
+
+            {/* NEW: /dashboard/pro alias so paywall CTA works */}
+            <Route path="pro" element={<ProPackagesPage />} />
             <Route path="pro-packages" element={<ProPackagesPage />} />
+
             <Route path="invite-friends" element={<InviteFriendsPage />} />
           </Route>
 
