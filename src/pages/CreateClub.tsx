@@ -22,11 +22,12 @@
  * UPDATE:
  * - Removed the Badge Shape, Symbol, and Letter customization sections from the Create Club flow.
  * - Users can now only change the interior pattern selection (interior layout).
- * - Updated customization container styling to emerald-accented.
- * - Updated preview helper text to reflect interior layout/colors update live.
+ * - Consolidated the interior pattern selector into the Team Preview area (removed bottom panel).
+ * - Cleaned up now-unused accordion code/state tied to the removed bottom panel.
  * - FIX: Rasterize badge SVG to PNG before upload (image/png) for consistent transparent logo rendering.
  * - DIAGNOSTICS: Logs when referral persistence is skipped due to missing referral code
  *   or inability to resolve created club id.
+ * - SVG MARKUP: Removed explicit transparent background rect prior to PNG rasterization to improve transparency handling.
  */
 
 import React, { useEffect, useState } from 'react'
@@ -94,7 +95,6 @@ type BadgeSymbol =
   | 'torch'
 
 type OverlayMode = 'none' | 'symbol' | 'letter'
-type CustomizationSection = 'pattern'
 
 const patternOptions: BadgePattern[] = [
   'solid',
@@ -208,16 +208,28 @@ function getBadgeClipPath(shape: BadgeShape): string {
   }
 }
 
+/**
+ * flagEmojiFromCode
+ * Fallback if the remote flag image fails.
+ */
 function flagEmojiFromCode(code: string): string {
   const clean = code.trim().toUpperCase()
   if (!/^[A-Z]{2}$/.test(clean)) return '🏳️'
   return clean.replace(/./g, (char) => String.fromCodePoint(127397 + char.charCodeAt(0)))
 }
 
+/**
+ * slugify
+ * Safe text for file names.
+ */
 function slugify(value: string): string {
   return value.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
 }
 
+/**
+ * escapeXml
+ * Makes text safe inside generated SVG.
+ */
 function escapeXml(value: string): string {
   return value
     .replace(/&/g, '&amp;')
@@ -227,10 +239,16 @@ function escapeXml(value: string): string {
     .replace(/'/g, '&apos;')
 }
 
+/**
+ * getSvgShapeMarkup
+ * Returns SVG markup for outer and inner badge shapes.
+ */
 function getSvgShapeMarkup(shape: BadgeShape, fill: string, inset = false): string {
   switch (shape) {
     case 'circle':
-      return inset ? `<circle cx="128" cy="128" r="102" fill="${fill}" />` : `<circle cx="128" cy="128" r="118" fill="${fill}" />`
+      return inset
+        ? `<circle cx="128" cy="128" r="102" fill="${fill}" />`
+        : `<circle cx="128" cy="128" r="118" fill="${fill}" />`
 
     case 'shield':
       return inset
@@ -282,25 +300,36 @@ function getSvgShapeMarkup(shape: BadgeShape, fill: string, inset = false): stri
   }
 }
 
+/**
+ * getPatternSvgMarkup
+ * Returns SVG markup for interior color layout clipped inside the badge.
+ */
 function getPatternSvgMarkup(pattern: BadgePattern, _primary: string, secondary: string): string {
   switch (pattern) {
     case 'solid':
       return ''
+
     case 'horizontal-band':
       return `<rect x="0" y="104" width="256" height="48" fill="${secondary}" />`
+
     case 'double-horizontal':
       return `
         <rect x="0" y="76" width="256" height="34" fill="${secondary}" />
         <rect x="0" y="146" width="256" height="34" fill="${secondary}" />
       `
+
     case 'vertical-split':
       return `<rect x="128" y="0" width="128" height="256" fill="${secondary}" />`
+
     case 'horizontal-split':
       return `<rect x="0" y="128" width="256" height="128" fill="${secondary}" />`
+
     case 'diagonal-sash':
       return `<rect x="-46" y="104" width="348" height="34" fill="${secondary}" transform="rotate(-18 128 128)" />`
+
     case 'diagonal-split':
       return `<polygon points="256,0 256,256 0,256" fill="${secondary}" />`
+
     case 'stripes-vertical':
       return `
         <rect x="0" y="0" width="34" height="256" fill="${secondary}" />
@@ -308,6 +337,7 @@ function getPatternSvgMarkup(pattern: BadgePattern, _primary: string, secondary:
         <rect x="136" y="0" width="34" height="256" fill="${secondary}" />
         <rect x="204" y="0" width="34" height="256" fill="${secondary}" />
       `
+
     case 'stripes-horizontal':
       return `
         <rect x="0" y="0" width="256" height="34" fill="${secondary}" />
@@ -315,20 +345,32 @@ function getPatternSvgMarkup(pattern: BadgePattern, _primary: string, secondary:
         <rect x="0" y="136" width="256" height="34" fill="${secondary}" />
         <rect x="0" y="204" width="256" height="34" fill="${secondary}" />
       `
+
     case 'chevron':
       return `<polygon points="48,64 128,158 208,64 230,84 128,200 26,84" fill="${secondary}" />`
+
     case 'center-band':
       return `<rect x="92" y="0" width="72" height="256" fill="${secondary}" />`
+
     case 'quartered':
       return `
         <rect x="128" y="0" width="128" height="128" fill="${secondary}" />
         <rect x="0" y="128" width="128" height="128" fill="${secondary}" />
       `
+
     default:
       return ''
   }
 }
 
+/**
+ * buildBadgeSvg
+ * Builds the generated team badge as SVG text so it can be rasterized then uploaded as PNG.
+ *
+ * Shape/overlay are fixed in this page (no customization UI).
+ *
+ * NOTE: Explicit transparent background rect removed to improve transparency after rasterization.
+ */
 function buildBadgeSvg(
   shape: BadgeShape,
   pattern: BadgePattern,
@@ -346,6 +388,7 @@ function buildBadgeSvg(
 
   let overlayMarkup = ''
 
+  // (Overlay is fixed to "none" in this page, but kept for compatibility.)
   if (overlayMode === 'symbol' && badgeSymbol !== 'none') {
     overlayMarkup = `
       <g clip-path="url(#innerClip)">
@@ -383,7 +426,6 @@ function buildBadgeSvg(
         </clipPath>
       </defs>
 
-      <rect width="256" height="256" fill="transparent" />
       ${outerShape}
       ${innerShape}
 
@@ -405,14 +447,20 @@ function buildBadgeSvg(
   `.trim()
 }
 
+/**
+ * PatternOverlay
+ * Renders interior pattern layers in the live preview.
+ */
 function PatternOverlay({ pattern, secondary }: { pattern: BadgePattern; secondary: string }): JSX.Element | null {
   const fill = { backgroundColor: secondary } as React.CSSProperties
 
   switch (pattern) {
     case 'solid':
       return null
+
     case 'horizontal-band':
       return <div className="absolute left-0 right-0 top-[42%] h-[18%]" style={fill} />
+
     case 'double-horizontal':
       return (
         <>
@@ -420,19 +468,26 @@ function PatternOverlay({ pattern, secondary }: { pattern: BadgePattern; seconda
           <div className="absolute left-0 right-0 top-[60%] h-[13%]" style={fill} />
         </>
       )
+
     case 'vertical-split':
       return <div className="absolute top-0 bottom-0 right-0 w-1/2" style={fill} />
+
     case 'horizontal-split':
       return <div className="absolute left-0 right-0 bottom-0 h-1/2" style={fill} />
+
     case 'diagonal-sash':
       return <div className="absolute left-[-12%] top-[40%] h-[16%] w-[124%] -rotate-[18deg]" style={fill} />
+
     case 'diagonal-split':
       return (
         <div
           className="absolute inset-0"
-          style={{ background: `linear-gradient(135deg, transparent 0 49%, ${secondary} 49% 100%)` }}
+          style={{
+            background: `linear-gradient(135deg, transparent 0 49%, ${secondary} 49% 100%)`,
+          }}
         />
       )
+
     case 'stripes-vertical':
       return (
         <>
@@ -442,6 +497,7 @@ function PatternOverlay({ pattern, secondary }: { pattern: BadgePattern; seconda
           <div className="absolute top-0 bottom-0 left-[84%] w-[14%]" style={fill} />
         </>
       )
+
     case 'stripes-horizontal':
       return (
         <>
@@ -451,6 +507,7 @@ function PatternOverlay({ pattern, secondary }: { pattern: BadgePattern; seconda
           <div className="absolute left-0 right-0 top-[84%] h-[14%]" style={fill} />
         </>
       )
+
     case 'chevron':
       return (
         <>
@@ -458,8 +515,10 @@ function PatternOverlay({ pattern, secondary }: { pattern: BadgePattern; seconda
           <div className="absolute right-[14%] top-[34%] h-[14%] w-[38%] rotate-45" style={fill} />
         </>
       )
+
     case 'center-band':
       return <div className="absolute top-0 bottom-0 left-[36%] w-[28%]" style={fill} />
+
     case 'quartered':
       return (
         <>
@@ -467,11 +526,16 @@ function PatternOverlay({ pattern, secondary }: { pattern: BadgePattern; seconda
           <div className="absolute bottom-0 left-0 h-1/2 w-1/2" style={fill} />
         </>
       )
+
     default:
       return null
   }
 }
 
+/**
+ * BadgePreview
+ * Renders a flexible preview badge using selected shape + pattern.
+ */
 function BadgePreview({
   shape,
   pattern,
@@ -501,43 +565,6 @@ function BadgePreview({
   )
 }
 
-function SelectionCard({
-  id,
-  title,
-  subtitle,
-  isOpen,
-  onToggle,
-  children,
-}: {
-  id: CustomizationSection
-  title: string
-  subtitle: string
-  isOpen: boolean
-  onToggle: (id: CustomizationSection) => void
-  children: React.ReactNode
-}): JSX.Element {
-  return (
-    <div className="rounded-xl border border-gray-200 bg-white p-4 text-left shadow-sm">
-      <button
-        type="button"
-        onClick={() => onToggle(id)}
-        className="w-full flex items-start justify-between gap-4 text-left"
-      >
-        <div>
-          <div className="text-sm font-semibold text-gray-900">{title}</div>
-          <div className="mt-1 text-xs text-gray-500">{subtitle}</div>
-        </div>
-
-        <span className="inline-flex h-7 min-w-7 items-center justify-center rounded-full border border-gray-300 text-sm font-bold text-gray-600 px-2">
-          {isOpen ? '−' : '+'}
-        </span>
-      </button>
-
-      {isOpen ? <div className="mt-4">{children}</div> : null}
-    </div>
-  )
-}
-
 /**
  * CreateClubPage
  * Team creation form with Supabase RPC integration and generated logo persistence.
@@ -558,10 +585,10 @@ export default function CreateClubPage(): JSX.Element {
   const [loadingCountries, setLoadingCountries] = useState<boolean>(true)
   const [submitting, setSubmitting] = useState<boolean>(false)
   const [error, setError] = useState<string | null>(null)
-
-  const [badgePattern, setBadgePattern] = useState<BadgePattern>('horizontal-band')
-  const [openSection, setOpenSection] = useState<CustomizationSection | null>(null)
   const [flagImageError, setFlagImageError] = useState(false)
+
+  // Only customization left: interior pattern (in Team Preview panel)
+  const [badgePattern, setBadgePattern] = useState<BadgePattern>('horizontal-band')
 
   // Fixed badge visuals for this page
   const badgeShape: BadgeShape = 'shield'
@@ -571,10 +598,6 @@ export default function CreateClubPage(): JSX.Element {
 
   function updateField(key: keyof typeof form, value: string): void {
     setForm((prev) => ({ ...prev, [key]: value }))
-  }
-
-  function toggleSection(section: CustomizationSection): void {
-    setOpenSection((prev) => (prev === section ? null : section))
   }
 
   useEffect(() => {
@@ -740,7 +763,6 @@ export default function CreateClubPage(): JSX.Element {
 
   const selectedCountry = countries.find((c) => c.code === form.countryCode) ?? null
   const flagUrl = form.countryCode ? `https://flagcdn.com/w40/${form.countryCode.toLowerCase()}.png` : ''
-
   const overlaySummary = 'No symbol / letter selected'
 
   return (
@@ -922,56 +944,43 @@ export default function CreateClubPage(): JSX.Element {
 
                 <div className="mt-2 text-xs text-gray-500">{overlaySummary}</div>
 
-                <div className="mt-8 w-full grid grid-cols-2 gap-3">
-                  <div className="rounded-lg border border-gray-200 p-3 bg-white">
-                    <div className="text-xs font-medium text-gray-500">Primary</div>
-                    <div className="mt-2 h-8 rounded-md border border-black/10" style={{ backgroundColor: form.primary }} />
+                {/* Consolidated Interior Style selector into the Team Preview area */}
+                <div className="mt-8 w-full rounded-xl border border-emerald-200 bg-emerald-50/40 p-4 text-left">
+                  <div className="text-sm font-semibold text-gray-900">Interior Style</div>
+                  <div className="mt-1 text-xs text-gray-500">
+                    Choose how the primary and secondary colors are divided.
                   </div>
 
-                  <div className="rounded-lg border border-gray-200 p-3 bg-white">
-                    <div className="text-xs font-medium text-gray-500">Secondary</div>
-                    <div className="mt-2 h-8 rounded-md border border-black/10" style={{ backgroundColor: form.secondary }} />
+                  <div className="mt-3 grid grid-cols-4 gap-2">
+                    {patternOptions.map((pattern) => (
+                      <button
+                        key={pattern}
+                        type="button"
+                        onClick={() => setBadgePattern(pattern)}
+                        className={`rounded-lg border p-2 flex flex-col items-center justify-center transition ${
+                          badgePattern === pattern
+                            ? 'border-blue-500 bg-blue-50'
+                            : 'border-gray-200 bg-white hover:border-gray-300'
+                        }`}
+                        aria-label={`Select ${patternLabels[pattern]} pattern`}
+                        title={patternLabels[pattern]}
+                      >
+                        <BadgePreview
+                          shape={badgeShape}
+                          pattern={pattern}
+                          primary={form.primary}
+                          secondary={form.secondary}
+                          size="small"
+                        />
+                      </button>
+                    ))}
                   </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
-
-        <div className="rounded-xl border-2 border-emerald-200 bg-emerald-50/40 p-4 lg:p-6">
-          <div className="grid grid-cols-1 gap-4">
-            <SelectionCard
-              id="pattern"
-              title="Interior Style"
-              subtitle="Choose how the primary and secondary colors are divided."
-              isOpen={openSection === 'pattern'}
-              onToggle={toggleSection}
-            >
-              <div className="grid grid-cols-4 gap-2">
-                {patternOptions.map((pattern) => (
-                  <button
-                    key={pattern}
-                    type="button"
-                    onClick={() => setBadgePattern(pattern)}
-                    className={`rounded-lg border p-2 flex flex-col items-center justify-center transition ${
-                      badgePattern === pattern ? 'border-blue-500 bg-blue-50' : 'border-gray-200 bg-white hover:border-gray-300'
-                    }`}
-                    aria-label={`Select ${patternLabels[pattern]} pattern`}
-                    title={patternLabels[pattern]}
-                  >
-                    <BadgePreview
-                      shape={badgeShape}
-                      pattern={pattern}
-                      primary={form.primary}
-                      secondary={form.secondary}
-                      size="small"
-                    />
-                  </button>
-                ))}
-              </div>
-            </SelectionCard>
-          </div>
-        </div>
+        {/* Removed the separate lower “Interior Style” panel entirely */}
       </div>
     </div>
   )
