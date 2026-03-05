@@ -157,8 +157,13 @@ function TeamAvatar({
 }) {
   if (clubLogoUrl) {
     return (
-      <div className={`${sizeClass} shrink-0 flex items-center justify-center overflow-hidden rounded-md bg-white p-1`}>
-        <img src={clubLogoUrl} alt={alt} className="max-h-full max-w-full object-contain" draggable={false} />
+      <div className={`${sizeClass} shrink-0 flex items-center justify-center bg-transparent`}>
+        <img
+          src={clubLogoUrl}
+          alt={alt}
+          className="h-full w-full object-contain mix-blend-multiply"
+          draggable={false}
+        />
       </div>
     )
   }
@@ -828,9 +833,7 @@ export default function Header({
 
                           <div className="min-w-0 flex-1">
                             <div className="flex items-start justify-between gap-3">
-                              <div
-                                className={`text-sm ${isUnread ? 'font-semibold text-black' : 'font-medium text-black'}`}
-                              >
+                              <div className={`text-sm ${isUnread ? 'font-semibold text-black' : 'font-medium text-black'}`}>
                                 {item.title}
                               </div>
 

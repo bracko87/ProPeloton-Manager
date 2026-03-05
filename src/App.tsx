@@ -9,6 +9,12 @@
  * - Provide small loading and error states in guards instead of blank screens.
  */
 
+/**
+ * Import lightweight process shim early to avoid "process is not defined"
+ * runtime errors coming from some dependencies or build outputs.
+ */
+import './lib/processShim'
+
 import React, { useEffect, useState } from 'react'
 import { HashRouter, Route, Routes, Navigate } from 'react-router'
 import HomePage from './pages/Home'

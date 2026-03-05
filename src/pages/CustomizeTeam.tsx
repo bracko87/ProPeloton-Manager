@@ -13,6 +13,14 @@
  * - Accept JPG/PNG/WEBP uploads.
  * - Convert uploaded logos to PNG in-browser.
  * - Store them as PNG in `club-logos`.
+ *
+ * UPDATE (remove logo behavior + base logo):
+ * - Remove Logo no longer sets logo_path to null.
+ * - Instead regenerates and restores a deterministic base logo:
+ *   generated/base-<clubId>.png
+ * - Base logo is a shield-style SVG built from team colors, rasterized to PNG,
+ *   and upserted to Supabase storage.
+ * - Team color updates also refresh that base logo in the background so it stays in sync.
  */
 
 import React, { useEffect, useId, useMemo, useRef, useState } from 'react'
@@ -77,7 +85,7 @@ function fileToDataUrl(file: File): Promise<string> {
 }
 
 /**
- * Logo validation (UPDATED): allow JPG/PNG/WEBP, max 0.5MB.
+ * Logo validation: allow JPG/PNG/WEBP, max 0.5MB.
  */
 function validateLogoFile(file: File): string | null {
   const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp']
@@ -94,7 +102,7 @@ function validateLogoFile(file: File): string | null {
 }
 
 /**
- * Convert an uploaded logo file into a PNG Blob (UPDATED).
+ * Convert an uploaded logo file into a PNG Blob.
  */
 function convertFileToPngBlob(file: File): Promise<Blob> {
   return new Promise((resolve, reject) => {
@@ -180,9 +188,6 @@ function validateJerseyUploadFile(file: File): Promise<string | null> {
 
 /**
  * For remote jersey URLs, we only verify that the image can load.
- * We intentionally do NOT enforce remote dimensions here, because the URL
- * is not being stored as file bytes in our backend. The UI always renders
- * it with object-contain + max bounds so it fits safely in-game.
  */
 function validateRemoteJerseyImage(url: string): Promise<string | null> {
   return new Promise(resolve => {
@@ -203,6 +208,89 @@ function validateRemoteJerseyImage(url: string): Promise<string | null> {
 function sanitizeTeamName(value: string): string {
   return value.replace(/\s+/g, ' ').trim()
 }
+
+/** ---------------- Base Logo helpers (NEW) ---------------- */
+
+function buildBaseBadgeSvg(primary: string, secondary: string): string {
+  return `
+    <svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256">
+      <polygon points="128,10 225,46 210,148 128,246 46,148 31,46" fill="${secondary}" />
+      <polygon points="128,30 205,58 194,140 128,220 62,140 51,58" fill="${primary}" />
+      <polygon points="62,118 194,118 194,140 128,220 62,140" fill="${secondary}" />
+      <rect x="30" y="116" width="196" height="24" fill="${secondary}" />
+      <rect x="58" y="58" width="94" height="28" transform="rotate(-12 58 58)" fill="#ffffff" opacity="0.15" />
+    </svg>
+  `.trim()
+}
+
+function rasterizeSvgToPngBlob(svg: string, size = 512): Promise<Blob> {
+  return new Promise((resolve, reject) => {
+    const svgBlob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' })
+    const objectUrl = URL.createObjectURL(svgBlob)
+    const image = new Image()
+
+    image.onload = () => {
+      const canvas = document.createElement('canvas')
+      canvas.width = size
+      canvas.height = size
+
+      const context = canvas.getContext('2d')
+      if (!context) {
+        URL.revokeObjectURL(objectUrl)
+        reject(new Error('Failed to render base logo image.'))
+        return
+      }
+
+      context.clearRect(0, 0, size, size)
+      context.drawImage(image, 0, 0, size, size)
+
+      canvas.toBlob(
+        blob => {
+          URL.revokeObjectURL(objectUrl)
+
+          if (!blob) {
+            reject(new Error('Failed to export base logo image.'))
+            return
+          }
+
+          resolve(blob)
+        },
+        'image/png',
+        1,
+      )
+    }
+
+    image.onerror = () => {
+      URL.revokeObjectURL(objectUrl)
+      reject(new Error('Failed to load base logo image.'))
+    }
+
+    image.src = objectUrl
+  })
+}
+
+async function upsertBaseTeamLogo(
+  clubId: string,
+  primaryColor: string,
+  secondaryColor: string,
+): Promise<string> {
+  const baseLogoPath = `generated/base-${clubId}.png`
+  const baseBadgeSvg = buildBaseBadgeSvg(primaryColor, secondaryColor)
+  const baseBadgePng = await rasterizeSvgToPngBlob(baseBadgeSvg)
+
+  const { error } = await supabase.storage.from(LOGO_BUCKET).upload(baseLogoPath, baseBadgePng, {
+    upsert: true,
+    contentType: 'image/png',
+  })
+
+  if (error) {
+    throw new Error(error.message || 'Failed to refresh base team logo.')
+  }
+
+  return baseLogoPath
+}
+
+/** ---------------- Jersey / Kits ---------------- */
 
 function createGenericKitConfig(): TeamKitConfig {
   return {
@@ -310,7 +398,7 @@ function GenericJerseySvg({
 
 /**
  * Used on the Customize Team page "Current logo" box.
- * This intentionally shows the full logo inside a square box (not circle-cropped).
+ * Shows full logo in a square box (not circle-cropped).
  */
 function HeaderLogo({
   logoSrc,
@@ -926,6 +1014,16 @@ export default function CustomizeTeamPage(): JSX.Element {
 
     if (!updatedClub) return
 
+    // NEW: refresh base logo in background so base logo stays in sync
+    if (clubId) {
+      try {
+        await upsertBaseTeamLogo(clubId, updatedClub.primary_color, updatedClub.secondary_color)
+      } catch (baseLogoError) {
+        // eslint-disable-next-line no-console
+        console.warn('Unable to refresh base logo after color update', baseLogoError)
+      }
+    }
+
     showSuccess('Team colors updated.')
     showTopNotice('success', `Team colors changed to ${updatedClub.primary_color} and ${updatedClub.secondary_color}.`)
   }
@@ -1009,7 +1107,7 @@ export default function CustomizeTeamPage(): JSX.Element {
       setError(null)
       setSaving(true)
 
-      // UPDATED: convert to PNG and store PNG in the bucket
+      // convert to PNG and store PNG in the bucket
       const pngLogoBlob = await convertFileToPngBlob(pendingLogoFile)
       const filePath = `logos/${clubId}-${Date.now()}.png`
 
@@ -1037,16 +1135,30 @@ export default function CustomizeTeamPage(): JSX.Element {
     }
   }
 
+  /**
+   * UPDATED: Remove Logo now restores a deterministic generated base logo
+   * instead of setting logo_path to null.
+   */
   async function handleRemoveLogo(): Promise<void> {
-    const updatedClub = await persistClub({ logo_path: null })
-    if (!updatedClub) return
+    if (!clubId) {
+      setError('Club not found.')
+      return
+    }
 
-    setLogoPreview(null)
-    setLogoUrlInput('')
-    setPendingLogoFile(null)
-    setPendingLogoUrl(null)
-    setLogoVersion(Date.now())
-    showSuccess('Custom logo removed.')
+    try {
+      const baseLogoPath = await upsertBaseTeamLogo(clubId, appliedPrimaryColor, appliedSecondaryColor)
+      const updatedClub = await persistClub({ logo_path: baseLogoPath })
+      if (!updatedClub) return
+
+      setLogoPreview(null)
+      setLogoUrlInput('')
+      setPendingLogoFile(null)
+      setPendingLogoUrl(null)
+      setLogoVersion(Date.now())
+      showSuccess('Custom logo removed. Base team logo restored.')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to restore base logo.')
+    }
   }
 
   return (
