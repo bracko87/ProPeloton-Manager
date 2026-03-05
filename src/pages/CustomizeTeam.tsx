@@ -8,6 +8,11 @@
  * - Adjust the supabase import path if needed.
  * - Club branding persists to public.clubs.
  * - Jersey config persists to public.team_kits using the `config` jsonb column.
+ *
+ * UPDATE (logo flow):
+ * - Accept JPG/PNG/WEBP uploads.
+ * - Convert uploaded logos to PNG in-browser.
+ * - Store them as PNG in `club-logos`.
  */
 
 import React, { useEffect, useId, useMemo, useRef, useState } from 'react'
@@ -71,11 +76,14 @@ function fileToDataUrl(file: File): Promise<string> {
   })
 }
 
-function validateJpgFile(file: File): string | null {
-  const validTypes = ['image/jpeg', 'image/jpg']
+/**
+ * Logo validation (UPDATED): allow JPG/PNG/WEBP, max 0.5MB.
+ */
+function validateLogoFile(file: File): string | null {
+  const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp']
 
   if (!validTypes.includes(file.type)) {
-    return 'Only JPG images are allowed.'
+    return 'Only JPG, PNG, or WEBP images are allowed.'
   }
 
   if (file.size > MAX_FILE_SIZE) {
@@ -83,6 +91,52 @@ function validateJpgFile(file: File): string | null {
   }
 
   return null
+}
+
+/**
+ * Convert an uploaded logo file into a PNG Blob (UPDATED).
+ */
+function convertFileToPngBlob(file: File): Promise<Blob> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+
+    reader.onload = () => {
+      const image = new Image()
+
+      image.onload = () => {
+        const canvas = document.createElement('canvas')
+        canvas.width = image.naturalWidth
+        canvas.height = image.naturalHeight
+
+        const context = canvas.getContext('2d')
+        if (!context) {
+          reject(new Error('Failed to process logo image.'))
+          return
+        }
+
+        context.clearRect(0, 0, canvas.width, canvas.height)
+        context.drawImage(image, 0, 0)
+
+        canvas.toBlob(
+          blob => {
+            if (!blob) {
+              reject(new Error('Failed to convert logo to PNG.'))
+              return
+            }
+            resolve(blob)
+          },
+          'image/png',
+          1,
+        )
+      }
+
+      image.onerror = () => reject(new Error('Failed to load logo image.'))
+      image.src = String(reader.result)
+    }
+
+    reader.onerror = () => reject(new Error('Failed to read logo image.'))
+    reader.readAsDataURL(file)
+  })
 }
 
 function validateJerseyUploadFile(file: File): Promise<string | null> {
@@ -221,12 +275,7 @@ function GenericJerseySvg({
     'M56 24h48l14 10 18 22-9 15-18-10v86H51V61L33 71 24 56l18-22 14-10z'
 
   return (
-    <svg
-      viewBox="0 0 160 180"
-      className={className}
-      aria-hidden="true"
-      role="img"
-    >
+    <svg viewBox="0 0 160 180" className={className} aria-hidden="true" role="img">
       <defs>
         <clipPath id={clipId}>
           <path d={shirtPath} />
@@ -254,13 +303,7 @@ function GenericJerseySvg({
         />
       </g>
 
-      <path
-        d={shirtPath}
-        fill="none"
-        stroke={stroke}
-        strokeWidth="3"
-        strokeLinejoin="round"
-      />
+      <path d={shirtPath} fill="none" stroke={stroke} strokeWidth="3" strokeLinejoin="round" />
     </svg>
   )
 }
@@ -291,12 +334,8 @@ function HeaderLogo({
 
   if (logoSrc) {
     return (
-      <div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-md border border-gray-200 bg-white p-2">
-        <img
-          src={logoSrc}
-          alt="Club logo"
-          className="max-h-full max-w-full object-contain"
-        />
+      <div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-md border border-gray-200 bg-transparent">
+        <img src={logoSrc} alt="Club logo" className="max-h-full max-w-full object-contain" />
       </div>
     )
   }
@@ -313,11 +352,7 @@ function HeaderLogo({
   )
 }
 
-function KitDesigner({
-  teamId,
-  primaryColor,
-  secondaryColor,
-}: KitDesignerProps): JSX.Element {
+function KitDesigner({ teamId, primaryColor, secondaryColor }: KitDesignerProps): JSX.Element {
   const [loaded, setLoaded] = useState(false)
   const [saving, setSaving] = useState(false)
   const [appliedKitConfig, setAppliedKitConfig] = useState<TeamKitConfig>(createGenericKitConfig())
@@ -465,10 +500,7 @@ function KitDesigner({
 
     const typedUrl = jerseyUrlInput.trim()
 
-    if (
-      typedUrl &&
-      (draftKitConfig.mode !== 'image_url' || draftKitConfig.image_url !== typedUrl)
-    ) {
+    if (typedUrl && (draftKitConfig.mode !== 'image_url' || draftKitConfig.image_url !== typedUrl)) {
       const committed = await handleJerseyUrlCommit()
       if (!committed) return
 
@@ -493,8 +525,7 @@ function KitDesigner({
           template: 'striped-tshirt',
           mode: nextConfig.mode,
           image_url: nextConfig.mode === 'image_url' ? nextConfig.image_url : null,
-          image_data_url:
-            nextConfig.mode === 'uploaded_image' ? nextConfig.image_data_url : null,
+          image_data_url: nextConfig.mode === 'uploaded_image' ? nextConfig.image_data_url : null,
         } satisfies TeamKitConfig,
         updated_at: new Date().toISOString(),
       }
@@ -535,16 +566,10 @@ function KitDesigner({
         <div className="text-sm font-medium mb-3">Generic jersey</div>
 
         <div className="flex items-center justify-center min-h-[220px] rounded-lg border border-gray-100 bg-gray-50">
-          <GenericJerseySvg
-            primaryColor={primaryColor}
-            secondaryColor={secondaryColor}
-            className="w-36 h-auto"
-          />
+          <GenericJerseySvg primaryColor={primaryColor} secondaryColor={secondaryColor} className="w-36 h-auto" />
         </div>
 
-        <div className="mt-3 text-xs text-center text-gray-500">
-          Default team jersey
-        </div>
+        <div className="mt-3 text-xs text-center text-gray-500">Default team jersey</div>
       </div>
 
       <div className="rounded-xl border border-gray-200 bg-gray-50 p-4 space-y-4">
@@ -617,11 +642,7 @@ function KitDesigner({
                 }}
               />
             ) : (
-              <GenericJerseySvg
-                primaryColor={primaryColor}
-                secondaryColor={secondaryColor}
-                className="w-44 h-auto"
-              />
+              <GenericJerseySvg primaryColor={primaryColor} secondaryColor={secondaryColor} className="w-44 h-auto" />
             )}
           </div>
         </div>
@@ -631,9 +652,7 @@ function KitDesigner({
         </div>
 
         {kitNotice ? (
-          <div className="rounded-md border border-gray-200 bg-white px-4 py-3 text-sm text-gray-700">
-            {kitNotice}
-          </div>
+          <div className="rounded-md border border-gray-200 bg-white px-4 py-3 text-sm text-gray-700">{kitNotice}</div>
         ) : null}
       </div>
     </div>
@@ -908,17 +927,14 @@ export default function CustomizeTeamPage(): JSX.Element {
     if (!updatedClub) return
 
     showSuccess('Team colors updated.')
-    showTopNotice(
-      'success',
-      `Team colors changed to ${updatedClub.primary_color} and ${updatedClub.secondary_color}.`,
-    )
+    showTopNotice('success', `Team colors changed to ${updatedClub.primary_color} and ${updatedClub.secondary_color}.`)
   }
 
   async function handleLogoUpload(event: React.ChangeEvent<HTMLInputElement>): Promise<void> {
     const file = event.target.files?.[0]
     if (!file) return
 
-    const validationError = validateJpgFile(file)
+    const validationError = validateLogoFile(file)
     if (validationError) {
       setError(validationError)
       event.target.value = ''
@@ -985,7 +1001,7 @@ export default function CustomizeTeamPage(): JSX.Element {
     }
 
     if (!pendingLogoFile) {
-      setError('Please upload a JPG logo or provide an image URL first.')
+      setError('Please upload a logo image or provide an image URL first.')
       return
     }
 
@@ -993,14 +1009,14 @@ export default function CustomizeTeamPage(): JSX.Element {
       setError(null)
       setSaving(true)
 
-      const filePath = `logos/${clubId}-${Date.now()}.jpg`
+      // UPDATED: convert to PNG and store PNG in the bucket
+      const pngLogoBlob = await convertFileToPngBlob(pendingLogoFile)
+      const filePath = `logos/${clubId}-${Date.now()}.png`
 
-      const { error: uploadError } = await supabase.storage
-        .from(LOGO_BUCKET)
-        .upload(filePath, pendingLogoFile, {
-          upsert: true,
-          contentType: 'image/jpeg',
-        })
+      const { error: uploadError } = await supabase.storage.from(LOGO_BUCKET).upload(filePath, pngLogoBlob, {
+        upsert: true,
+        contentType: 'image/png',
+      })
 
       if (uploadError) throw uploadError
 
@@ -1138,9 +1154,7 @@ export default function CustomizeTeamPage(): JSX.Element {
             <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
               <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
                 <div className="flex-shrink-0 rounded-lg border border-gray-200 bg-white p-3">
-                  <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">
-                    Current logo
-                  </div>
+                  <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">Current logo</div>
                   <div className="flex items-center justify-center">
                     <HeaderLogo
                       logoSrc={resolvedLogoUrl}
@@ -1154,17 +1168,17 @@ export default function CustomizeTeamPage(): JSX.Element {
                 <div className="flex-1 space-y-3">
                   <div className="flex flex-col sm:flex-row sm:items-center gap-3">
                     <label className="inline-flex items-center justify-center px-4 py-2 rounded-md border border-gray-300 bg-white cursor-pointer hover:bg-gray-50">
-                      <span className="text-sm font-medium">Upload JPG logo</span>
+                      <span className="text-sm font-medium">Upload logo image</span>
                       <input
                         type="file"
-                        accept=".jpg,.jpeg,image/jpeg"
+                        accept=".png,.jpg,.jpeg,.webp,image/png,image/jpeg,image/webp"
                         className="hidden"
                         onChange={handleLogoUpload}
                       />
                     </label>
 
                     <div className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-900">
-                      JPG only. Maximum file size: 0.5 MB
+                      JPG, PNG, or WEBP. Uploaded logos are saved as PNG. Maximum file size: 0.5 MB
                     </div>
                   </div>
 
@@ -1213,11 +1227,7 @@ export default function CustomizeTeamPage(): JSX.Element {
           <div className="bg-white p-4 rounded-lg shadow space-y-4">
             <h3 className="text-lg font-semibold">Jersey Creator</h3>
             {clubId ? (
-              <KitDesigner
-                teamId={clubId}
-                primaryColor={appliedPrimaryColor}
-                secondaryColor={appliedSecondaryColor}
-              />
+              <KitDesigner teamId={clubId} primaryColor={appliedPrimaryColor} secondaryColor={appliedSecondaryColor} />
             ) : (
               <div className="text-sm text-gray-600">Team not loaded yet.</div>
             )}

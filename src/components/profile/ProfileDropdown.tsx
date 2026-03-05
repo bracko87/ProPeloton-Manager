@@ -9,7 +9,7 @@
  */
 
 import React, { useEffect, useRef, useState } from 'react'
-import { NavLink, useNavigate } from 'react-router'
+import { useNavigate } from 'react-router'
 import { useAuth } from '../../context/AuthProvider'
 import { supabase } from '../../lib/supabase'
 import PlaceholderLogo from './PlaceholderLogo'
@@ -68,7 +68,7 @@ export default function ProfileDropdown({ clubLogoUrl, clubName }: ProfileDropdo
     { key: 'contact', label: 'Contact Us', to: '/contact' },
     { key: 'pro', label: 'Pro Packages', to: '/pro' },
     { key: 'invite', label: 'Invite Friends', to: '/invite' },
-    { key: 'logout', label: 'Logout', action: signOutUser }
+    { key: 'logout', label: 'Logout', action: signOutUser },
   ]
 
   useEffect(() => {
@@ -114,9 +114,9 @@ export default function ProfileDropdown({ clubLogoUrl, clubName }: ProfileDropdo
         className="flex items-center gap-2 rounded-full p-0.5 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500"
         title={clubName || username}
       >
-        <div className="h-9 w-9 rounded-full overflow-hidden border border-black/10 bg-black flex items-center justify-center">
+        <div className="h-9 w-9 rounded-full overflow-hidden border border-black/10 bg-transparent flex items-center justify-center">
           {clubLogoUrl ? (
-            <img src={clubLogoUrl} alt={clubName || 'Club'} className="h-full w-full object-cover" />
+            <img src={clubLogoUrl} alt={clubName || 'Club'} className="h-full w-full object-contain" />
           ) : (
             <PlaceholderLogo name={clubName || username || 'club'} size={36} />
           )}

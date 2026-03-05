@@ -5,7 +5,8 @@
  * Purpose:
  * - Load selectable countries from public.countries and store countryCode.
  * - Generate the selected badge preview as an SVG logo.
- * - Upload that generated logo into Supabase Storage (club-logos).
+ * - Rasterize generated SVG into PNG for consistent transparency rendering.
+ * - Upload that generated logo into Supabase Storage (club-logos) as PNG.
  * - Call RPC public.create_club(...) with validated form data.
  * - Do not write directly to any club-related tables.
  * - UI uses "team" language, while backend still uses the existing create_club RPC.
@@ -17,6 +18,15 @@
  *   console.warn('Unable to save referral', referralError)
  * }
  * If it fails, you will only see it in the browser console.
+ *
+ * UPDATE:
+ * - Removed the Badge Shape, Symbol, and Letter customization sections from the Create Club flow.
+ * - Users can now only change the interior pattern selection (interior layout).
+ * - Updated customization container styling to emerald-accented.
+ * - Updated preview helper text to reflect interior layout/colors update live.
+ * - FIX: Rasterize badge SVG to PNG before upload (image/png) for consistent transparent logo rendering.
+ * - DIAGNOSTICS: Logs when referral persistence is skipped due to missing referral code
+ *   or inability to resolve created club id.
  */
 
 import React, { useEffect, useState } from 'react'
@@ -84,20 +94,7 @@ type BadgeSymbol =
   | 'torch'
 
 type OverlayMode = 'none' | 'symbol' | 'letter'
-type CustomizationSection = 'shape' | 'pattern' | 'symbol' | 'letter'
-
-const badgeOptions: BadgeShape[] = [
-  'circle',
-  'shield',
-  'diamond',
-  'hexagon',
-  'triangle',
-  'square',
-  'banner',
-  'crest',
-  'octagon',
-  'pennant',
-]
+type CustomizationSection = 'pattern'
 
 const patternOptions: BadgePattern[] = [
   'solid',
@@ -114,43 +111,6 @@ const patternOptions: BadgePattern[] = [
   'quartered',
 ]
 
-const symbolOptions: BadgeSymbol[] = [
-  'none',
-  'star',
-  'bolt',
-  'crown',
-  'mountain',
-  'wheel',
-  'wing',
-  'flame',
-  'shield-mark',
-  'sword',
-  'anchor',
-  'heart',
-  'sun',
-  'moon',
-  'eagle',
-  'wolf',
-  'leaf',
-  'cross',
-  'clover',
-  'gem',
-  'torch',
-]
-
-const shapeLabels: Record<BadgeShape, string> = {
-  circle: 'Circle',
-  shield: 'Shield',
-  diamond: 'Diamond',
-  hexagon: 'Hexagon',
-  triangle: 'Triangle',
-  square: 'Square',
-  banner: 'Banner',
-  crest: 'Crest',
-  octagon: 'Octagon',
-  pennant: 'Pennant',
-}
-
 const patternLabels: Record<BadgePattern, string> = {
   solid: 'Solid',
   'horizontal-band': 'Band',
@@ -166,28 +126,55 @@ const patternLabels: Record<BadgePattern, string> = {
   quartered: 'Quartered',
 }
 
-const symbolLabels: Record<BadgeSymbol, string> = {
-  none: 'None',
-  star: 'Star',
-  bolt: 'Bolt',
-  crown: 'Crown',
-  mountain: 'Mountain',
-  wheel: 'Wheel',
-  wing: 'Wing',
-  flame: 'Flame',
-  'shield-mark': 'Shield',
-  sword: 'Sword',
-  anchor: 'Anchor',
-  heart: 'Heart',
-  sun: 'Sun',
-  moon: 'Moon',
-  eagle: 'Eagle',
-  wolf: 'Wolf',
-  leaf: 'Leaf',
-  cross: 'Cross',
-  clover: 'Clover',
-  gem: 'Gem',
-  torch: 'Torch',
+/**
+ * rasterizeBadgeSvgToPng
+ * Converts a generated SVG string into a PNG Blob using an in-browser canvas.
+ * This improves consistent transparent rendering in downstream usage (e.g. header logo).
+ */
+function rasterizeBadgeSvgToPng(svg: string, size = 512): Promise<Blob> {
+  return new Promise((resolve, reject) => {
+    const svgBlob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' })
+    const objectUrl = URL.createObjectURL(svgBlob)
+    const image = new Image()
+
+    image.onload = () => {
+      const canvas = document.createElement('canvas')
+      canvas.width = size
+      canvas.height = size
+
+      const context = canvas.getContext('2d')
+      if (!context) {
+        URL.revokeObjectURL(objectUrl)
+        reject(new Error('Failed to render badge image.'))
+        return
+      }
+
+      context.clearRect(0, 0, size, size)
+      context.drawImage(image, 0, 0, size, size)
+
+      canvas.toBlob(
+        (blob) => {
+          URL.revokeObjectURL(objectUrl)
+
+          if (!blob) {
+            reject(new Error('Failed to export badge image.'))
+            return
+          }
+
+          resolve(blob)
+        },
+        'image/png',
+        1
+      )
+    }
+
+    image.onerror = () => {
+      URL.revokeObjectURL(objectUrl)
+      reject(new Error('Failed to load generated badge image.'))
+    }
+
+    image.src = objectUrl
+  })
 }
 
 /**
@@ -221,28 +208,16 @@ function getBadgeClipPath(shape: BadgeShape): string {
   }
 }
 
-/**
- * flagEmojiFromCode
- * Fallback if the remote flag image fails.
- */
 function flagEmojiFromCode(code: string): string {
   const clean = code.trim().toUpperCase()
   if (!/^[A-Z]{2}$/.test(clean)) return '🏳️'
   return clean.replace(/./g, (char) => String.fromCodePoint(127397 + char.charCodeAt(0)))
 }
 
-/**
- * slugify
- * Safe text for file names.
- */
 function slugify(value: string): string {
   return value.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
 }
 
-/**
- * escapeXml
- * Makes text safe inside generated SVG.
- */
 function escapeXml(value: string): string {
   return value
     .replace(/&/g, '&amp;')
@@ -252,10 +227,6 @@ function escapeXml(value: string): string {
     .replace(/'/g, '&apos;')
 }
 
-/**
- * getSvgShapeMarkup
- * Returns SVG markup for outer and inner badge shapes.
- */
 function getSvgShapeMarkup(shape: BadgeShape, fill: string, inset = false): string {
   switch (shape) {
     case 'circle':
@@ -277,7 +248,9 @@ function getSvgShapeMarkup(shape: BadgeShape, fill: string, inset = false): stri
         : `<polygon points="58,14 198,14 244,128 198,242 58,242 12,128" fill="${fill}" />`
 
     case 'triangle':
-      return inset ? `<polygon points="128,28 222,222 34,222" fill="${fill}" />` : `<polygon points="128,10 246,246 10,246" fill="${fill}" />`
+      return inset
+        ? `<polygon points="128,28 222,222 34,222" fill="${fill}" />`
+        : `<polygon points="128,10 246,246 10,246" fill="${fill}" />`
 
     case 'square':
       return inset
@@ -309,36 +282,25 @@ function getSvgShapeMarkup(shape: BadgeShape, fill: string, inset = false): stri
   }
 }
 
-/**
- * getPatternSvgMarkup
- * Returns SVG markup for interior color layout clipped inside the badge.
- */
-function getPatternSvgMarkup(pattern: BadgePattern, primary: string, secondary: string): string {
+function getPatternSvgMarkup(pattern: BadgePattern, _primary: string, secondary: string): string {
   switch (pattern) {
     case 'solid':
       return ''
-
     case 'horizontal-band':
       return `<rect x="0" y="104" width="256" height="48" fill="${secondary}" />`
-
     case 'double-horizontal':
       return `
         <rect x="0" y="76" width="256" height="34" fill="${secondary}" />
         <rect x="0" y="146" width="256" height="34" fill="${secondary}" />
       `
-
     case 'vertical-split':
       return `<rect x="128" y="0" width="128" height="256" fill="${secondary}" />`
-
     case 'horizontal-split':
       return `<rect x="0" y="128" width="256" height="128" fill="${secondary}" />`
-
     case 'diagonal-sash':
       return `<rect x="-46" y="104" width="348" height="34" fill="${secondary}" transform="rotate(-18 128 128)" />`
-
     case 'diagonal-split':
       return `<polygon points="256,0 256,256 0,256" fill="${secondary}" />`
-
     case 'stripes-vertical':
       return `
         <rect x="0" y="0" width="34" height="256" fill="${secondary}" />
@@ -346,7 +308,6 @@ function getPatternSvgMarkup(pattern: BadgePattern, primary: string, secondary: 
         <rect x="136" y="0" width="34" height="256" fill="${secondary}" />
         <rect x="204" y="0" width="34" height="256" fill="${secondary}" />
       `
-
     case 'stripes-horizontal':
       return `
         <rect x="0" y="0" width="256" height="34" fill="${secondary}" />
@@ -354,131 +315,20 @@ function getPatternSvgMarkup(pattern: BadgePattern, primary: string, secondary: 
         <rect x="0" y="136" width="256" height="34" fill="${secondary}" />
         <rect x="0" y="204" width="256" height="34" fill="${secondary}" />
       `
-
     case 'chevron':
-      return `
-        <polygon points="48,64 128,158 208,64 230,84 128,200 26,84" fill="${secondary}" />
-      `
-
+      return `<polygon points="48,64 128,158 208,64 230,84 128,200 26,84" fill="${secondary}" />`
     case 'center-band':
       return `<rect x="92" y="0" width="72" height="256" fill="${secondary}" />`
-
     case 'quartered':
       return `
         <rect x="128" y="0" width="128" height="128" fill="${secondary}" />
         <rect x="0" y="128" width="128" height="128" fill="${secondary}" />
       `
-
     default:
       return ''
   }
 }
 
-/**
- * getSvgSymbolMarkup
- * Returns a central symbol for the badge in SVG coordinates (0..100 viewBox).
- */
-function getSvgSymbolMarkup(symbol: Exclude<BadgeSymbol, 'none'>, color: string): string {
-  switch (symbol) {
-    case 'star':
-      return `<polygon points="50,8 62,36 92,36 68,54 78,88 50,68 22,88 32,54 8,36 38,36" fill="${color}" />`
-    case 'bolt':
-      return `<polygon points="58,8 22,56 46,56 38,92 78,40 54,40" fill="${color}" />`
-    case 'crown':
-      return `
-        <polygon points="10,72 24,28 45,52 62,22 79,52 92,34 90,72" fill="${color}" />
-        <rect x="10" y="72" width="80" height="13" fill="${color}" rx="3" />
-      `
-    case 'mountain':
-      return `
-        <polygon points="8,80 34,40 50,64 70,34 92,80" fill="${color}" />
-        <polygon points="58,34 66,46 76,34" fill="#ffffff" opacity="0.75" />
-      `
-    case 'wheel':
-      return `
-        <circle cx="50" cy="50" r="30" fill="none" stroke="${color}" stroke-width="9" />
-        <circle cx="50" cy="50" r="7" fill="${color}" />
-        <line x1="50" y1="20" x2="50" y2="80" stroke="${color}" stroke-width="6" />
-        <line x1="20" y1="50" x2="80" y2="50" stroke="${color}" stroke-width="6" />
-        <line x1="29" y1="29" x2="71" y2="71" stroke="${color}" stroke-width="5" />
-        <line x1="71" y1="29" x2="29" y2="71" stroke="${color}" stroke-width="5" />
-      `
-    case 'wing':
-      return `<polygon points="10,58 52,24 84,36 60,48 90,54 60,66 84,74 48,78 22,70" fill="${color}" />`
-    case 'flame':
-      return `
-        <path d="M50 8 C72 24 82 44 74 62 C68 76 58 86 50 94 C42 86 26 74 26 54 C26 34 38 20 50 8 Z" fill="${color}" />
-        <path d="M50 32 C60 44 62 54 60 62 C58 69 54 74 50 79 C46 74 40 68 40 60 C40 50 44 41 50 32 Z" fill="#ffffff" opacity="0.45" />
-      `
-    case 'shield-mark':
-      return `<path d="M50 12 L82 24 L76 62 L50 88 L24 62 L18 24 Z" fill="${color}" />`
-    case 'sword':
-      return `
-        <polygon points="50,10 58,22 54,58 46,58 42,22" fill="${color}" />
-        <rect x="36" y="58" width="28" height="8" fill="${color}" rx="2" />
-        <rect x="46" y="66" width="8" height="20" fill="${color}" rx="2" />
-      `
-    case 'anchor':
-      return `
-        <circle cx="50" cy="24" r="8" fill="none" stroke="${color}" stroke-width="6" />
-        <line x1="50" y1="32" x2="50" y2="74" stroke="${color}" stroke-width="8" />
-        <path d="M22 56 Q22 82 50 84 Q78 82 78 56" fill="none" stroke="${color}" stroke-width="8" />
-        <line x1="34" y1="68" x2="22" y2="56" stroke="${color}" stroke-width="8" />
-        <line x1="66" y1="68" x2="78" y2="56" stroke="${color}" stroke-width="8" />
-      `
-    case 'heart':
-      return `<path d="M50 86 L18 54 C10 42 16 24 32 22 C40 22 46 26 50 34 C54 26 60 22 68 22 C84 24 90 42 82 54 Z" fill="${color}" />`
-    case 'sun':
-      return `
-        <circle cx="50" cy="50" r="16" fill="${color}" />
-        <g stroke="${color}" stroke-width="7" stroke-linecap="round">
-          <line x1="50" y1="12" x2="50" y2="26" />
-          <line x1="50" y1="74" x2="50" y2="88" />
-          <line x1="12" y1="50" x2="26" y2="50" />
-          <line x1="74" y1="50" x2="88" y2="50" />
-          <line x1="22" y1="22" x2="32" y2="32" />
-          <line x1="68" y1="68" x2="78" y2="78" />
-          <line x1="68" y1="32" x2="78" y2="22" />
-          <line x1="22" y1="78" x2="32" y2="68" />
-        </g>
-      `
-    case 'moon':
-      return `<path d="M66 18 C50 22 38 36 38 52 C38 68 50 82 66 86 C46 90 24 76 20 54 C16 32 30 14 50 10 C56 9 62 11 66 18 Z" fill="${color}" />`
-    case 'eagle':
-      return `<path d="M10 52 L34 40 L50 54 L66 40 L90 52 L68 58 L80 72 L58 68 L50 84 L42 68 L20 72 L32 58 Z" fill="${color}" />`
-    case 'wolf':
-      return `<path d="M24 80 L32 30 L46 40 L54 22 L66 42 L80 34 L76 80 Z" fill="${color}" />`
-    case 'leaf':
-      return `<path d="M50 88 C74 70 82 46 74 22 C50 28 30 44 26 66 C24 78 36 90 50 88 Z" fill="${color}" />`
-    case 'cross':
-      return `
-        <rect x="42" y="16" width="16" height="68" fill="${color}" rx="2" />
-        <rect x="24" y="36" width="52" height="16" fill="${color}" rx="2" />
-      `
-    case 'clover':
-      return `
-        <circle cx="38" cy="38" r="14" fill="${color}" />
-        <circle cx="62" cy="38" r="14" fill="${color}" />
-        <circle cx="38" cy="62" r="14" fill="${color}" />
-        <circle cx="62" cy="62" r="14" fill="${color}" />
-        <rect x="46" y="66" width="8" height="20" fill="${color}" rx="2" />
-      `
-    case 'gem':
-      return `<polygon points="50,10 76,28 66,76 34,76 24,28" fill="${color}" />`
-    case 'torch':
-      return `
-        <rect x="44" y="44" width="12" height="40" fill="${color}" rx="3" />
-        <path d="M50 10 C62 20 66 34 58 44 C54 48 50 52 50 52 C50 52 46 48 42 44 C34 34 38 20 50 10 Z" fill="${color}" />
-      `
-    default:
-      return ''
-  }
-}
-
-/**
- * buildBadgeSvg
- * Builds the generated team badge as SVG text so it can be uploaded to Supabase Storage.
- */
 function buildBadgeSvg(
   shape: BadgeShape,
   pattern: BadgePattern,
@@ -501,9 +351,6 @@ function buildBadgeSvg(
       <g clip-path="url(#innerClip)">
         <circle cx="128" cy="128" r="54" fill="#000000" opacity="0.12" />
         <circle cx="128" cy="128" r="46" fill="#ffffff" opacity="0.12" />
-        <g transform="translate(70 70) scale(1.16)">
-          ${getSvgSymbolMarkup(badgeSymbol, '#ffffff')}
-        </g>
       </g>
     `
   }
@@ -558,10 +405,6 @@ function buildBadgeSvg(
   `.trim()
 }
 
-/**
- * PatternOverlay
- * Renders interior pattern layers in the live preview.
- */
 function PatternOverlay({ pattern, secondary }: { pattern: BadgePattern; secondary: string }): JSX.Element | null {
   const fill = { backgroundColor: secondary } as React.CSSProperties
 
@@ -587,9 +430,7 @@ function PatternOverlay({ pattern, secondary }: { pattern: BadgePattern; seconda
       return (
         <div
           className="absolute inset-0"
-          style={{
-            background: `linear-gradient(135deg, transparent 0 49%, ${secondary} 49% 100%)`,
-          }}
+          style={{ background: `linear-gradient(135deg, transparent 0 49%, ${secondary} 49% 100%)` }}
         />
       )
     case 'stripes-vertical':
@@ -631,40 +472,15 @@ function PatternOverlay({ pattern, secondary }: { pattern: BadgePattern; seconda
   }
 }
 
-/**
- * SymbolGraphic
- * Renders an inline symbol icon in the live preview.
- */
-function SymbolGraphic({ symbol }: { symbol: Exclude<BadgeSymbol, 'none'> }): JSX.Element {
-  return (
-    <svg
-      viewBox="0 0 100 100"
-      className="w-full h-full"
-      aria-hidden="true"
-      dangerouslySetInnerHTML={{ __html: getSvgSymbolMarkup(symbol, '#ffffff') }}
-    />
-  )
-}
-
-/**
- * BadgePreview
- * Renders a flexible preview badge using selected shape, pattern and overlay.
- */
 function BadgePreview({
   shape,
   pattern,
-  overlayMode,
-  symbol,
-  letter,
   primary,
   secondary,
   size = 'large',
 }: {
   shape: BadgeShape
   pattern: BadgePattern
-  overlayMode: OverlayMode
-  symbol: BadgeSymbol
-  letter: string
   primary: string
   secondary: string
   size?: 'large' | 'small'
@@ -672,44 +488,19 @@ function BadgePreview({
   const clipPath = getBadgeClipPath(shape)
   const outerSize = size === 'large' ? 'w-56 h-56' : 'w-12 h-12'
   const innerInset = size === 'large' ? 'inset-[10px]' : 'inset-[3px]'
-  const overlaySize = size === 'large' ? 'w-[38%] h-[38%]' : 'w-[46%] h-[46%]'
-  const letterSize = size === 'large' ? 'text-5xl' : 'text-base'
-  const cleanLetter = letter.trim().toUpperCase().slice(0, 1)
 
   return (
     <div className={`relative ${outerSize}`} aria-hidden="true">
       <div className="absolute inset-0" style={{ backgroundColor: secondary, clipPath } as React.CSSProperties} />
-
       <div className={`absolute ${innerInset} overflow-hidden`} style={{ clipPath } as React.CSSProperties}>
         <div className="absolute inset-0" style={{ backgroundColor: primary }} />
-
         <PatternOverlay pattern={pattern} secondary={secondary} />
-
         <div className="absolute -left-[8%] top-[14%] h-[18%] w-[48%] -rotate-12 bg-white/15" />
-
-        {overlayMode !== 'none' ? (
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="absolute w-[40%] h-[40%] rounded-full bg-black/10" />
-            <div className="absolute w-[34%] h-[34%] rounded-full bg-white/10" />
-
-            <div className={`relative ${overlaySize} flex items-center justify-center`}>
-              {overlayMode === 'symbol' && symbol !== 'none' ? <SymbolGraphic symbol={symbol as Exclude<BadgeSymbol, 'none'>} /> : null}
-
-              {overlayMode === 'letter' && cleanLetter ? (
-                <span className={`${letterSize} font-extrabold text-white leading-none select-none`}>{cleanLetter}</span>
-              ) : null}
-            </div>
-          </div>
-        ) : null}
       </div>
     </div>
   )
 }
 
-/**
- * SelectionCard
- * Collapsible customization card where only one section can remain open at a time.
- */
 function SelectionCard({
   id,
   title,
@@ -727,7 +518,11 @@ function SelectionCard({
 }): JSX.Element {
   return (
     <div className="rounded-xl border border-gray-200 bg-white p-4 text-left shadow-sm">
-      <button type="button" onClick={() => onToggle(id)} className="w-full flex items-start justify-between gap-4 text-left">
+      <button
+        type="button"
+        onClick={() => onToggle(id)}
+        className="w-full flex items-start justify-between gap-4 text-left"
+      >
         <div>
           <div className="text-sm font-semibold text-gray-900">{title}</div>
           <div className="mt-1 text-xs text-gray-500">{subtitle}</div>
@@ -763,13 +558,16 @@ export default function CreateClubPage(): JSX.Element {
   const [loadingCountries, setLoadingCountries] = useState<boolean>(true)
   const [submitting, setSubmitting] = useState<boolean>(false)
   const [error, setError] = useState<string | null>(null)
-  const [badgeShape, setBadgeShape] = useState<BadgeShape>('shield')
+
   const [badgePattern, setBadgePattern] = useState<BadgePattern>('horizontal-band')
-  const [badgeSymbol, setBadgeSymbol] = useState<BadgeSymbol>('none')
-  const [overlayMode, setOverlayMode] = useState<OverlayMode>('none')
-  const [badgeLetter, setBadgeLetter] = useState<string>('')
   const [openSection, setOpenSection] = useState<CustomizationSection | null>(null)
   const [flagImageError, setFlagImageError] = useState(false)
+
+  // Fixed badge visuals for this page
+  const badgeShape: BadgeShape = 'shield'
+  const overlayMode: OverlayMode = 'none'
+  const badgeSymbol: BadgeSymbol = 'none'
+  const badgeLetter = ''
 
   function updateField(key: keyof typeof form, value: string): void {
     setForm((prev) => ({ ...prev, [key]: value }))
@@ -777,36 +575,6 @@ export default function CreateClubPage(): JSX.Element {
 
   function toggleSection(section: CustomizationSection): void {
     setOpenSection((prev) => (prev === section ? null : section))
-  }
-
-  function selectSymbol(symbol: BadgeSymbol): void {
-    setBadgeSymbol(symbol)
-
-    if (symbol === 'none') {
-      if (overlayMode === 'symbol') {
-        setOverlayMode('none')
-      }
-      return
-    }
-
-    setOverlayMode('symbol')
-  }
-
-  function setLetterValue(value: string): void {
-    const clean = value.replace(/[^a-z0-9]/gi, '').toUpperCase().slice(0, 1)
-    setBadgeLetter(clean)
-
-    if (clean) {
-      setOverlayMode('letter')
-    } else if (overlayMode === 'letter') {
-      setOverlayMode('none')
-    }
-  }
-
-  function clearOverlay(): void {
-    setOverlayMode('none')
-    setBadgeSymbol('none')
-    setBadgeLetter('')
   }
 
   useEffect(() => {
@@ -850,13 +618,6 @@ export default function CreateClubPage(): JSX.Element {
     }
   }, [])
 
-  /**
-   * handleSubmit
-   * Generates the selected badge, uploads it to Supabase Storage, then creates the club via RPC.
-   * If a pending referral exists, it is applied after successful club creation.
-   *
-   * Referral insert is intentionally non-blocking: failures are logged to the console only.
-   */
   async function handleSubmit(e: React.FormEvent): Promise<void> {
     e.preventDefault()
     setError(null)
@@ -881,15 +642,23 @@ export default function CreateClubPage(): JSX.Element {
     let uploadedLogoPath: string | null = null
 
     try {
-      const svg = buildBadgeSvg(badgeShape, badgePattern, overlayMode, badgeSymbol, badgeLetter, form.primary, form.secondary)
+      const svg = buildBadgeSvg(
+        badgeShape,
+        badgePattern,
+        overlayMode,
+        badgeSymbol,
+        badgeLetter,
+        form.primary,
+        form.secondary
+      )
 
-      const svgBlob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' })
+      const pngBlob = await rasterizeBadgeSvgToPng(svg)
 
       const safeName = slugify(form.name) || 'team'
-      uploadedLogoPath = `${user.id}/${Date.now()}-${safeName}-badge.svg`
+      uploadedLogoPath = `${user.id}/${Date.now()}-${safeName}-badge.png`
 
-      const { error: uploadError } = await supabase.storage.from('club-logos').upload(uploadedLogoPath, svgBlob, {
-        contentType: 'image/svg+xml',
+      const { error: uploadError } = await supabase.storage.from('club-logos').upload(uploadedLogoPath, pngBlob, {
+        contentType: 'image/png',
         upsert: false,
       })
 
@@ -920,6 +689,7 @@ export default function CreateClubPage(): JSX.Element {
         return
       }
 
+      // ---- Referral persistence (diagnostic logging added) ----
       const pendingReferralCode = getPendingReferralCode()
 
       if (pendingReferralCode) {
@@ -943,14 +713,18 @@ export default function CreateClubPage(): JSX.Element {
           try {
             await applyPendingReferral({
               referralCode: pendingReferralCode,
-              referredUserId: user.id,
               referredClubId: createdClubId,
             })
           } catch (referralError) {
             console.warn('Unable to save referral', referralError)
           }
+        } else {
+          console.warn('Referral was skipped because created club id was not resolved after create_club RPC.')
         }
+      } else {
+        console.info('No pending referral code found at club creation time.')
       }
+      // --------------------------------------------------------
 
       navigate('/dashboard/overview')
     } catch (err: any) {
@@ -967,12 +741,7 @@ export default function CreateClubPage(): JSX.Element {
   const selectedCountry = countries.find((c) => c.code === form.countryCode) ?? null
   const flagUrl = form.countryCode ? `https://flagcdn.com/w40/${form.countryCode.toLowerCase()}.png` : ''
 
-  const overlaySummary =
-    overlayMode === 'symbol' && badgeSymbol !== 'none'
-      ? `Symbol: ${symbolLabels[badgeSymbol]}`
-      : overlayMode === 'letter' && badgeLetter
-        ? `Letter: ${badgeLetter}`
-        : 'No symbol / letter selected'
+  const overlaySummary = 'No symbol / letter selected'
 
   return (
     <div className="relative isolate min-h-screen bg-[#081224] flex items-center justify-center p-6 overflow-hidden">
@@ -1132,15 +901,12 @@ export default function CreateClubPage(): JSX.Element {
             <div className="border-t lg:border-t-0 lg:border-l border-gray-200 bg-gradient-to-b from-slate-50 to-white p-8 lg:p-10 h-full">
               <div className="flex flex-col items-center justify-start text-center">
                 <h3 className="text-2xl font-bold text-gray-900">Team Preview</h3>
-                <p className="text-sm text-gray-600 mt-2">Shape, interior layout, symbol and letter all update live.</p>
+                <p className="text-sm text-gray-600 mt-2">Interior layout and colors update live.</p>
 
                 <div className="mt-6">
                   <BadgePreview
                     shape={badgeShape}
                     pattern={badgePattern}
-                    overlayMode={overlayMode}
-                    symbol={badgeSymbol}
-                    letter={badgeLetter}
                     primary={form.primary}
                     secondary={form.secondary}
                     size="large"
@@ -1172,45 +938,11 @@ export default function CreateClubPage(): JSX.Element {
           </div>
         </div>
 
-        <div className="rounded-xl border-2 border-red-300 bg-red-50/40 p-4 lg:p-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <SelectionCard
-              id="shape"
-              title="1. Badge Shape"
-              subtitle="Choose the outer shape of your badge."
-              isOpen={openSection === 'shape'}
-              onToggle={toggleSection}
-            >
-              <div className="grid grid-cols-5 gap-2">
-                {badgeOptions.map((shape) => (
-                  <button
-                    key={shape}
-                    type="button"
-                    onClick={() => setBadgeShape(shape)}
-                    className={`rounded-lg border p-2 flex flex-col items-center justify-center transition ${
-                      badgeShape === shape ? 'border-blue-500 bg-blue-50' : 'border-gray-200 bg-white hover:border-gray-300'
-                    }`}
-                    aria-label={`Select ${shapeLabels[shape]} shape`}
-                    title={shapeLabels[shape]}
-                  >
-                    <BadgePreview
-                      shape={shape}
-                      pattern={badgePattern}
-                      overlayMode={overlayMode}
-                      symbol={badgeSymbol}
-                      letter={badgeLetter}
-                      primary={form.primary}
-                      secondary={form.secondary}
-                      size="small"
-                    />
-                  </button>
-                ))}
-              </div>
-            </SelectionCard>
-
+        <div className="rounded-xl border-2 border-emerald-200 bg-emerald-50/40 p-4 lg:p-6">
+          <div className="grid grid-cols-1 gap-4">
             <SelectionCard
               id="pattern"
-              title="2. Interior Style"
+              title="Interior Style"
               subtitle="Choose how the primary and secondary colors are divided."
               isOpen={openSection === 'pattern'}
               onToggle={toggleSection}
@@ -1222,9 +954,7 @@ export default function CreateClubPage(): JSX.Element {
                     type="button"
                     onClick={() => setBadgePattern(pattern)}
                     className={`rounded-lg border p-2 flex flex-col items-center justify-center transition ${
-                      badgePattern === pattern
-                        ? 'border-blue-500 bg-blue-50'
-                        : 'border-gray-200 bg-white hover:border-gray-300'
+                      badgePattern === pattern ? 'border-blue-500 bg-blue-50' : 'border-gray-200 bg-white hover:border-gray-300'
                     }`}
                     aria-label={`Select ${patternLabels[pattern]} pattern`}
                     title={patternLabels[pattern]}
@@ -1232,91 +962,12 @@ export default function CreateClubPage(): JSX.Element {
                     <BadgePreview
                       shape={badgeShape}
                       pattern={pattern}
-                      overlayMode="none"
-                      symbol="none"
-                      letter=""
                       primary={form.primary}
                       secondary={form.secondary}
                       size="small"
                     />
                   </button>
                 ))}
-              </div>
-            </SelectionCard>
-
-            <SelectionCard
-              id="symbol"
-              title="3. Symbol (optional)"
-              subtitle="20 stronger symbol options. Selecting one overrides letter."
-              isOpen={openSection === 'symbol'}
-              onToggle={toggleSection}
-            >
-              <div className="grid grid-cols-5 gap-2">
-                {symbolOptions.map((symbol) => {
-                  const isActive =
-                    symbol === 'none'
-                      ? overlayMode === 'none' || (overlayMode === 'symbol' && badgeSymbol === 'none')
-                      : overlayMode === 'symbol' && badgeSymbol === symbol
-
-                  return (
-                    <button
-                      key={symbol}
-                      type="button"
-                      onClick={() => selectSymbol(symbol)}
-                      className={`rounded-lg border px-2 py-3 flex flex-col items-center justify-center gap-2 transition ${
-                        isActive ? 'border-blue-500 bg-blue-50' : 'border-gray-200 bg-white hover:border-gray-300'
-                      }`}
-                      aria-label={`Select ${symbolLabels[symbol]} symbol`}
-                    >
-                      <div className="w-9 h-9 rounded-full bg-slate-900 flex items-center justify-center">
-                        {symbol === 'none' ? (
-                          <span className="text-[10px] font-semibold text-white">Ø</span>
-                        ) : (
-                          <svg
-                            viewBox="0 0 100 100"
-                            className="w-6 h-6"
-                            aria-hidden="true"
-                            dangerouslySetInnerHTML={{
-                              __html: getSvgSymbolMarkup(symbol as Exclude<BadgeSymbol, 'none'>, '#ffffff'),
-                            }}
-                          />
-                        )}
-                      </div>
-                      <span className="text-[10px] font-medium text-gray-700 leading-none">{symbolLabels[symbol]}</span>
-                    </button>
-                  )
-                })}
-              </div>
-            </SelectionCard>
-
-            <SelectionCard
-              id="letter"
-              title="4. Letter (optional)"
-              subtitle="Write one letter only. Preset letter buttons removed."
-              isOpen={openSection === 'letter'}
-              onToggle={toggleSection}
-            >
-              <div className="flex flex-wrap items-center gap-3">
-                <input
-                  value={badgeLetter}
-                  onChange={(e) => setLetterValue(e.target.value)}
-                  maxLength={1}
-                  className="w-16 rounded-md border border-gray-300 px-3 py-2 text-center text-lg font-bold uppercase"
-                  placeholder="A"
-                  disabled={submitting}
-                />
-
-                <button
-                  type="button"
-                  onClick={clearOverlay}
-                  className="rounded-md border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
-                >
-                  Clear
-                </button>
-
-                <div className="text-xs text-gray-500">
-                  Current: {overlayMode === 'letter' && badgeLetter ? `Letter ${badgeLetter}` : 'No letter'}
-                </div>
               </div>
             </SelectionCard>
           </div>
