@@ -4,6 +4,13 @@
  * - Sponsors: main sponsor (for now)
  * - Transactions: ledger-backed statement
  * - Tax / Other: placeholders (no DB calls => no 404s)
+ *
+ * UPDATE:
+ * - Supabase client creation is now conditional:
+ *   createClient is ONLY called when both URL + anon key exist,
+ *   preventing runtime crashes at module load.
+ * - Loaders (base/transactions/sponsors) now guard against missing client
+ *   and show clear configuration errors instead of crashing.
  */
 
 import React, { useEffect, useMemo, useState } from 'react'
@@ -44,11 +51,12 @@ if (!supabaseUrl || !supabaseAnonKey) {
   // (If you prefer hard fail, you can throw here.)
   // eslint-disable-next-line no-console
   console.error(
-    'Missing Supabase env vars. Set NEXT_PUBLIC_SUPABASE_URL + NEXT_PUBLIC_SUPABASE_ANON_KEY (or VITE_/REACT_APP_ equivalents).'
+    'Missing Supabase env vars. Set NEXT_PUBLIC_SUPABASE_URL + NEXT_PUBLIC_SUPABASE_ANON_KEY (or VITE_/REACT_APP_ equivalents).',
   )
 }
 
-const supabase = createClient(supabaseUrl, supabaseAnonKey)
+// ✅ Conditional client creation (prevents "supabaseUrl is required" crash at module load)
+const supabase = supabaseUrl && supabaseAnonKey ? createClient(supabaseUrl, supabaseAnonKey) : null
 
 // -----------------------------
 // Types
@@ -252,7 +260,7 @@ function getISOWeek(d: Date) {
   const dayNum = date.getUTCDay() || 7
   date.setUTCDate(date.getUTCDate() + 4 - dayNum)
   const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1))
-  return Math.ceil((((date.getTime() - yearStart.getTime()) / 86400000) + 1) / 7)
+  return Math.ceil(((date.getTime() - yearStart.getTime()) / 86400000 + 1) / 7)
 }
 
 // -----------------------------
@@ -288,8 +296,11 @@ export default function FinancePage() {
     setError(null)
 
     try {
-      if (!supabaseUrl || !supabaseAnonKey) {
-        throw new Error('Supabase env vars are missing. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY.')
+      // ✅ strengthened guard
+      if (!supabaseUrl || !supabaseAnonKey || !supabase) {
+        throw new Error(
+          'Supabase env vars are missing. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY.',
+        )
       }
 
       const clubRes = await supabase.rpc('get_my_club_id')
@@ -306,11 +317,7 @@ export default function FinancePage() {
         return
       }
 
-      const summaryRes = await supabase
-        .from('club_finance_summary')
-        .select('*')
-        .eq('club_id', myClubId)
-        .single()
+      const summaryRes = await supabase.from('club_finance_summary').select('*').eq('club_id', myClubId).single()
       if (summaryRes.error) throw summaryRes.error
       setSummary(summaryRes.data as ClubFinanceSummary)
 
@@ -334,6 +341,13 @@ export default function FinancePage() {
 
   async function loadTransactions() {
     if (!clubId || statementLoaded) return
+
+    // ✅ defensive check
+    if (!supabase) {
+      setError('Supabase is not configured. Please set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY.')
+      return
+    }
+
     try {
       const res = await supabase.rpc('finance_get_club_statement', {
         p_club_id: clubId,
@@ -352,6 +366,13 @@ export default function FinancePage() {
 
   async function loadMoreTransactions() {
     if (!clubId || !statementBefore) return
+
+    // ✅ defensive check
+    if (!supabase) {
+      setError('Supabase is not configured. Please set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY.')
+      return
+    }
+
     setLoadingMoreTx(true)
     try {
       const res = await supabase.rpc('finance_get_club_statement', {
@@ -376,6 +397,12 @@ export default function FinancePage() {
 
   async function loadSponsors() {
     if (!clubId || sponsorsLoaded) return
+
+    // ✅ defensive check
+    if (!supabase) {
+      setError('Supabase is not configured. Please set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY.')
+      return
+    }
 
     try {
       const res = await supabase
@@ -473,17 +500,25 @@ export default function FinancePage() {
 
       {/* Tabs */}
       <div className="flex gap-2 mb-4 flex-wrap">
-        <TabButton active={tab === 'overview'} onClick={() => setTab('overview')}>Overview</TabButton>
-        <TabButton active={tab === 'sponsors'} onClick={() => setTab('sponsors')}>Sponsors</TabButton>
-        <TabButton active={tab === 'transactions'} onClick={() => setTab('transactions')}>Transactions</TabButton>
-        <TabButton active={tab === 'tax'} onClick={() => setTab('tax')}>Tax</TabButton>
-        <TabButton active={tab === 'other'} onClick={() => setTab('other')}>Other</TabButton>
+        <TabButton active={tab === 'overview'} onClick={() => setTab('overview')}>
+          Overview
+        </TabButton>
+        <TabButton active={tab === 'sponsors'} onClick={() => setTab('sponsors')}>
+          Sponsors
+        </TabButton>
+        <TabButton active={tab === 'transactions'} onClick={() => setTab('transactions')}>
+          Transactions
+        </TabButton>
+        <TabButton active={tab === 'tax'} onClick={() => setTab('tax')}>
+          Tax
+        </TabButton>
+        <TabButton active={tab === 'other'} onClick={() => setTab('other')}>
+          Other
+        </TabButton>
       </div>
 
       {/* State */}
-      {loading && (
-        <div className="bg-white p-4 rounded shadow text-sm text-gray-600">Loading…</div>
-      )}
+      {loading && <div className="bg-white p-4 rounded shadow text-sm text-gray-600">Loading…</div>}
 
       {!loading && error && (
         <div className="bg-white p-4 rounded shadow">
@@ -493,9 +528,7 @@ export default function FinancePage() {
       )}
 
       {!loading && !error && !clubId && (
-        <div className="bg-white p-4 rounded shadow text-sm text-gray-700">
-          Create or join a club to see finance data.
-        </div>
+        <div className="bg-white p-4 rounded shadow text-sm text-gray-700">Create or join a club to see finance data.</div>
       )}
 
       {/* OVERVIEW */}
@@ -528,21 +561,27 @@ export default function FinancePage() {
 
               <div className="flex gap-2">
                 <button
-                  className={`px-3 py-2 rounded text-sm shadow ${granularity === 'daily' ? 'bg-gray-900 text-white' : 'bg-white hover:bg-gray-100'}`}
+                  className={`px-3 py-2 rounded text-sm shadow ${
+                    granularity === 'daily' ? 'bg-gray-900 text-white' : 'bg-white hover:bg-gray-100'
+                  }`}
                   onClick={() => setGranularity('daily')}
                   type="button"
                 >
                   Daily
                 </button>
                 <button
-                  className={`px-3 py-2 rounded text-sm shadow ${granularity === 'weekly' ? 'bg-gray-900 text-white' : 'bg-white hover:bg-gray-100'}`}
+                  className={`px-3 py-2 rounded text-sm shadow ${
+                    granularity === 'weekly' ? 'bg-gray-900 text-white' : 'bg-white hover:bg-gray-100'
+                  }`}
                   onClick={() => setGranularity('weekly')}
                   type="button"
                 >
                   Weekly
                 </button>
                 <button
-                  className={`px-3 py-2 rounded text-sm shadow ${granularity === 'monthly' ? 'bg-gray-900 text-white' : 'bg-white hover:bg-gray-100'}`}
+                  className={`px-3 py-2 rounded text-sm shadow ${
+                    granularity === 'monthly' ? 'bg-gray-900 text-white' : 'bg-white hover:bg-gray-100'
+                  }`}
                   onClick={() => setGranularity('monthly')}
                   type="button"
                 >
@@ -604,9 +643,7 @@ export default function FinancePage() {
                       </div>
                       <div className="text-sm text-gray-600">
                         Monthly:{' '}
-                        <span className="font-semibold">
-                          {formatMoney(toNumber(mainSponsor.monthly_amount), currency)}
-                        </span>
+                        <span className="font-semibold">{formatMoney(toNumber(mainSponsor.monthly_amount), currency)}</span>
                       </div>
                       <div className="text-xs text-gray-500 mt-2">
                         {mainSponsor.started_at ? `Start: ${mainSponsor.started_at}` : ''}
@@ -714,7 +751,9 @@ export default function FinancePage() {
           <div className="mt-2 text-sm text-gray-600">Placeholder.</div>
 
           <div className="mt-4 text-xs text-gray-500">
-            <div>Club ID: <span className="font-mono">{clubId}</span></div>
+            <div>
+              Club ID: <span className="font-mono">{clubId}</span>
+            </div>
             <div>Summary updated: {summary?.updated_at ? formatDateTime(summary.updated_at) : '—'}</div>
           </div>
         </div>
