@@ -3,14 +3,15 @@
  * Finance container page that hosts the finance-related tabs.
  *
  * Purpose:
- * - Load club context (club id, summary and cashflow series) once.
+ * - Load club context (club id, summary, cashflow series) once.
+ * - ALSO load statement rows up front so Overview has real transaction names immediately.
  * - Provide tab navigation and an ErrorBoundary per tab so a single tab can
  *   fail without breaking the whole page.
  * - Keep the club id out of the header; if needed, it is surfaced only inside
- *   the Other -&gt; Debug panel.
+ *   the Other -> Debug panel.
  */
 
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { supabase } from './finance/supabase'
 import { ErrorBoundary } from './finance/ErrorBoundary'
 import { OverviewTab } from './finance/OverviewTab'
@@ -34,6 +35,77 @@ type CashflowPoint = {
   income: string | number
   expenses: string | number
   net: string | number
+}
+
+/**
+ * StatementRow
+ * Shape of statement rows returned by finance_get_club_statement.
+ * (Field names based on your snippets; keep as "any-ish" where backend may vary.)
+ */
+type StatementRow = {
+  created_at: string
+  transaction_id: string
+  type: string
+  net_amount: string | number
+  metadata?: unknown
+}
+
+/**
+ * Helpers
+ */
+function toNumber(v: unknown): number {
+  if (v === null || v === undefined) return 0
+  if (typeof v === 'number') return v
+  const n = Number(v)
+  return Number.isFinite(n) ? n : 0
+}
+
+function formatMoney(n: number, currency: 'USD' | 'EUR' = 'USD'): string {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency,
+    maximumFractionDigits: 0,
+  }).format(n)
+}
+
+/**
+ * getTransactionLabel
+ * Extracts a human label from statement metadata with safe fallback.
+ */
+function getTransactionLabel(row: StatementRow): string {
+  const meta = row.metadata && typeof row.metadata === 'object' ? (row.metadata as Record<string, unknown>) : null
+  const pick = (v: unknown): string | null => {
+    if (typeof v !== 'string') return null
+    const t = v.trim()
+    return t ? t : null
+  }
+
+  const candidates: Array<string | null> = [
+    pick(meta?.name),
+    pick(meta?.label),
+    pick(meta?.title),
+    pick(meta?.description),
+    pick(meta?.reason),
+    pick(meta?.expense_name),
+    pick(meta?.income_name),
+    pick(meta?.item_name),
+    pick(meta?.vendor),
+    pick(meta?.merchant),
+    pick(meta?.category),
+  ]
+
+  const nested = meta?.transaction
+  if (nested && typeof nested === 'object') {
+    const n = nested as Record<string, unknown>
+    candidates.push(pick(n.name))
+    candidates.push(pick(n.label))
+    candidates.push(pick(n.description))
+  }
+
+  const found = candidates.find(Boolean)
+  const shortId = typeof row.transaction_id === 'string' ? row.transaction_id.slice(0, 8) : 'unknown'
+  const t = row.type ? String(row.type) : 'transaction'
+  return (found as string) ?? `${t} (${shortId})`
 }
 
 /**
@@ -77,9 +149,50 @@ export default function FinancePage(): JSX.Element {
   const [summary, setSummary] = useState<any | null>(null)
   const [cashflowDaily, setCashflowDaily] = useState<CashflowPoint[]>([])
 
+  // NEW: statement prefetch for Overview
+  const [statement, setStatement] = useState<StatementRow[]>([])
+  const [statementBefore, setStatementBefore] = useState<string | null>(null)
+  const [statementLoaded, setStatementLoaded] = useState(false)
+
+  // Currency: you said everything is USD always
+  const currency: 'USD' = 'USD'
+
+  /**
+   * Top 5 incomes/costs by transaction label (aggregated from statement).
+   */
+  const topIncomeByName = useMemo(() => {
+    const map = new Map<string, number>()
+    for (const row of statement) {
+      const amount = toNumber(row.net_amount)
+      if (amount <= 0) continue
+      const label = getTransactionLabel(row)
+      map.set(label, (map.get(label) ?? 0) + amount)
+    }
+    return Array.from(map.entries())
+      .map(([label, amount]) => ({ label, amount }))
+      .sort((a, b) => b.amount - a.amount)
+      .slice(0, 5)
+  }, [statement])
+
+  const topCostsByName = useMemo(() => {
+    const map = new Map<string, number>()
+    for (const row of statement) {
+      const net = toNumber(row.net_amount)
+      const amount = Math.abs(net)
+      if (net >= 0 || amount <= 0) continue
+      const label = getTransactionLabel(row)
+      map.set(label, (map.get(label) ?? 0) + amount)
+    }
+    return Array.from(map.entries())
+      .map(([label, amount]) => ({ label, amount }))
+      .sort((a, b) => b.amount - a.amount)
+      .slice(0, 5)
+  }, [statement])
+
   /**
    * loadBase
-   * Loads club id, finance summary and daily cashflow series (last 90 days).
+   * Loads club id, finance summary, daily cashflow series (last 90 days),
+   * AND statement rows (so Overview has real transaction names immediately).
    */
   async function loadBase(): Promise<void> {
     setLoading(true)
@@ -94,6 +207,12 @@ export default function FinancePage(): JSX.Element {
       if (!myClubId) {
         setSummary(null)
         setCashflowDaily([])
+
+        // NEW: reset statement state
+        setStatement([])
+        setStatementBefore(null)
+        setStatementLoaded(false)
+
         setLoading(false)
         return
       }
@@ -102,7 +221,6 @@ export default function FinancePage(): JSX.Element {
       if (!summaryRes.error) {
         setSummary(summaryRes.data)
       } else {
-        // Non-fatal: keep summary null but continue.
         setSummary(null)
       }
 
@@ -114,6 +232,23 @@ export default function FinancePage(): JSX.Element {
         setCashflowDaily(((cashflowRes.data ?? []) as CashflowPoint[]) ?? [])
       } else {
         setCashflowDaily([])
+      }
+
+      // NEW: statement fetch up front
+      const txRes = await supabase.rpc('finance_get_club_statement', {
+        p_club_id: myClubId,
+        p_limit: 500,
+        p_before: null,
+      })
+      if (!txRes.error) {
+        const rows = (txRes.data ?? []) as StatementRow[]
+        setStatement(rows)
+        setStatementBefore(rows.length ? rows[rows.length - 1].created_at : null)
+        setStatementLoaded(true)
+      } else {
+        setStatement([])
+        setStatementBefore(null)
+        setStatementLoaded(false)
       }
 
       setLoading(false)
@@ -181,7 +316,61 @@ export default function FinancePage(): JSX.Element {
         <div>
           {tab === 'overview' && (
             <ErrorBoundary title="Overview tab error">
-              <OverviewTab summary={summary} cashflowDaily={cashflowDaily} />
+              <div className="space-y-4">
+                {/* Pass real breakdowns into Overview so donut legends show real names */}
+                <OverviewTab
+                  summary={summary}
+                  cashflowDaily={cashflowDaily}
+                  currency={currency}
+                  topIncomeBreakdown={topIncomeByName}
+                  topExpenseBreakdown={topCostsByName}
+                />
+
+                {/* Optional: extra sections you requested */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                  <div className="bg-white p-4 rounded shadow">
+                    <div className="font-semibold">Top 5 incomes by transaction name</div>
+                    <div className="text-xs text-gray-500 mt-1">
+                      Pulled from your transaction statement{statementLoaded ? '' : ' (not loaded)'}.
+                    </div>
+                    <div className="mt-3 space-y-2">
+                      {topIncomeByName.length === 0 ? (
+                        <div className="text-sm text-gray-500">No income items found yet.</div>
+                      ) : (
+                        topIncomeByName.map((item) => (
+                          <div key={item.label} className="flex items-center justify-between gap-3 text-sm">
+                            <span className="text-gray-700 truncate">{item.label}</span>
+                            <span className="font-semibold text-green-700 whitespace-nowrap">
+                              {formatMoney(item.amount, currency)}
+                            </span>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="bg-white p-4 rounded shadow">
+                    <div className="font-semibold">Top 5 costs by transaction name</div>
+                    <div className="text-xs text-gray-500 mt-1">
+                      Pulled from your transaction statement{statementLoaded ? '' : ' (not loaded)'}.
+                    </div>
+                    <div className="mt-3 space-y-2">
+                      {topCostsByName.length === 0 ? (
+                        <div className="text-sm text-gray-500">No cost items found yet.</div>
+                      ) : (
+                        topCostsByName.map((item) => (
+                          <div key={item.label} className="flex items-center justify-between gap-3 text-sm">
+                            <span className="text-gray-700 truncate">{item.label}</span>
+                            <span className="font-semibold text-red-700 whitespace-nowrap">
+                              {formatMoney(item.amount, currency)}
+                            </span>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
             </ErrorBoundary>
           )}
 
