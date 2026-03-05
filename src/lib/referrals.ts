@@ -4,15 +4,17 @@
  * Shared referral helper utilities.
  *
  * Purpose:
- * - Normalize, store and clear pending referral codes in localStorage.
- * - Resolve referrer club by referral_code, block self-referrals and
- *   insert pending referral records into club_referrals with a few
- *   fallback payload shapes for schema compatibility.
+ * - Normalize, store, read, and clear pending referral codes in localStorage.
+ * - Apply a referral by calling the apply_club_referral RPC.
+ *
+ * Note:
+ * - Some pages still import normalizeReferralCode + setPendingReferralCode.
+ *   These exports are kept for backwards compatibility.
  */
 
 import { supabase } from './supabase'
 
-export const PENDING_REFERRAL_STORAGE_KEY = 'pending_referral_code'
+const PENDING_REFERRAL_KEY = 'pending_referral_code'
 
 export function normalizeReferralCode(value: string | null | undefined): string {
   return (value ?? '').trim().toUpperCase()
@@ -22,86 +24,48 @@ export function setPendingReferralCode(code: string): void {
   const normalized = normalizeReferralCode(code)
   if (!normalized) return
 
-  window.localStorage.setItem(PENDING_REFERRAL_STORAGE_KEY, normalized)
+  try {
+    window.localStorage.setItem(PENDING_REFERRAL_KEY, normalized)
+  } catch {
+    // ignore
+  }
 }
 
-export function getPendingReferralCode(): string {
-  return normalizeReferralCode(window.localStorage.getItem(PENDING_REFERRAL_STORAGE_KEY))
+export function getPendingReferralCode(): string | null {
+  try {
+    const value = window.localStorage.getItem(PENDING_REFERRAL_KEY)
+    return value?.trim() || null
+  } catch {
+    return null
+  }
 }
 
 export function clearPendingReferralCode(): void {
-  window.localStorage.removeItem(PENDING_REFERRAL_STORAGE_KEY)
+  try {
+    window.localStorage.removeItem(PENDING_REFERRAL_KEY)
+  } catch {
+    // ignore
+  }
 }
 
-type ApplyPendingReferralParams = {
+export async function applyPendingReferral(args: {
   referralCode: string
-  referredUserId: string
   referredClubId: string
-}
+}): Promise<void> {
+  const referralCode = normalizeReferralCode(args.referralCode)
+  const { referredClubId } = args
 
-export async function applyPendingReferral({
-  referralCode,
-  referredUserId,
-  referredClubId,
-}: ApplyPendingReferralParams): Promise<void> {
-  const normalizedCode = normalizeReferralCode(referralCode)
-
-  if (!normalizedCode) {
+  if (!referralCode) {
     clearPendingReferralCode()
     return
   }
 
-  const { data: referrerClub, error: referrerError } = await supabase
-    .from('clubs')
-    .select('id, owner_user_id')
-    .eq('referral_code', normalizedCode)
-    .single()
+  const { error } = await supabase.rpc('apply_club_referral', {
+    p_referral_code: referralCode,
+    p_referred_club_id: referredClubId,
+  })
 
-  if (referrerError || !referrerClub) {
-    clearPendingReferralCode()
-    return
-  }
+  if (error) throw error
 
-  if (referrerClub.owner_user_id === referredUserId) {
-    clearPendingReferralCode()
-    return
-  }
-
-  const insertAttempts: Array<Record<string, string>> = [
-    {
-      referrer_club_id: referrerClub.id,
-      referred_club_id: referredClubId,
-      referred_user_id: referredUserId,
-      referral_code: normalizedCode,
-      status: 'pending',
-    },
-    {
-      referrer_club_id: referrerClub.id,
-      referred_club_id: referredClubId,
-      referred_user_id: referredUserId,
-      status: 'pending',
-    },
-    {
-      referrer_club_id: referrerClub.id,
-      referred_club_id: referredClubId,
-      status: 'pending',
-    },
-  ]
-
-  let lastError: Error | null = null
-
-  for (const payload of insertAttempts) {
-    const { error } = await supabase.from('club_referrals').insert(payload)
-
-    if (!error) {
-      clearPendingReferralCode()
-      return
-    }
-
-    lastError = error
-  }
-
-  if (lastError) {
-    throw lastError
-  }
+  clearPendingReferralCode()
 }

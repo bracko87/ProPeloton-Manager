@@ -12,6 +12,10 @@
  *
  * Notification behavior is now filtered against saved user preferences before
  * items are displayed or counted in the frontend.
+ *
+ * FIX: Club-sync updates from localStorage/events are only applied when they
+ * match the active club + signed-in user, preventing cross-team name/logo bleed
+ * from stale "ppm-active-club" data.
  */
 
 import React, { useCallback, useEffect, useRef, useState } from 'react'
@@ -27,6 +31,7 @@ interface HeaderProps {
   onToggle?: () => void
   title?: string
   route?: string
+  clubId?: string
   clubName?: string
   clubCountryName?: string
   clubCountryCode?: string
@@ -153,12 +158,7 @@ function TeamAvatar({
   if (clubLogoUrl) {
     return (
       <div className={`${sizeClass} shrink-0 flex items-center justify-center overflow-hidden rounded-md bg-white p-1`}>
-        <img
-          src={clubLogoUrl}
-          alt={alt}
-          className="max-h-full max-w-full object-contain"
-          draggable={false}
-        />
+        <img src={clubLogoUrl} alt={alt} className="max-h-full max-w-full object-contain" draggable={false} />
       </div>
     )
   }
@@ -175,6 +175,7 @@ function TeamAvatar({
 export default function Header({
   onToggle,
   title,
+  clubId,
   clubName,
   clubCountryName,
   clubCountryCode,
@@ -195,15 +196,35 @@ export default function Header({
   const [isMarkingAllRead, setIsMarkingAllRead] = useState(false)
 
   const [liveClubName, setLiveClubName] = useState(clubName || title || 'ProPeloton Manager')
+  const [liveClubId, setLiveClubId] = useState<string | undefined>(clubId)
   const [liveClubCountryName, setLiveClubCountryName] = useState(clubCountryName || 'Club country')
   const [liveClubCountryCode, setLiveClubCountryCode] = useState<string | undefined>(clubCountryCode)
   const [liveLogoPath, setLiveLogoPath] = useState<string | null>(clubLogoUrl ?? null)
   const [logoCacheKey, setLogoCacheKey] = useState(() => Date.now())
+  const [currentUserId, setCurrentUserId] = useState<string | undefined>(undefined)
+
+  const liveClubIdRef = useRef<string | undefined>(clubId)
+  const currentUserIdRef = useRef<string | undefined>(undefined)
 
   const profileMenuRef = useRef<HTMLDivElement>(null)
 
   const applyClubUpdatePayload = useCallback((payload: ClubUpdatePayload | null) => {
     if (!payload) return
+
+    const expectedClubId = liveClubIdRef.current
+    const expectedUserId = currentUserIdRef.current
+
+    if (payload.id && expectedClubId && payload.id !== expectedClubId) {
+      return
+    }
+
+    if (payload.owner_user_id && expectedUserId && payload.owner_user_id !== expectedUserId) {
+      return
+    }
+
+    if (payload.id && !expectedClubId) {
+      setLiveClubId(payload.id)
+    }
 
     if (typeof payload.name === 'string' && payload.name.trim()) {
       setLiveClubName(payload.name)
@@ -228,6 +249,39 @@ export default function Header({
       // ignore invalid localStorage payload
     }
   }, [applyClubUpdatePayload])
+
+  // Track active club id (prop -> state -> ref)
+  useEffect(() => {
+    setLiveClubId(clubId)
+  }, [clubId])
+
+  useEffect(() => {
+    liveClubIdRef.current = liveClubId
+  }, [liveClubId])
+
+  // Track current signed-in user id (auth -> state -> ref)
+  useEffect(() => {
+    currentUserIdRef.current = currentUserId
+  }, [currentUserId])
+
+  useEffect(() => {
+    let mounted = true
+
+    async function loadCurrentUserId() {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+
+      if (!mounted) return
+      setCurrentUserId(user?.id)
+    }
+
+    loadCurrentUserId()
+
+    return () => {
+      mounted = false
+    }
+  }, [])
 
   useEffect(() => {
     setLiveClubName(clubName || title || 'ProPeloton Manager')

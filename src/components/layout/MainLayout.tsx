@@ -15,6 +15,7 @@ interface MainLayoutProps {
 }
 
 interface ClubUiState {
+  id?: string
   name: string
   countryCode: string
   countryName: string
@@ -28,10 +29,11 @@ interface ClubUiState {
 export default function MainLayout({ children }: MainLayoutProps) {
   const [collapsed, setCollapsed] = useState(false)
   const [clubUi, setClubUi] = useState<ClubUiState>({
+    id: undefined,
     name: 'ProPeloton Manager',
     countryCode: '',
     countryName: '',
-    logoUrl: null
+    logoUrl: null,
   })
   const navigate = useNavigate()
 
@@ -47,7 +49,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
 
       const { data: club, error: clubError } = await supabase
         .from('clubs')
-        .select('name, country_code, logo_path')
+        .select('id, name, country_code, logo_path')
         .eq('id', clubId)
         .single()
 
@@ -68,10 +70,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
       let logoUrl: string | null = null
 
       if (club.logo_path) {
-        if (
-          club.logo_path.startsWith('http://') ||
-          club.logo_path.startsWith('https://')
-        ) {
+        if (club.logo_path.startsWith('http://') || club.logo_path.startsWith('https://')) {
           logoUrl = club.logo_path
         } else {
           const { data: signedData, error: signedError } = await supabase.storage
@@ -81,9 +80,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
           if (!signedError && signedData?.signedUrl) {
             logoUrl = signedData.signedUrl
           } else {
-            const { data: publicData } = supabase.storage
-              .from('club-logos')
-              .getPublicUrl(club.logo_path)
+            const { data: publicData } = supabase.storage.from('club-logos').getPublicUrl(club.logo_path)
 
             if (publicData?.publicUrl) {
               logoUrl = publicData.publicUrl
@@ -95,10 +92,11 @@ export default function MainLayout({ children }: MainLayoutProps) {
       if (!mounted) return
 
       setClubUi({
+        id: club.id,
         name: club.name,
         countryCode: club.country_code,
         countryName,
-        logoUrl
+        logoUrl,
       })
     }
 
@@ -115,7 +113,8 @@ export default function MainLayout({ children }: MainLayoutProps) {
 
       <div className="flex-1 flex flex-col min-w-0">
         <Header
-          onToggle={() => setCollapsed(v => !v)}
+          onToggle={() => setCollapsed((v) => !v)}
+          clubId={clubUi.id}
           clubName={clubUi.name}
           clubCountryCode={clubUi.countryCode}
           clubCountryName={clubUi.countryName}
@@ -123,9 +122,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
           onNavigate={(path) => navigate(path)}
         />
 
-        <main className="p-6 lg:p-8 flex-1 overflow-auto">
-          {children ?? <Outlet />}
-        </main>
+        <main className="p-6 lg:p-8 flex-1 overflow-auto">{children ?? <Outlet />}</main>
 
         <Footer />
       </div>
