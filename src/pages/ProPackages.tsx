@@ -3,9 +3,10 @@
  * Coin packages shop page (DB-driven).
  *
  * FIX:
+ * - Remove import.meta.env usage (it is undefined in your production build)
+ * - Use Supabase client internal config to get URL + anon key
  * - Use direct fetch() to call Edge Function with explicit headers:
  *   Authorization (user access_token) + apikey (anon key)
- * - This resolves 401 issues where supabase.functions.invoke did not forward headers.
  */
 import React, { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../lib/supabase'
@@ -29,10 +30,6 @@ type UiCoinPackage = {
 
 const COINS_PER_DAY = 2
 
-// IMPORTANT: these must match your frontend env vars (Vite default)
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string | undefined
-const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined
-
 function eur(n: number) {
   return new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(n)
 }
@@ -47,6 +44,29 @@ function taglineForCoins(coins: number) {
   if (coins <= 390) return 'Most popular'
   if (coins <= 570) return 'Serious manager mode'
   return 'Best for long-term play'
+}
+
+/**
+ * Safely derive Supabase URL + anon key from the existing client.
+ * This avoids import.meta.env which is crashing your production build.
+ */
+function getSupabaseConfig(): { url: string; anonKey: string } {
+  // supabase-js stores config internally; types don't expose it, so we access via "as any"
+  const anyClient = supabase as any
+
+  const url: string | undefined =
+    anyClient?.supabaseUrl || anyClient?.url || anyClient?.rest?.url || anyClient?.realtime?.url
+
+  const anonKey: string | undefined =
+    anyClient?.supabaseKey || anyClient?.anonKey || anyClient?.headers?.apikey || anyClient?.auth?.headers?.apikey
+
+  if (!url || !anonKey) {
+    throw new Error(
+      'Supabase client config not found. Ensure ../lib/supabase initializes createClient(SUPABASE_URL, SUPABASE_ANON_KEY).'
+    )
+  }
+
+  return { url, anonKey }
 }
 
 export default function ProPackagesPage(): JSX.Element {
@@ -126,23 +146,19 @@ export default function ProPackagesPage(): JSX.Element {
     setBuyingCode(code)
 
     try {
-      if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-        throw new Error('Missing VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY in frontend env.')
-      }
+      const { url: supabaseUrl, anonKey } = getSupabaseConfig()
 
-      // Get current user token
       const { data: sessionData, error: sessionError } = await supabase.auth.getSession()
       if (sessionError) throw sessionError
 
       const token = sessionData.session?.access_token
       if (!token) throw new Error('Not authenticated. Please log in again.')
 
-      // Direct fetch to Edge Function with explicit headers
-      const res = await fetch(`${SUPABASE_URL}/functions/v1/create-coin-checkout`, {
+      const res = await fetch(`${supabaseUrl}/functions/v1/create-coin-checkout`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          apikey: SUPABASE_ANON_KEY,
+          apikey: anonKey,
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({ package_code: code }),
@@ -180,9 +196,7 @@ export default function ProPackagesPage(): JSX.Element {
       </div>
 
       {error ? (
-        <div className="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
-          {error}
-        </div>
+        <div className="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{error}</div>
       ) : null}
 
       {loadingPackages ? (
