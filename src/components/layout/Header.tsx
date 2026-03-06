@@ -6,6 +6,10 @@
  * UPDATE: Wallet support (refactor)
  * - Header keeps the Coins UI pill, but coinBalance is now received as a prop
  * - Header no longer queries user_wallets / no loadCoinBalance
+ *
+ * UPDATE: Menu route alignment
+ * - Aligned the header menu’s Pro Packages item to the canonical paywall route
+ *   (/dashboard/pro) to avoid route mismatch edge cases.
  */
 
 import React, { useCallback, useEffect, useRef, useState } from 'react'
@@ -80,7 +84,7 @@ const profileMenuItems: MenuItem[] = [
   { label: 'Preferences', path: '/dashboard/preferences' },
   { label: 'Help', path: '/dashboard/help' },
   { label: 'Contact Us', path: '/dashboard/contact-us' },
-  { label: 'Pro Packages', path: '/dashboard/pro-packages' },
+  { label: 'Pro Packages', path: '/dashboard/pro' },
   { label: 'Invite Friends', path: '/dashboard/invite-friends' },
   { label: 'Logout', action: 'logout' },
 ]

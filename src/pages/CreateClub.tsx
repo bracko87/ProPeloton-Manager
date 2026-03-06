@@ -8,8 +8,8 @@
  * - Rasterize generated SVG into PNG for consistent transparency rendering.
  * - Upload that generated logo into Supabase Storage (club-logos) as PNG.
  * - Insert directly into public.clubs with validated form data.
- * - Call RPC public.generate_initial_roster(...) after club creation.
- * - UI uses "team" language, while backend table/RPC still uses the existing club naming.
+ * - Do not call generate_initial_roster from the frontend.
+ * - UI uses "team" language, while backend table still uses the existing club naming.
  *
  * NOTE: Referral insert is intentionally non-blocking:
  * try {
@@ -27,8 +27,8 @@
  * - FIX: Rasterize badge SVG to PNG before upload (image/png) for consistent transparent logo rendering.
  * - DIAGNOSTICS: Logs when referral persistence is skipped due to missing referral code.
  * - SVG MARKUP: Removed explicit transparent background rect prior to PNG rasterization to improve transparency handling.
- * - BACKEND FLOW: Replaced create_club RPC call with direct clubs insert + generate_initial_roster RPC call.
- * - SAFETY: Added best-effort cleanup if roster generation fails after club creation.
+ * - BACKEND FLOW: Uses direct clubs insert only (no create_club RPC and no generate_initial_roster RPC from frontend).
+ * - SAFETY: Keeps best-effort cleanup for failed creation flow.
  */
 
 import React, { useEffect, useState } from 'react'
@@ -568,7 +568,7 @@ function BadgePreview({
 
 /**
  * CreateClubPage
- * Team creation form with direct clubs insert + generate_initial_roster RPC integration.
+ * Team creation form with direct clubs insert integration.
  */
 export default function CreateClubPage(): JSX.Element {
   const navigate = useNavigate()
@@ -733,16 +733,6 @@ export default function CreateClubPage(): JSX.Element {
       }
 
       createdClubId = club.id
-
-      const { error: rosterErr } = await supabase.rpc('generate_initial_roster', {
-        p_club_id: createdClubId,
-      })
-
-      if (rosterErr) {
-        await cleanupFailedCreation(createdClubId, uploadedLogoPath)
-        setError(rosterErr.message ?? 'Failed to generate initial roster')
-        return
-      }
 
       // ---- Referral persistence (diagnostic logging retained) ----
       const pendingReferralCode = getPendingReferralCode()

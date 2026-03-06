@@ -6,6 +6,11 @@
  * - Shows club logo or generated placeholder.
  * - Opens on click, closes on outside click or Escape.
  * - Keyboard accessible and closes on item selection (where appropriate).
+ *
+ * UPDATE:
+ * - Fixed menu routing to use valid dashboard routes instead of outdated top-level routes.
+ * - This resolves cases where items like "Pro Packages" appeared to do nothing because
+ *   navigation targeted a non-matching path.
  */
 
 import React, { useEffect, useRef, useState } from 'react'
@@ -59,15 +64,15 @@ export default function ProfileDropdown({ clubLogoUrl, clubName }: ProfileDropdo
 
   const items: MenuItem[] = [
     { key: 'username', label: username, displayOnly: true },
-    { key: 'inbox', label: 'Inbox', to: '/inbox' },
-    { key: 'profile', label: 'My Profile', to: '/profile' },
+    { key: 'inbox', label: 'Inbox', to: '/dashboard/inbox' },
+    { key: 'profile', label: 'My Profile', to: '/dashboard/my-profile' },
     { key: 'customize', label: 'Customize Team', to: '/dashboard/customize-team' },
-    { key: 'forum', label: 'Forum', to: '/forum' },
-    { key: 'prefs', label: 'Preferences', to: '/preferences' },
-    { key: 'help', label: 'Help', to: '/help' },
-    { key: 'contact', label: 'Contact Us', to: '/contact' },
-    { key: 'pro', label: 'Pro Packages', to: '/pro' },
-    { key: 'invite', label: 'Invite Friends', to: '/invite' },
+    { key: 'forum', label: 'Forum', to: '/dashboard/forum' },
+    { key: 'prefs', label: 'Preferences', to: '/dashboard/preferences' },
+    { key: 'help', label: 'Help', to: '/dashboard/help' },
+    { key: 'contact', label: 'Contact Us', to: '/dashboard/contact-us' },
+    { key: 'pro', label: 'Pro Packages', to: '/dashboard/pro' },
+    { key: 'invite', label: 'Invite Friends', to: '/dashboard/invite-friends' },
     { key: 'logout', label: 'Logout', action: signOutUser },
   ]
 
