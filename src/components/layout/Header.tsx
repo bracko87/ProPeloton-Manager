@@ -1,21 +1,7 @@
+// Header.tsx
 /**
  * Header.tsx
  * Top header inside the in-game layout.
- *
- * This version updates the logo/name immediately after Customize Team applies
- * changes by listening to:
- * - window "club-updated" custom event (same-tab instant update)
- * - localStorage "ppm-active-club"
- * - browser "storage" event (cross-tab sync)
- *
- * It also includes a light fallback sync interval.
- *
- * Notification behavior is now filtered against saved user preferences before
- * items are displayed or counted in the frontend.
- *
- * FIX: Club-sync updates from localStorage/events are only applied when they
- * match the active club + signed-in user, preventing cross-team name/logo bleed
- * from stale "ppm-active-club" data.
  *
  * UPDATE: Wallet support (refactor)
  * - Header keeps the Coins UI pill, but coinBalance is now received as a prop
@@ -261,7 +247,6 @@ export default function Header({
     }
   }, [applyClubUpdatePayload])
 
-  // Track active club id (prop -> state -> ref)
   useEffect(() => {
     setLiveClubId(clubId)
   }, [clubId])
@@ -270,7 +255,6 @@ export default function Header({
     liveClubIdRef.current = liveClubId
   }, [liveClubId])
 
-  // Track current signed-in user id (auth -> state -> ref)
   useEffect(() => {
     currentUserIdRef.current = currentUserId
   }, [currentUserId])
@@ -388,17 +372,14 @@ export default function Header({
     }
   }, [onLogout])
 
-  // UPDATED: prefer item.preference_group when present, fallback to legacy mapping.
   const shouldDisplayNotification = useCallback((item: NotificationItem) => {
     const preferences = readNotificationPreferences()
 
-    // BEST: DB tells us the group explicitly
     const pg = item.preference_group as any
     if (pg && pg in preferences) {
       return canReceiveNotification(preferences, pg)
     }
 
-    // fallback for older rows
     const notificationType = getNotificationTypeFromEvent(item.type_code, item.source)
     if (!notificationType) return true
     return canReceiveNotification(preferences, notificationType)
@@ -528,7 +509,6 @@ export default function Header({
     setIsMarkingAllRead(false)
   }, [loadNotifications, loadUnreadCount])
 
-  // UPDATED: periodic refresh cycle now only covers notifications + inbox counters (coins come from props)
   useEffect(() => {
     void Promise.all([loadUnreadCount(), loadInboxUnreadCount()])
 
@@ -635,7 +615,7 @@ export default function Header({
         </div>
 
         <div className="flex items-center gap-3">
-          {/* Coins pill (now driven by prop) */}
+          {/* Coins pill (driven by prop) */}
           <div className="rounded-md border border-black/35 bg-yellow-300/70 px-3 py-1.5 text-sm font-semibold text-black min-w-[130px] text-center">
             ◎ {coinBalance.toLocaleString()} Coins
           </div>

@@ -1,3 +1,4 @@
+// App.tsx
 /**
  * App.tsx
  * Main application router and route registration for ProPeloton Manager.
@@ -138,9 +139,7 @@ function RequireNoClub({ children }: GuardProps): JSX.Element | null {
     let mounted = true
     ;(async () => {
       if (!user) {
-        if (mounted) {
-          setChecking(false)
-        }
+        if (mounted) setChecking(false)
         return
       }
 
@@ -195,9 +194,7 @@ function RequireClub({ children }: GuardProps): JSX.Element | null {
     let mounted = true
     ;(async () => {
       if (!user) {
-        if (mounted) {
-          setChecking(false)
-        }
+        if (mounted) setChecking(false)
         return
       }
 
