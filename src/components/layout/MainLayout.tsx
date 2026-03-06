@@ -3,15 +3,23 @@
  * MainLayout.tsx
  * Layout used for in-game pages: retractable sidebar, header, content, and footer with game-time.
  *
- * UPDATE:
- * - Loads coin status via supabase.rpc('get_my_coin_status')
- * - Passes coinBalance to <Header />
- * - Blocks gameplay when canPlayToday is false
- * - Shows paywall modal with stronger warning styling + logout button
+ * LOCK FLOW (corrected):
+ * - When user has <2 coins:
+ *   - Show a modal first (do NOT auto-redirect)
+ *   - Modal offers: Buy Coins / Watch Video (disabled) / Log out
+ * - When user clicks Buy Coins:
+ *   - Navigate to /dashboard/pro
+ *   - Pro page remains interactive so user can purchase
+ * - While locked on /dashboard/pro:
+ *   - UI should still be usable (Buy now buttons)
+ *   - Sidebar should be restricted (pass locked prop to Sidebar)
+ * - When balance becomes >=2:
+ *   - Unlock and restore navigation
+ *   - Optional: return to the last page the user was on before locking
  */
 
-import React, { useEffect, useState, useCallback } from 'react'
-import { Outlet, useNavigate } from 'react-router'
+import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react'
+import { Outlet, useNavigate, useLocation } from 'react-router'
 import Sidebar from './Sidebar'
 import Header from './Header'
 import Footer from './Footer'
@@ -40,6 +48,11 @@ export default function MainLayout({ children }: MainLayoutProps) {
   const [collapsed, setCollapsed] = useState(false)
   const [coinBalance, setCoinBalance] = useState(0)
   const [canPlayToday, setCanPlayToday] = useState(true)
+
+  // Controls whether the "locked" modal is currently shown.
+  // We only show it when locked AND not on pro pages.
+  const [showLockModal, setShowLockModal] = useState(false)
+
   const [clubUi, setClubUi] = useState<ClubUiState>({
     id: undefined,
     name: 'ProPeloton Manager',
@@ -49,10 +62,27 @@ export default function MainLayout({ children }: MainLayoutProps) {
   })
 
   const navigate = useNavigate()
+  const location = useLocation()
+
+  const isProPage = useMemo(() => {
+    return (
+      location.pathname === '/dashboard/pro' ||
+      location.pathname === '/dashboard/pro-packages'
+    )
+  }, [location.pathname])
+
+  // Remember where the user was before lock, so we can optionally send them back after top-up.
+  const lastNonProPathRef = useRef<string>('/dashboard/overview')
+
+  // Update the ref whenever the user is on a non-pro page
+  useEffect(() => {
+    if (!isProPage) {
+      lastNonProPathRef.current = location.pathname + (location.search ?? '') + (location.hash ?? '')
+    }
+  }, [isProPage, location.pathname, location.search, location.hash])
 
   const loadCoinStatus = useCallback(async () => {
     const { data, error } = await supabase.rpc('get_my_coin_status')
-
     if (error) {
       console.error('Failed to load coin status:', error)
       setCoinBalance(0)
@@ -104,9 +134,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
         .eq('code', club.country_code)
         .maybeSingle()
 
-      if (country?.name) {
-        countryName = country.name
-      }
+      if (country?.name) countryName = country.name
 
       let logoUrl: string | null = null
 
@@ -140,45 +168,82 @@ export default function MainLayout({ children }: MainLayoutProps) {
 
     void Promise.all([loadClubUi(), loadCoinStatus()])
 
-    // Refresh coin status periodically (useful after tick / later after purchases)
+    // refresh coin status periodically (important after tick + after purchase webhook)
     const intervalId = window.setInterval(() => {
       void loadCoinStatus()
-    }, 30000)
+    }, 15000)
+
+    // also refresh when user returns from Stripe tab/window
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible') void loadCoinStatus()
+    }
+    document.addEventListener('visibilitychange', onVisibility)
 
     return () => {
       mounted = false
       window.clearInterval(intervalId)
+      document.removeEventListener('visibilitychange', onVisibility)
     }
   }, [loadCoinStatus])
 
+  /**
+   * Lock behavior:
+   * - If locked and not on pro page: show modal.
+   * - If locked and on pro page: do NOT show modal (allow buying).
+   * - If unlocked: hide modal and optionally restore last non-pro page if user is on pro page.
+   */
+  useEffect(() => {
+    if (!canPlayToday) {
+      // Locked
+      if (!isProPage) {
+        setShowLockModal(true)
+      } else {
+        setShowLockModal(false)
+      }
+      return
+    }
+
+    // Unlocked
+    setShowLockModal(false)
+
+    // Optional: if user topped up while on /dashboard/pro, send them back to last page.
+    // If you prefer to keep them on pro page, remove this block.
+    if (isProPage) {
+      const backTo = lastNonProPathRef.current || '/dashboard/overview'
+      navigate(backTo, { replace: true })
+    }
+  }, [canPlayToday, isProPage, navigate])
+
+  // When locked, block everything EXCEPT pro pages. This is the key fix.
+  const shouldBlockMain = !canPlayToday && !isProPage
+
   return (
     <div className="min-h-screen flex bg-gray-100">
-      {/* Lock the entire interactive UI (sidebar + header + main) when out of coins */}
-      <div className={`flex min-h-screen w-full ${!canPlayToday ? 'pointer-events-none select-none' : ''}`}>
-        <Sidebar collapsed={collapsed} />
+      {/* Sidebar: pass locked so it can restrict navigation (only Buy Coins + Sign Out) */}
+      <Sidebar collapsed={collapsed} locked={!canPlayToday} />
 
-        <div className="flex-1 flex flex-col min-w-0">
-          <Header
-            onToggle={() => setCollapsed((v) => !v)}
-            clubId={clubUi.id}
-            clubName={clubUi.name}
-            clubCountryCode={clubUi.countryCode}
-            clubCountryName={clubUi.countryName}
-            clubLogoUrl={clubUi.logoUrl}
-            onNavigate={(path) => navigate(path)}
-            coinBalance={coinBalance}
-          />
+      <div className="flex-1 flex flex-col min-w-0">
+        <Header
+          onToggle={() => setCollapsed((v) => !v)}
+          clubId={clubUi.id}
+          clubName={clubUi.name}
+          clubCountryCode={clubUi.countryCode}
+          clubCountryName={clubUi.countryName}
+          clubLogoUrl={clubUi.logoUrl}
+          onNavigate={(path) => navigate(path)}
+          coinBalance={coinBalance}
+        />
 
-          <main className="p-6 lg:p-8 flex-1 overflow-auto">
-            {children ?? <Outlet />}
-          </main>
+        {/* Main content blocked ONLY when locked and not on pro page */}
+        <main className={`p-6 lg:p-8 flex-1 overflow-auto ${shouldBlockMain ? 'pointer-events-none select-none' : ''}`}>
+          {children ?? <Outlet />}
+        </main>
 
-          <Footer />
-        </div>
+        <Footer />
       </div>
 
-      {/* Paywall modal (bigger + stronger red warning + logout button) */}
-      {!canPlayToday ? (
+      {/* Paywall modal shown ONLY when locked and NOT on pro page */}
+      {showLockModal ? (
         <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/55 backdrop-blur-[3px] p-4 pointer-events-auto">
           <div className="w-full max-w-2xl rounded-2xl border border-black/10 bg-white p-8 shadow-2xl">
             <div className="flex items-start gap-4">
@@ -187,18 +252,15 @@ export default function MainLayout({ children }: MainLayoutProps) {
               </div>
 
               <div className="min-w-0 flex-1">
-                <h2 className="text-2xl font-extrabold text-red-700">
-                  Coins required — gameplay is locked
-                </h2>
+                <h2 className="text-2xl font-extrabold text-red-700">Coins required — gameplay is locked</h2>
 
                 <p className="mt-2 text-base text-gray-700">
-                  Your balance is{' '}
-                  <span className="font-bold text-black">◎ {coinBalance.toLocaleString()} Coins</span>.
+                  Your balance is <span className="font-bold text-black">◎ {coinBalance.toLocaleString()} Coins</span>.
                 </p>
 
                 <div className="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
-                  You need at least <span className="font-semibold">{COINS_NEEDED_TO_PLAY} Coins</span> to continue
-                  playing today. Buy coins to unlock your club, or log out and return to the home page.
+                  You need at least <span className="font-semibold">{COINS_NEEDED_TO_PLAY} Coins</span> to continue playing
+                  today. Buy coins to unlock your club, or log out and return to the home page.
                 </div>
               </div>
             </div>
@@ -206,7 +268,10 @@ export default function MainLayout({ children }: MainLayoutProps) {
             <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-3">
               <button
                 type="button"
-                onClick={() => navigate('/dashboard/pro')}
+                onClick={() => {
+                  setShowLockModal(false)
+                  navigate('/dashboard/pro')
+                }}
                 className="rounded-lg bg-yellow-400 px-4 py-3 text-sm font-semibold text-black hover:bg-yellow-300"
               >
                 Buy Coins
@@ -233,7 +298,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
             </div>
 
             <div className="mt-4 text-xs text-gray-500">
-              Tip: Once you have {COINS_NEEDED_TO_PLAY}+ coins again, refresh and you’ll be able to continue playing.
+              Tip: Once you have {COINS_NEEDED_TO_PLAY}+ coins again, you’ll be able to continue playing automatically.
             </div>
           </div>
         </div>

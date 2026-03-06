@@ -1,12 +1,18 @@
 /**
  * ProPackages.tsx
- * Coin packages shop page (DB-driven).
+ * Coin packages shop page (DB-driven) + Purchase History.
  *
- * FIX:
- * - Remove import.meta.env usage (it is undefined in your production build)
- * - Use Supabase client internal config to get URL + anon key
- * - Use direct fetch() to call Edge Function with explicit headers:
- *   Authorization (user access_token) + apikey (anon key)
+ * - Loads packages from coin_packages
+ * - Shows current balance (get_my_coin_status)
+ * - Buy Now -> create-coin-checkout Edge Function
+ * - Purchase history -> user_coin_ledger (reason='purchase')
+ *
+ * FIXES:
+ * - No import.meta.env usage
+ * - Uses Supabase client internal config for URL + anonKey
+ *
+ * UPDATE:
+ * - Remove Stripe session column from Purchase History (do not show to user)
  */
 import React, { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../lib/supabase'
@@ -28,6 +34,20 @@ type UiCoinPackage = {
   tagline?: string
 }
 
+type PurchaseRow = {
+  delta: number
+  reason: string
+  payload_json: any
+  created_at: string
+}
+
+type PurchaseUi = {
+  createdAt: string
+  coins: number
+  packageCode: string | null
+  priceEur: number | null
+}
+
 const COINS_PER_DAY = 2
 
 function eur(n: number) {
@@ -46,12 +66,25 @@ function taglineForCoins(coins: number) {
   return 'Best for long-term play'
 }
 
+function formatDateTime(iso: string) {
+  try {
+    const d = new Date(iso)
+    return d.toLocaleString(undefined, {
+      year: 'numeric',
+      month: 'short',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+    })
+  } catch {
+    return iso
+  }
+}
+
 /**
  * Safely derive Supabase URL + anon key from the existing client.
- * This avoids import.meta.env which is crashing your production build.
  */
 function getSupabaseConfig(): { url: string; anonKey: string } {
-  // supabase-js stores config internally; types don't expose it, so we access via "as any"
   const anyClient = supabase as any
 
   const url: string | undefined =
@@ -72,10 +105,18 @@ function getSupabaseConfig(): { url: string; anonKey: string } {
 export default function ProPackagesPage(): JSX.Element {
   const [balance, setBalance] = useState<number>(0)
   const [loadingBalance, setLoadingBalance] = useState(true)
+
   const [packages, setPackages] = useState<UiCoinPackage[]>([])
   const [loadingPackages, setLoadingPackages] = useState(true)
+
   const [buyingCode, setBuyingCode] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+
+  // Purchase history
+  const [historyOpen, setHistoryOpen] = useState(false)
+  const [loadingHistory, setLoadingHistory] = useState(false)
+  const [historyError, setHistoryError] = useState<string | null>(null)
+  const [purchases, setPurchases] = useState<PurchaseUi[]>([])
 
   const bestValueCode = useMemo(() => {
     if (packages.length === 0) return null
@@ -86,59 +127,106 @@ export default function ProPackagesPage(): JSX.Element {
     return best.code
   }, [packages])
 
+  // Map for quick lookup: code -> price
+  const priceByCode = useMemo(() => {
+    const m = new Map<string, number>()
+    for (const p of packages) m.set(p.code, p.priceEur)
+    return m
+  }, [packages])
+
+  async function loadCoinStatus() {
+    setLoadingBalance(true)
+    const { data, error } = await supabase.rpc('get_my_coin_status')
+    if (error) {
+      console.error('Failed to load coin status:', error)
+      setBalance(0)
+      setLoadingBalance(false)
+      return
+    }
+    const row = ((data ?? []) as CoinStatusRow[])[0]
+    setBalance(Math.max(Number(row?.balance ?? 0), 0))
+    setLoadingBalance(false)
+  }
+
+  async function loadPackages() {
+    setLoadingPackages(true)
+    const { data, error } = await supabase
+      .from('coin_packages')
+      .select('code, coins, price_cents, currency, active')
+      .eq('active', true)
+
+    if (error) {
+      console.error('Failed to load coin packages:', error)
+      setPackages([])
+      setLoadingPackages(false)
+      return
+    }
+
+    const rows = (data ?? []) as DbCoinPackage[]
+    const mapped: UiCoinPackage[] = rows
+      .map((r) => ({
+        code: r.code,
+        coins: Number(r.coins),
+        priceEur: Number(r.price_cents) / 100,
+        tagline: taglineForCoins(Number(r.coins)),
+      }))
+      .sort((a, b) => a.coins - b.coins)
+
+    setPackages(mapped)
+    setLoadingPackages(false)
+  }
+
+  async function loadPurchaseHistory() {
+    setHistoryError(null)
+    setLoadingHistory(true)
+
+    try {
+      const { data, error } = await supabase
+        .from('user_coin_ledger')
+        .select('delta, reason, payload_json, created_at')
+        .eq('reason', 'purchase')
+        .order('created_at', { ascending: false })
+        .limit(50)
+
+      if (error) throw error
+
+      const rows = (data ?? []) as PurchaseRow[]
+      const mapped: PurchaseUi[] = rows.map((r) => {
+        const payload = (r.payload_json ?? {}) as any
+        const packageCode = (payload.package_code as string) ?? null
+        const priceEur = packageCode ? priceByCode.get(packageCode) ?? null : null
+
+        return {
+          createdAt: r.created_at,
+          coins: Math.max(Number(r.delta ?? 0), 0),
+          packageCode,
+          priceEur,
+        }
+      })
+
+      setPurchases(mapped)
+    } catch (e: any) {
+      console.error('Failed to load purchase history:', e)
+      setHistoryError(e?.message ?? 'Failed to load purchase history.')
+      setPurchases([])
+    } finally {
+      setLoadingHistory(false)
+    }
+  }
+
   useEffect(() => {
     let mounted = true
-
-    const loadCoinStatus = async () => {
-      setLoadingBalance(true)
-      const { data, error } = await supabase.rpc('get_my_coin_status')
-      if (!mounted) return
-      if (error) {
-        console.error('Failed to load coin status:', error)
-        setBalance(0)
-        setLoadingBalance(false)
-        return
+    ;(async () => {
+      try {
+        await Promise.all([loadCoinStatus(), loadPackages()])
+      } finally {
+        if (!mounted) return
       }
-      const row = ((data ?? []) as CoinStatusRow[])[0]
-      setBalance(Math.max(Number(row?.balance ?? 0), 0))
-      setLoadingBalance(false)
-    }
-
-    const loadPackages = async () => {
-      setLoadingPackages(true)
-      const { data, error } = await supabase
-        .from('coin_packages')
-        .select('code, coins, price_cents, currency, active')
-        .eq('active', true)
-
-      if (!mounted) return
-
-      if (error) {
-        console.error('Failed to load coin packages:', error)
-        setPackages([])
-        setLoadingPackages(false)
-        return
-      }
-
-      const rows = (data ?? []) as DbCoinPackage[]
-      const mapped: UiCoinPackage[] = rows
-        .map((r) => ({
-          code: r.code,
-          coins: Number(r.coins),
-          priceEur: Number(r.price_cents) / 100,
-          tagline: taglineForCoins(Number(r.coins)),
-        }))
-        .sort((a, b) => a.coins - b.coins)
-
-      setPackages(mapped)
-      setLoadingPackages(false)
-    }
-
-    void Promise.all([loadCoinStatus(), loadPackages()])
-
+    })()
     return () => {
       mounted = false
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   async function handleBuy(code: string) {
@@ -179,6 +267,15 @@ export default function ProPackagesPage(): JSX.Element {
     }
   }
 
+  async function handleToggleHistory() {
+    const next = !historyOpen
+    setHistoryOpen(next)
+
+    if (next && purchases.length === 0) {
+      await loadPurchaseHistory()
+    }
+  }
+
   return (
     <div className="w-full">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
@@ -189,9 +286,21 @@ export default function ProPackagesPage(): JSX.Element {
           </p>
         </div>
 
-        <div className="rounded-xl border border-black/10 bg-white px-4 py-3 shadow-sm">
-          <div className="text-xs text-gray-500">Your balance</div>
-          <div className="text-lg font-bold text-black">◎ {loadingBalance ? '…' : balance.toLocaleString()} Coins</div>
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => {
+              void Promise.all([loadCoinStatus(), historyOpen ? loadPurchaseHistory() : Promise.resolve()])
+            }}
+            className="rounded-xl border border-black/10 bg-white px-4 py-3 text-sm font-semibold text-black shadow-sm hover:bg-gray-50"
+          >
+            Refresh
+          </button>
+
+          <div className="rounded-xl border border-black/10 bg-white px-4 py-3 shadow-sm">
+            <div className="text-xs text-gray-500">Your balance</div>
+            <div className="text-lg font-bold text-black">◎ {loadingBalance ? '…' : balance.toLocaleString()} Coins</div>
+          </div>
         </div>
       </div>
 
@@ -200,9 +309,7 @@ export default function ProPackagesPage(): JSX.Element {
       ) : null}
 
       {loadingPackages ? (
-        <div className="mt-6 rounded-xl border border-black/10 bg-white p-6 text-sm text-gray-600">
-          Loading packages…
-        </div>
+        <div className="mt-6 rounded-xl border border-black/10 bg-white p-6 text-sm text-gray-600">Loading packages…</div>
       ) : (
         <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
           {packages.map((p) => {
@@ -219,13 +326,9 @@ export default function ProPackagesPage(): JSX.Element {
               >
                 <div className="absolute right-4 top-4">
                   {isBestValue ? (
-                    <span className="rounded-full bg-yellow-400 px-3 py-1 text-xs font-bold text-black">
-                      Best value
-                    </span>
+                    <span className="rounded-full bg-yellow-400 px-3 py-1 text-xs font-bold text-black">Best value</span>
                   ) : p.tagline === 'Most popular' ? (
-                    <span className="rounded-full bg-black px-3 py-1 text-xs font-bold text-white">
-                      Most popular
-                    </span>
+                    <span className="rounded-full bg-black px-3 py-1 text-xs font-bold text-white">Most popular</span>
                   ) : null}
                 </div>
 
@@ -236,9 +339,7 @@ export default function ProPackagesPage(): JSX.Element {
                 <div className="mt-5 flex items-end justify-between gap-4">
                   <div>
                     <div className="text-2xl font-extrabold text-black">{eur(p.priceEur)}</div>
-                    <div className="mt-1 text-xs text-gray-500">
-                      ≈ {eur(perCoin(p.priceEur, p.coins))} per coin
-                    </div>
+                    <div className="mt-1 text-xs text-gray-500">≈ {eur(perCoin(p.priceEur, p.coins))} per coin</div>
                   </div>
 
                   <div className="text-right">
@@ -264,6 +365,72 @@ export default function ProPackagesPage(): JSX.Element {
           })}
         </div>
       )}
+
+      {/* Purchase history */}
+      <div className="mt-8 rounded-2xl border border-black/10 bg-white p-5">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <div className="text-base font-semibold text-black">Purchase history</div>
+            <div className="mt-1 text-sm text-gray-600">Your last 50 coin purchases</div>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => {
+              void handleToggleHistory()
+            }}
+            className="rounded-xl bg-black px-4 py-2.5 text-sm font-bold text-white hover:opacity-90"
+          >
+            {historyOpen ? 'Hide history' : 'Show history'}
+          </button>
+        </div>
+
+        {historyOpen ? (
+          <div className="mt-4">
+            {historyError ? (
+              <div className="mb-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+                {historyError}
+              </div>
+            ) : null}
+
+            {loadingHistory ? (
+              <div className="rounded-xl border border-black/10 bg-white p-4 text-sm text-gray-600">Loading…</div>
+            ) : purchases.length === 0 ? (
+              <div className="rounded-xl border border-black/10 bg-white p-4 text-sm text-gray-600">
+                No purchases yet.
+              </div>
+            ) : (
+              <div className="overflow-hidden rounded-xl border border-black/10">
+                <table className="w-full text-sm">
+                  <thead className="bg-gray-50 text-left text-gray-600">
+                    <tr>
+                      <th className="px-4 py-3 font-semibold">Date</th>
+                      <th className="px-4 py-3 font-semibold">Package</th>
+                      <th className="px-4 py-3 font-semibold">Coins</th>
+                      <th className="px-4 py-3 font-semibold">Price</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-black/5">
+                    {purchases.map((p, idx) => (
+                      <tr key={`${p.createdAt}_${idx}`} className="bg-white">
+                        <td className="px-4 py-3 text-gray-700">{formatDateTime(p.createdAt)}</td>
+                        <td className="px-4 py-3 text-gray-800">{p.packageCode ?? '—'}</td>
+                        <td className="px-4 py-3 font-semibold text-black">◎ {p.coins.toLocaleString()}</td>
+                        <td className="px-4 py-3 text-gray-800">{p.priceEur != null ? eur(p.priceEur) : '—'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            <div className="mt-3 text-xs text-gray-500">
+              Tip: if you change prices later, history prices will reflect current package prices. If you want immutable price
+              history, store <span className="font-semibold">price_cents</span> in the purchase payload at checkout/webhook time.
+            </div>
+          </div>
+        ) : null}
+      </div>
 
       <div className="mt-8 rounded-2xl border border-black/10 bg-white p-5 text-sm text-gray-600">
         <div className="font-semibold text-black">How it works</div>
