@@ -9,36 +9,62 @@ const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY")!, {
 
 const SITE_URL = Deno.env.get("SITE_URL") || "http://localhost:5173"
 
+function corsHeaders(origin: string | null) {
+  // You can restrict this later to your domain instead of "*"
+  return {
+    "Access-Control-Allow-Origin": origin ?? "*",
+    "Access-Control-Allow-Headers": "authorization, apikey, content-type, x-client-info",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+  }
+}
+
+function json(obj: unknown, status = 200, origin: string | null = null) {
+  return new Response(JSON.stringify(obj), {
+    status,
+    headers: { ...corsHeaders(origin), "Content-Type": "application/json" },
+  })
+}
+
 serve(async (req) => {
+  const origin = req.headers.get("origin")
+
   try {
+    // CORS preflight
     if (req.method === "OPTIONS") {
-      return new Response("ok", { headers: corsHeaders() })
-    }
-    if (req.method !== "POST") {
-      return new Response("Method Not Allowed", { status: 405, headers: corsHeaders() })
+      return new Response("ok", { headers: corsHeaders(origin) })
     }
 
-    // Supabase injects the user's JWT into Authorization header automatically
+    if (req.method !== "POST") {
+      return new Response("Method Not Allowed", { status: 405, headers: corsHeaders(origin) })
+    }
+
     const authHeader = req.headers.get("Authorization")
-    if (!authHeader) return json({ error: "Missing Authorization" }, 401)
+    if (!authHeader?.startsWith("Bearer ")) {
+      return json({ error: "Missing Authorization Bearer token" }, 401, origin)
+    }
+
+    const token = authHeader.replace("Bearer ", "").trim()
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!
     const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!
 
-    // Use the caller JWT to identify the user (safe)
+    // Validate the user using the token
     const supabaseUser = createClient(supabaseUrl, supabaseAnonKey, {
-      global: { headers: { Authorization: authHeader } },
+      global: { headers: { Authorization: `Bearer ${token}` } },
     })
 
     const { data: userRes, error: userErr } = await supabaseUser.auth.getUser()
-    if (userErr || !userRes?.user) return json({ error: "Invalid session" }, 401)
+    if (userErr || !userRes?.user) {
+      return json({ error: "Invalid session token" }, 401, origin)
+    }
+
     const userId = userRes.user.id
 
     const body = await req.json().catch(() => ({}))
     const packageCode = String(body.package_code || "")
-    if (!packageCode) return json({ error: "package_code is required" }, 400)
+    if (!packageCode) return json({ error: "package_code is required" }, 400, origin)
 
-    // Look up package from DB (source of truth)
+    // Source of truth: package from DB
     const { data: pkg, error: pkgErr } = await supabaseUser
       .from("coin_packages")
       .select("code, coins, price_cents, currency, provider_price_id, active")
@@ -46,7 +72,7 @@ serve(async (req) => {
       .eq("active", true)
       .single()
 
-    if (pkgErr || !pkg) return json({ error: "Package not found" }, 404)
+    if (pkgErr || !pkg) return json({ error: "Package not found" }, 404, origin)
 
     const lineItem = pkg.provider_price_id
       ? { price: pkg.provider_price_id, quantity: 1 }
@@ -65,7 +91,6 @@ serve(async (req) => {
           quantity: 1,
         }
 
-    // HashRouter success/cancel routes
     const successUrl = `${SITE_URL}/#/dashboard/overview?purchase=success`
     const cancelUrl = `${SITE_URL}/#/dashboard/pro?purchase=cancel`
 
@@ -82,24 +107,9 @@ serve(async (req) => {
       },
     })
 
-    return json({ url: session.url }, 200)
+    return json({ url: session.url }, 200, origin)
   } catch (e) {
     console.error(e)
-    return json({ error: "Server error" }, 500)
+    return json({ error: "Server error" }, 500, origin)
   }
 })
-
-function corsHeaders() {
-  return {
-    "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-    "Access-Control-Allow-Methods": "POST, OPTIONS",
-  }
-}
-
-function json(obj: unknown, status = 200) {
-  return new Response(JSON.stringify(obj), {
-    status,
-    headers: { ...corsHeaders(), "Content-Type": "application/json" },
-  })
-}
