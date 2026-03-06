@@ -10,6 +10,12 @@
  * UPDATE: Menu route alignment
  * - Aligned the header menu’s Pro Packages item to the canonical paywall route
  *   (/dashboard/pro) to avoid route mismatch edge cases.
+ *
+ * UPDATE: Club sync hardening
+ * - Header now only accepts fresh club-update payloads by requiring updated_at_ms
+ *   and ignoring older payloads.
+ * - Removed 10-second localStorage polling; kept event-based sync only
+ *   (club-updated + storage).
  */
 
 import React, { useCallback, useEffect, useRef, useState } from 'react'
@@ -72,6 +78,7 @@ type ClubUpdatePayload = {
   primary_color?: string
   secondary_color?: string
   logo_path?: string | null
+  updated_at_ms?: number
 }
 
 const LOGO_BUCKET = 'club-logos'
@@ -203,6 +210,7 @@ export default function Header({
   const [liveLogoPath, setLiveLogoPath] = useState<string | null>(clubLogoUrl ?? null)
   const [logoCacheKey, setLogoCacheKey] = useState(() => Date.now())
   const [currentUserId, setCurrentUserId] = useState<string | undefined>(undefined)
+  const [lastClubUpdateMs, setLastClubUpdateMs] = useState(0)
 
   const liveClubIdRef = useRef<string | undefined>(clubId)
   const currentUserIdRef = useRef<string | undefined>(undefined)
@@ -215,26 +223,38 @@ export default function Header({
     const expectedClubId = liveClubIdRef.current
     const expectedUserId = currentUserIdRef.current
 
-    if (payload.id && expectedClubId && payload.id !== expectedClubId) {
+    if (typeof payload.updated_at_ms !== 'number') {
       return
     }
 
-    if (payload.owner_user_id && expectedUserId && payload.owner_user_id !== expectedUserId) {
-      return
-    }
+    setLastClubUpdateMs(previous => {
+      if (payload.updated_at_ms! <= previous) {
+        return previous
+      }
 
-    if (payload.id && !expectedClubId) {
-      setLiveClubId(payload.id)
-    }
+      if (payload.id && expectedClubId && payload.id !== expectedClubId) {
+        return previous
+      }
 
-    if (typeof payload.name === 'string' && payload.name.trim()) {
-      setLiveClubName(payload.name)
-    }
+      if (payload.owner_user_id && expectedUserId && payload.owner_user_id !== expectedUserId) {
+        return previous
+      }
 
-    if (Object.prototype.hasOwnProperty.call(payload, 'logo_path')) {
-      setLiveLogoPath(payload.logo_path ?? null)
-      setLogoCacheKey(Date.now())
-    }
+      if (payload.id && !expectedClubId) {
+        setLiveClubId(payload.id)
+      }
+
+      if (typeof payload.name === 'string' && payload.name.trim()) {
+        setLiveClubName(payload.name)
+      }
+
+      if (Object.prototype.hasOwnProperty.call(payload, 'logo_path')) {
+        setLiveLogoPath(payload.logo_path ?? null)
+        setLogoCacheKey(Date.now())
+      }
+
+      return payload.updated_at_ms!
+    })
   }, [])
 
   const loadLiveClubFromStorage = useCallback(() => {
@@ -324,14 +344,9 @@ export default function Header({
     window.addEventListener('club-updated', handleClubUpdated as EventListener)
     window.addEventListener('storage', handleStorage)
 
-    const intervalId = window.setInterval(() => {
-      loadLiveClubFromStorage()
-    }, 10000)
-
     return () => {
       window.removeEventListener('club-updated', handleClubUpdated as EventListener)
       window.removeEventListener('storage', handleStorage)
-      window.clearInterval(intervalId)
     }
   }, [applyClubUpdatePayload, loadLiveClubFromStorage])
 
@@ -481,12 +496,12 @@ export default function Header({
             read_at: new Date().toISOString(),
           }
 
-          setUnreadItems((prev) =>
-            prev.filter((notification) => notification.user_notification_id !== item.user_notification_id)
+          setUnreadItems(prev =>
+            prev.filter(notification => notification.user_notification_id !== item.user_notification_id)
           )
 
-          setReadItems((prev) => [readItem, ...prev])
-          setUnreadCount((prev) => Math.max(0, prev - 1))
+          setReadItems(prev => [readItem, ...prev])
+          setUnreadCount(prev => Math.max(0, prev - 1))
         }
       }
 
@@ -648,7 +663,7 @@ export default function Header({
               type="button"
               onClick={() => {
                 setIsNotificationsOpen(false)
-                setIsProfileMenuOpen((prev) => !prev)
+                setIsProfileMenuOpen(prev => !prev)
               }}
               aria-label="Open profile menu"
               aria-haspopup="menu"
@@ -671,7 +686,7 @@ export default function Header({
                 </div>
 
                 <div className="py-1">
-                  {profileMenuItems.map((item) => {
+                  {profileMenuItems.map(item => {
                     const isInboxItem = item.path === '/dashboard/inbox'
 
                     if (item.action === 'logout') {
@@ -733,7 +748,7 @@ export default function Header({
 
           <div
             className="relative z-[81] mt-12 w-full max-w-2xl overflow-hidden rounded-2xl border border-black/10 bg-white shadow-2xl"
-            onClick={(event) => event.stopPropagation()}
+            onClick={event => event.stopPropagation()}
           >
             <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200">
               <div>
@@ -806,7 +821,7 @@ export default function Header({
                 </div>
               ) : (
                 <div className="divide-y divide-gray-100">
-                  {activeItems.map((item) => {
+                  {activeItems.map(item => {
                     const isUnread = item.status === 'unread'
 
                     return (

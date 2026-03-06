@@ -7,7 +7,7 @@
  */
 
 import React, { useEffect, useMemo, useState } from 'react'
-import { supabase } from '../../lib/supabase' // ✅ correct import for your project
+import { supabase } from '../../lib/supabase'
 
 type RiderRole =
   | 'Leader'
@@ -41,7 +41,7 @@ export default function SquadPage() {
         name: r.display_name,
         role: r.assigned_role,
         age: r.age_years,
-        overall: r.overall
+        fitness: r.overall,
       })),
     [rows]
   )
@@ -56,10 +56,10 @@ export default function SquadPage() {
       try {
         const { data: authData, error: authErr } = await supabase.auth.getUser()
         if (authErr) throw authErr
+
         const userId = authData.user?.id
         if (!userId) throw new Error('Not authenticated.')
 
-        // Your schema has UNIQUE(owner_user_id), so this is safe:
         const { data: club, error: clubErr } = await supabase
           .from('clubs')
           .select('id')
@@ -92,6 +92,7 @@ export default function SquadPage() {
     }
 
     loadClubIdAndRoster()
+
     return () => {
       isMounted = false
     }
@@ -138,13 +139,13 @@ export default function SquadPage() {
                 </tr>
               </thead>
               <tbody>
-                {riders.map(r => (
+                {riders.map((r) => (
                   <tr key={r.id} className="border-t">
                     <td className="p-2">{r.rowNo}</td>
                     <td className="p-2">{r.name}</td>
                     <td className="p-2">{r.role}</td>
                     <td className="p-2">{r.age}</td>
-                    <td className="p-2">{r.overall}%</td>
+                    <td className="p-2">{r.fitness}%</td>
                     <td className="p-2 text-right">
                       <button className="text-sm text-yellow-500 font-medium">View</button>
                     </td>
@@ -154,7 +155,7 @@ export default function SquadPage() {
                 {riders.length === 0 && (
                   <tr className="border-t">
                     <td className="p-2 text-gray-500" colSpan={6}>
-                      No riders found. If this is a new club, call the roster generator RPC.
+                      No riders found for this club yet.
                     </td>
                   </tr>
                 )}
@@ -163,7 +164,7 @@ export default function SquadPage() {
           </div>
 
           <div className="mt-6 grid grid-cols-3 gap-4 w-full">
-            {riders.map(r => (
+            {riders.map((r) => (
               <div key={r.id} className="bg-white p-4 rounded-lg shadow">
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center font-bold">
@@ -179,7 +180,7 @@ export default function SquadPage() {
 
                 <div className="mt-4">
                   <div className="text-xs text-gray-500">Overall</div>
-                  <div className="mt-1 text-lg font-bold">{r.overall}%</div>
+                  <div className="mt-1 text-lg font-bold">{r.fitness}%</div>
                 </div>
               </div>
             ))}

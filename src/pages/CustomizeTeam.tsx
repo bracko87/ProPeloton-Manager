@@ -21,6 +21,10 @@
  * - Base logo is a shield-style SVG built from team colors, rasterized to PNG,
  *   and upserted to Supabase storage.
  * - Team color updates also refresh that base logo in the background so it stays in sync.
+ *
+ * UPDATE (broadcast payload):
+ * - Club update broadcasts now include updated_at_ms so legitimate updates
+ *   can propagate instantly and in order across listeners/tabs.
  */
 
 import React, { useEffect, useId, useMemo, useRef, useState } from 'react'
@@ -837,6 +841,7 @@ export default function CustomizeTeamPage(): JSX.Element {
       primary_color: club.primary_color,
       secondary_color: club.secondary_color,
       logo_path: club.logo_path,
+      updated_at_ms: Date.now(),
     }
 
     localStorage.setItem('ppm-active-club', JSON.stringify(payload))
