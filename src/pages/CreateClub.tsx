@@ -7,9 +7,9 @@
  * - Generate the selected badge preview as an SVG logo.
  * - Rasterize generated SVG into PNG for consistent transparency rendering.
  * - Upload that generated logo into Supabase Storage (club-logos) as PNG.
- * - Call RPC public.create_club(...) with validated form data.
- * - Do not write directly to any club-related tables.
- * - UI uses "team" language, while backend still uses the existing create_club RPC.
+ * - Insert directly into public.clubs with validated form data.
+ * - Call RPC public.generate_initial_roster(...) after club creation.
+ * - UI uses "team" language, while backend table/RPC still uses the existing club naming.
  *
  * NOTE: Referral insert is intentionally non-blocking:
  * try {
@@ -25,9 +25,10 @@
  * - Consolidated the interior pattern selector into the Team Preview area (removed bottom panel).
  * - Cleaned up now-unused accordion code/state tied to the removed bottom panel.
  * - FIX: Rasterize badge SVG to PNG before upload (image/png) for consistent transparent logo rendering.
- * - DIAGNOSTICS: Logs when referral persistence is skipped due to missing referral code
- *   or inability to resolve created club id.
+ * - DIAGNOSTICS: Logs when referral persistence is skipped due to missing referral code.
  * - SVG MARKUP: Removed explicit transparent background rect prior to PNG rasterization to improve transparency handling.
+ * - BACKEND FLOW: Replaced create_club RPC call with direct clubs insert + generate_initial_roster RPC call.
+ * - SAFETY: Added best-effort cleanup if roster generation fails after club creation.
  */
 
 import React, { useEffect, useState } from 'react'
@@ -567,7 +568,7 @@ function BadgePreview({
 
 /**
  * CreateClubPage
- * Team creation form with Supabase RPC integration and generated logo persistence.
+ * Team creation form with direct clubs insert + generate_initial_roster RPC integration.
  */
 export default function CreateClubPage(): JSX.Element {
   const navigate = useNavigate()
@@ -598,6 +599,22 @@ export default function CreateClubPage(): JSX.Element {
 
   function updateField(key: keyof typeof form, value: string): void {
     setForm((prev) => ({ ...prev, [key]: value }))
+  }
+
+  async function cleanupFailedCreation(clubId: string | null, logoPath: string | null): Promise<void> {
+    const cleanupTasks: Promise<unknown>[] = []
+
+    if (clubId) {
+      cleanupTasks.push(supabase.from('clubs').delete().eq('id', clubId))
+    }
+
+    if (logoPath) {
+      cleanupTasks.push(supabase.storage.from('club-logos').remove([logoPath]))
+    }
+
+    if (cleanupTasks.length > 0) {
+      await Promise.allSettled(cleanupTasks)
+    }
   }
 
   useEffect(() => {
@@ -663,6 +680,7 @@ export default function CreateClubPage(): JSX.Element {
     setSubmitting(true)
 
     let uploadedLogoPath: string | null = null
+    let createdClubId: string | null = null
 
     try {
       const svg = buildBadgeSvg(
@@ -694,67 +712,59 @@ export default function CreateClubPage(): JSX.Element {
         return
       }
 
-      const { data: createClubData, error: rpcError } = await supabase.rpc('create_club', {
-        p_name: form.name.trim(),
-        p_country_code: form.countryCode,
-        p_primary_color: form.primary,
-        p_secondary_color: form.secondary,
-        p_logo_path: uploadedLogoPath,
-        p_motto: form.motto.trim() || null,
-      })
+      const { data: club, error: clubErr } = await supabase
+        .from('clubs')
+        .insert({
+          owner_user_id: user.id,
+          name: form.name.trim(),
+          country_code: form.countryCode,
+          primary_color: form.primary,
+          secondary_color: form.secondary,
+          logo_path: uploadedLogoPath,
+          motto: form.motto.trim() || null,
+        })
+        .select('id')
+        .single()
 
-      if (rpcError) {
-        if (uploadedLogoPath) {
-          await supabase.storage.from('club-logos').remove([uploadedLogoPath])
-        }
-
-        setError(rpcError.message ?? 'Failed to create team')
+      if (clubErr || !club?.id) {
+        await cleanupFailedCreation(null, uploadedLogoPath)
+        setError(clubErr?.message ?? 'Failed to create team')
         return
       }
 
-      // ---- Referral persistence (diagnostic logging added) ----
+      createdClubId = club.id
+
+      const { error: rosterErr } = await supabase.rpc('generate_initial_roster', {
+        p_club_id: createdClubId,
+      })
+
+      if (rosterErr) {
+        await cleanupFailedCreation(createdClubId, uploadedLogoPath)
+        setError(rosterErr.message ?? 'Failed to generate initial roster')
+        return
+      }
+
+      // ---- Referral persistence (diagnostic logging retained) ----
       const pendingReferralCode = getPendingReferralCode()
 
       if (pendingReferralCode) {
-        const createdClubIdFromRpc = typeof createClubData === 'string' ? createClubData : null
-        let createdClubId = createdClubIdFromRpc
-
-        if (!createdClubId) {
-          const { data: createdClub } = await supabase
-            .from('clubs')
-            .select('id')
-            .eq('owner_user_id', user.id)
-            .order('created_at', { ascending: false })
-            .limit(1)
-            .maybeSingle()
-
-          createdClubId = createdClub?.id ?? null
-        }
-
-        if (createdClubId) {
-          // Intentionally non-blocking: if this fails, user should still proceed.
-          try {
-            await applyPendingReferral({
-              referralCode: pendingReferralCode,
-              referredClubId: createdClubId,
-            })
-          } catch (referralError) {
-            console.warn('Unable to save referral', referralError)
-          }
-        } else {
-          console.warn('Referral was skipped because created club id was not resolved after create_club RPC.')
+        // Intentionally non-blocking: if this fails, user should still proceed.
+        try {
+          await applyPendingReferral({
+            referralCode: pendingReferralCode,
+            referredClubId: createdClubId,
+          })
+        } catch (referralError) {
+          console.warn('Unable to save referral', referralError)
         }
       } else {
         console.info('No pending referral code found at club creation time.')
       }
-      // --------------------------------------------------------
+      // -----------------------------------------------------------
 
       navigate('/dashboard/overview')
     } catch (err: any) {
-      if (uploadedLogoPath) {
-        await supabase.storage.from('club-logos').remove([uploadedLogoPath])
-      }
-
+      await cleanupFailedCreation(createdClubId, uploadedLogoPath)
       setError(err?.message ?? 'An unexpected error occurred')
     } finally {
       setSubmitting(false)
