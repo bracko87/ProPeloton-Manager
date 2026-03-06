@@ -4,6 +4,7 @@
  */
 
 import React from 'react'
+import { Outlet } from 'react-router'
 import MainLayout from '../../components/layout/MainLayout'
 
 /**
@@ -12,6 +13,10 @@ import MainLayout from '../../components/layout/MainLayout'
  *
  * Note: Authentication gating and data fetching should be handled through Supabase.
  */
-export default function ClubDashboard() {
-  return <MainLayout />
+export default function ClubDashboard(): JSX.Element {
+  return (
+    <MainLayout>
+      <Outlet />
+    </MainLayout>
+  )
 }

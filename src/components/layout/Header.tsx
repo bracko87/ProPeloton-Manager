@@ -16,6 +16,11 @@
  *   and ignoring older payloads.
  * - Removed 10-second localStorage polling; kept event-based sync only
  *   (club-updated + storage).
+ *
+ * UPDATE: Temporary Pro route test
+ * - Added TEST Pro Packages to the profile menu using /dashboard/pro
+ * - Added a hard TEST Packages button in the header that forces
+ *   window.location.hash = '#/dashboard/pro'
  */
 
 import React, { useCallback, useEffect, useRef, useState } from 'react'
@@ -92,6 +97,7 @@ const profileMenuItems: MenuItem[] = [
   { label: 'Help', path: '/dashboard/help' },
   { label: 'Contact Us', path: '/dashboard/contact-us' },
   { label: 'Pro Packages', path: '/dashboard/pro' },
+  { label: 'TEST Pro Packages', path: '/dashboard/pro' },
   { label: 'Invite Friends', path: '/dashboard/invite-friends' },
   { label: 'Logout', action: 'logout' },
 ]
@@ -634,6 +640,18 @@ export default function Header({
         </div>
 
         <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => {
+              if (typeof window !== 'undefined') {
+                window.location.hash = '#/dashboard/pro'
+              }
+            }}
+            className="rounded-md border border-black/35 bg-white/70 px-3 py-1.5 text-sm font-semibold text-black hover:bg-white"
+          >
+            TEST Packages
+          </button>
+
           {/* Coins pill (driven by prop) */}
           <div className="rounded-md border border-black/35 bg-yellow-300/70 px-3 py-1.5 text-sm font-semibold text-black min-w-[130px] text-center">
             ◎ {coinBalance.toLocaleString()} Coins
