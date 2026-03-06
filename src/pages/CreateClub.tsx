@@ -7,8 +7,8 @@
  * - Generate the selected badge preview as an SVG logo.
  * - Rasterize generated SVG into PNG for consistent transparency rendering.
  * - Upload that generated logo into Supabase Storage (club-logos) as PNG.
- * - Insert directly into public.clubs with validated form data.
- * - Do not call generate_initial_roster from the frontend.
+ * - Create the club through public.create_club(...) instead of direct frontend inserts.
+ * - Do not create finance rows, membership rows, wallet rows, or other infra rows from the frontend.
  * - UI uses "team" language, while backend table still uses the existing club naming.
  *
  * NOTE: Referral insert is intentionally non-blocking:
@@ -27,7 +27,7 @@
  * - FIX: Rasterize badge SVG to PNG before upload (image/png) for consistent transparent logo rendering.
  * - DIAGNOSTICS: Logs when referral persistence is skipped due to missing referral code.
  * - SVG MARKUP: Removed explicit transparent background rect prior to PNG rasterization to improve transparency handling.
- * - BACKEND FLOW: Uses direct clubs insert only (no create_club RPC and no generate_initial_roster RPC from frontend).
+ * - BACKEND FLOW: Frontend uploads logo, then calls public.create_club(...) only.
  * - SAFETY: Keeps best-effort cleanup for failed creation flow.
  */
 
@@ -154,7 +154,7 @@ function rasterizeBadgeSvgToPng(svg: string, size = 512): Promise<Blob> {
       context.drawImage(image, 0, 0, size, size)
 
       canvas.toBlob(
-        (blob) => {
+        blob => {
           URL.revokeObjectURL(objectUrl)
 
           if (!blob) {
@@ -165,7 +165,7 @@ function rasterizeBadgeSvgToPng(svg: string, size = 512): Promise<Blob> {
           resolve(blob)
         },
         'image/png',
-        1
+        1,
       )
     }
 
@@ -216,7 +216,7 @@ function getBadgeClipPath(shape: BadgeShape): string {
 function flagEmojiFromCode(code: string): string {
   const clean = code.trim().toUpperCase()
   if (!/^[A-Z]{2}$/.test(clean)) return '🏳️'
-  return clean.replace(/./g, (char) => String.fromCodePoint(127397 + char.charCodeAt(0)))
+  return clean.replace(/./g, char => String.fromCodePoint(127397 + char.charCodeAt(0)))
 }
 
 /**
@@ -379,7 +379,7 @@ function buildBadgeSvg(
   badgeSymbol: BadgeSymbol,
   badgeLetter: string,
   primary: string,
-  secondary: string
+  secondary: string,
 ): string {
   const outerShape = getSvgShapeMarkup(shape, secondary, false)
   const innerShape = getSvgShapeMarkup(shape, primary, true)
@@ -568,7 +568,7 @@ function BadgePreview({
 
 /**
  * CreateClubPage
- * Team creation form with direct clubs insert integration.
+ * Team creation form with backend RPC integration.
  */
 export default function CreateClubPage(): JSX.Element {
   const navigate = useNavigate()
@@ -598,7 +598,7 @@ export default function CreateClubPage(): JSX.Element {
   const badgeLetter = ''
 
   function updateField(key: keyof typeof form, value: string): void {
-    setForm((prev) => ({ ...prev, [key]: value }))
+    setForm(prev => ({ ...prev, [key]: value }))
   }
 
   async function cleanupFailedCreation(clubId: string | null, logoPath: string | null): Promise<void> {
@@ -643,7 +643,7 @@ export default function CreateClubPage(): JSX.Element {
         setCountries(options)
 
         if (options.length > 0) {
-          setForm((prev) => ({
+          setForm(prev => ({
             ...prev,
             countryCode: prev.countryCode || options[0].code,
           }))
@@ -690,7 +690,7 @@ export default function CreateClubPage(): JSX.Element {
         badgeSymbol,
         badgeLetter,
         form.primary,
-        form.secondary
+        form.secondary,
       )
 
       const pngBlob = await rasterizeBadgeSvgToPng(svg)
@@ -712,27 +712,25 @@ export default function CreateClubPage(): JSX.Element {
         return
       }
 
-      const { data: club, error: clubErr } = await supabase
-        .from('clubs')
-        .insert({
-          owner_user_id: user.id,
-          name: form.name.trim(),
-          country_code: form.countryCode,
-          primary_color: form.primary,
-          secondary_color: form.secondary,
-          logo_path: uploadedLogoPath,
-          motto: form.motto.trim() || null,
-        })
-        .select('id')
-        .single()
+      const { data: createdClubIdFromRpc, error: rpcError } = await supabase.rpc('create_club', {
+        p_name: form.name.trim(),
+        p_country_code: form.countryCode,
+        p_primary_color: form.primary,
+        p_secondary_color: form.secondary,
+        p_logo_path: uploadedLogoPath,
+        p_motto: form.motto.trim() || null,
+      })
 
-      if (clubErr || !club?.id) {
-        await cleanupFailedCreation(null, uploadedLogoPath)
-        setError(clubErr?.message ?? 'Failed to create team')
+      if (rpcError || !createdClubIdFromRpc) {
+        if (uploadedLogoPath) {
+          await supabase.storage.from('club-logos').remove([uploadedLogoPath])
+        }
+
+        setError(rpcError?.message ?? 'Failed to create team')
         return
       }
 
-      createdClubId = club.id
+      createdClubId = createdClubIdFromRpc as string
 
       // ---- Referral persistence (diagnostic logging retained) ----
       const pendingReferralCode = getPendingReferralCode()
@@ -761,7 +759,7 @@ export default function CreateClubPage(): JSX.Element {
     }
   }
 
-  const selectedCountry = countries.find((c) => c.code === form.countryCode) ?? null
+  const selectedCountry = countries.find(c => c.code === form.countryCode) ?? null
   const flagUrl = form.countryCode ? `https://flagcdn.com/w40/${form.countryCode.toLowerCase()}.png` : ''
   const overlaySummary = 'No symbol / letter selected'
 
@@ -807,7 +805,7 @@ export default function CreateClubPage(): JSX.Element {
                     <label className="text-sm font-medium text-gray-700">Team Name</label>
                     <input
                       value={form.name}
-                      onChange={(e) => updateField('name', e.target.value)}
+                      onChange={e => updateField('name', e.target.value)}
                       className="mt-1 block w-full border rounded-md px-3 py-2"
                       placeholder="e.g. Horizon Racing"
                       required
@@ -833,14 +831,14 @@ export default function CreateClubPage(): JSX.Element {
 
                       <select
                         value={form.countryCode}
-                        onChange={(e) => updateField('countryCode', e.target.value)}
+                        onChange={e => updateField('countryCode', e.target.value)}
                         className="block w-full border rounded-md px-3 py-2"
                         disabled={loadingCountries || submitting}
                       >
                         {countries.length === 0 ? (
                           <option value="">No countries available</option>
                         ) : (
-                          countries.map((c) => (
+                          countries.map(c => (
                             <option key={c.code} value={c.code}>
                               {c.name}
                             </option>
@@ -858,7 +856,7 @@ export default function CreateClubPage(): JSX.Element {
                       <input
                         type="color"
                         value={form.primary}
-                        onChange={(e) => updateField('primary', e.target.value)}
+                        onChange={e => updateField('primary', e.target.value)}
                         className="mt-2 w-20 h-10 p-0 border rounded"
                         disabled={submitting}
                       />
@@ -869,7 +867,7 @@ export default function CreateClubPage(): JSX.Element {
                       <input
                         type="color"
                         value={form.secondary}
-                        onChange={(e) => updateField('secondary', e.target.value)}
+                        onChange={e => updateField('secondary', e.target.value)}
                         className="mt-2 w-20 h-10 p-0 border rounded"
                         disabled={submitting}
                       />
@@ -880,7 +878,7 @@ export default function CreateClubPage(): JSX.Element {
                     <label className="text-sm font-medium text-gray-700">Team Motto (optional)</label>
                     <input
                       value={form.motto}
-                      onChange={(e) => updateField('motto', e.target.value)}
+                      onChange={e => updateField('motto', e.target.value)}
                       className="mt-1 block w-full border rounded-md px-3 py-2"
                       placeholder="e.g. Ride as one"
                       disabled={submitting}
@@ -952,7 +950,7 @@ export default function CreateClubPage(): JSX.Element {
                   </div>
 
                   <div className="mt-3 grid grid-cols-4 gap-2">
-                    {patternOptions.map((pattern) => (
+                    {patternOptions.map(pattern => (
                       <button
                         key={pattern}
                         type="button"

@@ -1,4 +1,3 @@
-// MainLayout.tsx
 /**
  * MainLayout.tsx
  * Layout used for in-game pages: retractable sidebar, header, content, and footer with game-time.
@@ -16,6 +15,11 @@
  * - When balance becomes >=2:
  *   - Unlock and restore navigation
  *   - Optional: return to the last page the user was on before locking
+ *
+ * RESTORE PATCH:
+ * - If the current path is /dashboard/pro or /dashboard/pro-packages,
+ *   render ProPackagesPage directly from MainLayout.
+ * - This helps restore the page even if nested routing/outlet wiring was broken.
  */
 
 import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react'
@@ -23,6 +27,7 @@ import { Outlet, useNavigate, useLocation } from 'react-router'
 import Sidebar from './Sidebar'
 import Header from './Header'
 import Footer from './Footer'
+import ProPackagesPage from '../../pages/ProPackages'
 import { supabase } from '../../lib/supabase'
 
 interface MainLayoutProps {
@@ -43,6 +48,11 @@ interface CoinStatusRow {
 }
 
 const COINS_NEEDED_TO_PLAY = 2
+const PRO_PAGE_PATH = '/dashboard/pro'
+const PRO_PAGE_ALIASES = new Set<string>([
+  '/dashboard/pro',
+  '/dashboard/pro-packages',
+])
 
 export default function MainLayout({ children }: MainLayoutProps) {
   const [collapsed, setCollapsed] = useState(false)
@@ -65,10 +75,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
   const location = useLocation()
 
   const isProPage = useMemo(() => {
-    return (
-      location.pathname === '/dashboard/pro' ||
-      location.pathname === '/dashboard/pro-packages'
-    )
+    return PRO_PAGE_ALIASES.has(location.pathname)
   }, [location.pathname])
 
   // Remember where the user was before lock, so we can optionally send them back after top-up.
@@ -107,6 +114,17 @@ export default function MainLayout({ children }: MainLayoutProps) {
       }
     }
   }, [navigate])
+
+  const handleNavigate = useCallback(
+    (path: string) => {
+      if (path === '/dashboard/pro-packages') {
+        navigate(PRO_PAGE_PATH)
+        return
+      }
+      navigate(path)
+    },
+    [navigate]
+  )
 
   useEffect(() => {
     let mounted = true
@@ -217,6 +235,18 @@ export default function MainLayout({ children }: MainLayoutProps) {
   // When locked, block everything EXCEPT pro pages. This is the key fix.
   const shouldBlockMain = !canPlayToday && !isProPage
 
+  const mainContent = useMemo(() => {
+    if (children) return children
+
+    // Restore patch:
+    // Render ProPackages directly for pro routes even if the Outlet route mapping is broken.
+    if (isProPage) {
+      return <ProPackagesPage />
+    }
+
+    return <Outlet />
+  }, [children, isProPage])
+
   return (
     <div className="min-h-screen flex bg-gray-100">
       {/* Sidebar: pass locked so it can restrict navigation (only Buy Coins + Sign Out) */}
@@ -230,13 +260,13 @@ export default function MainLayout({ children }: MainLayoutProps) {
           clubCountryCode={clubUi.countryCode}
           clubCountryName={clubUi.countryName}
           clubLogoUrl={clubUi.logoUrl}
-          onNavigate={(path) => navigate(path)}
+          onNavigate={handleNavigate}
           coinBalance={coinBalance}
         />
 
         {/* Main content blocked ONLY when locked and not on pro page */}
         <main className={`p-6 lg:p-8 flex-1 overflow-auto ${shouldBlockMain ? 'pointer-events-none select-none' : ''}`}>
-          {children ?? <Outlet />}
+          {mainContent}
         </main>
 
         <Footer />
@@ -270,7 +300,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
                 type="button"
                 onClick={() => {
                   setShowLockModal(false)
-                  navigate('/dashboard/pro')
+                  navigate(PRO_PAGE_PATH)
                 }}
                 className="rounded-lg bg-yellow-400 px-4 py-3 text-sm font-semibold text-black hover:bg-yellow-300"
               >

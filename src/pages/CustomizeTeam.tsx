@@ -25,6 +25,11 @@
  * UPDATE (broadcast payload):
  * - Club update broadcasts now include updated_at_ms so legitimate updates
  *   can propagate instantly and in order across listeners/tabs.
+ *
+ * UPDATE (broadcast logo-path guard):
+ * - Non-logo updates no longer rebroadcast logo_path.
+ * - This prevents header logo source churn and avoids the white-inside-crest regression.
+ * - logo_path is still broadcast on initial load and real logo changes.
  */
 
 import React, { useEffect, useId, useMemo, useRef, useState } from 'react'
@@ -833,14 +838,14 @@ export default function CustomizeTeamPage(): JSX.Element {
     }, 2500)
   }
 
-  function broadcastClubUpdate(club: ClubRow): void {
+  function broadcastClubUpdate(club: ClubRow, options?: { includeLogoPath?: boolean }): void {
     const payload = {
       id: club.id,
       owner_user_id: club.owner_user_id,
       name: club.name,
       primary_color: club.primary_color,
       secondary_color: club.secondary_color,
-      logo_path: club.logo_path,
+      ...(options?.includeLogoPath ? { logo_path: club.logo_path } : {}),
       updated_at_ms: Date.now(),
     }
 
@@ -905,7 +910,7 @@ export default function CustomizeTeamPage(): JSX.Element {
         if (!active || !club) return
 
         syncClubState(club)
-        broadcastClubUpdate(club)
+        broadcastClubUpdate(club, { includeLogoPath: true })
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load club.')
       } finally {
@@ -976,7 +981,9 @@ export default function CustomizeTeamPage(): JSX.Element {
     }
 
     syncClubState(updatedClub)
-    broadcastClubUpdate(updatedClub)
+    broadcastClubUpdate(updatedClub, {
+      includeLogoPath: Object.prototype.hasOwnProperty.call(normalizedPatch, 'logo_path'),
+    })
     return updatedClub
   }
 
