@@ -2,9 +2,10 @@
  * ProPackages.tsx
  * Coin packages shop page (DB-driven).
  *
- * UPDATE:
- * - Fix 401 by explicitly sending the user's access token to the Edge Function
- *   via Authorization header.
+ * FIX:
+ * - Use direct fetch() to call Edge Function with explicit headers:
+ *   Authorization (user access_token) + apikey (anon key)
+ * - This resolves 401 issues where supabase.functions.invoke did not forward headers.
  */
 import React, { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../lib/supabase'
@@ -27,6 +28,10 @@ type UiCoinPackage = {
 }
 
 const COINS_PER_DAY = 2
+
+// IMPORTANT: these must match your frontend env vars (Vite default)
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string | undefined
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined
 
 function eur(n: number) {
   return new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(n)
@@ -121,25 +126,37 @@ export default function ProPackagesPage(): JSX.Element {
     setBuyingCode(code)
 
     try {
-      // ✅ ensure we have a valid user session token
+      if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+        throw new Error('Missing VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY in frontend env.')
+      }
+
+      // Get current user token
       const { data: sessionData, error: sessionError } = await supabase.auth.getSession()
       if (sessionError) throw sessionError
 
       const token = sessionData.session?.access_token
       if (!token) throw new Error('Not authenticated. Please log in again.')
 
-      // ✅ call edge function with explicit Authorization header
-      const { data, error } = await supabase.functions.invoke('create-coin-checkout', {
-        body: { package_code: code },
+      // Direct fetch to Edge Function with explicit headers
+      const res = await fetch(`${SUPABASE_URL}/functions/v1/create-coin-checkout`, {
+        method: 'POST',
         headers: {
+          'Content-Type': 'application/json',
+          apikey: SUPABASE_ANON_KEY,
           Authorization: `Bearer ${token}`,
         },
+        body: JSON.stringify({ package_code: code }),
       })
 
-      if (error) throw error
-      if (!data?.url) throw new Error('Checkout URL missing')
+      if (!res.ok) {
+        const text = await res.text().catch(() => '')
+        throw new Error(text || `Edge function error: ${res.status}`)
+      }
 
-      window.location.href = data.url
+      const json = (await res.json()) as { url?: string }
+      if (!json.url) throw new Error('Checkout URL missing')
+
+      window.location.href = json.url
     } catch (e: any) {
       setError(e?.message ?? 'Checkout failed.')
       setBuyingCode(null)
@@ -163,7 +180,9 @@ export default function ProPackagesPage(): JSX.Element {
       </div>
 
       {error ? (
-        <div className="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{error}</div>
+        <div className="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+          {error}
+        </div>
       ) : null}
 
       {loadingPackages ? (
@@ -186,9 +205,13 @@ export default function ProPackagesPage(): JSX.Element {
               >
                 <div className="absolute right-4 top-4">
                   {isBestValue ? (
-                    <span className="rounded-full bg-yellow-400 px-3 py-1 text-xs font-bold text-black">Best value</span>
+                    <span className="rounded-full bg-yellow-400 px-3 py-1 text-xs font-bold text-black">
+                      Best value
+                    </span>
                   ) : p.tagline === 'Most popular' ? (
-                    <span className="rounded-full bg-black px-3 py-1 text-xs font-bold text-white">Most popular</span>
+                    <span className="rounded-full bg-black px-3 py-1 text-xs font-bold text-white">
+                      Most popular
+                    </span>
                   ) : null}
                 </div>
 
@@ -199,7 +222,9 @@ export default function ProPackagesPage(): JSX.Element {
                 <div className="mt-5 flex items-end justify-between gap-4">
                   <div>
                     <div className="text-2xl font-extrabold text-black">{eur(p.priceEur)}</div>
-                    <div className="mt-1 text-xs text-gray-500">≈ {eur(perCoin(p.priceEur, p.coins))} per coin</div>
+                    <div className="mt-1 text-xs text-gray-500">
+                      ≈ {eur(perCoin(p.priceEur, p.coins))} per coin
+                    </div>
                   </div>
 
                   <div className="text-right">
