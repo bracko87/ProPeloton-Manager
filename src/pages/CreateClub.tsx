@@ -7,7 +7,8 @@
  * - Generate the selected badge preview as an SVG logo.
  * - Rasterize generated SVG into PNG for consistent transparency rendering.
  * - Upload that generated logo into Supabase Storage (club-logos) as PNG.
- * - Create the club through public.create_club(...) instead of direct frontend inserts.
+ * - Create the club only through public.create_club(...).
+ * - Do not perform direct public.clubs inserts from the frontend.
  * - Do not create finance rows, membership rows, wallet rows, or other infra rows from the frontend.
  * - UI uses "team" language, while backend table still uses the existing club naming.
  *
@@ -28,7 +29,8 @@
  * - DIAGNOSTICS: Logs when referral persistence is skipped due to missing referral code.
  * - SVG MARKUP: Removed explicit transparent background rect prior to PNG rasterization to improve transparency handling.
  * - BACKEND FLOW: Frontend uploads logo, then calls public.create_club(...) only.
- * - SAFETY: Keeps best-effort cleanup for failed creation flow.
+ * - SAFETY: Keeps best-effort logo cleanup for failed creation flow before club creation succeeds.
+ * - RPC FIX: Uses rpcCreatedClubId for the Supabase return value, then assigns into mutable createdClubId.
  */
 
 import React, { useEffect, useState } from 'react'
@@ -601,20 +603,9 @@ export default function CreateClubPage(): JSX.Element {
     setForm(prev => ({ ...prev, [key]: value }))
   }
 
-  async function cleanupFailedCreation(clubId: string | null, logoPath: string | null): Promise<void> {
-    const cleanupTasks: Promise<unknown>[] = []
-
-    if (clubId) {
-      cleanupTasks.push(supabase.from('clubs').delete().eq('id', clubId))
-    }
-
-    if (logoPath) {
-      cleanupTasks.push(supabase.storage.from('club-logos').remove([logoPath]))
-    }
-
-    if (cleanupTasks.length > 0) {
-      await Promise.allSettled(cleanupTasks)
-    }
+  async function cleanupFailedLogoUpload(logoPath: string | null): Promise<void> {
+    if (!logoPath) return
+    await Promise.allSettled([supabase.storage.from('club-logos').remove([logoPath])])
   }
 
   useEffect(() => {
@@ -712,7 +703,7 @@ export default function CreateClubPage(): JSX.Element {
         return
       }
 
-      const { data: createdClubIdFromRpc, error: rpcError } = await supabase.rpc('create_club', {
+      const { data: rpcCreatedClubId, error: rpcError } = await supabase.rpc('create_club', {
         p_name: form.name.trim(),
         p_country_code: form.countryCode,
         p_primary_color: form.primary,
@@ -721,7 +712,7 @@ export default function CreateClubPage(): JSX.Element {
         p_motto: form.motto.trim() || null,
       })
 
-      if (rpcError || !createdClubIdFromRpc) {
+      if (rpcError || !rpcCreatedClubId) {
         if (uploadedLogoPath) {
           await supabase.storage.from('club-logos').remove([uploadedLogoPath])
         }
@@ -730,7 +721,7 @@ export default function CreateClubPage(): JSX.Element {
         return
       }
 
-      createdClubId = createdClubIdFromRpc as string
+      createdClubId = rpcCreatedClubId as string
 
       // ---- Referral persistence (diagnostic logging retained) ----
       const pendingReferralCode = getPendingReferralCode()
@@ -752,7 +743,9 @@ export default function CreateClubPage(): JSX.Element {
 
       navigate('/dashboard/overview')
     } catch (err: any) {
-      await cleanupFailedCreation(createdClubId, uploadedLogoPath)
+      if (!createdClubId) {
+        await cleanupFailedLogoUpload(uploadedLogoPath)
+      }
       setError(err?.message ?? 'An unexpected error occurred')
     } finally {
       setSubmitting(false)
