@@ -1,6 +1,10 @@
 /**
  * ProPackages.tsx
  * Coin packages shop page (DB-driven).
+ *
+ * UPDATE:
+ * - Fix 401 by explicitly sending the user's access token to the Edge Function
+ *   via Authorization header.
  */
 import React, { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../lib/supabase'
@@ -117,8 +121,19 @@ export default function ProPackagesPage(): JSX.Element {
     setBuyingCode(code)
 
     try {
+      // ✅ ensure we have a valid user session token
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession()
+      if (sessionError) throw sessionError
+
+      const token = sessionData.session?.access_token
+      if (!token) throw new Error('Not authenticated. Please log in again.')
+
+      // ✅ call edge function with explicit Authorization header
       const { data, error } = await supabase.functions.invoke('create-coin-checkout', {
         body: { package_code: code },
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       })
 
       if (error) throw error
@@ -143,16 +158,12 @@ export default function ProPackagesPage(): JSX.Element {
 
         <div className="rounded-xl border border-black/10 bg-white px-4 py-3 shadow-sm">
           <div className="text-xs text-gray-500">Your balance</div>
-          <div className="text-lg font-bold text-black">
-            ◎ {loadingBalance ? '…' : balance.toLocaleString()} Coins
-          </div>
+          <div className="text-lg font-bold text-black">◎ {loadingBalance ? '…' : balance.toLocaleString()} Coins</div>
         </div>
       </div>
 
       {error ? (
-        <div className="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
-          {error}
-        </div>
+        <div className="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{error}</div>
       ) : null}
 
       {loadingPackages ? (
@@ -175,13 +186,9 @@ export default function ProPackagesPage(): JSX.Element {
               >
                 <div className="absolute right-4 top-4">
                   {isBestValue ? (
-                    <span className="rounded-full bg-yellow-400 px-3 py-1 text-xs font-bold text-black">
-                      Best value
-                    </span>
+                    <span className="rounded-full bg-yellow-400 px-3 py-1 text-xs font-bold text-black">Best value</span>
                   ) : p.tagline === 'Most popular' ? (
-                    <span className="rounded-full bg-black px-3 py-1 text-xs font-bold text-white">
-                      Most popular
-                    </span>
+                    <span className="rounded-full bg-black px-3 py-1 text-xs font-bold text-white">Most popular</span>
                   ) : null}
                 </div>
 
@@ -192,9 +199,7 @@ export default function ProPackagesPage(): JSX.Element {
                 <div className="mt-5 flex items-end justify-between gap-4">
                   <div>
                     <div className="text-2xl font-extrabold text-black">{eur(p.priceEur)}</div>
-                    <div className="mt-1 text-xs text-gray-500">
-                      ≈ {eur(perCoin(p.priceEur, p.coins))} per coin
-                    </div>
+                    <div className="mt-1 text-xs text-gray-500">≈ {eur(perCoin(p.priceEur, p.coins))} per coin</div>
                   </div>
 
                   <div className="text-right">
