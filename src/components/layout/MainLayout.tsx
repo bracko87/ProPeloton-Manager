@@ -13,16 +13,21 @@
  *   - UI should still be usable (Buy now buttons)
  *   - Sidebar should be restricted (pass locked prop to Sidebar)
  * - When balance becomes >=2:
- *   - Unlock and restore navigation
- *   - Optional: return to the last page the user was on before locking
+ *   - Unlock and restore normal navigation
  *
  * RESTORE PATCH:
  * - If the current path is /dashboard/pro or /dashboard/pro-packages,
  *   render ProPackagesPage directly from MainLayout.
  * - This helps restore the page even if nested routing/outlet wiring was broken.
+ *
+ * UPDATE: Removed forced redirect after unlock
+ * - Users are no longer auto-redirected away from /dashboard/pro after coin status
+ *   changes to unlocked.
+ * - This fixes the issue where Buy Coins / Pro Packages appeared to "do nothing"
+ *   or bounce back immediately.
  */
 
-import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react'
+import React, { useEffect, useState, useCallback, useMemo } from 'react'
 import { Outlet, useNavigate, useLocation } from 'react-router'
 import Sidebar from './Sidebar'
 import Header from './Header'
@@ -77,16 +82,6 @@ export default function MainLayout({ children }: MainLayoutProps) {
   const isProPage = useMemo(() => {
     return PRO_PAGE_ALIASES.has(location.pathname)
   }, [location.pathname])
-
-  // Remember where the user was before lock, so we can optionally send them back after top-up.
-  const lastNonProPathRef = useRef<string>('/dashboard/overview')
-
-  // Update the ref whenever the user is on a non-pro page
-  useEffect(() => {
-    if (!isProPage) {
-      lastNonProPathRef.current = location.pathname + (location.search ?? '') + (location.hash ?? '')
-    }
-  }, [isProPage, location.pathname, location.search, location.hash])
 
   const loadCoinStatus = useCallback(async () => {
     const { data, error } = await supabase.rpc('get_my_coin_status')
@@ -208,7 +203,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
    * Lock behavior:
    * - If locked and not on pro page: show modal.
    * - If locked and on pro page: do NOT show modal (allow buying).
-   * - If unlocked: hide modal and optionally restore last non-pro page if user is on pro page.
+   * - If unlocked: hide modal and allow normal browsing (including staying on pro page).
    */
   useEffect(() => {
     if (!canPlayToday) {
@@ -223,14 +218,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
 
     // Unlocked
     setShowLockModal(false)
-
-    // Optional: if user topped up while on /dashboard/pro, send them back to last page.
-    // If you prefer to keep them on pro page, remove this block.
-    if (isProPage) {
-      const backTo = lastNonProPathRef.current || '/dashboard/overview'
-      navigate(backTo, { replace: true })
-    }
-  }, [canPlayToday, isProPage, navigate])
+  }, [canPlayToday, isProPage])
 
   // When locked, block everything EXCEPT pro pages. This is the key fix.
   const shouldBlockMain = !canPlayToday && !isProPage
@@ -254,7 +242,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
 
       <div className="flex-1 flex flex-col min-w-0">
         <Header
-          onToggle={() => setCollapsed((v) => !v)}
+          onToggle={() => setCollapsed(v => !v)}
           clubId={clubUi.id}
           clubName={clubUi.name}
           clubCountryCode={clubUi.countryCode}

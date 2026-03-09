@@ -10,6 +10,9 @@
  * Updated:
  * - Replaced native browser prompt/confirm/alert for shutdown flow
  *   with a custom in-page modal dialog.
+ * - Shutdown now explicitly fetches the current session token and sends
+ *   Authorization: Bearer <token> to the shutdown-team Edge Function.
+ * - Added a user-facing guard when the session/token is missing.
  */
 
 import React, { useEffect, useState } from 'react'
@@ -133,7 +136,20 @@ export default function PreferencesPage(): JSX.Element {
     setIsShuttingDown(true)
 
     try {
-      const { error } = await supabase.functions.invoke('shutdown-team')
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession()
+      const accessToken = sessionData.session?.access_token
+
+      if (sessionError || !accessToken) {
+        setShutdownError('Your session is missing. Please sign in again and retry.')
+        setIsShuttingDown(false)
+        return
+      }
+
+      const { error } = await supabase.functions.invoke('shutdown-team', {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      })
 
       if (error) {
         console.error('shutdown-team failed:', error)
@@ -231,11 +247,12 @@ export default function PreferencesPage(): JSX.Element {
               <div className="rounded-md border border-amber-200 bg-white p-4">
                 <h4 className="text-sm font-semibold text-gray-900">Restart Team</h4>
                 <p className="mt-2 text-sm text-gray-600">
-                  Reset this team back to the same starter state a brand-new user gets when creating a team
-                  for the first time.
+                  Reset this team back to the same starter state a brand-new user gets when creating a
+                  team for the first time.
                 </p>
                 <p className="mt-2 text-xs text-gray-500">
-                  This is a placeholder for the future full reset logic (riders, equipment, finances, etc.).
+                  This is a placeholder for the future full reset logic (riders, equipment, finances,
+                  etc.).
                 </p>
 
                 <button
@@ -250,8 +267,9 @@ export default function PreferencesPage(): JSX.Element {
               <div className="rounded-md border border-red-200 bg-white p-4">
                 <h4 className="text-sm font-semibold text-gray-900">Shut Down Team</h4>
                 <p className="mt-2 text-sm text-gray-600">
-                  Permanently delete this user team AND the authentication account. After successful deletion,
-                  you will be redirected to the homepage and may sign up again with the same email.
+                  Permanently delete this user team AND the authentication account. After successful
+                  deletion, you will be redirected to the homepage and may sign up again with the same
+                  email.
                 </p>
                 <p className="mt-2 text-xs text-gray-500">
                   This should delete only the current user’s team data, not other users or other teams.
@@ -297,10 +315,7 @@ export default function PreferencesPage(): JSX.Element {
             <div className="border-b border-red-100 bg-red-50 px-6 py-5">
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <h3
-                    id="shutdown-team-modal-title"
-                    className="text-lg font-semibold text-red-700"
-                  >
+                  <h3 id="shutdown-team-modal-title" className="text-lg font-semibold text-red-700">
                     Confirm Team Shutdown
                   </h3>
                   <p className="mt-1 text-sm text-red-600">
@@ -321,9 +336,7 @@ export default function PreferencesPage(): JSX.Element {
 
             <div className="px-6 py-5">
               <div className="rounded-lg border border-red-100 bg-red-50/50 p-4">
-                <p className="text-sm text-gray-700">
-                  You are about to permanently delete:
-                </p>
+                <p className="text-sm text-gray-700">You are about to permanently delete:</p>
 
                 <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-gray-700">
                   <li>Your current team</li>
@@ -332,8 +345,8 @@ export default function PreferencesPage(): JSX.Element {
                 </ul>
 
                 <p className="mt-3 text-sm text-gray-700">
-                  After successful deletion, you will be signed out and redirected to the homepage.
-                  You may then register again with the same email address as a brand-new user.
+                  After successful deletion, you will be signed out and redirected to the homepage. You
+                  may then register again with the same email address as a brand-new user.
                 </p>
               </div>
 

@@ -1,4 +1,3 @@
-// Header.tsx
 /**
  * Header.tsx
  * Top header inside the in-game layout.
@@ -18,9 +17,11 @@
  *   (club-updated + storage).
  *
  * UPDATE: Temporary Pro route test
- * - Added TEST Pro Packages to the profile menu using /dashboard/pro
- * - Added a hard TEST Packages button in the header that forces
- *   window.location.hash = '#/dashboard/pro'
+ * - Removed TEST Packages button per request.
+ *
+ * NOTE:
+ * - This component listens to window 'club-updated' and storage events to keep
+ *   the live club info up-to-date.
  */
 
 import React, { useCallback, useEffect, useRef, useState } from 'react'
@@ -47,14 +48,26 @@ interface HeaderProps {
   coinBalance?: number
 }
 
+/**
+ * MenuItem
+ * Shape for profile menu entries.
+ */
 type MenuItem = {
   label: string
   path?: string
   action?: 'logout'
 }
 
+/**
+ * NotificationTab
+ * Which notification tab is active.
+ */
 type NotificationTab = 'unread' | 'read'
 
+/**
+ * NotificationItem
+ * Shape of notification objects used in the header's inbox.
+ */
 type NotificationItem = {
   user_notification_id: number
   status: 'unread' | 'read'
@@ -72,10 +85,18 @@ type NotificationItem = {
   preference_group: string | null
 }
 
+/**
+ * InboxThreadRow
+ * Minimal shape for inbox summary RPC.
+ */
 type InboxThreadRow = {
   unread_count: number
 }
 
+/**
+ * ClubUpdatePayload
+ * Payload delivered by club-updated events / localStorage.
+ */
 type ClubUpdatePayload = {
   id?: string
   owner_user_id?: string
@@ -97,20 +118,31 @@ const profileMenuItems: MenuItem[] = [
   { label: 'Help', path: '/dashboard/help' },
   { label: 'Contact Us', path: '/dashboard/contact-us' },
   { label: 'Pro Packages', path: '/dashboard/pro' },
-  { label: 'TEST Pro Packages', path: '/dashboard/pro' },
   { label: 'Invite Friends', path: '/dashboard/invite-friends' },
   { label: 'Logout', action: 'logout' },
 ]
 
+/**
+ * getFlagImageUrl
+ * Build a small flag CDN URL when country code is present.
+ */
 function getFlagImageUrl(countryCode?: string) {
   if (!countryCode || countryCode.length !== 2) return null
   return `https://flagcdn.com/w40/${countryCode.toLowerCase()}.png`
 }
 
+/**
+ * getFallbackLetter
+ * Return a single-letter fallback for logo placeholders.
+ */
 function getFallbackLetter(name: string) {
   return name.trim().charAt(0).toUpperCase() || 'T'
 }
 
+/**
+ * formatNotificationTime
+ * Human-readable relative time for notification timestamps.
+ */
 function formatNotificationTime(dateString?: string | null) {
   if (!dateString) return ''
 
@@ -135,6 +167,10 @@ function formatNotificationTime(dateString?: string | null) {
   return date.toLocaleDateString()
 }
 
+/**
+ * resolveClubLogoUrl
+ * Resolve either absolute URLs or bucket paths via supabase.storage.
+ */
 function resolveClubLogoUrl(logoPath: string | null | undefined, cacheKey: number): string | null {
   if (!logoPath) return null
 
@@ -152,6 +188,10 @@ function resolveClubLogoUrl(logoPath: string | null | undefined, cacheKey: numbe
   return `${data.publicUrl}?v=${cacheKey}`
 }
 
+/**
+ * TeamAvatar
+ * Small avatar for team logo or letter fallback.
+ */
 function TeamAvatar({
   clubLogoUrl,
   alt,
@@ -169,7 +209,7 @@ function TeamAvatar({
         <img
           src={clubLogoUrl}
           alt={alt}
-          className="h-full w-full object-contain mix-blend-multiply"
+          className="h-full w-full object-contain"
           draggable={false}
         />
       </div>
@@ -185,6 +225,10 @@ function TeamAvatar({
   )
 }
 
+/**
+ * Header
+ * Top header component for the dashboard layout.
+ */
 export default function Header({
   onToggle,
   title,
@@ -223,6 +267,10 @@ export default function Header({
 
   const profileMenuRef = useRef<HTMLDivElement>(null)
 
+  /**
+   * applyClubUpdatePayload
+   * Apply an incoming club payload only if it's fresh and relevant.
+   */
   const applyClubUpdatePayload = useCallback((payload: ClubUpdatePayload | null) => {
     if (!payload) return
 
@@ -263,6 +311,10 @@ export default function Header({
     })
   }, [])
 
+  /**
+   * loadLiveClubFromStorage
+   * Hydrate live club info from localStorage if present.
+   */
   const loadLiveClubFromStorage = useCallback(() => {
     if (typeof window === 'undefined') return
 
@@ -365,6 +417,10 @@ export default function Header({
   const flagUrl = getFlagImageUrl(effectiveCountryCode)
   const fallbackLetter = getFallbackLetter(displayName)
 
+  /**
+   * handleNavigate
+   * Central navigation helper: either call onNavigate or update location.
+   */
   const handleNavigate = useCallback(
     (path: string) => {
       setIsProfileMenuOpen(false)
@@ -382,6 +438,10 @@ export default function Header({
     [onNavigate]
   )
 
+  /**
+   * handleLogoutClick
+   * Sign out via supabase or call onLogout if present.
+   */
   const handleLogoutClick = useCallback(async () => {
     setIsProfileMenuOpen(false)
 
@@ -397,6 +457,10 @@ export default function Header({
     }
   }, [onLogout])
 
+  /**
+   * shouldDisplayNotification
+   * Apply user preferences to decide if a notification should be shown.
+   */
   const shouldDisplayNotification = useCallback((item: NotificationItem) => {
     const preferences = readNotificationPreferences()
 
@@ -410,6 +474,10 @@ export default function Header({
     return canReceiveNotification(preferences, notificationType)
   }, [])
 
+  /**
+   * loadUnreadCount
+   * Fetch unread notifications count via RPC.
+   */
   const loadUnreadCount = useCallback(async () => {
     const { data, error } = await supabase.rpc('get_my_notifications', {
       p_status: 'unread',
@@ -426,6 +494,10 @@ export default function Header({
     setUnreadCount(unread.length)
   }, [shouldDisplayNotification])
 
+  /**
+   * loadInboxUnreadCount
+   * Fetch inbox threads and compute unread total.
+   */
   const loadInboxUnreadCount = useCallback(async () => {
     const { data, error } = await supabase.rpc('inbox_list_threads')
 
@@ -440,6 +512,10 @@ export default function Header({
     setInboxUnreadCount(unread)
   }, [])
 
+  /**
+   * loadNotifications
+   * Load notifications for a given tab (unread/read).
+   */
   const loadNotifications = useCallback(
     async (tab: NotificationTab) => {
       const setLoading = tab === 'unread' ? setIsLoadingUnread : setIsLoadingRead
@@ -486,6 +562,10 @@ export default function Header({
     [loadNotifications]
   )
 
+  /**
+   * handleNotificationClick
+   * Mark a notification read and navigate to action_url when clicked.
+   */
   const handleNotificationClick = useCallback(
     async (item: NotificationItem) => {
       if (item.status === 'unread') {
@@ -518,6 +598,10 @@ export default function Header({
     [handleNavigate]
   )
 
+  /**
+   * handleMarkAllAsRead
+   * Mark all unread notifications as read via RPC.
+   */
   const handleMarkAllAsRead = useCallback(async () => {
     setIsMarkingAllRead(true)
 
@@ -640,18 +724,6 @@ export default function Header({
         </div>
 
         <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={() => {
-              if (typeof window !== 'undefined') {
-                window.location.hash = '#/dashboard/pro'
-              }
-            }}
-            className="rounded-md border border-black/35 bg-white/70 px-3 py-1.5 text-sm font-semibold text-black hover:bg-white"
-          >
-            TEST Packages
-          </button>
-
           {/* Coins pill (driven by prop) */}
           <div className="rounded-md border border-black/35 bg-yellow-300/70 px-3 py-1.5 text-sm font-semibold text-black min-w-[130px] text-center">
             ◎ {coinBalance.toLocaleString()} Coins
@@ -806,9 +878,7 @@ export default function Header({
                   void handleNotificationTabChange('unread')
                 }}
                 className={`px-5 py-3 text-sm font-medium border-b-2 transition-colors ${
-                  activeNotificationTab === 'unread'
-                    ? 'border-black text-black'
-                    : 'border-transparent text-gray-500 hover:text-black'
+                  activeNotificationTab === 'unread' ? 'border-black text-black' : 'border-transparent text-gray-500 hover:text-black'
                 }`}
               >
                 Unread
@@ -821,9 +891,7 @@ export default function Header({
                   void handleNotificationTabChange('read')
                 }}
                 className={`px-5 py-3 text-sm font-medium border-b-2 transition-colors ${
-                  activeNotificationTab === 'read'
-                    ? 'border-black text-black'
-                    : 'border-transparent text-gray-500 hover:text-black'
+                  activeNotificationTab === 'read' ? 'border-black text-black' : 'border-transparent text-gray-500 hover:text-black'
                 }`}
               >
                 Read
@@ -854,25 +922,15 @@ export default function Header({
                         }`}
                       >
                         <div className="flex items-start gap-3">
-                          <div
-                            className={`mt-1 h-2.5 w-2.5 rounded-full shrink-0 ${
-                              isUnread ? 'bg-red-500' : 'bg-gray-300'
-                            }`}
-                          />
+                          <div className={`mt-1 h-2.5 w-2.5 rounded-full shrink-0 ${isUnread ? 'bg-red-500' : 'bg-gray-300'}`} />
 
                           <div className="min-w-0 flex-1">
                             <div className="flex items-start justify-between gap-3">
-                              <div
-                                className={`text-sm ${
-                                  isUnread ? 'font-semibold text-black' : 'font-medium text-black'
-                                }`}
-                              >
+                              <div className={`text-sm ${isUnread ? 'font-semibold text-black' : 'font-medium text-black'}`}>
                                 {item.title}
                               </div>
 
-                              <div className="shrink-0 text-xs text-gray-500">
-                                {formatNotificationTime(item.notification_created_at)}
-                              </div>
+                              <div className="shrink-0 text-xs text-gray-500">{formatNotificationTime(item.notification_created_at)}</div>
                             </div>
 
                             <div className="mt-1 text-sm text-gray-600 line-clamp-2">{item.message}</div>

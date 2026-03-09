@@ -25,7 +25,7 @@ export default function ForumPage(): JSX.Element {
             Discord channel.
           </p>
           <p className="mt-2 text-xs text-gray-500">
-            Our Discord server is not live yet, but it will be added here soon.
+            Join our Discord server using the button below.
           </p>
         </div>
 
@@ -43,16 +43,14 @@ export default function ForumPage(): JSX.Element {
             </div>
 
             <div className="flex flex-col items-start gap-2 md:items-end">
-              <span className="rounded-full bg-white/20 px-3 py-1 text-xs font-semibold">
-                Coming Soon
-              </span>
-              <button
-                type="button"
-                disabled
-                className="cursor-not-allowed rounded-md bg-white px-4 py-2 text-sm font-semibold text-indigo-600 opacity-80"
+              <a
+                href="https://discord.gg/9W6rSSjm"
+                target="_blank"
+                rel="noreferrer"
+                className="rounded-md bg-white px-4 py-2 text-sm font-semibold text-indigo-600 transition hover:bg-indigo-50"
               >
-                Discord Link Coming Soon
-              </button>
+                Join Discord
+              </a>
             </div>
           </div>
         </div>

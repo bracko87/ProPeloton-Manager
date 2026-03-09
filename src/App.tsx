@@ -25,6 +25,8 @@ import CreateClubPage from './pages/CreateClub'
 import ClubDashboard from './pages/dashboard/ClubDashboard'
 import OverviewPage from './pages/dashboard/Overview'
 import SquadPage from './pages/dashboard/Squad'
+import DevelopingTeamPage from './pages/dashboard/DevelopingTeam'
+import StaffPage from './pages/dashboard/Staff'
 import CalendarPage from './pages/dashboard/CalendarPage'
 import TeamSchedulePage from './pages/dashboard/TeamSchedule'
 import TrainingPage from './pages/dashboard/Training'
@@ -270,6 +272,8 @@ export default function App(): JSX.Element {
             <Route index element={<OverviewPage />} />
             <Route path="overview" element={<OverviewPage />} />
             <Route path="squad" element={<SquadPage />} />
+            <Route path="developing-team" element={<DevelopingTeamPage />} />
+            <Route path="staff" element={<StaffPage />} />
             <Route path="calendar" element={<CalendarPage />} />
             <Route path="team-schedule" element={<TeamSchedulePage />} />
             <Route path="training" element={<TrainingPage />} />
