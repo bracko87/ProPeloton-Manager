@@ -115,6 +115,7 @@ Deno.serve(async (req: Request) => {
     const userId = userData.user.id
     const adminClient = createClient(supabaseUrl, serviceRoleKey)
 
+    /* STEP 1: Clean up game data */
     const { error: rpcError } = await adminClient.rpc('delete_my_game_data', {
       p_user_id: userId,
     })
@@ -132,13 +133,21 @@ Deno.serve(async (req: Request) => {
       )
     }
 
-    const { error: deleteUserError } = await adminClient.auth.admin.deleteUser(userId)
+    /* STEP 2: Disable the auth account instead of deleting it */
+    const disabledEmail = `deleted_${userId}@deleted.local`
 
-    if (deleteUserError) {
+    const { error: disableUserError } =
+      await adminClient.auth.admin.updateUserById(userId, {
+        email: disabledEmail,
+        password: crypto.randomUUID(),
+        email_confirm: true,
+      })
+
+    if (disableUserError) {
       return jsonResponse(
         {
-          error: 'Failed to delete auth user',
-          details: deleteUserError.message,
+          error: 'Failed to disable auth user',
+          details: disableUserError.message,
           requestId,
         },
         500,
