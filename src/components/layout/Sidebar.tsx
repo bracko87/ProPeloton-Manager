@@ -52,6 +52,12 @@ const navItems = [
     icon: List
   },
   {
+    to: '/dashboard/team-ranking',
+    label: 'Team Ranking',
+    description: 'Rankings and standings',
+    icon: BarChart2
+  },
+  {
     to: '/dashboard/training',
     label: 'Training',
     description: 'Rider training and sessions',

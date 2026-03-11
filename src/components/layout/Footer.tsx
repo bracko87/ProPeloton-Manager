@@ -28,6 +28,71 @@ interface GameTimeProps {
   refreshIntervalMs?: number
 }
 
+const MONTH_INDEX_BY_NAME: Record<string, number> = {
+  January: 0,
+  February: 1,
+  March: 2,
+  April: 3,
+  May: 4,
+  June: 5,
+  July: 6,
+  August: 7,
+  September: 8,
+  October: 9,
+  November: 10,
+  December: 11
+}
+
+const WEEKDAY_NAMES = [
+  'Sunday',
+  'Monday',
+  'Tuesday',
+  'Wednesday',
+  'Thursday',
+  'Friday',
+  'Saturday'
+]
+
+/**
+ * Since the backend does not currently return a weekday,
+ * derive it from a fixed leap-year calendar so the result
+ * stays deterministic for in-game dates.
+ */
+const IN_GAME_REFERENCE_YEAR = 2000
+
+function getWeekdayName(monthName: string, dayNumber: number): string | null {
+  const monthIndex = MONTH_INDEX_BY_NAME[monthName]
+
+  if (monthIndex === undefined || !Number.isInteger(dayNumber)) {
+    return null
+  }
+
+  const date = new Date(Date.UTC(IN_GAME_REFERENCE_YEAR, monthIndex, dayNumber))
+
+  if (Number.isNaN(date.getTime())) {
+    return null
+  }
+
+  return WEEKDAY_NAMES[date.getUTCDay()] ?? null
+}
+
+function formatTime(hour24: number, minute2: number): string {
+  const hour = String(hour24).padStart(2, '0')
+  const minute = String(minute2).padStart(2, '0')
+  return `${hour}:${minute}`
+}
+
+function formatGameTime(row: GameTimeRow): string {
+  const seasonText = `Season ${row.season_number}`
+  const weekdayText = getWeekdayName(row.month_name, row.day_number)
+  const dateText = `${row.month_name} ${row.day_number}`
+  const timeText = formatTime(row.hour_24, row.minute_2)
+
+  return weekdayText
+    ? `${seasonText} - ${weekdayText} - ${dateText} - ${timeText}`
+    : `${seasonText} - ${dateText} - ${timeText}`
+}
+
 /**
  * Footer
  * Displays global game-time and simple footer navigation.
@@ -56,10 +121,10 @@ export default function Footer({
       }
 
       const rows = data as GameTimeRow[] | null
-      const nextText = rows?.[0]?.display_text
+      const nextRow = rows?.[0]
 
-      if (nextText) {
-        setGameTimeText(nextText)
+      if (nextRow) {
+        setGameTimeText(formatGameTime(nextRow))
       } else {
         setGameTimeText(prev =>
           prev === 'Loading game time...' ? 'Game time unavailable' : prev

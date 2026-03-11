@@ -809,7 +809,7 @@ export default function CreateClubPage(): JSX.Element {
                   <div>
                     <label className="text-sm font-medium text-gray-700">Team Country</label>
                     <div className="mt-1 flex items-center gap-3">
-                      <div className="w-14 h-11 rounded-md border border-gray-300 bg-white overflow-hidden flex items-center justify-center shrink-0">
+                      <div className="w-7 h-5 rounded-md border border-gray-300 bg-white overflow-hidden flex items-center justify-center shrink-0">
                         {!flagImageError && flagUrl ? (
                           <img
                             src={flagUrl}

@@ -29,6 +29,8 @@ import DevelopingTeamPage from './pages/dashboard/DevelopingTeam'
 import StaffPage from './pages/dashboard/Staff'
 import CalendarPage from './pages/dashboard/CalendarPage'
 import TeamSchedulePage from './pages/dashboard/TeamSchedule'
+import TeamRankingPage from './pages/dashboard/TeamRanking'
+import SeasonResetPreviewPage from './pages/dashboard/SeasonResetPreview'
 import TrainingPage from './pages/dashboard/Training'
 import EquipmentPage from './pages/dashboard/Equipment'
 import InfrastructurePage from './pages/dashboard/Infrastructure'
@@ -48,7 +50,19 @@ import ProPackagesPage from './pages/ProPackages'
 import InviteFriendsPage from './pages/InviteFriends'
 import ReferralCapturePage from './pages/ReferralCapture'
 import { AuthProvider, useAuth } from './context/AuthProvider'
+import { validateTeamRankingConfig } from './constants/teamRanking.validation'
 import { supabase } from './lib/supabase'
+
+/**
+ * Validate team ranking configuration at startup to catch config mistakes early.
+ * Any thrown error will be logged so developers can fix the constants.
+ */
+try {
+  validateTeamRankingConfig()
+} catch (e) {
+  // eslint-disable-next-line no-console
+  console.error('Team ranking configuration validation failed:', e)
+}
 
 /**
  * GuardProps
@@ -276,6 +290,8 @@ export default function App(): JSX.Element {
             <Route path="staff" element={<StaffPage />} />
             <Route path="calendar" element={<CalendarPage />} />
             <Route path="team-schedule" element={<TeamSchedulePage />} />
+            <Route path="team-ranking" element={<TeamRankingPage />} />
+            <Route path="season-reset-preview" element={<SeasonResetPreviewPage />} />
             <Route path="training" element={<TrainingPage />} />
             <Route path="equipment" element={<EquipmentPage />} />
             <Route path="infrastructure" element={<InfrastructurePage />} />
@@ -289,11 +305,8 @@ export default function App(): JSX.Element {
             <Route path="preferences" element={<PreferencesPage />} />
             <Route path="help" element={<HelpPage />} />
             <Route path="contact-us" element={<ContactUsPage />} />
-
-            {/* NEW: /dashboard/pro alias so paywall CTA works */}
             <Route path="pro" element={<ProPackagesPage />} />
             <Route path="pro-packages" element={<ProPackagesPage />} />
-
             <Route path="invite-friends" element={<InviteFriendsPage />} />
           </Route>
 

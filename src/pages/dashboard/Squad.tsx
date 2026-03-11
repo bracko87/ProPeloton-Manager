@@ -54,6 +54,7 @@ type ClubRosterRow = {
   assigned_role: RiderRole
   age_years: number
   overall: number
+  birth_date?: string | null
 }
 
 /**
@@ -85,6 +86,8 @@ type RiderDetails = {
   contract_expires_at?: string | null
   contract_expires_season?: number | null
   market_value?: number | null
+  asking_price?: number | null
+  asking_price_manual?: boolean | null
   availability_status?: RiderAvailabilityStatus | null
 }
 
@@ -195,28 +198,167 @@ function CountryFlag({
 }
 
 /**
+ * extractIsoDatePrefix
+ * Extract YYYY-MM-DD from a plain date or timestamp-like value.
+ *
+ * Supports:
+ * - 2001-01-13
+ * - 2001-01-13T00:00:00Z
+ * - 2001-01-13 00:00:00+00
+ */
+function extractIsoDatePrefix(value?: string | null) {
+  if (!value) return null
+
+  const match = String(value).trim().match(/(\d{4})-(\d{2})-(\d{2})/)
+  if (!match) return null
+
+  return `${match[1]}-${match[2]}-${match[3]}`
+}
+
+function toIntegerLike(value: unknown): number | null {
+  if (typeof value === 'number' && Number.isInteger(value)) {
+    return value
+  }
+
+  if (typeof value === 'string' && /^-?\d+$/.test(value.trim())) {
+    const parsed = Number(value)
+    return Number.isInteger(parsed) ? parsed : null
+  }
+
+  return null
+}
+
+function buildGameDateFromSeasonParts(
+  seasonNumberValue: unknown,
+  monthNumberValue: unknown,
+  dayNumberValue: unknown
+): string | null {
+  const seasonNumber = toIntegerLike(seasonNumberValue)
+  const monthNumber = toIntegerLike(monthNumberValue)
+  const dayNumber = toIntegerLike(dayNumberValue)
+
+  if (
+    seasonNumber === null ||
+    monthNumber === null ||
+    dayNumber === null ||
+    seasonNumber < 1 ||
+    monthNumber < 1 ||
+    monthNumber > 12 ||
+    dayNumber < 1 ||
+    dayNumber > 31
+  ) {
+    return null
+  }
+
+  const year = 2000 + seasonNumber
+  const date = new Date(Date.UTC(year, monthNumber - 1, dayNumber))
+
+  if (
+    date.getUTCFullYear() !== year ||
+    date.getUTCMonth() !== monthNumber - 1 ||
+    date.getUTCDate() !== dayNumber
+  ) {
+    return null
+  }
+
+  return `${year}-${String(monthNumber).padStart(2, '0')}-${String(dayNumber).padStart(2, '0')}`
+}
+
+/**
+ * normalizeGameDateValue
+ * Normalize the response from get_current_game_date() into YYYY-MM-DD or null.
+ *
+ * Handles common Supabase RPC shapes:
+ * - "2001-01-13"
+ * - "2001-01-13 00:00:00+00"
+ * - { current_game_date: "2001-01-13" }
+ * - { get_current_game_date: "2001-01-13" }
+ * - [{ current_game_date: "2001-01-13" }]
+ * - { season_number: 2, month_number: 12, day_number: 31 }
+ */
+function normalizeGameDateValue(value: unknown): string | null {
+  if (typeof value === 'string') {
+    return extractIsoDatePrefix(value)
+  }
+
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      const found = normalizeGameDateValue(item)
+      if (found) return found
+    }
+    return null
+  }
+
+  if (value && typeof value === 'object') {
+    const obj = value as Record<string, unknown>
+
+    const explicitDate =
+      normalizeGameDateValue(obj.current_game_date) ??
+      normalizeGameDateValue(obj.game_date) ??
+      normalizeGameDateValue(obj.currentGameDate) ??
+      normalizeGameDateValue(obj.get_current_game_date) ??
+      normalizeGameDateValue(obj.date) ??
+      normalizeGameDateValue(obj.value)
+
+    if (explicitDate) return explicitDate
+
+    const builtFromSeasonParts = buildGameDateFromSeasonParts(
+      obj.season_number ?? obj.seasonNumber,
+      obj.month_number ?? obj.monthNumber,
+      obj.day_number ?? obj.dayNumber
+    )
+
+    if (builtFromSeasonParts) return builtFromSeasonParts
+
+    for (const entry of Object.values(obj)) {
+      const found = normalizeGameDateValue(entry)
+      if (found) return found
+    }
+
+    return null
+  }
+
+  return null
+}
+
+/**
  * parseIsoDateUtc
- * Safely parse YYYY-MM-DD as a UTC date without browser-local timezone shifts.
+ * Safely parse YYYY-MM-DD (or timestamp-like strings) as a UTC date without
+ * browser-local timezone shifts.
  */
 function parseIsoDateUtc(dateStr?: string | null) {
-  if (!dateStr) return null
+  const isoDate = extractIsoDatePrefix(dateStr)
+  if (!isoDate) return null
 
-  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateStr)
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(isoDate)
   if (!match) return null
 
   const [, y, m, d] = match
   return new Date(Date.UTC(Number(y), Number(m) - 1, Number(d)))
 }
 
+function toUtcDayNumber(date: Date) {
+  return Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate())
+}
+
+function addUtcDays(date: Date, days: number) {
+  return new Date(
+    Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate() + days)
+  )
+}
+
 /**
  * getAgeFromBirthDate
  * Compute age in years from a YYYY-MM-DD birth date string using only the game/reference date.
  */
-function getAgeFromBirthDate(birthDate?: string, referenceDate?: string | null) {
+function getAgeFromBirthDate(
+  birthDate?: string | null,
+  referenceDate?: string | null
+): number | null {
   const dob = parseIsoDateUtc(birthDate)
   const ref = parseIsoDateUtc(referenceDate)
 
-  if (!dob || !ref) return 0
+  if (!dob || !ref) return null
 
   let age = ref.getUTCFullYear() - dob.getUTCFullYear()
 
@@ -246,7 +388,7 @@ function getDaysRemaining(expiresAt?: string | null, referenceDate?: string | nu
 
   if (!expiry || !ref) return null
 
-  const diffMs = expiry.getTime() - ref.getTime()
+  const diffMs = toUtcDayNumber(expiry) - toUtcDayNumber(ref)
   return Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)))
 }
 
@@ -274,7 +416,7 @@ function getContractExpiryUi(
       label: baseLabel,
       sublabel:
         daysRemaining === null
-          ? undefined
+          ? 'Game date unavailable'
           : daysRemaining === 1
             ? '1 day remaining'
             : `${daysRemaining} days remaining`,
@@ -289,8 +431,20 @@ function getContractExpiryUi(
       fallbackSeason === null || fallbackSeason === undefined
         ? '—'
         : `Season ${fallbackSeason}`,
+    sublabel: referenceDate ? undefined : 'Game date unavailable',
     valueClassName: 'text-lg leading-tight whitespace-nowrap',
   }
+}
+
+function getRenewalStartLabel(expiresAt?: string | null) {
+  const expiry = parseIsoDateUtc(expiresAt)
+  if (!expiry) return '—'
+
+  return addUtcDays(expiry, 1).toLocaleDateString('en-US', {
+    month: 'short',
+    day: '2-digit',
+    timeZone: 'UTC',
+  })
 }
 
 function isFutureDateTime(value?: string | null) {
@@ -339,6 +493,8 @@ function getRenewalErrorMessage(message?: string | null) {
 const DEFAULT_RIDER_IMAGE_URL =
   'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Others/Default%20Profile.png'
 
+const SEASON_WEEKS = 52
+
 /**
  * getRiderImageUrl
  * Return a safe image URL for rider thumbnails.
@@ -349,6 +505,21 @@ function getRiderImageUrl(imageUrl?: string | null) {
   }
 
   return imageUrl
+}
+
+function formatMoney(n?: number | null) {
+  if (n == null) return '—'
+  return `$${new Intl.NumberFormat('de-DE').format(n)}`
+}
+
+function formatWeeklySalary(n?: number | null) {
+  if (n == null) return '—'
+  return `${formatMoney(n)}/week`
+}
+
+function getSeasonWage(weeklySalary?: number | null) {
+  if (weeklySalary == null) return null
+  return weeklySalary * SEASON_WEEKS
 }
 
 /**
@@ -623,12 +794,14 @@ function CompactValueTile({
   valueClassName = '',
   subvalue,
   subvalueClassName = '',
+  children,
 }: {
   label: string
   value: string
   valueClassName?: string
   subvalue?: string
   subvalueClassName?: string
+  children?: React.ReactNode
 }) {
   return (
     <div className="rounded-xl border border-gray-200 p-3">
@@ -639,6 +812,7 @@ function CompactValueTile({
       {subvalue ? (
         <div className={`mt-1 text-xs ${subvalueClassName || 'text-gray-500'}`}>{subvalue}</div>
       ) : null}
+      {children}
     </div>
   )
 }
@@ -909,6 +1083,50 @@ function CompareBalanceBar({ diff }: { diff: number }) {
   )
 }
 
+async function fetchRiderDetailsById(riderId: string): Promise<RiderDetails> {
+  const { data, error } = await supabase
+    .from('riders')
+    .select(
+      `
+      id,
+      country_code,
+      first_name,
+      last_name,
+      display_name,
+      role,
+      sprint,
+      climbing,
+      time_trial,
+      endurance,
+      flat,
+      recovery,
+      resistance,
+      race_iq,
+      teamwork,
+      morale,
+      potential,
+      overall,
+      birth_date,
+      image_url,
+      salary,
+      contract_expires_at,
+      contract_expires_season,
+      market_value,
+      asking_price,
+      asking_price_manual
+    `
+    )
+    .eq('id', riderId)
+    .single()
+
+  if (error) throw error
+
+  return {
+    ...(data as RiderDetails),
+    availability_status: getDefaultRiderAvailabilityStatus(),
+  }
+}
+
 /**
  * RiderProfileModal
  * Extracted modal component kept inside this file to preserve behavior and imports.
@@ -945,59 +1163,32 @@ function RiderProfileModal({
     null
   )
   const [renewalResultMessage, setRenewalResultMessage] = useState<string | null>(null)
+  const [askingPriceInput, setAskingPriceInput] = useState('')
+  const [askingPriceMessage, setAskingPriceMessage] = useState<string | null>(null)
+  const [isSavingAskingPrice, setIsSavingAskingPrice] = useState(false)
 
   useEffect(() => {
     let mounted = true
+
     async function loadRider() {
       if (!riderId) return
+
       setProfileLoading(true)
       setProfileError(null)
       setSelectedRider(null)
       setImageUrlInput('')
       setImageSaveMessage(null)
       setContractActionMessage(null)
+      setAskingPriceInput('')
+      setAskingPriceMessage(null)
 
       try {
-        const { data, error } = await supabase
-          .from('riders')
-          .select(
-            `
-          id,
-          country_code,
-          first_name,
-          last_name,
-          display_name,
-          role,
-          sprint,
-          climbing,
-          time_trial,
-          endurance,
-          flat,
-          recovery,
-          resistance,
-          race_iq,
-          teamwork,
-          morale,
-          potential,
-          overall,
-          birth_date,
-          image_url,
-          salary,
-          contract_expires_at,
-          contract_expires_season,
-          market_value
-        `
-          )
-          .eq('id', riderId)
-          .single()
+        const nextRider = await fetchRiderDetailsById(riderId)
 
-        if (error) throw error
         if (!mounted) return
-        setSelectedRider({
-          ...(data as RiderDetails),
-          availability_status: getDefaultRiderAvailabilityStatus(),
-        })
-        setImageUrlInput((data as any).image_url ?? '')
+
+        setSelectedRider(nextRider)
+        setImageUrlInput(nextRider.image_url ?? '')
       } catch (e: any) {
         if (!mounted) return
         setProfileError(e?.message ?? 'Failed to load rider profile.')
@@ -1008,7 +1199,7 @@ function RiderProfileModal({
     }
 
     if (open) {
-      loadRider()
+      void loadRider()
     } else {
       setSelectedRider(null)
       setImageUrlInput('')
@@ -1023,6 +1214,9 @@ function RiderProfileModal({
       setOfferExtensionInput('1')
       setRenewalResultType(null)
       setRenewalResultMessage(null)
+      setAskingPriceInput('')
+      setAskingPriceMessage(null)
+      setIsSavingAskingPrice(false)
     }
 
     return () => {
@@ -1057,6 +1251,43 @@ function RiderProfileModal({
       setImageSaveMessage(e?.message ?? 'Failed to update rider image.')
     } finally {
       setImageSaving(false)
+    }
+  }
+
+  async function handleSetAskingPrice() {
+    if (!selectedRider?.id) return
+
+    const price = Math.round(Number(askingPriceInput))
+
+    if (!Number.isFinite(price) || price < 1000) {
+      setAskingPriceMessage('Please enter a valid asking price.')
+      return
+    }
+
+    setIsSavingAskingPrice(true)
+    setAskingPriceMessage(null)
+
+    try {
+      const { error } = await supabase
+        .from('riders')
+        .update({
+          asking_price: price,
+          asking_price_manual: true,
+        })
+        .eq('id', selectedRider.id)
+
+      if (error) throw error
+
+      const refreshedRider = await fetchRiderDetailsById(selectedRider.id)
+
+      setSelectedRider(refreshedRider)
+      setAskingPriceInput('')
+      setAskingPriceMessage('Asking price updated.')
+    } catch (e: any) {
+      console.error('set asking price failed:', e)
+      setAskingPriceMessage(e?.message ?? 'Could not set asking price.')
+    } finally {
+      setIsSavingAskingPrice(false)
     }
   }
 
@@ -1221,19 +1452,29 @@ function RiderProfileModal({
     selectedRider?.contract_expires_season
   )
 
-  const renewalCurrentStartLabel = formatShortGameDate(
-    renewalData?.current_contract_expires_at ?? selectedRider?.contract_expires_at
-  )
+  const profileAge = getAgeFromBirthDate(selectedRider?.birth_date, gameDate ?? null)
 
-  const renewalDaysRemaining = getDaysRemaining(
-    renewalData?.current_contract_expires_at ?? selectedRider?.contract_expires_at,
-    gameDate ?? null
-  )
+  const renewalCurrentContractExpiresAt =
+    renewalData?.current_contract_expires_at ?? selectedRider?.contract_expires_at
+
+  const renewalCurrentContractEndSeason =
+    renewalData?.current_contract_end_season ?? selectedRider?.contract_expires_season
+
+  const renewalCurrentStartLabel = getRenewalStartLabel(renewalCurrentContractExpiresAt)
+
+  const renewalDaysRemaining = getDaysRemaining(renewalCurrentContractExpiresAt, gameDate ?? null)
 
   const renewalLocked =
     !!renewalData &&
     (renewalData.attempt_count >= renewalData.max_attempts ||
       isFutureDateTime(renewalData.cooldown_until))
+
+  const askingPriceDisplay =
+    selectedRider?.asking_price === null || selectedRider?.asking_price === undefined
+      ? '$ -'
+      : formatMoney(selectedRider.asking_price)
+
+  const moraleUi = getMoraleUi(selectedRider?.morale)
 
   if (!open) return null
 
@@ -1307,10 +1548,46 @@ function RiderProfileModal({
                       <div className="mt-2 text-sm text-gray-600">{imageSaveMessage}</div>
                     )}
                   </div>
+
+                  <div className="mt-5 border-t border-gray-200 pt-4">
+                    <div className="rounded-xl border border-gray-200 p-4">
+                      <div className="text-xs text-gray-500">Set Asking Price</div>
+
+                      <div className="mt-3 flex items-center gap-2">
+                        <span className="text-xs text-gray-500">$</span>
+                        <input
+                          type="number"
+                          min={1000}
+                          value={askingPriceInput}
+                          onChange={(e) => {
+                            setAskingPriceInput(e.target.value)
+                            if (askingPriceMessage) setAskingPriceMessage(null)
+                          }}
+                          className="h-9 w-full rounded-md border border-gray-300 px-2 text-sm outline-none focus:border-yellow-400"
+                          placeholder="Enter asking price"
+                        />
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          void handleSetAskingPrice()
+                        }}
+                        disabled={isSavingAskingPrice}
+                        className="mt-2 text-xs text-gray-500 hover:text-gray-800 disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        {isSavingAskingPrice ? 'Saving...' : 'Set'}
+                      </button>
+
+                      {askingPriceMessage ? (
+                        <div className="mt-2 text-xs text-gray-500">{askingPriceMessage}</div>
+                      ) : null}
+                    </div>
+                  </div>
                 </div>
 
                 <div>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
                     <span className="inline-flex items-center gap-2 rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-700">
                       <CountryFlag countryCode={selectedRider.country_code} />
                       {getCountryName(selectedRider.country_code)}
@@ -1319,7 +1596,7 @@ function RiderProfileModal({
                       {selectedRider.role}
                     </span>
                     <span className="rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-700">
-                      Age {getAgeFromBirthDate(selectedRider.birth_date, gameDate ?? null)}
+                      Age {profileAge ?? '—'}
                     </span>
                     <RiderStatusBadge status={selectedRider.availability_status} />
                     <span className="rounded-full bg-yellow-100 px-3 py-1 text-sm font-medium text-yellow-800">
@@ -1327,11 +1604,13 @@ function RiderProfileModal({
                     </span>
                   </div>
 
-                  <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-2 xl:grid-cols-4">
+                  <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
                     <CompactValueTile
                       label="Salary (Weekly)"
-                      value={formatSalary(selectedRider.salary)}
+                      value={formatWeeklySalary(selectedRider.salary)}
                       valueClassName="text-lg leading-tight whitespace-nowrap"
+                      subvalue={`Full season wage: ${formatMoney(getSeasonWage(selectedRider.salary))}`}
+                      subvalueClassName="text-xs text-gray-500"
                     />
 
                     <CompactValueTile
@@ -1346,18 +1625,21 @@ function RiderProfileModal({
                       }
                     />
 
-                    <CompactStatusTile
-                      label="Morale"
-                      status={getMoraleUi(selectedRider.morale).label}
-                      subtitle="Current rider mood"
-                      statusColor={getMoraleUi(selectedRider.morale).color}
-                      statusClassName="text-lg leading-tight whitespace-nowrap"
+                    <CompactValueTile
+                      label="Market Value"
+                      value={formatMoney(selectedRider.market_value)}
+                      valueClassName="text-lg leading-tight whitespace-nowrap"
                     />
 
                     <CompactValueTile
-                      label="Potential"
-                      value={`${selectedRider.potential}/100`}
-                      valueClassName="text-lg leading-tight whitespace-nowrap"
+                      label="Asking Price"
+                      value={askingPriceDisplay}
+                      valueClassName={`text-lg leading-tight whitespace-nowrap ${
+                        selectedRider.asking_price === null ||
+                        selectedRider.asking_price === undefined
+                          ? 'text-gray-500'
+                          : 'text-gray-900'
+                      }`}
                     />
                   </div>
 
@@ -1380,6 +1662,23 @@ function RiderProfileModal({
                       ].map((stat) => (
                         <StatTile key={stat.label} label={stat.label} value={stat.value} />
                       ))}
+                    </div>
+                  </div>
+
+                  <div className="mt-6 border-t border-gray-200 pt-5">
+                    <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                      <CompactValueTile
+                        label="Potential"
+                        value={`${selectedRider.potential}/100`}
+                        valueClassName="text-lg leading-tight whitespace-nowrap"
+                      />
+
+                      <CompactStatusTile
+                        label="Morale"
+                        status={moraleUi.label}
+                        statusColor={moraleUi.color}
+                        statusClassName="text-lg leading-tight whitespace-nowrap"
+                      />
                     </div>
                   </div>
                 </div>
@@ -1481,12 +1780,12 @@ function RiderProfileModal({
                 />
                 <CompactValueTile
                   label="Current Contract Ends"
-                  value={`Season ${selectedRider?.contract_expires_season ?? '—'} - ${formatShortGameDate(
-                    renewalData.current_contract_expires_at ?? selectedRider?.contract_expires_at
+                  value={`Season ${renewalCurrentContractEndSeason ?? '—'} - ${formatShortGameDate(
+                    renewalCurrentContractExpiresAt
                   )}`}
                   subvalue={
                     renewalDaysRemaining === null
-                      ? undefined
+                      ? 'Game date unavailable'
                       : renewalDaysRemaining === 1
                         ? '1 day remaining'
                         : `${renewalDaysRemaining} days remaining`
@@ -1523,7 +1822,7 @@ function RiderProfileModal({
                       value={offerSalaryInput}
                       onChange={(e) => setOfferSalaryInput(e.target.value)}
                       disabled={renewalBusy || renewalLocked}
-                      className="w-full rounded-xl border-2 border-yellow-400 bg-yellow-50 pl-8 pr-4 py-3 text-base font-medium text-gray-900 outline-none focus:border-yellow-500 focus:bg-white disabled:cursor-not-allowed disabled:opacity-60"
+                      className="w-full rounded-xl border-2 border-yellow-400 bg-yellow-50 py-3 pl-8 pr-4 text-base font-medium text-gray-900 outline-none focus:border-yellow-500 focus:bg-white disabled:cursor-not-allowed disabled:opacity-60"
                       placeholder="Enter weekly salary offer"
                     />
                   </div>
@@ -1644,7 +1943,7 @@ function CompareRiderModal({
       }
     }
 
-    if (open) loadCandidates()
+    if (open) void loadCandidates()
 
     return () => {
       mounted = false
@@ -1688,7 +1987,9 @@ function CompareRiderModal({
           salary,
           contract_expires_at,
           contract_expires_season,
-          market_value
+          market_value,
+          asking_price,
+          asking_price_manual
         `
         )
         .eq('id', riderId)
@@ -1755,9 +2056,7 @@ function CompareRiderModal({
 
           <div className="min-h-0 flex-1 overflow-y-auto p-6">
             <div className="mb-6">
-              <label className="mb-2 block text-sm font-medium text-gray-700">
-                Compare with
-              </label>
+              <label className="mb-2 block text-sm font-medium text-gray-700">Compare with</label>
               <select
                 value={compareTargetId}
                 onChange={(e) => handleCompareSelect(e.target.value)}
@@ -1965,11 +2264,11 @@ export default function SquadPage() {
         name: r.display_name,
         countryCode: r.country_code,
         role: r.assigned_role,
-        age: r.age_years,
+        age: getAgeFromBirthDate(r.birth_date ?? null, gameDate ?? null) ?? r.age_years,
         overall: r.overall,
         status: getDefaultRiderAvailabilityStatus() as RiderAvailabilityStatus,
       })),
-    [rows]
+    [rows, gameDate]
   )
 
   const squadDisplayData = useMemo(() => {
@@ -2037,8 +2336,10 @@ export default function SquadPage() {
 
         if (gameDateErr) throw gameDateErr
 
+        const normalizedGameDate = normalizeGameDateValue(currentGameDate)
+
         if (!isMounted) return
-        setGameDate(currentGameDate ?? null)
+        setGameDate(normalizedGameDate)
 
         const { data: club, error: clubErr } = await supabase
           .from('clubs')
@@ -2058,8 +2359,34 @@ export default function SquadPage() {
 
         if (rosterErr) throw rosterErr
 
+        const rosterRows = (roster ?? []) as ClubRosterRow[]
+        const riderIds = rosterRows.map((row) => row.rider_id)
+
+        let birthDateMap = new Map<string, string | null>()
+
+        if (riderIds.length > 0) {
+          const { data: riderBirthDates, error: riderBirthDatesErr } = await supabase
+            .from('riders')
+            .select('id, birth_date')
+            .in('id', riderIds)
+
+          if (riderBirthDatesErr) throw riderBirthDatesErr
+
+          birthDateMap = new Map(
+            (riderBirthDates ?? []).map((row: { id: string; birth_date: string | null }) => [
+              row.id,
+              row.birth_date,
+            ])
+          )
+        }
+
+        const mergedRows = rosterRows.map((row) => ({
+          ...row,
+          birth_date: birthDateMap.get(row.rider_id) ?? null,
+        }))
+
         if (!isMounted) return
-        setRows((roster ?? []) as ClubRosterRow[])
+        setRows(mergedRows)
       } catch (e: any) {
         if (!isMounted) return
         setError(e?.message ?? 'Failed to load squad.')
@@ -2069,7 +2396,7 @@ export default function SquadPage() {
       }
     }
 
-    loadRoster()
+    void loadRoster()
 
     return () => {
       isMounted = false
@@ -2107,7 +2434,9 @@ export default function SquadPage() {
           salary,
           contract_expires_at,
           contract_expires_season,
-          market_value
+          market_value,
+          asking_price,
+          asking_price_manual
         `
         )
         .eq('id', riderId)
@@ -2247,7 +2576,7 @@ export default function SquadPage() {
                         </div>
                       </td>
                       <td className="p-2">{r.role}</td>
-                      <td className="p-2">{r.age}</td>
+                      <td className="p-2">{r.age ?? '—'}</td>
                       <td className="p-2">{r.overall}%</td>
                       <td className="p-2">
                         <RiderStatusBadge status={r.status} compact />
