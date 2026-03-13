@@ -24,7 +24,7 @@ interface SidebarProps {
   locked?: boolean
 }
 
-const GAME_LOGO_URL = 'https://i.ibb.co/k28T2XbC/5c3417dc-3924-4423-948a-745ae5902ed0.png'
+const GAME_LOGO_URL = 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/5c3417dc-3924-4423-948a-745ae5902ed0.png'
 
 const navItems = [
   {

@@ -250,7 +250,13 @@ function buildGameDateFromSeasonParts(
     return null
   }
 
-  const year = 2000 + seasonNumber
+  /**
+   * Backend mapping:
+   * - season 1 => year 2000
+   * - season 2 => year 2001
+   * Therefore the year offset must be 1999 + seasonNumber.
+   */
+  const year = 1999 + seasonNumber
   const date = new Date(Date.UTC(year, monthNumber - 1, dayNumber))
 
   if (

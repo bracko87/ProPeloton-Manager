@@ -32,6 +32,12 @@ type InboxMessage = {
   created_at: string
 }
 
+type ComposeTarget = {
+  userId: string
+  displayName: string
+  clubName?: string
+}
+
 function formatDateTime(value?: string | null): string {
   if (!value) return ''
 
@@ -60,6 +66,21 @@ function getInitials(name: string): string {
 }
 
 export default function InboxPage(): JSX.Element {
+  const initialComposeTarget = React.useMemo<ComposeTarget | null>(() => {
+    if (typeof window === 'undefined') return null
+
+    const params = new URLSearchParams(window.location.search)
+    const userId = params.get('composeTo')
+
+    if (!userId) return null
+
+    return {
+      userId,
+      displayName: params.get('composeName') || 'Player',
+      clubName: params.get('composeClub') || undefined
+    }
+  }, [])
+
   const [currentUserId, setCurrentUserId] = React.useState<string | null>(null)
   const [authChecked, setAuthChecked] = React.useState(false)
 
@@ -69,6 +90,9 @@ export default function InboxPage(): JSX.Element {
 
   const [search, setSearch] = React.useState('')
   const [draft, setDraft] = React.useState('')
+  const [composeTarget, setComposeTarget] = React.useState<ComposeTarget | null>(
+    initialComposeTarget
+  )
 
   const [loadingThreads, setLoadingThreads] = React.useState(true)
   const [loadingMessages, setLoadingMessages] = React.useState(false)
@@ -109,6 +133,11 @@ export default function InboxPage(): JSX.Element {
     [threads, unreadConversationsCount]
   )
 
+  const clearComposeParams = React.useCallback(() => {
+    if (typeof window === 'undefined') return
+    window.history.replaceState({}, '', '/dashboard/inbox')
+  }, [])
+
   const loadThreads = React.useCallback(async () => {
     setLoadingThreads(true)
     setError(null)
@@ -120,7 +149,7 @@ export default function InboxPage(): JSX.Element {
         setError(rpcError.message)
         setThreads([])
         setActiveThreadId(null)
-        return
+        return []
       }
 
       const nextThreads = (data ?? []) as Thread[]
@@ -131,16 +160,23 @@ export default function InboxPage(): JSX.Element {
           return current
         }
 
+        if (composeTarget) {
+          return null
+        }
+
         return nextThreads[0]?.conversation_id ?? null
       })
+
+      return nextThreads
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load conversations.')
       setThreads([])
       setActiveThreadId(null)
+      return []
     } finally {
       setLoadingThreads(false)
     }
-  }, [])
+  }, [composeTarget])
 
   const loadMessages = React.useCallback(async (conversationId: string) => {
     setLoadingMessages(true)
@@ -216,6 +252,32 @@ export default function InboxPage(): JSX.Element {
   }, [loadThreads])
 
   React.useEffect(() => {
+    if (!composeTarget) {
+      return
+    }
+
+    if (loadingThreads) {
+      return
+    }
+
+    const existingDirect = threads.find(
+      thread =>
+        thread.conversation_type === 'direct' &&
+        thread.other_user_id === composeTarget.userId
+    )
+
+    if (existingDirect) {
+      setComposeTarget(null)
+      setActiveThreadId(existingDirect.conversation_id)
+      clearComposeParams()
+      return
+    }
+
+    setActiveThreadId(null)
+    setMessages([])
+  }, [composeTarget, threads, loadingThreads, clearComposeParams])
+
+  React.useEffect(() => {
     if (!activeThreadId) {
       setMessages([])
       return
@@ -225,6 +287,11 @@ export default function InboxPage(): JSX.Element {
   }, [activeThreadId, loadMessages])
 
   function handleSelectThread(threadId: string) {
+    if (composeTarget) {
+      setComposeTarget(null)
+      clearComposeParams()
+    }
+
     setActiveThreadId(threadId)
   }
 
@@ -235,7 +302,9 @@ export default function InboxPage(): JSX.Element {
   async function handleSendMessage(e: React.FormEvent) {
     e.preventDefault()
 
-    if (!activeThread || !activeThread.can_reply || !draft.trim() || sending) {
+    const body = draft.trim()
+
+    if (!body || sending) {
       return
     }
 
@@ -243,25 +312,69 @@ export default function InboxPage(): JSX.Element {
     setError(null)
 
     try {
-      const { error: rpcError } = await supabase.rpc('inbox_send_message', {
-        p_conversation_id: activeThread.conversation_id,
-        p_body: draft.trim()
+      if (activeThread?.conversation_id) {
+        if (!activeThread.can_reply) {
+          return
+        }
+
+        const { error: rpcError } = await supabase.rpc('inbox_send_message', {
+          p_conversation_id: activeThread.conversation_id,
+          p_body: body
+        })
+
+        if (rpcError) {
+          setError(rpcError.message)
+          return
+        }
+
+        setDraft('')
+        await loadMessages(activeThread.conversation_id)
+        await loadThreads()
+        return
+      }
+
+      if (!composeTarget) {
+        return
+      }
+
+      const { error: rpcError } = await supabase.rpc('inbox_start_direct_conversation', {
+        p_other_user_id: composeTarget.userId,
+        p_body: body,
+        p_subject: null
       })
 
       if (rpcError) {
+        console.error('Failed to start conversation:', rpcError)
         setError(rpcError.message)
         return
       }
 
+      const targetUserId = composeTarget.userId
+
       setDraft('')
-      await loadMessages(activeThread.conversation_id)
-      await loadThreads()
+      setComposeTarget(null)
+      clearComposeParams()
+
+      const updatedThreads = await loadThreads()
+      const createdThread = updatedThreads.find(
+        thread =>
+          thread.conversation_type === 'direct' &&
+          thread.other_user_id === targetUserId
+      )
+
+      if (createdThread) {
+        setActiveThreadId(createdThread.conversation_id)
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to send message.')
     } finally {
       setSending(false)
     }
   }
+
+  const composerPlaceholder = composeTarget
+    ? `Write a message to ${composeTarget.displayName}...`
+    : 'Write a message...'
 
   return (
     <div className="w-full">
@@ -395,7 +508,7 @@ export default function InboxPage(): JSX.Element {
           </aside>
 
           <section className="flex min-h-[calc(100vh-180px)] flex-col">
-            {!activeThread ? (
+            {!activeThread && !composeTarget ? (
               <div className="flex flex-1 items-center justify-center p-8 text-center">
                 <div>
                   <div className="text-base font-medium text-slate-900">
@@ -411,39 +524,75 @@ export default function InboxPage(): JSX.Element {
             ) : (
               <>
                 <header className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
-                  <div className="flex items-center gap-3">
-                    <div
-                      className={`flex h-12 w-12 items-center justify-center rounded-full text-sm font-semibold ${
-                        activeThread.conversation_type === 'admin_direct'
-                          ? 'bg-amber-100 text-amber-700'
-                          : 'bg-slate-200 text-slate-700'
-                      }`}
-                    >
-                      {activeThread.conversation_type === 'admin_direct'
-                        ? 'AD'
-                        : getInitials(activeThread.display_name)}
-                    </div>
+                  {activeThread ? (
+                    <>
+                      <div className="flex items-center gap-3">
+                        <div
+                          className={`flex h-12 w-12 items-center justify-center rounded-full text-sm font-semibold ${
+                            activeThread.conversation_type === 'admin_direct'
+                              ? 'bg-amber-100 text-amber-700'
+                              : 'bg-slate-200 text-slate-700'
+                          }`}
+                        >
+                          {activeThread.conversation_type === 'admin_direct'
+                            ? 'AD'
+                            : getInitials(activeThread.display_name)}
+                        </div>
 
-                    <div>
-                      <div className="font-semibold text-slate-900">
-                        {activeThread.display_name}
+                        <div>
+                          <div className="font-semibold text-slate-900">
+                            {activeThread.display_name}
+                          </div>
+                          <div className="text-xs text-slate-500">
+                            {activeThread.subject ||
+                              (activeThread.can_reply
+                                ? 'Direct conversation'
+                                : 'Admin message thread')}
+                          </div>
+                        </div>
                       </div>
-                      <div className="text-xs text-slate-500">
-                        {activeThread.subject ||
-                          (activeThread.can_reply
-                            ? 'Direct conversation'
-                            : 'Admin message thread')}
-                      </div>
-                    </div>
-                  </div>
 
-                  <div className="text-xs text-slate-400">
-                    {activeThread.can_reply ? 'Replies enabled' : 'Read only'}
-                  </div>
+                      <div className="text-xs text-slate-400">
+                        {activeThread.can_reply ? 'Replies enabled' : 'Read only'}
+                      </div>
+                    </>
+                  ) : composeTarget ? (
+                    <>
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-200 text-sm font-semibold text-slate-700">
+                          {getInitials(composeTarget.displayName)}
+                        </div>
+
+                        <div>
+                          <div className="font-semibold text-slate-900">
+                            {composeTarget.displayName}
+                          </div>
+                          <div className="text-xs text-slate-500">
+                            {composeTarget.clubName
+                              ? `New direct conversation • Team: ${composeTarget.clubName}`
+                              : 'New direct conversation'}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="text-xs text-slate-400">New conversation</div>
+                    </>
+                  ) : null}
                 </header>
 
                 <div className="flex-1 space-y-4 overflow-y-auto bg-white px-5 py-5">
-                  {loadingMessages ? (
+                  {composeTarget && !activeThread ? (
+                    <div className="rounded-2xl border border-dashed border-slate-300 p-6">
+                      <div className="text-sm font-medium text-slate-900">New conversation</div>
+                      <div className="mt-1 text-sm text-slate-500">
+                        Your first message will start a direct conversation with{' '}
+                        <span className="font-medium text-slate-700">
+                          {composeTarget.displayName}
+                        </span>
+                        {composeTarget.clubName ? ` from ${composeTarget.clubName}.` : '.'}
+                      </div>
+                    </div>
+                  ) : loadingMessages ? (
                     <div className="text-sm text-slate-500">Loading messages...</div>
                   ) : messages.length === 0 ? (
                     <div className="rounded-2xl border border-dashed border-slate-300 p-6 text-sm text-slate-500">
@@ -500,12 +649,35 @@ export default function InboxPage(): JSX.Element {
                   onSubmit={handleSendMessage}
                   className="border-t border-slate-200 bg-white p-4"
                 >
-                  {activeThread.can_reply ? (
+                  {activeThread ? (
+                    activeThread.can_reply ? (
+                      <div className="flex items-end gap-3">
+                        <textarea
+                          value={draft}
+                          onChange={e => setDraft(e.target.value)}
+                          placeholder={composerPlaceholder}
+                          rows={3}
+                          className="min-h-[84px] flex-1 resize-none rounded-2xl border border-slate-300 px-4 py-3 text-sm text-slate-700 outline-none placeholder:text-slate-400 focus:border-slate-400"
+                        />
+                        <button
+                          type="submit"
+                          disabled={!draft.trim() || sending}
+                          className="rounded-2xl bg-slate-900 px-5 py-3 text-sm font-medium text-white transition disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                          {sending ? 'Sending...' : 'Send'}
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                        This is an admin message thread. Replies are currently disabled.
+                      </div>
+                    )
+                  ) : composeTarget ? (
                     <div className="flex items-end gap-3">
                       <textarea
                         value={draft}
                         onChange={e => setDraft(e.target.value)}
-                        placeholder="Write a message..."
+                        placeholder={composerPlaceholder}
                         rows={3}
                         className="min-h-[84px] flex-1 resize-none rounded-2xl border border-slate-300 px-4 py-3 text-sm text-slate-700 outline-none placeholder:text-slate-400 focus:border-slate-400"
                       />
@@ -517,11 +689,7 @@ export default function InboxPage(): JSX.Element {
                         {sending ? 'Sending...' : 'Send'}
                       </button>
                     </div>
-                  ) : (
-                    <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-                      This is an admin message thread. Replies are currently disabled.
-                    </div>
-                  )}
+                  ) : null}
                 </form>
               </>
             )}

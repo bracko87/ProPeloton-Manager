@@ -90,7 +90,7 @@ export default function HomePage(): JSX.Element {
         <div className="max-w-7xl mx-auto px-6 py-2 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <img
-              src="https://i.ibb.co/k28T2XbC/5c3417dc-3924-4423-948a-745ae5902ed0.png"
+              src="https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/5c3417dc-3924-4423-948a-745ae5902ed0.png"
               alt="ProPeloton Manager logo"
               className="h-24 w-auto object-contain shrink-0"
             />

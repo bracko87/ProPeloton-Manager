@@ -19,6 +19,10 @@
  * UPDATE: Temporary Pro route test
  * - Removed TEST Packages button per request.
  *
+ * UPDATE: Ranking summary
+ * - Header now loads and displays the current club's ranking position summary
+ *   inline with the country row.
+ *
  * NOTE:
  * - This component listens to window 'club-updated' and storage events to keep
  *   the live club info up-to-date.
@@ -107,6 +111,11 @@ type ClubUpdatePayload = {
   updated_at_ms?: number
 }
 
+type TeamCompetitionSummary = {
+  competition_label: string
+  rank_position: number
+}
+
 const LOGO_BUCKET = 'club-logos'
 
 const profileMenuItems: MenuItem[] = [
@@ -165,6 +174,24 @@ function formatNotificationTime(dateString?: string | null) {
   if (absDays < 7) return `${absDays}d ago`
 
   return date.toLocaleDateString()
+}
+
+function formatOrdinal(value?: number | null) {
+  if (!value || !Number.isFinite(value)) return ''
+
+  const mod100 = value % 100
+  if (mod100 >= 11 && mod100 <= 13) return `${value}th`
+
+  switch (value % 10) {
+    case 1:
+      return `${value}st`
+    case 2:
+      return `${value}nd`
+    case 3:
+      return `${value}rd`
+    default:
+      return `${value}th`
+  }
 }
 
 /**
@@ -255,12 +282,18 @@ export default function Header({
 
   const [liveClubName, setLiveClubName] = useState(clubName || title || 'ProPeloton Manager')
   const [liveClubId, setLiveClubId] = useState<string | undefined>(clubId)
-  const [liveClubCountryName, setLiveClubCountryName] = useState(clubCountryName || 'Club country')
-  const [liveClubCountryCode, setLiveClubCountryCode] = useState<string | undefined>(clubCountryCode)
+  const [liveClubCountryName, setLiveClubCountryName] = useState(
+    clubCountryName || 'Club country',
+  )
+  const [liveClubCountryCode, setLiveClubCountryCode] = useState<string | undefined>(
+    clubCountryCode,
+  )
   const [liveLogoPath, setLiveLogoPath] = useState<string | null>(clubLogoUrl ?? null)
   const [logoCacheKey, setLogoCacheKey] = useState(() => Date.now())
   const [currentUserId, setCurrentUserId] = useState<string | undefined>(undefined)
   const [lastClubUpdateMs, setLastClubUpdateMs] = useState(0)
+  const [teamCompetitionSummary, setTeamCompetitionSummary] =
+    useState<TeamCompetitionSummary | null>(null)
 
   const liveClubIdRef = useRef<string | undefined>(clubId)
   const currentUserIdRef = useRef<string | undefined>(undefined)
@@ -435,7 +468,7 @@ export default function Header({
         window.location.href = path
       }
     },
-    [onNavigate]
+    [onNavigate],
   )
 
   /**
@@ -474,6 +507,35 @@ export default function Header({
     return canReceiveNotification(preferences, notificationType)
   }, [])
 
+  const loadTeamCompetitionSummary = useCallback(async () => {
+    if (!liveClubId) {
+      setTeamCompetitionSummary(null)
+      return
+    }
+
+    const { data, error } = await supabase.rpc('get_club_ranking_summary', {
+      p_club_id: liveClubId,
+    })
+
+    if (error) {
+      console.error('Failed to load team competition summary:', error)
+      setTeamCompetitionSummary(null)
+      return
+    }
+
+    const row = Array.isArray(data) ? data[0] : data
+
+    if (!row) {
+      setTeamCompetitionSummary(null)
+      return
+    }
+
+    setTeamCompetitionSummary({
+      competition_label: String(row.competition_label ?? ''),
+      rank_position: Number(row.rank_position ?? 0),
+    })
+  }, [liveClubId])
+
   /**
    * loadUnreadCount
    * Fetch unread notifications count via RPC.
@@ -507,7 +569,10 @@ export default function Header({
     }
 
     const threads = (data ?? []) as InboxThreadRow[]
-    const unread = threads.reduce((sum, thread) => sum + Math.max(Number(thread.unread_count ?? 0), 0), 0)
+    const unread = threads.reduce(
+      (sum, thread) => sum + Math.max(Number(thread.unread_count ?? 0), 0),
+      0,
+    )
 
     setInboxUnreadCount(unread)
   }, [])
@@ -539,7 +604,7 @@ export default function Header({
       setItems(filteredItems)
       setLoading(false)
     },
-    [shouldDisplayNotification]
+    [shouldDisplayNotification],
   )
 
   const openNotifications = useCallback(async () => {
@@ -559,7 +624,7 @@ export default function Header({
       setActiveNotificationTab(tab)
       await loadNotifications(tab)
     },
-    [loadNotifications]
+    [loadNotifications],
   )
 
   /**
@@ -583,7 +648,9 @@ export default function Header({
           }
 
           setUnreadItems(prev =>
-            prev.filter(notification => notification.user_notification_id !== item.user_notification_id)
+            prev.filter(
+              notification => notification.user_notification_id !== item.user_notification_id,
+            ),
           )
 
           setReadItems(prev => [readItem, ...prev])
@@ -595,7 +662,7 @@ export default function Header({
         handleNavigate(item.action_url)
       }
     },
-    [handleNavigate]
+    [handleNavigate],
   )
 
   /**
@@ -617,6 +684,10 @@ export default function Header({
 
     setIsMarkingAllRead(false)
   }, [loadNotifications, loadUnreadCount])
+
+  useEffect(() => {
+    void loadTeamCompetitionSummary()
+  }, [loadTeamCompetitionSummary])
 
   useEffect(() => {
     void Promise.all([loadUnreadCount(), loadInboxUnreadCount()])
@@ -683,7 +754,7 @@ export default function Header({
   return (
     <>
       <header className="flex items-center justify-between px-6 py-3 border-b border-yellow-500 bg-yellow-400">
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-4 min-w-0 shrink-0">
           <button
             onClick={onToggle}
             className="text-black p-2 rounded-md hover:bg-black/10"
@@ -693,7 +764,7 @@ export default function Header({
             ☰
           </button>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 min-w-0">
             {effectiveLogoUrl ? (
               <TeamAvatar
                 clubLogoUrl={effectiveLogoUrl}
@@ -703,13 +774,13 @@ export default function Header({
               />
             ) : null}
 
-            <div>
-              <div className="text-lg text-black leading-tight">
+            <div className="min-w-0">
+              <div className="text-lg text-black leading-tight truncate">
                 <span className="font-normal">Team Name: </span>
                 <span className="font-bold">{displayName}</span>
               </div>
 
-              <div className="text-sm text-black/85 flex items-center gap-2 leading-tight">
+              <div className="text-sm text-black/85 flex items-center gap-2 leading-tight flex-wrap">
                 {flagUrl ? (
                   <img
                     src={flagUrl}
@@ -717,14 +788,25 @@ export default function Header({
                     className="h-3.5 w-5 rounded-[2px] object-cover border border-black/10"
                   />
                 ) : null}
+
                 <span>{displayCountry}</span>
+
+                {teamCompetitionSummary?.competition_label &&
+                teamCompetitionSummary.rank_position > 0 ? (
+                  <>
+                    <span className="text-black/60">-</span>
+                    <span>
+                      {formatOrdinal(teamCompetitionSummary.rank_position)} in{' '}
+                      {teamCompetitionSummary.competition_label} Ranking
+                    </span>
+                  </>
+                ) : null}
               </div>
             </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
-          {/* Coins pill (driven by prop) */}
+        <div className="flex items-center gap-3 shrink-0">
           <div className="rounded-md border border-black/35 bg-yellow-300/70 px-3 py-1.5 text-sm font-semibold text-black min-w-[130px] text-center">
             ◎ {coinBalance.toLocaleString()} Coins
           </div>
@@ -878,7 +960,9 @@ export default function Header({
                   void handleNotificationTabChange('unread')
                 }}
                 className={`px-5 py-3 text-sm font-medium border-b-2 transition-colors ${
-                  activeNotificationTab === 'unread' ? 'border-black text-black' : 'border-transparent text-gray-500 hover:text-black'
+                  activeNotificationTab === 'unread'
+                    ? 'border-black text-black'
+                    : 'border-transparent text-gray-500 hover:text-black'
                 }`}
               >
                 Unread
@@ -891,7 +975,9 @@ export default function Header({
                   void handleNotificationTabChange('read')
                 }}
                 className={`px-5 py-3 text-sm font-medium border-b-2 transition-colors ${
-                  activeNotificationTab === 'read' ? 'border-black text-black' : 'border-transparent text-gray-500 hover:text-black'
+                  activeNotificationTab === 'read'
+                    ? 'border-black text-black'
+                    : 'border-transparent text-gray-500 hover:text-black'
                 }`}
               >
                 Read
@@ -903,7 +989,9 @@ export default function Header({
                 <div className="px-5 py-10 text-sm text-gray-500">Loading notifications...</div>
               ) : activeItems.length === 0 ? (
                 <div className="px-5 py-10 text-sm text-gray-500">
-                  {activeNotificationTab === 'unread' ? 'No unread notifications.' : 'No read notifications yet.'}
+                  {activeNotificationTab === 'unread'
+                    ? 'No unread notifications.'
+                    : 'No read notifications yet.'}
                 </div>
               ) : (
                 <div className="divide-y divide-gray-100">
@@ -922,18 +1010,30 @@ export default function Header({
                         }`}
                       >
                         <div className="flex items-start gap-3">
-                          <div className={`mt-1 h-2.5 w-2.5 rounded-full shrink-0 ${isUnread ? 'bg-red-500' : 'bg-gray-300'}`} />
+                          <div
+                            className={`mt-1 h-2.5 w-2.5 rounded-full shrink-0 ${
+                              isUnread ? 'bg-red-500' : 'bg-gray-300'
+                            }`}
+                          />
 
                           <div className="min-w-0 flex-1">
                             <div className="flex items-start justify-between gap-3">
-                              <div className={`text-sm ${isUnread ? 'font-semibold text-black' : 'font-medium text-black'}`}>
+                              <div
+                                className={`text-sm ${
+                                  isUnread ? 'font-semibold text-black' : 'font-medium text-black'
+                                }`}
+                              >
                                 {item.title}
                               </div>
 
-                              <div className="shrink-0 text-xs text-gray-500">{formatNotificationTime(item.notification_created_at)}</div>
+                              <div className="shrink-0 text-xs text-gray-500">
+                                {formatNotificationTime(item.notification_created_at)}
+                              </div>
                             </div>
 
-                            <div className="mt-1 text-sm text-gray-600 line-clamp-2">{item.message}</div>
+                            <div className="mt-1 text-sm text-gray-600 line-clamp-2">
+                              {item.message}
+                            </div>
 
                             <div className="mt-2 flex items-center gap-2 text-xs text-gray-500">
                               <span className="capitalize">{item.source}</span>

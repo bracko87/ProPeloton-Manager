@@ -142,6 +142,7 @@ export const COUNTRY_TO_AMATEUR_DIVISION: Record<string, AmateurDivision> = {
   CR: 'NORTH_AMERICA',
   PA: 'NORTH_AMERICA',
   DM: 'NORTH_AMERICA',
+  BB: 'NORTH_AMERICA',
 
   AR: 'SOUTH_AMERICA',
   BR: 'SOUTH_AMERICA',
