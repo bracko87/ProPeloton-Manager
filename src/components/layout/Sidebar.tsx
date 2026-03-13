@@ -4,7 +4,7 @@
  */
 
 import React from 'react'
-import { NavLink, useNavigate } from 'react-router'
+import { NavLink, useNavigate, useLocation } from 'react-router'
 import {
   Home,
   Users,
@@ -18,13 +18,15 @@ import {
   Lock
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
+import BugReportButton from '../dashboard/BugReportButton'
 
 interface SidebarProps {
   collapsed?: boolean
   locked?: boolean
 }
 
-const GAME_LOGO_URL = 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/5c3417dc-3924-4423-948a-745ae5902ed0.png'
+const GAME_LOGO_URL =
+  'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/5c3417dc-3924-4423-948a-745ae5902ed0.png'
 
 const navItems = [
   {
@@ -105,6 +107,15 @@ export default function Sidebar({
   locked = false
 }: SidebarProps) {
   const navigate = useNavigate()
+  const location = useLocation()
+
+  const currentNavItem = navItems.find(
+    item =>
+      location.pathname === item.to ||
+      location.pathname.startsWith(`${item.to}/`)
+  )
+
+  const currentPageLabel = currentNavItem?.label ?? location.pathname
 
   const signOut = async () => {
     await supabase.auth.signOut()
@@ -167,7 +178,8 @@ export default function Sidebar({
                   Dashboard Locked
                 </div>
                 <div className="text-xs text-yellow-200/80 mt-1 leading-tight">
-                  You cannot make changes right now because you have already played today.
+                  You cannot make changes right now because you have already
+                  played today.
                 </div>
               </div>
             </div>
@@ -219,6 +231,12 @@ export default function Sidebar({
             <LogOut size={16} />
             {!collapsed && <span>Sign Out</span>}
           </button>
+
+          <BugReportButton
+            collapsed={collapsed}
+            currentPageLabel={currentPageLabel}
+            currentPath={location.pathname}
+          />
 
           {!collapsed && (
             <div className="text-xs text-white/60">

@@ -66,21 +66,6 @@ function getInitials(name: string): string {
 }
 
 export default function InboxPage(): JSX.Element {
-  const initialComposeTarget = React.useMemo<ComposeTarget | null>(() => {
-    if (typeof window === 'undefined') return null
-
-    const params = new URLSearchParams(window.location.search)
-    const userId = params.get('composeTo')
-
-    if (!userId) return null
-
-    return {
-      userId,
-      displayName: params.get('composeName') || 'Player',
-      clubName: params.get('composeClub') || undefined
-    }
-  }, [])
-
   const [currentUserId, setCurrentUserId] = React.useState<string | null>(null)
   const [authChecked, setAuthChecked] = React.useState(false)
 
@@ -90,9 +75,7 @@ export default function InboxPage(): JSX.Element {
 
   const [search, setSearch] = React.useState('')
   const [draft, setDraft] = React.useState('')
-  const [composeTarget, setComposeTarget] = React.useState<ComposeTarget | null>(
-    initialComposeTarget
-  )
+  const [composeTarget, setComposeTarget] = React.useState<ComposeTarget | null>(null)
 
   const [loadingThreads, setLoadingThreads] = React.useState(true)
   const [loadingMessages, setLoadingMessages] = React.useState(false)
@@ -132,11 +115,6 @@ export default function InboxPage(): JSX.Element {
     () => Math.max(threads.length - unreadConversationsCount, 0),
     [threads, unreadConversationsCount]
   )
-
-  const clearComposeParams = React.useCallback(() => {
-    if (typeof window === 'undefined') return
-    window.history.replaceState({}, '', '/dashboard/inbox')
-  }, [])
 
   const loadThreads = React.useCallback(async () => {
     setLoadingThreads(true)
@@ -215,6 +193,20 @@ export default function InboxPage(): JSX.Element {
   }, [])
 
   React.useEffect(() => {
+    const raw = sessionStorage.getItem('inbox_compose_target')
+    if (!raw) return
+
+    try {
+      const parsed = JSON.parse(raw)
+      setComposeTarget(parsed)
+    } catch (error) {
+      console.error('Failed to parse compose target:', error)
+    } finally {
+      sessionStorage.removeItem('inbox_compose_target')
+    }
+  }, [])
+
+  React.useEffect(() => {
     let mounted = true
 
     void (async () => {
@@ -269,13 +261,12 @@ export default function InboxPage(): JSX.Element {
     if (existingDirect) {
       setComposeTarget(null)
       setActiveThreadId(existingDirect.conversation_id)
-      clearComposeParams()
       return
     }
 
     setActiveThreadId(null)
     setMessages([])
-  }, [composeTarget, threads, loadingThreads, clearComposeParams])
+  }, [composeTarget, threads, loadingThreads])
 
   React.useEffect(() => {
     if (!activeThreadId) {
@@ -289,7 +280,6 @@ export default function InboxPage(): JSX.Element {
   function handleSelectThread(threadId: string) {
     if (composeTarget) {
       setComposeTarget(null)
-      clearComposeParams()
     }
 
     setActiveThreadId(threadId)
@@ -353,7 +343,6 @@ export default function InboxPage(): JSX.Element {
 
       setDraft('')
       setComposeTarget(null)
-      clearComposeParams()
 
       const updatedThreads = await loadThreads()
       const createdThread = updatedThreads.find(

@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router'
 import {
   AmateurDivision,
   AMATEUR_DIVISIONS,
@@ -600,6 +601,7 @@ function ClubProfileModal({
   onClose: () => void
   isMyTeam: boolean
 }): JSX.Element | null {
+  const navigate = useNavigate()
   const [club, setClub] = useState<ClubProfilePopupRecord | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -677,15 +679,18 @@ function ClubProfileModal({
   const handleSendMessage = () => {
     if (!club?.owner_user_id) return
 
-    const params = new URLSearchParams({
-      composeTo: club.owner_user_id,
-      composeName:
-        club.owner_display_name || club.owner_username || club.club_name || 'Player',
-      composeClub: club.club_name || '',
-    })
+    sessionStorage.setItem(
+      'inbox_compose_target',
+      JSON.stringify({
+        userId: club.owner_user_id,
+        displayName:
+          club.owner_display_name || club.owner_username || club.club_name || 'Player',
+        clubName: club.club_name || '',
+      }),
+    )
 
     onClose()
-    window.location.href = `/dashboard/inbox?${params.toString()}`
+    navigate('/dashboard/inbox')
   }
 
   if (!isOpen || !clubId) {

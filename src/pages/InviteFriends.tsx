@@ -7,6 +7,7 @@
  * - Generates an app link using the current origin (/#/referral/:code)
  * - Loads real referral activity from public.club_referrals for the current club (referrer_club_id)
  * - Shows activity immediately once a referral row exists (pending/completed/rejected)
+ * - Moves the "How it works" panel to the bottom of the page
  */
 
 import React, { useEffect, useMemo, useState } from 'react'
@@ -42,6 +43,19 @@ function statusClasses(status: ReferralActivityStatus): string {
       return 'bg-red-100 text-red-800'
     default:
       return 'bg-gray-100 text-gray-700'
+  }
+}
+
+function statusDescription(status: ReferralActivityStatus): string {
+  switch (status) {
+    case 'pending':
+      return 'Friend created a club. Waiting for first coin purchase.'
+    case 'completed':
+      return 'Friend bought their first coin package. Reward granted: 40 coins.'
+    case 'rejected':
+      return 'This referral could not be completed.'
+    default:
+      return ''
   }
 }
 
@@ -205,16 +219,16 @@ export default function InviteFriendsPage(): JSX.Element {
         <div>
           <h2 className="text-xl font-semibold">Invite Friends</h2>
           <p className="mt-1 text-sm text-gray-500">
-            Share your invite link so other players can join the game through your team.
+            Invite friends and earn 40 coins when they create a club and buy their first coin package.
           </p>
         </div>
 
         <section className="w-full rounded-lg border border-gray-100 bg-white p-5 shadow-sm">
-          <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+          <div className="flex flex-col gap-6">
             <div className="flex-1">
               <h3 className="text-base font-semibold">Your invite link</h3>
               <p className="mt-1 text-xs text-gray-500">
-                Share this link with a friend. When they sign up using it, the invite will be tied to your account.
+                Share this link with a friend. When they create a club and make their first coin purchase, you receive 40 coins.
               </p>
 
               <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -256,22 +270,13 @@ export default function InviteFriendsPage(): JSX.Element {
                 </div>
               ) : null}
             </div>
-
-            <div className="w-full lg:w-[320px] rounded-md border border-gray-100 bg-gray-50 p-4">
-              <h3 className="text-base font-semibold">How it works</h3>
-              <ol className="mt-3 list-decimal space-y-2 pl-5 text-sm text-gray-600">
-                <li>Copy or share your personal invite link.</li>
-                <li>Your friend opens the link and creates an account.</li>
-                <li>The referral is connected to your profile.</li>
-              </ol>
-            </div>
           </div>
         </section>
 
         <section className="w-full rounded-lg border border-gray-100 bg-white p-5 shadow-sm">
           <h3 className="text-base font-semibold">Referral activity</h3>
           <p className="mt-1 text-xs text-gray-500">
-            Activity is shown as soon as a referral is saved (pending, completed, or rejected).
+            Pending = your friend created a club but has not bought coins yet. Completed = your friend bought their first coin package and your 40-coin reward was granted.
           </p>
 
           {activityError ? (
@@ -286,7 +291,7 @@ export default function InviteFriendsPage(): JSX.Element {
             </div>
           ) : activity.length === 0 ? (
             <div className="mt-4 flex h-48 items-center justify-center rounded-md border border-dashed border-gray-200 bg-gray-50 text-sm text-gray-400">
-              No referral activity yet
+              No referral activity yet. Share your invite link to start earning 40-coin rewards.
             </div>
           ) : (
             <div className="mt-4 space-y-3">
@@ -307,6 +312,10 @@ export default function InviteFriendsPage(): JSX.Element {
                       Code: {item.referral_code_used}
                     </span>
                   </div>
+
+                  <p className="mt-2 text-sm text-gray-600">
+                    {statusDescription(item.status)}
+                  </p>
 
                   <dl className="mt-2 grid gap-2 text-sm text-gray-700 md:grid-cols-2">
                     <div>
@@ -335,6 +344,15 @@ export default function InviteFriendsPage(): JSX.Element {
               ))}
             </div>
           )}
+        </section>
+
+        <section className="w-full rounded-lg border border-gray-100 bg-gray-50 p-5 shadow-sm">
+          <h3 className="text-base font-semibold">How it works</h3>
+          <ol className="mt-3 list-decimal space-y-2 pl-5 text-sm text-gray-600">
+            <li>Copy or share your personal invite link.</li>
+            <li>Your friend opens the link, signs up, and creates a club.</li>
+            <li>When your friend buys their first coin package, you receive 40 coins.</li>
+          </ol>
         </section>
       </div>
     </div>
