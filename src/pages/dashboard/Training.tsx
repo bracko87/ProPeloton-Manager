@@ -727,6 +727,11 @@ function arraysEqual(a: string[], b: string[]): boolean {
   return true
 }
 
+function isClubLevelActiveCampOnlyError(message: string): boolean {
+  const normalized = message.trim().toLowerCase()
+  return normalized === 'club already has a planned or active training camp.'
+}
+
 export default function TrainingPage(): JSX.Element {
   const [activeTab, setActiveTab] = useState<TabKey>('camps')
   const [loading, setLoading] = useState(true)
@@ -795,6 +800,31 @@ export default function TrainingPage(): JSX.Element {
       ),
     [overlapBlockedRiders]
   )
+
+  const validationErrors = useMemo(
+    () => toArray(validation?.validation_errors),
+    [validation?.validation_errors]
+  )
+
+  const filteredValidationErrors = useMemo(
+    () => validationErrors.filter(message => !isClubLevelActiveCampOnlyError(message)),
+    [validationErrors]
+  )
+
+  const hasSelectedOverlapBlockedRider = useMemo(
+    () => selectedRiderIds.some(riderId => overlapBlockedRiderMap.has(riderId)),
+    [selectedRiderIds, overlapBlockedRiderMap]
+  )
+
+  const isBookingAllowedWithAvailableRiders =
+    filteredValidationErrors.length === 0 &&
+    !hasSelectedOverlapBlockedRider &&
+    selectedRiderIds.length >= 5
+
+  const canSubmitBooking =
+    Boolean(selectedCampId) &&
+    !bookingLoading &&
+    Boolean(validation?.is_valid || isBookingAllowedWithAvailableRiders)
 
   const currentCampParticipants = useMemo(() => {
     return roster.filter(rider => currentCampParticipantIds.includes(rider.rider_id))
@@ -1823,11 +1853,11 @@ export default function TrainingPage(): JSX.Element {
                     </div>
                   </div>
 
-                  {toArray(validation?.validation_errors).length > 0 ? (
+                  {filteredValidationErrors.length > 0 ? (
                     <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
                       <div className="font-medium">Booking blocked</div>
                       <ul className="mt-2 list-disc space-y-1 pl-5">
-                        {toArray(validation?.validation_errors).map(message => (
+                        {filteredValidationErrors.map(message => (
                           <li key={message}>{message}</li>
                         ))}
                       </ul>
@@ -1852,7 +1882,7 @@ export default function TrainingPage(): JSX.Element {
                   <button
                     type="button"
                     onClick={() => void handleDebugBooking()}
-                    disabled={bookingLoading || !validation?.is_valid || !selectedCampId}
+                    disabled={!canSubmitBooking}
                     className="w-full rounded-lg bg-blue-600 px-4 py-3 text-sm font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-300"
                   >
                     {bookingLoading ? 'Booking Training Camp…' : 'Book Training Camp'}

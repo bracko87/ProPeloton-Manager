@@ -67,6 +67,21 @@ type CalendarView = 'season' | 'races'
 
 const GAME_MONTH_LENGTH = 30
 
+const GAME_MONTH_NAMES = [
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December'
+]
+
 const STATUS_BADGE_STYLES: Record<string, string> = {
   planned: 'bg-blue-100 text-blue-700',
   active: 'bg-green-100 text-green-700',
@@ -147,6 +162,37 @@ function getMonthStartFromGameDate(currentGameDate: string, currentDayNumber: nu
   return addDays(current, -(currentDayNumber - 1))
 }
 
+function getGameMonthName(monthNumber: number): string {
+  return GAME_MONTH_NAMES[monthNumber - 1] ?? `Month ${monthNumber}`
+}
+
+function getWeekdayName(date: Date): string {
+  return new Intl.DateTimeFormat('en-US', { weekday: 'long' }).format(date)
+}
+
+function formatGameMonthLabel(seasonNumber: number, monthNumber: number): string {
+  return `Season ${seasonNumber} - ${getGameMonthName(monthNumber)}`
+}
+
+function formatGameDateDisplay(
+  seasonNumber: number,
+  monthNumber: number,
+  dayNumber: number,
+  canonicalDate: string
+): string {
+  const weekdayName = getWeekdayName(parseDateString(canonicalDate))
+  return `Season ${seasonNumber} - ${weekdayName} - ${getGameMonthName(monthNumber)} ${dayNumber}`
+}
+
+function formatGameDateShortDisplay(
+  monthNumber: number,
+  dayNumber: number,
+  canonicalDate: string
+): string {
+  const weekdayName = getWeekdayName(parseDateString(canonicalDate))
+  return `${weekdayName} - ${getGameMonthName(monthNumber)} ${dayNumber}`
+}
+
 function getGameDatePartsFromCanonical(
   canonicalDate: string,
   currentMonthStart: Date,
@@ -184,27 +230,40 @@ function formatGameDateFromCanonical(
     currentMonthNumber
   )
 
-  return `Season ${parts.seasonNumber} · Month ${parts.monthNumber} · Day ${parts.dayNumber}`
+  return formatGameDateDisplay(
+    parts.seasonNumber,
+    parts.monthNumber,
+    parts.dayNumber,
+    canonicalDate
+  )
 }
 
-function formatRaceGameRange(start: DerivedGameDateParts, end: DerivedGameDateParts): string {
+function formatRaceGameRange(start: RaceCalendarEntry['startGameDate'], end: RaceCalendarEntry['endGameDate'], startDate: string, endDate: string): string {
   const sameDay =
     start.seasonNumber === end.seasonNumber &&
     start.monthNumber === end.monthNumber &&
     start.dayNumber === end.dayNumber
 
   if (sameDay) {
-    return `Season ${start.seasonNumber} · Month ${start.monthNumber} · Day ${start.dayNumber}`
+    return formatGameDateDisplay(
+      start.seasonNumber,
+      start.monthNumber,
+      start.dayNumber,
+      startDate
+    )
   }
 
-  if (
-    start.seasonNumber === end.seasonNumber &&
-    start.monthNumber === end.monthNumber
-  ) {
-    return `Season ${start.seasonNumber} · Month ${start.monthNumber} · Day ${start.dayNumber} → Day ${end.dayNumber}`
-  }
-
-  return `Season ${start.seasonNumber} · Month ${start.monthNumber} · Day ${start.dayNumber} → Season ${end.seasonNumber} · Month ${end.monthNumber} · Day ${end.dayNumber}`
+  return `${formatGameDateDisplay(
+    start.seasonNumber,
+    start.monthNumber,
+    start.dayNumber,
+    startDate
+  )} → ${formatGameDateDisplay(
+    end.seasonNumber,
+    end.monthNumber,
+    end.dayNumber,
+    endDate
+  )}`
 }
 
 function isDateWithinRange(date: Date, startDate: string, endDate: string): boolean {
@@ -252,7 +311,6 @@ export default function CalendarPage(): JSX.Element {
   const [activeRaceMonth, setActiveRaceMonth] = useState(1)
 
   const [clubId, setClubId] = useState<string | null>(null)
-  const [clubCountryCode, setClubCountryCode] = useState<string | null>(null)
 
   const [currentGameDate, setCurrentGameDate] = useState<string | null>(null)
   const [gameDateParts, setGameDateParts] = useState<GameDateParts | null>(null)
@@ -260,7 +318,6 @@ export default function CalendarPage(): JSX.Element {
   const [bookings, setBookings] = useState<TrainingCampBooking[]>([])
   const [races, setRaces] = useState<RaceCalendarItem[]>([])
 
-  const [weatherWeek, setWeatherWeek] = useState<number | null>(null)
   const [teamWeather, setTeamWeather] = useState<WeatherNormals | null>(null)
 
   const [raceCalendarNotice, setRaceCalendarNotice] = useState<string | null>(null)
@@ -275,7 +332,6 @@ export default function CalendarPage(): JSX.Element {
       try {
         let resolvedClubId: string | null = null
         let resolvedClubCountryCode: string | null = null
-        let resolvedWeatherWeek: number | null = null
         let resolvedTeamWeather: WeatherNormals | null = null
         let resolvedRaceNotice: string | null = null
         let resolvedRaces: RaceCalendarItem[] = []
@@ -315,7 +371,6 @@ export default function CalendarPage(): JSX.Element {
           ? ((gameDatePartsRes.data[0] as GameDateParts | undefined) ?? null)
           : ((gameDatePartsRes.data as GameDateParts | null) ?? null)
 
-        // Club country for team weather
         try {
           const clubMetaRes = await supabase
             .from('clubs')
@@ -331,9 +386,8 @@ export default function CalendarPage(): JSX.Element {
           resolvedClubCountryCode = null
         }
 
-        // Team weather by week_of_year
         if (resolvedClubCountryCode && nextGameDate) {
-          resolvedWeatherWeek = getISOWeek(parseDateString(nextGameDate))
+          const resolvedWeatherWeek = getISOWeek(parseDateString(nextGameDate))
 
           try {
             const weatherRes = await supabase
@@ -371,7 +425,6 @@ export default function CalendarPage(): JSX.Element {
           }
         }
 
-        // Race calendar
         try {
           const racesRes = await supabase
             .from('races')
@@ -392,11 +445,9 @@ export default function CalendarPage(): JSX.Element {
         if (cancelled) return
 
         setClubId(resolvedClubId)
-        setClubCountryCode(resolvedClubCountryCode)
         setCurrentGameDate(nextGameDate || null)
         setGameDateParts(nextGameDateParts)
         setBookings((bookingsRes.data ?? []) as TrainingCampBooking[])
-        setWeatherWeek(resolvedWeatherWeek)
         setTeamWeather(resolvedTeamWeather)
         setRaces(resolvedRaces)
         setRaceCalendarNotice(resolvedRaceNotice)
@@ -429,16 +480,26 @@ export default function CalendarPage(): JSX.Element {
   }, [currentGameDate, gameDateParts])
 
   const monthDays = useMemo(() => {
-    if (!currentMonthStart) return []
+    if (!currentMonthStart || !gameDateParts) return []
+
     return Array.from({ length: GAME_MONTH_LENGTH }, (_, index) => {
       const canonicalDate = addDays(currentMonthStart, index)
+      const canonicalDateString = toDateString(canonicalDate)
+      const gameParts = getGameDatePartsFromCanonical(
+        canonicalDateString,
+        currentMonthStart,
+        gameDateParts.season_number,
+        gameDateParts.month_number
+      )
+
       return {
         dayNumber: index + 1,
         canonicalDate,
-        canonicalDateString: toDateString(canonicalDate)
+        canonicalDateString,
+        gameParts
       }
     })
-  }, [currentMonthStart])
+  }, [currentMonthStart, gameDateParts])
 
   const seasonRaceEntries = useMemo(() => {
     if (!currentMonthStart || !gameDateParts) return []
@@ -483,99 +544,114 @@ export default function CalendarPage(): JSX.Element {
 
   return (
     <div className="w-full">
-      <h2 className="mb-2 text-xl font-semibold">Calendar</h2>
-      <p className="mb-4 text-sm text-gray-600">
-        Season overview, race schedule, and team-country weather for the current in-game date.
-      </p>
+      <div className="mb-5 flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+        <div className="min-w-0 flex-1">
+          <h2 className="text-xl font-semibold text-gray-900">Calendar</h2>
+          <p className="mt-1 text-sm text-gray-500">
+            Season overview, race schedule, and team-country weather for the current in-game date.
+          </p>
 
-      {error ? (
-        <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-          {error}
+          {error ? (
+            <div className="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+              {error}
+            </div>
+          ) : null}
+
+          <div className="mt-4 inline-flex rounded-lg border border-gray-100 bg-white p-1 shadow-sm">
+            <button
+              type="button"
+              onClick={() => setActiveView('season')}
+              className={`rounded-md px-4 py-2 text-sm font-medium transition ${
+                activeView === 'season'
+                  ? 'bg-yellow-400 text-black'
+                  : 'text-gray-600 hover:bg-gray-100'
+              }`}
+            >
+              Season Calendar
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveView('races')}
+              className={`rounded-md px-4 py-2 text-sm font-medium transition ${
+                activeView === 'races'
+                  ? 'bg-yellow-400 text-black'
+                  : 'text-gray-600 hover:bg-gray-100'
+              }`}
+            >
+              Race Calendar
+            </button>
+          </div>
         </div>
-      ) : null}
 
-      <div className="mb-4 flex flex-wrap gap-2">
-        <button
-          type="button"
-          onClick={() => setActiveView('season')}
-          className={`rounded-md px-4 py-2 text-sm font-medium transition ${
-            activeView === 'season'
-              ? 'bg-gray-900 text-white'
-              : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50'
-          }`}
-        >
-          Season Calendar
-        </button>
+        {activeView === 'season' ? (
+          <div className="w-full xl:max-w-[380px]">
+            <div className="rounded-lg border border-sky-200 bg-sky-50 px-4 py-3">
+              <div className="text-xs font-semibold uppercase tracking-wide text-sky-700">
+                Team Country Weather
+              </div>
 
-        <button
-          type="button"
-          onClick={() => setActiveView('races')}
-          className={`rounded-md px-4 py-2 text-sm font-medium transition ${
-            activeView === 'races'
-              ? 'bg-gray-900 text-white'
-              : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50'
-          }`}
-        >
-          Race Calendar
-        </button>
+              {teamWeather && gameDateParts && currentGameDate ? (
+                <div className="mt-2 space-y-1.5">
+                  <div className="text-sm font-medium text-gray-900">
+                    Today: {formatGameDateDisplay(
+                      gameDateParts.season_number,
+                      gameDateParts.month_number,
+                      gameDateParts.day_number,
+                      currentGameDate
+                    )}
+                  </div>
+
+                  <div className="text-lg font-semibold text-gray-900">
+                    {formatWeatherNumber(teamWeather.avg_temp_c)}°C ·{' '}
+                    {getDominantWeatherLabel(teamWeather)}
+                  </div>
+
+                  <div className="text-xs text-gray-600">
+                    Min {formatWeatherNumber(teamWeather.avg_min_temp_c)}° · Max{' '}
+                    {formatWeatherNumber(teamWeather.avg_max_temp_c)}° · Wind{' '}
+                    {formatWeatherNumber(teamWeather.avg_wind_kmh)} km/h · Rain{' '}
+                    {formatWeatherNumber(teamWeather.avg_precip_mm, 1)} mm
+                  </div>
+                </div>
+              ) : (
+                <div className="mt-2 text-sm text-gray-600">
+                  No team-country weather data available yet.
+                </div>
+              )}
+            </div>
+          </div>
+        ) : null}
       </div>
 
-      <div className="w-full rounded-lg bg-white p-6 shadow">
+      <div className="w-full rounded-lg border border-gray-100 bg-white p-6 shadow">
         {activeView === 'season' ? (
           <>
-            <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+            <div className="mb-6 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
               <div>
                 <h4 className="font-semibold text-gray-900">
                   {gameDateParts
-                    ? `Season ${gameDateParts.season_number} · Month ${gameDateParts.month_number}`
+                    ? formatGameMonthLabel(
+                        gameDateParts.season_number,
+                        gameDateParts.month_number
+                      )
                     : 'Current Month'}
                 </h4>
                 <p className="text-sm text-gray-500">
                   {currentGameDate && gameDateParts
-                    ? `Today: Season ${gameDateParts.season_number} · Month ${gameDateParts.month_number} · Day ${gameDateParts.day_number}`
+                    ? `Today: ${formatGameDateDisplay(
+                        gameDateParts.season_number,
+                        gameDateParts.month_number,
+                        gameDateParts.day_number,
+                        currentGameDate
+                      )}`
                     : 'Game date unavailable'}
-                </p>
-                <p className="mt-2 text-sm text-gray-500">
-                  {bookings.length} planned / active training camp
-                  {bookings.length === 1 ? '' : 's'}
                 </p>
               </div>
 
-              <div className="w-full rounded-lg border border-sky-200 bg-sky-50 px-4 py-3 lg:max-w-[340px]">
-                <div className="text-xs font-semibold uppercase tracking-wide text-sky-700">
-                  Team Country Weather
-                </div>
-
-                {clubCountryCode && teamWeather ? (
-                  <div className="mt-2 space-y-1">
-                    <div className="text-sm font-medium text-gray-900">
-                      {clubCountryCode} · Week {weatherWeek ?? '—'}
-                    </div>
-
-                    <div className="text-lg font-semibold text-gray-900">
-                      {formatWeatherNumber(teamWeather.avg_temp_c)}°C ·{' '}
-                      {getDominantWeatherLabel(teamWeather)}
-                    </div>
-
-                    <div className="text-xs text-gray-600">
-                      Min {formatWeatherNumber(teamWeather.avg_min_temp_c)}° · Max{' '}
-                      {formatWeatherNumber(teamWeather.avg_max_temp_c)}°
-                    </div>
-
-                    <div className="text-xs text-gray-600">
-                      Wind {formatWeatherNumber(teamWeather.avg_wind_kmh)} km/h · Rain{' '}
-                      {formatWeatherNumber(teamWeather.avg_precip_mm, 1)} mm
-                    </div>
-
-                    <div className="pt-1 text-[11px] text-sky-700">
-                      Weekly normal for your club country on this in-game date.
-                    </div>
-                  </div>
-                ) : (
-                  <div className="mt-2 text-sm text-gray-600">
-                    No team-country weather data available yet.
-                  </div>
-                )}
+              <div className="text-sm text-gray-500">
+                {bookings.length} planned / active training camp
+                {bookings.length === 1 ? '' : 's'}
               </div>
             </div>
 
@@ -595,7 +671,13 @@ export default function CalendarPage(): JSX.Element {
                       isToday ? 'border-yellow-400 bg-yellow-50' : 'border-gray-200'
                     }`}
                   >
-                    <div className="text-xs font-medium text-gray-700">Day {day.dayNumber}</div>
+                    <div className="text-[11px] font-medium leading-4 text-gray-700">
+                      {formatGameDateShortDisplay(
+                        day.gameParts.monthNumber,
+                        day.gameParts.dayNumber,
+                        day.canonicalDateString
+                      )}
+                    </div>
 
                     <div className="mt-2 space-y-1">
                       {dayBookings.map(booking => (
@@ -618,7 +700,7 @@ export default function CalendarPage(): JSX.Element {
             </div>
 
             <div className="mt-6">
-              <h4 className="font-semibold">Upcoming Training Camps</h4>
+              <h4 className="font-semibold text-gray-900">Upcoming Training Camps</h4>
 
               {bookings.length === 0 ? (
                 <div className="mt-3 rounded-md border border-gray-200 p-4 text-sm text-gray-500">
@@ -699,19 +781,19 @@ export default function CalendarPage(): JSX.Element {
               </div>
             </div>
 
-            <div className="mb-4 flex flex-wrap gap-2">
+            <div className="mb-4 inline-flex flex-wrap rounded-lg border border-gray-100 bg-white p-1 shadow-sm">
               {Array.from({ length: 12 }, (_, index) => index + 1).map(monthNumber => (
                 <button
                   key={monthNumber}
                   type="button"
                   onClick={() => setActiveRaceMonth(monthNumber)}
-                  className={`rounded-md px-3 py-2 text-sm font-medium transition ${
+                  className={`rounded-md px-4 py-2 text-sm font-medium transition ${
                     activeRaceMonth === monthNumber
-                      ? 'bg-blue-600 text-white'
-                      : 'border border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
+                      ? 'bg-yellow-400 text-black'
+                      : 'text-gray-600 hover:bg-gray-100'
                   }`}
                 >
-                  Month {monthNumber}
+                  {getGameMonthName(monthNumber)}
                 </button>
               ))}
             </div>
@@ -724,7 +806,7 @@ export default function CalendarPage(): JSX.Element {
 
             {activeMonthRaces.length === 0 ? (
               <div className="rounded-md border border-gray-200 p-4 text-sm text-gray-500">
-                No races scheduled for Month {activeRaceMonth}.
+                No races scheduled for {getGameMonthName(activeRaceMonth)}.
               </div>
             ) : (
               <ul className="space-y-3">
@@ -737,7 +819,12 @@ export default function CalendarPage(): JSX.Element {
                       <div className="font-medium text-gray-900">{race.name}</div>
 
                       <div className="mt-1 text-xs text-gray-500">
-                        {formatRaceGameRange(race.startGameDate, race.endGameDate)}
+                        {formatRaceGameRange(
+                          race.startGameDate,
+                          race.endGameDate,
+                          race.start_date,
+                          race.end_date ?? race.start_date
+                        )}
                       </div>
 
                       <div className="mt-1 text-xs text-gray-400">
