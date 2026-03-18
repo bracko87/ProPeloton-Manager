@@ -3,6 +3,7 @@
  * Finance container page that hosts the finance-related tabs.
  *
  * Purpose:
+ * - Resolve the user's MAIN club only (club_type = 'main').
  * - Load club context (club id, summary, cashflow series) once.
  * - ALSO load statement rows up front so Overview has real transaction names immediately.
  * - Provide tab navigation and an ErrorBoundary per tab so a single tab can
@@ -51,6 +52,14 @@ type StatementRow = {
 }
 
 /**
+ * ClubRow
+ * Minimal shape needed when resolving the user's main club.
+ */
+type ClubRow = {
+  id: string
+}
+
+/**
  * Helpers
  */
 function toNumber(v: unknown): number {
@@ -73,7 +82,11 @@ function formatMoney(n: number, currency: 'USD' | 'EUR' = 'USD'): string {
  * Extracts a human label from statement metadata with safe fallback.
  */
 function getTransactionLabel(row: StatementRow): string {
-  const meta = row.metadata && typeof row.metadata === 'object' ? (row.metadata as Record<string, unknown>) : null
+  const meta =
+    row.metadata && typeof row.metadata === 'object'
+      ? (row.metadata as Record<string, unknown>)
+      : null
+
   const pick = (v: unknown): string | null => {
     if (typeof v !== 'string') return null
     const t = v.trim()
@@ -103,8 +116,10 @@ function getTransactionLabel(row: StatementRow): string {
   }
 
   const found = candidates.find(Boolean)
-  const shortId = typeof row.transaction_id === 'string' ? row.transaction_id.slice(0, 8) : 'unknown'
+  const shortId =
+    typeof row.transaction_id === 'string' ? row.transaction_id.slice(0, 8) : 'unknown'
   const t = row.type ? String(row.type) : 'transaction'
+
   return (found as string) ?? `${t} (${shortId})`
 }
 
@@ -138,6 +153,10 @@ function TabButton({
 /**
  * FinancePage
  * Main export: loads base data and renders tabs with per-tab error isolation.
+ *
+ * IMPORTANT:
+ * This page must always resolve the MAIN club only.
+ * Do not use generic club loaders here.
  */
 export default function FinancePage(): JSX.Element {
   const [tab, setTab] = useState<TabKey>('overview')
@@ -149,12 +168,12 @@ export default function FinancePage(): JSX.Element {
   const [summary, setSummary] = useState<any | null>(null)
   const [cashflowDaily, setCashflowDaily] = useState<CashflowPoint[]>([])
 
-  // NEW: statement prefetch for Overview
+  // Statement prefetch for Overview
   const [statement, setStatement] = useState<StatementRow[]>([])
   const [statementBefore, setStatementBefore] = useState<string | null>(null)
   const [statementLoaded, setStatementLoaded] = useState(false)
 
-  // Currency: you said everything is USD always
+  // Currency: everything is USD always
   const currency: 'USD' = 'USD'
 
   /**
@@ -190,8 +209,51 @@ export default function FinancePage(): JSX.Element {
   }, [statement])
 
   /**
+   * resetLoadedState
+   * Clears all club-scoped finance state.
+   */
+  function resetLoadedState(): void {
+    setClubId(null)
+    setSummary(null)
+    setCashflowDaily([])
+    setStatement([])
+    setStatementBefore(null)
+    setStatementLoaded(false)
+  }
+
+  /**
+   * resolveMainClubId
+   * Resolves the user's MAIN club only.
+   *
+   * This replaces generic club lookup behavior. Finance must not accidentally
+   * attach to U23 or any other non-main club.
+   */
+  async function resolveMainClubId(): Promise<string | null> {
+    const authRes = await supabase.auth.getUser()
+    if (authRes.error) throw authRes.error
+
+    const userId = authRes.data.user?.id ?? null
+    if (!userId) return null
+
+    const clubRes = await supabase
+      .from('clubs')
+      .select('id')
+      .eq('owner_user_id', userId)
+      .eq('club_type', 'main')
+      .single<ClubRow>()
+
+    if (clubRes.error) {
+      // Treat "no rows" as "no main club yet" instead of fatal page failure.
+      if (clubRes.error.code === 'PGRST116') return null
+      throw clubRes.error
+    }
+
+    return clubRes.data?.id ?? null
+  }
+
+  /**
    * loadBase
-   * Loads club id, finance summary, daily cashflow series (last 90 days),
+   * Loads MAIN club id, finance summary, daily cashflow series (last 90 days),
    * AND statement rows (so Overview has real transaction names immediately).
    */
   async function loadBase(): Promise<void> {
@@ -199,25 +261,21 @@ export default function FinancePage(): JSX.Element {
     setError(null)
 
     try {
-      const clubRes = await supabase.rpc('get_my_club_id')
-      if (clubRes.error) throw clubRes.error
-      const myClubId = (clubRes.data ?? null) as string | null
+      const myClubId = await resolveMainClubId()
       setClubId(myClubId)
 
       if (!myClubId) {
-        setSummary(null)
-        setCashflowDaily([])
-
-        // NEW: reset statement state
-        setStatement([])
-        setStatementBefore(null)
-        setStatementLoaded(false)
-
+        resetLoadedState()
         setLoading(false)
         return
       }
 
-      const summaryRes = await supabase.from('club_finance_summary').select('*').eq('club_id', myClubId).single()
+      const summaryRes = await supabase
+        .from('club_finance_summary')
+        .select('*')
+        .eq('club_id', myClubId)
+        .single()
+
       if (!summaryRes.error) {
         setSummary(summaryRes.data)
       } else {
@@ -228,18 +286,19 @@ export default function FinancePage(): JSX.Element {
         p_club_id: myClubId,
         p_days: 90,
       })
+
       if (!cashflowRes.error) {
         setCashflowDaily(((cashflowRes.data ?? []) as CashflowPoint[]) ?? [])
       } else {
         setCashflowDaily([])
       }
 
-      // NEW: statement fetch up front
       const txRes = await supabase.rpc('finance_get_club_statement', {
         p_club_id: myClubId,
         p_limit: 500,
         p_before: null,
       })
+
       if (!txRes.error) {
         const rows = (txRes.data ?? []) as StatementRow[]
         setStatement(rows)
@@ -253,6 +312,7 @@ export default function FinancePage(): JSX.Element {
 
       setLoading(false)
     } catch (e: any) {
+      resetLoadedState()
       setLoading(false)
       setError(e?.message ?? 'Failed to load finance data.')
     }
@@ -269,7 +329,9 @@ export default function FinancePage(): JSX.Element {
       <div className="flex items-start justify-between gap-4 mb-4">
         <div>
           <h2 className="text-xl font-semibold">Finance</h2>
-          <div className="text-sm text-gray-500 mt-1">Overview of income, expenses and transactions.</div>
+          <div className="text-sm text-gray-500 mt-1">
+            Overview of income, expenses and transactions.
+          </div>
         </div>
 
         <div className="flex items-center gap-2">
@@ -326,7 +388,6 @@ export default function FinancePage(): JSX.Element {
                   topExpenseBreakdown={topCostsByName}
                 />
 
-                {/* Optional: extra sections you requested */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                   <div className="bg-white p-4 rounded shadow">
                     <div className="font-semibold">Top 5 incomes by transaction name</div>
@@ -338,7 +399,10 @@ export default function FinancePage(): JSX.Element {
                         <div className="text-sm text-gray-500">No income items found yet.</div>
                       ) : (
                         topIncomeByName.map((item) => (
-                          <div key={item.label} className="flex items-center justify-between gap-3 text-sm">
+                          <div
+                            key={item.label}
+                            className="flex items-center justify-between gap-3 text-sm"
+                          >
                             <span className="text-gray-700 truncate">{item.label}</span>
                             <span className="font-semibold text-green-700 whitespace-nowrap">
                               {formatMoney(item.amount, currency)}
@@ -359,7 +423,10 @@ export default function FinancePage(): JSX.Element {
                         <div className="text-sm text-gray-500">No cost items found yet.</div>
                       ) : (
                         topCostsByName.map((item) => (
-                          <div key={item.label} className="flex items-center justify-between gap-3 text-sm">
+                          <div
+                            key={item.label}
+                            className="flex items-center justify-between gap-3 text-sm"
+                          >
                             <span className="text-gray-700 truncate">{item.label}</span>
                             <span className="font-semibold text-red-700 whitespace-nowrap">
                               {formatMoney(item.amount, currency)}
@@ -380,7 +447,7 @@ export default function FinancePage(): JSX.Element {
                 <SponsorsTab clubId={clubId} />
               ) : (
                 <div className="bg-white p-4 rounded shadow text-sm text-gray-600">
-                  Create or join a club to see sponsors.
+                  Create or join a main club to see sponsors.
                 </div>
               )}
             </ErrorBoundary>
@@ -392,7 +459,7 @@ export default function FinancePage(): JSX.Element {
                 <TransactionsTab clubId={clubId} />
               ) : (
                 <div className="bg-white p-4 rounded shadow text-sm text-gray-600">
-                  Create or join a club to see transactions.
+                  Create or join a main club to see transactions.
                 </div>
               )}
             </ErrorBoundary>
@@ -410,7 +477,7 @@ export default function FinancePage(): JSX.Element {
                 <OtherTab clubId={clubId} />
               ) : (
                 <div className="bg-white p-4 rounded shadow text-sm text-gray-600">
-                  No club detected. Debug information is unavailable.
+                  No main club detected. Debug information is unavailable.
                 </div>
               )}
             </ErrorBoundary>

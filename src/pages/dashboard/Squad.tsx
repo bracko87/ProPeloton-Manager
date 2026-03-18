@@ -9,162 +9,67 @@
  * - Provide top navigation to switch between squad-related pages (navigates routes).
  */
 
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useLocation } from 'react-router'
 import { supabase } from '../../lib/supabase'
 
-/**
- * RiderRole
- * Small enum-like union describing rider roles used in the UI.
- */
-type RiderRole =
-  | 'Leader'
-  | 'Sprinter'
-  | 'Climber'
-  | 'TT'
-  | 'Domestique'
-  | 'Breakaway'
-  | 'All-rounder'
+import type {
+  ChartPoint,
+  ClubHealthOverviewRow,
+  ClubRosterRow,
+  DevelopingTeamStatus,
+  RenewalNegotiationData,
+  RiderAvailabilityStatus,
+  RiderCurrentHealthCase,
+  RiderDetails,
+  TeamType,
+} from '../../features/squad/types'
 
-/**
- * MoraleUiLabel
- * UI-only morale labels. Backend still stores morale as 0..100.
- */
-type MoraleUiLabel = 'Bad' | 'Low' | 'Okay' | 'Good' | 'Great'
+import {
+  formatShortGameDate,
+  getAgeFromBirthDate,
+  getContractExpiryUi,
+  getDaysRemaining,
+  getMovementWindowInfo,
+  getRenewalStartLabel,
+  isFutureDateTime,
+  normalizeGameDateValue,
+} from '../../features/squad/utils/dates'
 
-/**
- * RiderAvailabilityStatus
- * UI-only rider availability / fitness status.
- *
- * NOTE:
- * - This is intentionally UI-only for now.
- * - Backend logic can be wired later without changing the components below.
- */
-type RiderAvailabilityStatus = 'fit' | 'not_fully_fit' | 'injured'
+import {
+  formatBlockFlag,
+  formatCaseStageLabel,
+  formatHealthCaseCode,
+  formatMoney,
+  formatSalary,
+  formatSeverityLabel,
+  formatUnavailableReason,
+  formatWeeklySalary,
+  getCountryName,
+  getFlagImageUrl,
+  getSeasonWage,
+} from '../../features/squad/utils/formatters'
 
-/**
- * ClubRosterRow
- * Minimal shape of a row returned from public.club_roster.
- */
-type ClubRosterRow = {
-  club_id: string
-  rider_id: string
-  display_name: string
-  country_code: string
-  assigned_role: RiderRole
-  age_years: number
-  overall: number
-  birth_date?: string | null
-}
+import {
+  formatDiff,
+  getDefaultRiderAvailabilityStatus,
+  getDiffClass,
+  getFatigueUi,
+  getHealthPanelNote,
+  getLeftValueClass,
+  getMoraleUi,
+  getPotentialDevelopmentBonus,
+  getPotentialUi,
+  getRenewalErrorMessage,
+  getRiderImageUrl,
+  getRiderStatusUi,
+  getRightValueClass,
+  hasActivePotentialBonus,
+} from '../../features/squad/utils/rider-ui'
 
-/**
- * RiderDetails
- * Detailed rider object loaded from public.riders.
- */
-type RiderDetails = {
-  id: string
-  country_code: string
-  first_name: string
-  last_name: string
-  display_name: string
-  role: RiderRole
-  sprint: number
-  climbing: number
-  time_trial: number
-  endurance: number
-  flat: number
-  recovery: number
-  resistance: number
-  race_iq: number
-  teamwork: number
-  morale: number
-  potential: number
-  overall: number
-  birth_date: string
-  image_url?: string | null
-  salary?: number | null
-  contract_expires_at?: string | null
-  contract_expires_season?: number | null
-  market_value?: number | null
-  asking_price?: number | null
-  asking_price_manual?: boolean | null
-  availability_status?: RiderAvailabilityStatus | null
-}
+import { getFirstSquadMoveState } from '../../features/squad/utils/movement'
 
-/**
- * ContractRenewalNegotiation
- * Exact negotiation payload used by the styled renewal modal.
- */
-type ContractRenewalNegotiation = {
-  negotiation_id: string
-  rider_id: string
-  club_id: string
-  current_salary_weekly: number
-  expected_salary_weekly: number
-  min_acceptable_salary_weekly: number
-  current_contract_end_season: number
-  current_contract_expires_at?: string | null
-  requested_extension_seasons: number
-  proposed_new_end_season: number
-  attempt_count: number
-  max_attempts: number
-}
-
-/**
- * RenewalNegotiationData
- * UI data used by the renewal modal.
- */
-type RenewalNegotiationData = {
-  negotiation_id: string
-  rider_id: string
-  club_id: string
-  current_salary_weekly: number
-  expected_salary_weekly: number
-  min_acceptable_salary_weekly: number
-  current_contract_end_season: number
-  requested_extension_seasons: number
-  current_contract_expires_at?: string | null
-  attempt_count: number
-  max_attempts: number
-  cooldown_until?: string | null
-}
-
-/**
- * ChartPoint
- * Simple shape for small chart helpers used in the page widgets.
- */
-type ChartPoint = {
-  label: string
-  value: number
-}
-
-/**
- * getCountryName
- * Return a localized country display name from a 2-letter code.
- */
-function getCountryName(countryCode?: string) {
-  const code = countryCode?.trim().toUpperCase()
-
-  if (!code) return 'Unknown'
-
-  try {
-    return new Intl.DisplayNames(['en'], { type: 'region' }).of(code) ?? code
-  } catch {
-    return code
-  }
-}
-
-/**
- * getFlagImageUrl
- * Helper to return a 24x18 flag image URL using flagcdn.
- */
-function getFlagImageUrl(countryCode?: string) {
-  const code = countryCode?.trim().toLowerCase()
-
-  if (!code || !/^[a-z]{2}$/.test(code)) return null
-
-  return `https://flagcdn.com/24x18/${code}.png`
-}
+const SEASON_WEEKS = 52
 
 /**
  * CountryFlag
@@ -198,505 +103,6 @@ function CountryFlag({
 }
 
 /**
- * extractIsoDatePrefix
- * Extract YYYY-MM-DD from a plain date or timestamp-like value.
- *
- * Supports:
- * - 2001-01-13
- * - 2001-01-13T00:00:00Z
- * - 2001-01-13 00:00:00+00
- */
-function extractIsoDatePrefix(value?: string | null) {
-  if (!value) return null
-
-  const match = String(value).trim().match(/(\d{4})-(\d{2})-(\d{2})/)
-  if (!match) return null
-
-  return `${match[1]}-${match[2]}-${match[3]}`
-}
-
-function toIntegerLike(value: unknown): number | null {
-  if (typeof value === 'number' && Number.isInteger(value)) {
-    return value
-  }
-
-  if (typeof value === 'string' && /^-?\d+$/.test(value.trim())) {
-    const parsed = Number(value)
-    return Number.isInteger(parsed) ? parsed : null
-  }
-
-  return null
-}
-
-function buildGameDateFromSeasonParts(
-  seasonNumberValue: unknown,
-  monthNumberValue: unknown,
-  dayNumberValue: unknown
-): string | null {
-  const seasonNumber = toIntegerLike(seasonNumberValue)
-  const monthNumber = toIntegerLike(monthNumberValue)
-  const dayNumber = toIntegerLike(dayNumberValue)
-
-  if (
-    seasonNumber === null ||
-    monthNumber === null ||
-    dayNumber === null ||
-    seasonNumber < 1 ||
-    monthNumber < 1 ||
-    monthNumber > 12 ||
-    dayNumber < 1 ||
-    dayNumber > 31
-  ) {
-    return null
-  }
-
-  /**
-   * Backend mapping:
-   * - season 1 => year 2000
-   * - season 2 => year 2001
-   * Therefore the year offset must be 1999 + seasonNumber.
-   */
-  const year = 1999 + seasonNumber
-  const date = new Date(Date.UTC(year, monthNumber - 1, dayNumber))
-
-  if (
-    date.getUTCFullYear() !== year ||
-    date.getUTCMonth() !== monthNumber - 1 ||
-    date.getUTCDate() !== dayNumber
-  ) {
-    return null
-  }
-
-  return `${year}-${String(monthNumber).padStart(2, '0')}-${String(dayNumber).padStart(2, '0')}`
-}
-
-/**
- * normalizeGameDateValue
- * Normalize the response from get_current_game_date() into YYYY-MM-DD or null.
- *
- * Handles common Supabase RPC shapes:
- * - "2001-01-13"
- * - "2001-01-13 00:00:00+00"
- * - { current_game_date: "2001-01-13" }
- * - { get_current_game_date: "2001-01-13" }
- * - [{ current_game_date: "2001-01-13" }]
- * - { season_number: 2, month_number: 12, day_number: 31 }
- */
-function normalizeGameDateValue(value: unknown): string | null {
-  if (typeof value === 'string') {
-    return extractIsoDatePrefix(value)
-  }
-
-  if (Array.isArray(value)) {
-    for (const item of value) {
-      const found = normalizeGameDateValue(item)
-      if (found) return found
-    }
-    return null
-  }
-
-  if (value && typeof value === 'object') {
-    const obj = value as Record<string, unknown>
-
-    const explicitDate =
-      normalizeGameDateValue(obj.current_game_date) ??
-      normalizeGameDateValue(obj.game_date) ??
-      normalizeGameDateValue(obj.currentGameDate) ??
-      normalizeGameDateValue(obj.get_current_game_date) ??
-      normalizeGameDateValue(obj.date) ??
-      normalizeGameDateValue(obj.value)
-
-    if (explicitDate) return explicitDate
-
-    const builtFromSeasonParts = buildGameDateFromSeasonParts(
-      obj.season_number ?? obj.seasonNumber,
-      obj.month_number ?? obj.monthNumber,
-      obj.day_number ?? obj.dayNumber
-    )
-
-    if (builtFromSeasonParts) return builtFromSeasonParts
-
-    for (const entry of Object.values(obj)) {
-      const found = normalizeGameDateValue(entry)
-      if (found) return found
-    }
-
-    return null
-  }
-
-  return null
-}
-
-/**
- * parseIsoDateUtc
- * Safely parse YYYY-MM-DD (or timestamp-like strings) as a UTC date without
- * browser-local timezone shifts.
- */
-function parseIsoDateUtc(dateStr?: string | null) {
-  const isoDate = extractIsoDatePrefix(dateStr)
-  if (!isoDate) return null
-
-  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(isoDate)
-  if (!match) return null
-
-  const [, y, m, d] = match
-  return new Date(Date.UTC(Number(y), Number(m) - 1, Number(d)))
-}
-
-function toUtcDayNumber(date: Date) {
-  return Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate())
-}
-
-function addUtcDays(date: Date, days: number) {
-  return new Date(
-    Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate() + days)
-  )
-}
-
-/**
- * getAgeFromBirthDate
- * Compute age in years from a YYYY-MM-DD birth date string using only the game/reference date.
- */
-function getAgeFromBirthDate(
-  birthDate?: string | null,
-  referenceDate?: string | null
-): number | null {
-  const dob = parseIsoDateUtc(birthDate)
-  const ref = parseIsoDateUtc(referenceDate)
-
-  if (!dob || !ref) return null
-
-  let age = ref.getUTCFullYear() - dob.getUTCFullYear()
-
-  const hasBirthdayPassed =
-    ref.getUTCMonth() > dob.getUTCMonth() ||
-    (ref.getUTCMonth() === dob.getUTCMonth() && ref.getUTCDate() >= dob.getUTCDate())
-
-  if (!hasBirthdayPassed) age -= 1
-
-  return age
-}
-
-function formatShortGameDate(dateStr?: string | null) {
-  const d = parseIsoDateUtc(dateStr)
-  if (!d) return '—'
-
-  return d.toLocaleDateString('en-US', {
-    month: 'short',
-    day: '2-digit',
-    timeZone: 'UTC',
-  })
-}
-
-function getDaysRemaining(expiresAt?: string | null, referenceDate?: string | null) {
-  const expiry = parseIsoDateUtc(expiresAt)
-  const ref = parseIsoDateUtc(referenceDate)
-
-  if (!expiry || !ref) return null
-
-  const diffMs = toUtcDayNumber(expiry) - toUtcDayNumber(ref)
-  return Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)))
-}
-
-function getContractExpiryUi(
-  expiresAt?: string | null,
-  referenceDate?: string | null,
-  fallbackSeason?: number | null
-): {
-  label: string
-  sublabel?: string
-  valueClassName: string
-} {
-  const daysRemaining = getDaysRemaining(expiresAt, referenceDate)
-  const shortDate = formatShortGameDate(expiresAt)
-
-  if (expiresAt) {
-    const baseLabel =
-      fallbackSeason === null || fallbackSeason === undefined
-        ? shortDate
-        : `Season ${fallbackSeason} - ${shortDate}`
-
-    const urgent = daysRemaining !== null && daysRemaining < 90
-
-    return {
-      label: baseLabel,
-      sublabel:
-        daysRemaining === null
-          ? 'Game date unavailable'
-          : daysRemaining === 1
-            ? '1 day remaining'
-            : `${daysRemaining} days remaining`,
-      valueClassName: urgent
-        ? 'text-lg leading-tight whitespace-nowrap text-red-600'
-        : 'text-lg leading-tight whitespace-nowrap',
-    }
-  }
-
-  return {
-    label:
-      fallbackSeason === null || fallbackSeason === undefined
-        ? '—'
-        : `Season ${fallbackSeason}`,
-    sublabel: referenceDate ? undefined : 'Game date unavailable',
-    valueClassName: 'text-lg leading-tight whitespace-nowrap',
-  }
-}
-
-function getRenewalStartLabel(expiresAt?: string | null) {
-  const expiry = parseIsoDateUtc(expiresAt)
-  if (!expiry) return '—'
-
-  return addUtcDays(expiry, 1).toLocaleDateString('en-US', {
-    month: 'short',
-    day: '2-digit',
-    timeZone: 'UTC',
-  })
-}
-
-function isFutureDateTime(value?: string | null) {
-  if (!value) return false
-
-  const t = Date.parse(value)
-  if (Number.isNaN(t)) return false
-
-  return t > Date.now()
-}
-
-function getRenewalErrorMessage(message?: string | null) {
-  const text = (message ?? '').toLowerCase()
-
-  if (text.includes('salary') || text.includes('minimum')) {
-    return 'Rider refused the offer because the salary is below his current expectations.'
-  }
-
-  if (text.includes('contract length') || text.includes('duration')) {
-    return 'Rider refused the offer because he is not happy with the proposed contract length.'
-  }
-
-  if (text.includes('cooldown') || text.includes('72 hour') || text.includes('72 hours')) {
-    return 'Negotiations have collapsed. This rider will not discuss a new contract for 72 hours, and morale dropped by 10.'
-  }
-
-  if (text.includes('recent form') || text.includes('morale')) {
-    return 'Rider refused the offer because recent form and morale increase his demands.'
-  }
-
-  if (text.includes('open negotiation not found')) {
-    return 'This negotiation is no longer active. Open a new contract talk after the cooldown expires.'
-  }
-
-  if (text.includes('result type')) {
-    return 'Renewal logic returned an invalid backend response. The SQL function needs to be fixed.'
-  }
-
-  return message ?? 'The rider refused the offer.'
-}
-
-/**
- * DEFAULT_RIDER_IMAGE_URL
- * Fallback image for riders with no image set.
- */
-const DEFAULT_RIDER_IMAGE_URL =
-  'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Others/Default%20Profile.png'
-
-const SEASON_WEEKS = 52
-
-/**
- * getRiderImageUrl
- * Return a safe image URL for rider thumbnails.
- */
-function getRiderImageUrl(imageUrl?: string | null) {
-  if (!imageUrl || imageUrl.trim() === '') {
-    return DEFAULT_RIDER_IMAGE_URL
-  }
-
-  return imageUrl
-}
-
-function formatMoney(n?: number | null) {
-  if (n == null) return '—'
-  return `$${new Intl.NumberFormat('de-DE').format(n)}`
-}
-
-function formatWeeklySalary(n?: number | null) {
-  if (n == null) return '—'
-  return `${formatMoney(n)}/week`
-}
-
-function getSeasonWage(weeklySalary?: number | null) {
-  if (weeklySalary == null) return null
-  return weeklySalary * SEASON_WEEKS
-}
-
-/**
- * formatSalary
- * Localized salary display or dash.
- */
-function formatSalary(value?: number | null) {
-  if (value === null || value === undefined) return '—'
-
-  const amount = new Intl.NumberFormat('de-DE', {
-    maximumFractionDigits: 0,
-  }).format(value)
-
-  return `$${amount}/week`
-}
-
-/**
- * formatPlainMoney
- * Number formatting without currency suffix/prefix composition logic.
- */
-function formatPlainMoney(value?: number | null) {
-  if (value === null || value === undefined) return '—'
-
-  return new Intl.NumberFormat('de-DE', {
-    maximumFractionDigits: 0,
-  }).format(value)
-}
-
-/**
- * hexToRgba
- * Convert a hex color to rgba for subtle badge backgrounds/borders.
- */
-function hexToRgba(hex: string, alpha: number) {
-  const normalized = hex.replace('#', '')
-  const value =
-    normalized.length === 3
-      ? normalized
-          .split('')
-          .map((char) => char + char)
-          .join('')
-      : normalized
-
-  const int = Number.parseInt(value, 16)
-  const r = (int >> 16) & 255
-  const g = (int >> 8) & 255
-  const b = int & 255
-
-  return `rgba(${r}, ${g}, ${b}, ${alpha})`
-}
-
-/**
- * getMoraleUi
- * Translate backend morale (0..100) into UI label + exact colors.
- */
-function getMoraleUi(morale?: number | null): {
-  label: MoraleUiLabel
-  color: string
-  bgColor: string
-  borderColor: string
-  dotColor: string
-} {
-  const value = Math.max(0, Math.min(100, morale ?? 0))
-
-  if (value <= 19) {
-    const color = '#DC2626'
-    return {
-      label: 'Bad',
-      color,
-      bgColor: hexToRgba(color, 0.12),
-      borderColor: hexToRgba(color, 0.22),
-      dotColor: color,
-    }
-  }
-
-  if (value <= 39) {
-    const color = '#F97316'
-    return {
-      label: 'Low',
-      color,
-      bgColor: hexToRgba(color, 0.12),
-      borderColor: hexToRgba(color, 0.22),
-      dotColor: color,
-    }
-  }
-
-  if (value <= 59) {
-    const color = '#EAB308'
-    return {
-      label: 'Okay',
-      color,
-      bgColor: hexToRgba(color, 0.14),
-      borderColor: hexToRgba(color, 0.24),
-      dotColor: color,
-    }
-  }
-
-  if (value <= 79) {
-    const color = '#84CC16'
-    return {
-      label: 'Good',
-      color,
-      bgColor: hexToRgba(color, 0.12),
-      borderColor: hexToRgba(color, 0.22),
-      dotColor: color,
-    }
-  }
-
-  const color = '#16A34A'
-  return {
-    label: 'Great',
-    color,
-    bgColor: hexToRgba(color, 0.12),
-    borderColor: hexToRgba(color, 0.22),
-    dotColor: color,
-  }
-}
-
-/**
- * getDefaultRiderAvailabilityStatus
- * Temporary UI-only default until backend status logic is connected.
- */
-function getDefaultRiderAvailabilityStatus(): RiderAvailabilityStatus {
-  return 'fit'
-}
-
-/**
- * getRiderStatusUi
- * UI representation for rider current status / availability.
- */
-function getRiderStatusUi(status?: RiderAvailabilityStatus | null): {
-  label: string
-  icon: string
-  color: string
-  bgColor: string
-  borderColor: string
-} {
-  const safeStatus = status ?? getDefaultRiderAvailabilityStatus()
-
-  if (safeStatus === 'injured') {
-    const color = '#DC2626'
-    return {
-      label: 'Injured',
-      icon: '✚',
-      color,
-      bgColor: hexToRgba(color, 0.1),
-      borderColor: hexToRgba(color, 0.2),
-    }
-  }
-
-  if (safeStatus === 'not_fully_fit') {
-    const color = '#C2410C'
-    return {
-      label: 'Not fully fit',
-      icon: '♥',
-      color,
-      bgColor: hexToRgba(color, 0.1),
-      borderColor: hexToRgba(color, 0.2),
-    }
-  }
-
-  const color = '#16A34A'
-  return {
-    label: 'Fit',
-    icon: '♥',
-    color,
-    bgColor: hexToRgba(color, 0.1),
-    borderColor: hexToRgba(color, 0.2),
-  }
-}
-
-/**
  * RiderStatusBadge
  * UI-only rider status badge.
  */
@@ -713,7 +119,9 @@ function RiderStatusBadge({
 
   return (
     <span
-      className={`inline-flex items-center whitespace-nowrap rounded-full border font-medium ${compact ? 'gap-1.5 px-2.5 py-1 text-xs' : 'gap-2 px-3 py-1 text-sm'} ${className}`}
+      className={`inline-flex items-center whitespace-nowrap rounded-full border font-medium ${
+        compact ? 'gap-1.5 px-2.5 py-1 text-xs' : 'gap-2 px-3 py-1 text-sm'
+      } ${className}`}
       title={`Status: ${ui.label}`}
       style={{
         color: ui.color,
@@ -765,35 +173,60 @@ function MoraleBadge({
   )
 }
 
-/**
- * getDiffClass / getLeftValueClass / getRightValueClass / formatDiff
- * Small visual helpers for compare diffs.
- */
-function getDiffClass(diff: number) {
-  if (diff > 0) return 'text-green-600'
-  if (diff < 0) return 'text-red-600'
-  return 'text-gray-500'
+function PotentialBadge({
+  potential,
+  className = '',
+}: {
+  potential?: number | null
+  className?: string
+}) {
+  const ui = getPotentialUi(potential)
+
+  return (
+    <span
+      className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-sm font-medium ${className}`}
+      title={`Potential: ${ui.label}`}
+      style={{
+        color: ui.color,
+        backgroundColor: ui.bgColor,
+        borderColor: ui.borderColor,
+      }}
+    >
+      <span className="h-2 w-2 rounded-full" style={{ backgroundColor: ui.dotColor }} />
+      <span>{ui.label}</span>
+    </span>
+  )
 }
-function getLeftValueClass(diff: number) {
-  if (diff > 0) return 'text-green-600'
-  if (diff < 0) return 'text-red-600'
-  return 'text-gray-700'
-}
-function getRightValueClass(diff: number) {
-  if (diff > 0) return 'text-red-600'
-  if (diff < 0) return 'text-green-600'
-  return 'text-gray-700'
-}
-function formatDiff(diff: number) {
-  if (diff > 0) return `+${diff}`
-  return `${diff}`
+
+function FatigueBadge({
+  fatigue,
+  className = '',
+}: {
+  fatigue?: number | null
+  className?: string
+}) {
+  const ui = getFatigueUi(fatigue)
+
+  return (
+    <span
+      className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-sm font-medium ${className}`}
+      title={`Fatigue: ${ui.label}`}
+      style={{
+        color: ui.color,
+        backgroundColor: ui.bgColor,
+        borderColor: ui.borderColor,
+      }}
+    >
+      <span className="h-2 w-2 rounded-full" style={{ backgroundColor: ui.dotColor }} />
+      <span>{ui.label}</span>
+    </span>
+  )
 }
 
 /**
  * Simple reusable UI pieces used by the page widgets.
  * Kept local to this file to avoid changing existing imports.
  */
-
 function CompactValueTile({
   label,
   value,
@@ -1111,6 +544,7 @@ async function fetchRiderDetailsById(riderId: string): Promise<RiderDetails> {
       teamwork,
       morale,
       potential,
+      fatigue,
       overall,
       birth_date,
       image_url,
@@ -1119,7 +553,10 @@ async function fetchRiderDetailsById(riderId: string): Promise<RiderDetails> {
       contract_expires_season,
       market_value,
       asking_price,
-      asking_price_manual
+      asking_price_manual,
+      availability_status,
+      unavailable_until,
+      unavailable_reason
     `
     )
     .eq('id', riderId)
@@ -1127,17 +564,304 @@ async function fetchRiderDetailsById(riderId: string): Promise<RiderDetails> {
 
   if (error) throw error
 
+  const rider = data as RiderDetails
+
   return {
-    ...(data as RiderDetails),
-    availability_status: getDefaultRiderAvailabilityStatus(),
+    ...rider,
+    availability_status: rider.availability_status ?? getDefaultRiderAvailabilityStatus(),
   }
+}
+
+async function fetchRiderCurrentHealthCaseById(
+  riderId: string
+): Promise<RiderCurrentHealthCase | null> {
+  const { data, error } = await supabase.rpc('get_rider_current_health_case', {
+    p_rider_id: riderId,
+  })
+
+  if (error) throw error
+
+  const row = Array.isArray(data) ? data[0] : data
+  return (row ?? null) as RiderCurrentHealthCase | null
+}
+
+function TransferListModal({
+  open,
+  onClose,
+  rider,
+  onUpdated,
+}: {
+  open: boolean
+  onClose: () => void
+  rider: RiderDetails | null
+  onUpdated: (updatedRider: RiderDetails) => void
+}) {
+  const [askingPriceInput, setAskingPriceInput] = useState('')
+  const [defaultAskingPrice, setDefaultAskingPrice] = useState<number | null>(null)
+  const [loadingSuggestedPrice, setLoadingSuggestedPrice] = useState(false)
+  const [savingPrice, setSavingPrice] = useState(false)
+  const [message, setMessage] = useState<string | null>(null)
+  const [messageType, setMessageType] = useState<'success' | 'error' | null>(null)
+
+  useEffect(() => {
+    let mounted = true
+
+    async function loadSuggestedPrice() {
+      if (!rider?.id) return
+
+      setLoadingSuggestedPrice(true)
+      setMessage(null)
+      setMessageType(null)
+      setAskingPriceInput(rider.asking_price != null ? String(rider.asking_price) : '')
+
+      try {
+        const { data, error } = await supabase.rpc('calculate_rider_default_asking_price', {
+          p_rider_id: rider.id,
+        })
+
+        if (error) throw error
+        if (!mounted) return
+
+        setDefaultAskingPrice(typeof data === 'number' ? data : null)
+      } catch (e: any) {
+        if (!mounted) return
+        setDefaultAskingPrice(null)
+        setMessage(e?.message ?? 'Could not load suggested asking price.')
+        setMessageType('error')
+      } finally {
+        if (!mounted) return
+        setLoadingSuggestedPrice(false)
+      }
+    }
+
+    if (open && rider?.id) {
+      void loadSuggestedPrice()
+    } else {
+      setAskingPriceInput('')
+      setDefaultAskingPrice(null)
+      setLoadingSuggestedPrice(false)
+      setSavingPrice(false)
+      setMessage(null)
+      setMessageType(null)
+    }
+
+    return () => {
+      mounted = false
+    }
+  }, [open, rider?.id, rider?.asking_price])
+
+  async function handleSetManualPrice() {
+    if (!rider?.id) return
+
+    const price = Math.round(Number(askingPriceInput))
+
+    if (!Number.isFinite(price) || price < 1000) {
+      setMessage('Asking price must be at least $1,000.')
+      setMessageType('error')
+      return
+    }
+
+    setSavingPrice(true)
+    setMessage(null)
+    setMessageType(null)
+
+    try {
+      const { error } = await supabase.rpc('set_rider_asking_price', {
+        p_rider_id: rider.id,
+        p_asking_price: price,
+      })
+
+      if (error) throw error
+
+      const refreshedRider = await fetchRiderDetailsById(rider.id)
+      onUpdated(refreshedRider)
+      setAskingPriceInput(
+        refreshedRider.asking_price != null ? String(refreshedRider.asking_price) : ''
+      )
+      setMessage('Manual asking price saved.')
+      setMessageType('success')
+    } catch (e: any) {
+      setMessage(e?.message ?? 'Could not set asking price.')
+      setMessageType('error')
+    } finally {
+      setSavingPrice(false)
+    }
+  }
+
+  async function handleResetToSuggested() {
+    if (!rider?.id) return
+
+    setSavingPrice(true)
+    setMessage(null)
+    setMessageType(null)
+
+    try {
+      const { error } = await supabase.rpc('clear_rider_asking_price', {
+        p_rider_id: rider.id,
+      })
+
+      if (error) throw error
+
+      const refreshedRider = await fetchRiderDetailsById(rider.id)
+      onUpdated(refreshedRider)
+      setAskingPriceInput(
+        refreshedRider.asking_price != null ? String(refreshedRider.asking_price) : ''
+      )
+      setMessage('Asking price reset to suggested value.')
+      setMessageType('success')
+    } catch (e: any) {
+      setMessage(e?.message ?? 'Could not reset asking price.')
+      setMessageType('error')
+    } finally {
+      setSavingPrice(false)
+    }
+  }
+
+  if (!open || !rider) return null
+
+  const currentAskingPriceDisplay =
+    rider.asking_price == null ? '—' : formatMoney(rider.asking_price)
+
+  const suggestedAskingPriceDisplay = loadingSuggestedPrice
+    ? 'Loading...'
+    : defaultAskingPrice == null
+      ? '—'
+      : formatMoney(defaultAskingPrice)
+
+  const pricingModeLabel = rider.asking_price_manual ? 'Manual price' : 'Suggested price'
+
+  return (
+    <div
+      className="fixed inset-0 z-[65] flex items-center justify-center bg-black/50 p-4"
+      onClick={onClose}
+    >
+      <div
+        className="w-full max-w-2xl overflow-hidden rounded-2xl bg-white shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between border-b border-gray-200 px-6 py-5">
+          <div>
+            <div className="text-2xl font-semibold text-gray-900">Transfer List</div>
+            <div className="mt-1 text-sm text-gray-500">
+              Manage transfer pricing for {rider.first_name} {rider.last_name}.
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50"
+          >
+            Close
+          </button>
+        </div>
+
+        <div className="p-6">
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+            <CompactValueTile
+              label="Market Value"
+              value={formatMoney(rider.market_value)}
+              valueClassName="text-lg leading-tight whitespace-nowrap"
+            />
+
+            <CompactValueTile
+              label="Current Asking Price"
+              value={currentAskingPriceDisplay}
+              valueClassName="text-lg leading-tight whitespace-nowrap"
+              subvalue={pricingModeLabel}
+              subvalueClassName="text-xs text-gray-500"
+            />
+
+            <CompactValueTile
+              label="Suggested Asking Price"
+              value={suggestedAskingPriceDisplay}
+              valueClassName="text-lg leading-tight whitespace-nowrap"
+              subvalue="Calculated from market value, contract, morale and release pressure"
+              subvalueClassName="text-xs text-gray-500"
+            />
+
+            <CompactValueTile
+              label="Pricing Mode"
+              value={rider.asking_price_manual ? 'Manual' : 'Suggested'}
+              valueClassName="text-lg leading-tight whitespace-nowrap"
+            />
+          </div>
+
+          <div className="mt-6">
+            <label className="mb-2 block text-sm font-semibold text-gray-800">
+              Set Manual Asking Price
+            </label>
+            <div className="mb-2 text-sm text-gray-500">
+              Enter the price you want other clubs to negotiate from.
+            </div>
+
+            <div className="relative">
+              <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-base font-semibold text-gray-500">
+                $
+              </span>
+              <input
+                type="number"
+                min={1000}
+                value={askingPriceInput}
+                onChange={(e) => {
+                  setAskingPriceInput(e.target.value)
+                  if (message) {
+                    setMessage(null)
+                    setMessageType(null)
+                  }
+                }}
+                disabled={savingPrice}
+                className="w-full rounded-xl border-2 border-yellow-400 bg-yellow-50 py-3 pl-8 pr-4 text-base font-medium text-gray-900 outline-none focus:border-yellow-500 focus:bg-white disabled:cursor-not-allowed disabled:opacity-60"
+                placeholder="Enter asking price"
+              />
+            </div>
+          </div>
+
+          {message ? (
+            <div
+              className={`mt-4 rounded-xl border px-4 py-3 text-sm ${
+                messageType === 'success'
+                  ? 'border-green-200 bg-green-50 text-green-800'
+                  : 'border-red-200 bg-red-50 text-red-700'
+              }`}
+            >
+              {message}
+            </div>
+          ) : null}
+
+          <div className="mt-4 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-600">
+            Manual price uses your chosen value. Reset returns the rider to the system-suggested
+            asking price.
+          </div>
+        </div>
+
+        <div className="flex flex-wrap items-center justify-end gap-3 border-t border-gray-200 px-6 py-4">
+          <button
+            type="button"
+            onClick={handleResetToSuggested}
+            disabled={savingPrice}
+            className="rounded-lg border border-gray-200 px-5 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {savingPrice ? 'Working...' : 'Reset to Suggested'}
+          </button>
+
+          <button
+            type="button"
+            onClick={handleSetManualPrice}
+            disabled={savingPrice}
+            className="rounded-lg bg-yellow-400 px-5 py-2.5 text-sm font-medium text-black hover:bg-yellow-500 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {savingPrice ? 'Saving...' : 'Set Manual Price'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
 }
 
 /**
  * RiderProfileModal
  * Extracted modal component kept inside this file to preserve behavior and imports.
- *
- * NOTE: The modal interacts with the same supabase client used by the page.
  */
 function RiderProfileModal({
   open,
@@ -1145,16 +869,19 @@ function RiderProfileModal({
   riderId,
   onImageUpdated,
   gameDate,
+  currentTeamType = 'first',
 }: {
   open: boolean
   onClose: () => void
   riderId: string | null
   onImageUpdated?: (id: string, imageUrl: string) => void
   gameDate?: string | null
+  currentTeamType?: TeamType
 }) {
   const [profileLoading, setProfileLoading] = useState(false)
   const [profileError, setProfileError] = useState<string | null>(null)
   const [selectedRider, setSelectedRider] = useState<RiderDetails | null>(null)
+  const [currentHealthCase, setCurrentHealthCase] = useState<RiderCurrentHealthCase | null>(null)
   const [imageUrlInput, setImageUrlInput] = useState('')
   const [imageSaving, setImageSaving] = useState(false)
   const [imageSaveMessage, setImageSaveMessage] = useState<string | null>(null)
@@ -1169,9 +896,7 @@ function RiderProfileModal({
     null
   )
   const [renewalResultMessage, setRenewalResultMessage] = useState<string | null>(null)
-  const [askingPriceInput, setAskingPriceInput] = useState('')
-  const [askingPriceMessage, setAskingPriceMessage] = useState<string | null>(null)
-  const [isSavingAskingPrice, setIsSavingAskingPrice] = useState(false)
+  const [transferListOpen, setTransferListOpen] = useState(false)
 
   useEffect(() => {
     let mounted = true
@@ -1182,18 +907,21 @@ function RiderProfileModal({
       setProfileLoading(true)
       setProfileError(null)
       setSelectedRider(null)
+      setCurrentHealthCase(null)
       setImageUrlInput('')
       setImageSaveMessage(null)
       setContractActionMessage(null)
-      setAskingPriceInput('')
-      setAskingPriceMessage(null)
 
       try {
-        const nextRider = await fetchRiderDetailsById(riderId)
+        const [nextRider, nextHealthCase] = await Promise.all([
+          fetchRiderDetailsById(riderId),
+          fetchRiderCurrentHealthCaseById(riderId),
+        ])
 
         if (!mounted) return
 
         setSelectedRider(nextRider)
+        setCurrentHealthCase(nextHealthCase)
         setImageUrlInput(nextRider.image_url ?? '')
       } catch (e: any) {
         if (!mounted) return
@@ -1208,6 +936,7 @@ function RiderProfileModal({
       void loadRider()
     } else {
       setSelectedRider(null)
+      setCurrentHealthCase(null)
       setImageUrlInput('')
       setImageSaveMessage(null)
       setImageSaving(false)
@@ -1220,9 +949,7 @@ function RiderProfileModal({
       setOfferExtensionInput('1')
       setRenewalResultType(null)
       setRenewalResultMessage(null)
-      setAskingPriceInput('')
-      setAskingPriceMessage(null)
-      setIsSavingAskingPrice(false)
+      setTransferListOpen(false)
     }
 
     return () => {
@@ -1237,7 +964,7 @@ function RiderProfileModal({
     setImageSaveMessage(null)
 
     try {
-      const nextImageUrl = imageUrlInput.trim() || DEFAULT_RIDER_IMAGE_URL
+      const nextImageUrl = getRiderImageUrl(imageUrlInput.trim())
 
       const { error } = await supabase
         .from('riders')
@@ -1257,43 +984,6 @@ function RiderProfileModal({
       setImageSaveMessage(e?.message ?? 'Failed to update rider image.')
     } finally {
       setImageSaving(false)
-    }
-  }
-
-  async function handleSetAskingPrice() {
-    if (!selectedRider?.id) return
-
-    const price = Math.round(Number(askingPriceInput))
-
-    if (!Number.isFinite(price) || price < 1000) {
-      setAskingPriceMessage('Please enter a valid asking price.')
-      return
-    }
-
-    setIsSavingAskingPrice(true)
-    setAskingPriceMessage(null)
-
-    try {
-      const { error } = await supabase
-        .from('riders')
-        .update({
-          asking_price: price,
-          asking_price_manual: true,
-        })
-        .eq('id', selectedRider.id)
-
-      if (error) throw error
-
-      const refreshedRider = await fetchRiderDetailsById(selectedRider.id)
-
-      setSelectedRider(refreshedRider)
-      setAskingPriceInput('')
-      setAskingPriceMessage('Asking price updated.')
-    } catch (e: any) {
-      console.error('set asking price failed:', e)
-      setAskingPriceMessage(e?.message ?? 'Could not set asking price.')
-    } finally {
-      setIsSavingAskingPrice(false)
     }
   }
 
@@ -1449,6 +1139,7 @@ function RiderProfileModal({
 
   function closeAll() {
     setCompareOpen(false)
+    setTransferListOpen(false)
     onClose()
   }
 
@@ -1459,6 +1150,16 @@ function RiderProfileModal({
   )
 
   const profileAge = getAgeFromBirthDate(selectedRider?.birth_date, gameDate ?? null)
+  const movementWindowInfo = getMovementWindowInfo(gameDate)
+
+  const isU23Ineligible =
+    currentTeamType === 'developing' && profileAge !== null && profileAge >= 24
+
+  const u23WarningMessage = isU23Ineligible
+    ? movementWindowInfo.isOpen
+      ? 'This rider has turned 24 and is no longer eligible for the Developing Team. He must be moved to the First Squad or released before the current movement window closes.'
+      : 'This rider has turned 24 and is no longer eligible for the Developing Team. He may remain there until the next movement window, but before that window closes he must be moved to the First Squad or released.'
+    : null
 
   const renewalCurrentContractExpiresAt =
     renewalData?.current_contract_expires_at ?? selectedRider?.contract_expires_at
@@ -1481,6 +1182,24 @@ function RiderProfileModal({
       : formatMoney(selectedRider.asking_price)
 
   const moraleUi = getMoraleUi(selectedRider?.morale)
+  const potentialUi = getPotentialUi(selectedRider?.potential)
+  const fatigueUi = getFatigueUi(selectedRider?.fatigue)
+  const potentialBonusActive = hasActivePotentialBonus(profileAge)
+  const potentialDevelopmentBonus = getPotentialDevelopmentBonus(
+    selectedRider?.potential,
+    profileAge
+  )
+
+  const healthCaseName = formatHealthCaseCode(currentHealthCase?.case_code)
+  const healthSeverityLabel = formatSeverityLabel(currentHealthCase?.severity)
+  const healthStageLabel = formatCaseStageLabel(currentHealthCase?.case_status)
+  const healthExpectedRecoveryLabel = formatShortGameDate(
+    currentHealthCase?.expected_full_recovery_on
+  )
+  const healthExpectedRecoveryDays = getDaysRemaining(
+    currentHealthCase?.expected_full_recovery_on,
+    gameDate ?? null
+  )
 
   if (!open) return null
 
@@ -1490,10 +1209,10 @@ function RiderProfileModal({
       onClick={closeAll}
     >
       <div
-        className="w-full max-w-6xl overflow-hidden rounded-2xl bg-white shadow-xl"
+        className="flex max-h-[90vh] w-full max-w-6xl flex-col overflow-hidden rounded-2xl bg-white shadow-xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4">
+        <div className="shrink-0 flex items-center justify-between border-b border-gray-200 px-6 py-4">
           <div className="text-3xl font-semibold text-gray-900">
             {selectedRider
               ? `${selectedRider.first_name} ${selectedRider.last_name}`
@@ -1509,7 +1228,7 @@ function RiderProfileModal({
           </button>
         </div>
 
-        <div className="p-6">
+        <div className="min-h-0 flex-1 overflow-y-auto p-6">
           {profileLoading && <div className="text-sm text-gray-600">Loading rider profile…</div>}
 
           {!profileLoading && profileError && (
@@ -1520,217 +1239,301 @@ function RiderProfileModal({
           )}
 
           {!profileLoading && !profileError && selectedRider && (
-            <>
-              <div className="grid grid-cols-1 gap-6 lg:grid-cols-[320px_minmax(0,1fr)]">
-                <div>
-                  <img
-                    src={getRiderImageUrl(selectedRider.image_url)}
-                    alt={selectedRider.display_name}
-                    className="h-80 w-full rounded-xl border border-gray-200 object-cover"
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-[320px_minmax(0,1fr)]">
+              <div>
+                <img
+                  src={getRiderImageUrl(selectedRider.image_url)}
+                  alt={selectedRider.display_name}
+                  className="h-80 w-full rounded-xl border border-gray-200 object-cover"
+                />
+
+                <div className="mt-4">
+                  <label className="mb-2 block text-sm font-medium text-gray-700">Image URL</label>
+                  <input
+                    type="text"
+                    value={imageUrlInput}
+                    onChange={(e) => setImageUrlInput(e.target.value)}
+                    placeholder="Paste rider image URL"
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-yellow-400"
                   />
 
-                  <div className="mt-4">
-                    <label className="mb-2 block text-sm font-medium text-gray-700">
-                      Image URL
-                    </label>
-                    <input
-                      type="text"
-                      value={imageUrlInput}
-                      onChange={(e) => setImageUrlInput(e.target.value)}
-                      placeholder="Paste rider image URL"
-                      className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-yellow-400"
-                    />
+                  <button
+                    type="button"
+                    onClick={applyImageChange}
+                    disabled={imageSaving}
+                    className="mt-3 w-full rounded-lg bg-yellow-400 px-4 py-2 text-sm font-medium text-black hover:bg-yellow-500 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {imageSaving ? 'Saving image...' : 'Apply Image Change'}
+                  </button>
 
-                    <button
-                      type="button"
-                      onClick={applyImageChange}
-                      disabled={imageSaving}
-                      className="mt-3 w-full rounded-lg bg-yellow-400 px-4 py-2 text-sm font-medium text-black hover:bg-yellow-500 disabled:cursor-not-allowed disabled:opacity-60"
-                    >
-                      {imageSaving ? 'Saving image...' : 'Apply Image Change'}
-                    </button>
+                  {imageSaveMessage && (
+                    <div className="mt-2 text-sm text-gray-600">{imageSaveMessage}</div>
+                  )}
+                </div>
 
-                    {imageSaveMessage && (
-                      <div className="mt-2 text-sm text-gray-600">{imageSaveMessage}</div>
-                    )}
-                  </div>
+                <div className="mt-5 border-t border-gray-200 pt-4">
+                  <div className="rounded-xl border border-gray-200 p-4">
+                    <div className="text-xs text-gray-500">Health</div>
 
-                  <div className="mt-5 border-t border-gray-200 pt-4">
-                    <div className="rounded-xl border border-gray-200 p-4">
-                      <div className="text-xs text-gray-500">Set Asking Price</div>
+                    <div className="mt-3 flex flex-wrap items-center gap-2">
+                      <RiderStatusBadge status={selectedRider.availability_status} />
+                      <FatigueBadge fatigue={selectedRider.fatigue} />
+                    </div>
 
-                      <div className="mt-3 flex items-center gap-2">
-                        <span className="text-xs text-gray-500">$</span>
-                        <input
-                          type="number"
-                          min={1000}
-                          value={askingPriceInput}
-                          onChange={(e) => {
-                            setAskingPriceInput(e.target.value)
-                            if (askingPriceMessage) setAskingPriceMessage(null)
-                          }}
-                          className="h-9 w-full rounded-md border border-gray-300 px-2 text-sm outline-none focus:border-yellow-400"
-                          placeholder="Enter asking price"
-                        />
+                    <div className="mt-3 space-y-1 text-sm text-gray-700">
+                      <div>
+                        <span className="text-gray-500">Fatigue score:</span>{' '}
+                        {selectedRider.fatigue ?? 0}/100
                       </div>
 
-                      <button
-                        type="button"
-                        onClick={() => {
-                          void handleSetAskingPrice()
-                        }}
-                        disabled={isSavingAskingPrice}
-                        className="mt-2 text-xs text-gray-500 hover:text-gray-800 disabled:cursor-not-allowed disabled:opacity-60"
-                      >
-                        {isSavingAskingPrice ? 'Saving...' : 'Set'}
-                      </button>
+                      {healthCaseName ? (
+                        <div>
+                          <span className="text-gray-500">Case:</span> {healthCaseName}
+                        </div>
+                      ) : null}
 
-                      {askingPriceMessage ? (
-                        <div className="mt-2 text-xs text-gray-500">{askingPriceMessage}</div>
+                      {healthSeverityLabel ? (
+                        <div>
+                          <span className="text-gray-500">Severity:</span> {healthSeverityLabel}
+                        </div>
+                      ) : null}
+
+                      {healthStageLabel ? (
+                        <div>
+                          <span className="text-gray-500">Stage:</span> {healthStageLabel}
+                        </div>
+                      ) : null}
+
+                      {selectedRider.unavailable_reason ? (
+                        <div>
+                          <span className="text-gray-500">Reason:</span>{' '}
+                          {formatUnavailableReason(selectedRider.unavailable_reason)}
+                        </div>
+                      ) : null}
+
+                      {currentHealthCase?.expected_full_recovery_on ? (
+                        <div>
+                          <span className="text-gray-500">Expected full recovery:</span>{' '}
+                          {healthExpectedRecoveryLabel}
+                          {healthExpectedRecoveryDays !== null
+                            ? ` (${healthExpectedRecoveryDays} day${
+                                healthExpectedRecoveryDays === 1 ? '' : 's'
+                              } remaining)`
+                            : ''}
+                        </div>
                       ) : null}
                     </div>
-                  </div>
-                </div>
 
-                <div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="inline-flex items-center gap-2 rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-700">
-                      <CountryFlag countryCode={selectedRider.country_code} />
-                      {getCountryName(selectedRider.country_code)}
-                    </span>
-                    <span className="rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-700">
-                      {selectedRider.role}
-                    </span>
-                    <span className="rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-700">
-                      Age {profileAge ?? '—'}
-                    </span>
-                    <RiderStatusBadge status={selectedRider.availability_status} />
-                    <span className="rounded-full bg-yellow-100 px-3 py-1 text-sm font-medium text-yellow-800">
-                      Overall {selectedRider.overall}%
-                    </span>
-                  </div>
+                    {currentHealthCase?.health_case_id ? (
+                      <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-3">
+                        <div className="rounded-lg bg-gray-50 px-3 py-2 text-xs text-gray-600">
+                          <div className="text-[11px] uppercase tracking-wide text-gray-500">
+                            Selection
+                          </div>
+                          <div className="mt-1 font-medium text-gray-800">
+                            {formatBlockFlag(currentHealthCase.selection_blocked)}
+                          </div>
+                        </div>
 
-                  <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
-                    <CompactValueTile
-                      label="Salary (Weekly)"
-                      value={formatWeeklySalary(selectedRider.salary)}
-                      valueClassName="text-lg leading-tight whitespace-nowrap"
-                      subvalue={`Full season wage: ${formatMoney(getSeasonWage(selectedRider.salary))}`}
-                      subvalueClassName="text-xs text-gray-500"
-                    />
+                        <div className="rounded-lg bg-gray-50 px-3 py-2 text-xs text-gray-600">
+                          <div className="text-[11px] uppercase tracking-wide text-gray-500">
+                            Training
+                          </div>
+                          <div className="mt-1 font-medium text-gray-800">
+                            {formatBlockFlag(currentHealthCase.training_blocked)}
+                          </div>
+                        </div>
 
-                    <CompactValueTile
-                      label="Contract Ends"
-                      value={contractExpiryUi.label}
-                      subvalue={contractExpiryUi.sublabel}
-                      valueClassName={contractExpiryUi.valueClassName}
-                      subvalueClassName={
-                        contractExpiryUi.valueClassName.includes('text-red-600')
-                          ? 'text-xs text-red-600'
-                          : 'text-xs text-gray-500'
-                      }
-                    />
+                        <div className="rounded-lg bg-gray-50 px-3 py-2 text-xs text-gray-600">
+                          <div className="text-[11px] uppercase tracking-wide text-gray-500">
+                            Development
+                          </div>
+                          <div className="mt-1 font-medium text-gray-800">
+                            {formatBlockFlag(currentHealthCase.development_blocked)}
+                          </div>
+                        </div>
+                      </div>
+                    ) : null}
 
-                    <CompactValueTile
-                      label="Market Value"
-                      value={formatMoney(selectedRider.market_value)}
-                      valueClassName="text-lg leading-tight whitespace-nowrap"
-                    />
-
-                    <CompactValueTile
-                      label="Asking Price"
-                      value={askingPriceDisplay}
-                      valueClassName={`text-lg leading-tight whitespace-nowrap ${
-                        selectedRider.asking_price === null ||
-                        selectedRider.asking_price === undefined
-                          ? 'text-gray-500'
-                          : 'text-gray-900'
-                      }`}
-                    />
-                  </div>
-
-                  <div className="mt-6">
-                    <div className="mb-3 text-base font-semibold text-gray-900">
-                      Rider Attributes
-                    </div>
-
-                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                      {[
-                        { label: 'Sprint', value: selectedRider.sprint },
-                        { label: 'Climbing', value: selectedRider.climbing },
-                        { label: 'Time Trial', value: selectedRider.time_trial },
-                        { label: 'Endurance', value: selectedRider.endurance },
-                        { label: 'Flat', value: selectedRider.flat },
-                        { label: 'Recovery', value: selectedRider.recovery },
-                        { label: 'Resistance', value: selectedRider.resistance },
-                        { label: 'Race IQ', value: selectedRider.race_iq },
-                        { label: 'Teamwork', value: selectedRider.teamwork },
-                      ].map((stat) => (
-                        <StatTile key={stat.label} label={stat.label} value={stat.value} />
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="mt-6 border-t border-gray-200 pt-5">
-                    <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-                      <CompactValueTile
-                        label="Potential"
-                        value={`${selectedRider.potential}/100`}
-                        valueClassName="text-lg leading-tight whitespace-nowrap"
-                      />
-
-                      <CompactStatusTile
-                        label="Morale"
-                        status={moraleUi.label}
-                        statusColor={moraleUi.color}
-                        statusClassName="text-lg leading-tight whitespace-nowrap"
-                      />
+                    <div className="mt-3 rounded-lg bg-gray-50 px-3 py-2 text-xs text-gray-600">
+                      {currentHealthCase?.health_case_id
+                        ? currentHealthCase.case_status === 'recovering'
+                          ? 'Rider has left the unavailable phase and is now recovering toward full fitness.'
+                          : currentHealthCase.case_status === 'active'
+                            ? 'Rider is in the active medical phase and remains unavailable until the current case clears.'
+                            : getHealthPanelNote(selectedRider)
+                        : getHealthPanelNote(selectedRider)}
                     </div>
                   </div>
                 </div>
               </div>
 
-              <div className="mt-6 border-t border-gray-200 pt-5">
-                <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
-                  <button
-                    type="button"
-                    onClick={handleNewContract}
-                    disabled={renewalBusy}
-                    className="rounded-lg border border-gray-200 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    {renewalBusy ? 'Processing...' : 'New Contract'}
-                  </button>
-
-                  <button
-                    type="button"
-                    className="rounded-lg border border-gray-200 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50"
-                  >
-                    Transfer List
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setCompareOpen(true)}
-                    className="rounded-lg border border-gray-200 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50"
-                  >
-                    Compare Rider
-                  </button>
-
-                  <button
-                    type="button"
-                    className="rounded-lg border border-red-200 px-4 py-3 text-sm font-medium text-red-600 hover:bg-red-50"
-                  >
-                    Release
-                  </button>
+              <div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="inline-flex items-center gap-2 rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-700">
+                    <CountryFlag countryCode={selectedRider.country_code} />
+                    {getCountryName(selectedRider.country_code)}
+                  </span>
+                  <span className="rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-700">
+                    {selectedRider.role}
+                  </span>
+                  <span className="rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-700">
+                    Age {profileAge ?? '—'}
+                  </span>
+                  <RiderStatusBadge status={selectedRider.availability_status} />
+                  <span className="rounded-full bg-yellow-100 px-3 py-1 text-sm font-medium text-yellow-800">
+                    Overall {selectedRider.overall}%
+                  </span>
                 </div>
 
-                {contractActionMessage && (
-                  <div className="mt-3 text-sm text-gray-600">{contractActionMessage}</div>
+                {u23WarningMessage && (
+                  <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                    <div className="font-semibold">U23 eligibility warning</div>
+                    <div className="mt-1">{u23WarningMessage}</div>
+                  </div>
                 )}
+
+                <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
+                  <CompactValueTile
+                    label="Salary (Weekly)"
+                    value={formatWeeklySalary(selectedRider.salary)}
+                    valueClassName="text-lg leading-tight whitespace-nowrap"
+                    subvalue={`Full season wage: ${formatMoney(getSeasonWage(selectedRider.salary))}`}
+                    subvalueClassName="text-xs text-gray-500"
+                  />
+
+                  <CompactValueTile
+                    label="Contract Ends"
+                    value={contractExpiryUi.label}
+                    subvalue={contractExpiryUi.sublabel}
+                    valueClassName={contractExpiryUi.valueClassName}
+                    subvalueClassName={
+                      contractExpiryUi.valueClassName.includes('text-red-600')
+                        ? 'text-xs text-red-600'
+                        : 'text-xs text-gray-500'
+                    }
+                  />
+
+                  <CompactValueTile
+                    label="Market Value"
+                    value={formatMoney(selectedRider.market_value)}
+                    valueClassName="text-lg leading-tight whitespace-nowrap"
+                  />
+
+                  <CompactValueTile
+                    label="Asking Price"
+                    value={askingPriceDisplay}
+                    valueClassName={`text-lg leading-tight whitespace-nowrap ${
+                      selectedRider.asking_price === null ||
+                      selectedRider.asking_price === undefined
+                        ? 'text-gray-500'
+                        : 'text-gray-900'
+                    }`}
+                  />
+                </div>
+
+                <div className="mt-6">
+                  <div className="mb-3 text-base font-semibold text-gray-900">
+                    Rider Attributes
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                    {[
+                      { label: 'Sprint', value: selectedRider.sprint },
+                      { label: 'Climbing', value: selectedRider.climbing },
+                      { label: 'Time Trial', value: selectedRider.time_trial },
+                      { label: 'Endurance', value: selectedRider.endurance },
+                      { label: 'Flat', value: selectedRider.flat },
+                      { label: 'Recovery', value: selectedRider.recovery },
+                      { label: 'Resistance', value: selectedRider.resistance },
+                      { label: 'Race IQ', value: selectedRider.race_iq },
+                      { label: 'Teamwork', value: selectedRider.teamwork },
+                    ].map((stat) => (
+                      <StatTile key={stat.label} label={stat.label} value={stat.value} />
+                    ))}
+                  </div>
+                </div>
+
+                <div className="mt-6 border-t border-gray-200 pt-5">
+                  <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+                    <CompactStatusTile
+                      label="Potential"
+                      status={potentialUi.label}
+                      subtitle={
+                        profileAge == null
+                          ? 'Game date unavailable'
+                          : potentialBonusActive
+                            ? `Growth bonus active (+${potentialDevelopmentBonus})`
+                            : 'No growth bonus after age 28'
+                      }
+                      statusColor={potentialUi.color}
+                      statusClassName="text-lg leading-tight whitespace-nowrap"
+                    />
+
+                    <CompactStatusTile
+                      label="Morale"
+                      status={moraleUi.label}
+                      statusColor={moraleUi.color}
+                      statusClassName="text-lg leading-tight whitespace-nowrap"
+                    />
+
+                    <CompactStatusTile
+                      label="Fatigue"
+                      status={fatigueUi.label}
+                      subtitle={
+                        selectedRider.fatigue == null ? '0/100' : `${selectedRider.fatigue}/100`
+                      }
+                      statusColor={fatigueUi.color}
+                      statusClassName="text-lg leading-tight whitespace-nowrap"
+                    />
+                  </div>
+                </div>
               </div>
-            </>
+            </div>
           )}
         </div>
+
+        {!profileLoading && !profileError && selectedRider && (
+          <div className="shrink-0 border-t border-gray-200 bg-white px-6 py-4">
+            {contractActionMessage && (
+              <div className="mb-3 text-sm text-gray-600">{contractActionMessage}</div>
+            )}
+
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
+              <button
+                type="button"
+                onClick={handleNewContract}
+                disabled={renewalBusy}
+                className="rounded-lg border border-gray-200 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {renewalBusy ? 'Processing...' : 'New Contract'}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setTransferListOpen(true)}
+                className="rounded-lg border border-gray-200 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50"
+              >
+                Transfer List
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setCompareOpen(true)}
+                className="rounded-lg border border-gray-200 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50"
+              >
+                Compare Rider
+              </button>
+
+              <button
+                type="button"
+                className="rounded-lg border border-red-200 px-4 py-3 text-sm font-medium text-red-600 hover:bg-red-50"
+              >
+                Release
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {compareOpen && selectedRider && (
@@ -1738,6 +1541,17 @@ function RiderProfileModal({
           open={compareOpen}
           onClose={() => setCompareOpen(false)}
           leftRider={selectedRider}
+        />
+      )}
+
+      {transferListOpen && selectedRider && (
+        <TransferListModal
+          open={transferListOpen}
+          onClose={() => setTransferListOpen(false)}
+          rider={selectedRider}
+          onUpdated={(updatedRider) => {
+            setSelectedRider(updatedRider)
+          }}
         />
       )}
 
@@ -1987,6 +1801,7 @@ function CompareRiderModal({
           teamwork,
           morale,
           potential,
+          fatigue,
           overall,
           birth_date,
           image_url,
@@ -1995,16 +1810,22 @@ function CompareRiderModal({
           contract_expires_season,
           market_value,
           asking_price,
-          asking_price_manual
+          asking_price_manual,
+          availability_status,
+          unavailable_until,
+          unavailable_reason
         `
         )
         .eq('id', riderId)
         .single()
 
       if (error) throw error
+
+      const rider = data as RiderDetails
+
       setComparedRider({
-        ...(data as RiderDetails),
-        availability_status: getDefaultRiderAvailabilityStatus(),
+        ...rider,
+        availability_status: rider.availability_status ?? getDefaultRiderAvailabilityStatus(),
       })
     } catch (e: any) {
       setCompareError(e?.message ?? 'Failed to load compare rider.')
@@ -2169,6 +1990,8 @@ function CompareRiderModal({
                       : null
                     const diff = compareValue === null ? null : currentValue - compareValue
                     const isMoraleRow = stat.key === 'morale'
+                    const isPotentialRow = stat.key === 'potential'
+                    const isStatusRow = isMoraleRow || isPotentialRow
 
                     return (
                       <tr key={stat.key as string} className="border-b border-gray-100">
@@ -2177,6 +2000,8 @@ function CompareRiderModal({
                         <td className="py-3 pr-4">
                           {isMoraleRow ? (
                             <MoraleBadge morale={leftRider.morale} />
+                          ) : isPotentialRow ? (
+                            <PotentialBadge potential={leftRider.potential} />
                           ) : (
                             <span
                               className={
@@ -2191,7 +2016,7 @@ function CompareRiderModal({
                         </td>
 
                         <td className="py-3 px-4">
-                          {isMoraleRow ? (
+                          {isStatusRow ? (
                             <div className="text-center text-gray-400">—</div>
                           ) : diff === null ? (
                             <div className="text-center text-gray-400">—</div>
@@ -2213,6 +2038,12 @@ function CompareRiderModal({
                           {isMoraleRow ? (
                             comparedRider ? (
                               <MoraleBadge morale={comparedRider.morale} />
+                            ) : (
+                              <span className="text-gray-400">—</span>
+                            )
+                          ) : isPotentialRow ? (
+                            comparedRider ? (
+                              <PotentialBadge potential={comparedRider.potential} />
                             ) : (
                               <span className="text-gray-400">—</span>
                             )
@@ -2240,17 +2071,12 @@ function CompareRiderModal({
 /**
  * SquadPage
  * First Squad page exported for route /dashboard/squad
- *
- * Responsibilities:
- * - Load the club roster for the current owner's club.
- * - Render roster table and widgets.
- * - Open RiderProfileModal and CompareRiderModal.
- * - Render top navigation to related squad pages (navigates routes).
  */
 export default function SquadPage() {
   const location = useLocation()
 
   const [rows, setRows] = useState<ClubRosterRow[]>([])
+  const [healthOverviewRows, setHealthOverviewRows] = useState<ClubHealthOverviewRow[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [gameDate, setGameDate] = useState<string | null>(null)
@@ -2258,7 +2084,12 @@ export default function SquadPage() {
   const [profileOpen, setProfileOpen] = useState(false)
   const [selectedRiderId, setSelectedRiderId] = useState<string | null>(null)
 
-  const [compareLeft, setCompareLeft] = useState<RiderDetails | null>(null)
+  const [developingTeamStatus, setDevelopingTeamStatus] = useState<DevelopingTeamStatus | null>(
+    null
+  )
+  const [developingTeamStatusError, setDevelopingTeamStatusError] = useState<string | null>(null)
+  const [movingRiderId, setMovingRiderId] = useState<string | null>(null)
+  const [moveActionMessage, setMoveActionMessage] = useState<string | null>(null)
 
   const SQUAD_MAX = 18
 
@@ -2272,7 +2103,9 @@ export default function SquadPage() {
         role: r.assigned_role,
         age: getAgeFromBirthDate(r.birth_date ?? null, gameDate ?? null) ?? r.age_years,
         overall: r.overall,
-        status: getDefaultRiderAvailabilityStatus() as RiderAvailabilityStatus,
+        fatigue: r.fatigue ?? 0,
+        status:
+          (r.availability_status ?? getDefaultRiderAvailabilityStatus()) as RiderAvailabilityStatus,
       })),
     [rows, gameDate]
   )
@@ -2322,152 +2155,168 @@ export default function SquadPage() {
     }
   }, [riders])
 
-  useEffect(() => {
-    let isMounted = true
+  const loadSquadPageData = useCallback(async () => {
+    setLoading(true)
+    setError(null)
+    setDevelopingTeamStatusError(null)
 
-    async function loadRoster() {
-      setLoading(true)
-      setError(null)
+    try {
+      const { data: authData, error: authErr } = await supabase.auth.getUser()
+      if (authErr) throw authErr
 
-      try {
-        const { data: authData, error: authErr } = await supabase.auth.getUser()
-        if (authErr) throw authErr
+      const userId = authData.user?.id
+      if (!userId) throw new Error('Not authenticated.')
 
-        const userId = authData.user?.id
-        if (!userId) throw new Error('Not authenticated.')
+      const { data: currentGameDate, error: gameDateErr } = await supabase.rpc(
+        'get_current_game_date'
+      )
 
-        const { data: currentGameDate, error: gameDateErr } = await supabase.rpc(
-          'get_current_game_date'
+      if (gameDateErr) throw gameDateErr
+
+      const normalizedGameDate = normalizeGameDateValue(currentGameDate)
+      setGameDate(normalizedGameDate)
+
+      const { data: devStatusData, error: devStatusErr } = await supabase.rpc(
+        'get_developing_team_status'
+      )
+
+      if (devStatusErr) {
+        console.error('get_developing_team_status failed:', devStatusErr)
+        setDevelopingTeamStatus(null)
+        setDevelopingTeamStatusError(
+          devStatusErr.message ?? 'Could not load Developing Team status.'
         )
-
-        if (gameDateErr) throw gameDateErr
-
-        const normalizedGameDate = normalizeGameDateValue(currentGameDate)
-
-        if (!isMounted) return
-        setGameDate(normalizedGameDate)
-
-        const { data: club, error: clubErr } = await supabase
-          .from('clubs')
-          .select('id')
-          .eq('owner_user_id', userId)
-          .single()
-        if (clubErr) throw clubErr
-        if (!club?.id) throw new Error('No club found for this user.')
-
-        const { data: roster, error: rosterErr } = await supabase
-          .from('club_roster')
-          .select(
-            'club_id, rider_id, display_name, country_code, assigned_role, age_years, overall'
-          )
-          .eq('club_id', club.id)
-          .order('overall', { ascending: false })
-
-        if (rosterErr) throw rosterErr
-
-        const rosterRows = (roster ?? []) as ClubRosterRow[]
-        const riderIds = rosterRows.map((row) => row.rider_id)
-
-        let birthDateMap = new Map<string, string | null>()
-
-        if (riderIds.length > 0) {
-          const { data: riderBirthDates, error: riderBirthDatesErr } = await supabase
-            .from('riders')
-            .select('id, birth_date')
-            .in('id', riderIds)
-
-          if (riderBirthDatesErr) throw riderBirthDatesErr
-
-          birthDateMap = new Map(
-            (riderBirthDates ?? []).map((row: { id: string; birth_date: string | null }) => [
-              row.id,
-              row.birth_date,
-            ])
-          )
-        }
-
-        const mergedRows = rosterRows.map((row) => ({
-          ...row,
-          birth_date: birthDateMap.get(row.rider_id) ?? null,
-        }))
-
-        if (!isMounted) return
-        setRows(mergedRows)
-      } catch (e: any) {
-        if (!isMounted) return
-        setError(e?.message ?? 'Failed to load squad.')
-      } finally {
-        if (!isMounted) return
-        setLoading(false)
+      } else {
+        const normalizedDevStatus = Array.isArray(devStatusData) ? devStatusData[0] : devStatusData
+        setDevelopingTeamStatus((normalizedDevStatus ?? null) as DevelopingTeamStatus | null)
       }
-    }
 
-    void loadRoster()
+      const { data: club, error: clubErr } = await supabase
+        .from('clubs')
+        .select('id')
+        .eq('owner_user_id', userId)
+        .eq('club_type', 'main')
+        .single()
 
-    return () => {
-      isMounted = false
+      if (clubErr) throw clubErr
+      if (!club?.id) throw new Error('No club found for this user.')
+
+      const { data: healthData, error: healthErr } = await supabase.rpc('get_club_health_overview', {
+        p_club_id: club.id,
+      })
+
+      if (healthErr) throw healthErr
+
+      const { data: roster, error: rosterErr } = await supabase
+        .from('club_roster')
+        .select(
+          'club_id, rider_id, display_name, country_code, assigned_role, age_years, overall, availability_status, fatigue'
+        )
+        .eq('club_id', club.id)
+        .order('overall', { ascending: false })
+
+      if (rosterErr) throw rosterErr
+
+      const rosterRows = (roster ?? []) as ClubRosterRow[]
+      const riderIds = rosterRows.map((row) => row.rider_id)
+
+      let birthDateMap = new Map<string, string | null>()
+
+      if (riderIds.length > 0) {
+        const { data: riderBirthDates, error: riderBirthDatesErr } = await supabase
+          .from('riders')
+          .select(
+            'id, birth_date, fatigue, availability_status, unavailable_until, unavailable_reason'
+          )
+          .in('id', riderIds)
+
+        if (riderBirthDatesErr) throw riderBirthDatesErr
+
+        birthDateMap = new Map(
+          (riderBirthDates ?? []).map((row: { id: string; birth_date: string | null }) => [
+            row.id,
+            row.birth_date,
+          ])
+        )
+      }
+
+      const mergedRows = rosterRows.map((row) => ({
+        ...row,
+        birth_date: birthDateMap.get(row.rider_id) ?? null,
+      }))
+
+      setRows(mergedRows)
+      setHealthOverviewRows((healthData ?? []) as ClubHealthOverviewRow[])
+    } catch (e: any) {
+      setError(e?.message ?? 'Failed to load squad.')
+    } finally {
+      setLoading(false)
     }
   }, [])
 
-  async function openRiderProfile(riderId: string) {
+  useEffect(() => {
+    void loadSquadPageData()
+  }, [loadSquadPageData])
+
+  function openRiderProfile(riderId: string) {
     setSelectedRiderId(riderId)
     setProfileOpen(true)
+  }
+
+  async function handleMoveToDevelopingTeam(riderId: string) {
+    if (movingRiderId) return
+
+    if (!developingTeamStatus?.is_purchased || !developingTeamStatus.developing_club_id) {
+      setMoveActionMessage('Unlock Developing Team in Preferences first.')
+      return
+    }
+
+    if (!developingTeamStatus.movement_window_open) {
+      setMoveActionMessage(
+        `Movement window is closed. Next window: ${developingTeamStatus.next_window_label ?? 'Unknown'}.`
+      )
+      return
+    }
+
+    setMovingRiderId(riderId)
+    setMoveActionMessage(null)
+
     try {
-      const { data, error } = await supabase
-        .from('riders')
-        .select(
-          `
-          id,
-          first_name,
-          last_name,
-          display_name,
-          role,
-          sprint,
-          climbing,
-          time_trial,
-          endurance,
-          flat,
-          recovery,
-          resistance,
-          race_iq,
-          teamwork,
-          morale,
-          potential,
-          overall,
-          country_code,
-          image_url,
-          birth_date,
-          salary,
-          contract_expires_at,
-          contract_expires_season,
-          market_value,
-          asking_price,
-          asking_price_manual
-        `
-        )
-        .eq('id', riderId)
-        .single()
-      if (!error && data) {
-        setCompareLeft({
-          ...(data as RiderDetails),
-          availability_status: getDefaultRiderAvailabilityStatus(),
-        })
-      }
-    } catch {
-      // ignore
+      const { error } = await supabase.rpc('move_rider_between_main_and_developing', {
+        p_rider_id: riderId,
+        p_target_club_id: developingTeamStatus.developing_club_id,
+      })
+
+      if (error) throw error
+
+      setMoveActionMessage('Rider moved to the Developing Team.')
+      await loadSquadPageData()
+    } catch (e: any) {
+      console.error('move_rider_between_main_and_developing failed:', e)
+      setMoveActionMessage(e?.message ?? 'Could not move rider to the Developing Team.')
+    } finally {
+      setMovingRiderId(null)
     }
   }
 
   function closeProfile() {
     setProfileOpen(false)
     setSelectedRiderId(null)
-    setCompareLeft(null)
   }
 
   function isActive(path: string) {
     const current = location.pathname
     return current === path
   }
+
+  const hasDevelopingTeam = developingTeamStatus?.is_purchased ?? false
+  const movementWindowOpen = developingTeamStatus?.movement_window_open ?? false
+
+  const movementWindowSummary = developingTeamStatus
+    ? developingTeamStatus.movement_window_open
+      ? `Movement window open now: ${developingTeamStatus.current_window_label ?? 'Current window'}`
+      : `Movement window closed. Next window: ${developingTeamStatus.next_window_label ?? 'Unknown'}`
+    : 'Movement window information unavailable.'
 
   return (
     <div className="w-full">
@@ -2491,16 +2340,27 @@ export default function SquadPage() {
             First Squad
           </a>
 
-          <a
-            href="#/dashboard/developing-team"
-            className={`rounded-lg px-4 py-2 text-sm font-medium transition ${
-              isActive('/dashboard/developing-team')
-                ? 'bg-yellow-400 text-black'
-                : 'border border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
-            }`}
-          >
-            Developing Team
-          </a>
+          {hasDevelopingTeam ? (
+            <a
+              href="#/dashboard/developing-team"
+              className={`rounded-lg px-4 py-2 text-sm font-medium transition ${
+                isActive('/dashboard/developing-team')
+                  ? 'bg-yellow-400 text-black'
+                  : 'border border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              Developing Team
+            </a>
+          ) : (
+            <span
+              className="inline-flex cursor-not-allowed items-center gap-2 rounded-lg border border-gray-200 bg-gray-100 px-4 py-2 text-sm font-medium text-gray-400"
+              title="Unlock Developing Team in Preferences first."
+              aria-disabled="true"
+            >
+              <span>Developing Team</span>
+              <span aria-hidden="true">🔒</span>
+            </span>
+          )}
 
           <a
             href="#/dashboard/staff"
@@ -2544,12 +2404,29 @@ export default function SquadPage() {
 
       {!loading && !error && (
         <>
+          {hasDevelopingTeam && (
+            <div className="mb-4 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">
+              {movementWindowSummary}
+            </div>
+          )}
+
+          {developingTeamStatusError && (
+            <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+              {developingTeamStatusError}
+            </div>
+          )}
+
+          {moveActionMessage && (
+            <div className="mb-4 rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-700">
+              {moveActionMessage}
+            </div>
+          )}
+
           <div className="w-full rounded-lg bg-white p-4 shadow">
             <div className="mb-2 flex items-center justify-between">
               <div className="text-base font-semibold text-gray-800">First Squad</div>
               <div className="text-sm text-gray-500">
-                Riders:{' '}
-                <span className="font-medium text-gray-700">{riders.length}/{SQUAD_MAX}</span>
+                Riders: <span className="font-medium text-gray-700">{riders.length}/{SQUAD_MAX}</span>
               </div>
             </div>
 
@@ -2564,6 +2441,7 @@ export default function SquadPage() {
                     <th className="p-2">Age</th>
                     <th className="p-2">Overall</th>
                     <th className="p-2 w-[160px]">Status</th>
+                    <th className="p-2 w-[90px] text-center">Move</th>
                     <th className="p-2 w-[90px]"></th>
                   </tr>
                 </thead>
@@ -2573,10 +2451,7 @@ export default function SquadPage() {
                       <td className="p-2">{r.rowNo}</td>
                       <td className="p-2 font-medium text-gray-800">{r.name}</td>
                       <td className="p-2">
-                        <div
-                          className="flex items-center gap-2"
-                          title={getCountryName(r.countryCode)}
-                        >
+                        <div className="flex items-center gap-2" title={getCountryName(r.countryCode)}>
                           <CountryFlag countryCode={r.countryCode} />
                           <span className="text-gray-700">{r.countryCode}</span>
                         </div>
@@ -2587,6 +2462,38 @@ export default function SquadPage() {
                       <td className="p-2">
                         <RiderStatusBadge status={r.status} compact />
                       </td>
+
+                      <td className="p-2 text-center">
+                        {(() => {
+                          const moveState = getFirstSquadMoveState({
+                            hasDevelopingTeam,
+                            movementWindowOpen,
+                            riderAge: r.age ?? null,
+                          })
+
+                          const isBusy = movingRiderId === r.id
+
+                          return (
+                            <button
+                              type="button"
+                              disabled={!moveState.enabled || isBusy}
+                              title={moveState.reason}
+                              onClick={() => {
+                                if (!moveState.enabled || isBusy) return
+                                void handleMoveToDevelopingTeam(r.id)
+                              }}
+                              className={`inline-flex h-8 w-8 items-center justify-center rounded-md border text-sm transition ${
+                                moveState.enabled && !isBusy
+                                  ? 'border-yellow-400 bg-yellow-100 text-yellow-800 hover:bg-yellow-200'
+                                  : 'cursor-not-allowed border-gray-200 bg-gray-100 text-gray-400'
+                              }`}
+                            >
+                              {isBusy ? '…' : '⇄'}
+                            </button>
+                          )
+                        })()}
+                      </td>
+
                       <td className="p-2 text-right">
                         <button
                           type="button"
@@ -2601,7 +2508,7 @@ export default function SquadPage() {
 
                   {riders.length === 0 && (
                     <tr className="border-t">
-                      <td className="p-2 text-gray-500" colSpan={8}>
+                      <td className="p-2 text-gray-500" colSpan={9}>
                         No riders found for this club yet.
                       </td>
                     </tr>
@@ -2611,16 +2518,82 @@ export default function SquadPage() {
             </div>
           </div>
 
+          <div className="mt-6 rounded-lg bg-white p-4 shadow">
+            <div className="mb-4">
+              <div className="text-base font-semibold text-gray-800">Health Report</div>
+              <div className="mt-1 text-sm text-gray-500">
+                Current injured, sick, and recovering first squad riders
+              </div>
+            </div>
+
+            {healthOverviewRows.length === 0 ? (
+              <div className="rounded-xl border border-gray-100 bg-gray-50 px-4 py-3 text-sm text-gray-600">
+                No active health concerns in the squad right now.
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-gray-200 text-left text-gray-500">
+                      <th className="py-2 pr-4">Rider</th>
+                      <th className="py-2 pr-4">Status</th>
+                      <th className="py-2 pr-4">Case</th>
+                      <th className="py-2 pr-4">Stage</th>
+                      <th className="py-2 pr-4">Severity</th>
+                      <th className="py-2 pr-4">Fatigue</th>
+                      <th className="py-2">Expected Recovery</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {healthOverviewRows.map((row) => (
+                      <tr key={row.rider_id} className="border-b border-gray-100 last:border-0">
+                        <td className="py-3 pr-4">
+                          <div className="flex items-center gap-2">
+                            <CountryFlag countryCode={row.country_code} />
+                            <span className="font-medium text-gray-800">{row.display_name}</span>
+                          </div>
+                        </td>
+
+                        <td className="py-3 pr-4">
+                          <RiderStatusBadge status={row.availability_status} compact />
+                        </td>
+
+                        <td className="py-3 pr-4 text-gray-700">
+                          {formatHealthCaseCode(row.case_code) ?? 'Fatigue'}
+                        </td>
+
+                        <td className="py-3 pr-4 text-gray-700">
+                          {formatCaseStageLabel(row.case_status) ?? '—'}
+                        </td>
+
+                        <td className="py-3 pr-4 text-gray-700">
+                          {formatSeverityLabel(row.severity) ?? '—'}
+                        </td>
+
+                        <td className="py-3 pr-4 text-gray-700">{row.fatigue}/100</td>
+
+                        <td className="py-3 text-gray-700">
+                          {row.expected_full_recovery_on
+                            ? `${formatShortGameDate(row.expected_full_recovery_on)}${
+                                getDaysRemaining(row.expected_full_recovery_on, gameDate ?? null) !==
+                                null
+                                  ? ` (${getDaysRemaining(row.expected_full_recovery_on, gameDate ?? null)}d)`
+                                  : ''
+                              }`
+                            : '—'}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+
           <div className="mt-6 grid grid-cols-2 gap-3 md:grid-cols-4">
             <CompactValueTile label="Season Wins" value={`${squadDisplayData.summary.wins}`} />
-            <CompactValueTile
-              label="Season Podiums"
-              value={`${squadDisplayData.summary.podiums}`}
-            />
-            <CompactValueTile
-              label="Top 10 Results"
-              value={`${squadDisplayData.summary.top10s}`}
-            />
+            <CompactValueTile label="Season Podiums" value={`${squadDisplayData.summary.podiums}`} />
+            <CompactValueTile label="Top 10 Results" value={`${squadDisplayData.summary.top10s}`} />
             <CompactValueTile label="Best GC" value={`${squadDisplayData.summary.bestGC}`} />
           </div>
 
@@ -2682,9 +2655,7 @@ export default function SquadPage() {
 
           <div className="mt-6 grid grid-cols-1 gap-4 xl:grid-cols-3">
             <div className="rounded-lg bg-white p-4 shadow xl:col-span-2">
-              <div className="text-base font-semibold text-gray-800">
-                Team Results This Season
-              </div>
+              <div className="text-base font-semibold text-gray-800">Team Results This Season</div>
               <div className="mt-4">
                 <LineChart data={squadDisplayData.seasonTrend} />
               </div>
@@ -2722,6 +2693,7 @@ export default function SquadPage() {
             onClose={closeProfile}
             riderId={selectedRiderId}
             gameDate={gameDate}
+            currentTeamType="first"
           />
         </>
       )}

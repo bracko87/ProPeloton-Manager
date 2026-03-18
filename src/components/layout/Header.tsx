@@ -11,10 +11,12 @@
  *   (/dashboard/pro) to avoid route mismatch edge cases.
  *
  * UPDATE: Club sync hardening
- * - Header now only accepts fresh club-update payloads by requiring updated_at_ms
- *   and ignoring older payloads.
- * - Removed 10-second localStorage polling; kept event-based sync only
- *   (club-updated + storage).
+ * - Header now only accepts fresh main-club update payloads by requiring
+ *   updated_at_ms and ignoring older payloads.
+ * - Header now ignores developing-club payloads entirely.
+ * - Uses ppm-main-club for header identity sync.
+ * - Removed the shared active-club concept from header sync.
+ * - Header now also accepts country_name and country_code from sync payloads.
  *
  * UPDATE: Temporary Pro route test
  * - Removed TEST Packages button per request.
@@ -23,9 +25,22 @@
  * - Header now loads and displays the current club's ranking position summary
  *   inline with the country row.
  *
+ * UPDATE: Notification row expand behavior
+ * - Clicking a notification row now expands/collapses details only
+ * - "Mark as read" is now a separate action
+ * - "Open" is now a separate action and only navigates when explicitly clicked
+ *
+ * UPDATE: Notification expanded-card polish
+ * - Expanded cards render structured text for known notification types
+ * - Raw payload JSON is no longer shown in the expanded view
+ * - Notification images were removed from the expanded card
+ *
  * NOTE:
  * - This component listens to window 'club-updated' and storage events to keep
- *   the live club info up-to-date.
+ *   the live main-club info up-to-date.
+ * - Header should only receive the user's main club from the layout.
+ * - Use a separate key like ppm-active-squad-club elsewhere for squad-page
+ *   tab behavior; do not reuse it here.
  */
 
 import React, { useCallback, useEffect, useRef, useState } from 'react'
@@ -105,9 +120,12 @@ type ClubUpdatePayload = {
   id?: string
   owner_user_id?: string
   name?: string
+  country_code?: string
+  country_name?: string
   primary_color?: string
   secondary_color?: string
   logo_path?: string | null
+  club_type?: 'main' | 'developing'
   updated_at_ms?: number
 }
 
@@ -117,6 +135,7 @@ type TeamCompetitionSummary = {
 }
 
 const LOGO_BUCKET = 'club-logos'
+const MAIN_CLUB_STORAGE_KEY = 'ppm-main-club'
 
 const profileMenuItems: MenuItem[] = [
   { label: 'Inbox', path: '/dashboard/inbox' },
@@ -192,6 +211,144 @@ function formatOrdinal(value?: number | null) {
     default:
       return `${value}th`
   }
+}
+
+function formatMoney(value: unknown) {
+  const numberValue = Number(value)
+  if (!Number.isFinite(numberValue)) return null
+  return `$${numberValue.toLocaleString()}`
+}
+
+function formatLabel(value: unknown) {
+  if (typeof value !== 'string' || !value.trim()) return ''
+  return value
+    .replace(/_/g, ' ')
+    .replace(/\b\w/g, char => char.toUpperCase())
+}
+
+function renderExpandedNotificationText(item: NotificationItem) {
+  const payload = item.payload_json ?? {}
+
+  if (item.type_code === 'SPONSOR_SELECTION_REQUIRED') {
+    const seasonNumber = Number(payload.season_number)
+    const insertedCount = Number(payload.inserted_count)
+    const coverageMonths = Number(payload.coverage_months)
+
+    return (
+      <div className="mt-3 space-y-2 text-sm text-gray-700 leading-6">
+        {Number.isFinite(seasonNumber) ? (
+          <div>
+            Sponsor offers for <strong>season {seasonNumber}</strong> are now ready for review.
+          </div>
+        ) : null}
+
+        {Number.isFinite(insertedCount) ? (
+          <div>
+            Available offers: <strong>{insertedCount}</strong>
+          </div>
+        ) : null}
+
+        {Number.isFinite(coverageMonths) ? (
+          <div>
+            Contract length: <strong>{coverageMonths} months</strong>
+          </div>
+        ) : null}
+      </div>
+    )
+  }
+
+  if (item.type_code === 'SPONSOR_DEAL_SIGNED') {
+    const companyName = typeof payload.company_name === 'string' ? payload.company_name : null
+    const sponsorKind =
+      typeof payload.sponsor_kind === 'string' ? formatLabel(payload.sponsor_kind) : null
+    const seasonNumber = Number(payload.season_number)
+    const guaranteedAmount = formatMoney(payload.guaranteed_amount)
+    const bonusPoolAmount = formatMoney(payload.bonus_pool_amount)
+
+    return (
+      <div className="mt-3 space-y-2 text-sm text-gray-700 leading-6">
+        {companyName ? (
+          <div>
+            Sponsor: <strong>{companyName}</strong>
+          </div>
+        ) : null}
+
+        {sponsorKind ? (
+          <div>
+            Sponsor type: <strong>{sponsorKind}</strong>
+          </div>
+        ) : null}
+
+        {Number.isFinite(seasonNumber) ? (
+          <div>
+            Season: <strong>{seasonNumber}</strong>
+          </div>
+        ) : null}
+
+        {guaranteedAmount ? (
+          <div>
+            Guaranteed payment: <strong>{guaranteedAmount}</strong>
+          </div>
+        ) : null}
+
+        {bonusPoolAmount ? (
+          <div>
+            Bonus pool: <strong>{bonusPoolAmount}</strong>
+          </div>
+        ) : null}
+      </div>
+    )
+  }
+
+  if (item.type_code === 'INFRASTRUCTURE_UPGRADE_COMPLETED') {
+    const facilityName =
+      typeof payload.facility_name === 'string'
+        ? payload.facility_name
+        : formatLabel(payload.target_key)
+
+    const level = Number(payload.facility_target_level ?? payload.level)
+
+    return (
+      <div className="mt-3 space-y-2 text-sm text-gray-700 leading-6">
+        {facilityName ? (
+          <div>
+            Facility: <strong>{facilityName}</strong>
+          </div>
+        ) : null}
+
+        {Number.isFinite(level) ? (
+          <div>
+            New level: <strong>{level}</strong>
+          </div>
+        ) : null}
+      </div>
+    )
+  }
+
+  if (item.type_code === 'INFRASTRUCTURE_ASSET_DELIVERED') {
+    const assetName =
+      typeof payload.asset_name === 'string' ? payload.asset_name : formatLabel(payload.target_key)
+
+    const quantity = Number(payload.asset_quantity)
+
+    return (
+      <div className="mt-3 space-y-2 text-sm text-gray-700 leading-6">
+        {assetName ? (
+          <div>
+            Asset: <strong>{assetName}</strong>
+          </div>
+        ) : null}
+
+        {Number.isFinite(quantity) ? (
+          <div>
+            Quantity delivered: <strong>{quantity}</strong>
+          </div>
+        ) : null}
+      </div>
+    )
+  }
+
+  return null
 }
 
 /**
@@ -279,14 +436,15 @@ export default function Header({
   const [isLoadingUnread, setIsLoadingUnread] = useState(false)
   const [isLoadingRead, setIsLoadingRead] = useState(false)
   const [isMarkingAllRead, setIsMarkingAllRead] = useState(false)
+  const [expandedNotificationId, setExpandedNotificationId] = useState<number | null>(null)
 
   const [liveClubName, setLiveClubName] = useState(clubName || title || 'ProPeloton Manager')
   const [liveClubId, setLiveClubId] = useState<string | undefined>(clubId)
   const [liveClubCountryName, setLiveClubCountryName] = useState(
-    clubCountryName || 'Club country',
+    clubCountryName || 'Club country'
   )
   const [liveClubCountryCode, setLiveClubCountryCode] = useState<string | undefined>(
-    clubCountryCode,
+    clubCountryCode
   )
   const [liveLogoPath, setLiveLogoPath] = useState<string | null>(clubLogoUrl ?? null)
   const [logoCacheKey, setLogoCacheKey] = useState(() => Date.now())
@@ -302,22 +460,26 @@ export default function Header({
 
   /**
    * applyClubUpdatePayload
-   * Apply an incoming club payload only if it's fresh and relevant.
+   * Apply an incoming main-club payload only if it's fresh and relevant.
    */
   const applyClubUpdatePayload = useCallback((payload: ClubUpdatePayload | null) => {
     if (!payload) return
 
-    const expectedClubId = liveClubIdRef.current
-    const expectedUserId = currentUserIdRef.current
-
-    if (typeof payload.updated_at_ms !== 'number') {
+    if (payload.club_type === 'developing') {
       return
     }
 
+    if (payload.club_type && payload.club_type !== 'main') {
+      return
+    }
+
+    const expectedClubId = liveClubIdRef.current
+    const expectedUserId = currentUserIdRef.current
+
+    if (typeof payload.updated_at_ms !== 'number') return
+
     setLastClubUpdateMs(previous => {
-      if (payload.updated_at_ms! <= previous) {
-        return previous
-      }
+      if (payload.updated_at_ms! <= previous) return previous
 
       if (payload.id && expectedClubId && payload.id !== expectedClubId) {
         return previous
@@ -335,6 +497,14 @@ export default function Header({
         setLiveClubName(payload.name)
       }
 
+      if (typeof payload.country_code === 'string') {
+        setLiveClubCountryCode(payload.country_code)
+      }
+
+      if (typeof payload.country_name === 'string') {
+        setLiveClubCountryName(payload.country_name)
+      }
+
       if (Object.prototype.hasOwnProperty.call(payload, 'logo_path')) {
         setLiveLogoPath(payload.logo_path ?? null)
         setLogoCacheKey(Date.now())
@@ -345,13 +515,13 @@ export default function Header({
   }, [])
 
   /**
-   * loadLiveClubFromStorage
-   * Hydrate live club info from localStorage if present.
+   * loadMainClubFromStorage
+   * Hydrate live main-club info from localStorage if present.
    */
-  const loadLiveClubFromStorage = useCallback(() => {
+  const loadMainClubFromStorage = useCallback(() => {
     if (typeof window === 'undefined') return
 
-    const raw = window.localStorage.getItem('ppm-active-club')
+    const raw = window.localStorage.getItem(MAIN_CLUB_STORAGE_KEY)
     if (!raw) return
 
     try {
@@ -413,7 +583,7 @@ export default function Header({
   useEffect(() => {
     if (typeof window === 'undefined') return
 
-    loadLiveClubFromStorage()
+    loadMainClubFromStorage()
 
     function handleClubUpdated(event: Event) {
       const customEvent = event as CustomEvent<ClubUpdatePayload>
@@ -421,7 +591,7 @@ export default function Header({
     }
 
     function handleStorage(event: StorageEvent) {
-      if (event.key !== 'ppm-active-club') return
+      if (event.key !== MAIN_CLUB_STORAGE_KEY) return
       if (!event.newValue) return
 
       try {
@@ -439,7 +609,7 @@ export default function Header({
       window.removeEventListener('club-updated', handleClubUpdated as EventListener)
       window.removeEventListener('storage', handleStorage)
     }
-  }, [applyClubUpdatePayload, loadLiveClubFromStorage])
+  }, [applyClubUpdatePayload, loadMainClubFromStorage])
 
   const displayName = liveClubName || clubName || title || 'ProPeloton Manager'
   const displayCountry = liveClubCountryName || clubCountryName || 'Club country'
@@ -468,7 +638,7 @@ export default function Header({
         window.location.href = path
       }
     },
-    [onNavigate],
+    [onNavigate]
   )
 
   /**
@@ -571,7 +741,7 @@ export default function Header({
     const threads = (data ?? []) as InboxThreadRow[]
     const unread = threads.reduce(
       (sum, thread) => sum + Math.max(Number(thread.unread_count ?? 0), 0),
-      0,
+      0
     )
 
     setInboxUnreadCount(unread)
@@ -604,7 +774,7 @@ export default function Header({
       setItems(filteredItems)
       setLoading(false)
     },
-    [shouldDisplayNotification],
+    [shouldDisplayNotification]
   )
 
   const openNotifications = useCallback(async () => {
@@ -617,21 +787,55 @@ export default function Header({
 
   const closeNotifications = useCallback(() => {
     setIsNotificationsOpen(false)
+    setExpandedNotificationId(null)
   }, [])
 
   const handleNotificationTabChange = useCallback(
     async (tab: NotificationTab) => {
       setActiveNotificationTab(tab)
+      setExpandedNotificationId(null)
       await loadNotifications(tab)
     },
-    [loadNotifications],
+    [loadNotifications]
   )
 
-  /**
-   * handleNotificationClick
-   * Mark a notification read and navigate to action_url when clicked.
-   */
-  const handleNotificationClick = useCallback(
+  const handleNotificationClick = useCallback((item: NotificationItem) => {
+    setExpandedNotificationId(prev =>
+      prev === item.user_notification_id ? null : item.user_notification_id
+    )
+  }, [])
+
+  const handleNotificationMarkRead = useCallback(async (item: NotificationItem) => {
+    if (item.status !== 'unread') return
+
+    const { data, error } = await supabase.rpc('mark_my_notification_read', {
+      p_user_notification_id: item.user_notification_id,
+    })
+
+    if (error) {
+      console.error('Failed to mark notification as read:', error)
+      return
+    }
+
+    if (data === true) {
+      const readItem: NotificationItem = {
+        ...item,
+        status: 'read',
+        read_at: new Date().toISOString(),
+      }
+
+      setUnreadItems(prev =>
+        prev.filter(notification => notification.user_notification_id !== item.user_notification_id)
+      )
+
+      setReadItems(prev => [readItem, ...prev])
+      setUnreadCount(prev => Math.max(0, prev - 1))
+
+      setExpandedNotificationId(prev => (prev === item.user_notification_id ? null : prev))
+    }
+  }, [])
+
+  const handleNotificationOpen = useCallback(
     async (item: NotificationItem) => {
       if (item.status === 'unread') {
         const { data, error } = await supabase.rpc('mark_my_notification_read', {
@@ -640,7 +844,10 @@ export default function Header({
 
         if (error) {
           console.error('Failed to mark notification as read:', error)
-        } else if (data === true) {
+          return
+        }
+
+        if (data === true) {
           const readItem: NotificationItem = {
             ...item,
             status: 'read',
@@ -649,8 +856,8 @@ export default function Header({
 
           setUnreadItems(prev =>
             prev.filter(
-              notification => notification.user_notification_id !== item.user_notification_id,
-            ),
+              notification => notification.user_notification_id !== item.user_notification_id
+            )
           )
 
           setReadItems(prev => [readItem, ...prev])
@@ -662,7 +869,7 @@ export default function Header({
         handleNavigate(item.action_url)
       }
     },
-    [handleNavigate],
+    [handleNavigate]
   )
 
   /**
@@ -683,6 +890,7 @@ export default function Header({
     await Promise.all([loadUnreadCount(), loadNotifications('unread'), loadNotifications('read')])
 
     setIsMarkingAllRead(false)
+    setExpandedNotificationId(null)
   }, [loadNotifications, loadUnreadCount])
 
   useEffect(() => {
@@ -734,6 +942,7 @@ export default function Header({
     function handleEscape(event: KeyboardEvent) {
       if (event.key === 'Escape') {
         setIsNotificationsOpen(false)
+        setExpandedNotificationId(null)
       }
     }
 
@@ -835,6 +1044,7 @@ export default function Header({
               type="button"
               onClick={() => {
                 setIsNotificationsOpen(false)
+                setExpandedNotificationId(null)
                 setIsProfileMenuOpen(prev => !prev)
               }}
               aria-label="Open profile menu"
@@ -997,58 +1207,101 @@ export default function Header({
                 <div className="divide-y divide-gray-100">
                   {activeItems.map(item => {
                     const isUnread = item.status === 'unread'
+                    const isExpanded = expandedNotificationId === item.user_notification_id
 
                     return (
-                      <button
+                      <div
                         key={item.user_notification_id}
-                        type="button"
-                        onClick={() => {
-                          void handleNotificationClick(item)
-                        }}
-                        className={`w-full px-5 py-4 text-left transition-colors hover:bg-gray-50 ${
+                        className={`px-5 py-4 transition-colors ${
                           isUnread ? 'bg-yellow-50/50' : 'bg-white'
                         }`}
                       >
-                        <div className="flex items-start gap-3">
-                          <div
-                            className={`mt-1 h-2.5 w-2.5 rounded-full shrink-0 ${
-                              isUnread ? 'bg-red-500' : 'bg-gray-300'
-                            }`}
-                          />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            handleNotificationClick(item)
+                          }}
+                          className="w-full text-left"
+                        >
+                          <div className="flex items-start gap-3">
+                            <div
+                              className={`mt-1 h-2.5 w-2.5 rounded-full shrink-0 ${
+                                isUnread ? 'bg-red-500' : 'bg-gray-300'
+                              }`}
+                            />
 
-                          <div className="min-w-0 flex-1">
-                            <div className="flex items-start justify-between gap-3">
-                              <div
-                                className={`text-sm ${
-                                  isUnread ? 'font-semibold text-black' : 'font-medium text-black'
-                                }`}
-                              >
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-start justify-between gap-3">
+                                <div
+                                  className={`text-sm ${
+                                    isUnread ? 'font-semibold text-black' : 'font-medium text-black'
+                                  }`}
+                                >
+                                  {item.title}
+                                </div>
+
+                                <div className="shrink-0 text-xs text-gray-500">
+                                  {formatNotificationTime(item.notification_created_at)}
+                                </div>
+                              </div>
+
+                              <div className="mt-1 text-sm text-gray-600 line-clamp-2">
+                                {item.message}
+                              </div>
+
+                              <div className="mt-2 flex items-center gap-2 text-xs text-gray-500">
+                                <span className="capitalize">{item.source}</span>
+                                <span>•</span>
+                                <span>{item.type_code}</span>
+                                <span>•</span>
+                                <span>{isExpanded ? 'Hide details' : 'Show details'}</span>
+                              </div>
+                            </div>
+                          </div>
+                        </button>
+
+                        {isExpanded && (
+                          <div className="mt-4 ml-5 rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+                            <div className="min-w-0">
+                              <div className="text-base font-semibold text-black">
                                 {item.title}
                               </div>
 
-                              <div className="shrink-0 text-xs text-gray-500">
-                                {formatNotificationTime(item.notification_created_at)}
+                              <div className="mt-2 text-sm leading-6 text-gray-700 whitespace-pre-wrap">
+                                {item.message}
+                              </div>
+
+                              {renderExpandedNotificationText(item)}
+
+                              <div className="mt-4 flex items-center justify-end gap-2 border-t border-gray-200 pt-3">
+                                {item.status === 'unread' ? (
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      void handleNotificationMarkRead(item)
+                                    }}
+                                    className="rounded-md border border-gray-300 px-3 py-2 text-sm font-medium text-black hover:bg-gray-50"
+                                  >
+                                    Mark as read
+                                  </button>
+                                ) : null}
+
+                                {item.action_url ? (
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      void handleNotificationOpen(item)
+                                    }}
+                                    className="rounded-md bg-black px-3 py-2 text-sm font-medium text-white hover:opacity-90"
+                                  >
+                                    Open
+                                  </button>
+                                ) : null}
                               </div>
                             </div>
-
-                            <div className="mt-1 text-sm text-gray-600 line-clamp-2">
-                              {item.message}
-                            </div>
-
-                            <div className="mt-2 flex items-center gap-2 text-xs text-gray-500">
-                              <span className="capitalize">{item.source}</span>
-                              <span>•</span>
-                              <span>{item.type_code}</span>
-                              {item.action_url ? (
-                                <>
-                                  <span>•</span>
-                                  <span>Open</span>
-                                </>
-                              ) : null}
-                            </div>
                           </div>
-                        </div>
-                      </button>
+                        )}
+                      </div>
                     )
                   })}
                 </div>

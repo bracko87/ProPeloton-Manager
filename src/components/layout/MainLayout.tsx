@@ -25,6 +25,19 @@
  *   changes to unlocked.
  * - This fixes the issue where Buy Coins / Pro Packages appeared to "do nothing"
  *   or bounce back immediately.
+ *
+ * MAIN CLUB FIX:
+ * - The dashboard shell/header must always load the user's MAIN club only.
+ * - Never use the developing club as a generic "active club".
+ * - Persist only the main club under the dedicated storage key: ppm-main-club.
+ *
+ * UPDATE: Active club auto-repair
+ * - On layout mount, repair ppm-active-club from the user's true main club context.
+ * - Broadcast a fresh club-updated event so listeners recover automatically.
+ * - This fixes:
+ *   - Mornar Bar BK broken state
+ *   - future users after Developing Team purchase
+ *   - stale localStorage after reload/sign-in
  */
 
 import React, { useEffect, useState, useCallback, useMemo } from 'react'
@@ -33,7 +46,8 @@ import Sidebar from './Sidebar'
 import Header from './Header'
 import Footer from './Footer'
 import ProPackagesPage from '../../pages/ProPackages'
-import { supabase } from '../../lib/supabase'
+import { getMyClubContext } from '@/lib/clubContext'
+import { supabase } from '@/lib/supabase'
 
 interface MainLayoutProps {
   children?: React.ReactNode
@@ -52,12 +66,21 @@ interface CoinStatusRow {
   can_play: boolean
 }
 
+interface MainClubRow {
+  id: string
+  owner_user_id: string
+  name: string
+  country_code: string
+  logo_path: string | null
+  primary_color?: string | null
+  secondary_color?: string | null
+  club_type: 'main' | 'developing' | string
+}
+
 const COINS_NEEDED_TO_PLAY = 2
 const PRO_PAGE_PATH = '/dashboard/pro'
-const PRO_PAGE_ALIASES = new Set<string>([
-  '/dashboard/pro',
-  '/dashboard/pro-packages',
-])
+const PRO_PAGE_ALIASES = new Set<string>(['/dashboard/pro', '/dashboard/pro-packages'])
+const MAIN_CLUB_STORAGE_KEY = 'ppm-main-club'
 
 export default function MainLayout({ children }: MainLayoutProps) {
   const [collapsed, setCollapsed] = useState(false)
@@ -83,6 +106,33 @@ export default function MainLayout({ children }: MainLayoutProps) {
     return PRO_PAGE_ALIASES.has(location.pathname)
   }, [location.pathname])
 
+  const persistMainClubToStorage = useCallback(
+    (club: MainClubRow, countryName: string, logoUrl: string | null) => {
+      if (typeof window === 'undefined') return
+
+      const payload = {
+        id: club.id,
+        owner_user_id: club.owner_user_id,
+        name: club.name,
+        country_code: club.country_code,
+        country_name: countryName,
+        logo_path: club.logo_path ?? null,
+        primary_color: club.primary_color ?? undefined,
+        secondary_color: club.secondary_color ?? undefined,
+        club_type: 'main' as const,
+        updated_at_ms: Date.now(),
+      }
+
+      window.localStorage.setItem(MAIN_CLUB_STORAGE_KEY, JSON.stringify(payload))
+    },
+    []
+  )
+
+  const clearMainClubStorage = useCallback(() => {
+    if (typeof window === 'undefined') return
+    window.localStorage.removeItem(MAIN_CLUB_STORAGE_KEY)
+  }, [])
+
   const loadCoinStatus = useCallback(async () => {
     const { data, error } = await supabase.rpc('get_my_coin_status')
     if (error) {
@@ -101,14 +151,15 @@ export default function MainLayout({ children }: MainLayoutProps) {
     try {
       await supabase.auth.signOut()
     } finally {
-      // Works with HashRouter and normal SPA hosting
+      clearMainClubStorage()
+
       if (typeof window !== 'undefined') {
         window.location.href = '/'
       } else {
         navigate('/')
       }
     }
-  }, [navigate])
+  }, [clearMainClubStorage, navigate])
 
   const handleNavigate = useCallback(
     (path: string) => {
@@ -122,58 +173,120 @@ export default function MainLayout({ children }: MainLayoutProps) {
   )
 
   useEffect(() => {
+    let cancelled = false
+
+    async function repairActiveClubContext(): Promise<void> {
+      try {
+        const {
+          data: { user },
+          error: authError,
+        } = await supabase.auth.getUser()
+
+        if (authError || !user?.id || cancelled) return
+
+        const { mainClub } = await getMyClubContext()
+        if (!mainClub || cancelled) return
+
+        const payload = {
+          id: mainClub.id,
+          owner_user_id: user.id,
+          name: mainClub.name,
+          country_code: mainClub.country_code,
+          logo_path: mainClub.logo_path ?? null,
+          primary_color: mainClub.primary_color ?? undefined,
+          secondary_color: mainClub.secondary_color ?? undefined,
+          club_type: 'main' as const,
+          updated_at_ms: Date.now(),
+        }
+
+        window.localStorage.setItem('ppm-active-club', JSON.stringify(payload))
+        window.dispatchEvent(new CustomEvent('club-updated', { detail: payload }))
+      } catch (error) {
+        console.error('Failed to repair active club context:', error)
+      }
+    }
+
+    void repairActiveClubContext()
+
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  useEffect(() => {
     let mounted = true
 
     const loadClubUi = async () => {
-      const { data: userResult } = await supabase.auth.getUser()
-      if (!userResult.user) return
+      const { data: userResult, error: userError } = await supabase.auth.getUser()
+      if (userError || !userResult.user) {
+        clearMainClubStorage()
+        return
+      }
 
-      const { data: clubId, error: clubIdError } = await supabase.rpc('get_my_club_id')
-      if (clubIdError || !clubId) return
+      const user = userResult.user
 
-      const { data: club, error: clubError } = await supabase
+      const { data: mainClub, error } = await supabase
         .from('clubs')
-        .select('id, name, country_code, logo_path')
-        .eq('id', clubId)
+        .select(`
+          id,
+          owner_user_id,
+          name,
+          country_code,
+          logo_path,
+          primary_color,
+          secondary_color,
+          club_type
+        `)
+        .eq('owner_user_id', user.id)
+        .eq('club_type', 'main')
         .single()
 
-      if (clubError || !club) return
+      if (error || !mainClub) {
+        console.error('Failed to load main club for layout/header:', error)
+        clearMainClubStorage()
+        return
+      }
 
-      let countryName = club.country_code || ''
+      let countryName = mainClub.country_code || ''
 
       const { data: country } = await supabase
         .from('countries')
         .select('name')
-        .eq('code', club.country_code)
+        .eq('code', mainClub.country_code)
         .maybeSingle()
 
       if (country?.name) countryName = country.name
 
       let logoUrl: string | null = null
 
-      if (club.logo_path) {
-        if (club.logo_path.startsWith('http://') || club.logo_path.startsWith('https://')) {
-          logoUrl = club.logo_path
+      if (mainClub.logo_path) {
+        if (mainClub.logo_path.startsWith('http://') || mainClub.logo_path.startsWith('https://')) {
+          logoUrl = mainClub.logo_path
         } else {
           const { data: signedData, error: signedError } = await supabase.storage
             .from('club-logos')
-            .createSignedUrl(club.logo_path, 60 * 60)
+            .createSignedUrl(mainClub.logo_path, 60 * 60)
 
           if (!signedError && signedData?.signedUrl) {
             logoUrl = signedData.signedUrl
           } else {
-            const { data: publicData } = supabase.storage.from('club-logos').getPublicUrl(club.logo_path)
+            const { data: publicData } = supabase.storage
+              .from('club-logos')
+              .getPublicUrl(mainClub.logo_path)
+
             if (publicData?.publicUrl) logoUrl = publicData.publicUrl
           }
         }
       }
 
+      persistMainClubToStorage(mainClub as MainClubRow, countryName, logoUrl)
+
       if (!mounted) return
 
       setClubUi({
-        id: club.id,
-        name: club.name,
-        countryCode: club.country_code,
+        id: mainClub.id,
+        name: mainClub.name,
+        countryCode: mainClub.country_code,
         countryName,
         logoUrl,
       })
@@ -181,12 +294,10 @@ export default function MainLayout({ children }: MainLayoutProps) {
 
     void Promise.all([loadClubUi(), loadCoinStatus()])
 
-    // refresh coin status periodically (important after tick + after purchase webhook)
     const intervalId = window.setInterval(() => {
       void loadCoinStatus()
     }, 15000)
 
-    // also refresh when user returns from Stripe tab/window
     const onVisibility = () => {
       if (document.visibilityState === 'visible') void loadCoinStatus()
     }
@@ -197,7 +308,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
       window.clearInterval(intervalId)
       document.removeEventListener('visibilitychange', onVisibility)
     }
-  }, [loadCoinStatus])
+  }, [clearMainClubStorage, loadCoinStatus, persistMainClubToStorage])
 
   /**
    * Lock behavior:
@@ -207,7 +318,6 @@ export default function MainLayout({ children }: MainLayoutProps) {
    */
   useEffect(() => {
     if (!canPlayToday) {
-      // Locked
       if (!isProPage) {
         setShowLockModal(true)
       } else {
@@ -216,7 +326,6 @@ export default function MainLayout({ children }: MainLayoutProps) {
       return
     }
 
-    // Unlocked
     setShowLockModal(false)
   }, [canPlayToday, isProPage])
 
@@ -226,8 +335,6 @@ export default function MainLayout({ children }: MainLayoutProps) {
   const mainContent = useMemo(() => {
     if (children) return children
 
-    // Restore patch:
-    // Render ProPackages directly for pro routes even if the Outlet route mapping is broken.
     if (isProPage) {
       return <ProPackagesPage />
     }
@@ -237,7 +344,6 @@ export default function MainLayout({ children }: MainLayoutProps) {
 
   return (
     <div className="min-h-screen flex bg-gray-100">
-      {/* Sidebar: pass locked so it can restrict navigation (only Buy Coins + Sign Out) */}
       <Sidebar collapsed={collapsed} locked={!canPlayToday} />
 
       <div className="flex-1 flex flex-col min-w-0">
@@ -252,15 +358,17 @@ export default function MainLayout({ children }: MainLayoutProps) {
           coinBalance={coinBalance}
         />
 
-        {/* Main content blocked ONLY when locked and not on pro page */}
-        <main className={`p-6 lg:p-8 flex-1 overflow-auto ${shouldBlockMain ? 'pointer-events-none select-none' : ''}`}>
+        <main
+          className={`p-6 lg:p-8 flex-1 overflow-auto ${
+            shouldBlockMain ? 'pointer-events-none select-none' : ''
+          }`}
+        >
           {mainContent}
         </main>
 
         <Footer />
       </div>
 
-      {/* Paywall modal shown ONLY when locked and NOT on pro page */}
       {showLockModal ? (
         <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/55 backdrop-blur-[3px] p-4 pointer-events-auto">
           <div className="w-full max-w-2xl rounded-2xl border border-black/10 bg-white p-8 shadow-2xl">
@@ -270,15 +378,20 @@ export default function MainLayout({ children }: MainLayoutProps) {
               </div>
 
               <div className="min-w-0 flex-1">
-                <h2 className="text-2xl font-extrabold text-red-700">Coins required — gameplay is locked</h2>
+                <h2 className="text-2xl font-extrabold text-red-700">
+                  Coins required — gameplay is locked
+                </h2>
 
                 <p className="mt-2 text-base text-gray-700">
-                  Your balance is <span className="font-bold text-black">◎ {coinBalance.toLocaleString()} Coins</span>.
+                  Your balance is{' '}
+                  <span className="font-bold text-black">◎ {coinBalance.toLocaleString()} Coins</span>
+                  .
                 </p>
 
                 <div className="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
-                  You need at least <span className="font-semibold">{COINS_NEEDED_TO_PLAY} Coins</span> to continue playing
-                  today. Buy coins to unlock your club, or log out and return to the home page.
+                  You need at least <span className="font-semibold">{COINS_NEEDED_TO_PLAY} Coins</span>{' '}
+                  to continue playing today. Buy coins to unlock your club, or log out and return to
+                  the home page.
                 </div>
               </div>
             </div>
@@ -316,7 +429,8 @@ export default function MainLayout({ children }: MainLayoutProps) {
             </div>
 
             <div className="mt-4 text-xs text-gray-500">
-              Tip: Once you have {COINS_NEEDED_TO_PLAY}+ coins again, you’ll be able to continue playing automatically.
+              Tip: Once you have {COINS_NEEDED_TO_PLAY}+ coins again, you’ll be able to continue
+              playing automatically.
             </div>
           </div>
         </div>

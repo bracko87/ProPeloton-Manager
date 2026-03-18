@@ -1,0 +1,24 @@
+/*
+ * src/styles/hideQuote.css
+ *
+ * Purpose:
+ * - Hide specific informational quote content that should not be visible in the UI.
+ *
+ * Note:
+ * - Targets the exact element shapes used in the application that include
+ *   inline pointer-events style, to avoid hiding unrelated elements.
+ */
+
+/**
+ * Hide the specific quoted paragraph that includes pointer-events inline style.
+ */
+quote p.text-xs.text-gray-500[style*="pointer-events: auto"] {
+  display: none !important;
+}
+
+/**
+ * Hide the ProPeloton Manager • Premium UI label shown in the same quoted wrapper.
+ */
+quote div.text-xs[style*="pointer-events: auto"][class*="text-white/60"] {
+  display: none !important;
+}

@@ -12,6 +12,7 @@ import {
   Tier3Division,
   TIER3_DIVISIONS,
 } from '../../constants/teamRanking'
+import ReportPlayerButton from '../../components/dashboard/ReportPlayerButton'
 import { supabase } from '../../lib/supabase'
 import { getTeamRankingTeams } from '../../services/teamRanking.service'
 import {
@@ -128,6 +129,15 @@ type TeamKitConfig = {
   template?: string | null
 }
 
+type MyOwnedClubRecord = {
+  id: string
+  club_type: 'main' | 'developing' | string | null
+  club_tier: string | null
+  tier2_division: Tier2Division | null
+  tier3_division: Tier3Division | null
+  amateur_division: AmateurDivision | null
+}
+
 const TIER_OPTIONS: TierOption[] = [
   { value: TEAM_TIERS.WORLD, label: 'WorldTeam' },
   { value: TEAM_TIERS.PRO, label: 'ProTeam' },
@@ -147,7 +157,7 @@ function TeamLogo({ src, teamName, className = 'h-8 w-8' }: TeamLogoProps): JSX.
 
   return (
     <div
-      className={`flex ${className} items-center justify-center overflow-hidden rounded border border-slate-200 bg-slate-100`}
+      className={`flex shrink-0 ${className} items-center justify-center overflow-hidden rounded border border-slate-200 bg-white p-1`}
     >
       {showFallback ? (
         <span className="text-[10px] text-slate-400">No logo</span>
@@ -155,7 +165,7 @@ function TeamLogo({ src, teamName, className = 'h-8 w-8' }: TeamLogoProps): JSX.
         <img
           src={src}
           alt={`${teamName} logo`}
-          className="h-full w-full object-cover"
+          className="h-full w-full object-contain"
           loading="lazy"
           onError={() => setImageFailed(true)}
         />
@@ -501,6 +511,21 @@ function getKitPreviewSrc(kitConfig: unknown): string | null {
   return null
 }
 
+function mapClubTierToRankingTier(clubTier: string | null): TeamRankingRecord['tier'] | null {
+  switch (clubTier) {
+    case 'worldteam':
+      return TEAM_TIERS.WORLD
+    case 'proteam':
+      return TEAM_TIERS.PRO
+    case 'continental':
+      return TEAM_TIERS.CONTINENTAL
+    case 'amateur':
+      return TEAM_TIERS.AMATEUR
+    default:
+      return null
+  }
+}
+
 function DetailItem({
   label,
   value,
@@ -595,11 +620,13 @@ function ClubProfileModal({
   isOpen,
   onClose,
   isMyTeam,
+  myClubId,
 }: {
   clubId: string | null
   isOpen: boolean
   onClose: () => void
   isMyTeam: boolean
+  myClubId: string | null
 }): JSX.Element | null {
   const navigate = useNavigate()
   const [club, setClub] = useState<ClubProfilePopupRecord | null>(null)
@@ -676,6 +703,13 @@ function ClubProfileModal({
     !!club.owner_user_id &&
     club.owner_user_id !== currentUserId
 
+  const canReportPlayer =
+    !!club &&
+    !!currentUserId &&
+    !club.is_ai &&
+    !!club.owner_user_id &&
+    club.owner_user_id !== currentUserId
+
   const handleSendMessage = () => {
     if (!club?.owner_user_id) return
 
@@ -715,6 +749,20 @@ function ClubProfileModal({
           </div>
 
           <div className="flex items-center gap-3">
+            {canReportPlayer && club && (
+              <ReportPlayerButton
+                reportedUserId={club.owner_user_id!}
+                reportedClubId={club.club_id}
+                reportedClubName={club.club_name}
+                reportedDisplayName={
+                  club.owner_display_name || club.owner_username || club.club_name || 'Player'
+                }
+                currentPageLabel="Team profile"
+                currentPath={window.location.pathname}
+                reporterClubId={myClubId}
+              />
+            )}
+
             {canSendMessage && (
               <button
                 type="button"
@@ -750,7 +798,11 @@ function ClubProfileModal({
             <div className="space-y-6">
               <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                 <div className="flex items-start gap-4">
-                  <TeamLogo src={club.logo_path} teamName={club.club_name} className="h-16 w-16" />
+                  <TeamLogo
+                    src={club.logo_path}
+                    teamName={club.club_name}
+                    className="h-[72px] w-[72px]"
+                  />
 
                   <div>
                     <div className="flex flex-wrap items-center gap-2">
@@ -767,7 +819,7 @@ function ClubProfileModal({
                       </span>
 
                       {isMyTeam ? (
-                        <span className="rounded-full bg-yellow-200 px-2.5 py-1 text-xs font-semibold text-yellow-900">
+                        <span className="rounded-full bg-yellow-100 px-2 py-1 text-xs font-medium text-yellow-800">
                           Your team
                         </span>
                       ) : null}
@@ -1123,7 +1175,8 @@ export default function TeamRankingPage(): JSX.Element {
   const [loading, setLoading] = useState(true)
   const [selectedTier, setSelectedTier] = useState<TeamRankingRecord['tier']>(TEAM_TIERS.WORLD)
   const [selectedDivision, setSelectedDivision] = useState<CompetitionDivision | null>(null)
-  const [myClubId, setMyClubId] = useState<string | null>(null)
+  const [myClubIds, setMyClubIds] = useState<string[]>([])
+  const [myMainClubId, setMyMainClubId] = useState<string | null>(null)
   const [selectedClubId, setSelectedClubId] = useState<string | null>(null)
   const [isClubProfileOpen, setIsClubProfileOpen] = useState(false)
   const [isPastWinnersOpen, setIsPastWinnersOpen] = useState(false)
@@ -1133,18 +1186,56 @@ export default function TeamRankingPage(): JSX.Element {
 
     async function load(): Promise<void> {
       try {
-        const [{ data: myClubData, error: myClubError }, teamsResult] = await Promise.all([
-          supabase.rpc('get_my_club_id'),
+        const [{ data: authData }, teamsResult] = await Promise.all([
+          supabase.auth.getUser(),
           getTeamRankingTeams(),
         ])
 
         if (!mounted) return
 
-        if (myClubError) {
-          throw myClubError
+        const userId = authData.user?.id ?? null
+
+        if (userId) {
+          const { data: myClubs, error: myClubsError } = await supabase
+            .from('clubs')
+            .select('id, club_type, club_tier, tier2_division, tier3_division, amateur_division')
+            .eq('owner_user_id', userId)
+            .in('club_type', ['main', 'developing'])
+
+          if (!mounted) return
+
+          if (myClubsError) {
+            throw myClubsError
+          }
+
+          const ownedClubs = (myClubs ?? []) as MyOwnedClubRecord[]
+          const mainClub = ownedClubs.find((club) => club.club_type === 'main') ?? null
+
+          setMyClubIds(ownedClubs.map((club) => club.id))
+          setMyMainClubId(mainClub?.id ?? null)
+
+          if (mainClub) {
+            const mainClubTier = mapClubTierToRankingTier(mainClub.club_tier)
+
+            if (mainClubTier) {
+              setSelectedTier(mainClubTier)
+
+              if (mainClubTier === TEAM_TIERS.WORLD) {
+                setSelectedDivision(null)
+              } else if (mainClubTier === TEAM_TIERS.PRO) {
+                setSelectedDivision(mainClub.tier2_division ?? null)
+              } else if (mainClubTier === TEAM_TIERS.CONTINENTAL) {
+                setSelectedDivision(mainClub.tier3_division ?? null)
+              } else if (mainClubTier === TEAM_TIERS.AMATEUR) {
+                setSelectedDivision(mainClub.amateur_division ?? null)
+              }
+            }
+          }
+        } else {
+          setMyClubIds([])
+          setMyMainClubId(null)
         }
 
-        setMyClubId(myClubData ?? null)
         setTeams(teamsResult)
       } catch (error) {
         console.error('Failed to load team ranking page:', error)
@@ -1168,38 +1259,6 @@ export default function TeamRankingPage(): JSX.Element {
       window.removeEventListener('focus', onFocus)
     }
   }, [])
-
-  const myTeam = useMemo(
-    () => teams.find((team) => team.id === myClubId) ?? null,
-    [teams, myClubId],
-  )
-
-  useEffect(() => {
-    if (!myTeam) return
-
-    if (myTeam.tier === TEAM_TIERS.WORLD) {
-      setSelectedTier(TEAM_TIERS.WORLD)
-      setSelectedDivision(null)
-      return
-    }
-
-    if (myTeam.tier === TEAM_TIERS.PRO) {
-      setSelectedTier(TEAM_TIERS.PRO)
-      setSelectedDivision(myTeam.tier2Division ?? null)
-      return
-    }
-
-    if (myTeam.tier === TEAM_TIERS.CONTINENTAL) {
-      setSelectedTier(TEAM_TIERS.CONTINENTAL)
-      setSelectedDivision(myTeam.tier3Division ?? null)
-      return
-    }
-
-    if (myTeam.tier === TEAM_TIERS.AMATEUR) {
-      setSelectedTier(TEAM_TIERS.AMATEUR)
-      setSelectedDivision(myTeam.amateurDivision ?? null)
-    }
-  }, [myTeam])
 
   const divisionOptions = useMemo(() => getDivisionOptions(selectedTier), [selectedTier])
 
@@ -1292,7 +1351,11 @@ export default function TeamRankingPage(): JSX.Element {
               <select
                 id="division-select"
                 value={selectedDivision ?? ''}
-                onChange={(e) => setSelectedDivision(e.target.value as CompetitionDivision)}
+                onChange={(e) =>
+                  setSelectedDivision(
+                    e.target.value ? (e.target.value as CompetitionDivision) : null,
+                  )
+                }
                 disabled={selectedTier === TEAM_TIERS.WORLD}
                 className="w-full rounded border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
               >
@@ -1387,7 +1450,7 @@ export default function TeamRankingPage(): JSX.Element {
               {!loading &&
                 selectedStanding &&
                 selectedRows.map((row) => {
-                  const isMyTeam = row.id === myClubId
+                  const isMyTeam = myClubIds.includes(row.id)
 
                   return (
                     <tr
@@ -1421,7 +1484,7 @@ export default function TeamRankingPage(): JSX.Element {
                             ) : null}
 
                             {isMyTeam ? (
-                              <span className="rounded-full bg-yellow-200 px-2 py-0.5 text-[11px] font-semibold text-yellow-900">
+                              <span className="rounded-full bg-yellow-100 px-2 py-1 text-xs font-medium text-yellow-800">
                                 Your team
                               </span>
                             ) : null}
@@ -1492,7 +1555,8 @@ export default function TeamRankingPage(): JSX.Element {
         clubId={selectedClubId}
         isOpen={isClubProfileOpen}
         onClose={closeClubProfile}
-        isMyTeam={selectedClubId === myClubId}
+        isMyTeam={selectedClubId ? myClubIds.includes(selectedClubId) : false}
+        myClubId={myMainClubId}
       />
 
       <PastWinnersModal

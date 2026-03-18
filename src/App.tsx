@@ -15,6 +15,7 @@
  * runtime errors coming from some dependencies or build outputs.
  */
 import './lib/processShim'
+import './styles/hideQuote.css'
 
 import React, { useEffect, useState } from 'react'
 import { HashRouter, Route, Routes, Navigate } from 'react-router'

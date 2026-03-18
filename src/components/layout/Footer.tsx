@@ -1,6 +1,6 @@
 /**
  * Footer.tsx
- * Global footer showing live game time and quick links.
+ * Global footer showing authoritative live game time and quick links.
  */
 
 import React, { useEffect, useState } from 'react'
@@ -9,10 +9,11 @@ import { supabase } from '../../lib/supabase'
 
 /**
  * GameTimeRow
- * Shape returned by public.get_game_time().
+ * Shape returned by public.get_authoritative_game_time().
  */
 interface GameTimeRow {
   season_number: number
+  month_number: number
   month_name: string
   day_number: number
   hour_24: number
@@ -40,7 +41,7 @@ const MONTH_INDEX_BY_NAME: Record<string, number> = {
   September: 8,
   October: 9,
   November: 10,
-  December: 11
+  December: 11,
 }
 
 const WEEKDAY_NAMES = [
@@ -50,14 +51,9 @@ const WEEKDAY_NAMES = [
   'Wednesday',
   'Thursday',
   'Friday',
-  'Saturday'
+  'Saturday',
 ]
 
-/**
- * Since the backend does not currently return a weekday,
- * derive it from a fixed leap-year calendar so the result
- * stays deterministic for in-game dates.
- */
 const IN_GAME_REFERENCE_YEAR = 2000
 
 function getWeekdayName(monthName: string, dayNumber: number): string | null {
@@ -83,6 +79,10 @@ function formatTime(hour24: number, minute2: number): string {
 }
 
 function formatGameTime(row: GameTimeRow): string {
+  if (row.display_text?.trim()) {
+    return row.display_text.trim()
+  }
+
   const seasonText = `Season ${row.season_number}`
   const weekdayText = getWeekdayName(row.month_name, row.day_number)
   const dateText = `${row.month_name} ${row.day_number}`
@@ -95,13 +95,13 @@ function formatGameTime(row: GameTimeRow): string {
 
 /**
  * Footer
- * Displays global game-time and simple footer navigation.
+ * Displays global authoritative game-time and simple footer navigation.
  *
- * Game-time is sourced from the centralized backend (Supabase)
- * using public.get_game_time().
+ * Game-time is sourced from public.get_authoritative_game_time()
+ * so it stays aligned with public.game_state.
  */
 export default function Footer({
-  refreshIntervalMs = 30000
+  refreshIntervalMs = 30000,
 }: GameTimeProps): JSX.Element {
   const [gameTimeText, setGameTimeText] = useState('Loading game time...')
 
@@ -109,12 +109,12 @@ export default function Footer({
     let cancelled = false
 
     async function loadGameTime(): Promise<void> {
-      const { data, error } = await supabase.rpc('get_game_time')
+      const { data, error } = await supabase.rpc('get_authoritative_game_time')
 
       if (cancelled) return
 
       if (error) {
-        setGameTimeText(prev =>
+        setGameTimeText((prev) =>
           prev === 'Loading game time...' ? 'Game time unavailable' : prev
         )
         return
@@ -126,15 +126,17 @@ export default function Footer({
       if (nextRow) {
         setGameTimeText(formatGameTime(nextRow))
       } else {
-        setGameTimeText(prev =>
+        setGameTimeText((prev) =>
           prev === 'Loading game time...' ? 'Game time unavailable' : prev
         )
       }
     }
 
-    loadGameTime()
+    void loadGameTime()
 
-    const interval = window.setInterval(loadGameTime, refreshIntervalMs)
+    const interval = window.setInterval(() => {
+      void loadGameTime()
+    }, refreshIntervalMs)
 
     return () => {
       cancelled = true
@@ -144,9 +146,7 @@ export default function Footer({
 
   return (
     <footer className="border-t border-yellow-500 bg-yellow-400 py-3 px-6 flex items-center justify-between">
-      <div className="text-sm font-semibold text-black">
-        {gameTimeText}
-      </div>
+      <div className="text-sm font-semibold text-black">{gameTimeText}</div>
 
       <div className="flex items-center gap-4">
         <Link

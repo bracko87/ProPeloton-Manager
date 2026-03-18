@@ -26,13 +26,13 @@
  * - Club update broadcasts now include updated_at_ms so legitimate updates
  *   can propagate instantly and in order across listeners/tabs.
  *
- * UPDATE (broadcast logo-path guard):
- * - Non-logo updates no longer rebroadcast logo_path.
- * - This prevents header logo source churn and avoids the white-inside-crest regression.
- * - logo_path is still broadcast on initial load and real logo changes.
+ * UPDATE (main-club writer fix):
+ * - ppm-active-club writes now always use the resolved MAIN club context.
+ * - This prevents developing-club state from being written into shared header/layout sync.
  */
 
 import React, { useEffect, useId, useMemo, useRef, useState } from 'react'
+import { getMyClubContext } from '@/lib/clubContext'
 import { supabase } from '@/lib/supabase' // <-- adjust if your path differs
 
 type ClubRow = {
@@ -578,7 +578,9 @@ function KitDesigner({ teamId, primaryColor, secondaryColor }: KitDesignerProps)
         image_data_url: null,
       })
 
-      setKitNotice('Jersey URL accepted. It will be fitted in preview and in-game. Click Apply jersey.')
+      setKitNotice(
+        'Jersey URL accepted. It will be fitted in preview and in-game. Click Apply jersey.',
+      )
       return true
     } catch {
       setKitNotice('Please provide a valid jersey image URL.')
@@ -663,7 +665,11 @@ function KitDesigner({ teamId, primaryColor, secondaryColor }: KitDesignerProps)
         <div className="text-sm font-medium mb-3">Generic jersey</div>
 
         <div className="flex items-center justify-center min-h-[220px] rounded-lg border border-gray-100 bg-gray-50">
-          <GenericJerseySvg primaryColor={primaryColor} secondaryColor={secondaryColor} className="w-36 h-auto" />
+          <GenericJerseySvg
+            primaryColor={primaryColor}
+            secondaryColor={secondaryColor}
+            className="w-36 h-auto"
+          />
         </div>
 
         <div className="mt-3 text-xs text-center text-gray-500">Default team jersey</div>
@@ -739,7 +745,11 @@ function KitDesigner({ teamId, primaryColor, secondaryColor }: KitDesignerProps)
                 }}
               />
             ) : (
-              <GenericJerseySvg primaryColor={primaryColor} secondaryColor={secondaryColor} className="w-44 h-auto" />
+              <GenericJerseySvg
+                primaryColor={primaryColor}
+                secondaryColor={secondaryColor}
+                className="w-44 h-auto"
+              />
             )}
           </div>
         </div>
@@ -749,7 +759,9 @@ function KitDesigner({ teamId, primaryColor, secondaryColor }: KitDesignerProps)
         </div>
 
         {kitNotice ? (
-          <div className="rounded-md border border-gray-200 bg-white px-4 py-3 text-sm text-gray-700">{kitNotice}</div>
+          <div className="rounded-md border border-gray-200 bg-white px-4 py-3 text-sm text-gray-700">
+            {kitNotice}
+          </div>
         ) : null}
       </div>
     </div>
@@ -757,7 +769,7 @@ function KitDesigner({ teamId, primaryColor, secondaryColor }: KitDesignerProps)
 }
 
 export default function CustomizeTeamPage(): JSX.Element {
-  const [clubId, setClubId] = useState<string | null>(null)
+  const [mainClubId, setMainClubId] = useState<string | null>(null)
   const [ownerUserId, setOwnerUserId] = useState<string | null>(null)
 
   const [teamNameInput, setTeamNameInput] = useState('My Club')
@@ -838,30 +850,40 @@ export default function CustomizeTeamPage(): JSX.Element {
     }, 2500)
   }
 
-  function broadcastClubUpdate(club: ClubRow, options?: { includeLogoPath?: boolean }): void {
-    const payload = {
-      id: club.id,
-      owner_user_id: club.owner_user_id,
-      name: club.name,
-      primary_color: club.primary_color,
-      secondary_color: club.secondary_color,
-      ...(options?.includeLogoPath ? { logo_path: club.logo_path } : {}),
-      updated_at_ms: Date.now(),
+  async function broadcastClubUpdate(): Promise<void> {
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+
+      const { mainClub } = await getMyClubContext()
+
+      if (user?.id && mainClub) {
+        const payload = {
+          id: mainClub.id,
+          owner_user_id: user.id,
+          name: mainClub.name,
+          country_code: mainClub.country_code,
+          logo_path: mainClub.logo_path ?? null,
+          primary_color: mainClub.primary_color ?? undefined,
+          secondary_color: mainClub.secondary_color ?? undefined,
+          club_type: 'main' as const,
+          updated_at_ms: Date.now(),
+        }
+
+        window.localStorage.setItem('ppm-active-club', JSON.stringify(payload))
+        window.dispatchEvent(new CustomEvent('club-updated', { detail: payload }))
+      }
+    } catch (broadcastError) {
+      // eslint-disable-next-line no-console
+      console.error('Failed to broadcast main club update:', broadcastError)
     }
-
-    localStorage.setItem('ppm-active-club', JSON.stringify(payload))
-
-    window.dispatchEvent(
-      new CustomEvent('club-updated', {
-        detail: payload,
-      }),
-    )
   }
 
   function syncClubState(club: ClubRow): void {
     const nextLogoVersion = Date.now()
 
-    setClubId(club.id)
+    setMainClubId(club.id)
 
     setTeamNameInput(club.name)
     setAppliedTeamName(club.name)
@@ -900,9 +922,16 @@ export default function CustomizeTeamPage(): JSX.Element {
         if (!active) return
         setOwnerUserId(user.id)
 
+        const { mainClub } = await getMyClubContext()
+
+        if (!mainClub?.id) {
+          throw new Error('Main club context not found.')
+        }
+
         const { data: club, error: clubError } = await supabase
           .from('clubs')
           .select('id, owner_user_id, name, country_code, primary_color, secondary_color, logo_path')
+          .eq('id', mainClub.id)
           .eq('owner_user_id', user.id)
           .single<ClubRow>()
 
@@ -910,7 +939,7 @@ export default function CustomizeTeamPage(): JSX.Element {
         if (!active || !club) return
 
         syncClubState(club)
-        broadcastClubUpdate(club, { includeLogoPath: true })
+        await broadcastClubUpdate()
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load club.')
       } finally {
@@ -930,8 +959,8 @@ export default function CustomizeTeamPage(): JSX.Element {
   }, [])
 
   async function persistClub(patch: PersistableClubPatch): Promise<ClubRow | null> {
-    if (!ownerUserId) {
-      const message = 'You must be logged in to update your club.'
+    if (!ownerUserId || !mainClubId) {
+      const message = 'Main club is not resolved.'
       setError(message)
       showTopNotice('error', message)
       return null
@@ -958,8 +987,10 @@ export default function CustomizeTeamPage(): JSX.Element {
     const { data, error: updateError } = await supabase
       .from('clubs')
       .update(normalizedPatch)
+      .eq('id', mainClubId)
       .eq('owner_user_id', ownerUserId)
       .select('id, owner_user_id, name, country_code, primary_color, secondary_color, logo_path')
+      .single<ClubRow>()
 
     setSaving(false)
 
@@ -969,22 +1000,16 @@ export default function CustomizeTeamPage(): JSX.Element {
       return null
     }
 
-    const updatedRows = (data ?? []) as ClubRow[]
-    const updatedClub = updatedRows[0] ?? null
-
-    if (!updatedClub) {
-      const message =
-        'No club row was updated. This usually means your UPDATE RLS policy on public.clubs is missing or blocking this user.'
+    if (!data) {
+      const message = 'Main club update failed.'
       setError(message)
       showTopNotice('error', message)
       return null
     }
 
-    syncClubState(updatedClub)
-    broadcastClubUpdate(updatedClub, {
-      includeLogoPath: Object.prototype.hasOwnProperty.call(normalizedPatch, 'logo_path'),
-    })
-    return updatedClub
+    syncClubState(data)
+    await broadcastClubUpdate()
+    return data
   }
 
   async function handleApplyTeamName(): Promise<void> {
@@ -1026,10 +1051,9 @@ export default function CustomizeTeamPage(): JSX.Element {
 
     if (!updatedClub) return
 
-    // NEW: refresh base logo in background so base logo stays in sync
-    if (clubId) {
+    if (mainClubId) {
       try {
-        await upsertBaseTeamLogo(clubId, updatedClub.primary_color, updatedClub.secondary_color)
+        await upsertBaseTeamLogo(mainClubId, updatedClub.primary_color, updatedClub.secondary_color)
       } catch (baseLogoError) {
         // eslint-disable-next-line no-console
         console.warn('Unable to refresh base logo after color update', baseLogoError)
@@ -1037,7 +1061,10 @@ export default function CustomizeTeamPage(): JSX.Element {
     }
 
     showSuccess('Team colors updated.')
-    showTopNotice('success', `Team colors changed to ${updatedClub.primary_color} and ${updatedClub.secondary_color}.`)
+    showTopNotice(
+      'success',
+      `Team colors changed to ${updatedClub.primary_color} and ${updatedClub.secondary_color}.`,
+    )
   }
 
   async function handleLogoUpload(event: React.ChangeEvent<HTMLInputElement>): Promise<void> {
@@ -1092,7 +1119,7 @@ export default function CustomizeTeamPage(): JSX.Element {
   }
 
   async function handleApplyLogo(): Promise<void> {
-    if (!clubId) {
+    if (!mainClubId) {
       setError('Club not found.')
       return
     }
@@ -1119,9 +1146,8 @@ export default function CustomizeTeamPage(): JSX.Element {
       setError(null)
       setSaving(true)
 
-      // convert to PNG and store PNG in the bucket
       const pngLogoBlob = await convertFileToPngBlob(pendingLogoFile)
-      const filePath = `logos/${clubId}-${Date.now()}.png`
+      const filePath = `logos/${mainClubId}-${Date.now()}.png`
 
       const { error: uploadError } = await supabase.storage.from(LOGO_BUCKET).upload(filePath, pngLogoBlob, {
         upsert: true,
@@ -1152,13 +1178,13 @@ export default function CustomizeTeamPage(): JSX.Element {
    * instead of setting logo_path to null.
    */
   async function handleRemoveLogo(): Promise<void> {
-    if (!clubId) {
+    if (!mainClubId) {
       setError('Club not found.')
       return
     }
 
     try {
-      const baseLogoPath = await upsertBaseTeamLogo(clubId, appliedPrimaryColor, appliedSecondaryColor)
+      const baseLogoPath = await upsertBaseTeamLogo(mainClubId, appliedPrimaryColor, appliedSecondaryColor)
       const updatedClub = await persistClub({ logo_path: baseLogoPath })
       if (!updatedClub) return
 
@@ -1178,7 +1204,9 @@ export default function CustomizeTeamPage(): JSX.Element {
       <h2 className="text-xl font-semibold mb-4">Customize Team</h2>
 
       {loading ? (
-        <div className="rounded-lg bg-white p-6 shadow text-sm text-gray-600">Loading club settings...</div>
+        <div className="rounded-lg bg-white p-6 shadow text-sm text-gray-600">
+          Loading club settings...
+        </div>
       ) : (
         <div className="space-y-6 w-full">
           <div className="bg-white p-4 rounded-lg shadow space-y-6">
@@ -1208,7 +1236,9 @@ export default function CustomizeTeamPage(): JSX.Element {
             <div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-800 mb-2">Primary color</label>
+                  <label className="block text-sm font-medium text-gray-800 mb-2">
+                    Primary color
+                  </label>
                   <div className="flex items-center gap-3">
                     <input
                       type="color"
@@ -1226,7 +1256,9 @@ export default function CustomizeTeamPage(): JSX.Element {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-800 mb-2">Secondary color</label>
+                  <label className="block text-sm font-medium text-gray-800 mb-2">
+                    Secondary color
+                  </label>
                   <div className="flex items-center gap-3">
                     <input
                       type="color"
@@ -1278,7 +1310,9 @@ export default function CustomizeTeamPage(): JSX.Element {
             <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
               <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
                 <div className="flex-shrink-0 rounded-lg border border-gray-200 bg-white p-3">
-                  <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">Current logo</div>
+                  <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">
+                    Current logo
+                  </div>
                   <div className="flex items-center justify-center">
                     <HeaderLogo
                       logoSrc={resolvedLogoUrl}
@@ -1350,8 +1384,12 @@ export default function CustomizeTeamPage(): JSX.Element {
 
           <div className="bg-white p-4 rounded-lg shadow space-y-4">
             <h3 className="text-lg font-semibold">Jersey Creator</h3>
-            {clubId ? (
-              <KitDesigner teamId={clubId} primaryColor={appliedPrimaryColor} secondaryColor={appliedSecondaryColor} />
+            {mainClubId ? (
+              <KitDesigner
+                teamId={mainClubId}
+                primaryColor={appliedPrimaryColor}
+                secondaryColor={appliedSecondaryColor}
+              />
             ) : (
               <div className="text-sm text-gray-600">Team not loaded yet.</div>
             )}

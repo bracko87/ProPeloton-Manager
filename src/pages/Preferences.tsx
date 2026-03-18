@@ -2,6 +2,7 @@
  * Preferences.tsx
  * Practical preferences page:
  * - In-game notification controls
+ * - Developing Team purchase section
  * - Danger zone
  *
  * Uses shared notification preferences helper so types/keys are centralized.
@@ -13,10 +14,23 @@
  * - Shutdown now explicitly fetches the current session token and sends
  *   Authorization: Bearer <token> to the shutdown-team Edge Function.
  * - Added a user-facing guard when the session/token is missing.
+ * - Added Developing Team purchase/status section wired to:
+ *   - get_developing_team_status()
+ *   - purchase_developing_team()
+ * - Updated DevelopingTeamStatus to use the new backend shape.
+ * - After successful Developing Team purchase, re-pin ppm-active-club
+ *   to the MAIN club only using getMyClubContext().
+ *
+ * Note:
+ * - The one-time repair / global protection for broken old localStorage
+ *   belongs in the top-level dashboard layout, not here.
+ * - This page only ensures the purchase flow does not incorrectly switch
+ *   active club context to the newly created developing club.
  */
 
 import React, { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
+import { getMyClubContext } from '@/lib/clubContext'
 import {
   NotificationSettings,
   PREFERENCES_STORAGE_KEY,
@@ -32,6 +46,45 @@ type ToggleRowProps = {
   description: string
   checked: boolean
   onToggle: () => void
+}
+
+type DevelopingTeamStatus = {
+  main_club_id: string | null
+  main_club_name: string | null
+  developing_club_id: string | null
+  developing_club_name: string | null
+  is_purchased: boolean
+  real_days_played: number
+  game_days_played: number
+  time_requirement_met: boolean
+  coin_balance: number
+  coin_cost: number
+  coin_requirement_met: boolean
+  can_purchase: boolean
+  movement_window_open: boolean
+  current_window_label: string | null
+  next_window_label: string | null
+}
+
+type MainClubContextClub = {
+  id: string
+  name: string
+  country_code: string
+  logo_path?: string | null
+  primary_color?: string | null
+  secondary_color?: string | null
+}
+
+type ActiveClubPayload = {
+  id: string
+  owner_user_id: string
+  name: string
+  country_code: string
+  logo_path: string | null
+  primary_color?: string | undefined
+  secondary_color?: string | undefined
+  club_type: 'main'
+  updated_at_ms: number
 }
 
 function ToggleRow({ title, description, checked, onToggle }: ToggleRowProps): JSX.Element {
@@ -57,10 +110,43 @@ export default function PreferencesPage(): JSX.Element {
     readNotificationPreferences()
   )
 
+  const [developingTeamStatus, setDevelopingTeamStatus] = useState<DevelopingTeamStatus | null>(null)
+  const [isLoadingDevelopingTeamStatus, setIsLoadingDevelopingTeamStatus] = useState(true)
+  const [developingTeamError, setDevelopingTeamError] = useState<string | null>(null)
+  const [isPurchasingDevelopingTeam, setIsPurchasingDevelopingTeam] = useState(false)
+  const [developingTeamSuccessMessage, setDevelopingTeamSuccessMessage] = useState<string | null>(
+    null
+  )
+
   const [isShuttingDown, setIsShuttingDown] = useState(false)
   const [isShutdownModalOpen, setIsShutdownModalOpen] = useState(false)
   const [shutdownConfirmText, setShutdownConfirmText] = useState('')
   const [shutdownError, setShutdownError] = useState<string | null>(null)
+
+  const loadDevelopingTeamStatus = async (): Promise<void> => {
+    setIsLoadingDevelopingTeamStatus(true)
+    setDevelopingTeamError(null)
+
+    try {
+      const { data, error } = await supabase.rpc('get_developing_team_status')
+
+      if (error) {
+        throw error
+      }
+
+      const normalized = Array.isArray(data) ? data[0] : data
+      setDevelopingTeamStatus((normalized ?? null) as DevelopingTeamStatus | null)
+    } catch (e: any) {
+      console.error('loadDevelopingTeamStatus failed:', e)
+      setDevelopingTeamError(e?.message ?? 'Failed to load Developing Team status.')
+    } finally {
+      setIsLoadingDevelopingTeamStatus(false)
+    }
+  }
+
+  useEffect(() => {
+    void loadDevelopingTeamStatus()
+  }, [])
 
   useEffect(() => {
     try {
@@ -108,6 +194,74 @@ export default function PreferencesPage(): JSX.Element {
     // TODO:
     // Connect this button to your backend reset logic.
     window.alert('Restart Team button is ready. Connect it to the backend reset flow.')
+  }
+
+  const handlePurchaseDevelopingTeam = async (): Promise<void> => {
+    if (isPurchasingDevelopingTeam) return
+
+    setDevelopingTeamError(null)
+    setDevelopingTeamSuccessMessage(null)
+    setIsPurchasingDevelopingTeam(true)
+
+    try {
+      const { data, error } = await supabase.rpc('purchase_developing_team')
+
+      if (error) {
+        throw error
+      }
+
+      const normalized = Array.isArray(data) ? data[0] : data
+
+      setDevelopingTeamSuccessMessage(
+        normalized?.developing_club_name
+          ? `${normalized.developing_club_name} has been created successfully.`
+          : 'Developing Team purchased successfully.'
+      )
+
+      /**
+       * IMPORTANT:
+       * After successful purchase, force the active club payload back to MAIN club.
+       * Do NOT build ppm-active-club from the newly created developing club.
+       */
+      try {
+        const { data: authData, error: authError } = await supabase.auth.getUser()
+        if (authError) {
+          throw authError
+        }
+
+        const user = authData.user ?? null
+        if (user) {
+          const context = (await getMyClubContext()) as { mainClub?: MainClubContextClub | null }
+          const mainClub = context?.mainClub ?? null
+
+          if (mainClub) {
+            const payload: ActiveClubPayload = {
+              id: mainClub.id,
+              owner_user_id: user.id,
+              name: mainClub.name,
+              country_code: mainClub.country_code,
+              logo_path: mainClub.logo_path ?? null,
+              primary_color: mainClub.primary_color ?? undefined,
+              secondary_color: mainClub.secondary_color ?? undefined,
+              club_type: 'main',
+              updated_at_ms: Date.now(),
+            }
+
+            window.localStorage.setItem('ppm-active-club', JSON.stringify(payload))
+            window.dispatchEvent(new CustomEvent('club-updated', { detail: payload }))
+          }
+        }
+      } catch (contextError) {
+        console.error('Failed to re-pin active club to main club after purchase:', contextError)
+      }
+
+      await loadDevelopingTeamStatus()
+    } catch (e: any) {
+      console.error('purchase_developing_team failed:', e)
+      setDevelopingTeamError(e?.message ?? 'Failed to purchase Developing Team.')
+    } finally {
+      setIsPurchasingDevelopingTeam(false)
+    }
   }
 
   const openShutdownModal = (): void => {
@@ -172,6 +326,40 @@ export default function PreferencesPage(): JSX.Element {
     }
   }
 
+  const realDaysProgressLabel = developingTeamStatus
+    ? `${developingTeamStatus.real_days_played} / 30`
+    : '—'
+
+  const gameDaysProgressLabel = developingTeamStatus
+    ? `${developingTeamStatus.game_days_played} / 60`
+    : '—'
+
+  const coinProgressLabel = developingTeamStatus
+    ? `${developingTeamStatus.coin_balance} / ${developingTeamStatus.coin_cost}`
+    : '—'
+
+  const movementWindowText = developingTeamStatus
+    ? developingTeamStatus.movement_window_open
+      ? `Movement window open now: ${developingTeamStatus.current_window_label ?? 'Current window'}`
+      : `Movement window closed. Next window: ${developingTeamStatus.next_window_label ?? 'Unknown'}`
+    : 'Movement window unavailable.'
+
+  const developingTeamButtonLabel = developingTeamStatus?.is_purchased
+    ? 'Already Unlocked'
+    : isPurchasingDevelopingTeam
+      ? 'Purchasing...'
+      : 'Purchase Developing Team'
+
+  const developingTeamBlockedReason = !developingTeamStatus
+    ? null
+    : developingTeamStatus.is_purchased
+      ? 'Developing Team already unlocked.'
+      : !developingTeamStatus.time_requirement_met
+        ? 'You must first reach 30 real-life days or 60 in-game days.'
+        : !developingTeamStatus.coin_requirement_met
+          ? 'You need at least 50 coins.'
+          : null
+
   return (
     <>
       <div className="w-full h-full min-h-[calc(100vh-10rem)] text-gray-900">
@@ -228,6 +416,103 @@ export default function PreferencesPage(): JSX.Element {
               </div>
             </section>
           </div>
+
+          <section className="w-full rounded-lg border border-gray-100 bg-white p-5 shadow-sm">
+            <h3 className="text-base font-semibold">Developing Team</h3>
+            <p className="mt-1 text-xs text-gray-500">
+              Unlock a U23 team for your club. This team can race normally, but it cannot be promoted
+              above Continental level.
+            </p>
+
+            {isLoadingDevelopingTeamStatus ? (
+              <div className="mt-4 text-sm text-gray-500">Loading Developing Team status...</div>
+            ) : (
+              <>
+                <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-3">
+                  <div className="rounded-md border border-gray-200 p-3">
+                    <div className="text-xs text-gray-500">Real-life progress</div>
+                    <div className="mt-1 text-lg font-semibold text-gray-900">
+                      {realDaysProgressLabel}
+                    </div>
+                    <div className="mt-1 text-xs text-gray-500">Minimum 30 days required</div>
+                  </div>
+
+                  <div className="rounded-md border border-gray-200 p-3">
+                    <div className="text-xs text-gray-500">In-game progress</div>
+                    <div className="mt-1 text-lg font-semibold text-gray-900">
+                      {gameDaysProgressLabel}
+                    </div>
+                    <div className="mt-1 text-xs text-gray-500">Minimum 60 days required</div>
+                  </div>
+
+                  <div className="rounded-md border border-gray-200 p-3">
+                    <div className="text-xs text-gray-500">Coins</div>
+                    <div className="mt-1 text-lg font-semibold text-gray-900">{coinProgressLabel}</div>
+                    <div className="mt-1 text-xs text-gray-500">Cost: 50 coins</div>
+                  </div>
+                </div>
+
+                <div className="mt-4 rounded-md border border-blue-200 bg-blue-50 p-4 text-sm text-blue-800">
+                  {movementWindowText}
+                </div>
+
+                <div className="mt-4 rounded-md border border-yellow-200 bg-yellow-50 p-4 text-sm text-yellow-800">
+                  Requirements: 30 real-life days or 60 in-game days, plus 50 coins. Maximum roster
+                  size: 8 riders. Only riders aged 23 or younger are eligible. Riders can move between
+                  First Squad and Developing Team only during movement windows.
+                </div>
+
+                <div className="mt-4 rounded-md border border-gray-200 bg-gray-50 p-4 text-sm text-gray-700">
+                  <div className="font-medium text-gray-900">Special rules</div>
+                  <ul className="mt-2 list-disc space-y-1 pl-5">
+                    <li>The team name will be your main club name plus U23.</li>
+                    <li>This team can apply to races normally.</li>
+                    <li>This team cannot be promoted above Continental level.</li>
+                    <li>Riders in this team are still part of the main club structure.</li>
+                  </ul>
+                </div>
+
+                {developingTeamError ? (
+                  <div className="mt-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                    {developingTeamError}
+                  </div>
+                ) : null}
+
+                {developingTeamSuccessMessage ? (
+                  <div className="mt-4 rounded-md border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-700">
+                    {developingTeamSuccessMessage}
+                  </div>
+                ) : null}
+
+                <div className="mt-4">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      void handlePurchaseDevelopingTeam()
+                    }}
+                    disabled={
+                      !!developingTeamStatus?.is_purchased ||
+                      !developingTeamStatus?.can_purchase ||
+                      isPurchasingDevelopingTeam
+                    }
+                    className="inline-flex items-center rounded-md bg-yellow-400 px-4 py-2 text-sm font-medium text-black transition-colors hover:bg-yellow-500 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {developingTeamButtonLabel}
+                  </button>
+
+                  {developingTeamBlockedReason ? (
+                    <div className="mt-2 text-xs text-gray-500">{developingTeamBlockedReason}</div>
+                  ) : null}
+
+                  {developingTeamStatus?.is_purchased && developingTeamStatus.developing_club_name ? (
+                    <div className="mt-2 text-xs text-gray-500">
+                      Unlocked: {developingTeamStatus.developing_club_name}
+                    </div>
+                  ) : null}
+                </div>
+              </>
+            )}
+          </section>
 
           <section className="rounded-lg border border-red-200 bg-red-50 p-5 shadow-sm">
             <div className="flex flex-col gap-2 lg:flex-row lg:items-start lg:justify-between">

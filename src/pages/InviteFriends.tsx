@@ -8,6 +8,7 @@
  * - Loads real referral activity from public.club_referrals for the current club (referrer_club_id)
  * - Shows activity immediately once a referral row exists (pending/completed/rejected)
  * - Moves the "How it works" panel to the bottom of the page
+ * - Masks referred user / club IDs for privacy
  */
 
 import React, { useEffect, useMemo, useState } from 'react'
@@ -31,6 +32,19 @@ function formatDateTime(value: string | null | undefined): string {
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return '—'
   return date.toLocaleString()
+}
+
+function maskIdentifier(
+  value: string | null | undefined,
+  startChars = 8,
+  endChars = 4
+): string {
+  if (!value) return '—'
+  if (value.length <= startChars + endChars) return value
+
+  const start = value.slice(0, startChars)
+  const end = value.slice(-endChars)
+  return `${start}******${end}`
 }
 
 function statusClasses(status: ReferralActivityStatus): string {
@@ -320,13 +334,17 @@ export default function InviteFriendsPage(): JSX.Element {
                   <dl className="mt-2 grid gap-2 text-sm text-gray-700 md:grid-cols-2">
                     <div>
                       <dt className="font-medium text-gray-600">Referred user</dt>
-                      <dd className="font-mono text-xs break-all">{item.referred_user_id}</dd>
+                      <dd className="text-xs break-all">
+                        {maskIdentifier(item.referred_user_id)}
+                      </dd>
                     </div>
 
                     <div>
                       <dt className="font-medium text-gray-600">Referred club</dt>
-                      <dd className="font-mono text-xs break-all">
-                        {item.referred_club_id ?? 'Not linked yet'}
+                      <dd className="text-xs break-all">
+                        {item.referred_club_id
+                          ? maskIdentifier(item.referred_club_id)
+                          : 'Not linked yet'}
                       </dd>
                     </div>
 
