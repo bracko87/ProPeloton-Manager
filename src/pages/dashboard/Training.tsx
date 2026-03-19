@@ -26,6 +26,34 @@ type GameDateParts = {
   hour_number: number
 }
 
+type FamilyClub = {
+  club_id: string
+  club_name: string
+  team_label: 'First Team' | 'U23'
+}
+
+type ClubRegularTrainingDefaultRow = {
+  club_id: string
+  team_scope: string
+  focus_code: string
+  intensity: 'light' | 'normal' | 'hard'
+  auto_when_free: boolean
+  updated_at?: string
+  created_at?: string
+}
+
+type RiderRegularTrainingPlanRow = {
+  rider_id: string
+  club_id: string
+  focus_code: string
+  intensity: 'light' | 'normal' | 'hard'
+  is_active: boolean
+  auto_when_free: boolean
+  preferred_days: number[] | null
+  updated_at?: string
+  created_at?: string
+}
+
 type Camp = {
   id: string
   name: string
@@ -191,6 +219,25 @@ const CAMP_TYPE_OPTIONS: Array<'all' | CampType> = [
   'time_trial'
 ]
 
+const REGULAR_TRAINING_FOCUS_OPTIONS = [
+  'general',
+  'recovery',
+  'sprint',
+  'climbing',
+  'flat',
+  'time_trial',
+  'endurance',
+  'resistance',
+  'race_iq',
+  'teamwork'
+] as const
+
+const REGULAR_TRAINING_INTENSITY_OPTIONS: Array<'light' | 'normal' | 'hard'> = [
+  'light',
+  'normal',
+  'hard'
+]
+
 const WEEKDAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 const CAMPS_PER_PAGE = 8
 const GAME_MONTH_SHORT = [
@@ -221,6 +268,14 @@ function titleCaseFromSnake(value: string | null | undefined): string {
     .split('_')
     .map(part => part.charAt(0).toUpperCase() + part.slice(1))
     .join(' ')
+}
+
+function formatTrainingFocusLabel(value: string): string {
+  return titleCaseFromSnake(value)
+}
+
+function formatTrainingIntensityLabel(value: 'light' | 'normal' | 'hard'): string {
+  return value.charAt(0).toUpperCase() + value.slice(1)
 }
 
 function getCountryRegion(countryCode: string | null | undefined): string {
@@ -354,6 +409,20 @@ function toDateString(date: Date): string {
   const month = `${date.getMonth() + 1}`.padStart(2, '0')
   const day = `${date.getDate()}`.padStart(2, '0')
   return `${year}-${month}-${day}`
+}
+
+function dateRangesOverlap(
+  leftStartDateValue: string,
+  leftEndDateValue: string,
+  rightStartDateValue: string,
+  rightEndDateValue: string
+): boolean {
+  const leftStart = parseDateString(leftStartDateValue).getTime()
+  const leftEnd = parseDateString(leftEndDateValue).getTime()
+  const rightStart = parseDateString(rightStartDateValue).getTime()
+  const rightEnd = parseDateString(rightEndDateValue).getTime()
+
+  return leftStart <= rightEnd && rightStart <= leftEnd
 }
 
 function startOfMonth(date: Date): Date {
@@ -733,7 +802,7 @@ function isClubLevelActiveCampOnlyError(message: string): boolean {
 }
 
 export default function TrainingPage(): JSX.Element {
-  const [activeTab, setActiveTab] = useState<TabKey>('camps')
+  const [activeTab, setActiveTab] = useState<TabKey>('regular')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -763,9 +832,18 @@ export default function TrainingPage(): JSX.Element {
   const [bookingResult, setBookingResult] = useState<BookingResult | null>(null)
   const [currentCampBooking, setCurrentCampBooking] = useState<CurrentCampBooking | null>(null)
   const [clubBookings, setClubBookings] = useState<CurrentCampBooking[]>([])
+  const [bookingParticipantsByBookingId, setBookingParticipantsByBookingId] = useState<
+    Record<string, string[]>
+  >({})
   const [overlapBlockedRiders, setOverlapBlockedRiders] = useState<
     NonNullable<BookingValidation['blocked_riders']>
   >([])
+  const [familyClubs, setFamilyClubs] = useState<FamilyClub[]>([])
+  const [regularDefaults, setRegularDefaults] = useState<ClubRegularTrainingDefaultRow[]>([])
+  const [regularPlans, setRegularPlans] = useState<RiderRegularTrainingPlanRow[]>([])
+  const [regularSavingDefaultClubId, setRegularSavingDefaultClubId] = useState<string | null>(null)
+  const [regularSavingRiderId, setRegularSavingRiderId] = useState<string | null>(null)
+  const [regularMessage, setRegularMessage] = useState<string | null>(null)
 
   const selectedCamp = useMemo(
     () => camps.find(camp => camp.id === selectedCampId) ?? null,
@@ -777,6 +855,13 @@ export default function TrainingPage(): JSX.Element {
     const current = parseDateString(currentGameDate)
     return toDateString(new Date(current.getFullYear(), 11, 31))
   }, [currentGameDate])
+
+  const selectedRangeEndValue = useMemo(() => {
+    if (!startDate) return null
+    const endDate = parseDateString(startDate)
+    endDate.setDate(endDate.getDate() + Math.max(0, days - 1))
+    return toDateString(endDate)
+  }, [startDate, days])
 
   const selectableRoster = useMemo(
     () =>
@@ -790,16 +875,52 @@ export default function TrainingPage(): JSX.Element {
     [roster]
   )
 
-  const overlapBlockedRiderMap = useMemo(
-    () =>
-      new Map(
-        overlapBlockedRiders.map(blocked => [
-          blocked.rider_id,
-          blocked
-        ])
-      ),
-    [overlapBlockedRiders]
-  )
+  const locallyBlockedRiderIds = useMemo(() => {
+    if (!startDate || !selectedRangeEndValue) return []
+
+    const blocked = new Set<string>()
+
+    clubBookings.forEach(booking => {
+      if (
+        !dateRangesOverlap(
+          startDate,
+          selectedRangeEndValue,
+          booking.start_date,
+          booking.end_date
+        )
+      ) {
+        return
+      }
+
+      ;(bookingParticipantsByBookingId[booking.id] ?? []).forEach(riderId => blocked.add(riderId))
+    })
+
+    return Array.from(blocked)
+  }, [clubBookings, bookingParticipantsByBookingId, startDate, selectedRangeEndValue])
+
+  const overlapBlockedRiderMap = useMemo(() => {
+    const map = new Map<
+      string,
+      NonNullable<BookingValidation['blocked_riders']>[number]
+    >()
+
+    overlapBlockedRiders.forEach(blocked => {
+      map.set(blocked.rider_id, blocked)
+    })
+
+    locallyBlockedRiderIds.forEach(riderId => {
+      if (map.has(riderId)) return
+      map.set(riderId, {
+        rider_id: riderId,
+        display_name: null,
+        availability_status: null,
+        fatigue: null,
+        status_code: 'already_in_overlapping_camp'
+      })
+    })
+
+    return map
+  }, [overlapBlockedRiders, locallyBlockedRiderIds])
 
   const validationErrors = useMemo(
     () => toArray(validation?.validation_errors),
@@ -862,6 +983,165 @@ export default function TrainingPage(): JSX.Element {
     return filteredCamps.slice(startIndex, startIndex + CAMPS_PER_PAGE)
   }, [filteredCamps, currentPage])
 
+  const regularDefaultsByClubId = useMemo(() => {
+    return new Map(regularDefaults.map(row => [row.club_id, row]))
+  }, [regularDefaults])
+
+  const regularPlansByRiderId = useMemo(() => {
+    return new Map(regularPlans.map(row => [row.rider_id, row]))
+  }, [regularPlans])
+
+  function upsertRegularDefaultLocal(nextRow: ClubRegularTrainingDefaultRow): void {
+    setRegularDefaults(current => {
+      const existingIndex = current.findIndex(row => row.club_id === nextRow.club_id)
+      if (existingIndex === -1) return [...current, nextRow]
+
+      const copy = [...current]
+      copy[existingIndex] = nextRow
+      return copy
+    })
+  }
+
+  function upsertRegularPlanLocal(nextRow: RiderRegularTrainingPlanRow): void {
+    setRegularPlans(current => {
+      const existingIndex = current.findIndex(row => row.rider_id === nextRow.rider_id)
+      if (existingIndex === -1) return [...current, nextRow]
+
+      const copy = [...current]
+      copy[existingIndex] = nextRow
+      return copy
+    })
+  }
+
+  function removeRegularPlanLocal(riderId: string): void {
+    setRegularPlans(current => current.filter(row => row.rider_id !== riderId))
+  }
+
+  function buildDefaultRowForClub(clubIdValue: string): ClubRegularTrainingDefaultRow {
+    const existing = regularDefaultsByClubId.get(clubIdValue)
+    if (existing) return existing
+
+    const familyClub = familyClubs.find(row => row.club_id === clubIdValue)
+
+    return {
+      club_id: clubIdValue,
+      team_scope: familyClub?.team_label === 'U23' ? 'u23' : 'first_team',
+      focus_code: 'general',
+      intensity: 'normal',
+      auto_when_free: true
+    }
+  }
+
+  function buildPlanRowForRider(rider: RosterRider): RiderRegularTrainingPlanRow {
+    const existing = regularPlansByRiderId.get(rider.rider_id)
+    if (existing) return existing
+
+    const defaultRow = regularDefaultsByClubId.get(rider.club_id)
+
+    return {
+      rider_id: rider.rider_id,
+      club_id: rider.club_id,
+      focus_code: defaultRow?.focus_code ?? 'general',
+      intensity: defaultRow?.intensity ?? 'normal',
+      is_active: true,
+      auto_when_free: true,
+      preferred_days: null
+    }
+  }
+
+  function getEffectiveRegularTraining(rider: RosterRider): {
+    source: 'override' | 'default' | 'none'
+    focus_code: string | null
+    intensity: 'light' | 'normal' | 'hard' | null
+    auto_when_free: boolean
+    is_active: boolean
+  } {
+    const plan = regularPlansByRiderId.get(rider.rider_id)
+    if (plan && plan.is_active) {
+      return {
+        source: 'override',
+        focus_code: plan.focus_code,
+        intensity: plan.intensity,
+        auto_when_free: plan.auto_when_free,
+        is_active: plan.is_active
+      }
+    }
+
+    const defaultRow = regularDefaultsByClubId.get(rider.club_id)
+    if (defaultRow) {
+      return {
+        source: 'default',
+        focus_code: defaultRow.focus_code,
+        intensity: defaultRow.intensity,
+        auto_when_free: defaultRow.auto_when_free,
+        is_active: true
+      }
+    }
+
+    return {
+      source: 'none',
+      focus_code: null,
+      intensity: null,
+      auto_when_free: false,
+      is_active: false
+    }
+  }
+
+  const regularTrainingSummary = useMemo(() => {
+    const totalRiders = roster.length
+    const blockedRiders = roster.filter(
+      rider => rider.availability_status === 'injured' || rider.availability_status === 'sick'
+    ).length
+
+    const overrideCount = roster.filter(rider => {
+      const plan = regularPlansByRiderId.get(rider.rider_id)
+      return Boolean(plan?.is_active)
+    }).length
+
+    const defaultOnlyCount = roster.filter(rider => {
+      const effective = getEffectiveRegularTraining(rider)
+      return effective.source === 'default'
+    }).length
+
+    const noPlanCount = roster.filter(rider => {
+      const effective = getEffectiveRegularTraining(rider)
+      return effective.source === 'none'
+    }).length
+
+    return {
+      totalRiders,
+      blockedRiders,
+      overrideCount,
+      defaultOnlyCount,
+      noPlanCount
+    }
+  }, [roster, regularPlansByRiderId, regularDefaultsByClubId])
+
+  function updateRegularDefaultDraft(
+    clubIdValue: string,
+    patch: Partial<ClubRegularTrainingDefaultRow>
+  ): void {
+    const base = buildDefaultRowForClub(clubIdValue)
+    upsertRegularDefaultLocal({
+      ...base,
+      ...patch,
+      club_id: clubIdValue
+    })
+  }
+
+  function updateRegularPlanDraft(
+    rider: RosterRider,
+    patch: Partial<RiderRegularTrainingPlanRow>
+  ): void {
+    const base = buildPlanRowForRider(rider)
+    upsertRegularPlanLocal({
+      ...base,
+      ...patch,
+      rider_id: rider.rider_id,
+      club_id: rider.club_id
+    })
+  }
+
   async function loadCurrentCampBooking(nextClubId: string): Promise<void> {
     const { data, error } = await supabase
       .from('training_camp_bookings')
@@ -876,6 +1156,33 @@ export default function TrainingPage(): JSX.Element {
 
     const bookings = (data ?? []) as CurrentCampBooking[]
     setClubBookings(bookings)
+
+    const bookingIds = bookings.map(booking => booking.id)
+    if (bookingIds.length === 0) {
+      setBookingParticipantsByBookingId({})
+      const activeBooking = bookings.find(booking => booking.status === 'active') ?? null
+      const plannedBooking = bookings.find(booking => booking.status === 'planned') ?? null
+      setCurrentCampBooking(activeBooking ?? plannedBooking ?? bookings[0] ?? null)
+      return
+    }
+
+    const { data: participantsData, error: participantsError } = await supabase
+      .from('training_camp_participants')
+      .select('booking_id, rider_id')
+      .in('booking_id', bookingIds)
+
+    if (participantsError) throw participantsError
+
+    const grouped = (participantsData ?? []).reduce<Record<string, string[]>>(
+      (acc, row: { booking_id: string; rider_id: string }) => {
+        if (!acc[row.booking_id]) acc[row.booking_id] = []
+        acc[row.booking_id].push(row.rider_id)
+        return acc
+      },
+      {}
+    )
+
+    setBookingParticipantsByBookingId(grouped)
 
     const activeBooking = bookings.find(booking => booking.status === 'active') ?? null
     const plannedBooking = bookings.find(booking => booking.status === 'planned') ?? null
@@ -985,7 +1292,7 @@ export default function TrainingPage(): JSX.Element {
 
         if (clubRowError) throw clubRowError
 
-        const [campRes, rosterRes] = await Promise.all([
+        const [campRes, rosterRes, regularDefaultsRes, regularPlansRes] = await Promise.all([
           supabase
             .from('training_camp_catalog')
             .select('*')
@@ -998,11 +1305,21 @@ export default function TrainingPage(): JSX.Element {
               'club_id, rider_id, display_name, assigned_role, age_years, overall, country_code, availability_status, fatigue'
             )
             .in('club_id', familyClubIds)
-            .order('overall', { ascending: false })
+            .order('overall', { ascending: false }),
+          supabase
+            .from('club_regular_training_defaults')
+            .select('*')
+            .in('club_id', familyClubIds),
+          supabase
+            .from('rider_regular_training_plans')
+            .select('*')
+            .in('club_id', familyClubIds)
         ])
 
         if (campRes.error) throw campRes.error
         if (rosterRes.error) throw rosterRes.error
+        if (regularDefaultsRes.error) throw regularDefaultsRes.error
+        if (regularPlansRes.error) throw regularPlansRes.error
 
         if (cancelled) return
 
@@ -1036,6 +1353,9 @@ export default function TrainingPage(): JSX.Element {
         setCamps(loadedCamps)
         setSelectedCampId(prev => prev ?? loadedCamps[0]?.id ?? null)
         setRoster(loadedRoster)
+        setFamilyClubs(familyClubs)
+        setRegularDefaults((regularDefaultsRes.data ?? []) as ClubRegularTrainingDefaultRow[])
+        setRegularPlans((regularPlansRes.data ?? []) as RiderRegularTrainingPlanRow[])
         setSelectedRiderIds(
           loadedRoster
             .filter(
@@ -1143,6 +1463,102 @@ export default function TrainingPage(): JSX.Element {
       cancelled = true
     }
   }, [clubId, selectedCampId, startDate, days, selectedRiderIds])
+
+  async function saveRegularTrainingDefault(clubIdValue: string): Promise<void> {
+    const row = buildDefaultRowForClub(clubIdValue)
+
+    setRegularSavingDefaultClubId(clubIdValue)
+    setRegularMessage(null)
+    setError(null)
+
+    try {
+      const payload = {
+        club_id: row.club_id,
+        team_scope: row.team_scope,
+        focus_code: row.focus_code,
+        intensity: row.intensity,
+        auto_when_free: row.auto_when_free
+      }
+
+      const { data, error } = await supabase
+        .from('club_regular_training_defaults')
+        .upsert(payload, { onConflict: 'club_id' })
+        .select('*')
+        .single()
+
+      if (error) throw error
+
+      upsertRegularDefaultLocal(data as ClubRegularTrainingDefaultRow)
+      setRegularMessage('Team default saved successfully.')
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : 'Failed to save regular training default.'
+      setError(message)
+    } finally {
+      setRegularSavingDefaultClubId(null)
+    }
+  }
+
+  async function saveRegularTrainingPlan(rider: RosterRider): Promise<void> {
+    const row = buildPlanRowForRider(rider)
+
+    setRegularSavingRiderId(rider.rider_id)
+    setRegularMessage(null)
+    setError(null)
+
+    try {
+      const payload = {
+        rider_id: row.rider_id,
+        club_id: row.club_id,
+        focus_code: row.focus_code,
+        intensity: row.intensity,
+        is_active: row.is_active,
+        auto_when_free: row.auto_when_free,
+        preferred_days: row.preferred_days
+      }
+
+      const { data, error } = await supabase
+        .from('rider_regular_training_plans')
+        .upsert(payload, { onConflict: 'rider_id' })
+        .select('*')
+        .single()
+
+      if (error) throw error
+
+      upsertRegularPlanLocal(data as RiderRegularTrainingPlanRow)
+      setRegularMessage(`Saved regular training override for ${rider.display_name}.`)
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : 'Failed to save rider regular training override.'
+      setError(message)
+    } finally {
+      setRegularSavingRiderId(null)
+    }
+  }
+
+  async function clearRegularTrainingPlan(rider: RosterRider): Promise<void> {
+    setRegularSavingRiderId(rider.rider_id)
+    setRegularMessage(null)
+    setError(null)
+
+    try {
+      const { error } = await supabase
+        .from('rider_regular_training_plans')
+        .delete()
+        .eq('rider_id', rider.rider_id)
+
+      if (error) throw error
+
+      removeRegularPlanLocal(rider.rider_id)
+      setRegularMessage(`Removed regular training override for ${rider.display_name}.`)
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : 'Failed to remove rider regular training override.'
+      setError(message)
+    } finally {
+      setRegularSavingRiderId(null)
+    }
+  }
 
   async function handleDebugBooking(): Promise<void> {
     if (!clubId || !selectedCampId) return
@@ -1324,6 +1740,12 @@ export default function TrainingPage(): JSX.Element {
         </div>
       ) : null}
 
+      {regularMessage ? (
+        <div className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-700">
+          {regularMessage}
+        </div>
+      ) : null}
+
       {currentCampBooking ? (
         <div className="rounded-xl border border-blue-200 bg-blue-50 p-5 shadow-sm">
           <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
@@ -1430,13 +1852,340 @@ export default function TrainingPage(): JSX.Element {
       </div>
 
       {activeTab === 'regular' ? (
-        <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-          <h3 className="text-lg font-semibold text-gray-900">Regular Training</h3>
-          <p className="mt-2 text-sm text-gray-600">
-            This stays intentionally light for now. Training Camps are the first live training
-            system, while regular weekly training will come after the long-term skill progression
-            processor is ready.
-          </p>
+        <div className="space-y-6">
+          <div className="grid gap-4 md:grid-cols-5">
+            <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+              <div className="text-xs font-medium uppercase tracking-wide text-gray-500">
+                Riders in scope
+              </div>
+              <div className="mt-2 text-2xl font-semibold text-gray-900">
+                {regularTrainingSummary.totalRiders}
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+              <div className="text-xs font-medium uppercase tracking-wide text-gray-500">
+                Rider overrides
+              </div>
+              <div className="mt-2 text-2xl font-semibold text-gray-900">
+                {regularTrainingSummary.overrideCount}
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+              <div className="text-xs font-medium uppercase tracking-wide text-gray-500">
+                Using team defaults
+              </div>
+              <div className="mt-2 text-2xl font-semibold text-gray-900">
+                {regularTrainingSummary.defaultOnlyCount}
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+              <div className="text-xs font-medium uppercase tracking-wide text-gray-500">
+                No plan yet
+              </div>
+              <div className="mt-2 text-2xl font-semibold text-gray-900">
+                {regularTrainingSummary.noPlanCount}
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+              <div className="text-xs font-medium uppercase tracking-wide text-gray-500">
+                Health-blocked
+              </div>
+              <div className="mt-2 text-2xl font-semibold text-gray-900">
+                {regularTrainingSummary.blockedRiders}
+              </div>
+            </div>
+          </div>
+
+          <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+            <div className="mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">Team Defaults</h3>
+              <p className="mt-1 text-sm text-gray-600">
+                These defaults apply when a rider does not have a personal override.
+              </p>
+            </div>
+
+            <div className="grid gap-4 lg:grid-cols-2">
+              {familyClubs.map(team => {
+                const row = buildDefaultRowForClub(team.club_id)
+                const ridersInTeam = roster.filter(rider => rider.club_id === team.club_id).length
+
+                return (
+                  <div
+                    key={team.club_id}
+                    className="rounded-xl border border-gray-200 bg-gray-50 p-4"
+                  >
+                    <div className="mb-4 flex items-start justify-between gap-3">
+                      <div>
+                        <div className="text-base font-semibold text-gray-900">
+                          {team.team_label}
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          {team.club_name} · Riders: {ridersInTeam}
+                        </div>
+                      </div>
+
+                      <span className="rounded-full bg-white px-2.5 py-1 text-xs text-gray-700">
+                        Scope: {row.team_scope}
+                      </span>
+                    </div>
+
+                    <div className="grid gap-3 md:grid-cols-2">
+                      <label className="block">
+                        <span className="mb-1 block text-sm font-medium text-gray-700">Focus</span>
+                        <select
+                          value={row.focus_code}
+                          onChange={event =>
+                            updateRegularDefaultDraft(team.club_id, {
+                              focus_code: event.target.value
+                            })
+                          }
+                          className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500"
+                        >
+                          {REGULAR_TRAINING_FOCUS_OPTIONS.map(option => (
+                            <option key={option} value={option}>
+                              {formatTrainingFocusLabel(option)}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+
+                      <label className="block">
+                        <span className="mb-1 block text-sm font-medium text-gray-700">
+                          Intensity
+                        </span>
+                        <select
+                          value={row.intensity}
+                          onChange={event =>
+                            updateRegularDefaultDraft(team.club_id, {
+                              intensity: event.target.value as 'light' | 'normal' | 'hard'
+                            })
+                          }
+                          className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500"
+                        >
+                          {REGULAR_TRAINING_INTENSITY_OPTIONS.map(option => (
+                            <option key={option} value={option}>
+                              {formatTrainingIntensityLabel(option)}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                    </div>
+
+                    <label className="mt-3 flex items-center gap-2 text-sm text-gray-700">
+                      <input
+                        type="checkbox"
+                        checked={row.auto_when_free}
+                        onChange={event =>
+                          updateRegularDefaultDraft(team.club_id, {
+                            auto_when_free: event.target.checked
+                          })
+                        }
+                      />
+                      Auto-apply when rider is free
+                    </label>
+
+                    <div className="mt-4">
+                      <button
+                        type="button"
+                        onClick={() => void saveRegularTrainingDefault(team.club_id)}
+                        disabled={regularSavingDefaultClubId === team.club_id}
+                        className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-300"
+                      >
+                        {regularSavingDefaultClubId === team.club_id
+                          ? 'Saving Default…'
+                          : 'Save Team Default'}
+                      </button>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+
+          <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+            <div className="mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">Rider Overrides</h3>
+              <p className="mt-1 text-sm text-gray-600">
+                Use this only when a rider should train differently from the team default.
+              </p>
+            </div>
+
+            <div className="space-y-3">
+              {roster.map(rider => {
+                const effective = getEffectiveRegularTraining(rider)
+                const draft = buildPlanRowForRider(rider)
+                const hasOverride = regularPlansByRiderId.has(rider.rider_id)
+
+                return (
+                  <div
+                    key={rider.rider_id}
+                    className="rounded-xl border border-gray-200 p-4"
+                  >
+                    <div className="grid gap-4 xl:grid-cols-[1.3fr_1fr_auto]">
+                      <div>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <div className="text-base font-semibold text-gray-900">
+                            {rider.display_name}
+                          </div>
+
+                          {rider.team_label === 'U23' ? (
+                            <span className="rounded-full bg-indigo-100 px-2 py-0.5 text-[11px] font-medium text-indigo-700">
+                              U23
+                            </span>
+                          ) : (
+                            <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-medium text-gray-700">
+                              First Team
+                            </span>
+                          )}
+
+                          <span
+                            className={`rounded-full px-2.5 py-1 text-xs font-medium ${AVAILABILITY_BADGE_STYLES[rider.availability_status]}`}
+                          >
+                            {rider.availability_status.replaceAll('_', ' ')}
+                          </span>
+
+                          <span className="rounded-full bg-gray-100 px-2.5 py-1 text-xs text-gray-700">
+                            Fatigue {rider.fatigue ?? 0}
+                          </span>
+
+                          {effective.source === 'override' ? (
+                            <span className="rounded-full bg-blue-100 px-2.5 py-1 text-xs font-medium text-blue-700">
+                              Personal override
+                            </span>
+                          ) : effective.source === 'default' ? (
+                            <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-medium text-emerald-700">
+                              Team default
+                            </span>
+                          ) : (
+                            <span className="rounded-full bg-amber-100 px-2.5 py-1 text-xs font-medium text-amber-700">
+                              No plan
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="mt-2 text-sm text-gray-500">
+                          {rider.source_club_name} · OVR {rider.overall ?? '-'}
+                        </div>
+
+                        <div className="mt-3 rounded-lg bg-gray-50 px-3 py-2 text-sm text-gray-700">
+                          Effective today:{' '}
+                          <span className="font-medium">
+                            {effective.focus_code
+                              ? `${formatTrainingFocusLabel(effective.focus_code)} · ${
+                                  effective.intensity
+                                    ? formatTrainingIntensityLabel(effective.intensity)
+                                    : '-'
+                                }`
+                              : 'No plan'}
+                          </span>
+                          {' · '}
+                          {effective.auto_when_free ? 'Auto when free' : 'Manual only'}
+                        </div>
+                      </div>
+
+                      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-1">
+                        <label className="block">
+                          <span className="mb-1 block text-sm font-medium text-gray-700">
+                            Focus
+                          </span>
+                          <select
+                            value={draft.focus_code}
+                            onChange={event =>
+                              updateRegularPlanDraft(rider, {
+                                focus_code: event.target.value
+                              })
+                            }
+                            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500"
+                          >
+                            {REGULAR_TRAINING_FOCUS_OPTIONS.map(option => (
+                              <option key={option} value={option}>
+                                {formatTrainingFocusLabel(option)}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+
+                        <label className="block">
+                          <span className="mb-1 block text-sm font-medium text-gray-700">
+                            Intensity
+                          </span>
+                          <select
+                            value={draft.intensity}
+                            onChange={event =>
+                              updateRegularPlanDraft(rider, {
+                                intensity: event.target.value as 'light' | 'normal' | 'hard'
+                              })
+                            }
+                            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500"
+                          >
+                            {REGULAR_TRAINING_INTENSITY_OPTIONS.map(option => (
+                              <option key={option} value={option}>
+                                {formatTrainingIntensityLabel(option)}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input
+                            type="checkbox"
+                            checked={draft.is_active}
+                            onChange={event =>
+                              updateRegularPlanDraft(rider, {
+                                is_active: event.target.checked
+                              })
+                            }
+                          />
+                          Override active
+                        </label>
+
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input
+                            type="checkbox"
+                            checked={draft.auto_when_free}
+                            onChange={event =>
+                              updateRegularPlanDraft(rider, {
+                                auto_when_free: event.target.checked
+                              })
+                            }
+                          />
+                          Auto when free
+                        </label>
+                      </div>
+
+                      <div className="flex flex-col gap-2 xl:items-end">
+                        <button
+                          type="button"
+                          onClick={() => void saveRegularTrainingPlan(rider)}
+                          disabled={regularSavingRiderId === rider.rider_id}
+                          className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-300"
+                        >
+                          {regularSavingRiderId === rider.rider_id
+                            ? 'Saving…'
+                            : hasOverride
+                              ? 'Save Override'
+                              : 'Create Override'}
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => void clearRegularTrainingPlan(rider)}
+                          disabled={!hasOverride || regularSavingRiderId === rider.rider_id}
+                          className="rounded-lg border border-red-300 bg-white px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                          Clear Override
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
         </div>
       ) : null}
 
@@ -1795,7 +2544,7 @@ export default function TrainingPage(): JSX.Element {
                 })}
               </div>
 
-              {overlapBlockedRiders.length > 0 ? (
+              {overlapBlockedRiderMap.size > 0 ? (
                 <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
                   Some riders are unavailable for the selected date range because they are already
                   assigned to an overlapping training camp.

@@ -65,6 +65,31 @@ type RaceCalendarEntry = RaceCalendarItem & {
 
 type CalendarView = 'season' | 'races'
 
+type SeasonCalendarFilters = {
+  races: boolean
+  trainingCamps: boolean
+  events: boolean
+  holidays: boolean
+}
+
+type MonthDayItem = {
+  dayNumber: number
+  canonicalDate: Date
+  canonicalDateString: string
+  gameParts: DerivedGameDateParts
+}
+
+type CalendarGridCell =
+  | {
+      type: 'empty'
+      key: string
+    }
+  | {
+      type: 'day'
+      key: string
+      day: MonthDayItem
+    }
+
 const GAME_MONTH_LENGTH = 30
 
 const GAME_MONTH_NAMES = [
@@ -80,6 +105,16 @@ const GAME_MONTH_NAMES = [
   'October',
   'November',
   'December'
+]
+
+const WEEKDAY_NAMES_MONDAY_FIRST = [
+  'Monday',
+  'Tuesday',
+  'Wednesday',
+  'Thursday',
+  'Friday',
+  'Saturday',
+  'Sunday'
 ]
 
 const STATUS_BADGE_STYLES: Record<string, string> = {
@@ -115,6 +150,13 @@ const WEATHER_LABELS: Array<{
   { key: 'p_sleet', label: 'Sleet' },
   { key: 'p_snow', label: 'Snow' },
   { key: 'p_thunderstorm', label: 'Thunderstorm' }
+]
+
+const FILTER_OPTIONS: Array<{ key: keyof SeasonCalendarFilters; label: string }> = [
+  { key: 'races', label: 'Races' },
+  { key: 'trainingCamps', label: 'Training Camps' },
+  { key: 'events', label: 'Events' },
+  { key: 'holidays', label: 'Holidays' }
 ]
 
 function parseDateString(value: string): Date {
@@ -170,6 +212,11 @@ function getWeekdayName(date: Date): string {
   return new Intl.DateTimeFormat('en-US', { weekday: 'long' }).format(date)
 }
 
+function getWeekdayIndexMondayFirst(date: Date): number {
+  const jsDay = date.getDay()
+  return jsDay === 0 ? 6 : jsDay - 1
+}
+
 function formatGameMonthLabel(seasonNumber: number, monthNumber: number): string {
   return `Season ${seasonNumber} - ${getGameMonthName(monthNumber)}`
 }
@@ -182,39 +229,6 @@ function formatGameDateDisplay(
 ): string {
   const weekdayName = getWeekdayName(parseDateString(canonicalDate))
   return `Season ${seasonNumber} - ${weekdayName} - ${getGameMonthName(monthNumber)} ${dayNumber}`
-}
-
-function formatGameDateShortDisplay(
-  monthNumber: number,
-  dayNumber: number,
-  canonicalDate: string
-): string {
-  const weekdayName = getWeekdayName(parseDateString(canonicalDate))
-  return `${weekdayName} - ${getGameMonthName(monthNumber)} ${dayNumber}`
-}
-
-function getGameDatePartsFromCanonical(
-  canonicalDate: string,
-  currentMonthStart: Date,
-  currentSeasonNumber: number,
-  currentMonthNumber: number
-): DerivedGameDateParts {
-  const target = parseDateString(canonicalDate)
-  const diff = differenceInDays(target, currentMonthStart)
-
-  const monthOffset = Math.floor(diff / GAME_MONTH_LENGTH)
-  const absoluteMonthIndex =
-    (currentSeasonNumber - 1) * 12 + (currentMonthNumber - 1) + monthOffset
-
-  const seasonNumber = Math.floor(absoluteMonthIndex / 12) + 1
-  const monthNumber = ((absoluteMonthIndex % 12) + 12) % 12 + 1
-  const dayNumber = diff - monthOffset * GAME_MONTH_LENGTH + 1
-
-  return {
-    seasonNumber,
-    monthNumber,
-    dayNumber
-  }
 }
 
 function formatGameDateFromCanonical(
@@ -238,7 +252,12 @@ function formatGameDateFromCanonical(
   )
 }
 
-function formatRaceGameRange(start: RaceCalendarEntry['startGameDate'], end: RaceCalendarEntry['endGameDate'], startDate: string, endDate: string): string {
+function formatRaceGameRange(
+  start: RaceCalendarEntry['startGameDate'],
+  end: RaceCalendarEntry['endGameDate'],
+  startDate: string,
+  endDate: string
+): string {
   const sameDay =
     start.seasonNumber === end.seasonNumber &&
     start.monthNumber === end.monthNumber &&
@@ -264,6 +283,41 @@ function formatRaceGameRange(start: RaceCalendarEntry['startGameDate'], end: Rac
     end.dayNumber,
     endDate
   )}`
+}
+
+function formatCalendarCellDate(monthNumber: number, dayNumber: number): string {
+  return `${getGameMonthName(monthNumber)} ${dayNumber}`
+}
+
+function formatRaceBadgeLabel(race: RaceCalendarItem): string {
+  if (race.race_type) {
+    return `${race.name} · ${titleCaseFromSnake(race.race_type)}`
+  }
+  return race.name
+}
+
+function getGameDatePartsFromCanonical(
+  canonicalDate: string,
+  currentMonthStart: Date,
+  currentSeasonNumber: number,
+  currentMonthNumber: number
+): DerivedGameDateParts {
+  const target = parseDateString(canonicalDate)
+  const diff = differenceInDays(target, currentMonthStart)
+
+  const monthOffset = Math.floor(diff / GAME_MONTH_LENGTH)
+  const absoluteMonthIndex =
+    (currentSeasonNumber - 1) * 12 + (currentMonthNumber - 1) + monthOffset
+
+  const seasonNumber = Math.floor(absoluteMonthIndex / 12) + 1
+  const monthNumber = ((absoluteMonthIndex % 12) + 12) % 12 + 1
+  const dayNumber = diff - monthOffset * GAME_MONTH_LENGTH + 1
+
+  return {
+    seasonNumber,
+    monthNumber,
+    dayNumber
+  }
 }
 
 function isDateWithinRange(date: Date, startDate: string, endDate: string): boolean {
@@ -309,6 +363,7 @@ export default function CalendarPage(): JSX.Element {
 
   const [activeView, setActiveView] = useState<CalendarView>('season')
   const [activeRaceMonth, setActiveRaceMonth] = useState(1)
+  const [displayedSeasonMonth, setDisplayedSeasonMonth] = useState(1)
 
   const [clubId, setClubId] = useState<string | null>(null)
 
@@ -321,6 +376,13 @@ export default function CalendarPage(): JSX.Element {
   const [teamWeather, setTeamWeather] = useState<WeatherNormals | null>(null)
 
   const [raceCalendarNotice, setRaceCalendarNotice] = useState<string | null>(null)
+
+  const [seasonFilters, setSeasonFilters] = useState<SeasonCalendarFilters>({
+    races: true,
+    trainingCamps: true,
+    events: false,
+    holidays: false
+  })
 
   useEffect(() => {
     let cancelled = false
@@ -471,6 +533,7 @@ export default function CalendarPage(): JSX.Element {
   useEffect(() => {
     if (gameDateParts) {
       setActiveRaceMonth(gameDateParts.month_number)
+      setDisplayedSeasonMonth(gameDateParts.month_number)
     }
   }, [gameDateParts])
 
@@ -479,11 +542,17 @@ export default function CalendarPage(): JSX.Element {
     return getMonthStartFromGameDate(currentGameDate, gameDateParts.day_number)
   }, [currentGameDate, gameDateParts])
 
+  const displayedMonthStart = useMemo(() => {
+    if (!currentMonthStart || !gameDateParts) return null
+    const monthOffset = displayedSeasonMonth - gameDateParts.month_number
+    return addDays(currentMonthStart, monthOffset * GAME_MONTH_LENGTH)
+  }, [currentMonthStart, gameDateParts, displayedSeasonMonth])
+
   const monthDays = useMemo(() => {
-    if (!currentMonthStart || !gameDateParts) return []
+    if (!displayedMonthStart || !currentMonthStart || !gameDateParts) return []
 
     return Array.from({ length: GAME_MONTH_LENGTH }, (_, index) => {
-      const canonicalDate = addDays(currentMonthStart, index)
+      const canonicalDate = addDays(displayedMonthStart, index)
       const canonicalDateString = toDateString(canonicalDate)
       const gameParts = getGameDatePartsFromCanonical(
         canonicalDateString,
@@ -499,7 +568,7 @@ export default function CalendarPage(): JSX.Element {
         gameParts
       }
     })
-  }, [currentMonthStart, gameDateParts])
+  }, [displayedMonthStart, currentMonthStart, gameDateParts])
 
   const seasonRaceEntries = useMemo(() => {
     if (!currentMonthStart || !gameDateParts) return []
@@ -537,6 +606,57 @@ export default function CalendarPage(): JSX.Element {
   const activeMonthRaces = useMemo(() => {
     return seasonRaceEntries.filter(race => race.startGameDate.monthNumber === activeRaceMonth)
   }, [seasonRaceEntries, activeRaceMonth])
+
+  const weekdayHeaders = useMemo(() => {
+    return WEEKDAY_NAMES_MONDAY_FIRST
+  }, [])
+
+  const calendarGridCells = useMemo<CalendarGridCell[]>(() => {
+    if (monthDays.length === 0) return []
+
+    const firstWeekdayIndex = getWeekdayIndexMondayFirst(monthDays[0].canonicalDate)
+    const leadingEmptyCells: CalendarGridCell[] = Array.from(
+      { length: firstWeekdayIndex },
+      (_, index) => ({
+        type: 'empty',
+        key: `leading-empty-${index}`
+      })
+    )
+
+    const dayCells: CalendarGridCell[] = monthDays.map(day => ({
+      type: 'day',
+      key: day.canonicalDateString,
+      day
+    }))
+
+    const totalBeforeTrailing = leadingEmptyCells.length + dayCells.length
+    const trailingEmptyCount = (7 - (totalBeforeTrailing % 7)) % 7
+
+    const trailingEmptyCells: CalendarGridCell[] = Array.from(
+      { length: trailingEmptyCount },
+      (_, index) => ({
+        type: 'empty',
+        key: `trailing-empty-${index}`
+      })
+    )
+
+    return [...leadingEmptyCells, ...dayCells, ...trailingEmptyCells]
+  }, [monthDays])
+
+  function toggleSeasonFilter(key: keyof SeasonCalendarFilters): void {
+    setSeasonFilters(current => ({
+      ...current,
+      [key]: !current[key]
+    }))
+  }
+
+  function handlePreviousSeasonMonth(): void {
+    setDisplayedSeasonMonth(current => Math.max(1, current - 1))
+  }
+
+  function handleNextSeasonMonth(): void {
+    setDisplayedSeasonMonth(current => Math.min(12, current + 1))
+  }
 
   if (loading) {
     return <div className="w-full text-sm text-gray-600">Loading calendar…</div>
@@ -594,7 +714,8 @@ export default function CalendarPage(): JSX.Element {
               {teamWeather && gameDateParts && currentGameDate ? (
                 <div className="mt-2 space-y-1.5">
                   <div className="text-sm font-medium text-gray-900">
-                    Today: {formatGameDateDisplay(
+                    Today:{' '}
+                    {formatGameDateDisplay(
                       gameDateParts.season_number,
                       gameDateParts.month_number,
                       gameDateParts.day_number,
@@ -627,14 +748,11 @@ export default function CalendarPage(): JSX.Element {
       <div className="w-full rounded-lg border border-gray-100 bg-white p-6 shadow">
         {activeView === 'season' ? (
           <>
-            <div className="mb-6 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+            <div className="mb-6 flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
               <div>
                 <h4 className="font-semibold text-gray-900">
                   {gameDateParts
-                    ? formatGameMonthLabel(
-                        gameDateParts.season_number,
-                        gameDateParts.month_number
-                      )
+                    ? formatGameMonthLabel(gameDateParts.season_number, displayedSeasonMonth)
                     : 'Current Month'}
                 </h4>
                 <p className="text-sm text-gray-500">
@@ -649,40 +767,126 @@ export default function CalendarPage(): JSX.Element {
                 </p>
               </div>
 
-              <div className="text-sm text-gray-500">
-                {bookings.length} planned / active training camp
-                {bookings.length === 1 ? '' : 's'}
+              <div className="flex justify-center xl:flex-1">
+                <div className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white p-1 shadow-sm">
+                  <button
+                    type="button"
+                    onClick={handlePreviousSeasonMonth}
+                    disabled={displayedSeasonMonth === 1}
+                    className={`rounded-md px-3 py-2 text-sm font-medium transition ${
+                      displayedSeasonMonth === 1
+                        ? 'cursor-not-allowed bg-gray-100 text-gray-400'
+                        : 'text-gray-700 hover:bg-gray-100'
+                    }`}
+                  >
+                    ← Previous
+                  </button>
+
+                  <div className="min-w-[140px] px-3 text-center text-sm font-semibold text-gray-800">
+                    {getGameMonthName(displayedSeasonMonth)}
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleNextSeasonMonth}
+                    disabled={displayedSeasonMonth === 12}
+                    className={`rounded-md px-3 py-2 text-sm font-medium transition ${
+                      displayedSeasonMonth === 12
+                        ? 'cursor-not-allowed bg-gray-100 text-gray-400'
+                        : 'text-gray-700 hover:bg-gray-100'
+                    }`}
+                  >
+                    Next →
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-3 xl:items-end">
+                <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3">
+                  <div className="flex flex-wrap gap-x-4 gap-y-2">
+                    {FILTER_OPTIONS.map(option => (
+                      <label
+                        key={option.key}
+                        className="flex cursor-pointer items-center gap-2 text-sm text-gray-700"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={seasonFilters[option.key]}
+                          onChange={() => toggleSeasonFilter(option.key)}
+                          className="h-4 w-4 rounded border-gray-300 text-yellow-400 focus:ring-yellow-400"
+                        />
+                        <span>{option.label}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="text-sm text-gray-500">
+                  {bookings.length} planned / active training camp
+                  {bookings.length === 1 ? '' : 's'}
+                </div>
               </div>
             </div>
 
+            <div className="mb-2 grid w-full grid-cols-7 gap-2">
+              {weekdayHeaders.map(header => (
+                <div key={header} className="px-3 text-sm font-medium text-gray-600">
+                  {header}
+                </div>
+              ))}
+            </div>
+
             <div className="grid w-full grid-cols-7 gap-2 text-sm text-gray-600">
-              {monthDays.map(day => {
-                const dayBookings = bookings.filter(booking =>
-                  isDateWithinRange(day.canonicalDate, booking.start_date, booking.end_date)
-                )
+              {calendarGridCells.map(cell => {
+                if (cell.type === 'empty') {
+                  return <div key={cell.key} className="min-h-[110px]" />
+                }
+
+                const day = cell.day
+
+                const dayBookings = seasonFilters.trainingCamps
+                  ? bookings.filter(booking =>
+                      isDateWithinRange(day.canonicalDate, booking.start_date, booking.end_date)
+                    )
+                  : []
+
+                const dayRaces = seasonFilters.races
+                  ? seasonRaceEntries.filter(race =>
+                      isDateWithinRange(
+                        day.canonicalDate,
+                        race.start_date,
+                        race.end_date ?? race.start_date
+                      )
+                    )
+                  : []
 
                 const isToday =
                   currentGameDate != null && day.canonicalDateString === currentGameDate
 
                 return (
                   <div
-                    key={day.canonicalDateString}
+                    key={cell.key}
                     className={`min-h-[110px] rounded-md border p-3 ${
                       isToday ? 'border-yellow-400 bg-yellow-50' : 'border-gray-200'
                     }`}
                   >
                     <div className="text-[11px] font-medium leading-4 text-gray-700">
-                      {formatGameDateShortDisplay(
-                        day.gameParts.monthNumber,
-                        day.gameParts.dayNumber,
-                        day.canonicalDateString
-                      )}
+                      {formatCalendarCellDate(day.gameParts.monthNumber, day.gameParts.dayNumber)}
                     </div>
 
                     <div className="mt-2 space-y-1">
+                      {dayRaces.map(race => (
+                        <div
+                          key={`${race.id}-${day.canonicalDateString}-race`}
+                          className="rounded-md bg-blue-100 px-2 py-1 text-[11px] font-medium text-blue-700"
+                        >
+                          {formatRaceBadgeLabel(race)}
+                        </div>
+                      ))}
+
                       {dayBookings.map(booking => (
                         <div
-                          key={`${booking.id}-${day.canonicalDateString}`}
+                          key={`${booking.id}-${day.canonicalDateString}-camp`}
                           className={`rounded-md px-2 py-1 text-[11px] font-medium ${
                             booking.status === 'active'
                               ? 'bg-green-100 text-green-700'
@@ -781,21 +985,23 @@ export default function CalendarPage(): JSX.Element {
               </div>
             </div>
 
-            <div className="mb-4 inline-flex flex-wrap rounded-lg border border-gray-100 bg-white p-1 shadow-sm">
-              {Array.from({ length: 12 }, (_, index) => index + 1).map(monthNumber => (
-                <button
-                  key={monthNumber}
-                  type="button"
-                  onClick={() => setActiveRaceMonth(monthNumber)}
-                  className={`rounded-md px-4 py-2 text-sm font-medium transition ${
-                    activeRaceMonth === monthNumber
-                      ? 'bg-yellow-400 text-black'
-                      : 'text-gray-600 hover:bg-gray-100'
-                  }`}
-                >
-                  {getGameMonthName(monthNumber)}
-                </button>
-              ))}
+            <div className="mb-4 w-full rounded-lg border border-gray-100 bg-white p-1 shadow-sm">
+              <div className="grid w-full grid-cols-2 gap-1 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-12">
+                {Array.from({ length: 12 }, (_, index) => index + 1).map(monthNumber => (
+                  <button
+                    key={monthNumber}
+                    type="button"
+                    onClick={() => setActiveRaceMonth(monthNumber)}
+                    className={`w-full rounded-md px-3 py-2 text-center text-sm font-medium transition ${
+                      activeRaceMonth === monthNumber
+                        ? 'bg-yellow-400 text-black'
+                        : 'text-gray-600 hover:bg-gray-100'
+                    }`}
+                  >
+                    {getGameMonthName(monthNumber)}
+                  </button>
+                ))}
+              </div>
             </div>
 
             {raceCalendarNotice ? (

@@ -467,7 +467,13 @@ export default function FinancePage(): JSX.Element {
 
           {tab === 'tax' && (
             <ErrorBoundary title="Tax tab error">
-              <TaxTab />
+              {clubId ? (
+                <TaxTab clubId={clubId} currency={currency} />
+              ) : (
+                <div className="bg-white p-4 rounded shadow text-sm text-gray-600">
+                  Create or join a main club to see tax data.
+                </div>
+              )}
             </ErrorBoundary>
           )}
 

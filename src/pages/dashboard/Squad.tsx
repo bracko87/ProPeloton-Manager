@@ -1273,11 +1273,13 @@ function RiderProfileModal({
 
                 <div className="mt-5 border-t border-gray-200 pt-4">
                   <div className="rounded-xl border border-gray-200 p-4">
-                    <div className="text-xs text-gray-500">Health</div>
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <div className="text-sm font-semibold text-gray-700">Health</div>
 
-                    <div className="mt-3 flex flex-wrap items-center gap-2">
-                      <RiderStatusBadge status={selectedRider.availability_status} />
-                      <FatigueBadge fatigue={selectedRider.fatigue} />
+                      <div className="flex flex-wrap items-center justify-end gap-2">
+                        <RiderStatusBadge status={selectedRider.availability_status} />
+                        <FatigueBadge fatigue={selectedRider.fatigue} />
+                      </div>
                     </div>
 
                     <div className="mt-3 space-y-1 text-sm text-gray-700">
@@ -1380,7 +1382,6 @@ function RiderProfileModal({
                   <span className="rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-700">
                     Age {profileAge ?? '—'}
                   </span>
-                  <RiderStatusBadge status={selectedRider.availability_status} />
                   <span className="rounded-full bg-yellow-100 px-3 py-1 text-sm font-medium text-yellow-800">
                     Overall {selectedRider.overall}%
                   </span>
