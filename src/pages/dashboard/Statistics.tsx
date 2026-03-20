@@ -173,6 +173,20 @@ type RiderBaseLookupRow = {
   image_url: string | null
 }
 
+type ClubRosterMini = {
+  rider_id: string
+  club_id: string
+}
+
+type ClubMini = {
+  id: string
+  name: string
+  club_tier: string | null
+  is_ai: boolean | null
+  is_active: boolean | null
+  country_code: string | null
+}
+
 const PAGE_SIZE = 20
 const RIDER_TOP_LIMIT = 50
 
@@ -302,15 +316,13 @@ function formatDateValue(value: string | null | undefined): string {
   return date.toLocaleDateString()
 }
 
-function formatScoutedRatingRange(value: number | null | undefined): string {
+function getApproxRangeLabel(value: number | null | undefined) {
   if (value === null || value === undefined) return 'Hidden'
-  const numericValue = Math.round(Number(value))
-  if (!Number.isFinite(numericValue)) return 'Hidden'
-
-  const lowerBound = Math.max(0, Math.floor(numericValue / 10) * 10)
-  const upperBound = lowerBound >= 90 ? 99 : lowerBound + 10
-
-  return `${lowerBound}-${upperBound}`
+  const safe = Math.max(40, Math.min(99, Number(value)))
+  if (!Number.isFinite(safe)) return 'Hidden'
+  const start = Math.floor(safe / 10) * 10
+  const end = Math.min(start + 9, 99)
+  return `${start}-${end}`
 }
 
 function getClubTierLabel(clubTier: string | null): string {
@@ -338,6 +350,25 @@ function getDivisionLabelFromProfile(profile: ClubProfilePopupRecord): string {
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null
+}
+
+function resolveStringValue(raw: Record<string, unknown>, aliases: string[]) {
+  for (const key of aliases) {
+    const value = raw[key]
+    if (typeof value === 'string' && value.trim() !== '') return value.trim()
+  }
+  return null
+}
+
+function resolveNumberValue(raw: Record<string, unknown>, aliases: string[]) {
+  for (const key of aliases) {
+    const value = raw[key]
+    if (typeof value === 'number' && Number.isFinite(value)) return value
+    if (typeof value === 'string' && value.trim() !== '' && Number.isFinite(Number(value))) {
+      return Number(value)
+    }
+  }
+  return null
 }
 
 function getKitPreviewSrc(kitConfig: unknown): string | null {
@@ -1232,26 +1263,43 @@ function RiderProfileModal({
         if (cancelled) return
         if (statsRes.error) throw statsRes.error
 
-        const rawRider = (statsRes.data ?? null) as Omit<RiderStatsRow, 'age_years'> | null
+        const rawRider = (statsRes.data ?? null) as Record<string, unknown> | null
         const baseRider = baseRes.error ? null : ((baseRes.data ?? null) as RiderBaseLookupRow | null)
+
+        const resolvedCountryCode =
+          (rawRider ? resolveStringValue(rawRider, ['country_code', 'nationality_code', 'country']) : null) ??
+          baseRider?.country_code ??
+          riderContext?.country_code ??
+          null
+
+        const resolvedBirthDate =
+          (rawRider ? resolveStringValue(rawRider, ['birth_date', 'dob', 'date_of_birth']) : null) ??
+          baseRider?.birth_date ??
+          riderContext?.birth_date ??
+          null
+
+        const resolvedImageUrl =
+          (rawRider ? resolveStringValue(rawRider, ['image_url']) : null) ??
+          baseRider?.image_url ??
+          riderContext?.image_url ??
+          null
 
         const mergedRider = rawRider
           ? ({
-              ...rawRider,
-              country_code: rawRider.country_code ?? baseRider?.country_code ?? null,
-              birth_date: rawRider.birth_date ?? baseRider?.birth_date ?? null,
-              image_url: rawRider.image_url ?? baseRider?.image_url ?? null,
-            } as Omit<RiderStatsRow, 'age_years'>)
+              ...(rawRider as Record<string, unknown>),
+              ...(rawRider as Omit<RiderStatsRow, 'age_years'>),
+              country_code: resolvedCountryCode,
+              birth_date: resolvedBirthDate,
+              image_url: resolvedImageUrl,
+              age_years:
+                getAgeYearsAtDate(resolvedBirthDate, currentGameDate) ??
+                resolveNumberValue(rawRider, ['age_years', 'age', 'rider_age']) ??
+                riderContext?.age_years ??
+                null,
+            } as RiderProfileRow)
           : null
 
-        setRider(
-          mergedRider
-            ? ({
-                ...mergedRider,
-                age_years: getAgeYearsAtDate(mergedRider.birth_date, currentGameDate),
-              } as RiderProfileRow)
-            : null
-        )
+        setRider(mergedRider)
       } catch (err) {
         console.error('Failed to load rider profile:', err)
         if (!cancelled) {
@@ -1268,7 +1316,7 @@ function RiderProfileModal({
     return () => {
       cancelled = true
     }
-  }, [isOpen, riderId, currentGameDate])
+  }, [isOpen, riderId, currentGameDate, riderContext])
 
   if (!isOpen || !riderId) return null
 
@@ -1527,7 +1575,7 @@ function RiderProfileModal({
                       <DetailItem
                         key={stat.label}
                         label={stat.label}
-                        value={formatScoutedRatingRange(stat.value)}
+                        value={getApproxRangeLabel(stat.value)}
                       />
                     ))}
                   </div>
@@ -1647,6 +1695,8 @@ export default function StatisticsPage() {
           snapshotsRes,
           ridersRes,
           riderBaseRes,
+          clubRosterRes,
+          clubsRes,
           countriesRes,
           currentSeasonRes,
           currentGameDateRes,
@@ -1656,6 +1706,8 @@ export default function StatisticsPage() {
           supabase.from('team_ranking_season_snapshots').select('*'),
           supabase.from('rider_statistics_view').select('*'),
           supabase.from('riders').select('id, country_code, birth_date, image_url'),
+          supabase.from('club_riders').select('rider_id, club_id'),
+          supabase.from('clubs').select('id, name, club_tier, is_ai, is_active, country_code'),
           supabase.from('countries').select('code, name'),
           supabase.rpc('get_current_season_number'),
           supabase.rpc('get_current_game_date'),
@@ -1665,18 +1717,21 @@ export default function StatisticsPage() {
           teamRankingsRes.error ||
           winnersRes.error ||
           snapshotsRes.error ||
-          ridersRes.error
+          ridersRes.error ||
+          clubRosterRes.error ||
+          clubsRes.error
 
         if (firstError) throw firstError
 
         const teams = (teamRankingsRes.data ?? []) as TeamCurrentRow[]
         const winners = (winnersRes.data ?? []) as TeamWinnerRow[]
         const snapshots = (snapshotsRes.data ?? []) as TeamSnapshotRow[]
-        const riders = (ridersRes.data ?? []) as Omit<RiderStatsRow, 'age_years'>[]
+        const riders = (ridersRes.data ?? []) as Record<string, unknown>[]
         const riderBaseRows = riderBaseRes.error
           ? []
           : ((riderBaseRes.data ?? []) as RiderBaseLookupRow[])
-        const riderBaseById = new Map(riderBaseRows.map(rider => [rider.id, rider]))
+        const clubRoster = (clubRosterRes.data ?? []) as ClubRosterMini[]
+        const clubs = (clubsRes.data ?? []) as ClubMini[]
         const countryRows = countriesRes.error ? [] : ((countriesRes.data ?? []) as CountryRow[])
         const currentSeason =
           currentSeasonRes.error || currentSeasonRes.data === null || currentSeasonRes.data === undefined
@@ -1686,19 +1741,77 @@ export default function StatisticsPage() {
           ? null
           : normalizeGameDateValue(currentGameDateRes.data)
 
-        const mergedRiders: RiderStatsRow[] = riders.map(rider => {
-          const baseRider = riderBaseById.get(rider.id)
+        const riderBaseById = new Map(riderBaseRows.map(rider => [rider.id, rider]))
+        const clubById = new Map(clubs.map(club => [club.id, club]))
+        const rosterByRiderId = new Map(clubRoster.map(row => [row.rider_id, row.club_id]))
 
-          const mergedCountryCode = rider.country_code ?? baseRider?.country_code ?? null
-          const mergedBirthDate = rider.birth_date ?? baseRider?.birth_date ?? null
-          const mergedImageUrl = rider.image_url ?? baseRider?.image_url ?? null
+        const mergedRiders: RiderStatsRow[] = riders.map(riderRaw => {
+          const riderId = resolveStringValue(riderRaw, ['id']) ?? String(riderRaw.id ?? '')
+          const baseRider = riderBaseById.get(riderId)
+          const clubId =
+            resolveStringValue(riderRaw, ['club_id']) ?? rosterByRiderId.get(riderId) ?? null
+          const club = clubId ? clubById.get(clubId) : undefined
+
+          const resolvedCountryCode =
+            resolveStringValue(riderRaw, ['country_code', 'nationality_code', 'country']) ??
+            baseRider?.country_code ??
+            club?.country_code ??
+            ''
+
+          const resolvedBirthDate =
+            resolveStringValue(riderRaw, ['birth_date', 'dob', 'date_of_birth']) ??
+            baseRider?.birth_date ??
+            null
+
+          const resolvedImageUrl =
+            resolveStringValue(riderRaw, ['image_url']) ?? baseRider?.image_url ?? null
+
+          const resolvedAgeYears =
+            getAgeYearsAtDate(resolvedBirthDate, normalizedGameDate) ??
+            resolveNumberValue(riderRaw, ['age_years', 'age', 'rider_age'])
+
+          const clubIsAiRaw = riderRaw.club_is_ai
+          const clubIsActiveRaw = riderRaw.club_is_active
 
           return {
-            ...rider,
-            country_code: mergedCountryCode,
-            birth_date: mergedBirthDate,
-            image_url: mergedImageUrl,
-            age_years: getAgeYearsAtDate(mergedBirthDate, normalizedGameDate),
+            id: riderId,
+            display_name: resolveStringValue(riderRaw, ['display_name', 'name']) ?? 'Unknown rider',
+            country_code: resolvedCountryCode,
+            role: resolveStringValue(riderRaw, ['role']) ?? '',
+            overall: resolveNumberValue(riderRaw, ['overall']),
+            potential: resolveNumberValue(riderRaw, ['potential']),
+            sprint: resolveNumberValue(riderRaw, ['sprint']),
+            climbing: resolveNumberValue(riderRaw, ['climbing']),
+            time_trial: resolveNumberValue(riderRaw, ['time_trial']),
+            endurance: resolveNumberValue(riderRaw, ['endurance']),
+            flat: resolveNumberValue(riderRaw, ['flat']),
+            recovery: resolveNumberValue(riderRaw, ['recovery']),
+            resistance: resolveNumberValue(riderRaw, ['resistance']),
+            race_iq: resolveNumberValue(riderRaw, ['race_iq']),
+            teamwork: resolveNumberValue(riderRaw, ['teamwork']),
+            morale: resolveNumberValue(riderRaw, ['morale']),
+            birth_date: resolvedBirthDate,
+            market_value: resolveNumberValue(riderRaw, ['market_value']),
+            salary: resolveNumberValue(riderRaw, ['salary']),
+            contract_expires_season: resolveNumberValue(riderRaw, ['contract_expires_season']),
+            availability_status:
+              resolveStringValue(riderRaw, ['availability_status']) ?? 'fit',
+            fatigue: resolveNumberValue(riderRaw, ['fatigue']),
+            image_url: resolvedImageUrl,
+            club_id: clubId,
+            club_name: resolveStringValue(riderRaw, ['club_name']) ?? club?.name ?? null,
+            club_tier: resolveStringValue(riderRaw, ['club_tier']) ?? club?.club_tier ?? null,
+            club_is_ai:
+              typeof clubIsAiRaw === 'boolean' ? clubIsAiRaw : (club?.is_ai ?? null),
+            club_is_active:
+              typeof clubIsActiveRaw === 'boolean' ? clubIsActiveRaw : (club?.is_active ?? null),
+            age_years: resolvedAgeYears ?? null,
+            season_points_overall:
+              resolveNumberValue(riderRaw, ['season_points_overall']) ?? 0,
+            season_points_sprint:
+              resolveNumberValue(riderRaw, ['season_points_sprint']) ?? 0,
+            season_points_climbing:
+              resolveNumberValue(riderRaw, ['season_points_climbing']) ?? 0,
           }
         })
 
@@ -2605,7 +2718,6 @@ export default function StatisticsPage() {
                           <th className="pb-3 pr-3">Team</th>
                           <th className="pb-3 pr-3">Country</th>
                           <th className="pb-3 pr-3">Age</th>
-                          <th className="pb-3 pr-3">Role</th>
                           <th className="pb-3 text-right">{formatRiderMetricLabel(riderMetric)} points</th>
                         </tr>
                       </thead>
@@ -2630,7 +2742,6 @@ export default function StatisticsPage() {
                               <CountryFlag code={row.country_code} countryNameByCode={countryNameByCode} />
                             </td>
                             <td className="py-3 pr-3 text-slate-600">{row.age_years ?? '—'}</td>
-                            <td className="py-3 pr-3 text-slate-600">{formatCompetitionLabel(row.role)}</td>
                             <td className="py-3 text-right font-semibold text-slate-900">
                               {Number(row[riderMetric] ?? 0)}
                             </td>
