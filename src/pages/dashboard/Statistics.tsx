@@ -59,7 +59,7 @@ type TeamSnapshotRow = {
 type RiderBaseRow = {
   id: string
   display_name: string
-  country_code: string
+  country_code: string | null
   role: string
   overall: number | null
   potential: number | null
@@ -85,6 +85,7 @@ type RiderBaseRow = {
 type RiderStatsRow = RiderBaseRow & {
   club_id: string | null
   club_name: string | null
+  club_country_code: string | null
   club_tier: string | null
   club_is_ai: boolean | null
   club_is_active: boolean | null
@@ -93,8 +94,6 @@ type RiderStatsRow = RiderBaseRow & {
   season_points_sprint: number
   season_points_climbing: number
 }
-
-type RiderProfileRow = RiderStatsRow & Record<string, unknown>
 
 type CountryRow = {
   code: string
@@ -191,7 +190,6 @@ const PAGE_SIZE = 20
 const RIDER_TOP_LIMIT = 50
 
 const TEAM_PAGE_BASE = '/dashboard/team'
-const RIDER_PAGE_BASE = '/dashboard/rider'
 
 const moneyFormatter = new Intl.NumberFormat('en-US', {
   style: 'currency',
@@ -247,10 +245,6 @@ function getTeamPageHref(id: string) {
   return buildHashHref(`${TEAM_PAGE_BASE}/${id}`)
 }
 
-function getRiderPageHref(id: string) {
-  return buildHashHref(`${RIDER_PAGE_BASE}/${id}`)
-}
-
 function toTitleCase(value: string) {
   return value
     .toLowerCase()
@@ -300,6 +294,12 @@ function getCountryName(code: string | null, countryNameByCode: Map<string, stri
 function getFlagUrl(code: string | null) {
   if (!code) return null
   return `https://flagcdn.com/24x18/${code.toLowerCase()}.png`
+}
+
+function getDisplayedRiderCountryCode(
+  row: Pick<RiderStatsRow, 'club_country_code' | 'country_code'>
+) {
+  return row.club_country_code ?? row.country_code ?? null
 }
 
 function formatNumberValue(value: number | string | null | undefined): string {
@@ -511,20 +511,6 @@ function TextSubTabs({
         ))}
       </div>
     </div>
-  )
-}
-
-function EntityLink({
-  href,
-  children,
-}: {
-  href: string
-  children: React.ReactNode
-}) {
-  return (
-    <a href={href} className="font-medium text-slate-900 hover:text-yellow-700 hover:underline">
-      {children}
-    </a>
   )
 }
 
@@ -947,7 +933,7 @@ function ClubProfileModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4"
       onClick={onClose}
     >
       <div
@@ -1201,394 +1187,6 @@ function ClubProfileModal({
   )
 }
 
-function RiderProfileModal({
-  riderId,
-  isOpen,
-  onClose,
-  riderContext,
-  currentGameDate,
-  countryNameByCode,
-  onOpenTeamProfile,
-}: {
-  riderId: string | null
-  isOpen: boolean
-  onClose: () => void
-  riderContext: RiderStatsRow | null
-  currentGameDate: string | null
-  countryNameByCode: Map<string, string>
-  onOpenTeamProfile: (teamId: string) => void
-}) {
-  const [rider, setRider] = useState<RiderProfileRow | null>(null)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [hasScouted, setHasScouted] = useState(false)
-  const [actionNotice, setActionNotice] = useState<string | null>(null)
-
-  useEffect(() => {
-    if (!isOpen) return
-
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') onClose()
-    }
-
-    window.addEventListener('keydown', onKeyDown)
-    return () => window.removeEventListener('keydown', onKeyDown)
-  }, [isOpen, onClose])
-
-  useEffect(() => {
-    if (!isOpen) return
-    setHasScouted(false)
-    setActionNotice(null)
-  }, [isOpen, riderId])
-
-  useEffect(() => {
-    if (!isOpen || !riderId) return
-
-    let cancelled = false
-
-    async function loadRiderProfile() {
-      try {
-        setLoading(true)
-        setError(null)
-
-        const [statsRes, baseRes] = await Promise.all([
-          supabase.from('rider_statistics_view').select('*').eq('id', riderId).single(),
-          supabase
-            .from('riders')
-            .select('id, country_code, birth_date, image_url')
-            .eq('id', riderId)
-            .maybeSingle(),
-        ])
-
-        if (cancelled) return
-        if (statsRes.error) throw statsRes.error
-
-        const rawRider = (statsRes.data ?? null) as Record<string, unknown> | null
-        const baseRider = baseRes.error ? null : ((baseRes.data ?? null) as RiderBaseLookupRow | null)
-
-        const resolvedCountryCode =
-          (rawRider ? resolveStringValue(rawRider, ['country_code', 'nationality_code', 'country']) : null) ??
-          baseRider?.country_code ??
-          riderContext?.country_code ??
-          null
-
-        const resolvedBirthDate =
-          (rawRider ? resolveStringValue(rawRider, ['birth_date', 'dob', 'date_of_birth']) : null) ??
-          baseRider?.birth_date ??
-          riderContext?.birth_date ??
-          null
-
-        const resolvedImageUrl =
-          (rawRider ? resolveStringValue(rawRider, ['image_url']) : null) ??
-          baseRider?.image_url ??
-          riderContext?.image_url ??
-          null
-
-        const mergedRider = rawRider
-          ? ({
-              ...(rawRider as Record<string, unknown>),
-              ...(rawRider as Omit<RiderStatsRow, 'age_years'>),
-              country_code: resolvedCountryCode,
-              birth_date: resolvedBirthDate,
-              image_url: resolvedImageUrl,
-              age_years:
-                getAgeYearsAtDate(resolvedBirthDate, currentGameDate) ??
-                resolveNumberValue(rawRider, ['age_years', 'age', 'rider_age']) ??
-                riderContext?.age_years ??
-                null,
-            } as RiderProfileRow)
-          : null
-
-        setRider(mergedRider)
-      } catch (err) {
-        console.error('Failed to load rider profile:', err)
-        if (!cancelled) {
-          setRider(null)
-          setError('Failed to load rider profile.')
-        }
-      } finally {
-        if (!cancelled) setLoading(false)
-      }
-    }
-
-    void loadRiderProfile()
-
-    return () => {
-      cancelled = true
-    }
-  }, [isOpen, riderId, currentGameDate, riderContext])
-
-  if (!isOpen || !riderId) return null
-
-  const resolvedRider = rider ?? riderContext
-  const ageYears =
-    resolvedRider?.age_years ??
-    getAgeYearsAtDate(resolvedRider?.birth_date ?? null, currentGameDate)
-
-  const hasTeam = !!resolvedRider?.club_id && !!resolvedRider?.club_name
-  const canOfferContract = !!resolvedRider && !hasTeam
-  const canTransferOffer = !!resolvedRider && hasTeam
-
-  const scoutStats: Array<{ label: string; value: number | null | undefined }> = resolvedRider
-    ? [
-        { label: 'Overall', value: resolvedRider.overall },
-        { label: 'Potential', value: resolvedRider.potential },
-        { label: 'Sprint', value: resolvedRider.sprint },
-        { label: 'Climbing', value: resolvedRider.climbing },
-        { label: 'Time Trial', value: resolvedRider.time_trial },
-        { label: 'Endurance', value: resolvedRider.endurance },
-        { label: 'Flat', value: resolvedRider.flat },
-        { label: 'Recovery', value: resolvedRider.recovery },
-        { label: 'Resistance', value: resolvedRider.resistance },
-        { label: 'Race IQ', value: resolvedRider.race_iq },
-        { label: 'Teamwork', value: resolvedRider.teamwork },
-        { label: 'Morale', value: resolvedRider.morale },
-      ]
-    : []
-
-  const handleScout = () => {
-    setHasScouted(true)
-    setActionNotice('Scout report updated. Approximate rider skill ranges are now visible.')
-  }
-
-  const handleOfferContract = () => {
-    if (!canOfferContract) return
-    setActionNotice('Contract offer action is available for free agents. Connect this button to your contract flow.')
-  }
-
-  const handleTransferOffer = () => {
-    if (!canTransferOffer) return
-    setActionNotice('Transfer offer action is available for riders with a team. Connect this button to your transfer flow.')
-  }
-
-  return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4"
-      onClick={onClose}
-    >
-      <div
-        className="max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-2xl bg-white shadow-2xl"
-        onClick={event => event.stopPropagation()}
-      >
-        <div className="sticky top-0 z-10 flex items-start justify-between border-b border-slate-200 bg-white px-6 py-4">
-          <div>
-            <h3 className="text-xl font-semibold text-slate-900">Rider profile</h3>
-            <p className="mt-1 text-sm text-slate-600">
-              Basic rider information with scouting and transfer actions.
-            </p>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <a
-              href={getRiderPageHref(riderId)}
-              className="inline-flex items-center rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
-            >
-              Open full page
-            </a>
-
-            <button
-              type="button"
-              onClick={onClose}
-              className="inline-flex items-center rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
-            >
-              Close
-            </button>
-          </div>
-        </div>
-
-        <div className="px-6 py-6">
-          {loading ? (
-            <div className="py-10 text-center text-sm text-slate-500">Loading rider profile...</div>
-          ) : null}
-
-          {!loading && error ? (
-            <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-              {error}
-            </div>
-          ) : null}
-
-          {!loading && !error && resolvedRider ? (
-            <div className="space-y-6">
-              <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-                <div className="flex items-start gap-4">
-                  <div className="flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-slate-200 bg-white">
-                    {resolvedRider.image_url ? (
-                      <img
-                        src={resolvedRider.image_url}
-                        alt={resolvedRider.display_name}
-                        className="h-full w-full object-cover"
-                        loading="lazy"
-                      />
-                    ) : (
-                      <span className="text-xs text-slate-400">No image</span>
-                    )}
-                  </div>
-
-                  <div>
-                    <h4 className="text-2xl font-semibold text-slate-900">{resolvedRider.display_name}</h4>
-
-                    <div className="mt-2 flex flex-wrap items-center gap-3 text-sm text-slate-600">
-                      <div className="flex items-center gap-2">
-                        <CountryFlag
-                          code={resolvedRider.country_code}
-                          countryNameByCode={countryNameByCode}
-                        />
-                        <span>{getCountryName(resolvedRider.country_code, countryNameByCode)}</span>
-                      </div>
-
-                      <span>•</span>
-                      <span>{formatCompetitionLabel(resolvedRider.role)}</span>
-
-                      {ageYears !== null ? (
-                        <>
-                          <span>•</span>
-                          <span>{ageYears} years</span>
-                        </>
-                      ) : null}
-                    </div>
-
-                    <div className="mt-3 flex flex-wrap items-center gap-2">
-                      <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700">
-                        Availability: {resolvedRider.availability_status ?? 'fit'}
-                      </span>
-
-                      {hasTeam ? (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            onClose()
-                            onOpenTeamProfile(resolvedRider.club_id!)
-                          }}
-                          className="rounded-full bg-yellow-100 px-2.5 py-1 text-xs font-medium text-yellow-800 hover:bg-yellow-200"
-                        >
-                          Team: {resolvedRider.club_name}
-                        </button>
-                      ) : (
-                        <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-medium text-emerald-800">
-                          Free agent
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                <DetailItem
-                  label="Nationality"
-                  value={
-                    <div className="flex items-center gap-2">
-                      <CountryFlag
-                        code={resolvedRider.country_code}
-                        countryNameByCode={countryNameByCode}
-                      />
-                      <span>{getCountryName(resolvedRider.country_code, countryNameByCode)}</span>
-                    </div>
-                  }
-                />
-                <DetailItem label="Age" value={ageYears ?? '-'} />
-                <DetailItem label="Role" value={formatCompetitionLabel(resolvedRider.role)} />
-                <DetailItem label="Team" value={resolvedRider.club_name ?? 'No team'} />
-                <DetailItem label="Availability" value={resolvedRider.availability_status ?? 'fit'} />
-                <DetailItem
-                  label="Contract expires"
-                  value={formatNumberValue(resolvedRider.contract_expires_season)}
-                />
-                <DetailItem
-                  label="Market value"
-                  value={moneyFormatter.format(resolvedRider.market_value ?? 0)}
-                />
-                <DetailItem label="Salary" value={moneyFormatter.format(resolvedRider.salary ?? 0)} />
-              </div>
-
-              <div className="rounded-xl border border-slate-200 p-4">
-                <div className="flex flex-wrap gap-3">
-                  <button
-                    type="button"
-                    onClick={handleScout}
-                    className={cx(
-                      'inline-flex items-center rounded-md border px-4 py-2 text-sm font-medium transition',
-                      hasScouted
-                        ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
-                        : 'border-yellow-300 bg-yellow-400 text-slate-900 hover:bg-yellow-300'
-                    )}
-                  >
-                    {hasScouted ? 'Scouted' : 'Scout rider'}
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={handleOfferContract}
-                    disabled={!canOfferContract}
-                    className={cx(
-                      'inline-flex items-center rounded-md border px-4 py-2 text-sm font-medium transition',
-                      canOfferContract
-                        ? 'border-slate-300 bg-white text-slate-700 hover:bg-slate-50'
-                        : 'cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400'
-                    )}
-                  >
-                    Offer contract
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={handleTransferOffer}
-                    disabled={!canTransferOffer}
-                    className={cx(
-                      'inline-flex items-center rounded-md border px-4 py-2 text-sm font-medium transition',
-                      canTransferOffer
-                        ? 'border-slate-300 bg-white text-slate-700 hover:bg-slate-50'
-                        : 'cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400'
-                    )}
-                  >
-                    Transfer offer
-                  </button>
-                </div>
-
-                {actionNotice ? (
-                  <div className="mt-3 rounded-lg bg-slate-50 px-4 py-3 text-sm text-slate-600">
-                    {actionNotice}
-                  </div>
-                ) : null}
-              </div>
-
-              <div className="rounded-xl border border-slate-200 p-4">
-                <div>
-                  <h5 className="text-sm font-semibold uppercase tracking-wide text-slate-700">
-                    Scout report
-                  </h5>
-                  <p className="mt-1 text-sm text-slate-500">
-                    Skills stay hidden until the rider has been scouted. After scouting, only approximate ranges are shown.
-                  </p>
-                </div>
-
-                {!hasScouted ? (
-                  <div className="mt-4 rounded-lg border border-dashed border-slate-300 bg-slate-50 px-4 py-8 text-center">
-                    <div className="text-sm font-semibold text-slate-700">Scouting report hidden</div>
-                    <div className="mt-2 text-sm text-slate-500">
-                      Click “Scout rider” to reveal approximate skill ranges instead of exact values.
-                    </div>
-                  </div>
-                ) : (
-                  <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                    {scoutStats.map(stat => (
-                      <DetailItem
-                        key={stat.label}
-                        label={stat.label}
-                        value={getApproxRangeLabel(stat.value)}
-                      />
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-          ) : null}
-        </div>
-      </div>
-    </div>
-  )
-}
-
 export default function StatisticsPage() {
   const [mainTab, setMainTab] = useState<MainTab>('teams')
   const [teamSubTab, setTeamSubTab] = useState<TeamSubTab>('current')
@@ -1619,11 +1217,18 @@ export default function StatisticsPage() {
   const [riderTableMetric, setRiderTableMetric] = useState<RiderMetric>('season_points_overall')
 
   const [selectedTeamProfileId, setSelectedTeamProfileId] = useState<string | null>(null)
-  const [selectedRiderProfileId, setSelectedRiderProfileId] = useState<string | null>(null)
+  const [selectedRiderId, setSelectedRiderId] = useState<string | null>(null)
+  const [isRiderScouted, setIsRiderScouted] = useState(false)
+  const [showRiderHistory, setShowRiderHistory] = useState(false)
 
   const [teamCurrentPage, setTeamCurrentPage] = useState(1)
   const [teamHistoryPage, setTeamHistoryPage] = useState(1)
   const [ridersPage, setRidersPage] = useState(1)
+
+  const selectedRider =
+    selectedRiderId !== null
+      ? riderRows.find(row => row.id === selectedRiderId) ?? null
+      : null
 
   function openTeamProfile(teamId: string) {
     setSelectedTeamProfileId(teamId)
@@ -1634,11 +1239,15 @@ export default function StatisticsPage() {
   }
 
   function openRiderProfile(riderId: string) {
-    setSelectedRiderProfileId(riderId)
+    setSelectedRiderId(riderId)
+    setIsRiderScouted(false)
+    setShowRiderHistory(false)
   }
 
   function closeRiderProfile() {
-    setSelectedRiderProfileId(null)
+    setSelectedRiderId(null)
+    setIsRiderScouted(false)
+    setShowRiderHistory(false)
   }
 
   useEffect(() => {
@@ -1744,19 +1353,33 @@ export default function StatisticsPage() {
         const riderBaseById = new Map(riderBaseRows.map(rider => [rider.id, rider]))
         const clubById = new Map(clubs.map(club => [club.id, club]))
         const rosterByRiderId = new Map(clubRoster.map(row => [row.rider_id, row.club_id]))
+        const teamCountryByClubId = new Map(teams.map(team => [team.id, team.country_code]))
 
         const mergedRiders: RiderStatsRow[] = riders.map(riderRaw => {
-          const riderId = resolveStringValue(riderRaw, ['id']) ?? String(riderRaw.id ?? '')
+          const rawIdValue = riderRaw['id']
+          const rawRiderIdValue = riderRaw['rider_id']
+
+          const riderId =
+            resolveStringValue(riderRaw, ['id', 'rider_id']) ??
+            (rawIdValue !== undefined && rawIdValue !== null ? String(rawIdValue) : null) ??
+            (rawRiderIdValue !== undefined && rawRiderIdValue !== null
+              ? String(rawRiderIdValue)
+              : null) ??
+            ''
+
           const baseRider = riderBaseById.get(riderId)
           const clubId =
             resolveStringValue(riderRaw, ['club_id']) ?? rosterByRiderId.get(riderId) ?? null
           const club = clubId ? clubById.get(clubId) : undefined
 
-          const resolvedCountryCode =
+          const riderCountryCode =
             resolveStringValue(riderRaw, ['country_code', 'nationality_code', 'country']) ??
             baseRider?.country_code ??
-            club?.country_code ??
-            ''
+            null
+
+          const clubCountryCode =
+            resolveStringValue(riderRaw, ['club_country_code', 'team_country_code']) ??
+            (clubId ? teamCountryByClubId.get(clubId) ?? club?.country_code ?? null : null)
 
           const resolvedBirthDate =
             resolveStringValue(riderRaw, ['birth_date', 'dob', 'date_of_birth']) ??
@@ -1776,7 +1399,8 @@ export default function StatisticsPage() {
           return {
             id: riderId,
             display_name: resolveStringValue(riderRaw, ['display_name', 'name']) ?? 'Unknown rider',
-            country_code: resolvedCountryCode,
+            country_code: riderCountryCode,
+            club_country_code: clubCountryCode,
             role: resolveStringValue(riderRaw, ['role']) ?? '',
             overall: resolveNumberValue(riderRaw, ['overall']),
             potential: resolveNumberValue(riderRaw, ['potential']),
@@ -1836,14 +1460,6 @@ export default function StatisticsPage() {
     return new Map(countries.map(country => [country.code, country.name]))
   }, [countries])
 
-  const riderById = useMemo(() => {
-    return new Map(riderRows.map(rider => [rider.id, rider]))
-  }, [riderRows])
-
-  const selectedRiderContext = selectedRiderProfileId
-    ? riderById.get(selectedRiderProfileId) ?? null
-    : null
-
   const historicalWinnerRows = useMemo(() => {
     return winnerRows.filter(row => row.season_number > 0 && row.season_number < currentSeasonNumber)
   }, [winnerRows, currentSeasonNumber])
@@ -1878,7 +1494,14 @@ export default function StatisticsPage() {
   }, [historicalWinnerRows, historicalSnapshotRows, countryNameByCode])
 
   const availableRiderCountries = useMemo(() => {
-    const codes = Array.from(new Set(riderRows.map(row => row.country_code).filter(Boolean)))
+    const codes = Array.from(
+      new Set(
+        riderRows
+          .map(row => getDisplayedRiderCountryCode(row))
+          .filter((code): code is string => Boolean(code))
+      )
+    )
+
     return codes.sort((a, b) =>
       getCountryName(a, countryNameByCode).localeCompare(getCountryName(b, countryNameByCode))
     )
@@ -1984,7 +1607,9 @@ export default function StatisticsPage() {
       rows = rows.filter(row => (row.availability_status ?? 'fit') !== 'fit')
     }
 
-    if (countryFilter !== 'all') rows = rows.filter(row => row.country_code === countryFilter)
+    if (countryFilter !== 'all') {
+      rows = rows.filter(row => getDisplayedRiderCountryCode(row) === countryFilter)
+    }
     if (tierFilter !== 'all') rows = rows.filter(row => row.club_tier === tierFilter)
 
     if (search.trim()) {
@@ -2091,6 +1716,15 @@ export default function StatisticsPage() {
   useEffect(() => {
     setRidersPage(1)
   }, [search, teamTypeFilter, statusFilter, tierFilter, countryFilter, riderMetric, riderTableMetric, mainTab, riderSubTab])
+
+  useEffect(() => {
+    if (selectedRiderId === null) return
+    if (!riderRows.some(row => row.id === selectedRiderId)) {
+      setSelectedRiderId(null)
+      setIsRiderScouted(false)
+      setShowRiderHistory(false)
+    }
+  }, [selectedRiderId, riderRows])
 
   const topCurrentTeam = filteredTeamCurrent[0]
   const latestWinner = filteredWinners[0]
@@ -2739,7 +2373,10 @@ export default function StatisticsPage() {
                               )}
                             </td>
                             <td className="py-3 pr-3">
-                              <CountryFlag code={row.country_code} countryNameByCode={countryNameByCode} />
+                              <CountryFlag
+                                code={getDisplayedRiderCountryCode(row)}
+                                countryNameByCode={countryNameByCode}
+                              />
                             </td>
                             <td className="py-3 pr-3 text-slate-600">{row.age_years ?? '—'}</td>
                             <td className="py-3 text-right font-semibold text-slate-900">
@@ -2817,7 +2454,10 @@ export default function StatisticsPage() {
                               )}
                             </td>
                             <td className="py-3 pr-3">
-                              <CountryFlag code={row.country_code} countryNameByCode={countryNameByCode} />
+                              <CountryFlag
+                                code={getDisplayedRiderCountryCode(row)}
+                                countryNameByCode={countryNameByCode}
+                              />
                             </td>
                             <td className="py-3 pr-3 text-slate-600">{row.age_years ?? '—'}</td>
                             <td className="py-3 pr-3 text-slate-600">{formatCompetitionLabel(row.role)}</td>
@@ -2960,15 +2600,157 @@ export default function StatisticsPage() {
         myClubId={myMainClubId}
       />
 
-      <RiderProfileModal
-        riderId={selectedRiderProfileId}
-        isOpen={!!selectedRiderProfileId}
-        onClose={closeRiderProfile}
-        riderContext={selectedRiderContext}
-        currentGameDate={currentGameDate}
-        countryNameByCode={countryNameByCode}
-        onOpenTeamProfile={openTeamProfile}
-      />
+      {selectedRider ? (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4"
+          onClick={closeRiderProfile}
+        >
+          <div
+            className="w-full max-w-2xl rounded-2xl bg-white shadow-2xl"
+            onClick={event => event.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
+              <div>
+                <h3 className="text-lg font-semibold text-slate-900">Rider profile</h3>
+              </div>
+              <button
+                type="button"
+                className="rounded-md border border-slate-300 px-3 py-1.5 text-sm"
+                onClick={closeRiderProfile}
+              >
+                Close
+              </button>
+            </div>
+
+            <div className="space-y-4 p-5">
+              <div>
+                <div className="text-xl font-semibold text-slate-900">{selectedRider.display_name}</div>
+                <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-slate-600">
+                  <span>Age {selectedRider.age_years ?? '—'}</span>
+                  <span>•</span>
+                  <span>{formatCompetitionLabel(selectedRider.role)}</span>
+                </div>
+                <div className="mt-1 text-sm text-slate-600">
+                  Team:{' '}
+                  {selectedRider.club_name ? (
+                    <button
+                      type="button"
+                      onClick={() => openTeamProfile(selectedRider.club_id!)}
+                      className="font-medium text-slate-900 hover:text-yellow-700 hover:underline"
+                    >
+                      {selectedRider.club_name}
+                    </button>
+                  ) : (
+                    'Free agent'
+                  )}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                {[
+                  ['Overall', selectedRider.overall],
+                  ['Sprint', selectedRider.sprint],
+                  ['Climbing', selectedRider.climbing],
+                  ['Time Trial', selectedRider.time_trial],
+                  ['Endurance', selectedRider.endurance],
+                  ['Race IQ', selectedRider.race_iq],
+                ].map(([label, value]) => (
+                  <div key={label} className="rounded-lg border border-slate-200 p-3">
+                    <div className="text-slate-500">{label}</div>
+                    <div className="font-semibold text-slate-900">
+                      {isRiderScouted
+                        ? getApproxRangeLabel(value as number | null)
+                        : 'Hidden (Scout first)'}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsRiderScouted(true)}
+                  className="rounded-md border border-yellow-400 bg-yellow-50 px-3 py-2 text-sm font-medium text-yellow-800"
+                >
+                  Scout rider
+                </button>
+
+                <button
+                  type="button"
+                  disabled={!!selectedRider.club_id}
+                  className={cx(
+                    'rounded-md border px-3 py-2 text-sm font-medium',
+                    selectedRider.club_id
+                      ? 'cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400'
+                      : 'border-emerald-300 bg-emerald-50 text-emerald-800'
+                  )}
+                >
+                  Offer contract
+                </button>
+
+                <button
+                  type="button"
+                  disabled={!selectedRider.club_id}
+                  className={cx(
+                    'rounded-md border px-3 py-2 text-sm font-medium',
+                    !selectedRider.club_id
+                      ? 'cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400'
+                      : 'border-sky-300 bg-sky-50 text-sky-800'
+                  )}
+                >
+                  Transfer offer
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setShowRiderHistory(prev => !prev)}
+                  className={cx(
+                    'rounded-md border px-3 py-2 text-sm font-medium',
+                    showRiderHistory
+                      ? 'border-slate-400 bg-slate-100 text-slate-900'
+                      : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-50'
+                  )}
+                >
+                  {showRiderHistory ? 'Hide history' : 'Rider history'}
+                </button>
+              </div>
+
+              {showRiderHistory ? (
+                <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                  <h4 className="text-sm font-semibold text-slate-900">Rider history</h4>
+
+                  <div className="mt-3 space-y-3">
+                    <div className="rounded-lg border border-slate-200 bg-white px-3 py-3">
+                      <div className="text-xs font-medium uppercase tracking-wide text-slate-500">
+                        Current team
+                      </div>
+                      <div className="mt-1 text-sm font-semibold text-slate-900">
+                        {selectedRider.club_name ? (
+                          <button
+                            type="button"
+                            onClick={() => openTeamProfile(selectedRider.club_id!)}
+                            className="font-medium text-slate-900 hover:text-yellow-700 hover:underline"
+                          >
+                            {selectedRider.club_name}
+                          </button>
+                        ) : (
+                          'Free agent'
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="rounded-lg border border-dashed border-slate-300 bg-white px-3 py-3 text-sm text-slate-600">
+                      Earlier team history is not included in the currently loaded statistics
+                      dataset yet. Once a rider history table or view is connected, this block can
+                      list every club by season.
+                    </div>
+                  </div>
+                </div>
+              ) : null}
+            </div>
+          </div>
+        </div>
+      ) : null}
     </>
   )
 }

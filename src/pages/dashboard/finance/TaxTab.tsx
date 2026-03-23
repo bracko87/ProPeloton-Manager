@@ -55,11 +55,6 @@ function formatMoney(n: number, currency: 'EUR' | 'USD' = 'EUR'): string {
   return formatted.replace('US$', '$')
 }
 
-function formatDateTime(iso: string): string {
-  const d = new Date(iso)
-  return Number.isNaN(d.getTime()) ? iso : d.toLocaleString()
-}
-
 function formatDateOnly(iso: string): string {
   const d = new Date(iso)
   return Number.isNaN(d.getTime()) ? iso : d.toLocaleDateString()
@@ -117,6 +112,21 @@ function statusBadgeClass(status: AuditRow['audit_status']): string {
     default:
       return 'bg-gray-100 text-gray-800'
   }
+}
+
+function endOfMonth(date: Date): Date {
+  return new Date(date.getFullYear(), date.getMonth() + 1, 0, 12, 0, 0, 0)
+}
+
+function nextMonthlyAuditDate(latestAudit: AuditRow | null): Date {
+  if (latestAudit) {
+    const lastPeriodEnd = new Date(latestAudit.period_end)
+    if (!Number.isNaN(lastPeriodEnd.getTime())) {
+      return endOfMonth(new Date(lastPeriodEnd.getFullYear(), lastPeriodEnd.getMonth() + 1, 1))
+    }
+  }
+
+  return endOfMonth(new Date())
 }
 
 export function TaxTab({
@@ -180,6 +190,14 @@ export function TaxTab({
 
   const latestAudit = audits[0] ?? null
 
+  const nextAuditDate = useMemo(() => {
+    return nextMonthlyAuditDate(latestAudit)
+  }, [latestAudit])
+
+  const nextAuditLabel = useMemo(() => {
+    return nextAuditDate.toLocaleDateString()
+  }, [nextAuditDate])
+
   const summary = useMemo(() => {
     if (!latestAudit) {
       return {
@@ -200,11 +218,8 @@ export function TaxTab({
 
   const taxRows = useMemo(() => {
     return allRows
-      .filter((row) => TAX_TYPES.has(row.type))
-      .sort(
-        (a, b) =>
-          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-      )
+      .filter(row => TAX_TYPES.has(row.type))
+      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
   }, [allRows])
 
   const rowById = useMemo(() => {
@@ -278,22 +293,28 @@ export function TaxTab({
             </div>
           </div>
 
-          {latestAudit ? (
-            <span
-              className={`inline-flex items-center rounded px-2 py-1 text-xs font-medium ${statusBadgeClass(
-                latestAudit.audit_status
-              )}`}
-            >
-              Latest audit: {latestAudit.audit_status}
+          <div className="flex flex-col items-end gap-2">
+            {latestAudit ? (
+              <span
+                className={`inline-flex items-center rounded px-2 py-1 text-xs font-medium ${statusBadgeClass(
+                  latestAudit.audit_status
+                )}`}
+              >
+                Latest audit: {latestAudit.audit_status}
+              </span>
+            ) : (
+              <span className="inline-flex items-center rounded bg-gray-100 px-2 py-1 text-xs font-medium text-gray-700">
+                No audits yet
+              </span>
+            )}
+
+            <span className="inline-flex items-center rounded bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700">
+              Next audit: {nextAuditLabel}
             </span>
-          ) : (
-            <span className="inline-flex items-center rounded bg-gray-100 px-2 py-1 text-xs font-medium text-gray-700">
-              No audits yet
-            </span>
-          )}
+          </div>
         </div>
 
-        <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-4">
+        <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
           <div className="rounded border p-3">
             <div className="text-xs uppercase tracking-wide text-gray-500">
               Taxable income
@@ -330,8 +351,8 @@ export function TaxTab({
                 summary.adjustment < 0
                   ? 'text-red-700'
                   : summary.adjustment > 0
-                  ? 'text-green-700'
-                  : 'text-gray-900'
+                    ? 'text-green-700'
+                    : 'text-gray-900'
               }`}
             >
               {formatMoney(summary.adjustment, currency)}
@@ -345,7 +366,7 @@ export function TaxTab({
           </div>
         ) : (
           <div className="mt-4 text-sm text-gray-600">
-            No tax audit has been recorded yet for this club.
+            No tax audit has been recorded yet for this club. Next expected audit: {nextAuditLabel}.
           </div>
         )}
       </div>
@@ -367,7 +388,7 @@ export function TaxTab({
                 </tr>
               </thead>
               <tbody>
-                {taxRows.slice(0, 20).map((row) => {
+                {taxRows.slice(0, 20).map(row => {
                   const amount = toNumber(row.net_amount)
 
                   return (
@@ -383,8 +404,8 @@ export function TaxTab({
                           amount < 0
                             ? 'text-red-700'
                             : amount > 0
-                            ? 'text-green-700'
-                            : 'text-gray-700'
+                              ? 'text-green-700'
+                              : 'text-gray-700'
                         }`}
                       >
                         {formatMoney(amount, currency)}
@@ -420,7 +441,7 @@ export function TaxTab({
                 </tr>
               </thead>
               <tbody>
-                {audits.map((audit) => (
+                {audits.map(audit => (
                   <tr
                     key={`${audit.period_start}-${audit.period_end}-${audit.created_at}`}
                     className="border-b last:border-b-0"
@@ -451,8 +472,8 @@ export function TaxTab({
                         toNumber(audit.adjustment_amount) < 0
                           ? 'text-red-700'
                           : toNumber(audit.adjustment_amount) > 0
-                          ? 'text-green-700'
-                          : 'text-gray-700'
+                            ? 'text-green-700'
+                            : 'text-gray-700'
                       }`}
                     >
                       {formatMoney(toNumber(audit.adjustment_amount), currency)}

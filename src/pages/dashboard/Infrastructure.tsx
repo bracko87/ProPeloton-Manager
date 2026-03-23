@@ -850,40 +850,42 @@ export default function InfrastructurePage({ clubId }: { clubId?: string }) {
 
   return (
     <div className="w-full">
-      <div className="mb-5">
-        <h2 className="text-xl font-semibold text-gray-900">Infrastructure</h2>
-        <p className="text-sm text-gray-500 mt-1">
-          Your team starts with <span className="font-semibold">Club House Level 1</span>.
-        </p>
+      <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h2 className="text-xl font-semibold text-gray-900">Infrastructure</h2>
+          <p className="text-sm text-gray-500 mt-1">
+            Your team starts with <span className="font-semibold">Club House Level 1</span>.
+          </p>
+        </div>
+
+        <div className="inline-flex rounded-lg bg-white border border-gray-100 p-1 shadow-sm self-start">
+          <button
+            type="button"
+            onClick={() => setActiveTab('facilities')}
+            className={`px-4 py-2 rounded-md text-sm font-medium transition ${
+              activeTab === 'facilities'
+                ? 'bg-yellow-400 text-black'
+                : 'text-gray-600 hover:bg-gray-100'
+            }`}
+          >
+            Facilities
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab('assets')}
+            className={`px-4 py-2 rounded-md text-sm font-medium transition ${
+              activeTab === 'assets'
+                ? 'bg-yellow-400 text-black'
+                : 'text-gray-600 hover:bg-gray-100'
+            }`}
+          >
+            Assets
+          </button>
+        </div>
       </div>
 
       <ActiveJobsPanel jobs={activeJobs} nowMs={nowMs} />
-
-      <div className="mb-5 inline-flex rounded-lg bg-white border border-gray-100 p-1 shadow-sm">
-        <button
-          type="button"
-          onClick={() => setActiveTab('facilities')}
-          className={`px-4 py-2 rounded-md text-sm font-medium transition ${
-            activeTab === 'facilities'
-              ? 'bg-yellow-400 text-black'
-              : 'text-gray-600 hover:bg-gray-100'
-          }`}
-        >
-          Facilities
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setActiveTab('assets')}
-          className={`px-4 py-2 rounded-md text-sm font-medium transition ${
-            activeTab === 'assets'
-              ? 'bg-yellow-400 text-black'
-              : 'text-gray-600 hover:bg-gray-100'
-          }`}
-        >
-          Assets
-        </button>
-      </div>
 
       {activeTab === 'facilities' && (
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 w-full">

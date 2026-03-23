@@ -8,6 +8,13 @@
  *   ✅ If you already pass `topIncomeBreakdown` / `topExpenseBreakdown`, those still win.
  *   - If neither is provided, it falls back to placeholders (as before).
  *
+ * NEW COSMETIC UPDATE:
+ * - Donut legends now show SHORT labels:
+ *   sponsor_contract_payment (b2374bed) -> Sponsor
+ *   tax_withholding (b677ebef) -> Tax
+ *   rider_salary_payday (...) -> Salary
+ *   new_club_bonus (...) -> Bonus
+ *
  * Notes:
  * - This file cannot “read the transactions table” by itself without your DB/client code.
  *   So the intended wiring is: wherever you load your Transactions table data, pass it
@@ -106,7 +113,7 @@ function groupSeries(
   points: { date: string; income: number; expenses: number; net: number }[],
   g: Granularity
 ): { label: string; income: number; expenses: number; net: number }[] {
-  if (g === 'daily') return points.map((p) => ({ label: p.date, ...p }))
+  if (g === 'daily') return points.map(p => ({ label: p.date, ...p }))
 
   const keyOf = (d: Date): string => {
     if (g === 'monthly') return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
@@ -132,16 +139,37 @@ function groupSeries(
 
 function normalizeBreakdown(items: { label: string; value: number }[], take = 5) {
   return items
-    .map((x) => ({ label: x.label, value: toNumber(x.value) }))
-    .filter((x) => x.value > 0)
+    .map(x => ({ label: x.label, value: toNumber(x.value) }))
+    .filter(x => x.value > 0)
+    .sort((a, b) => b.value - a.value)
+    .slice(0, take)
+}
+
+function aggregateBreakdown(
+  items: { label: string; value: number }[],
+  mapLabel: (label: string) => string,
+  take = 5
+) {
+  const map = new Map<string, number>()
+
+  for (const item of items) {
+    const value = toNumber(item.value)
+    if (value <= 0) continue
+
+    const label = mapLabel(item.label).trim() || 'Other'
+    map.set(label, (map.get(label) ?? 0) + value)
+  }
+
+  return Array.from(map.entries())
+    .map(([label, value]) => ({ label, value }))
     .sort((a, b) => b.value - a.value)
     .slice(0, take)
 }
 
 function prettyTimeLabel(raw: string): string {
-  if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) return raw.slice(5) // YYYY-MM-DD -> MM-DD
-  if (/^\d{4}-\d{2}$/.test(raw)) return `${raw.slice(5)}/${raw.slice(2, 4)}` // YYYY-MM -> MM/YY
-  if (/^\d{4}-W\d{2}$/.test(raw)) return raw.slice(5) // YYYY-Wxx -> Wxx
+  if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) return raw.slice(5)
+  if (/^\d{4}-\d{2}$/.test(raw)) return `${raw.slice(5)}/${raw.slice(2, 4)}`
+  if (/^\d{4}-W\d{2}$/.test(raw)) return raw.slice(5)
   return raw
 }
 
@@ -171,7 +199,77 @@ function txLabel(t: Transaction): string {
     t.memo ??
     t.category ??
     (t.id !== undefined ? `Transaction ${String(t.id)}` : 'Transaction')
+
   return String(s).trim() || 'Transaction'
+}
+
+function stripTrailingCode(raw: string): string {
+  return raw
+    .replace(/\s*\(([a-f0-9-]{6,}|[A-Z0-9-]{6,})\)\s*$/i, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
+function toTitleCase(raw: string): string {
+  return raw
+    .split(' ')
+    .filter(Boolean)
+    .map(word => {
+      const lower = word.toLowerCase()
+      return lower.charAt(0).toUpperCase() + lower.slice(1)
+    })
+    .join(' ')
+}
+
+function formatTransactionShortLabel(raw: string): string {
+  const cleaned = stripTrailingCode(raw).replace(/[_-]+/g, ' ').toLowerCase().trim()
+
+  if (
+    cleaned.includes('sponsor') ||
+    cleaned.includes('partnership') ||
+    cleaned.includes('advertising')
+  ) {
+    return 'Sponsor'
+  }
+
+  if (cleaned.includes('tax') || cleaned.includes('vat')) {
+    return 'Tax'
+  }
+
+  if (cleaned.includes('salary') || cleaned.includes('wage') || cleaned.includes('payroll')) {
+    return 'Salary'
+  }
+
+  if (cleaned.includes('bonus')) {
+    return 'Bonus'
+  }
+
+  if (cleaned.includes('training')) {
+    return 'Training'
+  }
+
+  if (cleaned.includes('transfer')) {
+    return 'Transfer'
+  }
+
+  if (cleaned.includes('equipment')) {
+    return 'Equipment'
+  }
+
+  if (cleaned.includes('staff')) {
+    return 'Staff'
+  }
+
+  if (cleaned.includes('medical')) {
+    return 'Medical'
+  }
+
+  if (cleaned.includes('travel') || cleaned.includes('hotel') || cleaned.includes('transport')) {
+    return 'Travel'
+  }
+
+  const first = cleaned.split(' ').find(Boolean)
+  return first ? toTitleCase(first) : 'Other'
 }
 
 /**
@@ -198,7 +296,7 @@ function AxisBarChart({
   const padT = 16
   const padB = 42
 
-  const maxVal = Math.max(0, ...points.map((p) => p.value))
+  const maxVal = Math.max(0, ...points.map(p => p.value))
   const yMax = maxVal <= 0 ? 1 : maxVal * 1.15
 
   const innerW = W - padL - padR
@@ -210,7 +308,7 @@ function AxisBarChart({
 
   const yOf = (v: number) => padT + innerH - (v / yMax) * innerH
 
-  const ticks = Array.from({ length: yTickCount }, (_, i) => i).map((i) => {
+  const ticks = Array.from({ length: yTickCount }, (_, i) => i).map(i => {
     if (yTickCount === 1) return 0
     return (yMax * i) / (yTickCount - 1)
   })
@@ -295,8 +393,8 @@ function AxisLineChart({
   const padT = 16
   const padB = 42
 
-  const maxVal = Math.max(...points.map((p) => p.value), 0)
-  const minVal = Math.min(...points.map((p) => p.value), 0)
+  const maxVal = Math.max(...points.map(p => p.value), 0)
+  const minVal = Math.min(...points.map(p => p.value), 0)
   const span = maxVal - minVal
   const yMin = minVal - span * 0.1
   const yMax = maxVal + span * 0.15 || 1
@@ -308,7 +406,7 @@ function AxisLineChart({
   const xOf = (i: number) => padL + (n === 1 ? innerW / 2 : (i / (n - 1)) * innerW)
   const yOf = (v: number) => padT + innerH - ((v - yMin) / (yMax - yMin)) * innerH
 
-  const ticks = Array.from({ length: yTickCount }, (_, i) => i).map((i) => {
+  const ticks = Array.from({ length: yTickCount }, (_, i) => i).map(i => {
     if (yTickCount === 1) return yMin
     return yMin + ((yMax - yMin) * i) / (yTickCount - 1)
   })
@@ -487,7 +585,7 @@ export function OverviewTab({
   currency = 'USD',
   topIncomeBreakdown,
   topExpenseBreakdown,
-  transactions, // NEW
+  transactions,
 }: {
   summary: ClubFinanceSummary | null
   cashflowDaily: CashflowPoint[]
@@ -495,7 +593,7 @@ export function OverviewTab({
   currency?: 'USD' | 'EUR'
   topIncomeBreakdown?: BreakdownItem[]
   topExpenseBreakdown?: BreakdownItem[]
-  transactions?: Transaction[] // NEW
+  transactions?: Transaction[]
 }): JSX.Element {
   const [granularity, setGranularity] = useState<Granularity>('monthly')
 
@@ -504,7 +602,7 @@ export function OverviewTab({
       cashflowDaily
         .slice()
         .sort((a, b) => (a.bucket_date < b.bucket_date ? -1 : 1))
-        .map((p) => ({
+        .map(p => ({
           date: p.bucket_date,
           income: toNumber(p.income),
           expenses: toNumber(p.expenses),
@@ -546,10 +644,6 @@ export function OverviewTab({
 
   const currentBalance = summary ? toNumber(summary.current_balance) : 0
 
-  /**
-   * Period boundaries (for filtering transactions)
-   * We mirror the same “last 1 / last 7 / last 30” approach used above.
-   */
   const periodBounds = useMemo(() => {
     const lastDateStr = dailyPoints[dailyPoints.length - 1]?.date
     const end = lastDateStr ? new Date(`${lastDateStr}T23:59:59Z`) : new Date()
@@ -557,78 +651,72 @@ export function OverviewTab({
 
     if (granularity === 'weekly') start.setUTCDate(start.getUTCDate() - 6)
     else if (granularity === 'monthly') start.setUTCDate(start.getUTCDate() - 29)
-    // daily -> same day
 
     start.setUTCHours(0, 0, 0, 0)
     return { start, end }
   }, [dailyPoints, granularity])
 
   const topFromTransactions = useMemo(() => {
-    if (!transactions || transactions.length === 0) return { incomes: [] as { label: string; value: number }[], expenses: [] as { label: string; value: number }[] }
+    if (!transactions || transactions.length === 0) {
+      return {
+        incomes: [] as { label: string; value: number }[],
+        expenses: [] as { label: string; value: number }[],
+      }
+    }
 
     const { start, end } = periodBounds
 
-    const inPeriod = transactions.filter((t) => {
+    const inPeriod = transactions.filter(t => {
       const d = parseTxDate(t)
       if (!d) return false
       return d.getTime() >= start.getTime() && d.getTime() <= end.getTime()
     })
 
-    const incomes = inPeriod
-      .filter((t) => txKind(t) === 'income')
-      .map((t) => ({ label: txLabel(t), value: txAmountAbs(t) }))
-    const expenses = inPeriod
-      .filter((t) => txKind(t) === 'expense')
-      .map((t) => ({ label: txLabel(t), value: txAmountAbs(t) }))
+    const incomesRaw = inPeriod
+      .filter(t => txKind(t) === 'income')
+      .map(t => ({ label: txLabel(t), value: txAmountAbs(t) }))
+
+    const expensesRaw = inPeriod
+      .filter(t => txKind(t) === 'expense')
+      .map(t => ({ label: txLabel(t), value: txAmountAbs(t) }))
 
     return {
-      incomes: normalizeBreakdown(incomes, 5),
-      expenses: normalizeBreakdown(expenses, 5),
+      incomes: aggregateBreakdown(incomesRaw, formatTransactionShortLabel, 5),
+      expenses: aggregateBreakdown(expensesRaw, formatTransactionShortLabel, 5),
     }
   }, [transactions, periodBounds])
 
-  /**
-   * Top 5 incomes:
-   * 1) If topIncomeBreakdown provided -> use it (names should already be correct).
-   * 2) Else if transactions provided -> compute from transactions (REAL names).
-   * 3) Else fallback placeholders.
-   */
   const topIncomeItems = useMemo(() => {
     if (topIncomeBreakdown && topIncomeBreakdown.length > 0) {
-      return normalizeBreakdown(
-        topIncomeBreakdown.map((x) => ({
+      return aggregateBreakdown(
+        topIncomeBreakdown.map(x => ({
           label: (x.name ?? x.label ?? 'Income').trim(),
           value: toNumber(x.amount),
         })),
+        formatTransactionShortLabel,
         5
       )
     }
 
     if (topFromTransactions.incomes.length > 0) return topFromTransactions.incomes
 
-    // fallback placeholder values
     const sorted = periodWindow
-      .map((p) => ({ value: p.income }))
-      .filter((x) => x.value > 0)
+      .map(p => ({ value: p.income }))
+      .filter(x => x.value > 0)
       .sort((a, b) => b.value - a.value)
       .slice(0, 5)
 
-    return sorted.map((x, idx) => ({ label: `Income item ${idx + 1}`, value: x.value }))
+    return sorted.map((x, idx) => ({ label: `Income ${idx + 1}`, value: x.value }))
   }, [topIncomeBreakdown, topFromTransactions.incomes, periodWindow])
 
-  /**
-   * Top 5 costs:
-   * 1) If topExpenseBreakdown provided -> use it
-   * 2) Else if transactions provided -> compute from transactions (REAL names)
-   * 3) Else fallback placeholders
-   */
   const topExpenseItems = useMemo(() => {
     if (topExpenseBreakdown && topExpenseBreakdown.length > 0) {
-      return normalizeBreakdown(
-        topExpenseBreakdown.map((x) => ({
+      return aggregateBreakdown(
+        topExpenseBreakdown.map(x => ({
           label: (x.name ?? x.label ?? 'Cost').trim(),
           value: Math.abs(toNumber(x.amount)),
         })),
+        formatTransactionShortLabel,
         5
       )
     }
@@ -636,12 +724,12 @@ export function OverviewTab({
     if (topFromTransactions.expenses.length > 0) return topFromTransactions.expenses
 
     const sorted = periodWindow
-      .map((p) => ({ value: p.expenses }))
-      .filter((x) => x.value > 0)
+      .map(p => ({ value: p.expenses }))
+      .filter(x => x.value > 0)
       .sort((a, b) => b.value - a.value)
       .slice(0, 5)
 
-    return sorted.map((x, idx) => ({ label: `Cost item ${idx + 1}`, value: x.value }))
+    return sorted.map((x, idx) => ({ label: `Cost ${idx + 1}`, value: x.value }))
   }, [topExpenseBreakdown, topFromTransactions.expenses, periodWindow])
 
   const incomePalette = ['#16a34a', '#22c55e', '#4ade80', '#86efac', '#bbf7d0']
@@ -649,7 +737,6 @@ export function OverviewTab({
 
   return (
     <div className="space-y-4">
-      {/* top cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full">
         <div className="bg-white p-4 rounded shadow">
           <div className="text-sm text-gray-500">Current Balance</div>
@@ -672,7 +759,6 @@ export function OverviewTab({
         </div>
       </div>
 
-      {/* breakdown selector */}
       <div className="bg-white p-4 rounded shadow">
         <div className="flex items-center justify-between gap-3 flex-wrap">
           <div>
@@ -712,7 +798,6 @@ export function OverviewTab({
         </div>
       </div>
 
-      {/* donut row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-stretch">
         <div className="bg-white p-5 rounded shadow h-full">
           <DonutBreakdown
@@ -749,7 +834,6 @@ export function OverviewTab({
         </div>
       </div>
 
-      {/* charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <div className="bg-white p-4 rounded shadow">
           <div className="flex items-center justify-between">
@@ -759,7 +843,7 @@ export function OverviewTab({
           <div className="mt-3">
             <AxisBarChart
               title="Income"
-              points={grouped.map((p) => ({ label: p.label, value: p.income }))}
+              points={grouped.map(p => ({ label: p.label, value: p.income }))}
               currency={currency}
               barColor="#16a34a"
             />
@@ -774,7 +858,7 @@ export function OverviewTab({
           <div className="mt-3">
             <AxisBarChart
               title="Expenses"
-              points={grouped.map((p) => ({ label: p.label, value: p.expenses }))}
+              points={grouped.map(p => ({ label: p.label, value: p.expenses }))}
               currency={currency}
               barColor="#dc2626"
             />
@@ -789,7 +873,7 @@ export function OverviewTab({
           <div className="mt-3">
             <AxisLineChart
               title="Net trend"
-              points={grouped.map((p) => ({ label: p.label, value: p.net }))}
+              points={grouped.map(p => ({ label: p.label, value: p.net }))}
               currency={currency}
               strokeColor="#2563eb"
             />

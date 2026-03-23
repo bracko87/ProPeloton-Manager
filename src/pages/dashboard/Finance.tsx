@@ -9,7 +9,7 @@
  * - Provide tab navigation and an ErrorBoundary per tab so a single tab can
  *   fail without breaking the whole page.
  * - Keep the club id out of the header; if needed, it is surfaced only inside
- *   the Other -> Debug panel.
+ *   the Team Policies & Operations -> Debug panel.
  */
 
 import React, { useEffect, useMemo, useState } from 'react'
@@ -19,18 +19,15 @@ import { OverviewTab } from './finance/OverviewTab'
 import { SponsorsTab } from './finance/SponsorsTab'
 import { TransactionsTab } from './finance/TransactionsTab'
 import { TaxTab } from './finance/TaxTab'
-import { OtherTab } from './finance/OtherTab'
+import { TeamPoliciesOperationsTab } from './finance/TeamPoliciesOperationsTab'
 
-/**
- * TabKey
- * Keys for Finance tabs.
- */
-type TabKey = 'overview' | 'sponsors' | 'transactions' | 'tax' | 'other'
+type TabKey =
+  | 'overview'
+  | 'sponsors'
+  | 'transactions'
+  | 'tax'
+  | 'teamPoliciesOperations'
 
-/**
- * CashflowPoint
- * Shape of daily cashflow buckets returned by the RPC.
- */
 type CashflowPoint = {
   bucket_date: string
   income: string | number
@@ -38,11 +35,6 @@ type CashflowPoint = {
   net: string | number
 }
 
-/**
- * StatementRow
- * Shape of statement rows returned by finance_get_club_statement.
- * (Field names based on your snippets; keep as "any-ish" where backend may vary.)
- */
 type StatementRow = {
   created_at: string
   transaction_id: string
@@ -51,17 +43,10 @@ type StatementRow = {
   metadata?: unknown
 }
 
-/**
- * ClubRow
- * Minimal shape needed when resolving the user's main club.
- */
 type ClubRow = {
   id: string
 }
 
-/**
- * Helpers
- */
 function toNumber(v: unknown): number {
   if (v === null || v === undefined) return 0
   if (typeof v === 'number') return v
@@ -77,10 +62,91 @@ function formatMoney(n: number, currency: 'USD' | 'EUR' = 'USD'): string {
   }).format(n)
 }
 
-/**
- * getTransactionLabel
- * Extracts a human label from statement metadata with safe fallback.
- */
+function stripTrailingCode(raw: string): string {
+  return raw
+    .replace(/\s*\(([a-f0-9-]{6,}|[A-Z0-9-]{6,})\)\s*$/i, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
+function toTitleCase(raw: string): string {
+  return raw
+    .split(' ')
+    .filter(Boolean)
+    .map(word => {
+      const lower = word.toLowerCase()
+      return lower.charAt(0).toUpperCase() + lower.slice(1)
+    })
+    .join(' ')
+}
+
+function formatTransactionFullLabel(raw: string): string {
+  const cleaned = stripTrailingCode(raw).replace(/[_-]+/g, ' ').toLowerCase().trim()
+
+  if (!cleaned) return 'Transaction'
+
+  // specific mappings first
+  if (cleaned.includes('competition reward cash')) return 'Competition Reward'
+  if (cleaned.includes('competition reward')) return 'Competition Reward'
+  if (cleaned.includes('race reward cash')) return 'Race Reward'
+  if (cleaned.includes('race reward')) return 'Race Reward'
+
+  if (cleaned.includes('sponsor contract payment')) return 'Sponsor Contract'
+  if (cleaned.includes('sponsor contract')) return 'Sponsor Contract'
+  if (cleaned.includes('sponsor payment')) return 'Sponsor Payment'
+  if (cleaned.includes('sponsor')) return 'Sponsor'
+
+  if (cleaned.includes('new club bonus')) return 'New Club Bonus'
+  if (cleaned.includes('signing bonus')) return 'Signing Bonus'
+  if (cleaned.includes('bonus')) return 'Bonus'
+
+  if (cleaned.includes('tax withholding')) return 'Tax Withholding'
+  if (cleaned.includes('tax payment')) return 'Tax Payment'
+  if (cleaned.includes('tax')) return 'Tax'
+
+  if (cleaned.includes('rider salary payday')) return 'Rider Salary'
+  if (cleaned.includes('rider salary')) return 'Rider Salary'
+  if (cleaned.includes('staff salary')) return 'Staff Salary'
+  if (cleaned.includes('salary')) return 'Salary'
+
+  if (cleaned.includes('training camp refund')) return 'Training Camp Refund'
+  if (cleaned.includes('training camp booking')) return 'Training Camp Booking'
+  if (cleaned.includes('training camp')) return 'Training Camp'
+  if (cleaned.includes('training')) return 'Training'
+
+  if (cleaned.includes('infrastructure facility start')) return 'Infrastructure Upgrade'
+  if (cleaned.includes('infrastructure asset delivery')) return 'Infrastructure Delivery'
+  if (cleaned.includes('infrastructure facility')) return 'Infrastructure Upgrade'
+  if (cleaned.includes('infrastructure')) return 'Infrastructure'
+
+  if (cleaned.includes('equipment purchase')) return 'Equipment Purchase'
+  if (cleaned.includes('equipment')) return 'Equipment'
+
+  if (cleaned.includes('medical')) return 'Medical'
+  if (cleaned.includes('staff')) return 'Staff'
+  if (cleaned.includes('transfer fee')) return 'Transfer Fee'
+  if (cleaned.includes('transfer')) return 'Transfer'
+  if (cleaned.includes('travel')) return 'Travel'
+  if (cleaned.includes('hotel')) return 'Hotel'
+  if (cleaned.includes('transport')) return 'Transport'
+
+  // generic cleanup fallback
+  const genericWords = new Set([
+    'payment',
+    'payday',
+    'booking',
+    'cash',
+    'start',
+    'delivery',
+    'fee',
+  ])
+
+  const words = cleaned.split(' ').filter(word => word && !genericWords.has(word))
+  const fallback = words.join(' ').trim()
+
+  return toTitleCase(fallback || cleaned)
+}
+
 function getTransactionLabel(row: StatementRow): string {
   const meta =
     row.metadata && typeof row.metadata === 'object'
@@ -123,10 +189,6 @@ function getTransactionLabel(row: StatementRow): string {
   return (found as string) ?? `${t} (${shortId})`
 }
 
-/**
- * TabButton
- * Small presentational button for the page tabs.
- */
 function TabButton({
   active,
   onClick,
@@ -140,24 +202,15 @@ function TabButton({
     <button
       type="button"
       onClick={onClick}
-      className={[
-        'px-4 py-2 rounded-md text-sm font-medium transition',
-        active ? 'bg-gray-900 text-white' : 'bg-white text-gray-700 hover:bg-gray-100',
-      ].join(' ')}
+      className={`px-4 py-2 rounded-md text-sm font-medium transition ${
+        active ? 'bg-yellow-400 text-black' : 'text-gray-600 hover:bg-gray-100'
+      }`}
     >
       {children}
     </button>
   )
 }
 
-/**
- * FinancePage
- * Main export: loads base data and renders tabs with per-tab error isolation.
- *
- * IMPORTANT:
- * This page must always resolve the MAIN club only.
- * Do not use generic club loaders here.
- */
 export default function FinancePage(): JSX.Element {
   const [tab, setTab] = useState<TabKey>('overview')
 
@@ -168,25 +221,25 @@ export default function FinancePage(): JSX.Element {
   const [summary, setSummary] = useState<any | null>(null)
   const [cashflowDaily, setCashflowDaily] = useState<CashflowPoint[]>([])
 
-  // Statement prefetch for Overview
   const [statement, setStatement] = useState<StatementRow[]>([])
   const [statementBefore, setStatementBefore] = useState<string | null>(null)
   const [statementLoaded, setStatementLoaded] = useState(false)
 
-  // Currency: everything is USD always
   const currency: 'USD' = 'USD'
 
-  /**
-   * Top 5 incomes/costs by transaction label (aggregated from statement).
-   */
   const topIncomeByName = useMemo(() => {
     const map = new Map<string, number>()
+
     for (const row of statement) {
       const amount = toNumber(row.net_amount)
       if (amount <= 0) continue
-      const label = getTransactionLabel(row)
+
+      const rawLabel = getTransactionLabel(row)
+      const label = formatTransactionFullLabel(rawLabel)
+
       map.set(label, (map.get(label) ?? 0) + amount)
     }
+
     return Array.from(map.entries())
       .map(([label, amount]) => ({ label, amount }))
       .sort((a, b) => b.amount - a.amount)
@@ -195,23 +248,24 @@ export default function FinancePage(): JSX.Element {
 
   const topCostsByName = useMemo(() => {
     const map = new Map<string, number>()
+
     for (const row of statement) {
       const net = toNumber(row.net_amount)
       const amount = Math.abs(net)
       if (net >= 0 || amount <= 0) continue
-      const label = getTransactionLabel(row)
+
+      const rawLabel = getTransactionLabel(row)
+      const label = formatTransactionFullLabel(rawLabel)
+
       map.set(label, (map.get(label) ?? 0) + amount)
     }
+
     return Array.from(map.entries())
       .map(([label, amount]) => ({ label, amount }))
       .sort((a, b) => b.amount - a.amount)
       .slice(0, 5)
   }, [statement])
 
-  /**
-   * resetLoadedState
-   * Clears all club-scoped finance state.
-   */
   function resetLoadedState(): void {
     setClubId(null)
     setSummary(null)
@@ -221,13 +275,6 @@ export default function FinancePage(): JSX.Element {
     setStatementLoaded(false)
   }
 
-  /**
-   * resolveMainClubId
-   * Resolves the user's MAIN club only.
-   *
-   * This replaces generic club lookup behavior. Finance must not accidentally
-   * attach to U23 or any other non-main club.
-   */
   async function resolveMainClubId(): Promise<string | null> {
     const authRes = await supabase.auth.getUser()
     if (authRes.error) throw authRes.error
@@ -243,7 +290,6 @@ export default function FinancePage(): JSX.Element {
       .single<ClubRow>()
 
     if (clubRes.error) {
-      // Treat "no rows" as "no main club yet" instead of fatal page failure.
       if (clubRes.error.code === 'PGRST116') return null
       throw clubRes.error
     }
@@ -251,11 +297,6 @@ export default function FinancePage(): JSX.Element {
     return clubRes.data?.id ?? null
   }
 
-  /**
-   * loadBase
-   * Loads MAIN club id, finance summary, daily cashflow series (last 90 days),
-   * AND statement rows (so Overview has real transaction names immediately).
-   */
   async function loadBase(): Promise<void> {
     setLoading(true)
     setError(null)
@@ -325,7 +366,6 @@ export default function FinancePage(): JSX.Element {
 
   return (
     <div className="w-full">
-      {/* Header (no club id here) */}
       <div className="flex items-start justify-between gap-4 mb-4">
         <div>
           <h2 className="text-xl font-semibold">Finance</h2>
@@ -346,8 +386,7 @@ export default function FinancePage(): JSX.Element {
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="flex gap-2 mb-4 flex-wrap">
+      <div className="mb-5 inline-flex rounded-lg bg-white border border-gray-100 p-1 shadow-sm flex-wrap">
         <TabButton active={tab === 'overview'} onClick={() => setTab('overview')}>
           Overview
         </TabButton>
@@ -360,8 +399,11 @@ export default function FinancePage(): JSX.Element {
         <TabButton active={tab === 'tax'} onClick={() => setTab('tax')}>
           Tax
         </TabButton>
-        <TabButton active={tab === 'other'} onClick={() => setTab('other')}>
-          Other
+        <TabButton
+          active={tab === 'teamPoliciesOperations'}
+          onClick={() => setTab('teamPoliciesOperations')}
+        >
+          Team Policies &amp; Operations
         </TabButton>
       </div>
 
@@ -379,7 +421,6 @@ export default function FinancePage(): JSX.Element {
           {tab === 'overview' && (
             <ErrorBoundary title="Overview tab error">
               <div className="space-y-4">
-                {/* Pass real breakdowns into Overview so donut legends show real names */}
                 <OverviewTab
                   summary={summary}
                   cashflowDaily={cashflowDaily}
@@ -398,7 +439,7 @@ export default function FinancePage(): JSX.Element {
                       {topIncomeByName.length === 0 ? (
                         <div className="text-sm text-gray-500">No income items found yet.</div>
                       ) : (
-                        topIncomeByName.map((item) => (
+                        topIncomeByName.map(item => (
                           <div
                             key={item.label}
                             className="flex items-center justify-between gap-3 text-sm"
@@ -422,7 +463,7 @@ export default function FinancePage(): JSX.Element {
                       {topCostsByName.length === 0 ? (
                         <div className="text-sm text-gray-500">No cost items found yet.</div>
                       ) : (
-                        topCostsByName.map((item) => (
+                        topCostsByName.map(item => (
                           <div
                             key={item.label}
                             className="flex items-center justify-between gap-3 text-sm"
@@ -477,15 +518,9 @@ export default function FinancePage(): JSX.Element {
             </ErrorBoundary>
           )}
 
-          {tab === 'other' && (
-            <ErrorBoundary title="Other tab error">
-              {clubId ? (
-                <OtherTab clubId={clubId} />
-              ) : (
-                <div className="bg-white p-4 rounded shadow text-sm text-gray-600">
-                  No main club detected. Debug information is unavailable.
-                </div>
-              )}
+          {tab === 'teamPoliciesOperations' && (
+            <ErrorBoundary title="Team Policies & Operations tab error">
+              <TeamPoliciesOperationsTab />
             </ErrorBoundary>
           )}
         </div>

@@ -352,7 +352,7 @@ function OfferModal({
 
   return (
     <div className="fixed inset-0 z-50">
-      <div className="absolute inset-0 bg-black/40" onClick={onClose} />
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
       <div className="absolute inset-0 p-4 md:p-8 overflow-y-auto">
         <div className="max-w-5xl mx-auto bg-white rounded-2xl shadow-2xl border overflow-hidden">
           <div className="flex items-center justify-between gap-4 px-6 py-4 border-b bg-gray-50">

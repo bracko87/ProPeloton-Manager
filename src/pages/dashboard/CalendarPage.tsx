@@ -244,12 +244,7 @@ function formatGameDateFromCanonical(
     currentMonthNumber
   )
 
-  return formatGameDateDisplay(
-    parts.seasonNumber,
-    parts.monthNumber,
-    parts.dayNumber,
-    canonicalDate
-  )
+  return formatGameDateDisplay(parts.seasonNumber, parts.monthNumber, parts.dayNumber, canonicalDate)
 }
 
 function formatRaceGameRange(
@@ -264,12 +259,7 @@ function formatRaceGameRange(
     start.dayNumber === end.dayNumber
 
   if (sameDay) {
-    return formatGameDateDisplay(
-      start.seasonNumber,
-      start.monthNumber,
-      start.dayNumber,
-      startDate
-    )
+    return formatGameDateDisplay(start.seasonNumber, start.monthNumber, start.dayNumber, startDate)
   }
 
   return `${formatGameDateDisplay(
@@ -277,12 +267,7 @@ function formatRaceGameRange(
     start.monthNumber,
     start.dayNumber,
     startDate
-  )} → ${formatGameDateDisplay(
-    end.seasonNumber,
-    end.monthNumber,
-    end.dayNumber,
-    endDate
-  )}`
+  )} → ${formatGameDateDisplay(end.seasonNumber, end.monthNumber, end.dayNumber, endDate)}`
 }
 
 function formatCalendarCellDate(monthNumber: number, dayNumber: number): string {
@@ -332,7 +317,7 @@ function getISOWeek(date: Date): number {
   const dayNumber = utcDate.getUTCDay() || 7
   utcDate.setUTCDate(utcDate.getUTCDate() + 4 - dayNumber)
   const yearStart = new Date(Date.UTC(utcDate.getUTCFullYear(), 0, 1))
-  return Math.ceil((((utcDate.getTime() - yearStart.getTime()) / 86400000) + 1) / 7)
+  return Math.ceil((utcDate.getTime() - yearStart.getTime() + 86400000) / 604800000)
 }
 
 function getDominantWeatherLabel(weather: WeatherNormals | null): string {
@@ -454,8 +439,7 @@ export default function CalendarPage(): JSX.Element {
           try {
             const weatherRes = await supabase
               .from('country_weather_weekly_normals')
-              .select(
-                `
+              .select(`
                   country_code,
                   week_of_year,
                   avg_temp_c,
@@ -473,8 +457,7 @@ export default function CalendarPage(): JSX.Element {
                   p_sleet,
                   p_snow,
                   p_thunderstorm
-                `
-              )
+                `)
               .eq('country_code', resolvedClubCountryCode)
               .eq('week_of_year', resolvedWeatherWeek)
               .maybeSingle()
@@ -494,14 +477,12 @@ export default function CalendarPage(): JSX.Element {
             .order('start_date', { ascending: true })
 
           if (racesRes.error) {
-            resolvedRaceNotice =
-              'Race Calendar is ready, but the race source is not available yet.'
+            resolvedRaceNotice = 'Race Calendar is ready, but the race source is not available yet.'
           } else {
             resolvedRaces = (racesRes.data ?? []) as RaceCalendarItem[]
           }
         } catch {
-          resolvedRaceNotice =
-            'Race Calendar is ready, but the race source is not available yet.'
+          resolvedRaceNotice = 'Race Calendar is ready, but the race source is not available yet.'
         }
 
         if (cancelled) return
@@ -598,8 +579,7 @@ export default function CalendarPage(): JSX.Element {
       })
       .filter(race => race.startGameDate.seasonNumber === gameDateParts.season_number)
       .sort(
-        (a, b) =>
-          parseDateString(a.start_date).getTime() - parseDateString(b.start_date).getTime()
+        (a, b) => parseDateString(a.start_date).getTime() - parseDateString(b.start_date).getTime()
       )
   }, [races, currentMonthStart, gameDateParts])
 
@@ -860,8 +840,7 @@ export default function CalendarPage(): JSX.Element {
                     )
                   : []
 
-                const isToday =
-                  currentGameDate != null && day.canonicalDateString === currentGameDate
+                const isToday = currentGameDate != null && day.canonicalDateString === currentGameDate
 
                 return (
                   <div
@@ -1066,8 +1045,6 @@ export default function CalendarPage(): JSX.Element {
             )}
           </>
         )}
-
-        {clubId ? <div className="mt-4 text-xs text-gray-400">Club ID: {clubId}</div> : null}
       </div>
     </div>
   )

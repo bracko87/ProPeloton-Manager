@@ -71,6 +71,129 @@ import { getFirstSquadMoveState } from '../../features/squad/utils/movement'
 
 const SEASON_WEEKS = 52
 
+type SquadListView = 'general' | 'financial' | 'skills' | 'form'
+
+const SQUAD_LIST_VIEW_OPTIONS: Array<{ value: SquadListView; label: string }> = [
+  { value: 'general', label: 'General View' },
+  { value: 'financial', label: 'Financial View' },
+  { value: 'skills', label: 'Skills View' },
+  { value: 'form', label: 'Form & Development' },
+]
+
+type RiderSkillAttributeCode =
+  | 'sprint'
+  | 'climbing'
+  | 'time_trial'
+  | 'endurance'
+  | 'flat'
+  | 'recovery'
+  | 'resistance'
+  | 'race_iq'
+  | 'teamwork'
+
+type RiderSkillDeltaRow = {
+  rider_id: string
+  attribute_code: RiderSkillAttributeCode
+  current_value: number
+  old_value: number | null
+  new_value: number | null
+  delta_value: number | null
+  delta_label: string | null
+  delta_direction: 'positive' | 'negative' | null
+  primary_source: string | null
+  week_start_date: string | null
+  week_end_date: string | null
+  has_visible_delta: boolean
+}
+
+type RiderSkillDeltaMap = Partial<Record<RiderSkillAttributeCode, RiderSkillDeltaRow>>
+
+type SquadRosterRow = ClubRosterRow & {
+  birth_date?: string | null
+  first_name?: string | null
+  last_name?: string | null
+  full_name?: string
+  market_value?: number | null
+  salary?: number | null
+  contract_expires_at?: string | null
+  contract_expires_season?: number | null
+  sprint?: number | null
+  climbing?: number | null
+  time_trial?: number | null
+  flat?: number | null
+  endurance?: number | null
+  recovery?: number | null
+  morale?: number | null
+  potential?: number | null
+}
+
+type CompareCandidateRow = ClubRosterRow & {
+  full_name?: string
+  team_label?: string
+}
+
+type ClubFamilyRow = {
+  id: string
+  club_type: string
+  parent_club_id: string | null
+  is_active: boolean | null
+  deleted_at: string | null
+}
+
+type RiderCareerHistoryRow = {
+  season: number | null
+  season_label: string
+  team_name: string
+  points: number
+  is_current_season: boolean
+}
+
+function buildRiderFullName(
+  firstName?: string | null,
+  lastName?: string | null,
+  fallback?: string | null
+) {
+  const fullName = [firstName?.trim(), lastName?.trim()].filter(Boolean).join(' ').trim()
+  return fullName || fallback || 'Unknown Rider'
+}
+
+function getBestRiderSkillValue(rider: {
+  sprint?: number | null
+  climbing?: number | null
+  timeTrial?: number | null
+  flat?: number | null
+  endurance?: number | null
+  recovery?: number | null
+}) {
+  const values = [
+    rider.sprint,
+    rider.climbing,
+    rider.timeTrial,
+    rider.flat,
+    rider.endurance,
+    rider.recovery,
+  ].filter((value): value is number => typeof value === 'number')
+
+  return values.length > 0 ? Math.max(...values) : null
+}
+
+function formatSkillDeltaSource(source?: string | null) {
+  switch (source) {
+    case 'training_camp':
+      return 'Training camp'
+    case 'regular_training':
+      return 'Regular training'
+    case 'age_decline':
+      return 'Age decline'
+    case 'inactivity_decay':
+      return 'Inactivity'
+    case 'race_experience':
+      return 'Race experience'
+    default:
+      return null
+  }
+}
+
 /**
  * CountryFlag
  * Small component that renders a country flag or a fallback box.
@@ -223,6 +346,25 @@ function FatigueBadge({
   )
 }
 
+function InlineStatusText({
+  label,
+  color,
+  className = '',
+}: {
+  label: string
+  color?: string
+  className?: string
+}) {
+  return (
+    <span
+      className={`inline-flex items-center text-sm font-medium ${className}`}
+      style={color ? { color } : undefined}
+    >
+      {label}
+    </span>
+  )
+}
+
 /**
  * Simple reusable UI pieces used by the page widgets.
  * Kept local to this file to avoid changing existing imports.
@@ -243,15 +385,30 @@ function CompactValueTile({
   children?: React.ReactNode
 }) {
   return (
-    <div className="rounded-xl border border-gray-200 p-3">
-      <div className="text-xs text-gray-500">{label}</div>
-      <div className={`mt-2 font-semibold text-gray-900 ${valueClassName || 'text-2xl'}`}>
+    <div className="rounded-2xl border border-slate-200 bg-gradient-to-b from-white to-slate-50/90 p-4 shadow-sm">
+      <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">
+        {label}
+      </div>
+
+      <div
+        className={`mt-3 font-semibold tracking-tight text-slate-900 ${
+          valueClassName || 'text-2xl leading-tight'
+        }`}
+      >
         {value}
       </div>
+
       {subvalue ? (
-        <div className={`mt-1 text-xs ${subvalueClassName || 'text-gray-500'}`}>{subvalue}</div>
+        <div
+          className={`mt-2 text-xs leading-relaxed ${
+            subvalueClassName || 'text-slate-500'
+          }`}
+        >
+          {subvalue}
+        </div>
       ) : null}
-      {children}
+
+      {children ? <div className="mt-3">{children}</div> : null}
     </div>
   )
 }
@@ -270,33 +427,93 @@ function CompactStatusTile({
   statusClassName?: string
 }) {
   return (
-    <div className="rounded-xl border border-gray-200 p-3">
-      <div className="flex flex-wrap items-center gap-1 text-xs text-gray-500">
-        <span>{label}</span>
-        {subtitle ? <span>({subtitle})</span> : null}
+    <div className="rounded-2xl border border-slate-200 bg-gradient-to-b from-white to-slate-50/90 p-4 shadow-sm">
+      <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">
+        {label}
       </div>
+
       <div
-        className={`mt-2 font-semibold ${statusClassName || 'text-2xl'}`}
+        className={`mt-3 font-semibold tracking-tight ${
+          statusClassName || 'text-2xl leading-tight'
+        }`}
         style={statusColor ? { color: statusColor } : undefined}
       >
         {status}
+      </div>
+
+      {subtitle ? (
+        <div className="mt-2 text-xs leading-relaxed text-slate-500">{subtitle}</div>
+      ) : null}
+    </div>
+  )
+}
+
+function SimpleAttributeRow({
+  label,
+  value,
+  deltaLabel,
+  deltaDirection,
+  sourceLabel,
+}: {
+  label: string
+  value: number
+  deltaLabel?: string | null
+  deltaDirection?: 'positive' | 'negative' | null
+  sourceLabel?: string | null
+}) {
+  const safeValue = Math.max(0, Math.min(100, value))
+
+  const deltaClasses =
+    deltaDirection === 'positive'
+      ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+      : deltaDirection === 'negative'
+        ? 'border-rose-200 bg-rose-50 text-rose-700'
+        : 'border-slate-200 bg-slate-100 text-slate-500'
+
+  return (
+    <div className="rounded-xl bg-slate-50 px-4 py-3">
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex min-w-0 items-center gap-2">
+          <div className="text-sm font-medium text-slate-700">{label}</div>
+          {deltaLabel ? (
+            <span
+              className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-semibold ${deltaClasses}`}
+              title={sourceLabel ?? undefined}
+            >
+              {deltaLabel}
+            </span>
+          ) : null}
+        </div>
+
+        <div className="shrink-0 text-base font-semibold text-slate-900">{safeValue}</div>
       </div>
     </div>
   )
 }
 
-function StatTile({ label, value }: { label: string; value: number }) {
-  const safeValue = Math.max(0, Math.min(100, value))
-
+function SimpleInfoRow({
+  label,
+  value,
+  note,
+  valueClassName = '',
+  noteClassName = '',
+}: {
+  label: string
+  value: React.ReactNode
+  note?: React.ReactNode
+  valueClassName?: string
+  noteClassName?: string
+}) {
   return (
-    <div className="rounded-xl border border-gray-200 p-3">
-      <div className="text-xs uppercase tracking-wide text-gray-500">{label}</div>
-      <div className="mt-1 flex items-end justify-between">
-        <div className="text-xl font-semibold text-gray-900">{safeValue}</div>
-        <div className="text-xs text-gray-400">/100</div>
-      </div>
-      <div className="mt-3 h-2 rounded-full bg-gray-100">
-        <div className="h-2 rounded-full bg-yellow-400" style={{ width: `${safeValue}%` }} />
+    <div className="rounded-xl bg-slate-50 px-4 py-3">
+      <div className="flex items-start justify-between gap-4">
+        <div className="min-w-0 text-sm font-medium text-slate-700">{label}</div>
+        <div className="min-w-0 text-right">
+          <div className={`text-sm font-semibold text-slate-900 ${valueClassName}`}>{value}</div>
+          {note ? (
+            <div className={`mt-1 text-xs text-slate-500 ${noteClassName}`}>{note}</div>
+          ) : null}
+        </div>
       </div>
     </div>
   )
@@ -313,12 +530,54 @@ function RenewalFeedbackBox({
 
   const classes =
     type === 'success'
-      ? 'border-green-200 bg-green-50 text-green-800'
+      ? 'border-emerald-200 bg-emerald-50 text-emerald-800'
       : type === 'error'
-        ? 'border-red-200 bg-red-50 text-red-700'
-        : 'border-gray-200 bg-gray-50 text-gray-600'
+        ? 'border-rose-200 bg-rose-50 text-rose-700'
+        : 'border-slate-200 bg-slate-50 text-slate-600'
 
-  return <div className={`rounded-xl border p-4 text-sm ${classes}`}>{message}</div>
+  return <div className={`rounded-2xl border px-4 py-3 text-sm ${classes}`}>{message}</div>
+}
+
+function SectionCard({
+  title,
+  subtitle,
+  children,
+  className = '',
+}: {
+  title: string
+  subtitle?: string
+  children: React.ReactNode
+  className?: string
+}) {
+  return (
+    <div className={`rounded-[24px] border border-slate-200 bg-white p-5 shadow-sm ${className}`}>
+      <div className="mb-4">
+        <div className="text-lg font-semibold tracking-tight text-slate-900">{title}</div>
+        {subtitle ? <div className="mt-1 text-sm text-slate-500">{subtitle}</div> : null}
+      </div>
+
+      {children}
+    </div>
+  )
+}
+
+function DetailRow({
+  label,
+  value,
+  valueClassName = '',
+}: {
+  label: string
+  value: React.ReactNode
+  valueClassName?: string
+}) {
+  return (
+    <div className="flex items-start justify-between gap-4 py-2.5">
+      <div className="text-sm text-slate-500">{label}</div>
+      <div className={`text-right text-sm font-medium text-slate-800 ${valueClassName}`}>
+        {value}
+      </div>
+    </div>
+  )
 }
 
 /**
@@ -585,6 +844,105 @@ async function fetchRiderCurrentHealthCaseById(
   return (row ?? null) as RiderCurrentHealthCase | null
 }
 
+async function fetchRiderCareerHistoryById(riderId: string): Promise<RiderCareerHistoryRow[]> {
+  function normalizeRows(rows: any[]): RiderCareerHistoryRow[] {
+    return rows
+      .map((row) => {
+        const seasonValueRaw =
+          row.season ?? row.season_number ?? row.season_id ?? row.year ?? row.current_season ?? null
+
+        const seasonValue =
+          typeof seasonValueRaw === 'number'
+            ? seasonValueRaw
+            : typeof seasonValueRaw === 'string' && seasonValueRaw.trim() !== ''
+              ? Number(seasonValueRaw)
+              : null
+
+        const seasonLabel =
+          row.season_label ??
+          row.season_name ??
+          (seasonValue !== null && Number.isFinite(seasonValue) ? `Season ${seasonValue}` : 'Unknown season')
+
+        const pointsRaw =
+          row.points ?? row.season_points ?? row.total_points ?? row.rider_points ?? row.points_total ?? 0
+
+        const points =
+          typeof pointsRaw === 'number'
+            ? pointsRaw
+            : typeof pointsRaw === 'string' && pointsRaw.trim() !== ''
+              ? Number(pointsRaw)
+              : 0
+
+        return {
+          season: seasonValue !== null && Number.isFinite(seasonValue) ? seasonValue : null,
+          season_label: seasonLabel,
+          team_name:
+            row.team_name ??
+            row.club_name ??
+            row.team_label ??
+            row.club_label ??
+            row.squad_name ??
+            row.club_display_name ??
+            row.team ??
+            'Unknown team',
+          points: Number.isFinite(points) ? points : 0,
+          is_current_season: Boolean(
+            row.is_current_season ?? row.is_current ?? row.current_season_flag ?? false
+          ),
+        } as RiderCareerHistoryRow
+      })
+      .sort((a, b) => {
+        if (a.is_current_season !== b.is_current_season) {
+          return a.is_current_season ? -1 : 1
+        }
+
+        const aSeason = a.season ?? -1
+        const bSeason = b.season ?? -1
+
+        if (aSeason !== bSeason) return bSeason - aSeason
+        return a.team_name.localeCompare(b.team_name)
+      })
+  }
+
+  try {
+    const { data, error } = await supabase.rpc('get_rider_career_history', {
+      p_rider_id: riderId,
+    })
+
+    if (!error && Array.isArray(data) && data.length > 0) {
+      return normalizeRows(data)
+    }
+  } catch {
+    // fallback below
+  }
+
+  const tableCandidates = [
+    'v_rider_career_history',
+    'rider_career_history',
+    'v_rider_season_history',
+    'rider_season_history',
+    'v_rider_history',
+  ]
+
+  for (const tableName of tableCandidates) {
+    try {
+      const { data, error } = await supabase
+        .from(tableName)
+        .select('*')
+        .eq('rider_id', riderId)
+        .order('season', { ascending: false })
+
+      if (!error && Array.isArray(data) && data.length > 0) {
+        return normalizeRows(data)
+      }
+    } catch {
+      // try next source
+    }
+  }
+
+  return []
+}
+
 function TransferListModal({
   open,
   onClose,
@@ -732,7 +1090,7 @@ function TransferListModal({
 
   return (
     <div
-      className="fixed inset-0 z-[65] flex items-center justify-center bg-black/50 p-4"
+      className="fixed inset-0 z-[65] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
       onClick={onClose}
     >
       <div
@@ -859,9 +1217,136 @@ function TransferListModal({
   )
 }
 
+function CareerHistoryModal({
+  open,
+  onClose,
+  rider,
+}: {
+  open: boolean
+  onClose: () => void
+  rider: RiderDetails | null
+}) {
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [historyRows, setHistoryRows] = useState<RiderCareerHistoryRow[]>([])
+
+  useEffect(() => {
+    let mounted = true
+
+    async function loadCareerHistory() {
+      if (!rider?.id || !open) return
+
+      setLoading(true)
+      setError(null)
+      setHistoryRows([])
+
+      try {
+        const rows = await fetchRiderCareerHistoryById(rider.id)
+        if (!mounted) return
+        setHistoryRows(rows)
+      } catch (e: any) {
+        if (!mounted) return
+        setError(e?.message ?? 'Could not load rider career history.')
+      } finally {
+        if (!mounted) return
+        setLoading(false)
+      }
+    }
+
+    if (open && rider?.id) {
+      void loadCareerHistory()
+    } else {
+      setLoading(false)
+      setError(null)
+      setHistoryRows([])
+    }
+
+    return () => {
+      mounted = false
+    }
+  }, [open, rider?.id])
+
+  if (!open || !rider) return null
+
+  return (
+    <div
+      className="fixed inset-0 z-[68] flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      <div
+        className="flex max-h-[85vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between border-b border-slate-200 px-6 py-5">
+          <div>
+            <div className="text-2xl font-semibold text-slate-900">Career History</div>
+            <div className="mt-1 text-sm text-slate-500">
+              Teams and season points for {rider.first_name} {rider.last_name}.
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50"
+          >
+            Close
+          </button>
+        </div>
+
+        <div className="min-h-0 flex-1 overflow-y-auto p-6">
+          {loading ? (
+            <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
+              Loading career history…
+            </div>
+          ) : error ? (
+            <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+              {error}
+            </div>
+          ) : historyRows.length === 0 ? (
+            <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
+              No career history data found for this rider yet.
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[520px] text-sm">
+                <thead>
+                  <tr className="border-b border-slate-200 text-left text-slate-500">
+                    <th className="py-3 pr-4">Season</th>
+                    <th className="py-3 pr-4">Team</th>
+                    <th className="py-3 text-right">Points</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {historyRows.map((row, index) => (
+                    <tr key={`${row.season_label}-${row.team_name}-${index}`} className="border-b border-slate-100 last:border-0">
+                      <td className="py-3 pr-4 font-medium text-slate-800">
+                        <div className="flex items-center gap-2">
+                          <span>{row.season_label}</span>
+                          {row.is_current_season ? (
+                            <span className="rounded-full bg-yellow-100 px-2 py-0.5 text-[11px] font-semibold text-yellow-800">
+                              Current
+                            </span>
+                          ) : null}
+                        </div>
+                      </td>
+                      <td className="py-3 pr-4 text-slate-700">{row.team_name}</td>
+                      <td className="py-3 text-right font-semibold text-slate-900">{row.points}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 /**
  * RiderProfileModal
- * Extracted modal component kept inside this file to preserve behavior and imports.
+ * Simplified rider profile modal with a cleaner two-column layout and simple attribute rows.
  */
 function RiderProfileModal({
   open,
@@ -882,6 +1367,7 @@ function RiderProfileModal({
   const [profileError, setProfileError] = useState<string | null>(null)
   const [selectedRider, setSelectedRider] = useState<RiderDetails | null>(null)
   const [currentHealthCase, setCurrentHealthCase] = useState<RiderCurrentHealthCase | null>(null)
+  const [skillDeltaMap, setSkillDeltaMap] = useState<RiderSkillDeltaMap>({})
   const [imageUrlInput, setImageUrlInput] = useState('')
   const [imageSaving, setImageSaving] = useState(false)
   const [imageSaveMessage, setImageSaveMessage] = useState<string | null>(null)
@@ -897,6 +1383,7 @@ function RiderProfileModal({
   )
   const [renewalResultMessage, setRenewalResultMessage] = useState<string | null>(null)
   const [transferListOpen, setTransferListOpen] = useState(false)
+  const [careerHistoryOpen, setCareerHistoryOpen] = useState(false)
 
   useEffect(() => {
     let mounted = true
@@ -908,14 +1395,34 @@ function RiderProfileModal({
       setProfileError(null)
       setSelectedRider(null)
       setCurrentHealthCase(null)
+      setSkillDeltaMap({})
       setImageUrlInput('')
       setImageSaveMessage(null)
       setContractActionMessage(null)
 
       try {
-        const [nextRider, nextHealthCase] = await Promise.all([
+        const [nextRider, nextHealthCase, deltaResult] = await Promise.all([
           fetchRiderDetailsById(riderId),
           fetchRiderCurrentHealthCaseById(riderId),
+          supabase
+            .from('v_rider_skill_card_deltas')
+            .select(
+              `
+              rider_id,
+              attribute_code,
+              current_value,
+              old_value,
+              new_value,
+              delta_value,
+              delta_label,
+              delta_direction,
+              primary_source,
+              week_start_date,
+              week_end_date,
+              has_visible_delta
+            `
+            )
+            .eq('rider_id', riderId),
         ])
 
         if (!mounted) return
@@ -923,6 +1430,17 @@ function RiderProfileModal({
         setSelectedRider(nextRider)
         setCurrentHealthCase(nextHealthCase)
         setImageUrlInput(nextRider.image_url ?? '')
+
+        if (deltaResult.error) throw deltaResult.error
+
+        const deltaRows = (deltaResult.data ?? []) as RiderSkillDeltaRow[]
+
+        const nextDeltaMap: RiderSkillDeltaMap = {}
+        for (const row of deltaRows) {
+          nextDeltaMap[row.attribute_code] = row
+        }
+
+        setSkillDeltaMap(nextDeltaMap)
       } catch (e: any) {
         if (!mounted) return
         setProfileError(e?.message ?? 'Failed to load rider profile.')
@@ -937,6 +1455,7 @@ function RiderProfileModal({
     } else {
       setSelectedRider(null)
       setCurrentHealthCase(null)
+      setSkillDeltaMap({})
       setImageUrlInput('')
       setImageSaveMessage(null)
       setImageSaving(false)
@@ -950,6 +1469,7 @@ function RiderProfileModal({
       setRenewalResultType(null)
       setRenewalResultMessage(null)
       setTransferListOpen(false)
+      setCareerHistoryOpen(false)
     }
 
     return () => {
@@ -1140,6 +1660,7 @@ function RiderProfileModal({
   function closeAll() {
     setCompareOpen(false)
     setTransferListOpen(false)
+    setCareerHistoryOpen(false)
     onClose()
   }
 
@@ -1184,6 +1705,7 @@ function RiderProfileModal({
   const moraleUi = getMoraleUi(selectedRider?.morale)
   const potentialUi = getPotentialUi(selectedRider?.potential)
   const fatigueUi = getFatigueUi(selectedRider?.fatigue)
+  const healthUi = getRiderStatusUi(selectedRider?.availability_status)
   const potentialBonusActive = hasActivePotentialBonus(profileAge)
   const potentialDevelopmentBonus = getPotentialDevelopmentBonus(
     selectedRider?.potential,
@@ -1205,257 +1727,278 @@ function RiderProfileModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4 backdrop-blur-sm"
       onClick={closeAll}
     >
       <div
-        className="flex max-h-[90vh] w-full max-w-6xl flex-col overflow-hidden rounded-2xl bg-white shadow-xl"
+        className="flex max-h-[92vh] w-full max-w-5xl flex-col overflow-hidden rounded-[24px] border border-slate-200 bg-white shadow-[0_24px_80px_rgba(15,23,42,0.22)]"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="shrink-0 flex items-center justify-between border-b border-gray-200 px-6 py-4">
-          <div className="text-3xl font-semibold text-gray-900">
-            {selectedRider
-              ? `${selectedRider.first_name} ${selectedRider.last_name}`
-              : 'Rider Profile'}
-          </div>
+        <div className="shrink-0 border-b border-slate-200 px-6 py-5">
+          <div className="flex items-start justify-between gap-4">
+            <div className="min-w-0">
+              <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">
+                Rider Profile
+              </div>
 
-          <button
-            type="button"
-            onClick={closeAll}
-            className="rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50"
-          >
-            Close
-          </button>
+              <div className="mt-1 truncate text-2xl font-semibold tracking-tight text-slate-900">
+                {selectedRider
+                  ? `${selectedRider.first_name} ${selectedRider.last_name}`
+                  : 'Rider Profile'}
+              </div>
+
+              <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-slate-500">
+                {selectedRider ? (
+                  <>
+                    <span>{selectedRider.role}</span>
+                    <span>•</span>
+                    <span>Age {profileAge ?? '—'}</span>
+                    <span>•</span>
+                    <span>Overall {selectedRider.overall}%</span>
+                  </>
+                ) : (
+                  <span>Contract, health and simple skill overview.</span>
+                )}
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={closeAll}
+              className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50"
+            >
+              Close
+            </button>
+          </div>
         </div>
 
-        <div className="min-h-0 flex-1 overflow-y-auto p-6">
-          {profileLoading && <div className="text-sm text-gray-600">Loading rider profile…</div>}
+        <div className="min-h-0 flex-1 overflow-y-auto bg-slate-50 p-6">
+          {profileLoading && (
+            <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600 shadow-sm">
+              Loading rider profile…
+            </div>
+          )}
 
           {!profileLoading && profileError && (
-            <div>
-              <div className="text-sm font-medium text-red-600">Could not load rider profile</div>
-              <div className="mt-1 text-sm text-gray-600">{profileError}</div>
+            <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-4">
+              <div className="text-sm font-medium text-rose-700">Could not load rider profile</div>
+              <div className="mt-1 text-sm text-rose-600">{profileError}</div>
             </div>
           )}
 
           {!profileLoading && !profileError && selectedRider && (
-            <div className="grid grid-cols-1 gap-6 lg:grid-cols-[320px_minmax(0,1fr)]">
-              <div>
-                <img
-                  src={getRiderImageUrl(selectedRider.image_url)}
-                  alt={selectedRider.display_name}
-                  className="h-80 w-full rounded-xl border border-gray-200 object-cover"
-                />
-
-                <div className="mt-4">
-                  <label className="mb-2 block text-sm font-medium text-gray-700">Image URL</label>
-                  <input
-                    type="text"
-                    value={imageUrlInput}
-                    onChange={(e) => setImageUrlInput(e.target.value)}
-                    placeholder="Paste rider image URL"
-                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-yellow-400"
+            <div className="grid grid-cols-1 gap-5 xl:grid-cols-[320px_minmax(0,1fr)]">
+              <div className="space-y-5">
+                <div className="overflow-hidden rounded-[24px] border border-slate-200 bg-white shadow-sm">
+                  <img
+                    src={getRiderImageUrl(selectedRider.image_url)}
+                    alt={selectedRider.display_name}
+                    className="h-[260px] w-full bg-slate-100 object-cover"
                   />
 
-                  <button
-                    type="button"
-                    onClick={applyImageChange}
-                    disabled={imageSaving}
-                    className="mt-3 w-full rounded-lg bg-yellow-400 px-4 py-2 text-sm font-medium text-black hover:bg-yellow-500 disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    {imageSaving ? 'Saving image...' : 'Apply Image Change'}
-                  </button>
+                  <div className="p-4">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-sm font-medium text-slate-700">
+                        <CountryFlag countryCode={selectedRider.country_code} />
+                        {getCountryName(selectedRider.country_code)}
+                      </span>
 
-                  {imageSaveMessage && (
-                    <div className="mt-2 text-sm text-gray-600">{imageSaveMessage}</div>
-                  )}
-                </div>
-
-                <div className="mt-5 border-t border-gray-200 pt-4">
-                  <div className="rounded-xl border border-gray-200 p-4">
-                    <div className="flex flex-wrap items-center justify-between gap-3">
-                      <div className="text-sm font-semibold text-gray-700">Health</div>
-
-                      <div className="flex flex-wrap items-center justify-end gap-2">
-                        <RiderStatusBadge status={selectedRider.availability_status} />
-                        <FatigueBadge fatigue={selectedRider.fatigue} />
-                      </div>
+                      <span className="rounded-full bg-yellow-100 px-3 py-1.5 text-sm font-semibold text-yellow-800">
+                        Overall {selectedRider.overall}%
+                      </span>
                     </div>
 
-                    <div className="mt-3 space-y-1 text-sm text-gray-700">
-                      <div>
-                        <span className="text-gray-500">Fatigue score:</span>{' '}
-                        {selectedRider.fatigue ?? 0}/100
-                      </div>
+                    <div className="mt-4">
+                      <label className="block text-sm font-semibold text-slate-800">Image URL</label>
 
-                      {healthCaseName ? (
-                        <div>
-                          <span className="text-gray-500">Case:</span> {healthCaseName}
+                      <input
+                        type="text"
+                        value={imageUrlInput}
+                        onChange={(e) => setImageUrlInput(e.target.value)}
+                        placeholder="Paste rider image URL"
+                        className="mt-3 w-full rounded-xl border border-slate-300 bg-slate-50 px-3.5 py-3 text-sm text-slate-800 outline-none transition focus:border-yellow-400 focus:bg-white focus:ring-4 focus:ring-yellow-100"
+                      />
+
+                      <button
+                        type="button"
+                        onClick={applyImageChange}
+                        disabled={imageSaving}
+                        className="mt-3 w-full rounded-xl bg-yellow-400 px-4 py-3 text-sm font-semibold text-slate-950 transition hover:bg-yellow-500 disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        {imageSaving ? 'Saving image...' : 'Apply Image Change'}
+                      </button>
+
+                      {imageSaveMessage && (
+                        <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600">
+                          {imageSaveMessage}
                         </div>
-                      ) : null}
-
-                      {healthSeverityLabel ? (
-                        <div>
-                          <span className="text-gray-500">Severity:</span> {healthSeverityLabel}
-                        </div>
-                      ) : null}
-
-                      {healthStageLabel ? (
-                        <div>
-                          <span className="text-gray-500">Stage:</span> {healthStageLabel}
-                        </div>
-                      ) : null}
-
-                      {selectedRider.unavailable_reason ? (
-                        <div>
-                          <span className="text-gray-500">Reason:</span>{' '}
-                          {formatUnavailableReason(selectedRider.unavailable_reason)}
-                        </div>
-                      ) : null}
-
-                      {currentHealthCase?.expected_full_recovery_on ? (
-                        <div>
-                          <span className="text-gray-500">Expected full recovery:</span>{' '}
-                          {healthExpectedRecoveryLabel}
-                          {healthExpectedRecoveryDays !== null
-                            ? ` (${healthExpectedRecoveryDays} day${
-                                healthExpectedRecoveryDays === 1 ? '' : 's'
-                              } remaining)`
-                            : ''}
-                        </div>
-                      ) : null}
-                    </div>
-
-                    {currentHealthCase?.health_case_id ? (
-                      <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-3">
-                        <div className="rounded-lg bg-gray-50 px-3 py-2 text-xs text-gray-600">
-                          <div className="text-[11px] uppercase tracking-wide text-gray-500">
-                            Selection
-                          </div>
-                          <div className="mt-1 font-medium text-gray-800">
-                            {formatBlockFlag(currentHealthCase.selection_blocked)}
-                          </div>
-                        </div>
-
-                        <div className="rounded-lg bg-gray-50 px-3 py-2 text-xs text-gray-600">
-                          <div className="text-[11px] uppercase tracking-wide text-gray-500">
-                            Training
-                          </div>
-                          <div className="mt-1 font-medium text-gray-800">
-                            {formatBlockFlag(currentHealthCase.training_blocked)}
-                          </div>
-                        </div>
-
-                        <div className="rounded-lg bg-gray-50 px-3 py-2 text-xs text-gray-600">
-                          <div className="text-[11px] uppercase tracking-wide text-gray-500">
-                            Development
-                          </div>
-                          <div className="mt-1 font-medium text-gray-800">
-                            {formatBlockFlag(currentHealthCase.development_blocked)}
-                          </div>
-                        </div>
-                      </div>
-                    ) : null}
-
-                    <div className="mt-3 rounded-lg bg-gray-50 px-3 py-2 text-xs text-gray-600">
-                      {currentHealthCase?.health_case_id
-                        ? currentHealthCase.case_status === 'recovering'
-                          ? 'Rider has left the unavailable phase and is now recovering toward full fitness.'
-                          : currentHealthCase.case_status === 'active'
-                            ? 'Rider is in the active medical phase and remains unavailable until the current case clears.'
-                            : getHealthPanelNote(selectedRider)
-                        : getHealthPanelNote(selectedRider)}
+                      )}
                     </div>
                   </div>
                 </div>
+
+                <SectionCard title="Contract & Value" subtitle="Simple contract overview">
+                  <div className="space-y-3">
+                    <SimpleInfoRow
+                      label="Weekly Wage"
+                      value={formatWeeklySalary(selectedRider.salary)}
+                      note={`Full season wage: ${formatMoney(getSeasonWage(selectedRider.salary))}`}
+                    />
+
+                    <SimpleInfoRow
+                      label="Contract"
+                      value={contractExpiryUi.label}
+                      valueClassName={contractExpiryUi.valueClassName}
+                      note={contractExpiryUi.sublabel}
+                      noteClassName={
+                        contractExpiryUi.valueClassName.includes('text-red-600')
+                          ? 'text-red-600'
+                          : ''
+                      }
+                    />
+
+                    <SimpleInfoRow
+                      label="Market Value"
+                      value={formatMoney(selectedRider.market_value)}
+                    />
+
+                    <SimpleInfoRow
+                      label="Asking Price"
+                      value={askingPriceDisplay}
+                      valueClassName={
+                        selectedRider.asking_price === null ||
+                        selectedRider.asking_price === undefined
+                          ? 'text-slate-500'
+                          : ''
+                      }
+                    />
+                  </div>
+
+                  {u23WarningMessage && (
+                    <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                      <div className="font-semibold">U23 eligibility warning</div>
+                      <div className="mt-1 leading-relaxed">{u23WarningMessage}</div>
+                    </div>
+                  )}
+                </SectionCard>
+
+                <SectionCard title="Availability" subtitle="Current condition and health status">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <RiderStatusBadge status={selectedRider.availability_status} />
+                    <FatigueBadge fatigue={selectedRider.fatigue} />
+                  </div>
+
+                  <div className="mt-4 divide-y divide-slate-100">
+                    <DetailRow label="Fatigue score" value={`${selectedRider.fatigue ?? 0}/100`} />
+                    {healthCaseName ? <DetailRow label="Case" value={healthCaseName} /> : null}
+                    {healthSeverityLabel ? (
+                      <DetailRow label="Severity" value={healthSeverityLabel} />
+                    ) : null}
+                    {healthStageLabel ? <DetailRow label="Stage" value={healthStageLabel} /> : null}
+                    {selectedRider.unavailable_reason ? (
+                      <DetailRow
+                        label="Reason"
+                        value={formatUnavailableReason(selectedRider.unavailable_reason)}
+                      />
+                    ) : null}
+                    {currentHealthCase?.expected_full_recovery_on ? (
+                      <DetailRow
+                        label="Expected recovery"
+                        value={
+                          <>
+                            {healthExpectedRecoveryLabel}
+                            {healthExpectedRecoveryDays !== null
+                              ? ` (${healthExpectedRecoveryDays} day${
+                                  healthExpectedRecoveryDays === 1 ? '' : 's'
+                                } remaining)`
+                              : ''}
+                          </>
+                        }
+                      />
+                    ) : null}
+                  </div>
+
+                  {currentHealthCase?.health_case_id ? (
+                    <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
+                      <div className="rounded-xl bg-slate-50 px-3 py-3">
+                        <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">
+                          Selection
+                        </div>
+                        <div className="mt-2 text-sm font-semibold text-slate-800">
+                          {formatBlockFlag(currentHealthCase.selection_blocked)}
+                        </div>
+                      </div>
+
+                      <div className="rounded-xl bg-slate-50 px-3 py-3">
+                        <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">
+                          Training
+                        </div>
+                        <div className="mt-2 text-sm font-semibold text-slate-800">
+                          {formatBlockFlag(currentHealthCase.training_blocked)}
+                        </div>
+                      </div>
+
+                      <div className="rounded-xl bg-slate-50 px-3 py-3">
+                        <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">
+                          Development
+                        </div>
+                        <div className="mt-2 text-sm font-semibold text-slate-800">
+                          {formatBlockFlag(currentHealthCase.development_blocked)}
+                        </div>
+                      </div>
+                    </div>
+                  ) : null}
+
+                  <div className="mt-4 rounded-xl bg-slate-50 px-4 py-3 text-sm leading-relaxed text-slate-600">
+                    {currentHealthCase?.health_case_id
+                      ? currentHealthCase.case_status === 'recovering'
+                        ? 'Rider has left the unavailable phase and is now recovering toward full fitness.'
+                        : currentHealthCase.case_status === 'active'
+                          ? 'Rider is in the active medical phase and remains unavailable until the current case clears.'
+                          : getHealthPanelNote(selectedRider)
+                      : getHealthPanelNote(selectedRider)}
+                  </div>
+                </SectionCard>
               </div>
 
-              <div>
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="inline-flex items-center gap-2 rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-700">
-                    <CountryFlag countryCode={selectedRider.country_code} />
-                    {getCountryName(selectedRider.country_code)}
-                  </span>
-                  <span className="rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-700">
-                    {selectedRider.role}
-                  </span>
-                  <span className="rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-700">
-                    Age {profileAge ?? '—'}
-                  </span>
-                  <span className="rounded-full bg-yellow-100 px-3 py-1 text-sm font-medium text-yellow-800">
-                    Overall {selectedRider.overall}%
-                  </span>
-                </div>
-
-                {u23WarningMessage && (
-                  <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-                    <div className="font-semibold">U23 eligibility warning</div>
-                    <div className="mt-1">{u23WarningMessage}</div>
-                  </div>
-                )}
-
-                <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
-                  <CompactValueTile
-                    label="Salary (Weekly)"
-                    value={formatWeeklySalary(selectedRider.salary)}
-                    valueClassName="text-lg leading-tight whitespace-nowrap"
-                    subvalue={`Full season wage: ${formatMoney(getSeasonWage(selectedRider.salary))}`}
-                    subvalueClassName="text-xs text-gray-500"
-                  />
-
-                  <CompactValueTile
-                    label="Contract Ends"
-                    value={contractExpiryUi.label}
-                    subvalue={contractExpiryUi.sublabel}
-                    valueClassName={contractExpiryUi.valueClassName}
-                    subvalueClassName={
-                      contractExpiryUi.valueClassName.includes('text-red-600')
-                        ? 'text-xs text-red-600'
-                        : 'text-xs text-gray-500'
-                    }
-                  />
-
-                  <CompactValueTile
-                    label="Market Value"
-                    value={formatMoney(selectedRider.market_value)}
-                    valueClassName="text-lg leading-tight whitespace-nowrap"
-                  />
-
-                  <CompactValueTile
-                    label="Asking Price"
-                    value={askingPriceDisplay}
-                    valueClassName={`text-lg leading-tight whitespace-nowrap ${
-                      selectedRider.asking_price === null ||
-                      selectedRider.asking_price === undefined
-                        ? 'text-gray-500'
-                        : 'text-gray-900'
-                    }`}
-                  />
-                </div>
-
-                <div className="mt-6">
-                  <div className="mb-3 text-base font-semibold text-gray-900">
-                    Rider Attributes
-                  </div>
-
-                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+              <div className="space-y-5">
+                <SectionCard
+                  title="Skill Attributes"
+                  subtitle="Simple list like the compact modal design"
+                >
+                  <div className="space-y-3">
                     {[
-                      { label: 'Sprint', value: selectedRider.sprint },
-                      { label: 'Climbing', value: selectedRider.climbing },
-                      { label: 'Time Trial', value: selectedRider.time_trial },
-                      { label: 'Endurance', value: selectedRider.endurance },
-                      { label: 'Flat', value: selectedRider.flat },
-                      { label: 'Recovery', value: selectedRider.recovery },
-                      { label: 'Resistance', value: selectedRider.resistance },
-                      { label: 'Race IQ', value: selectedRider.race_iq },
-                      { label: 'Teamwork', value: selectedRider.teamwork },
-                    ].map((stat) => (
-                      <StatTile key={stat.label} label={stat.label} value={stat.value} />
-                    ))}
-                  </div>
-                </div>
+                      { label: 'Sprint', key: 'sprint' as const, value: selectedRider.sprint },
+                      { label: 'Climbing', key: 'climbing' as const, value: selectedRider.climbing },
+                      { label: 'Time Trial', key: 'time_trial' as const, value: selectedRider.time_trial },
+                      { label: 'Endurance', key: 'endurance' as const, value: selectedRider.endurance },
+                      { label: 'Flat', key: 'flat' as const, value: selectedRider.flat },
+                      { label: 'Recovery', key: 'recovery' as const, value: selectedRider.recovery },
+                      { label: 'Resistance', key: 'resistance' as const, value: selectedRider.resistance },
+                      { label: 'Race IQ', key: 'race_iq' as const, value: selectedRider.race_iq },
+                      { label: 'Teamwork', key: 'teamwork' as const, value: selectedRider.teamwork },
+                    ].map((stat) => {
+                      const delta = skillDeltaMap[stat.key]
 
-                <div className="mt-6 border-t border-gray-200 pt-5">
+                      return (
+                        <SimpleAttributeRow
+                          key={stat.key}
+                          label={stat.label}
+                          value={stat.value ?? 0}
+                          deltaLabel={delta?.has_visible_delta ? delta.delta_label : null}
+                          deltaDirection={delta?.has_visible_delta ? delta.delta_direction : null}
+                          sourceLabel={
+                            delta?.has_visible_delta
+                              ? formatSkillDeltaSource(delta.primary_source)
+                              : null
+                          }
+                        />
+                      )
+                    })}
+                  </div>
+                </SectionCard>
+
+                <SectionCard title="Form & Development" subtitle="Simple current overview">
                   <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
                     <CompactStatusTile
                       label="Potential"
@@ -1479,41 +2022,71 @@ function RiderProfileModal({
                     />
 
                     <CompactStatusTile
-                      label="Fatigue"
-                      status={fatigueUi.label}
-                      subtitle={
-                        selectedRider.fatigue == null ? '0/100' : `${selectedRider.fatigue}/100`
-                      }
-                      statusColor={fatigueUi.color}
+                      label="Status"
+                      status={healthUi.label}
+                      subtitle={selectedRider.fatigue == null ? 'Fatigue 0/100' : `Fatigue ${selectedRider.fatigue}/100`}
+                      statusColor={healthUi.color}
                       statusClassName="text-lg leading-tight whitespace-nowrap"
                     />
                   </div>
-                </div>
+                </SectionCard>
+
+                <SectionCard title="Quick Notes" subtitle="Simple summary for decision making">
+                  <div className="space-y-3">
+                    <div className="rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-700">
+                      Contract ends: <span className="font-semibold">{contractExpiryUi.label}</span>
+                      {contractExpiryUi.sublabel ? ` · ${contractExpiryUi.sublabel}` : ''}
+                    </div>
+
+                    <div className="rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-700">
+                      Potential: <span style={{ color: potentialUi.color }}>{potentialUi.label}</span>
+                      {' · '}
+                      Morale: <span style={{ color: moraleUi.color }}>{moraleUi.label}</span>
+                      {' · '}
+                      Fatigue: <span style={{ color: fatigueUi.color }}>{fatigueUi.label}</span>
+                    </div>
+
+                    <div className="rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-700">
+                      {currentHealthCase?.health_case_id
+                        ? `Medical case: ${healthCaseName ?? 'Health issue'}${healthStageLabel ? ` · ${healthStageLabel}` : ''}`
+                        : 'No active medical case recorded right now.'}
+                    </div>
+                  </div>
+                </SectionCard>
               </div>
             </div>
           )}
         </div>
 
         {!profileLoading && !profileError && selectedRider && (
-          <div className="shrink-0 border-t border-gray-200 bg-white px-6 py-4">
-            {contractActionMessage && (
-              <div className="mb-3 text-sm text-gray-600">{contractActionMessage}</div>
-            )}
+          <div className="shrink-0 border-t border-slate-200 bg-white px-6 py-4">
+            <div className="mb-3 text-sm text-slate-600">
+              {contractActionMessage ??
+                'Manage contract, transfer and comparison actions for this rider.'}
+            </div>
 
-            <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-5">
               <button
                 type="button"
                 onClick={handleNewContract}
                 disabled={renewalBusy}
-                className="rounded-lg border border-gray-200 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
+                className="rounded-xl bg-yellow-400 px-4 py-3 text-sm font-semibold text-slate-950 transition hover:bg-yellow-500 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {renewalBusy ? 'Processing...' : 'New Contract'}
+                {renewalBusy ? 'Processing...' : 'Extend Contract'}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setCareerHistoryOpen(true)}
+                className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+              >
+                Career History
               </button>
 
               <button
                 type="button"
                 onClick={() => setTransferListOpen(true)}
-                className="rounded-lg border border-gray-200 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
               >
                 Transfer List
               </button>
@@ -1521,14 +2094,14 @@ function RiderProfileModal({
               <button
                 type="button"
                 onClick={() => setCompareOpen(true)}
-                className="rounded-lg border border-gray-200 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
               >
                 Compare Rider
               </button>
 
               <button
                 type="button"
-                className="rounded-lg border border-red-200 px-4 py-3 text-sm font-medium text-red-600 hover:bg-red-50"
+                className="rounded-xl border border-rose-200 bg-white px-4 py-3 text-sm font-medium text-rose-600 transition hover:bg-rose-50"
               >
                 Release
               </button>
@@ -1545,6 +2118,14 @@ function RiderProfileModal({
         />
       )}
 
+      {careerHistoryOpen && selectedRider && (
+        <CareerHistoryModal
+          open={careerHistoryOpen}
+          onClose={() => setCareerHistoryOpen(false)}
+          rider={selectedRider}
+        />
+      )}
+
       {transferListOpen && selectedRider && (
         <TransferListModal
           open={transferListOpen}
@@ -1558,7 +2139,7 @@ function RiderProfileModal({
 
       {renewalModalOpen && renewalData && (
         <div
-          className="fixed inset-0 z-[70] flex items-center justify-center bg-black/50 p-4"
+          className="fixed inset-0 z-[70] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
           onClick={() => setRenewalModalOpen(false)}
         >
           <div
@@ -1619,7 +2200,7 @@ function RiderProfileModal({
                   subvalueClassName={
                     renewalDaysRemaining !== null && renewalDaysRemaining < 90
                       ? 'text-xs text-red-600'
-                      : 'text-xs text-gray-500'
+                      : 'text-xs text-slate-500'
                   }
                 />
               </div>
@@ -1714,7 +2295,7 @@ function RiderProfileModal({
 /**
  * CompareRiderModal
  * Keep compare modal logic local: compares selected left rider to another rider
- * from the same roster. Diff is left - right.
+ * from the squad family. Diff is left - right.
  */
 function CompareRiderModal({
   open,
@@ -1725,7 +2306,7 @@ function CompareRiderModal({
   onClose: () => void
   leftRider: RiderDetails
 }) {
-  const [compareCandidates, setCompareCandidates] = useState<ClubRosterRow[]>([])
+  const [compareCandidates, setCompareCandidates] = useState<CompareCandidateRow[]>([])
   const [compareTargetId, setCompareTargetId] = useState('')
   const [compareLoading, setCompareLoading] = useState(false)
   const [compareError, setCompareError] = useState<string | null>(null)
@@ -1733,43 +2314,119 @@ function CompareRiderModal({
 
   useEffect(() => {
     let mounted = true
+
     async function loadCandidates() {
+      setCompareError(null)
+
       try {
         const { data: authData, error: authErr } = await supabase.auth.getUser()
         if (authErr) throw authErr
         const userId = authData.user?.id
         if (!userId) return
 
-        const { data: club, error: clubErr } = await supabase
+        const { data: clubs, error: clubsErr } = await supabase
           .from('clubs')
-          .select('id')
+          .select('id, club_type, parent_club_id, is_active, deleted_at')
           .eq('owner_user_id', userId)
-          .single()
-        if (clubErr) throw clubErr
-        if (!club?.id) return
+          .in('club_type', ['main', 'developing'])
+          .eq('is_active', true)
+          .is('deleted_at', null)
+
+        if (clubsErr) throw clubsErr
+
+        const clubRows = (clubs ?? []) as ClubFamilyRow[]
+        const mainClub = clubRows.find((c) => c.club_type === 'main')
+
+        if (!mainClub) throw new Error('Main club not found.')
+
+        const familyClubs = clubRows.filter(
+          (c) => c.id === mainClub.id || c.parent_club_id === mainClub.id
+        )
+
+        const familyClubIds = familyClubs.map((c) => c.id)
+        const teamLabelByClubId = new Map(
+          familyClubs.map((c) => [
+            c.id,
+            c.club_type === 'developing' ? 'Developing Team' : 'First Squad',
+          ])
+        )
+
+        if (familyClubIds.length === 0) {
+          if (!mounted) return
+          setCompareCandidates([])
+          return
+        }
 
         const { data: roster, error: rosterErr } = await supabase
           .from('club_roster')
           .select(
             'club_id, rider_id, display_name, country_code, assigned_role, age_years, overall'
           )
-          .eq('club_id', club.id)
+          .in('club_id', familyClubIds)
+          .neq('rider_id', leftRider.id)
           .order('overall', { ascending: false })
 
         if (rosterErr) throw rosterErr
+
+        const rosterRows = (roster ?? []) as CompareCandidateRow[]
+        const riderIds = rosterRows.map((row) => row.rider_id)
+
+        if (riderIds.length === 0) {
+          if (!mounted) return
+          setCompareCandidates([])
+          return
+        }
+
+        const { data: riderNames, error: riderNamesErr } = await supabase
+          .from('riders')
+          .select('id, first_name, last_name, display_name')
+          .in('id', riderIds)
+
+        if (riderNamesErr) throw riderNamesErr
+
+        const riderNameMap = new Map(
+          (riderNames ?? []).map(
+            (row: {
+              id: string
+              first_name: string | null
+              last_name: string | null
+              display_name: string | null
+            }) => [
+              row.id,
+              buildRiderFullName(row.first_name, row.last_name, row.display_name),
+            ]
+          )
+        )
+
         if (!mounted) return
-        setCompareCandidates((roster ?? []) as ClubRosterRow[])
-      } catch {
-        // keep silent for modal candidate load errors
+
+        setCompareCandidates(
+          rosterRows.map((row) => ({
+            ...row,
+            full_name: riderNameMap.get(row.rider_id) ?? row.display_name,
+            team_label: teamLabelByClubId.get(row.club_id) ?? 'Unknown Team',
+          }))
+        )
+      } catch (e: any) {
+        if (!mounted) return
+        setCompareCandidates([])
+        setCompareError(e?.message ?? 'Failed to load comparison candidates.')
       }
     }
 
-    if (open) void loadCandidates()
+    if (open) {
+      void loadCandidates()
+    } else {
+      setCompareCandidates([])
+      setCompareTargetId('')
+      setComparedRider(null)
+      setCompareError(null)
+    }
 
     return () => {
       mounted = false
     }
-  }, [open])
+  }, [open, leftRider.id])
 
   async function handleCompareSelect(riderId: string) {
     setCompareTargetId(riderId)
@@ -1837,6 +2494,9 @@ function CompareRiderModal({
 
   if (!open) return null
 
+  const selectedCompareCandidate =
+    compareCandidates.find((rider) => rider.rider_id === compareTargetId) ?? null
+
   const COMPARE_STATS: { key: keyof RiderDetails; label: string }[] = [
     { key: 'overall', label: 'Overall' },
     { key: 'sprint', label: 'Sprint' },
@@ -1867,7 +2527,7 @@ function CompareRiderModal({
               <div>
                 <div className="text-2xl font-semibold text-gray-900">Compare Riders</div>
                 <div className="mt-1 text-sm text-gray-500">
-                  Select another rider from the same team to compare against{' '}
+                  Select another rider from the First Squad or Developing Team to compare against{' '}
                   {leftRider.first_name} {leftRider.last_name}.
                 </div>
               </div>
@@ -1893,14 +2553,16 @@ function CompareRiderModal({
                 <option value="">Select a rider</option>
                 {compareCandidates.map((rider) => (
                   <option key={rider.rider_id} value={rider.rider_id}>
-                    {rider.display_name} • {rider.assigned_role} • {rider.overall}%
+                    {rider.full_name ?? rider.display_name} • {rider.team_label ?? 'Unknown Team'} •{' '}
+                    {rider.assigned_role} • {rider.overall}%
                   </option>
                 ))}
               </select>
 
-              {compareCandidates.length === 0 && (
+              {compareCandidates.length === 0 && !compareError && (
                 <div className="mt-2 text-sm text-gray-500">
-                  No other riders are available for comparison.
+                  No other riders are available for comparison across First Squad and Developing
+                  Team.
                 </div>
               )}
 
@@ -1956,6 +2618,12 @@ function CompareRiderModal({
                         <span>{getCountryName(comparedRider.country_code)}</span>
                         <span>•</span>
                         <span>{comparedRider.role}</span>
+                        {selectedCompareCandidate?.team_label ? (
+                          <>
+                            <span>•</span>
+                            <span>{selectedCompareCandidate.team_label}</span>
+                          </>
+                        ) : null}
                       </div>
                     </div>
                   </div>
@@ -2076,11 +2744,12 @@ function CompareRiderModal({
 export default function SquadPage() {
   const location = useLocation()
 
-  const [rows, setRows] = useState<ClubRosterRow[]>([])
+  const [rows, setRows] = useState<SquadRosterRow[]>([])
   const [healthOverviewRows, setHealthOverviewRows] = useState<ClubHealthOverviewRow[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [gameDate, setGameDate] = useState<string | null>(null)
+  const [listView, setListView] = useState<SquadListView>('general')
 
   const [profileOpen, setProfileOpen] = useState(false)
   const [selectedRiderId, setSelectedRiderId] = useState<string | null>(null)
@@ -2099,7 +2768,7 @@ export default function SquadPage() {
       rows.map((r, idx) => ({
         rowNo: idx + 1,
         id: r.rider_id,
-        name: r.display_name,
+        name: buildRiderFullName(r.first_name, r.last_name, r.full_name ?? r.display_name),
         countryCode: r.country_code,
         role: r.assigned_role,
         age: getAgeFromBirthDate(r.birth_date ?? null, gameDate ?? null) ?? r.age_years,
@@ -2107,8 +2776,40 @@ export default function SquadPage() {
         fatigue: r.fatigue ?? 0,
         status:
           (r.availability_status ?? getDefaultRiderAvailabilityStatus()) as RiderAvailabilityStatus,
+        marketValue: r.market_value ?? null,
+        salary: r.salary ?? null,
+        contractExpiresAt: r.contract_expires_at ?? null,
+        contractExpiresSeason: r.contract_expires_season ?? null,
+        sprint: r.sprint ?? null,
+        climbing: r.climbing ?? null,
+        timeTrial: r.time_trial ?? null,
+        flat: r.flat ?? null,
+        endurance: r.endurance ?? null,
+        recovery: r.recovery ?? null,
+        morale: r.morale ?? null,
+        potential: r.potential ?? null,
       })),
     [rows, gameDate]
+  )
+
+  const riderNameById = useMemo(
+    () =>
+      new Map(
+        rows.map((row) => [
+          row.rider_id,
+          buildRiderFullName(row.first_name, row.last_name, row.full_name ?? row.display_name),
+        ])
+      ),
+    [rows]
+  )
+
+  const healthOverviewDisplayRows = useMemo(
+    () =>
+      healthOverviewRows.map((row) => ({
+        ...row,
+        full_name: riderNameById.get(row.rider_id) ?? row.display_name,
+      })),
+    [healthOverviewRows, riderNameById]
   )
 
   const squadDisplayData = useMemo(() => {
@@ -2218,33 +2919,123 @@ export default function SquadPage() {
 
       if (rosterErr) throw rosterErr
 
-      const rosterRows = (roster ?? []) as ClubRosterRow[]
+      const rosterRows = (roster ?? []) as SquadRosterRow[]
       const riderIds = rosterRows.map((row) => row.rider_id)
 
-      let birthDateMap = new Map<string, string | null>()
+      let riderMetaMap = new Map<
+        string,
+        {
+          id: string
+          first_name: string | null
+          last_name: string | null
+          display_name: string | null
+          birth_date: string | null
+          salary: number | null
+          contract_expires_at: string | null
+          contract_expires_season: number | null
+          market_value: number | null
+          sprint: number | null
+          climbing: number | null
+          time_trial: number | null
+          flat: number | null
+          endurance: number | null
+          recovery: number | null
+          morale: number | null
+          potential: number | null
+          fatigue: number | null
+          availability_status: RiderAvailabilityStatus | null
+        }
+      >()
 
       if (riderIds.length > 0) {
-        const { data: riderBirthDates, error: riderBirthDatesErr } = await supabase
+        const { data: riderMetaRows, error: riderMetaErr } = await supabase
           .from('riders')
           .select(
-            'id, birth_date, fatigue, availability_status, unavailable_until, unavailable_reason'
+            `
+            id,
+            first_name,
+            last_name,
+            display_name,
+            birth_date,
+            salary,
+            contract_expires_at,
+            contract_expires_season,
+            market_value,
+            sprint,
+            climbing,
+            time_trial,
+            flat,
+            endurance,
+            recovery,
+            morale,
+            potential,
+            fatigue,
+            availability_status
+          `
           )
           .in('id', riderIds)
 
-        if (riderBirthDatesErr) throw riderBirthDatesErr
+        if (riderMetaErr) throw riderMetaErr
 
-        birthDateMap = new Map(
-          (riderBirthDates ?? []).map((row: { id: string; birth_date: string | null }) => [
-            row.id,
-            row.birth_date,
-          ])
+        riderMetaMap = new Map(
+          (
+            riderMetaRows as Array<{
+              id: string
+              first_name: string | null
+              last_name: string | null
+              display_name: string | null
+              birth_date: string | null
+              salary: number | null
+              contract_expires_at: string | null
+              contract_expires_season: number | null
+              market_value: number | null
+              sprint: number | null
+              climbing: number | null
+              time_trial: number | null
+              flat: number | null
+              endurance: number | null
+              recovery: number | null
+              morale: number | null
+              potential: number | null
+              fatigue: number | null
+              availability_status: RiderAvailabilityStatus | null
+            }>
+          ).map((row) => [row.id, row])
         )
       }
 
-      const mergedRows = rosterRows.map((row) => ({
-        ...row,
-        birth_date: birthDateMap.get(row.rider_id) ?? null,
-      }))
+      const mergedRows: SquadRosterRow[] = rosterRows.map((row) => {
+        const riderMeta = riderMetaMap.get(row.rider_id)
+        const fullName = buildRiderFullName(
+          riderMeta?.first_name,
+          riderMeta?.last_name,
+          riderMeta?.display_name ?? row.display_name
+        )
+
+        return {
+          ...row,
+          display_name: fullName,
+          full_name: fullName,
+          first_name: riderMeta?.first_name ?? null,
+          last_name: riderMeta?.last_name ?? null,
+          birth_date: riderMeta?.birth_date ?? null,
+          market_value: riderMeta?.market_value ?? null,
+          salary: riderMeta?.salary ?? null,
+          contract_expires_at: riderMeta?.contract_expires_at ?? null,
+          contract_expires_season: riderMeta?.contract_expires_season ?? null,
+          sprint: riderMeta?.sprint ?? null,
+          climbing: riderMeta?.climbing ?? null,
+          time_trial: riderMeta?.time_trial ?? null,
+          flat: riderMeta?.flat ?? null,
+          endurance: riderMeta?.endurance ?? null,
+          recovery: riderMeta?.recovery ?? null,
+          morale: riderMeta?.morale ?? null,
+          potential: riderMeta?.potential ?? null,
+          fatigue: row.fatigue ?? riderMeta?.fatigue ?? null,
+          availability_status:
+            row.availability_status ?? riderMeta?.availability_status ?? null,
+        }
+      })
 
       setRows(mergedRows)
       setHealthOverviewRows((healthData ?? []) as ClubHealthOverviewRow[])
@@ -2319,9 +3110,35 @@ export default function SquadPage() {
       : `Movement window closed. Next window: ${developingTeamStatus.next_window_label ?? 'Unknown'}`
     : 'Movement window information unavailable.'
 
+  const squadTableClassName = [
+    'w-full text-sm',
+    listView === 'skills' ? 'table-fixed' : '',
+    listView === 'financial'
+      ? 'min-w-[980px]'
+      : listView === 'form'
+        ? 'min-w-[1020px]'
+        : listView === 'general'
+          ? 'min-w-[900px]'
+          : '',
+  ]
+    .filter(Boolean)
+    .join(' ')
+
+  const squadTableColSpan =
+    listView === 'skills'
+      ? 11
+      : listView === 'financial'
+        ? 8
+        : listView === 'form'
+          ? 9
+          : 9
+
+  const currentViewLabel =
+    SQUAD_LIST_VIEW_OPTIONS.find((option) => option.value === listView)?.label ?? 'General View'
+
   return (
     <div className="w-full">
-      <div className="mb-4 flex items-center justify-between">
+      <div className="mb-4 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div>
           <h2 className="mb-2 text-xl font-semibold">Squad</h2>
           <div className="text-sm text-gray-500">
@@ -2329,13 +3146,13 @@ export default function SquadPage() {
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="inline-flex rounded-lg bg-white border border-gray-100 p-1 shadow-sm">
           <a
             href="#/dashboard/squad"
-            className={`rounded-lg px-4 py-2 text-sm font-medium transition ${
+            className={`rounded-md px-4 py-2 text-sm font-medium transition ${
               isActive('/dashboard/squad')
                 ? 'bg-yellow-400 text-black'
-                : 'border border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
+                : 'text-gray-600 hover:bg-gray-100'
             }`}
           >
             First Squad
@@ -2344,17 +3161,17 @@ export default function SquadPage() {
           {hasDevelopingTeam ? (
             <a
               href="#/dashboard/developing-team"
-              className={`rounded-lg px-4 py-2 text-sm font-medium transition ${
+              className={`rounded-md px-4 py-2 text-sm font-medium transition ${
                 isActive('/dashboard/developing-team')
                   ? 'bg-yellow-400 text-black'
-                  : 'border border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
+                  : 'text-gray-600 hover:bg-gray-100'
               }`}
             >
               Developing Team
             </a>
           ) : (
             <span
-              className="inline-flex cursor-not-allowed items-center gap-2 rounded-lg border border-gray-200 bg-gray-100 px-4 py-2 text-sm font-medium text-gray-400"
+              className="inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium text-gray-400 cursor-not-allowed"
               title="Unlock Developing Team in Preferences first."
               aria-disabled="true"
             >
@@ -2365,10 +3182,10 @@ export default function SquadPage() {
 
           <a
             href="#/dashboard/staff"
-            className={`rounded-lg px-4 py-2 text-sm font-medium transition ${
+            className={`rounded-md px-4 py-2 text-sm font-medium transition ${
               isActive('/dashboard/staff')
                 ? 'bg-yellow-400 text-black'
-                : 'border border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
+                : 'text-gray-600 hover:bg-gray-100'
             }`}
           >
             Staff
@@ -2424,92 +3241,273 @@ export default function SquadPage() {
           )}
 
           <div className="w-full rounded-lg bg-white p-4 shadow">
-            <div className="mb-2 flex items-center justify-between">
-              <div className="text-base font-semibold text-gray-800">First Squad</div>
-              <div className="text-sm text-gray-500">
-                Riders: <span className="font-medium text-gray-700">{riders.length}/{SQUAD_MAX}</span>
+            <div className="mb-3 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+              <div>
+                <div className="text-base font-semibold text-gray-800">First Squad</div>
+                <div className="mt-1 text-sm text-gray-500">
+                  {currentViewLabel} · Riders{' '}
+                  <span className="font-medium text-gray-700">
+                    {riders.length}/{SQUAD_MAX}
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <label htmlFor="squad-list-view" className="text-sm font-medium text-gray-600">
+                  View
+                </label>
+                <select
+                  id="squad-list-view"
+                  value={listView}
+                  onChange={(e) => setListView(e.target.value as SquadListView)}
+                  className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 outline-none transition focus:border-yellow-400"
+                >
+                  {SQUAD_LIST_VIEW_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
               </div>
             </div>
 
             <div className="overflow-x-auto">
-              <table className="w-full text-sm">
+              <table className={squadTableClassName}>
                 <thead>
                   <tr className="text-left text-gray-600">
-                    <th className="p-2">#</th>
-                    <th className="p-2">Name</th>
-                    <th className="p-2">Country</th>
-                    <th className="p-2">Role</th>
-                    <th className="p-2">Age</th>
-                    <th className="p-2">Overall</th>
-                    <th className="p-2 w-[160px]">Status</th>
-                    <th className="p-2 w-[90px] text-center">Move</th>
-                    <th className="p-2 w-[90px]"></th>
+                    <th className={`p-2 ${listView === 'skills' ? 'w-[42px]' : ''}`}>#</th>
+                    <th className={`p-2 ${listView === 'skills' ? 'w-[190px]' : ''}`}>Name</th>
+                    <th className={`p-2 ${listView === 'skills' ? 'w-[110px]' : ''}`}>Country</th>
+                    <th className={`p-2 ${listView === 'skills' ? 'w-[130px]' : ''}`}>Role</th>
+
+                    {listView === 'general' && (
+                      <>
+                        <th className="p-2">Age</th>
+                        <th className="p-2">Overall</th>
+                        <th className="p-2 w-[160px]">Status</th>
+                        <th className="p-2 w-[90px] text-center">Move</th>
+                      </>
+                    )}
+
+                    {listView === 'financial' && (
+                      <>
+                        <th className="p-2">Value</th>
+                        <th className="p-2">Wage</th>
+                        <th className="p-2">Contract Expires</th>
+                      </>
+                    )}
+
+                    {listView === 'skills' && (
+                      <>
+                        <th className="p-2 w-[64px] text-center">SP</th>
+                        <th className="p-2 w-[64px] text-center">CL</th>
+                        <th className="p-2 w-[64px] text-center">TT</th>
+                        <th className="p-2 w-[64px] text-center">FL</th>
+                        <th className="p-2 w-[64px] text-center">EN</th>
+                        <th className="p-2 w-[64px] text-center">RC</th>
+                      </>
+                    )}
+
+                    {listView === 'form' && (
+                      <>
+                        <th className="p-2">Potential</th>
+                        <th className="p-2">Morale</th>
+                        <th className="p-2">Fatigue</th>
+                        <th className="p-2">Health</th>
+                      </>
+                    )}
+
+                    <th
+                      className={`p-2 text-right ${listView === 'skills' ? 'w-[72px]' : 'w-[90px]'}`}
+                    >
+                      View
+                    </th>
                   </tr>
                 </thead>
+
                 <tbody>
-                  {riders.map((r) => (
-                    <tr key={r.id} className="border-t">
-                      <td className="p-2">{r.rowNo}</td>
-                      <td className="p-2 font-medium text-gray-800">{r.name}</td>
-                      <td className="p-2">
-                        <div className="flex items-center gap-2" title={getCountryName(r.countryCode)}>
-                          <CountryFlag countryCode={r.countryCode} />
-                          <span className="text-gray-700">{r.countryCode}</span>
-                        </div>
-                      </td>
-                      <td className="p-2">{r.role}</td>
-                      <td className="p-2">{r.age ?? '—'}</td>
-                      <td className="p-2">{r.overall}%</td>
-                      <td className="p-2">
-                        <RiderStatusBadge status={r.status} compact />
-                      </td>
+                  {riders.map((r) => {
+                    const contractExpiryUi = getContractExpiryUi(
+                      r.contractExpiresAt,
+                      gameDate ?? null,
+                      r.contractExpiresSeason
+                    )
 
-                      <td className="p-2 text-center">
-                        {(() => {
-                          const moveState = getFirstSquadMoveState({
-                            hasDevelopingTeam,
-                            movementWindowOpen,
-                            riderAge: r.age ?? null,
-                          })
+                    const bestSkillValue = getBestRiderSkillValue(r)
 
-                          const isBusy = movingRiderId === r.id
+                    const financialContractDisplay =
+                      contractExpiryUi.sublabel || contractExpiryUi.label || '—'
 
-                          return (
-                            <button
-                              type="button"
-                              disabled={!moveState.enabled || isBusy}
-                              title={moveState.reason}
-                              onClick={() => {
-                                if (!moveState.enabled || isBusy) return
-                                void handleMoveToDevelopingTeam(r.id)
-                              }}
-                              className={`inline-flex h-8 w-8 items-center justify-center rounded-md border text-sm transition ${
-                                moveState.enabled && !isBusy
-                                  ? 'border-yellow-400 bg-yellow-100 text-yellow-800 hover:bg-yellow-200'
-                                  : 'cursor-not-allowed border-gray-200 bg-gray-100 text-gray-400'
-                              }`}
-                            >
-                              {isBusy ? '…' : '⇄'}
-                            </button>
-                          )
-                        })()}
-                      </td>
+                    const potentialUi = getPotentialUi(r.potential)
+                    const moraleUi = getMoraleUi(r.morale)
+                    const fatigueUi = getFatigueUi(r.fatigue)
+                    const healthUi = getRiderStatusUi(r.status)
 
-                      <td className="p-2 text-right">
-                        <button
-                          type="button"
-                          onClick={() => openRiderProfile(r.id)}
-                          className="text-sm font-medium text-yellow-600 hover:text-yellow-700"
+                    const renderSkillCell = (value?: number | null) => {
+                      const isBest =
+                        value != null && bestSkillValue != null && value === bestSkillValue
+
+                      return (
+                        <td
+                          className={`p-2 text-center ${
+                            isBest ? 'font-bold text-gray-900' : 'font-medium text-gray-700'
+                          }`}
                         >
-                          View
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
+                          {value ?? '—'}
+                        </td>
+                      )
+                    }
+
+                    return (
+                      <tr key={r.id} className="border-t align-top">
+                        <td className="p-2">{r.rowNo}</td>
+
+                        <td
+                          className={`p-2 font-medium text-gray-800 ${
+                            listView === 'skills'
+                              ? 'truncate whitespace-nowrap'
+                              : 'whitespace-nowrap'
+                          }`}
+                          title={r.name}
+                        >
+                          {r.name}
+                        </td>
+
+                        <td className="p-2">
+                          <div
+                            className={`flex items-center gap-2 ${listView === 'skills' ? 'whitespace-nowrap' : ''}`}
+                            title={getCountryName(r.countryCode)}
+                          >
+                            <CountryFlag countryCode={r.countryCode} />
+                            <span className="text-gray-700">{r.countryCode}</span>
+                          </div>
+                        </td>
+
+                        <td
+                          className={`p-2 ${listView === 'skills' ? 'truncate' : ''}`}
+                          title={r.role}
+                        >
+                          {r.role}
+                        </td>
+
+                        {listView === 'general' && (
+                          <>
+                            <td className="p-2">{r.age ?? '—'}</td>
+                            <td className="p-2">{r.overall}%</td>
+                            <td className="p-2">
+                              <RiderStatusBadge status={r.status} compact />
+                            </td>
+
+                            <td className="p-2 text-center">
+                              {(() => {
+                                const moveState = getFirstSquadMoveState({
+                                  hasDevelopingTeam,
+                                  movementWindowOpen,
+                                  riderAge: r.age ?? null,
+                                })
+
+                                const isBusy = movingRiderId === r.id
+
+                                return (
+                                  <button
+                                    type="button"
+                                    disabled={!moveState.enabled || isBusy}
+                                    title={moveState.reason}
+                                    onClick={() => {
+                                      if (!moveState.enabled || isBusy) return
+                                      void handleMoveToDevelopingTeam(r.id)
+                                    }}
+                                    className={`inline-flex h-8 w-8 items-center justify-center rounded-md border text-sm transition ${
+                                      moveState.enabled && !isBusy
+                                        ? 'border-yellow-400 bg-yellow-100 text-yellow-800 hover:bg-yellow-200'
+                                        : 'cursor-not-allowed border-gray-200 bg-gray-100 text-gray-400'
+                                    }`}
+                                  >
+                                    {isBusy ? '…' : '⇄'}
+                                  </button>
+                                )
+                              })()}
+                            </td>
+                          </>
+                        )}
+
+                        {listView === 'financial' && (
+                          <>
+                            <td className="p-2">
+                              <div className="text-gray-800">
+                                {r.marketValue == null ? '—' : formatMoney(r.marketValue)}
+                              </div>
+                            </td>
+
+                            <td className="p-2">
+                              <div className="text-gray-800">
+                                {r.salary == null ? '—' : formatWeeklySalary(r.salary)}
+                              </div>
+                            </td>
+
+                            <td className="p-2">
+                              <div className="text-gray-800 whitespace-nowrap">
+                                {financialContractDisplay}
+                              </div>
+                            </td>
+                          </>
+                        )}
+
+                        {listView === 'skills' && (
+                          <>
+                            {renderSkillCell(r.sprint)}
+                            {renderSkillCell(r.climbing)}
+                            {renderSkillCell(r.timeTrial)}
+                            {renderSkillCell(r.flat)}
+                            {renderSkillCell(r.endurance)}
+                            {renderSkillCell(r.recovery)}
+                          </>
+                        )}
+
+                        {listView === 'form' && (
+                          <>
+                            <td className="p-2">
+                              {r.potential == null ? (
+                                <span className="text-gray-400">—</span>
+                              ) : (
+                                <InlineStatusText label={potentialUi.label} color={potentialUi.color} />
+                              )}
+                            </td>
+
+                            <td className="p-2">
+                              {r.morale == null ? (
+                                <span className="text-gray-400">—</span>
+                              ) : (
+                                <InlineStatusText label={moraleUi.label} color={moraleUi.color} />
+                              )}
+                            </td>
+
+                            <td className="p-2">
+                              <InlineStatusText label={fatigueUi.label} color={fatigueUi.color} />
+                            </td>
+
+                            <td className="p-2">
+                              <InlineStatusText label={healthUi.label} color={healthUi.color} />
+                            </td>
+                          </>
+                        )}
+
+                        <td className="p-2 text-right">
+                          <button
+                            type="button"
+                            onClick={() => openRiderProfile(r.id)}
+                            className="text-sm font-medium text-yellow-600 hover:text-yellow-700"
+                          >
+                            View
+                          </button>
+                        </td>
+                      </tr>
+                    )
+                  })}
 
                   {riders.length === 0 && (
                     <tr className="border-t">
-                      <td className="p-2 text-gray-500" colSpan={9}>
+                      <td className="p-2 text-gray-500" colSpan={squadTableColSpan}>
                         No riders found for this club yet.
                       </td>
                     </tr>
@@ -2527,7 +3525,7 @@ export default function SquadPage() {
               </div>
             </div>
 
-            {healthOverviewRows.length === 0 ? (
+            {healthOverviewDisplayRows.length === 0 ? (
               <div className="rounded-xl border border-gray-100 bg-gray-50 px-4 py-3 text-sm text-gray-600">
                 No active health concerns in the squad right now.
               </div>
@@ -2546,12 +3544,12 @@ export default function SquadPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {healthOverviewRows.map((row) => (
+                    {healthOverviewDisplayRows.map((row) => (
                       <tr key={row.rider_id} className="border-b border-gray-100 last:border-0">
                         <td className="py-3 pr-4">
                           <div className="flex items-center gap-2">
                             <CountryFlag countryCode={row.country_code} />
-                            <span className="font-medium text-gray-800">{row.display_name}</span>
+                            <span className="font-medium text-gray-800">{row.full_name}</span>
                           </div>
                         </td>
 

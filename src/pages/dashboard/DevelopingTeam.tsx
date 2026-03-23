@@ -13,16 +13,13 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router'
 import { supabase } from '../../lib/supabase'
 import type {
-  ChartPoint,
   ClubRosterRow,
   DevelopingTeamStatus,
   MoraleUiLabel,
-  MovementWindowInfo,
   PotentialUiLabel,
   RenewalNegotiationData,
   RiderAvailabilityStatus,
   RiderDetails,
-  RiderRole,
   TeamType,
 } from '../../features/squad/types'
 import {
@@ -35,6 +32,58 @@ import {
   getRenewalStartLabel,
   isFutureDateTime,
 } from '../../features/squad/utils/dates'
+
+const DEFAULT_RIDER_IMAGE_URL =
+  'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Others/Default%20Profile.png'
+
+const SEASON_WEEKS = 52
+const POTENTIAL_BONUS_MAX_AGE = 28
+const DEVELOPING_TEAM_MAX = 8
+const FIRST_SQUAD_MAX = 18
+
+type SquadListView = 'general' | 'financial' | 'skills' | 'form'
+
+const SQUAD_LIST_VIEW_OPTIONS: Array<{ value: SquadListView; label: string }> = [
+  { value: 'general', label: 'General View' },
+  { value: 'financial', label: 'Financial View' },
+  { value: 'skills', label: 'Skills View' },
+  { value: 'form', label: 'Form & Development' },
+]
+
+type DevelopingRosterRow = ClubRosterRow & {
+  birth_date?: string | null
+  first_name?: string | null
+  last_name?: string | null
+  full_name?: string
+  market_value?: number | null
+  salary?: number | null
+  contract_expires_at?: string | null
+  contract_expires_season?: number | null
+  sprint?: number | null
+  climbing?: number | null
+  time_trial?: number | null
+  flat?: number | null
+  endurance?: number | null
+  recovery?: number | null
+  morale?: number | null
+  potential?: number | null
+  fatigue?: number | null
+  availability_status?: RiderAvailabilityStatus | null
+}
+
+type CompareCandidateRow = ClubRosterRow & {
+  full_name?: string
+  team_label?: string
+}
+
+type ClubFamilyRow = {
+  id: string
+  club_type: string
+  parent_club_id: string | null
+  is_active: boolean | null
+  deleted_at: string | null
+}
+
 function getCountryName(countryCode?: string) {
   const code = countryCode?.trim().toUpperCase()
 
@@ -53,6 +102,35 @@ function getFlagImageUrl(countryCode?: string) {
   if (!code || !/^[a-z]{2}$/.test(code)) return null
 
   return `https://flagcdn.com/24x18/${code}.png`
+}
+
+function buildRiderFullName(
+  firstName?: string | null,
+  lastName?: string | null,
+  fallback?: string | null
+) {
+  const fullName = [firstName?.trim(), lastName?.trim()].filter(Boolean).join(' ').trim()
+  return fullName || fallback || 'Unknown Rider'
+}
+
+function getBestRiderSkillValue(rider: {
+  sprint?: number | null
+  climbing?: number | null
+  timeTrial?: number | null
+  flat?: number | null
+  endurance?: number | null
+  recovery?: number | null
+}) {
+  const values = [
+    rider.sprint,
+    rider.climbing,
+    rider.timeTrial,
+    rider.flat,
+    rider.endurance,
+    rider.recovery,
+  ].filter((value): value is number => typeof value === 'number')
+
+  return values.length > 0 ? Math.max(...values) : null
 }
 
 function CountryFlag({
@@ -81,7 +159,6 @@ function CountryFlag({
     />
   )
 }
-
 
 function getRenewalErrorMessage(message?: string | null) {
   const text = (message ?? '').toLowerCase()
@@ -112,14 +189,6 @@ function getRenewalErrorMessage(message?: string | null) {
 
   return message ?? 'The rider refused the offer.'
 }
-
-const DEFAULT_RIDER_IMAGE_URL =
-  'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Others/Default%20Profile.png'
-
-const SEASON_WEEKS = 52
-const POTENTIAL_BONUS_MAX_AGE = 28
-const DEVELOPING_TEAM_MAX = 8
-const FIRST_SQUAD_MAX = 18
 
 function getRiderImageUrl(imageUrl?: string | null) {
   if (!imageUrl || imageUrl.trim() === '') {
@@ -228,6 +297,58 @@ function getMoraleUi(morale?: number | null): {
   const color = '#16A34A'
   return {
     label: 'Great',
+    color,
+    bgColor: hexToRgba(color, 0.12),
+    borderColor: hexToRgba(color, 0.22),
+    dotColor: color,
+  }
+}
+
+function getFatigueUi(fatigue?: number | null): {
+  label: string
+  color: string
+  bgColor: string
+  borderColor: string
+  dotColor: string
+} {
+  const value = Math.max(0, Math.min(100, fatigue ?? 0))
+
+  if (value <= 19) {
+    const color = '#16A34A'
+    return {
+      label: 'Fresh',
+      color,
+      bgColor: hexToRgba(color, 0.12),
+      borderColor: hexToRgba(color, 0.22),
+      dotColor: color,
+    }
+  }
+
+  if (value <= 39) {
+    const color = '#84CC16'
+    return {
+      label: 'Normal',
+      color,
+      bgColor: hexToRgba(color, 0.12),
+      borderColor: hexToRgba(color, 0.22),
+      dotColor: color,
+    }
+  }
+
+  if (value <= 59) {
+    const color = '#EAB308'
+    return {
+      label: 'Tired',
+      color,
+      bgColor: hexToRgba(color, 0.14),
+      borderColor: hexToRgba(color, 0.24),
+      dotColor: color,
+    }
+  }
+
+  const color = '#F97316'
+  return {
+    label: 'Very Tired',
     color,
     bgColor: hexToRgba(color, 0.12),
     borderColor: hexToRgba(color, 0.22),
@@ -363,6 +484,17 @@ function getRiderStatusUi(status?: RiderAvailabilityStatus | null): {
     }
   }
 
+  if (safeStatus === 'sick') {
+    const color = '#7C3AED'
+    return {
+      label: 'Sick',
+      icon: '✚',
+      color,
+      bgColor: hexToRgba(color, 0.1),
+      borderColor: hexToRgba(color, 0.2),
+    }
+  }
+
   const color = '#16A34A'
   return {
     label: 'Fit',
@@ -386,7 +518,9 @@ function RiderStatusBadge({
 
   return (
     <span
-      className={`inline-flex items-center whitespace-nowrap rounded-full border font-medium ${compact ? 'gap-1.5 px-2.5 py-1 text-xs' : 'gap-2 px-3 py-1 text-sm'} ${className}`}
+      className={`inline-flex items-center whitespace-nowrap rounded-full border font-medium ${
+        compact ? 'gap-1.5 px-2.5 py-1 text-xs' : 'gap-2 px-3 py-1 text-sm'
+      } ${className}`}
       title={`Status: ${ui.label}`}
       style={{
         color: ui.color,
@@ -455,6 +589,25 @@ function PotentialBadge({
     >
       <span className="h-2 w-2 rounded-full" style={{ backgroundColor: ui.dotColor }} />
       <span>{ui.label}</span>
+    </span>
+  )
+}
+
+function InlineStatusText({
+  label,
+  color,
+  className = '',
+}: {
+  label: string
+  color?: string
+  className?: string
+}) {
+  return (
+    <span
+      className={`inline-flex items-center text-sm font-medium ${className}`}
+      style={color ? { color } : undefined}
+    >
+      {label}
     </span>
   )
 }
@@ -678,6 +831,7 @@ async function fetchRiderDetailsById(riderId: string): Promise<RiderDetails> {
       teamwork,
       morale,
       potential,
+      fatigue,
       overall,
       birth_date,
       image_url,
@@ -686,7 +840,10 @@ async function fetchRiderDetailsById(riderId: string): Promise<RiderDetails> {
       contract_expires_season,
       market_value,
       asking_price,
-      asking_price_manual
+      asking_price_manual,
+      availability_status,
+      unavailable_until,
+      unavailable_reason
     `
     )
     .eq('id', riderId)
@@ -696,7 +853,8 @@ async function fetchRiderDetailsById(riderId: string): Promise<RiderDetails> {
 
   return {
     ...(data as RiderDetails),
-    availability_status: getDefaultRiderAvailabilityStatus(),
+    availability_status:
+      (data as RiderDetails).availability_status ?? getDefaultRiderAvailabilityStatus(),
   }
 }
 
@@ -1332,7 +1490,6 @@ function RiderProfileModal({
           open={compareOpen}
           onClose={() => setCompareOpen(false)}
           leftRider={selectedRider}
-          teamType={currentTeamType}
         />
       )}
 
@@ -1495,14 +1652,12 @@ function CompareRiderModal({
   open,
   onClose,
   leftRider,
-  teamType,
 }: {
   open: boolean
   onClose: () => void
   leftRider: RiderDetails
-  teamType: TeamType
 }) {
-  const [compareCandidates, setCompareCandidates] = useState<ClubRosterRow[]>([])
+  const [compareCandidates, setCompareCandidates] = useState<CompareCandidateRow[]>([])
   const [compareTargetId, setCompareTargetId] = useState('')
   const [compareLoading, setCompareLoading] = useState(false)
   const [compareError, setCompareError] = useState<string | null>(null)
@@ -1510,49 +1665,119 @@ function CompareRiderModal({
 
   useEffect(() => {
     let mounted = true
+
     async function loadCandidates() {
+      setCompareError(null)
+
       try {
         const { data: authData, error: authErr } = await supabase.auth.getUser()
         if (authErr) throw authErr
         const userId = authData.user?.id
         if (!userId) return
 
-        const clubType = teamType === 'developing' ? 'developing' : 'main'
-
-        const { data: club, error: clubErr } = await supabase
+        const { data: clubs, error: clubsErr } = await supabase
           .from('clubs')
-          .select('id')
+          .select('id, club_type, parent_club_id, is_active, deleted_at')
           .eq('owner_user_id', userId)
-          .eq('club_type', clubType)
-          .single()
+          .in('club_type', ['main', 'developing'])
+          .eq('is_active', true)
+          .is('deleted_at', null)
 
-        if (clubErr) throw clubErr
-        if (!club?.id) return
+        if (clubsErr) throw clubsErr
+
+        const clubRows = (clubs ?? []) as ClubFamilyRow[]
+        const mainClub = clubRows.find((c) => c.club_type === 'main')
+
+        if (!mainClub) throw new Error('Main club not found.')
+
+        const familyClubs = clubRows.filter(
+          (c) => c.id === mainClub.id || c.parent_club_id === mainClub.id
+        )
+
+        const familyClubIds = familyClubs.map((c) => c.id)
+        const teamLabelByClubId = new Map(
+          familyClubs.map((c) => [
+            c.id,
+            c.club_type === 'developing' ? 'Developing Team' : 'First Squad',
+          ])
+        )
+
+        if (familyClubIds.length === 0) {
+          if (!mounted) return
+          setCompareCandidates([])
+          return
+        }
 
         const { data: roster, error: rosterErr } = await supabase
           .from('club_roster')
           .select(
             'club_id, rider_id, display_name, country_code, assigned_role, age_years, overall'
           )
-          .eq('club_id', club.id)
+          .in('club_id', familyClubIds)
+          .neq('rider_id', leftRider.id)
           .order('overall', { ascending: false })
 
         if (rosterErr) throw rosterErr
-        if (!mounted) return
-        setCompareCandidates(
-          ((roster ?? []) as ClubRosterRow[]).filter((r) => r.rider_id !== leftRider.id)
+
+        const rosterRows = (roster ?? []) as CompareCandidateRow[]
+        const riderIds = rosterRows.map((row) => row.rider_id)
+
+        if (riderIds.length === 0) {
+          if (!mounted) return
+          setCompareCandidates([])
+          return
+        }
+
+        const { data: riderNames, error: riderNamesErr } = await supabase
+          .from('riders')
+          .select('id, first_name, last_name, display_name')
+          .in('id', riderIds)
+
+        if (riderNamesErr) throw riderNamesErr
+
+        const riderNameMap = new Map(
+          (riderNames ?? []).map(
+            (row: {
+              id: string
+              first_name: string | null
+              last_name: string | null
+              display_name: string | null
+            }) => [
+              row.id,
+              buildRiderFullName(row.first_name, row.last_name, row.display_name),
+            ]
+          )
         )
-      } catch {
-        // keep silent for modal candidate load errors
+
+        if (!mounted) return
+
+        setCompareCandidates(
+          rosterRows.map((row) => ({
+            ...row,
+            full_name: riderNameMap.get(row.rider_id) ?? row.display_name,
+            team_label: teamLabelByClubId.get(row.club_id) ?? 'Unknown Team',
+          }))
+        )
+      } catch (e: any) {
+        if (!mounted) return
+        setCompareCandidates([])
+        setCompareError(e?.message ?? 'Failed to load comparison candidates.')
       }
     }
 
-    if (open) void loadCandidates()
+    if (open) {
+      void loadCandidates()
+    } else {
+      setCompareCandidates([])
+      setCompareTargetId('')
+      setComparedRider(null)
+      setCompareError(null)
+    }
 
     return () => {
       mounted = false
     }
-  }, [open, leftRider.id, teamType])
+  }, [open, leftRider.id])
 
   async function handleCompareSelect(riderId: string) {
     setCompareTargetId(riderId)
@@ -1585,6 +1810,7 @@ function CompareRiderModal({
           teamwork,
           morale,
           potential,
+          fatigue,
           overall,
           birth_date,
           image_url,
@@ -1593,7 +1819,10 @@ function CompareRiderModal({
           contract_expires_season,
           market_value,
           asking_price,
-          asking_price_manual
+          asking_price_manual,
+          availability_status,
+          unavailable_until,
+          unavailable_reason
         `
         )
         .eq('id', riderId)
@@ -1602,7 +1831,8 @@ function CompareRiderModal({
       if (error) throw error
       setComparedRider({
         ...(data as RiderDetails),
-        availability_status: getDefaultRiderAvailabilityStatus(),
+        availability_status:
+          (data as RiderDetails).availability_status ?? getDefaultRiderAvailabilityStatus(),
       })
     } catch (e: any) {
       setCompareError(e?.message ?? 'Failed to load compare rider.')
@@ -1612,6 +1842,9 @@ function CompareRiderModal({
   }
 
   if (!open) return null
+
+  const selectedCompareCandidate =
+    compareCandidates.find((rider) => rider.rider_id === compareTargetId) ?? null
 
   const COMPARE_STATS: { key: keyof RiderDetails; label: string }[] = [
     { key: 'overall', label: 'Overall' },
@@ -1643,7 +1876,7 @@ function CompareRiderModal({
               <div>
                 <div className="text-2xl font-semibold text-gray-900">Compare Riders</div>
                 <div className="mt-1 text-sm text-gray-500">
-                  Select another rider from the same team to compare against{' '}
+                  Select another rider from the First Squad or Developing Team to compare against{' '}
                   {leftRider.first_name} {leftRider.last_name}.
                 </div>
               </div>
@@ -1669,14 +1902,16 @@ function CompareRiderModal({
                 <option value="">Select a rider</option>
                 {compareCandidates.map((rider) => (
                   <option key={rider.rider_id} value={rider.rider_id}>
-                    {rider.display_name} • {rider.assigned_role} • {rider.overall}%
+                    {rider.full_name ?? rider.display_name} • {rider.team_label ?? 'Unknown Team'} •{' '}
+                    {rider.assigned_role} • {rider.overall}%
                   </option>
                 ))}
               </select>
 
-              {compareCandidates.length === 0 && (
+              {compareCandidates.length === 0 && !compareError && (
                 <div className="mt-2 text-sm text-gray-500">
-                  No other riders are available for comparison.
+                  No other riders are available for comparison across First Squad and Developing
+                  Team.
                 </div>
               )}
 
@@ -1732,6 +1967,12 @@ function CompareRiderModal({
                         <span>{getCountryName(comparedRider.country_code)}</span>
                         <span>•</span>
                         <span>{comparedRider.role}</span>
+                        {selectedCompareCandidate?.team_label ? (
+                          <>
+                            <span>•</span>
+                            <span>{selectedCompareCandidate.team_label}</span>
+                          </>
+                        ) : null}
                       </div>
                     </div>
                   </div>
@@ -1854,7 +2095,7 @@ function TopNav({
   const isActive = (path: string) => location.pathname === path
 
   return (
-    <div className="mb-4 flex items-center justify-between">
+    <div className="mb-4 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
       <div>
         <h2 className="mb-2 text-xl font-semibold">Squad</h2>
         <div className="text-sm text-gray-500">
@@ -1862,13 +2103,13 @@ function TopNav({
         </div>
       </div>
 
-      <div className="flex items-center gap-3">
+      <div className="inline-flex rounded-lg bg-white border border-gray-100 p-1 shadow-sm">
         <a
           href="#/dashboard/squad"
-          className={`rounded-lg px-4 py-2 text-sm font-medium transition ${
+          className={`rounded-md px-4 py-2 text-sm font-medium transition ${
             isActive('/dashboard/squad')
               ? 'bg-yellow-400 text-black'
-              : 'border border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
+              : 'text-gray-600 hover:bg-gray-100'
           }`}
         >
           First Squad
@@ -1877,30 +2118,31 @@ function TopNav({
         {isDevelopingTeamUnlocked ? (
           <a
             href="#/dashboard/developing-team"
-            className={`rounded-lg px-4 py-2 text-sm font-medium transition ${
+            className={`rounded-md px-4 py-2 text-sm font-medium transition ${
               isActive('/dashboard/developing-team')
                 ? 'bg-yellow-400 text-black'
-                : 'border border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
+                : 'text-gray-600 hover:bg-gray-100'
             }`}
           >
             Developing Team
           </a>
         ) : (
           <span
-            className="cursor-not-allowed rounded-lg border border-gray-200 bg-gray-100 px-4 py-2 text-sm font-medium text-gray-400"
+            className="inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium text-gray-400 cursor-not-allowed"
             title="Unlock Developing Team in Preferences first."
             aria-disabled="true"
           >
-            Developing Team
+            <span>Developing Team</span>
+            <span aria-hidden="true">🔒</span>
           </span>
         )}
 
         <a
           href="#/dashboard/staff"
-          className={`rounded-lg px-4 py-2 text-sm font-medium transition ${
+          className={`rounded-md px-4 py-2 text-sm font-medium transition ${
             isActive('/dashboard/staff')
               ? 'bg-yellow-400 text-black'
-              : 'border border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
+              : 'text-gray-600 hover:bg-gray-100'
           }`}
         >
           Staff
@@ -1911,7 +2153,7 @@ function TopNav({
 }
 
 export default function DevelopingTeamPage() {
-  const [rows, setRows] = useState<ClubRosterRow[]>([])
+  const [rows, setRows] = useState<DevelopingRosterRow[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [statusError, setStatusError] = useState<string | null>(null)
@@ -1924,6 +2166,7 @@ export default function DevelopingTeamPage() {
   const [selectedRiderId, setSelectedRiderId] = useState<string | null>(null)
   const [movingRiderId, setMovingRiderId] = useState<string | null>(null)
   const [moveActionMessage, setMoveActionMessage] = useState<string | null>(null)
+  const [listView, setListView] = useState<SquadListView>('general')
 
   const navigate = useNavigate()
 
@@ -1932,12 +2175,26 @@ export default function DevelopingTeamPage() {
       rows.map((r, idx) => ({
         rowNo: idx + 1,
         id: r.rider_id,
-        name: r.display_name,
+        name: buildRiderFullName(r.first_name, r.last_name, r.full_name ?? r.display_name),
         countryCode: r.country_code,
         role: r.assigned_role,
         age: getAgeFromBirthDate(r.birth_date ?? null, gameDate ?? null) ?? r.age_years,
         overall: r.overall,
-        status: getDefaultRiderAvailabilityStatus() as RiderAvailabilityStatus,
+        fatigue: r.fatigue ?? 0,
+        status:
+          (r.availability_status ?? getDefaultRiderAvailabilityStatus()) as RiderAvailabilityStatus,
+        marketValue: r.market_value ?? null,
+        salary: r.salary ?? null,
+        contractExpiresAt: r.contract_expires_at ?? null,
+        contractExpiresSeason: r.contract_expires_season ?? null,
+        sprint: r.sprint ?? null,
+        climbing: r.climbing ?? null,
+        timeTrial: r.time_trial ?? null,
+        flat: r.flat ?? null,
+        endurance: r.endurance ?? null,
+        recovery: r.recovery ?? null,
+        morale: r.morale ?? null,
+        potential: r.potential ?? null,
       })),
     [rows, gameDate]
   )
@@ -1998,40 +2255,132 @@ export default function DevelopingTeamPage() {
       const { data: roster, error: rosterErr } = await supabase
         .from('club_roster')
         .select(
-          'club_id, rider_id, display_name, country_code, assigned_role, age_years, overall'
+          'club_id, rider_id, display_name, country_code, assigned_role, age_years, overall, availability_status, fatigue'
         )
         .eq('club_id', status.developing_club_id)
         .order('overall', { ascending: false })
 
       if (rosterErr) throw rosterErr
 
-      const rosterRows = (roster ?? []) as ClubRosterRow[]
+      const rosterRows = (roster ?? []) as DevelopingRosterRow[]
       const riderIds = rosterRows.map((row) => row.rider_id)
 
-      let birthDateMap = new Map<string, string | null>()
+      let riderMetaMap = new Map<
+        string,
+        {
+          id: string
+          first_name: string | null
+          last_name: string | null
+          display_name: string | null
+          birth_date: string | null
+          salary: number | null
+          contract_expires_at: string | null
+          contract_expires_season: number | null
+          market_value: number | null
+          sprint: number | null
+          climbing: number | null
+          time_trial: number | null
+          flat: number | null
+          endurance: number | null
+          recovery: number | null
+          morale: number | null
+          potential: number | null
+          fatigue: number | null
+          availability_status: RiderAvailabilityStatus | null
+        }
+      >()
 
       if (riderIds.length > 0) {
-        const { data: riderBirthDates, error: riderBirthDatesErr } = await supabase
+        const { data: riderMetaRows, error: riderMetaErr } = await supabase
           .from('riders')
-          .select('id, birth_date')
+          .select(
+            `
+            id,
+            first_name,
+            last_name,
+            display_name,
+            birth_date,
+            salary,
+            contract_expires_at,
+            contract_expires_season,
+            market_value,
+            sprint,
+            climbing,
+            time_trial,
+            flat,
+            endurance,
+            recovery,
+            morale,
+            potential,
+            fatigue,
+            availability_status
+          `
+          )
           .in('id', riderIds)
 
-        if (riderBirthDatesErr) throw riderBirthDatesErr
+        if (riderMetaErr) throw riderMetaErr
 
-        birthDateMap = new Map(
-          (riderBirthDates ?? []).map((row: { id: string; birth_date: string | null }) => [
-            row.id,
-            row.birth_date,
-          ])
+        riderMetaMap = new Map(
+          (
+            riderMetaRows as Array<{
+              id: string
+              first_name: string | null
+              last_name: string | null
+              display_name: string | null
+              birth_date: string | null
+              salary: number | null
+              contract_expires_at: string | null
+              contract_expires_season: number | null
+              market_value: number | null
+              sprint: number | null
+              climbing: number | null
+              time_trial: number | null
+              flat: number | null
+              endurance: number | null
+              recovery: number | null
+              morale: number | null
+              potential: number | null
+              fatigue: number | null
+              availability_status: RiderAvailabilityStatus | null
+            }>
+          ).map((row) => [row.id, row])
         )
       }
 
-      setRows(
-        rosterRows.map((row) => ({
+      const mergedRows: DevelopingRosterRow[] = rosterRows.map((row) => {
+        const riderMeta = riderMetaMap.get(row.rider_id)
+        const fullName = buildRiderFullName(
+          riderMeta?.first_name,
+          riderMeta?.last_name,
+          riderMeta?.display_name ?? row.display_name
+        )
+
+        return {
           ...row,
-          birth_date: birthDateMap.get(row.rider_id) ?? null,
-        }))
-      )
+          display_name: fullName,
+          full_name: fullName,
+          first_name: riderMeta?.first_name ?? null,
+          last_name: riderMeta?.last_name ?? null,
+          birth_date: riderMeta?.birth_date ?? null,
+          market_value: riderMeta?.market_value ?? null,
+          salary: riderMeta?.salary ?? null,
+          contract_expires_at: riderMeta?.contract_expires_at ?? null,
+          contract_expires_season: riderMeta?.contract_expires_season ?? null,
+          sprint: riderMeta?.sprint ?? null,
+          climbing: riderMeta?.climbing ?? null,
+          time_trial: riderMeta?.time_trial ?? null,
+          flat: riderMeta?.flat ?? null,
+          endurance: riderMeta?.endurance ?? null,
+          recovery: riderMeta?.recovery ?? null,
+          morale: riderMeta?.morale ?? null,
+          potential: riderMeta?.potential ?? null,
+          fatigue: row.fatigue ?? riderMeta?.fatigue ?? null,
+          availability_status:
+            row.availability_status ?? riderMeta?.availability_status ?? null,
+        }
+      })
+
+      setRows(mergedRows)
     } catch (e: any) {
       setError(e?.message ?? 'Failed to load Developing Team.')
     } finally {
@@ -2109,6 +2458,32 @@ export default function DevelopingTeamPage() {
       : `Movement window closed. Next window: ${developingTeamStatus.next_window_label ?? 'Unknown'}`
     : 'Movement window information unavailable.'
 
+  const squadTableClassName = [
+    'w-full text-sm',
+    listView === 'skills' ? 'table-fixed' : '',
+    listView === 'financial'
+      ? 'min-w-[980px]'
+      : listView === 'form'
+        ? 'min-w-[1020px]'
+        : listView === 'general'
+          ? 'min-w-[900px]'
+          : '',
+  ]
+    .filter(Boolean)
+    .join(' ')
+
+  const squadTableColSpan =
+    listView === 'skills'
+      ? 11
+      : listView === 'financial'
+        ? 8
+        : listView === 'form'
+          ? 9
+          : 9
+
+  const currentViewLabel =
+    SQUAD_LIST_VIEW_OPTIONS.find((option) => option.value === listView)?.label ?? 'General View'
+
   if (!loading && !error && developingTeamStatus && !developingTeamStatus.is_purchased) {
     return null
   }
@@ -2161,29 +2536,96 @@ export default function DevelopingTeamPage() {
           </div>
 
           <div className="w-full rounded-lg bg-white p-4 shadow">
-            <div className="mb-2 flex items-center justify-between">
-              <div className="text-base font-semibold text-gray-800">Developing Team</div>
-              <div className="text-sm text-gray-500">
-                First Squad:{' '}
-                <span className="font-medium text-gray-700">
-                  {firstSquadRiderCount}/{FIRST_SQUAD_MAX}
-                </span>
+            <div className="mb-3 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+              <div>
+                <div className="text-base font-semibold text-gray-800">Developing Team</div>
+                <div className="mt-1 text-sm text-gray-500">
+                  {currentViewLabel} · Riders{' '}
+                  <span className="font-medium text-gray-700">
+                    {riders.length}/{DEVELOPING_TEAM_MAX}
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-3">
+                <div className="text-sm text-gray-500">
+                  First Squad:{' '}
+                  <span className="font-medium text-gray-700">
+                    {firstSquadRiderCount}/{FIRST_SQUAD_MAX}
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <label htmlFor="developing-team-list-view" className="text-sm font-medium text-gray-600">
+                    View
+                  </label>
+                  <select
+                    id="developing-team-list-view"
+                    value={listView}
+                    onChange={(e) => setListView(e.target.value as SquadListView)}
+                    className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 outline-none transition focus:border-yellow-400"
+                  >
+                    {SQUAD_LIST_VIEW_OPTIONS.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
             </div>
 
             <div className="overflow-x-auto">
-              <table className="w-full text-sm">
+              <table className={squadTableClassName}>
                 <thead>
                   <tr className="text-left text-gray-600">
-                    <th className="p-2">#</th>
-                    <th className="p-2">Name</th>
-                    <th className="p-2">Country</th>
-                    <th className="p-2">Role</th>
-                    <th className="p-2">Age</th>
-                    <th className="p-2">Overall</th>
-                    <th className="p-2 w-[160px]">Status</th>
-                    <th className="p-2 w-[90px] text-center">Move</th>
-                    <th className="p-2 w-[90px]"></th>
+                    <th className={`p-2 ${listView === 'skills' ? 'w-[42px]' : ''}`}>#</th>
+                    <th className={`p-2 ${listView === 'skills' ? 'w-[190px]' : ''}`}>Name</th>
+                    <th className={`p-2 ${listView === 'skills' ? 'w-[110px]' : ''}`}>Country</th>
+                    <th className={`p-2 ${listView === 'skills' ? 'w-[130px]' : ''}`}>Role</th>
+
+                    {listView === 'general' && (
+                      <>
+                        <th className="p-2">Age</th>
+                        <th className="p-2">Overall</th>
+                        <th className="p-2 w-[160px]">Status</th>
+                        <th className="p-2 w-[90px] text-center">Move</th>
+                      </>
+                    )}
+
+                    {listView === 'financial' && (
+                      <>
+                        <th className="p-2">Value</th>
+                        <th className="p-2">Wage</th>
+                        <th className="p-2">Contract Expires</th>
+                      </>
+                    )}
+
+                    {listView === 'skills' && (
+                      <>
+                        <th className="p-2 w-[64px] text-center">SP</th>
+                        <th className="p-2 w-[64px] text-center">CL</th>
+                        <th className="p-2 w-[64px] text-center">TT</th>
+                        <th className="p-2 w-[64px] text-center">FL</th>
+                        <th className="p-2 w-[64px] text-center">EN</th>
+                        <th className="p-2 w-[64px] text-center">RC</th>
+                      </>
+                    )}
+
+                    {listView === 'form' && (
+                      <>
+                        <th className="p-2">Potential</th>
+                        <th className="p-2">Morale</th>
+                        <th className="p-2">Fatigue</th>
+                        <th className="p-2">Health</th>
+                      </>
+                    )}
+
+                    <th
+                      className={`p-2 text-right ${listView === 'skills' ? 'w-[72px]' : 'w-[90px]'}`}
+                    >
+                      View
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -2194,15 +2636,53 @@ export default function DevelopingTeamPage() {
                       firstSquadRiderCount,
                     })
                     const isBusy = movingRiderId === r.id
-                    const ageWarning = getDevelopingTeamAgeWarning(
-                      r.age ?? null,
-                      movementWindowOpen
+                    const ageWarning =
+                      listView === 'general'
+                        ? getDevelopingTeamAgeWarning(r.age ?? null, movementWindowOpen)
+                        : null
+
+                    const contractExpiryUi = getContractExpiryUi(
+                      r.contractExpiresAt,
+                      gameDate ?? null,
+                      r.contractExpiresSeason
                     )
+
+                    const bestSkillValue = getBestRiderSkillValue(r)
+                    const financialContractDisplay =
+                      contractExpiryUi.sublabel || contractExpiryUi.label || '—'
+
+                    const potentialUi = getPotentialUi(r.potential)
+                    const moraleUi = getMoraleUi(r.morale)
+                    const fatigueUi = getFatigueUi(r.fatigue)
+                    const healthUi = getRiderStatusUi(r.status)
+
+                    const renderSkillCell = (value?: number | null) => {
+                      const isBest =
+                        value != null && bestSkillValue != null && value === bestSkillValue
+
+                      return (
+                        <td
+                          className={`p-2 text-center ${
+                            isBest ? 'font-bold text-gray-900' : 'font-medium text-gray-700'
+                          }`}
+                        >
+                          {value ?? '—'}
+                        </td>
+                      )
+                    }
 
                     return (
                       <tr key={r.id} className="border-t align-top">
                         <td className="p-2">{r.rowNo}</td>
-                        <td className="p-2">
+
+                        <td
+                          className={`p-2 ${
+                            listView === 'skills'
+                              ? 'truncate whitespace-nowrap'
+                              : 'whitespace-nowrap'
+                          }`}
+                          title={r.name}
+                        >
                           <div className="font-medium text-gray-800">{r.name}</div>
                           {ageWarning && (
                             <div className="mt-2">
@@ -2210,39 +2690,113 @@ export default function DevelopingTeamPage() {
                             </div>
                           )}
                         </td>
+
                         <td className="p-2">
                           <div
-                            className="flex items-center gap-2"
+                            className={`flex items-center gap-2 ${listView === 'skills' ? 'whitespace-nowrap' : ''}`}
                             title={getCountryName(r.countryCode)}
                           >
                             <CountryFlag countryCode={r.countryCode} />
                             <span className="text-gray-700">{r.countryCode}</span>
                           </div>
                         </td>
-                        <td className="p-2">{r.role}</td>
-                        <td className="p-2">{r.age ?? '—'}</td>
-                        <td className="p-2">{r.overall}%</td>
-                        <td className="p-2">
-                          <RiderStatusBadge status={r.status} compact />
+
+                        <td
+                          className={`p-2 ${listView === 'skills' ? 'truncate' : ''}`}
+                          title={r.role}
+                        >
+                          {r.role}
                         </td>
-                        <td className="p-2 text-center">
-                          <button
-                            type="button"
-                            disabled={!moveState.enabled || isBusy}
-                            title={moveState.reason}
-                            onClick={() => {
-                              if (!moveState.enabled || isBusy) return
-                              void handleMoveToFirstSquad(r.id)
-                            }}
-                            className={`inline-flex h-8 w-8 items-center justify-center rounded-md border text-sm transition ${
-                              moveState.enabled && !isBusy
-                                ? 'border-yellow-400 bg-yellow-100 text-yellow-800 hover:bg-yellow-200'
-                                : 'cursor-not-allowed border-gray-200 bg-gray-100 text-gray-400'
-                            }`}
-                          >
-                            {isBusy ? '…' : '⇄'}
-                          </button>
-                        </td>
+
+                        {listView === 'general' && (
+                          <>
+                            <td className="p-2">{r.age ?? '—'}</td>
+                            <td className="p-2">{r.overall}%</td>
+                            <td className="p-2">
+                              <RiderStatusBadge status={r.status} compact />
+                            </td>
+                            <td className="p-2 text-center">
+                              <button
+                                type="button"
+                                disabled={!moveState.enabled || isBusy}
+                                title={moveState.reason}
+                                onClick={() => {
+                                  if (!moveState.enabled || isBusy) return
+                                  void handleMoveToFirstSquad(r.id)
+                                }}
+                                className={`inline-flex h-8 w-8 items-center justify-center rounded-md border text-sm transition ${
+                                  moveState.enabled && !isBusy
+                                    ? 'border-yellow-400 bg-yellow-100 text-yellow-800 hover:bg-yellow-200'
+                                    : 'cursor-not-allowed border-gray-200 bg-gray-100 text-gray-400'
+                                }`}
+                              >
+                                {isBusy ? '…' : '⇄'}
+                              </button>
+                            </td>
+                          </>
+                        )}
+
+                        {listView === 'financial' && (
+                          <>
+                            <td className="p-2">
+                              <div className="text-gray-800">
+                                {r.marketValue == null ? '—' : formatMoney(r.marketValue)}
+                              </div>
+                            </td>
+
+                            <td className="p-2">
+                              <div className="text-gray-800">
+                                {r.salary == null ? '—' : formatWeeklySalary(r.salary)}
+                              </div>
+                            </td>
+
+                            <td className="p-2">
+                              <div className="text-gray-800 whitespace-nowrap">
+                                {financialContractDisplay}
+                              </div>
+                            </td>
+                          </>
+                        )}
+
+                        {listView === 'skills' && (
+                          <>
+                            {renderSkillCell(r.sprint)}
+                            {renderSkillCell(r.climbing)}
+                            {renderSkillCell(r.timeTrial)}
+                            {renderSkillCell(r.flat)}
+                            {renderSkillCell(r.endurance)}
+                            {renderSkillCell(r.recovery)}
+                          </>
+                        )}
+
+                        {listView === 'form' && (
+                          <>
+                            <td className="p-2">
+                              {r.potential == null ? (
+                                <span className="text-gray-400">—</span>
+                              ) : (
+                                <InlineStatusText label={potentialUi.label} color={potentialUi.color} />
+                              )}
+                            </td>
+
+                            <td className="p-2">
+                              {r.morale == null ? (
+                                <span className="text-gray-400">—</span>
+                              ) : (
+                                <InlineStatusText label={moraleUi.label} color={moraleUi.color} />
+                              )}
+                            </td>
+
+                            <td className="p-2">
+                              <InlineStatusText label={fatigueUi.label} color={fatigueUi.color} />
+                            </td>
+
+                            <td className="p-2">
+                              <InlineStatusText label={healthUi.label} color={healthUi.color} />
+                            </td>
+                          </>
+                        )}
+
                         <td className="p-2 text-right">
                           <button
                             type="button"
@@ -2258,7 +2812,7 @@ export default function DevelopingTeamPage() {
 
                   {riders.length === 0 && (
                     <tr className="border-t">
-                      <td className="p-2 text-gray-500" colSpan={9}>
+                      <td className="p-2 text-gray-500" colSpan={squadTableColSpan}>
                         No riders found for the Developing Team yet.
                       </td>
                     </tr>
