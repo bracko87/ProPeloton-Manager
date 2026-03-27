@@ -188,14 +188,27 @@ function stableStringify(value: unknown) {
 
 function normalizeMainSponsor(value: unknown): MainSponsor {
   const safe = asObject<Record<string, unknown>>(value, {})
+  const metadata = asObject<Record<string, unknown>>(safe.metadata, {})
+  const branding = asObject<Record<string, unknown>>(safe.branding, {})
 
-  const name = asString(safe.name, 'Main Sponsor')
+  const name =
+    asString(safe.name) ||
+    asString(safe.companyName) ||
+    asString(safe.company_name) ||
+    asString(metadata.company_name) ||
+    'Main Sponsor'
   const logoUrl =
     asString(safe.logoUrl) ||
     asString(safe.logo_url) ||
     asString(safe.logo) ||
     asString(safe.imageUrl) ||
-    asString(safe.image_url)
+    asString(safe.image_url) ||
+    asString(safe.company_logo_url) ||
+    asString(safe.companyLogoUrl) ||
+    asString(metadata.logo_url) ||
+    asString(metadata.logoUrl) ||
+    asString(branding.logo_url) ||
+    asString(branding.logoUrl)
 
   const subtitle =
     asString(safe.subtitle) ||
@@ -215,6 +228,22 @@ function normalizeMainSponsor(value: unknown): MainSponsor {
 
 function normalizeDashboardPayload(payload: unknown): DashboardOverviewData {
   const safe = asObject<Record<string, unknown>>(payload, {})
+  const fallbackMainSponsor =
+    safe.mainSponsor ??
+    safe.main_sponsor ??
+    safe.mainSponsorCompany ??
+    safe.main_sponsor_company ??
+    safe.sponsor ??
+    safe.primarySponsor
+  const finance = asObject(safe.finance, {
+    balance: 0,
+    weeklyNet: 0,
+    sponsorIncome: 0,
+    recurringPolicyCost: 0,
+    nextTripForecast: 0,
+    latestTransactionLabel: 'No transactions',
+    latestTransactionAmount: 0,
+  })
 
   return {
     club: asObject(safe.club, {
@@ -248,17 +277,13 @@ function normalizeDashboardPayload(payload: unknown): DashboardOverviewData {
     dayRaces: asArray<DayRaceItem>(safe.dayRaces),
     news: asArray<NewsItem>(safe.news),
     feed: asArray<FeedItem>(safe.feed),
-    finance: asObject(safe.finance, {
-      balance: 0,
-      weeklyNet: 0,
-      sponsorIncome: 0,
-      recurringPolicyCost: 0,
-      nextTripForecast: 0,
-      latestTransactionLabel: 'No transactions',
-      latestTransactionAmount: 0,
-    }),
+    finance,
     quickActions: asArray<QuickActionItem>(safe.quickActions),
-    mainSponsor: normalizeMainSponsor(safe.mainSponsor),
+    mainSponsor: normalizeMainSponsor(
+      fallbackMainSponsor ??
+        asObject<Record<string, unknown>>(finance, {}).mainSponsor ??
+        asObject<Record<string, unknown>>(finance, {}).main_sponsor,
+    ),
   }
 }
 
