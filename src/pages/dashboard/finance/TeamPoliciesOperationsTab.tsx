@@ -526,6 +526,7 @@ export function TeamPoliciesOperationsTab(): JSX.Element {
   const [clubId, setClubId] = useState<string | null>(null)
   const [sections, setSections] = useState<PolicySection[]>([])
   const [policyState, setPolicyState] = useState<PolicyState>({})
+  const [initialPolicyState, setInitialPolicyState] = useState<PolicyState>({})
   const [lastMonthActualCost, setLastMonthActualCost] = useState<number | null>(null)
   const [tripForecasts, setTripForecasts] = useState<TripForecastRow[]>([])
   const [policyEstimate, setPolicyEstimate] = useState<PolicyEstimateRow | null>(null)
@@ -577,7 +578,7 @@ export function TeamPoliciesOperationsTab(): JSX.Element {
           : item.options[0].value
       }
 
-      setPolicyState({
+      const nextPolicyState: PolicyState = {
         flightClass: coerceToAllowed('flightClass', policyRow.flight_class),
         hotelLevel: coerceToAllowed('hotelLevel', policyRow.hotel_level),
         groundTransport: coerceToAllowed('groundTransport', policyRow.ground_transport),
@@ -607,7 +608,10 @@ export function TeamPoliciesOperationsTab(): JSX.Element {
         ),
         riderBonusPlan: coerceToAllowed('riderBonusPlan', policyRow.rider_bonus_plan),
         staffBonusPlan: coerceToAllowed('staffBonusPlan', policyRow.staff_bonus_plan),
-      })
+      }
+
+      setPolicyState(nextPolicyState)
+      setInitialPolicyState(nextPolicyState)
 
       const estimateRes = await supabase.rpc('get_club_team_policy_estimate', {
         p_club_id: resolvedClubId,
@@ -659,6 +663,21 @@ export function TeamPoliciesOperationsTab(): JSX.Element {
     return Object.values(policyState).filter(value => value && value !== 'none').length
   }, [policyState])
 
+  const hasUnsavedChanges = useMemo(() => {
+    const keys = new Set([
+      ...Object.keys(policyState),
+      ...Object.keys(initialPolicyState),
+    ])
+
+    for (const key of keys) {
+      if ((policyState[key] ?? '') !== (initialPolicyState[key] ?? '')) {
+        return true
+      }
+    }
+
+    return false
+  }, [policyState, initialPolicyState])
+
   const summary = useMemo(() => {
     return {
       perTrip: sections
@@ -678,10 +697,17 @@ export function TeamPoliciesOperationsTab(): JSX.Element {
 
   function updatePolicy(key: string, value: string): void {
     setSaveMessage(null)
+    setError(null)
     setPolicyState(current => ({
       ...current,
       [key]: value,
     }))
+  }
+
+  function resetPolicies(): void {
+    setSaveMessage(null)
+    setError(null)
+    setPolicyState(initialPolicyState)
   }
 
   async function savePolicies(): Promise<void> {
@@ -698,7 +724,7 @@ export function TeamPoliciesOperationsTab(): JSX.Element {
         p_hotel_level: policyState.hotelLevel,
         p_ground_transport: policyState.groundTransport,
         p_logistics_support_level: policyState.logisticsSupportLevel,
-        p_team_vehicle_policy: null,
+        p_team_vehicle_policy: 'none',
         p_rider_housing_support: policyState.riderHousingSupport,
         p_nutrition_support_level: policyState.nutritionSupportLevel,
         p_recovery_support_level: policyState.recoverySupportLevel,
@@ -739,41 +765,49 @@ export function TeamPoliciesOperationsTab(): JSX.Element {
   return (
     <div className="space-y-4">
       <div className="rounded bg-white p-4 shadow">
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-          <div>
-            <h4 className="font-semibold text-gray-900">
-              Team Policies &amp; Operations
-            </h4>
-            <p className="mt-1 text-sm text-gray-600">
-              Set club-wide travel standards, support packages and bonus plans.
-              These choices create estimated recurring and trip-based costs, plus
-              small effects on morale, recovery, fatigue and logistics.
-            </p>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <div className="rounded border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700">
-              Active policies: <span className="font-semibold">{selectedCount}</span>
-            </div>
-            <button
-              type="button"
-              onClick={() => void savePolicies()}
-              disabled={saving}
-              className="rounded border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-60"
-            >
-              {saving ? 'Saving…' : 'Save'}
-            </button>
-          </div>
+        <div>
+          <h4 className="font-semibold text-gray-900">
+            Team Policies &amp; Operations
+          </h4>
+          <p className="mt-1 text-sm text-gray-600">
+            Set club-wide travel standards, support packages and bonus plans.
+            These choices create estimated recurring and trip-based costs, plus
+            small effects on morale, recovery, fatigue and logistics.
+          </p>
         </div>
 
-        {(saveMessage || error) && (
-          <div className="mt-3">
+        <div className="mt-4 flex flex-col gap-3 border-t border-gray-100 pt-4 lg:flex-row lg:items-end lg:justify-between">
+          <div className="min-h-[20px]">
             {saveMessage && (
               <div className="text-sm text-green-700">{saveMessage}</div>
             )}
             {error && <div className="text-sm text-red-600">{error}</div>}
           </div>
-        )}
+
+          <div className="flex flex-wrap items-center gap-2 lg:justify-end">
+            <div className="rounded border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700">
+              Active policies: <span className="font-semibold">{selectedCount}</span>
+            </div>
+
+            <button
+              type="button"
+              onClick={resetPolicies}
+              disabled={saving || !hasUnsavedChanges}
+              className="rounded border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              Reset
+            </button>
+
+            <button
+              type="button"
+              onClick={() => void savePolicies()}
+              disabled={saving || !hasUnsavedChanges}
+              className="rounded border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {saving ? 'Saving…' : 'Save'}
+            </button>
+          </div>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-4">

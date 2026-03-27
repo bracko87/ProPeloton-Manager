@@ -1724,12 +1724,40 @@ export default function TrainingPage(): JSX.Element {
 
   return (
     <div className="w-full space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
         <div>
           <h2 className="text-2xl font-semibold text-gray-900">Training</h2>
           <p className="mt-1 text-sm text-gray-600">
             Training Camps are live first. Regular Training stays as the next phase.
           </p>
+        </div>
+
+        <div className="flex md:justify-end">
+          <div className="inline-flex rounded-2xl border border-gray-200 bg-white p-1 shadow-sm">
+            <button
+              type="button"
+              onClick={() => setActiveTab('regular')}
+              className={`rounded-xl px-5 py-2.5 text-sm font-medium transition ${
+                activeTab === 'regular'
+                  ? 'bg-yellow-400 text-black shadow-sm'
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              Regular Training
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveTab('camps')}
+              className={`rounded-xl px-5 py-2.5 text-sm font-medium transition ${
+                activeTab === 'camps'
+                  ? 'bg-yellow-400 text-black shadow-sm'
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              Training Camps
+            </button>
+          </div>
         </div>
       </div>
 
@@ -1828,34 +1856,6 @@ export default function TrainingPage(): JSX.Element {
           </p>
         </div>
       )}
-
-      <div className="border-b border-gray-200 pb-4">
-        <div className="inline-flex rounded-2xl border border-gray-200 bg-white p-1 shadow-sm">
-          <button
-            type="button"
-            onClick={() => setActiveTab('regular')}
-            className={`rounded-xl px-5 py-2.5 text-sm font-medium transition ${
-              activeTab === 'regular'
-                ? 'bg-yellow-400 text-black shadow-sm'
-                : 'text-gray-500 hover:text-gray-700'
-            }`}
-          >
-            Regular Training
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveTab('camps')}
-            className={`rounded-xl px-5 py-2.5 text-sm font-medium transition ${
-              activeTab === 'camps'
-                ? 'bg-yellow-400 text-black shadow-sm'
-                : 'text-gray-500 hover:text-gray-700'
-            }`}
-          >
-            Training Camps
-          </button>
-        </div>
-      </div>
 
       {activeTab === 'regular' ? (
         <div className="space-y-6">

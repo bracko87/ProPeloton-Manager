@@ -50,6 +50,8 @@ type ResolvedGameDateParts = {
   day: string | number
 }
 
+type CurrencyCode = 'USD' | 'EUR'
+
 const PAGE_SIZE = 20
 const RECENT_DAYS = 30
 const ARCHIVE_MONTHS = 6
@@ -269,7 +271,7 @@ function resolveCompleteInGameDateCandidate(candidate: unknown, depth = 0): Reso
  * formatMoney
  * Format a number as a currency string.
  */
-function formatMoney(n: number, currency: 'EUR' | 'USD' = 'EUR'): string {
+function formatMoney(n: number, currency: CurrencyCode = 'USD'): string {
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency,
@@ -427,7 +429,7 @@ function TransactionsTable({
   emptyMessage,
 }: {
   rows: StatementRow[]
-  currency: 'EUR' | 'USD'
+  currency: CurrencyCode
   emptyMessage: string
 }): JSX.Element {
   return (
@@ -492,10 +494,10 @@ function TransactionsTable({
  */
 export function TransactionsTab({
   clubId,
-  currency = 'EUR',
+  currency = 'USD',
 }: {
   clubId: string
-  currency?: 'EUR' | 'USD'
+  currency?: CurrencyCode
 }): JSX.Element {
   const [loading, setLoading] = useState(true)
   const [rows, setRows] = useState<StatementRow[]>([])

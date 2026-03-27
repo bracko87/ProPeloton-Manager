@@ -65,6 +65,9 @@ type DevelopingRosterRow = ClubRosterRow & {
   flat?: number | null
   endurance?: number | null
   recovery?: number | null
+  resistance?: number | null
+  race_iq?: number | null
+  teamwork?: number | null
   morale?: number | null
   potential?: number | null
   fatigue?: number | null
@@ -83,6 +86,17 @@ type ClubFamilyRow = {
   is_active: boolean | null
   deleted_at: string | null
 }
+
+type RiderSkillAttributeCode =
+  | 'sprint'
+  | 'climbing'
+  | 'time_trial'
+  | 'endurance'
+  | 'flat'
+  | 'recovery'
+  | 'resistance'
+  | 'race_iq'
+  | 'teamwork'
 
 function getCountryName(countryCode?: string) {
   const code = countryCode?.trim().toUpperCase()
@@ -201,6 +215,26 @@ function getRiderImageUrl(imageUrl?: string | null) {
 function formatMoney(n?: number | null) {
   if (n == null) return '—'
   return `$${new Intl.NumberFormat('de-DE').format(n)}`
+}
+
+function formatCompactMoney(n?: number | null) {
+  if (n == null) return '—'
+
+  const abs = Math.abs(n)
+  const sign = n < 0 ? '-' : ''
+
+  if (abs >= 1_000_000) {
+    const millions = abs / 1_000_000
+    const formatted =
+      millions >= 10 ? Math.round(millions).toString() : millions.toFixed(1).replace('.0', '')
+    return `${sign}$${formatted}M`
+  }
+
+  if (abs >= 1_000) {
+    return `${sign}$${Math.floor(abs / 1_000)}K`
+  }
+
+  return `${sign}$${new Intl.NumberFormat('de-DE', { maximumFractionDigits: 0 }).format(abs)}`
 }
 
 function formatWeeklySalary(n?: number | null) {
@@ -593,6 +627,31 @@ function PotentialBadge({
   )
 }
 
+function FatigueBadge({
+  fatigue,
+  className = '',
+}: {
+  fatigue?: number | null
+  className?: string
+}) {
+  const ui = getFatigueUi(fatigue)
+
+  return (
+    <span
+      className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-sm font-medium ${className}`}
+      title={`Fatigue: ${ui.label}`}
+      style={{
+        color: ui.color,
+        backgroundColor: ui.bgColor,
+        borderColor: ui.borderColor,
+      }}
+    >
+      <span className="h-2 w-2 rounded-full" style={{ backgroundColor: ui.dotColor }} />
+      <span>{ui.label}</span>
+    </span>
+  )
+}
+
 function InlineStatusText({
   label,
   color,
@@ -683,7 +742,7 @@ function getDevelopingTeamAgeWarning(age?: number | null, movementWindowOpen?: b
     label: 'Must move next window',
     className:
       'inline-flex items-center rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-700',
-    }
+  }
 }
 
 function CompactValueTile({
@@ -702,15 +761,23 @@ function CompactValueTile({
   children?: React.ReactNode
 }) {
   return (
-    <div className="rounded-xl border border-gray-200 p-3">
-      <div className="text-xs text-gray-500">{label}</div>
-      <div className={`mt-2 font-semibold text-gray-900 ${valueClassName || 'text-2xl'}`}>
+    <div className="rounded-2xl border border-slate-200 bg-gradient-to-b from-white to-slate-50/90 p-4 shadow-sm">
+      <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">
+        {label}
+      </div>
+      <div
+        className={`mt-3 font-semibold tracking-tight text-slate-900 ${
+          valueClassName || 'text-2xl leading-tight'
+        }`}
+      >
         {value}
       </div>
       {subvalue ? (
-        <div className={`mt-1 text-xs ${subvalueClassName || 'text-gray-500'}`}>{subvalue}</div>
+        <div className={`mt-2 text-xs leading-relaxed ${subvalueClassName || 'text-slate-500'}`}>
+          {subvalue}
+        </div>
       ) : null}
-      {children}
+      {children ? <div className="mt-3">{children}</div> : null}
     </div>
   )
 }
@@ -729,33 +796,152 @@ function CompactStatusTile({
   statusClassName?: string
 }) {
   return (
-    <div className="rounded-xl border border-gray-200 p-3">
-      <div className="flex flex-wrap items-center gap-1 text-xs text-gray-500">
-        <span>{label}</span>
-        {subtitle ? <span>({subtitle})</span> : null}
+    <div className="rounded-2xl border border-slate-200 bg-gradient-to-b from-white to-slate-50/90 p-4 shadow-sm">
+      <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">
+        {label}
       </div>
       <div
-        className={`mt-2 font-semibold ${statusClassName || 'text-2xl'}`}
+        className={`mt-3 font-semibold tracking-tight ${
+          statusClassName || 'text-2xl leading-tight'
+        }`}
         style={statusColor ? { color: statusColor } : undefined}
       >
         {status}
       </div>
+      {subtitle ? <div className="mt-2 text-xs leading-relaxed text-slate-500">{subtitle}</div> : null}
     </div>
   )
 }
 
-function StatTile({ label, value }: { label: string; value: number }) {
+function HeaderMetaItem({
+  label,
+  value,
+  children,
+  valueClassName = '',
+}: {
+  label: string
+  value?: React.ReactNode
+  children?: React.ReactNode
+  valueClassName?: string
+}) {
+  return (
+    <div className="flex items-center gap-1.5 border-l border-slate-200 pl-3 first:border-l-0 first:pl-0">
+      <span className="text-sm text-slate-500">{label}</span>
+      <span className={`text-sm font-semibold text-slate-700 ${valueClassName}`}>
+        {value ?? children}
+      </span>
+    </div>
+  )
+}
+
+function ToggleCardButton({ open }: { open: boolean }) {
+  return (
+    <span className="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-50">
+      <span>{open ? 'Hide' : 'Show'}</span>
+      <span aria-hidden="true" className="text-base leading-none">
+        {open ? '−' : '+'}
+      </span>
+    </span>
+  )
+}
+
+function SectionCard({
+  title,
+  subtitle,
+  children,
+  className = '',
+  headerAction,
+}: {
+  title: string
+  subtitle?: string
+  children: React.ReactNode
+  className?: string
+  headerAction?: React.ReactNode
+}) {
+  return (
+    <div className={`rounded-[24px] border border-slate-200 bg-white p-5 shadow-sm ${className}`}>
+      <div className="mb-4 flex items-start justify-between gap-4">
+        <div>
+          <div className="text-lg font-semibold tracking-tight text-slate-900">{title}</div>
+          {subtitle ? <div className="mt-1 text-sm text-slate-500">{subtitle}</div> : null}
+        </div>
+        {headerAction ? <div className="shrink-0">{headerAction}</div> : null}
+      </div>
+      {children}
+    </div>
+  )
+}
+
+function DetailRow({
+  label,
+  value,
+  valueClassName = '',
+}: {
+  label: string
+  value: React.ReactNode
+  valueClassName?: string
+}) {
+  return (
+    <div className="flex items-start justify-between gap-4 py-2.5">
+      <div className="text-sm text-slate-500">{label}</div>
+      <div className={`text-right text-sm font-medium text-slate-800 ${valueClassName}`}>{value}</div>
+    </div>
+  )
+}
+
+function getSkillAccentStyle(attribute: RiderSkillAttributeCode) {
+  switch (attribute) {
+    case 'sprint':
+      return { soft: 'rgba(245, 158, 11, 0.18)' }
+    case 'climbing':
+      return { soft: 'rgba(16, 185, 129, 0.18)' }
+    case 'time_trial':
+      return { soft: 'rgba(59, 130, 246, 0.18)' }
+    case 'endurance':
+      return { soft: 'rgba(139, 92, 246, 0.18)' }
+    case 'flat':
+      return { soft: 'rgba(6, 182, 212, 0.18)' }
+    case 'recovery':
+      return { soft: 'rgba(34, 197, 94, 0.18)' }
+    case 'resistance':
+      return { soft: 'rgba(239, 68, 68, 0.18)' }
+    case 'race_iq':
+      return { soft: 'rgba(99, 102, 241, 0.18)' }
+    case 'teamwork':
+      return { soft: 'rgba(236, 72, 153, 0.18)' }
+    default:
+      return { soft: 'rgba(148, 163, 184, 0.18)' }
+  }
+}
+
+function SimpleAttributeRow({
+  label,
+  attributeCode,
+  value,
+}: {
+  label: string
+  attributeCode: RiderSkillAttributeCode
+  value: number
+}) {
   const safeValue = Math.max(0, Math.min(100, value))
+  const accent = getSkillAccentStyle(attributeCode)
 
   return (
-    <div className="rounded-xl border border-gray-200 p-3">
-      <div className="text-xs uppercase tracking-wide text-gray-500">{label}</div>
-      <div className="mt-1 flex items-end justify-between">
-        <div className="text-xl font-semibold text-gray-900">{safeValue}</div>
-        <div className="text-xs text-gray-400">/100</div>
-      </div>
-      <div className="mt-3 h-2 rounded-full bg-gray-100">
-        <div className="h-2 rounded-full bg-yellow-400" style={{ width: `${safeValue}%` }} />
+    <div className="relative overflow-hidden rounded-xl border border-slate-200 bg-white px-4 py-3">
+      <div
+        className="absolute inset-y-0 left-0 rounded-r-xl"
+        style={{
+          width: `${Math.max(12, safeValue)}%`,
+          background: `linear-gradient(90deg, ${accent.soft} 0%, ${accent.soft} 90%, rgba(255,255,255,0) 100%)`,
+          opacity: 0.95,
+        }}
+      />
+
+      <div className="relative flex items-center justify-between gap-4">
+        <div className="text-sm font-medium text-slate-700">{label}</div>
+        <div className="w-10 shrink-0 text-right text-base font-semibold text-slate-900">
+          {safeValue}
+        </div>
       </div>
     </div>
   )
@@ -894,6 +1080,11 @@ function RiderProfileModal({
   const [askingPriceMessage, setAskingPriceMessage] = useState<string | null>(null)
   const [isSavingAskingPrice, setIsSavingAskingPrice] = useState(false)
 
+  const [contractValueOpen, setContractValueOpen] = useState(false)
+  const [availabilityOpen, setAvailabilityOpen] = useState(true)
+  const [formDevelopmentOpen, setFormDevelopmentOpen] = useState(false)
+  const [quickNotesOpen, setQuickNotesOpen] = useState(true)
+
   useEffect(() => {
     let mounted = true
 
@@ -944,6 +1135,10 @@ function RiderProfileModal({
       setAskingPriceInput('')
       setAskingPriceMessage(null)
       setIsSavingAskingPrice(false)
+      setContractValueOpen(false)
+      setAvailabilityOpen(true)
+      setFormDevelopmentOpen(false)
+      setQuickNotesOpen(true)
     }
 
     return () => {
@@ -1209,280 +1404,465 @@ function RiderProfileModal({
   const askingPriceDisplay =
     selectedRider?.asking_price === null || selectedRider?.asking_price === undefined
       ? '$ -'
-      : formatMoney(selectedRider.asking_price)
+      : formatCompactMoney(selectedRider.asking_price)
 
   const moraleUi = getMoraleUi(selectedRider?.morale)
   const potentialUi = getPotentialUi(selectedRider?.potential)
+  const fatigueUi = getFatigueUi(selectedRider?.fatigue)
+  const healthUi = getRiderStatusUi(selectedRider?.availability_status)
   const potentialBonusActive = hasActivePotentialBonus(profileAge)
   const potentialDevelopmentBonus = getPotentialDevelopmentBonus(
     selectedRider?.potential,
     profileAge
   )
 
+  const availabilityNote =
+    selectedRider?.availability_status === 'injured'
+      ? 'Rider is currently injured and unavailable for full match activity.'
+      : selectedRider?.availability_status === 'not_fully_fit'
+        ? 'Rider is recovering and not yet back to full fitness.'
+        : selectedRider?.availability_status === 'sick'
+          ? 'Rider is sick and may not be available until cleared.'
+          : 'Rider is currently fit and available.'
+
   if (!open) return null
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4 backdrop-blur-sm"
       onClick={closeAll}
     >
       <div
-        className="w-full max-w-6xl overflow-hidden rounded-2xl bg-white shadow-xl"
+        className="flex max-h-[92vh] w-full max-w-5xl flex-col overflow-hidden rounded-[24px] border border-slate-200 bg-white shadow-[0_24px_80px_rgba(15,23,42,0.22)]"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4">
-          <div className="text-3xl font-semibold text-gray-900">
-            {selectedRider
-              ? `${selectedRider.first_name} ${selectedRider.last_name}`
-              : 'Rider Profile'}
-          </div>
+        <div className="shrink-0 border-b border-slate-200 px-6 py-5">
+          <div className="flex items-start justify-between gap-4">
+            <div className="min-w-0">
+              <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">
+                Rider Profile
+              </div>
 
-          <button
-            type="button"
-            onClick={closeAll}
-            className="rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50"
-          >
-            Close
-          </button>
+              <div className="mt-1 truncate text-2xl font-semibold tracking-tight text-slate-900">
+                {selectedRider
+                  ? `${selectedRider.first_name} ${selectedRider.last_name}`
+                  : 'Rider Profile'}
+              </div>
+
+              {selectedRider ? (
+                <div className="mt-3 space-y-2">
+                  <div className="flex flex-wrap items-center gap-y-2 text-sm">
+                    <HeaderMetaItem label="Country:">
+                      <span className="inline-flex items-center gap-2">
+                        <CountryFlag countryCode={selectedRider.country_code} />
+                        <span>{getCountryName(selectedRider.country_code)}</span>
+                      </span>
+                    </HeaderMetaItem>
+
+                    <HeaderMetaItem label="Role:" value={selectedRider.role} />
+                    <HeaderMetaItem label="Age:" value={profileAge ?? '—'} />
+                    <HeaderMetaItem label="Overall:" value={`${selectedRider.overall}%`} />
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-y-2 text-sm">
+                    <HeaderMetaItem label="Wage:" value={formatWeeklySalary(selectedRider.salary)} />
+                    <HeaderMetaItem
+                      label="Contract end:"
+                      value={contractExpiryUi.label}
+                      valueClassName={contractExpiryUi.valueClassName}
+                    />
+                    <HeaderMetaItem
+                      label="Rider value:"
+                      value={formatCompactMoney(selectedRider.market_value)}
+                    />
+                  </div>
+                </div>
+              ) : (
+                <div className="mt-3 text-sm text-slate-500">
+                  Contract, health and simple skill overview.
+                </div>
+              )}
+            </div>
+
+            <button
+              type="button"
+              onClick={closeAll}
+              className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50"
+            >
+              Close
+            </button>
+          </div>
         </div>
 
-        <div className="p-6">
-          {profileLoading && <div className="text-sm text-gray-600">Loading rider profile…</div>}
+        <div className="min-h-0 flex-1 overflow-y-auto bg-slate-50 p-6">
+          {profileLoading && (
+            <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600 shadow-sm">
+              Loading rider profile…
+            </div>
+          )}
 
           {!profileLoading && profileError && (
-            <div>
-              <div className="text-sm font-medium text-red-600">Could not load rider profile</div>
-              <div className="mt-1 text-sm text-gray-600">{profileError}</div>
+            <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-4">
+              <div className="text-sm font-medium text-rose-700">Could not load rider profile</div>
+              <div className="mt-1 text-sm text-rose-600">{profileError}</div>
             </div>
           )}
 
           {!profileLoading && !profileError && selectedRider && (
-            <>
-              <div className="grid grid-cols-1 gap-6 lg:grid-cols-[320px_minmax(0,1fr)]">
-                <div>
-                  <img
-                    src={getRiderImageUrl(selectedRider.image_url)}
-                    alt={selectedRider.display_name}
-                    className="h-80 w-full rounded-xl border border-gray-200 object-cover"
-                  />
-
-                  <div className="mt-4">
-                    <label className="mb-2 block text-sm font-medium text-gray-700">
-                      Image URL
-                    </label>
-                    <input
-                      type="text"
-                      value={imageUrlInput}
-                      onChange={(e) => setImageUrlInput(e.target.value)}
-                      placeholder="Paste rider image URL"
-                      className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-yellow-400"
+            <div className="grid grid-cols-1 gap-5 xl:grid-cols-[320px_minmax(0,1fr)]">
+              <div className="space-y-5">
+                <div className="overflow-hidden rounded-[24px] border border-slate-200 bg-white shadow-sm">
+                  <div className="flex h-[420px] items-center justify-center bg-slate-100 p-4">
+                    <img
+                      src={getRiderImageUrl(selectedRider.image_url)}
+                      alt={selectedRider.display_name}
+                      className="h-full w-full bg-slate-100 object-contain"
                     />
-
-                    <button
-                      type="button"
-                      onClick={applyImageChange}
-                      disabled={imageSaving}
-                      className="mt-3 w-full rounded-lg bg-yellow-400 px-4 py-2 text-sm font-medium text-black hover:bg-yellow-500 disabled:cursor-not-allowed disabled:opacity-60"
-                    >
-                      {imageSaving ? 'Saving image...' : 'Apply Image Change'}
-                    </button>
-
-                    {imageSaveMessage && (
-                      <div className="mt-2 text-sm text-gray-600">{imageSaveMessage}</div>
-                    )}
                   </div>
 
-                  <div className="mt-5 border-t border-gray-200 pt-4">
-                    <div className="rounded-xl border border-gray-200 p-4">
-                      <div className="text-xs text-gray-500">Set Asking Price</div>
+                  <div className="p-4">
+                    <div className="mt-4">
+                      <label className="block text-sm font-semibold text-slate-800">Image URL</label>
 
-                      <div className="mt-3 flex items-center gap-2">
-                        <span className="text-xs text-gray-500">$</span>
-                        <input
-                          type="number"
-                          min={1000}
-                          value={askingPriceInput}
-                          onChange={(e) => {
-                            setAskingPriceInput(e.target.value)
-                            if (askingPriceMessage) setAskingPriceMessage(null)
-                          }}
-                          className="h-9 w-full rounded-md border border-gray-300 px-2 text-sm outline-none focus:border-yellow-400"
-                          placeholder="Enter asking price"
-                        />
-                      </div>
+                      <input
+                        type="text"
+                        value={imageUrlInput}
+                        onChange={(e) => setImageUrlInput(e.target.value)}
+                        placeholder="Paste rider image URL"
+                        className="mt-3 w-full rounded-xl border border-slate-300 bg-slate-50 px-3.5 py-3 text-sm text-slate-800 outline-none transition focus:border-yellow-400 focus:bg-white focus:ring-4 focus:ring-yellow-100"
+                      />
 
                       <button
                         type="button"
-                        onClick={() => {
-                          void handleSetAskingPrice()
-                        }}
-                        disabled={isSavingAskingPrice}
-                        className="mt-2 text-xs text-gray-500 hover:text-gray-800 disabled:cursor-not-allowed disabled:opacity-60"
+                        onClick={applyImageChange}
+                        disabled={imageSaving}
+                        className="mt-3 w-full rounded-xl bg-yellow-400 px-4 py-3 text-sm font-semibold text-slate-950 transition hover:bg-yellow-500 disabled:cursor-not-allowed disabled:opacity-60"
                       >
-                        {isSavingAskingPrice ? 'Saving...' : 'Set'}
+                        {imageSaving ? 'Saving image...' : 'Apply Image Change'}
                       </button>
 
-                      {askingPriceMessage ? (
-                        <div className="mt-2 text-xs text-gray-500">{askingPriceMessage}</div>
-                      ) : null}
+                      {imageSaveMessage && (
+                        <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600">
+                          {imageSaveMessage}
+                        </div>
+                      )}
                     </div>
+
+                    {currentTeamType !== 'developing' && (
+                      <div className="mt-5 border-t border-slate-200 pt-4">
+                        <div className="rounded-2xl border border-slate-200 bg-gradient-to-b from-white to-slate-50/90 p-4 shadow-sm">
+                          <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">
+                            Set Asking Price
+                          </div>
+
+                          <div className="relative mt-3">
+                            <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-base font-semibold text-slate-500">
+                              $
+                            </span>
+                            <input
+                              type="number"
+                              min={1000}
+                              value={askingPriceInput}
+                              onChange={(e) => {
+                                setAskingPriceInput(e.target.value)
+                                if (askingPriceMessage) setAskingPriceMessage(null)
+                              }}
+                              className="w-full rounded-xl border-2 border-yellow-400 bg-yellow-50 py-3 pl-8 pr-4 text-base font-medium text-slate-900 outline-none focus:border-yellow-500 focus:bg-white"
+                              placeholder="Enter asking price"
+                            />
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={() => {
+                              void handleSetAskingPrice()
+                            }}
+                            disabled={isSavingAskingPrice}
+                            className="mt-3 w-full rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+                          >
+                            {isSavingAskingPrice ? 'Saving...' : 'Set Asking Price'}
+                          </button>
+
+                          {askingPriceMessage ? (
+                            <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600">
+                              {askingPriceMessage}
+                            </div>
+                          ) : null}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
 
-                <div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="inline-flex items-center gap-2 rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-700">
-                      <CountryFlag countryCode={selectedRider.country_code} />
-                      {getCountryName(selectedRider.country_code)}
-                    </span>
-                    <span className="rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-700">
-                      {selectedRider.role}
-                    </span>
-                    <span className="rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-700">
-                      Age {profileAge ?? '—'}
-                    </span>
-                    <RiderStatusBadge status={selectedRider.availability_status} />
-                    <span className="rounded-full bg-yellow-100 px-3 py-1 text-sm font-medium text-yellow-800">
-                      Overall {selectedRider.overall}%
-                    </span>
-                  </div>
+                <SectionCard
+                  title="Contract & Value"
+                  subtitle="Simple contract overview"
+                  headerAction={
+                    <button type="button" onClick={() => setContractValueOpen((prev) => !prev)}>
+                      <ToggleCardButton open={contractValueOpen} />
+                    </button>
+                  }
+                >
+                  {contractValueOpen ? (
+                    <>
+                      <div className="space-y-3">
+                        <CompactValueTile
+                          label="Weekly Wage"
+                          value={formatWeeklySalary(selectedRider.salary)}
+                          valueClassName="text-lg leading-tight whitespace-nowrap"
+                          subvalue={`Full season wage: ${formatMoney(getSeasonWage(selectedRider.salary))}`}
+                          subvalueClassName="text-xs text-slate-500"
+                        />
 
-                  {u23WarningMessage && (
-                    <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-                      <div className="font-semibold">U23 eligibility warning</div>
-                      <div className="mt-1">{u23WarningMessage}</div>
+                        <CompactValueTile
+                          label="Contract"
+                          value={contractExpiryUi.label}
+                          valueClassName={contractExpiryUi.valueClassName}
+                          subvalue={contractExpiryUi.sublabel}
+                          subvalueClassName={
+                            contractExpiryUi.valueClassName.includes('text-red-600')
+                              ? 'text-xs text-red-600'
+                              : 'text-xs text-slate-500'
+                          }
+                        />
+
+                        <CompactValueTile
+                          label="Market Value"
+                          value={formatCompactMoney(selectedRider.market_value)}
+                          valueClassName="text-lg leading-tight whitespace-nowrap"
+                        />
+
+                        <CompactValueTile
+                          label="Asking Price"
+                          value={askingPriceDisplay}
+                          valueClassName={`text-lg leading-tight whitespace-nowrap ${
+                            selectedRider.asking_price === null ||
+                            selectedRider.asking_price === undefined
+                              ? 'text-slate-500'
+                              : 'text-slate-900'
+                          }`}
+                        />
+                      </div>
+
+                      {u23WarningMessage && (
+                        <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                          <div className="font-semibold">U23 eligibility warning</div>
+                          <div className="mt-1 leading-relaxed">{u23WarningMessage}</div>
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <div className="rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-500">
+                      Hidden by default. Expand to view contract and value details.
                     </div>
                   )}
+                </SectionCard>
 
-                  <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
-                    <CompactValueTile
-                      label="Salary (Weekly)"
-                      value={formatWeeklySalary(selectedRider.salary)}
-                      valueClassName="text-lg leading-tight whitespace-nowrap"
-                      subvalue={`Full season wage: ${formatMoney(getSeasonWage(selectedRider.salary))}`}
-                      subvalueClassName="text-xs text-gray-500"
-                    />
+                <SectionCard
+                  title="Availability"
+                  subtitle="Current condition and health status"
+                  headerAction={
+                    <button type="button" onClick={() => setAvailabilityOpen((prev) => !prev)}>
+                      <ToggleCardButton open={availabilityOpen} />
+                    </button>
+                  }
+                >
+                  {availabilityOpen ? (
+                    <>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <RiderStatusBadge status={selectedRider.availability_status} />
+                        <FatigueBadge fatigue={selectedRider.fatigue} />
+                      </div>
 
-                    <CompactValueTile
-                      label="Contract Ends"
-                      value={contractExpiryUi.label}
-                      subvalue={contractExpiryUi.sublabel}
-                      valueClassName={contractExpiryUi.valueClassName}
-                      subvalueClassName={
-                        contractExpiryUi.valueClassName.includes('text-red-600')
-                          ? 'text-xs text-red-600'
-                          : 'text-xs text-gray-500'
-                      }
-                    />
+                      <div className="mt-4 divide-y divide-slate-100">
+                        <DetailRow label="Status" value={healthUi.label} valueClassName="" />
+                        <DetailRow label="Fatigue score" value={`${selectedRider.fatigue ?? 0}/100`} />
+                        {selectedRider.unavailable_reason ? (
+                          <DetailRow label="Reason" value={selectedRider.unavailable_reason} />
+                        ) : null}
+                        {selectedRider.unavailable_until ? (
+                          <DetailRow
+                            label="Unavailable until"
+                            value={formatShortGameDate(selectedRider.unavailable_until)}
+                          />
+                        ) : null}
+                      </div>
 
-                    <CompactValueTile
-                      label="Market Value"
-                      value={formatMoney(selectedRider.market_value)}
-                      valueClassName="text-lg leading-tight whitespace-nowrap"
-                    />
-
-                    <CompactValueTile
-                      label="Asking Price"
-                      value={askingPriceDisplay}
-                      valueClassName={`text-lg leading-tight whitespace-nowrap ${
-                        selectedRider.asking_price === null ||
-                        selectedRider.asking_price === undefined
-                          ? 'text-gray-500'
-                          : 'text-gray-900'
-                      }`}
-                    />
-                  </div>
-
-                  <div className="mt-6">
-                    <div className="mb-3 text-base font-semibold text-gray-900">
-                      Rider Attributes
+                      <div className="mt-4 rounded-xl bg-slate-50 px-4 py-3 text-sm leading-relaxed text-slate-600">
+                        {availabilityNote}
+                      </div>
+                    </>
+                  ) : (
+                    <div className="rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-500">
+                      Expand to view availability and health details.
                     </div>
+                  )}
+                </SectionCard>
+              </div>
 
-                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                      {[
-                        { label: 'Sprint', value: selectedRider.sprint },
-                        { label: 'Climbing', value: selectedRider.climbing },
-                        { label: 'Time Trial', value: selectedRider.time_trial },
-                        { label: 'Endurance', value: selectedRider.endurance },
-                        { label: 'Flat', value: selectedRider.flat },
-                        { label: 'Recovery', value: selectedRider.recovery },
-                        { label: 'Resistance', value: selectedRider.resistance },
-                        { label: 'Race IQ', value: selectedRider.race_iq },
-                        { label: 'Teamwork', value: selectedRider.teamwork },
-                      ].map((stat) => (
-                        <StatTile key={stat.label} label={stat.label} value={stat.value} />
-                      ))}
-                    </div>
+              <div className="space-y-5">
+                <SectionCard title="Skill Attributes">
+                  <div className="space-y-3">
+                    {[
+                      { label: 'Sprint', key: 'sprint' as const, value: selectedRider.sprint },
+                      { label: 'Climbing', key: 'climbing' as const, value: selectedRider.climbing },
+                      {
+                        label: 'Time Trial',
+                        key: 'time_trial' as const,
+                        value: selectedRider.time_trial,
+                      },
+                      { label: 'Endurance', key: 'endurance' as const, value: selectedRider.endurance },
+                      { label: 'Flat', key: 'flat' as const, value: selectedRider.flat },
+                      { label: 'Recovery', key: 'recovery' as const, value: selectedRider.recovery },
+                      {
+                        label: 'Resistance',
+                        key: 'resistance' as const,
+                        value: selectedRider.resistance,
+                      },
+                      { label: 'Race IQ', key: 'race_iq' as const, value: selectedRider.race_iq },
+                      { label: 'Teamwork', key: 'teamwork' as const, value: selectedRider.teamwork },
+                    ].map((stat) => (
+                      <SimpleAttributeRow
+                        key={stat.key}
+                        attributeCode={stat.key}
+                        label={stat.label}
+                        value={stat.value ?? 0}
+                      />
+                    ))}
                   </div>
+                </SectionCard>
 
-                  <div className="mt-6 border-t border-gray-200 pt-5">
-                    <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                <SectionCard
+                  title="Form & Development"
+                  subtitle="Simple current overview"
+                  headerAction={
+                    <button type="button" onClick={() => setFormDevelopmentOpen((prev) => !prev)}>
+                      <ToggleCardButton open={formDevelopmentOpen} />
+                    </button>
+                  }
+                >
+                  {formDevelopmentOpen ? (
+                    <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
                       <CompactStatusTile
                         label="Potential"
                         status={potentialUi.label}
-                        subtitle={
-                          profileAge == null
-                            ? 'Game date unavailable'
-                            : potentialBonusActive
-                              ? `Growth bonus active (+${potentialDevelopmentBonus})`
-                              : `No growth bonus after age ${POTENTIAL_BONUS_MAX_AGE}`
-                        }
                         statusColor={potentialUi.color}
-                        statusClassName="text-lg leading-tight whitespace-nowrap"
+                        statusClassName="whitespace-nowrap text-lg leading-tight"
                       />
 
                       <CompactStatusTile
                         label="Morale"
                         status={moraleUi.label}
                         statusColor={moraleUi.color}
-                        statusClassName="text-lg leading-tight whitespace-nowrap"
+                        statusClassName="whitespace-nowrap text-lg leading-tight"
+                      />
+
+                      <CompactStatusTile
+                        label="Status"
+                        status={healthUi.label}
+                        statusColor={healthUi.color}
+                        statusClassName="whitespace-nowrap text-lg leading-tight"
                       />
                     </div>
-                  </div>
-                </div>
+                  ) : (
+                    <div className="rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-500">
+                      Hidden by default. Expand to view current form and development.
+                    </div>
+                  )}
+                </SectionCard>
+
+                <SectionCard
+                  title="Quick Notes"
+                  subtitle="Simple summary for decision making"
+                  headerAction={
+                    <button type="button" onClick={() => setQuickNotesOpen((prev) => !prev)}>
+                      <ToggleCardButton open={quickNotesOpen} />
+                    </button>
+                  }
+                >
+                  {quickNotesOpen ? (
+                    <div className="space-y-3">
+                      <div className="rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-700">
+                        Contract ends: <span className="font-semibold">{contractExpiryUi.label}</span>
+                        {contractExpiryUi.sublabel ? ` · ${contractExpiryUi.sublabel}` : ''}
+                      </div>
+
+                      <div className="rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-700">
+                        Potential: <span style={{ color: potentialUi.color }}>{potentialUi.label}</span>
+                        {' · '}
+                        Morale: <span style={{ color: moraleUi.color }}>{moraleUi.label}</span>
+                        {' · '}
+                        Fatigue: <span style={{ color: fatigueUi.color }}>{fatigueUi.label}</span>
+                        {potentialBonusActive && profileAge != null
+                          ? ` · Growth bonus active (+${potentialDevelopmentBonus})`
+                          : ''}
+                        {selectedRider.fatigue != null ? ` · Fatigue ${selectedRider.fatigue}/100` : ''}
+                      </div>
+
+                      <div className="rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-700">
+                        {selectedRider.unavailable_reason
+                          ? `Availability note: ${selectedRider.unavailable_reason}`
+                          : availabilityNote}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-500">
+                      Expand to view quick notes and decision summary.
+                    </div>
+                  )}
+                </SectionCard>
               </div>
-
-              <div className="mt-6 border-t border-gray-200 pt-5">
-                <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
-                  <button
-                    type="button"
-                    onClick={handleNewContract}
-                    disabled={renewalBusy}
-                    className="rounded-lg border border-gray-200 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    {renewalBusy ? 'Processing...' : 'New Contract'}
-                  </button>
-
-                  <button
-                    type="button"
-                    className="rounded-lg border border-gray-200 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50"
-                  >
-                    Transfer List
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setCompareOpen(true)}
-                    className="rounded-lg border border-gray-200 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50"
-                  >
-                    Compare Rider
-                  </button>
-
-                  <button
-                    type="button"
-                    className="rounded-lg border border-red-200 px-4 py-3 text-sm font-medium text-red-600 hover:bg-red-50"
-                  >
-                    Release
-                  </button>
-                </div>
-
-                {contractActionMessage && (
-                  <div className="mt-3 text-sm text-gray-600">{contractActionMessage}</div>
-                )}
-              </div>
-            </>
+            </div>
           )}
         </div>
+
+        {!profileLoading && !profileError && selectedRider && (
+          <div className="shrink-0 border-t border-slate-200 bg-white px-6 py-4">
+            <div className="mb-3 text-sm text-slate-600">
+              {contractActionMessage ??
+                'Manage contract, transfer and comparison actions for this rider.'}
+            </div>
+
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
+              <button
+                type="button"
+                onClick={handleNewContract}
+                disabled={renewalBusy}
+                className="rounded-xl bg-yellow-400 px-4 py-3 text-sm font-semibold text-slate-950 transition hover:bg-yellow-500 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {renewalBusy ? 'Processing...' : 'New Contract'}
+              </button>
+
+              <button
+                type="button"
+                disabled={currentTeamType === 'developing'}
+                title={currentTeamType === 'developing' ? 'Transfer listing is disabled on the Developing Team page.' : 'Transfer List'}
+                className={`rounded-xl px-4 py-3 text-sm font-medium transition ${
+                  currentTeamType === 'developing'
+                    ? 'cursor-not-allowed border border-slate-200 bg-slate-100 text-slate-400'
+                    : 'border border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
+                }`}
+              >
+                Transfer List
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setCompareOpen(true)}
+                className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+              >
+                Compare Rider
+              </button>
+
+              <button
+                type="button"
+                className="rounded-xl border border-rose-700 bg-rose-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-rose-700"
+              >
+                Release
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {compareOpen && selectedRider && (
@@ -2283,6 +2663,9 @@ export default function DevelopingTeamPage() {
           flat: number | null
           endurance: number | null
           recovery: number | null
+          resistance: number | null
+          race_iq: number | null
+          teamwork: number | null
           morale: number | null
           potential: number | null
           fatigue: number | null
@@ -2310,6 +2693,9 @@ export default function DevelopingTeamPage() {
             flat,
             endurance,
             recovery,
+            resistance,
+            race_iq,
+            teamwork,
             morale,
             potential,
             fatigue,
@@ -2338,6 +2724,9 @@ export default function DevelopingTeamPage() {
               flat: number | null
               endurance: number | null
               recovery: number | null
+              resistance: number | null
+              race_iq: number | null
+              teamwork: number | null
               morale: number | null
               potential: number | null
               fatigue: number | null
@@ -2372,6 +2761,9 @@ export default function DevelopingTeamPage() {
           flat: riderMeta?.flat ?? null,
           endurance: riderMeta?.endurance ?? null,
           recovery: riderMeta?.recovery ?? null,
+          resistance: riderMeta?.resistance ?? null,
+          race_iq: riderMeta?.race_iq ?? null,
+          teamwork: riderMeta?.teamwork ?? null,
           morale: riderMeta?.morale ?? null,
           potential: riderMeta?.potential ?? null,
           fatigue: row.fatigue ?? riderMeta?.fatigue ?? null,
@@ -2740,7 +3132,7 @@ export default function DevelopingTeamPage() {
                           <>
                             <td className="p-2">
                               <div className="text-gray-800">
-                                {r.marketValue == null ? '—' : formatMoney(r.marketValue)}
+                                {r.marketValue == null ? '—' : formatCompactMoney(r.marketValue)}
                               </div>
                             </td>
 

@@ -1,12 +1,13 @@
 /**
  * SponsorsTab.tsx
- * Upgraded sponsor dashboard UI with:
- * - Premium main sponsor hero card
- * - Offer modal buttons per sponsor kind
- * - Objective progress graphics
- * - Better secondary / technical presentation
- * - Local flags + country names
- * - Larger main sponsor branding area
+ * Updated sponsor dashboard UI with:
+ * - Main / technical logos shown when real logo_url exists
+ * - Broken logos gracefully fall back to initials
+ * - Secondary sponsors intentionally shown without logos and without country
+ * - Contract coverage simplified to "Until end of Season X"
+ * - Optional sponsor descriptions from metadata
+ * - Main offer preview goals shown in modal
+ * - Main sponsor hero uses one single large logo area with less empty space
  */
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
@@ -127,6 +128,48 @@ function getLocalFlagUrl(countryCode: string | null | undefined): string | null 
   return `/flags/${countryCode.toLowerCase()}.svg`
 }
 
+function getMetadataValue(
+  metadata: Record<string, unknown> | null | undefined,
+  key: string
+): string | null {
+  const value = metadata?.[key]
+  return typeof value === 'string' && value.trim().length > 0 ? value : null
+}
+
+function getMetadataStringArray(
+  metadata: Record<string, unknown> | null | undefined,
+  key: string
+): string[] {
+  const value = metadata?.[key]
+  if (!Array.isArray(value)) return []
+  return value.filter((item): item is string => typeof item === 'string' && item.trim().length > 0)
+}
+
+function getSponsorDescription(
+  metadata: Record<string, unknown> | null | undefined
+): string | null {
+  return getMetadataValue(metadata, 'description')
+}
+
+function getSponsorPreviewGoals(
+  metadata: Record<string, unknown> | null | undefined
+): string[] {
+  return getMetadataStringArray(metadata, 'preview_focus')
+}
+
+function getSponsorLogoUrl(
+  sponsorKind: SponsorKind,
+  directLogoUrl?: string | null,
+  metadata?: Record<string, unknown> | null
+): string | null {
+  if (sponsorKind === 'secondary') return null
+
+  const metadataLogo = getMetadataValue(metadata, 'logo_url')
+  const finalUrl = directLogoUrl || metadataLogo
+  if (!finalUrl || finalUrl.trim().length === 0) return null
+  return finalUrl
+}
+
 function CountryFlagLabel({
   countryCode,
   imageWidth = 22,
@@ -157,18 +200,8 @@ function CountryFlagLabel({
   )
 }
 
-function formatContractCoverage(
-  startMonth: number | null | undefined,
-  coverageMonths: number | null | undefined
-): string {
-  const month = startMonth ?? 1
-  const coverage = coverageMonths ?? 12
-
-  if (month === 1 && coverage === 12) {
-    return 'Full season'
-  }
-
-  return `Signed in month ${month} · ${coverage} month(s) remaining`
+function formatContractCoverage(seasonNumber: number | null | undefined): string {
+  return `Until end of Season ${seasonNumber ?? 1}`
 }
 
 function sponsorKindLabel(kind: SponsorKind): string {
@@ -212,6 +245,8 @@ function LogoPlaceholder({
   logoUrl?: string | null
   size?: 'sm' | 'md' | 'lg' | 'hero'
 }): JSX.Element {
+  const [failed, setFailed] = React.useState(false)
+
   const initials = name
     .split(' ')
     .map((p) => p.trim()[0] ?? '')
@@ -221,12 +256,21 @@ function LogoPlaceholder({
 
   const sizeClass =
     size === 'hero'
-      ? 'w-44 h-44 text-4xl rounded-3xl'
+      ? 'w-full h-full text-7xl rounded-none'
       : size === 'lg'
-        ? 'w-20 h-20 text-lg rounded-xl'
+        ? 'w-24 h-24 text-xl rounded-xl'
         : size === 'sm'
           ? 'w-10 h-10 text-xs rounded-md'
           : 'w-14 h-14 text-sm rounded-xl'
+
+  const paddingClass =
+    size === 'hero'
+      ? 'p-4 md:p-6'
+      : size === 'lg'
+        ? 'p-3'
+        : 'p-2'
+
+  const showImage = !!logoUrl && !failed
 
   return (
     <div
@@ -235,8 +279,14 @@ function LogoPlaceholder({
         'bg-gray-100 border flex items-center justify-center overflow-hidden shrink-0',
       ].join(' ')}
     >
-      {logoUrl ? (
-        <img src={logoUrl} alt={name} className="w-full h-full object-cover" />
+      {showImage ? (
+        <img
+          src={logoUrl}
+          alt={name}
+          className={`w-full h-full object-contain ${paddingClass}`}
+          loading="lazy"
+          onError={() => setFailed(true)}
+        />
       ) : (
         <span className="font-semibold text-gray-600">{initials}</span>
       )}
@@ -383,38 +433,42 @@ function OfferModal({
                   const monthly = toNumber(offer.monthly_amount)
                   const discount =
                     offer.technical_discount_pct !== null ? Number(offer.technical_discount_pct) : null
+                  const description = getSponsorDescription(offer.metadata)
+                  const previewGoals = getSponsorPreviewGoals(offer.metadata)
+                  const resolvedLogoUrl = getSponsorLogoUrl(
+                    offer.sponsor_kind,
+                    offer.logo_url,
+                    offer.metadata
+                  )
 
                   return (
                     <div key={offer.id} className="border rounded-xl p-5">
                       <div className="flex items-start justify-between gap-4">
                         <div className="flex items-start gap-4 min-w-0">
-                          <div className="w-24 h-24 rounded-2xl bg-white border overflow-hidden shrink-0 flex items-center justify-center">
-                            {offer.logo_url ? (
-                              <img
-                                src={offer.logo_url}
-                                alt={offer.company_name}
-                                className="w-full h-full object-contain p-2"
-                              />
-                            ) : (
-                              <span className="text-2xl font-semibold text-gray-500">
-                                {offer.company_name
-                                  .split(' ')
-                                  .map((p) => p.trim()[0] ?? '')
-                                  .join('')
-                                  .slice(0, 2)
-                                  .toUpperCase()}
-                              </span>
-                            )}
-                          </div>
+                          {offer.sponsor_kind !== 'secondary' && (
+                            <LogoPlaceholder
+                              name={offer.company_name}
+                              logoUrl={resolvedLogoUrl}
+                              size="lg"
+                            />
+                          )}
 
                           <div className="min-w-0">
                             <div className="font-semibold text-lg truncate">{offer.company_name}</div>
+
                             <div className="text-sm text-gray-600 mt-1 flex items-center gap-2">
-                              <CountryFlagLabel countryCode={offer.company_country_code} imageWidth={20} />
-                              <span>· {sponsorKindLabel(offer.sponsor_kind)}</span>
+                              {offer.sponsor_kind !== 'secondary' && (
+                                <CountryFlagLabel countryCode={offer.company_country_code} imageWidth={20} />
+                              )}
+                              <span>{sponsorKindLabel(offer.sponsor_kind)}</span>
                             </div>
+
+                            {description && offer.sponsor_kind !== 'secondary' && (
+                              <div className="text-sm text-gray-500 mt-2">{description}</div>
+                            )}
+
                             <div className="flex flex-wrap gap-2 mt-3">
-                              <StatusPill label={`${offer.coverage_months} month(s) left`} tone="blue" />
+                              <StatusPill label={`Season ${offer.season_number}`} tone="blue" />
                               <StatusPill label={`Factor ${toNumber(offer.proration_factor).toFixed(2)}`} />
                             </div>
                           </div>
@@ -442,30 +496,39 @@ function OfferModal({
                         />
                         <StatCard
                           label="Contract Coverage"
-                          value={formatContractCoverage(
-                            offer.generated_game_month,
-                            offer.coverage_months
-                          )}
+                          value={formatContractCoverage(offer.season_number)}
                         />
                         <StatCard
-                          label={offer.sponsor_kind === 'technical' ? 'Discount' : 'Country'}
+                          label={offer.sponsor_kind === 'technical' ? 'Discount' : 'Details'}
                           value={
-                            offer.sponsor_kind === 'technical' ? (
-                              discount !== null ? (
-                                `${discount.toFixed(2)}%`
-                              ) : (
-                                'Future perk'
-                              )
-                            ) : (
-                              getCountryName(offer.company_country_code)
-                            )
+                            offer.sponsor_kind === 'technical'
+                              ? discount !== null
+                                ? `${discount.toFixed(2)}%`
+                                : 'Future perk'
+                              : offer.sponsor_kind === 'secondary'
+                                ? 'Supporting sponsor'
+                                : getCountryName(offer.company_country_code)
                           }
                         />
                       </div>
 
                       {offer.sponsor_kind === 'main' && (
                         <div className="mt-4 rounded-lg bg-blue-50 border border-blue-100 p-4 text-sm text-blue-900">
-                          Main sponsor deals include guaranteed money now and bonus money later through objectives.
+                          <div className="font-medium">Main sponsor package</div>
+                          <div className="mt-1">
+                            Main sponsor deals include guaranteed money now and bonus money later through objectives.
+                          </div>
+
+                          {previewGoals.length > 0 && (
+                            <div className="mt-3">
+                              <div className="font-medium mb-2">Preview goals</div>
+                              <ul className="list-disc pl-5 space-y-1">
+                                {previewGoals.map((goal, index) => (
+                                  <li key={`${offer.id}-goal-${index}`}>{goal}</li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
                         </div>
                       )}
 
@@ -477,7 +540,7 @@ function OfferModal({
 
                       {offer.sponsor_kind === 'technical' && (
                         <div className="mt-4 rounded-lg bg-gray-50 border p-4 text-sm text-gray-700">
-                          Technical sponsor rewards are a foundation for future equipment discounts and race-usage bonuses.
+                          Technical sponsor rewards currently include guaranteed contract income. Discount/perk systems are prepared for future equipment integration.
                         </div>
                       )}
                     </div>
@@ -551,6 +614,12 @@ function MainSponsorHero({
   onOpenOffers: () => void
   currency: 'USD' | 'EUR'
 }): JSX.Element {
+  const resolvedLogoUrl = sponsor
+    ? getSponsorLogoUrl(sponsor.sponsor_kind, sponsor.logo_url, sponsor.metadata)
+    : null
+
+  const description = sponsor ? getSponsorDescription(sponsor.metadata) : null
+
   return (
     <div className="bg-white rounded-xl shadow border overflow-hidden">
       <div className="flex items-center justify-between gap-4 px-5 py-4 border-b bg-gray-50">
@@ -577,9 +646,13 @@ function MainSponsorHero({
                   className="mt-3"
                 />
 
+                {description && (
+                  <div className="text-sm text-gray-500 mt-3">{description}</div>
+                )}
+
                 <div className="flex flex-wrap gap-2 mt-4">
                   <StatusPill label="Signed" tone="green" />
-                  <StatusPill label={`${sponsor.coverage_months} months coverage`} tone="blue" />
+                  <StatusPill label={`Season ${sponsor.season_number}`} tone="blue" />
                 </div>
               </div>
 
@@ -594,24 +667,21 @@ function MainSponsorHero({
                 />
                 <StatCard
                   label="Contract Coverage"
-                  value={formatContractCoverage(
-                    sponsor.signed_game_month,
-                    sponsor.coverage_months
-                  )}
+                  value={formatContractCoverage(sponsor.season_number)}
                 />
               </div>
 
               <div className="mt-5 rounded-2xl border bg-gradient-to-br from-gray-50 to-white overflow-hidden">
-                <div className="min-h-[360px] md:min-h-[420px] flex items-center justify-center p-8">
-                  {sponsor.logo_url ? (
+                <div className="h-[320px] md:h-[420px]">
+                  {resolvedLogoUrl ? (
                     <img
-                      src={sponsor.logo_url}
+                      src={resolvedLogoUrl}
                       alt={sponsor.name}
-                      className="w-full h-full max-h-[320px] object-contain"
+                      className="w-full h-full object-contain p-4 md:p-6"
                     />
                   ) : (
-                    <div className="w-full h-full min-h-[280px] flex items-center justify-center text-center">
-                      <div className="w-48 h-48 rounded-3xl bg-white border flex items-center justify-center text-5xl font-semibold text-gray-500">
+                    <div className="w-full h-full flex items-center justify-center bg-gray-100">
+                      <div className="text-7xl md:text-8xl font-semibold text-gray-500">
                         {sponsor.name
                           .split(' ')
                           .map((p) => p.trim()[0] ?? '')
@@ -720,16 +790,8 @@ function SecondarySponsorPanel({
 
                 {sponsor ? (
                   <div className="mt-4">
-                    <div className="flex items-start gap-3">
-                      <LogoPlaceholder name={sponsor.name} logoUrl={sponsor.logo_url} />
-                      <div className="min-w-0">
-                        <div className="font-semibold">{sponsor.name}</div>
-                        <CountryFlagLabel
-                          countryCode={sponsor.country_code}
-                          imageWidth={22}
-                          className="mt-2"
-                        />
-                      </div>
+                    <div className="min-w-0">
+                      <div className="font-semibold">{sponsor.name}</div>
                     </div>
 
                     <div className="grid grid-cols-1 gap-3 mt-4">
@@ -739,10 +801,7 @@ function SecondarySponsorPanel({
                       />
                       <StatCard
                         label="Contract Coverage"
-                        value={formatContractCoverage(
-                          sponsor.signed_game_month,
-                          sponsor.coverage_months
-                        )}
+                        value={formatContractCoverage(sponsor.season_number)}
                       />
                     </div>
                   </div>
@@ -776,6 +835,12 @@ function TechnicalSponsorPanel({
       ? Number(sponsor.technical_discount_pct)
       : null
 
+  const resolvedLogoUrl = sponsor
+    ? getSponsorLogoUrl(sponsor.sponsor_kind, sponsor.logo_url, sponsor.metadata)
+    : null
+
+  const description = sponsor ? getSponsorDescription(sponsor.metadata) : null
+
   return (
     <div className="bg-white rounded-xl shadow border overflow-hidden">
       <div className="flex items-center justify-between gap-4 px-5 py-4 border-b bg-gray-50">
@@ -794,7 +859,7 @@ function TechnicalSponsorPanel({
           {sponsor ? (
             <div>
               <div className="flex items-start gap-4">
-                <LogoPlaceholder name={sponsor.name} logoUrl={sponsor.logo_url} size="lg" />
+                <LogoPlaceholder name={sponsor.name} logoUrl={resolvedLogoUrl} size="lg" />
                 <div>
                   <div className="text-xl font-bold text-gray-900">{sponsor.name}</div>
                   <CountryFlagLabel
@@ -802,6 +867,10 @@ function TechnicalSponsorPanel({
                     imageWidth={24}
                     className="mt-2"
                   />
+
+                  {description && (
+                    <div className="text-sm text-gray-500 mt-3">{description}</div>
+                  )}
 
                   <div className="flex flex-wrap gap-2 mt-4">
                     <StatusPill label="Signed" tone="green" />
@@ -825,10 +894,7 @@ function TechnicalSponsorPanel({
                 />
                 <StatCard
                   label="Contract Coverage"
-                  value={formatContractCoverage(
-                    sponsor.signed_game_month,
-                    sponsor.coverage_months
-                  )}
+                  value={formatContractCoverage(sponsor.season_number)}
                 />
               </div>
             </div>
@@ -852,24 +918,24 @@ function TechnicalSponsorPanel({
             <div className="rounded-xl border bg-white p-4">
               <div className="flex items-center justify-between gap-3">
                 <div>
-                  <div className="font-medium">Equipment Discount</div>
+                  <div className="font-medium">Guaranteed Contract Income</div>
                   <div className="text-sm text-gray-600 mt-1">
-                    Stored in contract data and ready for shop integration.
+                    Technical sponsors already pay guaranteed money when signed.
                   </div>
                 </div>
-                <StatusPill label={sponsor ? 'Ready' : 'Locked'} tone={sponsor ? 'green' : 'gray'} />
+                <StatusPill label={sponsor ? 'Active' : 'Locked'} tone={sponsor ? 'green' : 'gray'} />
               </div>
             </div>
 
             <div className="rounded-xl border bg-white p-4">
               <div className="flex items-center justify-between gap-3">
                 <div>
-                  <div className="font-medium">Race Usage Bonus</div>
+                  <div className="font-medium">Equipment Discount</div>
                   <div className="text-sm text-gray-600 mt-1">
-                    Planned for future tracking when equipment/race links are added.
+                    Discount values are stored and ready for future equipment/shop integration.
                   </div>
                 </div>
-                <StatusPill label="Future" tone="yellow" />
+                <StatusPill label={discount !== null ? 'Ready' : 'Future'} tone={discount !== null ? 'green' : 'yellow'} />
               </div>
             </div>
           </div>
@@ -897,25 +963,32 @@ export function SponsorsTab({
   const loadDashboard = useCallback(async (): Promise<void> => {
     setError(null)
 
-    await supabase.rpc('sponsor_refresh_daily_offers', {
+    const refreshRes = await supabase.rpc('sponsor_refresh_daily_offers', {
       p_club_id: clubId,
     })
 
-    const res = await supabase.rpc('sponsor_get_dashboard', {
-      p_club_id: clubId,
-    })
-
-    if (res.error) {
+    if (refreshRes.error) {
       setDashboard(null)
-      setError(res.error.message ?? 'Failed to load sponsor dashboard.')
+      setError(refreshRes.error.message ?? 'Failed to refresh sponsor offers.')
       return
     }
 
-    setDashboard((res.data ?? null) as SponsorDashboard | null)
+    const dashboardRes = await supabase.rpc('sponsor_get_dashboard', {
+      p_club_id: clubId,
+    })
+
+    if (dashboardRes.error) {
+      setDashboard(null)
+      setError(dashboardRes.error.message ?? 'Failed to load sponsor dashboard.')
+      return
+    }
+
+    setDashboard((dashboardRes.data ?? null) as SponsorDashboard | null)
   }, [clubId])
 
   const generateIfNeeded = useCallback(async (): Promise<void> => {
     setGenerating(true)
+    setError(null)
 
     const genRes = await supabase.rpc('sponsor_generate_offers', {
       p_club_id: clubId,

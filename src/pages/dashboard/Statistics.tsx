@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router'
 import ReportPlayerButton from '../../components/dashboard/ReportPlayerButton'
 import { supabase } from '../../lib/supabase'
 import { normalizeGameDateValue } from '../../features/squad/utils/dates'
+import TeamStatisticsSection from '../../features/squad/components/TeamStatisticsSection'
+import RiderStatisticsSection from '../../features/squad/components/RiderStatisticsSection'
 
 type MainTab = 'teams' | 'riders'
 type TeamSubTab = 'current' | 'history'
@@ -189,8 +191,6 @@ type ClubMini = {
 const PAGE_SIZE = 20
 const RIDER_TOP_LIMIT = 50
 
-const TEAM_PAGE_BASE = '/dashboard/team'
-
 const moneyFormatter = new Intl.NumberFormat('en-US', {
   style: 'currency',
   currency: 'USD',
@@ -237,14 +237,6 @@ function cx(...parts: Array<string | false | null | undefined>) {
   return parts.filter(Boolean).join(' ')
 }
 
-function buildHashHref(path: string) {
-  return `#${path}`
-}
-
-function getTeamPageHref(id: string) {
-  return buildHashHref(`${TEAM_PAGE_BASE}/${id}`)
-}
-
 function toTitleCase(value: string) {
   return value
     .toLowerCase()
@@ -289,11 +281,6 @@ function getAgeYearsAtDate(birthDate: string | null, referenceDate: string | nul
 function getCountryName(code: string | null, countryNameByCode: Map<string, string>) {
   if (!code) return '—'
   return countryNameByCode.get(code) ?? code
-}
-
-function getFlagUrl(code: string | null) {
-  if (!code) return null
-  return `https://flagcdn.com/24x18/${code.toLowerCase()}.png`
 }
 
 function getDisplayedRiderCountryCode(
@@ -394,64 +381,6 @@ function getKitPreviewSrc(kitConfig: unknown): string | null {
   return null
 }
 
-function SectionCard({
-  title,
-  subtitle,
-  right,
-  children,
-}: {
-  title: string
-  subtitle?: string
-  right?: React.ReactNode
-  children: React.ReactNode
-}) {
-  return (
-    <div className="rounded-2xl border border-slate-200 bg-white shadow-sm">
-      <div className="flex items-start justify-between gap-4 border-b border-slate-200 px-4 py-4">
-        <div>
-          <h3 className="text-base font-semibold text-slate-900">{title}</h3>
-          {subtitle ? <p className="mt-1 text-sm text-slate-500">{subtitle}</p> : null}
-        </div>
-        {right}
-      </div>
-      <div className="p-4">{children}</div>
-    </div>
-  )
-}
-
-function KpiCard({
-  label,
-  value,
-  hint,
-}: {
-  label: string
-  value: React.ReactNode
-  hint?: string
-}) {
-  return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-      <div className="text-sm font-medium text-slate-500">{label}</div>
-      <div className="mt-2 text-2xl font-semibold text-slate-900">{value}</div>
-      {hint ? <div className="mt-1 text-xs text-slate-500">{hint}</div> : null}
-    </div>
-  )
-}
-
-function EmptyState({
-  title,
-  description,
-}: {
-  title: string
-  description: string
-}) {
-  return (
-    <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 py-8 text-center">
-      <div className="text-sm font-semibold text-slate-700">{title}</div>
-      <div className="mx-auto mt-2 max-w-xl text-sm text-slate-500">{description}</div>
-    </div>
-  )
-}
-
 function StatsTabGroup({
   items,
   activeKey,
@@ -470,83 +399,13 @@ function StatsTabGroup({
           onClick={() => onChange(item.key)}
           className={cx(
             'rounded-md px-4 py-2 text-sm font-medium transition',
-            activeKey === item.key
-              ? 'bg-yellow-400 text-black'
-              : 'text-gray-600 hover:bg-gray-100'
+            activeKey === item.key ? 'bg-yellow-400 text-black' : 'text-gray-600 hover:bg-gray-100'
           )}
         >
           {item.label}
         </button>
       ))}
     </div>
-  )
-}
-
-function TextSubTabs({
-  items,
-  activeKey,
-  onChange,
-}: {
-  items: Array<{ key: string; label: string }>
-  activeKey: string
-  onChange: (key: string) => void
-}) {
-  return (
-    <div className="border-b border-slate-200">
-      <div className="flex flex-wrap gap-6">
-        {items.map(item => (
-          <button
-            key={item.key}
-            type="button"
-            onClick={() => onChange(item.key)}
-            className={cx(
-              'border-b-2 pb-3 text-sm font-medium transition',
-              activeKey === item.key
-                ? 'border-yellow-500 text-slate-900'
-                : 'border-transparent text-slate-500 hover:text-slate-700'
-            )}
-          >
-            {item.label}
-          </button>
-        ))}
-      </div>
-    </div>
-  )
-}
-
-function TeamNameButton({
-  onClick,
-  children,
-}: {
-  onClick: () => void
-  children: React.ReactNode
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="font-medium text-slate-900 hover:text-yellow-700 hover:underline"
-    >
-      {children}
-    </button>
-  )
-}
-
-function RiderNameButton({
-  onClick,
-  children,
-}: {
-  onClick: () => void
-  children: React.ReactNode
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="font-medium text-slate-900 hover:text-yellow-700 hover:underline"
-    >
-      {children}
-    </button>
   )
 }
 
@@ -583,149 +442,6 @@ function TeamLogo({
           onError={() => setImageFailed(true)}
         />
       )}
-    </div>
-  )
-}
-
-function CountryFlag({
-  code,
-  countryNameByCode,
-}: {
-  code: string | null
-  countryNameByCode: Map<string, string>
-}) {
-  if (!code) {
-    return <span className="text-slate-400">—</span>
-  }
-
-  const name = getCountryName(code, countryNameByCode)
-  const flagUrl = getFlagUrl(code)
-
-  if (!flagUrl) {
-    return <span className="text-slate-400">—</span>
-  }
-
-  return (
-    <img
-      src={flagUrl}
-      alt={name}
-      title={name}
-      className="h-3.5 w-[18px] shrink-0 rounded-[2px] border border-slate-200 object-cover"
-      loading="lazy"
-    />
-  )
-}
-
-function TypeBadge({ isAi }: { isAi: boolean }) {
-  return (
-    <span
-      className={cx(
-        'inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium',
-        isAi ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800'
-      )}
-    >
-      {isAi ? 'AI' : 'User'}
-    </span>
-  )
-}
-
-function StatusBadge({ isActive }: { isActive: boolean }) {
-  return (
-    <span
-      className={cx(
-        'inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium',
-        isActive ? 'bg-sky-100 text-sky-800' : 'bg-rose-100 text-rose-800'
-      )}
-    >
-      {isActive ? 'Active' : 'Inactive'}
-    </span>
-  )
-}
-
-function MiniBarList({
-  items,
-}: {
-  items: Array<{ label: string; value: number }>
-}) {
-  const max = Math.max(...items.map(item => item.value), 1)
-
-  return (
-    <div className="space-y-3">
-      {items.map(item => (
-        <div key={item.label}>
-          <div className="mb-1 flex items-center justify-between gap-3 text-sm">
-            <span className="truncate text-slate-700">{item.label}</span>
-            <span className="font-medium text-slate-900">{item.value}</span>
-          </div>
-          <div className="h-2 rounded-full bg-slate-100">
-            <div
-              className="h-2 rounded-full bg-yellow-500"
-              style={{ width: `${(item.value / max) * 100}%` }}
-            />
-          </div>
-        </div>
-      ))}
-    </div>
-  )
-}
-
-function Pagination({
-  currentPage,
-  totalItems,
-  pageSize,
-  onPageChange,
-}: {
-  currentPage: number
-  totalItems: number
-  pageSize: number
-  onPageChange: (page: number) => void
-}) {
-  const totalPages = Math.ceil(totalItems / pageSize)
-
-  if (totalPages <= 1) return null
-
-  const start = (currentPage - 1) * pageSize + 1
-  const end = Math.min(currentPage * pageSize, totalItems)
-
-  return (
-    <div className="mt-4 flex items-center justify-between gap-3">
-      <div className="text-sm text-slate-500">
-        Showing {start}-{end} of {totalItems}
-      </div>
-
-      <div className="flex items-center gap-2">
-        <button
-          type="button"
-          onClick={() => onPageChange(Math.max(1, currentPage - 1))}
-          disabled={currentPage === 1}
-          className={cx(
-            'rounded-md border px-3 py-1.5 text-sm font-medium transition',
-            currentPage === 1
-              ? 'cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400'
-              : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
-          )}
-        >
-          Previous
-        </button>
-
-        <div className="text-sm font-medium text-slate-700">
-          {currentPage} / {totalPages}
-        </div>
-
-        <button
-          type="button"
-          onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
-          disabled={currentPage === totalPages}
-          className={cx(
-            'rounded-md border px-3 py-1.5 text-sm font-medium transition',
-            currentPage === totalPages
-              ? 'cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400'
-              : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
-          )}
-        >
-          Next
-        </button>
-      </div>
     </div>
   )
 }
@@ -812,6 +528,300 @@ function TeamJerseyPreview({
             </div>
           </div>
         )}
+      </div>
+    </div>
+  )
+}
+
+function formatWeeklyMoneyLabel(value: number | null | undefined) {
+  if (value === null || value === undefined) return '—'
+  return `${moneyFormatter.format(value)}/week`
+}
+
+function formatRiderValueLabel(value: number | null | undefined) {
+  if (value === null || value === undefined) return '—'
+  return moneyFormatter.format(value)
+}
+
+function formatRiderContractEndLabel(season: number | null | undefined) {
+  if (season === null || season === undefined) return '—'
+  return `Season ${season} - Dec 31`
+}
+
+function getRiderAttributeDisplayLabel(
+  value: number | null | undefined,
+  isVisible: boolean
+) {
+  if (!isVisible) return 'Hidden (Scout first)'
+  const safe = Number(value)
+  if (!Number.isFinite(safe)) return '—'
+  return `${Math.max(0, Math.min(100, Math.round(safe)))}`
+}
+
+function getRiderAttributeFillWidth(
+  value: number | null | undefined,
+  isVisible: boolean
+) {
+  if (!isVisible) return 24
+  const safe = Number(value)
+  if (!Number.isFinite(safe)) return 0
+  return Math.max(0, Math.min(100, safe))
+}
+
+function formatAvailabilityStatusLabel(value: string | null | undefined) {
+  if (!value) return 'Unknown'
+  return toTitleCase(value.replace(/_/g, ' '))
+}
+
+function getRiderHealthLabel(
+  fatigue: number | null | undefined,
+  availabilityStatus: string | null | undefined
+) {
+  if (availabilityStatus && availabilityStatus !== 'fit') return 'Needs attention'
+
+  const safeFatigue = Number(fatigue)
+  if (!Number.isFinite(safeFatigue)) return 'Unknown'
+  if (safeFatigue <= 20) return 'Excellent'
+  if (safeFatigue <= 40) return 'Good'
+  if (safeFatigue <= 65) return 'Fair'
+  return 'Poor'
+}
+
+function getRiderHealthNote(
+  fatigue: number | null | undefined,
+  availabilityStatus: string | null | undefined
+) {
+  if (availabilityStatus && availabilityStatus !== 'fit') {
+    return `Status flagged as ${formatAvailabilityStatusLabel(availabilityStatus)}`
+  }
+
+  const safeFatigue = Number(fatigue)
+  if (!Number.isFinite(safeFatigue)) return 'No fatigue data available'
+  return `Fatigue ${Math.max(0, Math.min(100, Math.round(safeFatigue)))}/100`
+}
+
+function getRiderAvailabilityNote(value: string | null | undefined) {
+  if (!value) return 'No availability report available'
+  if (value === 'fit') return 'Available for racing and training'
+  return 'Currently limited for normal squad duties'
+}
+
+function RiderPortrait({
+  imageUrl,
+  riderName,
+}: {
+  imageUrl: string | null | undefined
+  riderName: string
+}) {
+  const [imageFailed, setImageFailed] = useState(false)
+
+  useEffect(() => {
+    setImageFailed(false)
+  }, [imageUrl])
+
+  const hasValidImage = typeof imageUrl === 'string' && imageUrl.trim().length > 0 && !imageFailed
+
+  return (
+    <div className="flex h-[420px] items-center justify-center bg-slate-100 p-4">
+      {hasValidImage ? (
+        <img
+          src={imageUrl!}
+          alt={riderName}
+          className="h-full w-full object-contain"
+          loading="lazy"
+          onError={() => setImageFailed(true)}
+        />
+      ) : (
+        <svg
+          viewBox="0 0 240 320"
+          className="h-[360px] w-[260px] text-slate-300"
+          aria-hidden="true"
+        >
+          <rect x="0" y="0" width="240" height="320" fill="rgb(244 244 245)" />
+          <ellipse cx="120" cy="82" rx="42" ry="48" fill="currentColor" opacity="0.55" />
+          <path
+            d="M56 278c8-52 44-82 64-88 20 6 56 36 64 88"
+            fill="currentColor"
+            opacity="0.55"
+          />
+          <path
+            d="M83 46c8-16 24-28 37-28 15 0 31 12 39 28"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="10"
+            strokeLinecap="round"
+            opacity="0.7"
+          />
+          <path
+            d="M72 56h96l-8 22c-6 16-22 26-40 26s-34-10-40-26l-8-22Z"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="10"
+            strokeLinejoin="round"
+            opacity="0.7"
+          />
+          <path
+            d="M88 52l4 28M104 48l2 32M120 46v34M136 48l-2 32M152 52l-4 28"
+            stroke="currentColor"
+            strokeWidth="8"
+            strokeLinecap="round"
+            opacity="0.7"
+          />
+        </svg>
+      )}
+    </div>
+  )
+}
+
+function HeaderMetaItem({
+  label,
+  value,
+  children,
+  valueClassName = '',
+}: {
+  label: string
+  value?: React.ReactNode
+  children?: React.ReactNode
+  valueClassName?: string
+}) {
+  return (
+    <div className="flex items-center gap-1.5 border-l border-slate-200 pl-3 first:border-l-0 first:pl-0">
+      <span className="text-sm text-slate-500">{label}</span>
+      <span className={`text-sm font-semibold text-slate-700 ${valueClassName}`}>
+        {value ?? children}
+      </span>
+    </div>
+  )
+}
+
+function ScoutingInfoTile({
+  label,
+  value,
+  note,
+  isVisible,
+  toneClassName,
+}: {
+  label: string
+  value: string
+  note: string
+  isVisible: boolean
+  toneClassName: string
+}) {
+  return (
+    <div
+      className={`rounded-2xl border border-slate-200 bg-gradient-to-b ${toneClassName} p-4 shadow-sm`}
+    >
+      <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">
+        {label}
+      </div>
+
+      <div className="mt-3 text-lg font-semibold tracking-tight text-slate-900">
+        {isVisible ? value : 'Hidden (Scout first)'}
+      </div>
+
+      <div className="mt-2 text-xs leading-relaxed text-slate-500">
+        {isVisible ? note : 'Scout this rider to reveal it.'}
+      </div>
+    </div>
+  )
+}
+
+function RiderAttributeBar({
+  label,
+  value,
+  isVisible,
+  toneClassName,
+}: {
+  label: string
+  value: number | null | undefined
+  isVisible: boolean
+  toneClassName: string
+}) {
+  const fillWidth = getRiderAttributeFillWidth(value, isVisible)
+  const displayLabel = getRiderAttributeDisplayLabel(value, isVisible)
+
+  return (
+    <div className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white">
+      <div
+        className={`absolute inset-y-0 left-0 rounded-2xl bg-gradient-to-r ${toneClassName}`}
+        style={{ width: `${fillWidth}%` }}
+      />
+      <div className="relative flex items-center justify-between gap-4 px-5 py-4">
+        <div className="text-[15px] font-medium text-slate-800">{label}</div>
+        <div className="shrink-0 text-[15px] font-semibold text-slate-900">{displayLabel}</div>
+      </div>
+    </div>
+  )
+}
+
+function RiderCareerModal({
+  rider,
+  isOpen,
+  onClose,
+  onOpenTeamProfile,
+}: {
+  rider: RiderStatsRow | null
+  isOpen: boolean
+  onClose: () => void
+  onOpenTeamProfile: (teamId: string) => void
+}) {
+  if (!isOpen || !rider) return null
+
+  return (
+    <div
+      className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      <div
+        className="flex max-h-[85vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl"
+        onClick={event => event.stopPropagation()}
+      >
+        <div className="flex items-center justify-between border-b border-slate-200 px-6 py-5">
+          <div>
+            <div className="text-2xl font-semibold text-slate-900">Rider career</div>
+            <div className="mt-1 text-sm text-slate-500">
+              Teams and season history for {rider.display_name}.
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50"
+          >
+            Close
+          </button>
+        </div>
+
+        <div className="min-h-0 flex-1 overflow-y-auto p-6">
+          <div className="space-y-4">
+            <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-4">
+              <div className="text-xs font-medium uppercase tracking-wide text-slate-500">
+                Current team
+              </div>
+
+              <div className="mt-2 text-sm font-semibold text-slate-900">
+                {rider.club_name ? (
+                  <button
+                    type="button"
+                    onClick={() => onOpenTeamProfile(rider.club_id!)}
+                    className="font-semibold text-slate-900 hover:text-yellow-700 hover:underline"
+                  >
+                    {rider.club_name}
+                  </button>
+                ) : (
+                  'Free agent'
+                )}
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-dashed border-slate-300 bg-white px-4 py-4 text-sm text-slate-600">
+              Earlier team history is not included in the currently loaded statistics dataset yet.
+              Once a rider history table or view is connected, this popup can list every club by
+              season.
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   )
@@ -927,13 +937,11 @@ function ClubProfileModal({
     navigate('/dashboard/inbox')
   }
 
-  if (!isOpen || !clubId) {
-    return null
-  }
+  if (!isOpen || !clubId) return null
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm"
       onClick={onClose}
     >
       <div
@@ -943,9 +951,7 @@ function ClubProfileModal({
         <div className="sticky top-0 z-10 flex items-start justify-between border-b border-slate-200 bg-white px-6 py-4">
           <div>
             <h3 className="text-xl font-semibold text-slate-900">Team profile</h3>
-            <p className="mt-1 text-sm text-slate-600">
-              Overview of this club’s key information.
-            </p>
+            <p className="mt-1 text-sm text-slate-600">Overview of this club’s key information.</p>
           </div>
 
           <div className="flex items-center gap-3">
@@ -1036,7 +1042,7 @@ function ClubProfileModal({
                         <img
                           src={`https://flagcdn.com/24x18/${club.country_code.toLowerCase()}.png`}
                           alt={`${club.country_code} flag`}
-                          className="h-4 w-6 rounded-sm border border-slate-200 object-cover"
+                          className="h-5 w-7 rounded-sm border border-slate-200 object-cover"
                           loading="lazy"
                         />
                         <span>{club.country_name ?? club.country_code}</span>
@@ -1114,10 +1120,7 @@ function ClubProfileModal({
                   </h5>
 
                   <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                    <DetailItem
-                      label="Current world rank"
-                      value={formatNumberValue(club.world_rank)}
-                    />
+                    <DetailItem label="Current world rank" value={formatNumberValue(club.world_rank)} />
                     <DetailItem label="Season points" value={formatNumberValue(club.season_points)} />
                     <DetailItem label="Squad size" value={formatNumberValue(club.rider_count)} />
                     <DetailItem label="Division" value={getDivisionLabelFromProfile(club)} />
@@ -1187,6 +1190,300 @@ function ClubProfileModal({
   )
 }
 
+function RiderProfileModal({
+  rider,
+  isOpen,
+  onClose,
+  onOpenTeamProfile,
+  isRiderScouted,
+  setIsRiderScouted,
+  showRiderHistory,
+  setShowRiderHistory,
+  countryNameByCode,
+}: {
+  rider: RiderStatsRow | null
+  isOpen: boolean
+  onClose: () => void
+  onOpenTeamProfile: (teamId: string) => void
+  isRiderScouted: boolean
+  setIsRiderScouted: React.Dispatch<React.SetStateAction<boolean>>
+  showRiderHistory: boolean
+  setShowRiderHistory: React.Dispatch<React.SetStateAction<boolean>>
+  countryNameByCode: Map<string, string>
+}) {
+  if (!isOpen || !rider) return null
+
+  const displayedCountryCode = getDisplayedRiderCountryCode(rider)
+  const countryLabel = getCountryName(displayedCountryCode, countryNameByCode)
+  const overallLabel = isRiderScouted
+    ? Number.isFinite(Number(rider.overall))
+      ? `${Math.max(0, Math.min(100, Math.round(Number(rider.overall))))}%`
+      : '—'
+    : 'Hidden'
+
+  const riderValueLabel = isRiderScouted ? formatRiderValueLabel(rider.market_value) : 'Hidden'
+  const availabilityLabel = formatAvailabilityStatusLabel(rider.availability_status)
+  const availabilityNote = getRiderAvailabilityNote(rider.availability_status)
+  const healthLabel = getRiderHealthLabel(rider.fatigue, rider.availability_status)
+  const healthNote = getRiderHealthNote(rider.fatigue, rider.availability_status)
+
+  const attributes = [
+    {
+      label: 'Sprint',
+      value: rider.sprint,
+      toneClassName: 'from-amber-100 via-amber-50 to-white',
+    },
+    {
+      label: 'Climbing',
+      value: rider.climbing,
+      toneClassName: 'from-emerald-100 via-emerald-50 to-white',
+    },
+    {
+      label: 'Time Trial',
+      value: rider.time_trial,
+      toneClassName: 'from-sky-100 via-sky-50 to-white',
+    },
+    {
+      label: 'Endurance',
+      value: rider.endurance,
+      toneClassName: 'from-violet-100 via-violet-50 to-white',
+    },
+    {
+      label: 'Flat',
+      value: rider.flat,
+      toneClassName: 'from-cyan-100 via-cyan-50 to-white',
+    },
+    {
+      label: 'Recovery',
+      value: rider.recovery,
+      toneClassName: 'from-lime-100 via-lime-50 to-white',
+    },
+    {
+      label: 'Resistance',
+      value: rider.resistance,
+      toneClassName: 'from-rose-100 via-rose-50 to-white',
+    },
+    {
+      label: 'Race IQ',
+      value: rider.race_iq,
+      toneClassName: 'from-indigo-100 via-indigo-50 to-white',
+    },
+    {
+      label: 'Teamwork',
+      value: rider.teamwork,
+      toneClassName: 'from-teal-100 via-teal-50 to-white',
+    },
+    {
+      label: 'Morale',
+      value: rider.morale,
+      toneClassName: 'from-fuchsia-100 via-fuchsia-50 to-white',
+    },
+  ]
+
+  return (
+    <>
+      <div
+        className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4 backdrop-blur-sm"
+        onClick={onClose}
+      >
+        <div
+          className="flex max-h-[92vh] w-full max-w-5xl flex-col overflow-hidden rounded-[24px] border border-slate-200 bg-white shadow-[0_24px_80px_rgba(15,23,42,0.22)]"
+          onClick={event => event.stopPropagation()}
+        >
+          <div className="shrink-0 border-b border-slate-200 px-6 py-5">
+            <div className="flex items-start justify-between gap-4">
+              <div className="min-w-0">
+                <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">
+                  Rider Profile
+                </div>
+
+                <div className="mt-1 truncate text-2xl font-semibold tracking-tight text-slate-900">
+                  {rider.display_name}
+                </div>
+
+                <div className="mt-3 space-y-2">
+                  <div className="flex flex-wrap items-center gap-y-2">
+                    <HeaderMetaItem label="Country:">
+                      <span className="inline-flex items-center gap-2">
+                        {displayedCountryCode ? (
+                          <img
+                            src={`https://flagcdn.com/24x18/${displayedCountryCode.toLowerCase()}.png`}
+                            alt={countryLabel}
+                            title={countryLabel}
+                            className="h-5 w-7 rounded-sm border border-slate-200 object-cover"
+                            loading="lazy"
+                          />
+                        ) : null}
+                        <span>{countryLabel}</span>
+                      </span>
+                    </HeaderMetaItem>
+
+                    <HeaderMetaItem label="Team:">
+                      {rider.club_name ? (
+                        <button
+                          type="button"
+                          onClick={() => onOpenTeamProfile(rider.club_id!)}
+                          className="font-semibold text-slate-800 hover:text-yellow-700 hover:underline"
+                        >
+                          {rider.club_name}
+                        </button>
+                      ) : (
+                        <span className="font-semibold text-slate-800">Free agent</span>
+                      )}
+                    </HeaderMetaItem>
+
+                    <HeaderMetaItem label="Role:" value={formatCompetitionLabel(rider.role)} />
+                    <HeaderMetaItem label="Age:" value={rider.age_years ?? '—'} />
+                    <HeaderMetaItem label="Overall:" value={overallLabel} />
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-y-2">
+                    <HeaderMetaItem label="Wage:" value={formatWeeklyMoneyLabel(rider.salary)} />
+                    <HeaderMetaItem
+                      label="Contract end:"
+                      value={formatRiderContractEndLabel(rider.contract_expires_season)}
+                    />
+                    <HeaderMetaItem label="Rider value:" value={riderValueLabel} />
+                  </div>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={onClose}
+                className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+
+          <div className="min-h-0 flex-1 overflow-y-auto bg-slate-50 p-6">
+            <div className="grid grid-cols-1 gap-5 xl:grid-cols-[320px_minmax(0,1fr)]">
+              <div className="space-y-5">
+                <div className="overflow-hidden rounded-[24px] border border-slate-200 bg-white shadow-sm">
+                  <RiderPortrait imageUrl={rider.image_url} riderName={rider.display_name} />
+                </div>
+
+                <div className="rounded-[24px] border border-slate-200 bg-white p-5 shadow-sm">
+                  <div className="text-lg font-semibold tracking-tight text-slate-900">
+                    Availability
+                  </div>
+                  <div className="mt-1 text-sm text-slate-500">
+                    Health and status become visible after scouting.
+                  </div>
+
+                  <div className="mt-4 grid grid-cols-1 gap-3">
+                    <ScoutingInfoTile
+                      label="Health"
+                      value={healthLabel}
+                      note={healthNote}
+                      isVisible={isRiderScouted}
+                      toneClassName="from-emerald-50 to-white"
+                    />
+
+                    <ScoutingInfoTile
+                      label="Availability status"
+                      value={availabilityLabel}
+                      note={availabilityNote}
+                      isVisible={isRiderScouted}
+                      toneClassName="from-teal-50 to-white"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-5">
+                <div className="rounded-[24px] border border-slate-200 bg-white p-5 shadow-sm">
+                  <div className="mb-4">
+                    <div className="text-lg font-semibold tracking-tight text-slate-900">
+                      Skill Attributes
+                    </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    {attributes.map(attribute => (
+                      <RiderAttributeBar
+                        key={attribute.label}
+                        label={attribute.label}
+                        value={attribute.value}
+                        isVisible={isRiderScouted}
+                        toneClassName={attribute.toneClassName}
+                      />
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="shrink-0 border-t border-slate-200 bg-white px-6 py-4">
+            <div className="mb-3 text-sm text-slate-600">
+              Manage scouting, contract and transfer actions for this rider.
+            </div>
+
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
+              <button
+                type="button"
+                onClick={() => setIsRiderScouted(true)}
+                className={cx(
+                  'w-full rounded-xl px-4 py-3 text-sm font-semibold transition',
+                  isRiderScouted
+                    ? 'border border-emerald-300 bg-emerald-50 text-emerald-800'
+                    : 'border border-yellow-400 bg-yellow-50 text-yellow-800 hover:bg-yellow-100'
+                )}
+              >
+                {isRiderScouted ? 'Rider scouted' : 'Scout rider'}
+              </button>
+
+              <button
+                type="button"
+                disabled={!!rider.club_id}
+                className={cx(
+                  'w-full rounded-xl border px-4 py-3 text-sm font-semibold transition',
+                  rider.club_id
+                    ? 'cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400'
+                    : 'border-emerald-300 bg-emerald-50 text-emerald-800 hover:bg-emerald-100'
+                )}
+              >
+                Offer contract
+              </button>
+
+              <button
+                type="button"
+                disabled={!rider.club_id}
+                className={cx(
+                  'w-full rounded-xl border px-4 py-3 text-sm font-semibold transition',
+                  !rider.club_id
+                    ? 'cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400'
+                    : 'border-sky-300 bg-sky-50 text-sky-800 hover:bg-sky-100'
+                )}
+              >
+                Transfer offer
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setShowRiderHistory(true)}
+                className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+              >
+                Rider career
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <RiderCareerModal
+        rider={rider}
+        isOpen={showRiderHistory}
+        onClose={() => setShowRiderHistory(false)}
+        onOpenTeamProfile={onOpenTeamProfile}
+      />
+    </>
+  )
+}
+
 export default function StatisticsPage() {
   const [mainTab, setMainTab] = useState<MainTab>('teams')
   const [teamSubTab, setTeamSubTab] = useState<TeamSubTab>('current')
@@ -1195,7 +1492,6 @@ export default function StatisticsPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [currentSeasonNumber, setCurrentSeasonNumber] = useState<number>(1)
-  const [currentGameDate, setCurrentGameDate] = useState<string | null>(null)
 
   const [teamRows, setTeamRows] = useState<TeamCurrentRow[]>([])
   const [winnerRows, setWinnerRows] = useState<TeamWinnerRow[]>([])
@@ -1226,9 +1522,7 @@ export default function StatisticsPage() {
   const [ridersPage, setRidersPage] = useState(1)
 
   const selectedRider =
-    selectedRiderId !== null
-      ? riderRows.find(row => row.id === selectedRiderId) ?? null
-      : null
+    selectedRiderId !== null ? riderRows.find(row => row.id === selectedRiderId) ?? null : null
 
   function openTeamProfile(teamId: string) {
     setSelectedTeamProfileId(teamId)
@@ -1343,7 +1637,9 @@ export default function StatisticsPage() {
         const clubs = (clubsRes.data ?? []) as ClubMini[]
         const countryRows = countriesRes.error ? [] : ((countriesRes.data ?? []) as CountryRow[])
         const currentSeason =
-          currentSeasonRes.error || currentSeasonRes.data === null || currentSeasonRes.data === undefined
+          currentSeasonRes.error ||
+          currentSeasonRes.data === null ||
+          currentSeasonRes.data === undefined
             ? 1
             : Number(currentSeasonRes.data)
         const normalizedGameDate = currentGameDateRes.error
@@ -1418,15 +1714,13 @@ export default function StatisticsPage() {
             market_value: resolveNumberValue(riderRaw, ['market_value']),
             salary: resolveNumberValue(riderRaw, ['salary']),
             contract_expires_season: resolveNumberValue(riderRaw, ['contract_expires_season']),
-            availability_status:
-              resolveStringValue(riderRaw, ['availability_status']) ?? 'fit',
+            availability_status: resolveStringValue(riderRaw, ['availability_status']) ?? 'fit',
             fatigue: resolveNumberValue(riderRaw, ['fatigue']),
             image_url: resolvedImageUrl,
             club_id: clubId,
             club_name: resolveStringValue(riderRaw, ['club_name']) ?? club?.name ?? null,
             club_tier: resolveStringValue(riderRaw, ['club_tier']) ?? club?.club_tier ?? null,
-            club_is_ai:
-              typeof clubIsAiRaw === 'boolean' ? clubIsAiRaw : (club?.is_ai ?? null),
+            club_is_ai: typeof clubIsAiRaw === 'boolean' ? clubIsAiRaw : (club?.is_ai ?? null),
             club_is_active:
               typeof clubIsActiveRaw === 'boolean' ? clubIsActiveRaw : (club?.is_active ?? null),
             age_years: resolvedAgeYears ?? null,
@@ -1440,7 +1734,6 @@ export default function StatisticsPage() {
         })
 
         setCurrentSeasonNumber(Number.isFinite(currentSeason) && currentSeason > 0 ? currentSeason : 1)
-        setCurrentGameDate(normalizedGameDate)
         setTeamRows(teams)
         setWinnerRows(winners)
         setSnapshotRows(snapshots)
@@ -1453,7 +1746,7 @@ export default function StatisticsPage() {
       }
     }
 
-    loadAll()
+    void loadAll()
   }, [])
 
   const countryNameByCode = useMemo(() => {
@@ -1518,9 +1811,9 @@ export default function StatisticsPage() {
   const availableDivisions = useMemo(() => {
     const currentDivisions = teamRows.map(row => getDivisionValue(row))
     const historyDivisions = historicalSnapshotRows.map(row => row.division)
-    return Array.from(new Set([...currentDivisions, ...historyDivisions].filter(Boolean) as string[])).sort(
-      (a, b) => formatCompetitionLabel(a).localeCompare(formatCompetitionLabel(b))
-    )
+    return Array.from(
+      new Set([...currentDivisions, ...historyDivisions].filter(Boolean) as string[])
+    ).sort((a, b) => formatCompetitionLabel(a).localeCompare(formatCompetitionLabel(b)))
   }, [teamRows, historicalSnapshotRows])
 
   const filteredTeamCurrent = useMemo(() => {
@@ -1549,11 +1842,18 @@ export default function StatisticsPage() {
 
     if (seasonFilter !== 'all') rows = rows.filter(row => String(row.season_number) === seasonFilter)
     if (divisionFilter !== 'all') rows = rows.filter(row => row.division === divisionFilter)
+
     if (tierFilter !== 'all') {
       rows = rows.filter(row => {
-        if (tierFilter === 'worldteam') return row.division === 'WORLDTEAM' || row.division === 'worldteam'
-        if (tierFilter === 'proteam') return row.division === 'PRO_WEST' || row.division === 'PRO_EAST'
-        if (tierFilter === 'continental') return row.division.startsWith('CONTINENTAL_')
+        if (tierFilter === 'worldteam') {
+          return row.division === 'WORLDTEAM' || row.division === 'worldteam'
+        }
+        if (tierFilter === 'proteam') {
+          return row.division === 'PRO_WEST' || row.division === 'PRO_EAST'
+        }
+        if (tierFilter === 'continental') {
+          return row.division.startsWith('CONTINENTAL_')
+        }
         if (tierFilter === 'amateur') {
           return (
             !row.division.startsWith('CONTINENTAL_') &&
@@ -1565,6 +1865,7 @@ export default function StatisticsPage() {
         return true
       })
     }
+
     if (countryFilter !== 'all') rows = rows.filter(row => row.country_code === countryFilter)
 
     if (search.trim()) {
@@ -1610,6 +1911,7 @@ export default function StatisticsPage() {
     if (countryFilter !== 'all') {
       rows = rows.filter(row => getDisplayedRiderCountryCode(row) === countryFilter)
     }
+
     if (tierFilter !== 'all') rows = rows.filter(row => row.club_tier === tierFilter)
 
     if (search.trim()) {
@@ -1741,854 +2043,114 @@ export default function StatisticsPage() {
   return (
     <>
       <div className="w-full space-y-6">
-        <div>
-          <h2 className="text-2xl font-semibold text-slate-900">Statistics</h2>
-          <p className="mt-1 text-sm text-slate-600">
-            Team and rider statistics across your cycling world. Rider rankings here are global,
-            so they compare the best riders from all teams in the game.
-          </p>
+        <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+          <div>
+            <h2 className="text-2xl font-semibold text-slate-900">Statistics</h2>
+            <p className="mt-1 text-sm text-slate-600">
+              Team and rider statistics across your cycling world. Rider rankings here are global,
+              so they compare the best riders from all teams in the game.
+            </p>
+          </div>
+
+          <div className="shrink-0 self-start md:self-start">
+            <StatsTabGroup
+              items={[
+                { key: 'teams', label: 'Teams' },
+                { key: 'riders', label: 'Riders' },
+              ]}
+              activeKey={mainTab}
+              onChange={key => setMainTab(key as MainTab)}
+            />
+          </div>
         </div>
 
-        <StatsTabGroup
-          items={[
-            { key: 'teams', label: 'Teams' },
-            { key: 'riders', label: 'Riders' },
-          ]}
-          activeKey={mainTab}
-          onChange={key => setMainTab(key as MainTab)}
-        />
-
         {mainTab === 'teams' ? (
-          <TextSubTabs
-            items={[
-              { key: 'current', label: 'Current' },
-              { key: 'history', label: 'History' },
-            ]}
-            activeKey={teamSubTab}
-            onChange={key => setTeamSubTab(key as TeamSubTab)}
+          <TeamStatisticsSection
+            teamSubTab={teamSubTab}
+            setTeamSubTab={setTeamSubTab}
+            loading={loading}
+            error={error}
+            search={search}
+            setSearch={setSearch}
+            seasonFilter={seasonFilter}
+            setSeasonFilter={setSeasonFilter}
+            teamTypeFilter={teamTypeFilter}
+            setTeamTypeFilter={setTeamTypeFilter}
+            statusFilter={statusFilter}
+            setStatusFilter={setStatusFilter}
+            tierFilter={tierFilter}
+            setTierFilter={setTierFilter}
+            divisionFilter={divisionFilter}
+            setDivisionFilter={setDivisionFilter}
+            countryFilter={countryFilter}
+            setCountryFilter={setCountryFilter}
+            availableSeasons={availableSeasons}
+            availableTiers={availableTiers}
+            availableDivisions={availableDivisions}
+            availableTeamCountries={availableTeamCountries}
+            availableHistoryCountries={availableHistoryCountries}
+            countryNameByCode={countryNameByCode}
+            filteredTeamCurrent={filteredTeamCurrent}
+            filteredWinners={filteredWinners}
+            filteredSnapshots={filteredSnapshots}
+            paginatedTeamCurrent={paginatedTeamCurrent}
+            paginatedTeamHistory={paginatedTeamHistory}
+            teamsByCountry={teamsByCountry}
+            teamTitles={teamTitles}
+            topCurrentTeam={topCurrentTeam}
+            latestWinner={latestWinner}
+            teamCurrentPage={teamCurrentPage}
+            setTeamCurrentPage={setTeamCurrentPage}
+            teamHistoryPage={teamHistoryPage}
+            setTeamHistoryPage={setTeamHistoryPage}
+            pageSize={PAGE_SIZE}
+            openTeamProfile={openTeamProfile}
+            formatCompetitionLabel={formatCompetitionLabel}
+            getDivisionLabel={getDivisionLabel}
+            getCountryName={getCountryName}
           />
         ) : (
-          <TextSubTabs
-            items={[
-              { key: 'rankings', label: 'Rankings' },
-              { key: 'breakdown', label: 'Breakdown' },
-            ]}
-            activeKey={riderSubTab}
-            onChange={key => setRiderSubTab(key as RiderSubTab)}
+          <RiderStatisticsSection
+            riderSubTab={riderSubTab}
+            setRiderSubTab={setRiderSubTab}
+            loading={loading}
+            error={error}
+            search={search}
+            setSearch={setSearch}
+            teamTypeFilter={teamTypeFilter}
+            setTeamTypeFilter={setTeamTypeFilter}
+            statusFilter={statusFilter}
+            setStatusFilter={setStatusFilter}
+            tierFilter={tierFilter}
+            setTierFilter={setTierFilter}
+            riderMetric={riderMetric}
+            setRiderMetric={setRiderMetric}
+            riderTableMetric={riderTableMetric}
+            setRiderTableMetric={setRiderTableMetric}
+            countryFilter={countryFilter}
+            setCountryFilter={setCountryFilter}
+            availableTiers={availableTiers}
+            availableRiderCountries={availableRiderCountries}
+            countryNameByCode={countryNameByCode}
+            filteredRiders={filteredRiders}
+            topRiderTableRows={topRiderTableRows}
+            paginatedRiders={paginatedRiders}
+            riderRoles={riderRoles}
+            riderAgeBuckets={riderAgeBuckets}
+            topOverallPointsRider={topOverallPointsRider}
+            topSprintPointsRider={topSprintPointsRider}
+            topClimbingPointsRider={topClimbingPointsRider}
+            ridersPage={ridersPage}
+            setRidersPage={setRidersPage}
+            pageSize={PAGE_SIZE}
+            openRiderProfile={openRiderProfile}
+            openTeamProfile={openTeamProfile}
+            formatCompetitionLabel={formatCompetitionLabel}
+            formatRiderMetricLabel={formatRiderMetricLabel}
+            getCountryName={getCountryName}
+            getDisplayedRiderCountryCode={getDisplayedRiderCountryCode}
+            moneyFormatter={moneyFormatter}
           />
-        )}
-
-        {mainTab === 'teams' && teamSubTab === 'current' ? (
-          <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-            <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-6">
-              <input
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-                placeholder="Search teams..."
-                className="rounded-xl border border-slate-300 px-3 py-2 text-sm"
-              />
-
-              <select
-                value={teamTypeFilter}
-                onChange={e => setTeamTypeFilter(e.target.value as TeamTypeFilter)}
-                className="rounded-xl border border-slate-300 px-3 py-2 text-sm"
-              >
-                <option value="all">All team types</option>
-                <option value="user">User teams</option>
-                <option value="ai">AI teams</option>
-              </select>
-
-              <select
-                value={statusFilter}
-                onChange={e => setStatusFilter(e.target.value as StatusFilter)}
-                className="rounded-xl border border-slate-300 px-3 py-2 text-sm"
-              >
-                <option value="all">All status</option>
-                <option value="active">Active only</option>
-                <option value="inactive">Inactive only</option>
-              </select>
-
-              <select
-                value={tierFilter}
-                onChange={e => setTierFilter(e.target.value)}
-                className="rounded-xl border border-slate-300 px-3 py-2 text-sm"
-              >
-                <option value="all">All tiers</option>
-                {availableTiers.map(tier => (
-                  <option key={tier} value={tier}>
-                    {formatCompetitionLabel(tier)}
-                  </option>
-                ))}
-              </select>
-
-              <select
-                value={divisionFilter}
-                onChange={e => setDivisionFilter(e.target.value)}
-                className="rounded-xl border border-slate-300 px-3 py-2 text-sm"
-              >
-                <option value="all">All divisions</option>
-                {availableDivisions.map(division => (
-                  <option key={division} value={division}>
-                    {formatCompetitionLabel(division)}
-                  </option>
-                ))}
-              </select>
-
-              <select
-                value={countryFilter}
-                onChange={e => setCountryFilter(e.target.value)}
-                className="rounded-xl border border-slate-300 px-3 py-2 text-sm"
-              >
-                <option value="all">All countries</option>
-                {availableTeamCountries.map(country => (
-                  <option key={country} value={country}>
-                    {getCountryName(country, countryNameByCode)}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-        ) : null}
-
-        {mainTab === 'teams' && teamSubTab === 'history' ? (
-          <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-            <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-5">
-              <input
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-                placeholder="Search teams..."
-                className="rounded-xl border border-slate-300 px-3 py-2 text-sm"
-              />
-
-              <select
-                value={seasonFilter}
-                onChange={e => setSeasonFilter(e.target.value)}
-                className="rounded-xl border border-slate-300 px-3 py-2 text-sm"
-              >
-                <option value="all">All seasons</option>
-                {availableSeasons.map(season => (
-                  <option key={season} value={season}>
-                    Season {season}
-                  </option>
-                ))}
-              </select>
-
-              <select
-                value={tierFilter}
-                onChange={e => setTierFilter(e.target.value)}
-                className="rounded-xl border border-slate-300 px-3 py-2 text-sm"
-              >
-                <option value="all">All tiers</option>
-                {availableTiers.map(tier => (
-                  <option key={tier} value={tier}>
-                    {formatCompetitionLabel(tier)}
-                  </option>
-                ))}
-              </select>
-
-              <select
-                value={divisionFilter}
-                onChange={e => setDivisionFilter(e.target.value)}
-                className="rounded-xl border border-slate-300 px-3 py-2 text-sm"
-              >
-                <option value="all">All divisions</option>
-                {availableDivisions.map(division => (
-                  <option key={division} value={division}>
-                    {formatCompetitionLabel(division)}
-                  </option>
-                ))}
-              </select>
-
-              <select
-                value={countryFilter}
-                onChange={e => setCountryFilter(e.target.value)}
-                className="rounded-xl border border-slate-300 px-3 py-2 text-sm"
-              >
-                <option value="all">All countries</option>
-                {availableHistoryCountries.map(country => (
-                  <option key={country} value={country}>
-                    {getCountryName(country, countryNameByCode)}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-        ) : null}
-
-        {mainTab === 'riders' ? (
-          <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-            <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-6">
-              <input
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-                placeholder="Search riders or teams..."
-                className="rounded-xl border border-slate-300 px-3 py-2 text-sm"
-              />
-
-              <select
-                value={teamTypeFilter}
-                onChange={e => setTeamTypeFilter(e.target.value as TeamTypeFilter)}
-                className="rounded-xl border border-slate-300 px-3 py-2 text-sm"
-              >
-                <option value="all">All team types</option>
-                <option value="user">User teams</option>
-                <option value="ai">AI teams</option>
-              </select>
-
-              <select
-                value={statusFilter}
-                onChange={e => setStatusFilter(e.target.value as StatusFilter)}
-                className="rounded-xl border border-slate-300 px-3 py-2 text-sm"
-              >
-                <option value="all">All status</option>
-                <option value="active">Fit only</option>
-                <option value="inactive">Unavailable only</option>
-              </select>
-
-              <select
-                value={tierFilter}
-                onChange={e => setTierFilter(e.target.value)}
-                className="rounded-xl border border-slate-300 px-3 py-2 text-sm"
-              >
-                <option value="all">All tiers</option>
-                {availableTiers.map(tier => (
-                  <option key={tier} value={tier}>
-                    {formatCompetitionLabel(tier)}
-                  </option>
-                ))}
-              </select>
-
-              <select
-                value={riderMetric}
-                onChange={e => setRiderMetric(e.target.value as RiderMetric)}
-                className="rounded-xl border border-slate-300 px-3 py-2 text-sm"
-              >
-                <option value="season_points_overall">Sort: Overall points</option>
-                <option value="season_points_sprint">Sort: Sprinting points</option>
-                <option value="season_points_climbing">Sort: Climbing points</option>
-              </select>
-
-              <select
-                value={countryFilter}
-                onChange={e => setCountryFilter(e.target.value)}
-                className="rounded-xl border border-slate-300 px-3 py-2 text-sm"
-              >
-                <option value="all">All countries</option>
-                {availableRiderCountries.map(country => (
-                  <option key={country} value={country}>
-                    {getCountryName(country, countryNameByCode)}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-        ) : null}
-
-        {loading ? (
-          <SectionCard title="Loading statistics">
-            <div className="text-sm text-slate-500">Fetching data...</div>
-          </SectionCard>
-        ) : error ? (
-          <SectionCard title="Statistics error">
-            <div className="text-sm text-rose-600">{error}</div>
-          </SectionCard>
-        ) : mainTab === 'teams' && teamSubTab === 'current' ? (
-          <>
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-              <KpiCard label="Teams in filter" value={filteredTeamCurrent.length} />
-              <KpiCard
-                label="User teams"
-                value={filteredTeamCurrent.filter(row => !row.is_ai).length}
-              />
-              <KpiCard
-                label="AI teams"
-                value={filteredTeamCurrent.filter(row => row.is_ai).length}
-              />
-              <KpiCard
-                label="Current leader"
-                value={
-                  topCurrentTeam ? (
-                    <TeamNameButton onClick={() => openTeamProfile(topCurrentTeam.id)}>
-                      {topCurrentTeam.name}
-                    </TeamNameButton>
-                  ) : (
-                    '—'
-                  )
-                }
-              />
-            </div>
-
-            <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
-              <SectionCard title="Current leaderboard" subtitle="Best teams in the selected filter.">
-                {filteredTeamCurrent.length === 0 ? (
-                  <EmptyState
-                    title="No teams found"
-                    description="Try changing the filters or search term."
-                  />
-                ) : (
-                  <div className="overflow-x-auto">
-                    <table className="min-w-full text-sm">
-                      <thead>
-                        <tr className="border-b border-slate-200 text-left text-slate-500">
-                          <th className="pb-3 pr-3">#</th>
-                          <th className="pb-3 pr-3">Team</th>
-                          <th className="pb-3 pr-3">Country</th>
-                          <th className="pb-3 pr-3">Tier / Division</th>
-                          <th className="pb-3 text-right">Points</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {filteredTeamCurrent.slice(0, 10).map((row, index) => (
-                          <tr key={row.id} className="border-b border-slate-100">
-                            <td className="py-3 pr-3 font-medium text-slate-900">{index + 1}</td>
-                            <td className="py-3 pr-3">
-                              <TeamNameButton onClick={() => openTeamProfile(row.id)}>
-                                {row.name}
-                              </TeamNameButton>
-                            </td>
-                            <td className="py-3 pr-3">
-                              <CountryFlag code={row.country_code} countryNameByCode={countryNameByCode} />
-                            </td>
-                            <td className="py-3 pr-3 text-slate-600">
-                              {formatCompetitionLabel(row.club_tier)} / {getDivisionLabel(row)}
-                            </td>
-                            <td className="py-3 text-right font-semibold text-slate-900">
-                              {row.season_points ?? 0}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-              </SectionCard>
-
-              <SectionCard
-                title="Country spread"
-                subtitle="How many teams appear per country in the current filter."
-              >
-                {teamsByCountry.length === 0 ? (
-                  <EmptyState
-                    title="No country spread yet"
-                    description="Country distribution will appear once current team data is available."
-                  />
-                ) : (
-                  <MiniBarList items={teamsByCountry} />
-                )}
-              </SectionCard>
-            </div>
-
-            <SectionCard
-              title="All current teams"
-              subtitle="Full current standings dataset for the selected filters."
-            >
-              {filteredTeamCurrent.length === 0 ? (
-                <EmptyState title="No current teams" description="No teams match the selected filters." />
-              ) : (
-                <>
-                  <div className="overflow-x-auto">
-                    <table className="min-w-full text-sm">
-                      <thead>
-                        <tr className="border-b border-slate-200 text-left text-slate-500">
-                          <th className="pb-3 pr-3">Team</th>
-                          <th className="pb-3 pr-3">Country</th>
-                          <th className="pb-3 pr-3">Tier</th>
-                          <th className="pb-3 pr-3">Division</th>
-                          <th className="pb-3 pr-3">Type</th>
-                          <th className="pb-3 pr-3">Status</th>
-                          <th className="pb-3 text-right">Points</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {paginatedTeamCurrent.map(row => (
-                          <tr key={row.id} className="border-b border-slate-100">
-                            <td className="py-3 pr-3">
-                              <TeamNameButton onClick={() => openTeamProfile(row.id)}>
-                                {row.name}
-                              </TeamNameButton>
-                            </td>
-                            <td className="py-3 pr-3">
-                              <CountryFlag code={row.country_code} countryNameByCode={countryNameByCode} />
-                            </td>
-                            <td className="py-3 pr-3 text-slate-600">{formatCompetitionLabel(row.club_tier)}</td>
-                            <td className="py-3 pr-3 text-slate-600">{getDivisionLabel(row)}</td>
-                            <td className="py-3 pr-3">
-                              <TypeBadge isAi={row.is_ai} />
-                            </td>
-                            <td className="py-3 pr-3">
-                              <StatusBadge isActive={row.is_active} />
-                            </td>
-                            <td className="py-3 text-right font-semibold text-slate-900">
-                              {row.season_points ?? 0}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-
-                  <Pagination
-                    currentPage={teamCurrentPage}
-                    totalItems={filteredTeamCurrent.length}
-                    pageSize={PAGE_SIZE}
-                    onPageChange={setTeamCurrentPage}
-                  />
-                </>
-              )}
-            </SectionCard>
-          </>
-        ) : mainTab === 'teams' && teamSubTab === 'history' ? (
-          <>
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-              <KpiCard label="Seasons recorded" value={availableSeasons.length} />
-              <KpiCard label="Past winner rows" value={filteredWinners.length} />
-              <KpiCard
-                label="Most titles"
-                value={teamTitles[0] ? `${teamTitles[0].club_name} (${teamTitles[0].titles})` : '—'}
-              />
-              <KpiCard
-                label="Latest winner"
-                value={
-                  latestWinner ? (
-                    <TeamNameButton onClick={() => openTeamProfile(latestWinner.club_id)}>
-                      {latestWinner.club_name}
-                    </TeamNameButton>
-                  ) : (
-                    '—'
-                  )
-                }
-                hint={latestWinner ? `Season ${latestWinner.season_number}` : 'No winners recorded yet'}
-              />
-            </div>
-
-            <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
-              <SectionCard
-                title="Past winners"
-                subtitle="Historical champions for completed seasons."
-              >
-                {filteredWinners.length === 0 ? (
-                  <EmptyState
-                    title="No past winners yet"
-                    description="This is expected if you are still early in the game lifecycle or have not filled history yet."
-                  />
-                ) : (
-                  <div className="overflow-x-auto">
-                    <table className="min-w-full text-sm">
-                      <thead>
-                        <tr className="border-b border-slate-200 text-left text-slate-500">
-                          <th className="pb-3 pr-3">Season</th>
-                          <th className="pb-3 pr-3">Team</th>
-                          <th className="pb-3 pr-3">Country</th>
-                          <th className="pb-3 pr-3">Division</th>
-                          <th className="pb-3 text-right">Points</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {filteredWinners.map(row => (
-                          <tr key={row.id} className="border-b border-slate-100">
-                            <td className="py-3 pr-3 font-medium text-slate-900">{row.season_number}</td>
-                            <td className="py-3 pr-3">
-                              <TeamNameButton onClick={() => openTeamProfile(row.club_id)}>
-                                {row.club_name}
-                              </TeamNameButton>
-                            </td>
-                            <td className="py-3 pr-3">
-                              <CountryFlag code={row.country_code} countryNameByCode={countryNameByCode} />
-                            </td>
-                            <td className="py-3 pr-3 text-slate-600">{formatCompetitionLabel(row.division)}</td>
-                            <td className="py-3 text-right font-semibold text-slate-900">
-                              {row.points ?? 0}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-              </SectionCard>
-
-              <SectionCard
-                title="Titles leaderboard"
-                subtitle="Teams with the most recorded championships."
-              >
-                {teamTitles.length === 0 ? (
-                  <EmptyState
-                    title="No title leaderboard yet"
-                    description="Once past winners are stored, this block will become one of the best parts of the page."
-                  />
-                ) : (
-                  <MiniBarList
-                    items={teamTitles.map(item => ({
-                      label: `${item.club_name} (${getCountryName(item.country_code, countryNameByCode)})`,
-                      value: item.titles,
-                    }))}
-                  />
-                )}
-              </SectionCard>
-            </div>
-
-            <SectionCard
-              title="Historical finishes"
-              subtitle="Season-by-season finishing positions across divisions."
-            >
-              {filteredSnapshots.length === 0 ? (
-                <EmptyState
-                  title="No season history yet"
-                  description="Your game is currently in Season 1, so there are no completed historical seasons to show yet."
-                />
-              ) : (
-                <>
-                  <div className="overflow-x-auto">
-                    <table className="min-w-full text-sm">
-                      <thead>
-                        <tr className="border-b border-slate-200 text-left text-slate-500">
-                          <th className="pb-3 pr-3">Season</th>
-                          <th className="pb-3 pr-3">Pos</th>
-                          <th className="pb-3 pr-3">Team</th>
-                          <th className="pb-3 pr-3">Country</th>
-                          <th className="pb-3 pr-3">Division</th>
-                          <th className="pb-3 pr-3">Type</th>
-                          <th className="pb-3 pr-3">Status</th>
-                          <th className="pb-3 text-right">Points</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {paginatedTeamHistory.map(row => (
-                          <tr key={row.id} className="border-b border-slate-100">
-                            <td className="py-3 pr-3 font-medium text-slate-900">{row.season_number}</td>
-                            <td className="py-3 pr-3 font-semibold text-slate-900">{row.final_position}</td>
-                            <td className="py-3 pr-3">
-                              <TeamNameButton onClick={() => openTeamProfile(row.club_id)}>
-                                {row.club_name}
-                              </TeamNameButton>
-                            </td>
-                            <td className="py-3 pr-3">
-                              <CountryFlag code={row.country_code} countryNameByCode={countryNameByCode} />
-                            </td>
-                            <td className="py-3 pr-3 text-slate-600">{formatCompetitionLabel(row.division)}</td>
-                            <td className="py-3 pr-3">
-                              <TypeBadge isAi={row.is_ai} />
-                            </td>
-                            <td className="py-3 pr-3">
-                              <StatusBadge isActive={row.is_active} />
-                            </td>
-                            <td className="py-3 text-right font-semibold text-slate-900">
-                              {row.points ?? 0}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-
-                  <Pagination
-                    currentPage={teamHistoryPage}
-                    totalItems={filteredSnapshots.length}
-                    pageSize={PAGE_SIZE}
-                    onPageChange={setTeamHistoryPage}
-                  />
-                </>
-              )}
-            </SectionCard>
-          </>
-        ) : mainTab === 'riders' && riderSubTab === 'rankings' ? (
-          <>
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-              <KpiCard
-                label="Most overall points"
-                value={
-                  topOverallPointsRider ? (
-                    <RiderNameButton onClick={() => openRiderProfile(topOverallPointsRider.id)}>
-                      {topOverallPointsRider.display_name} ({topOverallPointsRider.season_points_overall})
-                    </RiderNameButton>
-                  ) : (
-                    '—'
-                  )
-                }
-              />
-              <KpiCard
-                label="Most sprinting points"
-                value={
-                  topSprintPointsRider ? (
-                    <RiderNameButton onClick={() => openRiderProfile(topSprintPointsRider.id)}>
-                      {topSprintPointsRider.display_name} ({topSprintPointsRider.season_points_sprint})
-                    </RiderNameButton>
-                  ) : (
-                    '—'
-                  )
-                }
-              />
-              <KpiCard
-                label="Most climbing points"
-                value={
-                  topClimbingPointsRider ? (
-                    <RiderNameButton onClick={() => openRiderProfile(topClimbingPointsRider.id)}>
-                      {topClimbingPointsRider.display_name} ({topClimbingPointsRider.season_points_climbing})
-                    </RiderNameButton>
-                  ) : (
-                    '—'
-                  )
-                }
-              />
-              <KpiCard label="Riders in filter" value={filteredRiders.length} />
-            </div>
-
-            <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
-              <SectionCard
-                title="Top riders"
-                subtitle={`Sorted by ${formatRiderMetricLabel(riderMetric).toLowerCase()} points.`}
-              >
-                {filteredRiders.length === 0 ? (
-                  <EmptyState
-                    title="No riders found"
-                    description="Try changing the rider filters."
-                  />
-                ) : (
-                  <div className="overflow-x-auto">
-                    <table className="min-w-full text-sm">
-                      <thead>
-                        <tr className="border-b border-slate-200 text-left text-slate-500">
-                          <th className="pb-3 pr-3">Rider</th>
-                          <th className="pb-3 pr-3">Team</th>
-                          <th className="pb-3 pr-3">Country</th>
-                          <th className="pb-3 pr-3">Age</th>
-                          <th className="pb-3 text-right">{formatRiderMetricLabel(riderMetric)} points</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {filteredRiders.slice(0, 12).map(row => (
-                          <tr key={row.id} className="border-b border-slate-100">
-                            <td className="py-3 pr-3">
-                              <RiderNameButton onClick={() => openRiderProfile(row.id)}>
-                                {row.display_name}
-                              </RiderNameButton>
-                            </td>
-                            <td className="py-3 pr-3 text-slate-600">
-                              {row.club_id && row.club_name ? (
-                                <TeamNameButton onClick={() => openTeamProfile(row.club_id!)}>
-                                  {row.club_name}
-                                </TeamNameButton>
-                              ) : (
-                                '—'
-                              )}
-                            </td>
-                            <td className="py-3 pr-3">
-                              <CountryFlag
-                                code={getDisplayedRiderCountryCode(row)}
-                                countryNameByCode={countryNameByCode}
-                              />
-                            </td>
-                            <td className="py-3 pr-3 text-slate-600">{row.age_years ?? '—'}</td>
-                            <td className="py-3 text-right font-semibold text-slate-900">
-                              {Number(row[riderMetric] ?? 0)}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-              </SectionCard>
-
-              <SectionCard
-                title="Role distribution"
-                subtitle="How riders are spread across roles in the selected filter."
-              >
-                {riderRoles.length === 0 ? (
-                  <EmptyState
-                    title="No role data"
-                    description="Role breakdown appears once rider data is available."
-                  />
-                ) : (
-                  <MiniBarList items={riderRoles} />
-                )}
-              </SectionCard>
-            </div>
-
-            <SectionCard
-              title="Top 50 riders"
-              subtitle="Best available riders in the current filter."
-              right={
-                <select
-                  value={riderTableMetric}
-                  onChange={e => setRiderTableMetric(e.target.value as RiderMetric)}
-                  className="rounded-lg border border-slate-300 px-3 py-2 text-sm"
-                >
-                  <option value="season_points_overall">Overall points</option>
-                  <option value="season_points_sprint">Sprinting points</option>
-                  <option value="season_points_climbing">Climbing points</option>
-                </select>
-              }
-            >
-              {topRiderTableRows.length === 0 ? (
-                <EmptyState title="No riders available" description="No riders match the selected filters." />
-              ) : (
-                <>
-                  <div className="overflow-x-auto">
-                    <table className="min-w-full text-sm">
-                      <thead>
-                        <tr className="border-b border-slate-200 text-left text-slate-500">
-                          <th className="pb-3 pr-3">Rider</th>
-                          <th className="pb-3 pr-3">Team</th>
-                          <th className="pb-3 pr-3">Country</th>
-                          <th className="pb-3 pr-3">Age</th>
-                          <th className="pb-3 pr-3">Role</th>
-                          <th className="pb-3 text-right">{formatRiderMetricLabel(riderTableMetric)} points</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {paginatedRiders.map(row => (
-                          <tr key={row.id} className="border-b border-slate-100">
-                            <td className="py-3 pr-3">
-                              <RiderNameButton onClick={() => openRiderProfile(row.id)}>
-                                {row.display_name}
-                              </RiderNameButton>
-                            </td>
-                            <td className="py-3 pr-3 text-slate-600">
-                              {row.club_id && row.club_name ? (
-                                <TeamNameButton onClick={() => openTeamProfile(row.club_id!)}>
-                                  {row.club_name}
-                                </TeamNameButton>
-                              ) : (
-                                '—'
-                              )}
-                            </td>
-                            <td className="py-3 pr-3">
-                              <CountryFlag
-                                code={getDisplayedRiderCountryCode(row)}
-                                countryNameByCode={countryNameByCode}
-                              />
-                            </td>
-                            <td className="py-3 pr-3 text-slate-600">{row.age_years ?? '—'}</td>
-                            <td className="py-3 pr-3 text-slate-600">{formatCompetitionLabel(row.role)}</td>
-                            <td className="py-3 text-right font-semibold text-slate-900">
-                              {Number(row[riderTableMetric] ?? 0)}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-
-                  <Pagination
-                    currentPage={ridersPage}
-                    totalItems={topRiderTableRows.length}
-                    pageSize={PAGE_SIZE}
-                    onPageChange={setRidersPage}
-                  />
-                </>
-              )}
-            </SectionCard>
-          </>
-        ) : (
-          <>
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-              <KpiCard
-                label="Average overall"
-                value={
-                  filteredRiders.length
-                    ? (
-                        filteredRiders.reduce((sum, row) => sum + (row.overall ?? 0), 0) /
-                        filteredRiders.length
-                      ).toFixed(1)
-                    : '—'
-                }
-              />
-              <KpiCard
-                label="Average fatigue"
-                value={
-                  filteredRiders.length
-                    ? (
-                        filteredRiders.reduce((sum, row) => sum + (row.fatigue ?? 0), 0) /
-                        filteredRiders.length
-                      ).toFixed(1)
-                    : '—'
-                }
-              />
-              <KpiCard
-                label="Total market value"
-                value={moneyFormatter.format(filteredRiders.reduce((sum, row) => sum + (row.market_value ?? 0), 0))}
-              />
-              <KpiCard
-                label="Average salary"
-                value={
-                  filteredRiders.length
-                    ? moneyFormatter.format(
-                        Math.round(
-                          filteredRiders.reduce((sum, row) => sum + (row.salary ?? 0), 0) /
-                            filteredRiders.length
-                        )
-                      )
-                    : '—'
-                }
-              />
-            </div>
-
-            <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
-              <SectionCard
-                title="Age distribution"
-                subtitle="Quick way to see how balanced the rider pool is."
-              >
-                {riderAgeBuckets.every(item => item.value === 0) ? (
-                  <EmptyState
-                    title="No age breakdown"
-                    description="Age buckets will appear once riders are loaded."
-                  />
-                ) : (
-                  <MiniBarList items={riderAgeBuckets} />
-                )}
-              </SectionCard>
-
-              <SectionCard
-                title="Top value / salary riders"
-                subtitle="Useful when you later want contract and transfer-related stats here."
-              >
-                {filteredRiders.length === 0 ? (
-                  <EmptyState
-                    title="No rider finance data"
-                    description="This area can later become value, wages, and contract expiry summaries."
-                  />
-                ) : (
-                  <div className="space-y-3">
-                    {[...filteredRiders]
-                      .sort((a, b) => (b.market_value ?? 0) - (a.market_value ?? 0))
-                      .slice(0, 6)
-                      .map(row => (
-                        <div
-                          key={row.id}
-                          className="flex items-center justify-between rounded-xl border border-slate-200 px-3 py-3"
-                        >
-                          <div>
-                            <div>
-                              <RiderNameButton onClick={() => openRiderProfile(row.id)}>
-                                {row.display_name}
-                              </RiderNameButton>
-                            </div>
-                            <div className="mt-1 text-sm text-slate-500">
-                              {row.club_id && row.club_name ? (
-                                <TeamNameButton onClick={() => openTeamProfile(row.club_id!)}>
-                                  {row.club_name}
-                                </TeamNameButton>
-                              ) : (
-                                '—'
-                              )}
-                            </div>
-                          </div>
-                          <div className="text-right">
-                            <div className="font-semibold text-slate-900">
-                              {moneyFormatter.format(row.market_value ?? 0)}
-                            </div>
-                            <div className="text-xs text-slate-500">
-                              Salary: {moneyFormatter.format(row.salary ?? 0)}
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                  </div>
-                )}
-              </SectionCard>
-            </div>
-          </>
         )}
       </div>
 
@@ -2600,157 +2162,17 @@ export default function StatisticsPage() {
         myClubId={myMainClubId}
       />
 
-      {selectedRider ? (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4"
-          onClick={closeRiderProfile}
-        >
-          <div
-            className="w-full max-w-2xl rounded-2xl bg-white shadow-2xl"
-            onClick={event => event.stopPropagation()}
-          >
-            <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
-              <div>
-                <h3 className="text-lg font-semibold text-slate-900">Rider profile</h3>
-              </div>
-              <button
-                type="button"
-                className="rounded-md border border-slate-300 px-3 py-1.5 text-sm"
-                onClick={closeRiderProfile}
-              >
-                Close
-              </button>
-            </div>
-
-            <div className="space-y-4 p-5">
-              <div>
-                <div className="text-xl font-semibold text-slate-900">{selectedRider.display_name}</div>
-                <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-slate-600">
-                  <span>Age {selectedRider.age_years ?? '—'}</span>
-                  <span>•</span>
-                  <span>{formatCompetitionLabel(selectedRider.role)}</span>
-                </div>
-                <div className="mt-1 text-sm text-slate-600">
-                  Team:{' '}
-                  {selectedRider.club_name ? (
-                    <button
-                      type="button"
-                      onClick={() => openTeamProfile(selectedRider.club_id!)}
-                      className="font-medium text-slate-900 hover:text-yellow-700 hover:underline"
-                    >
-                      {selectedRider.club_name}
-                    </button>
-                  ) : (
-                    'Free agent'
-                  )}
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3 text-sm">
-                {[
-                  ['Overall', selectedRider.overall],
-                  ['Sprint', selectedRider.sprint],
-                  ['Climbing', selectedRider.climbing],
-                  ['Time Trial', selectedRider.time_trial],
-                  ['Endurance', selectedRider.endurance],
-                  ['Race IQ', selectedRider.race_iq],
-                ].map(([label, value]) => (
-                  <div key={label} className="rounded-lg border border-slate-200 p-3">
-                    <div className="text-slate-500">{label}</div>
-                    <div className="font-semibold text-slate-900">
-                      {isRiderScouted
-                        ? getApproxRangeLabel(value as number | null)
-                        : 'Hidden (Scout first)'}
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <div className="flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  onClick={() => setIsRiderScouted(true)}
-                  className="rounded-md border border-yellow-400 bg-yellow-50 px-3 py-2 text-sm font-medium text-yellow-800"
-                >
-                  Scout rider
-                </button>
-
-                <button
-                  type="button"
-                  disabled={!!selectedRider.club_id}
-                  className={cx(
-                    'rounded-md border px-3 py-2 text-sm font-medium',
-                    selectedRider.club_id
-                      ? 'cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400'
-                      : 'border-emerald-300 bg-emerald-50 text-emerald-800'
-                  )}
-                >
-                  Offer contract
-                </button>
-
-                <button
-                  type="button"
-                  disabled={!selectedRider.club_id}
-                  className={cx(
-                    'rounded-md border px-3 py-2 text-sm font-medium',
-                    !selectedRider.club_id
-                      ? 'cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400'
-                      : 'border-sky-300 bg-sky-50 text-sky-800'
-                  )}
-                >
-                  Transfer offer
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setShowRiderHistory(prev => !prev)}
-                  className={cx(
-                    'rounded-md border px-3 py-2 text-sm font-medium',
-                    showRiderHistory
-                      ? 'border-slate-400 bg-slate-100 text-slate-900'
-                      : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-50'
-                  )}
-                >
-                  {showRiderHistory ? 'Hide history' : 'Rider history'}
-                </button>
-              </div>
-
-              {showRiderHistory ? (
-                <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-                  <h4 className="text-sm font-semibold text-slate-900">Rider history</h4>
-
-                  <div className="mt-3 space-y-3">
-                    <div className="rounded-lg border border-slate-200 bg-white px-3 py-3">
-                      <div className="text-xs font-medium uppercase tracking-wide text-slate-500">
-                        Current team
-                      </div>
-                      <div className="mt-1 text-sm font-semibold text-slate-900">
-                        {selectedRider.club_name ? (
-                          <button
-                            type="button"
-                            onClick={() => openTeamProfile(selectedRider.club_id!)}
-                            className="font-medium text-slate-900 hover:text-yellow-700 hover:underline"
-                          >
-                            {selectedRider.club_name}
-                          </button>
-                        ) : (
-                          'Free agent'
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="rounded-lg border border-dashed border-slate-300 bg-white px-3 py-3 text-sm text-slate-600">
-                      Earlier team history is not included in the currently loaded statistics
-                      dataset yet. Once a rider history table or view is connected, this block can
-                      list every club by season.
-                    </div>
-                  </div>
-                </div>
-              ) : null}
-            </div>
-          </div>
-        </div>
-      ) : null}
+      <RiderProfileModal
+        rider={selectedRider}
+        isOpen={!!selectedRider}
+        onClose={closeRiderProfile}
+        onOpenTeamProfile={openTeamProfile}
+        isRiderScouted={isRiderScouted}
+        setIsRiderScouted={setIsRiderScouted}
+        showRiderHistory={showRiderHistory}
+        setShowRiderHistory={setShowRiderHistory}
+        countryNameByCode={countryNameByCode}
+      />
     </>
   )
 }
