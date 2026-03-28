@@ -1,21 +1,9 @@
-/**
- * src/pages/dashboard/Transfers.tsx
- *
- * Transfers page
- *
- * Riders tab now supports:
- * - list own rider for transfer
- * - browse transfer market
- * - submit transfer offer
- * - seller accept/reject open offers
- * - buyer contract negotiation after club acceptance
- *
- * Staff tab kept from your previous version.
- */
-
 import React, { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import RiderProfileModal from '../../components/riders/RiderProfileModal'
+import RiderTransferListPage from './transfers/RiderTransferListPage'
+import RiderFreeAgentsPage from './transfers/RiderFreeAgentsPage'
+import StaffFreeAgentPage from './transfers/StaffFreeAgentPage'
 
 type TransferTab = 'riders' | 'staff'
 type RiderMarketSubTab = 'transfer_list' | 'free_agents'
@@ -29,6 +17,19 @@ type StaffRole =
 
 type StaffSortField = 'salary' | 'skills' | 'name' | 'country'
 type SortDirection = 'asc' | 'desc'
+
+type RiderRoleFilter = 'all' | string
+type RiderMarketSort =
+  | 'active'
+  | 'expires'
+  | 'overall_desc'
+  | 'overall_asc'
+  | 'price_desc'
+  | 'price_asc'
+  | 'name_asc'
+  | 'name_desc'
+  | 'age_asc'
+  | 'age_desc'
 
 type ClubRow = {
   id: string
@@ -246,25 +247,57 @@ type FreeAgentNegotiationRow = {
   } | null
 }
 
+type UnifiedMarketRow =
+  | {
+      kind: 'transfer'
+      key: string
+      rider_id: string
+      listing_id: string
+      display_name: string
+      country_code: string | null
+      role: string | null
+      overall: number | null
+      potential: number | null
+      age_years: number | null
+      seller_label: string
+      amount_value: number | null
+      amount_label: string
+      expires_on_game_date: string | null
+      is_user_active: boolean
+      is_own_item: boolean
+      raw: MarketListingRow
+    }
+  | {
+      kind: 'free_agent'
+      key: string
+      rider_id: string
+      free_agent_id: string
+      display_name: string
+      country_code: string | null
+      role: string | null
+      overall: number | null
+      potential: number | null
+      age_years: number | null
+      seller_label: string
+      amount_value: number | null
+      amount_label: string
+      expires_on_game_date: string | null
+      is_user_active: boolean
+      is_own_item: boolean
+      raw: FreeAgentMarketRow
+    }
+
 const CANDIDATES_PER_PAGE = 10
+const RIDERS_PER_PAGE = 30
 
 function formatCurrency(value: number | null | undefined) {
   if (value == null || Number.isNaN(value)) return '—'
   return `$${Number(value).toLocaleString('de-DE')}`
 }
 
-function formatDate(value: string | null | undefined) {
-  if (!value) return '—'
-  return value
-}
-
 function safeCountryCode(countryCode: string | null | undefined) {
   if (!countryCode || countryCode.length !== 2) return 'rs'
   return countryCode.toLowerCase()
-}
-
-function getCountryFlagUrl(countryCode: string) {
-  return `https://flagcdn.com/w40/${countryCode.toLowerCase()}.png`
 }
 
 function getCountryName(countryCode: string | null | undefined) {
@@ -366,6 +399,17 @@ function getCandidateSkillScore(candidate: StaffCandidateRow) {
   return stats.reduce((sum, stat) => sum + stat.value, 0) / stats.length
 }
 
+function tryParseDate(value: string | null | undefined) {
+  if (!value) return null
+  const direct = new Date(value)
+  if (!Number.isNaN(direct.getTime())) return direct
+
+  const asMidnight = new Date(`${value}T00:00:00`)
+  if (!Number.isNaN(asMidnight.getTime())) return asMidnight
+
+  return null
+}
+
 function SegmentedTabButton({
   active,
   label,
@@ -379,10 +423,8 @@ function SegmentedTabButton({
     <button
       type="button"
       onClick={onClick}
-      className={`px-4 py-2 rounded-md text-sm font-medium transition ${
-        active
-          ? 'bg-yellow-400 text-black'
-          : 'text-gray-600 hover:bg-gray-100'
+      className={`rounded-md px-4 py-2 text-sm font-medium transition ${
+        active ? 'bg-yellow-400 text-black' : 'text-gray-600 hover:bg-gray-100'
       }`}
     >
       {label}
@@ -410,52 +452,6 @@ function UnderlineSubTabButton({
       }`}
     >
       {label}
-    </button>
-  )
-}
-
-function CompactMarketRow({
-  title,
-  subtitle,
-  value,
-  countryCode,
-  onClick,
-}: {
-  title: string
-  subtitle: string
-  value?: string
-  countryCode?: string | null
-  onClick?: () => void
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="w-full rounded-lg border border-gray-100 bg-white px-3 py-3 text-left transition hover:border-gray-200 hover:bg-gray-50"
-    >
-      <div className="flex items-center justify-between gap-3">
-        <div className="min-w-0">
-          <div className="flex items-center gap-2">
-            {countryCode ? (
-              <img
-                src={getCountryFlagUrl(safeCountryCode(countryCode))}
-                alt={getCountryName(countryCode)}
-                className="h-4 w-6 rounded-sm border border-gray-200 object-cover shrink-0"
-              />
-            ) : null}
-
-            <div className="truncate text-sm font-semibold text-gray-900">
-              {title}
-            </div>
-          </div>
-
-          <div className="mt-1 truncate text-xs text-gray-500">{subtitle}</div>
-        </div>
-
-        {value ? (
-          <div className="shrink-0 text-sm font-semibold text-gray-700">{value}</div>
-        ) : null}
-      </div>
     </button>
   )
 }
@@ -497,6 +493,7 @@ export default function TransfersPage() {
 
   const [selectedOwnedRiderId, setSelectedOwnedRiderId] = useState<string | null>(null)
   const [selectedMarketListingId, setSelectedMarketListingId] = useState<string | null>(null)
+  const [selectedFreeAgentId, setSelectedFreeAgentId] = useState<string | null>(null)
 
   const [listAskingPrice, setListAskingPrice] = useState('')
   const [listDurationDays, setListDurationDays] = useState('7')
@@ -512,6 +509,22 @@ export default function TransfersPage() {
   const [isRiderPopupOpen, setIsRiderPopupOpen] = useState(false)
   const [isRiderScouted, setIsRiderScouted] = useState(false)
   const [showRiderHistory, setShowRiderHistory] = useState(false)
+
+  const [marketSearch, setMarketSearch] = useState('')
+  const [marketRoleFilter, setMarketRoleFilter] = useState<RiderRoleFilter>('all')
+  const [marketOnlyActive, setMarketOnlyActive] = useState(false)
+  const [marketHideOwn, setMarketHideOwn] = useState(false)
+  const [marketSort, setMarketSort] = useState<RiderMarketSort>('active')
+  const [marketPage, setMarketPage] = useState(1)
+
+  const [nowMs, setNowMs] = useState(Date.now())
+
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      setNowMs(Date.now())
+    }, 1000)
+    return () => window.clearInterval(timer)
+  }, [])
 
   useEffect(() => {
     let mounted = true
@@ -559,7 +572,7 @@ export default function TransfersPage() {
       }
     }
 
-    loadTransfersPage()
+    void loadTransfersPage()
 
     return () => {
       mounted = false
@@ -615,10 +628,7 @@ export default function TransfersPage() {
     const uniqueIds = Array.from(new Set(ids.filter(Boolean)))
     if (!uniqueIds.length) return {}
 
-    const { data, error } = await supabase
-      .from('clubs')
-      .select('id, name')
-      .in('id', uniqueIds)
+    const { data, error } = await supabase.from('clubs').select('id, name').in('id', uniqueIds)
 
     if (error) throw error
 
@@ -685,8 +695,7 @@ export default function TransfersPage() {
       setShowRiderHistory(false)
       setIsRiderPopupOpen(true)
     } catch (err) {
-      const message =
-        err instanceof Error ? err.message : 'Failed to open rider profile.'
+      const message = err instanceof Error ? err.message : 'Failed to open rider profile.'
       setPageMessage(message)
     }
   }
@@ -706,7 +715,7 @@ export default function TransfersPage() {
       ] = await Promise.all([
         supabase.rpc('get_transfer_market_listings', {
           p_page: 1,
-          p_page_size: 100,
+          p_page_size: 300,
         }),
         supabase
           .from('rider_statistics_view')
@@ -874,9 +883,9 @@ export default function TransfersPage() {
         ...listings.map((row) => row.seller_club_id),
         ...offers.flatMap((row) => [row.seller_club_id, row.buyer_club_id]),
         ...negotiations.flatMap((row) => [row.seller_club_id, row.buyer_club_id]),
-        ...freeAgentsRows
+        ...(freeAgentsRows
           .map((row) => row.source_club?.id || row.source_club_id)
-          .filter(Boolean) as string[],
+          .filter(Boolean) as string[]),
         ...freeAgentNegotiationRows.map((row) => row.club_id),
       ]
 
@@ -901,6 +910,10 @@ export default function TransfersPage() {
       if (!selectedMarketListingId && market.length) {
         setSelectedMarketListingId(market[0].listing_id)
         setOfferPrice(String(market[0].asking_price))
+      }
+
+      if (!selectedFreeAgentId && freeAgentsRows.length) {
+        setSelectedFreeAgentId(freeAgentsRows[0].id)
       }
     } finally {
       if (mounted) setRiderLoading(false)
@@ -978,8 +991,7 @@ export default function TransfersPage() {
   }, [paginatedCandidates, selectedCandidateId])
 
   const selectedCandidate = useMemo(
-    () =>
-      paginatedCandidates.find((candidate) => candidate.id === selectedCandidateId) || null,
+    () => paginatedCandidates.find((candidate) => candidate.id === selectedCandidateId) || null,
     [paginatedCandidates, selectedCandidateId]
   )
 
@@ -999,6 +1011,11 @@ export default function TransfersPage() {
   const selectedMarketListing = useMemo(
     () => marketListings.find((listing) => listing.listing_id === selectedMarketListingId) || null,
     [marketListings, selectedMarketListingId]
+  )
+
+  const selectedFreeAgent = useMemo(
+    () => freeAgents.find((agent) => agent.id === selectedFreeAgentId) || null,
+    [freeAgents, selectedFreeAgentId]
   )
 
   useEffect(() => {
@@ -1032,6 +1049,187 @@ export default function TransfersPage() {
     if (!clubId) return []
     return transferNegotiations.filter((negotiation) => negotiation.seller_club_id === clubId)
   }, [transferNegotiations, clubId])
+
+  const myFreeAgentNegotiations = useMemo(() => {
+    if (!clubId) return []
+    return freeAgentNegotiations.filter((row) => row.club_id === clubId)
+  }, [freeAgentNegotiations, clubId])
+
+  const activeTransferListingIds = useMemo(() => {
+    const ids = new Set<string>()
+    for (const offer of mySentOffers) {
+      if (offer.status === 'open' || offer.status === 'accepted') {
+        ids.add(offer.listing_id)
+      }
+    }
+    for (const negotiation of myBuyerNegotiations) {
+      if (negotiation.status === 'open') {
+        ids.add(negotiation.listing_id)
+      }
+    }
+    return ids
+  }, [mySentOffers, myBuyerNegotiations])
+
+  const activeFreeAgentIds = useMemo(() => {
+    const ids = new Set<string>()
+    for (const negotiation of myFreeAgentNegotiations) {
+      if (negotiation.status === 'open') {
+        ids.add(negotiation.free_agent_id)
+      }
+    }
+    return ids
+  }, [myFreeAgentNegotiations])
+
+  const riderRoleOptions = useMemo(() => {
+    const sourceRoles =
+      riderMarketSubTab === 'transfer_list'
+        ? marketListings.map((row) => row.role).filter(Boolean)
+        : freeAgents.map((row) => row.rider?.role).filter(Boolean)
+
+    return Array.from(new Set(sourceRoles as string[])).sort((a, b) =>
+      a.localeCompare(b, undefined, { sensitivity: 'base' })
+    )
+  }, [riderMarketSubTab, marketListings, freeAgents])
+
+  const unifiedMarketRows = useMemo(() => {
+    if (!clubId) return []
+
+    if (riderMarketSubTab === 'transfer_list') {
+      return marketListings.map(
+        (listing): UnifiedMarketRow => ({
+          kind: 'transfer',
+          key: `transfer-${listing.listing_id}`,
+          rider_id: listing.rider_id,
+          listing_id: listing.listing_id,
+          display_name: listing.display_name,
+          country_code: listing.country_code,
+          role: listing.role,
+          overall: listing.overall,
+          potential: listing.potential,
+          age_years: listing.age_years,
+          seller_label: `Seller: ${
+            listing.seller_club_name || clubNameMap[listing.seller_club_id] || 'Unknown club'
+          }`,
+          amount_value: listing.asking_price,
+          amount_label: `Asking price: ${formatCurrency(listing.asking_price)}`,
+          expires_on_game_date: listing.expires_on_game_date,
+          is_user_active: activeTransferListingIds.has(listing.listing_id),
+          is_own_item: listing.seller_club_id === clubId,
+          raw: listing,
+        })
+      )
+    }
+
+    return freeAgents.map(
+      (agent): UnifiedMarketRow => ({
+        kind: 'free_agent',
+        key: `free-agent-${agent.id}`,
+        rider_id: agent.rider_id,
+        free_agent_id: agent.id,
+        display_name: agent.rider?.display_name || 'Unknown rider',
+        country_code: agent.rider?.country_code || null,
+        role: agent.rider?.role || null,
+        overall: agent.rider?.overall ?? null,
+        potential: agent.rider?.potential ?? null,
+        age_years: null,
+        seller_label: `Source: ${
+          agent.source_club?.name ||
+          (agent.source_club_id ? clubNameMap[agent.source_club_id] : null) ||
+          agent.source_type ||
+          'Free market'
+        }`,
+        amount_value: agent.expected_salary_weekly,
+        amount_label: `Expected salary: ${formatCurrency(agent.expected_salary_weekly)}/week`,
+        expires_on_game_date: agent.expires_on_game_date,
+        is_user_active: activeFreeAgentIds.has(agent.id),
+        is_own_item: false,
+        raw: agent,
+      })
+    )
+  }, [
+    riderMarketSubTab,
+    marketListings,
+    freeAgents,
+    clubNameMap,
+    activeTransferListingIds,
+    activeFreeAgentIds,
+    clubId,
+  ])
+
+  const filteredUnifiedMarketRows = useMemo(() => {
+    const term = marketSearch.trim().toLowerCase()
+
+    return unifiedMarketRows.filter((row) => {
+      if (marketRoleFilter !== 'all' && (row.role || '') !== marketRoleFilter) return false
+      if (marketOnlyActive && !row.is_user_active) return false
+      if (marketHideOwn && row.is_own_item) return false
+
+      if (!term) return true
+
+      const searchable = [
+        row.display_name,
+        row.role || '',
+        row.seller_label,
+        row.country_code || '',
+      ]
+        .join(' ')
+        .toLowerCase()
+
+      return searchable.includes(term)
+    })
+  }, [unifiedMarketRows, marketSearch, marketRoleFilter, marketOnlyActive, marketHideOwn])
+
+  const sortedUnifiedMarketRows = useMemo(() => {
+    const rows = [...filteredUnifiedMarketRows]
+
+    rows.sort((a, b) => {
+      if (marketSort === 'active') {
+        if (a.is_user_active !== b.is_user_active) return a.is_user_active ? -1 : 1
+        const aTime = tryParseDate(a.expires_on_game_date)?.getTime() ?? Number.MAX_SAFE_INTEGER
+        const bTime = tryParseDate(b.expires_on_game_date)?.getTime() ?? Number.MAX_SAFE_INTEGER
+        return aTime - bTime
+      }
+
+      if (marketSort === 'expires') {
+        const aTime = tryParseDate(a.expires_on_game_date)?.getTime() ?? Number.MAX_SAFE_INTEGER
+        const bTime = tryParseDate(b.expires_on_game_date)?.getTime() ?? Number.MAX_SAFE_INTEGER
+        return aTime - bTime
+      }
+
+      if (marketSort === 'overall_desc') return (b.overall ?? -1) - (a.overall ?? -1)
+      if (marketSort === 'overall_asc') return (a.overall ?? 999) - (b.overall ?? 999)
+      if (marketSort === 'price_desc') return (b.amount_value ?? -1) - (a.amount_value ?? -1)
+      if (marketSort === 'price_asc') return (a.amount_value ?? 999999999) - (b.amount_value ?? 999999999)
+
+      if (marketSort === 'age_desc') return (b.age_years ?? -1) - (a.age_years ?? -1)
+      if (marketSort === 'age_asc') return (a.age_years ?? 999) - (b.age_years ?? 999)
+
+      if (marketSort === 'name_desc') {
+        return b.display_name.localeCompare(a.display_name, undefined, { sensitivity: 'base' })
+      }
+
+      return a.display_name.localeCompare(b.display_name, undefined, { sensitivity: 'base' })
+    })
+
+    return rows
+  }, [filteredUnifiedMarketRows, marketSort])
+
+  const marketTotalPages = Math.max(1, Math.ceil(sortedUnifiedMarketRows.length / RIDERS_PER_PAGE))
+
+  useEffect(() => {
+    setMarketPage(1)
+  }, [riderMarketSubTab, marketSearch, marketRoleFilter, marketOnlyActive, marketHideOwn, marketSort])
+
+  useEffect(() => {
+    if (marketPage > marketTotalPages) {
+      setMarketPage(marketTotalPages)
+    }
+  }, [marketPage, marketTotalPages])
+
+  const paginatedUnifiedMarketRows = useMemo(() => {
+    const startIndex = (marketPage - 1) * RIDERS_PER_PAGE
+    return sortedUnifiedMarketRows.slice(startIndex, startIndex + RIDERS_PER_PAGE)
+  }, [sortedUnifiedMarketRows, marketPage])
 
   function getNegotiationDraft(negotiation: TransferNegotiationRow) {
     return (
@@ -1106,8 +1304,7 @@ export default function TransfersPage() {
         `${selectedCandidate.staff_name} has been hired as ${roleLabel(selectedCandidate.role_type)}.`
       )
     } catch (err) {
-      const message =
-        err instanceof Error ? err.message : 'Failed to hire staff candidate.'
+      const message = err instanceof Error ? err.message : 'Failed to hire staff candidate.'
       setPageMessage(message)
     } finally {
       setHireLoading(false)
@@ -1135,8 +1332,7 @@ export default function TransfersPage() {
       await reloadRiders(clubId)
       setPageMessage(`${selectedOwnedRider.display_name} has been listed for transfer.`)
     } catch (err) {
-      const message =
-        err instanceof Error ? err.message : 'Failed to list rider for transfer.'
+      const message = err instanceof Error ? err.message : 'Failed to list rider for transfer.'
       setPageMessage(message)
     } finally {
       setRiderActionLoading(false)
@@ -1159,8 +1355,7 @@ export default function TransfersPage() {
       await reloadRiders(clubId)
       setPageMessage('Transfer listing cancelled.')
     } catch (err) {
-      const message =
-        err instanceof Error ? err.message : 'Failed to cancel transfer listing.'
+      const message = err instanceof Error ? err.message : 'Failed to cancel transfer listing.'
       setPageMessage(message)
     } finally {
       setRiderActionLoading(false)
@@ -1190,8 +1385,54 @@ export default function TransfersPage() {
       await reloadRiders(clubId)
       setPageMessage('Transfer offer submitted.')
     } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to submit transfer offer.'
+      setPageMessage(message)
+    } finally {
+      setRiderActionLoading(false)
+    }
+  }
+
+  async function handleStartFreeAgentNegotiation(agent: FreeAgentMarketRow) {
+    if (!clubId) return
+
+    try {
+      setRiderActionLoading(true)
+      setPageMessage(null)
+
+      const existingOpen = freeAgentNegotiations.find(
+        (row) =>
+          row.club_id === clubId &&
+          row.free_agent_id === agent.id &&
+          row.status === 'open'
+      )
+
+      if (existingOpen) {
+        setPageMessage('A contract negotiation for this free agent is already active.')
+        return
+      }
+
+      const insertPayload = {
+        free_agent_id: agent.id,
+        rider_id: agent.rider_id,
+        club_id: clubId,
+        status: 'open',
+        current_salary_weekly: agent.rider?.salary ?? null,
+        expected_salary_weekly: agent.expected_salary_weekly,
+        min_acceptable_salary_weekly: agent.min_acceptable_salary_weekly,
+        preferred_duration_seasons: agent.preferred_duration_seasons,
+        offer_salary_weekly: agent.expected_salary_weekly,
+        offer_duration_seasons: agent.preferred_duration_seasons,
+      }
+
+      const { error } = await supabase.from('rider_free_agent_negotiations').insert(insertPayload)
+
+      if (error) throw error
+
+      await reloadRiders(clubId)
+      setPageMessage('Free-agent contract negotiation opened.')
+    } catch (err) {
       const message =
-        err instanceof Error ? err.message : 'Failed to submit transfer offer.'
+        err instanceof Error ? err.message : 'Failed to open free-agent negotiation.'
       setPageMessage(message)
     } finally {
       setRiderActionLoading(false)
@@ -1214,8 +1455,7 @@ export default function TransfersPage() {
       await reloadRiders(clubId)
       setPageMessage('Club terms accepted. Rider negotiation opened.')
     } catch (err) {
-      const message =
-        err instanceof Error ? err.message : 'Failed to accept offer.'
+      const message = err instanceof Error ? err.message : 'Failed to accept offer.'
       setPageMessage(message)
     } finally {
       setRiderActionLoading(false)
@@ -1238,8 +1478,7 @@ export default function TransfersPage() {
       await reloadRiders(clubId)
       setPageMessage('Offer rejected.')
     } catch (err) {
-      const message =
-        err instanceof Error ? err.message : 'Failed to reject offer.'
+      const message = err instanceof Error ? err.message : 'Failed to reject offer.'
       setPageMessage(message)
     } finally {
       setRiderActionLoading(false)
@@ -1289,19 +1528,23 @@ export default function TransfersPage() {
     sortedCandidates.length === 0 ? 0 : (currentPage - 1) * CANDIDATES_PER_PAGE + 1
   const pageEnd = Math.min(currentPage * CANDIDATES_PER_PAGE, sortedCandidates.length)
 
+  const marketPageStart =
+    sortedUnifiedMarketRows.length === 0 ? 0 : (marketPage - 1) * RIDERS_PER_PAGE + 1
+  const marketPageEnd = Math.min(marketPage * RIDERS_PER_PAGE, sortedUnifiedMarketRows.length)
+
   if (loading) {
     return (
       <div className="w-full">
         <div className="mb-5 flex items-start justify-between gap-4">
           <div>
             <h2 className="text-xl font-semibold text-gray-900">Transfers</h2>
-            <p className="text-sm text-gray-500 mt-1">
+            <p className="mt-1 text-sm text-gray-500">
               Riders and staff market, shortlist and negotiations.
             </p>
           </div>
         </div>
 
-        <div className="bg-white rounded-lg p-6 shadow border border-gray-100 text-sm text-gray-500">
+        <div className="rounded-lg border border-gray-100 bg-white p-6 text-sm text-gray-500 shadow">
           Loading transfers...
         </div>
       </div>
@@ -1314,13 +1557,13 @@ export default function TransfersPage() {
         <div className="mb-5 flex items-start justify-between gap-4">
           <div>
             <h2 className="text-xl font-semibold text-gray-900">Transfers</h2>
-            <p className="text-sm text-gray-500 mt-1">
+            <p className="mt-1 text-sm text-gray-500">
               Riders and staff market, shortlist and negotiations.
             </p>
           </div>
         </div>
 
-        <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg p-4 text-sm">
+        <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
           {error}
         </div>
       </div>
@@ -1332,7 +1575,7 @@ export default function TransfersPage() {
       <div className="mb-5 flex items-start justify-between gap-4">
         <div>
           <h2 className="text-xl font-semibold text-gray-900">Transfers</h2>
-          <p className="text-sm text-gray-500 mt-1">
+          <p className="mt-1 text-sm text-gray-500">
             Riders and staff market, shortlist and negotiations.
           </p>
 
@@ -1357,7 +1600,7 @@ export default function TransfersPage() {
           ) : null}
         </div>
 
-        <div className="inline-flex rounded-lg bg-white border border-gray-100 p-1 shadow-sm">
+        <div className="inline-flex rounded-lg border border-gray-100 bg-white p-1 shadow-sm">
           <SegmentedTabButton
             active={activeTab === 'riders'}
             label="Riders"
@@ -1372,903 +1615,157 @@ export default function TransfersPage() {
       </div>
 
       {pageMessage ? (
-        <div className="mb-5 rounded-lg bg-yellow-50 px-4 py-3 text-sm text-yellow-800 border border-yellow-200">
+        <div className="mb-5 rounded-lg border border-yellow-200 bg-yellow-50 px-4 py-3 text-sm text-yellow-800">
           {pageMessage}
         </div>
       ) : null}
 
       {activeTab === 'riders' ? (
-        <div className="space-y-4">
-          {riderMarketSubTab === 'transfer_list' ? (
-            <>
-              <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 w-full">
-                <div className="bg-white rounded-lg p-4 shadow border border-gray-100 h-[640px] flex flex-col">
-                  <h4 className="font-semibold text-gray-900">Transfer List Riders</h4>
-                  <div className="mt-1 text-sm text-gray-500">
-                    Listed riders on the market. Click any row to open the rider popup.
-                  </div>
-
-                  <div className="mt-4 space-y-2 flex-1 overflow-auto pr-1">
-                    {riderLoading ? (
-                      <div className="rounded-lg border border-gray-100 bg-gray-50 p-4 text-sm text-gray-500">
-                        Loading transfer market...
-                      </div>
-                    ) : marketListings.length === 0 ? (
-                      <div className="rounded-lg border border-gray-100 bg-gray-50 p-4 text-sm text-gray-500">
-                        No active transfer listings.
-                      </div>
-                    ) : (
-                      marketListings.map((listing) => (
-                        <CompactMarketRow
-                          key={listing.listing_id}
-                          title={listing.display_name}
-                          subtitle={`${listing.role || '—'} • OVR ${listing.overall ?? '—'} • Seller: ${
-                            listing.seller_club_name ||
-                            clubNameMap[listing.seller_club_id] ||
-                            'Unknown club'
-                          }`}
-                          value={formatCurrency(listing.asking_price)}
-                          countryCode={listing.country_code}
-                          onClick={() => {
-                            setSelectedMarketListingId(listing.listing_id)
-                            setOfferPrice(String(listing.asking_price))
-                            openRiderPopup(listing.rider_id)
-                          }}
-                        />
-                      ))
-                    )}
-                  </div>
-                </div>
-
-                <div className="bg-white rounded-lg p-4 shadow border border-gray-100 h-[640px] flex flex-col">
-                  <h4 className="font-semibold text-gray-900">Transfer Offers</h4>
-                  <div className="mt-1 text-sm text-gray-500">
-                    Seller and buyer offer activity. Click any row to open the rider popup.
-                  </div>
-
-                  <div className="mt-4 space-y-2 flex-1 overflow-auto pr-1">
-                    {riderLoading ? (
-                      <div className="rounded-lg border border-gray-100 bg-gray-50 p-4 text-sm text-gray-500">
-                        Loading offers...
-                      </div>
-                    ) : [...myReceivedOffers, ...mySentOffers].length === 0 ? (
-                      <div className="rounded-lg border border-gray-100 bg-gray-50 p-4 text-sm text-gray-500">
-                        No transfer offers visible yet.
-                      </div>
-                    ) : (
-                      [...myReceivedOffers, ...mySentOffers].map((offer) => {
-                        const isReceived = offer.seller_club_id === clubId
-                        const counterpartyName = isReceived
-                          ? clubNameMap[offer.buyer_club_id] || 'Buyer club'
-                          : clubNameMap[offer.seller_club_id] || 'Seller club'
-
-                        return (
-                          <CompactMarketRow
-                            key={offer.id}
-                            title={`${counterpartyName} • ${offer.status}`}
-                            subtitle={`${isReceived ? 'Received' : 'Sent'} • Rider ${
-                              offer.rider_id
-                            }${
-                              offer.auto_block_reason ? ` • ${offer.auto_block_reason}` : ''
-                            }`}
-                            value={formatCurrency(offer.offered_price)}
-                            onClick={() => openRiderPopup(offer.rider_id)}
-                          />
-                        )
-                      })
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 xl:grid-cols-[1.05fr_0.95fr] gap-4 w-full">
-                <div className="bg-white rounded-lg p-4 shadow border border-gray-100">
-                  <h4 className="font-semibold text-gray-900">List My Rider</h4>
-
-                  <div className="mt-4 space-y-2 max-h-[280px] overflow-auto pr-1">
-                    {ownRiders.length === 0 ? (
-                      <div className="rounded-lg border border-gray-100 bg-gray-50 p-4 text-sm text-gray-500">
-                        No riders found for your club.
-                      </div>
-                    ) : (
-                      ownRiders.map((rider) => {
-                        const selected = rider.rider_id === selectedOwnedRiderId
-
-                        return (
-                          <button
-                            key={rider.rider_id}
-                            type="button"
-                            onClick={() => setSelectedOwnedRiderId(rider.rider_id)}
-                            className={`w-full rounded-lg p-3 border text-left transition ${
-                              selected
-                                ? 'border-yellow-300 bg-yellow-50'
-                                : 'border-gray-100 bg-white hover:border-gray-200'
-                            }`}
-                          >
-                            <div className="flex items-center justify-between gap-3">
-                              <div className="min-w-0">
-                                <div className="font-semibold text-gray-900">
-                                  {rider.display_name}
-                                </div>
-                                <div className="text-xs text-gray-500">
-                                  {rider.role || '—'} • OVR {rider.overall ?? '—'} • POT{' '}
-                                  {rider.potential ?? '—'}
-                                </div>
-                              </div>
-                              <div className="text-sm font-semibold text-gray-700 shrink-0">
-                                {formatCurrency(rider.market_value)}
-                              </div>
-                            </div>
-                          </button>
-                        )
-                      })
-                    )}
-                  </div>
-
-                  {selectedOwnedRider ? (
-                    <div className="mt-4 rounded-lg border border-gray-100 bg-gray-50 p-4">
-                      <div className="text-sm font-semibold text-gray-900">
-                        {selectedOwnedRider.display_name}
-                      </div>
-
-                      <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <div>
-                          <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-gray-500">
-                            Asking Price
-                          </label>
-                          <input
-                            type="number"
-                            value={listAskingPrice}
-                            onChange={(e) => setListAskingPrice(e.target.value)}
-                            className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700"
-                          />
-                        </div>
-
-                        <div>
-                          <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-gray-500">
-                            Listing Duration (days)
-                          </label>
-                          <input
-                            type="number"
-                            min={1}
-                            value={listDurationDays}
-                            onChange={(e) => setListDurationDays(e.target.value)}
-                            className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700"
-                          />
-                        </div>
-                      </div>
-
-                      <div className="mt-4 flex items-center justify-between gap-3">
-                        <div className="text-xs text-gray-500">
-                          Market value: {formatCurrency(selectedOwnedRider.market_value)}
-                        </div>
-
-                        <button
-                          type="button"
-                          onClick={handleListRider}
-                          disabled={riderActionLoading}
-                          className={`px-4 py-2 rounded-md text-sm font-medium transition ${
-                            riderActionLoading
-                              ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
-                              : 'bg-yellow-400 hover:bg-yellow-300 text-black'
-                          }`}
-                        >
-                          {riderActionLoading ? 'Processing...' : 'List Rider'}
-                        </button>
-                      </div>
-                    </div>
-                  ) : null}
-                </div>
-
-                <div className="bg-white rounded-lg p-4 shadow border border-gray-100">
-                  <h4 className="font-semibold text-gray-900">Selected Listing</h4>
-
-                  {!selectedMarketListing ? (
-                    <div className="mt-3 text-sm text-gray-500">
-                      Select a listed rider from the Transfer List box above.
-                    </div>
-                  ) : (
-                    <>
-                      <div className="mt-3">
-                        <div className="font-semibold text-gray-900">
-                          {selectedMarketListing.display_name}
-                        </div>
-                        <div className="text-sm text-gray-500">
-                          {selectedMarketListing.role || '—'} • Age{' '}
-                          {selectedMarketListing.age_years ?? '—'} • OVR{' '}
-                          {selectedMarketListing.overall ?? '—'} • POT{' '}
-                          {selectedMarketListing.potential ?? '—'}
-                        </div>
-                      </div>
-
-                      <div className="mt-4 grid grid-cols-2 gap-3">
-                        <div className="rounded-lg bg-gray-50 p-3">
-                          <div className="text-xs text-gray-500">Asking Price</div>
-                          <div className="mt-1 text-sm font-semibold text-gray-900">
-                            {formatCurrency(selectedMarketListing.asking_price)}
-                          </div>
-                        </div>
-
-                        <div className="rounded-lg bg-gray-50 p-3">
-                          <div className="text-xs text-gray-500">Market Value</div>
-                          <div className="mt-1 text-sm font-semibold text-gray-900">
-                            {formatCurrency(selectedMarketListing.market_value)}
-                          </div>
-                        </div>
-                      </div>
-
-                      {selectedMarketListing.seller_club_id === clubId ? (
-                        <div className="mt-4 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-700">
-                          This is your own listing.
-                        </div>
-                      ) : (
-                        <div className="mt-4">
-                          <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-gray-500">
-                            Offer Price
-                          </label>
-                          <input
-                            type="number"
-                            value={offerPrice}
-                            onChange={(e) => setOfferPrice(e.target.value)}
-                            className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700"
-                          />
-
-                          <div className="mt-3 flex items-center justify-between gap-3">
-                            <div className="text-xs text-gray-500">
-                              Listing expires{' '}
-                              {formatDate(selectedMarketListing.expires_on_game_date)}
-                            </div>
-
-                            <button
-                              type="button"
-                              onClick={handleSubmitOffer}
-                              disabled={riderActionLoading}
-                              className={`px-4 py-2 rounded-md text-sm font-medium transition ${
-                                riderActionLoading
-                                  ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
-                                  : 'bg-yellow-400 hover:bg-yellow-300 text-black'
-                              }`}
-                            >
-                              {riderActionLoading ? 'Processing...' : 'Submit Offer'}
-                            </button>
-                          </div>
-                        </div>
-                      )}
-                    </>
-                  )}
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 w-full">
-                <div className="bg-white rounded-lg p-4 shadow border border-gray-100">
-                  <h4 className="font-semibold text-gray-900">My Listings</h4>
-                  <div className="mt-3 space-y-2">
-                    {myListings.length === 0 ? (
-                      <div className="text-sm text-gray-500">
-                        No transfer listings created by your club yet.
-                      </div>
-                    ) : (
-                      myListings.map((listing) => (
-                        <div
-                          key={listing.id}
-                          className="rounded-lg border border-gray-100 bg-gray-50 p-3"
-                        >
-                          <div className="flex items-center justify-between gap-3">
-                            <div className="min-w-0">
-                              <div className="text-sm font-semibold text-gray-900">
-                                Rider ID: {listing.rider_id}
-                              </div>
-                              <div className="text-xs text-gray-500">
-                                Status: {listing.status} • Asking:{' '}
-                                {formatCurrency(listing.asking_price)} • Expires{' '}
-                                {formatDate(listing.expires_on_game_date)}
-                              </div>
-                            </div>
-
-                            {listing.status === 'listed' ? (
-                              <button
-                                type="button"
-                                onClick={() => handleCancelListing(listing.id)}
-                                disabled={riderActionLoading}
-                                className="px-3 py-2 rounded-md text-sm font-medium bg-white border border-gray-200 text-gray-700 hover:bg-gray-50"
-                              >
-                                Cancel
-                              </button>
-                            ) : null}
-                          </div>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                </div>
-
-                <div className="bg-white rounded-lg p-4 shadow border border-gray-100">
-                  <h4 className="font-semibold text-gray-900">Offers Received</h4>
-                  <div className="mt-3 space-y-2">
-                    {myReceivedOffers.length === 0 ? (
-                      <div className="text-sm text-gray-500">No visible incoming offers.</div>
-                    ) : (
-                      myReceivedOffers.map((offer) => (
-                        <div
-                          key={offer.id}
-                          className="rounded-lg border border-gray-100 bg-gray-50 p-3"
-                        >
-                          <div className="flex items-start justify-between gap-3">
-                            <div className="min-w-0">
-                              <div className="text-sm font-semibold text-gray-900">
-                                {clubNameMap[offer.buyer_club_id] || offer.buyer_club_id}
-                              </div>
-                              <div className="text-xs text-gray-500">
-                                Offer {formatCurrency(offer.offered_price)} • Status{' '}
-                                {offer.status}
-                              </div>
-                              <div className="text-[11px] text-gray-400">
-                                Expires {formatDate(offer.expires_on_game_date)}
-                                {offer.auto_block_reason
-                                  ? ` • ${offer.auto_block_reason}`
-                                  : ''}
-                              </div>
-                            </div>
-
-                            {offer.status === 'open' ? (
-                              <div className="flex items-center gap-2 shrink-0">
-                                <button
-                                  type="button"
-                                  onClick={() => handleRejectOffer(offer.id)}
-                                  disabled={riderActionLoading}
-                                  className="px-3 py-2 rounded-md text-sm font-medium bg-white border border-gray-200 text-gray-700 hover:bg-gray-50"
-                                >
-                                  Reject
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => handleAcceptOffer(offer.id)}
-                                  disabled={riderActionLoading}
-                                  className="px-3 py-2 rounded-md text-sm font-medium bg-yellow-400 hover:bg-yellow-300 text-black"
-                                >
-                                  Accept
-                                </button>
-                              </div>
-                            ) : null}
-                          </div>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 w-full">
-                <div className="bg-white rounded-lg p-4 shadow border border-gray-100">
-                  <h4 className="font-semibold text-gray-900">My Sent Offers</h4>
-                  <div className="mt-3 space-y-2">
-                    {mySentOffers.length === 0 ? (
-                      <div className="text-sm text-gray-500">No visible outgoing offers.</div>
-                    ) : (
-                      mySentOffers.map((offer) => (
-                        <div
-                          key={offer.id}
-                          className="rounded-lg border border-gray-100 bg-gray-50 p-3"
-                        >
-                          <div className="text-sm font-semibold text-gray-900">
-                            To seller {clubNameMap[offer.seller_club_id] || offer.seller_club_id}
-                          </div>
-                          <div className="text-xs text-gray-500">
-                            {formatCurrency(offer.offered_price)} • Status {offer.status}
-                          </div>
-                          <div className="text-[11px] text-gray-400">
-                            Expires {formatDate(offer.expires_on_game_date)}
-                            {offer.auto_block_reason ? ` • ${offer.auto_block_reason}` : ''}
-                          </div>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                </div>
-
-                <div className="bg-white rounded-lg p-4 shadow border border-gray-100">
-                  <h4 className="font-semibold text-gray-900">Buyer Negotiations</h4>
-                  <div className="mt-3 space-y-3">
-                    {myBuyerNegotiations.length === 0 ? (
-                      <div className="text-sm text-gray-500">
-                        No rider negotiations for your buyer club yet.
-                      </div>
-                    ) : (
-                      myBuyerNegotiations.map((negotiation) => {
-                        const draft = getNegotiationDraft(negotiation)
-                        const isOpen = negotiation.status === 'open'
-
-                        return (
-                          <div
-                            key={negotiation.id}
-                            className="rounded-lg border border-gray-100 bg-gray-50 p-3"
-                          >
-                            <div className="flex items-start justify-between gap-3">
-                              <div className="min-w-0">
-                                <div className="text-sm font-semibold text-gray-900">
-                                  Rider ID {negotiation.rider_id}
-                                </div>
-                                <div className="text-xs text-gray-500">
-                                  Status {negotiation.status} • Expected{' '}
-                                  {formatCurrency(negotiation.expected_salary_weekly)} • Min{' '}
-                                  {formatCurrency(negotiation.min_acceptable_salary_weekly)}
-                                </div>
-                                <div className="text-[11px] text-gray-400">
-                                  Preferred duration{' '}
-                                  {negotiation.preferred_duration_seasons} season(s) • Expires{' '}
-                                  {formatDate(negotiation.expires_on_game_date)}
-                                </div>
-                              </div>
-                            </div>
-
-                            <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
-                              <div>
-                                <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-gray-500">
-                                  Salary / week
-                                </label>
-                                <input
-                                  type="number"
-                                  value={draft.salary}
-                                  onChange={(e) =>
-                                    updateNegotiationDraft(negotiation.id, {
-                                      salary: e.target.value,
-                                    })
-                                  }
-                                  disabled={!isOpen}
-                                  className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 disabled:bg-gray-100"
-                                />
-                              </div>
-
-                              <div>
-                                <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-gray-500">
-                                  Duration (seasons)
-                                </label>
-                                <input
-                                  type="number"
-                                  min={1}
-                                  max={5}
-                                  value={draft.duration}
-                                  onChange={(e) =>
-                                    updateNegotiationDraft(negotiation.id, {
-                                      duration: e.target.value,
-                                    })
-                                  }
-                                  disabled={!isOpen}
-                                  className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 disabled:bg-gray-100"
-                                />
-                              </div>
-                            </div>
-
-                            <div className="mt-3 flex items-center justify-between gap-3">
-                              <div className="text-xs text-gray-500">
-                                Attempts {negotiation.attempt_count}/{negotiation.max_attempts}
-                                {negotiation.locked_until
-                                  ? ` • Locked until ${negotiation.locked_until}`
-                                  : ''}
-                                {negotiation.closed_reason
-                                  ? ` • ${negotiation.closed_reason}`
-                                  : ''}
-                              </div>
-
-                              {isOpen ? (
-                                <button
-                                  type="button"
-                                  onClick={() => handleSubmitNegotiation(negotiation)}
-                                  disabled={riderActionLoading}
-                                  className="px-4 py-2 rounded-md text-sm font-medium bg-yellow-400 hover:bg-yellow-300 text-black"
-                                >
-                                  Submit Terms
-                                </button>
-                              ) : null}
-                            </div>
-                          </div>
-                        )
-                      })
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-white rounded-lg p-4 shadow border border-gray-100">
-                <h4 className="font-semibold text-gray-900">Seller Negotiations</h4>
-                <div className="mt-3 space-y-2">
-                  {mySellerNegotiations.length === 0 ? (
-                    <div className="text-sm text-gray-500">
-                      No rider negotiations involving your selling club yet.
-                    </div>
-                  ) : (
-                    mySellerNegotiations.map((negotiation) => (
-                      <div
-                        key={negotiation.id}
-                        className="rounded-lg border border-gray-100 bg-gray-50 p-3"
-                      >
-                        <div className="text-sm font-semibold text-gray-900">
-                          Buyer {clubNameMap[negotiation.buyer_club_id] || negotiation.buyer_club_id}
-                        </div>
-                        <div className="text-xs text-gray-500">
-                          Status {negotiation.status} • Expected{' '}
-                          {formatCurrency(negotiation.expected_salary_weekly)} • Last offer{' '}
-                          {formatCurrency(negotiation.offer_salary_weekly)}
-                        </div>
-                        <div className="text-[11px] text-gray-400">
-                          Duration {negotiation.offer_duration_seasons ?? '—'} • Expires{' '}
-                          {formatDate(negotiation.expires_on_game_date)}
-                          {negotiation.closed_reason ? ` • ${negotiation.closed_reason}` : ''}
-                        </div>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </div>
-            </>
-          ) : (
-            <>
-              <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 w-full">
-                <div className="bg-white rounded-lg p-4 shadow border border-gray-100 h-[640px] flex flex-col">
-                  <h4 className="font-semibold text-gray-900">Free Agents</h4>
-                  <div className="mt-1 text-sm text-gray-500">
-                    Available free agents. Click any row to open the rider popup.
-                  </div>
-
-                  <div className="mt-4 space-y-2 flex-1 overflow-auto pr-1">
-                    {riderLoading ? (
-                      <div className="rounded-lg border border-gray-100 bg-gray-50 p-4 text-sm text-gray-500">
-                        Loading free agents...
-                      </div>
-                    ) : freeAgents.length === 0 ? (
-                      <div className="rounded-lg border border-gray-100 bg-gray-50 p-4 text-sm text-gray-500">
-                        No available free agents right now.
-                      </div>
-                    ) : (
-                      freeAgents.map((agent) => (
-                        <CompactMarketRow
-                          key={agent.id}
-                          title={agent.rider?.display_name || 'Unknown rider'}
-                          subtitle={`${agent.rider?.role || '—'} • OVR ${
-                            agent.rider?.overall ?? '—'
-                          } • Desired tier ${agent.desired_tier}`}
-                          value={formatCurrency(agent.expected_salary_weekly)}
-                          countryCode={agent.rider?.country_code}
-                          onClick={() => openRiderPopup(agent.rider_id)}
-                        />
-                      ))
-                    )}
-                  </div>
-                </div>
-
-                <div className="bg-white rounded-lg p-4 shadow border border-gray-100 h-[640px] flex flex-col">
-                  <h4 className="font-semibold text-gray-900">Free Agent Negotiations</h4>
-                  <div className="mt-1 text-sm text-gray-500">
-                    Your visible free-agent negotiations. Click any row to open the rider popup.
-                  </div>
-
-                  <div className="mt-4 space-y-2 flex-1 overflow-auto pr-1">
-                    {riderLoading ? (
-                      <div className="rounded-lg border border-gray-100 bg-gray-50 p-4 text-sm text-gray-500">
-                        Loading negotiations...
-                      </div>
-                    ) : freeAgentNegotiations.length === 0 ? (
-                      <div className="rounded-lg border border-gray-100 bg-gray-50 p-4 text-sm text-gray-500">
-                        No free-agent negotiations yet.
-                      </div>
-                    ) : (
-                      freeAgentNegotiations.map((negotiation) => (
-                        <CompactMarketRow
-                          key={negotiation.id}
-                          title={negotiation.rider?.display_name || 'Unknown rider'}
-                          subtitle={`Status ${negotiation.status} • Expected ${formatCurrency(
-                            negotiation.expected_salary_weekly
-                          )} • Min ${formatCurrency(
-                            negotiation.min_acceptable_salary_weekly
-                          )}`}
-                          value={
-                            negotiation.offer_salary_weekly
-                              ? formatCurrency(negotiation.offer_salary_weekly)
-                              : `${negotiation.preferred_duration_seasons}y`
-                          }
-                          countryCode={negotiation.rider?.country_code}
-                          onClick={() => openRiderPopup(negotiation.rider_id)}
-                        />
-                      ))
-                    )}
-                  </div>
-                </div>
-              </div>
-            </>
-          )}
-        </div>
+        riderMarketSubTab === 'transfer_list' ? (
+          <RiderTransferListPage
+            riderLoading={riderLoading}
+            nowMs={nowMs}
+            marketSearch={marketSearch}
+            setMarketSearch={setMarketSearch}
+            marketRoleFilter={marketRoleFilter}
+            setMarketRoleFilter={setMarketRoleFilter}
+            riderRoleOptions={riderRoleOptions}
+            marketSort={marketSort}
+            setMarketSort={setMarketSort}
+            marketOnlyActive={marketOnlyActive}
+            setMarketOnlyActive={setMarketOnlyActive}
+            marketHideOwn={marketHideOwn}
+            setMarketHideOwn={setMarketHideOwn}
+            paginatedUnifiedMarketRows={paginatedUnifiedMarketRows.filter(
+              (item): item is Extract<UnifiedMarketRow, { kind: 'transfer' }> =>
+                item.kind === 'transfer'
+            )}
+            selectedMarketListingId={selectedMarketListingId}
+            onSelectMarketItem={(item) => {
+              setSelectedMarketListingId(item.listing_id)
+              setOfferPrice(String(item.raw.asking_price))
+              void openRiderPopup(item.rider_id)
+            }}
+            onQuickActionMarketItem={(item) => {
+              setSelectedMarketListingId(item.listing_id)
+              setOfferPrice(String(item.raw.asking_price))
+              if (!item.is_own_item) {
+                void handleSubmitOffer()
+              }
+            }}
+            marketPageStart={marketPageStart}
+            marketPageEnd={marketPageEnd}
+            totalMarketRows={sortedUnifiedMarketRows.length}
+            marketPage={marketPage}
+            marketTotalPages={marketTotalPages}
+            onPrevMarketPage={() => setMarketPage((prev) => Math.max(1, prev - 1))}
+            onNextMarketPage={() => setMarketPage((prev) => Math.min(marketTotalPages, prev + 1))}
+            ownRiders={ownRiders}
+            selectedOwnedRiderId={selectedOwnedRiderId}
+            onSelectOwnedRider={setSelectedOwnedRiderId}
+            selectedOwnedRider={selectedOwnedRider}
+            listAskingPrice={listAskingPrice}
+            setListAskingPrice={setListAskingPrice}
+            listDurationDays={listDurationDays}
+            setListDurationDays={setListDurationDays}
+            riderActionLoading={riderActionLoading}
+            onListRider={() => {
+              void handleListRider()
+            }}
+            selectedMarketListing={selectedMarketListing}
+            clubId={clubId}
+            offerPrice={offerPrice}
+            setOfferPrice={setOfferPrice}
+            onSubmitOffer={() => {
+              void handleSubmitOffer()
+            }}
+            myListings={myListings}
+            onCancelListing={(listingId) => {
+              void handleCancelListing(listingId)
+            }}
+            myReceivedOffers={myReceivedOffers}
+            clubNameMap={clubNameMap}
+            onRejectOffer={(offerId) => {
+              void handleRejectOffer(offerId)
+            }}
+            onAcceptOffer={(offerId) => {
+              void handleAcceptOffer(offerId)
+            }}
+            mySentOffers={mySentOffers}
+            myBuyerNegotiations={myBuyerNegotiations}
+            getNegotiationDraft={getNegotiationDraft}
+            updateNegotiationDraft={updateNegotiationDraft}
+            onSubmitNegotiation={(negotiation) => {
+              void handleSubmitNegotiation(negotiation)
+            }}
+            mySellerNegotiations={mySellerNegotiations}
+          />
+        ) : (
+          <RiderFreeAgentsPage
+            riderLoading={riderLoading}
+            nowMs={nowMs}
+            marketSearch={marketSearch}
+            setMarketSearch={setMarketSearch}
+            marketRoleFilter={marketRoleFilter}
+            setMarketRoleFilter={setMarketRoleFilter}
+            riderRoleOptions={riderRoleOptions}
+            marketSort={marketSort}
+            setMarketSort={setMarketSort}
+            marketOnlyActive={marketOnlyActive}
+            setMarketOnlyActive={setMarketOnlyActive}
+            paginatedUnifiedMarketRows={paginatedUnifiedMarketRows.filter(
+              (item): item is Extract<UnifiedMarketRow, { kind: 'free_agent' }> =>
+                item.kind === 'free_agent'
+            )}
+            selectedFreeAgentId={selectedFreeAgentId}
+            onSelectMarketItem={(item) => {
+              setSelectedFreeAgentId(item.free_agent_id)
+              void openRiderPopup(item.rider_id)
+            }}
+            onQuickActionMarketItem={(item) => {
+              setSelectedFreeAgentId(item.free_agent_id)
+              void handleStartFreeAgentNegotiation(item.raw)
+            }}
+            marketPageStart={marketPageStart}
+            marketPageEnd={marketPageEnd}
+            totalMarketRows={sortedUnifiedMarketRows.length}
+            marketPage={marketPage}
+            marketTotalPages={marketTotalPages}
+            onPrevMarketPage={() => setMarketPage((prev) => Math.max(1, prev - 1))}
+            onNextMarketPage={() => setMarketPage((prev) => Math.min(marketTotalPages, prev + 1))}
+            selectedFreeAgent={selectedFreeAgent}
+            riderActionLoading={riderActionLoading}
+            onStartFreeAgentNegotiation={(agent) => {
+              void handleStartFreeAgentNegotiation(agent)
+            }}
+            myFreeAgentNegotiations={myFreeAgentNegotiations}
+          />
+        )
       ) : (
-        <div className="grid grid-cols-1 xl:grid-cols-[1.15fr_0.85fr] gap-4 w-full">
-          <div className="bg-white rounded-lg p-4 shadow border border-gray-100">
-            <div className="flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
-              <div>
-                <h4 className="font-semibold text-gray-900">Available Staff</h4>
-                <div className="mt-1 text-sm text-gray-500">
-                  Browse available staff candidates and hire directly into vacant roles.
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div>
-                  <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-gray-500">
-                    Role Filter
-                  </label>
-                  <select
-                    value={roleFilter}
-                    onChange={(e) => setRoleFilter(e.target.value as 'all' | StaffRole)}
-                    className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700"
-                  >
-                    <option value="all">All Roles</option>
-                    <option value="head_coach">Head Coach</option>
-                    <option value="team_doctor">Team Doctor</option>
-                    <option value="mechanic">Mechanic</option>
-                    <option value="sport_director">Sport Director</option>
-                    <option value="scout_analyst">Scout / Analyst</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-gray-500">
-                    Sort By
-                  </label>
-                  <select
-                    value={sortField}
-                    onChange={(e) => setSortField(e.target.value as StaffSortField)}
-                    className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700"
-                  >
-                    <option value="salary">Salary</option>
-                    <option value="skills">Skills</option>
-                    <option value="name">Name</option>
-                    <option value="country">Country</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-gray-500">
-                    Direction
-                  </label>
-                  <select
-                    value={sortDirection}
-                    onChange={(e) => setSortDirection(e.target.value as SortDirection)}
-                    className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700"
-                  >
-                    <option value="asc">Ascending</option>
-                    <option value="desc">Descending</option>
-                  </select>
-                </div>
-              </div>
-            </div>
-
-            <div className="mt-4 space-y-3">
-              {paginatedCandidates.length === 0 ? (
-                <div className="rounded-lg border border-gray-100 bg-gray-50 p-4 text-sm text-gray-500">
-                  No available staff candidates found.
-                </div>
-              ) : (
-                paginatedCandidates.map((candidate) => {
-                  const occupiedRole = occupiedRoleMap.get(candidate.role_type)
-                  const selected = candidate.id === selectedCandidateId
-
-                  return (
-                    <button
-                      key={candidate.id}
-                      type="button"
-                      onClick={() => setSelectedCandidateId(candidate.id)}
-                      className={`w-full rounded-lg p-4 shadow border text-left transition ${
-                        selected
-                          ? 'border-yellow-300 bg-yellow-50'
-                          : 'border-gray-100 bg-white hover:border-gray-200'
-                      }`}
-                    >
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-2">
-                            <img
-                              src={getCountryFlagUrl(safeCountryCode(candidate.country_code))}
-                              alt={getCountryName(candidate.country_code)}
-                              className="h-4 w-6 rounded-sm border border-gray-200 object-cover shrink-0"
-                            />
-                            <div className="text-sm font-semibold text-gray-900">
-                              {candidate.staff_name}
-                            </div>
-                          </div>
-
-                          <div className="mt-1 text-xs text-gray-500">
-                            {roleLabel(candidate.role_type)}
-                            {candidate.specialization ? ` • ${candidate.specialization}` : ''}
-                          </div>
-                        </div>
-
-                        <div className="text-sm font-semibold text-gray-700 shrink-0">
-                          {formatCurrency(candidate.salary_weekly)}/week
-                        </div>
-                      </div>
-
-                      <div className="mt-3 grid grid-cols-3 gap-2">
-                        {getCandidateStats(candidate).map((stat) => (
-                          <div key={stat.label} className="rounded-lg bg-gray-50 p-2">
-                            <div className="text-[11px] text-gray-500">{stat.label}</div>
-                            <div className="mt-1 text-sm font-semibold text-gray-900">
-                              {stat.value}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-
-                      {occupiedRole ? (
-                        <div className="mt-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
-                          Role currently filled by {occupiedRole.staff_name}.
-                        </div>
-                      ) : null}
-                    </button>
-                  )
-                })
-              )}
-            </div>
-
-            <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div className="text-xs text-gray-500">
-                Showing {pageStart}-{pageEnd} of {sortedCandidates.length} candidates
-              </div>
-
-              {sortedCandidates.length > CANDIDATES_PER_PAGE ? (
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
-                    disabled={currentPage === 1}
-                    className={`px-3 py-2 rounded-md text-sm font-medium transition ${
-                      currentPage === 1
-                        ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
-                        : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'
-                    }`}
-                  >
-                    Previous
-                  </button>
-
-                  <div className="text-sm text-gray-600 px-2">
-                    Page {currentPage} / {totalPages}
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
-                    disabled={currentPage === totalPages}
-                    className={`px-3 py-2 rounded-md text-sm font-medium transition ${
-                      currentPage === totalPages
-                        ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
-                        : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'
-                    }`}
-                  >
-                    Next
-                  </button>
-                </div>
-              ) : null}
-            </div>
-          </div>
-
-          <div className="space-y-4">
-            <div className="bg-white rounded-lg p-4 shadow border border-gray-100">
-              <h4 className="font-semibold text-gray-900">Candidate Details</h4>
-
-              {!selectedCandidate ? (
-                <div className="mt-3 text-sm text-gray-500">
-                  Select a staff candidate to view details.
-                </div>
-              ) : (
-                <>
-                  <div className="mt-3 flex items-center gap-3">
-                    <img
-                      src={getCountryFlagUrl(safeCountryCode(selectedCandidate.country_code))}
-                      alt={getCountryName(selectedCandidate.country_code)}
-                      className="h-5 w-7 rounded-sm border border-gray-200 object-cover"
-                    />
-                    <div>
-                      <div className="font-semibold text-gray-900">
-                        {selectedCandidate.staff_name}
-                      </div>
-                      <div className="text-sm text-gray-500">
-                        {roleLabel(selectedCandidate.role_type)}
-                        {selectedCandidate.specialization
-                          ? ` • ${selectedCandidate.specialization}`
-                          : ''}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="mt-4 grid grid-cols-2 gap-3">
-                    <div className="rounded-lg bg-gray-50 p-3">
-                      <div className="text-xs text-gray-500">Weekly Wage Demand</div>
-                      <div className="mt-1 text-sm font-semibold text-gray-900">
-                        {formatCurrency(selectedCandidate.salary_weekly)}
-                      </div>
-                    </div>
-
-                    <div className="rounded-lg bg-gray-50 p-3">
-                      <div className="text-xs text-gray-500">Availability</div>
-                      <div className="mt-1 text-sm font-semibold text-gray-900">
-                        {selectedCandidate.is_available ? 'Available' : 'Unavailable'}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="mt-4">
-                    <div className="text-sm font-semibold text-gray-900">Staff Attributes</div>
-                    <div className="mt-3 space-y-2">
-                      {[
-                        ...getCandidateStats(selectedCandidate),
-                        { label: 'Leadership', value: selectedCandidate.leadership },
-                        { label: 'Loyalty', value: selectedCandidate.loyalty },
-                      ].map((stat) => (
-                        <div
-                          key={stat.label}
-                          className="flex items-center justify-between rounded-lg bg-gray-50 px-3 py-2"
-                        >
-                          <span className="text-sm text-gray-600">{stat.label}</span>
-                          <span className="text-sm font-semibold text-gray-900">
-                            {stat.value}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="mt-5 flex items-center justify-between gap-3">
-                    <div className="text-xs text-gray-400">
-                      {occupiedRoleMap.get(selectedCandidate.role_type)
-                        ? 'Role must be vacant for direct hire'
-                        : ' '}
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={handleHireCandidate}
-                      disabled={
-                        hireLoading || Boolean(occupiedRoleMap.get(selectedCandidate.role_type))
-                      }
-                      className={`px-4 py-2 rounded-md text-sm font-medium transition ${
-                        hireLoading || Boolean(occupiedRoleMap.get(selectedCandidate.role_type))
-                          ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
-                          : 'bg-yellow-400 hover:bg-yellow-300 text-black'
-                      }`}
-                    >
-                      {hireLoading ? 'Hiring...' : 'Hire Staff'}
-                    </button>
-                  </div>
-                </>
-              )}
-            </div>
-
-            <div className="bg-white rounded-lg p-4 shadow border border-gray-100">
-              <h4 className="font-semibold text-gray-900">Current Staff Roles</h4>
-              <div className="mt-3 space-y-2 text-sm text-gray-600">
-                {(
-                  [
-                    'head_coach',
-                    'team_doctor',
-                    'mechanic',
-                    'sport_director',
-                    'scout_analyst',
-                  ] as StaffRole[]
-                ).map((role) => {
-                  const current = occupiedRoleMap.get(role)
-
-                  return (
-                    <div
-                      key={role}
-                      className="flex items-center justify-between rounded-lg bg-gray-50 px-3 py-2"
-                    >
-                      <span>{roleLabel(role)}</span>
-                      <span className={current ? 'text-gray-800' : 'text-gray-400'}>
-                        {current ? current.staff_name : 'Vacant'}
-                      </span>
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-          </div>
-        </div>
+        <StaffFreeAgentPage
+          roleFilter={roleFilter}
+          setRoleFilter={setRoleFilter}
+          sortField={sortField}
+          setSortField={setSortField}
+          sortDirection={sortDirection}
+          setSortDirection={setSortDirection}
+          paginatedCandidates={paginatedCandidates}
+          selectedCandidateId={selectedCandidateId}
+          onSelectCandidate={setSelectedCandidateId}
+          occupiedRoleMap={occupiedRoleMap}
+          pageStart={pageStart}
+          pageEnd={pageEnd}
+          totalCandidates={sortedCandidates.length}
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPrevPage={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+          onNextPage={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
+          selectedCandidate={selectedCandidate}
+          hireLoading={hireLoading}
+          onHireCandidate={() => {
+            void handleHireCandidate()
+          }}
+        />
       )}
 
       <RiderProfileModal

@@ -6,6 +6,8 @@
  * - Built for HashRouter links (`#/dashboard/...`).
  * - Dashboard data is loaded from Supabase RPC: `get_dashboard_overview`.
  * - Uses silent background refresh to avoid page flicker.
+ * - Integrates with sponsor dashboard RPC to pull the signed main sponsor logo
+ *   into the overview "Main Sponsor" panel when available.
  */
 
 import React from 'react'
@@ -121,6 +123,7 @@ type MainSponsor = {
 
 type DashboardOverviewData = {
   club: {
+    id?: string
     name: string
     handle: string
     countryCode: string
@@ -146,47 +149,143 @@ type DashboardOverviewData = {
   mainSponsor: MainSponsor
 }
 
+/**
+ * SponsorKindForOverview
+ * Narrowed sponsor kind union used for sponsor dashboard integration in overview.
+ */
+type SponsorKindForOverview = 'main' | 'secondary' | 'technical'
+
+/**
+ * SignedSponsorForOverview
+ * Minimal shape of a signed sponsor as returned by sponsor_get_dashboard,
+ * restricted to fields needed by the overview page.
+ */
+interface SignedSponsorForOverview {
+  sponsor_kind?: SponsorKindForOverview | string
+  logo_url?: string | null
+  metadata?: Record<string, unknown> | null
+  name?: string | null
+  status?: string | null
+}
+
+/**
+ * SponsorDashboardForOverview
+ * Minimal shape of the sponsor dashboard payload needed by the overview page.
+ */
+interface SponsorDashboardForOverview {
+  club_id?: string | null
+  signed_sponsors?: SignedSponsorForOverview[]
+}
+
 const currencyFormatter = new Intl.NumberFormat('en-US', {
   style: 'currency',
   currency: 'EUR',
   maximumFractionDigits: 0,
 })
 
+/**
+ * formatCurrency
+ * Formats a number as a EUR currency string without decimals.
+ */
 function formatCurrency(value: number) {
   return currencyFormatter.format(value)
 }
 
+/**
+ * formatSignedCurrency
+ * Formats a number as a signed EUR string (prefixing + for positive values).
+ */
 function formatSignedCurrency(value: number) {
   if (value > 0) return `+${formatCurrency(value)}`
   if (value < 0) return `-${formatCurrency(Math.abs(value))}`
   return formatCurrency(0)
 }
 
+/**
+ * cn
+ * Simple conditional class name joiner.
+ */
 function cn(...values: Array<string | false | null | undefined>) {
   return values.filter(Boolean).join(' ')
 }
 
+/**
+ * asArray
+ * Safe helper to coerce an unknown value into an array of T.
+ */
 function asArray<T>(value: unknown): T[] {
   return Array.isArray(value) ? (value as T[]) : []
 }
 
+/**
+ * asObject
+ * Safe helper to coerce an unknown value into an object of type T with fallback.
+ */
 function asObject<T>(value: unknown, fallback: T): T {
   return value && typeof value === 'object' ? (value as T) : fallback
 }
 
+/**
+ * asString
+ * Safe helper to coerce an unknown value into a string with fallback.
+ */
 function asString(value: unknown, fallback = ''): string {
   return typeof value === 'string' ? value : fallback
 }
 
+/**
+ * asBoolean
+ * Safe helper to coerce an unknown value into a boolean with fallback.
+ */
 function asBoolean(value: unknown, fallback = false): boolean {
   return typeof value === 'boolean' ? value : fallback
 }
 
+/**
+ * stableStringify
+ * Deterministic JSON stringify used for shallow change detection.
+ */
 function stableStringify(value: unknown) {
   return JSON.stringify(value)
 }
 
-function normalizeMainSponsor(value: unknown): MainSponsor {
+/**
+ * getMetadataValueFromObject
+ * Returns a trimmed string value from a loose metadata object if present; otherwise null.
+ */
+function getMetadataValueFromObject(
+  metadata: Record<string, unknown> | null | undefined,
+  key: string,
+): string | null {
+  if (!metadata) return null
+  const value = metadata[key]
+  return typeof value === 'string' && value.trim().length > 0 ? value : null
+}
+
+/**
+ * resolveMainSponsorLogoUrlFromDashboard
+ * Extracts the best-guess logo URL for a signed main sponsor coming from the
+ * sponsor dashboard payload, preferring direct logo_url and falling back to
+ * metadata.logo_url when set.
+ */
+function resolveMainSponsorLogoUrlFromDashboard(
+  signedSponsor: SignedSponsorForOverview | null | undefined,
+): string | null {
+  if (!signedSponsor) return null
+
+  const direct = typeof signedSponsor.logo_url === 'string' ? signedSponsor.logo_url : null
+  const metaLogo = getMetadataValueFromObject(signedSponsor.metadata ?? null, 'logo_url')
+  const finalUrl = direct || metaLogo
+
+  if (!finalUrl || finalUrl.trim().length === 0) return null
+  return finalUrl
+}
+
+/**
+ * normalizeMainSponsor
+ * Normalizes a loose main sponsor-like value into the MainSponsor type.
+ */
+function normalizeMainSponsor(value: unknown, fallbackIsActive = false): MainSponsor {
   const safe = asObject<Record<string, unknown>>(value, {})
   const metadata = asObject<Record<string, unknown>>(safe.metadata, {})
   const branding = asObject<Record<string, unknown>>(safe.branding, {})
@@ -197,6 +296,7 @@ function normalizeMainSponsor(value: unknown): MainSponsor {
     asString(safe.company_name) ||
     asString(metadata.company_name) ||
     'Main Sponsor'
+
   const logoUrl =
     asString(safe.logoUrl) ||
     asString(safe.logo_url) ||
@@ -215,7 +315,20 @@ function normalizeMainSponsor(value: unknown): MainSponsor {
     (logoUrl ? 'Signed main sponsor deal' : 'No main sponsor deal signed yet.')
 
   const href = asString(safe.href, '#/dashboard/finance')
-  const isActive = asBoolean(safe.isActive, Boolean(logoUrl))
+  const status = asString(safe.status).toLowerCase()
+  const isSignedByStatus =
+    status === 'signed' || status === 'active' || status === 'running' || status === 'current'
+
+  const isActive = asBoolean(
+    safe.isActive,
+    asBoolean(
+      safe.is_active,
+      asBoolean(
+        safe.isSigned,
+        asBoolean(safe.signed, Boolean(logoUrl) || isSignedByStatus || fallbackIsActive),
+      ),
+    ),
+  )
 
   return {
     name,
@@ -226,6 +339,10 @@ function normalizeMainSponsor(value: unknown): MainSponsor {
   }
 }
 
+/**
+ * normalizeDashboardPayload
+ * Converts the raw RPC payload for get_dashboard_overview into a typed structure.
+ */
 function normalizeDashboardPayload(payload: unknown): DashboardOverviewData {
   const safe = asObject<Record<string, unknown>>(payload, {})
   const fallbackMainSponsor =
@@ -235,6 +352,7 @@ function normalizeDashboardPayload(payload: unknown): DashboardOverviewData {
     safe.main_sponsor_company ??
     safe.sponsor ??
     safe.primarySponsor
+
   const finance = asObject(safe.finance, {
     balance: 0,
     weeklyNet: 0,
@@ -245,8 +363,23 @@ function normalizeDashboardPayload(payload: unknown): DashboardOverviewData {
     latestTransactionAmount: 0,
   })
 
+  const financeSafe = asObject<Record<string, unknown>>(finance, {})
+
+  const mainSponsorSignedHint =
+    asBoolean(safe.mainSponsorSigned) ||
+    asBoolean(safe.main_sponsor_signed) ||
+    asBoolean(safe.hasMainSponsor) ||
+    asBoolean(safe.has_main_sponsor) ||
+    asBoolean(financeSafe.mainSponsorSigned) ||
+    asBoolean(financeSafe.main_sponsor_signed) ||
+    asBoolean(financeSafe.hasMainSponsor) ||
+    asBoolean(financeSafe.has_main_sponsor) ||
+    asBoolean(financeSafe.mainSponsorActive) ||
+    asBoolean(financeSafe.main_sponsor_active)
+
   return {
     club: asObject(safe.club, {
+      id: '',
       name: 'Club',
       handle: 'Manager',
       countryCode: '',
@@ -280,13 +413,16 @@ function normalizeDashboardPayload(payload: unknown): DashboardOverviewData {
     finance,
     quickActions: asArray<QuickActionItem>(safe.quickActions),
     mainSponsor: normalizeMainSponsor(
-      fallbackMainSponsor ??
-        asObject<Record<string, unknown>>(finance, {}).mainSponsor ??
-        asObject<Record<string, unknown>>(finance, {}).main_sponsor,
+      fallbackMainSponsor ?? financeSafe.mainSponsor ?? financeSafe.main_sponsor,
+      mainSponsorSignedHint,
     ),
   }
 }
 
+/**
+ * getAlertClasses
+ * Returns Tailwind classes for an alert chip based on alert level.
+ */
 function getAlertClasses(level: AlertLevel) {
   switch (level) {
     case 'danger':
@@ -301,6 +437,10 @@ function getAlertClasses(level: AlertLevel) {
   }
 }
 
+/**
+ * getFeedAccent
+ * Returns Tailwind background classes for a feed item icon.
+ */
 function getFeedAccent(level: FeedLevel) {
   switch (level) {
     case 'finance':
@@ -321,6 +461,10 @@ function getFeedAccent(level: FeedLevel) {
   }
 }
 
+/**
+ * getFeedIcon
+ * Returns a simple text icon for a feed item.
+ */
 function getFeedIcon(level: FeedLevel) {
   switch (level) {
     case 'finance':
@@ -341,6 +485,10 @@ function getFeedIcon(level: FeedLevel) {
   }
 }
 
+/**
+ * Card
+ * Basic rounded card wrapper with border and shadow.
+ */
 function Card({
   children,
   className,
@@ -355,6 +503,10 @@ function Card({
   )
 }
 
+/**
+ * SectionTitle
+ * Standard section title with optional subtitle.
+ */
 function SectionTitle({
   title,
   subtitle,
@@ -372,6 +524,10 @@ function SectionTitle({
   )
 }
 
+/**
+ * SectionEmptyState
+ * Generic empty state panel for a section.
+ */
 function SectionEmptyState({
   title,
   description,
@@ -387,6 +543,10 @@ function SectionEmptyState({
   )
 }
 
+/**
+ * KpiCard
+ * Shows a single KPI metric.
+ */
 function KpiCard({ item }: { item: KpiItem }) {
   return (
     <Card className="p-4">
@@ -395,11 +555,17 @@ function KpiCard({ item }: { item: KpiItem }) {
       </div>
       <div className="mt-2 text-2xl font-bold text-slate-900">{item.value}</div>
       <div className="mt-2 text-sm text-slate-500">{item.hint}</div>
-      {item.trend ? <div className="mt-3 text-xs font-medium text-slate-700">{item.trend}</div> : null}
+      {item.trend ? (
+        <div className="mt-3 text-xs font-medium text-slate-700">{item.trend}</div>
+      ) : null}
     </Card>
   )
 }
 
+/**
+ * ProgressMetric
+ * Horizontal progress indicator used for squad metrics.
+ */
 function ProgressMetric({
   label,
   value,
@@ -425,6 +591,10 @@ function ProgressMetric({
   )
 }
 
+/**
+ * SmallStat
+ * Compact statistic row used across cards.
+ */
 function SmallStat({
   label,
   value,
@@ -442,6 +612,10 @@ function SmallStat({
   )
 }
 
+/**
+ * OperationCard
+ * Card for a single active operation.
+ */
 function OperationCard({ item }: { item: OperationItem }) {
   const hasMetrics = Array.isArray(item.metrics) && item.metrics.length > 0
 
@@ -484,6 +658,10 @@ function OperationCard({ item }: { item: OperationItem }) {
   )
 }
 
+/**
+ * ScheduleRow
+ * Row for an upcoming schedule entry.
+ */
 function ScheduleRow({ item }: { item: ScheduleItem }) {
   const content = (
     <div className="flex items-start gap-4 rounded-xl border border-slate-200 px-4 py-3 transition hover:bg-slate-50">
@@ -501,6 +679,10 @@ function ScheduleRow({ item }: { item: ScheduleItem }) {
   return item.href ? <a href={item.href}>{content}</a> : content
 }
 
+/**
+ * DayRaceRow
+ * Row for races happening on the current game day.
+ */
 function DayRaceRow({ item }: { item: DayRaceItem }) {
   const content = (
     <div className="flex items-start justify-between gap-4 rounded-xl border border-slate-200 px-4 py-3 transition hover:bg-slate-50">
@@ -519,6 +701,10 @@ function DayRaceRow({ item }: { item: DayRaceItem }) {
   return item.href ? <a href={item.href}>{content}</a> : content
 }
 
+/**
+ * NewsRow
+ * Row for a single news item.
+ */
 function NewsRow({ item }: { item: NewsItem }) {
   const content = (
     <div className="rounded-xl border border-slate-200 px-4 py-3 transition hover:bg-slate-50">
@@ -533,6 +719,10 @@ function NewsRow({ item }: { item: NewsItem }) {
   return item.href ? <a href={item.href}>{content}</a> : content
 }
 
+/**
+ * FeedRow
+ * Row for a single activity feed item.
+ */
 function FeedRow({ item }: { item: FeedItem }) {
   const content = (
     <div className="flex items-start gap-3 rounded-xl px-2 py-2 transition hover:bg-slate-50">
@@ -557,6 +747,10 @@ function FeedRow({ item }: { item: FeedItem }) {
   return item.href ? <a href={item.href}>{content}</a> : content
 }
 
+/**
+ * QuickAction
+ * Gradient tile linking to a primary management area.
+ */
 function QuickAction({ item }: { item: QuickActionItem }) {
   return (
     <a
@@ -573,27 +767,62 @@ function QuickAction({ item }: { item: QuickActionItem }) {
   )
 }
 
+/**
+ * MainSponsorPanel
+ * Visual panel that shows the main sponsor logo or a meaningful empty state.
+ * Fixed-height container so the card size does not change, while the logo
+ * stretches to use much more of the available space.
+ */
 function MainSponsorPanel({ sponsor }: { sponsor: MainSponsor }) {
-  const hasLogo = Boolean(sponsor.logoUrl)
+  const [failed, setFailed] = React.useState(false)
+
+  React.useEffect(() => {
+    setFailed(false)
+  }, [sponsor.logoUrl])
+
+  const hasLogo = Boolean(sponsor.logoUrl) && !failed
+  const hasSignedSponsor = Boolean(sponsor.isActive || sponsor.logoUrl)
+  const initials = (sponsor.name || 'MS')
+    .split(' ')
+    .map((part) => part.trim()[0] ?? '')
+    .join('')
+    .slice(0, 2)
+    .toUpperCase()
 
   return (
-    <div className="flex min-h-[220px] items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 p-6">
+    <div className="h-[220px] rounded-2xl border border-slate-200 bg-slate-50 p-3">
       {hasLogo ? (
-        <img
-          src={sponsor.logoUrl}
-          alt={sponsor.name || 'Main Sponsor'}
-          className="max-h-32 max-w-full object-contain"
-        />
+        <div className="flex h-full w-full items-center justify-center overflow-hidden rounded-xl bg-white">
+          <img
+            src={sponsor.logoUrl}
+            alt={sponsor.name || 'Main Sponsor'}
+            loading="lazy"
+            onError={() => setFailed(true)}
+            className="h-full w-full object-contain p-1"
+          />
+        </div>
+      ) : hasSignedSponsor ? (
+        <div className="flex h-full w-full items-center justify-center rounded-xl bg-white">
+          <div className="flex h-24 w-24 items-center justify-center rounded-2xl border border-slate-300 bg-white text-xl font-bold text-slate-700">
+            {initials}
+          </div>
+        </div>
       ) : (
-        <div className="text-center">
-          <div className="text-base font-semibold text-slate-700">No Main Sponsor signed</div>
-          <div className="mt-1 text-sm text-slate-500">Please visit Sponsor Page.</div>
+        <div className="flex h-full w-full items-center justify-center rounded-xl bg-white text-center">
+          <div>
+            <div className="text-base font-semibold text-slate-700">No Main Sponsor signed</div>
+            <div className="mt-1 text-sm text-slate-500">Please visit Sponsor Page.</div>
+          </div>
         </div>
       )}
     </div>
   )
 }
 
+/**
+ * EmptyState
+ * Generic centered empty state component.
+ */
 function EmptyState({
   title,
   subtitle,
@@ -609,13 +838,20 @@ function EmptyState({
   )
 }
 
+/**
+ * DashboardSkeleton
+ * Skeleton layout while the overview data is loading.
+ */
 function DashboardSkeleton() {
   return (
     <div className="w-full space-y-6">
       <div className="h-20 animate-pulse rounded-2xl border border-slate-200 bg-slate-100" />
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-6">
         {Array.from({ length: 6 }).map((_, i) => (
-          <div key={i} className="h-28 animate-pulse rounded-2xl border border-slate-200 bg-slate-100" />
+          <div
+            key={i}
+            className="h-28 animate-pulse rounded-2xl border border-slate-200 bg-slate-100"
+          />
         ))}
       </div>
       <div className="grid grid-cols-12 gap-6">
@@ -637,6 +873,10 @@ function DashboardSkeleton() {
   )
 }
 
+/**
+ * OverviewPage
+ * Top-level dashboard overview page component.
+ */
 export default function OverviewPage() {
   const [data, setData] = React.useState<DashboardOverviewData | null>(null)
   const [loading, setLoading] = React.useState(true)
@@ -653,6 +893,11 @@ export default function OverviewPage() {
     let alive = true
     let inFlight = false
 
+    /**
+     * loadDashboard
+     * Loads the main dashboard overview and enriches it with main sponsor logo
+     * information from the sponsor dashboard when available.
+     */
     async function loadDashboard(options?: { silent?: boolean }) {
       if (inFlight) return
       inFlight = true
@@ -674,6 +919,7 @@ export default function OverviewPage() {
         const { data: rpcData, error: rpcError } = await supabase.rpc('get_dashboard_overview')
 
         if (rpcError) {
+          // eslint-disable-next-line no-console
           console.error('Dashboard RPC error', rpcError)
           throw new Error(
             [
@@ -691,7 +937,64 @@ export default function OverviewPage() {
           throw new Error('Dashboard payload is empty.')
         }
 
-        const normalized = normalizeDashboardPayload(rpcData)
+        let normalized = normalizeDashboardPayload(rpcData)
+
+        // Try to enrich main sponsor with the signed main sponsor logo from the sponsor dashboard.
+        try {
+          const clubId =
+            normalized.club.id && normalized.club.id.trim().length > 0
+              ? normalized.club.id
+              : null
+
+          const { data: sponsorData, error: sponsorError } = await supabase.rpc(
+            'sponsor_get_dashboard',
+            {
+              p_club_id: clubId,
+            },
+          )
+
+          if (sponsorError) {
+            // eslint-disable-next-line no-console
+            console.error('Sponsor dashboard RPC error', sponsorError)
+          } else if (sponsorData) {
+            const dashboard = sponsorData as SponsorDashboardForOverview
+            const signedMain = Array.isArray(dashboard.signed_sponsors)
+              ? dashboard.signed_sponsors.find(
+                  (s) => (s.sponsor_kind ?? '').toString().toLowerCase() === 'main',
+                )
+              : undefined
+
+            if (signedMain) {
+              const logoUrl = resolveMainSponsorLogoUrlFromDashboard(signedMain)
+              const signedStatus = (signedMain.status ?? '').toString().toLowerCase()
+              const isSignedByStatus =
+                signedStatus === 'signed' ||
+                signedStatus === 'active' ||
+                signedStatus === 'running' ||
+                signedStatus === 'current'
+
+              normalized = {
+                ...normalized,
+                mainSponsor: {
+                  ...normalized.mainSponsor,
+                  name: signedMain.name || normalized.mainSponsor.name,
+                  logoUrl: logoUrl || normalized.mainSponsor.logoUrl,
+                  isActive: Boolean(logoUrl) || isSignedByStatus || true,
+                  subtitle:
+                    normalized.mainSponsor.subtitle &&
+                    normalized.mainSponsor.subtitle !== 'No main sponsor deal signed yet.'
+                      ? normalized.mainSponsor.subtitle
+                      : 'Signed main sponsor deal',
+                },
+              }
+            }
+          }
+        } catch (sponsorErr) {
+          // Sponsor integration is non-critical for the overview; log and continue.
+          // eslint-disable-next-line no-console
+          console.error('Sponsor dashboard enrichment failed', sponsorErr)
+        }
+
         const nextSerialized = stableStringify(normalized)
         const currentSerialized = stableStringify(dataRef.current)
 
@@ -702,6 +1005,7 @@ export default function OverviewPage() {
           setError(null)
         }
       } catch (err) {
+        // eslint-disable-next-line no-console
         console.error('Dashboard load failed', err)
 
         if (alive && !hasVisibleData) {
@@ -716,10 +1020,10 @@ export default function OverviewPage() {
       }
     }
 
-    loadDashboard()
+    void loadDashboard()
 
     const interval = window.setInterval(() => {
-      loadDashboard({ silent: true })
+      void loadDashboard({ silent: true })
     }, 30000)
 
     return () => {
@@ -856,7 +1160,11 @@ export default function OverviewPage() {
               </div>
 
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                <SmallStat label="Form" value={data.squadPulse.form} valueClassName="text-emerald-600" />
+                <SmallStat
+                  label="Form"
+                  value={data.squadPulse.form}
+                  valueClassName="text-emerald-600"
+                />
                 <SmallStat label="Available Riders" value={data.squadPulse.availableRiders} />
                 <SmallStat
                   label="Injured"
@@ -989,9 +1297,14 @@ export default function OverviewPage() {
               <SmallStat
                 label="Weekly Net"
                 value={formatSignedCurrency(data.finance.weeklyNet)}
-                valueClassName={data.finance.weeklyNet >= 0 ? 'text-emerald-600' : 'text-red-600'}
+                valueClassName={
+                  data.finance.weeklyNet >= 0 ? 'text-emerald-600' : 'text-red-600'
+                }
               />
-              <SmallStat label="Sponsor Income" value={formatCurrency(data.finance.sponsorIncome)} />
+              <SmallStat
+                label="Sponsor Income"
+                value={formatCurrency(data.finance.sponsorIncome)}
+              />
               <SmallStat
                 label="Recurring Policy Cost"
                 value={formatCurrency(data.finance.recurringPolicyCost)}
@@ -1012,7 +1325,9 @@ export default function OverviewPage() {
               <div
                 className={cn(
                   'mt-1 text-sm font-bold',
-                  data.finance.latestTransactionAmount >= 0 ? 'text-emerald-600' : 'text-red-600',
+                  data.finance.latestTransactionAmount >= 0
+                    ? 'text-emerald-600'
+                    : 'text-red-600',
                 )}
               >
                 {formatSignedCurrency(data.finance.latestTransactionAmount)}
