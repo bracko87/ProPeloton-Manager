@@ -4,6 +4,8 @@
 
 import React from 'react'
 
+type RiderProfileRenderVariant = 'modal' | 'page'
+
 type RiderProfileModalProps = {
   rider: {
     id?: string
@@ -48,6 +50,8 @@ type RiderProfileModalProps = {
   showRiderHistory: boolean
   setShowRiderHistory: React.Dispatch<React.SetStateAction<boolean>>
   countryNameByCode: Map<string, string>
+  variant?: RiderProfileRenderVariant
+  backButtonLabel?: string
 }
 
 function formatCurrency(value: number | null | undefined) {
@@ -73,8 +77,12 @@ export default function RiderProfileModal({
   showRiderHistory,
   setShowRiderHistory,
   countryNameByCode,
+  variant = 'modal',
+  backButtonLabel = 'Back',
 }: RiderProfileModalProps) {
   if (!isOpen || !rider) return null
+
+  const isPage = variant === 'page'
 
   const stats = [
     { label: 'OVR', value: rider.overall },
@@ -92,8 +100,20 @@ export default function RiderProfileModal({
   ]
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
-      <div className="w-full max-w-4xl rounded-xl bg-white shadow-2xl">
+    <div
+      className={
+        isPage
+          ? 'min-h-full w-full bg-slate-50 px-4 py-5 sm:px-6 lg:px-8'
+          : 'fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4'
+      }
+    >
+      <div
+        className={
+          isPage
+            ? 'mx-auto w-full max-w-5xl rounded-xl border border-gray-200 bg-white shadow-lg'
+            : 'w-full max-w-4xl rounded-xl bg-white shadow-2xl'
+        }
+      >
         <div className="flex items-start justify-between border-b border-gray-100 px-6 py-4">
           <div>
             <h3 className="text-xl font-semibold text-gray-900">
@@ -110,7 +130,7 @@ export default function RiderProfileModal({
             onClick={onClose}
             className="rounded-md border border-gray-200 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
           >
-            Close
+            {isPage ? backButtonLabel : 'Close'}
           </button>
         </div>
 

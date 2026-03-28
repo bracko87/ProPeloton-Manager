@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router'
 import { supabase } from '../../lib/supabase'
-import RiderProfileModal from '../../components/riders/RiderProfileModal'
 import RiderTransferListPage from './transfers/RiderTransferListPage'
 import RiderFreeAgentsPage from './transfers/RiderFreeAgentsPage'
 import StaffFreeAgentPage from './transfers/StaffFreeAgentPage'
@@ -154,42 +154,6 @@ type TransferNegotiationRow = {
   updated_at: string
 }
 
-type RiderPopupRow = {
-  id: string
-  display_name: string
-  country_code: string | null
-  role: string
-  overall: number | null
-  potential: number | null
-  sprint: number | null
-  climbing: number | null
-  time_trial: number | null
-  endurance: number | null
-  flat: number | null
-  recovery: number | null
-  resistance: number | null
-  race_iq: number | null
-  teamwork: number | null
-  morale: number | null
-  birth_date: string | null
-  market_value: number | null
-  salary: number | null
-  contract_expires_season: number | null
-  availability_status: string | null
-  fatigue: number | null
-  image_url: string | null
-  club_id: string | null
-  club_name: string | null
-  club_country_code: string | null
-  club_tier: string | null
-  club_is_ai: boolean | null
-  club_is_active: boolean | null
-  age_years: number | null
-  season_points_overall: number
-  season_points_sprint: number
-  season_points_climbing: number
-}
-
 type FreeAgentMarketRow = {
   id: string
   rider_id: string
@@ -292,7 +256,7 @@ const RIDERS_PER_PAGE = 30
 
 function formatCurrency(value: number | null | undefined) {
   if (value == null || Number.isNaN(value)) return '—'
-  return `$${Number(value).toLocaleString('de-DE')}`
+  return `$${Math.round(Number(value)).toLocaleString('en-US')}`
 }
 
 function safeCountryCode(countryCode: string | null | undefined) {
@@ -457,6 +421,8 @@ function UnderlineSubTabButton({
 }
 
 export default function TransfersPage() {
+  const navigate = useNavigate()
+
   const [activeTab, setActiveTab] = useState<TransferTab>('riders')
   const [riderMarketSubTab, setRiderMarketSubTab] =
     useState<RiderMarketSubTab>('transfer_list')
@@ -504,11 +470,6 @@ export default function TransfersPage() {
   const [negotiationDrafts, setNegotiationDrafts] = useState<
     Record<string, { salary: string; duration: string }>
   >({})
-
-  const [selectedPopupRider, setSelectedPopupRider] = useState<RiderPopupRow | null>(null)
-  const [isRiderPopupOpen, setIsRiderPopupOpen] = useState(false)
-  const [isRiderScouted, setIsRiderScouted] = useState(false)
-  const [showRiderHistory, setShowRiderHistory] = useState(false)
 
   const [marketSearch, setMarketSearch] = useState('')
   const [marketRoleFilter, setMarketRoleFilter] = useState<RiderRoleFilter>('all')
@@ -639,65 +600,8 @@ export default function TransfersPage() {
     return result
   }
 
-  async function openRiderPopup(riderId: string) {
-    try {
-      setPageMessage(null)
-
-      const { data, error } = await supabase
-        .from('rider_statistics_view')
-        .select('*')
-        .eq('rider_id', riderId)
-        .maybeSingle()
-
-      if (error) throw error
-      if (!data) throw new Error('Rider profile not found.')
-
-      const row = data as Record<string, any>
-
-      const popupRow: RiderPopupRow = {
-        id: row.rider_id ?? row.id,
-        display_name: row.display_name ?? 'Unknown rider',
-        country_code: row.country_code ?? null,
-        role: row.role ?? '',
-        overall: row.overall ?? null,
-        potential: row.potential ?? null,
-        sprint: row.sprint ?? null,
-        climbing: row.climbing ?? null,
-        time_trial: row.time_trial ?? null,
-        endurance: row.endurance ?? null,
-        flat: row.flat ?? null,
-        recovery: row.recovery ?? null,
-        resistance: row.resistance ?? null,
-        race_iq: row.race_iq ?? null,
-        teamwork: row.teamwork ?? null,
-        morale: row.morale ?? null,
-        birth_date: row.birth_date ?? null,
-        market_value: row.market_value ?? null,
-        salary: row.salary ?? null,
-        contract_expires_season: row.contract_expires_season ?? null,
-        availability_status: row.availability_status ?? null,
-        fatigue: row.fatigue ?? null,
-        image_url: row.image_url ?? null,
-        club_id: row.club_id ?? null,
-        club_name: row.club_name ?? null,
-        club_country_code: row.club_country_code ?? null,
-        club_tier: row.club_tier ?? null,
-        club_is_ai: row.club_is_ai ?? null,
-        club_is_active: row.club_is_active ?? null,
-        age_years: row.age_years ?? null,
-        season_points_overall: row.season_points_overall ?? 0,
-        season_points_sprint: row.season_points_sprint ?? 0,
-        season_points_climbing: row.season_points_climbing ?? 0,
-      }
-
-      setSelectedPopupRider(popupRow)
-      setIsRiderScouted(false)
-      setShowRiderHistory(false)
-      setIsRiderPopupOpen(true)
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to open rider profile.'
-      setPageMessage(message)
-    }
+  function openRiderProfilePage(riderId: string) {
+    navigate(`/dashboard/riders/${riderId}`)
   }
 
   async function loadRiderData(clubIdValue: string, mounted = true) {
@@ -1199,7 +1103,9 @@ export default function TransfersPage() {
       if (marketSort === 'overall_desc') return (b.overall ?? -1) - (a.overall ?? -1)
       if (marketSort === 'overall_asc') return (a.overall ?? 999) - (b.overall ?? 999)
       if (marketSort === 'price_desc') return (b.amount_value ?? -1) - (a.amount_value ?? -1)
-      if (marketSort === 'price_asc') return (a.amount_value ?? 999999999) - (b.amount_value ?? 999999999)
+      if (marketSort === 'price_asc') {
+        return (a.amount_value ?? 999999999) - (b.amount_value ?? 999999999)
+      }
 
       if (marketSort === 'age_desc') return (b.age_years ?? -1) - (a.age_years ?? -1)
       if (marketSort === 'age_asc') return (a.age_years ?? 999) - (b.age_years ?? 999)
@@ -1644,7 +1550,7 @@ export default function TransfersPage() {
             onSelectMarketItem={(item) => {
               setSelectedMarketListingId(item.listing_id)
               setOfferPrice(String(item.raw.asking_price))
-              void openRiderPopup(item.rider_id)
+              openRiderProfilePage(item.rider_id)
             }}
             onQuickActionMarketItem={(item) => {
               setSelectedMarketListingId(item.listing_id)
@@ -1720,7 +1626,7 @@ export default function TransfersPage() {
             selectedFreeAgentId={selectedFreeAgentId}
             onSelectMarketItem={(item) => {
               setSelectedFreeAgentId(item.free_agent_id)
-              void openRiderPopup(item.rider_id)
+              openRiderProfilePage(item.rider_id)
             }}
             onQuickActionMarketItem={(item) => {
               setSelectedFreeAgentId(item.free_agent_id)
@@ -1767,23 +1673,6 @@ export default function TransfersPage() {
           }}
         />
       )}
-
-      <RiderProfileModal
-        rider={selectedPopupRider}
-        isOpen={isRiderPopupOpen}
-        onClose={() => {
-          setIsRiderPopupOpen(false)
-          setSelectedPopupRider(null)
-          setIsRiderScouted(false)
-          setShowRiderHistory(false)
-        }}
-        onOpenTeamProfile={() => {}}
-        isRiderScouted={isRiderScouted}
-        setIsRiderScouted={setIsRiderScouted}
-        showRiderHistory={showRiderHistory}
-        setShowRiderHistory={setShowRiderHistory}
-        countryNameByCode={new Map<string, string>()}
-      />
     </div>
   )
 }

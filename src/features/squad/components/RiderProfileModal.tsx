@@ -1650,6 +1650,8 @@ function CompareRiderModal({
   )
 }
 
+type RiderProfileRenderVariant = 'modal' | 'page'
+
 type RiderProfileModalProps = {
   open: boolean
   onClose: () => void
@@ -1657,6 +1659,8 @@ type RiderProfileModalProps = {
   onImageUpdated?: (id: string, imageUrl: string) => void
   gameDate?: string | null
   currentTeamType?: TeamType
+  variant?: RiderProfileRenderVariant
+  backButtonLabel?: string
 }
 
 export default function RiderProfileModal({
@@ -1666,7 +1670,11 @@ export default function RiderProfileModal({
   onImageUpdated,
   gameDate,
   currentTeamType = 'first',
+  variant = 'modal',
+  backButtonLabel = 'Back',
 }: RiderProfileModalProps) {
+  const isPage = variant === 'page'
+
   const [profileLoading, setProfileLoading] = useState(false)
   const [profileError, setProfileError] = useState<string | null>(null)
   const [selectedRider, setSelectedRider] = useState<RiderDetails | null>(null)
@@ -2039,12 +2047,22 @@ export default function RiderProfileModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4 backdrop-blur-sm"
-      onClick={closeAll}
+      className={
+        isPage
+          ? 'min-h-full w-full bg-slate-50 p-4 sm:p-6'
+          : 'fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4 backdrop-blur-sm'
+      }
+      onClick={isPage ? undefined : closeAll}
     >
       <div
-        className="flex max-h-[92vh] w-full max-w-5xl flex-col overflow-hidden rounded-[24px] border border-slate-200 bg-white shadow-[0_24px_80px_rgba(15,23,42,0.22)]"
-        onClick={(e) => e.stopPropagation()}
+        className={
+          isPage
+            ? 'mx-auto flex w-full max-w-6xl flex-col overflow-hidden rounded-[24px] border border-slate-200 bg-white shadow-[0_24px_80px_rgba(15,23,42,0.15)]'
+            : 'flex max-h-[92vh] w-full max-w-5xl flex-col overflow-hidden rounded-[24px] border border-slate-200 bg-white shadow-[0_24px_80px_rgba(15,23,42,0.22)]'
+        }
+        onClick={(e) => {
+          if (!isPage) e.stopPropagation()
+        }}
       >
         <div className="shrink-0 border-b border-slate-200 px-6 py-5">
           <div className="flex items-start justify-between gap-4">
@@ -2099,7 +2117,7 @@ export default function RiderProfileModal({
               onClick={closeAll}
               className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50"
             >
-              Close
+              {isPage ? backButtonLabel : 'Close'}
             </button>
           </div>
         </div>
@@ -2420,7 +2438,9 @@ export default function RiderProfileModal({
 
                       <div className="rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-700">
                         {currentHealthCase?.health_case_id
-                          ? `Medical case: ${healthCaseName ?? 'Health issue'}${healthStageLabel ? ` · ${healthStageLabel}` : ''}`
+                          ? `Medical case: ${healthCaseName ?? 'Health issue'}${
+                              healthStageLabel ? ` · ${healthStageLabel}` : ''
+                            }`
                           : 'No active medical case recorded right now.'}
                       </div>
                     </div>

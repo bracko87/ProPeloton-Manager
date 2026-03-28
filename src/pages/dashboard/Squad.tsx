@@ -10,7 +10,7 @@
  */
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
-import { useLocation } from 'react-router'
+import { useLocation, useNavigate } from 'react-router'
 import { supabase } from '../../lib/supabase'
 
 import type {
@@ -30,7 +30,6 @@ import { getDefaultRiderAvailabilityStatus } from '../../features/squad/utils/ri
 import FirstSquadTab, {
   type SquadListView,
 } from '../../features/squad/components/FirstSquadTab'
-import RiderProfileModal from '../../features/squad/components/RiderProfileModal'
 
 type SquadRosterRow = ClubRosterRow & {
   birth_date?: string | null
@@ -62,6 +61,7 @@ function buildRiderFullName(
 
 export default function SquadPage() {
   const location = useLocation()
+  const navigate = useNavigate()
 
   const [rows, setRows] = useState<SquadRosterRow[]>([])
   const [healthOverviewRows, setHealthOverviewRows] = useState<ClubHealthOverviewRow[]>([])
@@ -69,9 +69,6 @@ export default function SquadPage() {
   const [error, setError] = useState<string | null>(null)
   const [gameDate, setGameDate] = useState<string | null>(null)
   const [listView, setListView] = useState<SquadListView>('general')
-
-  const [profileOpen, setProfileOpen] = useState(false)
-  const [selectedRiderId, setSelectedRiderId] = useState<string | null>(null)
 
   const [developingTeamStatus, setDevelopingTeamStatus] = useState<DevelopingTeamStatus | null>(
     null
@@ -370,8 +367,7 @@ export default function SquadPage() {
   }, [loadSquadPageData])
 
   function openRiderProfile(riderId: string) {
-    setSelectedRiderId(riderId)
-    setProfileOpen(true)
+    navigate(`/dashboard/my-riders/${riderId}`)
   }
 
   async function handleMoveToDevelopingTeam(riderId: string) {
@@ -408,11 +404,6 @@ export default function SquadPage() {
     } finally {
       setMovingRiderId(null)
     }
-  }
-
-  function closeProfile() {
-    setProfileOpen(false)
-    setSelectedRiderId(null)
   }
 
   function isActive(path: string) {
@@ -504,14 +495,6 @@ export default function SquadPage() {
         onOpenRiderProfile={openRiderProfile}
         healthOverviewDisplayRows={healthOverviewDisplayRows}
         squadDisplayData={squadDisplayData}
-      />
-
-      <RiderProfileModal
-        open={profileOpen}
-        onClose={closeProfile}
-        riderId={selectedRiderId}
-        gameDate={gameDate}
-        currentTeamType="first"
       />
     </div>
   )

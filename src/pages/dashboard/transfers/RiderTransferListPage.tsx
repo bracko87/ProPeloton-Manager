@@ -1,17 +1,26 @@
-import React from 'react'
+import React, { useEffect, useMemo } from 'react'
 
-type RiderRoleFilter = 'all' | string
-type RiderMarketSort =
-  | 'active'
-  | 'expires'
-  | 'overall_desc'
-  | 'overall_asc'
-  | 'price_desc'
-  | 'price_asc'
-  | 'name_asc'
-  | 'name_desc'
-  | 'age_asc'
-  | 'age_desc'
+type UnifiedTransferRow = {
+  kind: 'transfer'
+  key: string
+  rider_id: string
+  listing_id: string
+  display_name: string
+  country_code: string | null
+  role: string | null
+  overall: number | null
+  potential: number | null
+  age_years: number | null
+  seller_label: string
+  amount_value: number | null
+  amount_label: string
+  expires_on_game_date: string | null
+  is_user_active: boolean
+  is_own_item: boolean
+  raw: {
+    asking_price: number
+  }
+}
 
 type OwnedRiderRow = {
   rider_id: string
@@ -24,27 +33,6 @@ type OwnedRiderRow = {
   salary: number | null
   contract_expires_at: string | null
   availability_status: string | null
-}
-
-type MarketListingRow = {
-  listing_id: string
-  rider_id: string
-  seller_club_id: string
-  seller_club_name: string | null
-  display_name: string
-  country_code: string | null
-  role: string | null
-  age_years: number | null
-  overall: number | null
-  potential: number | null
-  market_value: number | null
-  asking_price: number
-  salary: number | null
-  contract_expires_at: string | null
-  availability_status: string | null
-  listed_on_game_date: string | null
-  expires_on_game_date: string | null
-  auto_price_clamped: boolean
 }
 
 type TransferListingRow = {
@@ -103,221 +91,36 @@ type TransferNegotiationRow = {
   updated_at: string
 }
 
-type TransferMarketItem = {
-  kind: 'transfer'
-  key: string
-  rider_id: string
-  listing_id: string
-  display_name: string
-  country_code: string | null
-  role: string | null
-  overall: number | null
-  potential: number | null
-  age_years: number | null
-  seller_label: string
-  amount_value: number | null
-  amount_label: string
-  expires_on_game_date: string | null
-  is_user_active: boolean
-  is_own_item: boolean
-  raw: MarketListingRow
-}
-
-function formatCurrency(value: number | null | undefined) {
-  if (value == null || Number.isNaN(value)) return '—'
-  return `$${Number(value).toLocaleString('de-DE')}`
-}
-
-function formatDate(value: string | null | undefined) {
-  if (!value) return '—'
-  return value
-}
-
-function safeCountryCode(countryCode: string | null | undefined) {
-  if (!countryCode || countryCode.length !== 2) return 'rs'
-  return countryCode.toLowerCase()
-}
-
-function getCountryFlagUrl(countryCode: string) {
-  return `https://flagcdn.com/w40/${countryCode.toLowerCase()}.png`
-}
-
-function getCountryName(countryCode: string | null | undefined) {
-  const code = safeCountryCode(countryCode).toUpperCase()
-
-  try {
-    if (typeof Intl !== 'undefined' && typeof Intl.DisplayNames !== 'undefined') {
-      const regionNames = new Intl.DisplayNames(['en'], { type: 'region' })
-      return regionNames.of(code) || code
-    }
-  } catch {
-    return code
-  }
-
-  return code
-}
-
-function tryParseDate(value: string | null | undefined) {
-  if (!value) return null
-  const direct = new Date(value)
-  if (!Number.isNaN(direct.getTime())) return direct
-
-  const asMidnight = new Date(`${value}T00:00:00`)
-  if (!Number.isNaN(asMidnight.getTime())) return asMidnight
-
-  return null
-}
-
-function getExpiryCountdownLabel(value: string | null | undefined, nowMs: number) {
-  if (!value) return 'No expiry'
-
-  const parsed = tryParseDate(value)
-  if (!parsed) return value
-
-  const diffMs = parsed.getTime() - nowMs
-  if (diffMs <= 0) return 'Expired'
-
-  const totalMinutes = Math.floor(diffMs / (1000 * 60))
-  const days = Math.floor(totalMinutes / (60 * 24))
-  const hours = Math.floor((totalMinutes % (60 * 24)) / 60)
-  const minutes = totalMinutes % 60
-
-  if (days > 0) return `${days}d ${hours}h left`
-  if (hours > 0) return `${hours}h ${minutes}m left`
-  return `${minutes}m left`
-}
-
-function MarketActionButton({
-  label,
-  onClick,
-  disabled,
-}: {
-  label: string
-  onClick: () => void
-  disabled?: boolean
-}) {
-  return (
-    <button
-      type="button"
-      onClick={(event) => {
-        event.stopPropagation()
-        onClick()
-      }}
-      disabled={disabled}
-      className={`rounded-md px-3 py-2 text-xs font-semibold transition ${
-        disabled
-          ? 'cursor-not-allowed bg-gray-200 text-gray-500'
-          : 'bg-yellow-400 text-black hover:bg-yellow-300'
-      }`}
-    >
-      {label}
-    </button>
-  )
-}
-
-function MarketListRow({
-  item,
-  nowMs,
-  isSelected,
-  onSelect,
-  onQuickAction,
-}: {
-  item: TransferMarketItem
-  nowMs: number
-  isSelected: boolean
-  onSelect: () => void
-  onQuickAction: () => void
-}) {
-  const countdown = getExpiryCountdownLabel(item.expires_on_game_date, nowMs)
-
-  return (
-    <button
-      type="button"
-      onClick={onSelect}
-      className={`w-full rounded-xl border p-4 text-left transition ${
-        item.is_user_active
-          ? 'border-yellow-300 bg-yellow-50'
-          : isSelected
-            ? 'border-gray-300 bg-gray-50'
-            : 'border-gray-100 bg-white hover:border-gray-200 hover:bg-gray-50'
-      }`}
-    >
-      <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <img
-              src={getCountryFlagUrl(safeCountryCode(item.country_code))}
-              alt={getCountryName(item.country_code)}
-              className="h-4 w-6 shrink-0 rounded-sm border border-gray-200 object-cover"
-            />
-
-            <span className="truncate text-sm font-semibold text-gray-900">{item.display_name}</span>
-
-            {item.is_user_active ? (
-              <span className="rounded-full bg-yellow-300 px-2 py-0.5 text-[11px] font-bold uppercase text-black">
-                Active Offer
-              </span>
-            ) : null}
-
-            {item.is_own_item ? (
-              <span className="rounded-full bg-blue-100 px-2 py-0.5 text-[11px] font-semibold text-blue-700">
-                Own
-              </span>
-            ) : null}
-          </div>
-
-          <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-500">
-            <span>{item.role || '—'}</span>
-            <span>OVR {item.overall ?? '—'}</span>
-            <span>POT {item.potential ?? '—'}</span>
-            <span>Age {item.age_years ?? '—'}</span>
-            <span>{item.seller_label}</span>
-          </div>
-
-          <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-500">
-            <span>{item.amount_label}</span>
-            <span>Visible: {countdown}</span>
-            <span>Expiry: {formatDate(item.expires_on_game_date)}</span>
-          </div>
-        </div>
-
-        <div className="flex shrink-0 items-center gap-3">
-          <div className="text-right">
-            <div className="text-sm font-semibold text-gray-900">Transfer</div>
-            <div className="text-xs text-gray-500">
-              {item.amount_value != null ? formatCurrency(item.amount_value) : '—'}
-            </div>
-          </div>
-
-          <MarketActionButton
-            label="Make Offer"
-            onClick={onQuickAction}
-            disabled={item.is_own_item}
-          />
-        </div>
-      </div>
-    </button>
-  )
-}
+type RiderMarketSort =
+  | 'active'
+  | 'expires'
+  | 'overall_desc'
+  | 'overall_asc'
+  | 'price_desc'
+  | 'price_asc'
+  | 'name_asc'
+  | 'name_desc'
+  | 'age_asc'
+  | 'age_desc'
 
 type RiderTransferListPageProps = {
   riderLoading: boolean
   nowMs: number
   marketSearch: string
-  setMarketSearch: (value: string) => void
-  marketRoleFilter: RiderRoleFilter
-  setMarketRoleFilter: (value: RiderRoleFilter) => void
+  setMarketSearch: React.Dispatch<React.SetStateAction<string>>
+  marketRoleFilter: string
+  setMarketRoleFilter: React.Dispatch<React.SetStateAction<string>>
   riderRoleOptions: string[]
   marketSort: RiderMarketSort
-  setMarketSort: (value: RiderMarketSort) => void
+  setMarketSort: React.Dispatch<React.SetStateAction<RiderMarketSort>>
   marketOnlyActive: boolean
-  setMarketOnlyActive: (value: boolean) => void
+  setMarketOnlyActive: React.Dispatch<React.SetStateAction<boolean>>
   marketHideOwn: boolean
-  setMarketHideOwn: (value: boolean) => void
-  paginatedUnifiedMarketRows: TransferMarketItem[]
+  setMarketHideOwn: React.Dispatch<React.SetStateAction<boolean>>
+  paginatedUnifiedMarketRows: UnifiedTransferRow[]
   selectedMarketListingId: string | null
-  onSelectMarketItem: (item: TransferMarketItem) => void
-  onQuickActionMarketItem: (item: TransferMarketItem) => void
+  onSelectMarketItem: (item: UnifiedTransferRow) => void
+  onQuickActionMarketItem: (item: UnifiedTransferRow) => void
   marketPageStart: number
   marketPageEnd: number
   totalMarketRows: number
@@ -325,27 +128,32 @@ type RiderTransferListPageProps = {
   marketTotalPages: number
   onPrevMarketPage: () => void
   onNextMarketPage: () => void
+
   ownRiders: OwnedRiderRow[]
   selectedOwnedRiderId: string | null
-  onSelectOwnedRider: (riderId: string) => void
+  onSelectOwnedRider: (id: string) => void
   selectedOwnedRider: OwnedRiderRow | null
   listAskingPrice: string
-  setListAskingPrice: (value: string) => void
+  setListAskingPrice: React.Dispatch<React.SetStateAction<string>>
   listDurationDays: string
-  setListDurationDays: (value: string) => void
+  setListDurationDays: React.Dispatch<React.SetStateAction<string>>
   riderActionLoading: boolean
   onListRider: () => void
-  selectedMarketListing: MarketListingRow | null
+
+  selectedMarketListing: UnifiedTransferRow | null
   clubId: string | null
   offerPrice: string
-  setOfferPrice: (value: string) => void
+  setOfferPrice: React.Dispatch<React.SetStateAction<string>>
   onSubmitOffer: () => void
+
   myListings: TransferListingRow[]
   onCancelListing: (listingId: string) => void
+
   myReceivedOffers: TransferOfferRow[]
   clubNameMap: Record<string, string>
   onRejectOffer: (offerId: string) => void
   onAcceptOffer: (offerId: string) => void
+
   mySentOffers: TransferOfferRow[]
   myBuyerNegotiations: TransferNegotiationRow[]
   getNegotiationDraft: (
@@ -359,81 +167,207 @@ type RiderTransferListPageProps = {
   mySellerNegotiations: TransferNegotiationRow[]
 }
 
-export default function RiderTransferListPage({
-  riderLoading,
+function formatCurrency(value: number | null | undefined) {
+  if (value == null || Number.isNaN(value)) return '—'
+  return `$${Math.round(Number(value)).toLocaleString('en-US')}`
+}
+
+function formatDate(value: string | null | undefined) {
+  if (!value) return '—'
+  return value
+}
+
+function safeCountryCode(countryCode: string | null | undefined) {
+  if (!countryCode || countryCode.length !== 2) return 'rs'
+  return countryCode.toLowerCase()
+}
+
+function normalizeRoleLabel(role: string | null | undefined) {
+  if (!role) return 'Rider'
+  return role.replace(/_/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase())
+}
+
+function parseExpiryToMs(value: string | null | undefined) {
+  if (!value) return null
+
+  const direct = new Date(value)
+  if (!Number.isNaN(direct.getTime())) return direct.getTime()
+
+  const endOfDay = new Date(`${value}T23:59:59`)
+  if (!Number.isNaN(endOfDay.getTime())) return endOfDay.getTime()
+
+  return null
+}
+
+function formatCountdown(targetMs: number | null, nowMs: number) {
+  if (!targetMs) return '—'
+  const diff = Math.max(0, targetMs - nowMs)
+
+  const totalSeconds = Math.floor(diff / 1000)
+  const days = Math.floor(totalSeconds / 86400)
+  const hours = Math.floor((totalSeconds % 86400) / 3600)
+  const minutes = Math.floor((totalSeconds % 3600) / 60)
+  const seconds = totalSeconds % 60
+
+  return `${days}d: ${String(hours).padStart(2, '0')}h, ${String(minutes).padStart(
+    2,
+    '0'
+  )}m: ${String(seconds).padStart(2, '0')}s`
+}
+
+function sortLabel(sort: RiderMarketSort) {
+  switch (sort) {
+    case 'active':
+      return 'Active First'
+    case 'expires':
+      return 'Expiring Soon'
+    case 'overall_desc':
+      return 'OVR High to Low'
+    case 'overall_asc':
+      return 'OVR Low to High'
+    case 'price_desc':
+      return 'Price High to Low'
+    case 'price_asc':
+      return 'Price Low to High'
+    case 'name_asc':
+      return 'Name A-Z'
+    case 'name_desc':
+      return 'Name Z-A'
+    case 'age_asc':
+      return 'Age Low to High'
+    case 'age_desc':
+      return 'Age High to Low'
+    default:
+      return 'Active First'
+  }
+}
+
+function Flag({ countryCode }: { countryCode: string | null }) {
+  const code = safeCountryCode(countryCode)
+  return <span className={`fi fi-${code} h-4 w-5 rounded-sm shadow-sm`} aria-hidden="true" />
+}
+
+function TransferRow({
+  item,
   nowMs,
-  marketSearch,
-  setMarketSearch,
-  marketRoleFilter,
-  setMarketRoleFilter,
-  riderRoleOptions,
-  marketSort,
-  setMarketSort,
-  marketOnlyActive,
-  setMarketOnlyActive,
-  marketHideOwn,
-  setMarketHideOwn,
-  paginatedUnifiedMarketRows,
-  selectedMarketListingId,
-  onSelectMarketItem,
-  onQuickActionMarketItem,
-  marketPageStart,
-  marketPageEnd,
-  totalMarketRows,
-  marketPage,
-  marketTotalPages,
-  onPrevMarketPage,
-  onNextMarketPage,
-  ownRiders,
-  selectedOwnedRiderId,
-  onSelectOwnedRider,
-  selectedOwnedRider,
-  listAskingPrice,
-  setListAskingPrice,
-  listDurationDays,
-  setListDurationDays,
-  riderActionLoading,
-  onListRider,
-  selectedMarketListing,
-  clubId,
-  offerPrice,
-  setOfferPrice,
-  onSubmitOffer,
-  myListings,
-  onCancelListing,
-  myReceivedOffers,
-  clubNameMap,
-  onRejectOffer,
-  onAcceptOffer,
-  mySentOffers,
-  myBuyerNegotiations,
-  getNegotiationDraft,
-  updateNegotiationDraft,
-  onSubmitNegotiation,
-  mySellerNegotiations,
-}: RiderTransferListPageProps) {
+  isSelected,
+  onSelect,
+  onMakeOffer,
+  disabled,
+}: {
+  item: UnifiedTransferRow
+  nowMs: number
+  isSelected: boolean
+  onSelect: () => void
+  onMakeOffer: () => void
+  disabled: boolean
+}) {
+  const expiryMs = parseExpiryToMs(item.expires_on_game_date)
+  const countdown = formatCountdown(expiryMs, nowMs)
+
   return (
-    <div className="space-y-4">
-      <div className="rounded-lg border border-gray-100 bg-white p-4 shadow">
-        <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
-          <div>
-            <h4 className="font-semibold text-gray-900">Transfer List Riders</h4>
-            <div className="mt-1 text-sm text-gray-500">
-              Full-width transfer market. Active user offers stay pinned on top and highlighted.
+    <button
+      type="button"
+      onClick={onSelect}
+      className={`w-full rounded-2xl border bg-white px-4 py-4 text-left transition ${
+        isSelected
+          ? 'border-yellow-400 ring-2 ring-yellow-200'
+          : 'border-gray-200 hover:border-gray-300 hover:shadow-sm'
+      }`}
+    >
+      <div className="flex items-center justify-between gap-4">
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-gray-700">
+            <div className="flex min-w-0 items-center gap-2">
+              <Flag countryCode={item.country_code} />
+              <span className="truncate font-bold text-gray-900">{item.display_name}</span>
             </div>
+
+            <span>
+              <span className="font-bold text-gray-900">{normalizeRoleLabel(item.role)}</span>
+            </span>
+
+            <span>
+              <span className="font-bold text-gray-900">OVR</span>{' '}
+              <span>{item.overall ?? '—'}</span>
+            </span>
+
+            <span>
+              <span className="font-bold text-gray-900">Age</span>{' '}
+              <span>{item.age_years ?? '—'}</span>
+            </span>
+
+            <span className="min-w-0 truncate">
+              <span className="font-bold text-gray-900">Seller:</span>{' '}
+              <span className="truncate">{item.seller_label.replace(/^Seller:\s*/i, '')}</span>
+            </span>
+          </div>
+        </div>
+
+        <div className="w-[180px] shrink-0 text-center">
+          <div className="text-sm font-bold text-gray-900">{countdown}</div>
+        </div>
+
+        <div className="flex shrink-0 items-center gap-4">
+          <div className="text-right">
+            <div className="font-semibold text-gray-900">Transfer</div>
+            <div className="text-sm text-gray-600">{formatCurrency(item.amount_value)}</div>
           </div>
 
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5">
-            <div className="xl:col-span-2">
+          <button
+            type="button"
+            onClick={(event) => {
+              event.stopPropagation()
+              onMakeOffer()
+            }}
+            disabled={disabled}
+            className="rounded-lg bg-yellow-400 px-4 py-2 text-sm font-semibold text-black transition hover:bg-yellow-300 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            Make Offer
+          </button>
+        </div>
+      </div>
+    </button>
+  )
+}
+
+export default function RiderTransferListPage(props: RiderTransferListPageProps) {
+  const visibleRows = useMemo(() => {
+    return props.paginatedUnifiedMarketRows.filter((item) => {
+      const expiryMs = parseExpiryToMs(item.expires_on_game_date)
+      if (expiryMs == null) return true
+      return expiryMs > props.nowMs
+    })
+  }, [props.paginatedUnifiedMarketRows, props.nowMs])
+
+  useEffect(() => {
+    if (!visibleRows.length) return
+    const stillSelected = visibleRows.some((row) => row.listing_id === props.selectedMarketListingId)
+    if (stillSelected) return
+    props.onSelectMarketItem(visibleRows[0])
+  }, [visibleRows, props.selectedMarketListingId, props.onSelectMarketItem])
+
+  return (
+    <div className="space-y-6">
+      <section className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+        <div className="mb-4 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <h3 className="text-xl font-semibold text-gray-900">Transfer List Riders</h3>
+            <p className="mt-1 text-sm text-gray-500">
+              Full-width transfer market. Active user offers stay pinned on top and highlighted.
+            </p>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <div>
               <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-gray-500">
                 Search
               </label>
               <input
-                type="text"
-                value={marketSearch}
-                onChange={(e) => setMarketSearch(e.target.value)}
+                value={props.marketSearch}
+                onChange={(event) => props.setMarketSearch(event.target.value)}
                 placeholder="Search rider, role, seller..."
-                className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700"
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none transition focus:border-yellow-400"
               />
             </div>
 
@@ -442,14 +376,14 @@ export default function RiderTransferListPage({
                 Role
               </label>
               <select
-                value={marketRoleFilter}
-                onChange={(e) => setMarketRoleFilter(e.target.value)}
-                className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700"
+                value={props.marketRoleFilter}
+                onChange={(event) => props.setMarketRoleFilter(event.target.value)}
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none transition focus:border-yellow-400"
               >
                 <option value="all">All Roles</option>
-                {riderRoleOptions.map((role) => (
+                {props.riderRoleOptions.map((role) => (
                   <option key={role} value={role}>
-                    {role}
+                    {normalizeRoleLabel(role)}
                   </option>
                 ))}
               </select>
@@ -460,20 +394,20 @@ export default function RiderTransferListPage({
                 Sort
               </label>
               <select
-                value={marketSort}
-                onChange={(e) => setMarketSort(e.target.value as RiderMarketSort)}
-                className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700"
+                value={props.marketSort}
+                onChange={(event) => props.setMarketSort(event.target.value as RiderMarketSort)}
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none transition focus:border-yellow-400"
               >
-                <option value="active">Active First</option>
-                <option value="expires">Expiry</option>
-                <option value="overall_desc">OVR High-Low</option>
-                <option value="overall_asc">OVR Low-High</option>
-                <option value="price_desc">Price High-Low</option>
-                <option value="price_asc">Price Low-High</option>
-                <option value="name_asc">Name A-Z</option>
-                <option value="name_desc">Name Z-A</option>
-                <option value="age_asc">Age Low-High</option>
-                <option value="age_desc">Age High-Low</option>
+                <option value="active">{sortLabel('active')}</option>
+                <option value="expires">{sortLabel('expires')}</option>
+                <option value="overall_desc">{sortLabel('overall_desc')}</option>
+                <option value="overall_asc">{sortLabel('overall_asc')}</option>
+                <option value="price_desc">{sortLabel('price_desc')}</option>
+                <option value="price_asc">{sortLabel('price_asc')}</option>
+                <option value="name_asc">{sortLabel('name_asc')}</option>
+                <option value="name_desc">{sortLabel('name_desc')}</option>
+                <option value="age_asc">{sortLabel('age_asc')}</option>
+                <option value="age_desc">{sortLabel('age_desc')}</option>
               </select>
             </div>
 
@@ -481,9 +415,9 @@ export default function RiderTransferListPage({
               <label className="flex items-center gap-2 text-sm text-gray-700">
                 <input
                   type="checkbox"
-                  checked={marketOnlyActive}
-                  onChange={(e) => setMarketOnlyActive(e.target.checked)}
-                  className="rounded border-gray-300"
+                  checked={props.marketOnlyActive}
+                  onChange={(event) => props.setMarketOnlyActive(event.target.checked)}
+                  className="h-4 w-4 rounded border-gray-300"
                 />
                 Only my active
               </label>
@@ -491,9 +425,9 @@ export default function RiderTransferListPage({
               <label className="flex items-center gap-2 text-sm text-gray-700">
                 <input
                   type="checkbox"
-                  checked={marketHideOwn}
-                  onChange={(e) => setMarketHideOwn(e.target.checked)}
-                  className="rounded border-gray-300"
+                  checked={props.marketHideOwn}
+                  onChange={(event) => props.setMarketHideOwn(event.target.checked)}
+                  className="h-4 w-4 rounded border-gray-300"
                 />
                 Hide own listings
               </label>
@@ -501,88 +435,80 @@ export default function RiderTransferListPage({
           </div>
         </div>
 
-        <div className="mt-4 space-y-3">
-          {riderLoading ? (
-            <div className="rounded-lg border border-gray-100 bg-gray-50 p-4 text-sm text-gray-500">
-              Loading rider market...
-            </div>
-          ) : paginatedUnifiedMarketRows.length === 0 ? (
-            <div className="rounded-lg border border-gray-100 bg-gray-50 p-4 text-sm text-gray-500">
-              No riders found for the current filters.
-            </div>
-          ) : (
-            paginatedUnifiedMarketRows.map((item) => (
-              <MarketListRow
+        {props.riderLoading ? (
+          <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-10 text-center text-sm text-gray-500">
+            Loading transfer market...
+          </div>
+        ) : visibleRows.length === 0 ? (
+          <div className="rounded-xl border border-dashed border-gray-300 bg-gray-50 px-4 py-10 text-center text-sm text-gray-500">
+            No active transfer offers found.
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {visibleRows.map((item) => (
+              <TransferRow
                 key={item.key}
                 item={item}
-                nowMs={nowMs}
-                isSelected={item.listing_id === selectedMarketListingId}
-                onSelect={() => onSelectMarketItem(item)}
-                onQuickAction={() => onQuickActionMarketItem(item)}
+                nowMs={props.nowMs}
+                isSelected={props.selectedMarketListingId === item.listing_id}
+                onSelect={() => props.onSelectMarketItem(item)}
+                onMakeOffer={() => props.onQuickActionMarketItem(item)}
+                disabled={props.riderActionLoading || item.is_own_item}
               />
-            ))
-          )}
-        </div>
+            ))}
+          </div>
+        )}
 
-        <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="text-xs text-gray-500">
-            Showing {marketPageStart}-{marketPageEnd} of {totalMarketRows} riders • 30 per page
+        <div className="mt-5 flex flex-col gap-3 border-t border-gray-100 pt-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="text-sm text-gray-500">
+            Showing {props.marketPageStart}-
+            {Math.min(props.marketPageEnd, props.totalMarketRows)} of {props.totalMarketRows}
           </div>
 
-          {totalMarketRows > 30 ? (
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={onPrevMarketPage}
-                disabled={marketPage === 1}
-                className={`rounded-md px-3 py-2 text-sm font-medium transition ${
-                  marketPage === 1
-                    ? 'cursor-not-allowed bg-gray-200 text-gray-500'
-                    : 'border border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
-                }`}
-              >
-                Previous
-              </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={props.onPrevMarketPage}
+              disabled={props.marketPage <= 1}
+              className="rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              Previous
+            </button>
 
-              <div className="px-2 text-sm text-gray-600">
-                Page {marketPage} / {marketTotalPages}
-              </div>
-
-              <button
-                type="button"
-                onClick={onNextMarketPage}
-                disabled={marketPage === marketTotalPages}
-                className={`rounded-md px-3 py-2 text-sm font-medium transition ${
-                  marketPage === marketTotalPages
-                    ? 'cursor-not-allowed bg-gray-200 text-gray-500'
-                    : 'border border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
-                }`}
-              >
-                Next
-              </button>
+            <div className="px-2 text-sm text-gray-600">
+              Page {props.marketPage} / {props.marketTotalPages}
             </div>
-          ) : null}
+
+            <button
+              type="button"
+              onClick={props.onNextMarketPage}
+              disabled={props.marketPage >= props.marketTotalPages}
+              className="rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              Next
+            </button>
+          </div>
         </div>
-      </div>
+      </section>
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1.05fr_0.95fr]">
         <div className="rounded-lg border border-gray-100 bg-white p-4 shadow">
           <h4 className="font-semibold text-gray-900">List My Rider</h4>
 
           <div className="mt-4 max-h-[320px] space-y-2 overflow-auto pr-1">
-            {ownRiders.length === 0 ? (
+            {props.ownRiders.length === 0 ? (
               <div className="rounded-lg border border-gray-100 bg-gray-50 p-4 text-sm text-gray-500">
                 No riders found for your club.
               </div>
             ) : (
-              ownRiders.map((rider) => {
-                const selected = rider.rider_id === selectedOwnedRiderId
+              props.ownRiders.map((rider) => {
+                const selected = rider.rider_id === props.selectedOwnedRiderId
 
                 return (
                   <button
                     key={rider.rider_id}
                     type="button"
-                    onClick={() => onSelectOwnedRider(rider.rider_id)}
+                    onClick={() => props.onSelectOwnedRider(rider.rider_id)}
                     className={`w-full rounded-lg border p-3 text-left transition ${
                       selected
                         ? 'border-yellow-300 bg-yellow-50'
@@ -593,7 +519,7 @@ export default function RiderTransferListPage({
                       <div className="min-w-0">
                         <div className="font-semibold text-gray-900">{rider.display_name}</div>
                         <div className="text-xs text-gray-500">
-                          {rider.role || '—'} • OVR {rider.overall ?? '—'} • POT{' '}
+                          {normalizeRoleLabel(rider.role)} • OVR {rider.overall ?? '—'} • POT{' '}
                           {rider.potential ?? '—'}
                         </div>
                       </div>
@@ -607,10 +533,10 @@ export default function RiderTransferListPage({
             )}
           </div>
 
-          {selectedOwnedRider ? (
+          {props.selectedOwnedRider ? (
             <div className="mt-4 rounded-lg border border-gray-100 bg-gray-50 p-4">
               <div className="text-sm font-semibold text-gray-900">
-                {selectedOwnedRider.display_name}
+                {props.selectedOwnedRider.display_name}
               </div>
 
               <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -620,8 +546,8 @@ export default function RiderTransferListPage({
                   </label>
                   <input
                     type="number"
-                    value={listAskingPrice}
-                    onChange={(e) => setListAskingPrice(e.target.value)}
+                    value={props.listAskingPrice}
+                    onChange={(e) => props.setListAskingPrice(e.target.value)}
                     className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700"
                   />
                 </div>
@@ -633,8 +559,8 @@ export default function RiderTransferListPage({
                   <input
                     type="number"
                     min={1}
-                    value={listDurationDays}
-                    onChange={(e) => setListDurationDays(e.target.value)}
+                    value={props.listDurationDays}
+                    onChange={(e) => props.setListDurationDays(e.target.value)}
                     className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700"
                   />
                 </div>
@@ -642,20 +568,20 @@ export default function RiderTransferListPage({
 
               <div className="mt-4 flex items-center justify-between gap-3">
                 <div className="text-xs text-gray-500">
-                  Market value: {formatCurrency(selectedOwnedRider.market_value)}
+                  Market value: {formatCurrency(props.selectedOwnedRider.market_value)}
                 </div>
 
                 <button
                   type="button"
-                  onClick={onListRider}
-                  disabled={riderActionLoading}
+                  onClick={props.onListRider}
+                  disabled={props.riderActionLoading}
                   className={`rounded-md px-4 py-2 text-sm font-medium transition ${
-                    riderActionLoading
+                    props.riderActionLoading
                       ? 'cursor-not-allowed bg-gray-200 text-gray-500'
                       : 'bg-yellow-400 text-black hover:bg-yellow-300'
                   }`}
                 >
-                  {riderActionLoading ? 'Processing...' : 'List Rider'}
+                  {props.riderActionLoading ? 'Processing...' : 'List Rider'}
                 </button>
               </div>
             </div>
@@ -665,19 +591,24 @@ export default function RiderTransferListPage({
         <div className="rounded-lg border border-gray-100 bg-white p-4 shadow">
           <h4 className="font-semibold text-gray-900">Selected Listing</h4>
 
-          {!selectedMarketListing ? (
+          {!props.selectedMarketListing ? (
             <div className="mt-3 text-sm text-gray-500">
               Select a listed rider from the market list above.
             </div>
           ) : (
             <>
               <div className="mt-3">
-                <div className="font-semibold text-gray-900">
-                  {selectedMarketListing.display_name}
+                <div className="flex items-center gap-2">
+                  <Flag countryCode={props.selectedMarketListing.country_code} />
+                  <div className="font-semibold text-gray-900">
+                    {props.selectedMarketListing.display_name}
+                  </div>
                 </div>
                 <div className="text-sm text-gray-500">
-                  {selectedMarketListing.role || '—'} • Age {selectedMarketListing.age_years ?? '—'} •
-                  OVR {selectedMarketListing.overall ?? '—'} • POT {selectedMarketListing.potential ?? '—'}
+                  {normalizeRoleLabel(props.selectedMarketListing.role)} • Age{' '}
+                  {props.selectedMarketListing.age_years ?? '—'} • OVR{' '}
+                  {props.selectedMarketListing.overall ?? '—'} • POT{' '}
+                  {props.selectedMarketListing.potential ?? '—'}
                 </div>
               </div>
 
@@ -685,19 +616,19 @@ export default function RiderTransferListPage({
                 <div className="rounded-lg bg-gray-50 p-3">
                   <div className="text-xs text-gray-500">Asking Price</div>
                   <div className="mt-1 text-sm font-semibold text-gray-900">
-                    {formatCurrency(selectedMarketListing.asking_price)}
+                    {formatCurrency(props.selectedMarketListing.raw.asking_price)}
                   </div>
                 </div>
 
                 <div className="rounded-lg bg-gray-50 p-3">
-                  <div className="text-xs text-gray-500">Market Value</div>
+                  <div className="text-xs text-gray-500">Seller</div>
                   <div className="mt-1 text-sm font-semibold text-gray-900">
-                    {formatCurrency(selectedMarketListing.market_value)}
+                    {props.selectedMarketListing.seller_label.replace(/^Seller:\s*/i, '')}
                   </div>
                 </div>
               </div>
 
-              {selectedMarketListing.seller_club_id === clubId ? (
+              {props.selectedMarketListing.is_own_item || props.selectedMarketListing.raw == null ? (
                 <div className="mt-4 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-700">
                   This is your own listing.
                 </div>
@@ -708,28 +639,31 @@ export default function RiderTransferListPage({
                   </label>
                   <input
                     type="number"
-                    value={offerPrice}
-                    onChange={(e) => setOfferPrice(e.target.value)}
+                    value={props.offerPrice}
+                    onChange={(e) => props.setOfferPrice(e.target.value)}
                     className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700"
                   />
 
                   <div className="mt-3 flex items-center justify-between gap-3">
                     <div className="text-xs text-gray-500">
                       Listing visible for{' '}
-                      {getExpiryCountdownLabel(selectedMarketListing.expires_on_game_date, nowMs)}
+                      {formatCountdown(
+                        parseExpiryToMs(props.selectedMarketListing.expires_on_game_date),
+                        props.nowMs
+                      )}
                     </div>
 
                     <button
                       type="button"
-                      onClick={onSubmitOffer}
-                      disabled={riderActionLoading}
+                      onClick={props.onSubmitOffer}
+                      disabled={props.riderActionLoading}
                       className={`rounded-md px-4 py-2 text-sm font-medium transition ${
-                        riderActionLoading
+                        props.riderActionLoading
                           ? 'cursor-not-allowed bg-gray-200 text-gray-500'
                           : 'bg-yellow-400 text-black hover:bg-yellow-300'
                       }`}
                     >
-                      {riderActionLoading ? 'Processing...' : 'Make Offer'}
+                      {props.riderActionLoading ? 'Processing...' : 'Make Offer'}
                     </button>
                   </div>
                 </div>
@@ -743,12 +677,12 @@ export default function RiderTransferListPage({
         <div className="rounded-lg border border-gray-100 bg-white p-4 shadow">
           <h4 className="font-semibold text-gray-900">My Listings</h4>
           <div className="mt-3 space-y-2">
-            {myListings.length === 0 ? (
+            {props.myListings.length === 0 ? (
               <div className="text-sm text-gray-500">
                 No transfer listings created by your club yet.
               </div>
             ) : (
-              myListings.map((listing) => (
+              props.myListings.map((listing) => (
                 <div key={listing.id} className="rounded-lg border border-gray-100 bg-gray-50 p-3">
                   <div className="flex items-center justify-between gap-3">
                     <div className="min-w-0">
@@ -764,8 +698,8 @@ export default function RiderTransferListPage({
                     {listing.status === 'listed' ? (
                       <button
                         type="button"
-                        onClick={() => onCancelListing(listing.id)}
-                        disabled={riderActionLoading}
+                        onClick={() => props.onCancelListing(listing.id)}
+                        disabled={props.riderActionLoading}
                         className="rounded-md border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
                       >
                         Cancel
@@ -781,15 +715,15 @@ export default function RiderTransferListPage({
         <div className="rounded-lg border border-gray-100 bg-white p-4 shadow">
           <h4 className="font-semibold text-gray-900">Offers Received</h4>
           <div className="mt-3 space-y-2">
-            {myReceivedOffers.length === 0 ? (
+            {props.myReceivedOffers.length === 0 ? (
               <div className="text-sm text-gray-500">No visible incoming offers.</div>
             ) : (
-              myReceivedOffers.map((offer) => (
+              props.myReceivedOffers.map((offer) => (
                 <div key={offer.id} className="rounded-lg border border-gray-100 bg-gray-50 p-3">
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <div className="text-sm font-semibold text-gray-900">
-                        {clubNameMap[offer.buyer_club_id] || offer.buyer_club_id}
+                        {props.clubNameMap[offer.buyer_club_id] || offer.buyer_club_id}
                       </div>
                       <div className="text-xs text-gray-500">
                         Offer {formatCurrency(offer.offered_price)} • Status {offer.status}
@@ -804,16 +738,16 @@ export default function RiderTransferListPage({
                       <div className="shrink-0 flex items-center gap-2">
                         <button
                           type="button"
-                          onClick={() => onRejectOffer(offer.id)}
-                          disabled={riderActionLoading}
+                          onClick={() => props.onRejectOffer(offer.id)}
+                          disabled={props.riderActionLoading}
                           className="rounded-md border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
                         >
                           Reject
                         </button>
                         <button
                           type="button"
-                          onClick={() => onAcceptOffer(offer.id)}
-                          disabled={riderActionLoading}
+                          onClick={() => props.onAcceptOffer(offer.id)}
+                          disabled={props.riderActionLoading}
                           className="rounded-md bg-yellow-400 px-3 py-2 text-sm font-medium text-black hover:bg-yellow-300"
                         >
                           Accept
@@ -832,10 +766,10 @@ export default function RiderTransferListPage({
         <div className="rounded-lg border border-gray-100 bg-white p-4 shadow">
           <h4 className="font-semibold text-gray-900">My Sent Offers</h4>
           <div className="mt-3 space-y-2">
-            {mySentOffers.length === 0 ? (
+            {props.mySentOffers.length === 0 ? (
               <div className="text-sm text-gray-500">No visible outgoing offers.</div>
             ) : (
-              mySentOffers.map((offer) => (
+              props.mySentOffers.map((offer) => (
                 <div
                   key={offer.id}
                   className={`rounded-lg border p-3 ${
@@ -845,7 +779,7 @@ export default function RiderTransferListPage({
                   }`}
                 >
                   <div className="text-sm font-semibold text-gray-900">
-                    To seller {clubNameMap[offer.seller_club_id] || offer.seller_club_id}
+                    To seller {props.clubNameMap[offer.seller_club_id] || offer.seller_club_id}
                   </div>
                   <div className="text-xs text-gray-500">
                     {formatCurrency(offer.offered_price)} • Status {offer.status}
@@ -863,13 +797,13 @@ export default function RiderTransferListPage({
         <div className="rounded-lg border border-gray-100 bg-white p-4 shadow">
           <h4 className="font-semibold text-gray-900">Buyer Negotiations</h4>
           <div className="mt-3 space-y-3">
-            {myBuyerNegotiations.length === 0 ? (
+            {props.myBuyerNegotiations.length === 0 ? (
               <div className="text-sm text-gray-500">
                 No rider negotiations for your buyer club yet.
               </div>
             ) : (
-              myBuyerNegotiations.map((negotiation) => {
-                const draft = getNegotiationDraft(negotiation)
+              props.myBuyerNegotiations.map((negotiation) => {
+                const draft = props.getNegotiationDraft(negotiation)
                 const isOpen = negotiation.status === 'open'
 
                 return (
@@ -905,7 +839,7 @@ export default function RiderTransferListPage({
                           type="number"
                           value={draft.salary}
                           onChange={(e) =>
-                            updateNegotiationDraft(negotiation.id, {
+                            props.updateNegotiationDraft(negotiation.id, {
                               salary: e.target.value,
                             })
                           }
@@ -924,7 +858,7 @@ export default function RiderTransferListPage({
                           max={5}
                           value={draft.duration}
                           onChange={(e) =>
-                            updateNegotiationDraft(negotiation.id, {
+                            props.updateNegotiationDraft(negotiation.id, {
                               duration: e.target.value,
                             })
                           }
@@ -944,8 +878,8 @@ export default function RiderTransferListPage({
                       {isOpen ? (
                         <button
                           type="button"
-                          onClick={() => onSubmitNegotiation(negotiation)}
-                          disabled={riderActionLoading}
+                          onClick={() => props.onSubmitNegotiation(negotiation)}
+                          disabled={props.riderActionLoading}
                           className="rounded-md bg-yellow-400 px-4 py-2 text-sm font-medium text-black hover:bg-yellow-300"
                         >
                           Submit Terms
@@ -963,15 +897,15 @@ export default function RiderTransferListPage({
       <div className="rounded-lg border border-gray-100 bg-white p-4 shadow">
         <h4 className="font-semibold text-gray-900">Seller Negotiations</h4>
         <div className="mt-3 space-y-2">
-          {mySellerNegotiations.length === 0 ? (
+          {props.mySellerNegotiations.length === 0 ? (
             <div className="text-sm text-gray-500">
               No rider negotiations involving your selling club yet.
             </div>
           ) : (
-            mySellerNegotiations.map((negotiation) => (
+            props.mySellerNegotiations.map((negotiation) => (
               <div key={negotiation.id} className="rounded-lg border border-gray-100 bg-gray-50 p-3">
                 <div className="text-sm font-semibold text-gray-900">
-                  Buyer {clubNameMap[negotiation.buyer_club_id] || negotiation.buyer_club_id}
+                  Buyer {props.clubNameMap[negotiation.buyer_club_id] || negotiation.buyer_club_id}
                 </div>
                 <div className="text-xs text-gray-500">
                   Status {negotiation.status} • Expected{' '}

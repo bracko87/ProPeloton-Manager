@@ -38,6 +38,8 @@ import InfrastructurePage from './pages/dashboard/Infrastructure'
 import FinancePage from './pages/dashboard/Finance'
 import TransfersPage from './pages/dashboard/Transfers'
 import StatisticsPage from './pages/dashboard/Statistics'
+import RiderProfilePublicPage from './pages/dashboard/riders/RiderProfilePublicPage'
+import RiderProfileOwnPage from './pages/dashboard/riders/RiderProfileOwnPage'
 
 /* Additional pages for profile/menu */
 import InboxPage from './pages/Inbox'
@@ -299,6 +301,8 @@ export default function App(): JSX.Element {
             <Route path="finance" element={<FinancePage />} />
             <Route path="transfers" element={<TransfersPage />} />
             <Route path="statistics" element={<StatisticsPage />} />
+            <Route path="riders/:riderId" element={<RiderProfilePublicPage />} />
+            <Route path="my-riders/:riderId" element={<RiderProfileOwnPage />} />
             <Route path="inbox" element={<InboxPage />} />
             <Route path="my-profile" element={<MyProfilePage />} />
             <Route path="customize-team" element={<CustomizeTeamPage />} />
