@@ -163,6 +163,7 @@ type TransferNegotiationRow = {
 }
 
 type FreeAgentMarketRow = {
+  id?: string
   free_agent_id: string
   rider_id: string
   status: string
@@ -240,6 +241,7 @@ type UnifiedMarketRow =
       key: string
       rider_id: string
       free_agent_id: string
+      full_name: string | null
       display_name: string
       country_code: string | null
       role: string | null
@@ -267,12 +269,15 @@ function formatCurrency(value: number | null | undefined) {
 }
 
 function safeCountryCode(countryCode: string | null | undefined) {
-  if (!countryCode || countryCode.length !== 2) return 'rs'
+  if (!countryCode || countryCode.length !== 2) return null
   return countryCode.toLowerCase()
 }
 
 function getCountryName(countryCode: string | null | undefined) {
-  const code = safeCountryCode(countryCode).toUpperCase()
+  const safeCode = safeCountryCode(countryCode)
+  if (!safeCode) return 'Unknown'
+
+  const code = safeCode.toUpperCase()
 
   try {
     if (typeof Intl !== 'undefined' && typeof Intl.DisplayNames !== 'undefined') {
@@ -381,17 +386,40 @@ function tryParseDate(value: string | null | undefined) {
   return null
 }
 
-function calculateAgeYears(birthDate: string | null | undefined) {
-  if (!birthDate) return null
+function getCurrentGameDateFromState(gameState: GameStateRow | null | undefined) {
+  if (!gameState) return null
+
+  const gameDate = new Date(
+    Date.UTC(
+      gameState.season_number,
+      Math.max(0, (gameState.month_number || 1) - 1),
+      Math.max(1, gameState.day_number || 1),
+      Math.max(0, gameState.hour_number || 0),
+      Math.max(0, gameState.minute_number || 0)
+    )
+  )
+
+  if (Number.isNaN(gameDate.getTime())) return null
+  return gameDate
+}
+
+function calculateAgeYearsFromGameDate(
+  birthDate: string | null | undefined,
+  currentGameDate: Date | null
+) {
+  if (!birthDate || !currentGameDate) return null
 
   const birth = new Date(birthDate)
   if (Number.isNaN(birth.getTime())) return null
 
-  const today = new Date()
-  let age = today.getFullYear() - birth.getFullYear()
-  const monthDiff = today.getMonth() - birth.getMonth()
+  let age = currentGameDate.getUTCFullYear() - birth.getUTCFullYear()
 
-  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+  const hasHadBirthdayThisYear =
+    currentGameDate.getUTCMonth() > birth.getUTCMonth() ||
+    (currentGameDate.getUTCMonth() === birth.getUTCMonth() &&
+      currentGameDate.getUTCDate() >= birth.getUTCDate())
+
+  if (!hasHadBirthdayThisYear) {
     age -= 1
   }
 
@@ -411,8 +439,11 @@ function buildFullName(
   return full || fallback || null
 }
 
-function normalizeFreeAgentNegotiationRow(row: any): FreeAgentNegotiationRow {
-  const rider = (row?.rider || null) as FreeAgentNegotiationRiderInfo | null
+function normalizeFreeAgentNegotiationRow(
+  row: any,
+  currentGameDate: Date | null
+): FreeAgentNegotiationRow {
+  const riderSource = Array.isArray(row?.rider) ? row.rider[0] : row?.rider || null
 
   return {
     id: row.id,
@@ -432,15 +463,16 @@ function normalizeFreeAgentNegotiationRow(row: any): FreeAgentNegotiationRow {
     opened_on_game_date: row.opened_on_game_date,
     closed_reason: row.closed_reason || null,
 
-    display_name: row.display_name || rider?.display_name || 'Unknown rider',
-    country_code: row.country_code || rider?.country_code || null,
-    role: row.role || rider?.role || null,
-    overall: row.overall ?? rider?.overall ?? null,
-    potential: row.potential ?? rider?.potential ?? null,
-    age_years: row.age_years ?? calculateAgeYears(rider?.birth_date),
+    display_name: row.display_name || riderSource?.display_name || 'Unknown rider',
+    country_code: row.country_code || riderSource?.country_code || null,
+    role: row.role || riderSource?.role || null,
+    overall: row.overall ?? riderSource?.overall ?? null,
+    potential: row.potential ?? riderSource?.potential ?? null,
+    age_years:
+      row.age_years ?? calculateAgeYearsFromGameDate(riderSource?.birth_date, currentGameDate),
 
     rider:
-      rider ||
+      riderSource ||
       (row.display_name || row.country_code || row.role || row.overall != null || row.potential != null
         ? {
             id: row.rider_id,
@@ -784,26 +816,23 @@ export default function TransfersPage() {
           `)
           .order('created_at', { ascending: false }),
         supabase
-          .from('rider_free_agents')
+          .from('free_agent_market_view')
           .select(`
-            id,
+            free_agent_id,
             rider_id,
             status,
             expected_salary_weekly,
             expires_on_game_date,
-            rider:riders!rider_free_agents_rider_id_fkey(
-              id,
-              first_name,
-              last_name,
-              display_name,
-              country_code,
-              role,
-              overall,
-              potential,
-              birth_date
-            )
+            created_at,
+            first_name,
+            last_name,
+            display_name,
+            country_code,
+            role,
+            overall,
+            potential,
+            birth_date
           `)
-          .eq('status', 'available')
           .order('created_at', { ascending: false }),
         supabase
           .from('rider_free_agent_negotiations')
@@ -856,52 +885,36 @@ export default function TransfersPage() {
       const listings = (myListingsResult.data || []) as TransferListingRow[]
       const offers = (offersResult.data || []) as TransferOfferRow[]
       const negotiations = (negotiationsResult.data || []) as TransferNegotiationRow[]
+      const gameStateData = gameStateResult.data as GameStateRow
+      const currentGameDate = getCurrentGameDateFromState(gameStateData)
 
       const freeAgentsRows = ((freeAgentsResult.data || []) as any[]).map((row) => {
-        let ageYears: number | null = null
-
-        if (row.rider?.birth_date) {
-          const birthDate = new Date(row.rider.birth_date)
-          const now = new Date()
-          ageYears = now.getUTCFullYear() - birthDate.getUTCFullYear()
-
-          const hasHadBirthdayThisYear =
-            now.getUTCMonth() > birthDate.getUTCMonth() ||
-            (now.getUTCMonth() === birthDate.getUTCMonth() &&
-              now.getUTCDate() >= birthDate.getUTCDate())
-
-          if (!hasHadBirthdayThisYear) {
-            ageYears -= 1
-          }
-        }
-
         const fullName = buildFullName(
-          row.rider?.first_name,
-          row.rider?.last_name,
-          row.rider?.display_name ?? row.rider_id
+          row.first_name,
+          row.last_name,
+          row.display_name ?? row.rider_id
         )
 
         return {
-          free_agent_id: row.id,
+          id: row.free_agent_id,
+          free_agent_id: row.free_agent_id,
           rider_id: row.rider_id,
           status: row.status,
           expected_salary_weekly: row.expected_salary_weekly ?? null,
           expires_on_game_date: row.expires_on_game_date ?? null,
           full_name: fullName,
-          display_name: row.rider?.display_name ?? row.rider_id,
-          country_code: row.rider?.country_code ?? null,
-          role: row.rider?.role ?? null,
-          overall: row.rider?.overall ?? null,
-          potential: row.rider?.potential ?? null,
-          age_years: ageYears,
+          display_name: row.display_name ?? row.rider_id,
+          country_code: row.country_code ?? null,
+          role: row.role ?? null,
+          overall: row.overall ?? null,
+          potential: row.potential ?? null,
+          age_years: calculateAgeYearsFromGameDate(row.birth_date, currentGameDate),
         } satisfies FreeAgentMarketRow
       })
 
       const freeAgentNegotiationRows = ((freeAgentNegotiationsResult.data || []) as any[]).map(
-        normalizeFreeAgentNegotiationRow
+        (row) => normalizeFreeAgentNegotiationRow(row, currentGameDate)
       )
-
-      const gameStateData = gameStateResult.data as GameStateRow
 
       const clubIds = [
         clubIdValue,
@@ -1150,6 +1163,7 @@ export default function TransfersPage() {
         key: `free-agent-${agent.free_agent_id}`,
         rider_id: agent.rider_id,
         free_agent_id: agent.free_agent_id,
+        full_name: agent.full_name,
         display_name: agent.full_name || agent.display_name || 'Unknown rider',
         country_code: agent.country_code,
         role: agent.role,
@@ -1776,6 +1790,9 @@ export default function TransfersPage() {
             onQuickActionMarketItem={(item) => {
               setSelectedFreeAgentId(item.free_agent_id)
               void handleStartFreeAgentNegotiation(item.raw)
+            }}
+            onOpenRiderProfile={(item) => {
+              openRiderProfilePage(item.rider_id)
             }}
             marketPageStart={marketPageStart}
             marketPageEnd={marketPageEnd}

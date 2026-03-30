@@ -2,12 +2,10 @@
  * RiderProfilePage.tsx
  *
  * Latest update:
- * - Back stays left, Actions moved to right
- * - Removed compare notice/banner
- * - Compare Rider removed from Contract tab
- * - Compare Rider in Actions now dispatches a custom event placeholder instead of showing a banner
- * - Training chart no longer shows small focus labels above points
- * - Training chart now shows vertical axis values
+ * - Unified transfer-list active statuses across loaders
+ * - Release is blocked while a rider is transfer listed
+ * - Transfer-list state is visible in the header area
+ * - Added optional roster refresh and compare callbacks
  */
 
 import React, { useEffect, useMemo, useState } from 'react'
@@ -15,7 +13,6 @@ import { supabase } from '../../../lib/supabase'
 
 import type {
   RenewalNegotiationData,
-  RiderAvailabilityStatus,
   RiderCurrentHealthCase,
   RiderDetails,
   TeamType,
@@ -169,12 +166,59 @@ type RiderTrainingSessionPoint = {
   participated: boolean
 }
 
+type ActiveTransferListing = {
+  id: string
+  rider_id: string
+  seller_club_id: string
+  asking_price: number
+  listed_on_game_date: string | null
+  expires_on_game_date: string | null
+  status: string
+}
+
+type ReleaseOwnedRiderResult = {
+  free_agent_id: string
+  rider_id: string
+  released_from_club_id: string
+  release_cost: number
+  remaining_weeks: number
+  remaining_salary: number
+  expires_on_game_date: string | null
+  finance_transaction_id: string | null
+}
+
+type RiderReleasePreview = {
+  rider_id: string
+  main_club_id: string
+  weekly_salary: number
+  contract_expires_on: string | null
+  remaining_days: number
+  remaining_weeks: number
+  remaining_salary: number
+  release_cost: number
+  transfer_listed: boolean
+  transfer_listing_id: string | null
+  blocked_reason: string | null
+  season_end_game_date: string | null
+  free_agent_expires_on_game_date: string | null
+  current_balance: number
+  balance_after_release: number
+  can_afford: boolean
+  can_release: boolean
+}
+
 type RiderProfilePageProps = {
   riderId: string
   gameDate?: string | null
   currentTeamType?: TeamType
   trainingPagePath?: string
   onBack: () => void
+  onRosterChanged?: () => Promise<void> | void
+  onCompareRider?: (payload: {
+    riderId: string
+    riderName: string
+    currentTeamType: TeamType
+  }) => void
 }
 
 const REGULAR_TRAINING_FOCUS_OPTIONS = [
@@ -195,6 +239,8 @@ const REGULAR_TRAINING_INTENSITY_OPTIONS: Array<'light' | 'normal' | 'hard'> = [
   'normal',
   'hard',
 ]
+
+const ACTIVE_TRANSFER_LISTING_STATUSES = ['listed', 'active', 'open'] as const
 
 function formatCompactMoneyValue(value?: number | null) {
   if (value === null || value === undefined || !Number.isFinite(value)) return '—'
@@ -368,6 +414,26 @@ function DetailRow({
   )
 }
 
+function SimpleInfoRow({
+  label,
+  value,
+  note,
+}: {
+  label: string
+  value: React.ReactNode
+  note?: React.ReactNode
+}) {
+  return (
+    <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+      <div className="flex items-start justify-between gap-4">
+        <div className="text-sm text-slate-500">{label}</div>
+        <div className="text-right text-sm font-medium text-slate-900">{value}</div>
+      </div>
+      {note ? <div className="mt-1 text-sm text-slate-600">{note}</div> : null}
+    </div>
+  )
+}
+
 function SimpleAttributeRow({
   label,
   attributeCode,
@@ -486,7 +552,14 @@ function TrainingTrendChart({
 
   return (
     <svg viewBox={`0 0 ${chartWidth} ${chartHeight}`} className="h-[280px] w-full">
-      <line x1={leftPad} y1={topPad} x2={leftPad} y2={baselineY} stroke="rgba(148,163,184,0.35)" strokeWidth="1" />
+      <line
+        x1={leftPad}
+        y1={topPad}
+        x2={leftPad}
+        y2={baselineY}
+        stroke="rgba(148,163,184,0.35)"
+        strokeWidth="1"
+      />
       <line
         x1={leftPad}
         y1={baselineY}
@@ -506,13 +579,7 @@ function TrainingTrendChart({
             stroke="rgba(148,163,184,0.16)"
             strokeWidth="1"
           />
-          <text
-            x={leftPad - 8}
-            y={guide.y + 4}
-            textAnchor="end"
-            fontSize="11"
-            fill="#64748b"
-          >
+          <text x={leftPad - 8} y={guide.y + 4} textAnchor="end" fontSize="11" fill="#64748b">
             {formatChartAxisLabel(guide.value)}
           </text>
         </g>
@@ -872,11 +939,13 @@ function TransferListModal({
   onClose,
   rider,
   onUpdated,
+  onTransferListingChanged,
 }: {
   open: boolean
   onClose: () => void
   rider: RiderDetails | null
   onUpdated: (updatedRider: RiderDetails) => void
+  onTransferListingChanged?: () => Promise<void> | void
 }) {
   const [askingPriceInput, setAskingPriceInput] = useState('')
   const [defaultAskingPrice, setDefaultAskingPrice] = useState<number | null>(null)
@@ -931,10 +1000,11 @@ function TransferListModal({
     }
   }, [open, rider?.id, rider?.asking_price])
 
-  async function handleSetManualPrice() {
+  async function handlePlaceOnTransferList() {
     if (!rider?.id) return
 
     const price = Math.round(Number(askingPriceInput))
+
     if (!Number.isFinite(price) || price < 1000) {
       setMessage('Asking price must be at least $1,000.')
       setMessageType('error')
@@ -946,22 +1016,28 @@ function TransferListModal({
     setMessageType(null)
 
     try {
-      const { error } = await supabase.rpc('set_rider_asking_price', {
+      const { error } = await supabase.rpc('list_rider_for_transfer', {
         p_rider_id: rider.id,
         p_asking_price: price,
+        p_duration_days: 7,
       })
 
       if (error) throw error
 
       const refreshedRider = await fetchRiderDetailsById(rider.id)
       onUpdated(refreshedRider)
+
+      if (onTransferListingChanged) {
+        await onTransferListingChanged()
+      }
+
       setAskingPriceInput(
         refreshedRider.asking_price != null ? String(refreshedRider.asking_price) : ''
       )
-      setMessage('Manual asking price saved.')
+      setMessage('Rider placed on transfer list successfully.')
       setMessageType('success')
     } catch (e: any) {
-      setMessage(e?.message ?? 'Could not set asking price.')
+      setMessage(e?.message ?? 'Could not place rider on transfer list.')
       setMessageType('error')
     } finally {
       setSavingPrice(false)
@@ -984,6 +1060,11 @@ function TransferListModal({
 
       const refreshedRider = await fetchRiderDetailsById(rider.id)
       onUpdated(refreshedRider)
+
+      if (onTransferListingChanged) {
+        await onTransferListingChanged()
+      }
+
       setAskingPriceInput(
         refreshedRider.asking_price != null ? String(refreshedRider.asking_price) : ''
       )
@@ -998,6 +1079,8 @@ function TransferListModal({
   }
 
   if (!open || !rider) return null
+
+  const riderName = rider.display_name ?? `${rider.first_name} ${rider.last_name}`
 
   const currentAskingPriceDisplay =
     rider.asking_price == null ? '—' : formatCompactMoneyValue(rider.asking_price)
@@ -1024,7 +1107,7 @@ function TransferListModal({
           <div>
             <div className="text-2xl font-semibold text-gray-900">Transfer List</div>
             <div className="mt-1 text-sm text-gray-500">
-              Manage transfer pricing for {rider.first_name} {rider.last_name}.
+              Manage transfer pricing for {riderName}.
             </div>
           </div>
 
@@ -1047,8 +1130,12 @@ function TransferListModal({
 
           <div className="mt-6">
             <label className="mb-2 block text-sm font-semibold text-gray-800">
-              Set Manual Asking Price
+              Transfer Asking Price
             </label>
+
+            <div className="mb-2 text-sm text-gray-500">
+              Set the asking price and place this rider on the transfer list.
+            </div>
 
             <div className="relative">
               <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-base font-semibold text-gray-500">
@@ -1073,7 +1160,7 @@ function TransferListModal({
 
             {message ? (
               <div
-                className={`mt-4 rounded-lg border px-4 py-3 text-sm ${
+                className={`mt-4 rounded-xl border px-4 py-3 text-sm ${
                   messageType === 'success'
                     ? 'border-green-200 bg-green-50 text-green-800'
                     : 'border-red-200 bg-red-50 text-red-700'
@@ -1097,11 +1184,140 @@ function TransferListModal({
 
           <button
             type="button"
-            onClick={handleSetManualPrice}
+            onClick={handlePlaceOnTransferList}
             disabled={savingPrice}
             className="rounded-lg bg-yellow-400 px-5 py-2.5 text-sm font-medium text-black hover:bg-yellow-500 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {savingPrice ? 'Saving...' : 'Set Manual Price'}
+            {savingPrice ? 'Working...' : 'Place on Transfer List'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function ReleaseRiderModal({
+  open,
+  rider,
+  preview,
+  loading,
+  busy,
+  onClose,
+  onConfirm,
+  onCancelTransferListing,
+}: {
+  open: boolean
+  rider: RiderDetails | null
+  preview: RiderReleasePreview | null
+  loading: boolean
+  busy: boolean
+  onClose: () => void
+  onConfirm: () => void
+  onCancelTransferListing: () => void
+}) {
+  if (!open || !rider) return null
+
+  const riderName = rider.display_name ?? `${rider.first_name} ${rider.last_name}`
+
+  return (
+    <div
+      className="fixed inset-0 z-[75] flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      <div
+        className="w-full max-w-2xl overflow-hidden rounded-2xl bg-white shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="border-b border-slate-200 px-6 py-5">
+          <div className="text-2xl font-semibold text-slate-900">Release Rider</div>
+          <div className="mt-1 text-sm text-slate-500">
+            Review the release cost before moving {riderName} to free agents.
+          </div>
+        </div>
+
+        <div className="p-6">
+          {loading ? (
+            <div className="text-sm text-slate-600">Loading release details…</div>
+          ) : !preview ? (
+            <div className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+              Could not load release preview.
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {preview.blocked_reason ? (
+                <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                  <div className="font-semibold">Release is currently blocked</div>
+                  <div className="mt-1">{preview.blocked_reason}</div>
+                </div>
+              ) : null}
+
+              <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                <SimpleInfoRow label="Weekly Wage" value={formatWeeklySalary(preview.weekly_salary)} />
+                <SimpleInfoRow
+                  label="Contract Ends"
+                  value={formatShortGameDate(preview.contract_expires_on)}
+                />
+                <SimpleInfoRow label="Remaining Weeks" value={`${preview.remaining_weeks}`} />
+                <SimpleInfoRow
+                  label="Remaining Salary"
+                  value={formatMoney(preview.remaining_salary)}
+                />
+                <SimpleInfoRow
+                  label="Release Compensation (20%)"
+                  value={
+                    <span className="font-bold text-rose-700">
+                      {formatMoney(preview.release_cost)}
+                    </span>
+                  }
+                />
+                <SimpleInfoRow
+                  label="Free Agent Until"
+                  value={formatShortGameDate(preview.free_agent_expires_on_game_date)}
+                />
+                <SimpleInfoRow label="Current Balance" value={formatMoney(preview.current_balance)} />
+                <SimpleInfoRow
+                  label="Balance After Release"
+                  value={
+                    <span
+                      className={
+                        preview.balance_after_release < 0 ? 'text-rose-700' : 'text-slate-900'
+                      }
+                    >
+                      {formatMoney(preview.balance_after_release)}
+                    </span>
+                  }
+                />
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div className="flex flex-wrap items-center justify-end gap-3 border-t border-slate-200 px-6 py-4">
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-lg border border-slate-200 px-5 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
+          >
+            Cancel
+          </button>
+
+          {preview?.transfer_listed ? (
+            <button
+              type="button"
+              onClick={onCancelTransferListing}
+              className="rounded-lg border border-amber-300 bg-amber-50 px-5 py-2.5 text-sm font-medium text-amber-800 hover:bg-amber-100"
+            >
+              Cancel Transfer Listing First
+            </button>
+          ) : null}
+
+          <button
+            type="button"
+            onClick={onConfirm}
+            disabled={loading || busy || !preview?.can_release}
+            className="rounded-lg bg-rose-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {busy ? 'Releasing...' : 'Confirm Release'}
           </button>
         </div>
       </div>
@@ -1115,6 +1331,8 @@ export default function RiderProfilePage({
   currentTeamType = 'first',
   trainingPagePath: _trainingPagePath = '/training',
   onBack,
+  onRosterChanged,
+  onCompareRider,
 }: RiderProfilePageProps) {
   const [profileLoading, setProfileLoading] = useState(false)
   const [profileError, setProfileError] = useState<string | null>(null)
@@ -1155,6 +1373,20 @@ export default function RiderProfilePage({
   const [renewalResultMessage, setRenewalResultMessage] = useState<string | null>(null)
 
   const [transferListOpen, setTransferListOpen] = useState(false)
+  const [activeTransferListing, setActiveTransferListing] = useState<ActiveTransferListing | null>(
+    null
+  )
+  const [activeTransferOfferCount, setActiveTransferOfferCount] = useState(0)
+  const [transferListingBusy, setTransferListingBusy] = useState(false)
+  const [releaseBusy, setReleaseBusy] = useState(false)
+  const [releaseModalOpen, setReleaseModalOpen] = useState(false)
+  const [releasePreview, setReleasePreview] = useState<RiderReleasePreview | null>(null)
+  const [releasePreviewLoading, setReleasePreviewLoading] = useState(false)
+  const [pageToast, setPageToast] = useState<{
+    type: 'success' | 'error' | 'info'
+    message: string
+  } | null>(null)
+
   const [historyLoading, setHistoryLoading] = useState(false)
   const [historyError, setHistoryError] = useState<string | null>(null)
   const [historyRows, setHistoryRows] = useState<RiderCareerHistoryRow[]>([])
@@ -1315,6 +1547,69 @@ export default function RiderProfilePage({
     }
   }
 
+  async function loadActiveTransferListing(riderId: string) {
+    const { data: listingRows, error: listingError } = await supabase
+      .from('rider_transfer_listings')
+      .select(
+        'id, rider_id, seller_club_id, asking_price, listed_on_game_date, expires_on_game_date, status'
+      )
+      .eq('rider_id', riderId)
+      .in('status', [...ACTIVE_TRANSFER_LISTING_STATUSES])
+      .order('listed_on_game_date', { ascending: false })
+      .limit(1)
+
+    if (listingError) throw listingError
+
+    const listing = listingRows?.[0]
+
+    if (!listing) {
+      setActiveTransferListing(null)
+      setActiveTransferOfferCount(0)
+      return
+    }
+
+    const { count, error: offersError } = await supabase
+      .from('rider_transfer_offers')
+      .select('id', { count: 'exact', head: true })
+      .eq('listing_id', listing.id)
+      .eq('status', 'open')
+
+    if (offersError) throw offersError
+
+    setActiveTransferListing(listing as ActiveTransferListing)
+    setActiveTransferOfferCount(count ?? 0)
+  }
+
+  async function loadReleasePreview(riderId: string) {
+    setReleasePreviewLoading(true)
+
+    try {
+      const { data, error } = await supabase.rpc('get_rider_release_preview', {
+        p_rider_id: riderId,
+      })
+
+      if (error) throw error
+
+      const preview = (Array.isArray(data) ? data[0] : data) as RiderReleasePreview | null
+      setReleasePreview(preview)
+    } catch (e: any) {
+      setReleasePreview(null)
+      setContractActionMessage(e?.message ?? 'Could not load release preview.')
+    } finally {
+      setReleasePreviewLoading(false)
+    }
+  }
+
+  async function handleOpenReleaseModal() {
+    if (!selectedRider?.id) return
+
+    setActionMenuOpen(false)
+    setPageToast(null)
+    setReleaseModalOpen(true)
+    setReleasePreview(null)
+    await loadReleasePreview(selectedRider.id)
+  }
+
   useEffect(() => {
     let mounted = true
 
@@ -1333,6 +1628,14 @@ export default function RiderProfilePage({
       setRenewalResultType(null)
       setRenewalResultMessage(null)
       setTransferListOpen(false)
+      setActiveTransferListing(null)
+      setActiveTransferOfferCount(0)
+      setTransferListingBusy(false)
+      setReleaseBusy(false)
+      setReleaseModalOpen(false)
+      setReleasePreview(null)
+      setReleasePreviewLoading(false)
+      setPageToast(null)
       setHistoryLoading(false)
       setHistoryError(null)
       setHistoryRows([])
@@ -1378,6 +1681,8 @@ export default function RiderProfilePage({
         setSelectedRider(nextRider)
         setCurrentHealthCase(nextHealthCase)
         setImageUrlInput(nextRider.image_url ?? '')
+
+        await loadActiveTransferListing(riderId)
 
         if (deltaResult.error) throw deltaResult.error
         if (gameDatePartsResult.error) throw gameDatePartsResult.error
@@ -1791,10 +2096,7 @@ export default function RiderProfilePage({
 
       setRenewalResultType('error')
 
-      if (
-        e?.code === '23514' ||
-        rawDetails.includes('rider_contracts_duration_chk')
-      ) {
+      if (e?.code === '23514' || rawDetails.includes('rider_contracts_duration_chk')) {
         setRenewalResultMessage(
           'Renewal failed because the backend contract duration limit is too low for this extension.'
         )
@@ -1806,25 +2108,108 @@ export default function RiderProfilePage({
     }
   }
 
-  function handleReleaseClick() {
-    setActionMenuOpen(false)
-    setContractActionMessage(
-      'Release rider action is not connected to backend yet. Wire your release confirmation flow here.'
-    )
-    setActiveTab('contract')
+  async function handleCancelTransferListing() {
+    if (!activeTransferListing?.id || !selectedRider?.id) return
+
+    setTransferListingBusy(true)
+    setContractActionMessage(null)
+
+    try {
+      const { error } = await supabase.rpc('cancel_rider_transfer_listing', {
+        p_listing_id: activeTransferListing.id,
+      })
+
+      if (error) throw error
+
+      await loadActiveTransferListing(selectedRider.id)
+
+      const refreshedRider = await fetchRiderDetailsById(selectedRider.id)
+      setSelectedRider(refreshedRider)
+
+      if (releaseModalOpen) {
+        await loadReleasePreview(selectedRider.id)
+      }
+
+      setContractActionMessage('Rider removed from transfer list.')
+    } catch (e: any) {
+      setContractActionMessage(e?.message ?? 'Could not cancel transfer listing.')
+    } finally {
+      setTransferListingBusy(false)
+    }
+  }
+
+  async function handleReleaseRider() {
+    if (!selectedRider?.id) return
+
+    setReleaseBusy(true)
+    setContractActionMessage(null)
+
+    try {
+      const { data, error } = await supabase.rpc('release_owned_rider', {
+        p_rider_id: selectedRider.id,
+      })
+
+      if (error) throw error
+
+      const result = (Array.isArray(data) ? data[0] : data) as ReleaseOwnedRiderResult | null
+
+      if (!result) {
+        throw new Error('No release result returned.')
+      }
+
+      const riderName =
+        selectedRider.display_name ?? `${selectedRider.first_name} ${selectedRider.last_name}`
+
+      setReleaseModalOpen(false)
+
+      setPageToast({
+        type: 'success',
+        message: `${riderName} was released. ${formatMoney(
+          result.release_cost
+        )} was deducted from club balance.`,
+      })
+
+      await onRosterChanged?.()
+
+      window.setTimeout(() => {
+        onBack()
+      }, 1200)
+    } catch (e: any) {
+      const message = e?.message ?? 'Could not release rider.'
+      setContractActionMessage(message)
+      setPageToast({
+        type: 'error',
+        message,
+      })
+    } finally {
+      setReleaseBusy(false)
+    }
   }
 
   function handleCompareClick() {
     setActionMenuOpen(false)
 
-    if (!selectedRider?.id || typeof window === 'undefined') return
+    if (!selectedRider?.id) return
+
+    const riderName =
+      selectedRider.display_name ?? `${selectedRider.first_name} ${selectedRider.last_name}`
+
+    const payload = {
+      riderId: selectedRider.id,
+      riderName,
+      currentTeamType,
+    }
+
+    if (onCompareRider) {
+      onCompareRider(payload)
+      return
+    }
+
+    if (typeof window === 'undefined') return
 
     window.dispatchEvent(
       new CustomEvent('rider-profile-compare', {
-        detail: {
-          riderId: selectedRider.id,
-          riderName: selectedRider.display_name,
-        },
+        detail: payload,
       })
     )
   }
@@ -1881,6 +2266,23 @@ export default function RiderProfilePage({
     currentHealthCase?.expected_full_recovery_on,
     gameDate ?? null
   )
+
+  const transferDaysRemaining = activeTransferListing?.expires_on_game_date
+    ? getDaysRemaining(activeTransferListing.expires_on_game_date, gameDate ?? null)
+    : null
+
+  const transferTimeLabel =
+    !activeTransferListing
+      ? 'Not listed'
+      : activeTransferListing.expires_on_game_date
+        ? transferDaysRemaining === null
+          ? `Listed until ${formatShortGameDate(activeTransferListing.expires_on_game_date)}`
+          : transferDaysRemaining <= 0
+            ? `Ends today (${formatShortGameDate(activeTransferListing.expires_on_game_date)})`
+            : `${transferDaysRemaining} day${transferDaysRemaining === 1 ? '' : 's'} left`
+        : 'Listed with no expiry'
+
+  const isTransferListed = !!activeTransferListing
 
   const tabButtonClass = (tab: RiderProfileTab) =>
     `border-b-2 px-4 py-3 text-sm font-medium transition ${
@@ -1974,11 +2376,15 @@ export default function RiderProfilePage({
                 type="button"
                 onClick={() => {
                   setActionMenuOpen(false)
-                  setTransferListOpen(true)
+                  if (activeTransferListing) {
+                    void handleCancelTransferListing()
+                  } else {
+                    setTransferListOpen(true)
+                  }
                 }}
                 className="block w-full rounded-md px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-50"
               >
-                Place on Transfer List
+                {activeTransferListing ? 'Cancel Transfer Listing' : 'Place on Transfer List'}
               </button>
 
               <button
@@ -2013,15 +2419,35 @@ export default function RiderProfilePage({
 
               <button
                 type="button"
-                onClick={handleReleaseClick}
-                className="block w-full rounded-md px-3 py-2 text-left text-sm text-rose-600 hover:bg-rose-50"
+                onClick={() => {
+                  void handleOpenReleaseModal()
+                }}
+                className={`block w-full rounded-md px-3 py-2 text-left text-sm ${
+                  isTransferListed
+                    ? 'text-amber-700 hover:bg-amber-50'
+                    : 'text-rose-600 hover:bg-rose-50'
+                }`}
               >
-                Release Rider
+                {isTransferListed ? 'Cancel Transfer Listing First' : 'Release Rider'}
               </button>
             </div>
           )}
         </div>
       </div>
+
+      {pageToast ? (
+        <div
+          className={`mb-4 rounded-lg border px-4 py-3 text-sm ${
+            pageToast.type === 'success'
+              ? 'border-emerald-200 bg-emerald-50 text-emerald-800'
+              : pageToast.type === 'error'
+                ? 'border-rose-200 bg-rose-50 text-rose-700'
+                : 'border-blue-200 bg-blue-50 text-blue-700'
+          }`}
+        >
+          {pageToast.message}
+        </div>
+      ) : null}
 
       <div className="mb-6 rounded-xl border border-yellow-500 bg-yellow-400 p-6 shadow">
         <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
@@ -2050,6 +2476,12 @@ export default function RiderProfilePage({
                 <span className="rounded-full border border-yellow-600/25 bg-white/55 px-3 py-1.5 text-sm font-bold text-slate-950">
                   OVR {selectedRider.overall ?? '—'}%
                 </span>
+
+                {isTransferListed ? (
+                  <span className="rounded-full border border-emerald-700/20 bg-emerald-50 px-3 py-1.5 text-sm font-bold text-emerald-800">
+                    Transfer Listed
+                  </span>
+                ) : null}
               </div>
             ) : null}
           </div>
@@ -2078,6 +2510,19 @@ export default function RiderProfilePage({
           </div>
         </div>
       </div>
+
+      {isTransferListed ? (
+        <div className="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+          <div className="font-semibold">This rider is currently on the transfer list.</div>
+          <div className="mt-1">
+            Asking price {formatCompactMoneyValue(activeTransferListing?.asking_price)} · {transferTimeLabel}
+            {activeTransferOfferCount > 0
+              ? ` · ${activeTransferOfferCount} open offer${activeTransferOfferCount === 1 ? '' : 's'}`
+              : ''}
+          </div>
+          <div className="mt-1">Release is blocked until the transfer listing is cancelled.</div>
+        </div>
+      ) : null}
 
       <div className="mb-6 border-b border-slate-200">
         <div className="flex flex-wrap gap-1">
@@ -2359,69 +2804,138 @@ export default function RiderProfilePage({
           )}
 
           {activeTab === 'contract' && (
-            <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_340px]">
-              <SectionCard title="Contract Details" subtitle="All current contract and value information">
-                <div className="divide-y divide-slate-100">
-                  <DetailRow label="Weekly Wage" value={formatWeeklySalary(selectedRider.salary)} />
-                  <DetailRow label="Season Wage" value={formatMoney(getSeasonWage(selectedRider.salary))} />
-                  <DetailRow
-                    label="Contract End"
-                    value={contractExpiryUi.label}
-                    valueClassName={contractExpiryUi.valueClassName}
-                  />
-                  {contractExpiryUi.sublabel ? (
-                    <DetailRow label="Contract Note" value={contractExpiryUi.sublabel} />
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_340px]">
+                <SectionCard title="Contract Details" subtitle="All current contract and value information">
+                  <div className="divide-y divide-slate-100">
+                    <DetailRow label="Weekly Wage" value={formatWeeklySalary(selectedRider.salary)} />
+                    <DetailRow label="Season Wage" value={formatMoney(getSeasonWage(selectedRider.salary))} />
+                    <DetailRow
+                      label="Contract End"
+                      value={contractExpiryUi.label}
+                      valueClassName={contractExpiryUi.valueClassName}
+                    />
+                    {contractExpiryUi.sublabel ? (
+                      <DetailRow label="Contract Note" value={contractExpiryUi.sublabel} />
+                    ) : null}
+                    <DetailRow label="Market Value" value={formatCompactMoneyValue(selectedRider.market_value)} />
+                    <DetailRow label="Asking Price" value={askingPriceDisplay} />
+                    <DetailRow
+                      label="Pricing Mode"
+                      value={selectedRider.asking_price_manual ? 'Manual' : 'Suggested'}
+                    />
+                  </div>
+
+                  <div className="mt-4 space-y-3">
+                    <SimpleInfoRow
+                      label="Transfer Market"
+                      value={
+                        activeTransferListing ? (
+                          <span className="font-semibold text-amber-700">Listed</span>
+                        ) : (
+                          'Not listed'
+                        )
+                      }
+                      note={
+                        activeTransferListing
+                          ? `${formatCompactMoneyValue(activeTransferListing.asking_price)} · ${transferTimeLabel}`
+                          : 'No active transfer listing'
+                      }
+                    />
+
+                    {activeTransferListing ? (
+                      <SimpleInfoRow
+                        label="Open Offers"
+                        value={`${activeTransferOfferCount}`}
+                        note={
+                          activeTransferOfferCount === 1
+                            ? '1 open offer on this listing'
+                            : `${activeTransferOfferCount} open offers on this listing`
+                        }
+                      />
+                    ) : null}
+                  </div>
+
+                  {activeTransferListing ? (
+                    <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                      <div className="font-semibold">Rider is currently on the transfer list</div>
+                      <div className="mt-1">
+                        Asking price {formatCompactMoneyValue(activeTransferListing.asking_price)} ·{' '}
+                        {transferTimeLabel} · {activeTransferOfferCount} open offer
+                        {activeTransferOfferCount === 1 ? '' : 's'}.
+                      </div>
+                    </div>
                   ) : null}
-                  <DetailRow label="Market Value" value={formatCompactMoneyValue(selectedRider.market_value)} />
-                  <DetailRow label="Asking Price" value={askingPriceDisplay} />
-                  <DetailRow
-                    label="Pricing Mode"
-                    value={selectedRider.asking_price_manual ? 'Manual' : 'Suggested'}
-                  />
-                </div>
 
-                {u23WarningMessage ? (
-                  <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-                    <div className="font-semibold">U23 eligibility warning</div>
-                    <div className="mt-1">{u23WarningMessage}</div>
+                  {u23WarningMessage ? (
+                    <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                      <div className="font-semibold">U23 eligibility warning</div>
+                      <div className="mt-1">{u23WarningMessage}</div>
+                    </div>
+                  ) : null}
+
+                  {contractActionMessage ? (
+                    <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
+                      {contractActionMessage}
+                    </div>
+                  ) : null}
+                </SectionCard>
+
+                <SectionCard title="Contract Actions" subtitle="Extend, list or terminate this rider">
+                  <div className="space-y-3">
+                    <button
+                      type="button"
+                      onClick={handleNewContract}
+                      disabled={renewalBusy}
+                      className="w-full rounded-lg bg-yellow-400 px-4 py-3 text-sm font-semibold text-slate-950 transition hover:bg-yellow-500 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {renewalBusy ? 'Processing...' : 'Extend Contract'}
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (activeTransferListing) {
+                          void handleCancelTransferListing()
+                        } else {
+                          setTransferListOpen(true)
+                        }
+                      }}
+                      disabled={transferListingBusy || releaseBusy}
+                      className={`w-full rounded-xl border px-4 py-3 text-sm font-medium transition ${
+                        activeTransferListing
+                          ? 'border-amber-300 bg-amber-50 text-amber-800 hover:bg-amber-100'
+                          : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
+                      } disabled:cursor-not-allowed disabled:opacity-60`}
+                    >
+                      {transferListingBusy
+                        ? 'Working...'
+                        : activeTransferListing
+                          ? 'Cancel Transfer Listing'
+                          : 'Place on Transfer List'}
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        void handleOpenReleaseModal()
+                      }}
+                      disabled={releaseBusy || transferListingBusy}
+                      className={`w-full rounded-xl border px-4 py-3 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60 ${
+                        isTransferListed
+                          ? 'border-amber-300 bg-amber-50 text-amber-800 hover:bg-amber-100'
+                          : 'border-rose-700 bg-rose-600 text-white hover:bg-rose-700'
+                      }`}
+                    >
+                      {releaseBusy
+                        ? 'Releasing...'
+                        : isTransferListed
+                          ? 'Cancel Transfer Listing First'
+                          : 'Release Rider'}
+                    </button>
                   </div>
-                ) : null}
-
-                {contractActionMessage ? (
-                  <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
-                    {contractActionMessage}
-                  </div>
-                ) : null}
-              </SectionCard>
-
-              <SectionCard title="Contract Actions" subtitle="Extend, list or terminate this rider">
-                <div className="space-y-3">
-                  <button
-                    type="button"
-                    onClick={handleNewContract}
-                    disabled={renewalBusy}
-                    className="w-full rounded-lg bg-yellow-400 px-4 py-3 text-sm font-semibold text-slate-950 transition hover:bg-yellow-500 disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    {renewalBusy ? 'Processing...' : 'Extend Contract'}
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setTransferListOpen(true)}
-                    className="w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
-                  >
-                    Place on Transfer List
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={handleReleaseClick}
-                    className="w-full rounded-lg border border-rose-300 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-700 transition hover:bg-rose-100"
-                  >
-                    Release Rider
-                  </button>
-                </div>
-              </SectionCard>
+                </SectionCard>
+              </div>
             </div>
           )}
 
@@ -2699,9 +3213,31 @@ export default function RiderProfilePage({
           open={transferListOpen}
           onClose={() => setTransferListOpen(false)}
           rider={selectedRider}
-          onUpdated={(updatedRider) => setSelectedRider(updatedRider)}
+          onUpdated={(updatedRider) => {
+            setSelectedRider(updatedRider)
+          }}
+          onTransferListingChanged={async () => {
+            if (selectedRider?.id) {
+              await loadActiveTransferListing(selectedRider.id)
+            }
+          }}
         />
       )}
+
+      <ReleaseRiderModal
+        open={releaseModalOpen}
+        rider={selectedRider}
+        preview={releasePreview}
+        loading={releasePreviewLoading}
+        busy={releaseBusy}
+        onClose={() => setReleaseModalOpen(false)}
+        onConfirm={() => {
+          void handleReleaseRider()
+        }}
+        onCancelTransferListing={() => {
+          void handleCancelTransferListing()
+        }}
+      />
 
       {renewalModalOpen && renewalData && selectedRider && (
         <div

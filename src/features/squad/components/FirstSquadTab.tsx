@@ -56,6 +56,7 @@ export type FirstSquadRiderRow = {
   recovery: number | null
   morale: number | null
   potential: number | null
+  isTransferListed?: boolean
 }
 
 export type HealthOverviewDisplayRow = ClubHealthOverviewRow & {
@@ -636,7 +637,17 @@ export default function FirstSquadTab({
                           }`}
                           title={r.name}
                         >
-                          {r.name}
+                          <div className="inline-flex items-center gap-2">
+                            <span>{r.name}</span>
+                            {r.isTransferListed ? (
+                              <span
+                                title="Rider is on the transfer list"
+                                className="inline-flex h-5 min-w-[20px] items-center justify-center rounded-full border border-emerald-200 bg-emerald-50 px-1.5 text-xs font-bold text-emerald-700"
+                              >
+                                $
+                              </span>
+                            ) : null}
+                          </div>
                         </td>
 
                         <td className="p-2">

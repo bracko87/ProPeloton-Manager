@@ -76,6 +76,7 @@ export default function SquadPage() {
   const [developingTeamStatusError, setDevelopingTeamStatusError] = useState<string | null>(null)
   const [movingRiderId, setMovingRiderId] = useState<string | null>(null)
   const [moveActionMessage, setMoveActionMessage] = useState<string | null>(null)
+  const [transferListedRiderIds, setTransferListedRiderIds] = useState<Set<string>>(new Set())
 
   const SQUAD_MAX = 18
 
@@ -104,8 +105,9 @@ export default function SquadPage() {
         recovery: r.recovery ?? null,
         morale: r.morale ?? null,
         potential: r.potential ?? null,
+        isTransferListed: transferListedRiderIds.has(r.rider_id),
       })),
-    [rows, gameDate]
+    [rows, gameDate, transferListedRiderIds]
   )
 
   const riderNameById = useMemo(
@@ -237,6 +239,22 @@ export default function SquadPage() {
 
       const rosterRows = (roster ?? []) as SquadRosterRow[]
       const riderIds = rosterRows.map((row) => row.rider_id)
+
+      const { data: transferMarketRows, error: transferMarketErr } = await supabase.rpc(
+        'get_transfer_market_listings',
+        {
+          p_page: 1,
+          p_page_size: 500,
+        }
+      )
+
+      if (transferMarketErr) throw transferMarketErr
+
+      const activeListedIds = new Set(
+        ((transferMarketRows ?? []) as Array<{ rider_id: string }>).map((row) => row.rider_id)
+      )
+
+      setTransferListedRiderIds(new Set(riderIds.filter((id) => activeListedIds.has(id))))
 
       let riderMetaMap = new Map<
         string,

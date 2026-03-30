@@ -26,7 +26,9 @@ export default function RiderProfileModal({
   variant = 'modal',
   backButtonLabel: _backButtonLabel = 'Back',
 }: RiderProfileModalProps) {
-  if (!open || !riderId) return null
+  const shouldRender = variant === 'page' ? !!riderId : open && !!riderId
+
+  if (!shouldRender || !riderId) return null
 
   const content = (
     <div className="mx-auto w-full max-w-7xl">

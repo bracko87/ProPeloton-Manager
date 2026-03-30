@@ -95,7 +95,7 @@ function formatDate(value: string | null | undefined) {
 }
 
 function safeCountryCode(countryCode: string | null | undefined) {
-  if (!countryCode || countryCode.length !== 2) return 'rs'
+  if (!countryCode || countryCode.length !== 2) return null
   return countryCode.toLowerCase()
 }
 
@@ -104,7 +104,10 @@ function getCountryFlagUrl(countryCode: string) {
 }
 
 function getCountryName(countryCode: string | null | undefined) {
-  const code = safeCountryCode(countryCode).toUpperCase()
+  const safeCode = safeCountryCode(countryCode)
+  if (!safeCode) return 'Unknown country'
+
+  const code = safeCode.toUpperCase()
 
   try {
     if (typeof Intl !== 'undefined' && typeof Intl.DisplayNames !== 'undefined') {
@@ -154,12 +157,7 @@ function getPreferredRiderName(value: {
   display_name?: string | null
   rider_id?: string | null
 }) {
-  return (
-    value.full_name?.trim() ||
-    value.display_name?.trim() ||
-    value.rider_id ||
-    'Unknown rider'
-  )
+  return value.full_name?.trim() || value.display_name?.trim() || value.rider_id || 'Unknown rider'
 }
 
 function InfoPair({
@@ -211,22 +209,32 @@ function MarketListRow({
   isSelected,
   onSelect,
   onQuickAction,
+  onOpenRiderProfile,
 }: {
   item: FreeAgentMarketItem
   gameState: GameStateRow | null
   isSelected: boolean
   onSelect: () => void
   onQuickAction: () => void
+  onOpenRiderProfile: () => void
 }) {
   const riderName = getPreferredRiderName(item.raw)
   const countdown = getGameCountdownLabel(item.expires_on_game_date, gameState)
   const isExpired = countdown === 'Expired'
+  const flagCode = safeCountryCode(item.country_code)
 
   return (
-    <button
-      type="button"
+    <div
+      role="button"
+      tabIndex={0}
       onClick={onSelect}
-      className={`w-full rounded-xl border p-4 text-left transition ${
+      onKeyDown={(event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault()
+          onSelect()
+        }
+      }}
+      className={`w-full cursor-pointer rounded-xl border p-4 text-left transition ${
         item.is_user_active
           ? 'border-yellow-300 bg-yellow-50'
           : isSelected
@@ -237,13 +245,29 @@ function MarketListRow({
       <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <img
-              src={getCountryFlagUrl(safeCountryCode(item.country_code))}
-              alt={getCountryName(item.country_code)}
-              className="h-4 w-6 shrink-0 rounded-sm border border-gray-200 object-cover"
-            />
+            {flagCode ? (
+              <img
+                src={getCountryFlagUrl(flagCode)}
+                alt={getCountryName(item.country_code)}
+                className="h-4 w-6 shrink-0 rounded-sm border border-gray-200 object-cover"
+              />
+            ) : (
+              <div
+                className="h-4 w-6 shrink-0 rounded-sm bg-gray-100"
+                aria-hidden="true"
+              />
+            )}
 
-            <span className="truncate text-sm font-semibold text-gray-900">{riderName}</span>
+            <button
+              type="button"
+              onClick={(event) => {
+                event.stopPropagation()
+                onOpenRiderProfile()
+              }}
+              className="truncate text-sm font-semibold text-gray-900 hover:underline"
+            >
+              {riderName}
+            </button>
 
             {item.is_user_active ? (
               <span className="rounded-full bg-yellow-300 px-2 py-0.5 text-[11px] font-bold uppercase text-black">
@@ -287,7 +311,7 @@ function MarketListRow({
           </div>
         </div>
       </div>
-    </button>
+    </div>
   )
 }
 
@@ -307,6 +331,7 @@ type RiderFreeAgentsPageProps = {
   selectedFreeAgentId: string | null
   onSelectMarketItem: (item: FreeAgentMarketItem) => void
   onQuickActionMarketItem: (item: FreeAgentMarketItem) => void
+  onOpenRiderProfile: (item: FreeAgentMarketItem) => void
   marketPageStart: number
   marketPageEnd: number
   totalMarketRows: number
@@ -336,6 +361,7 @@ export default function RiderFreeAgentsPage({
   selectedFreeAgentId,
   onSelectMarketItem,
   onQuickActionMarketItem,
+  onOpenRiderProfile,
   marketPageStart,
   marketPageEnd,
   totalMarketRows,
@@ -353,6 +379,7 @@ export default function RiderFreeAgentsPage({
     gameState
   )
   const selectedExpired = selectedCountdown === 'Expired'
+  const selectedFlagCode = safeCountryCode(selectedFreeAgent?.country_code)
 
   return (
     <div className="space-y-4">
@@ -361,7 +388,8 @@ export default function RiderFreeAgentsPage({
           <div>
             <h4 className="font-semibold text-gray-900">Free Agents</h4>
             <div className="mt-1 text-sm text-gray-500">
-              Full-width free-agent market. Active user negotiations stay pinned on top and highlighted.
+              Full-width free-agent market. Active user negotiations stay pinned on top and
+              highlighted.
             </div>
           </div>
 
@@ -453,6 +481,7 @@ export default function RiderFreeAgentsPage({
                 isSelected={item.free_agent_id === selectedFreeAgentId}
                 onSelect={() => onSelectMarketItem(item)}
                 onQuickAction={() => onQuickActionMarketItem(item)}
+                onOpenRiderProfile={() => onOpenRiderProfile(item)}
               />
             ))
           )}
@@ -511,11 +540,19 @@ export default function RiderFreeAgentsPage({
             <>
               <div className="mt-3">
                 <div className="flex items-center gap-2">
-                  <img
-                    src={getCountryFlagUrl(safeCountryCode(selectedFreeAgent.country_code))}
-                    alt={getCountryName(selectedFreeAgent.country_code)}
-                    className="h-4 w-6 shrink-0 rounded-sm border border-gray-200 object-cover"
-                  />
+                  {selectedFlagCode ? (
+                    <img
+                      src={getCountryFlagUrl(selectedFlagCode)}
+                      alt={getCountryName(selectedFreeAgent.country_code)}
+                      className="h-4 w-6 shrink-0 rounded-sm border border-gray-200 object-cover"
+                    />
+                  ) : (
+                    <div
+                      className="h-4 w-6 shrink-0 rounded-sm bg-gray-100"
+                      aria-hidden="true"
+                    />
+                  )}
+
                   <div className="font-semibold text-gray-900">
                     {getPreferredRiderName(selectedFreeAgent)}
                   </div>
@@ -553,7 +590,11 @@ export default function RiderFreeAgentsPage({
 
                 <div className="rounded-lg bg-gray-50 p-3">
                   <div className="text-xs text-gray-500">Time Left</div>
-                  <div className={`mt-1 text-sm font-semibold ${selectedExpired ? 'text-red-700' : 'text-gray-900'}`}>
+                  <div
+                    className={`mt-1 text-sm font-semibold ${
+                      selectedExpired ? 'text-red-700' : 'text-gray-900'
+                    }`}
+                  >
                     {selectedCountdown}
                   </div>
                 </div>
