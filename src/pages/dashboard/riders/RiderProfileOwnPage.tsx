@@ -1,15 +1,12 @@
 /**
  * RiderProfileOwnPage.tsx
  *
- * Full-page route wrapper for the existing squad rider profile UI.
- * - Loads current game date from the backend and passes it to the profile UI.
- * - Reuses RiderProfileModal in full-page mode.
- * - Closes with a back action via navigate(-1).
+ * Full page route wrapper for the dedicated rider profile page.
  */
 
 import React, { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
-import RiderProfileModal from '../../../features/squad/components/RiderProfileModal'
+import RiderProfilePage from '../../../features/squad/components/RiderProfilePage'
 import { supabase } from '../../../lib/supabase'
 import { normalizeGameDateValue } from '../../../features/squad/utils/dates'
 
@@ -44,6 +41,7 @@ export default function RiderProfileOwnPage() {
         >
           ← Back
         </button>
+
         <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
           Missing rider id.
         </div>
@@ -52,14 +50,12 @@ export default function RiderProfileOwnPage() {
   }
 
   return (
-    <RiderProfileModal
-      open
-      onClose={() => navigate(-1)}
+    <RiderProfilePage
       riderId={riderId}
       gameDate={gameDate}
       currentTeamType="first"
-      variant="page"
-      backButtonLabel="← Back"
+      trainingPagePath="/training"
+      onBack={() => navigate(-1)}
     />
   )
 }

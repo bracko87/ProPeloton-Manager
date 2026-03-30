@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useEffect, useMemo, useRef, useState } from 'react'
+import { useSearchParams } from 'react-router'
 import { supabase } from '../../lib/supabase'
 
 type TabKey = 'regular' | 'camps'
@@ -802,6 +803,9 @@ function isClubLevelActiveCampOnlyError(message: string): boolean {
 }
 
 export default function TrainingPage(): JSX.Element {
+  const [searchParams] = useSearchParams()
+  const focusedRiderId = searchParams.get('riderId')
+
   const [activeTab, setActiveTab] = useState<TabKey>('regular')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -849,6 +853,20 @@ export default function TrainingPage(): JSX.Element {
     () => camps.find(camp => camp.id === selectedCampId) ?? null,
     [camps, selectedCampId]
   )
+
+  const focusedRider = useMemo(
+    () => (focusedRiderId ? roster.find(rider => rider.rider_id === focusedRiderId) ?? null : null),
+    [roster, focusedRiderId]
+  )
+
+  const orderedRegularRoster = useMemo(() => {
+    if (!focusedRiderId) return roster
+
+    const matchedRider = roster.find(rider => rider.rider_id === focusedRiderId)
+    if (!matchedRider) return roster
+
+    return [matchedRider, ...roster.filter(rider => rider.rider_id !== focusedRiderId)]
+  }, [roster, focusedRiderId])
 
   const currentSeasonEndDateValue = useMemo(() => {
     if (!currentGameDate) return null
@@ -1220,6 +1238,12 @@ export default function TrainingPage(): JSX.Element {
 
     setCurrentCampParticipantIds((data ?? []).map((row: { rider_id: string }) => row.rider_id))
   }
+
+  useEffect(() => {
+    if (focusedRiderId) {
+      setActiveTab('regular')
+    }
+  }, [focusedRiderId])
 
   useEffect(() => {
     setCurrentPage(1)
@@ -1761,6 +1785,20 @@ export default function TrainingPage(): JSX.Element {
         </div>
       </div>
 
+      {focusedRiderId ? (
+        <div className="rounded-lg bg-white p-4 shadow">
+          <div className="text-sm font-semibold text-slate-900">Focused Rider Training</div>
+          <div className="mt-1 text-sm text-slate-600">
+            Opened from rider profile for rider id: {focusedRiderId}
+            {focusedRider ? ` · ${focusedRider.display_name}` : ''}
+          </div>
+          <div className="mt-3 text-sm text-slate-500">
+            Use this riderId to preload the rider card, fetch current assignments, and save
+            individual training changes for that rider.
+          </div>
+        </div>
+      ) : null}
+
       {error ? (
         <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
           {error}
@@ -2049,15 +2087,20 @@ export default function TrainingPage(): JSX.Element {
             </div>
 
             <div className="space-y-3">
-              {roster.map(rider => {
+              {orderedRegularRoster.map(rider => {
                 const effective = getEffectiveRegularTraining(rider)
                 const draft = buildPlanRowForRider(rider)
                 const hasOverride = regularPlansByRiderId.has(rider.rider_id)
+                const isFocusedRider = focusedRiderId === rider.rider_id
 
                 return (
                   <div
                     key={rider.rider_id}
-                    className="rounded-xl border border-gray-200 p-4"
+                    className={`rounded-xl border p-4 ${
+                      isFocusedRider
+                        ? 'border-blue-400 bg-blue-50/40 ring-2 ring-blue-100'
+                        : 'border-gray-200'
+                    }`}
                   >
                     <div className="grid gap-4 xl:grid-cols-[1.3fr_1fr_auto]">
                       <div>
@@ -2065,6 +2108,12 @@ export default function TrainingPage(): JSX.Element {
                           <div className="text-base font-semibold text-gray-900">
                             {rider.display_name}
                           </div>
+
+                          {isFocusedRider ? (
+                            <span className="rounded-full bg-blue-100 px-2 py-0.5 text-[11px] font-medium text-blue-700">
+                              Focused rider
+                            </span>
+                          ) : null}
 
                           {rider.team_label === 'U23' ? (
                             <span className="rounded-full bg-indigo-100 px-2 py-0.5 text-[11px] font-medium text-indigo-700">

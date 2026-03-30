@@ -13,34 +13,28 @@ type RiderMarketSort =
   | 'age_asc'
   | 'age_desc'
 
+type GameStateRow = {
+  season_number: number
+  month_number: number
+  day_number: number
+  hour_number: number
+  minute_number: number
+}
+
 type FreeAgentMarketRow = {
-  id: string
+  id?: string
+  free_agent_id: string
   rider_id: string
-  source_type: string
-  source_club_id: string | null
-  desired_tier: string
-  expected_salary_weekly: number
-  min_acceptable_salary_weekly: number
-  preferred_duration_seasons: number
-  available_from_game_date: string | null
-  expires_on_game_date: string | null
   status: string
-  rider: {
-    id: string
-    display_name: string
-    country_code: string | null
-    role: string | null
-    overall: number | null
-    potential: number | null
-    market_value: number | null
-    salary: number | null
-    contract_expires_at: string | null
-    availability_status: string | null
-  } | null
-  source_club: {
-    id: string
-    name: string | null
-  } | null
+  expected_salary_weekly: number | null
+  expires_on_game_date: string | null
+  full_name: string | null
+  display_name: string | null
+  country_code: string | null
+  role: string | null
+  overall: number | null
+  potential: number | null
+  age_years: number | null
 }
 
 type FreeAgentNegotiationRow = {
@@ -60,7 +54,7 @@ type FreeAgentNegotiationRow = {
   locked_until: string | null
   opened_on_game_date: string
   closed_reason: string | null
-  rider: {
+  rider?: {
     id: string
     display_name: string
     country_code: string | null
@@ -92,7 +86,12 @@ type FreeAgentMarketItem = {
 
 function formatCurrency(value: number | null | undefined) {
   if (value == null || Number.isNaN(value)) return '—'
-  return `$${Number(value).toLocaleString('de-DE')}`
+  return `$${Math.round(Number(value)).toLocaleString('en-US')}`
+}
+
+function formatDate(value: string | null | undefined) {
+  if (!value) return '—'
+  return value
 }
 
 function safeCountryCode(countryCode: string | null | undefined) {
@@ -119,42 +118,73 @@ function getCountryName(countryCode: string | null | undefined) {
   return code
 }
 
-function tryParseDate(value: string | null | undefined) {
-  if (!value) return null
-  const direct = new Date(value)
-  if (!Number.isNaN(direct.getTime())) return direct
+function getGameCountdownLabel(
+  expiresOnGameDate: string | null | undefined,
+  gameState: GameStateRow | null
+) {
+  if (!expiresOnGameDate || !gameState) return 'No expiry'
 
-  const asMidnight = new Date(`${value}T00:00:00`)
-  if (!Number.isNaN(asMidnight.getTime())) return asMidnight
+  const currentGameDate = new Date(
+    Date.UTC(
+      2000,
+      Math.max(0, gameState.month_number - 1),
+      gameState.day_number,
+      gameState.hour_number,
+      gameState.minute_number,
+      0
+    )
+  )
 
-  return null
-}
+  const expiryDate = new Date(`${expiresOnGameDate}T23:59:59Z`)
+  const diffMs = expiryDate.getTime() - currentGameDate.getTime()
 
-function getExpiryCountdownLabel(value: string | null | undefined, nowMs: number) {
-  if (!value) return 'No expiry'
-
-  const parsed = tryParseDate(value)
-  if (!parsed) return value
-
-  const diffMs = parsed.getTime() - nowMs
   if (diffMs <= 0) return 'Expired'
 
-  const totalMinutes = Math.floor(diffMs / (1000 * 60))
-  const days = Math.floor(totalMinutes / (60 * 24))
-  const hours = Math.floor((totalMinutes % (60 * 24)) / 60)
-  const minutes = totalMinutes % 60
+  const totalSeconds = Math.floor(diffMs / 1000)
+  const days = Math.floor(totalSeconds / 86400)
+  const hours = Math.floor((totalSeconds % 86400) / 3600)
+  const minutes = Math.floor((totalSeconds % 3600) / 60)
+  const seconds = totalSeconds % 60
 
-  if (days > 0) return `${days}d ${hours}h left`
-  if (hours > 0) return `${hours}h ${minutes}m left`
-  return `${minutes}m left`
+  return `${days}d ${hours}h ${minutes}m ${seconds}s`
+}
+
+function getPreferredRiderName(value: {
+  full_name?: string | null
+  display_name?: string | null
+  rider_id?: string | null
+}) {
+  return (
+    value.full_name?.trim() ||
+    value.display_name?.trim() ||
+    value.rider_id ||
+    'Unknown rider'
+  )
+}
+
+function InfoPair({
+  label,
+  value,
+}: {
+  label: string
+  value: React.ReactNode
+}) {
+  return (
+    <span className="whitespace-nowrap text-xs text-gray-600">
+      <span className="font-semibold text-gray-900">{label}</span>{' '}
+      <span className="font-normal text-gray-600">{value}</span>
+    </span>
+  )
 }
 
 function MarketActionButton({
   label,
   onClick,
+  disabled,
 }: {
   label: string
   onClick: () => void
+  disabled?: boolean
 }) {
   return (
     <button
@@ -163,7 +193,12 @@ function MarketActionButton({
         event.stopPropagation()
         onClick()
       }}
-      className="rounded-md bg-yellow-400 px-3 py-2 text-xs font-semibold text-black transition hover:bg-yellow-300"
+      disabled={disabled}
+      className={`rounded-md px-3 py-2 text-xs font-semibold transition ${
+        disabled
+          ? 'cursor-not-allowed bg-gray-200 text-gray-500'
+          : 'bg-yellow-400 text-black hover:bg-yellow-300'
+      }`}
     >
       {label}
     </button>
@@ -172,18 +207,20 @@ function MarketActionButton({
 
 function MarketListRow({
   item,
-  nowMs,
+  gameState,
   isSelected,
   onSelect,
   onQuickAction,
 }: {
   item: FreeAgentMarketItem
-  nowMs: number
+  gameState: GameStateRow | null
   isSelected: boolean
   onSelect: () => void
   onQuickAction: () => void
 }) {
-  const countdown = getExpiryCountdownLabel(item.expires_on_game_date, nowMs)
+  const riderName = getPreferredRiderName(item.raw)
+  const countdown = getGameCountdownLabel(item.expires_on_game_date, gameState)
+  const isExpired = countdown === 'Expired'
 
   return (
     <button
@@ -206,39 +243,48 @@ function MarketListRow({
               className="h-4 w-6 shrink-0 rounded-sm border border-gray-200 object-cover"
             />
 
-            <span className="truncate text-sm font-semibold text-gray-900">{item.display_name}</span>
+            <span className="truncate text-sm font-semibold text-gray-900">{riderName}</span>
 
             {item.is_user_active ? (
               <span className="rounded-full bg-yellow-300 px-2 py-0.5 text-[11px] font-bold uppercase text-black">
-                Active Offer
+                Active Negotiation
               </span>
             ) : null}
           </div>
 
-          <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-500">
-            <span>{item.role || '—'}</span>
-            <span>OVR {item.overall ?? '—'}</span>
-            <span>POT {item.potential ?? '—'}</span>
-            <span>Age {item.age_years ?? '—'}</span>
-            <span>{item.seller_label}</span>
-          </div>
-
-          <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-500">
-            <span>{item.amount_label}</span>
-            <span>Visible: {countdown}</span>
-            <span>Expiry: {item.expires_on_game_date || '—'}</span>
+          <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2">
+            <InfoPair label="Role:" value={item.role || '—'} />
+            <InfoPair label="OVR:" value={item.overall ?? '—'} />
+            <InfoPair label="POT:" value={item.potential ?? '—'} />
+            <InfoPair label="Age:" value={item.age_years ?? '—'} />
+            <InfoPair label="Type:" value="Free Agent" />
           </div>
         </div>
 
-        <div className="flex shrink-0 items-center gap-3">
-          <div className="text-right">
-            <div className="text-sm font-semibold text-gray-900">Free Agent</div>
-            <div className="text-xs text-gray-500">
-              {item.amount_value != null ? formatCurrency(item.amount_value) : '—'}
+        <div className="flex flex-col items-start gap-3 xl:items-end">
+          <div className="flex flex-wrap items-center gap-3 xl:justify-end">
+            <div
+              className={`rounded-md px-3 py-2 text-xs ${
+                isExpired ? 'bg-red-50 text-red-700' : 'bg-blue-50 text-blue-700'
+              }`}
+            >
+              <span className={`font-semibold ${isExpired ? 'text-red-900' : 'text-blue-900'}`}>
+                Time left:
+              </span>{' '}
+              <span>{countdown}</span>
             </div>
-          </div>
 
-          <MarketActionButton label="Contract Negotiate" onClick={onQuickAction} />
+            <div className="rounded-md bg-gray-50 px-3 py-2 text-xs text-gray-700">
+              <span className="font-semibold text-gray-900">Salary:</span>{' '}
+              <span>{formatCurrency(item.amount_value)}/week</span>
+            </div>
+
+            <MarketActionButton
+              label="Contract Negotiate"
+              onClick={onQuickAction}
+              disabled={isExpired}
+            />
+          </div>
         </div>
       </div>
     </button>
@@ -247,7 +293,7 @@ function MarketListRow({
 
 type RiderFreeAgentsPageProps = {
   riderLoading: boolean
-  nowMs: number
+  gameState: GameStateRow | null
   marketSearch: string
   setMarketSearch: (value: string) => void
   marketRoleFilter: RiderRoleFilter
@@ -276,7 +322,7 @@ type RiderFreeAgentsPageProps = {
 
 export default function RiderFreeAgentsPage({
   riderLoading,
-  nowMs,
+  gameState,
   marketSearch,
   setMarketSearch,
   marketRoleFilter,
@@ -302,6 +348,12 @@ export default function RiderFreeAgentsPage({
   onStartFreeAgentNegotiation,
   myFreeAgentNegotiations,
 }: RiderFreeAgentsPageProps) {
+  const selectedCountdown = getGameCountdownLabel(
+    selectedFreeAgent?.expires_on_game_date,
+    gameState
+  )
+  const selectedExpired = selectedCountdown === 'Expired'
+
   return (
     <div className="space-y-4">
       <div className="rounded-lg border border-gray-100 bg-white p-4 shadow">
@@ -322,7 +374,7 @@ export default function RiderFreeAgentsPage({
                 type="text"
                 value={marketSearch}
                 onChange={(e) => setMarketSearch(e.target.value)}
-                placeholder="Search rider, role, seller..."
+                placeholder="Search rider, role..."
                 className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700"
               />
             </div>
@@ -386,7 +438,7 @@ export default function RiderFreeAgentsPage({
         <div className="mt-4 space-y-3">
           {riderLoading ? (
             <div className="rounded-lg border border-gray-100 bg-gray-50 p-4 text-sm text-gray-500">
-              Loading rider market...
+              Loading free agents...
             </div>
           ) : paginatedUnifiedMarketRows.length === 0 ? (
             <div className="rounded-lg border border-gray-100 bg-gray-50 p-4 text-sm text-gray-500">
@@ -397,7 +449,7 @@ export default function RiderFreeAgentsPage({
               <MarketListRow
                 key={item.key}
                 item={item}
-                nowMs={nowMs}
+                gameState={gameState}
                 isSelected={item.free_agent_id === selectedFreeAgentId}
                 onSelect={() => onSelectMarketItem(item)}
                 onQuickAction={() => onQuickActionMarketItem(item)}
@@ -458,12 +510,20 @@ export default function RiderFreeAgentsPage({
           ) : (
             <>
               <div className="mt-3">
-                <div className="font-semibold text-gray-900">
-                  {selectedFreeAgent.rider?.display_name || 'Unknown rider'}
+                <div className="flex items-center gap-2">
+                  <img
+                    src={getCountryFlagUrl(safeCountryCode(selectedFreeAgent.country_code))}
+                    alt={getCountryName(selectedFreeAgent.country_code)}
+                    className="h-4 w-6 shrink-0 rounded-sm border border-gray-200 object-cover"
+                  />
+                  <div className="font-semibold text-gray-900">
+                    {getPreferredRiderName(selectedFreeAgent)}
+                  </div>
                 </div>
-                <div className="text-sm text-gray-500">
-                  {selectedFreeAgent.rider?.role || '—'} • OVR {selectedFreeAgent.rider?.overall ?? '—'} •
-                  POT {selectedFreeAgent.rider?.potential ?? '—'}
+
+                <div className="mt-1 text-sm text-gray-500">
+                  {selectedFreeAgent.role || '—'} • Age {selectedFreeAgent.age_years ?? '—'} • OVR{' '}
+                  {selectedFreeAgent.overall ?? '—'} • POT {selectedFreeAgent.potential ?? '—'}
                 </div>
               </div>
 
@@ -476,40 +536,36 @@ export default function RiderFreeAgentsPage({
                 </div>
 
                 <div className="rounded-lg bg-gray-50 p-3">
-                  <div className="text-xs text-gray-500">Min Acceptable</div>
+                  <div className="text-xs text-gray-500">Status</div>
                   <div className="mt-1 text-sm font-semibold text-gray-900">
-                    {formatCurrency(selectedFreeAgent.min_acceptable_salary_weekly)}/week
+                    {selectedFreeAgent.status || '—'}
                   </div>
                 </div>
               </div>
 
               <div className="mt-4 grid grid-cols-2 gap-3">
                 <div className="rounded-lg bg-gray-50 p-3">
-                  <div className="text-xs text-gray-500">Preferred Duration</div>
+                  <div className="text-xs text-gray-500">Visible Until</div>
                   <div className="mt-1 text-sm font-semibold text-gray-900">
-                    {selectedFreeAgent.preferred_duration_seasons} season(s)
+                    {formatDate(selectedFreeAgent.expires_on_game_date)}
                   </div>
                 </div>
 
                 <div className="rounded-lg bg-gray-50 p-3">
-                  <div className="text-xs text-gray-500">Visible For</div>
-                  <div className="mt-1 text-sm font-semibold text-gray-900">
-                    {getExpiryCountdownLabel(selectedFreeAgent.expires_on_game_date, nowMs)}
+                  <div className="text-xs text-gray-500">Time Left</div>
+                  <div className={`mt-1 text-sm font-semibold ${selectedExpired ? 'text-red-700' : 'text-gray-900'}`}>
+                    {selectedCountdown}
                   </div>
                 </div>
               </div>
 
-              <div className="mt-4 flex items-center justify-between gap-3">
-                <div className="text-xs text-gray-500">
-                  Desired tier: {selectedFreeAgent.desired_tier}
-                </div>
-
+              <div className="mt-4 flex items-center justify-end gap-3">
                 <button
                   type="button"
                   onClick={() => onStartFreeAgentNegotiation(selectedFreeAgent)}
-                  disabled={riderActionLoading}
+                  disabled={riderActionLoading || selectedExpired}
                   className={`rounded-md px-4 py-2 text-sm font-medium transition ${
-                    riderActionLoading
+                    riderActionLoading || selectedExpired
                       ? 'cursor-not-allowed bg-gray-200 text-gray-500'
                       : 'bg-yellow-400 text-black hover:bg-yellow-300'
                   }`}
