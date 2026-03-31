@@ -23,6 +23,8 @@ type GameStateRow = {
 
 type OwnedRiderRow = {
   rider_id: string
+  first_name?: string | null
+  last_name?: string | null
   full_name?: string | null
   display_name: string
   country_code?: string | null
@@ -41,6 +43,8 @@ type MarketListingRow = {
   rider_id: string
   seller_club_id: string
   seller_club_name: string | null
+  first_name?: string | null
+  last_name?: string | null
   full_name?: string | null
   display_name: string
   country_code: string | null
@@ -61,19 +65,23 @@ type MarketListingRow = {
 }
 
 type TransferListingRow = {
-  id: string
+  listing_id?: string
+  id?: string
   rider_id: string
-  seller_club_id: string
+  seller_club_id?: string
   asking_price: number
   min_allowed_price: number
   max_allowed_price: number
   listed_on_game_date: string | null
   expires_on_game_date: string | null
   status: string
-  auto_price_clamped: boolean
-  created_at: string
-  updated_at: string
+  auto_price_clamped?: boolean
+  created_at?: string
+  updated_at?: string
+  status_changed_at_game_ts?: string | null
 
+  first_name?: string | null
+  last_name?: string | null
   full_name?: string | null
   display_name?: string | null
   country_code?: string | null
@@ -228,12 +236,72 @@ function stripLabelPrefix(value: string) {
   return value.slice(colonIndex + 1).trim()
 }
 
+function looksLikeUuid(value: string | null | undefined) {
+  if (!value) return false
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+    value.trim()
+  )
+}
+
+function looksLikeShortInitialName(value: string | null | undefined) {
+  if (!value) return false
+  const normalized = value.trim()
+  return /^[A-Z]\.\s+[A-Za-zÀ-ÿ' -]+$/u.test(normalized)
+}
+
+function cleanNameCandidate(value: string | null | undefined) {
+  const normalized = value?.trim()
+  if (!normalized) return null
+  if (looksLikeUuid(normalized)) return null
+  return normalized
+}
+
+function pickBetterName(
+  currentValue: string | null,
+  nextValue: string | null
+) {
+  if (!nextValue) return currentValue
+  if (!currentValue) return nextValue
+
+  const currentIsShort = looksLikeShortInitialName(currentValue)
+  const nextIsShort = looksLikeShortInitialName(nextValue)
+
+  if (currentIsShort && !nextIsShort) return nextValue
+  if (!currentIsShort && nextIsShort) return currentValue
+
+  return nextValue.length > currentValue.length ? nextValue : currentValue
+}
+
 function getPreferredRiderName(value: {
+  first_name?: string | null
+  last_name?: string | null
   full_name?: string | null
   display_name?: string | null
   rider_id?: string | null
 }) {
-  return value.full_name?.trim() || value.display_name?.trim() || value.rider_id || 'Unknown rider'
+  const combinedName = cleanNameCandidate(
+    [value.first_name?.trim(), value.last_name?.trim()].filter(Boolean).join(' ')
+  )
+
+  const fullName = cleanNameCandidate(value.full_name)
+  const displayName = cleanNameCandidate(value.display_name)
+
+  let bestName: string | null = null
+  bestName = pickBetterName(bestName, combinedName)
+  bestName = pickBetterName(bestName, displayName)
+  bestName = pickBetterName(bestName, fullName)
+
+  if (bestName) return bestName
+
+  if (value.rider_id && !looksLikeUuid(value.rider_id)) {
+    return value.rider_id
+  }
+
+  return 'Unknown rider'
+}
+
+function getListingRowId(listing: TransferListingRow) {
+  return listing.listing_id ?? listing.id ?? listing.rider_id
 }
 
 function InfoPair({
@@ -662,10 +730,11 @@ export default function RiderTransferListPage({
               </div>
             ) : (
               myListings.map((listing) => {
+                const listingRowId = getListingRowId(listing)
                 const riderName = getPreferredRiderName(listing)
 
                 return (
-                  <div key={listing.id} className="rounded-lg border border-gray-100 bg-gray-50 p-3">
+                  <div key={listingRowId} className="rounded-lg border border-gray-100 bg-gray-50 p-3">
                     <div className="flex items-center justify-between gap-3">
                       <div className="min-w-0">
                         <div className="flex items-center gap-2">
@@ -674,14 +743,12 @@ export default function RiderTransferListPage({
                             alt={getCountryName(listing.country_code)}
                             className="h-4 w-6 shrink-0 rounded-sm border border-gray-200 object-cover"
                           />
-                          <div className="text-sm font-semibold text-gray-900">{riderName}</div>
+                          <div className="truncate font-medium text-gray-900">{riderName}</div>
                         </div>
 
-                        <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1">
-                          <InfoPair label="Role:" value={listing.role || '—'} />
-                          <InfoPair label="OVR:" value={listing.overall ?? '—'} />
-                          <InfoPair label="POT:" value={listing.potential ?? '—'} />
-                          <InfoPair label="Age:" value={listing.age_years ?? '—'} />
+                        <div className="text-sm text-gray-600">
+                          Role: {listing.role ?? '—'} · OVR: {listing.overall ?? '—'} · POT:{' '}
+                          {listing.potential ?? '—'} · Age: {listing.age_years ?? '—'}
                         </div>
 
                         <div className="mt-1 text-xs text-gray-500">
@@ -693,7 +760,7 @@ export default function RiderTransferListPage({
                       {listing.status === 'listed' ? (
                         <button
                           type="button"
-                          onClick={() => onCancelListing(listing.id)}
+                          onClick={() => onCancelListing(listingRowId)}
                           disabled={riderActionLoading}
                           className="rounded-md border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
                         >

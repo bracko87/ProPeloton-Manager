@@ -74,7 +74,11 @@ type ClubStaffRow = {
 
 type OwnedRiderRow = {
   rider_id: string
+  first_name?: string | null
+  last_name?: string | null
+  full_name?: string | null
   display_name: string
+  country_code?: string | null
   role: string | null
   age_years: number | null
   overall: number | null
@@ -90,6 +94,9 @@ type MarketListingRow = {
   rider_id: string
   seller_club_id: string
   seller_club_name: string | null
+  first_name?: string | null
+  last_name?: string | null
+  full_name?: string | null
   display_name: string
   country_code: string | null
   role: string | null
@@ -104,21 +111,35 @@ type MarketListingRow = {
   listed_on_game_date: string | null
   expires_on_game_date: string | null
   auto_price_clamped: boolean
+  time_left_label?: string | null
+  status?: string | null
 }
 
 type TransferListingRow = {
   id: string
+  listing_id: string
   rider_id: string
-  seller_club_id: string
+  seller_club_id?: string | null
   asking_price: number
   min_allowed_price: number
   max_allowed_price: number
   listed_on_game_date: string | null
   expires_on_game_date: string | null
   status: string
-  auto_price_clamped: boolean
-  created_at: string
-  updated_at: string
+  auto_price_clamped?: boolean
+  created_at?: string | null
+  updated_at?: string | null
+  status_changed_at_game_ts?: string | null
+
+  first_name?: string | null
+  last_name?: string | null
+  full_name?: string | null
+  display_name?: string | null
+  country_code?: string | null
+  role?: string | null
+  age_years?: number | null
+  overall?: number | null
+  potential?: number | null
 }
 
 type TransferOfferRow = {
@@ -389,9 +410,12 @@ function tryParseDate(value: string | null | undefined) {
 function getCurrentGameDateFromState(gameState: GameStateRow | null | undefined) {
   if (!gameState) return null
 
+  // season 1 = year 2000
+  const gameYear = 1999 + Math.max(1, gameState.season_number || 1)
+
   const gameDate = new Date(
     Date.UTC(
-      gameState.season_number,
+      gameYear,
       Math.max(0, (gameState.month_number || 1) - 1),
       Math.max(1, gameState.day_number || 1),
       Math.max(0, gameState.hour_number || 0),
@@ -437,6 +461,35 @@ function buildFullName(
 
   const full = parts.join(' ')
   return full || fallback || null
+}
+
+function looksLikeUuid(value: string | null | undefined) {
+  if (!value) return false
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+    value.trim()
+  )
+}
+
+function buildPreferredRiderName(params: {
+  firstName?: string | null
+  lastName?: string | null
+  fullName?: string | null
+  displayName?: string | null
+  fallbackId?: string | null
+}) {
+  const first = params.firstName?.trim() || ''
+  const last = params.lastName?.trim() || ''
+  const combined = [first, last].filter(Boolean).join(' ').trim()
+
+  if (combined) return combined
+  if (params.fullName?.trim()) return params.fullName.trim()
+  if (params.displayName?.trim() && !looksLikeUuid(params.displayName)) {
+    return params.displayName.trim()
+  }
+  if (params.fallbackId && !looksLikeUuid(params.fallbackId)) {
+    return params.fallbackId
+  }
+  return 'Unknown rider'
 }
 
 function normalizeFreeAgentNegotiationRow(
@@ -752,24 +805,10 @@ export default function TransfersPage() {
           `)
           .eq('club_id', clubIdValue)
           .order('overall', { ascending: false }),
-        supabase
-          .from('rider_transfer_listings')
-          .select(`
-            id,
-            rider_id,
-            seller_club_id,
-            asking_price,
-            min_allowed_price,
-            max_allowed_price,
-            listed_on_game_date,
-            expires_on_game_date,
-            status,
-            auto_price_clamped,
-            created_at,
-            updated_at
-          `)
-          .eq('seller_club_id', clubIdValue)
-          .order('created_at', { ascending: false }),
+
+        // IMPORTANT: use dashboard rpc instead of raw rider_transfer_listings table
+        supabase.rpc('get_my_transfer_listings_dashboard'),
+
         supabase
           .from('rider_transfer_offers')
           .select(`
@@ -880,20 +919,21 @@ export default function TransfersPage() {
       if (freeAgentNegotiationsResult.error) throw freeAgentNegotiationsResult.error
       if (gameStateResult.error) throw gameStateResult.error
 
-      const market = (marketResult.data || []) as MarketListingRow[]
-      const own = (ownRidersResult.data || []) as OwnedRiderRow[]
-      const listings = (myListingsResult.data || []) as TransferListingRow[]
+      const marketBase = (marketResult.data || []) as any[]
+      const ownBase = (ownRidersResult.data || []) as any[]
+      const listingsBase = (myListingsResult.data || []) as any[]
       const offers = (offersResult.data || []) as TransferOfferRow[]
       const negotiations = (negotiationsResult.data || []) as TransferNegotiationRow[]
       const gameStateData = gameStateResult.data as GameStateRow
       const currentGameDate = getCurrentGameDateFromState(gameStateData)
 
-      const freeAgentsRows = ((freeAgentsResult.data || []) as any[]).map((row) => {
-        const fullName = buildFullName(
-          row.first_name,
-          row.last_name,
-          row.display_name ?? row.rider_id
-        )
+      const freeAgentsRows: FreeAgentMarketRow[] = ((freeAgentsResult.data || []) as any[]).map((row) => {
+        const fullName = buildPreferredRiderName({
+          firstName: row.first_name,
+          lastName: row.last_name,
+          displayName: row.display_name,
+          fallbackId: row.rider_id,
+        })
 
         return {
           id: row.free_agent_id,
@@ -903,23 +943,134 @@ export default function TransfersPage() {
           expected_salary_weekly: row.expected_salary_weekly ?? null,
           expires_on_game_date: row.expires_on_game_date ?? null,
           full_name: fullName,
-          display_name: row.display_name ?? row.rider_id,
+          display_name: fullName,
           country_code: row.country_code ?? null,
           role: row.role ?? null,
           overall: row.overall ?? null,
           potential: row.potential ?? null,
           age_years: calculateAgeYearsFromGameDate(row.birth_date, currentGameDate),
-        } satisfies FreeAgentMarketRow
+        }
       })
 
       const freeAgentNegotiationRows = ((freeAgentNegotiationsResult.data || []) as any[]).map(
         (row) => normalizeFreeAgentNegotiationRow(row, currentGameDate)
       )
 
+      const riderIds = Array.from(
+        new Set(
+          [
+            ...marketBase.map((row) => row.rider_id),
+            ...ownBase.map((row) => row.rider_id),
+            ...listingsBase.map((row) => row.rider_id),
+            ...freeAgentsRows.map((row) => row.rider_id),
+            ...freeAgentNegotiationRows.map((row) => row.rider_id),
+          ].filter(Boolean)
+        )
+      )
+
+      let riderMap: Record<string, any> = {}
+
+      if (riderIds.length > 0) {
+        const { data: riderRows, error: riderRowsError } = await supabase
+          .from('riders')
+          .select(`
+            id,
+            first_name,
+            last_name,
+            display_name,
+            country_code,
+            role,
+            overall,
+            potential,
+            birth_date
+          `)
+          .in('id', riderIds)
+
+        if (riderRowsError) throw riderRowsError
+
+        riderMap = Object.fromEntries((riderRows || []).map((row: any) => [row.id, row]))
+      }
+
+      const market: MarketListingRow[] = marketBase.map((row: any) => {
+        const rider = riderMap[row.rider_id]
+        const fullName = buildPreferredRiderName({
+          firstName: rider?.first_name,
+          lastName: rider?.last_name,
+          fullName: row.full_name,
+          displayName: row.display_name ?? rider?.display_name,
+          fallbackId: row.rider_id,
+        })
+
+        return {
+          ...row,
+          first_name: rider?.first_name ?? null,
+          last_name: rider?.last_name ?? null,
+          full_name: fullName,
+          display_name: fullName,
+          country_code: row.country_code ?? rider?.country_code ?? null,
+          role: row.role ?? rider?.role ?? null,
+          overall: row.overall ?? rider?.overall ?? null,
+          potential: row.potential ?? rider?.potential ?? null,
+          age_years:
+            row.age_years ?? calculateAgeYearsFromGameDate(rider?.birth_date, currentGameDate),
+        }
+      })
+
+      const own: OwnedRiderRow[] = ownBase.map((row: any) => {
+        const rider = riderMap[row.rider_id]
+        const fullName = buildPreferredRiderName({
+          firstName: rider?.first_name,
+          lastName: rider?.last_name,
+          fullName: row.full_name,
+          displayName: row.display_name ?? rider?.display_name,
+          fallbackId: row.rider_id,
+        })
+
+        return {
+          ...row,
+          first_name: rider?.first_name ?? null,
+          last_name: rider?.last_name ?? null,
+          full_name: fullName,
+          display_name: fullName,
+          country_code: rider?.country_code ?? null,
+          role: row.role ?? rider?.role ?? null,
+          overall: row.overall ?? rider?.overall ?? null,
+          potential: row.potential ?? rider?.potential ?? null,
+          age_years:
+            row.age_years ?? calculateAgeYearsFromGameDate(rider?.birth_date, currentGameDate),
+        }
+      })
+
+      const listings: TransferListingRow[] = listingsBase.map((row: any) => {
+        const rider = riderMap[row.rider_id]
+        const fullName = buildPreferredRiderName({
+          firstName: rider?.first_name,
+          lastName: rider?.last_name,
+          fullName: row.full_name,
+          displayName: row.display_name ?? rider?.display_name,
+          fallbackId: row.rider_id,
+        })
+
+        return {
+          ...row,
+          id: row.id ?? row.listing_id,
+          listing_id: row.listing_id ?? row.id,
+          first_name: rider?.first_name ?? null,
+          last_name: rider?.last_name ?? null,
+          full_name: fullName,
+          display_name: fullName,
+          country_code: row.country_code ?? rider?.country_code ?? null,
+          role: row.role ?? rider?.role ?? null,
+          overall: row.overall ?? rider?.overall ?? null,
+          potential: row.potential ?? rider?.potential ?? null,
+          age_years:
+            row.age_years ?? calculateAgeYearsFromGameDate(rider?.birth_date, currentGameDate),
+        }
+      })
+
       const clubIds = [
         clubIdValue,
         ...market.map((row) => row.seller_club_id),
-        ...listings.map((row) => row.seller_club_id),
         ...offers.flatMap((row) => [row.seller_club_id, row.buyer_club_id]),
         ...negotiations.flatMap((row) => [row.seller_club_id, row.buyer_club_id]),
         ...freeAgentNegotiationRows.map((row) => row.club_id),
@@ -1138,7 +1289,7 @@ export default function TransfersPage() {
           key: `transfer-${listing.listing_id}`,
           rider_id: listing.rider_id,
           listing_id: listing.listing_id,
-          display_name: listing.display_name,
+          display_name: listing.full_name || listing.display_name,
           country_code: listing.country_code,
           role: listing.role,
           overall: listing.overall,
@@ -1423,20 +1574,21 @@ export default function TransfersPage() {
     }
   }
 
-  async function handleSubmitOffer() {
-    if (!selectedMarketListing || !clubId) return
+  async function handleSubmitOffer(targetListing?: MarketListingRow) {
+    const listing = targetListing || selectedMarketListing
+    if (!listing || !clubId) return
 
     try {
       setRiderActionLoading(true)
       setPageMessage(null)
 
-      const offeredPrice = Number(offerPrice)
+      const offeredPrice = Number(offerPrice || listing.asking_price)
       if (!Number.isFinite(offeredPrice) || offeredPrice <= 0) {
         throw new Error('Please enter a valid offer amount.')
       }
 
       const { error } = await supabase.rpc('submit_rider_transfer_offer', {
-        p_listing_id: selectedMarketListing.listing_id,
+        p_listing_id: listing.listing_id,
         p_buyer_club_id: clubId,
         p_offered_price: offeredPrice,
       })
@@ -1719,7 +1871,7 @@ export default function TransfersPage() {
               setSelectedMarketListingId(item.listing_id)
               setOfferPrice(String(item.raw.asking_price))
               if (!item.is_own_item) {
-                void handleSubmitOffer()
+                void handleSubmitOffer(item.raw)
               }
             }}
             marketPageStart={marketPageStart}

@@ -103,7 +103,7 @@ function getBestRiderSkillValue(rider: {
 
 function CountryFlag({
   countryCode,
-  className = 'h-4 w-5 rounded-sm object-cover',
+  className = '',
 }: {
   countryCode?: string | null
   className?: string
@@ -112,19 +112,27 @@ function CountryFlag({
   const countryName = getCountryName(countryCode)
   const [hasError, setHasError] = useState(false)
 
+  const wrapperClassName = [
+    'inline-flex h-[16px] w-[24px] shrink-0 overflow-hidden rounded-[4px] border border-gray-200 bg-white',
+    className,
+  ]
+    .filter(Boolean)
+    .join(' ')
+
   if (!src || hasError) {
-    return <div className={`${className} bg-gray-200`} />
+    return <span className={`${wrapperClassName} bg-gray-200`} title={countryName} />
   }
 
   return (
-    <img
-      src={src}
-      alt={`${countryName} flag`}
-      title={countryName}
-      className={className}
-      loading="lazy"
-      onError={() => setHasError(true)}
-    />
+    <span className={wrapperClassName} title={countryName}>
+      <img
+        src={src}
+        alt={`${countryName} flag`}
+        className="h-full w-full object-cover"
+        loading="lazy"
+        onError={() => setHasError(true)}
+      />
+    </span>
   )
 }
 
