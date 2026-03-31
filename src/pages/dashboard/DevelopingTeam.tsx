@@ -378,7 +378,7 @@ function getDevelopingTeamAgeWarning(age?: number | null, movementWindowOpen?: b
     label: 'Must move next window',
     className:
       'inline-flex items-center rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-700',
-    }
+  }
 }
 
 function CompactValueTile({
@@ -824,6 +824,10 @@ export default function DevelopingTeamPage() {
           gameDate={gameDate}
           currentTeamType="developing"
           onBack={closeProfile}
+          onRosterChanged={loadDevelopingTeamPageData}
+          onCompareRider={({ riderId }) => {
+            navigate(`/dashboard/compare-riders?left=${riderId}`)
+          }}
         />
       </div>
     )
@@ -897,7 +901,10 @@ export default function DevelopingTeamPage() {
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <label htmlFor="developing-team-list-view" className="text-sm font-medium text-gray-600">
+                  <label
+                    htmlFor="developing-team-list-view"
+                    className="text-sm font-medium text-gray-600"
+                  >
                     View
                   </label>
                   <select
@@ -963,7 +970,9 @@ export default function DevelopingTeamPage() {
                     )}
 
                     <th
-                      className={`p-2 text-right ${listView === 'skills' ? 'w-[72px]' : 'w-[90px]'}`}
+                      className={`p-2 text-right ${
+                        listView === 'skills' ? 'w-[72px]' : 'w-[90px]'
+                      }`}
                     >
                       View
                     </th>
@@ -1037,7 +1046,9 @@ export default function DevelopingTeamPage() {
 
                         <td className="p-2">
                           <div
-                            className={`flex items-center gap-2 ${listView === 'skills' ? 'whitespace-nowrap' : ''}`}
+                            className={`flex items-center gap-2 ${
+                              listView === 'skills' ? 'whitespace-nowrap' : ''
+                            }`}
                             title={getCountryName(r.countryCode)}
                           >
                             <CountryFlag countryCode={r.countryCode} />

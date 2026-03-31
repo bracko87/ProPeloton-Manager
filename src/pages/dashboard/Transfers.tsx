@@ -148,6 +148,7 @@ type TransferOfferRow = {
   rider_id: string
   seller_club_id: string
   buyer_club_id: string
+  seller_club_name?: string | null
   offered_price: number
   offered_on_game_date: string | null
   expires_on_game_date: string | null
@@ -156,6 +157,17 @@ type TransferOfferRow = {
   metadata: Record<string, unknown> | null
   created_at: string
   updated_at: string
+  status_changed_at_game_ts?: string | null
+
+  first_name?: string | null
+  last_name?: string | null
+  full_name?: string | null
+  display_name?: string | null
+  country_code?: string | null
+  role?: string | null
+  overall?: number | null
+  potential?: number | null
+  age_years?: number | null
 }
 
 type TransferNegotiationRow = {
@@ -181,6 +193,20 @@ type TransferNegotiationRow = {
   notes_json: Record<string, unknown> | null
   created_at: string
   updated_at: string
+}
+
+type TransferHistoryRow = {
+  id: string
+  direction: 'arrival' | 'departure'
+  movement_type: 'transfer' | 'free_agent' | 'release' | string
+  rider_id: string | null
+  rider_name: string
+  from_club_id: string | null
+  from_club_name: string | null
+  to_club_id: string | null
+  to_club_name: string | null
+  amount: number | null
+  game_date: string | null
 }
 
 type FreeAgentMarketRow = {
@@ -287,6 +313,25 @@ const RIDERS_PER_PAGE = 30
 function formatCurrency(value: number | null | undefined) {
   if (value == null || Number.isNaN(value)) return '—'
   return `$${Math.round(Number(value)).toLocaleString('en-US')}`
+}
+
+function formatTransferAmount(value: number | null | undefined) {
+  if (value == null || Number.isNaN(value)) return '—'
+  const roundedToThousand = Math.round(Number(value) / 1000) * 1000
+  return `$${roundedToThousand.toLocaleString('en-US')}`
+}
+
+function formatCurrencyInput(value: string) {
+  const digits = value.replace(/[^\d]/g, '')
+  if (!digits) return ''
+  return `$${Number(digits).toLocaleString('en-US')}`
+}
+
+function parseCurrencyInput(value: string) {
+  const digits = value.replace(/[^\d]/g, '')
+  if (!digits) return null
+  const parsed = Number(digits)
+  return Number.isFinite(parsed) ? parsed : null
 }
 
 function safeCountryCode(countryCode: string | null | undefined) {
@@ -410,7 +455,6 @@ function tryParseDate(value: string | null | undefined) {
 function getCurrentGameDateFromState(gameState: GameStateRow | null | undefined) {
   if (!gameState) return null
 
-  // season 1 = year 2000
   const gameYear = 1999 + Math.max(1, gameState.season_number || 1)
 
   const gameDate = new Date(
@@ -450,19 +494,6 @@ function calculateAgeYearsFromGameDate(
   return age
 }
 
-function buildFullName(
-  firstName: string | null | undefined,
-  lastName: string | null | undefined,
-  fallback: string | null | undefined
-) {
-  const parts = [firstName?.trim(), lastName?.trim()].filter(
-    (part): part is string => Boolean(part)
-  )
-
-  const full = parts.join(' ')
-  return full || fallback || null
-}
-
 function looksLikeUuid(value: string | null | undefined) {
   if (!value) return false
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
@@ -477,9 +508,10 @@ function buildPreferredRiderName(params: {
   displayName?: string | null
   fallbackId?: string | null
 }) {
-  const first = params.firstName?.trim() || ''
-  const last = params.lastName?.trim() || ''
-  const combined = [first, last].filter(Boolean).join(' ').trim()
+  const combined = [params.firstName?.trim(), params.lastName?.trim()]
+    .filter((part): part is string => Boolean(part))
+    .join(' ')
+    .trim()
 
   if (combined) return combined
   if (params.fullName?.trim()) return params.fullName.trim()
@@ -617,7 +649,9 @@ export default function TransfersPage() {
   const [marketListings, setMarketListings] = useState<MarketListingRow[]>([])
   const [myListings, setMyListings] = useState<TransferListingRow[]>([])
   const [transferOffers, setTransferOffers] = useState<TransferOfferRow[]>([])
+  const [mySentOffersDashboard, setMySentOffersDashboard] = useState<TransferOfferRow[]>([])
   const [transferNegotiations, setTransferNegotiations] = useState<TransferNegotiationRow[]>([])
+  const [transferHistory, setTransferHistory] = useState<TransferHistoryRow[]>([])
   const [freeAgents, setFreeAgents] = useState<FreeAgentMarketRow[]>([])
   const [freeAgentNegotiations, setFreeAgentNegotiations] = useState<
     FreeAgentNegotiationRow[]
@@ -631,6 +665,8 @@ export default function TransfersPage() {
   const [listAskingPrice, setListAskingPrice] = useState('')
   const [listDurationDays, setListDurationDays] = useState('7')
   const [offerPrice, setOfferPrice] = useState('')
+  const [offerModalListing, setOfferModalListing] = useState<MarketListingRow | null>(null)
+  const [offerDraftPrice, setOfferDraftPrice] = useState('')
 
   const [riderActionLoading, setRiderActionLoading] = useState(false)
 
@@ -771,6 +807,17 @@ export default function TransfersPage() {
     navigate(`/dashboard/riders/${riderId}`)
   }
 
+  function openClubProfilePage(targetClubId: string) {
+    navigate(`/dashboard/clubs/${targetClubId}`)
+  }
+
+  function openOfferModal(listing: MarketListingRow) {
+    setSelectedMarketListingId(listing.listing_id)
+    setOfferPrice(String(listing.asking_price))
+    setOfferDraftPrice(formatTransferAmount(listing.asking_price))
+    setOfferModalListing(listing)
+  }
+
   async function loadRiderData(clubIdValue: string, mounted = true) {
     setRiderLoading(true)
 
@@ -780,10 +827,12 @@ export default function TransfersPage() {
         ownRidersResult,
         myListingsResult,
         offersResult,
+        mySentOffersDashboardResult,
         negotiationsResult,
         freeAgentsResult,
         freeAgentNegotiationsResult,
         gameStateResult,
+        transferHistoryResult,
       ] = await Promise.all([
         supabase.rpc('get_transfer_market_listings', {
           p_page: 1,
@@ -805,10 +854,7 @@ export default function TransfersPage() {
           `)
           .eq('club_id', clubIdValue)
           .order('overall', { ascending: false }),
-
-        // IMPORTANT: use dashboard rpc instead of raw rider_transfer_listings table
-        supabase.rpc('get_my_transfer_listings_dashboard'),
-
+        supabase.rpc('get_my_transfer_listings_dashboard', {}),
         supabase
           .from('rider_transfer_offers')
           .select(`
@@ -827,6 +873,7 @@ export default function TransfersPage() {
             updated_at
           `)
           .order('created_at', { ascending: false }),
+        supabase.rpc('get_my_sent_transfer_offers_dashboard', {}),
         supabase
           .from('rider_transfer_negotiations')
           .select(`
@@ -908,22 +955,28 @@ export default function TransfersPage() {
           .select('season_number, month_number, day_number, hour_number, minute_number')
           .eq('id', true)
           .single(),
+        supabase.rpc('get_my_transfer_history_dashboard', {}),
       ])
 
       if (marketResult.error) throw marketResult.error
       if (ownRidersResult.error) throw ownRidersResult.error
       if (myListingsResult.error) throw myListingsResult.error
       if (offersResult.error) throw offersResult.error
+      if (mySentOffersDashboardResult.error) throw mySentOffersDashboardResult.error
       if (negotiationsResult.error) throw negotiationsResult.error
       if (freeAgentsResult.error) throw freeAgentsResult.error
       if (freeAgentNegotiationsResult.error) throw freeAgentNegotiationsResult.error
       if (gameStateResult.error) throw gameStateResult.error
+      if (transferHistoryResult.error) throw transferHistoryResult.error
 
       const marketBase = (marketResult.data || []) as any[]
       const ownBase = (ownRidersResult.data || []) as any[]
       const listingsBase = (myListingsResult.data || []) as any[]
-      const offers = (offersResult.data || []) as TransferOfferRow[]
+      const offersBase = (offersResult.data || []) as any[]
+      const mySentOffersDashboardRows =
+        (mySentOffersDashboardResult.data || []) as TransferOfferRow[]
       const negotiations = (negotiationsResult.data || []) as TransferNegotiationRow[]
+      const historyRows = (transferHistoryResult.data || []) as TransferHistoryRow[]
       const gameStateData = gameStateResult.data as GameStateRow
       const currentGameDate = getCurrentGameDateFromState(gameStateData)
 
@@ -962,8 +1015,11 @@ export default function TransfersPage() {
             ...marketBase.map((row) => row.rider_id),
             ...ownBase.map((row) => row.rider_id),
             ...listingsBase.map((row) => row.rider_id),
+            ...offersBase.map((row) => row.rider_id),
+            ...negotiations.map((row) => row.rider_id),
             ...freeAgentsRows.map((row) => row.rider_id),
             ...freeAgentNegotiationRows.map((row) => row.rider_id),
+            ...historyRows.map((row) => row.rider_id),
           ].filter(Boolean)
         )
       )
@@ -1068,12 +1124,37 @@ export default function TransfersPage() {
         }
       })
 
+      const offers: TransferOfferRow[] = offersBase.map((row: any) => {
+        const rider = riderMap[row.rider_id]
+        const fullName = buildPreferredRiderName({
+          firstName: rider?.first_name,
+          lastName: rider?.last_name,
+          fullName: row.full_name,
+          displayName: row.display_name ?? rider?.display_name,
+          fallbackId: row.rider_id,
+        })
+
+        return {
+          ...row,
+          first_name: rider?.first_name ?? null,
+          last_name: rider?.last_name ?? null,
+          full_name: fullName,
+          display_name: fullName,
+          country_code: rider?.country_code ?? null,
+          role: rider?.role ?? null,
+          overall: rider?.overall ?? null,
+          potential: rider?.potential ?? null,
+          age_years: calculateAgeYearsFromGameDate(rider?.birth_date, currentGameDate),
+        }
+      })
+
       const clubIds = [
         clubIdValue,
         ...market.map((row) => row.seller_club_id),
         ...offers.flatMap((row) => [row.seller_club_id, row.buyer_club_id]),
         ...negotiations.flatMap((row) => [row.seller_club_id, row.buyer_club_id]),
         ...freeAgentNegotiationRows.map((row) => row.club_id),
+        ...historyRows.flatMap((row) => [row.from_club_id, row.to_club_id]),
       ]
 
       const names = await fetchClubNameMap(clubIds)
@@ -1084,7 +1165,9 @@ export default function TransfersPage() {
       setOwnRiders(own)
       setMyListings(listings)
       setTransferOffers(offers)
+      setMySentOffersDashboard(mySentOffersDashboardRows)
       setTransferNegotiations(negotiations)
+      setTransferHistory(historyRows)
       setFreeAgents(freeAgentsRows)
       setFreeAgentNegotiations(freeAgentNegotiationRows)
       setClubNameMap(names)
@@ -1223,11 +1306,6 @@ export default function TransfersPage() {
     return transferOffers.filter((offer) => offer.seller_club_id === clubId)
   }, [transferOffers, clubId])
 
-  const mySentOffers = useMemo(() => {
-    if (!clubId) return []
-    return transferOffers.filter((offer) => offer.buyer_club_id === clubId)
-  }, [transferOffers, clubId])
-
   const myBuyerNegotiations = useMemo(() => {
     if (!clubId) return []
     return transferNegotiations.filter((negotiation) => negotiation.buyer_club_id === clubId)
@@ -1245,7 +1323,7 @@ export default function TransfersPage() {
 
   const activeTransferListingIds = useMemo(() => {
     const ids = new Set<string>()
-    for (const offer of mySentOffers) {
+    for (const offer of mySentOffersDashboard) {
       if (offer.status === 'open' || offer.status === 'accepted') {
         ids.add(offer.listing_id)
       }
@@ -1256,7 +1334,7 @@ export default function TransfersPage() {
       }
     }
     return ids
-  }, [mySentOffers, myBuyerNegotiations])
+  }, [mySentOffersDashboard, myBuyerNegotiations])
 
   const activeFreeAgentIds = useMemo(() => {
     const ids = new Set<string>()
@@ -1289,7 +1367,7 @@ export default function TransfersPage() {
           key: `transfer-${listing.listing_id}`,
           rider_id: listing.rider_id,
           listing_id: listing.listing_id,
-          display_name: listing.full_name || listing.display_name,
+          display_name: listing.full_name || listing.display_name || 'Unknown rider',
           country_code: listing.country_code,
           role: listing.role,
           overall: listing.overall,
@@ -1574,7 +1652,10 @@ export default function TransfersPage() {
     }
   }
 
-  async function handleSubmitOffer(targetListing?: MarketListingRow) {
+  async function handleSubmitOffer(
+    targetListing?: MarketListingRow,
+    explicitPrice?: number
+  ) {
     const listing = targetListing || selectedMarketListing
     if (!listing || !clubId) return
 
@@ -1582,7 +1663,8 @@ export default function TransfersPage() {
       setRiderActionLoading(true)
       setPageMessage(null)
 
-      const offeredPrice = Number(offerPrice || listing.asking_price)
+      const offeredPrice = explicitPrice ?? Number(offerPrice || listing.asking_price)
+
       if (!Number.isFinite(offeredPrice) || offeredPrice <= 0) {
         throw new Error('Please enter a valid offer amount.')
       }
@@ -1702,6 +1784,29 @@ export default function TransfersPage() {
       setPageMessage('Offer rejected.')
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to reject offer.'
+      setPageMessage(message)
+    } finally {
+      setRiderActionLoading(false)
+    }
+  }
+
+  async function handleWithdrawSentOffer(offerId: string) {
+    if (!clubId) return
+
+    try {
+      setRiderActionLoading(true)
+      setPageMessage(null)
+
+      const { error } = await supabase.rpc('withdraw_rider_transfer_offer', {
+        p_offer_id: offerId,
+      })
+
+      if (error) throw error
+
+      await reloadRiders(clubId)
+      setPageMessage('Offer cancelled.')
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to cancel offer.'
       setPageMessage(message)
     } finally {
       setRiderActionLoading(false)
@@ -1868,11 +1973,12 @@ export default function TransfersPage() {
               openRiderProfilePage(item.rider_id)
             }}
             onQuickActionMarketItem={(item) => {
+              if (item.is_own_item || item.is_user_active) return
+
               setSelectedMarketListingId(item.listing_id)
               setOfferPrice(String(item.raw.asking_price))
-              if (!item.is_own_item) {
-                void handleSubmitOffer(item.raw)
-              }
+              setOfferDraftPrice(formatTransferAmount(item.raw.asking_price))
+              setOfferModalListing(item.raw)
             }}
             marketPageStart={marketPageStart}
             marketPageEnd={marketPageEnd}
@@ -1898,7 +2004,8 @@ export default function TransfersPage() {
             offerPrice={offerPrice}
             setOfferPrice={setOfferPrice}
             onSubmitOffer={() => {
-              void handleSubmitOffer()
+              if (!selectedMarketListing) return
+              openOfferModal(selectedMarketListing)
             }}
             myListings={myListings}
             onCancelListing={(listingId) => {
@@ -1912,7 +2019,16 @@ export default function TransfersPage() {
             onAcceptOffer={(offerId) => {
               void handleAcceptOffer(offerId)
             }}
-            mySentOffers={mySentOffers}
+            onOpenTeamPage={(targetClubId) => {
+              openClubProfilePage(targetClubId)
+            }}
+            onOpenRiderProfile={(riderId) => {
+              openRiderProfilePage(riderId)
+            }}
+            mySentOffers={mySentOffersDashboard}
+            onWithdrawSentOffer={(offerId) => {
+              void handleWithdrawSentOffer(offerId)
+            }}
             myBuyerNegotiations={myBuyerNegotiations}
             getNegotiationDraft={getNegotiationDraft}
             updateNegotiationDraft={updateNegotiationDraft}
@@ -1920,6 +2036,7 @@ export default function TransfersPage() {
               void handleSubmitNegotiation(negotiation)
             }}
             mySellerNegotiations={mySellerNegotiations}
+            transferHistory={transferHistory}
           />
         ) : (
           <RiderFreeAgentsPage
@@ -1959,6 +2076,7 @@ export default function TransfersPage() {
               void handleStartFreeAgentNegotiation(agent)
             }}
             myFreeAgentNegotiations={myFreeAgentNegotiations}
+            transferHistory={transferHistory}
           />
         )
       ) : (
@@ -1987,6 +2105,74 @@ export default function TransfersPage() {
           }}
         />
       )}
+
+      {offerModalListing ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/25 backdrop-blur-sm px-4">
+          <div className="w-full max-w-md rounded-xl bg-white p-5 shadow-xl">
+            <h3 className="text-lg font-semibold text-gray-900">Make Transfer Offer</h3>
+
+            <div className="mt-3 space-y-2 text-sm text-gray-600">
+              <div>
+                <span className="font-semibold text-gray-900">Rider:</span>{' '}
+                {offerModalListing.full_name || offerModalListing.display_name || 'Unknown rider'}
+              </div>
+              <div>
+                <span className="font-semibold text-gray-900">Seller:</span>{' '}
+                {clubNameMap[offerModalListing.seller_club_id] ||
+                  offerModalListing.seller_club_name ||
+                  'Unknown club'}
+              </div>
+              <div>
+                <span className="font-semibold text-gray-900">Asking price:</span>{' '}
+                {formatTransferAmount(offerModalListing.asking_price)}
+              </div>
+            </div>
+
+            <div className="mt-4">
+              <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-gray-500">
+                Your Offer
+              </label>
+              <input
+                type="text"
+                inputMode="numeric"
+                value={offerDraftPrice}
+                onChange={(e) => setOfferDraftPrice(formatCurrencyInput(e.target.value))}
+                placeholder="$128,000"
+                className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700"
+              />
+            </div>
+
+            <div className="mt-5 flex items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setOfferModalListing(null)
+                  setOfferDraftPrice('')
+                }}
+                className="rounded-md border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  const parsed = parseCurrencyInput(offerDraftPrice)
+                  if (!parsed || !offerModalListing) return
+
+                  const listing = offerModalListing
+                  setOfferModalListing(null)
+                  setOfferDraftPrice('')
+                  void handleSubmitOffer(listing, parsed)
+                }}
+                className="rounded-md bg-yellow-400 px-4 py-2 text-sm font-medium text-black hover:bg-yellow-300"
+              >
+                Submit Offer
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   )
 }

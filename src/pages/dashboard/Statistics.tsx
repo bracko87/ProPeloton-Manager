@@ -929,8 +929,19 @@ export default function StatisticsPage() {
     setSelectedTeamProfileId(null)
   }
 
-  function openRiderProfile(riderId: string) {
-    navigate(`/dashboard/riders/${riderId}`)
+  function openRiderProfile(rider: Pick<RiderStatsRow, 'id' | 'club_id'> | null | undefined) {
+    const riderId = rider?.id?.trim()
+
+    if (!riderId) return
+
+    const isMyRider = !!rider?.club_id && myClubIds.includes(rider.club_id)
+
+    if (isMyRider) {
+      navigate(`/dashboard/riders/${riderId}`)
+      return
+    }
+
+    navigate(`/dashboard/external-riders/${riderId}`)
   }
 
   useEffect(() => {

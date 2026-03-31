@@ -1,4 +1,5 @@
 import React from 'react'
+import TransferHistoryPanel, { type TransferHistoryRow } from './TransferHistoryPanel'
 
 type RiderRoleFilter = 'all' | string
 type RiderMarketSort =
@@ -343,6 +344,7 @@ type RiderFreeAgentsPageProps = {
   riderActionLoading: boolean
   onStartFreeAgentNegotiation: (agent: FreeAgentMarketRow) => void
   myFreeAgentNegotiations: FreeAgentNegotiationRow[]
+  transferHistory: TransferHistoryRow[]
 }
 
 export default function RiderFreeAgentsPage({
@@ -373,6 +375,7 @@ export default function RiderFreeAgentsPage({
   riderActionLoading,
   onStartFreeAgentNegotiation,
   myFreeAgentNegotiations,
+  transferHistory,
 }: RiderFreeAgentsPageProps) {
   const selectedCountdown = getGameCountdownLabel(
     selectedFreeAgent?.expires_on_game_date,
@@ -653,6 +656,8 @@ export default function RiderFreeAgentsPage({
           </div>
         </div>
       </div>
+
+      <TransferHistoryPanel transferHistory={transferHistory} />
     </div>
   )
 }

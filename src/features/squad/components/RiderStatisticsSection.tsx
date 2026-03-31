@@ -8,7 +8,7 @@ type RiderMetric =
   | 'season_points_sprint'
   | 'season_points_climbing'
 
-type RiderStatsRow = {
+export type RiderStatsRow = {
   id: string
   display_name: string
   country_code: string | null
@@ -316,7 +316,7 @@ type Props = {
   setRidersPage: (page: number) => void
   pageSize: number
 
-  openRiderProfile: (riderId: string) => void
+  openRiderProfile: (rider: RiderStatsRow) => void
   openTeamProfile: (teamId: string) => void
 
   formatCompetitionLabel: (value: string | null | undefined) => string
@@ -462,7 +462,7 @@ export default function RiderStatisticsSection({
               label="Most overall points"
               value={
                 topOverallPointsRider ? (
-                  <RiderNameButton onClick={() => openRiderProfile(topOverallPointsRider.id)}>
+                  <RiderNameButton onClick={() => openRiderProfile(topOverallPointsRider)}>
                     {topOverallPointsRider.display_name} ({topOverallPointsRider.season_points_overall})
                   </RiderNameButton>
                 ) : (
@@ -475,7 +475,7 @@ export default function RiderStatisticsSection({
               label="Most sprinting points"
               value={
                 topSprintPointsRider ? (
-                  <RiderNameButton onClick={() => openRiderProfile(topSprintPointsRider.id)}>
+                  <RiderNameButton onClick={() => openRiderProfile(topSprintPointsRider)}>
                     {topSprintPointsRider.display_name} ({topSprintPointsRider.season_points_sprint})
                   </RiderNameButton>
                 ) : (
@@ -488,7 +488,7 @@ export default function RiderStatisticsSection({
               label="Most climbing points"
               value={
                 topClimbingPointsRider ? (
-                  <RiderNameButton onClick={() => openRiderProfile(topClimbingPointsRider.id)}>
+                  <RiderNameButton onClick={() => openRiderProfile(topClimbingPointsRider)}>
                     {topClimbingPointsRider.display_name} ({topClimbingPointsRider.season_points_climbing})
                   </RiderNameButton>
                 ) : (
@@ -525,7 +525,7 @@ export default function RiderStatisticsSection({
                       {filteredRiders.slice(0, 12).map(row => (
                         <tr key={row.id} className="border-b border-slate-100">
                           <td className="py-3 pr-3">
-                            <RiderNameButton onClick={() => openRiderProfile(row.id)}>
+                            <RiderNameButton onClick={() => openRiderProfile(row)}>
                               {row.display_name}
                             </RiderNameButton>
                           </td>
@@ -616,7 +616,7 @@ export default function RiderStatisticsSection({
                       {paginatedRiders.map(row => (
                         <tr key={row.id} className="border-b border-slate-100">
                           <td className="py-3 pr-3">
-                            <RiderNameButton onClick={() => openRiderProfile(row.id)}>
+                            <RiderNameButton onClick={() => openRiderProfile(row)}>
                               {row.display_name}
                             </RiderNameButton>
                           </td>
@@ -746,7 +746,7 @@ export default function RiderStatisticsSection({
                       >
                         <div>
                           <div>
-                            <RiderNameButton onClick={() => openRiderProfile(row.id)}>
+                            <RiderNameButton onClick={() => openRiderProfile(row)}>
                               {row.display_name}
                             </RiderNameButton>
                           </div>

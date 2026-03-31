@@ -6,10 +6,12 @@
  * - Release is blocked while a rider is transfer listed
  * - Transfer-list state is visible in the header area
  * - Added optional roster refresh and compare callbacks
+ * - Compare now behaves like an in-page tab instead of navigating away
  */
 
 import React, { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../../../lib/supabase'
+import RiderComparePanel from './RiderComparePanel'
 
 import type {
   RenewalNegotiationData,
@@ -53,7 +55,7 @@ import {
   getRiderStatusUi,
 } from '../utils/rider-ui'
 
-type RiderProfileTab = 'overview' | 'contract' | 'training' | 'history'
+type RiderProfileTab = 'overview' | 'contract' | 'training' | 'compare' | 'history'
 type OfferExtensionValue = '1' | '2'
 
 type RiderSkillAttributeCode =
@@ -1340,7 +1342,6 @@ export default function RiderProfilePage({
   trainingPagePath: _trainingPagePath = '/training',
   onBack,
   onRosterChanged,
-  onCompareRider,
 }: RiderProfilePageProps) {
   const [profileLoading, setProfileLoading] = useState(false)
   const [profileError, setProfileError] = useState<string | null>(null)
@@ -1348,7 +1349,6 @@ export default function RiderProfilePage({
   const [currentHealthCase, setCurrentHealthCase] = useState<RiderCurrentHealthCase | null>(null)
   const [skillDeltaMap, setSkillDeltaMap] = useState<RiderSkillDeltaMap>({})
   const [activeTab, setActiveTab] = useState<RiderProfileTab>('overview')
-  const [actionMenuOpen, setActionMenuOpen] = useState(false)
   const [contractActionMessage, setContractActionMessage] = useState<string | null>(null)
 
   const [seasonOverview, setSeasonOverview] = useState<RiderSeasonOverview>({
@@ -1412,6 +1412,7 @@ export default function RiderProfilePage({
     []
   )
   const [trainingSessionsLoading, setTrainingSessionsLoading] = useState(false)
+  const [compareClubId, setCompareClubId] = useState<string | null>(null)
 
   const regularDefaultsByClubId = useMemo(
     () => new Map(regularDefaults.map((row) => [row.club_id, row])),
@@ -1611,7 +1612,6 @@ export default function RiderProfilePage({
   async function handleOpenReleaseModal() {
     if (!selectedRider?.id) return
 
-    setActionMenuOpen(false)
     setPageToast(null)
     setReleaseModalOpen(true)
     setReleasePreview(null)
@@ -1648,7 +1648,6 @@ export default function RiderProfilePage({
       setHistoryError(null)
       setHistoryRows([])
       setActiveTab('overview')
-      setActionMenuOpen(false)
       setSeasonOverview({ points: 0, podiums: 0, jerseys: 0 })
       setSeasonStats({ races: 0, wins: 0, podiums: 0, top10: 0, points: 0 })
       setRecentRaces([])
@@ -1657,6 +1656,7 @@ export default function RiderProfilePage({
       setCurrentSeasonNumber(null)
       setRecentTrainingSessions([])
       setTrainingSessionsLoading(false)
+      setCompareClubId(null)
 
       try {
         const [nextRider, nextHealthCase, deltaResult, gameDatePartsResult] = await Promise.all([
@@ -1783,6 +1783,10 @@ export default function RiderProfilePage({
         const { data: myClubId, error: clubError } = await supabase.rpc('get_my_primary_club_id')
         if (clubError) throw clubError
         if (!myClubId) throw new Error('No club was found for the logged-in user.')
+
+        if (mounted) {
+          setCompareClubId(String(myClubId))
+        }
 
         const familyRes = await supabase.rpc('get_club_family_ids', {
           p_club_id: myClubId,
@@ -2165,17 +2169,14 @@ export default function RiderProfilePage({
         throw new Error('No release result returned.')
       }
 
-      const riderName =
-        selectedRider.display_name ?? `${selectedRider.first_name} ${selectedRider.last_name}`
-
-      setReleaseModalOpen(false)
-
       setPageToast({
         type: 'success',
-        message: `${riderName} was released. ${formatMoney(
+        message: `${selectedRider.display_name} was released to free agents. ${formatMoney(
           result.release_cost
         )} was deducted from club balance.`,
       })
+
+      setReleaseModalOpen(false)
 
       await onRosterChanged?.()
 
@@ -2192,34 +2193,6 @@ export default function RiderProfilePage({
     } finally {
       setReleaseBusy(false)
     }
-  }
-
-  function handleCompareClick() {
-    setActionMenuOpen(false)
-
-    if (!selectedRider?.id) return
-
-    const riderName =
-      selectedRider.display_name ?? `${selectedRider.first_name} ${selectedRider.last_name}`
-
-    const payload = {
-      riderId: selectedRider.id,
-      riderName,
-      currentTeamType,
-    }
-
-    if (onCompareRider) {
-      onCompareRider(payload)
-      return
-    }
-
-    if (typeof window === 'undefined') return
-
-    window.dispatchEvent(
-      new CustomEvent('rider-profile-compare', {
-        detail: payload,
-      })
-    )
   }
 
   const contractExpiryUi = getContractExpiryUi(
@@ -2357,90 +2330,6 @@ export default function RiderProfilePage({
         >
           ← Back
         </button>
-
-        <div className="relative shrink-0">
-          <button
-            type="button"
-            onClick={() => setActionMenuOpen((prev) => !prev)}
-            className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50"
-          >
-            ☰ Actions
-          </button>
-
-          {actionMenuOpen && (
-            <div className="absolute right-0 z-20 mt-2 w-56 rounded-lg border border-slate-200 bg-white p-2 shadow-xl">
-              <button
-                type="button"
-                onClick={() => {
-                  setActionMenuOpen(false)
-                  void handleNewContract()
-                }}
-                className="block w-full rounded-md px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-50"
-              >
-                Extend Contract
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  setActionMenuOpen(false)
-                  if (activeTransferListing) {
-                    void handleCancelTransferListing()
-                  } else {
-                    setTransferListOpen(true)
-                  }
-                }}
-                className="block w-full rounded-md px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-50"
-              >
-                {activeTransferListing ? 'Cancel Transfer Listing' : 'Place on Transfer List'}
-              </button>
-
-              <button
-                type="button"
-                onClick={handleCompareClick}
-                className="block w-full rounded-md px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-50"
-              >
-                Compare Rider
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  setActionMenuOpen(false)
-                  setActiveTab('training')
-                }}
-                className="block w-full rounded-md px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-50"
-              >
-                Open Training Tab
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  setActionMenuOpen(false)
-                  setActiveTab('history')
-                }}
-                className="block w-full rounded-md px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-50"
-              >
-                Open History Tab
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  void handleOpenReleaseModal()
-                }}
-                className={`block w-full rounded-md px-3 py-2 text-left text-sm ${
-                  isTransferListed
-                    ? 'text-amber-700 hover:bg-amber-50'
-                    : 'text-rose-600 hover:bg-rose-50'
-                }`}
-              >
-                {isTransferListed ? 'Cancel Transfer Listing First' : 'Release Rider'}
-              </button>
-            </div>
-          )}
-        </div>
       </div>
 
       {pageToast ? (
@@ -2534,16 +2423,43 @@ export default function RiderProfilePage({
 
       <div className="mb-6 border-b border-slate-200">
         <div className="flex flex-wrap gap-1">
-          <button type="button" onClick={() => setActiveTab('overview')} className={tabButtonClass('overview')}>
+          <button
+            type="button"
+            onClick={() => setActiveTab('overview')}
+            className={tabButtonClass('overview')}
+          >
             Overview
           </button>
-          <button type="button" onClick={() => setActiveTab('contract')} className={tabButtonClass('contract')}>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab('contract')}
+            className={tabButtonClass('contract')}
+          >
             Contract
           </button>
-          <button type="button" onClick={() => setActiveTab('training')} className={tabButtonClass('training')}>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab('training')}
+            className={tabButtonClass('training')}
+          >
             Training
           </button>
-          <button type="button" onClick={() => setActiveTab('history')} className={tabButtonClass('history')}>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab('compare')}
+            className={tabButtonClass('compare')}
+          >
+            Compare
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab('history')}
+            className={tabButtonClass('history')}
+          >
             History
           </button>
         </div>
@@ -3160,6 +3076,23 @@ export default function RiderProfilePage({
                   </div>
                 )}
               </SectionCard>
+            </div>
+          )}
+
+          {activeTab === 'compare' && (
+            <div className="space-y-4">
+              {!compareClubId ? (
+                <SectionCard
+                  title="Compare"
+                  subtitle="Compare this rider without leaving the rider profile page"
+                >
+                  <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
+                    Loading compare panel…
+                  </div>
+                </SectionCard>
+              ) : (
+                <RiderComparePanel leftRiderId={riderId} clubId={compareClubId} />
+              )}
             </div>
           )}
 

@@ -1,4 +1,5 @@
-import React from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
+import TransferHistoryPanel, { type TransferHistoryRow } from './TransferHistoryPanel'
 
 type RiderRoleFilter = 'all' | string
 type RiderMarketSort =
@@ -23,8 +24,6 @@ type GameStateRow = {
 
 type OwnedRiderRow = {
   rider_id: string
-  first_name?: string | null
-  last_name?: string | null
   full_name?: string | null
   display_name: string
   country_code?: string | null
@@ -43,8 +42,6 @@ type MarketListingRow = {
   rider_id: string
   seller_club_id: string
   seller_club_name: string | null
-  first_name?: string | null
-  last_name?: string | null
   full_name?: string | null
   display_name: string
   country_code: string | null
@@ -65,10 +62,10 @@ type MarketListingRow = {
 }
 
 type TransferListingRow = {
+  id: string
   listing_id?: string
-  id?: string
   rider_id: string
-  seller_club_id?: string
+  seller_club_id?: string | null
   asking_price: number
   min_allowed_price: number
   max_allowed_price: number
@@ -76,12 +73,10 @@ type TransferListingRow = {
   expires_on_game_date: string | null
   status: string
   auto_price_clamped?: boolean
-  created_at?: string
-  updated_at?: string
+  created_at?: string | null
+  updated_at?: string | null
   status_changed_at_game_ts?: string | null
 
-  first_name?: string | null
-  last_name?: string | null
   full_name?: string | null
   display_name?: string | null
   country_code?: string | null
@@ -89,7 +84,6 @@ type TransferListingRow = {
   age_years?: number | null
   overall?: number | null
   potential?: number | null
-  seller_club_name?: string | null
 }
 
 type TransferOfferRow = {
@@ -98,6 +92,7 @@ type TransferOfferRow = {
   rider_id: string
   seller_club_id: string
   buyer_club_id: string
+  seller_club_name?: string | null
   offered_price: number
   offered_on_game_date: string | null
   expires_on_game_date: string | null
@@ -106,6 +101,14 @@ type TransferOfferRow = {
   metadata: Record<string, unknown> | null
   created_at: string
   updated_at: string
+
+  full_name?: string | null
+  display_name?: string | null
+  country_code?: string | null
+  role?: string | null
+  overall?: number | null
+  potential?: number | null
+  age_years?: number | null
 }
 
 type TransferNegotiationRow = {
@@ -167,6 +170,35 @@ function formatTransferAmount(value: number | null | undefined) {
 function formatDate(value: string | null | undefined) {
   if (!value) return '—'
   return value
+}
+
+function formatOfferStatusLabel(status: string | null | undefined) {
+  const normalized = (status || '').toLowerCase()
+
+  switch (normalized) {
+    case 'open':
+      return 'Open'
+    case 'club_accepted':
+      return 'Club accepted'
+    case 'accepted':
+      return 'Accepted'
+    case 'completed':
+      return 'Completed'
+    case 'rejected':
+      return 'Rejected'
+    case 'declined':
+      return 'Declined'
+    case 'withdrawn':
+      return 'Cancelled'
+    case 'expired':
+      return 'Expired'
+    case 'auto_blocked':
+      return 'Blocked'
+    case 'rider_declined':
+      return 'Rider declined'
+    default:
+      return status || '—'
+  }
 }
 
 function safeCountryCode(countryCode: string | null | undefined) {
@@ -243,65 +275,31 @@ function looksLikeUuid(value: string | null | undefined) {
   )
 }
 
-function looksLikeShortInitialName(value: string | null | undefined) {
-  if (!value) return false
-  const normalized = value.trim()
-  return /^[A-Z]\.\s+[A-Za-zÀ-ÿ' -]+$/u.test(normalized)
-}
-
-function cleanNameCandidate(value: string | null | undefined) {
-  const normalized = value?.trim()
-  if (!normalized) return null
-  if (looksLikeUuid(normalized)) return null
-  return normalized
-}
-
-function pickBetterName(
-  currentValue: string | null,
-  nextValue: string | null
-) {
-  if (!nextValue) return currentValue
-  if (!currentValue) return nextValue
-
-  const currentIsShort = looksLikeShortInitialName(currentValue)
-  const nextIsShort = looksLikeShortInitialName(nextValue)
-
-  if (currentIsShort && !nextIsShort) return nextValue
-  if (!currentIsShort && nextIsShort) return currentValue
-
-  return nextValue.length > currentValue.length ? nextValue : currentValue
-}
-
 function getPreferredRiderName(value: {
-  first_name?: string | null
-  last_name?: string | null
   full_name?: string | null
   display_name?: string | null
   rider_id?: string | null
 }) {
-  const combinedName = cleanNameCandidate(
-    [value.first_name?.trim(), value.last_name?.trim()].filter(Boolean).join(' ')
-  )
-
-  const fullName = cleanNameCandidate(value.full_name)
-  const displayName = cleanNameCandidate(value.display_name)
-
-  let bestName: string | null = null
-  bestName = pickBetterName(bestName, combinedName)
-  bestName = pickBetterName(bestName, displayName)
-  bestName = pickBetterName(bestName, fullName)
-
-  if (bestName) return bestName
-
-  if (value.rider_id && !looksLikeUuid(value.rider_id)) {
-    return value.rider_id
+  if (value.full_name?.trim()) return value.full_name.trim()
+  if (value.display_name?.trim() && !looksLikeUuid(value.display_name)) {
+    return value.display_name.trim()
   }
-
+  if (value.rider_id && !looksLikeUuid(value.rider_id)) return value.rider_id
   return 'Unknown rider'
 }
 
-function getListingRowId(listing: TransferListingRow) {
-  return listing.listing_id ?? listing.id ?? listing.rider_id
+function getNegotiationCardClass(status: string | null | undefined) {
+  const normalized = (status || '').toLowerCase()
+
+  if (['completed', 'accepted', 'signed', 'success'].includes(normalized)) {
+    return 'rounded-lg border border-green-200 bg-green-50 p-3'
+  }
+
+  if (['rejected', 'failed', 'cancelled', 'expired', 'declined'].includes(normalized)) {
+    return 'rounded-lg border border-red-200 bg-red-50 p-3'
+  }
+
+  return 'rounded-lg border border-gray-100 bg-gray-50 p-3'
 }
 
 function InfoPair({
@@ -316,6 +314,31 @@ function InfoPair({
       <span className="font-semibold text-gray-900">{label}</span>{' '}
       <span className="font-normal text-gray-600">{value}</span>
     </span>
+  )
+}
+
+function InlineTextButton({
+  label,
+  onClick,
+  disabled = false,
+}: {
+  label: string
+  onClick: () => void
+  disabled?: boolean
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className={
+        disabled
+          ? 'cursor-default font-normal text-gray-500 no-underline'
+          : 'font-normal text-black no-underline hover:text-gray-700'
+      }
+    >
+      {label}
+    </button>
   )
 }
 
@@ -360,7 +383,11 @@ function MarketListRow({
   onSelect: () => void
   onQuickAction: () => void
 }) {
-  const riderName = getPreferredRiderName(item.raw)
+  const riderName = getPreferredRiderName({
+    full_name: item.raw.full_name,
+    display_name: item.display_name || item.raw.display_name,
+    rider_id: item.rider_id,
+  })
 
   const countdown = getGameCountdownLabel(
     item.expires_on_game_date,
@@ -428,20 +455,81 @@ function MarketListRow({
               <span>{countdown}</span>
             </div>
 
-            <div className="rounded-md bg-gray-50 px-3 py-2 text-xs text-gray-700">
-              <span className="font-semibold text-gray-900">Transfer:</span>{' '}
-              <span>{formatTransferAmount(item.amount_value)}</span>
+            <div className="rounded-md border border-green-300 bg-green-50 px-3 py-2 text-xs">
+              <span className="font-bold text-black">Transfer:</span>{' '}
+              <span className="font-bold text-black">{formatTransferAmount(item.amount_value)}</span>
             </div>
 
             <MarketActionButton
-              label="Make Offer"
+              label={item.is_user_active ? 'Offer Active' : 'Make Offer'}
               onClick={onQuickAction}
-              disabled={item.is_own_item || listingExpired}
+              disabled={item.is_own_item || listingExpired || item.is_user_active}
             />
           </div>
         </div>
       </div>
     </button>
+  )
+}
+
+const BOX_PAGE_SIZE = 5
+
+function getBoxPageCount(total: number) {
+  return Math.max(1, Math.ceil(total / BOX_PAGE_SIZE))
+}
+
+function getBoxRows<T>(rows: T[], page: number) {
+  const startIndex = (page - 1) * BOX_PAGE_SIZE
+  return rows.slice(startIndex, startIndex + BOX_PAGE_SIZE)
+}
+
+function PanelPagination({
+  page,
+  totalPages,
+  onPrev,
+  onNext,
+}: {
+  page: number
+  totalPages: number
+  onPrev: () => void
+  onNext: () => void
+}) {
+  if (totalPages <= 1) return null
+
+  return (
+    <div className="mt-3 flex items-center justify-between border-t border-gray-100 pt-3">
+      <div className="text-xs text-gray-500">
+        Page {page} / {totalPages}
+      </div>
+
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={onPrev}
+          disabled={page === 1}
+          className={`rounded-md px-3 py-1.5 text-xs font-medium transition ${
+            page === 1
+              ? 'cursor-not-allowed bg-gray-200 text-gray-500'
+              : 'border border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
+          }`}
+        >
+          Previous
+        </button>
+
+        <button
+          type="button"
+          onClick={onNext}
+          disabled={page === totalPages}
+          className={`rounded-md px-3 py-1.5 text-xs font-medium transition ${
+            page === totalPages
+              ? 'cursor-not-allowed bg-gray-200 text-gray-500'
+              : 'border border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
+          }`}
+        >
+          Next
+        </button>
+      </div>
+    </div>
   )
 }
 
@@ -495,7 +583,20 @@ type RiderTransferListPageProps = {
   clubNameMap: Record<string, string>
   onRejectOffer: (offerId: string) => void
   onAcceptOffer: (offerId: string) => void
+  onWithdrawSentOffer: (offerId: string) => void
+  onOpenTeamPage: (clubId: string) => void
+  onOpenRiderProfile: (riderId: string) => void
+
+  mySentOffers: TransferOfferRow[]
+  myBuyerNegotiations: TransferNegotiationRow[]
+  getNegotiationDraft: (negotiation: TransferNegotiationRow) => { salary: string; duration: string }
+  updateNegotiationDraft: (
+    negotiationId: string,
+    patch: Partial<{ salary: string; duration: string }>
+  ) => void
+  onSubmitNegotiation: (negotiation: TransferNegotiationRow) => void
   mySellerNegotiations: TransferNegotiationRow[]
+  transferHistory: TransferHistoryRow[]
 }
 
 export default function RiderTransferListPage({
@@ -545,7 +646,16 @@ export default function RiderTransferListPage({
   clubNameMap,
   onRejectOffer,
   onAcceptOffer,
+  onWithdrawSentOffer,
+  onOpenTeamPage,
+  onOpenRiderProfile,
+  mySentOffers,
+  myBuyerNegotiations,
+  getNegotiationDraft,
+  updateNegotiationDraft,
+  onSubmitNegotiation,
   mySellerNegotiations,
+  transferHistory,
 }: RiderTransferListPageProps) {
   void nowMs
   void ownRiders
@@ -565,6 +675,51 @@ export default function RiderTransferListPage({
 
   const visibleReceivedOffers = myReceivedOffers.filter(
     (offer) => offer.status === 'open' || offer.status === 'accepted'
+  )
+
+  const visibleSentOffers = mySentOffers
+
+  const [myListingsPage, setMyListingsPage] = useState(1)
+  const [receivedOffersPage, setReceivedOffersPage] = useState(1)
+  const [myOffersPage, setMyOffersPage] = useState(1)
+  const [buyerNegotiationsPage, setBuyerNegotiationsPage] = useState(1)
+  const [sellerNegotiationsPage, setSellerNegotiationsPage] = useState(1)
+
+  const myListingsTotalPages = getBoxPageCount(myListings.length)
+  const receivedOffersTotalPages = getBoxPageCount(visibleReceivedOffers.length)
+  const myOffersTotalPages = getBoxPageCount(visibleSentOffers.length)
+  const buyerNegotiationsTotalPages = getBoxPageCount(myBuyerNegotiations.length)
+  const sellerNegotiationsTotalPages = getBoxPageCount(mySellerNegotiations.length)
+
+  useEffect(() => {
+    setMyListingsPage((prev) => Math.min(prev, myListingsTotalPages))
+  }, [myListingsTotalPages])
+
+  useEffect(() => {
+    setReceivedOffersPage((prev) => Math.min(prev, receivedOffersTotalPages))
+  }, [receivedOffersTotalPages])
+
+  useEffect(() => {
+    setMyOffersPage((prev) => Math.min(prev, myOffersTotalPages))
+  }, [myOffersTotalPages])
+
+  useEffect(() => {
+    setBuyerNegotiationsPage((prev) => Math.min(prev, buyerNegotiationsTotalPages))
+  }, [buyerNegotiationsTotalPages])
+
+  useEffect(() => {
+    setSellerNegotiationsPage((prev) => Math.min(prev, sellerNegotiationsTotalPages))
+  }, [sellerNegotiationsTotalPages])
+
+  const pagedMyListings = getBoxRows(myListings, myListingsPage)
+  const pagedReceivedOffers = getBoxRows(visibleReceivedOffers, receivedOffersPage)
+  const pagedMyOffers = getBoxRows(visibleSentOffers, myOffersPage)
+  const pagedBuyerNegotiations = getBoxRows(myBuyerNegotiations, buyerNegotiationsPage)
+  const pagedSellerNegotiations = getBoxRows(mySellerNegotiations, sellerNegotiationsPage)
+
+  const sentOfferById = useMemo(
+    () => new Map(mySentOffers.map((offer) => [offer.id, offer])),
+    [mySentOffers]
   )
 
   return (
@@ -729,12 +884,14 @@ export default function RiderTransferListPage({
                 No transfer listings created by your club yet.
               </div>
             ) : (
-              myListings.map((listing) => {
-                const listingRowId = getListingRowId(listing)
+              pagedMyListings.map((listing) => {
                 const riderName = getPreferredRiderName(listing)
 
                 return (
-                  <div key={listingRowId} className="rounded-lg border border-gray-100 bg-gray-50 p-3">
+                  <div
+                    key={listing.id}
+                    className="rounded-lg border border-yellow-200 bg-yellow-50 p-3"
+                  >
                     <div className="flex items-center justify-between gap-3">
                       <div className="min-w-0">
                         <div className="flex items-center gap-2">
@@ -743,7 +900,13 @@ export default function RiderTransferListPage({
                             alt={getCountryName(listing.country_code)}
                             className="h-4 w-6 shrink-0 rounded-sm border border-gray-200 object-cover"
                           />
-                          <div className="truncate font-medium text-gray-900">{riderName}</div>
+                          <button
+                            type="button"
+                            onClick={() => onOpenRiderProfile(listing.rider_id)}
+                            className="truncate text-left font-medium text-black no-underline hover:text-gray-700"
+                          >
+                            {riderName}
+                          </button>
                         </div>
 
                         <div className="text-sm text-gray-600">
@@ -751,16 +914,24 @@ export default function RiderTransferListPage({
                           {listing.potential ?? '—'} · Age: {listing.age_years ?? '—'}
                         </div>
 
-                        <div className="mt-1 text-xs text-gray-500">
-                          Status: {listing.status} • Asking: {formatTransferAmount(listing.asking_price)} •
-                          Expires {formatDate(listing.expires_on_game_date)}
+                        <div className="mt-1 text-xs">
+                          <span className="font-bold text-black">Status:</span>{' '}
+                          <span className="font-bold text-black">{listing.status}</span>{' '}
+                          <span className="font-bold text-black">• Asking:</span>{' '}
+                          <span className="font-bold text-black">
+                            {formatTransferAmount(listing.asking_price)}
+                          </span>{' '}
+                          <span className="font-bold text-black">• Expires</span>{' '}
+                          <span className="font-bold text-red-600">
+                            {formatDate(listing.expires_on_game_date)}
+                          </span>
                         </div>
                       </div>
 
                       {listing.status === 'listed' ? (
                         <button
                           type="button"
-                          onClick={() => onCancelListing(listingRowId)}
+                          onClick={() => onCancelListing(listing.id)}
                           disabled={riderActionLoading}
                           className="rounded-md border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
                         >
@@ -773,6 +944,13 @@ export default function RiderTransferListPage({
               })
             )}
           </div>
+
+          <PanelPagination
+            page={myListingsPage}
+            totalPages={myListingsTotalPages}
+            onPrev={() => setMyListingsPage((prev) => Math.max(1, prev - 1))}
+            onNext={() => setMyListingsPage((prev) => Math.min(myListingsTotalPages, prev + 1))}
+          />
         </div>
 
         <div className="rounded-lg border border-gray-100 bg-white p-4 shadow">
@@ -781,47 +959,291 @@ export default function RiderTransferListPage({
             {visibleReceivedOffers.length === 0 ? (
               <div className="text-sm text-gray-500">No visible incoming offers.</div>
             ) : (
-              visibleReceivedOffers.map((offer) => (
-                <div key={offer.id} className="rounded-lg border border-gray-100 bg-gray-50 p-3">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <div className="text-sm font-semibold text-gray-900">
-                        {clubNameMap[offer.buyer_club_id] || offer.buyer_club_id}
-                      </div>
-                      <div className="text-xs text-gray-500">
-                        Offer {formatCurrency(offer.offered_price)} • Status {offer.status}
-                      </div>
-                      <div className="text-[11px] text-gray-400">
-                        Expires {formatDate(offer.expires_on_game_date)}
-                        {offer.auto_block_reason ? ` • ${offer.auto_block_reason}` : ''}
-                      </div>
-                    </div>
+              pagedReceivedOffers.map((offer) => {
+                const buyerClubName = clubNameMap[offer.buyer_club_id] || 'Unknown team'
+                const riderName = getPreferredRiderName(offer)
+                const canOpenTeam = Boolean(clubNameMap[offer.buyer_club_id])
 
-                    {offer.status === 'open' ? (
-                      <div className="shrink-0 flex items-center gap-2">
+                return (
+                  <div
+                    key={offer.id}
+                    className="rounded-lg border border-blue-200 bg-blue-50 p-3"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <div className="text-sm text-black">
+                          <span className="font-semibold">Team:</span>{' '}
+                          {canOpenTeam ? (
+                            <InlineTextButton
+                              label={buyerClubName}
+                              onClick={() => onOpenTeamPage(offer.buyer_club_id)}
+                            />
+                          ) : (
+                            <span className="font-normal text-black">{buyerClubName}</span>
+                          )}
+                        </div>
+
+                        <div className="text-sm text-black">
+                          <span className="font-semibold">Rider:</span>{' '}
+                          <InlineTextButton
+                            label={riderName}
+                            onClick={() => onOpenRiderProfile(offer.rider_id)}
+                          />
+                        </div>
+
+                        <div className="mt-1 text-xs">
+                          <span className="font-bold text-black">Offer</span>{' '}
+                          <span className="font-bold text-black">
+                            {formatTransferAmount(offer.offered_price)}
+                          </span>{' '}
+                          <span className="font-bold text-black">• Status</span>{' '}
+                          <span className="font-bold text-black">
+                            {formatOfferStatusLabel(offer.status)}
+                          </span>{' '}
+                          <span className="font-bold text-black">• Expires</span>{' '}
+                          <span className="font-bold text-red-600">
+                            {formatDate(offer.expires_on_game_date)}
+                          </span>
+                          {offer.auto_block_reason ? (
+                            <span className="text-gray-500"> • {offer.auto_block_reason}</span>
+                          ) : null}
+                        </div>
+                      </div>
+
+                      {offer.status === 'open' ? (
+                        <div className="shrink-0 flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => onRejectOffer(offer.id)}
+                            disabled={riderActionLoading}
+                            className="rounded-md border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                          >
+                            Reject
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => onAcceptOffer(offer.id)}
+                            disabled={riderActionLoading}
+                            className="rounded-md bg-yellow-400 px-3 py-2 text-sm font-medium text-black hover:bg-yellow-300"
+                          >
+                            Accept
+                          </button>
+                        </div>
+                      ) : null}
+                    </div>
+                  </div>
+                )
+              })
+            )}
+          </div>
+
+          <PanelPagination
+            page={receivedOffersPage}
+            totalPages={receivedOffersTotalPages}
+            onPrev={() => setReceivedOffersPage((prev) => Math.max(1, prev - 1))}
+            onNext={() =>
+              setReceivedOffersPage((prev) => Math.min(receivedOffersTotalPages, prev + 1))
+            }
+          />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+        <div className="rounded-lg border border-gray-100 bg-white p-4 shadow">
+          <h4 className="font-semibold text-gray-900">My Offers</h4>
+          <div className="mt-3 space-y-2">
+            {visibleSentOffers.length === 0 ? (
+              <div className="text-sm text-gray-500">No submitted transfer offers yet.</div>
+            ) : (
+              pagedMyOffers.map((offer) => {
+                const sellerClubName =
+                  offer.seller_club_name || clubNameMap[offer.seller_club_id] || 'Unknown team'
+                const riderName = getPreferredRiderName(offer)
+                const flagCode = safeCountryCode(offer.country_code)
+
+                return (
+                  <div
+                    key={offer.id}
+                    className="rounded-lg border border-green-200 bg-green-50 p-3"
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2">
+                          <img
+                            src={getCountryFlagUrl(flagCode)}
+                            alt={getCountryName(flagCode)}
+                            className="h-4 w-6 shrink-0 rounded-sm border border-gray-200 object-cover"
+                          />
+
+                          <button
+                            type="button"
+                            onClick={() => onOpenRiderProfile(offer.rider_id)}
+                            className="truncate text-left font-medium text-black no-underline hover:text-gray-700"
+                          >
+                            {riderName}
+                          </button>
+                        </div>
+
+                        <div className="text-sm text-gray-600">
+                          Role: {offer.role ?? '—'} · OVR: {offer.overall ?? '—'} · POT:{' '}
+                          {offer.potential ?? '—'} · Age: {offer.age_years ?? '—'}
+                        </div>
+
+                        <div className="mt-1 text-xs">
+                          <span className="font-bold text-black">Team:</span>{' '}
+                          <span className="font-bold text-black">{sellerClubName}</span>{' '}
+                          <span className="font-bold text-black">• Offer:</span>{' '}
+                          <span className="font-bold text-black">
+                            {formatTransferAmount(offer.offered_price)}
+                          </span>{' '}
+                          <span className="font-bold text-black">• Status:</span>{' '}
+                          <span className="font-bold text-black">
+                            {formatOfferStatusLabel(offer.status)}
+                          </span>{' '}
+                          <span className="font-bold text-black">• Expires</span>{' '}
+                          <span className="font-bold text-red-600">
+                            {formatDate(offer.expires_on_game_date)}
+                          </span>
+                        </div>
+                      </div>
+
+                      {offer.status === 'open' ? (
                         <button
                           type="button"
-                          onClick={() => onRejectOffer(offer.id)}
+                          onClick={() => onWithdrawSentOffer(offer.id)}
                           disabled={riderActionLoading}
                           className="rounded-md border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
                         >
-                          Reject
+                          Cancel Offer
                         </button>
-                        <button
-                          type="button"
-                          onClick={() => onAcceptOffer(offer.id)}
-                          disabled={riderActionLoading}
-                          className="rounded-md bg-yellow-400 px-3 py-2 text-sm font-medium text-black hover:bg-yellow-300"
-                        >
-                          Accept
-                        </button>
-                      </div>
-                    ) : null}
+                      ) : null}
+                    </div>
                   </div>
-                </div>
-              ))
+                )
+              })
             )}
           </div>
+
+          <PanelPagination
+            page={myOffersPage}
+            totalPages={myOffersTotalPages}
+            onPrev={() => setMyOffersPage((prev) => Math.max(1, prev - 1))}
+            onNext={() => setMyOffersPage((prev) => Math.min(myOffersTotalPages, prev + 1))}
+          />
+        </div>
+
+        <div className="rounded-lg border border-gray-100 bg-white p-4 shadow">
+          <h4 className="font-semibold text-gray-900">Buyer Negotiations</h4>
+          <div className="mt-3 space-y-2">
+            {myBuyerNegotiations.length === 0 ? (
+              <div className="text-sm text-gray-500">
+                No rider contract negotiations for your club yet.
+              </div>
+            ) : (
+              pagedBuyerNegotiations.map((negotiation) => {
+                const linkedOffer = sentOfferById.get(negotiation.offer_id)
+                const riderName = linkedOffer
+                  ? getPreferredRiderName(linkedOffer)
+                  : getPreferredRiderName({ rider_id: negotiation.rider_id })
+
+                const sellerClubName =
+                  linkedOffer?.seller_club_name ||
+                  clubNameMap[negotiation.seller_club_id] ||
+                  'Unknown team'
+
+                const draft = getNegotiationDraft(negotiation)
+                const isOpen = negotiation.status === 'open'
+
+                return (
+                  <div
+                    key={negotiation.id}
+                    className={getNegotiationCardClass(negotiation.status)}
+                  >
+                    <div className="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
+                      <div className="min-w-0 flex-1">
+                        <div className="text-sm font-semibold text-gray-900">{riderName}</div>
+
+                        <div className="text-xs text-gray-600">
+                          Seller {sellerClubName} • Status {formatOfferStatusLabel(negotiation.status)}
+                        </div>
+
+                        <div className="mt-1 text-xs text-gray-600">
+                          Expected {formatCurrency(negotiation.expected_salary_weekly)}/week • Min{' '}
+                          {formatCurrency(negotiation.min_acceptable_salary_weekly)}/week • Expires{' '}
+                          {formatDate(negotiation.expires_on_game_date)}
+                          {negotiation.closed_reason ? ` • ${negotiation.closed_reason}` : ''}
+                        </div>
+
+                        <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                          <div>
+                            <label className="mb-1 block text-[11px] font-medium uppercase tracking-wide text-gray-500">
+                              Salary / week
+                            </label>
+                            <input
+                              type="number"
+                              min="1"
+                              value={draft.salary}
+                              onChange={(e) =>
+                                updateNegotiationDraft(negotiation.id, {
+                                  salary: e.target.value,
+                                })
+                              }
+                              disabled={!isOpen || riderActionLoading}
+                              className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 disabled:bg-gray-100"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="mb-1 block text-[11px] font-medium uppercase tracking-wide text-gray-500">
+                              Duration (seasons)
+                            </label>
+                            <input
+                              type="number"
+                              min="1"
+                              value={draft.duration}
+                              onChange={(e) =>
+                                updateNegotiationDraft(negotiation.id, {
+                                  duration: e.target.value,
+                                })
+                              }
+                              disabled={!isOpen || riderActionLoading}
+                              className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 disabled:bg-gray-100"
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => onSubmitNegotiation(negotiation)}
+                          disabled={!isOpen || riderActionLoading}
+                          className={`rounded-md px-3 py-2 text-sm font-medium transition ${
+                            !isOpen || riderActionLoading
+                              ? 'cursor-not-allowed bg-gray-200 text-gray-500'
+                              : 'bg-yellow-400 text-black hover:bg-yellow-300'
+                          }`}
+                        >
+                          Submit Terms
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )
+              })
+            )}
+          </div>
+
+          <PanelPagination
+            page={buyerNegotiationsPage}
+            totalPages={buyerNegotiationsTotalPages}
+            onPrev={() => setBuyerNegotiationsPage((prev) => Math.max(1, prev - 1))}
+            onNext={() =>
+              setBuyerNegotiationsPage((prev) =>
+                Math.min(buyerNegotiationsTotalPages, prev + 1)
+              )
+            }
+          />
         </div>
       </div>
 
@@ -833,17 +1255,20 @@ export default function RiderTransferListPage({
               No rider negotiations involving your selling club yet.
             </div>
           ) : (
-            mySellerNegotiations.map((negotiation) => (
-              <div key={negotiation.id} className="rounded-lg border border-gray-100 bg-gray-50 p-3">
+            pagedSellerNegotiations.map((negotiation) => (
+              <div
+                key={negotiation.id}
+                className={getNegotiationCardClass(negotiation.status)}
+              >
                 <div className="text-sm font-semibold text-gray-900">
                   Buyer {clubNameMap[negotiation.buyer_club_id] || negotiation.buyer_club_id}
                 </div>
-                <div className="text-xs text-gray-500">
-                  Status {negotiation.status} • Expected{' '}
+                <div className="text-xs text-gray-600">
+                  Status {formatOfferStatusLabel(negotiation.status)} • Expected{' '}
                   {formatCurrency(negotiation.expected_salary_weekly)} • Last offer{' '}
                   {formatCurrency(negotiation.offer_salary_weekly)}
                 </div>
-                <div className="text-[11px] text-gray-400">
+                <div className="text-[11px] text-gray-500">
                   Duration {negotiation.offer_duration_seasons ?? '—'} • Expires{' '}
                   {formatDate(negotiation.expires_on_game_date)}
                   {negotiation.closed_reason ? ` • ${negotiation.closed_reason}` : ''}
@@ -851,6 +1276,61 @@ export default function RiderTransferListPage({
               </div>
             ))
           )}
+        </div>
+
+        <PanelPagination
+          page={sellerNegotiationsPage}
+          totalPages={sellerNegotiationsTotalPages}
+          onPrev={() => setSellerNegotiationsPage((prev) => Math.max(1, prev - 1))}
+          onNext={() =>
+            setSellerNegotiationsPage((prev) =>
+              Math.min(sellerNegotiationsTotalPages, prev + 1)
+            )
+          }
+        />
+      </div>
+
+      <TransferHistoryPanel transferHistory={transferHistory} />
+
+      <div className="rounded-lg border border-blue-100 bg-blue-50 p-4 shadow">
+        <h4 className="font-semibold text-gray-900">How Transfer Offers Work</h4>
+
+        <div className="mt-3 space-y-3 text-sm text-gray-700">
+          <p>
+            When you click <span className="font-semibold text-gray-900">Make Offer</span>, you
+            choose how much money your club wants to offer for that rider.
+          </p>
+
+          <p>
+            If your offer is{' '}
+            <span className="font-semibold text-gray-900">below the asking price</span>, the seller
+            club must manually decide whether to accept or reject it.
+          </p>
+
+          <p>
+            If your offer is{' '}
+            <span className="font-semibold text-gray-900">
+              equal to or above the asking price
+            </span>
+            , club terms are accepted automatically and the process moves straight to rider
+            contract negotiation.
+          </p>
+
+          <p>
+            Once club terms are accepted, the rider will review salary and contract duration. At
+            that stage, the rider can accept, ask for better terms, or decline.
+          </p>
+
+          <p>
+            Open offers stay active until they expire, are rejected, are cancelled by you, or
+            another offer is accepted first. If another offer wins, your competing offer becomes
+            blocked automatically.
+          </p>
+
+          <p>
+            If the rider accepts the contract terms, the transfer completes immediately and the
+            rider joins your team.
+          </p>
         </div>
       </div>
     </div>
