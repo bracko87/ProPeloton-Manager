@@ -277,6 +277,25 @@ async function fetchRiderDetailsById(riderId: string): Promise<RiderDetails> {
       }
     }
 
+    const { data: statsRow, error: statsError } = await supabase
+      .from('rider_statistics_view')
+      .select('rider_id')
+      .eq('id', trimmedId)
+      .maybeSingle()
+
+    if (statsError) throw statsError
+
+    const statsRiderId =
+      statsRow && typeof statsRow.rider_id === 'string' ? statsRow.rider_id.trim() : ''
+
+    if (statsRiderId) {
+      const { data: fallbackData, error: fallbackError } = await loadByRiderId(statsRiderId)
+      if (fallbackError) throw fallbackError
+      if (fallbackData?.id && typeof fallbackData.id === 'string') {
+        return fallbackData.id
+      }
+    }
+
     return null
   }
 
