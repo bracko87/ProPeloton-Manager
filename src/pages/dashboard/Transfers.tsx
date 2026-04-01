@@ -73,6 +73,7 @@ type ClubStaffRow = {
 }
 
 type MarketListingRow = {
+  id?: string
   listing_id: string
   rider_id: string
   seller_club_id: string
@@ -288,6 +289,24 @@ function parseCurrencyInput(value: string) {
   if (!digits) return null
   const parsed = Number(digits)
   return Number.isFinite(parsed) ? parsed : null
+}
+
+function getErrorMessage(err: any) {
+  const candidates = [
+    err?.message,
+    err?.details,
+    err?.hint,
+    err?.error_description,
+    err?.description,
+  ]
+
+  for (const candidate of candidates) {
+    if (typeof candidate === 'string' && candidate.trim()) {
+      return candidate.trim()
+    }
+  }
+
+  return 'Unexpected error.'
 }
 
 function safeCountryCode(countryCode: string | null | undefined) {
@@ -514,7 +533,11 @@ function normalizeFreeAgentNegotiationRow(
 
     rider:
       riderSource ||
-      (row.display_name || row.country_code || row.role || row.overall != null || row.potential != null
+      (row.display_name ||
+      row.country_code ||
+      row.role ||
+      row.overall != null ||
+      row.potential != null
         ? {
             id: row.rider_id,
             display_name: row.display_name || 'Unknown rider',
@@ -664,8 +687,7 @@ export default function TransfersPage() {
         if (!mounted) return
         await loadRiderData(resolvedClub.id, mounted)
       } catch (err) {
-        const message =
-          err instanceof Error ? err.message : 'Failed to load transfers page.'
+        const message = err instanceof Error ? err.message : 'Failed to load transfers page.'
         if (!mounted) return
         setError(message)
       } finally {
@@ -749,9 +771,14 @@ export default function TransfersPage() {
   }
 
   function openOfferModal(listing: MarketListingRow) {
-    setSelectedMarketListingId(listing.listing_id)
+    const resolvedListingId = listing.listing_id || listing.id || ''
+    setSelectedMarketListingId(resolvedListingId)
     setOfferDraftPrice(formatTransferAmount(listing.asking_price))
-    setOfferModalListing(listing)
+    setOfferModalListing({
+      ...listing,
+      listing_id: resolvedListingId,
+    })
+    setPageMessage(null)
   }
 
   async function loadRiderData(clubIdValue: string, mounted = true) {
@@ -963,30 +990,39 @@ export default function TransfersPage() {
         riderMap = Object.fromEntries((riderRows || []).map((row: any) => [row.id, row]))
       }
 
-      const market: MarketListingRow[] = marketBase.map((row: any) => {
-        const rider = riderMap[row.rider_id]
-        const fullName = buildPreferredRiderName({
-          firstName: rider?.first_name,
-          lastName: rider?.last_name,
-          fullName: row.full_name,
-          displayName: row.display_name ?? rider?.display_name,
-          fallbackId: row.rider_id,
-        })
+      const market: MarketListingRow[] = marketBase
+        .map((row: any) => {
+          const rider = riderMap[row.rider_id]
+          const fullName = buildPreferredRiderName({
+            firstName: rider?.first_name,
+            lastName: rider?.last_name,
+            fullName: row.full_name,
+            displayName: row.display_name ?? rider?.display_name,
+            fallbackId: row.rider_id,
+          })
 
-        return {
-          ...row,
-          first_name: rider?.first_name ?? null,
-          last_name: rider?.last_name ?? null,
-          full_name: fullName,
-          display_name: fullName,
-          country_code: row.country_code ?? rider?.country_code ?? null,
-          role: row.role ?? rider?.role ?? null,
-          overall: row.overall ?? rider?.overall ?? null,
-          potential: row.potential ?? rider?.potential ?? null,
-          age_years:
-            row.age_years ?? calculateAgeYearsFromGameDate(rider?.birth_date, currentGameDate),
-        }
-      })
+          const resolvedListingId = row.listing_id ?? row.id ?? null
+          if (!resolvedListingId) {
+            return null
+          }
+
+          return {
+            ...row,
+            id: row.id ?? resolvedListingId,
+            listing_id: resolvedListingId,
+            first_name: rider?.first_name ?? null,
+            last_name: rider?.last_name ?? null,
+            full_name: fullName,
+            display_name: fullName,
+            country_code: row.country_code ?? rider?.country_code ?? null,
+            role: row.role ?? rider?.role ?? null,
+            overall: row.overall ?? rider?.overall ?? null,
+            potential: row.potential ?? rider?.potential ?? null,
+            age_years:
+              row.age_years ?? calculateAgeYearsFromGameDate(rider?.birth_date, currentGameDate),
+          } satisfies MarketListingRow
+        })
+        .filter((row): row is MarketListingRow => Boolean(row))
 
       const offers: TransferOfferRow[] = offersBase.map((row: any) => {
         const rider = riderMap[row.rider_id]
@@ -1035,13 +1071,15 @@ export default function TransfersPage() {
       setClubNameMap(names)
       setGameState(gameStateData)
 
-      if (!selectedMarketListingId && market.length) {
-        setSelectedMarketListingId(market[0].listing_id)
-      }
+      setSelectedMarketListingId((prev) => {
+        if (prev && market.some((row) => row.listing_id === prev)) return prev
+        return market.length ? market[0].listing_id : null
+      })
 
-      if (!selectedFreeAgentId && freeAgentsRows.length) {
-        setSelectedFreeAgentId(freeAgentsRows[0].free_agent_id)
-      }
+      setSelectedFreeAgentId((prev) => {
+        if (prev && freeAgentsRows.some((row) => row.free_agent_id === prev)) return prev
+        return freeAgentsRows.length ? freeAgentsRows[0].free_agent_id : null
+      })
     } finally {
       if (mounted) setRiderLoading(false)
     }
@@ -1256,12 +1294,7 @@ export default function TransfersPage() {
 
       if (!term) return true
 
-      const searchable = [
-        row.display_name,
-        row.role || '',
-        row.seller_label,
-        row.country_code || '',
-      ]
+      const searchable = [row.display_name, row.role || '', row.seller_label, row.country_code || '']
         .join(' ')
         .toLowerCase()
 
@@ -1331,7 +1364,14 @@ export default function TransfersPage() {
 
   useEffect(() => {
     setMarketPage(1)
-  }, [riderMarketSubTab, marketSearch, marketRoleFilter, marketOnlyActive, marketHideOwn, marketSort])
+  }, [
+    riderMarketSubTab,
+    marketSearch,
+    marketRoleFilter,
+    marketOnlyActive,
+    marketHideOwn,
+    marketSort,
+  ])
 
   useEffect(() => {
     if (marketPage > marketTotalPages) {
@@ -1392,21 +1432,36 @@ export default function TransfersPage() {
     }
   }
 
-  async function handleSubmitOffer(targetListing: MarketListingRow, explicitPrice?: number) {
-    if (!clubId) return
+  async function handleSubmitOffer(
+    targetListing: MarketListingRow,
+    explicitPrice?: number
+  ): Promise<boolean> {
+    if (!clubId) return false
 
     try {
       setRiderActionLoading(true)
       setPageMessage(null)
 
+      const listingId = targetListing.listing_id || targetListing.id || ''
       const offeredPrice = explicitPrice ?? targetListing.asking_price
+
+      if (!listingId) {
+        throw new Error('Transfer listing id is missing.')
+      }
 
       if (!Number.isFinite(offeredPrice) || offeredPrice <= 0) {
         throw new Error('Please enter a valid offer amount.')
       }
 
+      console.error('submit_rider_transfer_offer payload', {
+        listingId,
+        buyerClubId: clubId,
+        offeredPrice,
+        targetListing,
+      })
+
       const { data, error } = await supabase.rpc('submit_rider_transfer_offer', {
-        p_listing_id: targetListing.listing_id,
+        p_listing_id: listingId,
         p_buyer_club_id: clubId,
         p_offered_price: offeredPrice,
       })
@@ -1417,7 +1472,7 @@ export default function TransfersPage() {
           details: error.details,
           hint: error.hint,
           code: error.code,
-          listingId: targetListing.listing_id,
+          listingId,
           buyerClubId: clubId,
           offeredPrice,
           responseData: data,
@@ -1429,11 +1484,7 @@ export default function TransfersPage() {
 
       await reloadRiders(clubId)
 
-      const riderName =
-        targetListing.full_name ||
-        targetListing.display_name ||
-        'the rider'
-
+      const riderName = targetListing.full_name || targetListing.display_name || 'the rider'
       const sellerName =
         targetListing.seller_club_name ||
         clubNameMap[targetListing.seller_club_id] ||
@@ -1448,16 +1499,12 @@ export default function TransfersPage() {
           `Your offer of ${formatTransferAmount(offeredPrice)} for ${riderName} was sent to ${sellerName}.`
         )
       }
+
+      return true
     } catch (err: any) {
       console.error('submit_rider_transfer_offer failed:', err)
-
-      const message =
-        err?.message ||
-        err?.details ||
-        err?.hint ||
-        'Failed to submit transfer offer.'
-
-      setPageMessage(message)
+      setPageMessage(getErrorMessage(err) || 'Failed to submit transfer offer.')
+      return false
     } finally {
       setRiderActionLoading(false)
     }
@@ -1476,10 +1523,7 @@ export default function TransfersPage() {
       }
 
       const existingOpen = freeAgentNegotiations.find(
-        (row) =>
-          row.club_id === clubId &&
-          row.free_agent_id === freeAgentId &&
-          row.status === 'open'
+        (row) => row.club_id === clubId && row.free_agent_id === freeAgentId && row.status === 'open'
       )
 
       if (existingOpen) {
@@ -1512,8 +1556,7 @@ export default function TransfersPage() {
       await reloadRiders(clubId)
       setPageMessage('Free-agent contract negotiation opened.')
     } catch (err) {
-      const message =
-        err instanceof Error ? err.message : 'Failed to open free-agent negotiation.'
+      const message = err instanceof Error ? err.message : 'Failed to open free-agent negotiation.'
       setPageMessage(message)
     } finally {
       setRiderActionLoading(false)
@@ -1858,18 +1901,30 @@ export default function TransfersPage() {
 
               <button
                 type="button"
-                onClick={() => {
-                  const parsed = parseCurrencyInput(offerDraftPrice)
-                  if (!parsed || !offerModalListing) return
+                disabled={riderActionLoading}
+                onClick={async () => {
+                  if (!offerModalListing) return
 
-                  const listing = offerModalListing
-                  setOfferModalListing(null)
-                  setOfferDraftPrice('')
-                  void handleSubmitOffer(listing, parsed)
+                  const parsed = parseCurrencyInput(offerDraftPrice)
+                  if (!parsed) {
+                    setPageMessage('Please enter a valid offer amount.')
+                    return
+                  }
+
+                  const ok = await handleSubmitOffer(offerModalListing, parsed)
+
+                  if (ok) {
+                    setOfferModalListing(null)
+                    setOfferDraftPrice('')
+                  }
                 }}
-                className="rounded-md bg-yellow-400 px-4 py-2 text-sm font-medium text-black hover:bg-yellow-300"
+                className={`rounded-md px-4 py-2 text-sm font-medium ${
+                  riderActionLoading
+                    ? 'cursor-not-allowed bg-gray-200 text-gray-500'
+                    : 'bg-yellow-400 text-black hover:bg-yellow-300'
+                }`}
               >
-                Submit Offer
+                {riderActionLoading ? 'Submitting...' : 'Submit Offer'}
               </button>
             </div>
           </div>

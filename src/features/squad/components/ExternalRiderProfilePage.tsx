@@ -72,6 +72,7 @@ type ExternalRiderProfilePageProps = {
   riderId?: string
   gameDate?: string | null
   marketMode?: ExternalRiderMarketMode
+  isScouted?: boolean
   onBack?: () => void
   onMakeTransferOffer?: (payload: {
     riderId: string
@@ -104,6 +105,22 @@ function normalizeNumber(value: unknown, fallback = 0) {
   return fallback
 }
 
+function normalizeNullableNumber(value: unknown): number | null {
+  if (typeof value === 'number' && Number.isFinite(value)) return value
+  if (typeof value === 'string' && value.trim() !== '') {
+    const parsed = Number(value)
+    return Number.isFinite(parsed) ? parsed : null
+  }
+  return null
+}
+
+function firstDefined<T>(...values: Array<T | null | undefined>): T | undefined {
+  for (const value of values) {
+    if (value !== undefined && value !== null) return value
+  }
+  return undefined
+}
+
 function normalizeGameDateInput(value: unknown): string | null {
   if (!value) return null
 
@@ -128,6 +145,31 @@ function normalizeGameDateInput(value: unknown): string | null {
   }
 
   return null
+}
+
+function getAttributeRangeLabel(value: unknown): string {
+  const numericValue = normalizeNullableNumber(value)
+  if (numericValue === null) return '—'
+
+  const clamped = Math.max(0, Math.min(100, numericValue))
+  const start = Math.min(80, Math.floor(clamped / 20) * 20)
+  const end = Math.min(100, start + 20)
+
+  return `${start}-${end}`
+}
+
+function getVisibleAttributeValue(value: unknown, isScouted: boolean): string {
+  if (!isScouted) return getAttributeRangeLabel(value)
+
+  const numericValue = normalizeNullableNumber(value)
+  return numericValue === null ? '—' : String(numericValue)
+}
+
+function getVisibleOverallValue(value: unknown, isScouted: boolean): string {
+  if (!isScouted) return getAttributeRangeLabel(value)
+
+  const numericValue = normalizeNullableNumber(value)
+  return numericValue === null ? '—' : `${numericValue}%`
 }
 
 function CountryFlag({
@@ -212,6 +254,11 @@ function DetailRow({
 }
 
 async function fetchRiderDetailsById(riderId: string): Promise<RiderDetails> {
+  const trimmedId = typeof riderId === 'string' ? riderId.trim() : ''
+  if (!trimmedId) {
+    throw new Error('Rider not found for id: missing id')
+  }
+
   const riderSelection = `
     id,
     country_code,
@@ -248,69 +295,144 @@ async function fetchRiderDetailsById(riderId: string): Promise<RiderDetails> {
   const loadByRiderId = async (id: string) =>
     supabase.from('riders').select(riderSelection).eq('id', id).maybeSingle()
 
-  const { data, error } = await loadByRiderId(riderId)
-  if (error) throw error
+  const lookupTables = [
+    'club_riders',
+    'rider_transfer_listings',
+    'rider_free_agents',
+    'rider_transfer_offers',
+    'rider_transfer_negotiations',
+    'rider_free_agent_negotiations',
+  ] as const
 
-  let rider = (data ?? null) as RiderDetails | null
+  const resolveCanonicalRiderId = async (id: string): Promise<string | null> => {
+    const { data: directRider, error: directRiderError } = await loadByRiderId(id)
+    if (directRiderError) throw directRiderError
+    if (directRider?.id && typeof directRider.id === 'string') {
+      return directRider.id
+    }
 
-  if (!rider) {
-    const { data: clubRider, error: clubRiderError } = await supabase
-      .from('club_riders')
+    const { data: directStatsByRiderId, error: directStatsByRiderIdError } = await supabase
+      .from('rider_statistics_view')
       .select('rider_id')
-      .eq('id', riderId)
+      .eq('rider_id', id)
       .maybeSingle()
 
-    if (clubRiderError) throw clubRiderError
+    if (directStatsByRiderIdError) throw directStatsByRiderIdError
 
-    const fallbackRiderId =
-      clubRider && typeof clubRider.rider_id === 'string' ? clubRider.rider_id.trim() : ''
+    const statsCanonicalId =
+      directStatsByRiderId && typeof directStatsByRiderId.rider_id === 'string'
+        ? directStatsByRiderId.rider_id.trim()
+        : ''
 
-    if (fallbackRiderId) {
-      const { data: fallbackData, error: fallbackError } = await loadByRiderId(fallbackRiderId)
-      if (fallbackError) throw fallbackError
-      rider = (fallbackData ?? null) as RiderDetails | null
+    if (statsCanonicalId) {
+      return statsCanonicalId
     }
-  }
 
-  if (!rider) {
-    const lookupTables = [
-      'rider_transfer_listings',
-      'rider_free_agents',
-      'rider_transfer_offers',
-      'rider_transfer_negotiations',
-      'rider_free_agent_negotiations',
-    ] as const
+    const { data: statsRowByViewId, error: statsRowByViewIdError } = await supabase
+      .from('rider_statistics_view')
+      .select('rider_id')
+      .eq('id', id)
+      .maybeSingle()
+
+    if (statsRowByViewIdError) throw statsRowByViewIdError
+
+    const statsViewResolvedId =
+      statsRowByViewId && typeof statsRowByViewId.rider_id === 'string'
+        ? statsRowByViewId.rider_id.trim()
+        : ''
+
+    if (statsViewResolvedId) {
+      return statsViewResolvedId
+    }
 
     for (const tableName of lookupTables) {
-      const { data: relationRow, error: relationError } = await supabase
-        .from(tableName)
-        .select('rider_id')
-        .eq('id', riderId)
-        .maybeSingle()
+      try {
+        const { data: relationRow, error: relationError } = await supabase
+          .from(tableName)
+          .select('rider_id')
+          .eq('id', id)
+          .maybeSingle()
 
-      if (relationError) {
-        continue
+        if (relationError) {
+          continue
+        }
+
+        const resolvedRelationId =
+          relationRow && typeof relationRow.rider_id === 'string' ? relationRow.rider_id.trim() : ''
+
+        if (resolvedRelationId) {
+          return resolvedRelationId
+        }
+      } catch {
+        // try next source
       }
-
-      const fallbackRiderId =
-        relationRow && typeof relationRow.rider_id === 'string' ? relationRow.rider_id.trim() : ''
-
-      if (!fallbackRiderId) continue
-
-      const { data: fallbackData, error: fallbackError } = await loadByRiderId(fallbackRiderId)
-      if (fallbackError) throw fallbackError
-      rider = (fallbackData ?? null) as RiderDetails | null
-
-      if (rider) break
     }
+
+    return null
   }
 
-  if (!rider) throw new Error(`Rider not found for id: ${riderId}`)
+  const canonicalRiderId = await resolveCanonicalRiderId(trimmedId)
+
+  if (!canonicalRiderId) {
+    throw new Error(`Rider not found for id: ${riderId}`)
+  }
+
+  const [{ data: riderRow, error: riderError }, { data: statsRow, error: statsError }] =
+    await Promise.all([
+      loadByRiderId(canonicalRiderId),
+      supabase
+        .from('rider_statistics_view')
+        .select('*')
+        .eq('rider_id', canonicalRiderId)
+        .maybeSingle(),
+    ])
+
+  if (riderError) throw riderError
+  if (statsError) throw statsError
+
+  const rider = riderRow as RiderDetails | null
+  const stats = (statsRow ?? null) as Record<string, any> | null
+
+  if (!rider && !stats) {
+    throw new Error(`Rider not found for id: ${riderId}`)
+  }
 
   return {
-    ...rider,
-    availability_status: rider.availability_status ?? getDefaultRiderAvailabilityStatus(),
-  }
+    id: canonicalRiderId,
+    country_code: firstDefined(rider?.country_code, stats?.country_code) ?? null,
+    first_name: firstDefined(rider?.first_name, stats?.first_name) ?? null,
+    last_name: firstDefined(rider?.last_name, stats?.last_name) ?? null,
+    display_name: firstDefined(rider?.display_name, stats?.display_name) ?? null,
+    role: firstDefined(rider?.role, stats?.role, '') ?? '',
+    sprint: normalizeNumber(firstDefined(stats?.sprint, rider?.sprint), 0),
+    climbing: normalizeNumber(firstDefined(stats?.climbing, rider?.climbing), 0),
+    time_trial: normalizeNumber(firstDefined(stats?.time_trial, rider?.time_trial), 0),
+    endurance: normalizeNumber(firstDefined(stats?.endurance, rider?.endurance), 0),
+    flat: normalizeNumber(firstDefined(stats?.flat, rider?.flat), 0),
+    recovery: normalizeNumber(firstDefined(stats?.recovery, rider?.recovery), 0),
+    resistance: normalizeNumber(firstDefined(stats?.resistance, rider?.resistance), 0),
+    race_iq: normalizeNumber(firstDefined(stats?.race_iq, rider?.race_iq), 0),
+    teamwork: normalizeNumber(firstDefined(stats?.teamwork, rider?.teamwork), 0),
+    morale: normalizeNumber(firstDefined(stats?.morale, rider?.morale), 0),
+    potential: normalizeNumber(firstDefined(stats?.potential, rider?.potential), 0),
+    fatigue: normalizeNumber(firstDefined(stats?.fatigue, rider?.fatigue), 0),
+    overall: normalizeNumber(firstDefined(stats?.overall, rider?.overall), 0),
+    birth_date: firstDefined(rider?.birth_date, stats?.birth_date) ?? null,
+    image_url: firstDefined(rider?.image_url, stats?.image_url) ?? null,
+    salary: normalizeNumber(firstDefined(rider?.salary, stats?.salary), 0),
+    contract_expires_at: firstDefined(rider?.contract_expires_at, stats?.contract_expires_at) ?? null,
+    contract_expires_season:
+      firstDefined(rider?.contract_expires_season, stats?.contract_expires_season) ?? null,
+    market_value: normalizeNumber(firstDefined(rider?.market_value, stats?.market_value), 0),
+    asking_price: normalizeNumber(firstDefined(rider?.asking_price, stats?.asking_price), 0),
+    asking_price_manual:
+      firstDefined(rider?.asking_price_manual, stats?.asking_price_manual) ?? null,
+    availability_status:
+      firstDefined(rider?.availability_status, stats?.availability_status) ??
+      getDefaultRiderAvailabilityStatus(),
+    unavailable_until: firstDefined(rider?.unavailable_until, stats?.unavailable_until) ?? null,
+    unavailable_reason: firstDefined(rider?.unavailable_reason, stats?.unavailable_reason) ?? null,
+  } as RiderDetails
 }
 
 async function fetchRiderCareerHistoryById(riderId: string): Promise<RiderCareerHistoryRow[]> {
@@ -615,6 +737,7 @@ export default function ExternalRiderProfilePage({
   riderId: riderIdProp,
   gameDate: gameDateProp,
   marketMode = 'general',
+  isScouted = false,
   onBack,
   onMakeTransferOffer,
   onOpenFreeAgentNegotiation,
@@ -962,6 +1085,8 @@ export default function ExternalRiderProfilePage({
     [selectedRider?.first_name, selectedRider?.last_name].filter(Boolean).join(' ').trim() ||
     'Rider'
 
+  const visibleOverallValue = getVisibleOverallValue(selectedRider?.overall, isScouted)
+
   const tabButtonClass = (tab: ExternalRiderProfileTab) =>
     `border-b-2 px-4 py-3 text-sm font-medium transition ${
       activeTab === tab
@@ -1005,6 +1130,19 @@ export default function ExternalRiderProfilePage({
         : marketMode === 'scouting'
           ? 'Scout Rider'
           : null
+
+  const skillRows = [
+    { label: 'Sprint', value: selectedRider?.sprint },
+    { label: 'Climbing', value: selectedRider?.climbing },
+    { label: 'Time Trial', value: selectedRider?.time_trial },
+    { label: 'Endurance', value: selectedRider?.endurance },
+    { label: 'Flat', value: selectedRider?.flat },
+    { label: 'Recovery', value: selectedRider?.recovery },
+    { label: 'Resistance', value: selectedRider?.resistance },
+    { label: 'Race IQ', value: selectedRider?.race_iq },
+    { label: 'Teamwork', value: selectedRider?.teamwork },
+    { label: 'Morale', value: selectedRider?.morale },
+  ]
 
   async function handleMarketAction() {
     if (!selectedRider || marketActionLoading) return
@@ -1102,7 +1240,7 @@ export default function ExternalRiderProfilePage({
                 </span>
 
                 <span className="rounded-full border border-yellow-600/25 bg-white/55 px-3 py-1.5 text-sm font-bold text-slate-950">
-                  OVR {selectedRider.overall ?? '—'}%
+                  OVR {visibleOverallValue}
                 </span>
 
                 {activeFreeAgent ? (
@@ -1284,8 +1422,10 @@ export default function ExternalRiderProfilePage({
                       />
                       <DetailRow label="Role" value={selectedRider.role || '—'} />
                       <DetailRow label="Age" value={profileAge ?? '—'} />
-                      <DetailRow label="Overall" value={`${selectedRider.overall ?? '—'}%`} />
-                      <DetailRow label="Potential" value={potentialUi.label} />
+                      <DetailRow label="Overall" value={visibleOverallValue} />
+                      {isScouted ? (
+                        <DetailRow label="Potential" value={potentialUi.label} />
+                      ) : null}
                       <DetailRow
                         label="Contract End"
                         value={contractExpiryUi.label}
@@ -1294,6 +1434,53 @@ export default function ExternalRiderProfilePage({
                     </div>
                   </div>
                 </SectionCard>
+
+                <SectionCard
+                  title="Skill Attributes"
+                  subtitle={
+                    isScouted
+                      ? 'Exact rider attributes'
+                      : 'Public scouting ranges are shown until the rider is scouted'
+                  }
+                >
+                  <div className="grid grid-cols-1 gap-x-6 md:grid-cols-2">
+                    {skillRows.map((item, columnIndex) => (
+                      <div
+                        key={item.label}
+                        className={columnIndex < 2 ? 'divide-y divide-slate-100' : 'divide-y divide-slate-100'}
+                      >
+                        <DetailRow
+                          label={item.label}
+                          value={getVisibleAttributeValue(item.value, isScouted)}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </SectionCard>
+
+                {isScouted ? (
+                  <SectionCard title="Availability & Medical">
+                    <div className="divide-y divide-slate-100">
+                      <DetailRow
+                        label="Availability"
+                        value={selectedRider.availability_status || '—'}
+                      />
+                      <DetailRow
+                        label="Unavailable Until"
+                        value={
+                          selectedRider.unavailable_until
+                            ? formatShortGameDate(selectedRider.unavailable_until)
+                            : '—'
+                        }
+                      />
+                      <DetailRow
+                        label="Medical / Reason"
+                        value={selectedRider.unavailable_reason || '—'}
+                      />
+                      <DetailRow label="Fatigue" value={selectedRider.fatigue ?? '—'} />
+                    </div>
+                  </SectionCard>
+                ) : null}
 
                 <SectionCard title="Last 5 Races" subtitle="Only finish position is shown">
                   {overviewLoading ? (
