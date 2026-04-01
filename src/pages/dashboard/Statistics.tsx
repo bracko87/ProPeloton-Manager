@@ -1080,7 +1080,9 @@ export default function StatisticsPage() {
           )
 
           const riderId =
-            candidateRiderIds.find(candidateId => riderBaseById.has(candidateId)) ?? ''
+            candidateRiderIds.find(candidateId => riderBaseById.has(candidateId)) ??
+            candidateRiderIds[0] ??
+            ''
 
           if (!riderId) {
             console.warn('Unresolved statistics rider row:', {

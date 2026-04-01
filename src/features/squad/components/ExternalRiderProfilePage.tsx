@@ -4,11 +4,20 @@ import { supabase } from '../../../lib/supabase'
 
 import type { RiderDetails } from '../types'
 
-import { formatShortGameDate, getAgeFromBirthDate, getContractExpiryUi, getDaysRemaining } from '../utils/dates'
+import {
+  formatShortGameDate,
+  getAgeFromBirthDate,
+  getContractExpiryUi,
+  getDaysRemaining,
+} from '../utils/dates'
 
 import { getCountryName, getFlagImageUrl } from '../utils/formatters'
 
-import { getDefaultRiderAvailabilityStatus, getPotentialUi, getRiderImageUrl } from '../utils/rider-ui'
+import {
+  getDefaultRiderAvailabilityStatus,
+  getPotentialUi,
+  getRiderImageUrl,
+} from '../utils/rider-ui'
 
 type ExternalRiderProfileTab = 'overview' | 'history'
 
@@ -203,51 +212,88 @@ function DetailRow({
 }
 
 async function fetchRiderDetailsById(riderId: string): Promise<RiderDetails> {
-  const { data, error } = await supabase
-    .from('riders')
-    .select(
-      `
-      id,
-      country_code,
-      first_name,
-      last_name,
-      display_name,
-      role,
-      sprint,
-      climbing,
-      time_trial,
-      endurance,
-      flat,
-      recovery,
-      resistance,
-      race_iq,
-      teamwork,
-      morale,
-      potential,
-      fatigue,
-      overall,
-      birth_date,
-      image_url,
-      salary,
-      contract_expires_at,
-      contract_expires_season,
-      market_value,
-      asking_price,
-      asking_price_manual,
-      availability_status,
-      unavailable_until,
-      unavailable_reason
-    `
-    )
-    .eq('id', riderId)
-    .maybeSingle()
+  const riderSelection = `
+    id,
+    country_code,
+    first_name,
+    last_name,
+    display_name,
+    role,
+    sprint,
+    climbing,
+    time_trial,
+    endurance,
+    flat,
+    recovery,
+    resistance,
+    race_iq,
+    teamwork,
+    morale,
+    potential,
+    fatigue,
+    overall,
+    birth_date,
+    image_url,
+    salary,
+    contract_expires_at,
+    contract_expires_season,
+    market_value,
+    asking_price,
+    asking_price_manual,
+    availability_status,
+    unavailable_until,
+    unavailable_reason
+  `
 
-  if (error) throw error
-  if (!data) {
+  const loadByRiderId = async (id: string) =>
+    supabase.from('riders').select(riderSelection).eq('id', id).maybeSingle()
+
+  const resolveCanonicalRiderId = async (id: string): Promise<string | null> => {
+    const trimmedId = typeof id === 'string' ? id.trim() : ''
+    if (!trimmedId) return null
+
+    const { data: directRider, error: directError } = await loadByRiderId(trimmedId)
+    if (directError) throw directError
+    if (directRider?.id && typeof directRider.id === 'string') {
+      return directRider.id
+    }
+
+    const { data: clubRider, error: clubRiderError } = await supabase
+      .from('club_riders')
+      .select('rider_id')
+      .eq('id', trimmedId)
+      .maybeSingle()
+
+    if (clubRiderError) throw clubRiderError
+
+    const clubRiderId =
+      clubRider && typeof clubRider.rider_id === 'string' ? clubRider.rider_id.trim() : ''
+
+    if (clubRiderId) {
+      const { data: fallbackData, error: fallbackError } = await loadByRiderId(clubRiderId)
+      if (fallbackError) throw fallbackError
+      if (fallbackData?.id && typeof fallbackData.id === 'string') {
+        return fallbackData.id
+      }
+    }
+
+    return null
+  }
+
+  const canonicalRiderId = await resolveCanonicalRiderId(riderId)
+
+  if (!canonicalRiderId) {
     throw new Error(`Rider not found for id: ${riderId}`)
   }
 
-  const rider = data as RiderDetails
+  const { data, error } = await loadByRiderId(canonicalRiderId)
+  if (error) throw error
+
+  const rider = (data ?? null) as RiderDetails | null
+
+  if (!rider) {
+    throw new Error(`Rider not found for id: ${riderId}`)
+  }
 
   return {
     ...rider,
@@ -668,14 +714,41 @@ export default function ExternalRiderProfilePage({
       }
 
       try {
-        const [nextRider, gameDatePartsResult] = await Promise.all([
-          fetchRiderDetailsById(resolvedRiderId),
+        const nextRider = await fetchRiderDetailsById(resolvedRiderId)
+
+        const [deltaResult, gameDatePartsResult] = await Promise.all([
+          supabase
+            .from('v_rider_skill_card_deltas')
+            .select(
+              `
+              rider_id,
+              attribute_code,
+              current_value,
+              old_value,
+              new_value,
+              delta_value,
+              delta_label,
+              delta_direction,
+              primary_source,
+              week_start_date,
+              week_end_date,
+              has_visible_delta
+            `
+            )
+            .eq('rider_id', nextRider.id),
           supabase.rpc('get_current_game_date_parts'),
         ])
 
         if (!mounted) return
 
         setSelectedRider(nextRider)
+
+        if (deltaResult.error) {
+          console.error(
+            'Failed to load rider skill deltas for external rider profile:',
+            deltaResult.error
+          )
+        }
 
         if (gameDatePartsResult.error) throw gameDatePartsResult.error
 
