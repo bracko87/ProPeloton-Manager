@@ -1405,49 +1405,37 @@ export default function TransfersPage() {
         throw new Error('Please enter a valid offer amount.')
       }
 
-      if (targetListing.seller_club_id === clubId) {
-        throw new Error('You cannot submit an offer for your own listed rider.')
-      }
-
-      const existingActiveOffer = mySentOffersDashboard.some((offer) => {
-        const normalizedStatus = String(offer.status || '').toLowerCase()
-        return (
-          offer.listing_id === targetListing.listing_id &&
-          ['open', 'club_accepted', 'accepted'].includes(normalizedStatus)
-        )
-      })
-
-      if (existingActiveOffer) {
-        throw new Error('You already have an active offer for this rider.')
-      }
-
-      const { error } = await supabase.rpc('submit_rider_transfer_offer', {
+      const { data, error } = await supabase.rpc('submit_rider_transfer_offer', {
         p_listing_id: targetListing.listing_id,
         p_buyer_club_id: clubId,
         p_offered_price: offeredPrice,
       })
 
       if (error) {
-        console.error('submit_rider_transfer_offer failed', {
-          error,
+        console.error('submit_rider_transfer_offer rpc error:', {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code,
           listingId: targetListing.listing_id,
           buyerClubId: clubId,
-          sellerClubId: targetListing.seller_club_id,
           offeredPrice,
+          responseData: data,
         })
-
-        const fullMessage = [error.message, error.details, error.hint, error.code]
-          .filter(Boolean)
-          .join(' | ')
-
-        throw new Error(fullMessage || 'Failed to submit transfer offer.')
+        throw error
       }
 
       await reloadRiders(clubId)
       setPageMessage('Transfer offer submitted.')
-    } catch (err) {
-      console.error('handleSubmitOffer error', err)
-      const message = err instanceof Error ? err.message : 'Failed to submit transfer offer.'
+    } catch (err: any) {
+      console.error('submit_rider_transfer_offer failed:', err)
+
+      const message =
+        err?.message ||
+        err?.details ||
+        err?.hint ||
+        'Failed to submit transfer offer.'
+
       setPageMessage(message)
     } finally {
       setRiderActionLoading(false)

@@ -248,71 +248,31 @@ async function fetchRiderDetailsById(riderId: string): Promise<RiderDetails> {
   const loadByRiderId = async (id: string) =>
     supabase.from('riders').select(riderSelection).eq('id', id).maybeSingle()
 
-  const resolveCanonicalRiderId = async (id: string): Promise<string | null> => {
-    const trimmedId = typeof id === 'string' ? id.trim() : ''
-    if (!trimmedId) return null
+  const { data, error } = await loadByRiderId(riderId)
+  if (error) throw error
 
-    const { data: directRider, error: directError } = await loadByRiderId(trimmedId)
-    if (directError) throw directError
-    if (directRider?.id && typeof directRider.id === 'string') {
-      return directRider.id
-    }
+  let rider = (data ?? null) as RiderDetails | null
 
+  if (!rider) {
     const { data: clubRider, error: clubRiderError } = await supabase
       .from('club_riders')
       .select('rider_id')
-      .eq('id', trimmedId)
+      .eq('id', riderId)
       .maybeSingle()
 
     if (clubRiderError) throw clubRiderError
 
-    const clubRiderId =
+    const fallbackRiderId =
       clubRider && typeof clubRider.rider_id === 'string' ? clubRider.rider_id.trim() : ''
 
-    if (clubRiderId) {
-      const { data: fallbackData, error: fallbackError } = await loadByRiderId(clubRiderId)
+    if (fallbackRiderId) {
+      const { data: fallbackData, error: fallbackError } = await loadByRiderId(fallbackRiderId)
       if (fallbackError) throw fallbackError
-      if (fallbackData?.id && typeof fallbackData.id === 'string') {
-        return fallbackData.id
-      }
+      rider = (fallbackData ?? null) as RiderDetails | null
     }
-
-    const { data: statsRow, error: statsError } = await supabase
-      .from('rider_statistics_view')
-      .select('rider_id')
-      .eq('id', trimmedId)
-      .maybeSingle()
-
-    if (statsError) throw statsError
-
-    const statsRiderId =
-      statsRow && typeof statsRow.rider_id === 'string' ? statsRow.rider_id.trim() : ''
-
-    if (statsRiderId) {
-      const { data: fallbackData, error: fallbackError } = await loadByRiderId(statsRiderId)
-      if (fallbackError) throw fallbackError
-      if (fallbackData?.id && typeof fallbackData.id === 'string') {
-        return fallbackData.id
-      }
-    }
-
-    return null
   }
 
-  const canonicalRiderId = await resolveCanonicalRiderId(riderId)
-
-  if (!canonicalRiderId) {
-    throw new Error(`Rider not found for id: ${riderId}`)
-  }
-
-  const { data, error } = await loadByRiderId(canonicalRiderId)
-  if (error) throw error
-
-  const rider = (data ?? null) as RiderDetails | null
-
-  if (!rider) {
-    throw new Error(`Rider not found for id: ${riderId}`)
-  }
+  if (!rider) throw new Error(`Rider not found for id: ${riderId}`)
 
   return {
     ...rider,
