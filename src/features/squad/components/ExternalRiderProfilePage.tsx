@@ -430,9 +430,12 @@ async function fetchRiderDetailsById(riderId: string): Promise<RiderDetails> {
     `
     )
     .eq('id', riderId)
-    .single()
+    .maybeSingle()
 
   if (error) throw error
+  if (!data) {
+    throw new Error(`Rider not found for id: ${riderId}`)
+  }
 
   const rider = data as RiderDetails
 

@@ -72,23 +72,6 @@ type ClubStaffRow = {
   is_active: boolean
 }
 
-type OwnedRiderRow = {
-  rider_id: string
-  first_name?: string | null
-  last_name?: string | null
-  full_name?: string | null
-  display_name: string
-  country_code?: string | null
-  role: string | null
-  age_years: number | null
-  overall: number | null
-  potential: number | null
-  market_value: number | null
-  salary: number | null
-  contract_expires_at: string | null
-  availability_status: string | null
-}
-
 type MarketListingRow = {
   listing_id: string
   rider_id: string
@@ -113,33 +96,6 @@ type MarketListingRow = {
   auto_price_clamped: boolean
   time_left_label?: string | null
   status?: string | null
-}
-
-type TransferListingRow = {
-  id: string
-  listing_id: string
-  rider_id: string
-  seller_club_id?: string | null
-  asking_price: number
-  min_allowed_price: number
-  max_allowed_price: number
-  listed_on_game_date: string | null
-  expires_on_game_date: string | null
-  status: string
-  auto_price_clamped?: boolean
-  created_at?: string | null
-  updated_at?: string | null
-  status_changed_at_game_ts?: string | null
-
-  first_name?: string | null
-  last_name?: string | null
-  full_name?: string | null
-  display_name?: string | null
-  country_code?: string | null
-  role?: string | null
-  age_years?: number | null
-  overall?: number | null
-  potential?: number | null
 }
 
 type TransferOfferRow = {
@@ -645,9 +601,7 @@ export default function TransfersPage() {
   const [pageMessage, setPageMessage] = useState<string | null>(null)
 
   const [riderLoading, setRiderLoading] = useState(false)
-  const [ownRiders, setOwnRiders] = useState<OwnedRiderRow[]>([])
   const [marketListings, setMarketListings] = useState<MarketListingRow[]>([])
-  const [myListings, setMyListings] = useState<TransferListingRow[]>([])
   const [transferOffers, setTransferOffers] = useState<TransferOfferRow[]>([])
   const [mySentOffersDashboard, setMySentOffersDashboard] = useState<TransferOfferRow[]>([])
   const [transferNegotiations, setTransferNegotiations] = useState<TransferNegotiationRow[]>([])
@@ -658,21 +612,13 @@ export default function TransfersPage() {
   >([])
   const [gameState, setGameState] = useState<GameStateRow | null>(null)
 
-  const [selectedOwnedRiderId, setSelectedOwnedRiderId] = useState<string | null>(null)
   const [selectedMarketListingId, setSelectedMarketListingId] = useState<string | null>(null)
   const [selectedFreeAgentId, setSelectedFreeAgentId] = useState<string | null>(null)
 
-  const [listAskingPrice, setListAskingPrice] = useState('')
-  const [listDurationDays, setListDurationDays] = useState('7')
-  const [offerPrice, setOfferPrice] = useState('')
   const [offerModalListing, setOfferModalListing] = useState<MarketListingRow | null>(null)
   const [offerDraftPrice, setOfferDraftPrice] = useState('')
 
   const [riderActionLoading, setRiderActionLoading] = useState(false)
-
-  const [negotiationDrafts, setNegotiationDrafts] = useState<
-    Record<string, { salary: string; duration: string }>
-  >({})
 
   const [marketSearch, setMarketSearch] = useState('')
   const [marketRoleFilter, setMarketRoleFilter] = useState<RiderRoleFilter>('all')
@@ -680,15 +626,6 @@ export default function TransfersPage() {
   const [marketHideOwn, setMarketHideOwn] = useState(false)
   const [marketSort, setMarketSort] = useState<RiderMarketSort>('active')
   const [marketPage, setMarketPage] = useState(1)
-
-  const [nowMs, setNowMs] = useState(Date.now())
-
-  useEffect(() => {
-    const timer = window.setInterval(() => {
-      setNowMs(Date.now())
-    }, 1000)
-    return () => window.clearInterval(timer)
-  }, [])
 
   useEffect(() => {
     let mounted = true
@@ -813,7 +750,6 @@ export default function TransfersPage() {
 
   function openOfferModal(listing: MarketListingRow) {
     setSelectedMarketListingId(listing.listing_id)
-    setOfferPrice(String(listing.asking_price))
     setOfferDraftPrice(formatTransferAmount(listing.asking_price))
     setOfferModalListing(listing)
   }
@@ -824,11 +760,9 @@ export default function TransfersPage() {
     try {
       const [
         marketResult,
-        ownRidersResult,
-        myListingsResult,
         offersResult,
         mySentOffersDashboardResult,
-        negotiationsResult,
+        sellerNegotiationsResult,
         freeAgentsResult,
         freeAgentNegotiationsResult,
         gameStateResult,
@@ -838,23 +772,6 @@ export default function TransfersPage() {
           p_page: 1,
           p_page_size: 300,
         }),
-        supabase
-          .from('rider_statistics_view')
-          .select(`
-            rider_id,
-            display_name,
-            role,
-            age_years,
-            overall,
-            potential,
-            market_value,
-            salary,
-            contract_expires_at,
-            availability_status
-          `)
-          .eq('club_id', clubIdValue)
-          .order('overall', { ascending: false }),
-        supabase.rpc('get_my_transfer_listings_dashboard', {}),
         supabase
           .from('rider_transfer_offers')
           .select(`
@@ -872,6 +789,7 @@ export default function TransfersPage() {
             created_at,
             updated_at
           `)
+          .eq('seller_club_id', clubIdValue)
           .order('created_at', { ascending: false }),
         supabase.rpc('get_my_sent_transfer_offers_dashboard', {}),
         supabase
@@ -900,6 +818,7 @@ export default function TransfersPage() {
             created_at,
             updated_at
           `)
+          .eq('seller_club_id', clubIdValue)
           .order('created_at', { ascending: false }),
         supabase
           .from('free_agent_market_view')
@@ -949,6 +868,7 @@ export default function TransfersPage() {
               birth_date
             )
           `)
+          .eq('club_id', clubIdValue)
           .order('created_at', { ascending: false }),
         supabase
           .from('game_state')
@@ -959,51 +879,49 @@ export default function TransfersPage() {
       ])
 
       if (marketResult.error) throw marketResult.error
-      if (ownRidersResult.error) throw ownRidersResult.error
-      if (myListingsResult.error) throw myListingsResult.error
       if (offersResult.error) throw offersResult.error
       if (mySentOffersDashboardResult.error) throw mySentOffersDashboardResult.error
-      if (negotiationsResult.error) throw negotiationsResult.error
+      if (sellerNegotiationsResult.error) throw sellerNegotiationsResult.error
       if (freeAgentsResult.error) throw freeAgentsResult.error
       if (freeAgentNegotiationsResult.error) throw freeAgentNegotiationsResult.error
       if (gameStateResult.error) throw gameStateResult.error
       if (transferHistoryResult.error) throw transferHistoryResult.error
 
       const marketBase = (marketResult.data || []) as any[]
-      const ownBase = (ownRidersResult.data || []) as any[]
-      const listingsBase = (myListingsResult.data || []) as any[]
       const offersBase = (offersResult.data || []) as any[]
       const mySentOffersDashboardRows =
         (mySentOffersDashboardResult.data || []) as TransferOfferRow[]
-      const negotiations = (negotiationsResult.data || []) as TransferNegotiationRow[]
+      const negotiations = (sellerNegotiationsResult.data || []) as TransferNegotiationRow[]
       const historyRows = (transferHistoryResult.data || []) as TransferHistoryRow[]
       const gameStateData = gameStateResult.data as GameStateRow
       const currentGameDate = getCurrentGameDateFromState(gameStateData)
 
-      const freeAgentsRows: FreeAgentMarketRow[] = ((freeAgentsResult.data || []) as any[]).map((row) => {
-        const fullName = buildPreferredRiderName({
-          firstName: row.first_name,
-          lastName: row.last_name,
-          displayName: row.display_name,
-          fallbackId: row.rider_id,
-        })
+      const freeAgentsRows: FreeAgentMarketRow[] = ((freeAgentsResult.data || []) as any[]).map(
+        (row) => {
+          const fullName = buildPreferredRiderName({
+            firstName: row.first_name,
+            lastName: row.last_name,
+            displayName: row.display_name,
+            fallbackId: row.rider_id,
+          })
 
-        return {
-          id: row.free_agent_id,
-          free_agent_id: row.free_agent_id,
-          rider_id: row.rider_id,
-          status: row.status,
-          expected_salary_weekly: row.expected_salary_weekly ?? null,
-          expires_on_game_date: row.expires_on_game_date ?? null,
-          full_name: fullName,
-          display_name: fullName,
-          country_code: row.country_code ?? null,
-          role: row.role ?? null,
-          overall: row.overall ?? null,
-          potential: row.potential ?? null,
-          age_years: calculateAgeYearsFromGameDate(row.birth_date, currentGameDate),
+          return {
+            id: row.free_agent_id,
+            free_agent_id: row.free_agent_id,
+            rider_id: row.rider_id,
+            status: row.status,
+            expected_salary_weekly: row.expected_salary_weekly ?? null,
+            expires_on_game_date: row.expires_on_game_date ?? null,
+            full_name: fullName,
+            display_name: fullName,
+            country_code: row.country_code ?? null,
+            role: row.role ?? null,
+            overall: row.overall ?? null,
+            potential: row.potential ?? null,
+            age_years: calculateAgeYearsFromGameDate(row.birth_date, currentGameDate),
+          }
         }
-      })
+      )
 
       const freeAgentNegotiationRows = ((freeAgentNegotiationsResult.data || []) as any[]).map(
         (row) => normalizeFreeAgentNegotiationRow(row, currentGameDate)
@@ -1013,8 +931,6 @@ export default function TransfersPage() {
         new Set(
           [
             ...marketBase.map((row) => row.rider_id),
-            ...ownBase.map((row) => row.rider_id),
-            ...listingsBase.map((row) => row.rider_id),
             ...offersBase.map((row) => row.rider_id),
             ...negotiations.map((row) => row.rider_id),
             ...freeAgentsRows.map((row) => row.rider_id),
@@ -1072,58 +988,6 @@ export default function TransfersPage() {
         }
       })
 
-      const own: OwnedRiderRow[] = ownBase.map((row: any) => {
-        const rider = riderMap[row.rider_id]
-        const fullName = buildPreferredRiderName({
-          firstName: rider?.first_name,
-          lastName: rider?.last_name,
-          fullName: row.full_name,
-          displayName: row.display_name ?? rider?.display_name,
-          fallbackId: row.rider_id,
-        })
-
-        return {
-          ...row,
-          first_name: rider?.first_name ?? null,
-          last_name: rider?.last_name ?? null,
-          full_name: fullName,
-          display_name: fullName,
-          country_code: rider?.country_code ?? null,
-          role: row.role ?? rider?.role ?? null,
-          overall: row.overall ?? rider?.overall ?? null,
-          potential: row.potential ?? rider?.potential ?? null,
-          age_years:
-            row.age_years ?? calculateAgeYearsFromGameDate(rider?.birth_date, currentGameDate),
-        }
-      })
-
-      const listings: TransferListingRow[] = listingsBase.map((row: any) => {
-        const rider = riderMap[row.rider_id]
-        const fullName = buildPreferredRiderName({
-          firstName: rider?.first_name,
-          lastName: rider?.last_name,
-          fullName: row.full_name,
-          displayName: row.display_name ?? rider?.display_name,
-          fallbackId: row.rider_id,
-        })
-
-        return {
-          ...row,
-          id: row.id ?? row.listing_id,
-          listing_id: row.listing_id ?? row.id,
-          first_name: rider?.first_name ?? null,
-          last_name: rider?.last_name ?? null,
-          full_name: fullName,
-          display_name: fullName,
-          country_code: row.country_code ?? rider?.country_code ?? null,
-          role: row.role ?? rider?.role ?? null,
-          overall: row.overall ?? rider?.overall ?? null,
-          potential: row.potential ?? rider?.potential ?? null,
-          age_years:
-            row.age_years ?? calculateAgeYearsFromGameDate(rider?.birth_date, currentGameDate),
-        }
-      })
-
       const offers: TransferOfferRow[] = offersBase.map((row: any) => {
         const rider = riderMap[row.rider_id]
         const fullName = buildPreferredRiderName({
@@ -1162,8 +1026,6 @@ export default function TransfersPage() {
       if (!mounted) return
 
       setMarketListings(market)
-      setOwnRiders(own)
-      setMyListings(listings)
       setTransferOffers(offers)
       setMySentOffersDashboard(mySentOffersDashboardRows)
       setTransferNegotiations(negotiations)
@@ -1173,14 +1035,8 @@ export default function TransfersPage() {
       setClubNameMap(names)
       setGameState(gameStateData)
 
-      if (!selectedOwnedRiderId && own.length) {
-        setSelectedOwnedRiderId(own[0].rider_id)
-        setListAskingPrice(String(Math.round(own[0].market_value || 0)))
-      }
-
       if (!selectedMarketListingId && market.length) {
         setSelectedMarketListingId(market[0].listing_id)
-        setOfferPrice(String(market[0].asking_price))
       }
 
       if (!selectedFreeAgentId && freeAgentsRows.length) {
@@ -1274,42 +1130,15 @@ export default function TransfersPage() {
     return map
   }, [clubStaff])
 
-  const selectedOwnedRider = useMemo(
-    () => ownRiders.find((rider) => rider.rider_id === selectedOwnedRiderId) || null,
-    [ownRiders, selectedOwnedRiderId]
-  )
-
-  const selectedMarketListing = useMemo(
-    () => marketListings.find((listing) => listing.listing_id === selectedMarketListingId) || null,
-    [marketListings, selectedMarketListingId]
-  )
-
   const selectedFreeAgent = useMemo(
     () => freeAgents.find((agent) => agent.free_agent_id === selectedFreeAgentId) || null,
     [freeAgents, selectedFreeAgentId]
   )
 
-  useEffect(() => {
-    if (selectedOwnedRider) {
-      setListAskingPrice(String(Math.round(selectedOwnedRider.market_value || 0)))
-    }
-  }, [selectedOwnedRiderId, selectedOwnedRider])
-
-  useEffect(() => {
-    if (selectedMarketListing) {
-      setOfferPrice(String(selectedMarketListing.asking_price))
-    }
-  }, [selectedMarketListingId, selectedMarketListing])
-
   const myReceivedOffers = useMemo(() => {
     if (!clubId) return []
     return transferOffers.filter((offer) => offer.seller_club_id === clubId)
   }, [transferOffers, clubId])
-
-  const myBuyerNegotiations = useMemo(() => {
-    if (!clubId) return []
-    return transferNegotiations.filter((negotiation) => negotiation.buyer_club_id === clubId)
-  }, [transferNegotiations, clubId])
 
   const mySellerNegotiations = useMemo(() => {
     if (!clubId) return []
@@ -1323,18 +1152,17 @@ export default function TransfersPage() {
 
   const activeTransferListingIds = useMemo(() => {
     const ids = new Set<string>()
+
     for (const offer of mySentOffersDashboard) {
-      if (offer.status === 'open' || offer.status === 'accepted') {
+      const normalizedStatus = String(offer.status || '').toLowerCase()
+
+      if (['open', 'club_accepted', 'accepted'].includes(normalizedStatus)) {
         ids.add(offer.listing_id)
       }
     }
-    for (const negotiation of myBuyerNegotiations) {
-      if (negotiation.status === 'open') {
-        ids.add(negotiation.listing_id)
-      }
-    }
+
     return ids
-  }, [mySentOffersDashboard, myBuyerNegotiations])
+  }, [mySentOffersDashboard])
 
   const activeFreeAgentIds = useMemo(() => {
     const ids = new Set<string>()
@@ -1521,43 +1349,6 @@ export default function TransfersPage() {
     return freeAgentMarketRows.slice(startIndex, startIndex + RIDERS_PER_PAGE)
   }, [freeAgentMarketRows, marketPage])
 
-  function getNegotiationDraft(negotiation: TransferNegotiationRow) {
-    return (
-      negotiationDrafts[negotiation.id] || {
-        salary: String(
-          negotiation.offer_salary_weekly ||
-            negotiation.expected_salary_weekly ||
-            negotiation.min_acceptable_salary_weekly
-        ),
-        duration: String(
-          negotiation.offer_duration_seasons || negotiation.preferred_duration_seasons || 1
-        ),
-      }
-    )
-  }
-
-  function updateNegotiationDraft(
-    negotiationId: string,
-    patch: Partial<{ salary: string; duration: string }>
-  ) {
-    setNegotiationDrafts((prev) => {
-      const currentNegotiation = transferNegotiations.find((neg) => neg.id === negotiationId)
-
-      if (!currentNegotiation) {
-        return prev
-      }
-
-      return {
-        ...prev,
-        [negotiationId]: {
-          ...getNegotiationDraft(currentNegotiation),
-          ...prev[negotiationId],
-          ...patch,
-        },
-      }
-    })
-  }
-
   async function reloadStaffMarket(clubIdValue: string) {
     await loadStaffData(clubIdValue, true)
   }
@@ -1601,76 +1392,21 @@ export default function TransfersPage() {
     }
   }
 
-  async function handleListRider() {
-    if (!selectedOwnedRider || !clubId) return
-
-    try {
-      setRiderActionLoading(true)
-      setPageMessage(null)
-
-      const askingPrice = Number(listAskingPrice)
-      const durationDays = Number(listDurationDays || 7)
-
-      const { error } = await supabase.rpc('list_rider_for_transfer', {
-        p_rider_id: selectedOwnedRider.rider_id,
-        p_asking_price: Number.isFinite(askingPrice) ? askingPrice : null,
-        p_duration_days: Number.isFinite(durationDays) ? durationDays : 7,
-      })
-
-      if (error) throw error
-
-      await reloadRiders(clubId)
-      setPageMessage(`${selectedOwnedRider.display_name} has been listed for transfer.`)
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to list rider for transfer.'
-      setPageMessage(message)
-    } finally {
-      setRiderActionLoading(false)
-    }
-  }
-
-  async function handleCancelListing(listingId: string) {
+  async function handleSubmitOffer(targetListing: MarketListingRow, explicitPrice?: number) {
     if (!clubId) return
 
     try {
       setRiderActionLoading(true)
       setPageMessage(null)
 
-      const { error } = await supabase.rpc('cancel_rider_transfer_listing', {
-        p_listing_id: listingId,
-      })
-
-      if (error) throw error
-
-      await reloadRiders(clubId)
-      setPageMessage('Transfer listing cancelled.')
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to cancel transfer listing.'
-      setPageMessage(message)
-    } finally {
-      setRiderActionLoading(false)
-    }
-  }
-
-  async function handleSubmitOffer(
-    targetListing?: MarketListingRow,
-    explicitPrice?: number
-  ) {
-    const listing = targetListing || selectedMarketListing
-    if (!listing || !clubId) return
-
-    try {
-      setRiderActionLoading(true)
-      setPageMessage(null)
-
-      const offeredPrice = explicitPrice ?? Number(offerPrice || listing.asking_price)
+      const offeredPrice = explicitPrice ?? targetListing.asking_price
 
       if (!Number.isFinite(offeredPrice) || offeredPrice <= 0) {
         throw new Error('Please enter a valid offer amount.')
       }
 
       const { error } = await supabase.rpc('submit_rider_transfer_offer', {
-        p_listing_id: listing.listing_id,
+        p_listing_id: targetListing.listing_id,
         p_buyer_club_id: clubId,
         p_offered_price: offeredPrice,
       })
@@ -1813,59 +1549,6 @@ export default function TransfersPage() {
     }
   }
 
-  async function handleSubmitNegotiation(negotiation: TransferNegotiationRow) {
-    if (!clubId) return
-
-    const draft = getNegotiationDraft(negotiation)
-
-    try {
-      setRiderActionLoading(true)
-      setPageMessage(null)
-
-      const salary = Number(draft.salary)
-      const duration = Number(draft.duration)
-
-      if (!Number.isFinite(salary) || salary <= 0) {
-        throw new Error('Please enter a valid salary offer.')
-      }
-
-      if (!Number.isFinite(duration) || duration < 1) {
-        throw new Error('Please enter a valid contract duration.')
-      }
-
-      const { error } = await supabase.rpc('submit_rider_transfer_contract_offer', {
-        p_negotiation_id: negotiation.id,
-        p_offer_salary_weekly: salary,
-        p_offer_duration_seasons: duration,
-      })
-
-      if (error) {
-        console.error('submit_rider_transfer_contract_offer rpc error:', {
-          message: error.message,
-          details: error.details,
-          hint: error.hint,
-          code: error.code,
-        })
-        throw error
-      }
-
-      await reloadRiders(clubId)
-      setPageMessage('Rider contract offer submitted.')
-    } catch (err: any) {
-      console.error('submit_rider_transfer_contract_offer failed:', err)
-
-      const message =
-        err?.message ||
-        err?.details ||
-        err?.hint ||
-        'Failed to submit rider contract offer.'
-
-      setPageMessage(message)
-    } finally {
-      setRiderActionLoading(false)
-    }
-  }
-
   const pageStart =
     sortedCandidates.length === 0 ? 0 : (currentPage - 1) * CANDIDATES_PER_PAGE + 1
   const pageEnd = Math.min(currentPage * CANDIDATES_PER_PAGE, sortedCandidates.length)
@@ -1966,7 +1649,6 @@ export default function TransfersPage() {
         riderMarketSubTab === 'transfer_list' ? (
           <RiderTransferListPage
             riderLoading={riderLoading}
-            nowMs={nowMs}
             gameState={gameState}
             marketSearch={marketSearch}
             setMarketSearch={setMarketSearch}
@@ -1983,16 +1665,11 @@ export default function TransfersPage() {
             selectedMarketListingId={selectedMarketListingId}
             onSelectMarketItem={(item) => {
               setSelectedMarketListingId(item.listing_id)
-              setOfferPrice(String(item.raw.asking_price))
               openRiderProfilePage(item.rider_id)
             }}
             onQuickActionMarketItem={(item) => {
               if (item.is_own_item || item.is_user_active) return
-
-              setSelectedMarketListingId(item.listing_id)
-              setOfferPrice(String(item.raw.asking_price))
-              setOfferDraftPrice(formatTransferAmount(item.raw.asking_price))
-              setOfferModalListing(item.raw)
+              openOfferModal(item.raw)
             }}
             marketPageStart={marketPageStart}
             marketPageEnd={marketPageEnd}
@@ -2001,30 +1678,7 @@ export default function TransfersPage() {
             marketTotalPages={marketTotalPages}
             onPrevMarketPage={() => setMarketPage((prev) => Math.max(1, prev - 1))}
             onNextMarketPage={() => setMarketPage((prev) => Math.min(marketTotalPages, prev + 1))}
-            ownRiders={ownRiders}
-            selectedOwnedRiderId={selectedOwnedRiderId}
-            onSelectOwnedRider={setSelectedOwnedRiderId}
-            selectedOwnedRider={selectedOwnedRider}
-            listAskingPrice={listAskingPrice}
-            setListAskingPrice={setListAskingPrice}
-            listDurationDays={listDurationDays}
-            setListDurationDays={setListDurationDays}
             riderActionLoading={riderActionLoading}
-            onListRider={() => {
-              void handleListRider()
-            }}
-            selectedMarketListing={selectedMarketListing}
-            clubId={clubId}
-            offerPrice={offerPrice}
-            setOfferPrice={setOfferPrice}
-            onSubmitOffer={() => {
-              if (!selectedMarketListing) return
-              openOfferModal(selectedMarketListing)
-            }}
-            myListings={myListings}
-            onCancelListing={(listingId) => {
-              void handleCancelListing(listingId)
-            }}
             myReceivedOffers={myReceivedOffers}
             clubNameMap={clubNameMap}
             onRejectOffer={(offerId) => {
@@ -2033,6 +1687,9 @@ export default function TransfersPage() {
             onAcceptOffer={(offerId) => {
               void handleAcceptOffer(offerId)
             }}
+            onWithdrawSentOffer={(offerId) => {
+              void handleWithdrawSentOffer(offerId)
+            }}
             onOpenTeamPage={(targetClubId) => {
               openClubProfilePage(targetClubId)
             }}
@@ -2040,15 +1697,6 @@ export default function TransfersPage() {
               openRiderProfilePage(riderId)
             }}
             mySentOffers={mySentOffersDashboard}
-            onWithdrawSentOffer={(offerId) => {
-              void handleWithdrawSentOffer(offerId)
-            }}
-            myBuyerNegotiations={myBuyerNegotiations}
-            getNegotiationDraft={getNegotiationDraft}
-            updateNegotiationDraft={updateNegotiationDraft}
-            onSubmitNegotiation={(negotiation) => {
-              void handleSubmitNegotiation(negotiation)
-            }}
             mySellerNegotiations={mySellerNegotiations}
             transferHistory={transferHistory}
           />
