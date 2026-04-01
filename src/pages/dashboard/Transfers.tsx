@@ -1839,13 +1839,27 @@ export default function TransfersPage() {
         p_offer_duration_seasons: duration,
       })
 
-      if (error) throw error
+      if (error) {
+        console.error('submit_rider_transfer_contract_offer rpc error:', {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code,
+        })
+        throw error
+      }
 
       await reloadRiders(clubId)
       setPageMessage('Rider contract offer submitted.')
-    } catch (err) {
+    } catch (err: any) {
+      console.error('submit_rider_transfer_contract_offer failed:', err)
+
       const message =
-        err instanceof Error ? err.message : 'Failed to submit rider contract offer.'
+        err?.message ||
+        err?.details ||
+        err?.hint ||
+        'Failed to submit rider contract offer.'
+
       setPageMessage(message)
     } finally {
       setRiderActionLoading(false)

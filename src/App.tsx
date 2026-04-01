@@ -37,10 +37,12 @@ import EquipmentPage from './pages/dashboard/Equipment'
 import InfrastructurePage from './pages/dashboard/Infrastructure'
 import FinancePage from './pages/dashboard/Finance'
 import TransfersPage from './pages/dashboard/Transfers'
+import RiderTransferNegotiationPage from './pages/dashboard/transfers/RiderTransferNegotiationPage'
 import StatisticsPage from './pages/dashboard/Statistics'
 import RiderProfilePublicPage from './pages/dashboard/riders/RiderProfilePublicPage'
 import RiderProfileOwnPage from './pages/dashboard/riders/RiderProfileOwnPage'
 import CompareRidersPage from './pages/dashboard/CompareRiders'
+import ExternalRiderProfilePage from './features/squad/components/ExternalRiderProfilePage'
 
 /* Additional pages for profile/menu */
 import InboxPage from './pages/Inbox'
@@ -301,9 +303,14 @@ export default function App(): JSX.Element {
             <Route path="infrastructure" element={<InfrastructurePage />} />
             <Route path="finance" element={<FinancePage />} />
             <Route path="transfers" element={<TransfersPage />} />
+            <Route
+              path="transfers/negotiations/:negotiationId"
+              element={<RiderTransferNegotiationPage />}
+            />
             <Route path="statistics" element={<StatisticsPage />} />
             <Route path="riders/:riderId" element={<RiderProfilePublicPage />} />
             <Route path="my-riders/:riderId" element={<RiderProfileOwnPage />} />
+            <Route path="external-riders/:riderId" element={<ExternalRiderProfilePage />} />
             <Route path="compare-riders" element={<CompareRidersPage />} />
             <Route path="inbox" element={<InboxPage />} />
             <Route path="my-profile" element={<MyProfilePage />} />

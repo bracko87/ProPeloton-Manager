@@ -28,7 +28,7 @@ import {
   getRiderStatusUi,
 } from '../utils/rider-ui'
 
-type ExternalRiderProfileTab = 'overview' | 'market' | 'compare' | 'history'
+type ExternalRiderProfileTab = 'overview' | 'contract' | 'compare' | 'history'
 
 type RiderSkillAttributeCode =
   | 'sprint'
@@ -754,7 +754,7 @@ export default function ExternalRiderProfilePage({
 
   const resolvedRiderId = riderIdProp ?? params.riderId ?? ''
   const effectiveOnBack = onBack ?? (() => navigate(-1))
-  const defaultTab: ExternalRiderProfileTab = marketMode === 'general' ? 'overview' : 'market'
+  const defaultTab: ExternalRiderProfileTab = marketMode === 'general' ? 'overview' : 'contract'
 
   const [resolvedGameDate, setResolvedGameDate] = useState<string | null>(
     normalizeGameDateInput(gameDateProp)
@@ -1088,11 +1088,9 @@ export default function ExternalRiderProfilePage({
         : 'Not Listed'
 
   const riderName =
-    selectedRider?.display_name ??
-    [selectedRider?.first_name, selectedRider?.last_name].filter(Boolean).join(' ') ??
+    selectedRider?.display_name?.trim() ||
+    [selectedRider?.first_name, selectedRider?.last_name].filter(Boolean).join(' ').trim() ||
     'Rider'
-
-  const safeRiderName = riderName && riderName.trim() !== '' ? riderName : 'Rider'
 
   const skillRows = [
     { label: 'Sprint', key: 'sprint' as const, value: selectedRider?.sprint },
@@ -1154,7 +1152,7 @@ export default function ExternalRiderProfilePage({
         <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
           <div className="min-w-0">
             <h2 className="truncate text-3xl font-semibold tracking-tight text-slate-950">
-              {selectedRider ? safeRiderName : 'Rider Profile'}
+              {selectedRider ? riderName : 'Rider Profile'}
             </h2>
 
             {selectedRider ? (
@@ -1240,10 +1238,10 @@ export default function ExternalRiderProfilePage({
           </button>
           <button
             type="button"
-            onClick={() => setActiveTab('market')}
-            className={tabButtonClass('market')}
+            onClick={() => setActiveTab('contract')}
+            className={tabButtonClass('contract')}
           >
-            Market
+            Contract
           </button>
           <button
             type="button"
@@ -1284,52 +1282,9 @@ export default function ExternalRiderProfilePage({
                   <div className="flex h-[340px] items-center justify-center rounded-lg bg-slate-100 p-4">
                     <img
                       src={getRiderImageUrl(selectedRider.image_url)}
-                      alt={selectedRider.display_name ?? safeRiderName}
+                      alt={selectedRider.display_name ?? riderName}
                       className="h-full w-full object-contain"
                     />
-                  </div>
-                </SectionCard>
-
-                <SectionCard title="Form & Status" subtitle="Public rider condition view">
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between gap-4">
-                      <div className="text-sm text-slate-500">Availability</div>
-                      <div className="text-sm font-semibold" style={{ color: healthUi.color }}>
-                        {healthUi.label}
-                      </div>
-                    </div>
-
-                    <div className="flex items-center justify-between gap-4">
-                      <div className="text-sm text-slate-500">Fatigue</div>
-                      <div className="text-sm font-semibold" style={{ color: fatigueUi.color }}>
-                        {fatigueUi.label}
-                        {selectedRider.fatigue != null ? ` (${selectedRider.fatigue}/100)` : ''}
-                      </div>
-                    </div>
-
-                    <div className="flex items-center justify-between gap-4">
-                      <div className="text-sm text-slate-500">Potential</div>
-                      <div className="text-sm font-semibold" style={{ color: potentialUi.color }}>
-                        {potentialUi.label}
-                      </div>
-                    </div>
-
-                    <div className="flex items-center justify-between gap-4">
-                      <div className="text-sm text-slate-500">Morale</div>
-                      <div className="text-sm font-semibold" style={{ color: moraleUi.color }}>
-                        {moraleUi.label}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="mt-4 rounded-lg bg-slate-50 px-4 py-3 text-sm text-slate-700">
-                    {selectedRider.unavailable_until
-                      ? `Unavailable until ${formatShortGameDate(selectedRider.unavailable_until)}${
-                          selectedRider.unavailable_reason
-                            ? ` because of ${formatUnavailableReason(selectedRider.unavailable_reason).toLowerCase()}`
-                            : ''
-                        }.`
-                      : 'No active public availability restriction is visible for this rider.'}
                   </div>
                 </SectionCard>
 
@@ -1369,7 +1324,10 @@ export default function ExternalRiderProfilePage({
                     </div>
 
                     <div className="divide-y divide-slate-100">
-                      <DetailRow label="Weekly Wage" value={formatWeeklySalary(selectedRider.salary)} />
+                      <DetailRow
+                        label="Weekly Wage"
+                        value={formatWeeklySalary(selectedRider.salary)}
+                      />
                       <DetailRow
                         label="Market Value"
                         value={formatCompactMoneyValue(selectedRider.market_value)}
@@ -1385,6 +1343,37 @@ export default function ExternalRiderProfilePage({
                       />
                       <DetailRow label="Availability" value={healthUi.label} />
                     </div>
+                  </div>
+                </SectionCard>
+
+                <SectionCard title="Availability & Medical">
+                  <div className="divide-y divide-slate-100">
+                    <DetailRow label="Status" value={healthUi.label} />
+                    <DetailRow label="Fatigue score" value={`${selectedRider.fatigue ?? 0}/100`} />
+                    <DetailRow label="Potential" value={potentialUi.label} />
+                    <DetailRow label="Morale" value={moraleUi.label} />
+                    {selectedRider.unavailable_reason ? (
+                      <DetailRow
+                        label="Reason"
+                        value={formatUnavailableReason(selectedRider.unavailable_reason)}
+                      />
+                    ) : null}
+                    {selectedRider.unavailable_until ? (
+                      <DetailRow
+                        label="Unavailable until"
+                        value={formatShortGameDate(selectedRider.unavailable_until)}
+                      />
+                    ) : null}
+                  </div>
+
+                  <div className="mt-4 rounded-lg bg-slate-50 px-4 py-3 text-sm text-slate-700">
+                    {selectedRider.unavailable_until
+                      ? `Unavailable until ${formatShortGameDate(selectedRider.unavailable_until)}${
+                          selectedRider.unavailable_reason
+                            ? ` because of ${formatUnavailableReason(selectedRider.unavailable_reason).toLowerCase()}`
+                            : ''
+                        }.`
+                      : 'No active public availability restriction is visible for this rider.'}
                   </div>
                 </SectionCard>
 
@@ -1447,15 +1436,15 @@ export default function ExternalRiderProfilePage({
             </div>
           )}
 
-          {activeTab === 'market' && (
+          {activeTab === 'contract' && (
             <div className="space-y-4">
               <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_340px]">
                 <SectionCard
-                  title="Market Overview"
-                  subtitle="Public market and contract context for this rider"
+                  title="Contract Details"
+                  subtitle="Public contract and market information for this rider"
                 >
                   {marketLoading ? (
-                    <div className="text-sm text-slate-600">Loading market data…</div>
+                    <div className="text-sm text-slate-600">Loading contract data…</div>
                   ) : marketError ? (
                     <div className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
                       {marketError}
@@ -1465,16 +1454,16 @@ export default function ExternalRiderProfilePage({
                       <div className="divide-y divide-slate-100">
                         <DetailRow label="Market Status" value={marketStatusLabel} />
                         <DetailRow
+                          label="Weekly Wage"
+                          value={formatWeeklySalary(selectedRider.salary)}
+                        />
+                        <DetailRow
                           label="Market Value"
                           value={formatCompactMoneyValue(selectedRider.market_value)}
                         />
                         <DetailRow
                           label="Asking Price"
                           value={formatCompactMoneyValue(selectedRider.asking_price)}
-                        />
-                        <DetailRow
-                          label="Weekly Wage"
-                          value={formatWeeklySalary(selectedRider.salary)}
                         />
                         <DetailRow
                           label="Contract End"
@@ -1526,7 +1515,7 @@ export default function ExternalRiderProfilePage({
                         onClick={() =>
                           onOpenFreeAgentNegotiation({
                             riderId: selectedRider.id,
-                            riderName: safeRiderName,
+                            riderName,
                             freeAgentId: activeFreeAgent.id,
                             expiresOnGameDate: activeFreeAgent.expires_on_game_date,
                           })
@@ -1543,7 +1532,7 @@ export default function ExternalRiderProfilePage({
                         onClick={() =>
                           onMakeTransferOffer({
                             riderId: selectedRider.id,
-                            riderName: safeRiderName,
+                            riderName,
                             listingId: activeTransferListing.id,
                             sellerClubId: activeTransferListing.seller_club_id,
                             askingPrice: activeTransferListing.asking_price,
@@ -1561,7 +1550,7 @@ export default function ExternalRiderProfilePage({
                         onClick={() =>
                           onScoutRider({
                             riderId: selectedRider.id,
-                            riderName: safeRiderName,
+                            riderName,
                           })
                         }
                         className="w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-800 transition hover:bg-slate-50"
@@ -1570,9 +1559,12 @@ export default function ExternalRiderProfilePage({
                       </button>
                     ) : null}
 
-                    {!onMakeTransferOffer && !onOpenFreeAgentNegotiation && !onScoutRider ? (
+                    {!onMakeTransferOffer &&
+                    !onOpenFreeAgentNegotiation &&
+                    !onScoutRider ? (
                       <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
-                        This page is ready for public rider actions, but no offer or scouting callbacks were passed yet.
+                        This page is ready for public rider actions, but no offer or scouting
+                        callbacks were passed yet.
                       </div>
                     ) : null}
 
@@ -1650,7 +1642,9 @@ export default function ExternalRiderProfilePage({
                             </div>
                           </td>
                           <td className="py-3 pr-4 text-slate-700">{row.team_name}</td>
-                          <td className="py-3 text-right font-semibold text-slate-900">{row.points}</td>
+                          <td className="py-3 text-right font-semibold text-slate-900">
+                            {row.points}
+                          </td>
                         </tr>
                       ))}
                     </tbody>

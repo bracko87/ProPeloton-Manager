@@ -936,12 +936,7 @@ export default function StatisticsPage() {
 
     const isMyRider = !!rider?.club_id && myClubIds.includes(rider.club_id)
 
-    if (isMyRider) {
-      navigate(`/dashboard/riders/${riderId}`)
-      return
-    }
-
-    navigate(`/dashboard/external-riders/${riderId}`)
+    navigate(isMyRider ? `/dashboard/my-riders/${riderId}` : `/dashboard/external-riders/${riderId}`)
   }
 
   useEffect(() => {
