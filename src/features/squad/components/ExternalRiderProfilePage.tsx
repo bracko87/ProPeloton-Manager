@@ -1,62 +1,16 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
 import { supabase } from '../../../lib/supabase'
-import RiderComparePanel from './RiderComparePanel'
 
 import type { RiderDetails } from '../types'
 
-import {
-  formatShortGameDate,
-  getAgeFromBirthDate,
-  getContractExpiryUi,
-  getDaysRemaining,
-} from '../utils/dates'
+import { formatShortGameDate, getAgeFromBirthDate, getContractExpiryUi, getDaysRemaining } from '../utils/dates'
 
-import {
-  formatUnavailableReason,
-  formatWeeklySalary,
-  getCountryName,
-  getFlagImageUrl,
-} from '../utils/formatters'
+import { getCountryName, getFlagImageUrl } from '../utils/formatters'
 
-import {
-  getDefaultRiderAvailabilityStatus,
-  getFatigueUi,
-  getMoraleUi,
-  getPotentialUi,
-  getRiderImageUrl,
-  getRiderStatusUi,
-} from '../utils/rider-ui'
+import { getDefaultRiderAvailabilityStatus, getPotentialUi, getRiderImageUrl } from '../utils/rider-ui'
 
-type ExternalRiderProfileTab = 'overview' | 'contract' | 'compare' | 'history'
-
-type RiderSkillAttributeCode =
-  | 'sprint'
-  | 'climbing'
-  | 'time_trial'
-  | 'endurance'
-  | 'flat'
-  | 'recovery'
-  | 'resistance'
-  | 'race_iq'
-  | 'teamwork'
-
-type RiderSkillDeltaRow = {
-  rider_id: string
-  attribute_code: RiderSkillAttributeCode
-  current_value: number
-  old_value: number | null
-  new_value: number | null
-  delta_value: number | null
-  delta_label: string | null
-  delta_direction: 'positive' | 'negative' | null
-  primary_source: string | null
-  week_start_date: string | null
-  week_end_date: string | null
-  has_visible_delta: boolean
-}
-
-type RiderSkillDeltaMap = Partial<Record<RiderSkillAttributeCode, RiderSkillDeltaRow>>
+type ExternalRiderProfileTab = 'overview' | 'history'
 
 type RiderCareerHistoryRow = {
   season: number | null
@@ -167,74 +121,6 @@ function normalizeGameDateInput(value: unknown): string | null {
   return null
 }
 
-function formatCompactMoneyValue(value?: number | null) {
-  if (value === null || value === undefined || !Number.isFinite(value)) return '—'
-
-  const absoluteValue = Math.abs(value)
-  const prefix = value < 0 ? '-$' : '$'
-  const formatOneDecimal = (amount: number) => amount.toFixed(1).replace(/\.0$/, '')
-
-  if (absoluteValue >= 1_000_000_000) {
-    return `${prefix}${formatOneDecimal(absoluteValue / 1_000_000_000)}b`
-  }
-
-  if (absoluteValue >= 1_000_000) {
-    return `${prefix}${formatOneDecimal(absoluteValue / 1_000_000)}m`
-  }
-
-  if (absoluteValue >= 100_000) {
-    return `${prefix}${Math.floor(absoluteValue / 1_000)}k`
-  }
-
-  if (absoluteValue >= 1_000) {
-    return `${prefix}${formatOneDecimal(absoluteValue / 1_000)}k`
-  }
-
-  return `${prefix}${Math.round(absoluteValue).toLocaleString('en-US')}`
-}
-
-function formatSkillDeltaSource(source?: string | null) {
-  switch (source) {
-    case 'training_camp':
-      return 'Training camp'
-    case 'regular_training':
-      return 'Regular training'
-    case 'age_decline':
-      return 'Age decline'
-    case 'inactivity_decay':
-      return 'Inactivity'
-    case 'race_experience':
-      return 'Race experience'
-    default:
-      return null
-  }
-}
-
-function getSkillAccentStyle(attribute: RiderSkillAttributeCode) {
-  switch (attribute) {
-    case 'sprint':
-      return { soft: 'rgba(245, 158, 11, 0.18)' }
-    case 'climbing':
-      return { soft: 'rgba(16, 185, 129, 0.18)' }
-    case 'time_trial':
-      return { soft: 'rgba(59, 130, 246, 0.18)' }
-    case 'endurance':
-      return { soft: 'rgba(139, 92, 246, 0.18)' }
-    case 'flat':
-      return { soft: 'rgba(6, 182, 212, 0.18)' }
-    case 'recovery':
-      return { soft: 'rgba(34, 197, 94, 0.18)' }
-    case 'resistance':
-      return { soft: 'rgba(239, 68, 68, 0.18)' }
-    case 'race_iq':
-      return { soft: 'rgba(99, 102, 241, 0.18)' }
-    case 'teamwork':
-      return { soft: 'rgba(236, 72, 153, 0.18)' }
-    default:
-      return { soft: 'rgba(148, 163, 184, 0.18)' }
-  }
-}
-
 function CountryFlag({
   countryCode,
   className = '',
@@ -311,82 +197,6 @@ function DetailRow({
       <div className="text-sm text-slate-500">{label}</div>
       <div className={`text-right text-sm font-medium text-slate-800 ${valueClassName}`}>
         {value}
-      </div>
-    </div>
-  )
-}
-
-function SimpleInfoRow({
-  label,
-  value,
-  note,
-}: {
-  label: string
-  value: React.ReactNode
-  note?: React.ReactNode
-}) {
-  return (
-    <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
-      <div className="flex items-start justify-between gap-4">
-        <div className="text-sm text-slate-500">{label}</div>
-        <div className="text-right text-sm font-medium text-slate-900">{value}</div>
-      </div>
-      {note ? <div className="mt-1 text-sm text-slate-600">{note}</div> : null}
-    </div>
-  )
-}
-
-function SimpleAttributeRow({
-  label,
-  attributeCode,
-  value,
-  deltaLabel,
-  deltaDirection,
-  sourceLabel,
-}: {
-  label: string
-  attributeCode: RiderSkillAttributeCode
-  value: number
-  deltaLabel?: string | null
-  deltaDirection?: 'positive' | 'negative' | null
-  sourceLabel?: string | null
-}) {
-  const safeValue = Math.max(0, Math.min(100, value))
-  const accent = getSkillAccentStyle(attributeCode)
-
-  const deltaClasses =
-    deltaDirection === 'positive'
-      ? 'border-emerald-300 bg-emerald-50 text-emerald-700'
-      : deltaDirection === 'negative'
-        ? 'border-rose-300 bg-rose-50 text-rose-700'
-        : 'border-slate-200 bg-slate-100 text-slate-500'
-
-  return (
-    <div className="relative overflow-hidden rounded-lg border border-slate-200 bg-white px-4 py-3">
-      <div
-        className="absolute inset-y-0 left-0"
-        style={{
-          width: `${Math.max(12, safeValue)}%`,
-          background: `linear-gradient(90deg, ${accent.soft} 0%, ${accent.soft} 88%, rgba(255,255,255,0) 100%)`,
-        }}
-      />
-
-      <div className="relative flex items-center justify-between gap-4">
-        <div className="flex min-w-0 items-center gap-2.5">
-          <div className="text-sm font-medium text-slate-700">{label}</div>
-          {deltaLabel ? (
-            <span
-              className={`inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-bold ${deltaClasses}`}
-              title={sourceLabel ?? undefined}
-            >
-              {deltaLabel}
-            </span>
-          ) : null}
-        </div>
-
-        <div className="w-10 shrink-0 text-right text-base font-semibold text-slate-900">
-          {safeValue}
-        </div>
       </div>
     </div>
   )
@@ -757,7 +567,7 @@ export default function ExternalRiderProfilePage({
 
   const resolvedRiderId = riderIdProp ?? params.riderId ?? ''
   const effectiveOnBack = onBack ?? (() => navigate(-1))
-  const defaultTab: ExternalRiderProfileTab = marketMode === 'general' ? 'overview' : 'contract'
+  const defaultTab: ExternalRiderProfileTab = 'overview'
 
   const [resolvedGameDate, setResolvedGameDate] = useState<string | null>(
     normalizeGameDateInput(gameDateProp)
@@ -767,7 +577,6 @@ export default function ExternalRiderProfilePage({
   const [profileLoading, setProfileLoading] = useState(false)
   const [profileError, setProfileError] = useState<string | null>(null)
   const [selectedRider, setSelectedRider] = useState<RiderDetails | null>(null)
-  const [skillDeltaMap, setSkillDeltaMap] = useState<RiderSkillDeltaMap>({})
   const [activeTab, setActiveTab] = useState<ExternalRiderProfileTab>(defaultTab)
 
   const [seasonOverview, setSeasonOverview] = useState<RiderSeasonOverview>({
@@ -791,13 +600,14 @@ export default function ExternalRiderProfilePage({
   )
   const [activeFreeAgent, setActiveFreeAgent] = useState<ActiveFreeAgentRow | null>(null)
   const [marketError, setMarketError] = useState<string | null>(null)
+  const [marketActionLoading, setMarketActionLoading] = useState(false)
+  const [marketActionMessage, setMarketActionMessage] = useState<string | null>(null)
+  const [myPrimaryClubId, setMyPrimaryClubId] = useState<string | null>(null)
 
   const [historyLoading, setHistoryLoading] = useState(false)
   const [historyError, setHistoryError] = useState<string | null>(null)
   const [historyRows, setHistoryRows] = useState<RiderCareerHistoryRow[]>([])
   const [currentSeasonNumber, setCurrentSeasonNumber] = useState<number | null>(null)
-
-  const [compareClubId, setCompareClubId] = useState<string | null>(null)
 
   useEffect(() => {
     if (gameDateProp !== undefined) {
@@ -840,13 +650,13 @@ export default function ExternalRiderProfilePage({
       setProfileLoading(true)
       setProfileError(null)
       setSelectedRider(null)
-      setSkillDeltaMap({})
       setSeasonOverview({ points: 0, podiums: 0, jerseys: 0 })
       setSeasonStats({ races: 0, wins: 0, podiums: 0, top10: 0, points: 0 })
       setRecentRaces([])
       setActiveTransferListing(null)
       setActiveFreeAgent(null)
       setMarketError(null)
+      setMarketActionMessage(null)
       setHistoryRows([])
       setHistoryError(null)
       setActiveTab(defaultTab)
@@ -858,27 +668,8 @@ export default function ExternalRiderProfilePage({
       }
 
       try {
-        const [nextRider, deltaResult, gameDatePartsResult] = await Promise.all([
+        const [nextRider, gameDatePartsResult] = await Promise.all([
           fetchRiderDetailsById(resolvedRiderId),
-          supabase
-            .from('v_rider_skill_card_deltas')
-            .select(
-              `
-              rider_id,
-              attribute_code,
-              current_value,
-              old_value,
-              new_value,
-              delta_value,
-              delta_label,
-              delta_direction,
-              primary_source,
-              week_start_date,
-              week_end_date,
-              has_visible_delta
-            `
-            )
-            .eq('rider_id', resolvedRiderId),
           supabase.rpc('get_current_game_date_parts'),
         ])
 
@@ -886,7 +677,6 @@ export default function ExternalRiderProfilePage({
 
         setSelectedRider(nextRider)
 
-        if (deltaResult.error) throw deltaResult.error
         if (gameDatePartsResult.error) throw gameDatePartsResult.error
 
         const gameDateParts = Array.isArray(gameDatePartsResult.data)
@@ -896,11 +686,6 @@ export default function ExternalRiderProfilePage({
         setCurrentSeasonNumber(
           typeof gameDateParts?.season_number === 'number' ? gameDateParts.season_number : null
         )
-
-        const deltaRows = (deltaResult.data ?? []) as RiderSkillDeltaRow[]
-        const nextDeltaMap: RiderSkillDeltaMap = {}
-        for (const row of deltaRows) nextDeltaMap[row.attribute_code] = row
-        setSkillDeltaMap(nextDeltaMap)
       } catch (e: any) {
         if (!mounted) return
         setProfileError(e?.message ?? 'Failed to load rider profile.')
@@ -915,7 +700,7 @@ export default function ExternalRiderProfilePage({
     return () => {
       mounted = false
     }
-  }, [resolvedRiderId, defaultTab])
+  }, [resolvedRiderId])
 
   useEffect(() => {
     let mounted = true
@@ -991,19 +776,19 @@ export default function ExternalRiderProfilePage({
   useEffect(() => {
     let mounted = true
 
-    async function loadCompareClubId() {
+    async function loadMyPrimaryClubId() {
       try {
         const { data, error } = await supabase.rpc('get_my_primary_club_id')
         if (error) throw error
         if (!mounted) return
-        setCompareClubId(data ? String(data) : null)
+        setMyPrimaryClubId(data ? String(data) : null)
       } catch {
         if (!mounted) return
-        setCompareClubId(null)
+        setMyPrimaryClubId(null)
       }
     }
 
-    void loadCompareClubId()
+    void loadMyPrimaryClubId()
 
     return () => {
       mounted = false
@@ -1048,9 +833,6 @@ export default function ExternalRiderProfilePage({
 
   const profileAge = getAgeFromBirthDate(selectedRider?.birth_date, resolvedGameDate)
   const potentialUi = getPotentialUi(selectedRider?.potential)
-  const moraleUi = getMoraleUi(selectedRider?.morale)
-  const fatigueUi = getFatigueUi(selectedRider?.fatigue)
-  const healthUi = getRiderStatusUi(selectedRider?.availability_status)
 
   const transferDaysRemaining = activeTransferListing?.expires_on_game_date
     ? getDaysRemaining(activeTransferListing.expires_on_game_date, resolvedGameDate)
@@ -1095,18 +877,6 @@ export default function ExternalRiderProfilePage({
     [selectedRider?.first_name, selectedRider?.last_name].filter(Boolean).join(' ').trim() ||
     'Rider'
 
-  const skillRows = [
-    { label: 'Sprint', key: 'sprint' as const, value: selectedRider?.sprint },
-    { label: 'Climbing', key: 'climbing' as const, value: selectedRider?.climbing },
-    { label: 'Time Trial', key: 'time_trial' as const, value: selectedRider?.time_trial },
-    { label: 'Endurance', key: 'endurance' as const, value: selectedRider?.endurance },
-    { label: 'Flat', key: 'flat' as const, value: selectedRider?.flat },
-    { label: 'Recovery', key: 'recovery' as const, value: selectedRider?.recovery },
-    { label: 'Resistance', key: 'resistance' as const, value: selectedRider?.resistance },
-    { label: 'Race IQ', key: 'race_iq' as const, value: selectedRider?.race_iq },
-    { label: 'Teamwork', key: 'teamwork' as const, value: selectedRider?.teamwork },
-  ]
-
   const tabButtonClass = (tab: ExternalRiderProfileTab) =>
     `border-b-2 px-4 py-3 text-sm font-medium transition ${
       activeTab === tab
@@ -1138,6 +908,79 @@ export default function ExternalRiderProfilePage({
 
     return currentSeasonRow ? [currentSeasonRow, ...filteredRows] : historyRows
   }, [currentSeasonNumber, historyRows, seasonOverview.points])
+
+  const marketActionButtonLabel = activeFreeAgent
+    ? 'Negotiate with Free Agent'
+    : activeTransferListing
+      ? onMakeTransferOffer
+        ? 'Make Transfer Offer'
+        : 'Submit Transfer Offer'
+      : onScoutRider
+        ? 'Add to Scout List'
+        : marketMode === 'scouting'
+          ? 'Scout Rider'
+          : null
+
+  async function handleMarketAction() {
+    if (!selectedRider || marketActionLoading) return
+
+    try {
+      setMarketActionLoading(true)
+      setMarketActionMessage(null)
+
+      if (activeFreeAgent) {
+        if (onOpenFreeAgentNegotiation) {
+          onOpenFreeAgentNegotiation({
+            riderId: selectedRider.id,
+            riderName,
+            freeAgentId: activeFreeAgent.id,
+            expiresOnGameDate: activeFreeAgent.expires_on_game_date,
+          })
+          return
+        }
+
+        setMarketActionMessage('Open this rider from Transfers to start free-agent negotiation.')
+        return
+      }
+
+      if (activeTransferListing) {
+        if (onMakeTransferOffer) {
+          onMakeTransferOffer({
+            riderId: selectedRider.id,
+            riderName,
+            listingId: activeTransferListing.id,
+            sellerClubId: activeTransferListing.seller_club_id,
+            askingPrice: activeTransferListing.asking_price,
+          })
+          return
+        }
+
+        if (!myPrimaryClubId) throw new Error('Your primary club is not available.')
+
+        const { error } = await supabase.rpc('submit_rider_transfer_offer', {
+          p_listing_id: activeTransferListing.id,
+          p_buyer_club_id: myPrimaryClubId,
+          p_offered_price: activeTransferListing.asking_price,
+        })
+
+        if (error) throw error
+
+        setMarketActionMessage('Transfer offer submitted.')
+        return
+      }
+
+      if (onScoutRider) {
+        onScoutRider({ riderId: selectedRider.id, riderName })
+        return
+      }
+
+      setMarketActionMessage('This rider is currently not listed.')
+    } catch (error: any) {
+      setMarketActionMessage(error?.message ?? 'Market action failed.')
+    } finally {
+      setMarketActionLoading(false)
+    }
+  }
 
   return (
     <div className="w-full">
@@ -1223,10 +1066,7 @@ export default function ExternalRiderProfilePage({
       ) : activeTransferListing ? (
         <div className="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
           <div className="font-semibold">This rider is currently on the transfer list.</div>
-          <div className="mt-1">
-            Asking price {formatCompactMoneyValue(activeTransferListing.asking_price)} ·{' '}
-            {transferTimeLabel}
-          </div>
+          <div className="mt-1">{transferTimeLabel}</div>
         </div>
       ) : null}
 
@@ -1238,20 +1078,6 @@ export default function ExternalRiderProfilePage({
             className={tabButtonClass('overview')}
           >
             Overview
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab('contract')}
-            className={tabButtonClass('contract')}
-          >
-            Contract
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab('compare')}
-            className={tabButtonClass('compare')}
-          >
-            Compare
           </button>
           <button
             type="button"
@@ -1305,6 +1131,57 @@ export default function ExternalRiderProfilePage({
                     </div>
                   )}
                 </SectionCard>
+
+                <SectionCard title="Market">
+                  {marketLoading ? (
+                    <div className="text-sm text-slate-600">Loading market data…</div>
+                  ) : marketError ? (
+                    <div className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+                      {marketError}
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      <div className="divide-y divide-slate-100">
+                        <DetailRow label="Status" value={marketStatusLabel} />
+                        {activeTransferListing ? (
+                          <DetailRow label="Transfer Window" value={transferTimeLabel} />
+                        ) : null}
+                        {activeFreeAgent ? (
+                          <DetailRow label="Free Agent Window" value={freeAgentTimeLabel} />
+                        ) : null}
+                      </div>
+
+                      <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
+                        {activeFreeAgent
+                          ? 'This rider is unattached and can be approached through the free-agent flow.'
+                          : activeTransferListing
+                            ? 'This rider is publicly listed on the transfer market.'
+                            : marketMode === 'scouting'
+                              ? 'This rider is being viewed as a scouting target.'
+                              : 'This rider is not currently listed on the market.'}
+                      </div>
+
+                      {marketActionButtonLabel ? (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            void handleMarketAction()
+                          }}
+                          disabled={marketActionLoading}
+                          className="w-full rounded-lg bg-yellow-400 px-4 py-3 text-sm font-semibold text-slate-950 transition hover:bg-yellow-500 disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          {marketActionLoading ? 'Working…' : marketActionButtonLabel}
+                        </button>
+                      ) : null}
+
+                      {marketActionMessage ? (
+                        <div className="rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700">
+                          {marketActionMessage}
+                        </div>
+                      ) : null}
+                    </div>
+                  )}
+                </SectionCard>
               </div>
 
               <div className="space-y-4">
@@ -1324,83 +1201,12 @@ export default function ExternalRiderProfilePage({
                       <DetailRow label="Age" value={profileAge ?? '—'} />
                       <DetailRow label="Overall" value={`${selectedRider.overall ?? '—'}%`} />
                       <DetailRow label="Potential" value={potentialUi.label} />
-                    </div>
-
-                    <div className="divide-y divide-slate-100">
-                      <DetailRow
-                        label="Weekly Wage"
-                        value={formatWeeklySalary(selectedRider.salary)}
-                      />
-                      <DetailRow
-                        label="Market Value"
-                        value={formatCompactMoneyValue(selectedRider.market_value)}
-                      />
-                      <DetailRow
-                        label="Asking Price"
-                        value={formatCompactMoneyValue(selectedRider.asking_price)}
-                      />
                       <DetailRow
                         label="Contract End"
                         value={contractExpiryUi.label}
                         valueClassName={contractExpiryUi.valueClassName}
                       />
-                      <DetailRow label="Availability" value={healthUi.label} />
                     </div>
-                  </div>
-                </SectionCard>
-
-                <SectionCard title="Availability & Medical">
-                  <div className="divide-y divide-slate-100">
-                    <DetailRow label="Status" value={healthUi.label} />
-                    <DetailRow label="Fatigue score" value={`${selectedRider.fatigue ?? 0}/100`} />
-                    <DetailRow label="Potential" value={potentialUi.label} />
-                    <DetailRow label="Morale" value={moraleUi.label} />
-                    {selectedRider.unavailable_reason ? (
-                      <DetailRow
-                        label="Reason"
-                        value={formatUnavailableReason(selectedRider.unavailable_reason)}
-                      />
-                    ) : null}
-                    {selectedRider.unavailable_until ? (
-                      <DetailRow
-                        label="Unavailable until"
-                        value={formatShortGameDate(selectedRider.unavailable_until)}
-                      />
-                    ) : null}
-                  </div>
-
-                  <div className="mt-4 rounded-lg bg-slate-50 px-4 py-3 text-sm text-slate-700">
-                    {selectedRider.unavailable_until
-                      ? `Unavailable until ${formatShortGameDate(selectedRider.unavailable_until)}${
-                          selectedRider.unavailable_reason
-                            ? ` because of ${formatUnavailableReason(selectedRider.unavailable_reason).toLowerCase()}`
-                            : ''
-                        }.`
-                      : 'No active public availability restriction is visible for this rider.'}
-                  </div>
-                </SectionCard>
-
-                <SectionCard title="Skill Attributes">
-                  <div className="space-y-3">
-                    {skillRows.map(stat => {
-                      const delta = skillDeltaMap[stat.key]
-
-                      return (
-                        <SimpleAttributeRow
-                          key={stat.key}
-                          attributeCode={stat.key}
-                          label={stat.label}
-                          value={stat.value ?? 0}
-                          deltaLabel={delta?.has_visible_delta ? delta.delta_label : null}
-                          deltaDirection={delta?.has_visible_delta ? delta.delta_direction : null}
-                          sourceLabel={
-                            delta?.has_visible_delta
-                              ? formatSkillDeltaSource(delta.primary_source)
-                              : null
-                          }
-                        />
-                      )
-                    })}
                   </div>
                 </SectionCard>
 
@@ -1436,168 +1242,6 @@ export default function ExternalRiderProfilePage({
                   )}
                 </SectionCard>
               </div>
-            </div>
-          )}
-
-          {activeTab === 'contract' && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_340px]">
-                <SectionCard
-                  title="Contract Details"
-                  subtitle="Public contract and market information for this rider"
-                >
-                  {marketLoading ? (
-                    <div className="text-sm text-slate-600">Loading contract data…</div>
-                  ) : marketError ? (
-                    <div className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
-                      {marketError}
-                    </div>
-                  ) : (
-                    <>
-                      <div className="divide-y divide-slate-100">
-                        <DetailRow label="Market Status" value={marketStatusLabel} />
-                        <DetailRow
-                          label="Weekly Wage"
-                          value={formatWeeklySalary(selectedRider.salary)}
-                        />
-                        <DetailRow
-                          label="Market Value"
-                          value={formatCompactMoneyValue(selectedRider.market_value)}
-                        />
-                        <DetailRow
-                          label="Asking Price"
-                          value={formatCompactMoneyValue(selectedRider.asking_price)}
-                        />
-                        <DetailRow
-                          label="Contract End"
-                          value={contractExpiryUi.label}
-                          valueClassName={contractExpiryUi.valueClassName}
-                        />
-                        <DetailRow label="Transfer Listing" value={transferTimeLabel} />
-                        <DetailRow label="Free Agent Window" value={freeAgentTimeLabel} />
-                      </div>
-
-                      <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2">
-                        <SimpleInfoRow
-                          label="Availability"
-                          value={healthUi.label}
-                          note={
-                            selectedRider.unavailable_until
-                              ? `Until ${formatShortGameDate(selectedRider.unavailable_until)}`
-                              : undefined
-                          }
-                        />
-                        <SimpleInfoRow
-                          label="Morale"
-                          value={moraleUi.label}
-                          note="Visible morale class from rider profile"
-                        />
-                        <SimpleInfoRow
-                          label="Potential"
-                          value={potentialUi.label}
-                          note="Useful for long-term value and development"
-                        />
-                        <SimpleInfoRow
-                          label="Fatigue"
-                          value={fatigueUi.label}
-                          note={selectedRider.fatigue != null ? `${selectedRider.fatigue}/100` : undefined}
-                        />
-                      </div>
-                    </>
-                  )}
-                </SectionCard>
-
-                <SectionCard
-                  title="Market Actions"
-                  subtitle="Actions available when viewing non-owned riders"
-                >
-                  <div className="space-y-3">
-                    {activeFreeAgent && onOpenFreeAgentNegotiation ? (
-                      <button
-                        type="button"
-                        onClick={() =>
-                          onOpenFreeAgentNegotiation({
-                            riderId: selectedRider.id,
-                            riderName,
-                            freeAgentId: activeFreeAgent.id,
-                            expiresOnGameDate: activeFreeAgent.expires_on_game_date,
-                          })
-                        }
-                        className="w-full rounded-lg bg-blue-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-blue-700"
-                      >
-                        Negotiate with Free Agent
-                      </button>
-                    ) : null}
-
-                    {activeTransferListing && onMakeTransferOffer ? (
-                      <button
-                        type="button"
-                        onClick={() =>
-                          onMakeTransferOffer({
-                            riderId: selectedRider.id,
-                            riderName,
-                            listingId: activeTransferListing.id,
-                            sellerClubId: activeTransferListing.seller_club_id,
-                            askingPrice: activeTransferListing.asking_price,
-                          })
-                        }
-                        className="w-full rounded-lg bg-yellow-400 px-4 py-3 text-sm font-semibold text-slate-950 transition hover:bg-yellow-500"
-                      >
-                        Make Transfer Offer
-                      </button>
-                    ) : null}
-
-                    {!activeTransferListing && !activeFreeAgent && onScoutRider ? (
-                      <button
-                        type="button"
-                        onClick={() =>
-                          onScoutRider({
-                            riderId: selectedRider.id,
-                            riderName,
-                          })
-                        }
-                        className="w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-800 transition hover:bg-slate-50"
-                      >
-                        Add to Scout List
-                      </button>
-                    ) : null}
-
-                    {!onMakeTransferOffer &&
-                    !onOpenFreeAgentNegotiation &&
-                    !onScoutRider ? (
-                      <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
-                        This page is ready for public rider actions, but no offer or scouting
-                        callbacks were passed yet.
-                      </div>
-                    ) : null}
-
-                    <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
-                      {activeFreeAgent
-                        ? 'This rider is currently unattached. Use the free-agent flow if you want to approach him.'
-                        : activeTransferListing
-                          ? 'This rider is listed on the market. Offer flow should use the listing id and asking price shown here.'
-                          : 'This rider is not currently listed. Scouting or watchlist actions are the safest default here.'}
-                    </div>
-                  </div>
-                </SectionCard>
-              </div>
-            </div>
-          )}
-
-          {activeTab === 'compare' && (
-            <div className="space-y-4">
-              {!compareClubId ? (
-                <SectionCard
-                  title="Compare"
-                  subtitle="Compare this external rider against riders from your squad"
-                >
-                  <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
-                    Loading compare panel…
-                  </div>
-                </SectionCard>
-              ) : (
-                <RiderComparePanel leftRiderId={resolvedRiderId} clubId={compareClubId} />
-              )}
             </div>
           )}
 

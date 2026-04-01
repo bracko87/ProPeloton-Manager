@@ -741,7 +741,7 @@ export default function TransfersPage() {
   }
 
   function openRiderProfilePage(riderId: string) {
-    navigate(`/dashboard/riders/${riderId}`)
+    navigate(`/dashboard/external-riders/${riderId}`)
   }
 
   function openClubProfilePage(targetClubId: string) {
