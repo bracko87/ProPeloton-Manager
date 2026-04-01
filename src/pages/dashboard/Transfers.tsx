@@ -1425,8 +1425,29 @@ export default function TransfersPage() {
         throw error
       }
 
+      const result = Array.isArray(data) ? data[0] : data
+
       await reloadRiders(clubId)
-      setPageMessage('Transfer offer submitted.')
+
+      const riderName =
+        targetListing.full_name ||
+        targetListing.display_name ||
+        'the rider'
+
+      const sellerName =
+        targetListing.seller_club_name ||
+        clubNameMap[targetListing.seller_club_id] ||
+        'the seller club'
+
+      if (result?.status === 'club_accepted' || result?.status === 'accepted') {
+        setPageMessage(
+          `Your offer of ${formatTransferAmount(offeredPrice)} for ${riderName} was accepted by ${sellerName}. Check your notifications to start contract negotiations.`
+        )
+      } else {
+        setPageMessage(
+          `Your offer of ${formatTransferAmount(offeredPrice)} for ${riderName} was sent to ${sellerName}.`
+        )
+      }
     } catch (err: any) {
       console.error('submit_rider_transfer_offer failed:', err)
 

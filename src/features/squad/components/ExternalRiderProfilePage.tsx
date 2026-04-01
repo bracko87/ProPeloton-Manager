@@ -272,6 +272,39 @@ async function fetchRiderDetailsById(riderId: string): Promise<RiderDetails> {
     }
   }
 
+  if (!rider) {
+    const lookupTables = [
+      'rider_transfer_listings',
+      'rider_free_agents',
+      'rider_transfer_offers',
+      'rider_transfer_negotiations',
+      'rider_free_agent_negotiations',
+    ] as const
+
+    for (const tableName of lookupTables) {
+      const { data: relationRow, error: relationError } = await supabase
+        .from(tableName)
+        .select('rider_id')
+        .eq('id', riderId)
+        .maybeSingle()
+
+      if (relationError) {
+        continue
+      }
+
+      const fallbackRiderId =
+        relationRow && typeof relationRow.rider_id === 'string' ? relationRow.rider_id.trim() : ''
+
+      if (!fallbackRiderId) continue
+
+      const { data: fallbackData, error: fallbackError } = await loadByRiderId(fallbackRiderId)
+      if (fallbackError) throw fallbackError
+      rider = (fallbackData ?? null) as RiderDetails | null
+
+      if (rider) break
+    }
+  }
+
   if (!rider) throw new Error(`Rider not found for id: ${riderId}`)
 
   return {
