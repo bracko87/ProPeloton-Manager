@@ -150,6 +150,16 @@ type TransferNegotiationRow = {
   notes_json: Record<string, unknown> | null
   created_at: string
   updated_at: string
+
+  first_name?: string | null
+  last_name?: string | null
+  full_name?: string | null
+  display_name?: string | null
+  country_code?: string | null
+  role?: string | null
+  overall?: number | null
+  potential?: number | null
+  age_years?: number | null
 }
 
 type TransferHistoryRow = {
@@ -916,9 +926,9 @@ export default function TransfersPage() {
 
       const marketBase = (marketResult.data || []) as any[]
       const offersBase = (offersResult.data || []) as any[]
-      const mySentOffersDashboardRows =
-        (mySentOffersDashboardResult.data || []) as TransferOfferRow[]
-      const negotiations = (sellerNegotiationsResult.data || []) as TransferNegotiationRow[]
+      const mySentOffersDashboardBase =
+        (mySentOffersDashboardResult.data || []) as any[]
+      const sellerNegotiationsBase = (sellerNegotiationsResult.data || []) as any[]
       const historyRows = (transferHistoryResult.data || []) as TransferHistoryRow[]
       const gameStateData = gameStateResult.data as GameStateRow
       const currentGameDate = getCurrentGameDateFromState(gameStateData)
@@ -959,7 +969,8 @@ export default function TransfersPage() {
           [
             ...marketBase.map((row) => row.rider_id),
             ...offersBase.map((row) => row.rider_id),
-            ...negotiations.map((row) => row.rider_id),
+            ...mySentOffersDashboardBase.map((row) => row.rider_id),
+            ...sellerNegotiationsBase.map((row) => row.rider_id),
             ...freeAgentsRows.map((row) => row.rider_id),
             ...freeAgentNegotiationRows.map((row) => row.rider_id),
             ...historyRows.map((row) => row.rider_id),
@@ -1025,6 +1036,56 @@ export default function TransfersPage() {
         .filter((row): row is MarketListingRow => Boolean(row))
 
       const offers: TransferOfferRow[] = offersBase.map((row: any) => {
+        const rider = riderMap[row.rider_id]
+        const fullName = buildPreferredRiderName({
+          firstName: rider?.first_name,
+          lastName: rider?.last_name,
+          fullName: row.full_name,
+          displayName: row.display_name ?? rider?.display_name,
+          fallbackId: row.rider_id,
+        })
+
+        return {
+          ...row,
+          first_name: rider?.first_name ?? null,
+          last_name: rider?.last_name ?? null,
+          full_name: fullName,
+          display_name: fullName,
+          country_code: rider?.country_code ?? null,
+          role: rider?.role ?? null,
+          overall: rider?.overall ?? null,
+          potential: rider?.potential ?? null,
+          age_years: calculateAgeYearsFromGameDate(rider?.birth_date, currentGameDate),
+        }
+      })
+
+      const mySentOffersDashboardRows: TransferOfferRow[] = mySentOffersDashboardBase.map(
+        (row: any) => {
+          const rider = riderMap[row.rider_id]
+          const fullName = buildPreferredRiderName({
+            firstName: rider?.first_name,
+            lastName: rider?.last_name,
+            fullName: row.full_name,
+            displayName: row.display_name ?? rider?.display_name,
+            fallbackId: row.rider_id,
+          })
+
+          return {
+            ...row,
+            first_name: rider?.first_name ?? null,
+            last_name: rider?.last_name ?? null,
+            full_name: fullName,
+            display_name: fullName,
+            country_code: rider?.country_code ?? null,
+            role: rider?.role ?? null,
+            overall: rider?.overall ?? null,
+            potential: rider?.potential ?? null,
+            age_years: calculateAgeYearsFromGameDate(rider?.birth_date, currentGameDate),
+          }
+        }
+      )
+
+      const negotiations: TransferNegotiationRow[] = sellerNegotiationsBase.map((row: any) => {
         const rider = riderMap[row.rider_id]
         const fullName = buildPreferredRiderName({
           firstName: rider?.first_name,

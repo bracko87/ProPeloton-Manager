@@ -114,6 +114,12 @@ function normalizeNullableNumber(value: unknown): number | null {
   return null
 }
 
+function normalizeString(value: unknown): string | null {
+  if (typeof value !== 'string') return null
+  const trimmed = value.trim()
+  return trimmed ? trimmed : null
+}
+
 function firstDefined<T>(...values: Array<T | null | undefined>): T | undefined {
   for (const value of values) {
     if (value !== undefined && value !== null) return value
@@ -170,6 +176,19 @@ function getVisibleOverallValue(value: unknown, isScouted: boolean): string {
 
   const numericValue = normalizeNullableNumber(value)
   return numericValue === null ? '—' : `${numericValue}%`
+}
+
+function getFullRiderName(rider?: Partial<RiderDetails> | null): string {
+  const firstName = normalizeString(rider?.first_name)
+  const lastName = normalizeString(rider?.last_name)
+  const fullName = [firstName, lastName].filter(Boolean).join(' ').trim()
+
+  if (fullName) return fullName
+
+  const displayName = normalizeString(rider?.display_name)
+  if (displayName) return displayName
+
+  return 'Rider'
 }
 
 function CountryFlag({
@@ -295,7 +314,7 @@ async function fetchRiderDetailsById(riderId: string): Promise<RiderDetails> {
   const loadByRiderId = async (id: string) =>
     supabase.from('riders').select(riderSelection).eq('id', id).maybeSingle()
 
-  const lookupTables = [
+  const relationLookupTables = [
     'club_riders',
     'rider_transfer_listings',
     'rider_free_agents',
@@ -311,41 +330,41 @@ async function fetchRiderDetailsById(riderId: string): Promise<RiderDetails> {
       return directRider.id
     }
 
-    const { data: directStatsByRiderId, error: directStatsByRiderIdError } = await supabase
+    const { data: statsByRiderId, error: statsByRiderIdError } = await supabase
       .from('rider_statistics_view')
       .select('rider_id')
       .eq('rider_id', id)
       .maybeSingle()
 
-    if (directStatsByRiderIdError) throw directStatsByRiderIdError
+    if (statsByRiderIdError) throw statsByRiderIdError
 
-    const statsCanonicalId =
-      directStatsByRiderId && typeof directStatsByRiderId.rider_id === 'string'
-        ? directStatsByRiderId.rider_id.trim()
+    const directStatsRiderId =
+      statsByRiderId && typeof statsByRiderId.rider_id === 'string'
+        ? statsByRiderId.rider_id.trim()
         : ''
 
-    if (statsCanonicalId) {
-      return statsCanonicalId
+    if (directStatsRiderId) {
+      return directStatsRiderId
     }
 
-    const { data: statsRowByViewId, error: statsRowByViewIdError } = await supabase
+    const { data: statsByViewRowId, error: statsByViewRowIdError } = await supabase
       .from('rider_statistics_view')
       .select('rider_id')
       .eq('id', id)
       .maybeSingle()
 
-    if (statsRowByViewIdError) throw statsRowByViewIdError
+    if (statsByViewRowIdError) throw statsByViewRowIdError
 
     const statsViewResolvedId =
-      statsRowByViewId && typeof statsRowByViewId.rider_id === 'string'
-        ? statsRowByViewId.rider_id.trim()
+      statsByViewRowId && typeof statsByViewRowId.rider_id === 'string'
+        ? statsByViewRowId.rider_id.trim()
         : ''
 
     if (statsViewResolvedId) {
       return statsViewResolvedId
     }
 
-    for (const tableName of lookupTables) {
+    for (const tableName of relationLookupTables) {
       try {
         const { data: relationRow, error: relationError } = await supabase
           .from(tableName)
@@ -353,18 +372,18 @@ async function fetchRiderDetailsById(riderId: string): Promise<RiderDetails> {
           .eq('id', id)
           .maybeSingle()
 
-        if (relationError) {
-          continue
-        }
+        if (relationError) continue
 
         const resolvedRelationId =
-          relationRow && typeof relationRow.rider_id === 'string' ? relationRow.rider_id.trim() : ''
+          relationRow && typeof relationRow.rider_id === 'string'
+            ? relationRow.rider_id.trim()
+            : ''
 
         if (resolvedRelationId) {
           return resolvedRelationId
         }
       } catch {
-        // try next source
+        // continue to next table
       }
     }
 
@@ -390,7 +409,7 @@ async function fetchRiderDetailsById(riderId: string): Promise<RiderDetails> {
   if (riderError) throw riderError
   if (statsError) throw statsError
 
-  const rider = riderRow as RiderDetails | null
+  const rider = (riderRow ?? null) as RiderDetails | null
   const stats = (statsRow ?? null) as Record<string, any> | null
 
   if (!rider && !stats) {
@@ -399,11 +418,17 @@ async function fetchRiderDetailsById(riderId: string): Promise<RiderDetails> {
 
   return {
     id: canonicalRiderId,
+
+    // Identity / public profile fields should prefer riders table first
     country_code: firstDefined(rider?.country_code, stats?.country_code) ?? null,
     first_name: firstDefined(rider?.first_name, stats?.first_name) ?? null,
     last_name: firstDefined(rider?.last_name, stats?.last_name) ?? null,
     display_name: firstDefined(rider?.display_name, stats?.display_name) ?? null,
     role: firstDefined(rider?.role, stats?.role, '') ?? '',
+    birth_date: firstDefined(rider?.birth_date, stats?.birth_date) ?? null,
+    image_url: firstDefined(rider?.image_url, stats?.image_url) ?? null,
+
+    // Performance fields can use stats view first, then riders fallback
     sprint: normalizeNumber(firstDefined(stats?.sprint, rider?.sprint), 0),
     climbing: normalizeNumber(firstDefined(stats?.climbing, rider?.climbing), 0),
     time_trial: normalizeNumber(firstDefined(stats?.time_trial, rider?.time_trial), 0),
@@ -417,8 +442,7 @@ async function fetchRiderDetailsById(riderId: string): Promise<RiderDetails> {
     potential: normalizeNumber(firstDefined(stats?.potential, rider?.potential), 0),
     fatigue: normalizeNumber(firstDefined(stats?.fatigue, rider?.fatigue), 0),
     overall: normalizeNumber(firstDefined(stats?.overall, rider?.overall), 0),
-    birth_date: firstDefined(rider?.birth_date, stats?.birth_date) ?? null,
-    image_url: firstDefined(rider?.image_url, stats?.image_url) ?? null,
+
     salary: normalizeNumber(firstDefined(rider?.salary, stats?.salary), 0),
     contract_expires_at: firstDefined(rider?.contract_expires_at, stats?.contract_expires_at) ?? null,
     contract_expires_season:
@@ -1080,11 +1104,7 @@ export default function ExternalRiderProfilePage({
         ? 'Scouting Target'
         : 'Not Listed'
 
-  const riderName =
-    selectedRider?.display_name?.trim() ||
-    [selectedRider?.first_name, selectedRider?.last_name].filter(Boolean).join(' ').trim() ||
-    'Rider'
-
+  const riderName = getFullRiderName(selectedRider)
   const visibleOverallValue = getVisibleOverallValue(selectedRider?.overall, isScouted)
 
   const tabButtonClass = (tab: ExternalRiderProfileTab) =>
@@ -1143,6 +1163,11 @@ export default function ExternalRiderProfilePage({
     { label: 'Teamwork', value: selectedRider?.teamwork },
     { label: 'Morale', value: selectedRider?.morale },
   ]
+
+  const skillColumns = useMemo(() => {
+    const midpoint = Math.ceil(skillRows.length / 2)
+    return [skillRows.slice(0, midpoint), skillRows.slice(midpoint)]
+  }, [selectedRider])
 
   async function handleMarketAction() {
     if (!selectedRider || marketActionLoading) return
@@ -1423,9 +1448,7 @@ export default function ExternalRiderProfilePage({
                       <DetailRow label="Role" value={selectedRider.role || '—'} />
                       <DetailRow label="Age" value={profileAge ?? '—'} />
                       <DetailRow label="Overall" value={visibleOverallValue} />
-                      {isScouted ? (
-                        <DetailRow label="Potential" value={potentialUi.label} />
-                      ) : null}
+                      {isScouted ? <DetailRow label="Potential" value={potentialUi.label} /> : null}
                       <DetailRow
                         label="Contract End"
                         value={contractExpiryUi.label}
@@ -1443,16 +1466,16 @@ export default function ExternalRiderProfilePage({
                       : 'Public scouting ranges are shown until the rider is scouted'
                   }
                 >
-                  <div className="grid grid-cols-1 gap-x-6 md:grid-cols-2">
-                    {skillRows.map((item, columnIndex) => (
-                      <div
-                        key={item.label}
-                        className={columnIndex < 2 ? 'divide-y divide-slate-100' : 'divide-y divide-slate-100'}
-                      >
-                        <DetailRow
-                          label={item.label}
-                          value={getVisibleAttributeValue(item.value, isScouted)}
-                        />
+                  <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                    {skillColumns.map((column, columnIndex) => (
+                      <div key={columnIndex} className="divide-y divide-slate-100">
+                        {column.map(item => (
+                          <DetailRow
+                            key={item.label}
+                            label={item.label}
+                            value={getVisibleAttributeValue(item.value, isScouted)}
+                          />
+                        ))}
                       </div>
                     ))}
                   </div>
