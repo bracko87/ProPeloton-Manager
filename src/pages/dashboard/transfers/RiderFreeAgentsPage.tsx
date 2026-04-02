@@ -228,11 +228,15 @@ function MarketListRow({
     <div
       role="button"
       tabIndex={0}
-      onClick={onSelect}
+      onClick={() => {
+        onSelect()
+        onOpenRiderProfile()
+      }}
       onKeyDown={(event) => {
         if (event.key === 'Enter' || event.key === ' ') {
           event.preventDefault()
           onSelect()
+          onOpenRiderProfile()
         }
       }}
       className={`w-full cursor-pointer rounded-xl border p-4 text-left transition ${
@@ -263,6 +267,7 @@ function MarketListRow({
               type="button"
               onClick={(event) => {
                 event.stopPropagation()
+                onSelect()
                 onOpenRiderProfile()
               }}
               className="truncate text-sm font-semibold text-gray-900 hover:underline"

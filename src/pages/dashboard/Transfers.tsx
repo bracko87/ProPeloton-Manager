@@ -276,6 +276,7 @@ type FreeAgentMarketItem = Extract<UnifiedMarketRow, { kind: 'free_agent' }>
 
 const CANDIDATES_PER_PAGE = 10
 const RIDERS_PER_PAGE = 30
+const ACTIVE_OUTGOING_OFFER_STATUSES = new Set(['open', 'club_accepted', 'accepted'])
 
 function formatCurrency(value: number | null | undefined) {
   if (value == null || Number.isNaN(value)) return '—'
@@ -299,6 +300,14 @@ function parseCurrencyInput(value: string) {
   if (!digits) return null
   const parsed = Number(digits)
   return Number.isFinite(parsed) ? parsed : null
+}
+
+function normalizeOfferStatus(status: unknown) {
+  return String(status || '').trim().toLowerCase()
+}
+
+function isActiveOutgoingOfferStatus(status: unknown) {
+  return ACTIVE_OUTGOING_OFFER_STATUSES.has(normalizeOfferStatus(status))
 }
 
 function getErrorMessage(err: any) {
@@ -637,6 +646,7 @@ export default function TransfersPage() {
   const [marketListings, setMarketListings] = useState<MarketListingRow[]>([])
   const [transferOffers, setTransferOffers] = useState<TransferOfferRow[]>([])
   const [mySentOffersDashboard, setMySentOffersDashboard] = useState<TransferOfferRow[]>([])
+  const [myOutgoingOffers, setMyOutgoingOffers] = useState<TransferOfferRow[]>([])
   const [transferNegotiations, setTransferNegotiations] = useState<TransferNegotiationRow[]>([])
   const [transferHistory, setTransferHistory] = useState<TransferHistoryRow[]>([])
   const [freeAgents, setFreeAgents] = useState<FreeAgentMarketRow[]>([])
@@ -650,6 +660,7 @@ export default function TransfersPage() {
 
   const [offerModalListing, setOfferModalListing] = useState<MarketListingRow | null>(null)
   const [offerDraftPrice, setOfferDraftPrice] = useState('')
+  const [offerModalMessage, setOfferModalMessage] = useState<string | null>(null)
 
   const [riderActionLoading, setRiderActionLoading] = useState(false)
 
@@ -772,8 +783,10 @@ export default function TransfersPage() {
     return result
   }
 
-  function openRiderProfilePage(riderId: string) {
-    navigate(`/dashboard/external-riders/${riderId}`)
+  function openRiderProfilePage(riderId: string, isOwnedByUser = false) {
+    navigate(
+      isOwnedByUser ? `/dashboard/my-riders/${riderId}` : `/dashboard/external-riders/${riderId}`
+    )
   }
 
   function openClubProfilePage(targetClubId: string) {
@@ -782,12 +795,14 @@ export default function TransfersPage() {
 
   function openOfferModal(listing: MarketListingRow) {
     const resolvedListingId = listing.listing_id || listing.id || ''
+
     setSelectedMarketListingId(resolvedListingId)
     setOfferDraftPrice(formatTransferAmount(listing.asking_price))
     setOfferModalListing({
       ...listing,
       listing_id: resolvedListingId,
     })
+    setOfferModalMessage(null)
     setPageMessage(null)
   }
 
@@ -799,6 +814,7 @@ export default function TransfersPage() {
         marketResult,
         offersResult,
         mySentOffersDashboardResult,
+        myOutgoingOffersResult,
         sellerNegotiationsResult,
         freeAgentsResult,
         freeAgentNegotiationsResult,
@@ -829,6 +845,25 @@ export default function TransfersPage() {
           .eq('seller_club_id', clubIdValue)
           .order('created_at', { ascending: false }),
         supabase.rpc('get_my_sent_transfer_offers_dashboard', {}),
+        supabase
+          .from('rider_transfer_offers')
+          .select(`
+            id,
+            listing_id,
+            rider_id,
+            seller_club_id,
+            buyer_club_id,
+            offered_price,
+            offered_on_game_date,
+            expires_on_game_date,
+            status,
+            auto_block_reason,
+            metadata,
+            created_at,
+            updated_at
+          `)
+          .eq('buyer_club_id', clubIdValue)
+          .order('created_at', { ascending: false }),
         supabase
           .from('rider_transfer_negotiations')
           .select(`
@@ -918,6 +953,7 @@ export default function TransfersPage() {
       if (marketResult.error) throw marketResult.error
       if (offersResult.error) throw offersResult.error
       if (mySentOffersDashboardResult.error) throw mySentOffersDashboardResult.error
+      if (myOutgoingOffersResult.error) throw myOutgoingOffersResult.error
       if (sellerNegotiationsResult.error) throw sellerNegotiationsResult.error
       if (freeAgentsResult.error) throw freeAgentsResult.error
       if (freeAgentNegotiationsResult.error) throw freeAgentNegotiationsResult.error
@@ -926,8 +962,8 @@ export default function TransfersPage() {
 
       const marketBase = (marketResult.data || []) as any[]
       const offersBase = (offersResult.data || []) as any[]
-      const mySentOffersDashboardBase =
-        (mySentOffersDashboardResult.data || []) as any[]
+      const mySentOffersDashboardBase = (mySentOffersDashboardResult.data || []) as any[]
+      const myOutgoingOffersBase = (myOutgoingOffersResult.data || []) as any[]
       const sellerNegotiationsBase = (sellerNegotiationsResult.data || []) as any[]
       const historyRows = (transferHistoryResult.data || []) as TransferHistoryRow[]
       const gameStateData = gameStateResult.data as GameStateRow
@@ -970,6 +1006,7 @@ export default function TransfersPage() {
             ...marketBase.map((row) => row.rider_id),
             ...offersBase.map((row) => row.rider_id),
             ...mySentOffersDashboardBase.map((row) => row.rider_id),
+            ...myOutgoingOffersBase.map((row) => row.rider_id),
             ...sellerNegotiationsBase.map((row) => row.rider_id),
             ...freeAgentsRows.map((row) => row.rider_id),
             ...freeAgentNegotiationRows.map((row) => row.rider_id),
@@ -1013,9 +1050,7 @@ export default function TransfersPage() {
           })
 
           const resolvedListingId = row.listing_id ?? row.id ?? null
-          if (!resolvedListingId) {
-            return null
-          }
+          if (!resolvedListingId) return null
 
           return {
             ...row,
@@ -1035,32 +1070,8 @@ export default function TransfersPage() {
         })
         .filter((row): row is MarketListingRow => Boolean(row))
 
-      const offers: TransferOfferRow[] = offersBase.map((row: any) => {
-        const rider = riderMap[row.rider_id]
-        const fullName = buildPreferredRiderName({
-          firstName: rider?.first_name,
-          lastName: rider?.last_name,
-          fullName: row.full_name,
-          displayName: row.display_name ?? rider?.display_name,
-          fallbackId: row.rider_id,
-        })
-
-        return {
-          ...row,
-          first_name: rider?.first_name ?? null,
-          last_name: rider?.last_name ?? null,
-          full_name: fullName,
-          display_name: fullName,
-          country_code: rider?.country_code ?? null,
-          role: rider?.role ?? null,
-          overall: rider?.overall ?? null,
-          potential: rider?.potential ?? null,
-          age_years: calculateAgeYearsFromGameDate(rider?.birth_date, currentGameDate),
-        }
-      })
-
-      const mySentOffersDashboardRows: TransferOfferRow[] = mySentOffersDashboardBase.map(
-        (row: any) => {
+      const mapOfferRows = (rows: any[]): TransferOfferRow[] =>
+        rows.map((row: any) => {
           const rider = riderMap[row.rider_id]
           const fullName = buildPreferredRiderName({
             firstName: rider?.first_name,
@@ -1082,8 +1093,11 @@ export default function TransfersPage() {
             potential: rider?.potential ?? null,
             age_years: calculateAgeYearsFromGameDate(rider?.birth_date, currentGameDate),
           }
-        }
-      )
+        })
+
+      const offers: TransferOfferRow[] = mapOfferRows(offersBase)
+      const mySentOffersDashboardRows: TransferOfferRow[] = mapOfferRows(mySentOffersDashboardBase)
+      const myOutgoingOffersRows: TransferOfferRow[] = mapOfferRows(myOutgoingOffersBase)
 
       const negotiations: TransferNegotiationRow[] = sellerNegotiationsBase.map((row: any) => {
         const rider = riderMap[row.rider_id]
@@ -1113,6 +1127,7 @@ export default function TransfersPage() {
         clubIdValue,
         ...market.map((row) => row.seller_club_id),
         ...offers.flatMap((row) => [row.seller_club_id, row.buyer_club_id]),
+        ...myOutgoingOffersRows.flatMap((row) => [row.seller_club_id, row.buyer_club_id]),
         ...negotiations.flatMap((row) => [row.seller_club_id, row.buyer_club_id]),
         ...freeAgentNegotiationRows.map((row) => row.club_id),
         ...historyRows.flatMap((row) => [row.from_club_id, row.to_club_id]),
@@ -1125,6 +1140,7 @@ export default function TransfersPage() {
       setMarketListings(market)
       setTransferOffers(offers)
       setMySentOffersDashboard(mySentOffersDashboardRows)
+      setMyOutgoingOffers(myOutgoingOffersRows)
       setTransferNegotiations(negotiations)
       setTransferHistory(historyRows)
       setFreeAgents(freeAgentsRows)
@@ -1252,16 +1268,14 @@ export default function TransfersPage() {
   const activeTransferListingIds = useMemo(() => {
     const ids = new Set<string>()
 
-    for (const offer of mySentOffersDashboard) {
-      const normalizedStatus = String(offer.status || '').toLowerCase()
-
-      if (['open', 'club_accepted', 'accepted'].includes(normalizedStatus)) {
+    for (const offer of myOutgoingOffers) {
+      if (isActiveOutgoingOfferStatus(offer.status)) {
         ids.add(offer.listing_id)
       }
     }
 
     return ids
-  }, [mySentOffersDashboard])
+  }, [myOutgoingOffers])
 
   const activeFreeAgentIds = useMemo(() => {
     const ids = new Set<string>()
@@ -1499,14 +1513,21 @@ export default function TransfersPage() {
   ): Promise<boolean> {
     if (!clubId) return false
 
+    const riderName = targetListing.full_name || targetListing.display_name || 'the rider'
+    const sellerName =
+      targetListing.seller_club_name ||
+      clubNameMap[targetListing.seller_club_id] ||
+      'the seller club'
+
     try {
       setRiderActionLoading(true)
       setPageMessage(null)
+      setOfferModalMessage(null)
 
-      const candidateListingId = targetListing.listing_id || targetListing.id || ''
+      const listingId = targetListing.listing_id || targetListing.id || ''
       const offeredPrice = explicitPrice ?? targetListing.asking_price
 
-      if (!candidateListingId) {
+      if (!listingId) {
         throw new Error('Transfer listing id is missing.')
       }
 
@@ -1514,52 +1535,16 @@ export default function TransfersPage() {
         throw new Error('Please enter a valid offer amount.')
       }
 
-      let listingId = candidateListingId
+      const existingActiveOffer = myOutgoingOffers.find(
+        (offer) => offer.listing_id === listingId && isActiveOutgoingOfferStatus(offer.status)
+      )
 
-      const { data: listingById, error: listingByIdError } = await supabase
-        .from('rider_transfer_listings')
-        .select('id')
-        .eq('id', candidateListingId)
-        .in('status', ['open', 'pending'])
-        .limit(1)
-        .maybeSingle()
-
-      if (listingByIdError) {
-        console.warn('Failed to validate transfer listing id before submit.', {
-          candidateListingId,
-          listingByIdError,
-        })
+      if (existingActiveOffer) {
+        const duplicateMessage = `You already have an active offer for ${riderName}.`
+        setPageMessage(duplicateMessage)
+        setOfferModalMessage(duplicateMessage)
+        return false
       }
-
-      if (!listingById?.id && targetListing.rider_id) {
-        const { data: listingByRider, error: listingByRiderError } = await supabase
-          .from('rider_transfer_listings')
-          .select('id')
-          .eq('rider_id', targetListing.rider_id)
-          .in('status', ['open', 'pending'])
-          .order('listed_on_game_date', { ascending: false })
-          .limit(1)
-          .maybeSingle()
-
-        if (listingByRiderError) {
-          console.warn('Failed to resolve transfer listing id by rider before submit.', {
-            riderId: targetListing.rider_id,
-            listingByRiderError,
-          })
-        }
-
-        if (listingByRider?.id) {
-          listingId = listingByRider.id
-        }
-      }
-
-      console.error('submit_rider_transfer_offer payload', {
-        candidateListingId,
-        resolvedListingId: listingId,
-        buyerClubId: clubId,
-        offeredPrice,
-        targetListing,
-      })
 
       const { data, error } = await supabase.rpc('submit_rider_transfer_offer', {
         p_listing_id: listingId,
@@ -1573,8 +1558,7 @@ export default function TransfersPage() {
           details: error.details,
           hint: error.hint,
           code: error.code,
-          candidateListingId,
-          resolvedListingId: listingId,
+          listingId,
           buyerClubId: clubId,
           offeredPrice,
           responseData: data,
@@ -1586,26 +1570,31 @@ export default function TransfersPage() {
 
       await reloadRiders(clubId)
 
-      const riderName = targetListing.full_name || targetListing.display_name || 'the rider'
-      const sellerName =
-        targetListing.seller_club_name ||
-        clubNameMap[targetListing.seller_club_id] ||
-        'the seller club'
-
       if (result?.status === 'club_accepted' || result?.status === 'accepted') {
-        setPageMessage(
-          `Your offer of ${formatTransferAmount(offeredPrice)} for ${riderName} was accepted by ${sellerName}. Check your notifications to start contract negotiations.`
-        )
+        const successMessage = `Your offer of ${formatTransferAmount(
+          offeredPrice
+        )} for ${riderName} was accepted by ${sellerName}. Check your notifications to start contract negotiations.`
+        setPageMessage(successMessage)
       } else {
-        setPageMessage(
-          `Your offer of ${formatTransferAmount(offeredPrice)} for ${riderName} was sent to ${sellerName}.`
-        )
+        const successMessage = `Your offer of ${formatTransferAmount(
+          offeredPrice
+        )} for ${riderName} was sent to ${sellerName}.`
+        setPageMessage(successMessage)
       }
 
+      setOfferModalMessage(null)
       return true
     } catch (err: any) {
       console.error('submit_rider_transfer_offer failed:', err)
-      setPageMessage(getErrorMessage(err) || 'Failed to submit transfer offer.')
+
+      const rawMessage = getErrorMessage(err)
+      const normalizedMessage =
+        rawMessage.includes('An open offer from this club already exists for this listing')
+          ? `You already have an active offer for ${riderName}.`
+          : rawMessage || 'Failed to submit transfer offer.'
+
+      setPageMessage(normalizedMessage)
+      setOfferModalMessage(normalizedMessage)
       return false
     } finally {
       setRiderActionLoading(false)
@@ -1850,7 +1839,7 @@ export default function TransfersPage() {
             selectedMarketListingId={selectedMarketListingId}
             onSelectMarketItem={(item) => {
               setSelectedMarketListingId(item.listing_id)
-              openRiderProfilePage(item.rider_id)
+              openRiderProfilePage(item.rider_id, item.is_own_item)
             }}
             onQuickActionMarketItem={(item) => {
               if (item.is_own_item || item.is_user_active) return
@@ -1878,8 +1867,8 @@ export default function TransfersPage() {
             onOpenTeamPage={(targetClubId) => {
               openClubProfilePage(targetClubId)
             }}
-            onOpenRiderProfile={(riderId) => {
-              openRiderProfilePage(riderId)
+            onOpenRiderProfile={(riderId, isOwnedByUser) => {
+              openRiderProfilePage(riderId, isOwnedByUser)
             }}
             mySentOffers={mySentOffersDashboard}
             mySellerNegotiations={mySellerNegotiations}
@@ -1975,6 +1964,12 @@ export default function TransfersPage() {
               </div>
             </div>
 
+            {offerModalMessage ? (
+              <div className="mt-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                {offerModalMessage}
+              </div>
+            ) : null}
+
             <div className="mt-4">
               <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-gray-500">
                 Your Offer
@@ -1995,6 +1990,7 @@ export default function TransfersPage() {
                 onClick={() => {
                   setOfferModalListing(null)
                   setOfferDraftPrice('')
+                  setOfferModalMessage(null)
                 }}
                 className="rounded-md border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
               >
@@ -2009,7 +2005,9 @@ export default function TransfersPage() {
 
                   const parsed = parseCurrencyInput(offerDraftPrice)
                   if (!parsed) {
-                    setPageMessage('Please enter a valid offer amount.')
+                    const msg = 'Please enter a valid offer amount.'
+                    setOfferModalMessage(msg)
+                    setPageMessage(msg)
                     return
                   }
 
@@ -2018,6 +2016,7 @@ export default function TransfersPage() {
                   if (ok) {
                     setOfferModalListing(null)
                     setOfferDraftPrice('')
+                    setOfferModalMessage(null)
                   }
                 }}
                 className={`rounded-md px-4 py-2 text-sm font-medium ${

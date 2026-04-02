@@ -126,6 +126,7 @@ type TransferActivityItem = {
   actionLabel?: string
   actionDisabled?: boolean
   clubIdToOpen?: string | null
+  riderIsOwnedByUser?: boolean
   sortTime: number
 }
 
@@ -301,6 +302,24 @@ function InfoPair({
   )
 }
 
+function InlineTextButton({
+  label,
+  onClick,
+}: {
+  label: string
+  onClick: () => void
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="truncate text-left font-medium text-black no-underline hover:text-gray-700"
+    >
+      {label}
+    </button>
+  )
+}
+
 function MarketActionButton({
   label,
   onClick,
@@ -464,7 +483,7 @@ type RiderTransferListPageProps = {
   onAcceptOffer: (offerId: string) => void
   onWithdrawSentOffer: (offerId: string) => void
   onOpenTeamPage: (clubId: string) => void
-  onOpenRiderProfile: (riderId: string) => void
+  onOpenRiderProfile: (riderId: string, isOwnedByUser?: boolean) => void
 
   mySentOffers: TransferOfferRow[]
   mySellerNegotiations: TransferNegotiationRow[]
@@ -563,6 +582,7 @@ export default function RiderTransferListPage(props: RiderTransferListPageProps)
         tone,
         riderId: offer.rider_id,
         riderName,
+        riderIsOwnedByUser: false,
         statusLabel,
         primaryLine: `Incoming transfer • ${riderName}`,
         secondaryLine,
@@ -583,6 +603,7 @@ export default function RiderTransferListPage(props: RiderTransferListPageProps)
         tone: 'positive',
         riderId: historyRow.rider_id,
         riderName: safeText(historyRow.rider_name, 'Unknown rider'),
+        riderIsOwnedByUser: false,
         statusLabel: 'Completed',
         primaryLine: `Incoming transfer • ${safeText(historyRow.rider_name, 'Unknown rider')}`,
         secondaryLine: `Arrived from ${safeText(historyRow.from_club_name, 'Unknown club')} • Fee: ${formatMoney(historyRow.amount)}`,
@@ -640,6 +661,7 @@ export default function RiderTransferListPage(props: RiderTransferListPageProps)
         tone,
         riderId: offer.rider_id,
         riderName,
+        riderIsOwnedByUser: true,
         statusLabel,
         primaryLine: `Outgoing transfer • ${riderName}`,
         secondaryLine,
@@ -693,6 +715,7 @@ export default function RiderTransferListPage(props: RiderTransferListPageProps)
         tone,
         riderId: negotiation.rider_id,
         riderName,
+        riderIsOwnedByUser: true,
         statusLabel,
         primaryLine: `Outgoing transfer • ${riderName}`,
         secondaryLine,
@@ -715,6 +738,7 @@ export default function RiderTransferListPage(props: RiderTransferListPageProps)
         tone: 'positive',
         riderId: historyRow.rider_id,
         riderName: safeText(historyRow.rider_name, 'Unknown rider'),
+        riderIsOwnedByUser: true,
         statusLabel: 'Completed',
         primaryLine: `Outgoing transfer • ${safeText(historyRow.rider_name, 'Unknown rider')}`,
         secondaryLine: `Transferred to ${safeText(historyRow.to_club_name, 'Unknown club')} • Fee: ${formatMoney(historyRow.amount)}`,
@@ -923,7 +947,19 @@ export default function RiderTransferListPage(props: RiderTransferListPageProps)
                 <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="text-base font-semibold text-gray-900">{item.riderName}</span>
+                      {item.riderId ? (
+                        <InlineTextButton
+                          label={item.riderName}
+                          onClick={() =>
+                            onOpenRiderProfile(item.riderId!, item.riderIsOwnedByUser)
+                          }
+                        />
+                      ) : (
+                        <span className="text-base font-semibold text-gray-900">
+                          {item.riderName}
+                        </span>
+                      )}
+
                       <span className="rounded-full bg-white/80 px-2 py-0.5 text-xs font-medium text-gray-700">
                         {item.statusLabel}
                       </span>
@@ -943,7 +979,9 @@ export default function RiderTransferListPage(props: RiderTransferListPageProps)
                       {item.riderId ? (
                         <button
                           type="button"
-                          onClick={() => onOpenRiderProfile(item.riderId!)}
+                          onClick={() =>
+                            onOpenRiderProfile(item.riderId!, item.riderIsOwnedByUser)
+                          }
                           className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50"
                         >
                           Open rider
@@ -997,7 +1035,8 @@ export default function RiderTransferListPage(props: RiderTransferListPageProps)
           </p>
 
           <p>
-            If your offer is <span className="font-semibold text-gray-900">equal to or above the asking price</span>,
+            If your offer is{' '}
+            <span className="font-semibold text-gray-900">equal to or above the asking price</span>,
             club terms are accepted automatically.
           </p>
 
