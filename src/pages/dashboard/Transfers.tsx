@@ -1503,10 +1503,10 @@ export default function TransfersPage() {
       setRiderActionLoading(true)
       setPageMessage(null)
 
-      const listingId = targetListing.listing_id || targetListing.id || ''
+      const candidateListingId = targetListing.listing_id || targetListing.id || ''
       const offeredPrice = explicitPrice ?? targetListing.asking_price
 
-      if (!listingId) {
+      if (!candidateListingId) {
         throw new Error('Transfer listing id is missing.')
       }
 
@@ -1514,8 +1514,48 @@ export default function TransfersPage() {
         throw new Error('Please enter a valid offer amount.')
       }
 
+      let listingId = candidateListingId
+
+      const { data: listingById, error: listingByIdError } = await supabase
+        .from('rider_transfer_listings')
+        .select('id')
+        .eq('id', candidateListingId)
+        .in('status', ['open', 'pending'])
+        .limit(1)
+        .maybeSingle()
+
+      if (listingByIdError) {
+        console.warn('Failed to validate transfer listing id before submit.', {
+          candidateListingId,
+          listingByIdError,
+        })
+      }
+
+      if (!listingById?.id && targetListing.rider_id) {
+        const { data: listingByRider, error: listingByRiderError } = await supabase
+          .from('rider_transfer_listings')
+          .select('id')
+          .eq('rider_id', targetListing.rider_id)
+          .in('status', ['open', 'pending'])
+          .order('listed_on_game_date', { ascending: false })
+          .limit(1)
+          .maybeSingle()
+
+        if (listingByRiderError) {
+          console.warn('Failed to resolve transfer listing id by rider before submit.', {
+            riderId: targetListing.rider_id,
+            listingByRiderError,
+          })
+        }
+
+        if (listingByRider?.id) {
+          listingId = listingByRider.id
+        }
+      }
+
       console.error('submit_rider_transfer_offer payload', {
-        listingId,
+        candidateListingId,
+        resolvedListingId: listingId,
         buyerClubId: clubId,
         offeredPrice,
         targetListing,
@@ -1533,7 +1573,8 @@ export default function TransfersPage() {
           details: error.details,
           hint: error.hint,
           code: error.code,
-          listingId,
+          candidateListingId,
+          resolvedListingId: listingId,
           buyerClubId: clubId,
           offeredPrice,
           responseData: data,
