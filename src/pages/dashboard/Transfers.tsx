@@ -789,6 +789,37 @@ export default function TransfersPage() {
     )
   }
 
+  async function openFreeAgentRiderProfile(item: { rider_id: string; free_agent_id?: string }) {
+    const rawRiderId = item.rider_id?.trim()
+    if (!rawRiderId) return
+
+    const { data: maybeFreeAgentByRiderId } = await supabase
+      .from('rider_free_agents')
+      .select('id, rider_id')
+      .eq('id', rawRiderId)
+      .maybeSingle()
+
+    if (maybeFreeAgentByRiderId?.rider_id) {
+      openRiderProfilePage(String(maybeFreeAgentByRiderId.rider_id), false)
+      return
+    }
+
+    if (item.free_agent_id) {
+      const { data: freeAgentById } = await supabase
+        .from('rider_free_agents')
+        .select('rider_id')
+        .eq('id', item.free_agent_id)
+        .maybeSingle()
+
+      if (freeAgentById?.rider_id) {
+        openRiderProfilePage(String(freeAgentById.rider_id), false)
+        return
+      }
+    }
+
+    openRiderProfilePage(rawRiderId, false)
+  }
+
   function openClubProfilePage(targetClubId: string) {
     navigate(`/dashboard/clubs/${targetClubId}`)
   }
@@ -995,6 +1026,27 @@ export default function TransfersPage() {
           }
         }
       )
+
+      const freeAgentIds = freeAgentsRows.map((row) => row.free_agent_id).filter(Boolean)
+      if (freeAgentIds.length > 0) {
+        const { data: freeAgentIdentityRows, error: freeAgentIdentityError } = await supabase
+          .from('rider_free_agents')
+          .select('id, rider_id')
+          .in('id', freeAgentIds)
+
+        if (!freeAgentIdentityError && freeAgentIdentityRows) {
+          const riderIdByFreeAgentId = new Map(
+            freeAgentIdentityRows.map((row: any) => [row.id, row.rider_id])
+          )
+
+          for (const row of freeAgentsRows) {
+            const canonicalRiderId = riderIdByFreeAgentId.get(row.free_agent_id)
+            if (typeof canonicalRiderId === 'string' && canonicalRiderId.trim() !== '') {
+              row.rider_id = canonicalRiderId
+            }
+          }
+        }
+      }
 
       const freeAgentNegotiationRows = ((freeAgentNegotiationsResult.data || []) as any[]).map(
         (row) => normalizeFreeAgentNegotiationRow(row, currentGameDate)
@@ -1897,7 +1949,7 @@ export default function TransfersPage() {
               void handleStartFreeAgentNegotiation(item.raw)
             }}
             onOpenRiderProfile={(item) => {
-              openRiderProfilePage(item.rider_id)
+              void openFreeAgentRiderProfile(item)
             }}
             marketPageStart={marketPageStart}
             marketPageEnd={marketPageEnd}
