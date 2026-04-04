@@ -266,6 +266,32 @@ async function fetchRiderDetailsById(riderId: string): Promise<RiderDetails> {
     throw new Error(`Rider not found for id: ${riderId}`)
   }
 
+  let resolvedLookupId = lookupId
+  let freeAgentSnapshot: Record<string, any> | null = null
+
+  const { data: freeAgentViewRow, error: freeAgentViewError } = await supabase
+    .from('free_agent_market_view')
+    .select('*')
+    .eq('free_agent_id', lookupId)
+    .maybeSingle()
+
+  if (!freeAgentViewError && freeAgentViewRow) {
+    freeAgentSnapshot = freeAgentViewRow as Record<string, any>
+    if (freeAgentViewRow.rider_id) {
+      resolvedLookupId = String(freeAgentViewRow.rider_id).trim()
+    }
+  } else {
+    const { data: freeAgentByRiderId, error: freeAgentByRiderIdError } = await supabase
+      .from('free_agent_market_view')
+      .select('*')
+      .eq('rider_id', lookupId)
+      .maybeSingle()
+
+    if (!freeAgentByRiderIdError && freeAgentByRiderId) {
+      freeAgentSnapshot = freeAgentByRiderId as Record<string, any>
+    }
+  }
+
   const riderSelection = `
     id,
     country_code,
@@ -354,7 +380,7 @@ async function fetchRiderDetailsById(riderId: string): Promise<RiderDetails> {
     riderRow?: Record<string, any> | null
   ): RiderDetails =>
     ({
-      id: normalizeString(riderRow?.id) ?? normalizeString(statsRow.rider_id) ?? lookupId,
+      id: normalizeString(riderRow?.id) ?? normalizeString(statsRow.rider_id) ?? resolvedLookupId,
 
       country_code:
         normalizeString(firstDefined(riderRow?.country_code, statsRow.country_code)) ?? null,
@@ -418,14 +444,14 @@ async function fetchRiderDetailsById(riderId: string): Promise<RiderDetails> {
       if (resolvedStatsId) return resolvedStatsId
     }
 
-    const { data: freeAgentViewRow, error: freeAgentViewError } = await supabase
+    const { data: freeAgentViewRowById, error: freeAgentViewErrorById } = await supabase
       .from('free_agent_market_view')
       .select('rider_id')
       .eq('free_agent_id', value)
       .maybeSingle()
 
-    if (!freeAgentViewError && freeAgentViewRow?.rider_id) {
-      const resolvedId = String(freeAgentViewRow.rider_id).trim()
+    if (!freeAgentViewErrorById && freeAgentViewRowById?.rider_id) {
+      const resolvedId = String(freeAgentViewRowById.rider_id).trim()
       if (resolvedId) return resolvedId
     }
 
@@ -447,7 +473,48 @@ async function fetchRiderDetailsById(riderId: string): Promise<RiderDetails> {
     return null
   }
 
-  const canonicalRiderId = await resolveCanonicalRiderId(lookupId)
+  const canonicalRiderId = await resolveCanonicalRiderId(resolvedLookupId)
+
+  if (!canonicalRiderId && freeAgentSnapshot) {
+    return {
+      id: resolvedLookupId,
+      country_code: freeAgentSnapshot.country_code ?? null,
+      first_name: freeAgentSnapshot.first_name ?? null,
+      last_name: freeAgentSnapshot.last_name ?? null,
+      display_name: freeAgentSnapshot.display_name ?? null,
+      role: freeAgentSnapshot.role ?? '',
+      sprint: normalizeNumber(freeAgentSnapshot.sprint, 0),
+      climbing: normalizeNumber(freeAgentSnapshot.climbing, 0),
+      time_trial: normalizeNumber(freeAgentSnapshot.time_trial, 0),
+      endurance: normalizeNumber(freeAgentSnapshot.endurance, 0),
+      flat: normalizeNumber(freeAgentSnapshot.flat, 0),
+      recovery: normalizeNumber(freeAgentSnapshot.recovery, 0),
+      resistance: normalizeNumber(freeAgentSnapshot.resistance, 0),
+      race_iq: normalizeNumber(freeAgentSnapshot.race_iq, 0),
+      teamwork: normalizeNumber(freeAgentSnapshot.teamwork, 0),
+      morale: normalizeNumber(freeAgentSnapshot.morale, 0),
+      potential: normalizeNumber(freeAgentSnapshot.potential, 0),
+      fatigue: normalizeNumber(freeAgentSnapshot.fatigue, 0),
+      overall: normalizeNumber(freeAgentSnapshot.overall, 0),
+      birth_date: freeAgentSnapshot.birth_date ?? null,
+      image_url: freeAgentSnapshot.image_url ?? null,
+      salary: normalizeNumber(freeAgentSnapshot.expected_salary_weekly, 0),
+      contract_expires_at: null,
+      contract_expires_season: null,
+      market_value: normalizeNumber(freeAgentSnapshot.market_value, 0),
+      asking_price: normalizeNumber(freeAgentSnapshot.asking_price, 0),
+      asking_price_manual: null,
+      availability_status: getDefaultRiderAvailabilityStatus(),
+      unavailable_until: null,
+      unavailable_reason: null,
+      age_years:
+        typeof freeAgentSnapshot.age_years === 'number'
+          ? freeAgentSnapshot.age_years
+          : typeof freeAgentSnapshot.birth_date === 'string'
+            ? null
+            : null,
+    } as RiderDetails
+  }
 
   if (!canonicalRiderId) {
     throw new Error(`Rider not found for id: ${riderId}`)
@@ -461,18 +528,56 @@ async function fetchRiderDetailsById(riderId: string): Promise<RiderDetails> {
   if (riderResult.error) throw riderResult.error
   if (statsResult.error) throw statsResult.error
 
+  const rider = (riderResult.data ?? null) as Record<string, any> | null
+
   if (statsResult.data) {
-    return buildFromStatsRow(
-      statsResult.data as Record<string, any>,
-      (riderResult.data ?? null) as Record<string, any> | null
-    )
+    return buildFromStatsRow(statsResult.data as Record<string, any>, rider)
   }
 
-  if (riderResult.data) {
-    return buildFromRiderRow(riderResult.data as Record<string, any>, canonicalRiderId)
+  if (!rider && freeAgentSnapshot) {
+    return {
+      id: resolvedLookupId,
+      country_code: freeAgentSnapshot.country_code ?? null,
+      first_name: freeAgentSnapshot.first_name ?? null,
+      last_name: freeAgentSnapshot.last_name ?? null,
+      display_name: freeAgentSnapshot.display_name ?? null,
+      role: freeAgentSnapshot.role ?? '',
+      sprint: normalizeNumber(freeAgentSnapshot.sprint, 0),
+      climbing: normalizeNumber(freeAgentSnapshot.climbing, 0),
+      time_trial: normalizeNumber(freeAgentSnapshot.time_trial, 0),
+      endurance: normalizeNumber(freeAgentSnapshot.endurance, 0),
+      flat: normalizeNumber(freeAgentSnapshot.flat, 0),
+      recovery: normalizeNumber(freeAgentSnapshot.recovery, 0),
+      resistance: normalizeNumber(freeAgentSnapshot.resistance, 0),
+      race_iq: normalizeNumber(freeAgentSnapshot.race_iq, 0),
+      teamwork: normalizeNumber(freeAgentSnapshot.teamwork, 0),
+      morale: normalizeNumber(freeAgentSnapshot.morale, 0),
+      potential: normalizeNumber(freeAgentSnapshot.potential, 0),
+      fatigue: normalizeNumber(freeAgentSnapshot.fatigue, 0),
+      overall: normalizeNumber(freeAgentSnapshot.overall, 0),
+      birth_date: freeAgentSnapshot.birth_date ?? null,
+      image_url: freeAgentSnapshot.image_url ?? null,
+      salary: normalizeNumber(freeAgentSnapshot.expected_salary_weekly, 0),
+      contract_expires_at: null,
+      contract_expires_season: null,
+      market_value: normalizeNumber(freeAgentSnapshot.market_value, 0),
+      asking_price: normalizeNumber(freeAgentSnapshot.asking_price, 0),
+      asking_price_manual: null,
+      availability_status: getDefaultRiderAvailabilityStatus(),
+      unavailable_until: null,
+      unavailable_reason: null,
+      age_years:
+        typeof freeAgentSnapshot.age_years === 'number'
+          ? freeAgentSnapshot.age_years
+          : typeof freeAgentSnapshot.birth_date === 'string'
+            ? null
+            : null,
+    } as RiderDetails
   }
 
-  throw new Error(`Rider not found for id: ${riderId}`)
+  if (!rider) throw new Error(`Rider not found for id: ${riderId}`)
+
+  return buildFromRiderRow(rider, canonicalRiderId)
 }
 
 async function fetchRiderCareerHistoryById(riderId: string): Promise<RiderCareerHistoryRow[]> {

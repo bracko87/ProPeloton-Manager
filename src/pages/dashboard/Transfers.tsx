@@ -48,6 +48,10 @@ type ClubRow = {
   deleted_at: string | null
 }
 
+type ClubOwnedRiderRow = {
+  rider_id: string
+}
+
 type StaffCandidateRow = {
   id: string
   role_type: StaffRole
@@ -704,6 +708,7 @@ export default function TransfersPage() {
   const [pageMessage, setPageMessage] = useState<string | null>(null)
 
   const [riderLoading, setRiderLoading] = useState(false)
+  const [clubOwnedRiders, setClubOwnedRiders] = useState<ClubOwnedRiderRow[]>([])
   const [marketListings, setMarketListings] = useState<MarketListingRow[]>([])
   const [transferOffers, setTransferOffers] = useState<TransferOfferRow[]>([])
   const [mySentOffersDashboard, setMySentOffersDashboard] = useState<TransferOfferRow[]>([])
@@ -921,28 +926,33 @@ export default function TransfersPage() {
     )
   }
 
-  function openFreeAgentRiderProfile(
-    item?: {
-      rider_id?: string | null
-      free_agent_id?: string | null
-      raw?: {
-        rider_id?: string | null
-        free_agent_id?: string | null
-      } | null
-    } | null
-  ) {
-    const riderId = safeTrim(item?.rider_id ?? item?.raw?.rider_id)
-    const freeAgentId = safeTrim(item?.free_agent_id ?? item?.raw?.free_agent_id)
+  async function openFreeAgentRiderProfile(item: {
+    rider_id: string
+    free_agent_id?: string
+  }) {
+    const freeAgentId = item.free_agent_id?.trim()
+    const rawRiderId = item.rider_id?.trim()
 
-    const targetId = freeAgentId || riderId
+    if (freeAgentId) {
+      const { data: freeAgentById } = await supabase
+        .from('free_agent_market_view')
+        .select('rider_id')
+        .eq('free_agent_id', freeAgentId)
+        .maybeSingle()
 
-    if (!targetId) {
-      console.error('Could not open free-agent rider profile: missing ids', item)
-      setPageMessage('Could not open rider profile right now. Please refresh and try again.')
+      if (freeAgentById?.rider_id) {
+        openRiderProfilePage(String(freeAgentById.rider_id), false)
+        return
+      }
+    }
+
+    if (rawRiderId) {
+      openRiderProfilePage(rawRiderId, false)
       return
     }
 
-    openRiderProfilePage(targetId, false)
+    console.error('Could not open free-agent rider profile: missing ids', item)
+    setPageMessage('Could not open rider profile right now. Please refresh and try again.')
   }
 
   function openClubProfilePage(targetClubId: string) {
@@ -977,6 +987,7 @@ export default function TransfersPage() {
         freeAgentNegotiationsResult,
         gameStateResult,
         transferHistoryResult,
+        clubOwnedRidersResult,
       ] = await Promise.all([
         supabase.rpc('get_transfer_market_listings', {
           p_page: 1,
@@ -1135,6 +1146,7 @@ export default function TransfersPage() {
           .eq('id', true)
           .single(),
         supabase.rpc('get_my_transfer_history_dashboard', {}),
+        supabase.from('club_riders').select('rider_id').eq('club_id', clubIdValue),
       ])
 
       if (marketResult.error) throw marketResult.error
@@ -1147,6 +1159,7 @@ export default function TransfersPage() {
       if (freeAgentNegotiationsResult.error) throw freeAgentNegotiationsResult.error
       if (gameStateResult.error) throw gameStateResult.error
       if (transferHistoryResult.error) throw transferHistoryResult.error
+      if (clubOwnedRidersResult.error) throw clubOwnedRidersResult.error
 
       const marketBase = (marketResult.data || []) as any[]
       const offersBase = (offersResult.data || []) as any[]
@@ -1155,6 +1168,7 @@ export default function TransfersPage() {
       const sellerNegotiationsBase = (sellerNegotiationsResult.data || []) as any[]
       const buyerNegotiationsBase = (buyerNegotiationsResult.data || []) as any[]
       const historyRows = (transferHistoryResult.data || []) as TransferHistoryRow[]
+      const ownedRiderRows = (clubOwnedRidersResult.data || []) as ClubOwnedRiderRow[]
       const gameStateData = gameStateResult.data as GameStateRow
       const currentGameDate = getCurrentGameDateFromState(gameStateData)
 
@@ -1222,6 +1236,7 @@ export default function TransfersPage() {
             ...freeAgentsRows.map((row) => row.rider_id),
             ...freeAgentNegotiationRows.map((row) => row.rider_id),
             ...historyRows.map((row) => row.rider_id),
+            ...ownedRiderRows.map((row) => row.rider_id),
           ].filter(isNonEmptyString)
         )
       )
@@ -1372,6 +1387,7 @@ export default function TransfersPage() {
 
       if (!mounted) return
 
+      setClubOwnedRiders(ownedRiderRows)
       setMarketListings(resolvedMarket)
       setTransferOffers(resolvedOffers)
       setMySentOffersDashboard(resolvedMySentOffersDashboard)
@@ -1480,6 +1496,10 @@ export default function TransfersPage() {
     }
     return map
   }, [clubStaff])
+
+  const currentClubRiderIds = useMemo(() => {
+    return new Set<string>((clubOwnedRiders || []).map((row: any) => row.rider_id))
+  }, [clubOwnedRiders])
 
   const selectedFreeAgent = useMemo(
     () => freeAgents.find((agent) => agent.free_agent_id === selectedFreeAgentId) || null,
@@ -2266,6 +2286,10 @@ export default function TransfersPage() {
               navigate(`/dashboard/transfers/negotiations/${negotiationId}`)
             }}
             transferHistory={transferHistory}
+            currentClubRiderIds={currentClubRiderIds}
+            onOpenOwnedRiderProfile={(riderId) => openRiderProfilePage(riderId, true)}
+            onOpenExternalRiderProfile={(riderId) => openRiderProfilePage(riderId, false)}
+            onOpenClubProfile={(targetClubId) => openClubProfilePage(targetClubId)}
             activityMode={transferActivityMode}
             setActivityMode={(value: ActivityFilterMode) => {
               setTransferActivityMode(value)
@@ -2304,7 +2328,7 @@ export default function TransfersPage() {
               void handleStartFreeAgentNegotiation(item.raw)
             }}
             onOpenRiderProfile={(item) => {
-              openFreeAgentRiderProfile(item)
+              void openFreeAgentRiderProfile(item)
             }}
             marketPageStart={marketPageStart}
             marketPageEnd={marketPageEnd}
@@ -2320,6 +2344,10 @@ export default function TransfersPage() {
             }}
             myFreeAgentNegotiations={myFreeAgentNegotiations}
             transferHistory={transferHistory}
+            currentClubRiderIds={currentClubRiderIds}
+            onOpenOwnedRiderProfile={(riderId) => openRiderProfilePage(riderId, true)}
+            onOpenExternalRiderProfile={(riderId) => openRiderProfilePage(riderId, false)}
+            onOpenClubProfile={(targetClubId) => openClubProfilePage(targetClubId)}
           />
         )
       ) : (
