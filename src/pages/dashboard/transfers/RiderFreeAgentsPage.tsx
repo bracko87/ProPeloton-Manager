@@ -257,10 +257,7 @@ function MarketListRow({
                 className="h-4 w-6 shrink-0 rounded-sm border border-gray-200 object-cover"
               />
             ) : (
-              <div
-                className="h-4 w-6 shrink-0 rounded-sm bg-gray-100"
-                aria-hidden="true"
-              />
+              <div className="h-4 w-6 shrink-0 rounded-sm bg-gray-100" aria-hidden="true" />
             )}
 
             <button
@@ -338,6 +335,7 @@ type RiderFreeAgentsPageProps = {
   onSelectMarketItem: (item: FreeAgentMarketItem) => void
   onQuickActionMarketItem: (item: FreeAgentMarketItem) => void
   onOpenRiderProfile: (item: FreeAgentMarketItem) => void
+  onOpenHistoryRiderProfile: (riderId: string) => void
   marketPageStart: number
   marketPageEnd: number
   totalMarketRows: number
@@ -369,6 +367,7 @@ export default function RiderFreeAgentsPage({
   onSelectMarketItem,
   onQuickActionMarketItem,
   onOpenRiderProfile,
+  onOpenHistoryRiderProfile,
   marketPageStart,
   marketPageEnd,
   totalMarketRows,
@@ -555,10 +554,7 @@ export default function RiderFreeAgentsPage({
                       className="h-4 w-6 shrink-0 rounded-sm border border-gray-200 object-cover"
                     />
                   ) : (
-                    <div
-                      className="h-4 w-6 shrink-0 rounded-sm bg-gray-100"
-                      aria-hidden="true"
-                    />
+                    <div className="h-4 w-6 shrink-0 rounded-sm bg-gray-100" aria-hidden="true" />
                   )}
 
                   <div className="font-semibold text-gray-900">
@@ -662,7 +658,10 @@ export default function RiderFreeAgentsPage({
         </div>
       </div>
 
-      <TransferHistoryPanel transferHistory={transferHistory} />
+      <TransferHistoryPanel
+        transferHistory={transferHistory}
+        onOpenRiderProfile={onOpenHistoryRiderProfile}
+      />
     </div>
   )
 }

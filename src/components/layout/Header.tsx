@@ -35,6 +35,11 @@
  * - Raw payload JSON is no longer shown in the expanded view
  * - Notification images were removed from the expanded card
  *
+ * UPDATE: Transfer notification fallback routing
+ * - Header now resolves transfer notification routes from payload_json when
+ *   older DB notifications contain stale action_url values.
+ * - Action button labels are now contextual for transfer notifications.
+ *
  * NOTE:
  * - This component listens to window 'club-updated' and storage events to keep
  *   the live main-club info up-to-date.
@@ -226,6 +231,42 @@ function formatLabel(value: unknown) {
     .replace(/\b\w/g, char => char.toUpperCase())
 }
 
+function getNotificationActionLabel(item: NotificationItem) {
+  if (item.type_code === 'TRANSFER_OFFER_RECEIVED') return 'Review offer'
+  if (item.type_code === 'TRANSFER_OFFER_REJECTED') return 'Open transfers'
+  if (item.type_code === 'TRANSFER_OFFER_ACCEPTED') return 'Open negotiation'
+  if (item.type_code === 'RIDER_NEGOTIATION_OPENED') return 'Open negotiation'
+  return 'Open'
+}
+
+function getResolvedNotificationActionUrl(item: NotificationItem) {
+  const payload = item.payload_json ?? {}
+
+  const offerId =
+    typeof payload.offer_id === 'string' && payload.offer_id.trim()
+      ? payload.offer_id
+      : null
+
+  const negotiationId =
+    typeof payload.negotiation_id === 'string' && payload.negotiation_id.trim()
+      ? payload.negotiation_id
+      : null
+
+  if (item.type_code === 'TRANSFER_OFFER_RECEIVED' && offerId) {
+    return `/dashboard/transfers?activity=outgoing&offerId=${offerId}`
+  }
+
+  if (
+    (item.type_code === 'TRANSFER_OFFER_ACCEPTED' ||
+      item.type_code === 'RIDER_NEGOTIATION_OPENED') &&
+    negotiationId
+  ) {
+    return `/dashboard/transfers/negotiations/${negotiationId}`
+  }
+
+  return item.action_url
+}
+
 function renderExpandedNotificationText(item: NotificationItem) {
   const payload = item.payload_json ?? {}
 
@@ -342,6 +383,71 @@ function renderExpandedNotificationText(item: NotificationItem) {
         {Number.isFinite(quantity) ? (
           <div>
             Quantity delivered: <strong>{quantity}</strong>
+          </div>
+        ) : null}
+      </div>
+    )
+  }
+
+  if (item.type_code === 'TRANSFER_OFFER_RECEIVED') {
+    const buyerClubName =
+      typeof payload.buyer_club_name === 'string' ? payload.buyer_club_name : null
+    const riderName = typeof payload.rider_name === 'string' ? payload.rider_name : null
+    const offeredPrice = formatMoney(payload.offered_price)
+    const askingPrice = formatMoney(payload.asking_price)
+
+    return (
+      <div className="mt-3 space-y-2 text-sm leading-6 text-gray-700">
+        {buyerClubName ? (
+          <div>
+            Buyer club: <strong>{buyerClubName}</strong>
+          </div>
+        ) : null}
+
+        {riderName ? (
+          <div>
+            Rider: <strong>{riderName}</strong>
+          </div>
+        ) : null}
+
+        {offeredPrice ? (
+          <div>
+            Offer value: <strong>{offeredPrice}</strong>
+          </div>
+        ) : null}
+
+        {askingPrice ? (
+          <div>
+            Asking price: <strong>{askingPrice}</strong>
+          </div>
+        ) : null}
+      </div>
+    )
+  }
+
+  if (item.type_code === 'TRANSFER_OFFER_REJECTED') {
+    const riderName = typeof payload.rider_name === 'string' ? payload.rider_name : null
+    const sellerClubName =
+      typeof payload.seller_club_name === 'string' ? payload.seller_club_name : null
+    const offeredPrice = formatMoney(payload.offered_price)
+
+    return (
+      <div className="mt-3 space-y-2 text-sm leading-6 text-gray-700">
+        {sellerClubName ? (
+          <div>
+            Seller club: <strong>{sellerClubName}</strong>
+          </div>
+        ) : null}
+
+        {riderName ? (
+          <div>
+            Rider: <strong>{riderName}</strong>
+          </div>
+        ) : null}
+
+        {offeredPrice ? (
+          <div>
+            Rejected offer: <strong>{offeredPrice}</strong>
           </div>
         ) : null}
       </div>
@@ -865,8 +971,10 @@ export default function Header({
         }
       }
 
-      if (item.action_url) {
-        handleNavigate(item.action_url)
+      const resolvedActionUrl = getResolvedNotificationActionUrl(item)
+
+      if (resolvedActionUrl) {
+        handleNavigate(resolvedActionUrl)
       }
     },
     [handleNavigate]
@@ -1208,6 +1316,7 @@ export default function Header({
                   {activeItems.map(item => {
                     const isUnread = item.status === 'unread'
                     const isExpanded = expandedNotificationId === item.user_notification_id
+                    const resolvedActionUrl = getResolvedNotificationActionUrl(item)
 
                     return (
                       <div
@@ -1286,7 +1395,7 @@ export default function Header({
                                   </button>
                                 ) : null}
 
-                                {item.action_url ? (
+                                {resolvedActionUrl ? (
                                   <button
                                     type="button"
                                     onClick={() => {
@@ -1294,7 +1403,7 @@ export default function Header({
                                     }}
                                     className="rounded-md bg-black px-3 py-2 text-sm font-medium text-white hover:opacity-90"
                                   >
-                                    Open
+                                    {getNotificationActionLabel(item)}
                                   </button>
                                 ) : null}
                               </div>

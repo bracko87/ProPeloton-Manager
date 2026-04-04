@@ -2,20 +2,16 @@
  * RiderTransferNegotiationPage.tsx
  *
  * Dashboard page for handling a single rider transfer negotiation.
- *
- * Responsibilities:
- * - Load a negotiation by id from the URL.
- * - Show rider info, seller club, current status and expiry.
- * - Allow the user to adjust salary offer and contract length.
- * - Submit updated terms through submit_rider_transfer_contract_offer.
  */
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
 import { supabase } from '../../../lib/supabase'
-import { formatShortGameDate, getDaysRemaining } from '../../../features/squad/utils/dates'
-import { getRiderImageUrl } from '../../../features/squad/utils/rider-ui'
-import { formatWeeklySalary, getCountryName, getFlagImageUrl } from '../../../features/squad/utils/formatters'
+import {
+  formatWeeklySalary,
+  getCountryName,
+  getFlagImageUrl,
+} from '../../../features/squad/utils/formatters'
 
 type NegotiationStatus =
   | 'open'
@@ -29,39 +25,49 @@ type NegotiationStatus =
   | 'countered'
   | string
 
-type RiderTransferNegotiation = {
-  id: string
+type GameStateRow = {
+  season_number: number
+  month_number: number
+  day_number: number
+  hour_number: number
+  minute_number: number
+}
+
+type NegotiationPageContextRow = {
+  negotiation_id: string
   offer_id: string | null
+  listing_id: string | null
   rider_id: string | null
   buyer_club_id: string | null
   seller_club_id: string | null
-  rider_name: string | null
-  seller_club_name: string | null
   status: NegotiationStatus
-  asking_price: number | null
+  current_salary_weekly: number | null
+  expected_salary_weekly: number | null
   offer_salary_weekly: number | null
   offer_duration_seasons: number | null
   min_acceptable_salary_weekly: number | null
   preferred_duration_seasons: number | null
-  rider_message: string | null
   closed_reason: string | null
+  opened_on_game_date: string | null
   expires_on_game_date: string | null
   locked_until: string | null
   attempt_count: number | null
   max_attempts: number | null
   created_at: string | null
   updated_at: string | null
-}
 
-type RiderBasicInfo = {
-  id: string
-  display_name: string | null
-  first_name: string | null
-  last_name: string | null
-  country_code: string | null
-  image_url: string | null
-  overall: number | null
-  role: string | null
+  rider_first_name: string | null
+  rider_last_name: string | null
+  rider_display_name: string | null
+  rider_country_code: string | null
+  rider_role: string | null
+  rider_birth_date: string | null
+  rider_image_url: string | null
+
+  buyer_club_name: string | null
+  seller_club_name: string | null
+
+  offered_price: number | null
 }
 
 type StatusBadgeDescriptor = {
@@ -76,158 +82,126 @@ type SubmitFeedback = {
 
 type RpcResultRow = Record<string, unknown>
 
-function CountryFlag({
-  countryCode,
-  className = '',
-}: {
-  countryCode?: string | null
-  className?: string
-}): JSX.Element {
-  const [hasError, setHasError] = useState(false)
-  const src = getFlagImageUrl(countryCode)
-  const countryName = getCountryName(countryCode)
+function looksLikeUuid(value?: string | null): boolean {
+  if (!value) return false
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+    value.trim()
+  )
+}
 
-  const wrapperClassName = [
-    'inline-flex h-[16px] w-[24px] shrink-0 overflow-hidden rounded-[4px] border border-gray-200 bg-white',
-    className,
-  ]
-    .filter(Boolean)
+function buildPreferredRiderName(params: {
+  firstName?: string | null
+  lastName?: string | null
+  displayName?: string | null
+  fallbackId?: string | null
+}) {
+  const combined = [params.firstName?.trim(), params.lastName?.trim()]
+    .filter((part): part is string => Boolean(part))
     .join(' ')
+    .trim()
 
-  if (!src || hasError) {
-    return <span className={`${wrapperClassName} bg-gray-200`} title={countryName} />
+  if (combined) return combined
+  if (params.displayName?.trim() && !looksLikeUuid(params.displayName)) {
+    return params.displayName.trim()
+  }
+  if (params.fallbackId && !looksLikeUuid(params.fallbackId)) {
+    return params.fallbackId
+  }
+  return 'Unknown rider'
+}
+
+function getCurrentGameDateFromState(gameState: GameStateRow | null | undefined) {
+  if (!gameState) return null
+
+  const gameYear = 1999 + Math.max(1, gameState.season_number || 1)
+
+  const gameDate = new Date(
+    Date.UTC(
+      gameYear,
+      Math.max(0, (gameState.month_number || 1) - 1),
+      Math.max(1, gameState.day_number || 1),
+      Math.max(0, gameState.hour_number || 0),
+      Math.max(0, gameState.minute_number || 0)
+    )
+  )
+
+  return Number.isNaN(gameDate.getTime()) ? null : gameDate
+}
+
+function calculateAgeYearsFromGameDate(
+  birthDate: string | null | undefined,
+  currentGameDate: Date | null
+) {
+  if (!birthDate || !currentGameDate) return null
+
+  const birth = new Date(birthDate)
+  if (Number.isNaN(birth.getTime())) return null
+
+  let age = currentGameDate.getUTCFullYear() - birth.getUTCFullYear()
+
+  const hasHadBirthdayThisYear =
+    currentGameDate.getUTCMonth() > birth.getUTCMonth() ||
+    (currentGameDate.getUTCMonth() === birth.getUTCMonth() &&
+      currentGameDate.getUTCDate() >= birth.getUTCDate())
+
+  if (!hasHadBirthdayThisYear) {
+    age -= 1
   }
 
-  return (
-    <span className={wrapperClassName} title={countryName}>
-      <img
-        src={src}
-        alt={`${countryName} flag`}
-        className="h-full w-full object-cover"
-        loading="lazy"
-        onError={() => setHasError(true)}
-      />
-    </span>
-  )
+  return age
+}
+
+function getInitials(name: string): string {
+  const clean = name.trim()
+  if (!clean || looksLikeUuid(clean)) return 'R'
+
+  const parts = clean.split(/\s+/).filter(Boolean)
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase()
+
+  return `${parts[0][0] || ''}${parts[1][0] || ''}`.toUpperCase()
+}
+
+function formatTransferAmount(value?: number | null): string {
+  if (value == null || Number.isNaN(value)) return '—'
+  const roundedToThousand = Math.round(Number(value) / 1000) * 1000
+  return `$${roundedToThousand.toLocaleString('en-US')}`
+}
+
+function formatDateTime(value?: string | null): string {
+  if (!value) return '—'
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return value
+  return date.toLocaleString()
+}
+
+function normalizeSalaryInput(raw: string): number | null {
+  if (!raw) return null
+  const cleaned = raw.replace(/[^\d]/g, '')
+  if (!cleaned) return null
+  const value = Number(cleaned)
+  return Number.isFinite(value) && value > 0 ? value : null
 }
 
 function getStatusBadgeProps(status: NegotiationStatus): StatusBadgeDescriptor {
   const value = String(status || '').toLowerCase()
 
   if (value === 'open') {
-    return {
-      label: 'Open',
-      className: 'bg-emerald-50 text-emerald-800 border-emerald-200',
-    }
+    return { label: 'Open', className: 'bg-emerald-50 text-emerald-800 border-emerald-200' }
   }
-
-  if (value === 'pending') {
-    return {
-      label: 'Pending',
-      className: 'bg-amber-50 text-amber-800 border-amber-200',
-    }
+  if (value === 'pending' || value === 'countered') {
+    return { label: 'Pending', className: 'bg-amber-50 text-amber-800 border-amber-200' }
   }
-
-  if (value === 'countered') {
-    return {
-      label: 'Countered',
-      className: 'bg-amber-50 text-amber-800 border-amber-200',
-    }
+  if (value === 'accepted' || value === 'completed' || value === 'club_accepted') {
+    return { label: 'Accepted', className: 'bg-blue-50 text-blue-800 border-blue-200' }
   }
-
-  if (value === 'club_accepted') {
-    return {
-      label: 'Club Accepted',
-      className: 'bg-blue-50 text-blue-800 border-blue-200',
-    }
+  if (value === 'declined' || value === 'rejected') {
+    return { label: 'Declined', className: 'bg-rose-50 text-rose-800 border-rose-200' }
   }
-
-  if (value === 'accepted') {
-    return {
-      label: 'Accepted',
-      className: 'bg-blue-50 text-blue-800 border-blue-200',
-    }
-  }
-
-  if (value === 'completed') {
-    return {
-      label: 'Completed',
-      className: 'bg-emerald-50 text-emerald-800 border-emerald-200',
-    }
-  }
-
-  if (value === 'rejected' || value === 'declined') {
-    return {
-      label: 'Declined',
-      className: 'bg-rose-50 text-rose-800 border-rose-200',
-    }
-  }
-
   if (value === 'expired') {
-    return {
-      label: 'Expired',
-      className: 'bg-slate-100 text-slate-700 border-slate-300',
-    }
+    return { label: 'Expired', className: 'bg-slate-100 text-slate-700 border-slate-300' }
   }
 
-  return {
-    label: 'Unknown',
-    className: 'bg-slate-100 text-slate-700 border-slate-300',
-  }
-}
-
-function formatCompactMoney(value?: number | null): string {
-  if (value == null || Number.isNaN(value)) return '—'
-  const abs = Math.abs(value)
-  const prefix = value < 0 ? '-$' : '$'
-
-  if (abs >= 1_000_000_000) {
-    return `${prefix}${(abs / 1_000_000_000).toFixed(1).replace(/\.0$/, '')}b`
-  }
-
-  if (abs >= 1_000_000) {
-    return `${prefix}${(abs / 1_000_000).toFixed(1).replace(/\.0$/, '')}m`
-  }
-
-  if (abs >= 100_000) {
-    return `${prefix}${Math.floor(abs / 1_000)}k`
-  }
-
-  if (abs >= 1_000) {
-    return `${prefix}${(abs / 1_000).toFixed(1).replace(/\.0$/, '')}k`
-  }
-
-  return `${prefix}${Math.round(abs).toLocaleString('en-US')}`
-}
-
-function getNegotiationExpiryLabel(
-  expiresOnGameDate: string | null,
-  currentGameDate: string | null
-): string {
-  if (!expiresOnGameDate) return 'No explicit expiry'
-
-  const daysRemaining = getDaysRemaining(expiresOnGameDate, currentGameDate)
-
-  if (daysRemaining == null) {
-    return `Expires on ${formatShortGameDate(expiresOnGameDate)}`
-  }
-
-  if (daysRemaining <= 0) {
-    return `Expired (${formatShortGameDate(expiresOnGameDate)})`
-  }
-
-  return `Expires in ${daysRemaining} day${daysRemaining === 1 ? '' : 's'} (${formatShortGameDate(
-    expiresOnGameDate
-  )})`
-}
-
-function normalizeSalaryInput(raw: string): number | null {
-  if (!raw) return null
-  const cleaned = raw.replace(/[^0-9.-]/g, '')
-  if (!cleaned) return null
-  const value = Number(cleaned)
-  if (!Number.isFinite(value) || value <= 0) return null
-  return value
+  return { label: 'Unknown', className: 'bg-slate-100 text-slate-700 border-slate-300' }
 }
 
 function formatNegotiationReason(reason?: string | null): string {
@@ -253,17 +227,6 @@ function formatNegotiationReason(reason?: string | null): string {
     default:
       return reason || 'No visible rejection reason at this time.'
   }
-}
-
-function formatDateTime(value?: string | null): string {
-  if (!value) return '—'
-
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) {
-    return value
-  }
-
-  return date.toLocaleString()
 }
 
 function getFirstRpcRow(data: unknown): RpcResultRow | null {
@@ -292,117 +255,178 @@ function getRpcString(row: RpcResultRow | null, keys: string[]): string | null {
   return null
 }
 
+function getNegotiationCountdownLabel(
+  expiresOnGameDate: string | null | undefined,
+  gameState: GameStateRow | null
+): string {
+  if (!expiresOnGameDate) return 'No expiry'
+
+  if (!gameState) {
+    return expiresOnGameDate
+  }
+
+  const currentGameDate = new Date(
+    Date.UTC(
+      2000,
+      Math.max(0, gameState.month_number - 1),
+      gameState.day_number,
+      gameState.hour_number,
+      gameState.minute_number,
+      0
+    )
+  )
+
+  const expiryDate = new Date(`${expiresOnGameDate}T23:59:59Z`)
+  const diffMs = expiryDate.getTime() - currentGameDate.getTime()
+
+  if (diffMs <= 0) return 'Expired'
+
+  const totalSeconds = Math.floor(diffMs / 1000)
+  const days = Math.floor(totalSeconds / 86400)
+  const hours = Math.floor((totalSeconds % 86400) / 3600)
+  const minutes = Math.floor((totalSeconds % 3600) / 60)
+  const seconds = totalSeconds % 60
+
+  return `${days}d ${hours}h ${minutes}m ${seconds}s`
+}
+
+function CountryFlag({
+  countryCode,
+  className = '',
+}: {
+  countryCode?: string | null
+  className?: string
+}) {
+  const [hasError, setHasError] = useState(false)
+  const src = getFlagImageUrl(countryCode)
+  const countryName = getCountryName(countryCode)
+
+  const wrapperClassName = [
+    'inline-flex h-[16px] w-[24px] shrink-0 overflow-hidden rounded-[4px] border border-gray-200 bg-white',
+    className,
+  ]
+    .filter(Boolean)
+    .join(' ')
+
+  if (!src || hasError) {
+    return <span className={`${wrapperClassName} bg-gray-200`} title={countryName} />
+  }
+
+  return (
+    <span className={wrapperClassName} title={countryName}>
+      <img
+        src={src}
+        alt={`${countryName} flag`}
+        className="h-full w-full object-cover"
+        loading="lazy"
+        onError={() => setHasError(true)}
+      />
+    </span>
+  )
+}
+
+function RiderPortrait({
+  riderName,
+  imageUrl,
+}: {
+  riderName: string
+  imageUrl?: string | null
+}) {
+  const [hasError, setHasError] = useState(false)
+
+  if (imageUrl && !hasError) {
+    return (
+      <img
+        src={imageUrl}
+        alt={riderName}
+        className="h-full w-full object-cover"
+        loading="lazy"
+        onError={() => setHasError(true)}
+      />
+    )
+  }
+
+  return (
+    <div className="flex h-full w-full items-center justify-center bg-slate-100 text-lg font-semibold text-slate-500">
+      {getInitials(riderName)}
+    </div>
+  )
+}
+
 export default function RiderTransferNegotiationPage(): JSX.Element {
   const navigate = useNavigate()
   const { negotiationId } = useParams<{ negotiationId: string }>()
 
-  const [negotiation, setNegotiation] = useState<RiderTransferNegotiation | null>(null)
-  const [riderInfo, setRiderInfo] = useState<RiderBasicInfo | null>(null)
-  const [gameDate, setGameDate] = useState<string | null>(null)
+  const [contextRow, setContextRow] = useState<NegotiationPageContextRow | null>(null)
+  const [gameState, setGameState] = useState<GameStateRow | null>(null)
 
-  const [salaryOffer, setSalaryOffer] = useState<string>('')
+  const [salaryOffer, setSalaryOffer] = useState('')
   const [contractYears, setContractYears] = useState<number | ''>('')
 
-  const [loading, setLoading] = useState<boolean>(true)
-  const [submitting, setSubmitting] = useState<boolean>(false)
-  const [error, setError] = useState<string | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [submitting, setSubmitting] = useState(false)
+  const [loadError, setLoadError] = useState<string | null>(null)
+  const [submitError, setSubmitError] = useState<string | null>(null)
   const [submitFeedback, setSubmitFeedback] = useState<SubmitFeedback | null>(null)
 
   const loadNegotiation = useCallback(async () => {
     if (!negotiationId) {
-      setError('Missing negotiation id.')
+      setLoadError('Missing negotiation id.')
       setLoading(false)
       return
     }
 
     setLoading(true)
-    setError(null)
+    setLoadError(null)
 
     try {
-      const [{ data: negotiationRow, error: negotiationError }, { data: gameDateData, error: gameDateError }] =
-        await Promise.all([
-          supabase
-            .from('rider_transfer_negotiations')
-            .select('*')
-            .eq('id', negotiationId)
-            .maybeSingle(),
-          supabase.rpc('get_current_game_date'),
-        ])
+      const [
+        { data: contextData, error: contextError },
+        { data: gameStateRow, error: gameStateError },
+      ] = await Promise.all([
+        supabase.rpc('get_rider_transfer_negotiation_page_context', {
+          p_negotiation_id: negotiationId,
+        }),
+        supabase
+          .from('game_state')
+          .select('season_number, month_number, day_number, hour_number, minute_number')
+          .eq('id', true)
+          .maybeSingle(),
+      ])
 
-      if (negotiationError) {
-        throw negotiationError
+      if (contextError) throw contextError
+      if (gameStateError) {
+        console.error('Failed to load game state:', gameStateError)
       }
 
-      if (!negotiationRow) {
-        setNegotiation(null)
-        setError('Negotiation not found.')
+      const row = Array.isArray(contextData) ? contextData[0] : contextData
+
+      if (!row) {
+        setContextRow(null)
+        setGameState(null)
+        setLoadError('Negotiation not found.')
         setLoading(false)
         return
       }
 
-      const parsedNegotiation = negotiationRow as unknown as RiderTransferNegotiation
-      setNegotiation(parsedNegotiation)
+      const parsed = row as NegotiationPageContextRow
+      setContextRow(parsed)
+      setGameState((gameStateRow as GameStateRow | null) ?? null)
 
       const initialSalary =
-        parsedNegotiation.offer_salary_weekly ?? parsedNegotiation.min_acceptable_salary_weekly ?? null
+        parsed.offer_salary_weekly ??
+        parsed.min_acceptable_salary_weekly ??
+        parsed.expected_salary_weekly ??
+        null
+
       setSalaryOffer(initialSalary != null ? String(Math.round(initialSalary)) : '')
 
-      const initialYears =
-        parsedNegotiation.offer_duration_seasons ??
-        parsedNegotiation.preferred_duration_seasons ??
-        3
+      const initialYears = parsed.offer_duration_seasons ?? parsed.preferred_duration_seasons ?? 1
       setContractYears(initialYears)
-
-      if (gameDateError) {
-        // eslint-disable-next-line no-console
-        console.error('Failed to load current game date for negotiation page:', gameDateError)
-      }
-
-      if (typeof gameDateData === 'string') {
-        setGameDate(gameDateData)
-      } else if (gameDateData && typeof gameDateData === 'object') {
-        const record = gameDateData as Record<string, unknown>
-        const candidate =
-          typeof record.game_date === 'string'
-            ? record.game_date
-            : typeof record.current_game_date === 'string'
-              ? record.current_game_date
-              : null
-        setGameDate(candidate)
-      } else {
-        setGameDate(null)
-      }
-
-      setRiderInfo(null)
-
-      if (parsedNegotiation.rider_id) {
-        const { data: riderRow, error: riderError } = await supabase
-          .from('riders')
-          .select(
-            `
-              id,
-              display_name,
-              first_name,
-              last_name,
-              country_code,
-              image_url,
-              overall,
-              role
-            `
-          )
-          .eq('id', parsedNegotiation.rider_id)
-          .maybeSingle()
-
-        if (riderError) {
-          // eslint-disable-next-line no-console
-          console.error('Failed to load rider info for negotiation page:', riderError)
-        } else if (riderRow) {
-          setRiderInfo(riderRow as RiderBasicInfo)
-        }
-      }
     } catch (e: any) {
-      setError(e?.message ?? 'Failed to load transfer negotiation.')
-      setNegotiation(null)
+      setLoadError(e?.message ?? 'Failed to load transfer negotiation.')
+      setContextRow(null)
+      setGameState(null)
     } finally {
       setLoading(false)
     }
@@ -413,70 +437,97 @@ export default function RiderTransferNegotiationPage(): JSX.Element {
   }, [loadNegotiation])
 
   const statusBadge = useMemo(
-    () => getStatusBadgeProps(negotiation?.status ?? 'open'),
-    [negotiation?.status]
+    () => getStatusBadgeProps(contextRow?.status ?? 'open'),
+    [contextRow?.status]
+  )
+
+  const riderDisplayName = useMemo(
+    () =>
+      buildPreferredRiderName({
+        firstName: contextRow?.rider_first_name,
+        lastName: contextRow?.rider_last_name,
+        displayName: contextRow?.rider_display_name,
+        fallbackId: contextRow?.rider_id,
+      }),
+    [
+      contextRow?.rider_first_name,
+      contextRow?.rider_last_name,
+      contextRow?.rider_display_name,
+      contextRow?.rider_id,
+    ]
+  )
+
+  const sellerClubName = contextRow?.seller_club_name?.trim() || 'Unknown club'
+  const buyerClubName = contextRow?.buyer_club_name?.trim() || 'Unknown club'
+
+  const offerValueLabel = useMemo(
+    () => formatTransferAmount(contextRow?.offered_price ?? null),
+    [contextRow?.offered_price]
   )
 
   const expiryLabel = useMemo(
-    () => getNegotiationExpiryLabel(negotiation?.expires_on_game_date ?? null, gameDate),
-    [negotiation?.expires_on_game_date, gameDate]
+    () => getNegotiationCountdownLabel(contextRow?.expires_on_game_date ?? null, gameState),
+    [contextRow?.expires_on_game_date, gameState]
   )
 
-  const riderDisplayName = useMemo(() => {
-    if (negotiation?.rider_name && negotiation.rider_name.trim() !== '') {
-      return negotiation.rider_name
-    }
-    if (!riderInfo) return 'Rider'
-    if (riderInfo.display_name && riderInfo.display_name.trim() !== '') {
-      return riderInfo.display_name
-    }
-    const combined = `${riderInfo.first_name ?? ''} ${riderInfo.last_name ?? ''}`.trim()
-    return combined || 'Rider'
-  }, [negotiation?.rider_name, riderInfo])
+  const currentGameDate = useMemo(() => getCurrentGameDateFromState(gameState), [gameState])
+
+  const riderAge = useMemo(
+    () => calculateAgeYearsFromGameDate(contextRow?.rider_birth_date, currentGameDate),
+    [contextRow?.rider_birth_date, currentGameDate]
+  )
+
+  const countryName = useMemo(
+    () => getCountryName(contextRow?.rider_country_code),
+    [contextRow?.rider_country_code]
+  )
 
   const isTerminal = useMemo(() => {
-    const value = String(negotiation?.status || '').toLowerCase()
+    const value = String(contextRow?.status || '').toLowerCase()
     return ['accepted', 'declined', 'rejected', 'expired', 'completed'].includes(value)
-  }, [negotiation?.status])
+  }, [contextRow?.status])
 
   const isLocked = useMemo(() => {
-    if (!negotiation?.locked_until) return false
-    const ts = new Date(negotiation.locked_until).getTime()
+    if (!contextRow?.locked_until) return false
+    const ts = new Date(contextRow.locked_until).getTime()
     if (Number.isNaN(ts)) return false
     return ts > Date.now()
-  }, [negotiation?.locked_until])
+  }, [contextRow?.locked_until])
 
   const canSubmit = !submitting && !isTerminal && !isLocked
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault()
 
-    if (!negotiation) return
+    if (!contextRow) return
 
     const numericSalary = normalizeSalaryInput(salaryOffer)
     const numericYears =
       typeof contractYears === 'number' ? contractYears : Number(contractYears || 0)
 
     if (!numericSalary || !Number.isFinite(numericYears) || numericYears <= 0) {
-      setError('Please provide a valid weekly salary and contract length.')
+      setSubmitError('Please provide a valid weekly salary and contract length.')
       return
     }
 
     if (isTerminal) {
-      setError('This negotiation is already closed.')
+      setSubmitError('This negotiation is already closed.')
       return
     }
 
     setSubmitting(true)
-    setError(null)
+    setSubmitError(null)
     setSubmitFeedback(null)
 
     try {
-      const { data, error: rpcError } = await supabase.rpc('submit_rider_transfer_contract_offer', {
-        p_negotiation_id: negotiation.id,
-        p_offer_salary_weekly: numericSalary,
-        p_offer_duration_seasons: numericYears,
-      })
+      const { data, error: rpcError } = await supabase.rpc(
+        'submit_rider_transfer_contract_offer',
+        {
+          p_negotiation_id: contextRow.negotiation_id,
+          p_offer_salary_weekly: numericSalary,
+          p_offer_duration_seasons: numericYears,
+        }
+      )
 
       if (rpcError) {
         console.error('submit_rider_transfer_contract_offer rpc error:', {
@@ -500,30 +551,18 @@ export default function RiderTransferNegotiationPage(): JSX.Element {
       }
 
       if (rpcStatus === 'completed' || rpcStatus === 'accepted') {
-        feedback = {
-          kind: 'success',
-          message: rpcMessage,
-        }
+        feedback = { kind: 'success', message: rpcMessage }
       } else if (rpcStatus === 'declined' || rpcStatus === 'rejected' || rpcStatus === 'expired') {
-        feedback = {
-          kind: 'error',
-          message: rpcMessage,
-        }
+        feedback = { kind: 'error', message: rpcMessage }
       }
 
       setSubmitFeedback(feedback)
-
       await loadNegotiation()
     } catch (e: any) {
       console.error('submit_rider_transfer_contract_offer failed:', e)
-
-      const message =
-        e?.message ||
-        e?.details ||
-        e?.hint ||
-        'Failed to submit rider contract offer.'
-
-      setError(message)
+      setSubmitError(
+        e?.message || e?.details || e?.hint || 'Failed to submit rider contract offer.'
+      )
     } finally {
       setSubmitting(false)
     }
@@ -537,7 +576,7 @@ export default function RiderTransferNegotiationPage(): JSX.Element {
     )
   }
 
-  if (error) {
+  if (loadError) {
     return (
       <div className="space-y-4">
         <button
@@ -550,13 +589,13 @@ export default function RiderTransferNegotiationPage(): JSX.Element {
 
         <div className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-4">
           <div className="text-sm font-medium text-rose-700">Could not load negotiation</div>
-          <div className="mt-1 text-sm text-rose-600">{error}</div>
+          <div className="mt-1 text-sm text-rose-600">{loadError}</div>
         </div>
       </div>
     )
   }
 
-  if (!negotiation) {
+  if (!contextRow) {
     return (
       <div className="space-y-4">
         <button
@@ -597,7 +636,7 @@ export default function RiderTransferNegotiationPage(): JSX.Element {
         </div>
       </div>
 
-      {submitFeedback && (
+      {submitFeedback ? (
         <div
           className={`rounded-lg border px-4 py-3 text-sm ${
             submitFeedback.kind === 'success'
@@ -609,28 +648,34 @@ export default function RiderTransferNegotiationPage(): JSX.Element {
         >
           {submitFeedback.message}
         </div>
-      )}
+      ) : null}
 
-      {isLocked && (
+      {submitError ? (
+        <div className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+          {submitError}
+        </div>
+      ) : null}
+
+      {isLocked ? (
         <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
           Negotiation is temporarily locked until{' '}
-          <span className="font-semibold">{formatDateTime(negotiation.locked_until)}</span>.
+          <span className="font-semibold">{formatDateTime(contextRow.locked_until)}</span>.
         </div>
-      )}
+      ) : null}
 
-      {isTerminal && (
+      {isTerminal ? (
         <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
-          {String(negotiation.status).toLowerCase() === 'completed' ||
-          String(negotiation.status).toLowerCase() === 'accepted'
+          {String(contextRow.status).toLowerCase() === 'completed' ||
+          String(contextRow.status).toLowerCase() === 'accepted'
             ? 'This transfer has been completed.'
-            : String(negotiation.status).toLowerCase() === 'expired'
+            : String(contextRow.status).toLowerCase() === 'expired'
               ? 'This negotiation expired before agreement was reached.'
               : 'This negotiation is closed and can no longer be updated.'}
         </div>
-      )}
+      ) : null}
 
       <div className="rounded-xl border border-yellow-500 bg-yellow-400/95 p-5 shadow">
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
           <div className="min-w-0">
             <div className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-950/75">
               Transfer Negotiation
@@ -639,27 +684,21 @@ export default function RiderTransferNegotiationPage(): JSX.Element {
               {riderDisplayName}
             </h1>
             <div className="mt-2 text-sm text-slate-900/80">
-              Between your club and{' '}
-              <span className="font-semibold">
-                {negotiation.seller_club_name || 'Unknown club'}
-              </span>
+              Between <span className="font-semibold">{buyerClubName}</span> and{' '}
+              <span className="font-semibold">{sellerClubName}</span>
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center justify-end gap-4">
-            <div className="text-right">
-              <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-900/80">
-                Asking Price
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div className="rounded-lg bg-white/60 px-4 py-3 text-right">
+              <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-900/70">
+                Offer Value
               </div>
-              <div className="mt-1 text-xl font-semibold text-slate-950">
-                {formatCompactMoney(negotiation.asking_price)}
-              </div>
+              <div className="mt-1 text-lg font-semibold text-slate-950">{offerValueLabel}</div>
             </div>
 
-            <div className="h-10 w-px bg-slate-900/25" />
-
-            <div className="text-right">
-              <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-900/80">
+            <div className="rounded-lg bg-white/60 px-4 py-3 text-right">
+              <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-900/70">
                 Expires
               </div>
               <div className="mt-1 text-sm font-semibold text-slate-950">{expiryLabel}</div>
@@ -675,17 +714,7 @@ export default function RiderTransferNegotiationPage(): JSX.Element {
 
             <div className="mt-3 flex items-start gap-3">
               <div className="h-20 w-20 shrink-0 overflow-hidden rounded-lg bg-slate-100">
-                {riderInfo ? (
-                  <img
-                    src={getRiderImageUrl(riderInfo.image_url)}
-                    alt={riderDisplayName}
-                    className="h-full w-full object-cover"
-                  />
-                ) : (
-                  <div className="flex h-full items-center justify-center text-sm text-slate-400">
-                    —
-                  </div>
-                )}
+                <RiderPortrait riderName={riderDisplayName} imageUrl={contextRow.rider_image_url} />
               </div>
 
               <div className="min-w-0">
@@ -694,54 +723,61 @@ export default function RiderTransferNegotiationPage(): JSX.Element {
                 </div>
 
                 <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-slate-600">
-                  <span className="inline-flex items-center gap-1 rounded-full bg-slate-50 px-2 py-0.5">
-                    <CountryFlag countryCode={riderInfo?.country_code} />
-                    <span>{getCountryName(riderInfo?.country_code)}</span>
-                  </span>
+                  {contextRow.rider_country_code ? (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-slate-50 px-2 py-0.5">
+                      <CountryFlag countryCode={contextRow.rider_country_code} />
+                      <span>{countryName}</span>
+                    </span>
+                  ) : null}
 
-                  <span className="rounded-full bg-slate-50 px-2 py-0.5 font-medium">
-                    {riderInfo?.role || '—'}
-                  </span>
+                  {riderAge != null ? (
+                    <span className="rounded-full bg-slate-50 px-2 py-0.5 font-medium">
+                      Age {riderAge}
+                    </span>
+                  ) : null}
 
-                  <span className="rounded-full bg-slate-50 px-2 py-0.5 font-medium">
-                    OVR {riderInfo?.overall ?? '—'}%
-                  </span>
+                  {contextRow.rider_role ? (
+                    <span className="rounded-full bg-slate-50 px-2 py-0.5 font-medium">
+                      {contextRow.rider_role}
+                    </span>
+                  ) : null}
                 </div>
               </div>
             </div>
           </div>
 
           <div className="rounded-lg bg-white p-4 shadow">
-            <h2 className="text-sm font-semibold text-slate-900">Seller Club</h2>
+            <h2 className="text-sm font-semibold text-slate-900">Transfer Context</h2>
 
             <div className="mt-3 space-y-2 text-sm text-slate-700">
               <div className="flex items-center justify-between gap-3">
-                <span className="text-slate-500">Club</span>
+                <span className="text-slate-500">Buyer Club</span>
+                <span className="font-medium">{buyerClubName}</span>
+              </div>
+
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-slate-500">Seller Club</span>
+                <span className="font-medium">{sellerClubName}</span>
+              </div>
+
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-slate-500">Offer Value</span>
+                <span className="font-semibold">{offerValueLabel}</span>
+              </div>
+
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-slate-500">Preferred minimum salary</span>
                 <span className="font-medium">
-                  {negotiation.seller_club_name || 'Unknown club'}
+                  {formatWeeklySalary(contextRow.min_acceptable_salary_weekly)}
                 </span>
               </div>
 
               <div className="flex items-center justify-between gap-3">
-                <span className="text-slate-500">Asking Price</span>
-                <span className="font-semibold">
-                  {formatCompactMoney(negotiation.asking_price)}
-                </span>
-              </div>
-
-              <div className="flex items-center justify-between gap-3">
-                <span className="text-slate-500">Minimum Salary</span>
+                <span className="text-slate-500">Preferred contract</span>
                 <span className="font-medium">
-                  {formatWeeklySalary(negotiation.min_acceptable_salary_weekly)}
-                </span>
-              </div>
-
-              <div className="flex items-center justify-between gap-3">
-                <span className="text-slate-500">Preferred Contract</span>
-                <span className="font-medium">
-                  {negotiation.preferred_duration_seasons
-                    ? `${negotiation.preferred_duration_seasons} season${
-                        negotiation.preferred_duration_seasons === 1 ? '' : 's'
+                  {contextRow.preferred_duration_seasons
+                    ? `${contextRow.preferred_duration_seasons} season${
+                        contextRow.preferred_duration_seasons === 1 ? '' : 's'
                       }`
                     : '—'}
                 </span>
@@ -750,8 +786,8 @@ export default function RiderTransferNegotiationPage(): JSX.Element {
               <div className="flex items-center justify-between gap-3">
                 <span className="text-slate-500">Attempts</span>
                 <span className="font-medium">
-                  {negotiation.attempt_count ?? 0}
-                  {negotiation.max_attempts ? ` / ${negotiation.max_attempts}` : ''}
+                  {contextRow.attempt_count ?? 0}
+                  {contextRow.max_attempts ? ` / ${contextRow.max_attempts}` : ''}
                 </span>
               </div>
             </div>
@@ -778,7 +814,7 @@ export default function RiderTransferNegotiationPage(): JSX.Element {
                 <p className="mt-1 text-xs text-slate-500">
                   Current:{' '}
                   <span className="font-medium">
-                    {formatWeeklySalary(negotiation.offer_salary_weekly)}
+                    {formatWeeklySalary(contextRow.offer_salary_weekly)}
                   </span>
                 </p>
               </div>
@@ -802,9 +838,9 @@ export default function RiderTransferNegotiationPage(): JSX.Element {
                 <p className="mt-1 text-xs text-slate-500">
                   Current:{' '}
                   <span className="font-medium">
-                    {negotiation.offer_duration_seasons
-                      ? `${negotiation.offer_duration_seasons} season${
-                          negotiation.offer_duration_seasons === 1 ? '' : 's'
+                    {contextRow.offer_duration_seasons
+                      ? `${contextRow.offer_duration_seasons} season${
+                          contextRow.offer_duration_seasons === 1 ? '' : 's'
                         }`
                       : '—'}
                   </span>
@@ -812,11 +848,7 @@ export default function RiderTransferNegotiationPage(): JSX.Element {
               </div>
             </div>
 
-            <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-              <div className="text-xs text-slate-500">
-                You can update terms while the negotiation is open and unlocked.
-              </div>
-
+            <div className="mt-4 flex justify-end">
               <button
                 type="submit"
                 disabled={!canSubmit}
@@ -833,44 +865,22 @@ export default function RiderTransferNegotiationPage(): JSX.Element {
             <div className="mt-3 space-y-3 text-sm text-slate-700">
               <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
                 <div className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
-                  Counter Message
-                </div>
-                <div className="mt-1">
-                  {negotiation.rider_message
-                    ? negotiation.rider_message
-                    : 'No specific counter message from the rider yet.'}
-                </div>
-              </div>
-
-              <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
-                <div className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
                   Latest Visible Reason
                 </div>
-                <div className="mt-1">
-                  {formatNegotiationReason(negotiation.closed_reason)}
-                </div>
+                <div className="mt-1">{formatNegotiationReason(contextRow.closed_reason)}</div>
               </div>
 
               <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
                 <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
                   <div className="font-semibold text-slate-700">Created</div>
-                  <div className="mt-0.5">{formatDateTime(negotiation.created_at)}</div>
+                  <div className="mt-0.5">{formatDateTime(contextRow.created_at)}</div>
                 </div>
 
                 <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
                   <div className="font-semibold text-slate-700">Last Updated</div>
-                  <div className="mt-0.5">{formatDateTime(negotiation.updated_at)}</div>
+                  <div className="mt-0.5">{formatDateTime(contextRow.updated_at)}</div>
                 </div>
               </div>
-            </div>
-
-            <div className="mt-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
-              This negotiation page is designed as the target for transfer-related notifications,
-              using the route{' '}
-              <span className="font-mono text-slate-800">
-                /dashboard/transfers/negotiations/:negotiationId
-              </span>
-              .
             </div>
           </div>
         </div>

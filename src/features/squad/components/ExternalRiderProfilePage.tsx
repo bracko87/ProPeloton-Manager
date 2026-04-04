@@ -260,9 +260,10 @@ function DetailRow({
 }
 
 async function fetchRiderDetailsById(riderId: string): Promise<RiderDetails> {
-  const trimmedId = typeof riderId === 'string' ? riderId.trim() : ''
-  if (!trimmedId) {
-    throw new Error('Rider not found for id: missing id')
+  const lookupId = normalizeString(riderId)
+
+  if (!lookupId) {
+    throw new Error(`Rider not found for id: ${riderId}`)
   }
 
   const riderSelection = `
@@ -298,27 +299,29 @@ async function fetchRiderDetailsById(riderId: string): Promise<RiderDetails> {
     unavailable_reason
   `
 
-  const loadByRiderId = async (id: string) =>
+  const relationLookupTables = [
+    'club_riders',
+    'rider_transfer_listings',
+    'rider_free_agents',
+    'rider_transfer_offers',
+    'rider_transfer_negotiations',
+    'rider_free_agent_negotiations',
+  ] as const
+
+  const loadRiderRow = async (id: string) =>
     supabase.from('riders').select(riderSelection).eq('id', id).maybeSingle()
 
-  const loadStatsByRiderId = async (id: string) =>
+  const loadStatsRow = async (id: string) =>
     supabase.from('rider_statistics_view').select('*').eq('rider_id', id).maybeSingle()
-
-  const loadStatsByViewRowId = async (id: string) =>
-    supabase.from('rider_statistics_view').select('*').eq('id', id).maybeSingle()
 
   const buildFromRiderRow = (row: Record<string, any>, fallbackId: string): RiderDetails =>
     ({
-      id: normalizeString(row.id) ?? normalizeString(row.rider_id) ?? fallbackId,
-
+      id: normalizeString(row.id) ?? fallbackId,
       country_code: normalizeString(row.country_code) ?? null,
       first_name: normalizeString(row.first_name) ?? null,
       last_name: normalizeString(row.last_name) ?? null,
       display_name: normalizeString(row.display_name) ?? null,
       role: normalizeString(row.role) ?? '',
-      birth_date: normalizeString(row.birth_date) ?? null,
-      image_url: normalizeString(row.image_url) ?? null,
-
       sprint: normalizeNumber(row.sprint, 0),
       climbing: normalizeNumber(row.climbing, 0),
       time_trial: normalizeNumber(row.time_trial, 0),
@@ -332,7 +335,8 @@ async function fetchRiderDetailsById(riderId: string): Promise<RiderDetails> {
       potential: normalizeNumber(row.potential, 0),
       fatigue: normalizeNumber(row.fatigue, 0),
       overall: normalizeNumber(row.overall, 0),
-
+      birth_date: normalizeString(row.birth_date) ?? null,
+      image_url: normalizeString(row.image_url) ?? null,
       salary: normalizeNumber(row.salary, 0),
       contract_expires_at: normalizeString(row.contract_expires_at) ?? null,
       contract_expires_season: row.contract_expires_season ?? null,
@@ -350,23 +354,16 @@ async function fetchRiderDetailsById(riderId: string): Promise<RiderDetails> {
     riderRow?: Record<string, any> | null
   ): RiderDetails =>
     ({
-      id:
-        normalizeString(riderRow?.id) ??
-        normalizeString(statsRow.rider_id) ??
-        normalizeString(statsRow.id) ??
-        trimmedId,
+      id: normalizeString(riderRow?.id) ?? normalizeString(statsRow.rider_id) ?? lookupId,
 
       country_code:
-        normalizeString(
-          firstDefined(riderRow?.country_code, statsRow.country_code, statsRow.club_country_code)
-        ) ?? null,
-      first_name: normalizeString(firstDefined(riderRow?.first_name, statsRow.first_name)) ?? null,
+        normalizeString(firstDefined(riderRow?.country_code, statsRow.country_code)) ?? null,
+      first_name:
+        normalizeString(firstDefined(riderRow?.first_name, statsRow.first_name)) ?? null,
       last_name: normalizeString(firstDefined(riderRow?.last_name, statsRow.last_name)) ?? null,
       display_name:
         normalizeString(firstDefined(riderRow?.display_name, statsRow.display_name)) ?? null,
       role: normalizeString(firstDefined(riderRow?.role, statsRow.role, '')) ?? '',
-      birth_date: normalizeString(firstDefined(riderRow?.birth_date, statsRow.birth_date)) ?? null,
-      image_url: normalizeString(firstDefined(riderRow?.image_url, statsRow.image_url)) ?? null,
 
       sprint: normalizeNumber(firstDefined(riderRow?.sprint, statsRow.sprint), 0),
       climbing: normalizeNumber(firstDefined(riderRow?.climbing, statsRow.climbing), 0),
@@ -382,6 +379,9 @@ async function fetchRiderDetailsById(riderId: string): Promise<RiderDetails> {
       fatigue: normalizeNumber(firstDefined(riderRow?.fatigue, statsRow.fatigue), 0),
       overall: normalizeNumber(firstDefined(riderRow?.overall, statsRow.overall), 0),
 
+      birth_date:
+        normalizeString(firstDefined(riderRow?.birth_date, statsRow.birth_date)) ?? null,
+      image_url: normalizeString(firstDefined(riderRow?.image_url, statsRow.image_url)) ?? null,
       salary: normalizeNumber(firstDefined(riderRow?.salary, statsRow.salary), 0),
       contract_expires_at:
         normalizeString(
@@ -406,107 +406,73 @@ async function fetchRiderDetailsById(riderId: string): Promise<RiderDetails> {
       age_years: normalizeNullableNumber(statsRow.age_years),
     }) as RiderDetails
 
-  const relationLookupTables = [
-    'club_riders',
-    'rider_transfer_listings',
-    'rider_free_agents',
-    'rider_transfer_offers',
-    'rider_transfer_negotiations',
-    'rider_free_agent_negotiations',
-  ] as const
+  async function resolveCanonicalRiderId(value: string): Promise<string | null> {
+    const { data: riderRow, error: riderError } = await loadRiderRow(value)
+    if (!riderError && riderRow?.id) {
+      return String(riderRow.id).trim()
+    }
 
-  const resolveCanonicalRiderId = async (id: string): Promise<string | null> => {
-    const { data: statsByRiderId, error: statsByRiderIdError } = await loadStatsByRiderId(id)
-    if (!statsByRiderIdError && statsByRiderId) {
-      const resolvedStatsId = normalizeString((statsByRiderId as Record<string, any>).rider_id)
+    const { data: statsRow, error: statsError } = await loadStatsRow(value)
+    if (!statsError && statsRow) {
+      const resolvedStatsId = normalizeString((statsRow as Record<string, any>).rider_id)
       if (resolvedStatsId) return resolvedStatsId
     }
 
-    const { data: directRider, error: directRiderError } = await loadByRiderId(id)
-    if (!directRiderError && directRider?.id && typeof directRider.id === 'string') {
-      const resolvedRiderId = directRider.id.trim()
-      if (resolvedRiderId) return resolvedRiderId
-    }
+    const { data: freeAgentViewRow, error: freeAgentViewError } = await supabase
+      .from('free_agent_market_view')
+      .select('rider_id')
+      .eq('free_agent_id', value)
+      .maybeSingle()
 
-    const { data: statsByViewRowId, error: statsByViewRowIdError } = await loadStatsByViewRowId(id)
-    if (!statsByViewRowIdError && statsByViewRowId) {
-      const resolvedStatsViewId = normalizeString(
-        (statsByViewRowId as Record<string, any>).rider_id
-      )
-      if (resolvedStatsViewId) return resolvedStatsViewId
+    if (!freeAgentViewError && freeAgentViewRow?.rider_id) {
+      const resolvedId = String(freeAgentViewRow.rider_id).trim()
+      if (resolvedId) return resolvedId
     }
 
     for (const tableName of relationLookupTables) {
-      try {
-        const { data: relationRow, error: relationError } = await supabase
-          .from(tableName)
-          .select('rider_id')
-          .eq('id', id)
-          .maybeSingle()
+      const { data: relationRow, error: relationError } = await supabase
+        .from(tableName)
+        .select('rider_id')
+        .eq('id', value)
+        .maybeSingle()
 
-        if (relationError) continue
+      if (relationError) continue
 
-        const resolvedRelationId =
-          relationRow && typeof relationRow.rider_id === 'string'
-            ? relationRow.rider_id.trim()
-            : ''
+      const resolvedId =
+        relationRow && typeof relationRow.rider_id === 'string' ? relationRow.rider_id.trim() : ''
 
-        if (resolvedRelationId) {
-          return resolvedRelationId
-        }
-      } catch {
-        // continue to next table
-      }
+      if (resolvedId) return resolvedId
     }
 
     return null
   }
 
-  const hydrateStatsFirst = async (statsRow: Record<string, any>): Promise<RiderDetails> => {
-    const resolvedId =
-      normalizeString(statsRow.rider_id) ?? normalizeString(statsRow.id) ?? trimmedId
-
-    const { data: riderTableData, error: riderTableError } = await loadByRiderId(resolvedId)
-
-    if (!riderTableError && riderTableData) {
-      return buildFromStatsRow(statsRow, riderTableData as Record<string, any>)
-    }
-
-    return buildFromStatsRow(statsRow, null)
-  }
-
-  const { data: statsDataByRiderId, error: statsErrorByRiderId } = await loadStatsByRiderId(trimmedId)
-  if (!statsErrorByRiderId && statsDataByRiderId) {
-    return hydrateStatsFirst(statsDataByRiderId as Record<string, any>)
-  }
-
-  const { data: statsDataByViewRowId, error: statsErrorByViewRowId } =
-    await loadStatsByViewRowId(trimmedId)
-  if (!statsErrorByViewRowId && statsDataByViewRowId) {
-    return hydrateStatsFirst(statsDataByViewRowId as Record<string, any>)
-  }
-
-  const canonicalRiderId = await resolveCanonicalRiderId(trimmedId)
+  const canonicalRiderId = await resolveCanonicalRiderId(lookupId)
 
   if (!canonicalRiderId) {
     throw new Error(`Rider not found for id: ${riderId}`)
   }
 
-  const { data: canonicalStatsData, error: canonicalStatsError } =
-    await loadStatsByRiderId(canonicalRiderId)
+  const [riderResult, statsResult] = await Promise.all([
+    loadRiderRow(canonicalRiderId),
+    loadStatsRow(canonicalRiderId),
+  ])
 
-  if (!canonicalStatsError && canonicalStatsData) {
-    return hydrateStatsFirst(canonicalStatsData as Record<string, any>)
+  if (riderResult.error) throw riderResult.error
+  if (statsResult.error) throw statsResult.error
+
+  if (statsResult.data) {
+    return buildFromStatsRow(
+      statsResult.data as Record<string, any>,
+      (riderResult.data ?? null) as Record<string, any> | null
+    )
   }
 
-  const { data: riderRow, error: riderError } = await loadByRiderId(canonicalRiderId)
-
-  if (riderError) throw riderError
-  if (!riderRow) {
-    throw new Error(`Rider not found for id: ${riderId}`)
+  if (riderResult.data) {
+    return buildFromRiderRow(riderResult.data as Record<string, any>, canonicalRiderId)
   }
 
-  return buildFromRiderRow(riderRow as Record<string, any>, canonicalRiderId)
+  throw new Error(`Rider not found for id: ${riderId}`)
 }
 
 async function fetchRiderCareerHistoryById(riderId: string): Promise<RiderCareerHistoryRow[]> {
