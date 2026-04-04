@@ -921,7 +921,20 @@ export default function TransfersPage() {
     )
   }
 
-  function openFreeAgentRiderProfile(
+  const resolveIfRealRiderId = async (candidateId: string) => {
+    if (!candidateId) return ''
+
+    const { data, error } = await supabase
+      .from('riders')
+      .select('id')
+      .eq('id', candidateId)
+      .maybeSingle()
+
+    if (error) return ''
+    return typeof data?.id === 'string' ? data.id.trim() : ''
+  }
+
+  async function openFreeAgentRiderProfile(
     item?: {
       rider_id?: string | null
       free_agent_id?: string | null
@@ -934,10 +947,35 @@ export default function TransfersPage() {
     const riderId = safeTrim(item?.rider_id ?? item?.raw?.rider_id)
     const freeAgentId = safeTrim(item?.free_agent_id ?? item?.raw?.free_agent_id)
 
-    const targetId = riderId || freeAgentId
+    let targetId = await resolveIfRealRiderId(riderId)
+
+    if (!targetId && freeAgentId) {
+      const { data, error } = await supabase
+        .from('free_agent_market_view')
+        .select('rider_id')
+        .eq('free_agent_id', freeAgentId)
+        .maybeSingle()
+
+      if (!error && typeof data?.rider_id === 'string' && data.rider_id.trim()) {
+        targetId = await resolveIfRealRiderId(data.rider_id.trim())
+      }
+    }
+
+    if (!targetId && freeAgentId) {
+      const { data, error } = await supabase
+        .from('rider_free_agents')
+        .select('rider_id')
+        .eq('id', freeAgentId)
+        .maybeSingle()
+
+      if (!error && typeof data?.rider_id === 'string' && data.rider_id.trim()) {
+        targetId = await resolveIfRealRiderId(data.rider_id.trim())
+      }
+    }
 
     if (!targetId) {
-      console.error('Could not open free-agent rider profile: missing ids', item)
+      console.error('Could not open free-agent rider profile: unresolved rider id', item)
+      setPageMessage('Could not open rider profile right now. Please refresh and try again.')
       return
     }
 
@@ -2076,6 +2114,30 @@ export default function TransfersPage() {
     }
   }
 
+  async function handleCancelTransferNegotiation(negotiationId: string) {
+    if (!clubId) return
+
+    try {
+      setRiderActionLoading(true)
+      setPageMessage(null)
+
+      const { error } = await supabase.rpc('withdraw_rider_transfer_negotiation', {
+        p_negotiation_id: negotiationId,
+      })
+
+      if (error) throw error
+
+      await reloadRiders(clubId)
+      setPageMessage('Transfer negotiation cancelled.')
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : 'Failed to cancel transfer negotiation.'
+      setPageMessage(message)
+    } finally {
+      setRiderActionLoading(false)
+    }
+  }
+
   const pageStart =
     sortedCandidates.length === 0 ? 0 : (currentPage - 1) * CANDIDATES_PER_PAGE + 1
   const pageEnd = Math.min(currentPage * CANDIDATES_PER_PAGE, sortedCandidates.length)
@@ -2229,6 +2291,9 @@ export default function TransfersPage() {
             onOpenNegotiation={(negotiationId) => {
               navigate(`/dashboard/transfers/negotiations/${negotiationId}`)
             }}
+            onCancelNegotiation={(negotiationId: string) => {
+              void handleCancelTransferNegotiation(negotiationId)
+            }}
             transferHistory={transferHistory}
             activityMode={transferActivityMode}
             setActivityMode={(value: ActivityFilterMode) => {
@@ -2268,7 +2333,7 @@ export default function TransfersPage() {
               void handleStartFreeAgentNegotiation(item.raw)
             }}
             onOpenRiderProfile={(item) => {
-              openFreeAgentRiderProfile(item)
+              void openFreeAgentRiderProfile(item)
             }}
             marketPageStart={marketPageStart}
             marketPageEnd={marketPageEnd}

@@ -143,6 +143,10 @@ type TransferActivityItem = {
   offerIdToReview?: string | null
   negotiationIdToOpen?: string | null
   withdrawOfferId?: string | null
+
+  cancelNegotiationId?: string | null
+  cancelNegotiationLabel?: string
+  cancelNegotiationDisabled?: boolean
 }
 
 type TransferMarketItem = {
@@ -551,6 +555,7 @@ type RiderTransferListPageProps = {
   setActivityMode: (value: ActivityFilterMode) => void
   onOpenOfferReview: (offerId: string) => void
   onOpenNegotiation: (negotiationId: string) => void
+  onCancelNegotiation: (negotiationId: string) => void
 }
 
 export default function RiderTransferListPage(props: RiderTransferListPageProps) {
@@ -592,6 +597,7 @@ export default function RiderTransferListPage(props: RiderTransferListPageProps)
     setActivityMode,
     onOpenOfferReview,
     onOpenNegotiation,
+    onCancelNegotiation,
   } = props
 
   const transferActivityItems = useMemo(() => {
@@ -632,6 +638,10 @@ export default function RiderTransferListPage(props: RiderTransferListPageProps)
       let negotiationIdToOpen: string | null = null
       let withdrawOfferId: string | null = null
 
+      let cancelNegotiationId: string | null = null
+      let cancelNegotiationLabel: string | undefined
+      let cancelNegotiationDisabled = true
+
       if (status === 'open') {
         tone = 'active'
         statusLabel = 'Offer submitted'
@@ -648,6 +658,10 @@ export default function RiderTransferListPage(props: RiderTransferListPageProps)
         actionDisabled = !linkedNegotiation || !linkedNegotiationIsActive
         actionKind = 'open_negotiation'
         negotiationIdToOpen = linkedNegotiation?.id ?? null
+
+        cancelNegotiationId = linkedNegotiation?.id ?? null
+        cancelNegotiationLabel = 'Cancel transfer'
+        cancelNegotiationDisabled = !linkedNegotiation || !linkedNegotiationIsActive
       } else if (status === 'rejected') {
         tone = 'negative'
         statusLabel = 'Rejected'
@@ -682,6 +696,9 @@ export default function RiderTransferListPage(props: RiderTransferListPageProps)
         actionDisabled,
         actionKind,
         negotiationIdToOpen,
+        cancelNegotiationId,
+        cancelNegotiationLabel,
+        cancelNegotiationDisabled,
         withdrawOfferId,
         clubIdToOpen: offer.seller_club_id,
         sortTime: parseSortTime(linkedNegotiation?.updated_at || offer.updated_at || offer.created_at),
@@ -1271,6 +1288,21 @@ export default function RiderTransferListPage(props: RiderTransferListPageProps)
                         {item.actionLabel}
                       </button>
                     ) : null}
+
+                    {item.cancelNegotiationLabel && item.cancelNegotiationId ? (
+                      <button
+                        type="button"
+                        disabled={item.cancelNegotiationDisabled}
+                        onClick={() => onCancelNegotiation(item.cancelNegotiationId!)}
+                        className={`rounded-md px-3 py-1.5 text-xs font-medium ${
+                          item.cancelNegotiationDisabled
+                            ? 'cursor-not-allowed border border-gray-200 bg-gray-100 text-gray-400'
+                            : 'border border-red-200 bg-red-50 text-red-700 hover:bg-red-100'
+                        }`}
+                      >
+                        {item.cancelNegotiationLabel}
+                      </button>
+                    ) : null}
                   </div>
                 </div>
               </div>
@@ -1327,8 +1359,8 @@ export default function RiderTransferListPage(props: RiderTransferListPageProps)
 
       <TransferHistoryPanel
         transferHistory={transferHistory}
-        onOpenRiderProfile={onOpenRiderProfile}
-        onOpenTeamPage={onOpenTeamPage}
+        onOpenRiderProfile={(riderId) => onOpenRiderProfile(riderId, false)}
+        onOpenTeamPage={(clubId) => onOpenTeamPage(clubId)}
       />
 
       <div className="rounded-lg border border-blue-100 bg-blue-50 p-4 shadow">
