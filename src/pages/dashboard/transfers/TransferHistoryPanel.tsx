@@ -25,34 +25,20 @@ function getMovementLabel(value: string): string {
   return 'Transfer'
 }
 
-function TextActionButton({
-  label,
-  onClick,
-}: {
-  label: string
-  onClick: () => void
-}): JSX.Element {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="truncate text-left font-medium text-black no-underline hover:text-gray-700"
-    >
-      {label}
-    </button>
-  )
-}
-
 function HistoryColumn({
   title,
   rows,
-  onOpenRiderProfile,
-  onOpenTeamPage,
+  currentClubRiderIds,
+  onOpenOwnedRiderProfile,
+  onOpenExternalRiderProfile,
+  onOpenClubProfile,
 }: {
   title: string
   rows: TransferHistoryRow[]
-  onOpenRiderProfile: (riderId: string) => void
-  onOpenTeamPage: (clubId: string) => void
+  currentClubRiderIds: Set<string>
+  onOpenOwnedRiderProfile?: (riderId: string) => void
+  onOpenExternalRiderProfile?: (riderId: string) => void
+  onOpenClubProfile?: (clubId: string) => void
 }): JSX.Element {
   return (
     <div className="rounded-lg border border-gray-100 bg-gray-50 p-3">
@@ -71,20 +57,39 @@ function HistoryColumn({
             const counterpartyClubId =
               row.direction === 'arrival' ? row.from_club_id : row.to_club_id
 
+            const isOwnedArrival =
+              row.direction === 'arrival' &&
+              !!row.rider_id &&
+              currentClubRiderIds.has(row.rider_id)
+
+            const handleOpenRider = () => {
+              if (!row.rider_id) return
+
+              if (isOwnedArrival) {
+                onOpenOwnedRiderProfile?.(row.rider_id)
+                return
+              }
+
+              onOpenExternalRiderProfile?.(row.rider_id)
+            }
+
             return (
               <div key={row.id} className="rounded-lg border border-gray-200 bg-white p-3">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <div className="truncate text-sm font-semibold text-gray-900">
-                      {row.rider_id ? (
-                        <TextActionButton
-                          label={row.rider_name || 'Unknown rider'}
-                          onClick={() => onOpenRiderProfile(row.rider_id!)}
-                        />
-                      ) : (
-                        row.rider_name || 'Unknown rider'
-                      )}
-                    </div>
+                    {row.rider_id ? (
+                      <button
+                        type="button"
+                        onClick={handleOpenRider}
+                        className="truncate text-left text-sm font-semibold text-gray-900 hover:text-gray-700"
+                      >
+                        {row.rider_name || 'Unknown rider'}
+                      </button>
+                    ) : (
+                      <div className="truncate text-sm font-semibold text-gray-900">
+                        {row.rider_name || 'Unknown rider'}
+                      </div>
+                    )}
 
                     <div className="mt-1 text-xs text-gray-600">
                       <span className="font-semibold text-gray-900">
@@ -92,21 +97,37 @@ function HistoryColumn({
                       </span>{' '}
                       • {row.direction === 'arrival' ? 'From' : 'To'}{' '}
                       {counterpartyClubId ? (
-                        <TextActionButton
-                          label={counterpartyLabel}
-                          onClick={() => onOpenTeamPage(counterpartyClubId)}
-                        />
+                        <button
+                          type="button"
+                          onClick={() => onOpenClubProfile?.(counterpartyClubId)}
+                          className="font-medium text-gray-900 hover:text-gray-700"
+                        >
+                          {counterpartyLabel}
+                        </button>
                       ) : (
                         <span className="font-medium text-gray-900">{counterpartyLabel}</span>
                       )}
                     </div>
                   </div>
 
-                  <div className="shrink-0 text-right">
-                    <div className="text-sm font-semibold text-gray-900">
-                      {formatCurrency(row.amount)}
+                  <div className="shrink-0 flex items-start gap-3">
+                    <span
+                      className={`inline-flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold ${
+                        row.direction === 'arrival'
+                          ? 'bg-green-50 text-green-600'
+                          : 'bg-red-50 text-red-600'
+                      }`}
+                      title={row.direction === 'arrival' ? 'Arrival' : 'Departure'}
+                    >
+                      {row.direction === 'arrival' ? '↓' : '↑'}
+                    </span>
+
+                    <div className="text-right">
+                      <div className="text-sm font-semibold text-gray-900">
+                        {formatCurrency(row.amount)}
+                      </div>
+                      <div className="text-xs text-gray-500">{row.game_date || '—'}</div>
                     </div>
-                    <div className="text-xs text-gray-500">{row.game_date || '—'}</div>
                   </div>
                 </div>
               </div>
@@ -120,12 +141,16 @@ function HistoryColumn({
 
 export default function TransferHistoryPanel({
   transferHistory,
-  onOpenRiderProfile,
-  onOpenTeamPage,
+  currentClubRiderIds = new Set<string>(),
+  onOpenOwnedRiderProfile,
+  onOpenExternalRiderProfile,
+  onOpenClubProfile,
 }: {
   transferHistory: TransferHistoryRow[]
-  onOpenRiderProfile: (riderId: string) => void
-  onOpenTeamPage: (clubId: string) => void
+  currentClubRiderIds?: Set<string>
+  onOpenOwnedRiderProfile?: (riderId: string) => void
+  onOpenExternalRiderProfile?: (riderId: string) => void
+  onOpenClubProfile?: (clubId: string) => void
 }): JSX.Element {
   const arrivals = useMemo(
     () => transferHistory.filter((row) => row.direction === 'arrival'),
@@ -145,14 +170,19 @@ export default function TransferHistoryPanel({
         <HistoryColumn
           title="Arrivals"
           rows={arrivals}
-          onOpenRiderProfile={onOpenRiderProfile}
-          onOpenTeamPage={onOpenTeamPage}
+          currentClubRiderIds={currentClubRiderIds}
+          onOpenOwnedRiderProfile={onOpenOwnedRiderProfile}
+          onOpenExternalRiderProfile={onOpenExternalRiderProfile}
+          onOpenClubProfile={onOpenClubProfile}
         />
+
         <HistoryColumn
           title="Departures"
           rows={departures}
-          onOpenRiderProfile={onOpenRiderProfile}
-          onOpenTeamPage={onOpenTeamPage}
+          currentClubRiderIds={currentClubRiderIds}
+          onOpenOwnedRiderProfile={onOpenOwnedRiderProfile}
+          onOpenExternalRiderProfile={onOpenExternalRiderProfile}
+          onOpenClubProfile={onOpenClubProfile}
         />
       </div>
     </div>

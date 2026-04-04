@@ -921,20 +921,7 @@ export default function TransfersPage() {
     )
   }
 
-  const resolveIfRealRiderId = async (candidateId: string) => {
-    if (!candidateId) return ''
-
-    const { data, error } = await supabase
-      .from('riders')
-      .select('id')
-      .eq('id', candidateId)
-      .maybeSingle()
-
-    if (error) return ''
-    return typeof data?.id === 'string' ? data.id.trim() : ''
-  }
-
-  async function openFreeAgentRiderProfile(
+  function openFreeAgentRiderProfile(
     item?: {
       rider_id?: string | null
       free_agent_id?: string | null
@@ -947,34 +934,10 @@ export default function TransfersPage() {
     const riderId = safeTrim(item?.rider_id ?? item?.raw?.rider_id)
     const freeAgentId = safeTrim(item?.free_agent_id ?? item?.raw?.free_agent_id)
 
-    let targetId = await resolveIfRealRiderId(riderId)
-
-    if (!targetId && freeAgentId) {
-      const { data, error } = await supabase
-        .from('free_agent_market_view')
-        .select('rider_id')
-        .eq('free_agent_id', freeAgentId)
-        .maybeSingle()
-
-      if (!error && typeof data?.rider_id === 'string' && data.rider_id.trim()) {
-        targetId = await resolveIfRealRiderId(data.rider_id.trim())
-      }
-    }
-
-    if (!targetId && freeAgentId) {
-      const { data, error } = await supabase
-        .from('rider_free_agents')
-        .select('rider_id')
-        .eq('id', freeAgentId)
-        .maybeSingle()
-
-      if (!error && typeof data?.rider_id === 'string' && data.rider_id.trim()) {
-        targetId = await resolveIfRealRiderId(data.rider_id.trim())
-      }
-    }
+    const targetId = freeAgentId || riderId
 
     if (!targetId) {
-      console.error('Could not open free-agent rider profile: unresolved rider id', item)
+      console.error('Could not open free-agent rider profile: missing ids', item)
       setPageMessage('Could not open rider profile right now. Please refresh and try again.')
       return
     }
@@ -2114,24 +2077,32 @@ export default function TransfersPage() {
     }
   }
 
-  async function handleCancelTransferNegotiation(negotiationId: string) {
+  async function handleWithdrawTransferNegotiation(negotiationId: string) {
     if (!clubId) return
 
     try {
       setRiderActionLoading(true)
       setPageMessage(null)
 
-      const { error } = await supabase.rpc('withdraw_rider_transfer_negotiation', {
+      const { data, error } = await supabase.rpc('withdraw_rider_transfer_negotiation', {
         p_negotiation_id: negotiationId,
       })
 
       if (error) throw error
 
       await reloadRiders(clubId)
-      setPageMessage('Transfer negotiation cancelled.')
-    } catch (err) {
-      const message =
-        err instanceof Error ? err.message : 'Failed to cancel transfer negotiation.'
+
+      const result = Array.isArray(data) ? data[0] : data
+
+      if (result?.listing_status === 'listed') {
+        setPageMessage('Transfer negotiation cancelled. The rider returned to the transfer market.')
+      } else if (result?.listing_status === 'expired') {
+        setPageMessage('Transfer negotiation cancelled. The transfer listing has already expired.')
+      } else {
+        setPageMessage('Transfer negotiation cancelled.')
+      }
+    } catch (err: any) {
+      const message = getErrorMessage(err) || 'Failed to cancel transfer negotiation.'
       setPageMessage(message)
     } finally {
       setRiderActionLoading(false)
@@ -2279,6 +2250,9 @@ export default function TransfersPage() {
             onWithdrawSentOffer={(offerId) => {
               void handleWithdrawSentOffer(offerId)
             }}
+            onWithdrawNegotiation={(negotiationId) => {
+              void handleWithdrawTransferNegotiation(negotiationId)
+            }}
             onOpenTeamPage={(targetClubId) => {
               openClubProfilePage(targetClubId)
             }}
@@ -2290,9 +2264,6 @@ export default function TransfersPage() {
             myBuyerNegotiations={myBuyerNegotiations}
             onOpenNegotiation={(negotiationId) => {
               navigate(`/dashboard/transfers/negotiations/${negotiationId}`)
-            }}
-            onCancelNegotiation={(negotiationId: string) => {
-              void handleCancelTransferNegotiation(negotiationId)
             }}
             transferHistory={transferHistory}
             activityMode={transferActivityMode}
@@ -2333,7 +2304,7 @@ export default function TransfersPage() {
               void handleStartFreeAgentNegotiation(item.raw)
             }}
             onOpenRiderProfile={(item) => {
-              void openFreeAgentRiderProfile(item)
+              openFreeAgentRiderProfile(item)
             }}
             marketPageStart={marketPageStart}
             marketPageEnd={marketPageEnd}

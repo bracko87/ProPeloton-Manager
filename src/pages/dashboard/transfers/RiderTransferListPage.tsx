@@ -545,6 +545,7 @@ type RiderTransferListPageProps = {
   onWithdrawSentOffer: (offerId: string) => void
   onOpenTeamPage: (clubId: string) => void
   onOpenRiderProfile: (riderId: string, isOwnedByUser?: boolean) => void
+  ownedRiderIds: Set<string>
 
   mySentOffers: TransferOfferRow[]
   mySellerNegotiations: TransferNegotiationRow[]
@@ -555,6 +556,7 @@ type RiderTransferListPageProps = {
   setActivityMode: (value: ActivityFilterMode) => void
   onOpenOfferReview: (offerId: string) => void
   onOpenNegotiation: (negotiationId: string) => void
+  onWithdrawNegotiation: (negotiationId: string) => void
   onCancelNegotiation: (negotiationId: string) => void
 }
 
@@ -589,6 +591,7 @@ export default function RiderTransferListPage(props: RiderTransferListPageProps)
     onWithdrawSentOffer,
     onOpenTeamPage,
     onOpenRiderProfile,
+    ownedRiderIds,
     mySentOffers,
     mySellerNegotiations,
     myBuyerNegotiations,
@@ -597,7 +600,7 @@ export default function RiderTransferListPage(props: RiderTransferListPageProps)
     setActivityMode,
     onOpenOfferReview,
     onOpenNegotiation,
-    onCancelNegotiation,
+    onWithdrawNegotiation,
   } = props
 
   const transferActivityItems = useMemo(() => {
@@ -1293,7 +1296,7 @@ export default function RiderTransferListPage(props: RiderTransferListPageProps)
                       <button
                         type="button"
                         disabled={item.cancelNegotiationDisabled}
-                        onClick={() => onCancelNegotiation(item.cancelNegotiationId!)}
+                        onClick={() => onWithdrawNegotiation(item.negotiationIdToOpen!)}
                         className={`rounded-md px-3 py-1.5 text-xs font-medium ${
                           item.cancelNegotiationDisabled
                             ? 'cursor-not-allowed border border-gray-200 bg-gray-100 text-gray-400'
@@ -1359,8 +1362,11 @@ export default function RiderTransferListPage(props: RiderTransferListPageProps)
 
       <TransferHistoryPanel
         transferHistory={transferHistory}
-        onOpenRiderProfile={(riderId) => onOpenRiderProfile(riderId, false)}
-        onOpenTeamPage={(clubId) => onOpenTeamPage(clubId)}
+        ownedRiderIds={ownedRiderIds}
+        onOpenRiderProfile={(riderId, isOwnedByUser) =>
+          onOpenRiderProfile(riderId, isOwnedByUser)
+        }
+        onOpenClubProfile={(clubId) => onOpenTeamPage(clubId)}
       />
 
       <div className="rounded-lg border border-blue-100 bg-blue-50 p-4 shadow">
