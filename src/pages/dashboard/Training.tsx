@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useEffect, useMemo, useRef, useState } from 'react'
-import { useSearchParams } from 'react-router'
+import { useNavigate, useSearchParams } from 'react-router'
 import { supabase } from '../../lib/supabase'
 
 type TabKey = 'regular' | 'camps'
@@ -21,16 +21,38 @@ type RegionFilter =
 type CalendarSuitability = 'preferred' | 'risky' | 'unavailable' | 'normal'
 
 type GameDateParts = {
+  current_game_date?: string | null
+  game_date?: string | null
   season_number: number
   month_number: number
   day_number: number
   hour_number: number
+  minute_number?: number | null
 }
 
 type FamilyClub = {
   club_id: string
   club_name: string
   team_label: 'First Team' | 'U23'
+}
+
+type CampStaffOption = {
+  staff_id: string
+  club_id: string
+  club_name: string | null
+  staff_name: string | null
+  role_type: string | null
+  role_label: string | null
+  specialization: string | null
+  team_scope: 'first_team' | 'u23' | 'all' | string | null
+  overall: number | null
+  salary_weekly: number | null
+  on_active_course: boolean
+  overlapping_booking_id: string | null
+  availability_status: string | null
+  block_reason: string | null
+  boost_label: string | null
+  boost_metadata: Record<string, unknown> | null
 }
 
 type ClubRegularTrainingDefaultRow = {
@@ -89,7 +111,9 @@ type Camp = {
 type RosterRider = {
   club_id: string
   rider_id: string
-  display_name: string
+  first_name?: string | null
+  last_name?: string | null
+  display_name: string | null
   assigned_role: string | null
   age_years: number | null
   overall: number | null
@@ -98,6 +122,13 @@ type RosterRider = {
   fatigue: number | null
   source_club_name?: string
   team_label?: 'First Team' | 'U23'
+}
+
+type RiderNameRow = {
+  id: string
+  first_name: string | null
+  last_name: string | null
+  display_name: string | null
 }
 
 type CampQuote = {
@@ -125,11 +156,24 @@ type CampQuote = {
   total_cost: number
   per_rider_total: number
   warnings: string[]
+
+  // v2 staff-aware fields
+  riders_count?: number
+  staff_count?: number
+  charged_participants_count?: number
 }
 
 type BookingValidation = {
   is_valid: boolean
-  participants_count: number
+
+  // old compatibility
+  participants_count?: number
+
+  // v2 staff-aware fields
+  riders_count?: number
+  staff_count?: number
+  charged_participants_count?: number
+
   weather_state: WeatherState
   validation_errors: string[]
   validation_warnings: string[]
@@ -140,6 +184,14 @@ type BookingValidation = {
     fatigue: number | null
     status_code: string
   }>
+  blocked_staff?: Array<{
+    staff_id: string
+    staff_name: string | null
+    role_type: string | null
+    availability_status: string | null
+    block_reason: string | null
+    status_code?: string | null
+  }>
 }
 
 type BookingResult = {
@@ -148,6 +200,8 @@ type BookingResult = {
   booking_status: string
   total_cost: number
   participants_count: number
+  staff_count?: number
+  charged_participants_count?: number
   weather_state: WeatherState
   validation_warnings: string[]
   created_at: string
@@ -160,11 +214,14 @@ type CurrentCampBooking = {
   end_date: string
   status: 'planned' | 'active' | 'completed' | 'cancelled'
   participants_count: number | null
+  staff_count: number | null
+  charged_participants_count: number | null
   total_cost: number | null
   city_snapshot: string | null
   country_code_snapshot: string | null
   camp_type_snapshot: string | null
   created_at: string
+  notes?: Record<string, unknown> | null
 }
 
 const CAMP_TYPE_LABELS: Record<CampType, string> = {
@@ -241,6 +298,20 @@ const REGULAR_TRAINING_INTENSITY_OPTIONS: Array<'light' | 'normal' | 'hard'> = [
 
 const WEEKDAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 const CAMPS_PER_PAGE = 8
+
+const campHeaderButtonBaseClass =
+  'inline-flex h-8 min-w-[118px] items-center justify-center rounded-full border px-3 text-xs font-medium whitespace-nowrap transition-colors'
+
+const openCurrentCampButtonClass =
+  `${campHeaderButtonBaseClass} border-blue-300 bg-white text-blue-700 hover:bg-blue-50`
+
+const cancelCampButtonClass =
+  `${campHeaderButtonBaseClass} border-red-300 bg-white text-red-700 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60`
+
+const PAST_TRAINING_CAMP_ERROR = 'Training camp cannot start today or in the past.'
+
+const TRAINING_CAMP_REFUND_NOTICE =
+  'Plan camp dates carefully. Once a training camp is booked, cancelling it close to the start date may only return a partial refund or no refund.'
 const GAME_MONTH_SHORT = [
   'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
   'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
@@ -271,12 +342,56 @@ function titleCaseFromSnake(value: string | null | undefined): string {
     .join(' ')
 }
 
+function formatCampTypeLabel(value: string | null | undefined): string {
+  if (!value) return 'Training Camp'
+
+  if (value in CAMP_TYPE_LABELS) {
+    return CAMP_TYPE_LABELS[value as CampType]
+  }
+
+  return titleCaseFromSnake(value)
+}
+
+function formatCampDateRange(startDateValue: string, endDateValue: string): string {
+  return `${formatGameDateLabel(startDateValue)} → ${formatGameDateLabel(endDateValue)}`
+}
+
+function formatSeasonLabel(dateValue: string | null | undefined): string {
+  if (!dateValue) return 'Season —'
+
+  try {
+    const date = parseDateString(dateValue)
+    const seasonNumber = date.getFullYear() - 1999
+
+    if (!Number.isFinite(seasonNumber) || seasonNumber < 1) {
+      return 'Season —'
+    }
+
+    return `Season ${seasonNumber}`
+  } catch {
+    return 'Season —'
+  }
+}
+
 function formatTrainingFocusLabel(value: string): string {
   return titleCaseFromSnake(value)
 }
 
 function formatTrainingIntensityLabel(value: 'light' | 'normal' | 'hard'): string {
   return value.charAt(0).toUpperCase() + value.slice(1)
+}
+
+function getFullRiderName(rider: {
+  first_name?: string | null
+  last_name?: string | null
+  display_name?: string | null
+}): string {
+  const fullName = [rider.first_name, rider.last_name]
+    .map(value => value?.trim())
+    .filter(Boolean)
+    .join(' ')
+
+  return fullName || rider.display_name || 'Unnamed rider'
 }
 
 function getCountryRegion(countryCode: string | null | undefined): string {
@@ -400,8 +515,18 @@ function estimatePerRiderCost(
   return Math.round(travelPerRider + accommodationPerRider + campFeePerRider + logisticsShare)
 }
 
+function normalizeIsoDateValue(value: string | null | undefined): string | null {
+  if (!value) return null
+
+  const match = String(value).match(/^(\d{4})-(\d{2})-(\d{2})/)
+  if (!match) return null
+
+  return `${match[1]}-${match[2]}-${match[3]}`
+}
+
 function parseDateString(value: string): Date {
-  const [year, month, day] = value.split('-').map(Number)
+  const normalizedValue = normalizeIsoDateValue(value) ?? value
+  const [year, month, day] = normalizedValue.split('-').map(Number)
   return new Date(year, month - 1, day)
 }
 
@@ -410,6 +535,90 @@ function toDateString(date: Date): string {
   const month = `${date.getMonth() + 1}`.padStart(2, '0')
   const day = `${date.getDate()}`.padStart(2, '0')
   return `${year}-${month}-${day}`
+}
+
+function addDays(dateValue: string, amount: number): string {
+  const date = parseDateString(dateValue)
+  date.setDate(date.getDate() + amount)
+  return toDateString(date)
+}
+
+function normalizeGameDateValue(value: unknown): string | null {
+  if (!value) return null
+
+  if (typeof value === 'string') {
+    return value.slice(0, 10)
+  }
+
+  if (Array.isArray(value)) {
+    return normalizeGameDateValue(value[0])
+  }
+
+  if (typeof value === 'object') {
+    const row = value as Record<string, unknown>
+
+    const possible =
+      row.get_current_game_date_date ??
+      row.current_game_date ??
+      row.game_date ??
+      row.date
+
+    if (typeof possible === 'string') {
+      return possible.slice(0, 10)
+    }
+  }
+
+  return null
+}
+
+function normalizeGameDateParts(value: unknown): GameDateParts | null {
+  if (!value) return null
+
+  const row = Array.isArray(value) ? value[0] : value
+
+  if (!row || typeof row !== 'object') return null
+
+  const record = row as Record<string, unknown>
+
+  const seasonNumber = Number(record.season_number)
+  const monthNumber = Number(record.month_number)
+  const dayNumber = Number(record.day_number)
+  const hourNumber = Number(record.hour_number ?? 0)
+  const minuteNumber = Number(record.minute_number ?? 0)
+
+  if (!Number.isFinite(seasonNumber) || !Number.isFinite(monthNumber) || !Number.isFinite(dayNumber)) {
+    return null
+  }
+
+  return {
+    current_game_date:
+      typeof record.current_game_date === 'string' ? record.current_game_date : null,
+    game_date:
+      typeof record.game_date === 'string' ? record.game_date : null,
+    season_number: seasonNumber,
+    month_number: monthNumber,
+    day_number: dayNumber,
+    hour_number: Number.isFinite(hourNumber) ? hourNumber : 0,
+    minute_number: Number.isFinite(minuteNumber) ? minuteNumber : 0
+  }
+}
+
+function buildGameDateFromParts(parts: GameDateParts | null): string | null {
+  if (!parts) return null
+
+  if (parts.current_game_date) return parts.current_game_date.slice(0, 10)
+  if (parts.game_date) return parts.game_date.slice(0, 10)
+
+  const year = parts.season_number + 1999
+  const month = `${parts.month_number}`.padStart(2, '0')
+  const day = `${parts.day_number}`.padStart(2, '0')
+
+  return `${year}-${month}-${day}`
+}
+
+function compareIsoDates(a: string, b: string): number {
+  if (a === b) return 0
+  return a < b ? -1 : 1
 }
 
 function dateRangesOverlap(
@@ -618,11 +827,24 @@ function CampDatePicker({
   currentSeasonNumber,
   bookings
 }: CampDatePickerProps): JSX.Element {
-  const baseDateValue = value || minDate || currentGameDateValue || '2000-01-01'
+  const baseDateValue =
+    normalizeIsoDateValue(value) ||
+    normalizeIsoDateValue(minDate) ||
+    normalizeIsoDateValue(currentGameDateValue) ||
+    '2000-01-01'
+
   const selectedDate = useMemo(() => parseDateString(baseDateValue), [baseDateValue])
 
-  const minimumDate = useMemo(() => (minDate ? parseDateString(minDate) : null), [minDate])
-  const maximumDate = useMemo(() => (maxDate ? parseDateString(maxDate) : null), [maxDate])
+  const minimumDate = useMemo(() => {
+    const normalized = normalizeIsoDateValue(minDate)
+    return normalized ? parseDateString(normalized) : null
+  }, [minDate])
+
+  const maximumDate = useMemo(() => {
+    const normalized = normalizeIsoDateValue(maxDate)
+    return normalized ? parseDateString(normalized) : null
+  }, [maxDate])
+
   const seasonStartDate = useMemo(
     () => getCurrentSeasonStartDate(currentGameDateValue),
     [currentGameDateValue]
@@ -719,32 +941,33 @@ function CampDatePicker({
 
           <div className="grid grid-cols-7 gap-1">
             {calendarDays.map(day => {
+              const isoDate = toDateString(day)
               const isSelected = isSameDay(day, selectedDate)
               const isCurrentMonth = day.getMonth() === viewMonth.getMonth()
               const suitability = getDateSuitability(day, camp)
-              const isBeforeMinimum = minimumDate != null ? isBeforeDay(day, minimumDate) : false
+              const isPastDate = minimumDate != null ? isBeforeDay(day, minimumDate) : false
               const isAfterMaximum = maximumDate != null ? isAfterDay(day, maximumDate) : false
               const isUnavailable = suitability === 'unavailable'
-              const isDisabled = isUnavailable || isBeforeMinimum || isAfterMaximum
+              const isDisabled = isPastDate || isAfterMaximum || isUnavailable
               const isBookedPeriod = bookings.some(booking =>
                 isDateWithinRange(day, booking.start_date, booking.end_date)
               )
 
               return (
                 <button
-                  key={toDateString(day)}
+                  key={isoDate}
                   type="button"
                   disabled={isDisabled}
                   title={
-                    isBeforeMinimum
-                      ? 'Past in-game date'
+                    isPastDate
+                      ? 'Before earliest bookable start date'
                       : isAfterMaximum
                         ? 'Outside current season'
                         : getSuitabilityTitle(suitability)
                   }
                   onClick={() => {
                     if (isDisabled) return
-                    onChange(toDateString(day))
+                    onChange(isoDate)
                     setIsOpen(false)
                   }}
                   className={`flex h-10 items-center justify-center rounded-lg text-sm transition ${getDayButtonClassName(
@@ -753,7 +976,7 @@ function CampDatePicker({
                     isCurrentMonth
                   )} ${isBookedPeriod ? 'ring-2 ring-blue-200' : ''} ${
                     isDisabled ? 'cursor-not-allowed opacity-70' : ''
-                  }`}
+                  } ${isPastDate ? 'bg-slate-100 text-slate-400 hover:bg-slate-100' : ''}`}
                 >
                   {day.getDate()}
                 </button>
@@ -803,6 +1026,7 @@ function isClubLevelActiveCampOnlyError(message: string): boolean {
 }
 
 export default function TrainingPage(): JSX.Element {
+  const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const focusedRiderId = searchParams.get('riderId')
 
@@ -821,6 +1045,9 @@ export default function TrainingPage(): JSX.Element {
   const [days, setDays] = useState<number>(7)
   const [startDate, setStartDate] = useState<string>('')
   const [selectedRiderIds, setSelectedRiderIds] = useState<string[]>([])
+  const [availableStaff, setAvailableStaff] = useState<CampStaffOption[]>([])
+  const [selectedStaffIds, setSelectedStaffIds] = useState<string[]>([])
+  const [staffLoading, setStaffLoading] = useState(false)
   const [regionFilter, setRegionFilter] = useState<RegionFilter>('all')
   const [campTypeFilter, setCampTypeFilter] = useState<'all' | CampType>('all')
   const [maxPerRiderFilter, setMaxPerRiderFilter] = useState<number>(2500)
@@ -868,10 +1095,17 @@ export default function TrainingPage(): JSX.Element {
     return [matchedRider, ...roster.filter(rider => rider.rider_id !== focusedRiderId)]
   }, [roster, focusedRiderId])
 
+  const currentGameDateIso = useMemo(() => currentGameDate, [currentGameDate])
+
   const currentSeasonEndDateValue = useMemo(() => {
-    if (!currentGameDate) return null
-    const current = parseDateString(currentGameDate)
+    if (!currentGameDateIso) return null
+    const current = parseDateString(currentGameDateIso)
     return toDateString(new Date(current.getFullYear(), 11, 31))
+  }, [currentGameDateIso])
+
+  const minimumBookableCampStartDate = useMemo(() => {
+    if (!currentGameDate) return null
+    return addDays(currentGameDate, 1)
   }, [currentGameDate])
 
   const selectedRangeEndValue = useMemo(() => {
@@ -880,6 +1114,13 @@ export default function TrainingPage(): JSX.Element {
     endDate.setDate(endDate.getDate() + Math.max(0, days - 1))
     return toDateString(endDate)
   }, [startDate, days])
+
+  const isSelectedStartDateInPast = useMemo(() => {
+    if (!minimumBookableCampStartDate || !startDate) return false
+
+    const selectedStartDateIso = normalizeIsoDateValue(startDate) ?? startDate
+    return compareIsoDates(selectedStartDateIso, minimumBookableCampStartDate) < 0
+  }, [minimumBookableCampStartDate, startDate])
 
   const selectableRoster = useMemo(
     () =>
@@ -958,11 +1199,13 @@ export default function TrainingPage(): JSX.Element {
   const isBookingAllowedWithAvailableRiders =
     filteredValidationErrors.length === 0 &&
     !hasSelectedOverlapBlockedRider &&
-    selectedRiderIds.length >= 5
+    selectedRiderIds.length >= 5 &&
+    !isSelectedStartDateInPast
 
   const canSubmitBooking =
     Boolean(selectedCampId) &&
     !bookingLoading &&
+    !isSelectedStartDateInPast &&
     Boolean(validation?.is_valid || isBookingAllowedWithAvailableRiders)
 
   const currentCampParticipants = useMemo(() => {
@@ -1185,23 +1428,40 @@ export default function TrainingPage(): JSX.Element {
     const { data, error } = await supabase
       .from('training_camp_bookings')
       .select(
-        'id, camp_id, start_date, end_date, status, participants_count, total_cost, city_snapshot, country_code_snapshot, camp_type_snapshot, created_at'
+        `
+        id,
+        camp_id,
+        start_date,
+        end_date,
+        status,
+        participants_count,
+        staff_count,
+        charged_participants_count,
+        total_cost,
+        city_snapshot,
+        country_code_snapshot,
+        camp_type_snapshot,
+        created_at,
+        notes
+      `
       )
       .eq('club_id', nextClubId)
       .in('status', ['planned', 'active'])
       .order('start_date', { ascending: true })
 
-    if (error) throw error
+    if (error) {
+      console.error('loadCurrentCampBooking error:', error)
+      throw error
+    }
 
     const bookings = (data ?? []) as CurrentCampBooking[]
     setClubBookings(bookings)
 
     const bookingIds = bookings.map(booking => booking.id)
+
     if (bookingIds.length === 0) {
       setBookingParticipantsByBookingId({})
-      const activeBooking = bookings.find(booking => booking.status === 'active') ?? null
-      const plannedBooking = bookings.find(booking => booking.status === 'planned') ?? null
-      setCurrentCampBooking(activeBooking ?? plannedBooking ?? bookings[0] ?? null)
+      setCurrentCampBooking(null)
       return
     }
 
@@ -1210,7 +1470,10 @@ export default function TrainingPage(): JSX.Element {
       .select('booking_id, rider_id')
       .in('booking_id', bookingIds)
 
-    if (participantsError) throw participantsError
+    if (participantsError) {
+      console.error('loadCurrentCampBooking participants error:', participantsError)
+      throw participantsError
+    }
 
     const grouped = (participantsData ?? []).reduce<Record<string, string[]>>(
       (acc, row: { booking_id: string; rider_id: string }) => {
@@ -1225,6 +1488,7 @@ export default function TrainingPage(): JSX.Element {
 
     const activeBooking = bookings.find(booking => booking.status === 'active') ?? null
     const plannedBooking = bookings.find(booking => booking.status === 'planned') ?? null
+
     setCurrentCampBooking(activeBooking ?? plannedBooking ?? bookings[0] ?? null)
   }
 
@@ -1237,6 +1501,32 @@ export default function TrainingPage(): JSX.Element {
     if (error) throw error
 
     setCurrentCampParticipantIds((data ?? []).map((row: { rider_id: string }) => row.rider_id))
+  }
+
+  async function fetchAvailableCampStaff(
+    nextClubId: string,
+    nextStartDate: string,
+    nextDays: number
+  ): Promise<CampStaffOption[]> {
+    const { data, error } = await supabase.rpc('get_available_training_camp_staff', {
+      p_club_id: nextClubId,
+      p_start_date: nextStartDate || null,
+      p_days: nextDays
+    })
+
+    if (error) throw error
+
+    return ((data ?? []) as CampStaffOption[]).filter(
+      member => member.role_type !== 'scout_analyst'
+    )
+  }
+
+  function keepOnlySelectableStaff(rows: CampStaffOption[]): void {
+    const selectableIds = rows.filter(isStaffSelectable).map(member => member.staff_id)
+
+    setSelectedStaffIds(current =>
+      current.filter(staffId => selectableIds.includes(staffId))
+    )
   }
 
   useEffect(() => {
@@ -1265,6 +1555,27 @@ export default function TrainingPage(): JSX.Element {
       setSelectedCampId(filteredCamps[0].id)
     }
   }, [filteredCamps, selectedCampId])
+
+  useEffect(() => {
+    if (!minimumBookableCampStartDate) return
+
+    setStartDate(current => {
+      const normalizedCurrent = normalizeIsoDateValue(current) ?? current
+
+      if (!normalizedCurrent) {
+        return minimumBookableCampStartDate
+      }
+
+      const selectedDate = parseDateString(normalizedCurrent)
+      const minimumDate = parseDateString(minimumBookableCampStartDate)
+
+      if (isBeforeDay(selectedDate, minimumDate)) {
+        return minimumBookableCampStartDate
+      }
+
+      return normalizedCurrent
+    })
+  }, [minimumBookableCampStartDate])
 
   useEffect(() => {
     const validIds = selectableRoster
@@ -1356,15 +1667,53 @@ export default function TrainingPage(): JSX.Element {
         if (campRes.error) throw campRes.error
         if (rosterRes.error) throw rosterRes.error
 
+        const rosterRows = (rosterRes.data ?? []) as RosterRider[]
+        const rosterRiderIds = Array.from(
+          new Set(
+            rosterRows
+              .map(row => row.rider_id)
+              .filter((riderId): riderId is string => Boolean(riderId))
+          )
+        )
+
+        let riderNameById = new Map<string, RiderNameRow>()
+
+        if (rosterRiderIds.length > 0) {
+          const { data: riderNameRows, error: riderNameError } = await supabase
+            .from('riders')
+            .select('id, first_name, last_name, display_name')
+            .in('id', rosterRiderIds)
+
+          if (riderNameError) {
+            console.warn('Could not load rider first/last names:', riderNameError)
+          }
+
+          riderNameById = new Map(
+            ((riderNameRows ?? []) as RiderNameRow[]).map(row => [row.id, row])
+          )
+        }
+
         if (cancelled) return
 
         const loadedCamps = (campRes.data ?? []) as Camp[]
-        const loadedRoster = ((rosterRes.data ?? []) as RosterRider[])
-          .map(rider => {
-            const source = familyClubMap.get(rider.club_id)
+        const loadedRoster = rosterRows
+          .map(row => {
+            const source = familyClubMap.get(row.club_id)
+            const riderName = riderNameById.get(row.rider_id)
+            const fullName = [riderName?.first_name, riderName?.last_name]
+              .map(value => value?.trim())
+              .filter(Boolean)
+              .join(' ')
 
             return {
-              ...rider,
+              ...row,
+              first_name: riderName?.first_name ?? null,
+              last_name: riderName?.last_name ?? null,
+              display_name:
+                fullName ||
+                riderName?.display_name ||
+                row.display_name ||
+                'Unnamed rider',
               source_club_name: source?.club_name ?? 'Unknown Team',
               team_label: (source?.team_label ?? 'First Team') as 'First Team' | 'U23'
             }
@@ -1376,10 +1725,13 @@ export default function TrainingPage(): JSX.Element {
             return (b.overall ?? 0) - (a.overall ?? 0)
           })
 
-        const nextGameDate = String(gameDateRes.data ?? '')
-        const nextGameDateParts = Array.isArray(gameDatePartsRes.data)
-          ? ((gameDatePartsRes.data[0] as GameDateParts | undefined) ?? null)
-          : (gameDatePartsRes.data as GameDateParts | null)
+        const nextGameDateParts = normalizeGameDateParts(gameDatePartsRes.data)
+
+        const nextGameDateFromParts = buildGameDateFromParts(nextGameDateParts)
+        const nextGameDateFromDateRpc = normalizeGameDateValue(gameDateRes.data)
+
+        const nextGameDate = nextGameDateFromParts ?? nextGameDateFromDateRpc ?? ''
+        const nextMinimumBookableCampStartDate = nextGameDate ? addDays(nextGameDate, 1) : ''
 
         setClubId(myClubId as string)
         setClubCountryCode(clubRow.country_code ?? null)
@@ -1402,12 +1754,39 @@ export default function TrainingPage(): JSX.Element {
             .slice(0, 5)
             .map(rider => rider.rider_id)
         )
-        setStartDate(prev => prev || nextGameDate)
+        setStartDate(prev => {
+          const normalizedPrev = normalizeIsoDateValue(prev) ?? prev
+
+          if (!nextMinimumBookableCampStartDate) {
+            return normalizedPrev
+          }
+
+          if (!normalizedPrev) {
+            return nextMinimumBookableCampStartDate
+          }
+
+          const previousSelected = parseDateString(normalizedPrev)
+          const minimumAllowed = parseDateString(nextMinimumBookableCampStartDate)
+
+          if (isBeforeDay(previousSelected, minimumAllowed)) {
+            return nextMinimumBookableCampStartDate
+          }
+
+          return normalizedPrev
+        })
 
         await loadCurrentCampBooking(myClubId as string)
       } catch (err) {
         if (!cancelled) {
-          const message = err instanceof Error ? err.message : 'Failed to load training page.'
+          console.error('Training page load failed:', err)
+
+          const message =
+            err instanceof Error
+              ? err.message
+              : typeof err === 'object' && err !== null && 'message' in err
+                ? String((err as { message?: unknown }).message)
+                : 'Failed to load training page.'
+
           setError(message)
         }
       } finally {
@@ -1425,6 +1804,46 @@ export default function TrainingPage(): JSX.Element {
   useEffect(() => {
     let cancelled = false
 
+    async function loadAvailableStaff(): Promise<void> {
+      if (!clubId || !startDate) {
+        setAvailableStaff([])
+        setSelectedStaffIds([])
+        return
+      }
+
+      setStaffLoading(true)
+
+      try {
+        const normalizedStartDate = normalizeIsoDateValue(startDate) ?? startDate
+        const rows = await fetchAvailableCampStaff(clubId, normalizedStartDate, days)
+
+        if (cancelled) return
+
+        setAvailableStaff(rows)
+        keepOnlySelectableStaff(rows)
+      } catch (err) {
+        if (!cancelled) {
+          const message =
+            err instanceof Error ? err.message : 'Failed to load training camp staff.'
+          setError(message)
+          setAvailableStaff([])
+          setSelectedStaffIds([])
+        }
+      } finally {
+        if (!cancelled) setStaffLoading(false)
+      }
+    }
+
+    void loadAvailableStaff()
+
+    return () => {
+      cancelled = true
+    }
+  }, [clubId, startDate, days])
+
+  useEffect(() => {
+    let cancelled = false
+
     async function refreshQuoteAndValidation(): Promise<void> {
       if (!clubId || !selectedCampId || !startDate) {
         setQuote(null)
@@ -1432,26 +1851,45 @@ export default function TrainingPage(): JSX.Element {
         return
       }
 
+      const normalizedStartDate = normalizeIsoDateValue(startDate) ?? startDate
+
+      if (minimumBookableCampStartDate) {
+        const selectedDate = parseDateString(normalizedStartDate)
+        const minimumDate = parseDateString(minimumBookableCampStartDate)
+
+        if (isBeforeDay(selectedDate, minimumDate)) {
+          setQuote(null)
+          setValidation(null)
+          setOverlapBlockedRiders([])
+          setStartDate(minimumBookableCampStartDate)
+          return
+        }
+      }
+
+      setError(current => (current === PAST_TRAINING_CAMP_ERROR ? null : current))
       setQuoteLoading(true)
       setBookingResult(null)
 
       try {
         const riderIds = [...new Set(selectedRiderIds)]
+        const staffIds = [...new Set(selectedStaffIds)]
 
         const [quoteRes, validationRes] = await Promise.all([
-          supabase.rpc('get_training_camp_quote', {
+          supabase.rpc('get_training_camp_quote_v2', {
             p_club_id: clubId,
             p_camp_id: selectedCampId,
-            p_start_date: startDate,
+            p_start_date: normalizedStartDate,
             p_days: days,
-            p_rider_ids: riderIds
+            p_rider_ids: riderIds,
+            p_staff_ids: staffIds
           }),
-          supabase.rpc('validate_training_camp_booking', {
+          supabase.rpc('validate_training_camp_booking_v2', {
             p_club_id: clubId,
             p_camp_id: selectedCampId,
-            p_start_date: startDate,
+            p_start_date: normalizedStartDate,
             p_days: days,
-            p_rider_ids: riderIds
+            p_rider_ids: riderIds,
+            p_staff_ids: staffIds
           })
         ])
 
@@ -1496,7 +1934,15 @@ export default function TrainingPage(): JSX.Element {
     return () => {
       cancelled = true
     }
-  }, [clubId, selectedCampId, startDate, days, selectedRiderIds])
+  }, [
+    clubId,
+    selectedCampId,
+    startDate,
+    days,
+    selectedRiderIds,
+    selectedStaffIds,
+    minimumBookableCampStartDate
+  ])
 
   async function saveRegularTrainingDefault(clubIdValue: string): Promise<void> {
     const row = buildDefaultRowForClub(clubIdValue)
@@ -1533,6 +1979,7 @@ export default function TrainingPage(): JSX.Element {
 
   async function saveRegularTrainingPlan(rider: RosterRider): Promise<void> {
     const row = buildPlanRowForRider(rider)
+    const riderName = getFullRiderName(rider)
 
     setRegularSavingRiderId(rider.rider_id)
     setRegularMessage(null)
@@ -1556,7 +2003,7 @@ export default function TrainingPage(): JSX.Element {
       if (error) throw error
 
       await loadRegularTrainingConfig(familyClubs.map(row => row.club_id))
-      setRegularMessage(`Saved regular training override for ${rider.display_name}.`)
+      setRegularMessage(`Saved regular training override for ${riderName}.`)
     } catch (err) {
       const message =
         err instanceof Error ? err.message : 'Failed to save rider regular training override.'
@@ -1567,6 +2014,8 @@ export default function TrainingPage(): JSX.Element {
   }
 
   async function clearRegularTrainingPlan(rider: RosterRider): Promise<void> {
+    const riderName = getFullRiderName(rider)
+
     setRegularSavingRiderId(rider.rider_id)
     setRegularMessage(null)
     setError(null)
@@ -1580,7 +2029,7 @@ export default function TrainingPage(): JSX.Element {
       if (error) throw error
 
       await loadRegularTrainingConfig(familyClubs.map(row => row.club_id))
-      setRegularMessage(`Removed regular training override for ${rider.display_name}.`)
+      setRegularMessage(`Removed regular training override for ${riderName}.`)
     } catch (err) {
       const message =
         err instanceof Error ? err.message : 'Failed to remove rider regular training override.'
@@ -1591,7 +2040,24 @@ export default function TrainingPage(): JSX.Element {
   }
 
   async function handleDebugBooking(): Promise<void> {
-    if (!clubId || !selectedCampId) return
+    if (!clubId || !selectedCampId || !startDate) return
+
+    const normalizedStartDate = normalizeIsoDateValue(startDate) ?? startDate
+
+    if (minimumBookableCampStartDate) {
+      const selectedDate = parseDateString(normalizedStartDate)
+      const minimumDate = parseDateString(minimumBookableCampStartDate)
+
+      if (isBeforeDay(selectedDate, minimumDate)) {
+        setError(
+          `Training camp cannot start today or in the past. Earliest start is ${formatGameDateLabel(
+            minimumBookableCampStartDate
+          )}.`
+        )
+        setStartDate(minimumBookableCampStartDate)
+        return
+      }
+    }
 
     setBookingLoading(true)
     setError(null)
@@ -1599,19 +2065,23 @@ export default function TrainingPage(): JSX.Element {
 
     try {
       const riderIds = [...new Set(selectedRiderIds)]
-      const idempotencyKey = `training-camp-${selectedCampId}-${startDate}-${days}-${Date.now()}`
+      const staffIds = [...new Set(selectedStaffIds)]
+      const idempotencyKey = `training-camp-${selectedCampId}-${normalizedStartDate}-${days}-${Date.now()}`
 
-      const { data, error: rpcError } = await supabase.rpc('finance_book_training_camp_debug', {
-        p_club_id: clubId,
-        p_camp_id: selectedCampId,
-        p_start_date: startDate,
-        p_days: days,
-        p_rider_ids: riderIds,
-        p_idempotency_key: idempotencyKey
+      const { data, error: functionError } = await supabase.functions.invoke('book-training-camp', {
+        body: {
+          club_id: clubId,
+          camp_id: selectedCampId,
+          start_date: normalizedStartDate,
+          days,
+          rider_ids: riderIds,
+          staff_ids: staffIds,
+          idempotency_key: idempotencyKey
+        }
       })
 
-      if (rpcError) {
-        throw new Error(rpcError.message || 'Training camp booking failed.')
+      if (functionError) {
+        throw new Error(functionError.message || 'Training camp booking failed.')
       }
 
       const debugResult = data as
@@ -1623,6 +2093,9 @@ export default function TrainingPage(): JSX.Element {
             booking_status?: string
             total_cost?: number
             participants_count?: number
+            riders_count?: number
+            staff_count?: number
+            charged_participants_count?: number
             weather_state?: WeatherState
             validation_warnings?: string[]
             created_at?: string
@@ -1630,7 +2103,7 @@ export default function TrainingPage(): JSX.Element {
         | null
 
       if (!debugResult) {
-        throw new Error('Training camp debug response was empty.')
+        throw new Error('Training camp booking response was empty.')
       }
 
       if (!debugResult.ok) {
@@ -1642,21 +2115,29 @@ export default function TrainingPage(): JSX.Element {
         finance_transaction_id: debugResult.finance_transaction_id ?? '',
         booking_status: debugResult.booking_status ?? 'planned',
         total_cost: debugResult.total_cost ?? 0,
-        participants_count: debugResult.participants_count ?? 0,
+        participants_count: debugResult.participants_count ?? debugResult.riders_count ?? 0,
+        staff_count: debugResult.staff_count ?? 0,
+        charged_participants_count: debugResult.charged_participants_count ?? 0,
         weather_state: (debugResult.weather_state ?? 'good') as WeatherState,
         validation_warnings: debugResult.validation_warnings ?? [],
         created_at: debugResult.created_at ?? new Date().toISOString()
       })
 
       await loadCurrentCampBooking(clubId)
+
+      const refreshedStaff = await fetchAvailableCampStaff(clubId, normalizedStartDate, days)
+      setAvailableStaff(refreshedStaff)
+      keepOnlySelectableStaff(refreshedStaff)
+      setSelectedStaffIds([])
       setOverlapBlockedRiders([])
 
-      const validationRes = await supabase.rpc('validate_training_camp_booking', {
+      const validationRes = await supabase.rpc('validate_training_camp_booking_v2', {
         p_club_id: clubId,
         p_camp_id: selectedCampId,
-        p_start_date: startDate,
+        p_start_date: normalizedStartDate,
         p_days: days,
-        p_rider_ids: riderIds
+        p_rider_ids: riderIds,
+        p_staff_ids: staffIds
       })
 
       if (!validationRes.error) {
@@ -1719,6 +2200,15 @@ export default function TrainingPage(): JSX.Element {
       }
 
       await loadCurrentCampBooking(clubId)
+
+      if (startDate) {
+        const normalizedStartDate = normalizeIsoDateValue(startDate) ?? startDate
+        const refreshedStaff = await fetchAvailableCampStaff(clubId, normalizedStartDate, days)
+        setAvailableStaff(refreshedStaff)
+        keepOnlySelectableStaff(refreshedStaff)
+      }
+
+      setSelectedStaffIds([])
       setCurrentCampParticipantIds([])
       setShowAssignedRidersModal(false)
       setBookingResult(null)
@@ -1731,6 +2221,23 @@ export default function TrainingPage(): JSX.Element {
     }
   }
 
+  function handleCampStartDateChange(nextValue: string): void {
+    if (!minimumBookableCampStartDate) {
+      setStartDate(nextValue)
+      return
+    }
+
+    const selectedDate = parseDateString(nextValue)
+    const minimumDate = parseDateString(minimumBookableCampStartDate)
+
+    if (isBeforeDay(selectedDate, minimumDate)) {
+      setStartDate(minimumBookableCampStartDate)
+      return
+    }
+
+    setStartDate(nextValue)
+  }
+
   function toggleRider(riderId: string): void {
     if (overlapBlockedRiderMap.has(riderId)) return
 
@@ -1739,6 +2246,39 @@ export default function TrainingPage(): JSX.Element {
         return current.filter(id => id !== riderId)
       }
       return [...current, riderId]
+    })
+  }
+
+  function isStaffSelectable(member: CampStaffOption): boolean {
+    return (
+      member.availability_status === 'available' &&
+      !member.on_active_course &&
+      !member.overlapping_booking_id
+    )
+  }
+
+  function getStaffBlockText(member: CampStaffOption): string | null {
+    if (member.block_reason) return member.block_reason
+    if (member.on_active_course) return 'Unavailable: this staff member is currently on a course.'
+    if (member.overlapping_booking_id) {
+      return 'Unavailable: already assigned to an overlapping training camp.'
+    }
+    if (member.availability_status && member.availability_status !== 'available') {
+      return `Unavailable: ${member.availability_status.replaceAll('_', ' ')}.`
+    }
+    return null
+  }
+
+  function toggleStaff(staffId: string): void {
+    const member = availableStaff.find(row => row.staff_id === staffId)
+    if (!member || !isStaffSelectable(member)) return
+
+    setSelectedStaffIds(current => {
+      if (current.includes(staffId)) {
+        return current.filter(id => id !== staffId)
+      }
+
+      return [...current, staffId]
     })
   }
 
@@ -1790,7 +2330,7 @@ export default function TrainingPage(): JSX.Element {
           <div className="text-sm font-semibold text-slate-900">Focused Rider Training</div>
           <div className="mt-1 text-sm text-slate-600">
             Opened from rider profile for rider id: {focusedRiderId}
-            {focusedRider ? ` · ${focusedRider.display_name}` : ''}
+            {focusedRider ? ` · ${getFullRiderName(focusedRider)}` : ''}
           </div>
           <div className="mt-3 text-sm text-slate-500">
             Use this riderId to preload the rider card, fetch current assignments, and save
@@ -1820,29 +2360,55 @@ export default function TrainingPage(): JSX.Element {
 
       {currentCampBooking ? (
         <div className="rounded-xl border border-blue-200 bg-blue-50 p-5 shadow-sm">
-          <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900">
-                Current / Planned Training Camp
-              </h3>
-              <p className="mt-1 text-sm text-gray-700">
-                {currentCampBooking.city_snapshot ?? 'Training Camp'} ·{' '}
-                {titleCaseFromSnake(currentCampBooking.camp_type_snapshot)}
-              </p>
-              <p className="mt-2 text-sm text-gray-600">
-                {formatGameDateLabel(currentCampBooking.start_date)} →{' '}
-                {formatGameDateLabel(currentCampBooking.end_date)}
-              </p>
-              {currentGameDateParts?.season_number != null ? (
-                <p className="mt-1 text-xs text-gray-500">
-                  Season {currentGameDateParts.season_number}
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Current / Planned Training Camp
+                </h3>
+
+                <p className="mt-1 text-sm text-gray-700">
+                  {currentCampBooking.city_snapshot ?? 'Training Camp'} ·{' '}
+                  {titleCaseFromSnake(currentCampBooking.camp_type_snapshot)}
                 </p>
-              ) : null}
+
+                <p className="mt-2 text-sm text-gray-600">
+                  {formatGameDateLabel(currentCampBooking.start_date)} →{' '}
+                  {formatGameDateLabel(currentCampBooking.end_date)}
+                </p>
+
+                {currentGameDateParts?.season_number != null ? (
+                  <p className="mt-1 text-xs text-gray-500">
+                    Season {currentGameDateParts.season_number}
+                  </p>
+                ) : null}
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() =>
+                    navigate(`/dashboard/training/current-camp/${currentCampBooking.id}`)
+                  }
+                  className={openCurrentCampButtonClass}
+                >
+                  Open Current Camp
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => void handleCancelCamp()}
+                  disabled={cancelLoading}
+                  className={cancelCampButtonClass}
+                >
+                  {cancelLoading ? 'Cancelling…' : 'Cancel Camp'}
+                </button>
+              </div>
             </div>
 
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2 md:justify-end">
               <span
-                className={`rounded-full px-2.5 py-1 text-xs font-medium ${
+                className={`rounded-full px-3 py-1 text-xs font-medium ${
                   currentCampBooking.status === 'active'
                     ? 'bg-green-100 text-green-700'
                     : 'bg-blue-100 text-blue-700'
@@ -1858,27 +2424,29 @@ export default function TrainingPage(): JSX.Element {
                   await loadCurrentCampParticipants(currentCampBooking.id)
                   setShowAssignedRidersModal(true)
                 }}
-                className="rounded-full border border-gray-200 bg-white px-2.5 py-1 text-xs text-gray-700 hover:bg-gray-50"
+                className="rounded-full border border-gray-200 bg-white px-3 py-1 text-xs text-gray-700 hover:bg-gray-50"
               >
                 Riders: {currentCampBooking.participants_count ?? 0}
               </button>
 
-              <span className="rounded-full bg-white px-2.5 py-1 text-xs text-gray-700">
-                {formatCurrency(currentCampBooking.total_cost ?? 0)}
+              <span className="rounded-full bg-white px-3 py-1 text-xs text-gray-700">
+                Staff: {currentCampBooking.staff_count ?? 0}
               </span>
 
-              <button
-                type="button"
-                onClick={() => void handleCancelCamp()}
-                disabled={cancelLoading}
-                className="rounded-full border border-red-300 bg-white px-3 py-1 text-xs font-medium text-red-700 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {cancelLoading ? 'Cancelling…' : 'Cancel Camp'}
-              </button>
+              <span className="rounded-full bg-white px-3 py-1 text-xs text-gray-700">
+                Charged:{' '}
+                {currentCampBooking.charged_participants_count ??
+                  currentCampBooking.participants_count ??
+                  0}
+              </span>
+
+              <span className="rounded-full bg-white px-3 py-1 text-xs text-gray-700">
+                {formatCurrency(currentCampBooking.total_cost ?? 0)}
+              </span>
             </div>
           </div>
 
-          <div className="mt-3 text-sm text-gray-600">
+          <div className="mt-4 text-sm text-gray-600">
             Existing camp dates are outlined in blue in the date picker. Overlap is enforced per
             rider during validation and booking, so another camp in the same period can still be
             planned if riders do not conflict.
@@ -1890,7 +2458,7 @@ export default function TrainingPage(): JSX.Element {
             Current / Planned Training Camp
           </h3>
           <p className="mt-2 text-sm text-gray-600">
-            No planned or active training camp yet. Pick a camp, choose riders, and book it.
+            No planned or active training camp yet. Pick a camp, choose riders, staff, and book it.
           </p>
         </div>
       )}
@@ -1942,11 +2510,6 @@ export default function TrainingPage(): JSX.Element {
                 {regularTrainingSummary.blockedRiders}
               </div>
             </div>
-          </div>
-
-          <div className="rounded-xl border border-dashed border-gray-300 bg-white p-4 text-sm text-gray-600 shadow-sm">
-            Loaded from DB: {regularDefaults.length} team default row(s), {regularPlans.length}{' '}
-            rider override row(s)
           </div>
 
           <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
@@ -2106,7 +2669,7 @@ export default function TrainingPage(): JSX.Element {
                       <div>
                         <div className="flex flex-wrap items-center gap-2">
                           <div className="text-base font-semibold text-gray-900">
-                            {rider.display_name}
+                            {getFullRiderName(rider)}
                           </div>
 
                           {isFocusedRider ? (
@@ -2515,9 +3078,9 @@ export default function TrainingPage(): JSX.Element {
                       </span>
                       <CampDatePicker
                         value={startDate}
-                        onChange={setStartDate}
+                        onChange={handleCampStartDateChange}
                         camp={selectedCamp}
-                        minDate={currentGameDate}
+                        minDate={minimumBookableCampStartDate}
                         maxDate={currentSeasonEndDateValue}
                         currentGameDateValue={currentGameDate}
                         currentSeasonNumber={currentGameDateParts?.season_number ?? null}
@@ -2526,6 +3089,11 @@ export default function TrainingPage(): JSX.Element {
                       {startDate ? (
                         <div className="mt-2 text-xs text-gray-500">
                           {formatGameDateLabel(startDate)}
+                        </div>
+                      ) : null}
+                      {minimumBookableCampStartDate ? (
+                        <div className="mt-1 text-xs text-gray-500">
+                          Earliest start: {formatGameDateLabel(minimumBookableCampStartDate)}
                         </div>
                       ) : null}
                       {currentGameDateParts?.season_number != null ? (
@@ -2552,6 +3120,38 @@ export default function TrainingPage(): JSX.Element {
                       </select>
                     </label>
                   </div>
+
+                  <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                    <div className="flex items-start gap-2">
+                      <span className="mt-0.5">⚠️</span>
+
+                      <div>
+                        <div className="font-medium">Check the camp dates before booking</div>
+
+                        <div className="mt-1">
+                          {TRAINING_CAMP_REFUND_NOTICE}
+                        </div>
+
+                        {startDate && selectedRangeEndValue ? (
+                          <div className="mt-2 text-xs text-amber-700">
+                            Selected period:{' '}
+                            <span className="font-medium">
+                              {formatCampDateRange(startDate, selectedRangeEndValue)}
+                            </span>
+                          </div>
+                        ) : null}
+                      </div>
+                    </div>
+                  </div>
+
+                  {isSelectedStartDateInPast ? (
+                    <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                      Training camp cannot start today or in the past.
+                      {minimumBookableCampStartDate
+                        ? ` Earliest start is ${formatGameDateLabel(minimumBookableCampStartDate)}.`
+                        : ''}
+                    </div>
+                  ) : null}
                 </div>
               ) : (
                 <div className="p-5 text-sm text-gray-500">
@@ -2589,7 +3189,7 @@ export default function TrainingPage(): JSX.Element {
                         <div>
                           <div className="flex items-center gap-2">
                             <div className="text-sm font-medium text-gray-900">
-                              {rider.display_name}
+                              {getFullRiderName(rider)}
                             </div>
 
                             {rider.team_label === 'U23' ? (
@@ -2641,6 +3241,110 @@ export default function TrainingPage(): JSX.Element {
 
             <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
               <div className="mb-3 flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900">Staff Selection</h3>
+                  <p className="mt-1 text-sm text-gray-600">
+                    Optional. Staff add camp boosts, but each selected staff member is charged like one rider.
+                  </p>
+                </div>
+
+                <span className="text-xs text-gray-500">
+                  Selected: {selectedStaffIds.length}
+                </span>
+              </div>
+
+              {staffLoading ? (
+                <div className="rounded-lg border border-gray-200 p-4 text-sm text-gray-500">
+                  Loading available staff…
+                </div>
+              ) : availableStaff.length === 0 ? (
+                <div className="rounded-lg border border-gray-200 p-4 text-sm text-gray-500">
+                  No eligible camp staff found. You can still book the camp without staff, but riders will not receive staff boosts.
+                </div>
+              ) : (
+                <div className="max-h-80 space-y-2 overflow-y-auto">
+                  {availableStaff.map(member => {
+                    const isSelected = selectedStaffIds.includes(member.staff_id)
+                    const isDisabled = !isStaffSelectable(member)
+                    const blockText = getStaffBlockText(member)
+
+                    return (
+                      <label
+                        key={member.staff_id}
+                        className={`flex items-center justify-between rounded-lg border px-3 py-2 ${
+                          isSelected ? 'border-blue-300 bg-blue-50' : 'border-gray-200'
+                        } ${isDisabled ? 'cursor-not-allowed opacity-70' : 'cursor-pointer'}`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            disabled={isDisabled}
+                            onChange={() => toggleStaff(member.staff_id)}
+                          />
+
+                          <div>
+                            <div className="flex flex-wrap items-center gap-2">
+                              <div className="text-sm font-medium text-gray-900">
+                                {member.staff_name || 'Unknown staff'}
+                              </div>
+
+                              <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-medium text-gray-700">
+                                {member.role_label || titleCaseFromSnake(member.role_type || 'staff')}
+                              </span>
+
+                              {member.team_scope ? (
+                                <span className="rounded-full bg-indigo-50 px-2 py-0.5 text-[11px] font-medium text-indigo-700">
+                                  Scope: {member.team_scope.replaceAll('_', ' ')}
+                                </span>
+                              ) : null}
+                            </div>
+
+                            <div className="text-xs text-gray-500">
+                              {member.club_name || 'Club'} · {member.specialization || 'General'} · OVR{' '}
+                              {member.overall ?? '-'} · Wage {formatCurrency(member.salary_weekly ?? 0)}
+                            </div>
+
+                            {member.boost_label ? (
+                              <div className="mt-1 text-[11px] text-green-700">
+                                Boost: {member.boost_label}
+                              </div>
+                            ) : null}
+
+                            {blockText ? (
+                              <div className="mt-1 text-[11px] text-red-600">
+                                {blockText}
+                              </div>
+                            ) : null}
+                          </div>
+                        </div>
+
+                        <span
+                          className={`rounded-full px-2.5 py-1 text-xs font-medium ${
+                            isDisabled
+                              ? 'bg-red-100 text-red-700'
+                              : isSelected
+                                ? 'bg-blue-100 text-blue-700'
+                                : 'bg-green-100 text-green-700'
+                          }`}
+                        >
+                          {isDisabled ? 'Unavailable' : isSelected ? 'Selected' : 'Available'}
+                        </span>
+                      </label>
+                    )
+                  })}
+                </div>
+              )}
+
+              {selectedStaffIds.length === 0 ? (
+                <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
+                  No staff selected. The camp can still be booked, but there will be no coach, doctor, mechanic, or director boost.
+                </div>
+              ) : null}
+            </div>
+
+            <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+              <div className="mb-3 flex items-center justify-between">
                 <h3 className="text-lg font-semibold text-gray-900">Quote & Booking</h3>
                 {quote?.weather_state ? (
                   <span
@@ -2657,13 +3361,25 @@ export default function TrainingPage(): JSX.Element {
                 <div className="space-y-4">
                   <div className="grid gap-3 md:grid-cols-2">
                     <div className="rounded-lg bg-gray-50 p-3 text-sm text-gray-700">
-                      <div className="font-medium">Participants</div>
-                      <div>{quote.participants_count}</div>
+                      <div className="font-medium">Riders</div>
+                      <div>{quote.riders_count ?? quote.participants_count}</div>
                     </div>
+
                     <div className="rounded-lg bg-gray-50 p-3 text-sm text-gray-700">
-                      <div className="font-medium">Per rider</div>
+                      <div className="font-medium">Staff</div>
+                      <div>{quote.staff_count ?? selectedStaffIds.length}</div>
+                    </div>
+
+                    <div className="rounded-lg bg-gray-50 p-3 text-sm text-gray-700">
+                      <div className="font-medium">Charged participants</div>
+                      <div>{quote.charged_participants_count ?? quote.participants_count}</div>
+                    </div>
+
+                    <div className="rounded-lg bg-gray-50 p-3 text-sm text-gray-700">
+                      <div className="font-medium">Per person</div>
                       <div>{formatCurrency(quote.per_rider_total)}</div>
                     </div>
+
                     <div className="rounded-lg bg-gray-50 p-3 text-sm text-gray-700">
                       <div className="font-medium">Travel total</div>
                       <div>{formatCurrency(quote.travel_total)}</div>
@@ -2688,6 +3404,18 @@ export default function TrainingPage(): JSX.Element {
                       {formatCurrency(quote.total_cost)}
                     </div>
                   </div>
+
+                  {isSelectedStartDateInPast ? (
+                    <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                      <div className="font-medium">Booking blocked</div>
+                      <div className="mt-1">
+                        Training camp cannot start today or in the past.
+                        {minimumBookableCampStartDate
+                          ? ` Earliest start is ${formatGameDateLabel(minimumBookableCampStartDate)}.`
+                          : ''}
+                      </div>
+                    </div>
+                  ) : null}
 
                   {filteredValidationErrors.length > 0 ? (
                     <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
@@ -2726,7 +3454,7 @@ export default function TrainingPage(): JSX.Element {
                 </div>
               ) : (
                 <div className="text-sm text-gray-600">
-                  Pick a camp and riders to see the quote.
+                  Pick a camp, riders, and optional staff to see the quote.
                 </div>
               )}
             </div>
@@ -2762,7 +3490,7 @@ export default function TrainingPage(): JSX.Element {
                     <div>
                       <div className="flex items-center gap-2">
                         <span className="text-sm font-medium text-gray-900">
-                          {rider.display_name}
+                          {getFullRiderName(rider)}
                         </span>
 
                         {rider.team_label === 'U23' ? (

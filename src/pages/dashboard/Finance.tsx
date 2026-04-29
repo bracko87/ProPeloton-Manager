@@ -13,6 +13,7 @@
  */
 
 import React, { useEffect, useMemo, useState } from 'react'
+import { useLocation } from 'react-router'
 import { supabase } from './finance/supabase'
 import { ErrorBoundary } from './finance/ErrorBoundary'
 import { OverviewTab } from './finance/OverviewTab'
@@ -213,6 +214,7 @@ function TabButton({
 
 export default function FinancePage(): JSX.Element {
   const [tab, setTab] = useState<TabKey>('overview')
+  const location = useLocation()
 
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -226,6 +228,15 @@ export default function FinancePage(): JSX.Element {
   const [statementLoaded, setStatementLoaded] = useState(false)
 
   const currency: 'USD' = 'USD'
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search)
+    const tabFromUrl = params.get('tab')
+
+    if (tabFromUrl === 'sponsors') {
+      setTab('sponsors')
+    }
+  }, [location.search])
 
   const topIncomeByName = useMemo(() => {
     const map = new Map<string, number>()

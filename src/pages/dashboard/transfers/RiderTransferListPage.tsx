@@ -5,6 +5,7 @@ type RiderRoleFilter = 'all' | string
 type RiderMarketSort =
   | 'active'
   | 'expires'
+  | 'scouted'
   | 'overall_desc'
   | 'overall_asc'
   | 'price_desc'
@@ -37,6 +38,9 @@ type MarketListingRow = {
   age_years: number | null
   overall: number | null
   potential: number | null
+  overall_label?: string | null
+  potential_label?: string | null
+  is_scouted?: boolean
   market_value: number | null
   asking_price: number
   salary: number | null
@@ -47,6 +51,7 @@ type MarketListingRow = {
   auto_price_clamped: boolean
   time_left_label?: string | null
   status?: string | null
+  created_at?: string | null
 }
 
 type TransferOfferRow = {
@@ -137,13 +142,18 @@ type TransferActivityItem = {
   actionDisabled?: boolean
   actionKind?: 'review_offer' | 'open_negotiation' | 'withdraw_offer'
   clubIdToOpen?: string | null
+  buyerClubId?: string | null
+  buyerClubName?: string
+  buyer_club_name?: string | null
+  payload_json?: Record<string, unknown> | null
+  metadata?: Record<string, unknown> | null
+  notes_json?: Record<string, unknown> | null
   riderIsOwnedByUser?: boolean
   sortTime: number
   detailChips?: TransferActivityChip[]
   offerIdToReview?: string | null
   negotiationIdToOpen?: string | null
   withdrawOfferId?: string | null
-
   cancelNegotiationId?: string | null
   cancelNegotiationLabel?: string
   cancelNegotiationDisabled?: boolean
@@ -159,6 +169,9 @@ type TransferMarketItem = {
   role: string | null
   overall: number | null
   potential: number | null
+  overall_label?: string | null
+  potential_label?: string | null
+  is_scouted?: boolean
   age_years: number | null
   seller_label: string
   amount_value: number | null
@@ -181,6 +194,65 @@ function safeText(value: string | null | undefined, fallback = 'Unknown') {
   return trimmed ? trimmed : fallback
 }
 
+function readText(value: unknown): string | null {
+  if (typeof value !== 'string') return null
+  const trimmed = value.trim()
+  return trimmed.length > 0 ? trimmed : null
+}
+
+function readRecord(value: unknown): Record<string, any> {
+  return value && typeof value === 'object' ? (value as Record<string, any>) : {}
+}
+
+function resolveBuyerClubName(item: any): string {
+  const payload = readRecord(item?.payload_json)
+  const metadata = readRecord(item?.metadata)
+  const notesJson = readRecord(item?.notes_json)
+
+  return (
+    readText(item?.buyerClubName) ??
+    readText(item?.buyer_club_name) ??
+    readText(payload?.buyer_club_name) ??
+    readText(payload?.buyerClubName) ??
+    readText(metadata?.buyer_club_name) ??
+    readText(metadata?.buyerClubName) ??
+    readText(notesJson?.buyer_club_name) ??
+    readText(notesJson?.buyerClubName) ??
+    'Unknown club'
+  )
+}
+
+function getOutgoingBuyerClubInfo(
+  item: any,
+  clubNameMap: Record<string, string>
+) {
+  const metadata = readRecord(item?.metadata)
+  const notesJson = readRecord(item?.notes_json)
+  const payloadJson = readRecord(item?.payload_json)
+
+  const clubId =
+    readText(item?.buyer_club_id) ??
+    readText(metadata?.buyer_club_id) ??
+    readText(notesJson?.buyer_club_id) ??
+    readText(payloadJson?.buyer_club_id) ??
+    readText(item?.to_club_id) ??
+    null
+
+  const clubName =
+    readText(item?.buyer_club_name) ??
+    (clubId ? readText(clubNameMap[clubId]) : null) ??
+    readText(metadata?.buyer_club_name) ??
+    readText(notesJson?.buyer_club_name) ??
+    readText(payloadJson?.buyer_club_name) ??
+    readText(item?.to_club_name) ??
+    null
+
+  return {
+    clubId,
+    clubName: clubName ?? 'Unknown club',
+  }
+}
+
 function normalizeStatus(value: string | null | undefined) {
   return String(value || '').trim().toLowerCase()
 }
@@ -191,11 +263,50 @@ function parseSortTime(value: string | null | undefined) {
   return Number.isFinite(parsed) ? parsed : 0
 }
 
-function isRecentCompletedHistory(completedAt: string | null | undefined) {
-  if (!completedAt) return false
-  const completedMs = new Date(completedAt).getTime()
-  if (!Number.isFinite(completedMs)) return false
-  return Date.now() - completedMs <= 24 * 60 * 60 * 1000
+function tryParseDate(value: string | null | undefined) {
+  if (!value) return null
+  const parsed = new Date(value)
+  return Number.isNaN(parsed.getTime()) ? null : parsed
+}
+
+function getCurrentGameDateFromState(gameState: GameStateRow | null | undefined) {
+  if (!gameState) return null
+
+  const gameYear = 1999 + Math.max(1, gameState.season_number || 1)
+
+  const gameDate = new Date(
+    Date.UTC(
+      gameYear,
+      Math.max(0, (gameState.month_number || 1) - 1),
+      Math.max(1, gameState.day_number || 1),
+      Math.max(0, gameState.hour_number || 0),
+      Math.max(0, gameState.minute_number || 0),
+      0
+    )
+  )
+
+  return Number.isNaN(gameDate.getTime()) ? null : gameDate
+}
+
+function getGameDateEndTimestamp(gameDate: string | null | undefined) {
+  if (!gameDate) return null
+
+  const parsed = new Date(`${gameDate}T23:59:59Z`)
+  if (Number.isNaN(parsed.getTime())) return null
+
+  return parsed.getTime()
+}
+
+function isRecentCompletedHistoryInGameTime(
+  completedGameDate: string | null | undefined,
+  gameState: GameStateRow | null | undefined
+) {
+  const currentGameDate = getCurrentGameDateFromState(gameState)
+  const completedTimestamp = getGameDateEndTimestamp(completedGameDate)
+
+  if (!currentGameDate || completedTimestamp == null) return false
+
+  return currentGameDate.getTime() - completedTimestamp < 24 * 60 * 60 * 1000
 }
 
 function getToneClasses(tone: ActivityTone) {
@@ -269,21 +380,12 @@ function getGameCountdownLabel(
 ) {
   if (!expiresOnGameDate) return 'No expiry'
 
-  if (!gameState) {
+  const currentGameDate = getCurrentGameDateFromState(gameState)
+
+  if (!currentGameDate) {
     const safeFallback = fallbackLabel?.trim()
     return safeFallback && safeFallback.length > 0 ? safeFallback : 'No expiry'
   }
-
-  const currentGameDate = new Date(
-    Date.UTC(
-      2000,
-      Math.max(0, gameState.month_number - 1),
-      gameState.day_number,
-      gameState.hour_number,
-      gameState.minute_number,
-      0
-    )
-  )
 
   const expiryDate = new Date(`${expiresOnGameDate}T23:59:59Z`)
   const diffMs = expiryDate.getTime() - currentGameDate.getTime()
@@ -323,6 +425,26 @@ function getPreferredRiderName(value: {
   }
   if (value.rider_id && !looksLikeUuid(value.rider_id)) return value.rider_id
   return 'Unknown rider'
+}
+
+function resolveActivityRiderName(item: any) {
+  const payload = readRecord(item?.payload_json)
+  const metadata = readRecord(item?.metadata)
+  const notesJson = readRecord(item?.notes_json)
+
+  return (
+    readText(item?.full_name) ??
+    readText(item?.display_name) ??
+    readText(item?.rider_name) ??
+    readText(payload?.rider_name) ??
+    readText(payload?.display_name) ??
+    readText(metadata?.rider_name) ??
+    readText(metadata?.display_name) ??
+    readText(notesJson?.rider_name) ??
+    readText(notesJson?.display_name) ??
+    (item?.rider_id && !looksLikeUuid(item.rider_id) ? item.rider_id : null) ??
+    'Unknown rider'
+  )
 }
 
 function InfoPair({
@@ -459,6 +581,12 @@ function MarketListRow({
 
             <span className="truncate text-sm font-semibold text-gray-900">{riderName}</span>
 
+            {item.is_scouted ? (
+              <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">
+                Scouted
+              </span>
+            ) : null}
+
             {item.is_user_active ? (
               <span className="rounded-full bg-yellow-300 px-2 py-0.5 text-[11px] font-bold uppercase text-black">
                 Active Offer
@@ -474,8 +602,10 @@ function MarketListRow({
 
           <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2">
             <InfoPair label="Role:" value={item.role || '—'} />
-            <InfoPair label="OVR:" value={item.overall ?? '—'} />
-            <InfoPair label="POT:" value={item.potential ?? '—'} />
+            <InfoPair label="OVR:" value={item.overall_label ?? '—'} />
+            {item.is_scouted ? (
+              <InfoPair label="POT:" value={item.potential_label ?? '—'} />
+            ) : null}
             <InfoPair label="Age:" value={item.age_years ?? '—'} />
             <InfoPair label="Seller:" value={stripLabelPrefix(item.seller_label)} />
           </div>
@@ -551,6 +681,7 @@ type RiderTransferListPageProps = {
   mySellerNegotiations: TransferNegotiationRow[]
   myBuyerNegotiations: TransferNegotiationRow[]
   transferHistory: TransferHistoryRow[]
+  myActiveTransferListings?: MarketListingRow[]
 
   activityMode: ActivityFilterMode
   setActivityMode: (value: ActivityFilterMode) => void
@@ -596,6 +727,7 @@ export default function RiderTransferListPage(props: RiderTransferListPageProps)
     mySellerNegotiations,
     myBuyerNegotiations,
     transferHistory,
+    myActiveTransferListings = [],
     activityMode,
     setActivityMode,
     onOpenOfferReview,
@@ -603,20 +735,26 @@ export default function RiderTransferListPage(props: RiderTransferListPageProps)
     onWithdrawNegotiation,
   } = props
 
-  const transferActivityItems = useMemo(() => {
+  const safeActiveTransferListings = Array.isArray(myActiveTransferListings)
+    ? myActiveTransferListings
+    : []
+
+  const sellerNegotiationOfferIds = useMemo(
+    () => new Set((mySellerNegotiations || []).map((row) => row.offer_id)),
+    [mySellerNegotiations]
+  )
+
+  const buyerNegotiationByOfferId = useMemo(
+    () => new Map((myBuyerNegotiations || []).map((row) => [row.offer_id, row])),
+    [myBuyerNegotiations]
+  )
+
+  const incomingActivityItems = useMemo(() => {
     const items: TransferActivityItem[] = []
-
-    const sellerNegotiationOfferIds = new Set(
-      (mySellerNegotiations || []).map((row) => row.offer_id)
-    )
-
-    const buyerNegotiationByOfferId = new Map(
-      (myBuyerNegotiations || []).map((row) => [row.offer_id, row])
-    )
 
     for (const offer of mySentOffers || []) {
       const status = normalizeStatus(offer.status)
-      const riderName = safeText(offer.full_name || offer.display_name, 'Unknown rider')
+      const riderName = resolveActivityRiderName(offer)
       const sellerName = safeText(
         offer.seller_club_name || clubNameMap[offer.seller_club_id],
         'Unknown club'
@@ -733,7 +871,7 @@ export default function RiderTransferListPage(props: RiderTransferListPageProps)
 
     for (const historyRow of transferHistory || []) {
       if (historyRow.direction !== 'arrival') continue
-      if (!isRecentCompletedHistory(historyRow.completed_at)) continue
+      if (!isRecentCompletedHistoryInGameTime(historyRow.game_date, gameState)) continue
 
       items.push({
         id: `incoming-history-${historyRow.id}`,
@@ -769,13 +907,61 @@ export default function RiderTransferListPage(props: RiderTransferListPageProps)
       })
     }
 
+    return sortActivityItems(items)
+  }, [
+    mySentOffers,
+    myBuyerNegotiations,
+    transferHistory,
+    clubNameMap,
+    gameState,
+    buyerNegotiationByOfferId,
+  ])
+
+  const outgoingListingActivityItems = useMemo(() => {
+    return safeActiveTransferListings.map((listing) => {
+      const riderName = resolveActivityRiderName(listing)
+
+      return {
+        id: `listing-${listing.listing_id}`,
+        mode: 'outgoing' as const,
+        riderId: listing.rider_id,
+        riderName,
+        riderIsOwnedByUser: true,
+        tone: 'active' as const,
+        statusLabel: 'Listed',
+        primaryLine: `Outgoing transfer • ${riderName}`,
+        secondaryLine: 'Rider is currently published on the transfer market.',
+        sortTime:
+          tryParseDate(listing.listed_on_game_date)?.getTime() ??
+          tryParseDate(listing.created_at)?.getTime() ??
+          0,
+        detailChips: [
+          {
+            label: 'Asking price',
+            value: formatTransferAmount(listing.asking_price),
+            emphasized: true,
+          },
+          {
+            label: 'Visible until',
+            value: listing.expires_on_game_date || '—',
+          },
+          {
+            label: 'Time left',
+            value: getGameCountdownLabel(listing.expires_on_game_date, gameState),
+            emphasized: true,
+          },
+        ],
+      } satisfies TransferActivityItem
+    })
+  }, [safeActiveTransferListings, gameState])
+
+  const outgoingOfferActivityItems = useMemo(() => {
+    const items: TransferActivityItem[] = []
+
     for (const offer of myReceivedOffers || []) {
       const status = normalizeStatus(offer.status)
-      const riderName = safeText(offer.full_name || offer.display_name, 'Unknown rider')
-      const buyerName = safeText(
-        offer.buyer_club_name || clubNameMap[offer.buyer_club_id],
-        'Unknown club'
-      )
+      const riderName = resolveActivityRiderName(offer)
+      const buyerClub = getOutgoingBuyerClubInfo(offer, clubNameMap)
 
       if (sellerNegotiationOfferIds.has(offer.id)) {
         continue
@@ -798,7 +984,7 @@ export default function RiderTransferListPage(props: RiderTransferListPageProps)
       } else if (status === 'rejected') {
         tone = 'negative'
         statusLabel = 'Rejected by you'
-        secondaryLine = `You rejected ${buyerName}'s offer for ${riderName}.`
+        secondaryLine = `You rejected ${buyerClub.clubName}'s offer for ${riderName}.`
       } else if (status === 'expired') {
         tone = 'negative'
         statusLabel = 'Expired'
@@ -808,7 +994,7 @@ export default function RiderTransferListPage(props: RiderTransferListPageProps)
       } else if (status === 'withdrawn' || status === 'cancelled') {
         tone = 'negative'
         statusLabel = 'Withdrawn'
-        secondaryLine = `${buyerName} cancelled this offer.`
+        secondaryLine = `${buyerClub.clubName} cancelled this offer.`
       } else {
         tone = 'active'
         statusLabel = status.replace(/_/g, ' ')
@@ -829,13 +1015,14 @@ export default function RiderTransferListPage(props: RiderTransferListPageProps)
         actionDisabled,
         actionKind,
         offerIdToReview: offer.id,
-        clubIdToOpen: offer.buyer_club_id,
+        buyerClubId: buyerClub.clubId,
+        buyerClubName: buyerClub.clubName,
+        buyer_club_name: offer.buyer_club_name ?? null,
+        metadata: offer.metadata ?? null,
+        notes_json: null,
+        payload_json: readRecord((offer as any)?.payload_json),
         sortTime: parseSortTime(offer.updated_at || offer.created_at),
         detailChips: [
-          {
-            label: 'Buyer',
-            value: buyerName,
-          },
           {
             label: 'Offer value',
             value: formatMoney(offer.offered_price),
@@ -854,13 +1041,26 @@ export default function RiderTransferListPage(props: RiderTransferListPageProps)
       })
     }
 
+    return items
+  }, [
+    myReceivedOffers,
+    sellerNegotiationOfferIds,
+    clubNameMap,
+    gameState,
+  ])
+
+  const outgoingNegotiationActivityItems = useMemo(() => {
+    const items: TransferActivityItem[] = []
+
     for (const negotiation of mySellerNegotiations || []) {
       const status = normalizeStatus(negotiation.status)
-      const riderName = safeText(negotiation.full_name || negotiation.display_name, 'Unknown rider')
-      const buyerName = safeText(
-        negotiation.buyer_club_name || clubNameMap[negotiation.buyer_club_id],
-        'Unknown club'
-      )
+
+      if (status === 'accepted' || status === 'completed') {
+        continue
+      }
+
+      const riderName = resolveActivityRiderName(negotiation)
+      const buyerClub = getOutgoingBuyerClubInfo(negotiation, clubNameMap)
       const latestSalary = formatMoney(
         negotiation.offer_salary_weekly ?? negotiation.expected_salary_weekly
       )
@@ -886,10 +1086,6 @@ export default function RiderTransferListPage(props: RiderTransferListPageProps)
         tone = 'negative'
         statusLabel = 'Negotiation expired'
         secondaryLine = 'The negotiation expired before agreement.'
-      } else if (status === 'accepted') {
-        tone = 'positive'
-        statusLabel = 'Accepted'
-        secondaryLine = 'Contract terms were accepted.'
       }
 
       items.push({
@@ -903,13 +1099,14 @@ export default function RiderTransferListPage(props: RiderTransferListPageProps)
         primaryLine: `Outgoing transfer • ${riderName}`,
         secondaryLine,
         negotiationIdToOpen: negotiation.id,
-        clubIdToOpen: negotiation.buyer_club_id,
+        buyerClubId: buyerClub.clubId,
+        buyerClubName: buyerClub.clubName,
+        buyer_club_name: negotiation.buyer_club_name ?? null,
+        metadata: null,
+        notes_json: negotiation.notes_json ?? null,
+        payload_json: readRecord((negotiation as any)?.payload_json),
         sortTime: parseSortTime(negotiation.updated_at || negotiation.opened_on_game_date),
         detailChips: [
-          {
-            label: 'Buyer',
-            value: buyerName,
-          },
           {
             label: 'Latest contract',
             value: `${latestSalary}/week`,
@@ -934,7 +1131,7 @@ export default function RiderTransferListPage(props: RiderTransferListPageProps)
 
     for (const historyRow of transferHistory || []) {
       if (historyRow.direction !== 'departure') continue
-      if (!isRecentCompletedHistory(historyRow.completed_at)) continue
+      if (!isRecentCompletedHistoryInGameTime(historyRow.game_date, gameState)) continue
 
       items.push({
         id: `outgoing-history-${historyRow.id}`,
@@ -946,13 +1143,14 @@ export default function RiderTransferListPage(props: RiderTransferListPageProps)
         statusLabel: 'Completed',
         primaryLine: `Outgoing transfer • ${safeText(historyRow.rider_name, 'Unknown rider')}`,
         secondaryLine: `Rider transfer completed successfully.`,
-        clubIdToOpen: historyRow.to_club_id,
+        buyerClubId: historyRow.to_club_id,
+        buyerClubName: safeText(historyRow.to_club_name, 'Unknown club'),
+        buyer_club_name: historyRow.to_club_name,
+        metadata: null,
+        notes_json: null,
+        payload_json: null,
         sortTime: parseSortTime(historyRow.game_date),
         detailChips: [
-          {
-            label: 'To',
-            value: safeText(historyRow.to_club_name, 'Unknown club'),
-          },
           {
             label: 'Fee',
             value: formatMoney(historyRow.amount),
@@ -970,20 +1168,31 @@ export default function RiderTransferListPage(props: RiderTransferListPageProps)
       })
     }
 
-    return sortActivityItems(items)
+    return items
   }, [
-    mySentOffers,
-    myReceivedOffers,
     mySellerNegotiations,
-    myBuyerNegotiations,
     transferHistory,
     clubNameMap,
     gameState,
   ])
 
+  const outgoingActivityItems = useMemo(() => {
+    const items = [
+      ...outgoingListingActivityItems,
+      ...outgoingOfferActivityItems,
+      ...outgoingNegotiationActivityItems,
+    ]
+
+    return sortActivityItems(items)
+  }, [
+    outgoingListingActivityItems,
+    outgoingOfferActivityItems,
+    outgoingNegotiationActivityItems,
+  ])
+
   const visibleTransferActivityItems = useMemo(
-    () => transferActivityItems.filter((item) => item.mode === activityMode),
-    [transferActivityItems, activityMode]
+    () => (activityMode === 'incoming' ? incomingActivityItems : outgoingActivityItems),
+    [activityMode, incomingActivityItems, outgoingActivityItems]
   )
 
   const [activityPage, setActivityPage] = useState(1)
@@ -1058,6 +1267,7 @@ export default function RiderTransferListPage(props: RiderTransferListPageProps)
                 className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700"
               >
                 <option value="active">Active First</option>
+                <option value="scouted">Scouted First</option>
                 <option value="expires">Expiry</option>
                 <option value="overall_desc">OVR High-Low</option>
                 <option value="overall_asc">OVR Low-High</option>
@@ -1224,9 +1434,22 @@ export default function RiderTransferListPage(props: RiderTransferListPageProps)
                       <div className="mt-1 text-sm text-gray-700">{item.secondaryLine}</div>
                     ) : null}
 
-                    {item.detailChips && item.detailChips.length > 0 ? (
+                    {item.mode === 'outgoing' ? (
+                      <div className="mt-1 text-sm text-gray-700">
+                        Buyer: {resolveBuyerClubName(item)}
+                      </div>
+                    ) : null}
+
+                    {item.mode === 'outgoing' ||
+                    (item.detailChips && item.detailChips.length > 0) ? (
                       <div className="mt-3 flex flex-wrap items-center gap-2">
-                        {item.detailChips.map((chip, index) => (
+                        {item.mode === 'outgoing' ? (
+                          <span className="rounded-md border border-slate-300 bg-white px-3 py-1 text-sm text-slate-700">
+                            Buyer: {resolveBuyerClubName(item)}
+                          </span>
+                        ) : null}
+
+                        {item.detailChips?.map((chip, index) => (
                           <ActivityDetailChip
                             key={`${item.id}-chip-${index}`}
                             label={chip.label}
@@ -1250,16 +1473,6 @@ export default function RiderTransferListPage(props: RiderTransferListPageProps)
                         className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50"
                       >
                         Open rider
-                      </button>
-                    ) : null}
-
-                    {item.clubIdToOpen ? (
-                      <button
-                        type="button"
-                        onClick={() => onOpenTeamPage(item.clubIdToOpen!)}
-                        className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50"
-                      >
-                        Open club
                       </button>
                     ) : null}
 
@@ -1296,7 +1509,11 @@ export default function RiderTransferListPage(props: RiderTransferListPageProps)
                       <button
                         type="button"
                         disabled={item.cancelNegotiationDisabled}
-                        onClick={() => onWithdrawNegotiation(item.negotiationIdToOpen!)}
+                        onClick={() => {
+                          if (item.cancelNegotiationId) {
+                            onWithdrawNegotiation(item.cancelNegotiationId)
+                          }
+                        }}
                         className={`rounded-md px-3 py-1.5 text-xs font-medium ${
                           item.cancelNegotiationDisabled
                             ? 'cursor-not-allowed border border-gray-200 bg-gray-100 text-gray-400'

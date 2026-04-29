@@ -1,29 +1,3 @@
-/**
- * src/pages/dashboard/Staff.tsx
- *
- * Staff page (dashboard/staff)
- *
- * Live v1:
- * - Resolves the user's main club
- * - Loads active staff from public.club_staff
- * - Loads infrastructure state from public.club_infrastructure
- * - Reads Developing Team unlock status for top navigation
- * - Reads current game date from backend
- * - Always shows the 5 core role slots
- * - Missing roles render as vacancies
- * - Facility levels can mark roles as Limited
- * - Release Staff is live via public.release_club_staff(...)
- * - Extend Contract is live via:
- *   - public.staff_get_contract_extension_quote(...)
- *   - public.extend_club_staff_contract(...)
- * - All popups use blurred background
- * - Release confirmation uses custom modal instead of window.confirm
- * - Extend Contract cancel returns to the staff detail window
- * - Staff detail modal shows 6 staff attributes
- * - Staff Course button restored with UI preview modal
- * - Active staff courses load and display on cards/detail modal
- */
-
 import React, { useEffect, useMemo, useState } from 'react'
 import { useLocation } from 'react-router'
 import { supabase } from '../../lib/supabase'
@@ -34,13 +8,6 @@ type StaffRole =
   | 'mechanic'
   | 'sport_director'
   | 'scout_analyst'
-
-type StaffCategory =
-  | 'performance'
-  | 'medical_technical'
-  | 'tactical_recruitment'
-
-type StaffStatus = 'active' | 'vacant' | 'limited'
 
 type ClubRow = {
   id: string
@@ -66,8 +33,18 @@ type ClubStaffRow = {
   loyalty: number
   salary_weekly: number
   contract_expires_at: string | null
+  birth_date: string | null
   is_active: boolean
   notes: Record<string, unknown> | null
+  current_assignment_label?: string | null
+}
+
+type StaffRoleLimitRow = {
+  role_type: StaffRole
+  limit_count: number
+  active_count: number
+  open_slots: number
+  can_hire: boolean
 }
 
 type ClubInfrastructureRow = {
@@ -133,39 +110,6 @@ type RecentStaffCourseResultRow = {
   loyalty_gain: number
 }
 
-type StaffMember = {
-  id: string
-  name: string
-  countryCode: string
-  specialization: string
-  salaryWeekly: number
-  contractExpiresAt: string | null
-  contractPrimaryLabel: string
-  contractSecondaryLabel: string
-  teamScope: 'first_team' | 'u23' | 'all'
-  stats: StaffStat[]
-  effects: string[]
-  activeCourse: StaffActiveCourse | null
-}
-
-type StaffSlot = {
-  role: StaffRole
-  roleLabel: string
-  category: StaffCategory
-  status: StaffStatus
-  statusLabel: string
-  member: StaffMember | null
-  warning?: string | null
-  vacancyNote?: string
-  futureNote?: string
-}
-
-type StaffCapacityInfo = {
-  supportedCount: number
-  totalCount: number
-  unsupportedRoleLabels: string[]
-}
-
 type ExtendContractQuoteRow = {
   staff_id: string
   staff_name: string
@@ -176,6 +120,35 @@ type ExtendContractQuoteRow = {
   requested_raise_percent: number
   target_contract_expires_at: string
   target_season_number: number
+
+  interest_score?: number | null
+  interest_level?: string | null
+  willingness_status?: string | null
+  decision_reason?: string | null
+  salary_reason?: string | null
+}
+
+type StaffListMember = {
+  id: string
+  role: StaffRole
+  roleLabel: string
+  name: string
+  countryCode: string
+  specialization: string
+  salaryWeekly: number
+  contractExpiresAt: string | null
+  contractPrimaryLabel: string
+  contractSecondaryLabel: string
+  teamScope: 'first_team' | 'u23' | 'all'
+  birthDate: string | null
+  ageYears: number | null
+  stats: StaffStat[]
+  effects: string[]
+  activeCourse: StaffActiveCourse | null
+  facilityWarning: string | null
+  currentAssignmentLabel: string | null
+  lastCourseTitle: string | null
+  lastCourseGains: string[]
 }
 
 type StaffCourseRow = {
@@ -206,6 +179,113 @@ type CourseOption = {
   durationDays: number
   costCash: number
   focusLabel: string
+}
+
+type RoleTabMeta = {
+  role: StaffRole
+  label: string
+  subtitle: string
+  impactAreas: string[]
+}
+
+const ROLE_TABS: RoleTabMeta[] = [
+  {
+    role: 'head_coach',
+    label: 'Head Coach',
+    subtitle: 'Training, recovery planning and long-term rider development.',
+    impactAreas: ['Regular training', 'Training camps', 'Rider development'],
+  },
+  {
+    role: 'team_doctor',
+    label: 'Team Doctor',
+    subtitle: 'Recovery quality, diagnosis and injury prevention.',
+    impactAreas: ['Recovery speed', 'Injury prevention', 'Medical case handling'],
+  },
+  {
+    role: 'mechanic',
+    label: 'Mechanic',
+    subtitle: 'Bike setup, reliability and future technical support.',
+    impactAreas: ['Race setup quality', 'Mechanical reliability', 'Condition-specific support'],
+  },
+  {
+    role: 'sport_director',
+    label: 'Sport Director',
+    subtitle: 'Tactics, leadership and race-day organization.',
+    impactAreas: ['Race tactics', 'Morale stability', 'Team coordination'],
+  },
+  {
+    role: 'scout_analyst',
+    label: 'Scout / Analyst',
+    subtitle: 'Scouting quality, prospect visibility and transfer intelligence.',
+    impactAreas: ['Scouting accuracy', 'Prospect discovery', 'Transfer intelligence'],
+  },
+]
+
+const gainLabelsByRole: Record<StaffRole, Record<string, string>> = {
+  head_coach: {
+    expertise_gain: 'Training',
+    experience_gain: 'Experience',
+    potential_gain: 'Youth Development',
+    leadership_gain: 'Leadership',
+    efficiency_gain: 'Recovery Planning',
+    loyalty_gain: 'Loyalty',
+  },
+  team_doctor: {
+    expertise_gain: 'Recovery',
+    experience_gain: 'Diagnosis',
+    potential_gain: 'Potential',
+    leadership_gain: 'Leadership',
+    efficiency_gain: 'Prevention',
+    loyalty_gain: 'Loyalty',
+  },
+  mechanic: {
+    expertise_gain: 'Setup',
+    experience_gain: 'Experience',
+    potential_gain: 'Innovation',
+    leadership_gain: 'Discipline',
+    efficiency_gain: 'Reliability',
+    loyalty_gain: 'Loyalty',
+  },
+  sport_director: {
+    expertise_gain: 'Tactics',
+    experience_gain: 'Experience',
+    potential_gain: 'Long-Term Vision',
+    leadership_gain: 'Motivation',
+    efficiency_gain: 'Organization',
+    loyalty_gain: 'Loyalty',
+  },
+  scout_analyst: {
+    expertise_gain: 'Evaluation',
+    experience_gain: 'Network',
+    potential_gain: 'Prospect Sense',
+    leadership_gain: 'Communication',
+    efficiency_gain: 'Accuracy',
+    loyalty_gain: 'Loyalty',
+  },
+}
+
+function isStaffRole(value: string | null | undefined): value is StaffRole {
+  return (
+    value === 'head_coach' ||
+    value === 'team_doctor' ||
+    value === 'mechanic' ||
+    value === 'sport_director' ||
+    value === 'scout_analyst'
+  )
+}
+
+function getCourseGainMap(role: StaffRole | string | null | undefined): Array<[string, string]> {
+  const safeRole: StaffRole = isStaffRole(role) ? role : 'head_coach'
+  const gainLabels = gainLabelsByRole[safeRole]
+
+  return [
+    ['expertise_gain', gainLabels.expertise_gain],
+    ['experience_gain', gainLabels.experience_gain],
+    ['potential_gain', gainLabels.potential_gain],
+    ['leadership_gain', gainLabels.leadership_gain],
+    ['efficiency_gain', gainLabels.efficiency_gain],
+    ['loyalty_gain', gainLabels.loyalty_gain],
+  ]
 }
 
 function TopNav({ hasDevelopingTeam }: { hasDevelopingTeam: boolean }) {
@@ -278,6 +358,14 @@ function normalizeRpcSingle<T>(value: unknown): T | null {
   return (value as T) ?? null
 }
 
+function getErrorMessage(err: unknown, fallback: string) {
+  if (err && typeof err === 'object' && 'message' in err) {
+    return String((err as { message?: unknown }).message)
+  }
+
+  return fallback
+}
+
 function normalizeGameDateValue(value: unknown): string | null {
   if (!value) return null
 
@@ -338,6 +426,26 @@ function parseIsoDateUtc(value: string | null | undefined) {
   return new Date(Date.UTC(year, month - 1, day))
 }
 
+function getStaffAge(birthDate: string | null, currentGameDate: string | null) {
+  const birth = parseIsoDateUtc(birthDate)
+  const current = parseIsoDateUtc(currentGameDate)
+
+  if (!birth || !current) return null
+
+  let age = current.getUTCFullYear() - birth.getUTCFullYear()
+  const currentMonth = current.getUTCMonth()
+  const birthMonth = birth.getUTCMonth()
+
+  if (
+    currentMonth < birthMonth ||
+    (currentMonth === birthMonth && current.getUTCDate() < birth.getUTCDate())
+  ) {
+    age -= 1
+  }
+
+  return age
+}
+
 function getSeasonNumberFromDate(value: string | null | undefined) {
   const date = parseIsoDateUtc(value)
   if (!date) return null
@@ -373,7 +481,7 @@ function formatContractUi(dateValue: string | null, currentGameDate: string | nu
   if (!dateValue) {
     return {
       primary: 'No contract date',
-      secondary: '',
+      secondary: 'Missing contract_expires_at in club_staff',
     }
   }
 
@@ -400,24 +508,16 @@ function formatContractUi(dateValue: string | null, currentGameDate: string | nu
   }
 }
 
+function formatStaffAge(ageYears: number | null) {
+  return ageYears === null ? 'Age unknown' : `${ageYears} years old`
+}
+
 function formatCurrency(value: number) {
   return `$${value.toLocaleString('de-DE')}`
 }
 
 function getStaffReleaseCost(salaryWeekly: number) {
   return Math.max(0, salaryWeekly * 6)
-}
-
-function getStatusClasses(status: StaffStatus) {
-  switch (status) {
-    case 'active':
-      return 'bg-green-100 text-green-700'
-    case 'limited':
-      return 'bg-yellow-100 text-yellow-700'
-    case 'vacant':
-    default:
-      return 'bg-gray-100 text-gray-600'
-  }
 }
 
 function getCountryFlagUrl(countryCode: string) {
@@ -429,6 +529,42 @@ function safeCountryCode(countryCode: string | null | undefined) {
   return countryCode.toLowerCase()
 }
 
+function getRoleMeta(role: StaffRole) {
+  return ROLE_TABS.find((item) => item.role === role) ?? ROLE_TABS[0]
+}
+
+function getRoleInfrastructureWarning(
+  role: StaffRole,
+  infrastructure: ClubInfrastructureRow | null
+) {
+  if (!infrastructure) return null
+
+  if (role === 'head_coach' && infrastructure.training_center_level <= 0) {
+    return 'Training Center Lv 0 caps part of head coach bonuses.'
+  }
+
+  if (role === 'team_doctor' && infrastructure.medical_center_level <= 0) {
+    return 'Medical Center Lv 0 caps part of team doctor bonuses.'
+  }
+
+  if (role === 'mechanic' && infrastructure.mechanics_workshop_level <= 0) {
+    return 'Mechanics Workshop Lv 0 caps part of mechanic bonuses.'
+  }
+
+  if (role === 'scout_analyst' && infrastructure.scouting_level <= 0) {
+    return 'Scouting Office Lv 0 caps part of scout and analyst bonuses.'
+  }
+
+  return null
+}
+
+function getRoleLimit(
+  role: StaffRole,
+  roleLimitMap: Map<StaffRole, StaffRoleLimitRow>
+) {
+  return roleLimitMap.get(role)?.limit_count ?? 0
+}
+
 function buildCourseOptions(role: StaffRole): CourseOption[] {
   if (role === 'head_coach') {
     return [
@@ -436,24 +572,24 @@ function buildCourseOptions(role: StaffRole): CourseOption[] {
         code: 'coach_elite_methodology',
         title: 'Elite Methodology Course',
         description: 'Improves training structure and overall rider progression quality.',
-        durationDays: 21,
-        costCash: 8000,
+        durationDays: 60,
+        costCash: 40000,
         focusLabel: 'Training + Development',
       },
       {
         code: 'coach_recovery_planning',
         title: 'Recovery Planning Seminar',
         description: 'Focus on load balancing, fatigue prevention and micro-cycle planning.',
-        durationDays: 14,
-        costCash: 5500,
+        durationDays: 30,
+        costCash: 16000,
         focusLabel: 'Recovery Planning',
       },
       {
         code: 'coach_youth_programme',
         title: 'Youth Development Programme',
         description: 'Specialised course for improving work with young and developing riders.',
-        durationDays: 28,
-        costCash: 9000,
+        durationDays: 45,
+        costCash: 28000,
         focusLabel: 'Youth Development',
       },
     ]
@@ -465,24 +601,24 @@ function buildCourseOptions(role: StaffRole): CourseOption[] {
         code: 'doctor_sports_medicine',
         title: 'Sports Medicine Course',
         description: 'Improves diagnosis quality and athlete-specific treatment decisions.',
-        durationDays: 21,
-        costCash: 8500,
+        durationDays: 45,
+        costCash: 30000,
         focusLabel: 'Diagnosis + Recovery',
       },
       {
         code: 'doctor_prevention_lab',
         title: 'Injury Prevention Lab',
         description: 'Focuses on risk screening and preventive protocols.',
-        durationDays: 14,
-        costCash: 6000,
+        durationDays: 30,
+        costCash: 17000,
         focusLabel: 'Prevention',
       },
       {
         code: 'doctor_rehab_acceleration',
         title: 'Rehab Acceleration Programme',
         description: 'Advanced rehab planning for shorter return timelines.',
-        durationDays: 28,
-        costCash: 9500,
+        durationDays: 60,
+        costCash: 42000,
         focusLabel: 'Recovery Speed',
       },
     ]
@@ -494,24 +630,24 @@ function buildCourseOptions(role: StaffRole): CourseOption[] {
         code: 'mechanic_tt_setup',
         title: 'Time Trial Setup Course',
         description: 'Advanced aerodynamic fitting and TT position optimisation.',
-        durationDays: 18,
-        costCash: 7000,
+        durationDays: 45,
+        costCash: 26000,
         focusLabel: 'Setup',
       },
       {
         code: 'mechanic_reliability',
         title: 'Reliability Workshop',
         description: 'Improves equipment consistency and race-day reliability.',
-        durationDays: 14,
-        costCash: 5200,
+        durationDays: 30,
+        costCash: 15000,
         focusLabel: 'Reliability',
       },
       {
         code: 'mechanic_weather_adaptation',
         title: 'Weather Adaptation Training',
         description: 'Focuses on technical support in wet and mixed conditions.',
-        durationDays: 16,
-        costCash: 5800,
+        durationDays: 30,
+        costCash: 17000,
         focusLabel: 'Conditions Support',
       },
     ]
@@ -523,24 +659,24 @@ function buildCourseOptions(role: StaffRole): CourseOption[] {
         code: 'director_tactics',
         title: 'Race Tactics Seminar',
         description: 'Improves tactical calls, pacing plans and race management decisions.',
-        durationDays: 18,
-        costCash: 7200,
+        durationDays: 45,
+        costCash: 28000,
         focusLabel: 'Tactics',
       },
       {
         code: 'director_leadership',
         title: 'Leadership Intensive',
         description: 'Strengthens motivation, leadership and intra-team communication.',
-        durationDays: 14,
-        costCash: 5000,
+        durationDays: 30,
+        costCash: 16000,
         focusLabel: 'Leadership',
       },
       {
         code: 'director_stage_strategy',
         title: 'Stage Strategy Programme',
         description: 'Specialized tactical planning for stage races and GC support.',
-        durationDays: 24,
-        costCash: 8600,
+        durationDays: 60,
+        costCash: 42000,
         focusLabel: 'Stage Strategy',
       },
     ]
@@ -551,24 +687,24 @@ function buildCourseOptions(role: StaffRole): CourseOption[] {
       code: 'scout_evaluation',
       title: 'Evaluation Accuracy Course',
       description: 'Improves rider assessment and report quality.',
-      durationDays: 18,
-      costCash: 6200,
+      durationDays: 45,
+      costCash: 26000,
       focusLabel: 'Evaluation',
     },
     {
       code: 'scout_networking',
       title: 'Scouting Network Camp',
       description: 'Builds connections and improves talent identification coverage.',
-      durationDays: 20,
-      costCash: 6800,
+      durationDays: 45,
+      costCash: 26000,
       focusLabel: 'Network',
     },
     {
       code: 'scout_data_analysis',
       title: 'Performance Data Analysis',
       description: 'Improves analytical review of riders and race preparation reports.',
-      durationDays: 16,
-      costCash: 5900,
+      durationDays: 30,
+      costCash: 18000,
       focusLabel: 'Accuracy + Analysis',
     },
   ]
@@ -603,679 +739,6 @@ function SectionTitle({
     <div className="mb-3">
       <div className="text-sm font-semibold text-gray-900">{title}</div>
       <div className="text-xs text-gray-500">{subtitle}</div>
-    </div>
-  )
-}
-
-function StaffRoleCard({
-  slot,
-  onOpen,
-}: {
-  slot: StaffSlot
-  onOpen: (slot: StaffSlot) => void
-}) {
-  return (
-    <button
-      type="button"
-      onClick={() => onOpen(slot)}
-      className="w-full rounded-xl border border-gray-100 bg-white p-4 text-left shadow-sm transition hover:border-gray-200 hover:shadow"
-    >
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <div className="text-sm font-semibold text-gray-900">{slot.roleLabel}</div>
-          <div className="mt-1 text-xs text-gray-500">
-            {slot.member ? slot.member.specialization : 'No staff member assigned'}
-          </div>
-        </div>
-
-        <span
-          className={`rounded-full px-2.5 py-1 text-xs font-medium ${getStatusClasses(slot.status)}`}
-        >
-          {slot.statusLabel}
-        </span>
-      </div>
-
-      <div className="mt-4">
-        {slot.member ? (
-          <>
-            <div className="flex items-center gap-3">
-              <img
-                src={getCountryFlagUrl(safeCountryCode(slot.member.countryCode))}
-                alt={slot.member.countryCode}
-                className="h-4 w-6 rounded-sm border border-gray-200 object-cover"
-              />
-              <div className="text-sm font-medium text-gray-800">{slot.member.name}</div>
-            </div>
-
-            <div className="mt-3 grid grid-cols-3 gap-2">
-              {slot.member.stats.slice(0, 3).map((stat) => (
-                <div key={stat.label} className="rounded-lg bg-gray-50 p-2">
-                  <div className="text-[11px] text-gray-500">{stat.label}</div>
-                  <div className="mt-1 text-sm font-semibold text-gray-900">{stat.value}</div>
-                </div>
-              ))}
-            </div>
-
-            <div className="mt-3 flex items-start justify-between gap-4 text-xs text-gray-500">
-              <span>{formatCurrency(slot.member.salaryWeekly)}/week</span>
-              <div className="text-right">
-                <div>{slot.member.contractPrimaryLabel}</div>
-                {slot.member.contractSecondaryLabel ? (
-                  <div className="mt-0.5 text-[11px] text-gray-400">
-                    {slot.member.contractSecondaryLabel}
-                  </div>
-                ) : null}
-              </div>
-            </div>
-
-            {slot.member.activeCourse ? (
-              <div className="mt-3 rounded-lg border border-blue-100 bg-blue-50 px-3 py-2">
-                <div className="text-xs font-medium text-blue-900">On Course</div>
-                <div className="mt-1 text-xs text-blue-800">{slot.member.activeCourse.title}</div>
-                <div className="mt-1 text-[11px] text-blue-700">
-                  Completes: {formatGameDateShort(slot.member.activeCourse.completesOnGameDate)}
-                </div>
-              </div>
-            ) : null}
-
-            <div className="mt-3 space-y-1">
-              {slot.member.effects.slice(0, 2).map((effect) => (
-                <div key={effect} className="text-xs text-gray-600">
-                  • {effect}
-                </div>
-              ))}
-            </div>
-          </>
-        ) : (
-          <>
-            <div className="rounded-lg bg-gray-50 p-3 text-sm text-gray-500">
-              {slot.vacancyNote || 'No staff member assigned to this role.'}
-            </div>
-
-            {slot.futureNote ? (
-              <div className="mt-3 text-xs text-gray-500">Future: {slot.futureNote}</div>
-            ) : null}
-          </>
-        )}
-      </div>
-
-      {slot.warning ? (
-        <div className="mt-3 rounded-lg bg-yellow-50 px-3 py-2 text-xs text-yellow-700">
-          {slot.warning}
-        </div>
-      ) : null}
-
-      <div className="mt-4 flex items-center justify-between">
-        <span className="text-xs font-medium text-gray-500">
-          {slot.member ? 'View details' : 'Open role'}
-        </span>
-        <span className="text-sm font-semibold text-gray-400">→</span>
-      </div>
-    </button>
-  )
-}
-
-function StaffDetailModal({
-  slot,
-  onClose,
-  onRequestRelease,
-  onRequestExtend,
-  onRequestCourse,
-}: {
-  slot: StaffSlot | null
-  onClose: () => void
-  onRequestRelease: (slot: StaffSlot) => void
-  onRequestExtend: (slot: StaffSlot) => void
-  onRequestCourse: (slot: StaffSlot) => void
-}) {
-  if (!slot) return null
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/35 px-4 backdrop-blur-sm">
-      <div className="max-h-[94vh] w-full max-w-4xl overflow-y-auto rounded-2xl bg-white shadow-2xl">
-        <div className="flex items-start justify-between border-b border-gray-100 p-5">
-          <div>
-            <div className="text-lg font-semibold text-gray-900">{slot.roleLabel}</div>
-            <div className="mt-1 text-sm text-gray-500">
-              {slot.member ? slot.member.specialization : 'Vacant position'}
-            </div>
-          </div>
-
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-lg px-3 py-1.5 text-sm text-gray-500 hover:bg-gray-100"
-          >
-            Close
-          </button>
-        </div>
-
-        <div className="p-5">
-          {slot.member ? (
-            <>
-              <div className="grid grid-cols-1 gap-5 lg:grid-cols-[1.35fr_1fr]">
-                <div className="rounded-xl border border-gray-100 p-4">
-                  <div className="flex items-center gap-3">
-                    <img
-                      src={getCountryFlagUrl(safeCountryCode(slot.member.countryCode))}
-                      alt={slot.member.countryCode}
-                      className="h-5 w-7 rounded-sm border border-gray-200 object-cover"
-                    />
-                    <div>
-                      <div className="font-semibold text-gray-900">{slot.member.name}</div>
-                      <div className="text-sm text-gray-500">
-                        Scope: {slot.member.teamScope.replace('_', ' ')}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="mt-4 grid grid-cols-2 gap-3">
-                    <div className="rounded-lg bg-gray-50 p-3">
-                      <div className="text-xs text-gray-500">Weekly Wage</div>
-                      <div className="mt-1 text-sm font-semibold text-gray-900">
-                        {formatCurrency(slot.member.salaryWeekly)}
-                      </div>
-                    </div>
-
-                    <div className="rounded-lg bg-gray-50 p-3">
-                      <div className="text-xs text-gray-500">Contract</div>
-                      <div className="mt-1 text-sm font-semibold text-gray-900">
-                        {slot.member.contractPrimaryLabel}
-                      </div>
-                      {slot.member.contractSecondaryLabel ? (
-                        <div className="mt-1 text-xs text-gray-500">
-                          {slot.member.contractSecondaryLabel}
-                        </div>
-                      ) : null}
-                    </div>
-                  </div>
-
-                  {slot.member.activeCourse ? (
-                    <div className="mt-4 rounded-xl border border-blue-100 bg-blue-50 p-4">
-                      <div className="text-sm font-semibold text-blue-900">Current Course</div>
-                      <div className="mt-2 text-sm text-blue-800">
-                        {slot.member.activeCourse.title}
-                      </div>
-                      <div className="mt-2 space-y-1 text-xs text-blue-700">
-                        <div>Focus: {slot.member.activeCourse.focusLabel}</div>
-                        <div>Duration: {slot.member.activeCourse.durationDays} days</div>
-                        <div>
-                          Completion:{' '}
-                          {formatGameDateShort(slot.member.activeCourse.completesOnGameDate)}
-                        </div>
-                      </div>
-                      <div className="mt-2 text-xs text-blue-700">
-                        This course cannot be canceled once booked. Staff bonuses from this role
-                        are paused until completion.
-                      </div>
-                    </div>
-                  ) : null}
-
-                  <div className="mt-4">
-                    <div className="text-sm font-semibold text-gray-900">Active Effects</div>
-                    <div className="mt-2 space-y-2">
-                      {slot.member.effects.map((effect) => (
-                        <div
-                          key={effect}
-                          className="rounded-lg border border-gray-100 bg-gray-50 px-3 py-2 text-sm text-gray-700"
-                        >
-                          {effect}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {slot.warning ? (
-                    <div className="mt-4 rounded-lg bg-yellow-50 px-3 py-2 text-sm text-yellow-700">
-                      {slot.warning}
-                    </div>
-                  ) : null}
-                </div>
-
-                <div className="rounded-xl border border-gray-100 p-4">
-                  <div className="text-sm font-semibold text-gray-900">Staff Attributes</div>
-                  <div className="mt-3 space-y-2">
-                    {slot.member.stats.map((stat) => (
-                      <div
-                        key={stat.label}
-                        className="flex items-center justify-between rounded-lg bg-gray-50 px-3 py-2"
-                      >
-                        <span className="text-sm text-gray-600">{stat.label}</span>
-                        <span className="text-sm font-semibold text-gray-900">{stat.value}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              <div className="mt-5 flex flex-wrap gap-3">
-                <button
-                  type="button"
-                  onClick={() => onRequestExtend(slot)}
-                  className="rounded-lg bg-yellow-400 px-4 py-2 text-sm font-medium text-black hover:bg-yellow-300"
-                >
-                  Extend Contract
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => onRequestCourse(slot)}
-                  disabled={Boolean(slot.member.activeCourse)}
-                  className={`rounded-lg px-4 py-2 text-sm font-medium transition ${
-                    slot.member.activeCourse
-                      ? 'cursor-not-allowed border border-gray-200 bg-gray-100 text-gray-400'
-                      : 'border border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
-                  }`}
-                >
-                  {slot.member.activeCourse ? 'Course In Progress' : 'Send on Course'}
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => onRequestRelease(slot)}
-                  className="rounded-lg border border-red-200 bg-white px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50"
-                >
-                  Release
-                </button>
-              </div>
-            </>
-          ) : (
-            <>
-              <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50 p-5">
-                <div className="text-sm font-semibold text-gray-900">Vacancy</div>
-                <div className="mt-2 text-sm text-gray-500">
-                  {slot.vacancyNote || 'This role currently has no assigned staff member.'}
-                </div>
-
-                {slot.futureNote ? (
-                  <div className="mt-3 text-sm text-gray-500">
-                    Planned function: {slot.futureNote}
-                  </div>
-                ) : null}
-
-                {slot.warning ? (
-                  <div className="mt-3 rounded-lg bg-yellow-50 px-3 py-2 text-sm text-yellow-700">
-                    {slot.warning}
-                  </div>
-                ) : null}
-
-                <div className="mt-5">
-                  <a
-                    href="#/dashboard/transfers?tab=staff"
-                    className="inline-flex rounded-lg bg-yellow-400 px-4 py-2 text-sm font-medium text-black hover:bg-yellow-300"
-                  >
-                    Find Staff
-                  </a>
-                </div>
-              </div>
-            </>
-          )}
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function ReleaseConfirmModal({
-  slot,
-  loading,
-  onCancel,
-  onConfirm,
-}: {
-  slot: StaffSlot | null
-  loading: boolean
-  onCancel: () => void
-  onConfirm: () => void
-}) {
-  if (!slot?.member) return null
-
-  const releaseCost = getStaffReleaseCost(slot.member.salaryWeekly)
-
-  return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/35 px-4 backdrop-blur-sm">
-      <div className="w-full max-w-md rounded-2xl bg-white shadow-2xl">
-        <div className="border-b border-gray-100 px-5 py-4">
-          <div className="text-lg font-semibold text-gray-900">Release Staff</div>
-          <div className="mt-1 text-sm text-gray-500">
-            Confirm this staff decision before continuing.
-          </div>
-        </div>
-
-        <div className="px-5 py-5">
-          <div className="rounded-xl border border-red-100 bg-red-50 p-4">
-            <div className="text-sm font-medium text-red-800">
-              You are about to release <span className="font-semibold">{slot.member.name}</span>
-            </div>
-            <div className="mt-1 text-sm text-red-700">Role: {slot.roleLabel}</div>
-            <div className="mt-1 text-sm text-red-700">
-              Weekly wage: {formatCurrency(slot.member.salaryWeekly)}
-            </div>
-            <div className="mt-1 text-sm font-semibold text-red-800">
-              Release compensation (6 weeks): {formatCurrency(releaseCost)}
-            </div>
-          </div>
-
-          <div className="mt-4 text-sm text-gray-600">
-            This will make the role vacant immediately. Staff bonuses from this role will stop until
-            you sign a replacement.
-          </div>
-
-          <div className="mt-2 text-sm text-gray-600">
-            The club will pay a one-time release compensation equal to 6 weeks of salary.
-          </div>
-
-          <div className="mt-6 flex items-center justify-end gap-3">
-            <button
-              type="button"
-              onClick={onCancel}
-              disabled={loading}
-              className={`rounded-lg border px-4 py-2 text-sm font-medium transition ${
-                loading
-                  ? 'cursor-not-allowed border-gray-200 bg-gray-100 text-gray-400'
-                  : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
-              }`}
-            >
-              Cancel
-            </button>
-
-            <button
-              type="button"
-              onClick={onConfirm}
-              disabled={loading}
-              className={`rounded-lg px-4 py-2 text-sm font-medium transition ${
-                loading
-                  ? 'cursor-not-allowed bg-gray-200 text-gray-500'
-                  : 'bg-red-600 text-white hover:bg-red-500'
-              }`}
-            >
-              {loading ? 'Releasing...' : 'Confirm Release'}
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function ExtendContractModal({
-  slot,
-  currentGameDate,
-  seasons,
-  setSeasons,
-  quote,
-  loading,
-  submitting,
-  salaryInput,
-  setSalaryInput,
-  error,
-  onCancel,
-  onConfirm,
-}: {
-  slot: StaffSlot | null
-  currentGameDate: string | null
-  seasons: 1 | 2
-  setSeasons: (value: 1 | 2) => void
-  quote: ExtendContractQuoteRow | null
-  loading: boolean
-  submitting: boolean
-  salaryInput: string
-  setSalaryInput: (value: string) => void
-  error: string | null
-  onCancel: () => void
-  onConfirm: () => void
-}) {
-  if (!slot?.member) return null
-
-  const targetContractUi = formatContractUi(
-    quote?.target_contract_expires_at ?? null,
-    currentGameDate
-  )
-
-  return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/35 px-4 backdrop-blur-sm">
-      <div className="w-full max-w-xl rounded-2xl bg-white shadow-2xl">
-        <div className="border-b border-gray-100 px-5 py-4">
-          <div className="text-lg font-semibold text-gray-900">Extend Contract</div>
-          <div className="mt-1 text-sm text-gray-500">
-            Negotiate a new staff deal for {slot.member.name}.
-          </div>
-        </div>
-
-        <div className="px-5 py-5">
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <div className="rounded-xl border border-gray-100 bg-gray-50 p-4">
-              <div className="text-xs text-gray-500">Current Salary</div>
-              <div className="mt-1 text-lg font-semibold text-gray-900">
-                {formatCurrency(slot.member.salaryWeekly)}/week
-              </div>
-            </div>
-
-            <div className="rounded-xl border border-gray-100 bg-gray-50 p-4">
-              <div className="text-xs text-gray-500">Current Contract</div>
-              <div className="mt-1 text-sm font-semibold text-gray-900">
-                {slot.member.contractPrimaryLabel}
-              </div>
-              {slot.member.contractSecondaryLabel ? (
-                <div className="mt-1 text-xs text-gray-500">
-                  {slot.member.contractSecondaryLabel}
-                </div>
-              ) : null}
-            </div>
-          </div>
-
-          <div className="mt-5">
-            <div className="text-sm font-semibold text-gray-900">Extension Length</div>
-            <div className="mt-3 inline-flex rounded-lg border border-gray-100 bg-white p-1 shadow-sm">
-              <button
-                type="button"
-                onClick={() => setSeasons(1)}
-                disabled={loading || submitting}
-                className={`rounded-md px-4 py-2 text-sm font-medium transition ${
-                  seasons === 1
-                    ? 'bg-yellow-400 text-black'
-                    : 'text-gray-600 hover:bg-gray-100'
-                }`}
-              >
-                1 Season
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setSeasons(2)}
-                disabled={loading || submitting}
-                className={`rounded-md px-4 py-2 text-sm font-medium transition ${
-                  seasons === 2
-                    ? 'bg-yellow-400 text-black'
-                    : 'text-gray-600 hover:bg-gray-100'
-                }`}
-              >
-                2 Seasons
-              </button>
-            </div>
-          </div>
-
-          <div className="mt-5 rounded-xl border border-gray-100 bg-gray-50 p-4">
-            {loading ? (
-              <div className="text-sm text-gray-500">Loading contract quote...</div>
-            ) : quote ? (
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                <div>
-                  <div className="text-xs text-gray-500">Requested Salary</div>
-                  <div className="mt-1 text-sm font-semibold text-gray-900">
-                    {formatCurrency(quote.requested_salary_weekly)}/week
-                  </div>
-                  <div className="mt-1 text-xs text-gray-500">
-                    Raise request: {quote.requested_raise_percent}%
-                  </div>
-                </div>
-
-                <div>
-                  <div className="text-xs text-gray-500">Minimum Acceptable</div>
-                  <div className="mt-1 text-sm font-semibold text-gray-900">
-                    {formatCurrency(quote.minimum_acceptable_salary_weekly)}/week
-                  </div>
-                </div>
-
-                <div className="md:col-span-2">
-                  <div className="text-xs text-gray-500">New Contract Target</div>
-                  <div className="mt-1 text-sm font-semibold text-gray-900">
-                    {targetContractUi.primary}
-                  </div>
-                  {targetContractUi.secondary ? (
-                    <div className="mt-1 text-xs text-gray-500">{targetContractUi.secondary}</div>
-                  ) : null}
-                </div>
-              </div>
-            ) : (
-              <div className="text-sm text-gray-500">No quote available.</div>
-            )}
-          </div>
-
-          <div className="mt-5">
-            <label className="block text-sm font-semibold text-gray-900">Your Salary Offer</label>
-            <div className="mt-2 flex items-center rounded-lg border border-gray-200 bg-white px-3 py-2">
-              <span className="mr-2 text-sm text-gray-500">$</span>
-              <input
-                type="number"
-                min={0}
-                value={salaryInput}
-                onChange={(e) => setSalaryInput(e.target.value)}
-                disabled={loading || submitting}
-                className="w-full bg-transparent text-sm text-gray-900 outline-none"
-                placeholder="Enter weekly salary"
-              />
-            </div>
-          </div>
-
-          {error ? (
-            <div className="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-              {error}
-            </div>
-          ) : null}
-
-          <div className="mt-6 flex items-center justify-end gap-3">
-            <button
-              type="button"
-              onClick={onCancel}
-              disabled={submitting}
-              className={`rounded-lg border px-4 py-2 text-sm font-medium transition ${
-                submitting
-                  ? 'cursor-not-allowed border-gray-200 bg-gray-100 text-gray-400'
-                  : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
-              }`}
-            >
-              Cancel
-            </button>
-
-            <button
-              type="button"
-              onClick={onConfirm}
-              disabled={loading || submitting || !salaryInput.trim()}
-              className={`rounded-lg px-4 py-2 text-sm font-medium transition ${
-                loading || submitting || !salaryInput.trim()
-                  ? 'cursor-not-allowed bg-gray-200 text-gray-500'
-                  : 'bg-yellow-400 text-black hover:bg-yellow-300'
-              }`}
-            >
-              {submitting ? 'Submitting...' : 'Submit Offer'}
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function StaffCourseModal({
-  slot,
-  startingCourseCode,
-  error,
-  onCancel,
-  onStartCourse,
-}: {
-  slot: StaffSlot | null
-  startingCourseCode: string | null
-  error: string | null
-  onCancel: () => void
-  onStartCourse: (courseCode: string) => void
-}) {
-  if (!slot?.member) return null
-
-  const courseOptions = buildCourseOptions(slot.role)
-
-  return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/35 px-4 backdrop-blur-sm">
-      <div className="max-h-[94vh] w-full max-w-5xl overflow-y-auto rounded-2xl bg-white shadow-2xl">
-        <div className="border-b border-gray-100 px-5 py-4">
-          <div className="text-lg font-semibold text-gray-900">Staff Course</div>
-          <div className="mt-1 text-sm text-gray-500">
-            Plan development work for {slot.member.name}.
-          </div>
-        </div>
-
-        <div className="px-5 py-5">
-          <div className="rounded-xl border border-blue-100 bg-blue-50 p-4">
-            <div className="text-sm font-medium text-blue-900">Live course start</div>
-            <div className="mt-1 text-sm text-blue-800">
-              Starting a course creates a real staff course entry. Stat gains apply when the
-              backend completion processor finishes the course. Courses cannot be canceled once
-              booked. Staff bonuses from this role are paused until the course is completed.
-            </div>
-          </div>
-
-          {error ? (
-            <div className="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-              {error}
-            </div>
-          ) : null}
-
-          <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {courseOptions.map((option) => (
-              <div
-                key={option.code}
-                className="rounded-xl border border-gray-100 bg-gray-50 p-4"
-              >
-                <div className="text-sm font-semibold text-gray-900">{option.title}</div>
-                <div className="mt-2 text-sm text-gray-600">{option.description}</div>
-
-                <div className="mt-4 space-y-1 text-xs text-gray-500">
-                  <div>Focus: {option.focusLabel}</div>
-                  <div>Duration: {option.durationDays} days</div>
-                  <div>Cost: {formatCurrency(option.costCash)}</div>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() => onStartCourse(option.code)}
-                  disabled={startingCourseCode !== null}
-                  className={`mt-4 w-full rounded-lg px-4 py-2 text-sm font-medium transition ${
-                    startingCourseCode !== null
-                      ? 'cursor-not-allowed bg-gray-200 text-gray-500'
-                      : 'bg-yellow-400 text-black hover:bg-yellow-300'
-                  }`}
-                >
-                  {startingCourseCode === option.code ? 'Starting...' : 'Start Course'}
-                </button>
-              </div>
-            ))}
-          </div>
-
-          <div className="mt-6 flex items-center justify-end">
-            <button
-              type="button"
-              onClick={onCancel}
-              disabled={startingCourseCode !== null}
-              className={`rounded-lg border px-4 py-2 text-sm font-medium transition ${
-                startingCourseCode !== null
-                  ? 'cursor-not-allowed border-gray-200 bg-gray-100 text-gray-400'
-                  : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
-              }`}
-            >
-              Back to Staff
-            </button>
-          </div>
-        </div>
-      </div>
     </div>
   )
 }
@@ -1362,6 +825,101 @@ function buildEffects(role: StaffRole, row: ClubStaffRow): string[] {
   ]
 }
 
+type ScoutQualityInfo = {
+  scoutAbilityTier: string
+  currentReportTier: string
+  scoutAbilityScore: number
+  currentReportScore: number
+  durationHours: number
+  isLimitedByOffice: boolean
+  scoutingLevel: number
+}
+
+function formatScoutTier(tier: string): string {
+  switch (tier) {
+    case 'elite':
+      return 'Elite'
+    case 'strong':
+      return 'Strong'
+    case 'solid':
+      return 'Solid'
+    case 'basic':
+      return 'Basic'
+    default:
+      return 'Unknown'
+  }
+}
+
+function calculateScoutQuality(
+  staff: Pick<StaffListMember, 'role' | 'stats'>,
+  infrastructure: ClubInfrastructureRow | null,
+): ScoutQualityInfo | null {
+  if (staff.role !== 'scout_analyst') return null
+
+  const statValue = (label: string) =>
+    staff.stats.find((stat) => stat.label === label)?.value ?? 0
+
+  const evaluation = statValue('Evaluation')
+  const network = statValue('Network')
+  const accuracy = statValue('Accuracy')
+  const prospectSense = statValue('Prospect Sense')
+  const loyalty = statValue('Loyalty')
+
+  const precisionScore =
+    0.35 * evaluation +
+    0.25 * network +
+    0.2 * accuracy +
+    0.1 * prospectSense +
+    0.1 * loyalty
+
+  const speedScore =
+    0.45 * evaluation +
+    0.35 * accuracy +
+    0.2 * network
+
+  const rawTier =
+    precisionScore >= 85
+      ? 'elite'
+      : precisionScore >= 70
+        ? 'strong'
+        : precisionScore >= 55
+          ? 'solid'
+          : 'basic'
+
+  const scoutingLevel = infrastructure?.scouting_level ?? 0
+
+  let cappedTier = rawTier
+
+  if (scoutingLevel <= 0) {
+    cappedTier = 'basic'
+  } else if (scoutingLevel === 1) {
+    cappedTier = 'basic'
+  } else if (scoutingLevel === 2 && (rawTier === 'elite' || rawTier === 'strong')) {
+    cappedTier = 'solid'
+  } else if (scoutingLevel === 3 && rawTier === 'elite') {
+    cappedTier = 'strong'
+  }
+
+  const durationHours =
+    speedScore >= 85
+      ? 1
+      : speedScore >= 70
+        ? 2
+        : speedScore >= 55
+          ? 3
+          : 4
+
+  return {
+    scoutAbilityTier: rawTier,
+    currentReportTier: cappedTier,
+    scoutAbilityScore: Math.round(precisionScore * 10) / 10,
+    currentReportScore: Math.round(precisionScore * 10) / 10,
+    durationHours,
+    isLimitedByOffice: rawTier !== cappedTier,
+    scoutingLevel,
+  }
+}
+
 function mapStats(role: StaffRole, row: ClubStaffRow): StaffStat[] {
   if (role === 'head_coach') {
     return [
@@ -1417,196 +975,1269 @@ function mapStats(role: StaffRole, row: ClubStaffRow): StaffStat[] {
   ]
 }
 
-function getBaseSlots(): StaffSlot[] {
+function formatCourseGains(row: RecentStaffCourseResultRow) {
+  const gains: string[] = []
+  const rowRecord = row as unknown as Record<string, unknown>
+
+  for (const [key, label] of getCourseGainMap(row.role_type)) {
+    const value = Number(rowRecord[key] ?? 0)
+
+    if (Number.isFinite(value) && value > 0) {
+      gains.push(`+${value} ${label}`)
+    }
+  }
+
+  return gains
+}
+
+function getLastCourseInfo(row: ClubStaffRow) {
+  const courseXp = row.notes?.staff_course_xp
+
+  if (!courseXp || typeof courseXp !== 'object') {
+    return {
+      title: null,
+      gains: [],
+    }
+  }
+
+  const course = courseXp as Record<string, unknown>
+  const gainsRaw =
+    course.last_gains && typeof course.last_gains === 'object'
+      ? (course.last_gains as Record<string, unknown>)
+      : {}
+
+  const gains: string[] = []
+
+  for (const [key, label] of getCourseGainMap(row.role_type)) {
+    const value = Number(gainsRaw[key] ?? 0)
+
+    if (Number.isFinite(value) && value > 0) {
+      gains.push(`+${value} ${label}`)
+    }
+  }
+
+  return {
+    title: typeof course.last_course_title === 'string' ? course.last_course_title : null,
+    gains,
+  }
+}
+
+function mapStaffMember(
+  row: ClubStaffRow,
+  currentGameDate: string | null,
+  activeCourseByStaffId: Map<string, StaffActiveCourse>,
+  infrastructure: ClubInfrastructureRow | null
+): StaffListMember {
+  const contractUi = formatContractUi(row.contract_expires_at, currentGameDate)
+  const roleMeta = getRoleMeta(row.role_type)
+  const lastCourseInfo = getLastCourseInfo(row)
+
+  return {
+    id: row.id,
+    role: row.role_type,
+    roleLabel: roleMeta.label,
+    name: row.staff_name,
+    countryCode: row.country_code || 'RS',
+    specialization: row.specialization || 'General',
+    salaryWeekly: row.salary_weekly,
+    contractExpiresAt: row.contract_expires_at,
+    contractPrimaryLabel: contractUi.primary,
+    contractSecondaryLabel: contractUi.secondary,
+    teamScope: row.team_scope,
+    birthDate: row.birth_date,
+    ageYears: getStaffAge(row.birth_date, currentGameDate),
+    stats: mapStats(row.role_type, row),
+    effects: buildEffects(row.role_type, row),
+    activeCourse: activeCourseByStaffId.get(row.id) ?? null,
+    facilityWarning: getRoleInfrastructureWarning(row.role_type, infrastructure),
+    currentAssignmentLabel:
+      row.current_assignment_label ??
+      (typeof row.notes?.current_assignment_label === 'string'
+        ? row.notes.current_assignment_label
+        : null),
+    lastCourseTitle: lastCourseInfo.title,
+    lastCourseGains: lastCourseInfo.gains,
+  }
+}
+
+function buildAggregateEffectSummary(role: StaffRole, members: StaffListMember[]) {
+  if (!members.length) {
+    return ['No active contribution yet from this role.']
+  }
+
+  if (role === 'head_coach') {
+    const training = members.reduce(
+      (sum, member) => sum + Math.max(3, Math.floor(member.stats[0].value / 10)),
+      0
+    )
+    const development = members.reduce(
+      (sum, member) => sum + Math.max(2, Math.floor(member.stats[1].value / 15)),
+      0
+    )
+    const overload = members.reduce(
+      (sum, member) => sum + Math.max(3, Math.floor(member.stats[3].value / 14)),
+      0
+    )
+
+    return [
+      `+${training}% combined training output`,
+      `+${development}% combined development support`,
+      `-${overload}% combined overload risk`,
+    ]
+  }
+
+  if (role === 'team_doctor') {
+    const risk = members.reduce(
+      (sum, member) => sum + Math.max(4, Math.floor(member.stats[0].value / 10)),
+      0
+    )
+    const recovery = members.reduce(
+      (sum, member) => sum + Math.max(4, Math.floor(member.stats[1].value / 12)),
+      0
+    )
+    const daily = members.reduce(
+      (sum, member) => sum + Math.max(1, Math.floor(member.stats[2].value / 30)),
+      0
+    )
+
+    return [
+      `-${risk}% combined injury and sickness risk`,
+      `-${recovery}% combined recovery duration`,
+      `+${daily} combined daily recovery`,
+    ]
+  }
+
+  if (role === 'mechanic') {
+    const setup = members.reduce(
+      (sum, member) => sum + Math.max(2, Math.floor(member.stats[0].value / 15)),
+      0
+    )
+    const reliability = members.reduce(
+      (sum, member) => sum + Math.max(2, Math.floor(member.stats[1].value / 18)),
+      0
+    )
+
+    return [
+      `+${setup}% combined setup quality`,
+      `-${reliability}% combined mechanical issue risk`,
+      'Future: aggregate terrain and weather setup bonuses',
+    ]
+  }
+
+  if (role === 'sport_director') {
+    const tactics = members.reduce(
+      (sum, member) => sum + Math.max(2, Math.floor(member.stats[0].value / 15)),
+      0
+    )
+    const morale = members.reduce(
+      (sum, member) => sum + Math.max(1, Math.floor(member.stats[1].value / 20)),
+      0
+    )
+
+    return [
+      `+${tactics}% combined tactical support`,
+      `+${morale}% combined morale stability`,
+      'Future: stronger collective race execution',
+    ]
+  }
+
+  const scouting = members.reduce(
+    (sum, member) => sum + Math.max(2, Math.floor(member.stats[0].value / 15)),
+    0
+  )
+  const prospects = members.reduce(
+    (sum, member) => sum + Math.max(2, Math.floor(member.stats[1].value / 18)),
+    0
+  )
+
   return [
-    {
-      role: 'head_coach',
-      roleLabel: 'Head Coach',
-      category: 'performance',
-      status: 'vacant',
-      statusLabel: 'Vacant',
-      member: null,
-      vacancyNote:
-        'No head coach assigned. Training quality and rider development are reduced.',
-    },
-    {
-      role: 'team_doctor',
-      roleLabel: 'Team Doctor',
-      category: 'medical_technical',
-      status: 'vacant',
-      statusLabel: 'Vacant',
-      member: null,
-      vacancyNote:
-        'No team doctor assigned. Recovery quality and medical prevention are reduced.',
-    },
-    {
-      role: 'mechanic',
-      roleLabel: 'Mechanic',
-      category: 'medical_technical',
-      status: 'vacant',
-      statusLabel: 'Vacant',
-      member: null,
-      vacancyNote:
-        'No mechanic employed. Mechanical reliability and race setup support are not covered.',
-      futureNote:
-        'TT setup, cobble durability, wet-weather reliability, mechanical incident reduction',
-    },
-    {
-      role: 'sport_director',
-      roleLabel: 'Sport Director',
-      category: 'tactical_recruitment',
-      status: 'vacant',
-      statusLabel: 'Vacant',
-      member: null,
-      vacancyNote:
-        'No sport director assigned. Tactical organization and leadership support are reduced.',
-      futureNote:
-        'Domestique coordination, stage tactics, leadout execution, energy saving',
-    },
-    {
-      role: 'scout_analyst',
-      roleLabel: 'Scout / Analyst',
-      category: 'tactical_recruitment',
-      status: 'vacant',
-      statusLabel: 'Vacant',
-      member: null,
-      vacancyNote:
-        'No scouting coverage. Youth discovery and transfer visibility are reduced.',
-      futureNote:
-        'Transfer scouting, youth reports, hidden stat visibility, race prep intelligence',
-    },
+    `+${scouting}% combined scouting accuracy`,
+    `+${prospects}% combined prospect visibility`,
+    'Future: broader transfer and youth intelligence',
   ]
 }
 
-function buildStaffSlotsFromRows(
-  staffRows: ClubStaffRow[],
-  infrastructure: ClubInfrastructureRow | null,
-  currentGameDate: string | null,
-  activeCourseByStaffId: Map<string, StaffActiveCourse>
-): StaffSlot[] {
-  const slots = getBaseSlots()
+function buildAverageStats(members: StaffListMember[]) {
+  if (!members.length) return []
 
-  for (const row of staffRows) {
-    const slot = slots.find((s) => s.role === row.role_type)
-    if (!slot) continue
+  const labels = members[0].stats.map((stat) => stat.label)
 
-    const contractUi = formatContractUi(row.contract_expires_at, currentGameDate)
-
-    slot.member = {
-      id: row.id,
-      name: row.staff_name,
-      countryCode: row.country_code || 'RS',
-      specialization: row.specialization || 'General',
-      salaryWeekly: row.salary_weekly,
-      contractExpiresAt: row.contract_expires_at,
-      contractPrimaryLabel: contractUi.primary,
-      contractSecondaryLabel: contractUi.secondary,
-      teamScope: row.team_scope,
-      stats: mapStats(row.role_type, row),
-      effects: buildEffects(row.role_type, row),
-      activeCourse: activeCourseByStaffId.get(row.id) ?? null,
+  return labels.map((label, index) => {
+    const total = members.reduce((sum, member) => sum + (member.stats[index]?.value ?? 0), 0)
+    return {
+      label,
+      value: Math.round(total / members.length),
     }
-
-    slot.status = 'active'
-    slot.statusLabel = 'Active'
-  }
-
-  return applyInfrastructureWarnings(slots, infrastructure)
-}
-
-function applyInfrastructureWarnings(
-  slots: StaffSlot[],
-  infrastructure: ClubInfrastructureRow | null
-) {
-  return slots.map((slot) => {
-    if (!infrastructure) return slot
-
-    if (slot.role === 'head_coach' && infrastructure.training_center_level <= 0) {
-      return {
-        ...slot,
-        status: slot.member ? ('limited' as const) : slot.status,
-        statusLabel: slot.member ? 'Limited' : slot.statusLabel,
-        warning: 'Training Center Lv 0 caps part of the coach bonus.',
-      }
-    }
-
-    if (slot.role === 'team_doctor' && infrastructure.medical_center_level <= 0) {
-      return {
-        ...slot,
-        status: slot.member ? ('limited' as const) : slot.status,
-        statusLabel: slot.member ? 'Limited' : slot.statusLabel,
-        warning: 'Medical Center Lv 0 caps part of the doctor bonus.',
-      }
-    }
-
-    if (slot.role === 'mechanic' && infrastructure.mechanics_workshop_level <= 0) {
-      return {
-        ...slot,
-        status: slot.member ? ('limited' as const) : slot.status,
-        statusLabel: slot.member ? 'Limited' : slot.statusLabel,
-        warning: 'Mechanics Workshop Lv 0 caps technical support and setup quality.',
-      }
-    }
-
-    if (slot.role === 'scout_analyst' && infrastructure.scouting_level <= 0) {
-      return {
-        ...slot,
-        status: slot.member ? ('limited' as const) : slot.status,
-        statusLabel: slot.member ? 'Limited' : slot.statusLabel,
-        warning: 'Scouting Office Lv 0 caps scouting and analyst effectiveness.',
-      }
-    }
-
-    return slot
   })
 }
 
-function getStaffCapacityInfo(infrastructure: ClubInfrastructureRow | null): StaffCapacityInfo {
-  const checks: Array<{ label: string; supported: boolean }> = [
-    {
-      label: 'Head Coach',
-      supported: (infrastructure?.training_center_level ?? 0) > 0,
-    },
-    {
-      label: 'Team Doctor',
-      supported: (infrastructure?.medical_center_level ?? 0) > 0,
-    },
-    {
-      label: 'Mechanic',
-      supported: (infrastructure?.mechanics_workshop_level ?? 0) > 0,
-    },
-    {
-      label: 'Sport Director',
-      supported: (infrastructure?.hq_level ?? 0) > 0,
-    },
-    {
-      label: 'Scout / Analyst',
-      supported: (infrastructure?.scouting_level ?? 0) > 0,
-    },
-  ]
+function RoleTabButton({
+  role,
+  selected,
+  currentCount,
+  limit,
+  onClick,
+}: {
+  role: StaffRole
+  selected: boolean
+  currentCount: number
+  limit: number
+  onClick: () => void
+}) {
+  const meta = getRoleMeta(role)
 
-  const unsupportedRoleLabels = checks
-    .filter((item) => !item.supported)
-    .map((item) => item.label)
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`w-full rounded-xl border p-4 text-left transition ${
+        selected
+          ? 'border-yellow-300 bg-yellow-50 shadow-sm'
+          : 'border-gray-100 bg-white hover:border-gray-200 hover:shadow-sm'
+      }`}
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <div className="text-sm font-semibold text-gray-900">{meta.label}</div>
+          <div className="mt-1 text-xs text-gray-500">{meta.subtitle}</div>
+        </div>
+
+        <span
+          className={`rounded-full px-2.5 py-1 text-xs font-medium ${
+            selected ? 'bg-yellow-400 text-black' : 'bg-gray-100 text-gray-600'
+          }`}
+        >
+          {currentCount}/{limit}
+        </span>
+      </div>
+    </button>
+  )
+}
+
+function getStaffAssignmentLabel(staff: StaffListMember) {
+  const rawLabel = staff.currentAssignmentLabel?.trim()
+
+  if (!rawLabel) {
+    return {
+      text: 'Currently not assigned',
+      isActive: false,
+    }
+  }
+
+  const cleanedLabel = rawLabel
+    .replace(/\s*•\s*Completes:\s*.+$/i, '')
+    .replace(/\s*-\s*Completes:\s*.+$/i, '')
+    .replace(/\s*Completes:\s*.+$/i, '')
+    .trim()
 
   return {
-    supportedCount: checks.filter((item) => item.supported).length,
-    totalCount: checks.length,
-    unsupportedRoleLabels,
+    text: cleanedLabel || rawLabel,
+    isActive: true,
   }
 }
 
-function formatCourseGains(row: RecentStaffCourseResultRow) {
-  const gains: string[] = []
+function StaffListRow({
+  staff,
+  onOpen,
+}: {
+  staff: StaffListMember
+  onOpen: (staff: StaffListMember) => void
+}) {
+  return (
+    <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
+      <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-3">
+            <img
+              src={getCountryFlagUrl(safeCountryCode(staff.countryCode))}
+              alt={staff.countryCode}
+              className="h-4 w-6 rounded-sm border border-gray-200 object-cover"
+            />
+            <div className="min-w-0">
+              <div className="truncate text-sm font-semibold text-gray-900">{staff.name}</div>
+              <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-gray-500">
+                <span>
+                  {staff.specialization} • Scope: {staff.teamScope.replace('_', ' ')}
+                </span>
+                <span className="rounded-full border border-green-200 bg-green-50 px-2 py-0.5 text-[11px] font-medium text-green-700">
+                  {formatStaffAge(staff.ageYears)}
+                </span>
+              </div>
+            </div>
+          </div>
 
-  if (row.expertise_gain) gains.push(`+${row.expertise_gain} Expertise`)
-  if (row.experience_gain) gains.push(`+${row.experience_gain} Experience`)
-  if (row.potential_gain) gains.push(`+${row.potential_gain} Potential`)
-  if (row.leadership_gain) gains.push(`+${row.leadership_gain} Leadership`)
-  if (row.efficiency_gain) gains.push(`+${row.efficiency_gain} Efficiency`)
-  if (row.loyalty_gain) gains.push(`+${row.loyalty_gain} Loyalty`)
+          <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
+            {staff.stats.map((stat) => (
+              <div key={stat.label} className="rounded-lg bg-gray-50 px-3 py-2">
+                <div className="text-[11px] text-gray-500">{stat.label}</div>
+                <div className="mt-1 text-sm font-semibold text-gray-900">{stat.value}</div>
+              </div>
+            ))}
+          </div>
 
-  return gains
+          {staff.activeCourse ? (
+            <div className="mt-3 rounded-lg border border-blue-100 bg-blue-50 px-3 py-2">
+              <div className="text-xs font-medium text-blue-900">On Course</div>
+              <div className="mt-1 text-xs text-blue-800">{staff.activeCourse.title}</div>
+            </div>
+          ) : null}
+
+          {(() => {
+            const assignment = getStaffAssignmentLabel(staff)
+
+            return (
+              <div
+                className={`mt-3 rounded-lg px-3 py-2 text-xs ${
+                  assignment.isActive
+                    ? 'border border-blue-100 bg-blue-50 text-blue-700'
+                    : 'border border-gray-100 bg-gray-50 text-gray-500'
+                }`}
+              >
+                <span className="font-medium">Current assignment:</span> {assignment.text}
+              </div>
+            )
+          })()}
+
+          {staff.facilityWarning ? (
+            <div className="mt-2 rounded-lg bg-yellow-50 px-3 py-2 text-xs text-yellow-700">
+              {staff.facilityWarning}
+            </div>
+          ) : null}
+        </div>
+
+        <div className="flex w-full flex-col gap-3 xl:w-64 xl:items-end">
+          <div className="w-full rounded-lg bg-gray-50 px-3 py-3 xl:w-60">
+            <div className="text-[11px] text-gray-500">Weekly Wage</div>
+            <div className="mt-1 text-sm font-semibold text-gray-900">
+              {formatCurrency(staff.salaryWeekly)}
+            </div>
+            <div className="mt-2 text-[11px] text-gray-500">Contract</div>
+            <div className="mt-1 text-xs font-medium text-gray-700">{staff.contractPrimaryLabel}</div>
+            {staff.contractSecondaryLabel ? (
+              <div className="mt-1 text-[11px] text-gray-500">{staff.contractSecondaryLabel}</div>
+            ) : null}
+          </div>
+
+          <button
+            type="button"
+            onClick={() => onOpen(staff)}
+            className="w-full rounded-lg bg-yellow-400 px-4 py-2 text-sm font-medium text-black transition hover:bg-yellow-300 xl:w-60"
+          >
+            Open Staff Profile
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function RoleContributionPanel({
+  role,
+  members,
+  infrastructure,
+  roleLimit,
+}: {
+  role: StaffRole
+  members: StaffListMember[]
+  infrastructure: ClubInfrastructureRow | null
+  roleLimit: number
+}) {
+  const roleMeta = getRoleMeta(role)
+  const facilityWarning = getRoleInfrastructureWarning(role, infrastructure)
+  const averageStats = buildAverageStats(members)
+  const aggregateEffects = buildAggregateEffectSummary(role, members)
+  const weeklyWages = members.reduce((sum, member) => sum + member.salaryWeekly, 0)
+  const activeCourses = members.filter((member) => member.activeCourse !== null).length
+
+  return (
+    <div className="rounded-2xl border border-gray-100 bg-gray-50 p-5">
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+        <div>
+          <div className="text-base font-semibold text-gray-900">{roleMeta.label} Role Summary</div>
+          <div className="mt-1 text-sm text-gray-500">{roleMeta.subtitle}</div>
+        </div>
+
+        <div className="rounded-full bg-white px-3 py-1.5 text-xs font-medium text-gray-700 shadow-sm">
+          Assigned {members.length}/{roleLimit}
+        </div>
+      </div>
+
+      {facilityWarning ? (
+        <div className="mt-4 rounded-xl border border-yellow-200 bg-yellow-50 px-4 py-3 text-sm text-yellow-800">
+          {facilityWarning}
+        </div>
+      ) : null}
+
+      <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <SummaryCard
+          label="Assigned"
+          value={`${members.length}/${roleLimit}`}
+          subtext={members.length < roleLimit ? 'Open slot available' : 'Current basic cap reached'}
+        />
+        <SummaryCard
+          label="Weekly Wages"
+          value={formatCurrency(weeklyWages)}
+          subtext="For this role only"
+        />
+        <SummaryCard
+          label="Active Courses"
+          value={String(activeCourses)}
+          subtext="Bonuses are partially paused while staff study"
+        />
+        <SummaryCard
+          label="Open Slots"
+          value={String(Math.max(roleLimit - members.length, 0))}
+          subtext="Use Transfers → Staff to fill vacancies"
+        />
+      </div>
+
+      <div className="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-[1.1fr_1fr]">
+        <div>
+          <SectionTitle
+            title="Combined Team Impact"
+            subtitle="Basic v1 summary of what this role currently contributes."
+          />
+          <div className="space-y-2">
+            {aggregateEffects.map((effect) => (
+              <div
+                key={effect}
+                className="rounded-lg border border-gray-100 bg-white px-4 py-3 text-sm text-gray-700"
+              >
+                {effect}
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-5">
+            <SectionTitle
+              title="Where This Role Helps"
+              subtitle="Main game systems influenced by this role."
+            />
+            <div className="flex flex-wrap gap-2">
+              {roleMeta.impactAreas.map((area) => (
+                <span
+                  key={area}
+                  className="rounded-full border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700"
+                >
+                  {area}
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <SectionTitle
+            title="Average Skill Profile"
+            subtitle="Average values across staff currently assigned to this role."
+          />
+          {averageStats.length > 0 ? (
+            <div className="grid grid-cols-2 gap-3">
+              {averageStats.map((stat) => (
+                <div key={stat.label} className="rounded-lg border border-gray-100 bg-white px-4 py-3">
+                  <div className="text-xs text-gray-500">{stat.label}</div>
+                  <div className="mt-1 text-sm font-semibold text-gray-900">{stat.value}</div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="rounded-xl border border-dashed border-gray-200 bg-white px-4 py-5 text-sm text-gray-500">
+              No staff assigned to this role yet, so there is no active skill profile to summarize.
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function StaffDetailModal({
+  staff,
+  infrastructure,
+  onClose,
+  onRequestRelease,
+  onRequestExtend,
+  onRequestCourse,
+}: {
+  staff: StaffListMember | null
+  infrastructure: ClubInfrastructureRow | null
+  onClose: () => void
+  onRequestRelease: (staff: StaffListMember) => void
+  onRequestExtend: (staff: StaffListMember) => void
+  onRequestCourse: (staff: StaffListMember) => void
+}) {
+  if (!staff) return null
+
+  const scoutQuality = calculateScoutQuality(staff, infrastructure)
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/35 px-4 backdrop-blur-sm">
+      <div className="max-h-[94vh] w-full max-w-6xl overflow-y-auto rounded-2xl bg-white shadow-2xl">
+        <div className="flex items-start justify-between border-b border-gray-100 p-5">
+          <div>
+            <div className="text-lg font-semibold text-gray-900">{staff.roleLabel}</div>
+            <div className="mt-1 text-sm text-gray-500">{staff.specialization}</div>
+          </div>
+
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-lg px-3 py-1.5 text-sm text-gray-500 hover:bg-gray-100"
+          >
+            Close
+          </button>
+        </div>
+
+        <div className="p-5">
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1.6fr_1fr]">
+            <div className="rounded-xl border border-gray-100 p-4">
+              <div className="flex items-center gap-3">
+                <img
+                  src={getCountryFlagUrl(safeCountryCode(staff.countryCode))}
+                  alt={staff.countryCode}
+                  className="h-5 w-7 rounded-sm border border-gray-200 object-cover"
+                />
+                <div>
+                  <div className="font-semibold text-gray-900">{staff.name}</div>
+                  <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-gray-500">
+                    <span>Scope: {staff.teamScope.replace('_', ' ')}</span>
+                    <span className="rounded-full border border-green-200 bg-green-50 px-2.5 py-1 text-xs font-medium text-green-700">
+                      {formatStaffAge(staff.ageYears)}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
+                <div className="rounded-lg bg-gray-50 p-3">
+                  <div className="text-xs text-gray-500">Weekly Wage</div>
+                  <div className="mt-1 text-sm font-semibold text-gray-900">
+                    {formatCurrency(staff.salaryWeekly)}
+                  </div>
+                </div>
+
+                <div className="rounded-lg bg-gray-50 p-3">
+                  <div className="text-xs text-gray-500">Contract</div>
+                  <div className="mt-1 text-sm font-semibold text-gray-900">
+                    {staff.contractPrimaryLabel}
+                  </div>
+                  {staff.contractSecondaryLabel ? (
+                    <div className="mt-1 text-xs text-gray-500">{staff.contractSecondaryLabel}</div>
+                  ) : null}
+                </div>
+
+                <div className="rounded-lg border border-green-100 bg-green-50 p-3">
+                  <div className="text-xs text-green-700">Age</div>
+                  <div className="mt-1 text-sm font-semibold text-green-900">
+                    {staff.ageYears ?? 'Age unknown'}
+                  </div>
+                  {staff.birthDate ? (
+                    <div className="mt-1 text-xs text-green-700">
+                      Born: {parseIsoDateUtc(staff.birthDate)?.toLocaleDateString('en-GB', {
+                        day: '2-digit',
+                        month: 'short',
+                        timeZone: 'UTC',
+                      })}
+                    </div>
+                  ) : null}
+                </div>
+              </div>
+
+              {(() => {
+                const assignment = getStaffAssignmentLabel(staff)
+
+                return (
+                  <div
+                    className={`mt-4 rounded-xl border p-4 ${
+                      assignment.isActive
+                        ? 'border-blue-100 bg-blue-50 text-blue-800'
+                        : 'border-gray-100 bg-gray-50 text-gray-600'
+                    }`}
+                  >
+                    <div className="text-sm font-semibold">Current Assignment</div>
+                    <div className="mt-2 text-sm">{assignment.text}</div>
+
+                    {staff.activeCourse ? (
+                      <div className="mt-2 text-xs">
+                        Course in progress: {staff.activeCourse.title}. Completion:{' '}
+                        {formatGameDateShort(staff.activeCourse.completesOnGameDate)}.
+                      </div>
+                    ) : null}
+                  </div>
+                )
+              })()}
+
+              {staff.activeCourse ? (
+                <div className="mt-4 rounded-xl border border-blue-100 bg-blue-50 p-4">
+                  <div className="text-sm font-semibold text-blue-900">Current Course</div>
+                  <div className="mt-2 text-sm text-blue-800">{staff.activeCourse.title}</div>
+                  <div className="mt-2 space-y-1 text-xs text-blue-700">
+                    <div>Focus: {staff.activeCourse.focusLabel}</div>
+                    <div>Duration: {staff.activeCourse.durationDays} days</div>
+                    <div>Completion: {formatGameDateShort(staff.activeCourse.completesOnGameDate)}</div>
+                  </div>
+                  <div className="mt-2 text-xs text-blue-700">
+                    This course cannot be canceled once booked. Staff bonuses from this role are
+                    paused until completion.
+                  </div>
+                </div>
+              ) : null}
+
+              <div className="mt-4">
+                <div className="text-sm font-semibold text-gray-900">Active Effects</div>
+                <div className="mt-2 space-y-2">
+                  {staff.effects.map((effect) => (
+                    <div
+                      key={effect}
+                      className="rounded-lg border border-gray-100 bg-gray-50 px-3 py-2 text-sm text-gray-700"
+                    >
+                      {effect}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {staff.facilityWarning ? (
+                <div className="mt-4 rounded-lg bg-yellow-50 px-3 py-2 text-sm text-yellow-700">
+                  {staff.facilityWarning}
+                </div>
+              ) : null}
+
+              {staff.role === 'scout_analyst' ? (
+                <div className="mt-4 rounded-xl border border-blue-100 bg-blue-50 p-4 text-sm text-blue-900">
+                  <div className="font-semibold">How Scout Quality Works</div>
+                  <div className="mt-2 text-blue-800">
+                    Scout attributes create the scout’s true ability. The Scouting Office can cap the final
+                    report quality, so a strong scout may still produce basic reports until the office is upgraded.
+                  </div>
+
+                  <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                    <div className="rounded-lg bg-white px-3 py-2">
+                      <div className="text-xs text-blue-700">Scout Ability levels</div>
+                      <div className="mt-1 font-medium">Basic → Solid → Strong → Elite</div>
+                    </div>
+
+                    <div className="rounded-lg bg-white px-3 py-2">
+                      <div className="text-xs text-blue-700">Report Quality levels</div>
+                      <div className="mt-1 font-medium">Basic → Solid → Strong → Elite</div>
+                    </div>
+                  </div>
+
+                  <div className="mt-2 rounded-lg bg-white px-3 py-2">
+                    <div className="text-xs text-blue-700">Scout Ability thresholds</div>
+                    <div className="mt-1 text-xs font-medium text-blue-950">
+                      Basic: below 55 · Solid: 55–69 · Strong: 70–84 · Elite: 85+
+                    </div>
+                  </div>
+
+                  <div className="mt-3 rounded-lg border border-yellow-200 bg-yellow-50 px-3 py-2 text-xs text-yellow-800">
+                    Better Scouting Office unlocks higher report quality.
+                  </div>
+                </div>
+              ) : null}
+            </div>
+
+            <div className="rounded-xl border border-gray-100 p-4">
+              <div className="text-sm font-semibold text-gray-900">Staff Attributes</div>
+              <div className="mt-3 space-y-2">
+                {staff.stats.map((stat) => (
+                  <div
+                    key={stat.label}
+                    className="flex items-center justify-between rounded-lg bg-gray-50 px-3 py-2"
+                  >
+                    <span className="text-sm text-gray-600">{stat.label}</span>
+                    <span className="text-sm font-semibold text-gray-900">{stat.value}</span>
+                  </div>
+                ))}
+              </div>
+
+              {scoutQuality ? (
+                <div className="mt-4">
+                  <div className="text-sm font-semibold text-gray-900">Scouting Quality</div>
+
+                  <div className="mt-3 space-y-2">
+                    <div className="rounded-lg bg-gray-50 px-3 py-2">
+                      <div className="text-xs text-gray-500">Scout Ability</div>
+                      <div className="mt-1 text-sm font-semibold text-gray-900">
+                        <span className="inline-flex rounded-full bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-900">
+                          {formatScoutTier(scoutQuality.scoutAbilityTier)} ({scoutQuality.scoutAbilityScore})
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="rounded-lg bg-gray-50 px-3 py-2">
+                      <div className="text-xs text-gray-500">Current Report Quality</div>
+                      <div className="mt-1 text-sm font-semibold text-gray-900">
+                        <span className="inline-flex rounded-full bg-yellow-50 px-2.5 py-1 text-xs font-semibold text-yellow-900">
+                          {formatScoutTier(scoutQuality.currentReportTier)}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="rounded-lg bg-gray-50 px-3 py-2">
+                      <div className="text-xs text-gray-500">Report Time</div>
+                      <div className="mt-1 text-sm font-semibold text-gray-900">
+                        {scoutQuality.durationHours}h
+                      </div>
+                    </div>
+
+                    <div className="rounded-lg bg-gray-50 px-3 py-2">
+                      <div className="text-xs text-gray-500">Scouting Office</div>
+                      <div className="mt-1 text-sm font-semibold text-gray-900">
+                        Lv {scoutQuality.scoutingLevel}
+                      </div>
+                    </div>
+                  </div>
+
+                  {scoutQuality.isLimitedByOffice ? (
+                    <div className="mt-3 rounded-lg border border-yellow-200 bg-yellow-50 px-3 py-2 text-xs text-yellow-800">
+                      Limited by Scouting Office Lv {scoutQuality.scoutingLevel}.
+                    </div>
+                  ) : null}
+                </div>
+              ) : null}
+
+              {staff.lastCourseGains.length > 0 ? (
+                <div className="mt-4 rounded-xl border border-green-100 bg-green-50 p-4">
+                  <div className="text-sm font-semibold text-green-900">Last Course Gains</div>
+                  {staff.lastCourseTitle ? (
+                    <div className="mt-1 text-sm text-green-800">{staff.lastCourseTitle}</div>
+                  ) : null}
+
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {staff.lastCourseGains.map((gain) => (
+                      <span
+                        key={gain}
+                        className="rounded-full bg-white px-2.5 py-1 text-xs font-medium text-green-800"
+                      >
+                        {gain}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+            </div>
+          </div>
+
+          <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
+            <div className="flex flex-wrap gap-3">
+              <button
+                type="button"
+                onClick={() => onRequestExtend(staff)}
+                className="rounded-lg bg-yellow-400 px-4 py-2 text-sm font-medium text-black hover:bg-yellow-300"
+              >
+                Extend Contract
+              </button>
+
+              <button
+                type="button"
+                onClick={() => onRequestCourse(staff)}
+                disabled={Boolean(staff.activeCourse)}
+                className={`rounded-lg px-4 py-2 text-sm font-medium transition ${
+                  staff.activeCourse
+                    ? 'cursor-not-allowed border border-gray-200 bg-gray-100 text-gray-400'
+                    : 'border border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
+                }`}
+              >
+                {staff.activeCourse ? 'Course In Progress' : 'Send on Course'}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => onRequestRelease(staff)}
+                className="rounded-lg border border-red-200 bg-white px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50"
+              >
+                Release
+              </button>
+            </div>
+
+            {staff.role === 'scout_analyst' ? (
+              <a
+                href="#/dashboard/scouting"
+                className="rounded-lg bg-yellow-400 px-4 py-2 text-sm font-medium text-black hover:bg-yellow-300"
+              >
+                Scouting Reports
+              </a>
+            ) : null}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function ReleaseConfirmModal({
+  staff,
+  loading,
+  onCancel,
+  onConfirm,
+}: {
+  staff: StaffListMember | null
+  loading: boolean
+  onCancel: () => void
+  onConfirm: () => void
+}) {
+  if (!staff) return null
+
+  const releaseCost = getStaffReleaseCost(staff.salaryWeekly)
+
+  return (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/35 px-4 backdrop-blur-sm">
+      <div className="w-full max-w-md rounded-2xl bg-white shadow-2xl">
+        <div className="border-b border-gray-100 px-5 py-4">
+          <div className="text-lg font-semibold text-gray-900">Release Staff</div>
+          <div className="mt-1 text-sm text-gray-500">
+            Confirm this staff decision before continuing.
+          </div>
+        </div>
+
+        <div className="px-5 py-5">
+          <div className="rounded-xl border border-red-100 bg-red-50 p-4">
+            <div className="text-sm font-medium text-red-800">
+              You are about to release <span className="font-semibold">{staff.name}</span>
+            </div>
+            <div className="mt-1 text-sm text-red-700">Role: {staff.roleLabel}</div>
+            <div className="mt-1 text-sm text-red-700">
+              Weekly wage: {formatCurrency(staff.salaryWeekly)}
+            </div>
+            <div className="mt-1 text-sm text-red-700">
+              Age: {formatStaffAge(staff.ageYears)}
+            </div>
+            <div className="mt-1 text-sm font-semibold text-red-800">
+              Release compensation (6 weeks): {formatCurrency(releaseCost)}
+            </div>
+          </div>
+
+          <div className="mt-4 text-sm text-gray-600">
+            This will remove the staff member from the squad immediately. Staff bonuses from this
+            slot will stop until you sign a replacement.
+          </div>
+
+          <div className="mt-2 text-sm text-gray-600">
+            The club will pay a one-time release compensation equal to 6 weeks of salary.
+          </div>
+
+          <div className="mt-6 flex items-center justify-end gap-3">
+            <button
+              type="button"
+              onClick={onCancel}
+              disabled={loading}
+              className={`rounded-lg border px-4 py-2 text-sm font-medium transition ${
+                loading
+                  ? 'cursor-not-allowed border-gray-200 bg-gray-100 text-gray-400'
+                  : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              Cancel
+            </button>
+
+            <button
+              type="button"
+              onClick={onConfirm}
+              disabled={loading}
+              className={`rounded-lg px-4 py-2 text-sm font-medium transition ${
+                loading
+                  ? 'cursor-not-allowed bg-gray-200 text-gray-500'
+                  : 'bg-red-600 text-white hover:bg-red-500'
+              }`}
+            >
+              {loading ? 'Releasing...' : 'Confirm Release'}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function ExtendContractModal({
+  staff,
+  currentGameDate,
+  seasons,
+  setSeasons,
+  quote,
+  loading,
+  submitting,
+  salaryInput,
+  setSalaryInput,
+  error,
+  resultMessage,
+  resultTone,
+  onCancel,
+  onConfirm,
+}: {
+  staff: StaffListMember | null
+  currentGameDate: string | null
+  seasons: 1 | 2
+  setSeasons: (value: 1 | 2) => void
+  quote: ExtendContractQuoteRow | null
+  loading: boolean
+  submitting: boolean
+  salaryInput: string
+  setSalaryInput: (value: string) => void
+  error: string | null
+  resultMessage: string | null
+  resultTone: 'success' | 'warning' | 'error' | null
+  onCancel: () => void
+  onConfirm: () => void
+}) {
+  if (!staff) return null
+
+  const targetContractUi = formatContractUi(
+    quote?.target_contract_expires_at ?? null,
+    currentGameDate
+  )
+
+  const offeredSalary = Number(salaryInput)
+  const requestedSalary = quote?.requested_salary_weekly ?? 0
+  const minimumSalary = quote?.minimum_acceptable_salary_weekly ?? 0
+
+  const offerChance =
+    quote && Number.isFinite(offeredSalary) && offeredSalary > 0
+      ? Math.max(
+          0,
+          Math.min(
+            100,
+            offeredSalary >= requestedSalary
+              ? quote.interest_score ?? 100
+              : offeredSalary >= minimumSalary
+                ? Math.round(
+                    55 +
+                      ((offeredSalary - minimumSalary) /
+                        Math.max(1, requestedSalary - minimumSalary)) *
+                        30
+                  )
+                : Math.round((offeredSalary / Math.max(1, minimumSalary)) * 50)
+          )
+        )
+      : quote?.interest_score ?? null
+
+  const offerChanceLabel =
+    offerChance == null
+      ? 'Chance unknown'
+      : offerChance >= 80
+        ? 'Very likely to accept'
+        : offerChance >= 60
+          ? 'Possible, but may ask for more'
+          : offerChance >= 40
+            ? 'Unlikely at this salary'
+            : 'Very unlikely'
+
+  return (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/35 px-4 backdrop-blur-sm">
+      <div className="max-h-[94vh] w-full max-w-3xl overflow-y-auto rounded-2xl bg-white shadow-2xl">
+        <div className="border-b border-gray-100 px-5 py-4">
+          <div className="text-lg font-semibold text-gray-900">Extend Contract</div>
+          <div className="mt-1 text-sm text-gray-500">
+            Negotiate a new staff deal for {staff.name}.
+          </div>
+        </div>
+
+        <div className="px-5 py-5">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+            <div className="rounded-xl border border-gray-100 bg-gray-50 p-4">
+              <div className="text-xs text-gray-500">Current Salary</div>
+              <div className="mt-1 text-lg font-semibold text-gray-900">
+                {formatCurrency(staff.salaryWeekly)}/week
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-gray-100 bg-gray-50 p-4">
+              <div className="text-xs text-gray-500">Current Contract</div>
+              <div className="mt-1 text-sm font-semibold text-gray-900">{staff.contractPrimaryLabel}</div>
+              {staff.contractSecondaryLabel ? (
+                <div className="mt-1 text-xs text-gray-500">{staff.contractSecondaryLabel}</div>
+              ) : null}
+            </div>
+
+            <div className="rounded-xl border border-green-100 bg-green-50 p-4">
+              <div className="text-xs text-green-700">Age</div>
+              <div className="mt-1 text-sm font-semibold text-green-900">
+                {formatStaffAge(staff.ageYears)}
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-5">
+            <div className="text-sm font-semibold text-gray-900">Extension Length</div>
+            <div className="mt-3 inline-flex rounded-lg border border-gray-100 bg-white p-1 shadow-sm">
+              <button
+                type="button"
+                onClick={() => setSeasons(1)}
+                disabled={loading || submitting}
+                className={`rounded-md px-4 py-2 text-sm font-medium transition ${
+                  seasons === 1
+                    ? 'bg-yellow-400 text-black'
+                    : 'text-gray-600 hover:bg-gray-100'
+                }`}
+              >
+                1 Season
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setSeasons(2)}
+                disabled={loading || submitting}
+                className={`rounded-md px-4 py-2 text-sm font-medium transition ${
+                  seasons === 2
+                    ? 'bg-yellow-400 text-black'
+                    : 'text-gray-600 hover:bg-gray-100'
+                }`}
+              >
+                2 Seasons
+              </button>
+            </div>
+          </div>
+
+          <div className="mt-5 rounded-xl border border-gray-100 bg-gray-50 p-4">
+            {loading ? (
+              <div className="text-sm text-gray-500">Loading contract quote...</div>
+            ) : quote ? (
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <div>
+                  <div className="text-xs text-gray-500">Requested Salary</div>
+                  <div className="mt-1 text-sm font-semibold text-gray-900">
+                    {formatCurrency(quote.requested_salary_weekly)}/week
+                  </div>
+                  <div className="mt-1 text-xs text-gray-500">
+                    Raise request: {quote.requested_raise_percent}%
+                  </div>
+                </div>
+
+                <div>
+                  <div className="text-xs text-gray-500">Minimum Acceptable</div>
+                  <div className="mt-1 text-sm font-semibold text-gray-900">
+                    {formatCurrency(quote.minimum_acceptable_salary_weekly)}/week
+                  </div>
+                </div>
+
+                <div className="md:col-span-2">
+                  <div className="text-xs text-gray-500">New Contract Target</div>
+                  <div className="mt-1 text-sm font-semibold text-gray-900">
+                    {targetContractUi.primary}
+                  </div>
+                  {targetContractUi.secondary ? (
+                    <div className="mt-1 text-xs text-gray-500">{targetContractUi.secondary}</div>
+                  ) : null}
+                </div>
+
+                <div className="md:col-span-2 rounded-lg border border-blue-100 bg-blue-50 px-3 py-3">
+                  <div className="text-xs font-semibold uppercase tracking-wide text-blue-700">
+                    Staff Interest
+                  </div>
+
+                  <div className="mt-1 text-sm font-semibold text-blue-900">
+                    {quote.interest_level || 'Interest unknown'}
+                    {quote.interest_score != null ? ` (${quote.interest_score}/100)` : ''}
+                  </div>
+
+                  {offerChance != null ? (
+                    <div className="mt-3">
+                      <div className="mb-1 flex items-center justify-between text-xs text-blue-800">
+                        <span>Chance to renew</span>
+                        <span>{offerChance}%</span>
+                      </div>
+
+                      <div className="h-2 overflow-hidden rounded-full bg-blue-100">
+                        <div
+                          className="h-full rounded-full bg-blue-600 transition-all"
+                          style={{
+                            width: `${offerChance}%`,
+                          }}
+                        />
+                      </div>
+
+                      <div className="mt-1 text-xs font-medium text-blue-900">
+                        {offerChanceLabel}
+                      </div>
+                    </div>
+                  ) : null}
+
+                  {quote.willingness_status ? (
+                    <div className="mt-1 text-xs text-blue-800">
+                      Status: {quote.willingness_status.replaceAll('_', ' ')}
+                    </div>
+                  ) : null}
+
+                  {quote.decision_reason ? (
+                    <div className="mt-2 text-xs text-blue-800">{quote.decision_reason}</div>
+                  ) : null}
+
+                  {quote.salary_reason ? (
+                    <div className="mt-1 text-xs text-blue-700">{quote.salary_reason}</div>
+                  ) : null}
+                </div>
+              </div>
+            ) : (
+              <div className="text-sm text-gray-500">No quote available.</div>
+            )}
+          </div>
+
+          {resultMessage ? (
+            <div
+              className={`mt-4 rounded-lg border px-4 py-3 text-sm ${
+                resultTone === 'success'
+                  ? 'border-green-200 bg-green-50 text-green-800'
+                  : resultTone === 'warning'
+                    ? 'border-yellow-200 bg-yellow-50 text-yellow-800'
+                    : 'border-red-200 bg-red-50 text-red-700'
+              }`}
+            >
+              {resultMessage}
+            </div>
+          ) : null}
+
+          <div className="mt-5">
+            <label className="block text-sm font-semibold text-gray-900">Your Salary Offer</label>
+            <div className="mt-2 flex items-center rounded-lg border border-gray-200 bg-white px-3 py-2">
+              <span className="mr-2 text-sm text-gray-500">$</span>
+              <input
+                type="number"
+                min={0}
+                value={salaryInput}
+                onChange={(e) => setSalaryInput(e.target.value)}
+                disabled={loading || submitting}
+                className="w-full bg-transparent text-sm text-gray-900 outline-none"
+                placeholder="Enter weekly salary"
+              />
+            </div>
+          </div>
+
+          {error ? (
+            <div className="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+              {error}
+            </div>
+          ) : null}
+
+          <div className="mt-6 flex items-center justify-end gap-3">
+            <button
+              type="button"
+              onClick={onCancel}
+              disabled={submitting}
+              className={`rounded-lg border px-4 py-2 text-sm font-medium transition ${
+                submitting
+                  ? 'cursor-not-allowed border-gray-200 bg-gray-100 text-gray-400'
+                  : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              Cancel
+            </button>
+
+            <button
+              type="button"
+              onClick={onConfirm}
+              disabled={loading || submitting || !salaryInput.trim()}
+              className={`rounded-lg px-4 py-2 text-sm font-medium transition ${
+                loading || submitting || !salaryInput.trim()
+                  ? 'cursor-not-allowed bg-gray-200 text-gray-500'
+                  : 'bg-yellow-400 text-black hover:bg-yellow-300'
+              }`}
+            >
+              {submitting ? 'Submitting...' : 'Submit Offer'}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function StaffCourseModal({
+  staff,
+  startingCourseCode,
+  error,
+  onCancel,
+  onStartCourse,
+}: {
+  staff: StaffListMember | null
+  startingCourseCode: string | null
+  error: string | null
+  onCancel: () => void
+  onStartCourse: (courseCode: string) => void
+}) {
+  if (!staff) return null
+
+  const courseOptions = buildCourseOptions(staff.role)
+
+  return (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/35 px-4 backdrop-blur-sm">
+      <div className="max-h-[94vh] w-full max-w-5xl overflow-y-auto rounded-2xl bg-white shadow-2xl">
+        <div className="border-b border-gray-100 px-5 py-4">
+          <div className="text-lg font-semibold text-gray-900">Staff Course</div>
+          <div className="mt-1 text-sm text-gray-500">
+            Plan development work for {staff.name}.
+          </div>
+        </div>
+
+        <div className="px-5 py-5">
+          <div className="rounded-xl border border-blue-100 bg-blue-50 p-4">
+            <div className="text-sm font-medium text-blue-900">Live course start</div>
+            <div className="mt-1 text-sm text-blue-800">
+              Starting a course creates a real staff course entry. Stat gains apply when the
+              backend completion processor finishes the course. Courses cannot be canceled once
+              booked. Staff bonuses from this role are paused until the course is completed.
+            </div>
+          </div>
+
+          <div className="mt-4 rounded-xl border border-green-100 bg-green-50 p-4">
+            <div className="text-sm font-semibold text-green-900">Staff Age</div>
+            <div className="mt-1 text-sm text-green-800">
+              {staff.name}: {formatStaffAge(staff.ageYears)}
+            </div>
+          </div>
+
+          {error ? (
+            <div className="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+              {error}
+            </div>
+          ) : null}
+
+          <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {courseOptions.map((option) => (
+              <div key={option.code} className="rounded-xl border border-gray-100 bg-gray-50 p-4">
+                <div className="text-sm font-semibold text-gray-900">{option.title}</div>
+                <div className="mt-2 text-sm text-gray-600">{option.description}</div>
+
+                <div className="mt-4 space-y-1 text-xs text-gray-500">
+                  <div>Focus: {option.focusLabel}</div>
+                  <div>Duration: {option.durationDays} days</div>
+                  <div>Cost: {formatCurrency(option.costCash)}</div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => onStartCourse(option.code)}
+                  disabled={startingCourseCode !== null}
+                  className={`mt-4 w-full rounded-lg px-4 py-2 text-sm font-medium transition ${
+                    startingCourseCode !== null
+                      ? 'cursor-not-allowed bg-gray-200 text-gray-500'
+                      : 'bg-yellow-400 text-black hover:bg-yellow-300'
+                  }`}
+                >
+                  {startingCourseCode === option.code ? 'Starting...' : 'Start Course'}
+                </button>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-6 flex items-center justify-end">
+            <button
+              type="button"
+              onClick={onCancel}
+              disabled={startingCourseCode !== null}
+              className={`rounded-lg border px-4 py-2 text-sm font-medium transition ${
+                startingCourseCode !== null
+                  ? 'cursor-not-allowed border-gray-200 bg-gray-100 text-gray-400'
+                  : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              Back to Staff
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
 }
 
 export default function StaffPage() {
@@ -1621,20 +2252,24 @@ export default function StaffPage() {
   const [activeCourseRows, setActiveCourseRows] = useState<ActiveStaffCourseRow[]>([])
   const [recentCourseResults, setRecentCourseResults] = useState<RecentStaffCourseResultRow[]>([])
   const [infrastructure, setInfrastructure] = useState<ClubInfrastructureRow | null>(null)
-  const [selectedSlot, setSelectedSlot] = useState<StaffSlot | null>(null)
-  const [releaseConfirmSlot, setReleaseConfirmSlot] = useState<StaffSlot | null>(null)
+  const [roleLimits, setRoleLimits] = useState<StaffRoleLimitRow[]>([])
+  const [selectedRole, setSelectedRole] = useState<StaffRole>('head_coach')
+  const [selectedStaff, setSelectedStaff] = useState<StaffListMember | null>(null)
+  const [releaseConfirmStaff, setReleaseConfirmStaff] = useState<StaffListMember | null>(null)
   const [pageMessage, setPageMessage] = useState<string | null>(null)
   const [releaseLoadingId, setReleaseLoadingId] = useState<string | null>(null)
 
-  const [extendContractSlot, setExtendContractSlot] = useState<StaffSlot | null>(null)
+  const [extendContractStaff, setExtendContractStaff] = useState<StaffListMember | null>(null)
   const [extendContractSeasons, setExtendContractSeasons] = useState<1 | 2>(1)
   const [extendQuote, setExtendQuote] = useState<ExtendContractQuoteRow | null>(null)
   const [extendQuoteLoading, setExtendQuoteLoading] = useState(false)
   const [extendSubmitLoading, setExtendSubmitLoading] = useState(false)
   const [extendContractSalary, setExtendContractSalary] = useState('')
   const [extendContractError, setExtendContractError] = useState<string | null>(null)
+  const [extendResultMessage, setExtendResultMessage] = useState<string | null>(null)
+  const [extendResultTone, setExtendResultTone] = useState<'success' | 'warning' | 'error' | null>(null)
 
-  const [courseSlot, setCourseSlot] = useState<StaffSlot | null>(null)
+  const [courseStaff, setCourseStaff] = useState<StaffListMember | null>(null)
   const [courseStartLoadingCode, setCourseStartLoadingCode] = useState<string | null>(null)
   const [courseError, setCourseError] = useState<string | null>(null)
 
@@ -1645,30 +2280,11 @@ export default function StaffPage() {
       gameDateResult,
       activeCoursesResult,
       recentCourseResultsResult,
+      roleLimitsResult,
     ] = await Promise.all([
-      supabase
-        .from('club_staff')
-        .select(`
-          id,
-          club_id,
-          role_type,
-          specialization,
-          team_scope,
-          staff_name,
-          country_code,
-          expertise,
-          experience,
-          potential,
-          leadership,
-          efficiency,
-          loyalty,
-          salary_weekly,
-          contract_expires_at,
-          is_active,
-          notes
-        `)
-        .eq('club_id', targetClubId)
-        .eq('is_active', true),
+      supabase.rpc('get_club_staff_with_current_assignments', {
+        p_club_id: targetClubId,
+      }),
       supabase
         .from('club_infrastructure')
         .select(`
@@ -1690,6 +2306,9 @@ export default function StaffPage() {
         p_club_id: targetClubId,
         p_limit: 6,
       }),
+      supabase.rpc('get_staff_role_capacity_overview_for_club', {
+        p_club_id: targetClubId,
+      }),
     ])
 
     if (staffResult.error) throw staffResult.error
@@ -1697,6 +2316,7 @@ export default function StaffPage() {
     if (gameDateResult.error) throw gameDateResult.error
     if (activeCoursesResult.error) throw activeCoursesResult.error
     if (recentCourseResultsResult.error) throw recentCourseResultsResult.error
+    if (roleLimitsResult.error) throw roleLimitsResult.error
 
     const nextStaffRows = (staffResult.data || []) as ClubStaffRow[]
     const nextInfrastructure = (infraResult.data as ClubInfrastructureRow | null) || null
@@ -1707,12 +2327,16 @@ export default function StaffPage() {
     const nextRecentCourseResults = Array.isArray(recentCourseResultsResult.data)
       ? (recentCourseResultsResult.data as RecentStaffCourseResultRow[])
       : []
+    const nextRoleLimits = Array.isArray(roleLimitsResult.data)
+      ? (roleLimitsResult.data as StaffRoleLimitRow[])
+      : []
 
     setStaffRows(nextStaffRows)
     setInfrastructure(nextInfrastructure)
     setCurrentGameDate(nextGameDate)
     setActiveCourseRows(nextActiveCourseRows)
     setRecentCourseResults(nextRecentCourseResults)
+    setRoleLimits(nextRoleLimits)
 
     return {
       staffRows: nextStaffRows,
@@ -1720,6 +2344,7 @@ export default function StaffPage() {
       currentGameDate: nextGameDate,
       activeCourseRows: nextActiveCourseRows,
       recentCourseResults: nextRecentCourseResults,
+      roleLimits: nextRoleLimits,
     }
   }
 
@@ -1773,7 +2398,8 @@ export default function StaffPage() {
 
         await reloadStaffPage(resolvedClub.id)
       } catch (err) {
-        const message = err instanceof Error ? err.message : 'Failed to load staff page.'
+        const message = getErrorMessage(err, 'Failed to load staff page.')
+
         if (!mounted) return
         setError(message)
       } finally {
@@ -1792,14 +2418,14 @@ export default function StaffPage() {
     let cancelled = false
 
     async function loadExtendQuote() {
-      if (!extendContractSlot?.member) return
+      if (!extendContractStaff) return
 
       try {
         setExtendQuoteLoading(true)
         setExtendContractError(null)
 
         const { data, error: quoteError } = await supabase.rpc('staff_get_contract_extension_quote', {
-          p_staff_id: extendContractSlot.member.id,
+          p_staff_id: extendContractStaff.id,
           p_seasons: extendContractSeasons,
         })
 
@@ -1816,7 +2442,7 @@ export default function StaffPage() {
         )
       } catch (err) {
         if (cancelled) return
-        const message = err instanceof Error ? err.message : 'Failed to load extension quote.'
+        const message = getErrorMessage(err, 'Failed to load extension quote.')
         setExtendQuote(null)
         setExtendContractSalary('')
         setExtendContractError(message)
@@ -1830,37 +2456,108 @@ export default function StaffPage() {
     return () => {
       cancelled = true
     }
-  }, [extendContractSlot, extendContractSeasons])
+  }, [extendContractStaff, extendContractSeasons])
+
+  const activeCourseByStaffId = useMemo(() => {
+    const map = new Map<string, StaffActiveCourse>()
+
+    for (const row of activeCourseRows) {
+      map.set(row.staff_id, {
+        id: row.course_id,
+        code: row.course_code,
+        title: row.course_title,
+        focusLabel: row.focus_label,
+        startedGameDate: row.started_game_date,
+        completesOnGameDate: row.completes_on_game_date,
+        durationDays: row.duration_days,
+        costCash: row.cost_cash,
+        status: row.status,
+      })
+    }
+
+    return map
+  }, [activeCourseRows])
+
+  const roleLimitMap = useMemo(() => {
+    const map = new Map<StaffRole, StaffRoleLimitRow>()
+
+    for (const row of roleLimits) {
+      map.set(row.role_type, row)
+    }
+
+    return map
+  }, [roleLimits])
+
+  const staffMembers = useMemo(
+    () =>
+      staffRows.map((row) => mapStaffMember(row, currentGameDate, activeCourseByStaffId, infrastructure)),
+    [staffRows, currentGameDate, activeCourseByStaffId, infrastructure]
+  )
+
+  const membersByRole = useMemo(() => {
+    const grouped: Record<StaffRole, StaffListMember[]> = {
+      head_coach: [],
+      team_doctor: [],
+      mechanic: [],
+      sport_director: [],
+      scout_analyst: [],
+    }
+
+    for (const member of staffMembers) {
+      grouped[member.role].push(member)
+    }
+
+    return grouped
+  }, [staffMembers])
+
+  const selectedRoleMeta = getRoleMeta(selectedRole)
+  const selectedRoleMembers = membersByRole[selectedRole]
+  const selectedRoleLimit = getRoleLimit(selectedRole, roleLimitMap)
+  const selectedRoleWarning = getRoleInfrastructureWarning(selectedRole, infrastructure)
+
+  const weeklyWages = useMemo(
+    () => staffMembers.reduce((sum, member) => sum + member.salaryWeekly, 0),
+    [staffMembers]
+  )
+
+  const totalStaffLimit = useMemo(
+    () => ROLE_TABS.reduce((sum, roleMeta) => sum + getRoleLimit(roleMeta.role, roleLimitMap), 0),
+    [roleLimitMap]
+  )
+
+  const openStaffSlots = Math.max(totalStaffLimit - staffMembers.length, 0)
+  const warningsCount = staffMembers.filter((member) => Boolean(member.facilityWarning)).length
+  const activeCoursesCount = staffMembers.filter((member) => member.activeCourse !== null).length
 
   async function confirmReleaseStaff() {
-    if (!releaseConfirmSlot?.member || !clubId) return
+    if (!releaseConfirmStaff || !clubId) return
 
     try {
-      setReleaseLoadingId(releaseConfirmSlot.member.id)
+      setReleaseLoadingId(releaseConfirmStaff.id)
       setPageMessage(null)
 
-      const releaseCost = getStaffReleaseCost(releaseConfirmSlot.member.salaryWeekly)
+      const releaseCost = getStaffReleaseCost(releaseConfirmStaff.salaryWeekly)
 
       const { error: releaseError } = await supabase.rpc('release_club_staff', {
-        p_staff_id: releaseConfirmSlot.member.id,
+        p_staff_id: releaseConfirmStaff.id,
       })
 
       if (releaseError) throw releaseError
 
       await reloadStaffPage(clubId)
 
-      const releasedName = releaseConfirmSlot.member.name
-      const releasedRole = releaseConfirmSlot.roleLabel
+      const releasedName = releaseConfirmStaff.name
+      const releasedRole = releaseConfirmStaff.roleLabel
 
-      setReleaseConfirmSlot(null)
-      setSelectedSlot(null)
+      setReleaseConfirmStaff(null)
+      setSelectedStaff(null)
       setPageMessage(
         `${releasedName} was released from ${releasedRole}. Release compensation paid: ${formatCurrency(
           releaseCost
         )}.`
       )
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to release staff member.'
+      const message = getErrorMessage(err, 'Failed to release staff member.')
       setPageMessage(message)
     } finally {
       setReleaseLoadingId(null)
@@ -1868,10 +2565,8 @@ export default function StaffPage() {
   }
 
   async function confirmExtendContract() {
-    if (!extendContractSlot?.member || !clubId) return
+    if (!extendContractStaff || !clubId) return
 
-    const targetRole = extendContractSlot.role
-    const targetStaffId = extendContractSlot.member.id
     const parsedSalary = Number(extendContractSalary)
 
     if (!Number.isFinite(parsedSalary) || parsedSalary <= 0) {
@@ -1882,10 +2577,12 @@ export default function StaffPage() {
     try {
       setExtendSubmitLoading(true)
       setExtendContractError(null)
+      setExtendResultMessage(null)
+      setExtendResultTone(null)
       setPageMessage(null)
 
       const { data, error: extendError } = await supabase.rpc('extend_club_staff_contract', {
-        p_staff_id: targetStaffId,
+        p_staff_id: extendContractStaff.id,
         p_seasons: extendContractSeasons,
         p_salary_weekly: parsedSalary,
       })
@@ -1897,6 +2594,8 @@ export default function StaffPage() {
         new_salary_weekly: number
         new_contract_expires_at: string
         new_season_number: number
+        decision_status?: string
+        decision_message?: string
       }>(data)
 
       const refreshedPage = await reloadStaffPage(clubId)
@@ -1916,49 +2615,76 @@ export default function StaffPage() {
         })
       }
 
-      const refreshedSlots = buildStaffSlotsFromRows(
-        refreshedPage.staffRows,
-        refreshedPage.infrastructure,
-        refreshedPage.currentGameDate,
-        refreshedActiveCourseByStaffId
+      const refreshedMembers = refreshedPage.staffRows.map((row) =>
+        mapStaffMember(
+          row,
+          refreshedPage.currentGameDate,
+          refreshedActiveCourseByStaffId,
+          refreshedPage.infrastructure
+        )
       )
 
-      const refreshedSlot =
-        refreshedSlots.find(
-          (slot) => slot.role === targetRole && slot.member?.id === targetStaffId
-        ) ??
-        refreshedSlots.find((slot) => slot.role === targetRole) ??
-        null
+      const refreshedStaff = refreshedMembers.find((member) => member.id === extendContractStaff.id) ?? null
 
-      setExtendContractSlot(null)
-      setExtendQuote(null)
-      setExtendContractSalary('')
+      setSelectedStaff(refreshedStaff)
+      setExtendContractStaff(refreshedStaff ?? extendContractStaff)
       setExtendContractError(null)
-      setSelectedSlot(refreshedSlot)
 
       if (result) {
-        setPageMessage(
-          `${result.staff_name} agreed a new deal at ${formatCurrency(
-            result.new_salary_weekly
-          )}/week until Season ${result.new_season_number}.`
-        )
+        const status = result.decision_status || 'accepted'
+
+        if (status === 'accepted') {
+          setExtendResultTone('success')
+          setExtendResultMessage(
+            `${result.staff_name} accepted the new contract: ${formatCurrency(
+              result.new_salary_weekly
+            )}/week until Season ${result.new_season_number}.`
+          )
+        } else if (status === 'countered') {
+          setExtendResultTone('warning')
+          setExtendResultMessage(result.decision_message || `${result.staff_name} wants improved terms.`)
+        } else if (status === 'rejected') {
+          setExtendResultTone('error')
+          setExtendResultMessage(result.decision_message || `${result.staff_name} rejected the offer.`)
+        } else {
+          setExtendResultTone('warning')
+          setExtendResultMessage(result.decision_message || 'Contract discussion completed.')
+        }
       } else {
-        setPageMessage('Staff contract extended successfully.')
+        setExtendResultTone('success')
+        setExtendResultMessage('Staff contract extended successfully.')
       }
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to extend staff contract.'
-      setExtendContractError(message)
+      const rawMessage = getErrorMessage(err, 'Failed to extend staff contract.')
+
+      const friendlyMessage = rawMessage.includes('Minimum acceptable salary is')
+        ? rawMessage.replace(
+            /^extend_club_staff_contract:\s*/i,
+            ''
+          ).replace(
+            'Minimum acceptable salary is',
+            'Minimum acceptable weekly salary is $'
+          )
+        : rawMessage.includes('wants closer to')
+          ? rawMessage.replace(
+              /^extend_club_staff_contract:\s*/i,
+              ''
+            ).replace(
+              /(.+?) wants closer to (\d+) per week\.?/i,
+              '$1 wants a weekly salary closer to $$$2.'
+            )
+          : rawMessage.replace(/^extend_club_staff_contract:\s*/i, '')
+
+      setExtendContractError(friendlyMessage)
     } finally {
       setExtendSubmitLoading(false)
     }
   }
 
   async function confirmStartCourse(courseCode: string) {
-    if (!courseSlot?.member || !clubId) return
+    if (!courseStaff || !clubId) return
 
-    const previousSlot = courseSlot
-    const targetRole = previousSlot.role
-    const targetStaffId = previousSlot.member.id
+    const previousStaff = courseStaff
 
     try {
       setCourseStartLoadingCode(courseCode)
@@ -1966,7 +2692,7 @@ export default function StaffPage() {
       setPageMessage(null)
 
       const { data, error } = await supabase.rpc('start_staff_course', {
-        p_staff_id: targetStaffId,
+        p_staff_id: previousStaff.id,
         p_course_code: courseCode,
       })
 
@@ -1994,138 +2720,59 @@ export default function StaffPage() {
         })
       }
 
-      const refreshedSlots = buildStaffSlotsFromRows(
-        refreshedPage.staffRows,
-        refreshedPage.infrastructure,
-        refreshedPage.currentGameDate,
-        refreshedActiveCourseMap
+      const refreshedMembers = refreshedPage.staffRows.map((row) =>
+        mapStaffMember(
+          row,
+          refreshedPage.currentGameDate,
+          refreshedActiveCourseMap,
+          refreshedPage.infrastructure
+        )
       )
 
-      const refreshedSlot =
-        refreshedSlots.find(
-          (slot) => slot.role === targetRole && slot.member?.id === targetStaffId
-        ) ??
-        refreshedSlots.find((slot) => slot.role === targetRole) ??
-        null
+      const refreshedStaff = refreshedMembers.find((member) => member.id === previousStaff.id) ?? null
 
-      setCourseSlot(null)
-      setSelectedSlot(refreshedSlot)
+      setCourseStaff(null)
+      setSelectedStaff(refreshedStaff)
 
       if (result) {
         setPageMessage(
-          `${previousSlot.member.name} started ${result.course_title}. Completion target ${formatGameDateShort(
+          `${previousStaff.name} started ${result.course_title}. Completion target ${formatGameDateShort(
             result.completes_on_game_date
           )}.`
         )
       } else {
-        setPageMessage(`${previousSlot.member.name} started a staff course.`)
+        setPageMessage(`${previousStaff.name} started a staff course.`)
       }
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to start staff course.'
+      const message = getErrorMessage(err, 'Failed to start staff course.')
       setCourseError(message)
     } finally {
       setCourseStartLoadingCode(null)
     }
   }
 
-  function openReleaseFlow(slot: StaffSlot) {
-    setSelectedSlot(null)
-    setReleaseConfirmSlot(slot)
+  function openReleaseFlow(staff: StaffListMember) {
+    setSelectedStaff(null)
+    setReleaseConfirmStaff(staff)
   }
 
-  function openExtendFlow(slot: StaffSlot) {
-    setSelectedSlot(null)
-    setExtendContractSlot(slot)
+  function openExtendFlow(staff: StaffListMember) {
+    setSelectedStaff(null)
+    setExtendContractStaff(staff)
     setExtendContractSeasons(1)
     setExtendQuote(null)
     setExtendContractSalary('')
     setExtendContractError(null)
+    setExtendResultMessage(null)
+    setExtendResultTone(null)
   }
 
-  function openCourseFlow(slot: StaffSlot) {
-    setSelectedSlot(null)
+  function openCourseFlow(staff: StaffListMember) {
+    setSelectedStaff(null)
     setCourseError(null)
     setCourseStartLoadingCode(null)
-    setCourseSlot(slot)
+    setCourseStaff(staff)
   }
-
-  const activeCourseByStaffId = useMemo(() => {
-    const map = new Map<string, StaffActiveCourse>()
-
-    for (const row of activeCourseRows) {
-      map.set(row.staff_id, {
-        id: row.course_id,
-        code: row.course_code,
-        title: row.course_title,
-        focusLabel: row.focus_label,
-        startedGameDate: row.started_game_date,
-        completesOnGameDate: row.completes_on_game_date,
-        durationDays: row.duration_days,
-        costCash: row.cost_cash,
-        status: row.status,
-      })
-    }
-
-    return map
-  }, [activeCourseRows])
-
-  const staffSlots = useMemo(
-    () => buildStaffSlotsFromRows(staffRows, infrastructure, currentGameDate, activeCourseByStaffId),
-    [staffRows, infrastructure, currentGameDate, activeCourseByStaffId]
-  )
-
-  const performanceSlots = useMemo(
-    () => staffSlots.filter((slot) => slot.category === 'performance'),
-    [staffSlots]
-  )
-
-  const medicalTechnicalSlots = useMemo(
-    () => staffSlots.filter((slot) => slot.category === 'medical_technical'),
-    [staffSlots]
-  )
-
-  const tacticalRecruitmentSlots = useMemo(
-    () => staffSlots.filter((slot) => slot.category === 'tactical_recruitment'),
-    [staffSlots]
-  )
-
-  const weeklyWages = useMemo(
-    () =>
-      staffSlots.reduce((sum, slot) => {
-        if (!slot.member) return sum
-        return sum + slot.member.salaryWeekly
-      }, 0),
-    [staffSlots]
-  )
-
-  const vacancyCount = useMemo(
-    () => staffSlots.filter((slot) => !slot.member).length,
-    [staffSlots]
-  )
-
-  const warningsCount = useMemo(
-    () => staffSlots.filter((slot) => Boolean(slot.warning)).length,
-    [staffSlots]
-  )
-
-  const hiredStaffCount = useMemo(
-    () => staffSlots.filter((slot) => slot.member !== null).length,
-    [staffSlots]
-  )
-
-  const staffCapacityInfo = useMemo(() => getStaffCapacityInfo(infrastructure), [infrastructure])
-
-  const staffCapacitySubtext = useMemo(() => {
-    if (staffCapacityInfo.unsupportedRoleLabels.length === 0) {
-      return 'All core staff roles are fully supported by infrastructure'
-    }
-
-    if (hiredStaffCount > staffCapacityInfo.supportedCount) {
-      return `Over supported capacity by ${hiredStaffCount - staffCapacityInfo.supportedCount} staff`
-    }
-
-    return `${staffCapacityInfo.unsupportedRoleLabels.length} role(s) limited by infrastructure`
-  }, [hiredStaffCount, staffCapacityInfo])
 
   if (loading) {
     return (
@@ -2158,14 +2805,13 @@ export default function StaffPage() {
           <div>
             <div className="text-base font-semibold text-gray-800">Team Staff</div>
             <div className="mt-1 text-sm text-gray-500">
-              Manage coaches, medical staff, technical staff and recruitment roles.
+              Manage multiple staff roles through dedicated role tabs and per-role staff lists.
             </div>
             {clubName ? <div className="mt-1 text-xs text-gray-400">{clubName}</div> : null}
           </div>
 
           <div className="text-xs text-gray-500">
-            Staff should amplify training, recovery, preparation and consistency — not replace rider
-            quality.
+            Staff limits now use live backend capacity values. Infrastructure-linked scaling can still be refined later.
           </div>
         </div>
 
@@ -2179,22 +2825,87 @@ export default function StaffPage() {
           <SummaryCard
             label="Weekly Staff Wages"
             value={formatCurrency(weeklyWages)}
-            subtext="Hook this into payroll later"
+            subtext="Current total payroll"
           />
           <SummaryCard
-            label="Open Roles"
-            value={String(vacancyCount)}
-            subtext="Vacant roles reduce support quality"
+            label="Open Staff Slots"
+            value={String(openStaffSlots)}
+            subtext="Live open slots across all staff roles"
           />
           <SummaryCard
-            label="Staff Capacity"
-            value={`${hiredStaffCount}/${staffCapacityInfo.supportedCount}`}
-            subtext={staffCapacitySubtext}
+            label="Total Staff Capacity"
+            value={`${staffMembers.length}/${totalStaffLimit}`}
+            subtext="Live backend role limits"
           />
           <SummaryCard
             label="Warnings"
             value={String(warningsCount)}
-            subtext="Facility level can cap some staff effects"
+            subtext="Facility level can cap some bonuses"
+          />
+        </div>
+
+        <div className="mt-8">
+          <SectionTitle
+            title="Staff Roles"
+            subtitle="Select a role to see assigned staff, live role limit and role contribution summary."
+          />
+          <div className="grid grid-cols-1 gap-3 lg:grid-cols-2 xl:grid-cols-5">
+            {ROLE_TABS.map((roleMeta) => (
+              <RoleTabButton
+                key={roleMeta.role}
+                role={roleMeta.role}
+                selected={selectedRole === roleMeta.role}
+                currentCount={membersByRole[roleMeta.role].length}
+                limit={getRoleLimit(roleMeta.role, roleLimitMap)}
+                onClick={() => setSelectedRole(roleMeta.role)}
+              />
+            ))}
+          </div>
+        </div>
+
+        <div className="mt-8">
+          <SectionTitle
+            title={`${selectedRoleMeta.label} Staff List`}
+            subtitle={`${selectedRoleMembers.length}/${selectedRoleLimit} assigned for this role.`}
+          />
+
+          {selectedRoleWarning ? (
+            <div className="mb-4 rounded-lg border border-yellow-200 bg-yellow-50 px-4 py-3 text-sm text-yellow-800">
+              {selectedRoleWarning}
+            </div>
+          ) : null}
+
+          {selectedRoleMembers.length > 0 ? (
+            <div className="space-y-4">
+              {selectedRoleMembers.map((staff) => (
+                <StaffListRow key={staff.id} staff={staff} onOpen={setSelectedStaff} />
+              ))}
+            </div>
+          ) : (
+            <div className="rounded-2xl border border-dashed border-gray-200 bg-gray-50 p-6">
+              <div className="text-sm font-semibold text-gray-900">No {selectedRoleMeta.label} assigned</div>
+              <div className="mt-2 text-sm text-gray-500">
+                Current role usage: {selectedRoleMembers.length}/{selectedRoleLimit}. Sign staff from the
+                staff market to fill this role.
+              </div>
+              <div className="mt-4">
+                <a
+                  href="#/dashboard/transfers?tab=staff"
+                  className="inline-flex rounded-lg bg-yellow-400 px-4 py-2 text-sm font-medium text-black hover:bg-yellow-300"
+                >
+                  Find Staff
+                </a>
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div className="mt-8">
+          <RoleContributionPanel
+            role={selectedRole}
+            members={selectedRoleMembers}
+            infrastructure={infrastructure}
+            roleLimit={selectedRoleLimit}
           />
         </div>
 
@@ -2209,10 +2920,7 @@ export default function StaffPage() {
                 const gains = formatCourseGains(result)
 
                 return (
-                  <div
-                    key={result.course_id}
-                    className="rounded-xl border border-green-100 bg-green-50 p-4"
-                  >
+                  <div key={result.course_id} className="rounded-xl border border-green-100 bg-green-50 p-4">
                     <div className="text-sm font-semibold text-green-900">{result.course_title}</div>
                     <div className="mt-1 text-sm text-green-800">{result.staff_name}</div>
                     <div className="mt-1 text-xs text-green-700">Focus: {result.focus_label}</div>
@@ -2237,70 +2945,40 @@ export default function StaffPage() {
           </div>
         ) : null}
 
-        <div className="mt-8">
-          <SectionTitle
-            title="Performance Staff"
-            subtitle="Training, progression, training camps and long-term rider development."
-          />
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {performanceSlots.map((slot) => (
-              <StaffRoleCard key={slot.role} slot={slot} onOpen={setSelectedSlot} />
-            ))}
-          </div>
-        </div>
-
-        <div className="mt-8">
-          <SectionTitle
-            title="Medical & Technical"
-            subtitle="Recovery, injury prevention, reliability and equipment support."
-          />
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {medicalTechnicalSlots.map((slot) => (
-              <StaffRoleCard key={slot.role} slot={slot} onOpen={setSelectedSlot} />
-            ))}
-          </div>
-        </div>
-
-        <div className="mt-8">
-          <SectionTitle
-            title="Tactical & Recruitment"
-            subtitle="Race direction, team coordination, scouting and transfer intelligence."
-          />
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {tacticalRecruitmentSlots.map((slot) => (
-              <StaffRoleCard key={slot.role} slot={slot} onOpen={setSelectedSlot} />
-            ))}
+        <div className="mt-8 rounded-2xl border border-blue-100 bg-blue-50 p-5">
+          <div className="text-sm font-semibold text-blue-900">Next iteration later</div>
+          <div className="mt-2 text-sm text-blue-800">
+            Role capacities now come from backend data. The next step later is refining how
+            infrastructure, unlocks and contribution formulas scale those limits and bonuses.
           </div>
         </div>
       </div>
 
       <StaffDetailModal
-        slot={selectedSlot}
-        onClose={() => setSelectedSlot(null)}
+        staff={selectedStaff}
+        infrastructure={infrastructure}
+        onClose={() => setSelectedStaff(null)}
         onRequestRelease={openReleaseFlow}
         onRequestExtend={openExtendFlow}
         onRequestCourse={openCourseFlow}
       />
 
       <ReleaseConfirmModal
-        slot={releaseConfirmSlot}
-        loading={
-          releaseConfirmSlot?.member != null &&
-          releaseLoadingId === releaseConfirmSlot.member.id
-        }
+        staff={releaseConfirmStaff}
+        loading={releaseConfirmStaff != null && releaseLoadingId === releaseConfirmStaff.id}
         onCancel={() => {
           if (releaseLoadingId) return
-          const previousSlot = releaseConfirmSlot
-          setReleaseConfirmSlot(null)
-          if (previousSlot) {
-            setSelectedSlot(previousSlot)
+          const previousStaff = releaseConfirmStaff
+          setReleaseConfirmStaff(null)
+          if (previousStaff) {
+            setSelectedStaff(previousStaff)
           }
         }}
         onConfirm={confirmReleaseStaff}
       />
 
       <ExtendContractModal
-        slot={extendContractSlot}
+        staff={extendContractStaff}
         currentGameDate={currentGameDate}
         seasons={extendContractSeasons}
         setSeasons={setExtendContractSeasons}
@@ -2310,32 +2988,36 @@ export default function StaffPage() {
         salaryInput={extendContractSalary}
         setSalaryInput={setExtendContractSalary}
         error={extendContractError}
+        resultMessage={extendResultMessage}
+        resultTone={extendResultTone}
         onCancel={() => {
           if (extendSubmitLoading) return
-          const previousSlot = extendContractSlot
-          setExtendContractSlot(null)
+          const previousStaff = extendContractStaff
+          setExtendContractStaff(null)
           setExtendQuote(null)
           setExtendContractSalary('')
           setExtendContractError(null)
-          if (previousSlot) {
-            setSelectedSlot(previousSlot)
+          setExtendResultMessage(null)
+          setExtendResultTone(null)
+          if (previousStaff) {
+            setSelectedStaff(previousStaff)
           }
         }}
         onConfirm={confirmExtendContract}
       />
 
       <StaffCourseModal
-        slot={courseSlot}
+        staff={courseStaff}
         startingCourseCode={courseStartLoadingCode}
         error={courseError}
         onStartCourse={confirmStartCourse}
         onCancel={() => {
           if (courseStartLoadingCode) return
-          const previousSlot = courseSlot
-          setCourseSlot(null)
+          const previousStaff = courseStaff
+          setCourseStaff(null)
           setCourseError(null)
-          if (previousSlot) {
-            setSelectedSlot(previousSlot)
+          if (previousStaff) {
+            setSelectedStaff(previousStaff)
           }
         }}
       />

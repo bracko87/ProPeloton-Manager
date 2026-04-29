@@ -68,7 +68,7 @@ function KpiCard({
   return (
     <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
       <div className="text-sm font-medium text-slate-500">{label}</div>
-      <div className="mt-2 text-2xl font-semibold text-slate-900">{value}</div>
+      <div className="mt-2 text-xl font-semibold leading-tight text-slate-900">{value}</div>
     </div>
   )
 }
@@ -172,13 +172,17 @@ function CountryFlag({
   const name = getCountryName(code, countryNameByCode)
 
   return (
-    <img
-      src={`https://flagcdn.com/24x18/${code.toLowerCase()}.png`}
-      alt={name}
+    <div
+      className="inline-flex h-7 w-10 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white shadow-sm"
       title={name}
-      className="h-3.5 w-[18px] shrink-0 rounded-[2px] border border-slate-200 object-cover"
-      loading="lazy"
-    />
+    >
+      <img
+        src={`https://flagcdn.com/24x18/${code.toLowerCase()}.png`}
+        alt={name}
+        className="h-4 w-6 rounded-[2px] object-cover"
+        loading="lazy"
+      />
+    </div>
   )
 }
 

@@ -7,10 +7,6 @@ import React, { useEffect, useState } from 'react'
 import { Link } from 'react-router'
 import { supabase } from '../../lib/supabase'
 
-/**
- * GameTimeRow
- * Shape returned by public.get_authoritative_game_time().
- */
 interface GameTimeRow {
   season_number: number
   month_number: number
@@ -21,10 +17,6 @@ interface GameTimeRow {
   display_text: string
 }
 
-/**
- * GameTimeProps
- * Optional refresh interval override.
- */
 interface GameTimeProps {
   refreshIntervalMs?: number
 }
@@ -54,16 +46,19 @@ const WEEKDAY_NAMES = [
   'Saturday',
 ]
 
-const IN_GAME_REFERENCE_YEAR = 2000
-
-function getWeekdayName(monthName: string, dayNumber: number): string | null {
+function getWeekdayName(
+  seasonNumber: number,
+  monthName: string,
+  dayNumber: number
+): string | null {
   const monthIndex = MONTH_INDEX_BY_NAME[monthName]
 
   if (monthIndex === undefined || !Number.isInteger(dayNumber)) {
     return null
   }
 
-  const date = new Date(Date.UTC(IN_GAME_REFERENCE_YEAR, monthIndex, dayNumber))
+  const year = 1999 + seasonNumber
+  const date = new Date(Date.UTC(year, monthIndex, dayNumber))
 
   if (Number.isNaN(date.getTime())) {
     return null
@@ -79,12 +74,12 @@ function formatTime(hour24: number, minute2: number): string {
 }
 
 function formatGameTime(row: GameTimeRow): string {
-  if (row.display_text?.trim()) {
-    return row.display_text.trim()
-  }
-
   const seasonText = `Season ${row.season_number}`
-  const weekdayText = getWeekdayName(row.month_name, row.day_number)
+  const weekdayText = getWeekdayName(
+    row.season_number,
+    row.month_name,
+    row.day_number
+  )
   const dateText = `${row.month_name} ${row.day_number}`
   const timeText = formatTime(row.hour_24, row.minute_2)
 
@@ -93,13 +88,6 @@ function formatGameTime(row: GameTimeRow): string {
     : `${seasonText} - ${dateText} - ${timeText}`
 }
 
-/**
- * Footer
- * Displays global authoritative game-time and simple footer navigation.
- *
- * Game-time is sourced from public.get_authoritative_game_time()
- * so it stays aligned with public.game_state.
- */
 export default function Footer({
   refreshIntervalMs = 30000,
 }: GameTimeProps): JSX.Element {

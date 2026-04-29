@@ -1,10 +1,52 @@
-import React from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import TransferHistoryPanel, { type TransferHistoryRow } from './TransferHistoryPanel'
+
+const FREE_AGENT_ACTIVITY_ITEMS_PER_PAGE = 5
+
+function getCurrentGameDateFromState(gameState: GameStateRow | null | undefined) {
+  if (!gameState) return null
+
+  const gameYear = 1999 + Math.max(1, gameState.season_number || 1)
+
+  const gameDate = new Date(
+    Date.UTC(
+      gameYear,
+      Math.max(0, (gameState.month_number || 1) - 1),
+      Math.max(1, gameState.day_number || 1),
+      Math.max(0, gameState.hour_number || 0),
+      Math.max(0, gameState.minute_number || 0)
+    )
+  )
+
+  return Number.isNaN(gameDate.getTime()) ? null : gameDate
+}
+
+function getGameDateExpiryTimestamp(expiresOnGameDate: string | null | undefined) {
+  if (!expiresOnGameDate) return null
+
+  const expiryDate = new Date(`${expiresOnGameDate}T23:59:59Z`)
+  if (Number.isNaN(expiryDate.getTime())) return null
+
+  return expiryDate.getTime()
+}
+
+function isFreeAgentNegotiationEffectivelyExpired(
+  expiresOnGameDate: string | null | undefined,
+  gameState: GameStateRow | null | undefined
+) {
+  const currentGameDate = getCurrentGameDateFromState(gameState)
+  const expiryTimestamp = getGameDateExpiryTimestamp(expiresOnGameDate)
+
+  if (!currentGameDate || expiryTimestamp == null) return false
+
+  return currentGameDate.getTime() > expiryTimestamp
+}
 
 type RiderRoleFilter = 'all' | string
 type RiderMarketSort =
   | 'active'
   | 'expires'
+  | 'scouted'
   | 'overall_desc'
   | 'overall_asc'
   | 'price_desc'
@@ -36,6 +78,9 @@ type FreeAgentMarketRow = {
   overall: number | null
   potential: number | null
   age_years: number | null
+  overall_label?: string | null
+  potential_label?: string | null
+  is_scouted?: boolean
 }
 
 type FreeAgentNegotiationRow = {
@@ -55,6 +100,11 @@ type FreeAgentNegotiationRow = {
   locked_until: string | null
   opened_on_game_date: string
   closed_reason: string | null
+  created_at?: string | null
+  updated_at?: string | null
+  expires_on_game_date?: string | null
+  full_name?: string | null
+  display_name?: string | null
   rider?: {
     id: string
     display_name: string
@@ -75,6 +125,9 @@ type FreeAgentMarketItem = {
   role: string | null
   overall: number | null
   potential: number | null
+  overall_label?: string | null
+  potential_label?: string | null
+  is_scouted?: boolean
   age_years: number | null
   seller_label: string
   amount_value: number | null
@@ -85,14 +138,32 @@ type FreeAgentMarketItem = {
   raw: FreeAgentMarketRow
 }
 
+type ActivityTone = 'active' | 'positive' | 'negative'
+
+type TransferActivityChip = {
+  label: string
+  value: string
+  emphasized?: boolean
+}
+
+type FreeAgentActivityItem = {
+  id: string
+  negotiationId: string
+  riderId: string | null
+  riderName: string
+  tone: ActivityTone
+  statusLabel: string
+  primaryLine: string
+  secondaryLine?: string
+  sortTime: number
+  detailChips: TransferActivityChip[]
+  status: string
+  expires_on_game_date: string | null
+}
+
 function formatCurrency(value: number | null | undefined) {
   if (value == null || Number.isNaN(value)) return '—'
   return `$${Math.round(Number(value)).toLocaleString('en-US')}`
-}
-
-function formatDate(value: string | null | undefined) {
-  if (!value) return '—'
-  return value
 }
 
 function safeCountryCode(countryCode: string | null | undefined) {
@@ -159,6 +230,63 @@ function getPreferredRiderName(value: {
   rider_id?: string | null
 }) {
   return value.full_name?.trim() || value.display_name?.trim() || value.rider_id || 'Unknown rider'
+}
+
+function normalizeStatus(value: string | null | undefined) {
+  return String(value || '').trim().toLowerCase()
+}
+
+const TERMINAL_FREE_AGENT_NEGOTIATION_STATUSES = new Set([
+  'accepted',
+  'completed',
+  'declined',
+  'rejected',
+  'expired',
+  'withdrawn',
+  'cancelled',
+])
+
+function canOpenFreeAgentNegotiation(status: string | null | undefined) {
+  return !TERMINAL_FREE_AGENT_NEGOTIATION_STATUSES.has(normalizeStatus(status))
+}
+
+function getToneClasses(tone: ActivityTone) {
+  if (tone === 'active') return 'border-yellow-300 bg-white'
+  if (tone === 'positive') return 'border-green-300 bg-green-50'
+  return 'border-red-300 bg-red-50'
+}
+
+function getActivityStatusClasses(tone: ActivityTone) {
+  if (tone === 'positive') {
+    return 'border-green-200 bg-white text-green-700'
+  }
+  if (tone === 'negative') {
+    return 'border-red-200 bg-white text-red-700'
+  }
+  return 'border-gray-300 bg-white text-gray-700'
+}
+
+function ActivityDetailChip({
+  label,
+  value,
+  emphasized = false,
+}: TransferActivityChip) {
+  return (
+    <span
+      className={`inline-flex items-center rounded-md border px-3 py-1.5 text-xs ${
+        emphasized
+          ? 'border-gray-300 bg-white text-gray-700 shadow-sm'
+          : 'border-gray-200 bg-white/90 text-gray-700'
+      }`}
+    >
+      <span className="font-semibold text-gray-900">{label}:</span>
+      <span
+        className={`ml-1 ${emphasized ? 'font-bold text-gray-900' : 'font-medium text-gray-700'}`}
+      >
+        {value}
+      </span>
+    </span>
+  )
 }
 
 function InfoPair({
@@ -272,6 +400,12 @@ function MarketListRow({
               {riderName}
             </button>
 
+            {item.is_scouted ? (
+              <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">
+                Scouted
+              </span>
+            ) : null}
+
             {item.is_user_active ? (
               <span className="rounded-full bg-yellow-300 px-2 py-0.5 text-[11px] font-bold uppercase text-black">
                 Active Negotiation
@@ -281,8 +415,10 @@ function MarketListRow({
 
           <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2">
             <InfoPair label="Role:" value={item.role || '—'} />
-            <InfoPair label="OVR:" value={item.overall ?? '—'} />
-            <InfoPair label="POT:" value={item.potential ?? '—'} />
+            <InfoPair label="OVR:" value={item.overall_label ?? '—'} />
+            {item.is_scouted ? (
+              <InfoPair label="POT:" value={item.potential_label ?? '—'} />
+            ) : null}
             <InfoPair label="Age:" value={item.age_years ?? '—'} />
             <InfoPair label="Type:" value="Free Agent" />
           </div>
@@ -321,72 +457,213 @@ function MarketListRow({
 type RiderFreeAgentsPageProps = {
   riderLoading: boolean
   gameState: GameStateRow | null
-  marketSearch: string
+  marketSearch?: string
   setMarketSearch: (value: string) => void
   marketRoleFilter: RiderRoleFilter
   setMarketRoleFilter: (value: RiderRoleFilter) => void
-  riderRoleOptions: string[]
+  riderRoleOptions?: string[]
   marketSort: RiderMarketSort
   setMarketSort: (value: RiderMarketSort) => void
   marketOnlyActive: boolean
   setMarketOnlyActive: (value: boolean) => void
-  paginatedUnifiedMarketRows: FreeAgentMarketItem[]
+  paginatedUnifiedMarketRows?: FreeAgentMarketItem[]
   selectedFreeAgentId: string | null
   onSelectMarketItem: (item: FreeAgentMarketItem) => void
   onQuickActionMarketItem: (item: FreeAgentMarketItem) => void
   onOpenRiderProfile: (item: FreeAgentMarketItem) => void
-  onOpenHistoryRiderProfile: (riderId: string) => void
+  onOpenHistoryRiderProfile?: (riderId: string) => void
   marketPageStart: number
   marketPageEnd: number
   totalMarketRows: number
   marketPage: number
   marketTotalPages: number
+  onFirstMarketPage: () => void
   onPrevMarketPage: () => void
   onNextMarketPage: () => void
+  onLastMarketPage: () => void
   selectedFreeAgent: FreeAgentMarketRow | null
   riderActionLoading: boolean
   onStartFreeAgentNegotiation: (agent: FreeAgentMarketRow) => void
-  myFreeAgentNegotiations: FreeAgentNegotiationRow[]
-  transferHistory: TransferHistoryRow[]
+  onOpenNegotiation?: (negotiationId: string) => void
+  onCancelNegotiation?: (negotiationId: string) => void
+  myFreeAgentNegotiations?: FreeAgentNegotiationRow[]
+  transferHistory?: TransferHistoryRow[]
+  currentClubRiderIds?: Set<string>
+  onOpenOwnedRiderProfile?: (riderId: string) => void
+  onOpenExternalRiderProfile?: (riderId: string) => void
+  onOpenClubProfile?: (clubId: string) => void
 }
 
 export default function RiderFreeAgentsPage({
   riderLoading,
   gameState,
-  marketSearch,
+  marketSearch = '',
   setMarketSearch,
   marketRoleFilter,
   setMarketRoleFilter,
-  riderRoleOptions,
+  riderRoleOptions = [],
   marketSort,
   setMarketSort,
   marketOnlyActive,
   setMarketOnlyActive,
-  paginatedUnifiedMarketRows,
+  paginatedUnifiedMarketRows = [],
   selectedFreeAgentId,
   onSelectMarketItem,
   onQuickActionMarketItem,
   onOpenRiderProfile,
-  onOpenHistoryRiderProfile,
+  onOpenHistoryRiderProfile = () => {},
   marketPageStart,
   marketPageEnd,
   totalMarketRows,
   marketPage,
   marketTotalPages,
+  onFirstMarketPage,
   onPrevMarketPage,
   onNextMarketPage,
+  onLastMarketPage,
   selectedFreeAgent,
   riderActionLoading,
   onStartFreeAgentNegotiation,
-  myFreeAgentNegotiations,
-  transferHistory,
+  onOpenNegotiation = () => {},
+  onCancelNegotiation = () => {},
+  myFreeAgentNegotiations = [],
+  transferHistory = [],
+  currentClubRiderIds = new Set<string>(),
+  onOpenOwnedRiderProfile = () => {},
+  onOpenExternalRiderProfile = () => {},
+  onOpenClubProfile = () => {},
 }: RiderFreeAgentsPageProps) {
-  const selectedCountdown = getGameCountdownLabel(
-    selectedFreeAgent?.expires_on_game_date,
-    gameState
+  const safeMarketRows = Array.isArray(paginatedUnifiedMarketRows)
+    ? paginatedUnifiedMarketRows
+    : []
+
+  const safeNegotiations = Array.isArray(myFreeAgentNegotiations)
+    ? myFreeAgentNegotiations
+    : []
+
+  const safeTransferHistory = Array.isArray(transferHistory)
+    ? transferHistory
+    : []
+
+  const safeRoleOptions = Array.isArray(riderRoleOptions) ? riderRoleOptions : []
+  const safeOwnedRiderIds =
+    currentClubRiderIds instanceof Set ? currentClubRiderIds : new Set<string>()
+
+  void selectedFreeAgent
+  void riderActionLoading
+  void onStartFreeAgentNegotiation
+  void onOpenHistoryRiderProfile
+
+  function handleOpenActivityRider(riderId: string | null) {
+    if (!riderId) return
+
+    if (safeOwnedRiderIds.has(riderId)) {
+      onOpenOwnedRiderProfile(riderId)
+      return
+    }
+
+    onOpenExternalRiderProfile(riderId)
+  }
+
+  const freeAgentActivityItems = useMemo(() => {
+    const items: FreeAgentActivityItem[] = []
+
+    for (const negotiation of safeNegotiations) {
+      const riderName =
+        negotiation.full_name?.trim() ||
+        negotiation.display_name?.trim() ||
+        negotiation.rider?.display_name?.trim() ||
+        negotiation.rider_id ||
+        'Unknown rider'
+
+      const status = normalizeStatus(negotiation.status)
+
+      let tone: 'active' | 'positive' | 'negative' = 'active'
+      let statusLabel = 'Negotiation active'
+      let secondaryLine = 'Contract talks are in progress.'
+
+      if (status === 'accepted' || status === 'completed') {
+        tone = 'positive'
+        statusLabel = 'Completed'
+        secondaryLine = 'Free-agent signing completed successfully.'
+      } else if (status === 'declined' || status === 'rejected' || status === 'expired') {
+        tone = 'negative'
+        statusLabel = status === 'expired' ? 'Expired' : 'Declined'
+        secondaryLine =
+          negotiation.closed_reason?.trim() || 'Negotiation ended without agreement.'
+      }
+
+      items.push({
+        id: negotiation.id,
+        negotiationId: negotiation.id,
+        riderId: negotiation.rider_id,
+        riderName,
+        tone,
+        statusLabel,
+        primaryLine: `Free agent negotiation • ${riderName}`,
+        secondaryLine,
+        sortTime:
+          new Date(
+            (negotiation as any).updated_at ||
+              (negotiation as any).created_at ||
+              negotiation.opened_on_game_date
+          ).getTime() || 0,
+        detailChips: [
+          {
+            label: 'Min salary',
+            value: `${formatCurrency(negotiation.min_acceptable_salary_weekly)}/week`,
+            emphasized: true,
+          },
+          {
+            label: 'Latest offer',
+            value: `${formatCurrency(
+              negotiation.offer_salary_weekly ?? negotiation.expected_salary_weekly
+            )}/week`,
+            emphasized: true,
+          },
+          {
+            label: 'Duration',
+            value: `${negotiation.offer_duration_seasons ?? negotiation.preferred_duration_seasons} season(s)`,
+          },
+          ...(negotiation.expires_on_game_date
+            ? [
+                {
+                  label: 'Expires',
+                  value: getGameCountdownLabel(negotiation.expires_on_game_date, gameState),
+                  emphasized: true,
+                },
+              ]
+            : []),
+        ],
+        status: negotiation.status,
+        expires_on_game_date: negotiation.expires_on_game_date ?? null,
+      })
+    }
+
+    return items.sort((a, b) => b.sortTime - a.sortTime)
+  }, [safeNegotiations, gameState])
+
+  const [activityPage, setActivityPage] = useState(1)
+
+  useEffect(() => {
+    setActivityPage(1)
+  }, [freeAgentActivityItems])
+
+  const activityTotalPages = Math.max(
+    1,
+    Math.ceil(freeAgentActivityItems.length / FREE_AGENT_ACTIVITY_ITEMS_PER_PAGE)
   )
-  const selectedExpired = selectedCountdown === 'Expired'
-  const selectedFlagCode = safeCountryCode(selectedFreeAgent?.country_code)
+
+  const paginatedFreeAgentActivityItems = useMemo(() => {
+    const startIndex = (activityPage - 1) * FREE_AGENT_ACTIVITY_ITEMS_PER_PAGE
+    return freeAgentActivityItems.slice(
+      startIndex,
+      startIndex + FREE_AGENT_ACTIVITY_ITEMS_PER_PAGE
+    )
+  }, [freeAgentActivityItems, activityPage])
+
+  const negotiationActionButtonClassName =
+    'inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1.5 text-xs font-medium'
 
   return (
     <div className="space-y-4">
@@ -424,7 +701,7 @@ export default function RiderFreeAgentsPage({
                 className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700"
               >
                 <option value="all">All Roles</option>
-                {riderRoleOptions.map((role) => (
+                {safeRoleOptions.map((role) => (
                   <option key={role} value={role}>
                     {role}
                   </option>
@@ -442,11 +719,12 @@ export default function RiderFreeAgentsPage({
                 className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700"
               >
                 <option value="active">Active First</option>
-                <option value="expires">Expiry</option>
-                <option value="overall_desc">OVR High-Low</option>
-                <option value="overall_asc">OVR Low-High</option>
-                <option value="price_desc">Price High-Low</option>
-                <option value="price_asc">Price Low-High</option>
+                <option value="scouted">Scouted First</option>
+                <option value="expires">Expires Soonest</option>
+                <option value="overall_desc">Overall High-Low</option>
+                <option value="overall_asc">Overall Low-High</option>
+                <option value="price_desc">Salary High-Low</option>
+                <option value="price_asc">Salary Low-High</option>
                 <option value="name_asc">Name A-Z</option>
                 <option value="name_desc">Name Z-A</option>
                 <option value="age_asc">Age Low-High</option>
@@ -475,12 +753,12 @@ export default function RiderFreeAgentsPage({
             <div className="rounded-lg border border-gray-100 bg-gray-50 p-4 text-sm text-gray-500">
               Loading free agents...
             </div>
-          ) : paginatedUnifiedMarketRows.length === 0 ? (
+          ) : safeMarketRows.length === 0 ? (
             <div className="rounded-lg border border-gray-100 bg-gray-50 p-4 text-sm text-gray-500">
               No riders found for the current filters.
             </div>
           ) : (
-            paginatedUnifiedMarketRows.map((item) => (
+            safeMarketRows.map((item) => (
               <MarketListRow
                 key={item.key}
                 item={item}
@@ -500,13 +778,197 @@ export default function RiderFreeAgentsPage({
           </div>
 
           {totalMarketRows > 30 ? (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={onFirstMarketPage}
+                disabled={marketPage <= 1}
+                className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                First
+              </button>
+
               <button
                 type="button"
                 onClick={onPrevMarketPage}
-                disabled={marketPage === 1}
+                disabled={marketPage <= 1}
+                className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Previous
+              </button>
+
+              <div className="text-sm text-gray-600">
+                Page {marketPage} / {marketTotalPages}
+              </div>
+
+              <button
+                type="button"
+                onClick={onNextMarketPage}
+                disabled={marketPage >= marketTotalPages}
+                className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Next
+              </button>
+
+              <button
+                type="button"
+                onClick={onLastMarketPage}
+                disabled={marketPage >= marketTotalPages}
+                className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Last
+              </button>
+            </div>
+          ) : null}
+        </div>
+      </div>
+
+      <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+        <div>
+          <h3 className="text-lg font-semibold text-gray-900">Free Agent Negotiations</h3>
+          <p className="mt-1 text-sm text-gray-500">
+            All current and recently updated free-agent negotiations from the last 24 hours.
+          </p>
+        </div>
+
+        <div className="mt-4 space-y-3">
+          {freeAgentActivityItems.length === 0 ? (
+            <div className="rounded-lg border border-dashed border-gray-200 bg-gray-50 px-4 py-5 text-sm text-gray-500">
+              No free-agent negotiation activity in the last 24 hours.
+            </div>
+          ) : (
+            paginatedFreeAgentActivityItems.map((item) => {
+              const normalizedStatus = normalizeStatus(item.status)
+              const isExpired = isFreeAgentNegotiationEffectivelyExpired(
+                item.expires_on_game_date,
+                gameState
+              )
+
+              const canCancelNegotiation = !isExpired && normalizedStatus === 'open'
+              const uiStatus = isExpired ? 'expired' : normalizedStatus
+
+              const displayTone: ActivityTone =
+                uiStatus === 'accepted' || uiStatus === 'completed'
+                  ? 'positive'
+                  : uiStatus === 'declined' ||
+                      uiStatus === 'rejected' ||
+                      uiStatus === 'withdrawn' ||
+                      uiStatus === 'expired'
+                    ? 'negative'
+                    : 'active'
+
+              const statusLabel =
+                uiStatus === 'open'
+                  ? 'Negotiation active'
+                  : uiStatus === 'rejected' || uiStatus === 'declined'
+                    ? 'Declined'
+                    : uiStatus === 'withdrawn'
+                      ? 'Withdrawn'
+                      : uiStatus === 'accepted' || uiStatus === 'completed'
+                        ? 'Completed'
+                        : uiStatus === 'expired'
+                          ? 'Expired'
+                          : 'Negotiation'
+
+              return (
+                <div
+                  key={item.id}
+                  className={`rounded-xl border px-4 py-4 ${getToneClasses(displayTone)}`}
+                >
+                  <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="text-base font-semibold text-gray-900">{item.riderName}</span>
+
+                        <span
+                          className={`inline-flex items-center rounded-md border px-3 py-1.5 text-xs font-medium shadow-sm ${getActivityStatusClasses(
+                            displayTone
+                          )}`}
+                        >
+                          {statusLabel}
+                        </span>
+                      </div>
+
+                      <div className="mt-1 text-sm font-semibold text-gray-800">
+                        {item.primaryLine}
+                      </div>
+
+                      {item.secondaryLine ? (
+                        <div className="mt-1 text-sm text-gray-700">{item.secondaryLine}</div>
+                      ) : null}
+
+                      <div className="mt-3 flex flex-wrap items-center gap-2">
+                        {item.detailChips.map((chip, index) => (
+                          <ActivityDetailChip
+                            key={`${item.id}-chip-${index}`}
+                            label={chip.label}
+                            value={chip.value}
+                            emphasized={chip.emphasized}
+                          />
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="ml-auto flex shrink-0 flex-wrap items-center justify-end gap-2 lg:self-center">
+                      {item.riderId ? (
+                        <button
+                          type="button"
+                          onClick={() => handleOpenActivityRider(item.riderId)}
+                          className={`${negotiationActionButtonClassName} border border-slate-300 bg-white text-slate-700 hover:bg-slate-50`}
+                        >
+                          Open rider
+                        </button>
+                      ) : null}
+
+                      {canCancelNegotiation ? (
+                        <button
+                          type="button"
+                          onClick={() => onCancelNegotiation(item.id)}
+                          className={`${negotiationActionButtonClassName} border border-red-200 bg-red-50 text-red-700 hover:bg-red-100`}
+                        >
+                          Cancel negotiation
+                        </button>
+                      ) : null}
+
+                      {canOpenFreeAgentNegotiation(uiStatus) ? (
+                        <button
+                          type="button"
+                          onClick={() => onOpenNegotiation(item.id)}
+                          className={`${negotiationActionButtonClassName} bg-yellow-400 text-black hover:bg-yellow-300`}
+                        >
+                          Open negotiation
+                        </button>
+                      ) : null}
+                    </div>
+                  </div>
+                </div>
+              )
+            })
+          )}
+        </div>
+
+        <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="text-xs text-gray-500">
+            Showing{' '}
+            {paginatedFreeAgentActivityItems.length === 0
+              ? 0
+              : (activityPage - 1) * FREE_AGENT_ACTIVITY_ITEMS_PER_PAGE + 1}
+            -
+            {Math.min(
+              activityPage * FREE_AGENT_ACTIVITY_ITEMS_PER_PAGE,
+              freeAgentActivityItems.length
+            )}{' '}
+            of {freeAgentActivityItems.length} negotiation items
+          </div>
+
+          {freeAgentActivityItems.length > FREE_AGENT_ACTIVITY_ITEMS_PER_PAGE ? (
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setActivityPage((prev) => Math.max(1, prev - 1))}
+                disabled={activityPage === 1}
                 className={`rounded-md px-3 py-2 text-sm font-medium transition ${
-                  marketPage === 1
+                  activityPage === 1
                     ? 'cursor-not-allowed bg-gray-200 text-gray-500'
                     : 'border border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
                 }`}
@@ -515,15 +977,17 @@ export default function RiderFreeAgentsPage({
               </button>
 
               <div className="px-2 text-sm text-gray-600">
-                Page {marketPage} / {marketTotalPages}
+                Page {activityPage} / {activityTotalPages}
               </div>
 
               <button
                 type="button"
-                onClick={onNextMarketPage}
-                disabled={marketPage === marketTotalPages}
+                onClick={() =>
+                  setActivityPage((prev) => Math.min(activityTotalPages, prev + 1))
+                }
+                disabled={activityPage === activityTotalPages}
                 className={`rounded-md px-3 py-2 text-sm font-medium transition ${
-                  marketPage === marketTotalPages
+                  activityPage === activityTotalPages
                     ? 'cursor-not-allowed bg-gray-200 text-gray-500'
                     : 'border border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
                 }`}
@@ -535,132 +999,12 @@ export default function RiderFreeAgentsPage({
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1fr_1fr]">
-        <div className="rounded-lg border border-gray-100 bg-white p-4 shadow">
-          <h4 className="font-semibold text-gray-900">Selected Free Agent</h4>
-
-          {!selectedFreeAgent ? (
-            <div className="mt-3 text-sm text-gray-500">
-              Select a free agent from the market list above.
-            </div>
-          ) : (
-            <>
-              <div className="mt-3">
-                <div className="flex items-center gap-2">
-                  {selectedFlagCode ? (
-                    <img
-                      src={getCountryFlagUrl(selectedFlagCode)}
-                      alt={getCountryName(selectedFreeAgent.country_code)}
-                      className="h-4 w-6 shrink-0 rounded-sm border border-gray-200 object-cover"
-                    />
-                  ) : (
-                    <div className="h-4 w-6 shrink-0 rounded-sm bg-gray-100" aria-hidden="true" />
-                  )}
-
-                  <div className="font-semibold text-gray-900">
-                    {getPreferredRiderName(selectedFreeAgent)}
-                  </div>
-                </div>
-
-                <div className="mt-1 text-sm text-gray-500">
-                  {selectedFreeAgent.role || '—'} • Age {selectedFreeAgent.age_years ?? '—'} • OVR{' '}
-                  {selectedFreeAgent.overall ?? '—'} • POT {selectedFreeAgent.potential ?? '—'}
-                </div>
-              </div>
-
-              <div className="mt-4 grid grid-cols-2 gap-3">
-                <div className="rounded-lg bg-gray-50 p-3">
-                  <div className="text-xs text-gray-500">Expected Salary</div>
-                  <div className="mt-1 text-sm font-semibold text-gray-900">
-                    {formatCurrency(selectedFreeAgent.expected_salary_weekly)}/week
-                  </div>
-                </div>
-
-                <div className="rounded-lg bg-gray-50 p-3">
-                  <div className="text-xs text-gray-500">Status</div>
-                  <div className="mt-1 text-sm font-semibold text-gray-900">
-                    {selectedFreeAgent.status || '—'}
-                  </div>
-                </div>
-              </div>
-
-              <div className="mt-4 grid grid-cols-2 gap-3">
-                <div className="rounded-lg bg-gray-50 p-3">
-                  <div className="text-xs text-gray-500">Visible Until</div>
-                  <div className="mt-1 text-sm font-semibold text-gray-900">
-                    {formatDate(selectedFreeAgent.expires_on_game_date)}
-                  </div>
-                </div>
-
-                <div className="rounded-lg bg-gray-50 p-3">
-                  <div className="text-xs text-gray-500">Time Left</div>
-                  <div
-                    className={`mt-1 text-sm font-semibold ${
-                      selectedExpired ? 'text-red-700' : 'text-gray-900'
-                    }`}
-                  >
-                    {selectedCountdown}
-                  </div>
-                </div>
-              </div>
-
-              <div className="mt-4 flex items-center justify-end gap-3">
-                <button
-                  type="button"
-                  onClick={() => onStartFreeAgentNegotiation(selectedFreeAgent)}
-                  disabled={riderActionLoading || selectedExpired}
-                  className={`rounded-md px-4 py-2 text-sm font-medium transition ${
-                    riderActionLoading || selectedExpired
-                      ? 'cursor-not-allowed bg-gray-200 text-gray-500'
-                      : 'bg-yellow-400 text-black hover:bg-yellow-300'
-                  }`}
-                >
-                  {riderActionLoading ? 'Processing...' : 'Contract Negotiate'}
-                </button>
-              </div>
-            </>
-          )}
-        </div>
-
-        <div className="rounded-lg border border-gray-100 bg-white p-4 shadow">
-          <h4 className="font-semibold text-gray-900">Free Agent Negotiations</h4>
-          <div className="mt-3 space-y-2">
-            {myFreeAgentNegotiations.length === 0 ? (
-              <div className="text-sm text-gray-500">No free-agent negotiations yet.</div>
-            ) : (
-              myFreeAgentNegotiations.map((negotiation) => (
-                <div
-                  key={negotiation.id}
-                  className={`rounded-lg border p-3 ${
-                    negotiation.status === 'open'
-                      ? 'border-yellow-300 bg-yellow-50'
-                      : 'border-gray-100 bg-gray-50'
-                  }`}
-                >
-                  <div className="text-sm font-semibold text-gray-900">
-                    {negotiation.rider?.display_name || 'Unknown rider'}
-                  </div>
-                  <div className="text-xs text-gray-500">
-                    Status {negotiation.status} • Expected{' '}
-                    {formatCurrency(negotiation.expected_salary_weekly)} • Min{' '}
-                    {formatCurrency(negotiation.min_acceptable_salary_weekly)}
-                  </div>
-                  <div className="text-[11px] text-gray-400">
-                    Offer {formatCurrency(negotiation.offer_salary_weekly)} • Duration{' '}
-                    {negotiation.offer_duration_seasons ?? negotiation.preferred_duration_seasons}
-                    {negotiation.locked_until ? ` • Locked until ${negotiation.locked_until}` : ''}
-                    {negotiation.closed_reason ? ` • ${negotiation.closed_reason}` : ''}
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        </div>
-      </div>
-
       <TransferHistoryPanel
-        transferHistory={transferHistory}
-        onOpenRiderProfile={onOpenHistoryRiderProfile}
+        transferHistory={safeTransferHistory}
+        currentClubRiderIds={safeOwnedRiderIds}
+        onOpenOwnedRiderProfile={onOpenOwnedRiderProfile}
+        onOpenExternalRiderProfile={onOpenExternalRiderProfile}
+        onOpenClubProfile={onOpenClubProfile}
       />
     </div>
   )

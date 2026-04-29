@@ -63,11 +63,14 @@ type NegotiationPageContextRow = {
   rider_role: string | null
   rider_birth_date: string | null
   rider_image_url: string | null
+  rider_market_value?: number | null
 
   buyer_club_name: string | null
   seller_club_name: string | null
 
   offered_price: number | null
+  offer_signing_bonus?: number | null
+  offer_agent_fee?: number | null
 }
 
 type StatusBadgeDescriptor = {
@@ -81,6 +84,47 @@ type SubmitFeedback = {
 }
 
 type RpcResultRow = Record<string, unknown>
+
+type TransferOfferPreviewRpcRow = {
+  acceptance_percent?: number | string | null
+  acceptance_band?: string | null
+  predicted_outcome?: string | null
+  summary_text?: string | null
+  primary_reason?: string | null
+  hard_block?: boolean | string | number | null
+  salary_score?: number | string | null
+  duration_score?: number | string | null
+  bonus_score?: number | string | null
+  fee_score?: number | string | null
+  tier_score?: number | string | null
+  total_score?: number | string | null
+  message?: string | null
+  status?: string | null
+}
+
+type TransferOfferPreviewState = {
+  acceptancePercent: number | null
+  acceptanceBand: string | null
+  predictedOutcome: string | null
+  summaryText: string | null
+  primaryReason: string | null
+  hardBlock: boolean
+  salaryScore: number | null
+  durationScore: number | null
+  bonusScore: number | null
+  feeScore: number | null
+  tierScore: number | null
+  totalScore: number | null
+}
+
+type OfferOutlookTone = {
+  badgeClassName: string
+  panelClassName: string
+  barClassName: string
+}
+
+const MIN_CONTRACT_YEARS = 1
+const MAX_CONTRACT_YEARS = 5
 
 function looksLikeUuid(value?: string | null): boolean {
   if (!value) return false
@@ -180,6 +224,18 @@ function normalizeSalaryInput(raw: string): number | null {
   if (!cleaned) return null
   const value = Number(cleaned)
   return Number.isFinite(value) && value > 0 ? value : null
+}
+
+function normalizeMoneyInput(raw: string): number | null {
+  const cleaned = String(raw || '').replace(/[^\d]/g, '')
+  if (!cleaned) return 0
+  const value = Number(cleaned)
+  return Number.isFinite(value) && value >= 0 ? value : null
+}
+
+function formatMoney(value?: number | null): string {
+  if (value == null || Number.isNaN(value)) return '$0'
+  return `$${Math.round(Number(value)).toLocaleString('en-US')}`
 }
 
 function getStatusBadgeProps(status: NegotiationStatus): StatusBadgeDescriptor {
@@ -290,6 +346,121 @@ function getNegotiationCountdownLabel(
   return `${days}d ${hours}h ${minutes}m ${seconds}s`
 }
 
+function normalizeOfferPreview(data: unknown): TransferOfferPreviewState | null {
+  const row = getFirstRpcRow(data) as TransferOfferPreviewRpcRow | null
+  if (!row) return null
+
+  const toNumber = (value: unknown): number | null => {
+    if (typeof value === 'number' && Number.isFinite(value)) return value
+    if (typeof value === 'string' && value.trim() !== '') {
+      const parsed = Number(value)
+      return Number.isFinite(parsed) ? parsed : null
+    }
+    return null
+  }
+
+  const toString = (value: unknown): string | null => {
+    return typeof value === 'string' && value.trim() !== '' ? value.trim() : null
+  }
+
+  const toBoolean = (value: unknown): boolean => {
+    if (typeof value === 'boolean') return value
+    if (typeof value === 'number') return value !== 0
+    if (typeof value === 'string') {
+      const normalized = value.trim().toLowerCase()
+      return ['true', 't', '1', 'yes', 'y'].includes(normalized)
+    }
+    return false
+  }
+
+  const acceptancePercent = toNumber(row.acceptance_percent)
+  return {
+    acceptancePercent:
+      acceptancePercent == null
+        ? null
+        : Math.max(0, Math.min(100, Math.round(acceptancePercent))),
+    acceptanceBand: toString(row.acceptance_band),
+    predictedOutcome: toString(row.predicted_outcome),
+    summaryText: toString(row.summary_text) ?? toString(row.message),
+    primaryReason: toString(row.primary_reason),
+    hardBlock: toBoolean(row.hard_block),
+    salaryScore: toNumber(row.salary_score),
+    durationScore: toNumber(row.duration_score),
+    bonusScore: toNumber(row.bonus_score),
+    feeScore: toNumber(row.fee_score),
+    tierScore: toNumber(row.tier_score),
+    totalScore: toNumber(row.total_score),
+  }
+}
+
+function getOfferOutlookLabel(preview: TransferOfferPreviewState | null): string {
+  if (!preview) return 'No preview'
+
+  if (preview.hardBlock) return 'Extremely difficult'
+
+  switch (preview.acceptanceBand) {
+    case 'very_high':
+      return 'Very high chance'
+    case 'high':
+      return 'High chance'
+    case 'moderate':
+    case 'medium':
+      return 'Moderate chance'
+    case 'low':
+      return 'Low chance'
+    case 'very_low':
+      return 'Very low chance'
+    default:
+      return 'Unclear'
+  }
+}
+
+function getOfferOutlookTone(preview: TransferOfferPreviewState | null): OfferOutlookTone {
+  if (!preview) {
+    return {
+      badgeClassName: 'border-slate-200 bg-slate-100 text-slate-700',
+      panelClassName: 'border-slate-200 bg-slate-50',
+      barClassName: 'bg-slate-400',
+    }
+  }
+
+  if (preview.hardBlock) {
+    return {
+      badgeClassName: 'border-rose-200 bg-rose-50 text-rose-700',
+      panelClassName: 'border-rose-200 bg-rose-50/70',
+      barClassName: 'bg-rose-500',
+    }
+  }
+
+  const outcome = String(preview.predictedOutcome || '').toLowerCase()
+  const band = String(preview.acceptanceBand || '').toLowerCase()
+
+  if (
+    ['accept', 'accepted', 'sign', 'sign_now'].includes(outcome) ||
+    ['very_high', 'high'].includes(band)
+  ) {
+    return {
+      badgeClassName: 'border-emerald-200 bg-emerald-50 text-emerald-700',
+      panelClassName: 'border-emerald-200 bg-emerald-50/70',
+      barClassName: 'bg-emerald-500',
+    }
+  }
+
+  if (['medium', 'moderate'].includes(band)) {
+    return {
+      badgeClassName: 'border-amber-200 bg-amber-50 text-amber-700',
+      panelClassName: 'border-amber-200 bg-amber-50/70',
+      barClassName: 'bg-amber-500',
+    }
+  }
+
+  return {
+    badgeClassName: 'border-rose-200 bg-rose-50 text-rose-700',
+    panelClassName: 'border-rose-200 bg-rose-50/70',
+    barClassName: 'bg-rose-500',
+  }
+}
+
 function CountryFlag({
   countryCode,
   className = '',
@@ -362,6 +533,10 @@ export default function RiderTransferNegotiationPage(): JSX.Element {
 
   const [salaryOffer, setSalaryOffer] = useState('')
   const [contractYears, setContractYears] = useState<number | ''>('')
+  const [signingBonusInput, setSigningBonusInput] = useState('0')
+  const [agentFeeInput, setAgentFeeInput] = useState('0')
+  const [offerPreview, setOfferPreview] = useState<TransferOfferPreviewState | null>(null)
+  const [previewLoading, setPreviewLoading] = useState(false)
 
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
@@ -409,20 +584,25 @@ export default function RiderTransferNegotiationPage(): JSX.Element {
         return
       }
 
-      const parsed = row as NegotiationPageContextRow
-      setContextRow(parsed)
+      const typedContext = row as NegotiationPageContextRow
+      setContextRow(typedContext)
       setGameState((gameStateRow as GameStateRow | null) ?? null)
 
       const initialSalary =
-        parsed.offer_salary_weekly ??
-        parsed.min_acceptable_salary_weekly ??
-        parsed.expected_salary_weekly ??
+        typedContext.offer_salary_weekly ??
+        typedContext.min_acceptable_salary_weekly ??
+        typedContext.expected_salary_weekly ??
+        typedContext.current_salary_weekly ??
         null
 
       setSalaryOffer(initialSalary != null ? String(Math.round(initialSalary)) : '')
 
-      const initialYears = parsed.offer_duration_seasons ?? parsed.preferred_duration_seasons ?? 1
+      const initialYears =
+        typedContext.offer_duration_seasons ?? typedContext.preferred_duration_seasons ?? 1
       setContractYears(initialYears)
+
+      setSigningBonusInput(String(Number(typedContext.offer_signing_bonus ?? 0)))
+      setAgentFeeInput(String(Number(typedContext.offer_agent_fee ?? 0)))
     } catch (e: any) {
       setLoadError(e?.message ?? 'Failed to load transfer negotiation.')
       setContextRow(null)
@@ -495,18 +675,116 @@ export default function RiderTransferNegotiationPage(): JSX.Element {
   }, [contextRow?.locked_until])
 
   const canSubmit = !submitting && !isTerminal && !isLocked
+  const workingNegotiationId = contextRow?.negotiation_id ?? negotiationId ?? null
+
+  const parsedSalary = useMemo(() => normalizeSalaryInput(salaryOffer), [salaryOffer])
+  const parsedDuration = useMemo(
+    () => (typeof contractYears === 'number' ? contractYears : Number(contractYears || 0)),
+    [contractYears]
+  )
+  const parsedSigningBonus = useMemo(
+    () => normalizeMoneyInput(signingBonusInput),
+    [signingBonusInput]
+  )
+  const parsedAgentFee = useMemo(() => normalizeMoneyInput(agentFeeInput), [agentFeeInput])
+
+  const parsedSigningBonusPreview = parsedSigningBonus ?? 0
+  const parsedAgentFeePreview = parsedAgentFee ?? 0
+  const estimatedUpfrontCost = parsedSigningBonusPreview + parsedAgentFeePreview
+  const transferOfferValue = contextRow?.offered_price ?? null
+
+  useEffect(() => {
+    let isCancelled = false
+
+    if (!workingNegotiationId || isTerminal) {
+      setOfferPreview(null)
+      setPreviewLoading(false)
+      return
+    }
+
+    if (
+      !parsedSalary ||
+      !Number.isFinite(parsedDuration) ||
+      parsedDuration < MIN_CONTRACT_YEARS ||
+      parsedDuration > MAX_CONTRACT_YEARS ||
+      parsedSigningBonus == null ||
+      parsedSigningBonus < 0 ||
+      parsedAgentFee == null ||
+      parsedAgentFee < 0
+    ) {
+      setOfferPreview(null)
+      setPreviewLoading(false)
+      return
+    }
+
+    setPreviewLoading(true)
+
+    const timeoutId = window.setTimeout(async () => {
+      try {
+        const { data, error } = await supabase.rpc('preview_rider_transfer_contract_offer', {
+          p_negotiation_id: workingNegotiationId,
+          p_offer_salary_weekly: parsedSalary,
+          p_offer_duration_seasons: parsedDuration,
+          p_offer_signing_bonus: parsedSigningBonus,
+          p_offer_agent_fee: parsedAgentFee,
+        })
+
+        if (error) throw error
+        if (isCancelled) return
+
+        setOfferPreview(normalizeOfferPreview(data))
+      } catch (error) {
+        if (isCancelled) return
+        console.error('preview_rider_transfer_contract_offer failed:', error)
+        setOfferPreview(null)
+      } finally {
+        if (!isCancelled) {
+          setPreviewLoading(false)
+        }
+      }
+    }, 250)
+
+    return () => {
+      isCancelled = true
+      window.clearTimeout(timeoutId)
+    }
+  }, [
+    workingNegotiationId,
+    isTerminal,
+    parsedSalary,
+    parsedDuration,
+    parsedSigningBonus,
+    parsedAgentFee,
+  ])
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault()
 
-    if (!contextRow) return
+    if (!contextRow || !workingNegotiationId) return
 
-    const numericSalary = normalizeSalaryInput(salaryOffer)
-    const numericYears =
-      typeof contractYears === 'number' ? contractYears : Number(contractYears || 0)
+    if (!parsedSalary) {
+      setSubmitError('Please provide a valid weekly salary.')
+      return
+    }
 
-    if (!numericSalary || !Number.isFinite(numericYears) || numericYears <= 0) {
-      setSubmitError('Please provide a valid weekly salary and contract length.')
+    if (
+      !Number.isFinite(parsedDuration) ||
+      parsedDuration < MIN_CONTRACT_YEARS ||
+      parsedDuration > MAX_CONTRACT_YEARS
+    ) {
+      setSubmitError(
+        `Contract length must be between ${MIN_CONTRACT_YEARS} and ${MAX_CONTRACT_YEARS} seasons.`
+      )
+      return
+    }
+
+    if (parsedSigningBonus == null || parsedSigningBonus < 0) {
+      setSubmitError('Signing bonus must be 0 or greater.')
+      return
+    }
+
+    if (parsedAgentFee == null || parsedAgentFee < 0) {
+      setSubmitError('Agent fee must be 0 or greater.')
       return
     }
 
@@ -523,9 +801,11 @@ export default function RiderTransferNegotiationPage(): JSX.Element {
       const { data, error: rpcError } = await supabase.rpc(
         'submit_rider_transfer_contract_offer',
         {
-          p_negotiation_id: contextRow.negotiation_id,
-          p_offer_salary_weekly: numericSalary,
-          p_offer_duration_seasons: numericYears,
+          p_negotiation_id: workingNegotiationId,
+          p_offer_salary_weekly: parsedSalary,
+          p_offer_duration_seasons: parsedDuration,
+          p_offer_signing_bonus: parsedSigningBonus,
+          p_offer_agent_fee: parsedAgentFee,
         }
       )
 
@@ -552,7 +832,11 @@ export default function RiderTransferNegotiationPage(): JSX.Element {
 
       if (rpcStatus === 'completed' || rpcStatus === 'accepted') {
         feedback = { kind: 'success', message: rpcMessage }
-      } else if (rpcStatus === 'declined' || rpcStatus === 'rejected' || rpcStatus === 'expired') {
+      } else if (
+        rpcStatus === 'declined' ||
+        rpcStatus === 'rejected' ||
+        rpcStatus === 'expired'
+      ) {
         feedback = { kind: 'error', message: rpcMessage }
       }
 
@@ -766,6 +1050,13 @@ export default function RiderTransferNegotiationPage(): JSX.Element {
               </div>
 
               <div className="flex items-center justify-between gap-3">
+                <span className="text-slate-500">Market Value</span>
+                <span className="font-medium">
+                  {formatTransferAmount(contextRow.rider_market_value)}
+                </span>
+              </div>
+
+              <div className="flex items-center justify-between gap-3">
                 <span className="text-slate-500">Preferred minimum salary</span>
                 <span className="font-medium">
                   {formatWeeklySalary(contextRow.min_acceptable_salary_weekly)}
@@ -798,7 +1089,7 @@ export default function RiderTransferNegotiationPage(): JSX.Element {
           <form onSubmit={handleSubmit} className="rounded-lg bg-white p-4 shadow">
             <h2 className="text-sm font-semibold text-slate-900">Offer Terms</h2>
 
-            <div className="mt-3 grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
               <div>
                 <label className="mb-1 block text-xs font-medium uppercase tracking-[0.14em] text-slate-500">
                   Weekly Salary Offer
@@ -825,8 +1116,8 @@ export default function RiderTransferNegotiationPage(): JSX.Element {
                 </label>
                 <input
                   type="number"
-                  min={1}
-                  max={5}
+                  min={MIN_CONTRACT_YEARS}
+                  max={MAX_CONTRACT_YEARS}
                   step={1}
                   value={contractYears}
                   onChange={(event) =>
@@ -846,6 +1137,114 @@ export default function RiderTransferNegotiationPage(): JSX.Element {
                   </span>
                 </p>
               </div>
+
+              <div>
+                <label className="mb-1 block text-xs font-medium uppercase tracking-[0.14em] text-slate-500">
+                  Signing Bonus
+                </label>
+                <input
+                  type="text"
+                  value={signingBonusInput}
+                  onChange={(event) => setSigningBonusInput(event.target.value)}
+                  disabled={!canSubmit}
+                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-yellow-400 focus:ring-0 disabled:cursor-not-allowed disabled:bg-slate-100"
+                  placeholder="0"
+                />
+                <p className="mt-1 text-xs text-slate-500">
+                  Optional. Extra incentive for the rider. Current:{' '}
+                  <span className="font-medium">
+                    {formatMoney(contextRow.offer_signing_bonus ?? 0)}
+                  </span>
+                  . No minimum.
+                </p>
+              </div>
+
+              <div>
+                <label className="mb-1 block text-xs font-medium uppercase tracking-[0.14em] text-slate-500">
+                  Agent Fee
+                </label>
+                <input
+                  type="text"
+                  value={agentFeeInput}
+                  onChange={(event) => setAgentFeeInput(event.target.value)}
+                  disabled={!canSubmit}
+                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-yellow-400 focus:ring-0 disabled:cursor-not-allowed disabled:bg-slate-100"
+                  placeholder="0"
+                />
+                <p className="mt-1 text-xs text-slate-500">
+                  Optional. Extra incentive for the rider. Current:{' '}
+                  <span className="font-medium">{formatMoney(contextRow.offer_agent_fee ?? 0)}</span>
+                  . No minimum.
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
+              <div className="font-semibold text-slate-900">Financial Summary</div>
+
+              <div className="mt-2 flex items-center justify-between gap-3">
+                <span>Signing bonus</span>
+                <span className="font-medium">{formatMoney(parsedSigningBonusPreview)}</span>
+              </div>
+
+              <div className="mt-1 flex items-center justify-between gap-3">
+                <span>Agent fee</span>
+                <span className="font-medium">{formatMoney(parsedAgentFeePreview)}</span>
+              </div>
+
+              <div className="mt-2 flex items-center justify-between gap-3 border-t border-slate-200 pt-2">
+                <span className="font-semibold text-slate-900">Total up-front cost</span>
+                <span className="font-semibold text-slate-900">
+                  {formatMoney(estimatedUpfrontCost)}
+                </span>
+              </div>
+
+              <div className="mt-2 text-xs text-slate-500">
+                Transfer fee remains separate from these extras. Current transfer offer value:{' '}
+                <span className="font-medium text-slate-700">
+                  {formatMoney(transferOfferValue)}
+                </span>
+              </div>
+            </div>
+
+            <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <div className="font-semibold text-slate-900">Offer Outlook</div>
+                  <div className="mt-1 text-sm text-slate-600">
+                    {previewLoading
+                      ? 'Calculating live rider reaction...'
+                      : offerPreview?.summaryText ||
+                        'Adjust the package to preview the rider response.'}
+                  </div>
+                </div>
+
+                <div className="shrink-0 text-right">
+                  <div className="text-sm font-semibold text-slate-900">
+                    {previewLoading && !offerPreview
+                      ? 'Loading...'
+                      : getOfferOutlookLabel(offerPreview)}
+                  </div>
+                  <div className="text-xs text-slate-500">
+                    {offerPreview?.acceptancePercent != null
+                      ? `${offerPreview.acceptancePercent}% preview`
+                      : previewLoading
+                        ? 'Loading...'
+                        : 'No preview'}
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-3 h-3 overflow-hidden rounded-full bg-slate-200">
+                <div
+                  className={`h-full rounded-full transition-all duration-200 ${getOfferOutlookTone(
+                    offerPreview
+                  ).barClassName}`}
+                  style={{
+                    width: `${Math.max(4, offerPreview?.acceptancePercent ?? 0)}%`,
+                  }}
+                />
+              </div>
             </div>
 
             <div className="mt-4 flex justify-end">
@@ -854,7 +1253,7 @@ export default function RiderTransferNegotiationPage(): JSX.Element {
                 disabled={!canSubmit}
                 className="inline-flex items-center justify-center rounded-lg bg-yellow-400 px-4 py-2 text-sm font-semibold text-slate-950 shadow-sm transition hover:bg-yellow-500 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {submitting ? 'Submitting…' : 'Submit Terms'}
+                {submitting ? 'Submitting...' : 'Submit Terms'}
               </button>
             </div>
           </form>

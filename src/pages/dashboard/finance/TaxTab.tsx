@@ -5,6 +5,32 @@
 
 import React, { useEffect, useMemo, useState } from 'react'
 import { supabase } from './supabase'
+import {
+  formatGameDate,
+  getNextGameMonthEndLabel,
+  resolveGameDate,
+} from './gameDate'
+
+const DEV_TAX_NEXT_AUDIT_OVERRIDE_LABEL: string | null = null
+
+const GAME_YEAR_BASE = 1999
+
+type GameStateRow = {
+  season_number: number
+  month_number: number
+  day_number: number
+  hour_number: number | null
+  minute_number: number | null
+}
+
+type TaxPositionRow = {
+  period_start: string
+  period_end: string
+  taxable_income_gross: number | string
+  expected_tax: number | string
+  already_withheld: number | string
+  adjustment_amount: number | string
+}
 
 type AuditRow = {
   period_start: string
@@ -35,12 +61,78 @@ const TAX_TYPES = new Set([
   'tax_monthly_refund',
 ])
 
+function pad2(n: number): string {
+  return String(n).padStart(2, '0')
+}
+
+function getDaysInGameMonth(month: number): number {
+  switch (month) {
+    case 1:
+      return 31
+    case 2:
+      return 28
+    case 3:
+      return 31
+    case 4:
+      return 30
+    case 5:
+      return 31
+    case 6:
+      return 30
+    case 7:
+      return 31
+    case 8:
+      return 31
+    case 9:
+      return 30
+    case 10:
+      return 31
+    case 11:
+      return 30
+    case 12:
+      return 31
+    default:
+      return 31
+  }
+}
+
+function getCurrentGameMonthPeriod(gameState: GameStateRow): {
+  periodStart: string
+  periodEnd: string
+} {
+  const year = GAME_YEAR_BASE + gameState.season_number
+  const month = gameState.month_number
+  const lastDay = getDaysInGameMonth(month)
+
+  return {
+    periodStart: `${year}-${pad2(month)}-01`,
+    periodEnd: `${year}-${pad2(month)}-${pad2(lastDay)}`,
+  }
+}
+
+function formatGameDateRange(start: string, end: string): string {
+  const s = new Date(`${start}T00:00:00Z`)
+  const e = new Date(`${end}T00:00:00Z`)
+
+  if (Number.isNaN(s.getTime()) || Number.isNaN(e.getTime())) {
+    return `${start} → ${end}`
+  }
+
+  const season = s.getUTCFullYear() - GAME_YEAR_BASE
+
+  return `${pad2(s.getUTCDate())}/${pad2(s.getUTCMonth() + 1)} → ${pad2(
+    e.getUTCDate()
+  )}/${pad2(e.getUTCMonth() + 1)}, Season ${season}`
+}
+
 function toNumber(v: unknown): number {
   if (typeof v === 'number') return Number.isFinite(v) ? v : 0
+
   if (typeof v === 'string') {
     const n = Number(v)
     return Number.isFinite(n) ? n : 0
   }
+
   return 0
 }
 
@@ -55,39 +147,35 @@ function formatMoney(n: number, currency: 'EUR' | 'USD' = 'EUR'): string {
   return formatted.replace('US$', '$')
 }
 
-function formatDateOnly(iso: string): string {
-  const d = new Date(iso)
-  return Number.isNaN(d.getTime()) ? iso : d.toLocaleDateString()
-}
-
-function formatDateRange(start: string, end: string): string {
-  const s = new Date(start)
-  const e = new Date(end)
-  if (Number.isNaN(s.getTime()) || Number.isNaN(e.getTime())) return `${start} → ${end}`
-  return `${s.toLocaleDateString()} → ${e.toLocaleDateString()}`
-}
-
-function getMeta(row: { metadata: Record<string, unknown> | null }): Record<string, unknown> | null {
+function getMeta(row: {
+  metadata: Record<string, unknown> | null
+}): Record<string, unknown> | null {
   return row.metadata && typeof row.metadata === 'object' ? row.metadata : null
 }
 
 function pickText(v: unknown): string | null {
   if (typeof v !== 'string') return null
+
   const t = v.trim()
   return t ? t : null
 }
 
-function extractGameDate(meta: Record<string, unknown> | null): string | null {
+function extractGameDate(meta: Record<string, unknown> | null): unknown | null {
   if (!meta) return null
 
   return (
-    pickText(meta.in_game_date) ||
-    pickText(meta.game_date) ||
-    pickText(meta.gameDate) ||
-    pickText(meta.source_game_date) ||
-    pickText(meta.sourceGameDate) ||
+    meta.game_date ??
+    meta.in_game_date ??
+    meta.gameDate ??
+    meta.source_game_date ??
+    meta.sourceGameDate ??
     null
   )
+}
+
+function formatGameDateValue(value: unknown): string | null {
+  const resolved = resolveGameDate(value)
+  return resolved ? formatGameDate(resolved, true) : null
 }
 
 function extractPeriod(meta: Record<string, unknown> | null): string | null {
@@ -98,35 +186,23 @@ function extractPeriod(meta: Record<string, unknown> | null): string | null {
 
   if (!start || !end) return null
 
-  return formatDateRange(start, end)
+  return formatGameDateRange(start, end)
 }
 
 function statusBadgeClass(status: AuditRow['audit_status']): string {
   switch (status) {
     case 'ok':
       return 'bg-green-100 text-green-800'
+
     case 'adjusted':
       return 'bg-yellow-100 text-yellow-800'
+
     case 'refunded':
       return 'bg-blue-100 text-blue-800'
+
     default:
       return 'bg-gray-100 text-gray-800'
   }
-}
-
-function endOfMonth(date: Date): Date {
-  return new Date(date.getFullYear(), date.getMonth() + 1, 0, 12, 0, 0, 0)
-}
-
-function nextMonthlyAuditDate(latestAudit: AuditRow | null): Date {
-  if (latestAudit) {
-    const lastPeriodEnd = new Date(latestAudit.period_end)
-    if (!Number.isNaN(lastPeriodEnd.getTime())) {
-      return endOfMonth(new Date(lastPeriodEnd.getFullYear(), lastPeriodEnd.getMonth() + 1, 1))
-    }
-  }
-
-  return endOfMonth(new Date())
 }
 
 export function TaxTab({
@@ -140,25 +216,56 @@ export function TaxTab({
   const [error, setError] = useState<string | null>(null)
   const [audits, setAudits] = useState<AuditRow[]>([])
   const [allRows, setAllRows] = useState<StatementRowV2[]>([])
+  const [gameState, setGameState] = useState<GameStateRow | null>(null)
+  const [currentTaxPosition, setCurrentTaxPosition] =
+    useState<TaxPositionRow | null>(null)
 
   useEffect(() => {
     let cancelled = false
 
     async function load(): Promise<void> {
-      if (!clubId) return
+      if (!clubId) {
+        setAudits([])
+        setAllRows([])
+        setGameState(null)
+        setCurrentTaxPosition(null)
+        setLoading(false)
+        return
+      }
 
       setLoading(true)
       setError(null)
 
-      const [auditsRes, statementRes] = await Promise.all([
+      const gameStateRes = await supabase
+        .from('game_state')
+        .select('season_number, month_number, day_number, hour_number, minute_number')
+        .eq('id', true)
+        .single<GameStateRow>()
+
+      if (cancelled) return
+
+      if (gameStateRes.error) {
+        setError(gameStateRes.error.message)
+        setLoading(false)
+        return
+      }
+
+      const currentPeriod = getCurrentGameMonthPeriod(gameStateRes.data)
+
+      const [auditsRes, statementRes, taxPositionRes] = await Promise.all([
         supabase.rpc('finance_get_club_tax_audits', {
           p_club_id: clubId,
           p_limit: 12,
         }),
         supabase.rpc('finance_get_club_statement_v2', {
           p_club_id: clubId,
-          p_limit: 200,
+          p_limit: 500,
           p_before: null,
+        }),
+        supabase.rpc('finance_get_club_tax_position_for_period', {
+          p_club_id: clubId,
+          p_period_start: currentPeriod.periodStart,
+          p_period_end: currentPeriod.periodEnd,
         }),
       ])
 
@@ -176,8 +283,18 @@ export function TaxTab({
         return
       }
 
+      if (taxPositionRes.error) {
+        setError(taxPositionRes.error.message)
+        setLoading(false)
+        return
+      }
+
       setAudits((auditsRes.data ?? []) as AuditRow[])
       setAllRows((statementRes.data ?? []) as StatementRowV2[])
+      setGameState(gameStateRes.data)
+      setCurrentTaxPosition(
+        ((taxPositionRes.data ?? []) as TaxPositionRow[])[0] ?? null
+      )
       setLoading(false)
     }
 
@@ -190,16 +307,23 @@ export function TaxTab({
 
   const latestAudit = audits[0] ?? null
 
-  const nextAuditDate = useMemo(() => {
-    return nextMonthlyAuditDate(latestAudit)
-  }, [latestAudit])
-
   const nextAuditLabel = useMemo(() => {
-    return nextAuditDate.toLocaleDateString()
-  }, [nextAuditDate])
+    if (DEV_TAX_NEXT_AUDIT_OVERRIDE_LABEL) {
+      return DEV_TAX_NEXT_AUDIT_OVERRIDE_LABEL
+    }
+
+    if (currentTaxPosition) {
+      return `After ${
+        formatGameDateValue(currentTaxPosition.period_end) ??
+        currentTaxPosition.period_end
+      }`
+    }
+
+    return latestAudit ? getNextGameMonthEndLabel(latestAudit.period_end) : '—'
+  }, [currentTaxPosition, latestAudit])
 
   const summary = useMemo(() => {
-    if (!latestAudit) {
+    if (!currentTaxPosition) {
       return {
         gross: 0,
         expected: 0,
@@ -209,24 +333,29 @@ export function TaxTab({
     }
 
     return {
-      gross: toNumber(latestAudit.taxable_income_gross),
-      expected: toNumber(latestAudit.expected_tax),
-      withheld: toNumber(latestAudit.already_withheld),
-      adjustment: toNumber(latestAudit.adjustment_amount),
+      gross: toNumber(currentTaxPosition.taxable_income_gross),
+      expected: toNumber(currentTaxPosition.expected_tax),
+      withheld: toNumber(currentTaxPosition.already_withheld),
+      adjustment: toNumber(currentTaxPosition.adjustment_amount),
     }
-  }, [latestAudit])
+  }, [currentTaxPosition])
 
   const taxRows = useMemo(() => {
     return allRows
       .filter(row => TAX_TYPES.has(row.type))
-      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+      .sort(
+        (a, b) =>
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      )
   }, [allRows])
 
   const rowById = useMemo(() => {
     const map = new Map<string, StatementRowV2>()
+
     for (const row of allRows) {
       map.set(row.transaction_id, row)
     }
+
     return map
   }, [allRows])
 
@@ -234,12 +363,14 @@ export function TaxTab({
     const meta = getMeta(row)
 
     const ownGameDate = extractGameDate(meta)
-    if (ownGameDate) return formatDateOnly(ownGameDate)
+    const ownGameDateLabel = formatGameDateValue(ownGameDate)
+    if (ownGameDateLabel) return ownGameDateLabel
 
     const ownPeriod = extractPeriod(meta)
     if (ownPeriod) return ownPeriod
 
     const sourceTxId = pickText(meta?.source_transaction_id)
+
     if (sourceTxId) {
       const sourceRow = rowById.get(sourceTxId)
 
@@ -247,12 +378,13 @@ export function TaxTab({
         const sourceMeta = getMeta(sourceRow)
 
         const sourceGameDate = extractGameDate(sourceMeta)
-        if (sourceGameDate) return formatDateOnly(sourceGameDate)
+        const sourceGameDateLabel = formatGameDateValue(sourceGameDate)
+        if (sourceGameDateLabel) return sourceGameDateLabel
 
         const sourcePeriod = extractPeriod(sourceMeta)
         if (sourcePeriod) return sourcePeriod
 
-        return formatDateOnly(sourceRow.created_at)
+        return '—'
       }
     }
 
@@ -288,8 +420,10 @@ export function TaxTab({
         <div className="flex items-start justify-between gap-4">
           <div>
             <h4 className="font-semibold">Tax</h4>
+
             <div className="mt-1 text-sm text-gray-600">
-              Flat tax rate on taxable income: <span className="font-medium">15%</span>
+              Flat tax rate on taxable income:{' '}
+              <span className="font-medium">15%</span>
             </div>
           </div>
 
@@ -317,8 +451,9 @@ export function TaxTab({
         <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
           <div className="rounded border p-3">
             <div className="text-xs uppercase tracking-wide text-gray-500">
-              Taxable income
+              Current taxable income
             </div>
+
             <div className="mt-1 text-lg font-semibold">
               {formatMoney(summary.gross, currency)}
             </div>
@@ -326,8 +461,9 @@ export function TaxTab({
 
           <div className="rounded border p-3">
             <div className="text-xs uppercase tracking-wide text-gray-500">
-              Expected tax
+              Expected tax so far
             </div>
+
             <div className="mt-1 text-lg font-semibold">
               {formatMoney(summary.expected, currency)}
             </div>
@@ -337,6 +473,7 @@ export function TaxTab({
             <div className="text-xs uppercase tracking-wide text-gray-500">
               Already withheld
             </div>
+
             <div className="mt-1 text-lg font-semibold">
               {formatMoney(summary.withheld, currency)}
             </div>
@@ -344,8 +481,9 @@ export function TaxTab({
 
           <div className="rounded border p-3">
             <div className="text-xs uppercase tracking-wide text-gray-500">
-              Audit adjustment
+              Estimated adjustment
             </div>
+
             <div
               className={`mt-1 text-lg font-semibold ${
                 summary.adjustment < 0
@@ -360,47 +498,70 @@ export function TaxTab({
           </div>
         </div>
 
-        {latestAudit ? (
+        {currentTaxPosition ? (
           <div className="mt-4 text-sm text-gray-600">
-            Game period: {formatDateRange(latestAudit.period_start, latestAudit.period_end)}
+            Current tax period:{' '}
+            {formatGameDateRange(
+              currentTaxPosition.period_start,
+              currentTaxPosition.period_end
+            )}
+          </div>
+        ) : gameState ? (
+          <div className="mt-4 text-sm text-gray-600">
+            Current tax period is loading…
           </div>
         ) : (
           <div className="mt-4 text-sm text-gray-600">
-            No tax audit has been recorded yet for this club. Next expected audit: {nextAuditLabel}.
+            Current game period unavailable.
           </div>
         )}
       </div>
 
       <div className="bg-white p-4 rounded shadow">
-        <h5 className="font-medium">Recent tax transactions</h5>
+        <h5 className="font-medium">Tax statement</h5>
 
         {taxRows.length === 0 ? (
-          <div className="mt-3 text-sm text-gray-600">No tax transactions found.</div>
+          <div className="mt-3 text-sm text-gray-600">
+            No tax statement rows found.
+          </div>
         ) : (
           <div className="mt-3 overflow-x-auto">
             <table className="w-full table-fixed text-sm">
               <thead>
                 <tr className="border-b text-left text-gray-500">
-                  <th className="py-2 pr-4 w-[18%]">In-Game Date</th>
-                  <th className="py-2 pr-4 w-[24%]">Type</th>
-                  <th className="py-2 pr-4 w-[16%]">Amount</th>
-                  <th className="py-2 w-[42%] text-right">Reference</th>
+                  <th className="py-2 pr-4 w-[20%]">Game Time</th>
+                  <th className="py-2 pr-4 w-[20%]">Type</th>
+                  <th className="py-2 pr-4 w-[20%]">Category</th>
+                  <th className="py-2 pr-4 w-[20%]">Reference</th>
+                  <th className="py-2 w-[20%] text-right">Amount</th>
                 </tr>
               </thead>
+
               <tbody>
-                {taxRows.slice(0, 20).map(row => {
+                {taxRows.map(row => {
                   const amount = toNumber(row.net_amount)
 
                   return (
-                    <tr key={row.transaction_id} className="border-b last:border-b-0">
-                      <td className="py-2 pr-4 text-gray-700">
-                        {getInGameTimeLabel(row)}
-                      </td>
+                    <tr
+                      key={row.transaction_id}
+                      className="border-b last:border-b-0"
+                    >
+                      <td className="py-2 pr-4">{getInGameTimeLabel(row)}</td>
+
                       <td className="py-2 pr-4">
                         {row.type_name || row.type}
                       </td>
+
+                      <td className="py-2 pr-4">{row.category || '—'}</td>
+
+                      <td className="py-2 pr-4">
+                        <span className="font-mono text-xs text-gray-600">
+                          {getReferenceText(row)}
+                        </span>
+                      </td>
+
                       <td
-                        className={`py-2 pr-4 font-medium ${
+                        className={`py-2 text-right font-medium ${
                           amount < 0
                             ? 'text-red-700'
                             : amount > 0
@@ -409,9 +570,6 @@ export function TaxTab({
                         }`}
                       >
                         {formatMoney(amount, currency)}
-                      </td>
-                      <td className="py-2 text-right font-mono text-xs text-gray-600 whitespace-nowrap">
-                        {getReferenceText(row)}
                       </td>
                     </tr>
                   )
@@ -440,6 +598,7 @@ export function TaxTab({
                   <th className="py-2 w-[16%]">Adjustment</th>
                 </tr>
               </thead>
+
               <tbody>
                 {audits.map(audit => (
                   <tr
@@ -447,8 +606,9 @@ export function TaxTab({
                     className="border-b last:border-b-0"
                   >
                     <td className="py-2 pr-4">
-                      {formatDateRange(audit.period_start, audit.period_end)}
+                      {formatGameDateRange(audit.period_start, audit.period_end)}
                     </td>
+
                     <td className="py-2 pr-4">
                       <span
                         className={`inline-flex items-center rounded px-2 py-1 text-xs font-medium ${statusBadgeClass(
@@ -458,15 +618,19 @@ export function TaxTab({
                         {audit.audit_status}
                       </span>
                     </td>
+
                     <td className="py-2 pr-4">
                       {formatMoney(toNumber(audit.taxable_income_gross), currency)}
                     </td>
+
                     <td className="py-2 pr-4">
                       {formatMoney(toNumber(audit.expected_tax), currency)}
                     </td>
+
                     <td className="py-2 pr-4">
                       {formatMoney(toNumber(audit.already_withheld), currency)}
                     </td>
+
                     <td
                       className={`py-2 font-medium ${
                         toNumber(audit.adjustment_amount) < 0

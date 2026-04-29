@@ -48,6 +48,29 @@ function cx(...parts: Array<string | false | null | undefined>) {
   return parts.filter(Boolean).join(' ')
 }
 
+function CountryFlagBadge({
+  countryCode,
+}: {
+  countryCode: string | null | undefined
+}) {
+  if (!countryCode?.trim()) {
+    return <span className="text-slate-400">—</span>
+  }
+
+  const normalizedCode = countryCode.trim().toLowerCase()
+
+  return (
+    <div className="inline-flex h-7 w-10 items-center justify-center rounded-full border border-slate-200 bg-white shadow-sm">
+      <img
+        src={`https://flagcdn.com/24x18/${normalizedCode}.png`}
+        alt={`${countryCode} flag`}
+        className="h-4 w-6 rounded-[2px] object-cover"
+        loading="lazy"
+      />
+    </div>
+  )
+}
+
 function SectionCard({
   title,
   subtitle,
@@ -77,15 +100,19 @@ function KpiCard({
   label,
   value,
   hint,
+  valueClassName,
 }: {
   label: string
   value: React.ReactNode
   hint?: string
+  valueClassName?: string
 }) {
   return (
     <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
       <div className="text-sm font-medium text-slate-500">{label}</div>
-      <div className="mt-2 text-2xl font-semibold text-slate-900">{value}</div>
+      <div className={valueClassName ?? 'mt-2 text-xl font-semibold leading-tight text-slate-900'}>
+        {value}
+      </div>
       {hint ? <div className="mt-1 text-xs text-slate-500">{hint}</div> : null}
     </div>
   )
@@ -141,44 +168,23 @@ function TextSubTabs({
 function TeamNameButton({
   onClick,
   children,
+  className,
 }: {
   onClick: () => void
   children: React.ReactNode
+  className?: string
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className="font-medium text-slate-900 hover:text-yellow-700 hover:underline"
+      className={cx(
+        'text-slate-900 hover:text-yellow-700 hover:underline',
+        className ?? 'font-medium'
+      )}
     >
       {children}
     </button>
-  )
-}
-
-function CountryFlag({
-  code,
-  countryNameByCode,
-  getCountryName,
-}: {
-  code: string | null
-  countryNameByCode: Map<string, string>
-  getCountryName: (code: string | null, countryNameByCode: Map<string, string>) => string
-}) {
-  if (!code) {
-    return <span className="text-slate-400">—</span>
-  }
-
-  const name = getCountryName(code, countryNameByCode)
-
-  return (
-    <img
-      src={`https://flagcdn.com/24x18/${code.toLowerCase()}.png`}
-      alt={name}
-      title={name}
-      className="h-3.5 w-[18px] shrink-0 rounded-[2px] border border-slate-200 object-cover"
-      loading="lazy"
-    />
   )
 }
 
@@ -562,9 +568,13 @@ export default function TeamStatisticsSection({
             <KpiCard label="AI teams" value={filteredTeamCurrent.filter(row => row.is_ai).length} />
             <KpiCard
               label="Current leader"
+              valueClassName="mt-3 text-lg font-semibold leading-tight text-slate-900 sm:text-xl"
               value={
                 topCurrentTeam ? (
-                  <TeamNameButton onClick={() => openTeamProfile(topCurrentTeam.id)}>
+                  <TeamNameButton
+                    onClick={() => openTeamProfile(topCurrentTeam.id)}
+                    className="font-semibold"
+                  >
                     {topCurrentTeam.name}
                   </TeamNameButton>
                 ) : (
@@ -605,11 +615,7 @@ export default function TeamStatisticsSection({
                           </td>
 
                           <td className="py-3 pr-3">
-                            <CountryFlag
-                              code={row.country_code}
-                              countryNameByCode={countryNameByCode}
-                              getCountryName={getCountryName}
-                            />
+                            <CountryFlagBadge countryCode={row.country_code} />
                           </td>
 
                           <td className="py-3 pr-3 text-slate-600">
@@ -676,11 +682,7 @@ export default function TeamStatisticsSection({
                           </td>
 
                           <td className="py-3 pr-3">
-                            <CountryFlag
-                              code={row.country_code}
-                              countryNameByCode={countryNameByCode}
-                              getCountryName={getCountryName}
-                            />
+                            <CountryFlagBadge countryCode={row.country_code} />
                           </td>
 
                           <td className="py-3 pr-3 text-slate-600">
@@ -725,9 +727,13 @@ export default function TeamStatisticsSection({
             />
             <KpiCard
               label="Latest winner"
+              valueClassName="mt-3 text-lg font-semibold leading-tight text-slate-900 sm:text-xl"
               value={
                 latestWinner ? (
-                  <TeamNameButton onClick={() => openTeamProfile(latestWinner.club_id)}>
+                  <TeamNameButton
+                    onClick={() => openTeamProfile(latestWinner.club_id)}
+                    className="font-semibold"
+                  >
                     {latestWinner.club_name}
                   </TeamNameButton>
                 ) : (
@@ -769,11 +775,7 @@ export default function TeamStatisticsSection({
                           </td>
 
                           <td className="py-3 pr-3">
-                            <CountryFlag
-                              code={row.country_code}
-                              countryNameByCode={countryNameByCode}
-                              getCountryName={getCountryName}
-                            />
+                            <CountryFlagBadge countryCode={row.country_code} />
                           </td>
 
                           <td className="py-3 pr-3 text-slate-600">
@@ -849,11 +851,7 @@ export default function TeamStatisticsSection({
                           </td>
 
                           <td className="py-3 pr-3">
-                            <CountryFlag
-                              code={row.country_code}
-                              countryNameByCode={countryNameByCode}
-                              getCountryName={getCountryName}
-                            />
+                            <CountryFlagBadge countryCode={row.country_code} />
                           </td>
 
                           <td className="py-3 pr-3 text-slate-600">

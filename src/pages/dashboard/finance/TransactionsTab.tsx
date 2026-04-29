@@ -3,37 +3,50 @@
  * Loads and displays the ledger-backed statement via RPC.
  *
  * Behavior:
- * - Uses RPC finance_get_club_statement(p_club_id, p_limit, p_before).
- * - Recent view shows only the last 30 days of transactions.
- * - Archive view shows older transactions grouped by month.
- * - Archive keeps only the last 6 months.
+ * - Uses RPC finance_get_club_statement_v2(p_club_id, p_limit, p_before).
+ * - Recent view shows only the last 30 game days of transactions.
+ * - Archive view shows older transactions grouped by in-game month.
+ * - Archive keeps only the previous 6 game months.
  * - Pagination is handled in the frontend with 20 items per page.
- * - In-game date is shown only when a complete Season + Month + Day exists.
+ * - Real-life created_at is used only as the RPC pagination cursor.
+ * - Real-life created_at is also used as a hidden sorting fallback for old rows without game_date.
+ * - Visible dates are based only on stored in-game date metadata.
+ *
+ * Important backend rule:
+ * - created_at = real technical timestamp
+ * - game_date = in-game date metadata
+ * - Do not backfill old game_date values from created_at.
  */
 
 import React, { useEffect, useMemo, useState } from 'react'
 import { supabase } from './supabase'
-
-type GameDateObject = {
-  season?: string | number | null
-  month?: string | number | null
-  day?: string | number | null
-  date?: string | number | null
-}
+import {
+  addGameDays,
+  addGameMonths,
+  formatGameDate,
+  formatGameMonthLabel,
+  getGameDateValue,
+  getGameMonthKey,
+  resolveGameDate,
+  type GameDateParts,
+} from './gameDate'
 
 type StatementRow = {
   created_at: string
   transaction_id: string
   type: string
+  type_name?: string | null
+  category?: string | null
   net_amount: string | number
   metadata?: unknown
-  game_date?: string | GameDateObject | null
-  in_game_date?: string | GameDateObject | null
-  gameDate?: string | GameDateObject | null
+  game_date?: unknown
+  in_game_date?: unknown
+  gameDate?: unknown
   season?: string | number | null
   month?: string | number | null
   day?: string | number | null
-  date?: string | number | null
+  hour?: string | number | null
+  minute?: string | number | null
 }
 
 type ViewMode = 'recent' | 'archive'
@@ -42,12 +55,6 @@ type ArchiveGroup = {
   monthKey: string
   label: string
   rows: StatementRow[]
-}
-
-type ResolvedGameDateParts = {
-  season: string | number
-  month: string | number
-  day: string | number
 }
 
 type CurrencyCode = 'USD' | 'EUR'
@@ -64,207 +71,101 @@ const MAX_RPC_REQUESTS = 12
  */
 function toNumber(v: unknown): number {
   if (v === null || v === undefined) return 0
-  if (typeof v === 'number') return v
+  if (typeof v === 'number') return Number.isFinite(v) ? v : 0
   const n = Number(v)
   return Number.isFinite(n) ? n : 0
 }
 
 /**
  * getDateValue
- * Safely get a timestamp from an ISO date.
- */
-function getDateValue(iso: string): number {
-  const value = new Date(iso).getTime()
-  return Number.isNaN(value) ? 0 : value
-}
-
-/**
- * isRecord
- * Narrow unknown values to plain objects.
- */
-function isRecord(v: unknown): v is Record<string, unknown> {
-  return typeof v === 'object' && v !== null && !Array.isArray(v)
-}
-
-/**
- * hasValue
- * Check whether a scalar value is present.
- */
-function hasValue(v: unknown): boolean {
-  return v !== null && v !== undefined && !(typeof v === 'string' && v.trim() === '')
-}
-
-/**
- * getFirstScalar
- * Return the first usable string or number.
- */
-function getFirstScalar(...values: unknown[]): string | number | null {
-  for (const value of values) {
-    if (typeof value === 'number' && Number.isFinite(value)) {
-      return value
-    }
-
-    if (typeof value === 'string' && value.trim()) {
-      return value.trim()
-    }
-  }
-
-  return null
-}
-
-/**
- * parseCompleteInGameDateText
- * Parse a complete text label such as:
- * "Season 1, Month 2, Day 3"
- *
- * Returns null unless all 3 parts are present.
- */
-function parseCompleteInGameDateText(text: string): ResolvedGameDateParts | null {
-  const trimmed = text.trim()
-  if (!trimmed) return null
-
-  const seasonMatch = trimmed.match(/season\s+([^\s,]+)/i)
-  const monthMatch = trimmed.match(/month\s+([^\s,]+)/i)
-  const dayMatch = trimmed.match(/day\s+([^\s,]+)/i)
-
-  if (!seasonMatch || !monthMatch || !dayMatch) {
-    return null
-  }
-
-  return {
-    season: seasonMatch[1],
-    month: monthMatch[1],
-    day: dayMatch[1],
-  }
-}
-
-/**
- * formatCompleteInGameDateParts
- * Format a complete in-game date.
- */
-function formatCompleteInGameDateParts(parts: ResolvedGameDateParts): string {
-  return `Season ${parts.season}, Month ${parts.month}, Day ${parts.day}`
-}
-
-/**
- * resolveCompleteInGameDatePartsFromObject
- * Resolve complete Season + Month + Day from an object.
- *
- * This is intentionally strict:
- * - it returns a value only if all three parts exist
- * - season-only values are ignored
- */
-function resolveCompleteInGameDatePartsFromObject(
-  candidate: Record<string, unknown>
-): ResolvedGameDateParts | null {
-  const season = getFirstScalar(
-    candidate['season'],
-    candidate['game_season'],
-    candidate['in_game_season'],
-    candidate['season_number'],
-    candidate['gameSeason'],
-    candidate['inGameSeason']
-  )
-
-  const month = getFirstScalar(
-    candidate['month'],
-    candidate['game_month'],
-    candidate['in_game_month'],
-    candidate['month_number'],
-    candidate['gameMonth'],
-    candidate['inGameMonth']
-  )
-
-  const day = getFirstScalar(
-    candidate['day'],
-    candidate['date'],
-    candidate['game_day'],
-    candidate['in_game_day'],
-    candidate['day_number'],
-    candidate['gameDay'],
-    candidate['inGameDay']
-  )
-
-  if (!hasValue(season) || !hasValue(month) || !hasValue(day)) {
-    return null
-  }
-
-  return {
-    season,
-    month,
-    day,
-  }
-}
-
-/**
- * resolveCompleteInGameDateCandidate
- * Try to resolve a complete in-game date from a value or nested object.
- *
- * Supported examples:
- * - "Season 1, Month 2, Day 3"
- * - { season: 1, month: 2, day: 3 }
- * - { in_game_date: { season: 1, month: 2, day: 3 } }
- * - { metadata: { season_number: 1, month_number: 2, day_number: 3 } }
+ * Convert a real technical timestamp into a sortable numeric value.
  *
  * Important:
- * - If only season exists, returns null
- * - This prevents misleading output like "Season 2"
+ * - This is used only as a hidden fallback for sorting old rows that do not
+ *   have stored in-game date metadata.
+ * - This value must never be used for visible Game Date display.
  */
-function resolveCompleteInGameDateCandidate(candidate: unknown, depth = 0): ResolvedGameDateParts | null {
-  if (depth > 3) return null
+function getDateValue(value: unknown): number {
+  if (value === null || value === undefined) return 0
 
-  if (typeof candidate === 'string') {
-    return parseCompleteInGameDateText(candidate)
+  if (typeof value === 'number') {
+    return Number.isFinite(value) ? value : 0
   }
 
-  if (!isRecord(candidate)) {
-    return null
+  if (typeof value === 'string') {
+    const time = new Date(value).getTime()
+    return Number.isFinite(time) ? time : 0
   }
 
-  const directTextCandidates = [
-    candidate['in_game_date_label'],
-    candidate['game_date_label'],
-    candidate['inGameDateLabel'],
-    candidate['in_game_date'],
-    candidate['game_date'],
-    candidate['gameDate'],
-  ]
-
-  for (const value of directTextCandidates) {
-    if (typeof value === 'string') {
-      const parsed = parseCompleteInGameDateText(value)
-      if (parsed) {
-        return parsed
-      }
-    }
+  if (value instanceof Date) {
+    const time = value.getTime()
+    return Number.isFinite(time) ? time : 0
   }
 
-  const directParts = resolveCompleteInGameDatePartsFromObject(candidate)
-  if (directParts) {
-    return directParts
-  }
+  return 0
+}
 
-  const nestedKeys = [
-    'game_date',
-    'in_game_date',
-    'gameDate',
-    'metadata',
-    'details',
-    'game_date_info',
-    'in_game_date_info',
-  ]
+/**
+ * getStatementGameDate
+ * Resolve the transaction's stored in-game date.
+ *
+ * Supports:
+ * - direct game date fields returned by the RPC
+ * - nested metadata.game_date used by finance transaction metadata
+ */
+function getStatementGameDate(row: StatementRow): GameDateParts | null {
+  const direct = resolveGameDate(row)
 
-  for (const key of nestedKeys) {
-    const nested = candidate[key]
-    if (nested !== undefined && nested !== null && nested !== candidate) {
-      const resolved = resolveCompleteInGameDateCandidate(nested, depth + 1)
-      if (resolved) {
-        return resolved
-      }
+  if (direct) return direct
+
+  if (row.metadata && typeof row.metadata === 'object') {
+    const metadata = row.metadata as Record<string, unknown>
+    const gameDate = metadata.game_date
+
+    if (gameDate && typeof gameDate === 'object') {
+      return resolveGameDate(gameDate)
     }
   }
 
   return null
+}
+
+/**
+ * formatStatementGameDate
+ * Format the transaction's in-game date.
+ *
+ * Rows without game_date intentionally show "—".
+ * We do not display created_at as a fallback because created_at is real-life time.
+ */
+function formatStatementGameDate(row: StatementRow): string {
+  const gameDate = getStatementGameDate(row)
+
+  if (!gameDate) return '—'
+
+  return formatGameDate(gameDate, true)
+}
+
+/**
+ * getStatementGameDateValue
+ * Convert the transaction's in-game date into a sortable value.
+ */
+function getStatementGameDateValue(row: StatementRow): number {
+  return getGameDateValue(getStatementGameDate(row))
+}
+
+/**
+ * getStatementSortValue
+ * Sort by in-game date when available.
+ *
+ * For old finance rows without game date, use created_at only as a hidden
+ * fallback so the UI still orders them sensibly without displaying real dates.
+ */
+function getStatementSortValue(row: StatementRow): number {
+  const gameValue = getStatementGameDateValue(row)
+
+  if (gameValue > 0) return gameValue
+
+  return getDateValue(row.created_at)
 }
 
 /**
@@ -277,15 +178,6 @@ function formatMoney(n: number, currency: CurrencyCode = 'USD'): string {
     currency,
     maximumFractionDigits: 0,
   }).format(n)
-}
-
-/**
- * formatDateTime
- * Format an ISO string as a locale datetime.
- */
-function formatDateTime(iso: string): string {
-  const d = new Date(iso)
-  return Number.isNaN(d.getTime()) ? iso : d.toLocaleString()
 }
 
 /**
@@ -303,24 +195,25 @@ function formatTransactionType(value: string): string {
 }
 
 /**
- * formatInGameDate
- * Resolve and format the in-game date from the row.
- *
- * This is strict by design:
- * - show only full dates
- * - hide partial values like "Season 2"
- */
-function formatInGameDate(row: StatementRow): string {
-  const resolved = resolveCompleteInGameDateCandidate(row)
-  return resolved ? formatCompleteInGameDateParts(resolved) : '—'
-}
-
-/**
- * sortRowsByDateDesc
+ * sortRowsByGameDateDesc
  * Sort transactions from newest to oldest.
+ *
+ * Primary sort:
+ * - stored in-game date
+ *
+ * Compatibility fallback:
+ * - real created_at only for old rows missing game_date
+ *
+ * Display still never uses created_at.
  */
-function sortRowsByDateDesc(rows: StatementRow[]): StatementRow[] {
-  return [...rows].sort((a, b) => getDateValue(b.created_at) - getDateValue(a.created_at))
+function sortRowsByGameDateDesc(rows: StatementRow[]): StatementRow[] {
+  return [...rows].sort((a, b) => {
+    const diff = getStatementSortValue(b) - getStatementSortValue(a)
+
+    if (diff !== 0) return diff
+
+    return String(b.transaction_id).localeCompare(String(a.transaction_id))
+  })
 }
 
 /**
@@ -337,61 +230,6 @@ function dedupeRows(rows: StatementRow[]): StatementRow[] {
   })
 
   return Array.from(map.values())
-}
-
-/**
- * getRecentCutoff
- * Returns the timestamp cutoff for recent transactions.
- */
-function getRecentCutoff(now: Date = new Date()): number {
-  const d = new Date(now)
-  d.setHours(0, 0, 0, 0)
-  d.setDate(d.getDate() - RECENT_DAYS)
-  return d.getTime()
-}
-
-/**
- * getArchiveCutoff
- * Returns the timestamp cutoff for archive visibility.
- */
-function getArchiveCutoff(now: Date = new Date()): number {
-  const d = new Date(now)
-  d.setHours(0, 0, 0, 0)
-  d.setMonth(d.getMonth() - ARCHIVE_MONTHS)
-  return d.getTime()
-}
-
-/**
- * getMonthKey
- * Returns a YYYY-MM key for grouping.
- */
-function getMonthKey(iso: string): string {
-  const d = new Date(iso)
-
-  if (Number.isNaN(d.getTime())) {
-    return 'unknown'
-  }
-
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
-}
-
-/**
- * formatMonthLabel
- * Converts YYYY-MM to a readable month label.
- */
-function formatMonthLabel(monthKey: string): string {
-  const [year, month] = monthKey.split('-').map(Number)
-
-  if (!year || !month) {
-    return 'Unknown month'
-  }
-
-  const d = new Date(year, month - 1, 1)
-
-  return d.toLocaleString('en-US', {
-    month: 'long',
-    year: 'numeric',
-  })
 }
 
 /**
@@ -420,6 +258,18 @@ function clampPage(page: number, totalPages: number): number {
 }
 
 /**
+ * getCreatedAtCursor
+ * Returns the real-life created_at cursor used only for RPC pagination.
+ *
+ * Important:
+ * - This does not affect visible date display.
+ * - It is only needed because finance_get_club_statement_v2 uses p_before.
+ */
+function getCreatedAtCursor(rows: StatementRow[]): string | null {
+  return rows[rows.length - 1]?.created_at ?? null
+}
+
+/**
  * TransactionsTable
  * Shared table renderer for transaction lists.
  */
@@ -437,10 +287,9 @@ function TransactionsTable({
       <table className="w-full table-auto text-sm">
         <thead className="bg-gray-50 text-gray-600">
           <tr>
-            <th className="text-left p-3 whitespace-nowrap">Date</th>
+            <th className="text-left p-3 whitespace-nowrap">Game Date</th>
             <th className="text-left p-3">Type</th>
             <th className="text-left p-3 whitespace-nowrap">Amount</th>
-            <th className="text-left p-3 whitespace-nowrap">In-Game Date</th>
             <th
               className="p-3 pr-4 text-right whitespace-nowrap"
               style={{ width: '1%' }}
@@ -449,10 +298,11 @@ function TransactionsTable({
             </th>
           </tr>
         </thead>
+
         <tbody>
           {rows.length === 0 ? (
             <tr>
-              <td colSpan={5} className="p-4 text-gray-600">
+              <td colSpan={4} className="p-4 text-gray-600">
                 {emptyMessage}
               </td>
             </tr>
@@ -464,14 +314,18 @@ function TransactionsTable({
 
               return (
                 <tr key={r.transaction_id} className="border-t">
-                  <td className="p-3 text-gray-700 whitespace-nowrap">{formatDateTime(r.created_at)}</td>
-                  <td className="p-3 font-medium text-gray-800 whitespace-nowrap">
-                    {formatTransactionType(r.type)}
+                  <td className="p-3 text-gray-700 whitespace-nowrap">
+                    {formatStatementGameDate(r)}
                   </td>
+
+                  <td className="p-3 font-medium text-gray-800 whitespace-nowrap">
+                    {r.type_name || formatTransactionType(r.type)}
+                  </td>
+
                   <td className={`p-3 font-semibold whitespace-nowrap ${amountColorClass}`}>
                     {formatMoney(amt, currency)}
                   </td>
-                  <td className="p-3 text-gray-700 whitespace-nowrap">{formatInGameDate(r)}</td>
+
                   <td
                     className="p-3 pr-4 font-mono text-xs text-gray-700 whitespace-nowrap text-right"
                     style={{ width: '1%' }}
@@ -504,21 +358,47 @@ export function TransactionsTab({
   const [viewMode, setViewMode] = useState<ViewMode>('recent')
   const [recentPage, setRecentPage] = useState(1)
   const [archivePages, setArchivePages] = useState<Record<string, number>>({})
+  const [currentGameDate, setCurrentGameDate] = useState<GameDateParts | null>(null)
 
   /**
    * loadTransactions
-   * Load enough transactions to cover recent data and the last 6 archive months.
+   * Load enough transactions to cover recent data and the previous 6 archive game months.
    */
   async function loadTransactions(): Promise<void> {
     setLoading(true)
 
-    const archiveCutoff = getArchiveCutoff()
+    let loadedCurrentGameDate: GameDateParts | null = null
+
+    const gameStateRes = await supabase
+      .from('game_state')
+      .select('season_number, month_number, day_number, hour_number, minute_number')
+      .eq('id', true)
+      .single()
+
+    if (!gameStateRes.error && gameStateRes.data) {
+      loadedCurrentGameDate = {
+        season: Number(gameStateRes.data.season_number),
+        month: Number(gameStateRes.data.month_number),
+        day: Number(gameStateRes.data.day_number),
+        hour: Number(gameStateRes.data.hour_number ?? 0),
+        minute: Number(gameStateRes.data.minute_number ?? 0),
+      }
+
+      setCurrentGameDate(loadedCurrentGameDate)
+    } else {
+      setCurrentGameDate(null)
+    }
+
+    const archiveCutoffValue = loadedCurrentGameDate
+      ? getGameDateValue(addGameMonths(loadedCurrentGameDate, -ARCHIVE_MONTHS))
+      : 0
+
     let before: string | null = null
     let requestCount = 0
     let collected: StatementRow[] = []
 
     while (requestCount < MAX_RPC_REQUESTS) {
-      const res = await supabase.rpc('finance_get_club_statement', {
+      const res = await supabase.rpc('finance_get_club_statement_v2', {
         p_club_id: clubId,
         p_limit: RPC_BATCH_SIZE,
         p_before: before,
@@ -532,27 +412,37 @@ export function TransactionsTab({
         return
       }
 
-      const data = sortRowsByDateDesc((res.data ?? []) as StatementRow[])
+      const rawRows = (res.data ?? []) as StatementRow[]
+      const data = sortRowsByGameDateDesc(rawRows)
 
       if (data.length === 0) {
         break
       }
 
       collected = [...collected, ...data]
-      before = data[data.length - 1].created_at
+
+      before = getCreatedAtCursor(rawRows)
       requestCount += 1
 
-      const oldestLoaded = getDateValue(data[data.length - 1].created_at)
+      const loadedGameDateValues = data
+        .map((row) => getStatementGameDateValue(row))
+        .filter((value) => value > 0)
 
-      if (data.length < RPC_BATCH_SIZE || oldestLoaded < archiveCutoff) {
+      const oldestLoadedGameDate =
+        loadedGameDateValues.length > 0 ? Math.min(...loadedGameDateValues) : 0
+
+      if (
+        !before ||
+        data.length < RPC_BATCH_SIZE ||
+        (archiveCutoffValue > 0 &&
+          oldestLoadedGameDate > 0 &&
+          oldestLoadedGameDate < archiveCutoffValue)
+      ) {
         break
       }
     }
 
-    const normalizedRows = sortRowsByDateDesc(dedupeRows(collected)).filter((row) => {
-      const time = getDateValue(row.created_at)
-      return time > 0 && time >= archiveCutoff
-    })
+    const normalizedRows = sortRowsByGameDateDesc(dedupeRows(collected))
 
     setRows(normalizedRows)
     setRecentPage(1)
@@ -565,23 +455,42 @@ export function TransactionsTab({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [clubId])
 
-  const recentCutoff = useMemo(() => getRecentCutoff(), [])
-  const archiveCutoff = useMemo(() => getArchiveCutoff(), [])
+  const recentCutoff = useMemo(() => {
+    if (!currentGameDate) return 0
+    return getGameDateValue(addGameDays(currentGameDate, -RECENT_DAYS))
+  }, [currentGameDate])
+
+  const archiveCutoff = useMemo(() => {
+    if (!currentGameDate) return 0
+    return getGameDateValue(addGameMonths(currentGameDate, -ARCHIVE_MONTHS))
+  }, [currentGameDate])
 
   const recentRows = useMemo(() => {
-    return rows.filter((row) => getDateValue(row.created_at) >= recentCutoff)
+    return rows.filter((row) => {
+      const value = getStatementGameDateValue(row)
+
+      // Old ledger rows without game_date stay visible.
+      // The UI will show "—" instead of using real-life created_at.
+      if (value <= 0) return true
+
+      return value >= recentCutoff
+    })
   }, [rows, recentCutoff])
 
   const archiveGroups = useMemo<ArchiveGroup[]>(() => {
     const archiveRows = rows.filter((row) => {
-      const time = getDateValue(row.created_at)
+      const time = getStatementGameDateValue(row)
+
+      // Missing game-date rows stay in Recent for now.
+      if (time <= 0) return false
+
       return time < recentCutoff && time >= archiveCutoff
     })
 
     const grouped = new Map<string, StatementRow[]>()
 
     archiveRows.forEach((row) => {
-      const monthKey = getMonthKey(row.created_at)
+      const monthKey = getGameMonthKey(getStatementGameDate(row))
       const existing = grouped.get(monthKey) ?? []
       existing.push(row)
       grouped.set(monthKey, existing)
@@ -592,8 +501,8 @@ export function TransactionsTab({
       .slice(0, ARCHIVE_MONTHS)
       .map(([monthKey, monthRows]) => ({
         monthKey,
-        label: formatMonthLabel(monthKey),
-        rows: sortRowsByDateDesc(monthRows),
+        label: formatGameMonthLabel(monthKey),
+        rows: sortRowsByGameDateDesc(monthRows),
       }))
   }, [rows, recentCutoff, archiveCutoff])
 
@@ -625,7 +534,8 @@ export function TransactionsTab({
           <div>
             <h4 className="font-semibold">Transactions</h4>
             <div className="text-sm text-gray-500 mt-1">
-              Recent view shows the last 30 days. Archive keeps the previous 6 months grouped by month.
+              Recent view shows the last 30 game days. Archive keeps the previous 6 game months
+              grouped by month.
             </div>
           </div>
 
@@ -666,13 +576,14 @@ export function TransactionsTab({
           <TransactionsTable
             rows={visibleRecentRows}
             currency={currency}
-            emptyMessage="No transactions found in the last 30 days."
+            emptyMessage="No transactions found in the last 30 game days."
           />
 
           <div className="p-3 border-t bg-gray-50 flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center">
             <div className="text-xs text-gray-600">
               Showing {recentRows.length === 0 ? 0 : (safeRecentPage - 1) * PAGE_SIZE + 1}-
-              {Math.min(safeRecentPage * PAGE_SIZE, recentRows.length)} of {recentRows.length} recent transactions.
+              {Math.min(safeRecentPage * PAGE_SIZE, recentRows.length)} of {recentRows.length}{' '}
+              recent transactions.
             </div>
 
             <div className="flex items-center gap-2">
@@ -712,7 +623,7 @@ export function TransactionsTab({
         <div className="divide-y">
           {archiveGroups.length === 0 ? (
             <div className="p-4 text-sm text-gray-600">
-              No archived transactions found in the last 6 months.
+              No archived transactions found in the previous 6 game months.
             </div>
           ) : (
             archiveGroups.map((group) => {
@@ -738,8 +649,8 @@ export function TransactionsTab({
                   <div className="p-3 bg-gray-50 flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center">
                     <div className="text-xs text-gray-600">
                       Showing {group.rows.length === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1}-
-                      {Math.min(currentPage * PAGE_SIZE, group.rows.length)} of {group.rows.length} items in{' '}
-                      {group.label}.
+                      {Math.min(currentPage * PAGE_SIZE, group.rows.length)} of {group.rows.length}{' '}
+                      items in {group.label}.
                     </div>
 
                     <div className="flex items-center gap-2">
@@ -754,7 +665,9 @@ export function TransactionsTab({
                         disabled={currentPage <= 1}
                         className={[
                           'px-3 py-2 rounded text-sm shadow',
-                          currentPage <= 1 ? 'bg-gray-200 text-gray-500' : 'bg-white hover:bg-gray-100',
+                          currentPage <= 1
+                            ? 'bg-gray-200 text-gray-500'
+                            : 'bg-white hover:bg-gray-100',
                         ].join(' ')}
                       >
                         Previous

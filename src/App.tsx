@@ -31,13 +31,18 @@ import StaffPage from './pages/dashboard/Staff'
 import CalendarPage from './pages/dashboard/CalendarPage'
 import TeamSchedulePage from './pages/dashboard/TeamSchedule'
 import TeamRankingPage from './pages/dashboard/TeamRanking'
+import TeamProfilePage from './pages/dashboard/TeamProfilePage'
 import SeasonResetPreviewPage from './pages/dashboard/SeasonResetPreview'
 import TrainingPage from './pages/dashboard/Training'
+import CurrentTrainingCampPage from './pages/dashboard/training/CurrentTrainingCampPage'
 import EquipmentPage from './pages/dashboard/Equipment'
 import InfrastructurePage from './pages/dashboard/Infrastructure'
 import FinancePage from './pages/dashboard/Finance'
 import TransfersPage from './pages/dashboard/Transfers'
+import NotificationsPage from './pages/dashboard/NotificationsPage'
+import ScoutingPage from './pages/dashboard/ScoutingPage'
 import RiderTransferNegotiationPage from './pages/dashboard/transfers/RiderTransferNegotiationPage'
+import RiderFreeAgentNegotiationPage from './pages/dashboard/transfers/RiderFreeAgentNegotiationPage'
 import StatisticsPage from './pages/dashboard/Statistics'
 import RiderProfilePublicPage from './pages/dashboard/riders/RiderProfilePublicPage'
 import RiderProfileOwnPage from './pages/dashboard/riders/RiderProfileOwnPage'
@@ -159,6 +164,7 @@ function RequireNoClub({ children }: GuardProps): JSX.Element | null {
 
   useEffect(() => {
     let mounted = true
+
     ;(async () => {
       if (!user) {
         if (mounted) setChecking(false)
@@ -214,6 +220,7 @@ function RequireClub({ children }: GuardProps): JSX.Element | null {
 
   useEffect(() => {
     let mounted = true
+
     ;(async () => {
       if (!user) {
         if (mounted) setChecking(false)
@@ -257,6 +264,16 @@ function RequireClub({ children }: GuardProps): JSX.Element | null {
 /**
  * App
  * Application router with auth and club-based route protection.
+ *
+ * Help quick-link destinations are aligned to valid registered dashboard routes,
+ * including overview, transfers, notifications, scouting, and invite-friends.
+ *
+ * Training camp routes:
+ * - /dashboard/training/current-camp
+ * - /dashboard/training/current-camp/:campId
+ *
+ * CurrentTrainingCampPage expects this RPC later:
+ * - training_get_current_camp(p_camp_id uuid default null)
  */
 export default function App(): JSX.Element {
   return (
@@ -297,21 +314,39 @@ export default function App(): JSX.Element {
             <Route path="calendar" element={<CalendarPage />} />
             <Route path="team-schedule" element={<TeamSchedulePage />} />
             <Route path="team-ranking" element={<TeamRankingPage />} />
+            <Route path="teams/:clubId" element={<TeamProfilePage />} />
             <Route path="season-reset-preview" element={<SeasonResetPreviewPage />} />
+
             <Route path="training" element={<TrainingPage />} />
+            <Route path="training/current-camp" element={<CurrentTrainingCampPage />} />
+            <Route path="training/current-camp/:campId" element={<CurrentTrainingCampPage />} />
+
             <Route path="equipment" element={<EquipmentPage />} />
             <Route path="infrastructure" element={<InfrastructurePage />} />
             <Route path="finance" element={<FinancePage />} />
             <Route path="transfers" element={<TransfersPage />} />
+            <Route path="notifications" element={<NotificationsPage />} />
+            <Route path="scouting" element={<ScoutingPage />} />
+
             <Route
               path="transfers/negotiations/:negotiationId"
               element={<RiderTransferNegotiationPage />}
             />
+            <Route
+              path="transfers/free-agent-negotiations/new"
+              element={<RiderFreeAgentNegotiationPage />}
+            />
+            <Route
+              path="transfers/free-agent-negotiations/:negotiationId"
+              element={<RiderFreeAgentNegotiationPage />}
+            />
+
             <Route path="statistics" element={<StatisticsPage />} />
             <Route path="riders/:riderId" element={<RiderProfilePublicPage />} />
             <Route path="my-riders/:riderId" element={<RiderProfileOwnPage />} />
             <Route path="external-riders/:riderId" element={<ExternalRiderProfilePage />} />
             <Route path="compare-riders" element={<CompareRidersPage />} />
+
             <Route path="inbox" element={<InboxPage />} />
             <Route path="my-profile" element={<MyProfilePage />} />
             <Route path="customize-team" element={<CustomizeTeamPage />} />

@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import { useNavigate, useParams } from 'react-router'
+import { useLocation, useNavigate, useParams } from 'react-router'
 import { supabase } from '../../../lib/supabase'
 
 import type { RiderDetails } from '../types'
@@ -15,7 +15,6 @@ import { getCountryName, getFlagImageUrl } from '../utils/formatters'
 
 import {
   getDefaultRiderAvailabilityStatus,
-  getPotentialUi,
   getRiderImageUrl,
 } from '../utils/rider-ui'
 
@@ -66,30 +65,136 @@ type ActiveFreeAgentRow = {
   status: string
 }
 
+type ExternalProfileGameStateRow = {
+  season_number: number
+  month_number: number
+  day_number: number
+  hour_number: number
+  minute_number: number
+}
+
+type AvailableScoutStaffRow = {
+  scout_staff_id: string
+  scout_name: string
+  role_type: string
+  expertise: number
+  experience: number
+  potential: number
+  leadership: number
+  efficiency: number
+  loyalty: number
+  scouting_level: number
+  precision_score: number | string
+  speed_score: number | string
+  precision_tier: 'basic' | 'solid' | 'strong' | 'elite' | string
+  estimated_duration_hours: number
+  free_reports_per_day: number
+  free_reports_used_today: number
+  free_reports_left_today: number
+  next_report_coin_cost: number
+  wallet_balance: number
+  on_active_course: boolean
+  can_scout: boolean
+  blocking_reason: string | null
+  has_active_scouting_task?: boolean
+  active_scouting_task_label?: string | null
+}
+
+type ActiveScoutTaskRow = {
+  id: string
+  club_id: string
+  rider_id: string
+  scout_staff_id: string
+  status: string
+  precision_score: number | string | null
+  precision_tier: string | null
+  duration_hours: number | null
+  is_paid: boolean | null
+  coin_cost: number | null
+  free_reports_used_before: number | null
+  started_at_game_ts: string | null
+  completes_at_game_ts: string | null
+  created_at: string | null
+  updated_at: string | null
+  scout_staff_name?: string | null
+  scout_name?: string | null
+}
+
+type SecureMetricValue = {
+  label?: string | null
+  exact?: number | string | null
+}
+
+type SecureAvailabilityValue = {
+  status?: string | null
+  unavailable_until?: string | null
+  reason?: string | null
+}
+
+type SecureScoutReportData = {
+  precisionScore?: number
+  precisionTier?: 'basic' | 'solid' | 'strong' | 'elite'
+  overall?: SecureMetricValue
+  potential?: SecureMetricValue
+  fatigue?: SecureMetricValue
+  availability?: SecureAvailabilityValue
+  attributes?: Record<string, SecureMetricValue>
+}
+
+type ExternalRiderSecureProfilePayload = {
+  riderId: string
+  clubId: string
+  gameDate: string
+  isOwnRider: boolean
+  hasScout: boolean
+  canScout: boolean
+  usedToday: number
+  dailyLimit: number
+  remainingToday: number
+  statusMessage: string
+  profile: {
+    id: string
+    firstName: string | null
+    lastName: string | null
+    displayName: string | null
+    countryCode: string | null
+    role: string | null
+    birthDate: string | null
+    imageUrl: string | null
+    contractExpiresAt: string | null
+    contractExpiresSeason: number | string | null
+    marketValue: number | null
+    salary: number | null
+  }
+  publicView: {
+    overall?: SecureMetricValue
+    potential?: SecureMetricValue
+    fatigue?: SecureMetricValue
+    availability?: SecureAvailabilityValue
+    attributes?: Record<string, SecureMetricValue>
+  }
+  scoutReport: null | {
+    reportId: string
+    precisionScore?: number
+    precisionTier?: 'basic' | 'solid' | 'strong' | 'elite'
+    scoutedOnGameDate?: string | null
+    createdAt?: string | null
+    report?: SecureScoutReportData | null
+  }
+}
+
 type ExternalRiderMarketMode = 'general' | 'transfer_list' | 'free_agent' | 'scouting'
 
 type ExternalRiderProfilePageProps = {
   riderId?: string
   gameDate?: string | null
   marketMode?: ExternalRiderMarketMode
-  isScouted?: boolean
   onBack?: () => void
-  onMakeTransferOffer?: (payload: {
-    riderId: string
-    riderName: string
-    listingId: string
-    sellerClubId: string
-    askingPrice: number
-  }) => void
   onOpenFreeAgentNegotiation?: (payload: {
     riderId: string
     riderName: string
     freeAgentId: string
     expiresOnGameDate: string | null
-  }) => void
-  onScoutRider?: (payload: {
-    riderId: string
-    riderName: string
   }) => void
 }
 
@@ -120,13 +225,6 @@ function normalizeString(value: unknown): string | null {
   return trimmed ? trimmed : null
 }
 
-function firstDefined<T>(...values: Array<T | null | undefined>): T | undefined {
-  for (const value of values) {
-    if (value !== undefined && value !== null) return value
-  }
-  return undefined
-}
-
 function normalizeGameDateInput(value: unknown): string | null {
   if (!value) return null
 
@@ -153,29 +251,36 @@ function normalizeGameDateInput(value: unknown): string | null {
   return null
 }
 
-function getAttributeRangeLabel(value: unknown): string {
-  const numericValue = normalizeNullableNumber(value)
-  if (numericValue === null) return '—'
+function parseGameTimestamp(value: string | null | undefined): Date | null {
+  if (!value) return null
 
-  const clamped = Math.max(0, Math.min(100, numericValue))
-  const start = Math.min(80, Math.floor(clamped / 20) * 20)
-  const end = Math.min(100, start + 20)
+  const normalized = value.includes('T') ? value : value.replace(' ', 'T')
+  const utcDate = new Date(`${normalized}Z`)
 
-  return `${start}-${end}`
+  if (!Number.isNaN(utcDate.getTime())) return utcDate
+
+  const localDate = new Date(normalized)
+  return Number.isNaN(localDate.getTime()) ? null : localDate
 }
 
-function getVisibleAttributeValue(value: unknown, isScouted: boolean): string {
-  if (!isScouted) return getAttributeRangeLabel(value)
+function formatGameTimestampAsSeasonLabel(value?: string | null): string {
+  if (!value) return '—'
 
-  const numericValue = normalizeNullableNumber(value)
-  return numericValue === null ? '—' : String(numericValue)
-}
+  const normalized = value.includes('T') ? value : value.replace(' ', 'T')
+  const parsed = new Date(`${normalized}Z`)
 
-function getVisibleOverallValue(value: unknown, isScouted: boolean): string {
-  if (!isScouted) return getAttributeRangeLabel(value)
+  if (Number.isNaN(parsed.getTime())) return value
 
-  const numericValue = normalizeNullableNumber(value)
-  return numericValue === null ? '—' : `${numericValue}%`
+  const seasonNumber = parsed.getUTCFullYear() - 1999
+  const month = parsed.toLocaleString('en-US', {
+    month: 'short',
+    timeZone: 'UTC',
+  })
+  const day = String(parsed.getUTCDate()).padStart(2, '0')
+  const hour = String(parsed.getUTCHours()).padStart(2, '0')
+  const minute = String(parsed.getUTCMinutes()).padStart(2, '0')
+
+  return `Season ${seasonNumber} - ${month} ${day} ${hour}:${minute}`
 }
 
 function CountryFlag({
@@ -257,327 +362,6 @@ function DetailRow({
       </div>
     </div>
   )
-}
-
-async function fetchRiderDetailsById(riderId: string): Promise<RiderDetails> {
-  const lookupId = normalizeString(riderId)
-
-  if (!lookupId) {
-    throw new Error(`Rider not found for id: ${riderId}`)
-  }
-
-  let resolvedLookupId = lookupId
-  let freeAgentSnapshot: Record<string, any> | null = null
-
-  const { data: freeAgentViewRow, error: freeAgentViewError } = await supabase
-    .from('free_agent_market_view')
-    .select('*')
-    .eq('free_agent_id', lookupId)
-    .maybeSingle()
-
-  if (!freeAgentViewError && freeAgentViewRow) {
-    freeAgentSnapshot = freeAgentViewRow as Record<string, any>
-    if (freeAgentViewRow.rider_id) {
-      resolvedLookupId = String(freeAgentViewRow.rider_id).trim()
-    }
-  } else {
-    const { data: freeAgentByRiderId, error: freeAgentByRiderIdError } = await supabase
-      .from('free_agent_market_view')
-      .select('*')
-      .eq('rider_id', lookupId)
-      .maybeSingle()
-
-    if (!freeAgentByRiderIdError && freeAgentByRiderId) {
-      freeAgentSnapshot = freeAgentByRiderId as Record<string, any>
-    }
-  }
-
-  const riderSelection = `
-    id,
-    country_code,
-    first_name,
-    last_name,
-    display_name,
-    role,
-    sprint,
-    climbing,
-    time_trial,
-    endurance,
-    flat,
-    recovery,
-    resistance,
-    race_iq,
-    teamwork,
-    morale,
-    potential,
-    fatigue,
-    overall,
-    birth_date,
-    image_url,
-    salary,
-    contract_expires_at,
-    contract_expires_season,
-    market_value,
-    asking_price,
-    asking_price_manual,
-    availability_status,
-    unavailable_until,
-    unavailable_reason
-  `
-
-  const relationLookupTables = [
-    'club_riders',
-    'rider_transfer_listings',
-    'rider_free_agents',
-    'rider_transfer_offers',
-    'rider_transfer_negotiations',
-    'rider_free_agent_negotiations',
-  ] as const
-
-  const loadRiderRow = async (id: string) =>
-    supabase.from('riders').select(riderSelection).eq('id', id).maybeSingle()
-
-  const loadStatsRow = async (id: string) =>
-    supabase.from('rider_statistics_view').select('*').eq('rider_id', id).maybeSingle()
-
-  const buildFromRiderRow = (row: Record<string, any>, fallbackId: string): RiderDetails =>
-    ({
-      id: normalizeString(row.id) ?? fallbackId,
-      country_code: normalizeString(row.country_code) ?? null,
-      first_name: normalizeString(row.first_name) ?? null,
-      last_name: normalizeString(row.last_name) ?? null,
-      display_name: normalizeString(row.display_name) ?? null,
-      role: normalizeString(row.role) ?? '',
-      sprint: normalizeNumber(row.sprint, 0),
-      climbing: normalizeNumber(row.climbing, 0),
-      time_trial: normalizeNumber(row.time_trial, 0),
-      endurance: normalizeNumber(row.endurance, 0),
-      flat: normalizeNumber(row.flat, 0),
-      recovery: normalizeNumber(row.recovery, 0),
-      resistance: normalizeNumber(row.resistance, 0),
-      race_iq: normalizeNumber(row.race_iq, 0),
-      teamwork: normalizeNumber(row.teamwork, 0),
-      morale: normalizeNumber(row.morale, 0),
-      potential: normalizeNumber(row.potential, 0),
-      fatigue: normalizeNumber(row.fatigue, 0),
-      overall: normalizeNumber(row.overall, 0),
-      birth_date: normalizeString(row.birth_date) ?? null,
-      image_url: normalizeString(row.image_url) ?? null,
-      salary: normalizeNumber(row.salary, 0),
-      contract_expires_at: normalizeString(row.contract_expires_at) ?? null,
-      contract_expires_season: row.contract_expires_season ?? null,
-      market_value: normalizeNumber(row.market_value, 0),
-      asking_price: normalizeNumber(row.asking_price, 0),
-      asking_price_manual: row.asking_price_manual ?? null,
-      availability_status:
-        normalizeString(row.availability_status) ?? getDefaultRiderAvailabilityStatus(),
-      unavailable_until: normalizeString(row.unavailable_until) ?? null,
-      unavailable_reason: normalizeString(row.unavailable_reason) ?? null,
-    }) as RiderDetails
-
-  const buildFromStatsRow = (
-    statsRow: Record<string, any>,
-    riderRow?: Record<string, any> | null
-  ): RiderDetails =>
-    ({
-      id: normalizeString(riderRow?.id) ?? normalizeString(statsRow.rider_id) ?? resolvedLookupId,
-
-      country_code:
-        normalizeString(firstDefined(riderRow?.country_code, statsRow.country_code)) ?? null,
-      first_name:
-        normalizeString(firstDefined(riderRow?.first_name, statsRow.first_name)) ?? null,
-      last_name: normalizeString(firstDefined(riderRow?.last_name, statsRow.last_name)) ?? null,
-      display_name:
-        normalizeString(firstDefined(riderRow?.display_name, statsRow.display_name)) ?? null,
-      role: normalizeString(firstDefined(riderRow?.role, statsRow.role, '')) ?? '',
-
-      sprint: normalizeNumber(firstDefined(riderRow?.sprint, statsRow.sprint), 0),
-      climbing: normalizeNumber(firstDefined(riderRow?.climbing, statsRow.climbing), 0),
-      time_trial: normalizeNumber(firstDefined(riderRow?.time_trial, statsRow.time_trial), 0),
-      endurance: normalizeNumber(firstDefined(riderRow?.endurance, statsRow.endurance), 0),
-      flat: normalizeNumber(firstDefined(riderRow?.flat, statsRow.flat), 0),
-      recovery: normalizeNumber(firstDefined(riderRow?.recovery, statsRow.recovery), 0),
-      resistance: normalizeNumber(firstDefined(riderRow?.resistance, statsRow.resistance), 0),
-      race_iq: normalizeNumber(firstDefined(riderRow?.race_iq, statsRow.race_iq), 0),
-      teamwork: normalizeNumber(firstDefined(riderRow?.teamwork, statsRow.teamwork), 0),
-      morale: normalizeNumber(firstDefined(riderRow?.morale, statsRow.morale), 0),
-      potential: normalizeNumber(firstDefined(riderRow?.potential, statsRow.potential), 0),
-      fatigue: normalizeNumber(firstDefined(riderRow?.fatigue, statsRow.fatigue), 0),
-      overall: normalizeNumber(firstDefined(riderRow?.overall, statsRow.overall), 0),
-
-      birth_date:
-        normalizeString(firstDefined(riderRow?.birth_date, statsRow.birth_date)) ?? null,
-      image_url: normalizeString(firstDefined(riderRow?.image_url, statsRow.image_url)) ?? null,
-      salary: normalizeNumber(firstDefined(riderRow?.salary, statsRow.salary), 0),
-      contract_expires_at:
-        normalizeString(
-          firstDefined(riderRow?.contract_expires_at, statsRow.contract_expires_at)
-        ) ?? null,
-      contract_expires_season:
-        firstDefined(riderRow?.contract_expires_season, statsRow.contract_expires_season) ?? null,
-      market_value: normalizeNumber(firstDefined(riderRow?.market_value, statsRow.market_value), 0),
-      asking_price: normalizeNumber(firstDefined(riderRow?.asking_price, statsRow.asking_price), 0),
-      asking_price_manual:
-        firstDefined(riderRow?.asking_price_manual, statsRow.asking_price_manual) ?? null,
-      availability_status:
-        normalizeString(
-          firstDefined(riderRow?.availability_status, statsRow.availability_status)
-        ) ?? getDefaultRiderAvailabilityStatus(),
-      unavailable_until:
-        normalizeString(firstDefined(riderRow?.unavailable_until, statsRow.unavailable_until)) ??
-        null,
-      unavailable_reason:
-        normalizeString(firstDefined(riderRow?.unavailable_reason, statsRow.unavailable_reason)) ??
-        null,
-      age_years: normalizeNullableNumber(statsRow.age_years),
-    }) as RiderDetails
-
-  async function resolveCanonicalRiderId(value: string): Promise<string | null> {
-    const { data: riderRow, error: riderError } = await loadRiderRow(value)
-    if (!riderError && riderRow?.id) {
-      return String(riderRow.id).trim()
-    }
-
-    const { data: statsRow, error: statsError } = await loadStatsRow(value)
-    if (!statsError && statsRow) {
-      const resolvedStatsId = normalizeString((statsRow as Record<string, any>).rider_id)
-      if (resolvedStatsId) return resolvedStatsId
-    }
-
-    const { data: freeAgentViewRowById, error: freeAgentViewErrorById } = await supabase
-      .from('free_agent_market_view')
-      .select('rider_id')
-      .eq('free_agent_id', value)
-      .maybeSingle()
-
-    if (!freeAgentViewErrorById && freeAgentViewRowById?.rider_id) {
-      const resolvedId = String(freeAgentViewRowById.rider_id).trim()
-      if (resolvedId) return resolvedId
-    }
-
-    for (const tableName of relationLookupTables) {
-      const { data: relationRow, error: relationError } = await supabase
-        .from(tableName)
-        .select('rider_id')
-        .eq('id', value)
-        .maybeSingle()
-
-      if (relationError) continue
-
-      const resolvedId =
-        relationRow && typeof relationRow.rider_id === 'string' ? relationRow.rider_id.trim() : ''
-
-      if (resolvedId) return resolvedId
-    }
-
-    return null
-  }
-
-  const canonicalRiderId = await resolveCanonicalRiderId(resolvedLookupId)
-
-  if (!canonicalRiderId && freeAgentSnapshot) {
-    return {
-      id: resolvedLookupId,
-      country_code: freeAgentSnapshot.country_code ?? null,
-      first_name: freeAgentSnapshot.first_name ?? null,
-      last_name: freeAgentSnapshot.last_name ?? null,
-      display_name: freeAgentSnapshot.display_name ?? null,
-      role: freeAgentSnapshot.role ?? '',
-      sprint: normalizeNumber(freeAgentSnapshot.sprint, 0),
-      climbing: normalizeNumber(freeAgentSnapshot.climbing, 0),
-      time_trial: normalizeNumber(freeAgentSnapshot.time_trial, 0),
-      endurance: normalizeNumber(freeAgentSnapshot.endurance, 0),
-      flat: normalizeNumber(freeAgentSnapshot.flat, 0),
-      recovery: normalizeNumber(freeAgentSnapshot.recovery, 0),
-      resistance: normalizeNumber(freeAgentSnapshot.resistance, 0),
-      race_iq: normalizeNumber(freeAgentSnapshot.race_iq, 0),
-      teamwork: normalizeNumber(freeAgentSnapshot.teamwork, 0),
-      morale: normalizeNumber(freeAgentSnapshot.morale, 0),
-      potential: normalizeNumber(freeAgentSnapshot.potential, 0),
-      fatigue: normalizeNumber(freeAgentSnapshot.fatigue, 0),
-      overall: normalizeNumber(freeAgentSnapshot.overall, 0),
-      birth_date: freeAgentSnapshot.birth_date ?? null,
-      image_url: freeAgentSnapshot.image_url ?? null,
-      salary: normalizeNumber(freeAgentSnapshot.expected_salary_weekly, 0),
-      contract_expires_at: null,
-      contract_expires_season: null,
-      market_value: normalizeNumber(freeAgentSnapshot.market_value, 0),
-      asking_price: normalizeNumber(freeAgentSnapshot.asking_price, 0),
-      asking_price_manual: null,
-      availability_status: getDefaultRiderAvailabilityStatus(),
-      unavailable_until: null,
-      unavailable_reason: null,
-      age_years:
-        typeof freeAgentSnapshot.age_years === 'number'
-          ? freeAgentSnapshot.age_years
-          : typeof freeAgentSnapshot.birth_date === 'string'
-            ? null
-            : null,
-    } as RiderDetails
-  }
-
-  if (!canonicalRiderId) {
-    throw new Error(`Rider not found for id: ${riderId}`)
-  }
-
-  const [riderResult, statsResult] = await Promise.all([
-    loadRiderRow(canonicalRiderId),
-    loadStatsRow(canonicalRiderId),
-  ])
-
-  if (riderResult.error) throw riderResult.error
-  if (statsResult.error) throw statsResult.error
-
-  const rider = (riderResult.data ?? null) as Record<string, any> | null
-
-  if (statsResult.data) {
-    return buildFromStatsRow(statsResult.data as Record<string, any>, rider)
-  }
-
-  if (!rider && freeAgentSnapshot) {
-    return {
-      id: resolvedLookupId,
-      country_code: freeAgentSnapshot.country_code ?? null,
-      first_name: freeAgentSnapshot.first_name ?? null,
-      last_name: freeAgentSnapshot.last_name ?? null,
-      display_name: freeAgentSnapshot.display_name ?? null,
-      role: freeAgentSnapshot.role ?? '',
-      sprint: normalizeNumber(freeAgentSnapshot.sprint, 0),
-      climbing: normalizeNumber(freeAgentSnapshot.climbing, 0),
-      time_trial: normalizeNumber(freeAgentSnapshot.time_trial, 0),
-      endurance: normalizeNumber(freeAgentSnapshot.endurance, 0),
-      flat: normalizeNumber(freeAgentSnapshot.flat, 0),
-      recovery: normalizeNumber(freeAgentSnapshot.recovery, 0),
-      resistance: normalizeNumber(freeAgentSnapshot.resistance, 0),
-      race_iq: normalizeNumber(freeAgentSnapshot.race_iq, 0),
-      teamwork: normalizeNumber(freeAgentSnapshot.teamwork, 0),
-      morale: normalizeNumber(freeAgentSnapshot.morale, 0),
-      potential: normalizeNumber(freeAgentSnapshot.potential, 0),
-      fatigue: normalizeNumber(freeAgentSnapshot.fatigue, 0),
-      overall: normalizeNumber(freeAgentSnapshot.overall, 0),
-      birth_date: freeAgentSnapshot.birth_date ?? null,
-      image_url: freeAgentSnapshot.image_url ?? null,
-      salary: normalizeNumber(freeAgentSnapshot.expected_salary_weekly, 0),
-      contract_expires_at: null,
-      contract_expires_season: null,
-      market_value: normalizeNumber(freeAgentSnapshot.market_value, 0),
-      asking_price: normalizeNumber(freeAgentSnapshot.asking_price, 0),
-      asking_price_manual: null,
-      availability_status: getDefaultRiderAvailabilityStatus(),
-      unavailable_until: null,
-      unavailable_reason: null,
-      age_years:
-        typeof freeAgentSnapshot.age_years === 'number'
-          ? freeAgentSnapshot.age_years
-          : typeof freeAgentSnapshot.birth_date === 'string'
-            ? null
-            : null,
-    } as RiderDetails
-  }
-
-  if (!rider) throw new Error(`Rider not found for id: ${riderId}`)
-
-  return buildFromRiderRow(rider, canonicalRiderId)
 }
 
 async function fetchRiderCareerHistoryById(riderId: string): Promise<RiderCareerHistoryRow[]> {
@@ -878,17 +662,275 @@ async function fetchActiveFreeAgent(riderId: string): Promise<ActiveFreeAgentRow
   return (data ?? null) as ActiveFreeAgentRow | null
 }
 
+async function fetchScoutStaffNameById(staffId: string): Promise<string | null> {
+  try {
+    const { data, error } = await supabase
+      .from('club_staff')
+      .select('staff_name')
+      .eq('id', staffId)
+      .limit(1)
+      .maybeSingle()
+
+    if (error) throw error
+    return normalizeString(data?.staff_name) ?? null
+  } catch {
+    return null
+  }
+}
+
+async function fetchActiveScoutTaskForRider(
+  riderId: string,
+  clubId?: string | null
+): Promise<ActiveScoutTaskRow | null> {
+  let query = supabase
+    .from('rider_scout_tasks')
+    .select(
+      'id, club_id, rider_id, scout_staff_id, status, precision_score, precision_tier, duration_hours, is_paid, coin_cost, free_reports_used_before, started_at_game_ts, completes_at_game_ts, created_at, updated_at'
+    )
+    .eq('rider_id', riderId)
+    .in('status', ['queued', 'in_progress'])
+    .order('created_at', { ascending: false })
+    .limit(1)
+
+  if (clubId) {
+    query = query.eq('club_id', clubId)
+  }
+
+  const { data, error } = await query.maybeSingle()
+
+  if (error) throw error
+  if (!data) return null
+
+  const scoutStaffName = await fetchScoutStaffNameById(data.scout_staff_id)
+
+  return {
+    ...(data as ActiveScoutTaskRow),
+    scout_staff_name: scoutStaffName,
+    scout_name: scoutStaffName,
+  }
+}
+
+function buildRiderDetailsFromSecureProfile(
+  payload: ExternalRiderSecureProfilePayload
+): RiderDetails {
+  const profile = payload.profile as Record<string, unknown>
+
+  return {
+    id: normalizeString(profile.id) ?? '',
+
+    country_code:
+      normalizeString(profile.countryCode) ??
+      normalizeString(profile.country_code) ??
+      null,
+
+    first_name:
+      normalizeString(profile.firstName) ??
+      normalizeString(profile.first_name) ??
+      null,
+
+    last_name:
+      normalizeString(profile.lastName) ??
+      normalizeString(profile.last_name) ??
+      null,
+
+    display_name:
+      normalizeString(profile.displayName) ??
+      normalizeString(profile.display_name) ??
+      null,
+
+    role: normalizeString(profile.role) ?? '',
+
+    sprint: 0,
+    climbing: 0,
+    time_trial: 0,
+    endurance: 0,
+    flat: 0,
+    recovery: 0,
+    resistance: 0,
+    race_iq: 0,
+    teamwork: 0,
+    morale: 0,
+    potential: 0,
+    fatigue: 0,
+    overall: 0,
+
+    birth_date:
+      normalizeString(profile.birthDate) ??
+      normalizeString(profile.birth_date) ??
+      null,
+
+    image_url:
+      normalizeString(profile.imageUrl) ??
+      normalizeString(profile.image_url) ??
+      null,
+
+    salary: normalizeNumber(profile.salary, 0),
+
+    contract_expires_at:
+      normalizeString(profile.contractExpiresAt) ??
+      normalizeString(profile.contract_expires_at) ??
+      null,
+
+    contract_expires_season:
+      profile.contractExpiresSeason ??
+      profile.contract_expires_season ??
+      null,
+
+    market_value: normalizeNumber(profile.marketValue ?? profile.market_value, 0),
+
+    asking_price: 0,
+    asking_price_manual: null,
+    availability_status: getDefaultRiderAvailabilityStatus(),
+    unavailable_until: null,
+    unavailable_reason: null,
+
+    age_years:
+      normalizeNullableNumber(profile.ageYears) ??
+      normalizeNullableNumber(profile.age_years),
+  } as RiderDetails
+}
+
+function getSecureMetricLabel(value?: SecureMetricValue | null): string {
+  const label = normalizeString(value?.label)
+  if (label) return label
+
+  if (value?.exact !== null && value?.exact !== undefined) {
+    return String(value.exact)
+  }
+
+  return '—'
+}
+
+function getAttributeRangeLabel(value: unknown): string {
+  const numericValue = normalizeNullableNumber(value)
+  if (numericValue === null) return '—'
+
+  const clamped = Math.max(0, Math.min(100, numericValue))
+  const start = Math.min(80, Math.floor(clamped / 20) * 20)
+  const end = Math.min(100, start + 20)
+
+  return `${start}-${end}`
+}
+
+function getPublicRangeLabel(value?: SecureMetricValue | null): string {
+  const label = normalizeString(value?.label)
+  if (label && label.includes('-')) return label
+
+  const numeric =
+    normalizeNullableNumber(value?.exact) ??
+    normalizeNullableNumber(label)
+
+  return numeric === null ? '—' : getAttributeRangeLabel(numeric)
+}
+
+function getSecureOverallLabel(payload: ExternalRiderSecureProfilePayload | null): string {
+  const scoutedValue = payload?.scoutReport?.report?.overall ?? null
+  const publicValue = payload?.publicView?.overall ?? null
+
+  if (payload?.scoutReport) {
+    return getSecureMetricLabel(scoutedValue)
+  }
+
+  return getPublicRangeLabel(publicValue)
+}
+
+function getPotentialTierName(value: unknown): string {
+  const numeric = normalizeNullableNumber(value)
+  if (numeric == null) return '—'
+
+  if (numeric < 20) return 'Very Low'
+  if (numeric < 40) return 'Low'
+  if (numeric < 60) return 'Medium'
+  if (numeric < 80) return 'High'
+  return 'Elite'
+}
+
+function getSecurePotentialText(payload: ExternalRiderSecureProfilePayload | null): string {
+  const scoutedPotential = payload?.scoutReport?.report?.potential ?? null
+
+  if (!payload?.scoutReport) {
+    return 'Hidden until scouted'
+  }
+
+  const exactValue = normalizeNullableNumber(scoutedPotential?.exact)
+  if (exactValue !== null) {
+    return getPotentialTierName(exactValue)
+  }
+
+  return 'Scouted'
+}
+
+function getSecureFatigueLabel(payload: ExternalRiderSecureProfilePayload | null): string {
+  return getSecureMetricLabel(
+    payload?.scoutReport?.report?.fatigue ?? payload?.publicView?.fatigue ?? null
+  )
+}
+
+function getSecureAttributeLabel(
+  payload: ExternalRiderSecureProfilePayload | null,
+  attributeKey: string
+): string {
+  if (!payload?.scoutReport) {
+    return '-'
+  }
+
+  const scoutedValue = payload?.scoutReport?.report?.attributes?.[attributeKey] ?? null
+  return getSecureMetricLabel(scoutedValue) === '—' ? '-' : getSecureMetricLabel(scoutedValue)
+}
+
+function getSecureAvailabilityValue(
+  payload: ExternalRiderSecureProfilePayload | null,
+  field: keyof SecureAvailabilityValue
+): string | null {
+  const scopedValue =
+    payload?.scoutReport?.report?.availability?.[field] ??
+    payload?.publicView?.availability?.[field] ??
+    null
+
+  return normalizeString(scopedValue)
+}
+
+function formatScoutPrecisionTier(value?: string | null): string {
+  const normalized = normalizeString(value)
+  if (!normalized) return 'Unknown'
+  return normalized.charAt(0).toUpperCase() + normalized.slice(1)
+}
+
+function isOfficeLevelScoutBlock(blockingReason?: string | null): boolean {
+  const normalized = normalizeString(blockingReason)?.toLowerCase() ?? ''
+  return normalized.includes('office') && normalized.includes('level')
+}
+
+function getEffectiveScoutCanStart(scout?: AvailableScoutStaffRow | null): boolean {
+  if (!scout) return false
+  if (scout.on_active_course) return false
+  if (scout.can_scout) return true
+  if (isOfficeLevelScoutBlock(scout.blocking_reason)) return true
+  return false
+}
+
+function getEffectiveScoutBlockingReason(scout?: AvailableScoutStaffRow | null): string | null {
+  if (!scout) return null
+
+  if (scout.on_active_course) {
+    return normalizeString(scout.blocking_reason) ?? 'This scout is already on an active course.'
+  }
+
+  if (scout.can_scout) return null
+  if (isOfficeLevelScoutBlock(scout.blocking_reason)) return null
+
+  return normalizeString(scout.blocking_reason) ?? 'This scout cannot start a report right now.'
+}
+
 export default function ExternalRiderProfilePage({
   riderId: riderIdProp,
   gameDate: gameDateProp,
   marketMode = 'general',
-  isScouted = false,
   onBack,
-  onMakeTransferOffer,
   onOpenFreeAgentNegotiation,
-  onScoutRider,
 }: ExternalRiderProfilePageProps) {
   const navigate = useNavigate()
+  const location = useLocation()
   const params = useParams<{ riderId: string }>()
 
   const resolvedRiderId = riderIdProp ?? params.riderId ?? ''
@@ -903,6 +945,7 @@ export default function ExternalRiderProfilePage({
   const [profileLoading, setProfileLoading] = useState(false)
   const [profileError, setProfileError] = useState<string | null>(null)
   const [selectedRider, setSelectedRider] = useState<RiderDetails | null>(null)
+  const [secureProfile, setSecureProfile] = useState<ExternalRiderSecureProfilePayload | null>(null)
   const [activeTab, setActiveTab] = useState<ExternalRiderProfileTab>(defaultTab)
 
   const [seasonOverview, setSeasonOverview] = useState<RiderSeasonOverview>({
@@ -926,9 +969,34 @@ export default function ExternalRiderProfilePage({
   )
   const [activeFreeAgent, setActiveFreeAgent] = useState<ActiveFreeAgentRow | null>(null)
   const [marketError, setMarketError] = useState<string | null>(null)
-  const [marketActionLoading, setMarketActionLoading] = useState(false)
   const [marketActionMessage, setMarketActionMessage] = useState<string | null>(null)
-  const [myPrimaryClubId, setMyPrimaryClubId] = useState<string | null>(null)
+
+  const [scoutActionMessage, setScoutActionMessage] = useState<string | null>(null)
+  const [scoutTaskLoading, setScoutTaskLoading] = useState(false)
+  const [scoutTaskError, setScoutTaskError] = useState<string | null>(null)
+  const [activeScoutTask, setActiveScoutTask] = useState<ActiveScoutTaskRow | null>(null)
+
+  const [scoutPickerOpen, setScoutPickerOpen] = useState(false)
+  const [availableScouts, setAvailableScouts] = useState<AvailableScoutStaffRow[]>([])
+  const [availableScoutsLoading, setAvailableScoutsLoading] = useState(false)
+  const [availableScoutsError, setAvailableScoutsError] = useState<string | null>(null)
+  const [selectedScoutStaffId, setSelectedScoutStaffId] = useState<string>('')
+  const [scoutSubmitLoading, setScoutSubmitLoading] = useState(false)
+
+  const [freeAgentActionLoading, setFreeAgentActionLoading] = useState(false)
+  const [freeAgentActionError, setFreeAgentActionError] = useState<string | null>(null)
+
+  const [offerModal, setOfferModal] = useState<{
+    listingId: string
+    sellerClubId: string
+    sellerClubName: string | null
+    riderId: string
+    riderName: string
+    askingPrice: number
+  } | null>(null)
+  const [offerDraftPrice, setOfferDraftPrice] = useState('')
+  const [offerModalMessage, setOfferModalMessage] = useState<string | null>(null)
+  const [offerSubmitting, setOfferSubmitting] = useState(false)
 
   const [historyLoading, setHistoryLoading] = useState(false)
   const [historyError, setHistoryError] = useState<string | null>(null)
@@ -976,6 +1044,7 @@ export default function ExternalRiderProfilePage({
       setProfileLoading(true)
       setProfileError(null)
       setSelectedRider(null)
+      setSecureProfile(null)
       setSeasonOverview({ points: 0, podiums: 0, jerseys: 0 })
       setSeasonStats({ races: 0, wins: 0, podiums: 0, top10: 0, points: 0 })
       setRecentRaces([])
@@ -983,6 +1052,22 @@ export default function ExternalRiderProfilePage({
       setActiveFreeAgent(null)
       setMarketError(null)
       setMarketActionMessage(null)
+      setScoutActionMessage(null)
+      setScoutTaskLoading(false)
+      setScoutTaskError(null)
+      setActiveScoutTask(null)
+      setScoutPickerOpen(false)
+      setAvailableScouts([])
+      setAvailableScoutsLoading(false)
+      setAvailableScoutsError(null)
+      setSelectedScoutStaffId('')
+      setScoutSubmitLoading(false)
+      setFreeAgentActionLoading(false)
+      setFreeAgentActionError(null)
+      setOfferModal(null)
+      setOfferDraftPrice('')
+      setOfferModalMessage(null)
+      setOfferSubmitting(false)
       setHistoryRows([])
       setHistoryError(null)
       setActiveTab(defaultTab)
@@ -994,41 +1079,30 @@ export default function ExternalRiderProfilePage({
       }
 
       try {
-        const nextRider = await fetchRiderDetailsById(resolvedRiderId)
-
-        const [deltaResult, gameDatePartsResult] = await Promise.all([
-          supabase
-            .from('v_rider_skill_card_deltas')
-            .select(
-              `
-              rider_id,
-              attribute_code,
-              current_value,
-              old_value,
-              new_value,
-              delta_value,
-              delta_label,
-              delta_direction,
-              primary_source,
-              week_start_date,
-              week_end_date,
-              has_visible_delta
-            `
-            )
-            .eq('rider_id', nextRider.id),
+        const [secureProfileResult, gameDatePartsResult] = await Promise.all([
+          supabase.rpc('get_external_rider_profile', {
+            p_rider_id: resolvedRiderId,
+          }),
           supabase.rpc('get_current_game_date_parts'),
         ])
 
+        if (secureProfileResult.error) throw secureProfileResult.error
+
+        const nextSecureProfile =
+          secureProfileResult.data as ExternalRiderSecureProfilePayload | null
+
+        if (!nextSecureProfile) {
+          throw new Error('Secure rider profile could not be loaded.')
+        }
+
+        if (!nextSecureProfile?.profile) {
+          throw new Error('Secure rider profile payload is missing profile data.')
+        }
+
         if (!mounted) return
 
-        setSelectedRider(nextRider)
-
-        if (deltaResult.error) {
-          console.error(
-            'Failed to load rider skill deltas for external rider profile:',
-            deltaResult.error
-          )
-        }
+        setSecureProfile(nextSecureProfile)
+        setSelectedRider(buildRiderDetailsFromSecureProfile(nextSecureProfile))
 
         if (gameDatePartsResult.error) throw gameDatePartsResult.error
 
@@ -1036,8 +1110,18 @@ export default function ExternalRiderProfilePage({
           ? gameDatePartsResult.data[0]
           : gameDatePartsResult.data
 
+        const typedGameState =
+          gameDateParts &&
+          typeof gameDateParts.season_number === 'number' &&
+          typeof gameDateParts.month_number === 'number' &&
+          typeof gameDateParts.day_number === 'number' &&
+          typeof gameDateParts.hour_number === 'number' &&
+          typeof gameDateParts.minute_number === 'number'
+            ? (gameDateParts as ExternalProfileGameStateRow)
+            : null
+
         setCurrentSeasonNumber(
-          typeof gameDateParts?.season_number === 'number' ? gameDateParts.season_number : null
+          typeof typedGameState?.season_number === 'number' ? typedGameState.season_number : null
         )
       } catch (e: any) {
         if (!mounted) return
@@ -1129,24 +1213,38 @@ export default function ExternalRiderProfilePage({
   useEffect(() => {
     let mounted = true
 
-    async function loadMyPrimaryClubId() {
+    async function loadScoutTask() {
+      if (!selectedRider?.id) return
+
+      await supabase.rpc('complete_due_rider_scout_tasks')
+
       try {
-        const { data, error } = await supabase.rpc('get_my_primary_club_id')
-        if (error) throw error
+        setScoutTaskLoading(true)
+        setScoutTaskError(null)
+
+        const nextTask = await fetchActiveScoutTaskForRider(
+          selectedRider.id,
+          normalizeString(secureProfile?.clubId)
+        )
+
         if (!mounted) return
-        setMyPrimaryClubId(data ? String(data) : null)
-      } catch {
+        setActiveScoutTask(nextTask)
+      } catch (error: any) {
         if (!mounted) return
-        setMyPrimaryClubId(null)
+        setActiveScoutTask(null)
+        setScoutTaskError(error?.message ?? 'Could not load scout task.')
+      } finally {
+        if (!mounted) return
+        setScoutTaskLoading(false)
       }
     }
 
-    void loadMyPrimaryClubId()
+    void loadScoutTask()
 
     return () => {
       mounted = false
     }
-  }, [])
+  }, [selectedRider?.id, secureProfile?.clubId])
 
   useEffect(() => {
     let mounted = true
@@ -1183,7 +1281,6 @@ export default function ExternalRiderProfilePage({
       ? ((selectedRider as { age_years?: number }).age_years ?? null)
       : null
   const profileAge = getAgeFromBirthDate(selectedRider?.birth_date, resolvedGameDate) ?? statsAge
-  const potentialUi = getPotentialUi(selectedRider?.potential)
 
   const contractExpiryUi = getContractExpiryUi(
     selectedRider?.contract_expires_at,
@@ -1237,7 +1334,22 @@ export default function ExternalRiderProfilePage({
     normalizeString(selectedRider?.display_name) ||
     'Rider'
 
-  const visibleOverallValue = getVisibleOverallValue(selectedRider?.overall, isScouted)
+  const effectiveIsScouted = Boolean(secureProfile?.scoutReport)
+  const visibleOverallValue = getSecureOverallLabel(secureProfile)
+
+  const selectedScoutOption = useMemo(
+    () =>
+      availableScouts.find(row => row.scout_staff_id === selectedScoutStaffId) ?? null,
+    [availableScouts, selectedScoutStaffId]
+  )
+
+  const selectedScoutEffectiveBlockingReason = useMemo(
+    () => getEffectiveScoutBlockingReason(selectedScoutOption),
+    [selectedScoutOption]
+  )
+
+  const shouldShowScoutButton = !secureProfile?.isOwnRider && !activeScoutTask
+  const scoutButtonLabel = secureProfile?.scoutReport ? 'Scout Rider Again' : 'Scout Rider'
 
   const tabButtonClass = (tab: ExternalRiderProfileTab) =>
     `border-b-2 px-4 py-3 text-sm font-medium transition ${
@@ -1271,94 +1383,322 @@ export default function ExternalRiderProfilePage({
     return currentSeasonRow ? [currentSeasonRow, ...filteredRows] : historyRows
   }, [currentSeasonNumber, historyRows, seasonOverview.points])
 
-  const marketActionButtonLabel = activeFreeAgent
-    ? 'Negotiate with Free Agent'
-    : activeTransferListing
-      ? onMakeTransferOffer
-        ? 'Make Transfer Offer'
-        : 'Submit Transfer Offer'
-      : onScoutRider
-        ? 'Add to Scout List'
-        : marketMode === 'scouting'
-          ? 'Scout Rider'
-          : null
-
   const skillRows = [
-    { label: 'Sprint', value: selectedRider?.sprint },
-    { label: 'Climbing', value: selectedRider?.climbing },
-    { label: 'Time Trial', value: selectedRider?.time_trial },
-    { label: 'Endurance', value: selectedRider?.endurance },
-    { label: 'Flat', value: selectedRider?.flat },
-    { label: 'Recovery', value: selectedRider?.recovery },
-    { label: 'Resistance', value: selectedRider?.resistance },
-    { label: 'Race IQ', value: selectedRider?.race_iq },
-    { label: 'Teamwork', value: selectedRider?.teamwork },
-    { label: 'Morale', value: selectedRider?.morale },
+    { label: 'Sprint', key: 'sprint' },
+    { label: 'Climbing', key: 'climbing' },
+    { label: 'Time Trial', key: 'time_trial' },
+    { label: 'Endurance', key: 'endurance' },
+    { label: 'Flat', key: 'flat' },
+    { label: 'Recovery', key: 'recovery' },
+    { label: 'Resistance', key: 'resistance' },
+    { label: 'Race IQ', key: 'race_iq' },
+    { label: 'Teamwork', key: 'teamwork' },
+    { label: 'Morale', key: 'morale' },
   ]
 
   const skillColumns = useMemo(() => {
     const midpoint = Math.ceil(skillRows.length / 2)
     return [skillRows.slice(0, midpoint), skillRows.slice(midpoint)]
-  }, [selectedRider])
+  }, [])
 
-  async function handleMarketAction() {
-    if (!selectedRider || marketActionLoading) return
+  async function refreshSecureProfile(targetRiderId: string) {
+    const { data, error } = await supabase.rpc('get_external_rider_profile', {
+      p_rider_id: targetRiderId,
+    })
+
+    if (error) throw error
+
+    const nextSecureProfile = data as ExternalRiderSecureProfilePayload | null
+
+    if (!nextSecureProfile || !nextSecureProfile.profile) {
+      throw new Error('Secure rider profile could not be loaded.')
+    }
+
+    setSecureProfile(nextSecureProfile)
+    setSelectedRider(buildRiderDetailsFromSecureProfile(nextSecureProfile))
+  }
+
+  async function refreshActiveScoutTask(targetRiderId: string, targetClubId?: string | null) {
+    const nextTask = await fetchActiveScoutTaskForRider(targetRiderId, targetClubId)
+    setActiveScoutTask(nextTask)
+  }
+
+  function formatTransferAmount(value: number | null | undefined) {
+    if (value == null || Number.isNaN(value)) return '—'
+    const roundedToThousand = Math.round(Number(value) / 1000) * 1000
+    return `$${roundedToThousand.toLocaleString('en-US')}`
+  }
+
+  function formatCurrencyInput(value: string) {
+    const digits = value.replace(/[^\d]/g, '')
+    if (!digits) return ''
+    return `$${Number(digits).toLocaleString('en-US')}`
+  }
+
+  function parseCurrencyInput(value: string) {
+    const digits = value.replace(/[^\d]/g, '')
+    if (!digits) return null
+    const parsed = Number(digits)
+    return Number.isFinite(parsed) ? parsed : null
+  }
+
+  async function fetchClubNameById(clubId: string): Promise<string | null> {
+    try {
+      const { data, error } = await supabase
+        .from('clubs')
+        .select('name')
+        .eq('id', clubId)
+        .limit(1)
+        .maybeSingle()
+
+      if (error) throw error
+      return normalizeString(data?.name) ?? null
+    } catch {
+      return null
+    }
+  }
+
+  async function openTransferOfferModal(listing: ActiveTransferListing) {
+    const sellerClubName = await fetchClubNameById(listing.seller_club_id)
+
+    setOfferModal({
+      listingId: listing.id,
+      sellerClubId: listing.seller_club_id,
+      sellerClubName,
+      riderId: selectedRider?.id ?? '',
+      riderName,
+      askingPrice: listing.asking_price,
+    })
+
+    setOfferDraftPrice(formatTransferAmount(listing.asking_price))
+    setOfferModalMessage(null)
+    setOfferSubmitting(false)
+  }
+
+  async function handleOpenScoutPicker() {
+    if (!selectedRider?.id || availableScoutsLoading) return
 
     try {
-      setMarketActionLoading(true)
-      setMarketActionMessage(null)
+      setAvailableScoutsLoading(true)
+      setAvailableScoutsError(null)
+      setScoutActionMessage(null)
 
-      if (activeFreeAgent) {
-        if (onOpenFreeAgentNegotiation) {
-          onOpenFreeAgentNegotiation({
-            riderId: selectedRider.id,
-            riderName,
-            freeAgentId: activeFreeAgent.id,
-            expiresOnGameDate: activeFreeAgent.expires_on_game_date,
-          })
-          return
-        }
+      const {
+        data: { user },
+        error: authError,
+      } = await supabase.auth.getUser()
 
-        setMarketActionMessage('Open this rider from Transfers to start free-agent negotiation.')
-        return
-      }
+      if (authError) throw authError
+      if (!user?.id) throw new Error('You must be signed in to start scouting.')
 
-      if (activeTransferListing) {
-        if (onMakeTransferOffer) {
-          onMakeTransferOffer({
-            riderId: selectedRider.id,
-            riderName,
-            listingId: activeTransferListing.id,
-            sellerClubId: activeTransferListing.seller_club_id,
-            askingPrice: activeTransferListing.asking_price,
-          })
-          return
-        }
+      const { data, error } = await supabase.rpc('get_available_scout_staff_for_rider', {
+        p_rider_id: selectedRider.id,
+        p_requesting_user_id: user.id,
+      })
 
-        if (!myPrimaryClubId) throw new Error('Your primary club is not available.')
+      if (error) throw error
 
-        const { error } = await supabase.rpc('submit_rider_transfer_offer', {
-          p_listing_id: activeTransferListing.id,
-          p_buyer_club_id: myPrimaryClubId,
-          p_offered_price: activeTransferListing.asking_price,
-        })
+      const rows = (Array.isArray(data) ? data : []) as AvailableScoutStaffRow[]
 
-        if (error) throw error
-
-        setMarketActionMessage('Transfer offer submitted.')
-        return
-      }
-
-      if (onScoutRider) {
-        onScoutRider({ riderId: selectedRider.id, riderName })
-        return
-      }
-
-      setMarketActionMessage('This rider is currently not listed.')
+      setAvailableScouts(rows)
+      setSelectedScoutStaffId(
+        rows.find(row => getEffectiveScoutCanStart(row))?.scout_staff_id ??
+          rows[0]?.scout_staff_id ??
+          ''
+      )
+      setScoutPickerOpen(true)
     } catch (error: any) {
-      setMarketActionMessage(error?.message ?? 'Market action failed.')
+      setAvailableScouts([])
+      setSelectedScoutStaffId('')
+      setAvailableScoutsError(error?.message ?? 'Could not load available scouts.')
+      setScoutPickerOpen(true)
     } finally {
-      setMarketActionLoading(false)
+      setAvailableScoutsLoading(false)
+    }
+  }
+
+  async function handleSubmitScoutTask() {
+    if (!selectedRider?.id) return
+
+    if (!selectedScoutOption) {
+      setAvailableScoutsError('Please choose a scout.')
+      return
+    }
+
+    const effectiveBlockingReason = getEffectiveScoutBlockingReason(selectedScoutOption)
+    if (effectiveBlockingReason) {
+      setAvailableScoutsError(effectiveBlockingReason)
+      return
+    }
+
+    try {
+      setScoutSubmitLoading(true)
+      setAvailableScoutsError(null)
+      setScoutActionMessage(null)
+      setScoutTaskError(null)
+
+      const {
+        data: { user },
+        error: authError,
+      } = await supabase.auth.getUser()
+
+      if (authError) throw authError
+      if (!user?.id) throw new Error('You must be signed in to start scouting.')
+
+      const { data, error } = await supabase.rpc('start_rider_scout_task_v1', {
+        p_rider_id: selectedRider.id,
+        p_scout_staff_id: selectedScoutOption.scout_staff_id,
+        p_requesting_user_id: user.id,
+      })
+
+      if (error) throw error
+
+      const result = Array.isArray(data) ? data[0] : data
+
+      const durationHours = normalizeNumber(
+        result?.duration_hours ?? selectedScoutOption.estimated_duration_hours,
+        selectedScoutOption.estimated_duration_hours
+      )
+
+      const isPaid = Boolean(
+        result?.is_paid ?? (selectedScoutOption.next_report_coin_cost ?? 0) > 0
+      )
+
+      const coinCost = normalizeNumber(
+        result?.coin_cost ?? selectedScoutOption.next_report_coin_cost,
+        0
+      )
+
+      setScoutPickerOpen(false)
+
+      setScoutActionMessage(
+        isPaid
+          ? `Scout task started with ${selectedScoutOption.scout_name}. Estimated duration: ${durationHours} in-game hour${
+              durationHours === 1 ? '' : 's'
+            }. This report uses ${coinCost} coin${coinCost === 1 ? '' : 's'}.`
+          : `Scout task started with ${selectedScoutOption.scout_name}. Estimated duration: ${durationHours} in-game hour${
+              durationHours === 1 ? '' : 's'
+            }.`
+      )
+
+      await refreshActiveScoutTask(
+        selectedRider.id,
+        normalizeString(secureProfile?.clubId)
+      )
+      await refreshSecureProfile(selectedRider.id)
+    } catch (error: any) {
+      setAvailableScoutsError(error?.message ?? 'Failed to start scouting task.')
+    } finally {
+      setScoutSubmitLoading(false)
+    }
+  }
+
+  async function handleSubmitTransferOfferFromProfile() {
+    if (!offerModal) return
+
+    const offeredPrice = parseCurrencyInput(offerDraftPrice)
+
+    if (!offeredPrice || offeredPrice <= 0) {
+      setOfferModalMessage('Please enter a valid offer amount.')
+      return
+    }
+
+    const myPrimaryClubId = normalizeString(secureProfile?.clubId)
+    if (!myPrimaryClubId) {
+      setOfferModalMessage('Your primary club is not available.')
+      return
+    }
+
+    try {
+      setOfferSubmitting(true)
+      setOfferModalMessage(null)
+
+      const { data: existingOffer, error: existingOfferError } = await supabase
+        .from('rider_transfer_offers')
+        .select('id, status')
+        .eq('listing_id', offerModal.listingId)
+        .eq('buyer_club_id', myPrimaryClubId)
+        .in('status', ['open', 'club_accepted', 'accepted'])
+        .limit(1)
+        .maybeSingle()
+
+      if (existingOfferError) throw existingOfferError
+
+      if (existingOffer) {
+        throw new Error(`You already have an active offer for ${offerModal.riderName}.`)
+      }
+
+      const { data, error } = await supabase.rpc('submit_rider_transfer_offer', {
+        p_listing_id: offerModal.listingId,
+        p_buyer_club_id: myPrimaryClubId,
+        p_offered_price: offeredPrice,
+      })
+
+      if (error) throw error
+
+      const result = Array.isArray(data) ? data[0] : data
+
+      setOfferModal(null)
+      setOfferDraftPrice('')
+      setOfferModalMessage(null)
+
+      if (result?.status === 'club_accepted' || result?.status === 'accepted') {
+        setMarketActionMessage(
+          `Your offer of ${formatTransferAmount(
+            offeredPrice
+          )} was accepted. Check Transfers to continue rider negotiation.`
+        )
+      } else {
+        setMarketActionMessage(
+          `Your offer of ${formatTransferAmount(offeredPrice)} was sent successfully.`
+        )
+      }
+
+      await refreshSecureProfile(offerModal.riderId)
+    } catch (error: any) {
+      setOfferModalMessage(error?.message ?? 'Failed to submit transfer offer.')
+    } finally {
+      setOfferSubmitting(false)
+    }
+  }
+
+  function handleNegotiateWithFreeAgent() {
+    try {
+      setFreeAgentActionLoading(true)
+      setFreeAgentActionError(null)
+
+      const freeAgentId = activeFreeAgent?.id
+      const riderId = selectedRider?.id
+
+      if (!freeAgentId) {
+        throw new Error('Free agent id is missing.')
+      }
+
+      if (!riderId) {
+        throw new Error('Rider id is missing.')
+      }
+
+      if (onOpenFreeAgentNegotiation) {
+        onOpenFreeAgentNegotiation({
+          riderId,
+          riderName,
+          freeAgentId,
+          expiresOnGameDate: activeFreeAgent?.expires_on_game_date ?? null,
+        })
+        setFreeAgentActionLoading(false)
+        return
+      }
+
+      const returnTo = `${location.pathname}${location.search || ''}`
+
+      navigate(
+        `/dashboard/transfers/free-agent-negotiations/new?freeAgentId=${encodeURIComponent(
+          freeAgentId
+        )}&riderId=${encodeURIComponent(riderId)}&returnTo=${encodeURIComponent(returnTo)}`
+      )
+    } catch (err: any) {
+      setFreeAgentActionError(err?.message || 'Failed to open free-agent draft.')
+      setFreeAgentActionLoading(false)
     }
   }
 
@@ -1399,6 +1739,12 @@ export default function ExternalRiderProfilePage({
                 <span className="rounded-full border border-yellow-600/25 bg-white/55 px-3 py-1.5 text-sm font-bold text-slate-950">
                   OVR {visibleOverallValue}
                 </span>
+
+                {effectiveIsScouted ? (
+                  <span className="rounded-full border border-violet-700/20 bg-violet-50 px-3 py-1.5 text-sm font-bold text-violet-800">
+                    Scouted
+                  </span>
+                ) : null}
 
                 {activeFreeAgent ? (
                   <span className="rounded-full border border-blue-700/20 bg-blue-50 px-3 py-1.5 text-sm font-bold text-blue-800">
@@ -1519,31 +1865,108 @@ export default function ExternalRiderProfilePage({
                         ) : null}
                       </div>
 
-                      <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
-                        {activeFreeAgent
-                          ? 'This rider is unattached and can be approached through the free-agent flow.'
-                          : activeTransferListing
-                            ? 'This rider is publicly listed on the transfer market.'
-                            : marketMode === 'scouting'
-                              ? 'This rider is being viewed as a scouting target.'
-                              : 'This rider is not currently listed on the market.'}
+                      <div className="rounded-xl border border-slate-200 bg-white px-4 py-3">
+                        <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                          Scouting
+                        </div>
+
+                        {activeScoutTask ? (
+                          <div className="mt-3 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">
+                            <div className="font-medium text-blue-900">
+                              {(activeScoutTask.scout_name ??
+                                activeScoutTask.scout_staff_name ??
+                                'Assigned scout')}{' '}
+                              is currently scouting this rider.
+                            </div>
+
+                            <div className="mt-1">
+                              Completes:{' '}
+                              {formatGameTimestampAsSeasonLabel(
+                                activeScoutTask.completes_at_game_ts
+                              )}
+                            </div>
+                          </div>
+                        ) : secureProfile?.scoutReport ? (
+                          <div className="mt-3 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+                            Scouting report available for this rider.
+                          </div>
+                        ) : secureProfile?.isOwnRider ? (
+                          <div className="mt-3 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
+                            Scouting is only available for external riders.
+                          </div>
+                        ) : null}
+
+                        {shouldShowScoutButton ? (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              void handleOpenScoutPicker()
+                            }}
+                            disabled={availableScoutsLoading || scoutTaskLoading}
+                            className="mt-3 w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-900 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+                          >
+                            {availableScoutsLoading
+                              ? 'Loading scouts…'
+                              : scoutTaskLoading
+                                ? 'Checking scout tasks…'
+                                : scoutButtonLabel}
+                          </button>
+                        ) : null}
+
+                        {scoutTaskError ? (
+                          <div className="mt-3 rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+                            {scoutTaskError}
+                          </div>
+                        ) : null}
+
+                        {scoutActionMessage ? (
+                          <div className="mt-3 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
+                            {scoutActionMessage}
+                          </div>
+                        ) : null}
                       </div>
 
-                      {marketActionButtonLabel ? (
+                      {activeTransferListing ? (
                         <button
                           type="button"
                           onClick={() => {
-                            void handleMarketAction()
+                            void openTransferOfferModal(activeTransferListing)
                           }}
-                          disabled={marketActionLoading}
-                          className="w-full rounded-lg bg-yellow-400 px-4 py-3 text-sm font-semibold text-slate-950 transition hover:bg-yellow-500 disabled:cursor-not-allowed disabled:opacity-60"
+                          className="w-full rounded-lg bg-yellow-400 px-4 py-3 text-sm font-semibold text-slate-950 transition hover:bg-yellow-500"
                         >
-                          {marketActionLoading ? 'Working…' : marketActionButtonLabel}
+                          Make Transfer Offer
                         </button>
                       ) : null}
 
+                      {activeFreeAgent ? (
+                        <div className="mt-4 space-y-3">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              handleNegotiateWithFreeAgent()
+                            }}
+                            disabled={freeAgentActionLoading}
+                            className={`w-full rounded-lg px-4 py-3 text-sm font-semibold transition ${
+                              freeAgentActionLoading
+                                ? 'cursor-not-allowed bg-gray-200 text-gray-500'
+                                : 'bg-yellow-400 text-black hover:bg-yellow-300'
+                            }`}
+                          >
+                            {freeAgentActionLoading
+                              ? 'Opening negotiation...'
+                              : 'Negotiate with Free Agent'}
+                          </button>
+
+                          {freeAgentActionError ? (
+                            <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                              {freeAgentActionError}
+                            </div>
+                          ) : null}
+                        </div>
+                      ) : null}
+
                       {marketActionMessage ? (
-                        <div className="rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700">
+                        <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
                           {marketActionMessage}
                         </div>
                       ) : null}
@@ -1568,7 +1991,9 @@ export default function ExternalRiderProfilePage({
                       <DetailRow label="Role" value={selectedRider.role || '—'} />
                       <DetailRow label="Age" value={profileAge ?? '—'} />
                       <DetailRow label="Overall" value={visibleOverallValue} />
-                      {isScouted ? <DetailRow label="Potential" value={potentialUi.label} /> : null}
+                      {effectiveIsScouted ? (
+                        <DetailRow label="Potential" value={getSecurePotentialText(secureProfile)} />
+                      ) : null}
                       <DetailRow
                         label="Contract End"
                         value={contractExpiryUi.label}
@@ -1581,9 +2006,9 @@ export default function ExternalRiderProfilePage({
                 <SectionCard
                   title="Skill Attributes"
                   subtitle={
-                    isScouted
-                      ? 'Exact rider attributes'
-                      : 'Public scouting ranges are shown until the rider is scouted'
+                    effectiveIsScouted
+                      ? 'Scouted report ranges are shown below. Better scouts provide narrower and more reliable ranges.'
+                      : 'Skill attributes are hidden until the rider is scouted.'
                   }
                 >
                   <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
@@ -1593,7 +2018,7 @@ export default function ExternalRiderProfilePage({
                           <DetailRow
                             key={item.label}
                             label={item.label}
-                            value={getVisibleAttributeValue(item.value, isScouted)}
+                            value={getSecureAttributeLabel(secureProfile, item.key)}
                           />
                         ))}
                       </div>
@@ -1601,26 +2026,31 @@ export default function ExternalRiderProfilePage({
                   </div>
                 </SectionCard>
 
-                {isScouted ? (
+                {effectiveIsScouted ? (
                   <SectionCard title="Availability & Medical">
                     <div className="divide-y divide-slate-100">
                       <DetailRow
                         label="Availability"
-                        value={selectedRider.availability_status || '—'}
+                        value={getSecureAvailabilityValue(secureProfile, 'status') ?? '—'}
                       />
                       <DetailRow
                         label="Unavailable Until"
                         value={
-                          selectedRider.unavailable_until
-                            ? formatShortGameDate(selectedRider.unavailable_until)
+                          getSecureAvailabilityValue(secureProfile, 'unavailable_until')
+                            ? formatShortGameDate(
+                                getSecureAvailabilityValue(
+                                  secureProfile,
+                                  'unavailable_until'
+                                ) as string
+                              )
                             : '—'
                         }
                       />
                       <DetailRow
                         label="Medical / Reason"
-                        value={selectedRider.unavailable_reason || '—'}
+                        value={getSecureAvailabilityValue(secureProfile, 'reason') ?? '—'}
                       />
-                      <DetailRow label="Fatigue" value={selectedRider.fatigue ?? '—'} />
+                      <DetailRow label="Fatigue" value={getSecureFatigueLabel(secureProfile)} />
                     </div>
                   </SectionCard>
                 ) : null}
@@ -1717,6 +2147,289 @@ export default function ExternalRiderProfilePage({
           )}
         </>
       )}
+
+      {scoutPickerOpen ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/25 px-4 backdrop-blur-sm">
+          <div className="w-full max-w-3xl rounded-xl bg-white p-5 shadow-xl">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">Choose Scout</h3>
+                <div className="mt-1 text-sm text-gray-600">
+                  Select which scout will handle this report for {riderName}.
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setScoutPickerOpen(false)
+                  setAvailableScoutsError(null)
+                  setScoutSubmitLoading(false)
+                }}
+                className="rounded-md border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+              >
+                Close
+              </button>
+            </div>
+
+            {availableScoutsError ? (
+              <div className="mt-4 rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+                {availableScoutsError}
+              </div>
+            ) : null}
+
+            {availableScoutsLoading ? (
+              <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 px-4 py-4 text-sm text-slate-600">
+                Loading available scouts…
+              </div>
+            ) : availableScouts.length === 0 ? (
+              <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 px-4 py-4 text-sm text-slate-600">
+                No available scouts found for this rider.
+              </div>
+            ) : (
+              <div className="mt-4 space-y-4">
+                <div className="space-y-3">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Select scout
+                  </label>
+
+                  <select
+                    value={selectedScoutStaffId}
+                    onChange={e => {
+                      setSelectedScoutStaffId(e.target.value)
+                      setAvailableScoutsError(null)
+                    }}
+                    className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900"
+                  >
+                    <option value="">Choose a scout...</option>
+                    {availableScouts.map(scout => {
+                      const busy = Boolean(scout.has_active_scouting_task)
+
+                      return (
+                        <option
+                          key={scout.scout_staff_id}
+                          value={scout.scout_staff_id}
+                          disabled={busy}
+                        >
+                          {scout.scout_name}
+                          {busy ? ' — busy' : ''}
+                        </option>
+                      )
+                    })}
+                  </select>
+                </div>
+
+                {selectedScoutOption ? (
+                  <div
+                    className={`rounded-xl border bg-white p-4 ${
+                      getEffectiveScoutCanStart(selectedScoutOption)
+                        ? 'border-blue-400'
+                        : 'border-gray-200'
+                    }`}
+                  >
+                    <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <div className="text-base font-semibold text-slate-900">
+                            {selectedScoutOption.scout_name}
+                          </div>
+
+                          <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700">
+                            Report quality: {formatScoutPrecisionTier(selectedScoutOption.precision_tier)}
+                          </span>
+
+                          {!getEffectiveScoutCanStart(selectedScoutOption) ? (
+                            <span className="rounded-full bg-rose-100 px-2 py-0.5 text-[11px] font-semibold text-rose-700">
+                              Unavailable
+                            </span>
+                          ) : null}
+                        </div>
+
+                        <div className="mt-3 grid grid-cols-2 gap-2 text-xs text-slate-700 md:grid-cols-3">
+                          <div>
+                            <span className="font-semibold">Expertise:</span>{' '}
+                            {selectedScoutOption.expertise}
+                          </div>
+                          <div>
+                            <span className="font-semibold">Experience:</span>{' '}
+                            {selectedScoutOption.experience}
+                          </div>
+                          <div>
+                            <span className="font-semibold">Potential:</span>{' '}
+                            {selectedScoutOption.potential}
+                          </div>
+                          <div>
+                            <span className="font-semibold">Leadership:</span>{' '}
+                            {selectedScoutOption.leadership}
+                          </div>
+                          <div>
+                            <span className="font-semibold">Efficiency:</span>{' '}
+                            {selectedScoutOption.efficiency}
+                          </div>
+                          <div>
+                            <span className="font-semibold">Loyalty:</span>{' '}
+                            {selectedScoutOption.loyalty}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="w-full shrink-0 space-y-2 lg:w-[290px]">
+                        <div className="rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-700">
+                          <span className="font-semibold text-slate-900">Estimated duration:</span>{' '}
+                          {selectedScoutOption.estimated_duration_hours} in-game hour
+                          {selectedScoutOption.estimated_duration_hours === 1 ? '' : 's'}
+                        </div>
+
+                        <div className="rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-700">
+                          <span className="font-semibold text-slate-900">Free reports left today:</span>{' '}
+                          {normalizeNumber(selectedScoutOption.free_reports_left_today, 0)} /{' '}
+                          {normalizeNumber(selectedScoutOption.free_reports_per_day, 1)}
+                        </div>
+
+                        <div className="rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-700">
+                          <span className="font-semibold text-slate-900">Wallet balance:</span>{' '}
+                          {normalizeNumber(selectedScoutOption.wallet_balance, 0)} coin
+                          {normalizeNumber(selectedScoutOption.wallet_balance, 0) === 1 ? '' : 's'}
+                        </div>
+
+                        <div className="rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-700">
+                          <span className="font-semibold text-slate-900">Next report coin cost:</span>{' '}
+                          {normalizeNumber(selectedScoutOption.next_report_coin_cost, 0)}
+                        </div>
+
+                        {selectedScoutEffectiveBlockingReason ? (
+                          <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-700">
+                            {selectedScoutEffectiveBlockingReason}
+                          </div>
+                        ) : null}
+                      </div>
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+            )}
+
+            {selectedScoutOption && normalizeNumber(selectedScoutOption.next_report_coin_cost, 0) > 0 ? (
+              <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                This scout has no free reports left today. Starting this scouting task will cost{' '}
+                <span className="font-semibold">
+                  {normalizeNumber(selectedScoutOption.next_report_coin_cost, 0)} coin
+                </span>
+                . You currently have{' '}
+                <span className="font-semibold">
+                  {normalizeNumber(selectedScoutOption.wallet_balance, 0)} coin
+                </span>
+                .
+              </div>
+            ) : null}
+
+            <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-600">
+              Each scout includes 1 free report per in-game day. Additional reports cost 1 coin.
+            </div>
+
+            <div className="mt-5 flex items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setScoutPickerOpen(false)
+                  setAvailableScoutsError(null)
+                  setScoutSubmitLoading(false)
+                }}
+                className="rounded-md border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                disabled={!selectedScoutOption || Boolean(selectedScoutEffectiveBlockingReason) || scoutSubmitLoading}
+                onClick={() => {
+                  void handleSubmitScoutTask()
+                }}
+                className={`rounded-md px-4 py-2 text-sm font-medium ${
+                  !selectedScoutOption || Boolean(selectedScoutEffectiveBlockingReason) || scoutSubmitLoading
+                    ? 'cursor-not-allowed bg-gray-200 text-gray-500'
+                    : 'bg-yellow-400 text-black hover:bg-yellow-300'
+                }`}
+              >
+                {scoutSubmitLoading ? 'Starting...' : 'Start Scouting'}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {offerModal ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/25 px-4 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-xl bg-white p-5 shadow-xl">
+            <h3 className="text-lg font-semibold text-gray-900">Make Transfer Offer</h3>
+
+            <div className="mt-3 space-y-2 text-sm text-gray-600">
+              <div>
+                <span className="font-semibold text-gray-900">Rider:</span> {offerModal.riderName}
+              </div>
+              <div>
+                <span className="font-semibold text-gray-900">Seller:</span>{' '}
+                {offerModal.sellerClubName ?? 'Unknown club'}
+              </div>
+              <div>
+                <span className="font-semibold text-gray-900">Asking price:</span>{' '}
+                {formatTransferAmount(offerModal.askingPrice)}
+              </div>
+            </div>
+
+            {offerModalMessage ? (
+              <div className="mt-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                {offerModalMessage}
+              </div>
+            ) : null}
+
+            <div className="mt-4">
+              <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-gray-500">
+                Your Offer
+              </label>
+              <input
+                type="text"
+                inputMode="numeric"
+                value={offerDraftPrice}
+                onChange={e => setOfferDraftPrice(formatCurrencyInput(e.target.value))}
+                placeholder="$128,000"
+                className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700"
+              />
+            </div>
+
+            <div className="mt-5 flex items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setOfferModal(null)
+                  setOfferDraftPrice('')
+                  setOfferModalMessage(null)
+                  setOfferSubmitting(false)
+                }}
+                className="rounded-md border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                disabled={offerSubmitting}
+                onClick={() => {
+                  void handleSubmitTransferOfferFromProfile()
+                }}
+                className={`rounded-md px-4 py-2 text-sm font-medium ${
+                  offerSubmitting
+                    ? 'cursor-not-allowed bg-gray-200 text-gray-500'
+                    : 'bg-yellow-400 text-black hover:bg-yellow-300'
+                }`}
+              >
+                {offerSubmitting ? 'Submitting...' : 'Submit Offer'}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   )
 }

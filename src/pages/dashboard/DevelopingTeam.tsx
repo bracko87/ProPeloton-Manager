@@ -1,9 +1,11 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router'
 import { supabase } from '../../lib/supabase'
 import RiderProfilePage from '../../features/squad/components/RiderProfilePage'
+import DevelopingSquadTab from '../../features/squad/components/DevelopingSquadTab'
 
 import type {
+  ClubHealthOverviewRow,
   ClubRosterRow,
   DevelopingTeamStatus,
   RiderAvailabilityStatus,
@@ -12,23 +14,12 @@ import type {
 import {
   getAgeFromBirthDate,
   normalizeGameDateValue,
-  getContractExpiryUi,
 } from '../../features/squad/utils/dates'
-
-const DEFAULT_RIDER_IMAGE_URL =
-  'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Others/Default%20Profile.png'
 
 const DEVELOPING_TEAM_MAX = 8
 const FIRST_SQUAD_MAX = 18
 
 type SquadListView = 'general' | 'financial' | 'skills' | 'form'
-
-const SQUAD_LIST_VIEW_OPTIONS: Array<{ value: SquadListView; label: string }> = [
-  { value: 'general', label: 'General View' },
-  { value: 'financial', label: 'Financial View' },
-  { value: 'skills', label: 'Skills View' },
-  { value: 'form', label: 'Form & Development' },
-]
 
 type DevelopingRosterRow = ClubRosterRow & {
   birth_date?: string | null
@@ -54,24 +45,28 @@ type DevelopingRosterRow = ClubRosterRow & {
   availability_status?: RiderAvailabilityStatus | null
 }
 
-function getCountryName(countryCode?: string) {
-  const code = countryCode?.trim().toUpperCase()
-
-  if (!code) return 'Unknown'
-
-  try {
-    return new Intl.DisplayNames(['en'], { type: 'region' }).of(code) ?? code
-  } catch {
-    return code
-  }
-}
-
-function getFlagImageUrl(countryCode?: string) {
-  const code = countryCode?.trim().toLowerCase()
-
-  if (!code || !/^[a-z]{2}$/.test(code)) return null
-
-  return `https://flagcdn.com/24x18/${code}.png`
+type DevelopingTeamRiderView = {
+  rowNo: number
+  id: string
+  name: string
+  countryCode?: string | null
+  role?: string | null
+  age?: number | null
+  overall: number
+  fatigue: number
+  status: RiderAvailabilityStatus
+  marketValue?: number | null
+  salary?: number | null
+  contractExpiresAt?: string | null
+  contractExpiresSeason?: number | null
+  sprint?: number | null
+  climbing?: number | null
+  timeTrial?: number | null
+  flat?: number | null
+  endurance?: number | null
+  recovery?: number | null
+  morale?: number | null
+  potential?: number | null
 }
 
 function buildRiderFullName(
@@ -83,324 +78,21 @@ function buildRiderFullName(
   return fullName || fallback || 'Unknown Rider'
 }
 
-function getBestRiderSkillValue(rider: {
-  sprint?: number | null
-  climbing?: number | null
-  timeTrial?: number | null
-  flat?: number | null
-  endurance?: number | null
-  recovery?: number | null
-}) {
-  const values = [
-    rider.sprint,
-    rider.climbing,
-    rider.timeTrial,
-    rider.flat,
-    rider.endurance,
-    rider.recovery,
-  ].filter((value): value is number => typeof value === 'number')
+function formatOrdinal(value?: number | null) {
+  if (value == null) return '—'
 
-  return values.length > 0 ? Math.max(...values) : null
-}
+  const mod10 = value % 10
+  const mod100 = value % 100
 
-function CountryFlag({
-  countryCode,
-  className = 'h-4 w-5 rounded-sm object-cover',
-}: {
-  countryCode?: string
-  className?: string
-}) {
-  const src = getFlagImageUrl(countryCode)
-  const countryName = getCountryName(countryCode)
-  const [hasError, setHasError] = useState(false)
+  if (mod10 === 1 && mod100 !== 11) return `${value}st`
+  if (mod10 === 2 && mod100 !== 12) return `${value}nd`
+  if (mod10 === 3 && mod100 !== 13) return `${value}rd`
 
-  if (!src || hasError) {
-    return <div className={`${className} bg-gray-200`} />
-  }
-
-  return (
-    <img
-      src={src}
-      alt={`${countryName} flag`}
-      title={countryName}
-      className={className}
-      loading="lazy"
-      onError={() => setHasError(true)}
-    />
-  )
-}
-
-function formatCompactMoney(n?: number | null) {
-  if (n == null) return '—'
-
-  const abs = Math.abs(n)
-  const sign = n < 0 ? '-' : ''
-
-  if (abs >= 1_000_000) {
-    const millions = abs / 1_000_000
-    const formatted =
-      millions >= 10 ? Math.round(millions).toString() : millions.toFixed(1).replace('.0', '')
-    return `${sign}$${formatted}M`
-  }
-
-  if (abs >= 1_000) {
-    return `${sign}$${Math.floor(abs / 1_000)}K`
-  }
-
-  return `${sign}$${new Intl.NumberFormat('de-DE', { maximumFractionDigits: 0 }).format(abs)}`
-}
-
-function formatWeeklySalary(n?: number | null) {
-  if (n == null) return '—'
-  return `${formatCompactMoney(n)}/week`
-}
-
-function hexToRgba(hex: string, alpha: number) {
-  const normalized = hex.replace('#', '')
-  const value =
-    normalized.length === 3
-      ? normalized
-          .split('')
-          .map((char) => char + char)
-          .join('')
-      : normalized
-
-  const int = Number.parseInt(value, 16)
-  const r = (int >> 16) & 255
-  const g = (int >> 8) & 255
-  const b = int & 255
-
-  return `rgba(${r}, ${g}, ${b}, ${alpha})`
-}
-
-function getMoraleUi(morale?: number | null): {
-  label: string
-  color: string
-} {
-  const value = Math.max(0, Math.min(100, morale ?? 0))
-
-  if (value <= 19) return { label: 'Bad', color: '#DC2626' }
-  if (value <= 39) return { label: 'Low', color: '#F97316' }
-  if (value <= 59) return { label: 'Okay', color: '#EAB308' }
-  if (value <= 79) return { label: 'Good', color: '#84CC16' }
-
-  return { label: 'Great', color: '#16A34A' }
-}
-
-function getFatigueUi(fatigue?: number | null): {
-  label: string
-  color: string
-} {
-  const value = Math.max(0, Math.min(100, fatigue ?? 0))
-
-  if (value <= 19) return { label: 'Fresh', color: '#16A34A' }
-  if (value <= 39) return { label: 'Normal', color: '#84CC16' }
-  if (value <= 59) return { label: 'Tired', color: '#EAB308' }
-
-  return { label: 'Very Tired', color: '#F97316' }
-}
-
-function getPotentialUi(potential?: number | null): {
-  label: string
-  color: string
-} {
-  const value = Math.max(0, Math.min(100, potential ?? 0))
-
-  if (value <= 19) return { label: 'Limited', color: '#6B7280' }
-  if (value <= 39) return { label: 'Average', color: '#0F766E' }
-  if (value <= 59) return { label: 'Promising', color: '#0284C7' }
-  if (value <= 79) return { label: 'High', color: '#7C3AED' }
-
-  return { label: 'Elite', color: '#16A34A' }
+  return `${value}th`
 }
 
 function getDefaultRiderAvailabilityStatus(): RiderAvailabilityStatus {
   return 'fit'
-}
-
-function getRiderStatusUi(status?: RiderAvailabilityStatus | null): {
-  label: string
-  icon: string
-  color: string
-  bgColor: string
-  borderColor: string
-} {
-  const safeStatus = status ?? getDefaultRiderAvailabilityStatus()
-
-  if (safeStatus === 'injured') {
-    const color = '#DC2626'
-    return {
-      label: 'Injured',
-      icon: '✚',
-      color,
-      bgColor: hexToRgba(color, 0.1),
-      borderColor: hexToRgba(color, 0.2),
-    }
-  }
-
-  if (safeStatus === 'not_fully_fit') {
-    const color = '#C2410C'
-    return {
-      label: 'Not fully fit',
-      icon: '♥',
-      color,
-      bgColor: hexToRgba(color, 0.1),
-      borderColor: hexToRgba(color, 0.2),
-    }
-  }
-
-  if (safeStatus === 'sick') {
-    const color = '#7C3AED'
-    return {
-      label: 'Sick',
-      icon: '✚',
-      color,
-      bgColor: hexToRgba(color, 0.1),
-      borderColor: hexToRgba(color, 0.2),
-    }
-  }
-
-  const color = '#16A34A'
-  return {
-    label: 'Fit',
-    icon: '♥',
-    color,
-    bgColor: hexToRgba(color, 0.1),
-    borderColor: hexToRgba(color, 0.2),
-  }
-}
-
-function RiderStatusBadge({
-  status,
-  className = '',
-  compact = false,
-}: {
-  status?: RiderAvailabilityStatus | null
-  className?: string
-  compact?: boolean
-}) {
-  const ui = getRiderStatusUi(status)
-
-  return (
-    <span
-      className={`inline-flex items-center whitespace-nowrap rounded-full border font-medium ${
-        compact ? 'gap-1.5 px-2.5 py-1 text-xs' : 'gap-2 px-3 py-1 text-sm'
-      } ${className}`}
-      title={`Status: ${ui.label}`}
-      style={{
-        color: ui.color,
-        backgroundColor: ui.bgColor,
-        borderColor: ui.borderColor,
-      }}
-    >
-      <span
-        aria-hidden="true"
-        style={{
-          color: ui.color,
-          lineHeight: 1,
-          fontSize: compact ? '0.8rem' : '0.9rem',
-        }}
-      >
-        {ui.icon}
-      </span>
-      <span>{ui.label}</span>
-    </span>
-  )
-}
-
-function InlineStatusText({
-  label,
-  color,
-  className = '',
-}: {
-  label: string
-  color?: string
-  className?: string
-}) {
-  return (
-    <span
-      className={`inline-flex items-center text-sm font-medium ${className}`}
-      style={color ? { color } : undefined}
-    >
-      {label}
-    </span>
-  )
-}
-
-function getDevelopingTeamMoveState({
-  hasFirstSquad,
-  movementWindowOpen,
-  firstSquadRiderCount,
-}: {
-  hasFirstSquad: boolean
-  movementWindowOpen: boolean
-  firstSquadRiderCount: number
-}) {
-  if (!hasFirstSquad) {
-    return {
-      enabled: false,
-      reason: 'First Squad is unavailable.',
-    }
-  }
-
-  if (!movementWindowOpen) {
-    return {
-      enabled: false,
-      reason: 'Movement window is closed.',
-    }
-  }
-
-  if (firstSquadRiderCount >= FIRST_SQUAD_MAX) {
-    return {
-      enabled: false,
-      reason: `First Squad is full (${FIRST_SQUAD_MAX}/${FIRST_SQUAD_MAX}).`,
-    }
-  }
-
-  return {
-    enabled: true,
-    reason: 'Move to First Squad',
-  }
-}
-
-function getDevelopingTeamAgeWarning(age?: number | null, movementWindowOpen?: boolean) {
-  if (age === null || age === undefined || age < 24) return null
-
-  if (movementWindowOpen) {
-    return {
-      label: 'Action required now',
-      className:
-        'inline-flex items-center rounded-full border border-red-200 bg-red-50 px-2.5 py-1 text-xs font-medium text-red-700',
-    }
-  }
-
-  return {
-    label: 'Must move next window',
-    className:
-      'inline-flex items-center rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-700',
-  }
-}
-
-function CompactValueTile({
-  label,
-  value,
-  subvalue,
-}: {
-  label: string
-  value: string
-  subvalue?: string
-}) {
-  return (
-    <div className="rounded-2xl border border-slate-200 bg-gradient-to-b from-white to-slate-50/90 p-4 shadow-sm">
-      <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">
-        {label}
-      </div>
-      <div className="mt-3 text-2xl font-semibold leading-tight tracking-tight text-slate-900">
-        {value}
-      </div>
-      {subvalue ? <div className="mt-2 text-xs leading-relaxed text-slate-500">{subvalue}</div> : null}
-    </div>
-  )
 }
 
 function TopNav({
@@ -471,6 +163,7 @@ function TopNav({
 
 export default function DevelopingTeamPage() {
   const [rows, setRows] = useState<DevelopingRosterRow[]>([])
+  const [healthOverviewRows, setHealthOverviewRows] = useState<ClubHealthOverviewRow[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [statusError, setStatusError] = useState<string | null>(null)
@@ -486,7 +179,7 @@ export default function DevelopingTeamPage() {
 
   const navigate = useNavigate()
 
-  const riders = useMemo(
+  const riders = useMemo<DevelopingTeamRiderView[]>(
     () =>
       rows.map((r, idx) => ({
         rowNo: idx + 1,
@@ -515,6 +208,72 @@ export default function DevelopingTeamPage() {
     [rows, gameDate]
   )
 
+  const riderNameById = useMemo(
+    () =>
+      new Map(
+        rows.map((row) => [
+          row.rider_id,
+          buildRiderFullName(row.first_name, row.last_name, row.full_name ?? row.display_name),
+        ])
+      ),
+    [rows]
+  )
+
+  const healthOverviewDisplayRows = useMemo(
+    () =>
+      healthOverviewRows.map((row) => ({
+        ...row,
+        full_name: riderNameById.get(row.rider_id) ?? row.display_name ?? 'Unknown Rider',
+      })),
+    [healthOverviewRows, riderNameById]
+  )
+
+  const developingTeamDisplayData = useMemo(() => {
+    const sorted = [...riders].sort((a, b) => b.overall - a.overall)
+
+    const avgOverall = sorted.length
+      ? Math.round(sorted.reduce((sum, rider) => sum + rider.overall, 0) / sorted.length)
+      : 50
+
+    const seasonTrend = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+    ].map((label, index) => ({
+      label,
+      value: Math.max(
+        6,
+        Math.round((avgOverall - 44) * 0.9 + 6 + (index % 2 === 0 ? 0 : 1))
+      ),
+    }))
+
+    const podiumChart = [
+      { label: 'Wins', value: Math.max(0, Math.round((avgOverall - 54) / 6)) },
+      { label: '2nd', value: Math.max(1, Math.round((avgOverall - 50) / 8) + 1) },
+      { label: '3rd', value: 2 },
+      { label: 'Top10', value: Math.max(4, Math.round(avgOverall / 6)) },
+      { label: 'Top20', value: Math.max(8, Math.round(avgOverall / 3)) },
+    ]
+
+    return {
+      seasonTrend,
+      podiumChart,
+      summary: {
+        wins: podiumChart[0].value,
+        podiums: podiumChart[0].value + podiumChart[1].value + podiumChart[2].value,
+        top10s: podiumChart[3].value,
+        bestGC: Math.max(5, 18 - podiumChart[0].value),
+      },
+    }
+  }, [riders])
+
   const loadDevelopingTeamPageData = useCallback(async () => {
     setLoading(true)
     setError(null)
@@ -542,6 +301,7 @@ export default function DevelopingTeamPage() {
         setDevelopingTeamStatus(null)
         setStatusError(devStatusErr.message ?? 'Could not load Developing Team status.')
         setRows([])
+        setHealthOverviewRows([])
         setFirstSquadRiderCount(0)
         return
       }
@@ -549,6 +309,20 @@ export default function DevelopingTeamPage() {
       const normalizedDevStatus = Array.isArray(devStatusData) ? devStatusData[0] : devStatusData
       const status = (normalizedDevStatus ?? null) as DevelopingTeamStatus | null
       setDevelopingTeamStatus(status)
+
+      if (status?.developing_club_id) {
+        const { data: healthData, error: healthErr } = await supabase.rpc(
+          'get_club_health_overview',
+          {
+            p_club_id: status.developing_club_id,
+          }
+        )
+
+        if (healthErr) throw healthErr
+        setHealthOverviewRows((healthData ?? []) as ClubHealthOverviewRow[])
+      } else {
+        setHealthOverviewRows([])
+      }
 
       const mainClubId = status?.main_club_id
       if (mainClubId) {
@@ -565,6 +339,7 @@ export default function DevelopingTeamPage() {
 
       if (!status?.is_purchased || !status.developing_club_id) {
         setRows([])
+        setHealthOverviewRows([])
         return
       }
 
@@ -710,6 +485,8 @@ export default function DevelopingTeamPage() {
 
       setRows(mergedRows)
     } catch (e: any) {
+      setRows([])
+      setHealthOverviewRows([])
       setError(e?.message ?? 'Failed to load Developing Team.')
     } finally {
       setLoading(false)
@@ -754,12 +531,12 @@ export default function DevelopingTeamPage() {
     setMoveActionMessage(null)
 
     try {
-      const { error } = await supabase.rpc('move_rider_between_main_and_developing', {
+      const { error: moveError } = await supabase.rpc('move_rider_between_main_and_developing', {
         p_rider_id: riderId,
         p_target_club_id: developingTeamStatus.main_club_id,
       })
 
-      if (error) throw error
+      if (moveError) throw moveError
 
       setMoveActionMessage('Rider moved to the First Squad.')
       await loadDevelopingTeamPageData()
@@ -783,32 +560,6 @@ export default function DevelopingTeamPage() {
       ? `Movement window open now: ${developingTeamStatus.current_window_label ?? 'Current window'}`
       : `Movement window closed. Next window: ${developingTeamStatus.next_window_label ?? 'Unknown'}`
     : 'Movement window information unavailable.'
-
-  const squadTableClassName = [
-    'w-full text-sm',
-    listView === 'skills' ? 'table-fixed' : '',
-    listView === 'financial'
-      ? 'min-w-[980px]'
-      : listView === 'form'
-        ? 'min-w-[1020px]'
-        : listView === 'general'
-          ? 'min-w-[900px]'
-          : '',
-  ]
-    .filter(Boolean)
-    .join(' ')
-
-  const squadTableColSpan =
-    listView === 'skills'
-      ? 11
-      : listView === 'financial'
-        ? 8
-        : listView === 'form'
-          ? 9
-          : 9
-
-  const currentViewLabel =
-    SQUAD_LIST_VIEW_OPTIONS.find((option) => option.value === listView)?.label ?? 'General View'
 
   if (!loading && !error && developingTeamStatus && !developingTeamStatus.is_purchased) {
     return null
@@ -880,337 +631,52 @@ export default function DevelopingTeamPage() {
             </div>
           </div>
 
-          <div className="w-full rounded-lg bg-white p-4 shadow">
-            <div className="mb-3 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div className="mb-4 rounded-lg border border-slate-200 bg-white px-4 py-3 shadow-sm">
+            <div className="flex items-center justify-between gap-4">
               <div>
-                <div className="text-base font-semibold text-gray-800">Developing Team</div>
-                <div className="mt-1 text-sm text-gray-500">
-                  {currentViewLabel} · Riders{' '}
-                  <span className="font-medium text-gray-700">
-                    {riders.length}/{DEVELOPING_TEAM_MAX}
-                  </span>
+                <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">
+                  Current Competition
+                </div>
+                <div className="mt-1 text-base font-semibold text-slate-900">
+                  {developingTeamStatus?.current_competition_name ?? 'Competition unavailable'}
                 </div>
               </div>
 
-              <div className="flex flex-wrap items-center gap-3">
-                <div className="text-sm text-gray-500">
-                  First Squad:{' '}
-                  <span className="font-medium text-gray-700">
-                    {firstSquadRiderCount}/{FIRST_SQUAD_MAX}
-                  </span>
+              <div className="text-right">
+                <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">
+                  Current Place
                 </div>
-
-                <div className="flex items-center gap-2">
-                  <label
-                    htmlFor="developing-team-list-view"
-                    className="text-sm font-medium text-gray-600"
-                  >
-                    View
-                  </label>
-                  <select
-                    id="developing-team-list-view"
-                    value={listView}
-                    onChange={(e) => setListView(e.target.value as SquadListView)}
-                    className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 outline-none transition focus:border-yellow-400"
-                  >
-                    {SQUAD_LIST_VIEW_OPTIONS.map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </select>
+                <div className="mt-1 text-2xl font-semibold tracking-tight text-slate-900">
+                  {formatOrdinal(developingTeamStatus?.current_competition_place)}
                 </div>
+                {developingTeamStatus?.current_competition_total_teams ? (
+                  <div className="text-xs text-slate-500">
+                    of {developingTeamStatus.current_competition_total_teams} teams
+                  </div>
+                ) : null}
               </div>
             </div>
-
-            <div className="overflow-x-auto">
-              <table className={squadTableClassName}>
-                <thead>
-                  <tr className="text-left text-gray-600">
-                    <th className={`p-2 ${listView === 'skills' ? 'w-[42px]' : ''}`}>#</th>
-                    <th className={`p-2 ${listView === 'skills' ? 'w-[190px]' : ''}`}>Name</th>
-                    <th className={`p-2 ${listView === 'skills' ? 'w-[110px]' : ''}`}>Country</th>
-                    <th className={`p-2 ${listView === 'skills' ? 'w-[130px]' : ''}`}>Role</th>
-
-                    {listView === 'general' && (
-                      <>
-                        <th className="p-2">Age</th>
-                        <th className="p-2">Overall</th>
-                        <th className="p-2 w-[160px]">Status</th>
-                        <th className="p-2 w-[90px] text-center">Move</th>
-                      </>
-                    )}
-
-                    {listView === 'financial' && (
-                      <>
-                        <th className="p-2">Value</th>
-                        <th className="p-2">Wage</th>
-                        <th className="p-2">Contract Expires</th>
-                      </>
-                    )}
-
-                    {listView === 'skills' && (
-                      <>
-                        <th className="p-2 w-[64px] text-center">SP</th>
-                        <th className="p-2 w-[64px] text-center">CL</th>
-                        <th className="p-2 w-[64px] text-center">TT</th>
-                        <th className="p-2 w-[64px] text-center">FL</th>
-                        <th className="p-2 w-[64px] text-center">EN</th>
-                        <th className="p-2 w-[64px] text-center">RC</th>
-                      </>
-                    )}
-
-                    {listView === 'form' && (
-                      <>
-                        <th className="p-2">Potential</th>
-                        <th className="p-2">Morale</th>
-                        <th className="p-2">Fatigue</th>
-                        <th className="p-2">Health</th>
-                      </>
-                    )}
-
-                    <th
-                      className={`p-2 text-right ${
-                        listView === 'skills' ? 'w-[72px]' : 'w-[90px]'
-                      }`}
-                    >
-                      View
-                    </th>
-                  </tr>
-                </thead>
-
-                <tbody>
-                  {riders.map((r) => {
-                    const moveState = getDevelopingTeamMoveState({
-                      hasFirstSquad: !!developingTeamStatus?.main_club_id,
-                      movementWindowOpen,
-                      firstSquadRiderCount,
-                    })
-
-                    const isBusy = movingRiderId === r.id
-
-                    const ageWarning =
-                      listView === 'general'
-                        ? getDevelopingTeamAgeWarning(r.age ?? null, movementWindowOpen)
-                        : null
-
-                    const contractExpiryUi = getContractExpiryUi(
-                      r.contractExpiresAt,
-                      gameDate ?? null,
-                      r.contractExpiresSeason
-                    )
-
-                    const bestSkillValue = getBestRiderSkillValue(r)
-                    const financialContractDisplay =
-                      contractExpiryUi.sublabel || contractExpiryUi.label || '—'
-
-                    const potentialUi = getPotentialUi(r.potential)
-                    const moraleUi = getMoraleUi(r.morale)
-                    const fatigueUi = getFatigueUi(r.fatigue)
-                    const healthUi = getRiderStatusUi(r.status)
-
-                    const renderSkillCell = (value?: number | null) => {
-                      const isBest =
-                        value != null && bestSkillValue != null && value === bestSkillValue
-
-                      return (
-                        <td
-                          className={`p-2 text-center ${
-                            isBest ? 'font-bold text-gray-900' : 'font-medium text-gray-700'
-                          }`}
-                        >
-                          {value ?? '—'}
-                        </td>
-                      )
-                    }
-
-                    return (
-                      <tr key={r.id} className="border-t align-top">
-                        <td className="p-2">{r.rowNo}</td>
-
-                        <td
-                          className={`p-2 ${
-                            listView === 'skills'
-                              ? 'truncate whitespace-nowrap'
-                              : 'whitespace-nowrap'
-                          }`}
-                          title={r.name}
-                        >
-                          <div className="font-medium text-gray-800">{r.name}</div>
-                          {ageWarning ? (
-                            <div className="mt-2">
-                              <span className={ageWarning.className}>{ageWarning.label}</span>
-                            </div>
-                          ) : null}
-                        </td>
-
-                        <td className="p-2">
-                          <div
-                            className={`flex items-center gap-2 ${
-                              listView === 'skills' ? 'whitespace-nowrap' : ''
-                            }`}
-                            title={getCountryName(r.countryCode)}
-                          >
-                            <CountryFlag countryCode={r.countryCode} />
-                            <span className="text-gray-700">{r.countryCode}</span>
-                          </div>
-                        </td>
-
-                        <td
-                          className={`p-2 ${listView === 'skills' ? 'truncate' : ''}`}
-                          title={r.role}
-                        >
-                          {r.role}
-                        </td>
-
-                        {listView === 'general' && (
-                          <>
-                            <td className="p-2">{r.age ?? '—'}</td>
-                            <td className="p-2">{r.overall}%</td>
-                            <td className="p-2">
-                              <RiderStatusBadge status={r.status} compact />
-                            </td>
-                            <td className="p-2 text-center">
-                              <button
-                                type="button"
-                                disabled={!moveState.enabled || isBusy}
-                                title={moveState.reason}
-                                onClick={() => {
-                                  if (!moveState.enabled || isBusy) return
-                                  void handleMoveToFirstSquad(r.id)
-                                }}
-                                className={`inline-flex h-8 w-8 items-center justify-center rounded-md border text-sm transition ${
-                                  moveState.enabled && !isBusy
-                                    ? 'border-yellow-400 bg-yellow-100 text-yellow-800 hover:bg-yellow-200'
-                                    : 'cursor-not-allowed border-gray-200 bg-gray-100 text-gray-400'
-                                }`}
-                              >
-                                {isBusy ? '…' : '⇄'}
-                              </button>
-                            </td>
-                          </>
-                        )}
-
-                        {listView === 'financial' && (
-                          <>
-                            <td className="p-2">
-                              <div className="text-gray-800">
-                                {r.marketValue == null ? '—' : formatCompactMoney(r.marketValue)}
-                              </div>
-                            </td>
-
-                            <td className="p-2">
-                              <div className="text-gray-800">
-                                {r.salary == null ? '—' : formatWeeklySalary(r.salary)}
-                              </div>
-                            </td>
-
-                            <td className="p-2">
-                              <div className="whitespace-nowrap text-gray-800">
-                                {financialContractDisplay}
-                              </div>
-                            </td>
-                          </>
-                        )}
-
-                        {listView === 'skills' && (
-                          <>
-                            {renderSkillCell(r.sprint)}
-                            {renderSkillCell(r.climbing)}
-                            {renderSkillCell(r.timeTrial)}
-                            {renderSkillCell(r.flat)}
-                            {renderSkillCell(r.endurance)}
-                            {renderSkillCell(r.recovery)}
-                          </>
-                        )}
-
-                        {listView === 'form' && (
-                          <>
-                            <td className="p-2">
-                              {r.potential == null ? (
-                                <span className="text-gray-400">—</span>
-                              ) : (
-                                <InlineStatusText label={potentialUi.label} color={potentialUi.color} />
-                              )}
-                            </td>
-
-                            <td className="p-2">
-                              {r.morale == null ? (
-                                <span className="text-gray-400">—</span>
-                              ) : (
-                                <InlineStatusText label={moraleUi.label} color={moraleUi.color} />
-                              )}
-                            </td>
-
-                            <td className="p-2">
-                              <InlineStatusText label={fatigueUi.label} color={fatigueUi.color} />
-                            </td>
-
-                            <td className="p-2">
-                              <InlineStatusText label={healthUi.label} color={healthUi.color} />
-                            </td>
-                          </>
-                        )}
-
-                        <td className="p-2 text-right">
-                          <button
-                            type="button"
-                            onClick={() => openRiderProfile(r.id)}
-                            className="text-sm font-medium text-yellow-600 hover:text-yellow-700"
-                          >
-                            View
-                          </button>
-                        </td>
-                      </tr>
-                    )
-                  })}
-
-                  {riders.length === 0 && (
-                    <tr className="border-t">
-                      <td className="p-2 text-gray-500" colSpan={squadTableColSpan}>
-                        No riders found for the Developing Team yet.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
           </div>
 
-          <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <CompactValueTile
-              label="Eligible U23 Riders"
-              value={`${riders.filter((r) => r.age !== null && r.age <= 23).length}`}
-            />
-            <CompactValueTile
-              label="Aged-out Riders"
-              value={`${riders.filter((r) => r.age !== null && r.age >= 24).length}`}
-              subvalue={
-                movementWindowOpen
-                  ? 'Need action during current window'
-                  : 'Need action by next window'
-              }
-            />
-            <CompactValueTile
-              label="Average Overall"
-              value={`${
-                riders.length
-                  ? Math.round(
-                      riders.reduce((sum, rider) => sum + rider.overall, 0) / riders.length
-                    )
-                  : 0
-              }`}
-            />
-            <CompactValueTile
-              label="Movement Window"
-              value={movementWindowOpen ? 'Open' : 'Closed'}
-              subvalue={
-                movementWindowOpen
-                  ? developingTeamStatus?.current_window_label ?? 'Current window'
-                  : developingTeamStatus?.next_window_label ?? 'Unknown'
-              }
-            />
-          </div>
+          <DevelopingSquadTab
+            loading={loading}
+            error={error}
+            riders={riders}
+            gameDate={gameDate}
+            listView={listView}
+            onListViewChange={setListView}
+            squadMax={DEVELOPING_TEAM_MAX}
+            firstSquadRiderCount={firstSquadRiderCount}
+            movementWindowOpen={movementWindowOpen}
+            movementWindowSummary={movementWindowSummary}
+            statusError={statusError}
+            moveActionMessage={moveActionMessage}
+            movingRiderId={movingRiderId}
+            onMoveToFirstSquad={handleMoveToFirstSquad}
+            onOpenRiderProfile={openRiderProfile}
+            healthOverviewDisplayRows={healthOverviewDisplayRows}
+            squadDisplayData={developingTeamDisplayData}
+          />
         </>
       )}
     </div>

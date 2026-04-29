@@ -11,50 +11,65 @@ import React from 'react'
  */
 export default function HelpPage(): JSX.Element {
   const firstSteps = [
-    'Complete your rider profile and team branding to stand out in leagues.',
-    'Review race formats and score rules before entering your first event.',
-    'Invite teammates and assign roles so everyone has a clear responsibility.',
-    'Join the community Discord to get announcements, race tips, and patch notes.'
+    'Create your club first, then complete Customize Team so your jersey, logo, and identity are ready for race day.',
+    'Review your Squad and Developing Team pages to understand current talent, potential, and where your roster is thin.',
+    'Set up your first week in Training and check Team Schedule so workloads match your upcoming races.',
+    'Open Finance and Infrastructure early to avoid cash-flow issues while your club is still growing.'
   ]
 
   const gameplayBasics = [
     {
-      title: 'Build your squad',
+      title: 'Build a balanced roster',
       description:
-        'Create a balanced roster with sprinters, climbers, and all-rounders to adapt to different race terrains.'
+        'Use Squad, Transfers, and rider profiles to combine climbers, sprinters, and all-rounders that fit your long-term race plan.'
     },
     {
-      title: 'Plan race strategy',
+      title: 'Develop riders over time',
       description:
-        'Use course knowledge and rider strengths to decide when to push, conserve energy, or launch attacks.'
+        'Training, morale, fatigue, and developing riders all influence progression. Plan for today without sacrificing next season.'
     },
     {
-      title: 'Manage resources',
+      title: 'Run your club like a business',
       description:
-        'Track stamina, boosts, and substitutions through the season to stay competitive in long campaigns.'
+        'Sponsors, taxes, operations, infrastructure, and equipment affect performance and sustainability—not just race results.'
     }
   ]
 
   const faqs = [
     {
-      question: 'How do I create a team?',
+      question: 'What should I do right after creating my club?',
       answer:
-        'Go to Customize Team, select your identity, then save to unlock league and event access.'
+        'Start with Customize Team, then review Overview, Squad, and Finance. Those pages give you the fastest snapshot of identity, rider depth, and budget health.'
     },
     {
-      question: 'How can I invite friends?',
+      question: 'How do I improve my riders faster?',
       answer:
-        'Open Invite Friends to copy your referral link and send it through chat, social media, or email.'
+        'Use Training consistently, monitor fatigue, and rotate riders based on Team Schedule. Pushing everyone at max intensity every day usually hurts long-term development.'
     },
     {
-      question: 'Where can I read the full manual?',
+      question: 'Where do I sign or sell riders?',
       answer:
-        'Open the Manual section from the dashboard menu for advanced mechanics, league rules, and controls.'
+        'Go to Transfers. You can browse available riders, track history, and handle active negotiations from the transfer workflow pages.'
     },
     {
-      question: 'What should I do if something looks wrong?',
+      question: 'Why is my team underperforming even with strong riders?',
       answer:
-        'Report the issue in Discord support with screenshots and a short description of what happened.'
+        'Check morale, fatigue, equipment, infrastructure, and staff support. Results depend on the whole club system, not only individual rider ratings.'
+    },
+    {
+      question: 'Where can I compare riders before making a transfer decision?',
+      answer:
+        'Use Compare Riders and open rider profile pages to inspect strengths, stats, and role fit side by side before committing budget.'
+    },
+    {
+      question: 'How can I invite friends to join the game?',
+      answer:
+        'Open Invite Friends from the dashboard and share your referral link. Referral captures route new users into registration with your code.'
+    },
+    {
+      question: 'What is the best way to report a bug or wrong data?',
+      answer:
+        'Use the in-app bug report option when available, then add details in Contact Us or Discord with steps to reproduce and screenshots.'
     }
   ]
 
@@ -102,19 +117,19 @@ export default function HelpPage(): JSX.Element {
           <div className="mt-3 space-y-2 text-sm">
             <a
               className="block rounded-md border border-slate-200 bg-white px-3 py-2 hover:bg-slate-100"
-              href="/dashboard/manual"
+              href="/dashboard/overview"
             >
-              Game Manual
+              Club Overview
             </a>
             <a
               className="block rounded-md border border-slate-200 bg-white px-3 py-2 hover:bg-slate-100"
-              href="/dashboard/news"
+              href="/dashboard/transfers"
             >
-              Latest News
+              Transfers
             </a>
             <a
               className="block rounded-md border border-slate-200 bg-white px-3 py-2 hover:bg-slate-100"
-              href="/dashboard/invite"
+              href="/dashboard/invite-friends"
             >
               Invite Friends
             </a>

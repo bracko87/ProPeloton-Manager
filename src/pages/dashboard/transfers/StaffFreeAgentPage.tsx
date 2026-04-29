@@ -35,6 +35,22 @@ type ClubStaffRow = {
   is_active: boolean
 }
 
+type StaffRoleLimitRow = {
+  role_type: StaffRole
+  limit_count: number
+  active_count: number
+  open_slots: number
+  can_hire: boolean
+}
+
+type CandidateScoutQualityInfo = {
+  scoutAbilityTier: string
+  currentReportTier: string
+  durationHours: number
+  isLimitedByOffice: boolean
+  scoutingLevel: number
+}
+
 function formatCurrency(value: number | null | undefined) {
   if (value == null || Number.isNaN(value)) return '—'
   return `$${Number(value).toLocaleString('de-DE')}`
@@ -81,6 +97,92 @@ function roleLabel(role: StaffRole) {
   }
 }
 
+function formatScoutTier(tier: string): string {
+  switch (tier) {
+    case 'elite':
+      return 'Elite'
+    case 'strong':
+      return 'Strong'
+    case 'solid':
+      return 'Solid'
+    case 'basic':
+      return 'Basic'
+    default:
+      return 'Unknown'
+  }
+}
+
+function calculateScoutCandidateQuality(
+  candidate: {
+    role_type?: string | null
+    expertise?: number | null
+    experience?: number | null
+    potential?: number | null
+    leadership?: number | null
+    efficiency?: number | null
+    loyalty?: number | null
+  },
+  scoutingLevel: number
+): CandidateScoutQualityInfo | null {
+  if (candidate.role_type !== 'scout_analyst') return null
+
+  const evaluation = Number(candidate.expertise ?? 0)
+  const network = Number(candidate.experience ?? 0)
+  const accuracy = Number(candidate.efficiency ?? 0)
+  const prospectSense = Number(candidate.potential ?? 0)
+  const loyalty = Number(candidate.loyalty ?? 0)
+
+  const precisionScore =
+    0.35 * evaluation +
+    0.25 * network +
+    0.2 * accuracy +
+    0.1 * prospectSense +
+    0.1 * loyalty
+
+  const speedScore =
+    0.45 * evaluation +
+    0.35 * accuracy +
+    0.2 * network
+
+  const rawTier =
+    precisionScore >= 85
+      ? 'elite'
+      : precisionScore >= 70
+        ? 'strong'
+        : precisionScore >= 55
+          ? 'solid'
+          : 'basic'
+
+  let cappedTier = rawTier
+
+  if (scoutingLevel <= 0) {
+    cappedTier = 'basic'
+  } else if (scoutingLevel === 1) {
+    cappedTier = 'basic'
+  } else if (scoutingLevel === 2 && (rawTier === 'elite' || rawTier === 'strong')) {
+    cappedTier = 'solid'
+  } else if (scoutingLevel === 3 && rawTier === 'elite') {
+    cappedTier = 'strong'
+  }
+
+  const durationHours =
+    speedScore >= 85
+      ? 1
+      : speedScore >= 70
+        ? 2
+        : speedScore >= 55
+          ? 3
+          : 4
+
+  return {
+    scoutAbilityTier: rawTier,
+    currentReportTier: cappedTier,
+    durationHours,
+    isLimitedByOffice: rawTier !== cappedTier,
+    scoutingLevel,
+  }
+}
+
 function getCandidateStats(candidate: StaffCandidateRow) {
   if (candidate.role_type === 'head_coach') {
     return [
@@ -121,6 +223,17 @@ function getCandidateStats(candidate: StaffCandidateRow) {
   ]
 }
 
+function getAssignedStaffSummary(staffRows: ClubStaffRow[]) {
+  if (!staffRows.length) return 'No staff assigned'
+
+  if (staffRows.length <= 2) {
+    return staffRows.map((row) => row.staff_name).join(', ')
+  }
+
+  const firstTwo = staffRows.slice(0, 2).map((row) => row.staff_name).join(', ')
+  return `${firstTwo} +${staffRows.length - 2} more`
+}
+
 type StaffFreeAgentPageProps = {
   roleFilter: 'all' | StaffRole
   setRoleFilter: (value: 'all' | StaffRole) => void
@@ -131,7 +244,8 @@ type StaffFreeAgentPageProps = {
   paginatedCandidates: StaffCandidateRow[]
   selectedCandidateId: string | null
   onSelectCandidate: (candidateId: string) => void
-  occupiedRoleMap: Map<StaffRole, ClubStaffRow>
+  activeStaffByRole: Map<StaffRole, ClubStaffRow[]>
+  roleLimits: StaffRoleLimitRow[]
   pageStart: number
   pageEnd: number
   totalCandidates: number
@@ -141,7 +255,10 @@ type StaffFreeAgentPageProps = {
   onNextPage: () => void
   selectedCandidate: StaffCandidateRow | null
   hireLoading: boolean
+  hireContractTerm: 0 | 1
+  setHireContractTerm: (value: 0 | 1) => void
   onHireCandidate: () => void
+  scoutingLevel?: number
 }
 
 export default function StaffFreeAgentPage({
@@ -154,7 +271,8 @@ export default function StaffFreeAgentPage({
   paginatedCandidates,
   selectedCandidateId,
   onSelectCandidate,
-  occupiedRoleMap,
+  activeStaffByRole,
+  roleLimits,
   pageStart,
   pageEnd,
   totalCandidates,
@@ -164,8 +282,60 @@ export default function StaffFreeAgentPage({
   onNextPage,
   selectedCandidate,
   hireLoading,
+  hireContractTerm,
+  setHireContractTerm,
   onHireCandidate,
+  scoutingLevel = 0,
 }: StaffFreeAgentPageProps) {
+  const roleLimitMap = new Map(roleLimits.map((row) => [row.role_type, row] as const))
+
+  const staffRoleCapacity = (
+    [
+      'head_coach',
+      'team_doctor',
+      'mechanic',
+      'sport_director',
+      'scout_analyst',
+    ] as StaffRole[]
+  ).map((role) => {
+    const limitRow = roleLimitMap.get(role)
+    const assignedRows = activeStaffByRole.get(role) ?? []
+
+    const currentCount = limitRow?.active_count ?? assignedRows.length
+    const limitCount = limitRow?.limit_count ?? 0
+    const openSlots = Math.max(limitCount - currentCount, 0)
+
+    return {
+      role_type: role,
+      role_label: roleLabel(role),
+      current_count: currentCount,
+      limit_count: limitCount,
+      open_slots: openSlots,
+      can_hire: limitRow?.can_hire ?? openSlots > 0,
+    }
+  })
+
+  const selectedRoleLimit = selectedCandidate
+    ? roleLimitMap.get(selectedCandidate.role_type)
+    : null
+
+  const selectedRoleAssigned = selectedCandidate
+    ? selectedRoleLimit?.active_count ??
+      (activeStaffByRole.get(selectedCandidate.role_type)?.length ?? 0)
+    : 0
+
+  const selectedRoleAssignedRows = selectedCandidate
+    ? activeStaffByRole.get(selectedCandidate.role_type) ?? []
+    : []
+
+  const selectedRoleLimitCount = selectedRoleLimit?.limit_count ?? 0
+  const selectedRoleOpenSlots = Math.max(
+    selectedRoleLimit?.open_slots ?? selectedRoleLimitCount - selectedRoleAssigned,
+    0
+  )
+  const selectedRoleCanHire =
+    selectedRoleLimit?.can_hire ?? selectedRoleOpenSlots > 0
+
   return (
     <div className="grid w-full grid-cols-1 gap-4 xl:grid-cols-[1.15fr_0.85fr]">
       <div className="rounded-lg border border-gray-100 bg-white p-4 shadow">
@@ -173,7 +343,7 @@ export default function StaffFreeAgentPage({
           <div>
             <h4 className="font-semibold text-gray-900">Available Staff</h4>
             <div className="mt-1 text-sm text-gray-500">
-              Browse available staff candidates and hire directly into vacant roles.
+              Browse available staff candidates and hire directly into available staff slots.
             </div>
           </div>
 
@@ -235,8 +405,18 @@ export default function StaffFreeAgentPage({
             </div>
           ) : (
             paginatedCandidates.map((candidate) => {
-              const occupiedRole = occupiedRoleMap.get(candidate.role_type)
+              const roleLimit = roleLimitMap.get(candidate.role_type)
+              const assignedRows = activeStaffByRole.get(candidate.role_type) ?? []
               const selected = candidate.id === selectedCandidateId
+
+              const currentCount = roleLimit?.active_count ?? assignedRows.length
+              const limitCount = roleLimit?.limit_count ?? 0
+              const openSlots = Math.max(
+                roleLimit?.open_slots ?? limitCount - currentCount,
+                0
+              )
+              const canHire = roleLimit?.can_hire ?? openSlots > 0
+              const roleAtCapacity = !canHire || openSlots <= 0
 
               return (
                 <button
@@ -268,8 +448,13 @@ export default function StaffFreeAgentPage({
                       </div>
                     </div>
 
-                    <div className="shrink-0 text-sm font-semibold text-gray-700">
-                      {formatCurrency(candidate.salary_weekly)}/week
+                    <div className="shrink-0 text-right">
+                      <div className="text-sm font-semibold text-gray-700">
+                        {formatCurrency(candidate.salary_weekly)}/week
+                      </div>
+                      <div className="mt-1 text-xs text-gray-500">
+                        {currentCount}/{limitCount} assigned
+                      </div>
                     </div>
                   </div>
 
@@ -277,16 +462,30 @@ export default function StaffFreeAgentPage({
                     {getCandidateStats(candidate).map((stat) => (
                       <div key={stat.label} className="rounded-lg bg-gray-50 p-2">
                         <div className="text-[11px] text-gray-500">{stat.label}</div>
-                        <div className="mt-1 text-sm font-semibold text-gray-900">{stat.value}</div>
+                        <div className="mt-1 text-sm font-semibold text-gray-900">
+                          {stat.value}
+                        </div>
                       </div>
                     ))}
                   </div>
 
-                  {occupiedRole ? (
+                  {roleAtCapacity ? (
                     <div className="mt-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
-                      Role currently filled by {occupiedRole.staff_name}.
+                      Role at capacity ({currentCount}/{limitCount}).
+                      {assignedRows.length > 0
+                        ? ` Assigned: ${getAssignedStaffSummary(assignedRows)}.`
+                        : ''}
                     </div>
-                  ) : null}
+                  ) : assignedRows.length > 0 ? (
+                    <div className="mt-3 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-700">
+                      Currently assigned: {getAssignedStaffSummary(assignedRows)}. Open slots left:{' '}
+                      {openSlots}.
+                    </div>
+                  ) : (
+                    <div className="mt-3 rounded-lg border border-green-200 bg-green-50 px-3 py-2 text-xs text-green-700">
+                      No one assigned yet. Open slots left: {openSlots}.
+                    </div>
+                  )}
                 </button>
               )
             })
@@ -351,10 +550,14 @@ export default function StaffFreeAgentPage({
                   className="h-5 w-7 rounded-sm border border-gray-200 object-cover"
                 />
                 <div>
-                  <div className="font-semibold text-gray-900">{selectedCandidate.staff_name}</div>
+                  <div className="font-semibold text-gray-900">
+                    {selectedCandidate.staff_name}
+                  </div>
                   <div className="text-sm text-gray-500">
                     {roleLabel(selectedCandidate.role_type)}
-                    {selectedCandidate.specialization ? ` • ${selectedCandidate.specialization}` : ''}
+                    {selectedCandidate.specialization
+                      ? ` • ${selectedCandidate.specialization}`
+                      : ''}
                   </div>
                 </div>
               </div>
@@ -375,6 +578,23 @@ export default function StaffFreeAgentPage({
                 </div>
               </div>
 
+              <div className="mt-4 rounded-lg border border-gray-100 bg-gray-50 p-3">
+                <div className="text-xs text-gray-500">Role Capacity</div>
+                <div className="mt-1 text-sm font-semibold text-gray-900">
+                  {selectedRoleAssigned}/{selectedRoleLimitCount} assigned
+                </div>
+                <div className="mt-1 text-xs text-gray-500">
+                  {selectedRoleAssignedRows.length > 0
+                    ? `Current staff: ${getAssignedStaffSummary(selectedRoleAssignedRows)}`
+                    : 'No staff currently assigned to this role'}
+                </div>
+                <div className="mt-1 text-xs text-gray-500">
+                  {selectedRoleLimitCount <= 0
+                    ? 'This role is currently unavailable for this club.'
+                    : `Open slots left: ${selectedRoleOpenSlots}`}
+                </div>
+              </div>
+
               <div className="mt-4">
                 <div className="text-sm font-semibold text-gray-900">Staff Attributes</div>
                 <div className="mt-3 space-y-2">
@@ -388,25 +608,111 @@ export default function StaffFreeAgentPage({
                       className="flex items-center justify-between rounded-lg bg-gray-50 px-3 py-2"
                     >
                       <span className="text-sm text-gray-600">{stat.label}</span>
-                      <span className="text-sm font-semibold text-gray-900">{stat.value}</span>
+                      <span className="text-sm font-semibold text-gray-900">
+                        {stat.value}
+                      </span>
                     </div>
                   ))}
                 </div>
               </div>
 
+              {(() => {
+                const scoutQuality = calculateScoutCandidateQuality(
+                  selectedCandidate,
+                  scoutingLevel
+                )
+
+                if (!scoutQuality) return null
+
+                return (
+                  <div className="mt-4 rounded-xl border border-blue-100 bg-blue-50 p-4">
+                    <div className="text-sm font-semibold text-blue-900">
+                      Scouting Quality
+                    </div>
+
+                    <div className="mt-3 space-y-2 text-sm">
+                      <div className="flex items-center justify-between rounded-lg bg-white px-3 py-2">
+                        <span className="text-blue-700">Scout Ability</span>
+                        <span className="font-semibold text-blue-950">
+                          {formatScoutTier(scoutQuality.scoutAbilityTier)}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center justify-between rounded-lg bg-white px-3 py-2">
+                        <span className="text-blue-700">Current Report Quality</span>
+                        <span className="font-semibold text-blue-950">
+                          {formatScoutTier(scoutQuality.currentReportTier)}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center justify-between rounded-lg bg-white px-3 py-2">
+                        <span className="text-blue-700">Report Time</span>
+                        <span className="font-semibold text-blue-950">
+                          {scoutQuality.durationHours}h
+                        </span>
+                      </div>
+                    </div>
+
+                    {scoutQuality.isLimitedByOffice ? (
+                      <div className="mt-3 rounded-lg border border-yellow-200 bg-yellow-50 px-3 py-2 text-xs text-yellow-800">
+                        Limited by Scouting Office Lv {scoutQuality.scoutingLevel}.
+                      </div>
+                    ) : null}
+                  </div>
+                )
+              })()}
+
+              <div className="mt-4 rounded-lg border border-gray-100 bg-gray-50 p-3">
+                <div className="text-xs text-gray-500">Contract Term</div>
+
+                <div className="mt-3 inline-flex rounded-lg border border-gray-200 bg-white p-1 shadow-sm">
+                  <button
+                    type="button"
+                    onClick={() => setHireContractTerm(0)}
+                    disabled={hireLoading}
+                    className={`rounded-md px-3 py-2 text-sm font-medium transition ${
+                      hireContractTerm === 0
+                        ? 'bg-yellow-400 text-black'
+                        : 'text-gray-600 hover:bg-gray-100'
+                    }`}
+                  >
+                    End of current season
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setHireContractTerm(1)}
+                    disabled={hireLoading}
+                    className={`rounded-md px-3 py-2 text-sm font-medium transition ${
+                      hireContractTerm === 1
+                        ? 'bg-yellow-400 text-black'
+                        : 'text-gray-600 hover:bg-gray-100'
+                    }`}
+                  >
+                    End of next season
+                  </button>
+                </div>
+
+                <div className="mt-2 text-xs text-gray-500">
+                  Staff contracts always end on season end, not after a fixed number of days.
+                </div>
+              </div>
+
               <div className="mt-5 flex items-center justify-between gap-3">
                 <div className="text-xs text-gray-400">
-                  {occupiedRoleMap.get(selectedCandidate.role_type)
-                    ? 'Role must be vacant for direct hire'
-                    : ' '}
+                  {selectedRoleLimitCount <= 0
+                    ? 'This role is currently unavailable'
+                    : !selectedRoleCanHire
+                      ? 'Role is already at full capacity'
+                      : `${selectedRoleOpenSlots} open slot(s) available`}
                 </div>
 
                 <button
                   type="button"
                   onClick={onHireCandidate}
-                  disabled={hireLoading || Boolean(occupiedRoleMap.get(selectedCandidate.role_type))}
+                  disabled={hireLoading || !selectedRoleCanHire}
                   className={`rounded-md px-4 py-2 text-sm font-medium transition ${
-                    hireLoading || Boolean(occupiedRoleMap.get(selectedCandidate.role_type))
+                    hireLoading || !selectedRoleCanHire
                       ? 'cursor-not-allowed bg-gray-200 text-gray-500'
                       : 'bg-yellow-400 text-black hover:bg-yellow-300'
                   }`}
@@ -418,32 +724,29 @@ export default function StaffFreeAgentPage({
           )}
         </div>
 
-        <div className="rounded-lg border border-gray-100 bg-white p-4 shadow">
-          <h4 className="font-semibold text-gray-900">Current Staff Roles</h4>
-          <div className="mt-3 space-y-2 text-sm text-gray-600">
-            {(
-              [
-                'head_coach',
-                'team_doctor',
-                'mechanic',
-                'sport_director',
-                'scout_analyst',
-              ] as StaffRole[]
-            ).map((role) => {
-              const current = occupiedRoleMap.get(role)
+        <div className="rounded-2xl border bg-white p-4 shadow-sm">
+          <h3 className="text-lg font-semibold text-slate-900">Current Staff Roles</h3>
 
-              return (
-                <div
-                  key={role}
-                  className="flex items-center justify-between rounded-lg bg-gray-50 px-3 py-2"
-                >
-                  <span>{roleLabel(role)}</span>
-                  <span className={current ? 'text-gray-800' : 'text-gray-400'}>
-                    {current ? current.staff_name : 'Vacant'}
-                  </span>
+          <div className="mt-4 space-y-3">
+            {staffRoleCapacity.map((row) => (
+              <div
+                key={row.role_type}
+                className="flex items-center justify-between rounded-lg bg-slate-50 px-4 py-3"
+              >
+                <div>
+                  <div className="text-sm font-medium text-slate-800">{row.role_label}</div>
+                  <div className="mt-1 text-xs text-slate-500">
+                    {row.current_count > 0
+                      ? `${row.current_count} assigned • ${row.open_slots} open slot(s)`
+                      : `No staff assigned • ${row.open_slots} open slot(s)`}
+                  </div>
                 </div>
-              )
-            })}
+
+                <span className="text-sm text-slate-500">
+                  {row.current_count}/{row.limit_count}
+                </span>
+              </div>
+            ))}
           </div>
         </div>
       </div>

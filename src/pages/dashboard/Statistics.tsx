@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router'
-import ReportPlayerButton from '../../components/dashboard/ReportPlayerButton'
 import { supabase } from '../../lib/supabase'
 import { normalizeGameDateValue } from '../../features/squad/utils/dates'
 import TeamStatisticsSection from '../../features/squad/components/TeamStatisticsSection'
@@ -100,71 +99,6 @@ type RiderStatsRow = RiderBaseRow & {
 type CountryRow = {
   code: string
   name: string
-}
-
-type ClubProfilePopupRecord = {
-  club_id: string
-  club_name: string
-  country_code: string
-  country_name: string | null
-  is_ai: boolean
-  club_type: 'ai' | 'user'
-  owner_user_id: string | null
-  owner_display_name: string | null
-  owner_username: string | null
-  logo_path: string | null
-  motto: string | null
-  crest_style: string | null
-  primary_color: string | null
-  secondary_color: string | null
-  club_tier: string | null
-  world_tier: number | null
-  reputation: number | null
-  season_points: number | null
-  world_rank: number | null
-  tier2_division: string | null
-  tier3_division: string | null
-  amateur_division: string | null
-  club_cash_balance: string | number | null
-  current_balance: string | number | null
-  weekly_income: string | number | null
-  weekly_expenses: string | number | null
-  wage_total: string | number | null
-  rider_count: number | null
-  active_sponsor_count: number | null
-  active_sponsor_monthly_total: string | number | null
-  main_sponsor_name: string | null
-  main_sponsor_monthly_amount: string | number | null
-  hq_level: number | null
-  training_center_level: number | null
-  medical_center_level: number | null
-  scouting_level: number | null
-  equipment_level: number | null
-  default_training_intensity: number | null
-  ui_theme_variant: string | null
-  kit_id: string | null
-  kit_name: string | null
-  kit_config: unknown
-  is_active: boolean
-  created_at: string
-  updated_at: string
-}
-
-type TeamKitConfig = {
-  image_url?: string | null
-  image_data_url?: string | null
-  preview_url?: string | null
-  public_url?: string | null
-  generated_image_url?: string | null
-  render_url?: string | null
-  file_url?: string | null
-  mode?: string | null
-  template?: string | null
-}
-
-type MyOwnedClubRecord = {
-  id: string
-  club_type: 'main' | 'developing' | string | null
 }
 
 type RiderBaseLookupRow = {
@@ -291,47 +225,6 @@ function getDisplayedRiderCountryCode(
   return row.club_country_code ?? row.country_code ?? null
 }
 
-function formatNumberValue(value: number | string | null | undefined): string {
-  if (value === null || value === undefined) return '-'
-  const numericValue = Number(value)
-  if (Number.isFinite(numericValue)) return numericValue.toLocaleString()
-  return String(value)
-}
-
-function formatDateValue(value: string | null | undefined): string {
-  if (!value) return '-'
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return value
-  return date.toLocaleDateString()
-}
-
-function getClubTierLabel(clubTier: string | null): string {
-  if (!clubTier) return '-'
-  switch (clubTier) {
-    case 'worldteam':
-      return 'WorldTeam'
-    case 'proteam':
-      return 'ProTeam'
-    case 'continental':
-      return 'Continental'
-    case 'amateur':
-      return 'Amateur'
-    default:
-      return formatCompetitionLabel(clubTier)
-  }
-}
-
-function getDivisionLabelFromProfile(profile: ClubProfilePopupRecord): string {
-  if (profile.tier2_division) return formatCompetitionLabel(profile.tier2_division)
-  if (profile.tier3_division) return formatCompetitionLabel(profile.tier3_division)
-  if (profile.amateur_division) return formatCompetitionLabel(profile.amateur_division)
-  return '-'
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null
-}
-
 function resolveStringValue(raw: Record<string, unknown>, aliases: string[]) {
   for (const key of aliases) {
     const value = raw[key]
@@ -348,29 +241,6 @@ function resolveNumberValue(raw: Record<string, unknown>, aliases: string[]) {
       return Number(value)
     }
   }
-  return null
-}
-
-function getKitPreviewSrc(kitConfig: unknown): string | null {
-  if (!isRecord(kitConfig)) return null
-
-  const config = kitConfig as TeamKitConfig
-  const candidates = [
-    config.image_data_url,
-    config.image_url,
-    config.preview_url,
-    config.public_url,
-    config.generated_image_url,
-    config.render_url,
-    config.file_url,
-  ]
-
-  for (const candidate of candidates) {
-    if (typeof candidate === 'string' && candidate.trim().length > 0) {
-      return candidate
-    }
-  }
-
   return null
 }
 
@@ -402,493 +272,6 @@ function StatsTabGroup({
   )
 }
 
-function TeamLogo({
-  src,
-  teamName,
-  className = 'h-8 w-8',
-}: {
-  src?: string | null
-  teamName: string
-  className?: string
-}) {
-  const [imageFailed, setImageFailed] = useState(false)
-
-  useEffect(() => {
-    setImageFailed(false)
-  }, [src])
-
-  const hasValidSrc = typeof src === 'string' && src.trim().length > 0
-  const showFallback = !hasValidSrc || imageFailed
-
-  return (
-    <div
-      className={`flex shrink-0 ${className} items-center justify-center overflow-hidden rounded border border-slate-200 bg-white p-1`}
-    >
-      {showFallback ? (
-        <span className="text-[10px] text-slate-400">No logo</span>
-      ) : (
-        <img
-          src={src}
-          alt={`${teamName} logo`}
-          className="h-full w-full object-contain"
-          loading="lazy"
-          onError={() => setImageFailed(true)}
-        />
-      )}
-    </div>
-  )
-}
-
-function DetailItem({
-  label,
-  value,
-}: {
-  label: string
-  value: React.ReactNode
-}) {
-  return (
-    <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
-      <div className="text-xs font-medium uppercase tracking-wide text-slate-500">{label}</div>
-      <div className="mt-1 text-sm font-semibold text-slate-900">{value}</div>
-    </div>
-  )
-}
-
-function TeamJerseyPreview({
-  clubName,
-  kitName,
-  kitConfig,
-  primaryColor,
-  secondaryColor,
-}: {
-  clubName: string
-  kitName: string | null
-  kitConfig: unknown
-  primaryColor: string | null
-  secondaryColor: string | null
-}) {
-  const [imageFailed, setImageFailed] = useState(false)
-
-  const previewSrc = useMemo(() => getKitPreviewSrc(kitConfig), [kitConfig])
-
-  useEffect(() => {
-    setImageFailed(false)
-  }, [previewSrc])
-
-  const hasPreview = typeof previewSrc === 'string' && previewSrc.trim().length > 0 && !imageFailed
-
-  return (
-    <div className="rounded-xl border border-slate-200 p-4">
-      <div className="flex items-center justify-between gap-3">
-        <h5 className="text-sm font-semibold uppercase tracking-wide text-slate-700">Team jersey</h5>
-
-        {kitName ? (
-          <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700">
-            {kitName}
-          </span>
-        ) : null}
-      </div>
-
-      <div className="mt-4 rounded-xl border border-dashed border-slate-200 bg-slate-50 p-4">
-        {hasPreview ? (
-          <div className="flex min-h-[280px] items-center justify-center">
-            <img
-              src={previewSrc}
-              alt={`${clubName} jersey`}
-              className="max-h-[280px] max-w-full object-contain"
-              loading="lazy"
-              onError={() => setImageFailed(true)}
-            />
-          </div>
-        ) : (
-          <div className="flex min-h-[280px] flex-col items-center justify-center rounded-lg border border-slate-200 bg-white px-6 py-8 text-center">
-            <div className="mb-4 flex gap-3">
-              <div
-                className="h-10 w-10 rounded-lg border border-slate-200"
-                style={{ backgroundColor: primaryColor ?? '#e2e8f0' }}
-                title={primaryColor ?? 'Primary color'}
-              />
-              <div
-                className="h-10 w-10 rounded-lg border border-slate-200"
-                style={{ backgroundColor: secondaryColor ?? '#f8fafc' }}
-                title={secondaryColor ?? 'Secondary color'}
-              />
-            </div>
-
-            <div className="text-sm font-semibold text-slate-900">Jersey preview unavailable</div>
-            <div className="mt-1 text-sm text-slate-500">
-              The kit exists, but no public preview image is available yet.
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
-  )
-}
-
-function ClubProfileModal({
-  clubId,
-  isOpen,
-  onClose,
-  isMyTeam,
-  myClubId,
-}: {
-  clubId: string | null
-  isOpen: boolean
-  onClose: () => void
-  isMyTeam: boolean
-  myClubId: string | null
-}) {
-  const navigate = useNavigate()
-  const [club, setClub] = useState<ClubProfilePopupRecord | null>(null)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [currentUserId, setCurrentUserId] = useState<string | null>(null)
-
-  useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      setCurrentUserId(data.user?.id ?? null)
-    })
-  }, [])
-
-  useEffect(() => {
-    if (!isOpen) return
-
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') onClose()
-    }
-
-    window.addEventListener('keydown', onKeyDown)
-    return () => window.removeEventListener('keydown', onKeyDown)
-  }, [isOpen, onClose])
-
-  useEffect(() => {
-    if (!isOpen || !clubId) return
-
-    let cancelled = false
-
-    async function loadClubProfile() {
-      try {
-        setLoading(true)
-        setError(null)
-
-        const { data, error: queryError } = await supabase
-          .from('club_profile_popup_view')
-          .select('*')
-          .eq('club_id', clubId)
-          .single()
-
-        if (cancelled) return
-        if (queryError) throw queryError
-
-        setClub(data as ClubProfilePopupRecord)
-      } catch (err) {
-        console.error('Failed to load club profile:', err)
-        if (!cancelled) {
-          setClub(null)
-          setError('Failed to load team profile.')
-        }
-      } finally {
-        if (!cancelled) {
-          setLoading(false)
-        }
-      }
-    }
-
-    void loadClubProfile()
-
-    return () => {
-      cancelled = true
-    }
-  }, [clubId, isOpen])
-
-  const canSendMessage =
-    !!club &&
-    !!currentUserId &&
-    !club.is_ai &&
-    !!club.owner_user_id &&
-    club.owner_user_id !== currentUserId
-
-  const canReportPlayer =
-    !!club &&
-    !!currentUserId &&
-    !club.is_ai &&
-    !!club.owner_user_id &&
-    club.owner_user_id !== currentUserId
-
-  const handleSendMessage = () => {
-    if (!club?.owner_user_id) return
-
-    sessionStorage.setItem(
-      'inbox_compose_target',
-      JSON.stringify({
-        userId: club.owner_user_id,
-        displayName:
-          club.owner_display_name || club.owner_username || club.club_name || 'Player',
-        clubName: club.club_name || '',
-      })
-    )
-
-    onClose()
-    navigate('/dashboard/inbox')
-  }
-
-  if (!isOpen || !clubId) return null
-
-  return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm"
-      onClick={onClose}
-    >
-      <div
-        className="max-h-[90vh] w-full max-w-5xl overflow-y-auto rounded-2xl bg-white shadow-2xl"
-        onClick={event => event.stopPropagation()}
-      >
-        <div className="sticky top-0 z-10 flex items-start justify-between border-b border-slate-200 bg-white px-6 py-4">
-          <div>
-            <h3 className="text-xl font-semibold text-slate-900">Team profile</h3>
-            <p className="mt-1 text-sm text-slate-600">Overview of this club’s key information.</p>
-          </div>
-
-          <div className="flex items-center gap-3">
-            {canReportPlayer && club && (
-              <ReportPlayerButton
-                reportedUserId={club.owner_user_id!}
-                reportedClubId={club.club_id}
-                reportedClubName={club.club_name}
-                reportedDisplayName={
-                  club.owner_display_name || club.owner_username || club.club_name || 'Player'
-                }
-                currentPageLabel="Statistics"
-                currentPath={window.location.pathname}
-                reporterClubId={myClubId}
-              />
-            )}
-
-            {canSendMessage ? (
-              <button
-                type="button"
-                onClick={handleSendMessage}
-                className="inline-flex items-center rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
-              >
-                Send Message
-              </button>
-            ) : null}
-
-            <button
-              type="button"
-              onClick={onClose}
-              className="inline-flex items-center rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
-            >
-              Close
-            </button>
-          </div>
-        </div>
-
-        <div className="px-6 py-6">
-          {loading ? (
-            <div className="py-10 text-center text-sm text-slate-500">Loading team profile...</div>
-          ) : null}
-
-          {!loading && error ? (
-            <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-              {error}
-            </div>
-          ) : null}
-
-          {!loading && !error && club ? (
-            <div className="space-y-6">
-              <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-                <div className="flex items-start gap-4">
-                  <TeamLogo
-                    src={club.logo_path}
-                    teamName={club.club_name}
-                    className="h-[72px] w-[72px]"
-                  />
-
-                  <div>
-                    <div className="flex flex-wrap items-center gap-2">
-                      <h4 className="text-2xl font-semibold text-slate-900">{club.club_name}</h4>
-
-                      <span
-                        className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
-                          club.club_type === 'ai'
-                            ? 'bg-slate-200 text-slate-800'
-                            : 'bg-indigo-100 text-indigo-800'
-                        }`}
-                      >
-                        {club.club_type === 'ai' ? 'AI Team' : 'User Team'}
-                      </span>
-
-                      {isMyTeam ? (
-                        <span className="rounded-full bg-yellow-100 px-2 py-1 text-xs font-medium text-yellow-800">
-                          Your team
-                        </span>
-                      ) : null}
-
-                      {!club.is_active ? (
-                        <span className="rounded-full bg-slate-200 px-2.5 py-1 text-xs font-semibold text-slate-700">
-                          Inactive
-                        </span>
-                      ) : null}
-                    </div>
-
-                    <div className="mt-2 flex flex-wrap items-center gap-3 text-sm text-slate-600">
-                      <div className="flex items-center gap-2">
-                        <img
-                          src={`https://flagcdn.com/24x18/${club.country_code.toLowerCase()}.png`}
-                          alt={`${club.country_code} flag`}
-                          className="h-5 w-7 rounded-sm border border-slate-200 object-cover"
-                          loading="lazy"
-                        />
-                        <span>{club.country_name ?? club.country_code}</span>
-                      </div>
-
-                      <span>•</span>
-                      <span>{getClubTierLabel(club.club_tier)}</span>
-
-                      {getDivisionLabelFromProfile(club) !== '-' ? (
-                        <>
-                          <span>•</span>
-                          <span>{getDivisionLabelFromProfile(club)}</span>
-                        </>
-                      ) : null}
-                    </div>
-
-                    {club.motto ? (
-                      <p className="mt-3 max-w-2xl text-sm italic text-slate-700">“{club.motto}”</p>
-                    ) : null}
-                  </div>
-                </div>
-
-                <div className="flex gap-2">
-                  {club.primary_color ? (
-                    <div className="rounded-lg border border-slate-200 p-2">
-                      <div
-                        className="h-8 w-8 rounded"
-                        style={{ backgroundColor: club.primary_color }}
-                        title={`Primary: ${club.primary_color}`}
-                      />
-                    </div>
-                  ) : null}
-
-                  {club.secondary_color ? (
-                    <div className="rounded-lg border border-slate-200 p-2">
-                      <div
-                        className="h-8 w-8 rounded"
-                        style={{ backgroundColor: club.secondary_color }}
-                        title={`Secondary: ${club.secondary_color}`}
-                      />
-                    </div>
-                  ) : null}
-                </div>
-              </div>
-
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                <DetailItem label="World rank" value={formatNumberValue(club.world_rank)} />
-                <DetailItem label="Season points" value={formatNumberValue(club.season_points)} />
-                <DetailItem label="World tier" value={formatNumberValue(club.world_tier)} />
-                <DetailItem label="Created" value={formatDateValue(club.created_at)} />
-                <DetailItem label="Riders" value={formatNumberValue(club.rider_count)} />
-                <DetailItem
-                  label="Manager"
-                  value={club.owner_display_name ?? (club.is_ai ? 'AI Team' : '-')}
-                />
-                <DetailItem
-                  label="Main sponsor"
-                  value={club.main_sponsor_name ?? 'No active sponsor'}
-                />
-                <DetailItem label="Updated" value={formatDateValue(club.updated_at)} />
-              </div>
-
-              <div className="grid gap-6 lg:grid-cols-2">
-                <TeamJerseyPreview
-                  clubName={club.club_name}
-                  kitName={club.kit_name}
-                  kitConfig={club.kit_config}
-                  primaryColor={club.primary_color}
-                  secondaryColor={club.secondary_color}
-                />
-
-                <div className="rounded-xl border border-slate-200 p-4">
-                  <h5 className="text-sm font-semibold uppercase tracking-wide text-slate-700">
-                    This season
-                  </h5>
-
-                  <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                    <DetailItem
-                      label="Current world rank"
-                      value={formatNumberValue(club.world_rank)}
-                    />
-                    <DetailItem label="Season points" value={formatNumberValue(club.season_points)} />
-                    <DetailItem label="Squad size" value={formatNumberValue(club.rider_count)} />
-                    <DetailItem label="Division" value={getDivisionLabelFromProfile(club)} />
-                  </div>
-
-                  <div className="mt-5 space-y-3 text-sm text-slate-700">
-                    <p>
-                      <span className="font-semibold text-slate-900">{club.club_name}</span> is
-                      currently{' '}
-                      <span className="font-semibold text-slate-900">
-                        #{formatNumberValue(club.world_rank)}
-                      </span>{' '}
-                      in the global ranking with{' '}
-                      <span className="font-semibold text-slate-900">
-                        {formatNumberValue(club.season_points)}
-                      </span>{' '}
-                      points this season.
-                    </p>
-
-                    <p>
-                      The team competes as a{' '}
-                      <span className="font-semibold text-slate-900">
-                        {getClubTierLabel(club.club_tier)}
-                      </span>
-                      {getDivisionLabelFromProfile(club) !== '-' ? (
-                        <>
-                          {' '}
-                          club in{' '}
-                          <span className="font-semibold text-slate-900">
-                            {getDivisionLabelFromProfile(club)}
-                          </span>
-                        </>
-                      ) : null}
-                      .
-                    </p>
-
-                    <p>
-                      Current squad size is{' '}
-                      <span className="font-semibold text-slate-900">
-                        {formatNumberValue(club.rider_count)}
-                      </span>
-                      {club.main_sponsor_name ? (
-                        <>
-                          , with{' '}
-                          <span className="font-semibold text-slate-900">
-                            {club.main_sponsor_name}
-                          </span>{' '}
-                          as the main sponsor.
-                        </>
-                      ) : (
-                        '.'
-                      )}
-                    </p>
-
-                    <div className="rounded-lg bg-slate-50 px-4 py-3 text-sm text-slate-600">
-                      Detailed season stats like wins, podiums, second places, and best rider can
-                      be shown here once those fields are added to the backend view.
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          ) : null}
-        </div>
-      </div>
-    </div>
-  )
-}
-
 export default function StatisticsPage() {
   const navigate = useNavigate()
   const [mainTab, setMainTab] = useState<MainTab>('teams')
@@ -906,7 +289,6 @@ export default function StatisticsPage() {
   const [countries, setCountries] = useState<CountryRow[]>([])
 
   const [myClubIds, setMyClubIds] = useState<string[]>([])
-  const [myMainClubId, setMyMainClubId] = useState<string | null>(null)
 
   const [search, setSearch] = useState('')
   const [seasonFilter, setSeasonFilter] = useState<string>('all')
@@ -918,17 +300,12 @@ export default function StatisticsPage() {
   const [riderMetric, setRiderMetric] = useState<RiderMetric>('season_points_overall')
   const [riderTableMetric, setRiderTableMetric] = useState<RiderMetric>('season_points_overall')
 
-  const [selectedTeamProfileId, setSelectedTeamProfileId] = useState<string | null>(null)
   const [teamCurrentPage, setTeamCurrentPage] = useState(1)
   const [teamHistoryPage, setTeamHistoryPage] = useState(1)
   const [ridersPage, setRidersPage] = useState(1)
 
   function openTeamProfile(teamId: string) {
-    setSelectedTeamProfileId(teamId)
-  }
-
-  function closeTeamProfile() {
-    setSelectedTeamProfileId(null)
+    navigate(`/dashboard/teams/${teamId}`)
   }
 
   function openRiderProfile(rider: Pick<RiderStatsRow, 'id' | 'club_id'> | null | undefined) {
@@ -959,25 +336,22 @@ export default function StatisticsPage() {
         if (!userId || cancelled) {
           if (!cancelled) {
             setMyClubIds([])
-            setMyMainClubId(null)
           }
           return
         }
 
         const { data, error: queryError } = await supabase
           .from('clubs')
-          .select('id, club_type')
+          .select('id')
           .eq('owner_user_id', userId)
           .in('club_type', ['main', 'developing'])
 
         if (cancelled) return
         if (queryError) throw queryError
 
-        const ownedClubs = (data ?? []) as MyOwnedClubRecord[]
-        const mainClub = ownedClubs.find(club => club.club_type === 'main') ?? null
+        const ownedClubs = (data ?? []) as Array<{ id: string }>
 
         setMyClubIds(ownedClubs.map(club => club.id))
-        setMyMainClubId(mainClub?.id ?? null)
       } catch (err) {
         console.error('Failed to load my clubs for statistics page:', err)
       }
@@ -1472,126 +846,116 @@ export default function StatisticsPage() {
   )[0]
 
   return (
-    <>
-      <div className="w-full space-y-6">
-        <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-          <div>
-            <h2 className="text-2xl font-semibold text-slate-900">Statistics</h2>
-            <p className="mt-1 text-sm text-slate-600">
-              Team and rider statistics across your cycling world. Rider rankings here are global,
-              so they compare the best riders from all teams in the game.
-            </p>
-          </div>
-
-          <div className="shrink-0 self-start md:self-start">
-            <StatsTabGroup
-              items={[
-                { key: 'teams', label: 'Teams' },
-                { key: 'riders', label: 'Riders' },
-              ]}
-              activeKey={mainTab}
-              onChange={key => setMainTab(key as MainTab)}
-            />
-          </div>
+    <div className="w-full space-y-6">
+      <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+        <div>
+          <h2 className="text-2xl font-semibold text-slate-900">Statistics</h2>
+          <p className="mt-1 text-sm text-slate-600">
+            Team and rider statistics across your cycling world. Rider rankings here are global,
+            so they compare the best riders from all teams in the game.
+          </p>
         </div>
 
-        {mainTab === 'teams' ? (
-          <TeamStatisticsSection
-            teamSubTab={teamSubTab}
-            setTeamSubTab={setTeamSubTab}
-            loading={loading}
-            error={error}
-            search={search}
-            setSearch={setSearch}
-            seasonFilter={seasonFilter}
-            setSeasonFilter={setSeasonFilter}
-            teamTypeFilter={teamTypeFilter}
-            setTeamTypeFilter={setTeamTypeFilter}
-            statusFilter={statusFilter}
-            setStatusFilter={setStatusFilter}
-            tierFilter={tierFilter}
-            setTierFilter={setTierFilter}
-            divisionFilter={divisionFilter}
-            setDivisionFilter={setDivisionFilter}
-            countryFilter={countryFilter}
-            setCountryFilter={setCountryFilter}
-            availableSeasons={availableSeasons}
-            availableTiers={availableTiers}
-            availableDivisions={availableDivisions}
-            availableTeamCountries={availableTeamCountries}
-            availableHistoryCountries={availableHistoryCountries}
-            countryNameByCode={countryNameByCode}
-            filteredTeamCurrent={filteredTeamCurrent}
-            filteredWinners={filteredWinners}
-            filteredSnapshots={filteredSnapshots}
-            paginatedTeamCurrent={paginatedTeamCurrent}
-            paginatedTeamHistory={paginatedTeamHistory}
-            teamsByCountry={teamsByCountry}
-            teamTitles={teamTitles}
-            topCurrentTeam={topCurrentTeam}
-            latestWinner={latestWinner}
-            teamCurrentPage={teamCurrentPage}
-            setTeamCurrentPage={setTeamCurrentPage}
-            teamHistoryPage={teamHistoryPage}
-            setTeamHistoryPage={setTeamHistoryPage}
-            pageSize={PAGE_SIZE}
-            openTeamProfile={openTeamProfile}
-            formatCompetitionLabel={formatCompetitionLabel}
-            getDivisionLabel={getDivisionLabel}
-            getCountryName={getCountryName}
+        <div className="shrink-0 self-start md:self-start">
+          <StatsTabGroup
+            items={[
+              { key: 'teams', label: 'Teams' },
+              { key: 'riders', label: 'Riders' },
+            ]}
+            activeKey={mainTab}
+            onChange={key => setMainTab(key as MainTab)}
           />
-        ) : (
-          <RiderStatisticsSection
-            riderSubTab={riderSubTab}
-            setRiderSubTab={setRiderSubTab}
-            loading={loading}
-            error={error}
-            search={search}
-            setSearch={setSearch}
-            teamTypeFilter={teamTypeFilter}
-            setTeamTypeFilter={setTeamTypeFilter}
-            statusFilter={statusFilter}
-            setStatusFilter={setStatusFilter}
-            tierFilter={tierFilter}
-            setTierFilter={setTierFilter}
-            riderMetric={riderMetric}
-            setRiderMetric={setRiderMetric}
-            riderTableMetric={riderTableMetric}
-            setRiderTableMetric={setRiderTableMetric}
-            countryFilter={countryFilter}
-            setCountryFilter={setCountryFilter}
-            availableTiers={availableTiers}
-            availableRiderCountries={availableRiderCountries}
-            countryNameByCode={countryNameByCode}
-            filteredRiders={filteredRiders}
-            topRiderTableRows={topRiderTableRows}
-            paginatedRiders={paginatedRiders}
-            riderRoles={riderRoles}
-            riderAgeBuckets={riderAgeBuckets}
-            topOverallPointsRider={topOverallPointsRider}
-            topSprintPointsRider={topSprintPointsRider}
-            topClimbingPointsRider={topClimbingPointsRider}
-            ridersPage={ridersPage}
-            setRidersPage={setRidersPage}
-            pageSize={PAGE_SIZE}
-            openRiderProfile={openRiderProfile}
-            openTeamProfile={openTeamProfile}
-            formatCompetitionLabel={formatCompetitionLabel}
-            formatRiderMetricLabel={formatRiderMetricLabel}
-            getCountryName={getCountryName}
-            getDisplayedRiderCountryCode={getDisplayedRiderCountryCode}
-            moneyFormatter={moneyFormatter}
-          />
-        )}
+        </div>
       </div>
 
-      <ClubProfileModal
-        clubId={selectedTeamProfileId}
-        isOpen={!!selectedTeamProfileId}
-        onClose={closeTeamProfile}
-        isMyTeam={selectedTeamProfileId ? myClubIds.includes(selectedTeamProfileId) : false}
-        myClubId={myMainClubId}
-      />
-    </>
+      {mainTab === 'teams' ? (
+        <TeamStatisticsSection
+          teamSubTab={teamSubTab}
+          setTeamSubTab={setTeamSubTab}
+          loading={loading}
+          error={error}
+          search={search}
+          setSearch={setSearch}
+          seasonFilter={seasonFilter}
+          setSeasonFilter={setSeasonFilter}
+          teamTypeFilter={teamTypeFilter}
+          setTeamTypeFilter={setTeamTypeFilter}
+          statusFilter={statusFilter}
+          setStatusFilter={setStatusFilter}
+          tierFilter={tierFilter}
+          setTierFilter={setTierFilter}
+          divisionFilter={divisionFilter}
+          setDivisionFilter={setDivisionFilter}
+          countryFilter={countryFilter}
+          setCountryFilter={setCountryFilter}
+          availableSeasons={availableSeasons}
+          availableTiers={availableTiers}
+          availableDivisions={availableDivisions}
+          availableTeamCountries={availableTeamCountries}
+          availableHistoryCountries={availableHistoryCountries}
+          countryNameByCode={countryNameByCode}
+          filteredTeamCurrent={filteredTeamCurrent}
+          filteredWinners={filteredWinners}
+          filteredSnapshots={filteredSnapshots}
+          paginatedTeamCurrent={paginatedTeamCurrent}
+          paginatedTeamHistory={paginatedTeamHistory}
+          teamsByCountry={teamsByCountry}
+          teamTitles={teamTitles}
+          topCurrentTeam={topCurrentTeam}
+          latestWinner={latestWinner}
+          teamCurrentPage={teamCurrentPage}
+          setTeamCurrentPage={setTeamCurrentPage}
+          teamHistoryPage={teamHistoryPage}
+          setTeamHistoryPage={setTeamHistoryPage}
+          pageSize={PAGE_SIZE}
+          openTeamProfile={openTeamProfile}
+          formatCompetitionLabel={formatCompetitionLabel}
+          getDivisionLabel={getDivisionLabel}
+          getCountryName={getCountryName}
+        />
+      ) : (
+        <RiderStatisticsSection
+          riderSubTab={riderSubTab}
+          setRiderSubTab={setRiderSubTab}
+          loading={loading}
+          error={error}
+          search={search}
+          setSearch={setSearch}
+          teamTypeFilter={teamTypeFilter}
+          setTeamTypeFilter={setTeamTypeFilter}
+          statusFilter={statusFilter}
+          setStatusFilter={setStatusFilter}
+          tierFilter={tierFilter}
+          setTierFilter={setTierFilter}
+          riderMetric={riderMetric}
+          setRiderMetric={setRiderMetric}
+          riderTableMetric={riderTableMetric}
+          setRiderTableMetric={setRiderTableMetric}
+          countryFilter={countryFilter}
+          setCountryFilter={setCountryFilter}
+          availableTiers={availableTiers}
+          availableRiderCountries={availableRiderCountries}
+          countryNameByCode={countryNameByCode}
+          filteredRiders={filteredRiders}
+          topRiderTableRows={topRiderTableRows}
+          paginatedRiders={paginatedRiders}
+          riderRoles={riderRoles}
+          riderAgeBuckets={riderAgeBuckets}
+          topOverallPointsRider={topOverallPointsRider}
+          topSprintPointsRider={topSprintPointsRider}
+          topClimbingPointsRider={topClimbingPointsRider}
+          ridersPage={ridersPage}
+          setRidersPage={setRidersPage}
+          pageSize={PAGE_SIZE}
+          openRiderProfile={openRiderProfile}
+          openTeamProfile={openTeamProfile}
+          formatCompetitionLabel={formatCompetitionLabel}
+          formatRiderMetricLabel={formatRiderMetricLabel}
+          getCountryName={getCountryName}
+          getDisplayedRiderCountryCode={getDisplayedRiderCountryCode}
+          moneyFormatter={moneyFormatter}
+        />
+      )}
+    </div>
   )
 }
