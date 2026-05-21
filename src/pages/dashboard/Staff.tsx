@@ -4,10 +4,14 @@ import { supabase } from '../../lib/supabase'
 
 type StaffRole =
   | 'head_coach'
+  | 'trainer'
   | 'team_doctor'
+  | 'physio'
+  | 'nutritionist'
   | 'mechanic'
   | 'sport_director'
   | 'scout_analyst'
+  | 'u23_head_coach'
 
 type ClubRow = {
   id: string
@@ -61,6 +65,25 @@ type DevelopingTeamStatusRow = {
   is_purchased: boolean
   developing_club_id?: string | null
   main_club_id?: string | null
+}
+
+type HeadCoachEffectRow = {
+  staff_id: string
+  staff_name: string
+  specialization: string | null
+  training_efficiency_multiplier: number | string
+  development_multiplier: number | string
+  overload_risk_multiplier: number | string
+  youth_dev_multiplier: number | string
+}
+
+type MedicalStaffEffectRow = {
+  staff_name: string
+  specialization: string
+  risk_multiplier: string | number
+  recovery_duration_multiplier: string | number
+  daily_recovery_bonus: number
+  fatigue_floor_reduction: number
 }
 
 type StaffStat = {
@@ -192,32 +215,56 @@ const ROLE_TABS: RoleTabMeta[] = [
   {
     role: 'head_coach',
     label: 'Head Coach',
-    subtitle: 'Training, recovery planning and long-term rider development.',
+    subtitle: 'Leads coaching, training planning and long-term rider development.',
     impactAreas: ['Regular training', 'Training camps', 'Rider development'],
+  },
+  {
+    role: 'trainer',
+    label: 'Trainer',
+    subtitle: 'Improves daily training output and supports head coach plans.',
+    impactAreas: ['Daily training', 'Training quality', 'Rider development'],
   },
   {
     role: 'team_doctor',
     label: 'Team Doctor',
-    subtitle: 'Recovery quality, diagnosis and injury prevention.',
+    subtitle: 'Leads medical recovery, diagnosis and injury prevention.',
     impactAreas: ['Recovery speed', 'Injury prevention', 'Medical case handling'],
+  },
+  {
+    role: 'physio',
+    label: 'Physio',
+    subtitle: 'Focuses on rehabilitation, recovery speed and return-to-fitness.',
+    impactAreas: ['Return to fitness', 'Recovery speed', 'Fatigue recovery'],
+  },
+  {
+    role: 'nutritionist',
+    label: 'Nutritionist',
+    subtitle: 'Supports recovery, fitness consistency and medical staff output.',
+    impactAreas: ['Recovery support', 'Fitness consistency', 'Race preparation'],
   },
   {
     role: 'mechanic',
     label: 'Mechanic',
-    subtitle: 'Bike setup, reliability and future technical support.',
-    impactAreas: ['Race setup quality', 'Mechanical reliability', 'Condition-specific support'],
+    subtitle: 'Bike setup and reliability. Gameplay bonuses deferred until Equipment page.',
+    impactAreas: ['Equipment setup', 'Mechanical reliability', 'Race-day support'],
   },
   {
     role: 'sport_director',
     label: 'Sport Director',
-    subtitle: 'Tactics, leadership and race-day organization.',
-    impactAreas: ['Race tactics', 'Morale stability', 'Team coordination'],
+    subtitle: 'Planned race tactics, morale, teamwork and domestique support.',
+    impactAreas: ['Race tactics', 'Team morale', 'Domestique support'],
   },
   {
     role: 'scout_analyst',
     label: 'Scout / Analyst',
     subtitle: 'Scouting quality, prospect visibility and transfer intelligence.',
     impactAreas: ['Scouting accuracy', 'Prospect discovery', 'Transfer intelligence'],
+  },
+  {
+    role: 'u23_head_coach',
+    label: 'U23 Head Coach',
+    subtitle: 'Planned developing-team training and U23 race tactical support.',
+    impactAreas: ['U23 training', 'Youth development', 'U23 race tactics'],
   },
 ]
 
@@ -230,6 +277,14 @@ const gainLabelsByRole: Record<StaffRole, Record<string, string>> = {
     efficiency_gain: 'Recovery Planning',
     loyalty_gain: 'Loyalty',
   },
+  trainer: {
+    expertise_gain: 'Daily Training',
+    experience_gain: 'Experience',
+    potential_gain: 'Potential Growth',
+    leadership_gain: 'Leadership',
+    efficiency_gain: 'Training Efficiency',
+    loyalty_gain: 'Loyalty',
+  },
   team_doctor: {
     expertise_gain: 'Recovery',
     experience_gain: 'Diagnosis',
@@ -237,6 +292,22 @@ const gainLabelsByRole: Record<StaffRole, Record<string, string>> = {
     leadership_gain: 'Leadership',
     efficiency_gain: 'Prevention',
     loyalty_gain: 'Loyalty',
+  },
+  physio: {
+    expertise_gain: 'Rehabilitation',
+    experience_gain: 'Experience',
+    potential_gain: 'Potential',
+    leadership_gain: 'Leadership',
+    efficiency_gain: 'Recovery Speed',
+    loyalty_gain: 'Loyalty',
+  },
+  nutritionist: {
+    expertise_gain: 'Nutrition Planning',
+    experience_gain: 'Experience',
+    potential_gain: 'Potential',
+    leadership_gain: 'Leadership',
+    efficiency_gain: 'Recovery Support',
+    loyalty_gain: 'Consistency',
   },
   mechanic: {
     expertise_gain: 'Setup',
@@ -262,15 +333,27 @@ const gainLabelsByRole: Record<StaffRole, Record<string, string>> = {
     efficiency_gain: 'Accuracy',
     loyalty_gain: 'Loyalty',
   },
+  u23_head_coach: {
+    expertise_gain: 'Youth Training',
+    experience_gain: 'Experience',
+    potential_gain: 'Youth Development',
+    leadership_gain: 'Leadership',
+    efficiency_gain: 'Training Efficiency',
+    loyalty_gain: 'Loyalty',
+  },
 }
 
 function isStaffRole(value: string | null | undefined): value is StaffRole {
   return (
     value === 'head_coach' ||
+    value === 'trainer' ||
     value === 'team_doctor' ||
+    value === 'physio' ||
+    value === 'nutritionist' ||
     value === 'mechanic' ||
     value === 'sport_director' ||
-    value === 'scout_analyst'
+    value === 'scout_analyst' ||
+    value === 'u23_head_coach'
   )
 }
 
@@ -364,6 +447,22 @@ function getErrorMessage(err: unknown, fallback: string) {
   }
 
   return fallback
+}
+
+function multiplierToBonusPercent(value: number | string | null | undefined) {
+  const numeric = Number(value)
+
+  if (!Number.isFinite(numeric)) return 0
+
+  return Math.round((numeric - 1) * 100)
+}
+
+function multiplierToReductionPercent(value: number | string | null | undefined) {
+  const numeric = Number(value)
+
+  if (!Number.isFinite(numeric)) return 0
+
+  return Math.round((1 - numeric) * 100)
 }
 
 function normalizeGameDateValue(value: unknown): string | null {
@@ -533,22 +632,32 @@ function getRoleMeta(role: StaffRole) {
   return ROLE_TABS.find((item) => item.role === role) ?? ROLE_TABS[0]
 }
 
+function isMedicalRole(role: StaffRole) {
+  return role === 'team_doctor' || role === 'physio' || role === 'nutritionist'
+}
+
 function getRoleInfrastructureWarning(
   role: StaffRole,
   infrastructure: ClubInfrastructureRow | null
 ) {
   if (!infrastructure) return null
 
-  if (role === 'head_coach' && infrastructure.training_center_level <= 0) {
-    return 'Training Center Lv 0 caps part of head coach bonuses.'
+  if (
+    (role === 'head_coach' || role === 'trainer' || role === 'u23_head_coach') &&
+    infrastructure.training_center_level <= 0
+  ) {
+    return 'Training Center Lv 0 caps part of coaching staff bonuses.'
   }
 
-  if (role === 'team_doctor' && infrastructure.medical_center_level <= 0) {
-    return 'Medical Center Lv 0 caps part of team doctor bonuses.'
+  if (
+    (role === 'team_doctor' || role === 'physio' || role === 'nutritionist') &&
+    infrastructure.medical_center_level <= 0
+  ) {
+    return 'Medical Center Lv 0 caps part of medical staff bonuses.'
   }
 
   if (role === 'mechanic' && infrastructure.mechanics_workshop_level <= 0) {
-    return 'Mechanics Workshop Lv 0 caps part of mechanic bonuses.'
+    return 'Mechanics Workshop Lv 0 caps part of mechanic bonuses. Gameplay bonuses are still deferred until Equipment page.'
   }
 
   if (role === 'scout_analyst' && infrastructure.scouting_level <= 0) {
@@ -563,6 +672,39 @@ function getRoleLimit(
   roleLimitMap: Map<StaffRole, StaffRoleLimitRow>
 ) {
   return roleLimitMap.get(role)?.limit_count ?? 0
+}
+
+function buildMedicalCombinedEffects(effect: MedicalStaffEffectRow | null) {
+  if (!effect) {
+    return ['No active medical contribution yet from this staff group.']
+  }
+
+  const riskMultiplier = Number(effect.risk_multiplier ?? 1)
+  const recoveryMultiplier = Number(effect.recovery_duration_multiplier ?? 1)
+  const dailyRecoveryBonus = Number(effect.daily_recovery_bonus ?? 0)
+  const fatigueFloorReduction = Number(effect.fatigue_floor_reduction ?? 0)
+
+  const riskReductionPct = Math.max(
+    0,
+    Math.round((1 - riskMultiplier) * 100)
+  )
+
+  const recoverySpeedPct = Math.max(
+    0,
+    Math.round((1 - recoveryMultiplier) * 100)
+  )
+
+  const effects = [
+    `-${riskReductionPct}% combined injury and sickness risk`,
+    `+${recoverySpeedPct}% combined return-to-fitness speed`,
+    `+${dailyRecoveryBonus} combined daily recovery support`,
+  ]
+
+  if (fatigueFloorReduction > 0) {
+    effects.push(`-${fatigueFloorReduction} fatigue floor after health cases`)
+  }
+
+  return effects
 }
 
 function buildCourseOptions(role: StaffRole): CourseOption[] {
@@ -595,6 +737,38 @@ function buildCourseOptions(role: StaffRole): CourseOption[] {
     ]
   }
 
+  if (role === 'trainer') {
+    return [
+      {
+        code: 'trainer_daily_training_methods',
+        title: 'Daily Training Methods',
+        description:
+          'Improves day-to-day training delivery, session structure and rider training consistency.',
+        durationDays: 30,
+        costCash: 16000,
+        focusLabel: 'Daily Training + Efficiency',
+      },
+      {
+        code: 'trainer_load_management',
+        title: 'Load Management Workshop',
+        description:
+          'Focuses on balancing training load, reducing overload risk and supporting better recovery between sessions.',
+        durationDays: 45,
+        costCash: 26000,
+        focusLabel: 'Efficiency + Experience',
+      },
+      {
+        code: 'trainer_potential_growth',
+        title: 'Potential Growth Programme',
+        description:
+          'Specialised trainer course for improving long-term rider development and potential growth support.',
+        durationDays: 60,
+        costCash: 38000,
+        focusLabel: 'Potential Growth + Daily Training',
+      },
+    ]
+  }
+
   if (role === 'team_doctor') {
     return [
       {
@@ -620,6 +794,64 @@ function buildCourseOptions(role: StaffRole): CourseOption[] {
         durationDays: 60,
         costCash: 42000,
         focusLabel: 'Recovery Speed',
+      },
+    ]
+  }
+
+  if (role === 'physio') {
+    return [
+      {
+        code: 'physio_rehab_methods',
+        title: 'Rehabilitation Methods',
+        description: 'Improves rehab planning, recovery speed and return-to-fitness support.',
+        durationDays: 30,
+        costCash: 16000,
+        focusLabel: 'Rehabilitation + Recovery Speed',
+      },
+      {
+        code: 'physio_load_recovery',
+        title: 'Load Recovery Workshop',
+        description: 'Focuses on reducing fatigue impact and improving post-training recovery.',
+        durationDays: 45,
+        costCash: 26000,
+        focusLabel: 'Recovery Speed + Experience',
+      },
+      {
+        code: 'physio_injury_return',
+        title: 'Return-to-Fitness Programme',
+        description: 'Specialised programme for helping riders recover from injuries more efficiently.',
+        durationDays: 60,
+        costCash: 38000,
+        focusLabel: 'Rehabilitation + Experience',
+      },
+    ]
+  }
+
+  if (role === 'nutritionist') {
+    return [
+      {
+        code: 'nutritionist_race_nutrition',
+        title: 'Race Nutrition Planning',
+        description: 'Improves race nutrition plans, rider consistency and recovery support.',
+        durationDays: 30,
+        costCash: 16000,
+        focusLabel: 'Nutrition Plan + Consistency',
+      },
+      {
+        code: 'nutritionist_recovery_diet',
+        title: 'Recovery Diet Workshop',
+        description: 'Focuses on nutrition routines that support daily fatigue recovery.',
+        durationDays: 45,
+        costCash: 24000,
+        focusLabel: 'Recovery Support + Nutrition',
+      },
+      {
+        code: 'nutritionist_endurance_fueling',
+        title: 'Endurance Fueling Programme',
+        description: 'Advanced nutrition planning for long-term rider endurance and training quality.',
+        durationDays: 60,
+        costCash: 36000,
+        focusLabel: 'Nutrition + Long-Term Support',
       },
     ]
   }
@@ -682,32 +914,68 @@ function buildCourseOptions(role: StaffRole): CourseOption[] {
     ]
   }
 
-  return [
-    {
-      code: 'scout_evaluation',
-      title: 'Evaluation Accuracy Course',
-      description: 'Improves rider assessment and report quality.',
-      durationDays: 45,
-      costCash: 26000,
-      focusLabel: 'Evaluation',
-    },
-    {
-      code: 'scout_networking',
-      title: 'Scouting Network Camp',
-      description: 'Builds connections and improves talent identification coverage.',
-      durationDays: 45,
-      costCash: 26000,
-      focusLabel: 'Network',
-    },
-    {
-      code: 'scout_data_analysis',
-      title: 'Performance Data Analysis',
-      description: 'Improves analytical review of riders and race preparation reports.',
-      durationDays: 30,
-      costCash: 18000,
-      focusLabel: 'Accuracy + Analysis',
-    },
-  ]
+  if (role === 'u23_head_coach') {
+    return [
+      {
+        code: 'u23_youth_development_methods',
+        title: 'Youth Development Methods',
+        description:
+          'Improves youth training structure, development planning and long-term rider growth.',
+        durationDays: 30,
+        costCash: 16000,
+        focusLabel: 'Youth Development + Youth Training',
+      },
+      {
+        code: 'u23_talent_pathway_programme',
+        title: 'Talent Pathway Programme',
+        description:
+          'Focuses on identifying development paths and improving potential growth support.',
+        durationDays: 45,
+        costCash: 26000,
+        focusLabel: 'Potential Growth + Experience',
+      },
+      {
+        code: 'u23_race_readiness_course',
+        title: 'U23 Race Readiness Course',
+        description:
+          'Prepares young riders for race-day structure, discipline and tactical development.',
+        durationDays: 60,
+        costCash: 38000,
+        focusLabel: 'Youth Training + Leadership',
+      },
+    ]
+  }
+
+  if (role === 'scout_analyst') {
+    return [
+      {
+        code: 'scout_evaluation',
+        title: 'Evaluation Accuracy Course',
+        description: 'Improves rider assessment and report quality.',
+        durationDays: 45,
+        costCash: 26000,
+        focusLabel: 'Evaluation',
+      },
+      {
+        code: 'scout_networking',
+        title: 'Scouting Network Camp',
+        description: 'Builds connections and improves talent identification coverage.',
+        durationDays: 45,
+        costCash: 26000,
+        focusLabel: 'Network',
+      },
+      {
+        code: 'scout_data_analysis',
+        title: 'Performance Data Analysis',
+        description: 'Improves analytical review of riders and race preparation reports.',
+        durationDays: 30,
+        costCash: 18000,
+        focusLabel: 'Accuracy + Analysis',
+      },
+    ]
+  }
+
+  return []
 }
 
 function SummaryCard({
@@ -733,7 +1001,7 @@ function SectionTitle({
   subtitle,
 }: {
   title: string
-  subtitle: string
+  subtitle: React.ReactNode
 }) {
   return (
     <div className="mb-3">
@@ -764,7 +1032,76 @@ function resolveMainClub(rows: ClubRow[]) {
   return rows.find((club) => club.deleted_at == null) || null
 }
 
-function buildEffects(role: StaffRole, row: ClubStaffRow): string[] {
+function clampNumber(value: number, min: number, max: number) {
+  return Math.max(min, Math.min(max, value))
+}
+
+function buildMedicalStaffEffects(
+  role: StaffRole,
+  row: ClubStaffRow,
+  isPaused: boolean
+): string[] {
+  if (isPaused) {
+    return [
+      'Medical effects paused while this staff member is unavailable.',
+      '0% injury and sickness risk contribution',
+      '0% return-to-fitness speed contribution',
+      '+0 daily recovery support',
+      '0 fatigue floor reduction',
+    ]
+  }
+
+  let riskReductionPct = 0
+  let returnToFitnessPct = 0
+  let dailyRecoveryBonus = 0
+  let fatigueFloorReduction = 0
+
+  if (role === 'team_doctor') {
+    riskReductionPct = clampNumber(Math.round(row.experience / 12), 0, 8)
+    returnToFitnessPct = clampNumber(
+      Math.round((row.expertise + row.efficiency) / 16),
+      0,
+      10
+    )
+    dailyRecoveryBonus = clampNumber(Math.floor(row.efficiency / 28), 0, 3)
+    fatigueFloorReduction = clampNumber(Math.floor(row.efficiency / 28), 0, 3)
+  }
+
+  if (role === 'physio') {
+    riskReductionPct = clampNumber(Math.round(row.experience / 10), 0, 5)
+    returnToFitnessPct = clampNumber(
+      Math.round((row.expertise + row.efficiency) / 13),
+      0,
+      8
+    )
+    dailyRecoveryBonus = clampNumber(Math.floor(row.efficiency / 25), 0, 2)
+    fatigueFloorReduction = clampNumber(Math.floor(row.experience / 25), 0, 2)
+  }
+
+  if (role === 'nutritionist') {
+    riskReductionPct = clampNumber(Math.round(row.loyalty / 30), 0, 3)
+    returnToFitnessPct = clampNumber(Math.round(row.efficiency / 30), 0, 3)
+    dailyRecoveryBonus = clampNumber(Math.floor(row.expertise / 35), 0, 2)
+    fatigueFloorReduction = clampNumber(Math.floor(row.loyalty / 35), 0, 2)
+  }
+
+  return [
+    `-${riskReductionPct}% injury and sickness risk contribution`,
+    `+${returnToFitnessPct}% return-to-fitness speed contribution`,
+    `+${dailyRecoveryBonus} daily recovery support`,
+    `-${fatigueFloorReduction} fatigue floor after health cases`,
+  ]
+}
+
+function buildEffects(
+  role: StaffRole,
+  row: ClubStaffRow,
+  isPaused = false
+): string[] {
+  if (role === 'team_doctor' || role === 'physio' || role === 'nutritionist') {
+    return buildMedicalStaffEffects(role, row, isPaused)
+  }
+
   if (role === 'head_coach') {
     const trainingBonus = Math.max(3, Math.floor(row.expertise / 10))
     const devBonus = Math.max(2, Math.floor(row.efficiency / 15))
@@ -781,37 +1118,39 @@ function buildEffects(role: StaffRole, row: ClubStaffRow): string[] {
     ]
   }
 
-  if (role === 'team_doctor') {
-    const riskReduction = Math.max(4, Math.floor(row.expertise / 10))
-    const recoveryReduction = Math.max(4, Math.floor(row.efficiency / 12))
-    const dailyRecovery = Math.max(1, Math.floor(row.experience / 30))
+  if (role === 'trainer') {
+    const trainingBonus = Math.max(2, Math.floor(row.expertise / 14))
+    const efficiencyBonus = Math.max(1, Math.floor(row.efficiency / 18))
+    const developmentBonus = Math.max(1, Math.floor(row.potential / 20))
 
     return [
-      `-${riskReduction}% injury and sickness risk`,
-      `-${recoveryReduction}% recovery duration`,
-      `+${dailyRecovery} daily recovery`,
+      `+${trainingBonus}% daily training output`,
+      `+${efficiencyBonus}% training efficiency`,
+      `+${developmentBonus}% rider development support`,
     ]
   }
 
   if (role === 'mechanic') {
-    const setupBonus = Math.max(2, Math.floor(row.expertise / 15))
-    const reliabilityBonus = Math.max(2, Math.floor(row.efficiency / 18))
-
     return [
-      `+${setupBonus}% setup quality`,
-      `-${reliabilityBonus}% mechanical issue risk`,
-      'Future: weather and terrain setup bonuses',
+      'Gameplay contribution deferred until Equipment page is live.',
+      'Future: setup quality and mechanical reliability.',
+      'Future: condition-specific bike preparation.',
     ]
   }
 
   if (role === 'sport_director') {
-    const tacticsBonus = Math.max(2, Math.floor(row.expertise / 15))
-    const moraleStability = Math.max(1, Math.floor(row.leadership / 20))
-
     return [
-      `+${tacticsBonus}% tactical support`,
-      `+${moraleStability}% morale stability`,
-      'Future: smarter leader/domestique execution',
+      'Planned: tactical execution support',
+      'Planned: teamwork and domestique coordination',
+      'Planned: small morale stability boost',
+    ]
+  }
+
+  if (role === 'u23_head_coach') {
+    return [
+      'Planned: U23 training support',
+      'Planned: developing-team race tactics',
+      'Planned: young rider development boost',
     ]
   }
 
@@ -848,6 +1187,684 @@ function formatScoutTier(tier: string): string {
     default:
       return 'Unknown'
   }
+}
+
+type StaffQualityRow = {
+  label: string
+  value: string
+}
+
+type StaffQualityPanelData = {
+  title: string
+  rows: StaffQualityRow[]
+  warning?: string | null
+}
+
+type StaffQualityExplanationData = {
+  title: string
+  body: string
+  boxes: Array<{
+    label: string
+    value: string
+  }>
+  thresholdLabel?: string
+  thresholdValue?: string
+  warning?: string | null
+}
+
+function clampSkillScore(value: number) {
+  if (!Number.isFinite(value)) return 0
+  return Math.max(0, Math.min(100, value))
+}
+
+function weightedScore(parts: Array<[number, number]>) {
+  const totalWeight = parts.reduce((sum, [, weight]) => sum + weight, 0)
+
+  if (totalWeight <= 0) return 0
+
+  const score =
+    parts.reduce(
+      (sum, [value, weight]) => sum + clampSkillScore(Number(value ?? 0)) * weight,
+      0
+    ) / totalWeight
+
+  return Math.round(score * 10) / 10
+}
+
+function qualityTierFromScore(score: number) {
+  if (score >= 85) return 'Elite'
+  if (score >= 70) return 'Strong'
+  if (score >= 55) return 'Solid'
+  return 'Basic'
+}
+
+function formatTierWithScore(score: number) {
+  return `${qualityTierFromScore(score)} (${score})`
+}
+
+function statValue(staff: StaffListMember, labels: string[]) {
+  for (const label of labels) {
+    const found = staff.stats.find((stat) => stat.label === label)
+
+    if (found) {
+      return Number(found.value ?? 0)
+    }
+  }
+
+  return 0
+}
+
+function getFacilityLevelForRole(
+  role: StaffRole,
+  infrastructure: ClubInfrastructureRow | null
+) {
+  if (!infrastructure) return null
+
+  if (role === 'head_coach' || role === 'trainer') {
+    return {
+      label: 'Training Center',
+      level: infrastructure.training_center_level,
+    }
+  }
+
+  if (
+    role === 'team_doctor' ||
+    role === 'physio' ||
+    role === 'nutritionist'
+  ) {
+    return {
+      label: 'Medical Center',
+      level: infrastructure.medical_center_level,
+    }
+  }
+
+  if (role === 'mechanic') {
+    return {
+      label: 'Mechanics Workshop',
+      level: infrastructure.mechanics_workshop_level,
+    }
+  }
+
+  if (role === 'scout_analyst') {
+    return {
+      label: 'Scouting Office',
+      level: infrastructure.scouting_level,
+    }
+  }
+
+  if (role === 'u23_head_coach') {
+    return {
+      label: 'Youth Academy',
+      level: infrastructure.youth_academy_level,
+    }
+  }
+
+  return null
+}
+
+function buildStaffQualityPanel(
+  staff: StaffListMember,
+  infrastructure: ClubInfrastructureRow | null
+): StaffQualityPanelData {
+  const facility = getFacilityLevelForRole(staff.role, infrastructure)
+
+  if (staff.role === 'scout_analyst') {
+    const scoutQuality = calculateScoutQuality(staff, infrastructure)
+
+    if (!scoutQuality) {
+      return {
+        title: 'Scouting Quality',
+        rows: [
+          { label: 'Scout Ability', value: 'Unknown' },
+          { label: 'Current Report Quality', value: 'Unknown' },
+          { label: 'Report Time', value: 'Unknown' },
+          { label: 'Scouting Office', value: facility ? `Lv ${facility.level}` : 'Unknown' },
+        ],
+      }
+    }
+
+    return {
+      title: 'Scouting Quality',
+      rows: [
+        {
+          label: 'Scout Ability',
+          value: `${formatScoutTier(scoutQuality.scoutAbilityTier)} (${scoutQuality.scoutAbilityScore})`,
+        },
+        {
+          label: 'Current Report Quality',
+          value: formatScoutTier(scoutQuality.currentReportTier),
+        },
+        {
+          label: 'Report Time',
+          value: `${scoutQuality.durationHours}h`,
+        },
+        {
+          label: 'Scouting Office',
+          value: `Lv ${scoutQuality.scoutingLevel}`,
+        },
+      ],
+      warning: scoutQuality.isLimitedByOffice
+        ? `Limited by Scouting Office Lv ${scoutQuality.scoutingLevel}.`
+        : null,
+    }
+  }
+
+  if (staff.role === 'head_coach') {
+    const training = statValue(staff, ['Training'])
+    const recoveryPlanning = statValue(staff, ['Recovery Planning'])
+    const youthDevelopment = statValue(staff, ['Youth Development'])
+    const experience = statValue(staff, ['Experience'])
+    const leadership = statValue(staff, ['Leadership'])
+
+    const ability = weightedScore([
+      [training, 0.35],
+      [recoveryPlanning, 0.2],
+      [youthDevelopment, 0.25],
+      [leadership, 0.2],
+    ])
+
+    const trainingQuality = weightedScore([
+      [training, 0.55],
+      [recoveryPlanning, 0.25],
+      [experience, 0.2],
+    ])
+
+    const developmentSupport = weightedScore([
+      [youthDevelopment, 0.5],
+      [training, 0.25],
+      [leadership, 0.25],
+    ])
+
+    return {
+      title: 'Coaching Quality',
+      rows: [
+        { label: 'Coach Ability', value: formatTierWithScore(ability) },
+        { label: 'Training Quality', value: formatTierWithScore(trainingQuality) },
+        { label: 'Development Support', value: formatTierWithScore(developmentSupport) },
+        { label: facility?.label ?? 'Facility', value: facility ? `Lv ${facility.level}` : 'Unknown' },
+      ],
+      warning:
+        facility && facility.level <= 0
+          ? `${facility.label} Lv ${facility.level} can cap part of coaching bonuses.`
+          : null,
+    }
+  }
+
+  if (staff.role === 'trainer') {
+    const dailyTraining = statValue(staff, ['Daily Training', 'Training'])
+    const trainingEfficiency = statValue(staff, ['Training Efficiency', 'Efficiency'])
+    const potentialGrowth = statValue(staff, ['Potential Growth', 'Youth Development'])
+    const experience = statValue(staff, ['Experience'])
+    const leadership = statValue(staff, ['Leadership'])
+
+    const ability = weightedScore([
+      [dailyTraining, 0.4],
+      [trainingEfficiency, 0.3],
+      [potentialGrowth, 0.2],
+      [leadership, 0.1],
+    ])
+
+    const sessionQuality = weightedScore([
+      [dailyTraining, 0.55],
+      [trainingEfficiency, 0.35],
+      [experience, 0.1],
+    ])
+
+    const loadManagement = weightedScore([
+      [trainingEfficiency, 0.45],
+      [experience, 0.35],
+      [leadership, 0.2],
+    ])
+
+    return {
+      title: 'Training Quality',
+      rows: [
+        { label: 'Trainer Ability', value: formatTierWithScore(ability) },
+        { label: 'Session Quality', value: formatTierWithScore(sessionQuality) },
+        { label: 'Load Management', value: formatTierWithScore(loadManagement) },
+        { label: facility?.label ?? 'Facility', value: facility ? `Lv ${facility.level}` : 'Unknown' },
+      ],
+      warning:
+        facility && facility.level <= 0
+          ? `${facility.label} Lv ${facility.level} can cap part of trainer bonuses.`
+          : null,
+    }
+  }
+
+  if (staff.role === 'team_doctor') {
+    const recovery = statValue(staff, ['Recovery'])
+    const prevention = statValue(staff, ['Prevention'])
+    const diagnosis = statValue(staff, ['Diagnosis'])
+    const leadership = statValue(staff, ['Leadership'])
+
+    const ability = weightedScore([
+      [recovery, 0.35],
+      [prevention, 0.3],
+      [diagnosis, 0.25],
+      [leadership, 0.1],
+    ])
+
+    const injuryPrevention = weightedScore([
+      [prevention, 0.55],
+      [diagnosis, 0.25],
+      [recovery, 0.2],
+    ])
+
+    const returnToFitness = weightedScore([
+      [recovery, 0.45],
+      [diagnosis, 0.35],
+      [prevention, 0.2],
+    ])
+
+    return {
+      title: 'Medical Quality',
+      rows: [
+        { label: 'Medical Ability', value: formatTierWithScore(ability) },
+        { label: 'Injury Prevention', value: formatTierWithScore(injuryPrevention) },
+        { label: 'Return-to-Fitness', value: formatTierWithScore(returnToFitness) },
+        { label: facility?.label ?? 'Facility', value: facility ? `Lv ${facility.level}` : 'Unknown' },
+      ],
+      warning:
+        facility && facility.level <= 0
+          ? `${facility.label} Lv ${facility.level} can cap part of medical bonuses.`
+          : null,
+    }
+  }
+
+  if (staff.role === 'physio') {
+    const rehabilitation = statValue(staff, ['Rehabilitation'])
+    const recoverySpeed = statValue(staff, ['Recovery Speed'])
+    const experience = statValue(staff, ['Experience'])
+    const leadership = statValue(staff, ['Leadership'])
+
+    const ability = weightedScore([
+      [rehabilitation, 0.4],
+      [recoverySpeed, 0.35],
+      [experience, 0.2],
+      [leadership, 0.05],
+    ])
+
+    const rehabQuality = weightedScore([
+      [rehabilitation, 0.6],
+      [experience, 0.25],
+      [recoverySpeed, 0.15],
+    ])
+
+    const speedSupport = weightedScore([
+      [recoverySpeed, 0.55],
+      [rehabilitation, 0.3],
+      [experience, 0.15],
+    ])
+
+    return {
+      title: 'Recovery Quality',
+      rows: [
+        { label: 'Recovery Ability', value: formatTierWithScore(ability) },
+        { label: 'Rehabilitation Quality', value: formatTierWithScore(rehabQuality) },
+        { label: 'Recovery Speed', value: formatTierWithScore(speedSupport) },
+        { label: facility?.label ?? 'Facility', value: facility ? `Lv ${facility.level}` : 'Unknown' },
+      ],
+      warning:
+        facility && facility.level <= 0
+          ? `${facility.label} Lv ${facility.level} can cap part of physio bonuses.`
+          : null,
+    }
+  }
+
+  if (staff.role === 'nutritionist') {
+    const nutrition = statValue(staff, ['Nutrition Planning', 'Nutrition Plan'])
+    const recoverySupport = statValue(staff, ['Recovery Support'])
+    const consistency = statValue(staff, ['Consistency', 'Loyalty'])
+    const leadership = statValue(staff, ['Leadership'])
+
+    const ability = weightedScore([
+      [nutrition, 0.45],
+      [recoverySupport, 0.3],
+      [consistency, 0.2],
+      [leadership, 0.05],
+    ])
+
+    const recoveryQuality = weightedScore([
+      [recoverySupport, 0.5],
+      [nutrition, 0.3],
+      [consistency, 0.2],
+    ])
+
+    const consistencySupport = weightedScore([
+      [consistency, 0.5],
+      [nutrition, 0.3],
+      [leadership, 0.2],
+    ])
+
+    return {
+      title: 'Nutrition Quality',
+      rows: [
+        { label: 'Nutrition Ability', value: formatTierWithScore(ability) },
+        { label: 'Recovery Support', value: formatTierWithScore(recoveryQuality) },
+        { label: 'Consistency Support', value: formatTierWithScore(consistencySupport) },
+        { label: facility?.label ?? 'Facility', value: facility ? `Lv ${facility.level}` : 'Unknown' },
+      ],
+      warning:
+        facility && facility.level <= 0
+          ? `${facility.label} Lv ${facility.level} can cap part of nutrition bonuses.`
+          : null,
+    }
+  }
+
+  if (staff.role === 'mechanic') {
+    const setup = statValue(staff, ['Setup'])
+    const reliability = statValue(staff, ['Reliability'])
+    const innovation = statValue(staff, ['Innovation'])
+    const experience = statValue(staff, ['Experience'])
+    const discipline = statValue(staff, ['Discipline', 'Leadership'])
+
+    const ability = weightedScore([
+      [setup, 0.4],
+      [reliability, 0.35],
+      [innovation, 0.15],
+      [discipline, 0.1],
+    ])
+
+    const setupQuality = weightedScore([
+      [setup, 0.6],
+      [reliability, 0.25],
+      [innovation, 0.15],
+    ])
+
+    const reliabilitySupport = weightedScore([
+      [reliability, 0.55],
+      [experience, 0.25],
+      [discipline, 0.2],
+    ])
+
+    return {
+      title: 'Technical Quality',
+      rows: [
+        { label: 'Technical Ability', value: formatTierWithScore(ability) },
+        { label: 'Bike Setup Quality', value: formatTierWithScore(setupQuality) },
+        { label: 'Reliability Support', value: formatTierWithScore(reliabilitySupport) },
+        { label: facility?.label ?? 'Facility', value: facility ? `Lv ${facility.level}` : 'Unknown' },
+      ],
+      warning:
+        facility && facility.level <= 0
+          ? `${facility.label} Lv ${facility.level} can cap part of mechanic bonuses.`
+          : null,
+    }
+  }
+
+  if (staff.role === 'sport_director') {
+    const tactics = statValue(staff, ['Tactics'])
+    const motivation = statValue(staff, ['Motivation'])
+    const organization = statValue(staff, ['Organization'])
+    const experience = statValue(staff, ['Experience'])
+    const vision = statValue(staff, ['Long-Term Vision', 'Potential'])
+
+    const ability = weightedScore([
+      [tactics, 0.35],
+      [motivation, 0.25],
+      [organization, 0.25],
+      [experience, 0.15],
+    ])
+
+    const racePlanQuality = weightedScore([
+      [tactics, 0.55],
+      [organization, 0.3],
+      [experience, 0.15],
+    ])
+
+    const teamControl = weightedScore([
+      [motivation, 0.45],
+      [organization, 0.3],
+      [vision, 0.25],
+    ])
+
+    return {
+      title: 'Tactical Quality',
+      rows: [
+        { label: 'Director Ability', value: formatTierWithScore(ability) },
+        { label: 'Race Plan Quality', value: formatTierWithScore(racePlanQuality) },
+        { label: 'Team Control', value: formatTierWithScore(teamControl) },
+        { label: 'Race Engine Role', value: 'Prepared' },
+      ],
+    }
+  }
+
+  const youthTraining = statValue(staff, ['Youth Training', 'Training'])
+  const youthDevelopment = statValue(staff, ['Youth Dev', 'Youth Development'])
+  const leadership = statValue(staff, ['Leadership'])
+  const experience = statValue(staff, ['Experience'])
+  const loyalty = statValue(staff, ['Loyalty'])
+
+  const ability = weightedScore([
+    [youthTraining, 0.35],
+    [youthDevelopment, 0.35],
+    [leadership, 0.2],
+    [experience, 0.1],
+  ])
+
+  const talentDevelopment = weightedScore([
+    [youthDevelopment, 0.55],
+    [youthTraining, 0.3],
+    [leadership, 0.15],
+  ])
+
+  const raceReadiness = weightedScore([
+    [youthTraining, 0.4],
+    [leadership, 0.3],
+    [experience, 0.2],
+    [loyalty, 0.1],
+  ])
+
+  return {
+    title: 'Youth Coaching Quality',
+    rows: [
+      { label: 'Youth Coach Ability', value: formatTierWithScore(ability) },
+      { label: 'Talent Development', value: formatTierWithScore(talentDevelopment) },
+      { label: 'Race Readiness', value: formatTierWithScore(raceReadiness) },
+      { label: facility?.label ?? 'Facility', value: facility ? `Lv ${facility.level}` : 'Unknown' },
+    ],
+    warning:
+      facility && facility.level <= 0
+        ? `${facility.label} Lv ${facility.level} can cap part of U23 coaching bonuses.`
+        : null,
+  }
+}
+
+function buildStaffQualityExplanation(
+  role: StaffRole,
+  infrastructure: ClubInfrastructureRow | null
+): StaffQualityExplanationData {
+  const facility = getFacilityLevelForRole(role, infrastructure)
+
+  if (role === 'scout_analyst') {
+    return {
+      title: 'How Scout Quality Works',
+      body:
+        'Scout attributes create the scout’s true ability. The Scouting Office can cap the final report quality, so a strong scout may still produce basic reports until the office is upgraded.',
+      boxes: [
+        { label: 'Scout Ability levels', value: 'Basic → Solid → Strong → Elite' },
+        { label: 'Report Quality levels', value: 'Basic → Solid → Strong → Elite' },
+      ],
+      thresholdLabel: 'Scout Ability thresholds',
+      thresholdValue: 'Basic: below 55 · Solid: 55–69 · Strong: 70–84 · Elite: 85+',
+      warning: facility
+        ? `Better ${facility.label} unlocks higher report quality. Current level: Lv ${facility.level}.`
+        : 'Better Scouting Office unlocks higher report quality.',
+    }
+  }
+
+  if (role === 'head_coach') {
+    return {
+      title: 'How Coaching Quality Works',
+      body:
+        'Head coach quality is based on training skill, recovery planning, youth development and leadership. Higher quality improves training output, development support and overload management.',
+      boxes: [
+        { label: 'Coach Ability', value: 'Overall coaching profile' },
+        { label: 'Training Quality', value: 'Daily training output' },
+        { label: 'Development Support', value: 'Long-term rider growth' },
+      ],
+      thresholdLabel: 'Quality thresholds',
+      thresholdValue: 'Basic: below 55 · Solid: 55–69 · Strong: 70–84 · Elite: 85+',
+      warning: facility
+        ? `${facility.label} can cap part of coaching bonuses. Current level: Lv ${facility.level}.`
+        : null,
+    }
+  }
+
+  if (role === 'trainer') {
+    return {
+      title: 'How Trainer Quality Works',
+      body:
+        'Trainer quality is based on daily training skill, training efficiency, potential growth and experience. Trainers support the coaching group and improve regular training quality.',
+      boxes: [
+        { label: 'Trainer Ability', value: 'Overall trainer profile' },
+        { label: 'Session Quality', value: 'Daily training delivery' },
+        { label: 'Load Management', value: 'Fatigue and workload support' },
+      ],
+      thresholdLabel: 'Quality thresholds',
+      thresholdValue: 'Basic: below 55 · Solid: 55–69 · Strong: 70–84 · Elite: 85+',
+      warning: facility
+        ? `${facility.label} can cap part of trainer bonuses. Current level: Lv ${facility.level}.`
+        : null,
+    }
+  }
+
+  if (role === 'team_doctor' || role === 'physio' || role === 'nutritionist') {
+    return {
+      title:
+        role === 'team_doctor'
+          ? 'How Medical Quality Works'
+          : role === 'physio'
+            ? 'How Recovery Quality Works'
+            : 'How Nutrition Quality Works',
+      body:
+        'Medical staff quality contributes to injury and sickness risk, return-to-fitness speed, daily recovery support and fatigue floor after health cases. Team Doctor, Physio and Nutritionist are combined in the medical staff impact group.',
+      boxes: [
+        { label: 'Risk Control', value: 'Injury and sickness prevention' },
+        { label: 'Return-to-Fitness', value: 'Recovery duration support' },
+        { label: 'Daily Recovery', value: 'Fatigue recovery support' },
+      ],
+      thresholdLabel: 'Quality thresholds',
+      thresholdValue: 'Basic: below 55 · Solid: 55–69 · Strong: 70–84 · Elite: 85+',
+      warning: facility
+        ? `${facility.label} can cap part of medical bonuses. Current level: Lv ${facility.level}.`
+        : null,
+    }
+  }
+
+  if (role === 'mechanic') {
+    return {
+      title: 'How Technical Quality Works',
+      body:
+        'Mechanic quality is based on setup, reliability, innovation and experience. This profile prepares the mechanic for equipment reliability, race setup quality and future equipment/race-engine effects.',
+      boxes: [
+        { label: 'Technical Ability', value: 'Overall mechanic profile' },
+        { label: 'Bike Setup Quality', value: 'Race setup support' },
+        { label: 'Reliability Support', value: 'Mechanical issue prevention' },
+      ],
+      thresholdLabel: 'Quality thresholds',
+      thresholdValue: 'Basic: below 55 · Solid: 55–69 · Strong: 70–84 · Elite: 85+',
+      warning: facility
+        ? `${facility.label} can cap part of mechanic bonuses. Current level: Lv ${facility.level}.`
+        : null,
+    }
+  }
+
+  if (role === 'sport_director') {
+    return {
+      title: 'How Tactical Quality Works',
+      body:
+        'Sport director quality is based on tactics, motivation, organization and experience. This profile prepares race tactics, morale stability and team coordination for the race engine.',
+      boxes: [
+        { label: 'Director Ability', value: 'Overall race leadership' },
+        { label: 'Race Plan Quality', value: 'Tactical preparation' },
+        { label: 'Team Control', value: 'Morale and organization' },
+      ],
+      thresholdLabel: 'Quality thresholds',
+      thresholdValue: 'Basic: below 55 · Solid: 55–69 · Strong: 70–84 · Elite: 85+',
+    }
+  }
+
+  return {
+    title: 'How Youth Coaching Quality Works',
+    body:
+      'U23 head coach quality is based on youth training, youth development, leadership and experience. This profile supports developing-team rider growth and race readiness.',
+    boxes: [
+      { label: 'Youth Coach Ability', value: 'Overall U23 coaching profile' },
+      { label: 'Talent Development', value: 'Young rider progression' },
+      { label: 'Race Readiness', value: 'U23 race preparation' },
+    ],
+    thresholdLabel: 'Quality thresholds',
+    thresholdValue: 'Basic: below 55 · Solid: 55–69 · Strong: 70–84 · Elite: 85+',
+    warning: facility
+      ? `${facility.label} can cap part of U23 coaching bonuses. Current level: Lv ${facility.level}.`
+      : null,
+  }
+}
+
+function StaffQualityPanel({
+  data,
+}: {
+  data: StaffQualityPanelData
+}) {
+  return (
+    <div className="mt-4">
+      <div className="text-sm font-semibold text-gray-900">{data.title}</div>
+
+      <div className="mt-3 space-y-2">
+        {data.rows.map((row) => (
+          <div key={row.label} className="rounded-lg bg-gray-50 px-3 py-2">
+            <div className="text-xs text-gray-500">{row.label}</div>
+            <div className="mt-1 text-sm font-semibold text-gray-900">{row.value}</div>
+          </div>
+        ))}
+      </div>
+
+      {data.warning ? (
+        <div className="mt-3 rounded-lg border border-yellow-200 bg-yellow-50 px-3 py-2 text-xs text-yellow-800">
+          {data.warning}
+        </div>
+      ) : null}
+    </div>
+  )
+}
+
+function StaffQualityExplanationPanel({
+  data,
+}: {
+  data: StaffQualityExplanationData
+}) {
+  return (
+    <div className="mt-4 rounded-xl border border-blue-100 bg-blue-50 p-4 text-sm text-blue-900">
+      <div className="font-semibold">{data.title}</div>
+
+      <div className="mt-2 text-blue-800">{data.body}</div>
+
+      <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+        {data.boxes.map((box) => (
+          <div key={box.label} className="rounded-lg bg-white px-3 py-2">
+            <div className="text-xs text-blue-700">{box.label}</div>
+            <div className="mt-1 font-medium">{box.value}</div>
+          </div>
+        ))}
+      </div>
+
+      {data.thresholdLabel && data.thresholdValue ? (
+        <div className="mt-2 rounded-lg bg-white px-3 py-2">
+          <div className="text-xs text-blue-700">{data.thresholdLabel}</div>
+          <div className="mt-1 text-xs font-medium text-blue-950">
+            {data.thresholdValue}
+          </div>
+        </div>
+      ) : null}
+
+      {data.warning ? (
+        <div className="mt-3 rounded-lg border border-yellow-200 bg-yellow-50 px-3 py-2 text-xs text-yellow-800">
+          {data.warning}
+        </div>
+      ) : null}
+    </div>
+  )
 }
 
 function calculateScoutQuality(
@@ -932,6 +1949,17 @@ function mapStats(role: StaffRole, row: ClubStaffRow): StaffStat[] {
     ]
   }
 
+  if (role === 'trainer') {
+    return [
+      { label: 'Daily Training', value: row.expertise },
+      { label: 'Training Efficiency', value: row.efficiency },
+      { label: 'Potential Growth', value: row.potential },
+      { label: 'Experience', value: row.experience },
+      { label: 'Leadership', value: row.leadership },
+      { label: 'Loyalty', value: row.loyalty },
+    ]
+  }
+
   if (role === 'team_doctor') {
     return [
       { label: 'Recovery', value: row.expertise },
@@ -940,6 +1968,28 @@ function mapStats(role: StaffRole, row: ClubStaffRow): StaffStat[] {
       { label: 'Potential', value: row.potential },
       { label: 'Leadership', value: row.leadership },
       { label: 'Loyalty', value: row.loyalty },
+    ]
+  }
+
+  if (role === 'physio') {
+    return [
+      { label: 'Rehabilitation', value: row.expertise },
+      { label: 'Recovery Speed', value: row.efficiency },
+      { label: 'Experience', value: row.experience },
+      { label: 'Potential', value: row.potential },
+      { label: 'Leadership', value: row.leadership },
+      { label: 'Loyalty', value: row.loyalty },
+    ]
+  }
+
+  if (role === 'nutritionist') {
+    return [
+      { label: 'Nutrition Planning', value: row.expertise },
+      { label: 'Recovery Support', value: row.efficiency },
+      { label: 'Consistency', value: row.loyalty },
+      { label: 'Experience', value: row.experience },
+      { label: 'Potential', value: row.potential },
+      { label: 'Leadership', value: row.leadership },
     ]
   }
 
@@ -961,6 +2011,17 @@ function mapStats(role: StaffRole, row: ClubStaffRow): StaffStat[] {
       { label: 'Organization', value: row.efficiency },
       { label: 'Experience', value: row.experience },
       { label: 'Long-Term Vision', value: row.potential },
+      { label: 'Loyalty', value: row.loyalty },
+    ]
+  }
+
+  if (role === 'u23_head_coach') {
+    return [
+      { label: 'Youth Training', value: row.expertise },
+      { label: 'Youth Development', value: row.potential },
+      { label: 'U23 Race Tactics', value: row.leadership },
+      { label: 'Experience', value: row.experience },
+      { label: 'Planning', value: row.efficiency },
       { label: 'Loyalty', value: row.loyalty },
     ]
   }
@@ -1031,6 +2092,19 @@ function mapStaffMember(
   const contractUi = formatContractUi(row.contract_expires_at, currentGameDate)
   const roleMeta = getRoleMeta(row.role_type)
   const lastCourseInfo = getLastCourseInfo(row)
+  const activeCourse = activeCourseByStaffId.get(row.id) ?? null
+
+  const currentAssignmentLabel =
+    row.current_assignment_label ??
+    (typeof row.notes?.current_assignment_label === 'string'
+      ? row.notes.current_assignment_label
+      : null)
+
+  const hasActiveAssignment =
+    Boolean(currentAssignmentLabel?.trim()) &&
+    !currentAssignmentLabel?.toLowerCase().includes('currently not assigned')
+
+  const isPausedForMainRole = Boolean(activeCourse) || hasActiveAssignment
 
   return {
     id: row.id,
@@ -1047,112 +2121,224 @@ function mapStaffMember(
     birthDate: row.birth_date,
     ageYears: getStaffAge(row.birth_date, currentGameDate),
     stats: mapStats(row.role_type, row),
-    effects: buildEffects(row.role_type, row),
-    activeCourse: activeCourseByStaffId.get(row.id) ?? null,
+    effects: buildEffects(row.role_type, row, isPausedForMainRole),
+    activeCourse,
     facilityWarning: getRoleInfrastructureWarning(row.role_type, infrastructure),
-    currentAssignmentLabel:
-      row.current_assignment_label ??
-      (typeof row.notes?.current_assignment_label === 'string'
-        ? row.notes.current_assignment_label
-        : null),
+    currentAssignmentLabel,
     lastCourseTitle: lastCourseInfo.title,
     lastCourseGains: lastCourseInfo.gains,
   }
 }
 
+function getStatValue(member: StaffListMember, label: string, fallbackIndex = 0) {
+  return (
+    member.stats.find((stat) => stat.label === label)?.value ??
+    member.stats[fallbackIndex]?.value ??
+    0
+  )
+}
+
+function getImpactRoles(role: StaffRole): StaffRole[] {
+  if (role === 'head_coach' || role === 'trainer') {
+    return ['head_coach', 'trainer']
+  }
+
+  if (role === 'team_doctor' || role === 'physio' || role === 'nutritionist') {
+    return ['team_doctor', 'physio', 'nutritionist']
+  }
+
+  return [role]
+}
+
+function isCoachingRole(role: StaffRole) {
+  return role === 'head_coach' || role === 'trainer'
+}
+
+function getImpactPanelTitle(role: StaffRole) {
+  if (role === 'head_coach' || role === 'trainer') {
+    return 'Coaching Staff Combined Impact'
+  }
+
+  if (role === 'team_doctor' || role === 'physio' || role === 'nutritionist') {
+    return 'Medical Staff Combined Impact'
+  }
+
+  if (role === 'mechanic') return 'Technical Staff Impact'
+  if (role === 'sport_director') return 'Race Staff Impact'
+  if (role === 'u23_head_coach') return 'Developing Team Staff Impact'
+
+  return 'Scouting Staff Impact'
+}
+
+function getImpactMembers(
+  role: StaffRole,
+  membersByRole: Record<StaffRole, StaffListMember[]>
+) {
+  return getImpactRoles(role).flatMap((impactRole) => membersByRole[impactRole] ?? [])
+}
+
+function getImpactRoleLimit(
+  role: StaffRole,
+  roleLimitMap: Map<StaffRole, StaffRoleLimitRow>
+) {
+  return getImpactRoles(role).reduce(
+    (sum, impactRole) => sum + getRoleLimit(impactRole, roleLimitMap),
+    0
+  )
+}
+
 function buildAggregateEffectSummary(role: StaffRole, members: StaffListMember[]) {
+  const activeMembers = members.filter((member) => !member.activeCourse)
+
   if (!members.length) {
     return ['No active contribution yet from this role.']
   }
 
-  if (role === 'head_coach') {
-    const training = members.reduce(
-      (sum, member) => sum + Math.max(3, Math.floor(member.stats[0].value / 10)),
-      0
-    )
-    const development = members.reduce(
-      (sum, member) => sum + Math.max(2, Math.floor(member.stats[1].value / 15)),
-      0
-    )
-    const overload = members.reduce(
-      (sum, member) => sum + Math.max(3, Math.floor(member.stats[3].value / 14)),
+  if (!activeMembers.length) {
+    return ['All assigned staff in this impact group are currently on course, so active contribution is temporarily paused.']
+  }
+
+  if (role === 'head_coach' || role === 'trainer') {
+    const headCoaches = activeMembers.filter((member) => member.role === 'head_coach')
+    const trainers = activeMembers.filter((member) => member.role === 'trainer')
+
+    const headCoachTraining = headCoaches.reduce(
+      (sum, member) => sum + Math.max(3, Math.floor(getStatValue(member, 'Training') / 10)),
       0
     )
 
+    const trainerBaseTraining = trainers.reduce(
+      (sum, member) => sum + Math.max(2, Math.floor(getStatValue(member, 'Daily Training') / 14)),
+      0
+    )
+
+    const headCoachAverage =
+      headCoaches.length > 0
+        ? headCoaches.reduce(
+            (sum, member) =>
+              sum +
+              getStatValue(member, 'Training') * 0.45 +
+              getStatValue(member, 'Recovery Planning') * 0.2 +
+              getStatValue(member, 'Youth Development') * 0.2 +
+              getStatValue(member, 'Leadership') * 0.15,
+            0
+          ) / headCoaches.length
+        : 0
+
+    const trainerBoostPercent =
+      headCoaches.length > 0 ? Math.min(25, Math.max(5, Math.floor(headCoachAverage / 4))) : 0
+
+    const boostedTrainerTraining = Math.round(
+      trainerBaseTraining * (1 + trainerBoostPercent / 100)
+    )
+
+    const development =
+      headCoaches.reduce(
+        (sum, member) =>
+          sum + Math.max(2, Math.floor(getStatValue(member, 'Youth Development') / 15)),
+        0
+      ) +
+      trainers.reduce(
+        (sum, member) =>
+          sum + Math.max(1, Math.floor(getStatValue(member, 'Potential Growth') / 18)),
+        0
+      )
+
+    const overloadReduction =
+      headCoaches.reduce(
+        (sum, member) => sum + Math.max(3, Math.floor(getStatValue(member, 'Experience') / 14)),
+        0
+      ) +
+      trainers.reduce(
+        (sum, member) =>
+          sum + Math.max(1, Math.floor(getStatValue(member, 'Training Efficiency') / 25)),
+        0
+      )
+
     return [
-      `+${training}% combined training output`,
+      `+${headCoachTraining + boostedTrainerTraining}% combined training output`,
       `+${development}% combined development support`,
-      `-${overload}% combined overload risk`,
+      `-${overloadReduction}% combined overload risk`,
+      trainers.length > 0 && headCoaches.length > 0
+        ? `Head Coach boosts trainer contribution by +${trainerBoostPercent}%.`
+        : 'Hire Trainers to increase coaching staff output.',
     ]
   }
 
-  if (role === 'team_doctor') {
-    const risk = members.reduce(
-      (sum, member) => sum + Math.max(4, Math.floor(member.stats[0].value / 10)),
-      0
-    )
-    const recovery = members.reduce(
-      (sum, member) => sum + Math.max(4, Math.floor(member.stats[1].value / 12)),
-      0
-    )
-    const daily = members.reduce(
-      (sum, member) => sum + Math.max(1, Math.floor(member.stats[2].value / 30)),
+  if (role === 'team_doctor' || role === 'physio' || role === 'nutritionist') {
+    const doctors = activeMembers.filter((member) => member.role === 'team_doctor')
+    const physios = activeMembers.filter((member) => member.role === 'physio')
+    const nutritionists = activeMembers.filter((member) => member.role === 'nutritionist')
+
+    const riskReduction = doctors.reduce(
+      (sum, member) => sum + Math.max(4, Math.floor(getStatValue(member, 'Prevention') / 10)),
       0
     )
 
+    const returnFitnessSpeed = physios.reduce(
+      (sum, member) => sum + Math.max(3, Math.floor(getStatValue(member, 'Recovery Speed') / 12)),
+      0
+    )
+
+    const dailyRecovery =
+      doctors.reduce(
+        (sum, member) => sum + Math.max(1, Math.floor(getStatValue(member, 'Diagnosis') / 30)),
+        0
+      ) +
+      physios.reduce(
+        (sum, member) => sum + Math.max(1, Math.floor(getStatValue(member, 'Experience') / 30)),
+        0
+      ) +
+      nutritionists.reduce(
+        (sum, member) =>
+          sum + Math.max(1, Math.floor(getStatValue(member, 'Recovery Support') / 35)),
+        0
+      )
+
     return [
-      `-${risk}% combined injury and sickness risk`,
-      `-${recovery}% combined recovery duration`,
-      `+${daily} combined daily recovery`,
+      `-${riskReduction}% combined injury and sickness risk`,
+      `+${returnFitnessSpeed}% combined return-to-fitness speed`,
+      `+${dailyRecovery} combined daily recovery support`,
     ]
   }
 
   if (role === 'mechanic') {
-    const setup = members.reduce(
-      (sum, member) => sum + Math.max(2, Math.floor(member.stats[0].value / 15)),
-      0
-    )
-    const reliability = members.reduce(
-      (sum, member) => sum + Math.max(2, Math.floor(member.stats[1].value / 18)),
-      0
-    )
-
     return [
-      `+${setup}% combined setup quality`,
-      `-${reliability}% combined mechanical issue risk`,
-      'Future: aggregate terrain and weather setup bonuses',
+      'Mechanic gameplay bonuses are deferred until Equipment page is live.',
+      'Future impact: setup quality, reliability and condition-specific bike preparation.',
+      'Staff can be hired now, but live team bonuses should stay inactive for this role.',
     ]
   }
 
   if (role === 'sport_director') {
-    const tactics = members.reduce(
-      (sum, member) => sum + Math.max(2, Math.floor(member.stats[0].value / 15)),
-      0
-    )
-    const morale = members.reduce(
-      (sum, member) => sum + Math.max(1, Math.floor(member.stats[1].value / 20)),
-      0
-    )
-
     return [
-      `+${tactics}% combined tactical support`,
-      `+${morale}% combined morale stability`,
-      'Future: stronger collective race execution',
+      'Sport Director gameplay is planned for race systems.',
+      'Future impact: better tactical execution, teamwork and domestique support.',
+      'Future impact: small morale stability bonus.',
     ]
   }
 
-  const scouting = members.reduce(
-    (sum, member) => sum + Math.max(2, Math.floor(member.stats[0].value / 15)),
+  if (role === 'u23_head_coach') {
+    return [
+      'U23 Head Coach gameplay is planned for developing-team systems.',
+      'Future impact: U23 training support and young rider development.',
+      'Future impact: automated U23 race tactics when developing-team races are ready.',
+    ]
+  }
+
+  const scoutingScore = activeMembers.reduce(
+    (sum, member) => sum + Math.max(2, Math.floor(getStatValue(member, 'Evaluation') / 15)),
     0
   )
-  const prospects = members.reduce(
-    (sum, member) => sum + Math.max(2, Math.floor(member.stats[1].value / 18)),
+
+  const prospectScore = activeMembers.reduce(
+    (sum, member) => sum + Math.max(2, Math.floor(getStatValue(member, 'Network') / 18)),
     0
   )
 
   return [
-    `+${scouting}% combined scouting accuracy`,
-    `+${prospects}% combined prospect visibility`,
+    `+${scoutingScore}% combined scouting accuracy`,
+    `+${prospectScore}% combined prospect visibility`,
     'Future: broader transfer and youth intelligence',
   ]
 }
@@ -1336,16 +2522,30 @@ function RoleContributionPanel({
   members,
   infrastructure,
   roleLimit,
+  backendHeadCoachImpact,
+  activeHeadCoachEffect,
+  medicalStaffEffect,
 }: {
   role: StaffRole
   members: StaffListMember[]
   infrastructure: ClubInfrastructureRow | null
   roleLimit: number
+  backendHeadCoachImpact?: string[] | null
+  activeHeadCoachEffect?: HeadCoachEffectRow | null
+  medicalStaffEffect?: MedicalStaffEffectRow | null
 }) {
   const roleMeta = getRoleMeta(role)
   const facilityWarning = getRoleInfrastructureWarning(role, infrastructure)
   const averageStats = buildAverageStats(members)
-  const aggregateEffects = buildAggregateEffectSummary(role, members)
+  const isCoachingGroup = isCoachingRole(role)
+  const isMedicalGroup = isMedicalRole(role)
+
+  const aggregateEffects = isMedicalGroup
+    ? buildMedicalCombinedEffects(medicalStaffEffect ?? null)
+    : isCoachingGroup && backendHeadCoachImpact
+      ? backendHeadCoachImpact
+      : buildAggregateEffectSummary(role, members)
+
   const weeklyWages = members.reduce((sum, member) => sum + member.salaryWeekly, 0)
   const activeCourses = members.filter((member) => member.activeCourse !== null).length
 
@@ -1353,7 +2553,7 @@ function RoleContributionPanel({
     <div className="rounded-2xl border border-gray-100 bg-gray-50 p-5">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
         <div>
-          <div className="text-base font-semibold text-gray-900">{roleMeta.label} Role Summary</div>
+          <div className="text-base font-semibold text-gray-900">{getImpactPanelTitle(role)}</div>
           <div className="mt-1 text-sm text-gray-500">{roleMeta.subtitle}</div>
         </div>
 
@@ -1377,7 +2577,7 @@ function RoleContributionPanel({
         <SummaryCard
           label="Weekly Wages"
           value={formatCurrency(weeklyWages)}
-          subtext="For this role only"
+          subtext="For this impact group"
         />
         <SummaryCard
           label="Active Courses"
@@ -1395,7 +2595,13 @@ function RoleContributionPanel({
         <div>
           <SectionTitle
             title="Combined Team Impact"
-            subtitle="Basic v1 summary of what this role currently contributes."
+            subtitle={
+              isMedicalGroup
+                ? 'Combined medical support from Team Doctor, Physio and Nutritionist.'
+                : isCoachingGroup && activeHeadCoachEffect
+                  ? `Backend-applied coaching effect from ${activeHeadCoachEffect.staff_name}.`
+                  : 'Current combined impact from active staff in this group.'
+            }
           />
           <div className="space-y-2">
             {aggregateEffects.map((effect) => (
@@ -1429,7 +2635,7 @@ function RoleContributionPanel({
         <div>
           <SectionTitle
             title="Average Skill Profile"
-            subtitle="Average values across staff currently assigned to this role."
+            subtitle="Average values across staff currently assigned to this impact group."
           />
           {averageStats.length > 0 ? (
             <div className="grid grid-cols-2 gap-3">
@@ -1442,7 +2648,7 @@ function RoleContributionPanel({
             </div>
           ) : (
             <div className="rounded-xl border border-dashed border-gray-200 bg-white px-4 py-5 text-sm text-gray-500">
-              No staff assigned to this role yet, so there is no active skill profile to summarize.
+              No staff assigned to this impact group yet, so there is no active skill profile to summarize.
             </div>
           )}
         </div>
@@ -1468,7 +2674,8 @@ function StaffDetailModal({
 }) {
   if (!staff) return null
 
-  const scoutQuality = calculateScoutQuality(staff, infrastructure)
+  const qualityPanel = buildStaffQualityPanel(staff, infrastructure)
+  const qualityExplanation = buildStaffQualityExplanation(staff.role, infrastructure)
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/35 px-4 backdrop-blur-sm">
@@ -1603,38 +2810,7 @@ function StaffDetailModal({
                 </div>
               ) : null}
 
-              {staff.role === 'scout_analyst' ? (
-                <div className="mt-4 rounded-xl border border-blue-100 bg-blue-50 p-4 text-sm text-blue-900">
-                  <div className="font-semibold">How Scout Quality Works</div>
-                  <div className="mt-2 text-blue-800">
-                    Scout attributes create the scout’s true ability. The Scouting Office can cap the final
-                    report quality, so a strong scout may still produce basic reports until the office is upgraded.
-                  </div>
-
-                  <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
-                    <div className="rounded-lg bg-white px-3 py-2">
-                      <div className="text-xs text-blue-700">Scout Ability levels</div>
-                      <div className="mt-1 font-medium">Basic → Solid → Strong → Elite</div>
-                    </div>
-
-                    <div className="rounded-lg bg-white px-3 py-2">
-                      <div className="text-xs text-blue-700">Report Quality levels</div>
-                      <div className="mt-1 font-medium">Basic → Solid → Strong → Elite</div>
-                    </div>
-                  </div>
-
-                  <div className="mt-2 rounded-lg bg-white px-3 py-2">
-                    <div className="text-xs text-blue-700">Scout Ability thresholds</div>
-                    <div className="mt-1 text-xs font-medium text-blue-950">
-                      Basic: below 55 · Solid: 55–69 · Strong: 70–84 · Elite: 85+
-                    </div>
-                  </div>
-
-                  <div className="mt-3 rounded-lg border border-yellow-200 bg-yellow-50 px-3 py-2 text-xs text-yellow-800">
-                    Better Scouting Office unlocks higher report quality.
-                  </div>
-                </div>
-              ) : null}
+              <StaffQualityExplanationPanel data={qualityExplanation} />
             </div>
 
             <div className="rounded-xl border border-gray-100 p-4">
@@ -1651,51 +2827,7 @@ function StaffDetailModal({
                 ))}
               </div>
 
-              {scoutQuality ? (
-                <div className="mt-4">
-                  <div className="text-sm font-semibold text-gray-900">Scouting Quality</div>
-
-                  <div className="mt-3 space-y-2">
-                    <div className="rounded-lg bg-gray-50 px-3 py-2">
-                      <div className="text-xs text-gray-500">Scout Ability</div>
-                      <div className="mt-1 text-sm font-semibold text-gray-900">
-                        <span className="inline-flex rounded-full bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-900">
-                          {formatScoutTier(scoutQuality.scoutAbilityTier)} ({scoutQuality.scoutAbilityScore})
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="rounded-lg bg-gray-50 px-3 py-2">
-                      <div className="text-xs text-gray-500">Current Report Quality</div>
-                      <div className="mt-1 text-sm font-semibold text-gray-900">
-                        <span className="inline-flex rounded-full bg-yellow-50 px-2.5 py-1 text-xs font-semibold text-yellow-900">
-                          {formatScoutTier(scoutQuality.currentReportTier)}
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="rounded-lg bg-gray-50 px-3 py-2">
-                      <div className="text-xs text-gray-500">Report Time</div>
-                      <div className="mt-1 text-sm font-semibold text-gray-900">
-                        {scoutQuality.durationHours}h
-                      </div>
-                    </div>
-
-                    <div className="rounded-lg bg-gray-50 px-3 py-2">
-                      <div className="text-xs text-gray-500">Scouting Office</div>
-                      <div className="mt-1 text-sm font-semibold text-gray-900">
-                        Lv {scoutQuality.scoutingLevel}
-                      </div>
-                    </div>
-                  </div>
-
-                  {scoutQuality.isLimitedByOffice ? (
-                    <div className="mt-3 rounded-lg border border-yellow-200 bg-yellow-50 px-3 py-2 text-xs text-yellow-800">
-                      Limited by Scouting Office Lv {scoutQuality.scoutingLevel}.
-                    </div>
-                  ) : null}
-                </div>
-              ) : null}
+              <StaffQualityPanel data={qualityPanel} />
 
               {staff.lastCourseGains.length > 0 ? (
                 <div className="mt-4 rounded-xl border border-green-100 bg-green-50 p-4">
@@ -2192,33 +3324,40 @@ function StaffCourseModal({
             </div>
           ) : null}
 
-          <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {courseOptions.map((option) => (
-              <div key={option.code} className="rounded-xl border border-gray-100 bg-gray-50 p-4">
-                <div className="text-sm font-semibold text-gray-900">{option.title}</div>
-                <div className="mt-2 text-sm text-gray-600">{option.description}</div>
+          {courseOptions.length > 0 ? (
+            <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+              {courseOptions.map((option) => (
+                <div key={option.code} className="rounded-xl border border-gray-100 bg-gray-50 p-4">
+                  <div className="text-sm font-semibold text-gray-900">{option.title}</div>
+                  <div className="mt-2 text-sm text-gray-600">{option.description}</div>
 
-                <div className="mt-4 space-y-1 text-xs text-gray-500">
-                  <div>Focus: {option.focusLabel}</div>
-                  <div>Duration: {option.durationDays} days</div>
-                  <div>Cost: {formatCurrency(option.costCash)}</div>
+                  <div className="mt-4 space-y-1 text-xs text-gray-500">
+                    <div>Focus: {option.focusLabel}</div>
+                    <div>Duration: {option.durationDays} days</div>
+                    <div>Cost: {formatCurrency(option.costCash)}</div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => onStartCourse(option.code)}
+                    disabled={startingCourseCode !== null}
+                    className={`mt-4 w-full rounded-lg px-4 py-2 text-sm font-medium transition ${
+                      startingCourseCode !== null
+                        ? 'cursor-not-allowed bg-gray-200 text-gray-500'
+                        : 'bg-yellow-400 text-black hover:bg-yellow-300'
+                    }`}
+                  >
+                    {startingCourseCode === option.code ? 'Starting...' : 'Start Course'}
+                  </button>
                 </div>
-
-                <button
-                  type="button"
-                  onClick={() => onStartCourse(option.code)}
-                  disabled={startingCourseCode !== null}
-                  className={`mt-4 w-full rounded-lg px-4 py-2 text-sm font-medium transition ${
-                    startingCourseCode !== null
-                      ? 'cursor-not-allowed bg-gray-200 text-gray-500'
-                      : 'bg-yellow-400 text-black hover:bg-yellow-300'
-                  }`}
-                >
-                  {startingCourseCode === option.code ? 'Starting...' : 'Start Course'}
-                </button>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <div className="mt-5 rounded-xl border border-dashed border-gray-200 bg-gray-50 p-5 text-sm text-gray-500">
+              No course options are configured for this staff role yet. This prevents the wrong
+              course type from being started until backend course codes are added for this role.
+            </div>
+          )}
 
           <div className="mt-6 flex items-center justify-end">
             <button
@@ -2253,6 +3392,8 @@ export default function StaffPage() {
   const [recentCourseResults, setRecentCourseResults] = useState<RecentStaffCourseResultRow[]>([])
   const [infrastructure, setInfrastructure] = useState<ClubInfrastructureRow | null>(null)
   const [roleLimits, setRoleLimits] = useState<StaffRoleLimitRow[]>([])
+  const [headCoachEffects, setHeadCoachEffects] = useState<HeadCoachEffectRow[]>([])
+  const [medicalStaffEffect, setMedicalStaffEffect] = useState<MedicalStaffEffectRow | null>(null)
   const [selectedRole, setSelectedRole] = useState<StaffRole>('head_coach')
   const [selectedStaff, setSelectedStaff] = useState<StaffListMember | null>(null)
   const [releaseConfirmStaff, setReleaseConfirmStaff] = useState<StaffListMember | null>(null)
@@ -2281,6 +3422,8 @@ export default function StaffPage() {
       activeCoursesResult,
       recentCourseResultsResult,
       roleLimitsResult,
+      headCoachEffectsResult,
+      medicalEffectsResult,
     ] = await Promise.all([
       supabase.rpc('get_club_staff_with_current_assignments', {
         p_club_id: targetClubId,
@@ -2309,6 +3452,12 @@ export default function StaffPage() {
       supabase.rpc('get_staff_role_capacity_overview_for_club', {
         p_club_id: targetClubId,
       }),
+      supabase.rpc('get_head_coach_effects', {
+        p_club_id: targetClubId,
+      }),
+      supabase.rpc('get_team_doctor_effects', {
+        p_club_id: targetClubId,
+      }),
     ])
 
     if (staffResult.error) throw staffResult.error
@@ -2317,6 +3466,8 @@ export default function StaffPage() {
     if (activeCoursesResult.error) throw activeCoursesResult.error
     if (recentCourseResultsResult.error) throw recentCourseResultsResult.error
     if (roleLimitsResult.error) throw roleLimitsResult.error
+    if (headCoachEffectsResult.error) throw headCoachEffectsResult.error
+    if (medicalEffectsResult.error) throw medicalEffectsResult.error
 
     const nextStaffRows = (staffResult.data || []) as ClubStaffRow[]
     const nextInfrastructure = (infraResult.data as ClubInfrastructureRow | null) || null
@@ -2330,6 +3481,10 @@ export default function StaffPage() {
     const nextRoleLimits = Array.isArray(roleLimitsResult.data)
       ? (roleLimitsResult.data as StaffRoleLimitRow[])
       : []
+    const nextHeadCoachEffects = Array.isArray(headCoachEffectsResult.data)
+      ? (headCoachEffectsResult.data as HeadCoachEffectRow[])
+      : []
+    const nextMedicalStaffEffect = normalizeRpcSingle<MedicalStaffEffectRow>(medicalEffectsResult.data)
 
     setStaffRows(nextStaffRows)
     setInfrastructure(nextInfrastructure)
@@ -2337,6 +3492,8 @@ export default function StaffPage() {
     setActiveCourseRows(nextActiveCourseRows)
     setRecentCourseResults(nextRecentCourseResults)
     setRoleLimits(nextRoleLimits)
+    setHeadCoachEffects(nextHeadCoachEffects)
+    setMedicalStaffEffect(nextMedicalStaffEffect)
 
     return {
       staffRows: nextStaffRows,
@@ -2345,6 +3502,8 @@ export default function StaffPage() {
       activeCourseRows: nextActiveCourseRows,
       recentCourseResults: nextRecentCourseResults,
       roleLimits: nextRoleLimits,
+      headCoachEffects: nextHeadCoachEffects,
+      medicalStaffEffect: nextMedicalStaffEffect,
     }
   }
 
@@ -2497,10 +3656,14 @@ export default function StaffPage() {
   const membersByRole = useMemo(() => {
     const grouped: Record<StaffRole, StaffListMember[]> = {
       head_coach: [],
+      trainer: [],
       team_doctor: [],
+      physio: [],
+      nutritionist: [],
       mechanic: [],
       sport_director: [],
       scout_analyst: [],
+      u23_head_coach: [],
     }
 
     for (const member of staffMembers) {
@@ -2515,6 +3678,25 @@ export default function StaffPage() {
   const selectedRoleLimit = getRoleLimit(selectedRole, roleLimitMap)
   const selectedRoleWarning = getRoleInfrastructureWarning(selectedRole, infrastructure)
 
+  const selectedImpactMembers = getImpactMembers(selectedRole, membersByRole)
+  const selectedImpactLimit = getImpactRoleLimit(selectedRole, roleLimitMap)
+
+  const activeHeadCoachEffect = headCoachEffects[0] ?? null
+
+  const backendHeadCoachImpact = activeHeadCoachEffect
+    ? [
+        `+${multiplierToBonusPercent(
+          activeHeadCoachEffect.training_efficiency_multiplier
+        )}% training output`,
+        `+${multiplierToBonusPercent(
+          activeHeadCoachEffect.development_multiplier
+        )}% development support`,
+        `-${multiplierToReductionPercent(
+          activeHeadCoachEffect.overload_risk_multiplier
+        )}% overload risk`,
+      ]
+    : null
+
   const weeklyWages = useMemo(
     () => staffMembers.reduce((sum, member) => sum + member.salaryWeekly, 0),
     [staffMembers]
@@ -2528,6 +3710,19 @@ export default function StaffPage() {
   const openStaffSlots = Math.max(totalStaffLimit - staffMembers.length, 0)
   const warningsCount = staffMembers.filter((member) => Boolean(member.facilityWarning)).length
   const activeCoursesCount = staffMembers.filter((member) => member.activeCourse !== null).length
+
+  const recentCourseResultsToShow = useMemo(
+    () =>
+      recentCourseResults
+        .slice()
+        .sort((a, b) =>
+          String(b.completed_game_date ?? '').localeCompare(
+            String(a.completed_game_date ?? '')
+          )
+        )
+        .slice(0, 6),
+    [recentCourseResults]
+  )
 
   async function confirmReleaseStaff() {
     if (!releaseConfirmStaff || !clubId) return
@@ -2903,20 +4098,23 @@ export default function StaffPage() {
         <div className="mt-8">
           <RoleContributionPanel
             role={selectedRole}
-            members={selectedRoleMembers}
+            members={selectedImpactMembers}
             infrastructure={infrastructure}
-            roleLimit={selectedRoleLimit}
+            roleLimit={selectedImpactLimit}
+            backendHeadCoachImpact={backendHeadCoachImpact}
+            activeHeadCoachEffect={activeHeadCoachEffect}
+            medicalStaffEffect={medicalStaffEffect}
           />
         </div>
 
-        {recentCourseResults.length > 0 ? (
+        {recentCourseResultsToShow.length > 0 ? (
           <div className="mt-8">
             <SectionTitle
               title="Recent Course Results"
               subtitle="Completed staff development courses and applied stat gains."
             />
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-              {recentCourseResults.map((result) => {
+              {recentCourseResultsToShow.map((result) => {
                 const gains = formatCourseGains(result)
 
                 return (

@@ -181,16 +181,48 @@ function formatMoney(n: number, currency: CurrencyCode = 'USD'): string {
 }
 
 /**
- * formatTransactionType
- * Convert values like "sponsor_contract_payment" into readable text.
+ * transactionTypeLabelMap
+ * Human-readable labels for known backend finance transaction types.
  */
-function formatTransactionType(value: string): string {
-  if (!value) return '—'
+const transactionTypeLabelMap: Record<string, string> = {
+  sponsor_contract_payment: 'Sponsor Contract Payment',
+  tax_withholding: 'Tax Withholding',
 
-  return value
-    .replace(/[_-]+/g, ' ')
+  rider_salary_payday: 'Rider Salary Payday',
+  staff_salary_payday: 'Staff Salary Payday',
+
+  new_club_bonus: 'New Club Bonus',
+
+  staff_course_fee: 'Staff Course Fee',
+  staff_release_cost: 'Staff Release Cost',
+
+  infrastructure_facility_start: 'Infrastructure Facility Start',
+  infrastructure_asset_start: 'Infrastructure Asset Start',
+  infrastructure_asset_repair: 'Infrastructure Asset Repair',
+  infrastructure_asset_sale: 'Infrastructure Asset Sale',
+  infrastructure_job_refund: 'Infrastructure Job Refund',
+
+  team_policy_housing_cost: 'Team Policy Housing Cost',
+}
+
+/**
+ * formatTransactionType
+ * Convert backend transaction types into readable labels.
+ *
+ * Known types use explicit labels.
+ * Future unknown underscore-based types are automatically prettified.
+ */
+function formatTransactionType(type: string | null | undefined): string {
+  if (!type) return 'Transaction'
+
+  const mapped = transactionTypeLabelMap[type]
+
+  if (mapped) return mapped
+
+  return type
+    .replace(/_/g, ' ')
+    .replace(/\s+/g, ' ')
     .trim()
-    .toLowerCase()
     .replace(/\b\w/g, (char) => char.toUpperCase())
 }
 
@@ -319,7 +351,9 @@ function TransactionsTable({
                   </td>
 
                   <td className="p-3 font-medium text-gray-800 whitespace-nowrap">
-                    {r.type_name || formatTransactionType(r.type)}
+                    <span title={r.type || undefined}>
+                      {formatTransactionType(r.type)}
+                    </span>
                   </td>
 
                   <td className={`p-3 font-semibold whitespace-nowrap ${amountColorClass}`}>

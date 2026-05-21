@@ -7,6 +7,7 @@ import { supabase } from '../../lib/supabase'
 type TabKey = 'regular' | 'camps'
 type CampType = 'general' | 'sprint' | 'climbing' | 'flat' | 'time_trial'
 type AvailabilityStatus = 'fit' | 'not_fully_fit' | 'injured' | 'sick'
+type RegularTrainingIntensity = 'recovery' | 'light' | 'normal' | 'hard'
 type WeatherState = 'ideal' | 'good' | 'mixed' | 'poor' | 'unavailable'
 type RegionFilter =
   | 'all'
@@ -59,7 +60,7 @@ type ClubRegularTrainingDefaultRow = {
   club_id: string
   team_scope: string
   focus_code: string
-  intensity: 'light' | 'normal' | 'hard'
+  intensity: RegularTrainingIntensity
   auto_when_free: boolean
   updated_at?: string
   created_at?: string
@@ -69,7 +70,7 @@ type RiderRegularTrainingPlanRow = {
   rider_id: string
   club_id: string
   focus_code: string
-  intensity: 'light' | 'normal' | 'hard'
+  intensity: RegularTrainingIntensity
   is_active: boolean
   auto_when_free: boolean
   preferred_days: number[] | null
@@ -90,7 +91,7 @@ type Camp = {
   location_cost_index: number
   training_quality_multiplier: number
   recovery_comfort_bonus: number
-  default_intensity: 'light' | 'normal' | 'hard'
+  default_intensity: RegularTrainingIntensity
   base_accommodation_per_day: number
   base_camp_fee_per_day: number
   preferred_weeks: number[]
@@ -157,7 +158,6 @@ type CampQuote = {
   per_rider_total: number
   warnings: string[]
 
-  // v2 staff-aware fields
   riders_count?: number
   staff_count?: number
   charged_participants_count?: number
@@ -165,15 +165,10 @@ type CampQuote = {
 
 type BookingValidation = {
   is_valid: boolean
-
-  // old compatibility
   participants_count?: number
-
-  // v2 staff-aware fields
   riders_count?: number
   staff_count?: number
   charged_participants_count?: number
-
   weather_state: WeatherState
   validation_errors: string[]
   validation_warnings: string[]
@@ -278,22 +273,27 @@ const CAMP_TYPE_OPTIONS: Array<'all' | CampType> = [
 ]
 
 const REGULAR_TRAINING_FOCUS_OPTIONS = [
-  'general',
-  'recovery',
-  'sprint',
-  'climbing',
-  'flat',
-  'time_trial',
-  'endurance',
-  'resistance',
-  'race_iq',
-  'teamwork'
+  { value: 'general', label: 'General' },
+  { value: 'recovery', label: 'Recovery' },
+  { value: 'sprint', label: 'Sprint' },
+  { value: 'climbing', label: 'Climbing' },
+  { value: 'flat', label: 'Flat' },
+  { value: 'time_trial', label: 'Time Trial' },
+  { value: 'endurance', label: 'Endurance' },
+  { value: 'resistance', label: 'Resistance' },
+  { value: 'race_iq', label: 'Race IQ' },
+  { value: 'teamwork', label: 'Teamwork' },
+  { value: 'day_off', label: 'Day Off' }
 ] as const
 
-const REGULAR_TRAINING_INTENSITY_OPTIONS: Array<'light' | 'normal' | 'hard'> = [
-  'light',
-  'normal',
-  'hard'
+const REGULAR_TRAINING_INTENSITY_OPTIONS: Array<{
+  value: RegularTrainingIntensity
+  label: string
+}> = [
+  { value: 'recovery', label: 'Recovery' },
+  { value: 'light', label: 'Light' },
+  { value: 'normal', label: 'Normal' },
+  { value: 'hard', label: 'Hard' }
 ]
 
 const WEEKDAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
@@ -312,6 +312,10 @@ const PAST_TRAINING_CAMP_ERROR = 'Training camp cannot start today or in the pas
 
 const TRAINING_CAMP_REFUND_NOTICE =
   'Plan camp dates carefully. Once a training camp is booked, cancelling it close to the start date may only return a partial refund or no refund.'
+
+const DAY_OFF_HELPER_TEXT =
+  'Day Off gives no skill development and no training staff boost. Riders only recover fatigue.'
+
 const GAME_MONTH_SHORT = [
   'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
   'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
@@ -373,12 +377,52 @@ function formatSeasonLabel(dateValue: string | null | undefined): string {
   }
 }
 
-function formatTrainingFocusLabel(value: string): string {
+function formatTrainingFocusLabel(value: string | null | undefined): string {
+  if (value === 'day_off') return 'Day Off'
   return titleCaseFromSnake(value)
 }
 
-function formatTrainingIntensityLabel(value: 'light' | 'normal' | 'hard'): string {
+function formatTrainingIntensityLabel(value: RegularTrainingIntensity): string {
   return value.charAt(0).toUpperCase() + value.slice(1)
+}
+
+function isDayOffFocus(focusCode: string | null | undefined): boolean {
+  return focusCode === 'day_off'
+}
+
+function normalizeTrainingIntensityForSave(
+  focusCode: string,
+  intensity: string | null | undefined
+): RegularTrainingIntensity {
+  if (isDayOffFocus(focusCode)) {
+    return 'normal'
+  }
+
+  if (
+    intensity === 'recovery' ||
+    intensity === 'light' ||
+    intensity === 'normal' ||
+    intensity === 'hard'
+  ) {
+    return intensity
+  }
+
+  return 'normal'
+}
+
+function formatEffectiveRegularTrainingLabel(
+  focusCode: string | null | undefined,
+  intensity: string | null | undefined
+): string {
+  if (!focusCode) return 'No plan'
+
+  if (isDayOffFocus(focusCode)) {
+    return 'Day Off'
+  }
+
+  return `${formatTrainingFocusLabel(focusCode)} · ${formatTrainingIntensityLabel(
+    normalizeTrainingIntensityForSave(focusCode, intensity)
+  )}`
 }
 
 function getFullRiderName(rider: {
@@ -849,6 +893,7 @@ function CampDatePicker({
     () => getCurrentSeasonStartDate(currentGameDateValue),
     [currentGameDateValue]
   )
+
   const seasonEndDate = useMemo(
     () => getCurrentSeasonEndDate(currentGameDateValue),
     [currentGameDateValue]
@@ -989,18 +1034,22 @@ function CampDatePicker({
               <span className="inline-block h-3 w-3 rounded-full bg-green-100 ring-1 ring-green-200" />
               <span>Best period</span>
             </div>
+
             <div className="flex items-center gap-2">
               <span className="inline-block h-3 w-3 rounded-full bg-amber-100 ring-1 ring-amber-200" />
               <span>Risky period</span>
             </div>
+
             <div className="flex items-center gap-2">
               <span className="inline-block h-3 w-3 rounded-full bg-red-100 ring-1 ring-red-200" />
               <span>Unavailable</span>
             </div>
+
             <div className="flex items-center gap-2">
               <span className="inline-block h-3 w-3 rounded-full bg-gray-100 ring-1 ring-gray-200" />
               <span>Normal</span>
             </div>
+
             <div className="flex items-center gap-2">
               <span className="inline-block h-3 w-3 rounded-full bg-white ring-2 ring-blue-200" />
               <span>Existing camp booking</span>
@@ -1059,7 +1108,10 @@ export default function TrainingPage(): JSX.Element {
   const [bookingLoading, setBookingLoading] = useState(false)
   const [showAssignedRidersModal, setShowAssignedRidersModal] = useState(false)
   const [currentCampParticipantIds, setCurrentCampParticipantIds] = useState<string[]>([])
-  const [cancelLoading, setCancelLoading] = useState(false)
+  const [isCancellingCamp, setIsCancellingCamp] = useState(false)
+  const [cancelCampError, setCancelCampError] = useState<string | null>(null)
+  const [showCancelCampModal, setShowCancelCampModal] = useState(false)
+  const [cancelCampName, setCancelCampName] = useState<string>('')
   const [bookingResult, setBookingResult] = useState<BookingResult | null>(null)
   const [currentCampBooking, setCurrentCampBooking] = useState<CurrentCampBooking | null>(null)
   const [clubBookings, setClubBookings] = useState<CurrentCampBooking[]>([])
@@ -1309,7 +1361,7 @@ export default function TrainingPage(): JSX.Element {
   function getEffectiveRegularTraining(rider: RosterRider): {
     source: 'override' | 'default' | 'none'
     focus_code: string | null
-    intensity: 'light' | 'normal' | 'hard' | null
+    intensity: RegularTrainingIntensity | null
     auto_when_free: boolean
     is_active: boolean
   } {
@@ -1379,10 +1431,16 @@ export default function TrainingPage(): JSX.Element {
     patch: Partial<ClubRegularTrainingDefaultRow>
   ): void {
     const base = buildDefaultRowForClub(clubIdValue)
+    const nextFocusCode = patch.focus_code ?? base.focus_code
+
     upsertRegularDefaultLocal({
       ...base,
       ...patch,
-      club_id: clubIdValue
+      club_id: clubIdValue,
+      intensity: normalizeTrainingIntensityForSave(
+        nextFocusCode,
+        patch.intensity ?? base.intensity
+      )
     })
   }
 
@@ -1391,11 +1449,17 @@ export default function TrainingPage(): JSX.Element {
     patch: Partial<RiderRegularTrainingPlanRow>
   ): void {
     const base = buildPlanRowForRider(rider)
+    const nextFocusCode = patch.focus_code ?? base.focus_code
+
     upsertRegularPlanLocal({
       ...base,
       ...patch,
       rider_id: rider.rider_id,
-      club_id: rider.club_id
+      club_id: rider.club_id,
+      intensity: normalizeTrainingIntensityForSave(
+        nextFocusCode,
+        patch.intensity ?? base.intensity
+      )
     })
   }
 
@@ -1518,6 +1582,14 @@ export default function TrainingPage(): JSX.Element {
 
     return ((data ?? []) as CampStaffOption[]).filter(
       member => member.role_type !== 'scout_analyst'
+    )
+  }
+
+  function isStaffSelectable(member: CampStaffOption): boolean {
+    return (
+      member.availability_status === 'available' &&
+      !member.on_active_course &&
+      !member.overlapping_booking_id
     )
   }
 
@@ -1741,7 +1813,9 @@ export default function TrainingPage(): JSX.Element {
         setSelectedCampId(prev => prev ?? loadedCamps[0]?.id ?? null)
         setRoster(loadedRoster)
         setFamilyClubs(familyClubs)
+
         await loadRegularTrainingConfig(familyClubIds)
+
         setSelectedRiderIds(
           loadedRoster
             .filter(
@@ -1754,6 +1828,7 @@ export default function TrainingPage(): JSX.Element {
             .slice(0, 5)
             .map(rider => rider.rider_id)
         )
+
         setStartDate(prev => {
           const normalizedPrev = normalizeIsoDateValue(prev) ?? prev
 
@@ -1946,6 +2021,7 @@ export default function TrainingPage(): JSX.Element {
 
   async function saveRegularTrainingDefault(clubIdValue: string): Promise<void> {
     const row = buildDefaultRowForClub(clubIdValue)
+    const normalizedIntensity = normalizeTrainingIntensityForSave(row.focus_code, row.intensity)
 
     setRegularSavingDefaultClubId(clubIdValue)
     setRegularMessage(null)
@@ -1956,7 +2032,7 @@ export default function TrainingPage(): JSX.Element {
         club_id: row.club_id,
         team_scope: row.team_scope,
         focus_code: row.focus_code,
-        intensity: row.intensity,
+        intensity: normalizedIntensity,
         auto_when_free: row.auto_when_free
       }
 
@@ -1980,6 +2056,7 @@ export default function TrainingPage(): JSX.Element {
   async function saveRegularTrainingPlan(rider: RosterRider): Promise<void> {
     const row = buildPlanRowForRider(rider)
     const riderName = getFullRiderName(rider)
+    const normalizedIntensity = normalizeTrainingIntensityForSave(row.focus_code, row.intensity)
 
     setRegularSavingRiderId(rider.rider_id)
     setRegularMessage(null)
@@ -1990,7 +2067,7 @@ export default function TrainingPage(): JSX.Element {
         rider_id: row.rider_id,
         club_id: row.club_id,
         focus_code: row.focus_code,
-        intensity: row.intensity,
+        intensity: normalizedIntensity,
         is_active: row.is_active,
         auto_when_free: row.auto_when_free,
         preferred_days: row.preferred_days
@@ -2151,59 +2228,62 @@ export default function TrainingPage(): JSX.Element {
     }
   }
 
-  async function handleCancelCamp(): Promise<void> {
+  function openCancelCampModal(): void {
+    if (!currentCampBooking) return
+
+    const campName =
+      currentCampBooking.city_snapshot ||
+      currentCampBooking.country_code_snapshot ||
+      'this training camp'
+
+    setCancelCampName(campName)
+    setCancelCampError(null)
+    setShowCancelCampModal(true)
+  }
+
+  async function handleCancelCampConfirm(): Promise<void> {
     if (!currentCampBooking || !clubId) return
 
-    setCancelLoading(true)
+    setIsCancellingCamp(true)
+    setCancelCampError(null)
     setError(null)
 
     try {
-      const { data, error } = await supabase.rpc('cancel_training_camp_booking_debug', {
+      const { data, error } = await supabase.rpc('cancel_training_camp_booking', {
         p_booking_id: currentCampBooking.id
       })
 
       if (error) {
-        console.error('cancel_training_camp_booking_debug error raw:', error)
-        console.error(
-          'cancel_training_camp_booking_debug error json:',
-          JSON.stringify(error, null, 2)
-        )
-
-        const fullMessage = [error.message, (error as any).details, (error as any).hint]
-          .filter(Boolean)
-          .join(' — ')
-
-        throw new Error(fullMessage || 'Failed to cancel training camp.')
+        throw new Error(error.message || 'Training camp could not be cancelled.')
       }
 
-      const debugResult = data as
+      const result = data as
         | {
-            ok: boolean
+            ok?: boolean
+            reason?: string
             message?: string
-            result?: {
-              ok?: boolean
-              refund_amount?: number
-            }
+            refund_amount?: number
           }
         | null
 
-      if (!debugResult) {
-        throw new Error('Cancel debug response was empty.')
-      }
-
-      if (!debugResult.ok) {
-        throw new Error(debugResult.message || 'Failed to cancel training camp.')
-      }
-
-      if (debugResult.result?.ok !== true) {
-        throw new Error('Failed to cancel training camp.')
+      if (result?.ok === false) {
+        throw new Error(
+          result.reason ||
+            result.message ||
+            'Training camp could not be cancelled.'
+        )
       }
 
       await loadCurrentCampBooking(clubId)
 
       if (startDate) {
         const normalizedStartDate = normalizeIsoDateValue(startDate) ?? startDate
-        const refreshedStaff = await fetchAvailableCampStaff(clubId, normalizedStartDate, days)
+        const refreshedStaff = await fetchAvailableCampStaff(
+          clubId,
+          normalizedStartDate,
+          days
+        )
+
         setAvailableStaff(refreshedStaff)
         keepOnlySelectableStaff(refreshedStaff)
       }
@@ -2212,12 +2292,15 @@ export default function TrainingPage(): JSX.Element {
       setCurrentCampParticipantIds([])
       setShowAssignedRidersModal(false)
       setBookingResult(null)
-    } catch (err) {
-      const message =
-        err instanceof Error ? err.message : 'Failed to cancel training camp.'
-      setError(message)
+      setShowCancelCampModal(false)
+    } catch (error) {
+      setCancelCampError(
+        error instanceof Error
+          ? error.message
+          : 'Training camp could not be cancelled.'
+      )
     } finally {
-      setCancelLoading(false)
+      setIsCancellingCamp(false)
     }
   }
 
@@ -2247,14 +2330,6 @@ export default function TrainingPage(): JSX.Element {
       }
       return [...current, riderId]
     })
-  }
-
-  function isStaffSelectable(member: CampStaffOption): boolean {
-    return (
-      member.availability_status === 'available' &&
-      !member.on_active_course &&
-      !member.overlapping_booking_id
-    )
   }
 
   function getStaffBlockText(member: CampStaffOption): string | null {
@@ -2397,11 +2472,11 @@ export default function TrainingPage(): JSX.Element {
 
                 <button
                   type="button"
-                  onClick={() => void handleCancelCamp()}
-                  disabled={cancelLoading}
+                  onClick={openCancelCampModal}
+                  disabled={isCancellingCamp}
                   className={cancelCampButtonClass}
                 >
-                  {cancelLoading ? 'Cancelling…' : 'Cancel Camp'}
+                  {isCancellingCamp ? 'Cancelling…' : 'Cancel Camp'}
                 </button>
               </div>
             </div>
@@ -2445,6 +2520,12 @@ export default function TrainingPage(): JSX.Element {
               </span>
             </div>
           </div>
+
+          {cancelCampError ? (
+            <div className="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+              {cancelCampError}
+            </div>
+          ) : null}
 
           <div className="mt-4 text-sm text-gray-600">
             Existing camp dates are outlined in blue in the date picker. Overlap is enforced per
@@ -2535,6 +2616,7 @@ export default function TrainingPage(): JSX.Element {
                 const row = buildDefaultRowForClub(team.club_id)
                 const hasSavedDefault = regularDefaultsByClubId.has(team.club_id)
                 const ridersInTeam = roster.filter(rider => rider.club_id === team.club_id).length
+                const defaultIsDayOff = isDayOffFocus(row.focus_code)
 
                 return (
                   <div
@@ -2570,44 +2652,57 @@ export default function TrainingPage(): JSX.Element {
 
                     <div className="grid gap-3 md:grid-cols-2">
                       <label className="block">
-                        <span className="mb-1 block text-sm font-medium text-gray-700">Focus</span>
+                        <span className="mb-1 block text-sm font-medium text-gray-700">
+                          Focus
+                        </span>
                         <select
                           value={row.focus_code}
-                          onChange={event =>
+                          onChange={event => {
+                            const nextFocus = event.target.value
+
                             updateRegularDefaultDraft(team.club_id, {
-                              focus_code: event.target.value
+                              focus_code: nextFocus,
+                              intensity: normalizeTrainingIntensityForSave(nextFocus, row.intensity)
                             })
-                          }
+                          }}
                           className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500"
                         >
                           {REGULAR_TRAINING_FOCUS_OPTIONS.map(option => (
-                            <option key={option} value={option}>
-                              {formatTrainingFocusLabel(option)}
+                            <option key={option.value} value={option.value}>
+                              {option.label}
                             </option>
                           ))}
                         </select>
                       </label>
 
-                      <label className="block">
+                      <div>
                         <span className="mb-1 block text-sm font-medium text-gray-700">
                           Intensity
                         </span>
+
                         <select
-                          value={row.intensity}
+                          value={defaultIsDayOff ? 'normal' : row.intensity}
+                          disabled={defaultIsDayOff}
                           onChange={event =>
                             updateRegularDefaultDraft(team.club_id, {
-                              intensity: event.target.value as 'light' | 'normal' | 'hard'
+                              intensity: event.target.value as RegularTrainingIntensity
                             })
                           }
-                          className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500"
+                          className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 outline-none focus:border-blue-500 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-400"
                         >
                           {REGULAR_TRAINING_INTENSITY_OPTIONS.map(option => (
-                            <option key={option} value={option}>
-                              {formatTrainingIntensityLabel(option)}
+                            <option key={option.value} value={option.value}>
+                              {option.label}
                             </option>
                           ))}
                         </select>
-                      </label>
+
+                        {defaultIsDayOff ? (
+                          <div className="mt-2 rounded-lg border border-blue-100 bg-blue-50 px-3 py-2 text-xs text-blue-700">
+                            {DAY_OFF_HELPER_TEXT}
+                          </div>
+                        ) : null}
+                      </div>
                     </div>
 
                     <label className="mt-3 flex items-center gap-2 text-sm text-gray-700">
@@ -2655,6 +2750,7 @@ export default function TrainingPage(): JSX.Element {
                 const draft = buildPlanRowForRider(rider)
                 const hasOverride = regularPlansByRiderId.has(rider.rider_id)
                 const isFocusedRider = focusedRiderId === rider.rider_id
+                const draftIsDayOff = isDayOffFocus(draft.focus_code)
 
                 return (
                   <div
@@ -2720,13 +2816,10 @@ export default function TrainingPage(): JSX.Element {
                         <div className="mt-3 rounded-lg bg-gray-50 px-3 py-2 text-sm text-gray-700">
                           Effective today:{' '}
                           <span className="font-medium">
-                            {effective.focus_code
-                              ? `${formatTrainingFocusLabel(effective.focus_code)} · ${
-                                  effective.intensity
-                                    ? formatTrainingIntensityLabel(effective.intensity)
-                                    : '-'
-                                }`
-                              : 'No plan'}
+                            {formatEffectiveRegularTrainingLabel(
+                              effective.focus_code,
+                              effective.intensity
+                            )}
                           </span>
                           {' · '}
                           {effective.auto_when_free ? 'Auto when free' : 'Manual only'}
@@ -2744,41 +2837,52 @@ export default function TrainingPage(): JSX.Element {
                           </span>
                           <select
                             value={draft.focus_code}
-                            onChange={event =>
+                            onChange={event => {
+                              const nextFocus = event.target.value
+
                               updateRegularPlanDraft(rider, {
-                                focus_code: event.target.value
+                                focus_code: nextFocus,
+                                intensity: normalizeTrainingIntensityForSave(nextFocus, draft.intensity)
                               })
-                            }
+                            }}
                             className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500"
                           >
                             {REGULAR_TRAINING_FOCUS_OPTIONS.map(option => (
-                              <option key={option} value={option}>
-                                {formatTrainingFocusLabel(option)}
+                              <option key={option.value} value={option.value}>
+                                {option.label}
                               </option>
                             ))}
                           </select>
                         </label>
 
-                        <label className="block">
+                        <div>
                           <span className="mb-1 block text-sm font-medium text-gray-700">
                             Intensity
                           </span>
+
                           <select
-                            value={draft.intensity}
+                            value={draftIsDayOff ? 'normal' : draft.intensity}
+                            disabled={draftIsDayOff}
                             onChange={event =>
                               updateRegularPlanDraft(rider, {
-                                intensity: event.target.value as 'light' | 'normal' | 'hard'
+                                intensity: event.target.value as RegularTrainingIntensity
                               })
                             }
-                            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500"
+                            className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 outline-none focus:border-blue-500 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-400"
                           >
                             {REGULAR_TRAINING_INTENSITY_OPTIONS.map(option => (
-                              <option key={option} value={option}>
-                                {formatTrainingIntensityLabel(option)}
+                              <option key={option.value} value={option.value}>
+                                {option.label}
                               </option>
                             ))}
                           </select>
-                        </label>
+
+                          {draftIsDayOff ? (
+                            <div className="mt-2 rounded-lg border border-blue-100 bg-blue-50 px-3 py-2 text-xs text-blue-700">
+                              {DAY_OFF_HELPER_TEXT}
+                            </div>
+                          ) : null}
+                        </div>
 
                         <label className="flex items-center gap-2 text-sm text-gray-700">
                           <input
@@ -3457,6 +3561,103 @@ export default function TrainingPage(): JSX.Element {
                   Pick a camp, riders, and optional staff to see the quote.
                 </div>
               )}
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {showCancelCampModal ? (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 px-4">
+          <div className="w-full max-w-md overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl">
+            <div className="flex items-start justify-between gap-4 border-b border-gray-200 px-6 py-4">
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Cancel Training Camp
+                </h3>
+                <p className="mt-1 text-sm text-gray-500">
+                  Please confirm that you want to cancel this training camp.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => {
+                  if (isCancellingCamp) return
+                  setShowCancelCampModal(false)
+                  setCancelCampError(null)
+                }}
+                disabled={isCancellingCamp}
+                className="rounded-full p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-700 disabled:cursor-not-allowed disabled:opacity-60"
+                aria-label="Close cancel training camp modal"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="space-y-4 px-6 py-5">
+              <div className="rounded-xl bg-gray-50 p-4">
+                <div className="text-xs font-medium uppercase tracking-wide text-gray-500">
+                  Camp
+                </div>
+                <div className="mt-1 text-sm font-semibold text-gray-900">
+                  {cancelCampName}
+                </div>
+                {currentCampBooking ? (
+                  <div className="mt-2 text-sm text-gray-600">
+                    <div>
+                      {formatCampDateRange(
+                        currentCampBooking.start_date,
+                        currentCampBooking.end_date
+                      )}
+                    </div>
+                    <div className="mt-1">
+                      {formatSeasonLabel(currentCampBooking.start_date)}
+                    </div>
+                    <div className="mt-1">
+                      Riders: {currentCampBooking.participants_count ?? 0} · Staff:{' '}
+                      {currentCampBooking.staff_count ?? 0} · Cost:{' '}
+                      {formatCurrency(currentCampBooking.total_cost ?? 0)}
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+
+              <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                <div className="font-medium">Important</div>
+                <div className="mt-1">
+                  This action will cancel the current training camp booking. Depending on your game rules, refund handling may be partial or unavailable.
+                </div>
+              </div>
+
+              {cancelCampError ? (
+                <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                  {cancelCampError}
+                </div>
+              ) : null}
+            </div>
+
+            <div className="flex justify-end gap-3 border-t border-gray-200 px-6 py-4">
+              <button
+                type="button"
+                onClick={() => {
+                  if (isCancellingCamp) return
+                  setShowCancelCampModal(false)
+                  setCancelCampError(null)
+                }}
+                disabled={isCancellingCamp}
+                className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                Keep Camp
+              </button>
+
+              <button
+                type="button"
+                onClick={() => void handleCancelCampConfirm()}
+                disabled={isCancellingCamp}
+                className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:bg-red-300"
+              >
+                {isCancellingCamp ? 'Cancelling…' : 'Yes, Cancel Camp'}
+              </button>
             </div>
           </div>
         </div>

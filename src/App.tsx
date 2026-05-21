@@ -5,8 +5,8 @@
  *
  * Purpose:
  * - Wrap the app with AuthProvider to keep Supabase auth state in memory.
- * - Add route guards for /create-club and /dashboard/* that rely on Supabase auth
- *   and the backend RPC get_my_club_id() to decide routing.
+ * - Add route guards for /create-club and /dashboard/* that rely on Supabase auth.
+ * - Keep /create-club outside the dashboard route so the liquidation guard cannot block it.
  * - Provide small loading and error states in guards instead of blank screens.
  */
 
@@ -151,66 +151,16 @@ function RequireAuth({ children }: GuardProps): JSX.Element | null {
 }
 
 /**
- * RequireNoClub
- * For /create-club:
- * - If user already has a club, redirect to /dashboard/overview.
- * - If RPC fails, show an error state instead of misrouting.
- */
-function RequireNoClub({ children }: GuardProps): JSX.Element | null {
-  const { user, loading } = useAuth()
-  const [checking, setChecking] = useState(true)
-  const [hasClub, setHasClub] = useState<boolean | null>(null)
-  const [error, setError] = useState<string | null>(null)
-
-  useEffect(() => {
-    let mounted = true
-
-    ;(async () => {
-      if (!user) {
-        if (mounted) setChecking(false)
-        return
-      }
-
-      const { data, error: rpcError } = await supabase.rpc('get_my_club_id')
-
-      if (!mounted) return
-
-      if (rpcError) {
-        setError('Unable to check your club status right now. Please try again shortly.')
-        setChecking(false)
-        return
-      }
-
-      setHasClub(Boolean(data))
-      setChecking(false)
-    })()
-
-    return () => {
-      mounted = false
-    }
-  }, [user])
-
-  if (loading || checking) {
-    return <LoadingScreen label="Preparing club creation..." />
-  }
-
-  if (error) {
-    return <GuardErrorScreen message={error} />
-  }
-
-  if (hasClub) {
-    return <Navigate to="/dashboard/overview" replace />
-  }
-
-  return children
-}
-
-/**
  * RequireClub
  * For /dashboard/*:
  * - Allows access only if the authenticated user has a club.
  * - If not, redirect to /create-club.
  * - If RPC fails, show an error state instead of misrouting.
+ *
+ * Important:
+ * - Liquidated clubs may still return from get_my_club_id().
+ * - That is okay here because ClubDashboard handles the liquidation screen.
+ * - /create-club is outside ClubDashboard and is not blocked by the liquidation guard.
  */
 function RequireClub({ children }: GuardProps): JSX.Element | null {
   const { user, loading } = useAuth()
@@ -265,6 +215,13 @@ function RequireClub({ children }: GuardProps): JSX.Element | null {
  * App
  * Application router with auth and club-based route protection.
  *
+ * Important create-club rule:
+ * - /create-club must stay outside /dashboard.
+ * - Do not wrap /create-club in ClubDashboard.
+ * - Do not block /create-club with a get_my_club_id() "already has club" guard,
+ *   because a liquidated club can still be returned by that RPC and would redirect
+ *   the user back into the blocked dashboard.
+ *
  * Help quick-link destinations are aligned to valid registered dashboard routes,
  * including overview, transfers, notifications, scouting, and invite-friends.
  *
@@ -280,22 +237,29 @@ export default function App(): JSX.Element {
     <AuthProvider>
       <HashRouter>
         <Routes>
+          {/* Public / account routes */}
           <Route path="/" element={<HomePage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/referral/:code" element={<ReferralCapturePage />} />
 
+          {/* 
+            Create club route.
+
+            This route is intentionally outside /dashboard and does not use the old
+            RequireNoClub guard. That old guard checked get_my_club_id(), which can
+            still return a liquidated club and redirect the user back to dashboard.
+          */}
           <Route
             path="/create-club"
             element={
               <RequireAuth>
-                <RequireNoClub>
-                  <CreateClubPage />
-                </RequireNoClub>
+                <CreateClubPage />
               </RequireAuth>
             }
           />
 
+          {/* Protected game routes */}
           <Route
             path="/dashboard"
             element={

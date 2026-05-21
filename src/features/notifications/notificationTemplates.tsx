@@ -2560,7 +2560,7 @@ export const NOTIFICATION_TEMPLATES: Record<string, NotificationTemplate> = {
     defaultMessage:
       'A staff member has successfully completed a training course.',
     imageSrc:
-      'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Event%20images/Staff%20course%20completed.png',
+      'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Event%20images/Staff%20Course%20Completed.png',
 
     enrich: (item) => {
       const payload = getPayload(item) ?? {}
@@ -4681,6 +4681,2765 @@ export const NOTIFICATION_TEMPLATES: Record<string, NotificationTemplate> = {
       variant: 'secondary',
       kind: 'navigate',
       getHref: () => '/dashboard/training',
+      show: () => true,
+    },
+    MARK_READ_ACTION,
+  ],
+},
+  WELCOME_MESSAGE: {
+  defaultTitle: 'Welcome',
+  defaultMessage:
+    'Welcome to your cycling manager career. Start by reviewing the game manual, FAQ, and support options if you need help.',
+
+  imageSrc:
+    'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Event%20images/Welcome%20Message.png',
+
+  getImageSrc: (item) =>
+    getImageSrcFromItem(item) ||
+    'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Event%20images/Welcome%20Message.png',
+
+  enrich: (item) => {
+    const payload = getPayload(item)
+
+    const clubName = pickFirstString(payload, [
+      'club_name',
+      'team_name',
+      'manager_club_name',
+    ])
+
+    return {
+      ...item,
+      title: item.title || 'Welcome',
+      message:
+        item.message ||
+        (clubName
+          ? `Welcome to ${clubName}. Your cycling manager career has started.`
+          : 'Welcome to your cycling manager career. Your club is ready to begin.'),
+    }
+  },
+
+  getIntroText: (item) => {
+    const payload = getPayload(item)
+
+    const clubName = pickFirstString(payload, [
+      'club_name',
+      'team_name',
+      'manager_club_name',
+    ])
+
+    if (clubName) {
+      return `Welcome to ${clubName}. Your cycling manager career is ready to begin.`
+    }
+
+    return (
+      buildIntroFromMessage(item) ||
+      'Welcome to your cycling manager career. Start by reviewing your club, squad, and first plans.'
+    )
+  },
+
+  getDetailRows: (item) => {
+    const payload = getPayload(item)
+
+    return compactRows([
+      detailRow(
+        'Club',
+        pickFirstString(payload, [
+          'club_name',
+          'team_name',
+          'manager_club_name',
+        ])
+      ),
+      detailRow(
+        'Country',
+        pickFirstString(payload, [
+          'country_name',
+          'country_code',
+        ])
+      ),
+      detailRow(
+        'Club tier',
+        formatLabel(
+          pickFirstString(payload, [
+            'club_tier',
+            'world_tier',
+            'tier',
+          ])
+        )
+      ),
+      detailRow(
+        'Starting balance',
+        formatCurrencyLabel(
+          pickFirstNumber(payload, [
+            'cash_balance',
+            'starting_cash',
+            'club_cash',
+          ]),
+          '$'
+        )
+      ),
+      detailRow(
+        'Career start',
+        formatContractSeasonLabel(
+          pickFirstString(payload, [
+            'created_game_date',
+            'career_start_game_date',
+            'start_game_date',
+            'game_date',
+          ])
+        )
+      ),
+    ])
+  },
+
+  getExtraText: () =>
+    'New managers should check the game manual and FAQ first. The forum is useful for community tips, and the contact page can be used if you need direct support.',
+
+  actions: [
+  {
+    key: 'open-game-manual',
+    label: 'Game manual',
+    variant: 'primary',
+    kind: 'navigate',
+    getHref: () => '/dashboard/help',
+    show: () => true,
+  },
+  {
+    key: 'open-faq',
+    label: 'FAQ',
+    variant: 'secondary',
+    kind: 'navigate',
+    getHref: () => '/dashboard/help',
+    show: () => true,
+  },
+  {
+    key: 'open-forum',
+    label: 'Forum',
+    variant: 'secondary',
+    kind: 'navigate',
+    getHref: () => '/dashboard/forum',
+    show: () => true,
+  },
+  {
+    key: 'open-contact-us',
+    label: 'Contact us',
+    variant: 'secondary',
+    kind: 'navigate',
+    getHref: () => '/dashboard/contact-us',
+    show: () => true,
+  },
+  MARK_READ_ACTION,
+],
+},
+  ADMIN_MESSAGE: {
+  defaultTitle: 'Admin message',
+  defaultMessage:
+    'You have received a message from the game administration team.',
+
+  imageSrc:
+    'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Event%20images/Admin%20Message.png',
+
+  getImageSrc: (item) =>
+    getImageSrcFromItem(item) ||
+    'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Event%20images/Admin%20Message.png',
+
+  enrich: (item) => {
+    const payload = getPayload(item)
+
+    const adminTitle = pickFirstString(payload, [
+      'admin_title',
+      'message_title',
+      'headline',
+      'subject',
+    ])
+
+    const adminMessage = pickFirstString(payload, [
+      'admin_message',
+      'message_text',
+      'body',
+      'content',
+      'description',
+      'details',
+    ])
+
+    return {
+      ...item,
+      title: item.title || adminTitle || 'Admin message',
+      message:
+        item.message ||
+        adminMessage ||
+        'You have received a message from the game administration team.',
+    }
+  },
+
+  getIntroText: (item) => {
+    const payload = getPayload(item)
+
+    return (
+      pickFirstString(payload, [
+        'intro_text',
+        'admin_message',
+        'message_text',
+        'body',
+        'content',
+        'description',
+      ]) ||
+      buildIntroFromMessage(item) ||
+      'You have received a message from the game administration team.'
+    )
+  },
+
+  getDetailRows: (item) => {
+    const payload = getPayload(item)
+
+    return compactRows([
+      detailRow(
+        'Category',
+        formatLabel(
+          pickFirstString(payload, [
+            'category',
+            'message_category',
+            'admin_category',
+            'topic',
+          ])
+        )
+      ),
+      detailRow(
+        'Sender',
+        pickFirstString(payload, [
+          'sender_name',
+          'admin_name',
+          'sent_by',
+          'from',
+        ]) || 'Game administration'
+      ),
+      detailRow(
+        'Priority',
+        formatLabel(
+          pickFirstString(payload, [
+            'priority',
+            'message_priority',
+            'importance',
+          ])
+        )
+      ),
+      detailRow(
+        'Sent on',
+        formatContractSeasonLabel(
+          pickFirstString(payload, [
+            'sent_on_game_date',
+            'created_game_date',
+            'message_game_date',
+            'game_date',
+          ])
+        )
+      ),
+    ])
+  },
+
+  getExtraText: (item) => {
+    const payload = getPayload(item)
+
+    return (
+      pickFirstString(payload, [
+        'extra_text',
+        'footer_text',
+        'support_text',
+        'note',
+      ]) ||
+      'Review this message carefully. If it includes an action button, open it to continue.'
+    )
+  },
+
+  actions: [
+    {
+      key: 'open-admin-message',
+      label: 'Open',
+      variant: 'primary',
+      kind: 'navigate',
+      getHref: (item) => getActionHrefFromItem(item),
+      show: (item) => Boolean(getActionHrefFromItem(item)),
+    },
+    {
+      key: 'open-dashboard',
+      label: 'Dashboard',
+      variant: 'secondary',
+      kind: 'navigate',
+      getHref: () => '/dashboard',
+      show: () => true,
+    },
+    {
+      key: 'open-help',
+      label: 'Help',
+      variant: 'secondary',
+      kind: 'navigate',
+      getHref: () => '/dashboard/help',
+      show: () => true,
+    },
+    MARK_READ_ACTION,
+  ],
+},
+  COIN_PURCHASE_COMPLETED: {
+  defaultTitle: 'Coin purchase completed',
+  defaultMessage:
+    'Your coin purchase has been completed and the coins have been added to your account.',
+
+  imageSrc:
+    'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Event%20images/Coins%20Purchase%20Completed.png',
+
+  getImageSrc: (item) =>
+    getImageSrcFromItem(item) ||
+    'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Event%20images/Coins%20Purchase%20Completed.png',
+
+  enrich: (item) => {
+    const payload = getPayload(item)
+
+    const totalCoins = pickFirstNumber(payload, [
+      'total_coins',
+      'coins_total',
+      'coins_received',
+      'coins_amount',
+      'coin_amount',
+      'amount_coins',
+    ])
+
+    return {
+      ...item,
+      title: item.title || 'Coin purchase completed',
+      message:
+        item.message ||
+        (totalCoins !== null
+          ? `Your purchase of ${formatCurrency(totalCoins)} coins has been completed.`
+          : 'Your coin purchase has been completed and the coins have been added to your account.'),
+    }
+  },
+
+  getIntroText: (item) => {
+    const payload = getPayload(item)
+
+    const totalCoins = pickFirstNumber(payload, [
+      'total_coins',
+      'coins_total',
+      'coins_received',
+      'coins_amount',
+      'coin_amount',
+      'amount_coins',
+    ])
+
+    if (totalCoins !== null) {
+      return `Your purchase of ${formatCurrency(totalCoins)} coins has been completed successfully.`
+    }
+
+    return (
+      buildIntroFromMessage(item) ||
+      'Your coin purchase has been completed successfully.'
+    )
+  },
+
+  getDetailRows: (item) => {
+    const payload = getPayload(item)
+
+    const purchasedCoins = pickFirstNumber(payload, [
+      'purchased_coins',
+      'base_coins',
+      'coins_purchased',
+      'coin_amount',
+      'coins_amount',
+    ])
+
+    const bonusCoins = pickFirstNumber(payload, [
+      'bonus_coins',
+      'coins_bonus',
+      'bonus_amount',
+    ])
+
+    const totalCoins = pickFirstNumber(payload, [
+      'total_coins',
+      'coins_total',
+      'coins_received',
+      'amount_coins',
+    ])
+
+    const amountPaid = pickFirstNumber(payload, [
+      'amount_paid',
+      'paid_amount',
+      'price',
+      'purchase_amount',
+      'payment_amount',
+      'gross_amount',
+    ])
+
+    return compactRows([
+      detailRow(
+        'Coins purchased',
+        purchasedCoins !== null ? formatCurrency(purchasedCoins) : null
+      ),
+      detailRow(
+        'Bonus coins',
+        bonusCoins !== null ? formatCurrency(bonusCoins) : null
+      ),
+      detailRow(
+        'Total coins received',
+        totalCoins !== null ? formatCurrency(totalCoins) : null
+      ),
+      detailRow(
+        'Amount paid',
+        formatCurrencyLabel(amountPaid, '$')
+      ),
+      detailRow(
+        'Payment status',
+        formatLabel(
+          pickFirstString(payload, [
+            'payment_status',
+            'status',
+            'purchase_status',
+            'transaction_status',
+          ])
+        ) || 'Completed'
+      ),
+      detailRow(
+        'Provider',
+        formatLabel(
+          pickFirstString(payload, [
+            'payment_provider',
+            'provider',
+            'gateway',
+            'payment_gateway',
+          ])
+        )
+      ),
+      detailRow(
+        'Purchased on',
+        formatContractSeasonLabel(
+          pickFirstString(payload, [
+            'purchased_on_game_date',
+            'purchase_game_date',
+            'completed_on_game_date',
+            'created_game_date',
+            'game_date',
+          ])
+        )
+      ),
+    ])
+  },
+
+  getExtraText: () =>
+    'The purchased coins are now available on your account and can be used for eligible in-game actions or services.',
+
+  actions: [
+    {
+      key: 'open-purchase-details',
+      label: 'Open details',
+      variant: 'primary',
+      kind: 'navigate',
+      getHref: (item) => getActionHrefFromItem(item),
+      show: (item) => Boolean(getActionHrefFromItem(item)),
+    },
+    {
+      key: 'open-finance-page',
+      label: 'Finance page',
+      variant: 'secondary',
+      kind: 'navigate',
+      getHref: () => '/dashboard/finance',
+      show: () => true,
+    },
+    {
+      key: 'open-dashboard',
+      label: 'Dashboard',
+      variant: 'secondary',
+      kind: 'navigate',
+      getHref: () => '/dashboard',
+      show: () => true,
+    },
+    MARK_READ_ACTION,
+  ],
+},
+  REFERRAL_REWARD_GRANTED: {
+  defaultTitle: 'Referral reward granted',
+  defaultMessage:
+    'Your referral reward has been granted and added to your account.',
+
+  imageSrc:
+    'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Event%20images/Referral%20Reward%20Granted.png',
+
+  getImageSrc: (item) =>
+    getImageSrcFromItem(item) ||
+    'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Event%20images/Referral%20Reward%20Granted.png',
+
+  enrich: (item) => {
+    const payload = getPayload(item)
+
+    const referredName = pickFirstString(payload, [
+      'referred_user_name',
+      'referred_manager_name',
+      'friend_name',
+      'new_user_name',
+      'user_name',
+    ])
+
+    const coinsReward = pickFirstNumber(payload, [
+      'coins_reward',
+      'coin_reward',
+      'reward_coins',
+      'coins_amount',
+      'coin_amount',
+      'amount_coins',
+    ])
+
+    const cashReward = pickFirstNumber(payload, [
+      'cash_reward',
+      'reward_cash',
+      'cash_amount',
+      'money_reward',
+      'reward_amount',
+    ])
+
+    return {
+      ...item,
+      title: item.title || 'Referral reward granted',
+      message:
+        item.message ||
+        (referredName && coinsReward !== null
+          ? `Your referral reward for inviting ${referredName} has been granted: ${formatCurrency(coinsReward)} coins.`
+          : referredName && cashReward !== null
+            ? `Your referral reward for inviting ${referredName} has been granted: ${formatCurrencyLabel(cashReward, '$')}.`
+            : referredName
+              ? `Your referral reward for inviting ${referredName} has been granted.`
+              : 'Your referral reward has been granted and added to your account.'),
+    }
+  },
+
+  getIntroText: (item) => {
+    const payload = getPayload(item)
+
+    const referredName = pickFirstString(payload, [
+      'referred_user_name',
+      'referred_manager_name',
+      'friend_name',
+      'new_user_name',
+      'user_name',
+    ])
+
+    if (referredName) {
+      return `Your referral for ${referredName} was successful, and your reward has been added to your account.`
+    }
+
+    return (
+      buildIntroFromMessage(item) ||
+      'Your referral was successful, and your reward has been added to your account.'
+    )
+  },
+
+  getDetailRows: (item) => {
+    const payload = getPayload(item)
+
+    const coinsReward = pickFirstNumber(payload, [
+      'coins_reward',
+      'coin_reward',
+      'reward_coins',
+      'coins_amount',
+      'coin_amount',
+      'amount_coins',
+    ])
+
+    const cashReward = pickFirstNumber(payload, [
+      'cash_reward',
+      'reward_cash',
+      'cash_amount',
+      'money_reward',
+      'reward_amount',
+    ])
+
+    const reputationReward = pickFirstNumber(payload, [
+      'reputation_reward',
+      'reward_reputation',
+      'reputation_gain',
+    ])
+
+    return compactRows([
+      detailRow(
+        'Referred manager',
+        pickFirstString(payload, [
+          'referred_user_name',
+          'referred_manager_name',
+          'friend_name',
+          'new_user_name',
+          'user_name',
+        ])
+      ),
+      detailRow(
+        'Referral code',
+        pickFirstString(payload, [
+          'referral_code',
+          'invite_code',
+          'code',
+        ])
+      ),
+      detailRow(
+        'Coins reward',
+        coinsReward !== null ? `${formatCurrency(coinsReward)} coins` : null
+      ),
+      detailRow(
+        'Cash reward',
+        formatCurrencyLabel(cashReward, '$')
+      ),
+      detailRow(
+        'Reputation reward',
+        reputationReward !== null ? `+${reputationReward}` : null
+      ),
+      detailRow(
+        'Reward status',
+        formatLabel(
+          pickFirstString(payload, [
+            'reward_status',
+            'status',
+            'grant_status',
+          ])
+        ) || 'Granted'
+      ),
+      detailRow(
+        'Granted on',
+        formatContractSeasonLabel(
+          pickFirstString(payload, [
+            'granted_on_game_date',
+            'reward_game_date',
+            'created_game_date',
+            'game_date',
+          ])
+        )
+      ),
+    ])
+  },
+
+  getExtraText: () =>
+    'Referral rewards help your account progress faster. Share your referral code with other managers to invite more players.',
+
+  actions: [
+    {
+      key: 'open-referral-details',
+      label: 'Open details',
+      variant: 'primary',
+      kind: 'navigate',
+      getHref: (item) => getActionHrefFromItem(item),
+      show: (item) => Boolean(getActionHrefFromItem(item)),
+    },
+    {
+      key: 'open-finance-page',
+      label: 'Finance page',
+      variant: 'secondary',
+      kind: 'navigate',
+      getHref: () => '/dashboard/finance',
+      show: () => true,
+    },
+    {
+      key: 'open-dashboard',
+      label: 'Dashboard',
+      variant: 'secondary',
+      kind: 'navigate',
+      getHref: () => '/dashboard',
+      show: () => true,
+    },
+    MARK_READ_ACTION,
+  ],
+},
+  SPONSOR_DEAL_EXPIRED: {
+  defaultTitle: 'Sponsor deal expired',
+  defaultMessage:
+    'One of your sponsor agreements has expired. Review your sponsor options and finances.',
+
+  imageSrc:
+    'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Event%20images/Sponsor%20deal%20Expired.png',
+
+  getImageSrc: (item) =>
+    getImageSrcFromItem(item) ||
+    'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Event%20images/Sponsor%20deal%20Expired.png',
+
+  enrich: (item) => {
+    const payload = getPayload(item)
+
+    const sponsorName = pickFirstString(payload, [
+      'sponsor_name',
+      'partner_name',
+      'company_name',
+      'name',
+    ])
+
+    return {
+      ...item,
+      title: sponsorName
+        ? `Sponsor deal expired: ${sponsorName}`
+        : item.title || 'Sponsor deal expired',
+      message:
+        item.message ||
+        (sponsorName
+          ? `Your sponsor agreement with ${sponsorName} has expired.`
+          : 'One of your sponsor agreements has expired.'),
+    }
+  },
+
+  getIntroText: (item) => {
+    const payload = getPayload(item)
+
+    const sponsorName = pickFirstString(payload, [
+      'sponsor_name',
+      'partner_name',
+      'company_name',
+      'name',
+    ])
+
+    return sponsorName
+      ? `Your sponsor agreement with ${sponsorName} has expired. Review your sponsor situation and decide the next step.`
+      : buildIntroFromMessage(item) ||
+          'One of your sponsor agreements has expired. Review your sponsor situation and decide the next step.'
+  },
+
+  getDetailRows: (item) => {
+    const payload = getPayload(item)
+
+    const annualValue = pickFirstNumber(payload, [
+      'annual_value',
+      'deal_value',
+      'contract_value',
+      'sponsor_value',
+      'yearly_value',
+    ])
+
+    const totalValue = pickFirstNumber(payload, [
+      'total_value',
+      'total_contract_value',
+      'contract_total',
+    ])
+
+    return compactRows([
+      detailRow(
+        'Sponsor',
+        pickFirstString(payload, [
+          'sponsor_name',
+          'partner_name',
+          'company_name',
+          'name',
+        ])
+      ),
+      detailRow(
+        'Annual value',
+        formatCurrencyLabel(annualValue, '$')
+      ),
+      detailRow(
+        'Total value',
+        formatCurrencyLabel(totalValue, '$')
+      ),
+      detailRow(
+        'Contract status',
+        formatLabel(
+          pickFirstString(payload, [
+            'status',
+            'deal_status',
+            'contract_status',
+          ])
+        ) || 'Expired'
+      ),
+      detailRow(
+        'Expired on',
+        formatContractSeasonLabel(
+          pickFirstString(payload, [
+            'expired_on_game_date',
+            'expires_on_game_date',
+            'expires_at',
+            'expired_at',
+            'end_game_date',
+            'contract_end_game_date',
+            'game_date',
+          ])
+        )
+      ),
+      detailRow(
+        'Next step',
+        pickFirstString(payload, [
+          'next_step',
+          'recommendation',
+          'action_required_text',
+        ]) || 'Review available sponsor offers.'
+      ),
+    ])
+  },
+
+  getExtraText: () =>
+    'An expired sponsor deal can reduce future income. Open the sponsor tab in Finance to review available offers or prepare a replacement deal.',
+
+  actions: [
+    {
+      key: 'open-sponsor-tab',
+      label: 'Open sponsor tab',
+      variant: 'primary',
+      kind: 'navigate',
+      getHref: () => '/dashboard/finance?tab=sponsors',
+      show: () => true,
+    },
+    {
+      key: 'open-finance-page',
+      label: 'Finance page',
+      variant: 'secondary',
+      kind: 'navigate',
+      getHref: () => '/dashboard/finance',
+      show: () => true,
+    },
+    MARK_READ_ACTION,
+  ],
+},
+  FREE_AGENT_NEGOTIATION_STARTED: {
+  defaultTitle: 'Free agent negotiation started',
+  defaultMessage:
+    'A free agent contract negotiation has started. Review the proposed terms before it expires.',
+
+  imageSrc:
+    'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Event%20images/Free%20Agent%20Negotiation%20Started.png',
+
+  getImageSrc: (item) =>
+    getImageSrcFromItem(item) ||
+    'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Event%20images/Free%20Agent%20Negotiation%20Started.png',
+
+  enrich: (item) => {
+    const riderName = getPreferredRiderName(item)
+
+    return {
+      ...item,
+      title: riderName
+        ? `Free agent negotiation: ${riderName}`
+        : item.title || 'Free agent negotiation started',
+      message:
+        item.message ||
+        (riderName
+          ? `${riderName} has entered free agent contract negotiations with your club.`
+          : 'A free agent contract negotiation has started.'),
+    }
+  },
+
+  getIntroText: (item) => {
+    const riderName = getPreferredRiderName(item)
+
+    return riderName
+      ? `${riderName} is negotiating contract terms with your club from the free agent market.`
+      : buildIntroFromMessage(item) ||
+          'A free agent is negotiating contract terms with your club.'
+  },
+
+  getDetailRows: (item) => {
+    const payload = getPayload(item)
+
+    const weeklySalary = pickFirstNumber(payload, [
+      'offer_salary_weekly',
+      'salary_weekly',
+      'weekly_salary',
+      'proposed_salary_weekly',
+      'expected_salary_weekly',
+    ])
+
+    const minAcceptableSalary = pickFirstNumber(payload, [
+      'min_acceptable_salary_weekly',
+      'minimum_salary_weekly',
+      'minimum_weekly_salary',
+    ])
+
+    const signingBonus = pickFirstNumber(payload, [
+      'signing_bonus',
+      'offered_signing_bonus',
+      'signing_bonus_amount',
+      'bonus_amount',
+    ])
+
+    const agentFee = pickFirstNumber(payload, [
+      'agent_fee',
+      'offered_agent_fee',
+      'agent_fee_amount',
+      'agency_fee',
+      'agent_commission',
+    ])
+
+    const durationSeasons = pickFirstNumber(payload, [
+      'offer_duration_seasons',
+      'duration_seasons',
+      'contract_years',
+      'proposed_duration_seasons',
+      'preferred_duration_seasons',
+    ])
+
+    return compactRows([
+      detailRow('Rider', getPreferredRiderName(item)),
+      detailRow('Source', 'Free agent market'),
+      detailRow(
+        'Club',
+        pickFirstString(payload, [
+          'buyer_club_name',
+          'club_name',
+          'team_name',
+        ])
+      ),
+      detailRow(
+        'Offered salary',
+        weeklySalary !== null ? `${formatCurrencyLabel(weeklySalary, '$')}/week` : null
+      ),
+      detailRow(
+        'Minimum acceptable salary',
+        minAcceptableSalary !== null
+          ? `${formatCurrencyLabel(minAcceptableSalary, '$')}/week`
+          : null
+      ),
+      detailRow(
+        'Signing bonus',
+        signingBonus !== null ? formatCurrencyLabel(signingBonus, '$') : null
+      ),
+      detailRow(
+        'Agent fee',
+        agentFee !== null ? formatCurrencyLabel(agentFee, '$') : null
+      ),
+      detailRow(
+        'Contract duration',
+        durationSeasons !== null
+          ? `${durationSeasons} season${durationSeasons === 1 ? '' : 's'}`
+          : null
+      ),
+      detailRow(
+        'Negotiation status',
+        formatLabel(
+          pickFirstString(payload, [
+            'status',
+            'negotiation_status',
+          ])
+        ) || 'Active'
+      ),
+      detailRow(
+        'Expires',
+        formatContractSeasonLabel(
+          pickFirstString(payload, [
+            'expires_on_game_date',
+            'negotiation_expires_on_game_date',
+            'expires_at',
+            'deadline_at',
+            'deadline_game_date',
+            'game_date',
+          ])
+        )
+      ),
+    ])
+  },
+
+  getExtraText: (item) => {
+    const riderName = getPreferredRiderName(item)
+
+    return riderName
+      ? `Review ${riderName}'s contract expectations before the negotiation expires. Free agents do not require a transfer fee, but salary, signing bonus, and agent fee can still affect your budget.`
+      : 'Review the contract expectations before the negotiation expires. Free agents do not require a transfer fee, but salary, signing bonus, and agent fee can still affect your budget.'
+  },
+
+  actions: [
+    {
+      key: 'open-rider-profile',
+      label: 'Rider profile',
+      variant: 'secondary',
+      kind: 'navigate',
+      getHref: (item) => {
+        const payload = getPayload(item)
+
+        const directProfilePath = pickFirstString(payload, [
+          'external_rider_profile_path',
+          'public_rider_profile_path',
+          'rider_profile_path',
+          'rider_path',
+          'profile_path',
+        ])
+
+        if (
+          directProfilePath &&
+          !/negotiation/i.test(directProfilePath) &&
+          !/transfers\/negotiations/i.test(directProfilePath) &&
+          !/activity=/i.test(directProfilePath)
+        ) {
+          return directProfilePath
+        }
+
+        const riderId = pickFirstString(payload, ['rider_id'])
+        return riderId ? `/dashboard/external-riders/${riderId}` : null
+      },
+      show: (item) => {
+        const payload = getPayload(item)
+
+        return Boolean(
+          pickFirstString(payload, [
+            'external_rider_profile_path',
+            'public_rider_profile_path',
+            'rider_profile_path',
+            'rider_path',
+            'profile_path',
+            'rider_id',
+          ])
+        )
+      },
+    },
+    {
+      key: 'review-negotiation',
+      label: 'Review negotiation',
+      variant: 'primary',
+      kind: 'navigate',
+      getHref: (item) =>
+        pickFirstString(getPayload(item), [
+          'negotiation_path',
+          'free_agent_negotiation_path',
+          'contract_negotiation_path',
+        ]) ||
+        getActionHrefFromItem(item) ||
+        '/dashboard/transfers?subTab=free_agents',
+      show: () => true,
+    },
+    {
+      key: 'open-free-agents-page',
+      label: 'Free agents page',
+      variant: 'secondary',
+      kind: 'navigate',
+      getHref: () => '/dashboard/transfers?subTab=free_agents',
+      show: () => true,
+    },
+    {
+      key: 'open-transfers-page',
+      label: 'Transfers page',
+      variant: 'secondary',
+      kind: 'navigate',
+      getHref: () => '/dashboard/transfers',
+      show: () => true,
+    },
+    MARK_READ_ACTION,
+  ],
+},
+  FREE_AGENT_EXPIRED: {
+  defaultTitle: 'Free agent expired',
+  defaultMessage:
+    'A free agent opportunity has expired. Review the market for other available riders.',
+
+  imageSrc:
+    'PASTE_FREE_AGENT_EXPIRED_IMAGE_URL_HERE',
+
+  getImageSrc: (item) =>
+    getImageSrcFromItem(item) ||
+    'PASTE_FREE_AGENT_EXPIRED_IMAGE_URL_HERE',
+
+  enrich: (item) => {
+    const riderName = getPreferredRiderName(item)
+
+    return {
+      ...item,
+      title: riderName
+        ? `Free agent expired: ${riderName}`
+        : item.title || 'Free agent expired',
+      message:
+        item.message ||
+        (riderName
+          ? `${riderName} is no longer available as a free agent.`
+          : 'A free agent opportunity has expired.'),
+    }
+  },
+
+  getIntroText: (item) => {
+    const riderName = getPreferredRiderName(item)
+
+    return riderName
+      ? `${riderName} is no longer available on the free agent market.`
+      : buildIntroFromMessage(item) ||
+          'A free agent opportunity has expired and is no longer available.'
+  },
+
+  getDetailRows: (item) => {
+    const payload = getPayload(item)
+
+    const weeklySalary = pickFirstNumber(payload, [
+      'salary_weekly',
+      'weekly_salary',
+      'expected_salary_weekly',
+      'offer_salary_weekly',
+      'proposed_salary_weekly',
+    ])
+
+    const signingBonus = pickFirstNumber(payload, [
+      'signing_bonus',
+      'offered_signing_bonus',
+      'signing_bonus_amount',
+      'bonus_amount',
+    ])
+
+    const agentFee = pickFirstNumber(payload, [
+      'agent_fee',
+      'offered_agent_fee',
+      'agent_fee_amount',
+      'agency_fee',
+      'agent_commission',
+    ])
+
+    const durationSeasons = pickFirstNumber(payload, [
+      'duration_seasons',
+      'offer_duration_seasons',
+      'contract_years',
+      'proposed_duration_seasons',
+      'preferred_duration_seasons',
+    ])
+
+    return compactRows([
+      detailRow('Rider', getPreferredRiderName(item)),
+      detailRow('Source', 'Free agent market'),
+      detailRow(
+        'Expected salary',
+        weeklySalary !== null
+          ? `${formatCurrencyLabel(weeklySalary, '$')}/week`
+          : null
+      ),
+      detailRow(
+        'Signing bonus',
+        signingBonus !== null ? formatCurrencyLabel(signingBonus, '$') : null
+      ),
+      detailRow(
+        'Agent fee',
+        agentFee !== null ? formatCurrencyLabel(agentFee, '$') : null
+      ),
+      detailRow(
+        'Contract duration',
+        durationSeasons !== null
+          ? `${durationSeasons} season${durationSeasons === 1 ? '' : 's'}`
+          : null
+      ),
+      detailRow(
+        'Status',
+        formatLabel(
+          pickFirstString(payload, [
+            'status',
+            'free_agent_status',
+            'negotiation_status',
+          ])
+        ) || 'Expired'
+      ),
+      detailRow(
+        'Expired on',
+        formatContractSeasonLabel(
+          pickFirstString(payload, [
+            'expired_on_game_date',
+            'expires_on_game_date',
+            'free_agent_expires_on_game_date',
+            'negotiation_expires_on_game_date',
+            'expires_at',
+            'expired_at',
+            'deadline_at',
+            'deadline_game_date',
+            'game_date',
+          ])
+        )
+      ),
+      detailRow(
+        'Next step',
+        pickFirstString(payload, [
+          'next_step',
+          'recommendation',
+          'action_required_text',
+        ]) || 'Review the free agent market for other available riders.'
+      ),
+    ])
+  },
+
+  getExtraText: (item) => {
+    const riderName = getPreferredRiderName(item)
+
+    return riderName
+      ? `${riderName} can no longer be signed from the free agent market. Check available free agents or look for another transfer target.`
+      : 'This rider can no longer be signed from the free agent market. Check available free agents or look for another transfer target.'
+  },
+
+  actions: [
+    {
+      key: 'open-rider-profile',
+      label: 'Rider profile',
+      variant: 'secondary',
+      kind: 'navigate',
+      getHref: (item) => {
+        const payload = getPayload(item)
+
+        const directProfilePath = pickFirstString(payload, [
+          'external_rider_profile_path',
+          'public_rider_profile_path',
+          'rider_profile_path',
+          'rider_path',
+          'profile_path',
+        ])
+
+        if (
+          directProfilePath &&
+          !/negotiation/i.test(directProfilePath) &&
+          !/transfers\/negotiations/i.test(directProfilePath) &&
+          !/activity=/i.test(directProfilePath)
+        ) {
+          return directProfilePath
+        }
+
+        const riderId = pickFirstString(payload, ['rider_id'])
+        return riderId ? `/dashboard/external-riders/${riderId}` : null
+      },
+      show: (item) => {
+        const payload = getPayload(item)
+
+        return Boolean(
+          pickFirstString(payload, [
+            'external_rider_profile_path',
+            'public_rider_profile_path',
+            'rider_profile_path',
+            'rider_path',
+            'profile_path',
+            'rider_id',
+          ])
+        )
+      },
+    },
+    {
+      key: 'open-free-agents-page',
+      label: 'Free agents page',
+      variant: 'primary',
+      kind: 'navigate',
+      getHref: () => '/dashboard/transfers?subTab=free_agents',
+      show: () => true,
+    },
+    {
+      key: 'open-transfers-page',
+      label: 'Transfers page',
+      variant: 'secondary',
+      kind: 'navigate',
+      getHref: () => '/dashboard/transfers',
+      show: () => true,
+    },
+    MARK_READ_ACTION,
+  ],
+},
+  FREE_AGENT_EXPIRED: {
+  defaultTitle: 'Free agent expired',
+  defaultMessage:
+    'A free agent opportunity has expired. Review the market for other available riders.',
+
+  imageSrc:
+    'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Event%20images/Free%20Agent%20Expired.png',
+
+  getImageSrc: (item) =>
+    getImageSrcFromItem(item) ||
+    'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Event%20images/Free%20Agent%20Expired.png',
+
+  enrich: (item) => {
+    const riderName = getPreferredRiderName(item)
+
+    return {
+      ...item,
+      title: riderName
+        ? `Free agent expired: ${riderName}`
+        : item.title || 'Free agent expired',
+      message:
+        item.message ||
+        (riderName
+          ? `${riderName} is no longer available as a free agent.`
+          : 'A free agent opportunity has expired.'),
+    }
+  },
+
+  getIntroText: (item) => {
+    const riderName = getPreferredRiderName(item)
+
+    return riderName
+      ? `${riderName} is no longer available on the free agent market.`
+      : buildIntroFromMessage(item) ||
+          'A free agent opportunity has expired and is no longer available.'
+  },
+
+  getDetailRows: (item) => {
+    const payload = getPayload(item)
+
+    const weeklySalary = pickFirstNumber(payload, [
+      'salary_weekly',
+      'weekly_salary',
+      'expected_salary_weekly',
+      'offer_salary_weekly',
+      'proposed_salary_weekly',
+    ])
+
+    const signingBonus = pickFirstNumber(payload, [
+      'signing_bonus',
+      'offered_signing_bonus',
+      'signing_bonus_amount',
+      'bonus_amount',
+    ])
+
+    const agentFee = pickFirstNumber(payload, [
+      'agent_fee',
+      'offered_agent_fee',
+      'agent_fee_amount',
+      'agency_fee',
+      'agent_commission',
+    ])
+
+    const durationSeasons = pickFirstNumber(payload, [
+      'duration_seasons',
+      'offer_duration_seasons',
+      'contract_years',
+      'proposed_duration_seasons',
+      'preferred_duration_seasons',
+    ])
+
+    return compactRows([
+      detailRow('Rider', getPreferredRiderName(item)),
+      detailRow('Source', 'Free agent market'),
+      detailRow(
+        'Expected salary',
+        weeklySalary !== null
+          ? `${formatCurrencyLabel(weeklySalary, '$')}/week`
+          : null
+      ),
+      detailRow(
+        'Signing bonus',
+        signingBonus !== null ? formatCurrencyLabel(signingBonus, '$') : null
+      ),
+      detailRow(
+        'Agent fee',
+        agentFee !== null ? formatCurrencyLabel(agentFee, '$') : null
+      ),
+      detailRow(
+        'Contract duration',
+        durationSeasons !== null
+          ? `${durationSeasons} season${durationSeasons === 1 ? '' : 's'}`
+          : null
+      ),
+      detailRow(
+        'Status',
+        formatLabel(
+          pickFirstString(payload, [
+            'status',
+            'free_agent_status',
+            'negotiation_status',
+          ])
+        ) || 'Expired'
+      ),
+      detailRow(
+        'Expired on',
+        formatContractSeasonLabel(
+          pickFirstString(payload, [
+            'expired_on_game_date',
+            'expires_on_game_date',
+            'free_agent_expires_on_game_date',
+            'negotiation_expires_on_game_date',
+            'expires_at',
+            'expired_at',
+            'deadline_at',
+            'deadline_game_date',
+            'game_date',
+          ])
+        )
+      ),
+      detailRow(
+        'Next step',
+        pickFirstString(payload, [
+          'next_step',
+          'recommendation',
+          'action_required_text',
+        ]) || 'Review the free agent market for other available riders.'
+      ),
+    ])
+  },
+
+  getExtraText: (item) => {
+    const riderName = getPreferredRiderName(item)
+
+    return riderName
+      ? `${riderName} can no longer be signed from the free agent market. Check available free agents or look for another transfer target.`
+      : 'This rider can no longer be signed from the free agent market. Check available free agents or look for another transfer target.'
+  },
+
+  actions: [
+    {
+      key: 'open-rider-profile',
+      label: 'Rider profile',
+      variant: 'secondary',
+      kind: 'navigate',
+      getHref: (item) => {
+        const payload = getPayload(item)
+
+        const directProfilePath = pickFirstString(payload, [
+          'external_rider_profile_path',
+          'public_rider_profile_path',
+          'rider_profile_path',
+          'rider_path',
+          'profile_path',
+        ])
+
+        if (
+          directProfilePath &&
+          !/negotiation/i.test(directProfilePath) &&
+          !/transfers\/negotiations/i.test(directProfilePath) &&
+          !/activity=/i.test(directProfilePath)
+        ) {
+          return directProfilePath
+        }
+
+        const riderId = pickFirstString(payload, ['rider_id'])
+        return riderId ? `/dashboard/external-riders/${riderId}` : null
+      },
+      show: (item) => {
+        const payload = getPayload(item)
+
+        return Boolean(
+          pickFirstString(payload, [
+            'external_rider_profile_path',
+            'public_rider_profile_path',
+            'rider_profile_path',
+            'rider_path',
+            'profile_path',
+            'rider_id',
+          ])
+        )
+      },
+    },
+    {
+      key: 'open-free-agents-page',
+      label: 'Free agents page',
+      variant: 'primary',
+      kind: 'navigate',
+      getHref: () => '/dashboard/transfers?subTab=free_agents',
+      show: () => true,
+    },
+    {
+      key: 'open-transfers-page',
+      label: 'Transfers page',
+      variant: 'secondary',
+      kind: 'navigate',
+      getHref: () => '/dashboard/transfers',
+      show: () => true,
+    },
+    MARK_READ_ACTION,
+  ],
+},
+  INFRASTRUCTURE_UPGRADE_COMPLETED: {
+  defaultTitle: 'Infrastructure upgrade completed',
+  defaultMessage:
+    'One of your facilities has finished upgrading and is now available at its new level.',
+
+  imageSrc:
+    'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Event%20images/Infrastructure%20upgdare%20completed.png',
+
+  getImageSrc: (item) =>
+    getImageSrcFromItem(item) ||
+    'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Event%20images/Infrastructure%20upgdare%20completed.png',
+
+  enrich: (item) => {
+    const payload = getPayload(item)
+
+    const facilityName = pickFirstString(payload, [
+      'facility_name',
+      'facility_label',
+      'upgrade_name',
+      'name',
+    ])
+
+    const newLevel = pickFirstNumber(payload, [
+      'new_level',
+      'level',
+      'upgraded_level',
+      'target_level',
+    ])
+
+    return {
+      ...item,
+      title: facilityName
+        ? `Upgrade completed: ${facilityName}`
+        : item.title || 'Infrastructure upgrade completed',
+      message:
+        item.message ||
+        (facilityName && newLevel !== null
+          ? `${facilityName} has reached level ${newLevel}.`
+          : facilityName
+            ? `${facilityName} has finished upgrading.`
+            : 'One of your facilities has finished upgrading.'),
+    }
+  },
+
+  getIntroText: (item) => {
+    const payload = getPayload(item)
+
+    const facilityName = pickFirstString(payload, [
+      'facility_name',
+      'facility_label',
+      'upgrade_name',
+      'name',
+    ])
+
+    const newLevel = pickFirstNumber(payload, [
+      'new_level',
+      'level',
+      'upgraded_level',
+      'target_level',
+    ])
+
+    if (facilityName && newLevel !== null) {
+      return `${facilityName} has been upgraded successfully and is now available at level ${newLevel}.`
+    }
+
+    if (facilityName) {
+      return `${facilityName} has been upgraded successfully and is now available.`
+    }
+
+    return (
+      buildIntroFromMessage(item) ||
+      'One of your infrastructure upgrades has been completed successfully.'
+    )
+  },
+
+  getDetailRows: (item) => {
+    const payload = getPayload(item)
+
+    const previousLevel = pickFirstNumber(payload, [
+      'previous_level',
+      'old_level',
+      'from_level',
+      'level_before',
+    ])
+
+    const newLevel = pickFirstNumber(payload, [
+      'new_level',
+      'level',
+      'upgraded_level',
+      'target_level',
+      'to_level',
+      'level_after',
+    ])
+
+    const upgradeCost = pickFirstNumber(payload, [
+      'upgrade_cost',
+      'cost_cash',
+      'cash_cost',
+      'price',
+      'upgrade_price',
+    ])
+
+    return compactRows([
+      detailRow(
+        'Facility',
+        pickFirstString(payload, [
+          'facility_name',
+          'facility_label',
+          'upgrade_name',
+          'name',
+        ])
+      ),
+      detailRow(
+        'Previous level',
+        previousLevel !== null ? `${previousLevel}` : null
+      ),
+      detailRow(
+        'New level',
+        newLevel !== null ? `${newLevel}` : null
+      ),
+      detailRow(
+        'Upgrade cost',
+        formatCurrencyLabel(upgradeCost, '$')
+      ),
+      detailRow(
+        'Completed on',
+        formatContractSeasonLabel(
+          pickFirstString(payload, [
+            'completed_on_game_date',
+            'completed_game_date',
+            'completed_at',
+            'finished_at',
+            'finished_on_game_date',
+            'game_date',
+          ])
+        )
+      ),
+      detailRow(
+        'Status',
+        formatLabel(
+          pickFirstString(payload, [
+            'status',
+            'upgrade_status',
+            'job_status',
+          ])
+        ) || 'Completed'
+      ),
+      detailRow(
+        'Effect',
+        pickFirstString(payload, [
+          'effect_summary',
+          'bonus_summary',
+          'upgrade_effect',
+          'benefit_text',
+          'description',
+        ])
+      ),
+    ])
+  },
+
+  getExtraText: () =>
+    'Review your infrastructure page to see the new facility effects and decide your next upgrade step.',
+
+  actions: [
+    {
+      key: 'open-infrastructure-facilities',
+      label: 'Open infrastructure',
+      variant: 'primary',
+      kind: 'navigate',
+      getHref: () => '/dashboard/infrastructure?tab=facilities',
+      show: () => true,
+    },
+    {
+      key: 'open-infrastructure-page',
+      label: 'Infrastructure page',
+      variant: 'secondary',
+      kind: 'navigate',
+      getHref: () => '/dashboard/infrastructure',
+      show: () => true,
+    },
+    MARK_READ_ACTION,
+  ],
+},
+  FINANCE_EMERGENCY_LOAN_GRANTED: {
+  defaultTitle: 'Emergency loan granted',
+  defaultMessage:
+    'Your club has received an emergency loan because it could not cover a mandatory obligation.',
+
+  imageSrc:
+    'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Event%20images/Emergency%20loan%20granted.png',
+
+  getImageSrc: (item) =>
+    getImageSrcFromItem(item) ||
+    'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Event%20images/Emergency%20loan%20granted.png',
+
+  enrich: (item) => {
+    const payload = getPayload(item)
+
+    const principalAmount = pickFirstNumber(payload, [
+      'principal_amount',
+      'loan_amount',
+      'amount',
+      'emergency_loan_amount',
+    ])
+
+    const clubName = pickFirstString(payload, [
+      'club_name',
+      'team_name',
+    ])
+
+    return {
+      ...item,
+      title:
+        principalAmount !== null
+          ? `Emergency loan granted: ${formatCurrencyLabel(principalAmount, '$')}`
+          : item.title || 'Emergency loan granted',
+      message:
+        item.message ||
+        (clubName && principalAmount !== null
+          ? `${clubName} received an emergency loan of ${formatCurrencyLabel(principalAmount, '$')} because it could not cover a mandatory obligation.`
+          : principalAmount !== null
+            ? `Your club received an emergency loan of ${formatCurrencyLabel(principalAmount, '$')}.`
+            : 'Your club has received an emergency loan because it could not cover a mandatory obligation.'),
+    }
+  },
+
+  getIntroText: (item) => {
+    const payload = getPayload(item)
+
+    const clubName = pickFirstString(payload, [
+      'club_name',
+      'team_name',
+    ])
+
+    const principalAmount = pickFirstNumber(payload, [
+      'principal_amount',
+      'loan_amount',
+      'amount',
+      'emergency_loan_amount',
+    ])
+
+    const reasonLabel =
+      pickFirstString(payload, [
+        'reason_label',
+        'reason',
+        'obligation_reason',
+      ]) || 'mandatory obligation'
+
+    if (clubName && principalAmount !== null) {
+      return `${clubName} received an emergency loan of ${formatCurrencyLabel(principalAmount, '$')} because it could not cover ${reasonLabel}.`
+    }
+
+    if (principalAmount !== null) {
+      return `Your club received an emergency loan of ${formatCurrencyLabel(principalAmount, '$')} because it could not cover ${reasonLabel}.`
+    }
+
+    return (
+      buildIntroFromMessage(item) ||
+      'Your club received an emergency loan because it could not cover a mandatory obligation.'
+    )
+  },
+
+  getDetailRows: (item) => {
+    const payload = getPayload(item)
+
+    const principalAmount = pickFirstNumber(payload, [
+      'principal_amount',
+      'loan_amount',
+      'amount',
+      'emergency_loan_amount',
+    ])
+
+    const outstandingPrincipal = pickFirstNumber(payload, [
+      'outstanding_principal',
+      'remaining_principal',
+    ])
+
+    const weeklyTotalDue = pickFirstNumber(payload, [
+      'weekly_total_due',
+      'weekly_repayment',
+      'weekly_due',
+    ])
+
+    const weeklyPrincipalDue = pickFirstNumber(payload, [
+      'weekly_principal_due',
+      'weekly_principal',
+    ])
+
+    const weeklyInterestDue = pickFirstNumber(payload, [
+      'weekly_interest_due',
+      'weekly_interest',
+    ])
+
+    const totalInterest = pickFirstNumber(payload, [
+      'total_interest',
+      'interest_total',
+    ])
+
+    const totalRepayment = pickFirstNumber(payload, [
+      'total_repayment',
+      'repayment_total',
+      'total_due',
+    ])
+
+    const repaymentWeeks = pickFirstNumber(payload, [
+      'repayment_weeks',
+      'weeks',
+      'loan_weeks',
+    ])
+
+    const rescueNumber = pickFirstNumber(payload, [
+      'rescue_number',
+      'rescues_used_lifetime',
+      'rescues_used',
+    ])
+
+    const maxRescues = pickFirstNumber(payload, [
+      'max_lifetime_rescues',
+      'max_rescues',
+      'rescue_limit',
+    ])
+
+    return compactRows([
+      detailRow(
+        'Club',
+        pickFirstString(payload, [
+          'club_name',
+          'team_name',
+        ])
+      ),
+      detailRow(
+        'Reason',
+        formatLabel(
+          pickFirstString(payload, [
+            'reason_label',
+            'reason',
+            'obligation_reason',
+          ])
+        )
+      ),
+      detailRow(
+        'Loan amount',
+        formatCurrencyLabel(principalAmount, '$')
+      ),
+      detailRow(
+        'Outstanding principal',
+        formatCurrencyLabel(outstandingPrincipal, '$')
+      ),
+      detailRow(
+        'Weekly repayment',
+        formatCurrencyLabel(weeklyTotalDue, '$')
+      ),
+      detailRow(
+        'Weekly principal',
+        formatCurrencyLabel(weeklyPrincipalDue, '$')
+      ),
+      detailRow(
+        'Weekly emergency interest',
+        formatCurrencyLabel(weeklyInterestDue, '$')
+      ),
+      detailRow(
+        'Repayment period',
+        repaymentWeeks !== null
+          ? `${repaymentWeeks} week${repaymentWeeks === 1 ? '' : 's'}`
+          : null
+      ),
+      detailRow(
+        'Total interest',
+        formatCurrencyLabel(totalInterest, '$')
+      ),
+      detailRow(
+        'Total repayment',
+        formatCurrencyLabel(totalRepayment, '$')
+      ),
+      detailRow(
+        'First due date',
+        formatContractSeasonLabel(
+          pickFirstString(payload, [
+            'first_due_game_date',
+            'first_due_date',
+            'next_due_game_date',
+          ])
+        )
+      ),
+      detailRow(
+        'Final due date',
+        formatContractSeasonLabel(
+          pickFirstString(payload, [
+            'final_due_game_date',
+            'final_due_date',
+            'due_game_date',
+          ])
+        )
+      ),
+      detailRow(
+        'Issued on',
+        formatContractSeasonLabel(
+          pickFirstString(payload, [
+            'issued_game_date',
+            'issued_on_game_date',
+            'created_game_date',
+            'game_date',
+          ])
+        )
+      ),
+      detailRow(
+        'Emergency rescues used',
+        rescueNumber !== null && maxRescues !== null
+          ? `${rescueNumber} of ${maxRescues}`
+          : rescueNumber !== null
+            ? `${rescueNumber}`
+            : null
+      ),
+      detailRow(
+        'Status',
+        formatLabel(
+          pickFirstString(payload, [
+            'status',
+            'loan_status',
+            'repayment_status',
+          ])
+        ) || 'Granted'
+      ),
+    ])
+  },
+
+  getExtraText: (item) => {
+    const payload = getPayload(item)
+
+    const rescueNumber = pickFirstNumber(payload, [
+      'rescue_number',
+      'rescues_used_lifetime',
+      'rescues_used',
+    ])
+
+    const maxRescues = pickFirstNumber(payload, [
+      'max_lifetime_rescues',
+      'max_rescues',
+      'rescue_limit',
+    ])
+
+    const liquidationRule = pickFirstString(payload, [
+      'liquidation_rule',
+      'liquidation_warning',
+    ])
+
+    const optionalRule = pickFirstString(payload, [
+      'optional_spending_rule',
+      'optional_purchase_rule',
+    ])
+
+    if (rescueNumber !== null && maxRescues !== null && rescueNumber >= maxRescues) {
+      return liquidationRule ||
+        `This was emergency rescue ${rescueNumber} of ${maxRescues}. If the club fails another mandatory obligation, liquidation may be triggered. Optional purchases and upgrades should be controlled carefully.`
+    }
+
+    return (
+      optionalRule ||
+      'Emergency loans are only used for mandatory obligations. Review your finances and upcoming repayments to avoid further rescue loans.'
+    )
+  },
+
+  actions: [
+    {
+      key: 'open-finance-transactions',
+      label: 'Open transactions',
+      variant: 'primary',
+      kind: 'navigate',
+      getHref: (item) =>
+        getActionHrefFromItem(item) ||
+        '/dashboard/finance?tab=transactions',
+      show: () => true,
+    },
+    {
+      key: 'open-finance-page',
+      label: 'Finance page',
+      variant: 'secondary',
+      kind: 'navigate',
+      getHref: () => '/dashboard/finance',
+      show: () => true,
+    },
+    MARK_READ_ACTION,
+  ],
+},
+  FINANCE_EMERGENCY_LOAN_REPAID: {
+  defaultTitle: 'Emergency loan repaid',
+  defaultMessage:
+    'Your club has fully repaid an emergency loan. The repayment obligation is now closed.',
+
+  imageSrc:
+    'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Event%20images/Emergancy%20Loan%20repaid.png',
+
+  getImageSrc: (item) =>
+    getImageSrcFromItem(item) ||
+    'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Event%20images/Emergancy%20Loan%20repaid.png',
+
+  enrich: (item) => {
+    const payload = getPayload(item)
+
+    const clubName = pickFirstString(payload, [
+      'club_name',
+      'team_name',
+    ])
+
+    const totalRepaid = pickFirstNumber(payload, [
+      'total_repaid',
+      'total_repayment',
+      'repaid_amount',
+      'amount_repaid',
+      'total_paid',
+    ])
+
+    return {
+      ...item,
+      title:
+        totalRepaid !== null
+          ? `Emergency loan repaid: ${formatCurrencyLabel(totalRepaid, '$')}`
+          : item.title || 'Emergency loan repaid',
+      message:
+        item.message ||
+        (clubName && totalRepaid !== null
+          ? `${clubName} has fully repaid an emergency loan totaling ${formatCurrencyLabel(totalRepaid, '$')}.`
+          : totalRepaid !== null
+            ? `Your club has fully repaid an emergency loan totaling ${formatCurrencyLabel(totalRepaid, '$')}.`
+            : 'Your club has fully repaid an emergency loan.'),
+    }
+  },
+
+  getIntroText: (item) => {
+    const payload = getPayload(item)
+
+    const clubName = pickFirstString(payload, [
+      'club_name',
+      'team_name',
+    ])
+
+    const totalRepaid = pickFirstNumber(payload, [
+      'total_repaid',
+      'total_repayment',
+      'repaid_amount',
+      'amount_repaid',
+      'total_paid',
+    ])
+
+    if (clubName && totalRepaid !== null) {
+      return `${clubName} has fully repaid its emergency loan. Total repayment: ${formatCurrencyLabel(totalRepaid, '$')}.`
+    }
+
+    if (totalRepaid !== null) {
+      return `Your club has fully repaid its emergency loan. Total repayment: ${formatCurrencyLabel(totalRepaid, '$')}.`
+    }
+
+    return (
+      buildIntroFromMessage(item) ||
+      'Your club has fully repaid its emergency loan. The repayment obligation is now closed.'
+    )
+  },
+
+  getDetailRows: (item) => {
+    const payload = getPayload(item)
+
+    const principalAmount = pickFirstNumber(payload, [
+      'principal_amount',
+      'loan_amount',
+      'original_principal',
+      'emergency_loan_amount',
+    ])
+
+    const principalRepaid = pickFirstNumber(payload, [
+      'principal_repaid',
+      'repaid_principal',
+      'principal_paid',
+    ])
+
+    const interestPaid = pickFirstNumber(payload, [
+      'interest_paid',
+      'total_interest',
+      'interest_total',
+      'emergency_interest_paid',
+    ])
+
+    const totalRepaid = pickFirstNumber(payload, [
+      'total_repaid',
+      'total_repayment',
+      'repaid_amount',
+      'amount_repaid',
+      'total_paid',
+    ])
+
+    const repaymentWeeks = pickFirstNumber(payload, [
+      'repayment_weeks',
+      'weeks',
+      'loan_weeks',
+      'paid_weeks',
+    ])
+
+    const rescueNumber = pickFirstNumber(payload, [
+      'rescue_number',
+      'rescues_used_lifetime',
+      'rescues_used',
+    ])
+
+    const maxRescues = pickFirstNumber(payload, [
+      'max_lifetime_rescues',
+      'max_rescues',
+      'rescue_limit',
+    ])
+
+    return compactRows([
+      detailRow(
+        'Club',
+        pickFirstString(payload, [
+          'club_name',
+          'team_name',
+        ])
+      ),
+      detailRow(
+        'Original loan amount',
+        formatCurrencyLabel(principalAmount, '$')
+      ),
+      detailRow(
+        'Principal repaid',
+        formatCurrencyLabel(principalRepaid, '$')
+      ),
+      detailRow(
+        'Interest paid',
+        formatCurrencyLabel(interestPaid, '$')
+      ),
+      detailRow(
+        'Total repaid',
+        formatCurrencyLabel(totalRepaid, '$')
+      ),
+      detailRow(
+        'Repayment period',
+        repaymentWeeks !== null
+          ? `${repaymentWeeks} week${repaymentWeeks === 1 ? '' : 's'}`
+          : null
+      ),
+      detailRow(
+        'First due date',
+        formatContractSeasonLabel(
+          pickFirstString(payload, [
+            'first_due_game_date',
+            'first_due_date',
+          ])
+        )
+      ),
+      detailRow(
+        'Final due date',
+        formatContractSeasonLabel(
+          pickFirstString(payload, [
+            'final_due_game_date',
+            'final_due_date',
+            'due_game_date',
+          ])
+        )
+      ),
+      detailRow(
+        'Repaid on',
+        formatContractSeasonLabel(
+          pickFirstString(payload, [
+            'repaid_on_game_date',
+            'repaid_game_date',
+            'completed_game_date',
+            'closed_game_date',
+            'game_date',
+          ])
+        )
+      ),
+      detailRow(
+        'Emergency rescue',
+        rescueNumber !== null && maxRescues !== null
+          ? `${rescueNumber} of ${maxRescues}`
+          : rescueNumber !== null
+            ? `${rescueNumber}`
+            : null
+      ),
+      detailRow(
+        'Loan status',
+        formatLabel(
+          pickFirstString(payload, [
+            'status',
+            'loan_status',
+            'repayment_status',
+          ])
+        ) || 'Repaid'
+      ),
+    ])
+  },
+
+  getExtraText: () =>
+    'This emergency loan is now closed. No further weekly repayments are due for this loan, but previous emergency rescues still count toward the lifetime rescue limit.',
+
+  actions: [
+    {
+      key: 'open-finance-transactions',
+      label: 'Open transactions',
+      variant: 'primary',
+      kind: 'navigate',
+      getHref: (item) =>
+        getActionHrefFromItem(item) ||
+        '/dashboard/finance?tab=transactions',
+      show: () => true,
+    },
+    {
+      key: 'open-finance-page',
+      label: 'Finance page',
+      variant: 'secondary',
+      kind: 'navigate',
+      getHref: () => '/dashboard/finance',
+      show: () => true,
+    },
+    MARK_READ_ACTION,
+  ],
+},
+  FINANCE_LIQUIDATION_FINAL_WARNING: {
+  defaultTitle: 'Final liquidation warning',
+  defaultMessage:
+    'Your club is at risk of liquidation because all emergency rescues have already been used.',
+
+  imageSrc:    'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Event%20images/Liquidation%20Final%20Warning.png',
+
+  getImageSrc: (item) =>
+    getImageSrcFromItem(item) ||    'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Event%20images/Liquidation%20Final%20Warning.png',
+
+  enrich: (item) => {
+    const payload = getPayload(item)
+
+    const clubName = pickFirstString(payload, [
+      'club_name',
+      'team_name',
+    ])
+
+    const shortfallAmount = pickFirstNumber(payload, [
+      'shortfall_amount',
+      'missing_amount',
+      'amount_short',
+      'unpaid_amount',
+      'required_amount',
+      'obligation_amount',
+    ])
+
+    return {
+      ...item,
+      title: clubName
+        ? `Final liquidation warning: ${clubName}`
+        : item.title || 'Final liquidation warning',
+      message:
+        item.message ||
+        (clubName && shortfallAmount !== null
+          ? `${clubName} is at risk of liquidation because it cannot cover ${formatCurrencyLabel(shortfallAmount, '$')} after all emergency rescues have been used.`
+          : clubName
+            ? `${clubName} is at risk of liquidation because all emergency rescues have already been used.`
+            : 'Your club is at risk of liquidation because all emergency rescues have already been used.'),
+    }
+  },
+
+  getIntroText: (item) => {
+    const payload = getPayload(item)
+
+    const clubName = pickFirstString(payload, [
+      'club_name',
+      'team_name',
+    ])
+
+    const reasonLabel =
+      pickFirstString(payload, [
+        'reason_label',
+        'reason',
+        'obligation_reason',
+        'liquidation_reason',
+      ]) || 'mandatory obligation'
+
+    if (clubName) {
+      return `${clubName} has reached the final liquidation warning. The club could not cover ${reasonLabel}, and no further emergency rescues are available.`
+    }
+
+    return (
+      buildIntroFromMessage(item) ||
+      'Your club has reached the final liquidation warning. No further emergency rescues are available.'
+    )
+  },
+
+  getDetailRows: (item) => {
+    const payload = getPayload(item)
+
+    const availableCash = pickFirstNumber(payload, [
+      'available_cash',
+      'cash_balance',
+      'club_cash',
+      'current_cash',
+    ])
+
+    const obligationAmount = pickFirstNumber(payload, [
+      'obligation_amount',
+      'required_amount',
+      'mandatory_amount',
+      'amount_due',
+    ])
+
+    const shortfallAmount = pickFirstNumber(payload, [
+      'shortfall_amount',
+      'missing_amount',
+      'amount_short',
+      'unpaid_amount',
+    ])
+
+    const rescuesUsed = pickFirstNumber(payload, [
+      'rescues_used_lifetime',
+      'rescues_used',
+      'rescue_number',
+    ])
+
+    const maxRescues = pickFirstNumber(payload, [
+      'max_lifetime_rescues',
+      'max_rescues',
+      'rescue_limit',
+    ])
+
+    return compactRows([
+      detailRow(
+        'Club',
+        pickFirstString(payload, [
+          'club_name',
+          'team_name',
+        ])
+      ),
+      detailRow(
+        'Reason',
+        formatLabel(
+          pickFirstString(payload, [
+            'reason_label',
+            'reason',
+            'obligation_reason',
+            'liquidation_reason',
+          ])
+        )
+      ),
+      detailRow(
+        'Available cash',
+        formatCurrencyLabel(availableCash, '$')
+      ),
+      detailRow(
+        'Mandatory obligation',
+        formatCurrencyLabel(obligationAmount, '$')
+      ),
+      detailRow(
+        'Shortfall',
+        formatCurrencyLabel(shortfallAmount, '$')
+      ),
+      detailRow(
+        'Emergency rescues used',
+        rescuesUsed !== null && maxRescues !== null
+          ? `${rescuesUsed} of ${maxRescues}`
+          : rescuesUsed !== null
+            ? `${rescuesUsed}`
+            : null
+      ),
+      detailRow(
+        'Warning date',
+        formatContractSeasonLabel(
+          pickFirstString(payload, [
+            'warning_game_date',
+            'issued_game_date',
+            'created_game_date',
+            'game_date',
+          ])
+        )
+      ),
+      detailRow(
+        'Deadline',
+        formatContractSeasonLabel(
+          pickFirstString(payload, [
+            'deadline_game_date',
+            'liquidation_deadline_game_date',
+            'final_due_game_date',
+            'due_game_date',
+          ])
+        )
+      ),
+      detailRow(
+        'Status',
+        formatLabel(
+          pickFirstString(payload, [
+            'status',
+            'finance_status',
+            'warning_status',
+          ])
+        ) || 'Final warning'
+      ),
+    ])
+  },
+
+  getExtraText: (item) => {
+    const payload = getPayload(item)
+
+    return (
+      pickFirstString(payload, [
+        'liquidation_rule',
+        'liquidation_warning',
+        'warning_text',
+      ]) ||
+      'This is the final warning before liquidation. Emergency rescues have already been used, so the next unpaid mandatory obligation can liquidate the club. Review finances immediately and avoid new optional spending.'
+    )
+  },
+
+  actions: [
+    {
+      key: 'open-finance-transactions',
+      label: 'Open transactions',
+      variant: 'primary',
+      kind: 'navigate',
+      getHref: (item) =>
+        getActionHrefFromItem(item) ||
+        '/dashboard/finance?tab=transactions',
+      show: () => true,
+    },
+    {
+      key: 'open-finance-page',
+      label: 'Finance page',
+      variant: 'secondary',
+      kind: 'navigate',
+      getHref: () => '/dashboard/finance',
+      show: () => true,
+    },
+    MARK_READ_ACTION,
+  ],
+},
+  FINANCE_CLUB_LIQUIDATED: {
+  defaultTitle: 'Club liquidated',
+  defaultMessage:
+    'A club has been liquidated because it could not cover a mandatory obligation after all emergency rescues were used.',
+
+  imageSrc:   'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Event%20images/Club%20Liquidated.png',
+
+  getImageSrc: (item) =>
+    getImageSrcFromItem(item) ||    'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Event%20images/Club%20Liquidated.png',
+
+  enrich: (item) => {
+    const payload = getPayload(item)
+
+    const clubName = pickFirstString(payload, [
+      'club_name',
+      'team_name',
+    ])
+
+    return {
+      ...item,
+      title: clubName
+        ? `Club liquidated: ${clubName}`
+        : item.title || 'Club liquidated',
+      message:
+        item.message ||
+        (clubName
+          ? `${clubName} has been liquidated because no further emergency rescues were available.`
+          : 'A club has been liquidated because no further emergency rescues were available.'),
+    }
+  },
+
+  getIntroText: (item) => {
+    const payload = getPayload(item)
+
+    const clubName = pickFirstString(payload, [
+      'club_name',
+      'team_name',
+    ])
+
+    const reason =
+      pickFirstString(payload, [
+        'liquidation_reason',
+        'reason_label',
+        'reason',
+        'obligation_reason',
+      ]) || 'an unpaid mandatory obligation'
+
+    if (clubName) {
+      return `${clubName} has been liquidated after failing to cover ${reason}. No further emergency rescues were available.`
+    }
+
+    return (
+      buildIntroFromMessage(item) ||
+      'The club has been liquidated after failing to cover a mandatory obligation. No further emergency rescues were available.'
+    )
+  },
+
+  getDetailRows: (item) => {
+    const payload = getPayload(item)
+
+    const availableCash = pickFirstNumber(payload, [
+      'available_cash',
+      'cash_balance',
+      'club_cash',
+      'current_cash',
+    ])
+
+    const obligationAmount = pickFirstNumber(payload, [
+      'obligation_amount',
+      'required_amount',
+      'mandatory_amount',
+      'amount_due',
+      'unpaid_amount',
+    ])
+
+    const shortfallAmount = pickFirstNumber(payload, [
+      'shortfall_amount',
+      'missing_amount',
+      'amount_short',
+    ])
+
+    const rescuesUsed = pickFirstNumber(payload, [
+      'rescues_used_lifetime',
+      'rescues_used',
+      'rescue_number',
+    ])
+
+    const maxRescues = pickFirstNumber(payload, [
+      'max_lifetime_rescues',
+      'max_rescues',
+      'rescue_limit',
+    ])
+
+    return compactRows([
+      detailRow(
+        'Club',
+        pickFirstString(payload, [
+          'club_name',
+          'team_name',
+        ])
+      ),
+      detailRow(
+        'Liquidation reason',
+        formatLabel(
+          pickFirstString(payload, [
+            'liquidation_reason',
+            'reason_label',
+            'reason',
+            'obligation_reason',
+          ])
+        )
+      ),
+      detailRow(
+        'Available cash',
+        formatCurrencyLabel(availableCash, '$')
+      ),
+      detailRow(
+        'Unpaid obligation',
+        formatCurrencyLabel(obligationAmount, '$')
+      ),
+      detailRow(
+        'Shortfall',
+        formatCurrencyLabel(shortfallAmount, '$')
+      ),
+      detailRow(
+        'Emergency rescues used',
+        rescuesUsed !== null && maxRescues !== null
+          ? `${rescuesUsed} of ${maxRescues}`
+          : rescuesUsed !== null
+            ? `${rescuesUsed}`
+            : null
+      ),
+      detailRow(
+        'Liquidated on',
+        formatContractSeasonLabel(
+          pickFirstString(payload, [
+            'liquidated_on_game_date',
+            'liquidation_game_date',
+            'processed_game_date',
+            'created_game_date',
+            'game_date',
+          ])
+        )
+      ),
+      detailRow(
+        'Club status',
+        formatLabel(
+          pickFirstString(payload, [
+            'status',
+            'club_status',
+            'finance_status',
+          ])
+        ) || 'Liquidated'
+      ),
+    ])
+  },
+
+  getExtraText: (item) => {
+    const payload = getPayload(item)
+
+    return (
+      pickFirstString(payload, [
+        'liquidation_rule',
+        'liquidation_warning',
+        'rule_text',
+      ]) ||
+      'After all lifetime emergency rescues are used, the next unpaid mandatory obligation can liquidate the club. Optional purchases, upgrades, transfers, staff courses, scouting, and camps should be blocked when funds are insufficient.'
+    )
+  },
+
+  actions: [
+    {
+      key: 'open-finance-page',
+      label: 'Finance page',
+      variant: 'primary',
+      kind: 'navigate',
+      getHref: (item) =>
+        getActionHrefFromItem(item) ||
+        '/dashboard/finance',
+      show: () => true,
+    },
+    {
+      key: 'open-transactions',
+      label: 'Transactions',
+      variant: 'secondary',
+      kind: 'navigate',
+      getHref: () => '/dashboard/finance?tab=transactions',
+      show: () => true,
+    },
+    {
+      key: 'open-dashboard',
+      label: 'Dashboard',
+      variant: 'secondary',
+      kind: 'navigate',
+      getHref: () => '/dashboard',
+      show: () => true,
+    },
+    MARK_READ_ACTION,
+  ],
+},
+  INFRASTRUCTURE_ASSET_ORDERED: {
+  defaultTitle: 'Asset ordered',
+  defaultMessage:
+    'A new infrastructure asset has been ordered and is now waiting for delivery.',
+
+  imageSrc:    'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Event%20images/Asset%20Order.png',
+
+  getImageSrc: (item) =>
+    getImageSrcFromItem(item) ||    'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Event%20images/Asset%20Order.png',
+
+  enrich: (item) => {
+    const payload = getPayload(item)
+
+    const assetLabel =
+      pickFirstString(payload, [
+        'asset_name',
+        'display_name',
+        'asset_label',
+        'name',
+      ]) ||
+      formatLabel(
+        pickFirstString(payload, [
+          'target_key',
+          'asset_key',
+          'key',
+        ])
+      )
+
+    const quantity = pickFirstNumber(payload, [
+      'asset_quantity',
+      'quantity',
+      'count',
+    ])
+
+    return {
+      ...item,
+      title: assetLabel
+        ? `Asset ordered: ${assetLabel}${quantity && quantity > 1 ? ` x${quantity}` : ''}`
+        : item.title || 'Asset ordered',
+      message:
+        item.message ||
+        (assetLabel
+          ? `${assetLabel}${quantity && quantity > 1 ? ` x${quantity}` : ''} has been ordered and is waiting for delivery.`
+          : 'A new infrastructure asset has been ordered and is waiting for delivery.'),
+    }
+  },
+
+  getIntroText: (item) => {
+    const payload = getPayload(item)
+
+    const assetLabel =
+      pickFirstString(payload, [
+        'asset_name',
+        'display_name',
+        'asset_label',
+        'name',
+      ]) ||
+      formatLabel(
+        pickFirstString(payload, [
+          'target_key',
+          'asset_key',
+          'key',
+        ])
+      )
+
+    const quantity = pickFirstNumber(payload, [
+      'asset_quantity',
+      'quantity',
+      'count',
+    ])
+
+    if (assetLabel) {
+      return `${assetLabel}${quantity && quantity > 1 ? ` x${quantity}` : ''} has been ordered for your club. Delivery is now scheduled.`
+    }
+
+    return (
+      buildIntroFromMessage(item) ||
+      'A new infrastructure asset has been ordered for your club. Delivery is now scheduled.'
+    )
+  },
+
+  getDetailRows: (item) => {
+    const payload = getPayload(item)
+
+    const assetLabel =
+      pickFirstString(payload, [
+        'asset_name',
+        'display_name',
+        'asset_label',
+        'name',
+      ]) ||
+      formatLabel(
+        pickFirstString(payload, [
+          'target_key',
+          'asset_key',
+          'key',
+        ])
+      )
+
+    const quantity = pickFirstNumber(payload, [
+      'asset_quantity',
+      'quantity',
+      'count',
+    ])
+
+    const assetLevel = pickFirstNumber(payload, [
+      'asset_level',
+      'level',
+      'tier',
+    ])
+
+    const costCash = pickFirstNumber(payload, [
+      'cost_cash',
+      'asset_cost',
+      'purchase_cost',
+      'price',
+      'cash_cost',
+    ])
+
+    const durationDays = pickFirstNumber(payload, [
+      'duration_game_days',
+      'delivery_days',
+      'duration_days',
+    ])
+
+    return compactRows([
+      detailRow('Asset', assetLabel),
+      detailRow(
+        'Quantity',
+        quantity !== null ? `${quantity}` : null
+      ),
+      detailRow(
+        'Asset level',
+        assetLevel !== null ? `${assetLevel}` : null
+      ),
+      detailRow(
+        'Order cost',
+        formatCurrencyLabel(costCash, '$')
+      ),
+      detailRow(
+        'Ordered on',
+        formatContractSeasonLabel(
+          pickFirstString(payload, [
+            'started_game_date',
+            'ordered_on_game_date',
+            'order_game_date',
+            'created_game_date',
+            'game_date',
+          ])
+        )
+      ),
+      detailRow(
+        'Planned delivery',
+        formatContractSeasonLabel(
+          pickFirstString(payload, [
+            'complete_game_date',
+            'delivery_game_date',
+            'planned_delivery_game_date',
+            'delivers_on_game_date',
+          ])
+        )
+      ),
+      detailRow(
+        'Delivery time',
+        durationDays !== null
+          ? `${durationDays} day${durationDays === 1 ? '' : 's'}`
+          : null
+      ),
+      detailRow(
+        'Status',
+        formatLabel(
+          pickFirstString(payload, [
+            'status',
+            'job_status',
+            'delivery_status',
+          ])
+        ) || 'Ordered'
+      ),
+    ])
+  },
+
+  getExtraText: () =>
+    'Open the infrastructure assets page to review the delivery queue and check when the ordered asset will become available.',
+
+  actions: [
+    {
+      key: 'open-infrastructure-assets',
+      label: 'Open assets',
+      variant: 'primary',
+      kind: 'navigate',
+      getHref: () => '/dashboard/infrastructure?tab=assets',
+      show: () => true,
+    },
+    {
+      key: 'open-infrastructure-page',
+      label: 'Infrastructure page',
+      variant: 'secondary',
+      kind: 'navigate',
+      getHref: (item) =>
+        getActionHrefFromItem(item) || '/dashboard/infrastructure',
       show: () => true,
     },
     MARK_READ_ACTION,

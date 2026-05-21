@@ -2,7 +2,11 @@ import React from 'react'
 
 type StaffRole =
   | 'head_coach'
+  | 'trainer'
+  | 'u23_head_coach'
   | 'team_doctor'
+  | 'physio'
+  | 'nutritionist'
   | 'mechanic'
   | 'sport_director'
   | 'scout_analyst'
@@ -16,6 +20,7 @@ type StaffCandidateRow = {
   specialization: string | null
   staff_name: string
   country_code: string | null
+  birth_date: string | null
   expertise: number
   experience: number
   potential: number
@@ -51,6 +56,113 @@ type CandidateScoutQualityInfo = {
   scoutingLevel: number
 }
 
+type StaffQualityRow = {
+  label: string
+  value: string
+}
+
+type StaffQualityBox = {
+  title: string
+  rows: StaffQualityRow[]
+  note?: string | null
+}
+
+const STAFF_ROLE_FILTERS: Array<{ value: 'all' | StaffRole; label: string }> = [
+  { value: 'all', label: 'All roles' },
+  { value: 'head_coach', label: 'Head Coach' },
+  { value: 'trainer', label: 'Trainer' },
+  { value: 'u23_head_coach', label: 'U23 Head Coach' },
+  { value: 'team_doctor', label: 'Team Doctor' },
+  { value: 'physio', label: 'Physio' },
+  { value: 'nutritionist', label: 'Nutritionist' },
+  { value: 'mechanic', label: 'Mechanic' },
+  { value: 'sport_director', label: 'Sport Director' },
+  { value: 'scout_analyst', label: 'Scout / Analyst' },
+]
+
+const STAFF_ROLES = STAFF_ROLE_FILTERS.filter(
+  (role): role is { value: StaffRole; label: string } => role.value !== 'all'
+)
+
+function normalizeStaffRole(value: unknown): StaffRole | null {
+  if (typeof value !== 'string') return null
+
+  const normalized = value.trim().toLowerCase()
+
+  if (
+    normalized === 'head_coach' ||
+    normalized === 'trainer' ||
+    normalized === 'u23_head_coach' ||
+    normalized === 'team_doctor' ||
+    normalized === 'physio' ||
+    normalized === 'nutritionist' ||
+    normalized === 'mechanic' ||
+    normalized === 'sport_director' ||
+    normalized === 'scout_analyst'
+  ) {
+    return normalized as StaffRole
+  }
+
+  return null
+}
+
+function parseIsoDateUtc(value: string | null | undefined) {
+  if (!value) return null
+
+  const parts = value.split('-').map(Number)
+  if (parts.length !== 3) return null
+
+  const [year, month, day] = parts
+  if (!year || !month || !day) return null
+
+  return new Date(Date.UTC(year, month - 1, day))
+}
+
+function getStaffAge(
+  birthDate: string | null | undefined,
+  currentGameDate: string | null | undefined
+) {
+  const birth = parseIsoDateUtc(birthDate)
+  const current = parseIsoDateUtc(currentGameDate)
+
+  if (!birth || !current) return null
+
+  let age = current.getUTCFullYear() - birth.getUTCFullYear()
+
+  if (
+    current.getUTCMonth() < birth.getUTCMonth() ||
+    (current.getUTCMonth() === birth.getUTCMonth() &&
+      current.getUTCDate() < birth.getUTCDate())
+  ) {
+    age -= 1
+  }
+
+  return age
+}
+
+function formatStaffAge(ageYears: number | null) {
+  return ageYears === null ? 'Age unknown' : `${ageYears} years old`
+}
+
+function normalizeRoleCapacity(
+  roleLimit: StaffRoleLimitRow | undefined,
+  assignedRows: ClubStaffRow[]
+) {
+  const activeCount = Number(roleLimit?.active_count ?? assignedRows.length ?? 0)
+  const limitCount = Number(roleLimit?.limit_count ?? 0)
+  const openSlots = Math.max(Number(roleLimit?.open_slots ?? limitCount - activeCount), 0)
+
+  return {
+    currentCount: activeCount,
+    limitCount,
+    openSlots,
+    canHire:
+      limitCount > 0 &&
+      openSlots > 0 &&
+      (roleLimit?.can_hire ?? true),
+  }
+}
+
 function formatCurrency(value: number | null | undefined) {
   if (value == null || Number.isNaN(value)) return '—'
   return `$${Number(value).toLocaleString('de-DE')}`
@@ -81,20 +193,7 @@ function getCountryName(countryCode: string | null | undefined) {
 }
 
 function roleLabel(role: StaffRole) {
-  switch (role) {
-    case 'head_coach':
-      return 'Head Coach'
-    case 'team_doctor':
-      return 'Team Doctor'
-    case 'mechanic':
-      return 'Mechanic'
-    case 'sport_director':
-      return 'Sport Director'
-    case 'scout_analyst':
-      return 'Scout / Analyst'
-    default:
-      return role
-  }
+  return STAFF_ROLES.find((item) => item.value === role)?.label ?? role
 }
 
 function formatScoutTier(tier: string): string {
@@ -110,6 +209,30 @@ function formatScoutTier(tier: string): string {
     default:
       return 'Unknown'
   }
+}
+
+function clampSkillScore(value: number) {
+  if (!Number.isFinite(value)) return 0
+  return Math.max(0, Math.min(100, value))
+}
+
+function weightedScore(parts: Array<[number, number]>) {
+  const totalWeight = parts.reduce((sum, [, weight]) => sum + weight, 0)
+
+  if (totalWeight <= 0) return 0
+
+  const score =
+    parts.reduce((sum, [value, weight]) => sum + clampSkillScore(Number(value ?? 0)) * weight, 0) /
+    totalWeight
+
+  return Math.round(score * 10) / 10
+}
+
+function qualityTierFromScore(score: number) {
+  if (score >= 85) return 'Elite'
+  if (score >= 70) return 'Strong'
+  if (score >= 55) return 'Solid'
+  return 'Basic'
 }
 
 function calculateScoutCandidateQuality(
@@ -183,12 +306,338 @@ function calculateScoutCandidateQuality(
   }
 }
 
+function buildStaffQualityBox(
+  candidate: StaffCandidateRow,
+  scoutingLevel: number
+): StaffQualityBox {
+  const expertise = Number(candidate.expertise ?? 0)
+  const experience = Number(candidate.experience ?? 0)
+  const potential = Number(candidate.potential ?? 0)
+  const leadership = Number(candidate.leadership ?? 0)
+  const efficiency = Number(candidate.efficiency ?? 0)
+  const loyalty = Number(candidate.loyalty ?? 0)
+
+  if (candidate.role_type === 'scout_analyst') {
+    const scoutQuality = calculateScoutCandidateQuality(candidate, scoutingLevel)
+
+    if (!scoutQuality) {
+      return {
+        title: 'Scouting Quality',
+        rows: [
+          { label: 'Scout Ability', value: 'Unknown' },
+          { label: 'Current Report Quality', value: 'Unknown' },
+          { label: 'Report Time', value: 'Unknown' },
+        ],
+      }
+    }
+
+    return {
+      title: 'Scouting Quality',
+      rows: [
+        {
+          label: 'Scout Ability',
+          value: formatScoutTier(scoutQuality.scoutAbilityTier),
+        },
+        {
+          label: 'Current Report Quality',
+          value: formatScoutTier(scoutQuality.currentReportTier),
+        },
+        {
+          label: 'Report Time',
+          value: `${scoutQuality.durationHours}h`,
+        },
+      ],
+      note: scoutQuality.isLimitedByOffice
+        ? `Limited by Scouting Office Lv ${scoutQuality.scoutingLevel}.`
+        : null,
+    }
+  }
+
+  if (candidate.role_type === 'head_coach') {
+    const coachAbility = weightedScore([
+      [expertise, 0.35],
+      [efficiency, 0.25],
+      [potential, 0.25],
+      [leadership, 0.15],
+    ])
+
+    const trainingQuality = weightedScore([
+      [expertise, 0.6],
+      [efficiency, 0.25],
+      [experience, 0.15],
+    ])
+
+    const developmentSupport = weightedScore([
+      [potential, 0.5],
+      [expertise, 0.25],
+      [leadership, 0.25],
+    ])
+
+    return {
+      title: 'Coaching Quality',
+      rows: [
+        { label: 'Coach Ability', value: qualityTierFromScore(coachAbility) },
+        { label: 'Training Quality', value: qualityTierFromScore(trainingQuality) },
+        { label: 'Development Support', value: qualityTierFromScore(developmentSupport) },
+      ],
+    }
+  }
+
+  if (candidate.role_type === 'trainer') {
+    const trainingAbility = weightedScore([
+      [expertise, 0.45],
+      [efficiency, 0.3],
+      [potential, 0.15],
+      [experience, 0.1],
+    ])
+
+    const sessionQuality = weightedScore([
+      [expertise, 0.55],
+      [efficiency, 0.35],
+      [leadership, 0.1],
+    ])
+
+    const loadManagement = weightedScore([
+      [efficiency, 0.45],
+      [experience, 0.3],
+      [loyalty, 0.25],
+    ])
+
+    return {
+      title: 'Training Quality',
+      rows: [
+        { label: 'Training Ability', value: qualityTierFromScore(trainingAbility) },
+        { label: 'Session Quality', value: qualityTierFromScore(sessionQuality) },
+        { label: 'Load Management', value: qualityTierFromScore(loadManagement) },
+      ],
+    }
+  }
+
+  if (candidate.role_type === 'team_doctor') {
+    const medicalAbility = weightedScore([
+      [expertise, 0.35],
+      [efficiency, 0.3],
+      [experience, 0.25],
+      [leadership, 0.1],
+    ])
+
+    const injuryPrevention = weightedScore([
+      [efficiency, 0.55],
+      [experience, 0.3],
+      [expertise, 0.15],
+    ])
+
+    const returnToFitness = weightedScore([
+      [expertise, 0.45],
+      [efficiency, 0.35],
+      [experience, 0.2],
+    ])
+
+    return {
+      title: 'Medical Quality',
+      rows: [
+        { label: 'Medical Ability', value: qualityTierFromScore(medicalAbility) },
+        { label: 'Injury Prevention', value: qualityTierFromScore(injuryPrevention) },
+        { label: 'Return-to-Fitness', value: qualityTierFromScore(returnToFitness) },
+      ],
+    }
+  }
+
+  if (candidate.role_type === 'physio') {
+    const recoveryAbility = weightedScore([
+      [expertise, 0.4],
+      [efficiency, 0.35],
+      [experience, 0.25],
+    ])
+
+    const rehabilitationQuality = weightedScore([
+      [expertise, 0.6],
+      [experience, 0.25],
+      [efficiency, 0.15],
+    ])
+
+    const recoverySpeed = weightedScore([
+      [efficiency, 0.55],
+      [expertise, 0.3],
+      [experience, 0.15],
+    ])
+
+    return {
+      title: 'Recovery Quality',
+      rows: [
+        { label: 'Recovery Ability', value: qualityTierFromScore(recoveryAbility) },
+        { label: 'Rehabilitation Quality', value: qualityTierFromScore(rehabilitationQuality) },
+        { label: 'Recovery Speed', value: qualityTierFromScore(recoverySpeed) },
+      ],
+    }
+  }
+
+  if (candidate.role_type === 'nutritionist') {
+    const nutritionAbility = weightedScore([
+      [expertise, 0.45],
+      [efficiency, 0.3],
+      [loyalty, 0.25],
+    ])
+
+    const recoverySupport = weightedScore([
+      [efficiency, 0.5],
+      [expertise, 0.3],
+      [loyalty, 0.2],
+    ])
+
+    const consistencySupport = weightedScore([
+      [loyalty, 0.5],
+      [expertise, 0.3],
+      [leadership, 0.2],
+    ])
+
+    return {
+      title: 'Nutrition Quality',
+      rows: [
+        { label: 'Nutrition Ability', value: qualityTierFromScore(nutritionAbility) },
+        { label: 'Recovery Support', value: qualityTierFromScore(recoverySupport) },
+        { label: 'Consistency Support', value: qualityTierFromScore(consistencySupport) },
+      ],
+    }
+  }
+
+  if (candidate.role_type === 'mechanic') {
+    const technicalAbility = weightedScore([
+      [expertise, 0.45],
+      [efficiency, 0.35],
+      [potential, 0.2],
+    ])
+
+    const bikeSetupQuality = weightedScore([
+      [expertise, 0.6],
+      [efficiency, 0.25],
+      [potential, 0.15],
+    ])
+
+    const reliabilitySupport = weightedScore([
+      [efficiency, 0.55],
+      [experience, 0.25],
+      [loyalty, 0.2],
+    ])
+
+    return {
+      title: 'Technical Quality',
+      rows: [
+        { label: 'Technical Ability', value: qualityTierFromScore(technicalAbility) },
+        { label: 'Bike Setup Quality', value: qualityTierFromScore(bikeSetupQuality) },
+        { label: 'Reliability Support', value: qualityTierFromScore(reliabilitySupport) },
+      ],
+    }
+  }
+
+  if (candidate.role_type === 'sport_director') {
+    const directorAbility = weightedScore([
+      [expertise, 0.35],
+      [leadership, 0.35],
+      [efficiency, 0.2],
+      [experience, 0.1],
+    ])
+
+    const racePlanQuality = weightedScore([
+      [expertise, 0.55],
+      [efficiency, 0.3],
+      [experience, 0.15],
+    ])
+
+    const motivationSupport = weightedScore([
+      [leadership, 0.55],
+      [loyalty, 0.25],
+      [experience, 0.2],
+    ])
+
+    return {
+      title: 'Tactical Quality',
+      rows: [
+        { label: 'Director Ability', value: qualityTierFromScore(directorAbility) },
+        { label: 'Race Plan Quality', value: qualityTierFromScore(racePlanQuality) },
+        { label: 'Motivation Support', value: qualityTierFromScore(motivationSupport) },
+      ],
+    }
+  }
+
+  const youthCoachAbility = weightedScore([
+    [expertise, 0.35],
+    [potential, 0.35],
+    [leadership, 0.2],
+    [experience, 0.1],
+  ])
+
+  const talentDevelopment = weightedScore([
+    [potential, 0.55],
+    [expertise, 0.3],
+    [leadership, 0.15],
+  ])
+
+  const raceReadiness = weightedScore([
+    [expertise, 0.45],
+    [leadership, 0.3],
+    [experience, 0.25],
+  ])
+
+  return {
+    title: 'Youth Coaching Quality',
+    rows: [
+      { label: 'Youth Coach Ability', value: qualityTierFromScore(youthCoachAbility) },
+      { label: 'Talent Development', value: qualityTierFromScore(talentDevelopment) },
+      { label: 'Race Readiness', value: qualityTierFromScore(raceReadiness) },
+    ],
+  }
+}
+
+function StaffQualityBoxPanel({ qualityBox }: { qualityBox: StaffQualityBox }) {
+  return (
+    <div className="mt-4 rounded-xl border border-blue-100 bg-blue-50 p-4">
+      <div className="text-sm font-semibold text-blue-900">{qualityBox.title}</div>
+
+      <div className="mt-3 space-y-2 text-sm">
+        {qualityBox.rows.map((row) => (
+          <div
+            key={row.label}
+            className="flex items-center justify-between rounded-lg bg-white px-3 py-2"
+          >
+            <span className="text-blue-700">{row.label}</span>
+
+            <span className="font-semibold text-blue-950">{row.value}</span>
+          </div>
+        ))}
+      </div>
+
+      {qualityBox.note ? (
+        <div className="mt-3 rounded-lg border border-yellow-200 bg-yellow-50 px-3 py-2 text-xs text-yellow-800">
+          {qualityBox.note}
+        </div>
+      ) : null}
+    </div>
+  )
+}
+
 function getCandidateStats(candidate: StaffCandidateRow) {
   if (candidate.role_type === 'head_coach') {
     return [
       { label: 'Training', value: candidate.expertise },
       { label: 'Recovery Plan', value: candidate.efficiency },
+      { label: 'Team Dev', value: candidate.potential },
+    ]
+  }
+
+  if (candidate.role_type === 'trainer') {
+    return [
+      { label: 'Daily Training', value: candidate.expertise },
+      { label: 'Efficiency', value: candidate.efficiency },
+      { label: 'Potential Growth', value: candidate.potential },
+    ]
+  }
+
+  if (candidate.role_type === 'u23_head_coach') {
+    return [
+      { label: 'Youth Training', value: candidate.expertise },
       { label: 'Youth Dev', value: candidate.potential },
+      { label: 'Leadership', value: candidate.leadership },
     ]
   }
 
@@ -197,6 +646,22 @@ function getCandidateStats(candidate: StaffCandidateRow) {
       { label: 'Recovery', value: candidate.expertise },
       { label: 'Prevention', value: candidate.efficiency },
       { label: 'Diagnosis', value: candidate.experience },
+    ]
+  }
+
+  if (candidate.role_type === 'physio') {
+    return [
+      { label: 'Rehabilitation', value: candidate.expertise },
+      { label: 'Recovery Speed', value: candidate.efficiency },
+      { label: 'Experience', value: candidate.experience },
+    ]
+  }
+
+  if (candidate.role_type === 'nutritionist') {
+    return [
+      { label: 'Nutrition Plan', value: candidate.expertise },
+      { label: 'Recovery Support', value: candidate.efficiency },
+      { label: 'Consistency', value: candidate.loyalty },
     ]
   }
 
@@ -230,7 +695,11 @@ function getAssignedStaffSummary(staffRows: ClubStaffRow[]) {
     return staffRows.map((row) => row.staff_name).join(', ')
   }
 
-  const firstTwo = staffRows.slice(0, 2).map((row) => row.staff_name).join(', ')
+  const firstTwo = staffRows
+    .slice(0, 2)
+    .map((row) => row.staff_name)
+    .join(', ')
+
   return `${firstTwo} +${staffRows.length - 2} more`
 }
 
@@ -259,6 +728,7 @@ type StaffFreeAgentPageProps = {
   setHireContractTerm: (value: 0 | 1) => void
   onHireCandidate: () => void
   scoutingLevel?: number
+  currentGameDate: string | null
 }
 
 export default function StaffFreeAgentPage({
@@ -286,55 +756,60 @@ export default function StaffFreeAgentPage({
   setHireContractTerm,
   onHireCandidate,
   scoutingLevel = 0,
+  currentGameDate,
 }: StaffFreeAgentPageProps) {
   const roleLimitMap = new Map(roleLimits.map((row) => [row.role_type, row] as const))
 
-  const staffRoleCapacity = (
-    [
-      'head_coach',
-      'team_doctor',
-      'mechanic',
-      'sport_director',
-      'scout_analyst',
-    ] as StaffRole[]
-  ).map((role) => {
-    const limitRow = roleLimitMap.get(role)
-    const assignedRows = activeStaffByRole.get(role) ?? []
+  const staffRoleCapacity = STAFF_ROLES.map((role) => {
+    const limitRow = roleLimitMap.get(role.value)
+    const assignedRows = activeStaffByRole.get(role.value) ?? []
 
-    const currentCount = limitRow?.active_count ?? assignedRows.length
-    const limitCount = limitRow?.limit_count ?? 0
-    const openSlots = Math.max(limitCount - currentCount, 0)
+    const {
+      currentCount,
+      limitCount,
+      openSlots,
+      canHire,
+    } = normalizeRoleCapacity(limitRow, assignedRows)
 
     return {
-      role_type: role,
-      role_label: roleLabel(role),
+      role_type: role.value,
+      role_label: role.label,
       current_count: currentCount,
       limit_count: limitCount,
       open_slots: openSlots,
-      can_hire: limitRow?.can_hire ?? openSlots > 0,
+      can_hire: canHire,
     }
   })
 
-  const selectedRoleLimit = selectedCandidate
-    ? roleLimitMap.get(selectedCandidate.role_type)
+  const selectedCandidateRole = selectedCandidate
+    ? normalizeStaffRole(selectedCandidate.role_type)
     : null
 
-  const selectedRoleAssigned = selectedCandidate
-    ? selectedRoleLimit?.active_count ??
-      (activeStaffByRole.get(selectedCandidate.role_type)?.length ?? 0)
-    : 0
+  const selectedCandidateAge = selectedCandidate
+    ? getStaffAge(selectedCandidate.birth_date, currentGameDate)
+    : null
 
-  const selectedRoleAssignedRows = selectedCandidate
-    ? activeStaffByRole.get(selectedCandidate.role_type) ?? []
+  const selectedCandidateQualityBox = selectedCandidate
+    ? buildStaffQualityBox(selectedCandidate, scoutingLevel)
+    : null
+
+  const selectedRoleLimit = selectedCandidateRole
+    ? roleLimitMap.get(selectedCandidateRole)
+    : undefined
+
+  const selectedRoleAssignedRows = selectedCandidateRole
+    ? activeStaffByRole.get(selectedCandidateRole) ?? []
     : []
 
-  const selectedRoleLimitCount = selectedRoleLimit?.limit_count ?? 0
-  const selectedRoleOpenSlots = Math.max(
-    selectedRoleLimit?.open_slots ?? selectedRoleLimitCount - selectedRoleAssigned,
-    0
-  )
+  const {
+    currentCount: selectedRoleAssigned,
+    limitCount: selectedRoleLimitCount,
+    openSlots: selectedRoleOpenSlots,
+    canHire: selectedRoleCanHireRaw,
+  } = normalizeRoleCapacity(selectedRoleLimit, selectedRoleAssignedRows)
+
   const selectedRoleCanHire =
-    selectedRoleLimit?.can_hire ?? selectedRoleOpenSlots > 0
+    selectedCandidate?.is_available === true && selectedRoleCanHireRaw
 
   return (
     <div className="grid w-full grid-cols-1 gap-4 xl:grid-cols-[1.15fr_0.85fr]">
@@ -342,8 +817,10 @@ export default function StaffFreeAgentPage({
         <div className="flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
           <div>
             <h4 className="font-semibold text-gray-900">Available Staff</h4>
+
             <div className="mt-1 text-sm text-gray-500">
-              Browse available staff candidates and hire directly into available staff slots.
+              Browse available staff candidates and hire directly into available staff
+              slots.
             </div>
           </div>
 
@@ -352,17 +829,17 @@ export default function StaffFreeAgentPage({
               <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-gray-500">
                 Role Filter
               </label>
+
               <select
                 value={roleFilter}
                 onChange={(e) => setRoleFilter(e.target.value as 'all' | StaffRole)}
                 className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700"
               >
-                <option value="all">All Roles</option>
-                <option value="head_coach">Head Coach</option>
-                <option value="team_doctor">Team Doctor</option>
-                <option value="mechanic">Mechanic</option>
-                <option value="sport_director">Sport Director</option>
-                <option value="scout_analyst">Scout / Analyst</option>
+                {STAFF_ROLE_FILTERS.map((role) => (
+                  <option key={role.value} value={role.value}>
+                    {role.label}
+                  </option>
+                ))}
               </select>
             </div>
 
@@ -370,6 +847,7 @@ export default function StaffFreeAgentPage({
               <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-gray-500">
                 Sort By
               </label>
+
               <select
                 value={sortField}
                 onChange={(e) => setSortField(e.target.value as StaffSortField)}
@@ -386,6 +864,7 @@ export default function StaffFreeAgentPage({
               <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-gray-500">
                 Direction
               </label>
+
               <select
                 value={sortDirection}
                 onChange={(e) => setSortDirection(e.target.value as SortDirection)}
@@ -405,18 +884,28 @@ export default function StaffFreeAgentPage({
             </div>
           ) : (
             paginatedCandidates.map((candidate) => {
-              const roleLimit = roleLimitMap.get(candidate.role_type)
-              const assignedRows = activeStaffByRole.get(candidate.role_type) ?? []
+              const normalizedCandidateRole = normalizeStaffRole(candidate.role_type)
+              const roleLimit = normalizedCandidateRole
+                ? roleLimitMap.get(normalizedCandidateRole)
+                : undefined
+
+              const assignedRows = normalizedCandidateRole
+                ? activeStaffByRole.get(normalizedCandidateRole) ?? []
+                : []
+
               const selected = candidate.id === selectedCandidateId
 
-              const currentCount = roleLimit?.active_count ?? assignedRows.length
-              const limitCount = roleLimit?.limit_count ?? 0
-              const openSlots = Math.max(
-                roleLimit?.open_slots ?? limitCount - currentCount,
-                0
-              )
-              const canHire = roleLimit?.can_hire ?? openSlots > 0
-              const roleAtCapacity = !canHire || openSlots <= 0
+              const {
+                currentCount,
+                limitCount,
+                openSlots,
+                canHire: roleCanHire,
+              } = normalizeRoleCapacity(roleLimit, assignedRows)
+
+              const candidateAge = getStaffAge(candidate.birth_date, currentGameDate)
+
+              const canHire = candidate.is_available === true && roleCanHire
+              const roleAtCapacity = limitCount > 0 && openSlots <= 0
 
               return (
                 <button
@@ -437,14 +926,23 @@ export default function StaffFreeAgentPage({
                           alt={getCountryName(candidate.country_code)}
                           className="h-4 w-6 shrink-0 rounded-sm border border-gray-200 object-cover"
                         />
+
                         <div className="text-sm font-semibold text-gray-900">
                           {candidate.staff_name}
                         </div>
                       </div>
 
-                      <div className="mt-1 text-xs text-gray-500">
-                        {roleLabel(candidate.role_type)}
-                        {candidate.specialization ? ` • ${candidate.specialization}` : ''}
+                      <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-gray-500">
+                        <span>
+                          {roleLabel(candidate.role_type)}
+                          {candidate.specialization
+                            ? ` • ${candidate.specialization}`
+                            : ''}
+                        </span>
+
+                        <span className="rounded-full border border-green-200 bg-green-50 px-2 py-0.5 text-[11px] font-medium text-green-700">
+                          {formatStaffAge(candidateAge)}
+                        </span>
                       </div>
                     </div>
 
@@ -452,6 +950,7 @@ export default function StaffFreeAgentPage({
                       <div className="text-sm font-semibold text-gray-700">
                         {formatCurrency(candidate.salary_weekly)}/week
                       </div>
+
                       <div className="mt-1 text-xs text-gray-500">
                         {currentCount}/{limitCount} assigned
                       </div>
@@ -462,6 +961,7 @@ export default function StaffFreeAgentPage({
                     {getCandidateStats(candidate).map((stat) => (
                       <div key={stat.label} className="rounded-lg bg-gray-50 p-2">
                         <div className="text-[11px] text-gray-500">{stat.label}</div>
+
                         <div className="mt-1 text-sm font-semibold text-gray-900">
                           {stat.value}
                         </div>
@@ -469,17 +969,29 @@ export default function StaffFreeAgentPage({
                     ))}
                   </div>
 
-                  {roleAtCapacity ? (
+                  {!candidate.is_available ? (
+                    <div className="mt-3 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-xs text-gray-600">
+                      Candidate is no longer available.
+                    </div>
+                  ) : limitCount <= 0 ? (
+                    <div className="mt-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+                      This role is currently unavailable for this club.
+                    </div>
+                  ) : !canHire && roleAtCapacity ? (
                     <div className="mt-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
                       Role at capacity ({currentCount}/{limitCount}).
                       {assignedRows.length > 0
                         ? ` Assigned: ${getAssignedStaffSummary(assignedRows)}.`
                         : ''}
                     </div>
+                  ) : !canHire ? (
+                    <div className="mt-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+                      This role cannot currently be hired for this club.
+                    </div>
                   ) : assignedRows.length > 0 ? (
                     <div className="mt-3 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-700">
-                      Currently assigned: {getAssignedStaffSummary(assignedRows)}. Open slots left:{' '}
-                      {openSlots}.
+                      Currently assigned: {getAssignedStaffSummary(assignedRows)}. Open
+                      slots left: {openSlots}.
                     </div>
                   ) : (
                     <div className="mt-3 rounded-lg border border-green-200 bg-green-50 px-3 py-2 text-xs text-green-700">
@@ -549,10 +1061,12 @@ export default function StaffFreeAgentPage({
                   alt={getCountryName(selectedCandidate.country_code)}
                   className="h-5 w-7 rounded-sm border border-gray-200 object-cover"
                 />
+
                 <div>
                   <div className="font-semibold text-gray-900">
                     {selectedCandidate.staff_name}
                   </div>
+
                   <div className="text-sm text-gray-500">
                     {roleLabel(selectedCandidate.role_type)}
                     {selectedCandidate.specialization
@@ -565,6 +1079,7 @@ export default function StaffFreeAgentPage({
               <div className="mt-4 grid grid-cols-2 gap-3">
                 <div className="rounded-lg bg-gray-50 p-3">
                   <div className="text-xs text-gray-500">Weekly Wage Demand</div>
+
                   <div className="mt-1 text-sm font-semibold text-gray-900">
                     {formatCurrency(selectedCandidate.salary_weekly)}
                   </div>
@@ -572,22 +1087,34 @@ export default function StaffFreeAgentPage({
 
                 <div className="rounded-lg bg-gray-50 p-3">
                   <div className="text-xs text-gray-500">Availability</div>
+
                   <div className="mt-1 text-sm font-semibold text-gray-900">
                     {selectedCandidate.is_available ? 'Available' : 'Unavailable'}
+                  </div>
+                </div>
+
+                <div className="rounded-lg bg-gray-50 p-3">
+                  <div className="text-xs text-gray-500">Age</div>
+
+                  <div className="mt-1 text-sm font-semibold text-gray-900">
+                    {formatStaffAge(selectedCandidateAge)}
                   </div>
                 </div>
               </div>
 
               <div className="mt-4 rounded-lg border border-gray-100 bg-gray-50 p-3">
                 <div className="text-xs text-gray-500">Role Capacity</div>
+
                 <div className="mt-1 text-sm font-semibold text-gray-900">
                   {selectedRoleAssigned}/{selectedRoleLimitCount} assigned
                 </div>
+
                 <div className="mt-1 text-xs text-gray-500">
                   {selectedRoleAssignedRows.length > 0
                     ? `Current staff: ${getAssignedStaffSummary(selectedRoleAssignedRows)}`
                     : 'No staff currently assigned to this role'}
                 </div>
+
                 <div className="mt-1 text-xs text-gray-500">
                   {selectedRoleLimitCount <= 0
                     ? 'This role is currently unavailable for this club.'
@@ -596,18 +1123,22 @@ export default function StaffFreeAgentPage({
               </div>
 
               <div className="mt-4">
-                <div className="text-sm font-semibold text-gray-900">Staff Attributes</div>
+                <div className="text-sm font-semibold text-gray-900">
+                  Staff Attributes
+                </div>
+
                 <div className="mt-3 space-y-2">
                   {[
                     ...getCandidateStats(selectedCandidate),
                     { label: 'Leadership', value: selectedCandidate.leadership },
                     { label: 'Loyalty', value: selectedCandidate.loyalty },
-                  ].map((stat) => (
+                  ].map((stat, index) => (
                     <div
-                      key={stat.label}
+                      key={`${stat.label}-${index}`}
                       className="flex items-center justify-between rounded-lg bg-gray-50 px-3 py-2"
                     >
                       <span className="text-sm text-gray-600">{stat.label}</span>
+
                       <span className="text-sm font-semibold text-gray-900">
                         {stat.value}
                       </span>
@@ -616,51 +1147,9 @@ export default function StaffFreeAgentPage({
                 </div>
               </div>
 
-              {(() => {
-                const scoutQuality = calculateScoutCandidateQuality(
-                  selectedCandidate,
-                  scoutingLevel
-                )
-
-                if (!scoutQuality) return null
-
-                return (
-                  <div className="mt-4 rounded-xl border border-blue-100 bg-blue-50 p-4">
-                    <div className="text-sm font-semibold text-blue-900">
-                      Scouting Quality
-                    </div>
-
-                    <div className="mt-3 space-y-2 text-sm">
-                      <div className="flex items-center justify-between rounded-lg bg-white px-3 py-2">
-                        <span className="text-blue-700">Scout Ability</span>
-                        <span className="font-semibold text-blue-950">
-                          {formatScoutTier(scoutQuality.scoutAbilityTier)}
-                        </span>
-                      </div>
-
-                      <div className="flex items-center justify-between rounded-lg bg-white px-3 py-2">
-                        <span className="text-blue-700">Current Report Quality</span>
-                        <span className="font-semibold text-blue-950">
-                          {formatScoutTier(scoutQuality.currentReportTier)}
-                        </span>
-                      </div>
-
-                      <div className="flex items-center justify-between rounded-lg bg-white px-3 py-2">
-                        <span className="text-blue-700">Report Time</span>
-                        <span className="font-semibold text-blue-950">
-                          {scoutQuality.durationHours}h
-                        </span>
-                      </div>
-                    </div>
-
-                    {scoutQuality.isLimitedByOffice ? (
-                      <div className="mt-3 rounded-lg border border-yellow-200 bg-yellow-50 px-3 py-2 text-xs text-yellow-800">
-                        Limited by Scouting Office Lv {scoutQuality.scoutingLevel}.
-                      </div>
-                    ) : null}
-                  </div>
-                )
-              })()}
+              {selectedCandidateQualityBox ? (
+                <StaffQualityBoxPanel qualityBox={selectedCandidateQualityBox} />
+              ) : null}
 
               <div className="mt-4 rounded-lg border border-gray-100 bg-gray-50 p-3">
                 <div className="text-xs text-gray-500">Contract Term</div>
@@ -694,17 +1183,20 @@ export default function StaffFreeAgentPage({
                 </div>
 
                 <div className="mt-2 text-xs text-gray-500">
-                  Staff contracts always end on season end, not after a fixed number of days.
+                  Staff contracts always end on season end, not after a fixed number of
+                  days.
                 </div>
               </div>
 
               <div className="mt-5 flex items-center justify-between gap-3">
                 <div className="text-xs text-gray-400">
-                  {selectedRoleLimitCount <= 0
-                    ? 'This role is currently unavailable'
-                    : !selectedRoleCanHire
-                      ? 'Role is already at full capacity'
-                      : `${selectedRoleOpenSlots} open slot(s) available`}
+                  {!selectedCandidate.is_available
+                    ? 'Candidate is no longer available'
+                    : selectedRoleLimitCount <= 0
+                      ? 'This role is currently unavailable'
+                      : !selectedRoleCanHire
+                        ? 'Role is already at full capacity'
+                        : `${selectedRoleOpenSlots} open slot(s) available`}
                 </div>
 
                 <button
@@ -734,7 +1226,10 @@ export default function StaffFreeAgentPage({
                 className="flex items-center justify-between rounded-lg bg-slate-50 px-4 py-3"
               >
                 <div>
-                  <div className="text-sm font-medium text-slate-800">{row.role_label}</div>
+                  <div className="text-sm font-medium text-slate-800">
+                    {row.role_label}
+                  </div>
+
                   <div className="mt-1 text-xs text-slate-500">
                     {row.current_count > 0
                       ? `${row.current_count} assigned • ${row.open_slots} open slot(s)`

@@ -48,21 +48,6 @@ type ClubRow = {
   id: string
 }
 
-function toNumber(v: unknown): number {
-  if (v === null || v === undefined) return 0
-  if (typeof v === 'number') return v
-  const n = Number(v)
-  return Number.isFinite(n) ? n : 0
-}
-
-function formatMoney(n: number, currency: 'USD' | 'EUR' = 'USD'): string {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency,
-    maximumFractionDigits: 0,
-  }).format(n)
-}
-
 function stripTrailingCode(raw: string): string {
   return raw
     .replace(/\s*\(([a-f0-9-]{6,}|[A-Z0-9-]{6,})\)\s*$/i, '')
@@ -224,8 +209,6 @@ export default function FinancePage(): JSX.Element {
   const [cashflowDaily, setCashflowDaily] = useState<CashflowPoint[]>([])
 
   const [statement, setStatement] = useState<StatementRow[]>([])
-  const [statementBefore, setStatementBefore] = useState<string | null>(null)
-  const [statementLoaded, setStatementLoaded] = useState(false)
 
   const currency: 'USD' = 'USD'
 
@@ -238,52 +221,24 @@ export default function FinancePage(): JSX.Element {
     }
   }, [location.search])
 
-  const topIncomeByName = useMemo(() => {
-    const map = new Map<string, number>()
-
-    for (const row of statement) {
-      const amount = toNumber(row.net_amount)
-      if (amount <= 0) continue
-
-      const rawLabel = getTransactionLabel(row)
-      const label = formatTransactionFullLabel(rawLabel)
-
-      map.set(label, (map.get(label) ?? 0) + amount)
-    }
-
-    return Array.from(map.entries())
-      .map(([label, amount]) => ({ label, amount }))
-      .sort((a, b) => b.amount - a.amount)
-      .slice(0, 5)
-  }, [statement])
-
-  const topCostsByName = useMemo(() => {
-    const map = new Map<string, number>()
-
-    for (const row of statement) {
-      const net = toNumber(row.net_amount)
-      const amount = Math.abs(net)
-      if (net >= 0 || amount <= 0) continue
-
-      const rawLabel = getTransactionLabel(row)
-      const label = formatTransactionFullLabel(rawLabel)
-
-      map.set(label, (map.get(label) ?? 0) + amount)
-    }
-
-    return Array.from(map.entries())
-      .map(([label, amount]) => ({ label, amount }))
-      .sort((a, b) => b.amount - a.amount)
-      .slice(0, 5)
-  }, [statement])
+  const overviewTransactions = useMemo(
+    () =>
+      statement.map(row => ({
+        id: row.transaction_id,
+        created_at: row.created_at,
+        date: row.created_at,
+        type: row.type,
+        name: formatTransactionFullLabel(getTransactionLabel(row)),
+        amount: row.net_amount,
+      })),
+    [statement]
+  )
 
   function resetLoadedState(): void {
     setClubId(null)
     setSummary(null)
     setCashflowDaily([])
     setStatement([])
-    setStatementBefore(null)
-    setStatementLoaded(false)
   }
 
   async function resolveMainClubId(): Promise<string | null> {
@@ -354,12 +309,8 @@ export default function FinancePage(): JSX.Element {
       if (!txRes.error) {
         const rows = (txRes.data ?? []) as StatementRow[]
         setStatement(rows)
-        setStatementBefore(rows.length ? rows[rows.length - 1].created_at : null)
-        setStatementLoaded(true)
       } else {
         setStatement([])
-        setStatementBefore(null)
-        setStatementLoaded(false)
       }
 
       setLoading(false)
@@ -431,65 +382,12 @@ export default function FinancePage(): JSX.Element {
         <div>
           {tab === 'overview' && (
             <ErrorBoundary title="Overview tab error">
-              <div className="space-y-4">
-                <OverviewTab
-                  summary={summary}
-                  cashflowDaily={cashflowDaily}
-                  currency={currency}
-                  topIncomeBreakdown={topIncomeByName}
-                  topExpenseBreakdown={topCostsByName}
-                />
-
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                  <div className="bg-white p-4 rounded shadow">
-                    <div className="font-semibold">Top 5 incomes by transaction name</div>
-                    <div className="text-xs text-gray-500 mt-1">
-                      Pulled from your transaction statement{statementLoaded ? '' : ' (not loaded)'}.
-                    </div>
-                    <div className="mt-3 space-y-2">
-                      {topIncomeByName.length === 0 ? (
-                        <div className="text-sm text-gray-500">No income items found yet.</div>
-                      ) : (
-                        topIncomeByName.map(item => (
-                          <div
-                            key={item.label}
-                            className="flex items-center justify-between gap-3 text-sm"
-                          >
-                            <span className="text-gray-700 truncate">{item.label}</span>
-                            <span className="font-semibold text-green-700 whitespace-nowrap">
-                              {formatMoney(item.amount, currency)}
-                            </span>
-                          </div>
-                        ))
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="bg-white p-4 rounded shadow">
-                    <div className="font-semibold">Top 5 costs by transaction name</div>
-                    <div className="text-xs text-gray-500 mt-1">
-                      Pulled from your transaction statement{statementLoaded ? '' : ' (not loaded)'}.
-                    </div>
-                    <div className="mt-3 space-y-2">
-                      {topCostsByName.length === 0 ? (
-                        <div className="text-sm text-gray-500">No cost items found yet.</div>
-                      ) : (
-                        topCostsByName.map(item => (
-                          <div
-                            key={item.label}
-                            className="flex items-center justify-between gap-3 text-sm"
-                          >
-                            <span className="text-gray-700 truncate">{item.label}</span>
-                            <span className="font-semibold text-red-700 whitespace-nowrap">
-                              {formatMoney(item.amount, currency)}
-                            </span>
-                          </div>
-                        ))
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
+              <OverviewTab
+                summary={summary}
+                cashflowDaily={cashflowDaily}
+                currency={currency}
+                transactions={overviewTransactions}
+              />
             </ErrorBoundary>
           )}
 

@@ -96,6 +96,13 @@ type NewsItem = {
   href?: string
 }
 
+type TransactionSummaryItem = {
+  id: string
+  type: string
+  label: string
+  amount: number
+}
+
 type FinanceHealth = {
   balance: number
   weeklyNet: number
@@ -104,6 +111,23 @@ type FinanceHealth = {
   nextTripForecast: number
   latestTransactionLabel: string
   latestTransactionAmount: number
+  monthlyOperatingIncome: number
+  monthlyOperatingExpense: number
+  topOperatingIncomes: TransactionSummaryItem[]
+  topOperatingExpenses: TransactionSummaryItem[]
+  debtMovements: TransactionSummaryItem[]
+}
+
+type EmergencyDebtHealth = {
+  rescuesUsed: number
+  rescueLimit: number
+  outstandingPrincipal: number
+  nextRepaymentAmount: number
+  nextRepaymentDateLabel: string
+  liquidationRisk: string
+  totalEmergencyLoanDisbursed: number
+  totalPrincipalRepaid: number
+  totalInterestPaid: number
 }
 
 type QuickActionItem = {
@@ -145,6 +169,7 @@ type DashboardOverviewData = {
   news: NewsItem[]
   feed: FeedItem[]
   finance: FinanceHealth
+  emergencyDebt: EmergencyDebtHealth
   quickActions: QuickActionItem[]
   mainSponsor: MainSponsor
 }
@@ -179,13 +204,70 @@ interface SponsorDashboardForOverview {
 
 const currencyFormatter = new Intl.NumberFormat('en-US', {
   style: 'currency',
-  currency: 'EUR',
+  currency: 'USD',
   maximumFractionDigits: 0,
 })
 
+const DEBT_TRANSACTION_TYPES = new Set([
+  'emergency_loan_disbursement',
+  'emergency_loan_principal_repayment',
+])
+
+const REAL_EXPENSE_TRANSACTION_TYPES = new Set([
+  'emergency_loan_interest',
+])
+
+const transactionTypeLabels: Record<string, string> = {
+  emergency_loan_disbursement: 'Emergency Loan',
+  emergency_loan_principal_repayment: 'Loan Principal',
+  emergency_loan_interest: 'Loan Interest',
+  rider_salary_payday: 'Rider Salary',
+  staff_salary_payday: 'Staff Salary',
+  sponsor_contract_payment: 'Sponsor',
+  tax_withholding: 'Tax',
+  new_club_bonus: 'Bonus',
+}
+
+/**
+ * isDebtTransaction
+ * Returns true for transaction types that are debt balance movements and should
+ * not be mixed into operating income or operating costs.
+ */
+function isDebtTransaction(type: string): boolean {
+  return DEBT_TRANSACTION_TYPES.has(type)
+}
+
+/**
+ * shouldCountAsOperatingIncome
+ * Counts real operating income while excluding loan disbursements.
+ */
+function shouldCountAsOperatingIncome(type: string, amount: number): boolean {
+  if (isDebtTransaction(type)) return false
+  return amount > 0
+}
+
+/**
+ * shouldCountAsOperatingExpense
+ * Counts real operating expenses while excluding loan principal repayment.
+ * Emergency loan interest is a true expense and must remain in costs.
+ */
+function shouldCountAsOperatingExpense(type: string, amount: number): boolean {
+  if (REAL_EXPENSE_TRANSACTION_TYPES.has(type)) return true
+  if (isDebtTransaction(type)) return false
+  return amount < 0
+}
+
+/**
+ * getTransactionTypeLabel
+ * Returns a friendly label for known finance transaction types.
+ */
+function getTransactionTypeLabel(type: string, fallback?: string) {
+  return transactionTypeLabels[type] || fallback || type.replace(/_/g, ' ')
+}
+
 /**
  * formatCurrency
- * Formats a number as a EUR currency string without decimals.
+ * Formats a number as a USD currency string without decimals.
  */
 function formatCurrency(value: number) {
   return currencyFormatter.format(value)
@@ -193,7 +275,7 @@ function formatCurrency(value: number) {
 
 /**
  * formatSignedCurrency
- * Formats a number as a signed EUR string (prefixing + for positive values).
+ * Formats a number as a signed USD string, prefixing + for positive values.
  */
 function formatSignedCurrency(value: number) {
   if (value > 0) return `+${formatCurrency(value)}`
@@ -242,6 +324,22 @@ function asBoolean(value: unknown, fallback = false): boolean {
 }
 
 /**
+ * asNumber
+ * Safe helper to coerce numbers or numeric strings into a number.
+ */
+function asNumber(value: unknown, fallback = 0): number {
+  if (typeof value === 'number' && Number.isFinite(value)) return value
+
+  if (typeof value === 'string') {
+    const normalized = value.trim().replace(/[$€£,\s]/g, '')
+    const parsed = Number(normalized)
+    return Number.isFinite(parsed) ? parsed : fallback
+  }
+
+  return fallback
+}
+
+/**
  * stableStringify
  * Deterministic JSON stringify used for shallow change detection.
  */
@@ -279,6 +377,372 @@ function resolveMainSponsorLogoUrlFromDashboard(
 
   if (!finalUrl || finalUrl.trim().length === 0) return null
   return finalUrl
+}
+
+/**
+ * formatGameDateShort
+ * Converts an in-game ISO date like 2000-07-03 into 03/07, Season 1.
+ */
+function formatGameDateShort(value: string): string {
+  const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(value)
+  if (!match) return ''
+
+  const year = Number(match[1])
+  const month = match[2]
+  const day = match[3]
+  const season = year - 1999
+
+  if (!Number.isFinite(year) || season < 1) return ''
+  return `${day}/${month}, Season ${season}`
+}
+
+/**
+ * normalizeTransactionType
+ * Ensures transaction type checks are consistent.
+ */
+function normalizeTransactionType(value: unknown): string {
+  return asString(value).trim().toLowerCase()
+}
+
+/**
+ * normalizeFinanceTransactionRows
+ * Normalizes loose transaction rows into a consistent typed shape.
+ */
+function normalizeFinanceTransactionRows(value: unknown): TransactionSummaryItem[] {
+  return asArray<Record<string, unknown>>(value)
+    .map((row, index) => {
+      const type = normalizeTransactionType(row.type ?? row.transaction_type ?? row.kind)
+      const rawLabel = asString(row.label ?? row.title ?? row.name)
+      const amount = asNumber(
+        row.amount ??
+          row.netAmount ??
+          row.net_amount ??
+          row.total ??
+          row.value ??
+          row.signed_amount,
+        0,
+      )
+
+      if (!type && !rawLabel) return null
+
+      return {
+        id: asString(row.id ?? row.transaction_id, `${type || 'transaction'}:${index}`),
+        type,
+        label: getTransactionTypeLabel(type, rawLabel),
+        amount,
+      }
+    })
+    .filter((row): row is TransactionSummaryItem => Boolean(row))
+}
+
+/**
+ * buildOperatingTransactionSummary
+ * Builds frontend operating finance summaries from raw transaction rows.
+ *
+ * Important:
+ * - Emergency loan disbursement is excluded from income.
+ * - Emergency loan principal repayment is excluded from costs.
+ * - Emergency loan interest remains a real operating expense.
+ * - Displayed amounts keep their real signed value.
+ */
+function buildOperatingTransactionSummary(rows: TransactionSummaryItem[]) {
+  const topOperatingIncomes = rows
+    .filter((row) => shouldCountAsOperatingIncome(row.type, row.amount))
+    .sort((a, b) => Math.abs(b.amount) - Math.abs(a.amount))
+    .slice(0, 5)
+
+  const topOperatingExpenses = rows
+    .filter((row) => shouldCountAsOperatingExpense(row.type, row.amount))
+    .sort((a, b) => Math.abs(b.amount) - Math.abs(a.amount))
+    .slice(0, 5)
+
+  const debtMovements = rows
+    .filter((row) => isDebtTransaction(row.type))
+    .sort((a, b) => Math.abs(b.amount) - Math.abs(a.amount))
+    .slice(0, 5)
+
+  return {
+    monthlyOperatingIncome: topOperatingIncomes.reduce((sum, row) => sum + row.amount, 0),
+    monthlyOperatingExpense: topOperatingExpenses.reduce((sum, row) => sum + row.amount, 0),
+    topOperatingIncomes,
+    topOperatingExpenses,
+    debtMovements,
+  }
+}
+
+/**
+ * normalizeFinanceHealth
+ * Normalizes finance payload and applies loan-aware operating transaction rules.
+ */
+function normalizeFinanceHealth(value: unknown, fallbackTransactions?: unknown): FinanceHealth {
+  const safe = asObject<Record<string, unknown>>(value, {})
+
+  const rawTransactions =
+    safe.monthlyTransactions ??
+    safe.monthly_transactions ??
+    safe.statementRows ??
+    safe.statement_rows ??
+    safe.transactions ??
+    fallbackTransactions ??
+    []
+
+  const transactionRows = normalizeFinanceTransactionRows(rawTransactions)
+  const summary = buildOperatingTransactionSummary(transactionRows)
+
+  const suppliedTopIncomes = normalizeFinanceTransactionRows(
+    safe.topOperatingIncomes ??
+      safe.top_operating_incomes ??
+      safe.topIncomes ??
+      safe.top_incomes,
+  ).filter((row) => shouldCountAsOperatingIncome(row.type, row.amount))
+
+  const suppliedTopExpenses = normalizeFinanceTransactionRows(
+    safe.topOperatingExpenses ??
+      safe.top_operating_expenses ??
+      safe.topCosts ??
+      safe.top_costs ??
+      safe.topExpenses ??
+      safe.top_expenses,
+  ).filter((row) => shouldCountAsOperatingExpense(row.type, row.amount))
+
+  const suppliedDebtMovements = normalizeFinanceTransactionRows(
+    safe.debtMovements ?? safe.debt_movements ?? safe.debtItems ?? safe.debt_items,
+  ).filter((row) => isDebtTransaction(row.type))
+
+  return {
+    balance: asNumber(safe.balance, 0),
+    weeklyNet: asNumber(safe.weeklyNet ?? safe.weekly_net, 0),
+    sponsorIncome: asNumber(safe.sponsorIncome ?? safe.sponsor_income, 0),
+    recurringPolicyCost: asNumber(
+      safe.recurringPolicyCost ?? safe.recurring_policy_cost,
+      0,
+    ),
+    nextTripForecast: asNumber(safe.nextTripForecast ?? safe.next_trip_forecast, 0),
+    latestTransactionLabel: asString(
+      safe.latestTransactionLabel ?? safe.latest_transaction_label,
+      'No transactions',
+    ),
+    latestTransactionAmount: asNumber(
+      safe.latestTransactionAmount ?? safe.latest_transaction_amount,
+      0,
+    ),
+    monthlyOperatingIncome: asNumber(
+      safe.monthlyOperatingIncome ?? safe.monthly_operating_income,
+      summary.monthlyOperatingIncome,
+    ),
+    monthlyOperatingExpense: asNumber(
+      safe.monthlyOperatingExpense ?? safe.monthly_operating_expense,
+      summary.monthlyOperatingExpense,
+    ),
+    topOperatingIncomes:
+      suppliedTopIncomes.length > 0
+        ? suppliedTopIncomes
+        : summary.topOperatingIncomes,
+    topOperatingExpenses:
+      suppliedTopExpenses.length > 0
+        ? suppliedTopExpenses
+        : summary.topOperatingExpenses,
+    debtMovements:
+      suppliedDebtMovements.length > 0
+        ? suppliedDebtMovements
+        : summary.debtMovements,
+  }
+}
+
+/**
+ * normalizeEmergencyDebt
+ * Normalizes emergency-loan debt data from either top-level payload or finance payload.
+ */
+function normalizeEmergencyDebt(
+  value: unknown,
+  financeSafe: Record<string, unknown>,
+): EmergencyDebtHealth {
+  const safe = asObject<Record<string, unknown>>(
+    value ??
+      financeSafe.emergencyDebt ??
+      financeSafe.emergency_debt ??
+      financeSafe.debt ??
+      {},
+    {},
+  )
+
+  const rescuesUsed = asNumber(
+    safe.rescuesUsed ??
+      safe.rescues_used ??
+      safe.emergencyRescueCount ??
+      safe.emergency_rescue_count ??
+      financeSafe.rescuesUsed ??
+      financeSafe.rescues_used ??
+      financeSafe.emergencyRescueCount ??
+      financeSafe.emergency_rescue_count,
+    0,
+  )
+
+  const rescueLimit = asNumber(
+    safe.rescueLimit ??
+      safe.rescue_limit ??
+      safe.maxRescues ??
+      safe.max_rescues ??
+      financeSafe.rescueLimit ??
+      financeSafe.rescue_limit ??
+      financeSafe.maxRescues ??
+      financeSafe.max_rescues,
+    3,
+  )
+
+  const outstandingPrincipal = asNumber(
+    safe.outstandingPrincipal ??
+      safe.outstanding_principal ??
+      safe.activeOutstandingPrincipal ??
+      safe.active_outstanding_principal ??
+      financeSafe.outstandingPrincipal ??
+      financeSafe.outstanding_principal ??
+      financeSafe.activeOutstandingPrincipal ??
+      financeSafe.active_outstanding_principal,
+    0,
+  )
+
+  const nextRepaymentAmount = asNumber(
+    safe.nextRepaymentAmount ??
+      safe.next_repayment_amount ??
+      safe.actualWeeklyDueOptionB ??
+      safe.actual_weekly_due_option_b ??
+      safe.weeklyDue ??
+      safe.weekly_due ??
+      financeSafe.nextRepaymentAmount ??
+      financeSafe.next_repayment_amount ??
+      financeSafe.actualWeeklyDueOptionB ??
+      financeSafe.actual_weekly_due_option_b,
+    0,
+  )
+
+  const nextRepaymentDateRaw = asString(
+    safe.nextRepaymentDate ??
+      safe.next_repayment_date ??
+      safe.nextUnprocessedDueGameDate ??
+      safe.next_unprocessed_due_game_date ??
+      financeSafe.nextRepaymentDate ??
+      financeSafe.next_repayment_date ??
+      financeSafe.nextUnprocessedDueGameDate ??
+      financeSafe.next_unprocessed_due_game_date,
+    '',
+  )
+
+  const nextRepaymentDateLabel =
+    asString(
+      safe.nextRepaymentDateLabel ??
+        safe.next_repayment_date_label ??
+        financeSafe.nextRepaymentDateLabel ??
+        financeSafe.next_repayment_date_label,
+      '',
+    ) ||
+    formatGameDateShort(nextRepaymentDateRaw) ||
+    'No repayment scheduled'
+
+  const totalEmergencyLoanDisbursed = asNumber(
+    safe.totalEmergencyLoanDisbursed ??
+      safe.total_emergency_loan_disbursed ??
+      safe.emergencyLoanDisbursed ??
+      safe.emergency_loan_disbursed ??
+      financeSafe.totalEmergencyLoanDisbursed ??
+      financeSafe.total_emergency_loan_disbursed,
+    outstandingPrincipal,
+  )
+
+  const totalPrincipalRepaid = asNumber(
+    safe.totalPrincipalRepaid ??
+      safe.total_principal_repaid ??
+      safe.principalRepaid ??
+      safe.principal_repaid ??
+      financeSafe.totalPrincipalRepaid ??
+      financeSafe.total_principal_repaid,
+    0,
+  )
+
+  const totalInterestPaid = asNumber(
+    safe.totalInterestPaid ??
+      safe.total_interest_paid ??
+      safe.interestPaid ??
+      safe.interest_paid ??
+      financeSafe.totalInterestPaid ??
+      financeSafe.total_interest_paid,
+    0,
+  )
+
+  const liquidationRisk =
+    asString(
+      safe.liquidationRisk ??
+        safe.liquidation_risk ??
+        financeSafe.liquidationRisk ??
+        financeSafe.liquidation_risk,
+      '',
+    ) ||
+    (outstandingPrincipal > 0 && rescuesUsed >= 2
+      ? 'High'
+      : outstandingPrincipal > 0
+        ? 'Medium'
+        : 'Low')
+
+  return {
+    rescuesUsed,
+    rescueLimit,
+    outstandingPrincipal,
+    nextRepaymentAmount,
+    nextRepaymentDateLabel,
+    liquidationRisk,
+    totalEmergencyLoanDisbursed,
+    totalPrincipalRepaid,
+    totalInterestPaid,
+  }
+}
+
+/**
+ * buildDebtMovementsFromEmergencyDebt
+ * Creates debt movement rows for the Emergency Debt card when the RPC sends
+ * aggregated debt totals instead of transaction rows.
+ */
+function buildDebtMovementsFromEmergencyDebt(
+  debt: EmergencyDebtHealth,
+  financeDebtMovements: TransactionSummaryItem[],
+): TransactionSummaryItem[] {
+  if (financeDebtMovements.length > 0) return financeDebtMovements
+
+  const rows: TransactionSummaryItem[] = []
+
+  if (debt.totalEmergencyLoanDisbursed !== 0) {
+    rows.push({
+      id: 'emergency_loan_disbursement',
+      type: 'emergency_loan_disbursement',
+      label: transactionTypeLabels.emergency_loan_disbursement,
+      amount: Math.abs(debt.totalEmergencyLoanDisbursed),
+    })
+  }
+
+  if (debt.totalPrincipalRepaid !== 0) {
+    rows.push({
+      id: 'emergency_loan_principal_repayment',
+      type: 'emergency_loan_principal_repayment',
+      label: transactionTypeLabels.emergency_loan_principal_repayment,
+      amount:
+        debt.totalPrincipalRepaid > 0
+          ? -Math.abs(debt.totalPrincipalRepaid)
+          : debt.totalPrincipalRepaid,
+    })
+  }
+
+  if (debt.totalInterestPaid !== 0) {
+    rows.push({
+      id: 'emergency_loan_interest',
+      type: 'emergency_loan_interest',
+      label: transactionTypeLabels.emergency_loan_interest,
+      amount:
+        debt.totalInterestPaid > 0
+          ? -Math.abs(debt.totalInterestPaid)
+          : debt.totalInterestPaid,
+    })
+  }
+
+  return rows
 }
 
 /**
@@ -345,6 +809,8 @@ function normalizeMainSponsor(value: unknown, fallbackIsActive = false): MainSpo
  */
 function normalizeDashboardPayload(payload: unknown): DashboardOverviewData {
   const safe = asObject<Record<string, unknown>>(payload, {})
+  const financeSafe = asObject<Record<string, unknown>>(safe.finance, {})
+
   const fallbackMainSponsor =
     safe.mainSponsor ??
     safe.main_sponsor ??
@@ -353,17 +819,15 @@ function normalizeDashboardPayload(payload: unknown): DashboardOverviewData {
     safe.sponsor ??
     safe.primarySponsor
 
-  const finance = asObject(safe.finance, {
-    balance: 0,
-    weeklyNet: 0,
-    sponsorIncome: 0,
-    recurringPolicyCost: 0,
-    nextTripForecast: 0,
-    latestTransactionLabel: 'No transactions',
-    latestTransactionAmount: 0,
-  })
+  const finance = normalizeFinanceHealth(
+    safe.finance,
+    safe.transactions ?? safe.statementRows ?? safe.statement_rows,
+  )
 
-  const financeSafe = asObject<Record<string, unknown>>(finance, {})
+  const emergencyDebt = normalizeEmergencyDebt(
+    safe.emergencyDebt ?? safe.emergency_debt ?? safe.debt,
+    financeSafe,
+  )
 
   const mainSponsorSignedHint =
     asBoolean(safe.mainSponsorSigned) ||
@@ -411,6 +875,7 @@ function normalizeDashboardPayload(payload: unknown): DashboardOverviewData {
     news: asArray<NewsItem>(safe.news),
     feed: asArray<FeedItem>(safe.feed),
     finance,
+    emergencyDebt,
     quickActions: asArray<QuickActionItem>(safe.quickActions),
     mainSponsor: normalizeMainSponsor(
       fallbackMainSponsor ?? financeSafe.mainSponsor ?? financeSafe.main_sponsor,
@@ -483,6 +948,40 @@ function getFeedIcon(level: FeedLevel) {
     default:
       return '•'
   }
+}
+
+/**
+ * getRiskTextClass
+ * Returns text color class for liquidation risk.
+ */
+function getRiskTextClass(risk: string) {
+  const normalized = risk.trim().toLowerCase()
+
+  if (normalized === 'high' || normalized === 'critical') return 'text-red-600'
+  if (normalized === 'medium' || normalized === 'moderate') return 'text-yellow-600'
+  if (normalized === 'low') return 'text-emerald-600'
+
+  return 'text-slate-900'
+}
+
+/**
+ * formatNextRepayment
+ * Formats next repayment amount and game date.
+ */
+function formatNextRepayment(debt: EmergencyDebtHealth) {
+  const hasAmount = debt.nextRepaymentAmount > 0
+  const hasDate =
+    debt.nextRepaymentDateLabel &&
+    debt.nextRepaymentDateLabel !== 'No repayment scheduled'
+
+  if (hasAmount && hasDate) {
+    return `${formatCurrency(debt.nextRepaymentAmount)} on ${debt.nextRepaymentDateLabel}`
+  }
+
+  if (hasAmount) return formatCurrency(debt.nextRepaymentAmount)
+  if (hasDate) return debt.nextRepaymentDateLabel
+
+  return 'No repayment scheduled'
 }
 
 /**
@@ -605,9 +1104,31 @@ function SmallStat({
   valueClassName?: string
 }) {
   return (
-    <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
+    <div className="flex items-center justify-between gap-4 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
       <span className="text-sm text-slate-600">{label}</span>
-      <span className={cn('text-sm font-semibold text-slate-900', valueClassName)}>{value}</span>
+      <span className={cn('text-right text-sm font-semibold text-slate-900', valueClassName)}>
+        {value}
+      </span>
+    </div>
+  )
+}
+
+/**
+ * TransactionSummaryRow
+ * Compact row for top incomes, costs, and debt movement display.
+ */
+function TransactionSummaryRow({ item }: { item: TransactionSummaryItem }) {
+  return (
+    <div className="flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
+      <span className="min-w-0 truncate text-sm text-slate-600">{item.label}</span>
+      <span
+        className={cn(
+          'whitespace-nowrap text-sm font-semibold',
+          item.amount >= 0 ? 'text-emerald-600' : 'text-red-600',
+        )}
+      >
+        {formatSignedCurrency(item.amount)}
+      </span>
     </div>
   )
 }
@@ -820,6 +1341,67 @@ function MainSponsorPanel({ sponsor }: { sponsor: MainSponsor }) {
 }
 
 /**
+ * EmergencyDebtCard
+ * Dedicated emergency-loan card so loan disbursement and principal repayment
+ * are not mixed into operating income/costs.
+ */
+function EmergencyDebtCard({
+  debt,
+  debtMovements,
+}: {
+  debt: EmergencyDebtHealth
+  debtMovements: TransactionSummaryItem[]
+}) {
+  const visibleDebtMovements = buildDebtMovementsFromEmergencyDebt(debt, debtMovements)
+
+  return (
+    <Card className="p-5">
+      <SectionTitle
+        title="Emergency Debt"
+        subtitle="Emergency loans, principal balance, repayment pressure, and liquidation risk."
+      />
+
+      <div className="mt-5 space-y-3">
+        <SmallStat
+          label="Rescues used"
+          value={`${debt.rescuesUsed} / ${debt.rescueLimit}`}
+          valueClassName={debt.rescuesUsed >= debt.rescueLimit ? 'text-red-600' : ''}
+        />
+        <SmallStat
+          label="Outstanding principal"
+          value={formatCurrency(debt.outstandingPrincipal)}
+          valueClassName={debt.outstandingPrincipal > 0 ? 'text-red-600' : 'text-emerald-600'}
+        />
+        <SmallStat label="Next repayment" value={formatNextRepayment(debt)} />
+        <SmallStat
+          label="Liquidation risk"
+          value={debt.liquidationRisk}
+          valueClassName={getRiskTextClass(debt.liquidationRisk)}
+        />
+      </div>
+
+      <div className="mt-5 rounded-xl border border-slate-200 bg-white p-4">
+        <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+          Debt Movement
+        </div>
+
+        {visibleDebtMovements.length > 0 ? (
+          <div className="mt-3 space-y-2">
+            {visibleDebtMovements.map((item) => (
+              <TransactionSummaryRow key={item.id} item={item} />
+            ))}
+          </div>
+        ) : (
+          <div className="mt-3 rounded-xl border border-dashed border-slate-200 bg-slate-50 px-3 py-3 text-sm text-slate-500">
+            No emergency loan movement found.
+          </div>
+        )}
+      </div>
+    </Card>
+  )
+}
+
+/**
  * EmptyState
  * Generic centered empty state component.
  */
@@ -865,6 +1447,7 @@ function DashboardSkeleton() {
         <div className="col-span-12 space-y-6 xl:col-span-4">
           <div className="h-72 animate-pulse rounded-2xl border border-slate-200 bg-slate-100" />
           <div className="h-80 animate-pulse rounded-2xl border border-slate-200 bg-slate-100" />
+          <div className="h-72 animate-pulse rounded-2xl border border-slate-200 bg-slate-100" />
           <div className="h-72 animate-pulse rounded-2xl border border-slate-200 bg-slate-100" />
         </div>
       </div>
@@ -1333,7 +1916,44 @@ export default function OverviewPage() {
                 {formatSignedCurrency(data.finance.latestTransactionAmount)}
               </div>
             </div>
+
+            {data.finance.topOperatingIncomes.length > 0 ||
+            data.finance.topOperatingExpenses.length > 0 ? (
+              <div className="mt-5 grid grid-cols-1 gap-4">
+                {data.finance.topOperatingIncomes.length > 0 ? (
+                  <div className="rounded-xl border border-slate-200 bg-white p-4">
+                    <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                      Top Operating Incomes
+                    </div>
+                    <div className="mt-3 space-y-2">
+                      {data.finance.topOperatingIncomes.map((item) => (
+                        <TransactionSummaryRow key={item.id} item={item} />
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+
+                {data.finance.topOperatingExpenses.length > 0 ? (
+                  <div className="rounded-xl border border-slate-200 bg-white p-4">
+                    <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                      Top Operating Costs
+                    </div>
+                    <div className="mt-3 space-y-2">
+                      {data.finance.topOperatingExpenses.map((item) => (
+                        <TransactionSummaryRow key={item.id} item={item} />
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
           </Card>
+
+          {/* Emergency Debt */}
+          <EmergencyDebtCard
+            debt={data.emergencyDebt}
+            debtMovements={data.finance.debtMovements}
+          />
         </div>
       </div>
 

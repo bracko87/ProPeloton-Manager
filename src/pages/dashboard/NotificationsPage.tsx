@@ -5,12 +5,21 @@
  *
  * Purpose:
  * - Show the user's game/admin notifications in a dedicated page.
- * - Provide Unread/Read tabs, basic filtering via user preferences,
- *   and actions like "Mark as read" and template-driven navigation.
+ * - Provide Unread/Read tabs.
+ * - Provide search by notification title/message/type.
+ * - Provide category filtering via dropdown.
+ * - Provide full pagination controls: first / previous / next / last.
  * - Reuse the same Supabase RPCs and preference rules as the header inbox.
+ *
+ * Notes:
+ * - The current get_my_notifications RPC does not return total_count.
+ * - To support page count and last-page navigation, this page loads a larger batch
+ *   and paginates locally.
+ * - If you expect more than 500 notifications per tab, increase MAX_FETCH_SIZE
+ *   or later create a dedicated RPC that supports search/filter/total_count.
  */
 
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { supabase } from '@/lib/supabase'
 import {
@@ -37,22 +46,101 @@ import {
 type NotificationTab = 'unread' | 'read'
 
 const PAGE_SIZE = 10
+const MAX_FETCH_SIZE = 500
+
+type CategoryOption = {
+  value: string
+  label: string
+}
+
+function normalizeSearchValue(value: unknown): string {
+  return String(value ?? '')
+    .toLowerCase()
+    .trim()
+}
+
+function formatCategoryLabel(raw: string): string {
+  const cleaned = String(raw || '')
+    .replace(/[_-]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .toLowerCase()
+
+  if (!cleaned) return 'Other'
+
+  return cleaned
+    .split(' ')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ')
+}
+
+function getNotificationCategoryValue(item: NotificationItem): string {
+  const preferenceGroup = String((item.preference_group as any) ?? '').trim()
+  if (preferenceGroup) return `preference:${preferenceGroup}`
+
+  const source = String(item.source ?? '').trim()
+  if (source) return `source:${source}`
+
+  const typeCode = String(item.type_code ?? '').trim()
+  if (typeCode) return `type:${typeCode}`
+
+  return 'other'
+}
+
+function getNotificationCategoryLabel(item: NotificationItem): string {
+  const preferenceGroup = String((item.preference_group as any) ?? '').trim()
+  if (preferenceGroup) return formatCategoryLabel(preferenceGroup)
+
+  const source = String(item.source ?? '').trim()
+  if (source) return formatCategoryLabel(source)
+
+  const typeCode = String(item.type_code ?? '').trim()
+  if (typeCode) return formatCategoryLabel(typeCode)
+
+  return 'Other'
+}
+
+function matchesSearch(item: NotificationItem, query: string): boolean {
+  const q = normalizeSearchValue(query)
+  if (!q) return true
+
+  const haystack = [
+    item.title,
+    item.message,
+    item.type_code,
+    item.source,
+    item.preference_group,
+    item.notification_created_at,
+  ]
+    .map(normalizeSearchValue)
+    .join(' ')
+
+  return haystack.includes(q)
+}
 
 export default function NotificationsPage(): JSX.Element {
   const navigate = useNavigate()
 
   const [activeTab, setActiveTab] = useState<NotificationTab>('unread')
+
   const [unreadItems, setUnreadItems] = useState<NotificationItem[]>([])
   const [readItems, setReadItems] = useState<NotificationItem[]>([])
+
   const [unreadCount, setUnreadCount] = useState(0)
+
   const [isLoadingUnread, setIsLoadingUnread] = useState(false)
   const [isLoadingRead, setIsLoadingRead] = useState(false)
   const [isMarkingAllRead, setIsMarkingAllRead] = useState(false)
+
   const [expandedId, setExpandedId] = useState<number | null>(null)
+
   const [pageByTab, setPageByTab] = useState<Record<NotificationTab, number>>({
     unread: 1,
     read: 1,
   })
+
+  const [searchQuery, setSearchQuery] = useState('')
+  const [categoryFilter, setCategoryFilter] = useState('all')
 
   const shouldDisplayNotification = useCallback((item: NotificationItem): boolean => {
     const preferences = readNotificationPreferences()
@@ -64,6 +152,7 @@ export default function NotificationsPage(): JSX.Element {
 
     const notificationType = getNotificationTypeFromEvent(item.type_code, item.source)
     if (!notificationType) return true
+
     return canReceiveNotification(preferences, notificationType)
   }, [])
 
@@ -71,7 +160,7 @@ export default function NotificationsPage(): JSX.Element {
     const { data, error } = await supabase.rpc('get_my_notifications', {
       p_status: 'unread',
       p_page: 1,
-      p_page_size: 200,
+      p_page_size: MAX_FETCH_SIZE,
     })
 
     if (error) {
@@ -82,6 +171,7 @@ export default function NotificationsPage(): JSX.Element {
 
     const templatedItems = applyNotificationTemplates((data ?? []) as NotificationItem[])
     const unread = templatedItems.filter(shouldDisplayNotification)
+
     setUnreadCount(unread.length)
   }, [shouldDisplayNotification])
 
@@ -94,8 +184,8 @@ export default function NotificationsPage(): JSX.Element {
 
       const { data, error } = await supabase.rpc('get_my_notifications', {
         p_status: tab,
-        p_page: pageByTab[tab],
-        p_page_size: PAGE_SIZE,
+        p_page: 1,
+        p_page_size: MAX_FETCH_SIZE,
       })
 
       if (error) {
@@ -107,10 +197,11 @@ export default function NotificationsPage(): JSX.Element {
 
       const templatedItems = applyNotificationTemplates((data ?? []) as NotificationItem[])
       const filteredItems = templatedItems.filter(shouldDisplayNotification)
+
       setItems(filteredItems)
       setLoading(false)
     },
-    [pageByTab, shouldDisplayNotification]
+    [shouldDisplayNotification]
   )
 
   const handleTabChange = useCallback((tab: NotificationTab) => {
@@ -121,6 +212,14 @@ export default function NotificationsPage(): JSX.Element {
       [tab]: 1,
     }))
   }, [])
+
+  const resetActivePage = useCallback(() => {
+    setExpandedId(null)
+    setPageByTab(prev => ({
+      ...prev,
+      [activeTab]: 1,
+    }))
+  }, [activeTab])
 
   const handleMarkAsRead = useCallback(async (item: NotificationItem) => {
     if (item.status !== 'unread') return
@@ -214,10 +313,18 @@ export default function NotificationsPage(): JSX.Element {
       return
     }
 
-    await Promise.all([loadUnreadCount(), loadNotifications('unread'), loadNotifications('read')])
+    await Promise.all([
+      loadUnreadCount(),
+      loadNotifications('unread'),
+      loadNotifications('read'),
+    ])
 
     setIsMarkingAllRead(false)
     setExpandedId(null)
+    setPageByTab({
+      unread: 1,
+      read: 1,
+    })
   }, [loadNotifications, loadUnreadCount])
 
   useEffect(() => {
@@ -226,13 +333,57 @@ export default function NotificationsPage(): JSX.Element {
 
   useEffect(() => {
     void loadNotifications(activeTab)
-  }, [activeTab, pageByTab, loadNotifications])
+  }, [activeTab, loadNotifications])
 
-  const activeItems = activeTab === 'unread' ? unreadItems : readItems
+  const allActiveItems = activeTab === 'unread' ? unreadItems : readItems
   const isActiveTabLoading = activeTab === 'unread' ? isLoadingUnread : isLoadingRead
+
+  const categoryOptions = useMemo<CategoryOption[]>(() => {
+    const map = new Map<string, string>()
+
+    for (const item of allActiveItems) {
+      const value = getNotificationCategoryValue(item)
+      const label = getNotificationCategoryLabel(item)
+      map.set(value, label)
+    }
+
+    return Array.from(map.entries())
+      .map(([value, label]) => ({ value, label }))
+      .sort((a, b) => a.label.localeCompare(b.label))
+  }, [allActiveItems])
+
+  const filteredItems = useMemo(() => {
+    return allActiveItems.filter(item => {
+      if (!matchesSearch(item, searchQuery)) return false
+
+      if (categoryFilter !== 'all') {
+        return getNotificationCategoryValue(item) === categoryFilter
+      }
+
+      return true
+    })
+  }, [allActiveItems, categoryFilter, searchQuery])
+
   const activePage = pageByTab[activeTab]
-  const canGoPrevious = activePage > 1
-  const canGoNext = activeItems.length === PAGE_SIZE
+  const totalItems = filteredItems.length
+  const totalPages = Math.max(1, Math.ceil(totalItems / PAGE_SIZE))
+
+  const safeActivePage = Math.min(activePage, totalPages)
+  const startIndex = (safeActivePage - 1) * PAGE_SIZE
+  const endIndex = startIndex + PAGE_SIZE
+  const visibleItems = filteredItems.slice(startIndex, endIndex)
+
+  const canGoPrevious = safeActivePage > 1
+  const canGoNext = safeActivePage < totalPages
+
+  useEffect(() => {
+    if (activePage > totalPages) {
+      setPageByTab(prev => ({
+        ...prev,
+        [activeTab]: totalPages,
+      }))
+    }
+  }, [activePage, activeTab, totalPages])
 
   return (
     <div className="w-full px-6 py-6">
@@ -245,68 +396,121 @@ export default function NotificationsPage(): JSX.Element {
         </div>
 
         <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-          <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3">
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={() => {
-                  handleTabChange('unread')
-                }}
-                className={`rounded-full px-3 py-1.5 text-xs font-medium ${
-                  activeTab === 'unread'
-                    ? 'bg-slate-900 text-white'
-                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                }`}
-              >
-                Unread
-                {unreadCount > 0 ? (
-                  <span className="ml-2 inline-flex min-w-[18px] items-center justify-center rounded-full bg-white/15 px-1 text-[10px]">
-                    {unreadCount > 99 ? '99+' : unreadCount}
-                  </span>
-                ) : null}
-              </button>
+          <div className="border-b border-slate-200 px-4 py-3">
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    handleTabChange('unread')
+                  }}
+                  className={`rounded-full px-3 py-1.5 text-xs font-medium ${
+                    activeTab === 'unread'
+                      ? 'bg-slate-900 text-white'
+                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                  }`}
+                >
+                  Unread
+                  {unreadCount > 0 ? (
+                    <span className="ml-2 inline-flex min-w-[18px] items-center justify-center rounded-full bg-white/15 px-1 text-[10px]">
+                      {unreadCount > 99 ? '99+' : unreadCount}
+                    </span>
+                  ) : null}
+                </button>
 
-              <button
-                type="button"
-                onClick={() => {
-                  handleTabChange('read')
-                }}
-                className={`rounded-full px-3 py-1.5 text-xs font-medium ${
-                  activeTab === 'read'
-                    ? 'bg-slate-900 text-white'
-                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                }`}
-              >
-                Read
-              </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    handleTabChange('read')
+                  }}
+                  className={`rounded-full px-3 py-1.5 text-xs font-medium ${
+                    activeTab === 'read'
+                      ? 'bg-slate-900 text-white'
+                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                  }`}
+                >
+                  Read
+                </button>
+
+                {unreadCount > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      void handleMarkAllAsRead()
+                    }}
+                    disabled={isMarkingAllRead}
+                    className="rounded-md px-3 py-1.5 text-xs font-medium text-slate-900 hover:bg-slate-100 disabled:opacity-60"
+                  >
+                    {isMarkingAllRead ? 'Marking…' : 'Mark all as read'}
+                  </button>
+                )}
+              </div>
+
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                <input
+                  type="search"
+                  value={searchQuery}
+                  onChange={event => {
+                    setSearchQuery(event.target.value)
+                    resetActivePage()
+                  }}
+                  placeholder="Search notifications..."
+                  className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-slate-500 sm:w-72"
+                />
+
+                <select
+                  value={categoryFilter}
+                  onChange={event => {
+                    setCategoryFilter(event.target.value)
+                    resetActivePage()
+                  }}
+                  className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-slate-500 sm:w-56"
+                >
+                  <option value="all">All categories</option>
+                  {categoryOptions.map(option => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+
+                {(searchQuery || categoryFilter !== 'all') && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSearchQuery('')
+                      setCategoryFilter('all')
+                      resetActivePage()
+                    }}
+                    className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100"
+                  >
+                    Clear
+                  </button>
+                )}
+              </div>
             </div>
 
-            {unreadCount > 0 && (
-              <button
-                type="button"
-                onClick={() => {
-                  void handleMarkAllAsRead()
-                }}
-                disabled={isMarkingAllRead}
-                className="rounded-md px-3 py-1.5 text-xs font-medium text-slate-900 hover:bg-slate-100 disabled:opacity-60"
-              >
-                {isMarkingAllRead ? 'Marking…' : 'Mark all as read'}
-              </button>
-            )}
+            <div className="mt-3 text-xs text-slate-500">
+              Showing {visibleItems.length === 0 ? 0 : startIndex + 1}
+              {' - '}
+              {Math.min(endIndex, totalItems)} of {totalItems} {activeTab} notifications.
+            </div>
           </div>
 
           <div className="max-h-[70vh] overflow-y-auto">
             {isActiveTabLoading ? (
               <div className="px-4 py-10 text-sm text-slate-500">Loading notifications…</div>
-            ) : activeItems.length === 0 ? (
+            ) : visibleItems.length === 0 ? (
               <div className="px-4 py-10 text-sm text-slate-500">
-                {activeTab === 'unread'
-                  ? 'You have no unread notifications.'
-                  : 'No read notifications yet.'}
+                {searchQuery || categoryFilter !== 'all'
+                  ? 'No notifications match your search or filter.'
+                  : activeTab === 'unread'
+                    ? 'You have no unread notifications.'
+                    : 'No read notifications yet.'}
               </div>
             ) : (
               <div className="divide-y divide-slate-100">
-                {activeItems.map(item => {
+                {visibleItems.map(item => {
                   const isUnread = item.status === 'unread'
                   const isExpanded = expandedId === item.user_notification_id
                   const imageSrc = getNotificationImageSrc(item)
@@ -336,6 +540,7 @@ export default function NotificationsPage(): JSX.Element {
                             isUnread ? 'bg-emerald-500' : 'bg-slate-300'
                           }`}
                         />
+
                         <div className="min-w-0 flex-1">
                           <div className="flex items-start justify-between gap-3">
                             <div
@@ -347,6 +552,7 @@ export default function NotificationsPage(): JSX.Element {
                             >
                               {item.title}
                             </div>
+
                             <div className="shrink-0 text-xs text-slate-500">
                               {formatNotificationTime(item.notification_created_at)}
                             </div>
@@ -361,6 +567,8 @@ export default function NotificationsPage(): JSX.Element {
                             <span>•</span>
                             <span>{item.type_code}</span>
                             <span>•</span>
+                            <span>{getNotificationCategoryLabel(item)}</span>
+                            <span>•</span>
                             <span>{isExpanded ? 'Hide details' : 'Show details'}</span>
                           </div>
                         </div>
@@ -369,7 +577,9 @@ export default function NotificationsPage(): JSX.Element {
                       {isExpanded && (
                         <div className="ml-5 mt-4 overflow-hidden rounded-xl border border-slate-300 bg-slate-50 shadow-sm">
                           <div className="border-b border-slate-300 bg-white px-4 py-3">
-                            <div className="text-sm font-semibold text-slate-900">{item.title}</div>
+                            <div className="text-sm font-semibold text-slate-900">
+                              {item.title}
+                            </div>
                           </div>
 
                           <div className="px-4 py-4">
@@ -380,7 +590,9 @@ export default function NotificationsPage(): JSX.Element {
                             >
                               <div className="min-w-0">
                                 {introText ? (
-                                  <p className="text-sm leading-6 text-slate-700">{introText}</p>
+                                  <p className="text-sm leading-6 text-slate-700">
+                                    {introText}
+                                  </p>
                                 ) : null}
 
                                 {detailRows.length > 0 ? (
@@ -448,40 +660,76 @@ export default function NotificationsPage(): JSX.Element {
             )}
           </div>
 
-          <div className="flex items-center justify-between border-t border-slate-200 px-4 py-3">
-            <button
-              type="button"
-              onClick={() => {
-                if (!canGoPrevious) return
-                setExpandedId(null)
-                setPageByTab(prev => ({
-                  ...prev,
-                  [activeTab]: prev[activeTab] - 1,
-                }))
-              }}
-              disabled={!canGoPrevious}
-              className="rounded-md border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-900 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              Previous
-            </button>
+          <div className="flex flex-col gap-3 border-t border-slate-200 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="text-xs text-slate-500">
+              Page {safeActivePage} / {totalPages}
+            </div>
 
-            <div className="text-xs text-slate-500">Page {activePage}</div>
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  if (!canGoPrevious) return
+                  setExpandedId(null)
+                  setPageByTab(prev => ({
+                    ...prev,
+                    [activeTab]: 1,
+                  }))
+                }}
+                disabled={!canGoPrevious}
+                className="rounded-md border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-900 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                First
+              </button>
 
-            <button
-              type="button"
-              onClick={() => {
-                if (!canGoNext) return
-                setExpandedId(null)
-                setPageByTab(prev => ({
-                  ...prev,
-                  [activeTab]: prev[activeTab] + 1,
-                }))
-              }}
-              disabled={!canGoNext}
-              className="rounded-md border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-900 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              Next
-            </button>
+              <button
+                type="button"
+                onClick={() => {
+                  if (!canGoPrevious) return
+                  setExpandedId(null)
+                  setPageByTab(prev => ({
+                    ...prev,
+                    [activeTab]: Math.max(1, prev[activeTab] - 1),
+                  }))
+                }}
+                disabled={!canGoPrevious}
+                className="rounded-md border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-900 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Previous
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  if (!canGoNext) return
+                  setExpandedId(null)
+                  setPageByTab(prev => ({
+                    ...prev,
+                    [activeTab]: Math.min(totalPages, prev[activeTab] + 1),
+                  }))
+                }}
+                disabled={!canGoNext}
+                className="rounded-md border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-900 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Next
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  if (!canGoNext) return
+                  setExpandedId(null)
+                  setPageByTab(prev => ({
+                    ...prev,
+                    [activeTab]: totalPages,
+                  }))
+                }}
+                disabled={!canGoNext}
+                className="rounded-md border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-900 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Last
+              </button>
+            </div>
           </div>
         </div>
       </div>

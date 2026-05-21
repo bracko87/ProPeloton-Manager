@@ -11,7 +11,11 @@ type ActivityFilterMode = 'incoming' | 'outgoing'
 
 type StaffRole =
   | 'head_coach'
+  | 'trainer'
+  | 'u23_head_coach'
   | 'team_doctor'
+  | 'physio'
+  | 'nutritionist'
   | 'mechanic'
   | 'sport_director'
   | 'scout_analyst'
@@ -68,6 +72,7 @@ type StaffCandidateRow = {
   last_name?: string | null
   staff_name: string
   country_code: string | null
+  birth_date: string | null
   expertise: number
   experience: number
   potential: number
@@ -345,6 +350,18 @@ const TERMINAL_ACTIVITY_STATUSES = new Set([
 ])
 const HIDE_TERMINAL_AFTER_GAME_DAYS = 1
 
+const STAFF_ROLES: StaffRole[] = [
+  'head_coach',
+  'trainer',
+  'u23_head_coach',
+  'team_doctor',
+  'physio',
+  'nutritionist',
+  'mechanic',
+  'sport_director',
+  'scout_analyst',
+]
+
 function isValidRiderMarketSubTab(value: unknown): value is RiderMarketSubTab {
   return value === 'transfer_list' || value === 'free_agents'
 }
@@ -476,7 +493,7 @@ function isWithinLastGameDay(
 
   if (lastTs == null || currentTs == null) return true
 
-  return lastTs >= currentTs - 24 * 60 * 60 * 1000
+  return lastTs >= currentTs - HIDE_TERMINAL_AFTER_GAME_DAYS * 24 * 60 * 60 * 1000
 }
 
 function getActivityPayload(item: any): Record<string, any> {
@@ -676,6 +693,36 @@ async function fetchLatestScoutReportsForClub(
   return latestByRiderId
 }
 
+async function loadCurrentGameDateString(): Promise<string | null> {
+  const gameDateResult = await supabase.rpc('get_current_game_date_date')
+
+  if (gameDateResult.error) {
+    throw gameDateResult.error
+  }
+
+  const raw = gameDateResult.data as any
+
+  if (typeof raw === 'string') {
+    return raw
+  }
+
+  if (Array.isArray(raw)) {
+    return (
+      raw[0]?.get_current_game_date_date ??
+      raw[0]?.current_game_date ??
+      raw[0]?.game_date ??
+      null
+    )
+  }
+
+  return (
+    raw?.get_current_game_date_date ??
+    raw?.current_game_date ??
+    raw?.game_date ??
+    null
+  )
+}
+
 async function loadStaffMarketCandidates(clubId: string): Promise<StaffCandidateRow[]> {
   const { data, error } = await supabase.rpc('get_staff_market_candidates_for_club', {
     p_club_id: clubId,
@@ -695,6 +742,7 @@ async function loadStaffMarketCandidates(clubId: string): Promise<StaffCandidate
     last_name: row.last_name ?? null,
     staff_name: row.staff_name,
     country_code: row.country_code,
+    birth_date: row.birth_date ?? null,
     expertise: row.expertise,
     experience: row.experience,
     potential: row.potential,
@@ -710,53 +758,17 @@ async function loadStaffMarketCandidates(clubId: string): Promise<StaffCandidate
   }))
 }
 
-async function loadStaffRoleLimits(clubId: string): Promise<StaffRoleLimitRow[]> {
-  const { data, error } = await supabase.rpc('get_club_staff_role_limits', {
-    p_club_id: clubId,
-  })
+async function loadStaffRoleLimitCounts(clubId: string): Promise<StaffRoleLimitRow[]> {
+  const { data: staffRoleLimitsData, error: staffRoleLimitsError } =
+    await supabase.rpc('get_staff_role_limit_counts', {
+      p_club_id: clubId,
+    })
 
-  if (error) {
-    throw error
+  if (staffRoleLimitsError) {
+    throw staffRoleLimitsError
   }
 
-  const rows = (data ?? []).map((row: any) => {
-    const roleType = String(row.role_type ?? '') as StaffRole
-    const limitCount = Number(row.limit_count ?? 0)
-    const activeCount = Number(row.active_count ?? 0)
-    const openSlots = Number(row.open_slots ?? Math.max(0, limitCount - activeCount))
-    const canHire =
-      typeof row.can_hire === 'boolean' ? row.can_hire : openSlots > 0
-
-    return {
-      role_type: roleType,
-      limit_count: limitCount,
-      active_count: activeCount,
-      open_slots: openSlots,
-      can_hire: canHire,
-    }
-  })
-
-  const allRoles: StaffRole[] = [
-    'head_coach',
-    'team_doctor',
-    'mechanic',
-    'sport_director',
-    'scout_analyst',
-  ]
-
-  return allRoles.map((role) => {
-    const existing = rows.find((row) => row.role_type === role)
-
-    return (
-      existing ?? {
-        role_type: role,
-        limit_count: 0,
-        active_count: 0,
-        open_slots: 0,
-        can_hire: false,
-      }
-    )
-  })
+  return (staffRoleLimitsData ?? []) as StaffRoleLimitRow[]
 }
 
 async function loadClubInfrastructure(
@@ -827,8 +839,16 @@ function roleLabel(role: StaffRole) {
   switch (role) {
     case 'head_coach':
       return 'Head Coach'
+    case 'trainer':
+      return 'Trainer'
+    case 'u23_head_coach':
+      return 'U23 Head Coach'
     case 'team_doctor':
       return 'Team Doctor'
+    case 'physio':
+      return 'Physio'
+    case 'nutritionist':
+      return 'Nutritionist'
     case 'mechanic':
       return 'Mechanic'
     case 'sport_director':
@@ -870,11 +890,43 @@ function getCandidateStats(candidate: StaffCandidateRow) {
     ]
   }
 
+  if (candidate.role_type === 'trainer') {
+    return [
+      { label: 'Training', value: candidate.expertise },
+      { label: 'Conditioning', value: candidate.efficiency },
+      { label: 'Development', value: candidate.potential },
+    ]
+  }
+
+  if (candidate.role_type === 'u23_head_coach') {
+    return [
+      { label: 'Youth Dev', value: candidate.potential },
+      { label: 'Training', value: candidate.expertise },
+      { label: 'Leadership', value: candidate.leadership },
+    ]
+  }
+
   if (candidate.role_type === 'team_doctor') {
     return [
       { label: 'Recovery', value: candidate.expertise },
       { label: 'Prevention', value: candidate.efficiency },
       { label: 'Diagnosis', value: candidate.experience },
+    ]
+  }
+
+  if (candidate.role_type === 'physio') {
+    return [
+      { label: 'Rehab', value: candidate.expertise },
+      { label: 'Recovery', value: candidate.efficiency },
+      { label: 'Experience', value: candidate.experience },
+    ]
+  }
+
+  if (candidate.role_type === 'nutritionist') {
+    return [
+      { label: 'Nutrition', value: candidate.expertise },
+      { label: 'Planning', value: candidate.efficiency },
+      { label: 'Potential', value: candidate.potential },
     ]
   }
 
@@ -944,15 +996,6 @@ function getGameDateExpiryTimestamp(expiresOnGameDate: string | null | undefined
   if (Number.isNaN(expiryDate.getTime())) return null
 
   return expiryDate.getTime()
-}
-
-function isActiveTransferOfferStatus(status: unknown) {
-  const normalized = normalizeOfferStatus(status)
-  return normalized === 'open' || normalized === 'club_accepted'
-}
-
-function isActiveTransferNegotiationStatus(status: unknown) {
-  return normalizeOfferStatus(status) === 'open'
 }
 
 function isFreeAgentNegotiationEffectivelyExpired(
@@ -1164,7 +1207,7 @@ export default function TransfersPage() {
 
   const [staffCandidates, setStaffCandidates] = useState<StaffCandidateRow[]>([])
   const [clubStaffRows, setClubStaffRows] = useState<ClubStaffRow[]>([])
-  const [roleLimits, setRoleLimits] = useState<StaffRoleLimitRow[]>([])
+  const [staffRoleLimits, setStaffRoleLimits] = useState<StaffRoleLimitRow[]>([])
   const [selectedCandidateId, setSelectedCandidateId] = useState<string | null>(null)
   const [currentPage, setCurrentPage] = useState(1)
 
@@ -1189,6 +1232,7 @@ export default function TransfersPage() {
     FreeAgentNegotiationRow[]
   >([])
   const [gameState, setGameState] = useState<GameStateRow | null>(null)
+  const [currentGameDate, setCurrentGameDate] = useState<string | null>(null)
 
   const [selectedMarketListingId, setSelectedMarketListingId] = useState<string | null>(null)
   const [selectedFreeAgentId, setSelectedFreeAgentId] = useState<string | null>(null)
@@ -1329,13 +1373,17 @@ export default function TransfersPage() {
         const resolvedClub = resolveMainClub((clubsData || []) as ClubRow[])
         if (!resolvedClub) throw new Error('Main club not found.')
 
-        const infrastructureRow = await loadClubInfrastructure(resolvedClub.id)
+        const [infrastructureRow, nextCurrentGameDate] = await Promise.all([
+          loadClubInfrastructure(resolvedClub.id),
+          loadCurrentGameDateString(),
+        ])
 
         if (!mounted) return
 
         setClubId(resolvedClub.id)
         setClubName(resolvedClub.name || null)
         setClubInfrastructure(infrastructureRow)
+        setCurrentGameDate(nextCurrentGameDate)
 
         await loadStaffData(resolvedClub.id, mounted)
 
@@ -1391,7 +1439,7 @@ export default function TransfersPage() {
   }, [location.search])
 
   async function loadStaffData(clubIdValue: string, mounted = true) {
-    const [candidateRows, clubStaffResult, roleLimitRows] = await Promise.all([
+    const [candidateRows, clubStaffResult, nextStaffRoleLimits] = await Promise.all([
       loadStaffMarketCandidates(clubIdValue),
       supabase
         .from('club_staff')
@@ -1405,16 +1453,18 @@ export default function TransfersPage() {
         `)
         .eq('club_id', clubIdValue)
         .eq('is_active', true),
-      loadStaffRoleLimits(clubIdValue),
+      loadStaffRoleLimitCounts(clubIdValue),
     ])
 
     if (clubStaffResult.error) throw clubStaffResult.error
+
+    console.log('staff candidate sample', candidateRows[0])
 
     if (!mounted) return
 
     setStaffCandidates(candidateRows)
     setClubStaffRows((clubStaffResult.data || []) as ClubStaffRow[])
-    setRoleLimits(roleLimitRows)
+    setStaffRoleLimits(nextStaffRoleLimits)
   }
 
   async function fetchClubNameMap(ids: string[]) {
@@ -1655,10 +1705,10 @@ export default function TransfersPage() {
       const historyRows = (transferHistoryResult.data || []) as TransferHistoryRow[]
       const ownedRiderRows = (clubOwnedRidersResult.data || []) as ClubOwnedRiderRow[]
       const gameStateData = gameStateResult.data as GameStateRow
-      const currentGameDate = getCurrentGameDateFromState(gameStateData)
+      const currentGameDateForRiders = getCurrentGameDateFromState(gameStateData)
 
       const freeAgentNegotiationRows = ((freeAgentNegotiationsResult.data || []) as any[]).map(
-        (row) => normalizeFreeAgentNegotiationRow(row, currentGameDate)
+        (row) => normalizeFreeAgentNegotiationRow(row, currentGameDateForRiders)
       )
 
       const riderIds = Array.from(
@@ -1680,9 +1730,10 @@ export default function TransfersPage() {
 
       const marketScoutRiderIds = Array.from(
         new Set(
-          [...marketBase.map((row) => row.rider_id), ...freeAgentBase.map((row) => row.rider_id)].filter(
-            isNonEmptyString
-          )
+          [
+            ...marketBase.map((row) => row.rider_id),
+            ...freeAgentBase.map((row) => row.rider_id),
+          ].filter(isNonEmptyString)
         )
       )
 
@@ -1724,7 +1775,7 @@ export default function TransfersPage() {
           role: row.role ?? null,
           overall: row.overall ?? null,
           potential: row.potential ?? null,
-          age_years: calculateAgeYearsFromGameDate(row.birth_date, currentGameDate),
+          age_years: calculateAgeYearsFromGameDate(row.birth_date, currentGameDateForRiders),
           latest_scout_report: latestScoutReport,
           is_scouted: Boolean(latestScoutReport),
         }
@@ -1787,7 +1838,7 @@ export default function TransfersPage() {
               marketFallback?.age_years ??
               calculateAgeYearsFromGameDate(
                 rider?.birth_date ?? row.rider?.birth_date,
-                currentGameDate
+                currentGameDateForRiders
               ),
             rider: {
               id: row.rider_id,
@@ -1835,7 +1886,8 @@ export default function TransfersPage() {
             overall: row.overall ?? rider?.overall ?? null,
             potential: row.potential ?? rider?.potential ?? null,
             age_years:
-              row.age_years ?? calculateAgeYearsFromGameDate(rider?.birth_date, currentGameDate),
+              row.age_years ??
+              calculateAgeYearsFromGameDate(rider?.birth_date, currentGameDateForRiders),
           } satisfies MarketListingRow
         })
         .filter((row): row is MarketListingRow => Boolean(row))
@@ -1874,7 +1926,8 @@ export default function TransfersPage() {
             overall: row.overall ?? rider?.overall ?? null,
             potential: row.potential ?? rider?.potential ?? null,
             age_years:
-              row.age_years ?? calculateAgeYearsFromGameDate(rider?.birth_date, currentGameDate),
+              row.age_years ??
+              calculateAgeYearsFromGameDate(rider?.birth_date, currentGameDateForRiders),
           }
         })
 
@@ -1912,7 +1965,8 @@ export default function TransfersPage() {
             overall: row.overall ?? rider?.overall ?? null,
             potential: row.potential ?? rider?.potential ?? null,
             age_years:
-              row.age_years ?? calculateAgeYearsFromGameDate(rider?.birth_date, currentGameDate),
+              row.age_years ??
+              calculateAgeYearsFromGameDate(rider?.birth_date, currentGameDateForRiders),
           }
         })
 
@@ -2079,8 +2133,9 @@ export default function TransfersPage() {
   const activeStaffByRole = useMemo(() => {
     const map = new Map<StaffRole, ClubStaffRow[]>()
 
-    ;(['head_coach', 'team_doctor', 'mechanic', 'sport_director', 'scout_analyst'] as StaffRole[])
-      .forEach((role) => map.set(role, []))
+    STAFF_ROLES.forEach((role) => {
+      map.set(role, [])
+    })
 
     clubStaffRows
       .filter((row) => row.is_active)
@@ -2095,11 +2150,11 @@ export default function TransfersPage() {
 
   const roleLimitsByRole = useMemo(() => {
     const map = new Map<StaffRole, StaffRoleLimitRow>()
-    for (const row of roleLimits) {
+    for (const row of staffRoleLimits) {
       map.set(row.role_type, row)
     }
     return map
-  }, [roleLimits])
+  }, [staffRoleLimits])
 
   const currentClubRiderIds = useMemo(() => {
     return new Set<string>((clubOwnedRiders || []).map((row: any) => row.rider_id))
@@ -2110,7 +2165,10 @@ export default function TransfersPage() {
     [freeAgents, selectedFreeAgentId]
   )
 
-  const currentGameDate = useMemo(() => getCurrentGameDateFromState(gameState), [gameState])
+  const currentGameDateObject = useMemo(
+    () => getCurrentGameDateFromState(gameState),
+    [gameState]
+  )
 
   const myReceivedOffers = useMemo(() => {
     if (!clubId) return []
@@ -2133,27 +2191,27 @@ export default function TransfersPage() {
 
   const visibleMyReceivedOffers = useMemo(() => {
     return myReceivedOffers.filter((offer) =>
-      shouldKeepTransferActivityRow(offer, currentGameDate)
+      shouldKeepTransferActivityRow(offer, currentGameDateObject)
     )
-  }, [myReceivedOffers, currentGameDate])
+  }, [myReceivedOffers, currentGameDateObject])
 
   const visibleMySentOffersDashboard = useMemo(() => {
     return mySentOffersDashboard.filter((offer) =>
-      shouldKeepTransferActivityRow(offer, currentGameDate)
+      shouldKeepTransferActivityRow(offer, currentGameDateObject)
     )
-  }, [mySentOffersDashboard, currentGameDate])
+  }, [mySentOffersDashboard, currentGameDateObject])
 
   const visibleMySellerNegotiations = useMemo(() => {
     return mySellerNegotiations.filter((negotiation) =>
-      shouldKeepTransferActivityRow(negotiation, currentGameDate)
+      shouldKeepTransferActivityRow(negotiation, currentGameDateObject)
     )
-  }, [mySellerNegotiations, currentGameDate])
+  }, [mySellerNegotiations, currentGameDateObject])
 
   const visibleMyBuyerNegotiations = useMemo(() => {
     return myBuyerNegotiations.filter((negotiation) =>
-      shouldKeepTransferActivityRow(negotiation, currentGameDate)
+      shouldKeepTransferActivityRow(negotiation, currentGameDateObject)
     )
-  }, [myBuyerNegotiations, currentGameDate])
+  }, [myBuyerNegotiations, currentGameDateObject])
 
   const myFreeAgentNegotiations = useMemo(() => {
     if (!clubId) return []
@@ -2437,12 +2495,14 @@ export default function TransfersPage() {
   }, [freeAgentMarketRows, marketPage])
 
   async function reloadStaffMarket(clubIdValue: string) {
-    const [infrastructureRow] = await Promise.all([
+    const [infrastructureRow, nextCurrentGameDate] = await Promise.all([
       loadClubInfrastructure(clubIdValue),
+      loadCurrentGameDateString(),
       loadStaffData(clubIdValue, true),
     ])
 
     setClubInfrastructure(infrastructureRow)
+    setCurrentGameDate(nextCurrentGameDate)
   }
 
   async function reloadRiders(clubIdValue: string) {
@@ -2874,6 +2934,12 @@ export default function TransfersPage() {
     activeMarketRowCount === 0 ? 0 : (marketPage - 1) * RIDERS_PER_PAGE + 1
   const marketPageEnd = Math.min(marketPage * RIDERS_PER_PAGE, activeMarketRowCount)
 
+  console.log('staffRoleLimits passed to StaffFreeAgentPage:', staffRoleLimits)
+  console.log(
+    'trainer limit passed:',
+    staffRoleLimits.find((row) => row.role_type === 'trainer')
+  )
+
   if (loading) {
     return (
       <div className="w-full">
@@ -3117,7 +3183,7 @@ export default function TransfersPage() {
           selectedCandidateId={selectedCandidateId}
           onSelectCandidate={setSelectedCandidateId}
           activeStaffByRole={activeStaffByRole}
-          roleLimits={roleLimits}
+          roleLimits={staffRoleLimits}
           pageStart={pageStart}
           pageEnd={pageEnd}
           totalCandidates={sortedCandidates.length}
@@ -3130,6 +3196,7 @@ export default function TransfersPage() {
           hireContractTerm={hireContractTerm}
           setHireContractTerm={setHireContractTerm}
           scoutingLevel={clubInfrastructure?.scouting_level ?? 0}
+          currentGameDate={currentGameDate}
           onHireCandidate={() => {
             void handleHireCandidate()
           }}

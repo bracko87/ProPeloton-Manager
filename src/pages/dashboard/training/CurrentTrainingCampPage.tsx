@@ -14,6 +14,7 @@
  * - Training plan save errors now show the real Edge Function error/reason.
  * - Future booked camps only show the full interface one in-game day before start.
  * - Future camps stay in booked notice state when another camp is currently active.
+ * - Staff boost summary is loaded from public.get_training_camp_staff_boost_summary.
  */
 
 import React, { useEffect, useMemo, useState } from 'react'
@@ -293,7 +294,8 @@ function formatGainValue(value: number | null): string {
 function formatBoostValue(value: number | null | undefined, suffix = ''): string {
   const numeric = Number(value ?? 0)
   if (!Number.isFinite(numeric) || numeric === 0) return '—'
-  return `+${numeric}${suffix}`
+
+  return `${numeric > 0 ? '+' : ''}${numeric}${suffix}`
 }
 
 function formatFatigueDelta(before: number | null, after: number | null): string {
@@ -303,6 +305,37 @@ function formatFatigueDelta(before: number | null, after: number | null): string
   if (!Number.isFinite(delta)) return '—'
 
   return `${delta >= 0 ? '+' : ''}${delta.toFixed(1)}`
+}
+
+function normalizeBoostSummary(
+  value: unknown,
+  fallbackStaff: CampStaff[],
+): StaffBoostSummary {
+  const source = Array.isArray(value) ? value[0] : value
+
+  const summary =
+    source && typeof source === 'object'
+      ? (source as Record<string, unknown>)
+      : {}
+
+  return {
+    boosts: Array.isArray(summary.boosts)
+      ? (summary.boosts as StaffBoostSummary['boosts'])
+      : fallbackStaff.map((member) => ({
+          staff_id: member.staff_id,
+          staff_name: member.staff_name ?? undefined,
+          role_type: member.role_type ?? undefined,
+          boost_label: member.boost_label ?? undefined,
+        })),
+
+    staff_count: Number(summary.staff_count ?? fallbackStaff.length),
+
+    recovery_bonus: Number(summary.recovery_bonus ?? 0),
+    development_bonus_pct: Number(summary.development_bonus_pct ?? 0),
+    organization_bonus_pct: Number(summary.organization_bonus_pct ?? 0),
+    health_risk_reduction_pct: Number(summary.health_risk_reduction_pct ?? 0),
+    mechanical_risk_reduction_pct: Number(summary.mechanical_risk_reduction_pct ?? 0),
+  }
 }
 
 function formatWeatherForecastLabel(dateValue: string, index: number): string {
@@ -741,10 +774,28 @@ export default function CurrentTrainingCampPage(): JSX.Element {
 
         setStaff(nextStaff)
 
-        const nextBoostSummary =
+        let nextBoostSummary: StaffBoostSummary | null =
           result?.boost_summary ??
           nextCamp?.notes?.staff_boost_summary ??
           null
+
+        if (nextCamp?.id) {
+          const { data: boostData, error: boostError } = await supabase.rpc(
+            'get_training_camp_staff_boost_summary',
+            {
+              p_booking_id: nextCamp.id,
+            },
+          )
+
+          if (cancelled) return
+
+          if (boostError) {
+            // eslint-disable-next-line no-console
+            console.warn('Failed to load training camp staff boost summary:', boostError)
+          } else {
+            nextBoostSummary = normalizeBoostSummary(boostData, nextStaff)
+          }
+        }
 
         setBoostSummary(nextBoostSummary)
         setLocationInfo(nextLocationInfo)
@@ -1190,7 +1241,7 @@ export default function CurrentTrainingCampPage(): JSX.Element {
               <div className="rounded-xl bg-slate-50 p-3">
                 <div className="text-xs text-slate-500">Staff</div>
                 <div className="mt-1 font-semibold">
-                  {camp.staff_count ?? staff.length}
+                  {boostSummary?.staff_count ?? camp.staff_count ?? staff.length}
                 </div>
               </div>
             </div>
