@@ -97,6 +97,37 @@ type SignResult = {
   created_objectives: number
 }
 
+type TechnicalSponsorBenefitPackage = {
+  contract_value_cash: number | string
+  cash_support_cash: number | string
+  equipment_support_budget_cash: number | string
+  raw_equipment_budget_cash?: number | string
+  estimated_useful_equipment_budget_cash?: number | string
+  category_count: number
+  category_discounts_json: Record<string, number | string>
+  notes?: string[]
+}
+
+type ActiveTechnicalSponsorSupport = {
+  has_active_support: boolean
+  benefit_id?: string
+  club_sponsor_id?: string
+  sponsor_company_id?: string
+  sponsor_name?: string
+  sponsor_logo_url?: string | null
+  contract_value_cash?: number | string
+  cash_support_cash?: number | string
+  equipment_support_budget_cash?: number | string
+  equipment_support_used_cash?: number | string
+  equipment_support_remaining_cash?: number | string
+  equipment_support_used_pct?: number | string
+  category_discounts_json?: Record<string, number | string>
+  starts_game_date?: string | null
+  expires_game_date?: string | null
+  status?: string
+  notes?: string[]
+}
+
 function toNumber(v: unknown): number {
   if (v === null || v === undefined) return 0
   if (typeof v === 'number') return v
@@ -202,6 +233,48 @@ function CountryFlagLabel({
 
 function formatContractCoverage(seasonNumber: number | null | undefined): string {
   return `Until end of Season ${seasonNumber ?? 1}`
+}
+
+function formatEquipmentCategoryLabel(category: string): string {
+  const labels: Record<string, string> = {
+    frame: 'Frames',
+    wheelset: 'Wheelsets',
+    tires: 'Tires',
+    groupset: 'Groupsets',
+    helmet: 'Helmets',
+    shoes: 'Shoes',
+  }
+
+  return labels[category] ?? category
+}
+
+function getOfferContractValueCash(offer: SponsorOffer): number {
+  return toNumber(offer.guaranteed_amount)
+}
+
+async function calculateTechnicalSponsorBenefitPackagesBatch(
+  offers: Array<{
+    offerId: string
+    sponsorCompanyId: string
+    contractValueCash: number
+  }>
+): Promise<Record<string, TechnicalSponsorBenefitPackage>> {
+  if (offers.length === 0) return {}
+
+  const { data, error } = await supabase.rpc(
+    'calculate_technical_sponsor_benefit_packages_batch',
+    {
+      p_offers: offers.map((offer) => ({
+        offer_id: offer.offerId,
+        sponsor_company_id: offer.sponsorCompanyId,
+        contract_value_cash: offer.contractValueCash,
+      })),
+    }
+  )
+
+  if (error) throw error
+
+  return (data ?? {}) as Record<string, TechnicalSponsorBenefitPackage>
 }
 
 function sponsorKindLabel(kind: SponsorKind): string {
@@ -387,6 +460,7 @@ function OfferModal({
   offers,
   currency,
   signingOfferId,
+  technicalBenefitPackages,
   onClose,
   onSign,
 }: {
@@ -395,6 +469,7 @@ function OfferModal({
   offers: SponsorOffer[]
   currency: 'USD' | 'EUR'
   signingOfferId: string | null
+  technicalBenefitPackages: Record<string, TechnicalSponsorBenefitPackage>
   onClose: () => void
   onSign: (offerId: string) => Promise<void>
 }): JSX.Element | null {
@@ -424,7 +499,9 @@ function OfferModal({
 
           <div className="p-6">
             {offers.length === 0 ? (
-              <div className="text-sm text-gray-600">No offers available for this sponsor category.</div>
+              <div className="text-sm text-gray-600">
+                No offers available for this sponsor category.
+              </div>
             ) : (
               <div className="space-y-4">
                 {offers.map((offer) => {
@@ -432,7 +509,10 @@ function OfferModal({
                   const bonus = toNumber(offer.bonus_pool_amount)
                   const monthly = toNumber(offer.monthly_amount)
                   const discount =
-                    offer.technical_discount_pct !== null ? Number(offer.technical_discount_pct) : null
+                    offer.technical_discount_pct !== null
+                      ? Number(offer.technical_discount_pct)
+                      : null
+
                   const description = getSponsorDescription(offer.metadata)
                   const previewGoals = getSponsorPreviewGoals(offer.metadata)
                   const resolvedLogoUrl = getSponsorLogoUrl(
@@ -440,6 +520,14 @@ function OfferModal({
                     offer.logo_url,
                     offer.metadata
                   )
+
+                  const technicalPackage =
+                    offer.sponsor_kind === 'technical'
+                      ? technicalBenefitPackages[offer.id] ?? null
+                      : null
+
+                  const technicalDiscounts =
+                    technicalPackage?.category_discounts_json ?? {}
 
                   return (
                     <div key={offer.id} className="border rounded-xl p-5">
@@ -454,22 +542,31 @@ function OfferModal({
                           )}
 
                           <div className="min-w-0">
-                            <div className="font-semibold text-lg truncate">{offer.company_name}</div>
+                            <div className="font-semibold text-lg truncate">
+                              {offer.company_name}
+                            </div>
 
                             <div className="text-sm text-gray-600 mt-1 flex items-center gap-2">
                               {offer.sponsor_kind !== 'secondary' && (
-                                <CountryFlagLabel countryCode={offer.company_country_code} imageWidth={20} />
+                                <CountryFlagLabel
+                                  countryCode={offer.company_country_code}
+                                  imageWidth={20}
+                                />
                               )}
                               <span>{sponsorKindLabel(offer.sponsor_kind)}</span>
                             </div>
 
                             {description && offer.sponsor_kind !== 'secondary' && (
-                              <div className="text-sm text-gray-500 mt-2">{description}</div>
+                              <div className="text-sm text-gray-500 mt-2">
+                                {description}
+                              </div>
                             )}
 
                             <div className="flex flex-wrap gap-2 mt-3">
                               <StatusPill label={`Season ${offer.season_number}`} tone="blue" />
-                              <StatusPill label={`Factor ${toNumber(offer.proration_factor).toFixed(2)}`} />
+                              <StatusPill
+                                label={`Factor ${toNumber(offer.proration_factor).toFixed(2)}`}
+                              />
                             </div>
                           </div>
                         </div>
@@ -484,33 +581,107 @@ function OfferModal({
                         </button>
                       </div>
 
-                      <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mt-5">
-                        <StatCard label="Guaranteed" value={formatMoney(guaranteed, currency)} />
-                        <StatCard
-                          label={offer.sponsor_kind === 'main' ? 'Bonus pool' : 'Monthly equivalent'}
-                          value={
-                            offer.sponsor_kind === 'main'
-                              ? formatMoney(bonus, currency)
-                              : formatMoney(monthly, currency)
-                          }
-                        />
-                        <StatCard
-                          label="Contract Coverage"
-                          value={formatContractCoverage(offer.season_number)}
-                        />
-                        <StatCard
-                          label={offer.sponsor_kind === 'technical' ? 'Discount' : 'Details'}
-                          value={
-                            offer.sponsor_kind === 'technical'
-                              ? discount !== null
-                                ? `${discount.toFixed(2)}%`
-                                : 'Future perk'
-                              : offer.sponsor_kind === 'secondary'
-                                ? 'Supporting sponsor'
-                                : getCountryName(offer.company_country_code)
-                          }
-                        />
-                      </div>
+                      {offer.sponsor_kind === 'technical' && technicalPackage ? (
+                        <>
+                          <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mt-5">
+                            <StatCard
+                              label="Total value"
+                              value={formatMoney(
+                                toNumber(technicalPackage.contract_value_cash),
+                                currency
+                              )}
+                            />
+                            <StatCard
+                              label="Cash paid now"
+                              value={formatMoney(
+                                toNumber(technicalPackage.cash_support_cash),
+                                currency
+                              )}
+                            />
+                            <StatCard
+                              label="Equipment fund"
+                              value={formatMoney(
+                                toNumber(technicalPackage.equipment_support_budget_cash),
+                                currency
+                              )}
+                            />
+                            <StatCard
+                              label="Contract Coverage"
+                              value={formatContractCoverage(offer.season_number)}
+                            />
+                          </div>
+
+                          <div className="mt-4 rounded-lg bg-green-50 border border-green-100 p-4 text-sm text-green-900">
+                            <div className="font-medium">Technical sponsor package</div>
+
+                            <div className="mt-3">
+                              <div className="text-xs uppercase tracking-wide text-green-700 font-semibold">
+                                Discounts
+                              </div>
+
+                              <div className="mt-2 flex flex-wrap gap-2">
+                                {Object.entries(technicalDiscounts).map(
+                                  ([category, value]) => (
+                                    <span
+                                      key={category}
+                                      className="rounded-full bg-white px-2.5 py-1 text-xs font-medium text-green-700 ring-1 ring-green-200"
+                                    >
+                                      {formatEquipmentCategoryLabel(category)}:{' '}
+                                      {toNumber(value).toFixed(0)}%
+                                    </span>
+                                  )
+                                )}
+                              </div>
+                            </div>
+
+                            <div className="mt-3 text-xs text-green-800">
+                              Equipment support is not cash. It can only be used for
+                              sponsor-branded equipment discounts. There is no fixed unit cap;
+                              the remaining equipment fund is the limit.
+                            </div>
+                          </div>
+
+                          <div className="mt-3 rounded-lg bg-amber-50 border border-amber-100 p-3 text-xs text-amber-800">
+                            Unused equipment support expires at the end of the season.
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mt-5">
+                            <StatCard label="Guaranteed" value={formatMoney(guaranteed, currency)} />
+                            <StatCard
+                              label={offer.sponsor_kind === 'main' ? 'Bonus pool' : 'Monthly equivalent'}
+                              value={
+                                offer.sponsor_kind === 'main'
+                                  ? formatMoney(bonus, currency)
+                                  : formatMoney(monthly, currency)
+                              }
+                            />
+                            <StatCard
+                              label="Contract Coverage"
+                              value={formatContractCoverage(offer.season_number)}
+                            />
+                            <StatCard
+                              label={offer.sponsor_kind === 'technical' ? 'Discount' : 'Details'}
+                              value={
+                                offer.sponsor_kind === 'technical'
+                                  ? discount !== null
+                                    ? `${discount.toFixed(2)}%`
+                                    : 'Calculating package'
+                                  : offer.sponsor_kind === 'secondary'
+                                    ? 'Supporting sponsor'
+                                    : getCountryName(offer.company_country_code)
+                              }
+                            />
+                          </div>
+
+                          {offer.sponsor_kind === 'technical' && (
+                            <div className="mt-4 rounded-lg bg-gray-50 border p-4 text-sm text-gray-700">
+                              Calculating technical sponsor cash/equipment support package…
+                            </div>
+                          )}
+                        </>
+                      )}
 
                       {offer.sponsor_kind === 'main' && (
                         <div className="mt-4 rounded-lg bg-blue-50 border border-blue-100 p-4 text-sm text-blue-900">
@@ -535,12 +706,6 @@ function OfferModal({
                       {offer.sponsor_kind === 'secondary' && (
                         <div className="mt-4 rounded-lg bg-gray-50 border p-4 text-sm text-gray-700">
                           Secondary sponsors have no objectives in v1 and simply add more seasonal income.
-                        </div>
-                      )}
-
-                      {offer.sponsor_kind === 'technical' && (
-                        <div className="mt-4 rounded-lg bg-gray-50 border p-4 text-sm text-gray-700">
-                          Technical sponsor rewards currently include guaranteed contract income. Discount/perk systems are prepared for future equipment integration.
                         </div>
                       )}
                     </div>
@@ -821,25 +986,34 @@ function SecondarySponsorPanel({
 
 function TechnicalSponsorPanel({
   sponsor,
+  technicalSupport,
   canOpenOffers,
   onOpenOffers,
   currency,
 }: {
   sponsor: SignedSponsor | null
+  technicalSupport: ActiveTechnicalSponsorSupport | null
   canOpenOffers: boolean
   onOpenOffers: () => void
   currency: 'USD' | 'EUR'
 }): JSX.Element {
-  const discount =
-    sponsor?.technical_discount_pct !== null && sponsor?.technical_discount_pct !== undefined
-      ? Number(sponsor.technical_discount_pct)
-      : null
-
   const resolvedLogoUrl = sponsor
     ? getSponsorLogoUrl(sponsor.sponsor_kind, sponsor.logo_url, sponsor.metadata)
     : null
 
   const description = sponsor ? getSponsorDescription(sponsor.metadata) : null
+
+  const support =
+    technicalSupport?.has_active_support && sponsor
+      ? technicalSupport
+      : null
+
+  const discountEntries = Object.entries(support?.category_discounts_json ?? {})
+  const usedSupport = toNumber(support?.equipment_support_used_cash)
+  const totalSupport = toNumber(support?.equipment_support_budget_cash)
+  const remainingSupport = toNumber(support?.equipment_support_remaining_cash)
+  const usedPct =
+    totalSupport > 0 ? Math.max(0, Math.min(100, (usedSupport / totalSupport) * 100)) : 0
 
   return (
     <div className="bg-white rounded-xl shadow border overflow-hidden">
@@ -847,7 +1021,7 @@ function TechnicalSponsorPanel({
         <div>
           <div className="font-semibold text-lg">Technical Sponsor</div>
           <div className="text-sm text-gray-500 mt-1">
-            Equipment partnership foundation with future discounts and usage bonuses.
+            Equipment partner providing cash support and sponsor-branded equipment discounts.
           </div>
         </div>
 
@@ -874,70 +1048,133 @@ function TechnicalSponsorPanel({
 
                   <div className="flex flex-wrap gap-2 mt-4">
                     <StatusPill label="Signed" tone="green" />
-                    {discount !== null ? (
-                      <StatusPill label={`${discount.toFixed(2)}% discount`} tone="blue" />
+                    {discountEntries.length > 0 ? (
+                      discountEntries.map(([category, discount]) => (
+                        <StatusPill
+                          key={category}
+                          label={`${formatEquipmentCategoryLabel(category)} ${toNumber(discount).toFixed(0)}%`}
+                          tone="blue"
+                        />
+                      ))
                     ) : (
-                      <StatusPill label="Future perk" />
+                      <StatusPill label="No active equipment fund" tone="yellow" />
                     )}
                   </div>
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-5">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mt-5">
                 <StatCard
-                  label="Guaranteed Payment"
-                  value={formatMoney(toNumber(sponsor.guaranteed_amount), currency)}
+                  label="Cash support"
+                  value={
+                    support
+                      ? formatMoney(toNumber(support.cash_support_cash), currency)
+                      : formatMoney(toNumber(sponsor.guaranteed_amount), currency)
+                  }
                 />
                 <StatCard
-                  label="Perk"
-                  value={discount !== null ? `${discount.toFixed(2)}% discount` : 'Future perk'}
+                  label="Equipment fund"
+                  value={
+                    support
+                      ? `${formatMoney(usedSupport, currency)} / ${formatMoney(totalSupport, currency)}`
+                      : 'Not created'
+                  }
+                />
+                <StatCard
+                  label="Remaining"
+                  value={
+                    support
+                      ? formatMoney(remainingSupport, currency)
+                      : '—'
+                  }
                 />
                 <StatCard
                   label="Contract Coverage"
                   value={formatContractCoverage(sponsor.season_number)}
                 />
               </div>
+
+              {support && (
+                <div className="mt-5">
+                  <ProgressBar value={usedPct} tone="green" />
+                  <div className="mt-2 text-xs text-gray-500">
+                    {usedPct.toFixed(1)}% of equipment support used.
+                  </div>
+                </div>
+              )}
+
+              {support && (
+                <div className="mt-4 rounded-lg bg-amber-50 border border-amber-100 p-3 text-xs text-amber-800">
+                  Equipment support is not cash. It can only be used for sponsor-branded
+                  equipment discounts. Unused support expires at season end.
+                </div>
+              )}
             </div>
           ) : (
             <div className="rounded-xl border border-dashed p-6 bg-gray-50">
               <div className="text-lg font-semibold text-gray-900">No Technical Sponsor Signed</div>
               <div className="text-sm text-gray-600 mt-2">
-                Sign a technical sponsor to prepare future equipment discounts and usage-based bonuses.
+                Sign a technical sponsor to unlock sponsor-branded equipment discounts.
               </div>
             </div>
           )}
         </div>
 
         <div className="xl:col-span-2 border-t xl:border-t-0 xl:border-l bg-gray-50/70 p-5">
-          <div className="font-semibold">Perk Status</div>
+          <div className="font-semibold">Support Status</div>
           <div className="text-sm text-gray-500 mt-1">
-            Technical sponsor effects are partly visual now and ready for equipment integration later.
+            Technical sponsor support is split into cash and a seasonal equipment discount fund.
           </div>
 
           <div className="space-y-3 mt-4">
             <div className="rounded-xl border bg-white p-4">
               <div className="flex items-center justify-between gap-3">
                 <div>
-                  <div className="font-medium">Guaranteed Contract Income</div>
+                  <div className="font-medium">Cash Support</div>
                   <div className="text-sm text-gray-600 mt-1">
-                    Technical sponsors already pay guaranteed money when signed.
+                    Paid immediately when the technical sponsor is signed.
                   </div>
                 </div>
-                <StatusPill label={sponsor ? 'Active' : 'Locked'} tone={sponsor ? 'green' : 'gray'} />
+                <StatusPill label={sponsor ? 'Paid' : 'Locked'} tone={sponsor ? 'green' : 'gray'} />
               </div>
             </div>
 
             <div className="rounded-xl border bg-white p-4">
               <div className="flex items-center justify-between gap-3">
                 <div>
-                  <div className="font-medium">Equipment Discount</div>
+                  <div className="font-medium">Equipment Support Fund</div>
                   <div className="text-sm text-gray-600 mt-1">
-                    Discount values are stored and ready for future equipment/shop integration.
+                    Used automatically when buying matching sponsor-branded equipment.
                   </div>
                 </div>
-                <StatusPill label={discount !== null ? 'Ready' : 'Future'} tone={discount !== null ? 'green' : 'yellow'} />
+                <StatusPill label={support ? 'Active' : 'Missing'} tone={support ? 'green' : 'yellow'} />
               </div>
+
+              {support && (
+                <div className="mt-4">
+                  <ProgressBar value={usedPct} tone="green" />
+                  <div className="mt-2 text-xs text-gray-500">
+                    Remaining: {formatMoney(remainingSupport, currency)}
+                  </div>
+                </div>
+              )}
             </div>
+
+            {support && discountEntries.length > 0 && (
+              <div className="rounded-xl border bg-white p-4">
+                <div className="font-medium">Discounts</div>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {discountEntries.map(([category, discount]) => (
+                    <span
+                      key={category}
+                      className="rounded-full bg-green-50 px-2.5 py-1 text-xs font-medium text-green-700 ring-1 ring-green-200"
+                    >
+                      {formatEquipmentCategoryLabel(category)}: {toNumber(discount).toFixed(0)}%
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -959,6 +1196,11 @@ export function SponsorsTab({
   const [signingOfferId, setSigningOfferId] = useState<string | null>(null)
   const [banner, setBanner] = useState<string | null>(null)
   const [offersModalKind, setOffersModalKind] = useState<SponsorKind | null>(null)
+  const [technicalBenefitPackages, setTechnicalBenefitPackages] = useState<
+    Record<string, TechnicalSponsorBenefitPackage>
+  >({})
+  const [activeTechnicalSupport, setActiveTechnicalSupport] =
+    useState<ActiveTechnicalSponsorSupport | null>(null)
 
   const loadDashboard = useCallback(async (): Promise<void> => {
     setError(null)
@@ -984,6 +1226,21 @@ export function SponsorsTab({
     }
 
     setDashboard((dashboardRes.data ?? null) as SponsorDashboard | null)
+
+    const supportRes = await supabase.rpc(
+      'equipment_get_active_technical_sponsor_support',
+      {
+        p_club_id: clubId,
+      }
+    )
+
+    if (!supportRes.error) {
+      setActiveTechnicalSupport(
+        (supportRes.data ?? null) as ActiveTechnicalSponsorSupport | null
+      )
+    } else {
+      setActiveTechnicalSupport(null)
+    }
   }, [clubId])
 
   const generateIfNeeded = useCallback(async (): Promise<void> => {
@@ -1065,6 +1322,55 @@ export function SponsorsTab({
     [dashboard]
   )
 
+  useEffect(() => {
+    let cancelled = false
+
+    async function loadTechnicalPackages(): Promise<void> {
+      if (offersModalKind !== 'technical' || technicalOffers.length === 0) {
+        if (!cancelled && offersModalKind !== 'technical') {
+          setTechnicalBenefitPackages({})
+        }
+        return
+      }
+
+      try {
+        const packages = await calculateTechnicalSponsorBenefitPackagesBatch(
+          technicalOffers
+            .map((offer) => ({
+              offerId: offer.id,
+              sponsorCompanyId: offer.company_id,
+              contractValueCash: getOfferContractValueCash(offer),
+            }))
+            .filter(
+              (offer) =>
+                offer.offerId &&
+                offer.sponsorCompanyId &&
+                offer.contractValueCash > 0
+            )
+        )
+
+        if (!cancelled) {
+          setTechnicalBenefitPackages(packages)
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setTechnicalBenefitPackages({})
+          setError(
+            err instanceof Error
+              ? err.message
+              : 'Failed to calculate technical sponsor packages.'
+          )
+        }
+      }
+    }
+
+    void loadTechnicalPackages()
+
+    return () => {
+      cancelled = true
+    }
+  }, [offersModalKind, technicalOffers])
+
   const mainObjectives = useMemo(() => {
     if (!signedMain || !dashboard) return []
     return [...dashboard.objectives]
@@ -1129,6 +1435,7 @@ export function SponsorsTab({
         offers={modalOffers}
         currency={currency}
         signingOfferId={signingOfferId}
+        technicalBenefitPackages={technicalBenefitPackages}
         onClose={() => setOffersModalKind(null)}
         onSign={handleSignOffer}
       />
@@ -1202,6 +1509,7 @@ export function SponsorsTab({
 
           <TechnicalSponsorPanel
             sponsor={signedTechnical}
+            technicalSupport={activeTechnicalSupport}
             currency={currency}
             canOpenOffers={canOpenTechnicalOffers}
             onOpenOffers={() => setOffersModalKind('technical')}

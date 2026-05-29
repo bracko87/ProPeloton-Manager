@@ -48,26 +48,45 @@ function cx(...parts: Array<string | false | null | undefined>) {
   return parts.filter(Boolean).join(' ')
 }
 
+function safeCountryCode(countryCode: string | null | undefined) {
+  const code = countryCode?.trim().toLowerCase()
+
+  if (!code || !/^[a-z]{2}$/.test(code)) return null
+
+  return code
+}
+
+function getCountryFlagUrl(countryCode: string) {
+  return `https://flagcdn.com/w40/${countryCode.toLowerCase()}.png`
+}
+
 function CountryFlagBadge({
   countryCode,
 }: {
   countryCode: string | null | undefined
 }) {
-  if (!countryCode?.trim()) {
-    return <span className="text-slate-400">—</span>
+  const safeCode = safeCountryCode(countryCode)
+
+  if (!safeCode) {
+    return (
+      <span
+        className="inline-block h-4 w-6 shrink-0 rounded-sm border border-slate-200 bg-slate-100"
+        title="Unknown country"
+        aria-label="Unknown country"
+      />
+    )
   }
 
-  const normalizedCode = countryCode.trim().toLowerCase()
+  const displayCode = safeCode.toUpperCase()
 
   return (
-    <div className="inline-flex h-7 w-10 items-center justify-center rounded-full border border-slate-200 bg-white shadow-sm">
-      <img
-        src={`https://flagcdn.com/24x18/${normalizedCode}.png`}
-        alt={`${countryCode} flag`}
-        className="h-4 w-6 rounded-[2px] object-cover"
-        loading="lazy"
-      />
-    </div>
+    <img
+      src={getCountryFlagUrl(safeCode)}
+      alt={`${displayCode} flag`}
+      title={displayCode}
+      className="h-4 w-6 shrink-0 rounded-sm border border-slate-200 object-cover"
+      loading="lazy"
+    />
   )
 }
 

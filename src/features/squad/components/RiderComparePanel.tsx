@@ -142,6 +142,92 @@ function buildOptionLabel(displayName: string | null | undefined, teamLabel?: st
   return teamLabel ? `${base} · ${teamLabel}` : base
 }
 
+function safeCountryCode(countryCode?: string | null): string | null {
+  const code = countryCode?.trim().toLowerCase()
+
+  if (!code || !/^[a-z]{2}$/.test(code)) {
+    return null
+  }
+
+  return code
+}
+
+function getCountryFlagUrl(countryCode: string): string {
+  return `https://flagcdn.com/w40/${countryCode.toLowerCase()}.png`
+}
+
+function getCountryName(countryCode?: string | null): string {
+  const safeCode = safeCountryCode(countryCode)
+
+  if (!safeCode) {
+    return 'Unknown country'
+  }
+
+  const code = safeCode.toUpperCase()
+
+  try {
+    if (typeof Intl !== 'undefined' && typeof Intl.DisplayNames !== 'undefined') {
+      const regionNames = new Intl.DisplayNames(['en'], { type: 'region' })
+      return regionNames.of(code) || code
+    }
+  } catch {
+    return code
+  }
+
+  return code
+}
+
+function CountryFlag({
+  countryCode,
+  className = '',
+}: {
+  countryCode?: string | null
+  className?: string
+}) {
+  const safeCode = safeCountryCode(countryCode)
+  const countryName = getCountryName(countryCode)
+  const [hasError, setHasError] = useState(false)
+
+  useEffect(() => {
+    setHasError(false)
+  }, [safeCode])
+
+  const imageClassName = [
+    'h-4 w-6 shrink-0 rounded-sm border border-slate-200 object-cover',
+    className,
+  ]
+    .filter(Boolean)
+    .join(' ')
+
+  const placeholderClassName = [
+    'inline-block h-4 w-6 shrink-0 rounded-sm border border-slate-200 bg-slate-100',
+    className,
+  ]
+    .filter(Boolean)
+    .join(' ')
+
+  if (!safeCode || hasError) {
+    return (
+      <span
+        className={placeholderClassName}
+        title={countryName}
+        aria-label={countryName}
+      />
+    )
+  }
+
+  return (
+    <img
+      src={getCountryFlagUrl(safeCode)}
+      alt={countryName}
+      title={countryName}
+      className={imageClassName}
+      loading="lazy"
+      onError={() => setHasError(true)}
+    />
+  )
+}
+
 export default function RiderComparePanel({
   leftRiderId,
   clubId,
@@ -466,6 +552,7 @@ export default function RiderComparePanel({
 
   function RiderCard({ rider }: { rider: RiderSummary | null }) {
     const age = getResolvedRiderAge(rider)
+    const displayedCountryCode = safeCountryCode(rider?.country_code)?.toUpperCase() ?? '—'
 
     return (
       <div className="flex items-center gap-3">
@@ -487,8 +574,11 @@ export default function RiderComparePanel({
           <div className="truncate text-sm font-semibold text-slate-900">
             {getRiderLabel(rider)}
           </div>
-          <div className="mt-0.5 text-xs text-slate-500">
-            Age {age ?? '—'} · {rider?.country_code ?? '—'}
+          <div className="mt-0.5 flex items-center gap-1.5 text-xs text-slate-500">
+            <span>Age {age ?? '—'}</span>
+            <span>·</span>
+            <CountryFlag countryCode={rider?.country_code} />
+            <span>{displayedCountryCode}</span>
           </div>
         </div>
       </div>

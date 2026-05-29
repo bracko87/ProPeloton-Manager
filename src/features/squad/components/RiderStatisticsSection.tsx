@@ -33,6 +33,18 @@ function cx(...parts: Array<string | false | null | undefined>) {
   return parts.filter(Boolean).join(' ')
 }
 
+function safeCountryCode(countryCode: string | null | undefined) {
+  const code = countryCode?.trim().toLowerCase()
+
+  if (!code || !/^[a-z]{2}$/.test(code)) return null
+
+  return code
+}
+
+function getCountryFlagUrl(countryCode: string) {
+  return `https://flagcdn.com/w40/${countryCode.toLowerCase()}.png`
+}
+
 function SectionCard({
   title,
   subtitle,
@@ -165,24 +177,29 @@ function CountryFlag({
   countryNameByCode: Map<string, string>
   getCountryName: (code: string | null, countryNameByCode: Map<string, string>) => string
 }) {
-  if (!code) {
-    return <span className="text-slate-400">—</span>
+  const safeCode = safeCountryCode(code)
+
+  if (!safeCode) {
+    return (
+      <span
+        className="inline-block h-4 w-6 shrink-0 rounded-sm border border-slate-200 bg-slate-100"
+        title="Unknown country"
+        aria-label="Unknown country"
+      />
+    )
   }
 
-  const name = getCountryName(code, countryNameByCode)
+  const displayCode = safeCode.toUpperCase()
+  const name = getCountryName(displayCode, countryNameByCode)
 
   return (
-    <div
-      className="inline-flex h-7 w-10 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white shadow-sm"
+    <img
+      src={getCountryFlagUrl(safeCode)}
+      alt={name}
       title={name}
-    >
-      <img
-        src={`https://flagcdn.com/24x18/${code.toLowerCase()}.png`}
-        alt={name}
-        className="h-4 w-6 rounded-[2px] object-cover"
-        loading="lazy"
-      />
-    </div>
+      className="h-4 w-6 shrink-0 rounded-sm border border-slate-200 object-cover"
+      loading="lazy"
+    />
   )
 }
 

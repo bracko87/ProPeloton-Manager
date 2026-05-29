@@ -59,6 +59,11 @@ type TeamLogoProps = {
   className?: string
 }
 
+type CountryFlagProps = {
+  countryCode?: string | null
+  className?: string
+}
+
 type PastWinnerRecord = {
   season_number: number
   club_id: string
@@ -83,6 +88,86 @@ const TIER_OPTIONS: TierOption[] = [
   { value: TEAM_TIERS.CONTINENTAL, label: 'Continental' },
   { value: TEAM_TIERS.AMATEUR, label: 'Amateur' },
 ]
+
+function safeCountryCode(countryCode?: string | null): string | null {
+  const code = countryCode?.trim().toLowerCase()
+
+  if (!code || !/^[a-z]{2}$/.test(code)) {
+    return null
+  }
+
+  return code
+}
+
+function getCountryFlagUrl(countryCode: string): string {
+  return `https://flagcdn.com/w40/${countryCode.toLowerCase()}.png`
+}
+
+function getCountryName(countryCode?: string | null): string {
+  const safeCode = safeCountryCode(countryCode)
+
+  if (!safeCode) {
+    return 'Unknown country'
+  }
+
+  const code = safeCode.toUpperCase()
+
+  try {
+    if (typeof Intl !== 'undefined' && typeof Intl.DisplayNames !== 'undefined') {
+      const regionNames = new Intl.DisplayNames(['en'], { type: 'region' })
+      return regionNames.of(code) || code
+    }
+  } catch {
+    return code
+  }
+
+  return code
+}
+
+function CountryFlag({ countryCode, className = '' }: CountryFlagProps): JSX.Element {
+  const safeCode = safeCountryCode(countryCode)
+  const countryName = getCountryName(countryCode)
+  const [imageFailed, setImageFailed] = useState(false)
+
+  useEffect(() => {
+    setImageFailed(false)
+  }, [safeCode])
+
+  const imageClassName = [
+    'h-4 w-6 shrink-0 rounded-sm border border-slate-200 object-cover',
+    className,
+  ]
+    .filter(Boolean)
+    .join(' ')
+
+  const fallbackClassName = [
+    'inline-block h-4 w-6 shrink-0 rounded-sm border border-slate-200 bg-slate-100',
+    className,
+  ]
+    .filter(Boolean)
+    .join(' ')
+
+  if (!safeCode || imageFailed) {
+    return (
+      <span
+        className={fallbackClassName}
+        title={countryName}
+        aria-label={countryName}
+      />
+    )
+  }
+
+  return (
+    <img
+      src={getCountryFlagUrl(safeCode)}
+      alt={countryName}
+      title={countryName}
+      className={imageClassName}
+      loading="lazy"
+      onError={() => setImageFailed(true)}
+    />
+  )
+}
 
 function TeamLogo({ src, teamName, className = 'h-8 w-8' }: TeamLogoProps): JSX.Element {
   const [imageFailed, setImageFailed] = useState(false)
@@ -545,12 +630,7 @@ function PastWinnersModal({
                       </td>
 
                       <td className="px-4 py-3 text-sm text-slate-700">
-                        <img
-                          src={`https://flagcdn.com/24x18/${winner.country_code.toLowerCase()}.png`}
-                          alt={`${winner.country_code} flag`}
-                          className="h-4 w-6 rounded-sm border border-slate-200 object-cover"
-                          loading="lazy"
-                        />
+                        <CountryFlag countryCode={winner.country_code} />
                       </td>
 
                       <td className="px-4 py-3 text-right text-sm font-semibold text-slate-900">
@@ -883,12 +963,7 @@ export default function TeamRankingPage(): JSX.Element {
                       </td>
 
                       <td className="px-4 py-3 text-sm text-slate-700">
-                        <img
-                          src={`https://flagcdn.com/24x18/${row.countryCode.toLowerCase()}.png`}
-                          alt={`${row.countryCode} flag`}
-                          className="h-4 w-6 rounded-sm border border-slate-200 object-cover"
-                          loading="lazy"
-                        />
+                        <CountryFlag countryCode={row.countryCode} />
                       </td>
 
                       <td className="px-4 py-3 text-right text-sm font-semibold text-slate-900">

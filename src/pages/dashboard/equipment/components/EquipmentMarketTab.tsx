@@ -7,8 +7,16 @@
  */
 
 import React, { useEffect, useMemo, useState } from 'react'
-import { getEquipmentMarket, purchaseEquipmentItem } from '../equipmentApi'
-import type { EquipmentCategory, EquipmentMarketItem } from '../types'
+import {
+  getEquipmentMarket,
+  purchaseEquipmentItem,
+  quoteTechnicalSponsorDiscountsBatch,
+} from '../equipmentApi'
+import type {
+  EquipmentCategory,
+  EquipmentMarketItem,
+  SponsorDiscountQuote,
+} from '../types'
 import {
   equipmentCategoryLabels,
   formatMoney,
@@ -72,10 +80,6 @@ function getSafePurchaseQuantity(value: unknown): number {
   if (parsed > 99) return 99
 
   return parsed
-}
-
-function getPurchaseTotalCash(item: EquipmentMarketItem, quantity: number): number {
-  return getEffectivePriceCash(item) * getSafePurchaseQuantity(quantity)
 }
 
 function getMarketItemImageUrl(item: EquipmentMarketItem): string | null {
@@ -152,23 +156,68 @@ function EquipmentImagePreviewModal({
 }
 
 function EquipmentPurchaseModal({
+  clubId,
   draft,
   isSubmitting,
   onQuantityChange,
   onClose,
   onConfirm,
 }: {
+  clubId: string
   draft: MarketPurchaseDraft
   isSubmitting: boolean
   onQuantityChange: (quantity: number) => void
   onClose: () => void
   onConfirm: () => void
 }): JSX.Element {
+  const [purchaseQuote, setPurchaseQuote] =
+    useState<SponsorDiscountQuote | null>(null)
+
   const item = draft.item
   const quantity = getSafePurchaseQuantity(draft.quantity)
   const unitPriceCash = getEffectivePriceCash(item)
-  const totalCostCash = getPurchaseTotalCash(item, quantity)
-  const hasDiscount = Number(item.technical_discount_pct ?? 0) > 0
+
+  useEffect(() => {
+    let cancelled = false
+
+    async function loadPurchaseQuote(): Promise<void> {
+      try {
+        const quote = await quoteTechnicalSponsorDiscountsBatch(
+          clubId,
+          [draft.item.id],
+          quantity
+        )
+
+        if (cancelled) return
+
+        const itemQuote =
+          (quote as Record<string, SponsorDiscountQuote>)[draft.item.id] ?? null
+
+        setPurchaseQuote(itemQuote)
+      } catch {
+        if (!cancelled) {
+          setPurchaseQuote(null)
+        }
+      }
+    }
+
+    setPurchaseQuote(null)
+    void loadPurchaseQuote()
+
+    return () => {
+      cancelled = true
+    }
+  }, [clubId, draft.item.id, quantity])
+
+  const popupBaseCost = Number(
+    purchaseQuote?.base_total_cash ?? item.base_price_cash * quantity
+  )
+
+  const popupDiscountCash = Number(purchaseQuote?.discount_cash ?? 0)
+
+  const popupClubPays = Number(
+    purchaseQuote?.club_pays_total_cash ?? unitPriceCash * quantity
+  )
 
   return (
     <div
@@ -212,17 +261,10 @@ function EquipmentPurchaseModal({
               <div>
                 <div className="text-xs text-gray-400">Total cost</div>
                 <div className="font-semibold text-gray-900">
-                  {formatMoney(totalCostCash)}
+                  {formatMoney(popupClubPays)}
                 </div>
               </div>
             </div>
-
-            {hasDiscount ? (
-              <div className="mt-3 rounded border border-green-100 bg-green-50 px-3 py-2 text-xs text-green-700">
-                Technical sponsor discount applied:{' '}
-                {Number(item.technical_discount_pct).toFixed(1)}%
-              </div>
-            ) : null}
           </div>
 
           <label className="block">
@@ -238,6 +280,34 @@ function EquipmentPurchaseModal({
               className="mt-1 w-full rounded border border-gray-200 px-3 py-2 text-sm"
             />
           </label>
+
+          {purchaseQuote?.has_discount ? (
+            <div className="rounded-lg border border-green-100 bg-green-50 p-3 text-sm text-green-800">
+              <div className="flex justify-between">
+                <span>Base cost</span>
+                <span>{formatMoney(popupBaseCost)}</span>
+              </div>
+
+              <div className="mt-1 flex justify-between">
+                <span>Sponsor pays</span>
+                <span>-{formatMoney(popupDiscountCash)}</span>
+              </div>
+
+              <div className="mt-1 flex justify-between font-semibold">
+                <span>You pay</span>
+                <span>{formatMoney(popupClubPays)}</span>
+              </div>
+
+              <div className="mt-2 text-xs">
+                Remaining support after purchase:{' '}
+                {formatMoney(
+                  Number(
+                    purchaseQuote.equipment_support_remaining_after_purchase_cash ?? 0
+                  )
+                )}
+              </div>
+            </div>
+          ) : null}
 
           <div className="rounded border border-blue-100 bg-blue-50 px-3 py-2 text-xs text-blue-800">
             After confirmation, the purchase is sent to the Edge Function. The
@@ -264,7 +334,7 @@ function EquipmentPurchaseModal({
           >
             {isSubmitting
               ? 'Purchasing...'
-              : `Purchase for ${formatMoney(totalCostCash)}`}
+              : `Purchase for ${formatMoney(popupClubPays)}`}
           </button>
         </div>
       </div>
@@ -360,10 +430,6 @@ function getEffectBadgeClass(value: number): string {
   return 'border-gray-100 bg-gray-50 text-gray-600'
 }
 
-function hasSponsorDiscount(item: EquipmentMarketItem): boolean {
-  return Number(item.technical_discount_pct ?? 0) > 0
-}
-
 function EquipmentMarketRulesBox(): JSX.Element {
   return (
     <div className="rounded-lg border border-blue-100 bg-blue-50 p-4 text-sm text-blue-900">
@@ -442,6 +508,9 @@ export default function EquipmentMarketTab({
   const [page, setPage] = useState(0)
   const [imagePreview, setImagePreview] = useState<MarketImagePreview | null>(null)
   const [purchaseDraft, setPurchaseDraft] = useState<MarketPurchaseDraft | null>(null)
+  const [sponsorDiscountsByItemId, setSponsorDiscountsByItemId] = useState<
+    Record<string, SponsorDiscountQuote>
+  >({})
 
   const [loading, setLoading] = useState(true)
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null)
@@ -451,9 +520,10 @@ export default function EquipmentMarketTab({
   async function loadMarket(): Promise<void> {
     setLoading(true)
     setError(null)
+    setSponsorDiscountsByItemId({})
 
     try {
-      const data = await getEquipmentMarket({
+      const response = await getEquipmentMarket({
         clubId,
         kind: 'durable',
         category,
@@ -463,9 +533,26 @@ export default function EquipmentMarketTab({
         offset: page * PAGE_SIZE,
       })
 
-      setItems(data.items ?? [])
-      setTotalCount(data.total_count ?? 0)
+      const marketItems = response.items ?? []
+
+      setItems(marketItems)
+      setTotalCount(response.total_count ?? 0)
+
+      const itemIds = marketItems.map(item => item.id)
+
+      if (itemIds.length > 0) {
+        const discounts = (await quoteTechnicalSponsorDiscountsBatch(
+          clubId,
+          itemIds,
+          1
+        )) as Record<string, SponsorDiscountQuote>
+
+        setSponsorDiscountsByItemId(discounts)
+      }
     } catch (err) {
+      setItems([])
+      setTotalCount(0)
+      setSponsorDiscountsByItemId({})
       setError(err instanceof Error ? err.message : 'Failed to load equipment market')
     } finally {
       setLoading(false)
@@ -632,13 +719,31 @@ export default function EquipmentMarketTab({
           <div className="space-y-4 p-4">
             {items.map(item => {
               const effectEntries = getEffectEntries(item.effects)
-              const discounted = hasSponsorDiscount(item)
               const imageUrl = getMarketItemImageUrl(item)
+              const sponsorDiscount = sponsorDiscountsByItemId[item.id]
+              const hasSponsorDiscount = Boolean(sponsorDiscount?.has_discount)
+
+              const basePriceCash = Number(
+                sponsorDiscount?.base_total_cash ?? item.base_price_cash ?? 0
+              )
+
+              const clubPaysCash = Number(
+                sponsorDiscount?.club_pays_total_cash ??
+                  item.effective_price_cash ??
+                  item.base_price_cash ??
+                  0
+              )
+
+              const discountCash = Number(sponsorDiscount?.discount_cash ?? 0)
+              const discountPct = Number(sponsorDiscount?.discount_pct ?? 0)
+              const remainingAfterPurchase = Number(
+                sponsorDiscount?.equipment_support_remaining_after_purchase_cash ?? 0
+              )
 
               return (
                 <div
                   key={item.id}
-                  className="grid gap-5 rounded-lg border border-gray-100 bg-white p-4 shadow-sm md:grid-cols-[14rem_1fr_8rem]"
+                  className="grid gap-5 rounded-lg border border-gray-100 bg-white p-4 shadow-sm md:grid-cols-[14rem_minmax(0,1fr)_12rem]"
                 >
                   <div className="flex h-48 w-full shrink-0 items-center justify-center overflow-hidden rounded-lg border border-gray-100 bg-white p-3 md:w-56">
                     {imageUrl ? (
@@ -726,33 +831,47 @@ export default function EquipmentMarketTab({
                         </div>
                       )}
                     </div>
-
-                    <div className="mt-4 text-xs text-gray-500">
-                      <div>Base price: {formatMoney(item.base_price_cash)}</div>
-                      {discounted ? (
-                        <div className="font-medium text-green-700">
-                          Sponsor discount:{' '}
-                          {Number(item.technical_discount_pct).toFixed(1)}%
-                        </div>
-                      ) : (
-                        <div>No sponsor discount</div>
-                      )}
-                    </div>
                   </div>
 
-                  <div className="flex flex-col items-start justify-between gap-4 md:items-end md:text-right">
-                    <div>
-                      <div className="text-xs text-gray-400">Club price</div>
-                      <div className="text-lg font-semibold text-gray-900">
-                        {formatMoney(item.effective_price_cash ?? item.base_price_cash)}
+                  <div className="ml-auto flex min-w-[190px] flex-col items-end justify-between gap-3 self-stretch">
+                    {hasSponsorDiscount ? (
+                      <div className="w-full rounded-lg border border-green-200 bg-green-50 p-3 text-right">
+                        <div className="text-xs text-gray-400">Sponsor price</div>
+
+                        <div className="mt-1 text-sm text-gray-400 line-through">
+                          {formatMoney(basePriceCash)}
+                        </div>
+
+                        <div className="text-xl font-semibold leading-tight text-green-700">
+                          {formatMoney(clubPaysCash)}
+                        </div>
+
+                        <div className="mt-2 text-xs text-green-700">
+                          Save {formatMoney(discountCash)} ({discountPct.toFixed(0)}%)
+                        </div>
+
+                        <div className="mt-1 text-xs text-green-700">
+                          Sponsor pays {formatMoney(discountCash)}
+                        </div>
+
+                        <div className="mt-1 text-xs text-gray-500">
+                          Remaining fund: {formatMoney(remainingAfterPurchase)}
+                        </div>
                       </div>
-                    </div>
+                    ) : (
+                      <div className="text-right">
+                        <div className="text-xs text-gray-400">Club price</div>
+                        <div className="text-xl font-semibold text-gray-900">
+                          {formatMoney(clubPaysCash)}
+                        </div>
+                      </div>
+                    )}
 
                     <button
                       type="button"
                       disabled={actionLoadingId === item.id}
                       onClick={() => openPurchaseModal(item)}
-                      className="rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+                      className="inline-flex h-10 items-center justify-center rounded-md bg-blue-600 px-5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
                     >
                       {actionLoadingId === item.id ? 'Purchasing...' : 'Buy'}
                     </button>
@@ -799,6 +918,7 @@ export default function EquipmentMarketTab({
 
       {purchaseDraft && (
         <EquipmentPurchaseModal
+          clubId={clubId}
           draft={purchaseDraft}
           isSubmitting={actionLoadingId === purchaseDraft.item.id}
           onQuantityChange={updatePurchaseQuantity}

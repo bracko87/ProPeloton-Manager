@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 
 import type {
   ChartPoint,
@@ -19,7 +19,6 @@ import {
   formatSeverityLabel,
   formatWeeklySalary,
   getCountryName,
-  getFlagImageUrl,
 } from '../utils/formatters'
 
 import {
@@ -154,6 +153,18 @@ function getDevelopingTeamAgeWarning(age?: number | null, movementWindowOpen?: b
   }
 }
 
+function safeCountryCode(countryCode?: string | null) {
+  const code = countryCode?.trim().toLowerCase()
+
+  if (!code || !/^[a-z]{2}$/.test(code)) return null
+
+  return code
+}
+
+function getCountryFlagUrl(countryCode: string) {
+  return `https://flagcdn.com/w40/${countryCode.toLowerCase()}.png`
+}
+
 function CountryFlag({
   countryCode,
   className = '',
@@ -161,31 +172,41 @@ function CountryFlag({
   countryCode?: string | null
   className?: string
 }) {
-  const src = getFlagImageUrl(countryCode)
-  const countryName = getCountryName(countryCode)
+  const safeCode = safeCountryCode(countryCode)
+  const countryName = getCountryName(safeCode?.toUpperCase())
   const [hasError, setHasError] = useState(false)
 
-  const wrapperClassName = [
-    'inline-flex h-[16px] w-[24px] shrink-0 overflow-hidden rounded-[4px] border border-gray-200 bg-white',
+  useEffect(() => {
+    setHasError(false)
+  }, [safeCode])
+
+  const imageClassName = [
+    'h-4 w-6 shrink-0 rounded-sm border border-gray-200 object-cover',
     className,
   ]
     .filter(Boolean)
     .join(' ')
 
-  if (!src || hasError) {
-    return <span className={`${wrapperClassName} bg-gray-200`} title={countryName} />
+  const placeholderClassName = [
+    'inline-block h-4 w-6 shrink-0 rounded-sm border border-gray-200 bg-gray-100',
+    className,
+  ]
+    .filter(Boolean)
+    .join(' ')
+
+  if (!safeCode || hasError) {
+    return <span className={placeholderClassName} title={countryName} aria-label={countryName} />
   }
 
   return (
-    <span className={wrapperClassName} title={countryName}>
-      <img
-        src={src}
-        alt={`${countryName} flag`}
-        className="h-full w-full object-cover"
-        loading="lazy"
-        onError={() => setHasError(true)}
-      />
-    </span>
+    <img
+      src={getCountryFlagUrl(safeCode)}
+      alt={countryName}
+      title={countryName}
+      className={imageClassName}
+      loading="lazy"
+      onError={() => setHasError(true)}
+    />
   )
 }
 
@@ -455,14 +476,19 @@ function HorizontalMetricBar({
 }
 
 type DevelopingSquadTabProps = {
+  loading?: boolean
+  error?: string | null
   riders: DevelopingSquadRiderRow[]
   gameDate: string | null
   listView: SquadListView
   onListViewChange: (value: SquadListView) => void
   squadMax: number
   firstSquadRiderCount: number
-  firstSquadMax: number
+  firstSquadMax?: number
   movementWindowOpen: boolean
+  movementWindowSummary?: string
+  statusError?: string | null
+  moveActionMessage?: string | null
   onMoveToFirstSquad: (riderId: string) => void | Promise<void>
   onOpenRiderProfile: (riderId: string) => void
   healthOverviewDisplayRows: HealthOverviewDisplayRow[]
@@ -477,7 +503,7 @@ export default function DevelopingSquadTab({
   onListViewChange,
   squadMax,
   firstSquadRiderCount,
-  firstSquadMax,
+  firstSquadMax = 18,
   movementWindowOpen,
   onMoveToFirstSquad,
   onOpenRiderProfile,
@@ -623,6 +649,7 @@ export default function DevelopingSquadTab({
                 const moraleUi = getMoraleUi(r.morale)
                 const fatigueUi = getFatigueUi(r.fatigue)
                 const healthUi = getRiderStatusUi(r.status)
+                const displayedCountryCode = safeCountryCode(r.countryCode)?.toUpperCase() ?? '—'
 
                 const moveState = getDevelopingTeamMoveState({
                   hasFirstSquad: true,
@@ -678,10 +705,12 @@ export default function DevelopingSquadTab({
                         className={`flex items-center gap-2 ${
                           listView === 'skills' ? 'whitespace-nowrap' : ''
                         }`}
-                        title={getCountryName(r.countryCode)}
+                        title={getCountryName(
+                          displayedCountryCode === '—' ? undefined : displayedCountryCode
+                        )}
                       >
                         <CountryFlag countryCode={r.countryCode} />
-                        <span className="text-gray-700">{r.countryCode}</span>
+                        <span className="text-gray-700">{displayedCountryCode}</span>
                       </div>
                     </td>
 

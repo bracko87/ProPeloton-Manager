@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useEffect, useMemo, useState } from 'react'
+import RaceDetailPage from './RaceDetailPage'
 import { supabase } from '../../lib/supabase'
 
 type GameDateParts = {
@@ -42,14 +43,62 @@ type WeatherNormals = {
   p_thunderstorm: number | null
 }
 
-type RaceCalendarItem = {
+type RaceApplicationStatus =
+  | 'not_open'
+  | 'open'
+  | 'closed'
+  | 'race_active'
+  | 'race_finished'
+  | 'cancelled'
+  | string
+
+export type RaceCalendarEntry = {
   id: string
   name: string
+  category: string | null
   start_date: string
   end_date: string | null
+  applications_status: RaceApplicationStatus | null
+  target_teams: number | null
+  max_teams: number | null
+  accepted_teams: number
+  existing_application_status: string | null
+}
+
+type RaceCalendarItem = RaceCalendarEntry & {
   country_code: string | null
-  category: string | null
+  host_city: string | null
   race_type: string | null
+  is_stage_race: boolean | null
+  stage_count: number | null
+  status: string | null
+  description: string | null
+  min_riders_per_team: number | null
+  max_riders_per_team: number | null
+}
+
+type RaceEntryRules = {
+  race_id: string
+  applications_status: RaceApplicationStatus | null
+  target_teams: number | null
+  max_teams: number | null
+  min_riders_per_team: number | null
+  max_riders_per_team: number | null
+}
+
+type RaceStageSummary = {
+  id: string
+  race_id: string
+  stage_number: number
+  stage_date: string
+  start_city: string | null
+  finish_city: string | null
+}
+
+type RaceTeamEntry = {
+  race_id: string
+  club_id: string
+  status: string | null
 }
 
 type DerivedGameDateParts = {
@@ -58,7 +107,7 @@ type DerivedGameDateParts = {
   dayNumber: number
 }
 
-type RaceCalendarEntry = RaceCalendarItem & {
+type RaceCalendarEntryWithGameDates = RaceCalendarItem & {
   startGameDate: DerivedGameDateParts
   endGameDate: DerivedGameDateParts
 }
@@ -105,6 +154,21 @@ const GAME_MONTH_NAMES = [
   'October',
   'November',
   'December'
+]
+
+const GAME_MONTH_SHORT_NAMES = [
+  'Jan',
+  'Feb',
+  'Mar',
+  'Apr',
+  'May',
+  'Jun',
+  'Jul',
+  'Aug',
+  'Sep',
+  'Oct',
+  'Nov',
+  'Dec',
 ]
 
 const WEEKDAY_NAMES_MONDAY_FIRST = [
@@ -159,9 +223,21 @@ const FILTER_OPTIONS: Array<{ key: keyof SeasonCalendarFilters; label: string }>
   { key: 'holidays', label: 'Holidays' }
 ]
 
+const BASE_GAME_SEASON_YEAR = 2000
+
 function parseDateString(value: string): Date {
   const [year, month, day] = value.split('-').map(Number)
   return new Date(year, month - 1, day)
+}
+
+function getGameDatePartsFromStoredRaceDate(canonicalDate: string): DerivedGameDateParts {
+  const date = parseDateString(canonicalDate)
+
+  return {
+    seasonNumber: Math.max(1, date.getFullYear() - BASE_GAME_SEASON_YEAR + 1),
+    monthNumber: date.getMonth() + 1,
+    dayNumber: date.getDate()
+  }
 }
 
 function toDateString(date: Date): string {
@@ -208,6 +284,55 @@ function getGameMonthName(monthNumber: number): string {
   return GAME_MONTH_NAMES[monthNumber - 1] ?? `Month ${monthNumber}`
 }
 
+function getGameMonthShortName(monthNumber: number): string {
+  return GAME_MONTH_SHORT_NAMES[monthNumber - 1] ?? `M${monthNumber}`
+}
+
+function formatCompactGameDateDisplay(
+  seasonNumber: number,
+  monthNumber: number,
+  dayNumber: number
+): string {
+  return `S${seasonNumber} · ${getGameMonthShortName(monthNumber)} ${String(dayNumber).padStart(
+    2,
+    '0'
+  )}`
+}
+
+function formatCalendarDateBadge(race: RaceCalendarEntryWithGameDates): {
+  start: string
+  end: string | null
+} {
+  const start = race.startGameDate
+  const end = race.endGameDate
+
+  const startLabel = `${String(start.dayNumber).padStart(2, '0')} ${getGameMonthShortName(
+    start.monthNumber
+  )}`
+
+  const endLabel = `${String(end.dayNumber).padStart(2, '0')} ${getGameMonthShortName(
+    end.monthNumber
+  )}`
+
+  const sameDay =
+    start.seasonNumber === end.seasonNumber &&
+    start.monthNumber === end.monthNumber &&
+    start.dayNumber === end.dayNumber
+
+  return {
+    start: startLabel,
+    end: sameDay ? null : endLabel
+  }
+}
+
+function getRaceCalendarSortOrdinal(parts: DerivedGameDateParts): number {
+  return (
+    (parts.seasonNumber - 1) * 12 * GAME_MONTH_LENGTH +
+    (parts.monthNumber - 1) * GAME_MONTH_LENGTH +
+    (parts.dayNumber - 1)
+  )
+}
+
 function getWeekdayName(date: Date): string {
   return new Intl.DateTimeFormat('en-US', { weekday: 'long' }).format(date)
 }
@@ -248,8 +373,8 @@ function formatGameDateFromCanonical(
 }
 
 function formatRaceGameRange(
-  start: RaceCalendarEntry['startGameDate'],
-  end: RaceCalendarEntry['endGameDate'],
+  start: RaceCalendarEntryWithGameDates['startGameDate'],
+  end: RaceCalendarEntryWithGameDates['endGameDate'],
   startDate: string,
   endDate: string
 ): string {
@@ -279,6 +404,174 @@ function formatRaceBadgeLabel(race: RaceCalendarItem): string {
     return `${race.name} · ${titleCaseFromSnake(race.race_type)}`
   }
   return race.name
+}
+
+function normalizeCountryCode(code: string | null | undefined): string | null {
+  if (!code) return null
+
+  const normalized = code.trim().toUpperCase()
+
+  if (normalized === 'UK') return 'GB'
+  if (!/^[A-Z]{2}$/.test(normalized)) return null
+
+  return normalized
+}
+
+function getFlagImageUrl(code: string | null | undefined): string | null {
+  const normalized = normalizeCountryCode(code)
+
+  if (!normalized) return null
+
+  return `https://flagcdn.com/w40/${normalized.toLowerCase()}.png`
+}
+
+function CountryFlag({ code }: { code: string | null | undefined }) {
+  const flagUrl = getFlagImageUrl(code)
+  const normalized = normalizeCountryCode(code)
+  const [hasError, setHasError] = useState(false)
+
+  useEffect(() => {
+    setHasError(false)
+  }, [normalized])
+
+  if (!flagUrl || !normalized || hasError) {
+    return (
+      <span
+        className="inline-block h-4 w-6 shrink-0 rounded-sm border border-gray-200 bg-gray-100 align-middle"
+        title={normalized ?? 'Unknown country'}
+        aria-label={normalized ?? 'Unknown country'}
+      />
+    )
+  }
+
+  return (
+    <img
+      src={flagUrl}
+      alt={normalized}
+      title={normalized}
+      className="inline-block h-4 w-6 shrink-0 rounded-sm border border-gray-200 object-cover align-middle"
+      loading="lazy"
+      onError={() => setHasError(true)}
+    />
+  )
+}
+
+function getRaceTypeLabel(raceType: string | null | undefined): string {
+  if (raceType === 'one_day') return 'One Day'
+  if (raceType === 'stage_race') return 'Stage Race'
+  return titleCaseFromSnake(raceType)
+}
+
+function getRaceTypeBadgeClass(raceType: string | null | undefined): string {
+  if (raceType === 'one_day') return 'bg-emerald-100 text-emerald-700'
+  if (raceType === 'stage_race') return 'bg-blue-100 text-blue-700'
+  return 'bg-gray-100 text-gray-700'
+}
+
+function getRaceApplicationBadgeClass(status?: string | null): string {
+  switch (status?.toLowerCase()) {
+    case 'open':
+      return 'bg-sky-100 text-sky-700'
+    case 'not_open':
+      return 'bg-slate-100 text-slate-600'
+    case 'applied':
+      return 'bg-sky-100 text-sky-700'
+    case 'accepted':
+      return 'bg-green-100 text-green-700'
+    case 'declined':
+      return 'bg-red-100 text-red-700'
+    case 'withdrawn':
+      return 'bg-slate-100 text-slate-600'
+    case 'missed_startlist':
+      return 'bg-orange-100 text-orange-700'
+    case 'race_active':
+      return 'bg-green-100 text-green-700'
+    case 'race_finished':
+      return 'bg-gray-200 text-gray-700'
+    case 'cancelled':
+      return 'bg-red-100 text-red-700'
+    case 'closed':
+    default:
+      return 'bg-gray-100 text-gray-600'
+  }
+}
+
+function getRaceApplicationBadgeLabel(status?: string | null): string {
+  switch (status?.toLowerCase()) {
+    case 'not_open':
+      return 'Applications not open'
+    case 'open':
+      return 'Open for Applications'
+    case 'closed':
+      return 'Applications closed'
+    case 'applied':
+      return 'Applied'
+    case 'accepted':
+      return 'Accepted'
+    case 'declined':
+      return 'Declined'
+    case 'withdrawn':
+      return 'Withdrawn'
+    case 'missed_startlist':
+      return 'Missed startlist'
+    case 'race_active':
+      return 'Race active'
+    case 'race_finished':
+      return 'Race finished'
+    case 'cancelled':
+      return 'Cancelled'
+    default:
+      return 'Applications closed'
+  }
+}
+
+function getEffectiveRaceCalendarStatus(race: RaceCalendarItem): RaceApplicationStatus | null {
+  const raceStatus = race.status?.toLowerCase() ?? null
+
+  if (raceStatus === 'active') return 'race_active'
+  if (raceStatus === 'completed' || raceStatus === 'archived') return 'race_finished'
+  if (raceStatus === 'cancelled') return 'cancelled'
+
+  return race.existing_application_status ?? race.applications_status
+}
+
+function isRaceAcceptedForUser(race: RaceCalendarItem): boolean {
+  return race.existing_application_status?.toLowerCase() === 'accepted'
+}
+
+function cleanRouteCity(value: string | null | undefined): string | null {
+  const trimmed = value?.trim()
+  if (!trimmed) return null
+  if (trimmed.toLowerCase() === 'tbd') return null
+  return trimmed
+}
+
+function getRaceRouteSummary(
+  race: RaceCalendarItem,
+  stagesByRaceId: Record<string, RaceStageSummary[]>
+): string {
+  const stages = stagesByRaceId[race.id] ?? []
+  const sortedStages = [...stages].sort((a, b) => a.stage_number - b.stage_number)
+
+  const firstStage = sortedStages[0] ?? null
+  const lastStage = sortedStages[sortedStages.length - 1] ?? null
+
+  const startCity = cleanRouteCity(firstStage?.start_city)
+  const finishCity = cleanRouteCity(lastStage?.finish_city)
+
+  if (startCity && finishCity) {
+    const stageSuffix =
+      race.race_type === 'stage_race' && sortedStages.length > 1
+        ? ` · ${sortedStages.length} stages`
+        : ''
+
+    return `${startCity} → ${finishCity}${stageSuffix}`
+  }
+
+  if (race.description?.trim()) return race.description.trim()
+  if (race.host_city?.trim()) return `Host area: ${race.host_city.trim()}`
+
+  return 'Route details coming soon'
 }
 
 function getGameDatePartsFromCanonical(
@@ -342,6 +635,23 @@ function formatWeatherNumber(value: number | null | undefined, digits = 0): stri
   return Number(value).toFixed(digits)
 }
 
+function toNullableString(value: unknown): string | null {
+  if (typeof value !== 'string') return null
+  const trimmed = value.trim()
+  return trimmed || null
+}
+
+function toNullableNumber(value: unknown): number | null {
+  if (value === null || value === undefined || value === '') return null
+  const parsed = Number(value)
+  return Number.isFinite(parsed) ? parsed : null
+}
+
+function toCount(value: unknown): number {
+  const parsed = Number(value)
+  return Number.isFinite(parsed) ? parsed : 0
+}
+
 export default function CalendarPage(): JSX.Element {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -350,13 +660,15 @@ export default function CalendarPage(): JSX.Element {
   const [activeRaceMonth, setActiveRaceMonth] = useState(1)
   const [displayedSeasonMonth, setDisplayedSeasonMonth] = useState(1)
 
-  const [clubId, setClubId] = useState<string | null>(null)
+  const [, setClubId] = useState<string | null>(null)
+  const [selectedRaceId, setSelectedRaceId] = useState<string | null>(null)
 
   const [currentGameDate, setCurrentGameDate] = useState<string | null>(null)
   const [gameDateParts, setGameDateParts] = useState<GameDateParts | null>(null)
 
   const [bookings, setBookings] = useState<TrainingCampBooking[]>([])
   const [races, setRaces] = useState<RaceCalendarItem[]>([])
+  const [raceStages, setRaceStages] = useState<RaceStageSummary[]>([])
 
   const [teamWeather, setTeamWeather] = useState<WeatherNormals | null>(null)
 
@@ -382,6 +694,7 @@ export default function CalendarPage(): JSX.Element {
         let resolvedTeamWeather: WeatherNormals | null = null
         let resolvedRaceNotice: string | null = null
         let resolvedRaces: RaceCalendarItem[] = []
+        let resolvedRaceStages: RaceStageSummary[] = []
 
         const primaryClubRes = await supabase.rpc('get_my_primary_club_id')
         if (!primaryClubRes.error && primaryClubRes.data) {
@@ -471,18 +784,97 @@ export default function CalendarPage(): JSX.Element {
         }
 
         try {
-          const racesRes = await supabase
-            .from('races')
-            .select('id, name, start_date, end_date, country_code, category, race_type')
-            .order('start_date', { ascending: true })
+          const { data, error } = await supabase.rpc('get_race_calendar_entries_v1')
 
-          if (racesRes.error) {
-            resolvedRaceNotice = 'Race Calendar is ready, but the race source is not available yet.'
-          } else {
-            resolvedRaces = (racesRes.data ?? []) as RaceCalendarItem[]
+          if (error) {
+            throw error
           }
+
+          const raceRows = Array.isArray(data) ? (data as Partial<RaceCalendarItem>[]) : []
+          const raceIds = raceRows
+            .map(row => toNullableString(row.id))
+            .filter((raceId): raceId is string => Boolean(raceId))
+
+          let entryRulesByRaceId: Record<string, RaceEntryRules> = {}
+          let userEntriesByRaceId: Record<string, RaceTeamEntry> = {}
+
+          if (raceIds.length > 0) {
+            const [entryRulesRes, userEntriesRes] = await Promise.all([
+              supabase
+                .from('race_entry_rules')
+                .select(
+                  'race_id, applications_status, target_teams, max_teams, min_riders_per_team, max_riders_per_team'
+                )
+                .in('race_id', raceIds),
+              supabase
+                .from('race_team_entries')
+                .select('race_id, club_id, status')
+                .in('race_id', raceIds)
+                .eq('club_id', resolvedClubId)
+                .in('status', ['applied', 'accepted', 'declined', 'withdrawn', 'missed_startlist', 'cancelled'])
+            ])
+
+            if (!entryRulesRes.error) {
+              entryRulesByRaceId = ((entryRulesRes.data ?? []) as RaceEntryRules[]).reduce<
+                Record<string, RaceEntryRules>
+              >((acc, rule) => {
+                acc[rule.race_id] = rule
+                return acc
+              }, {})
+            }
+
+            if (!userEntriesRes.error) {
+              userEntriesByRaceId = ((userEntriesRes.data ?? []) as RaceTeamEntry[]).reduce<
+                Record<string, RaceTeamEntry>
+              >((acc, entry) => {
+                acc[entry.race_id] = entry
+                return acc
+              }, {})
+            }
+          }
+
+          resolvedRaces = raceRows.map(row => {
+            const raceId = toNullableString(row.id) ?? ''
+            const entryRules = entryRulesByRaceId[raceId]
+            const userEntry = userEntriesByRaceId[raceId]
+
+            return {
+              ...row,
+              id: raceId,
+              name: toNullableString(row.name) ?? 'Unnamed race',
+              start_date: toNullableString(row.start_date) ?? '',
+              end_date: toNullableString(row.end_date),
+              category: toNullableString(row.category),
+              applications_status: entryRules?.applications_status ?? null,
+              status: toNullableString(row.status),
+              target_teams: toNullableNumber(entryRules?.target_teams ?? row.target_teams),
+              max_teams: toNullableNumber(entryRules?.max_teams ?? row.max_teams),
+              min_riders_per_team: toNullableNumber(
+                row.min_riders_per_team ?? entryRules?.min_riders_per_team
+              ),
+              max_riders_per_team: toNullableNumber(
+                row.max_riders_per_team ?? entryRules?.max_riders_per_team
+              ),
+              accepted_teams: toCount(row.accepted_teams),
+              existing_application_status:
+                toNullableString(row.existing_application_status) ?? userEntry?.status ?? null
+            } as RaceCalendarItem
+          })
         } catch {
           resolvedRaceNotice = 'Race Calendar is ready, but the race source is not available yet.'
+        }
+
+        try {
+          const stagesRes = await supabase
+            .from('race_stages')
+            .select('id, race_id, stage_number, stage_date, start_city, finish_city')
+            .order('stage_number', { ascending: true })
+
+          if (!stagesRes.error) {
+            resolvedRaceStages = (stagesRes.data ?? []) as RaceStageSummary[]
+          }
+        } catch {
+          resolvedRaceStages = []
         }
 
         if (cancelled) return
@@ -493,6 +885,7 @@ export default function CalendarPage(): JSX.Element {
         setBookings((bookingsRes.data ?? []) as TrainingCampBooking[])
         setTeamWeather(resolvedTeamWeather)
         setRaces(resolvedRaces)
+        setRaceStages(resolvedRaceStages)
         setRaceCalendarNotice(resolvedRaceNotice)
       } catch (err) {
         if (!cancelled) {
@@ -552,40 +945,60 @@ export default function CalendarPage(): JSX.Element {
   }, [displayedMonthStart, currentMonthStart, gameDateParts])
 
   const seasonRaceEntries = useMemo(() => {
-    if (!currentMonthStart || !gameDateParts) return []
+    if (!gameDateParts) return []
 
     return races
-      .map((race): RaceCalendarEntry => {
-        const startGameDate = getGameDatePartsFromCanonical(
-          race.start_date,
-          currentMonthStart,
-          gameDateParts.season_number,
-          gameDateParts.month_number
-        )
+      .filter(race => race.start_date)
+      .map((race) => {
+        const raceStartDate = race.start_date
+        const raceEndDate = race.end_date ?? race.start_date
 
-        const endGameDate = getGameDatePartsFromCanonical(
-          race.end_date ?? race.start_date,
-          currentMonthStart,
-          gameDateParts.season_number,
-          gameDateParts.month_number
-        )
+        const startGameDate = getGameDatePartsFromStoredRaceDate(raceStartDate)
+        const endGameDate = getGameDatePartsFromStoredRaceDate(raceEndDate)
 
         return {
           ...race,
-          end_date: race.end_date ?? race.start_date,
           startGameDate,
           endGameDate
         }
       })
-      .filter(race => race.startGameDate.seasonNumber === gameDateParts.season_number)
-      .sort(
-        (a, b) => parseDateString(a.start_date).getTime() - parseDateString(b.start_date).getTime()
-      )
-  }, [races, currentMonthStart, gameDateParts])
+      .filter((race) => race.startGameDate.seasonNumber === gameDateParts.season_number)
+      .sort((a, b) => {
+        const dateDiff =
+          getRaceCalendarSortOrdinal(a.startGameDate) -
+          getRaceCalendarSortOrdinal(b.startGameDate)
+
+        if (dateDiff !== 0) return dateDiff
+
+        return a.name.localeCompare(b.name)
+      })
+  }, [races, gameDateParts])
 
   const activeMonthRaces = useMemo(() => {
-    return seasonRaceEntries.filter(race => race.startGameDate.monthNumber === activeRaceMonth)
+    return seasonRaceEntries
+      .filter((race) => race.startGameDate.monthNumber === activeRaceMonth)
+      .sort((a, b) => {
+        const dateDiff =
+          getRaceCalendarSortOrdinal(a.startGameDate) -
+          getRaceCalendarSortOrdinal(b.startGameDate)
+
+        if (dateDiff !== 0) return dateDiff
+
+        return a.name.localeCompare(b.name)
+      })
   }, [seasonRaceEntries, activeRaceMonth])
+
+  const stagesByRaceId = useMemo(() => {
+    return raceStages.reduce<Record<string, RaceStageSummary[]>>((acc, stage) => {
+      if (!acc[stage.race_id]) acc[stage.race_id] = []
+      acc[stage.race_id].push(stage)
+      return acc
+    }, {})
+  }, [raceStages])
+
+  const acceptedSeasonRaceEntries = useMemo(() => {
+    return seasonRaceEntries.filter(race => isRaceAcceptedForUser(race))
+  }, [seasonRaceEntries])
 
   const weekdayHeaders = useMemo(() => {
     return WEEKDAY_NAMES_MONDAY_FIRST
@@ -640,6 +1053,15 @@ export default function CalendarPage(): JSX.Element {
 
   if (loading) {
     return <div className="w-full text-sm text-gray-600">Loading calendar…</div>
+  }
+
+  if (selectedRaceId) {
+    return (
+      <RaceDetailPage
+        raceIdOverride={selectedRaceId}
+        onBack={() => setSelectedRaceId(null)}
+      />
+    )
   }
 
   return (
@@ -703,7 +1125,7 @@ export default function CalendarPage(): JSX.Element {
                     )}
                   </div>
 
-                  <div className="text-lg font-semibold text-gray-900">
+                  <div className="text-sm font-semibold text-gray-900">
                     {formatWeatherNumber(teamWeather.avg_temp_c)}°C ·{' '}
                     {getDominantWeatherLabel(teamWeather)}
                   </div>
@@ -831,7 +1253,7 @@ export default function CalendarPage(): JSX.Element {
                   : []
 
                 const dayRaces = seasonFilters.races
-                  ? seasonRaceEntries.filter(race =>
+                  ? acceptedSeasonRaceEntries.filter(race =>
                       isDateWithinRange(
                         day.canonicalDate,
                         race.start_date,
@@ -859,7 +1281,13 @@ export default function CalendarPage(): JSX.Element {
                           key={`${race.id}-${day.canonicalDateString}-race`}
                           className="rounded-md bg-blue-100 px-2 py-1 text-[11px] font-medium text-blue-700"
                         >
-                          {formatRaceBadgeLabel(race)}
+                          <button
+                            type="button"
+                            onClick={() => setSelectedRaceId(race.id)}
+                            className="text-left hover:underline"
+                          >
+                            {formatRaceBadgeLabel(race)}
+                          </button>
                         </div>
                       ))}
 
@@ -995,52 +1423,71 @@ export default function CalendarPage(): JSX.Element {
               </div>
             ) : (
               <ul className="space-y-3">
-                {activeMonthRaces.map(race => (
-                  <li
-                    key={race.id}
-                    className="flex flex-col gap-3 rounded-md border border-gray-200 p-4 md:flex-row md:items-center md:justify-between"
-                  >
-                    <div>
-                      <div className="font-medium text-gray-900">{race.name}</div>
+                {activeMonthRaces.map((race) => {
+                  const dateBadge = formatCalendarDateBadge(race)
+                  const effectiveRaceStatus = getEffectiveRaceCalendarStatus(race)
 
-                      <div className="mt-1 text-xs text-gray-500">
-                        {formatRaceGameRange(
-                          race.startGameDate,
-                          race.endGameDate,
-                          race.start_date,
-                          race.end_date ?? race.start_date
-                        )}
+                  return (
+                    <li
+                      key={race.id}
+                      className="flex flex-col gap-3 rounded-md border border-gray-200 p-4 md:flex-row md:items-center md:justify-between"
+                    >
+                      <div className="flex min-w-0 items-center gap-3">
+                        <div className="w-[62px] shrink-0 text-center text-sm font-semibold leading-5 text-black">
+                          <div>{dateBadge.start}</div>
+                          {dateBadge.end ? <div>{dateBadge.end}</div> : null}
+                        </div>
+
+                        <div className="h-14 w-0.5 shrink-0 rounded-full bg-green-400" />
+
+                        <div className="min-w-0">
+                          <div className="font-medium text-gray-900">
+                            <button
+                              type="button"
+                              onClick={() => setSelectedRaceId(race.id)}
+                              className="text-left hover:underline"
+                            >
+                              <span className="mr-2 inline-flex align-middle">
+                                <CountryFlag code={race.country_code} />
+                              </span>
+                              {race.name}
+                            </button>
+                          </div>
+
+                          <div className="mt-1 text-xs text-gray-500">
+                            {getRaceRouteSummary(race, stagesByRaceId)}
+                          </div>
+                        </div>
                       </div>
 
-                      <div className="mt-1 text-xs text-gray-400">
-                        {race.start_date}
-                        {race.end_date && race.end_date !== race.start_date
-                          ? ` → ${race.end_date}`
-                          : ''}
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span
+                          className={`rounded-full px-2.5 py-1 text-xs font-medium ${getRaceApplicationBadgeClass(
+                            effectiveRaceStatus
+                          )}`}
+                        >
+                          {getRaceApplicationBadgeLabel(effectiveRaceStatus)}
+                        </span>
+
+                        {race.category ? (
+                          <span className="rounded-full bg-purple-100 px-2.5 py-1 text-xs text-purple-700">
+                            {race.category}
+                          </span>
+                        ) : null}
+
+                        {race.race_type ? (
+                          <span
+                            className={`rounded-full px-2.5 py-1 text-xs font-medium ${getRaceTypeBadgeClass(
+                              race.race_type
+                            )}`}
+                          >
+                            {getRaceTypeLabel(race.race_type)}
+                          </span>
+                        ) : null}
                       </div>
-                    </div>
-
-                    <div className="flex flex-wrap items-center gap-2">
-                      {race.country_code ? (
-                        <span className="rounded-full bg-gray-100 px-2.5 py-1 text-xs text-gray-700">
-                          {race.country_code}
-                        </span>
-                      ) : null}
-
-                      {race.category ? (
-                        <span className="rounded-full bg-purple-100 px-2.5 py-1 text-xs text-purple-700">
-                          {race.category}
-                        </span>
-                      ) : null}
-
-                      {race.race_type ? (
-                        <span className="rounded-full bg-blue-100 px-2.5 py-1 text-xs text-blue-700">
-                          {titleCaseFromSnake(race.race_type)}
-                        </span>
-                      ) : null}
-                    </div>
-                  </li>
-                ))}
+                    </li>
+                  )
+                })}
               </ul>
             )}
           </>

@@ -161,6 +161,40 @@ export async function quoteEquipmentMaintenance(params: {
   })
 }
 
+export async function getActiveTechnicalSponsorSupport(
+  clubId: string
+): Promise<unknown> {
+  const { data, error } = await supabase.rpc(
+    'equipment_get_active_technical_sponsor_support',
+    {
+      p_club_id: clubId,
+    }
+  )
+
+  if (error) throw error
+
+  return data
+}
+
+export async function quoteTechnicalSponsorDiscountsBatch(
+  clubId: string,
+  catalogItemIds: string[],
+  quantity = 1
+): Promise<unknown> {
+  const { data, error } = await supabase.rpc(
+    'equipment_quote_technical_sponsor_discounts_batch',
+    {
+      p_club_id: clubId,
+      p_catalog_item_ids: catalogItemIds,
+      p_quantity: quantity,
+    }
+  )
+
+  if (error) throw error
+
+  return data
+}
+
 /**
  * purchaseEquipmentItem
  * Purchase a durable equipment item via Edge Function.

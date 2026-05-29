@@ -9,6 +9,7 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import EquipmentSetupPresetsBox from './EquipmentSetupPresetsBox'
 import {
+  getActiveTechnicalSponsorSupport,
   getEquipmentDashboard,
   getEquipmentDefaultSetupOptions,
   saveEquipmentDefaultSetupTypes,
@@ -38,6 +39,52 @@ type StatCardProps = {
   label: string
   value: string | number
   helper?: string
+}
+
+type ActiveTechnicalSponsorSupport = {
+  has_active_support: boolean
+  benefit_id?: string
+  club_sponsor_id?: string
+  sponsor_company_id?: string
+  sponsor_name?: string
+  sponsor_logo_url?: string | null
+  contract_value_cash?: number | string
+  cash_support_cash?: number | string
+  equipment_support_budget_cash?: number | string
+  equipment_support_used_cash?: number | string
+  equipment_support_remaining_cash?: number | string
+  equipment_support_used_pct?: number | string
+  category_discounts_json?: Record<string, number | string>
+  starts_game_date?: string | null
+  expires_game_date?: string | null
+  status?: string
+  notes?: string[]
+}
+
+function toNumber(value: unknown): number {
+  const numberValue = Number(value)
+  return Number.isFinite(numberValue) ? numberValue : 0
+}
+
+function formatMoney(value: unknown): string {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    maximumFractionDigits: 0,
+  }).format(toNumber(value))
+}
+
+function formatEquipmentCategoryLabel(category: string): string {
+  const labels: Record<string, string> = {
+    frame: 'Frames',
+    wheelset: 'Wheelsets',
+    tires: 'Tires',
+    groupset: 'Groupsets',
+    helmet: 'Helmets',
+    shoes: 'Shoes',
+  }
+
+  return labels[category] ?? category
 }
 
 function getSponsorInitials(name: string): string {
@@ -126,6 +173,8 @@ export default function EquipmentOverviewTab({
   clubId,
 }: EquipmentOverviewTabProps): JSX.Element {
   const [dashboard, setDashboard] = useState<EquipmentDashboard | null>(null)
+  const [technicalSupport, setTechnicalSupport] =
+    useState<ActiveTechnicalSponsorSupport | null>(null)
   const [setupOptions, setSetupOptions] =
     useState<EquipmentDefaultSetupOptionsResponse | null>(null)
   const [selection, setSelection] = useState<DefaultSetupSelection>({
@@ -148,13 +197,18 @@ export default function EquipmentOverviewTab({
     setSetupMessage(null)
 
     try {
-      const [dashboardData, setupOptionsData] = await Promise.all([
-        getEquipmentDashboard(clubId),
-        getEquipmentDefaultSetupOptions(clubId),
-      ])
+      const [dashboardData, setupOptionsData, technicalSupportData] =
+        await Promise.all([
+          getEquipmentDashboard(clubId),
+          getEquipmentDefaultSetupOptions(clubId),
+          getActiveTechnicalSponsorSupport(clubId).catch(() => null),
+        ])
 
       setDashboard(dashboardData)
       setSetupOptions(setupOptionsData)
+      setTechnicalSupport(
+        (technicalSupportData ?? null) as ActiveTechnicalSponsorSupport | null
+      )
       setSelection(makeInitialSelection(setupOptionsData))
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load dashboard')
@@ -216,9 +270,38 @@ export default function EquipmentOverviewTab({
   }
 
   const technicalSponsor = dashboard.technical_sponsor
-  const technicalSponsorLogoUrl = technicalSponsor
-    ? getTechnicalSponsorLogoUrl(technicalSponsor)
-    : null
+
+  const hasTechnicalSupport = Boolean(technicalSupport?.has_active_support)
+
+  const technicalSponsorName =
+    technicalSupport?.sponsor_name ??
+    technicalSponsor?.name ??
+    null
+
+  const technicalSponsorLogoUrl =
+    technicalSupport?.sponsor_logo_url ??
+    (technicalSponsor ? getTechnicalSponsorLogoUrl(technicalSponsor) : null)
+
+  const equipmentSupportUsed = toNumber(
+    technicalSupport?.equipment_support_used_cash
+  )
+
+  const equipmentSupportBudget = toNumber(
+    technicalSupport?.equipment_support_budget_cash
+  )
+
+  const equipmentSupportRemaining = toNumber(
+    technicalSupport?.equipment_support_remaining_cash
+  )
+
+  const equipmentSupportUsedPct =
+    equipmentSupportBudget > 0
+      ? Math.max(0, Math.min(100, (equipmentSupportUsed / equipmentSupportBudget) * 100))
+      : 0
+
+  const discountEntries = Object.entries(
+    technicalSupport?.category_discounts_json ?? {}
+  )
 
   return (
     <div className="space-y-4">
@@ -385,71 +468,129 @@ export default function EquipmentOverviewTab({
           </div>
         </div>
 
-        <div className="rounded-lg bg-white p-4 shadow-sm">
-          <h3 className="font-semibold text-gray-900">Technical Sponsor</h3>
-
-          {technicalSponsor ? (
-            <>
-              <div className="mt-3 rounded-lg border border-blue-100 bg-blue-50 p-4">
-                <div className="text-xl font-semibold text-blue-900">
-                  {technicalSponsor.name}
+        <div>
+          <div className="rounded-lg bg-white p-4 shadow-sm">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <div className="text-xs font-medium uppercase tracking-wide text-gray-400">
+                  Technical Sponsor
                 </div>
 
-                <div className="mt-1 text-sm text-blue-700">
-                  Discount: {formatPercent(technicalSponsor.technical_discount_pct)}
-                </div>
-
-                <p className="mt-2 text-xs text-blue-700">
-                  Discount applies to matching sponsor-branded equipment and supplies.
-                </p>
+                {technicalSponsorName ? (
+                  <h3 className="mt-1 text-lg font-semibold text-gray-900">
+                    {technicalSponsorName}
+                  </h3>
+                ) : (
+                  <h3 className="mt-1 text-base font-semibold text-gray-500">
+                    No active technical sponsor.
+                  </h3>
+                )}
               </div>
 
-              <div className="mt-4 space-y-1 text-xs text-gray-500">
-                {(dashboard.support_effects.notes ?? []).map(note => (
-                  <div key={note}>• {note}</div>
-                ))}
-              </div>
-
-              <div className="mt-5 rounded-xl border border-gray-100 bg-gray-50 p-5">
-                <div className="mb-3 text-xs font-medium uppercase tracking-wide text-gray-400">
-                  Sponsor Logo
+              {technicalSponsorLogoUrl ? (
+                <img
+                  src={technicalSponsorLogoUrl}
+                  alt={`${technicalSponsorName ?? 'Technical sponsor'} logo`}
+                  className="h-12 w-24 rounded object-contain"
+                />
+              ) : technicalSponsorName ? (
+                <div className="flex h-12 w-24 items-center justify-center rounded bg-gray-100 text-sm font-semibold text-gray-500">
+                  {getSponsorInitials(technicalSponsorName)}
                 </div>
+              ) : null}
+            </div>
 
-                <div className="flex h-48 items-center justify-center rounded-lg border border-gray-100 bg-white p-6">
-                  {technicalSponsorLogoUrl ? (
-                    <img
-                      src={technicalSponsorLogoUrl}
-                      alt={`${technicalSponsor.name} logo`}
-                      className="max-h-full max-w-full object-contain"
-                      onError={event => {
-                        event.currentTarget.style.display = 'none'
+            {technicalSponsorName ? (
+              <>
+                <div className="mt-4 grid gap-3 sm:grid-cols-3">
+                  <div className="rounded border border-gray-100 bg-gray-50 p-3">
+                    <div className="text-xs text-gray-400">Cash paid</div>
+                    <div className="mt-1 font-semibold text-gray-900">
+                      {hasTechnicalSupport
+                        ? formatMoney(technicalSupport?.cash_support_cash)
+                        : 'Not created'}
+                    </div>
+                  </div>
 
-                        const fallback = event.currentTarget
-                          .nextElementSibling as HTMLElement | null
+                  <div className="rounded border border-gray-100 bg-gray-50 p-3">
+                    <div className="text-xs text-gray-400">Equipment support</div>
+                    <div className="mt-1 font-semibold text-gray-900">
+                      {hasTechnicalSupport
+                        ? `${formatMoney(equipmentSupportUsed)} / ${formatMoney(equipmentSupportBudget)}`
+                        : 'Not created'}
+                    </div>
+                  </div>
 
-                        if (fallback) {
-                          fallback.style.display = 'flex'
-                        }
-                      }}
-                    />
-                  ) : null}
-
-                  <div
-                    className={[
-                      'h-full w-full items-center justify-center rounded-lg bg-blue-100 text-6xl font-bold text-blue-900',
-                      technicalSponsorLogoUrl ? 'hidden' : 'flex',
-                    ].join(' ')}
-                  >
-                    {getSponsorInitials(technicalSponsor.name)}
+                  <div className="rounded border border-gray-100 bg-gray-50 p-3">
+                    <div className="text-xs text-gray-400">Remaining</div>
+                    <div className="mt-1 font-semibold text-gray-900">
+                      {hasTechnicalSupport ? formatMoney(equipmentSupportRemaining) : '—'}
+                    </div>
                   </div>
                 </div>
+
+                {hasTechnicalSupport ? (
+                  <>
+                    <div className="mt-4">
+                      <div className="h-2 overflow-hidden rounded-full bg-gray-100">
+                        <div
+                          className="h-full rounded-full bg-green-600"
+                          style={{ width: `${equipmentSupportUsedPct}%` }}
+                        />
+                      </div>
+                      <p className="mt-1 text-xs text-gray-400">
+                        {equipmentSupportUsedPct.toFixed(1)}% of equipment support used
+                      </p>
+                    </div>
+
+                    <div className="mt-4">
+                      <p className="text-xs font-medium uppercase tracking-wide text-gray-400">
+                        Discounts
+                      </p>
+
+                      {discountEntries.length > 0 ? (
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          {discountEntries.map(([category, discount]) => (
+                            <span
+                              key={category}
+                              className="rounded-full bg-green-50 px-2.5 py-1 text-xs font-medium text-green-700 ring-1 ring-green-200"
+                            >
+                              {formatEquipmentCategoryLabel(category)}:{' '}
+                              {toNumber(discount).toFixed(0)}%
+                            </span>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="mt-2 text-xs text-gray-500">
+                          No category discounts configured.
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="mt-4 rounded border border-amber-100 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+                      Equipment support is not cash. It can only be used for sponsor-branded
+                      equipment discounts and unused support expires at season end.
+                    </div>
+                  </>
+                ) : (
+                  <div className="mt-4 rounded border border-yellow-200 bg-yellow-50 px-3 py-2 text-xs text-yellow-800">
+                    This sponsor is signed, but the technical equipment support row is not
+                    created yet. Refresh after the sponsor benefit backfill/signing patch.
+                  </div>
+                )}
+
+                <div className="mt-4 space-y-1 text-xs text-gray-500">
+                  {(dashboard.support_effects.notes ?? []).map(note => (
+                    <div key={note}>• {note}</div>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <div className="mt-3 rounded border border-gray-100 p-3 text-sm text-gray-500">
+                No active technical sponsor.
               </div>
-            </>
-          ) : (
-            <div className="mt-3 rounded border border-gray-100 p-3 text-sm text-gray-500">
-              No active technical sponsor.
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </div>
 

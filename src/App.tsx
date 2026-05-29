@@ -29,6 +29,7 @@ import SquadPage from './pages/dashboard/Squad'
 import DevelopingTeamPage from './pages/dashboard/DevelopingTeam'
 import StaffPage from './pages/dashboard/Staff'
 import CalendarPage from './pages/dashboard/CalendarPage'
+import RaceDetailPage from './pages/dashboard/RaceDetailPage'
 import TeamSchedulePage from './pages/dashboard/TeamSchedule'
 import TeamRankingPage from './pages/dashboard/TeamRanking'
 import TeamProfilePage from './pages/dashboard/TeamProfilePage'
@@ -276,6 +277,7 @@ export default function App(): JSX.Element {
             <Route path="developing-team" element={<DevelopingTeamPage />} />
             <Route path="staff" element={<StaffPage />} />
             <Route path="calendar" element={<CalendarPage />} />
+            <Route path="races/:raceId" element={<RaceDetailPage />} />
             <Route path="team-schedule" element={<TeamSchedulePage />} />
             <Route path="team-ranking" element={<TeamRankingPage />} />
             <Route path="teams/:clubId" element={<TeamProfilePage />} />

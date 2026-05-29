@@ -317,27 +317,78 @@ function TeamLogo({
 }
 
 /**
+ * safeCountryCode
+ * Normalizes and validates a two-letter country code.
+ */
+function safeCountryCode(countryCode: string | null | undefined): string | null {
+  const code = countryCode?.trim().toLowerCase()
+
+  if (!code || !/^[a-z]{2}$/.test(code)) return null
+
+  return code
+}
+
+/**
+ * getCountryFlagUrl
+ * Returns the same rectangular FlagCDN PNG style used on the Transfer page.
+ */
+function getCountryFlagUrl(countryCode: string): string {
+  return `https://flagcdn.com/w40/${countryCode.toLowerCase()}.png`
+}
+
+/**
  * CountryFlagBadge
- * Renders a small country flag badge based on a two-letter country code.
+ * Renders a small rectangular country flag based on a two-letter country code.
  */
 function CountryFlagBadge({
   countryCode,
+  className = '',
 }: {
   countryCode: string | null | undefined
+  className?: string
 }): JSX.Element | null {
-  if (!countryCode) return null
+  const safeCode = safeCountryCode(countryCode)
+  const [imageFailed, setImageFailed] = useState(false)
 
-  const normalizedCode = countryCode.trim().toLowerCase()
+  useEffect(() => {
+    setImageFailed(false)
+  }, [safeCode])
+
+  const imageClassName = [
+    'h-4 w-6 shrink-0 rounded-sm border border-slate-200 object-cover',
+    className,
+  ]
+    .filter(Boolean)
+    .join(' ')
+
+  const fallbackClassName = [
+    'inline-block h-4 w-6 shrink-0 rounded-sm border border-slate-200 bg-slate-100',
+    className,
+  ]
+    .filter(Boolean)
+    .join(' ')
+
+  if (!safeCode || imageFailed) {
+    return (
+      <span
+        className={fallbackClassName}
+        title="Unknown country"
+        aria-label="Unknown country"
+      />
+    )
+  }
+
+  const displayCode = safeCode.toUpperCase()
 
   return (
-    <div className="inline-flex h-7 w-10 items-center justify-center rounded-full border border-slate-200 bg-white shadow-sm">
-      <img
-        src={`https://flagcdn.com/24x18/${normalizedCode}.png`}
-        alt={`${countryCode} flag`}
-        className="h-4 w-6 rounded-[2px] object-cover"
-        loading="lazy"
-      />
-    </div>
+    <img
+      src={getCountryFlagUrl(safeCode)}
+      alt={`${displayCode} flag`}
+      title={displayCode}
+      className={imageClassName}
+      loading="lazy"
+      onError={() => setImageFailed(true)}
+    />
   )
 }
 
