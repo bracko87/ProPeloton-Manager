@@ -19,6 +19,8 @@ import CTA from '../components/home/CTA'
 import { useAuth } from '../context/AuthProvider'
 import { supabase } from '../lib/supabase'
 
+const BETA_NOTICE_STORAGE_KEY = 'propeloton-beta-notice-seen'
+
 /**
  * HomePage
  * Extended landing page with multiple sections: hero, features, screenshots,
@@ -30,6 +32,25 @@ export default function HomePage(): JSX.Element {
   const { user, loading } = useAuth()
   const [checkingClub, setCheckingClub] = useState(false)
   const [clubError, setClubError] = useState<string | null>(null)
+  const [showBetaNotice, setShowBetaNotice] = useState(false)
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+
+    const hasSeenBetaNotice = window.sessionStorage.getItem(BETA_NOTICE_STORAGE_KEY)
+
+    if (!hasSeenBetaNotice) {
+      setShowBetaNotice(true)
+    }
+  }, [])
+
+  function closeBetaNotice() {
+    setShowBetaNotice(false)
+
+    if (typeof window !== 'undefined') {
+      window.sessionStorage.setItem(BETA_NOTICE_STORAGE_KEY, 'true')
+    }
+  }
 
   /**
    * When auth is resolved and a user is present, call get_my_club_id()
@@ -120,6 +141,54 @@ export default function HomePage(): JSX.Element {
       {clubError && (
         <div className="bg-red-900/80 border-b border-red-500 text-red-50 text-sm text-center py-2">
           {clubError}
+        </div>
+      )}
+
+
+      {showBetaNotice && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 py-8 backdrop-blur-sm"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="beta-notice-title"
+        >
+          <div className="w-full max-w-lg overflow-hidden rounded-2xl border border-yellow-400/40 bg-[#081224] shadow-2xl">
+            <div className="border-b border-white/10 bg-yellow-400 px-6 py-4 text-black">
+              <div className="text-xs font-bold uppercase tracking-[0.22em]">
+                Closed beta notice
+              </div>
+              <h2 id="beta-notice-title" className="mt-2 text-2xl font-bold">
+                ProPeloton Manager is still in beta
+              </h2>
+            </div>
+
+            <div className="space-y-4 px-6 py-6 text-sm leading-6 text-white/80">
+              <p>
+                The game is online for testing, but it is not fully playable yet.
+                Some features, race systems, results, balancing, notifications and UI
+                screens may still be unfinished or change during development.
+              </p>
+
+              <p className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-white/75">
+                You can explore the current beta version, but progress and data may be
+                adjusted while the game is being completed.
+              </p>
+            </div>
+
+            <div className="flex flex-col gap-3 border-t border-white/10 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
+              <a href="#/login" className="text-center text-sm font-semibold text-white/80 hover:text-white">
+                Tester sign in
+              </a>
+
+              <button
+                type="button"
+                onClick={closeBetaNotice}
+                className="rounded-md bg-yellow-400 px-5 py-2 text-sm font-bold text-black hover:bg-yellow-300"
+              >
+                I understand
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
