@@ -30,7 +30,7 @@ import DevelopingTeamPage from './pages/dashboard/DevelopingTeam'
 import StaffPage from './pages/dashboard/Staff'
 import CalendarPage from './pages/dashboard/CalendarPage'
 import RaceDetailPage from './pages/dashboard/RaceDetailPage'
-import TeamSchedulePage from './pages/dashboard/TeamSchedule'
+import RacePreparationPage from './pages/dashboard/RacePreparation'
 import TeamRankingPage from './pages/dashboard/TeamRanking'
 import TeamProfilePage from './pages/dashboard/TeamProfilePage'
 import SeasonResetPreviewPage from './pages/dashboard/SeasonResetPreview'
@@ -230,6 +230,10 @@ function RequireClub({ children }: GuardProps): JSX.Element | null {
  * - /dashboard/training/current-camp
  * - /dashboard/training/current-camp/:campId
  *
+ * Race preparation routes:
+ * - /dashboard/race-preparation
+ * - /dashboard/team-schedule
+ *
  * CurrentTrainingCampPage expects this RPC later:
  * - training_get_current_camp(p_camp_id uuid default null)
  */
@@ -276,9 +280,17 @@ export default function App(): JSX.Element {
             <Route path="squad" element={<SquadPage />} />
             <Route path="developing-team" element={<DevelopingTeamPage />} />
             <Route path="staff" element={<StaffPage />} />
+
+            {/* Calendar must stay separate from RaceDetailPage */}
             <Route path="calendar" element={<CalendarPage />} />
+
+            {/* Real race detail route */}
             <Route path="races/:raceId" element={<RaceDetailPage />} />
-            <Route path="team-schedule" element={<TeamSchedulePage />} />
+
+            {/* Race preparation */}
+            <Route path="race-preparation" element={<RacePreparationPage />} />
+            <Route path="team-schedule" element={<RacePreparationPage />} />
+
             <Route path="team-ranking" element={<TeamRankingPage />} />
             <Route path="teams/:clubId" element={<TeamProfilePage />} />
             <Route path="season-reset-preview" element={<SeasonResetPreviewPage />} />

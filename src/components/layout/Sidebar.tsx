@@ -15,7 +15,8 @@ import {
   BarChart2,
   DollarSign,
   LogOut,
-  Lock
+  Lock,
+  ClipboardCheck
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import BugReportButton from '../dashboard/BugReportButton'
@@ -25,10 +26,18 @@ interface SidebarProps {
   locked?: boolean
 }
 
+interface NavItem {
+  to: string
+  label: string
+  description: string
+  icon: React.ComponentType<{ size?: number; className?: string }>
+  aliases?: string[]
+}
+
 const GAME_LOGO_URL =
   'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/5c3417dc-3924-4423-948a-745ae5902ed0.png'
 
-const navItems = [
+const navItems: NavItem[] = [
   {
     to: '/dashboard/overview',
     label: 'Overview',
@@ -48,10 +57,11 @@ const navItems = [
     icon: Calendar
   },
   {
-    to: '/dashboard/team-schedule',
-    label: 'Team Schedule',
-    description: 'Training and assignments',
-    icon: List
+    to: '/dashboard/race-preparation',
+    aliases: ['/dashboard/team-schedule'],
+    label: 'Race Preparation',
+    description: 'Startlist, logistics and stage plans',
+    icon: ClipboardCheck
   },
   {
     to: '/dashboard/team-ranking',
@@ -97,6 +107,14 @@ const navItems = [
   }
 ]
 
+function isPathActive(pathname: string, item: NavItem): boolean {
+  const paths = [item.to, ...(item.aliases ?? [])]
+
+  return paths.some(
+    path => pathname === path || pathname.startsWith(`${path}/`)
+  )
+}
+
 /**
  * Sidebar
  * Black sidebar with yellow active state and larger menu text.
@@ -109,10 +127,8 @@ export default function Sidebar({
   const navigate = useNavigate()
   const location = useLocation()
 
-  const currentNavItem = navItems.find(
-    item =>
-      location.pathname === item.to ||
-      location.pathname.startsWith(`${item.to}/`)
+  const currentNavItem = navItems.find(item =>
+    isPathActive(location.pathname, item)
   )
 
   const currentPageLabel = currentNavItem?.label ?? location.pathname
@@ -122,7 +138,7 @@ export default function Sidebar({
     navigate('/')
   }
 
-  const linkClass = ({ isActive }: { isActive: boolean }) =>
+  const linkClass = (isActive: boolean) =>
     [
       'rounded-md transition-colors w-full',
       collapsed
@@ -189,12 +205,13 @@ export default function Sidebar({
         <nav className="p-4 space-y-2">
           {navItems.map(item => {
             const Icon = item.icon
+            const active = isPathActive(location.pathname, item)
 
             return (
               <NavLink
                 key={item.to}
                 to={locked ? '#' : item.to}
-                className={linkClass}
+                className={linkClass(active)}
                 onClick={event => {
                   if (locked) event.preventDefault()
                 }}

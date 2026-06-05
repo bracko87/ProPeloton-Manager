@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useEffect, useMemo, useState } from 'react'
-import RaceDetailPage from './RaceDetailPage'
+import { Link, useLocation, useNavigate } from 'react-router'
 import { supabase } from '../../lib/supabase'
 
 type GameDateParts = {
@@ -660,8 +660,10 @@ export default function CalendarPage(): JSX.Element {
   const [activeRaceMonth, setActiveRaceMonth] = useState(1)
   const [displayedSeasonMonth, setDisplayedSeasonMonth] = useState(1)
 
+  const location = useLocation()
+  const navigate = useNavigate()
+
   const [, setClubId] = useState<string | null>(null)
-  const [selectedRaceId, setSelectedRaceId] = useState<string | null>(null)
 
   const [currentGameDate, setCurrentGameDate] = useState<string | null>(null)
   const [gameDateParts, setGameDateParts] = useState<GameDateParts | null>(null)
@@ -911,6 +913,61 @@ export default function CalendarPage(): JSX.Element {
     }
   }, [gameDateParts])
 
+  useEffect(() => {
+    if (loading) return
+
+    const state = location.state as
+      | {
+          restoreCalendar?: boolean
+          restoreScrollY?: number
+          restoreRaceId?: string
+          restoreCalendarView?: CalendarView
+          restoreMonthNumber?: number
+        }
+      | null
+
+    if (!state?.restoreCalendar) return
+
+    if (state.restoreCalendarView === 'season' || state.restoreCalendarView === 'races') {
+      setActiveView(state.restoreCalendarView)
+    }
+
+    if (typeof state.restoreMonthNumber === 'number') {
+      setActiveRaceMonth(state.restoreMonthNumber)
+      setDisplayedSeasonMonth(state.restoreMonthNumber)
+    }
+
+    window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(() => {
+        if (state.restoreRaceId) {
+          const row = document.querySelector(`[data-race-id="${state.restoreRaceId}"]`)
+
+          if (row) {
+            row.scrollIntoView({
+              block: 'center',
+              behavior: 'auto',
+            })
+          } else if (typeof state.restoreScrollY === 'number') {
+            window.scrollTo({
+              top: state.restoreScrollY,
+              behavior: 'auto',
+            })
+          }
+        } else if (typeof state.restoreScrollY === 'number') {
+          window.scrollTo({
+            top: state.restoreScrollY,
+            behavior: 'auto',
+          })
+        }
+
+        navigate(`${location.pathname}${location.search}`, {
+          replace: true,
+          state: null,
+        })
+      })
+    })
+  }, [loading, location.pathname, location.search, location.state, navigate])
+
   const currentMonthStart = useMemo(() => {
     if (!currentGameDate || !gameDateParts) return null
     return getMonthStartFromGameDate(currentGameDate, gameDateParts.day_number)
@@ -1051,18 +1108,27 @@ export default function CalendarPage(): JSX.Element {
     setDisplayedSeasonMonth(current => Math.min(12, current + 1))
   }
 
+  function getCalendarReturnState(raceId: string) {
+    return {
+      from: 'calendar',
+      returnTo: `${location.pathname}${location.search}`,
+      returnScrollY: window.scrollY,
+      returnRaceId: raceId,
+      returnCalendarView: activeView,
+      returnMonthNumber: activeView === 'races' ? activeRaceMonth : displayedSeasonMonth,
+    }
+  }
+
+  function openRaceDetail(raceId: string): void {
+    navigate(`/dashboard/races/${raceId}?raceId=${raceId}`, {
+      state: getCalendarReturnState(raceId),
+    })
+  }
+
   if (loading) {
     return <div className="w-full text-sm text-gray-600">Loading calendar…</div>
   }
 
-  if (selectedRaceId) {
-    return (
-      <RaceDetailPage
-        raceIdOverride={selectedRaceId}
-        onBack={() => setSelectedRaceId(null)}
-      />
-    )
-  }
 
   return (
     <div className="w-full">
@@ -1279,11 +1345,12 @@ export default function CalendarPage(): JSX.Element {
                       {dayRaces.map(race => (
                         <div
                           key={`${race.id}-${day.canonicalDateString}-race`}
+                          data-race-id={race.id}
                           className="rounded-md bg-blue-100 px-2 py-1 text-[11px] font-medium text-blue-700"
                         >
                           <button
                             type="button"
-                            onClick={() => setSelectedRaceId(race.id)}
+                            onClick={() => openRaceDetail(race.id)}
                             className="text-left hover:underline"
                           >
                             {formatRaceBadgeLabel(race)}
@@ -1430,6 +1497,7 @@ export default function CalendarPage(): JSX.Element {
                   return (
                     <li
                       key={race.id}
+                      data-race-id={race.id}
                       className="flex flex-col gap-3 rounded-md border border-gray-200 p-4 md:flex-row md:items-center md:justify-between"
                     >
                       <div className="flex min-w-0 items-center gap-3">
@@ -1444,7 +1512,7 @@ export default function CalendarPage(): JSX.Element {
                           <div className="font-medium text-gray-900">
                             <button
                               type="button"
-                              onClick={() => setSelectedRaceId(race.id)}
+                              onClick={() => openRaceDetail(race.id)}
                               className="text-left hover:underline"
                             >
                               <span className="mr-2 inline-flex align-middle">
@@ -1484,6 +1552,14 @@ export default function CalendarPage(): JSX.Element {
                             {getRaceTypeLabel(race.race_type)}
                           </span>
                         ) : null}
+
+                        <Link
+                          to={`/dashboard/races/${race.id}?raceId=${race.id}`}
+                          state={getCalendarReturnState(race.id)}
+                          className="rounded-full bg-gray-900 px-2.5 py-1 text-xs font-semibold text-white hover:bg-gray-700"
+                        >
+                          Open Race
+                        </Link>
                       </div>
                     </li>
                   )

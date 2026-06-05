@@ -1,6 +1,13 @@
 'use client'
 
 import React, { useEffect, useMemo, useRef, useState } from 'react'
+import {
+  Link,
+  useLocation,
+  useNavigate,
+  useParams,
+  useSearchParams,
+} from 'react-router'
 import { supabase } from '../../lib/supabase'
 
 type JsonValue = string | number | boolean | null | JsonObject | JsonValue[]
@@ -353,24 +360,56 @@ function viewerTeamRowClass(
 }
 
 
-function getRaceIdFromUrl(): string | null {
-  if (typeof window === 'undefined') return null
-
-  const params = new URLSearchParams(window.location.search)
-  const queryRaceId = params.get('raceId') || params.get('race_id') || params.get('id')
-
-  if (queryRaceId) return queryRaceId
-
-  const pathParts = window.location.pathname.split('/').filter(Boolean)
-  const raceIndex = pathParts.findIndex((part) => part === 'race' || part === 'races')
-
-  if (raceIndex >= 0 && pathParts[raceIndex + 1]) {
-    return pathParts[raceIndex + 1]
-  }
-
-  return pathParts[pathParts.length - 1] || null
+function isUuid(value: unknown): value is string {
+  return (
+    typeof value === 'string' &&
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+      value,
+    )
+  )
 }
 
+function extractUuidFromText(value: unknown): string | null {
+  if (typeof value !== 'string') return null
+
+  const match = value.match(
+    /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i,
+  )
+
+  return isUuid(match?.[0]) ? match[0] : null
+}
+
+function useRaceIdFromRoute(): string | null {
+  const params = useParams()
+  const location = useLocation()
+  const [searchParams] = useSearchParams()
+
+  const candidates = [
+    params.raceId,
+    searchParams.get('raceId'),
+    location.pathname,
+    location.search,
+    location.hash,
+  ]
+
+  if (typeof window !== 'undefined') {
+    candidates.push(
+      window.location.pathname,
+      window.location.search,
+      window.location.hash,
+      window.location.href,
+    )
+  }
+
+  for (const candidate of candidates) {
+    if (isUuid(candidate)) return candidate
+
+    const extracted = extractUuidFromText(candidate)
+    if (extracted) return extracted
+  }
+
+  return null
+}
 
 function formatShortDate(value?: string | null): string {
   if (!value) return '—'
@@ -879,6 +918,11 @@ function asNumber(value: number | string | null | undefined): number | null {
   const parsed = typeof value === 'number' ? value : Number(value)
 
   return Number.isFinite(parsed) ? parsed : null
+}
+
+function toKmNumber(value: unknown): number {
+  const n = Number(value)
+  return Number.isFinite(n) ? n : 0
 }
 
 function formatKm(value: number | string | null | undefined): string {
@@ -4767,6 +4811,50 @@ function StagePointCard({
   )
 }
 
+type SprintStagePoint = StageProfileDetailItem & {
+  pointType: 'sprint'
+  sortKm: number
+  sortIndex: number
+}
+
+type KOMStagePoint = StageProfileDetailItem & {
+  pointType: 'kom'
+  sortKm: number
+  sortIndex: number
+}
+
+function SprintCard({ sprint }: { sprint: SprintStagePoint }) {
+  return (
+    <StagePointCard
+      variant="sprint"
+      title={`Sprint ${formatProfileDetailValue(sprint['number'])}`}
+      subtitle={`km ${formatProfileDetailValue(sprint['km'])}`}
+      points={sprint['points_scheme']}
+      bonuses={sprint['time_bonus_seconds']}
+    />
+  )
+}
+
+function KOMCard({ climb }: { climb: KOMStagePoint }) {
+  const name = formatProfileDetailValue(climb['name'])
+  const category = formatProfileDetailValue(climb['category'])
+  const km = formatProfileDetailValue(climb['km'])
+  const lengthKm = formatProfileDetailValue(climb['length_km'])
+  const avgGradient = formatProfileDetailValue(climb['avg_gradient'])
+
+  return (
+    <StagePointCard
+      variant="mountain"
+      title={`${name} · ${category}`}
+      subtitle={`km ${km}${lengthKm !== '—' ? ` · ${lengthKm} km` : ''}${
+        avgGradient !== '—' ? ` at ${avgGradient}%` : ''
+      }`}
+      points={climb['points_scheme']}
+      bonuses={climb['time_bonus_seconds']}
+    />
+  )
+}
+
 function getProfileDetailNumber(
   item: StageProfileDetailItem | null | undefined,
   key: string
@@ -5287,6 +5375,38 @@ function RaceStageProfilePanel({
     finishPoint || finishMarker || profile.distance_km !== null || selectedStage?.finish_city
   )
 
+  const stagePoints = [
+    ...(profile.intermediate_sprints ?? []).map((sprint, index) => ({
+      ...sprint,
+      pointType: 'sprint' as const,
+      sortKm: toKmNumber(sprint.km),
+      sortIndex: index,
+    })),
+
+    ...(visibleMountainClimbs ?? []).map((climb, index) => ({
+      ...climb,
+      pointType: 'kom' as const,
+      sortKm: toKmNumber(climb.km),
+      sortIndex: index,
+    })),
+  ].sort((a, b) => {
+    if (a.sortKm !== b.sortKm) return a.sortKm - b.sortKm
+    return a.sortIndex - b.sortIndex
+  })
+
+  function FinishSprintCard() {
+    if (!shouldShowFinishCard) return null
+
+    return (
+      <StageFinishPointCard
+        isMountainFinish={finishIsMountain}
+        finishKm={finishKm}
+        finishPoint={finishPoint}
+        finishClimb={finishClimb}
+      />
+    )
+  }
+
   return (
     <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
       <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
@@ -5351,58 +5471,37 @@ function RaceStageProfilePanel({
         </div>
 
         <div className="mt-6">
-          <h4 className="font-semibold text-slate-950">Stage points</h4>
+          <section>
+            <h3 className="text-lg font-semibold text-slate-900">Stage points</h3>
 
-          <div className="mt-3 space-y-3">
-            {(profile.intermediate_sprints ?? []).map((sprint, index) => (
-              <StagePointCard
-                key={`sprint-${index}`}
-                variant="sprint"
-                title={`Sprint ${formatProfileDetailValue(sprint['number'])}`}
-                subtitle={`km ${formatProfileDetailValue(sprint['km'])}`}
-                points={sprint['points_scheme']}
-                bonuses={sprint['time_bonus_seconds']}
-              />
-            ))}
+            <div className="mt-4 space-y-3">
+              {stagePoints.map((point) => {
+                if (point.pointType === 'sprint') {
+                  return (
+                    <SprintCard
+                      key={`sprint-${point.sortKm}-${point.sortIndex}`}
+                      sprint={point}
+                    />
+                  )
+                }
 
-            {visibleMountainClimbs.map((climb, index) => {
-              const name = formatProfileDetailValue(climb['name'])
-              const category = formatProfileDetailValue(climb['category'])
-              const km = formatProfileDetailValue(climb['km'])
-              const lengthKm = formatProfileDetailValue(climb['length_km'])
-              const avgGradient = formatProfileDetailValue(climb['avg_gradient'])
+                return (
+                  <KOMCard
+                    key={`kom-${point.sortKm}-${point.sortIndex}-${point.name ?? 'climb'}`}
+                    climb={point}
+                  />
+                )
+              })}
 
-              return (
-                <StagePointCard
-                  key={`climb-${index}`}
-                  variant="mountain"
-                  title={`${name} · ${category}`}
-                  subtitle={`km ${km}${lengthKm !== '—' ? ` · ${lengthKm} km` : ''}${
-                    avgGradient !== '—' ? ` at ${avgGradient}%` : ''
-                  }`}
-                  points={climb['points_scheme']}
-                  bonuses={climb['time_bonus_seconds']}
-                />
-              )
-            })}
+              <FinishSprintCard />
 
-            {shouldShowFinishCard ? (
-              <StageFinishPointCard
-                isMountainFinish={finishIsMountain}
-                finishKm={finishKm}
-                finishPoint={finishPoint}
-                finishClimb={finishClimb}
-              />
-            ) : null}
-
-            {(profile.intermediate_sprints ?? []).length === 0 &&
-            visibleMountainClimbs.length === 0 &&
-            !shouldShowFinishCard ? (
-              <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-500">
-                No stage points configured for this stage.
-              </div>
-            ) : null}
-          </div>
+              {stagePoints.length === 0 && !shouldShowFinishCard ? (
+                <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-500">
+                  No stage points configured for this stage.
+                </div>
+              ) : null}
+            </div>
+          </section>
         </div>
       </div>
 
@@ -5454,11 +5553,48 @@ const RACE_ENTRY_RULES_DETAIL_SELECT = `
 export default function RaceDetailPage({
   raceIdOverride = null,
   currentClubId = DEFAULT_CURRENT_CLUB_ID,
-  onBack,
   onOpenTeamProfile,
   onOpenRiderProfile,
 }: RaceDetailPageProps) {
-  const raceId = useMemo(() => raceIdOverride ?? getRaceIdFromUrl(), [raceIdOverride])
+  const navigate = useNavigate()
+  const location = useLocation()
+  const routeRaceId = useRaceIdFromRoute()
+  const raceId = raceIdOverride ?? routeRaceId
+
+  function handleBackToCalendar() {
+    const state = location.state as
+      | {
+          from?: string
+          returnTo?: string
+          returnScrollY?: number
+          returnRaceId?: string
+          returnCalendarView?: string
+          returnMonthNumber?: number
+        }
+      | null
+
+    if (state?.from === 'calendar' && state.returnTo) {
+      navigate(state.returnTo, {
+        state: {
+          restoreCalendar: true,
+          restoreScrollY: state.returnScrollY,
+          restoreRaceId: state.returnRaceId,
+          restoreCalendarView: state.returnCalendarView,
+          restoreMonthNumber: state.returnMonthNumber,
+        },
+      })
+      return
+    }
+
+    navigate('/dashboard/calendar')
+  }
+
+  useEffect(() => {
+    window.scrollTo({
+      top: 0,
+      behavior: 'auto',
+    })
+  }, [raceId])
 
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -5490,8 +5626,8 @@ export default function RaceDetailPage({
     let cancelled = false
 
     async function loadRaceDetail() {
-      if (!raceId) {
-        setError('Race id is missing.')
+      if (!raceId || !isUuid(raceId)) {
+        setError('Invalid or missing race id.')
         setRace(null)
         setEntry(null)
         setStages([])
@@ -5771,7 +5907,7 @@ export default function RaceDetailPage({
   }, [raceId, raceDetailReloadKey])
 
   useEffect(() => {
-    if (!raceId) {
+    if (!raceId || !isUuid(raceId)) {
       setParticipantTeams([])
       setParticipantsLoading(false)
       return
@@ -6170,19 +6306,22 @@ export default function RaceDetailPage({
   if (error || !race) {
     return (
       <div className="p-6">
-        {onBack ? (
+        <div className="flex flex-wrap items-center gap-4">
           <button
             type="button"
-            onClick={onBack}
+            onClick={handleBackToCalendar}
             className="text-sm font-medium text-slate-600 hover:text-slate-900"
           >
             ← Back to calendar
           </button>
-        ) : (
-          <a href="/dashboard/calendar" className="text-sm font-medium text-slate-600 hover:text-slate-900">
-            ← Back to calendar
-          </a>
-        )}
+
+          <Link
+            to="/dashboard/race-preparation"
+            className="text-sm font-medium text-slate-600 hover:text-slate-900"
+          >
+            ← Back to Race Preparation
+          </Link>
+        </div>
 
         <div className="mt-4 rounded-2xl border border-red-200 bg-red-50 p-6 text-red-900">
           {error ?? 'Race not found.'}
@@ -6407,20 +6546,21 @@ export default function RaceDetailPage({
       ) : null}
 
       <div className="space-y-6 p-6">
-      <div>
-        {onBack ? (
-          <button
-            type="button"
-            onClick={onBack}
-            className="text-sm font-medium text-slate-600 hover:text-slate-900"
-          >
-            ← Back to calendar
-          </button>
-        ) : (
-          <a href="/dashboard/calendar" className="text-sm font-medium text-slate-600 hover:text-slate-900">
-            ← Back to calendar
-          </a>
-        )}
+      <div className="flex flex-wrap items-center gap-4">
+        <button
+          type="button"
+          onClick={handleBackToCalendar}
+          className="text-sm font-medium text-slate-600 hover:text-slate-900"
+        >
+          ← Back to calendar
+        </button>
+
+        <Link
+          to="/dashboard/race-preparation"
+          className="text-sm font-medium text-slate-600 hover:text-slate-900"
+        >
+          ← Back to Race Preparation
+        </Link>
       </div>
 
       <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
