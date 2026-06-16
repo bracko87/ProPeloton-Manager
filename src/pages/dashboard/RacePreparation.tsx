@@ -11,234 +11,239 @@
  * Button → Supabase Edge Function → SQL RPC → Database
  */
 
-import React, { useEffect, useMemo, useState } from 'react'
-import { Link, useSearchParams } from 'react-router'
-import RaceDetailPage from './RaceDetailPage'
+import React, { useEffect, useMemo, useState } from "react";
+import { Link, useSearchParams } from "react-router";
+import RaceDetailPage from "./RaceDetailPage";
 import {
   getRiderName,
   loadAcceptedRacePreparations,
   loadExistingRacePreparationDraft,
   loadRacePreparationContext,
   loadRacePreparationSelectableData,
+  loadRacePreparationSquadOptions,
   loadRaceStageProfileDetail,
   quoteRacePreparation,
   resolveCurrentClubId,
   saveRacePreparationDraft,
+  saveRaceStagePlan,
   submitRacePreparation,
-} from './race-preparation/racePreparationApi'
+} from "./race-preparation/racePreparationApi";
 import type {
   AcceptedRacePreparationRow,
+  BlockedRacePreparationResource,
   EquipmentSetupPresetOption,
   JsonRecord,
   RacePrepAssetKey,
   RacePreparationPayload,
   RacePreparationQuote,
   RacePreparationSelectableData,
+  RacePreparationSquadOption,
   RacePreparationTab,
   RacePreparationTarget,
+  RaceSupplyOption,
   UUID,
-} from './race-preparation/racePreparationTypes'
+} from "./race-preparation/racePreparationTypes";
 
 const assetLabels: Record<RacePrepAssetKey, string> = {
-  team_bus: 'Team Bus',
-  equipment_van: 'Equipment Van',
-  mobile_workshop: 'Mobile Workshop',
-  medical_van: 'Medical Van',
-  team_car_1: 'Team Car 1',
-  team_car_2: 'Team Car 2',
-  team_car_3: 'Team Car 3',
-}
+  team_bus: "Team Bus",
+  equipment_van: "Equipment Van",
+  mobile_workshop: "Mobile Workshop",
+  medical_van: "Medical Van",
+  team_car_1: "Team Car 1",
+  team_car_2: "Team Car 2",
+  team_car_3: "Team Car 3",
+};
 
 function getAssetInventoryKey(assetKey: RacePrepAssetKey): string {
   if (
-    assetKey === 'team_car_1' ||
-    assetKey === 'team_car_2' ||
-    assetKey === 'team_car_3'
+    assetKey === "team_car_1" ||
+    assetKey === "team_car_2" ||
+    assetKey === "team_car_3"
   ) {
-    return 'team_car'
+    return "team_car";
   }
 
-  return assetKey
+  return assetKey;
 }
 
-function createEmptySelectedAssets(): Record<RacePrepAssetKey, UUID | ''> {
+function createEmptySelectedAssets(): Record<RacePrepAssetKey, UUID | ""> {
   return {
-    team_bus: '',
-    equipment_van: '',
-    mobile_workshop: '',
-    medical_van: '',
-    team_car_1: '',
-    team_car_2: '',
-    team_car_3: '',
-  }
+    team_bus: "",
+    equipment_van: "",
+    mobile_workshop: "",
+    medical_van: "",
+    team_car_1: "",
+    team_car_2: "",
+    team_car_3: "",
+  };
 }
 
 function isAssetSelectedInAnotherSlot(
-  selectedAssets: Record<RacePrepAssetKey, UUID | ''>,
+  selectedAssets: Record<RacePrepAssetKey, UUID | "">,
   currentAssetKey: RacePrepAssetKey,
   assetId: UUID,
 ): boolean {
   return Object.entries(selectedAssets).some(([key, value]) => {
-    return key !== currentAssetKey && value === assetId
-  })
+    return key !== currentAssetKey && value === assetId;
+  });
 }
 
 const staffRoleLabels: Record<string, string> = {
-  sport_director: 'Sport Director',
-  team_doctor: 'Team Doctor',
-  physio: 'Physio',
-  mechanic: 'Mechanic',
-}
+  sport_director: "Sport Director",
+  team_doctor: "Team Doctor",
+  physio: "Physio",
+  mechanic: "Mechanic",
+};
 
-const raceAssetKeys = Object.keys(assetLabels) as RacePrepAssetKey[]
+const raceAssetKeys = Object.keys(assetLabels) as RacePrepAssetKey[];
 
 const monthLabels = [
-  'Jan',
-  'Feb',
-  'Mar',
-  'Apr',
-  'May',
-  'Jun',
-  'Jul',
-  'Aug',
-  'Sep',
-  'Oct',
-  'Nov',
-  'Dec',
-]
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
+];
 
 const fullMonthLabels = [
-  'January',
-  'February',
-  'March',
-  'April',
-  'May',
-  'June',
-  'July',
-  'August',
-  'September',
-  'October',
-  'November',
-  'December',
-]
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+];
 
 function asRecord(value: unknown): JsonRecord {
-  return value && typeof value === 'object' && !Array.isArray(value)
+  return value && typeof value === "object" && !Array.isArray(value)
     ? (value as JsonRecord)
-    : {}
+    : {};
 }
 
 function firstNonEmptyRecord(...values: unknown[]): JsonRecord {
   for (const value of values) {
-    const record = asRecord(value)
+    const record = asRecord(value);
 
     if (Object.keys(record).length > 0) {
-      return record
+      return record;
     }
   }
 
-  return {}
+  return {};
 }
 
 function toArray<T = unknown>(value: unknown): T[] {
-  return Array.isArray(value) ? (value as T[]) : []
+  return Array.isArray(value) ? (value as T[]) : [];
 }
 
 function getText(obj: unknown, key: string) {
-  return String(asRecord(obj)[key] ?? '')
+  return String(asRecord(obj)[key] ?? "");
 }
 
 function getNumber(obj: unknown, key: string) {
-  const n = Number(asRecord(obj)[key] ?? 0)
-  return Number.isFinite(n) ? n : 0
+  const n = Number(asRecord(obj)[key] ?? 0);
+  return Number.isFinite(n) ? n : 0;
 }
 
 function formatMoney(value: unknown) {
-  const n = Number(value ?? 0)
-  return `$${n.toLocaleString()}`
+  const n = Number(value ?? 0);
+  return `$${n.toLocaleString()}`;
 }
 
 function parseDateParts(value: unknown) {
-  if (!value) return null
+  if (!value) return null;
 
-  const match = String(value).match(/^(\d{4})-(\d{2})-(\d{2})/)
-  if (!match) return null
+  const match = String(value).match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (!match) return null;
 
-  const year = Number(match[1])
-  const month = Number(match[2])
-  const day = Number(match[3])
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
 
-  if (!year || !month || !day) return null
+  if (!year || !month || !day) return null;
 
   return {
     year,
     month,
     day,
     season: year - 1999,
-  }
+  };
 }
 
 function parseGameDateTime(value: unknown): number | null {
-  const parts = parseDateParts(value)
-  if (!parts) return null
+  const parts = parseDateParts(value);
+  if (!parts) return null;
 
-  return Date.UTC(parts.year, parts.month - 1, parts.day)
+  return Date.UTC(parts.year, parts.month - 1, parts.day);
 }
 
 function formatGameDate(value: unknown) {
-  const parts = parseDateParts(value)
-  if (!parts) return '—'
+  const parts = parseDateParts(value);
+  if (!parts) return "—";
 
   return `S${parts.season} · ${monthLabels[parts.month - 1]} ${String(
     parts.day,
-  ).padStart(2, '0')}`
+  ).padStart(2, "0")}`;
 }
 
 function formatFullGameDate(value: unknown) {
-  const parts = parseDateParts(value)
-  if (!parts) return '—'
+  const parts = parseDateParts(value);
+  if (!parts) return "—";
 
   return `Season ${parts.season} - ${
     fullMonthLabels[parts.month - 1]
-  } ${String(parts.day).padStart(2, '0')}`
+  } ${String(parts.day).padStart(2, "0")}`;
 }
 
 function formatFullStageDateTime(stage: JsonRecord) {
-  const dateLabel = formatFullGameDate(stage.stage_date)
-  const timeLabel = getStageStartTime(stage)
+  const dateLabel = formatFullGameDate(stage.stage_date);
+  const timeLabel = getStageStartTime(stage);
 
-  return timeLabel ? `${dateLabel} · ${timeLabel}` : dateLabel
+  return timeLabel ? `${dateLabel} · ${timeLabel}` : dateLabel;
 }
 
 function formatCompactStageDateTime(stage: JsonRecord) {
-  const parts = parseDateParts(stage.stage_date)
-  const timeLabel = getStageStartTime(stage)
+  const parts = parseDateParts(stage.stage_date);
+  const timeLabel = getStageStartTime(stage);
 
-  if (!parts) return timeLabel ? `— · ${timeLabel}` : '—'
+  if (!parts) return timeLabel ? `— · ${timeLabel}` : "—";
 
-  const date = new Date(Date.UTC(parts.year, parts.month - 1, parts.day))
+  const date = new Date(Date.UTC(parts.year, parts.month - 1, parts.day));
 
   const weekday = date.toLocaleDateString(undefined, {
-    weekday: 'short',
-    timeZone: 'UTC',
-  })
+    weekday: "short",
+    timeZone: "UTC",
+  });
 
-  const monthLabel = monthLabels[parts.month - 1] ?? `M${parts.month}`
+  const monthLabel = monthLabels[parts.month - 1] ?? `M${parts.month}`;
 
   const label = `S${parts.season} · ${weekday} · ${monthLabel} ${String(
     parts.day,
-  ).padStart(2, '0')}`
+  ).padStart(2, "0")}`;
 
-  return timeLabel ? `${label} · ${timeLabel}` : label
+  return timeLabel ? `${label} · ${timeLabel}` : label;
 }
 
 function formatGameDateRange(start: unknown, end: unknown) {
-  const startParts = parseDateParts(start)
-  const endParts = parseDateParts(end)
+  const startParts = parseDateParts(start);
+  const endParts = parseDateParts(end);
 
-  if (!startParts && !endParts) return '—'
-  if (startParts && !endParts) return formatGameDate(start)
-  if (!startParts && endParts) return formatGameDate(end)
+  if (!startParts && !endParts) return "—";
+  if (startParts && !endParts) return formatGameDate(start);
+  if (!startParts && endParts) return formatGameDate(end);
 
   if (
     startParts!.season === endParts!.season &&
@@ -246,44 +251,60 @@ function formatGameDateRange(start: unknown, end: unknown) {
   ) {
     return `S${startParts!.season} · ${monthLabels[startParts!.month - 1]} ${String(
       startParts!.day,
-    ).padStart(2, '0')} – ${String(endParts!.day).padStart(2, '0')}`
+    ).padStart(2, "0")} – ${String(endParts!.day).padStart(2, "0")}`;
   }
 
   if (startParts!.season === endParts!.season) {
     return `S${startParts!.season} · ${
       monthLabels[startParts!.month - 1]
-    } ${String(startParts!.day).padStart(2, '0')} – ${
+    } ${String(startParts!.day).padStart(2, "0")} – ${
       monthLabels[endParts!.month - 1]
-    } ${String(endParts!.day).padStart(2, '0')}`
+    } ${String(endParts!.day).padStart(2, "0")}`;
   }
 
-  return `${formatGameDate(start)} – ${formatGameDate(end)}`
+  return `${formatGameDate(start)} – ${formatGameDate(end)}`;
+}
+
+function formatBlockedResourceReason(
+  blocked?: BlockedRacePreparationResource | null,
+): string | null {
+  if (!blocked) return null;
+
+  const raceName = blocked.blocking_race_name || "another race";
+  const range = formatGameDateRange(
+    blocked.blocking_start_date,
+    blocked.blocking_end_date,
+  );
+
+  return range && range !== "—"
+    ? `Already assigned to ${raceName} (${range})`
+    : `Already assigned to ${raceName}`;
 }
 
 function getRacePagePath(raceId: UUID) {
-  return `/dashboard/races/${raceId}?raceId=${raceId}`
+  return `/dashboard/races/${raceId}?raceId=${raceId}`;
 }
 
 function isUuid(value: unknown): value is string {
   return (
-    typeof value === 'string' &&
+    typeof value === "string" &&
     /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
       value,
     )
-  )
+  );
 }
 
 function normalizeRacePreparationTab(value: string | null): RacePreparationTab {
   switch (value) {
-    case 'racePlan':
-    case 'racePackage':
-      return 'racePackage'
-    case 'stagePlans':
-      return 'stagePlans'
-    case 'acceptedRaces':
-      return 'acceptedRaces'
+    case "racePlan":
+    case "racePackage":
+      return "racePackage";
+    case "stagePlans":
+      return "stagePlans";
+    case "acceptedRaces":
+      return "acceptedRaces";
     default:
-      return 'acceptedRaces'
+      return "acceptedRaces";
   }
 }
 
@@ -291,14 +312,14 @@ function buildSelectedRacePlanRiders(
   selectedRiderIds: UUID[],
   selectableData: RacePreparationSelectableData | null,
 ): JsonRecord[] {
-  if (!selectableData || selectedRiderIds.length === 0) return []
+  if (!selectableData || selectedRiderIds.length === 0) return [];
 
-  const selectedIdSet = new Set(selectedRiderIds)
+  const selectedIdSet = new Set(selectedRiderIds);
 
   return selectableData.riders
     .filter((option) => selectedIdSet.has(option.rider_id))
     .map((option) => {
-      const rider = asRecord(option.rider)
+      const rider = asRecord(option.rider);
 
       return {
         ...rider,
@@ -306,46 +327,50 @@ function buildSelectedRacePlanRiders(
         rider_id: option.rider_id,
         club_rider_id: option.club_rider_id,
         full_name: getRiderName(option.rider),
-        role_label: option.assigned_role ?? rider.role_label ?? rider.specialty ?? 'Rider',
-      }
-    })
+        role_label:
+          option.assigned_role ??
+          rider.role_label ??
+          rider.specialty ??
+          "Rider",
+      };
+    });
 }
 
 function normalizeCountryCode(code?: string | null): string | null {
-  if (!code) return null
+  if (!code) return null;
 
-  const normalized = code.trim().toUpperCase()
+  const normalized = code.trim().toUpperCase();
 
-  if (normalized === 'UK') return 'GB'
-  if (!/^[A-Z]{2}$/.test(normalized)) return null
+  if (normalized === "UK") return "GB";
+  if (!/^[A-Z]{2}$/.test(normalized)) return null;
 
-  return normalized
+  return normalized;
 }
 
 function getFlagImageUrl(code?: string | null): string | null {
-  const normalized = normalizeCountryCode(code)
-  if (!normalized) return null
+  const normalized = normalizeCountryCode(code);
+  if (!normalized) return null;
 
-  return `https://flagcdn.com/w40/${normalized.toLowerCase()}.png`
+  return `https://flagcdn.com/w40/${normalized.toLowerCase()}.png`;
 }
 
 function CountryFlag({ code }: { code?: string | null }) {
-  const flagUrl = getFlagImageUrl(code)
-  const normalized = normalizeCountryCode(code)
-  const [hasError, setHasError] = useState(false)
+  const flagUrl = getFlagImageUrl(code);
+  const normalized = normalizeCountryCode(code);
+  const [hasError, setHasError] = useState(false);
 
   useEffect(() => {
-    setHasError(false)
-  }, [normalized])
+    setHasError(false);
+  }, [normalized]);
 
   if (!flagUrl || !normalized || hasError) {
     return (
       <span
         className="inline-block h-4 w-6 shrink-0 rounded-sm border border-slate-200 bg-slate-100 align-middle"
-        title={normalized ?? 'Unknown country'}
-        aria-label={normalized ?? 'Unknown country'}
+        title={normalized ?? "Unknown country"}
+        aria-label={normalized ?? "Unknown country"}
       />
-    )
+    );
   }
 
   return (
@@ -357,72 +382,71 @@ function CountryFlag({ code }: { code?: string | null }) {
       loading="lazy"
       onError={() => setHasError(true)}
     />
-  )
+  );
 }
-
 
 const riderSkillLabels: Record<string, string> = {
-  flat: 'Flat',
-  hill: 'Hill',
-  hills: 'Hills',
-  mountain: 'Mountain',
-  climbing: 'Climbing',
-  sprint: 'Sprint',
-  time_trial: 'Time Trial',
-  timetrial: 'Time Trial',
-  cobble: 'Cobble',
-  cobbles: 'Cobbles',
-  endurance: 'Endurance',
-  stamina: 'Stamina',
-  recovery: 'Recovery',
-  acceleration: 'Acceleration',
-  descending: 'Descending',
-  technique: 'Technique',
-  teamwork: 'Teamwork',
-  race_intelligence: 'Race IQ',
-  intelligence: 'Race IQ',
-}
+  flat: "Flat",
+  hill: "Hill",
+  hills: "Hills",
+  mountain: "Mountain",
+  climbing: "Climbing",
+  sprint: "Sprint",
+  time_trial: "Time Trial",
+  timetrial: "Time Trial",
+  cobble: "Cobble",
+  cobbles: "Cobbles",
+  endurance: "Endurance",
+  stamina: "Stamina",
+  recovery: "Recovery",
+  acceleration: "Acceleration",
+  descending: "Descending",
+  technique: "Technique",
+  teamwork: "Teamwork",
+  race_intelligence: "Race IQ",
+  intelligence: "Race IQ",
+};
 
 const preferredRiderSkillKeys = [
-  'mountain',
-  'climbing',
-  'hill',
-  'hills',
-  'flat',
-  'sprint',
-  'time_trial',
-  'timetrial',
-  'cobble',
-  'cobbles',
-  'endurance',
-  'stamina',
-  'recovery',
-  'acceleration',
-  'descending',
-  'technique',
-  'teamwork',
-  'race_intelligence',
-  'intelligence',
-]
+  "mountain",
+  "climbing",
+  "hill",
+  "hills",
+  "flat",
+  "sprint",
+  "time_trial",
+  "timetrial",
+  "cobble",
+  "cobbles",
+  "endurance",
+  "stamina",
+  "recovery",
+  "acceleration",
+  "descending",
+  "technique",
+  "teamwork",
+  "race_intelligence",
+  "intelligence",
+];
 
 function getRiderCountryCode(rider: JsonRecord): string | null {
   return (
-    getOptionalText(rider, 'country_code') ??
-    getOptionalText(rider, 'nationality_code') ??
-    getOptionalText(rider, 'country_iso2') ??
-    getOptionalText(rider, 'nation_code') ??
+    getOptionalText(rider, "country_code") ??
+    getOptionalText(rider, "nationality_code") ??
+    getOptionalText(rider, "country_iso2") ??
+    getOptionalText(rider, "nation_code") ??
     null
-  )
+  );
 }
 
 function getOptionalText(obj: unknown, key: string): string | null {
-  const value = asRecord(obj)[key]
+  const value = asRecord(obj)[key];
 
-  if (value === null || value === undefined || value === '') {
-    return null
+  if (value === null || value === undefined || value === "") {
+    return null;
   }
 
-  return String(value)
+  return String(value);
 }
 
 function getRiderAgeLabel(
@@ -431,49 +455,46 @@ function getRiderAgeLabel(
 ): string | null {
   const directAge = Number(
     rider.age ?? rider.rider_age ?? rider.current_age ?? 0,
-  )
+  );
 
   if (Number.isFinite(directAge) && directAge > 0) {
-    return `${Math.floor(directAge)} years`
+    return `${Math.floor(directAge)} years`;
   }
 
   const birthDate = String(
-    rider.date_of_birth ??
-      rider.birth_date ??
-      rider.dob ??
-      '',
-  )
+    rider.date_of_birth ?? rider.birth_date ?? rider.dob ?? "",
+  );
 
-  const birthParts = parseDateParts(birthDate)
-  const currentParts = parseDateParts(currentGameDate)
+  const birthParts = parseDateParts(birthDate);
+  const currentParts = parseDateParts(currentGameDate);
 
   if (!birthParts || !currentParts) {
-    return null
+    return null;
   }
 
-  let age = currentParts.year - birthParts.year
+  let age = currentParts.year - birthParts.year;
 
   if (
     currentParts.month < birthParts.month ||
     (currentParts.month === birthParts.month &&
       currentParts.day < birthParts.day)
   ) {
-    age -= 1
+    age -= 1;
   }
 
-  return age > 0 ? `${age} years` : null
+  return age > 0 ? `${age} years` : null;
 }
 
 function getTopRiderSkills(rider: JsonRecord): {
-  key: string
-  label: string
-  value: number
+  key: string;
+  label: string;
+  value: number;
 }[] {
   const rows = preferredRiderSkillKeys.flatMap((key) => {
-    const value = Number(rider[key] ?? rider[`${key}_skill`] ?? NaN)
+    const value = Number(rider[key] ?? rider[`${key}_skill`] ?? NaN);
 
     if (!Number.isFinite(value)) {
-      return []
+      return [];
     }
 
     return [
@@ -482,24 +503,22 @@ function getTopRiderSkills(rider: JsonRecord): {
         label: riderSkillLabels[key] ?? titleFromSnake(key),
         value: Math.round(value),
       },
-    ]
-  })
+    ];
+  });
 
-  return rows
-    .sort((a, b) => b.value - a.value)
-    .slice(0, 6)
+  return rows.sort((a, b) => b.value - a.value).slice(0, 6);
 }
 
 function getRaceRouteLine(race: unknown, stageCount?: number): string {
-  const record = asRecord(race)
+  const record = asRecord(race);
 
   const startCity = String(
     record.start_city ??
       record.host_city ??
       record.city ??
       record.location_city ??
-      '',
-  ).trim()
+      "",
+  ).trim();
 
   const finishCity = String(
     record.finish_city ??
@@ -507,72 +526,75 @@ function getRaceRouteLine(race: unknown, stageCount?: number): string {
       record.host_city ??
       record.city ??
       record.location_city ??
-      '',
-  ).trim()
+      "",
+  ).trim();
 
   const route =
     startCity && finishCity && startCity !== finishCity
       ? `${startCity} → ${finishCity}`
-      : startCity || finishCity || 'Route details pending'
+      : startCity || finishCity || "Route details pending";
 
-  const stages = Number(stageCount ?? record.stage_count ?? 0)
+  const stages = Number(stageCount ?? record.stage_count ?? 0);
 
   if (stages > 1) {
-    return `${route} · ${stages} stages`
+    return `${route} · ${stages} stages`;
   }
 
-  return `${route} · One Day Race`
+  return `${route} · One Day Race`;
 }
 
 function getRaceLifecycleLabel(status?: string | null) {
   switch (status) {
-    case 'completed':
-      return 'Race finished'
-    case 'active':
-      return 'Race active'
-    case 'scheduled':
-      return 'Scheduled'
-    case 'cancelled':
-      return 'Cancelled'
+    case "completed":
+      return "Race finished";
+    case "active":
+      return "Race active";
+    case "scheduled":
+      return "Scheduled";
+    case "cancelled":
+      return "Cancelled";
     default:
-      return status ? titleFromSnake(status) : 'Scheduled'
+      return status ? titleFromSnake(status) : "Scheduled";
   }
 }
 
 function statusClass(status?: string) {
   switch (status) {
-    case 'race_plan_open':
-    case 'draft':
-      return 'bg-yellow-100 text-yellow-800 ring-1 ring-yellow-200'
-    case 'submitted':
-    case 'accepted':
-      return 'bg-emerald-100 text-emerald-800'
-    case 'locked':
-      return 'bg-slate-200 text-slate-800'
-    case 'not_created':
-      return 'bg-slate-100 text-slate-700'
-    case 'missed_startlist':
-    case 'declined':
-      return 'bg-red-100 text-red-800'
+    case "race_plan_open":
+    case "draft":
+      return "bg-yellow-100 text-yellow-800 ring-1 ring-yellow-200";
+    case "submitted":
+    case "accepted":
+      return "bg-emerald-100 text-emerald-800";
+    case "locked":
+      return "bg-slate-200 text-slate-800";
+    case "not_created":
+      return "bg-slate-100 text-slate-700";
+    case "deadline_reached":
+    case "missed_startlist":
+    case "declined":
+      return "bg-red-100 text-red-800";
     default:
-      return 'bg-slate-100 text-slate-700'
+      return "bg-slate-100 text-slate-700";
   }
 }
 
 function getRacePlanStatusLabel(status?: string) {
   switch (status) {
-    case 'draft':
-    case 'race_plan_open':
-      return 'Race Plan Open'
-    case 'submitted':
-      return 'Race Plan Submitted'
-    case 'locked':
-    case 'sent_to_engine':
-      return 'Race Active'
-    case 'not_created':
-      return 'Race Plan Not Open'
+    case "draft":
+    case "race_plan_open":
+      return "Race Plan Open";
+    case "submitted":
+      return "Race Plan Submitted";
+    case "locked":
+    case "sent_to_engine":
+      return "Race Active";
+    case "deadline_reached":
+      return "Rider Deadline Reached";
+    case "not_created":
+      return "Race Plan Not Open";
     default:
-      return status ? titleFromSnake(status) : 'Race Plan Not Open'
+      return status ? titleFromSnake(status) : "Race Plan Not Open";
   }
 }
 
@@ -583,109 +605,109 @@ function getRacePlanUiStatus({
   isPackageDeadlinePassed,
   packageSubmitted,
 }: {
-  raceStatus: string
-  prepStatus: string
-  isPackageTooEarly: boolean
-  isPackageDeadlinePassed: boolean
-  packageSubmitted: boolean
+  raceStatus: string;
+  prepStatus: string;
+  isPackageTooEarly: boolean;
+  isPackageDeadlinePassed: boolean;
+  packageSubmitted: boolean;
 }) {
-  if (packageSubmitted || isPackageDeadlinePassed) {
-    return 'submitted'
+  if (packageSubmitted) {
+    return "submitted";
+  }
+
+  if (isPackageDeadlinePassed) {
+    return "deadline_reached";
   }
 
   if (isPackageTooEarly) {
-    return 'not_created'
+    return "not_created";
   }
 
   if (
-    raceStatus === 'draft' ||
-    prepStatus === 'draft' ||
-    raceStatus === 'not_created'
+    raceStatus === "draft" ||
+    prepStatus === "draft" ||
+    raceStatus === "not_created"
   ) {
-    return 'race_plan_open'
+    return "race_plan_open";
   }
 
-  return raceStatus || prepStatus || 'race_plan_open'
+  return raceStatus || prepStatus || "race_plan_open";
 }
 
 function titleFromSnake(value: string) {
   return value
-    .split('_')
+    .split("_")
     .filter(Boolean)
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-    .join(' ')
+    .join(" ");
 }
-
-
 
 function isRacePackageSubmitted(status?: string | null) {
   return (
-    status === 'submitted' ||
-    status === 'locked' ||
-    status === 'sent_to_engine'
-  )
+    status === "submitted" || status === "locked" || status === "sent_to_engine"
+  );
 }
 
 function getAcceptedRacePreparationState(
   row: AcceptedRacePreparationRow,
   currentGameDate?: string,
 ) {
-  const raceStatus = String(row.race.status ?? '').toLowerCase()
-  const packageStatus = row.race_package_status
-  const currentTime = parseGameDateTime(currentGameDate)
-  const opensTime = parseGameDateTime(row.setup_window_opens_on)
-  const deadlineTime = parseGameDateTime(row.rider_submission_deadline_on)
+  const raceStatus = String(row.race.status ?? "").toLowerCase();
+  const packageStatus = row.race_package_status;
+  const currentTime = parseGameDateTime(currentGameDate);
+  const opensTime = parseGameDateTime(row.setup_window_opens_on);
+  const deadlineTime = parseGameDateTime(row.rider_submission_deadline_on);
 
-  if (raceStatus === 'completed' || raceStatus === 'archived') {
+  if (raceStatus === "completed" || raceStatus === "archived") {
     return {
-      label: 'Race Finished',
-      className: 'bg-slate-100 text-slate-700',
+      label: "Race Finished",
+      className: "bg-slate-100 text-slate-700",
       stagePlansEnabled: false,
-    }
+    };
   }
 
-  if (raceStatus === 'active') {
+  if (raceStatus === "active") {
     return {
-      label: 'Race Active',
-      className: 'bg-emerald-100 text-emerald-700',
+      label: "Race Active",
+      className: "bg-emerald-100 text-emerald-700",
       stagePlansEnabled: isRacePackageSubmitted(packageStatus),
-    }
+    };
   }
 
-  if (packageStatus === 'submitted') {
+  if (packageStatus === "submitted") {
     return {
-      label: 'Stage Plans Open',
-      className: 'bg-blue-100 text-blue-700',
+      label: "Stage Plans Open",
+      className: "bg-blue-100 text-blue-700",
       stagePlansEnabled: true,
-    }
+    };
   }
 
-  if (packageStatus === 'locked' || packageStatus === 'sent_to_engine') {
+  if (packageStatus === "locked" || packageStatus === "sent_to_engine") {
     return {
-      label: 'All Set',
-      className: 'bg-emerald-100 text-emerald-700',
+      label: "All Set",
+      className: "bg-emerald-100 text-emerald-700",
       stagePlansEnabled: true,
-    }
+    };
   }
 
-  if (packageStatus === 'draft') {
+  if (packageStatus === "draft") {
     if (
       currentTime !== null &&
       deadlineTime !== null &&
-      currentTime > deadlineTime
+      currentTime >= deadlineTime
     ) {
       return {
-        label: 'Stage Plans Open',
-        className: 'bg-blue-100 text-blue-700',
-        stagePlansEnabled: true,
-      }
+        label: "Rider Deadline Reached",
+        className: "bg-red-100 text-red-800",
+        stagePlansEnabled: false,
+      };
     }
 
     return {
-      label: 'Race Plan Open',
-      className: statusClass('race_plan_open'),
+      label: "Race Plan Open",
+      className: statusClass("race_plan_open"),
       stagePlansEnabled: false,
-    }
+    };
   }
 
   if (
@@ -693,102 +715,106 @@ function getAcceptedRacePreparationState(
     opensTime !== null &&
     deadlineTime !== null &&
     currentTime >= opensTime &&
-    currentTime <= deadlineTime
+    currentTime < deadlineTime
   ) {
     return {
-      label: 'Race Plan Open',
-      className: statusClass('race_plan_open'),
+      label: "Race Plan Open",
+      className: statusClass("race_plan_open"),
       stagePlansEnabled: false,
-    }
+    };
   }
 
-  if (
-    currentTime !== null &&
-    opensTime !== null &&
-    currentTime < opensTime
-  ) {
+  if (currentTime !== null && opensTime !== null && currentTime < opensTime) {
     return {
-      label: 'Race Plan Not Open',
-      className: 'bg-slate-100 text-slate-700',
+      label: "Race Plan Not Open",
+      className: "bg-slate-100 text-slate-700",
       stagePlansEnabled: false,
-    }
+    };
   }
 
   if (
     currentTime !== null &&
     deadlineTime !== null &&
-    currentTime > deadlineTime
+    currentTime >= deadlineTime
   ) {
     return {
-      label: 'Stage Plans Open',
-      className: 'bg-blue-100 text-blue-700',
-      stagePlansEnabled: true,
-    }
+      label: "Rider Deadline Reached",
+      className: "bg-red-100 text-red-800",
+      stagePlansEnabled: false,
+    };
   }
 
   return {
-    label: 'Scheduled',
-    className: 'bg-slate-100 text-slate-700',
+    label: "Scheduled",
+    className: "bg-slate-100 text-slate-700",
     stagePlansEnabled: false,
-  }
+  };
 }
 
 export default function RacePreparationPage(): JSX.Element {
-  const [searchParams] = useSearchParams()
+  const [searchParams] = useSearchParams();
 
   const [activeTab, setActiveTab] = useState<RacePreparationTab>(() =>
-    normalizeRacePreparationTab(searchParams.get('tab')),
-  )
+    normalizeRacePreparationTab(searchParams.get("tab")),
+  );
 
-  const [clubId, setClubId] = useState<UUID | null>(null)
-  const [selectedRaceId, setSelectedRaceId] = useState<UUID | null>(null)
+  const [clubId, setClubId] = useState<UUID | null>(null);
+  const [selectedRaceId, setSelectedRaceId] = useState<UUID | null>(null);
   const [acceptedRaces, setAcceptedRaces] = useState<
     AcceptedRacePreparationRow[]
-  >([])
-  const [target, setTarget] = useState<RacePreparationTarget | null>(null)
+  >([]);
+  const [target, setTarget] = useState<RacePreparationTarget | null>(null);
   const [selectableData, setSelectableData] =
-    useState<RacePreparationSelectableData | null>(null)
+    useState<RacePreparationSelectableData | null>(null);
+  const [squadOptions, setSquadOptions] = useState<
+    RacePreparationSquadOption[]
+  >([]);
+  const [participatingClubId, setParticipatingClubId] = useState<UUID | null>(
+    null,
+  );
+  const [pendingParticipatingClubId, setPendingParticipatingClubId] =
+    useState<UUID | null>(null);
 
-  const [selectedRiderIds, setSelectedRiderIds] = useState<UUID[]>([])
-  const [selectedStaffIds, setSelectedStaffIds] = useState<UUID[]>([])
+  const [selectedRiderIds, setSelectedRiderIds] = useState<UUID[]>([]);
+  const [selectedStaffIds, setSelectedStaffIds] = useState<UUID[]>([]);
   const [selectedAssets, setSelectedAssets] = useState<
-    Record<RacePrepAssetKey, UUID | ''>
-  >(() => createEmptySelectedAssets())
-  const [quote, setQuote] = useState<RacePreparationQuote | null>(null)
-  const [quoteRefreshing, setQuoteRefreshing] = useState(false)
-  const [loading, setLoading] = useState(true)
-  const [actionLoading, setActionLoading] = useState(false)
-  const [message, setMessage] = useState<string | null>(null)
-  const [errorMessage, setErrorMessage] = useState<string | null>(null)
-  const [racePreviewId, setRacePreviewId] = useState<UUID | null>(null)
-  const [showSubmitConfirm, setShowSubmitConfirm] = useState(false)
+    Record<RacePrepAssetKey, UUID | "">
+  >(() => createEmptySelectedAssets());
+  const [quote, setQuote] = useState<RacePreparationQuote | null>(null);
+  const [quoteRefreshing, setQuoteRefreshing] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [racePreviewId, setRacePreviewId] = useState<UUID | null>(null);
+  const [showSubmitConfirm, setShowSubmitConfirm] = useState(false);
 
-  const race = target?.race ?? null
-  const entryRules = target?.entry_rules ?? null
-  const preparation = target?.preparation ?? null
-  const raceId = selectedRaceId ?? (getText(race, 'id') || null)
-  const raceStatus = target?.race_package_status ?? 'not_created'
-  const prepStatus = getText(preparation, 'status')
-  const savedCostBreakdown = asRecord(preparation?.cost_breakdown_json)
-  const liveCostBreakdown = asRecord(quote?.cost_breakdown)
+  const race = target?.race ?? null;
+  const entryRules = target?.entry_rules ?? null;
+  const preparation = target?.preparation ?? null;
+  const raceId = selectedRaceId ?? (getText(race, "id") || null);
+  const raceStatus = target?.race_package_status ?? "not_created";
+  const prepStatus = getText(preparation, "status");
+  const savedCostBreakdown = asRecord(preparation?.cost_breakdown_json);
+  const liveCostBreakdown = asRecord(quote?.cost_breakdown);
 
   const costBreakdown =
     Object.keys(liveCostBreakdown).length > 0
       ? liveCostBreakdown
-      : savedCostBreakdown
+      : savedCostBreakdown;
 
-  const validationSnapshot = asRecord(preparation?.validation_snapshot_json)
-  const savedQuote = asRecord(validationSnapshot.quote)
+  const validationSnapshot = asRecord(preparation?.validation_snapshot_json);
+  const savedQuote = asRecord(validationSnapshot.quote);
 
-  const liveBonusPreview = asRecord(quote?.bonus_preview)
-  const savedBonusPreviewFromRoot = asRecord(validationSnapshot.bonus_preview)
-  const savedBonusPreviewFromQuote = asRecord(savedQuote.bonus_preview)
+  const liveBonusPreview = asRecord(quote?.bonus_preview);
+  const savedBonusPreviewFromRoot = asRecord(validationSnapshot.bonus_preview);
+  const savedBonusPreviewFromQuote = asRecord(savedQuote.bonus_preview);
 
   const bonusPreview = firstNonEmptyRecord(
     liveBonusPreview,
     savedBonusPreviewFromRoot,
     savedBonusPreviewFromQuote,
-  )
+  );
 
   const standardizedBonus = firstNonEmptyRecord(
     quote?.standardized_bonus,
@@ -796,33 +822,120 @@ export default function RacePreparationPage(): JSX.Element {
     validationSnapshot.standardized_bonus,
     savedQuote.standardized_bonus,
     bonusPreview.groups ? bonusPreview : {},
-  )
+  );
+
+  const blockedResources = useMemo(
+    () =>
+      toArray<BlockedRacePreparationResource>(
+        asRecord(selectableData).blockedResources,
+      ),
+    [selectableData],
+  );
+
+  const blockedRiderMap = useMemo(() => {
+    return new Map(
+      blockedResources
+        .filter((row) => row.resource_type === "rider")
+        .map((row) => [row.resource_id, row]),
+    );
+  }, [blockedResources]);
+
+  const blockedStaffMap = useMemo(() => {
+    return new Map(
+      blockedResources
+        .filter((row) => row.resource_type === "staff")
+        .map((row) => [row.resource_id, row]),
+    );
+  }, [blockedResources]);
+
+  const blockedAssetMap = useMemo(() => {
+    return new Map(
+      blockedResources
+        .filter((row) => row.resource_type === "asset")
+        .map((row) => [row.resource_id, row]),
+    );
+  }, [blockedResources]);
+
+  const blockedRiderIds = useMemo(
+    () => new Set(blockedRiderMap.keys()),
+    [blockedRiderMap],
+  );
+
+  const blockedStaffIds = useMemo(
+    () => new Set(blockedStaffMap.keys()),
+    [blockedStaffMap],
+  );
+
+  const blockedAssetIds = useMemo(
+    () => new Set(blockedAssetMap.keys()),
+    [blockedAssetMap],
+  );
+
+  const cleanSelectedRiderIds = useMemo(() => {
+    return selectedRiderIds.filter((id) => !blockedRiderIds.has(id));
+  }, [blockedRiderIds, selectedRiderIds]);
+
+  const cleanSelectedStaffIds = useMemo(() => {
+    return selectedStaffIds.filter((id) => !blockedStaffIds.has(id));
+  }, [blockedStaffIds, selectedStaffIds]);
+
+  const cleanSelectedAssets = useMemo(() => {
+    const next = { ...selectedAssets };
+
+    raceAssetKeys.forEach((assetKey) => {
+      const assetId = next[assetKey];
+
+      if (assetId && blockedAssetIds.has(assetId)) {
+        next[assetKey] = "";
+      }
+    });
+
+    return next;
+  }, [blockedAssetIds, selectedAssets]);
 
   const selectedRacePlanRiders = useMemo(
-    () => buildSelectedRacePlanRiders(selectedRiderIds, selectableData),
-    [selectedRiderIds, selectableData],
-  )
+    () => buildSelectedRacePlanRiders(cleanSelectedRiderIds, selectableData),
+    [cleanSelectedRiderIds, selectableData],
+  );
 
   const selectedStaffByRole = useMemo(() => {
-    const result: Record<string, UUID> = {}
+    const result: Record<string, UUID> = {};
 
-    ;(selectableData?.staff ?? []).forEach((staff) => {
-      if (selectedStaffIds.includes(staff.id)) {
-        result[staff.role_type] = staff.id
+    (selectableData?.staff ?? []).forEach((staff) => {
+      if (cleanSelectedStaffIds.includes(staff.id)) {
+        result[staff.role_type] = staff.id;
       }
-    })
+    });
 
-    return result
-  }, [selectableData?.staff, selectedStaffIds])
+    return result;
+  }, [cleanSelectedStaffIds, selectableData?.staff]);
 
-  const defaultEquipmentSetupId: UUID | null = null
+  const visibleRiderOptions = useMemo(() => {
+    return selectableData?.riders ?? [];
+  }, [selectableData?.riders]);
+
+  const selectedSquadOption = useMemo(() => {
+    return (
+      squadOptions.find((option) => option.id === participatingClubId) ?? null
+    );
+  }, [participatingClubId, squadOptions]);
+
+  const pendingSquadOption = useMemo(() => {
+    return (
+      squadOptions.find((option) => option.id === pendingParticipatingClubId) ??
+      null
+    );
+  }, [pendingParticipatingClubId, squadOptions]);
+
+  const defaultEquipmentSetupId: UUID | null = null;
+  const supplyReservations = useMemo(() => ({}), []);
 
   const payload: RacePreparationPayload | null = useMemo(() => {
-    if (!raceId || !clubId) return null
+    if (!raceId || !clubId) return null;
 
     const assetAssignments = raceAssetKeys.flatMap((assetKey) => {
-      const assetId = selectedAssets[assetKey]
-      if (!assetId) return []
+      const assetId = cleanSelectedAssets[assetKey];
+      if (!assetId) return [];
 
       return [
         {
@@ -830,65 +943,97 @@ export default function RacePreparationPage(): JSX.Element {
           asset_slot_key: assetKey,
           asset_id: assetId,
         },
-      ]
-    })
+      ];
+    });
 
     return {
       race_id: raceId,
       club_id: clubId,
-      rider_ids: selectedRiderIds,
-      staff_ids: selectedStaffIds,
+      participating_club_id: participatingClubId ?? clubId,
+      rider_ids: cleanSelectedRiderIds,
+      staff_ids: cleanSelectedStaffIds,
       asset_assignments: assetAssignments,
-      supply_reservations: {},
+      supply_reservations: supplyReservations,
       default_equipment_setup_id: defaultEquipmentSetupId,
-    }
+    };
   }, [
+    cleanSelectedAssets,
+    cleanSelectedRiderIds,
+    cleanSelectedStaffIds,
     clubId,
     defaultEquipmentSetupId,
+    participatingClubId,
     raceId,
-    selectedAssets,
-    selectedRiderIds,
-    selectedStaffIds,
-  ])
+    supplyReservations,
+  ]);
 
-  const currentGameDateTime = parseGameDateTime(target?.current_game_date)
-  const packageOpensTime = parseGameDateTime(target?.setup_window_opens_on)
+  const currentGameDateTime = parseGameDateTime(target?.current_game_date);
+  const packageOpensTime = parseGameDateTime(target?.setup_window_opens_on);
   const riderDeadlineTime = parseGameDateTime(
     target?.rider_submission_deadline_on,
-  )
+  );
 
   const isPackageWindowOpen =
     currentGameDateTime !== null &&
     packageOpensTime !== null &&
     riderDeadlineTime !== null &&
     currentGameDateTime >= packageOpensTime &&
-    currentGameDateTime <= riderDeadlineTime
+    currentGameDateTime < riderDeadlineTime;
 
   const isPackageTooEarly =
     currentGameDateTime !== null &&
     packageOpensTime !== null &&
-    currentGameDateTime < packageOpensTime
+    currentGameDateTime < packageOpensTime;
 
   const isPackageDeadlinePassed =
     currentGameDateTime !== null &&
     riderDeadlineTime !== null &&
-    currentGameDateTime > riderDeadlineTime
+    currentGameDateTime >= riderDeadlineTime;
 
   const canEdit =
     isPackageWindowOpen &&
-    (raceStatus === 'not_created' ||
-      raceStatus === 'draft' ||
-      prepStatus === 'draft')
+    (raceStatus === "not_created" ||
+      raceStatus === "draft" ||
+      prepStatus === "draft");
+
+  useEffect(() => {
+    if (!canEdit) return;
+
+    setSelectedRiderIds((current) => {
+      const next = current.filter((id) => !blockedRiderIds.has(id));
+      return next.length === current.length ? current : next;
+    });
+
+    setSelectedStaffIds((current) => {
+      const next = current.filter((id) => !blockedStaffIds.has(id));
+      return next.length === current.length ? current : next;
+    });
+
+    setSelectedAssets((current) => {
+      let changed = false;
+      const next = { ...current };
+
+      raceAssetKeys.forEach((assetKey) => {
+        const assetId = current[assetKey];
+        if (assetId && blockedAssetIds.has(assetId)) {
+          next[assetKey] = "";
+          changed = true;
+        }
+      });
+
+      return changed ? next : current;
+    });
+  }, [blockedAssetIds, blockedRiderIds, blockedStaffIds, canEdit]);
 
   const packageSubmitted =
-    raceStatus === 'submitted' ||
-    raceStatus === 'locked' ||
-    raceStatus === 'sent_to_engine' ||
-    prepStatus === 'submitted' ||
-    prepStatus === 'locked' ||
-    prepStatus === 'sent_to_engine'
+    raceStatus === "submitted" ||
+    raceStatus === "locked" ||
+    raceStatus === "sent_to_engine" ||
+    prepStatus === "submitted" ||
+    prepStatus === "locked" ||
+    prepStatus === "sent_to_engine";
 
-  const stagePlansOpen = packageSubmitted || isPackageDeadlinePassed
+  const stagePlansOpen = packageSubmitted;
 
   const racePlanUiStatus = getRacePlanUiStatus({
     raceStatus,
@@ -896,215 +1041,435 @@ export default function RacePreparationPage(): JSX.Element {
     isPackageTooEarly,
     isPackageDeadlinePassed,
     packageSubmitted,
-  })
+  });
 
-  const minRiders = getNumber(entryRules, 'min_riders_per_team')
-  const maxRiders = getNumber(entryRules, 'max_riders_per_team')
+  const minRiders = getNumber(entryRules, "min_riders_per_team");
+  const maxRiders = getNumber(entryRules, "max_riders_per_team");
 
-  const selectedRiderCount = selectedRiderIds.length
+  const selectedRiderCount = cleanSelectedRiderIds.length;
 
-  const riderSelectionTooFew =
-    minRiders > 0 && selectedRiderCount < minRiders
+  const riderSelectionTooFew = minRiders > 0 && selectedRiderCount < minRiders;
 
-  const riderSelectionTooMany =
-    maxRiders > 0 && selectedRiderCount > maxRiders
+  const riderSelectionTooMany = maxRiders > 0 && selectedRiderCount > maxRiders;
 
-  const riderSelectionValid =
-    !riderSelectionTooFew && !riderSelectionTooMany
+  const riderSelectionValid = !riderSelectionTooFew && !riderSelectionTooMany;
 
-  const canSaveRacePlan = canEdit && !riderSelectionTooMany
-  const canSubmitRacePlan = canEdit && riderSelectionValid
+  const canSaveRacePlan = canEdit && !riderSelectionTooMany;
+  const canSubmitRacePlan = canEdit && riderSelectionValid;
+
+  const selectedStaffCount = cleanSelectedStaffIds.length;
+  const maxStaffSlots = Object.keys(staffRoleLabels).length;
+  const selectedAssetCount =
+    Object.values(cleanSelectedAssets).filter(Boolean).length;
+  const maxAssetSlots = raceAssetKeys.length;
+
+  const submitPlanWarnings = [
+    maxRiders > 0 && selectedRiderCount < maxRiders
+      ? `Maximum riders allowed: ${maxRiders}. You selected: ${selectedRiderCount}.`
+      : null,
+    maxStaffSlots > 0 && selectedStaffCount < maxStaffSlots
+      ? `Maximum race staff slots: ${maxStaffSlots}. You selected: ${selectedStaffCount}.`
+      : null,
+    maxAssetSlots > 0 && selectedAssetCount < maxAssetSlots
+      ? `Maximum race asset slots: ${maxAssetSlots}. You selected: ${selectedAssetCount}.`
+      : null,
+  ].filter(Boolean) as string[];
+
+  const hasSubmitPlanWarnings = submitPlanWarnings.length > 0;
 
   useEffect(() => {
-    if (!payload || !canEdit) return
+    if (!payload || !canEdit) return;
 
     const timer = window.setTimeout(() => {
-      setQuoteRefreshing(true)
+      setQuoteRefreshing(true);
 
       quoteRacePreparation(payload)
         .then((result) => {
-          console.log('Race Plan live quote payload', payload)
-          console.log('Race Plan live quote result', result)
-          console.log('Race Plan standardized bonus', asRecord(result).standardized_bonus)
-          setQuote(result)
+          console.log("Race Plan live quote payload", payload);
+          console.log("Race Plan live quote result", result);
+          console.log(
+            "Race Plan standardized bonus",
+            asRecord(result).standardized_bonus,
+          );
+          setQuote(result);
         })
         .catch((error) => {
-          console.error('Failed to refresh Race Plan quote', error)
+          console.error("Failed to refresh Race Plan quote", error);
         })
         .finally(() => {
-          setQuoteRefreshing(false)
-        })
-    }, 500)
+          setQuoteRefreshing(false);
+        });
+    }, 500);
 
-    return () => window.clearTimeout(timer)
-  }, [payload, canEdit])
+    return () => window.clearTimeout(timer);
+  }, [payload, canEdit]);
 
   useEffect(() => {
-    if (!loading && activeTab === 'stagePlans' && !stagePlansOpen) {
-      setActiveTab('racePackage')
+    if (!loading && activeTab === "stagePlans" && !stagePlansOpen) {
+      setActiveTab("racePackage");
     }
-  }, [activeTab, loading, stagePlansOpen])
+  }, [activeTab, loading, stagePlansOpen]);
 
-  async function applyContext(context: RacePreparationTarget) {
-    setTarget(context)
-    setQuote(null)
+  async function applyContext(
+    context: RacePreparationTarget,
+    currentClubId: UUID | null = clubId,
+  ) {
+    setTarget(context);
+    setQuote(null);
+    setPendingParticipatingClubId(null);
 
-    const contextRaceId = getText(context.race, 'id')
-    setSelectedRaceId(contextRaceId || null)
+    const contextRaceId = getText(context.race, "id");
+    setSelectedRaceId(contextRaceId || null);
 
     const prepId = context.preparation?.id
       ? String(context.preparation.id)
-      : null
+      : null;
+
+    const savedParticipatingClubId =
+      getText(context.preparation, "participating_club_id") ||
+      getText(context.entry, "participating_club_id");
+
+    const nextParticipatingClubId =
+      currentClubId && isUuid(savedParticipatingClubId)
+        ? savedParticipatingClubId
+        : currentClubId;
+
+    setParticipatingClubId(nextParticipatingClubId);
+
+    if (currentClubId) {
+      const [squadOptionResult, selectableResult] = await Promise.all([
+        loadRacePreparationSquadOptions(currentClubId),
+        loadRacePreparationSelectableData(
+          currentClubId,
+          contextRaceId || null,
+          prepId,
+          nextParticipatingClubId,
+        ),
+      ]);
+
+      setSquadOptions(squadOptionResult);
+      setSelectableData(selectableResult);
+    } else {
+      setSquadOptions([]);
+      setSelectableData(null);
+    }
 
     if (prepId) {
-      const draft = await loadExistingRacePreparationDraft(prepId)
-      setSelectedRiderIds(draft.riderIds)
-      setSelectedStaffIds(draft.staffIds)
+      const draft = await loadExistingRacePreparationDraft(prepId);
+      setSelectedRiderIds(draft.riderIds);
+      setSelectedStaffIds(draft.staffIds);
       setSelectedAssets({
         ...createEmptySelectedAssets(),
         ...draft.assetAssignments,
-      })
+      });
     } else {
-      setSelectedRiderIds([])
-      setSelectedStaffIds([])
-      setSelectedAssets(createEmptySelectedAssets())
+      setSelectedRiderIds([]);
+      setSelectedStaffIds([]);
+      setSelectedAssets(createEmptySelectedAssets());
     }
   }
 
   async function loadPage(preferredRaceId?: UUID | null) {
-    setLoading(true)
-    setErrorMessage(null)
-    setMessage(null)
-    setQuote(null)
+    setLoading(true);
+    setErrorMessage(null);
+    setMessage(null);
+    setQuote(null);
 
     try {
-      const resolvedClubId = await resolveCurrentClubId()
-      setClubId(resolvedClubId)
+      const resolvedClubId = await resolveCurrentClubId();
+      setClubId(resolvedClubId);
 
-      const [acceptedResult, selectableResult] = await Promise.all([
-        loadAcceptedRacePreparations(resolvedClubId),
-        loadRacePreparationSelectableData(resolvedClubId),
-      ])
+      const acceptedResult = await loadAcceptedRacePreparations(resolvedClubId);
 
-      setAcceptedRaces(acceptedResult)
-      setSelectableData(selectableResult)
+      setAcceptedRaces(acceptedResult);
 
       const raceToLoad =
-        preferredRaceId ??
-        selectedRaceId ??
-        acceptedResult[0]?.race_id ??
-        null
+        preferredRaceId ?? selectedRaceId ?? acceptedResult[0]?.race_id ?? null;
 
       if (!raceToLoad) {
+        const [squadOptionResult, selectableResult] = await Promise.all([
+          loadRacePreparationSquadOptions(resolvedClubId),
+          loadRacePreparationSelectableData(
+            resolvedClubId,
+            null,
+            null,
+            resolvedClubId,
+          ),
+        ]);
+
+        setSquadOptions(squadOptionResult);
+        setParticipatingClubId(resolvedClubId);
+        setSelectableData(selectableResult);
         setTarget({
           has_target: false,
-          message: 'No accepted races found for this club.',
-        })
-        return
+          message: "No accepted races found for this club.",
+        });
+        return;
       }
 
-      const context = await loadRacePreparationContext(resolvedClubId, raceToLoad)
-      await applyContext(context)
+      const context = await loadRacePreparationContext(
+        resolvedClubId,
+        raceToLoad,
+      );
+      await applyContext(context, resolvedClubId);
     } catch (error) {
       setErrorMessage(
-        error instanceof Error ? error.message : 'Failed to load page.',
-      )
+        error instanceof Error ? error.message : "Failed to load page.",
+      );
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
   }
 
   async function selectRace(raceIdToSelect: UUID, nextTab: RacePreparationTab) {
-    if (!clubId) return
+    if (!clubId) return;
 
-    setActionLoading(true)
-    setErrorMessage(null)
-    setMessage(null)
+    setActionLoading(true);
+    setErrorMessage(null);
+    setMessage(null);
+    setQuote(null);
+    setSelectedRaceId(raceIdToSelect);
+    setParticipatingClubId(clubId);
+    setPendingParticipatingClubId(null);
+    setSelectedRiderIds([]);
+    setSelectedStaffIds([]);
+    setSelectedAssets(createEmptySelectedAssets());
 
     try {
-      const context = await loadRacePreparationContext(clubId, raceIdToSelect)
-      await applyContext(context)
-      setActiveTab(nextTab)
+      const context = await loadRacePreparationContext(clubId, raceIdToSelect);
+      await applyContext(context, clubId);
+      setActiveTab(nextTab);
     } catch (error) {
       setErrorMessage(
-        error instanceof Error ? error.message : 'Failed to load selected race.',
-      )
+        error instanceof Error
+          ? error.message
+          : "Failed to load selected race.",
+      );
     } finally {
-      setActionLoading(false)
+      setActionLoading(false);
     }
   }
 
   async function refreshSelectedRace() {
-    if (!clubId || !raceId) return
+    if (!clubId || !raceId) return;
 
     const [acceptedResult, context] = await Promise.all([
       loadAcceptedRacePreparations(clubId),
       loadRacePreparationContext(clubId, raceId),
-    ])
+    ]);
 
-    setAcceptedRaces(acceptedResult)
-    await applyContext(context)
+    setAcceptedRaces(acceptedResult);
+    await applyContext(context, clubId);
   }
 
   useEffect(() => {
-    const tabFromUrl = normalizeRacePreparationTab(searchParams.get('tab'))
-    const raceIdFromUrl = searchParams.get('raceId')
+    const tabFromUrl = normalizeRacePreparationTab(searchParams.get("tab"));
+    const raceIdFromUrl = searchParams.get("raceId");
 
-    setActiveTab(tabFromUrl)
+    setActiveTab(tabFromUrl);
 
-    void loadPage(isUuid(raceIdFromUrl) ? raceIdFromUrl : null)
+    void loadPage(isUuid(raceIdFromUrl) ? raceIdFromUrl : null);
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, []);
 
-  async function handleQuote() {
-    if (!payload) return
+  async function applyParticipatingClub(
+    nextParticipatingClubId: UUID,
+  ) {
+    if (
+      !clubId ||
+      !raceId ||
+      !canEdit ||
+      nextParticipatingClubId === participatingClubId
+    ) {
+      setPendingParticipatingClubId(null);
+      return;
+    }
 
-    setActionLoading(true)
-    setErrorMessage(null)
-    setMessage(null)
+    setActionLoading(true);
+    setErrorMessage(null);
+    setMessage(null);
+    setQuote(null);
+
+    /*
+     * Remove the old squad riders immediately so the First Squad
+     * roster is not displayed while the Developing Team roster is
+     * loading.
+     */
+    setSelectedRiderIds([]);
+
+    setSelectableData((current) => {
+      if (!current) return current;
+
+      return {
+        ...current,
+        riders: [],
+      };
+    });
 
     try {
-      const result = await quoteRacePreparation(payload)
-      console.log('Race quote result', result)
-      console.log('Standardized bonus', asRecord(result).standardized_bonus)
-      setQuote(result)
-      setMessage('Race Plan quote refreshed.')
+      const prepId = preparation?.id
+        ? String(preparation.id)
+        : null;
+
+      const selectableResult =
+        await loadRacePreparationSelectableData(
+          clubId,
+          raceId,
+          prepId,
+          nextParticipatingClubId,
+        );
+
+      setParticipatingClubId(
+        nextParticipatingClubId,
+      );
+
+      /*
+       * Replace the rider pool with the selected squad.
+       *
+       * Shared club resources stay attached to the main club.
+       */
+      setSelectableData((current) => {
+        if (!current) {
+          return selectableResult;
+        }
+
+        return {
+          ...current,
+
+          riders:
+            selectableResult.riders,
+
+          blockedResources:
+            selectableResult.blockedResources,
+
+          /*
+           * These are still returned from the main club, but keep
+           * the existing selections and displayed resource pools.
+           */
+          staff:
+            selectableResult.staff,
+
+          assets:
+            selectableResult.assets,
+
+          supplies:
+            selectableResult.supplies,
+
+          equipmentPresets:
+            selectableResult.equipmentPresets,
+        };
+      });
+
+      setPendingParticipatingClubId(null);
+
+      const nextOption = squadOptions.find(
+        (option) =>
+          option.id === nextParticipatingClubId,
+      );
+
+      setMessage(
+        nextOption
+          ? `Competing squad changed to ${nextOption.name}.`
+          : "Competing squad changed.",
+      );
+    } catch (error) {
+      /*
+       * Restore the currently selected squad roster if loading the
+       * requested squad fails.
+       */
+      try {
+        const prepId = preparation?.id
+          ? String(preparation.id)
+          : null;
+
+        const restoredResult =
+          await loadRacePreparationSelectableData(
+            clubId,
+            raceId,
+            prepId,
+            participatingClubId ?? clubId,
+          );
+
+        setSelectableData(restoredResult);
+      } catch (restoreError) {
+        console.error(
+          "Failed to restore current squad riders:",
+          restoreError,
+        );
+      }
+
+      setErrorMessage(
+        error instanceof Error
+          ? error.message
+          : "Failed to change competing squad.",
+      );
+    } finally {
+      setActionLoading(false);
+    }
+  }
+
+  function requestParticipatingClubChange(nextParticipatingClubId: UUID) {
+    if (!canEdit || nextParticipatingClubId === participatingClubId) {
+      return;
+    }
+
+    if (cleanSelectedRiderIds.length > 0) {
+      setPendingParticipatingClubId(nextParticipatingClubId);
+      return;
+    }
+
+    void applyParticipatingClub(nextParticipatingClubId);
+  }
+
+  async function handleQuote() {
+    if (!payload) return;
+
+    setActionLoading(true);
+    setErrorMessage(null);
+    setMessage(null);
+
+    try {
+      const result = await quoteRacePreparation(payload);
+      console.log("Race quote result", result);
+      console.log("Standardized bonus", asRecord(result).standardized_bonus);
+      setQuote(result);
+      setMessage("Race Plan quote refreshed.");
     } catch (error) {
       setErrorMessage(
-        error instanceof Error ? error.message : 'Failed to quote race plan.',
-      )
+        error instanceof Error ? error.message : "Failed to quote race plan.",
+      );
     } finally {
-      setActionLoading(false)
+      setActionLoading(false);
     }
   }
 
   async function handleSaveDraft() {
-    if (!payload) return
+    if (!payload) return;
 
     if (riderSelectionTooMany) {
       setErrorMessage(
         `Remove ${selectedRiderCount - maxRiders} rider${
-          selectedRiderCount - maxRiders === 1 ? '' : 's'
+          selectedRiderCount - maxRiders === 1 ? "" : "s"
         } before saving.`,
-      )
-      return
+      );
+      return;
     }
 
-    setActionLoading(true)
-    setErrorMessage(null)
-    setMessage(null)
+    setActionLoading(true);
+    setErrorMessage(null);
+    setMessage(null);
 
     try {
-      await saveRacePreparationDraft(payload)
-      setMessage('Race Plan saved.')
-      await refreshSelectedRace()
+      await saveRacePreparationDraft(payload);
+      setMessage("Race Plan saved.");
+      await refreshSelectedRace();
     } catch (error) {
       setErrorMessage(
-        error instanceof Error ? error.message : 'Failed to save race plan.',
-      )
+        error instanceof Error ? error.message : "Failed to save race plan.",
+      );
     } finally {
-      setActionLoading(false)
+      setActionLoading(false);
     }
   }
 
@@ -1112,38 +1477,36 @@ export default function RacePreparationPage(): JSX.Element {
     if (!riderSelectionValid) {
       setErrorMessage(
         `Select ${minRiders}–${maxRiders} riders before submitting the Race Plan.`,
-      )
-      return
+      );
+      return;
     }
 
-    if (!raceId || !clubId || !payload) return
+    if (!raceId || !clubId || !payload) return;
 
-    setActionLoading(true)
-    setErrorMessage(null)
-    setMessage(null)
+    setActionLoading(true);
+    setErrorMessage(null);
+    setMessage(null);
 
     try {
       if (canEdit) {
-        await saveRacePreparationDraft(payload)
+        await saveRacePreparationDraft(payload);
       }
 
       const result = await submitRacePreparation({
         race_id: raceId,
         club_id: clubId,
-      })
+      });
 
-      setMessage(
-        String(result.message ?? 'Race Plan submitted successfully.'),
-      )
+      setMessage(String(result.message ?? "Race Plan submitted successfully."));
 
-      await refreshSelectedRace()
-      setActiveTab('stagePlans')
+      await refreshSelectedRace();
+      setActiveTab("stagePlans");
     } catch (error) {
       setErrorMessage(
-        error instanceof Error ? error.message : 'Failed to submit race plan.',
-      )
+        error instanceof Error ? error.message : "Failed to submit race plan.",
+      );
     } finally {
-      setActionLoading(false)
+      setActionLoading(false);
     }
   }
 
@@ -1151,74 +1514,113 @@ export default function RacePreparationPage(): JSX.Element {
     if (!riderSelectionValid) {
       setErrorMessage(
         `Select ${minRiders}–${maxRiders} riders before submitting the Race Plan.`,
-      )
-      return
+      );
+      return;
     }
 
-    if (!canEdit) return
+    if (!canEdit) return;
 
     if (!isPackageDeadlinePassed && !packageSubmitted) {
-      setShowSubmitConfirm(true)
-      return
+      setShowSubmitConfirm(true);
+      return;
     }
 
-    void handleSubmit()
+    void handleSubmit();
   }
 
   function toggleRider(riderId: UUID) {
-    if (!canEdit) return
+    if (!canEdit) return;
+
+    if (blockedRiderIds.has(riderId)) {
+      setErrorMessage(
+        "This rider is already assigned to an overlapping submitted race.",
+      );
+      return;
+    }
 
     setSelectedRiderIds((current) => {
-      if (current.includes(riderId)) {
-        setErrorMessage(null)
-        return current.filter((id) => id !== riderId)
+      const currentClean = current.filter((id) => !blockedRiderIds.has(id));
+
+      if (currentClean.includes(riderId)) {
+        setErrorMessage(null);
+        return currentClean.filter((id) => id !== riderId);
       }
 
-      if (maxRiders > 0 && current.length >= maxRiders) {
-        setErrorMessage(
-          `Maximum ${maxRiders} riders can be selected for this race.`,
-        )
-        return current
+      if (maxRiders > 0 && currentClean.length >= maxRiders) {
+        setErrorMessage(`You can select at most ${maxRiders} riders.`);
+        return currentClean;
       }
 
-      setErrorMessage(null)
-      return [...current, riderId]
-    })
+      setErrorMessage(null);
+      return [...currentClean, riderId];
+    });
   }
 
-  function setStaffForRole(roleType: string, staffId: UUID | '') {
-    if (!canEdit) return
+  function setStaffForRole(roleType: string, staffId: UUID | "") {
+    if (!canEdit) return;
+
+    if (staffId && blockedStaffIds.has(staffId)) {
+      setErrorMessage(
+        "This staff member is already assigned to an overlapping submitted race.",
+      );
+      return;
+    }
 
     const staffInRole = new Set(
       (selectableData?.staff ?? [])
         .filter((staff) => staff.role_type === roleType)
         .map((staff) => staff.id),
-    )
+    );
+
+    setErrorMessage(null);
 
     setSelectedStaffIds((current) => {
-      const withoutThisRole = current.filter((id) => !staffInRole.has(id))
-      return staffId ? [...withoutThisRole, staffId] : withoutThisRole
-    })
+      const withoutThisRole = current.filter((id) => {
+        return !staffInRole.has(id) && !blockedStaffIds.has(id);
+      });
+
+      return staffId ? [...withoutThisRole, staffId] : withoutThisRole;
+    });
   }
 
+  function updateSelectedAsset(assetKey: RacePrepAssetKey, assetId: UUID | "") {
+    if (!canEdit) return;
 
-  function updateSelectedAsset(assetKey: RacePrepAssetKey, assetId: UUID | '') {
-    if (!canEdit) return
+    if (assetId && blockedAssetIds.has(assetId)) {
+      setErrorMessage(
+        "This asset is already assigned to an overlapping submitted race.",
+      );
+      return;
+    }
 
     if (
       assetId &&
-      isAssetSelectedInAnotherSlot(selectedAssets, assetKey, assetId)
+      isAssetSelectedInAnotherSlot(cleanSelectedAssets, assetKey, assetId)
     ) {
-      setErrorMessage('This asset is already selected in another Race Plan slot.')
-      return
+      setErrorMessage(
+        "This asset is already selected in another Race Plan slot.",
+      );
+      return;
     }
 
-    setErrorMessage(null)
+    setErrorMessage(null);
 
-    setSelectedAssets((current) => ({
-      ...current,
-      [assetKey]: assetId,
-    }))
+    setSelectedAssets((current) => {
+      const next = { ...current };
+
+      raceAssetKeys.forEach((key) => {
+        const currentAssetId = next[key];
+
+        if (currentAssetId && blockedAssetIds.has(currentAssetId)) {
+          next[key] = "";
+        }
+      });
+
+      return {
+        ...next,
+        [assetKey]: assetId,
+      };
+    });
   }
 
   if (loading) {
@@ -1228,7 +1630,7 @@ export default function RacePreparationPage(): JSX.Element {
           Loading Race Preparation...
         </div>
       </div>
-    )
+    );
   }
 
   if (errorMessage && !target) {
@@ -1238,20 +1640,18 @@ export default function RacePreparationPage(): JSX.Element {
           {errorMessage}
         </div>
       </div>
-    )
+    );
   }
 
   const raceClassCode =
-    getText(entryRules, 'race_class_code') ||
-    getText(race, 'race_class_code') ||
-    getText(race, 'category')
+    getText(entryRules, "race_class_code") ||
+    getText(race, "race_class_code") ||
+    getText(race, "category");
 
   return (
     <div className="space-y-6 p-6">
       <header className="space-y-2">
-        <h1 className="text-2xl font-bold text-slate-900">
-          Race Preparation
-        </h1>
+        <h1 className="text-2xl font-bold text-slate-900">Race Preparation</h1>
         <p className="text-sm text-slate-600">
           Accepted races are listed first. Race Plan handles whole-race
           startlist, travel, staff, assets and costs. Stage Plans handle
@@ -1262,19 +1662,19 @@ export default function RacePreparationPage(): JSX.Element {
       <div className="inline-flex rounded-xl border bg-white p-1 shadow-sm">
         <TabButton
           label="Accepted Races"
-          active={activeTab === 'acceptedRaces'}
-          onClick={() => setActiveTab('acceptedRaces')}
+          active={activeTab === "acceptedRaces"}
+          onClick={() => setActiveTab("acceptedRaces")}
         />
         <TabButton
           label="Race Plan"
-          active={activeTab === 'racePackage'}
-          onClick={() => setActiveTab('racePackage')}
+          active={activeTab === "racePackage"}
+          onClick={() => setActiveTab("racePackage")}
         />
         <TabButton
           label="Stage Plans"
-          active={activeTab === 'stagePlans'}
+          active={activeTab === "stagePlans"}
           disabled={!stagePlansOpen}
-          onClick={() => setActiveTab('stagePlans')}
+          onClick={() => setActiveTab("stagePlans")}
         />
       </div>
 
@@ -1290,18 +1690,18 @@ export default function RacePreparationPage(): JSX.Element {
         </div>
       )}
 
-      {activeTab === 'acceptedRaces' && (
+      {activeTab === "acceptedRaces" && (
         <AcceptedRacesTab
           acceptedRaces={acceptedRaces}
           selectedRaceId={raceId}
           currentGameDate={target?.current_game_date}
           actionLoading={actionLoading}
-          onPrepareRace={(id) => selectRace(id, 'racePackage')}
-          onOpenStages={(id) => selectRace(id, 'stagePlans')}
+          onPrepareRace={(id) => selectRace(id, "racePackage")}
+          onOpenStages={(id) => selectRace(id, "stagePlans")}
         />
       )}
 
-      {activeTab === 'racePackage' && (
+      {activeTab === "racePackage" && (
         <>
           {!target?.has_target ? (
             <EmptyCard message="No accepted race selected." />
@@ -1317,11 +1717,16 @@ export default function RacePreparationPage(): JSX.Element {
                 packageOpensOn={target.setup_window_opens_on}
                 riderDeadlineOn={target.rider_submission_deadline_on}
                 stageCount={target.stages?.length ?? 1}
+                squadOptions={squadOptions}
+                participatingClubId={participatingClubId}
+                canChangeSquad={canEdit}
+                squadChangeLoading={actionLoading}
+                onParticipatingClubChange={requestParticipatingClubChange}
               />
 
               {isPackageTooEarly && (
                 <div className="rounded-xl border border-orange-300 bg-orange-50 px-4 py-3 text-sm font-medium text-orange-800">
-                  Race Plan is not open yet. It opens on{' '}
+                  Race Plan is not open yet. It opens on{" "}
                   {formatFullGameDate(target.setup_window_opens_on)}.
                 </div>
               )}
@@ -1339,24 +1744,22 @@ export default function RacePreparationPage(): JSX.Element {
                     <div
                       className={`mb-3 text-sm ${
                         riderSelectionTooFew || riderSelectionTooMany
-                          ? 'text-red-700'
-                          : 'text-slate-600'
+                          ? "text-red-700"
+                          : "text-slate-600"
                       }`}
                     >
-                      Selected riders: {selectedRiderCount}
-                      {minRiders || maxRiders
-                        ? ` · Required: ${minRiders || '—'}–${
-                            maxRiders || '—'
-                          }`
-                        : ''}
-
+                      Selected riders: {cleanSelectedRiderIds.length} ·
+                      Required: {minRiders || "—"}–{maxRiders || "—"}
+                      {selectedSquadOption
+                        ? ` · ${selectedSquadOption.name}`
+                        : ""}
                       {riderSelectionTooMany && (
                         <div className="mt-1 font-medium">
                           Remove {selectedRiderCount - maxRiders} rider
-                          {selectedRiderCount - maxRiders === 1 ? '' : 's'} before saving.
+                          {selectedRiderCount - maxRiders === 1 ? "" : "s"}{" "}
+                          before saving.
                         </div>
                       )}
-
                       {riderSelectionTooFew && (
                         <div className="mt-1 font-medium">
                           Select at least {minRiders} riders before submitting.
@@ -1364,11 +1767,24 @@ export default function RacePreparationPage(): JSX.Element {
                       )}
                     </div>
 
+                    {blockedRiderIds.size > 0 ? (
+                      <div className="mt-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+                        {blockedRiderIds.size} rider
+                        {blockedRiderIds.size === 1 ? "" : "s"} unavailable
+                        because they are already assigned to an overlapping
+                        race.
+                      </div>
+                    ) : null}
+
                     <div className="grid gap-3 md:grid-cols-2">
-                      {(selectableData?.riders ?? []).map((option) => {
-                        const selected = selectedRiderIds.includes(
+                      {visibleRiderOptions.map((option) => {
+                        const selected = cleanSelectedRiderIds.includes(
                           option.rider_id,
-                        )
+                        );
+                        const blockedReason = formatBlockedResourceReason(
+                          blockedRiderMap.get(option.rider_id),
+                        );
+
                         return (
                           <RiderSelectionCard
                             key={option.rider_id}
@@ -1376,9 +1792,10 @@ export default function RacePreparationPage(): JSX.Element {
                             selected={selected}
                             canEdit={canEdit}
                             currentGameDate={target?.current_game_date}
+                            blockedReason={blockedReason}
                             onToggle={() => toggleRider(option.rider_id)}
                           />
-                        )
+                        );
                       })}
                     </div>
                   </RacePackageCard>
@@ -1389,12 +1806,21 @@ export default function RacePreparationPage(): JSX.Element {
                       available for Race Preparation.
                     </div>
 
+                    {blockedStaffIds.size > 0 ? (
+                      <div className="mb-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+                        {blockedStaffIds.size} staff member
+                        {blockedStaffIds.size === 1 ? "" : "s"} unavailable
+                        because they are already assigned to an overlapping
+                        race.
+                      </div>
+                    ) : null}
+
                     <div className="grid gap-4 md:grid-cols-2">
                       {Object.entries(staffRoleLabels).map(
                         ([roleType, label]) => {
-                          const options = (selectableData?.staff ?? []).filter(
-                            (staff) => staff.role_type === roleType,
-                          )
+                          const staffOptionsForRole = (
+                            selectableData?.staff ?? []
+                          ).filter((staff) => staff.role_type === roleType);
 
                           return (
                             <label key={roleType} className="block">
@@ -1403,76 +1829,116 @@ export default function RacePreparationPage(): JSX.Element {
                               </span>
                               <select
                                 disabled={!canEdit}
-                                value={selectedStaffByRole[roleType] ?? ''}
+                                value={selectedStaffByRole[roleType] ?? ""}
                                 onChange={(event) =>
                                   setStaffForRole(roleType, event.target.value)
                                 }
                                 className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm disabled:opacity-60"
                               >
-                                <option value="">
-                                  No {label} selected
-                                </option>
-                                {options.map((staff) => (
-                                  <option key={staff.id} value={staff.id}>
-                                    {staff.staff_name} · EXP{' '}
-                                    {staff.experience ?? 0} · EFF{' '}
-                                    {staff.efficiency ?? 0}
-                                  </option>
-                                ))}
+                                <option value="">No {label} selected</option>
+                                {staffOptionsForRole.map((staff) => {
+                                  const blockedReason =
+                                    formatBlockedResourceReason(
+                                      blockedStaffMap.get(staff.id),
+                                    );
+
+                                  return (
+                                    <option
+                                      key={staff.id}
+                                      value={staff.id}
+                                      disabled={Boolean(blockedReason)}
+                                    >
+                                      {staff.staff_name}
+                                      {blockedReason
+                                        ? ` — ${blockedReason}`
+                                        : ""}
+                                    </option>
+                                  );
+                                })}
                               </select>
                             </label>
-                          )
+                          );
                         },
                       )}
                     </div>
                   </RacePackageCard>
 
                   <RacePackageCard title="3. Race Assets">
+                    {blockedAssetIds.size > 0 ? (
+                      <div className="mb-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+                        {blockedAssetIds.size} asset
+                        {blockedAssetIds.size === 1 ? "" : "s"} unavailable
+                        because they are already assigned to an overlapping
+                        race.
+                      </div>
+                    ) : null}
+
                     <div className="grid gap-4 md:grid-cols-2">
-                      {raceAssetKeys.map((assetKey) => (
-                        <label key={assetKey} className="block">
-                          <span className="text-sm font-medium text-slate-700">
-                            {assetLabels[assetKey]}
-                          </span>
-                          <select
-                            disabled={!canEdit}
-                            value={selectedAssets[assetKey]}
-                            onChange={(event) =>
-                              updateSelectedAsset(
-                                assetKey,
-                                event.target.value as UUID | '',
-                              )
-                            }
-                            className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm disabled:opacity-60"
-                          >
-                            <option value="">No asset selected</option>
-                            {(
-                              selectableData?.assets[
-                                getAssetInventoryKey(assetKey)
-                              ] ?? []
-                            ).map((asset) => (
-                              <option
-                                key={asset.id}
-                                value={asset.id}
-                                disabled={isAssetSelectedInAnotherSlot(
-                                  selectedAssets,
+                      {raceAssetKeys.map((assetKey) => {
+                        const assetInventoryKey =
+                          getAssetInventoryKey(assetKey);
+
+                        const assetOptions =
+                          selectableData?.assets[assetInventoryKey] ?? [];
+
+                        return (
+                          <label key={assetKey} className="block">
+                            <span className="text-sm font-medium text-slate-700">
+                              {assetLabels[assetKey]}
+                            </span>
+                            <select
+                              disabled={!canEdit}
+                              value={cleanSelectedAssets[assetKey]}
+                              onChange={(event) =>
+                                updateSelectedAsset(
                                   assetKey,
-                                  asset.id,
-                                )}
-                              >
-                                {asset.display_name} · Lv{' '}
-                                {asset.asset_level ?? 1} ·{' '}
-                                {Number(
-                                  asset.condition_percent ?? 0,
-                                ).toFixed(0)}% condition
-                              </option>
-                            ))}
-                          </select>
-                        </label>
-                      ))}
+                                  event.target.value as UUID | "",
+                                )
+                              }
+                              className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm disabled:opacity-60"
+                            >
+                              <option value="">No asset selected</option>
+                              {assetOptions.map((asset) => {
+                                const blockedReason =
+                                  formatBlockedResourceReason(
+                                    blockedAssetMap.get(asset.id),
+                                  );
+
+                                const selectedInAnotherSlot =
+                                  isAssetSelectedInAnotherSlot(
+                                    cleanSelectedAssets,
+                                    assetKey,
+                                    asset.id,
+                                  );
+
+                                return (
+                                  <option
+                                    key={asset.id}
+                                    value={asset.id}
+                                    disabled={
+                                      Boolean(blockedReason) ||
+                                      selectedInAnotherSlot
+                                    }
+                                  >
+                                    {asset.display_name} · Lv{" "}
+                                    {asset.asset_level ?? 1} ·{" "}
+                                    {Number(
+                                      asset.condition_percent ?? 0,
+                                    ).toFixed(0)}
+                                    % condition
+                                    {blockedReason ? ` — ${blockedReason}` : ""}
+                                    {!blockedReason && selectedInAnotherSlot
+                                      ? " — already selected in another slot"
+                                      : ""}
+                                  </option>
+                                );
+                              })}
+                            </select>
+                          </label>
+                        );
+                      })}
                     </div>
                   </RacePackageCard>
-
                 </div>
 
                 <aside className="space-y-6">
@@ -1509,8 +1975,8 @@ export default function RacePreparationPage(): JSX.Element {
 
                     <div className="mt-4 rounded-xl bg-slate-50 p-3 text-xs text-slate-600">
                       This is a preview only. Saving the Race Plan does not
-                      charge money or lock assets. Payment and locks happen
-                      only after confirmed submission or the rider deadline.
+                      charge money or lock assets. Payment and locks happen only
+                      after confirmed submission or the rider deadline.
                       {quoteRefreshing ? <span> Updating preview…</span> : null}
                     </div>
 
@@ -1535,7 +2001,9 @@ export default function RacePreparationPage(): JSX.Element {
 
                       <button
                         type="button"
-                        disabled={actionLoading || !payload || !canSubmitRacePlan}
+                        disabled={
+                          actionLoading || !payload || !canSubmitRacePlan
+                        }
                         onClick={requestSubmitRacePlan}
                         className="rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
                       >
@@ -1587,27 +2055,68 @@ export default function RacePreparationPage(): JSX.Element {
         </>
       )}
 
-      {activeTab === 'stagePlans' && (
+      {activeTab === "stagePlans" && (
         <StagePlansTab
           target={target}
           packageSubmitted={stagePlansOpen}
           raceId={raceId}
           selectedRiders={selectedRacePlanRiders}
           equipmentPresetOptions={selectableData?.equipmentPresets ?? []}
-          selectedStageIdFromUrl={searchParams.get('stageId')}
+          supplyOptions={selectableData?.supplies ?? []}
+          standardizedBonus={standardizedBonus}
+          exactBonusPreview={bonusPreview}
+          selectedStageIdFromUrl={searchParams.get("stageId")}
           onOpenRacePreview={setRacePreviewId}
         />
       )}
 
+      {pendingParticipatingClubId && pendingSquadOption && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-950/60 p-4">
+          <div className="w-full max-w-lg rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl">
+            <h2 className="text-lg font-bold text-slate-900">
+              Change competing squad?
+            </h2>
+
+            <p className="mt-3 text-sm leading-6 text-slate-600">
+              Changing to <strong>{pendingSquadOption.name}</strong> will remove
+              the currently selected riders. Staff, assets, supplies and
+              equipment settings will remain unchanged.
+            </p>
+
+            <div className="mt-6 flex flex-wrap justify-end gap-3">
+              <button
+                type="button"
+                disabled={actionLoading}
+                onClick={() => setPendingParticipatingClubId(null)}
+                className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                disabled={actionLoading}
+                onClick={() =>
+                  void applyParticipatingClub(pendingParticipatingClubId)
+                }
+                className="rounded-xl bg-yellow-400 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-yellow-300 disabled:opacity-50"
+              >
+                Change squad
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {showSubmitConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 px-4">
-          <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl">
+          <div className="w-full max-w-xl rounded-2xl bg-white p-6 shadow-xl">
             <h2 className="text-lg font-semibold text-slate-950">
               Submit Race Plan now?
             </h2>
 
             <p className="mt-3 text-sm leading-6 text-slate-600">
-              The rider deadline is{' '}
+              The rider deadline is{" "}
               <strong>
                 {formatGameDate(target?.rider_submission_deadline_on)}
               </strong>
@@ -1615,6 +2124,25 @@ export default function RacePreparationPage(): JSX.Element {
               assets will be locked for this race. Stage Plans will open
               immediately after submission.
             </p>
+
+            {hasSubmitPlanWarnings ? (
+              <div className="mt-4 rounded-xl border-2 border-red-300 bg-red-50 p-4">
+                <div className="text-base font-bold text-red-800">
+                  Warning: this Race Plan is not fully assigned.
+                </div>
+
+                <ul className="mt-3 list-disc space-y-2 pl-5 text-sm font-semibold text-red-700">
+                  {submitPlanWarnings.map((warning) => (
+                    <li key={warning}>{warning}</li>
+                  ))}
+                </ul>
+
+                <p className="mt-3 text-sm font-medium text-red-700">
+                  If you continue, the Race Plan will be submitted exactly like
+                  this and missing riders, staff or assets will stay empty.
+                </p>
+              </div>
+            ) : null}
 
             <div className="mt-6 flex justify-end gap-3">
               <button
@@ -1628,12 +2156,14 @@ export default function RacePreparationPage(): JSX.Element {
               <button
                 type="button"
                 onClick={() => {
-                  setShowSubmitConfirm(false)
-                  void handleSubmit()
+                  setShowSubmitConfirm(false);
+                  void handleSubmit();
                 }}
                 className="rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700"
               >
-                Yes, Submit Race Plan
+                {hasSubmitPlanWarnings
+                  ? "Yes, Submit Anyway"
+                  : "Yes, Submit Race Plan"}
               </button>
             </div>
           </div>
@@ -1647,7 +2177,7 @@ export default function RacePreparationPage(): JSX.Element {
         />
       )}
     </div>
-  )
+  );
 }
 
 function AcceptedRacesTab({
@@ -1658,23 +2188,21 @@ function AcceptedRacesTab({
   onPrepareRace,
   onOpenStages,
 }: {
-  acceptedRaces: AcceptedRacePreparationRow[]
-  selectedRaceId: UUID | null
-  currentGameDate?: string
-  actionLoading: boolean
-  onPrepareRace: (raceId: UUID) => void
-  onOpenStages: (raceId: UUID) => void
+  acceptedRaces: AcceptedRacePreparationRow[];
+  selectedRaceId: UUID | null;
+  currentGameDate?: string;
+  actionLoading: boolean;
+  onPrepareRace: (raceId: UUID) => void;
+  onOpenStages: (raceId: UUID) => void;
 }) {
   if (acceptedRaces.length === 0) {
-    return <EmptyCard message="No accepted races found for this club." />
+    return <EmptyCard message="No accepted races found for this club." />;
   }
 
   return (
     <section className="rounded-2xl border bg-white p-5 shadow-sm">
       <div className="mb-4">
-        <h2 className="text-lg font-semibold text-slate-900">
-          Accepted Races
-        </h2>
+        <h2 className="text-lg font-semibold text-slate-900">Accepted Races</h2>
         <p className="mt-1 text-sm text-slate-600">
           Confirmed participations. The status shows what can be done now for
           Race Plan and Stage Plans.
@@ -1683,55 +2211,52 @@ function AcceptedRacesTab({
 
       <div className="space-y-3">
         {acceptedRaces.map((row) => {
-          const selected = selectedRaceId === row.race_id
-          const race = row.race
+          const selected = selectedRaceId === row.race_id;
+          const race = row.race;
           const prepState = getAcceptedRacePreparationState(
             row,
             currentGameDate,
-          )
+          );
 
           const raceClass =
             String(
               row.entry_rules?.race_class_code ??
                 race.race_class_code ??
                 race.category ??
-                '—',
-            ) || '—'
+                "—",
+            ) || "—";
 
-          const raceTypeLabel =
-            row.stage_count > 1 ? 'Stage Race' : 'One Day'
+          const raceTypeLabel = row.stage_count > 1 ? "Stage Race" : "One Day";
 
-          const startParts = parseDateParts(race.start_date)
-          const endParts = parseDateParts(race.end_date)
+          const startParts = parseDateParts(race.start_date);
+          const endParts = parseDateParts(race.end_date);
 
           const startDay = startParts
-            ? `${String(startParts.day).padStart(2, '0')} ${
+            ? `${String(startParts.day).padStart(2, "0")} ${
                 monthLabels[startParts.month - 1]
               }`
-            : '—'
+            : "—";
 
           const endDay = endParts
-            ? `${String(endParts.day).padStart(2, '0')} ${
+            ? `${String(endParts.day).padStart(2, "0")} ${
                 monthLabels[endParts.month - 1]
               }`
-            : '—'
+            : "—";
 
           return (
             <div
               key={row.race_team_entry_id}
               className={`rounded-2xl border p-4 transition ${
                 selected
-                  ? 'border-yellow-300 bg-yellow-50'
-                  : 'border-slate-200 bg-white hover:bg-slate-50'
+                  ? "border-yellow-300 bg-yellow-50"
+                  : "border-slate-200 bg-white hover:bg-slate-50"
               }`}
             >
               <div className="grid gap-4 md:grid-cols-[80px_1fr_auto] md:items-center">
                 <div className="flex items-center gap-4">
                   <div className="w-16 text-right text-sm font-semibold leading-tight text-slate-950">
                     <div>{startDay}</div>
-                    {race.start_date !== race.end_date && (
-                      <div>{endDay}</div>
-                    )}
+                    {race.start_date !== race.end_date && <div>{endDay}</div>}
                   </div>
 
                   <div className="h-14 w-px bg-emerald-400" />
@@ -1744,7 +2269,7 @@ function AcceptedRacesTab({
                   className="min-w-0 text-left disabled:opacity-60"
                 >
                   <div className="flex min-w-0 flex-wrap items-center gap-2">
-                    <CountryFlag code={String(race.country_code ?? '')} />
+                    <CountryFlag code={String(race.country_code ?? "")} />
 
                     <div className="truncate text-base font-semibold text-slate-900">
                       {race.name}
@@ -1757,8 +2282,8 @@ function AcceptedRacesTab({
                     <span
                       className={`rounded-full px-3 py-1 text-xs font-semibold ${
                         row.stage_count > 1
-                          ? 'bg-blue-100 text-blue-700'
-                          : 'bg-emerald-100 text-emerald-700'
+                          ? "bg-blue-100 text-blue-700"
+                          : "bg-emerald-100 text-emerald-700"
                       }`}
                     >
                       {raceTypeLabel}
@@ -1783,13 +2308,13 @@ function AcceptedRacesTab({
                     onClick={() => onOpenStages(row.race_id)}
                     className={`rounded-full px-3 py-1 text-xs font-semibold ${
                       prepState.stagePlansEnabled
-                        ? 'bg-yellow-400 text-slate-950 hover:bg-yellow-300'
-                        : 'cursor-not-allowed bg-slate-100 text-slate-400'
+                        ? "bg-yellow-400 text-slate-950 hover:bg-yellow-300"
+                        : "cursor-not-allowed bg-slate-100 text-slate-400"
                     }`}
                     title={
                       prepState.stagePlansEnabled
-                        ? 'Open Stage Plans'
-                        : 'Stage Plans open after the rider deadline or confirmed early submission'
+                        ? "Open Stage Plans"
+                        : "Stage Plans open after backend finalisation confirms the Race Plan submission"
                     }
                   >
                     Stage Plans
@@ -1797,11 +2322,11 @@ function AcceptedRacesTab({
                 </div>
               </div>
             </div>
-          )
+          );
         })}
       </div>
     </section>
-  )
+  );
 }
 
 function RaceHeaderCard({
@@ -1814,18 +2339,55 @@ function RaceHeaderCard({
   packageOpensOn,
   riderDeadlineOn,
   stageCount,
+  squadOptions,
+  participatingClubId,
+  canChangeSquad,
+  squadChangeLoading,
+  onParticipatingClubChange,
 }: {
-  race: unknown
-  raceClassCode: string
-  minRiders: number
-  maxRiders: number
-  raceStatus: string
-  currentGameDate?: string
-  packageOpensOn?: string
-  riderDeadlineOn?: string
-  stageCount: number
+  race: unknown;
+  raceClassCode: string;
+  minRiders: number;
+  maxRiders: number;
+  raceStatus: string;
+  currentGameDate?: string;
+  packageOpensOn?: string;
+  riderDeadlineOn?: string;
+  stageCount: number;
+  squadOptions: RacePreparationSquadOption[];
+  participatingClubId: UUID | null;
+  canChangeSquad: boolean;
+  squadChangeLoading: boolean;
+  onParticipatingClubChange: (clubId: UUID) => void;
 }) {
-  const raceId = getText(race, 'id')
+  const raceId = getText(race, "id");
+
+  const firstSquadOption =
+    squadOptions.find(
+      (option) =>
+        option.club_type === "main" ||
+        !option.parent_club_id,
+    ) ?? null;
+
+  const developingSquadOption =
+    squadOptions.find(
+      (option) =>
+        option.club_type === "developing" &&
+        Boolean(option.parent_club_id),
+    ) ?? null;
+
+  const hasDevelopingTeam =
+    Boolean(developingSquadOption);
+
+  const visibleSquadOptions = [
+    firstSquadOption,
+    developingSquadOption,
+  ].filter(
+    (
+      option,
+    ): option is RacePreparationSquadOption =>
+      Boolean(option),
+  );
 
   return (
     <section className="rounded-2xl border bg-white p-5 shadow-sm">
@@ -1836,9 +2398,9 @@ function RaceHeaderCard({
           </div>
 
           <div className="mt-1 flex items-center gap-2">
-            <CountryFlag code={getText(race, 'country_code')} />
+            <CountryFlag code={getText(race, "country_code")} />
             <h2 className="text-xl font-semibold text-slate-900">
-              {getText(race, 'name') || 'Unnamed race'}
+              {getText(race, "name") || "Unnamed race"}
             </h2>
           </div>
 
@@ -1846,14 +2408,14 @@ function RaceHeaderCard({
             <InfoChip
               label="Race dates"
               value={formatGameDateRange(
-                getText(race, 'start_date'),
-                getText(race, 'end_date'),
+                getText(race, "start_date"),
+                getText(race, "end_date"),
               )}
             />
-            <InfoChip label="Class" value={raceClassCode || '—'} />
+            <InfoChip label="Class" value={raceClassCode || "—"} />
             <InfoChip
               label="Riders"
-              value={`${minRiders || '—'}–${maxRiders || '—'}`}
+              value={`${minRiders || "—"}–${maxRiders || "—"}`}
             />
           </div>
         </div>
@@ -1884,6 +2446,52 @@ function RaceHeaderCard({
         </div>
       </div>
 
+      {hasDevelopingTeam && (
+        <div className="mt-5 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                Competing squad
+              </div>
+              <div className="mt-1 text-sm text-slate-600">
+                Rider selection comes from this squad. Staff, assets, equipment,
+                supplies and finance remain shared by the club.
+              </div>
+            </div>
+
+            <div className="inline-flex rounded-xl border border-slate-200 bg-white p-1 shadow-sm">
+              {visibleSquadOptions.map((option) => {
+                const active = option.id === participatingClubId;
+
+                return (
+                  <button
+                    key={option.id}
+                    type="button"
+                    disabled={!canChangeSquad || squadChangeLoading}
+                    onClick={() => onParticipatingClubChange(option.id)}
+                    className={[
+                      "rounded-lg px-4 py-2 text-sm font-semibold transition",
+                      active
+                        ? "bg-yellow-400 text-slate-950 shadow-sm"
+                        : "text-slate-600 hover:bg-slate-100",
+                      !canChangeSquad || squadChangeLoading
+                        ? "cursor-not-allowed opacity-60"
+                        : "",
+                    ].join(" ")}
+                    title={option.name}
+                  >
+                    <span className="block">{option.label}</span>
+                    <span className="block max-w-[180px] truncate text-[11px] font-medium opacity-75">
+                      {option.name}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="mt-5 grid gap-3 md:grid-cols-3">
         <InfoBox
           label="Race Plan opens"
@@ -1896,131 +2504,130 @@ function RaceHeaderCard({
         <InfoBox label="Stages" value={String(stageCount)} />
       </div>
     </section>
-  )
+  );
 }
-
-
 
 type BonusBreakdownRow = {
-  sourceType: string
-  sourceLabel: string
-  effectKey: string
-  effectLabel: string
-  rawValueText: string
-  contributionPercent: number
-  contributionLabel: string
-}
+  sourceType: string;
+  sourceLabel: string;
+  effectKey: string;
+  effectLabel: string;
+  rawValueText: string;
+  contributionPercent: number;
+  contributionLabel: string;
+};
 
 const standardizedBonusDescriptions: Record<string, string> = {
   fatigue_control:
-    'Reduces race fatigue pressure, travel fatigue, and fatigue floor effects.',
+    "Reduces race fatigue pressure, travel fatigue, and fatigue floor effects.",
   recovery_support:
-    'Improves daily recovery, recovery duration, and post-stage recovery.',
+    "Improves daily recovery, recovery duration, and post-stage recovery.",
   health_protection:
-    'Reduces injury risk, illness risk, and minor health problems.',
+    "Reduces injury risk, illness risk, and minor health problems.",
   mechanical_reliability:
-    'Reduces mechanical problems, mechanical time loss, and equipment-related race issues.',
+    "Reduces mechanical problems, mechanical time loss, and equipment-related race issues.",
   race_support:
-    'Improves feeding, team-car coverage, race logistics, and tactical support.',
-}
+    "Improves feeding, team-car coverage, race logistics, and tactical support.",
+};
 
 const standardizedEffectKeyMap: Record<string, string[]> = {
   fatigue_control: [
-    'tour_fatigue_reduction_pct',
-    'one_day_fatigue_reduction_pct',
-    'short_tour_fatigue_reduction_pct',
-    'long_tour_fatigue_reduction_pct',
-    'race_fatigue_protection_pct',
-    'race_fatigue_reduction_pct',
-    'fatigue_floor_reduction',
-    'travel_comfort_pct',
+    "tour_fatigue_reduction_pct",
+    "one_day_fatigue_reduction_pct",
+    "short_tour_fatigue_reduction_pct",
+    "long_tour_fatigue_reduction_pct",
+    "race_fatigue_protection_pct",
+    "race_fatigue_reduction_pct",
+    "fatigue_floor_reduction",
+    "travel_comfort_pct",
   ],
 
   recovery_support: [
-    'recovery_duration',
-    'daily_recovery_bonus',
-    'post_stage_recovery_pct',
-    'post_stage_recovery_bonus_pct',
-    'post_stage_recovery_support',
-    'recovery_comfort_bonus_pct',
-    'recovery_bonus',
+    "recovery_duration",
+    "daily_recovery_bonus",
+    "post_stage_recovery_pct",
+    "post_stage_recovery_bonus_pct",
+    "post_stage_recovery_support",
+    "recovery_comfort_bonus_pct",
+    "recovery_bonus",
   ],
 
   health_protection: [
-    'injury_illness_risk',
-    'minor_injury_risk_reduction_pct',
-    'medical_response_pct',
-    'medical_response_bonus_pct',
-    'hydration_support_pct',
-    'hydration_support_bonus_pct',
-    'heat_hydration_support_pct',
+    "injury_illness_risk",
+    "minor_injury_risk_reduction_pct",
+    "medical_response_pct",
+    "medical_response_bonus_pct",
+    "hydration_support_pct",
+    "hydration_support_bonus_pct",
+    "heat_hydration_support_pct",
   ],
 
   mechanical_reliability: [
-    'mechanical_time_loss_reduction_pct',
-    'mechanical_response_pct',
-    'mechanical_response_bonus_pct',
-    'pre_stage_readiness_pct',
-    'pre_stage_equipment_readiness_pct',
-    'spare_bike_response_pct',
-    'spare_bike_response_bonus_pct',
-    'wheel_change_support_pct',
-    'equipment_condition_loss_reduction_pct',
-    'repair_speed_pct',
-    'repair_cost_reduction_pct',
-    'mechanic_response_pct',
-    'mechanic_response_during_races',
+    "mechanical_time_loss_reduction_pct",
+    "mechanical_response_pct",
+    "mechanical_response_bonus_pct",
+    "pre_stage_readiness_pct",
+    "pre_stage_equipment_readiness_pct",
+    "spare_bike_response_pct",
+    "spare_bike_response_bonus_pct",
+    "wheel_change_support_pct",
+    "equipment_condition_loss_reduction_pct",
+    "repair_speed_pct",
+    "repair_cost_reduction_pct",
+    "mechanic_response_pct",
+    "mechanic_response_during_races",
   ],
 
   race_support: [
-    'race_support_coverage_pct',
-    'race_support_quality_pct',
-    'feeding_support_pct',
-    'feeding_support_bonus_pct',
-    'tactical_communication_pct',
-    'tactical_support_pct',
-    'incident_response_pct',
-    'incident_support_pct',
-    'crash_incident_response_pct',
-    'race_day_logistics_pct',
-    'logistics_bonus',
-    'travel_morale_bonus',
+    "race_support_coverage_pct",
+    "race_support_quality_pct",
+    "feeding_support_pct",
+    "feeding_support_bonus_pct",
+    "tactical_communication_pct",
+    "tactical_support_pct",
+    "incident_response_pct",
+    "incident_support_pct",
+    "crash_incident_response_pct",
+    "race_day_logistics_pct",
+    "logistics_bonus",
+    "travel_morale_bonus",
   ],
-}
+};
 
 const negativeRawMeansPositiveContribution = new Set([
-  'tour_fatigue_reduction_pct',
-  'one_day_fatigue_reduction_pct',
-  'short_tour_fatigue_reduction_pct',
-  'long_tour_fatigue_reduction_pct',
-  'race_fatigue_protection_pct',
-  'race_fatigue_reduction_pct',
-  'fatigue_floor_reduction',
-  'recovery_duration',
-  'injury_illness_risk',
-  'minor_injury_risk_reduction_pct',
-  'mechanical_time_loss_reduction_pct',
-  'equipment_condition_loss_reduction_pct',
-  'repair_cost_reduction_pct',
-])
+  "tour_fatigue_reduction_pct",
+  "one_day_fatigue_reduction_pct",
+  "short_tour_fatigue_reduction_pct",
+  "long_tour_fatigue_reduction_pct",
+  "race_fatigue_protection_pct",
+  "race_fatigue_reduction_pct",
+  "fatigue_floor_reduction",
+  "recovery_duration",
+  "injury_illness_risk",
+  "minor_injury_risk_reduction_pct",
+  "mechanical_time_loss_reduction_pct",
+  "equipment_condition_loss_reduction_pct",
+  "repair_cost_reduction_pct",
+]);
 
 function RacePlanBonusPreview({
   standardizedBonus,
   exactBonusPreview,
 }: {
-  standardizedBonus: JsonRecord
-  exactBonusPreview: JsonRecord
+  standardizedBonus: JsonRecord;
+  exactBonusPreview: JsonRecord;
 }) {
-  const groups = toArray<JsonRecord>(standardizedBonus.groups)
+  const groups = toArray<JsonRecord>(standardizedBonus.groups);
+  const [activeGroupKey, setActiveGroupKey] = useState<string | null>(null);
 
   const breakdownByBonusKey = useMemo(
     () => buildStandardizedBreakdownMap(exactBonusPreview),
     [exactBonusPreview],
-  )
+  );
 
   return (
     <RacePackageCard title="Race Plan Bonus Preview">
-      <div className="space-y-3">
+      <div className="space-y-3" onMouseLeave={() => setActiveGroupKey(null)}>
         <div>
           <h4 className="text-sm font-semibold text-slate-900">
             Standardized Race Bonus Percentages
@@ -2035,15 +2642,17 @@ function RacePlanBonusPreview({
         {groups.length > 0 ? (
           <div className="grid gap-2">
             {groups.map((group) => {
-              const bonusKey = String(group.bonus_key ?? group.key ?? '')
+              const bonusKey = String(group.bonus_key ?? group.key ?? "");
               const displayName = String(
                 group.display_name ?? titleFromSnake(bonusKey),
-              )
+              );
 
               const breakdown = getBreakdownForStandardizedGroup(
                 group,
                 breakdownByBonusKey,
-              )
+              );
+
+              const active = activeGroupKey === bonusKey;
 
               return (
                 <StandardizedBonusCard
@@ -2052,8 +2661,15 @@ function RacePlanBonusPreview({
                   bonusKey={bonusKey}
                   displayName={displayName}
                   breakdown={breakdown}
+                  active={active}
+                  onOpen={() => setActiveGroupKey(bonusKey)}
+                  onToggle={() =>
+                    setActiveGroupKey((current) =>
+                      current === bonusKey ? null : bonusKey,
+                    )
+                  }
                 />
-              )
+              );
             })}
           </div>
         ) : (
@@ -2064,7 +2680,7 @@ function RacePlanBonusPreview({
         )}
       </div>
     </RacePackageCard>
-  )
+  );
 }
 
 function StandardizedBonusCard({
@@ -2072,27 +2688,45 @@ function StandardizedBonusCard({
   bonusKey,
   displayName,
   breakdown,
+  active,
+  onOpen,
+  onToggle,
 }: {
-  group: JsonRecord
-  bonusKey: string
-  displayName: string
-  breakdown: BonusBreakdownRow[]
+  group: JsonRecord;
+  bonusKey: string;
+  displayName: string;
+  breakdown: BonusBreakdownRow[];
+  active: boolean;
+  onOpen: () => void;
+  onToggle: () => void;
 }) {
-  const [open, setOpen] = useState(false)
-  const percent = Number(group.percent ?? group.points ?? 0)
+  const percent = Number(group.percent ?? group.points ?? 0);
+  const openAbove = bonusKey === "race_support";
 
   return (
     <div
-      className="relative"
-      onMouseEnter={() => setOpen(true)}
-      onMouseLeave={() => setOpen(false)}
+      className={`relative ${active ? "z-50" : "z-0"}`}
+      onMouseEnter={onOpen}
     >
+      {active && openAbove ? (
+        <div className="absolute bottom-full left-0 right-0 z-50 mb-2">
+          <BonusBreakdownPopover
+            title={displayName}
+            percent={percent}
+            breakdown={breakdown}
+          />
+        </div>
+      ) : null}
+
       <button
         type="button"
-        onClick={() => setOpen((current) => !current)}
-        onFocus={() => setOpen(true)}
-        onBlur={() => setOpen(false)}
-        className="w-full rounded-xl border border-slate-200 bg-white p-3 text-left transition hover:border-emerald-300 hover:bg-emerald-50/30 focus:outline-none focus:ring-2 focus:ring-emerald-200"
+        onClick={onToggle}
+        onFocus={onOpen}
+        className={`w-full rounded-xl border p-3 text-left transition focus:outline-none focus:ring-2 focus:ring-emerald-200 ${
+          active
+            ? "border-emerald-300 bg-emerald-50/40"
+            : "border-slate-200 bg-white hover:border-emerald-300 hover:bg-emerald-50/30"
+        }`}
       >
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
@@ -2109,7 +2743,7 @@ function StandardizedBonusCard({
               {String(
                 group.description ??
                   standardizedBonusDescriptions[bonusKey] ??
-                  'Standardized race-engine support bonus.',
+                  "Standardized race-engine support bonus.",
               )}
             </div>
           </div>
@@ -2122,15 +2756,17 @@ function StandardizedBonusCard({
         </div>
       </button>
 
-      {open ? (
-        <BonusBreakdownPopover
-          title={displayName}
-          percent={percent}
-          breakdown={breakdown}
-        />
+      {active && !openAbove ? (
+        <div className="absolute left-0 right-0 top-full z-50 mt-2">
+          <BonusBreakdownPopover
+            title={displayName}
+            percent={percent}
+            breakdown={breakdown}
+          />
+        </div>
       ) : null}
     </div>
-  )
+  );
 }
 
 function BonusBreakdownPopover({
@@ -2138,17 +2774,17 @@ function BonusBreakdownPopover({
   percent,
   breakdown,
 }: {
-  title: string
-  percent: number
-  breakdown: BonusBreakdownRow[]
+  title: string;
+  percent: number;
+  breakdown: BonusBreakdownRow[];
 }) {
   const contributionTotal = breakdown.reduce(
     (sum, row) => sum + row.contributionPercent,
     0,
-  )
+  );
 
   return (
-    <div className="absolute right-0 top-full z-40 mt-2 w-[380px] max-w-[calc(100vw-3rem)] rounded-2xl border border-slate-200 bg-white p-4 text-xs shadow-xl">
+    <div className="max-h-[360px] overflow-y-auto rounded-2xl border border-slate-200 bg-white p-4 text-xs shadow-xl">
       <div className="mb-3 flex items-start justify-between gap-3">
         <div>
           <div className="text-sm font-semibold text-slate-900">
@@ -2177,9 +2813,7 @@ function BonusBreakdownPopover({
                   <div className="font-semibold text-slate-800">
                     {row.sourceLabel}
                   </div>
-                  <div className="mt-1 text-slate-600">
-                    {row.effectLabel}
-                  </div>
+                  <div className="mt-1 text-slate-600">{row.effectLabel}</div>
                   <div className="mt-1 text-[11px] text-slate-400">
                     Raw effect: {row.rawValueText}
                   </div>
@@ -2214,44 +2848,46 @@ function BonusBreakdownPopover({
         </div>
       )}
     </div>
-  )
+  );
 }
 
 function buildStandardizedBreakdownMap(
   exactBonusPreview: JsonRecord,
 ): Record<string, BonusBreakdownRow[]> {
-  const result: Record<string, BonusBreakdownRow[]> = {}
+  const result: Record<string, BonusBreakdownRow[]> = {};
 
   Object.keys(standardizedEffectKeyMap).forEach((key) => {
-    result[key] = []
-  })
+    result[key] = [];
+  });
 
   const sourceGroups = [
     ...toArray<JsonRecord>(exactBonusPreview.staff),
     ...toArray<JsonRecord>(exactBonusPreview.assets),
     ...toArray<JsonRecord>(exactBonusPreview.policies),
-  ]
+  ];
 
   sourceGroups.forEach((sourceGroup) => {
-    const sourceType = String(sourceGroup.source_type ?? '')
+    const sourceType = String(sourceGroup.source_type ?? "");
     const sourceLabel = String(
-      sourceGroup.source_label ?? sourceGroup.source_key ?? 'Bonus source',
-    )
+      sourceGroup.source_label ?? sourceGroup.source_key ?? "Bonus source",
+    );
 
     toArray<JsonRecord>(sourceGroup.effects).forEach((effect) => {
-      const effectKey = String(effect.effect_key ?? '')
-      const effectLabel = String(effect.label ?? effectKey)
-      const rawValueText = String(effect.value ?? '')
+      const effectKey = String(effect.effect_key ?? "");
+      const effectLabel = String(effect.label ?? effectKey);
+      const rawValueText = String(effect.value ?? "");
 
-      if (!effectKey || !effectLabel || !rawValueText) return
+      if (!effectKey || !effectLabel || !rawValueText) return;
 
-      const matchingBonusKeys = getStandardizedBonusKeysForEffect(effectKey)
+      const matchingBonusKeys = getStandardizedBonusKeysForEffect(effectKey);
 
       matchingBonusKeys.forEach((bonusKey) => {
-        const contributionPercent =
-          getStandardizedContributionPercent(effectKey, rawValueText)
+        const contributionPercent = getStandardizedContributionPercent(
+          effectKey,
+          rawValueText,
+        );
 
-        if (contributionPercent <= 0) return
+        if (contributionPercent <= 0) return;
 
         result[bonusKey] = [
           ...(result[bonusKey] ?? []),
@@ -2262,68 +2898,117 @@ function buildStandardizedBreakdownMap(
             effectLabel: getContributionEffectLabel(effectKey, effectLabel),
             rawValueText,
             contributionPercent,
-            contributionLabel: `+${formatBonusPercent(
-              contributionPercent,
-            )}%`,
+            contributionLabel: `+${formatBonusPercent(contributionPercent)}%`,
           },
-        ]
-      })
-    })
-  })
+        ];
+      });
+    });
+  });
 
-  return result
+  Object.keys(result).forEach((bonusKey) => {
+    result[bonusKey] = mergeBreakdownRows(result[bonusKey] ?? []);
+  });
+
+  return result;
+}
+
+function mergeBreakdownRows(rows: BonusBreakdownRow[]): BonusBreakdownRow[] {
+  const grouped = new Map<string, BonusBreakdownRow & { count: number }>();
+
+  rows.forEach((row) => {
+    const sourceLabel = normalizeBreakdownSourceLabel(row.sourceLabel);
+    const key = [sourceLabel, row.effectKey, row.effectLabel].join("|");
+
+    const existing = grouped.get(key);
+
+    if (!existing) {
+      grouped.set(key, {
+        ...row,
+        sourceLabel,
+        count: 1,
+      });
+      return;
+    }
+
+    grouped.set(key, {
+      ...existing,
+      contributionPercent:
+        existing.contributionPercent + row.contributionPercent,
+      contributionLabel: `+${formatBonusPercent(
+        existing.contributionPercent + row.contributionPercent,
+      )}%`,
+      rawValueText:
+        existing.count + 1 > 1
+          ? `${existing.count + 1} sources`
+          : existing.rawValueText,
+      count: existing.count + 1,
+    });
+  });
+
+  return Array.from(grouped.values()).map(({ count, ...row }) => row);
+}
+
+function normalizeBreakdownSourceLabel(sourceLabel: string): string {
+  if (/^Team Car\s+\d+:/i.test(sourceLabel)) {
+    return "Team Cars";
+  }
+
+  return sourceLabel;
 }
 
 function getStandardizedBonusKeysForEffect(effectKey: string): string[] {
   return Object.entries(standardizedEffectKeyMap)
     .filter(([, effectKeys]) => effectKeys.includes(effectKey))
-    .map(([bonusKey]) => bonusKey)
+    .map(([bonusKey]) => bonusKey);
 }
 
 function getStandardizedContributionPercent(
   effectKey: string,
   rawValueText: string,
 ): number {
-  const rawValue = parseSignedNumericValue(rawValueText)
+  const rawValue = parseSignedNumericValue(rawValueText);
 
   if (!Number.isFinite(rawValue) || rawValue === 0) {
-    return 0
+    return 0;
   }
 
   if (negativeRawMeansPositiveContribution.has(effectKey)) {
-    return Math.abs(rawValue)
+    return Math.abs(rawValue);
   }
 
-  return Math.max(0, rawValue)
+  return Math.max(0, rawValue);
 }
 
 function parseSignedNumericValue(value: string): number {
-  const normalized = value.replace('%', '').replace('+', '').trim()
-  const numeric = Number(normalized)
+  const normalized = value.replace("%", "").replace("+", "").trim();
+  const numeric = Number(normalized);
 
-  return Number.isFinite(numeric) ? numeric : 0
+  return Number.isFinite(numeric) ? numeric : 0;
 }
 
-function getContributionEffectLabel(effectKey: string, fallback: string): string {
+function getContributionEffectLabel(
+  effectKey: string,
+  fallback: string,
+): string {
   switch (effectKey) {
-    case 'recovery_duration':
-      return 'Recovery duration support'
-    case 'daily_recovery_bonus':
-      return 'Daily recovery support'
-    case 'fatigue_floor_reduction':
-      return 'Fatigue floor control'
-    case 'injury_illness_risk':
-      return 'Injury / illness protection'
-    case 'tour_fatigue_reduction_pct':
-      return 'Tour fatigue control'
-    case 'mechanical_time_loss_reduction_pct':
-      return 'Mechanical time-loss protection'
-    case 'minor_injury_risk_reduction_pct':
-      return 'Minor-injury protection'
-    case 'race_fatigue_protection_pct':
-      return 'Race fatigue control'
+    case "recovery_duration":
+      return "Recovery duration support";
+    case "daily_recovery_bonus":
+      return "Daily recovery support";
+    case "fatigue_floor_reduction":
+      return "Fatigue floor control";
+    case "injury_illness_risk":
+      return "Injury / illness protection";
+    case "tour_fatigue_reduction_pct":
+      return "Tour fatigue control";
+    case "mechanical_time_loss_reduction_pct":
+      return "Mechanical time-loss protection";
+    case "minor_injury_risk_reduction_pct":
+      return "Minor-injury protection";
+    case "race_fatigue_protection_pct":
+      return "Race fatigue control";
     default:
-      return fallback
+      return fallback;
   }
 }
 
@@ -2333,51 +3018,929 @@ function getBreakdownForStandardizedGroup(
 ): BonusBreakdownRow[] {
   const directBreakdown = toArray<JsonRecord>(group.breakdown)
     .map((row) => normalizeBreakdownRow(row))
-    .filter(Boolean) as BonusBreakdownRow[]
+    .filter(Boolean) as BonusBreakdownRow[];
 
   if (directBreakdown.length > 0) {
-    return directBreakdown
+    return directBreakdown;
   }
 
-  const bonusKey = String(group.bonus_key ?? group.key ?? '')
+  const bonusKey = String(group.bonus_key ?? group.key ?? "");
 
-  return fallbackBreakdownByBonusKey[bonusKey] ?? []
+  return fallbackBreakdownByBonusKey[bonusKey] ?? [];
 }
 
 function normalizeBreakdownRow(row: JsonRecord): BonusBreakdownRow | null {
-  const effectKey = String(row.effect_key ?? row.key ?? '')
-  const effectLabel = String(row.effect_label ?? row.label ?? effectKey)
-  const rawValueText = String(row.raw_value ?? row.rawValue ?? row.value ?? '')
+  const effectKey = String(row.effect_key ?? row.key ?? "");
+  const effectLabel = String(row.effect_label ?? row.label ?? effectKey);
+  const rawValueText = String(row.raw_value ?? row.rawValue ?? row.value ?? "");
   const contributionRaw = String(
     row.contribution_percent ??
       row.contributionPercent ??
       row.percent ??
       row.points ??
-      '',
-  )
+      "",
+  );
 
-  const contributionPercent = parseSignedNumericValue(contributionRaw)
+  const contributionPercent = parseSignedNumericValue(contributionRaw);
 
   if (!effectLabel || !Number.isFinite(contributionPercent)) {
-    return null
+    return null;
   }
 
   return {
-    sourceType: String(row.source_type ?? ''),
-    sourceLabel: String(row.source_label ?? row.source ?? 'Bonus source'),
+    sourceType: String(row.source_type ?? ""),
+    sourceLabel: String(row.source_label ?? row.source ?? "Bonus source"),
     effectKey,
     effectLabel,
     rawValueText: rawValueText || contributionRaw,
     contributionPercent: Math.abs(contributionPercent),
-    contributionLabel: `+${formatBonusPercent(
-      Math.abs(contributionPercent),
-    )}%`,
-  }
+    contributionLabel: `+${formatBonusPercent(Math.abs(contributionPercent))}%`,
+  };
 }
 
 function formatBonusPercent(value: number): string {
-  if (!Number.isFinite(value)) return '0'
-  return value % 1 === 0 ? value.toFixed(0) : value.toFixed(1)
+  if (!Number.isFinite(value)) return "0";
+  return value % 1 === 0 ? value.toFixed(0) : value.toFixed(1);
+}
+
+type StageRiderRoleCode =
+  | "team_leader_gc"
+  | "sprinter"
+  | "lead_out_rider"
+  | "sprint_train_rider"
+  | "climber"
+  | "mountain_domestique"
+  | "helper_domestique"
+  | "breakaway_rider"
+  | "breakaway_chaser"
+  | "rouleur"
+  | "protected_rider"
+  | "free_role";
+
+type StageRiderSupplyDraft = {
+  bidons: number;
+  gels: number;
+  nutrition_packs: number;
+  race_jersey_complete: boolean;
+  rain_jacket: boolean;
+};
+
+type StageRainJacketMode = "none" | "all";
+
+type StageTeamSupplyPlan = {
+  bidonsPerRider: number;
+  gelsPerRider: number;
+  nutritionPacksPerRider: number;
+  rainJacketMode: StageRainJacketMode;
+};
+
+type StageIndividualTacticPhaseCommand = {
+  command: string;
+  from_km: number;
+  to_km: number;
+  label: string;
+};
+
+type StageIndividualTacticsByRider = Record<
+  string,
+  Record<string, StageIndividualTacticPhaseCommand>
+>;
+
+type StagePlanDraft = {
+  equipmentByRider: Record<string, string>;
+  riderRolesByRider: Record<string, StageRiderRoleCode | string>;
+  individualTacticsByRider: StageIndividualTacticsByRider;
+  suppliesByRider: Record<string, StageRiderSupplyDraft>;
+  teamTactic: {
+    plan: string;
+    notes: string;
+  };
+  lastSavedAt?: string | null;
+};
+
+const STAGE_PLAN_LOCK_HOURS_BEFORE_START = 3;
+const DEFAULT_STAGE_RIDER_ROLE: StageRiderRoleCode = "free_role";
+
+const STAGE_RIDER_ROLE_OPTIONS: Array<{
+  value: StageRiderRoleCode;
+  label: string;
+  description: string;
+}> = [
+  {
+    value: "team_leader_gc",
+    label: "Team Leader (GC)",
+    description:
+      "Main protected rider for the general classification. The team should protect this rider, reduce unnecessary fatigue, and support key race moments.",
+  },
+  {
+    value: "sprinter",
+    label: "Sprinter",
+    description:
+      "Focuses on intermediate sprints and sprint finishes whenever points or a stage win are realistically available.",
+  },
+  {
+    value: "lead_out_rider",
+    label: "Lead-out Rider",
+    description:
+      "Final helper before the sprinter launches. Gives a sprint launch and positioning bonus, but spends extra stamina late in the stage.",
+  },
+  {
+    value: "sprint_train_rider",
+    label: "Sprint Train Rider",
+    description:
+      "Earlier rider in the sprint train. Keeps speed high, protects the sprinter before the lead-out, and spends extra stamina.",
+  },
+  {
+    value: "climber",
+    label: "Climber",
+    description:
+      "Focuses on climbs and KOM points. Should contest mountain points and perform better on climbing sections.",
+  },
+  {
+    value: "mountain_domestique",
+    label: "Mountain Domestique",
+    description:
+      "Climbing helper for the Team Leader or Climber. Gives a small climbing/protection bonus while using extra stamina on climbs.",
+  },
+  {
+    value: "helper_domestique",
+    label: "Helper / Domestique",
+    description:
+      "General support rider. Protects important riders, helps chase and control, and usually loses more fatigue because he works for others.",
+  },
+  {
+    value: "breakaway_rider",
+    label: "Breakaway Rider",
+    description:
+      "Assigned to attack or join the breakaway. Higher escape priority, but faster stamina loss during the stage.",
+  },
+  {
+    value: "breakaway_chaser",
+    label: "Breakaway Chaser",
+    description:
+      "Stays near the front of the peloton and helps chase dangerous breakaways. Uses extra stamina while chasing.",
+  },
+  {
+    value: "rouleur",
+    label: "Rouleur",
+    description:
+      "Strong flat/rolling-road tempo rider. Controls pace, rides in wind, protects leaders, and chases on flat or rolling terrain.",
+  },
+  {
+    value: "protected_rider",
+    label: "Protected Rider",
+    description:
+      "Tries to stay safe in the main group, avoids attacks/chases, and loses less stamina when helpers protect him.",
+  },
+  {
+    value: "free_role",
+    label: "Free Role",
+    description:
+      "Neutral role. Stays in the group and reacts normally without special protection, attack priority, or major extra fatigue cost.",
+  },
+];
+
+const STAGE_RIDER_ROLE_LABELS = STAGE_RIDER_ROLE_OPTIONS.reduce(
+  (acc, option) => {
+    acc[option.value] = option.label;
+    return acc;
+  },
+  {} as Record<string, string>,
+);
+
+const STAGE_TACTIC_PLAN_OPTIONS: Array<{
+  value: string;
+  label: string;
+  description: string;
+}> = [
+  {
+    value: "balanced",
+    label: "Balanced",
+    description:
+      "Default all-round plan. The team rides with normal energy use, reacts to the race, and does not overcommit too early.",
+  },
+  {
+    value: "aggressive",
+    label: "Aggressive",
+    description:
+      "Higher-rhythm plan. Riders attack, chase and position more actively, but the team will usually spend more stamina.",
+  },
+  {
+    value: "sprint_control",
+    label: "Sprint Control",
+    description:
+      "The team focuses on controlling the race for a sprint finish, protecting the sprinter, and organizing the sprint train.",
+  },
+  {
+    value: "breakaway",
+    label: "Breakaway Support",
+    description:
+      "The team gives more freedom to breakaway riders and spends less effort on pure sprint control unless the race situation changes.",
+  },
+  {
+    value: "gc_protection",
+    label: "GC Protection",
+    description:
+      "Main focus is keeping the Team Leader safe, protected and well-positioned while avoiding unnecessary risks and fatigue.",
+  },
+  {
+    value: "climber_support",
+    label: "Climber Support",
+    description:
+      "The team puts more support into climbs, mountain pacing and KOM/GC support on uphill sections.",
+  },
+];
+
+const STAGE_TACTIC_PLAN_LABELS = STAGE_TACTIC_PLAN_OPTIONS.reduce(
+  (acc, option) => {
+    acc[option.value] = option.label;
+    return acc;
+  },
+  {} as Record<string, string>,
+);
+
+/**
+ * Stage tactic engine model v1.
+ *
+ * This is intentionally kept as structured data so the future race engine can
+ * implement the same meanings server-side. The UI saves role/command codes per
+ * stage; the race engine should map those codes to behavior, energy/stamina
+ * costs, fatigue pressure, and action priorities using this model.
+ *
+ * Suggested engine interpretation:
+ * - team tactic = base behavior for the whole team on the selected stage
+ * - rider role = default behavior/priority for each rider
+ * - individual phase command = optional override for one rider and one phase
+ * - final action = team tactic base + rider role + phase command + rider stats
+ */
+const STAGE_TACTIC_ENGINE_MODEL_V1 = {
+  version: "stage_tactics_engine_v1",
+  phaseCount: 4,
+  raceSituationFactors: [
+    "weather",
+    "terrain",
+    "stage_profile",
+    "fatigue",
+    "stamina",
+    "peloton_position",
+    "attacks",
+    "breakaways",
+    "crashes",
+    "injuries",
+    "mechanicals",
+    "rider_morale",
+    "rider_health",
+    "race_plan_staff_bonuses",
+    "race_plan_asset_bonuses",
+    "stage_race_supplies",
+  ],
+  teamTacticEffects: {
+    balanced: {
+      effort: "normal",
+      staminaMultiplier: 1.0,
+      fatigueMultiplier: 1.0,
+      positioning: "normal",
+      attackPriority: "normal",
+      chasePriority: "normal",
+      sprintSupport: "normal",
+      risk: "normal",
+    },
+    aggressive: {
+      effort: "high",
+      staminaMultiplier: 1.12,
+      fatigueMultiplier: 1.12,
+      positioning: "front",
+      attackPriority: "high",
+      chasePriority: "high",
+      sprintSupport: "normal",
+      risk: "medium_high",
+    },
+    sprint_control: {
+      effort: "controlled_high",
+      staminaMultiplier: 1.08,
+      fatigueMultiplier: 1.08,
+      positioning: "front",
+      attackPriority: "low",
+      chasePriority: "high",
+      sprintSupport: "high",
+      risk: "medium",
+    },
+    breakaway: {
+      effort: "selective",
+      staminaMultiplier: 1.05,
+      fatigueMultiplier: 1.05,
+      positioning: "flexible",
+      attackPriority: "high_for_breakaway_roles",
+      chasePriority: "low_to_normal",
+      sprintSupport: "low",
+      risk: "medium_high",
+    },
+    gc_protection: {
+      effort: "controlled",
+      staminaMultiplier: 1.04,
+      fatigueMultiplier: 1.04,
+      positioning: "safe_front",
+      attackPriority: "low_except_leader",
+      chasePriority: "normal",
+      sprintSupport: "low",
+      risk: "low",
+    },
+    climber_support: {
+      effort: "climb_focused",
+      staminaMultiplier: 1.08,
+      fatigueMultiplier: 1.1,
+      positioning: "front_on_climbs",
+      attackPriority: "high_on_climbs",
+      chasePriority: "normal",
+      sprintSupport: "low",
+      risk: "medium",
+    },
+  },
+  riderRoleEffects: {
+    team_leader_gc: {
+      priority: "gc",
+      protected: true,
+      staminaMultiplier: 0.96,
+      fatigueMultiplier: 0.96,
+      attackIntent: "selective_key_moments",
+      sprintIntent: "low",
+      komIntent: "situational",
+      supportTarget: "self",
+    },
+    sprinter: {
+      priority: "sprints",
+      protected: true,
+      staminaMultiplier: 1.0,
+      fatigueMultiplier: 1.0,
+      attackIntent: "low",
+      sprintIntent: "high_when_points_available",
+      komIntent: "low",
+      supportTarget: "self",
+    },
+    lead_out_rider: {
+      priority: "sprint_support_final",
+      protected: false,
+      staminaMultiplier: 1.14,
+      fatigueMultiplier: 1.14,
+      attackIntent: "low",
+      sprintIntent: "support_only",
+      komIntent: "low",
+      supportTarget: "sprinter",
+    },
+    sprint_train_rider: {
+      priority: "sprint_support_setup",
+      protected: false,
+      staminaMultiplier: 1.1,
+      fatigueMultiplier: 1.1,
+      attackIntent: "low",
+      sprintIntent: "support_only",
+      komIntent: "low",
+      supportTarget: "sprinter",
+    },
+    climber: {
+      priority: "kom_and_climbs",
+      protected: false,
+      staminaMultiplier: 1.06,
+      fatigueMultiplier: 1.08,
+      attackIntent: "high_on_climbs",
+      sprintIntent: "low",
+      komIntent: "high_when_points_available",
+      supportTarget: "self",
+    },
+    mountain_domestique: {
+      priority: "climb_support",
+      protected: false,
+      staminaMultiplier: 1.12,
+      fatigueMultiplier: 1.14,
+      attackIntent: "low",
+      sprintIntent: "low",
+      komIntent: "support_only",
+      supportTarget: "team_leader_or_climber",
+    },
+    helper_domestique: {
+      priority: "general_support",
+      protected: false,
+      staminaMultiplier: 1.12,
+      fatigueMultiplier: 1.12,
+      attackIntent: "low",
+      sprintIntent: "low",
+      komIntent: "low",
+      supportTarget: "protected_riders",
+    },
+    breakaway_rider: {
+      priority: "breakaway",
+      protected: false,
+      staminaMultiplier: 1.16,
+      fatigueMultiplier: 1.16,
+      attackIntent: "high",
+      sprintIntent: "situational",
+      komIntent: "situational",
+      supportTarget: "self",
+    },
+    breakaway_chaser: {
+      priority: "chase",
+      protected: false,
+      staminaMultiplier: 1.14,
+      fatigueMultiplier: 1.14,
+      attackIntent: "low",
+      sprintIntent: "low",
+      komIntent: "low",
+      supportTarget: "team",
+    },
+    rouleur: {
+      priority: "tempo_control_wind_chase",
+      protected: false,
+      staminaMultiplier: 1.1,
+      fatigueMultiplier: 1.1,
+      attackIntent: "low_to_normal",
+      sprintIntent: "low",
+      komIntent: "low",
+      supportTarget: "team",
+    },
+    protected_rider: {
+      priority: "safe_finish_main_group",
+      protected: true,
+      staminaMultiplier: 0.94,
+      fatigueMultiplier: 0.94,
+      attackIntent: "none",
+      sprintIntent: "none_unless_forced",
+      komIntent: "none_unless_forced",
+      supportTarget: "self",
+    },
+    free_role: {
+      priority: "neutral",
+      protected: false,
+      staminaMultiplier: 1.0,
+      fatigueMultiplier: 1.0,
+      attackIntent: "normal_opportunistic",
+      sprintIntent: "normal_if_suitable",
+      komIntent: "normal_if_suitable",
+      supportTarget: "self",
+    },
+  },
+  individualCommandEffects: {
+    follow_team_plan: {
+      overrideStrength: 0,
+      staminaMultiplier: 1.0,
+      fatigueMultiplier: 1.0,
+      mainEffect: "use_team_tactic_and_rider_role",
+    },
+    protect_leader: {
+      overrideStrength: 0.75,
+      staminaMultiplier: 1.12,
+      fatigueMultiplier: 1.12,
+      mainEffect: "protect_leader_or_protected_rider",
+    },
+    conserve_energy: {
+      overrideStrength: 0.65,
+      staminaMultiplier: 0.88,
+      fatigueMultiplier: 0.88,
+      mainEffect: "reduce_work_and_stay_sheltered",
+    },
+    stay_near_front: {
+      overrideStrength: 0.55,
+      staminaMultiplier: 1.05,
+      fatigueMultiplier: 1.05,
+      mainEffect: "improve_positioning_and_safety",
+    },
+    control_tempo: {
+      overrideStrength: 0.8,
+      staminaMultiplier: 1.14,
+      fatigueMultiplier: 1.14,
+      mainEffect: "ride_front_and_control_speed",
+    },
+    chase_breakaway: {
+      overrideStrength: 0.85,
+      staminaMultiplier: 1.16,
+      fatigueMultiplier: 1.16,
+      mainEffect: "close_gap_to_breakaway",
+    },
+    attack: {
+      overrideStrength: 0.9,
+      staminaMultiplier: 1.18,
+      fatigueMultiplier: 1.18,
+      mainEffect: "try_to_attack_or_create_split",
+    },
+    join_breakaway: {
+      overrideStrength: 0.9,
+      staminaMultiplier: 1.18,
+      fatigueMultiplier: 1.18,
+      mainEffect: "try_to_enter_or_follow_breakaway",
+    },
+    lead_out: {
+      overrideStrength: 0.8,
+      staminaMultiplier: 1.16,
+      fatigueMultiplier: 1.16,
+      mainEffect: "support_sprinter_before_sprint",
+    },
+    sprint: {
+      overrideStrength: 0.85,
+      staminaMultiplier: 1.2,
+      fatigueMultiplier: 1.2,
+      mainEffect: "contest_sprint_points_or_finish",
+    },
+    climb_hard: {
+      overrideStrength: 0.85,
+      staminaMultiplier: 1.18,
+      fatigueMultiplier: 1.2,
+      mainEffect: "increase_effort_on_climbs_or_kom",
+    },
+    avoid_risks: {
+      overrideStrength: 0.6,
+      staminaMultiplier: 0.94,
+      fatigueMultiplier: 0.94,
+      mainEffect: "prioritize_safety_and_group_finish",
+    },
+  },
+} as const;
+
+const STAGE_INDIVIDUAL_TACTIC_OPTIONS: Array<{
+  value: string;
+  label: string;
+  description: string;
+}> = [
+  {
+    value: "follow_team_plan",
+    label: "Follow Team Plan",
+    description:
+      "Default command. The rider follows the selected team tactic and role without extra individual risk or extra stamina cost.",
+  },
+  {
+    value: "protect_leader",
+    label: "Protect Leader",
+    description:
+      "The rider focuses on protecting the Team Leader or Protected Rider. Helpful for safety and fatigue protection, but costs more stamina.",
+  },
+  {
+    value: "conserve_energy",
+    label: "Conserve Energy",
+    description:
+      "The rider stays sheltered and avoids unnecessary work. Lower stamina cost, but lower chance to attack, chase or contest points.",
+  },
+  {
+    value: "stay_near_front",
+    label: "Stay Near Front",
+    description:
+      "The rider tries to stay in the front part of the peloton for positioning, safety and tactical reaction.",
+  },
+  {
+    value: "control_tempo",
+    label: "Control Tempo",
+    description:
+      "The rider works on the front to control pace. Useful for GC or sprint teams, but increases fatigue.",
+  },
+  {
+    value: "chase_breakaway",
+    label: "Chase Breakaway",
+    description:
+      "The rider helps close gaps to breakaways. Strong effect in chase phases, but uses extra stamina.",
+  },
+  {
+    value: "attack",
+    label: "Attack",
+    description:
+      "The rider looks for an attacking move in this phase. Higher chance to create a split or escape, with higher stamina cost.",
+  },
+  {
+    value: "join_breakaway",
+    label: "Join Breakaway",
+    description:
+      "The rider actively tries to enter or follow a breakaway move during this phase.",
+  },
+  {
+    value: "lead_out",
+    label: "Lead-out",
+    description:
+      "The rider works to position and launch a sprinter. Best used in the final phase before a likely sprint.",
+  },
+  {
+    value: "sprint",
+    label: "Sprint",
+    description:
+      "The rider contests sprint points or the finish if a sprint opportunity exists in this phase.",
+  },
+  {
+    value: "climb_hard",
+    label: "Climb Hard",
+    description:
+      "The rider increases effort on climbs. Useful for KOM points, climbing attacks or protecting a leader uphill.",
+  },
+  {
+    value: "avoid_risks",
+    label: "Avoid Risks",
+    description:
+      "The rider prioritizes safety and finishing in the group over attacks, sprints or aggressive chasing.",
+  },
+];
+
+const STAGE_INDIVIDUAL_TACTIC_LABELS = STAGE_INDIVIDUAL_TACTIC_OPTIONS.reduce(
+  (acc, option) => {
+    acc[option.value] = option.label;
+    return acc;
+  },
+  {} as Record<string, string>,
+);
+
+function getStagePlanKey(stage?: JsonRecord | null): string {
+  if (!stage) return "";
+  return String(stage.id ?? stage.stage_id ?? stage.stage_number ?? "");
+}
+
+function findSavedStagePlan(
+  stagePlans: JsonRecord[],
+  stage: JsonRecord | null,
+): JsonRecord | null {
+  if (!stage) return null;
+
+  const stageId = String(stage.id ?? "");
+  const stageNumber = String(stage.stage_number ?? "");
+
+  return (
+    stagePlans.find((plan) => {
+      const planStageId = String(plan.stage_id ?? "");
+      const planStageNumber = String(plan.stage_number ?? "");
+
+      return (
+        (stageId && planStageId && planStageId === stageId) ||
+        (stageNumber && planStageNumber && planStageNumber === stageNumber)
+      );
+    }) ?? null
+  );
+}
+
+function getStageDistanceNumber(stage?: JsonRecord | null): number {
+  if (!stage) return 0;
+
+  const direct = Number(stage.distance_km ?? stage.stage_distance_km);
+
+  if (Number.isFinite(direct) && direct > 0) return direct;
+
+  const metadata = asRecord(stage.metadata);
+  const profile = asRecord(metadata.route_profile_v1);
+  const fallback = Number(profile.distance_km);
+
+  return Number.isFinite(fallback) && fallback > 0 ? fallback : 0;
+}
+
+function formatKmRangeValue(value: number): string {
+  if (!Number.isFinite(value)) return "0";
+  return value % 1 === 0 ? value.toFixed(0) : value.toFixed(1);
+}
+
+function getStagePhaseRanges(stage?: JsonRecord | null) {
+  const distance = getStageDistanceNumber(stage);
+  const safeDistance = distance > 0 ? distance : 120;
+  const phaseLength = safeDistance / 4;
+
+  return [0, 1, 2, 3].map((index) => {
+    const from = index === 0 ? 0 : Number((phaseLength * index).toFixed(1));
+    const to =
+      index === 3
+        ? Number(safeDistance.toFixed(1))
+        : Number((phaseLength * (index + 1)).toFixed(1));
+
+    return {
+      key: `phase_${index + 1}`,
+      number: index + 1,
+      fromKm: from,
+      toKm: to,
+      label: `Phase ${index + 1}`,
+      rangeLabel: `${formatKmRangeValue(from)}–${formatKmRangeValue(to)} km`,
+    };
+  });
+}
+
+function createDefaultIndividualTacticsForRider(
+  stage?: JsonRecord | null,
+): Record<string, StageIndividualTacticPhaseCommand> {
+  return getStagePhaseRanges(stage).reduce(
+    (acc, phase) => {
+      acc[phase.key] = {
+        command: "follow_team_plan",
+        from_km: phase.fromKm,
+        to_km: phase.toKm,
+        label: `${phase.label}: ${phase.rangeLabel}`,
+      };
+      return acc;
+    },
+    {} as Record<string, StageIndividualTacticPhaseCommand>,
+  );
+}
+
+function normalizeIndividualTacticsForRider(
+  value: unknown,
+  stage?: JsonRecord | null,
+): Record<string, StageIndividualTacticPhaseCommand> {
+  const saved = asRecord(value);
+  const fallback = createDefaultIndividualTacticsForRider(stage);
+
+  getStagePhaseRanges(stage).forEach((phase) => {
+    const savedPhase = asRecord(saved[phase.key]);
+    const savedCommand = String(savedPhase.command ?? saved[phase.key] ?? "");
+    const command = STAGE_INDIVIDUAL_TACTIC_LABELS[savedCommand]
+      ? savedCommand
+      : "follow_team_plan";
+
+    fallback[phase.key] = {
+      command,
+      from_km: phase.fromKm,
+      to_km: phase.toKm,
+      label: `${phase.label}: ${phase.rangeLabel}`,
+    };
+  });
+
+  return fallback;
+}
+
+function normalizeRiderSupplyDraft(value: unknown): StageRiderSupplyDraft {
+  const record = asRecord(value);
+
+  return {
+    bidons: Number(record.bidons ?? record.bidons_water_bottles ?? 2),
+    gels: Number(record.gels ?? record.energy_gels ?? 2),
+    nutrition_packs: Number(record.nutrition_packs ?? 1),
+    race_jersey_complete: Boolean(
+      record.race_jersey_complete ?? record.race_jersey ?? true,
+    ),
+    rain_jacket: Boolean(record.rain_jacket ?? record.rain_jackets ?? false),
+  };
+}
+
+function createStagePlanDraft({
+  riders,
+  equipmentPresetOptions,
+  savedPlan,
+  stage,
+}: {
+  riders: JsonRecord[];
+  equipmentPresetOptions: EquipmentSetupPresetOption[];
+  savedPlan?: JsonRecord | null;
+  stage?: JsonRecord | null;
+}): StagePlanDraft {
+  const savedEquipment = asRecord(
+    savedPlan?.rider_equipment_json ?? savedPlan?.equipment_json,
+  );
+  const savedRoles = asRecord(savedPlan?.rider_roles_json);
+  const savedSupplies = asRecord(savedPlan?.rider_supplies_json);
+  const savedTactic = asRecord(savedPlan?.team_tactic_json);
+  const savedIndividualTactics = asRecord(
+    savedPlan?.rider_individual_tactics_json ??
+      savedPlan?.individual_tactics_json ??
+      savedTactic.individual_tactics_by_rider ??
+      savedTactic.rider_individual_tactics_json,
+  );
+  const defaultPresetId = equipmentPresetOptions[0]?.id ?? "";
+
+  const equipmentByRider: Record<string, string> = {};
+  const riderRolesByRider: Record<string, StageRiderRoleCode | string> = {};
+  const individualTacticsByRider: StageIndividualTacticsByRider = {};
+  const suppliesByRider: Record<string, StageRiderSupplyDraft> = {};
+
+  riders.forEach((rider) => {
+    const riderId = String(rider.id ?? "");
+    if (!riderId) return;
+
+    equipmentByRider[riderId] = String(
+      savedEquipment[riderId] ?? defaultPresetId,
+    );
+    riderRolesByRider[riderId] = String(
+      savedRoles[riderId] ?? DEFAULT_STAGE_RIDER_ROLE,
+    );
+    individualTacticsByRider[riderId] = normalizeIndividualTacticsForRider(
+      savedIndividualTactics[riderId],
+      stage,
+    );
+    suppliesByRider[riderId] = normalizeRiderSupplyDraft(
+      savedSupplies[riderId],
+    );
+  });
+
+  return {
+    equipmentByRider,
+    riderRolesByRider,
+    individualTacticsByRider,
+    suppliesByRider,
+    teamTactic: {
+      plan: String(savedTactic.plan ?? savedPlan?.team_strategy ?? "balanced"),
+      notes: String(savedTactic.notes ?? savedPlan?.tactical_notes ?? ""),
+    },
+    lastSavedAt: savedPlan?.last_saved_at
+      ? String(savedPlan.last_saved_at)
+      : null,
+  };
+}
+
+function parseGameTimestamp(value: unknown): number | null {
+  if (!value) return null;
+  const text = String(value).trim();
+  if (!text) return null;
+
+  const normalized = text.includes("T") ? text : text.replace(" ", "T");
+  const parsed = Date.parse(normalized);
+
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function getStageStartTimestamp(stage: JsonRecord): number | null {
+  const dateText = String(
+    stage.stage_date ?? stage.date ?? stage.start_date ?? "",
+  ).slice(0, 10);
+
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dateText)) return null;
+
+  const hour = Number(
+    stage.planned_start_hour_number ??
+      stage.planned_start_hour ??
+      stage.start_hour ??
+      0,
+  );
+  const minute = Number(stage.planned_start_minute ?? stage.start_minute ?? 0);
+
+  const safeHour = Number.isFinite(hour) ? Math.max(0, Math.min(23, hour)) : 0;
+  const safeMinute = Number.isFinite(minute)
+    ? Math.max(0, Math.min(59, minute))
+    : 0;
+
+  return Date.parse(
+    `${dateText}T${String(safeHour).padStart(2, "0")}:${String(
+      safeMinute,
+    ).padStart(2, "0")}:00`,
+  );
+}
+
+function formatGameTimestampLabel(value: number | null) {
+  if (value === null || !Number.isFinite(value)) return "—";
+
+  const date = new Date(value);
+  const season = date.getUTCFullYear() - 1999;
+  const weekday = date.toLocaleDateString(undefined, {
+    weekday: "short",
+    timeZone: "UTC",
+  });
+  const monthLabel = monthLabels[date.getUTCMonth()] ?? "—";
+  const day = String(date.getUTCDate()).padStart(2, "0");
+  const hour = String(date.getUTCHours()).padStart(2, "0");
+  const minute = String(date.getUTCMinutes()).padStart(2, "0");
+
+  return `S${season} · ${weekday} · ${monthLabel} ${day} · ${hour}:${minute}`;
+}
+
+function getStagePlanLockInfo({
+  stage,
+  currentGameTimestamp,
+}: {
+  stage: JsonRecord | null;
+  currentGameTimestamp?: string;
+}) {
+  const baseLabel = `Locks ${STAGE_PLAN_LOCK_HOURS_BEFORE_START} hours before stage start`;
+
+  if (!stage) {
+    return {
+      isLocked: false,
+      lockLabel: baseLabel,
+      lockMessage: "",
+      statusLabel: "Open",
+      statusTone: "open" as const,
+      statusHint: "Select a stage to see the exact lock time.",
+      lockAtLabel: "—",
+      stageStartLabel: "—",
+    };
+  }
+
+  const stageStartTs = getStageStartTimestamp(stage);
+  const currentTs = parseGameTimestamp(currentGameTimestamp);
+
+  if (stageStartTs === null || currentTs === null) {
+    return {
+      isLocked: false,
+      lockLabel: baseLabel,
+      lockMessage: "",
+      statusLabel: "Open",
+      statusTone: "open" as const,
+      statusHint: "Exact lock timing is not available from the current data.",
+      lockAtLabel: "—",
+      stageStartLabel: "—",
+    };
+  }
+
+  const lockTs =
+    stageStartTs - STAGE_PLAN_LOCK_HOURS_BEFORE_START * 60 * 60 * 1000;
+  const isLocked = currentTs >= lockTs;
+
+  return {
+    isLocked,
+    lockLabel: baseLabel,
+    lockAtLabel: formatGameTimestampLabel(lockTs),
+    stageStartLabel: formatGameTimestampLabel(stageStartTs),
+    statusLabel: isLocked ? "Locked" : "Open",
+    statusTone: isLocked ? ("locked" as const) : ("open" as const),
+    statusHint: isLocked
+      ? "This stage plan is locked because the current game time is already at or after the stage lock time."
+      : "This stage plan is still open and can be edited until the lock time is reached.",
+    lockMessage: isLocked
+      ? `Stage Plan locked. This stage starts in less than ${STAGE_PLAN_LOCK_HOURS_BEFORE_START} hours, so changes can no longer be saved.`
+      : "",
+  };
 }
 
 function StagePlansTab({
@@ -2386,94 +3949,193 @@ function StagePlansTab({
   raceId,
   selectedRiders,
   equipmentPresetOptions,
+  supplyOptions,
+  standardizedBonus,
+  exactBonusPreview,
   selectedStageIdFromUrl,
   onOpenRacePreview,
 }: {
-  target: RacePreparationTarget | null
-  packageSubmitted: boolean
-  raceId: UUID | null
-  selectedRiders: JsonRecord[]
-  equipmentPresetOptions: EquipmentSetupPresetOption[]
-  selectedStageIdFromUrl?: string | null
-  onOpenRacePreview: (raceId: UUID) => void
+  target: RacePreparationTarget | null;
+  packageSubmitted: boolean;
+  raceId: UUID | null;
+  selectedRiders: JsonRecord[];
+  equipmentPresetOptions: EquipmentSetupPresetOption[];
+  supplyOptions: RaceSupplyOption[];
+  standardizedBonus: JsonRecord;
+  exactBonusPreview: JsonRecord;
+  selectedStageIdFromUrl?: string | null;
+  onOpenRacePreview: (raceId: UUID) => void;
 }) {
-  const stages = target?.stages ?? []
-  const [selectedStageIndex, setSelectedStageIndex] = useState(0)
+  const stages = target?.stages ?? [];
+  const stagePlans = target?.stage_plans ?? [];
+  const [selectedStageIndex, setSelectedStageIndex] = useState(0);
+  const [stageDraftsByStageKey, setStageDraftsByStageKey] = useState<
+    Record<string, StagePlanDraft>
+  >({});
+  const [savingStagePlan, setSavingStagePlan] = useState(false);
+  const [stageSaveMessage, setStageSaveMessage] = useState<string | null>(null);
+  const [stageSaveError, setStageSaveError] = useState<string | null>(null);
 
-  const selectedStage = stages[selectedStageIndex] ?? stages[0] ?? null
+  const selectedStage = stages[selectedStageIndex] ?? stages[0] ?? null;
+  const selectedStageKey = getStagePlanKey(selectedStage);
+  const selectedSavedStagePlan = findSavedStagePlan(stagePlans, selectedStage);
+  const selectedDraft =
+    (selectedStageKey && stageDraftsByStageKey[selectedStageKey]) ||
+    createStagePlanDraft({
+      riders: selectedRiders,
+      equipmentPresetOptions,
+      savedPlan: selectedSavedStagePlan,
+      stage: selectedStage,
+    });
+
+  const lockInfo = getStagePlanLockInfo({
+    stage: selectedStage,
+    currentGameTimestamp: target?.current_game_timestamp,
+  });
+
+  const stageSaveDisabled =
+    !packageSubmitted ||
+    !selectedStage ||
+    !selectedStageKey ||
+    lockInfo.isLocked ||
+    savingStagePlan;
 
   useEffect(() => {
-    if (!selectedStageIdFromUrl) return
+    if (!selectedStageIdFromUrl) return;
 
     const index = stages.findIndex(
       (stage) => String(stage.id) === selectedStageIdFromUrl,
-    )
+    );
 
     if (index >= 0) {
-      setSelectedStageIndex(index)
+      setSelectedStageIndex(index);
     }
-  }, [selectedStageIdFromUrl, stages])
-
-  const [equipmentByRider, setEquipmentByRider] = useState<
-    Record<string, string>
-  >({})
-  const [suppliesByRider, setSuppliesByRider] = useState<
-    Record<
-      string,
-      {
-        bidons: number
-        gels: number
-        nutrition_packs: number
-        rain_jacket: boolean
-      }
-    >
-  >({})
-  const [teamTactic, setTeamTactic] = useState({
-    plan: 'balanced',
-    notes: '',
-  })
+  }, [selectedStageIdFromUrl, stages]);
 
   useEffect(() => {
-    if (!selectedStage) return
+    const next: Record<string, StagePlanDraft> = {};
 
-    setEquipmentByRider((prev) => {
-      let changed = false
-      const next = { ...prev }
+    stages.forEach((stage) => {
+      const key = getStagePlanKey(stage);
+      if (!key) return;
 
-      selectedRiders.forEach((rider) => {
-        const riderId = String(rider.id ?? '')
-        if (!riderId || next[riderId]) return
+      next[key] = createStagePlanDraft({
+        riders: selectedRiders,
+        equipmentPresetOptions,
+        savedPlan: findSavedStagePlan(stagePlans, stage),
+        stage,
+      });
+    });
 
-        next[riderId] = equipmentPresetOptions[0]?.id ?? ''
-        changed = true
-      })
+    setStageDraftsByStageKey(next);
+    setStageSaveMessage(null);
+    setStageSaveError(null);
+  }, [
+    target?.preparation?.id,
+    stages,
+    stagePlans,
+    selectedRiders,
+    equipmentPresetOptions,
+  ]);
 
-      return changed ? next : prev
-    })
+  function updateSelectedStageDraft(
+    updater: (current: StagePlanDraft) => StagePlanDraft,
+  ) {
+    if (!selectedStageKey) return;
 
-    setSuppliesByRider((prev) => {
-      let changed = false
-      const next = { ...prev }
+    setStageDraftsByStageKey((prev) => {
+      const current =
+        prev[selectedStageKey] ??
+        createStagePlanDraft({
+          riders: selectedRiders,
+          equipmentPresetOptions,
+          savedPlan: selectedSavedStagePlan,
+          stage: selectedStage,
+        });
 
-      selectedRiders.forEach((rider) => {
-        const riderId = String(rider.id ?? '')
-        if (!riderId || next[riderId]) return
+      return {
+        ...prev,
+        [selectedStageKey]: updater(current),
+      };
+    });
 
-        next[riderId] = {
-          bidons: 2,
-          gels: 2,
-          nutrition_packs: 1,
-          rain_jacket: false,
-        }
-        changed = true
-      })
+    setStageSaveMessage(null);
+    setStageSaveError(null);
+  }
 
-      return changed ? next : prev
-    })
-  }, [selectedStage, selectedRiders, equipmentPresetOptions])
+  async function handleSaveStagePlan() {
+    if (!target || !selectedStage || !selectedStageKey) return;
+
+    const preparation = asRecord(target.preparation);
+    const race = asRecord(target.race);
+    const entry = asRecord(target.entry);
+    const racePreparationId = String(preparation.id ?? "");
+    const resolvedRaceId = String(race.id ?? raceId ?? "");
+    const clubId = String(preparation.club_id ?? entry.club_id ?? "");
+    const stageNumber = Number(
+      selectedStage.stage_number ?? selectedStageIndex + 1,
+    );
+    const selectedStageId = String(selectedStage.id ?? "");
+
+    if (!racePreparationId || !resolvedRaceId || !clubId || !stageNumber) {
+      setStageSaveError(
+        "Cannot save this stage plan because required IDs are missing.",
+      );
+      return;
+    }
+
+    if (lockInfo.isLocked) {
+      setStageSaveError(lockInfo.lockMessage);
+      return;
+    }
+
+    setSavingStagePlan(true);
+    setStageSaveMessage(null);
+    setStageSaveError(null);
+
+    try {
+      const result = await saveRaceStagePlan({
+        club_id: clubId,
+        race_preparation_id: racePreparationId,
+        race_id: resolvedRaceId,
+        stage_id: selectedStageId || null,
+        stage_number: stageNumber,
+        team_tactic_json: {
+          ...selectedDraft.teamTactic,
+          engine_model_version: STAGE_TACTIC_ENGINE_MODEL_V1.version,
+          race_situation_factors:
+            STAGE_TACTIC_ENGINE_MODEL_V1.raceSituationFactors,
+          individual_tactics_by_rider: selectedDraft.individualTacticsByRider,
+          stage_phase_ranges: getStagePhaseRanges(selectedStage),
+        },
+        rider_roles_json: selectedDraft.riderRolesByRider,
+        rider_equipment_json: selectedDraft.equipmentByRider,
+        rider_supplies_json: selectedDraft.suppliesByRider,
+      });
+
+      setStageDraftsByStageKey((prev) => ({
+        ...prev,
+        [selectedStageKey]: {
+          ...selectedDraft,
+          lastSavedAt:
+            typeof result.last_saved_at === "string"
+              ? result.last_saved_at
+              : new Date().toISOString(),
+        },
+      }));
+
+      setStageSaveMessage("Stage Plan saved for this stage.");
+    } catch (error) {
+      setStageSaveError(
+        error instanceof Error ? error.message : "Failed to save Stage Plan.",
+      );
+    } finally {
+      setSavingStagePlan(false);
+    }
+  }
 
   if (!target?.has_target) {
-    return <EmptyCard message="No accepted race selected." />
+    return <EmptyCard message="No accepted race selected." />;
   }
 
   return (
@@ -2486,7 +4148,8 @@ function StagePlansTab({
             </h2>
             <p className="mt-1 text-sm text-slate-600">
               Select a stage below to review its profile, then configure
-              equipment, stage supplies and tactics for that stage.
+              equipment, team tactics and optional individual tactics for that
+              stage.
             </p>
           </div>
 
@@ -2501,7 +4164,9 @@ function StagePlansTab({
           )}
         </div>
 
-        {selectedStage && <SelectedStagePlanProfileCard stage={selectedStage} />}
+        {selectedStage && (
+          <SelectedStagePlanProfileCard stage={selectedStage} />
+        )}
       </section>
 
       {!packageSubmitted && (
@@ -2511,53 +4176,250 @@ function StagePlansTab({
         </div>
       )}
 
+      <div
+        className={[
+          "rounded-2xl border px-4 py-3 shadow-sm",
+          lockInfo.statusTone === "locked"
+            ? "border-red-200 bg-red-50"
+            : "border-emerald-200 bg-emerald-50",
+        ].join(" ")}
+      >
+        <div className="flex flex-wrap items-center gap-2 text-sm">
+          <span className="font-semibold text-slate-900">Stage Plan lock</span>
+          <span className="text-slate-400">·</span>
+          <span className="text-slate-700">
+            Lock time: {lockInfo.lockAtLabel}
+          </span>
+          <span className="text-slate-400">·</span>
+          <span className="text-slate-700">
+            Stage start: {lockInfo.stageStartLabel}
+          </span>
+          <span className="text-slate-400">·</span>
+          <span
+            className={[
+              "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold",
+              lockInfo.statusTone === "locked"
+                ? "bg-red-100 text-red-700"
+                : "bg-emerald-100 text-emerald-700",
+            ].join(" ")}
+          >
+            Status: {lockInfo.statusLabel}
+          </span>
+        </div>
+
+        <div
+          className={[
+            "mt-1 text-sm",
+            lockInfo.statusTone === "locked"
+              ? "text-red-700"
+              : "text-emerald-700",
+          ].join(" ")}
+        >
+          {lockInfo.statusHint}
+        </div>
+      </div>
+
       <StageCardsScroller
         stages={stages}
         selectedStageIndex={selectedStageIndex}
-        onSelectStage={setSelectedStageIndex}
+        onSelectStage={(index) => {
+          setSelectedStageIndex(index);
+          setStageSaveMessage(null);
+          setStageSaveError(null);
+        }}
       />
 
-      <section className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
+        <div className="space-y-1 text-sm text-slate-600">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="font-semibold text-slate-900">
+              Selected stage save
+            </span>
+            <span className="text-slate-400">·</span>
+            <span>{lockInfo.lockLabel}</span>
+            <span className="text-slate-400">·</span>
+            <span>Lock time: {lockInfo.lockAtLabel}</span>
+            <span className="text-slate-400">·</span>
+            <span
+              className={[
+                "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold",
+                lockInfo.statusTone === "locked"
+                  ? "bg-red-100 text-red-700"
+                  : "bg-emerald-100 text-emerald-700",
+              ].join(" ")}
+            >
+              {lockInfo.statusLabel}
+            </span>
+          </div>
+          <div>
+            {selectedDraft.lastSavedAt ? (
+              <span>
+                Last saved {formatTimestampLabel(selectedDraft.lastSavedAt)}
+              </span>
+            ) : (
+              <span>Not saved yet</span>
+            )}
+          </div>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => void handleSaveStagePlan()}
+          disabled={stageSaveDisabled}
+          className="rounded-xl bg-yellow-400 px-4 py-2 text-sm font-semibold text-slate-950 shadow-sm hover:bg-yellow-300 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500"
+        >
+          {savingStagePlan ? "Saving…" : "Save Stage Plan"}
+        </button>
+      </div>
+
+      {stageSaveMessage && (
+        <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800">
+          {stageSaveMessage}
+        </div>
+      )}
+
+      {stageSaveError && (
+        <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-800">
+          {stageSaveError}
+        </div>
+      )}
+
+      <section className="grid items-stretch gap-6 xl:grid-cols-2">
         <StageRiderEquipmentCard
           riders={selectedRiders}
           equipmentPresetOptions={equipmentPresetOptions}
-          equipmentByRider={equipmentByRider}
+          equipmentByRider={selectedDraft.equipmentByRider}
           onChange={(riderId, presetId) =>
-            setEquipmentByRider((prev) => ({
-              ...prev,
-              [riderId]: presetId,
+            updateSelectedStageDraft((current) => ({
+              ...current,
+              equipmentByRider: {
+                ...current.equipmentByRider,
+                [riderId]: presetId,
+              },
             }))
           }
-          disabled={!packageSubmitted}
+          onSave={() => void handleSaveStagePlan()}
+          saveDisabled={stageSaveDisabled}
+          saving={savingStagePlan}
+          disabled={!packageSubmitted || lockInfo.isLocked}
         />
 
         <StageTeamTacticCard
-          value={teamTactic}
-          onChange={setTeamTactic}
-          disabled={!packageSubmitted}
+          riders={selectedRiders}
+          value={selectedDraft.teamTactic}
+          riderRolesByRider={selectedDraft.riderRolesByRider}
+          onChange={(teamTactic) =>
+            updateSelectedStageDraft((current) => ({
+              ...current,
+              teamTactic,
+            }))
+          }
+          onRoleChange={(riderId, role) =>
+            updateSelectedStageDraft((current) => ({
+              ...current,
+              riderRolesByRider: {
+                ...current.riderRolesByRider,
+                [riderId]: role,
+              },
+            }))
+          }
+          onSave={() => void handleSaveStagePlan()}
+          saveDisabled={stageSaveDisabled}
+          saving={savingStagePlan}
+          disabled={!packageSubmitted || lockInfo.isLocked}
         />
       </section>
 
-      <StageRiderSuppliesCard
+      <StageIndividualTacticsCard
+        stage={selectedStage}
         riders={selectedRiders}
-        suppliesByRider={suppliesByRider}
-        onChange={(riderId, patch) =>
-          setSuppliesByRider((prev) => ({
-            ...prev,
-            [riderId]: {
-              bidons: 0,
-              gels: 0,
-              nutrition_packs: 0,
-              rain_jacket: false,
-              ...prev[riderId],
-              ...patch,
-            },
-          }))
+        individualTacticsByRider={selectedDraft.individualTacticsByRider}
+        onChange={(riderId, phaseKey, command) =>
+          updateSelectedStageDraft((current) => {
+            const riderTactics =
+              current.individualTacticsByRider[riderId] ??
+              createDefaultIndividualTacticsForRider(selectedStage);
+
+            const phase = getStagePhaseRanges(selectedStage).find(
+              (item) => item.key === phaseKey,
+            );
+
+            return {
+              ...current,
+              individualTacticsByRider: {
+                ...current.individualTacticsByRider,
+                [riderId]: {
+                  ...riderTactics,
+                  [phaseKey]: {
+                    command,
+                    from_km:
+                      phase?.fromKm ?? riderTactics[phaseKey]?.from_km ?? 0,
+                    to_km: phase?.toKm ?? riderTactics[phaseKey]?.to_km ?? 0,
+                    label: phase
+                      ? `${phase.label}: ${phase.rangeLabel}`
+                      : (riderTactics[phaseKey]?.label ?? phaseKey),
+                  },
+                },
+              },
+            };
+          })
         }
-        disabled={!packageSubmitted}
+        onSave={() => void handleSaveStagePlan()}
+        saveDisabled={stageSaveDisabled}
+        saving={savingStagePlan}
+        disabled={!packageSubmitted || lockInfo.isLocked}
       />
+
+      <section className="grid gap-6 xl:grid-cols-2">
+        <StageRaceSuppliesCard
+          stage={selectedStage}
+          riders={selectedRiders}
+          supplyOptions={supplyOptions}
+          suppliesByRider={selectedDraft.suppliesByRider}
+          onApplyTeamPlan={(teamPlan) =>
+            updateSelectedStageDraft((current) => ({
+              ...current,
+              suppliesByRider: buildSuppliesByRiderFromTeamPlan(
+                selectedRiders,
+                teamPlan,
+                selectedStage,
+              ),
+            }))
+          }
+          onSave={() => void handleSaveStagePlan()}
+          saveDisabled={stageSaveDisabled}
+          saving={savingStagePlan}
+          disabled={!packageSubmitted || lockInfo.isLocked}
+        />
+
+        <StageFinalCalculationCard
+          stage={selectedStage}
+          riders={selectedRiders}
+          draft={selectedDraft}
+          equipmentPresetOptions={equipmentPresetOptions}
+          supplyOptions={supplyOptions}
+          standardizedBonus={standardizedBonus}
+          exactBonusPreview={exactBonusPreview}
+          onSave={() => void handleSaveStagePlan()}
+          saveDisabled={stageSaveDisabled}
+          saving={savingStagePlan}
+        />
+      </section>
     </div>
-  )
+  );
+}
+
+function formatTimestampLabel(value: string): string {
+  const parsed = new Date(value);
+
+  if (!Number.isFinite(parsed.getTime())) return value;
+
+  return parsed.toLocaleString(undefined, {
+    month: "short",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 }
 
 function getStageDisplayName(stage: JsonRecord, fallbackNumber: string) {
@@ -2567,117 +4429,303 @@ function getStageDisplayName(stage: JsonRecord, fallbackNumber: string) {
       stage.name ??
       stage.route_label ??
       `Stage ${fallbackNumber}`,
-  )
+  );
 }
 
 function getStageRoute(stage: JsonRecord) {
-  const routeLabel = String(stage.route_label ?? '').trim()
+  const routeLabel = String(stage.route_label ?? "").trim();
 
-  if (routeLabel) return routeLabel
+  if (routeLabel) return routeLabel;
 
-  const start = String(stage.start_city ?? '').trim()
-  const finish = String(stage.finish_city ?? '').trim()
+  const start = String(stage.start_city ?? "").trim();
+  const finish = String(stage.finish_city ?? "").trim();
 
-  if (start && finish && start !== finish) return `${start} → ${finish}`
-  if (start && finish && start === finish) return `${start} circuit`
+  if (start && finish && start !== finish) return `${start} → ${finish}`;
+  if (start && finish && start === finish) return `${start} circuit`;
 
-  return start || finish || 'Route details pending'
+  return start || finish || "Route details pending";
 }
 
 function getStageStartTime(stage: JsonRecord) {
-  const directLabel = String(stage.planned_start_time_label ?? '').trim()
+  const directLabel = String(stage.planned_start_time_label ?? "").trim();
 
-  if (directLabel) return directLabel
+  if (directLabel) return directLabel;
 
-  const hour = Number(stage.planned_start_hour_number)
-  const minute = Number(stage.planned_start_minute)
+  const hour = Number(stage.planned_start_hour_number);
+  const minute = Number(stage.planned_start_minute);
 
-  if (!Number.isFinite(hour) || !Number.isFinite(minute)) return ''
+  if (!Number.isFinite(hour) || !Number.isFinite(minute)) return "";
 
-  return `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`
+  return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
 }
 
 function getStageProfileLabel(stage: JsonRecord) {
   const value = String(
-    stage.profile_type ??
-      stage.terrain_type ??
-      stage.stage_type ??
-      '',
-  ).trim()
+    stage.profile_type ?? stage.terrain_type ?? stage.stage_type ?? "",
+  ).trim();
 
-  if (!value) return 'Profile pending'
+  if (!value) return "Profile pending";
 
-  return titleFromSnake(value)
+  return titleFromSnake(value);
 }
 
 function getStageDistance(stage: JsonRecord) {
-  const distance = Number(stage.distance_km)
+  const distance = Number(stage.distance_km);
 
-  if (!Number.isFinite(distance) || distance <= 0) return ''
+  if (!Number.isFinite(distance) || distance <= 0) return "";
 
-  return `${distance.toFixed(distance % 1 === 0 ? 0 : 1)} km`
+  return `${distance.toFixed(distance % 1 === 0 ? 0 : 1)} km`;
 }
 
 function getStageFinishLabel(stage: JsonRecord) {
-  const finishType = String(stage.finish_type ?? '').trim()
-  const summit = Boolean(stage.is_summit_finish)
+  const finishType = String(stage.finish_type ?? "").trim();
+  const summit = Boolean(stage.is_summit_finish);
 
-  if (summit) return 'Summit finish'
-  if (finishType) return titleFromSnake(finishType)
+  if (summit) return "Summit finish";
+  if (finishType) return titleFromSnake(finishType);
 
-  return 'Finish details pending'
+  return "Finish details pending";
+}
+
+function pickStageWeatherRecord(profile: JsonRecord | null, stage: JsonRecord) {
+  const stageMetadata = asRecord(stage.metadata);
+  const profileMetadata = asRecord(profile?.metadata);
+
+  /**
+   * Race Page uses race_stages.weather_snapshot.
+   * Stage Plans previously only checked weather_json / weather_snapshot_json,
+   * so generated weather existed but was invisible here.
+   */
+  const candidates = [
+    asRecord(profile?.weather_snapshot),
+    asRecord(profile?.weather_json),
+    asRecord(profile?.weather_snapshot_json),
+    asRecord(profile?.stage_weather_json),
+    asRecord(profile?.weather),
+    asRecord(profileMetadata.weather_snapshot),
+    asRecord(profileMetadata.weather),
+    asRecord(profileMetadata.stage_weather),
+
+    asRecord(stage.weather_snapshot),
+    asRecord(stage.weather_json),
+    asRecord(stage.weather_snapshot_json),
+    asRecord(stage.stage_weather_json),
+    asRecord(stage.weather),
+    asRecord(stageMetadata.weather_snapshot),
+    asRecord(stageMetadata.weather),
+    asRecord(stageMetadata.stage_weather),
+  ];
+
+  return (
+    candidates.find((candidate) => Object.keys(candidate).length > 0) ?? {}
+  );
+}
+
+function pickWeatherNumber(record: JsonRecord, keys: string[]): number | null {
+  for (const key of keys) {
+    const value = Number(record[key]);
+    if (Number.isFinite(value)) return value;
+  }
+
+  return null;
+}
+
+function getWeatherConditionLabel(record: JsonRecord): string {
+  const value = String(
+    record.condition_label ??
+      record.label ??
+      record.name ??
+      record.condition ??
+      record.summary ??
+      record.weather_summary ??
+      record.weather ??
+      "",
+  ).trim();
+
+  return value ? titleFromSnake(value) : "";
+}
+
+function getWeatherRainLabel(record: JsonRecord): string {
+  const rainChance = pickWeatherNumber(record, [
+    "rain_chance_pct",
+    "rain_probability_pct",
+    "precipitation_chance_pct",
+    "precipitation_probability_pct",
+    "chance_of_rain_pct",
+  ]);
+
+  if (rainChance !== null) {
+    return `${Math.round(rainChance)}%`;
+  }
+
+  const rainMm = pickWeatherNumber(record, [
+    "avg_precip_mm",
+    "precip_mm",
+    "precipitation_mm",
+    "rain_mm",
+    "avg_rain_mm",
+  ]);
+
+  if (rainMm !== null) {
+    return rainMm === 0 ? "—" : `${rainMm.toFixed(1)} mm`;
+  }
+
+  return "—";
+}
+
+function getWeatherIcon(record: JsonRecord): string {
+  const text = String(
+    record.icon ??
+      record.weather_icon ??
+      record.condition_icon ??
+      record.condition ??
+      record.summary ??
+      "",
+  ).toLowerCase();
+
+  if (text.includes("rain") || text.includes("shower")) return "🌧️";
+  if (text.includes("storm") || text.includes("thunder")) return "⛈️";
+  if (text.includes("cloud")) return "☁️";
+  if (text.includes("wind")) return "💨";
+  if (text.includes("snow")) return "❄️";
+  if (text.includes("sun") || text.includes("clear")) return "☀️";
+
+  return "🌤️";
+}
+
+function StageWeatherMiniCard({
+  profile,
+  stage,
+}: {
+  profile: JsonRecord | null;
+  stage: JsonRecord;
+}) {
+  const weather = pickStageWeatherRecord(profile, stage);
+  const temperature = pickWeatherNumber(weather, [
+    "temperature_c",
+    "temp_c",
+    "avg_temperature_c",
+    "average_temperature_c",
+    "avg_temp_c",
+    "average_temp_c",
+    "temperature",
+  ]);
+  const minTemperature = pickWeatherNumber(weather, [
+    "min_temperature_c",
+    "avg_min_temp_c",
+    "min_temp_c",
+  ]);
+  const maxTemperature = pickWeatherNumber(weather, [
+    "max_temperature_c",
+    "avg_max_temp_c",
+    "max_temp_c",
+  ]);
+  const wind = pickWeatherNumber(weather, [
+    "wind_kph",
+    "wind_speed_kph",
+    "wind_km_h",
+    "wind_kmh",
+    "avg_wind_kmh",
+    "wind_speed",
+    "wind",
+  ]);
+  const conditionLabel = getWeatherConditionLabel(weather);
+  const rainLabel = getWeatherRainLabel(weather);
+
+  const hasWeather =
+    temperature !== null ||
+    minTemperature !== null ||
+    maxTemperature !== null ||
+    wind !== null ||
+    rainLabel !== "—" ||
+    conditionLabel ||
+    Object.keys(weather).length > 0;
+
+  return (
+    <div className="mt-3 rounded-xl border border-slate-200 bg-white/80 px-3 py-3">
+      <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
+        <span className="text-base">{getWeatherIcon(weather)}</span>
+        Stage weather
+      </div>
+
+      {hasWeather ? (
+        <div className="mt-2 grid gap-2 text-sm text-slate-700 sm:grid-cols-3">
+          <div>
+            <div className="text-[11px] text-slate-400">Temp</div>
+            <div className="font-semibold text-slate-900">
+              {temperature !== null ? `${temperature.toFixed(1)}°C` : "—"}
+            </div>
+          </div>
+          <div>
+            <div className="text-[11px] text-slate-400">Wind</div>
+            <div className="font-semibold text-slate-900">
+              {wind !== null ? `${Math.round(wind)} km/h` : "—"}
+            </div>
+          </div>
+          <div>
+            <div className="text-[11px] text-slate-400">Rain</div>
+            <div className="font-semibold text-slate-900">{rainLabel}</div>
+          </div>
+        </div>
+      ) : (
+        <div className="mt-2 text-sm text-slate-500">
+          Weather data not available for this stage yet.
+        </div>
+      )}
+    </div>
+  );
 }
 
 function SelectedStagePlanProfileCard({ stage }: { stage: JsonRecord }) {
-  const [profile, setProfile] = useState<JsonRecord | null>(null)
-  const [loading, setLoading] = useState(false)
-  const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [profile, setProfile] = useState<JsonRecord | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const stageId = String(stage.id ?? '')
-  const stageNumber = String(stage.stage_number ?? '—')
+  const stageId = String(stage.id ?? "");
+  const stageNumber = String(stage.stage_number ?? "—");
 
   useEffect(() => {
     if (!stageId) {
-      setProfile(null)
-      return
+      setProfile(null);
+      return;
     }
 
-    let cancelled = false
+    let cancelled = false;
 
     async function loadProfile() {
-      setLoading(true)
-      setErrorMessage(null)
+      setLoading(true);
+      setErrorMessage(null);
 
       try {
-        const result = await loadRaceStageProfileDetail(stageId)
+        const result = await loadRaceStageProfileDetail(stageId);
 
         if (!cancelled) {
-          setProfile(result)
+          setProfile(result);
         }
       } catch (error) {
         if (!cancelled) {
-          setProfile(null)
+          setProfile(null);
           setErrorMessage(
             error instanceof Error
               ? error.message
-              : 'Failed to load stage profile.',
-          )
+              : "Failed to load stage profile.",
+          );
         }
       } finally {
         if (!cancelled) {
-          setLoading(false)
+          setLoading(false);
         }
       }
     }
 
-    void loadProfile()
+    void loadProfile();
 
     return () => {
-      cancelled = true
-    }
-  }, [stageId])
+      cancelled = true;
+    };
+  }, [stageId]);
 
-  const profileData = profile?.has_profile ? profile : null
+  const profileData = profile?.has_profile ? profile : null;
 
   return (
     <div className="mt-5 rounded-2xl border border-slate-200 bg-slate-50 p-4">
@@ -2712,10 +4760,12 @@ function SelectedStagePlanProfileCard({ stage }: { stage: JsonRecord }) {
                   ? `${Number(profileData.distance_km).toFixed(
                       Number(profileData.distance_km) % 1 === 0 ? 0 : 1,
                     )} km`
-                  : getStageDistance(stage) || '—'
+                  : getStageDistance(stage) || "—"
               }
             />
           </div>
+
+          <StageWeatherMiniCard profile={profile} stage={stage} />
         </div>
 
         <div className="rounded-2xl bg-white p-4">
@@ -2737,72 +4787,78 @@ function SelectedStagePlanProfileCard({ stage }: { stage: JsonRecord }) {
         </div>
       </div>
     </div>
-  )
+  );
 }
 
-function CompactStageInfo({
-  label,
-  value,
-}: {
-  label: string
-  value: string
-}) {
+function CompactStageInfo({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-xl bg-white/70 px-3 py-2">
       <div className="text-[11px] font-medium uppercase tracking-wide text-slate-400">
         {label}
       </div>
-      <div className="mt-0.5 text-sm font-semibold text-slate-900">
-        {value}
-      </div>
+      <div className="mt-0.5 text-sm font-semibold text-slate-900">{value}</div>
     </div>
-  )
+  );
 }
 
 type StagePlanProfilePoint = {
-  km: number
-  elevation_m: number
-}
+  km: number;
+  elevation_m: number;
+};
 
 type StagePlanProfileMarker = {
-  km: number
-  type: string
-  label: string
-}
+  km: number;
+  type: string;
+  label: string;
+};
 
 function toFiniteNumberValue(value: unknown): number | null {
-  const parsed = Number(value)
-  return Number.isFinite(parsed) ? parsed : null
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
 }
 
 function normalizeProfilePoints(profile: JsonRecord, stage: JsonRecord) {
   const direct = Array.isArray(profile.profile_points)
     ? profile.profile_points
-    : []
+    : [];
 
-  const metadata = asRecord(stage.metadata)
-  const routeProfile = asRecord(metadata.route_profile_v1)
+  const metadata = asRecord(stage.metadata);
+  const routeProfile = asRecord(metadata.route_profile_v1);
   const fallback = Array.isArray(routeProfile.profile_points)
     ? routeProfile.profile_points
-    : []
+    : [];
 
-  const source = direct.length > 0 ? direct : fallback
+  const source = direct.length > 0 ? direct : fallback;
 
   return source
     .map((raw): StagePlanProfilePoint | null => {
-      const point = asRecord(raw)
-      const km = toFiniteNumberValue(point.km)
-      const elevation = toFiniteNumberValue(point.elevation_m)
+      const point = asRecord(raw);
+      const km = toFiniteNumberValue(point.km);
+      const elevation = toFiniteNumberValue(point.elevation_m);
 
-      if (km === null || elevation === null) return null
+      if (km === null || elevation === null) return null;
 
       return {
         km,
         elevation_m: elevation,
-      }
+      };
     })
     .filter((point): point is StagePlanProfilePoint => point !== null)
-    .sort((a, b) => a.km - b.km)
+    .sort((a, b) => a.km - b.km);
+}
+
+function isStagePlanTacticalMarkerType(type: string): boolean {
+  const normalized = type.toUpperCase();
+
+  return (
+    normalized === "START" ||
+    normalized === "FINISH" ||
+    normalized === "KOM" ||
+    normalized === "MOUNTAIN" ||
+    normalized === "INTERMEDIATE_SPRINT" ||
+    normalized === "BONUS_SPRINT" ||
+    normalized === "SPRINT"
+  );
 }
 
 function normalizeProfileMarkers(
@@ -2812,168 +4868,179 @@ function normalizeProfileMarkers(
 ) {
   const direct = Array.isArray(profile.route_markers)
     ? profile.route_markers
-    : []
+    : [];
 
-  const stagePoints = Array.isArray(stage.points) ? stage.points : []
+  const stagePoints = Array.isArray(stage.points) ? stage.points : [];
 
   const fromProfile = direct
     .map((raw): StagePlanProfileMarker | null => {
-      const marker = asRecord(raw)
-      const km = toFiniteNumberValue(marker.km)
+      const marker = asRecord(raw);
+      const km = toFiniteNumberValue(marker.km);
 
-      if (km === null) return null
+      if (km === null) return null;
 
       return {
         km,
-        type: String(marker.type ?? marker.point_type ?? ''),
+        type: String(marker.type ?? marker.point_type ?? ""),
         label: getStagePlanMarkerLabel(marker),
-      }
+      };
     })
     .filter((marker): marker is StagePlanProfileMarker => marker !== null)
+    .filter((marker) => isStagePlanTacticalMarkerType(marker.type));
 
   const fromStagePoints = stagePoints
     .map((raw): StagePlanProfileMarker | null => {
-      const point = asRecord(raw)
-      const km = toFiniteNumberValue(point.km_from_start)
+      const point = asRecord(raw);
+      const km = toFiniteNumberValue(point.km_from_start);
 
-      if (km === null) return null
+      if (km === null) return null;
 
       return {
         km,
-        type: String(point.point_type ?? ''),
+        type: String(point.point_type ?? ""),
         label: getStagePlanMarkerLabel(point),
-      }
+      };
     })
     .filter((marker): marker is StagePlanProfileMarker => marker !== null)
+    .filter((marker) => isStagePlanTacticalMarkerType(marker.type));
 
-  const merged = fromProfile.length > 0 ? fromProfile : fromStagePoints
+  const merged = fromProfile.length > 0 ? fromProfile : fromStagePoints;
 
-  const hasStart = merged.some((marker) => marker.km <= 0.5)
+  const hasStart = merged.some((marker) => marker.km <= 0.5);
   const hasFinish = merged.some(
     (marker) => Math.abs(marker.km - distanceKm) <= 0.5,
-  )
+  );
 
   return [
     ...(hasStart
       ? []
-      : [{ km: 0, type: 'START', label: 'Start' } as StagePlanProfileMarker]),
+      : [{ km: 0, type: "START", label: "Start" } as StagePlanProfileMarker]),
     ...merged,
     ...(hasFinish
       ? []
       : [
           {
             km: distanceKm,
-            type: 'FINISH',
-            label: 'Finish',
+            type: "FINISH",
+            label: "Finish",
           } as StagePlanProfileMarker,
         ]),
-  ].sort((a, b) => a.km - b.km)
+  ].sort((a, b) => a.km - b.km);
 }
 
 function getStagePlanMarkerLabel(marker: JsonRecord) {
-  const type = String(marker.type ?? marker.point_type ?? '').toUpperCase()
-  const label = String(marker.chart_label ?? marker.label ?? '').trim()
+  const type = String(marker.type ?? marker.point_type ?? "").toUpperCase();
 
-  if (label) return label
-  if (type === 'START') return 'Start'
-  if (type === 'FINISH') return 'Finish'
-  if (type === 'INTERMEDIATE_SPRINT') return 'Sprint'
-  if (type === 'BONUS_SPRINT') return 'Bonus'
-  if (type === 'KOM') {
-    const category = String(marker.category ?? marker.kom_category ?? '').trim()
-    return category ? `Cat ${category}` : 'KOM'
+  if (type === "START") return "Start";
+  if (type === "FINISH") return "Finish";
+  if (
+    type === "INTERMEDIATE_SPRINT" ||
+    type === "BONUS_SPRINT" ||
+    type === "SPRINT"
+  ) {
+    return "Sprint";
   }
 
-  return type ? titleFromSnake(type.toLowerCase()) : 'Point'
+  if (type === "KOM" || type === "MOUNTAIN") {
+    const category = String(
+      marker.category ?? marker.kom_category ?? "",
+    ).trim();
+    return category ? `Cat ${category}` : "KOM";
+  }
+
+  return "Point";
 }
 
 function getMarkerColor(type: string) {
-  const normalized = type.toUpperCase()
+  const normalized = type.toUpperCase();
 
-  if (normalized === 'START') return '#64748b'
-  if (normalized === 'FINISH') return '#2563eb'
-  if (normalized === 'KOM') return '#ef4444'
+  if (normalized === "START") return "#64748b";
+  if (normalized === "FINISH") return "#2563eb";
+  if (normalized === "KOM" || normalized === "MOUNTAIN") return "#ef4444";
   if (
-    normalized === 'INTERMEDIATE_SPRINT' ||
-    normalized === 'BONUS_SPRINT' ||
-    normalized === 'SPRINT'
+    normalized === "INTERMEDIATE_SPRINT" ||
+    normalized === "BONUS_SPRINT" ||
+    normalized === "SPRINT"
   ) {
-    return '#22c55e'
+    return "#22c55e";
   }
 
-  return '#475569'
+  return "#475569";
 }
 
 function StagePlanProfileChart({
   profile,
   stage,
 }: {
-  profile: JsonRecord
-  stage: JsonRecord
+  profile: JsonRecord;
+  stage: JsonRecord;
 }) {
-  const points = normalizeProfilePoints(profile, stage)
+  const points = normalizeProfilePoints(profile, stage);
   const distanceKm =
     toFiniteNumberValue(profile.distance_km) ??
     toFiniteNumberValue(stage.distance_km) ??
-    Math.max(...points.map((point) => point.km), 1)
+    Math.max(...points.map((point) => point.km), 1);
 
   if (points.length < 2) {
     return (
       <div className="flex min-h-[360px] items-center justify-center rounded-xl border border-dashed border-slate-300 text-sm text-slate-500">
         Stage profile points are missing.
       </div>
-    )
+    );
   }
 
-  const width = 920
-  const height = 360
+  const width = 920;
+  const height = 360;
   const padding = {
     top: 38,
     right: 24,
     bottom: 54,
     left: 58,
-  }
+  };
 
-  const innerWidth = width - padding.left - padding.right
-  const innerHeight = height - padding.top - padding.bottom
+  const innerWidth = width - padding.left - padding.right;
+  const innerHeight = height - padding.top - padding.bottom;
 
-  const maxElevationRaw = Math.max(...points.map((point) => point.elevation_m))
+  const maxElevationRaw = Math.max(...points.map((point) => point.elevation_m));
   const maxElevation = Math.max(
     500,
     Math.ceil((maxElevationRaw * 1.12) / 100) * 100,
-  )
+  );
 
   const xForKm = (km: number) =>
-    padding.left + (Math.max(0, Math.min(distanceKm, km)) / distanceKm) * innerWidth
+    padding.left +
+    (Math.max(0, Math.min(distanceKm, km)) / distanceKm) * innerWidth;
 
   const yForElevation = (elevation: number) =>
-    padding.top + innerHeight - (Math.max(0, elevation) / maxElevation) * innerHeight
+    padding.top +
+    innerHeight -
+    (Math.max(0, elevation) / maxElevation) * innerHeight;
 
   const coordinates = points.map((point) => ({
     x: xForKm(point.km),
     y: yForElevation(point.elevation_m),
     ...point,
-  }))
+  }));
 
   const linePath = coordinates.reduce((path, point, index) => {
-    if (index === 0) return `M ${point.x} ${point.y}`
+    if (index === 0) return `M ${point.x} ${point.y}`;
 
-    const previous = coordinates[index - 1]
-    const controlX = (previous.x + point.x) / 2
+    const previous = coordinates[index - 1];
+    const controlX = (previous.x + point.x) / 2;
 
-    return `${path} C ${controlX} ${previous.y}, ${controlX} ${point.y}, ${point.x} ${point.y}`
-  }, '')
+    return `${path} C ${controlX} ${previous.y}, ${controlX} ${point.y}, ${point.x} ${point.y}`;
+  }, "");
 
   const areaPath = `${linePath} L ${
     coordinates[coordinates.length - 1].x
   } ${height - padding.bottom} L ${coordinates[0].x} ${
     height - padding.bottom
-  } Z`
+  } Z`;
 
-  const markers = normalizeProfileMarkers(profile, stage, distanceKm)
-  const elevationTicks = [0, 0.25, 0.5, 0.75, 1].map((ratio) =>
-    Math.round((maxElevation * ratio) / 100) * 100,
-  )
+  const markers = normalizeProfileMarkers(profile, stage, distanceKm);
+  const elevationTicks = [0, 0.25, 0.5, 0.75, 1].map(
+    (ratio) => Math.round((maxElevation * ratio) / 100) * 100,
+  );
 
   return (
     <div className="w-full overflow-hidden rounded-xl border border-slate-200 bg-white">
@@ -2986,7 +5053,7 @@ function StagePlanProfileChart({
         <rect width={width} height={height} fill="#ffffff" />
 
         {elevationTicks.map((tick) => {
-          const y = yForElevation(tick)
+          const y = yForElevation(tick);
 
           return (
             <g key={tick}>
@@ -3008,7 +5075,7 @@ function StagePlanProfileChart({
                 {tick} m
               </text>
             </g>
-          )
+          );
         })}
 
         <path d={areaPath} fill="#fde68a" opacity="0.9" />
@@ -3021,8 +5088,8 @@ function StagePlanProfileChart({
         />
 
         {markers.map((marker, index) => {
-          const x = xForKm(marker.km)
-          const color = getMarkerColor(marker.type)
+          const x = xForKm(marker.km);
+          const color = getMarkerColor(marker.type);
 
           return (
             <g key={`${marker.type}-${marker.km}-${index}`}>
@@ -3068,11 +5135,11 @@ function StagePlanProfileChart({
                 {marker.km.toFixed(marker.km % 1 === 0 ? 0 : 1)} km
               </text>
             </g>
-          )
+          );
         })}
       </svg>
     </div>
-  )
+  );
 }
 
 function StageCardsScroller({
@@ -3080,28 +5147,28 @@ function StageCardsScroller({
   selectedStageIndex,
   onSelectStage,
 }: {
-  stages: JsonRecord[]
-  selectedStageIndex: number
-  onSelectStage: (index: number) => void
+  stages: JsonRecord[];
+  selectedStageIndex: number;
+  onSelectStage: (index: number) => void;
 }) {
-  const stageSliderRef = React.useRef<HTMLDivElement | null>(null)
+  const stageSliderRef = React.useRef<HTMLDivElement | null>(null);
 
-  function scrollStages(direction: 'left' | 'right'): void {
-    const node = stageSliderRef.current
-    if (!node) return
+  function scrollStages(direction: "left" | "right"): void {
+    const node = stageSliderRef.current;
+    if (!node) return;
 
     node.scrollBy({
-      left: direction === 'left' ? -320 : 320,
-      behavior: 'smooth',
-    })
+      left: direction === "left" ? -320 : 320,
+      behavior: "smooth",
+    });
   }
 
   function renderStageCard(stage: JsonRecord, compact = false) {
     const index = stages.findIndex(
       (item) => String(item.id) === String(stage.id),
-    )
-    const active = index === selectedStageIndex
-    const stageNumber = String(stage.stage_number ?? index + 1)
+    );
+    const active = index === selectedStageIndex;
+    const stageNumber = String(stage.stage_number ?? index + 1);
 
     return (
       <button
@@ -3110,12 +5177,12 @@ function StageCardsScroller({
         onClick={() => onSelectStage(index)}
         className={[
           compact
-            ? 'min-h-[92px] min-w-[220px] snap-start rounded-2xl border px-4 py-3 text-left transition'
-            : 'min-h-[92px] rounded-2xl border px-4 py-3 text-left transition',
+            ? "min-h-[92px] min-w-[220px] snap-start rounded-2xl border px-4 py-3 text-left transition"
+            : "min-h-[92px] rounded-2xl border px-4 py-3 text-left transition",
           active
-            ? 'border-yellow-200 bg-yellow-50 text-slate-950 shadow-sm'
-            : 'border-slate-200 bg-white text-slate-900 hover:bg-slate-50',
-        ].join(' ')}
+            ? "border-yellow-200 bg-yellow-50 text-slate-950 shadow-sm"
+            : "border-slate-200 bg-white text-slate-900 hover:bg-slate-50",
+        ].join(" ")}
       >
         <div className="text-sm font-medium text-slate-500">
           {formatCompactStageDateTime(stage)}
@@ -3130,10 +5197,10 @@ function StageCardsScroller({
         </div>
 
         <div className="mt-1 text-xs opacity-75">
-          {getStageProfileLabel(stage)} · {getStageDistance(stage) || '—'}
+          {getStageProfileLabel(stage)} · {getStageDistance(stage) || "—"}
         </div>
       </button>
-    )
+    );
   }
 
   if (stages.length === 0) {
@@ -3141,7 +5208,7 @@ function StageCardsScroller({
       <div className="rounded-3xl border border-slate-200 bg-white p-6 text-sm text-slate-500 shadow-sm">
         No stages found for this race.
       </div>
-    )
+    );
   }
 
   return (
@@ -3155,7 +5222,7 @@ function StageCardsScroller({
           <div className="flex gap-2">
             <button
               type="button"
-              onClick={() => scrollStages('left')}
+              onClick={() => scrollStages("left")}
               className="rounded-full border border-slate-200 bg-white px-3 py-1 text-sm font-semibold text-slate-700 hover:bg-slate-50"
             >
               ←
@@ -3163,7 +5230,7 @@ function StageCardsScroller({
 
             <button
               type="button"
-              onClick={() => scrollStages('right')}
+              onClick={() => scrollStages("right")}
               className="rounded-full border border-slate-200 bg-white px-3 py-1 text-sm font-semibold text-slate-700 hover:bg-slate-50"
             >
               →
@@ -3175,17 +5242,17 @@ function StageCardsScroller({
       {stages.length <= 5 ? (
         <div
           className={[
-            'grid gap-2',
+            "grid gap-2",
             stages.length <= 1
-              ? 'grid-cols-1'
+              ? "grid-cols-1"
               : stages.length === 2
-                ? 'grid-cols-1 md:grid-cols-2'
+                ? "grid-cols-1 md:grid-cols-2"
                 : stages.length === 3
-                  ? 'grid-cols-1 md:grid-cols-3'
+                  ? "grid-cols-1 md:grid-cols-3"
                   : stages.length === 4
-                    ? 'grid-cols-1 md:grid-cols-4'
-                    : 'grid-cols-1 md:grid-cols-5',
-          ].join(' ')}
+                    ? "grid-cols-1 md:grid-cols-4"
+                    : "grid-cols-1 md:grid-cols-5",
+          ].join(" ")}
         >
           {stages.map((stage) => renderStageCard(stage))}
         </div>
@@ -3198,7 +5265,525 @@ function StageCardsScroller({
         </div>
       )}
     </div>
-  )
+  );
+}
+
+function InfoTooltip({
+  label = "Info",
+  children,
+  panelWidthClass = "w-[26rem]",
+}: {
+  label?: string;
+  children: React.ReactNode;
+  panelWidthClass?: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const [pinned, setPinned] = useState(false);
+  const pinTimerRef = React.useRef<number | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (pinTimerRef.current !== null) {
+        window.clearTimeout(pinTimerRef.current);
+      }
+    };
+  }, []);
+
+  function startPinCountdown() {
+    if (pinTimerRef.current !== null) {
+      window.clearTimeout(pinTimerRef.current);
+    }
+
+    pinTimerRef.current = window.setTimeout(() => {
+      setPinned(true);
+      setOpen(true);
+    }, 3000);
+  }
+
+  function stopPinCountdown() {
+    if (pinTimerRef.current !== null) {
+      window.clearTimeout(pinTimerRef.current);
+      pinTimerRef.current = null;
+    }
+  }
+
+  function handleMouseEnter() {
+    setOpen(true);
+    if (!pinned) {
+      startPinCountdown();
+    }
+  }
+
+  function handleMouseLeave() {
+    stopPinCountdown();
+    if (!pinned) {
+      setOpen(false);
+    }
+  }
+
+  function handleToggleClick() {
+    if (open && pinned) {
+      setPinned(false);
+      setOpen(false);
+      stopPinCountdown();
+      return;
+    }
+
+    setOpen(true);
+    setPinned(true);
+    stopPinCountdown();
+  }
+
+  function handleClose() {
+    setPinned(false);
+    setOpen(false);
+    stopPinCountdown();
+  }
+
+  return (
+    <span
+      className="relative inline-flex"
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+    >
+      <button
+        type="button"
+        aria-label={label}
+        onClick={handleToggleClick}
+        className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-slate-300 bg-white text-xs font-bold text-slate-500 shadow-sm hover:bg-slate-50"
+      >
+        i
+      </button>
+
+      {open && (
+        <div
+          className={`absolute right-0 top-full z-50 mt-2 ${panelWidthClass} rounded-2xl border border-slate-200 bg-white p-4 text-left text-xs leading-5 text-slate-600 shadow-xl`}
+        >
+          <div className="mb-2 flex items-center justify-between gap-3">
+            <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+              {label}
+            </div>
+            {pinned ? (
+              <button
+                type="button"
+                onClick={handleClose}
+                className="rounded-md px-1.5 py-0.5 text-xs font-semibold text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+              >
+                ×
+              </button>
+            ) : null}
+          </div>
+
+          <div className="max-h-80 overflow-y-auto pr-1">{children}</div>
+
+          {!pinned && (
+            <div className="mt-3 text-[11px] text-slate-400">
+              Hover for 3 seconds or click to keep this help window open.
+            </div>
+          )}
+        </div>
+      )}
+    </span>
+  );
+}
+
+function RoleExplanationTooltip() {
+  return (
+    <InfoTooltip
+      label="Team tactic and rider role help"
+      panelWidthClass="w-[28rem]"
+    >
+      <div className="mb-3 text-sm font-semibold text-slate-900">
+        Team tactic plans
+      </div>
+      <div className="space-y-2">
+        {STAGE_TACTIC_PLAN_OPTIONS.map((option) => (
+          <div key={option.value}>
+            <span className="font-semibold text-slate-900">{option.label}</span>{" "}
+            — {option.description}
+          </div>
+        ))}
+      </div>
+
+      <div className="mb-2 mt-4 text-sm font-semibold text-slate-900">
+        Rider stage roles
+      </div>
+      <div className="space-y-2">
+        {STAGE_RIDER_ROLE_OPTIONS.map((option) => (
+          <div key={option.value}>
+            <span className="font-semibold text-slate-900">{option.label}</span>{" "}
+            — {option.description}
+          </div>
+        ))}
+      </div>
+    </InfoTooltip>
+  );
+}
+
+function formatBonusPreviewLabel(key: string): string {
+  return titleFromSnake(key.replace(/_pct$/, "").replace(/_bonus$/, ""));
+}
+
+function getPresetBonusPreview(preset?: EquipmentSetupPresetOption | null) {
+  const preview = asRecord(preset?.bonus_preview);
+  const weightedBonuses = asRecord(
+    preset?.weighted_bonuses ?? preview.weighted_bonuses,
+  );
+  const selectedItems = preset?.selected_items ?? preview.selected_items;
+  const caps = asRecord(preset?.caps ?? preview.caps);
+
+  return {
+    preview,
+    weightedBonuses,
+    selectedItems,
+    caps,
+  };
+}
+
+function EquipmentPresetTooltip({
+  preset,
+}: {
+  preset?: EquipmentSetupPresetOption | null;
+}) {
+  const { weightedBonuses, selectedItems, caps } =
+    getPresetBonusPreview(preset);
+  const weightedEntries = Object.entries(weightedBonuses).filter(
+    ([, value]) => {
+      const numeric = Number(value);
+      return Number.isFinite(numeric) && numeric !== 0;
+    },
+  );
+
+  const selectedItemEntries = Array.isArray(selectedItems)
+    ? selectedItems.map((item, index) => [String(index + 1), item] as const)
+    : Object.entries(asRecord(selectedItems));
+
+  const capEntries = Object.entries(caps).filter(
+    ([, value]) => value !== null && value !== undefined,
+  );
+
+  return (
+    <InfoTooltip label="Equipment package bonus preview">
+      <div className="text-sm font-semibold text-slate-900">
+        {preset?.label ?? "Equipment package"}
+      </div>
+
+      <div className="mt-3">
+        <div className="mb-1 font-semibold text-slate-700">
+          Weighted bonus preview
+        </div>
+        {weightedEntries.length > 0 ? (
+          <div className="flex flex-wrap gap-1.5">
+            {weightedEntries.map(([key, value]) => {
+              const numeric = Number(value);
+              const sign = numeric >= 0 ? "+" : "";
+              const isNegative = numeric < 0;
+
+              return (
+                <span
+                  key={key}
+                  className={[
+                    "rounded-full px-2 py-0.5 font-semibold",
+                    isNegative
+                      ? "bg-rose-50 text-rose-700"
+                      : "bg-emerald-50 text-emerald-700",
+                  ].join(" ")}
+                >
+                  {formatBonusPreviewLabel(key)} {sign}
+                  {formatBonusPercent(numeric)}%
+                </span>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="text-slate-500">
+            No weighted bonus preview available for this setup yet.
+          </div>
+        )}
+      </div>
+
+      {selectedItemEntries.length > 0 && (
+        <div className="mt-3">
+          <div className="mb-1 font-semibold text-slate-700">
+            Selected items
+          </div>
+          <div className="space-y-1">
+            {selectedItemEntries.slice(0, 8).map(([key, raw]) => {
+              const item = asRecord(raw);
+              const label = String(
+                item.display_name ??
+                  item.name ??
+                  item.catalog_name ??
+                  raw ??
+                  "",
+              );
+              return (
+                <div key={key} className="flex justify-between gap-3">
+                  <span className="text-slate-500">
+                    {formatBonusPreviewLabel(key)}
+                  </span>
+                  <span className="max-w-[180px] truncate font-medium text-slate-800">
+                    {label || "Selected"}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {capEntries.length > 0 && (
+        <div className="mt-3">
+          <div className="mb-1 font-semibold text-slate-700">Caps</div>
+          <div className="space-y-1">
+            {capEntries.slice(0, 6).map(([key, value]) => (
+              <div key={key} className="flex justify-between gap-3">
+                <span className="text-slate-500">
+                  {formatBonusPreviewLabel(key)}
+                </span>
+                <span className="font-medium text-slate-800">
+                  {String(value)}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </InfoTooltip>
+  );
+}
+
+type EquipmentPresetCapacity = {
+  maxAssignments: number | null;
+  limitingItemLabel: string | null;
+  itemCaps: Array<{
+    key: string;
+    label: string;
+    available: number | null;
+  }>;
+};
+
+function parseEquipmentCountFromLabel(value: unknown): number | null {
+  if (typeof value !== "string") return null;
+
+  const match = value.match(/\((\d+)\s*\/\s*(\d+)\)/);
+  if (!match) return null;
+
+  const available = Number(match[1]);
+  const total = Number(match[2]);
+
+  if (Number.isFinite(available)) return available;
+  if (Number.isFinite(total)) return total;
+
+  return null;
+}
+
+function getEquipmentItemAvailableCount(raw: unknown): number | null {
+  const item = asRecord(raw);
+  const metadata = asRecord(item.metadata);
+
+  const direct = [
+    item.available_count,
+    item.quantity_available,
+    item.available_quantity,
+    item.available,
+    item.usable_count,
+    item.owned_count,
+    item.total_owned,
+    item.count,
+    metadata.available_count,
+    metadata.quantity_available,
+    metadata.available,
+    metadata.usable_count,
+    metadata.owned_count,
+  ];
+
+  for (const value of direct) {
+    const numeric = Number(value);
+    if (Number.isFinite(numeric) && numeric >= 0) {
+      return Math.floor(numeric);
+    }
+  }
+
+  const label = String(
+    item.display_name ??
+      item.name ??
+      item.catalog_name ??
+      item.label ??
+      raw ??
+      "",
+  );
+
+  return parseEquipmentCountFromLabel(label);
+}
+
+function getEquipmentItemLabel(raw: unknown, fallback: string): string {
+  const item = asRecord(raw);
+
+  return String(
+    item.display_name ??
+      item.name ??
+      item.catalog_name ??
+      item.label ??
+      fallback,
+  );
+}
+
+function getEquipmentPresetCapacity(
+  preset?: EquipmentSetupPresetOption | null,
+): EquipmentPresetCapacity {
+  const directCapacity = firstNonEmptyRecord(
+    asRecord(preset).setup_capacity,
+    asRecord(preset).capacity,
+    asRecord(preset).equipment_capacity,
+  );
+
+  const directMaxAssignments = Number(
+    directCapacity.max_assignments ??
+      directCapacity.maxAssignments ??
+      directCapacity.capacity ??
+      asRecord(preset).max_assignments,
+  );
+
+  if (Number.isFinite(directMaxAssignments) && directMaxAssignments >= 0) {
+    const directCaps = toArray<JsonRecord>(
+      directCapacity.item_caps ?? directCapacity.itemCaps,
+    );
+
+    return {
+      maxAssignments: Math.floor(directMaxAssignments),
+      limitingItemLabel:
+        String(
+          directCapacity.limiting_item_label ??
+            directCapacity.limitingItemLabel ??
+            asRecord(preset).limiting_item_label ??
+            "",
+        ) || null,
+      itemCaps: directCaps.map((item, index) => ({
+        key: String(item.equipment_category ?? item.key ?? index + 1),
+        label: String(
+          item.label ?? item.display_name ?? item.name ?? "Equipment",
+        ),
+        available: Number.isFinite(Number(item.available_count))
+          ? Math.floor(Number(item.available_count))
+          : null,
+      })),
+    };
+  }
+
+  const { selectedItems } = getPresetBonusPreview(preset);
+  const selectedItemEntries = Array.isArray(selectedItems)
+    ? selectedItems.map((item, index) => [String(index + 1), item] as const)
+    : Object.entries(asRecord(selectedItems));
+
+  const itemCaps = selectedItemEntries.flatMap(([key, raw]) => {
+    const label = getEquipmentItemLabel(raw, formatBonusPreviewLabel(key));
+    const available = getEquipmentItemAvailableCount(raw);
+
+    if (available === null) return [];
+
+    return [
+      {
+        key,
+        label,
+        available,
+      },
+    ];
+  });
+
+  if (itemCaps.length === 0) {
+    return {
+      maxAssignments: null,
+      limitingItemLabel: null,
+      itemCaps: [],
+    };
+  }
+
+  const maxAssignments = Math.min(...itemCaps.map((item) => item.available));
+  const limitingItem =
+    itemCaps.find((item) => item.available === maxAssignments) ?? itemCaps[0];
+
+  return {
+    maxAssignments,
+    limitingItemLabel: limitingItem?.label ?? null,
+    itemCaps,
+  };
+}
+
+function getEquipmentPresetAssignmentCounts(
+  equipmentByRider: Record<string, string>,
+): Record<string, number> {
+  return Object.values(equipmentByRider).reduce<Record<string, number>>(
+    (acc, presetId) => {
+      if (!presetId) return acc;
+      acc[presetId] = (acc[presetId] ?? 0) + 1;
+      return acc;
+    },
+    {},
+  );
+}
+
+function getEquipmentPresetAvailabilityLabel({
+  preset,
+  assignmentCount,
+}: {
+  preset: EquipmentSetupPresetOption;
+  assignmentCount: number;
+}) {
+  const capacity = getEquipmentPresetCapacity(preset);
+
+  if (capacity.maxAssignments === null) {
+    return "";
+  }
+
+  const remaining = Math.max(capacity.maxAssignments - assignmentCount, 0);
+
+  return `${remaining}/${capacity.maxAssignments} left`;
+}
+
+function isDefaultEquipmentPreset(
+  preset?: EquipmentSetupPresetOption | null,
+): boolean {
+  if (!preset) return false;
+
+  const record = asRecord(preset);
+
+  return (
+    record.is_default_setup === true ||
+    record.is_virtual_default === true ||
+    preset.id === "__default_race_setup__" ||
+    preset.setup_name === "Default" ||
+    preset.label === "Default"
+  );
+}
+
+function getEquipmentCapacityConflicts({
+  equipmentPresetOptions,
+  equipmentByRider,
+}: {
+  equipmentPresetOptions: EquipmentSetupPresetOption[];
+  equipmentByRider: Record<string, string>;
+}) {
+  const assignmentCounts = getEquipmentPresetAssignmentCounts(equipmentByRider);
+
+  return equipmentPresetOptions.flatMap((preset) => {
+    const capacity = getEquipmentPresetCapacity(preset);
+    const count = assignmentCounts[preset.id] ?? 0;
+
+    if (capacity.maxAssignments === null || count <= capacity.maxAssignments) {
+      return [];
+    }
+
+    return [
+      {
+        presetId: preset.id,
+        label: preset.label,
+        assigned: count,
+        maxAssignments: capacity.maxAssignments,
+        limitingItemLabel: capacity.limitingItemLabel,
+      },
+    ];
+  });
 }
 
 function StageRiderEquipmentCard({
@@ -3206,24 +5791,86 @@ function StageRiderEquipmentCard({
   equipmentPresetOptions,
   equipmentByRider,
   onChange,
+  onSave,
+  saveDisabled,
+  saving,
   disabled,
 }: {
-  riders: JsonRecord[]
-  equipmentPresetOptions: EquipmentSetupPresetOption[]
-  equipmentByRider: Record<string, string>
-  onChange: (riderId: string, presetId: string) => void
-  disabled: boolean
+  riders: JsonRecord[];
+  equipmentPresetOptions: EquipmentSetupPresetOption[];
+  equipmentByRider: Record<string, string>;
+  onChange: (riderId: string, presetId: string) => void;
+  onSave: () => void;
+  saveDisabled: boolean;
+  saving: boolean;
+  disabled: boolean;
 }) {
-  return (
-    <section className="rounded-2xl border bg-white p-5 shadow-sm">
-      <h2 className="text-lg font-semibold text-slate-900">
-        1. Rider Equipment Packages
-      </h2>
-      <p className="mt-1 text-sm text-slate-600">
-        Choose one equipment package for each rider for this stage.
-      </p>
+  const assignmentCounts = getEquipmentPresetAssignmentCounts(equipmentByRider);
+  const capacityConflicts = getEquipmentCapacityConflicts({
+    equipmentPresetOptions,
+    equipmentByRider,
+  });
+  const equipmentSaveDisabled = saveDisabled || capacityConflicts.length > 0;
 
-      <div className="mt-4 space-y-3">
+  return (
+    <section className="flex h-full flex-col rounded-2xl border bg-white p-5 shadow-sm">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h2 className="text-lg font-semibold text-slate-900">
+            1. Rider Equipment Packages
+          </h2>
+          <p className="mt-1 text-sm text-slate-600">
+            Choose one equipment package for each rider for this stage.
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={onSave}
+            disabled={equipmentSaveDisabled}
+            className="rounded-lg bg-yellow-400 px-3 py-1.5 text-xs font-semibold text-slate-950 hover:bg-yellow-300 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500"
+          >
+            {saving ? "Saving…" : "Save"}
+          </button>
+          <InfoTooltip label="Rider equipment package help">
+            <div className="text-sm font-semibold text-slate-900">
+              Equipment package preview
+            </div>
+            <p className="mt-2">
+              Each rider can use one saved equipment setup for this stage. The
+              dropdown also includes the Default Race Setup from the Equipment
+              Overview page. The counter beside each setup shows how many times
+              that setup can still be assigned based on the lowest available
+              equipment item inside the setup.
+            </p>
+            <p className="mt-2">
+              Example: if a setup contains a tire set with 1/1 available, the
+              setup can only be assigned to one rider on the same stage.
+            </p>
+          </InfoTooltip>
+        </div>
+      </div>
+
+      {capacityConflicts.length > 0 ? (
+        <div className="mt-4 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+          <div className="font-semibold">Equipment setup capacity problem</div>
+          <div className="mt-1 space-y-1">
+            {capacityConflicts.map((conflict) => (
+              <div key={conflict.presetId}>
+                {conflict.label}: assigned {conflict.assigned} time
+                {conflict.assigned === 1 ? "" : "s"}, but only{" "}
+                {conflict.maxAssignments} available
+                {conflict.limitingItemLabel
+                  ? ` because of ${conflict.limitingItemLabel}`
+                  : ""}
+                .
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
+      <div className="mt-4 flex-1 space-y-3">
         {riders.length === 0 && (
           <div className="rounded-xl border border-dashed border-slate-300 p-4 text-sm text-slate-500">
             No riders found from the submitted Race Plan yet.
@@ -3231,182 +5878,1216 @@ function StageRiderEquipmentCard({
         )}
 
         {riders.map((rider) => {
-          const riderId = String(rider.id ?? '')
+          const riderId = String(rider.id ?? "");
+          const selectedPresetId = equipmentByRider[riderId] ?? "";
+          const selectedPreset = equipmentPresetOptions.find(
+            (option) => option.id === selectedPresetId,
+          );
+          const selectedCapacity = getEquipmentPresetCapacity(selectedPreset);
+          const selectedAssignmentCount = selectedPresetId
+            ? (assignmentCounts[selectedPresetId] ?? 0)
+            : 0;
+          const selectedIsOverCapacity =
+            selectedCapacity.maxAssignments !== null &&
+            selectedAssignmentCount > selectedCapacity.maxAssignments;
+
           return (
             <div
               key={riderId}
-              className="grid gap-3 rounded-xl border border-slate-200 p-3 md:grid-cols-[1fr_220px]"
+              className={[
+                "grid gap-3 rounded-xl border p-3 md:grid-cols-[1fr_300px]",
+                selectedIsOverCapacity
+                  ? "border-red-200 bg-red-50/50"
+                  : "border-slate-200 bg-white",
+              ].join(" ")}
             >
               <div className="min-w-0">
-                <div className="relative inline-flex max-w-full items-center gap-2">
-                  <div className="group relative min-w-0">
-                    <span className="cursor-help truncate font-medium text-slate-900">
-                      {getRiderDisplayName(rider)}
-                    </span>
+                <div className="group relative inline-block max-w-full">
+                  <span className="cursor-help truncate font-medium text-slate-900">
+                    {getRiderDisplayName(rider)}
+                  </span>
 
-                    <RiderHoverCard rider={rider} />
-                  </div>
+                  <RiderHoverCard rider={rider} />
+                </div>
 
+                <div className="mt-1 flex flex-wrap items-center gap-2">
                   <span className="shrink-0 rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">
                     {getRiderRoleLabel(rider)}
                   </span>
                 </div>
 
-                <RiderRaceScoreLine rider={rider} />
+                {selectedIsOverCapacity ? (
+                  <div className="mt-2 text-xs font-semibold text-red-700">
+                    This setup is assigned more times than the available
+                    equipment allows.
+                  </div>
+                ) : null}
               </div>
 
-              <select
-                value={equipmentByRider[riderId] ?? ''}
-                onChange={(event) => onChange(riderId, event.target.value)}
-                disabled={disabled || equipmentPresetOptions.length === 0}
-                className="rounded-xl border border-slate-300 px-3 py-2 text-sm disabled:bg-slate-100"
-              >
-                {equipmentPresetOptions.length === 0 ? (
-                  <option value="">No equipment setup presets found</option>
-                ) : (
-                  equipmentPresetOptions.map((option) => (
-                    <option key={option.id} value={option.id}>
-                      {option.label}
-                    </option>
-                  ))
-                )}
-              </select>
+              <div className="flex items-center gap-2">
+                <select
+                  value={selectedPresetId}
+                  onChange={(event) => onChange(riderId, event.target.value)}
+                  disabled={disabled || equipmentPresetOptions.length === 0}
+                  className="min-w-0 flex-1 rounded-xl border border-slate-300 px-3 py-2 text-sm disabled:bg-slate-100"
+                >
+                  {equipmentPresetOptions.length === 0 ? (
+                    <option value="">No equipment setup presets found</option>
+                  ) : (
+                    equipmentPresetOptions.map((option) => {
+                      const assignmentCount = assignmentCounts[option.id] ?? 0;
+                      const capacity = getEquipmentPresetCapacity(option);
+                      const remaining =
+                        capacity.maxAssignments === null
+                          ? null
+                          : Math.max(
+                              capacity.maxAssignments - assignmentCount,
+                              0,
+                            );
+                      const isCurrent = option.id === selectedPresetId;
+                      const unavailable =
+                        !isCurrent && remaining !== null && remaining <= 0;
+
+                      const availabilityLabel =
+                        getEquipmentPresetAvailabilityLabel({
+                          preset: option,
+                          assignmentCount,
+                        });
+
+                      const optionLabel = [
+                        isDefaultEquipmentPreset(option)
+                          ? "Default"
+                          : option.label,
+                        availabilityLabel,
+                        capacity.limitingItemLabel
+                          ? `limit: ${capacity.limitingItemLabel}`
+                          : "",
+                      ]
+                        .filter(Boolean)
+                        .join(" · ");
+
+                      return (
+                        <option
+                          key={option.id}
+                          value={option.id}
+                          disabled={unavailable}
+                        >
+                          {optionLabel}
+                        </option>
+                      );
+                    })
+                  )}
+                </select>
+
+                <EquipmentPresetTooltip preset={selectedPreset} />
+              </div>
             </div>
-          )
+          );
         })}
       </div>
+
+      <div className="mt-4 rounded-xl border border-violet-200 bg-violet-50 px-3 py-2 text-sm text-violet-800">
+        The dropdown also includes the Default Race Setup from the Equipment
+        Overview page. If a selected equipment setup is no longer available
+        before a stage because one of its equipment items is broken, worn out,
+        assigned, or otherwise unavailable, the race engine should automatically
+        fall back to Default. If Default also cannot be used, the stage setup
+        should be blocked with a clear equipment warning.
+      </div>
     </section>
-  )
+  );
 }
 
-function StageRiderSuppliesCard({
+const STAGE_SUPPLY_RULES: Record<
+  string,
+  {
+    label: string;
+    shortLabel: string;
+    minPerRider: number;
+    maxPerRider: number;
+    defaultPerRider: number;
+    useType: "consumable" | "durable";
+    mandatory: boolean;
+    durabilityText: string;
+    positiveEffects: string[];
+    negativeEffects: string[];
+  }
+> = {
+  bidons_water_bottles: {
+    label: "Bidons / Water Bottles",
+    shortLabel: "Bidons",
+    minPerRider: 1,
+    maxPerRider: 4,
+    defaultPerRider: 2,
+    useType: "consumable",
+    mandatory: false,
+    durabilityText:
+      "One-use consumable. Each bottle used in a stage is consumed.",
+    positiveEffects: [
+      "Hydration support: +0.2% stamina stability per bidon",
+      "Fatigue control: -0.2% stage fatigue per bidon",
+    ],
+    negativeEffects: [
+      "Below minimum: +1% fatigue risk",
+      "No extra benefit after 4 bidons per rider",
+    ],
+  },
+  energy_gels: {
+    label: "Energy Gels",
+    shortLabel: "Gels",
+    minPerRider: 0,
+    maxPerRider: 4,
+    defaultPerRider: 2,
+    useType: "consumable",
+    mandatory: false,
+    durabilityText: "One-use consumable. Each gel used in a stage is consumed.",
+    positiveEffects: [
+      "Energy boost: +0.5% stamina per gel",
+      "Final effort support: +0.25% sprint/climb/attack efficiency per gel",
+    ],
+    negativeEffects: [
+      "No gels: -1% final-phase stamina support",
+      "No extra benefit after 4 gels per rider",
+    ],
+  },
+  nutrition_packs: {
+    label: "Nutrition Packs",
+    shortLabel: "Nutrition",
+    minPerRider: 0,
+    maxPerRider: 2,
+    defaultPerRider: 1,
+    useType: "consumable",
+    mandatory: false,
+    durabilityText:
+      "One-use consumable. Each nutrition pack used in a stage is consumed.",
+    positiveEffects: [
+      "Endurance support: +1% stamina stability per pack",
+      "Recovery support: +0.5% post-stage recovery per pack",
+    ],
+    negativeEffects: [
+      "No nutrition on long stages: +1% fatigue pressure",
+      "No extra benefit after 2 packs per rider",
+    ],
+  },
+  race_jersey_complete: {
+    label: "Race Jersey Complete",
+    shortLabel: "Race Jersey",
+    minPerRider: 1,
+    maxPerRider: 1,
+    defaultPerRider: 1,
+    useType: "durable",
+    mandatory: true,
+    durabilityText:
+      "Mandatory durable kit. One jersey kit is needed per rider and each kit has 10 stage uses.",
+    positiveEffects: [
+      "Race readiness: +0.5% setup readiness",
+      "Comfort support: +0.25% fatigue control",
+    ],
+    negativeEffects: ["Missing jersey kit: blocks stage setup"],
+  },
+  rain_jackets: {
+    label: "Rain Jackets",
+    shortLabel: "Rain Jacket",
+    minPerRider: 0,
+    maxPerRider: 1,
+    defaultPerRider: 0,
+    useType: "durable",
+    mandatory: false,
+    durabilityText:
+      "Optional durable item. Each jacket has 25 stage uses. One use is counted whenever the jacket is assigned/used for a stage.",
+    positiveEffects: [
+      "Bad-weather protection: sickness risk ×0.50 in rain/cold/bad weather",
+      "Cold/rain fatigue support: -0.5% fatigue pressure",
+    ],
+    negativeEffects: [
+      "Efficiency penalty: -1% rider speed/efficiency when used",
+      "Uses 1 jacket durability use every assigned stage",
+    ],
+  },
+};
+
+function clampStageSupplyValue(value: number, min: number, max: number) {
+  if (!Number.isFinite(value)) return min;
+  return Math.min(Math.max(Math.floor(value), min), max);
+}
+
+function getSupplyAvailableQuantity(
+  supplyOptions: RaceSupplyOption[],
+  supplyKey: string,
+): number {
+  const option = supplyOptions.find((row) => row.supply_key === supplyKey);
+  return Number(option?.quantity_available ?? 0);
+}
+
+function getStageWeatherRisk(stage: JsonRecord | null) {
+  const weather = stage ? pickStageWeatherRecord(null, stage) : {};
+  const temperature = pickWeatherNumber(weather, [
+    "temperature_c",
+    "temp_c",
+    "avg_temperature_c",
+    "average_temperature_c",
+    "avg_temp_c",
+    "average_temp_c",
+    "temperature",
+  ]);
+  const wind = pickWeatherNumber(weather, [
+    "wind_kph",
+    "wind_speed_kph",
+    "wind_km_h",
+    "wind_kmh",
+    "avg_wind_kmh",
+    "wind_speed",
+    "wind",
+  ]);
+  const rainChance = pickWeatherNumber(weather, [
+    "rain_chance_pct",
+    "rain_probability_pct",
+    "precipitation_chance_pct",
+    "precipitation_probability_pct",
+    "chance_of_rain_pct",
+  ]);
+  const precipitationMm = pickWeatherNumber(weather, [
+    "avg_precip_mm",
+    "precip_mm",
+    "precipitation_mm",
+    "rain_mm",
+    "avg_rain_mm",
+  ]);
+  const rain = rainChance ?? precipitationMm;
+  const text = String(
+    weather.condition_label ??
+      weather.label ??
+      weather.name ??
+      weather.condition ??
+      weather.summary ??
+      weather.weather_summary ??
+      weather.weather ??
+      weather.icon ??
+      "",
+  ).toLowerCase();
+
+  const isRain =
+    (rainChance !== null && rainChance >= 40) ||
+    (precipitationMm !== null && precipitationMm >= 2);
+  const isCold = temperature !== null && temperature < 15;
+  const isWindy = wind !== null && wind >= 35;
+  const textBad =
+    text.includes("rain") ||
+    text.includes("storm") ||
+    text.includes("shower") ||
+    text.includes("snow") ||
+    text.includes("cold");
+
+  const isBadWeather = isRain || isCold || (isCold && isWindy) || textBad;
+
+  return {
+    weather,
+    temperature,
+    wind,
+    rain,
+    isBadWeather,
+    reason: isBadWeather
+      ? [
+          isRain ? "rain risk" : "",
+          isCold ? "cold below 15°C" : "",
+          isWindy ? "strong wind" : "",
+          textBad ? "bad-weather condition text" : "",
+        ]
+          .filter(Boolean)
+          .join(", ")
+      : "no strong weather risk detected",
+  };
+}
+
+function getStageTeamSupplyPlan({
   riders,
   suppliesByRider,
-  onChange,
-  disabled,
+  stage,
 }: {
-  riders: JsonRecord[]
-  suppliesByRider: Record<
-    string,
-    {
-      bidons: number
-      gels: number
-      nutrition_packs: number
-      rain_jacket: boolean
-    }
-  >
-  onChange: (
-    riderId: string,
-    patch: Partial<{
-      bidons: number
-      gels: number
-      nutrition_packs: number
-      rain_jacket: boolean
-    }>,
-  ) => void
-  disabled: boolean
+  riders: JsonRecord[];
+  suppliesByRider: Record<string, StageRiderSupplyDraft>;
+  stage: JsonRecord | null;
+}): StageTeamSupplyPlan {
+  const firstRiderId = String(riders[0]?.id ?? "");
+  const first =
+    (firstRiderId && suppliesByRider[firstRiderId]) ||
+    normalizeRiderSupplyDraft(null);
+
+  const riderCount = riders.length;
+  const jacketCount = riders.reduce((count, rider) => {
+    const riderId = String(rider.id ?? "");
+    return count + (suppliesByRider[riderId]?.rain_jacket ? 1 : 0);
+  }, 0);
+
+  let rainJacketMode: StageRainJacketMode = "none";
+  if (riderCount > 0 && jacketCount === riderCount) {
+    rainJacketMode = "all";
+  }
+
+  return {
+    bidonsPerRider: clampStageSupplyValue(
+      Number(first.bidons),
+      STAGE_SUPPLY_RULES.bidons_water_bottles.minPerRider,
+      STAGE_SUPPLY_RULES.bidons_water_bottles.maxPerRider,
+    ),
+    gelsPerRider: clampStageSupplyValue(
+      Number(first.gels),
+      STAGE_SUPPLY_RULES.energy_gels.minPerRider,
+      STAGE_SUPPLY_RULES.energy_gels.maxPerRider,
+    ),
+    nutritionPacksPerRider: clampStageSupplyValue(
+      Number(first.nutrition_packs),
+      STAGE_SUPPLY_RULES.nutrition_packs.minPerRider,
+      STAGE_SUPPLY_RULES.nutrition_packs.maxPerRider,
+    ),
+    rainJacketMode,
+  };
+}
+
+function getStageSupplyNeeds(
+  riders: JsonRecord[],
+  plan: StageTeamSupplyPlan,
+  stage: JsonRecord | null,
+) {
+  const riderCount = riders.length;
+  const weatherRisk = getStageWeatherRisk(stage);
+  const rainJacketCount = plan.rainJacketMode === "all" ? riderCount : 0;
+
+  return {
+    riderCount,
+    bidons_water_bottles: riderCount * plan.bidonsPerRider,
+    energy_gels: riderCount * plan.gelsPerRider,
+    nutrition_packs: riderCount * plan.nutritionPacksPerRider,
+    race_jersey_complete: riderCount,
+    rain_jackets: rainJacketCount,
+    weatherRisk,
+  };
+}
+
+function buildSuppliesByRiderFromTeamPlan(
+  riders: JsonRecord[],
+  plan: StageTeamSupplyPlan,
+  stage: JsonRecord | null,
+): Record<string, StageRiderSupplyDraft> {
+  const useRainJacket = plan.rainJacketMode === "all";
+
+  return riders.reduce<Record<string, StageRiderSupplyDraft>>((acc, rider) => {
+    const riderId = String(rider.id ?? "");
+    if (!riderId) return acc;
+
+    acc[riderId] = {
+      bidons: plan.bidonsPerRider,
+      gels: plan.gelsPerRider,
+      nutrition_packs: plan.nutritionPacksPerRider,
+      race_jersey_complete: true,
+      rain_jacket: useRainJacket,
+    };
+
+    return acc;
+  }, {});
+}
+
+function StageSupplyNumberInput({
+  label,
+  value,
+  min,
+  max,
+  disabled,
+  onChange,
+}: {
+  label: string;
+  value: number;
+  min: number;
+  max: number;
+  disabled: boolean;
+  onChange: (value: number) => void;
 }) {
   return (
+    <label className="block">
+      <span className="mb-1 block text-sm font-medium text-slate-700">
+        {label}
+      </span>
+      <input
+        type="number"
+        min={min}
+        max={max}
+        value={value}
+        disabled={disabled}
+        onChange={(event) =>
+          onChange(clampStageSupplyValue(Number(event.target.value), min, max))
+        }
+        className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm disabled:bg-slate-100"
+      />
+      <span className="mt-1 block text-xs text-slate-400">
+        Min {min} / Max {max} per rider
+      </span>
+    </label>
+  );
+}
+
+function StageSupplyRowInput({
+  label,
+  value,
+  min,
+  max,
+  disabled,
+  onChange,
+}: {
+  label: string;
+  value: number;
+  min: number;
+  max: number;
+  disabled: boolean;
+  onChange: (value: number) => void;
+}) {
+  return (
+    <label className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2">
+      <div className="min-w-0 flex-1">
+        <div className="text-sm font-semibold text-slate-900">{label}</div>
+        <div className="mt-0.5 text-xs text-slate-400">
+          Min {min} / Max {max} per rider
+        </div>
+      </div>
+
+      <input
+        type="number"
+        min={min}
+        max={max}
+        value={value}
+        disabled={disabled}
+        onChange={(event) =>
+          onChange(clampStageSupplyValue(Number(event.target.value), min, max))
+        }
+        className="h-10 w-24 shrink-0 rounded-xl border border-slate-300 px-3 text-sm font-semibold text-slate-900 disabled:bg-slate-100"
+      />
+    </label>
+  );
+}
+
+function StageSupplyInventoryLine({
+  label,
+  needed,
+  available,
+  durable,
+  durabilityText,
+}: {
+  label: string;
+  needed: number;
+  available: number;
+  durable: boolean;
+  durabilityText: string;
+}) {
+  const missing = needed > available;
+
+  return (
+    <div
+      className={[
+        "rounded-xl border px-3 py-2",
+        missing ? "border-red-200 bg-red-50" : "border-slate-200 bg-slate-50",
+      ].join(" ")}
+    >
+      <div className="flex items-center justify-between gap-3">
+        <div className="text-sm font-semibold text-slate-900">{label}</div>
+        <div
+          className={[
+            "rounded-full px-2 py-0.5 text-xs font-semibold",
+            missing
+              ? "bg-red-100 text-red-700"
+              : "bg-emerald-100 text-emerald-700",
+          ].join(" ")}
+        >
+          {needed} / {available || "—"}
+        </div>
+      </div>
+      <div className="mt-1 text-xs text-slate-500">
+        {durable ? durabilityText : "One-use consumable"}
+      </div>
+      {missing ? (
+        <div className="mt-1 text-xs font-semibold text-red-700">
+          Missing {needed - available}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function StageRaceSuppliesCard({
+  stage,
+  riders,
+  supplyOptions,
+  suppliesByRider,
+  onApplyTeamPlan,
+  onSave,
+  saveDisabled,
+  saving,
+  disabled,
+}: {
+  stage: JsonRecord | null;
+  riders: JsonRecord[];
+  supplyOptions: RaceSupplyOption[];
+  suppliesByRider: Record<string, StageRiderSupplyDraft>;
+  onApplyTeamPlan: (teamPlan: StageTeamSupplyPlan) => void;
+  onSave: () => void;
+  saveDisabled: boolean;
+  saving: boolean;
+  disabled: boolean;
+}) {
+  const teamPlan = getStageTeamSupplyPlan({ riders, suppliesByRider, stage });
+  const needs = getStageSupplyNeeds(riders, teamPlan, stage);
+  const jerseyAvailable = getSupplyAvailableQuantity(
+    supplyOptions,
+    "race_jersey_complete",
+  );
+  const rainAvailable = getSupplyAvailableQuantity(
+    supplyOptions,
+    "rain_jackets",
+  );
+  const jerseyMissing = needs.race_jersey_complete > jerseyAvailable;
+  const rainJacketSelected = teamPlan.rainJacketMode === "all";
+
+  function updatePlan(patch: Partial<StageTeamSupplyPlan>) {
+    onApplyTeamPlan({
+      ...teamPlan,
+      ...patch,
+      rainJacketMode: patch.rainJacketMode ?? teamPlan.rainJacketMode,
+    });
+  }
+
+  return (
     <section className="rounded-2xl border bg-white p-5 shadow-sm">
-      <h2 className="text-lg font-semibold text-slate-900">
-        2. Stage Supplies
-      </h2>
-      <p className="mt-1 text-sm text-slate-600">
-        Additional race supplies for each rider on this stage.
-      </p>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h2 className="text-lg font-semibold text-slate-900">
+            4. Stage Race Supplies
+          </h2>
+          <p className="mt-1 text-sm text-slate-600">
+            Team-level supply setup for this stage. Consumables are applied per
+            rider; Race Jersey Complete is mandatory and Rain Jackets are a
+            team-wide yes/no choice.
+          </p>
+        </div>
 
-      <div className="mt-4 space-y-3">
-        {riders.length === 0 && (
-          <div className="rounded-xl border border-dashed border-slate-300 p-4 text-sm text-slate-500">
-            No riders found from the submitted Race Plan yet.
-          </div>
-        )}
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={onSave}
+            disabled={saveDisabled || jerseyMissing}
+            className="rounded-lg bg-yellow-400 px-3 py-1.5 text-xs font-semibold text-slate-950 hover:bg-yellow-300 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500"
+          >
+            {saving ? "Saving…" : "Save"}
+          </button>
 
-        {riders.map((rider) => {
-          const riderId = String(rider.id ?? '')
-          const value = suppliesByRider[riderId] ?? {
-            bidons: 0,
-            gels: 0,
-            nutrition_packs: 0,
-            rain_jacket: false,
-          }
-
-          return (
-            <div
-              key={riderId}
-              className="rounded-xl border border-slate-200 p-4"
-            >
-              <div className="mb-3 font-medium text-slate-900">
-                {getRiderDisplayName(rider)}
-              </div>
-
-              <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-                <NumberField
-                  label="Bidons"
-                  value={value.bidons}
-                  disabled={disabled}
-                  onChange={(next) => onChange(riderId, { bidons: next })}
-                />
-                <NumberField
-                  label="Energy Gels"
-                  value={value.gels}
-                  disabled={disabled}
-                  onChange={(next) => onChange(riderId, { gels: next })}
-                />
-                <NumberField
-                  label="Nutrition Packs"
-                  value={value.nutrition_packs}
-                  disabled={disabled}
-                  onChange={(next) =>
-                    onChange(riderId, { nutrition_packs: next })
-                  }
-                />
-
-                <label className="flex items-center gap-2 rounded-xl border border-slate-300 px-3 py-2 text-sm">
-                  <input
-                    type="checkbox"
-                    checked={value.rain_jacket}
-                    disabled={disabled}
-                    onChange={(event) =>
-                      onChange(riderId, {
-                        rain_jacket: event.target.checked,
-                      })
-                    }
-                  />
-                  Rain Jacket
-                </label>
-              </div>
+          <InfoTooltip
+            label="Stage race supplies help"
+            panelWidthClass="w-[30rem]"
+          >
+            <div className="text-sm font-semibold text-slate-900">
+              Supply rules and effects
             </div>
-          )
-        })}
+            <p className="mt-1 text-xs text-slate-500">
+              These are simple stage-engine effects. The race engine should use
+              them as small modifiers, not guaranteed outcomes.
+            </p>
+            <div className="mt-3 space-y-3">
+              {Object.entries(STAGE_SUPPLY_RULES).map(([key, rule]) => (
+                <div
+                  key={key}
+                  className="rounded-xl border border-slate-200 p-3"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <div className="font-semibold text-slate-900">
+                        {rule.label}
+                      </div>
+                      <div className="mt-1 text-xs text-slate-500">
+                        {rule.durabilityText}
+                      </div>
+                    </div>
+
+                    <span
+                      className={[
+                        "shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold",
+                        rule.useType === "durable"
+                          ? "bg-blue-50 text-blue-700"
+                          : "bg-emerald-50 text-emerald-700",
+                      ].join(" ")}
+                    >
+                      {rule.useType === "durable" ? "durable" : "consumable"}
+                    </span>
+                  </div>
+
+                  <div className="mt-3 grid gap-3 md:grid-cols-2">
+                    <div>
+                      <div className="text-xs font-semibold text-emerald-700">
+                        Positive
+                      </div>
+                      <ul className="mt-1 list-disc space-y-1 pl-4 text-xs text-slate-600">
+                        {rule.positiveEffects.map((effect) => (
+                          <li key={effect}>{effect}</li>
+                        ))}
+                      </ul>
+                    </div>
+
+                    <div>
+                      <div className="text-xs font-semibold text-red-700">
+                        Negative / limits
+                      </div>
+                      <ul className="mt-1 list-disc space-y-1 pl-4 text-xs text-slate-600">
+                        {rule.negativeEffects.map((effect) => (
+                          <li key={effect}>{effect}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </InfoTooltip>
+        </div>
+      </div>
+
+      {jerseyMissing ? (
+        <div className="mt-4 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm font-medium text-red-700">
+          Race Jersey Complete is mandatory. You need{" "}
+          {needs.race_jersey_complete}, but only {jerseyAvailable} are
+          available.
+        </div>
+      ) : null}
+
+      <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h3 className="text-sm font-semibold text-slate-900">
+              Stage supply setup
+            </h3>
+            <p className="mt-1 text-xs text-slate-500">
+              Choose the per-rider consumables and team-wide reusable items for
+              this selected stage.
+            </p>
+          </div>
+
+          <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-600 shadow-sm">
+            {riders.length} riders selected
+          </span>
+        </div>
+
+        <div className="mt-4 grid gap-4 xl:grid-cols-[minmax(0,1.25fr)_minmax(280px,0.75fr)]">
+          <div>
+            <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
+              Consumables per rider
+            </div>
+            <div className="space-y-2">
+              <StageSupplyRowInput
+                label="Bidons"
+                value={teamPlan.bidonsPerRider}
+                min={STAGE_SUPPLY_RULES.bidons_water_bottles.minPerRider}
+                max={STAGE_SUPPLY_RULES.bidons_water_bottles.maxPerRider}
+                disabled={disabled}
+                onChange={(value) => updatePlan({ bidonsPerRider: value })}
+              />
+
+              <StageSupplyRowInput
+                label="Energy Gels"
+                value={teamPlan.gelsPerRider}
+                min={STAGE_SUPPLY_RULES.energy_gels.minPerRider}
+                max={STAGE_SUPPLY_RULES.energy_gels.maxPerRider}
+                disabled={disabled}
+                onChange={(value) => updatePlan({ gelsPerRider: value })}
+              />
+
+              <StageSupplyRowInput
+                label="Nutrition Packs"
+                value={teamPlan.nutritionPacksPerRider}
+                min={STAGE_SUPPLY_RULES.nutrition_packs.minPerRider}
+                max={STAGE_SUPPLY_RULES.nutrition_packs.maxPerRider}
+                disabled={disabled}
+                onChange={(value) =>
+                  updatePlan({ nutritionPacksPerRider: value })
+                }
+              />
+            </div>
+          </div>
+
+          <div>
+            <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
+              Reusable stage items
+            </div>
+            <div className="space-y-3">
+              <div
+                className={[
+                  "rounded-xl border bg-white p-3",
+                  jerseyMissing ? "border-red-200" : "border-slate-200",
+                ].join(" ")}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <div className="text-sm font-semibold text-slate-900">
+                      Race Jersey Complete
+                    </div>
+                    <div className="mt-1 text-xs text-slate-500">
+                      Mandatory for all selected riders.
+                    </div>
+                    <div className="mt-1 text-xs text-slate-400">
+                      10 stage uses per kit.
+                    </div>
+                  </div>
+
+                  <span
+                    className={[
+                      "shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold",
+                      jerseyMissing
+                        ? "bg-red-100 text-red-700"
+                        : "bg-emerald-100 text-emerald-700",
+                    ].join(" ")}
+                  >
+                    {needs.race_jersey_complete} needed
+                  </span>
+                </div>
+              </div>
+
+              <label className="block rounded-xl border border-slate-200 bg-white p-3">
+                <span className="mb-1 block text-sm font-semibold text-slate-900">
+                  Rain Jackets
+                </span>
+                <select
+                  value={teamPlan.rainJacketMode}
+                  disabled={disabled}
+                  onChange={(event) =>
+                    updatePlan({
+                      rainJacketMode: event.target.value as StageRainJacketMode,
+                    })
+                  }
+                  className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm disabled:bg-slate-100"
+                >
+                  <option value="none">None</option>
+                  <option value="all">All riders</option>
+                </select>
+                <span className="mt-2 block text-xs text-slate-500">
+                  {rainJacketSelected
+                    ? `${needs.rain_jackets} jacket durability uses will be counted for this stage.`
+                    : "No rain jackets selected for this stage."}
+                </span>
+                <span className="mt-1 block text-xs text-slate-400">
+                  Weather: {needs.weatherRisk.reason}
+                </span>
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-4 rounded-2xl border border-slate-200 bg-white p-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h3 className="text-sm font-semibold text-slate-900">
+              Stage stock check
+            </h3>
+            <p className="mt-1 text-xs text-slate-500">
+              Needed for this stage compared with currently available club
+              stock.
+            </p>
+          </div>
+
+          <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-500">
+            Plan only
+          </span>
+        </div>
+
+        <div className="mt-3 grid gap-3 md:grid-cols-2">
+          <StageSupplyInventoryLine
+            label="Bidons / Water Bottles"
+            needed={needs.bidons_water_bottles}
+            available={getSupplyAvailableQuantity(
+              supplyOptions,
+              "bidons_water_bottles",
+            )}
+            durable={false}
+            durabilityText=""
+          />
+          <StageSupplyInventoryLine
+            label="Energy Gels"
+            needed={needs.energy_gels}
+            available={getSupplyAvailableQuantity(supplyOptions, "energy_gels")}
+            durable={false}
+            durabilityText=""
+          />
+          <StageSupplyInventoryLine
+            label="Nutrition Packs"
+            needed={needs.nutrition_packs}
+            available={getSupplyAvailableQuantity(
+              supplyOptions,
+              "nutrition_packs",
+            )}
+            durable={false}
+            durabilityText=""
+          />
+          <StageSupplyInventoryLine
+            label="Race Jersey Complete"
+            needed={needs.race_jersey_complete}
+            available={jerseyAvailable}
+            durable
+            durabilityText="10 stage uses per jersey"
+          />
+          <StageSupplyInventoryLine
+            label="Rain Jackets"
+            needed={needs.rain_jackets}
+            available={rainAvailable}
+            durable
+            durabilityText="25 stage uses per jacket"
+          />
+        </div>
+      </div>
+
+      <div className="mt-4 rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-800">
+        Stage Plan save only stores the plan. Consumables and durable item usage
+        are applied later by the race engine when the stage is processed.
       </div>
     </section>
-  )
+  );
+}
+
+function getStagePlanRaceBonusRows(standardizedBonus: JsonRecord) {
+  const groups = toArray<JsonRecord>(standardizedBonus.groups);
+
+  if (groups.length > 0) {
+    return groups.map((group) => {
+      const bonusKey = String(group.bonus_key ?? group.key ?? "");
+      return {
+        key: bonusKey || String(group.display_name ?? "bonus"),
+        label: String(group.display_name ?? titleFromSnake(bonusKey)),
+        value: Number(group.percent ?? group.points ?? 0),
+        description: String(
+          group.description ??
+            standardizedBonusDescriptions[bonusKey] ??
+            "Race Plan bonus",
+        ),
+      };
+    });
+  }
+
+  const totals = asRecord(standardizedBonus.totals);
+
+  return Object.entries(totals).map(([key, value]) => ({
+    key,
+    label: titleFromSnake(key),
+    value: Number(value),
+    description: standardizedBonusDescriptions[key] ?? "Race Plan bonus",
+  }));
+}
+
+function sumEquipmentWeightedBonuses(
+  equipmentPresetOptions: EquipmentSetupPresetOption[],
+  equipmentByRider: Record<string, string>,
+) {
+  return Object.values(equipmentByRider).reduce(
+    (acc, presetId) => {
+      const preset = equipmentPresetOptions.find(
+        (option) => option.id === presetId,
+      );
+      const { weightedBonuses } = getPresetBonusPreview(preset);
+
+      Object.values(weightedBonuses).forEach((value) => {
+        const numeric = Number(value);
+        if (!Number.isFinite(numeric)) return;
+        if (numeric >= 0) acc.positive += numeric;
+        if (numeric < 0) acc.negative += numeric;
+      });
+
+      return acc;
+    },
+    { positive: 0, negative: 0 },
+  );
+}
+
+function getStageIndividualOverrideCount(draft: StagePlanDraft) {
+  return Object.values(draft.individualTacticsByRider).reduce(
+    (sum, riderPlan) => {
+      return (
+        sum +
+        Object.values(riderPlan).filter(
+          (phase) => phase.command !== "follow_team_plan",
+        ).length
+      );
+    },
+    0,
+  );
+}
+
+function getStageRoleCounts(draft: StagePlanDraft) {
+  return Object.values(draft.riderRolesByRider).reduce<Record<string, number>>(
+    (acc, role) => {
+      const label = STAGE_RIDER_ROLE_LABELS[String(role)] ?? String(role);
+      acc[label] = (acc[label] ?? 0) + 1;
+      return acc;
+    },
+    {},
+  );
+}
+
+function StageFinalCalculationCard({
+  stage,
+  riders,
+  draft,
+  equipmentPresetOptions,
+  supplyOptions,
+  standardizedBonus,
+  exactBonusPreview,
+  onSave,
+  saveDisabled,
+  saving,
+}: {
+  stage: JsonRecord | null;
+  riders: JsonRecord[];
+  draft: StagePlanDraft;
+  equipmentPresetOptions: EquipmentSetupPresetOption[];
+  supplyOptions: RaceSupplyOption[];
+  standardizedBonus: JsonRecord;
+  exactBonusPreview: JsonRecord;
+  onSave: () => void;
+  saveDisabled: boolean;
+  saving: boolean;
+}) {
+  const teamPlan = getStageTeamSupplyPlan({
+    riders,
+    suppliesByRider: draft.suppliesByRider,
+    stage,
+  });
+  const needs = getStageSupplyNeeds(riders, teamPlan, stage);
+  const equipmentTotals = sumEquipmentWeightedBonuses(
+    equipmentPresetOptions,
+    draft.equipmentByRider,
+  );
+  const raceBonusRows = getStagePlanRaceBonusRows(standardizedBonus);
+  const jacketSelected = needs.rain_jackets > 0;
+  const jacketBenefitActive = jacketSelected && needs.weatherRisk.isBadWeather;
+  const jerseyAvailable = getSupplyAvailableQuantity(
+    supplyOptions,
+    "race_jersey_complete",
+  );
+  const missingJerseys = Math.max(
+    needs.race_jersey_complete - jerseyAvailable,
+    0,
+  );
+  const racePlanBonusTotal = raceBonusRows.reduce(
+    (sum, row) => sum + (Number.isFinite(row.value) ? row.value : 0),
+    0,
+  );
+
+  void exactBonusPreview;
+
+  return (
+    <section className="rounded-2xl border bg-white p-5 shadow-sm">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h2 className="text-lg font-semibold text-slate-900">
+            5. Final Stage Calculation
+          </h2>
+          <p className="mt-1 text-sm text-slate-600">
+            Team-level engine preview for this exact stage setup: Race Plan
+            bonuses, equipment, supplies, weather and risk factors.
+          </p>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={onSave}
+            disabled={saveDisabled || missingJerseys > 0}
+            className="rounded-lg bg-yellow-400 px-3 py-1.5 text-xs font-semibold text-slate-950 hover:bg-yellow-300 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500"
+          >
+            {saving ? "Saving…" : "Save"}
+          </button>
+
+          <InfoTooltip
+            label="Final stage calculation help"
+            panelWidthClass="w-[30rem]"
+          >
+            <div className="text-sm font-semibold text-slate-900">
+              What this preview means
+            </div>
+            <p className="mt-2">
+              This is a team-level preview. The race engine should combine Race
+              Plan staff/assets/policy bonuses, rider equipment, stage supplies,
+              team tactic, rider roles and individual commands.
+            </p>
+            <p className="mt-2">
+              Weather, crashes, mechanicals, fatigue, health and sickness risk
+              should be applied later by the race engine during stage
+              processing.
+            </p>
+          </InfoTooltip>
+        </div>
+      </div>
+
+      <div className="mt-4 grid gap-3 md:grid-cols-3">
+        <InfoBox
+          label="Race Plan bonus total"
+          value={`+${formatBonusPercent(racePlanBonusTotal)}%`}
+        />
+        <InfoBox
+          label="Equipment bonus direction"
+          value={`+${formatBonusPercent(equipmentTotals.positive)} / ${formatBonusPercent(equipmentTotals.negative)}%`}
+        />
+        <InfoBox
+          label="Rain jacket effect"
+          value={
+            jacketBenefitActive
+              ? "-50% sickness risk / -1% efficiency"
+              : jacketSelected
+                ? "-1% efficiency"
+                : "Not active"
+          }
+        />
+      </div>
+
+      {missingJerseys > 0 ? (
+        <div className="mt-4 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm font-semibold text-red-700">
+          Missing mandatory Race Jersey Complete units: {missingJerseys}. This
+          should block the final stage setup.
+        </div>
+      ) : null}
+
+      <div className="mt-4 space-y-4">
+        <div className="rounded-xl border border-slate-200 p-4">
+          <div className="text-sm font-semibold text-slate-900">
+            Race Plan bonuses
+          </div>
+          <div className="mt-3 space-y-2">
+            {raceBonusRows.length > 0 ? (
+              raceBonusRows.map((row) => (
+                <div
+                  key={row.key}
+                  className="flex items-start justify-between gap-3 rounded-lg bg-slate-50 px-3 py-2 text-sm"
+                >
+                  <div>
+                    <div className="font-semibold text-slate-800">
+                      {row.label}
+                    </div>
+                    <div className="text-xs text-slate-500">
+                      {row.description}
+                    </div>
+                  </div>
+                  <div className="font-bold text-emerald-700">
+                    +{formatBonusPercent(row.value)}%
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-500">
+                Race Plan bonus preview is not available yet.
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="rounded-xl border border-slate-200 p-4">
+          <div className="text-sm font-semibold text-slate-900">
+            Stage supplies
+          </div>
+          <div className="mt-3 grid gap-2 text-sm">
+            <div className="flex justify-between gap-3 rounded-lg bg-slate-50 px-3 py-2">
+              <span>Bidons needed</span>
+              <strong>{needs.bidons_water_bottles}</strong>
+            </div>
+            <div className="flex justify-between gap-3 rounded-lg bg-slate-50 px-3 py-2">
+              <span>Energy gels needed</span>
+              <strong>{needs.energy_gels}</strong>
+            </div>
+            <div className="flex justify-between gap-3 rounded-lg bg-slate-50 px-3 py-2">
+              <span>Nutrition packs needed</span>
+              <strong>{needs.nutrition_packs}</strong>
+            </div>
+            <div className="flex justify-between gap-3 rounded-lg bg-slate-50 px-3 py-2">
+              <span>Race jerseys needed</span>
+              <strong>{needs.race_jersey_complete}</strong>
+            </div>
+            <div className="flex justify-between gap-3 rounded-lg bg-slate-50 px-3 py-2">
+              <span>Rain jackets needed</span>
+              <strong>{needs.rain_jackets}</strong>
+            </div>
+          </div>
+          <div className="mt-3 rounded-lg bg-blue-50 px-3 py-2 text-sm text-blue-800">
+            Jerseys: 10 stage uses each. Rain jackets: 25 stage uses each.
+            Jackets reduce bad-weather sickness risk by 50%, but add -1% rider
+            efficiency whenever used.
+          </div>
+        </div>
+      </div>
+    </section>
+  );
 }
 
 function StageTeamTacticCard({
+  riders,
   value,
+  riderRolesByRider,
   onChange,
+  onRoleChange,
+  onSave,
+  saveDisabled,
+  saving,
   disabled,
 }: {
-  value: { plan: string; notes: string }
-  onChange: (next: { plan: string; notes: string }) => void
-  disabled: boolean
+  riders: JsonRecord[];
+  value: { plan: string; notes: string };
+  riderRolesByRider: Record<string, StageRiderRoleCode | string>;
+  onChange: (next: { plan: string; notes: string }) => void;
+  onRoleChange: (riderId: string, role: StageRiderRoleCode) => void;
+  onSave: () => void;
+  saveDisabled: boolean;
+  saving: boolean;
+  disabled: boolean;
 }) {
   return (
-    <section className="rounded-2xl border bg-white p-5 shadow-sm">
-      <h2 className="text-lg font-semibold text-slate-900">
-        3. Team Tactic
-      </h2>
-      <p className="mt-1 text-sm text-slate-600">
-        General stage tactic for the team. Rider-level tactics can come later.
-      </p>
-
-      <div className="mt-4 space-y-4">
+    <section className="flex h-full flex-col rounded-2xl border bg-white p-5 shadow-sm">
+      <div className="flex items-start justify-between gap-3">
         <div>
-          <label className="mb-1 block text-sm font-medium text-slate-700">
-            Tactic plan
-          </label>
+          <h2 className="text-lg font-semibold text-slate-900">
+            2. Team Tactic
+          </h2>
+          <p className="mt-1 text-sm text-slate-600">
+            General stage tactic and rider roles for this selected stage.
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={onSave}
+            disabled={saveDisabled}
+            className="rounded-lg bg-yellow-400 px-3 py-1.5 text-xs font-semibold text-slate-950 hover:bg-yellow-300 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500"
+          >
+            {saving ? "Saving…" : "Save"}
+          </button>
+          <RoleExplanationTooltip />
+        </div>
+      </div>
+
+      <div className="mt-4 flex-1 space-y-4">
+        <div>
+          <div className="mb-1 flex items-center gap-2">
+            <label className="block text-sm font-medium text-slate-700">
+              Tactic plan
+            </label>
+            <InfoTooltip
+              label="Tactic plan options"
+              panelWidthClass="w-[24rem]"
+            >
+              <div className="mb-2 text-sm font-semibold text-slate-900">
+                Tactic plan options
+              </div>
+              <div className="space-y-2">
+                {STAGE_TACTIC_PLAN_OPTIONS.map((option) => (
+                  <div key={option.value}>
+                    <span className="font-semibold text-slate-900">
+                      {option.label}
+                    </span>{" "}
+                    — {option.description}
+                  </div>
+                ))}
+              </div>
+            </InfoTooltip>
+          </div>
+
           <select
             value={value.plan}
             disabled={disabled}
@@ -3414,81 +7095,238 @@ function StageTeamTacticCard({
               onChange({
                 ...value,
                 plan: event.target.value,
+                notes: "",
               })
             }
             className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm disabled:bg-slate-100"
           >
-            <option value="balanced">Balanced</option>
-            <option value="aggressive">Aggressive</option>
-            <option value="sprint_control">Sprint Control</option>
-            <option value="breakaway">Breakaway Support</option>
-            <option value="gc_protection">GC Protection</option>
-            <option value="climber_support">Climber Support</option>
-            <option value="time_trial_focus">Time Trial Focus</option>
+            {STAGE_TACTIC_PLAN_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
           </select>
         </div>
 
         <div>
-          <label className="mb-1 block text-sm font-medium text-slate-700">
-            Tactical notes
-          </label>
-          <textarea
-            value={value.notes}
-            disabled={disabled}
-            onChange={(event) =>
-              onChange({
-                ...value,
-                notes: event.target.value,
-              })
-            }
-            rows={8}
-            placeholder="Add the team plan for this stage..."
-            className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm disabled:bg-slate-100"
-          />
+          <div className="mb-2 text-sm font-semibold text-slate-900">
+            Rider stage roles
+          </div>
+
+          <div className="space-y-3">
+            {riders.length === 0 && (
+              <div className="rounded-xl border border-dashed border-slate-300 p-4 text-sm text-slate-500">
+                No riders found from the submitted Race Plan yet.
+              </div>
+            )}
+
+            {riders.map((rider) => {
+              const riderId = String(rider.id ?? "");
+              const role = String(
+                riderRolesByRider[riderId] ?? DEFAULT_STAGE_RIDER_ROLE,
+              ) as StageRiderRoleCode;
+
+              return (
+                <div
+                  key={riderId}
+                  className="grid items-center gap-3 rounded-xl border border-slate-200 p-3 md:grid-cols-[1fr_240px]"
+                >
+                  <div className="min-w-0">
+                    <div className="group relative inline-block max-w-full">
+                      <span className="cursor-help truncate font-medium text-slate-900">
+                        {getRiderDisplayName(rider)}
+                      </span>
+                      <RiderHoverCard rider={rider} />
+                    </div>
+                    <div className="mt-1 text-xs text-slate-500">
+                      Engine role: {STAGE_RIDER_ROLE_LABELS[role] ?? role}
+                    </div>
+                  </div>
+
+                  <select
+                    value={role}
+                    disabled={disabled}
+                    onChange={(event) =>
+                      onRoleChange(
+                        riderId,
+                        event.target.value as StageRiderRoleCode,
+                      )
+                    }
+                    className="rounded-xl border border-slate-300 px-3 py-2 text-sm disabled:bg-slate-100"
+                  >
+                    {STAGE_RIDER_ROLE_OPTIONS.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              );
+            })}
+          </div>
         </div>
       </div>
     </section>
-  )
+  );
 }
 
-function NumberField({
-  label,
-  value,
+function StageIndividualTacticsCard({
+  stage,
+  riders,
+  individualTacticsByRider,
   onChange,
+  onSave,
+  saveDisabled,
+  saving,
   disabled,
 }: {
-  label: string
-  value: number
-  onChange: (value: number) => void
-  disabled: boolean
+  stage: JsonRecord | null;
+  riders: JsonRecord[];
+  individualTacticsByRider: StageIndividualTacticsByRider;
+  onChange: (riderId: string, phaseKey: string, command: string) => void;
+  onSave: () => void;
+  saveDisabled: boolean;
+  saving: boolean;
+  disabled: boolean;
 }) {
+  const phases = getStagePhaseRanges(stage);
+
   return (
-    <div>
-      <label className="mb-1 block text-sm font-medium text-slate-700">
-        {label}
-      </label>
-      <input
-        type="number"
-        min={0}
-        value={value}
-        disabled={disabled}
-        onChange={(event) => onChange(Number(event.target.value || 0))}
-        className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm disabled:bg-slate-100"
-      />
-    </div>
-  )
+    <section className="rounded-2xl border bg-white p-5 shadow-sm">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h2 className="text-lg font-semibold text-slate-900">
+            3. Individual Tactics
+          </h2>
+          <p className="mt-1 text-sm text-slate-600">
+            Optional per-rider phase commands. If left as Follow Team Plan, the
+            race engine uses the team tactic and rider role above.
+          </p>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={onSave}
+            disabled={saveDisabled}
+            className="rounded-lg bg-yellow-400 px-3 py-1.5 text-xs font-semibold text-slate-950 hover:bg-yellow-300 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500"
+          >
+            {saving ? "Saving…" : "Save"}
+          </button>
+
+          <InfoTooltip
+            label="Individual tactic commands"
+            panelWidthClass="w-[28rem]"
+          >
+            <div className="text-sm font-semibold text-slate-900">
+              Individual tactic commands
+            </div>
+            <p className="mt-2">
+              These commands are optional. They override the general team tactic
+              only for this rider and only for the selected phase of the stage.
+            </p>
+            <div className="mt-3 space-y-2">
+              {STAGE_INDIVIDUAL_TACTIC_OPTIONS.map((option) => (
+                <div key={option.value}>
+                  <span className="font-semibold text-slate-900">
+                    {option.label}
+                  </span>{" "}
+                  — {option.description}
+                </div>
+              ))}
+            </div>
+          </InfoTooltip>
+        </div>
+      </div>
+
+      <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+        Do not forget to save this stage. These phase commands are saved only
+        for the selected stage.
+      </div>
+
+      <div className="mt-4 overflow-x-auto">
+        <div className="min-w-[980px] space-y-3">
+          <div className="grid grid-cols-[250px_repeat(4,minmax(150px,1fr))] gap-2 px-1 text-xs font-semibold uppercase tracking-wide text-slate-500">
+            <div>Rider</div>
+            {phases.map((phase) => (
+              <div key={phase.key}>
+                {phase.label}
+                <span className="ml-1 normal-case text-slate-400">
+                  {phase.rangeLabel}
+                </span>
+              </div>
+            ))}
+          </div>
+
+          {riders.length === 0 && (
+            <div className="rounded-xl border border-dashed border-slate-300 p-4 text-sm text-slate-500">
+              No riders found from the submitted Race Plan yet.
+            </div>
+          )}
+
+          {riders.map((rider) => {
+            const riderId = String(rider.id ?? "");
+            const riderTactics =
+              individualTacticsByRider[riderId] ??
+              createDefaultIndividualTacticsForRider(stage);
+
+            return (
+              <div
+                key={riderId}
+                className="grid grid-cols-[250px_repeat(4,minmax(150px,1fr))] gap-2 rounded-xl border border-slate-200 p-3"
+              >
+                <div className="min-w-0">
+                  <div className="group relative inline-block max-w-full">
+                    <span className="cursor-help truncate font-medium text-slate-900">
+                      {getRiderDisplayName(rider)}
+                    </span>
+                    <RiderHoverCard rider={rider} />
+                  </div>
+                  <div className="mt-1 text-xs text-slate-500">
+                    {getRiderRoleLabel(rider)}
+                  </div>
+                </div>
+
+                {phases.map((phase) => {
+                  const command =
+                    riderTactics[phase.key]?.command ?? "follow_team_plan";
+
+                  return (
+                    <select
+                      key={`${riderId}-${phase.key}`}
+                      value={command}
+                      disabled={disabled}
+                      onChange={(event) =>
+                        onChange(riderId, phase.key, event.target.value)
+                      }
+                      className="h-10 rounded-xl border border-slate-300 px-2 text-sm disabled:bg-slate-100"
+                    >
+                      {STAGE_INDIVIDUAL_TACTIC_OPTIONS.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                  );
+                })}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </section>
+  );
 }
 
-
 function getRiderDisplayName(rider: JsonRecord) {
-  const fullName = String(rider.full_name ?? rider.name ?? '').trim()
-  if (fullName) return fullName
+  const fullName = String(rider.full_name ?? rider.name ?? "").trim();
+  if (fullName) return fullName;
 
-  const firstName = String(rider.first_name ?? '').trim()
-  const lastName = String(rider.last_name ?? '').trim()
-  const combinedName = `${firstName} ${lastName}`.trim()
+  const firstName = String(rider.first_name ?? "").trim();
+  const lastName = String(rider.last_name ?? "").trim();
+  const combinedName = `${firstName} ${lastName}`.trim();
 
-  return combinedName || 'Unnamed rider'
+  return combinedName || "Unnamed rider";
 }
 
 function getRiderRoleLabel(rider: JsonRecord): string {
@@ -3497,28 +7335,28 @@ function getRiderRoleLabel(rider: JsonRecord): string {
       rider.assigned_role ??
       rider.specialty ??
       rider.rider_type ??
-      'Rider',
-  )
+      "Rider",
+  );
 }
 
 function getRiderAge(rider: JsonRecord): string {
-  const directAge = Number(rider.age)
+  const directAge = Number(rider.age);
 
   if (Number.isFinite(directAge) && directAge > 0) {
-    return String(Math.floor(directAge))
+    return String(Math.floor(directAge));
   }
 
-  const birthDate = String(rider.birth_date ?? '').trim()
-  const yearMatch = birthDate.match(/^(\d{4})-/)
+  const birthDate = String(rider.birth_date ?? "").trim();
+  const yearMatch = birthDate.match(/^(\d{4})-/);
 
-  if (!yearMatch) return '—'
+  if (!yearMatch) return "—";
 
-  const birthYear = Number(yearMatch[1])
-  if (!Number.isFinite(birthYear)) return '—'
+  const birthYear = Number(yearMatch[1]);
+  if (!Number.isFinite(birthYear)) return "—";
 
   // Game dates use Season 1 = year 2000, so this is only a fallback.
-  const estimatedAge = 2000 - birthYear
-  return estimatedAge > 0 ? String(estimatedAge) : '—'
+  const estimatedAge = 2000 - birthYear;
+  return estimatedAge > 0 ? String(estimatedAge) : "—";
 }
 
 function getRiderOverall(rider: JsonRecord): string {
@@ -3527,25 +7365,25 @@ function getRiderOverall(rider: JsonRecord): string {
     rider.overall_rating ??
     rider.rating ??
     rider.ovr ??
-    rider.current_ability
+    rider.current_ability;
 
-  const numberValue = Number(value)
+  const numberValue = Number(value);
 
-  return Number.isFinite(numberValue) ? numberValue.toFixed(0) : '—'
+  return Number.isFinite(numberValue) ? numberValue.toFixed(0) : "—";
 }
 
 function getRiderSkillEntries(rider: JsonRecord) {
   const skills = [
-    ['Flat', rider.flat],
-    ['Hills', rider.hills ?? rider.hilly],
-    ['Mountain', rider.mountain ?? rider.climbing],
-    ['Sprint', rider.sprint],
-    ['Time Trial', rider.time_trial ?? rider.tt],
-    ['Stamina', rider.stamina],
-    ['Recovery', rider.recovery],
-    ['Downhill', rider.downhill],
-    ['Cobbles', rider.cobbles],
-  ]
+    ["Flat", rider.flat],
+    ["Hills", rider.hills ?? rider.hilly],
+    ["Mountain", rider.mountain ?? rider.climbing],
+    ["Sprint", rider.sprint],
+    ["Time Trial", rider.time_trial ?? rider.tt],
+    ["Stamina", rider.stamina],
+    ["Recovery", rider.recovery],
+    ["Downhill", rider.downhill],
+    ["Cobbles", rider.cobbles],
+  ];
 
   return skills
     .map(([label, value]) => ({
@@ -3553,28 +7391,46 @@ function getRiderSkillEntries(rider: JsonRecord) {
       value: Number(value),
     }))
     .filter((skill) => Number.isFinite(skill.value))
-    .sort((a, b) => b.value - a.value)
+    .sort((a, b) => b.value - a.value);
 }
 
 function RiderHoverCard({ rider }: { rider: JsonRecord }) {
-  const skills = getRiderSkillEntries(rider)
-  const topSkillNames = new Set(skills.slice(0, 3).map((skill) => skill.label))
+  const skills = getRiderSkillEntries(rider);
+  const topSkillNames = new Set(skills.slice(0, 3).map((skill) => skill.label));
+  const score = getRiderRaceScore(rider);
 
   return (
-    <div className="pointer-events-none absolute left-0 top-full z-40 mt-2 hidden w-72 rounded-2xl border border-slate-200 bg-white p-4 text-left shadow-xl group-hover:block">
+    <div className="pointer-events-none absolute left-0 top-full z-40 mt-2 hidden w-80 rounded-2xl border border-slate-200 bg-white p-4 text-left shadow-xl group-hover:block">
       <div className="font-semibold text-slate-900">
         {getRiderDisplayName(rider)}
       </div>
 
       <div className="mt-1 text-xs text-slate-500">
-        Age {getRiderAge(rider)} · Overall {getRiderOverall(rider)} ·{' '}
+        Age {getRiderAge(rider)} · Overall {getRiderOverall(rider)} ·{" "}
         {getRiderRoleLabel(rider)}
+      </div>
+
+      <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
+        <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+          Current race classifications
+        </div>
+
+        <div className="grid grid-cols-2 gap-2 text-xs">
+          <RiderRaceScorePopoverItem label="GC" value={score.position} />
+          <RiderRaceScorePopoverItem label="Time" value={score.time} />
+          <RiderRaceScorePopoverItem label="Points" value={score.points} />
+          <RiderRaceScorePopoverItem
+            label="Sprint"
+            value={score.sprintPoints}
+          />
+          <RiderRaceScorePopoverItem label="KOM" value={score.mountainPoints} />
+        </div>
       </div>
 
       <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
         {skills.length > 0 ? (
           skills.slice(0, 8).map((skill) => {
-            const isTopSkill = topSkillNames.has(skill.label)
+            const isTopSkill = topSkillNames.has(skill.label);
 
             return (
               <div
@@ -3584,8 +7440,8 @@ function RiderHoverCard({ rider }: { rider: JsonRecord }) {
                 <span
                   className={
                     isTopSkill
-                      ? 'font-semibold text-slate-900'
-                      : 'text-slate-500'
+                      ? "font-semibold text-slate-900"
+                      : "text-slate-500"
                   }
                 >
                   {skill.label}
@@ -3593,14 +7449,14 @@ function RiderHoverCard({ rider }: { rider: JsonRecord }) {
                 <span
                   className={
                     isTopSkill
-                      ? 'font-bold text-slate-900'
-                      : 'font-medium text-slate-700'
+                      ? "font-bold text-slate-900"
+                      : "font-medium text-slate-700"
                   }
                 >
                   {skill.value.toFixed(0)}
                 </span>
               </div>
-            )
+            );
           })
         ) : (
           <div className="col-span-2 text-slate-500">
@@ -3609,7 +7465,24 @@ function RiderHoverCard({ rider }: { rider: JsonRecord }) {
         )}
       </div>
     </div>
-  )
+  );
+}
+
+function RiderRaceScorePopoverItem({
+  label,
+  value,
+}: {
+  label: string;
+  value: unknown;
+}) {
+  return (
+    <div className="flex items-center justify-between rounded-lg bg-white px-2 py-1">
+      <span className="text-slate-500">{label}</span>
+      <span className="font-semibold text-slate-800">
+        {String(value ?? "—")}
+      </span>
+    </div>
+  );
 }
 
 function getRiderRaceScore(rider: JsonRecord) {
@@ -3619,44 +7492,42 @@ function getRiderRaceScore(rider: JsonRecord) {
     rider.race_position ??
     rider.standing_position ??
     rider.tour_position ??
-    null
+    null;
 
   const time =
     rider.gc_time_gap ??
     rider.general_time_gap ??
     rider.time_gap ??
     rider.race_time_gap ??
-    null
+    null;
 
   const points =
     rider.points ??
     rider.points_score ??
     rider.race_points ??
     rider.classification_points ??
-    0
+    0;
 
   const sprintPoints =
     rider.sprint_points ??
     rider.green_points ??
     rider.points_classification_points ??
-    0
+    0;
 
   const mountainPoints =
     rider.mountain_points ??
     rider.kom_points ??
     rider.climbing_points ??
     rider.mountain_classification_points ??
-    0
+    0;
 
   return {
     position:
-      position === null || position === undefined || position === ''
-        ? '—'
+      position === null || position === undefined || position === ""
+        ? "—"
         : String(position),
     time:
-      time === null || time === undefined || time === ''
-        ? '—'
-        : String(time),
+      time === null || time === undefined || time === "" ? "—" : String(time),
     points: Number.isFinite(Number(points)) ? Number(points) : 0,
     sprintPoints: Number.isFinite(Number(sprintPoints))
       ? Number(sprintPoints)
@@ -3664,16 +7535,16 @@ function getRiderRaceScore(rider: JsonRecord) {
     mountainPoints: Number.isFinite(Number(mountainPoints))
       ? Number(mountainPoints)
       : 0,
-  }
+  };
 }
 
 function RiderRaceScoreLine({ rider }: { rider: JsonRecord }) {
-  const score = getRiderRaceScore(rider)
+  const score = getRiderRaceScore(rider);
 
   return (
     <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-slate-500">
       <span>
-        GC:{' '}
+        GC:{" "}
         <strong className="font-semibold text-slate-700">
           {score.position}
         </strong>
@@ -3682,25 +7553,21 @@ function RiderRaceScoreLine({ rider }: { rider: JsonRecord }) {
       <span className="text-slate-300">|</span>
 
       <span>
-        Time:{' '}
-        <strong className="font-semibold text-slate-700">
-          {score.time}
-        </strong>
+        Time:{" "}
+        <strong className="font-semibold text-slate-700">{score.time}</strong>
       </span>
 
       <span className="text-slate-300">|</span>
 
       <span>
-        Points:{' '}
-        <strong className="font-semibold text-slate-700">
-          {score.points}
-        </strong>
+        Points:{" "}
+        <strong className="font-semibold text-slate-700">{score.points}</strong>
       </span>
 
       <span className="text-slate-300">|</span>
 
       <span>
-        Sprint:{' '}
+        Sprint:{" "}
         <strong className="font-semibold text-slate-700">
           {score.sprintPoints}
         </strong>
@@ -3709,13 +7576,13 @@ function RiderRaceScoreLine({ rider }: { rider: JsonRecord }) {
       <span className="text-slate-300">|</span>
 
       <span>
-        KOM:{' '}
+        KOM:{" "}
         <strong className="font-semibold text-slate-700">
           {score.mountainPoints}
         </strong>
       </span>
     </div>
-  )
+  );
 }
 
 function TabButton({
@@ -3724,10 +7591,10 @@ function TabButton({
   disabled = false,
   onClick,
 }: {
-  label: string
-  active: boolean
-  disabled?: boolean
-  onClick: () => void
+  label: string;
+  active: boolean;
+  disabled?: boolean;
+  onClick: () => void;
 }) {
   return (
     <button
@@ -3736,13 +7603,13 @@ function TabButton({
       onClick={onClick}
       className={`rounded-lg px-6 py-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50 ${
         active
-          ? 'bg-yellow-400 text-slate-950'
-          : 'text-slate-700 hover:bg-slate-100'
+          ? "bg-yellow-400 text-slate-950"
+          : "text-slate-700 hover:bg-slate-100"
       }`}
     >
       {label}
     </button>
-  )
+  );
 }
 
 function InfoChip({
@@ -3750,20 +7617,20 @@ function InfoChip({
   value,
   alignRight = false,
 }: {
-  label: string
-  value: string
-  alignRight?: boolean
+  label: string;
+  value: string;
+  alignRight?: boolean;
 }) {
   return (
     <div
       className={`rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm ${
-        alignRight ? 'text-right' : ''
+        alignRight ? "text-right" : ""
       }`}
     >
       <span className="text-xs text-slate-500">{label}: </span>
       <span className="font-semibold text-slate-900">{value}</span>
     </div>
-  )
+  );
 }
 
 function InfoBox({ label, value }: { label: string; value: string }) {
@@ -3772,22 +7639,22 @@ function InfoBox({ label, value }: { label: string; value: string }) {
       <div className="text-xs text-slate-500">{label}</div>
       <div className="font-semibold">{value}</div>
     </div>
-  )
+  );
 }
 
 function RacePackageCard({
   title,
   children,
 }: {
-  title: string
-  children: React.ReactNode
+  title: string;
+  children: React.ReactNode;
 }) {
   return (
     <section className="rounded-2xl border bg-white p-5 shadow-sm">
       <h2 className="mb-4 text-lg font-semibold text-slate-900">{title}</h2>
       {children}
     </section>
-  )
+  );
 }
 
 function RiderSelectionCard({
@@ -3795,73 +7662,102 @@ function RiderSelectionCard({
   selected,
   canEdit,
   currentGameDate,
+  blockedReason,
   onToggle,
 }: {
-  option: RacePreparationSelectableData['riders'][number]
-  selected: boolean
-  canEdit: boolean
-  currentGameDate?: string
-  onToggle: () => void
+  option: RacePreparationSelectableData["riders"][number];
+  selected: boolean;
+  canEdit: boolean;
+  currentGameDate?: string;
+  blockedReason?: string | null;
+  onToggle: () => void;
 }) {
-  const [open, setOpen] = useState(false)
-  const rider = asRecord(option.rider)
+  const [open, setOpen] = useState(false);
+  const rider = asRecord(option.rider);
+  const blocked = Boolean(blockedReason);
 
   return (
-    <div
-      className="relative"
-      onMouseEnter={() => setOpen(true)}
-      onMouseLeave={() => setOpen(false)}
-    >
+    <div className="relative">
       <button
         type="button"
         disabled={!canEdit}
-        onClick={onToggle}
-        onFocus={() => setOpen(true)}
-        onBlur={() => setOpen(false)}
+        aria-disabled={blocked}
+        onClick={(event) => {
+          if (blocked) {
+            event.preventDefault();
+            return;
+          }
+
+          onToggle();
+        }}
         className={`w-full rounded-xl border p-4 text-left transition disabled:cursor-not-allowed disabled:opacity-60 ${
-          selected
-            ? 'border-blue-400 bg-blue-50'
-            : 'border-slate-200 bg-white hover:bg-slate-50'
+          blocked
+            ? "cursor-not-allowed border-amber-200 bg-amber-50/70 opacity-80"
+            : selected
+              ? "border-blue-400 bg-blue-50"
+              : "border-slate-200 bg-white hover:bg-slate-50"
         }`}
       >
-        <div className="font-semibold text-slate-900">
+        <div
+          className="inline-block rounded-md px-1 py-0.5 font-semibold text-slate-900"
+          onMouseEnter={() => {
+            if (!blocked) setOpen(true);
+          }}
+          onMouseLeave={() => setOpen(false)}
+          onFocus={() => {
+            if (!blocked) setOpen(true);
+          }}
+          onBlur={() => setOpen(false)}
+          tabIndex={blocked ? -1 : 0}
+        >
           {getRiderName(option.rider)}
         </div>
 
-        <div className="mt-1 text-xs text-slate-500">
-          Role: {String(option.assigned_role ?? '—')}
-        </div>
+        {blockedReason ? (
+          <div className="mt-3 rounded-lg border border-amber-200 bg-amber-100 px-2 py-1 text-xs font-medium text-amber-800">
+            {blockedReason}
+          </div>
+        ) : (
+          <>
+            <div className="mt-1 text-xs text-slate-500">
+              Role: {String(option.assigned_role ?? "—")}
+            </div>
 
-        <div className="mt-2 text-xs text-slate-500">
-          Fatigue: {String(rider.fatigue ?? '—')} · Availability:{' '}
-          {String(rider.availability_status ?? 'fit')}
-        </div>
+            <div className="mt-2 text-xs text-slate-500">
+              Fatigue: {String(rider.fatigue ?? "—")} · Availability:{" "}
+              {String(rider.availability_status ?? "fit")}
+            </div>
+          </>
+        )}
       </button>
 
-      {open ? (
-        <RiderInfoPopover
-          option={option}
-          currentGameDate={currentGameDate}
-        />
+      {!blocked && open ? (
+        <div
+          className="absolute left-4 top-[54px] z-50"
+          onMouseEnter={() => setOpen(true)}
+          onMouseLeave={() => setOpen(false)}
+        >
+          <RiderInfoPopover option={option} currentGameDate={currentGameDate} />
+        </div>
       ) : null}
     </div>
-  )
+  );
 }
 
 function RiderInfoPopover({
   option,
   currentGameDate,
 }: {
-  option: RacePreparationSelectableData['riders'][number]
-  currentGameDate?: string
+  option: RacePreparationSelectableData["riders"][number];
+  currentGameDate?: string;
 }) {
-  const rider = asRecord(option.rider)
-  const countryCode = getRiderCountryCode(rider)
-  const ageLabel = getRiderAgeLabel(rider, currentGameDate)
-  const topSkills = getTopRiderSkills(rider)
+  const rider = asRecord(option.rider);
+  const countryCode = getRiderCountryCode(rider);
+  const ageLabel = getRiderAgeLabel(rider, currentGameDate);
+  const topSkills = getTopRiderSkills(rider);
 
   return (
-    <div className="absolute left-0 top-full z-40 mt-2 w-[360px] max-w-[calc(100vw-3rem)] rounded-2xl border border-slate-200 bg-white p-4 text-xs shadow-xl">
+    <div className="w-[360px] max-w-[calc(100vw-3rem)] rounded-2xl border border-slate-200 bg-white p-4 text-xs shadow-xl">
       <div className="flex items-start gap-3">
         <CountryFlag code={countryCode} />
 
@@ -3871,8 +7767,8 @@ function RiderInfoPopover({
           </div>
 
           <div className="mt-1 text-slate-500">
-            {String(option.assigned_role ?? 'Rider')}
-            {ageLabel ? ` · ${ageLabel}` : ''}
+            {String(option.assigned_role ?? "Rider")}
+            {ageLabel ? ` · ${ageLabel}` : ""}
           </div>
         </div>
       </div>
@@ -3880,7 +7776,7 @@ function RiderInfoPopover({
       <div className="mt-3 grid grid-cols-3 gap-2">
         <RiderPopupMetric
           label="Fatigue"
-          value={String(rider.fatigue ?? '—')}
+          value={String(rider.fatigue ?? "—")}
         />
         <RiderPopupMetric
           label="Fitness"
@@ -3889,19 +7785,17 @@ function RiderInfoPopover({
               rider.fitness_level ??
               rider.form ??
               rider.condition ??
-              '—',
+              "—",
           )}
         />
         <RiderPopupMetric
           label="Availability"
-          value={String(rider.availability_status ?? 'fit')}
+          value={String(rider.availability_status ?? "fit")}
         />
       </div>
 
       <div className="mt-4">
-        <div className="mb-2 font-semibold text-slate-900">
-          Key skills
-        </div>
+        <div className="mb-2 font-semibold text-slate-900">Key skills</div>
 
         {topSkills.length > 0 ? (
           <div className="grid grid-cols-2 gap-2">
@@ -3911,9 +7805,7 @@ function RiderInfoPopover({
                 className="flex items-center justify-between rounded-xl bg-slate-50 px-3 py-2"
               >
                 <span className="text-slate-600">{skill.label}</span>
-                <span className="font-bold text-slate-900">
-                  {skill.value}
-                </span>
+                <span className="font-bold text-slate-900">{skill.value}</span>
               </div>
             ))}
           </div>
@@ -3924,26 +7816,18 @@ function RiderInfoPopover({
         )}
       </div>
     </div>
-  )
+  );
 }
 
-function RiderPopupMetric({
-  label,
-  value,
-}: {
-  label: string
-  value: string
-}) {
+function RiderPopupMetric({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-xl bg-slate-50 p-2">
       <div className="text-[10px] uppercase tracking-wide text-slate-400">
         {label}
       </div>
-      <div className="mt-1 truncate font-semibold text-slate-900">
-        {value}
-      </div>
+      <div className="mt-1 truncate font-semibold text-slate-900">{value}</div>
     </div>
-  )
+  );
 }
 
 function CostLine({
@@ -3951,20 +7835,20 @@ function CostLine({
   value,
   strong = false,
 }: {
-  label: string
-  value: unknown
-  strong?: boolean
+  label: string;
+  value: unknown;
+  strong?: boolean;
 }) {
   return (
     <div
       className={`flex items-center justify-between ${
-        strong ? 'text-base font-bold text-slate-900' : 'text-slate-700'
+        strong ? "text-base font-bold text-slate-900" : "text-slate-700"
       }`}
     >
       <span>{label}</span>
       <span>{formatMoney(value)}</span>
     </div>
-  )
+  );
 }
 
 function EmptyCard({ message }: { message: string }) {
@@ -3972,16 +7856,15 @@ function EmptyCard({ message }: { message: string }) {
     <div className="rounded-2xl border bg-white p-6 text-sm text-slate-600 shadow-sm">
       {message}
     </div>
-  )
+  );
 }
-
 
 function RacePreviewModal({
   raceId,
   onClose,
 }: {
-  raceId: UUID
-  onClose: () => void
+  raceId: UUID;
+  onClose: () => void;
 }) {
   return (
     <div className="fixed inset-0 z-50 bg-slate-950/60 p-4">
@@ -4003,5 +7886,5 @@ function RacePreviewModal({
         </div>
       </div>
     </div>
-  )
+  );
 }

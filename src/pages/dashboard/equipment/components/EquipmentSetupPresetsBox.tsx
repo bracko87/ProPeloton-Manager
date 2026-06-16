@@ -58,6 +58,25 @@ type SetupPreset = {
   setup_name: string
   selected_catalog_item_ids: SelectedCatalogItemIds
   bonus_preview: BonusPreview
+  setup_capacity?: {
+    max_assignments?: number | null
+    limiting_item_label?: string | null
+    limiting_equipment_category?: string | null
+    item_caps?: Array<Record<string, unknown>>
+  } | null
+}
+
+type SetupCapacity = {
+  maxAssignments: number | null
+  limitingItemLabel: string | null
+  limitingCategoryLabel: string | null
+  itemCaps: Array<{
+    category: EquipmentCategory
+    categoryLabel: string
+    label: string
+    available: number
+    owned: number
+  }>
 }
 
 type SetupPresetsResponse = {
@@ -175,6 +194,98 @@ function getOptionsForCategory(
     options.find(optionGroup => optionGroup.equipment_category === category)
       ?.options ?? []
   )
+}
+
+function getOptionForDraftCategory(
+  options: SetupCategoryOptions[],
+  category: EquipmentCategory,
+  catalogItemId: string | null
+): SetupOption | null {
+  if (!catalogItemId) return null
+
+  return (
+    getOptionsForCategory(options, category).find(
+      option => option.catalog_item_id === catalogItemId
+    ) ?? null
+  )
+}
+
+function getSetupCapacity(
+  draft: SetupDraft,
+  options: SetupCategoryOptions[]
+): SetupCapacity {
+  const itemCaps = equipmentCategories.flatMap(category => {
+    const catalogItemId = draft.selected_catalog_item_ids[category.key]
+    const option = getOptionForDraftCategory(options, category.key, catalogItemId)
+
+    if (!catalogItemId || !option) return []
+
+    return [
+      {
+        category: category.key,
+        categoryLabel: category.label,
+        label: option.display_name?.trim() || option.label,
+        available: toNumber(option.available_count),
+        owned: toNumber(option.owned_count),
+      },
+    ]
+  })
+
+  if (itemCaps.length !== equipmentCategories.length) {
+    return {
+      maxAssignments: null,
+      limitingItemLabel: null,
+      limitingCategoryLabel: null,
+      itemCaps,
+    }
+  }
+
+  const maxAssignments = Math.min(...itemCaps.map(item => item.available))
+  const limitingItem =
+    itemCaps.find(item => item.available === maxAssignments) ?? itemCaps[0]
+
+  return {
+    maxAssignments,
+    limitingItemLabel: limitingItem.label,
+    limitingCategoryLabel: limitingItem.categoryLabel,
+    itemCaps,
+  }
+}
+
+function formatSetupCapacityLabel(capacity: SetupCapacity): string {
+  if (capacity.maxAssignments === null) {
+    return 'Incomplete setup'
+  }
+
+  return `Available setups: ${capacity.maxAssignments}/${capacity.maxAssignments}`
+}
+
+function getSetupCapacityBadgeClass(capacity: SetupCapacity): string {
+  if (capacity.maxAssignments === null) {
+    return 'bg-gray-100 text-gray-500'
+  }
+
+  if (capacity.maxAssignments <= 0) {
+    return 'bg-red-100 text-red-700'
+  }
+
+  if (capacity.maxAssignments <= 2) {
+    return 'bg-amber-100 text-amber-700'
+  }
+
+  return 'bg-emerald-100 text-emerald-700'
+}
+
+function getSetupCapacityHelper(capacity: SetupCapacity): string {
+  if (capacity.maxAssignments === null) {
+    return 'Select all six equipment categories to calculate setup availability.'
+  }
+
+  if (!capacity.limitingItemLabel) {
+    return 'Capacity is based on the lowest available selected equipment type.'
+  }
+
+  return `Limited by ${capacity.limitingCategoryLabel}: ${capacity.limitingItemLabel}.`
 }
 
 function makeDraftFromPreset(preset: SetupPreset): SetupDraft {
@@ -422,8 +533,8 @@ export default function EquipmentSetupPresetsBox({
         <div>
           <h3 className="text-lg font-semibold">Race Setup Configurations</h3>
           <p className="mt-1 text-sm text-gray-500">
-            Save up to four preferred equipment type setups. The race engine can
-            later pick any available inventory unit of the selected type.
+            Save up to four preferred equipment type setups. The setup capacity
+            shows how many riders can use that exact configuration in one stage.
           </p>
         </div>
 
@@ -454,6 +565,7 @@ export default function EquipmentSetupPresetsBox({
           const preview = draftPreviews[preset.setup_slot] ?? preset.bonus_preview
           const isSaving = savingSlot === preset.setup_slot
           const isPreviewLoading = previewLoadingSlots.has(preset.setup_slot)
+          const capacity = getSetupCapacity(draft, options)
           const missingCategories = getMissingDraftCategories(draft)
           const canSave = isDraftComplete(draft)
 
@@ -476,6 +588,20 @@ export default function EquipmentSetupPresetsBox({
                   className="min-w-0 flex-1 rounded border border-gray-200 bg-white px-3 py-2 text-sm font-semibold text-gray-900"
                   placeholder={`Setup ${preset.setup_slot}`}
                 />
+
+                <span
+                  className={[
+                    'shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold',
+                    getSetupCapacityBadgeClass(capacity),
+                  ].join(' ')}
+                  title={getSetupCapacityHelper(capacity)}
+                >
+                  {formatSetupCapacityLabel(capacity)}
+                </span>
+              </div>
+
+              <div className="ml-11 mt-2 text-xs text-gray-500">
+                {getSetupCapacityHelper(capacity)}
               </div>
 
               <div className="mt-4 grid gap-3 md:grid-cols-2">

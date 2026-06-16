@@ -246,6 +246,29 @@ function formatLabel(value: string | null): string | null {
     .replace(/\b\w/g, (char) => char.toUpperCase())
 }
 
+function formatCountryName(value?: string | null): string | null {
+  if (!value) return null
+
+  const trimmed = String(value).trim()
+  if (!trimmed) return null
+
+  if (/^[a-z]{2}$/i.test(trimmed)) {
+    const code = trimmed.toUpperCase()
+
+    try {
+      const displayName = new Intl.DisplayNames(['en'], {
+        type: 'region',
+      }).of(code)
+
+      return displayName || code
+    } catch {
+      return code
+    }
+  }
+
+  return formatLabel(trimmed) || trimmed
+}
+
 function compactRows(
   rows: Array<NotificationDetailRow | null | undefined>
 ): NotificationDetailRow[] {
@@ -658,6 +681,19 @@ function formatContractSeasonLabel(value: string | null): string | null {
   }
 
   return `${day} ${month}`
+}
+
+function formatGameDateTimeLabel(
+  dateValue: string | null,
+  timeLabel?: string | null
+): string | null {
+  const dateLabel = formatContractSeasonLabel(dateValue)
+
+  if (dateLabel && timeLabel) {
+    return `${dateLabel} · ${timeLabel}`
+  }
+
+  return dateLabel || timeLabel || null
 }
 
 function getTransferCompletedIntro(item: NotificationItem): string | null {
@@ -7235,6 +7271,3764 @@ export const NOTIFICATION_TEMPLATES: Record<string, NotificationTemplate> = {
       variant: 'secondary',
       kind: 'navigate',
       getHref: () => '/dashboard',
+      show: () => true,
+    },
+    MARK_READ_ACTION,
+  ],
+},
+INFRASTRUCTURE_ASSET_DELIVERED: {
+  defaultTitle: 'Asset delivered',
+  defaultMessage:
+    'A new infrastructure asset has been delivered and is now available for your club.',
+
+  imageSrc:
+    'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Event%20images/Infrastructure%20assets%20Delivered.png',
+
+  getImageSrc: (item) =>
+    getImageSrcFromItem(item) ||
+    'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Event%20images/Infrastructure%20assets%20Delivered.png',
+
+  enrich: (item) => {
+    const payload = getPayload(item)
+
+    const assetLabel =
+      pickFirstString(payload, [
+        'asset_name',
+        'display_name',
+        'asset_label',
+        'name',
+      ]) ||
+      formatLabel(
+        pickFirstString(payload, [
+          'target_key',
+          'asset_key',
+          'key',
+        ])
+      )
+
+    const quantity = pickFirstNumber(payload, [
+      'asset_quantity',
+      'quantity',
+      'count',
+    ])
+
+    return {
+      ...item,
+      title: assetLabel
+        ? `Asset delivered: ${assetLabel}${quantity && quantity > 1 ? ` x${quantity}` : ''}`
+        : item.title || 'Asset delivered',
+      message:
+        item.message ||
+        (assetLabel
+          ? `${assetLabel}${quantity && quantity > 1 ? ` x${quantity}` : ''} has been delivered and is now available.`
+          : 'A new infrastructure asset has been delivered and is now available.'),
+    }
+  },
+
+  getIntroText: (item) => {
+    const payload = getPayload(item)
+
+    const assetLabel =
+      pickFirstString(payload, [
+        'asset_name',
+        'display_name',
+        'asset_label',
+        'name',
+      ]) ||
+      formatLabel(
+        pickFirstString(payload, [
+          'target_key',
+          'asset_key',
+          'key',
+        ])
+      )
+
+    const quantity = pickFirstNumber(payload, [
+      'asset_quantity',
+      'quantity',
+      'count',
+    ])
+
+    if (assetLabel) {
+      return `${assetLabel}${quantity && quantity > 1 ? ` x${quantity}` : ''} has been delivered to your club and can now be used.`
+    }
+
+    return (
+      buildIntroFromMessage(item) ||
+      'A new infrastructure asset has been delivered to your club and can now be used.'
+    )
+  },
+
+  getDetailRows: (item) => {
+    const payload = getPayload(item)
+
+    const assetLabel =
+      pickFirstString(payload, [
+        'asset_name',
+        'display_name',
+        'asset_label',
+        'name',
+      ]) ||
+      formatLabel(
+        pickFirstString(payload, [
+          'target_key',
+          'asset_key',
+          'key',
+        ])
+      )
+
+    const quantity = pickFirstNumber(payload, [
+      'asset_quantity',
+      'quantity',
+      'count',
+    ])
+
+    const assetLevel = pickFirstNumber(payload, [
+      'asset_level',
+      'level',
+      'tier',
+    ])
+
+    const durationDays = pickFirstNumber(payload, [
+      'duration_game_days',
+      'delivery_days',
+      'duration_days',
+    ])
+
+    return compactRows([
+      detailRow('Asset', assetLabel),
+      detailRow(
+        'Quantity',
+        quantity !== null ? `${quantity}` : null
+      ),
+      detailRow(
+        'Asset level',
+        assetLevel !== null ? `${assetLevel}` : null
+      ),
+      detailRow(
+        'Ordered on',
+        formatContractSeasonLabel(
+          pickFirstString(payload, [
+            'started_game_date',
+            'ordered_on_game_date',
+            'order_game_date',
+            'created_game_date',
+            'game_date',
+          ])
+        )
+      ),
+      detailRow(
+        'Delivered on',
+        formatContractSeasonLabel(
+          pickFirstString(payload, [
+            'complete_game_date',
+            'delivered_on_game_date',
+            'delivery_game_date',
+            'completed_game_date',
+          ])
+        )
+      ),
+      detailRow(
+        'Delivery time',
+        durationDays !== null
+          ? `${durationDays} day${durationDays === 1 ? '' : 's'}`
+          : null
+      ),
+      detailRow(
+        'Status',
+        formatLabel(
+          pickFirstString(payload, [
+            'status',
+            'job_status',
+            'delivery_status',
+          ])
+        ) || 'Delivered'
+      ),
+    ])
+  },
+
+  getExtraText: () =>
+    'Open the infrastructure assets page to review the delivered asset and decide how it should be used in your club operations.',
+
+  actions: [
+    {
+      key: 'open-infrastructure-assets',
+      label: 'Open assets',
+      variant: 'primary',
+      kind: 'navigate',
+      getHref: () => '/dashboard/infrastructure?tab=assets',
+      show: () => true,
+    },
+    {
+      key: 'open-infrastructure-page',
+      label: 'Infrastructure page',
+      variant: 'secondary',
+      kind: 'navigate',
+      getHref: () => '/dashboard/infrastructure',
+      show: () => true,
+    },
+    MARK_READ_ACTION,
+  ],
+},
+  INFRASTRUCTURE_ASSET_CONDITION_LOW: {
+  defaultTitle: 'Asset condition low',
+  defaultMessage:
+    'One of your infrastructure assets has dropped below the recommended condition threshold and should be repaired.',
+
+  imageSrc:
+    'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Event%20images/Infrastructure%20assets%20Condition%20low.png',
+
+  getImageSrc: (item) =>
+    getImageSrcFromItem(item) ||
+    'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Event%20images/Infrastructure%20assets%20Condition%20low.png',
+
+  enrich: (item) => {
+    const payload = getPayload(item)
+
+    const assetLabel =
+      pickFirstString(payload, [
+        'asset_name',
+        'display_name',
+        'asset_label',
+        'name',
+      ]) ||
+      formatLabel(
+        pickFirstString(payload, [
+          'asset_key',
+          'target_key',
+          'key',
+        ])
+      )
+
+    const conditionPercent = pickFirstNumber(payload, [
+      'condition_percent',
+      'current_condition_percent',
+      'condition',
+    ])
+
+    return {
+      ...item,
+      title: assetLabel
+        ? `Low condition: ${assetLabel}`
+        : item.title || 'Asset condition low',
+      message:
+        item.message ||
+        (assetLabel && conditionPercent !== null
+          ? `${assetLabel} condition has dropped to ${conditionPercent}% and should be repaired.`
+          : assetLabel
+            ? `${assetLabel} condition is low and should be repaired.`
+            : 'One of your infrastructure assets has low condition and should be repaired.'),
+    }
+  },
+
+  getIntroText: (item) => {
+    const payload = getPayload(item)
+
+    const assetLabel =
+      pickFirstString(payload, [
+        'asset_name',
+        'display_name',
+        'asset_label',
+        'name',
+      ]) ||
+      formatLabel(
+        pickFirstString(payload, [
+          'asset_key',
+          'target_key',
+          'key',
+        ])
+      )
+
+    const conditionPercent = pickFirstNumber(payload, [
+      'condition_percent',
+      'current_condition_percent',
+      'condition',
+    ])
+
+    const thresholdPercent = pickFirstNumber(payload, [
+      'threshold_percent',
+      'low_condition_threshold',
+      'condition_threshold',
+    ])
+
+    if (assetLabel && conditionPercent !== null && thresholdPercent !== null) {
+      return `${assetLabel} has dropped to ${conditionPercent}% condition, below the ${thresholdPercent}% warning threshold. Repair is recommended before the asset is used again.`
+    }
+
+    if (assetLabel && conditionPercent !== null) {
+      return `${assetLabel} has dropped to ${conditionPercent}% condition. Repair is recommended before the asset is used again.`
+    }
+
+    if (assetLabel) {
+      return `${assetLabel} is now in low condition. Repair is recommended before the asset is used again.`
+    }
+
+    return (
+      buildIntroFromMessage(item) ||
+      'One of your infrastructure assets is now in low condition. Repair is recommended before it is used again.'
+    )
+  },
+
+  getDetailRows: (item) => {
+    const payload = getPayload(item)
+
+    const assetLabel =
+      pickFirstString(payload, [
+        'asset_name',
+        'display_name',
+        'asset_label',
+        'name',
+      ]) ||
+      formatLabel(
+        pickFirstString(payload, [
+          'asset_key',
+          'target_key',
+          'key',
+        ])
+      )
+
+    const assetLevel = pickFirstNumber(payload, [
+      'asset_level',
+      'level',
+      'tier',
+    ])
+
+    const garageSlot = pickFirstNumber(payload, [
+      'garage_slot',
+      'slot',
+      'garage_position',
+    ])
+
+    const oldConditionPercent = pickFirstNumber(payload, [
+      'old_condition_percent',
+      'previous_condition_percent',
+      'condition_before',
+    ])
+
+    const conditionPercent = pickFirstNumber(payload, [
+      'condition_percent',
+      'current_condition_percent',
+      'condition',
+    ])
+
+    const thresholdPercent = pickFirstNumber(payload, [
+      'threshold_percent',
+      'low_condition_threshold',
+      'condition_threshold',
+    ])
+
+    return compactRows([
+      detailRow('Asset', assetLabel),
+      detailRow(
+        'Asset type',
+        formatLabel(
+          pickFirstString(payload, [
+            'asset_key',
+            'target_key',
+            'key',
+          ])
+        )
+      ),
+      detailRow(
+        'Display name',
+        pickFirstString(payload, [
+          'display_name',
+          'garage_name',
+          'label',
+        ])
+      ),
+      detailRow(
+        'Asset level',
+        assetLevel !== null ? `${assetLevel}` : null
+      ),
+      detailRow(
+        'Garage slot',
+        garageSlot !== null ? `${garageSlot}` : null
+      ),
+      detailRow(
+        'Previous condition',
+        oldConditionPercent !== null ? `${oldConditionPercent}%` : null
+      ),
+      detailRow(
+        'Current condition',
+        conditionPercent !== null ? `${conditionPercent}%` : null
+      ),
+      detailRow(
+        'Warning threshold',
+        thresholdPercent !== null ? `${thresholdPercent}%` : null
+      ),
+      detailRow(
+        'Recommended action',
+        formatLabel(
+          pickFirstString(payload, [
+            'recommended_action',
+            'action_required',
+            'next_action',
+          ])
+        ) || 'Repair'
+      ),
+      detailRow(
+        'Asset status',
+        formatLabel(
+          pickFirstString(payload, [
+            'status',
+            'asset_status',
+          ])
+        )
+      ),
+    ])
+  },
+
+  getExtraText: () =>
+    'Open the infrastructure assets page to review this asset and start a repair if it is available for maintenance.',
+
+  actions: [
+    {
+      key: 'open-infrastructure-asset',
+      label: 'Open asset',
+      variant: 'primary',
+      kind: 'navigate',
+      getHref: (item) => {
+        const payload = getPayload(item)
+
+        const assetKey = pickFirstString(payload, [
+          'asset_key',
+          'target_key',
+          'key',
+        ])
+
+        const assetId = pickFirstString(payload, [
+          'asset_id',
+          'infrastructure_asset_id',
+          'garage_asset_id',
+        ])
+
+        const params = new URLSearchParams()
+        params.set('tab', 'assets')
+
+        if (assetKey) {
+          params.set('assetKey', assetKey)
+        }
+
+        if (assetId) {
+          params.set('assetId', assetId)
+        }
+
+        return `/dashboard/infrastructure?${params.toString()}`
+      },
+      show: () => true,
+    },
+    {
+      key: 'open-infrastructure-page',
+      label: 'Infrastructure page',
+      variant: 'secondary',
+      kind: 'navigate',
+      getHref: () => '/dashboard/infrastructure',
+      show: () => true,
+    },
+    MARK_READ_ACTION,
+  ],
+},
+  INFRASTRUCTURE_ASSET_REPAIR_STARTED: {
+  defaultTitle: 'Asset repair started',
+  defaultMessage:
+    'Repair work has started on one of your infrastructure assets.',
+
+  imageSrc:
+    'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Event%20images/Infrastructure%20assets%20Repair%20Started.png',
+
+  getImageSrc: (item) =>
+    getImageSrcFromItem(item) ||
+    'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Event%20images/Infrastructure%20assets%20Repair%20Started.png',
+
+  enrich: (item) => {
+    const payload = getPayload(item)
+
+    const assetLabel =
+      pickFirstString(payload, [
+        'asset_name',
+        'display_name',
+        'asset_label',
+        'name',
+      ]) ||
+      formatLabel(
+        pickFirstString(payload, [
+          'asset_key',
+          'target_key',
+          'key',
+        ])
+      )
+
+    const conditionPercent = pickFirstNumber(payload, [
+      'condition_percent',
+      'current_condition_percent',
+      'condition',
+    ])
+
+    return {
+      ...item,
+      title: assetLabel
+        ? `Repair started: ${assetLabel}`
+        : item.title || 'Asset repair started',
+      message:
+        item.message ||
+        (assetLabel && conditionPercent !== null
+          ? `${assetLabel} repair has started. Current condition is ${conditionPercent}%.`
+          : assetLabel
+            ? `${assetLabel} repair has started.`
+            : 'Repair work has started on one of your infrastructure assets.'),
+    }
+  },
+
+  getIntroText: (item) => {
+    const payload = getPayload(item)
+
+    const assetLabel =
+      pickFirstString(payload, [
+        'asset_name',
+        'display_name',
+        'asset_label',
+        'name',
+      ]) ||
+      formatLabel(
+        pickFirstString(payload, [
+          'asset_key',
+          'target_key',
+          'key',
+        ])
+      )
+
+    const conditionPercent = pickFirstNumber(payload, [
+      'condition_percent',
+      'current_condition_percent',
+      'condition',
+    ])
+
+    if (assetLabel && conditionPercent !== null) {
+      return `${assetLabel} has entered repair. Its current condition is ${conditionPercent}%, and it should not be treated as fully available until the repair is complete.`
+    }
+
+    if (assetLabel) {
+      return `${assetLabel} has entered repair and should not be treated as fully available until the repair is complete.`
+    }
+
+    return (
+      buildIntroFromMessage(item) ||
+      'One of your infrastructure assets has entered repair and should not be treated as fully available until the repair is complete.'
+    )
+  },
+
+  getDetailRows: (item) => {
+    const payload = getPayload(item)
+
+    const assetLabel =
+      pickFirstString(payload, [
+        'asset_name',
+        'display_name',
+        'asset_label',
+        'name',
+      ]) ||
+      formatLabel(
+        pickFirstString(payload, [
+          'asset_key',
+          'target_key',
+          'key',
+        ])
+      )
+
+    const assetLevel = pickFirstNumber(payload, [
+      'asset_level',
+      'level',
+      'tier',
+    ])
+
+    const garageSlot = pickFirstNumber(payload, [
+      'garage_slot',
+      'slot',
+      'garage_position',
+    ])
+
+    const oldConditionPercent = pickFirstNumber(payload, [
+      'old_condition_percent',
+      'previous_condition_percent',
+      'condition_before',
+    ])
+
+    const conditionPercent = pickFirstNumber(payload, [
+      'condition_percent',
+      'current_condition_percent',
+      'condition',
+    ])
+
+    const repairCost = pickFirstNumber(payload, [
+      'repair_cost_cash',
+      'repair_cost',
+      'cost_cash',
+      'cash_cost',
+    ])
+
+    const repairDurationDays = pickFirstNumber(payload, [
+      'repair_duration_game_days',
+      'duration_game_days',
+      'repair_days',
+      'duration_days',
+    ])
+
+    return compactRows([
+      detailRow('Asset', assetLabel),
+      detailRow(
+        'Asset type',
+        formatLabel(
+          pickFirstString(payload, [
+            'asset_key',
+            'target_key',
+            'key',
+          ])
+        )
+      ),
+      detailRow(
+        'Display name',
+        pickFirstString(payload, [
+          'display_name',
+          'garage_name',
+          'label',
+        ])
+      ),
+      detailRow(
+        'Asset level',
+        assetLevel !== null ? `${assetLevel}` : null
+      ),
+      detailRow(
+        'Garage slot',
+        garageSlot !== null ? `${garageSlot}` : null
+      ),
+      detailRow(
+        'Previous condition',
+        oldConditionPercent !== null ? `${oldConditionPercent}%` : null
+      ),
+      detailRow(
+        'Current condition',
+        conditionPercent !== null ? `${conditionPercent}%` : null
+      ),
+      detailRow(
+        'Repair cost',
+        formatCurrencyLabel(repairCost, '$')
+      ),
+      detailRow(
+        'Repair time',
+        repairDurationDays !== null
+          ? `${repairDurationDays} day${repairDurationDays === 1 ? '' : 's'}`
+          : null
+      ),
+      detailRow(
+        'Repair started',
+        formatContractSeasonLabel(
+          pickFirstString(payload, [
+            'repair_started_game_date',
+            'started_game_date',
+            'started_on_game_date',
+            'game_date',
+          ])
+        )
+      ),
+      detailRow(
+        'Repair complete',
+        formatContractSeasonLabel(
+          pickFirstString(payload, [
+            'repair_complete_game_date',
+            'repair_complete',
+            'complete_game_date',
+            'completed_game_date',
+          ])
+        )
+      ),
+      detailRow(
+        'Previous status',
+        formatLabel(
+          pickFirstString(payload, [
+            'old_status',
+            'previous_status',
+          ])
+        )
+      ),
+      detailRow(
+        'Current status',
+        formatLabel(
+          pickFirstString(payload, [
+            'status',
+            'asset_status',
+          ])
+        ) || 'In repair'
+      ),
+    ])
+  },
+
+  getExtraText: () =>
+    'Open the infrastructure assets page to review the repair status and monitor when the asset becomes available again.',
+
+  actions: [
+    {
+      key: 'open-infrastructure-asset',
+      label: 'Open asset',
+      variant: 'primary',
+      kind: 'navigate',
+      getHref: (item) => {
+        const payload = getPayload(item)
+
+        const assetKey = pickFirstString(payload, [
+          'asset_key',
+          'target_key',
+          'key',
+        ])
+
+        const assetId = pickFirstString(payload, [
+          'asset_id',
+          'infrastructure_asset_id',
+          'garage_asset_id',
+        ])
+
+        const params = new URLSearchParams()
+        params.set('tab', 'assets')
+
+        if (assetKey) {
+          params.set('assetKey', assetKey)
+        }
+
+        if (assetId) {
+          params.set('assetId', assetId)
+        }
+
+        return `/dashboard/infrastructure?${params.toString()}`
+      },
+      show: () => true,
+    },
+    {
+      key: 'open-infrastructure-page',
+      label: 'Infrastructure page',
+      variant: 'secondary',
+      kind: 'navigate',
+      getHref: () => '/dashboard/infrastructure',
+      show: () => true,
+    },
+    MARK_READ_ACTION,
+  ],
+},
+  INFRASTRUCTURE_ASSET_SOLD: {
+  defaultTitle: 'Asset sold',
+  defaultMessage:
+    'One of your infrastructure assets has been sold and removed from your club inventory.',
+
+  imageSrc:
+    'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Event%20images/Infrastructure%20assets%20Sold.png',
+
+  getImageSrc: (item) =>
+    getImageSrcFromItem(item) ||
+    'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Event%20images/Infrastructure%20assets%20Sold.png',
+
+  enrich: (item) => {
+    const payload = getPayload(item)
+
+    const assetLabel =
+      pickFirstString(payload, [
+        'asset_name',
+        'display_name',
+        'asset_label',
+        'name',
+      ]) ||
+      formatLabel(
+        pickFirstString(payload, [
+          'asset_key',
+          'target_key',
+          'key',
+        ])
+      )
+
+    const salePrice = pickFirstNumber(payload, [
+      'sale_price',
+      'sold_price',
+      'sell_price',
+      'cash_received',
+      'amount',
+      'value',
+    ])
+
+    return {
+      ...item,
+      title: assetLabel
+        ? `Asset sold: ${assetLabel}`
+        : item.title || 'Asset sold',
+      message:
+        item.message ||
+        (assetLabel && salePrice !== null
+          ? `${assetLabel} has been sold for $${salePrice}.`
+          : assetLabel
+            ? `${assetLabel} has been sold and removed from your club inventory.`
+            : 'One of your infrastructure assets has been sold and removed from your club inventory.'),
+    }
+  },
+
+  getIntroText: (item) => {
+    const payload = getPayload(item)
+
+    const assetLabel =
+      pickFirstString(payload, [
+        'asset_name',
+        'display_name',
+        'asset_label',
+        'name',
+      ]) ||
+      formatLabel(
+        pickFirstString(payload, [
+          'asset_key',
+          'target_key',
+          'key',
+        ])
+      )
+
+    const salePrice = pickFirstNumber(payload, [
+      'sale_price',
+      'sold_price',
+      'sell_price',
+      'cash_received',
+      'amount',
+      'value',
+    ])
+
+    if (assetLabel && salePrice !== null) {
+      return `${assetLabel} has been sold from your club inventory for $${salePrice}.`
+    }
+
+    if (assetLabel) {
+      return `${assetLabel} has been sold from your club inventory.`
+    }
+
+    return (
+      buildIntroFromMessage(item) ||
+      'One of your infrastructure assets has been sold from your club inventory.'
+    )
+  },
+
+  getDetailRows: (item) => {
+    const payload = getPayload(item)
+
+    const assetLabel =
+      pickFirstString(payload, [
+        'asset_name',
+        'display_name',
+        'asset_label',
+        'name',
+      ]) ||
+      formatLabel(
+        pickFirstString(payload, [
+          'asset_key',
+          'target_key',
+          'key',
+        ])
+      )
+
+    const assetLevel = pickFirstNumber(payload, [
+      'asset_level',
+      'level',
+      'tier',
+    ])
+
+    const garageSlot = pickFirstNumber(payload, [
+      'garage_slot',
+      'slot',
+      'garage_position',
+    ])
+
+    const conditionPercent = pickFirstNumber(payload, [
+      'condition_percent',
+      'current_condition_percent',
+      'condition',
+    ])
+
+    const salePrice = pickFirstNumber(payload, [
+      'sale_price',
+      'sold_price',
+      'sell_price',
+      'cash_received',
+      'amount',
+      'value',
+    ])
+
+    return compactRows([
+      detailRow('Asset', assetLabel),
+      detailRow(
+        'Asset type',
+        formatLabel(
+          pickFirstString(payload, [
+            'asset_key',
+            'target_key',
+            'key',
+          ])
+        )
+      ),
+      detailRow(
+        'Display name',
+        pickFirstString(payload, [
+          'display_name',
+          'garage_name',
+          'label',
+        ])
+      ),
+      detailRow(
+        'Asset level',
+        assetLevel !== null ? `${assetLevel}` : null
+      ),
+      detailRow(
+        'Garage slot',
+        garageSlot !== null ? `${garageSlot}` : null
+      ),
+      detailRow(
+        'Condition at sale',
+        conditionPercent !== null ? `${conditionPercent}%` : null
+      ),
+      detailRow(
+        'Sale price',
+        salePrice !== null ? `$${salePrice}` : null
+      ),
+      detailRow(
+        'Sold on',
+        formatContractSeasonLabel(
+          pickFirstString(payload, [
+            'sold_game_date',
+            'sold_on_game_date',
+            'sale_game_date',
+            'complete_game_date',
+            'completed_game_date',
+            'game_date',
+          ])
+        )
+      ),
+      detailRow(
+        'Previous status',
+        formatLabel(
+          pickFirstString(payload, [
+            'old_status',
+            'previous_status',
+          ])
+        )
+      ),
+      detailRow(
+        'Current status',
+        formatLabel(
+          pickFirstString(payload, [
+            'status',
+            'asset_status',
+          ])
+        ) || 'Sold'
+      ),
+    ])
+  },
+
+  getExtraText: () =>
+    'Open the infrastructure assets page to review your remaining assets and club equipment inventory.',
+
+  actions: [
+    {
+      key: 'open-infrastructure-asset',
+      label: 'Open assets',
+      variant: 'primary',
+      kind: 'navigate',
+      getHref: (item) => {
+        const payload = getPayload(item)
+
+        const assetKey = pickFirstString(payload, [
+          'asset_key',
+          'target_key',
+          'key',
+        ])
+
+        const assetId = pickFirstString(payload, [
+          'asset_id',
+          'infrastructure_asset_id',
+          'garage_asset_id',
+        ])
+
+        const params = new URLSearchParams()
+        params.set('tab', 'assets')
+
+        if (assetKey) {
+          params.set('assetKey', assetKey)
+        }
+
+        if (assetId) {
+          params.set('assetId', assetId)
+        }
+
+        return `/dashboard/infrastructure?${params.toString()}`
+      },
+      show: () => true,
+    },
+    {
+      key: 'open-infrastructure-page',
+      label: 'Infrastructure page',
+      variant: 'secondary',
+      kind: 'navigate',
+      getHref: () => '/dashboard/infrastructure',
+      show: () => true,
+    },
+    MARK_READ_ACTION,
+  ],
+},
+RIDER_TRANSFER_LISTING_EXPIRED: {
+  defaultTitle: 'Transfer listing expired',
+  defaultMessage:
+    'A rider transfer listing expired without a completed transfer.',
+
+  imageSrc:
+    'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Event%20images/Rider%20Transfer%20Time%20expired.png',
+
+  getImageSrc: (item) =>
+    getImageSrcFromItem(item) ||
+    'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Event%20images/Rider%20Transfer%20Time%20expired.png',
+
+  enrich: (item) => {
+    const payload = getPayload(item)
+
+    const riderName =
+      pickFirstString(payload, [
+        'rider_full_name',
+        'rider_name',
+        'display_name',
+        'full_name',
+        'name',
+      ]) || 'Rider'
+
+    return {
+      ...item,
+      title: `Transfer listing expired: ${riderName}`,
+      message:
+        item.message ||
+        `${riderName} was not transferred before the deadline and has returned to your team roster.`,
+    }
+  },
+
+  getIntroText: (item) => {
+    const payload = getPayload(item)
+
+    const riderName =
+      pickFirstString(payload, [
+        'rider_full_name',
+        'rider_name',
+        'display_name',
+        'full_name',
+        'name',
+      ]) || 'This rider'
+
+    return `No club signed ${riderName} before the transfer deadline. The rider has returned to your active team roster.`
+  },
+
+  getDetailRows: (item) => {
+    const payload = getPayload(item)
+
+    const riderName =
+      pickFirstString(payload, [
+        'rider_full_name',
+        'rider_name',
+        'display_name',
+        'full_name',
+        'name',
+      ]) || null
+
+    const sellerClub =
+      pickFirstString(payload, [
+        'seller_club_name',
+        'club_name',
+        'team_name',
+      ]) || null
+
+    const askingPrice = pickFirstNumber(payload, [
+      'asking_price',
+      'price',
+      'transfer_fee',
+      'value',
+    ])
+
+    return compactRows([
+      detailRow('Rider', riderName),
+      detailRow('Club', sellerClub),
+      detailRow(
+        'Asking price',
+        formatCurrencyLabel(askingPrice, '$')
+      ),
+      detailRow(
+        'Listed on',
+        formatContractSeasonLabel(
+          pickFirstString(payload, [
+            'listed_on_game_date',
+            'opened_on_game_date',
+            'created_game_date',
+            'game_date',
+          ])
+        )
+      ),
+      detailRow(
+        'Visible until',
+        formatContractSeasonLabel(
+          pickFirstString(payload, [
+            'expires_on_game_date',
+            'expiry_game_date',
+            'expires_at_game_date',
+          ])
+        )
+      ),
+      detailRow(
+        'Expired on',
+        formatContractSeasonLabel(
+          pickFirstString(payload, [
+            'expired_on_game_date',
+            'closed_on_game_date',
+            'status_changed_game_date',
+          ])
+        )
+      ),
+      detailRow(
+        'Status',
+        formatLabel(
+          pickFirstString(payload, [
+            'status',
+          ])
+        ) || 'Expired'
+      ),
+      detailRow(
+        'Result',
+        formatLabel(
+          pickFirstString(payload, [
+            'result',
+          ])
+        ) || 'Returned to team roster'
+      ),
+    ])
+  },
+
+  getExtraText: () =>
+    'The rider was not transferred before the deadline and is now available again in your squad. You can keep the rider, relist him later, or review other transfer options.',
+
+  actions: [
+    {
+      key: 'open-rider-profile',
+      label: 'Rider profile',
+      variant: 'primary',
+      kind: 'navigate',
+      getHref: (item) => {
+        const payload = getPayload(item)
+
+        return (
+          pickFirstString(payload, [
+            'rider_profile_path',
+            'my_rider_profile_path',
+          ]) ||
+          `/dashboard/my-riders/${pickFirstString(payload, ['rider_id']) || ''}`
+        )
+      },
+      show: (item) => {
+        const payload = getPayload(item)
+
+        return Boolean(
+          pickFirstString(payload, [
+            'rider_profile_path',
+            'my_rider_profile_path',
+            'rider_id',
+          ])
+        )
+      },
+    },
+    {
+      key: 'open-transfers',
+      label: 'Open transfers',
+      variant: 'secondary',
+      kind: 'navigate',
+      getHref: (item) => {
+        const payload = getPayload(item)
+
+        return (
+          pickFirstString(payload, ['transfers_path']) ||
+          '/dashboard/transfers'
+        )
+      },
+      show: () => true,
+    },
+    MARK_READ_ACTION,
+  ],
+},
+  RIDER_RELEASED_TO_FREE_AGENTS: {
+  defaultTitle: 'Rider released to free agents',
+  defaultMessage:
+    'A rider has been released from your team and moved to the free-agent market.',
+
+  imageSrc:
+    'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Event%20images/Rider%20Relesad%20to%20free%20agent.png',
+
+  getImageSrc: (item) =>
+    getImageSrcFromItem(item) ||
+    'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Event%20images/Rider%20Relesad%20to%20free%20agent.png',
+
+  enrich: (item) => {
+    const payload = getPayload(item)
+
+    const riderName =
+      pickFirstString(payload, [
+        'rider_full_name',
+        'rider_name',
+        'display_name',
+        'full_name',
+        'name',
+      ]) || 'Rider'
+
+    return {
+      ...item,
+      title: `Rider released: ${riderName}`,
+      message:
+        item.message ||
+        `${riderName} has been released from your team and is now available as a free agent.`,
+    }
+  },
+
+  getIntroText: (item) => {
+    const payload = getPayload(item)
+
+    const riderName =
+      pickFirstString(payload, [
+        'rider_full_name',
+        'rider_name',
+        'display_name',
+        'full_name',
+        'name',
+      ]) || 'This rider'
+
+    const clubName = pickFirstString(payload, [
+      'club_name',
+      'team_name',
+      'seller_club_name',
+      'previous_club_name',
+    ])
+
+    if (clubName) {
+      return `${riderName} has been released by ${clubName} and moved to the free-agent market.`
+    }
+
+    return `${riderName} has been released from your team and moved to the free-agent market.`
+  },
+
+  getDetailRows: (item) => {
+    const payload = getPayload(item)
+
+    const riderName =
+      pickFirstString(payload, [
+        'rider_full_name',
+        'rider_name',
+        'display_name',
+        'full_name',
+        'name',
+      ]) || null
+
+    const clubName =
+      pickFirstString(payload, [
+        'club_name',
+        'team_name',
+        'seller_club_name',
+        'previous_club_name',
+      ]) || null
+
+    const marketValue = pickFirstNumber(payload, [
+      'market_value',
+      'rider_market_value',
+      'value',
+    ])
+
+    const releaseCost = pickFirstNumber(payload, [
+      'release_cost',
+      'release_fee',
+      'contract_release_cost',
+      'compensation_cost',
+    ])
+
+    const salaryWeekly = pickFirstNumber(payload, [
+      'salary_weekly',
+      'weekly_salary',
+      'previous_salary_weekly',
+    ])
+
+    return compactRows([
+      detailRow('Rider', riderName),
+      detailRow('Previous club', clubName),
+      detailRow(
+        'Market value',
+        formatCurrencyLabel(marketValue, '$')
+      ),
+      detailRow(
+        'Previous weekly salary',
+        formatCurrencyLabel(salaryWeekly, '$')
+      ),
+      detailRow(
+        'Release cost',
+        formatCurrencyLabel(releaseCost, '$')
+      ),
+      detailRow(
+        'Released on',
+        formatContractSeasonLabel(
+          pickFirstString(payload, [
+            'released_on_game_date',
+            'release_game_date',
+            'game_date',
+          ])
+        )
+      ),
+      detailRow(
+        'New status',
+        formatLabel(
+          pickFirstString(payload, [
+            'status',
+            'new_status',
+            'rider_status',
+          ])
+        ) || 'Free agent'
+      ),
+      detailRow(
+        'Result',
+        formatLabel(
+          pickFirstString(payload, [
+            'result',
+          ])
+        ) || 'Moved to free-agent market'
+      ),
+    ])
+  },
+
+  getExtraText: () =>
+    'The rider is no longer part of your team roster. You can review the free-agent market or open the rider profile from this notification.',
+
+  actions: [
+    {
+      key: 'open-rider-profile',
+      label: 'Rider profile',
+      variant: 'primary',
+      kind: 'navigate',
+      getHref: (item) => {
+        const payload = getPayload(item)
+
+        return (
+          pickFirstString(payload, [
+            'rider_profile_path',
+            'external_rider_profile_path',
+            'profile_path',
+          ]) ||
+          `/dashboard/external-riders/${pickFirstString(payload, ['rider_id']) || ''}`
+        )
+      },
+      show: (item) => {
+        const payload = getPayload(item)
+
+        return Boolean(
+          pickFirstString(payload, [
+            'rider_profile_path',
+            'external_rider_profile_path',
+            'profile_path',
+            'rider_id',
+          ])
+        )
+      },
+    },
+    {
+      key: 'open-free-agents',
+      label: 'Free agents',
+      variant: 'secondary',
+      kind: 'navigate',
+      getHref: (item) => {
+        const payload = getPayload(item)
+
+        return (
+          pickFirstString(payload, [
+            'free_agents_path',
+            'transfers_path',
+          ]) || '/dashboard/transfers?subTab=free_agents'
+        )
+      },
+      show: () => true,
+    },
+    MARK_READ_ACTION,
+  ],
+},
+  DEVELOPING_TEAM_WINDOW_OPEN: {
+  defaultTitle: 'Developing team window open',
+  defaultMessage:
+    'The movement window is now open for your developing team.',
+
+  imageSrc:
+    'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Event%20images/Developing%20Team%20Window%20Open.png',
+
+  getImageSrc: (item) =>
+    getImageSrcFromItem(item) ||
+    'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Event%20images/Developing%20Team%20Window%20Open.png',
+
+  enrich: (item) => {
+    const payload = getPayload(item)
+
+    const clubName =
+      pickFirstString(payload, [
+        'club_name',
+        'team_name',
+      ]) || 'your team'
+
+    return {
+      ...item,
+      title: 'Developing team window open',
+      message:
+        item.message ||
+        `The movement window is now open for ${clubName}. You can move eligible riders between your first team and developing team.`,
+    }
+  },
+
+  getIntroText: (item) => {
+    const payload = getPayload(item)
+
+    const clubName =
+      pickFirstString(payload, [
+        'club_name',
+        'team_name',
+      ]) || 'your club'
+
+    return `The developing team movement window is now open for ${clubName}. During this period, you can promote or move eligible riders between your main squad and developing team.`
+  },
+
+  getDetailRows: (item) => {
+    const payload = getPayload(item)
+
+    return compactRows([
+      detailRow(
+        'Window opens',
+        formatContractSeasonLabel(
+          pickFirstString(payload, [
+            'window_opens_on_game_date',
+            'window_start_game_date',
+            'opens_on_game_date',
+            'start_game_date',
+          ])
+        )
+      ),
+      detailRow(
+        'Window closes',
+        formatContractSeasonLabel(
+          pickFirstString(payload, [
+            'window_closes_on_game_date',
+            'window_end_game_date',
+            'closes_on_game_date',
+            'end_game_date',
+          ])
+        )
+      ),
+      detailRow(
+        'Club',
+        pickFirstString(payload, [
+          'club_name',
+          'team_name',
+        ])
+      ),
+      detailRow(
+        'Window type',
+        formatLabel(
+          pickFirstString(payload, [
+            'window_type',
+            'movement_window_type',
+          ])
+        ) || 'Developing team movement'
+      ),
+      detailRow(
+        'Action required',
+        pickFirstString(payload, [
+          'action_required_label',
+          'action_required',
+        ]) || 'Review eligible riders'
+      ),
+    ])
+  },
+
+  getExtraText: () =>
+    'Use this window to review your developing team, promote riders who are ready, and move eligible riders before the window closes.',
+
+  actions: [
+    {
+      key: 'open-squad',
+      label: 'Open squad',
+      variant: 'primary',
+      kind: 'navigate',
+      getHref: (item) => {
+        const payload = getPayload(item)
+
+        return (
+          pickFirstString(payload, [
+            'squad_path',
+            'action_path',
+          ]) || '/dashboard/squad'
+        )
+      },
+      show: () => true,
+    },
+    MARK_READ_ACTION,
+  ],
+},
+  DEVELOPING_RIDER_AGE_LIMIT_REACHED: {
+  defaultTitle: 'Developing rider age limit reached',
+  defaultMessage:
+    'A developing-team rider has reached the age limit and must be moved out during the next movement window.',
+
+  imageSrc:
+    'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Event%20images/Developing%20rider%20age%20limit%20reached.png',
+
+  getImageSrc: (item) =>
+    getImageSrcFromItem(item) ||
+    'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Event%20images/Developing%20rider%20age%20limit%20reached.png',
+
+  enrich: (item) => {
+    const payload = getPayload(item)
+
+    const riderName =
+      pickFirstString(payload, [
+        'rider_full_name',
+        'rider_name',
+        'display_name',
+        'full_name',
+        'name',
+      ]) || 'Rider'
+
+    return {
+      ...item,
+      title: `Age limit reached: ${riderName}`,
+      message:
+        item.message ||
+        `${riderName} has reached the developing-team age limit and must be moved out during the next movement window.`,
+    }
+  },
+
+  getIntroText: (item) => {
+    const payload = getPayload(item)
+
+    const riderName =
+      pickFirstString(payload, [
+        'rider_full_name',
+        'rider_name',
+        'display_name',
+        'full_name',
+        'name',
+      ]) || 'This rider'
+
+    return `${riderName} has reached the developing-team age limit. Move the rider out of the developing team during the next available movement window.`
+  },
+
+  getDetailRows: (item) => {
+    const payload = getPayload(item)
+
+    const riderName =
+      pickFirstString(payload, [
+        'rider_full_name',
+        'rider_name',
+        'display_name',
+        'full_name',
+        'name',
+      ]) || null
+
+    const ageYears = pickFirstNumber(payload, [
+      'age_years',
+      'age',
+      'current_age',
+    ])
+
+    const ageLimit = pickFirstNumber(payload, [
+      'age_limit_years',
+      'limit_age_years',
+    ])
+
+    const maxDevelopingAge = pickFirstNumber(payload, [
+      'max_developing_age',
+      'developing_team_max_age',
+    ])
+
+    const overall = pickFirstNumber(payload, ['overall'])
+    const potential = pickFirstNumber(payload, ['potential'])
+    const salaryWeekly = pickFirstNumber(payload, ['salary_weekly'])
+    const marketValue = pickFirstNumber(payload, ['market_value'])
+
+    return compactRows([
+      detailRow('Rider', riderName),
+      detailRow(
+        'Club',
+        pickFirstString(payload, [
+          'club_name',
+          'team_name',
+        ])
+      ),
+      detailRow(
+        'Country',
+        pickFirstString(payload, [
+          'country_code',
+          'nationality',
+        ])
+      ),
+      detailRow(
+        'Role',
+        formatLabel(
+          pickFirstString(payload, [
+            'role',
+            'rider_role',
+          ])
+        )
+      ),
+      detailRow(
+        'Current age',
+        ageYears !== null ? `${ageYears}` : null
+      ),
+      detailRow(
+        'Age limit',
+        ageLimit !== null
+          ? `${ageLimit}+`
+          : maxDevelopingAge !== null
+            ? `Over ${maxDevelopingAge}`
+            : null
+      ),
+      detailRow(
+        'Current squad',
+        formatLabel(
+          pickFirstString(payload, [
+            'current_squad',
+            'squad',
+          ])
+        ) || 'Developing team'
+      ),
+      detailRow(
+        'Overall / Potential',
+        overall !== null || potential !== null
+          ? `${overall ?? '—'} / ${potential ?? '—'}`
+          : null
+      ),
+      detailRow(
+        'Weekly salary',
+        formatCurrencyLabel(salaryWeekly, '$')
+      ),
+      detailRow(
+        'Market value',
+        formatCurrencyLabel(marketValue, '$')
+      ),
+      detailRow(
+        'Reached on',
+        formatContractSeasonLabel(
+          pickFirstString(payload, [
+            'age_limit_reached_on_game_date',
+            'game_date',
+          ])
+        )
+      ),
+      detailRow(
+        'Movement window opens',
+        formatContractSeasonLabel(
+          pickFirstString(payload, [
+            'required_window_start_game_date',
+            'window_opens_on_game_date',
+            'window_start_game_date',
+          ])
+        )
+      ),
+      detailRow(
+        'Movement window closes',
+        formatContractSeasonLabel(
+          pickFirstString(payload, [
+            'required_window_end_game_date',
+            'window_closes_on_game_date',
+            'window_end_game_date',
+          ])
+        )
+      ),
+      detailRow(
+        'Required action',
+        pickFirstString(payload, [
+          'action_required_label',
+          'required_action_label',
+        ]) ||
+          formatLabel(
+            pickFirstString(payload, [
+              'required_action',
+              'action_required',
+            ])
+          ) ||
+          'Move rider out of developing team'
+      ),
+    ])
+  },
+
+  getExtraText: () =>
+    'This rider can no longer remain in the developing team after the movement window. Open the rider profile or developing team page to decide the next step.',
+
+  actions: [
+    {
+      key: 'open-rider-profile',
+      label: 'Rider profile',
+      variant: 'primary',
+      kind: 'navigate',
+      getHref: (item) => {
+        const payload = getPayload(item)
+
+        return (
+          pickFirstString(payload, [
+            'rider_profile_path',
+            'my_rider_profile_path',
+            'profile_path',
+          ]) ||
+          `/dashboard/my-riders/${pickFirstString(payload, ['rider_id']) || ''}`
+        )
+      },
+      show: (item) => {
+        const payload = getPayload(item)
+
+        return Boolean(
+          pickFirstString(payload, [
+            'rider_profile_path',
+            'my_rider_profile_path',
+            'profile_path',
+            'rider_id',
+          ])
+        )
+      },
+    },
+    {
+      key: 'open-developing-team',
+      label: 'Developing team',
+      variant: 'secondary',
+      kind: 'navigate',
+      getHref: (item) => {
+        const payload = getPayload(item)
+
+        return (
+          pickFirstString(payload, [
+            'developing_team_path',
+            'squad_path',
+          ]) || '/dashboard/squad?tab=developing'
+        )
+      },
+      show: () => true,
+    },
+    MARK_READ_ACTION,
+  ],
+},
+  INFRASTRUCTURE_ASSET_REPAIRED: {
+  defaultTitle: 'Asset repaired',
+  defaultMessage:
+    'One of your infrastructure assets has been repaired and is available again.',
+
+  imageSrc:
+    'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Event%20images/Infrastructure%20assets%20Repaired.png',
+
+  getImageSrc: (item) =>
+    getImageSrcFromItem(item) ||
+    'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Event%20images/Infrastructure%20assets%20Repaired.png',
+
+  enrich: (item) => {
+    const payload = getPayload(item)
+
+    const assetLabel =
+      pickFirstString(payload, [
+        'asset_name',
+        'display_name',
+        'asset_label',
+        'name',
+      ]) ||
+      formatLabel(
+        pickFirstString(payload, [
+          'asset_key',
+          'target_key',
+          'key',
+        ])
+      )
+
+    const conditionPercent = pickFirstNumber(payload, [
+      'condition_percent',
+      'current_condition_percent',
+      'condition',
+    ])
+
+    return {
+      ...item,
+      title: assetLabel
+        ? `Repair complete: ${assetLabel}`
+        : item.title || 'Asset repaired',
+      message:
+        item.message ||
+        (assetLabel && conditionPercent !== null
+          ? `${assetLabel} has been repaired and is available again at ${conditionPercent}% condition.`
+          : assetLabel
+            ? `${assetLabel} has been repaired and is available again.`
+            : 'One of your infrastructure assets has been repaired and is available again.'),
+    }
+  },
+
+  getIntroText: (item) => {
+    const payload = getPayload(item)
+
+    const assetLabel =
+      pickFirstString(payload, [
+        'asset_name',
+        'display_name',
+        'asset_label',
+        'name',
+      ]) ||
+      formatLabel(
+        pickFirstString(payload, [
+          'asset_key',
+          'target_key',
+          'key',
+        ])
+      )
+
+    const conditionPercent = pickFirstNumber(payload, [
+      'condition_percent',
+      'current_condition_percent',
+      'condition',
+    ])
+
+    if (assetLabel && conditionPercent !== null) {
+      return `${assetLabel} has been successfully repaired and is now available again with ${conditionPercent}% condition.`
+    }
+
+    if (assetLabel) {
+      return `${assetLabel} has been successfully repaired and is now available again for club operations.`
+    }
+
+    return (
+      buildIntroFromMessage(item) ||
+      'One of your infrastructure assets has been successfully repaired and is now available again for club operations.'
+    )
+  },
+
+  getDetailRows: (item) => {
+    const payload = getPayload(item)
+
+    const assetLabel =
+      pickFirstString(payload, [
+        'asset_name',
+        'display_name',
+        'asset_label',
+        'name',
+      ]) ||
+      formatLabel(
+        pickFirstString(payload, [
+          'asset_key',
+          'target_key',
+          'key',
+        ])
+      )
+
+    const assetLevel = pickFirstNumber(payload, [
+      'asset_level',
+      'level',
+      'tier',
+    ])
+
+    const garageSlot = pickFirstNumber(payload, [
+      'garage_slot',
+      'slot',
+      'garage_position',
+    ])
+
+    const oldConditionPercent = pickFirstNumber(payload, [
+      'old_condition_percent',
+      'previous_condition_percent',
+      'condition_before',
+    ])
+
+    const conditionPercent = pickFirstNumber(payload, [
+      'condition_percent',
+      'current_condition_percent',
+      'condition',
+    ])
+
+    return compactRows([
+      detailRow('Asset', assetLabel),
+      detailRow(
+        'Asset type',
+        formatLabel(
+          pickFirstString(payload, [
+            'asset_key',
+            'target_key',
+            'key',
+          ])
+        )
+      ),
+      detailRow(
+        'Display name',
+        pickFirstString(payload, [
+          'display_name',
+          'garage_name',
+          'label',
+        ])
+      ),
+      detailRow(
+        'Asset level',
+        assetLevel !== null ? `${assetLevel}` : null
+      ),
+      detailRow(
+        'Garage slot',
+        garageSlot !== null ? `${garageSlot}` : null
+      ),
+      detailRow(
+        'Condition before repair',
+        oldConditionPercent !== null ? `${oldConditionPercent}%` : null
+      ),
+      detailRow(
+        'Condition after repair',
+        conditionPercent !== null ? `${conditionPercent}%` : null
+      ),
+      detailRow(
+        'Repair completed on',
+        formatContractSeasonLabel(
+          pickFirstString(payload, [
+            'repair_completed_game_date',
+            'repaired_on_game_date',
+            'complete_game_date',
+            'completed_game_date',
+            'game_date',
+          ])
+        )
+      ),
+      detailRow(
+        'Previous status',
+        formatLabel(
+          pickFirstString(payload, [
+            'old_status',
+            'previous_status',
+          ])
+        )
+      ),
+      detailRow(
+        'Current status',
+        formatLabel(
+          pickFirstString(payload, [
+            'status',
+            'asset_status',
+          ])
+        ) || 'Available'
+      ),
+    ])
+  },
+
+  getExtraText: () =>
+    'Open the infrastructure assets page to review the repaired asset and use it again in your club operations.',
+
+  actions: [
+    {
+      key: 'open-infrastructure-asset',
+      label: 'Open asset',
+      variant: 'primary',
+      kind: 'navigate',
+      getHref: (item) => {
+        const payload = getPayload(item)
+
+        const assetKey = pickFirstString(payload, [
+          'asset_key',
+          'target_key',
+          'key',
+        ])
+
+        const assetId = pickFirstString(payload, [
+          'asset_id',
+          'infrastructure_asset_id',
+          'garage_asset_id',
+        ])
+
+        const params = new URLSearchParams()
+        params.set('tab', 'assets')
+
+        if (assetKey) {
+          params.set('assetKey', assetKey)
+        }
+
+        if (assetId) {
+          params.set('assetId', assetId)
+        }
+
+        return `/dashboard/infrastructure?${params.toString()}`
+      },
+      show: () => true,
+    },
+    {
+      key: 'open-infrastructure-page',
+      label: 'Infrastructure page',
+      variant: 'secondary',
+      kind: 'navigate',
+      getHref: () => '/dashboard/infrastructure',
+      show: () => true,
+    },
+    MARK_READ_ACTION,
+  ],
+},
+  STAGE_PLANS_OPEN: {
+  defaultTitle: 'Stage plans open',
+  defaultMessage:
+    'Stage-by-stage planning is now available for this race.',
+
+  imageSrc:
+    'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Event%20images/Stage%20plan%20open.png',
+
+  getImageSrc: (item) =>
+    getImageSrcFromItem(item) ||
+    'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Event%20images/Stage%20plan%20open.png',
+
+  enrich: (item) => {
+    const payload = getPayload(item)
+
+    const raceName =
+      pickFirstString(payload, [
+        'race_name',
+        'race_title',
+        'name',
+      ]) || 'Race'
+
+    return {
+      ...item,
+      title: `Stage plans open: ${raceName}`,
+      message:
+        item.message ||
+        `Stage-by-stage planning is now available for ${raceName}. Set rider roles, tactics and stage objectives before the race starts.`,
+    }
+  },
+
+  getIntroText: (item) => {
+    const payload = getPayload(item)
+
+    const raceName =
+      pickFirstString(payload, [
+        'race_name',
+        'race_title',
+        'name',
+      ]) || 'This race'
+
+    return `${raceName} is now open for stage-by-stage planning. Review each stage and set rider roles, protection, sprint/KOM focus and tactical instructions.`
+  },
+
+  getDetailRows: (item) => {
+    const payload = getPayload(item)
+
+    const raceName =
+      pickFirstString(payload, [
+        'race_name',
+        'race_title',
+        'name',
+      ]) || null
+
+    const stageCount = pickFirstNumber(payload, [
+      'stage_count',
+      'stages_count',
+      'number_of_stages',
+    ])
+
+    return compactRows([
+      detailRow('Race', raceName),
+      detailRow(
+        'Race class',
+        pickFirstString(payload, [
+          'race_class',
+          'class',
+          'category',
+          'race_category',
+        ])
+      ),
+      detailRow(
+        'Country',
+        formatCountryName(
+          pickFirstString(payload, [
+            'country_name',
+            'host_country_name',
+            'country',
+            'host_country',
+            'country_code',
+          ])
+        )
+      ),
+      detailRow(
+        'Race starts',
+        formatContractSeasonLabel(
+          pickFirstString(payload, [
+            'race_start_date',
+            'start_date',
+            'starts_on_game_date',
+          ])
+        )
+      ),
+      detailRow(
+        'First stage',
+        formatContractSeasonLabel(
+          pickFirstString(payload, [
+            'first_stage_date',
+            'stage_plans_open_on',
+            'race_start_date',
+            'start_date',
+          ])
+        )
+      ),
+      detailRow(
+        'Stages to plan',
+        stageCount !== null
+          ? `${stageCount} stage${stageCount === 1 ? '' : 's'}`
+          : null
+      ),
+      detailRow(
+        'Status',
+        formatLabel(
+          pickFirstString(payload, [
+            'stage_plan_status',
+            'stage_plans_status',
+            'status',
+          ])
+        ) || 'Open'
+      ),
+    ])
+  },
+
+  getExtraText: () =>
+    'Open stage plans to assign rider roles and stage tactics. You can still open the race page to review route details before deciding your plan.',
+
+  actions: [
+    {
+      key: 'open-stage-plans',
+      label: 'Stage plans',
+      variant: 'primary',
+      kind: 'navigate',
+      getHref: (item) => {
+        const payload = getPayload(item)
+        const raceId = pickFirstString(payload, ['race_id'])
+
+        return (
+          pickFirstString(payload, [
+            'stage_plans_path',
+            'stage_plan_path',
+          ]) ||
+          (raceId
+            ? `/dashboard/race-preparation?tab=stagePlans&raceId=${raceId}`
+            : '/dashboard/race-preparation?tab=stagePlans')
+        )
+      },
+      show: () => true,
+    },
+    {
+      key: 'open-race-preparation',
+      label: 'Race preparation',
+      variant: 'secondary',
+      kind: 'navigate',
+      getHref: (item) => {
+        const payload = getPayload(item)
+        const raceId = pickFirstString(payload, ['race_id'])
+
+        return (
+          pickFirstString(payload, [
+            'race_plan_path',
+            'race_preparation_path',
+            'action_path',
+          ]) ||
+          (raceId
+            ? `/dashboard/race-preparation?tab=racePlan&raceId=${raceId}`
+            : '/dashboard/race-preparation')
+        )
+      },
+      show: () => true,
+    },
+    {
+      key: 'open-race-page',
+      label: 'Open race page',
+      variant: 'secondary',
+      kind: 'navigate',
+      getHref: (item) => {
+        const payload = getPayload(item)
+        const raceId = pickFirstString(payload, ['race_id'])
+
+        if (raceId) {
+          return `/dashboard/races/${raceId}`
+        }
+
+        return (
+          pickFirstString(payload, [
+            'race_profile_path',
+            'race_detail_path',
+            'calendar_race_path',
+          ]) || '/dashboard/calendar'
+        )
+      },
+      show: (item) => {
+        const payload = getPayload(item)
+
+        return Boolean(
+          pickFirstString(payload, [
+            'race_id',
+            'race_profile_path',
+            'race_detail_path',
+            'calendar_race_path',
+          ])
+        )
+      },
+    },
+    {
+      key: 'open-calendar',
+      label: 'Team calendar',
+      variant: 'secondary',
+      kind: 'navigate',
+      getHref: (item) => {
+        const payload = getPayload(item)
+
+        return (
+          pickFirstString(payload, [
+            'calendar_path',
+            'team_calendar_path',
+          ]) || '/dashboard/calendar'
+        )
+      },
+      show: () => true,
+    },
+    MARK_READ_ACTION,
+  ],
+},
+  STAGE_PLAN_LOCK_REMINDER: {
+  defaultTitle: 'Stage plan lock reminder',
+  defaultMessage:
+    'Stage plans will lock soon. Review and finalise your stage tactics before the lock date.',
+
+  imageSrc:
+    'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Event%20images/Stgae%20Plan%20lock%20reminder.png',
+
+  getImageSrc: (item) =>
+    getImageSrcFromItem(item) ||
+    'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Event%20images/Stgae%20Plan%20lock%20reminder.png',
+
+  enrich: (item) => {
+    const payload = getPayload(item)
+
+    const raceName =
+      pickFirstString(payload, [
+        'race_name',
+        'race_title',
+        'name',
+      ]) || 'Race'
+
+    return {
+      ...item,
+      title: `Stage plans lock soon: ${raceName}`,
+      message:
+        item.message ||
+        `Stage plans for ${raceName} will lock soon. Review and finalise your stage tactics before the lock date.`,
+    }
+  },
+
+  getIntroText: (item) => {
+    const payload = getPayload(item)
+
+    const raceName =
+      pickFirstString(payload, [
+        'race_name',
+        'race_title',
+        'name',
+      ]) || 'This race'
+
+    return `${raceName} stage plans will lock soon. Finalise rider roles, tactics, protection, sprint/KOM focus and stage objectives before the lock date.`
+  },
+
+  getDetailRows: (item) => {
+    const payload = getPayload(item)
+
+    const raceName =
+      pickFirstString(payload, [
+        'race_name',
+        'race_title',
+        'name',
+      ]) || null
+
+    const stageCount = pickFirstNumber(payload, [
+      'stage_count',
+      'stages_count',
+      'number_of_stages',
+    ])
+
+    const daysUntilLock = pickFirstNumber(payload, [
+      'days_until_lock',
+      'days_left',
+      'days_remaining',
+    ])
+
+    return compactRows([
+      detailRow('Race', raceName),
+      detailRow(
+        'Race class',
+        pickFirstString(payload, [
+          'race_class',
+          'class',
+          'category',
+          'race_category',
+        ])
+      ),
+      detailRow(
+        'Country',
+        formatCountryName(
+          pickFirstString(payload, [
+            'country_name',
+            'host_country_name',
+            'country',
+            'host_country',
+            'country_code',
+          ])
+        )
+      ),
+      detailRow(
+        'Stage',
+        (() => {
+          const stageNumber = pickFirstNumber(payload, [
+            'stage_number',
+            'selected_stage_number',
+          ])
+
+          return stageNumber !== null ? `Stage ${stageNumber}` : null
+        })()
+      ),
+      detailRow(
+        'Stage start',
+        formatGameDateTimeLabel(
+          pickFirstString(payload, [
+            'stage_start_at',
+            'stage_start_datetime',
+            'stage_date',
+            'first_stage_date',
+            'race_start_date',
+          ]),
+          pickFirstString(payload, [
+            'stage_start_time_label',
+            'planned_start_time_label',
+          ])
+        )
+      ),
+      detailRow(
+        'Stage plans opened',
+        formatContractSeasonLabel(
+          pickFirstString(payload, [
+            'stage_plans_open_on',
+            'stage_plan_open_on',
+          ])
+        )
+      ),
+      detailRow(
+        'Stage plan lock',
+        formatGameDateTimeLabel(
+          pickFirstString(payload, [
+            'stage_plan_lock_at',
+            'stage_plan_lock_datetime',
+            'stage_plan_lock_on',
+            'stage_plans_lock_on',
+            'lock_on',
+          ]),
+          pickFirstString(payload, [
+            'stage_plan_lock_time_label',
+            'lock_time_label',
+          ])
+        )
+      ),
+      detailRow(
+        'Days until lock',
+        daysUntilLock !== null
+          ? `${daysUntilLock} day${daysUntilLock === 1 ? '' : 's'}`
+          : null
+      ),
+      detailRow(
+        'Stages to finalise',
+        stageCount !== null
+          ? `${stageCount} stage${stageCount === 1 ? '' : 's'}`
+          : null
+      ),
+      detailRow(
+        'Status',
+        formatLabel(
+          pickFirstString(payload, [
+            'stage_plan_status',
+            'stage_plans_status',
+            'status',
+          ])
+        ) || 'Lock approaching'
+      ),
+    ])
+  },
+
+  getExtraText: () =>
+    'Open stage plans to review and finalise your tactical setup before the plans lock.',
+
+  actions: [
+    {
+      key: 'open-stage-plans',
+      label: 'Stage plans',
+      variant: 'primary',
+      kind: 'navigate',
+      getHref: (item) => {
+        const payload = getPayload(item)
+        const raceId = pickFirstString(payload, ['race_id'])
+
+        return (
+          pickFirstString(payload, [
+            'stage_plans_path',
+            'stage_plan_path',
+          ]) ||
+          (raceId
+            ? `/dashboard/race-preparation?tab=stagePlans&raceId=${raceId}`
+            : '/dashboard/race-preparation?tab=stagePlans')
+        )
+      },
+      show: () => true,
+    },
+    {
+      key: 'open-race-preparation',
+      label: 'Race preparation',
+      variant: 'secondary',
+      kind: 'navigate',
+      getHref: (item) => {
+        const payload = getPayload(item)
+        const raceId = pickFirstString(payload, ['race_id'])
+
+        return (
+          pickFirstString(payload, [
+            'race_plan_path',
+            'race_preparation_path',
+            'action_path',
+          ]) ||
+          (raceId
+            ? `/dashboard/race-preparation?tab=racePlan&raceId=${raceId}`
+            : '/dashboard/race-preparation')
+        )
+      },
+      show: () => true,
+    },
+    {
+      key: 'open-race-page',
+      label: 'Open race page',
+      variant: 'secondary',
+      kind: 'navigate',
+      getHref: (item) => {
+        const payload = getPayload(item)
+        const raceId = pickFirstString(payload, ['race_id'])
+
+        if (raceId) {
+          return `/dashboard/races/${raceId}`
+        }
+
+        return (
+          pickFirstString(payload, [
+            'race_profile_path',
+            'race_detail_path',
+            'calendar_race_path',
+          ]) || '/dashboard/calendar'
+        )
+      },
+      show: (item) => {
+        const payload = getPayload(item)
+
+        return Boolean(
+          pickFirstString(payload, [
+            'race_id',
+            'race_profile_path',
+            'race_detail_path',
+            'calendar_race_path',
+          ])
+        )
+      },
+    },
+    {
+      key: 'open-calendar',
+      label: 'Team calendar',
+      variant: 'secondary',
+      kind: 'navigate',
+      getHref: (item) => {
+        const payload = getPayload(item)
+
+        return (
+          pickFirstString(payload, [
+            'calendar_path',
+            'team_calendar_path',
+          ]) || '/dashboard/calendar'
+        )
+      },
+      show: () => true,
+    },
+    MARK_READ_ACTION,
+  ],
+},
+  RACE_APPLICATION_ACCEPTED: {
+  defaultTitle: 'Race application accepted',
+  defaultMessage:
+    'Your team has been accepted to participate in a race.',
+
+  imageSrc:
+    'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Event%20images/Race%20application%20accepted.png',
+
+  getImageSrc: (item) =>
+    getImageSrcFromItem(item) ||
+    'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Event%20images/Race%20application%20accepted.png',
+
+  enrich: (item) => {
+    const payload = getPayload(item)
+
+    const raceName =
+      pickFirstString(payload, [
+        'race_name',
+        'race_title',
+        'name',
+      ]) || 'Race'
+
+    const clubName =
+      pickFirstString(payload, [
+        'club_name',
+        'team_name',
+        'accepted_team_name',
+      ]) || 'Your team'
+
+    return {
+      ...item,
+      title: `Race application accepted: ${raceName}`,
+      message:
+        item.message ||
+        `${clubName} has been accepted to participate in ${raceName}.`,
+    }
+  },
+
+  getIntroText: (item) => {
+    const payload = getPayload(item)
+
+    const raceName =
+      pickFirstString(payload, [
+        'race_name',
+        'race_title',
+        'name',
+      ]) || 'this race'
+
+    const clubName =
+      pickFirstString(payload, [
+        'club_name',
+        'team_name',
+        'accepted_team_name',
+      ]) || 'Your team'
+
+    return `${clubName} has been accepted to participate in ${raceName}. You can now review the race page and prepare for the upcoming event.`
+  },
+
+  getDetailRows: (item) => {
+    const payload = getPayload(item)
+
+    const raceName =
+      pickFirstString(payload, [
+        'race_name',
+        'race_title',
+        'name',
+      ]) || null
+
+    const stageCount = pickFirstNumber(payload, [
+      'stage_count',
+      'stages_count',
+      'number_of_stages',
+    ])
+
+    return compactRows([
+      detailRow('Race', raceName),
+      detailRow(
+        'Race class',
+        pickFirstString(payload, [
+          'race_class',
+          'class',
+          'category',
+          'race_category',
+        ])
+      ),
+      detailRow(
+        'Country',
+        formatCountryName(
+          pickFirstString(payload, [
+            'country_name',
+            'host_country_name',
+            'country',
+            'host_country',
+            'country_code',
+          ])
+        )
+      ),
+      detailRow(
+        'Host city',
+        pickFirstString(payload, [
+          'host_city',
+          'city_name',
+          'start_city',
+        ])
+      ),
+      detailRow(
+        'Race starts',
+        formatContractSeasonLabel(
+          pickFirstString(payload, [
+            'race_start_date',
+            'start_date',
+            'starts_on_game_date',
+          ])
+        )
+      ),
+      detailRow(
+        'Race ends',
+        formatContractSeasonLabel(
+          pickFirstString(payload, [
+            'race_end_date',
+            'end_date',
+            'ends_on_game_date',
+          ])
+        )
+      ),
+      detailRow(
+        'Stages',
+        stageCount !== null
+          ? `${stageCount} stage${stageCount === 1 ? '' : 's'}`
+          : null
+      ),
+      detailRow(
+        'Application status',
+        formatLabel(
+          pickFirstString(payload, [
+            'application_status',
+            'entry_status',
+            'status',
+          ])
+        ) || 'Accepted'
+      ),
+    ])
+  },
+
+  getExtraText: () =>
+    'Open the race page to review the route, race details, stage information and planning requirements.',
+
+  actions: [
+    {
+      key: 'open-race-page',
+      label: 'Open race page',
+      variant: 'primary',
+      kind: 'navigate',
+      getHref: (item) => {
+        const payload = getPayload(item)
+        const raceId = pickFirstString(payload, ['race_id'])
+
+        if (raceId) {
+          return `/dashboard/races/${raceId}`
+        }
+
+        return (
+          pickFirstString(payload, [
+            'race_profile_path',
+            'race_detail_path',
+            'calendar_race_path',
+          ]) || '/dashboard/calendar'
+        )
+      },
+      show: (item) => {
+        const payload = getPayload(item)
+
+        return Boolean(
+          pickFirstString(payload, [
+            'race_id',
+            'race_profile_path',
+            'race_detail_path',
+            'calendar_race_path',
+          ])
+        )
+      },
+    },
+    {
+      key: 'open-calendar',
+      label: 'Team calendar',
+      variant: 'secondary',
+      kind: 'navigate',
+      getHref: (item) => {
+        const payload = getPayload(item)
+
+        return (
+          pickFirstString(payload, [
+            'calendar_path',
+            'team_calendar_path',
+          ]) || '/dashboard/calendar'
+        )
+      },
+      show: () => true,
+    },
+    MARK_READ_ACTION,
+  ],
+},
+  RACE_APPLICATION_DECLINED: {
+  defaultTitle: 'Race application declined',
+  defaultMessage:
+    'Your team was not accepted to participate in a race.',
+
+  imageSrc:
+    'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Event%20images/Race%20application%20declined.png',
+
+  getImageSrc: (item) =>
+    getImageSrcFromItem(item) ||
+    'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Event%20images/Race%20application%20declined.png',
+
+  enrich: (item) => {
+    const payload = getPayload(item)
+
+    const raceName =
+      pickFirstString(payload, [
+        'race_name',
+        'race_title',
+        'name',
+      ]) || 'Race'
+
+    const clubName =
+      pickFirstString(payload, [
+        'club_name',
+        'team_name',
+        'declined_team_name',
+      ]) || 'Your team'
+
+    return {
+      ...item,
+      title: `Race application declined: ${raceName}`,
+      message:
+        item.message ||
+        `${clubName} was not accepted to participate in ${raceName}.`,
+    }
+  },
+
+  getIntroText: (item) => {
+    const payload = getPayload(item)
+
+    const raceName =
+      pickFirstString(payload, [
+        'race_name',
+        'race_title',
+        'name',
+      ]) || 'this race'
+
+    const clubName =
+      pickFirstString(payload, [
+        'club_name',
+        'team_name',
+        'declined_team_name',
+      ]) || 'Your team'
+
+    return `${clubName} was not accepted to participate in ${raceName}. You can still review the race page and continue planning for other events.`
+  },
+
+  getDetailRows: (item) => {
+    const payload = getPayload(item)
+
+    const raceName =
+      pickFirstString(payload, [
+        'race_name',
+        'race_title',
+        'name',
+      ]) || null
+
+    const stageCount = pickFirstNumber(payload, [
+      'stage_count',
+      'stages_count',
+      'number_of_stages',
+    ])
+
+    return compactRows([
+      detailRow('Race', raceName),
+      detailRow(
+        'Race class',
+        pickFirstString(payload, [
+          'race_class',
+          'class',
+          'category',
+          'race_category',
+        ])
+      ),
+      detailRow(
+        'Country',
+        formatCountryName(
+          pickFirstString(payload, [
+            'country_name',
+            'host_country_name',
+            'country',
+            'host_country',
+            'country_code',
+          ])
+        )
+      ),
+      detailRow(
+        'Host city',
+        pickFirstString(payload, [
+          'host_city',
+          'city_name',
+          'start_city',
+        ])
+      ),
+      detailRow(
+        'Race starts',
+        formatContractSeasonLabel(
+          pickFirstString(payload, [
+            'race_start_date',
+            'start_date',
+            'starts_on_game_date',
+          ])
+        )
+      ),
+      detailRow(
+        'Race ends',
+        formatContractSeasonLabel(
+          pickFirstString(payload, [
+            'race_end_date',
+            'end_date',
+            'ends_on_game_date',
+          ])
+        )
+      ),
+      detailRow(
+        'Stages',
+        stageCount !== null
+          ? `${stageCount} stage${stageCount === 1 ? '' : 's'}`
+          : null
+      ),
+      detailRow(
+        'Application status',
+        formatLabel(
+          pickFirstString(payload, [
+            'application_status',
+            'entry_status',
+            'status',
+          ])
+        ) || 'Declined'
+      ),
+      detailRow(
+        'Reason',
+        pickFirstString(payload, [
+          'decline_reason',
+          'rejection_reason',
+          'reason',
+        ])
+      ),
+    ])
+  },
+
+  getExtraText: () =>
+    'Open the race page to review the race details, or use the team calendar to prepare for another available race.',
+
+  actions: [
+    {
+      key: 'open-race-page',
+      label: 'Open race page',
+      variant: 'primary',
+      kind: 'navigate',
+      getHref: (item) => {
+        const payload = getPayload(item)
+        const raceId = pickFirstString(payload, ['race_id'])
+
+        if (raceId) {
+          return `/dashboard/races/${raceId}`
+        }
+
+        return (
+          pickFirstString(payload, [
+            'race_profile_path',
+            'race_detail_path',
+            'calendar_race_path',
+          ]) || '/dashboard/calendar'
+        )
+      },
+      show: (item) => {
+        const payload = getPayload(item)
+
+        return Boolean(
+          pickFirstString(payload, [
+            'race_id',
+            'race_profile_path',
+            'race_detail_path',
+            'calendar_race_path',
+          ])
+        )
+      },
+    },
+    {
+      key: 'open-calendar',
+      label: 'Team calendar',
+      variant: 'secondary',
+      kind: 'navigate',
+      getHref: (item) => {
+        const payload = getPayload(item)
+
+        return (
+          pickFirstString(payload, [
+            'calendar_path',
+            'team_calendar_path',
+          ]) || '/dashboard/calendar'
+        )
+      },
+      show: () => true,
+    },
+    MARK_READ_ACTION,
+  ],
+},
+  RACE_PLAN_DEADLINE_REMINDER: {
+  defaultTitle: 'Race plan deadline reminder',
+  defaultMessage:
+    'A race plan deadline is approaching. Review your selection and submit before the deadline.',
+
+  imageSrc:
+    'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Event%20images/Race%20Plan%20Deadline%20Reminder.png',
+
+  getImageSrc: (item) =>
+    getImageSrcFromItem(item) ||
+    'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Event%20images/Race%20Plan%20Deadline%20Reminder.png',
+
+  enrich: (item) => {
+    const payload = getPayload(item)
+
+    const raceName =
+      pickFirstString(payload, [
+        'race_name',
+        'race_title',
+        'name',
+      ]) || 'Race'
+
+    return {
+      ...item,
+      title: `Race plan deadline reminder: ${raceName}`,
+      message:
+        item.message ||
+        `${raceName} is approaching its rider submission deadline. Review your riders, staff and assets before the deadline passes.`,
+    }
+  },
+
+  getIntroText: (item) => {
+    const payload = getPayload(item)
+
+    const raceName =
+      pickFirstString(payload, [
+        'race_name',
+        'race_title',
+        'name',
+      ]) || 'This race'
+
+    return `${raceName} is approaching its race-plan deadline. Make sure your riders, staff and assets are reviewed and submitted before the rider submission deadline.`
+  },
+
+  getDetailRows: (item) => {
+    const payload = getPayload(item)
+
+    const raceName =
+      pickFirstString(payload, [
+        'race_name',
+        'race_title',
+        'name',
+      ]) || null
+
+    const daysLeft = pickFirstNumber(payload, [
+      'days_left',
+      'days_until_deadline',
+      'deadline_days_left',
+      'days_remaining',
+    ])
+
+    return compactRows([
+      detailRow('Race', raceName),
+      detailRow(
+        'Race class',
+        pickFirstString(payload, [
+          'race_class',
+          'class',
+          'category',
+          'race_category',
+        ])
+      ),
+      detailRow(
+        'Country',
+        formatCountryName(
+          pickFirstString(payload, [
+            'country_name',
+            'host_country_name',
+            'country',
+            'host_country',
+            'country_code',
+          ])
+        )
+      ),
+      detailRow(
+        'Race date',
+        formatContractSeasonLabel(
+          pickFirstString(payload, [
+            'race_start_date',
+            'start_date',
+            'starts_on_game_date',
+          ])
+        )
+      ),
+      detailRow(
+        'Rider submission deadline',
+        formatContractSeasonLabel(
+          pickFirstString(payload, [
+            'rider_submission_deadline',
+            'rider_submission_deadline_game_date',
+            'rider_deadline_on',
+            'lineup_deadline_game_date',
+          ])
+        )
+      ),
+      detailRow(
+        'Time remaining',
+        daysLeft !== null
+          ? `${daysLeft} day${daysLeft === 1 ? '' : 's'}`
+          : null
+      ),
+      detailRow(
+        'Status',
+        formatLabel(
+          pickFirstString(payload, [
+            'status',
+            'application_status',
+            'race_plan_status',
+          ])
+        ) || 'Deadline approaching'
+      ),
+    ])
+  },
+
+  getExtraText: () =>
+    'Open race preparation to complete or review your lineup, or open the race page to review route details and final requirements.',
+
+  actions: [
+    {
+      key: 'open-race-preparation',
+      label: 'Race preparation',
+      variant: 'primary',
+      kind: 'navigate',
+      getHref: (item) => {
+        const payload = getPayload(item)
+        const raceId = pickFirstString(payload, ['race_id'])
+
+        return (
+          pickFirstString(payload, [
+            'race_plan_path',
+            'race_preparation_path',
+            'action_path',
+          ]) ||
+          (raceId
+            ? `/dashboard/race-preparation?tab=racePlan&raceId=${raceId}`
+            : '/dashboard/race-preparation')
+        )
+      },
+      show: () => true,
+    },
+    {
+      key: 'open-race-page',
+      label: 'Open race page',
+      variant: 'secondary',
+      kind: 'navigate',
+      getHref: (item) => {
+        const payload = getPayload(item)
+        const raceId = pickFirstString(payload, ['race_id'])
+
+        if (raceId) {
+          return `/dashboard/races/${raceId}`
+        }
+
+        return (
+          pickFirstString(payload, [
+            'race_profile_path',
+            'race_detail_path',
+            'calendar_race_path',
+          ]) || '/dashboard/calendar'
+        )
+      },
+      show: (item) => {
+        const payload = getPayload(item)
+
+        return Boolean(
+          pickFirstString(payload, [
+            'race_id',
+            'race_profile_path',
+            'race_detail_path',
+            'calendar_race_path',
+          ])
+        )
+      },
+    },
+    {
+      key: 'open-calendar',
+      label: 'Team calendar',
+      variant: 'secondary',
+      kind: 'navigate',
+      getHref: (item) => {
+        const payload = getPayload(item)
+
+        return (
+          pickFirstString(payload, [
+            'calendar_path',
+            'team_calendar_path',
+          ]) || '/dashboard/calendar'
+        )
+      },
+      show: () => true,
+    },
+    MARK_READ_ACTION,
+  ],
+},
+RACE_PLAN_OPEN: {
+  defaultTitle: 'Race plan open',
+  defaultMessage:
+    'A race is now open for planning and applications.',
+
+  imageSrc:
+    'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Event%20images/Race%20Plan%20Open.png',
+
+  getImageSrc: (item) =>
+    getImageSrcFromItem(item) ||
+    'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Event%20images/Race%20Plan%20Open.png',
+
+  enrich: (item) => {
+    const payload = getPayload(item)
+
+    const raceName =
+      pickFirstString(payload, [
+        'race_name',
+        'race_title',
+        'name',
+      ]) || 'Race'
+
+    return {
+      ...item,
+      title: `Race plan open: ${raceName}`,
+      message:
+        item.message ||
+        `${raceName} is now open for planning. Review the race details and submit your race plan before the rider deadline.`,
+    }
+  },
+
+  getIntroText: (item) => {
+    const payload = getPayload(item)
+
+    const raceName =
+      pickFirstString(payload, [
+        'race_name',
+        'race_title',
+        'name',
+      ]) || 'This race'
+
+    return `${raceName} is now open for planning and applications. Review the race page, check the race dates, and submit your race plan before the rider deadline.`
+  },
+
+  getDetailRows: (item) => {
+    const payload = getPayload(item)
+
+    const raceName =
+      pickFirstString(payload, [
+        'race_name',
+        'race_title',
+        'name',
+      ]) || null
+
+    return compactRows([
+      detailRow('Race', raceName),
+      detailRow(
+        'Race class',
+        pickFirstString(payload, [
+          'race_class',
+          'class',
+          'category',
+          'race_category',
+        ])
+      ),
+      detailRow(
+        'Country',
+        formatCountryName(
+          pickFirstString(payload, [
+            'country_name',
+            'host_country_name',
+            'country',
+            'host_country',
+            'country_code',
+          ])
+        )
+      ),
+      detailRow(
+        'Region',
+        pickFirstString(payload, [
+          'region',
+          'race_region',
+          'market_region',
+        ])
+      ),
+      detailRow(
+        'Race starts',
+        formatContractSeasonLabel(
+          pickFirstString(payload, [
+            'race_start_date',
+            'start_date',
+            'starts_on_game_date',
+          ])
+        )
+      ),
+      detailRow(
+        'Race ends',
+        formatContractSeasonLabel(
+          pickFirstString(payload, [
+            'race_end_date',
+            'end_date',
+            'ends_on_game_date',
+          ])
+        )
+      ),
+      detailRow(
+        'Applications open',
+        formatContractSeasonLabel(
+          pickFirstString(payload, [
+            'applications_open',
+            'applications_open_game_date',
+            'application_window_start_game_date',
+          ])
+        )
+      ),
+      detailRow(
+        'Applications close',
+        formatContractSeasonLabel(
+          pickFirstString(payload, [
+            'applications_close',
+            'applications_close_game_date',
+            'application_deadline_game_date',
+          ])
+        )
+      ),
+      detailRow(
+        'Rider submission deadline',
+        formatContractSeasonLabel(
+          pickFirstString(payload, [
+            'rider_submission_deadline',
+            'rider_submission_deadline_game_date',
+            'rider_deadline_on',
+            'lineup_deadline_game_date',
+          ])
+        )
+      ),
+      detailRow(
+        'Status',
+        formatLabel(
+          pickFirstString(payload, [
+            'status',
+            'application_status',
+            'race_plan_status',
+          ])
+        ) || 'Open'
+      ),
+    ])
+  },
+
+  getExtraText: () =>
+    'Open race preparation to select riders, staff and assets, or open the race page to review route details and requirements.',
+
+  actions: [
+    {
+      key: 'open-race-preparation',
+      label: 'Race preparation',
+      variant: 'primary',
+      kind: 'navigate',
+      getHref: (item) => {
+        const payload = getPayload(item)
+        const raceId = pickFirstString(payload, ['race_id'])
+
+        return (
+          pickFirstString(payload, [
+            'race_plan_path',
+            'race_preparation_path',
+            'action_path',
+          ]) ||
+          (raceId
+            ? `/dashboard/race-preparation?tab=racePlan&raceId=${raceId}`
+            : '/dashboard/race-preparation')
+        )
+      },
+      show: () => true,
+    },
+    {
+      key: 'open-race-page',
+      label: 'Open race page',
+      variant: 'secondary',
+      kind: 'navigate',
+      getHref: (item) => {
+        const payload = getPayload(item)
+        const raceId = pickFirstString(payload, ['race_id'])
+
+        if (raceId) {
+          return `/dashboard/races/${raceId}`
+        }
+
+        return (
+          pickFirstString(payload, [
+            'race_profile_path',
+            'race_detail_path',
+            'calendar_race_path',
+          ]) || '/dashboard/calendar'
+        )
+      },
+      show: (item) => {
+        const payload = getPayload(item)
+
+        return Boolean(
+          pickFirstString(payload, [
+            'race_id',
+            'race_profile_path',
+            'race_detail_path',
+            'calendar_race_path',
+          ])
+        )
+      },
+    },
+    {
+      key: 'open-calendar',
+      label: 'Team calendar',
+      variant: 'secondary',
+      kind: 'navigate',
+      getHref: (item) => {
+        const payload = getPayload(item)
+
+        return (
+          pickFirstString(payload, [
+            'calendar_path',
+            'team_calendar_path',
+          ]) || '/dashboard/calendar'
+        )
+      },
+      show: () => true,
+    },
+    MARK_READ_ACTION,
+  ],
+},
+  STAGE_PLAN_LOCKED: {
+  defaultTitle: 'Stage plan locked',
+  defaultMessage:
+    'A stage plan is now locked and can no longer be changed.',
+
+  imageSrc:
+    'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Event%20images/Stage%20Plan%20Locked.png',
+
+  getImageSrc: (item) =>
+    getImageSrcFromItem(item) ||
+    'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Event%20images/Stage%20Plan%20Locked.png',
+
+  enrich: (item) => {
+    const payload = getPayload(item)
+
+    const raceName =
+      pickFirstString(payload, [
+        'race_name',
+        'race_title',
+        'name',
+      ]) || 'Race'
+
+    const stageNumber = pickFirstNumber(payload, [
+      'stage_number',
+      'selected_stage_number',
+    ])
+
+    return {
+      ...item,
+      title:
+        stageNumber !== null
+          ? `Stage plan locked: ${raceName} Stage ${stageNumber}`
+          : `Stage plan locked: ${raceName}`,
+      message:
+        item.message ||
+        `The stage plan for ${raceName} is now locked and can no longer be changed.`,
+    }
+  },
+
+  getIntroText: (item) => {
+    const payload = getPayload(item)
+
+    const raceName =
+      pickFirstString(payload, [
+        'race_name',
+        'race_title',
+        'name',
+      ]) || 'This race'
+
+    const stageNumber = pickFirstNumber(payload, [
+      'stage_number',
+      'selected_stage_number',
+    ])
+
+    if (stageNumber !== null) {
+      return `Stage ${stageNumber} plan for ${raceName} is now locked. Rider roles, tactics and stage setup can no longer be changed for this stage.`
+    }
+
+    return `${raceName} stage plan is now locked. Rider roles, tactics and stage setup can no longer be changed.`
+  },
+
+  getDetailRows: (item) => {
+    const payload = getPayload(item)
+
+    const raceName =
+      pickFirstString(payload, [
+        'race_name',
+        'race_title',
+        'name',
+      ]) || null
+
+    const stageNumber = pickFirstNumber(payload, [
+      'stage_number',
+      'selected_stage_number',
+    ])
+
+    const startCity = pickFirstString(payload, [
+      'start_city',
+      'stage_start_city',
+    ])
+
+    const finishCity = pickFirstString(payload, [
+      'finish_city',
+      'stage_finish_city',
+    ])
+
+    return compactRows([
+      detailRow('Race', raceName),
+      detailRow(
+        'Stage',
+        stageNumber !== null ? `Stage ${stageNumber}` : null
+      ),
+      detailRow(
+        'Route',
+        startCity && finishCity ? `${startCity} → ${finishCity}` : null
+      ),
+      detailRow(
+        'Race class',
+        pickFirstString(payload, [
+          'race_class',
+          'class',
+          'category',
+          'race_category',
+        ])
+      ),
+      detailRow(
+        'Country',
+        formatCountryName(
+          pickFirstString(payload, [
+            'country_name',
+            'host_country_name',
+            'country',
+            'host_country',
+            'country_code',
+          ])
+        )
+      ),
+      detailRow(
+        'Stage start',
+        formatGameDateTimeLabel(
+          pickFirstString(payload, [
+            'stage_start_at',
+            'stage_start_datetime',
+            'stage_date',
+            'first_stage_date',
+            'race_start_date',
+          ]),
+          pickFirstString(payload, [
+            'stage_start_time_label',
+            'planned_start_time_label',
+          ])
+        )
+      ),
+      detailRow(
+        'Locked at',
+        formatGameDateTimeLabel(
+          pickFirstString(payload, [
+            'stage_plan_locked_at',
+            'locked_at',
+            'stage_plan_lock_at',
+            'stage_plan_lock_datetime',
+            'stage_plan_lock_on',
+            'stage_plans_lock_on',
+          ]),
+          pickFirstString(payload, [
+            'stage_plan_lock_time_label',
+            'lock_time_label',
+          ])
+        )
+      ),
+      detailRow(
+        'Status',
+        formatLabel(
+          pickFirstString(payload, [
+            'stage_plan_status',
+            'stage_plans_status',
+            'status',
+          ])
+        ) || 'Locked'
+      ),
+    ])
+  },
+
+  getExtraText: () =>
+    'This stage plan is now final. You can still open the stage plan page to review the locked setup.',
+
+  actions: [
+    {
+      key: 'open-stage-plans',
+      label: 'Stage plans',
+      variant: 'primary',
+      kind: 'navigate',
+      getHref: (item) => {
+        const payload = getPayload(item)
+        const raceId = pickFirstString(payload, ['race_id'])
+        const stageId = pickFirstString(payload, ['stage_id'])
+
+        return (
+          pickFirstString(payload, [
+            'stage_plans_path',
+            'stage_plan_path',
+          ]) ||
+          (raceId
+            ? `/dashboard/race-preparation?tab=stagePlans&raceId=${raceId}${stageId ? `&stageId=${stageId}` : ''}`
+            : '/dashboard/race-preparation?tab=stagePlans')
+        )
+      },
+      show: () => true,
+    },
+    {
+      key: 'open-race-preparation',
+      label: 'Race preparation',
+      variant: 'secondary',
+      kind: 'navigate',
+      getHref: (item) => {
+        const payload = getPayload(item)
+        const raceId = pickFirstString(payload, ['race_id'])
+
+        return (
+          pickFirstString(payload, [
+            'race_plan_path',
+            'race_preparation_path',
+            'action_path',
+          ]) ||
+          (raceId
+            ? `/dashboard/race-preparation?tab=racePlan&raceId=${raceId}`
+            : '/dashboard/race-preparation')
+        )
+      },
+      show: () => true,
+    },
+    {
+      key: 'open-race-page',
+      label: 'Open race page',
+      variant: 'secondary',
+      kind: 'navigate',
+      getHref: (item) => {
+        const payload = getPayload(item)
+        const raceId = pickFirstString(payload, ['race_id'])
+
+        if (raceId) {
+          return `/dashboard/races/${raceId}`
+        }
+
+        return (
+          pickFirstString(payload, [
+            'race_profile_path',
+            'race_detail_path',
+            'calendar_race_path',
+          ]) || '/dashboard/calendar'
+        )
+      },
+      show: (item) => {
+        const payload = getPayload(item)
+
+        return Boolean(
+          pickFirstString(payload, [
+            'race_id',
+            'race_profile_path',
+            'race_detail_path',
+            'calendar_race_path',
+          ])
+        )
+      },
+    },
+    {
+      key: 'open-calendar',
+      label: 'Team calendar',
+      variant: 'secondary',
+      kind: 'navigate',
+      getHref: (item) => {
+        const payload = getPayload(item)
+
+        return (
+          pickFirstString(payload, [
+            'calendar_path',
+            'team_calendar_path',
+          ]) || '/dashboard/calendar'
+        )
+      },
+      show: () => true,
+    },
+    MARK_READ_ACTION,
+  ],
+},
+RACE_SUPPLIES_LOW: {
+  defaultTitle: 'Race supplies low',
+  defaultMessage:
+    'Your available race supplies are below the required amount for an upcoming race.',
+
+  imageSrc:
+    'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Event%20images/Race%20Supplies%20low.png',
+
+  getImageSrc: (item) =>
+    getImageSrcFromItem(item) ||
+    'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Event%20images/Race%20Supplies%20low.png',
+
+  enrich: (item) => {
+    const payload = getPayload(item)
+
+    const raceName =
+      pickFirstString(payload, [
+        'race_name',
+        'race_title',
+        'name',
+      ]) || 'Upcoming race'
+
+    return {
+      ...item,
+      title: `Race supplies low: ${raceName}`,
+      message:
+        item.message ||
+        `Your club does not currently have enough race supplies for ${raceName}. Review shortages and restock before the race deadline.`,
+    }
+  },
+
+  getIntroText: (item) => {
+    const payload = getPayload(item)
+
+    const raceName =
+      pickFirstString(payload, [
+        'race_name',
+        'race_title',
+        'name',
+      ]) || 'This race'
+
+    return `${raceName} requires more race supplies than your club currently has available. Open Race Supplies and restock the missing items before the race.`
+  },
+
+  getDetailRows: (item) => {
+    const payload = getPayload(item)
+
+    const raceName =
+      pickFirstString(payload, [
+        'race_name',
+        'race_title',
+        'name',
+      ]) || null
+
+    const shortageCount = pickFirstNumber(payload, [
+      'shortage_count',
+      'missing_items_count',
+      'low_supply_count',
+    ])
+
+    const shortageSummary =
+      pickFirstString(payload, [
+        'shortage_summary',
+        'supplies_summary',
+        'missing_supplies_summary',
+      ]) ||
+      (() => {
+        const shortages = payload?.shortages
+
+        if (!Array.isArray(shortages) || shortages.length === 0) {
+          return null
+        }
+
+        return shortages
+          .map((item) => {
+            const row =
+              item !== null && typeof item === 'object' && !Array.isArray(item)
+                ? (item as Record<string, unknown>)
+                : null
+
+            if (!row) return null
+
+            const supplyName =
+              readString(row.supply_name) ||
+              formatLabel(readString(row.supply_key)) ||
+              'Supply item'
+
+            const required =
+              readNumber(row.required_quantity) ??
+              readNumber(row.required_qty)
+
+            const available =
+              readNumber(row.available_quantity) ??
+              readNumber(row.available_qty)
+
+            const missing =
+              readNumber(row.missing_quantity) ??
+              readNumber(row.missing_qty)
+
+            const details = [
+              required !== null ? `required ${required}` : null,
+              available !== null ? `available ${available}` : null,
+              missing !== null ? `missing ${missing}` : null,
+            ].filter(Boolean)
+
+            return details.length > 0
+              ? `${supplyName}: ${details.join(' · ')}`
+              : supplyName
+          })
+          .filter(Boolean)
+          .join('\n')
+      })()
+
+    return compactRows([
+      detailRow('Race', raceName),
+      detailRow(
+        'Race class',
+        pickFirstString(payload, [
+          'race_class',
+          'class',
+          'category',
+          'race_category',
+        ])
+      ),
+      detailRow(
+        'Country',
+        formatCountryName(
+          pickFirstString(payload, [
+            'country_name',
+            'host_country_name',
+            'country',
+            'host_country',
+            'country_code',
+          ])
+        )
+      ),
+      detailRow(
+        'Race starts',
+        formatContractSeasonLabel(
+          pickFirstString(payload, [
+            'race_start_date',
+            'start_date',
+            'starts_on_game_date',
+          ])
+        )
+      ),
+      detailRow(
+        'Missing supply types',
+        shortageCount !== null
+          ? `${shortageCount} item${shortageCount === 1 ? '' : 's'}`
+          : null
+      ),
+      detailRow('Shortages', shortageSummary),
+      detailRow('Status', 'Supplies low'),
+    ])
+  },
+
+  getExtraText: () =>
+    'Open Race Supplies to restock the missing items needed for this race.',
+
+  actions: [
+    {
+      key: 'open-race-supplies',
+      label: 'Race supplies',
+      variant: 'primary',
+      kind: 'navigate',
+      getHref: () => '/dashboard/equipment?tab=race-supplies',
       show: () => true,
     },
     MARK_READ_ACTION,

@@ -73,6 +73,12 @@ type RaceCalendarItem = RaceCalendarEntry & {
   stage_count: number | null
   status: string | null
   description: string | null
+
+  stored_stage_count?: number | null
+  actual_stage_count?: number | null
+  first_start_city?: string | null
+  final_finish_city?: string | null
+
   min_riders_per_team: number | null
   max_riders_per_team: number | null
 }
@@ -84,15 +90,6 @@ type RaceEntryRules = {
   max_teams: number | null
   min_riders_per_team: number | null
   max_riders_per_team: number | null
-}
-
-type RaceStageSummary = {
-  id: string
-  race_id: string
-  stage_number: number
-  stage_date: string
-  start_city: string | null
-  finish_city: string | null
 }
 
 type RaceTeamEntry = {
@@ -547,29 +544,37 @@ function cleanRouteCity(value: string | null | undefined): string | null {
 }
 
 function getRaceRouteSummary(
-  race: RaceCalendarItem,
-  stagesByRaceId: Record<string, RaceStageSummary[]>
+  race: RaceCalendarItem
 ): string {
-  const stages = stagesByRaceId[race.id] ?? []
-  const sortedStages = [...stages].sort((a, b) => a.stage_number - b.stage_number)
+  const startCity =
+    cleanRouteCity(race.first_start_city)
 
-  const firstStage = sortedStages[0] ?? null
-  const lastStage = sortedStages[sortedStages.length - 1] ?? null
+  const finishCity =
+    cleanRouteCity(race.final_finish_city)
 
-  const startCity = cleanRouteCity(firstStage?.start_city)
-  const finishCity = cleanRouteCity(lastStage?.finish_city)
+  const stageCount = Number(
+    race.actual_stage_count ??
+      race.stage_count ??
+      0
+  )
 
   if (startCity && finishCity) {
     const stageSuffix =
-      race.race_type === 'stage_race' && sortedStages.length > 1
-        ? ` · ${sortedStages.length} stages`
+      race.race_type === 'stage_race' &&
+      stageCount > 1
+        ? ` · ${stageCount} stages`
         : ''
 
     return `${startCity} → ${finishCity}${stageSuffix}`
   }
 
-  if (race.description?.trim()) return race.description.trim()
-  if (race.host_city?.trim()) return `Host area: ${race.host_city.trim()}`
+  if (race.description?.trim()) {
+    return race.description.trim()
+  }
+
+  if (race.host_city?.trim()) {
+    return `Host area: ${race.host_city.trim()}`
+  }
 
   return 'Route details coming soon'
 }
@@ -670,7 +675,6 @@ export default function CalendarPage(): JSX.Element {
 
   const [bookings, setBookings] = useState<TrainingCampBooking[]>([])
   const [races, setRaces] = useState<RaceCalendarItem[]>([])
-  const [raceStages, setRaceStages] = useState<RaceStageSummary[]>([])
 
   const [teamWeather, setTeamWeather] = useState<WeatherNormals | null>(null)
 
@@ -696,7 +700,6 @@ export default function CalendarPage(): JSX.Element {
         let resolvedTeamWeather: WeatherNormals | null = null
         let resolvedRaceNotice: string | null = null
         let resolvedRaces: RaceCalendarItem[] = []
-        let resolvedRaceStages: RaceStageSummary[] = []
 
         const primaryClubRes = await supabase.rpc('get_my_primary_club_id')
         if (!primaryClubRes.error && primaryClubRes.data) {
@@ -849,6 +852,10 @@ export default function CalendarPage(): JSX.Element {
               category: toNullableString(row.category),
               applications_status: entryRules?.applications_status ?? null,
               status: toNullableString(row.status),
+              stored_stage_count: toNullableNumber(row.stored_stage_count),
+              actual_stage_count: toNullableNumber(row.actual_stage_count),
+              first_start_city: toNullableString(row.first_start_city),
+              final_finish_city: toNullableString(row.final_finish_city),
               target_teams: toNullableNumber(entryRules?.target_teams ?? row.target_teams),
               max_teams: toNullableNumber(entryRules?.max_teams ?? row.max_teams),
               min_riders_per_team: toNullableNumber(
@@ -866,19 +873,6 @@ export default function CalendarPage(): JSX.Element {
           resolvedRaceNotice = 'Race Calendar is ready, but the race source is not available yet.'
         }
 
-        try {
-          const stagesRes = await supabase
-            .from('race_stages')
-            .select('id, race_id, stage_number, stage_date, start_city, finish_city')
-            .order('stage_number', { ascending: true })
-
-          if (!stagesRes.error) {
-            resolvedRaceStages = (stagesRes.data ?? []) as RaceStageSummary[]
-          }
-        } catch {
-          resolvedRaceStages = []
-        }
-
         if (cancelled) return
 
         setClubId(resolvedClubId)
@@ -887,7 +881,6 @@ export default function CalendarPage(): JSX.Element {
         setBookings((bookingsRes.data ?? []) as TrainingCampBooking[])
         setTeamWeather(resolvedTeamWeather)
         setRaces(resolvedRaces)
-        setRaceStages(resolvedRaceStages)
         setRaceCalendarNotice(resolvedRaceNotice)
       } catch (err) {
         if (!cancelled) {
@@ -1044,14 +1037,6 @@ export default function CalendarPage(): JSX.Element {
         return a.name.localeCompare(b.name)
       })
   }, [seasonRaceEntries, activeRaceMonth])
-
-  const stagesByRaceId = useMemo(() => {
-    return raceStages.reduce<Record<string, RaceStageSummary[]>>((acc, stage) => {
-      if (!acc[stage.race_id]) acc[stage.race_id] = []
-      acc[stage.race_id].push(stage)
-      return acc
-    }, {})
-  }, [raceStages])
 
   const acceptedSeasonRaceEntries = useMemo(() => {
     return seasonRaceEntries.filter(race => isRaceAcceptedForUser(race))
@@ -1523,7 +1508,7 @@ export default function CalendarPage(): JSX.Element {
                           </div>
 
                           <div className="mt-1 text-xs text-gray-500">
-                            {getRaceRouteSummary(race, stagesByRaceId)}
+                            {getRaceRouteSummary(race)}
                           </div>
                         </div>
                       </div>

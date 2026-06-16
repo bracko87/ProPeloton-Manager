@@ -106,6 +106,86 @@ type DeliverableAssetKey =
   | 'mobile_workshop'
   | 'medical_van'
 
+function getInfrastructureTabFromUrl(): TabKey {
+  if (typeof window === 'undefined') return 'facilities'
+
+  const hash = window.location.hash
+  const hashQueryIndex = hash.indexOf('?')
+  const hashQuery =
+    hashQueryIndex >= 0 ? hash.slice(hashQueryIndex + 1) : ''
+
+  const searchQuery = window.location.search.startsWith('?')
+    ? window.location.search.slice(1)
+    : window.location.search
+
+  const params = new URLSearchParams(hashQuery || searchQuery)
+  const tab = params.get('tab')
+
+  return tab === 'assets' ? 'assets' : 'facilities'
+}
+
+
+function getAssetSubTabFromUrl(): AssetSubTabKey {
+  if (typeof window === 'undefined') return 'team_cars'
+
+  const hash = window.location.hash
+  const hashQueryIndex = hash.indexOf('?')
+  const hashQuery =
+    hashQueryIndex >= 0 ? hash.slice(hashQueryIndex + 1) : ''
+
+  const searchQuery = window.location.search.startsWith('?')
+    ? window.location.search.slice(1)
+    : window.location.search
+
+  const params = new URLSearchParams(hashQuery || searchQuery)
+
+  const assetKey =
+    params.get('assetKey') ||
+    params.get('asset_key') ||
+    params.get('target_key')
+
+  switch (assetKey) {
+    case 'team_car':
+      return 'team_cars'
+    case 'team_bus':
+      return 'team_bus'
+    case 'equipment_van':
+      return 'equipment_van'
+    case 'mobile_workshop':
+      return 'mobile_workshop'
+    case 'medical_van':
+      return 'medical_van'
+    default:
+      return 'team_cars'
+  }
+}
+
+function updateInfrastructureTabUrl(nextTab: TabKey) {
+  if (typeof window === 'undefined') return
+
+  const hash = window.location.hash
+
+  if (hash) {
+    const rawHash = hash.startsWith('#') ? hash.slice(1) : hash
+    const [hashPath, hashQuery = ''] = rawHash.split('?')
+    const params = new URLSearchParams(hashQuery)
+
+    params.set('tab', nextTab)
+
+    const nextHash = `#${hashPath}?${params.toString()}`
+    const nextUrl = `${window.location.pathname}${window.location.search}${nextHash}`
+
+    window.history.replaceState(null, '', nextUrl)
+    return
+  }
+
+  const params = new URLSearchParams(window.location.search)
+  params.set('tab', nextTab)
+
+  const nextUrl = `${window.location.pathname}?${params.toString()}`
+  window.history.replaceState(null, '', nextUrl)
+}
+
 function AssetActionConfirmModal({
   modal,
   isProcessing,
@@ -294,8 +374,12 @@ function AssetActionConfirmModal({
 }
 
 export default function InfrastructurePage({ clubId }: { clubId?: string }) {
-  const [activeTab, setActiveTab] = useState<TabKey>('facilities')
-  const [activeAssetSubTab, setActiveAssetSubTab] = useState<AssetSubTabKey>('team_cars')
+  const [activeTab, setActiveTab] = useState<TabKey>(() =>
+    getInfrastructureTabFromUrl(),
+  )
+  const [activeAssetSubTab, setActiveAssetSubTab] = useState<AssetSubTabKey>(() =>
+    getAssetSubTabFromUrl(),
+  )
   const [resolvedClubId, setResolvedClubId] = useState<string | null>(clubId ?? null)
 
   const [infrastructure, setInfrastructure] = useState<ClubInfrastructureRow | null>(null)
@@ -376,6 +460,33 @@ export default function InfrastructurePage({ clubId }: { clubId?: string }) {
   } | null>(null)
 
   const lastZeroRefreshRef = useRef<number>(0)
+
+  useEffect(() => {
+    function syncTabFromUrl() {
+      const nextTab = getInfrastructureTabFromUrl()
+
+      setActiveTab(nextTab)
+
+      if (nextTab === 'assets') {
+        setActiveAssetSubTab(getAssetSubTabFromUrl())
+      }
+    }
+
+    syncTabFromUrl()
+
+    window.addEventListener('popstate', syncTabFromUrl)
+    window.addEventListener('hashchange', syncTabFromUrl)
+
+    return () => {
+      window.removeEventListener('popstate', syncTabFromUrl)
+      window.removeEventListener('hashchange', syncTabFromUrl)
+    }
+  }, [])
+
+  function handleInfrastructureTabChange(nextTab: TabKey) {
+    setActiveTab(nextTab)
+    updateInfrastructureTabUrl(nextTab)
+  }
 
   async function resolveClubId(): Promise<string | null> {
     if (clubId) {
@@ -1773,7 +1884,7 @@ export default function InfrastructurePage({ clubId }: { clubId?: string }) {
           <div className="inline-flex rounded-lg bg-white border border-gray-100 p-1 shadow-sm">
             <button
               type="button"
-              onClick={() => setActiveTab('facilities')}
+              onClick={() => handleInfrastructureTabChange('facilities')}
               className={`px-4 py-2 rounded-md text-sm font-medium transition ${
                 activeTab === 'facilities'
                   ? 'bg-yellow-400 text-black'
@@ -1785,7 +1896,7 @@ export default function InfrastructurePage({ clubId }: { clubId?: string }) {
 
             <button
               type="button"
-              onClick={() => setActiveTab('assets')}
+              onClick={() => handleInfrastructureTabChange('assets')}
               className={`px-4 py-2 rounded-md text-sm font-medium transition ${
                 activeTab === 'assets'
                   ? 'bg-yellow-400 text-black'

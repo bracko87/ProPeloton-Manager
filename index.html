@@ -4,23 +4,15 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Web Creator</title>
-    <link href="main.css" rel="stylesheet" />
-
-    <!-- Favicon -->
-    <link rel="icon" type="image/x-icon" href="favicon.ico" />
-    <!-- Optional for phones/iPads -->
-    <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+    <link href="main.css" rel="stylesheet">
   </head>
-
+  <script>
+    new EventSource('/esbuild').addEventListener('change', () =>
+      location.reload()
+    )
+  </script>
   <body>
     <div id="app"></div>
-
-    <script>
-      new EventSource('/esbuild').addEventListener('change', () =>
-        location.reload()
-      )
-    </script>
-
     <script src="main.js"></script>
   </body>
 </html>

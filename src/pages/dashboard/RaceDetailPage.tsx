@@ -247,6 +247,13 @@ type RaceStageResultRow = {
   sprint_points: number | null
   mountain_points: number | null
   status: string | null
+  full_name?: string | null
+  rider_full_name?: string | null
+  display_name?: string | null
+  rider_name?: string | null
+  rider_country_code?: string | null
+  nationality_code?: string | null
+  country_code?: string | null
 }
 
 type RacePointResultRow = {
@@ -254,6 +261,8 @@ type RacePointResultRow = {
   point_type: string | null
   point_name: string | null
   km_from_start: number | string | null
+  kom_category: string | null
+  sort_order: number | null
   rank: number | null
   rider_id: string | null
   team_id: string | null
@@ -280,6 +289,73 @@ type RaceStageReportEvent = {
   metadata: Record<string, unknown> | null
 }
 
+type RaceReplayEntityType = 'group' | 'rider' | 'team' | string
+
+type RaceReplayFrame = {
+  id: string
+  simulation_run_id: string
+  race_id: string
+  stage_id: string
+  frame_number: number
+  race_seconds: number
+  km_marker: number | string
+  group_code: string
+  group_label: string
+  group_order: number
+  gap_seconds: number
+  avg_speed_kmh: number | string
+  rider_ids: string[]
+  rider_names: string[]
+  team_names: string[]
+  metadata: Record<string, unknown> | null
+
+  entity_type?: RaceReplayEntityType | null
+  entity_id?: string | null
+  entity_key?: string | null
+  entity_label?: string | null
+  start_order?: number | null
+  competition_start_offset_seconds?: number | null
+  replay_start_offset_seconds?: number | null
+  entity_elapsed_seconds?: number | null
+  provisional_rank?: number | null
+  entity_finished?: boolean | null
+}
+
+type RaceStageLiveState = {
+  stage_id: string
+  has_simulation: boolean
+  simulation_run_id: string | null
+  live_started_at: string | null
+  live_ends_at: string | null
+  is_live: boolean
+  results_visible: boolean
+  speed_locked: boolean
+  progress: number
+}
+
+type ReplayStandingRow = {
+  rider_id: string
+  rider_name: string
+  team_name: string
+  rider_country_code: string | null
+  group_code: string
+  group_label: string
+  group_order: number
+  gap_seconds: number
+  gc_rank?: number | null
+  gc_gap_seconds?: number | null
+  isGcLeader?: boolean
+  isPointsLeader?: boolean
+  isClimberLeader?: boolean
+  timeTrialLabel?: string | null
+  timeTrialStartOrder?: number | null
+  timeTrialState?: string | null
+  liveElapsedSeconds?: number | null
+  liveGapSeconds?: number | null
+  splitElapsedSeconds?: number | null
+  splitGapSeconds?: number | null
+}
+
 type AggregatedStagePointResultRow = {
   rank: number | null
   rider_id: string | null
@@ -304,6 +380,34 @@ type RaceClassificationRow = {
   points: number | null
 }
 
+type RacePreStageLeader = {
+  classification_type?: string | null
+  rider_id?: string | null
+  team_id?: string | null
+  rank?: number | null
+  name?: string | null
+  team_name?: string | null
+  total_time_seconds?: number | null
+  gap_seconds?: number | null
+  points?: number | null
+}
+
+type RacePreStageLeaderSnapshot = {
+  source?: string | null
+  has_snapshot?: boolean
+  captured_at?: string | null
+  simulation_run_id?: string | null
+  race_id?: string | null
+  stage_id?: string | null
+  stage_number?: number | null
+  previous_stage_id?: string | null
+  previous_stage_number?: number | null
+  has_established_leaders?: boolean
+  general?: RacePreStageLeader | null
+  mountain?: RacePreStageLeader | null
+  points?: RacePreStageLeader | null
+}
+
 type RaceResultsViewPayload = {
   race_id?: string | null
   stage_id?: string | null
@@ -326,7 +430,7 @@ const TERRAIN_LABELS: Record<string, string> = {
 const DEFAULT_CURRENT_CLUB_ID = '49caba57-9a5e-4820-b4bf-06cfc684e8b2'
 
 const VIEWER_TEAM_ROW_HIGHLIGHT_CLASS =
-  'bg-yellow-50/70 shadow-[inset_3px_0_0_rgba(234,179,8,0.35)]'
+  'bg-yellow-100/80 shadow-[inset_4px_0_0_rgba(234,179,8,0.65)]'
 
 type ViewerTeamComparableRow = {
   team_id?: string | null
@@ -357,6 +461,49 @@ function viewerTeamRowClass(
   return isViewerTeamRow(row, viewerTeamId)
     ? VIEWER_TEAM_ROW_HIGHLIGHT_CLASS
     : 'bg-white'
+}
+
+
+function CollapsibleRaceSection({
+  eyebrow,
+  title,
+  description,
+  defaultOpen = false,
+  children,
+}: {
+  eyebrow: string
+  title: string
+  description?: string
+  defaultOpen?: boolean
+  children: React.ReactNode
+}) {
+  const [open, setOpen] = useState(defaultOpen)
+
+  return (
+    <section className="rounded-3xl border border-slate-200 bg-white shadow-sm">
+      <button
+        type="button"
+        onClick={() => setOpen((value) => !value)}
+        className="flex w-full items-center justify-between gap-4 px-6 py-5 text-left"
+      >
+        <div>
+          <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+            {eyebrow}
+          </div>
+          <h3 className="mt-1 text-lg font-semibold text-slate-950">{title}</h3>
+          {description ? (
+            <p className="mt-1 text-sm text-slate-500">{description}</p>
+          ) : null}
+        </div>
+
+        <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-600">
+          {open ? 'Hide' : 'Show'}
+        </span>
+      </button>
+
+      {open ? <div className="border-t border-slate-100 p-6">{children}</div> : null}
+    </section>
+  )
 }
 
 
@@ -1393,6 +1540,967 @@ function buildStageProfilePath(
   })
 }
 
+type ReplayLeaderBadgeType = 'gc' | 'cl' | 'pts'
+
+type ReplayGroupLine = {
+  code: string
+  label: string
+  shortLabel: string
+  gapSeconds: number
+  kmOffset: number
+  size: number | null
+  actualKm?: number
+  kmMarker?: number
+  riderCount?: number
+  specialLeaderTypes?: ReplayLeaderBadgeType[]
+  entityType?: RaceReplayEntityType
+  teamName?: string
+  entityState?: string
+  gapLabel?: string
+}
+
+function getReplayBaseGroupCode(code: string): string {
+  if (
+    code === 'front_group' ||
+    code.startsWith('front_group_')
+  ) {
+    return 'front_group'
+  }
+
+  if (
+    code === 'chase_group' ||
+    code.startsWith('chase_group_')
+  ) {
+    return 'chase_group'
+  }
+
+  if (code === 'main_peloton') {
+    return 'main_peloton'
+  }
+
+  if (
+    code === 'dropped_group' ||
+    code.startsWith('dropped_group_')
+  ) {
+    return 'dropped_group'
+  }
+
+  if (
+    code === 'outside_group' ||
+    code.startsWith('outside_group_')
+  ) {
+    return 'outside_group'
+  }
+
+  return code
+}
+
+function isPelotonGroup(
+  code?: string | null
+): boolean {
+  if (!code) return false
+
+  return (
+    getReplayBaseGroupCode(code) ===
+    'main_peloton'
+  )
+}
+
+function getReplayGroupShortLabel(
+  code: string,
+  groupOrder?: number | null,
+  pelotonGroupOrder?: number | null
+): string {
+  if (
+    getReplayBaseGroupCode(code) ===
+    'main_peloton'
+  ) {
+    return 'P'
+  }
+
+  if (
+    groupOrder !== null &&
+    groupOrder !== undefined &&
+    pelotonGroupOrder !== null &&
+    pelotonGroupOrder !== undefined
+  ) {
+    /*
+     * Number every non-Peloton physical road group once.
+     *
+     * Example:
+     *
+     * physical order 1 → G1
+     * physical order 2 → G2
+     * physical order 3 → P
+     * physical order 4 → G3
+     * physical order 5 → G4
+     */
+    const roadGroupNumber =
+      groupOrder < pelotonGroupOrder
+        ? groupOrder
+        : groupOrder - 1
+
+    return `G${Math.max(
+      1,
+      roadGroupNumber
+    )}`
+  }
+
+  /*
+   * Fallback for old replay data.
+   */
+  switch (getReplayBaseGroupCode(code)) {
+    case 'front_group':
+      return 'G1'
+
+    case 'chase_group':
+      return 'G2'
+
+    case 'dropped_group':
+      return 'G3'
+
+    case 'outside_group':
+      return 'G4'
+
+    default:
+      return 'G'
+  }
+}
+
+function getReplayGroupStroke(
+  code: string
+): string {
+  switch (getReplayBaseGroupCode(code)) {
+    case 'front_group':
+      return '#059669'
+
+    case 'chase_group':
+      return '#dc2626'
+
+    case 'main_peloton':
+      return '#2563eb'
+
+    case 'dropped_group':
+      return '#111827'
+
+    case 'outside_group':
+      return '#64748b'
+
+    default:
+      return '#334155'
+  }
+}
+
+function getReplaySpecialLeaderTypes(
+  groupCode: string,
+  gcLeaderGroupCode: string | null,
+  mountainLeaderGroupCode: string | null,
+  pointsLeaderGroupCode: string | null
+): ReplayLeaderBadgeType[] {
+  const types: ReplayLeaderBadgeType[] = []
+
+  if (gcLeaderGroupCode === groupCode) {
+    types.push('gc')
+  }
+
+  if (mountainLeaderGroupCode === groupCode) {
+    types.push('cl')
+  }
+
+  if (pointsLeaderGroupCode === groupCode) {
+    types.push('pts')
+  }
+
+  return types
+}
+
+function getReplaySpecialLeaderTitle(
+  type: ReplayLeaderBadgeType
+): string {
+  switch (type) {
+    case 'gc':
+      return 'Stage-start general classification leader group'
+
+    case 'cl':
+      return 'Stage-start climber classification leader group'
+
+    case 'pts':
+      return 'Stage-start points classification leader group'
+  }
+}
+
+function getReplayStandingLeaderTabs(
+  row: ReplayStandingRow
+): ReplayLeaderBadgeType[] {
+  const tabs: ReplayLeaderBadgeType[] = []
+
+  if (row.isGcLeader) tabs.push('gc')
+  if (row.isPointsLeader) tabs.push('pts')
+  if (row.isClimberLeader) tabs.push('cl')
+
+  return tabs
+}
+
+function ReplayLeaderTab({
+  type,
+}: {
+  type: ReplayLeaderBadgeType
+}) {
+  if (type === 'gc') {
+    return (
+      <span className="inline-flex items-center rounded-full border border-amber-300 bg-amber-100 px-2 py-0.5 text-[10px] font-bold uppercase text-amber-900">
+        GC
+      </span>
+    )
+  }
+
+  if (type === 'pts') {
+    return (
+      <span className="inline-flex items-center rounded-full border border-emerald-300 bg-emerald-500 px-2 py-0.5 text-[10px] font-bold uppercase text-white">
+        PTS
+      </span>
+    )
+  }
+
+  return (
+    <span
+      className="inline-flex items-center rounded-full border border-red-300 bg-white px-2 py-0.5 text-[10px] font-bold uppercase text-red-600"
+      style={{
+        backgroundImage:
+          'radial-gradient(circle at 3px 3px, #dc2626 0 1.5px, transparent 1.8px)',
+        backgroundSize: '7px 7px',
+      }}
+    >
+      CL
+    </span>
+  )
+}
+
+function renderSpecialLeaderBadge(
+  type: ReplayLeaderBadgeType
+) {
+  if (type === 'gc') {
+    return (
+      <span className="inline-flex items-center rounded-full border border-amber-400 bg-amber-300 px-2 py-0.5 text-[10px] font-bold text-slate-900">
+        GC
+      </span>
+    )
+  }
+
+  if (type === 'cl') {
+    return (
+      <span
+        className="inline-flex items-center rounded-full border border-red-400 bg-white px-2 py-0.5 text-[10px] font-bold text-red-600"
+        style={{
+          backgroundImage:
+            'radial-gradient(circle at 3px 3px, #dc2626 0 2px, transparent 2.3px)',
+          backgroundSize: '7px 7px',
+        }}
+      >
+        CL
+      </span>
+    )
+  }
+
+  return (
+    <span className="inline-flex items-center rounded-full border border-emerald-500 bg-emerald-500 px-2 py-0.5 text-[10px] font-bold text-white">
+      PTS
+    </span>
+  )
+}
+
+function buildReplayGroupLines(groups: RaceReportGroupSummary[]): ReplayGroupLine[] {
+  return groups.map((group) => {
+    const gapSeconds = group.gapSeconds ?? 0
+
+    return {
+      code: group.code,
+      label: group.label,
+      shortLabel: getReplayGroupShortLabel(group.code),
+      gapSeconds,
+      kmOffset: Math.min(16, Math.max(0, gapSeconds / 15)),
+      size: group.size,
+    }
+  })
+}
+
+function getReplayEntityType(frame: RaceReplayFrame): RaceReplayEntityType {
+  return frame.entity_type || 'group'
+}
+
+function getReplayFrameLabel(frame: RaceReplayFrame): string {
+  return (
+    frame.entity_label ||
+    frame.group_label ||
+    frame.rider_names?.[0] ||
+    'Replay entity'
+  )
+}
+
+function getReplayFrameTeamName(frame: RaceReplayFrame): string {
+  const metadata = frame.metadata ?? {}
+
+  const metadataTeamName =
+    typeof metadata.team_name === 'string'
+      ? metadata.team_name
+      : null
+
+  return (
+    metadataTeamName ||
+    frame.team_names?.[0] ||
+    ''
+  )
+}
+
+function getReplayEntityState(frame: RaceReplayFrame): string {
+  const metadata = frame.metadata ?? {}
+
+  return typeof metadata.entity_state === 'string'
+    ? metadata.entity_state
+    : frame.entity_finished
+      ? 'finished'
+      : 'racing'
+}
+
+function getReplayEntitySize(frame: RaceReplayFrame): number {
+  const entityType = getReplayEntityType(frame)
+
+  if (entityType === 'rider') return 1
+
+  const metadata = frame.metadata ?? {}
+  const metadataGroupSize = Number(metadata.group_size)
+
+  if (Number.isFinite(metadataGroupSize) && metadataGroupSize > 0) {
+    return metadataGroupSize
+  }
+
+  return frame.rider_ids?.length ?? frame.rider_names?.length ?? 0
+}
+
+function getReplayFrameGapSeconds(frame: RaceReplayFrame): number {
+  const entityType = getReplayEntityType(frame)
+  const metadata = frame.metadata ?? {}
+
+  const provisionalGap = asNumber(
+    metadata.provisional_gap_seconds as
+      | number
+      | string
+      | null
+      | undefined
+  )
+
+  const finalGap = asNumber(
+    metadata.final_gap_seconds as
+      | number
+      | string
+      | null
+      | undefined
+  )
+
+  const gap =
+    entityType === 'group'
+      ? Number(frame.gap_seconds ?? 0)
+      : provisionalGap ?? finalGap ?? Number(frame.gap_seconds ?? 0)
+
+  return Number.isFinite(gap) ? Math.max(0, gap) : 0
+}
+
+function getReplayFrameGapLabel(frame: RaceReplayFrame): string {
+  const gap = getReplayFrameGapSeconds(frame)
+
+  if (!Number.isFinite(gap) || gap <= 0) return 'Leader'
+
+  const minutes = Math.floor(gap / 60)
+  const seconds = Math.round(gap % 60)
+
+  if (minutes <= 0) return `+${seconds}s`
+
+  return `+${minutes}:${String(seconds).padStart(2, '0')}`
+}
+
+function getReplayTimeTrialStartOrder(
+  frame: RaceReplayFrame
+): number | null {
+  const order = Number(frame.start_order)
+
+  return Number.isFinite(order) && order > 0
+    ? order
+    : null
+}
+
+function getReplayTimeTrialMarkerShortLabel(
+  frame: RaceReplayFrame
+): string {
+  const entityType = getReplayEntityType(frame)
+  const order = getReplayTimeTrialStartOrder(frame)
+  const rank = Number(frame.provisional_rank)
+
+  /*
+   * Time-trial labels must describe the fixed start identity,
+   * not the changing provisional rank.
+   *
+   * Example: the first rider to start stays R1 until the finish,
+   * even if another rider later becomes provisional leader.
+   */
+  if (entityType === 'team') {
+    if (order !== null) return `T${order}`
+    if (Number.isFinite(rank) && rank > 0) return `T${rank}`
+    return 'TTT'
+  }
+
+  if (entityType === 'rider') {
+    if (order !== null) return `R${order}`
+    if (Number.isFinite(rank) && rank > 0) return `R${rank}`
+    return 'R'
+  }
+
+  return getReplayGroupShortLabel(frame.group_code)
+}
+
+function getReplayTimeTrialFrameKey(
+  frame: RaceReplayFrame
+): string {
+  return (
+    frame.entity_id ||
+    frame.rider_ids?.[0] ||
+    frame.entity_key ||
+    frame.group_code ||
+    frame.id
+  )
+}
+
+function getReplayTimeTrialLiveElapsedSeconds(
+  frame: RaceReplayFrame
+): number | null {
+  const state = getReplayEntityState(frame)
+
+  if (state === 'waiting') return null
+
+  const metadata = frame.metadata ?? {}
+
+  const explicitElapsed =
+    asNumber(frame.entity_elapsed_seconds) ??
+    asNumber(
+      metadata.entity_elapsed_seconds as
+        | number
+        | string
+        | null
+        | undefined
+    ) ??
+    asNumber(
+      metadata.elapsed_seconds as
+        | number
+        | string
+        | null
+        | undefined
+    )
+
+  if (explicitElapsed !== null) {
+    return Math.max(0, explicitElapsed)
+  }
+
+  const raceSeconds = asNumber(frame.race_seconds)
+  const startOffset =
+    asNumber(frame.competition_start_offset_seconds) ??
+    asNumber(frame.replay_start_offset_seconds) ??
+    asNumber(
+      metadata.competition_start_offset_seconds as
+        | number
+        | string
+        | null
+        | undefined
+    ) ??
+    0
+
+  if (raceSeconds === null) return null
+
+  const elapsed = raceSeconds - startOffset
+
+  return Number.isFinite(elapsed) && elapsed >= 0
+    ? elapsed
+    : null
+}
+
+function getReplayTimeTrialStartOffsetSeconds(
+  frame: RaceReplayFrame
+): number | null {
+  const metadata = frame.metadata ?? {}
+
+  return (
+    asNumber(frame.competition_start_offset_seconds) ??
+    asNumber(frame.replay_start_offset_seconds) ??
+    asNumber(
+      metadata.competition_start_offset_seconds as
+        | number
+        | string
+        | null
+        | undefined
+    ) ??
+    asNumber(
+      metadata.replay_start_offset_seconds as
+        | number
+        | string
+        | null
+        | undefined
+    ) ??
+    null
+  )
+}
+
+function getReplayTimeTrialRaceClockSeconds(
+  frame: RaceReplayFrame
+): number | null {
+  /*
+   * For prologue / ITT / TTT the backend RPC must return the
+   * real global competition clock in top-level race_seconds.
+   *
+   * Older rows stored a compressed 0-900 replay clock there and
+   * kept the true race clock in metadata.competition_seconds.
+   * The database has now been patched so race_seconds is the
+   * source of truth. Prefer it first so the replay does not stop
+   * when the first rider finishes.
+   */
+  const storedRaceSeconds = asNumber(frame.race_seconds)
+
+  if (
+    storedRaceSeconds !== null &&
+    Number.isFinite(storedRaceSeconds)
+  ) {
+    return Math.max(0, storedRaceSeconds)
+  }
+
+  const elapsedSeconds = getReplayTimeTrialLiveElapsedSeconds(frame)
+  const startOffsetSeconds = getReplayTimeTrialStartOffsetSeconds(frame)
+
+  if (elapsedSeconds !== null && startOffsetSeconds !== null) {
+    return Math.max(0, startOffsetSeconds + elapsedSeconds)
+  }
+
+  return null
+}
+
+function getReplayTimeTrialCurrentRaceClockSeconds(
+  frames: RaceReplayFrame[]
+): number {
+  const liveClockSeconds = frames
+    .map(getReplayTimeTrialRaceClockSeconds)
+    .filter(
+      (value): value is number =>
+        value !== null &&
+        value !== undefined &&
+        Number.isFinite(Number(value))
+    )
+    .map(Number)
+
+  if (liveClockSeconds.length > 0) {
+    return Math.max(...liveClockSeconds)
+  }
+
+  const storedRaceSeconds = frames
+    .map((frame) => asNumber(frame.race_seconds))
+    .filter(
+      (value): value is number =>
+        value !== null &&
+        value !== undefined &&
+        Number.isFinite(Number(value))
+    )
+    .map(Number)
+
+  return storedRaceSeconds.length > 0
+    ? Math.max(...storedRaceSeconds)
+    : 0
+}
+
+
+type TimeTrialReplayClockBounds = {
+  startSeconds: number
+  endSeconds: number
+}
+
+function getReplayTimeTrialFrameClockForSort(
+  frame: RaceReplayFrame
+): number {
+  const raceClock = getReplayTimeTrialRaceClockSeconds(frame)
+
+  if (raceClock !== null && Number.isFinite(raceClock)) {
+    return raceClock
+  }
+
+  const startOffset = getReplayTimeTrialStartOffsetSeconds(frame)
+  if (startOffset !== null && Number.isFinite(startOffset)) {
+    return startOffset
+  }
+
+  const frameNumber = Number(frame.frame_number)
+  return Number.isFinite(frameNumber) ? frameNumber : 0
+}
+
+function getReplayTimeTrialClockBounds(
+  frames: RaceReplayFrame[],
+  primaryEntityType: 'rider' | 'team' | null
+): TimeTrialReplayClockBounds | null {
+  if (!primaryEntityType) return null
+
+  const clockSeconds = frames
+    .filter(
+      (frame) => getReplayEntityType(frame) === primaryEntityType
+    )
+    .map(getReplayTimeTrialRaceClockSeconds)
+    .filter(
+      (value): value is number =>
+        value !== null &&
+        value !== undefined &&
+        Number.isFinite(value)
+    )
+
+  if (clockSeconds.length === 0) return null
+
+  /*
+   * Time-trial replay should span the whole global race clock,
+   * not only the first rider's local frame sequence.
+   */
+  const start = 0
+  const end = Math.max(...clockSeconds)
+
+  if (!Number.isFinite(end) || end <= start) return null
+
+  return {
+    startSeconds: start,
+    endSeconds: end,
+  }
+}
+
+function getReplayTimeTrialFramesAtRaceSeconds(
+  frames: RaceReplayFrame[],
+  raceSeconds: number
+): RaceReplayFrame[] {
+  const framesByEntityKey = new Map<string, RaceReplayFrame[]>()
+
+  frames
+    .filter((frame) => {
+      const entityType = getReplayEntityType(frame)
+      return entityType === 'rider' || entityType === 'team'
+    })
+    .forEach((frame) => {
+      const entityType = getReplayEntityType(frame)
+      const key = `${entityType}:${getReplayTimeTrialFrameKey(frame)}`
+      framesByEntityKey.set(
+        key,
+        [...(framesByEntityKey.get(key) ?? []), frame]
+      )
+    })
+
+  const selectedFrames: RaceReplayFrame[] = []
+
+  framesByEntityKey.forEach((entityFrames) => {
+    const sortedFrames = [...entityFrames].sort(
+      (left, right) =>
+        getReplayTimeTrialFrameClockForSort(left) -
+          getReplayTimeTrialFrameClockForSort(right) ||
+        Number(left.frame_number) - Number(right.frame_number)
+    )
+
+    const waitingFrame =
+      sortedFrames.find(
+        (frame) => getReplayEntityState(frame) === 'waiting'
+      ) ?? sortedFrames[0]
+
+    const activeFrames = sortedFrames.filter((frame) => {
+      const state = getReplayEntityState(frame)
+      return (
+        state !== 'waiting' &&
+        getReplayTimeTrialRaceClockSeconds(frame) !== null
+      )
+    })
+
+    const firstActiveFrame = activeFrames[0]
+    const finishedFrame = activeFrames.find(
+      (frame) => getReplayEntityState(frame) === 'finished'
+    )
+    const lastActiveFrame =
+      finishedFrame ?? activeFrames[activeFrames.length - 1]
+
+    const firstActiveSeconds = firstActiveFrame
+      ? getReplayTimeTrialRaceClockSeconds(firstActiveFrame)
+      : null
+    const lastActiveSeconds = lastActiveFrame
+      ? getReplayTimeTrialRaceClockSeconds(lastActiveFrame)
+      : null
+
+    if (
+      firstActiveSeconds === null ||
+      !Number.isFinite(firstActiveSeconds)
+    ) {
+      if (waitingFrame) selectedFrames.push(waitingFrame)
+      return
+    }
+
+    if (raceSeconds < firstActiveSeconds) {
+      if (waitingFrame) selectedFrames.push(waitingFrame)
+      return
+    }
+
+    if (
+      lastActiveFrame &&
+      lastActiveSeconds !== null &&
+      Number.isFinite(lastActiveSeconds) &&
+      raceSeconds >= lastActiveSeconds
+    ) {
+      selectedFrames.push(lastActiveFrame)
+      return
+    }
+
+    const currentFrame = [...activeFrames]
+      .reverse()
+      .find((frame) => {
+        const frameSeconds = getReplayTimeTrialRaceClockSeconds(frame)
+        return (
+          frameSeconds !== null &&
+          Number.isFinite(frameSeconds) &&
+          frameSeconds <= raceSeconds
+        )
+      })
+
+    selectedFrames.push(currentFrame ?? firstActiveFrame)
+  })
+
+  return selectedFrames.sort(sortReplayFrames)
+}
+
+function getVisibleTimeTrialProfileFrames(
+  frames: RaceReplayFrame[]
+): RaceReplayFrame[] {
+  const timeTrialFrames = frames.filter((frame) => {
+    const entityType = getReplayEntityType(frame)
+    return entityType === 'rider' || entityType === 'team'
+  })
+
+  if (timeTrialFrames.length === 0) return frames
+
+  /*
+   * For TTT stages, use the team marker on the profile.
+   * Otherwise, ITT/prologue stages use rider markers.
+   */
+  const profileFrames = timeTrialFrames.some(
+    (frame) => getReplayEntityType(frame) === 'team'
+  )
+    ? timeTrialFrames.filter(
+        (frame) => getReplayEntityType(frame) === 'team'
+      )
+    : timeTrialFrames.filter(
+        (frame) => getReplayEntityType(frame) === 'rider'
+      )
+
+  const waitingFrames = profileFrames
+    .filter(
+      (frame) => getReplayEntityState(frame) === 'waiting'
+    )
+    .sort((left, right) => {
+      const leftOrder =
+        getReplayTimeTrialStartOrder(left) ?? Number.MAX_SAFE_INTEGER
+      const rightOrder =
+        getReplayTimeTrialStartOrder(right) ?? Number.MAX_SAFE_INTEGER
+
+      return leftOrder - rightOrder
+    })
+
+  const activeFrames = profileFrames.filter((frame) => {
+    const state = getReplayEntityState(frame)
+    return state !== 'waiting' && state !== 'finished'
+  })
+
+  const nextWaitingFrame = waitingFrames[0]
+
+  return [...activeFrames, nextWaitingFrame]
+    .filter((frame): frame is RaceReplayFrame => Boolean(frame))
+    .sort((left, right) => {
+      const leftOrder =
+        getReplayTimeTrialStartOrder(left) ?? Number.MAX_SAFE_INTEGER
+      const rightOrder =
+        getReplayTimeTrialStartOrder(right) ?? Number.MAX_SAFE_INTEGER
+
+      return leftOrder - rightOrder
+    })
+}
+
+function getTimeTrialReplayPrimaryEntityType(
+  frames: RaceReplayFrame[]
+): 'rider' | 'team' | null {
+  if (frames.some((frame) => getReplayEntityType(frame) === 'team')) {
+    return 'team'
+  }
+
+  if (frames.some((frame) => getReplayEntityType(frame) === 'rider')) {
+    return 'rider'
+  }
+
+  return null
+}
+
+function getTimeTrialReplayEntityCount(
+  frames: RaceReplayFrame[]
+): number {
+  const primaryEntityType = getTimeTrialReplayPrimaryEntityType(frames)
+
+  if (!primaryEntityType) return 0
+
+  return new Set(
+    frames
+      .filter((frame) => getReplayEntityType(frame) === primaryEntityType)
+      .map(getReplayTimeTrialFrameKey)
+      .filter(Boolean)
+  ).size
+}
+
+function getReplayInitialProgress(
+  frames: RaceReplayFrame[]
+): number {
+  if (getTimeTrialReplayPrimaryEntityType(frames)) {
+    return 0
+  }
+
+  const maxFrameNumber = frames.reduce(
+    (maximum, frame) =>
+      Math.max(maximum, Number(frame.frame_number) || 0),
+    0
+  )
+
+  if (maxFrameNumber <= 0) return 0
+
+  const firstActiveFrameNumber = frames
+    .filter((frame) => {
+      const entityType = getReplayEntityType(frame)
+      return entityType === 'rider' || entityType === 'team'
+    })
+    .filter((frame) => {
+      const state = getReplayEntityState(frame)
+
+      return (
+        state !== 'waiting' &&
+        getReplayTimeTrialLiveElapsedSeconds(frame) !== null
+      )
+    })
+    .map((frame) => Number(frame.frame_number))
+    .filter((frameNumber) => Number.isFinite(frameNumber))
+    .sort((left, right) => left - right)[0]
+
+  if (!Number.isFinite(firstActiveFrameNumber)) return 0
+
+  return Math.max(
+    0,
+    Math.min(
+      1,
+      Number(firstActiveFrameNumber) / maxFrameNumber
+    )
+  )
+}
+
+function getReplayPlaybackDurationMs(
+  frames: RaceReplayFrame[]
+): number {
+  const timeTrialEntityCount = getTimeTrialReplayEntityCount(frames)
+
+  if (timeTrialEntityCount <= 0) {
+    return 15 * 60 * 1000
+  }
+
+  if (timeTrialEntityCount <= 12) {
+    return 60 * 1000
+  }
+
+  return Math.min(
+    15 * 60 * 1000,
+    Math.max(
+      60 * 1000,
+      timeTrialEntityCount * 5 * 1000
+    )
+  )
+}
+
+function getTimeTrialStageKindLabel(stage: RaceStage): string {
+  const rawKind = (
+    stage.profile_type ||
+    stage.terrain_type ||
+    ''
+  ).toLowerCase()
+
+  if (rawKind.includes('team_time_trial')) {
+    return 'team time trial'
+  }
+
+  if (rawKind.includes('prologue')) {
+    return 'prologue'
+  }
+
+  return 'individual time trial'
+}
+
+function getReplayWeatherIntroSentence(
+  weather: { temperature: string; wind: string; rain: string }
+): string {
+  const parts = [
+    weather.temperature !== '—' ? `${weather.temperature}` : null,
+    weather.wind !== '—' ? `wind ${weather.wind}` : null,
+    weather.rain !== '—' ? `rain ${weather.rain}` : null,
+  ].filter(Boolean)
+
+  return parts.length > 0 ? parts.join(', ') : 'weather data is limited'
+}
+
+function sortReplayFrames(
+  left: RaceReplayFrame,
+  right: RaceReplayFrame
+): number {
+  const leftType = getReplayEntityType(left)
+  const rightType = getReplayEntityType(right)
+
+  const typeOrder = (type: RaceReplayEntityType) => {
+    if (type === 'group') return 1
+    if (type === 'team') return 2
+    if (type === 'rider') return 3
+    return 9
+  }
+
+  const typeDiff = typeOrder(leftType) - typeOrder(rightType)
+  if (typeDiff !== 0) return typeDiff
+
+  const leftOrder =
+    leftType === 'group'
+      ? Number(left.group_order) || Number.MAX_VALUE
+      : Number(left.start_order) ||
+        Number(left.group_order) ||
+        Number.MAX_VALUE
+
+  const rightOrder =
+    rightType === 'group'
+      ? Number(right.group_order) || Number.MAX_VALUE
+      : Number(right.start_order) ||
+        Number(right.group_order) ||
+        Number.MAX_VALUE
+
+  if (leftOrder !== rightOrder) return leftOrder - rightOrder
+
+  const leftRank =
+    Number(left.provisional_rank) ||
+    Number.MAX_VALUE
+
+  const rightRank =
+    Number(right.provisional_rank) ||
+    Number.MAX_VALUE
+
+  if (leftRank !== rightRank) return leftRank - rightRank
+
+  return getReplayFrameLabel(left).localeCompare(
+    getReplayFrameLabel(right)
+  )
+}
+
+function isGeneralClassificationCode(value: string): boolean {
+  return ['general', 'gc', 'general_classification'].includes(
+    value.toLowerCase()
+  )
+}
+
 function WeatherCard({ stage }: { stage: RaceStage }) {
   const weather = stage.weather_snapshot ?? {}
   const condition = String(weather.condition ?? '')
@@ -1570,6 +2678,2881 @@ function StageWeatherCard({
   )
 }
 
+
+function userTeamParticipatedInRace(
+  participantTeams: RaceParticipantTeam[],
+  currentClubId?: string | null
+): boolean {
+  if (!currentClubId) return false
+
+  return participantTeams.some(
+    (team) =>
+      team.club_id === currentClubId ||
+      team.team_id === currentClubId ||
+      team.race_team_entry_id === currentClubId
+  )
+}
+
+function isStageStartReached(
+  stage: RaceStage | null,
+  currentGameDate?: string | null
+): boolean {
+  if (!stage?.stage_date) return false
+
+  const stageDate = parseDateOnly(stage.stage_date)
+  if (!stageDate) return false
+
+  if (currentGameDate) {
+    const currentDate = parseDateOnly(currentGameDate)
+    if (!currentDate) return false
+
+    return currentDate >= stageDate
+  }
+
+  const stageRealDate = new Date(`${stage.stage_date}T00:00:00`)
+  if (Number.isNaN(stageRealDate.getTime())) return false
+
+  return new Date() >= stageRealDate
+}
+
+function StageReplayAccessCard({
+  race,
+  stage,
+  currentClubId,
+  participantTeams,
+  currentGameDate,
+  canViewRaceReplay,
+  replayAccessLoading = false,
+  onOpenReplay,
+}: {
+  race: Race | null
+  stage: RaceStage | null
+  currentClubId?: string | null
+  participantTeams: RaceParticipantTeam[]
+  currentGameDate?: string | null
+  canViewRaceReplay?: boolean | null
+  replayAccessLoading?: boolean
+  onOpenReplay: (stage: RaceStage) => void
+}) {
+  const [hasResults, setHasResults] = useState(false)
+  const [loading, setLoading] = useState(false)
+
+  const localParticipationAccess = userTeamParticipatedInRace(
+    participantTeams,
+    currentClubId
+  )
+  const userParticipated = canViewRaceReplay === true || localParticipationAccess
+  const stageReached = isStageStartReached(stage, currentGameDate)
+
+  useEffect(() => {
+    if (!stage?.id) {
+      setHasResults(false)
+      setLoading(false)
+      return
+    }
+
+    let cancelled = false
+
+    async function checkResults() {
+      setLoading(true)
+
+      const { count, error } = await supabase
+        .from('race_stage_results')
+        .select('id', { count: 'exact', head: true })
+        .eq('stage_id', stage.id)
+
+      if (cancelled) return
+
+      setHasResults(!error && Boolean(count && count > 0))
+      setLoading(false)
+    }
+
+    checkResults()
+
+    return () => {
+      cancelled = true
+    }
+  }, [stage?.id])
+
+  const canWatch = Boolean(stage && userParticipated && hasResults)
+  const checkingReplayAccess = loading || replayAccessLoading
+
+  return (
+    <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+      <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+        Live race
+      </div>
+
+      <h3 className="mt-2 text-lg font-semibold text-slate-950">
+        {hasResults ? 'Watch replay' : 'Watch race'}
+      </h3>
+
+      <p className="mt-2 text-sm leading-5 text-slate-500">
+        Replay is available only for teams that participated in {race?.name ?? 'this race'}.
+      </p>
+
+      <button
+        type="button"
+        disabled={!canWatch || checkingReplayAccess}
+        onClick={() => {
+          if (stage && canWatch) onOpenReplay(stage)
+        }}
+        className={`mt-5 w-full rounded-2xl px-4 py-3 text-sm font-semibold transition ${
+          canWatch
+            ? 'bg-slate-950 text-white hover:bg-slate-800'
+            : 'cursor-not-allowed bg-slate-100 text-slate-400'
+        }`}
+      >
+        {checkingReplayAccess
+          ? 'Checking replay…'
+          : canWatch
+            ? 'Watch replay'
+            : !userParticipated
+              ? 'Your team did not participate'
+              : !stageReached && !hasResults
+                ? 'Race not started'
+                : 'Replay not available yet'}
+      </button>
+    </div>
+  )
+}
+
+
+function ReplayStageProfile({
+  stage,
+  profile,
+  groups,
+  frames,
+  progress,
+  visibleGcLeaderGroupCode,
+  visibleClLeaderGroupCode,
+  visiblePointsLeaderGroupCode,
+}: {
+  stage: RaceStage
+  profile: StageProfileDetailPayload | null
+  groups: RaceReportGroupSummary[]
+  frames: RaceReplayFrame[]
+  progress: number
+  visibleGcLeaderGroupCode: string | null
+  visibleClLeaderGroupCode: string | null
+  visiblePointsLeaderGroupCode: string | null
+}) {
+  const points =
+    profile?.profile_points?.length
+      ? profile.profile_points.map((point) => ({
+          km: point.km,
+          elevation_m: point.elevation,
+        }))
+      : getStageProfilePoints(stage)
+  const eventPoints =
+    profile?.route_markers?.length
+      ? buildStageProfileChartMarkers(
+          profile.route_markers,
+          profile.mountain_climbs
+        )
+          .map((marker, index): StageProfileEventPoint => {
+            const pointType =
+              marker.chartType === 'start'
+                ? 'START'
+                : marker.chartType === 'finish'
+                  ? 'FINISH'
+                  : marker.chartType === 'sprint'
+                    ? 'INTERMEDIATE_SPRINT'
+                    : 'KOM'
+
+            const komCategory =
+              pointType === 'KOM' && marker.chartLabel !== 'KOM'
+                ? marker.chartLabel.replace(/^Cat\s+/i, '')
+                : marker.category ?? null
+
+            return {
+              id: `${stage.id}-profile-marker-${index}-${marker.km}`,
+              stage_id: stage.id,
+              point_type: pointType,
+              km_from_start: marker.km,
+              name: marker.label,
+              kom_category: komCategory,
+              points_scheme: null,
+              time_bonus_seconds: null,
+              is_finish_point: pointType === 'FINISH',
+              sort_order: index,
+              metadata: null,
+              km: marker.km,
+            }
+          })
+          .filter((point) => point.km > 0 || point.point_type === 'START')
+      : getStageProfileEventPoints(stage)
+
+  if (points.length < 2) {
+    return (
+      <div className="flex h-72 items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-white text-sm text-slate-500">
+        Stage profile is not available.
+      </div>
+    )
+  }
+
+  const width = 1600
+  const height = 330
+  const padding = { top: 32, right: 32, bottom: 38, left: 64 }
+  const profilePayload = JSON.parse(
+    buildStageProfilePath(points, width, height, padding, stage.terrain_type)
+  ) as {
+    linePath: string
+    areaPath: string
+    coordinates: { x: number; y: number; km: number; elevation_m: number }[]
+    minElevation: number
+    maxElevation: number
+    minKm: number
+    maxKm: number
+  }
+
+  const currentKm = profilePayload.maxKm * progress
+
+  const groupFrames = frames.filter(
+    (frame) => getReplayEntityType(frame) === 'group'
+  )
+
+  const pelotonGroupOrder =
+    groupFrames.find(
+      (frame) =>
+        getReplayBaseGroupCode(
+          frame.group_code
+        ) === 'main_peloton'
+    )?.group_order ?? null
+
+  const hasTimeTrialProfileFrames = frames.some((frame) => {
+    const entityType = getReplayEntityType(frame)
+    return entityType === 'rider' || entityType === 'team'
+  })
+  const profileReplayFrames = getVisibleTimeTrialProfileFrames(frames)
+
+  const replayGroups: ReplayGroupLine[] =
+    profileReplayFrames.length > 0
+      ? profileReplayFrames.map((frame, index) => {
+          const entityType = getReplayEntityType(frame)
+          const actualKm =
+            asNumber(frame.km_marker) ?? 0
+          const entityCode =
+            entityType === 'group'
+              ? frame.group_code
+              : frame.entity_key ||
+                  frame.group_code ||
+                  `${entityType}-${frame.entity_id ?? index}`
+          const gapSeconds = getReplayFrameGapSeconds(frame)
+
+          return {
+            code: entityCode,
+            label: getReplayFrameLabel(frame),
+            shortLabel:
+              entityType === 'group'
+                ? getReplayGroupShortLabel(
+                    frame.group_code,
+                    Number(frame.group_order),
+                    pelotonGroupOrder
+                  )
+                : getReplayTimeTrialMarkerShortLabel(frame),
+            specialLeaderTypes:
+              getReplaySpecialLeaderTypes(
+                entityCode,
+                visibleGcLeaderGroupCode,
+                visibleClLeaderGroupCode,
+                visiblePointsLeaderGroupCode
+              ),
+            gapSeconds,
+            gapLabel: getReplayFrameGapLabel(frame),
+            kmOffset: 0,
+            actualKm,
+            kmMarker: Math.max(0, actualKm),
+            riderCount: getReplayEntitySize(frame),
+            size: getReplayEntitySize(frame),
+            entityType,
+            teamName: getReplayFrameTeamName(frame),
+            entityState: getReplayEntityState(frame),
+          }
+        })
+      : hasTimeTrialProfileFrames
+        ? []
+        : buildReplayGroupLines(groups).map(
+          (group) => ({
+            ...group,
+            entityType: 'group',
+            specialLeaderTypes:
+              getReplaySpecialLeaderTypes(
+                group.code,
+                visibleGcLeaderGroupCode,
+                visibleClLeaderGroupCode,
+                visiblePointsLeaderGroupCode
+              ),
+            actualKm: currentKm,
+            kmMarker: currentKm,
+            riderCount: group.size ?? 0,
+            gapLabel:
+              group.gapSeconds === 0
+                ? 'Leader'
+                : `+${formatGapValue(group.gapSeconds)}`,
+          })
+        )
+
+  const timeTrialSplitKm = hasTimeTrialProfileFrames
+    ? Math.max(
+        0,
+        Math.min(
+          profilePayload.maxKm,
+          (asNumber(stage.distance_km) ?? profilePayload.maxKm) / 2
+        )
+      )
+    : null
+
+  const timeTrialSplitCoord =
+    timeTrialSplitKm !== null
+      ? getInterpolatedProfileCoordinate(
+          profilePayload.coordinates,
+          timeTrialSplitKm
+        )
+      : null
+
+  return (
+    <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
+      <svg viewBox={`0 0 ${width} ${height}`} className="h-[330px] w-full">
+        <defs>
+          <pattern
+            id="komLeaderPattern"
+            width="8"
+            height="8"
+            patternUnits="userSpaceOnUse"
+          >
+            <rect
+              width="8"
+              height="8"
+              fill="#ffffff"
+            />
+
+            <circle
+              cx="2"
+              cy="2"
+              r="2"
+              fill="#dc2626"
+            />
+
+            <circle
+              cx="6"
+              cy="6"
+              r="2"
+              fill="#dc2626"
+            />
+          </pattern>
+
+        </defs>
+
+        {getElevationTickValues(
+          profilePayload.minElevation,
+          profilePayload.maxElevation
+        ).map((tick) => {
+          const span = Math.max(profilePayload.maxElevation - profilePayload.minElevation, 1)
+          const y =
+            padding.top +
+            (1 - (tick - profilePayload.minElevation) / span) *
+              (height - padding.top - padding.bottom)
+
+          return (
+            <g key={tick}>
+              <line
+                x1={padding.left}
+                x2={width - padding.right}
+                y1={y}
+                y2={y}
+                stroke="#e2e8f0"
+                strokeWidth="1"
+              />
+              <text x={8} y={y + 4} fontSize="12" fill="#64748b">
+                {tick} m
+              </text>
+            </g>
+          )
+        })}
+
+        <path d={profilePayload.areaPath} fill="#fde68a" />
+        <path d={profilePayload.linePath} fill="none" stroke="#334155" strokeWidth="4" />
+
+        {eventPoints.map((point) => {
+          const coord = getInterpolatedProfileCoordinate(
+            profilePayload.coordinates,
+            point.km
+          )
+          if (!coord) return null
+
+          return (
+            <g key={point.id}>
+              <line
+                x1={coord.x}
+                x2={coord.x}
+                y1={padding.top - 4}
+                y2={height - padding.bottom}
+                stroke={getStagePointMarkerFill(point, stage)}
+                strokeDasharray="4 4"
+                strokeWidth="2"
+              />
+              <rect
+                x={coord.x - 24}
+                y={10}
+                width="48"
+                height="22"
+                rx="11"
+                fill={getStagePointMarkerFill(point, stage)}
+              />
+              <text
+                x={coord.x}
+                y={25}
+                textAnchor="middle"
+                fontSize="11"
+                fontWeight="700"
+                fill="white"
+              >
+                {getStagePointShortLabel(point)}
+              </text>
+            </g>
+          )
+        })}
+
+        {timeTrialSplitCoord ? (
+          <g>
+            <line
+              x1={timeTrialSplitCoord.x}
+              x2={timeTrialSplitCoord.x}
+              y1={padding.top - 4}
+              y2={height - padding.bottom}
+              stroke="#64748b"
+              strokeDasharray="7 7"
+              strokeWidth="2"
+              opacity={0.75}
+            />
+            <rect
+              x={timeTrialSplitCoord.x - 24}
+              y={36}
+              width="48"
+              height="20"
+              rx="10"
+              fill="#64748b"
+              opacity={0.92}
+            />
+            <text
+              x={timeTrialSplitCoord.x}
+              y={50}
+              textAnchor="middle"
+              fontSize="10"
+              fontWeight="800"
+              fill="white"
+            >
+              Split
+            </text>
+          </g>
+        ) : null}
+
+        {replayGroups.map((group, index) => {
+          const groupKm = Math.max(
+            0,
+            Math.min(profilePayload.maxKm, group.kmMarker)
+          )
+          const coord = getInterpolatedProfileCoordinate(profilePayload.coordinates, groupKm)
+          if (!coord) return null
+
+          const specialLeaderTypes =
+            group.specialLeaderTypes ?? []
+
+          const entityType = group.entityType ?? 'group'
+          const isTeamMarker = entityType === 'team'
+          const isRiderMarker = entityType === 'rider'
+          const isTimeTrialMarker = isTeamMarker || isRiderMarker
+          const yOffset = isTimeTrialMarker ? -54 : -22 - index * 13
+          const displayedLabel = group.shortLabel
+
+          const markerFill = isTeamMarker
+            ? '#7c3aed'
+            : isRiderMarker
+              ? '#f97316'
+              : getReplayGroupStroke(group.code)
+
+          const markerStroke = isTeamMarker
+            ? '#5b21b6'
+            : isRiderMarker
+              ? '#c2410c'
+              : getReplayGroupStroke(group.code)
+
+          const markerTextColor = '#ffffff'
+          const markerWidth = isTeamMarker ? 42 : isRiderMarker ? 38 : 32
+          const markerHeight = isTimeTrialMarker ? 22 : 18
+          const markerRadius = isTimeTrialMarker ? 11 : 9
+          const connectorRadius = isTimeTrialMarker ? 6 : 7
+          const markerY = Math.max(
+            4,
+            coord.y + yOffset - markerHeight
+          )
+          const markerTextY = markerY + markerHeight / 2 + 3.5
+
+          return (
+            <g key={group.code}>
+              <title>
+                {[
+                  ...specialLeaderTypes.map(
+                    getReplaySpecialLeaderTitle
+                  ),
+                  group.label,
+                  entityType === 'rider'
+                    ? group.teamName
+                    : `${group.riderCount ?? 0} riders`,
+                  group.entityState
+                    ? humanizeCode(group.entityState)
+                    : null,
+                  group.gapLabel,
+                ]
+                  .filter(Boolean)
+                  .join(' · ')}
+              </title>
+
+              <circle
+                cx={coord.x}
+                cy={coord.y}
+                r={connectorRadius}
+                fill={markerFill}
+                stroke={markerStroke}
+                strokeWidth={1}
+              />
+
+              <line
+                x1={coord.x}
+                y1={coord.y}
+                x2={coord.x}
+                y2={Math.max(
+                  18,
+                  coord.y + yOffset
+                )}
+                stroke={markerStroke}
+                strokeWidth="2"
+              />
+
+              <rect
+                x={coord.x - markerWidth / 2}
+                y={markerY}
+                width={markerWidth}
+                height={markerHeight}
+                rx={markerRadius}
+                fill={markerFill}
+                stroke={markerStroke}
+                strokeWidth={0}
+              />
+
+              <text
+                x={coord.x}
+                y={markerTextY}
+                textAnchor="middle"
+                fontSize={isRiderMarker ? '10' : '10'}
+                fontWeight="800"
+                fill={markerTextColor}
+              >
+                {displayedLabel}
+              </text>
+
+              {specialLeaderTypes.map(
+                (type, badgeIndex) => {
+                  const badgeWidth =
+                    type === 'pts' ? 34 : 30
+
+                  /*
+                   * Keep the road-group marker anchored at the true
+                   * group position. Leader jerseys extend backward to
+                   * the left, so GC sits nearest to the group marker,
+                   * followed by CL and then PTS.
+                   *
+                   * Visual order with all three:
+                   *
+                   * [PTS] [CL] [GC] [P / G1 / G2 / ...]
+                   */
+                  const precedingWidth =
+                    specialLeaderTypes
+                      .slice(0, badgeIndex)
+                      .reduce(
+                        (total, previousType) =>
+                          total +
+                          (previousType === 'pts'
+                            ? 34
+                            : 30),
+                        0
+                      )
+
+                  const badgeX =
+                    coord.x -
+                    markerWidth / 2 -
+                    4 -
+                    precedingWidth -
+                    badgeIndex * 4 -
+                    badgeWidth
+
+                  const badgeFill =
+                    type === 'gc'
+                      ? '#facc15'
+                      : type === 'cl'
+                        ? 'url(#komLeaderPattern)'
+                        : '#10b981'
+
+                  const badgeStroke =
+                    type === 'gc'
+                      ? '#ca8a04'
+                      : type === 'cl'
+                        ? '#dc2626'
+                        : '#059669'
+
+                  const badgeTextColor =
+                    type === 'pts'
+                      ? '#ffffff'
+                      : type === 'cl'
+                        ? '#b91c1c'
+                        : '#111827'
+
+                  const badgeLabel =
+                    type === 'gc'
+                      ? 'GC'
+                      : type === 'cl'
+                        ? 'CL'
+                        : 'PTS'
+
+                  return (
+                    <g key={type}>
+                      <rect
+                        x={badgeX}
+                        y={Math.max(
+                          4,
+                          coord.y + yOffset - 18
+                        )}
+                        width={badgeWidth}
+                        height="18"
+                        rx="9"
+                        fill={badgeFill}
+                        stroke={badgeStroke}
+                        strokeWidth="1.5"
+                      />
+
+                      <text
+                        x={badgeX + badgeWidth / 2}
+                        y={Math.max(
+                          17,
+                          coord.y + yOffset - 5
+                        )}
+                        textAnchor="middle"
+                        fontSize="9"
+                        fontWeight="800"
+                        fill={badgeTextColor}
+                      >
+                        {badgeLabel}
+                      </text>
+                    </g>
+                  )
+                }
+              )}
+            </g>
+          )
+        })}
+
+        <text x={padding.left} y={height - 8} fontSize="13" fontWeight="700" fill="#0f172a">
+          0 km
+        </text>
+        <text
+          x={width - padding.right}
+          y={height - 8}
+          textAnchor="end"
+          fontSize="13"
+          fontWeight="700"
+          fill="#0f172a"
+        >
+          {formatKm(profilePayload.maxKm)}
+        </text>
+      </svg>
+
+      {visibleGcLeaderGroupCode ||
+      visibleClLeaderGroupCode ||
+      visiblePointsLeaderGroupCode ? (
+        <div className="flex flex-wrap items-center gap-4 border-t border-slate-100 px-4 py-2 text-[11px] text-slate-600">
+          {visibleGcLeaderGroupCode && (
+            <div className="flex items-center gap-2">
+              {renderSpecialLeaderBadge('gc')}
+              <span>
+                Stage-start general classification leader group
+              </span>
+            </div>
+          )}
+
+          {visibleClLeaderGroupCode && (
+            <div className="flex items-center gap-2">
+              {renderSpecialLeaderBadge('cl')}
+              <span>
+                Stage-start climber classification leader group
+              </span>
+            </div>
+          )}
+
+          {visiblePointsLeaderGroupCode && (
+            <div className="flex items-center gap-2">
+              {renderSpecialLeaderBadge('pts')}
+              <span>
+                Stage-start points classification leader group
+              </span>
+            </div>
+          )}
+        </div>
+      ) : null}
+    </div>
+  )
+}
+
+function getReplayWeatherSummary(
+  stage: RaceStage,
+  profile: StageProfileDetailPayload | null
+) {
+  const metadata =
+    (stage.metadata as Record<string, unknown> | null) ?? {}
+
+  const weather = {
+    ...getRecord(profile?.weather_snapshot),
+    ...getRecord(profile?.stage_weather),
+    ...getRecord(stage.weather_snapshot),
+    ...getRecord(metadata.weather),
+  }
+
+  const firstNumber = (...keys: string[]): number | null => {
+    for (const key of keys) {
+      const value = asNumber(weather[key] as number | string | null | undefined)
+      if (value !== null) return value
+    }
+
+    return null
+  }
+
+  const firstText = (...keys: string[]): string | null => {
+    for (const key of keys) {
+      const value = weather[key]
+      if (typeof value === 'string' && value.trim()) return value.trim()
+    }
+
+    return null
+  }
+
+  const temperature = firstNumber(
+    'temperature_c',
+    'avg_temp_c',
+    'temp_c',
+    'temperature'
+  )
+  const wind = firstNumber('wind_kmh', 'avg_wind_kmh', 'wind_speed_kmh')
+  const rain = firstNumber(
+    'rain_mm',
+    'precip_mm',
+    'avg_precip_mm',
+    'precipitation_mm'
+  )
+  const storedRainLabel = firstText(
+    'rain_label',
+    'precipitation_label',
+    'rain_status'
+  )
+
+  return {
+    temperature:
+      temperature === null ? '—' : `${temperature.toFixed(1)}°C`,
+    wind: wind === null ? '—' : `${wind.toFixed(0)} km/h`,
+    rain:
+      storedRainLabel ??
+      (rain === null
+        ? '—'
+        : rain <= 0.05
+          ? 'Dry'
+          : `${rain.toFixed(1)} mm`),
+  }
+}
+
+function RaceReplayModal({
+  open,
+  race,
+  stage,
+  currentClubId,
+  participantTeams,
+  canViewRaceReplay,
+  liveState,
+  lockReplaySpeed,
+  onClose,
+}: {
+  open: boolean
+  race: Race | null
+  stage: RaceStage | null
+  currentClubId?: string | null
+  participantTeams: RaceParticipantTeam[]
+  canViewRaceReplay?: boolean | null
+  liveState: RaceStageLiveState | null
+  lockReplaySpeed: boolean
+  onClose: () => void
+}) {
+  const [speed, setSpeed] = useState<1 | 2 | 4 | 8>(1)
+  const [playing, setPlaying] = useState(false)
+  const [progress, setProgress] = useState(0)
+  const playbackAnimationFrameRef = useRef<number | null>(null)
+  const playbackLastTickRef = useRef<number | null>(null)
+  const [events, setEvents] = useState<RaceStageReportEvent[]>([])
+  const [resultsPayload, setResultsPayload] = useState<RaceResultsViewPayload | null>(null)
+  const [pointResults, setPointResults] = useState<RacePointResultRow[]>([])
+  const [replayProfile, setReplayProfile] =
+    useState<StageProfileDetailPayload | null>(null)
+  const [replayFrames, setReplayFrames] = useState<RaceReplayFrame[]>([])
+  const [
+    preStageLeaderSnapshot,
+    setPreStageLeaderSnapshot,
+  ] = useState<RacePreStageLeaderSnapshot | null>(
+    null
+  )
+  const [previousGcClassifications, setPreviousGcClassifications] =
+    useState<RaceClassificationRow[]>([])
+
+  const isLiveBroadcast = liveState?.is_live === true
+  const areReplaySpeedControlsLocked =
+    isLiveBroadcast || lockReplaySpeed
+
+  const viewerTeamId = getViewerTeamId(currentClubId)
+  const localParticipationAccess = userTeamParticipatedInRace(
+    participantTeams,
+    viewerTeamId
+  )
+  const userParticipated = canViewRaceReplay === true || localParticipationAccess
+
+  const replayPlaybackDurationMs = getReplayPlaybackDurationMs(replayFrames)
+  const replayInitialProgress = getReplayInitialProgress(replayFrames)
+
+  const participantRiderById = useMemo(() => {
+    const entries = participantTeams.flatMap((team) =>
+      team.riders.map(
+        (rider) => [rider.rider_id, rider] as const
+      )
+    )
+
+    return new Map(entries)
+  }, [participantTeams])
+
+  useEffect(() => {
+    if (!open || !isLiveBroadcast) return
+
+    function updateLiveProgress() {
+      const startedAt = Date.parse(
+        liveState?.live_started_at ?? ''
+      )
+
+      const endsAt = Date.parse(
+        liveState?.live_ends_at ?? ''
+      )
+
+      if (
+        !Number.isFinite(startedAt) ||
+        !Number.isFinite(endsAt) ||
+        endsAt <= startedAt
+      ) {
+        return
+      }
+
+      setProgress(
+        Math.max(
+          0,
+          Math.min(
+            1,
+            (Date.now() - startedAt) /
+              (endsAt - startedAt)
+          )
+        )
+      )
+    }
+
+    updateLiveProgress()
+
+    const interval = window.setInterval(
+      updateLiveProgress,
+      1000
+    )
+
+    return () => window.clearInterval(interval)
+  }, [
+    open,
+    isLiveBroadcast,
+    liveState?.live_started_at,
+    liveState?.live_ends_at,
+  ])
+
+  useEffect(() => {
+    if (!open || isLiveBroadcast || !playing) {
+      playbackLastTickRef.current = null
+
+      if (playbackAnimationFrameRef.current !== null) {
+        window.cancelAnimationFrame(playbackAnimationFrameRef.current)
+        playbackAnimationFrameRef.current = null
+      }
+
+      return
+    }
+
+    let cancelled = false
+
+    function tick(timestamp: number) {
+      if (cancelled) return
+
+      const lastTick = playbackLastTickRef.current ?? timestamp
+      const elapsedMs = Math.max(0, timestamp - lastTick)
+
+      playbackLastTickRef.current = timestamp
+
+      if (elapsedMs > 0) {
+        setProgress((value) => {
+          const safeDurationMs = Math.max(
+            1000,
+            replayPlaybackDurationMs
+          )
+
+          const next =
+            value + (elapsedMs / safeDurationMs) * speed
+
+          return next >= 1 ? 1 : next
+        })
+      }
+
+      playbackAnimationFrameRef.current =
+        window.requestAnimationFrame(tick)
+    }
+
+    playbackAnimationFrameRef.current =
+      window.requestAnimationFrame(tick)
+
+    return () => {
+      cancelled = true
+      playbackLastTickRef.current = null
+
+      if (playbackAnimationFrameRef.current !== null) {
+        window.cancelAnimationFrame(playbackAnimationFrameRef.current)
+        playbackAnimationFrameRef.current = null
+      }
+    }
+  }, [
+    open,
+    isLiveBroadcast,
+    playing,
+    replayPlaybackDurationMs,
+    speed,
+  ])
+
+  useEffect(() => {
+    if (!open) return
+
+    setPlaying(false)
+    setSpeed(1)
+    playbackLastTickRef.current = null
+
+    if (!isLiveBroadcast) {
+      setProgress(0)
+    }
+  }, [open, stage?.id, isLiveBroadcast])
+
+  useEffect(() => {
+    if (progress >= 1) {
+      setPlaying(false)
+      playbackLastTickRef.current = null
+    }
+  }, [progress])
+
+  useEffect(() => {
+    if (!open || !stage?.id || !race?.id) {
+      setEvents([])
+      setResultsPayload(null)
+      setPointResults([])
+      setReplayProfile(null)
+      setReplayFrames([])
+      setPreStageLeaderSnapshot(null)
+      setPreviousGcClassifications([])
+      setPlaying(false)
+      return
+    }
+
+    setPreStageLeaderSnapshot(null)
+
+    let cancelled = false
+
+    async function loadReplayData() {
+      if (!stage?.id || !race?.id) return
+
+      const [
+        { data: reportData },
+        { data: resultsData },
+        { data: profileData },
+        { data: frameData },
+        {
+          data: stagePointData,
+          error: stagePointError,
+        },
+        {
+          data: preStageLeaderData,
+          error: preStageLeaderError,
+        },
+      ] = await Promise.all([
+        supabase.rpc('get_race_stage_report_v1', {
+          p_stage_id: stage.id,
+        }),
+
+        supabase.rpc('get_race_results_view_v1', {
+          p_race_id: race.id,
+          p_after_stage_id: stage.id,
+        }),
+
+        supabase.rpc('get_race_stage_profile_detail_v1', {
+          p_stage_id: stage.id,
+        }),
+
+        supabase.rpc('get_race_stage_replay_frames_v1', {
+          p_stage_id: stage.id,
+        }),
+
+        supabase.rpc('get_race_stage_point_results_v1', {
+          p_stage_id: stage.id,
+        }),
+
+        supabase.rpc(
+          'get_race_stage_pre_stage_leaders_v1',
+          {
+            p_stage_id: stage.id,
+          }
+        ),
+      ])
+
+      if (preStageLeaderError) {
+        throw preStageLeaderError
+      }
+
+      const normalizedPreStageLeaderData =
+        Array.isArray(preStageLeaderData)
+          ? preStageLeaderData[0]
+          : preStageLeaderData
+
+      let previousGcRows: RaceClassificationRow[] = []
+
+      if (Number(stage.stage_number) > 1) {
+        const { data: previousStageRows } = await supabase
+          .from('race_stages')
+          .select('id, stage_number')
+          .eq('race_id', race.id)
+          .lt('stage_number', stage.stage_number)
+          .order('stage_number', { ascending: false })
+          .limit(1)
+
+        const previousStageId = previousStageRows?.[0]?.id
+
+        if (previousStageId) {
+          const { data: previousResultsData } = await supabase.rpc(
+            'get_race_results_view_v1',
+            {
+              p_race_id: race.id,
+              p_after_stage_id: previousStageId,
+            }
+          )
+
+          const previousPayload =
+            normalizeRaceResultsPayload(
+              previousResultsData
+            )
+
+          previousGcRows =
+            previousPayload.classifications.filter(
+              (row) =>
+                row.entity_type === 'rider' &&
+                isGeneralClassificationCode(
+                  String(row.classification_type)
+                )
+            )
+        }
+      }
+
+      if (cancelled) return
+
+      const normalizedResults = normalizeRaceResultsPayload(resultsData)
+
+      setEvents(
+        Array.isArray(reportData) ? (reportData as RaceStageReportEvent[]) : []
+      )
+      setResultsPayload(normalizedResults)
+      if (stagePointError) {
+        console.error(
+          'get_race_stage_point_results_v1 failed:',
+          stagePointError
+        )
+      }
+
+      setPointResults(
+        !stagePointError && Array.isArray(stagePointData)
+          ? (stagePointData as RacePointResultRow[])
+          : []
+      )
+      setReplayProfile(normalizeStageProfileDetailPayload(profileData))
+      setReplayFrames(
+        Array.isArray(frameData) ? (frameData as RaceReplayFrame[]) : []
+      )
+      setPreStageLeaderSnapshot(
+        normalizedPreStageLeaderData &&
+          typeof normalizedPreStageLeaderData ===
+            'object'
+          ? (
+              normalizedPreStageLeaderData as
+                RacePreStageLeaderSnapshot
+            )
+          : null
+      )
+      setPreviousGcClassifications(previousGcRows)
+    }
+
+    loadReplayData()
+
+    return () => {
+      cancelled = true
+    }
+  }, [open, race?.id, stage?.id])
+
+  const replayEvents = useMemo(() => {
+    return [...events].sort((left, right) => {
+      const leftKm =
+        asNumber(left.km_marker) ?? Number.MAX_VALUE
+
+      const rightKm =
+        asNumber(right.km_marker) ?? Number.MAX_VALUE
+
+      if (leftKm !== rightKm) {
+        return leftKm - rightKm
+      }
+
+      return left.event_order - right.event_order
+    })
+  }, [events])
+
+  if (!open || !stage) return null
+
+  const replayWeather = getReplayWeatherSummary(stage, replayProfile)
+  const replayStarted = progress > 0
+  const replayFinished = progress >= 1
+
+  const maxFrameNumber = replayFrames.reduce(
+    (maximum, frame) =>
+      Math.max(maximum, Number(frame.frame_number) || 0),
+    0
+  )
+
+  const timeTrialPrimaryEntityType =
+    getTimeTrialReplayPrimaryEntityType(replayFrames)
+  const isTimeTrialReplay =
+    timeTrialPrimaryEntityType !== null
+  const timeTrialClockBounds = isTimeTrialReplay
+    ? getReplayTimeTrialClockBounds(
+        replayFrames,
+        timeTrialPrimaryEntityType
+      )
+    : null
+  const currentTimeTrialRaceSeconds =
+    timeTrialClockBounds !== null
+      ? timeTrialClockBounds.startSeconds +
+        progress *
+          (timeTrialClockBounds.endSeconds -
+            timeTrialClockBounds.startSeconds)
+      : null
+
+  const currentFrameNumber =
+    maxFrameNumber > 0
+      ? Math.min(
+          maxFrameNumber,
+          Math.floor(progress * maxFrameNumber)
+        )
+      : 0
+
+  const currentFrames =
+    isTimeTrialReplay &&
+    currentTimeTrialRaceSeconds !== null
+      ? getReplayTimeTrialFramesAtRaceSeconds(
+          replayFrames,
+          currentTimeTrialRaceSeconds
+        )
+      : replayFrames
+          .filter(
+            (frame) =>
+              Number(frame.frame_number) === currentFrameNumber
+          )
+          .sort(sortReplayFrames)
+
+  const currentGroupFrames = currentFrames.filter(
+    (frame) => getReplayEntityType(frame) === 'group'
+  )
+
+  const currentTeamFrames = currentFrames.filter(
+    (frame) => getReplayEntityType(frame) === 'team'
+  )
+
+  const currentRiderFrames = currentFrames.filter(
+    (frame) => getReplayEntityType(frame) === 'rider'
+  )
+
+  const currentPelotonGroupOrder =
+    currentGroupFrames.find(
+      (frame) =>
+        getReplayBaseGroupCode(
+          frame.group_code
+        ) === 'main_peloton'
+    )?.group_order ?? null
+
+  const currentLeaderKm = currentFrames.reduce(
+    (maximum, frame) =>
+      Math.max(
+        maximum,
+        asNumber(frame.km_marker) ?? 0
+      ),
+    0
+  )
+
+  const currentRaceSeconds = isTimeTrialReplay
+    ? currentTimeTrialRaceSeconds ??
+      getReplayTimeTrialCurrentRaceClockSeconds(currentFrames)
+    : currentFrames[0]?.race_seconds ?? 0
+
+  const timeTrialCommentaryEvents: RaceStageReportEvent[] = []
+
+  if (isTimeTrialReplay && race?.id && stage?.id) {
+    const commentaryEntityType = currentTeamFrames.length > 0
+      ? 'team'
+      : 'rider'
+
+    const framesByEntityKey = new Map<string, RaceReplayFrame[]>()
+
+    replayFrames
+      .filter(
+        (frame) =>
+          getReplayEntityType(frame) === commentaryEntityType
+      )
+      .forEach((frame) => {
+        const key = getReplayTimeTrialFrameKey(frame)
+        framesByEntityKey.set(
+          key,
+          [...(framesByEntityKey.get(key) ?? []), frame]
+        )
+      })
+
+    const halfKm = Math.max(
+      0,
+      (asNumber(stage.distance_km) ?? 0) / 2
+    )
+
+    const timeTrialStageKindLabel = getTimeTrialStageKindLabel(stage)
+    const timeTrialWeatherIntro = getReplayWeatherIntroSentence(replayWeather)
+
+    const sortedTimeTrialEntityInfos = Array.from(
+      framesByEntityKey.entries()
+    )
+      .map(([key, entityFrames]) => {
+        const sortedFrames = [...entityFrames].sort(
+          (left, right) =>
+            Number(left.frame_number) - Number(right.frame_number)
+        )
+
+        const firstStartedFrame = sortedFrames.find((frame) => {
+          const state = getReplayEntityState(frame)
+
+          return (
+            state !== 'waiting' &&
+            getReplayTimeTrialLiveElapsedSeconds(frame) !== null
+          )
+        })
+
+        const labelFrame = firstStartedFrame ?? sortedFrames[0]
+
+        if (!labelFrame) return null
+
+        return {
+          key,
+          shortLabel: getReplayTimeTrialMarkerShortLabel(labelFrame),
+          name: getReplayFrameLabel(labelFrame),
+          teamName: getReplayFrameTeamName(labelFrame),
+          startOrder:
+            getReplayTimeTrialStartOrder(labelFrame) ??
+            Number.MAX_SAFE_INTEGER,
+        }
+      })
+      .filter(
+        (info): info is {
+          key: string
+          shortLabel: string
+          name: string
+          teamName: string
+          startOrder: number
+        } => Boolean(info)
+      )
+      .sort(
+        (left, right) =>
+          left.startOrder - right.startOrder ||
+          left.name.localeCompare(right.name)
+      )
+
+    const timeTrialEntityInfoByKey = new Map<
+      string,
+      {
+        key: string
+        shortLabel: string
+        name: string
+        teamName: string
+        startOrder: number
+        next: {
+          shortLabel: string
+          name: string
+          teamName: string
+        } | null
+      }
+    >()
+
+    sortedTimeTrialEntityInfos.forEach((info, index) => {
+      const next = sortedTimeTrialEntityInfos[index + 1] ?? null
+
+      timeTrialEntityInfoByKey.set(info.key, {
+        ...info,
+        next: next
+          ? {
+              shortLabel: next.shortLabel,
+              name: next.name,
+              teamName: next.teamName,
+            }
+          : null,
+      })
+    })
+
+    if (sortedTimeTrialEntityInfos.length > 0) {
+      const openingFirst = sortedTimeTrialEntityInfos[0]
+      const openingSecond = sortedTimeTrialEntityInfos[1] ?? null
+
+      timeTrialCommentaryEvents.push({
+        id: `${stage.id}-time-trial-welcome`,
+        race_id: race.id,
+        stage_id: stage.id,
+        event_order: 799999,
+        km_marker: 0,
+        race_time_label: '0:00:00',
+        event_type: 'summary',
+        title: `Welcome to Stage ${stage.stage_number}`,
+        description: `${race.name} ${timeTrialStageKindLabel} is ready on ${formatStageRoute(stage)}. Weather today: ${timeTrialWeatherIntro}. ${openingFirst.shortLabel} ${openingFirst.name} starts first${openingFirst.teamName ? ` for ${openingFirst.teamName}` : ''}.${openingSecond ? ` Next rider is ${openingSecond.shortLabel} ${openingSecond.name}${openingSecond.teamName ? ` from ${openingSecond.teamName}` : ''}.` : ''}`,
+        rider_id: null,
+        team_id: null,
+        rider_name_snapshot: null,
+        team_name_snapshot: null,
+        metadata: {
+          source: 'frontend_time_trial_replay',
+          race_seconds: 0,
+          entity_type: commentaryEntityType,
+        },
+      })
+    }
+
+    framesByEntityKey.forEach((entityFrames, key) => {
+      const sortedFrames = [...entityFrames].sort(
+        (left, right) =>
+          Number(left.frame_number) - Number(right.frame_number)
+      )
+
+      const startFrame = sortedFrames.find((frame) => {
+        const state = getReplayEntityState(frame)
+        return (
+          state !== 'waiting' &&
+          getReplayTimeTrialLiveElapsedSeconds(frame) !== null
+        )
+      })
+
+      const splitFrame = sortedFrames.find((frame) => {
+        const km = asNumber(frame.km_marker) ?? 0
+        return (
+          km >= halfKm &&
+          getReplayTimeTrialLiveElapsedSeconds(frame) !== null
+        )
+      })
+
+      const finishFrame = sortedFrames.find(
+        (frame) =>
+          getReplayEntityState(frame) === 'finished' &&
+          getReplayTimeTrialLiveElapsedSeconds(frame) !== null
+      )
+
+      const entityLabelFrame =
+        startFrame || splitFrame || finishFrame || sortedFrames[0]
+
+      if (!entityLabelFrame) return
+
+      const shortLabel =
+        getReplayTimeTrialMarkerShortLabel(entityLabelFrame)
+      const entityName = getReplayFrameLabel(entityLabelFrame)
+      const entityKind = commentaryEntityType === 'team'
+        ? 'Team'
+        : 'Rider'
+      const entityInfo = timeTrialEntityInfoByKey.get(key)
+      const nextEntityInfo = entityInfo?.next ?? null
+      const stageKind = timeTrialStageKindLabel
+
+      if (startFrame) {
+        const startRaceSeconds =
+          getReplayTimeTrialRaceClockSeconds(startFrame) ??
+          asNumber(startFrame.race_seconds) ??
+          0
+
+        timeTrialCommentaryEvents.push({
+          id: `${stage.id}-${key}-start`,
+          race_id: race.id,
+          stage_id: stage.id,
+          event_order: 800000 + Math.round(startRaceSeconds),
+          km_marker: asNumber(startFrame.km_marker) ?? 0,
+          race_time_label: formatDuration(startRaceSeconds),
+          event_type: 'start',
+          title: `${shortLabel} starts`,
+          description: `${entityKind} ${entityName} rolls down the start ramp as ${shortLabel} and starts the ${stageKind}.${nextEntityInfo ? ` Next away is ${nextEntityInfo.shortLabel} ${nextEntityInfo.name}${nextEntityInfo.teamName ? ` from ${nextEntityInfo.teamName}` : ''}.` : ''}`,
+          rider_id:
+            commentaryEntityType === 'rider'
+              ? getReplayTimeTrialFrameKey(startFrame)
+              : null,
+          team_id:
+            commentaryEntityType === 'team'
+              ? getReplayTimeTrialFrameKey(startFrame)
+              : null,
+          rider_name_snapshot:
+            commentaryEntityType === 'rider' ? entityName : null,
+          team_name_snapshot:
+            commentaryEntityType === 'team' ? entityName : null,
+          metadata: {
+            source: 'frontend_time_trial_replay',
+            race_seconds: startRaceSeconds,
+            entity_key: key,
+            entity_type: commentaryEntityType,
+          },
+        })
+      }
+
+      if (splitFrame) {
+        const splitRaceSeconds =
+          getReplayTimeTrialRaceClockSeconds(splitFrame) ??
+          asNumber(splitFrame.race_seconds) ??
+          0
+        const elapsedSeconds =
+          getReplayTimeTrialLiveElapsedSeconds(splitFrame)
+
+        if (elapsedSeconds !== null) {
+          timeTrialCommentaryEvents.push({
+            id: `${stage.id}-${key}-half-split`,
+            race_id: race.id,
+            stage_id: stage.id,
+            event_order: 810000 + Math.round(splitRaceSeconds),
+            km_marker: asNumber(splitFrame.km_marker) ?? halfKm,
+            race_time_label: formatDuration(splitRaceSeconds),
+            event_type: 'summary',
+            title: `${shortLabel} halfway split`,
+            description: `${entityKind} ${entityName} reaches the halfway time check in ${formatDuration(elapsedSeconds)}.`,
+            rider_id:
+              commentaryEntityType === 'rider'
+                ? getReplayTimeTrialFrameKey(splitFrame)
+                : null,
+            team_id:
+              commentaryEntityType === 'team'
+                ? getReplayTimeTrialFrameKey(splitFrame)
+                : null,
+            rider_name_snapshot:
+              commentaryEntityType === 'rider' ? entityName : null,
+            team_name_snapshot:
+              commentaryEntityType === 'team' ? entityName : null,
+            metadata: {
+              source: 'frontend_time_trial_replay',
+              race_seconds: splitRaceSeconds,
+              entity_key: key,
+              entity_type: commentaryEntityType,
+              elapsed_seconds: elapsedSeconds,
+            },
+          })
+        }
+      }
+
+      if (finishFrame) {
+        const finishRaceSeconds =
+          getReplayTimeTrialRaceClockSeconds(finishFrame) ??
+          asNumber(finishFrame.race_seconds) ??
+          0
+        const elapsedSeconds =
+          getReplayTimeTrialLiveElapsedSeconds(finishFrame)
+
+        if (elapsedSeconds !== null) {
+          timeTrialCommentaryEvents.push({
+            id: `${stage.id}-${key}-finish`,
+            race_id: race.id,
+            stage_id: stage.id,
+            event_order: 820000 + Math.round(finishRaceSeconds),
+            km_marker:
+              asNumber(finishFrame.km_marker) ??
+              asNumber(stage.distance_km) ??
+              0,
+            race_time_label: formatDuration(finishRaceSeconds),
+            event_type: 'finish',
+            title: `${shortLabel} finishes`,
+            description: `${entityKind} ${entityName} finishes in ${formatDuration(elapsedSeconds)}.`,
+            rider_id:
+              commentaryEntityType === 'rider'
+                ? getReplayTimeTrialFrameKey(finishFrame)
+                : null,
+            team_id:
+              commentaryEntityType === 'team'
+                ? getReplayTimeTrialFrameKey(finishFrame)
+                : null,
+            rider_name_snapshot:
+              commentaryEntityType === 'rider' ? entityName : null,
+            team_name_snapshot:
+              commentaryEntityType === 'team' ? entityName : null,
+            metadata: {
+              source: 'frontend_time_trial_replay',
+              race_seconds: finishRaceSeconds,
+              entity_key: key,
+              entity_type: commentaryEntityType,
+              elapsed_seconds: elapsedSeconds,
+            },
+          })
+        }
+      }
+    })
+  }
+
+  const sortedTimeTrialCommentaryEvents =
+    timeTrialCommentaryEvents.sort((left, right) => {
+      const leftSeconds = asNumber(
+        left.metadata?.race_seconds as
+          | number
+          | string
+          | null
+          | undefined
+      ) ?? 0
+      const rightSeconds = asNumber(
+        right.metadata?.race_seconds as
+          | number
+          | string
+          | null
+          | undefined
+      ) ?? 0
+
+      return leftSeconds - rightSeconds || left.event_order - right.event_order
+    })
+
+  const visibleEvents = replayStarted
+    ? isTimeTrialReplay
+      ? sortedTimeTrialCommentaryEvents.filter((event) => {
+          if (replayFinished) return true
+
+          const eventSeconds = asNumber(
+            event.metadata?.race_seconds as
+              | number
+              | string
+              | null
+              | undefined
+          )
+
+          return eventSeconds !== null && eventSeconds <= currentRaceSeconds
+        })
+      : replayEvents.filter((event) => {
+          if (replayFinished) return true
+          if (event.km_marker === null) return false
+
+          return Number(event.km_marker) <= currentLeaderKm
+        })
+    : []
+
+  const groups: RaceReportGroupSummary[] =
+    currentGroupFrames.length > 0
+      ? currentGroupFrames.map((frame) => ({
+          code: frame.group_code,
+          label: frame.group_label,
+          size: getReplayEntitySize(frame),
+          gapSeconds: frame.gap_seconds ?? 0,
+        }))
+      : currentTeamFrames.length > 0
+        ? currentTeamFrames.map((frame) => ({
+            code: frame.entity_key || frame.group_code,
+            label: getReplayFrameLabel(frame),
+            size: getReplayEntitySize(frame),
+            gapSeconds: frame.gap_seconds ?? 0,
+          }))
+        : []
+
+  /*
+   * Full rider names are available on classification snapshots.
+   *
+   * This is more reliable than rider_name_snapshot inside replay
+   * frames, because older frame rows can contain abbreviated names.
+   */
+  const classificationNameByRiderId = new Map<string, string>()
+
+  ;(resultsPayload?.classifications ?? []).forEach((row) => {
+    if (
+      row.entity_type !== 'rider' ||
+      !row.rider_id ||
+      !row.display_name_snapshot?.trim()
+    ) {
+      return
+    }
+
+    classificationNameByRiderId.set(
+      row.rider_id,
+      row.display_name_snapshot.trim()
+    )
+  })
+
+  const previousGcByRiderId = new Map<
+    string,
+    {
+      rank: number | null
+      gapSeconds: number | null
+      totalTimeSeconds: number | null
+      displayName: string | null
+    }
+  >()
+
+  if (Number(stage.stage_number) > 1) {
+    previousGcClassifications.forEach((row) => {
+      if (!row.rider_id) return
+
+      previousGcByRiderId.set(row.rider_id, {
+        rank: row.rank,
+        gapSeconds: row.gap_seconds,
+        totalTimeSeconds: row.total_time_seconds,
+        displayName: row.display_name_snapshot,
+      })
+    })
+  }
+
+  /*
+   * Only bonuses from gates already reached in the live replay
+   * affect the provisional GC.
+   *
+   * Future sprint and finish bonuses remain excluded until the
+   * replay leader reaches those gates.
+   */
+  const reachedBonusSecondsByRiderId = new Map<string, number>()
+
+  pointResults.forEach((row) => {
+    if (!row.rider_id || row.rank === null) return
+
+    const pointKm = asNumber(row.km_from_start)
+    const bonusSeconds = Number(
+      row.bonus_seconds_awarded ?? 0
+    )
+
+    if (
+      pointKm === null ||
+      pointKm > currentLeaderKm ||
+      !Number.isFinite(bonusSeconds) ||
+      bonusSeconds <= 0
+    ) {
+      return
+    }
+
+    reachedBonusSecondsByRiderId.set(
+      row.rider_id,
+      (reachedBonusSecondsByRiderId.get(row.rider_id) ?? 0) +
+        bonusSeconds
+    )
+  })
+
+  const previousGcTotals = Array.from(
+    previousGcByRiderId.values()
+  )
+    .map((row) => row.totalTimeSeconds)
+    .filter(
+      (value): value is number =>
+        value !== null &&
+        value !== undefined &&
+        Number.isFinite(Number(value))
+    )
+    .map(Number)
+
+  /*
+   * A rider missing from the previous GC must not incorrectly become
+   * the provisional leader. Give such a rider a safe fallback behind
+   * the final previous-GC rider.
+   */
+  const missingPreviousGcFallback =
+    previousGcTotals.length > 0
+      ? Math.max(...previousGcTotals) + 3600
+      : 0
+
+  const timeTrialHalfDistanceKm = Math.max(
+    0,
+    (asNumber(stage.distance_km) ?? 0) / 2
+  )
+
+  const timeTrialHalfSplitByRiderId = new Map<
+    string,
+    {
+      elapsedSeconds: number
+      gapSeconds: number | null
+      raceSeconds: number
+    }
+  >()
+
+  if (isTimeTrialReplay && timeTrialHalfDistanceKm > 0) {
+    const rawSplitRows: {
+      riderId: string
+      elapsedSeconds: number
+      raceSeconds: number
+    }[] = []
+
+    const framesByRiderId = new Map<string, RaceReplayFrame[]>()
+
+    replayFrames
+      .filter(
+        (frame) => getReplayEntityType(frame) === 'rider'
+      )
+      .forEach((frame) => {
+        const riderId = getReplayTimeTrialFrameKey(frame)
+        framesByRiderId.set(
+          riderId,
+          [...(framesByRiderId.get(riderId) ?? []), frame]
+        )
+      })
+
+    framesByRiderId.forEach((entityFrames, riderId) => {
+      const splitFrame = [...entityFrames]
+        .sort(
+          (left, right) =>
+            Number(left.frame_number) - Number(right.frame_number)
+        )
+        .find((frame) => {
+          const km = asNumber(frame.km_marker) ?? 0
+          const elapsed = getReplayTimeTrialLiveElapsedSeconds(frame)
+          const raceSeconds = getReplayTimeTrialRaceClockSeconds(frame)
+
+          return (
+            km >= timeTrialHalfDistanceKm &&
+            elapsed !== null &&
+            raceSeconds !== null &&
+            raceSeconds <= currentRaceSeconds
+          )
+        })
+
+      if (!splitFrame) return
+
+      const elapsedSeconds =
+        getReplayTimeTrialLiveElapsedSeconds(splitFrame)
+      const raceSeconds = getReplayTimeTrialRaceClockSeconds(splitFrame)
+
+      if (elapsedSeconds === null || raceSeconds === null) return
+
+      rawSplitRows.push({
+        riderId,
+        elapsedSeconds,
+        raceSeconds,
+      })
+    })
+
+    const bestSplitSeconds = rawSplitRows.reduce(
+      (best, row) => Math.min(best, row.elapsedSeconds),
+      Number.POSITIVE_INFINITY
+    )
+
+    rawSplitRows.forEach((row) => {
+      timeTrialHalfSplitByRiderId.set(row.riderId, {
+        elapsedSeconds: row.elapsedSeconds,
+        raceSeconds: row.raceSeconds,
+        gapSeconds: Number.isFinite(bestSplitSeconds)
+          ? Math.max(0, row.elapsedSeconds - bestSplitSeconds)
+          : null,
+      })
+    })
+  }
+
+  const rawFrameStandingRows: ReplayStandingRow[] =
+    isTimeTrialReplay
+      ? currentFrames
+          .filter(
+            (frame) =>
+              getReplayEntityType(frame) === 'rider'
+          )
+          .map((frame) => {
+            const riderId =
+              frame.entity_id ||
+              frame.rider_ids?.[0] ||
+              ''
+
+            const previousGc =
+              previousGcByRiderId.get(riderId)
+            const participantRider =
+              participantRiderById.get(riderId)
+            const timeTrialState = getReplayEntityState(frame)
+            const liveElapsedSeconds =
+              getReplayTimeTrialLiveElapsedSeconds(frame)
+            const splitSnapshot =
+              timeTrialHalfSplitByRiderId.get(riderId)
+            const startOrder =
+              getReplayTimeTrialStartOrder(frame)
+
+            return {
+              rider_id: riderId,
+              rider_name:
+                classificationNameByRiderId.get(riderId) ||
+                previousGc?.displayName?.trim() ||
+                participantRider?.rider_name_snapshot?.trim() ||
+                getReplayFrameLabel(frame),
+              team_name:
+                participantRider?.team_name_snapshot?.trim() ||
+                getReplayFrameTeamName(frame),
+              group_code:
+                frame.entity_key ||
+                frame.group_code ||
+                'time_trial_rider',
+              group_label:
+                getReplayEntityState(frame) === 'waiting'
+                  ? 'Waiting'
+                  : getReplayEntityState(frame) === 'finished'
+                    ? 'Finished'
+                    : 'On course',
+              group_order:
+                startOrder ||
+                Number(frame.group_order) ||
+                Number(frame.provisional_rank) ||
+                9999,
+              gap_seconds:
+                getReplayFrameGapSeconds(frame),
+              rider_country_code:
+                participantRider?.country_code_snapshot ?? null,
+              gc_rank: previousGc?.rank ?? null,
+              gc_gap_seconds: previousGc?.gapSeconds ?? null,
+              timeTrialLabel:
+                getReplayTimeTrialMarkerShortLabel(frame),
+              timeTrialStartOrder: startOrder,
+              timeTrialState,
+              liveElapsedSeconds,
+              liveGapSeconds: null,
+              splitElapsedSeconds:
+                splitSnapshot?.elapsedSeconds ?? null,
+              splitGapSeconds:
+                splitSnapshot?.gapSeconds ?? null,
+            }
+          })
+      : currentGroupFrames.flatMap((frame) =>
+          (frame.rider_ids ?? []).map((riderId, index) => {
+            const previousGc =
+              previousGcByRiderId.get(riderId)
+            const participantRider =
+              participantRiderById.get(riderId)
+
+            const fullName =
+              classificationNameByRiderId.get(riderId) ||
+              previousGc?.displayName?.trim() ||
+              participantRider?.rider_name_snapshot?.trim() ||
+              frame.rider_names?.[index]?.trim() ||
+              'Rider'
+
+            return {
+              rider_id: riderId,
+              rider_name: fullName,
+              team_name:
+                participantRider?.team_name_snapshot?.trim() ||
+                frame.team_names?.[index]?.trim() ||
+                '',
+              group_code: frame.group_code,
+              group_label: frame.group_label,
+              group_order: frame.group_order,
+              gap_seconds: Math.max(
+                Number(frame.gap_seconds ?? 0),
+                0
+              ),
+              rider_country_code:
+                participantRider?.country_code_snapshot ?? null,
+              gc_rank: previousGc?.rank ?? null,
+              gc_gap_seconds: previousGc?.gapSeconds ?? null,
+            }
+          })
+        )
+
+  const startedTimeTrialElapsedRows = rawFrameStandingRows
+    .map((row) => row.liveElapsedSeconds)
+    .filter(
+      (value): value is number =>
+        value !== null &&
+        value !== undefined &&
+        Number.isFinite(Number(value))
+    )
+    .map(Number)
+
+  const bestTimeTrialLiveElapsedSeconds =
+    startedTimeTrialElapsedRows.length > 0
+      ? Math.min(...startedTimeTrialElapsedRows)
+      : null
+
+  const finishedTimeTrialElapsedRows = rawFrameStandingRows
+    .filter((row) => row.timeTrialState === 'finished')
+    .map((row) => row.liveElapsedSeconds)
+    .filter(
+      (value): value is number =>
+        value !== null &&
+        value !== undefined &&
+        Number.isFinite(Number(value))
+    )
+    .map(Number)
+
+  const bestFinishedTimeTrialElapsedSeconds =
+    finishedTimeTrialElapsedRows.length > 0
+      ? Math.min(...finishedTimeTrialElapsedRows)
+      : null
+
+  const finishedTimeTrialCount = finishedTimeTrialElapsedRows.length
+
+  /*
+   * Provisional GC while Stage 2 or later is live:
+   *
+   * previous cumulative GC
+   * + current live stage gap
+   * - current-stage bonuses already earned
+   *
+   * The common live race time is the same for everyone and therefore
+   * does not need to be added when calculating relative GC gaps.
+   */
+  const provisionalGcEntries =
+    rawFrameStandingRows.map((row) => {
+      const previousGc =
+        previousGcByRiderId.get(row.rider_id)
+
+      const previousTotal =
+        Number(stage.stage_number) <= 1
+          ? 0
+          : previousGc?.totalTimeSeconds !== null &&
+              previousGc?.totalTimeSeconds !== undefined
+            ? Number(previousGc.totalTimeSeconds)
+            : missingPreviousGcFallback
+
+      const earnedBonus =
+        reachedBonusSecondsByRiderId.get(row.rider_id) ?? 0
+
+      const provisionalTotal = Math.max(
+        0,
+        previousTotal +
+          Math.max(row.gap_seconds, 0) -
+          earnedBonus
+      )
+
+      return {
+        riderId: row.rider_id,
+        provisionalTotal,
+        previousRank:
+          previousGc?.rank ?? Number.MAX_SAFE_INTEGER,
+      }
+    })
+
+  const sortedProvisionalGcEntries =
+    [...provisionalGcEntries].sort(
+      (left, right) =>
+        left.provisionalTotal -
+          right.provisionalTotal ||
+        left.previousRank -
+          right.previousRank ||
+        left.riderId.localeCompare(right.riderId)
+    )
+
+  const bestProvisionalGcTime =
+    sortedProvisionalGcEntries[0]
+      ?.provisionalTotal ?? 0
+
+  const provisionalGcByRiderId = new Map<
+    string,
+    {
+      rank: number
+      gapSeconds: number
+    }
+  >()
+
+  let previousScore: number | null = null
+  let previousRank = 0
+
+  sortedProvisionalGcEntries.forEach(
+    (entry, index) => {
+      const rank =
+        previousScore !== null &&
+        entry.provisionalTotal === previousScore
+          ? previousRank
+          : index + 1
+
+      provisionalGcByRiderId.set(entry.riderId, {
+        rank,
+        gapSeconds: Math.max(
+          0,
+          entry.provisionalTotal -
+            bestProvisionalGcTime
+        ),
+      })
+
+      previousScore = entry.provisionalTotal
+      previousRank = rank
+    }
+  )
+
+
+  /*
+   * Jersey ownership is frozen at the start of the stage.
+   *
+   * Stage 2 uses the leaders after Stage 1.
+   * Stage 3 uses the leaders after Stage 2.
+   *
+   * Results produced by the stage currently being replayed must
+   * never change these three rider IDs.
+   */
+  const currentStageNumber =
+    stage?.stage_number ?? 1
+
+  const hasEstablishedClassificationLeaders =
+    currentStageNumber > 1 &&
+    preStageLeaderSnapshot
+      ?.has_established_leaders === true
+
+  const preStageGcLeaderRiderId =
+    hasEstablishedClassificationLeaders
+      ? preStageLeaderSnapshot
+          ?.general?.rider_id ?? null
+      : null
+
+  const preStageClimberLeaderRiderId =
+    hasEstablishedClassificationLeaders
+      ? preStageLeaderSnapshot
+          ?.mountain?.rider_id ?? null
+      : null
+
+  const preStagePointsLeaderRiderId =
+    hasEstablishedClassificationLeaders
+      ? preStageLeaderSnapshot
+          ?.points?.rider_id ?? null
+      : null
+
+  function findCurrentRiderGroupCode(
+    riderId: string | null
+  ): string | null {
+    if (!riderId) return null
+
+    return (
+      rawFrameStandingRows.find(
+        (row) => row.rider_id === riderId
+      )?.group_code ?? null
+    )
+  }
+
+  const gcLeaderGroupCode =
+    findCurrentRiderGroupCode(
+      preStageGcLeaderRiderId
+    )
+
+  const mountainLeaderGroupCode =
+    findCurrentRiderGroupCode(
+      preStageClimberLeaderRiderId
+    )
+
+  const pointsLeaderGroupCode =
+    findCurrentRiderGroupCode(
+      preStagePointsLeaderRiderId
+    )
+
+  /*
+   * The blue Peloton remains only P.
+   *
+   * Show GC, CL or PTS solely when the corresponding pre-stage
+   * jersey owner is currently riding outside the Peloton.
+   */
+  const visibleGcLeaderGroupCode =
+    gcLeaderGroupCode &&
+    !isPelotonGroup(gcLeaderGroupCode)
+      ? gcLeaderGroupCode
+      : null
+
+  const visibleClLeaderGroupCode =
+    mountainLeaderGroupCode &&
+    !isPelotonGroup(
+      mountainLeaderGroupCode
+    )
+      ? mountainLeaderGroupCode
+      : null
+
+  const visiblePointsLeaderGroupCode =
+    pointsLeaderGroupCode &&
+    !isPelotonGroup(pointsLeaderGroupCode)
+      ? pointsLeaderGroupCode
+      : null
+
+  const frameStandingRows: ReplayStandingRow[] =
+    rawFrameStandingRows.map((row) => {
+      const provisionalGc =
+        provisionalGcByRiderId.get(row.rider_id)
+      const liveGapSeconds =
+        row.liveElapsedSeconds !== null &&
+        row.liveElapsedSeconds !== undefined &&
+        bestTimeTrialLiveElapsedSeconds !== null
+          ? Math.max(
+              0,
+              row.liveElapsedSeconds -
+                bestTimeTrialLiveElapsedSeconds
+            )
+          : null
+
+      return {
+        ...row,
+        liveGapSeconds,
+        gc_rank: provisionalGc?.rank ?? null,
+        gc_gap_seconds:
+          provisionalGc?.gapSeconds ?? null,
+        /*
+         * Jersey tabs appear only on the actual pre-stage jersey
+         * owner and only while that rider is outside the Peloton.
+         */
+        isGcLeader:
+          Boolean(
+            visibleGcLeaderGroupCode
+          ) &&
+          row.rider_id ===
+            preStageGcLeaderRiderId,
+
+        isPointsLeader:
+          Boolean(
+            visiblePointsLeaderGroupCode
+          ) &&
+          row.rider_id ===
+            preStagePointsLeaderRiderId,
+
+        isClimberLeader:
+          Boolean(
+            visibleClLeaderGroupCode
+          ) &&
+          row.rider_id ===
+            preStageClimberLeaderRiderId,
+      }
+    })
+
+  const alphabeticalStandingRows: ReplayStandingRow[] =
+    (resultsPayload?.stage_results ?? [])
+      .map((row) => {
+        const riderId = row.rider_id ?? ''
+
+        const previousGc =
+          previousGcByRiderId.get(riderId)
+
+        const participantRider =
+          participantRiderById.get(riderId)
+
+        const fullName =
+          classificationNameByRiderId.get(riderId) ||
+          previousGc?.displayName?.trim() ||
+          participantRider?.rider_name_snapshot?.trim() ||
+          row.full_name?.trim() ||
+          row.rider_full_name?.trim() ||
+          row.display_name?.trim() ||
+          row.rider_name?.trim() ||
+          row.rider_name_snapshot?.trim() ||
+          'Rider'
+
+        return {
+          rider_id: riderId,
+          rider_name: fullName,
+
+          team_name:
+            participantRider?.team_name_snapshot?.trim() ||
+            row.team_name_snapshot?.trim() ||
+            '',
+
+          group_code: 'main_peloton',
+          group_label: 'Peloton',
+          group_order: 1,
+          gap_seconds: 0,
+
+          rider_country_code:
+            participantRider?.country_code_snapshot ??
+            row.rider_country_code ??
+            row.nationality_code ??
+            row.country_code ??
+            null,
+
+          gc_rank: previousGc?.rank ?? null,
+          gc_gap_seconds:
+            previousGc?.gapSeconds ?? null,
+          isGcLeader:
+            Boolean(
+              visibleGcLeaderGroupCode
+            ) &&
+            riderId ===
+              preStageGcLeaderRiderId,
+
+          isPointsLeader:
+            Boolean(
+              visiblePointsLeaderGroupCode
+            ) &&
+            riderId ===
+              preStagePointsLeaderRiderId,
+
+          isClimberLeader:
+            Boolean(
+              visibleClLeaderGroupCode
+            ) &&
+            riderId ===
+              preStageClimberLeaderRiderId,
+        }
+      })
+      .sort((left, right) =>
+        left.rider_name.localeCompare(
+          right.rider_name
+        )
+      )
+
+  const visibleStandingRows =
+    replayStarted && frameStandingRows.length > 0
+      ? isTimeTrialReplay
+        ? [...frameStandingRows].sort((left, right) => {
+            const statePriority = (row: ReplayStandingRow) => {
+              if (row.timeTrialState === 'finished') return 0
+              if (
+                row.liveElapsedSeconds !== null &&
+                row.liveElapsedSeconds !== undefined
+              ) {
+                return 1
+              }
+
+              return 2
+            }
+
+            const leftPriority = statePriority(left)
+            const rightPriority = statePriority(right)
+
+            if (leftPriority !== rightPriority) {
+              return leftPriority - rightPriority
+            }
+
+            if (leftPriority === 0 && rightPriority === 0) {
+              const timeDiff =
+                Number(left.liveElapsedSeconds) -
+                Number(right.liveElapsedSeconds)
+
+              if (timeDiff !== 0) return timeDiff
+            }
+
+            const orderDiff =
+              (left.timeTrialStartOrder ?? Number.MAX_SAFE_INTEGER) -
+              (right.timeTrialStartOrder ?? Number.MAX_SAFE_INTEGER)
+
+            if (orderDiff !== 0) return orderDiff
+
+            return left.rider_name.localeCompare(right.rider_name)
+          })
+        : frameStandingRows
+      : alphabeticalStandingRows
+
+  const viewerRiderIds = new Set(
+    participantTeams
+      .filter(
+        (team) =>
+          team.club_id === viewerTeamId ||
+          team.team_id === viewerTeamId
+      )
+      .flatMap((team) =>
+        team.riders.map((rider) => rider.rider_id)
+      )
+  )
+
+  return (
+    <div className="fixed inset-0 z-50 bg-slate-950/70 p-4">
+      <div className="flex h-full flex-col overflow-hidden rounded-3xl bg-white shadow-2xl">
+        <div className="flex flex-wrap items-start justify-between gap-4 border-b border-slate-200 px-6 py-4">
+          <div>
+            <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+              Race replay
+            </div>
+
+            <div className="mt-1 flex items-center gap-2">
+              <RaceTitleFlag
+                code={race?.country_code || stage.host_country_code || 'ME'}
+              />
+
+              <h2 className="text-xl font-semibold text-slate-950">
+                {race?.name ?? 'Race replay'}
+              </h2>
+            </div>
+
+            <div className="mt-1 text-sm text-slate-500">
+              Stage {stage.stage_number} · {stage.name || formatStageRoute(stage)}
+            </div>
+
+            <div className="mt-1 text-sm text-slate-500">
+              {formatStageRoute(stage)}
+            </div>
+
+            {!userParticipated ? (
+              <div className="mt-2 text-xs font-semibold text-amber-700">
+                Your team is not listed as a participant for this race.
+              </div>
+            ) : null}
+          </div>
+
+          <div className="flex flex-wrap items-start justify-end gap-3">
+            <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
+              <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                Stage weather
+              </div>
+
+              <div className="mt-2 grid grid-cols-3 gap-4">
+                <div>
+                  <div className="text-[10px] uppercase tracking-wide text-slate-400">
+                    Temp
+                  </div>
+                  <div className="mt-0.5 whitespace-nowrap text-xs font-semibold text-slate-800">
+                    {replayWeather.temperature}
+                  </div>
+                </div>
+
+                <div>
+                  <div className="text-[10px] uppercase tracking-wide text-slate-400">
+                    Wind
+                  </div>
+                  <div className="mt-0.5 whitespace-nowrap text-xs font-semibold text-slate-800">
+                    {replayWeather.wind}
+                  </div>
+                </div>
+
+                <div>
+                  <div className="text-[10px] uppercase tracking-wide text-slate-400">
+                    Rain
+                  </div>
+                  <div className="mt-0.5 whitespace-nowrap text-xs font-semibold text-slate-800">
+                    {replayWeather.rain}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+
+        <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-auto p-6">
+          <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+              <div className="text-sm font-semibold text-slate-950">
+                Stage profile replay
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (playing) {
+                      setPlaying(false)
+                      return
+                    }
+
+                    if (progress >= 1) {
+                      setProgress(replayInitialProgress)
+                    } else if (progress <= 0 && replayInitialProgress > 0) {
+                      setProgress(replayInitialProgress)
+                    }
+
+                    setPlaying(true)
+                  }}
+                  className="rounded-full bg-slate-950 px-4 py-2 text-xs font-semibold text-white"
+                >
+                  {playing ? 'Pause' : 'Play'}
+                </button>
+
+                {!areReplaySpeedControlsLocked ? (
+                  <>
+                    {[1, 2, 4, 8].map((value) => (
+                      <button
+                        key={value}
+                        type="button"
+                        onClick={() => setSpeed(value as 1 | 2 | 4 | 8)}
+                        className={`rounded-full border px-3 py-2 text-xs font-semibold ${
+                          speed === value
+                            ? 'border-slate-950 bg-slate-950 text-white'
+                            : 'border-slate-200 bg-white text-slate-600'
+                        }`}
+                      >
+                        {value}x
+                      </button>
+                    ))}
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setProgress(1)
+                        setPlaying(false)
+                      }}
+                      className="rounded-full border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50"
+                    >
+                      Finish replay
+                    </button>
+                  </>
+                ) : (
+                  <span className="rounded-full bg-red-50 px-3 py-1 text-xs font-semibold text-red-700">
+                    {isLiveBroadcast ? 'Live · 1×' : '1× locked'}
+                  </span>
+                )}
+
+                <div className="text-xs font-semibold text-slate-500">
+                  {Math.round(progress * 100)}%
+                </div>
+              </div>
+            </div>
+
+            <ReplayStageProfile
+              stage={stage}
+              profile={replayProfile}
+              groups={groups}
+              frames={currentFrames}
+              progress={progress}
+              visibleGcLeaderGroupCode={
+                visibleGcLeaderGroupCode
+              }
+              visibleClLeaderGroupCode={
+                visibleClLeaderGroupCode
+              }
+              visiblePointsLeaderGroupCode={
+                visiblePointsLeaderGroupCode
+              }
+            />
+          </div>
+
+          <section className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
+            <div className="grid min-h-[420px] gap-4 xl:grid-cols-[minmax(0,1.45fr)_minmax(360px,0.8fr)]">
+              <div className="overflow-hidden rounded-3xl border border-slate-200">
+                <div className="border-b border-slate-200 bg-slate-50 px-4 py-3 text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+                  Live commentary
+                </div>
+
+                <div className="max-h-[520px] overflow-auto divide-y divide-slate-100">
+                  {visibleEvents.length === 0 ? (
+                    <div className="px-4 py-6 text-sm text-slate-500">
+                      {!replayStarted
+                        ? 'Press Play to start live commentary.'
+                        : isTimeTrialReplay
+                          ? 'No time-trial commentary event has been reached yet.'
+                          : events.length === 0
+                            ? 'No commentary events were generated for this stage. The backend must insert stage report events before KOM, sprint, or other race moments can appear here.'
+                            : 'No commentary event has been reached yet.'}
+                    </div>
+                  ) : (
+                    visibleEvents.map((event) => (
+                      <div
+                        key={event.id}
+                        className="grid grid-cols-[74px_1fr] gap-3 px-4 py-2.5 text-sm"
+                      >
+                        <div className="font-semibold text-slate-500">
+                          {isTimeTrialReplay && event.race_time_label
+                            ? event.race_time_label
+                            : getRaceReportKmLabel(event)}
+                        </div>
+
+                        <div>
+                          <span className="font-semibold text-slate-950">
+                            {event.title}
+                          </span>
+                          <span className="ml-2 text-slate-600">
+                            {event.description}
+                          </span>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+
+              <aside className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
+                <div className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+                  Stage standing
+                </div>
+
+                <div className="mt-4">
+                  {visibleStandingRows.length ? (
+                    <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
+                      <div className="flex items-center justify-between border-b border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-500">
+                        <span>
+                          {replayStarted
+                            ? formatDuration(currentRaceSeconds)
+                            : '00:00:00'}
+                        </span>
+
+                        <span>
+                          {replayStarted
+                            ? formatKm(currentLeaderKm)
+                            : 'Race not started'}
+                        </span>
+                      </div>
+
+                      <div className="max-h-[480px] overflow-auto divide-y divide-slate-100">
+                        {visibleStandingRows.map((row, index) => {
+                          const isViewerRider =
+                            Boolean(row.rider_id) &&
+                            viewerRiderIds.has(row.rider_id)
+
+                          const gcStatusLabel =
+                            hasEstablishedClassificationLeaders
+                              ? formatReplayGcStatus(
+                                  row.gc_rank,
+                                  row.gc_gap_seconds
+                                )
+                              : null
+
+                          const leaderTabs =
+                            getReplayStandingLeaderTabs(row)
+
+                          const standingBadgeLabel =
+                            isTimeTrialReplay
+                              ? row.timeTrialLabel ??
+                                (row.timeTrialStartOrder
+                                  ? `R${row.timeTrialStartOrder}`
+                                  : 'R')
+                              : getReplayGroupShortLabel(
+                                  row.group_code,
+                                  row.group_order,
+                                  currentPelotonGroupOrder
+                                )
+
+                          const standingBadgeColor =
+                            isTimeTrialReplay
+                              ? row.timeTrialState === 'finished'
+                                ? '#64748b'
+                                : row.timeTrialState === 'waiting'
+                                  ? '#94a3b8'
+                                  : '#f97316'
+                              : getReplayGroupStroke(row.group_code)
+
+                          const splitLabel =
+                            isTimeTrialReplay &&
+                            row.splitElapsedSeconds !== null &&
+                            row.splitElapsedSeconds !== undefined
+                              ? formatDuration(row.splitElapsedSeconds)
+                              : null
+
+                          const finishedGapSeconds =
+                            isTimeTrialReplay &&
+                            row.timeTrialState === 'finished' &&
+                            row.liveElapsedSeconds !== null &&
+                            row.liveElapsedSeconds !== undefined &&
+                            bestFinishedTimeTrialElapsedSeconds !== null
+                              ? Math.max(
+                                  0,
+                                  Number(row.liveElapsedSeconds) -
+                                    bestFinishedTimeTrialElapsedSeconds
+                                )
+                              : null
+
+                          const standingTimeLabel =
+                            isTimeTrialReplay
+                              ? row.liveElapsedSeconds === null ||
+                                row.liveElapsedSeconds === undefined
+                                ? 'Waiting'
+                                : row.timeTrialState === 'finished'
+                                  ? `${formatDuration(row.liveElapsedSeconds)}${
+                                      finishedGapSeconds === null
+                                        ? ''
+                                        : finishedGapSeconds <= 0
+                                          ? ' · Leader'
+                                          : finishedTimeTrialCount > 1
+                                            ? ` · +${formatGapValue(finishedGapSeconds)}`
+                                            : ''
+                                    }`
+                                  : formatDuration(row.liveElapsedSeconds)
+                              : !replayStarted
+                                ? '—'
+                                : index === 0
+                                  ? 'Leader'
+                                  : row.gap_seconds === 0
+                                    ? 's.t.'
+                                    : `+${formatGapValue(row.gap_seconds)}`
+
+                          return (
+                            <div
+                              key={`${row.rider_id}-${index}`}
+                              className={`grid ${
+                                isTimeTrialReplay
+                                  ? 'grid-cols-[24px_38px_minmax(0,1fr)_minmax(82px,auto)_minmax(96px,auto)]'
+                                  : 'grid-cols-[24px_38px_minmax(0,1fr)_minmax(190px,auto)]'
+                              } items-center gap-2 px-3 py-3 ${
+                                isViewerRider
+                                  ? VIEWER_TEAM_ROW_HIGHLIGHT_CLASS
+                                  : 'bg-white'
+                              }`}
+                            >
+                              <div className="text-sm font-semibold text-slate-500">
+                                {isTimeTrialReplay &&
+                                (row.liveElapsedSeconds === null ||
+                                  row.liveElapsedSeconds === undefined)
+                                  ? '—'
+                                  : replayStarted
+                                    ? index + 1
+                                    : '—'}
+                              </div>
+
+                              <span
+                                className="inline-flex h-6 min-w-[34px] items-center justify-center rounded-full px-2 text-[10px] font-bold text-white"
+                                style={{
+                                  backgroundColor: standingBadgeColor,
+                                }}
+                                title={row.group_label}
+                              >
+                                {standingBadgeLabel}
+                              </span>
+
+                              <div className="min-w-0">
+                                <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+                                  <SmallCountryFlag
+                                    code={row.rider_country_code}
+                                  />
+
+                                  <span className="break-words text-sm font-semibold text-slate-950">
+                                    {row.rider_name}
+                                  </span>
+
+                                  {replayStarted && gcStatusLabel ? (
+                                    <span className="whitespace-nowrap rounded-full bg-sky-50 px-2 py-0.5 text-[10px] font-semibold text-sky-700">
+                                      {gcStatusLabel}
+                                    </span>
+                                  ) : null}
+                                </div>
+
+                                <div className="ml-6 mt-0.5 truncate text-xs text-slate-500">
+                                  {row.team_name || '—'}
+                                </div>
+                              </div>
+
+                              {isTimeTrialReplay ? (
+                                <>
+                                  <div className="text-right">
+                                    <div className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+                                      Split
+                                    </div>
+                                    <div className="whitespace-nowrap text-xs font-semibold text-slate-700">
+                                      {splitLabel ?? '—'}
+                                    </div>
+                                  </div>
+
+                                  <div className="text-right">
+                                    <div className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+                                      Finish
+                                    </div>
+                                    <div className="whitespace-nowrap text-xs font-semibold text-slate-700">
+                                      {standingTimeLabel}
+                                    </div>
+                                  </div>
+                                </>
+                              ) : (
+                                <div className="flex flex-wrap items-center justify-end gap-1.5 text-right">
+                                  {leaderTabs.length > 0 ? (
+                                    <div className="flex items-center justify-end gap-1">
+                                      {leaderTabs.map((tab) => (
+                                        <ReplayLeaderTab
+                                          key={tab}
+                                          type={tab}
+                                        />
+                                      ))}
+                                    </div>
+                                  ) : null}
+
+                                  <span className="whitespace-nowrap text-xs font-semibold text-slate-700">
+                                    {standingTimeLabel}
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-500">
+                      No stage standing available yet.
+                    </div>
+                  )}
+                </div>
+              </aside>
+            </div>
+          </section>
+
+          <section className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
+            <ReplayStagePointsPanel
+              pointResults={pointResults}
+              currentKm={currentLeaderKm}
+            />
+          </section>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function ReplayStagePointsPanel({
+  pointResults,
+  currentKm,
+}: {
+  pointResults: RacePointResultRow[]
+  currentKm: number
+}) {
+  const pointOptions = useMemo(() => {
+    const uniquePoints = new Map<
+      string,
+      {
+        id: string
+        label: string
+        reached: boolean
+        sortOrder: number
+        km: number
+      }
+    >()
+
+    pointResults.forEach((row) => {
+      if (!row.point_id) return
+
+      const pointType = String(row.point_type ?? '').toUpperCase()
+      if (pointType === 'START') return
+
+      const km = asNumber(row.km_from_start) ?? 0
+
+      const categoryLabel =
+        pointType === 'KOM' && row.kom_category
+          ? ` · Cat ${row.kom_category}`
+          : ''
+
+      uniquePoints.set(row.point_id, {
+        id: row.point_id,
+        label:
+          `${row.point_name || humanizeCode(pointType)}` +
+          `${categoryLabel} · ${formatKm(km)}`,
+        reached: currentKm >= km,
+        sortOrder: Number(row.sort_order ?? 999),
+        km,
+      })
+    })
+
+    return Array.from(uniquePoints.values()).sort(
+      (left, right) =>
+        left.sortOrder - right.sortOrder ||
+        left.km - right.km
+    )
+  }, [currentKm, pointResults])
+
+  const [selectedPointId, setSelectedPointId] = useState<string>('')
+
+  useEffect(() => {
+    const selectedPointStillExists = pointOptions.some(
+      (point) => point.id === selectedPointId
+    )
+
+    if (!selectedPointStillExists) {
+      const firstReachedPoint = pointOptions.find((point) => point.reached)
+      setSelectedPointId(firstReachedPoint?.id ?? pointOptions[0]?.id ?? '')
+    }
+  }, [pointOptions, selectedPointId])
+
+  const selectedPoint = pointOptions.find(
+    (point) => point.id === selectedPointId
+  )
+
+  const rows = selectedPoint?.reached
+    ? pointResults
+        .filter(
+          (row) =>
+            row.point_id === selectedPointId &&
+            row.rank !== null
+        )
+        .sort((a, b) => (a.rank ?? 999) - (b.rank ?? 999))
+    : []
+
+  return (
+    <div className="rounded-3xl border border-slate-200 bg-white p-4">
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <div>
+          <div className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+            Stage points
+          </div>
+          <div className="mt-1 text-sm text-slate-500">
+            Sprint, KOM and finish point winners.
+          </div>
+        </div>
+
+        <select
+          value={selectedPointId}
+          onChange={(event) => setSelectedPointId(event.target.value)}
+          className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm"
+          disabled={pointOptions.length === 0}
+        >
+          {pointOptions.length === 0 ? (
+            <option>No stage points available</option>
+          ) : (
+            pointOptions.map((point) => (
+              <option
+                key={point.id}
+                value={point.id}
+                disabled={!point.reached}
+              >
+                {point.label}
+              </option>
+            ))
+          )}
+        </select>
+      </div>
+
+      {pointOptions.length === 0 ? (
+        <div className="rounded-2xl bg-slate-50 p-4 text-sm text-slate-500">
+          This stage has no sprint, KOM, or finish point definitions.
+        </div>
+      ) : !selectedPoint?.reached ? (
+        <div className="rounded-2xl bg-slate-50 p-4 text-sm text-slate-500">
+          This point has not been reached yet.
+        </div>
+      ) : rows.length === 0 ? (
+        <div className="rounded-2xl bg-amber-50 px-4 py-4 text-sm text-amber-800">
+          This point has been reached, but its result rows have not been generated.
+        </div>
+      ) : (
+        <div className="overflow-hidden rounded-2xl border border-slate-200">
+          <table className="w-full text-sm">
+            <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+              <tr>
+                <th className="px-3 py-2 text-left">#</th>
+                <th className="px-3 py-2 text-left">Rider</th>
+                <th className="px-3 py-2 text-left">Team</th>
+                <th className="px-3 py-2 text-right">Points</th>
+                <th className="px-3 py-2 text-right">Bonus</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((row) => (
+                <tr
+                  key={`${row.point_id}-${row.rank}`}
+                  className="border-t border-slate-100"
+                >
+                  <td className="px-3 py-2 font-semibold">{row.rank}</td>
+                  <td className="px-3 py-2 font-semibold">
+                    {row.rider_name_snapshot}
+                  </td>
+                  <td className="px-3 py-2 text-slate-600">
+                    {row.team_name_snapshot}
+                  </td>
+                  <td className="px-3 py-2 text-right font-semibold">
+                    {row.points_awarded}
+                  </td>
+                  <td className="px-3 py-2 text-right font-semibold">
+                    {formatBonusSeconds(row.bonus_seconds_awarded)}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  )
+}
+
 type StageProfileEventPoint = RaceStagePoint & {
   km: number
 }
@@ -1732,6 +5715,10 @@ function formatRaceClock(seconds?: number | null): string {
   return `${hours}:${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`
 }
 
+function formatDuration(seconds?: number | null): string {
+  return formatRaceClock(seconds)
+}
+
 function formatGapValue(seconds?: number | null): string {
   if (seconds === null || seconds === undefined || Number.isNaN(Number(seconds))) {
     return '—'
@@ -1762,6 +5749,27 @@ function formatClassificationGap(seconds?: number | null): string {
   return `+${formatGapValue(seconds)}`
 }
 
+function formatReplayGcStatus(
+  rank?: number | null,
+  gapSeconds?: number | null
+): string | null {
+  if (
+    rank === null ||
+    rank === undefined ||
+    gapSeconds === null ||
+    gapSeconds === undefined
+  ) {
+    return null
+  }
+
+  const gapLabel =
+    Number(gapSeconds) === 0
+      ? 'Leader'
+      : `+${formatGapValue(gapSeconds)}`
+
+  return `GC: ${gapLabel} (${rank})`
+}
+
 function formatBonusSeconds(seconds?: number | null): string {
   if (!seconds) return '—'
   return `-${seconds}s`
@@ -1770,31 +5778,6 @@ function formatBonusSeconds(seconds?: number | null): string {
 function formatResultPoints(points?: number | null): string {
   if (points === null || points === undefined) return '0'
   return String(points)
-}
-
-function getCurrentResultsStage(
-  stages: RaceStage[],
-  currentGameDate?: string | null
-): RaceStage | null {
-  if (stages.length === 0) return null
-
-  const sortedStages = [...stages].sort((a, b) => {
-    const dateCompare = String(a.stage_date ?? '').localeCompare(String(b.stage_date ?? ''))
-    if (dateCompare !== 0) return dateCompare
-    return Number(a.stage_number ?? 0) - Number(b.stage_number ?? 0)
-  })
-
-  if (!currentGameDate) return sortedStages[sortedStages.length - 1] ?? null
-
-  const today = parseDateOnly(currentGameDate)
-  if (!today) return sortedStages[sortedStages.length - 1] ?? null
-
-  const completedStages = sortedStages.filter((stage) => {
-    const stageDate = parseDateOnly(stage.stage_date)
-    return stageDate ? differenceInDays(today, stageDate) >= 0 : false
-  })
-
-  return completedStages[completedStages.length - 1] ?? sortedStages[0] ?? null
 }
 
 function sortRankedRows<T extends { rank: number | null }>(rows: T[]): T[] {
@@ -1991,11 +5974,20 @@ function buildAggregatedStagePointRows(
   pointGateRows: RacePointResultRow[],
   view: StagePointAggregateView
 ): AggregatedStagePointResultRow[] {
-  const fromStageRows = aggregateStagePointRowsFromStageResults(stageRows, view)
+  const fromPointGates =
+    aggregateStagePointRowsFromPointGates(
+      pointGateRows,
+      view
+    )
 
-  if (fromStageRows.length > 0) return fromStageRows
+  if (fromPointGates.length > 0) {
+    return fromPointGates
+  }
 
-  return aggregateStagePointRowsFromPointGates(pointGateRows, view)
+  return aggregateStagePointRowsFromStageResults(
+    stageRows,
+    view
+  )
 }
 
 function getStageResultGapSeconds(
@@ -2104,10 +6096,10 @@ function getLeaderRow(
 
 function RaceLeadersCard({
   race,
-  currentResultsStageId,
+  classificationResultsStageId,
 }: {
   race: Race
-  currentResultsStageId?: string | null
+  classificationResultsStageId?: string | null
 }) {
   const [snapshot, setSnapshot] = useState<Record<string, unknown>>(() =>
     getLeaderSnapshot(race)
@@ -2118,7 +6110,7 @@ function RaceLeadersCard({
     let mounted = true
 
     async function loadLeaderSnapshot() {
-      if (!race.id || !currentResultsStageId) {
+      if (!race.id || !classificationResultsStageId) {
         setSnapshot(getLeaderSnapshot(race))
         return
       }
@@ -2127,7 +6119,7 @@ function RaceLeadersCard({
 
       const { data, error } = await supabase.rpc('get_race_results_view_v1', {
         p_race_id: race.id,
-        p_after_stage_id: currentResultsStageId,
+        p_after_stage_id: classificationResultsStageId,
       })
 
       if (!mounted) return
@@ -2148,7 +6140,7 @@ function RaceLeadersCard({
     return () => {
       mounted = false
     }
-  }, [race, race.id, currentResultsStageId])
+  }, [race, race.id, classificationResultsStageId])
 
   const rows = [
     { key: 'general', label: 'General leader' },
@@ -2668,49 +6660,48 @@ function normalizeRaceRewardsTotalsPayload(
   }
 }
 
+type RaceRewardTotalsView =
+  | 'prize_team'
+  | 'ranking_team'
+  | 'ranking_rider'
+
 function RaceRewardsTotalsPanel({
   raceId,
   viewerTeamId,
 }: {
   raceId: string
-  viewerTeamId: string | null
+  viewerTeamId?: string | null
 }) {
   const [payload, setPayload] = useState<RaceRewardsTotalsPayload | null>(null)
   const [loading, setLoading] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [view, setView] = useState<RaceRewardTotalsView>('prize_team')
 
   useEffect(() => {
-    if (!raceId) {
-      setPayload(null)
-      return
-    }
-
     let cancelled = false
 
-    async function loadTotals() {
+    async function loadRewards() {
       setLoading(true)
       setErrorMessage(null)
 
       const { data, error } = await supabase.rpc('get_race_rewards_totals_v1', {
         p_race_id: raceId,
-        p_viewer_team_id: viewerTeamId,
+        p_viewer_team_id: viewerTeamId ?? null,
       })
 
       if (cancelled) return
 
       if (error) {
-        console.error(error)
         setPayload(null)
         setErrorMessage(error.message)
-        setLoading(false)
-        return
+      } else {
+        setPayload(normalizeRaceRewardsTotalsPayload(data))
       }
 
-      setPayload(normalizeRaceRewardsTotalsPayload(data))
       setLoading(false)
     }
 
-    loadTotals()
+    loadRewards()
 
     return () => {
       cancelled = true
@@ -2718,135 +6709,84 @@ function RaceRewardsTotalsPanel({
   }, [raceId, viewerTeamId])
 
   if (loading) {
-    return (
-      <div className="rounded-3xl border border-slate-200 bg-white p-5 text-sm text-slate-500 shadow-sm">
-        Loading race rewards…
-      </div>
-    )
+    return <div className="text-sm text-slate-500">Loading rewards…</div>
   }
 
   if (errorMessage) {
-    return (
-      <div className="rounded-3xl border border-rose-200 bg-rose-50 p-5 text-sm text-rose-700 shadow-sm">
-        Could not load race rewards: {errorMessage}
-      </div>
-    )
+    return <div className="text-sm text-rose-700">{errorMessage}</div>
   }
 
   if (!payload) {
-    return null
+    return <div className="text-sm text-slate-500">No reward data available.</div>
   }
 
-  const isHighlighted = (row: { team_id?: string | null; is_viewer_team?: boolean }) =>
-    Boolean(row.is_viewer_team) || isViewerTeamRow(row, viewerTeamId)
-
-  const rowClass = (row: { team_id?: string | null; is_viewer_team?: boolean }) =>
-    isHighlighted(row) ? VIEWER_TEAM_ROW_HIGHLIGHT_CLASS : 'bg-white'
+  const rowClass = (row: ViewerTeamComparableRow) =>
+    viewerTeamRowClass(row, viewerTeamId)
 
   return (
-    <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-      <div className="mb-5">
-        <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-          Race rewards
+    <div>
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <div className="text-sm text-slate-500">
+          Select which race reward table to view.
         </div>
-        <h3 className="mt-1 text-lg font-semibold text-slate-950">
-          Total prize money and international points
-        </h3>
-        <p className="mt-1 text-sm text-slate-500">
-          Totals for the whole race based on generated reward rows.
-        </p>
+
+        <select
+          value={view}
+          onChange={(event) => setView(event.target.value as RaceRewardTotalsView)}
+          className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm"
+        >
+          <option value="prize_team">Prize money by team</option>
+          <option value="ranking_team">International points by team</option>
+          <option value="ranking_rider">International points by rider</option>
+        </select>
       </div>
 
-      <div className="grid gap-5 xl:grid-cols-2">
-        <div className="overflow-hidden rounded-2xl border border-slate-200">
-          <div className="border-b border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-900">
-            Prize money by team
-          </div>
-
-          {payload.prize_team_totals.length === 0 ? (
-            <div className="px-4 py-6 text-sm text-slate-500">
-              No prize money totals generated yet.
-            </div>
-          ) : (
-            <table className="w-full text-sm">
-              <thead className="bg-white text-xs uppercase tracking-wide text-slate-500">
-                <tr>
-                  <th className="px-4 py-3 text-left">#</th>
-                  <th className="px-4 py-3 text-left">Team</th>
-                  <th className="px-4 py-3 text-right">Prize</th>
+      <div className="overflow-hidden rounded-2xl border border-slate-200">
+        {view === 'prize_team' ? (
+          <table className="w-full text-sm">
+            <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+              <tr>
+                <th className="px-4 py-3 text-left">#</th>
+                <th className="px-4 py-3 text-left">Team</th>
+                <th className="px-4 py-3 text-right">Prize</th>
+              </tr>
+            </thead>
+            <tbody>
+              {payload.prize_team_totals.map((row) => (
+                <tr key={row.team_id} className={`border-t border-slate-100 ${rowClass(row)}`}>
+                  <td className="px-4 py-3 font-semibold">{row.rank}</td>
+                  <td className="px-4 py-3 font-semibold text-slate-950">{row.team_name}</td>
+                  <td className="px-4 py-3 text-right font-semibold">
+                    {formatCash(row.total_prize_cash)}
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {payload.prize_team_totals.map((row) => (
-                  <tr
-                    key={row.team_id}
-                    className={`border-t border-slate-100 ${rowClass(row)}`}
-                  >
-                    <td className="px-4 py-3 font-semibold">{row.rank}</td>
-                    <td className="px-4 py-3 font-semibold text-slate-950">
-                      {row.team_name}
-                    </td>
-                    <td className="px-4 py-3 text-right font-semibold">
-                      {formatCash(row.total_prize_cash)}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </div>
-
-        <div className="overflow-hidden rounded-2xl border border-slate-200">
-          <div className="border-b border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-900">
-            International points by team
-          </div>
-
-          {payload.ranking_team_totals.length === 0 ? (
-            <div className="px-4 py-6 text-sm text-slate-500">
-              No team points totals generated yet.
-            </div>
-          ) : (
-            <table className="w-full text-sm">
-              <thead className="bg-white text-xs uppercase tracking-wide text-slate-500">
-                <tr>
-                  <th className="px-4 py-3 text-left">#</th>
-                  <th className="px-4 py-3 text-left">Team</th>
-                  <th className="px-4 py-3 text-right">Points</th>
+              ))}
+            </tbody>
+          </table>
+        ) : view === 'ranking_team' ? (
+          <table className="w-full text-sm">
+            <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+              <tr>
+                <th className="px-4 py-3 text-left">#</th>
+                <th className="px-4 py-3 text-left">Team</th>
+                <th className="px-4 py-3 text-right">Points</th>
+              </tr>
+            </thead>
+            <tbody>
+              {payload.ranking_team_totals.map((row) => (
+                <tr key={row.team_id} className={`border-t border-slate-100 ${rowClass(row)}`}>
+                  <td className="px-4 py-3 font-semibold">{row.rank}</td>
+                  <td className="px-4 py-3 font-semibold text-slate-950">{row.team_name}</td>
+                  <td className="px-4 py-3 text-right font-semibold">
+                    {row.total_team_points.toLocaleString()}
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {payload.ranking_team_totals.map((row) => (
-                  <tr
-                    key={row.team_id}
-                    className={`border-t border-slate-100 ${rowClass(row)}`}
-                  >
-                    <td className="px-4 py-3 font-semibold">{row.rank}</td>
-                    <td className="px-4 py-3 font-semibold text-slate-950">
-                      {row.team_name}
-                    </td>
-                    <td className="px-4 py-3 text-right font-semibold">
-                      {row.total_team_points.toLocaleString()}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </div>
-      </div>
-
-      <div className="mt-5 overflow-hidden rounded-2xl border border-slate-200">
-        <div className="border-b border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-900">
-          International points by rider
-        </div>
-
-        {payload.ranking_rider_totals.length === 0 ? (
-          <div className="px-4 py-6 text-sm text-slate-500">
-            No rider points totals generated yet.
-          </div>
+              ))}
+            </tbody>
+          </table>
         ) : (
           <table className="w-full text-sm">
-            <thead className="bg-white text-xs uppercase tracking-wide text-slate-500">
+            <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
               <tr>
                 <th className="px-4 py-3 text-left">#</th>
                 <th className="px-4 py-3 text-left">Rider</th>
@@ -2856,14 +6796,9 @@ function RaceRewardsTotalsPanel({
             </thead>
             <tbody>
               {payload.ranking_rider_totals.map((row) => (
-                <tr
-                  key={row.rider_id}
-                  className={`border-t border-slate-100 ${rowClass(row)}`}
-                >
+                <tr key={row.rider_id} className={`border-t border-slate-100 ${rowClass(row)}`}>
                   <td className="px-4 py-3 font-semibold">{row.rank}</td>
-                  <td className="px-4 py-3 font-semibold text-slate-950">
-                    {row.rider_name}
-                  </td>
+                  <td className="px-4 py-3 font-semibold text-slate-950">{row.rider_name}</td>
                   <td className="px-4 py-3 text-slate-600">{row.team_name}</td>
                   <td className="px-4 py-3 text-right font-semibold">
                     {row.total_rider_points.toLocaleString()}
@@ -2878,11 +6813,6 @@ function RaceRewardsTotalsPanel({
   )
 }
 
-
-type RaceInfoTab = 'participants' | 'results'
-type ClassificationView = 'general' | 'points' | 'mountain' | 'young' | 'team'
-type StageResultView = 'stage_general' | 'stage_sprint' | 'stage_mountain'
-type StagePointAggregateView = 'sprint' | 'mountain'
 
 function getReportBadgeLabel(eventType: string) {
   switch (eventType) {
@@ -2917,34 +6847,102 @@ function getReportBadgeLabel(eventType: string) {
   }
 }
 
-function getReportBadgeClass(eventType: string) {
+type RaceReportGroupSummary = {
+  code: string
+  label: string
+  size: number | null
+  gapSeconds: number | null
+}
+
+function getReportEventDotClass(eventType: string): string {
   switch (eventType) {
     case 'start':
     case 'neutral_start':
-      return 'bg-sky-100 text-sky-700'
+      return 'bg-sky-500'
     case 'attack':
     case 'breakaway':
-      return 'bg-orange-100 text-orange-700'
+      return 'bg-orange-500'
     case 'sprint':
-      return 'bg-emerald-100 text-emerald-700'
+      return 'bg-emerald-500'
     case 'kom':
-      return 'bg-rose-100 text-rose-700'
-    case 'catch':
-      return 'bg-slate-200 text-slate-700'
+      return 'bg-rose-500'
     case 'crash':
     case 'mechanical':
-      return 'bg-amber-100 text-amber-700'
-    case 'weather':
-      return 'bg-cyan-100 text-cyan-700'
-    case 'split':
-      return 'bg-yellow-50 text-yellow-700 ring-1 ring-yellow-100'
+      return 'bg-amber-500'
     case 'finish':
-      return 'bg-indigo-100 text-indigo-700'
+      return 'bg-indigo-500'
+    case 'split':
+      return 'bg-yellow-500'
     case 'summary':
-      return 'bg-slate-100 text-slate-700'
+      return 'bg-slate-400'
     default:
-      return 'bg-slate-100 text-slate-700'
+      return 'bg-slate-400'
   }
+}
+
+function getRaceReportKmLabel(event: RaceStageReportEvent): string {
+  if (event.km_marker === null || event.km_marker === undefined) return '—'
+  return `${Number(event.km_marker).toFixed(Number(event.km_marker) % 1 === 0 ? 0 : 1)} km`
+}
+
+function getRaceReportParticipantLine(event: RaceStageReportEvent): string | null {
+  if (event.rider_name_snapshot && event.team_name_snapshot) {
+    return `${event.rider_name_snapshot} · ${event.team_name_snapshot}`
+  }
+
+  if (event.rider_name_snapshot) return event.rider_name_snapshot
+  if (event.team_name_snapshot) return event.team_name_snapshot
+
+  return null
+}
+
+function getRaceReportGroupColor(code: string): string {
+  switch (code) {
+    case 'front_group':
+      return 'border-emerald-200 bg-emerald-50 text-emerald-800'
+    case 'chase_group':
+      return 'border-sky-200 bg-sky-50 text-sky-800'
+    case 'main_peloton':
+      return 'border-blue-200 bg-blue-50 text-blue-800'
+    case 'dropped_group':
+      return 'border-orange-200 bg-orange-50 text-orange-800'
+    case 'outside_group':
+      return 'border-slate-200 bg-slate-50 text-slate-700'
+    default:
+      return 'border-slate-200 bg-slate-50 text-slate-700'
+  }
+}
+
+function extractRaceReportGroups(events: RaceStageReportEvent[]): RaceReportGroupSummary[] {
+  return events
+    .map((event) => {
+      const metadata = event.metadata ?? {}
+      const code = typeof metadata.group_code === 'string' ? metadata.group_code : null
+
+      if (!code) return null
+
+      return {
+        code,
+        label: event.title,
+        size:
+          typeof metadata.group_size === 'number'
+            ? metadata.group_size
+            : Number.isFinite(Number(metadata.group_size))
+              ? Number(metadata.group_size)
+              : null,
+        gapSeconds:
+          typeof metadata.gap_seconds === 'number'
+            ? metadata.gap_seconds
+            : Number.isFinite(Number(metadata.gap_seconds))
+              ? Number(metadata.gap_seconds)
+              : null,
+      }
+    })
+    .filter((group): group is RaceReportGroupSummary => group !== null)
+    .sort((a, b) => {
+      const order = ['front_group', 'chase_group', 'main_peloton', 'dropped_group', 'outside_group']
+      return order.indexOf(a.code) - order.indexOf(b.code)
+    })
 }
 
 function RaceStageReportCard({
@@ -2996,18 +6994,31 @@ function RaceStageReportCard({
     }
   }, [selectedStageId])
 
+  const groups = extractRaceReportGroups(events)
+
   return (
     <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-      <div className="mb-5">
-        <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-          Race report
+      <div className="mb-5 flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+            Race report
+          </div>
+
+          <h3 className="mt-1 text-lg font-semibold text-slate-950">
+            {selectedStageName ?? 'Stage report'}
+          </h3>
+
+          <p className="mt-1 text-sm text-slate-500">
+            Compact race commentary and final road groups.
+          </p>
         </div>
-        <h3 className="mt-1 text-lg font-semibold text-slate-950">
-          {selectedStageName ?? 'Stage report'}
-        </h3>
-        <p className="mt-1 text-sm text-slate-500">
-          Preview timeline of key events during the selected stage.
-        </p>
+
+        <button
+          type="button"
+          className="rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100"
+        >
+          Watch replay
+        </button>
       </div>
 
       {loading ? (
@@ -3023,58 +7034,114 @@ function RaceStageReportCard({
           No race report available for this stage yet.
         </div>
       ) : (
-        <div className="relative space-y-3">
-          <div className="absolute bottom-4 left-[18px] top-4 w-px bg-slate-200" />
+        <div className="grid gap-5 xl:grid-cols-[minmax(0,1.7fr)_minmax(280px,0.8fr)]">
+          <div className="overflow-hidden rounded-2xl border border-slate-200">
+            <div className="grid grid-cols-[72px_28px_minmax(0,1fr)] border-b border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
+              <div>Km</div>
+              <div />
+              <div>Commentary</div>
+            </div>
 
-          {events.map((event) => (
-            <div key={event.id} className="relative flex gap-4">
-              <div className="relative z-10 mt-4 h-3 w-3 rounded-full border-2 border-white bg-slate-400 shadow" />
+            <div className="divide-y divide-slate-100">
+              {events.map((event) => {
+                const participantLine = getRaceReportParticipantLine(event)
 
-              <div className="flex-1 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
-                <div className="mb-2 flex flex-wrap items-center gap-2">
-                  <span
-                    className={`rounded-full px-2.5 py-1 text-xs font-semibold ${getReportBadgeClass(
-                      event.event_type
-                    )}`}
+                return (
+                  <div
+                    key={event.id}
+                    className="grid grid-cols-[72px_28px_minmax(0,1fr)] items-start gap-0 px-3 py-2.5 text-sm hover:bg-slate-50"
                   >
-                    {getReportBadgeLabel(event.event_type)}
-                  </span>
+                    <div className="pt-0.5 text-xs font-semibold text-slate-500">
+                      {getRaceReportKmLabel(event)}
+                    </div>
 
-                  {event.km_marker !== null && event.km_marker !== undefined ? (
-                    <span className="text-xs font-semibold text-slate-700">
-                      {Number(event.km_marker).toFixed(
-                        Number(event.km_marker) % 1 === 0 ? 0 : 1
-                      )}{' '}
-                      km
-                    </span>
-                  ) : null}
+                    <div className="pt-1">
+                      <span
+                        className={`block h-2.5 w-2.5 rounded-full ${getReportEventDotClass(
+                          event.event_type
+                        )}`}
+                        title={getReportBadgeLabel(event.event_type)}
+                      />
+                    </div>
 
-                  {event.race_time_label ? (
-                    <span className="text-xs text-slate-500">{event.race_time_label}</span>
-                  ) : null}
-                </div>
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+                        <span className="text-sm font-semibold text-slate-950">
+                          {event.title}
+                        </span>
 
-                <div className="text-sm font-semibold text-slate-950">{event.title}</div>
+                        <span className="text-xs font-medium text-slate-400">
+                          {getReportBadgeLabel(event.event_type)}
+                        </span>
+                      </div>
 
-                <div className="mt-1 text-sm leading-6 text-slate-600">
-                  {event.description}
-                </div>
+                      <div className="mt-0.5 text-sm leading-5 text-slate-700">
+                        {event.description}
+                      </div>
 
-                {event.rider_name_snapshot || event.team_name_snapshot ? (
-                  <div className="mt-2 text-xs font-medium text-slate-500">
-                    {[event.rider_name_snapshot, event.team_name_snapshot]
-                      .filter(Boolean)
-                      .join(' · ')}
+                      {participantLine ? (
+                        <div className="mt-0.5 text-xs text-slate-500">
+                          {participantLine}
+                        </div>
+                      ) : null}
+                    </div>
                   </div>
-                ) : null}
+                )
+              })}
+            </div>
+          </div>
+
+          <aside className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+            <div className="mb-3">
+              <div className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+                Road groups
+              </div>
+              <div className="mt-1 text-sm text-slate-500">
+                Final race situation from the replay engine.
               </div>
             </div>
-          ))}
+
+            {groups.length === 0 ? (
+              <div className="rounded-2xl border border-slate-200 bg-white px-3 py-4 text-sm text-slate-500">
+                No road group data available yet.
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {groups.map((group) => (
+                  <div
+                    key={group.code}
+                    className={`rounded-2xl border px-3 py-3 ${getRaceReportGroupColor(
+                      group.code
+                    )}`}
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="text-sm font-bold">
+                        {group.label}
+                      </div>
+
+                      <div className="text-xs font-semibold">
+                        {group.gapSeconds === 0
+                          ? 'Leader'
+                          : group.gapSeconds !== null
+                            ? `+${formatGapValue(group.gapSeconds)}`
+                            : '—'}
+                      </div>
+                    </div>
+
+                    <div className="mt-1 text-xs opacity-80">
+                      {group.size !== null ? `${group.size} riders` : 'Riders —'}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </aside>
         </div>
       )}
     </div>
   )
 }
+
 
 
 type RaceParticipantTeamViewRow = {
@@ -3923,6 +7990,117 @@ function ApplicationPendingInfoCard({
   )
 }
 
+function usePublishedRaceStageIds(
+  stages: RaceStage[]
+): string[] {
+  const stageIds = useMemo(
+    () => stages.map((stage) => stage.id),
+    [stages]
+  )
+
+  const stageIdsKey = stageIds.join('|')
+
+  const [
+    publishedStageIds,
+    setPublishedStageIds,
+  ] = useState<string[]>([])
+
+  useEffect(() => {
+    if (stageIds.length === 0) {
+      setPublishedStageIds((current) =>
+        current.length === 0 ? current : []
+      )
+      return
+    }
+
+    let cancelled = false
+
+    async function loadPublishedStages() {
+      const results = await Promise.all(
+        stageIds.map(async (stageId) => {
+          const { data, error } =
+            await supabase.rpc(
+              'get_race_stage_live_state_v1',
+              {
+                p_stage_id: stageId,
+              }
+            )
+
+          if (error) {
+            console.error(
+              `Could not load live state for stage ${stageId}:`,
+              error
+            )
+            return null
+          }
+
+          const value = Array.isArray(data)
+            ? data[0]
+            : data
+
+          const liveState =
+            value &&
+            typeof value === 'object'
+              ? (value as RaceStageLiveState)
+              : null
+
+          return liveState?.results_visible === true
+            ? stageId
+            : null
+        })
+      )
+
+      if (cancelled) return
+
+      const nextPublishedStageIds =
+        results.filter(
+          (stageId): stageId is string =>
+            Boolean(stageId)
+        )
+
+      /*
+       * Keep the existing array reference when the publication
+       * state has not changed.
+       *
+       * This prevents the results effects from restarting every
+       * five seconds.
+       */
+      setPublishedStageIds(
+        (currentPublishedStageIds) => {
+          const unchanged =
+            currentPublishedStageIds.length ===
+              nextPublishedStageIds.length &&
+            currentPublishedStageIds.every(
+              (stageId, index) =>
+                stageId ===
+                nextPublishedStageIds[index]
+            )
+
+          return unchanged
+            ? currentPublishedStageIds
+            : nextPublishedStageIds
+        }
+      )
+    }
+
+    void loadPublishedStages()
+
+    const interval = window.setInterval(
+      () => {
+        void loadPublishedStages()
+      },
+      5000
+    )
+
+    return () => {
+      cancelled = true
+      window.clearInterval(interval)
+    }
+  }, [stageIdsKey])
+
+  return publishedStageIds
+}
+
 function RaceResultsHub({
   race,
   stages,
@@ -3930,7 +8108,6 @@ function RaceResultsHub({
   participantsLoading,
   participantsError,
   currentClubId,
-  currentGameDate,
   teamEntryStatus,
   onOpenTeamProfile,
   onOpenRiderProfile,
@@ -3941,7 +8118,6 @@ function RaceResultsHub({
   participantsLoading: boolean
   participantsError: string | null
   currentClubId?: string | null
-  currentGameDate?: string | null
   teamEntryStatus?: string | null
   onOpenTeamProfile: (teamId: string) => void
   onOpenRiderProfile: (riderId: string) => void
@@ -3952,31 +8128,115 @@ function RaceResultsHub({
   const [stageId, setStageId] = useState<string>(stages[0]?.id ?? '')
   const [stageResultView, setStageResultView] =
     useState<StageResultView>('stage_general')
+  const [isExpanded, setIsExpanded] = useState(false)
 
   const [classificationPayload, setClassificationPayload] =
     useState<RaceResultsViewPayload | null>(null)
   const [classificationLoading, setClassificationLoading] = useState(false)
   const [classificationError, setClassificationError] = useState<string | null>(null)
+  const [
+    availableClassificationStageIds,
+    setAvailableClassificationStageIds,
+  ] = useState<string[]>([])
 
   const [stageResultsPayload, setStageResultsPayload] =
     useState<RaceResultsViewPayload | null>(null)
+  const [stagePointResults, setStagePointResults] =
+    useState<RacePointResultRow[]>([])
   const [stageResultsLoading, setStageResultsLoading] = useState(false)
   const [stageResultsError, setStageResultsError] = useState<string | null>(null)
   const [inlineApplicationQuote, setInlineApplicationQuote] = useState<RaceApplicationQuote | null>(null)
   const [inlineApplicationQuoteLoading, setInlineApplicationQuoteLoading] = useState(false)
   const [inlineApplicationQuoteError, setInlineApplicationQuoteError] = useState<string | null>(null)
 
+  const publishedStageIds =
+    usePublishedRaceStageIds(stages)
+
+  const publishedStageIdSet = useMemo(
+    () => new Set(publishedStageIds),
+    [publishedStageIds]
+  )
+
+  const publishedStages = useMemo(
+    () =>
+      [...stages]
+        .filter((stage) =>
+          publishedStageIdSet.has(stage.id)
+        )
+        .sort(
+          (left, right) =>
+            Number(left.stage_number) -
+            Number(right.stage_number)
+        ),
+    [stages, publishedStageIdSet]
+  )
+
+  const normalizedRaceStatus =
+    race.status?.trim().toLowerCase() ?? ''
+
+  const raceHasStarted =
+    publishedStages.length > 0 ||
+    [
+      'active',
+      'completed',
+      'finished',
+      'archived',
+    ].includes(normalizedRaceStatus)
+
+  function toggleRaceInformation() {
+    setIsExpanded((currentValue) => {
+      const nextValue = !currentValue
+
+      /*
+       * Before the race starts:
+       *   Teams & riders opens first.
+       *
+       * Once the race starts:
+       *   Results opens first whenever the card is expanded.
+       */
+      if (nextValue) {
+        setActiveTab(
+          raceHasStarted
+            ? 'results'
+            : 'participants'
+        )
+      }
+
+      return nextValue
+    })
+  }
+
   useEffect(() => {
-    if (stages.length === 0) return
-
-    const hasStage = stages.some((stage) => stage.id === stageId)
-
-    if (!stageId || !hasStage) {
-      setStageId(stages[0].id)
+    if (publishedStages.length === 0) {
+      setStageId('')
+      return
     }
-  }, [stages, stageId])
 
-  const selectedStage = stages.find((stage) => stage.id === stageId) ?? stages[0] ?? null
+    const selectedStageIsPublished =
+      publishedStages.some(
+        (stage) => stage.id === stageId
+      )
+
+    if (!selectedStageIsPublished) {
+      /*
+       * Default to the latest published stage.
+       */
+      setStageId(
+        publishedStages[
+          publishedStages.length - 1
+        ].id
+      )
+    }
+  }, [publishedStages, stageId])
+
+  const selectedStage =
+    publishedStages.find(
+      (stage) => stage.id === stageId
+    ) ??
+    publishedStages[
+      publishedStages.length - 1
+    ] ??
+    null
   const viewerTeamId = getViewerTeamId(currentClubId)
   const effectiveEntryStatus = teamEntryStatus ?? race.existing_application_status ?? null
   const showPendingApplicationInfo =
@@ -3987,11 +8247,84 @@ function RaceResultsHub({
     participantTeams.length === 0 &&
     !isRaceStartlistLocked(race.status)
 
-  const currentResultsStage = useMemo(() => {
-    return getCurrentResultsStage(stages, currentGameDate)
-  }, [stages, currentGameDate])
+  useEffect(() => {
+    if (
+      !isExpanded ||
+      !race.id ||
+      activeTab !== 'results'
+    ) {
+      setAvailableClassificationStageIds([])
+      return
+    }
 
-  const currentResultsStageId = currentResultsStage?.id ?? null
+    let cancelled = false
+
+    async function loadAvailableClassificationStages() {
+      const { data, error } = await supabase
+        .from('race_classification_standings')
+        .select('after_stage_id')
+        .eq('race_id', race.id)
+        .eq('classification_type', 'general')
+        .eq('entity_type', 'rider')
+
+      if (cancelled) return
+
+      if (error) {
+        console.error(
+          'Could not load available classification stages:',
+          error
+        )
+        setAvailableClassificationStageIds([])
+        return
+      }
+
+      setAvailableClassificationStageIds(
+        Array.from(
+          new Set(
+            (data ?? [])
+              .map((row) => row.after_stage_id)
+              .filter(
+                (stageId): stageId is string =>
+                  typeof stageId === 'string' &&
+                  stageId.length > 0
+              )
+          )
+        )
+      )
+    }
+
+    loadAvailableClassificationStages()
+
+    return () => {
+      cancelled = true
+    }
+  }, [race.id, activeTab, isExpanded])
+
+  const availableClassificationStageIdSet =
+    useMemo(
+      () =>
+        new Set(
+          availableClassificationStageIds
+        ),
+      [availableClassificationStageIds]
+    )
+
+  /*
+   * Stage 1 selected → classification after Stage 1
+   * Stage 2 selected → classification after Stage 2
+   * Stage 3 selected → classification after Stage 3,
+   * but only after Stage 3 is published.
+   */
+  const classificationResultsStageId =
+    selectedStage &&
+    publishedStageIdSet.has(
+      selectedStage.id
+    ) &&
+    availableClassificationStageIdSet.has(
+      selectedStage.id
+    )
+      ? selectedStage.id
+      : null
 
   useEffect(() => {
     let mounted = true
@@ -4043,9 +8376,15 @@ function RaceResultsHub({
     let mounted = true
 
     async function loadCurrentClassifications() {
-      if (!race.id || activeTab !== 'results') return
+      if (
+        !isExpanded ||
+        !race.id ||
+        activeTab !== 'results'
+      ) {
+        return
+      }
 
-      if (!currentResultsStageId) {
+      if (!classificationResultsStageId) {
         setClassificationPayload(null)
         return
       }
@@ -4055,7 +8394,7 @@ function RaceResultsHub({
 
       const { data, error } = await supabase.rpc('get_race_results_view_v1', {
         p_race_id: race.id,
-        p_after_stage_id: currentResultsStageId,
+        p_after_stage_id: classificationResultsStageId,
       })
 
       if (!mounted) return
@@ -4075,29 +8414,69 @@ function RaceResultsHub({
     return () => {
       mounted = false
     }
-  }, [race.id, currentResultsStageId, activeTab])
+  }, [
+    race.id,
+    classificationResultsStageId,
+    activeTab,
+    isExpanded,
+  ])
 
   useEffect(() => {
     let mounted = true
 
     async function loadStageResults() {
-      if (!race.id || !stageId || activeTab !== 'results') return
+      if (
+        !isExpanded ||
+        !race.id ||
+        !stageId ||
+        !publishedStageIdSet.has(stageId) ||
+        activeTab !== 'results'
+      ) {
+        setStageResultsPayload(null)
+        setStagePointResults([])
+        return
+      }
 
       setStageResultsLoading(true)
       setStageResultsError(null)
 
-      const { data, error } = await supabase.rpc('get_race_results_view_v1', {
-        p_race_id: race.id,
-        p_after_stage_id: stageId,
-      })
+      const [
+        { data: resultsData, error: resultsError },
+        { data: pointData, error: pointError },
+      ] = await Promise.all([
+        supabase.rpc('get_race_results_view_v1', {
+          p_race_id: race.id,
+          p_after_stage_id: stageId,
+        }),
+
+        supabase.rpc('get_race_stage_point_results_v1', {
+          p_stage_id: stageId,
+        }),
+      ])
 
       if (!mounted) return
 
-      if (error) {
+      if (resultsError) {
         setStageResultsPayload(null)
-        setStageResultsError(error.message)
+        setStagePointResults([])
+        setStageResultsError(resultsError.message)
       } else {
-        setStageResultsPayload(normalizeRaceResultsPayload(data))
+        setStageResultsPayload(
+          normalizeRaceResultsPayload(resultsData)
+        )
+
+        setStagePointResults(
+          !pointError && Array.isArray(pointData)
+            ? (pointData as RacePointResultRow[])
+            : []
+        )
+
+        if (pointError) {
+          console.error(
+            'Could not load stage point results:',
+            pointError
+          )
+        }
       }
 
       setStageResultsLoading(false)
@@ -4108,7 +8487,13 @@ function RaceResultsHub({
     return () => {
       mounted = false
     }
-  }, [race.id, stageId, activeTab])
+  }, [
+    race.id,
+    stageId,
+    activeTab,
+    isExpanded,
+    publishedStageIdSet,
+  ])
 
   const classificationRows = useMemo(() => {
     return (classificationPayload?.classifications ?? []).filter(
@@ -4124,20 +8509,30 @@ function RaceResultsHub({
 
     return buildAggregatedStagePointRows(
       stageResultsPayload?.stage_results ?? [],
-      stageResultsPayload?.point_results ?? [],
+      stagePointResults,
       stagePointAggregateView
     )
-  }, [stageResultsPayload, stagePointAggregateView, stageResultView])
+  }, [
+    stageResultsPayload,
+    stagePointResults,
+    stagePointAggregateView,
+    stageResultView,
+  ])
 
-  const normalizedRaceStatus = race.status?.toLowerCase() ?? null
-  const raceAwaitingSimulation = normalizedRaceStatus === 'active'
+  const raceAwaitingSimulation =
+    normalizedRaceStatus === 'active'
 
   function renderResultsState(
     loading: boolean,
     error: string | null,
-    label: string
+    label: string,
+    hasExistingData = false
   ) {
-    if (loading) {
+    /*
+     * Never replace an already rendered table during a background
+     * synchronization request.
+     */
+    if (loading && !hasExistingData) {
       return (
         <div className="mt-4 rounded-xl bg-white p-4 text-sm text-slate-500">
           Loading {label}…
@@ -4145,7 +8540,7 @@ function RaceResultsHub({
       )
     }
 
-    if (error) {
+    if (error && !hasExistingData) {
       return (
         <div className="mt-4 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
           Could not load {label}: {error}
@@ -4157,50 +8552,61 @@ function RaceResultsHub({
   }
 
   return (
-    <div
-      className="w-full rounded-3xl border border-slate-200 bg-white p-6 shadow-sm"
+    <section
+      className="w-full rounded-3xl border border-slate-200 bg-white shadow-sm"
       aria-label={`Race information for ${race.name}`}
     >
-      <div className="flex flex-wrap items-center justify-between gap-4">
+      <button
+        type="button"
+        onClick={toggleRaceInformation}
+        className="flex w-full items-center justify-between gap-4 px-6 py-5 text-left"
+      >
         <div>
           <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
             Race information
           </div>
+
           <div className="mt-1 text-lg font-semibold text-slate-950">
             Participants and results
           </div>
         </div>
 
-        <div className="flex rounded-2xl bg-slate-100 p-1">
-          <button
-            type="button"
-            onClick={() => setActiveTab('participants')}
-            className={[
-              'rounded-xl px-4 py-2 text-sm font-semibold',
-              activeTab === 'participants'
-                ? 'bg-white text-slate-950 shadow-sm'
-                : 'text-slate-500',
-            ].join(' ')}
-          >
-            Teams & riders
-          </button>
+        <span className="rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-semibold text-slate-700">
+          {isExpanded ? 'Hide' : 'Show'}
+        </span>
+      </button>
 
-          <button
-            type="button"
-            onClick={() => setActiveTab('results')}
-            className={[
-              'rounded-xl px-4 py-2 text-sm font-semibold',
-              activeTab === 'results'
-                ? 'bg-white text-slate-950 shadow-sm'
-                : 'text-slate-500',
-            ].join(' ')}
-          >
-            Results
-          </button>
-        </div>
-      </div>
+      {isExpanded ? (
+        <div className="border-t border-slate-100 p-6">
+          <div className="flex rounded-2xl bg-slate-100 p-1">
+            <button
+              type="button"
+              onClick={() => setActiveTab('participants')}
+              className={[
+                'rounded-xl px-4 py-2 text-sm font-semibold',
+                activeTab === 'participants'
+                  ? 'bg-white text-slate-950 shadow-sm'
+                  : 'text-slate-500',
+              ].join(' ')}
+            >
+              Teams & riders
+            </button>
 
-      {raceAwaitingSimulation ? (
+            <button
+              type="button"
+              onClick={() => setActiveTab('results')}
+              className={[
+                'rounded-xl px-4 py-2 text-sm font-semibold',
+                activeTab === 'results'
+                  ? 'bg-white text-slate-950 shadow-sm'
+                  : 'text-slate-500',
+              ].join(' ')}
+            >
+              Results
+            </button>
+          </div>
+
+          {raceAwaitingSimulation ? (
         <div className="mt-5 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
           Race active. Teams and riders are locked. Results will appear here after the race simulation engine runs.
         </div>
@@ -4256,7 +8662,8 @@ function RaceResultsHub({
               {renderResultsState(
                 classificationLoading,
                 classificationError,
-                'race classifications'
+                'race classifications',
+                classificationPayload !== null
               ) ?? (
                 <RaceClassificationTable
                   rows={classificationRows}
@@ -4286,7 +8693,7 @@ function RaceResultsHub({
                     onChange={(event) => setStageId(event.target.value)}
                     className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm"
                   >
-                    {stages.map((stage) => (
+                    {publishedStages.map((stage) => (
                       <option key={stage.id} value={stage.id}>
                         Stage {stage.stage_number}
                       </option>
@@ -4310,11 +8717,15 @@ function RaceResultsHub({
               {renderResultsState(
                 stageResultsLoading,
                 stageResultsError,
-                'stage results'
+                'stage results',
+                stageResultsPayload !== null
               ) ?? (
                 stageResultView === 'stage_general' ? (
                   <StageResultsTable
-                    rows={stageResultsPayload?.stage_results ?? []}
+                    rows={
+                      stageResultsPayload?.stage_results ??
+                      []
+                    }
                     participantTeams={participantTeams}
                     currentClubId={viewerTeamId}
                   />
@@ -4330,18 +8741,22 @@ function RaceResultsHub({
             </div>
           </div>
 
-          <RaceStageReportCard
-            selectedStageId={selectedStage?.id ?? null}
-            selectedStageName={selectedStage?.name ?? null}
-          />
-
-          <RaceRewardsTotalsPanel
-            raceId={race.id}
-            viewerTeamId={viewerTeamId}
-          />
+          <CollapsibleRaceSection
+            eyebrow="Race rewards"
+            title="Prize money and international points"
+            description="Prize money, team points, and rider points generated by the race engine."
+            defaultOpen={false}
+          >
+            <RaceRewardsTotalsPanel
+              raceId={race.id}
+              viewerTeamId={viewerTeamId}
+            />
+          </CollapsibleRaceSection>
         </div>
-      )}
-    </div>
+          )}
+        </div>
+      ) : null}
+    </section>
   )
 }
 
@@ -4462,6 +8877,32 @@ function StageResultsTable({
     )
   }
 
+  const participantRiderById = new Map(
+    participantTeams.flatMap((team) =>
+      team.riders.map(
+        (rider) => [rider.rider_id, rider] as const
+      )
+    )
+  )
+
+  function getFullStageResultRiderName(
+    row: RaceStageResultRow
+  ): string {
+    const participantRider = row.rider_id
+      ? participantRiderById.get(row.rider_id)
+      : null
+
+    return (
+      participantRider?.rider_name_snapshot?.trim() ||
+      row.full_name?.trim() ||
+      row.rider_full_name?.trim() ||
+      row.display_name?.trim() ||
+      row.rider_name?.trim() ||
+      row.rider_name_snapshot?.trim() ||
+      '—'
+    )
+  }
+
   const sortedRows = sortRankedRows(rows)
   const winnerElapsedSeconds = (() => {
     const winner = sortedRows.find(
@@ -4493,15 +8934,29 @@ function StageResultsTable({
       </td>
 
       <td className="px-3 py-3 font-medium text-slate-900">
-        {row.rider_name_snapshot ?? '—'}
+        {getFullStageResultRiderName(row)}
       </td>
 
       <td className="px-3 py-3 text-slate-500">
         {row.team_name_snapshot ?? '—'}
       </td>
 
-      <td className="px-3 py-3 text-right font-semibold text-slate-900">
-        {formatStageResultTime(row, winnerElapsedSeconds)}
+      <td className="px-3 py-3 text-right">
+        <div className="font-semibold text-slate-900">
+          {formatStageResultTime(row, winnerElapsedSeconds)}
+        </div>
+
+        {Number(row.bonus_seconds ?? 0) > 0 ? (
+          <div className="mt-0.5 text-[11px] font-medium text-emerald-700">
+            −{formatGapValue(Number(row.bonus_seconds))} GC bonus
+          </div>
+        ) : null}
+
+        {Number(row.penalty_seconds ?? 0) > 0 ? (
+          <div className="mt-0.5 text-[11px] font-medium text-red-700">
+            +{formatGapValue(Number(row.penalty_seconds))} penalty
+          </div>
+        ) : null}
       </td>
     </tr>
   )
@@ -4646,6 +9101,7 @@ type StageProfileDetailPayload = {
   stage_summary: string | null
   weather_summary: string | null
   weather_snapshot: JsonObject | null
+  stage_weather?: JsonObject | null
   distance_km: number | null
   elevation_gain_m: number | null
   terrain_type: string | null
@@ -4704,6 +9160,7 @@ function normalizeStageRouteMarker(value: unknown): StageRouteMarker | null {
 function normalizeStageProfileDetailPayload(value: unknown): StageProfileDetailPayload {
   const record = getRecord(value)
   const terrainSplit = getRecord(record.terrain_split)
+  const stageWeather = getRecord(record.stage_weather)
 
   return {
     stage_id: typeof record.stage_id === 'string' ? record.stage_id : '',
@@ -4714,6 +9171,9 @@ function normalizeStageProfileDetailPayload(value: unknown): StageProfileDetailP
     stage_summary: typeof record.stage_summary === 'string' ? record.stage_summary : null,
     weather_summary: typeof record.weather_summary === 'string' ? record.weather_summary : null,
     weather_snapshot: getRecord(record.weather_snapshot) as JsonObject,
+    stage_weather: Object.keys(stageWeather).length
+      ? (stageWeather as JsonObject)
+      : null,
     distance_km: Number.isFinite(Number(record.distance_km)) ? Number(record.distance_km) : null,
     elevation_gain_m: Number.isFinite(Number(record.elevation_gain_m))
       ? Number(record.elevation_gain_m)
@@ -5243,14 +9703,28 @@ function StageProfileChart({
 
 function RaceStageProfilePanel({
   selectedStageId,
+  classificationResultsStageId,
   selectedStage,
   race,
   currentGameDate,
+  currentClubId,
+  participantTeams,
+  canViewRaceReplay,
+  replayAccessLoading,
+  hideLiveResults,
+  onOpenReplay,
 }: {
   selectedStageId: string | null
+  classificationResultsStageId: string | null
   selectedStage: RaceStage | null
   race: Race | null
   currentGameDate: string | null
+  currentClubId?: string | null
+  participantTeams: RaceParticipantTeam[]
+  canViewRaceReplay?: boolean | null
+  replayAccessLoading?: boolean
+  hideLiveResults: boolean
+  onOpenReplay: (stage: RaceStage) => void
 }) {
   const [profile, setProfile] = useState<StageProfileDetailPayload | null>(null)
   const [loading, setLoading] = useState(false)
@@ -5506,14 +9980,28 @@ function RaceStageProfilePanel({
       </div>
 
       <div className="space-y-6">
+        <StageReplayAccessCard
+          race={race}
+          stage={selectedStage}
+          currentClubId={currentClubId}
+          participantTeams={participantTeams}
+          currentGameDate={currentGameDate}
+          canViewRaceReplay={canViewRaceReplay}
+          replayAccessLoading={replayAccessLoading}
+          onOpenReplay={onOpenReplay}
+        />
+
         <TerrainSplitCard terrainSplit={profileTerrainSplit} />
 
         {selectedStage ? (
           <StageWeatherCard stage={selectedStage} currentGameDate={currentGameDate} />
         ) : null}
 
-        {race ? (
-          <RaceLeadersCard race={race} currentResultsStageId={selectedStageId} />
+        {race && !hideLiveResults ? (
+          <RaceLeadersCard
+            race={race}
+            classificationResultsStageId={classificationResultsStageId}
+          />
         ) : null}
       </div>
     </div>
@@ -5553,6 +10041,7 @@ const RACE_ENTRY_RULES_DETAIL_SELECT = `
 export default function RaceDetailPage({
   raceIdOverride = null,
   currentClubId = DEFAULT_CURRENT_CLUB_ID,
+  onBack,
   onOpenTeamProfile,
   onOpenRiderProfile,
 }: RaceDetailPageProps) {
@@ -5562,6 +10051,11 @@ export default function RaceDetailPage({
   const raceId = raceIdOverride ?? routeRaceId
 
   function handleBackToCalendar() {
+    if (onBack) {
+      onBack()
+      return
+    }
+
     const state = location.state as
       | {
           from?: string
@@ -5611,16 +10105,24 @@ export default function RaceDetailPage({
   const [participantTeams, setParticipantTeams] = useState<RaceParticipantTeam[]>([])
   const [participantsLoading, setParticipantsLoading] = useState(false)
   const [participantsError, setParticipantsError] = useState<string | null>(null)
+  const [canViewRaceReplay, setCanViewRaceReplay] = useState<boolean | null>(null)
+  const [replayAccessLoading, setReplayAccessLoading] = useState(false)
   const [applicationActionLoading, setApplicationActionLoading] = useState<
     'apply' | 'cancel' | null
   >(null)
   const [applicationActionError, setApplicationActionError] = useState<string | null>(null)
   const [applicationActionMessage, setApplicationActionMessage] = useState<string | null>(null)
   const [showApplicationModal, setShowApplicationModal] = useState(false)
+  const [replayStage, setReplayStage] = useState<RaceStage | null>(null)
+  const [liveState, setLiveState] = useState<RaceStageLiveState | null>(null)
   const [applicationQuote, setApplicationQuote] = useState<RaceApplicationQuote | null>(null)
   const [applicationQuoteLoading, setApplicationQuoteLoading] = useState(false)
   const [applicationQuoteError, setApplicationQuoteError] = useState<string | null>(null)
   const [raceDetailReloadKey, setRaceDetailReloadKey] = useState(0)
+  const [
+    availableClassificationStageIds,
+    setAvailableClassificationStageIds,
+  ] = useState<string[]>([])
 
   useEffect(() => {
     let cancelled = false
@@ -5988,9 +10490,180 @@ export default function RaceDetailPage({
     }
   }, [raceId])
 
-  const currentResultsStage = useMemo(() => {
-    return getCurrentResultsStage(stages, currentGameDate)
-  }, [stages, currentGameDate])
+  useEffect(() => {
+    if (!raceId || !isUuid(raceId)) {
+      setCanViewRaceReplay(null)
+      setReplayAccessLoading(false)
+      return
+    }
+
+    let cancelled = false
+
+    async function loadReplayAccess() {
+      setReplayAccessLoading(true)
+
+      const { data, error } = await supabase.rpc(
+        'can_view_race_replay_frames_v1',
+        {
+          p_race_id: raceId,
+        }
+      )
+
+      if (cancelled) return
+
+      if (error) {
+        console.warn(
+          'Could not load race replay access:',
+          error.message
+        )
+        setCanViewRaceReplay(null)
+      } else {
+        setCanViewRaceReplay(
+          normalizeBoolean(
+            data as boolean | string | null | undefined
+          ) === true
+        )
+      }
+
+      setReplayAccessLoading(false)
+    }
+
+    loadReplayAccess()
+
+    return () => {
+      cancelled = true
+    }
+  }, [raceId, raceDetailReloadKey])
+
+  useEffect(() => {
+    if (!selectedStage?.id) {
+      setLiveState(null)
+      return
+    }
+
+    let cancelled = false
+
+    async function loadSelectedStageLiveState() {
+      if (!selectedStage?.id) return
+
+      const { data, error } = await supabase.rpc(
+        'get_race_stage_live_state_v1',
+        {
+          p_stage_id: selectedStage.id,
+        }
+      )
+
+      if (cancelled) return
+
+      if (error) {
+        console.error(
+          'Could not load race stage live state:',
+          error
+        )
+        setLiveState(null)
+        return
+      }
+
+      const value = Array.isArray(data) ? data[0] : data
+
+      setLiveState(
+        value && typeof value === 'object'
+          ? (value as RaceStageLiveState)
+          : null
+      )
+    }
+
+    loadSelectedStageLiveState()
+
+    const interval = window.setInterval(
+      loadSelectedStageLiveState,
+      5000
+    )
+
+    return () => {
+      cancelled = true
+      window.clearInterval(interval)
+    }
+  }, [selectedStage?.id])
+
+  useEffect(() => {
+    const classificationRaceId = race?.id
+
+    if (!classificationRaceId) {
+      setAvailableClassificationStageIds([])
+      return
+    }
+
+    let cancelled = false
+
+    async function loadAvailableClassificationStages() {
+      const { data, error } = await supabase
+        .from('race_classification_standings')
+        .select('after_stage_id')
+        .eq('race_id', classificationRaceId)
+        .eq('classification_type', 'general')
+        .eq('entity_type', 'rider')
+
+      if (cancelled) return
+
+      if (error) {
+        console.error(
+          'Could not load available classification stages for leaders:',
+          error
+        )
+        setAvailableClassificationStageIds([])
+        return
+      }
+
+      setAvailableClassificationStageIds(
+        Array.from(
+          new Set(
+            (data ?? [])
+              .map((row) => row.after_stage_id)
+              .filter(
+                (stageId): stageId is string =>
+                  typeof stageId === 'string' &&
+                  stageId.length > 0
+              )
+          )
+        )
+      )
+    }
+
+    loadAvailableClassificationStages()
+
+    return () => {
+      cancelled = true
+    }
+  }, [race?.id])
+
+  const latestClassificationStage = useMemo(() => {
+    const availableStageIds = new Set(
+      availableClassificationStageIds
+    )
+
+    return (
+      [...stages]
+        .filter((stage) =>
+          availableStageIds.has(stage.id)
+        )
+        .sort(
+          (left, right) =>
+            Number(right.stage_number) -
+            Number(left.stage_number)
+        )[0] ?? null
+    )
+  }, [availableClassificationStageIds, stages])
+
+  const classificationResultsStageId =
+    latestClassificationStage?.id ?? null
+
+  const selectedStageLiveState =
+    liveState?.stage_id === selectedStage?.id
+      ? liveState
+      : null
+  const hideRaceInformation = selectedStageLiveState?.is_live === true
+  const lockReplaySpeed = selectedStageLiveState?.speed_locked === true
 
   const currentMonthStart = useMemo(() => {
     if (!currentGameDate) return null
@@ -6748,29 +11421,49 @@ export default function RaceDetailPage({
         <div className="w-full space-y-6">
           <RaceStageProfilePanel
             selectedStageId={selectedStage?.id ?? null}
+            classificationResultsStageId={classificationResultsStageId}
             selectedStage={selectedStage}
             race={race}
             currentGameDate={currentGameDate}
+            currentClubId={currentClubId ?? DEFAULT_CURRENT_CLUB_ID}
+            participantTeams={participantTeams}
+            canViewRaceReplay={canViewRaceReplay}
+            replayAccessLoading={replayAccessLoading}
+            hideLiveResults={hideRaceInformation}
+            onOpenReplay={(stage) => setReplayStage(stage)}
           />
 
-          <RaceResultsHub
-            race={race}
-            stages={stages}
-            participantTeams={participantTeams}
-            participantsLoading={participantsLoading}
-            participantsError={participantsError}
-            currentClubId={currentClubId ?? DEFAULT_CURRENT_CLUB_ID}
-            currentGameDate={currentGameDate}
-            teamEntryStatus={effectiveTeamEntryStatus}
-            onOpenTeamProfile={handleOpenTeamProfile}
-            onOpenRiderProfile={handleOpenRiderProfile}
-          />
+          {!hideRaceInformation ? (
+            <RaceResultsHub
+              race={race}
+              stages={stages}
+              participantTeams={participantTeams}
+              participantsLoading={participantsLoading}
+              participantsError={participantsError}
+              currentClubId={currentClubId ?? DEFAULT_CURRENT_CLUB_ID}
+              teamEntryStatus={effectiveTeamEntryStatus}
+              onOpenTeamProfile={handleOpenTeamProfile}
+              onOpenRiderProfile={handleOpenRiderProfile}
+            />
+          ) : null}
         </div>
       ) : (
         <div className="rounded-2xl border border-slate-200 bg-white p-6 text-slate-500 shadow-sm">
           No stages found for this race.
         </div>
       )}
+
+      <RaceReplayModal
+        open={Boolean(replayStage)}
+        race={race}
+        stage={replayStage}
+        currentClubId={currentClubId}
+        participantTeams={participantTeams}
+        canViewRaceReplay={canViewRaceReplay}
+        liveState={selectedStageLiveState}
+        lockReplaySpeed={lockReplaySpeed}
+        onClose={() => setReplayStage(null)}
+      />
       </div>
     </>
   )

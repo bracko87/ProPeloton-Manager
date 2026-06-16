@@ -11,6 +11,7 @@ import { supabase } from '../../../lib/supabase'
 import type {
   AcceptedRacePreparationRow,
   AssetOption,
+  BlockedRacePreparationResource,
   ClubRiderOption,
   EquipmentSetupPresetOption,
   ExistingRacePreparationDraft,
@@ -20,8 +21,11 @@ import type {
   RacePreparationQuote as BaseRacePreparationQuote,
   RacePreparationRace,
   RacePreparationSelectableData,
+  RacePreparationSquadOption,
   RacePreparationSubmitResult,
   RacePreparationTarget,
+  RaceStagePlanSavePayload,
+  RaceStagePlanSaveResult,
   RaceSupplyKey,
   RaceSupplyOption,
   StaffOption,
@@ -30,6 +34,7 @@ import type {
 
 export type RacePreparationQuote = BaseRacePreparationQuote & {
   bonus_preview?: JsonRecord | null
+  standardized_bonus?: JsonRecord | null
 }
 
 export const RACE_STAFF_ROLES = [
@@ -46,6 +51,10 @@ export const RACE_SUPPLY_KEYS: RaceSupplyKey[] = [
   'race_jersey_complete',
   'rain_jackets',
 ]
+
+export const DEFAULT_EQUIPMENT_SETUP_PRESET_ID = '__default_race_setup__'
+
+const ACCEPTED_RACE_FINISHED_GRACE_DAYS = 3
 
 function toArray<T>(value: unknown): T[] {
   return Array.isArray(value) ? (value as T[]) : []
@@ -82,6 +91,25 @@ function addCanonicalDays(value: unknown, days: number): string | null {
   const d = String(date.getUTCDate()).padStart(2, '0')
 
   return `${y}-${m}-${d}`
+}
+
+function shouldHideFinishedAcceptedRace(
+  race: JsonRecord,
+  currentGameDate?: string | null,
+): boolean {
+  const currentDate = toDateOnly(currentGameDate)
+  const raceEndDate = toDateOnly(race.end_date ?? race.start_date)
+
+  if (!currentDate || !raceEndDate) return false
+
+  const hideAfterDate = addCanonicalDays(
+    raceEndDate,
+    ACCEPTED_RACE_FINISHED_GRACE_DAYS,
+  )
+
+  if (!hideAfterDate) return false
+
+  return currentDate > hideAfterDate
 }
 
 function makeGameRuleDate(
@@ -154,51 +182,191 @@ async function loadCurrentGameDate(): Promise<string | undefined> {
   return data ? String(data) : undefined
 }
 
+async function loadCurrentGameTimestamp(): Promise<string | undefined> {
+  const { data, error } = await supabase.rpc('get_current_game_timestamp')
+
+  if (error) {
+    console.warn('Failed to load current game timestamp:', error.message)
+    return undefined
+  }
+
+  return data ? String(data) : undefined
+}
+
 export async function resolveCurrentClubId(): Promise<UUID> {
-  const { data: userResult, error: userError } = await supabase.auth.getUser()
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
 
-  if (userError) {
-    throw userError
+  if (userError) throw userError;
+
+  if (!user) {
+    throw new Error(
+      "User is not authenticated.",
+    );
   }
 
-  const userId = userResult.user?.id
-
-  if (!userId) {
-    throw new Error('User is not authenticated.')
-  }
-
-  const ownedClub = await supabase
-    .from('clubs')
-    .select('id')
-    .eq('owner_user_id', userId)
-    .order('created_at', { ascending: true })
+  const { data, error } = await supabase
+    .from("clubs")
+    .select(
+      "id, club_type, parent_club_id",
+    )
+    .eq("owner_user_id", user.id)
+    .is("parent_club_id", null)
+    .or(
+      "club_type.eq.main,club_type.is.null",
+    )
     .limit(1)
-    .maybeSingle()
+    .maybeSingle();
 
-  if (ownedClub.error) {
-    throw ownedClub.error
+  if (error) throw error;
+
+  if (!data?.id) {
+    throw new Error(
+      "Main club was not found for this user.",
+    );
   }
 
-  if (ownedClub.data?.id) {
-    return String(ownedClub.data.id)
+  localStorage.setItem(
+    "ppm-active-club",
+    String(data.id),
+  );
+
+  return String(data.id);
+}
+
+export async function loadRacePreparationSquadOptions(
+  clubId: UUID,
+): Promise<RacePreparationSquadOption[]> {
+  const { data, error } = await supabase.rpc(
+    'get_race_preparation_squad_options_v1',
+    {
+      p_club_id: clubId,
+    },
+  )
+
+  if (error) {
+    throw error
   }
 
-  const membershipClub = await supabase
-    .from('club_memberships')
-    .select('club_id')
-    .eq('user_id', userId)
-    .limit(1)
-    .maybeSingle()
+  const result = asRecord(data)
 
-  if (membershipClub.error) {
-    throw membershipClub.error
+  return toArray<JsonRecord>(result.options).map((row) => ({
+    id: String(row.id),
+
+    name: String(
+      row.name ?? 'Unnamed squad',
+    ),
+
+    club_type: String(
+      row.club_type ?? 'main',
+    ),
+
+    parent_club_id: row.parent_club_id
+      ? String(row.parent_club_id)
+      : null,
+
+    country_code: row.country_code
+      ? String(row.country_code)
+      : null,
+
+    logo_url: row.logo_url
+      ? String(row.logo_url)
+      : null,
+
+    is_default: Boolean(
+      row.is_default,
+    ),
+
+    label: String(
+      row.label ??
+        (
+          String(row.id) === clubId
+            ? 'First Squad'
+            : 'Developing Team'
+        ),
+    ),
+  }))
+}
+
+
+
+
+function stringifyUnknownError(value: unknown): string {
+  if (value instanceof Error && value.message.trim()) {
+    return value.message.trim()
   }
 
-  if (membershipClub.data?.club_id) {
-    return String(membershipClub.data.club_id)
+  if (typeof value === 'string') {
+    return value.trim()
   }
 
-  throw new Error('No club found for current user.')
+  const record = asRecord(value)
+
+  const candidates = [
+    record.error,
+    record.message,
+    record.details,
+    record.hint,
+    asRecord(record.data).error,
+    asRecord(record.data).message,
+    asRecord(record.data).details,
+  ]
+
+  const message = candidates
+    .map((candidate) => String(candidate ?? '').trim())
+    .find(Boolean)
+
+  if (message) return message
+
+  if (Object.keys(record).length > 0) {
+    try {
+      return JSON.stringify(record)
+    } catch {
+      return 'Unknown object error.'
+    }
+  }
+
+  return String(value ?? 'Unknown error.')
+}
+
+async function readEdgeFunctionErrorMessage(
+  error: unknown,
+  fallbackMessage: string,
+): Promise<string> {
+  const errorRecord = asRecord(error)
+
+  const context = errorRecord.context
+  const contextRecord = asRecord(context)
+
+  const maybeText =
+    typeof contextRecord.text === 'function'
+      ? (contextRecord.text as () => Promise<string>)
+      : null
+
+  if (maybeText) {
+    try {
+      const text = await maybeText.call(context)
+
+      if (text.trim()) {
+        try {
+          const parsed = JSON.parse(text)
+          const parsedMessage = stringifyUnknownError(parsed)
+
+          if (parsedMessage && parsedMessage !== '{}') {
+            return parsedMessage
+          }
+        } catch {
+          return text.trim()
+        }
+      }
+    } catch {
+      // Ignore body parsing errors and fall back below.
+    }
+  }
+
+  return stringifyUnknownError(error) || fallbackMessage
 }
 
 async function invokeRacePrepFunction<T>(
@@ -210,13 +378,20 @@ async function invokeRacePrepFunction<T>(
   })
 
   if (error) {
-    throw error
+    throw new Error(
+      await readEdgeFunctionErrorMessage(
+        error,
+        `${functionName} failed with a non-2xx status code.`,
+      ),
+    )
   }
 
   const result = asRecord(data)
 
   if (!result.success) {
-    throw new Error(String(result.error ?? `${functionName} failed.`))
+    throw new Error(
+      stringifyUnknownError(result.error ?? result) || `${functionName} failed.`,
+    )
   }
 
   return result.data as T
@@ -273,6 +448,39 @@ export function submitRacePreparation(params: {
   )
 }
 
+export function saveRaceStagePlan(payload: RaceStagePlanSavePayload) {
+  return invokeRacePrepFunction<RaceStagePlanSaveResult>(
+    'save-race-stage-plan',
+    payload,
+  )
+}
+
+
+export async function loadBlockedRacePreparationResources({
+  clubId,
+  raceId,
+  racePreparationId,
+}: {
+  clubId: UUID
+  raceId: UUID
+  racePreparationId?: UUID | null
+}): Promise<BlockedRacePreparationResource[]> {
+  const { data, error } = await supabase.rpc(
+    'get_race_preparation_blocked_resources_v1',
+    {
+      p_club_id: clubId,
+      p_race_id: raceId,
+      p_exclude_race_preparation_id: racePreparationId ?? null,
+    },
+  )
+
+  if (error) {
+    throw error
+  }
+
+  return (data ?? []) as BlockedRacePreparationResource[]
+}
+
 export async function loadAcceptedRacePreparations(
   clubId: UUID,
 ): Promise<AcceptedRacePreparationRow[]> {
@@ -292,6 +500,8 @@ export async function loadAcceptedRacePreparations(
   if (raceIds.length === 0) {
     return []
   }
+
+  const currentGameDate = await loadCurrentGameDate()
 
   const [racesResult, rulesResult, preparationsResult, stagesResult] =
     await Promise.all([
@@ -319,6 +529,10 @@ export async function loadAcceptedRacePreparations(
   const stageCountMap = new Map<string, number>()
 
   toArray<RacePreparationRace>(racesResult.data).forEach((race) => {
+    if (shouldHideFinishedAcceptedRace(race as JsonRecord, currentGameDate)) {
+      return
+    }
+
     raceMap.set(String(race.id), race)
   })
 
@@ -389,6 +603,7 @@ export async function loadRacePreparationContext(
 ): Promise<RacePreparationTarget> {
   const [
     currentGameDate,
+    currentGameTimestamp,
     raceResult,
     entryResult,
     rulesResult,
@@ -396,6 +611,7 @@ export async function loadRacePreparationContext(
     stagesResult,
   ] = await Promise.all([
     loadCurrentGameDate(),
+    loadCurrentGameTimestamp(),
     supabase.from('races').select('*').eq('id', raceId).maybeSingle(),
     supabase
       .from('race_team_entries')
@@ -454,6 +670,7 @@ export async function loadRacePreparationContext(
   return {
     has_target: Boolean(race.id),
     current_game_date: currentGameDate,
+    current_game_timestamp: currentGameTimestamp,
     race: race as RacePreparationRace,
     entry,
     entry_rules: entryRules,
@@ -473,14 +690,48 @@ export async function loadRacePreparationContext(
 
 export async function loadRacePreparationSelectableData(
   clubId: UUID,
+  raceId?: UUID | null,
+  racePreparationId?: UUID | null,
+  riderClubId?: UUID | null,
 ): Promise<RacePreparationSelectableData> {
-  const [riders, staff, assets, supplies, equipmentPresets] = await Promise.all([
-    loadClubRiders(clubId),
+  /*
+   * Riders come from the selected competing squad.
+   *
+   * Staff, assets, supplies and equipment remain attached to
+   * the main club.
+   */
+  const effectiveRiderClubId =
+    riderClubId ?? clubId;
+
+  const blockedResourcesPromise = raceId
+    ? loadBlockedRacePreparationResources({
+        clubId,
+        raceId,
+        racePreparationId,
+      })
+    : Promise.resolve(
+        [] as BlockedRacePreparationResource[],
+      );
+
+  const [
+    riders,
+    staff,
+    assets,
+    supplies,
+    equipmentPresets,
+    blockedResources,
+  ] = await Promise.all([
+    loadClubRiders(
+      effectiveRiderClubId,
+    ),
+
     loadRaceStaff(clubId),
     loadRaceAssets(clubId),
     loadRaceSupplies(clubId),
     loadEquipmentSetupPresets(clubId),
-  ])
+
+    blockedResourcesPromise,
+  ]);
 
   return {
     riders,
@@ -488,7 +739,8 @@ export async function loadRacePreparationSelectableData(
     assets,
     supplies,
     equipmentPresets,
-  }
+    blockedResources,
+  };
 }
 
 async function loadClubRiders(clubId: UUID): Promise<ClubRiderOption[]> {
@@ -584,30 +836,56 @@ async function loadRaceAssets(
   }
 }
 
+function isRacePrepSelectableAsset(row: JsonRecord): boolean {
+  const status = String(row.status ?? '')
+  const assignmentType = String(row.current_assignment_type ?? '')
+
+  return (
+    status === 'available' ||
+    (status === 'assigned' && assignmentType === 'race_preparation')
+  )
+}
+
 function normalizeAssetRows(
   rows: unknown,
   assetKey: string,
 ): AssetOption[] {
-  return toArray<JsonRecord>(rows).map((row) => ({
-    id: String(row.id),
-    asset_key: assetKey,
-    display_name: String(row.display_name ?? assetKey),
-    asset_level: toNumber(row.asset_level),
-    condition_percent: toNumber(row.condition_percent),
-    support_value: toNumber(row.support_value),
-    status: String(row.status ?? ''),
-  }))
+  return toArray<JsonRecord>(rows)
+    .filter(isRacePrepSelectableAsset)
+    .map((row) => ({
+      id: String(row.id),
+      asset_key: assetKey,
+      display_name: String(row.display_name ?? assetKey),
+      asset_level: toNumber(row.asset_level),
+      condition_percent: toNumber(row.condition_percent),
+      support_value: toNumber(row.support_value),
+      status: String(row.status ?? ''),
+      assignment_locked: Boolean(row.assignment_locked),
+      current_assignment_type: row.current_assignment_type
+        ? String(row.current_assignment_type)
+        : null,
+      current_assignment_id: row.current_assignment_id
+        ? String(row.current_assignment_id)
+        : null,
+      current_assignment_label: row.current_assignment_label
+        ? String(row.current_assignment_label)
+        : null,
+      assignment_start_game_date: row.assignment_start_game_date
+        ? String(row.assignment_start_game_date)
+        : null,
+      assignment_end_game_date: row.assignment_end_game_date
+        ? String(row.assignment_end_game_date)
+        : null,
+    }))
 }
 
 async function loadTeamBusAssets(clubId: UUID): Promise<AssetOption[]> {
   const { data, error } = await supabase
     .from('club_team_buses')
     .select(
-      'id, asset_level, display_name, support_value, condition_percent, status, assignment_locked',
+      'id, asset_level, display_name, support_value, condition_percent, status, assignment_locked, current_assignment_type, current_assignment_id, current_assignment_label, assignment_start_game_date, assignment_end_game_date',
     )
     .eq('club_id', clubId)
-    .eq('status', 'available')
-    .eq('assignment_locked', false)
     .gte('condition_percent', 30)
     .order('asset_level', { ascending: false })
     .order('display_name', { ascending: true })
@@ -620,11 +898,9 @@ async function loadEquipmentVanAssets(clubId: UUID): Promise<AssetOption[]> {
   const { data, error } = await supabase
     .from('club_equipment_vans')
     .select(
-      'id, asset_level, display_name, support_value, condition_percent, status, assignment_locked',
+      'id, asset_level, display_name, support_value, condition_percent, status, assignment_locked, current_assignment_type, current_assignment_id, current_assignment_label, assignment_start_game_date, assignment_end_game_date',
     )
     .eq('club_id', clubId)
-    .eq('status', 'available')
-    .eq('assignment_locked', false)
     .gte('condition_percent', 30)
     .order('asset_level', { ascending: false })
     .order('display_name', { ascending: true })
@@ -637,11 +913,9 @@ async function loadMobileWorkshopAssets(clubId: UUID): Promise<AssetOption[]> {
   const { data, error } = await supabase
     .from('club_mobile_workshops')
     .select(
-      'id, asset_level, display_name, support_value, condition_percent, status, assignment_locked',
+      'id, asset_level, display_name, support_value, condition_percent, status, assignment_locked, current_assignment_type, current_assignment_id, current_assignment_label, assignment_start_game_date, assignment_end_game_date',
     )
     .eq('club_id', clubId)
-    .eq('status', 'available')
-    .eq('assignment_locked', false)
     .gte('condition_percent', 30)
     .order('asset_level', { ascending: false })
     .order('display_name', { ascending: true })
@@ -654,11 +928,9 @@ async function loadMedicalVanAssets(clubId: UUID): Promise<AssetOption[]> {
   const { data, error } = await supabase
     .from('club_medical_vans')
     .select(
-      'id, asset_level, display_name, support_value, condition_percent, status, assignment_locked',
+      'id, asset_level, display_name, support_value, condition_percent, status, assignment_locked, current_assignment_type, current_assignment_id, current_assignment_label, assignment_start_game_date, assignment_end_game_date',
     )
     .eq('club_id', clubId)
-    .eq('status', 'available')
-    .eq('assignment_locked', false)
     .gte('condition_percent', 30)
     .order('asset_level', { ascending: false })
     .order('display_name', { ascending: true })
@@ -671,27 +943,27 @@ async function loadTeamCars(clubId: UUID): Promise<AssetOption[]> {
   const { data, error } = await supabase
     .from('club_team_cars')
     .select(
-      'id, display_name, asset_key, asset_level, support_value, condition_percent, status, assignment_locked, metadata, garage_slot',
+      'id, display_name, asset_key, asset_level, support_value, condition_percent, status, assignment_locked, current_assignment_type, current_assignment_id, current_assignment_label, assignment_start_game_date, assignment_end_game_date, metadata, garage_slot',
     )
     .eq('club_id', clubId)
-    .eq('status', 'available')
-    .eq('assignment_locked', false)
     .gte('condition_percent', 30)
     .order('garage_slot', { ascending: true })
 
   if (error) throw error
 
-  return toArray<JsonRecord>(data).map((row) => ({
-    id: String(row.id),
-    display_name: String(row.display_name ?? 'Team Car'),
-    asset_key: 'team_car',
-    asset_level: toNumber(row.asset_level, 1),
-    support_value: toNumber(row.support_value),
-    condition_percent: toNumber(row.condition_percent),
-    status: String(row.status ?? ''),
-    assignment_locked: Boolean(row.assignment_locked),
-    metadata: asRecord(row.metadata),
-  }))
+  return toArray<JsonRecord>(data)
+    .filter(isRacePrepSelectableAsset)
+    .map((row) => ({
+      id: String(row.id),
+      display_name: String(row.display_name ?? 'Team Car'),
+      asset_key: 'team_car',
+      asset_level: toNumber(row.asset_level, 1),
+      support_value: toNumber(row.support_value),
+      condition_percent: toNumber(row.condition_percent),
+      status: String(row.status ?? ''),
+      assignment_locked: Boolean(row.assignment_locked),
+      metadata: asRecord(row.metadata),
+    }))
 }
 
 async function loadRaceSupplies(clubId: UUID): Promise<RaceSupplyOption[]> {
@@ -714,37 +986,456 @@ async function loadRaceSupplies(clubId: UUID): Promise<RaceSupplyOption[]> {
   }))
 }
 
+
+function getSetupSelectedCatalogItemIds(
+  row: JsonRecord,
+  bonusPreview: JsonRecord,
+): Record<string, string> {
+  const result: Record<string, string> = {}
+  const direct = asRecord(row.selected_catalog_item_ids)
+
+  Object.entries(direct).forEach(([category, value]) => {
+    const text = String(value ?? '').trim()
+    if (category && text && text !== 'null') {
+      result[category] = text
+    }
+  })
+
+  const selectedItems = toArray<JsonRecord>(
+    row.selected_items ?? bonusPreview.selected_items,
+  )
+
+  selectedItems.forEach((item) => {
+    const category = String(item.equipment_category ?? '').trim()
+    const catalogItemId = String(item.catalog_item_id ?? '').trim()
+
+    if (category && catalogItemId && catalogItemId !== 'null') {
+      result[category] = catalogItemId
+    }
+  })
+
+  return result
+}
+
+function getSetupOptionForCatalogItem({
+  setupOptions,
+  equipmentCategory,
+  catalogItemId,
+}: {
+  setupOptions: JsonRecord[]
+  equipmentCategory: string
+  catalogItemId: string
+}): JsonRecord | null {
+  const optionGroup = setupOptions.find(
+    (group) => String(group.equipment_category) === equipmentCategory,
+  )
+
+  const options = toArray<JsonRecord>(asRecord(optionGroup).options)
+
+  return (
+    options.find((option) => String(option.catalog_item_id) === catalogItemId) ??
+    null
+  )
+}
+
+function buildSetupCapacityFromOptions({
+  row,
+  bonusPreview,
+  setupOptions,
+}: {
+  row: JsonRecord
+  bonusPreview: JsonRecord
+  setupOptions: JsonRecord[]
+}): JsonRecord | null {
+  const directCapacity = asRecord(
+    row.setup_capacity ?? row.capacity ?? row.equipment_capacity,
+  )
+
+  if (Object.keys(directCapacity).length > 0) {
+    return directCapacity
+  }
+
+  const selectedCatalogItemIds = getSetupSelectedCatalogItemIds(row, bonusPreview)
+
+  const itemCaps = Object.entries(selectedCatalogItemIds).flatMap(
+    ([equipmentCategory, catalogItemId]) => {
+      const option = getSetupOptionForCatalogItem({
+        setupOptions,
+        equipmentCategory,
+        catalogItemId,
+      })
+
+      if (!option) return []
+
+      const available = toNumber(
+        option.available_count ??
+          option.quantity_available ??
+          option.available_quantity ??
+          option.available ??
+          option.usable_count ??
+          option.owned_count,
+        -1,
+      )
+
+      if (available < 0) return []
+
+      const owned = toNumber(
+        option.owned_count ?? option.total_owned ?? option.total_count,
+        available,
+      )
+
+      const label = String(
+        option.display_name ?? option.label ?? option.name ?? equipmentCategory,
+      )
+
+      return [
+        {
+          equipment_category: equipmentCategory,
+          catalog_item_id: catalogItemId,
+          label,
+          available_count: available,
+          owned_count: owned,
+        },
+      ]
+    },
+  )
+
+  if (itemCaps.length === 0) {
+    return null
+  }
+
+  const maxAssignments = Math.min(
+    ...itemCaps.map((item) => toNumber(item.available_count)),
+  )
+
+  const limitingItem =
+    itemCaps.find((item) => toNumber(item.available_count) === maxAssignments) ??
+    itemCaps[0]
+
+  return {
+    max_assignments: maxAssignments,
+    limiting_item_label: String(limitingItem.label ?? ''),
+    limiting_equipment_category: String(limitingItem.equipment_category ?? ''),
+    item_caps: itemCaps,
+  }
+}
+
+
+
+function getDefaultSetupSelectedCatalogIds(
+  categories: JsonRecord[],
+): Record<string, string> {
+  const result: Record<string, string> = {}
+
+  categories.forEach((category) => {
+    const equipmentCategory = String(category.equipment_category ?? '').trim()
+    const selectedCatalogItemId = String(
+      category.selected_catalog_item_id ??
+        category.recommended_catalog_item_id ??
+        '',
+    ).trim()
+
+    if (
+      equipmentCategory &&
+      selectedCatalogItemId &&
+      selectedCatalogItemId !== 'null'
+    ) {
+      result[equipmentCategory] = selectedCatalogItemId
+    }
+  })
+
+  return result
+}
+
+function getDefaultSetupSelectedItems(
+  categories: JsonRecord[],
+): JsonRecord[] {
+  return categories.flatMap((category) => {
+    const equipmentCategory = String(category.equipment_category ?? '').trim()
+    const categoryLabel = String(category.label ?? equipmentCategory)
+    const selectedCatalogItemId = String(
+      category.selected_catalog_item_id ??
+        category.recommended_catalog_item_id ??
+        '',
+    ).trim()
+
+    if (!equipmentCategory || !selectedCatalogItemId) return []
+
+    const options = toArray<JsonRecord>(category.options)
+    const selectedOption = options.find(
+      (option) => String(option.catalog_item_id) === selectedCatalogItemId,
+    )
+
+    if (!selectedOption) return []
+
+    return [
+      {
+        ...selectedOption,
+        equipment_category: equipmentCategory,
+        category_label: categoryLabel,
+        catalog_item_id: selectedCatalogItemId,
+      },
+    ]
+  })
+}
+
+function buildDefaultSetupCapacityFromCategories(
+  categories: JsonRecord[],
+): JsonRecord | null {
+  const itemCaps = getDefaultSetupSelectedItems(categories).flatMap((item) => {
+    const available = toNumber(
+      item.available_count ??
+        item.quantity_available ??
+        item.available_quantity ??
+        item.available ??
+        item.usable_count ??
+        item.owned_count,
+      -1,
+    )
+
+    if (available < 0) return []
+
+    const owned = toNumber(
+      item.owned_count ?? item.total_owned ?? item.total_count,
+      available,
+    )
+
+    return [
+      {
+        equipment_category: String(item.equipment_category ?? ''),
+        catalog_item_id: String(item.catalog_item_id ?? ''),
+        label: String(item.display_name ?? item.label ?? item.name ?? 'Equipment'),
+        available_count: available,
+        owned_count: owned,
+      },
+    ]
+  })
+
+  if (itemCaps.length === 0) {
+    return null
+  }
+
+  const maxAssignments = Math.min(
+    ...itemCaps.map((item) => toNumber(item.available_count)),
+  )
+
+  const limitingItem =
+    itemCaps.find((item) => toNumber(item.available_count) === maxAssignments) ??
+    itemCaps[0]
+
+  return {
+    max_assignments: maxAssignments,
+    limiting_item_label: String(limitingItem.label ?? ''),
+    limiting_equipment_category: String(limitingItem.equipment_category ?? ''),
+    item_caps: itemCaps,
+  }
+}
+
+async function loadDefaultEquipmentSetupPreset(
+  clubId: UUID,
+): Promise<EquipmentSetupPresetOption | null> {
+  try {
+    const [{ data: setupData, error: setupError }, bonusResult] =
+      await Promise.all([
+        supabase.rpc('equipment_get_default_setup_options', {
+          p_club_id: clubId,
+        }),
+        supabase
+          .rpc('equipment_get_default_setup_bonus_preview', {
+            p_club_id: clubId,
+          })
+          .then((result) => result)
+          .catch((error) => ({ data: null, error })),
+      ])
+
+    if (setupError) {
+      console.warn('Failed to load Default Race Setup options:', setupError.message)
+      return null
+    }
+
+    const root = asRecord(setupData)
+    const categories = toArray<JsonRecord>(root.categories)
+    const selectedCatalogItemIds = getDefaultSetupSelectedCatalogIds(categories)
+
+    if (Object.keys(selectedCatalogItemIds).length === 0) {
+      return null
+    }
+
+    const bonusPreview = asRecord(bonusResult.data)
+    const setupCapacity = buildDefaultSetupCapacityFromCategories(categories)
+    const maxAssignments = setupCapacity
+      ? toNumber(
+          setupCapacity.max_assignments ??
+            setupCapacity.maxAssignments ??
+            setupCapacity.capacity,
+          -1,
+        )
+      : -1
+
+    return {
+      id: DEFAULT_EQUIPMENT_SETUP_PRESET_ID,
+      setup_slot: 99,
+      setup_name: 'Default',
+      label: 'Default',
+      bonus_preview: Object.keys(bonusPreview).length > 0 ? bonusPreview : null,
+      selected_catalog_item_ids: selectedCatalogItemIds,
+      selected_items:
+        Object.keys(bonusPreview).length > 0
+          ? bonusPreview.selected_items
+          : getDefaultSetupSelectedItems(categories),
+      weighted_bonuses: asRecord(bonusPreview.weighted_bonuses),
+      raw_weighted_bonuses: asRecord(bonusPreview.raw_weighted_bonuses),
+      caps: asRecord(bonusPreview.caps),
+      bonus_model: asRecord(bonusPreview.bonus_model),
+      setup_capacity: setupCapacity,
+      max_assignments: maxAssignments >= 0 ? maxAssignments : null,
+      limiting_item_label: setupCapacity
+        ? String(setupCapacity.limiting_item_label ?? '')
+        : null,
+      limiting_equipment_category: setupCapacity
+        ? String(setupCapacity.limiting_equipment_category ?? '')
+        : null,
+      is_default_setup: true,
+      is_virtual_default: true,
+    }
+  } catch (error) {
+    console.warn('Failed to load Default Race Setup preset:', error)
+    return null
+  }
+}
+
+
 async function loadEquipmentSetupPresets(
   clubId: UUID,
 ): Promise<EquipmentSetupPresetOption[]> {
-  const { data, error } = await supabase
-    .from('club_equipment_setup_presets')
-    .select('id, setup_slot, setup_name')
-    .eq('club_id', clubId)
-    .order('setup_slot', { ascending: true })
-    .order('created_at', { ascending: true })
+  const fallbackToPresetTable = async (): Promise<EquipmentSetupPresetOption[]> => {
+    const { data, error } = await supabase
+      .from('club_equipment_setup_presets')
+      .select('id, setup_slot, setup_name')
+      .eq('club_id', clubId)
+      .order('setup_slot', { ascending: true })
+      .order('created_at', { ascending: true })
 
-  if (error) {
-    throw error
+    if (error) {
+      throw error
+    }
+
+    return toArray<JsonRecord>(data).map((row, index) => {
+      const setupSlot =
+        row.setup_slot === null || row.setup_slot === undefined
+          ? index + 1
+          : toNumber(row.setup_slot, index + 1)
+
+      const setupName = String(
+        row.setup_name ?? `Equipment Setup ${setupSlot}`,
+      ).trim()
+
+      return {
+        id: String(row.id),
+        setup_slot: setupSlot,
+        setup_name: setupName,
+        label: setupName,
+        bonus_preview: null,
+      }
+    })
   }
 
-  return toArray<JsonRecord>(data).map((row, index) => {
-    const setupSlot =
-      row.setup_slot === null || row.setup_slot === undefined
-        ? index + 1
-        : toNumber(row.setup_slot, index + 1)
+  try {
+    const { data, error } = await supabase.rpc('equipment_get_setup_presets', {
+      p_club_id: clubId,
+    })
 
-    const setupName = String(
-      row.setup_name ?? `Equipment Setup ${setupSlot}`,
-    ).trim()
-
-    return {
-      id: String(row.id),
-      setup_slot: setupSlot,
-      setup_name: setupName,
-      label: setupName,
+    if (error) {
+      console.warn('Failed to load equipment setup preset previews:', error.message)
+      return fallbackToPresetTable()
     }
-  })
+
+    const root = asRecord(data)
+    const setupOptions = toArray<JsonRecord>(root.options)
+    const presetsSource = Array.isArray(root.presets)
+      ? root.presets
+      : Array.isArray(root.options)
+        ? root.options
+        : Array.isArray(data)
+          ? data
+          : []
+
+    const presets = toArray<JsonRecord>(presetsSource).map((row, index) => {
+      const setupSlot =
+        row.setup_slot === null || row.setup_slot === undefined
+          ? index + 1
+          : toNumber(row.setup_slot, index + 1)
+
+      const setupName = String(
+        row.setup_name ?? row.name ?? row.label ?? `Equipment Setup ${setupSlot}`,
+      ).trim()
+
+      const bonusPreview = asRecord(row.bonus_preview)
+      const setupCapacity = buildSetupCapacityFromOptions({
+        row,
+        bonusPreview,
+        setupOptions,
+      })
+      const maxAssignments = setupCapacity
+        ? toNumber(
+            setupCapacity.max_assignments ??
+              setupCapacity.maxAssignments ??
+              setupCapacity.capacity,
+            -1,
+          )
+        : -1
+
+      return {
+        id: String(row.id ?? row.preset_id),
+        setup_slot: setupSlot,
+        setup_name: setupName,
+        label: setupName,
+        bonus_preview:
+          Object.keys(bonusPreview).length > 0 ? bonusPreview : null,
+        selected_catalog_item_ids:
+          Object.keys(asRecord(row.selected_catalog_item_ids)).length > 0
+            ? asRecord(row.selected_catalog_item_ids)
+            : getSetupSelectedCatalogItemIds(row, bonusPreview),
+        selected_items: row.selected_items ?? bonusPreview.selected_items,
+        weighted_bonuses: asRecord(
+          row.weighted_bonuses ?? bonusPreview.weighted_bonuses,
+        ),
+        raw_weighted_bonuses: asRecord(
+          row.raw_weighted_bonuses ?? bonusPreview.raw_weighted_bonuses,
+        ),
+        caps: asRecord(row.caps ?? bonusPreview.caps),
+        bonus_model: asRecord(row.bonus_model ?? bonusPreview.bonus_model),
+        setup_capacity: setupCapacity,
+        max_assignments: maxAssignments >= 0 ? maxAssignments : null,
+        limiting_item_label: setupCapacity
+          ? String(setupCapacity.limiting_item_label ?? '')
+          : null,
+        limiting_equipment_category: setupCapacity
+          ? String(setupCapacity.limiting_equipment_category ?? '')
+          : null,
+      }
+    }).filter((preset) => preset.id && preset.id !== 'undefined')
+
+    const defaultSetupPreset = await loadDefaultEquipmentSetupPreset(clubId)
+    const presetsWithDefault = defaultSetupPreset
+      ? [...presets, defaultSetupPreset]
+      : presets
+
+    return presetsWithDefault.length > 0
+      ? presetsWithDefault
+      : fallbackToPresetTable()
+  } catch (error) {
+    console.warn('Failed to load equipment setup presets with preview:', error)
+
+    const [fallbackPresets, defaultSetupPreset] = await Promise.all([
+      fallbackToPresetTable(),
+      loadDefaultEquipmentSetupPreset(clubId),
+    ])
+
+    return defaultSetupPreset
+      ? [...fallbackPresets, defaultSetupPreset]
+      : fallbackPresets
+  }
 }
 
 export async function loadExistingRacePreparationDraft(
