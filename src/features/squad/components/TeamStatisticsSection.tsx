@@ -604,7 +604,7 @@ export default function TeamStatisticsSection({
           </div>
 
           <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
-            <SectionCard title="Current leaderboard" subtitle="Best teams in the selected filter.">
+            <SectionCard title="Current leaderboard" subtitle="Best teams by international points in the selected filter.">
               {filteredTeamCurrent.length === 0 ? (
                 <EmptyState
                   title="No teams found"
@@ -619,7 +619,7 @@ export default function TeamStatisticsSection({
                         <th className="pb-3 pr-3">Team</th>
                         <th className="pb-3 pr-3">Country</th>
                         <th className="pb-3 pr-3">Tier / Division</th>
-                        <th className="pb-3 text-right">Points</th>
+                        <th className="pb-3 text-right">International points</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -688,7 +688,7 @@ export default function TeamStatisticsSection({
                         <th className="pb-3 pr-3">Division</th>
                         <th className="pb-3 pr-3">Type</th>
                         <th className="pb-3 pr-3">Status</th>
-                        <th className="pb-3 text-right">Points</th>
+                        <th className="pb-3 text-right">International points</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -779,7 +779,7 @@ export default function TeamStatisticsSection({
                         <th className="pb-3 pr-3">Team</th>
                         <th className="pb-3 pr-3">Country</th>
                         <th className="pb-3 pr-3">Division</th>
-                        <th className="pb-3 text-right">Points</th>
+                        <th className="pb-3 text-right">International points</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -854,7 +854,7 @@ export default function TeamStatisticsSection({
                         <th className="pb-3 pr-3">Division</th>
                         <th className="pb-3 pr-3">Type</th>
                         <th className="pb-3 pr-3">Status</th>
-                        <th className="pb-3 text-right">Points</th>
+                        <th className="pb-3 text-right">International points</th>
                       </tr>
                     </thead>
                     <tbody>

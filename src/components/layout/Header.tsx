@@ -36,6 +36,8 @@
  * - This component listens to window 'club-updated' and storage events to keep
  *   the live main-club info up-to-date.
  * - Header should only receive the user's main club from the layout.
+ * - Visible team name is resolved through get_club_display_identity_v1 so
+ *   naming-rights sponsor names are shown globally without overwriting clubs.name.
  * - Use a separate key like ppm-active-squad-club elsewhere for squad-page
  *   tab behavior; do not reuse it here.
  */
@@ -112,6 +114,18 @@ type ClubUpdatePayload = {
 type TeamCompetitionSummary = {
   competition_label: string
   rank_position: number
+}
+
+type ClubDisplayIdentity = {
+  club_id: string
+  base_name: string | null
+  display_name: string | null
+  season_display_name: string | null
+  original_club_name: string | null
+  full_display_name: string | null
+  locked_by_sponsor: boolean
+  locked_until_game_date: string | null
+  source_sponsor_id: string | null
 }
 
 const LOGO_BUCKET = 'club-logos'
@@ -258,6 +272,8 @@ export default function Header({
   const [lastClubUpdateMs, setLastClubUpdateMs] = useState(0)
   const [teamCompetitionSummary, setTeamCompetitionSummary] =
     useState<TeamCompetitionSummary | null>(null)
+  const [clubDisplayIdentity, setClubDisplayIdentity] = useState<ClubDisplayIdentity | null>(null)
+  const [identityRefreshKey, setIdentityRefreshKey] = useState(0)
 
   const liveClubIdRef = useRef<string | undefined>(clubId)
   const currentUserIdRef = useRef<string | undefined>(undefined)
@@ -315,6 +331,11 @@ export default function Header({
         setLiveLogoPath(payload.logo_path ?? null)
         setLogoCacheKey(Date.now())
       }
+
+      // Any accepted main-club update can affect the display identity.
+      // When a naming-rights sponsor is active, the base club name may change
+      // in storage, but the visible team name still comes from the seasonal identity RPC.
+      setIdentityRefreshKey(key => key + 1)
 
       return payload.updated_at_ms!
     })
@@ -417,7 +438,18 @@ export default function Header({
     }
   }, [applyClubUpdatePayload, loadMainClubFromStorage])
 
-  const displayName = liveClubName || clubName || title || 'ProPeloton Manager'
+  const baseClubName = liveClubName || clubName || title || 'ProPeloton Manager'
+  const displayName =
+    clubDisplayIdentity?.display_name ||
+    clubDisplayIdentity?.season_display_name ||
+    baseClubName
+  const originalClubName = clubDisplayIdentity?.original_club_name || baseClubName
+  const fullDisplayName = clubDisplayIdentity?.full_display_name || displayName
+  const isNamingRightsDisplay = Boolean(
+    clubDisplayIdentity?.locked_by_sponsor &&
+      clubDisplayIdentity?.season_display_name &&
+      clubDisplayIdentity.season_display_name !== originalClubName
+  )
   const displayCountry = liveClubCountryName || clubCountryName || 'Club country'
   const effectiveCountryCode = liveClubCountryCode || clubCountryCode
   const effectiveLogoUrl = resolveClubLogoUrl(liveLogoPath ?? clubLogoUrl ?? null, logoCacheKey)
@@ -481,6 +513,50 @@ export default function Header({
     if (!notificationType) return true
     return canReceiveNotification(preferences, notificationType)
   }, [])
+
+  /**
+   * loadClubDisplayIdentity
+   * Central team-name resolver for sponsor naming-rights.
+   *
+   * Do not show public.clubs.name directly in the header. The visible team name must
+   * come from get_club_display_identity_v1 so naming-rights deals can rename the team
+   * across the whole game without permanently overwriting the original club name.
+   */
+  const loadClubDisplayIdentity = useCallback(async () => {
+    if (!liveClubId) {
+      setClubDisplayIdentity(null)
+      return
+    }
+
+    const { data, error } = await supabase.rpc('get_club_display_identity_v1', {
+      p_club_id: liveClubId,
+    })
+
+    if (error) {
+      console.error('Failed to load club display identity:', error)
+      setClubDisplayIdentity(null)
+      return
+    }
+
+    const row = Array.isArray(data) ? data[0] : data
+
+    if (!row) {
+      setClubDisplayIdentity(null)
+      return
+    }
+
+    setClubDisplayIdentity({
+      club_id: String(row.club_id ?? liveClubId),
+      base_name: row.base_name ? String(row.base_name) : null,
+      display_name: row.display_name ? String(row.display_name) : null,
+      season_display_name: row.season_display_name ? String(row.season_display_name) : null,
+      original_club_name: row.original_club_name ? String(row.original_club_name) : null,
+      full_display_name: row.full_display_name ? String(row.full_display_name) : null,
+      locked_by_sponsor: Boolean(row.locked_by_sponsor),
+      locked_until_game_date: row.locked_until_game_date ? String(row.locked_until_game_date) : null,
+      source_sponsor_id: row.source_sponsor_id ? String(row.source_sponsor_id) : null,
+    })
+  }, [liveClubId])
 
   const loadTeamCompetitionSummary = useCallback(async () => {
     if (!liveClubId) {
@@ -553,6 +629,10 @@ export default function Header({
   }, [])
 
   useEffect(() => {
+    void loadClubDisplayIdentity()
+  }, [loadClubDisplayIdentity, identityRefreshKey])
+
+  useEffect(() => {
     void loadTeamCompetitionSummary()
   }, [loadTeamCompetitionSummary])
 
@@ -618,9 +698,17 @@ export default function Header({
           ) : null}
 
           <div className="min-w-0">
-            <div className="text-lg text-black leading-tight truncate">
+            <div
+              className="text-lg text-black leading-tight truncate"
+              title={isNamingRightsDisplay ? fullDisplayName : displayName}
+            >
               <span className="font-normal">Team Name: </span>
               <span className="font-bold">{displayName}</span>
+              {isNamingRightsDisplay ? (
+                <span className="ml-2 rounded-full border border-black/20 bg-white/35 px-2 py-0.5 align-middle text-[11px] font-semibold text-black/80">
+                  Naming rights
+                </span>
+              ) : null}
             </div>
 
             <div className="text-sm text-black/85 flex items-center gap-2 leading-tight flex-wrap">
@@ -694,7 +782,14 @@ export default function Header({
             >
               <div className="px-4 py-3 border-b border-gray-200 bg-gray-50">
                 <div className="text-sm font-semibold text-black">{displayUserName}</div>
-                <div className="text-xs text-black/70">Team: {displayName}</div>
+                <div className="text-xs text-black/70">
+                  Team: {displayName}
+                  {isNamingRightsDisplay ? (
+                    <span className="block truncate" title={fullDisplayName}>
+                      Original club: {originalClubName}
+                    </span>
+                  ) : null}
+                </div>
               </div>
 
               <div className="py-1">

@@ -48,6 +48,7 @@ type SquadRosterRow = ClubRosterRow & {
   recovery?: number | null
   morale?: number | null
   potential?: number | null
+  international_points?: number | null
 }
 
 function buildRiderFullName(
@@ -57,6 +58,305 @@ function buildRiderFullName(
 ) {
   const fullName = [firstName?.trim(), lastName?.trim()].filter(Boolean).join(' ').trim()
   return fullName || fallback || 'Unknown Rider'
+}
+
+
+function getSeasonYearFromGameDate(value: string | null): number {
+  if (!value) return 2000
+  const year = Number(value.slice(0, 4))
+  return Number.isFinite(year) && year > 0 ? year : 2000
+}
+
+function normalizePointsValue(value: unknown, fallback = 0): number {
+  if (typeof value === 'number' && Number.isFinite(value)) return value
+  if (typeof value === 'string' && value.trim() !== '') {
+    const parsed = Number(value)
+    return Number.isFinite(parsed) ? parsed : fallback
+  }
+  return fallback
+}
+
+
+type SquadSeasonDashboardChartPoint = {
+  label: string
+  value: number
+}
+
+type SquadSeasonDashboardRaceRow = {
+  riderId: string
+  riderName: string
+  role: string | null
+  resultLabel: string
+  position: number | null
+  points: number
+}
+
+type SquadSeasonDashboardSelectionRow = {
+  riderId: string
+  riderName: string
+  role: string | null
+  raceName: string | null
+  stageLabel: string | null
+  raceSharpness?: number | null
+  raceSharpnessLabel?: string | null
+}
+
+type SquadSeasonDashboardRaceTypeRow = {
+  label: string
+  value: number
+}
+
+type SquadSeasonDashboardData = {
+  seasonTrend: SquadSeasonDashboardChartPoint[]
+  podiumChart: SquadSeasonDashboardChartPoint[]
+  summary: {
+    wins: number
+    podiums: number
+    top10s: number
+    bestGC: number
+  }
+  lastTeamRace: {
+    raceId?: string | null
+    raceName: string | null
+    raceCategory?: string | null
+    raceCountryCode?: string | null
+    stageDate?: string | null
+    stageLabel: string | null
+    routeLabel?: string | null
+    stageCount?: number | null
+    rows: SquadSeasonDashboardRaceRow[]
+  }
+  nextRaceSelection: {
+    raceId?: string | null
+    raceName: string | null
+    raceCategory?: string | null
+    raceCountryCode?: string | null
+    stageDate?: string | null
+    stageLabel: string | null
+    routeLabel?: string | null
+    stageCount?: number | null
+    rows: SquadSeasonDashboardSelectionRow[]
+  }
+  raceTypeSnapshot: SquadSeasonDashboardRaceTypeRow[]
+}
+
+function createEmptySquadSeasonDashboardData(): SquadSeasonDashboardData {
+  return {
+    seasonTrend: [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ].map((label) => ({ label, value: 0 })),
+    podiumChart: [
+      { label: 'Wins', value: 0 },
+      { label: '2nd', value: 0 },
+      { label: '3rd', value: 0 },
+      { label: 'Top10', value: 0 },
+      { label: 'Top20', value: 0 },
+    ],
+    summary: {
+      wins: 0,
+      podiums: 0,
+      top10s: 0,
+      bestGC: 0,
+    },
+    lastTeamRace: {
+      raceId: null,
+      raceName: null,
+      raceCategory: null,
+      raceCountryCode: null,
+      stageDate: null,
+      stageLabel: null,
+      routeLabel: null,
+      stageCount: 0,
+      rows: [],
+    },
+    nextRaceSelection: {
+      raceId: null,
+      raceName: null,
+      raceCategory: null,
+      raceCountryCode: null,
+      stageDate: null,
+      stageLabel: null,
+      routeLabel: null,
+      stageCount: 0,
+      rows: [],
+    },
+    raceTypeSnapshot: [
+      { label: 'One-day classics', value: 0 },
+      { label: 'Stage finishes', value: 0 },
+      { label: 'Mountain days', value: 0 },
+      { label: 'Time trials', value: 0 },
+    ],
+  }
+}
+
+function normalizeDashboardChartRows(value: unknown): SquadSeasonDashboardChartPoint[] {
+  if (!Array.isArray(value)) return []
+
+  return value.map((row) => {
+    const record = row && typeof row === 'object' ? (row as Record<string, unknown>) : {}
+
+    return {
+      label: String(record.label ?? ''),
+      value: normalizePointsValue(record.value, 0),
+    }
+  })
+}
+
+function normalizeSquadSeasonDashboardData(value: unknown): SquadSeasonDashboardData {
+  const fallback = createEmptySquadSeasonDashboardData()
+  const record = value && typeof value === 'object' ? (value as Record<string, unknown>) : {}
+  const summary =
+    record.summary && typeof record.summary === 'object'
+      ? (record.summary as Record<string, unknown>)
+      : {}
+  const lastTeamRace =
+    record.lastTeamRace && typeof record.lastTeamRace === 'object'
+      ? (record.lastTeamRace as Record<string, unknown>)
+      : {}
+  const nextRaceSelection =
+    record.nextRaceSelection && typeof record.nextRaceSelection === 'object'
+      ? (record.nextRaceSelection as Record<string, unknown>)
+      : {}
+
+  const seasonTrend = normalizeDashboardChartRows(record.seasonTrend)
+  const podiumChart = normalizeDashboardChartRows(record.podiumChart)
+  const raceTypeSnapshot = normalizeDashboardChartRows(record.raceTypeSnapshot)
+
+  return {
+    seasonTrend: seasonTrend.length > 0 ? seasonTrend : fallback.seasonTrend,
+    podiumChart: podiumChart.length > 0 ? podiumChart : fallback.podiumChart,
+    summary: {
+      wins: normalizePointsValue(summary.wins, 0),
+      podiums: normalizePointsValue(summary.podiums, 0),
+      top10s: normalizePointsValue(summary.top10s, 0),
+      bestGC: normalizePointsValue(summary.bestGC, 0),
+    },
+    lastTeamRace: {
+      raceId:
+        typeof lastTeamRace.raceId === 'string' && lastTeamRace.raceId.trim()
+          ? lastTeamRace.raceId
+          : null,
+      raceName:
+        typeof lastTeamRace.raceName === 'string' && lastTeamRace.raceName.trim()
+          ? lastTeamRace.raceName
+          : null,
+      raceCategory:
+        typeof lastTeamRace.raceCategory === 'string' && lastTeamRace.raceCategory.trim()
+          ? lastTeamRace.raceCategory
+          : null,
+      raceCountryCode:
+        typeof lastTeamRace.raceCountryCode === 'string' && lastTeamRace.raceCountryCode.trim()
+          ? lastTeamRace.raceCountryCode
+          : null,
+      stageDate:
+        typeof lastTeamRace.stageDate === 'string' && lastTeamRace.stageDate.trim()
+          ? lastTeamRace.stageDate
+          : null,
+      stageLabel:
+        typeof lastTeamRace.stageLabel === 'string' && lastTeamRace.stageLabel.trim()
+          ? lastTeamRace.stageLabel
+          : null,
+      routeLabel:
+        typeof lastTeamRace.routeLabel === 'string' && lastTeamRace.routeLabel.trim()
+          ? lastTeamRace.routeLabel
+          : null,
+      stageCount: normalizePointsValue(lastTeamRace.stageCount, 0),
+      rows: Array.isArray(lastTeamRace.rows)
+        ? lastTeamRace.rows.map((row) => {
+            const item = row && typeof row === 'object' ? (row as Record<string, unknown>) : {}
+
+            return {
+              riderId: String(item.riderId ?? ''),
+              riderName: String(item.riderName ?? 'Unknown rider'),
+              role: typeof item.role === 'string' ? item.role : null,
+              resultLabel: String(item.resultLabel ?? '—'),
+              position:
+                typeof item.position === 'number' && Number.isFinite(item.position)
+                  ? item.position
+                  : null,
+              points: normalizePointsValue(item.points, 0),
+            }
+          })
+        : [],
+    },
+    nextRaceSelection: {
+      raceId:
+        typeof nextRaceSelection.raceId === 'string' && nextRaceSelection.raceId.trim()
+          ? nextRaceSelection.raceId
+          : null,
+      raceName:
+        typeof nextRaceSelection.raceName === 'string' && nextRaceSelection.raceName.trim()
+          ? nextRaceSelection.raceName
+          : null,
+      raceCategory:
+        typeof nextRaceSelection.raceCategory === 'string' && nextRaceSelection.raceCategory.trim()
+          ? nextRaceSelection.raceCategory
+          : null,
+      raceCountryCode:
+        typeof nextRaceSelection.raceCountryCode === 'string' && nextRaceSelection.raceCountryCode.trim()
+          ? nextRaceSelection.raceCountryCode
+          : null,
+      stageDate:
+        typeof nextRaceSelection.stageDate === 'string' && nextRaceSelection.stageDate.trim()
+          ? nextRaceSelection.stageDate
+          : null,
+      stageLabel:
+        typeof nextRaceSelection.stageLabel === 'string' && nextRaceSelection.stageLabel.trim()
+          ? nextRaceSelection.stageLabel
+          : null,
+      routeLabel:
+        typeof nextRaceSelection.routeLabel === 'string' && nextRaceSelection.routeLabel.trim()
+          ? nextRaceSelection.routeLabel
+          : null,
+      stageCount: normalizePointsValue(nextRaceSelection.stageCount, 0),
+      rows: Array.isArray(nextRaceSelection.rows)
+        ? nextRaceSelection.rows.map((row) => {
+            const item = row && typeof row === 'object' ? (row as Record<string, unknown>) : {}
+
+            return {
+              riderId: String(item.riderId ?? ''),
+              riderName: String(item.riderName ?? 'Unknown rider'),
+              role: typeof item.role === 'string' ? item.role : null,
+              raceName: typeof item.raceName === 'string' ? item.raceName : null,
+              stageLabel: typeof item.stageLabel === 'string' ? item.stageLabel : null,
+              raceSharpness: normalizePointsValue(item.raceSharpness, 50),
+              raceSharpnessLabel:
+                typeof item.raceSharpnessLabel === 'string' ? item.raceSharpnessLabel : null,
+            }
+          })
+        : [],
+    },
+    raceTypeSnapshot:
+      raceTypeSnapshot.length > 0 ? raceTypeSnapshot : fallback.raceTypeSnapshot,
+  }
+}
+
+async function fetchSquadSeasonDashboardData(
+  clubId: string,
+  seasonYear: number,
+): Promise<SquadSeasonDashboardData> {
+  const { data, error } = await supabase.rpc('get_club_squad_season_dashboard_v1', {
+    p_club_id: clubId,
+    p_season_year: seasonYear,
+  })
+
+  if (error) {
+    console.warn('Failed to load squad season dashboard data:', error)
+    return createEmptySquadSeasonDashboardData()
+  }
+
+  return normalizeSquadSeasonDashboardData(data)
 }
 
 export default function SquadPage() {
@@ -69,6 +369,8 @@ export default function SquadPage() {
   const [error, setError] = useState<string | null>(null)
   const [gameDate, setGameDate] = useState<string | null>(null)
   const [listView, setListView] = useState<SquadListView>('general')
+  const [squadSeasonDashboardData, setSquadSeasonDashboardData] =
+    useState<SquadSeasonDashboardData>(() => createEmptySquadSeasonDashboardData())
 
   const [developingTeamStatus, setDevelopingTeamStatus] = useState<DevelopingTeamStatus | null>(
     null
@@ -105,6 +407,7 @@ export default function SquadPage() {
         recovery: r.recovery ?? null,
         morale: r.morale ?? null,
         potential: r.potential ?? null,
+        internationalPoints: r.international_points ?? 0,
         isTransferListed: transferListedRiderIds.has(r.rider_id),
       })),
     [rows, gameDate, transferListedRiderIds]
@@ -130,50 +433,7 @@ export default function SquadPage() {
     [healthOverviewRows, riderNameById]
   )
 
-  const squadDisplayData = useMemo(() => {
-    const sorted = [...riders].sort((a, b) => b.overall - a.overall)
-    const avgOverall = sorted.length
-      ? Math.round(sorted.reduce((sum, rider) => sum + rider.overall, 0) / sorted.length)
-      : 60
-
-    const seasonTrend = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-    ].map((label, index) => ({
-      label,
-      value: Math.max(
-        8,
-        Math.round((avgOverall - 48) * 0.95 + 8 + (index % 2 === 0 ? 0 : 2))
-      ),
-    }))
-
-    const podiumChart = [
-      { label: 'Wins', value: Math.max(1, Math.round((avgOverall - 52) / 4) + 1) },
-      { label: '2nd', value: 2 },
-      { label: '3rd', value: 3 },
-      { label: 'Top10', value: 9 },
-      { label: 'Top20', value: 20 },
-    ]
-
-    return {
-      seasonTrend,
-      podiumChart,
-      summary: {
-        wins: podiumChart[0].value,
-        podiums: podiumChart[0].value + podiumChart[1].value + podiumChart[2].value,
-        top10s: podiumChart[3].value,
-        bestGC: Math.max(2, 12 - podiumChart[0].value),
-      },
-    }
-  }, [riders])
+  const squadDisplayData = useMemo(() => squadSeasonDashboardData, [squadSeasonDashboardData])
 
   const loadSquadPageData = useCallback(async () => {
     setLoading(true)
@@ -221,6 +481,12 @@ export default function SquadPage() {
       if (clubErr) throw clubErr
       if (!club?.id) throw new Error('No club found for this user.')
 
+      const dashboardData = await fetchSquadSeasonDashboardData(
+        club.id,
+        getSeasonYearFromGameDate(normalizedGameDate)
+      )
+      setSquadSeasonDashboardData(dashboardData)
+
       const { data: healthData, error: healthErr } = await supabase.rpc('get_club_health_overview', {
         p_club_id: club.id,
       })
@@ -239,6 +505,21 @@ export default function SquadPage() {
 
       const rosterRows = (roster ?? []) as SquadRosterRow[]
       const riderIds = rosterRows.map((row) => row.rider_id)
+
+      const { data: riderInternationalPointRows, error: riderInternationalPointErr } = await supabase
+        .from('rider_international_points_by_season_v1')
+        .select('rider_id, season_year, international_points')
+        .in('rider_id', riderIds.length > 0 ? riderIds : ['00000000-0000-0000-0000-000000000000'])
+        .eq('season_year', getSeasonYearFromGameDate(normalizedGameDate))
+
+      if (riderInternationalPointErr) throw riderInternationalPointErr
+
+      const internationalPointsByRiderId = new Map(
+        ((riderInternationalPointRows ?? []) as Array<{
+          rider_id: string
+          international_points: number | string | null
+        }>).map((row) => [row.rider_id, normalizePointsValue(row.international_points, 0)])
+      )
 
       const { data: transferMarketRows, error: transferMarketErr } = await supabase.rpc(
         'get_transfer_market_listings',
@@ -365,6 +646,7 @@ export default function SquadPage() {
           recovery: riderMeta?.recovery ?? null,
           morale: riderMeta?.morale ?? null,
           potential: riderMeta?.potential ?? null,
+          international_points: internationalPointsByRiderId.get(row.rider_id) ?? 0,
           fatigue: row.fatigue ?? riderMeta?.fatigue ?? null,
           availability_status:
             row.availability_status ?? riderMeta?.availability_status ?? null,
@@ -374,6 +656,7 @@ export default function SquadPage() {
       setRows(mergedRows)
       setHealthOverviewRows((healthData ?? []) as ClubHealthOverviewRow[])
     } catch (e: any) {
+      setSquadSeasonDashboardData(createEmptySquadSeasonDashboardData())
       setError(e?.message ?? 'Failed to load squad.')
     } finally {
       setLoading(false)

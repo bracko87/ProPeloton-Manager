@@ -10865,7 +10865,7 @@ RACE_PLAN_OPEN: {
 RACE_SUPPLIES_LOW: {
   defaultTitle: 'Race supplies low',
   defaultMessage:
-    'Your available race supplies are below the required amount for an upcoming race.',
+    'Your race supplies are low. Review stock levels and restock before the next race.',
 
   imageSrc:
     'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Event%20images/Race%20Supplies%20low.png',
@@ -10882,14 +10882,27 @@ RACE_SUPPLIES_LOW: {
         'race_name',
         'race_title',
         'name',
-      ]) || 'Upcoming race'
+      ]) || null
+
+    const criticalCount = pickFirstNumber(payload, [
+      'critical_count',
+      'critical_items_count',
+      'low_supply_count',
+      'shortage_count',
+    ])
 
     return {
       ...item,
-      title: `Race supplies low: ${raceName}`,
+      title: raceName
+        ? `Race supplies low: ${raceName}`
+        : criticalCount !== null
+          ? `Race supplies critically low: ${criticalCount} item${criticalCount === 1 ? '' : 's'}`
+          : item.title || 'Race supplies low',
       message:
         item.message ||
-        `Your club does not currently have enough race supplies for ${raceName}. Review shortages and restock before the race deadline.`,
+        (raceName
+          ? `Your club does not currently have enough race supplies for ${raceName}. Review shortages and restock before the race deadline.`
+          : 'Some race supplies are critically low. Review stock levels and restock before your next race preparation.'),
     }
   },
 
@@ -10901,9 +10914,13 @@ RACE_SUPPLIES_LOW: {
         'race_name',
         'race_title',
         'name',
-      ]) || 'This race'
+      ]) || null
 
-    return `${raceName} requires more race supplies than your club currently has available. Open Race Supplies and restock the missing items before the race.`
+    if (raceName) {
+      return `${raceName} requires more race supplies than your club currently has available. Open Race Supplies and restock the missing items before the race.`
+    }
+
+    return 'Your race supplies stock is critically low. Restock consumables and durable race supplies before preparing for the next race.'
   },
 
   getDetailRows: (item) => {
@@ -10920,6 +10937,8 @@ RACE_SUPPLIES_LOW: {
       'shortage_count',
       'missing_items_count',
       'low_supply_count',
+      'critical_count',
+      'critical_items_count',
     ])
 
     const shortageSummary =
@@ -10927,15 +10946,23 @@ RACE_SUPPLIES_LOW: {
         'shortage_summary',
         'supplies_summary',
         'missing_supplies_summary',
+        'critical_summary',
+        'low_stock_summary',
       ]) ||
       (() => {
-        const shortages = payload?.shortages
+        const rows = Array.isArray(payload?.shortages)
+          ? payload.shortages
+          : Array.isArray(payload?.critical_items)
+            ? payload.critical_items
+            : Array.isArray(payload?.low_items)
+              ? payload.low_items
+              : []
 
-        if (!Array.isArray(shortages) || shortages.length === 0) {
+        if (!Array.isArray(rows) || rows.length === 0) {
           return null
         }
 
-        return shortages
+        return rows
           .map((item) => {
             const row =
               item !== null && typeof item === 'object' && !Array.isArray(item)
@@ -10946,81 +10973,194 @@ RACE_SUPPLIES_LOW: {
 
             const supplyName =
               readString(row.supply_name) ||
+              readString(row.display_name) ||
+              readString(row.name) ||
               formatLabel(readString(row.supply_key)) ||
               'Supply item'
 
             const required =
               readNumber(row.required_quantity) ??
-              readNumber(row.required_qty)
+              readNumber(row.required_qty) ??
+              readNumber(row.required)
 
             const available =
               readNumber(row.available_quantity) ??
-              readNumber(row.available_qty)
+              readNumber(row.available_qty) ??
+              readNumber(row.available) ??
+              readNumber(row.stock_now) ??
+              readNumber(row.current_stock)
 
             const missing =
               readNumber(row.missing_quantity) ??
-              readNumber(row.missing_qty)
+              readNumber(row.missing_qty) ??
+              readNumber(row.missing)
 
-            const details = [
-              required !== null ? `required ${required}` : null,
-              available !== null ? `available ${available}` : null,
-              missing !== null ? `missing ${missing}` : null,
-            ].filter(Boolean)
+            const threshold =
+              readNumber(row.threshold) ??
+              readNumber(row.critical_threshold) ??
+              readNumber(row.low_stock_threshold)
 
-            return details.length > 0
-              ? `${supplyName}: ${details.join(' · ')}`
-              : supplyName
+            if (required !== null && available !== null && missing !== null) {
+              return `${supplyName}: missing ${missing} (${available}/${required} available)`
+            }
+
+            if (available !== null && threshold !== null) {
+              return `${supplyName}: ${available} left, threshold ${threshold}`
+            }
+
+            if (available !== null) {
+              return `${supplyName}: ${available} left`
+            }
+
+            return supplyName
           })
           .filter(Boolean)
-          .join('\n')
+          .join(', ')
       })()
 
     return compactRows([
       detailRow('Race', raceName),
       detailRow(
-        'Race class',
-        pickFirstString(payload, [
-          'race_class',
-          'class',
-          'category',
-          'race_category',
-        ])
-      ),
-      detailRow(
-        'Country',
-        formatCountryName(
-          pickFirstString(payload, [
-            'country_name',
-            'host_country_name',
-            'country',
-            'host_country',
-            'country_code',
-          ])
-        )
-      ),
-      detailRow(
-        'Race starts',
+        'Race date',
         formatContractSeasonLabel(
           pickFirstString(payload, [
             'race_start_date',
             'start_date',
             'starts_on_game_date',
+            'stage_date',
           ])
         )
       ),
       detailRow(
-        'Missing supply types',
-        shortageCount !== null
-          ? `${shortageCount} item${shortageCount === 1 ? '' : 's'}`
-          : null
+        'Critical items',
+        shortageCount !== null ? `${shortageCount}` : null
       ),
-      detailRow('Shortages', shortageSummary),
-      detailRow('Status', 'Supplies low'),
+      detailRow('Supply status', shortageSummary),
+      detailRow(
+        'Bidons / Water Bottles',
+        (() => {
+          const stock = pickFirstNumber(payload, [
+            'bidons_available',
+            'water_bottles_available',
+            'bidons_stock',
+            'water_bottles_stock',
+          ])
+
+          const required = pickFirstNumber(payload, [
+            'bidons_required',
+            'water_bottles_required',
+          ])
+
+          if (stock !== null && required !== null) {
+            return `${stock}/${required} available`
+          }
+
+          return stock !== null ? `${stock} available` : null
+        })()
+      ),
+      detailRow(
+        'Energy Gels',
+        (() => {
+          const stock = pickFirstNumber(payload, [
+            'energy_gels_available',
+            'gels_available',
+            'energy_gels_stock',
+            'gels_stock',
+          ])
+
+          const required = pickFirstNumber(payload, [
+            'energy_gels_required',
+            'gels_required',
+          ])
+
+          if (stock !== null && required !== null) {
+            return `${stock}/${required} available`
+          }
+
+          return stock !== null ? `${stock} available` : null
+        })()
+      ),
+      detailRow(
+        'Nutrition Packs',
+        (() => {
+          const stock = pickFirstNumber(payload, [
+            'nutrition_packs_available',
+            'nutrition_available',
+            'nutrition_packs_stock',
+            'nutrition_stock',
+          ])
+
+          const required = pickFirstNumber(payload, [
+            'nutrition_packs_required',
+            'nutrition_required',
+          ])
+
+          if (stock !== null && required !== null) {
+            return `${stock}/${required} available`
+          }
+
+          return stock !== null ? `${stock} available` : null
+        })()
+      ),
+      detailRow(
+        'Race Jersey Complete',
+        (() => {
+          const stock = pickFirstNumber(payload, [
+            'race_jersey_complete_available',
+            'race_jersey_available',
+            'jersey_available',
+            'race_jersey_complete_stock',
+            'race_jersey_stock',
+            'jersey_stock',
+          ])
+
+          const required = pickFirstNumber(payload, [
+            'race_jersey_complete_required',
+            'race_jersey_required',
+            'jersey_required',
+          ])
+
+          if (stock !== null && required !== null) {
+            return `${stock}/${required} available`
+          }
+
+          return stock !== null ? `${stock} available` : null
+        })()
+      ),
+      detailRow(
+        'Rain Jackets',
+        (() => {
+          const stock = pickFirstNumber(payload, [
+            'rain_jackets_available',
+            'rain_jackets_stock',
+          ])
+
+          const required = pickFirstNumber(payload, [
+            'rain_jackets_required',
+          ])
+
+          if (stock !== null && required !== null) {
+            return `${stock}/${required} available`
+          }
+
+          return stock !== null ? `${stock} available` : null
+        })()
+      ),
+      detailRow(
+        'Status',
+        formatLabel(
+          pickFirstString(payload, [
+            'status',
+            'supply_status',
+            'stock_status',
+          ])
+        ) || 'Restock required'
+      ),
     ])
   },
 
   getExtraText: () =>
-    'Open Race Supplies to restock the missing items needed for this race.',
+    'Consumables are used once. Race Jersey Complete and Rain Jackets are durable reusable supplies with stage-use limits. Restock before race preparation to avoid missing supplies.',
 
   actions: [
     {
@@ -11031,9 +11171,192 @@ RACE_SUPPLIES_LOW: {
       getHref: () => '/dashboard/equipment?tab=race-supplies',
       show: () => true,
     },
+    {
+      key: 'open-equipment',
+      label: 'Equipment page',
+      variant: 'secondary',
+      kind: 'navigate',
+      getHref: () => '/dashboard/equipment',
+      show: () => true,
+    },
     MARK_READ_ACTION,
   ],
 },
+STAGE_PLAN_MISSING_AT_LOCK: {
+    defaultTitle: 'Stage plan missing',
+    defaultMessage:
+      'A stage plan was missing when the stage locked. Review the race preparation page.',
+
+    imageSrc:
+      'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Event%20images/Stage%20Plan%20Locked.png',
+
+    getImageSrc: (item) =>
+      getImageSrcFromItem(item) ||
+      'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Event%20images/Stage%20Plan%20Locked.png',
+
+    enrich: (item) => {
+      const payload = getPayload(item)
+
+      const raceName =
+        pickFirstString(payload, [
+          'race_name',
+          'race_title',
+          'name',
+        ]) || 'Race'
+
+      const stageNumber = pickFirstString(payload, ['stage_number'])
+      const stageLabel = stageNumber ? ` Stage ${stageNumber}` : ''
+
+      return {
+        ...item,
+        title: `Stage plan missing: ${raceName}${stageLabel}`,
+        message:
+          item.message ||
+          `No stage plan was found for ${raceName}${stageLabel} after the lock time.`,
+      }
+    },
+
+    getIntroText: (item) => {
+      const payload = getPayload(item)
+
+      const raceName =
+        pickFirstString(payload, [
+          'race_name',
+          'race_title',
+          'name',
+        ]) || 'this race'
+
+      const stageNumber = pickFirstString(payload, ['stage_number'])
+      const stageLabel = stageNumber ? ` Stage ${stageNumber}` : ''
+
+      return `No stage plan was found for ${raceName}${stageLabel} when the stage locked. The team may race with a weaker/default setup unless a fallback plan is generated.`
+    },
+
+    getDetailRows: (item) => {
+      const payload = getPayload(item)
+
+      const stageNumber = pickFirstString(payload, ['stage_number'])
+
+      return compactRows([
+        detailRow(
+          'Race',
+          pickFirstString(payload, [
+            'race_name',
+            'race_title',
+            'name',
+          ])
+        ),
+        detailRow(
+          'Stage',
+          stageNumber ? `Stage ${stageNumber}` : null
+        ),
+        detailRow(
+          'Stage date',
+          formatContractSeasonLabel(
+            pickFirstString(payload, [
+              'stage_date',
+              'race_stage_date',
+              'starts_on_game_date',
+            ])
+          )
+        ),
+        detailRow(
+          'Start',
+          pickFirstString(payload, [
+            'start_city',
+            'stage_start_city',
+          ])
+        ),
+        detailRow(
+          'Finish',
+          pickFirstString(payload, [
+            'finish_city',
+            'stage_finish_city',
+          ])
+        ),
+        detailRow(
+          'Reason',
+          formatLabel(
+            pickFirstString(payload, [
+              'missing_reason',
+              'reason',
+            ])
+          ) || 'No stage plan found after lock'
+        ),
+        detailRow(
+          'Fine applied',
+          pickFirstString(payload, ['fine_applied']) === 'true'
+            ? 'Yes'
+            : 'No'
+        ),
+        detailRow(
+          'Fine status',
+          formatLabel(
+            pickFirstString(payload, [
+              'fine_status',
+              'penalty_status',
+            ])
+          )
+        ),
+      ])
+    },
+
+    getExtraText: () =>
+      'Open Stage Plans to review what happened. Fine logic is not applied yet; it should be connected later through the finance ledger model.',
+
+    actions: [
+      {
+        key: 'open-stage-plans',
+        label: 'Stage plans',
+        variant: 'primary',
+        kind: 'navigate',
+        getHref: (item) => {
+          const payload = getPayload(item)
+          const raceId = pickFirstString(payload, ['race_id'])
+          const stageId = pickFirstString(payload, ['stage_id'])
+
+          return (
+            pickFirstString(payload, [
+              'stage_plans_path',
+              'stage_plan_path',
+            ]) ||
+            (raceId
+              ? `/dashboard/race-preparation?tab=stagePlans&raceId=${raceId}${stageId ? `&stageId=${stageId}` : ''}`
+              : '/dashboard/race-preparation?tab=stagePlans')
+          )
+        },
+        show: () => true,
+      },
+      {
+        key: 'open-race-page',
+        label: 'Open race page',
+        variant: 'secondary',
+        kind: 'navigate',
+        getHref: (item) => {
+          const payload = getPayload(item)
+          const raceId = pickFirstString(payload, ['race_id'])
+
+          return raceId
+            ? `/dashboard/races/${raceId}`
+            : pickFirstString(payload, [
+                'race_profile_path',
+                'race_detail_path',
+                'race_page_path',
+              ]) || '/dashboard/calendar'
+        },
+        show: () => true,
+      },
+      {
+        key: 'open-calendar',
+        label: 'Team calendar',
+        variant: 'secondary',
+        kind: 'navigate',
+        getHref: () => '/dashboard/calendar',
+        show: () => true,
+      },
+      MARK_READ_ACTION,
+    ],
+  },
   INFRASTRUCTURE_ASSET_ORDERED: {
   defaultTitle: 'Asset ordered',
   defaultMessage:

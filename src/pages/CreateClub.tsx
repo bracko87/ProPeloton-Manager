@@ -33,7 +33,7 @@
  * - RPC FIX: Uses rpcCreatedClubId for the Supabase return value, then assigns into mutable createdClubId.
  */
 
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthProvider'
@@ -128,6 +128,28 @@ const patternLabels: Record<BadgePattern, string> = {
   'center-band': 'Center Stripe',
   quartered: 'Quartered',
 }
+
+const GENERIC_TEAM_KITS = [
+  'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/AI%20Teams%20Kits/Genkit1.png',
+  'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/AI%20Teams%20Kits/Genkit2.png',
+  'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/AI%20Teams%20Kits/Genkit3.png',
+  'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/AI%20Teams%20Kits/Genkit4.png',
+  'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/AI%20Teams%20Kits/Genkit5.png',
+  'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/AI%20Teams%20Kits/Genkit6.png',
+  'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/AI%20Teams%20Kits/Genkit7.png',
+  'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/AI%20Teams%20Kits/Genkit8.png',
+  'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/AI%20Teams%20Kits/Genkit9.png',
+  'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/AI%20Teams%20Kits/Genkit10.png',
+  'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/AI%20Teams%20Kits/Genkit11.png',
+  'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/AI%20Teams%20Kits/Genkit12.png',
+  'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/AI%20Teams%20Kits/Genkit13.png',
+  'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/AI%20Teams%20Kits/Genkit14.png',
+  'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/AI%20Teams%20Kits/Genkit15.png',
+  'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/AI%20Teams%20Kits/Genkit16.png',
+  'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/AI%20Teams%20Kits/Genkit17.png',
+  'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/AI%20Teams%20Kits/Genkit18.png',
+]
+
 
 /**
  * rasterizeBadgeSvgToPng
@@ -568,6 +590,102 @@ function BadgePreview({
   )
 }
 
+
+type GenericKitSelectorProps = {
+  selectedKitUrl: string | null
+  onSelect: (url: string) => void
+  scrollerRef: React.RefObject<HTMLDivElement>
+  onScrollLeft: () => void
+  onScrollRight: () => void
+  disabled?: boolean
+}
+
+/**
+ * GenericKitSelector
+ * Lets the user choose one starter jersey from the predefined generic kit pool.
+ */
+function GenericKitSelector({
+  selectedKitUrl,
+  onSelect,
+  scrollerRef,
+  onScrollLeft,
+  onScrollRight,
+  disabled = false,
+}: GenericKitSelectorProps): JSX.Element {
+  return (
+    <div className="w-full min-w-0 max-w-full space-y-5 overflow-hidden rounded-xl border border-emerald-200 bg-emerald-50/40 p-6 min-h-[360px]">
+      <div>
+        <label className="block text-sm font-medium text-gray-700">Team Jersey</label>
+        <p className="mt-1 text-xs text-gray-500">
+          Choose one jersey to unlock team creation. You can change it later in Customize Team.
+        </p>
+      </div>
+
+      <div className="flex w-full min-w-0 items-center justify-center gap-5 overflow-hidden pt-3">
+        <button
+          type="button"
+          onClick={onScrollLeft}
+          disabled={disabled}
+          className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full border border-gray-300 bg-white text-4xl font-bold text-gray-700 shadow-sm transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+          aria-label="Scroll kits left"
+        >
+          ‹
+        </button>
+
+        <div
+          ref={scrollerRef}
+          className="flex h-[250px] max-w-[560px] min-w-0 flex-1 gap-6 overflow-x-hidden scroll-smooth whitespace-nowrap rounded-2xl border border-gray-200 bg-white/90 p-5"
+        >
+          {GENERIC_TEAM_KITS.map((kitUrl, index) => {
+            const isSelected = selectedKitUrl === kitUrl
+
+            return (
+              <button
+                key={kitUrl}
+                type="button"
+                onClick={() => onSelect(kitUrl)}
+                disabled={disabled}
+                className={[
+                  'inline-flex h-52 w-44 shrink-0 items-center justify-center rounded-2xl border bg-white p-5 shadow-sm transition',
+                  isSelected
+                    ? 'border-emerald-500 ring-2 ring-emerald-400 ring-offset-2'
+                    : 'border-gray-200 hover:border-emerald-300 hover:shadow-md',
+                  disabled ? 'cursor-not-allowed opacity-60' : '',
+                ].join(' ')}
+                aria-label={`Select generic kit ${index + 1}`}
+                aria-pressed={isSelected}
+              >
+                <img
+                  src={kitUrl}
+                  alt={`Generic team kit ${index + 1}`}
+                  className="h-full w-full object-contain"
+                  draggable={false}
+                />
+              </button>
+            )
+          })}
+        </div>
+
+        <button
+          type="button"
+          onClick={onScrollRight}
+          disabled={disabled}
+          className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full border border-gray-300 bg-white text-4xl font-bold text-gray-700 shadow-sm transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+          aria-label="Scroll kits right"
+        >
+          ›
+        </button>
+      </div>
+
+      {!selectedKitUrl ? (
+        <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-800">
+          Jersey selection is required before you can create your team.
+        </div>
+      ) : null}
+    </div>
+  )
+}
+
 /**
  * CreateClubPage
  * Team creation form with backend RPC integration.
@@ -592,6 +710,8 @@ export default function CreateClubPage(): JSX.Element {
 
   // Only customization left: interior pattern (in Team Preview panel)
   const [badgePattern, setBadgePattern] = useState<BadgePattern>('horizontal-band')
+  const [selectedKitUrl, setSelectedKitUrl] = useState<string | null>(null)
+  const kitScrollerRef = useRef<HTMLDivElement | null>(null)
 
   // Fixed badge visuals for this page
   const badgeShape: BadgeShape = 'shield'
@@ -606,6 +726,41 @@ export default function CreateClubPage(): JSX.Element {
   async function cleanupFailedLogoUpload(logoPath: string | null): Promise<void> {
     if (!logoPath) return
     await Promise.allSettled([supabase.storage.from('club-logos').remove([logoPath])])
+  }
+
+  function scrollGenericKits(direction: 'left' | 'right'): void {
+    const el = kitScrollerRef.current
+    if (!el) return
+
+    el.scrollBy({
+      left: direction === 'left' ? -288 : 288,
+      behavior: 'smooth',
+    })
+  }
+
+  async function saveSelectedHomeKit(clubId: string, kitUrl: string): Promise<void> {
+    const { error: kitError } = await supabase.from('team_kits').upsert(
+      {
+        team_id: clubId,
+        name: 'home',
+        config: {
+          version: 1,
+          mode: 'generic_pool',
+          template: 'generic_pool',
+          image_url: kitUrl,
+          image_data_url: null,
+          source: 'create_club',
+        },
+        updated_at: new Date().toISOString(),
+      },
+      {
+        onConflict: 'team_id,name',
+      },
+    )
+
+    if (kitError) {
+      throw kitError
+    }
   }
 
   useEffect(() => {
@@ -663,10 +818,17 @@ export default function CreateClubPage(): JSX.Element {
       return
     }
 
+    if (!selectedKitUrl) {
+      setError('Please choose a team jersey before creating your team.')
+      return
+    }
+
     if (!user) {
       setError('You must be signed in to create a team.')
       return
     }
+
+    const selectedKitForSubmit = selectedKitUrl
 
     setSubmitting(true)
 
@@ -723,6 +885,8 @@ export default function CreateClubPage(): JSX.Element {
 
       createdClubId = rpcCreatedClubId as string
 
+      await saveSelectedHomeKit(createdClubId, selectedKitForSubmit)
+
       // ---- Referral persistence (diagnostic logging retained) ----
       const pendingReferralCode = getPendingReferralCode()
 
@@ -753,6 +917,8 @@ export default function CreateClubPage(): JSX.Element {
   }
 
   const selectedCountry = countries.find(c => c.code === form.countryCode) ?? null
+  const isTeamNameValid = form.name.trim().length >= 3
+  const canCreateTeam = Boolean(isTeamNameValid && form.countryCode && selectedKitUrl && !loadingCountries && !submitting)
   const flagUrl = form.countryCode ? `https://flagcdn.com/w40/${form.countryCode.toLowerCase()}.png` : ''
   const overlaySummary = 'No symbol / letter selected'
 
@@ -787,12 +953,12 @@ export default function CreateClubPage(): JSX.Element {
 
       <div className="relative z-10 max-w-7xl w-full bg-white rounded-xl shadow-2xl overflow-hidden p-6 lg:p-8 space-y-6">
         <div className="rounded-xl border-2 border-emerald-400 bg-white/95 overflow-hidden">
-          <div className="grid grid-cols-1 lg:grid-cols-[1.05fr_0.95fr]">
-            <div className="p-8 lg:p-10 flex flex-col h-full">
+          <div className="grid min-w-0 grid-cols-1 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)]">
+            <div className="min-w-0 p-8 lg:p-10 flex flex-col h-full">
               <h2 className="text-2xl font-bold text-gray-900">Create Your Team</h2>
               <p className="text-sm text-gray-600 mt-2">Design your team identity and enter the ProPeloton world.</p>
 
-              <form onSubmit={handleSubmit} className="mt-8 flex flex-col flex-1">
+              <form id="create-club-form" onSubmit={handleSubmit} className="mt-8 flex flex-col flex-1">
                 <div className="space-y-5">
                   <div>
                     <label className="text-sm font-medium text-gray-700">Team Name</label>
@@ -844,24 +1010,24 @@ export default function CreateClubPage(): JSX.Element {
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="text-sm font-medium text-gray-700">Primary Color</label>
+                    <div className="flex items-center gap-3">
+                      <label className="min-w-[88px] text-sm font-medium text-gray-700">Primary Color</label>
                       <input
                         type="color"
                         value={form.primary}
                         onChange={e => updateField('primary', e.target.value)}
-                        className="mt-2 w-20 h-10 p-0 border rounded"
+                        className="h-10 w-20 rounded border p-0"
                         disabled={submitting}
                       />
                     </div>
 
-                    <div>
-                      <label className="text-sm font-medium text-gray-700">Secondary Color</label>
+                    <div className="flex items-center gap-3">
+                      <label className="min-w-[106px] text-sm font-medium text-gray-700">Secondary Color</label>
                       <input
                         type="color"
                         value={form.secondary}
                         onChange={e => updateField('secondary', e.target.value)}
-                        className="mt-2 w-20 h-10 p-0 border rounded"
+                        className="h-10 w-20 rounded border p-0"
                         disabled={submitting}
                       />
                     </div>
@@ -877,6 +1043,15 @@ export default function CreateClubPage(): JSX.Element {
                       disabled={submitting}
                     />
                   </div>
+
+                  <GenericKitSelector
+                    selectedKitUrl={selectedKitUrl}
+                    onSelect={setSelectedKitUrl}
+                    scrollerRef={kitScrollerRef}
+                    onScrollLeft={() => scrollGenericKits('left')}
+                    onScrollRight={() => scrollGenericKits('right')}
+                    disabled={submitting}
+                  />
                 </div>
 
                 <div className="mt-auto pt-8">
@@ -888,30 +1063,11 @@ export default function CreateClubPage(): JSX.Element {
                       {error}
                     </div>
                   ) : null}
-
-                  <div className="flex items-center gap-4 mt-4">
-                    <button
-                      type="submit"
-                      className="bg-yellow-400 px-6 py-2 rounded-md font-semibold disabled:opacity-70"
-                      disabled={submitting}
-                    >
-                      {submitting ? 'Creating...' : 'Create Team'}
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => navigate('/')}
-                      className="px-4 py-2 rounded-md border border-gray-300"
-                      disabled={submitting}
-                    >
-                      Cancel
-                    </button>
-                  </div>
                 </div>
               </form>
             </div>
 
-            <div className="border-t lg:border-t-0 lg:border-l border-gray-200 bg-gradient-to-b from-slate-50 to-white p-8 lg:p-10 h-full">
+            <div className="min-w-0 border-t lg:border-t-0 lg:border-l border-gray-200 bg-gradient-to-b from-slate-50 to-white p-8 lg:p-10 h-full">
               <div className="flex flex-col items-center justify-start text-center">
                 <h3 className="text-2xl font-bold text-gray-900">Team Preview</h3>
                 <p className="text-sm text-gray-600 mt-2">Interior layout and colors update live.</p>
@@ -934,6 +1090,7 @@ export default function CreateClubPage(): JSX.Element {
                 </div>
 
                 <div className="mt-2 text-xs text-gray-500">{overlaySummary}</div>
+
 
                 {/* Consolidated Interior Style selector into the Team Preview area */}
                 <div className="mt-8 w-full rounded-xl border border-emerald-200 bg-emerald-50/40 p-4 text-left">
@@ -966,6 +1123,27 @@ export default function CreateClubPage(): JSX.Element {
                       </button>
                     ))}
                   </div>
+                </div>
+
+                <div className="mt-6 flex w-full justify-end gap-3">
+                  <button
+                    type="button"
+                    onClick={() => navigate('/')}
+                    className="rounded-md border border-gray-300 bg-white px-4 py-2 font-medium text-gray-700 shadow-sm transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
+                    disabled={submitting}
+                  >
+                    Cancel
+                  </button>
+
+                  <button
+                    type="submit"
+                    form="create-club-form"
+                    className="rounded-md bg-yellow-400 px-6 py-2 font-semibold text-gray-950 shadow-sm transition hover:bg-yellow-300 disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-500 disabled:shadow-none"
+                    disabled={!canCreateTeam}
+                    title={!selectedKitUrl ? 'Choose one team jersey first' : undefined}
+                  >
+                    {submitting ? 'Creating...' : 'Create Team'}
+                  </button>
                 </div>
               </div>
             </div>

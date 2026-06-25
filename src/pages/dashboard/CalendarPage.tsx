@@ -98,6 +98,24 @@ type RaceTeamEntry = {
   status: string | null
 }
 
+type RaceStageCalendarRow = {
+  race_id: string
+  stage_number: number | null
+  stage_date: string
+}
+
+type SponsorObjectiveCalendarTarget = {
+  objective_id: string
+  sponsor_name: string
+  objective_title: string
+  target_race_id: string
+  required_result: string
+  display_status_label: string
+  objective_result_state: string
+  payout_status: string
+  target_check_game_date: string | null
+}
+
 type DerivedGameDateParts = {
   seasonNumber: number
   monthNumber: number
@@ -322,6 +340,25 @@ function formatCalendarDateBadge(race: RaceCalendarEntryWithGameDates): {
   }
 }
 
+function getCalendarDeepLinkParams(search: string): {
+  view: CalendarView | null
+  monthNumber: number | null
+  raceId: string | null
+  source: string | null
+} {
+  const params = new URLSearchParams(search)
+  const rawView = params.get('view')
+  const rawMonth = Number(params.get('month'))
+  const rawRaceId = params.get('raceId') || params.get('focusRaceId')
+
+  return {
+    view: rawView === 'season' || rawView === 'races' ? rawView : null,
+    monthNumber: Number.isFinite(rawMonth) && rawMonth >= 1 && rawMonth <= 12 ? rawMonth : null,
+    raceId: rawRaceId && /^[0-9a-f-]{36}$/i.test(rawRaceId) ? rawRaceId : null,
+    source: params.get('source')
+  }
+}
+
 function getRaceCalendarSortOrdinal(parts: DerivedGameDateParts): number {
   return (
     (parts.seasonNumber - 1) * 12 * GAME_MONTH_LENGTH +
@@ -396,11 +433,35 @@ function formatCalendarCellDate(monthNumber: number, dayNumber: number): string 
   return `${getGameMonthName(monthNumber)} ${dayNumber}`
 }
 
-function formatRaceBadgeLabel(race: RaceCalendarItem): string {
-  if (race.race_type) {
-    return `${race.name} · ${titleCaseFromSnake(race.race_type)}`
+function formatRaceBadgeLabel(
+  race: RaceCalendarItem,
+  canonicalDateString: string,
+  stagesByRaceId: Record<string, RaceStageCalendarRow[]>
+): string {
+  const stages = stagesByRaceId[race.id] ?? []
+  const matchingStage = stages.find(stage => stage.stage_date === canonicalDateString)
+
+  if (matchingStage?.stage_number != null) {
+    return `${race.name} · Stage ${matchingStage.stage_number}`
   }
-  return race.name
+
+  const raceStart = race.start_date ? parseDateString(race.start_date) : null
+  const currentDate = parseDateString(canonicalDateString)
+  const fallbackStageNumber = raceStart ? differenceInDays(currentDate, raceStart) + 1 : 1
+
+  const stageCount = Number(
+    race.actual_stage_count ??
+      race.stage_count ??
+      race.stored_stage_count ??
+      1
+  )
+
+  const safeStageNumber = Math.max(
+    1,
+    Math.min(Math.max(1, stageCount), fallbackStageNumber)
+  )
+
+  return `${race.name} · Stage ${safeStageNumber}`
 }
 
 function normalizeCountryCode(code: string | null | undefined): string | null {
@@ -675,6 +736,10 @@ export default function CalendarPage(): JSX.Element {
 
   const [bookings, setBookings] = useState<TrainingCampBooking[]>([])
   const [races, setRaces] = useState<RaceCalendarItem[]>([])
+  const [raceStagesByRaceId, setRaceStagesByRaceId] = useState<Record<string, RaceStageCalendarRow[]>>({})
+  const [sponsorObjectiveTargets, setSponsorObjectiveTargets] = useState<
+    SponsorObjectiveCalendarTarget[]
+  >([])
 
   const [teamWeather, setTeamWeather] = useState<WeatherNormals | null>(null)
 
@@ -700,6 +765,8 @@ export default function CalendarPage(): JSX.Element {
         let resolvedTeamWeather: WeatherNormals | null = null
         let resolvedRaceNotice: string | null = null
         let resolvedRaces: RaceCalendarItem[] = []
+        let resolvedRaceStagesByRaceId: Record<string, RaceStageCalendarRow[]> = {}
+        let resolvedSponsorObjectiveTargets: SponsorObjectiveCalendarTarget[] = []
 
         const primaryClubRes = await supabase.rpc('get_my_primary_club_id')
         if (!primaryClubRes.error && primaryClubRes.data) {
@@ -869,8 +936,66 @@ export default function CalendarPage(): JSX.Element {
                 toNullableString(row.existing_application_status) ?? userEntry?.status ?? null
             } as RaceCalendarItem
           })
+
+
+          if (raceIds.length > 0) {
+            const stagesRes = await supabase
+              .from('race_stages')
+              .select('race_id, stage_number, stage_date')
+              .in('race_id', raceIds)
+              .order('stage_date', { ascending: true })
+              .order('stage_number', { ascending: true })
+
+            if (!stagesRes.error) {
+              resolvedRaceStagesByRaceId = ((stagesRes.data ?? []) as RaceStageCalendarRow[]).reduce<
+                Record<string, RaceStageCalendarRow[]>
+              >((acc, stage) => {
+                if (!acc[stage.race_id]) acc[stage.race_id] = []
+                acc[stage.race_id].push({
+                  race_id: stage.race_id,
+                  stage_number: stage.stage_number,
+                  stage_date: stage.stage_date,
+                })
+                return acc
+              }, {})
+            }
+          }
         } catch {
           resolvedRaceNotice = 'Race Calendar is ready, but the race source is not available yet.'
+        }
+
+        try {
+          const sponsorObjectivesRes = await supabase.rpc('get_club_sponsor_objectives_ui_v1', {
+            p_club_id: resolvedClubId,
+          })
+
+          if (!sponsorObjectivesRes.error) {
+            const rows = Array.isArray(sponsorObjectivesRes.data)
+              ? (sponsorObjectivesRes.data as Array<Record<string, unknown>>)
+              : []
+
+            resolvedSponsorObjectiveTargets = rows
+              .map((row) => {
+                const targetRaceId = toNullableString(row.target_race_id)
+
+                if (!targetRaceId) return null
+
+                return {
+                  objective_id: toNullableString(row.objective_id) ?? `${targetRaceId}-sponsor-objective`,
+                  sponsor_name: toNullableString(row.sponsor_name) ?? 'Sponsor',
+                  objective_title: toNullableString(row.objective_title) ?? 'Sponsor objective',
+                  target_race_id: targetRaceId,
+                  required_result: toNullableString(row.required_result) ?? 'objective',
+                  display_status_label: toNullableString(row.display_status_label) ?? 'Scheduled',
+                  objective_result_state: toNullableString(row.objective_result_state) ?? 'pending',
+                  payout_status: toNullableString(row.payout_status) ?? 'unpaid',
+                  target_check_game_date: toNullableString(row.target_check_game_date),
+                }
+              })
+              .filter((target): target is SponsorObjectiveCalendarTarget => Boolean(target))
+          }
+        } catch {
+          resolvedSponsorObjectiveTargets = []
         }
 
         if (cancelled) return
@@ -881,6 +1006,8 @@ export default function CalendarPage(): JSX.Element {
         setBookings((bookingsRes.data ?? []) as TrainingCampBooking[])
         setTeamWeather(resolvedTeamWeather)
         setRaces(resolvedRaces)
+        setRaceStagesByRaceId(resolvedRaceStagesByRaceId)
+        setSponsorObjectiveTargets(resolvedSponsorObjectiveTargets)
         setRaceCalendarNotice(resolvedRaceNotice)
       } catch (err) {
         if (!cancelled) {
@@ -900,11 +1027,18 @@ export default function CalendarPage(): JSX.Element {
   }, [])
 
   useEffect(() => {
-    if (gameDateParts) {
-      setActiveRaceMonth(gameDateParts.month_number)
-      setDisplayedSeasonMonth(gameDateParts.month_number)
+    if (!gameDateParts) return
+
+    const deepLink = getCalendarDeepLinkParams(location.search)
+    const resolvedMonth = deepLink.monthNumber ?? gameDateParts.month_number
+
+    setActiveRaceMonth(resolvedMonth)
+    setDisplayedSeasonMonth(resolvedMonth)
+
+    if (deepLink.view) {
+      setActiveView(deepLink.view)
     }
-  }, [gameDateParts])
+  }, [gameDateParts, location.search])
 
   useEffect(() => {
     if (loading) return
@@ -960,6 +1094,7 @@ export default function CalendarPage(): JSX.Element {
       })
     })
   }, [loading, location.pathname, location.search, location.state, navigate])
+
 
   const currentMonthStart = useMemo(() => {
     if (!currentGameDate || !gameDateParts) return null
@@ -1038,9 +1173,44 @@ export default function CalendarPage(): JSX.Element {
       })
   }, [seasonRaceEntries, activeRaceMonth])
 
+  useEffect(() => {
+    if (loading) return
+
+    const deepLink = getCalendarDeepLinkParams(location.search)
+    if (!deepLink.raceId) return
+
+    const timer = window.setTimeout(() => {
+      const row = document.querySelector(`[data-race-id="${deepLink.raceId}"]`)
+
+      if (row) {
+        row.scrollIntoView({
+          block: 'center',
+          behavior: 'smooth'
+        })
+      }
+    }, 120)
+
+    return () => window.clearTimeout(timer)
+  }, [loading, activeView, activeRaceMonth, activeMonthRaces.length, location.search])
+
   const acceptedSeasonRaceEntries = useMemo(() => {
     return seasonRaceEntries.filter(race => isRaceAcceptedForUser(race))
   }, [seasonRaceEntries])
+
+  const calendarDeepLink = useMemo(() => {
+    return getCalendarDeepLinkParams(location.search)
+  }, [location.search])
+
+  const sponsorObjectiveTargetsByRaceId = useMemo(() => {
+    return sponsorObjectiveTargets.reduce<Record<string, SponsorObjectiveCalendarTarget[]>>(
+      (acc, target) => {
+        if (!acc[target.target_race_id]) acc[target.target_race_id] = []
+        acc[target.target_race_id].push(target)
+        return acc
+      },
+      {}
+    )
+  }, [sponsorObjectiveTargets])
 
   const weekdayHeaders = useMemo(() => {
     return WEEKDAY_NAMES_MONDAY_FIRST
@@ -1338,7 +1508,7 @@ export default function CalendarPage(): JSX.Element {
                             onClick={() => openRaceDetail(race.id)}
                             className="text-left hover:underline"
                           >
-                            {formatRaceBadgeLabel(race)}
+                            {formatRaceBadgeLabel(race, day.canonicalDateString, raceStagesByRaceId)}
                           </button>
                         </div>
                       ))}
@@ -1478,12 +1648,24 @@ export default function CalendarPage(): JSX.Element {
                 {activeMonthRaces.map((race) => {
                   const dateBadge = formatCalendarDateBadge(race)
                   const effectiveRaceStatus = getEffectiveRaceCalendarStatus(race)
+                  const sponsorTargetsForRace = sponsorObjectiveTargetsByRaceId[race.id] ?? []
+                  const hasSponsorObjectiveTarget = sponsorTargetsForRace.length > 0
+                  const sponsorTargetTitle = sponsorTargetsForRace
+                    .map((target) => `${target.sponsor_name}: ${target.objective_title}`)
+                    .join('\n')
+                  const isFocusedRace = calendarDeepLink.raceId === race.id
+                  const isSponsorObjectiveFocus =
+                    isFocusedRace && calendarDeepLink.source === 'sponsor_objective'
 
                   return (
                     <li
                       key={race.id}
                       data-race-id={race.id}
-                      className="flex flex-col gap-3 rounded-md border border-gray-200 p-4 md:flex-row md:items-center md:justify-between"
+                      className={`flex flex-col gap-3 rounded-md border p-4 md:flex-row md:items-center md:justify-between ${
+                        isFocusedRace
+                          ? 'border-yellow-400 bg-yellow-50 ring-2 ring-yellow-300'
+                          : 'border-gray-200'
+                      }`}
                     >
                       <div className="flex min-w-0 items-center gap-3">
                         <div className="w-[62px] shrink-0 text-center text-sm font-semibold leading-5 text-black">
@@ -1514,6 +1696,19 @@ export default function CalendarPage(): JSX.Element {
                       </div>
 
                       <div className="flex flex-wrap items-center gap-2">
+                        {hasSponsorObjectiveTarget ? (
+                          <span
+                            className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
+                              isSponsorObjectiveFocus
+                                ? 'bg-yellow-300 text-yellow-950 ring-2 ring-yellow-400'
+                                : 'bg-yellow-100 text-yellow-800'
+                            }`}
+                            title={sponsorTargetTitle || 'Sponsor objective target'}
+                          >
+                            ★ Sponsor goal
+                          </span>
+                        ) : null}
+
                         <span
                           className={`rounded-full px-2.5 py-1 text-xs font-medium ${getRaceApplicationBadgeClass(
                             effectiveRaceStatus

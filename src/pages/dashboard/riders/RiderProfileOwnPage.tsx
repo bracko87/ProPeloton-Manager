@@ -7,8 +7,8 @@
 import React, { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
 import RiderProfilePage from '../../../features/squad/components/RiderProfilePage'
-import { supabase } from '../../../lib/supabase'
 import { normalizeGameDateValue } from '../../../features/squad/utils/dates'
+import { supabase } from '../../../lib/supabase'
 
 export default function RiderProfileOwnPage() {
   const { riderId } = useParams<{ riderId: string }>()
@@ -20,7 +20,9 @@ export default function RiderProfileOwnPage() {
 
     async function loadGameDate() {
       const { data, error } = await supabase.rpc('get_current_game_date')
+
       if (!mounted || error) return
+
       setGameDate(normalizeGameDateValue(data))
     }
 

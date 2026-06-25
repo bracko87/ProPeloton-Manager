@@ -455,6 +455,31 @@ export function saveRaceStagePlan(payload: RaceStagePlanSavePayload) {
   )
 }
 
+export async function askSportDirectorForStagePlan({
+  racePreparationId,
+  stageId,
+  clubId,
+}: {
+  racePreparationId: UUID
+  stageId: UUID
+  clubId: UUID
+}): Promise<JsonRecord> {
+  const { data, error } = await supabase.rpc(
+    'generate_stage_plan_sport_director_suggestion_v1',
+    {
+      p_race_preparation_id: racePreparationId,
+      p_stage_id: stageId,
+      p_club_id: clubId,
+    },
+  )
+
+  if (error) {
+    throw error
+  }
+
+  return asRecord(data)
+}
+
 
 export async function loadBlockedRacePreparationResources({
   clubId,

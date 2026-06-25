@@ -1,12 +1,12 @@
 /**
  * CustomizeTeam.tsx
- * Team branding and settings page with direct persistence to public.clubs
- * and jersey persistence to public.team_kits.
+ * Team branding and settings page with validated branding persistence through
+ * update_club_branding_v1 and jersey persistence to public.team_kits.
  *
  * NOTE:
  * - This file assumes you have a configured Supabase client export.
  * - Adjust the supabase import path if needed.
- * - Club branding persists to public.clubs.
+ * - Club branding persists through update_club_branding_v1.
  * - Jersey config persists to public.team_kits using the `config` jsonb column.
  *
  * UPDATE (logo flow):
@@ -29,6 +29,10 @@
  * UPDATE (main-club writer fix):
  * - ppm-active-club writes now always use the resolved MAIN club context.
  * - This prevents developing-club state from being written into shared header/layout sync.
+ *
+ * UPDATE (sponsor naming-rights lock):
+ * - Reads club_branding_lock_status_v1 for UI lock state.
+ * - Persists club branding through update_club_branding_v1 instead of direct clubs update.
  */
 
 import React, { useEffect, useId, useMemo, useRef, useState } from 'react'
@@ -48,6 +52,19 @@ type ClubRow = {
 type PersistableClubPatch = Partial<
   Pick<ClubRow, 'name' | 'primary_color' | 'secondary_color' | 'logo_path'>
 >
+
+type BrandingLockStatus = {
+  can_edit_name: boolean
+  can_edit_colors: boolean
+  can_edit_logo: boolean
+  locked_by_sponsor: boolean
+  locked_until_game_date: string | null
+  season_display_name: string | null
+  original_club_name: string | null
+  full_display_name: string | null
+  source_sponsor_id: string | null
+  lock_reason: string | null
+}
 
 type KitDesignerProps = {
   teamId: string
@@ -771,6 +788,7 @@ function KitDesigner({ teamId, primaryColor, secondaryColor }: KitDesignerProps)
 export default function CustomizeTeamPage(): JSX.Element {
   const [mainClubId, setMainClubId] = useState<string | null>(null)
   const [ownerUserId, setOwnerUserId] = useState<string | null>(null)
+  const [brandingLock, setBrandingLock] = useState<BrandingLockStatus | null>(null)
 
   const [teamNameInput, setTeamNameInput] = useState('My Club')
   const [appliedTeamName, setAppliedTeamName] = useState('My Club')
@@ -903,6 +921,21 @@ export default function CustomizeTeamPage(): JSX.Element {
     }
   }
 
+  async function loadBrandingLockStatus(clubId: string): Promise<void> {
+    const { data, error } = await supabase.rpc('club_branding_lock_status_v1', {
+      p_club_id: clubId,
+    })
+
+    if (error) {
+      console.warn('Failed to load branding lock status:', error.message)
+      setBrandingLock(null)
+      return
+    }
+
+    const row = Array.isArray(data) ? data[0] : data
+    setBrandingLock((row ?? null) as BrandingLockStatus | null)
+  }
+
   useEffect(() => {
     let active = true
 
@@ -939,6 +972,7 @@ export default function CustomizeTeamPage(): JSX.Element {
         if (!active || !club) return
 
         syncClubState(club)
+        await loadBrandingLockStatus(club.id)
         await broadcastClubUpdate()
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load club.')
@@ -984,13 +1018,13 @@ export default function CustomizeTeamPage(): JSX.Element {
       normalizedPatch.secondary_color = normalizedPatch.secondary_color.trim()
     }
 
-    const { data, error: updateError } = await supabase
-      .from('clubs')
-      .update(normalizedPatch)
-      .eq('id', mainClubId)
-      .eq('owner_user_id', ownerUserId)
-      .select('id, owner_user_id, name, country_code, primary_color, secondary_color, logo_path')
-      .single<ClubRow>()
+    const { data, error: updateError } = await supabase.rpc('update_club_branding_v1', {
+      p_club_id: mainClubId,
+      p_name: normalizedPatch.name ?? null,
+      p_primary_color: normalizedPatch.primary_color ?? null,
+      p_secondary_color: normalizedPatch.secondary_color ?? null,
+      p_logo_path: normalizedPatch.logo_path ?? null,
+    })
 
     setSaving(false)
 
@@ -1000,19 +1034,31 @@ export default function CustomizeTeamPage(): JSX.Element {
       return null
     }
 
-    if (!data) {
+    const updatedRow = Array.isArray(data) ? data[0] : data
+
+    if (!updatedRow) {
       const message = 'Main club update failed.'
       setError(message)
       showTopNotice('error', message)
       return null
     }
 
-    syncClubState(data)
+    const updatedClub = updatedRow as ClubRow
+
+    syncClubState(updatedClub)
+    await loadBrandingLockStatus(updatedClub.id)
     await broadcastClubUpdate()
-    return data
+    return updatedClub
   }
 
   async function handleApplyTeamName(): Promise<void> {
+    if (brandingLock?.can_edit_name === false) {
+      const message = 'Team name is locked by a naming-rights sponsor.'
+      setError(message)
+      showTopNotice('error', message)
+      return
+    }
+
     const cleanName = sanitizeTeamName(teamNameInput)
 
     if (cleanName.length < 3 || cleanName.length > 40) {
@@ -1030,6 +1076,13 @@ export default function CustomizeTeamPage(): JSX.Element {
   }
 
   async function handleApplyTeamColors(): Promise<void> {
+    if (brandingLock?.can_edit_colors === false) {
+      const message = 'Team colors are locked by a naming-rights sponsor.'
+      setError(message)
+      showTopNotice('error', message)
+      return
+    }
+
     if (!isValidHexColor(primaryColor) || !isValidHexColor(secondaryColor)) {
       const message = 'Please use valid HEX colors like #ff0000.'
       setError(message)
@@ -1199,6 +1252,10 @@ export default function CustomizeTeamPage(): JSX.Element {
     }
   }
 
+  const identityLockedBySponsor = brandingLock?.locked_by_sponsor === true
+  const canEditTeamName = brandingLock?.can_edit_name !== false
+  const canEditTeamColors = brandingLock?.can_edit_colors !== false
+
   return (
     <div className="w-full">
       <h2 className="text-xl font-semibold mb-4">Customize Team</h2>
@@ -1210,6 +1267,19 @@ export default function CustomizeTeamPage(): JSX.Element {
       ) : (
         <div className="space-y-6 w-full">
           <div className="bg-white p-4 rounded-lg shadow space-y-6">
+            {identityLockedBySponsor && (
+              <div className="rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+                <div className="font-semibold">Team identity locked by naming-rights sponsor</div>
+                <div className="mt-1">
+                  Your team is racing this season as{' '}
+                  <span className="font-semibold">
+                    {brandingLock?.full_display_name ?? brandingLock?.season_display_name}
+                  </span>
+                  . Team name and colors are locked until the end of the season.
+                </div>
+              </div>
+            )}
+
             <div>
               <label className="block text-sm font-medium text-gray-800 mb-2">Team name</label>
               <div className="flex flex-col md:flex-row gap-3">
@@ -1217,15 +1287,25 @@ export default function CustomizeTeamPage(): JSX.Element {
                   value={teamNameInput}
                   onChange={e => setTeamNameInput(e.target.value)}
                   maxLength={40}
-                  className="w-full border border-gray-300 px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-slate-300"
+                  disabled={!canEditTeamName}
+                  className={[
+                    'w-full border border-gray-300 px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-slate-300',
+                    !canEditTeamName ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : '',
+                  ].join(' ')}
                   placeholder="Enter team name"
                 />
                 <button
                   type="button"
+                  disabled={!canEditTeamName || saving}
                   onClick={() => {
                     void handleApplyTeamName()
                   }}
-                  className="h-10 px-4 rounded-md border border-slate-900 bg-slate-900 text-white text-sm font-medium hover:bg-slate-800"
+                  className={[
+                    'h-10 px-4 rounded-md border text-sm font-medium',
+                    !canEditTeamName || saving
+                      ? 'border-gray-300 bg-gray-200 text-gray-500 cursor-not-allowed'
+                      : 'border-slate-900 bg-slate-900 text-white hover:bg-slate-800',
+                  ].join(' ')}
                 >
                   Apply Name
                 </button>
@@ -1243,13 +1323,18 @@ export default function CustomizeTeamPage(): JSX.Element {
                     <input
                       type="color"
                       value={primaryColor}
+                      disabled={!canEditTeamColors}
                       onChange={e => setPrimaryColor(e.target.value)}
-                      className="h-12 w-20 cursor-pointer rounded border border-gray-300 bg-white"
+                      className="h-12 w-20 cursor-pointer rounded border border-gray-300 bg-white disabled:cursor-not-allowed disabled:opacity-60"
                     />
                     <input
                       value={primaryColor}
+                      disabled={!canEditTeamColors}
                       onChange={e => setPrimaryColor(e.target.value)}
-                      className="flex-1 border border-gray-300 px-3 py-2 rounded-md font-mono"
+                      className={[
+                        'flex-1 border border-gray-300 px-3 py-2 rounded-md font-mono',
+                        !canEditTeamColors ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : '',
+                      ].join(' ')}
                       maxLength={7}
                     />
                   </div>
@@ -1263,13 +1348,18 @@ export default function CustomizeTeamPage(): JSX.Element {
                     <input
                       type="color"
                       value={secondaryColor}
+                      disabled={!canEditTeamColors}
                       onChange={e => setSecondaryColor(e.target.value)}
-                      className="h-12 w-20 cursor-pointer rounded border border-gray-300 bg-white"
+                      className="h-12 w-20 cursor-pointer rounded border border-gray-300 bg-white disabled:cursor-not-allowed disabled:opacity-60"
                     />
                     <input
                       value={secondaryColor}
+                      disabled={!canEditTeamColors}
                       onChange={e => setSecondaryColor(e.target.value)}
-                      className="flex-1 border border-gray-300 px-3 py-2 rounded-md font-mono"
+                      className={[
+                        'flex-1 border border-gray-300 px-3 py-2 rounded-md font-mono',
+                        !canEditTeamColors ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : '',
+                      ].join(' ')}
                       maxLength={7}
                     />
                   </div>
@@ -1279,10 +1369,16 @@ export default function CustomizeTeamPage(): JSX.Element {
               <div className="flex justify-end mt-4">
                 <button
                   type="button"
+                  disabled={!canEditTeamColors || saving}
                   onClick={() => {
                     void handleApplyTeamColors()
                   }}
-                  className="h-10 px-4 rounded-md border border-slate-900 bg-slate-900 text-white text-sm font-medium hover:bg-slate-800"
+                  className={[
+                    'h-10 px-4 rounded-md border text-sm font-medium',
+                    !canEditTeamColors || saving
+                      ? 'border-gray-300 bg-gray-200 text-gray-500 cursor-not-allowed'
+                      : 'border-slate-900 bg-slate-900 text-white hover:bg-slate-800',
+                  ].join(' ')}
                 >
                   Apply team colors
                 </button>

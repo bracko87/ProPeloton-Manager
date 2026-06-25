@@ -1,6 +1,7 @@
 /**
  * Overview.tsx
  * Redesigned dashboard overview page for ProPeloton-style club management.
+ * v26: keeps race flags fixed and aligns overview income/expenses with Finance Overview statement rows.
  *
  * Notes:
  * - Built for HashRouter links (`#/dashboard/...`).
@@ -10,175 +11,267 @@
  *   into the overview "Main Sponsor" panel when available.
  */
 
-import React from 'react'
-import { supabase } from '../../lib/supabase'
+import React from "react";
+import { supabase } from "../../lib/supabase";
 
-type AlertLevel = 'danger' | 'warning' | 'info' | 'success'
+type AlertLevel = "danger" | "warning" | "info" | "success";
 type FeedLevel =
-  | 'finance'
-  | 'training'
-  | 'infrastructure'
-  | 'medical'
-  | 'inbox'
-  | 'sponsor'
-  | 'system'
+  | "finance"
+  | "training"
+  | "infrastructure"
+  | "medical"
+  | "inbox"
+  | "sponsor"
+  | "system";
 
 type AlertItem = {
-  id: string
-  label: string
-  level: AlertLevel
-  href?: string
-}
+  id: string;
+  label: string;
+  level: AlertLevel;
+  href?: string;
+};
 
 type KpiItem = {
-  label: string
-  value: string
-  hint: string
-  trend?: string
-}
+  label: string;
+  value: string;
+  hint: string;
+  trend?: string;
+};
 
 type OperationMetric = {
-  label: string
-  value: string
-}
+  label: string;
+  value: string;
+};
 
 type OperationItem = {
-  id: string
-  title: string
-  status: string
-  summary: string
-  href?: string
-  metrics: OperationMetric[]
-}
+  id: string;
+  title: string;
+  status: string;
+  summary: string;
+  href?: string;
+  metrics: OperationMetric[];
+  subtitle?: string;
+  statusLabel?: string;
+};
 
 type SquadPulse = {
-  fitness: number
-  morale: number
-  readiness: number
-  form: string
-  availableRiders: number
-  injured: number
-  sick: number
-  notFullyFit: number
-  expiringContracts: number
-}
+  fitness: number;
+  morale: number;
+  readiness: number;
+  form: string;
+  availableRiders: number;
+  injured: number;
+  sick: number;
+  notFullyFit: number;
+  expiringContracts: number;
+};
 
 type ScheduleItem = {
-  id: string
-  dateLabel: string
-  title: string
-  subtitle: string
-  href?: string
-}
+  id: string;
+  dateLabel: string;
+  title: string;
+  subtitle: string;
+  countryCode?: string | null;
+  href?: string;
+};
 
 type FeedItem = {
-  id: string
-  level: FeedLevel
-  title: string
-  subtitle: string
-  timeLabel: string
-  href?: string
-}
+  id: string;
+  level: FeedLevel;
+  title: string;
+  subtitle: string;
+  timeLabel: string;
+  href?: string;
+};
 
 type DayRaceItem = {
-  id: string
-  title: string
-  subtitle: string
-  timeLabel?: string
-  href?: string
-}
+  id: string;
+  title: string;
+  subtitle: string;
+  timeLabel?: string;
+  countryCode?: string | null;
+  href?: string;
+};
 
 type NewsItem = {
-  id: string
-  title: string
-  subtitle: string
-  timeLabel: string
-  href?: string
-}
+  id: string;
+  title: string;
+  subtitle: string;
+  timeLabel: string;
+  href?: string;
+  detail?: string;
+  expandedText?: string;
+  sourceType?: string;
+  relatedType?: string;
+  relatedHref?: string;
+};
 
 type TransactionSummaryItem = {
-  id: string
-  type: string
-  label: string
-  amount: number
-}
+  id: string;
+  type: string;
+  label: string;
+  amount: number;
+};
 
-type FinanceHealth = {
-  balance: number
-  weeklyNet: number
-  sponsorIncome: number
-  recurringPolicyCost: number
-  nextTripForecast: number
-  latestTransactionLabel: string
-  latestTransactionAmount: number
-  monthlyOperatingIncome: number
-  monthlyOperatingExpense: number
-  topOperatingIncomes: TransactionSummaryItem[]
-  topOperatingExpenses: TransactionSummaryItem[]
-  debtMovements: TransactionSummaryItem[]
-}
+type FinancePeriodSummary = {
+  weeklyOperatingIncome: number;
+  weeklyOperatingExpense: number;
+  monthlyOperatingIncome: number;
+  monthlyOperatingExpense: number;
+  seasonOperatingIncome: number;
+  seasonOperatingExpense: number;
+};
+
+type FinanceHealth = FinancePeriodSummary & {
+  balance: number;
+  weeklyNet: number;
+  sponsorIncome: number;
+  recurringPolicyCost: number;
+  nextTripForecast: number;
+  latestTransactionLabel: string;
+  latestTransactionAmount: number;
+  topOperatingIncomes: TransactionSummaryItem[];
+  topOperatingExpenses: TransactionSummaryItem[];
+  debtMovements: TransactionSummaryItem[];
+};
 
 type EmergencyDebtHealth = {
-  rescuesUsed: number
-  rescueLimit: number
-  outstandingPrincipal: number
-  nextRepaymentAmount: number
-  nextRepaymentDateLabel: string
-  liquidationRisk: string
-  totalEmergencyLoanDisbursed: number
-  totalPrincipalRepaid: number
-  totalInterestPaid: number
-}
+  rescuesUsed: number;
+  rescueLimit: number;
+  outstandingPrincipal: number;
+  nextRepaymentAmount: number;
+  nextRepaymentDateLabel: string;
+  liquidationRisk: string;
+  totalEmergencyLoanDisbursed: number;
+  totalPrincipalRepaid: number;
+  totalInterestPaid: number;
+};
 
 type QuickActionItem = {
-  id: string
-  label: string
-  href: string
-  accent: string
-}
+  id: string;
+  label: string;
+  href: string;
+  accent: string;
+};
 
 type MainSponsor = {
-  name: string
-  logoUrl?: string
-  subtitle?: string
-  href?: string
-  isActive?: boolean
-}
+  name: string;
+  logoUrl?: string;
+  subtitle?: string;
+  href?: string;
+  isActive?: boolean;
+};
+
+type OverviewSeasonSnapshot = {
+  races: number;
+  stages: number;
+  internationalPoints: number;
+  wins: number;
+  podiums: number;
+  top10s: number;
+  jerseys: number;
+  bestGc: number | null;
+};
+
+const EMPTY_SEASON_SNAPSHOT: OverviewSeasonSnapshot = {
+  races: 0,
+  stages: 0,
+  internationalPoints: 0,
+  wins: 0,
+  podiums: 0,
+  top10s: 0,
+  jerseys: 0,
+  bestGc: null,
+};
 
 type DashboardOverviewData = {
   club: {
-    id?: string
-    name: string
-    handle: string
-    countryCode: string
-    tier: string
-    division: string
-    seasonLabel: string
-    dateLabel: string
-    weatherLabel: string
-    rankLabel: string
-    inboxUnread: number
-    notificationsUnread: number
-  }
-  alerts: AlertItem[]
-  kpis: KpiItem[]
-  operations: OperationItem[]
-  squadPulse: SquadPulse
-  schedule: ScheduleItem[]
-  dayRaces: DayRaceItem[]
-  news: NewsItem[]
-  feed: FeedItem[]
-  finance: FinanceHealth
-  emergencyDebt: EmergencyDebtHealth
-  quickActions: QuickActionItem[]
-  mainSponsor: MainSponsor
-}
+    id?: string;
+    name: string;
+    handle: string;
+    countryCode: string;
+    tier: string;
+    division: string;
+    seasonLabel: string;
+    dateLabel: string;
+    weatherLabel: string;
+    rankLabel: string;
+    inboxUnread: number;
+    notificationsUnread: number;
+  };
+  alerts: AlertItem[];
+  kpis: KpiItem[];
+  operations: OperationItem[];
+  squadPulse: SquadPulse;
+  schedule: ScheduleItem[];
+  dayRaces: DayRaceItem[];
+  news: NewsItem[];
+  feed: FeedItem[];
+  finance: FinanceHealth;
+  emergencyDebt: EmergencyDebtHealth;
+  quickActions: QuickActionItem[];
+  mainSponsor: MainSponsor;
+};
+
+type OverviewNextRaceRow = {
+  riderId: string;
+  riderName: string;
+  role: string | null;
+  raceSharpness: number | null;
+  raceSharpnessLabel: string | null;
+};
+
+type OverviewLastRaceRow = {
+  riderId: string;
+  riderName: string;
+  role: string | null;
+  position: number | null;
+  resultLabel: string;
+  points: number;
+};
+
+type OverviewRaceBase = {
+  squadLabel: string;
+  raceId: string | null;
+  raceName: string | null;
+  raceCategory: string | null;
+  raceCountryCode: string | null;
+  stageDate: string | null;
+  stageLabel: string | null;
+  routeLabel: string | null;
+  stageCount: number;
+};
+
+type OverviewNextTeamRace = OverviewRaceBase & {
+  rows: OverviewNextRaceRow[];
+};
+
+type OverviewLastTeamRace = OverviewRaceBase & {
+  rows: OverviewLastRaceRow[];
+};
+
+type OverviewTeamRaceHub = {
+  lastTeamRace: OverviewLastTeamRace | null;
+  nextTeamRace: OverviewNextTeamRace | null;
+};
+
+type OverviewRaceWorldData = {
+  upcomingSchedule: ScheduleItem[];
+  todayRaces: DayRaceItem[];
+  worldNews: NewsItem[];
+};
+
+const EMPTY_RACE_WORLD_DATA: OverviewRaceWorldData = {
+  upcomingSchedule: [],
+  todayRaces: [],
+  worldNews: [],
+};
 
 /**
  * SponsorKindForOverview
  * Narrowed sponsor kind union used for sponsor dashboard integration in overview.
  */
-type SponsorKindForOverview = 'main' | 'secondary' | 'technical'
+type SponsorKindForOverview = "main" | "secondary" | "technical";
 
 /**
  * SignedSponsorForOverview
@@ -186,11 +279,11 @@ type SponsorKindForOverview = 'main' | 'secondary' | 'technical'
  * restricted to fields needed by the overview page.
  */
 interface SignedSponsorForOverview {
-  sponsor_kind?: SponsorKindForOverview | string
-  logo_url?: string | null
-  metadata?: Record<string, unknown> | null
-  name?: string | null
-  status?: string | null
+  sponsor_kind?: SponsorKindForOverview | string;
+  logo_url?: string | null;
+  metadata?: Record<string, unknown> | null;
+  name?: string | null;
+  status?: string | null;
 }
 
 /**
@@ -198,35 +291,33 @@ interface SignedSponsorForOverview {
  * Minimal shape of the sponsor dashboard payload needed by the overview page.
  */
 interface SponsorDashboardForOverview {
-  club_id?: string | null
-  signed_sponsors?: SignedSponsorForOverview[]
+  club_id?: string | null;
+  signed_sponsors?: SignedSponsorForOverview[];
 }
 
-const currencyFormatter = new Intl.NumberFormat('en-US', {
-  style: 'currency',
-  currency: 'USD',
+const currencyFormatter = new Intl.NumberFormat("en-US", {
+  style: "currency",
+  currency: "USD",
   maximumFractionDigits: 0,
-})
+});
 
 const DEBT_TRANSACTION_TYPES = new Set([
-  'emergency_loan_disbursement',
-  'emergency_loan_principal_repayment',
-])
+  "emergency_loan_disbursement",
+  "emergency_loan_principal_repayment",
+]);
 
-const REAL_EXPENSE_TRANSACTION_TYPES = new Set([
-  'emergency_loan_interest',
-])
+const REAL_EXPENSE_TRANSACTION_TYPES = new Set(["emergency_loan_interest"]);
 
 const transactionTypeLabels: Record<string, string> = {
-  emergency_loan_disbursement: 'Emergency Loan',
-  emergency_loan_principal_repayment: 'Loan Principal',
-  emergency_loan_interest: 'Loan Interest',
-  rider_salary_payday: 'Rider Salary',
-  staff_salary_payday: 'Staff Salary',
-  sponsor_contract_payment: 'Sponsor',
-  tax_withholding: 'Tax',
-  new_club_bonus: 'Bonus',
-}
+  emergency_loan_disbursement: "Emergency Loan",
+  emergency_loan_principal_repayment: "Loan Principal",
+  emergency_loan_interest: "Loan Interest",
+  rider_salary_payday: "Rider Salary",
+  staff_salary_payday: "Staff Salary",
+  sponsor_contract_payment: "Sponsor",
+  tax_withholding: "Tax",
+  new_club_bonus: "Bonus",
+};
 
 /**
  * isDebtTransaction
@@ -234,7 +325,7 @@ const transactionTypeLabels: Record<string, string> = {
  * not be mixed into operating income or operating costs.
  */
 function isDebtTransaction(type: string): boolean {
-  return DEBT_TRANSACTION_TYPES.has(type)
+  return DEBT_TRANSACTION_TYPES.has(type);
 }
 
 /**
@@ -242,8 +333,8 @@ function isDebtTransaction(type: string): boolean {
  * Counts real operating income while excluding loan disbursements.
  */
 function shouldCountAsOperatingIncome(type: string, amount: number): boolean {
-  if (isDebtTransaction(type)) return false
-  return amount > 0
+  if (isDebtTransaction(type)) return false;
+  return amount > 0;
 }
 
 /**
@@ -252,9 +343,9 @@ function shouldCountAsOperatingIncome(type: string, amount: number): boolean {
  * Emergency loan interest is a true expense and must remain in costs.
  */
 function shouldCountAsOperatingExpense(type: string, amount: number): boolean {
-  if (REAL_EXPENSE_TRANSACTION_TYPES.has(type)) return true
-  if (isDebtTransaction(type)) return false
-  return amount < 0
+  if (REAL_EXPENSE_TRANSACTION_TYPES.has(type)) return true;
+  if (isDebtTransaction(type)) return false;
+  return amount < 0;
 }
 
 /**
@@ -262,7 +353,7 @@ function shouldCountAsOperatingExpense(type: string, amount: number): boolean {
  * Returns a friendly label for known finance transaction types.
  */
 function getTransactionTypeLabel(type: string, fallback?: string) {
-  return transactionTypeLabels[type] || fallback || type.replace(/_/g, ' ')
+  return transactionTypeLabels[type] || fallback || type.replace(/_/g, " ");
 }
 
 /**
@@ -270,7 +361,7 @@ function getTransactionTypeLabel(type: string, fallback?: string) {
  * Formats a number as a USD currency string without decimals.
  */
 function formatCurrency(value: number) {
-  return currencyFormatter.format(value)
+  return currencyFormatter.format(value);
 }
 
 /**
@@ -278,9 +369,9 @@ function formatCurrency(value: number) {
  * Formats a number as a signed USD string, prefixing + for positive values.
  */
 function formatSignedCurrency(value: number) {
-  if (value > 0) return `+${formatCurrency(value)}`
-  if (value < 0) return `-${formatCurrency(Math.abs(value))}`
-  return formatCurrency(0)
+  if (value > 0) return `+${formatCurrency(value)}`;
+  if (value < 0) return `-${formatCurrency(Math.abs(value))}`;
+  return formatCurrency(0);
 }
 
 /**
@@ -288,7 +379,7 @@ function formatSignedCurrency(value: number) {
  * Simple conditional class name joiner.
  */
 function cn(...values: Array<string | false | null | undefined>) {
-  return values.filter(Boolean).join(' ')
+  return values.filter(Boolean).join(" ");
 }
 
 /**
@@ -296,7 +387,7 @@ function cn(...values: Array<string | false | null | undefined>) {
  * Safe helper to coerce an unknown value into an array of T.
  */
 function asArray<T>(value: unknown): T[] {
-  return Array.isArray(value) ? (value as T[]) : []
+  return Array.isArray(value) ? (value as T[]) : [];
 }
 
 /**
@@ -304,15 +395,15 @@ function asArray<T>(value: unknown): T[] {
  * Safe helper to coerce an unknown value into an object of type T with fallback.
  */
 function asObject<T>(value: unknown, fallback: T): T {
-  return value && typeof value === 'object' ? (value as T) : fallback
+  return value && typeof value === "object" ? (value as T) : fallback;
 }
 
 /**
  * asString
  * Safe helper to coerce an unknown value into a string with fallback.
  */
-function asString(value: unknown, fallback = ''): string {
-  return typeof value === 'string' ? value : fallback
+function asString(value: unknown, fallback = ""): string {
+  return typeof value === "string" ? value : fallback;
 }
 
 /**
@@ -320,7 +411,7 @@ function asString(value: unknown, fallback = ''): string {
  * Safe helper to coerce an unknown value into a boolean with fallback.
  */
 function asBoolean(value: unknown, fallback = false): boolean {
-  return typeof value === 'boolean' ? value : fallback
+  return typeof value === "boolean" ? value : fallback;
 }
 
 /**
@@ -328,15 +419,38 @@ function asBoolean(value: unknown, fallback = false): boolean {
  * Safe helper to coerce numbers or numeric strings into a number.
  */
 function asNumber(value: unknown, fallback = 0): number {
-  if (typeof value === 'number' && Number.isFinite(value)) return value
+  if (typeof value === "number" && Number.isFinite(value)) return value;
 
-  if (typeof value === 'string') {
-    const normalized = value.trim().replace(/[$€£,\s]/g, '')
-    const parsed = Number(normalized)
-    return Number.isFinite(parsed) ? parsed : fallback
+  if (typeof value === "string") {
+    const normalized = value.trim().replace(/[$€£,\s]/g, "");
+    const parsed = Number(normalized);
+    return Number.isFinite(parsed) ? parsed : fallback;
   }
 
-  return fallback
+  return fallback;
+}
+
+/**
+ * pickFinanceTotal
+ * Uses an explicit non-zero total when supplied, otherwise falls back to a
+ * transaction-derived total. This prevents the overview card from showing $0
+ * when an optional overview RPC returns empty zero placeholders while the main
+ * dashboard/finance payload still contains real transaction activity.
+ */
+function pickFinanceTotal(
+  supplied: unknown,
+  transactionTotal: number,
+  finalFallback = 0,
+): number {
+  const parsed = asNumber(supplied, Number.NaN);
+
+  if (Number.isFinite(parsed) && parsed !== 0) return parsed;
+  if (Number.isFinite(transactionTotal) && transactionTotal !== 0) {
+    return transactionTotal;
+  }
+  if (Number.isFinite(parsed)) return parsed;
+
+  return finalFallback;
 }
 
 /**
@@ -344,7 +458,7 @@ function asNumber(value: unknown, fallback = 0): number {
  * Deterministic JSON stringify used for shallow change detection.
  */
 function stableStringify(value: unknown) {
-  return JSON.stringify(value)
+  return JSON.stringify(value);
 }
 
 /**
@@ -355,9 +469,9 @@ function getMetadataValueFromObject(
   metadata: Record<string, unknown> | null | undefined,
   key: string,
 ): string | null {
-  if (!metadata) return null
-  const value = metadata[key]
-  return typeof value === 'string' && value.trim().length > 0 ? value : null
+  if (!metadata) return null;
+  const value = metadata[key];
+  return typeof value === "string" && value.trim().length > 0 ? value : null;
 }
 
 /**
@@ -369,14 +483,18 @@ function getMetadataValueFromObject(
 function resolveMainSponsorLogoUrlFromDashboard(
   signedSponsor: SignedSponsorForOverview | null | undefined,
 ): string | null {
-  if (!signedSponsor) return null
+  if (!signedSponsor) return null;
 
-  const direct = typeof signedSponsor.logo_url === 'string' ? signedSponsor.logo_url : null
-  const metaLogo = getMetadataValueFromObject(signedSponsor.metadata ?? null, 'logo_url')
-  const finalUrl = direct || metaLogo
+  const direct =
+    typeof signedSponsor.logo_url === "string" ? signedSponsor.logo_url : null;
+  const metaLogo = getMetadataValueFromObject(
+    signedSponsor.metadata ?? null,
+    "logo_url",
+  );
+  const finalUrl = direct || metaLogo;
 
-  if (!finalUrl || finalUrl.trim().length === 0) return null
-  return finalUrl
+  if (!finalUrl || finalUrl.trim().length === 0) return null;
+  return finalUrl;
 }
 
 /**
@@ -384,16 +502,16 @@ function resolveMainSponsorLogoUrlFromDashboard(
  * Converts an in-game ISO date like 2000-07-03 into 03/07, Season 1.
  */
 function formatGameDateShort(value: string): string {
-  const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(value)
-  if (!match) return ''
+  const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(value);
+  if (!match) return "";
 
-  const year = Number(match[1])
-  const month = match[2]
-  const day = match[3]
-  const season = year - 1999
+  const year = Number(match[1]);
+  const month = match[2];
+  const day = match[3];
+  const season = year - 1999;
 
-  if (!Number.isFinite(year) || season < 1) return ''
-  return `${day}/${month}, Season ${season}`
+  if (!Number.isFinite(year) || season < 1) return "";
+  return `${day}/${month}, Season ${season}`;
 }
 
 /**
@@ -401,38 +519,50 @@ function formatGameDateShort(value: string): string {
  * Ensures transaction type checks are consistent.
  */
 function normalizeTransactionType(value: unknown): string {
-  return asString(value).trim().toLowerCase()
+  return asString(value).trim().toLowerCase();
 }
 
 /**
  * normalizeFinanceTransactionRows
  * Normalizes loose transaction rows into a consistent typed shape.
  */
-function normalizeFinanceTransactionRows(value: unknown): TransactionSummaryItem[] {
+function normalizeFinanceTransactionRows(
+  value: unknown,
+): TransactionSummaryItem[] {
   return asArray<Record<string, unknown>>(value)
     .map((row, index) => {
-      const type = normalizeTransactionType(row.type ?? row.transaction_type ?? row.kind)
-      const rawLabel = asString(row.label ?? row.title ?? row.name)
+      const type = normalizeTransactionType(
+        row.type ?? row.transaction_type ?? row.kind,
+      );
+      const rawLabel = asString(row.label ?? row.title ?? row.name);
       const amount = asNumber(
         row.amount ??
+          row.amount_cash ??
+          row.cash_amount ??
           row.netAmount ??
           row.net_amount ??
           row.total ??
+          row.total_amount ??
           row.value ??
+          row.delta ??
+          row.cash_delta ??
           row.signed_amount,
         0,
-      )
+      );
 
-      if (!type && !rawLabel) return null
+      if (!type && !rawLabel) return null;
 
       return {
-        id: asString(row.id ?? row.transaction_id, `${type || 'transaction'}:${index}`),
+        id: asString(
+          row.id ?? row.transaction_id,
+          `${type || "transaction"}:${index}`,
+        ),
         type,
         label: getTransactionTypeLabel(type, rawLabel),
         amount,
-      }
+      };
     })
-    .filter((row): row is TransactionSummaryItem => Boolean(row))
+    .filter((row): row is TransactionSummaryItem => Boolean(row));
 }
 
 /**
@@ -449,33 +579,42 @@ function buildOperatingTransactionSummary(rows: TransactionSummaryItem[]) {
   const topOperatingIncomes = rows
     .filter((row) => shouldCountAsOperatingIncome(row.type, row.amount))
     .sort((a, b) => Math.abs(b.amount) - Math.abs(a.amount))
-    .slice(0, 5)
+    .slice(0, 5);
 
   const topOperatingExpenses = rows
     .filter((row) => shouldCountAsOperatingExpense(row.type, row.amount))
     .sort((a, b) => Math.abs(b.amount) - Math.abs(a.amount))
-    .slice(0, 5)
+    .slice(0, 5);
 
   const debtMovements = rows
     .filter((row) => isDebtTransaction(row.type))
     .sort((a, b) => Math.abs(b.amount) - Math.abs(a.amount))
-    .slice(0, 5)
+    .slice(0, 5);
 
   return {
-    monthlyOperatingIncome: topOperatingIncomes.reduce((sum, row) => sum + row.amount, 0),
-    monthlyOperatingExpense: topOperatingExpenses.reduce((sum, row) => sum + row.amount, 0),
+    monthlyOperatingIncome: topOperatingIncomes.reduce(
+      (sum, row) => sum + row.amount,
+      0,
+    ),
+    monthlyOperatingExpense: topOperatingExpenses.reduce(
+      (sum, row) => sum + row.amount,
+      0,
+    ),
     topOperatingIncomes,
     topOperatingExpenses,
     debtMovements,
-  }
+  };
 }
 
 /**
  * normalizeFinanceHealth
  * Normalizes finance payload and applies loan-aware operating transaction rules.
  */
-function normalizeFinanceHealth(value: unknown, fallbackTransactions?: unknown): FinanceHealth {
-  const safe = asObject<Record<string, unknown>>(value, {})
+function normalizeFinanceHealth(
+  value: unknown,
+  fallbackTransactions?: unknown,
+): FinanceHealth {
+  const safe = asObject<Record<string, unknown>>(value, {});
 
   const rawTransactions =
     safe.monthlyTransactions ??
@@ -484,17 +623,17 @@ function normalizeFinanceHealth(value: unknown, fallbackTransactions?: unknown):
     safe.statement_rows ??
     safe.transactions ??
     fallbackTransactions ??
-    []
+    [];
 
-  const transactionRows = normalizeFinanceTransactionRows(rawTransactions)
-  const summary = buildOperatingTransactionSummary(transactionRows)
+  const transactionRows = normalizeFinanceTransactionRows(rawTransactions);
+  const summary = buildOperatingTransactionSummary(transactionRows);
 
   const suppliedTopIncomes = normalizeFinanceTransactionRows(
     safe.topOperatingIncomes ??
       safe.top_operating_incomes ??
       safe.topIncomes ??
       safe.top_incomes,
-  ).filter((row) => shouldCountAsOperatingIncome(row.type, row.amount))
+  ).filter((row) => shouldCountAsOperatingIncome(row.type, row.amount));
 
   const suppliedTopExpenses = normalizeFinanceTransactionRows(
     safe.topOperatingExpenses ??
@@ -503,11 +642,31 @@ function normalizeFinanceHealth(value: unknown, fallbackTransactions?: unknown):
       safe.top_costs ??
       safe.topExpenses ??
       safe.top_expenses,
-  ).filter((row) => shouldCountAsOperatingExpense(row.type, row.amount))
+  ).filter((row) => shouldCountAsOperatingExpense(row.type, row.amount));
 
   const suppliedDebtMovements = normalizeFinanceTransactionRows(
-    safe.debtMovements ?? safe.debt_movements ?? safe.debtItems ?? safe.debt_items,
-  ).filter((row) => isDebtTransaction(row.type))
+    safe.debtMovements ??
+      safe.debt_movements ??
+      safe.debtItems ??
+      safe.debt_items,
+  ).filter((row) => isDebtTransaction(row.type));
+
+  const suppliedMonthlyIncome =
+    safe.monthlyOperatingIncome ?? safe.monthly_operating_income;
+  const suppliedMonthlyExpense =
+    safe.monthlyOperatingExpense ?? safe.monthly_operating_expense;
+
+  const monthlyOperatingIncome = pickFinanceTotal(
+    suppliedMonthlyIncome,
+    summary.monthlyOperatingIncome,
+    asNumber(safe.sponsorIncome ?? safe.sponsor_income, 0),
+  );
+
+  const monthlyOperatingExpense = pickFinanceTotal(
+    suppliedMonthlyExpense,
+    summary.monthlyOperatingExpense,
+    0,
+  );
 
   return {
     balance: asNumber(safe.balance, 0),
@@ -517,22 +676,39 @@ function normalizeFinanceHealth(value: unknown, fallbackTransactions?: unknown):
       safe.recurringPolicyCost ?? safe.recurring_policy_cost,
       0,
     ),
-    nextTripForecast: asNumber(safe.nextTripForecast ?? safe.next_trip_forecast, 0),
+    nextTripForecast: asNumber(
+      safe.nextTripForecast ?? safe.next_trip_forecast,
+      0,
+    ),
     latestTransactionLabel: asString(
       safe.latestTransactionLabel ?? safe.latest_transaction_label,
-      'No transactions',
+      "No transactions",
     ),
     latestTransactionAmount: asNumber(
       safe.latestTransactionAmount ?? safe.latest_transaction_amount,
       0,
     ),
-    monthlyOperatingIncome: asNumber(
-      safe.monthlyOperatingIncome ?? safe.monthly_operating_income,
-      summary.monthlyOperatingIncome,
+    weeklyOperatingIncome: pickFinanceTotal(
+      safe.weeklyOperatingIncome ?? safe.weekly_operating_income,
+      0,
+      Math.round(monthlyOperatingIncome / 4),
     ),
-    monthlyOperatingExpense: asNumber(
-      safe.monthlyOperatingExpense ?? safe.monthly_operating_expense,
-      summary.monthlyOperatingExpense,
+    weeklyOperatingExpense: pickFinanceTotal(
+      safe.weeklyOperatingExpense ?? safe.weekly_operating_expense,
+      0,
+      Math.round(monthlyOperatingExpense / 4),
+    ),
+    monthlyOperatingIncome,
+    monthlyOperatingExpense,
+    seasonOperatingIncome: pickFinanceTotal(
+      safe.seasonOperatingIncome ?? safe.season_operating_income,
+      0,
+      monthlyOperatingIncome,
+    ),
+    seasonOperatingExpense: pickFinanceTotal(
+      safe.seasonOperatingExpense ?? safe.season_operating_expense,
+      0,
+      monthlyOperatingExpense,
     ),
     topOperatingIncomes:
       suppliedTopIncomes.length > 0
@@ -546,7 +722,305 @@ function normalizeFinanceHealth(value: unknown, fallbackTransactions?: unknown):
       suppliedDebtMovements.length > 0
         ? suppliedDebtMovements
         : summary.debtMovements,
+  };
+
+}
+
+type OverviewFinanceStatementRow = Record<string, unknown>;
+
+function extractFinanceStatementRows(value: unknown): OverviewFinanceStatementRow[] {
+  if (Array.isArray(value)) return value as OverviewFinanceStatementRow[];
+
+  const safe = asObject<Record<string, unknown>>(value, {});
+
+  return asArray<OverviewFinanceStatementRow>(
+    safe.rows ??
+      safe.data ??
+      safe.transactions ??
+      safe.statementRows ??
+      safe.statement_rows ??
+      safe.items,
+  );
+}
+
+function getFinanceStatementDate(row: OverviewFinanceStatementRow): Date | null {
+  const raw = asString(
+    row.occurred_at ?? row.transaction_date ?? row.date ?? row.created_at,
+    "",
+  );
+
+  if (!raw) return null;
+
+  const value = /^\d{4}-\d{2}-\d{2}$/.test(raw)
+    ? `${raw}T00:00:00Z`
+    : raw;
+
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function parseFinanceGameDateValue(value: unknown): Date | null {
+  if (!value) return null;
+
+  if (typeof value === "string") {
+    const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(value);
+    if (!match) return null;
+
+    const year = Number(match[1]);
+    const month = Number(match[2]);
+    const day = Number(match[3]);
+
+    if (!year || !month || !day) return null;
+    return new Date(Date.UTC(year, month - 1, day, 0, 0, 0, 0));
   }
+
+  if (value && typeof value === "object" && !Array.isArray(value)) {
+    const record = value as Record<string, unknown>;
+
+    const nestedDate = parseFinanceGameDateValue(
+      record.game_date ?? record.in_game_date ?? record.date,
+    );
+    if (nestedDate) return nestedDate;
+
+    const season = asNumber(record.season, 0);
+    const month = asNumber(record.month, 0);
+    const day = asNumber(record.day, 0);
+
+    if (season > 0 && month > 0 && day > 0) {
+      return new Date(Date.UTC(1999 + season, month - 1, day, 0, 0, 0, 0));
+    }
+  }
+
+  return null;
+}
+
+function getFinanceStatementGameDate(row: OverviewFinanceStatementRow): Date | null {
+  const metadata = asObject<Record<string, unknown>>(row.metadata, {});
+
+  return (
+    parseFinanceGameDateValue(row.game_date) ??
+    parseFinanceGameDateValue(metadata.game_date) ??
+    parseFinanceGameDateValue(metadata.in_game_date) ??
+    parseFinanceGameDateValue(metadata.submitted_on_game_date) ??
+    parseFinanceGameDateValue(metadata.due_game_date) ??
+    parseFinanceGameDateValue(metadata.started_game_date) ??
+    parseFinanceGameDateValue(metadata.complete_game_date) ??
+    null
+  );
+}
+
+function getFinanceStatementType(row: OverviewFinanceStatementRow): string {
+  return normalizeTransactionType(row.type ?? row.transaction_type ?? row.kind);
+}
+
+function getFinanceStatementSignedAmount(row: OverviewFinanceStatementRow): number {
+  const hasNetAmount = row.net_amount !== null && row.net_amount !== undefined;
+
+  const amount = asNumber(
+    hasNetAmount
+      ? row.net_amount
+      : row.amount ??
+          row.amount_cash ??
+          row.cash_amount ??
+          row.total_amount ??
+          row.signed_amount ??
+          row.value,
+    0,
+  );
+
+  const direction = asString(row.direction, "").toLowerCase();
+
+  if (!hasNetAmount && direction === "expense" && amount > 0) {
+    return -amount;
+  }
+
+  if (!hasNetAmount && direction === "income" && amount < 0) {
+    return Math.abs(amount);
+  }
+
+  return amount;
+}
+
+function isDateInInclusiveRange(date: Date, start: Date, end: Date): boolean {
+  const time = date.getTime();
+  return time >= start.getTime() && time <= end.getTime();
+}
+
+function buildFinancePeriodSummaryFromStatementRows(
+  rows: OverviewFinanceStatementRow[],
+  seasonYear: number,
+): Partial<FinancePeriodSummary> | null {
+  const datedRows = rows
+    .map((row) => ({
+      row,
+      date: getFinanceStatementDate(row),
+      gameDate: getFinanceStatementGameDate(row),
+    }))
+    .filter(
+      (item): item is {
+        row: OverviewFinanceStatementRow;
+        date: Date;
+        gameDate: Date | null;
+      } => Boolean(item.date),
+    );
+
+  if (datedRows.length === 0) return null;
+
+  const latestDateMs = Math.max(...datedRows.map((item) => item.date.getTime()));
+  if (!Number.isFinite(latestDateMs)) return null;
+
+  const end = new Date(latestDateMs);
+  end.setUTCHours(23, 59, 59, 999);
+
+  const weekStart = new Date(end.getTime());
+  weekStart.setUTCDate(weekStart.getUTCDate() - 6);
+  weekStart.setUTCHours(0, 0, 0, 0);
+
+  const monthStart = new Date(end.getTime());
+  monthStart.setUTCDate(monthStart.getUTCDate() - 29);
+  monthStart.setUTCHours(0, 0, 0, 0);
+
+  const seasonStart = new Date(Date.UTC(seasonYear, 0, 1, 0, 0, 0, 0));
+  const seasonEnd = new Date(Date.UTC(seasonYear, 11, 31, 23, 59, 59, 999));
+
+  const totalsFor = (
+    start: Date | null,
+    rangeEnd: Date | null,
+    dateSelector: (item: {
+      row: OverviewFinanceStatementRow;
+      date: Date;
+      gameDate: Date | null;
+    }) => Date | null,
+  ) => {
+    let income = 0;
+    let expenses = 0;
+
+    for (const item of datedRows) {
+      const selectedDate = dateSelector(item);
+      if (!selectedDate) continue;
+
+      if (start && rangeEnd && !isDateInInclusiveRange(selectedDate, start, rangeEnd)) {
+        continue;
+      }
+
+      const type = getFinanceStatementType(item.row);
+      const amount = getFinanceStatementSignedAmount(item.row);
+
+      if (shouldCountAsOperatingIncome(type, amount)) {
+        income += amount;
+      }
+
+      if (shouldCountAsOperatingExpense(type, amount)) {
+        expenses += Math.abs(amount);
+      }
+    }
+
+    return { income, expenses };
+  };
+
+  const week = totalsFor(weekStart, end, (item) => item.date);
+  const month = totalsFor(monthStart, end, (item) => item.date);
+
+  let season = totalsFor(
+    seasonStart,
+    seasonEnd,
+    (item) => item.gameDate ?? null,
+  );
+
+  if (season.income === 0 && season.expenses === 0) {
+    season = totalsFor(null, null, (item) => item.date);
+  }
+
+  const values = [
+    week.income,
+    week.expenses,
+    month.income,
+    month.expenses,
+    season.income,
+    season.expenses,
+  ];
+
+  if (!values.some((value) => Math.abs(value) > 0)) return null;
+
+  return {
+    weeklyOperatingIncome: week.income,
+    weeklyOperatingExpense: week.expenses,
+    monthlyOperatingIncome: month.income,
+    monthlyOperatingExpense: month.expenses,
+    seasonOperatingIncome: season.income,
+    seasonOperatingExpense: season.expenses,
+  };
+}
+
+async function loadOverviewFinanceStatementPeriodSummary(
+  mainClubId: string | null,
+  seasonYear: number,
+): Promise<Partial<FinancePeriodSummary> | null> {
+  if (!mainClubId) return null;
+
+  const statementSources: Array<{
+    functionName: string;
+    args: Record<string, unknown>;
+  }> = [
+    {
+      functionName: "finance_get_club_statement_v2",
+      args: {
+        p_club_id: mainClubId,
+        p_limit: 10000,
+        p_before: "2100-01-01T00:00:00+00:00",
+      },
+    },
+    {
+      functionName: "finance_get_club_statement_admin",
+      args: {
+        p_club_id: mainClubId,
+        p_limit: 10000,
+        p_before: "2100-01-01T00:00:00+00:00",
+      },
+    },
+    {
+      functionName: "finance_get_club_statement",
+      args: {
+        p_club_id: mainClubId,
+        p_limit: 10000,
+        p_before: "2100-01-01T00:00:00+00:00",
+      },
+    },
+  ];
+
+  for (const source of statementSources) {
+    try {
+      const { data, error } = await supabase.rpc(
+        source.functionName,
+        source.args,
+      );
+
+      if (error) {
+        console.warn(
+          `Could not load overview finance statement from ${source.functionName}:`,
+          error.message,
+        );
+        continue;
+      }
+
+      const rows = extractFinanceStatementRows(data);
+      const summary = buildFinancePeriodSummaryFromStatementRows(
+        rows,
+        seasonYear,
+      );
+
+      if (summary) {
+        return summary;
+      }
+    } catch (err) {
+      console.warn(
+        `Overview finance statement lookup failed for ${source.functionName}:`,
+        err,
+      );
+    }
+  }
+
+  return null;
 }
 
 /**
@@ -564,7 +1038,7 @@ function normalizeEmergencyDebt(
       financeSafe.debt ??
       {},
     {},
-  )
+  );
 
   const rescuesUsed = asNumber(
     safe.rescuesUsed ??
@@ -576,7 +1050,7 @@ function normalizeEmergencyDebt(
       financeSafe.emergencyRescueCount ??
       financeSafe.emergency_rescue_count,
     0,
-  )
+  );
 
   const rescueLimit = asNumber(
     safe.rescueLimit ??
@@ -588,7 +1062,7 @@ function normalizeEmergencyDebt(
       financeSafe.maxRescues ??
       financeSafe.max_rescues,
     3,
-  )
+  );
 
   const outstandingPrincipal = asNumber(
     safe.outstandingPrincipal ??
@@ -600,7 +1074,7 @@ function normalizeEmergencyDebt(
       financeSafe.activeOutstandingPrincipal ??
       financeSafe.active_outstanding_principal,
     0,
-  )
+  );
 
   const nextRepaymentAmount = asNumber(
     safe.nextRepaymentAmount ??
@@ -614,7 +1088,7 @@ function normalizeEmergencyDebt(
       financeSafe.actualWeeklyDueOptionB ??
       financeSafe.actual_weekly_due_option_b,
     0,
-  )
+  );
 
   const nextRepaymentDateRaw = asString(
     safe.nextRepaymentDate ??
@@ -625,8 +1099,8 @@ function normalizeEmergencyDebt(
       financeSafe.next_repayment_date ??
       financeSafe.nextUnprocessedDueGameDate ??
       financeSafe.next_unprocessed_due_game_date,
-    '',
-  )
+    "",
+  );
 
   const nextRepaymentDateLabel =
     asString(
@@ -634,10 +1108,10 @@ function normalizeEmergencyDebt(
         safe.next_repayment_date_label ??
         financeSafe.nextRepaymentDateLabel ??
         financeSafe.next_repayment_date_label,
-      '',
+      "",
     ) ||
     formatGameDateShort(nextRepaymentDateRaw) ||
-    'No repayment scheduled'
+    "No repayment scheduled";
 
   const totalEmergencyLoanDisbursed = asNumber(
     safe.totalEmergencyLoanDisbursed ??
@@ -647,7 +1121,7 @@ function normalizeEmergencyDebt(
       financeSafe.totalEmergencyLoanDisbursed ??
       financeSafe.total_emergency_loan_disbursed,
     outstandingPrincipal,
-  )
+  );
 
   const totalPrincipalRepaid = asNumber(
     safe.totalPrincipalRepaid ??
@@ -657,7 +1131,7 @@ function normalizeEmergencyDebt(
       financeSafe.totalPrincipalRepaid ??
       financeSafe.total_principal_repaid,
     0,
-  )
+  );
 
   const totalInterestPaid = asNumber(
     safe.totalInterestPaid ??
@@ -667,7 +1141,7 @@ function normalizeEmergencyDebt(
       financeSafe.totalInterestPaid ??
       financeSafe.total_interest_paid,
     0,
-  )
+  );
 
   const liquidationRisk =
     asString(
@@ -675,13 +1149,13 @@ function normalizeEmergencyDebt(
         safe.liquidation_risk ??
         financeSafe.liquidationRisk ??
         financeSafe.liquidation_risk,
-      '',
+      "",
     ) ||
     (outstandingPrincipal > 0 && rescuesUsed >= 2
-      ? 'High'
+      ? "High"
       : outstandingPrincipal > 0
-        ? 'Medium'
-        : 'Low')
+        ? "Medium"
+        : "Low");
 
   return {
     rescuesUsed,
@@ -693,7 +1167,7 @@ function normalizeEmergencyDebt(
     totalEmergencyLoanDisbursed,
     totalPrincipalRepaid,
     totalInterestPaid,
-  }
+  };
 }
 
 /**
@@ -705,61 +1179,64 @@ function buildDebtMovementsFromEmergencyDebt(
   debt: EmergencyDebtHealth,
   financeDebtMovements: TransactionSummaryItem[],
 ): TransactionSummaryItem[] {
-  if (financeDebtMovements.length > 0) return financeDebtMovements
+  if (financeDebtMovements.length > 0) return financeDebtMovements;
 
-  const rows: TransactionSummaryItem[] = []
+  const rows: TransactionSummaryItem[] = [];
 
   if (debt.totalEmergencyLoanDisbursed !== 0) {
     rows.push({
-      id: 'emergency_loan_disbursement',
-      type: 'emergency_loan_disbursement',
+      id: "emergency_loan_disbursement",
+      type: "emergency_loan_disbursement",
       label: transactionTypeLabels.emergency_loan_disbursement,
       amount: Math.abs(debt.totalEmergencyLoanDisbursed),
-    })
+    });
   }
 
   if (debt.totalPrincipalRepaid !== 0) {
     rows.push({
-      id: 'emergency_loan_principal_repayment',
-      type: 'emergency_loan_principal_repayment',
+      id: "emergency_loan_principal_repayment",
+      type: "emergency_loan_principal_repayment",
       label: transactionTypeLabels.emergency_loan_principal_repayment,
       amount:
         debt.totalPrincipalRepaid > 0
           ? -Math.abs(debt.totalPrincipalRepaid)
           : debt.totalPrincipalRepaid,
-    })
+    });
   }
 
   if (debt.totalInterestPaid !== 0) {
     rows.push({
-      id: 'emergency_loan_interest',
-      type: 'emergency_loan_interest',
+      id: "emergency_loan_interest",
+      type: "emergency_loan_interest",
       label: transactionTypeLabels.emergency_loan_interest,
       amount:
         debt.totalInterestPaid > 0
           ? -Math.abs(debt.totalInterestPaid)
           : debt.totalInterestPaid,
-    })
+    });
   }
 
-  return rows
+  return rows;
 }
 
 /**
  * normalizeMainSponsor
  * Normalizes a loose main sponsor-like value into the MainSponsor type.
  */
-function normalizeMainSponsor(value: unknown, fallbackIsActive = false): MainSponsor {
-  const safe = asObject<Record<string, unknown>>(value, {})
-  const metadata = asObject<Record<string, unknown>>(safe.metadata, {})
-  const branding = asObject<Record<string, unknown>>(safe.branding, {})
+function normalizeMainSponsor(
+  value: unknown,
+  fallbackIsActive = false,
+): MainSponsor {
+  const safe = asObject<Record<string, unknown>>(value, {});
+  const metadata = asObject<Record<string, unknown>>(safe.metadata, {});
+  const branding = asObject<Record<string, unknown>>(safe.branding, {});
 
   const name =
     asString(safe.name) ||
     asString(safe.companyName) ||
     asString(safe.company_name) ||
     asString(metadata.company_name) ||
-    'Main Sponsor'
+    "Main Sponsor";
 
   const logoUrl =
     asString(safe.logoUrl) ||
@@ -772,16 +1249,19 @@ function normalizeMainSponsor(value: unknown, fallbackIsActive = false): MainSpo
     asString(metadata.logo_url) ||
     asString(metadata.logoUrl) ||
     asString(branding.logo_url) ||
-    asString(branding.logoUrl)
+    asString(branding.logoUrl);
 
   const subtitle =
     asString(safe.subtitle) ||
-    (logoUrl ? 'Signed main sponsor deal' : 'No main sponsor deal signed yet.')
+    (logoUrl ? "Signed main sponsor deal" : "No main sponsor deal signed yet.");
 
-  const href = asString(safe.href, '#/dashboard/finance')
-  const status = asString(safe.status).toLowerCase()
+  const href = asString(safe.href, "#/dashboard/finance");
+  const status = asString(safe.status).toLowerCase();
   const isSignedByStatus =
-    status === 'signed' || status === 'active' || status === 'running' || status === 'current'
+    status === "signed" ||
+    status === "active" ||
+    status === "running" ||
+    status === "current";
 
   const isActive = asBoolean(
     safe.isActive,
@@ -789,10 +1269,13 @@ function normalizeMainSponsor(value: unknown, fallbackIsActive = false): MainSpo
       safe.is_active,
       asBoolean(
         safe.isSigned,
-        asBoolean(safe.signed, Boolean(logoUrl) || isSignedByStatus || fallbackIsActive),
+        asBoolean(
+          safe.signed,
+          Boolean(logoUrl) || isSignedByStatus || fallbackIsActive,
+        ),
       ),
     ),
-  )
+  );
 
   return {
     name,
@@ -800,16 +1283,12 @@ function normalizeMainSponsor(value: unknown, fallbackIsActive = false): MainSpo
     subtitle,
     href,
     isActive,
-  }
+  };
 }
 
-/**
- * normalizeDashboardPayload
- * Converts the raw RPC payload for get_dashboard_overview into a typed structure.
- */
 function normalizeDashboardPayload(payload: unknown): DashboardOverviewData {
-  const safe = asObject<Record<string, unknown>>(payload, {})
-  const financeSafe = asObject<Record<string, unknown>>(safe.finance, {})
+  const safe = asObject<Record<string, unknown>>(payload, {});
+  const financeSafe = asObject<Record<string, unknown>>(safe.finance, {});
 
   const fallbackMainSponsor =
     safe.mainSponsor ??
@@ -817,17 +1296,17 @@ function normalizeDashboardPayload(payload: unknown): DashboardOverviewData {
     safe.mainSponsorCompany ??
     safe.main_sponsor_company ??
     safe.sponsor ??
-    safe.primarySponsor
+    safe.primarySponsor;
 
   const finance = normalizeFinanceHealth(
     safe.finance,
     safe.transactions ?? safe.statementRows ?? safe.statement_rows,
-  )
+  );
 
   const emergencyDebt = normalizeEmergencyDebt(
     safe.emergencyDebt ?? safe.emergency_debt ?? safe.debt,
     financeSafe,
-  )
+  );
 
   const mainSponsorSignedHint =
     asBoolean(safe.mainSponsorSigned) ||
@@ -839,20 +1318,20 @@ function normalizeDashboardPayload(payload: unknown): DashboardOverviewData {
     asBoolean(financeSafe.hasMainSponsor) ||
     asBoolean(financeSafe.has_main_sponsor) ||
     asBoolean(financeSafe.mainSponsorActive) ||
-    asBoolean(financeSafe.main_sponsor_active)
+    asBoolean(financeSafe.main_sponsor_active);
 
   return {
     club: asObject(safe.club, {
-      id: '',
-      name: 'Club',
-      handle: 'Manager',
-      countryCode: '',
-      tier: '',
-      division: '',
-      seasonLabel: 'Season 1',
-      dateLabel: '',
-      weatherLabel: '',
-      rankLabel: '-',
+      id: "",
+      name: "Club",
+      handle: "Manager",
+      countryCode: "",
+      tier: "",
+      division: "",
+      seasonLabel: "Season 1",
+      dateLabel: "",
+      weatherLabel: "",
+      rankLabel: "-",
       inboxUnread: 0,
       notificationsUnread: 0,
     }),
@@ -863,7 +1342,7 @@ function normalizeDashboardPayload(payload: unknown): DashboardOverviewData {
       fitness: 0,
       morale: 0,
       readiness: 0,
-      form: '+0',
+      form: "+0",
       availableRiders: 0,
       injured: 0,
       sick: 0,
@@ -878,9 +1357,1126 @@ function normalizeDashboardPayload(payload: unknown): DashboardOverviewData {
     emergencyDebt,
     quickActions: asArray<QuickActionItem>(safe.quickActions),
     mainSponsor: normalizeMainSponsor(
-      fallbackMainSponsor ?? financeSafe.mainSponsor ?? financeSafe.main_sponsor,
+      fallbackMainSponsor ??
+        financeSafe.mainSponsor ??
+        financeSafe.main_sponsor,
       mainSponsorSignedHint,
     ),
+  };
+}
+
+/**
+ * getSeasonYearFromOverview
+ * Converts "Season 1" into DB season_year 2000, "Season 2" into 2001, etc.
+ */
+function getSeasonYearFromOverview(data: DashboardOverviewData): number {
+  const seasonText = `${data.club.seasonLabel} ${data.club.dateLabel}`;
+  const match = /season\s*(\d+)/i.exec(seasonText);
+  const seasonNumber = match ? Number(match[1]) : 1;
+
+  return Number.isFinite(seasonNumber) && seasonNumber > 0
+    ? 1999 + seasonNumber
+    : 2000;
+}
+
+/**
+ * countryCodeToFlagEmoji
+ * Converts an ISO alpha-2 country code into a flag emoji.
+ */
+function countryCodeToFlagEmoji(countryCode?: string | null): string {
+  const code = (countryCode ?? "").trim().toUpperCase();
+
+  if (!/^[A-Z]{2}$/.test(code)) return "";
+
+  return Array.from(code)
+    .map((char) => String.fromCodePoint(127397 + char.charCodeAt(0)))
+    .join("");
+}
+
+function inferCountryCodeFromRaceTitle(title?: string | null): string | null {
+  const value = (title ?? "").toLowerCase();
+
+  if (!value) return null;
+  if (value.includes("black river gorges") || value.includes("mauritius"))
+    return "MU";
+  if (value.includes("guadeloupe")) return "GP";
+  if (value.includes("namib")) return "NA";
+  if (value.includes("faso")) return "BF";
+  if (value.includes("israel") || value.includes("tel aviv")) return "IL";
+  if (
+    value.includes("dalmaciji") ||
+    value.includes("dalmacija") ||
+    value.includes("cro tour") ||
+    value.includes("croatia")
+  )
+    return "HR";
+  if (
+    value.includes("perth") ||
+    value.includes("hamilton to auckland") ||
+    value.includes("victoria")
+  )
+    return "AU";
+  if (value.includes("cape winelands") || value.includes("stellenbosch"))
+    return "ZA";
+  if (value.includes("zanzibar")) return "TZ";
+  if (value.includes("fuerteventura")) return "ES";
+  if (value.includes("aruba")) return "AW";
+  if (value.includes("kingston") || value.includes("kings avenue")) return "JM";
+  if (value.includes("veneto") || value.includes("giro del veneto"))
+    return "IT";
+  if (value.includes("montenegro")) return "ME";
+  if (value.includes("guatemala")) return "GT";
+  if (value.includes("rio")) return "BR";
+
+  return null;
+}
+
+/**
+ * formatShortOverviewDate
+ * Converts 2000-11-02 into Nov 02 for compact race strips.
+ */
+function formatShortOverviewDate(value?: string | null): string {
+  if (!value) return "—";
+
+  const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(value);
+  if (!match) return value;
+
+  const monthIndex = Number(match[2]) - 1;
+  const day = match[3];
+  const months = [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec",
+  ];
+
+  return `${months[monthIndex] ?? match[2]} ${day}`;
+}
+
+/**
+ * normalizeOverviewRaceBase
+ * Shared race metadata normalizer for squad-dashboard last/next race blocks.
+ */
+function normalizeOverviewRaceBase(
+  value: Record<string, unknown>,
+  squadLabel: string,
+): OverviewRaceBase {
+  return {
+    squadLabel,
+    raceId: asString(value.raceId ?? value.race_id, "") || null,
+    raceName: asString(value.raceName ?? value.race_name, "") || null,
+    raceCategory:
+      asString(value.raceCategory ?? value.race_category, "") || null,
+    raceCountryCode:
+      asString(value.raceCountryCode ?? value.race_country_code, "") || null,
+    stageDate: asString(value.stageDate ?? value.stage_date, "") || null,
+    stageLabel: asString(value.stageLabel ?? value.stage_label, "") || null,
+    routeLabel: asString(value.routeLabel ?? value.route_label, "") || null,
+    stageCount: asNumber(value.stageCount ?? value.stage_count, 0),
+  };
+}
+
+/**
+ * normalizeOverviewNextRace
+ * Converts the squad dashboard RPC payload into a compact next race widget payload.
+ */
+function normalizeOverviewNextRace(
+  payload: unknown,
+  squadLabel: string,
+): OverviewNextTeamRace | null {
+  const safePayload = Array.isArray(payload) ? payload[0] : payload;
+  const safe = asObject<Record<string, unknown>>(safePayload, {});
+  const nextRace = asObject<Record<string, unknown>>(
+    safe.nextRaceSelection ?? safe.next_race_selection ?? {},
+    {},
+  );
+  const rows = asArray<Record<string, unknown>>(nextRace.rows).map(
+    (row, index) => ({
+      riderId: asString(row.riderId ?? row.rider_id, `next-rider:${index}`),
+      riderName: asString(row.riderName ?? row.rider_name, "Unnamed rider"),
+      role: asString(row.role, "") || null,
+      raceSharpness:
+        row.raceSharpness === null || row.raceSharpness === undefined
+          ? null
+          : asNumber(row.raceSharpness ?? row.race_sharpness, 0),
+      raceSharpnessLabel:
+        asString(row.raceSharpnessLabel ?? row.race_sharpness_label, "") ||
+        null,
+    }),
+  );
+
+  const base = normalizeOverviewRaceBase(nextRace, squadLabel);
+
+  if (!base.raceName && rows.length === 0) return null;
+
+  return {
+    ...base,
+    rows,
+  };
+}
+
+/**
+ * normalizeOverviewLastRace
+ * Converts the squad dashboard RPC payload into a compact last race widget payload.
+ */
+function normalizeOverviewLastRace(
+  payload: unknown,
+  squadLabel: string,
+): OverviewLastTeamRace | null {
+  const safePayload = Array.isArray(payload) ? payload[0] : payload;
+  const safe = asObject<Record<string, unknown>>(safePayload, {});
+  const lastRace = asObject<Record<string, unknown>>(
+    safe.lastTeamRace ?? safe.last_team_race ?? {},
+    {},
+  );
+  const rows = asArray<Record<string, unknown>>(lastRace.rows).map(
+    (row, index) => ({
+      riderId: asString(row.riderId ?? row.rider_id, `last-rider:${index}`),
+      riderName: asString(row.riderName ?? row.rider_name, "Unnamed rider"),
+      role: asString(row.role, "") || null,
+      position:
+        row.position === null || row.position === undefined
+          ? null
+          : asNumber(row.position ?? row.finish_position, 0),
+      resultLabel:
+        asString(row.resultLabel ?? row.result_label, "") ||
+        formatOrdinal(asNumber(row.position ?? row.finish_position, 0)),
+      points: asNumber(
+        row.points ?? row.international_points ?? row.rider_points,
+        0,
+      ),
+    }),
+  );
+
+  const base = normalizeOverviewRaceBase(lastRace, squadLabel);
+
+  if (!base.raceName && rows.length === 0) return null;
+
+  return {
+    ...base,
+    rows,
+  };
+}
+
+/**
+ * loadOverviewTeamRaceHub
+ * Loads the latest completed race and earliest submitted race selection across
+ * first squad and developing squads.
+ */
+async function loadCurrentGameDateOnly(): Promise<string | null> {
+  try {
+    const { data, error } = await supabase.rpc("get_current_game_date_date");
+
+    if (error) {
+      console.warn(
+        "Could not load current game date for overview race hub:",
+        error.message,
+      );
+      return null;
+    }
+
+    return asString(data, "") || null;
+  } catch (err) {
+    console.warn("Current game date lookup failed for overview race hub:", err);
+    return null;
+  }
+}
+
+function compareDateOnly(left?: string | null, right?: string | null): number {
+  const leftTime = left ? Date.parse(`${left}T00:00:00`) : Number.NaN;
+  const rightTime = right ? Date.parse(`${right}T00:00:00`) : Number.NaN;
+
+  if (!Number.isFinite(leftTime) && !Number.isFinite(rightTime)) return 0;
+  if (!Number.isFinite(leftTime)) return -1;
+  if (!Number.isFinite(rightTime)) return 1;
+
+  return leftTime - rightTime;
+}
+
+function isDateAfter(left?: string | null, right?: string | null): boolean {
+  return compareDateOnly(left, right) > 0;
+}
+
+function isDateBefore(left?: string | null, right?: string | null): boolean {
+  return compareDateOnly(left, right) < 0;
+}
+
+function normalizeRaceStatusForOverview(value?: string | null): string {
+  return (value ?? "").trim().toLowerCase();
+}
+
+function isFinishedRaceStatusForOverview(value?: string | null): boolean {
+  const normalized = normalizeRaceStatusForOverview(value);
+
+  return (
+    normalized === "completed" ||
+    normalized === "archived" ||
+    normalized === "finished" ||
+    normalized === "race_finished" ||
+    normalized === "race_completed"
+  );
+}
+
+function isActiveOrClosedRaceStatusForOverview(value?: string | null): boolean {
+  const normalized = normalizeRaceStatusForOverview(value);
+
+  return (
+    normalized === "active" ||
+    normalized === "running" ||
+    normalized === "started" ||
+    normalized === "live" ||
+    normalized === "completed" ||
+    normalized === "archived" ||
+    normalized === "finished" ||
+    normalized === "race_finished" ||
+    normalized === "race_completed" ||
+    normalized === "cancelled" ||
+    normalized === "canceled"
+  );
+}
+
+function isSubmittedRacePreparationStatus(value?: string | null): boolean {
+  const normalized = (value ?? "").trim().toLowerCase();
+
+  return (
+    normalized === "submitted" ||
+    normalized === "finalised" ||
+    normalized === "finalized" ||
+    normalized === "locked"
+  );
+}
+
+function buildOverviewRaceFromRaceRow(
+  race: Record<string, unknown>,
+  squadLabel: string,
+  dateKey: "start_date" | "end_date",
+): OverviewRaceBase {
+  const raceId = asString(race.id, "") || null;
+  const raceName = asString(race.name ?? race.short_name, "") || null;
+  const stageCount = asNumber(race.stage_count, 0);
+
+  return {
+    squadLabel,
+    raceId,
+    raceName,
+    raceCategory: asString(race.category, "") || null,
+    raceCountryCode: asString(race.country_code, "") || null,
+    stageDate: asString(race[dateKey], "") || null,
+    stageLabel:
+      stageCount && stageCount > 1 ? `${stageCount} stages` : "One-day race",
+    routeLabel: null,
+    stageCount,
+  };
+}
+
+/**
+ * loadOverviewTeamRaceHub
+ * Loads race hub cards with strict timeline rules:
+ * - Next Team Race = first accepted/submitted race whose race start date is after the current game date.
+ *   Current-day active races are not considered next.
+ * - Last Team Race = latest finished full race whose race end date is before the current game date
+ *   and where the first team or developing team has persisted results.
+ */
+async function loadOverviewTeamRaceHub(
+  mainClubId: string | null,
+  seasonYear: number,
+): Promise<OverviewTeamRaceHub> {
+  void seasonYear;
+
+  const emptyHub: OverviewTeamRaceHub = {
+    lastTeamRace: null,
+    nextTeamRace: null,
+  };
+
+  if (!mainClubId) return emptyHub;
+
+  const currentGameDate = await loadCurrentGameDateOnly();
+
+  if (!currentGameDate) {
+    return emptyHub;
+  }
+
+  const candidateClubs: Array<{ id: string; label: string }> = [
+    { id: mainClubId, label: "First Squad" },
+  ];
+
+  try {
+    const { data: developingClubs, error: developingError } = await supabase
+      .from("clubs")
+      .select("id, name")
+      .eq("parent_club_id", mainClubId)
+      .eq("club_type", "developing");
+
+    if (developingError) {
+      console.warn(
+        "Could not load developing club for overview race hub:",
+        developingError.message,
+      );
+    } else {
+      for (const club of asArray<Record<string, unknown>>(developingClubs)) {
+        const id = asString(club.id);
+        if (id) {
+          candidateClubs.push({
+            id,
+            label: asString(club.name, "Developing Team"),
+          });
+        }
+      }
+    }
+  } catch (err) {
+    console.warn("Developing club lookup failed for overview race hub:", err);
+  }
+
+  const clubIds = candidateClubs.map((club) => club.id).filter(Boolean);
+  const clubLabelById = new Map(
+    candidateClubs.map((club) => [club.id, club.label]),
+  );
+
+  if (clubIds.length === 0) return emptyHub;
+
+  try {
+    const { data: entryData, error: entryError } = await supabase
+      .from("race_team_entries")
+      .select("id, race_id, club_id, status")
+      .in("club_id", clubIds)
+      .eq("status", "accepted");
+
+    if (entryError) {
+      console.warn(
+        "Could not load accepted race entries for overview race hub:",
+        entryError.message,
+      );
+      return emptyHub;
+    }
+
+    const entries = asArray<Record<string, unknown>>(entryData);
+    const raceIds = Array.from(
+      new Set(
+        entries.map((entry) => asString(entry.race_id, "")).filter(Boolean),
+      ),
+    );
+
+    if (raceIds.length === 0) return emptyHub;
+
+    const [
+      { data: preparationData, error: preparationError },
+      { data: raceData, error: raceError },
+    ] = await Promise.all([
+      supabase
+        .from("race_preparations")
+        .select("id, race_id, club_id, status, startlist_status")
+        .in("club_id", clubIds)
+        .in("race_id", raceIds),
+      supabase
+        .from("races")
+        .select(
+          "id, name, short_name, category, country_code, start_date, end_date, stage_count, is_stage_race, status",
+        )
+        .in("id", raceIds),
+    ]);
+
+    if (preparationError) {
+      console.warn(
+        "Could not load race preparations for overview race hub:",
+        preparationError.message,
+      );
+    }
+
+    if (raceError) {
+      console.warn(
+        "Could not load races for overview race hub:",
+        raceError.message,
+      );
+      return emptyHub;
+    }
+
+    const preparations = asArray<Record<string, unknown>>(preparationData);
+    const races = asArray<Record<string, unknown>>(raceData);
+    const raceById = new Map(
+      races.map((race) => [asString(race.id, ""), race]),
+    );
+    const preparationByClubRace = new Map(
+      preparations.map((preparation) => [
+        `${asString(preparation.club_id, "")}:${asString(preparation.race_id, "")}`,
+        preparation,
+      ]),
+    );
+
+    const submittedEntries = entries.filter((entry) => {
+      const prep = preparationByClubRace.get(
+        `${asString(entry.club_id, "")}:${asString(entry.race_id, "")}`,
+      );
+
+      return Boolean(
+        prep &&
+        (isSubmittedRacePreparationStatus(asString(prep.status, "")) ||
+          isSubmittedRacePreparationStatus(
+            asString(prep.startlist_status, ""),
+          )),
+      );
+    });
+
+    const nextEntries = submittedEntries
+      .map((entry) => {
+        const race = raceById.get(asString(entry.race_id, ""));
+        const clubId = asString(entry.club_id, "");
+
+        if (!race) return null;
+        if (!isDateAfter(asString(race.start_date, ""), currentGameDate))
+          return null;
+        if (isActiveOrClosedRaceStatusForOverview(asString(race.status, "")))
+          return null;
+
+        return {
+          entry,
+          race,
+          clubId,
+          startDate: asString(race.start_date, ""),
+        };
+      })
+      .filter(
+        (
+          item,
+        ): item is {
+          entry: Record<string, unknown>;
+          race: Record<string, unknown>;
+          clubId: string;
+          startDate: string;
+        } => Boolean(item),
+      )
+      .sort((left, right) => compareDateOnly(left.startDate, right.startDate));
+
+    const finishedCandidateEntries = entries
+      .map((entry) => {
+        const race = raceById.get(asString(entry.race_id, ""));
+        const clubId = asString(entry.club_id, "");
+
+        if (!race) return null;
+
+        const endDate = asString(race.end_date ?? race.start_date, "");
+        const status = asString(race.status, "");
+        const isFinishedByStatus = isFinishedRaceStatusForOverview(status);
+        const isBeforeToday = isDateBefore(endDate, currentGameDate);
+
+        if (!isFinishedByStatus && !isBeforeToday) return null;
+        if (!isBeforeToday && !isFinishedByStatus) return null;
+
+        return {
+          entry,
+          race,
+          clubId,
+          endDate,
+        };
+      })
+      .filter(
+        (
+          item,
+        ): item is {
+          entry: Record<string, unknown>;
+          race: Record<string, unknown>;
+          clubId: string;
+          endDate: string;
+        } => Boolean(item),
+      );
+
+    let raceIdsWithTeamResults = new Set<string>();
+
+    if (finishedCandidateEntries.length > 0) {
+      try {
+        const { data: resultData, error: resultError } = await supabase
+          .from("race_stage_results")
+          .select("race_id, team_id")
+          .in(
+            "race_id",
+            Array.from(
+              new Set(
+                finishedCandidateEntries
+                  .map((item) => asString(item.race.id, ""))
+                  .filter(Boolean),
+              ),
+            ),
+          )
+          .in("team_id", clubIds);
+
+        if (resultError) {
+          console.warn(
+            "Could not verify team results for overview last race:",
+            resultError.message,
+          );
+        } else {
+          raceIdsWithTeamResults = new Set(
+            asArray<Record<string, unknown>>(resultData)
+              .map((row) => asString(row.race_id, ""))
+              .filter(Boolean),
+          );
+        }
+      } catch (err) {
+        console.warn("Team result lookup failed for overview last race:", err);
+      }
+    }
+
+    const lastEntries = finishedCandidateEntries
+      .filter(
+        (item) =>
+          raceIdsWithTeamResults.size === 0 ||
+          raceIdsWithTeamResults.has(asString(item.race.id, "")),
+      )
+      .sort((left, right) => compareDateOnly(right.endDate, left.endDate));
+
+    const nextTeamRace = nextEntries[0]
+      ? {
+          ...buildOverviewRaceFromRaceRow(
+            nextEntries[0].race,
+            clubLabelById.get(nextEntries[0].clubId) ?? "Team",
+            "start_date",
+          ),
+          rows: [],
+        }
+      : null;
+
+    const lastTeamRace = lastEntries[0]
+      ? {
+          ...buildOverviewRaceFromRaceRow(
+            lastEntries[0].race,
+            clubLabelById.get(lastEntries[0].clubId) ?? "Team",
+            "end_date",
+          ),
+          rows: [],
+        }
+      : null;
+
+    return {
+      lastTeamRace,
+      nextTeamRace,
+    };
+  } catch (err) {
+    console.warn("Overview team race hub direct lookup failed:", err);
+    return emptyHub;
+  }
+}
+
+/**
+ * normalizeOverviewRaceWorldData
+ * Converts the overview race-world RPC into frontend rows.
+ */
+function normalizeOverviewRaceWorldData(value: unknown): OverviewRaceWorldData {
+  const safe = asObject<Record<string, unknown>>(value, {});
+
+  const upcomingSchedule = asArray<Record<string, unknown>>(
+    safe.upcomingSchedule ?? safe.upcoming_schedule,
+  ).map((row, index) => {
+    const title = asString(row.title, "Upcoming race");
+    const subtitle = asString(row.subtitle, "");
+    const countryCode =
+      asString(
+        row.countryCode ??
+          row.country_code ??
+          row.raceCountryCode ??
+          row.race_country_code ??
+          row.country_iso2 ??
+          row.country,
+        "",
+      ) || inferCountryCodeFromRaceTitle(`${title} ${subtitle}`);
+
+    return {
+      id: asString(row.id, `upcoming:${index}`),
+      dateLabel: asString(row.dateLabel ?? row.date_label, ""),
+      title,
+      subtitle,
+      countryCode: countryCode || null,
+      href: asString(row.href, "") || undefined,
+    };
+  });
+
+  const todayRaces = asArray<Record<string, unknown>>(
+    safe.todayRaces ?? safe.today_races,
+  ).map((row, index) => {
+    const title = asString(row.title, "Race");
+    const subtitle = asString(row.subtitle, "");
+    const countryCode =
+      asString(
+        row.countryCode ??
+          row.country_code ??
+          row.raceCountryCode ??
+          row.race_country_code ??
+          row.country_iso2 ??
+          row.country,
+        "",
+      ) || inferCountryCodeFromRaceTitle(`${title} ${subtitle}`);
+
+    return {
+      id: asString(row.id, `today:${index}`),
+      title,
+      subtitle,
+      timeLabel: asString(row.timeLabel ?? row.time_label, ""),
+      countryCode: countryCode || null,
+      href: asString(row.href, "") || undefined,
+    };
+  });
+
+  const worldNews = asArray<Record<string, unknown>>(
+    safe.worldNews ?? safe.world_news,
+  ).map((row, index) => ({
+    id: asString(row.id, `world-news:${index}`),
+    title: asString(row.title, "World news"),
+    subtitle: asString(row.subtitle, ""),
+    timeLabel: asString(row.timeLabel ?? row.time_label, ""),
+    href: asString(row.href, "") || undefined,
+    detail: asString(
+      row.detail ?? row.details ?? row.long_text ?? row.longText,
+      "",
+    ),
+    expandedText: asString(
+      row.expandedText ?? row.expanded_text ?? row.description ?? row.body,
+      "",
+    ),
+    sourceType: asString(row.sourceType ?? row.source_type ?? row.type, ""),
+    relatedType: asString(
+      row.relatedType ?? row.related_type ?? row.entity_type,
+      "",
+    ),
+    relatedHref: asString(
+      row.relatedHref ?? row.related_href ?? row.related_url,
+      "",
+    ),
+  }));
+
+  return {
+    upcomingSchedule,
+    todayRaces,
+    worldNews,
+  };
+}
+
+/**
+ * loadOverviewRaceWorldData
+ * Loads real accepted upcoming races, current-day races, and generated world news.
+ *
+ * This removes the old mock-like schedule fallback from the overview.
+ */
+async function loadOverviewRaceWorldData(
+  mainClubId: string | null,
+  seasonYear: number,
+): Promise<OverviewRaceWorldData> {
+  if (!mainClubId) return EMPTY_RACE_WORLD_DATA;
+
+  try {
+    const { data, error } = await supabase.rpc("get_overview_race_world_v1", {
+      p_club_id: mainClubId,
+      p_season_year: seasonYear,
+    });
+
+    if (error) {
+      console.warn("Could not load overview race world data:", error.message);
+      return EMPTY_RACE_WORLD_DATA;
+    }
+
+    return normalizeOverviewRaceWorldData(data);
+  } catch (err) {
+    console.warn("Overview race world lookup failed:", err);
+    return EMPTY_RACE_WORLD_DATA;
+  }
+}
+
+function normalizeOverviewActiveOperations(value: unknown): OperationItem[] {
+  const rows = Array.isArray(value) ? value : [];
+
+  return rows.map((entry, index) => {
+    const row = asObject<Record<string, unknown>>(entry, {});
+    const title = asString(row.title ?? row.name, "Active operation");
+    const subtitle = asString(
+      row.subtitle ?? row.summary ?? row.description,
+      "",
+    );
+    const statusLabel = asString(
+      row.statusLabel ?? row.status_label ?? row.status,
+      "",
+    );
+
+    const rawMetrics = asArray<Record<string, unknown>>(row.metrics);
+    const metrics = rawMetrics.map((metric, metricIndex) => ({
+      label: asString(metric.label, `Metric ${metricIndex + 1}`),
+      value: asString(metric.value, "—"),
+    }));
+
+    return {
+      id: asString(row.id, `operation:${index}`),
+      title,
+      subtitle,
+      statusLabel,
+      status: statusLabel || asString(row.status, "Active"),
+      summary: subtitle,
+      href: asString(row.href ?? row.action_url, "") || undefined,
+      metrics,
+    };
+  });
+}
+
+function mergeOverviewOperations(
+  existing: OperationItem[],
+  loaded: OperationItem[],
+): OperationItem[] {
+  const merged: OperationItem[] = [];
+  const seen = new Set<string>();
+
+  [...loaded, ...existing].forEach((item, index) => {
+    const key =
+      item.id || `${item.title}:${item.subtitle ?? item.summary}:${index}`;
+    if (seen.has(key)) return;
+    seen.add(key);
+    merged.push(item);
+  });
+
+  return merged;
+}
+
+async function loadOverviewActiveOperations(
+  mainClubId: string | null,
+): Promise<OperationItem[]> {
+  if (!mainClubId) return [];
+
+  try {
+    const { data, error } = await supabase.rpc(
+      "get_overview_active_operations_v1",
+      {
+        p_club_id: mainClubId,
+      },
+    );
+
+    if (error) {
+      console.warn("Could not load overview active operations:", error.message);
+      return [];
+    }
+
+    return normalizeOverviewActiveOperations(data);
+  } catch (err) {
+    console.warn("Overview active operations lookup failed:", err);
+    return [];
+  }
+}
+
+function normalizeFinancePeriodSummary(
+  value: unknown,
+): Partial<FinancePeriodSummary> | null {
+  const safe = asObject<Record<string, unknown>>(value, {});
+  if (Object.keys(safe).length === 0) return null;
+
+  const summary: Partial<FinancePeriodSummary> = {
+    weeklyOperatingIncome: asNumber(
+      safe.weeklyOperatingIncome ??
+        safe.weekly_operating_income ??
+        safe.weekIncome ??
+        safe.week_income,
+      Number.NaN,
+    ),
+    weeklyOperatingExpense: asNumber(
+      safe.weeklyOperatingExpense ??
+        safe.weekly_operating_expense ??
+        safe.weekExpense ??
+        safe.week_expense,
+      Number.NaN,
+    ),
+    monthlyOperatingIncome: asNumber(
+      safe.monthlyOperatingIncome ??
+        safe.monthly_operating_income ??
+        safe.monthIncome ??
+        safe.month_income,
+      Number.NaN,
+    ),
+    monthlyOperatingExpense: asNumber(
+      safe.monthlyOperatingExpense ??
+        safe.monthly_operating_expense ??
+        safe.monthExpense ??
+        safe.month_expense,
+      Number.NaN,
+    ),
+    seasonOperatingIncome: asNumber(
+      safe.seasonOperatingIncome ??
+        safe.season_operating_income ??
+        safe.seasonIncome ??
+        safe.season_income,
+      Number.NaN,
+    ),
+    seasonOperatingExpense: asNumber(
+      safe.seasonOperatingExpense ??
+        safe.season_operating_expense ??
+        safe.seasonExpense ??
+        safe.season_expense,
+      Number.NaN,
+    ),
+  };
+
+  const cleaned = Object.fromEntries(
+    Object.entries(summary).filter(([, value]) => Number.isFinite(value)),
+  ) as Partial<FinancePeriodSummary>;
+
+  const values = Object.values(cleaned).filter((value) =>
+    Number.isFinite(value),
+  );
+  const hasNonZeroValue = values.some((value) => Math.abs(Number(value)) > 0);
+
+  // Ignore all-zero period summaries because they usually mean the optional
+  // overview period RPC returned placeholder values. The card should then keep
+  // the transaction/dashboard-derived finance totals instead of showing $0.
+  if (!hasNonZeroValue) return null;
+
+  return Object.keys(cleaned).length > 0 ? cleaned : null;
+}
+
+function mergeFinancePeriodSummary(
+  finance: FinanceHealth,
+  summary: Partial<FinancePeriodSummary> | null,
+): FinanceHealth {
+  if (!summary) return finance;
+
+  return {
+    ...finance,
+    weeklyOperatingIncome:
+      summary.weeklyOperatingIncome ?? finance.weeklyOperatingIncome,
+    weeklyOperatingExpense:
+      summary.weeklyOperatingExpense ?? finance.weeklyOperatingExpense,
+    monthlyOperatingIncome:
+      summary.monthlyOperatingIncome ?? finance.monthlyOperatingIncome,
+    monthlyOperatingExpense:
+      summary.monthlyOperatingExpense ?? finance.monthlyOperatingExpense,
+    seasonOperatingIncome:
+      summary.seasonOperatingIncome ?? finance.seasonOperatingIncome,
+    seasonOperatingExpense:
+      summary.seasonOperatingExpense ?? finance.seasonOperatingExpense,
+  };
+}
+
+async function loadOverviewFinancePeriodSummary(
+  mainClubId: string | null,
+  _seasonYear: number,
+): Promise<Partial<FinancePeriodSummary> | null> {
+  if (!mainClubId) return null;
+
+  try {
+    const { data, error } = await supabase.rpc(
+      "get_overview_finance_period_summary_v1",
+      {
+        p_club_id: mainClubId,
+        p_before: "2100-01-01T00:00:00+00:00",
+        p_limit: 10000,
+      },
+    );
+
+    if (!error && data) {
+      return normalizeFinancePeriodSummary(data);
+    }
+
+    if (error) {
+      console.warn(
+        "Could not load overview finance period summary:",
+        error.message,
+      );
+    }
+  } catch (err) {
+    console.warn("Overview finance period summary lookup failed:", err);
+  }
+
+  return null;
+}
+
+
+function normalizeOverviewAttentionItems(value: unknown): AlertItem[] {
+  return asArray<Record<string, unknown>>(value).map((row, index) => {
+    const rawLevel = asString(row.level, "info").toLowerCase();
+    const level: AlertLevel =
+      rawLevel === "danger" || rawLevel === "warning" || rawLevel === "success"
+        ? rawLevel
+        : "info";
+
+    return {
+      id: asString(row.id, `attention:${index}`),
+      label: asString(row.label ?? row.title, "Attention item"),
+      level,
+      href: asString(row.href ?? row.action_url, "") || undefined,
+    };
+  });
+}
+
+function mergeOverviewAlerts(
+  primary: AlertItem[],
+  secondary: AlertItem[],
+): AlertItem[] {
+  const seen = new Set<string>();
+  const merged: AlertItem[] = [];
+
+  for (const item of [...secondary, ...primary]) {
+    const key = `${item.href ?? ""}:${item.label}`.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    merged.push(item);
+  }
+
+  return merged.slice(0, 6);
+}
+
+function buildAttentionAlertsFromFeed(feed: FeedItem[]): AlertItem[] {
+  const actionKeywords = [
+    "test attention",
+    "race application",
+    "deadline",
+    "needs review",
+    "needs attention",
+    "contract",
+    "sick",
+    "injured",
+    "repair",
+    "condition low",
+    "supplies low",
+    "scout",
+    "report completed",
+  ];
+
+  return feed
+    .filter((item) => {
+      const searchable = `${item.title} ${item.subtitle}`.toLowerCase();
+      return actionKeywords.some((keyword) => searchable.includes(keyword));
+    })
+    .map((item) => ({
+      id: `feed-attention:${item.id}`,
+      label: item.title,
+      level:
+        item.level === "danger"
+          ? "danger"
+          : item.level === "warning"
+            ? "warning"
+            : "info",
+      href: item.href,
+    }))
+    .slice(0, 6);
+}
+
+async function loadOverviewAttentionItems(
+  mainClubId: string | null,
+): Promise<AlertItem[]> {
+  if (!mainClubId) return [];
+
+  try {
+    const { data: userData } = await supabase.auth.getUser();
+    const userId = userData.user?.id ?? null;
+
+    const { data, error } = await supabase.rpc(
+      "get_overview_attention_items_v1",
+      {
+        p_club_id: mainClubId,
+        p_user_id: userId,
+        p_limit: 6,
+      },
+    );
+
+    if (error) {
+      console.warn("Could not load overview attention items:", error.message);
+      return [];
+    }
+
+    return normalizeOverviewAttentionItems(data);
+  } catch (err) {
+    console.warn("Overview attention lookup failed:", err);
+    return [];
+  }
+}
+
+function normalizeOverviewSquadPulse(value: unknown): SquadPulse | null {
+  const safe = asObject<Record<string, unknown>>(value, {});
+  if (Object.keys(safe).length === 0) return null;
+
+  return {
+    fitness: asNumber(safe.fitness, 0),
+    morale: asNumber(safe.morale, 0),
+    readiness: asNumber(safe.readiness, 0),
+    form: asString(safe.form, "+0"),
+    availableRiders: asNumber(safe.availableRiders ?? safe.available_riders, 0),
+    injured: asNumber(safe.injured, 0),
+    sick: asNumber(safe.sick, 0),
+    notFullyFit: asNumber(safe.notFullyFit ?? safe.not_fully_fit, 0),
+    expiringContracts: asNumber(
+      safe.expiringContracts ?? safe.expiring_contracts,
+      0,
+    ),
+  };
+}
+
+async function loadOverviewSquadPulse(
+  mainClubId: string | null,
+): Promise<SquadPulse | null> {
+  if (!mainClubId) return null;
+
+  try {
+    const { data, error } = await supabase.rpc("get_overview_squad_pulse_v1", {
+      p_club_id: mainClubId,
+    });
+
+    if (error) {
+      console.warn("Could not load overview squad pulse:", error.message);
+      return null;
+    }
+
+    return normalizeOverviewSquadPulse(data);
+  } catch (err) {
+    console.warn("Overview squad pulse lookup failed:", err);
+    return null;
+  }
+}
+
+function normalizeOverviewSeasonSnapshot(
+  value: unknown,
+): OverviewSeasonSnapshot {
+  const safe = asObject<Record<string, unknown>>(value, {});
+
+  return {
+    races: asNumber(safe.races, 0),
+    stages: asNumber(safe.stages, 0),
+    internationalPoints: asNumber(
+      safe.internationalPoints ?? safe.international_points,
+      0,
+    ),
+    wins: asNumber(safe.wins, 0),
+    podiums: asNumber(safe.podiums, 0),
+    top10s: asNumber(safe.top10s ?? safe.top10, 0),
+    jerseys: asNumber(safe.jerseys, 0),
+    bestGc:
+      safe.bestGc === null || safe.best_gc === null
+        ? null
+        : asNumber(safe.bestGc ?? safe.best_gc, 0) || null,
+  };
+}
+
+async function loadOverviewSeasonSnapshot(
+  mainClubId: string | null,
+  seasonYear: number,
+): Promise<OverviewSeasonSnapshot> {
+  if (!mainClubId) return EMPTY_SEASON_SNAPSHOT;
+
+  try {
+    const { data, error } = await supabase.rpc(
+      "get_overview_season_snapshot_v1",
+      {
+        p_club_id: mainClubId,
+        p_season_year: seasonYear,
+      },
+    );
+
+    if (error) {
+      console.warn("Could not load overview season snapshot:", error.message);
+      return EMPTY_SEASON_SNAPSHOT;
+    }
+
+    return normalizeOverviewSeasonSnapshot(data);
+  } catch (err) {
+    console.warn("Overview season snapshot lookup failed:", err);
+    return EMPTY_SEASON_SNAPSHOT;
   }
 }
 
@@ -890,15 +2486,15 @@ function normalizeDashboardPayload(payload: unknown): DashboardOverviewData {
  */
 function getAlertClasses(level: AlertLevel) {
   switch (level) {
-    case 'danger':
-      return 'border-red-200 bg-red-50 text-red-700'
-    case 'warning':
-      return 'border-yellow-200 bg-yellow-50 text-yellow-800'
-    case 'success':
-      return 'border-emerald-200 bg-emerald-50 text-emerald-700'
-    case 'info':
+    case "danger":
+      return "border-red-200 bg-red-50 text-red-700";
+    case "warning":
+      return "border-yellow-200 bg-yellow-50 text-yellow-800";
+    case "success":
+      return "border-emerald-200 bg-emerald-50 text-emerald-700";
+    case "info":
     default:
-      return 'border-blue-200 bg-blue-50 text-blue-700'
+      return "border-blue-200 bg-blue-50 text-blue-700";
   }
 }
 
@@ -908,21 +2504,21 @@ function getAlertClasses(level: AlertLevel) {
  */
 function getFeedAccent(level: FeedLevel) {
   switch (level) {
-    case 'finance':
-      return 'bg-emerald-500'
-    case 'training':
-      return 'bg-violet-500'
-    case 'infrastructure':
-      return 'bg-cyan-600'
-    case 'medical':
-      return 'bg-red-500'
-    case 'inbox':
-      return 'bg-rose-500'
-    case 'sponsor':
-      return 'bg-yellow-500'
-    case 'system':
+    case "finance":
+      return "bg-emerald-500";
+    case "training":
+      return "bg-violet-500";
+    case "infrastructure":
+      return "bg-cyan-600";
+    case "medical":
+      return "bg-red-500";
+    case "inbox":
+      return "bg-rose-500";
+    case "sponsor":
+      return "bg-yellow-500";
+    case "system":
     default:
-      return 'bg-slate-500'
+      return "bg-slate-500";
   }
 }
 
@@ -932,21 +2528,21 @@ function getFeedAccent(level: FeedLevel) {
  */
 function getFeedIcon(level: FeedLevel) {
   switch (level) {
-    case 'finance':
-      return '€'
-    case 'training':
-      return 'TC'
-    case 'infrastructure':
-      return 'IF'
-    case 'medical':
-      return '+'
-    case 'inbox':
-      return 'IN'
-    case 'sponsor':
-      return 'SP'
-    case 'system':
+    case "finance":
+      return "€";
+    case "training":
+      return "TC";
+    case "infrastructure":
+      return "IF";
+    case "medical":
+      return "+";
+    case "inbox":
+      return "IN";
+    case "sponsor":
+      return "SP";
+    case "system":
     default:
-      return '•'
+      return "•";
   }
 }
 
@@ -955,13 +2551,14 @@ function getFeedIcon(level: FeedLevel) {
  * Returns text color class for liquidation risk.
  */
 function getRiskTextClass(risk: string) {
-  const normalized = risk.trim().toLowerCase()
+  const normalized = risk.trim().toLowerCase();
 
-  if (normalized === 'high' || normalized === 'critical') return 'text-red-600'
-  if (normalized === 'medium' || normalized === 'moderate') return 'text-yellow-600'
-  if (normalized === 'low') return 'text-emerald-600'
+  if (normalized === "high" || normalized === "critical") return "text-red-600";
+  if (normalized === "medium" || normalized === "moderate")
+    return "text-yellow-600";
+  if (normalized === "low") return "text-emerald-600";
 
-  return 'text-slate-900'
+  return "text-slate-900";
 }
 
 /**
@@ -969,19 +2566,19 @@ function getRiskTextClass(risk: string) {
  * Formats next repayment amount and game date.
  */
 function formatNextRepayment(debt: EmergencyDebtHealth) {
-  const hasAmount = debt.nextRepaymentAmount > 0
+  const hasAmount = debt.nextRepaymentAmount > 0;
   const hasDate =
     debt.nextRepaymentDateLabel &&
-    debt.nextRepaymentDateLabel !== 'No repayment scheduled'
+    debt.nextRepaymentDateLabel !== "No repayment scheduled";
 
   if (hasAmount && hasDate) {
-    return `${formatCurrency(debt.nextRepaymentAmount)} on ${debt.nextRepaymentDateLabel}`
+    return `${formatCurrency(debt.nextRepaymentAmount)} on ${debt.nextRepaymentDateLabel}`;
   }
 
-  if (hasAmount) return formatCurrency(debt.nextRepaymentAmount)
-  if (hasDate) return debt.nextRepaymentDateLabel
+  if (hasAmount) return formatCurrency(debt.nextRepaymentAmount);
+  if (hasDate) return debt.nextRepaymentDateLabel;
 
-  return 'No repayment scheduled'
+  return "No repayment scheduled";
 }
 
 /**
@@ -992,14 +2589,19 @@ function Card({
   children,
   className,
 }: {
-  children: React.ReactNode
-  className?: string
+  children: React.ReactNode;
+  className?: string;
 }) {
   return (
-    <div className={cn('rounded-2xl border border-slate-200 bg-white shadow-sm', className)}>
+    <div
+      className={cn(
+        "rounded-2xl border border-slate-200 bg-white shadow-sm",
+        className,
+      )}
+    >
       {children}
     </div>
-  )
+  );
 }
 
 /**
@@ -1010,17 +2612,19 @@ function SectionTitle({
   title,
   subtitle,
 }: {
-  title: string
-  subtitle?: string
+  title: string;
+  subtitle?: string;
 }) {
   return (
     <div className="flex items-start justify-between gap-4">
       <div>
         <h3 className="text-base font-semibold text-slate-900">{title}</h3>
-        {subtitle ? <p className="mt-1 text-sm text-slate-500">{subtitle}</p> : null}
+        {subtitle ? (
+          <p className="mt-1 text-sm text-slate-500">{subtitle}</p>
+        ) : null}
       </div>
     </div>
-  )
+  );
 }
 
 /**
@@ -1031,15 +2635,15 @@ function SectionEmptyState({
   title,
   description,
 }: {
-  title: string
-  description: string
+  title: string;
+  description: string;
 }) {
   return (
     <div className="mt-5 rounded-xl border border-dashed border-slate-300 bg-slate-50 p-6">
       <div className="text-sm font-semibold text-slate-700">{title}</div>
       <div className="mt-1 text-sm text-slate-500">{description}</div>
     </div>
-  )
+  );
 }
 
 /**
@@ -1055,10 +2659,12 @@ function KpiCard({ item }: { item: KpiItem }) {
       <div className="mt-2 text-2xl font-bold text-slate-900">{item.value}</div>
       <div className="mt-2 text-sm text-slate-500">{item.hint}</div>
       {item.trend ? (
-        <div className="mt-3 text-xs font-medium text-slate-700">{item.trend}</div>
+        <div className="mt-3 text-xs font-medium text-slate-700">
+          {item.trend}
+        </div>
       ) : null}
     </Card>
-  )
+  );
 }
 
 /**
@@ -1070,9 +2676,9 @@ function ProgressMetric({
   value,
   colorClass,
 }: {
-  label: string
-  value: number
-  colorClass: string
+  label: string;
+  value: number;
+  colorClass: string;
 }) {
   return (
     <div>
@@ -1082,12 +2688,12 @@ function ProgressMetric({
       </div>
       <div className="h-2 overflow-hidden rounded-full bg-slate-100">
         <div
-          className={cn('h-full rounded-full', colorClass)}
+          className={cn("h-full rounded-full", colorClass)}
           style={{ width: `${Math.max(0, Math.min(100, value))}%` }}
         />
       </div>
     </div>
-  )
+  );
 }
 
 /**
@@ -1099,18 +2705,23 @@ function SmallStat({
   value,
   valueClassName,
 }: {
-  label: string
-  value: string | number
-  valueClassName?: string
+  label: string;
+  value: string | number;
+  valueClassName?: string;
 }) {
   return (
     <div className="flex items-center justify-between gap-4 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
       <span className="text-sm text-slate-600">{label}</span>
-      <span className={cn('text-right text-sm font-semibold text-slate-900', valueClassName)}>
+      <span
+        className={cn(
+          "text-right text-sm font-semibold text-slate-900",
+          valueClassName,
+        )}
+      >
         {value}
       </span>
     </div>
-  )
+  );
 }
 
 /**
@@ -1120,17 +2731,19 @@ function SmallStat({
 function TransactionSummaryRow({ item }: { item: TransactionSummaryItem }) {
   return (
     <div className="flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
-      <span className="min-w-0 truncate text-sm text-slate-600">{item.label}</span>
+      <span className="min-w-0 truncate text-sm text-slate-600">
+        {item.label}
+      </span>
       <span
         className={cn(
-          'whitespace-nowrap text-sm font-semibold',
-          item.amount >= 0 ? 'text-emerald-600' : 'text-red-600',
+          "whitespace-nowrap text-sm font-semibold",
+          item.amount >= 0 ? "text-emerald-600" : "text-red-600",
         )}
       >
         {formatSignedCurrency(item.amount)}
       </span>
     </div>
-  )
+  );
 }
 
 /**
@@ -1138,13 +2751,15 @@ function TransactionSummaryRow({ item }: { item: TransactionSummaryItem }) {
  * Card for a single active operation.
  */
 function OperationCard({ item }: { item: OperationItem }) {
-  const hasMetrics = Array.isArray(item.metrics) && item.metrics.length > 0
+  const hasMetrics = Array.isArray(item.metrics) && item.metrics.length > 0;
 
   return (
     <Card className="p-4">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <div className="text-base font-semibold text-slate-900">{item.title}</div>
+          <div className="text-base font-semibold text-slate-900">
+            {item.title}
+          </div>
           <div className="mt-1 text-sm text-slate-500">{item.summary}</div>
         </div>
         <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700">
@@ -1155,7 +2770,10 @@ function OperationCard({ item }: { item: OperationItem }) {
       {hasMetrics ? (
         <div className="mt-4 space-y-2">
           {item.metrics.map((metric) => (
-            <div key={metric.label} className="flex items-center justify-between text-sm">
+            <div
+              key={metric.label}
+              className="flex items-center justify-between text-sm"
+            >
               <span className="text-slate-500">{metric.label}</span>
               <span className="font-medium text-slate-900">{metric.value}</span>
             </div>
@@ -1176,7 +2794,7 @@ function OperationCard({ item }: { item: OperationItem }) {
         </a>
       ) : null}
     </Card>
-  )
+  );
 }
 
 /**
@@ -1187,17 +2805,21 @@ function ScheduleRow({ item }: { item: ScheduleItem }) {
   const content = (
     <div className="flex items-start gap-4 rounded-xl border border-slate-200 px-4 py-3 transition hover:bg-slate-50">
       <div className="min-w-[72px] rounded-lg bg-slate-100 px-3 py-2 text-center">
-        <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Date</div>
-        <div className="mt-1 text-sm font-bold text-slate-900">{item.dateLabel}</div>
+        <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+          Date
+        </div>
+        <div className="mt-1 text-sm font-bold text-slate-900">
+          {item.dateLabel}
+        </div>
       </div>
       <div className="flex-1">
         <div className="text-sm font-semibold text-slate-900">{item.title}</div>
         <div className="mt-1 text-sm text-slate-500">{item.subtitle}</div>
       </div>
     </div>
-  )
+  );
 
-  return item.href ? <a href={item.href}>{content}</a> : content
+  return item.href ? <a href={item.href}>{content}</a> : content;
 }
 
 /**
@@ -1217,9 +2839,9 @@ function DayRaceRow({ item }: { item: DayRaceItem }) {
         </div>
       ) : null}
     </div>
-  )
+  );
 
-  return item.href ? <a href={item.href}>{content}</a> : content
+  return item.href ? <a href={item.href}>{content}</a> : content;
 }
 
 /**
@@ -1231,13 +2853,15 @@ function NewsRow({ item }: { item: NewsItem }) {
     <div className="rounded-xl border border-slate-200 px-4 py-3 transition hover:bg-slate-50">
       <div className="flex items-start justify-between gap-3">
         <div className="text-sm font-semibold text-slate-900">{item.title}</div>
-        <div className="whitespace-nowrap text-xs text-slate-400">{item.timeLabel}</div>
+        <div className="whitespace-nowrap text-xs text-slate-400">
+          {item.timeLabel}
+        </div>
       </div>
       <div className="mt-1 text-sm text-slate-500">{item.subtitle}</div>
     </div>
-  )
+  );
 
-  return item.href ? <a href={item.href}>{content}</a> : content
+  return item.href ? <a href={item.href}>{content}</a> : content;
 }
 
 /**
@@ -1249,7 +2873,7 @@ function FeedRow({ item }: { item: FeedItem }) {
     <div className="flex items-start gap-3 rounded-xl px-2 py-2 transition hover:bg-slate-50">
       <div
         className={cn(
-          'flex h-9 w-9 items-center justify-center rounded-full text-xs font-bold text-white',
+          "flex h-9 w-9 items-center justify-center rounded-full text-xs font-bold text-white",
           getFeedAccent(item.level),
         )}
       >
@@ -1257,15 +2881,19 @@ function FeedRow({ item }: { item: FeedItem }) {
       </div>
       <div className="min-w-0 flex-1">
         <div className="flex items-start justify-between gap-3">
-          <div className="text-sm font-semibold text-slate-900">{item.title}</div>
-          <div className="whitespace-nowrap text-xs text-slate-400">{item.timeLabel}</div>
+          <div className="text-sm font-semibold text-slate-900">
+            {item.title}
+          </div>
+          <div className="whitespace-nowrap text-xs text-slate-400">
+            {item.timeLabel}
+          </div>
         </div>
         <div className="mt-1 text-sm text-slate-500">{item.subtitle}</div>
       </div>
     </div>
-  )
+  );
 
-  return item.href ? <a href={item.href}>{content}</a> : content
+  return item.href ? <a href={item.href}>{content}</a> : content;
 }
 
 /**
@@ -1277,7 +2905,7 @@ function QuickAction({ item }: { item: QuickActionItem }) {
     <a
       href={item.href}
       className={cn(
-        'group relative min-h-[92px] overflow-hidden rounded-2xl bg-gradient-to-br px-4 py-4 text-white shadow-sm transition hover:-translate-y-0.5',
+        "group relative min-h-[92px] overflow-hidden rounded-2xl bg-gradient-to-br px-4 py-4 text-white shadow-sm transition hover:-translate-y-0.5",
         item.accent,
       )}
     >
@@ -1285,7 +2913,7 @@ function QuickAction({ item }: { item: QuickActionItem }) {
       <div className="mt-1 text-xs text-white/80">Open</div>
       <div className="pointer-events-none absolute -right-4 -top-4 h-16 w-16 rounded-full bg-white/10 transition group-hover:scale-110" />
     </a>
-  )
+  );
 }
 
 /**
@@ -1295,20 +2923,20 @@ function QuickAction({ item }: { item: QuickActionItem }) {
  * stretches to use much more of the available space.
  */
 function MainSponsorPanel({ sponsor }: { sponsor: MainSponsor }) {
-  const [failed, setFailed] = React.useState(false)
+  const [failed, setFailed] = React.useState(false);
 
   React.useEffect(() => {
-    setFailed(false)
-  }, [sponsor.logoUrl])
+    setFailed(false);
+  }, [sponsor.logoUrl]);
 
-  const hasLogo = Boolean(sponsor.logoUrl) && !failed
-  const hasSignedSponsor = Boolean(sponsor.isActive || sponsor.logoUrl)
-  const initials = (sponsor.name || 'MS')
-    .split(' ')
-    .map((part) => part.trim()[0] ?? '')
-    .join('')
+  const hasLogo = Boolean(sponsor.logoUrl) && !failed;
+  const hasSignedSponsor = Boolean(sponsor.isActive || sponsor.logoUrl);
+  const initials = (sponsor.name || "MS")
+    .split(" ")
+    .map((part) => part.trim()[0] ?? "")
+    .join("")
     .slice(0, 2)
-    .toUpperCase()
+    .toUpperCase();
 
   return (
     <div className="h-[220px] rounded-2xl border border-slate-200 bg-slate-50 p-3">
@@ -1316,7 +2944,7 @@ function MainSponsorPanel({ sponsor }: { sponsor: MainSponsor }) {
         <div className="flex h-full w-full items-center justify-center overflow-hidden rounded-xl bg-white">
           <img
             src={sponsor.logoUrl}
-            alt={sponsor.name || 'Main Sponsor'}
+            alt={sponsor.name || "Main Sponsor"}
             loading="lazy"
             onError={() => setFailed(true)}
             className="h-full w-full object-contain p-1"
@@ -1331,13 +2959,17 @@ function MainSponsorPanel({ sponsor }: { sponsor: MainSponsor }) {
       ) : (
         <div className="flex h-full w-full items-center justify-center rounded-xl bg-white text-center">
           <div>
-            <div className="text-base font-semibold text-slate-700">No Main Sponsor signed</div>
-            <div className="mt-1 text-sm text-slate-500">Please visit Sponsor Page.</div>
+            <div className="text-base font-semibold text-slate-700">
+              No Main Sponsor signed
+            </div>
+            <div className="mt-1 text-sm text-slate-500">
+              Please visit Sponsor Page.
+            </div>
           </div>
         </div>
       )}
     </div>
-  )
+  );
 }
 
 /**
@@ -1349,10 +2981,13 @@ function EmergencyDebtCard({
   debt,
   debtMovements,
 }: {
-  debt: EmergencyDebtHealth
-  debtMovements: TransactionSummaryItem[]
+  debt: EmergencyDebtHealth;
+  debtMovements: TransactionSummaryItem[];
 }) {
-  const visibleDebtMovements = buildDebtMovementsFromEmergencyDebt(debt, debtMovements)
+  const visibleDebtMovements = buildDebtMovementsFromEmergencyDebt(
+    debt,
+    debtMovements,
+  );
 
   return (
     <Card className="p-5">
@@ -1365,12 +3000,16 @@ function EmergencyDebtCard({
         <SmallStat
           label="Rescues used"
           value={`${debt.rescuesUsed} / ${debt.rescueLimit}`}
-          valueClassName={debt.rescuesUsed >= debt.rescueLimit ? 'text-red-600' : ''}
+          valueClassName={
+            debt.rescuesUsed >= debt.rescueLimit ? "text-red-600" : ""
+          }
         />
         <SmallStat
           label="Outstanding principal"
           value={formatCurrency(debt.outstandingPrincipal)}
-          valueClassName={debt.outstandingPrincipal > 0 ? 'text-red-600' : 'text-emerald-600'}
+          valueClassName={
+            debt.outstandingPrincipal > 0 ? "text-red-600" : "text-emerald-600"
+          }
         />
         <SmallStat label="Next repayment" value={formatNextRepayment(debt)} />
         <SmallStat
@@ -1398,26 +3037,1414 @@ function EmergencyDebtCard({
         )}
       </div>
     </Card>
-  )
+  );
 }
 
 /**
  * EmptyState
  * Generic centered empty state component.
  */
-function EmptyState({
-  title,
-  subtitle,
-}: {
-  title: string
-  subtitle: string
-}) {
+function EmptyState({ title, subtitle }: { title: string; subtitle: string }) {
   return (
     <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-6 text-center">
       <div className="text-sm font-semibold text-slate-700">{title}</div>
       <div className="mt-1 text-sm text-slate-500">{subtitle}</div>
     </div>
+  );
+}
+
+/**
+ * safeCountryCode
+ * Returns a safe lowercase ISO country code for flag images.
+ */
+function safeCountryCode(countryCode?: string | null) {
+  const code = countryCode?.trim().toLowerCase();
+
+  if (!code || !/^[a-z]{2}$/.test(code)) return null;
+
+  return code;
+}
+
+/**
+ * getCountryFlagUrl
+ * Returns a flag CDN URL for a country code.
+ */
+function getCountryFlagUrl(countryCode: string) {
+  return `https://flagcdn.com/w40/${countryCode.toLowerCase()}.png`;
+}
+
+/**
+ * CountryFlag
+ * Small flag image with graceful placeholder fallback.
+ */
+function CountryFlag({
+  countryCode,
+  className = "",
+}: {
+  countryCode?: string | null;
+  className?: string;
+}) {
+  const safeCode = safeCountryCode(countryCode);
+  const [hasError, setHasError] = React.useState(false);
+
+  React.useEffect(() => {
+    setHasError(false);
+  }, [safeCode]);
+
+  const imageClassName = [
+    "h-4 w-6 shrink-0 rounded-sm border border-gray-200 object-cover",
+    className,
+  ]
+    .filter(Boolean)
+    .join(" ");
+
+  const placeholderClassName = [
+    "inline-block h-4 w-6 shrink-0 rounded-sm border border-gray-200 bg-gray-100",
+    className,
+  ]
+    .filter(Boolean)
+    .join(" ");
+
+  if (!safeCode) {
+    return (
+      <span
+        className={placeholderClassName}
+        title="Unknown country"
+        aria-label="Unknown country"
+      />
+    );
+  }
+
+  if (hasError) {
+    const emoji = countryCodeToFlagEmoji(safeCode);
+
+    return (
+      <span
+        className={cn(
+          "inline-flex h-4 w-6 shrink-0 items-center justify-center rounded-sm border border-gray-200 bg-white text-[13px] leading-none",
+          className,
+        )}
+        title={safeCode.toUpperCase()}
+        aria-label={safeCode.toUpperCase()}
+      >
+        {emoji || safeCode.toUpperCase()}
+      </span>
+    );
+  }
+
+  return (
+    <img
+      src={getCountryFlagUrl(safeCode)}
+      alt={safeCode.toUpperCase()}
+      title={safeCode.toUpperCase()}
+      className={imageClassName}
+      loading="lazy"
+      onError={() => setHasError(true)}
+    />
+  );
+}
+
+/**
+ * RacePreviewStrip
+ * Same visual style used on squad pages for last/next race previews.
+ */
+function RacePreviewStrip({
+  raceName,
+  raceCountryCode,
+  raceCategory,
+  stageDate,
+  stageLabel,
+  routeLabel,
+  stageCount,
+  emptyLabel = "No race found yet",
+  href,
+  compactDetails = false,
+}: {
+  raceName?: string | null;
+  raceCountryCode?: string | null;
+  raceCategory?: string | null;
+  stageDate?: string | null;
+  stageLabel?: string | null;
+  routeLabel?: string | null;
+  stageCount?: number | null;
+  emptyLabel?: string;
+  href?: string;
+  compactDetails?: boolean;
+}) {
+  if (!raceName) {
+    return (
+      <div className="mt-2 rounded-lg border border-dashed border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-500">
+        {emptyLabel}
+      </div>
+    );
+  }
+
+  const resolvedCountryCode =
+    raceCountryCode || inferCountryCodeFromRaceTitle(raceName);
+  const details = compactDetails
+    ? []
+    : [
+        stageLabel,
+        stageCount && stageCount > 1 ? `${stageCount} stages` : null,
+        routeLabel,
+      ].filter((value): value is string => Boolean(value));
+
+  const content = (
+    <div className="mt-2 flex min-w-0 items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm shadow-sm transition hover:bg-white">
+      <div className="w-[68px] shrink-0 whitespace-nowrap text-xs font-semibold text-slate-900">
+        {stageDate ? formatShortOverviewDate(stageDate) : "—"}
+      </div>
+
+      {resolvedCountryCode ? (
+        <div className="h-7 w-px shrink-0 bg-emerald-400" />
+      ) : null}
+
+      <div className="flex min-w-0 flex-1 items-center gap-2 overflow-hidden">
+        <CountryFlag countryCode={resolvedCountryCode} />
+
+        <div
+          className="min-w-0 flex-1 truncate text-sm font-semibold leading-5 text-slate-900"
+          title={raceName ?? undefined}
+        >
+          {raceName}
+        </div>
+
+        {raceCategory ? (
+          <span className="shrink-0 rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700">
+            {raceCategory}
+          </span>
+        ) : null}
+
+        {details.length > 0 ? (
+          <span className="min-w-0 truncate text-xs text-slate-500">
+            · {details.join(" · ")}
+          </span>
+        ) : null}
+      </div>
+    </div>
+  );
+
+  return href ? <a href={href}>{content}</a> : content;
+}
+
+/**
+ * CompactRaceStrip
+ * Backward-compatible wrapper for existing schedule/day-race rows.
+ */
+function CompactRaceStrip({
+  dateLabel,
+  countryCode,
+  title,
+  category,
+  details,
+  href,
+}: {
+  dateLabel?: string | null;
+  countryCode?: string | null;
+  title: string;
+  category?: string | null;
+  details?: string | null;
+  href?: string;
+}) {
+  const resolvedCountryCode =
+    countryCode || inferCountryCodeFromRaceTitle(title);
+
+  const content = (
+    <div className="mt-2 flex min-w-0 items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm shadow-sm transition hover:bg-white">
+      <div className="w-[68px] shrink-0 whitespace-nowrap text-xs font-semibold text-slate-900">
+        {dateLabel || "—"}
+      </div>
+
+      {resolvedCountryCode ? (
+        <div className="h-7 w-px shrink-0 bg-emerald-400" />
+      ) : null}
+
+      <div className="flex min-w-0 flex-1 items-center gap-2 overflow-hidden">
+        <CountryFlag countryCode={resolvedCountryCode} />
+
+        <div
+          className="min-w-0 flex-1 truncate font-semibold text-slate-900"
+          title={title}
+        >
+          {title}
+        </div>
+
+        {category ? (
+          <span className="shrink-0 rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700">
+            {category}
+          </span>
+        ) : null}
+
+        {details ? (
+          <span className="min-w-0 truncate text-xs text-slate-500">
+            · {details}
+          </span>
+        ) : null}
+      </div>
+    </div>
+  );
+
+  return href ? <a href={href}>{content}</a> : content;
+}
+
+type OverviewNewsListItem = {
+  id: string;
+  title: string;
+  subtitle: string;
+  timeLabel: string;
+  href?: string;
+  level?: AlertLevel | FeedLevel | "world";
+  sourceLabel: "Team" | "World";
+  expandedText: string;
+  linkLabel?: string;
+};
+
+/**
+ * getOverviewGameTimeLabel
+ * Keeps overview news on in-game time when the RPC only sends real timestamps.
+ */
+const OVERVIEW_MONTH_MAP: Record<string, string> = {
+  january: "Jan",
+  february: "Feb",
+  march: "Mar",
+  april: "Apr",
+  may: "May",
+  june: "Jun",
+  july: "Jul",
+  august: "Aug",
+  september: "Sep",
+  october: "Oct",
+  november: "Nov",
+  december: "Dec",
+};
+
+function getOverviewShortCurrentDateLabel(
+  currentGameDateLabel: string,
+): string {
+  const raw = (currentGameDateLabel ?? "").trim();
+
+  if (!raw || raw.toLowerCase() === "current game date") return "Today";
+
+  const monthMatch =
+    /(?:January|February|March|April|May|June|July|August|September|October|November|December)\s+(\d{1,2})/i.exec(
+      raw,
+    );
+  if (!monthMatch) return raw;
+
+  const monthName = monthMatch[0].replace(/\s+\d{1,2}.*/, "");
+  const day = monthMatch[1].padStart(2, "0");
+
+  return `${OVERVIEW_MONTH_MAP[monthName.toLowerCase()] ?? monthName.slice(0, 3)} ${day}`;
+}
+
+function getOverviewCurrentGameDateTimeLabel(
+  currentGameDateLabel: string,
+): string {
+  // News Board should never display real-world timestamps.
+  // Current game-day team items are always labelled with the current in-game day.
+  void currentGameDateLabel;
+  return "Today";
+}
+
+function looksLikeRealTimestampLabel(raw: string): boolean {
+  const value = raw.trim();
+
+  if (!value) return true;
+  if (/^today$/i.test(value)) return true;
+  if (/\b202\d\b/.test(value)) return true;
+  if (/^\d{4}-\d{2}-\d{2}/.test(value)) return true;
+  if (/^\d{4}-\d{2}-\d{2}t/i.test(value)) return true;
+  if (
+    /^(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d{1,2}\s+\d{1,2}:\d{2}$/i.test(
+      value,
+    )
   )
+    return true;
+  if (
+    /^(January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{1,2},?\s+202\d/i.test(
+      value,
+    )
+  )
+    return true;
+
+  return false;
+}
+
+function getOverviewGameTimeLabel(
+  rawTimeLabel: string | undefined,
+  currentGameDateLabel: string,
+) {
+  const raw = (rawTimeLabel ?? "").trim();
+  const currentShort = getOverviewShortCurrentDateLabel(currentGameDateLabel);
+
+  if (!raw || raw.toLowerCase() === "current game date") return "Today";
+  if (/season\s+\d+/i.test(raw)) return raw;
+
+  const shortRaw = /^\d{4}-\d{2}-\d{2}/.test(raw)
+    ? formatShortOverviewDate(raw)
+    : raw;
+
+  // Anything created/published on the current in-game date should read Today.
+  // Real-world timestamps from notifications are also converted to Today.
+  if (raw.toLowerCase() === "today") return "Today";
+  if (
+    currentShort !== "Today" &&
+    shortRaw.toLowerCase() === currentShort.toLowerCase()
+  )
+    return "Today";
+  if (looksLikeRealTimestampLabel(raw)) return "Today";
+
+  return shortRaw;
+}
+
+/**
+ * normalizeDashboardHref
+ * Keeps overview links inside the game dashboard. World-news rows must not point
+ * to external articles; they should point to the related team, rider, or competition page.
+ */
+function normalizeDashboardHref(value: string | undefined): string | undefined {
+  const raw = (value ?? "").trim();
+  if (!raw) return undefined;
+
+  if (raw.startsWith("#/dashboard/")) return raw;
+  if (raw.startsWith("/dashboard/")) return raw;
+  if (raw.startsWith("dashboard/")) return `/${raw}`;
+
+  return undefined;
+}
+
+/**
+ * getNewsLinkLabel
+ * Uses the linked game entity to explain what the button opens.
+ */
+function getNewsLinkLabel(
+  href: string | undefined,
+  sourceLabel: "Team" | "World",
+) {
+  const target = (href ?? "").toLowerCase();
+
+  if (!target) return undefined;
+  if (target.includes("/team-profile/")) return "Open team profile";
+  if (target.includes("/my-riders/") || target.includes("/external-riders/")) {
+    return "Open rider profile";
+  }
+  if (target.includes("/races/") || target.includes("raceid="))
+    return "Open competition page";
+  if (target.includes("/team-ranking") || target.includes("/statistics")) {
+    return "Open competition page";
+  }
+
+  return sourceLabel === "World" ? "Open related page" : "Open related page";
+}
+
+/**
+ * buildTeamNewsExpandedText
+ * Provides richer expanded copy for team-management messages.
+ */
+function buildTeamNewsExpandedText(title: string, subtitle: string) {
+  const normalizedTitle = title.toLowerCase();
+
+  if (normalizedTitle.includes("race plan open")) {
+    return `${subtitle} This is a team-management item: the race plan window is active, so it is a good moment to review the race profile, pick the correct riders, attach staff, assign vehicles/assets, and check supplies before the deadline.`;
+  }
+
+  if (normalizedTitle.includes("stage plans open")) {
+    return `${subtitle} Stage planning is now available. Check each stage separately, because rider roles, tactics, and leader protection can be different from stage to stage.`;
+  }
+
+  if (normalizedTitle.includes("stage plan missing")) {
+    return `${subtitle} This is an action item. A stage plan is missing or has not been saved yet, so the team could enter the race stage without clear roles or tactics if you do not finish it.`;
+  }
+
+  if (
+    normalizedTitle.includes("locks soon") ||
+    normalizedTitle.includes("deadline")
+  ) {
+    return `${subtitle} This is a deadline warning. Review the related page now, because after the lock time the game should no longer allow normal edits.`;
+  }
+
+  return `${subtitle} This is a team update from your club dashboard. Open the related page if you want to inspect the item and decide whether action is needed.`;
+}
+
+function prettifyOverviewRaceType(value: string): string {
+  const raw = (value ?? "").trim();
+  if (!raw) return "road race";
+
+  return raw
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
+function parseTodayInPelotonSubtitle(subtitle: string) {
+  const parts = subtitle
+    .split("·")
+    .map((part) => part.trim())
+    .filter(Boolean);
+
+  return {
+    raceClass: parts[0] ?? "",
+    stageLabel: parts.find((part) => /^stage\s+\d+/i.test(part)) ?? "",
+    raceType:
+      parts.find(
+        (part) =>
+          /road|time|trial|flat|hilly|mountain|race/i.test(part) &&
+          !/^stage\s+\d+/i.test(part),
+      ) ?? "",
+  };
+}
+
+function buildWorldNewsSubtitle(item: NewsItem) {
+  const title = item.title || "";
+  const subtitle = item.subtitle || "";
+
+  if (!title.toLowerCase().includes("today in the peloton")) return subtitle;
+
+  const parsed = parseTodayInPelotonSubtitle(subtitle);
+  const lowerSubtitle = subtitle.toLowerCase();
+  const oneDayClassMatch = /one[- ]day race:?\s*([0-9][.][0-9a-z]+)/i.exec(
+    subtitle,
+  );
+  const classOnlyMatch =
+    /(?:current game-day race:)?\s*([0-9][.][0-9a-z]+)/i.exec(subtitle);
+  const raceClass =
+    parsed.raceClass || oneDayClassMatch?.[1] || classOnlyMatch?.[1] || "";
+
+  if (lowerSubtitle.includes("one-day") || lowerSubtitle.includes("one day")) {
+    return `A one-day${raceClass ? ` ${raceClass}` : ""} race is scheduled on the current game day.`;
+  }
+
+  const stageText = parsed.stageLabel || "A stage";
+  const classText = raceClass ? ` of this ${raceClass} race` : "";
+  const typeText = parsed.raceType
+    ? ` Race type: ${prettifyOverviewRaceType(parsed.raceType)}.`
+    : "";
+
+  return `${stageText}${classText} is scheduled on the current game day.${typeText}`;
+}
+
+/**
+ * buildWorldNewsExpandedText
+ * Provides richer expanded copy for world peloton headlines.
+ */
+function buildWorldNewsExpandedText(item: NewsItem) {
+  const title = item.title || "World news";
+  const subtitle = item.subtitle || "A new world-peloton update is available.";
+  const extra = item.expandedText || item.detail;
+  const normalizedTitle = title.toLowerCase();
+
+  if (extra) return `${subtitle} ${extra}`;
+
+  if (
+    normalizedTitle.includes("stage result") ||
+    normalizedTitle.includes("takes the stage")
+  ) {
+    return `${subtitle} This world-news item is generated from published in-game stage results. It is available for races your team joined and for races your team did not join, and it links only to the related competition page.`;
+  }
+
+  if (normalizedTitle.includes("world rider ranking")) {
+    return `${subtitle} This world-news item is based on the international-points ranking. It highlights a rider who is currently important in the season standings and links to the rider profile when available.`;
+  }
+
+  if (normalizedTitle.includes("team ranking")) {
+    return `${subtitle} This world-news item is based on the team ranking table. It highlights a strong team performance and links to the team profile when available.`;
+  }
+
+  if (normalizedTitle.includes("today in the peloton")) {
+    const readableSubtitle = buildWorldNewsSubtitle(item);
+    return `${readableSubtitle} Open the competition page for the route, profile, participating teams, live/replay access, and published results when the stage is completed.`;
+  }
+
+  return `${subtitle} This is a world-peloton update generated from in-game race, rider, team, or competition data. It should link only to the related in-game page.`;
+}
+
+/**
+ * buildTeamNewsItems
+ * Team news = attention items + existing activity feed.
+ */
+function buildTeamNewsItems(
+  alerts: AlertItem[],
+  feed: FeedItem[],
+  currentGameDateLabel: string,
+): OverviewNewsListItem[] {
+  const alertItems: OverviewNewsListItem[] = alerts.map((alert) => {
+    const href = normalizeDashboardHref(alert.href);
+
+    return {
+      id: `alert:${alert.id}`,
+      title: alert.label,
+      subtitle: "Action may be required from your team management dashboard.",
+      timeLabel: getOverviewCurrentGameDateTimeLabel(currentGameDateLabel),
+      href,
+      level: alert.level,
+      sourceLabel: "Team",
+      expandedText: buildTeamNewsExpandedText(
+        alert.label,
+        "Action may be required from your team management dashboard.",
+      ),
+      linkLabel: getNewsLinkLabel(href, "Team"),
+    };
+  });
+
+  const feedItems: OverviewNewsListItem[] = feed.map((item) => {
+    const href = normalizeDashboardHref(item.href);
+
+    return {
+      id: `feed:${item.id}`,
+      title: item.title,
+      subtitle: buildWorldNewsSubtitle(item),
+      timeLabel: getOverviewGameTimeLabel(item.timeLabel, currentGameDateLabel),
+      href,
+      level: item.level,
+      sourceLabel: "Team",
+      expandedText: buildTeamNewsExpandedText(item.title, item.subtitle),
+      linkLabel: getNewsLinkLabel(href, "Team"),
+    };
+  });
+
+  return [...alertItems, ...feedItems];
+}
+
+/**
+ * buildWorldNewsItems
+ * World news must come from real race-world/news data, not schedule fallbacks.
+ * External links are deliberately ignored; only internal game pages are allowed.
+ */
+function buildWorldNewsItems(
+  news: NewsItem[],
+  currentGameDateLabel: string,
+): OverviewNewsListItem[] {
+  return news.map((item) => {
+    const href = normalizeDashboardHref(item.relatedHref || item.href);
+
+    return {
+      id: `world:${item.id}`,
+      title: item.title,
+      subtitle: buildWorldNewsSubtitle(item),
+      timeLabel: getOverviewGameTimeLabel(item.timeLabel, currentGameDateLabel),
+      href,
+      level: "world" as const,
+      sourceLabel: "World",
+      expandedText: buildWorldNewsExpandedText(item),
+      linkLabel: getNewsLinkLabel(href, "World"),
+    };
+  });
+}
+
+type OverviewNewsSortableItem = OverviewNewsListItem & {
+  dateSortValue: number;
+  sourceOrder: number;
+  priorityScore: number;
+};
+
+const OVERVIEW_NEWS_MONTH_SORT: Record<string, number> = {
+  jan: 1,
+  feb: 2,
+  mar: 3,
+  apr: 4,
+  may: 5,
+  jun: 6,
+  jul: 7,
+  aug: 8,
+  sep: 9,
+  oct: 10,
+  nov: 11,
+  dec: 12,
+};
+
+function getOverviewNewsDateSortValue(
+  timeLabel: string | undefined,
+  currentGameDateLabel: string,
+): number {
+  const raw = (timeLabel ?? "").trim();
+  const currentShort = getOverviewShortCurrentDateLabel(currentGameDateLabel);
+
+  const normalized = !raw || raw.toLowerCase() === "today" ? currentShort : raw;
+
+  const match =
+    /^(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+(\d{1,2})$/i.exec(
+      normalized,
+    );
+
+  if (match) {
+    const month =
+      OVERVIEW_NEWS_MONTH_SORT[match[1].slice(0, 3).toLowerCase()] ?? 0;
+    const day = Number(match[2]);
+
+    if (month > 0 && Number.isFinite(day)) {
+      return month * 100 + day;
+    }
+  }
+
+  // Current-day/team news without a parseable label should stay above dated archive items.
+  return 9999;
+}
+
+function normalizeOverviewNewsKeyText(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/[#,:;.!?()\[\]]+/g, " ")
+    .replace(/\bx\d+\b/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function extractRaceNameFromOverviewNewsTitle(title: string): string | null {
+  const raw = title.trim();
+
+  const raceTodayMatch = /^race today:\s*(.+)$/i.exec(raw);
+  if (raceTodayMatch?.[1]) return raceTodayMatch[1].trim();
+
+  const raceResultsMatch = /^race results:\s*(.+)$/i.exec(raw);
+  if (raceResultsMatch?.[1]) return raceResultsMatch[1].trim();
+
+  const stageResultMatch = /^stage result:\s*(.+?)\s+stage\s+\d+\b/i.exec(raw);
+  if (stageResultMatch?.[1]) return stageResultMatch[1].trim();
+
+  return null;
+}
+
+function getOverviewNewsDedupeKey(item: OverviewNewsListItem): string {
+  const normalizedTitle = normalizeOverviewNewsKeyText(item.title);
+  const normalizedDate = normalizeOverviewNewsKeyText(item.timeLabel);
+  const raceName = extractRaceNameFromOverviewNewsTitle(item.title);
+
+  if (raceName) {
+    return `race-event:${normalizedDate}:${normalizeOverviewNewsKeyText(raceName)}`;
+  }
+
+  if (normalizedTitle.startsWith("asset ordered")) {
+    return `asset-ordered:${normalizedDate}:${normalizedTitle}`;
+  }
+
+  if (normalizedTitle.startsWith("race plan open")) {
+    return `race-plan-open:${normalizedDate}:${normalizedTitle}`;
+  }
+
+  return `title:${normalizedDate}:${normalizedTitle}`;
+}
+
+function getOverviewNewsPriorityScore(item: OverviewNewsListItem): number {
+  const title = item.title.toLowerCase();
+  const subtitle = item.subtitle.toLowerCase();
+
+  let score = 0;
+
+  if (title.includes("stage result")) score += 100;
+  if (title.includes("race results")) score += 95;
+  if (title.includes("asset ordered") || title.includes("asset delivery"))
+    score += 85;
+  if (title.includes("stage plan missing") || title.includes("locks soon"))
+    score += 80;
+  if (title.includes("race today")) score += 65;
+  if (title.includes("race plan open")) score += 45;
+  if (title.includes("ranking")) score += 20;
+
+  // Prefer the real feed/news item over a generic alert fallback when both describe the same thing.
+  if (
+    subtitle.includes(
+      "action may be required from your team management dashboard",
+    )
+  )
+    score -= 80;
+  if (
+    subtitle.includes("has been ordered") ||
+    subtitle.includes("delivery is planned")
+  )
+    score += 70;
+  if (subtitle.includes("results are available")) score += 60;
+  if (item.href) score += 5;
+
+  score += Math.min(30, item.subtitle.length / 8);
+
+  return score;
+}
+
+function buildSortedDedupedNewsBoardItems(
+  teamItems: OverviewNewsListItem[],
+  worldItems: OverviewNewsListItem[],
+  currentGameDateLabel: string,
+  maxItems = 7,
+) {
+  const candidates: OverviewNewsSortableItem[] = [
+    ...teamItems,
+    ...worldItems,
+  ].map((item, sourceOrder) => ({
+    ...item,
+    dateSortValue: getOverviewNewsDateSortValue(
+      item.timeLabel,
+      currentGameDateLabel,
+    ),
+    sourceOrder,
+    priorityScore: getOverviewNewsPriorityScore(item),
+  }));
+
+  const byKey = new Map<string, OverviewNewsSortableItem>();
+
+  candidates.forEach((item) => {
+    const key = getOverviewNewsDedupeKey(item);
+    const existing = byKey.get(key);
+
+    if (!existing) {
+      byKey.set(key, item);
+      return;
+    }
+
+    const itemScore = item.priorityScore + item.subtitle.length * 0.01;
+    const existingScore =
+      existing.priorityScore + existing.subtitle.length * 0.01;
+
+    if (itemScore > existingScore) {
+      byKey.set(key, item);
+    }
+  });
+
+  return [...byKey.values()]
+    .sort((left, right) => {
+      if (right.dateSortValue !== left.dateSortValue) {
+        return right.dateSortValue - left.dateSortValue;
+      }
+
+      if (right.priorityScore !== left.priorityScore) {
+        return right.priorityScore - left.priorityScore;
+      }
+
+      return left.sourceOrder - right.sourceOrder;
+    })
+    .slice(0, maxItems);
+}
+
+/**
+ * NewsCommandCenter
+ * Newsletter-style panel. Team news combines alerts and activity feed; world news uses game/news data.
+ */
+function NewsCommandCenter({
+  alerts,
+  feed,
+  news,
+  currentGameDateLabel,
+}: {
+  alerts: AlertItem[];
+  feed: FeedItem[];
+  news: NewsItem[];
+  currentGameDateLabel: string;
+}) {
+  const [expandedId, setExpandedId] = React.useState<string | null>(null);
+
+  const teamNewsItems = buildTeamNewsItems(alerts, feed, currentGameDateLabel);
+  const worldNewsItems = buildWorldNewsItems(news, currentGameDateLabel);
+  const combinedItems = buildSortedDedupedNewsBoardItems(
+    teamNewsItems,
+    worldNewsItems,
+    currentGameDateLabel,
+    7,
+  );
+
+  return (
+    <Card className="overflow-hidden">
+      <div className="border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white px-5 py-4">
+        <div className="flex items-start justify-between gap-3">
+          <SectionTitle
+            title="News Board"
+            subtitle="Latest team and world news. Click a row to expand it."
+          />
+          <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-600">
+            {combinedItems.length}/7
+          </span>
+        </div>
+      </div>
+
+      <div className="p-5">
+        {combinedItems.length > 0 ? (
+          <div className="divide-y divide-slate-100">
+            {combinedItems.map((item) => {
+              const isExpanded = expandedId === item.id;
+
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => setExpandedId(isExpanded ? null : item.id)}
+                  className="block w-full px-1 py-3 text-left transition hover:bg-slate-50"
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="font-semibold text-slate-950">
+                          {item.title}
+                        </span>
+                        {!isExpanded ? (
+                          <span
+                            className={cn(
+                              "rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em]",
+                              item.sourceLabel === "World"
+                                ? "bg-indigo-50 text-indigo-600"
+                                : "bg-emerald-50 text-emerald-600",
+                            )}
+                          >
+                            {item.sourceLabel}
+                          </span>
+                        ) : null}
+                      </div>
+                      <div
+                        className={cn(
+                          "mt-1 text-sm leading-6 text-slate-500",
+                          isExpanded ? "" : "line-clamp-2",
+                        )}
+                      >
+                        {isExpanded ? item.expandedText : item.subtitle}
+                      </div>
+                      {isExpanded ? (
+                        <div className="mt-2 flex flex-wrap items-center gap-2">
+                          <span
+                            className={cn(
+                              "inline-flex rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em]",
+                              item.sourceLabel === "World"
+                                ? "bg-indigo-50 text-indigo-700"
+                                : "bg-emerald-50 text-emerald-700",
+                            )}
+                          >
+                            {item.sourceLabel} news
+                          </span>
+
+                          {item.href && item.linkLabel ? (
+                            <button
+                              type="button"
+                              className="inline-flex rounded-full bg-yellow-100 px-3 py-1.5 text-xs font-bold text-yellow-800 transition hover:bg-yellow-200"
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                const href = item.href ?? "";
+                                if (!href) return;
+                                window.location.hash = href.startsWith("#")
+                                  ? href.replace(/^#/, "")
+                                  : href.startsWith("/dashboard")
+                                    ? href
+                                    : href.replace(/^#?\//, "/");
+                              }}
+                            >
+                              {item.linkLabel}
+                            </button>
+                          ) : null}
+                        </div>
+                      ) : null}
+                    </div>
+
+                    <div className="shrink-0 whitespace-nowrap rounded-md border border-sky-200 bg-sky-50 px-2 py-1 text-xs font-semibold text-sky-700">
+                      {item.timeLabel}
+                    </div>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        ) : (
+          <EmptyState
+            title="No news yet"
+            subtitle="Team updates, race results, ranking headlines, and world peloton news will appear here."
+          />
+        )}
+      </div>
+    </Card>
+  );
+}
+
+/**
+ * LastTeamRaceCard
+ * Shows the latest completed race for either first squad or developing squad.
+ */
+function LastTeamRaceCard({
+  race,
+  loading,
+}: {
+  race: OverviewLastTeamRace | null;
+  loading: boolean;
+}) {
+  return (
+    <Card className="p-5">
+      <SectionTitle
+        title="Last Team Race"
+        subtitle="Latest finished full race involving your first team or developing team."
+      />
+
+      {loading && !race?.raceName ? (
+        <div className="mt-5 rounded-xl border border-slate-200 bg-slate-50 px-4 py-6 text-sm text-slate-500">
+          Loading latest finished full race...
+        </div>
+      ) : race?.raceName ? (
+        <RacePreviewStrip
+          raceName={race.raceName}
+          raceCountryCode={race.raceCountryCode}
+          raceCategory={race.raceCategory}
+          stageDate={race.stageDate}
+          stageLabel={race.stageLabel}
+          routeLabel={null}
+          stageCount={race.stageCount}
+          href={race.raceId ? `#/dashboard/races/${race.raceId}` : undefined}
+          compactDetails
+        />
+      ) : (
+        <div className="mt-5 rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 py-6 text-sm text-slate-500">
+          No finished full race found for the first team or developing team yet.
+        </div>
+      )}
+    </Card>
+  );
+}
+
+/**
+ * NextTeamRaceCard
+ * Shows the next submitted race plan and selected riders.
+ */
+function NextTeamRaceCard({
+  race,
+  loading,
+}: {
+  race: OverviewNextTeamRace | null;
+  loading: boolean;
+}) {
+  return (
+    <Card className="p-5">
+      <SectionTitle
+        title="Next Team Race"
+        subtitle="Next submitted race that has not started yet."
+      />
+
+      {loading && !race?.raceName ? (
+        <div className="mt-5 rounded-xl border border-slate-200 bg-slate-50 px-4 py-6 text-sm text-slate-500">
+          Loading next submitted race plan...
+        </div>
+      ) : race?.raceName ? (
+        <RacePreviewStrip
+          raceName={race.raceName}
+          raceCountryCode={race.raceCountryCode}
+          raceCategory={race.raceCategory}
+          stageDate={race.stageDate}
+          stageLabel={race.stageLabel}
+          routeLabel={null}
+          stageCount={race.stageCount}
+          href={race.raceId ? `#/dashboard/races/${race.raceId}` : undefined}
+          compactDetails
+        />
+      ) : (
+        <div className="mt-5 rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 py-6 text-sm text-slate-500">
+          No upcoming submitted race found for the first team or developing team
+          yet.
+        </div>
+      )}
+    </Card>
+  );
+}
+
+/**
+ * UpcomingRaceScheduleCard
+ * Shows the next five schedule items in compact race-strip style.
+ */
+function UpcomingRaceScheduleCard({ schedule }: { schedule: ScheduleItem[] }) {
+  return (
+    <Card className="p-5">
+      <SectionTitle
+        title="Upcoming Schedule"
+        subtitle="Next five accepted races, race deadlines, and club milestones."
+      />
+
+      {schedule.length > 0 ? (
+        <div className="mt-5 space-y-3">
+          {schedule.slice(0, 5).map((item) => (
+            <CompactRaceStrip
+              key={item.id}
+              dateLabel={item.dateLabel}
+              countryCode={item.countryCode}
+              title={item.title}
+              details={item.subtitle}
+              href={item.href}
+            />
+          ))}
+        </div>
+      ) : (
+        <SectionEmptyState
+          title="No upcoming events"
+          description="There are no accepted races, camps, deadlines, or infrastructure milestones in the current overview window."
+        />
+      )}
+    </Card>
+  );
+}
+
+/**
+ * TodayRaceCard
+ * Shows all races happening on the current in-game day.
+ */
+function TodayRaceCard({
+  dateLabel,
+  races,
+}: {
+  dateLabel: string;
+  races: DayRaceItem[];
+}) {
+  return (
+    <Card className="p-5">
+      <SectionTitle
+        title="This Day Races"
+        subtitle={
+          dateLabel
+            ? `Races happening on ${dateLabel}.`
+            : "Races happening on the current game day."
+        }
+      />
+
+      {races.length > 0 ? (
+        <div className="mt-5 space-y-3">
+          {races.map((item) => (
+            <CompactRaceStrip
+              key={item.id}
+              dateLabel={item.timeLabel || dateLabel}
+              countryCode={item.countryCode}
+              title={item.title}
+              details={item.subtitle}
+              href={item.href}
+            />
+          ))}
+        </div>
+      ) : (
+        <div className="mt-5">
+          <EmptyState
+            title="No races on this date"
+            subtitle="There are no race events scheduled for the current game day."
+          />
+        </div>
+      )}
+    </Card>
+  );
+}
+
+/**
+ * CompactSquadPulseCard
+ * Right-rail version of squad pulse: fitness focus plus one-row status values.
+ */
+function CompactSquadPulseCard({ pulse }: { pulse: SquadPulse }) {
+  const rowItems = [
+    ["Form", pulse.form],
+    ["Available", pulse.availableRiders],
+    ["Injured", pulse.injured],
+    ["Sick", pulse.sick],
+    ["Not fully fit", pulse.notFullyFit],
+    ["Contracts", pulse.expiringContracts],
+  ] as Array<[string, React.ReactNode]>;
+
+  return (
+    <Card className="p-5">
+      <SectionTitle
+        title="Squad Pulse"
+        subtitle="Fitness and immediate squad status."
+      />
+
+      <div className="mt-4">
+        <ProgressMetric
+          label="Fitness"
+          value={pulse.fitness}
+          colorClass="bg-blue-500"
+        />
+      </div>
+
+      <div className="mt-4 grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+        {rowItems.map(([label, value]) => (
+          <div
+            key={label}
+            className="flex items-center justify-between border-b border-slate-100 py-2 last:border-b-0"
+          >
+            <span className="text-slate-500">{label}</span>
+            <span className="font-bold text-slate-950">{value}</span>
+          </div>
+        ))}
+      </div>
+    </Card>
+  );
+}
+
+/**
+ * CompactOperationsCard
+ * Right-rail version of active operations without large boxes.
+ */
+function CompactOperationsCard({
+  operations,
+}: {
+  operations: OperationItem[];
+}) {
+  return (
+    <Card className="p-5">
+      <SectionTitle
+        title="Active Operations"
+        subtitle="Current jobs and running processes."
+      />
+
+      {operations.length > 0 ? (
+        <div className="mt-4 divide-y divide-slate-100">
+          {operations.slice(0, 6).map((item) => (
+            <a
+              key={item.id}
+              href={item.href ?? "#/dashboard"}
+              className="block py-3 transition hover:bg-slate-50"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="truncate text-sm font-bold text-slate-950">
+                    {item.title}
+                  </div>
+                  <div className="mt-1 line-clamp-2 text-xs text-slate-500">
+                    {item.subtitle}
+                  </div>
+                </div>
+                {item.statusLabel ? (
+                  <span className="shrink-0 rounded-full bg-slate-100 px-2 py-1 text-[11px] font-bold text-slate-600">
+                    {item.statusLabel}
+                  </span>
+                ) : null}
+              </div>
+            </a>
+          ))}
+        </div>
+      ) : (
+        <div className="mt-4 text-sm text-slate-500">
+          Nothing happening at the moment.
+        </div>
+      )}
+    </Card>
+  );
+}
+
+function SeasonSnapshotCard({ stats }: { stats: OverviewSeasonSnapshot }) {
+  const items = [
+    {
+      label: "Races this season",
+      value: stats.races,
+      cardClass: "border-sky-100 bg-sky-50/70",
+      valueClass: "text-sky-700",
+    },
+    {
+      label: "Stages raced",
+      value: stats.stages,
+      cardClass: "border-indigo-100 bg-indigo-50/70",
+      valueClass: "text-indigo-700",
+    },
+    {
+      label: "International points",
+      value: stats.internationalPoints,
+      cardClass: "border-emerald-100 bg-emerald-50/70",
+      valueClass: "text-emerald-700",
+    },
+    {
+      label: "Wins",
+      value: stats.wins,
+      cardClass: "border-amber-100 bg-amber-50/70",
+      valueClass: "text-amber-700",
+    },
+    {
+      label: "Podiums",
+      value: stats.podiums,
+      cardClass: "border-fuchsia-100 bg-fuchsia-50/70",
+      valueClass: "text-fuchsia-700",
+    },
+    {
+      label: "Top 10 results",
+      value: stats.top10s,
+      cardClass: "border-violet-100 bg-violet-50/70",
+      valueClass: "text-violet-700",
+    },
+    {
+      label: "Jerseys",
+      value: stats.jerseys,
+      cardClass: "border-rose-100 bg-rose-50/70",
+      valueClass: "text-rose-700",
+    },
+    {
+      label: "Best GC",
+      value: stats.bestGc ? `${stats.bestGc}.` : "—",
+      cardClass: "border-cyan-100 bg-cyan-50/70",
+      valueClass: "text-cyan-700",
+    },
+  ];
+
+  return (
+    <Card className="p-5">
+      <div>
+        <h3 className="text-base font-normal text-slate-900">
+          Season Snapshot
+        </h3>
+        <p className="mt-1 text-sm font-normal text-slate-500">
+          Current season results, points, podiums, jerseys, and race volume.
+        </p>
+      </div>
+
+      <div className="mt-5 grid grid-cols-2 gap-3 md:grid-cols-4">
+        {items.map((item) => (
+          <div
+            key={item.label}
+            className={`rounded-2xl border px-4 py-4 ${item.cardClass}`}
+          >
+            <div className="text-[10px] font-normal uppercase tracking-[0.16em] text-slate-500">
+              {item.label}
+            </div>
+            <div
+              className={`mt-2 text-2xl font-light tabular-nums ${item.valueClass}`}
+              style={{ fontWeight: 300 }}
+            >
+              {item.value}
+            </div>
+          </div>
+        ))}
+      </div>
+    </Card>
+  );
+}
+
+type FinancePeriodKey = "weekly" | "monthly" | "season";
+
+function getFinancePeriodValues(
+  finance: FinanceHealth,
+  period: FinancePeriodKey,
+) {
+  switch (period) {
+    case "weekly":
+      return {
+        label: "Weekly",
+        income: finance.weeklyOperatingIncome,
+        expenses: finance.weeklyOperatingExpense,
+      };
+    case "season":
+      return {
+        label: "Season",
+        income: finance.seasonOperatingIncome,
+        expenses: finance.seasonOperatingExpense,
+      };
+    case "monthly":
+    default:
+      return {
+        label: "Monthly",
+        income: finance.monthlyOperatingIncome,
+        expenses: finance.monthlyOperatingExpense,
+      };
+  }
+}
+
+/**
+ * IncomeExpenseCard
+ * Replaces the emergency debt card with a simple income/expense pie style view.
+ */
+function IncomeExpenseCard({ finance }: { finance: FinanceHealth }) {
+  const [period, setPeriod] = React.useState<FinancePeriodKey>("monthly");
+
+  const periodConfig = getFinancePeriodValues(finance, period);
+
+  const income = Math.max(0, periodConfig.income);
+  const expenses = Math.abs(periodConfig.expenses);
+  const total = Math.max(1, income + expenses);
+  const incomePct = Math.round((income / total) * 100);
+  const expensePct = 100 - incomePct;
+  const net = income - expenses;
+
+  return (
+    <Card className="p-5">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h3 className="text-lg font-semibold text-slate-950">
+            Income & Expenses
+          </h3>
+          <p className="mt-1 text-sm leading-6 text-slate-500">
+            {periodConfig.label} operating balance from real in-game finance
+            transactions.
+          </p>
+        </div>
+
+        <div className="shrink-0 rounded-full bg-slate-100 p-1">
+          {(["weekly", "monthly", "season"] as const).map((option) => (
+            <button
+              key={option}
+              type="button"
+              onClick={() => setPeriod(option)}
+              className={cn(
+                "rounded-full px-2.5 py-1.5 text-[11px] font-bold transition",
+                period === option
+                  ? "bg-white text-slate-950 shadow-sm"
+                  : "text-slate-500 hover:text-slate-800",
+              )}
+            >
+              {option === "weekly"
+                ? "Week"
+                : option === "monthly"
+                  ? "Month"
+                  : "Season"}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="mt-4 flex items-center gap-4">
+        <div
+          className="h-36 w-36 shrink-0 rounded-full"
+          style={{
+            background: `conic-gradient(#10b981 0 ${incomePct}%, #ef4444 ${incomePct}% 100%)`,
+          }}
+        >
+          <div className="flex h-full w-full items-center justify-center rounded-full p-4">
+            <div className="flex h-20 w-20 items-center justify-center rounded-full bg-white text-center shadow-inner">
+              <div>
+                <div className="text-[10px] font-medium uppercase text-slate-500">
+                  Net
+                </div>
+                <div
+                  className={cn(
+                    "text-sm font-normal",
+                    net >= 0 ? "text-emerald-600" : "text-red-600",
+                  )}
+                >
+                  {formatSignedCurrency(net)}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="min-w-0 flex-1 space-y-2">
+          <SmallStat
+            label={`Income ${incomePct}%`}
+            value={formatCurrency(income)}
+            valueClassName="text-emerald-600"
+          />
+          <SmallStat
+            label={`Expenses ${expensePct}%`}
+            value={formatCurrency(expenses)}
+            valueClassName="text-red-600"
+          />
+          <SmallStat
+            label="Final balance"
+            value={formatSignedCurrency(net)}
+            valueClassName={net >= 0 ? "text-emerald-600" : "text-red-600"}
+          />
+        </div>
+      </div>
+    </Card>
+  );
+}
+
+/**
+ * KpiSection
+ * Moved lower on the page so it no longer dominates the top of the overview.
+ */
+function KpiSection({ items }: { items: KpiItem[] }) {
+  if (items.length === 0) return null;
+
+  return (
+    <Card className="p-5">
+      <SectionTitle
+        title="Club Snapshot"
+        subtitle="Finance, points, roster, morale, and ranking metrics."
+      />
+      <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        {items.map((item) => (
+          <KpiCard key={item.label} item={item} />
+        ))}
+      </div>
+    </Card>
+  );
 }
 
 /**
@@ -1453,7 +4480,7 @@ function DashboardSkeleton() {
       </div>
       <div className="h-40 animate-pulse rounded-2xl border border-slate-200 bg-slate-100" />
     </div>
-  )
+  );
 }
 
 /**
@@ -1461,20 +4488,33 @@ function DashboardSkeleton() {
  * Top-level dashboard overview page component.
  */
 export default function OverviewPage() {
-  const [data, setData] = React.useState<DashboardOverviewData | null>(null)
-  const [loading, setLoading] = React.useState(true)
-  const [refreshing, setRefreshing] = React.useState(false)
-  const [error, setError] = React.useState<string | null>(null)
+  const [data, setData] = React.useState<DashboardOverviewData | null>(null);
+  const [raceHub, setRaceHub] = React.useState<OverviewTeamRaceHub>({
+    lastTeamRace: null,
+    nextTeamRace: null,
+  });
+  const [raceWorld, setRaceWorld] = React.useState<OverviewRaceWorldData>(
+    EMPTY_RACE_WORLD_DATA,
+  );
+  const [attentionAlerts, setAttentionAlerts] = React.useState<AlertItem[]>([]);
+  const [squadPulseOverride, setSquadPulseOverride] =
+    React.useState<SquadPulse | null>(null);
+  const [seasonSnapshot, setSeasonSnapshot] =
+    React.useState<OverviewSeasonSnapshot>(EMPTY_SEASON_SNAPSHOT);
+  const [raceHubLoading, setRaceHubLoading] = React.useState(false);
+  const [loading, setLoading] = React.useState(true);
+  const [refreshing, setRefreshing] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
 
-  const dataRef = React.useRef<DashboardOverviewData | null>(null)
+  const dataRef = React.useRef<DashboardOverviewData | null>(null);
 
   React.useEffect(() => {
-    dataRef.current = data
-  }, [data])
+    dataRef.current = data;
+  }, [data]);
 
   React.useEffect(() => {
-    let alive = true
-    let inFlight = false
+    let alive = true;
+    let inFlight = false;
 
     /**
      * loadDashboard
@@ -1482,28 +4522,30 @@ export default function OverviewPage() {
      * information from the sponsor dashboard when available.
      */
     async function loadDashboard(options?: { silent?: boolean }) {
-      if (inFlight) return
-      inFlight = true
+      if (inFlight) return;
+      inFlight = true;
 
-      const silent = options?.silent === true
-      const hasVisibleData = !!dataRef.current
+      const silent = options?.silent === true;
+      const hasVisibleData = !!dataRef.current;
 
       try {
         if (!silent && !hasVisibleData) {
-          setLoading(true)
+          setLoading(true);
         } else if (silent) {
-          setRefreshing(true)
+          setRefreshing(true);
         }
 
         if (!silent && !hasVisibleData) {
-          setError(null)
+          setError(null);
         }
 
-        const { data: rpcData, error: rpcError } = await supabase.rpc('get_dashboard_overview')
+        const { data: rpcData, error: rpcError } = await supabase.rpc(
+          "get_dashboard_overview",
+        );
 
         if (rpcError) {
           // eslint-disable-next-line no-console
-          console.error('Dashboard RPC error', rpcError)
+          console.error("Dashboard RPC error", rpcError);
           throw new Error(
             [
               rpcError.message,
@@ -1512,49 +4554,65 @@ export default function OverviewPage() {
               rpcError.code ? `code=${rpcError.code}` : null,
             ]
               .filter(Boolean)
-              .join(' | '),
-          )
+              .join(" | "),
+          );
         }
 
         if (!rpcData) {
-          throw new Error('Dashboard payload is empty.')
+          throw new Error("Dashboard payload is empty.");
         }
 
-        let normalized = normalizeDashboardPayload(rpcData)
+        let normalized = normalizeDashboardPayload(rpcData);
 
         // Try to enrich main sponsor with the signed main sponsor logo from the sponsor dashboard.
         try {
           const clubId =
             normalized.club.id && normalized.club.id.trim().length > 0
               ? normalized.club.id
-              : null
+              : null;
 
           const { data: sponsorData, error: sponsorError } = await supabase.rpc(
-            'sponsor_get_dashboard',
+            "sponsor_get_dashboard",
             {
               p_club_id: clubId,
             },
-          )
+          );
 
           if (sponsorError) {
             // eslint-disable-next-line no-console
-            console.error('Sponsor dashboard RPC error', sponsorError)
+            console.error("Sponsor dashboard RPC error", sponsorError);
           } else if (sponsorData) {
-            const dashboard = sponsorData as SponsorDashboardForOverview
+            const dashboard = sponsorData as SponsorDashboardForOverview;
+            const sponsorClubId = asString(dashboard.club_id);
+
+            if (sponsorClubId && !normalized.club.id) {
+              normalized = {
+                ...normalized,
+                club: {
+                  ...normalized.club,
+                  id: sponsorClubId,
+                },
+              };
+            }
+
             const signedMain = Array.isArray(dashboard.signed_sponsors)
               ? dashboard.signed_sponsors.find(
-                  (s) => (s.sponsor_kind ?? '').toString().toLowerCase() === 'main',
+                  (s) =>
+                    (s.sponsor_kind ?? "").toString().toLowerCase() === "main",
                 )
-              : undefined
+              : undefined;
 
             if (signedMain) {
-              const logoUrl = resolveMainSponsorLogoUrlFromDashboard(signedMain)
-              const signedStatus = (signedMain.status ?? '').toString().toLowerCase()
+              const logoUrl =
+                resolveMainSponsorLogoUrlFromDashboard(signedMain);
+              const signedStatus = (signedMain.status ?? "")
+                .toString()
+                .toLowerCase();
               const isSignedByStatus =
-                signedStatus === 'signed' ||
-                signedStatus === 'active' ||
-                signedStatus === 'running' ||
-                signedStatus === 'current'
+                signedStatus === "signed" ||
+                signedStatus === "active" ||
+                signedStatus === "running" ||
+                signedStatus === "current";
 
               normalized = {
                 ...normalized,
@@ -1565,79 +4623,173 @@ export default function OverviewPage() {
                   isActive: Boolean(logoUrl) || isSignedByStatus || true,
                   subtitle:
                     normalized.mainSponsor.subtitle &&
-                    normalized.mainSponsor.subtitle !== 'No main sponsor deal signed yet.'
+                    normalized.mainSponsor.subtitle !==
+                      "No main sponsor deal signed yet."
                       ? normalized.mainSponsor.subtitle
-                      : 'Signed main sponsor deal',
+                      : "Signed main sponsor deal",
                 },
-              }
+              };
             }
           }
         } catch (sponsorErr) {
           // Sponsor integration is non-critical for the overview; log and continue.
           // eslint-disable-next-line no-console
-          console.error('Sponsor dashboard enrichment failed', sponsorErr)
+          console.error("Sponsor dashboard enrichment failed", sponsorErr);
         }
 
-        const nextSerialized = stableStringify(normalized)
-        const currentSerialized = stableStringify(dataRef.current)
+        try {
+          const mainClubIdForOperations =
+            normalized.club.id && normalized.club.id.trim().length > 0
+              ? normalized.club.id
+              : null;
+          const loadedOperations = await loadOverviewActiveOperations(
+            mainClubIdForOperations,
+          );
+
+          if (loadedOperations.length > 0) {
+            normalized = {
+              ...normalized,
+              operations: mergeOverviewOperations(
+                normalized.operations,
+                loadedOperations,
+              ),
+            };
+          }
+        } catch (operationErr) {
+          console.error("Active operations enrichment failed", operationErr);
+        }
+
+        try {
+          const mainClubIdForFinance =
+            normalized.club.id && normalized.club.id.trim().length > 0
+              ? normalized.club.id
+              : null;
+          const seasonYearForFinance = getSeasonYearFromOverview(normalized);
+          const loadedFinancePeriods =
+            (await loadOverviewFinanceStatementPeriodSummary(
+              mainClubIdForFinance,
+              seasonYearForFinance,
+            )) ??
+            (await loadOverviewFinancePeriodSummary(
+              mainClubIdForFinance,
+              seasonYearForFinance,
+            ));
+
+          if (loadedFinancePeriods) {
+            normalized = {
+              ...normalized,
+              finance: mergeFinancePeriodSummary(
+                normalized.finance,
+                loadedFinancePeriods,
+              ),
+            };
+          }
+        } catch (financeErr) {
+          console.error("Finance period enrichment failed", financeErr);
+        }
+
+        const nextSerialized = stableStringify(normalized);
+        const currentSerialized = stableStringify(dataRef.current);
 
         if (alive) {
           if (nextSerialized !== currentSerialized) {
-            setData(normalized)
+            setData(normalized);
           }
-          setError(null)
+          setError(null);
+        }
+
+        if (alive) {
+          setRaceHubLoading(true);
+          const mainClubId =
+            normalized.club.id && normalized.club.id.trim().length > 0
+              ? normalized.club.id
+              : null;
+          const seasonYear = getSeasonYearFromOverview(normalized);
+
+          const [
+            loadedRaceHub,
+            loadedRaceWorld,
+            loadedAttentionAlerts,
+            loadedSquadPulse,
+            loadedSeasonSnapshot,
+          ] = await Promise.all([
+            loadOverviewTeamRaceHub(mainClubId, seasonYear),
+            loadOverviewRaceWorldData(mainClubId, seasonYear),
+            loadOverviewAttentionItems(mainClubId),
+            loadOverviewSquadPulse(mainClubId),
+            loadOverviewSeasonSnapshot(mainClubId, seasonYear),
+          ]);
+
+          if (alive) {
+            setRaceHub(loadedRaceHub);
+            setRaceWorld(loadedRaceWorld);
+            setAttentionAlerts(loadedAttentionAlerts);
+            setSquadPulseOverride(loadedSquadPulse);
+            setSeasonSnapshot(loadedSeasonSnapshot);
+          }
         }
       } catch (err) {
         // eslint-disable-next-line no-console
-        console.error('Dashboard load failed', err)
+        console.error("Dashboard load failed", err);
 
         if (alive && !hasVisibleData) {
-          setError(err instanceof Error ? err.message : 'Failed to load dashboard.')
+          setError(
+            err instanceof Error ? err.message : "Failed to load dashboard.",
+          );
         }
       } finally {
         if (alive) {
-          setLoading(false)
-          setRefreshing(false)
+          setLoading(false);
+          setRefreshing(false);
+          setRaceHubLoading(false);
         }
-        inFlight = false
+        inFlight = false;
       }
     }
 
-    void loadDashboard()
+    void loadDashboard();
 
     const interval = window.setInterval(() => {
-      void loadDashboard({ silent: true })
-    }, 30000)
+      void loadDashboard({ silent: true });
+    }, 30000);
 
     return () => {
-      alive = false
-      window.clearInterval(interval)
-    }
-  }, [])
+      alive = false;
+      window.clearInterval(interval);
+    };
+  }, []);
 
   if (loading && !data) {
-    return <DashboardSkeleton />
+    return <DashboardSkeleton />;
   }
 
   if (error || !data) {
     return (
       <div className="w-full space-y-6">
         <div className="rounded-2xl border border-red-200 bg-red-50 p-6 shadow-sm">
-          <div className="text-sm font-medium text-red-700">Failed to load dashboard</div>
-          <div className="mt-1 text-sm text-red-600">{error ?? 'Unknown error'}</div>
+          <div className="text-sm font-medium text-red-700">
+            Failed to load dashboard
+          </div>
+          <div className="mt-1 text-sm text-red-600">
+            {error ?? "Unknown error"}
+          </div>
         </div>
       </div>
-    )
+    );
   }
 
-  const visibleFeed = data.feed.slice(0, 5)
+  const attentionItems = mergeOverviewAlerts(data.alerts, attentionAlerts);
+  const visibleSquadPulse = squadPulseOverride ?? data.squadPulse;
 
   return (
     <div className="w-full space-y-6">
-      {/* Alerts */}
+      {/* Attention stays as the main top command area */}
       <Card className="p-4">
         <div className="flex flex-wrap items-start justify-between gap-4">
-          <SectionTitle title="Attention" subtitle="Important things that need action or awareness." />
+          <SectionTitle
+            title="Attention"
+            subtitle="Important tasks that need action: race deadlines, contracts, equipment, health, finance, scouting, and operations."
+          />
 
           <div className="flex flex-wrap items-center gap-2">
             {refreshing ? (
@@ -1646,28 +4798,34 @@ export default function OverviewPage() {
               </div>
             ) : null}
 
-            <div className="rounded-full bg-slate-100 px-3 py-1.5 text-sm font-medium text-slate-700">
+            <a
+              href="#/dashboard/inbox"
+              className="rounded-full bg-slate-100 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-200"
+            >
               Inbox {data.club.inboxUnread}
-            </div>
-            <div className="rounded-full bg-slate-100 px-3 py-1.5 text-sm font-medium text-slate-700">
+            </a>
+            <a
+              href="#/dashboard/notifications"
+              className="rounded-full bg-slate-100 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-200"
+            >
               Notifications {data.club.notificationsUnread}
-            </div>
+            </a>
           </div>
         </div>
 
-        {data.alerts.length > 0 ? (
-          <div className="mt-4 flex flex-wrap gap-3">
-            {data.alerts.slice(0, 6).map((alert) => {
+        {attentionItems.length > 0 ? (
+          <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+            {attentionItems.slice(0, 6).map((alert) => {
               const chip = (
                 <div
                   className={cn(
-                    'rounded-full border px-3 py-2 text-sm font-medium transition hover:opacity-90',
+                    "rounded-xl border px-4 py-3 text-sm font-semibold transition hover:opacity-90",
                     getAlertClasses(alert.level),
                   )}
                 >
                   {alert.label}
                 </div>
-              )
+              );
 
               return alert.href ? (
                 <a key={alert.id} href={alert.href}>
@@ -1675,7 +4833,7 @@ export default function OverviewPage() {
                 </a>
               ) : (
                 <div key={alert.id}>{chip}</div>
-              )
+              );
             })}
           </div>
         ) : (
@@ -1685,38 +4843,18 @@ export default function OverviewPage() {
         )}
       </Card>
 
-      {/* KPIs */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-6">
-        {data.kpis.map((item) => (
-          <KpiCard key={item.label} item={item} />
-        ))}
-      </div>
-
-      {/* Main grid */}
       <div className="grid grid-cols-12 gap-6">
         <div className="col-span-12 space-y-6 xl:col-span-8">
-          {/* Active Operations */}
-          <Card className="p-5">
-            <SectionTitle
-              title="Active Operations"
-              subtitle="Live systems, ongoing jobs, and current club activity."
-            />
+          {/* Main top-left area: newsletter instead of operations */}
+          <NewsCommandCenter
+            alerts={attentionItems}
+            feed={data.feed}
+            news={
+              raceWorld.worldNews.length > 0 ? raceWorld.worldNews : data.news
+            }
+            currentGameDateLabel={data.club.dateLabel}
+          />
 
-            {data.operations.length > 0 ? (
-              <div className="mt-5 grid grid-cols-1 gap-4 lg:grid-cols-3">
-                {data.operations.map((item) => (
-                  <OperationCard key={item.id} item={item} />
-                ))}
-              </div>
-            ) : (
-              <SectionEmptyState
-                title="No active operations"
-                description="There are no active training camps, infrastructure jobs, or policy-heavy operational events right now."
-              />
-            )}
-          </Card>
-
-          {/* Squad Pulse */}
           <Card className="p-5">
             <SectionTitle
               title="Squad Pulse"
@@ -1727,17 +4865,17 @@ export default function OverviewPage() {
               <div className="space-y-5">
                 <ProgressMetric
                   label="Fitness"
-                  value={data.squadPulse.fitness}
+                  value={visibleSquadPulse.fitness}
                   colorClass="bg-blue-500"
                 />
                 <ProgressMetric
                   label="Morale"
-                  value={data.squadPulse.morale}
+                  value={visibleSquadPulse.morale}
                   colorClass="bg-emerald-500"
                 />
                 <ProgressMetric
                   label="Readiness"
-                  value={data.squadPulse.readiness}
+                  value={visibleSquadPulse.readiness}
                   colorClass="bg-violet-500"
                 />
               </div>
@@ -1745,98 +4883,66 @@ export default function OverviewPage() {
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <SmallStat
                   label="Form"
-                  value={data.squadPulse.form}
+                  value={visibleSquadPulse.form}
                   valueClassName="text-emerald-600"
                 />
-                <SmallStat label="Available Riders" value={data.squadPulse.availableRiders} />
+                <SmallStat
+                  label="Available Riders"
+                  value={visibleSquadPulse.availableRiders}
+                />
                 <SmallStat
                   label="Injured"
-                  value={data.squadPulse.injured}
-                  valueClassName={data.squadPulse.injured > 0 ? 'text-red-600' : ''}
+                  value={visibleSquadPulse.injured}
+                  valueClassName={
+                    visibleSquadPulse.injured > 0 ? "text-red-600" : ""
+                  }
                 />
                 <SmallStat
                   label="Sick"
-                  value={data.squadPulse.sick}
-                  valueClassName={data.squadPulse.sick > 0 ? 'text-red-600' : ''}
+                  value={visibleSquadPulse.sick}
+                  valueClassName={
+                    visibleSquadPulse.sick > 0 ? "text-red-600" : ""
+                  }
                 />
                 <SmallStat
                   label="Not Fully Fit"
-                  value={data.squadPulse.notFullyFit}
-                  valueClassName={data.squadPulse.notFullyFit > 0 ? 'text-yellow-600' : ''}
+                  value={visibleSquadPulse.notFullyFit}
+                  valueClassName={
+                    visibleSquadPulse.notFullyFit > 0 ? "text-yellow-600" : ""
+                  }
                 />
                 <SmallStat
                   label="Expiring Contracts"
-                  value={data.squadPulse.expiringContracts}
-                  valueClassName={data.squadPulse.expiringContracts > 0 ? 'text-yellow-600' : ''}
+                  value={visibleSquadPulse.expiringContracts}
+                  valueClassName={
+                    visibleSquadPulse.expiringContracts > 0
+                      ? "text-yellow-600"
+                      : ""
+                  }
                 />
               </div>
             </div>
           </Card>
 
-          {/* Upcoming Schedule */}
-          <Card className="p-5">
-            <SectionTitle
-              title="Upcoming Schedule"
-              subtitle="Next major events, races, and club milestones."
-            />
+          <UpcomingRaceScheduleCard schedule={raceWorld.upcomingSchedule} />
 
-            {data.schedule.length > 0 ? (
-              <div className="mt-5 space-y-3">
-                {data.schedule.map((item) => (
-                  <ScheduleRow key={item.id} item={item} />
-                ))}
-              </div>
-            ) : (
-              <SectionEmptyState
-                title="No upcoming events"
-                description="There are no scheduled races, camps, or infrastructure milestones in the current overview window."
-              />
-            )}
-          </Card>
-
-          {/* This Day Races */}
-          <Card className="p-5">
-            <SectionTitle
-              title="This Day Races"
-              subtitle={
-                data.club.dateLabel
-                  ? `Races happening on ${data.club.dateLabel}.`
-                  : 'Races happening on the current game date.'
-              }
-            />
-            <div className="mt-5 space-y-3">
-              {data.dayRaces.length > 0 ? (
-                data.dayRaces.map((item) => <DayRaceRow key={item.id} item={item} />)
-              ) : (
-                <EmptyState
-                  title="No races on this date"
-                  subtitle="There are no race events scheduled for the current game day."
-                />
-              )}
-            </div>
-          </Card>
-
-          {/* In-Game News */}
-          <Card className="p-5">
-            <SectionTitle
-              title="In-Game News"
-              subtitle="Latest world updates, announcements, and game news posts."
-            />
-            <div className="mt-5 space-y-3">
-              {data.news.length > 0 ? (
-                data.news.map((item) => <NewsRow key={item.id} item={item} />)
-              ) : (
-                <EmptyState
-                  title="No news published yet"
-                  subtitle="New in-game news will appear here when you publish it."
-                />
-              )}
-            </div>
-          </Card>
+          <TodayRaceCard
+            dateLabel={data.club.dateLabel}
+            races={raceWorld.todayRaces}
+          />
         </div>
 
         <div className="col-span-12 space-y-6 xl:col-span-4">
-          {/* Main Sponsor */}
+          {/* Main right-side replacement for Activity Feed */}
+          <NextTeamRaceCard
+            race={raceHub.nextTeamRace}
+            loading={raceHubLoading}
+          />
+          <LastTeamRaceCard
+            race={raceHub.lastTeamRace}
+            loading={raceHubLoading}
+          />
+
           <Card className="p-5">
             <SectionTitle
               title="Main Sponsor"
@@ -1847,28 +4953,6 @@ export default function OverviewPage() {
             </div>
           </Card>
 
-          {/* Activity Feed */}
-          <Card className="p-5">
-            <SectionTitle
-              title="Activity Feed"
-              subtitle="Latest changes across finance, training, infrastructure, and inbox."
-            />
-
-            {visibleFeed.length > 0 ? (
-              <div className="mt-4 space-y-1">
-                {visibleFeed.map((item) => (
-                  <FeedRow key={item.id} item={item} />
-                ))}
-              </div>
-            ) : (
-              <SectionEmptyState
-                title="No recent activity"
-                description="No recent finance, training, infrastructure, sponsor, or inbox events were found for this club."
-              />
-            )}
-          </Card>
-
-          {/* Finance Health */}
           <Card className="p-5">
             <SectionTitle
               title="Finance Health"
@@ -1876,12 +4960,17 @@ export default function OverviewPage() {
             />
 
             <div className="mt-5 space-y-3">
-              <SmallStat label="Balance" value={formatCurrency(data.finance.balance)} />
+              <SmallStat
+                label="Balance"
+                value={formatCurrency(data.finance.balance)}
+              />
               <SmallStat
                 label="Weekly Net"
                 value={formatSignedCurrency(data.finance.weeklyNet)}
                 valueClassName={
-                  data.finance.weeklyNet >= 0 ? 'text-emerald-600' : 'text-red-600'
+                  data.finance.weeklyNet >= 0
+                    ? "text-emerald-600"
+                    : "text-red-600"
                 }
               />
               <SmallStat
@@ -1907,76 +4996,23 @@ export default function OverviewPage() {
               </div>
               <div
                 className={cn(
-                  'mt-1 text-sm font-bold',
+                  "mt-1 text-sm font-bold",
                   data.finance.latestTransactionAmount >= 0
-                    ? 'text-emerald-600'
-                    : 'text-red-600',
+                    ? "text-emerald-600"
+                    : "text-red-600",
                 )}
               >
                 {formatSignedCurrency(data.finance.latestTransactionAmount)}
               </div>
             </div>
-
-            {data.finance.topOperatingIncomes.length > 0 ||
-            data.finance.topOperatingExpenses.length > 0 ? (
-              <div className="mt-5 grid grid-cols-1 gap-4">
-                {data.finance.topOperatingIncomes.length > 0 ? (
-                  <div className="rounded-xl border border-slate-200 bg-white p-4">
-                    <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                      Top Operating Incomes
-                    </div>
-                    <div className="mt-3 space-y-2">
-                      {data.finance.topOperatingIncomes.map((item) => (
-                        <TransactionSummaryRow key={item.id} item={item} />
-                      ))}
-                    </div>
-                  </div>
-                ) : null}
-
-                {data.finance.topOperatingExpenses.length > 0 ? (
-                  <div className="rounded-xl border border-slate-200 bg-white p-4">
-                    <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                      Top Operating Costs
-                    </div>
-                    <div className="mt-3 space-y-2">
-                      {data.finance.topOperatingExpenses.map((item) => (
-                        <TransactionSummaryRow key={item.id} item={item} />
-                      ))}
-                    </div>
-                  </div>
-                ) : null}
-              </div>
-            ) : null}
           </Card>
 
-          {/* Emergency Debt */}
-          <EmergencyDebtCard
-            debt={data.emergencyDebt}
-            debtMovements={data.finance.debtMovements}
-          />
+          <IncomeExpenseCard finance={data.finance} />
+
+          <CompactOperationsCard operations={data.operations} />
         </div>
       </div>
-
-      {/* Quick Actions */}
-      <Card className="p-5">
-        <SectionTitle
-          title="Quick Actions"
-          subtitle="Direct navigation to your main management areas."
-        />
-
-        {data.quickActions.length > 0 ? (
-          <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4 xl:grid-cols-8">
-            {data.quickActions.map((item) => (
-              <QuickAction key={item.id} item={item} />
-            ))}
-          </div>
-        ) : (
-          <SectionEmptyState
-            title="No actions available"
-            description="Quick actions are not available right now."
-          />
-        )}
-      </Card>
+      <SeasonSnapshotCard stats={seasonSnapshot} />
     </div>
-  )
+  );
 }

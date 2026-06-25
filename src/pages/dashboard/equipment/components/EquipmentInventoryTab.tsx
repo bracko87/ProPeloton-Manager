@@ -44,7 +44,22 @@ type ActionModalState = {
   item: EquipmentInventoryItem
 }
 
-const PAGE_SIZE = 20
+
+type EquipmentInventoryGroup = {
+  key: string
+  displayName: string
+  brandName: string | null
+  category: EquipmentCategory
+  items: EquipmentInventoryItem[]
+  totalCount: number
+  readyCount: number
+  averageCondition: number
+  totalValue: number
+  qualityScore: number | string | null | undefined
+  bonuses: Array<{ label: string; value: string }>
+}
+
+const PAGE_SIZE = 200
 
 const activeStatusOptions: Array<{ value: EquipmentStatus; label: string }> = [
   { value: 'ready', label: equipmentStatusLabels.ready },
@@ -112,6 +127,66 @@ function getShortBonuses(item: EquipmentInventoryItem): Array<{ label: string; v
     }))
 }
 
+
+function getEquipmentGroupKey(item: EquipmentInventoryItem): string {
+  return [
+    item.equipment_category,
+    item.brand_name ?? 'Generic brand',
+    item.display_name,
+  ]
+    .map(value => String(value).trim().toLowerCase())
+    .join('::')
+}
+
+function getReadyInventoryCount(items: EquipmentInventoryItem[]): number {
+  return items.filter(item => item.status === 'ready').length
+}
+
+function getAverageCondition(items: EquipmentInventoryItem[]): number {
+  if (items.length === 0) return 0
+
+  const total = items.reduce((sum, item) => sum + Number(item.condition_percent ?? 0), 0)
+  return total / items.length
+}
+
+function getTotalCurrentValue(items: EquipmentInventoryItem[]): number {
+  return items.reduce((sum, item) => sum + Number(item.current_value_cash ?? 0), 0)
+}
+
+function buildInventoryGroups(items: EquipmentInventoryItem[]): EquipmentInventoryGroup[] {
+  const groups = new Map<string, EquipmentInventoryGroup>()
+
+  for (const item of items) {
+    const key = getEquipmentGroupKey(item)
+    const existing = groups.get(key)
+
+    if (existing) {
+      existing.items.push(item)
+      existing.totalCount = existing.items.length
+      existing.readyCount = getReadyInventoryCount(existing.items)
+      existing.averageCondition = getAverageCondition(existing.items)
+      existing.totalValue = getTotalCurrentValue(existing.items)
+      continue
+    }
+
+    groups.set(key, {
+      key,
+      displayName: item.display_name,
+      brandName: item.brand_name ?? null,
+      category: item.equipment_category,
+      items: [item],
+      totalCount: 1,
+      readyCount: item.status === 'ready' ? 1 : 0,
+      averageCondition: Number(item.condition_percent ?? 0),
+      totalValue: Number(item.current_value_cash ?? 0),
+      qualityScore: item.quality_score,
+      bonuses: getShortBonuses(item),
+    })
+  }
+
+  return Array.from(groups.values())
+}
+
 export default function EquipmentInventoryTab({
   clubId,
 }: EquipmentInventoryTabProps): JSX.Element {
@@ -132,6 +207,7 @@ export default function EquipmentInventoryTab({
 
   const [message, setMessage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [expandedGroupKeys, setExpandedGroupKeys] = useState<Set<string>>(new Set())
 
   async function loadInventory(): Promise<void> {
     setLoading(true)
@@ -163,6 +239,10 @@ export default function EquipmentInventoryTab({
     void loadInventory()
   }, [clubId, category, status, sort, page])
 
+  useEffect(() => {
+    setExpandedGroupKeys(new Set())
+  }, [clubId, category, status, sort, search])
+
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE))
 
   const categoryOptions = useMemo(
@@ -173,6 +253,23 @@ export default function EquipmentInventoryTab({
       })),
     []
   )
+
+
+  const groupedItems = useMemo(() => buildInventoryGroups(items), [items])
+
+  function toggleGroup(groupKey: string): void {
+    setExpandedGroupKeys(current => {
+      const next = new Set(current)
+
+      if (next.has(groupKey)) {
+        next.delete(groupKey)
+      } else {
+        next.add(groupKey)
+      }
+
+      return next
+    })
+  }
 
   async function openActionModal(mode: ActionMode, item: EquipmentInventoryItem): Promise<void> {
     setModal({ mode, item })
@@ -299,6 +396,125 @@ export default function EquipmentInventoryTab({
     return 'bg-red-600 hover:bg-red-700'
   }
 
+
+  function renderInventoryItemRow(item: EquipmentInventoryItem): JSX.Element {
+    const bonuses = getShortBonuses(item)
+    const itemCanRunAction = canRunAction(item)
+    const itemCanRepair = canRepair(item)
+
+    return (
+      <div
+        key={item.id}
+        className="grid gap-4 bg-white px-4 py-3 xl:grid-cols-[2.1fr_1.1fr_1.2fr_2fr_1.2fr]"
+      >
+        <div className="min-w-0">
+          <div className="truncate font-medium text-gray-900">
+            {item.display_name}
+          </div>
+
+          <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-gray-500">
+            <span>
+              {equipmentCategoryLabels[item.equipment_category]} ·{' '}
+              {item.brand_name ?? 'Generic brand'}
+            </span>
+
+            {item.used_in_default_setup ? (
+              <span className="rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5 font-medium text-blue-700">
+                Default setup
+              </span>
+            ) : null}
+          </div>
+        </div>
+
+        <div className="flex flex-col justify-center gap-1 xl:border-l xl:border-gray-100 xl:pl-4">
+          <div className="flex items-center gap-2 text-xs">
+            <span className="text-gray-400">Quality</span>
+            <span
+              className={[
+                'rounded-full border px-2 py-0.5 font-medium',
+                getQualityBadgeClass(item.quality_score),
+              ].join(' ')}
+            >
+              ★ {getQualityLabel(item.quality_score)}
+            </span>
+          </div>
+
+          <span
+            className={[
+              'inline-block w-fit rounded-full px-2 py-0.5 text-xs font-medium',
+              getStatusBadgeClass(item.status),
+            ].join(' ')}
+          >
+            {equipmentStatusLabels[item.status]}
+          </span>
+        </div>
+
+        <div className="flex flex-col justify-center gap-1 text-sm xl:border-l xl:border-gray-100 xl:pl-4">
+          <div>
+            <span className="text-gray-500">Condition</span>{' '}
+            <span className="font-medium text-gray-900">
+              {formatCondition(item.condition_percent)}
+            </span>
+          </div>
+
+          <div>
+            <span className="text-gray-500">Value</span>{' '}
+            <span className="font-medium text-gray-900">
+              {formatMoney(item.current_value_cash)}
+            </span>
+          </div>
+        </div>
+
+        <div className="flex min-w-0 flex-wrap items-center gap-2 text-xs xl:border-l xl:border-gray-100 xl:pl-4">
+          {bonuses.length > 0 ? (
+            bonuses.map(bonus => (
+              <span
+                key={`${item.id}-${bonus.label}`}
+                className="rounded-full border border-purple-100 bg-purple-50 px-2 py-1 text-purple-700"
+              >
+                {bonus.label} {bonus.value}
+              </span>
+            ))
+          ) : (
+            <span className="text-gray-400">No direct bonuses yet</span>
+          )}
+        </div>
+
+        <div className="flex flex-col items-start justify-center gap-1 text-left text-xs xl:border-l xl:border-gray-100 xl:pl-4">
+          {itemCanRepair ? (
+            <button
+              type="button"
+              onClick={() => void openActionModal('repair', item)}
+              className="text-xs font-medium text-yellow-600 hover:text-yellow-700"
+            >
+              Repair
+            </button>
+          ) : (
+            <span className="text-xs text-gray-400">No repair needed</span>
+          )}
+
+          <button
+            type="button"
+            disabled={!itemCanRunAction}
+            onClick={() => void openActionModal('sell', item)}
+            className="text-xs font-medium text-green-600 hover:text-green-700 disabled:text-gray-300"
+          >
+            Sell
+          </button>
+
+          <button
+            type="button"
+            disabled={!itemCanRunAction}
+            onClick={() => void openActionModal('discard', item)}
+            className="text-xs font-medium text-red-600 hover:text-red-700 disabled:text-gray-300"
+          >
+            Discard
+          </button>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-4">
       <div className="rounded-lg bg-white p-4 shadow-sm">
@@ -402,120 +618,96 @@ export default function EquipmentInventoryTab({
           </div>
         ) : (
           <div className="divide-y divide-gray-100">
-            {items.map(item => {
-              const bonuses = getShortBonuses(item)
-              const itemCanRunAction = canRunAction(item)
-              const itemCanRepair = canRepair(item)
+            {groupedItems.map(group => {
+              const isExpanded = expandedGroupKeys.has(group.key)
 
               return (
-                <div
-                  key={item.id}
-                  className="grid gap-4 px-4 py-3 xl:grid-cols-[2.1fr_1.1fr_1.2fr_2fr_1.2fr]"
-                >
-                  <div className="min-w-0">
-                    <div className="truncate font-medium text-gray-900">
-                      {item.display_name}
-                    </div>
-
-                    <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-gray-500">
-                      <span>
-                        {equipmentCategoryLabels[item.equipment_category]} ·{' '}
-                        {item.brand_name ?? 'Generic brand'}
-                      </span>
-
-                      {item.used_in_default_setup ? (
-                        <span className="rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5 font-medium text-blue-700">
-                          Default setup
+                <div key={group.key} className="divide-y divide-gray-100">
+                  <button
+                    type="button"
+                    onClick={() => toggleGroup(group.key)}
+                    className="grid w-full gap-4 bg-slate-50 px-4 py-3 text-left transition hover:bg-slate-100 xl:grid-cols-[2.1fr_1.1fr_1.2fr_2fr_1.2fr]"
+                  >
+                    <div className="min-w-0">
+                      <div className="flex min-w-0 items-center gap-2">
+                        <div className="truncate font-semibold text-gray-900">
+                          {group.displayName}
+                        </div>
+                        <span className="shrink-0 rounded-full bg-white px-2 py-0.5 text-[11px] font-medium text-slate-500 ring-1 ring-slate-200">
+                          {group.totalCount} item{group.totalCount === 1 ? '' : 's'}
                         </span>
-                      ) : null}
-                    </div>
-                  </div>
+                      </div>
 
-                  <div className="flex flex-col justify-center gap-1 xl:border-l xl:border-gray-100 xl:pl-4">
-                    <div className="flex items-center gap-2 text-xs">
-                      <span className="text-gray-400">Quality</span>
-                      <span
-                        className={[
-                          'rounded-full border px-2 py-0.5 font-medium',
-                          getQualityBadgeClass(item.quality_score),
-                        ].join(' ')}
-                      >
-                        ★ {getQualityLabel(item.quality_score)}
-                      </span>
+                      <div className="mt-1 text-xs text-gray-500">
+                        {equipmentCategoryLabels[group.category]} · {group.brandName ?? 'Generic brand'}
+                      </div>
                     </div>
 
-                    <span
-                      className={[
-                        'inline-block w-fit rounded-full px-2 py-0.5 text-xs font-medium',
-                        getStatusBadgeClass(item.status),
-                      ].join(' ')}
-                    >
-                      {equipmentStatusLabels[item.status]}
-                    </span>
-                  </div>
-
-                  <div className="flex flex-col justify-center gap-1 text-sm xl:border-l xl:border-gray-100 xl:pl-4">
-                    <div>
-                      <span className="text-gray-500">Condition</span>{' '}
-                      <span className="font-medium text-gray-900">
-                        {formatCondition(item.condition_percent)}
-                      </span>
-                    </div>
-
-                    <div>
-                      <span className="text-gray-500">Value</span>{' '}
-                      <span className="font-medium text-gray-900">
-                        {formatMoney(item.current_value_cash)}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="flex min-w-0 flex-wrap items-center gap-2 text-xs xl:border-l xl:border-gray-100 xl:pl-4">
-                    {bonuses.length > 0 ? (
-                      bonuses.map(bonus => (
+                    <div className="flex flex-col justify-center gap-1 xl:border-l xl:border-gray-200 xl:pl-4">
+                      <div className="flex items-center gap-2 text-xs">
+                        <span className="text-gray-400">Quality</span>
                         <span
-                          key={`${item.id}-${bonus.label}`}
-                          className="rounded-full border border-purple-100 bg-purple-50 px-2 py-1 text-purple-700"
+                          className={[
+                            'rounded-full border px-2 py-0.5 font-medium',
+                            getQualityBadgeClass(group.qualityScore),
+                          ].join(' ')}
                         >
-                          {bonus.label} {bonus.value}
+                          ★ {getQualityLabel(group.qualityScore)}
                         </span>
-                      ))
-                    ) : (
-                      <span className="text-gray-400">No direct bonuses yet</span>
-                    )}
-                  </div>
+                      </div>
 
-                  <div className="flex flex-col items-start justify-center gap-1 text-left text-xs xl:border-l xl:border-gray-100 xl:pl-4">
-                    {itemCanRepair ? (
-                      <button
-                        type="button"
-                        onClick={() => void openActionModal('repair', item)}
-                        className="text-xs font-medium text-yellow-600 hover:text-yellow-700"
-                      >
-                        Repair
-                      </button>
-                    ) : (
-                      <span className="text-xs text-gray-400">No repair needed</span>
-                    )}
+                      <span className="inline-block w-fit rounded-full bg-green-50 px-2 py-0.5 text-xs font-medium text-green-700">
+                        Ready {group.readyCount}/{group.totalCount}
+                      </span>
+                    </div>
 
-                    <button
-                      type="button"
-                      disabled={!itemCanRunAction}
-                      onClick={() => void openActionModal('sell', item)}
-                      className="text-xs font-medium text-green-600 hover:text-green-700 disabled:text-gray-300"
-                    >
-                      Sell
-                    </button>
+                    <div className="flex flex-col justify-center gap-1 text-sm xl:border-l xl:border-gray-200 xl:pl-4">
+                      <div>
+                        <span className="text-gray-500">Avg. condition</span>{' '}
+                        <span className="font-semibold text-gray-900">
+                          {formatCondition(group.averageCondition)}
+                        </span>
+                      </div>
 
-                    <button
-                      type="button"
-                      disabled={!itemCanRunAction}
-                      onClick={() => void openActionModal('discard', item)}
-                      className="text-xs font-medium text-red-600 hover:text-red-700 disabled:text-gray-300"
-                    >
-                      Discard
-                    </button>
-                  </div>
+                      <div>
+                        <span className="text-gray-500">Total value</span>{' '}
+                        <span className="font-medium text-gray-900">
+                          {formatMoney(group.totalValue)}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="flex min-w-0 flex-wrap items-center gap-2 text-xs xl:border-l xl:border-gray-200 xl:pl-4">
+                      {group.bonuses.length > 0 ? (
+                        group.bonuses.map(bonus => (
+                          <span
+                            key={`${group.key}-${bonus.label}`}
+                            className="rounded-full border border-purple-100 bg-white px-2 py-1 text-purple-700"
+                          >
+                            {bonus.label} {bonus.value}
+                          </span>
+                        ))
+                      ) : (
+                        <span className="text-gray-400">No direct bonuses yet</span>
+                      )}
+                    </div>
+
+                    <div className="flex items-center justify-between gap-3 text-xs xl:border-l xl:border-gray-200 xl:pl-4">
+                      <div className="text-gray-500">
+                        {isExpanded ? 'Hide item list' : 'Show item list'}
+                      </div>
+
+                      <span className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-blue-200 bg-white text-sm font-bold text-blue-700 shadow-sm">
+                        {isExpanded ? '−' : '+'}
+                      </span>
+                    </div>
+                  </button>
+
+                  {isExpanded ? (
+                    <div className="divide-y divide-gray-100 bg-white">
+                      {group.items.map(item => renderInventoryItemRow(item))}
+                    </div>
+                  ) : null}
                 </div>
               )
             })}

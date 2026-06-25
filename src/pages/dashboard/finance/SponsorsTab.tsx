@@ -11,6 +11,7 @@
  */
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import { useLocation, useNavigate } from 'react-router'
 import { supabase } from './supabase'
 
 type SponsorKind = 'main' | 'secondary' | 'technical'
@@ -73,6 +74,67 @@ type SponsorObjective = {
   country_code: string | null
   status: string
   metadata?: Record<string, unknown> | null
+}
+
+type SponsorObjectiveUiRow = {
+  club_id: string
+  club_sponsor_id: string
+  sponsor_name: string
+  sponsor_kind: string
+  sponsor_status: string
+  main_sponsor_deal_type: string
+  season_number: number | null
+
+  objective_id: string
+  objective_code: string
+  objective_title: string
+  reward_amount: number
+  target_value: number
+  current_value: number
+
+  objective_status: string
+  check_state: string
+  objective_result_state: string
+  objective_target_mode: string
+  evaluation_mode: string
+  progress_source: string | null
+
+  target_race_id: string | null
+  target_race_name: string | null
+  target_race_country: string | null
+  target_race_category: string | null
+  target_race_type: string | null
+  target_race_start_date: string | null
+  target_race_end_date: string | null
+  target_check_game_date: string | null
+
+  eligible_from_game_date: string | null
+  eligible_to_game_date: string | null
+  eligible_country_code: string | null
+
+  required_result: string
+  user_visible_deadline_label: string
+
+  checked_at: string | null
+  failed_reason: string | null
+  payout_transaction_id: string | null
+  payout_status: string
+  paid_amount: number | null
+
+  display_status_label: string
+  display_status_variant: 'success' | 'danger' | 'warning' | 'info' | 'muted' | string
+  progress_text: string
+  target_text: string
+  result_text: string
+
+  // Optional fields returned by newer objective-status RPCs.
+  race_application_status?: string | null
+  race_application_status_label?: string | null
+  race_entry_status?: string | null
+  race_status?: string | null
+  race_status_label?: string | null
+
+  metadata: Record<string, unknown>
 }
 
 type SponsorDashboard = {
@@ -143,6 +205,158 @@ function formatMoney(n: number, currency: 'USD' | 'EUR' = 'USD'): string {
   }).format(n)
 }
 
+function formatCashAmount(value: number | null | undefined): string {
+  return `${new Intl.NumberFormat('en-US').format(value ?? 0)} cash`
+}
+
+function sponsorObjectiveBadgeClass(variant: string): string {
+  switch (variant) {
+    case 'success':
+      return 'border-green-300 bg-green-50 text-green-800'
+    case 'danger':
+      return 'border-red-300 bg-red-50 text-red-700'
+    case 'warning':
+      return 'border-amber-300 bg-amber-50 text-amber-800'
+    case 'info':
+      return 'border-blue-300 bg-blue-50 text-blue-800'
+    case 'muted':
+    default:
+      return 'border-gray-300 bg-gray-50 text-gray-600'
+  }
+}
+
+function sponsorObjectiveRequiredResultLabel(value: string): string {
+  switch (value) {
+    case 'race_podium':
+      return 'Race podium'
+    case 'race_win':
+      return 'Race win'
+    case 'race_top_5':
+      return 'Race top 5'
+    case 'race_top_10':
+      return 'Race top 10'
+    case 'gc_top_10':
+      return 'General classification top 10'
+    case 'gc_top_5':
+      return 'General classification top 5'
+    case 'stage_top_5':
+      return 'Stage top 5'
+    case 'stage_win':
+      return 'Stage win'
+    case 'race_start':
+      return 'Race start'
+    case 'classification_visibility':
+      return 'Points or mountain jersey visibility'
+    default:
+      return value
+        ? value
+            .replace(/_/g, ' ')
+            .replace(/\w/g, (letter) => letter.toUpperCase())
+        : 'Objective'
+  }
+}
+
+function sponsorObjectiveDisplayLabel(objective: SponsorObjectiveUiRow): string {
+  const normalizedResult = String(objective.objective_result_state || '').toLowerCase()
+  const normalizedCheck = String(objective.check_state || '').toLowerCase()
+  const normalizedStatus = String(objective.display_status_label || objective.objective_status || '').toLowerCase()
+  const payoutStatus = String(objective.payout_status || '').toLowerCase()
+
+  if (payoutStatus === 'paid' || normalizedResult === 'paid') return 'Paid'
+  if (['completed', 'complete', 'achieved', 'success'].includes(normalizedResult)) return 'Achieved'
+  if (['failed', 'missed', 'not_met'].includes(normalizedResult)) return 'Missed'
+  if (['checked'].includes(normalizedCheck) && normalizedResult === 'pending') return 'Checked'
+  if (['scheduled', 'pending', 'active'].includes(normalizedCheck) || normalizedStatus.includes('scheduled')) return 'Scheduled'
+  if (normalizedStatus.includes('failed') || normalizedStatus.includes('missed')) return 'Missed'
+  if (normalizedStatus.includes('completed') || normalizedStatus.includes('achieved')) return 'Achieved'
+
+  return objective.display_status_label || 'Scheduled'
+}
+
+function sponsorObjectiveDisplayVariant(objective: SponsorObjectiveUiRow): string {
+  const label = sponsorObjectiveDisplayLabel(objective).toLowerCase()
+  if (label === 'paid' || label === 'achieved') return 'success'
+  if (label === 'missed' || label === 'failed') return 'danger'
+  if (label === 'checked') return 'info'
+  return objective.display_status_variant || 'info'
+}
+
+function sponsorObjectiveRacePath(objective: SponsorObjectiveUiRow): string | null {
+  return objective.target_race_id
+    ? `/dashboard/races/${objective.target_race_id}?raceId=${objective.target_race_id}`
+    : null
+}
+
+function sponsorObjectiveCalendarPath(objective: SponsorObjectiveUiRow): string | null {
+  if (!objective.target_race_id) return null
+
+  const dateForMonth =
+    objective.target_check_game_date ||
+    objective.target_race_start_date ||
+    objective.target_race_end_date ||
+    null
+
+  const parsedMonth = dateForMonth ? Number(dateForMonth.slice(5, 7)) : NaN
+  const month = Number.isFinite(parsedMonth) && parsedMonth >= 1 && parsedMonth <= 12
+    ? parsedMonth
+    : null
+
+  const params = new URLSearchParams({
+    view: 'races',
+    raceId: objective.target_race_id,
+    source: 'sponsor_objective',
+  })
+
+  if (month) params.set('month', String(month))
+
+  return `/dashboard/calendar?${params.toString()}`
+}
+
+function sponsorObjectiveTitleSuffix(objective: SponsorObjectiveUiRow): string {
+  const title = String(objective.objective_title || '').trim()
+  const raceName = String(objective.target_race_name || '').trim()
+
+  if (!title || !raceName) return title
+
+  if (title.toLowerCase().startsWith(raceName.toLowerCase())) {
+    return title.slice(raceName.length).replace(/^\s*[:–-]\s*/, '').trim()
+  }
+
+  return title
+}
+
+function prettifyStatusValue(value: unknown): string {
+  const normalized = String(value || '').trim()
+  if (!normalized) return ''
+
+  return normalized
+    .replace(/_/g, ' ')
+    .replace(/-/g, ' ')
+    .replace(/\b\w/g, (letter) => letter.toUpperCase())
+}
+
+function sponsorObjectiveRaceStatusLabel(objective: SponsorObjectiveUiRow): string {
+  const metadata = objective.metadata || {}
+
+  const entryStatus =
+    objective.race_application_status_label ||
+    objective.race_application_status ||
+    objective.race_entry_status ||
+    metadata.race_application_status_label ||
+    metadata.race_application_status ||
+    metadata.race_entry_status
+
+  const raceStatus =
+    objective.race_status_label ||
+    objective.race_status ||
+    metadata.race_status_label ||
+    metadata.race_status
+
+  const parts = [prettifyStatusValue(entryStatus), prettifyStatusValue(raceStatus)].filter(Boolean)
+
+  return parts.length > 0 ? parts.join(' · ') : 'Not entered yet'
+}
+
 function getCountryName(countryCode: string | null | undefined): string {
   if (!countryCode) return 'Unknown country'
 
@@ -188,6 +402,198 @@ function getSponsorPreviewGoals(
   return getMetadataStringArray(metadata, 'preview_focus')
 }
 
+type MainSponsorObjectiveExplanation = {
+  title: string
+  description: string
+  rewardLabel?: string
+}
+
+function getMainSponsorPreviewObjectives(
+  metadata: Record<string, unknown> | null | undefined
+): MainSponsorObjectiveExplanation[] {
+  const raw = metadata?.preview_objectives
+  if (!Array.isArray(raw)) return []
+
+  return raw
+    .map((item): MainSponsorObjectiveExplanation | null => {
+      if (!item || typeof item !== 'object') return null
+
+      const record = item as Record<string, unknown>
+      const title = typeof record.title === 'string' ? record.title.trim() : ''
+      const description = typeof record.description === 'string' ? record.description.trim() : ''
+      const rewardAmount = toNumber(record.estimated_reward_amount)
+      const rewardLabel =
+        typeof record.reward_label === 'string' && record.reward_label.trim().length > 0
+          ? record.reward_label.trim()
+          : rewardAmount > 0
+            ? formatCashAmount(rewardAmount)
+            : undefined
+
+      if (!title && !description) return null
+
+      return {
+        title: title || 'Sponsor objective',
+        description: description || 'This objective is checked after the relevant race result is finalized.',
+        rewardLabel,
+      }
+    })
+    .filter((item): item is MainSponsorObjectiveExplanation => item !== null)
+}
+
+function explainMainSponsorObjective(goal: string): MainSponsorObjectiveExplanation {
+  const normalizedGoal = goal.toLowerCase()
+
+  if (normalizedGoal.includes('start')) {
+    return {
+      title: 'Sponsor-market race starts',
+      description:
+        'The sponsor wants visible participation in races connected to its country, region, or global market. This is normally checked through accepted race entries and completed starts.',
+    }
+  }
+
+  if (normalizedGoal.includes('podium') || normalizedGoal.includes('win')) {
+    return {
+      title: 'High-profile result target',
+      description:
+        'The sponsor expects a headline result such as a win, podium, or strong GC finish in a race connected to its market or prestige calendar.',
+    }
+  }
+
+  if (normalizedGoal.includes('top-5') || normalizedGoal.includes('top 5')) {
+    return {
+      title: 'Multiple top-5 results',
+      description:
+        'The sponsor wants repeatable sporting visibility, usually several top-5 stage or race results instead of one single lucky result.',
+    }
+  }
+
+  if (normalizedGoal.includes('top 10') || normalizedGoal.includes('top-10')) {
+    return {
+      title: 'Top-10 performance target',
+      description:
+        'The sponsor expects a reliable competitive result, normally a top-10 placing in a race, stage, or general classification tied to its market.',
+    }
+  }
+
+  if (normalizedGoal.includes('visibility')) {
+    return {
+      title: 'Market visibility objective',
+      description:
+        'The sponsor wants exposure in its home market through participation, branding, and realistic competitive presence during the season.',
+    }
+  }
+
+  return {
+    title: goal,
+    description:
+      'This bonus objective is checked against your race participation or final results after the relevant race has been completed.',
+  }
+}
+
+function getMainSponsorObjectiveExplanations(
+  metadata: Record<string, unknown> | null | undefined
+): MainSponsorObjectiveExplanation[] {
+  const structuredObjectives = getMainSponsorPreviewObjectives(metadata)
+  if (structuredObjectives.length > 0) return structuredObjectives
+
+  const goals = getSponsorPreviewGoals(metadata)
+
+  if (goals.length === 0) {
+    return [
+      {
+        title: 'Season visibility',
+        description:
+          'The sponsor expects your team to appear in races that matter for its market and brand exposure.',
+      },
+      {
+        title: 'Sporting results',
+        description:
+          'Bonus money is tied to race results such as wins, podiums, top-5 finishes, top-10 finishes, or GC targets.',
+      },
+      {
+        title: 'Checked after races',
+        description:
+          'Objectives are evaluated only after the target race or stage result is finalized, then bonuses are paid through the finance ledger.',
+      },
+    ]
+  }
+
+  return goals.map(explainMainSponsorObjective)
+}
+
+function countryCodeToEmoji(countryCode: string | null | undefined): string {
+  if (!countryCode || countryCode.length !== 2) return '🏳️'
+
+  return countryCode
+    .toUpperCase()
+    .replace(/./g, (char) => String.fromCodePoint(127397 + char.charCodeAt(0)))
+}
+
+function getMainSponsorDealType(
+  metadata: Record<string, unknown> | null | undefined
+): 'standard' | 'naming_rights' {
+  const rawDealType =
+    getMetadataValue(metadata, 'main_sponsor_deal_type') ??
+    getMetadataValue(metadata, 'deal_type') ??
+    getMetadataValue(metadata, 'main_deal_type')
+
+  const requiresNameChange = metadata?.requires_team_name_change === true
+
+  if (rawDealType === 'naming_rights' || requiresNameChange) {
+    return 'naming_rights'
+  }
+
+  return 'standard'
+}
+
+function getMainSponsorDealLabel(
+  metadata: Record<string, unknown> | null | undefined
+): string {
+  return getMainSponsorDealType(metadata) === 'naming_rights'
+    ? 'Naming-rights deal'
+    : 'Standard main sponsor'
+}
+
+function getMainSponsorDealPillClass(
+  metadata: Record<string, unknown> | null | undefined
+): string {
+  return getMainSponsorDealType(metadata) === 'naming_rights'
+    ? 'border-purple-300 bg-purple-50 text-purple-800'
+    : 'border-blue-300 bg-blue-50 text-blue-800'
+}
+
+function getMainSponsorTeamNamePreview(offer: SponsorOffer): string | null {
+  const metadata = offer.metadata
+
+  const explicitSeasonDisplayName =
+    getMetadataValue(metadata, 'season_display_name') ??
+    getMetadataValue(metadata, 'naming_rights_display_name')
+
+  if (explicitSeasonDisplayName) return explicitSeasonDisplayName
+
+  if (getMainSponsorDealType(metadata) !== 'naming_rights') return null
+
+  return `${offer.company_name} Team`
+}
+
+function getMainSponsorHistoryNamePreview(
+  offer: SponsorOffer,
+  currentClubName = 'BK Novi Beograd'
+): string | null {
+  const metadata = offer.metadata
+
+  const explicitFullDisplayName =
+    getMetadataValue(metadata, 'full_display_name') ??
+    getMetadataValue(metadata, 'team_name_preview')
+
+  if (explicitFullDisplayName) return explicitFullDisplayName
+
+  const seasonName = getMainSponsorTeamNamePreview(offer)
+  if (!seasonName) return null
+
+  return `${seasonName} (${currentClubName})`
+}
+
 function getSponsorLogoUrl(
   sponsorKind: SponsorKind,
   directLogoUrl?: string | null,
@@ -228,6 +634,39 @@ function CountryFlagLabel({
       ) : null}
       <span>{countryName}</span>
     </div>
+  )
+}
+
+function CountryFlagOnly({
+  countryCode,
+  imageWidth = 28,
+  className = '',
+}: {
+  countryCode: string | null | undefined
+  imageWidth?: number
+  className?: string
+}): JSX.Element | null {
+  const [failed, setFailed] = React.useState(false)
+  const src = getLocalFlagUrl(countryCode)
+  const countryName = getCountryName(countryCode)
+
+  if (!src || failed) return null
+
+  return (
+    <span
+      title={countryName}
+      className={`inline-flex items-center justify-center rounded-sm ${className}`}
+      aria-label={countryName}
+    >
+      <img
+        src={src}
+        alt={countryName}
+        width={imageWidth}
+        className="rounded-sm border object-cover shrink-0"
+        loading="lazy"
+        onError={() => setFailed(true)}
+      />
+    </span>
   )
 }
 
@@ -290,25 +729,6 @@ function sponsorKindLabel(kind: SponsorKind): string {
   }
 }
 
-function getObjectivePercent(objective: SponsorObjective): number {
-  const target = Math.max(1, toNumber(objective.target_value))
-  const current = Math.max(0, toNumber(objective.current_value))
-  return Math.max(0, Math.min(100, (current / target) * 100))
-}
-
-function getObjectiveBadge(
-  objectiveCode: string
-): { label: string; tone: 'blue' | 'green' | 'yellow' } {
-  if (objectiveCode.includes('starts')) return { label: 'Participation', tone: 'blue' }
-  if (objectiveCode.includes('win') || objectiveCode.includes('podium')) {
-    return { label: 'Performance', tone: 'green' }
-  }
-  if (objectiveCode.includes('top5') || objectiveCode.includes('gc')) {
-    return { label: 'Results', tone: 'yellow' }
-  }
-  return { label: 'Objective', tone: 'blue' }
-}
-
 function LogoPlaceholder({
   name,
   logoUrl,
@@ -316,7 +736,7 @@ function LogoPlaceholder({
 }: {
   name: string
   logoUrl?: string | null
-  size?: 'sm' | 'md' | 'lg' | 'hero'
+  size?: 'sm' | 'md' | 'lg' | 'offer' | 'hero'
 }): JSX.Element {
   const [failed, setFailed] = React.useState(false)
 
@@ -330,8 +750,10 @@ function LogoPlaceholder({
   const sizeClass =
     size === 'hero'
       ? 'w-full h-full text-7xl rounded-none'
-      : size === 'lg'
-        ? 'w-24 h-24 text-xl rounded-xl'
+      : size === 'offer'
+        ? 'w-80 h-48 text-3xl rounded-xl'
+        : size === 'lg'
+          ? 'w-24 h-24 text-xl rounded-xl'
         : size === 'sm'
           ? 'w-10 h-10 text-xs rounded-md'
           : 'w-14 h-14 text-sm rounded-xl'
@@ -339,9 +761,11 @@ function LogoPlaceholder({
   const paddingClass =
     size === 'hero'
       ? 'p-4 md:p-6'
-      : size === 'lg'
-        ? 'p-3'
-        : 'p-2'
+      : size === 'offer'
+        ? 'p-0'
+        : size === 'lg'
+          ? 'p-3'
+          : 'p-2'
 
   const showImage = !!logoUrl && !failed
 
@@ -349,7 +773,8 @@ function LogoPlaceholder({
     <div
       className={[
         sizeClass,
-        'bg-gray-100 border flex items-center justify-center overflow-hidden shrink-0',
+        size === 'offer' ? 'bg-white border-0' : 'bg-gray-100 border',
+        'flex items-center justify-center overflow-hidden shrink-0',
       ].join(' ')}
     >
       {showImage ? (
@@ -407,10 +832,10 @@ function ActionButton({
       disabled={disabled}
       onClick={onClick}
       className={[
-        'px-3 py-2 rounded-md text-sm font-medium transition border',
+        'px-3 py-2 rounded-md text-sm font-semibold transition border shadow-sm',
         disabled
-          ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed'
-          : 'bg-white text-gray-800 border-gray-300 hover:bg-gray-50',
+          ? 'bg-yellow-100 text-yellow-700 border-yellow-200 cursor-not-allowed opacity-70'
+          : 'bg-yellow-400 text-gray-950 border-yellow-500 hover:bg-yellow-300',
       ].join(' ')}
     >
       {label}
@@ -478,8 +903,8 @@ function OfferModal({
   return (
     <div className="fixed inset-0 z-50">
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
-      <div className="absolute inset-0 p-4 md:p-8 overflow-y-auto">
-        <div className="max-w-5xl mx-auto bg-white rounded-2xl shadow-2xl border overflow-hidden">
+      <div className="absolute inset-0 p-2 md:p-4 overflow-y-auto">
+        <div className="w-[min(98vw,1720px)] mx-auto bg-white rounded-2xl shadow-2xl border overflow-hidden">
           <div className="flex items-center justify-between gap-4 px-6 py-4 border-b bg-gray-50">
             <div>
               <div className="text-lg font-semibold">{sponsorKindLabel(kind)} Offers</div>
@@ -514,7 +939,7 @@ function OfferModal({
                       : null
 
                   const description = getSponsorDescription(offer.metadata)
-                  const previewGoals = getSponsorPreviewGoals(offer.metadata)
+                  const objectiveExplanations = getMainSponsorObjectiveExplanations(offer.metadata)
                   const resolvedLogoUrl = getSponsorLogoUrl(
                     offer.sponsor_kind,
                     offer.logo_url,
@@ -529,6 +954,11 @@ function OfferModal({
                   const technicalDiscounts =
                     technicalPackage?.category_discounts_json ?? {}
 
+                  const mainSponsorDealLabel = getMainSponsorDealLabel(offer.metadata)
+                  const mainSponsorDealType = getMainSponsorDealType(offer.metadata)
+                  const teamNamePreview = getMainSponsorTeamNamePreview(offer)
+                  const teamNameHistoryPreview = getMainSponsorHistoryNamePreview(offer)
+
                   return (
                     <div key={offer.id} className="border rounded-xl p-5">
                       <div className="flex items-start justify-between gap-4">
@@ -537,7 +967,7 @@ function OfferModal({
                             <LogoPlaceholder
                               name={offer.company_name}
                               logoUrl={resolvedLogoUrl}
-                              size="lg"
+                              size="offer"
                             />
                           )}
 
@@ -546,14 +976,28 @@ function OfferModal({
                               {offer.company_name}
                             </div>
 
-                            <div className="text-sm text-gray-600 mt-1 flex items-center gap-2">
+                            <div className="text-sm text-gray-600 mt-2 flex flex-wrap items-center gap-2">
                               {offer.sponsor_kind !== 'secondary' && (
-                                <CountryFlagLabel
+                                <CountryFlagOnly
                                   countryCode={offer.company_country_code}
-                                  imageWidth={20}
+                                  imageWidth={30}
                                 />
                               )}
-                              <span>{sponsorKindLabel(offer.sponsor_kind)}</span>
+
+                              <span className="rounded-full border border-gray-200 bg-gray-50 px-2 py-1 text-xs font-semibold text-gray-700">
+                                {sponsorKindLabel(offer.sponsor_kind)}
+                              </span>
+
+                              {offer.sponsor_kind === 'main' && (
+                                <span
+                                  className={[
+                                    'rounded-full border px-2 py-1 text-xs font-semibold',
+                                    getMainSponsorDealPillClass(offer.metadata),
+                                  ].join(' ')}
+                                >
+                                  {mainSponsorDealLabel}
+                                </span>
+                              )}
                             </div>
 
                             {description && offer.sponsor_kind !== 'secondary' && (
@@ -662,7 +1106,13 @@ function OfferModal({
                               value={formatContractCoverage(offer.season_number)}
                             />
                             <StatCard
-                              label={offer.sponsor_kind === 'technical' ? 'Discount' : 'Details'}
+                              label={
+                                offer.sponsor_kind === 'technical'
+                                  ? 'Discount'
+                                  : offer.sponsor_kind === 'main'
+                                    ? 'Deal type'
+                                    : 'Details'
+                              }
                               value={
                                 offer.sponsor_kind === 'technical'
                                   ? discount !== null
@@ -670,7 +1120,9 @@ function OfferModal({
                                     : 'Calculating package'
                                   : offer.sponsor_kind === 'secondary'
                                     ? 'Supporting sponsor'
-                                    : getCountryName(offer.company_country_code)
+                                    : mainSponsorDealType === 'naming_rights'
+                                      ? 'Naming rights'
+                                      : 'Standard'
                               }
                             />
                           </div>
@@ -684,22 +1136,85 @@ function OfferModal({
                       )}
 
                       {offer.sponsor_kind === 'main' && (
-                        <div className="mt-4 rounded-lg bg-blue-50 border border-blue-100 p-4 text-sm text-blue-900">
-                          <div className="font-medium">Main sponsor package</div>
-                          <div className="mt-1">
-                            Main sponsor deals include guaranteed money now and bonus money later through objectives.
+                        <div className="mt-4 rounded-lg bg-white border border-gray-200 p-4 text-sm text-blue-900">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <div className="font-medium">Main sponsor package</div>
+                            <span
+                              className={[
+                                'rounded-full border px-2 py-0.5 text-xs font-semibold',
+                                getMainSponsorDealPillClass(offer.metadata),
+                              ].join(' ')}
+                            >
+                              {mainSponsorDealLabel}
+                            </span>
                           </div>
 
-                          {previewGoals.length > 0 && (
-                            <div className="mt-3">
-                              <div className="font-medium mb-2">Preview goals</div>
-                              <ul className="list-disc pl-5 space-y-1">
-                                {previewGoals.map((goal, index) => (
-                                  <li key={`${offer.id}-goal-${index}`}>{goal}</li>
-                                ))}
-                              </ul>
+                          <div className="mt-2 text-sm leading-6 text-blue-900">
+                            This offer pays guaranteed money immediately when signed. The bonus pool is only paid later if your team completes sponsor objectives such as market starts, wins, podiums, top-5 results, or GC targets.
+                          </div>
+
+                          <div className="mt-3 grid grid-cols-1 gap-2 md:grid-cols-2">
+                            <div className="rounded-lg border border-blue-100 bg-white/70 px-3 py-2">
+                              <div className="text-xs font-semibold uppercase tracking-wide text-blue-700">
+                                Guaranteed money
+                              </div>
+                              <div className="mt-1 font-semibold">
+                                {formatMoney(guaranteed, currency)} paid when signed
+                              </div>
+                            </div>
+
+                            <div className="rounded-lg border border-blue-100 bg-white/70 px-3 py-2">
+                              <div className="text-xs font-semibold uppercase tracking-wide text-blue-700">
+                                Bonus pool
+                              </div>
+                              <div className="mt-1 font-semibold">
+                                {formatMoney(bonus, currency)} available through objectives
+                              </div>
+                            </div>
+                          </div>
+
+                          {teamNamePreview && (
+                            <div className="mt-3 rounded-lg border border-purple-200 bg-purple-50 px-3 py-2 text-purple-900">
+                              <div className="text-xs font-semibold uppercase tracking-wide text-purple-700">
+                                Naming-rights team identity
+                              </div>
+                              <div className="mt-1 text-lg font-semibold">{teamNamePreview}</div>
+                              <div className="mt-1 text-xs text-purple-800">
+                                During the sponsor season, the team is shown with this name. The original club name is kept for history only.
+                              </div>
+                              {teamNameHistoryPreview && teamNameHistoryPreview !== teamNamePreview ? (
+                                <div className="mt-2 rounded-md bg-white/70 px-2 py-1 text-xs text-purple-800">
+                                  History label after the deal: {teamNameHistoryPreview}
+                                </div>
+                              ) : null}
                             </div>
                           )}
+
+                          <div className="mt-4">
+                            <div className="font-medium mb-2">Expected bonus objectives</div>
+                            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                              {objectiveExplanations.slice(0, 6).map((objective, index) => (
+                                <div
+                                  key={`${offer.id}-objective-${index}`}
+                                  className="rounded-lg border border-blue-100 bg-white/75 px-3 py-3"
+                                >
+                                  <div className="flex items-start justify-between gap-3">
+                                    <div className="text-sm font-semibold text-blue-950">
+                                      {objective.title}
+                                    </div>
+                                    {objective.rewardLabel ? (
+                                      <div className="shrink-0 rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5 text-xs font-semibold text-blue-800">
+                                        {objective.rewardLabel}
+                                      </div>
+                                    ) : null}
+                                  </div>
+                                  <div className="mt-1 text-xs leading-5 text-blue-800">
+                                    {objective.description}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
                         </div>
                       )}
 
@@ -720,61 +1235,146 @@ function OfferModal({
   )
 }
 
-function ObjectiveCard({
-  objective,
-  currency,
+function SponsorObjectiveCards({
+  objectives,
+  loading,
+  error,
+  onOpenRace,
+  onShowInCalendar,
 }: {
-  objective: SponsorObjective
-  currency: 'USD' | 'EUR'
+  objectives: SponsorObjectiveUiRow[]
+  loading: boolean
+  error: string | null
+  onOpenRace: (objective: SponsorObjectiveUiRow) => void
+  onShowInCalendar: (objective: SponsorObjectiveUiRow) => void
 }): JSX.Element {
-  const percent = getObjectivePercent(objective)
-  const completed = objective.status === 'completed'
-  const failed = objective.status === 'failed'
-  const badge = getObjectiveBadge(objective.objective_code)
-
   return (
-    <div className="rounded-xl border bg-white p-4">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <div className="font-medium text-gray-900">{objective.title}</div>
-          <div className="mt-2">
-            <StatusPill label={badge.label} tone={badge.tone} />
-          </div>
-          <div className="text-sm text-gray-600 mt-1">
-            Progress: {objective.current_value}/{objective.target_value}
-          </div>
-        </div>
-
-        <div className="text-right shrink-0">
-          <div className="text-sm font-semibold text-green-700">
-            {formatMoney(toNumber(objective.reward_amount), currency)}
-          </div>
-          <div className="mt-2">
-            <StatusPill
-              label={completed ? 'Completed' : failed ? 'Failed' : 'Active'}
-              tone={completed ? 'green' : failed ? 'red' : 'blue'}
-            />
-          </div>
+    <div className="rounded-xl border border-gray-200 bg-white p-4">
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <div>
+          <h3 className="text-base font-semibold text-gray-900">Main sponsor objectives</h3>
+          <p className="text-sm text-gray-500">
+            Rewards, progress, required result, and bonus payout state.
+          </p>
         </div>
       </div>
 
-      <div className="mt-4">
-        <ProgressBar value={percent} tone={completed ? 'green' : 'blue'} />
-        <div className="text-xs text-gray-500 mt-2">{percent.toFixed(0)}% complete</div>
-      </div>
+      {loading ? (
+        <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-600">
+          Loading sponsor objectives...
+        </div>
+      ) : error ? (
+        <div className="rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-700">
+          {error}
+        </div>
+      ) : objectives.length === 0 ? (
+        <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-600">
+          No main sponsor objectives yet.
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 gap-3 xl:grid-cols-3">
+          {objectives.map((objective) => (
+            <div
+              key={objective.objective_id}
+              className="rounded-xl border border-gray-200 bg-gray-50 p-4"
+            >
+              <div className="mb-3 flex items-start justify-between gap-3">
+                <div>
+                  {objective.target_race_id && objective.target_race_name && sponsorObjectiveRacePath(objective) ? (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => onOpenRace(objective)}
+                        className="text-left text-sm font-semibold text-blue-700 hover:text-blue-900 hover:underline"
+                      >
+                        {objective.target_race_name}
+                      </button>
+                      {sponsorObjectiveTitleSuffix(objective) ? (
+                        <div className="mt-0.5 text-xs font-semibold text-gray-700">
+                          {sponsorObjectiveTitleSuffix(objective)}
+                        </div>
+                      ) : null}
+                      {sponsorObjectiveCalendarPath(objective) ? (
+                        <button
+                          type="button"
+                          onClick={() => onShowInCalendar(objective)}
+                          className="mt-1 inline-flex text-[11px] font-semibold text-gray-500 hover:text-gray-900 hover:underline"
+                        >
+                          Show in calendar
+                        </button>
+                      ) : null}
+                    </>
+                  ) : (
+                    <div className="text-sm font-semibold text-gray-900">
+                      {objective.objective_title}
+                    </div>
+                  )}
+                </div>
+
+                <div
+                  className={[
+                    'shrink-0 rounded-full border px-2.5 py-1 text-xs font-semibold',
+                    sponsorObjectiveBadgeClass(sponsorObjectiveDisplayVariant(objective)),
+                  ].join(' ')}
+                >
+                  {sponsorObjectiveDisplayLabel(objective)}
+                </div>
+              </div>
+
+              <div className="space-y-2 text-sm">
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-gray-500">Reward</span>
+                  <span className="font-semibold text-gray-900">
+                    {formatMoney(toNumber(objective.reward_amount))}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-gray-500">Progress</span>
+                  <span className="font-semibold text-gray-900">
+                    {objective.progress_text}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-gray-500">Required result</span>
+                  <span className="font-semibold text-gray-900">
+                    {sponsorObjectiveRequiredResultLabel(objective.required_result)}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-gray-500">Race status</span>
+                  <span className="font-semibold text-gray-900">
+                    {sponsorObjectiveRaceStatusLabel(objective)}
+                  </span>
+                </div>
+
+                {objective.payout_transaction_id ? (
+                  <div className="rounded-lg border border-green-300 bg-green-50 px-3 py-2 text-xs font-semibold text-green-800">
+                    Bonus paid
+                  </div>
+                ) : objective.objective_result_state === 'completed' ? (
+                  <div className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-800">
+                    Bonus ready for payout
+                  </div>
+                ) : null}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   )
 }
 
 function MainSponsorHero({
   sponsor,
-  objectives,
   canOpenOffers,
   onOpenOffers,
   currency,
 }: {
   sponsor: SignedSponsor | null
-  objectives: SponsorObjective[]
   canOpenOffers: boolean
   onOpenOffers: () => void
   currency: 'USD' | 'EUR'
@@ -784,6 +1384,18 @@ function MainSponsorHero({
     : null
 
   const description = sponsor ? getSponsorDescription(sponsor.metadata) : null
+  const signedMainDealType = sponsor ? getMainSponsorDealType(sponsor.metadata) : 'standard'
+  const signedMainDealLabel =
+    signedMainDealType === 'naming_rights' ? 'Naming rights' : 'Standard main deal'
+  const activeSeasonTeamName = sponsor
+    ? getMetadataValue(sponsor.metadata, 'season_display_name') ??
+      getMetadataValue(sponsor.metadata, 'naming_rights_display_name') ??
+      (signedMainDealType === 'naming_rights' ? `${sponsor.name} Team` : 'Club name unchanged')
+    : null
+  const historyDisplayName = sponsor
+    ? getMetadataValue(sponsor.metadata, 'full_display_name') ??
+      getMetadataValue(sponsor.metadata, 'history_display_name')
+    : null
 
   return (
     <div className="bg-white rounded-xl shadow border overflow-hidden">
@@ -798,30 +1410,49 @@ function MainSponsorHero({
         <ActionButton label="View Offers" disabled={!canOpenOffers} onClick={onOpenOffers} />
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-5">
-        <div className="xl:col-span-3 p-5">
-          {sponsor ? (
-            <div className="h-full">
-              <div>
-                <div className="text-2xl font-bold text-gray-900">{sponsor.name}</div>
+      <div className="p-5">
+        {sponsor ? (
+          <div className="h-full">
+            <div>
+              <div className="text-2xl font-bold text-gray-900">{sponsor.name}</div>
 
-                <CountryFlagLabel
-                  countryCode={sponsor.country_code}
-                  imageWidth={24}
-                  className="mt-3"
+              <CountryFlagLabel
+                countryCode={sponsor.country_code}
+                imageWidth={24}
+                className="mt-3"
+              />
+
+              {description && (
+                <div className="text-sm text-gray-500 mt-3">{description}</div>
+              )}
+
+              <div className="flex flex-wrap gap-2 mt-4">
+                <StatusPill label="Signed" tone="green" />
+                <StatusPill
+                  label={signedMainDealLabel}
+                  tone={signedMainDealType === 'naming_rights' ? 'yellow' : 'blue'}
                 />
+                <StatusPill label={`Season ${sponsor.season_number}`} tone="blue" />
+              </div>
+            </div>
 
-                {description && (
-                  <div className="text-sm text-gray-500 mt-3">{description}</div>
-                )}
-
-                <div className="flex flex-wrap gap-2 mt-4">
-                  <StatusPill label="Signed" tone="green" />
-                  <StatusPill label={`Season ${sponsor.season_number}`} tone="blue" />
+            <div className="mt-5 rounded-xl border border-yellow-200 bg-yellow-50/60 p-4">
+              <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
+                <div>
+                  <div className="text-sm font-semibold uppercase tracking-wide text-yellow-800">
+                    Main Sponsor Contract Summary
+                  </div>
+                  <div className="mt-1 text-xs text-yellow-900/80">
+                    These fields belong to the active signed main sponsor and will change when a new main sponsor is signed in another season.
+                  </div>
                 </div>
+
+                <span className="inline-flex w-fit rounded-full border border-yellow-300 bg-white px-2.5 py-1 text-xs font-semibold text-yellow-800">
+                  Active signed contract
+                </span>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-5">
+              <div className="grid grid-cols-1 gap-3 mt-4 md:grid-cols-2 xl:grid-cols-5">
                 <StatCard
                   label="Guaranteed Payment"
                   value={formatMoney(toNumber(sponsor.guaranteed_amount), currency)}
@@ -834,68 +1465,55 @@ function MainSponsorHero({
                   label="Contract Coverage"
                   value={formatContractCoverage(sponsor.season_number)}
                 />
+                <StatCard
+                  label="Deal Type"
+                  value={signedMainDealLabel}
+                />
+                <StatCard
+                  label={signedMainDealType === 'naming_rights' ? 'Season Team Name' : 'Team Identity'}
+                  value={activeSeasonTeamName ?? 'Club name unchanged'}
+                />
               </div>
 
-              <div className="mt-5 rounded-2xl border bg-gradient-to-br from-gray-50 to-white overflow-hidden">
-                <div className="h-[320px] md:h-[420px]">
-                  {resolvedLogoUrl ? (
-                    <img
-                      src={resolvedLogoUrl}
-                      alt={sponsor.name}
-                      className="w-full h-full object-contain p-4 md:p-6"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-gray-100">
-                      <div className="text-7xl md:text-8xl font-semibold text-gray-500">
-                        {sponsor.name
-                          .split(' ')
-                          .map((p) => p.trim()[0] ?? '')
-                          .join('')
-                          .slice(0, 2)
-                          .toUpperCase()}
-                      </div>
-                    </div>
-                  )}
+              {historyDisplayName && signedMainDealType === 'naming_rights' ? (
+                <div className="mt-3 rounded-lg border border-purple-200 bg-white px-3 py-2 text-xs text-purple-900">
+                  <span className="font-semibold">History label after the deal:</span>{' '}
+                  {historyDisplayName}
                 </div>
-              </div>
+              ) : null}
             </div>
-          ) : (
-            <div className="h-full flex flex-col justify-center rounded-xl border border-dashed p-6 bg-gray-50">
-              <div className="text-lg font-semibold text-gray-900">No Main Sponsor Signed</div>
-              <div className="text-sm text-gray-600 mt-2">
-                Choose one main sponsor to secure your biggest seasonal sponsorship deal.
-              </div>
-            </div>
-          )}
-        </div>
 
-        <div className="xl:col-span-2 border-t xl:border-t-0 xl:border-l bg-gray-50/70 p-5">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <div className="font-semibold">Main Sponsor Objectives</div>
-              <div className="text-sm text-gray-500 mt-1">
-                Track bonus progress for the current main sponsor.
+            <div className="mt-5 rounded-2xl border bg-gradient-to-br from-gray-50 to-white overflow-hidden">
+              <div className="h-[320px] md:h-[420px]">
+                {resolvedLogoUrl ? (
+                  <img
+                    src={resolvedLogoUrl}
+                    alt={sponsor.name}
+                    className="w-full h-full object-contain p-4 md:p-6"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center bg-gray-100">
+                    <div className="text-7xl md:text-8xl font-semibold text-gray-500">
+                      {sponsor.name
+                        .split(' ')
+                        .map((part) => part.trim()[0] ?? '')
+                        .join('')
+                        .slice(0, 2)
+                        .toUpperCase()}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
-            <StatusPill label={`${objectives.length} objective(s)`} tone="blue" />
           </div>
-
-          <div className="mt-4 space-y-3">
-            {!sponsor ? (
-              <div className="rounded-xl border border-dashed bg-white p-4 text-sm text-gray-600">
-                Objectives will appear here after you sign a main sponsor.
-              </div>
-            ) : objectives.length === 0 ? (
-              <div className="rounded-xl border bg-white p-4 text-sm text-gray-600">
-                No objectives found for the current sponsor.
-              </div>
-            ) : (
-              objectives.map((objective) => (
-                <ObjectiveCard key={objective.id} objective={objective} currency={currency} />
-              ))
-            )}
+        ) : (
+          <div className="h-full flex flex-col justify-center rounded-xl border border-dashed p-6 bg-gray-50">
+            <div className="text-lg font-semibold text-gray-900">No Main Sponsor Signed</div>
+            <div className="text-sm text-gray-600 mt-2">
+              Choose one main sponsor to secure your biggest seasonal sponsorship deal.
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   )
@@ -1201,6 +1819,99 @@ export function SponsorsTab({
   >({})
   const [activeTechnicalSupport, setActiveTechnicalSupport] =
     useState<ActiveTechnicalSponsorSupport | null>(null)
+  const [sponsorObjectives, setSponsorObjectives] = useState<SponsorObjectiveUiRow[]>([])
+  const [sponsorObjectivesLoading, setSponsorObjectivesLoading] = useState(false)
+  const [sponsorObjectivesError, setSponsorObjectivesError] = useState<string | null>(null)
+
+  const location = useLocation()
+  const navigate = useNavigate()
+
+  function getSponsorReturnState(extra?: Record<string, unknown>) {
+    return {
+      from: 'sponsor_objective',
+      returnTo: `${location.pathname}${location.search}`,
+      returnScrollY: window.scrollY,
+      restoreSponsorTab: true,
+      restoreSponsorScrollY: window.scrollY,
+      ...extra,
+    }
+  }
+
+  function handleOpenSponsorObjectiveRace(objective: SponsorObjectiveUiRow): void {
+    if (!objective.target_race_id) return
+
+    navigate(`/dashboard/races/${objective.target_race_id}?raceId=${objective.target_race_id}`, {
+      state: getSponsorReturnState({
+        returnSponsorObjectiveId: objective.objective_id,
+        returnSponsorRaceId: objective.target_race_id,
+      }),
+    })
+  }
+
+  function handleShowSponsorObjectiveInCalendar(objective: SponsorObjectiveUiRow): void {
+    const path = sponsorObjectiveCalendarPath(objective)
+    if (!path) return
+
+    navigate(path, {
+      state: getSponsorReturnState({
+        returnSponsorObjectiveId: objective.objective_id,
+        returnSponsorRaceId: objective.target_race_id,
+      }),
+    })
+  }
+
+  useEffect(() => {
+    const state = location.state as
+      | { restoreSponsorTab?: boolean; restoreSponsorScrollY?: number; returnScrollY?: number }
+      | null
+
+    if (!state?.restoreSponsorTab && typeof state?.restoreSponsorScrollY !== 'number') return
+
+    const scrollY =
+      typeof state.restoreSponsorScrollY === 'number'
+        ? state.restoreSponsorScrollY
+        : typeof state.returnScrollY === 'number'
+          ? state.returnScrollY
+          : null
+
+    window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(() => {
+        if (typeof scrollY === 'number') {
+          window.scrollTo({ top: scrollY, behavior: 'auto' })
+        }
+
+        navigate(`${location.pathname}${location.search}`, {
+          replace: true,
+          state: null,
+        })
+      })
+    })
+  }, [location.pathname, location.search, location.state, navigate])
+
+  const loadSponsorObjectives = useCallback(async (mainClubId: string): Promise<void> => {
+    try {
+      setSponsorObjectivesLoading(true)
+      setSponsorObjectivesError(null)
+
+      const { data, error: objectivesError } = await supabase.rpc(
+        'get_club_sponsor_objectives_ui_v1',
+        {
+          p_club_id: mainClubId,
+        }
+      )
+
+      if (objectivesError) throw objectivesError
+
+      setSponsorObjectives((data ?? []) as SponsorObjectiveUiRow[])
+    } catch (err) {
+      setSponsorObjectivesError(
+        err instanceof Error ? err.message : 'Failed to load sponsor objectives.'
+      )
+      setSponsorObjectives([])
+    } finally {
+      setSponsorObjectivesLoading(false)
+    }
+  }, [])
 
   const loadDashboard = useCallback(async (): Promise<void> => {
     setError(null)
@@ -1277,6 +1988,12 @@ export function SponsorsTab({
       mounted = false
     }
   }, [loadDashboard])
+
+  useEffect(() => {
+    if (!clubId) return
+
+    void loadSponsorObjectives(clubId)
+  }, [clubId, loadSponsorObjectives])
 
   useEffect(() => {
     if (!dashboard) return
@@ -1371,13 +2088,6 @@ export function SponsorsTab({
     }
   }, [offersModalKind, technicalOffers])
 
-  const mainObjectives = useMemo(() => {
-    if (!signedMain || !dashboard) return []
-    return [...dashboard.objectives]
-      .filter((o) => o.club_sponsor_id === signedMain.id)
-      .sort((a, b) => toNumber(b.reward_amount) - toNumber(a.reward_amount))
-  }, [dashboard, signedMain])
-
   const modalOffers = useMemo(() => {
     if (offersModalKind === 'main') return mainOffers
     if (offersModalKind === 'secondary') return secondaryOffers
@@ -1409,11 +2119,13 @@ export function SponsorsTab({
       return
     }
 
-    const row = Array.isArray(res.data) ? ((res.data[0] ?? null) as SignResult | null) : null
+    const row = Array.isArray(res.data)
+      ? ((res.data[0] ?? null) as SignResult | null)
+      : ((res.data ?? null) as SignResult | null)
 
     if (row) {
       if (row.signed_kind === 'main') {
-        setBanner(`Main sponsor signed. ${row.created_objectives} objective(s) created.`)
+        setBanner(`Main sponsor signed. ${row.created_objectives} objective(s) created and targets prepared.`)
       } else if (row.signed_kind === 'secondary') {
         setBanner(`Secondary sponsor signed into slot ${row.assigned_slot_no ?? '—'}.`)
       } else {
@@ -1425,6 +2137,7 @@ export function SponsorsTab({
 
     setOffersModalKind(null)
     await loadDashboard()
+    await loadSponsorObjectives(clubId)
   }
 
   return (
@@ -1468,23 +2181,60 @@ export function SponsorsTab({
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-4 text-sm">
               <div className="rounded-xl bg-gray-50 border p-4">
-                <div className="text-gray-500">Main sponsor</div>
-                <div className="font-semibold mt-2">
-                  {dashboard.needs_main_sponsor ? 'Needed' : 'Signed'}
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <div className="text-gray-500">Main sponsor</div>
+                    <div className="font-semibold mt-2">
+                      {dashboard.needs_main_sponsor ? 'Needed' : 'Signed'}
+                    </div>
+                  </div>
+                  <div
+                    className={[
+                      'flex h-11 w-11 items-center justify-center rounded-full border text-lg font-bold',
+                      dashboard.needs_main_sponsor
+                        ? 'border-amber-200 bg-amber-50 text-amber-700'
+                        : 'border-green-200 bg-green-50 text-green-700',
+                    ].join(' ')}
+                    aria-label={dashboard.needs_main_sponsor ? 'Main sponsor needed' : 'Main sponsor signed'}
+                  >
+                    {dashboard.needs_main_sponsor ? '!' : '✓'}
+                  </div>
                 </div>
               </div>
 
               <div className="rounded-xl bg-gray-50 border p-4">
-                <div className="text-gray-500">Secondary sponsors</div>
-                <div className="font-semibold mt-2">
-                  {dashboard.secondary_slots_used}/{dashboard.secondary_slots_total}
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <div className="text-gray-500">Secondary sponsors</div>
+                    <div className="font-semibold mt-2">
+                      {dashboard.secondary_slots_used}/{dashboard.secondary_slots_total}
+                    </div>
+                  </div>
+                  <div className="flex h-11 min-w-[2.75rem] items-center justify-center rounded-full border border-blue-200 bg-blue-50 px-3 text-sm font-bold text-blue-700">
+                    {dashboard.secondary_slots_used}/{dashboard.secondary_slots_total}
+                  </div>
                 </div>
               </div>
 
               <div className="rounded-xl bg-gray-50 border p-4">
-                <div className="text-gray-500">Technical sponsor</div>
-                <div className="font-semibold mt-2">
-                  {dashboard.needs_technical_sponsor ? 'Needed' : 'Signed'}
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <div className="text-gray-500">Technical sponsor</div>
+                    <div className="font-semibold mt-2">
+                      {dashboard.needs_technical_sponsor ? 'Needed' : 'Signed'}
+                    </div>
+                  </div>
+                  <div
+                    className={[
+                      'flex h-11 w-11 items-center justify-center rounded-full border text-lg font-bold',
+                      dashboard.needs_technical_sponsor
+                        ? 'border-amber-200 bg-amber-50 text-amber-700'
+                        : 'border-green-200 bg-green-50 text-green-700',
+                    ].join(' ')}
+                    aria-label={dashboard.needs_technical_sponsor ? 'Technical sponsor needed' : 'Technical sponsor signed'}
+                  >
+                    {dashboard.needs_technical_sponsor ? '!' : '✓'}
+                  </div>
                 </div>
               </div>
             </div>
@@ -1492,10 +2242,23 @@ export function SponsorsTab({
 
           <MainSponsorHero
             sponsor={signedMain}
-            objectives={mainObjectives}
             currency={currency}
             canOpenOffers={canOpenMainOffers}
             onOpenOffers={() => setOffersModalKind('main')}
+          />
+
+          <SponsorObjectiveCards
+            objectives={
+              signedMain
+                ? sponsorObjectives.filter(
+                    (objective) => objective.club_sponsor_id === signedMain.id
+                  )
+                : []
+            }
+            loading={signedMain ? sponsorObjectivesLoading : false}
+            error={signedMain ? sponsorObjectivesError : null}
+            onOpenRace={handleOpenSponsorObjectiveRace}
+            onShowInCalendar={handleShowSponsorObjectiveInCalendar}
           />
 
           <SecondarySponsorPanel

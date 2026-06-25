@@ -1,5 +1,5 @@
-import React, { useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
+import { useLocation, useNavigate } from 'react-router'
 import {
   AmateurDivision,
   AMATEUR_DIVISIONS,
@@ -33,6 +33,21 @@ type StandingOption = {
   relegationLabel?: string
 }
 
+type PublicInactivityStatus = 'inactive' | 'season_end_removal_pending'
+
+type ClubPublicInactivityRow = {
+  club_id: string
+  public_inactivity_status: PublicInactivityStatus | null
+  inactivity_days_snapshot: number | null
+  season_end_transition_pending: boolean | null
+}
+
+type ClubPublicInactivityUi = {
+  status: PublicInactivityStatus | null
+  days: number | null
+  seasonEndTransitionPending: boolean
+}
+
 type StandingRow = {
   id: string
   position: number
@@ -41,6 +56,9 @@ type StandingRow = {
   points: number
   logoPath?: string | null
   isActive: boolean
+  publicInactivityStatus: PublicInactivityStatus | null
+  inactivityDaysSnapshot: number | null
+  seasonEndTransitionPending: boolean
 }
 
 type TierOption = {
@@ -80,6 +98,137 @@ type MyOwnedClubRecord = {
   tier2_division: Tier2Division | null
   tier3_division: Tier3Division | null
   amateur_division: AmateurDivision | null
+}
+
+
+type TeamInternationalPointsRow = {
+  season_year: number | null
+  team_id: string
+  international_points: number | string | null
+  international_rank?: number | string | null
+}
+
+type ClubDisplayNameLookupRow = {
+  club_id: string
+  display_name: string | null
+  original_name?: string | null
+  full_display_name?: string | null
+}
+
+async function loadClubDisplayNameMap(
+  clubIds: Array<string | null | undefined>,
+): Promise<Map<string, string>> {
+  const uniqueClubIds = Array.from(
+    new Set(
+      clubIds
+        .map((clubId) => clubId?.trim())
+        .filter((clubId): clubId is string => Boolean(clubId)),
+    ),
+  )
+
+  if (uniqueClubIds.length === 0) {
+    return new Map()
+  }
+
+  const { data, error } = await supabase.rpc('get_club_display_names_v1', {
+    p_club_ids: uniqueClubIds,
+  })
+
+  if (error) {
+    console.warn('Could not load club display names for team ranking:', error.message)
+    return new Map()
+  }
+
+  const displayNameByClubId = new Map<string, string>()
+
+  for (const row of (data ?? []) as ClubDisplayNameLookupRow[]) {
+    const clubId = row.club_id?.trim()
+    const displayName = row.display_name?.trim()
+
+    if (clubId && displayName) {
+      displayNameByClubId.set(clubId, displayName)
+    }
+  }
+
+  return displayNameByClubId
+}
+
+async function loadPublicClubInactivityMap(
+  clubIds: Array<string | null | undefined>,
+): Promise<Map<string, ClubPublicInactivityUi>> {
+  const uniqueClubIds = Array.from(
+    new Set(
+      clubIds
+        .map((clubId) => clubId?.trim())
+        .filter((clubId): clubId is string => Boolean(clubId)),
+    ),
+  )
+
+  if (uniqueClubIds.length === 0) {
+    return new Map()
+  }
+
+  const { data, error } = await supabase.rpc('get_public_club_inactivity_statuses_v1', {
+    p_club_ids: uniqueClubIds,
+  })
+
+  if (error) {
+    console.warn('Could not load public inactivity statuses for team ranking:', error.message)
+    return new Map()
+  }
+
+  const map = new Map<string, ClubPublicInactivityUi>()
+
+  for (const row of (data ?? []) as ClubPublicInactivityRow[]) {
+    const clubId = row.club_id?.trim()
+
+    if (!clubId) continue
+
+    map.set(clubId, {
+      status: row.public_inactivity_status ?? null,
+      days: row.inactivity_days_snapshot ?? null,
+      seasonEndTransitionPending: row.season_end_transition_pending === true,
+    })
+  }
+
+  return map
+}
+
+function normalizePointsValue(value: number | string | null | undefined): number {
+  if (typeof value === 'number' && Number.isFinite(value)) return value
+  if (typeof value === 'string' && value.trim() !== '') {
+    const parsed = Number(value)
+    return Number.isFinite(parsed) ? parsed : 0
+  }
+  return 0
+}
+
+async function loadTeamInternationalPointsByTeamId(): Promise<Map<string, number>> {
+  const { data, error } = await supabase
+    .from('team_international_points_by_season_v1')
+    .select('season_year, team_id, international_points, international_rank')
+
+  if (error) {
+    console.error('Failed to load team international points:', error)
+    return new Map()
+  }
+
+  const rows = (data ?? []) as TeamInternationalPointsRow[]
+  const latestSeasonYear = rows.reduce<number | null>((latest, row) => {
+    const seasonYear = typeof row.season_year === 'number' ? row.season_year : null
+    if (seasonYear === null) return latest
+    return latest === null || seasonYear > latest ? seasonYear : latest
+  }, null)
+
+  const map = new Map<string, number>()
+
+  rows.forEach((row) => {
+    if (!row.team_id) return
+    if (latestSeasonYear !== null && row.season_year !== latestSeasonYear) return
+    map.set(row.team_id, normalizePointsValue(row.international_points))
+  })
+
+  return map
 }
 
 const TIER_OPTIONS: TierOption[] = [
@@ -370,16 +519,58 @@ function getDivisionOptions(tier: TeamRankingRecord['tier']): DivisionSelectOpti
   }))
 }
 
-function toStandingRows(teams: TeamRankingRecord[]): StandingRow[] {
-  return teams.map((team, index) => ({
-    id: team.id,
-    position: team.divisionRank ?? team.tierRank ?? team.overallRank ?? index + 1,
-    teamName: team.name,
-    countryCode: team.country,
-    points: team.seasonPoints,
-    logoPath: team.logoPath ?? null,
-    isActive: team.isActive !== false,
-  }))
+function getPublicInactivityLabel(row: StandingRow): string | null {
+  if (row.publicInactivityStatus === 'inactive') {
+    return 'Inactive manager'
+  }
+
+  if (row.publicInactivityStatus === 'season_end_removal_pending') {
+    return 'Inactive manager'
+  }
+
+  return null
+}
+
+function PublicInactivityBadge({ row }: { row: StandingRow }): JSX.Element | null {
+  const label = getPublicInactivityLabel(row)
+
+  if (!label) return null
+
+  const title =
+    row.publicInactivityStatus === 'season_end_removal_pending'
+      ? 'This manager is inactive. The team remains visible until season end.'
+      : 'This manager is inactive. The team remains in standings and results.'
+
+  return (
+    <span
+      title={title}
+      className="inline-flex shrink-0 items-center rounded-full border border-slate-300 bg-slate-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-600"
+    >
+      {label}
+    </span>
+  )
+}
+
+function toStandingRows(
+  teams: TeamRankingRecord[],
+  inactivityByClubId: Map<string, ClubPublicInactivityUi>,
+): StandingRow[] {
+  return teams.map((team, index) => {
+    const inactivity = inactivityByClubId.get(team.id)
+
+    return {
+      id: team.id,
+      position: team.divisionRank ?? team.tierRank ?? team.overallRank ?? index + 1,
+      teamName: team.name,
+      countryCode: team.country,
+      points: team.seasonPoints,
+      logoPath: team.logoPath ?? null,
+      isActive: team.isActive !== false,
+      publicInactivityStatus: inactivity?.status ?? null,
+      inactivityDaysSnapshot: inactivity?.days ?? null,
+      seasonEndTransitionPending: inactivity?.seasonEndTransitionPending ?? false,
+    }
+  })
 }
 
 function getRowClass(
@@ -468,6 +659,64 @@ function mapClubTierToRankingTier(clubTier: string | null): TeamRankingRecord['t
     default:
       return null
   }
+}
+
+function isValidRankingTier(value: string | null): value is TeamRankingRecord['tier'] {
+  return Object.values(TEAM_TIERS).includes(value as TeamRankingRecord['tier'])
+}
+
+function isValidCompetitionDivision(value: string | null): value is CompetitionDivision {
+  if (!value) return false
+
+  return (
+    value === 'WORLD' ||
+    Object.values(TIER2_DIVISIONS).includes(value as Tier2Division) ||
+    Object.values(TIER3_DIVISIONS).includes(value as Tier3Division) ||
+    Object.values(AMATEUR_DIVISIONS).includes(value as AmateurDivision)
+  )
+}
+
+function getTeamRankingSelectionFromSearch(search: string): {
+  tier: TeamRankingRecord['tier']
+  division: CompetitionDivision | null
+  hasSelection: boolean
+} {
+  const params = new URLSearchParams(search)
+  const tierParam = params.get('tier')
+  const divisionParam = params.get('division')
+
+  const tier = isValidRankingTier(tierParam) ? tierParam : TEAM_TIERS.WORLD
+  const division =
+    tier === TEAM_TIERS.WORLD
+      ? null
+      : isValidCompetitionDivision(divisionParam)
+        ? divisionParam
+        : null
+
+  return {
+    tier,
+    division,
+    hasSelection: isValidRankingTier(tierParam),
+  }
+}
+
+function buildTeamRankingSearch(
+  currentSearch: string,
+  tier: TeamRankingRecord['tier'],
+  division: CompetitionDivision | null,
+): string {
+  const params = new URLSearchParams(currentSearch)
+
+  params.set('tier', tier)
+
+  if (tier === TEAM_TIERS.WORLD || !division) {
+    params.delete('division')
+  } else {
+    params.set('division', division)
+  }
+
+  const nextSearch = params.toString()
+  return nextSearch ? `?${nextSearch}` : ''
 }
 
 function PastWinnersModal({
@@ -607,7 +856,7 @@ function PastWinnersModal({
                       Country
                     </th>
                     <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-600">
-                      Points
+                      International points
                     </th>
                   </tr>
                 </thead>
@@ -650,12 +899,26 @@ function PastWinnersModal({
 
 export default function TeamRankingPage(): JSX.Element {
   const navigate = useNavigate()
+  const location = useLocation()
+  const initialSelection = useMemo(
+    () => getTeamRankingSelectionFromSearch(location.search),
+    // Only use the current URL for the first render.
+    // User changes are then controlled by local state and replaceState navigation.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  )
+  const shouldAutoSelectMyCompetitionRef = useRef(!initialSelection.hasSelection)
 
   const [teams, setTeams] = useState<TeamRankingRecord[]>([])
   const [loading, setLoading] = useState(true)
-  const [selectedTier, setSelectedTier] = useState<TeamRankingRecord['tier']>(TEAM_TIERS.WORLD)
-  const [selectedDivision, setSelectedDivision] = useState<CompetitionDivision | null>(null)
+  const [selectedTier, setSelectedTier] = useState<TeamRankingRecord['tier']>(initialSelection.tier)
+  const [selectedDivision, setSelectedDivision] = useState<CompetitionDivision | null>(
+    initialSelection.division,
+  )
   const [myClubIds, setMyClubIds] = useState<string[]>([])
+  const [inactivityByClubId, setInactivityByClubId] = useState<
+    Map<string, ClubPublicInactivityUi>
+  >(new Map())
   const [isPastWinnersOpen, setIsPastWinnersOpen] = useState(false)
 
   useEffect(() => {
@@ -663,9 +926,10 @@ export default function TeamRankingPage(): JSX.Element {
 
     async function load(): Promise<void> {
       try {
-        const [{ data: authData }, teamsResult] = await Promise.all([
+        const [{ data: authData }, teamsResult, internationalPointsByTeamId] = await Promise.all([
           supabase.auth.getUser(),
           getTeamRankingTeams(),
+          loadTeamInternationalPointsByTeamId(),
         ])
 
         if (!mounted) return
@@ -690,28 +954,58 @@ export default function TeamRankingPage(): JSX.Element {
 
           setMyClubIds(ownedClubs.map((club) => club.id))
 
-          if (mainClub) {
+          if (mainClub && shouldAutoSelectMyCompetitionRef.current) {
             const mainClubTier = mapClubTierToRankingTier(mainClub.club_tier)
 
             if (mainClubTier) {
-              setSelectedTier(mainClubTier)
+              let mainClubDivision: CompetitionDivision | null = null
 
-              if (mainClubTier === TEAM_TIERS.WORLD) {
-                setSelectedDivision(null)
-              } else if (mainClubTier === TEAM_TIERS.PRO) {
-                setSelectedDivision(mainClub.tier2_division ?? null)
+              if (mainClubTier === TEAM_TIERS.PRO) {
+                mainClubDivision = mainClub.tier2_division ?? null
               } else if (mainClubTier === TEAM_TIERS.CONTINENTAL) {
-                setSelectedDivision(mainClub.tier3_division ?? null)
+                mainClubDivision = mainClub.tier3_division ?? null
               } else if (mainClubTier === TEAM_TIERS.AMATEUR) {
-                setSelectedDivision(mainClub.amateur_division ?? null)
+                mainClubDivision = mainClub.amateur_division ?? null
               }
+
+              setSelectedTier(mainClubTier)
+              setSelectedDivision(mainClubDivision)
+              shouldAutoSelectMyCompetitionRef.current = false
+
+              navigate(
+                {
+                  pathname: location.pathname,
+                  search: buildTeamRankingSearch(location.search, mainClubTier, mainClubDivision),
+                  hash: location.hash,
+                },
+                { replace: true },
+              )
             }
           }
         } else {
           setMyClubIds([])
         }
 
-        setTeams(teamsResult)
+        const displayNameByClubId = await loadClubDisplayNameMap(
+          teamsResult.map((team) => team.id),
+        )
+
+        if (!mounted) return
+
+        const teamsWithInternationalPoints = teamsResult.map((team) => ({
+          ...team,
+          name: displayNameByClubId.get(team.id) ?? team.name,
+          seasonPoints: internationalPointsByTeamId.get(team.id) ?? 0,
+        }))
+
+        const publicInactivityByClubId = await loadPublicClubInactivityMap(
+          teamsWithInternationalPoints.map((team) => team.id),
+        )
+
+        if (!mounted) return
+
+        setInactivityByClubId(publicInactivityByClubId)
+        setTeams(teamsWithInternationalPoints)
       } catch (error) {
         console.error('Failed to load team ranking page:', error)
       } finally {
@@ -733,7 +1027,7 @@ export default function TeamRankingPage(): JSX.Element {
       mounted = false
       window.removeEventListener('focus', onFocus)
     }
-  }, [])
+  }, [location.hash, location.pathname, location.search, navigate])
 
   const divisionOptions = useMemo(() => getDivisionOptions(selectedTier), [selectedTier])
 
@@ -748,39 +1042,73 @@ export default function TeamRankingPage(): JSX.Element {
     }
 
     if (selectedStanding.type === 'WORLD') {
-      return toStandingRows(getWorldStandings(teams))
+      return toStandingRows(getWorldStandings(teams), inactivityByClubId)
     }
 
     if (selectedStanding.type === 'TIER2') {
       return toStandingRows(
         getTier2DivisionStandings(teams, selectedStanding.division as Tier2Division),
+        inactivityByClubId,
       )
     }
 
     if (selectedStanding.type === 'TIER3') {
       return toStandingRows(
         getTier3DivisionStandings(teams, selectedStanding.division as Tier3Division),
+        inactivityByClubId,
       )
     }
 
     return toStandingRows(
       getAmateurDivisionStandings(teams, selectedStanding.division as AmateurDivision),
+      inactivityByClubId,
     )
-  }, [selectedStanding, teams])
+  }, [selectedStanding, teams, inactivityByClubId])
+
+  function replaceStandingUrl(
+    tier: TeamRankingRecord['tier'],
+    division: CompetitionDivision | null,
+  ): void {
+    navigate(
+      {
+        pathname: location.pathname,
+        search: buildTeamRankingSearch(location.search, tier, division),
+        hash: location.hash,
+      },
+      { replace: true },
+    )
+  }
 
   const handleTierChange = (value: TeamRankingRecord['tier']) => {
+    shouldAutoSelectMyCompetitionRef.current = false
     setSelectedTier(value)
-
-    if (value === TEAM_TIERS.WORLD) {
-      setSelectedDivision(null)
-      return
-    }
-
     setSelectedDivision(null)
+    replaceStandingUrl(value, null)
+  }
+
+  const handleDivisionChange = (value: CompetitionDivision | null) => {
+    shouldAutoSelectMyCompetitionRef.current = false
+    setSelectedDivision(value)
+    replaceStandingUrl(selectedTier, value)
   }
 
   const openClubProfile = (clubId: string) => {
-    navigate(`/dashboard/teams/${clubId}`)
+    const returnTo = `${location.pathname}${buildTeamRankingSearch(
+      location.search,
+      selectedTier,
+      selectedDivision,
+    )}${location.hash}`
+
+    navigate(`/dashboard/teams/${clubId}`, {
+      state: {
+        returnTo,
+        returnLabel: '← Back',
+        returnScrollX: typeof window !== 'undefined' ? window.scrollX : 0,
+        returnScrollY: typeof window !== 'undefined' ? window.scrollY : 0,
+        teamRankingTier: selectedTier,
+        teamRankingDivision: selectedDivision,
+      },
+    })
   }
 
   return (
@@ -822,7 +1150,7 @@ export default function TeamRankingPage(): JSX.Element {
                 id="division-select"
                 value={selectedDivision ?? ''}
                 onChange={(e) =>
-                  setSelectedDivision(
+                  handleDivisionChange(
                     e.target.value ? (e.target.value as CompetitionDivision) : null,
                   )
                 }
@@ -872,7 +1200,7 @@ export default function TeamRankingPage(): JSX.Element {
               </h3>
               <p className="mt-1 text-sm text-slate-600">
                 {selectedStanding
-                  ? 'Current season standings based on points collected across all competitions.'
+                  ? 'Current season standings based on international points from race results.'
                   : 'Choose a tier and division to view the standings.'}
               </p>
             </div>
@@ -944,10 +1272,15 @@ export default function TeamRankingPage(): JSX.Element {
                         >
                           <TeamLogo src={row.logoPath} teamName={row.teamName} />
 
-                          <div className="flex items-center gap-2">
-                            <span className="font-medium hover:underline">{row.teamName}</span>
+                          <div className="flex min-w-0 flex-wrap items-center gap-2">
+                            <div className="flex min-w-0 items-center gap-2">
+                              <span className="truncate font-semibold text-slate-900 hover:underline">
+                                {row.teamName}
+                              </span>
+                              <PublicInactivityBadge row={row} />
+                            </div>
 
-                            {!row.isActive ? (
+                            {!row.isActive && !row.publicInactivityStatus ? (
                               <span className="rounded-full bg-slate-200 px-2 py-0.5 text-[11px] font-semibold text-slate-700">
                                 Inactive
                               </span>

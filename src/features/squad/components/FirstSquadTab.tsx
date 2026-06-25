@@ -62,6 +62,30 @@ export type HealthOverviewDisplayRow = ClubHealthOverviewRow & {
   full_name: string
 }
 
+export type SquadDisplayRaceRow = {
+  riderId: string
+  riderName: string
+  role: string | null
+  position: number | null
+  resultLabel: string
+  points: number
+}
+
+export type SquadDisplaySelectionRow = {
+  riderId: string
+  riderName: string
+  role: string | null
+  raceName?: string | null
+  stageLabel?: string | null
+  raceSharpness?: number | null
+  raceSharpnessLabel?: string | null
+}
+
+export type SquadDisplayRaceTypeRow = {
+  label: string
+  value: number
+}
+
 export type SquadDisplayData = {
   seasonTrend: ChartPoint[]
   podiumChart: ChartPoint[]
@@ -71,6 +95,233 @@ export type SquadDisplayData = {
     top10s: number
     bestGC: number
   }
+  lastTeamRace?: {
+    raceId?: string | null
+    raceName: string | null
+    raceCategory?: string | null
+    raceCountryCode?: string | null
+    stageDate?: string | null
+    stageLabel: string | null
+    routeLabel?: string | null
+    stageCount?: number | null
+    rows: SquadDisplayRaceRow[]
+  }
+  nextRaceSelection?: {
+    raceId?: string | null
+    raceName: string | null
+    raceCategory?: string | null
+    raceCountryCode?: string | null
+    stageDate?: string | null
+    stageLabel: string | null
+    routeLabel?: string | null
+    stageCount?: number | null
+    rows: SquadDisplaySelectionRow[]
+  }
+  raceTypeSnapshot?: SquadDisplayRaceTypeRow[]
+}
+
+function formatOrdinal(value?: number | null): string {
+  if (value === null || value === undefined || value <= 0) return '—'
+
+  const mod10 = value % 10
+  const mod100 = value % 100
+
+  if (mod10 === 1 && mod100 !== 11) return `${value}st`
+  if (mod10 === 2 && mod100 !== 12) return `${value}nd`
+  if (mod10 === 3 && mod100 !== 13) return `${value}rd`
+
+  return `${value}th`
+}
+
+function formatBestGcValue(value: number): string {
+  return value > 0 ? formatOrdinal(value) : '—'
+}
+
+function parseDateOnlyMs(value?: string | null): number | null {
+  if (!value) return null
+
+  const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(value))
+  if (!match) return null
+
+  const year = Number(match[1])
+  const month = Number(match[2])
+  const day = Number(match[3])
+
+  if (!Number.isFinite(year) || !Number.isFinite(month) || !Number.isFinite(day)) {
+    return null
+  }
+
+  return Date.UTC(year, month - 1, day)
+}
+
+function isDateAfter(left?: string | null, right?: string | null): boolean {
+  const leftMs = parseDateOnlyMs(left)
+  const rightMs = parseDateOnlyMs(right)
+
+  if (leftMs === null || rightMs === null) return false
+
+  return leftMs > rightMs
+}
+
+function getStageNumberFromLabel(stageLabel?: string | null): number | null {
+  const match = /\bstage\s+(\d+)\b/i.exec(String(stageLabel ?? ''))
+  if (!match) return null
+
+  const stageNumber = Number(match[1])
+  return Number.isFinite(stageNumber) && stageNumber > 0 ? stageNumber : null
+}
+
+function isStageSliceForMultiStageRace(race?: {
+  stageLabel?: string | null
+  stageCount?: number | null
+} | null): boolean {
+  const stageNumber = getStageNumberFromLabel(race?.stageLabel)
+  const stageCount = Number(race?.stageCount ?? 0)
+
+  return Boolean(stageNumber && stageCount > 1)
+}
+
+function isLaterStageInsideAlreadyStartedRace(race?: {
+  stageLabel?: string | null
+  stageCount?: number | null
+} | null): boolean {
+  const stageNumber = getStageNumberFromLabel(race?.stageLabel)
+  const stageCount = Number(race?.stageCount ?? 0)
+
+  return Boolean(stageNumber && stageNumber > 1 && stageCount > 1)
+}
+
+function getVisibleLastTeamRace<T extends {
+  raceName?: string | null
+  stageLabel?: string | null
+  stageCount?: number | null
+}>(race?: T | null): T | undefined {
+  if (!race?.raceName) return undefined
+
+  /*
+   * Last Team Race must be a finished whole race, not the latest completed
+   * stage inside an active stage race. If the payload still says "Stage 4"
+   * of an 11-stage race, hide it until the backend sends final race-level
+   * classification data.
+   */
+  if (isStageSliceForMultiStageRace(race)) return undefined
+
+  return race
+}
+
+function getVisibleNextRaceSelection<T extends {
+  raceName?: string | null
+  stageDate?: string | null
+  stageLabel?: string | null
+  stageCount?: number | null
+}>(race: T | undefined | null, gameDate: string | null): T | undefined {
+  if (!race?.raceName) return undefined
+
+  /*
+   * Next Team Race means a submitted race plan for a race that has not
+   * started yet. A future stage inside an already-started race, such as
+   * Stage 5 tomorrow, is a current race continuation, not the next race.
+   */
+  if (isLaterStageInsideAlreadyStartedRace(race)) return undefined
+
+  if (gameDate && race.stageDate && !isDateAfter(race.stageDate, gameDate)) {
+    return undefined
+  }
+
+  return race
+}
+
+
+function getRaceSummarySubtitle(raceName?: string | null, stageLabel?: string | null): string {
+  const parts = [raceName, stageLabel].filter((value): value is string => Boolean(value))
+  return parts.length > 0 ? parts.join(' · ') : 'No race found yet'
+}
+
+function getRaceTypeSnapshotMax(rows: SquadDisplayRaceTypeRow[]): number {
+  return Math.max(...rows.map((row) => row.value), 1)
+}
+
+function RaceSummaryHeader({
+  title,
+  raceName,
+  stageLabel,
+}: {
+  title: string
+  raceName?: string | null
+  stageLabel?: string | null
+}) {
+  return (
+    <div className="mb-4">
+      <div className="text-base font-semibold text-gray-800">{title}</div>
+      <div className="mt-1 text-sm text-gray-500">
+        {getRaceSummarySubtitle(raceName, stageLabel)}
+      </div>
+    </div>
+  )
+}
+
+function RacePreviewStrip({
+  raceName,
+  raceCountryCode,
+  raceCategory,
+  stageDate,
+  stageLabel,
+  routeLabel,
+  stageCount,
+  emptyLabel = 'No race found yet',
+}: {
+  raceName?: string | null
+  raceCountryCode?: string | null
+  raceCategory?: string | null
+  stageDate?: string | null
+  stageLabel?: string | null
+  routeLabel?: string | null
+  stageCount?: number | null
+  emptyLabel?: string
+}) {
+  if (!raceName) {
+    return (
+      <div className="mt-2 rounded-lg border border-dashed border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-500">
+        {emptyLabel}
+      </div>
+    )
+  }
+
+  const details = [
+    stageLabel,
+    stageCount && stageCount > 1 ? `${stageCount} stages` : null,
+    routeLabel,
+  ].filter((value): value is string => Boolean(value))
+
+  return (
+    <div className="mt-2 flex min-w-0 items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm shadow-sm">
+      <div className="w-[68px] shrink-0 whitespace-nowrap text-xs font-semibold text-slate-900">
+        {stageDate ? formatShortGameDate(stageDate) : '—'}
+      </div>
+
+      <div className="h-7 w-px shrink-0 bg-emerald-400" />
+
+      <div className="flex min-w-0 flex-1 items-center gap-2 overflow-hidden">
+        <CountryFlag countryCode={raceCountryCode} />
+
+        <div className="min-w-0 flex-1 truncate font-semibold text-slate-900">
+          {raceName}
+        </div>
+
+        {raceCategory ? (
+          <span className="shrink-0 rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700">
+            {raceCategory}
+          </span>
+        ) : null}
+
+        {details.length > 0 ? (
+          <span className="min-w-0 truncate text-xs text-slate-500">
+            · {details.join(' · ')}
+          </span>
+        ) : null}
+      </div>
+    </div>
+  )
 }
 
 const SQUAD_LIST_VIEW_OPTIONS: Array<{ value: SquadListView; label: string }> = [
@@ -486,6 +737,12 @@ export default function FirstSquadTab({
 
   const currentViewLabel =
     SQUAD_LIST_VIEW_OPTIONS.find((option) => option.value === listView)?.label ?? 'General View'
+
+  const visibleLastTeamRace = getVisibleLastTeamRace(squadDisplayData.lastTeamRace)
+  const visibleNextRaceSelection = getVisibleNextRaceSelection(
+    squadDisplayData.nextRaceSelection,
+    gameDate
+  )
 
   return (
     <>
@@ -905,60 +1162,104 @@ export default function FirstSquadTab({
             <CompactValueTile label="Season Wins" value={`${squadDisplayData.summary.wins}`} />
             <CompactValueTile label="Season Podiums" value={`${squadDisplayData.summary.podiums}`} />
             <CompactValueTile label="Top 10 Results" value={`${squadDisplayData.summary.top10s}`} />
-            <CompactValueTile label="Best GC" value={`${squadDisplayData.summary.bestGC}`} />
+            <CompactValueTile label="Best GC" value={formatBestGcValue(squadDisplayData.summary.bestGC)} />
           </div>
 
           <div className="mt-6 grid grid-cols-1 gap-4 xl:grid-cols-2">
             <div className="rounded-lg bg-white p-4 shadow">
               <div className="mb-4">
                 <div className="text-base font-semibold text-gray-800">Last Team Race</div>
-                <div className="mt-1 text-sm text-gray-500">Result preview (mocked)</div>
+                <RacePreviewStrip
+                  raceName={visibleLastTeamRace?.raceName}
+                  raceCountryCode={visibleLastTeamRace?.raceCountryCode}
+                  raceCategory={visibleLastTeamRace?.raceCategory}
+                  stageDate={visibleLastTeamRace?.stageDate}
+                  stageLabel={visibleLastTeamRace?.stageLabel}
+                  routeLabel={visibleLastTeamRace?.routeLabel}
+                  stageCount={visibleLastTeamRace?.stageCount}
+                  emptyLabel="No finished full-race classification found for this squad yet."
+                />
               </div>
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-gray-200 text-left text-gray-500">
-                      <th className="py-2 pr-4">Rider</th>
-                      <th className="py-2 pr-4">Role</th>
-                      <th className="py-2">Result</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {riders.slice(0, 8).map((r, index) => (
-                      <tr key={r.id} className="border-b border-gray-100 last:border-0">
-                        <td className="py-3 pr-4 font-medium text-gray-800">{r.name}</td>
-                        <td className="py-3 pr-4 text-gray-600">{r.role}</td>
-                        <td className="py-3 text-gray-700">
-                          {index < 3 ? `${index + 1}th` : `${index + 4}th`}
-                        </td>
+
+              {visibleLastTeamRace?.rows?.length ? (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-gray-200 text-left text-gray-500">
+                        <th className="py-2 pr-4">Rider</th>
+                        <th className="py-2 pr-4">Role</th>
+                        <th className="py-2 pr-4">Result</th>
+                        <th className="py-2 text-right">Int. pts</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody>
+                      {visibleLastTeamRace.rows.map((row) => (
+                        <tr key={row.riderId} className="border-b border-gray-100 last:border-0">
+                          <td className="py-3 pr-4 font-medium text-gray-800">{row.riderName}</td>
+                          <td className="py-3 pr-4 text-gray-600">{row.role ?? '—'}</td>
+                          <td className="py-3 pr-4 text-gray-700">
+                            {row.resultLabel || formatOrdinal(row.position)}
+                          </td>
+                          <td className="py-3 text-right font-semibold text-slate-900">
+                            {row.points.toLocaleString()}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className="rounded-xl border border-gray-100 bg-gray-50 px-4 py-6 text-sm text-gray-600">
+                  No finished full-race classification found for this squad yet.
+                </div>
+              )}
             </div>
 
             <div className="rounded-lg bg-white p-4 shadow">
               <div className="mb-4">
-                <div className="text-base font-semibold text-gray-800">Next Race Selection</div>
-                <div className="mt-1 text-sm text-gray-500">Mock selection preview</div>
+                <div className="text-base font-semibold text-gray-800">Next Team Race</div>
+                <RacePreviewStrip
+                  raceName={visibleNextRaceSelection?.raceName}
+                  raceCountryCode={visibleNextRaceSelection?.raceCountryCode}
+                  raceCategory={visibleNextRaceSelection?.raceCategory}
+                  stageDate={visibleNextRaceSelection?.stageDate}
+                  stageLabel={visibleNextRaceSelection?.stageLabel}
+                  routeLabel={visibleNextRaceSelection?.routeLabel}
+                  stageCount={visibleNextRaceSelection?.stageCount}
+                  emptyLabel="No next not-started submitted race plan found for this squad yet."
+                />
               </div>
-              <div className="space-y-3">
-                {riders.slice(0, 7).map((r) => (
-                  <div
-                    key={r.id}
-                    className="flex flex-col gap-2 rounded-xl border border-gray-100 p-3 md:flex-row md:items-center md:justify-between"
-                  >
-                    <div>
-                      <div className="font-medium text-gray-800">{r.name}</div>
-                      <div className="mt-1 text-sm text-gray-500">Selected for role {r.role}</div>
-                    </div>
-                    <div className="rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-700">
-                      {r.role}
-                    </div>
-                  </div>
-                ))}
-              </div>
+
+              {visibleNextRaceSelection?.rows?.length ? (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-gray-200 text-left text-gray-500">
+                        <th className="py-2 pr-4">Rider</th>
+                        <th className="py-2 pr-4">Role</th>
+                        <th className="py-2 text-right">Sharpness</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {visibleNextRaceSelection.rows.map((row) => (
+                        <tr key={row.riderId} className="border-b border-gray-100 last:border-0">
+                          <td className="py-3 pr-4 font-medium text-gray-800">{row.riderName}</td>
+                          <td className="py-3 pr-4 text-gray-600">{row.role ?? '—'}</td>
+                          <td className="py-3 text-right font-semibold text-emerald-700">
+                            {row.raceSharpness !== null && row.raceSharpness !== undefined
+                              ? `${Math.round(row.raceSharpness)}/100`
+                              : '—'}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className="rounded-xl border border-gray-100 bg-gray-50 px-4 py-6 text-sm text-gray-600">
+                  No next not-started submitted race plan found for this squad yet.
+                </div>
+              )}
             </div>
           </div>
 
@@ -980,17 +1281,12 @@ export default function FirstSquadTab({
             <div className="rounded-lg bg-white p-4 shadow xl:col-span-3">
               <div className="text-base font-semibold text-gray-800">Race Type Snapshot</div>
               <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
-                {[
-                  { label: 'One-day classics', value: 72 },
-                  { label: 'Stage finishes', value: 60 },
-                  { label: 'Mountain days', value: 34 },
-                  { label: 'Time trials', value: 29 },
-                ].map((item) => (
+                {(squadDisplayData.raceTypeSnapshot ?? []).map((item) => (
                   <HorizontalMetricBar
                     key={item.label}
                     label={item.label}
                     value={item.value}
-                    max={100}
+                    max={getRaceTypeSnapshotMax(squadDisplayData.raceTypeSnapshot ?? [])}
                   />
                 ))}
               </div>

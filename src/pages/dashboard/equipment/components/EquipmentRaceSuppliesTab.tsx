@@ -287,6 +287,74 @@ function formatUses(value: number | null): string {
   return value % 1 === 0 ? value.toFixed(0) : value.toFixed(1)
 }
 
+function formatPercent(value: number | null): string {
+  if (value === null || !Number.isFinite(value)) return '—'
+  return `${Math.round(value)}%`
+}
+
+function getPurchaseInputValue(value: number | undefined): string {
+  if (!value || value <= 0) return ''
+  return String(value)
+}
+
+function getDurableUsageStats(item: RaceSupplyItem, rule: RaceSupplyRule) {
+  const summary = getDurableSupplySummary(item)
+  const maxStageUses = summary.maxStageUses ?? (
+    item.supply_key === 'race_jersey_complete' ? 10 : 25
+  )
+
+  const totalUnits = summary.totalUnits ?? item.total_purchased ?? item.quantity_available ?? 0
+  const usableUnits = summary.usableUnits ?? item.quantity_available ?? 0
+  const wornOutUnits = summary.wornOutUnits ?? 0
+  const discardedUnits = summary.discardedUnits ?? 0
+  const purchasedUnits = item.total_purchased ?? totalUnits
+  const availableUnits = item.quantity_available ?? usableUnits
+
+  const totalStageCapacity = Math.max(0, totalUnits * maxStageUses)
+  const usedStageUses = Math.max(0, Number(item.total_used ?? 0))
+
+  const avgUsesRemaining = summary.avgUsesRemaining
+  const estimatedRemainingFromUnits =
+    avgUsesRemaining !== null ? Math.max(0, avgUsesRemaining * usableUnits) : null
+
+  const remainingStageUses =
+    estimatedRemainingFromUnits !== null
+      ? estimatedRemainingFromUnits
+      : Math.max(0, totalStageCapacity - usedStageUses)
+
+  const consumedStageUses =
+    totalStageCapacity > 0
+      ? Math.min(totalStageCapacity, Math.max(usedStageUses, totalStageCapacity - remainingStageUses))
+      : usedStageUses
+
+  const conditionPercent =
+    totalStageCapacity > 0
+      ? Math.max(0, Math.min(100, (remainingStageUses / totalStageCapacity) * 100))
+      : null
+
+  const usedPercent =
+    totalStageCapacity > 0
+      ? Math.max(0, Math.min(100, (consumedStageUses / totalStageCapacity) * 100))
+      : 0
+
+  return {
+    availableUnits,
+    purchasedUnits,
+    usableUnits,
+    wornOutUnits,
+    discardedUnits,
+    maxStageUses,
+    totalStageCapacity,
+    usedStageUses: consumedStageUses,
+    remainingStageUses,
+    conditionPercent,
+    usedPercent,
+    remainingPercent: conditionPercent,
+    minUsesRemaining: summary.minUsesRemaining,
+    maxUsesRemaining: summary.maxUsesRemaining,
+  }
+}
+
 function getRaceSupplyStockStatus(
   item: RaceSupplyItem,
   rule: RaceSupplyRule,
@@ -509,11 +577,11 @@ function DurableMetric({
   value: string
 }) {
   return (
-    <div className="rounded-lg border border-blue-100 bg-white px-3 py-2">
-      <div className="text-[11px] uppercase tracking-wide text-blue-500">
+    <div className="rounded-md border border-blue-100 bg-white px-2.5 py-2">
+      <div className="text-[10px] font-semibold uppercase tracking-wide text-blue-500">
         {label}
       </div>
-      <div className="mt-1 text-sm font-semibold text-blue-950">{value}</div>
+      <div className="mt-0.5 text-sm font-semibold text-blue-950">{value}</div>
     </div>
   )
 }
@@ -531,13 +599,13 @@ function DurableSupplyOverviewPanel({
   if (durableItems.length === 0) return null
 
   return (
-    <div className="rounded-xl bg-white p-5 shadow-sm xl:col-span-2">
+    <div className="rounded-xl bg-white p-4 shadow-sm xl:col-span-2">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h4 className="text-lg font-semibold text-gray-900">
+          <h4 className="text-base font-semibold text-gray-900">
             Durable reusable supply condition
           </h4>
-          <p className="mt-1 text-sm text-gray-500">
+          <p className="mt-1 text-xs text-gray-500">
             Race Jersey Complete and Rain Jackets are reusable units. This panel
             keeps their counts and remaining stage-use durability visible in one
             place.
@@ -549,73 +617,110 @@ function DurableSupplyOverviewPanel({
         </span>
       </div>
 
-      <div className="mt-4 grid gap-4 lg:grid-cols-2">
+      <div className="mt-3 grid gap-3 lg:grid-cols-2">
         {durableItems.map((item) => {
           const rule = getRaceSupplyRule(item.supply_key)
           if (!rule) return null
 
-          const summary = getDurableSupplySummary(item)
-          const maxStageUses = summary.maxStageUses ?? (
-            item.supply_key === 'race_jersey_complete' ? 10 : 25
-          )
-          const usableUnits = summary.usableUnits ?? item.quantity_available
-          const wornOutUnits = summary.wornOutUnits ?? 0
-          const avgUsesRemaining = summary.avgUsesRemaining ?? maxStageUses
-          const minUsesRemaining = summary.minUsesRemaining
-          const maxUsesRemaining = summary.maxUsesRemaining
+          const stats = getDurableUsageStats(item, rule)
 
           return (
             <div
               key={item.supply_key}
-              className="relative rounded-2xl border border-blue-100 bg-blue-50 p-4 pr-32"
+              className="relative rounded-xl border border-blue-100 bg-blue-50 p-3"
             >
-              <span className="absolute right-4 top-4 rounded-full bg-white px-2 py-0.5 text-xs font-semibold text-blue-700 shadow-sm">
-                {formatUses(maxStageUses)} stage uses
-              </span>
-
-              <div className="min-w-0">
-                <div className="text-sm font-semibold text-blue-950">
-                  {item.display_name}
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="text-sm font-semibold text-blue-950">
+                    {item.display_name}
+                  </div>
+                  <div className="mt-1 max-w-[34rem] text-xs leading-5 text-blue-800">
+                    {rule.durabilityRule}
+                  </div>
                 </div>
-                <div className="mt-1 max-w-[34rem] text-xs leading-5 text-blue-800">
-                  {rule.durabilityRule}
+
+                <span className="rounded-full bg-white px-2 py-0.5 text-xs font-semibold text-blue-700 shadow-sm">
+                  {formatUses(stats.maxStageUses)} uses / unit
+                </span>
+              </div>
+
+              <div className="mt-3 rounded-lg border border-blue-100 bg-white p-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div>
+                    <div className="text-xs font-semibold uppercase tracking-wide text-blue-500">
+                      Overall condition
+                    </div>
+                    <div className="mt-0.5 text-xl font-bold text-blue-950">
+                      {formatPercent(stats.conditionPercent)}
+                    </div>
+                  </div>
+
+                  <div className="text-right text-xs text-blue-700">
+                    <div>
+                      Used:{' '}
+                      <span className="font-semibold">
+                        {formatPercent(stats.usedPercent)} ({formatUses(stats.usedStageUses)} / {formatUses(stats.totalStageCapacity)})
+                      </span>
+                    </div>
+                    <div>
+                      Left:{' '}
+                      <span className="font-semibold">
+                        {formatPercent(stats.remainingPercent)} ({formatUses(stats.remainingStageUses)} uses)
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-2 h-2 overflow-hidden rounded-full bg-blue-100">
+                  <div
+                    className="h-full rounded-full bg-blue-600"
+                    style={{ width: `${stats.usedPercent}%` }}
+                  />
+                </div>
+
+                <div className="mt-1 flex justify-between text-[11px] text-blue-500">
+                  <span>used</span>
+                  <span>full capacity</span>
                 </div>
               </div>
 
-              <div className="mt-3 grid grid-cols-2 gap-2 md:grid-cols-3">
+              <div className="mt-2 grid grid-cols-2 gap-2 md:grid-cols-4">
                 <DurableMetric
-                  label="Available"
-                  value={formatUses(item.quantity_available)}
+                  label="Available now"
+                  value={formatUses(stats.availableUnits)}
                 />
                 <DurableMetric
-                  label="Purchased"
-                  value={formatUses(item.total_purchased)}
-                />
-                <DurableMetric
-                  label="Used"
-                  value={formatUses(item.total_used)}
+                  label="Purchased units"
+                  value={formatUses(stats.purchasedUnits)}
                 />
                 <DurableMetric
                   label="Usable units"
-                  value={formatUses(usableUnits)}
+                  value={formatUses(stats.usableUnits)}
                 />
                 <DurableMetric
                   label="Worn out"
-                  value={formatUses(wornOutUnits)}
+                  value={formatUses(stats.wornOutUnits)}
                 />
                 <DurableMetric
-                  label="Avg uses left"
-                  value={formatUses(avgUsesRemaining)}
+                  label="Discarded"
+                  value={formatUses(stats.discardedUnits)}
                 />
-              </div>
-
-              <div className="mt-3 rounded-lg border border-blue-100 bg-white px-3 py-2 text-xs text-blue-800">
-                Uses range:{' '}
-                <span className="font-semibold">
-                  {minUsesRemaining === null || maxUsesRemaining === null
-                    ? '—'
-                    : `${formatUses(minUsesRemaining)}–${formatUses(maxUsesRemaining)}`}
-                </span>
+                <DurableMetric
+                  label="Capacity left"
+                  value={formatPercent(stats.remainingPercent)}
+                />
+                <DurableMetric
+                  label="Capacity used"
+                  value={formatPercent(stats.usedPercent)}
+                />
+                <DurableMetric
+                  label="Per-unit range"
+                  value={
+                    stats.minUsesRemaining === null || stats.maxUsesRemaining === null
+                      ? '—'
+                      : `${formatUses(stats.minUsesRemaining)}–${formatUses(stats.maxUsesRemaining)}`
+                  }
+                />
               </div>
             </div>
           )
@@ -652,11 +757,11 @@ export default function EquipmentRaceSuppliesTab({
       nextItems.forEach((item) => {
         const rule = getRaceSupplyRule(item.supply_key)
 
-        initialQuantities[item.supply_key] =
-          rule?.defaultPurchaseQuantity ?? 1
+        void rule
+        initialQuantities[item.supply_key] = 0
       })
 
-      setQuantities((current) => ({ ...initialQuantities, ...current }))
+      setQuantities(initialQuantities)
     } catch (err) {
       setError(
         err instanceof Error ? err.message : 'Failed to load race supplies',
@@ -678,8 +783,15 @@ export default function EquipmentRaceSuppliesTab({
     }
 
     const rule = getRaceSupplyRule(item.supply_key)
+    const requestedQuantity = quantities[item.supply_key] ?? 0
+
+    if (requestedQuantity <= 0) {
+      setError(`Enter how many ${item.display_name} you want to buy.`)
+      return
+    }
+
     const quantity = normalizePurchaseQuantity(
-      quantities[item.supply_key] ?? rule?.defaultPurchaseQuantity ?? 1,
+      requestedQuantity,
       rule ?? {
         key: item.supply_key as RaceSupplyKey,
         displayName: item.display_name,
@@ -767,16 +879,16 @@ export default function EquipmentRaceSuppliesTab({
 
             const imageUrl = getRaceSupplyImageUrl(item)
             const isDurable = rule?.useType === 'durable'
-            const purchaseQuantity = quantities[item.supply_key] ?? 1
+            const purchaseQuantity = quantities[item.supply_key] ?? 0
 
             return (
               <div
                 key={item.supply_key}
                 className="relative rounded-xl bg-white shadow-sm"
               >
-                <div className="grid min-h-[230px] gap-0 md:grid-cols-[220px_1fr]">
+                <div className="grid min-h-[230px] gap-0 md:grid-cols-[260px_1fr]">
                   <div className="flex items-center justify-center bg-gray-50 p-4">
-                    <div className="flex h-44 w-full items-center justify-center overflow-hidden rounded-lg border border-gray-100 bg-white">
+                    <div className="flex h-56 w-full items-center justify-center overflow-hidden rounded-lg border border-gray-100 bg-white">
                       {imageUrl ? (
                         <img
                           src={imageUrl}
@@ -809,10 +921,10 @@ export default function EquipmentRaceSuppliesTab({
                   <div className="flex flex-col p-5">
                     <div className="flex items-start justify-between gap-3">
                       <div>
-                        <h4 className="text-lg font-semibold text-gray-900">
+                        <h4 className="text-base font-semibold text-gray-900">
                           {item.display_name}
                         </h4>
-                        <p className="mt-1 text-sm text-gray-500">
+                        <p className="mt-1 text-xs text-gray-500">
                           {item.brand_name
                             ? `Brand: ${item.brand_name}`
                             : 'Generic supply'}
@@ -862,8 +974,10 @@ export default function EquipmentRaceSuppliesTab({
 
                     <div className="mt-5 grid grid-cols-4 gap-3 text-sm">
                       <div>
-                        <div className="text-xs text-gray-400">Available</div>
-                        <div className="font-semibold text-gray-900">
+                        <div className="text-[11px] font-semibold uppercase tracking-wide text-emerald-600">
+                          In stock now
+                        </div>
+                        <div className="mt-1 text-lg font-bold text-gray-900">
                           {item.quantity_available}
                         </div>
                       </div>
@@ -891,40 +1005,49 @@ export default function EquipmentRaceSuppliesTab({
                     </div>
 
 
-                    <div className="mt-auto flex gap-2 pt-5">
+                    <div className="mt-auto pt-5">
+                      <div className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-gray-400">
+                        New order quantity
+                      </div>
+                      <div className="flex gap-2">
                       <input
                         type="number"
-                        min={rule?.minPurchaseQuantity ?? 1}
+                        min={0}
                         max={rule?.maxPurchaseQuantity ?? 999}
-                        value={purchaseQuantity}
-                        onChange={(event) =>
+                        value={getPurchaseInputValue(purchaseQuantity)}
+                        placeholder="0"
+                        onChange={(event) => {
+                          const rawValue = event.target.value
+
                           setQuantities((current) => ({
                             ...current,
-                            [item.supply_key]: normalizePurchaseQuantity(
-                              Number(event.target.value),
-                              rule ?? {
-                                key: item.supply_key as RaceSupplyKey,
-                                displayName: item.display_name,
-                                shortLabel: item.display_name,
-                                useType: 'consumable',
-                                defaultPurchaseQuantity: 1,
-                                minPurchaseQuantity: 1,
-                                maxPurchaseQuantity: 999,
-                                stockLowThreshold: 20,
-                                stageRule: '',
-                                durabilityRule: '',
-                                positiveEffects: [],
-                                negativeEffects: [],
-                              },
-                            ),
+                            [item.supply_key]: rawValue.trim() === ''
+                              ? 0
+                              : normalizePurchaseQuantity(
+                                  Number(rawValue),
+                                  rule ?? {
+                                    key: item.supply_key as RaceSupplyKey,
+                                    displayName: item.display_name,
+                                    shortLabel: item.display_name,
+                                    useType: 'consumable',
+                                    defaultPurchaseQuantity: 1,
+                                    minPurchaseQuantity: 1,
+                                    maxPurchaseQuantity: 999,
+                                    stockLowThreshold: 20,
+                                    stageRule: '',
+                                    durabilityRule: '',
+                                    positiveEffects: [],
+                                    negativeEffects: [],
+                                  },
+                                ),
                           }))
-                        }
+                        }}
                         className="w-28 rounded border border-gray-200 px-3 py-2 text-sm"
                       />
 
                       <button
                         type="button"
-                        disabled={actionLoadingKey === item.supply_key}
+                        disabled={actionLoadingKey === item.supply_key || purchaseQuantity <= 0}
                         onClick={() => void handleBuy(item)}
                         className="flex-1 rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
                       >
@@ -934,6 +1057,7 @@ export default function EquipmentRaceSuppliesTab({
                             ? 'Buy Units'
                             : 'Buy'}
                       </button>
+                      </div>
                     </div>
                   </div>
                 </div>

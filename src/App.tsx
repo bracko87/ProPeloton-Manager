@@ -33,6 +33,7 @@ import RaceDetailPage from './pages/dashboard/RaceDetailPage'
 import RacePreparationPage from './pages/dashboard/RacePreparation'
 import TeamRankingPage from './pages/dashboard/TeamRanking'
 import TeamProfilePage from './pages/dashboard/TeamProfilePage'
+import ClubIdentityPage from './pages/dashboard/ClubIdentityPage'
 import SeasonResetPreviewPage from './pages/dashboard/SeasonResetPreview'
 import TrainingPage from './pages/dashboard/Training'
 import CurrentTrainingCampPage from './pages/dashboard/training/CurrentTrainingCampPage'
@@ -293,6 +294,7 @@ export default function App(): JSX.Element {
 
             <Route path="team-ranking" element={<TeamRankingPage />} />
             <Route path="teams/:clubId" element={<TeamProfilePage />} />
+            <Route path="club-identity" element={<ClubIdentityPage />} />
             <Route path="season-reset-preview" element={<SeasonResetPreviewPage />} />
 
             <Route path="training" element={<TrainingPage />} />

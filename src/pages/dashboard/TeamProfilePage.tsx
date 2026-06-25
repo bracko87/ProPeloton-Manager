@@ -19,6 +19,8 @@ import ReportPlayerButton from '../../components/dashboard/ReportPlayerButton'
 import { normalizeGameDateValue } from '../../features/squad/utils/dates'
 import { supabase } from '../../lib/supabase'
 
+const RACE_PROFILE_RETURN_STORAGE_KEY = 'pro_peloton_race_profile_return_state_v1'
+
 /**
  * ClubProfileRecord
  * Shape of a single club profile row from the public profile view.
@@ -70,6 +72,72 @@ type TeamRosterRow = {
   country_code: string | null
   role: string | null
   birth_date: string | null
+}
+
+type AiTeamKitPreviewRow = {
+  club_id: string
+  jersey_url: string | null
+}
+
+type TeamInternationalPointsSummary = {
+  international_rank: number | string | null
+  season_year: number | null
+  team_id: string
+  team_name_snapshot: string | null
+  international_points: number | string | null
+  oneday_finish_points: number | string | null
+  stage_finish_points: number | string | null
+  leader_day_points: number | string | null
+  final_gc_points: number | string | null
+  scoring_rows: number | string | null
+  scoring_races: number | string | null
+  scoring_stages: number | string | null
+}
+
+type ProfileReturnState = {
+  returnTo?: string
+  returnLabel?: string
+  returnRaceId?: string
+  returnScrollX?: number
+  returnScrollY?: number
+  scrollX?: number
+  scrollY?: number
+  restoreScrollX?: number
+  restoreScrollY?: number
+  raceInfoExpanded?: boolean
+  raceInfoTab?: 'participants' | 'results'
+}
+
+type TeamRecentRaceRow = {
+  race_id: string
+  race_name: string
+  race_country_code: string | null
+  race_category: string | null
+  race_start_date: string | null
+  race_end_date: string | null
+  race_date: string | null
+  stage_count: number | null
+  route_label: string | null
+  team_position: number | null
+  uci_points: number
+  result_source: string | null
+  squad_type: string | null
+  parent_club_id: string | null
+}
+
+type PublicInactivityStatus = 'inactive' | 'season_end_removal_pending'
+
+type ClubPublicInactivityRow = {
+  club_id: string
+  public_inactivity_status: PublicInactivityStatus | null
+  inactivity_days_snapshot: number | null
+  season_end_transition_pending: boolean | null
+}
+
+type ClubPublicInactivityUi = {
+  status: PublicInactivityStatus | null
+  days: number | null
+  seasonEndTransitionPending: boolean
 }
 
 /**
@@ -151,6 +219,141 @@ function formatNumberValue(value: number | string | null | undefined): string {
   const numericValue = Number(value)
   if (Number.isFinite(numericValue)) return numericValue.toLocaleString()
   return String(value)
+}
+
+async function loadPublicClubInactivityStatus(
+  clubId: string,
+): Promise<ClubPublicInactivityUi | null> {
+  const { data, error } = await supabase.rpc('get_public_club_inactivity_statuses_v1', {
+    p_club_ids: [clubId],
+  })
+
+  if (error) {
+    console.warn('Could not load public inactivity status for team profile:', error.message)
+    return null
+  }
+
+  const row = ((data ?? []) as ClubPublicInactivityRow[])[0]
+
+  if (!row) return null
+
+  return {
+    status: row.public_inactivity_status ?? null,
+    days: row.inactivity_days_snapshot ?? null,
+    seasonEndTransitionPending: row.season_end_transition_pending === true,
+  }
+}
+
+function normalizeRecentRaceNumber(value: unknown, fallback = 0): number {
+  if (typeof value === 'number' && Number.isFinite(value)) return value
+
+  if (typeof value === 'string' && value.trim() !== '') {
+    const parsed = Number(value)
+    return Number.isFinite(parsed) ? parsed : fallback
+  }
+
+  return fallback
+}
+
+function normalizeRecentRaceNullableNumber(value: unknown): number | null {
+  if (typeof value === 'number' && Number.isFinite(value)) return value
+
+  if (typeof value === 'string' && value.trim() !== '') {
+    const parsed = Number(value)
+    return Number.isFinite(parsed) ? parsed : null
+  }
+
+  return null
+}
+
+function normalizeRecentRaceString(value: unknown): string | null {
+  if (typeof value !== 'string') return null
+  const trimmed = value.trim()
+  return trimmed ? trimmed : null
+}
+
+function formatRecentRaceDate(value?: string | null): string {
+  if (!value) return '—'
+
+  const date = new Date(`${value}T00:00:00`)
+  if (Number.isNaN(date.getTime())) return value
+
+  return date.toLocaleDateString(undefined, {
+    month: 'short',
+    day: 'numeric',
+  })
+}
+
+function formatRecentRaceDateRange(race: TeamRecentRaceRow): string {
+  const start = race.race_start_date ?? race.race_date
+  const end = race.race_end_date ?? race.race_date ?? start
+
+  if (!start && !end) return '—'
+
+  const startLabel = formatRecentRaceDate(start)
+  const endLabel = formatRecentRaceDate(end)
+
+  if (!start || !end || start === end) return startLabel
+
+  const startDate = new Date(`${start}T00:00:00`)
+  const endDate = new Date(`${end}T00:00:00`)
+
+  if (
+    !Number.isNaN(startDate.getTime()) &&
+    !Number.isNaN(endDate.getTime()) &&
+    startDate.getFullYear() === endDate.getFullYear() &&
+    startDate.getMonth() === endDate.getMonth()
+  ) {
+    const month = startDate.toLocaleDateString(undefined, { month: 'short' })
+    return `${month} ${startDate.getDate()}–${endDate.getDate()}`
+  }
+
+  return `${startLabel}–${endLabel}`
+}
+
+function getRecentRaceSubtitle(race: TeamRecentRaceRow): string {
+  const parts: string[] = []
+
+  if (race.stage_count && race.stage_count > 1) {
+    parts.push(`${race.stage_count} stages`)
+  } else if (race.stage_count === 1) {
+    parts.push('1 stage')
+  }
+
+  if (race.route_label) {
+    parts.push(race.route_label)
+  }
+
+  if (race.result_source === 'team_classification') {
+    parts.push('team classification')
+  } else if (race.result_source === 'best_rider_final_gc') {
+    parts.push('best rider GC')
+  } else if (race.result_source === 'best_stage_finish') {
+    parts.push('best stage finish')
+  }
+
+  return parts.join(' · ')
+}
+
+function formatTeamPosition(value?: number | null): string {
+  return value === null || value === undefined ? '—' : String(value)
+}
+
+function buildRaceReturnState(currentPath: string) {
+  return {
+    from: currentPath,
+    returnTo: currentPath,
+    returnLabel: '← Back',
+    scrollX: typeof window !== 'undefined' ? window.scrollX : 0,
+    scrollY: typeof window !== 'undefined' ? window.scrollY : 0,
+  }
+}
+
+
+function getSeasonYearFromGameDate(value: string | null): number {
+  if (!value) return 2000
+  const year = Number(value.slice(0, 4))
+  return Number.isFinite(year) && year > 0 ? year : 2000
 }
 
 function getAgeYearsAtDate(
@@ -299,7 +502,7 @@ function TeamLogo({
 
   return (
     <div
-      className={`flex shrink-0 ${className} items-center justify-center overflow-hidden rounded-xl border border-slate-200 bg-white p-2`}
+      className={`flex shrink-0 ${className} items-center justify-center overflow-hidden rounded-2xl border border-slate-200 bg-white p-2 shadow-sm`}
     >
       {showFallback ? (
         <span className="text-center text-[10px] text-slate-400">No logo</span>
@@ -393,10 +596,10 @@ function CountryFlagBadge({
 }
 
 /**
- * DetailItem
- * Card-style key-value display for stats and profile attributes.
+ * ProfileHeaderStat
+ * Clean stat item for the banner/header section without card boxes.
  */
-function DetailItem({
+function ProfileHeaderStat({
   label,
   value,
 }: {
@@ -404,9 +607,13 @@ function DetailItem({
   value: React.ReactNode
 }): JSX.Element {
   return (
-    <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 shadow-sm">
-      <div className="text-xs font-medium uppercase tracking-wide text-slate-500">{label}</div>
-      <div className="mt-1 text-xl font-semibold leading-tight text-slate-900">{value}</div>
+    <div className="min-w-0 px-4 first:pl-0 last:pr-0">
+      <div className="truncate whitespace-nowrap text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+        {label}
+      </div>
+      <div className="mt-1 truncate whitespace-nowrap text-lg font-semibold leading-tight text-slate-900">
+        {value}
+      </div>
     </div>
   )
 }
@@ -452,6 +659,33 @@ function SponsorLogo({
 }
 
 /**
+ * SponsorsPanel
+ * Displays sponsor information as a reusable panel so it can be reordered for AI teams.
+ */
+function SponsorsPanel({
+  mainSponsorName,
+  mainSponsorLogoUrl,
+}: {
+  mainSponsorName: string | null
+  mainSponsorLogoUrl: string | null
+}): JSX.Element {
+  return (
+    <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+      <h2 className="text-sm font-semibold text-slate-900">Sponsors</h2>
+
+      <div className="mt-4 flex flex-wrap items-center gap-2">
+        <span className="text-xs font-medium uppercase tracking-wide text-slate-500">
+          Main sponsor:
+        </span>
+        <span className="text-lg font-semibold text-slate-900">{mainSponsorName ?? '—'}</span>
+      </div>
+
+      <SponsorLogo src={mainSponsorLogoUrl} sponsorName={mainSponsorName} />
+    </section>
+  )
+}
+
+/**
  * TeamJerseyPreview
  * Shows either the generated jersey image or a color-based placeholder.
  */
@@ -461,16 +695,24 @@ function TeamJerseyPreview({
   kitConfig,
   primaryColor,
   secondaryColor,
+  aiKitPreviewUrl,
 }: {
   clubName: string
   kitName: string | null
   kitConfig: unknown
   primaryColor: string | null
   secondaryColor: string | null
+  aiKitPreviewUrl?: string | null
 }): JSX.Element {
   const [imageFailed, setImageFailed] = useState(false)
 
-  const previewSrc = useMemo(() => getKitPreviewSrc(kitConfig), [kitConfig])
+  const kitConfigPreviewSrc = useMemo(() => getKitPreviewSrc(kitConfig), [kitConfig])
+
+  const previewSrc = useMemo(() => {
+    const aiUrl = aiKitPreviewUrl?.trim()
+    if (aiUrl) return aiUrl
+    return kitConfigPreviewSrc
+  }, [aiKitPreviewUrl, kitConfigPreviewSrc])
 
   useEffect(() => {
     setImageFailed(false)
@@ -480,7 +722,7 @@ function TeamJerseyPreview({
     typeof previewSrc === 'string' && previewSrc.trim().length > 0 && !imageFailed
 
   return (
-    <section className="rounded-2xl border border-slate-200 bg-slate-50 p-5 shadow-sm">
+    <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
       <div className="flex items-center justify-between gap-3">
         <div>
           <h3 className="text-base font-semibold text-slate-900">Team jersey</h3>
@@ -606,25 +848,138 @@ function TeamRosterTable({
   )
 }
 
-function LastFiveRacesPanel(): JSX.Element {
+function LastFiveRacesPanel({
+  races,
+  currentPath,
+  loading,
+}: {
+  races: TeamRecentRaceRow[]
+  currentPath: string
+  loading: boolean
+}): JSX.Element {
   return (
     <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
       <h2 className="text-sm font-semibold text-slate-900">Last 5 races</h2>
       <p className="mt-1 text-sm text-slate-500">
-        Recent race history for this team will appear here.
+        Finished races only · exact squad participation only
       </p>
 
       <div className="mt-4 space-y-2">
-        {Array.from({ length: 5 }).map((_, index) => (
-          <div
-            key={index}
-            className="rounded-lg border border-dashed border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-400"
-          >
-            Race slot {index + 1}
+        {loading ? (
+          <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-500">
+            Loading recent races…
           </div>
-        ))}
+        ) : races.length === 0 ? (
+          <div className="rounded-lg border border-dashed border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-500">
+            No finished races found for this exact team/squad yet.
+          </div>
+        ) : (
+          races.map((race) => {
+            const subtitle = getRecentRaceSubtitle(race)
+            const raceTitle = subtitle ? `${race.race_name} · ${subtitle}` : race.race_name
+
+            return (
+              <div
+                key={race.race_id}
+                className="flex min-w-0 items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm shadow-sm"
+                title={raceTitle}
+              >
+                <div className="w-[56px] shrink-0 whitespace-nowrap text-xs font-semibold text-slate-900">
+                  {formatRecentRaceDateRange(race)}
+                </div>
+
+                <div className="h-7 w-px shrink-0 bg-emerald-400" />
+
+                <div className="flex min-w-0 flex-1 items-center gap-2 overflow-hidden">
+                  <CountryFlagBadge countryCode={race.race_country_code} />
+
+                  <Link
+                    to={`/dashboard/races/${race.race_id}`}
+                    state={buildRaceReturnState(currentPath)}
+                    title={raceTitle}
+                    className="min-w-0 flex-1 truncate font-semibold text-slate-900 hover:text-yellow-600 hover:underline"
+                  >
+                    {race.race_name}
+                  </Link>
+
+                  {race.race_category ? (
+                    <span className="shrink-0 rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700">
+                      {race.race_category}
+                    </span>
+                  ) : null}
+                </div>
+
+                <div className="ml-auto flex shrink-0 items-center divide-x divide-slate-300 border-l border-slate-300 pl-3 text-[10px] uppercase tracking-[0.14em] text-slate-500">
+                  <div className="pr-3">
+                    Team position:{' '}
+                    <span className="tracking-normal text-slate-900">
+                      {formatTeamPosition(race.team_position)}
+                    </span>
+                  </div>
+
+                  <div className="pl-3">
+                    UCI points:{' '}
+                    <span className="tracking-normal text-slate-900">
+                      {formatNumberValue(race.uci_points)}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )
+          })
+        )}
       </div>
     </section>
+  )
+}
+
+function PublicInactivityProfileNotice({
+  inactivity,
+}: {
+  inactivity: ClubPublicInactivityUi | null
+}): JSX.Element | null {
+  if (!inactivity?.status) return null
+
+  if (inactivity.status === 'season_end_removal_pending') {
+    return (
+      <div className="rounded-2xl border border-slate-300 bg-slate-50 px-5 py-4 shadow-sm">
+        <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <div className="text-sm font-semibold text-slate-900">
+              Inactive manager
+            </div>
+            <p className="mt-1 text-sm text-slate-600">
+              This team remains visible until the end of the season. If the manager does not return,
+              the team place can be replaced by an AI pool team after season end.
+            </p>
+          </div>
+
+          <span className="mt-2 inline-flex w-fit rounded-full border border-slate-300 bg-white px-3 py-1 text-xs font-semibold uppercase tracking-wide text-slate-600 sm:mt-0">
+            Season-end review
+          </span>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="rounded-2xl border border-slate-300 bg-slate-50 px-5 py-4 shadow-sm">
+      <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <div className="text-sm font-semibold text-slate-900">
+            Inactive manager
+          </div>
+          <p className="mt-1 text-sm text-slate-600">
+            This team is currently inactive, but it remains in standings, race history, results,
+            and calendar.
+          </p>
+        </div>
+
+        <span className="mt-2 inline-flex w-fit rounded-full border border-slate-300 bg-white px-3 py-1 text-xs font-semibold uppercase tracking-wide text-slate-600 sm:mt-0">
+          Inactive
+        </span>
+      </div>
+    </div>
   )
 }
 
@@ -639,6 +994,13 @@ export default function TeamProfilePage(): JSX.Element {
 
   const [profile, setProfile] = useState<ClubProfileRecord | null>(null)
   const [rosterRows, setRosterRows] = useState<TeamRosterRow[]>([])
+  const [internationalPointsSummary, setInternationalPointsSummary] =
+    useState<TeamInternationalPointsSummary | null>(null)
+  const [lastFiveRaces, setLastFiveRaces] = useState<TeamRecentRaceRow[]>([])
+  const [lastFiveRacesLoading, setLastFiveRacesLoading] = useState(false)
+  const [publicInactivityStatus, setPublicInactivityStatus] =
+    useState<ClubPublicInactivityUi | null>(null)
+  const [aiKitPreviewUrl, setAiKitPreviewUrl] = useState<string | null>(null)
   const [myMainClubId, setMyMainClubId] = useState<string | null>(null)
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
   const [currentGameDate, setCurrentGameDate] = useState<string | null>(null)
@@ -691,13 +1053,22 @@ export default function TeamProfilePage(): JSX.Element {
   }, [])
 
   useEffect(() => {
+    let cancelled = false
+
     if (!clubId) {
       setError('No club specified.')
       setLoading(false)
       setProfile(null)
       setRosterRows([])
+      setInternationalPointsSummary(null)
+      setLastFiveRaces([])
+      setLastFiveRacesLoading(false)
+      setPublicInactivityStatus(null)
+      setAiKitPreviewUrl(null)
       setCurrentGameDate(null)
-      return
+      return () => {
+        cancelled = true
+      }
     }
 
     /**
@@ -711,6 +1082,11 @@ export default function TeamProfilePage(): JSX.Element {
         setError(null)
         setProfile(null)
         setRosterRows([])
+        setInternationalPointsSummary(null)
+        setLastFiveRaces([])
+        setLastFiveRacesLoading(false)
+        setPublicInactivityStatus(null)
+        setAiKitPreviewUrl(null)
         setCurrentGameDate(null)
 
         const { data, error: queryError } = await supabase
@@ -726,6 +1102,28 @@ export default function TeamProfilePage(): JSX.Element {
         const profileRow = data as ClubProfileRecord
         setProfile(profileRow)
 
+        const publicInactivity = await loadPublicClubInactivityStatus(profileRow.club_id)
+
+        if (!cancelled) {
+          setPublicInactivityStatus(publicInactivity)
+        }
+
+        if (profileRow.is_ai) {
+          const { data: aiKitData, error: aiKitError } = await supabase
+            .from('ai_team_kit_previews')
+            .select('club_id, jersey_url')
+            .eq('club_id', profileRow.club_id)
+            .eq('is_active', true)
+            .maybeSingle()
+
+          if (aiKitError) {
+            console.warn('Failed to load AI team jersey preview:', aiKitError)
+            setAiKitPreviewUrl(null)
+          } else {
+            setAiKitPreviewUrl((aiKitData as AiTeamKitPreviewRow | null)?.jersey_url ?? null)
+          }
+        }
+
         const { data: currentGameDateRaw, error: currentGameDateError } = await supabase.rpc(
           'get_current_game_date'
         )
@@ -734,7 +1132,67 @@ export default function TeamProfilePage(): JSX.Element {
           throw currentGameDateError
         }
 
-        setCurrentGameDate(normalizeGameDateValue(currentGameDateRaw))
+        const normalizedGameDate = normalizeGameDateValue(currentGameDateRaw)
+        setCurrentGameDate(normalizedGameDate)
+
+        const { data: internationalPointsData, error: internationalPointsError } =
+          await supabase.rpc('get_team_international_points_summary_v1', {
+            p_team_id: profileRow.club_id,
+            p_season_year: getSeasonYearFromGameDate(normalizedGameDate),
+          })
+
+        if (internationalPointsError) {
+          console.warn('Failed to load team international points:', internationalPointsError)
+          setInternationalPointsSummary(null)
+        } else {
+          setInternationalPointsSummary(
+            ((Array.isArray(internationalPointsData)
+              ? internationalPointsData[0]
+              : internationalPointsData) ?? null) as TeamInternationalPointsSummary | null
+          )
+        }
+
+        setLastFiveRacesLoading(true)
+
+        const { data: lastFiveRacesData, error: lastFiveRacesError } = await supabase.rpc(
+          'get_team_last_five_races',
+          {
+            p_team_id: profileRow.club_id,
+            p_limit: 5,
+          }
+        )
+
+        if (lastFiveRacesError) {
+          console.warn('Failed to load team last five races:', lastFiveRacesError)
+          setLastFiveRaces([])
+        } else {
+          const rows = Array.isArray(lastFiveRacesData) ? lastFiveRacesData : []
+
+          setLastFiveRaces(
+            rows.map((raceRow) => {
+              const row = raceRow as Record<string, unknown>
+
+              return {
+                race_id: normalizeRecentRaceString(row.race_id) ?? '',
+                race_name: normalizeRecentRaceString(row.race_name) ?? 'Unknown race',
+                race_country_code: normalizeRecentRaceString(row.race_country_code),
+                race_category: normalizeRecentRaceString(row.race_category),
+                race_start_date: normalizeRecentRaceString(row.race_start_date),
+                race_end_date: normalizeRecentRaceString(row.race_end_date),
+                race_date: normalizeRecentRaceString(row.race_date),
+                stage_count: normalizeRecentRaceNullableNumber(row.stage_count),
+                route_label: normalizeRecentRaceString(row.route_label),
+                team_position: normalizeRecentRaceNullableNumber(row.team_position),
+                uci_points: normalizeRecentRaceNumber(row.uci_points),
+                result_source: normalizeRecentRaceString(row.result_source),
+                squad_type: normalizeRecentRaceString(row.squad_type),
+                parent_club_id: normalizeRecentRaceString(row.parent_club_id),
+              }
+            }).filter((raceRow) => raceRow.race_id)
+          )
+        }
+
+        setLastFiveRacesLoading(false)
 
         const { data: rosterData, error: rosterError } = await supabase
           .from('club_profile_roster_view')
@@ -753,20 +1211,31 @@ export default function TeamProfilePage(): JSX.Element {
         setError(getErrorMessage(err))
         setProfile(null)
         setRosterRows([])
+        setInternationalPointsSummary(null)
+        setLastFiveRaces([])
+        setLastFiveRacesLoading(false)
+        setPublicInactivityStatus(null)
+        setAiKitPreviewUrl(null)
         setCurrentGameDate(null)
       } finally {
-        setLoading(false)
+        if (!cancelled) {
+          setLoading(false)
+        }
       }
     }
 
     void loadProfile()
+
+    return () => {
+      cancelled = true
+    }
   }, [clubId])
 
   const ownerLabel = useMemo(() => {
     if (!profile) return '—'
     if (profile.owner_display_name) return profile.owner_display_name
     if (profile.owner_username) return `@${profile.owner_username}`
-    if (profile.is_ai) return 'AI-controlled team'
+    if (profile.is_ai) return 'AIT'
     return 'Unknown owner'
   }, [profile])
 
@@ -779,6 +1248,77 @@ export default function TeamProfilePage(): JSX.Element {
 
   const currentPath = `${location.pathname}${location.search}${location.hash}`
   const clubName = profile?.club_name ?? 'Team'
+  const returnState = (location.state ?? null) as ProfileReturnState | null
+
+  function getReturnNumber(...values: Array<number | undefined>): number | undefined {
+    return values.find((value) => typeof value === 'number' && Number.isFinite(value))
+  }
+
+  function handleBackNavigation(): void {
+    const returnTo = typeof returnState?.returnTo === 'string' ? returnState.returnTo : null
+
+    if (returnTo) {
+      const restoreScrollX = getReturnNumber(
+        returnState?.returnScrollX,
+        returnState?.scrollX,
+        returnState?.restoreScrollX
+      )
+      const restoreScrollY = getReturnNumber(
+        returnState?.returnScrollY,
+        returnState?.scrollY,
+        returnState?.restoreScrollY
+      )
+
+      if (typeof window !== 'undefined') {
+        window.sessionStorage.setItem(
+          RACE_PROFILE_RETURN_STORAGE_KEY,
+          JSON.stringify({
+            returnTo,
+            returnRaceId: returnState?.returnRaceId,
+            restoreScrollX,
+            restoreScrollY,
+            raceInfoExpanded: returnState?.raceInfoExpanded,
+            raceInfoTab: returnState?.raceInfoTab,
+          })
+        )
+      }
+
+      navigate(returnTo, {
+        replace: true,
+        state: {
+          from: 'profile_back',
+          restoreScrollX,
+          restoreScrollY,
+          restoreRaceInfoExpanded: returnState?.raceInfoExpanded,
+          raceInfoExpanded: returnState?.raceInfoExpanded,
+          raceInfoTab: returnState?.raceInfoTab,
+        },
+      })
+      return
+    }
+
+    navigate(-1)
+  }
+
+  const backButtonLabel = '← Back'
+
+  const sponsorPanel = profile ? (
+    <SponsorsPanel
+      mainSponsorName={profile.main_sponsor_name}
+      mainSponsorLogoUrl={profile.main_sponsor_logo_url}
+    />
+  ) : null
+
+  const teamJerseyPanel = profile ? (
+    <TeamJerseyPreview
+      clubName={clubName}
+      kitName={profile.kit_name}
+      kitConfig={profile.kit_config}
+      primaryColor={profile.primary_color}
+      secondaryColor={profile.secondary_color}
+      aiKitPreviewUrl={aiKitPreviewUrl}
+    />
+  ) : null
 
   function handleSendMessage(): void {
     if (!profile?.owner_user_id) return
@@ -801,163 +1341,168 @@ export default function TeamProfilePage(): JSX.Element {
 
   return (
     <div className="w-full px-4 pb-10 pt-4">
-      <div className="w-full rounded-3xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
+      <div className="mb-4">
+        <button
+          type="button"
+          onClick={handleBackNavigation}
+          className="inline-flex items-center rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 shadow-sm transition hover:bg-slate-50"
+        >
+          {backButtonLabel}
+        </button>
+      </div>
+
+      <div className="w-full rounded-b-3xl rounded-t-none border border-slate-200 bg-white p-6 shadow-sm md:p-8">
         <div className="space-y-6">
           {loading ? (
             <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-8 text-center text-sm text-slate-600 shadow-sm">
               Loading team profile...
             </div>
           ) : error ? (
-            <div className="space-y-3">
-              <button
-                type="button"
-                onClick={() => navigate(-1)}
-                className="inline-flex items-center rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 shadow-sm transition hover:bg-slate-50"
-              >
-                ← Back
-              </button>
-
-              <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-4 text-sm text-red-700">
-                {error}
-              </div>
+            <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-4 text-sm text-red-700">
+              {error}
             </div>
           ) : profile ? (
             <>
-              {/* Header */}
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <button
-                    type="button"
-                    onClick={() => navigate(-1)}
-                    className="inline-flex items-center rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 shadow-sm transition hover:bg-slate-50"
-                  >
-                    ← Back
-                  </button>
-
-                  <div className="flex items-center gap-3">
-                    <TeamLogo src={profile.logo_path} teamName={profile.club_name} />
-
-                    <div>
-                      <div className="flex flex-wrap items-center gap-2">
-                        <h1 className="text-lg font-semibold text-slate-900">
+              {/* Team profile banner / header */}
+              <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+                <div className="p-6 md:p-8">
+                  <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_auto_auto] lg:items-start">
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-3">
+                        <h1 className="text-2xl font-bold tracking-tight text-slate-900 md:text-3xl">
                           {profile.club_name}
                         </h1>
-                        <CountryFlagBadge countryCode={profile.country_code} />
+                        <CountryFlagBadge countryCode={profile.country_code} className="h-5 w-7" />
                       </div>
 
-                      <div className="mt-0.5 flex flex-wrap items-center gap-2 text-xs text-slate-500">
-                        <span>
-                          {getClubTierLabel(profile.club_tier)}
-                          {profile.world_tier ? ` · World tier ${profile.world_tier}` : ''}
-                        </span>
-                        <span className="text-slate-300">•</span>
+                      <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-slate-600">
+                        <span className="font-medium">{getClubTierLabel(profile.club_tier)}</span>
+                        {profile.world_tier ? <span>· World tier {profile.world_tier}</span> : null}
+                        <span>·</span>
                         <span>{getDivisionLabelFromProfile(profile)}</span>
                       </div>
 
-                      {profile.motto ? (
-                        <div className="mt-1 text-xs italic text-slate-500">
-                          “{profile.motto}”
+                      <div className="mt-3">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="inline-flex items-center rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-700 shadow-sm">
+                            {profile.is_ai ? 'AI-controlled team' : 'Player-controlled team'}
+                          </span>
                         </div>
+
+                        {profile.motto ? (
+                          <div className="mt-1 text-sm italic text-slate-500">“{profile.motto}”</div>
+                        ) : null}
+                      </div>
+                    </div>
+
+                    <div className="flex flex-wrap items-center justify-start gap-2 lg:justify-center">
+                      {canSendMessage ? (
+                        <button
+                          type="button"
+                          onClick={handleSendMessage}
+                          className="inline-flex items-center rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50"
+                        >
+                          Send Message
+                        </button>
                       ) : null}
+
+                      {profile &&
+                      currentUserId &&
+                      !profile.is_ai &&
+                      profile.owner_user_id &&
+                      profile.owner_user_id !== currentUserId ? (
+                        <ReportPlayerButton
+                          reportedUserId={profile.owner_user_id}
+                          reportedClubId={profile.club_id}
+                          reportedClubName={profile.club_name}
+                          reportedDisplayName={
+                            profile.owner_display_name ||
+                            profile.owner_username ||
+                            profile.club_name ||
+                            'Player'
+                          }
+                          currentPageLabel="Team profile"
+                          currentPath={currentPath}
+                          reporterClubId={myMainClubId}
+                        />
+                      ) : null}
+                    </div>
+
+                    <div className="flex justify-start lg:justify-end">
+                      <TeamLogo
+                        src={profile.logo_path}
+                        teamName={profile.club_name}
+                        className="h-28 w-48 md:h-32 md:w-56"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="mt-6 border-t border-slate-200/80 pt-5">
+                    <div className="grid grid-cols-6 divide-x divide-slate-200">
+                      <ProfileHeaderStat
+                        label="Country"
+                        value={profile.country_name ?? profile.country_code ?? '—'}
+                      />
+                      <ProfileHeaderStat label="Owner" value={ownerLabel} />
+                      <ProfileHeaderStat
+                        label="Riders"
+                        value={profile.rider_count !== null ? formatNumberValue(profile.rider_count) : '—'}
+                      />
+                      <ProfileHeaderStat
+                        label="Reputation"
+                        value={profile.reputation !== null ? formatNumberValue(profile.reputation) : '—'}
+                      />
+                      <ProfileHeaderStat
+                        label="International rank"
+                        value={
+                          internationalPointsSummary?.international_rank !== null &&
+                          internationalPointsSummary?.international_rank !== undefined
+                            ? `#${formatNumberValue(internationalPointsSummary.international_rank)}`
+                            : profile.world_rank !== null
+                              ? `#${formatNumberValue(profile.world_rank)}`
+                              : '—'
+                        }
+                      />
+                      <ProfileHeaderStat
+                        label="International points"
+                        value={
+                          internationalPointsSummary?.international_points !== null &&
+                          internationalPointsSummary?.international_points !== undefined
+                            ? formatNumberValue(internationalPointsSummary.international_points)
+                            : profile.season_points !== null
+                              ? formatNumberValue(profile.season_points)
+                              : '—'
+                        }
+                      />
                     </div>
                   </div>
                 </div>
-
-                <div className="flex flex-wrap items-center gap-2">
-                  {canSendMessage ? (
-                    <button
-                      type="button"
-                      onClick={handleSendMessage}
-                      className="inline-flex items-center rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50"
-                    >
-                      Send Message
-                    </button>
-                  ) : null}
-
-                  {profile &&
-                  currentUserId &&
-                  !profile.is_ai &&
-                  profile.owner_user_id &&
-                  profile.owner_user_id !== currentUserId ? (
-                    <ReportPlayerButton
-                      reportedUserId={profile.owner_user_id}
-                      reportedClubId={profile.club_id}
-                      reportedClubName={profile.club_name}
-                      reportedDisplayName={
-                        profile.owner_display_name ||
-                        profile.owner_username ||
-                        profile.club_name ||
-                        'Player'
-                      }
-                      currentPageLabel="Team profile"
-                      currentPath={currentPath}
-                      reporterClubId={myMainClubId}
-                    />
-                  ) : null}
-                </div>
-              </div>
-
-              {/* Overview cards */}
-              <section className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                <DetailItem
-                  label="Country"
-                  value={profile.country_name ?? profile.country_code ?? '—'}
-                />
-                <DetailItem label="Owner" value={ownerLabel} />
-                <DetailItem
-                  label="Riders"
-                  value={profile.rider_count !== null ? formatNumberValue(profile.rider_count) : '—'}
-                />
-                <DetailItem
-                  label="Reputation"
-                  value={profile.reputation !== null ? formatNumberValue(profile.reputation) : '—'}
-                />
-                <DetailItem
-                  label="World ranking"
-                  value={
-                    profile.world_rank !== null ? `#${formatNumberValue(profile.world_rank)}` : '—'
-                  }
-                />
-                <DetailItem
-                  label="Season points"
-                  value={
-                    profile.season_points !== null ? formatNumberValue(profile.season_points) : '—'
-                  }
-                />
               </section>
 
-              {/* Public roster + sponsors / jersey / last 5 races placeholder */}
+              <PublicInactivityProfileNotice inactivity={publicInactivityStatus} />
+
+              {/* Public roster + AI/user ordered right column */}
               <section className="grid gap-4 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1.1fr)]">
                 <TeamRosterTable riders={rosterRows} currentGameDate={currentGameDate} />
 
                 <div className="space-y-4">
-                  <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                    <h2 className="text-sm font-semibold text-slate-900">Sponsors</h2>
+                  {profile.is_ai ? (
+                    <>
+                      {teamJerseyPanel}
+                      {sponsorPanel}
+                    </>
+                  ) : (
+                    <>
+                      {sponsorPanel}
+                      {teamJerseyPanel}
+                    </>
+                  )}
 
-                    <div className="mt-4 flex flex-wrap items-center gap-2">
-                      <span className="text-xs font-medium uppercase tracking-wide text-slate-500">
-                        Main sponsor:
-                      </span>
-                      <span className="text-lg font-semibold text-slate-900">
-                        {profile.main_sponsor_name ?? '—'}
-                      </span>
-                    </div>
-
-                    <SponsorLogo
-                      src={profile.main_sponsor_logo_url}
-                      sponsorName={profile.main_sponsor_name}
-                    />
-                  </section>
-
-                  <TeamJerseyPreview
-                    clubName={clubName}
-                    kitName={profile.kit_name}
-                    kitConfig={profile.kit_config}
-                    primaryColor={profile.primary_color}
-                    secondaryColor={profile.secondary_color}
+                  <LastFiveRacesPanel
+                    races={lastFiveRaces}
+                    currentPath={currentPath}
+                    loading={lastFiveRacesLoading}
                   />
-
-                  <LastFiveRacesPanel />
                 </div>
               </section>
             </>

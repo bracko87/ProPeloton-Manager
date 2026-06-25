@@ -10,6 +10,7 @@
  */
 
 import React, { useEffect, useMemo, useState } from 'react'
+import { Link, useLocation, useNavigate } from 'react-router'
 import { supabase } from '../../../lib/supabase'
 import RiderComparePanel from './RiderComparePanel'
 
@@ -17,8 +18,8 @@ import type {
   RenewalNegotiationData,
   RiderCurrentHealthCase,
   RiderDetails,
-  TeamType,
 } from '../types'
+import type { TeamType } from '../types'
 
 import {
   formatShortGameDate,
@@ -56,6 +57,30 @@ import {
 
 type RiderProfileTab = 'overview' | 'contract' | 'training' | 'compare' | 'history'
 type OfferExtensionValue = '1' | '2'
+type RiderSkillViewMode = 'basic' | 'modern'
+
+const RIDER_SKILL_VIEW_MODE_STORAGE_KEY = 'ppm:rider-profile.skill-attributes-view-mode'
+
+function getStoredRiderSkillViewMode(): RiderSkillViewMode {
+  if (typeof window === 'undefined') return 'modern'
+
+  try {
+    const storedValue = window.localStorage.getItem(RIDER_SKILL_VIEW_MODE_STORAGE_KEY)
+    return storedValue === 'basic' || storedValue === 'modern' ? storedValue : 'modern'
+  } catch {
+    return 'modern'
+  }
+}
+
+function saveStoredRiderSkillViewMode(mode: RiderSkillViewMode) {
+  if (typeof window === 'undefined') return
+
+  try {
+    window.localStorage.setItem(RIDER_SKILL_VIEW_MODE_STORAGE_KEY, mode)
+  } catch {
+    // Ignore storage errors. The in-page state still changes.
+  }
+}
 
 type RiderSkillAttributeCode =
   | 'sprint'
@@ -91,6 +116,7 @@ type RiderCareerHistoryRow = {
   team_name: string
   points: number
   is_current_season: boolean
+  club_id?: string | null
 }
 
 type RiderSeasonOverview = {
@@ -108,9 +134,38 @@ type RiderSeasonStatsBox = {
 }
 
 type RiderRecentRaceRow = {
+  race_id?: string | null
   race_name: string
+  race_country_code?: string | null
+  race_category?: string | null
+  race_start_date?: string | null
+  race_end_date?: string | null
   race_date: string | null
+  stage_count?: number | null
+  route_label?: string | null
   finish_position: number | null
+  ci_points?: number | null
+  result_source?: string | null
+}
+
+type RiderRaceSharpnessUiRow = {
+  rider_id: string
+  rider_name: string
+  club_id: string | null
+  club_name: string | null
+  race_sharpness: number | string
+  race_sharpness_percent: number | string
+  race_sharpness_label: string
+  race_sharpness_status: string
+  badge_tone: 'success' | 'info' | 'warning' | 'danger' | string
+  last_raced_on: string | null
+  race_days_last_14: number | string
+  race_days_last_30: number | string
+  total_race_days: number | string
+  last_stage_sharpness_delta: number | string
+  overload_penalty: number | string
+  overload_warning: boolean
+  race_sharpness_message: string
 }
 
 type AvailabilityStatus = 'fit' | 'not_fully_fit' | 'injured' | 'sick'
@@ -154,6 +209,7 @@ type FocusedTrainingRider = {
   availability_status: AvailabilityStatus
   fatigue: number | null
   source_club_name?: string
+  source_club_full_display_name?: string
   team_label?: 'First Team' | 'U23'
 }
 
@@ -399,6 +455,73 @@ function CountryFlag({
   )
 }
 
+
+function getRecentRaceDatePart(value?: string | null): {
+  day: string
+  month: string
+  year: number
+} | null {
+  if (!value) return null
+
+  const parsed = new Date(`${value}T00:00:00Z`)
+  if (Number.isNaN(parsed.getTime())) return null
+
+  return {
+    day: String(parsed.getUTCDate()).padStart(2, '0'),
+    month: parsed.toLocaleDateString('en-GB', {
+      month: 'short',
+      timeZone: 'UTC',
+    }),
+    year: parsed.getUTCFullYear(),
+  }
+}
+
+function formatRecentRaceDate(value?: string | null): string {
+  const part = getRecentRaceDatePart(value)
+  if (!part) return value ? formatShortGameDate(value) : '—'
+
+  return `${part.month} ${part.day}`
+}
+
+function formatRecentRaceDateRange(race: RiderRecentRaceRow): string {
+  const startDate = race.race_start_date ?? race.race_date ?? null
+  const endDate = race.race_end_date ?? race.race_date ?? null
+
+  const start = getRecentRaceDatePart(startDate)
+  const end = getRecentRaceDatePart(endDate)
+
+  if (!start && !end) return '—'
+  if (start && !end) return `${start.month} ${start.day}`
+  if (!start && end) return `${end.month} ${end.day}`
+  if (!start || !end) return '—'
+
+  const sameDate =
+    start.day === end.day && start.month === end.month && start.year === end.year
+
+  if (sameDate) return `${start.month} ${start.day}`
+
+  if (start.month === end.month && start.year === end.year) {
+    return `${start.month} ${start.day}–${end.day}`
+  }
+
+  return `${start.month} ${start.day}–${end.month} ${end.day}`
+}
+
+function getRecentRaceSubtitle(race: RiderRecentRaceRow): string {
+  const parts: string[] = []
+
+  if (race.route_label) parts.push(race.route_label)
+  if (race.stage_count && race.stage_count > 1) parts.push(`${race.stage_count} stages`)
+  if (race.race_category) parts.push(race.race_category)
+
+  return parts.length > 0 ? parts.join(' · ') : 'Finished race'
+}
+
+function formatGcPosition(value?: number | null): string {
+  if (value === null || value === undefined || !Number.isFinite(value)) return '—'
+  return String(value)
+}
+
 function SectionCard({
   title,
   subtitle,
@@ -442,6 +565,71 @@ function DetailRow({
         {value}
       </div>
     </div>
+  )
+}
+
+function getRaceSharpnessBadgeClass(sharpness: RiderRaceSharpnessUiRow | null): string {
+  if (!sharpness) {
+    return 'border-slate-200 bg-slate-50 text-slate-500'
+  }
+
+  const percent = Math.max(
+    0,
+    Math.min(100, Math.round(normalizeNumber(sharpness.race_sharpness_percent, 50)))
+  )
+
+  if (sharpness.overload_warning || sharpness.badge_tone === 'danger') {
+    return 'border-rose-200 bg-rose-50 text-rose-700'
+  }
+
+  if (percent >= 80) {
+    return 'border-emerald-300 bg-emerald-100 text-emerald-800'
+  }
+
+  if (percent >= 65) {
+    return 'border-emerald-200 bg-emerald-50 text-emerald-700'
+  }
+
+  if (percent >= 50) {
+    return 'border-lime-200 bg-lime-50 text-lime-700'
+  }
+
+  if (percent >= 40) {
+    return 'border-amber-200 bg-amber-50 text-amber-700'
+  }
+
+  return 'border-rose-200 bg-rose-50 text-rose-700'
+}
+
+function formatRaceSharpnessShort(sharpness: RiderRaceSharpnessUiRow | null): string {
+  if (!sharpness) return '—'
+
+  const percent = Math.max(
+    0,
+    Math.min(100, Math.round(normalizeNumber(sharpness.race_sharpness_percent, 50)))
+  )
+
+  return `${percent}/100 · ${sharpness.race_sharpness_label}`
+}
+
+function RaceSharpnessInlineBadge({
+  sharpness,
+}: {
+  sharpness: RiderRaceSharpnessUiRow | null
+}) {
+  if (!sharpness) {
+    return <span className="text-sm font-medium text-slate-500">—</span>
+  }
+
+  return (
+    <span
+      className={`inline-flex items-center rounded-full border px-3 py-1 text-sm font-semibold ${getRaceSharpnessBadgeClass(
+        sharpness
+      )}`}
+      title={sharpness.race_sharpness_message}
+    >
+      {formatRaceSharpnessShort(sharpness)}
+    </span>
   )
 }
 
@@ -694,6 +882,61 @@ async function fetchRiderCurrentHealthCaseById(
   return (row ?? null) as RiderCurrentHealthCase | null
 }
 
+
+type ClubDisplayNameRpcRow = {
+  club_id: string
+  display_name: string | null
+  original_name: string | null
+  full_display_name: string | null
+}
+
+async function loadClubHistoryDisplayNameMap(
+  clubIds: Array<string | null | undefined>
+): Promise<Record<string, string>> {
+  const uniqueClubIds = Array.from(
+    new Set(
+      clubIds
+        .map((clubId) => clubId?.trim())
+        .filter((clubId): clubId is string => Boolean(clubId))
+    )
+  )
+
+  if (uniqueClubIds.length === 0) return {}
+
+  const { data, error } = await supabase.rpc('get_club_display_names_v1', {
+    p_club_ids: uniqueClubIds,
+  })
+
+  if (error) {
+    console.warn('Failed to load club history display names:', error)
+    return {}
+  }
+
+  const rows = (Array.isArray(data) ? data : []) as ClubDisplayNameRpcRow[]
+
+  return rows.reduce<Record<string, string>>((acc, row) => {
+    if (!row?.club_id) return acc
+
+    const label = row.full_display_name?.trim() || row.display_name?.trim()
+    if (label) acc[row.club_id] = label
+
+    return acc
+  }, {})
+}
+
+async function hydrateRiderCareerHistoryRowsForDisplay(
+  rows: RiderCareerHistoryRow[]
+): Promise<RiderCareerHistoryRow[]> {
+  const historyNameByClubId = await loadClubHistoryDisplayNameMap(
+    rows.map((row) => row.club_id)
+  )
+
+  return rows.map((row) => {
+    const historyDisplayName = row.club_id ? historyNameByClubId[row.club_id] : null
+    return historyDisplayName ? { ...row, team_name: historyDisplayName } : row
+  })
+}
+
 async function fetchRiderCareerHistoryById(riderId: string): Promise<RiderCareerHistoryRow[]> {
   function normalizeRows(rows: any[]): RiderCareerHistoryRow[] {
     const normalized = rows
@@ -739,6 +982,19 @@ async function fetchRiderCareerHistoryById(riderId: string): Promise<RiderCareer
             false
         )
 
+        const clubIdRaw =
+          row.club_id ??
+          row.team_id ??
+          row.current_club_id ??
+          row.source_club_id ??
+          row.parent_club_id ??
+          null
+
+        const clubId =
+          typeof clubIdRaw === 'string' && clubIdRaw.trim() !== ''
+            ? clubIdRaw.trim()
+            : null
+
         return {
           season: seasonValue !== null && Number.isFinite(seasonValue) ? seasonValue : null,
           season_label: seasonLabel,
@@ -753,6 +1009,7 @@ async function fetchRiderCareerHistoryById(riderId: string): Promise<RiderCareer
             'Unknown team',
           points: Number.isFinite(points) ? points : 0,
           is_current_season: isCurrentSeason,
+          club_id: clubId,
         } as RiderCareerHistoryRow
       })
       .filter((row) => row.team_name || row.season_label)
@@ -776,7 +1033,7 @@ async function fetchRiderCareerHistoryById(riderId: string): Promise<RiderCareer
     })
 
     if (!error && Array.isArray(data) && data.length > 0) {
-      return normalizeRows(data)
+      return hydrateRiderCareerHistoryRowsForDisplay(normalizeRows(data))
     }
   } catch {
     // fallback below
@@ -799,7 +1056,7 @@ async function fetchRiderCareerHistoryById(riderId: string): Promise<RiderCareer
         .order('season', { ascending: false })
 
       if (!error && Array.isArray(data) && data.length > 0) {
-        return normalizeRows(data)
+        return hydrateRiderCareerHistoryRowsForDisplay(normalizeRows(data))
       }
     } catch {
       // try next source
@@ -811,10 +1068,30 @@ async function fetchRiderCareerHistoryById(riderId: string): Promise<RiderCareer
 
 async function fetchRiderSeasonOverviewById(riderId: string): Promise<RiderSeasonOverview> {
   const normalizeRow = (row: any): RiderSeasonOverview => ({
-    points: normalizeNumber(row.points ?? row.season_points ?? row.total_points, 0),
+    points: normalizeNumber(row.international_points ?? row.points ?? row.season_points ?? row.total_points, 0),
     podiums: normalizeNumber(row.podiums ?? row.podium_count ?? row.podium_finishes, 0),
     jerseys: normalizeNumber(row.jerseys ?? row.jersey_count ?? row.special_jerseys, 0),
   })
+
+  try {
+    const { data, error } = await supabase.rpc('get_rider_international_points_summary_v1', {
+      p_rider_id: riderId,
+      p_season_year: 2000,
+    })
+
+    if (!error) {
+      const row = Array.isArray(data) ? data[0] : data
+      if (row) {
+        return {
+          points: normalizeNumber(row.international_points, 0),
+          podiums: 0,
+          jerseys: 0,
+        }
+      }
+    }
+  } catch {
+    // fallback below
+  }
 
   try {
     const { data, error } = await supabase.rpc('get_rider_season_overview', {
@@ -864,8 +1141,30 @@ async function fetchRiderSeasonStatsById(riderId: string): Promise<RiderSeasonSt
     wins: normalizeNumber(row.wins ?? row.win_count ?? row.victories, 0),
     podiums: normalizeNumber(row.podiums ?? row.podium_count ?? row.podium_finishes, 0),
     top10: normalizeNumber(row.top10 ?? row.top_10 ?? row.top_ten_count, 0),
-    points: normalizeNumber(row.points ?? row.season_points ?? row.total_points, 0),
+    points: normalizeNumber(row.international_points ?? row.points ?? row.season_points ?? row.total_points, 0),
   })
+
+  try {
+    const { data, error } = await supabase.rpc('get_rider_international_points_summary_v1', {
+      p_rider_id: riderId,
+      p_season_year: 2000,
+    })
+
+    if (!error) {
+      const row = Array.isArray(data) ? data[0] : data
+      if (row) {
+        return {
+          races: normalizeNumber(row.scoring_races, 0),
+          wins: 0,
+          podiums: 0,
+          top10: 0,
+          points: normalizeNumber(row.international_points, 0),
+        }
+      }
+    }
+  } catch {
+    // fallback below
+  }
 
   try {
     const { data, error } = await supabase.rpc('get_rider_season_stats_box', {
@@ -914,15 +1213,49 @@ async function fetchRiderSeasonStatsById(riderId: string): Promise<RiderSeasonSt
 async function fetchRiderLastFiveRacesById(riderId: string): Promise<RiderRecentRaceRow[]> {
   const normalizeRows = (rows: any[]): RiderRecentRaceRow[] =>
     rows
-      .map((row) => ({
-        race_name:
-          row.race_name ?? row.event_name ?? row.race_label ?? row.stage_name ?? 'Unknown race',
-        race_date: row.race_date ?? row.event_date ?? row.date ?? null,
-        finish_position: normalizeNumber(
-          row.finish_position ?? row.position ?? row.final_position ?? row.result_position,
-          0
-        ) || null,
-      }))
+      .map((row) => {
+        const startCity =
+          row.start_city ?? row.start_city_name ?? row.start_location ?? row.start_town ?? null
+        const finishCity =
+          row.finish_city ?? row.finish_city_name ?? row.finish_location ?? row.finish_town ?? null
+
+        const routeLabel =
+          row.route_label ??
+          row.route_name ??
+          row.race_route_label ??
+          (startCity && finishCity ? `${startCity} → ${finishCity}` : null)
+
+        return {
+          race_id: row.race_id ?? row.id ?? null,
+          race_name:
+            row.race_name ?? row.event_name ?? row.race_label ?? row.stage_name ?? 'Unknown race',
+          race_country_code:
+            row.race_country_code ?? row.country_code ?? row.country ?? row.host_country_code ?? null,
+          race_category: row.race_category ?? row.category ?? row.race_class ?? null,
+          race_start_date:
+            row.race_start_date ?? row.start_date ?? row.race_date ?? row.event_date ?? row.date ?? null,
+          race_end_date:
+            row.race_end_date ?? row.end_date ?? row.race_date ?? row.event_date ?? row.date ?? null,
+          race_date: row.race_date ?? row.event_date ?? row.date ?? row.end_date ?? null,
+          stage_count: normalizeNumber(row.stage_count ?? row.stages_count ?? row.total_stages, 0) || null,
+          route_label: routeLabel,
+          finish_position:
+            normalizeNumber(
+              row.finish_position ?? row.position ?? row.final_position ?? row.result_position,
+              0
+            ) || null,
+          ci_points:
+            normalizeNumber(
+              row.ci_points ??
+                row.international_points ??
+                row.rider_points ??
+                row.ranking_points ??
+                row.classification_points,
+              0
+            ) || null,
+          result_source: row.result_source ?? row.source_type ?? null,
+        }
+      })
       .slice(0, 5)
 
   try {
@@ -963,6 +1296,20 @@ async function fetchRiderLastFiveRacesById(riderId: string): Promise<RiderRecent
   }
 
   return []
+}
+
+async function fetchRiderRaceSharpnessById(
+  riderId: string
+): Promise<RiderRaceSharpnessUiRow | null> {
+  const { data, error } = await supabase.rpc('get_rider_race_sharpness_ui_v1', {
+    p_club_id: null,
+    p_rider_id: riderId,
+  })
+
+  if (error) throw error
+
+  const row = Array.isArray(data) ? data[0] : data
+  return (row ?? null) as RiderRaceSharpnessUiRow | null
 }
 
 function TransferListModal({
@@ -1364,12 +1711,30 @@ export default function RiderProfilePage({
   onBack,
   onRosterChanged,
 }: RiderProfilePageProps) {
+  const location = useLocation()
+  const navigate = useNavigate()
+
+  function getRaceDetailReturnState() {
+    const currentPath = `${location.pathname}${location.search}${location.hash}`
+
+    return {
+      from: 'rider_profile',
+      returnTo: currentPath,
+      returnLabel: 'Back to rider profile',
+      returnScrollY: typeof window === 'undefined' ? 0 : window.scrollY,
+      returnScrollX: typeof window === 'undefined' ? 0 : window.scrollX,
+    }
+  }
+
   const [profileLoading, setProfileLoading] = useState(false)
   const [profileError, setProfileError] = useState<string | null>(null)
   const [selectedRider, setSelectedRider] = useState<RiderDetails | null>(null)
   const [currentHealthCase, setCurrentHealthCase] = useState<RiderCurrentHealthCase | null>(null)
   const [skillDeltaMap, setSkillDeltaMap] = useState<RiderSkillDeltaMap>({})
   const [activeTab, setActiveTab] = useState<RiderProfileTab>('overview')
+  const [skillViewMode, setSkillViewMode] = useState<RiderSkillViewMode>(() =>
+    getStoredRiderSkillViewMode()
+  )
   const [contractActionMessage, setContractActionMessage] = useState<string | null>(null)
 
   const [seasonOverview, setSeasonOverview] = useState<RiderSeasonOverview>({
@@ -1385,6 +1750,7 @@ export default function RiderProfilePage({
     points: 0,
   })
   const [recentRaces, setRecentRaces] = useState<RiderRecentRaceRow[]>([])
+  const [raceSharpness, setRaceSharpness] = useState<RiderRaceSharpnessUiRow | null>(null)
   const [overviewLoading, setOverviewLoading] = useState(false)
 
   const [imageUrlInput, setImageUrlInput] = useState('')
@@ -1672,6 +2038,7 @@ export default function RiderProfilePage({
       setSeasonOverview({ points: 0, podiums: 0, jerseys: 0 })
       setSeasonStats({ races: 0, wins: 0, podiums: 0, top10: 0, points: 0 })
       setRecentRaces([])
+      setRaceSharpness(null)
       setImageUrlInput('')
       setImageSaveMessage(null)
       setCurrentSeasonNumber(null)
@@ -1757,10 +2124,11 @@ export default function RiderProfilePage({
       setOverviewLoading(true)
 
       try {
-        const [overviewData, statsData, racesData] = await Promise.all([
+        const [overviewData, statsData, racesData, sharpnessData] = await Promise.all([
           fetchRiderSeasonOverviewById(selectedRider.id),
           fetchRiderSeasonStatsById(selectedRider.id),
           fetchRiderLastFiveRacesById(selectedRider.id),
+          fetchRiderRaceSharpnessById(selectedRider.id),
         ])
 
         if (!mounted) return
@@ -1768,11 +2136,13 @@ export default function RiderProfilePage({
         setSeasonOverview(overviewData)
         setSeasonStats(statsData)
         setRecentRaces(racesData)
+        setRaceSharpness(sharpnessData)
       } catch {
         if (!mounted) return
         setSeasonOverview({ points: 0, podiums: 0, jerseys: 0 })
         setSeasonStats({ races: 0, wins: 0, podiums: 0, top10: 0, points: 0 })
         setRecentRaces([])
+        setRaceSharpness(null)
       } finally {
         if (!mounted) return
         setOverviewLoading(false)
@@ -1816,10 +2186,15 @@ export default function RiderProfilePage({
 
         const nextFamilyClubs = (familyRes.data ?? []) as FamilyClub[]
         const familyClubIds = nextFamilyClubs.map((row) => row.club_id)
+        const historyDisplayNameByClubId = await loadClubHistoryDisplayNameMap(familyClubIds)
         const familyClubMap = new Map(
           nextFamilyClubs.map((row) => [
             row.club_id,
-            { club_name: row.club_name, team_label: row.team_label },
+            {
+              club_name: row.club_name,
+              history_display_name: historyDisplayNameByClubId[row.club_id] ?? row.club_name,
+              team_label: row.team_label,
+            },
           ])
         )
 
@@ -1846,7 +2221,9 @@ export default function RiderProfilePage({
 
           setFocusedTrainingRider({
             ...row,
-            source_club_name: source?.club_name ?? 'Unknown Team',
+            source_club_name: source?.history_display_name ?? source?.club_name ?? 'Unknown Team',
+            source_club_full_display_name:
+              source?.history_display_name ?? source?.club_name ?? 'Unknown Team',
             team_label: (source?.team_label ?? 'First Team') as 'First Team' | 'U23',
           })
         } else {
@@ -2293,6 +2670,11 @@ export default function RiderProfilePage({
         : 'border-transparent text-slate-500 hover:text-slate-700'
     }`
 
+  function handleSkillViewModeChange(nextMode: RiderSkillViewMode) {
+    setSkillViewMode(nextMode)
+    saveStoredRiderSkillViewMode(nextMode)
+  }
+
   const skillRows = [
     { label: 'Sprint', key: 'sprint' as const, value: selectedRider?.sprint },
     { label: 'Climbing', key: 'climbing' as const, value: selectedRider?.climbing },
@@ -2304,6 +2686,9 @@ export default function RiderProfilePage({
     { label: 'Race IQ', key: 'race_iq' as const, value: selectedRider?.race_iq },
     { label: 'Teamwork', key: 'teamwork' as const, value: selectedRider?.teamwork },
   ]
+
+  const skillRowMidpoint = Math.ceil(skillRows.length / 2)
+  const skillRowColumns = [skillRows.slice(0, skillRowMidpoint), skillRows.slice(skillRowMidpoint)]
 
   const focusedTrainingDraft = focusedTrainingRider ? buildPlanRowForRider(focusedTrainingRider) : null
   const focusedTrainingEffective = focusedTrainingRider
@@ -2322,6 +2707,7 @@ export default function RiderProfilePage({
             season: currentSeasonNumber,
             season_label: `Season ${currentSeasonNumber}`,
             team_name:
+              focusedTrainingRider?.source_club_full_display_name ??
               focusedTrainingRider?.source_club_name ??
               historyRows.find((row) => row.is_current_season)?.team_name ??
               'Current Team',
@@ -2639,6 +3025,10 @@ export default function RiderProfilePage({
                   <div className="divide-y divide-slate-100">
                     <DetailRow label="Status" value={healthUi.label} />
                     <DetailRow label="Fatigue score" value={`${selectedRider.fatigue ?? 0}/100`} />
+                    <DetailRow
+                      label="Race Sharpness"
+                      value={<RaceSharpnessInlineBadge sharpness={raceSharpness} />}
+                    />
                     {healthCaseName ? <DetailRow label="Case" value={healthCaseName} /> : null}
                     {healthSeverityLabel ? <DetailRow label="Severity" value={healthSeverityLabel} /> : null}
                     {healthStageLabel ? <DetailRow label="Stage" value={healthStageLabel} /> : null}
@@ -2689,31 +3079,90 @@ export default function RiderProfilePage({
                   ) : null}
                 </SectionCard>
 
-                <SectionCard title="Skill Attributes">
-                  <div className="space-y-3">
-                    {skillRows.map((stat) => {
-                      const delta = skillDeltaMap[stat.key]
+                <SectionCard
+                  title="Skill Attributes"
+                  headerAction={
+                    <div className="inline-flex overflow-hidden rounded-full border border-slate-200 bg-slate-50 p-1">
+                      {(['basic', 'modern'] as RiderSkillViewMode[]).map((mode) => (
+                        <button
+                          key={mode}
+                          type="button"
+                          onClick={() => handleSkillViewModeChange(mode)}
+                          className={`rounded-full px-3 py-1 text-xs font-semibold transition ${
+                            skillViewMode === mode
+                              ? 'bg-slate-900 text-white shadow-sm'
+                              : 'text-slate-500 hover:text-slate-800'
+                          }`}
+                        >
+                          {mode === 'basic' ? 'Basic view' : 'Modern view'}
+                        </button>
+                      ))}
+                    </div>
+                  }
+                >
+                  {skillViewMode === 'basic' ? (
+                    <div className="grid grid-cols-1 gap-x-6 md:grid-cols-2">
+                      {skillRowColumns.map((column, columnIndex) => (
+                        <div key={columnIndex} className="divide-y divide-slate-100">
+                          {column.map((stat) => {
+                            const delta = skillDeltaMap[stat.key]
+                            const showDelta = Boolean(delta?.has_visible_delta && delta.delta_label)
+                            const deltaClasses =
+                              delta?.delta_direction === 'positive'
+                                ? 'border-emerald-300 bg-emerald-50 text-emerald-700'
+                                : delta?.delta_direction === 'negative'
+                                  ? 'border-rose-300 bg-rose-50 text-rose-700'
+                                  : 'border-slate-200 bg-slate-100 text-slate-500'
 
-                      return (
-                        <SimpleAttributeRow
-                          key={stat.key}
-                          attributeCode={stat.key}
-                          label={stat.label}
-                          value={stat.value ?? 0}
-                          deltaLabel={delta?.has_visible_delta ? delta.delta_label : null}
-                          deltaDirection={delta?.has_visible_delta ? delta.delta_direction : null}
-                          sourceLabel={
-                            delta?.has_visible_delta
-                              ? formatSkillDeltaSource(delta.primary_source)
-                              : null
-                          }
-                        />
-                      )
-                    })}
-                  </div>
+                            return (
+                              <DetailRow
+                                key={stat.key}
+                                label={stat.label}
+                                value={
+                                  <span className="inline-flex items-center justify-end gap-2">
+                                    <span>{stat.value ?? 0}</span>
+                                    {showDelta ? (
+                                      <span
+                                        className={`rounded-full border px-2 py-0.5 text-[11px] font-bold ${deltaClasses}`}
+                                        title={formatSkillDeltaSource(delta?.primary_source) ?? undefined}
+                                      >
+                                        {delta?.delta_label}
+                                      </span>
+                                    ) : null}
+                                  </span>
+                                }
+                              />
+                            )
+                          })}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {skillRows.map((stat) => {
+                        const delta = skillDeltaMap[stat.key]
+
+                        return (
+                          <SimpleAttributeRow
+                            key={stat.key}
+                            attributeCode={stat.key}
+                            label={stat.label}
+                            value={stat.value ?? 0}
+                            deltaLabel={delta?.has_visible_delta ? delta.delta_label : null}
+                            deltaDirection={delta?.has_visible_delta ? delta.delta_direction : null}
+                            sourceLabel={
+                              delta?.has_visible_delta
+                                ? formatSkillDeltaSource(delta.primary_source)
+                                : null
+                            }
+                          />
+                        )
+                      })}
+                    </div>
+                  )}
                 </SectionCard>
 
-                <SectionCard title="Last 5 Races" subtitle="Only finish position is shown">
+                <SectionCard title="Last 5 Races" subtitle="Finished races only · final race position shown">
                   {overviewLoading ? (
                     <div className="text-sm text-slate-500">Loading recent races…</div>
                   ) : recentRaces.length === 0 ? (
@@ -2721,26 +3170,99 @@ export default function RiderProfilePage({
                       No recent race results found for this rider.
                     </div>
                   ) : (
-                    <div className="space-y-3">
-                      {recentRaces.map((race, index) => (
-                        <div
-                          key={`${race.race_name}-${race.race_date ?? index}`}
-                          className="flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50 px-4 py-3"
-                        >
-                          <div className="min-w-0">
-                            <div className="truncate text-sm font-semibold text-slate-900">
-                              {race.race_name}
-                            </div>
-                            <div className="mt-1 text-xs text-slate-500">
-                              {race.race_date ? formatShortGameDate(race.race_date) : 'Date unknown'}
-                            </div>
-                          </div>
+                    <div className="space-y-1.5">
+                      {recentRaces.map((race, index) => {
+                        const dateLabel = formatRecentRaceDateRange(race)
 
-                          <div className="text-sm font-bold text-slate-900">
-                            {race.finish_position == null ? '—' : `P${race.finish_position}`}
+                        return (
+                          <div
+                            key={`${race.race_id ?? race.race_name}-${race.race_date ?? index}`}
+                            className="flex min-h-[38px] min-w-0 items-center gap-2.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 shadow-sm"
+                          >
+                            <div
+                              className="w-16 shrink-0 whitespace-nowrap text-center text-xs font-semibold leading-none text-slate-900"
+                              title={dateLabel}
+                            >
+                              {dateLabel}
+                            </div>
+
+                            <div className="h-6 w-px shrink-0 bg-emerald-400" />
+
+                            <CountryFlag countryCode={race.race_country_code} />
+
+                            <div className="flex min-w-0 flex-1 items-center gap-2 overflow-hidden whitespace-nowrap">
+                              {race.race_id ? (
+                                <Link
+                                  to={`/dashboard/races/${race.race_id}`}
+                                  state={getRaceDetailReturnState()}
+                                  onClick={(event) => {
+                                    if (
+                                      event.defaultPrevented ||
+                                      event.button !== 0 ||
+                                      event.metaKey ||
+                                      event.altKey ||
+                                      event.ctrlKey ||
+                                      event.shiftKey
+                                    ) {
+                                      return
+                                    }
+
+                                    event.preventDefault()
+                                    navigate(`/dashboard/races/${race.race_id}`, {
+                                      state: getRaceDetailReturnState(),
+                                    })
+                                  }}
+                                  className="truncate text-sm font-semibold text-slate-900 hover:text-yellow-700 hover:underline"
+                                  title={race.race_name}
+                                >
+                                  {race.race_name}
+                                </Link>
+                              ) : (
+                                <span
+                                  className="truncate text-sm font-semibold text-slate-900"
+                                  title={race.race_name}
+                                >
+                                  {race.race_name}
+                                </span>
+                              )}
+
+                              {race.race_category ? (
+                                <span className="shrink-0 rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700">
+                                  {race.race_category}
+                                </span>
+                              ) : null}
+
+                              {race.stage_count && race.stage_count > 1 ? (
+                                <span className="shrink-0 text-xs text-slate-400">
+                                  · {race.stage_count} stages
+                                </span>
+                              ) : null}
+
+                              {race.route_label ? (
+                                <span className="min-w-0 truncate text-xs text-slate-400">
+                                  · {race.route_label}
+                                </span>
+                              ) : null}
+                            </div>
+
+                            <div className="ml-auto flex shrink-0 items-center text-[10px] leading-none text-slate-500">
+                              <div className="border-l border-slate-300 px-3 text-right">
+                                <span className="uppercase tracking-[0.12em] text-slate-400">Position:</span>{' '}
+                                <span className="font-normal text-slate-900">
+                                  {formatGcPosition(race.finish_position)}
+                                </span>
+                              </div>
+
+                              <div className="border-l border-slate-300 pl-3 text-right">
+                                <span className="uppercase tracking-[0.12em] text-slate-400">UCI points:</span>{' '}
+                                <span className="font-normal text-slate-900">
+                                  {formatGcPosition(race.ci_points)}
+                                </span>
+                              </div>
+                            </div>
                           </div>
-                        </div>
-                      ))}
+                        )
+                      })}
                     </div>
                   )}
                 </SectionCard>

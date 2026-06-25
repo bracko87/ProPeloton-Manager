@@ -330,8 +330,8 @@ type Props = {
   riderAgeBuckets: Array<{ label: string; value: number }>
 
   topOverallPointsRider?: RiderStatsRow
-  topSprintPointsRider?: RiderStatsRow
-  topClimbingPointsRider?: RiderStatsRow
+  topPodiumsRider?: RiderStatsRow
+  topJerseysRider?: RiderStatsRow
 
   ridersPage: number
   setRidersPage: (page: number) => void
@@ -343,9 +343,7 @@ type Props = {
   formatCompetitionLabel: (value: string | null | undefined) => string
   formatRiderMetricLabel: (metric: RiderMetric) => string
   getCountryName: (code: string | null, countryNameByCode: Map<string, string>) => string
-  getDisplayedRiderCountryCode: (
-    row: Pick<RiderStatsRow, 'club_country_code' | 'country_code'>
-  ) => string | null
+  getDisplayedRiderCountryCode: (row: Pick<RiderStatsRow, 'country_code'>) => string | null
   moneyFormatter: Intl.NumberFormat
 }
 
@@ -377,8 +375,8 @@ export default function RiderStatisticsSection({
   riderRoles,
   riderAgeBuckets,
   topOverallPointsRider,
-  topSprintPointsRider,
-  topClimbingPointsRider,
+  topPodiumsRider,
+  topJerseysRider,
   ridersPage,
   setRidersPage,
   pageSize,
@@ -448,9 +446,9 @@ export default function RiderStatisticsSection({
             onChange={e => setRiderMetric(e.target.value as RiderMetric)}
             className="rounded-xl border border-slate-300 px-3 py-2 text-sm"
           >
-            <option value="season_points_overall">Sort: Overall points</option>
-            <option value="season_points_sprint">Sort: Sprinting points</option>
-            <option value="season_points_climbing">Sort: Climbing points</option>
+            <option value="season_points_overall">Sort: International points</option>
+            <option value="season_points_sprint">Sort: Stage finish points</option>
+            <option value="season_points_climbing">Sort: GC / one-day points</option>
           </select>
 
           <select
@@ -480,7 +478,7 @@ export default function RiderStatisticsSection({
         <>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
             <KpiCard
-              label="Most overall points"
+              label="Most international points"
               value={
                 topOverallPointsRider ? (
                   <RiderNameButton onClick={() => openRiderProfile(topOverallPointsRider)}>
@@ -493,11 +491,11 @@ export default function RiderStatisticsSection({
             />
 
             <KpiCard
-              label="Most sprinting points"
+              label="Most podiums"
               value={
-                topSprintPointsRider ? (
-                  <RiderNameButton onClick={() => openRiderProfile(topSprintPointsRider)}>
-                    {topSprintPointsRider.display_name} ({topSprintPointsRider.season_points_sprint})
+                topPodiumsRider ? (
+                  <RiderNameButton onClick={() => openRiderProfile(topPodiumsRider)}>
+                    {topPodiumsRider.display_name} ({topPodiumsRider.podiums ?? 0})
                   </RiderNameButton>
                 ) : (
                   '—'
@@ -506,11 +504,11 @@ export default function RiderStatisticsSection({
             />
 
             <KpiCard
-              label="Most climbing points"
+              label="Most jerseys"
               value={
-                topClimbingPointsRider ? (
-                  <RiderNameButton onClick={() => openRiderProfile(topClimbingPointsRider)}>
-                    {topClimbingPointsRider.display_name} ({topClimbingPointsRider.season_points_climbing})
+                topJerseysRider ? (
+                  <RiderNameButton onClick={() => openRiderProfile(topJerseysRider)}>
+                    {topJerseysRider.display_name} ({topJerseysRider.jerseys ?? 0})
                   </RiderNameButton>
                 ) : (
                   '—'
@@ -534,8 +532,9 @@ export default function RiderStatisticsSection({
                     <thead>
                       <tr className="border-b border-slate-200 text-left text-slate-500">
                         <th className="pb-3 pr-3">Rider</th>
-                        <th className="pb-3 pr-3">Team</th>
                         <th className="pb-3 pr-3">Country</th>
+                        <th className="pb-3 pr-3">Role</th>
+                        <th className="pb-3 pr-3">Team</th>
                         <th className="pb-3 pr-3">Age</th>
                         <th className="pb-3 text-right">
                           {formatRiderMetricLabel(riderMetric)} points
@@ -551,6 +550,18 @@ export default function RiderStatisticsSection({
                             </RiderNameButton>
                           </td>
 
+                          <td className="py-3 pr-3">
+                            <CountryFlag
+                              code={getDisplayedRiderCountryCode(row)}
+                              countryNameByCode={countryNameByCode}
+                              getCountryName={getCountryName}
+                            />
+                          </td>
+
+                          <td className="py-3 pr-3 text-slate-600">
+                            {formatCompetitionLabel(row.role)}
+                          </td>
+
                           <td className="py-3 pr-3 text-slate-600">
                             {row.club_id && row.club_name ? (
                               <TeamNameButton onClick={() => openTeamProfile(row.club_id)}>
@@ -559,14 +570,6 @@ export default function RiderStatisticsSection({
                             ) : (
                               '—'
                             )}
-                          </td>
-
-                          <td className="py-3 pr-3">
-                            <CountryFlag
-                              code={getDisplayedRiderCountryCode(row)}
-                              countryNameByCode={countryNameByCode}
-                              getCountryName={getCountryName}
-                            />
                           </td>
 
                           <td className="py-3 pr-3 text-slate-600">{row.age_years ?? '—'}</td>
@@ -606,9 +609,9 @@ export default function RiderStatisticsSection({
                 onChange={e => setRiderTableMetric(e.target.value as RiderMetric)}
                 className="rounded-lg border border-slate-300 px-3 py-2 text-sm"
               >
-                <option value="season_points_overall">Overall points</option>
-                <option value="season_points_sprint">Sprinting points</option>
-                <option value="season_points_climbing">Climbing points</option>
+                <option value="season_points_overall">International points</option>
+                <option value="season_points_sprint">Stage finish points</option>
+                <option value="season_points_climbing">GC / one-day points</option>
               </select>
             }
           >
@@ -624,10 +627,10 @@ export default function RiderStatisticsSection({
                     <thead>
                       <tr className="border-b border-slate-200 text-left text-slate-500">
                         <th className="pb-3 pr-3">Rider</th>
-                        <th className="pb-3 pr-3">Team</th>
                         <th className="pb-3 pr-3">Country</th>
-                        <th className="pb-3 pr-3">Age</th>
                         <th className="pb-3 pr-3">Role</th>
+                        <th className="pb-3 pr-3">Team</th>
+                        <th className="pb-3 pr-3">Age</th>
                         <th className="pb-3 text-right">
                           {formatRiderMetricLabel(riderTableMetric)} points
                         </th>
@@ -642,6 +645,18 @@ export default function RiderStatisticsSection({
                             </RiderNameButton>
                           </td>
 
+                          <td className="py-3 pr-3">
+                            <CountryFlag
+                              code={getDisplayedRiderCountryCode(row)}
+                              countryNameByCode={countryNameByCode}
+                              getCountryName={getCountryName}
+                            />
+                          </td>
+
+                          <td className="py-3 pr-3 text-slate-600">
+                            {formatCompetitionLabel(row.role)}
+                          </td>
+
                           <td className="py-3 pr-3 text-slate-600">
                             {row.club_id && row.club_name ? (
                               <TeamNameButton onClick={() => openTeamProfile(row.club_id)}>
@@ -652,18 +667,7 @@ export default function RiderStatisticsSection({
                             )}
                           </td>
 
-                          <td className="py-3 pr-3">
-                            <CountryFlag
-                              code={getDisplayedRiderCountryCode(row)}
-                              countryNameByCode={countryNameByCode}
-                              getCountryName={getCountryName}
-                            />
-                          </td>
-
                           <td className="py-3 pr-3 text-slate-600">{row.age_years ?? '—'}</td>
-                          <td className="py-3 pr-3 text-slate-600">
-                            {formatCompetitionLabel(row.role)}
-                          </td>
 
                           <td className="py-3 text-right font-semibold text-slate-900">
                             {Number(row[riderTableMetric] ?? 0)}

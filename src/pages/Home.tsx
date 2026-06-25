@@ -7,19 +7,79 @@
  * - After auth email confirmation, detect authenticated users and route them
  *   to the correct next step based on get_my_club_id().
  * - Show lightweight loading/error banners without changing the main layout.
+ * - Load live public homepage data from get_public_homepage_snapshot_v1().
  */
 
 import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router'
 import Hero from '../components/home/Hero'
+import HomepageRaceDays, {
+  type HomepageRaceDaysData,
+} from '../components/home/HomepageRaceDays'
 import FeatureCard from '../components/home/FeatureCard'
 import ScreenshotGallery from '../components/home/ScreenshotGallery'
-import ReviewCard from '../components/home/ReviewCard'
 import CTA from '../components/home/CTA'
 import { useAuth } from '../context/AuthProvider'
 import { supabase } from '../lib/supabase'
 
+type HomeSnapshot = {
+  game_time_label: string
+  active_managers: number
+  total_teams: number
+  total_races: number
+  total_stages: number
+}
+
+type RawHomeSnapshot = {
+  game_time_label?: unknown
+  active_managers?: unknown
+  total_teams?: unknown
+  total_races?: unknown
+  total_stages?: unknown
+}
+
 const BETA_NOTICE_STORAGE_KEY = 'propeloton-beta-notice-seen'
+
+const SOCIAL_LINKS = {
+  facebook: '#',
+  youtube: '#',
+  discord: '#',
+  x: '#',
+  email: 'mailto:contact@nextqueststudio.com',
+}
+
+function toNumber(value: unknown): number {
+  const parsedValue = Number(value)
+
+  if (!Number.isFinite(parsedValue)) {
+    return 0
+  }
+
+  return parsedValue
+}
+
+function formatNumber(value: unknown): string {
+  return new Intl.NumberFormat('en-US').format(toNumber(value))
+}
+
+function normalizeHomeSnapshot(data: unknown): HomeSnapshot | null {
+  if (!data || typeof data !== 'object') {
+    return null
+  }
+
+  const row = data as RawHomeSnapshot
+
+  return {
+    game_time_label:
+      typeof row.game_time_label === 'string' && row.game_time_label.trim().length > 0
+        ? row.game_time_label
+        : 'Loading game time...',
+    active_managers: toNumber(row.active_managers),
+    total_teams: toNumber(row.total_teams),
+    total_races: toNumber(row.total_races),
+    total_stages: toNumber(row.total_stages),
+  }
+}
 
 /**
  * HomePage
@@ -33,6 +93,10 @@ export default function HomePage(): JSX.Element {
   const [checkingClub, setCheckingClub] = useState(false)
   const [clubError, setClubError] = useState<string | null>(null)
   const [showBetaNotice, setShowBetaNotice] = useState(false)
+  const [homeSnapshot, setHomeSnapshot] = useState<HomeSnapshot | null>(null)
+  const [homeSnapshotError, setHomeSnapshotError] = useState<string | null>(null)
+  const [raceDays, setRaceDays] = useState<HomepageRaceDaysData | null>(null)
+  const [raceDaysLoading, setRaceDaysLoading] = useState(false)
 
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -41,6 +105,76 @@ export default function HomePage(): JSX.Element {
 
     if (!hasSeenBetaNotice) {
       setShowBetaNotice(true)
+    }
+  }, [])
+
+  useEffect(() => {
+    let isMounted = true
+
+    async function loadHomeSnapshot() {
+      const { data, error } = await supabase.rpc('get_public_homepage_snapshot_v1')
+
+      if (!isMounted) return
+
+      if (error) {
+        console.warn('Could not load homepage snapshot:', error.message)
+        setHomeSnapshotError('Live homepage data is temporarily unavailable.')
+        return
+      }
+
+      const normalizedSnapshot = normalizeHomeSnapshot(data)
+
+      if (!normalizedSnapshot) {
+        setHomeSnapshotError('Live homepage data returned an unexpected format.')
+        return
+      }
+
+      setHomeSnapshot(normalizedSnapshot)
+      setHomeSnapshotError(null)
+    }
+
+    loadHomeSnapshot()
+
+    const intervalId = window.setInterval(loadHomeSnapshot, 60_000)
+
+    return () => {
+      isMounted = false
+      window.clearInterval(intervalId)
+    }
+  }, [])
+
+  useEffect(() => {
+    let isMounted = true
+
+    async function loadRaceDays() {
+      setRaceDaysLoading(true)
+
+      const { data, error } = await supabase.rpc('get_public_homepage_race_days_v1')
+
+      if (!isMounted) return
+
+      if (error) {
+        console.warn('Could not load homepage race days:', error.message)
+        setRaceDaysLoading(false)
+        return
+      }
+
+      setRaceDays({
+        yesterdayRaces: Array.isArray(data?.yesterdayRaces) ? data.yesterdayRaces : [],
+        todayRaces: Array.isArray(data?.todayRaces) ? data.todayRaces : [],
+        tomorrowRaces: Array.isArray(data?.tomorrowRaces) ? data.tomorrowRaces : [],
+      })
+
+      setRaceDaysLoading(false)
+    }
+
+    loadRaceDays()
+
+    const intervalId = window.setInterval(loadRaceDays, 60_000)
+
+    return () => {
+      isMounted = false
+      window.clearInterval(intervalId)
     }
   }, [])
 
@@ -63,16 +197,15 @@ export default function HomePage(): JSX.Element {
     let isMounted = true
 
     if (loading) {
-      // Auth state still resolving; do not redirect yet.
       return
     }
 
     if (!user) {
-      // Not authenticated: show normal homepage and reset any previous state.
       if (isMounted) {
         setCheckingClub(false)
         setClubError(null)
       }
+
       return
     }
 
@@ -86,13 +219,12 @@ export default function HomePage(): JSX.Element {
 
       if (error) {
         setClubError(
-          'You are signed in, but we could not load your club status. Please refresh or try again.'
+          'You are signed in, but we could not load your club status. Please refresh or try again.',
         )
         setCheckingClub(false)
         return
       }
 
-      // Only redirect when RPC succeeds.
       if (!data) {
         navigate('/create-club', { replace: true })
       } else {
@@ -108,13 +240,14 @@ export default function HomePage(): JSX.Element {
   return (
     <div className="min-h-screen bg-[#081224] text-white">
       <header className="border-b border-white/15">
-        <div className="max-w-7xl mx-auto px-6 py-2 flex items-center justify-between">
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-2">
           <div className="flex items-center gap-4">
             <img
               src="https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/5c3417dc-3924-4423-948a-745ae5902ed0.png"
               alt="ProPeloton Manager logo"
-              className="h-24 w-auto object-contain shrink-0"
+              className="h-24 w-auto shrink-0 object-contain"
             />
+
             <div className="text-xl font-semibold">ProPeloton Manager</div>
           </div>
 
@@ -122,9 +255,10 @@ export default function HomePage(): JSX.Element {
             <a href="#/login" className="text-white/80 hover:text-white">
               Sign In
             </a>
+
             <a
               href="#/register"
-              className="bg-yellow-400 text-black px-4 py-2 rounded-md font-semibold"
+              className="rounded-md bg-yellow-400 px-4 py-2 font-semibold text-black hover:bg-yellow-300"
             >
               Start Playing
             </a>
@@ -132,18 +266,17 @@ export default function HomePage(): JSX.Element {
         </div>
       </header>
 
-      {/* Lightweight loading / error banners for authenticated users */}
       {checkingClub && (
-        <div className="bg-blue-950 border-b border-blue-700 text-blue-100 text-sm text-center py-2">
+        <div className="border-b border-blue-700 bg-blue-950 py-2 text-center text-sm text-blue-100">
           Preparing your manager account...
         </div>
       )}
+
       {clubError && (
-        <div className="bg-red-900/80 border-b border-red-500 text-red-50 text-sm text-center py-2">
+        <div className="border-b border-red-500 bg-red-900/80 py-2 text-center text-sm text-red-50">
           {clubError}
         </div>
       )}
-
 
       {showBetaNotice && (
         <div
@@ -157,6 +290,7 @@ export default function HomePage(): JSX.Element {
               <div className="text-xs font-bold uppercase tracking-[0.22em]">
                 Closed beta notice
               </div>
+
               <h2 id="beta-notice-title" className="mt-2 text-2xl font-bold">
                 ProPeloton Manager is still in beta
               </h2>
@@ -176,7 +310,10 @@ export default function HomePage(): JSX.Element {
             </div>
 
             <div className="flex flex-col gap-3 border-t border-white/10 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
-              <a href="#/login" className="text-center text-sm font-semibold text-white/80 hover:text-white">
+              <a
+                href="#/login"
+                className="text-center text-sm font-semibold text-white/80 hover:text-white"
+              >
                 Tester sign in
               </a>
 
@@ -193,144 +330,165 @@ export default function HomePage(): JSX.Element {
       )}
 
       <main>
-        <Hero />
+        <Hero gameTimeLabel={homeSnapshot?.game_time_label ?? 'Loading game time...'} />
 
-        <section className="py-12">
-          <div className="max-w-7xl mx-auto px-6">
-            <h3 className="text-2xl font-semibold">Quick Stats</h3>
-            <p className="mt-2 text-sm text-white/70">
-              Live snapshot of the ProPeloton community and world.
-            </p>
+        <HomepageRaceDays data={raceDays} loading={raceDaysLoading} />
 
-            <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="bg-white/5 border border-white/5 rounded-md p-4">
-                <div className="text-xs text-white/60">Active Managers</div>
-                <div className="mt-1 text-2xl font-bold text-white">12,423</div>
-              </div>
+        <section className="relative w-full overflow-hidden border-y border-white/15 bg-[#1a1404] py-16">
+          <div className="pointer-events-none absolute inset-0" aria-hidden="true">
+            <img
+              src="https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/ChatGPT%20Image%20Mar%201,%202026,%2008_28_06%20PM.png"
+              alt=""
+              className="h-full w-full object-cover"
+              style={{
+                opacity: 0.18,
+                WebkitMaskImage:
+                  'linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0.85) 55%, rgba(0,0,0,0.45) 100%)',
+                maskImage:
+                  'linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0.85) 55%, rgba(0,0,0,0.45) 100%)',
+              }}
+            />
 
-              <div className="bg-white/5 border border-white/5 rounded-md p-4">
-                <div className="text-xs text-white/60">Total Teams</div>
-                <div className="mt-1 text-2xl font-bold text-white">3,128</div>
-              </div>
-
-              <div className="bg-white/5 border border-white/5 rounded-md p-4">
-                <div className="text-xs text-white/60">Total Tours</div>
-                <div className="mt-1 text-2xl font-bold text-white">248</div>
-              </div>
-
-              <div className="bg-white/5 border border-white/5 rounded-md p-4">
-                <div className="text-xs text-white/60">Total Stages</div>
-                <div className="mt-1 text-2xl font-bold text-white">5,143</div>
-              </div>
-            </div>
+            <div className="absolute inset-0 bg-gradient-to-b from-[#2a2108]/40 via-[#081224]/80 to-[#081224]/95" />
           </div>
-        </section>
 
-        <section className="py-12">
-          <div className="max-w-7xl mx-auto px-6">
-            <h3 className="text-2xl font-semibold">Core Features</h3>
-            <p className="mt-2 text-sm text-white/70">
-              Everything you need to manage a world-class cycling club.
-            </p>
+          <div className="relative z-10 mx-auto max-w-7xl px-6">
+            <section>
+              <h3 className="text-2xl font-semibold">Quick Stats</h3>
 
-            <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              <FeatureCard
-                icon={
-                  <svg
-                    className="w-6 h-6"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                  >
-                    <path d="M12 2l3 7h7l-5.5 4 2 7L12 17l-6.5 3 2-7L2 9h7z" />
-                  </svg>
-                }
-                title="Deep Squad Management"
-                description="Train, rotate and develop riders with realistic form, fatigue and talent progression."
-              />
+              <p className="mt-2 text-sm text-white/70">
+                Live snapshot of the ProPeloton world.
+              </p>
 
-              <FeatureCard
-                icon={
-                  <svg
-                    className="w-6 h-6"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                  >
-                    <path d="M3 3h18v4H3zM5 11h14v10H5z" />
-                  </svg>
-                }
-                title="Tactical Races"
-                description="Choose attack points, manage breakaways and execute stage-winning tactics."
-              />
+              {homeSnapshotError && (
+                <div className="mt-4 rounded-md border border-yellow-400/30 bg-yellow-400/10 px-4 py-3 text-sm text-yellow-100">
+                  {homeSnapshotError}
+                </div>
+              )}
 
-              <FeatureCard
-                icon={
-                  <svg
-                    className="w-6 h-6"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                  >
-                    <path d="M12 1v22" />
-                  </svg>
-                }
-                title="Market & Transfers"
-                description="Scout, bid and negotiate contracts in a dynamic transfer market."
-              />
-            </div>
+              <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4">
+                <div className="rounded-md border border-white/10 bg-[#101b31]/85 p-4 backdrop-blur-sm">
+                  <div className="text-xs text-white/60">Active Managers</div>
+                  <div className="mt-1 text-2xl font-bold text-white">
+                    {formatNumber(homeSnapshot?.active_managers)}
+                  </div>
+                </div>
+
+                <div className="rounded-md border border-white/10 bg-[#101b31]/85 p-4 backdrop-blur-sm">
+                  <div className="text-xs text-white/60">Total Teams</div>
+                  <div className="mt-1 text-2xl font-bold text-white">
+                    {formatNumber(homeSnapshot?.total_teams)}
+                  </div>
+                </div>
+
+                <div className="rounded-md border border-white/10 bg-[#101b31]/85 p-4 backdrop-blur-sm">
+                  <div className="text-xs text-white/60">Total Races & Tours</div>
+                  <div className="mt-1 text-2xl font-bold text-white">
+                    {formatNumber(homeSnapshot?.total_races)}
+                  </div>
+                </div>
+
+                <div className="rounded-md border border-white/10 bg-[#101b31]/85 p-4 backdrop-blur-sm">
+                  <div className="text-xs text-white/60">Total Stages</div>
+                  <div className="mt-1 text-2xl font-bold text-white">
+                    {formatNumber(homeSnapshot?.total_stages)}
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <section className="mt-20">
+              <h3 className="text-2xl font-semibold">Core Features</h3>
+
+              <p className="mt-2 text-sm text-white/70">
+                Everything you need to manage a world-class cycling club.
+              </p>
+
+              <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                <FeatureCard
+                  icon={
+                    <svg
+                      className="h-6 w-6"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                    >
+                      <path d="M12 2l3 7h7l-5.5 4 2 7L12 17l-6.5 3 2-7L2 9h7z" />
+                    </svg>
+                  }
+                  title="Deep Squad Management"
+                  description="Train, rotate and develop riders with realistic form, fatigue and talent progression."
+                />
+
+                <FeatureCard
+                  icon={
+                    <svg
+                      className="h-6 w-6"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                    >
+                      <path d="M3 3h18v4H3zM5 11h14v10H5z" />
+                    </svg>
+                  }
+                  title="Tactical Races"
+                  description="Choose attack points, manage breakaways and execute stage-winning tactics."
+                />
+
+                <FeatureCard
+                  icon={
+                    <svg
+                      className="h-6 w-6"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                    >
+                      <path d="M12 1v22" />
+                    </svg>
+                  }
+                  title="Market & Transfers"
+                  description="Scout, bid and negotiate contracts in a dynamic transfer market."
+                />
+              </div>
+            </section>
           </div>
         </section>
 
         <ScreenshotGallery />
 
         <section className="py-12">
-          <div className="max-w-7xl mx-auto px-6">
+          <div className="mx-auto max-w-7xl px-6">
             <h3 className="text-2xl font-semibold">Player Reviews</h3>
+
             <p className="mt-2 text-sm text-white/70">
-              What early players are saying about ProPeloton Manager.
+              Community reviews will be shown here once public reviews are available.
             </p>
 
-            <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-6">
-              <ReviewCard
-                name="A. Thompson"
-                title="Competitive Manager"
-                rating={5}
-                text="Incredible depth and real tactical decisions. The leagues are addictive."
-              />
+            <div className="mt-6 rounded-xl border border-white/10 bg-white/5 px-6 py-8 text-center">
+              <div className="text-lg font-semibold text-white">No reviews yet</div>
 
-              <ReviewCard
-                name="M. Chen"
-                title="Long-time Fan"
-                rating={4}
-                text="Lovely UI and strong progression systems. Transfers could use more transparency."
-              />
-
-              <ReviewCard
-                name="S. Patel"
-                title="Competitive Player"
-                rating={5}
-                text="Race-day tension is real — perfectly balanced and exciting."
-              />
+              <p className="mt-2 text-sm text-white/65">
+                Reviews will appear here after the review system is opened for players.
+              </p>
             </div>
           </div>
         </section>
 
         <section className="relative w-full overflow-hidden border-t border-white/15 bg-[#1a1404] py-20">
-          {/* background image overlay */}
-          <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
+          <div className="pointer-events-none absolute inset-0" aria-hidden="true">
             <img
               src="https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/ChatGPT%20Image%20Mar%201,%202026,%2008_28_06%20PM.png"
               alt=""
-              className="w-full h-full object-cover"
+              className="h-full w-full object-cover"
               style={{
                 opacity: 0.2,
                 WebkitMaskImage:
                   'linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0.85) 55%, rgba(0,0,0,0.45) 100%)',
                 maskImage:
-                  'linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0.85) 55%, rgba(0,0,0,0.45) 100%)'
+                  'linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0.85) 55%, rgba(0,0,0,0.45) 100%)',
               }}
             />
+
             <div className="absolute inset-0 bg-gradient-to-b from-[#2a2108]/30 via-[#171105]/75 to-[#081224]/90" />
           </div>
 
@@ -341,16 +499,58 @@ export default function HomePage(): JSX.Element {
       </main>
 
       <footer className="border-t border-white/15 py-8">
-        <div className="max-w-7xl mx-auto px-6 flex items-start justify-between gap-6">
+        <div className="mx-auto flex max-w-7xl flex-col gap-6 px-6 md:flex-row md:items-start md:justify-between">
           <div>
             <div className="text-lg font-semibold">ProPeloton Manager</div>
-            <div className="text-sm text-white/70 mt-2">
-              A premium multiplayer cycling management experience.
+
+            <div className="mt-2 text-sm text-white/70">
+              A premium online cycling manager by Next Quest Studio.
             </div>
           </div>
 
-          <div className="text-sm text-white/60">
-            © ProPeloton • Season-based world • No local saves — backend-ready
+          <div className="flex flex-col items-start gap-4 md:items-end">
+            <div className="text-sm text-white/60">
+              © ProPeloton Manager. All rights reserved by Next Quest Studio.
+            </div>
+
+            <div className="flex items-center gap-3 text-white/70">
+              <a href={SOCIAL_LINKS.facebook} aria-label="Facebook" className="hover:text-yellow-400">
+                <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M13.5 22v-8h2.7l.4-3h-3.1V9.1c0-.9.3-1.5 1.6-1.5h1.7V4.9c-.8-.1-1.6-.2-2.5-.2-2.5 0-4.2 1.5-4.2 4.2V11H7.4v3h2.7v8h3.4z" />
+                </svg>
+              </a>
+
+              <a href={SOCIAL_LINKS.youtube} aria-label="YouTube" className="hover:text-yellow-400">
+                <svg className="h-6 w-6" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M21.6 7.2s-.2-1.5-.8-2.1c-.8-.8-1.7-.8-2.1-.9C15.8 4 12 4 12 4s-3.8 0-6.7.2c-.4.1-1.3.1-2.1.9-.6.6-.8 2.1-.8 2.1S2.2 9 2.2 10.8v1.7c0 1.8.2 3.6.2 3.6s.2 1.5.8 2.1c.8.8 1.9.8 2.4.9 1.7.2 6.4.2 6.4.2s3.8 0 6.7-.3c.4 0 1.3-.1 2.1-.9.6-.6.8-2.1.8-2.1s.2-1.8.2-3.6v-1.7c0-1.7-.2-3.5-.2-3.5zM10.1 14.6V8.4l5.8 3.1-5.8 3.1z" />
+                </svg>
+              </a>
+
+              <a href={SOCIAL_LINKS.discord} aria-label="Discord" className="hover:text-yellow-400">
+                <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M19.5 5.2A16.3 16.3 0 0 0 15.4 4l-.2.4c1.5.4 2.2 1 2.2 1s-1.4-.8-4.1-1c-2.7-.2-4.8.6-4.8.6s.8-.7 2.4-1L10.7 4a16.5 16.5 0 0 0-4.1 1.2C4 9.1 3.3 13 3.5 16.8A16.7 16.7 0 0 0 8.6 19l.6-.9c-1.1-.4-1.7-1-1.7-1s.2.1.5.3c2 .9 4.1 1.1 6 1 1.5-.1 3-.4 4.3-1 .2-.1.4-.2.4-.2s-.6.7-1.8 1.1l.6.9a16.5 16.5 0 0 0 5.1-2.2c.3-4.4-.7-8.2-3.1-11.8zM9.3 14.5c-.8 0-1.5-.7-1.5-1.6s.7-1.6 1.5-1.6 1.5.7 1.5 1.6-.7 1.6-1.5 1.6zm5.4 0c-.8 0-1.5-.7-1.5-1.6s.7-1.6 1.5-1.6 1.5.7 1.5 1.6-.7 1.6-1.5 1.6z" />
+                </svg>
+              </a>
+
+              <a href={SOCIAL_LINKS.x} aria-label="X" className="hover:text-yellow-400">
+                <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M18.9 3H22l-6.8 7.8 8 10.2h-6.3l-4.9-6.3L6.4 21H3.3l7.3-8.4L3 3h6.4l4.4 5.7L18.9 3zm-1.1 16.2h1.7L8.5 4.7H6.7l11.1 14.5z" />
+                </svg>
+              </a>
+
+              <a href={SOCIAL_LINKS.email} aria-label="Email" className="hover:text-yellow-400">
+                <svg
+                  className="h-5 w-5"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
+                  <path d="M4 6h16v12H4z" />
+                  <path d="m4 7 8 6 8-6" />
+                </svg>
+              </a>
+            </div>
           </div>
         </div>
       </footer>

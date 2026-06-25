@@ -4,7 +4,7 @@
  * Public full-page rider profile route.
  *
  * Purpose:
- * - Fetch a non-owned rider's data from rider_statistics_view.
+ * - Fetch a non-owned rider's data from the new central international-points statistics view.
  * - Render the standardized non-own rider profile in full-page mode.
  * - Provide basic loading and error states with back navigation.
  */
@@ -48,6 +48,38 @@ type RiderPopupRow = {
   season_points_overall: number
   season_points_sprint: number
   season_points_climbing: number
+  podiums?: number
+  jerseys?: number
+  stage_wins?: number
+  final_jerseys?: number
+}
+
+function normalizeNumber(value: unknown, fallback = 0): number {
+  if (typeof value === 'number' && Number.isFinite(value)) return value
+
+  if (typeof value === 'string' && value.trim() !== '') {
+    const parsed = Number(value)
+    return Number.isFinite(parsed) ? parsed : fallback
+  }
+
+  return fallback
+}
+
+function normalizeNullableNumber(value: unknown): number | null {
+  if (typeof value === 'number' && Number.isFinite(value)) return value
+
+  if (typeof value === 'string' && value.trim() !== '') {
+    const parsed = Number(value)
+    return Number.isFinite(parsed) ? parsed : null
+  }
+
+  return null
+}
+
+function normalizeString(value: unknown): string | null {
+  if (typeof value !== 'string') return null
+  const trimmed = value.trim()
+  return trimmed ? trimmed : null
 }
 
 export default function RiderProfilePublicPage() {
@@ -75,52 +107,66 @@ export default function RiderProfilePublicPage() {
         setError(null)
 
         const { data, error: riderError } = await supabase
-          .from('rider_statistics_view')
+          .from('rider_statistics_page_international_v1')
           .select('*')
           .eq('rider_id', riderId)
+          .eq('season_year', 2000)
           .maybeSingle()
 
         if (riderError) throw riderError
         if (!data) throw new Error('Rider profile not found.')
 
-        const row = data as Record<string, any>
+        const row = data as Record<string, unknown>
+
         const riderRow: RiderPopupRow = {
-          id: row.rider_id ?? row.id,
-          display_name: row.display_name ?? 'Unknown rider',
-          country_code: row.country_code ?? null,
-          role: row.role ?? '',
-          overall: row.overall ?? null,
-          potential: row.potential ?? null,
-          sprint: row.sprint ?? null,
-          climbing: row.climbing ?? null,
-          time_trial: row.time_trial ?? null,
-          endurance: row.endurance ?? null,
-          flat: row.flat ?? null,
-          recovery: row.recovery ?? null,
-          resistance: row.resistance ?? null,
-          race_iq: row.race_iq ?? null,
-          teamwork: row.teamwork ?? null,
-          morale: row.morale ?? null,
-          birth_date: row.birth_date ?? null,
-          market_value: row.market_value ?? null,
-          salary: row.salary ?? null,
-          contract_expires_season: row.contract_expires_season ?? null,
-          availability_status: row.availability_status ?? null,
-          fatigue: row.fatigue ?? null,
-          image_url: row.image_url ?? null,
-          club_id: row.club_id ?? null,
-          club_name: row.club_name ?? null,
-          club_country_code: row.club_country_code ?? null,
-          club_tier: row.club_tier ?? null,
-          club_is_ai: row.club_is_ai ?? null,
-          club_is_active: row.club_is_active ?? null,
-          age_years: row.age_years ?? null,
-          season_points_overall: row.season_points_overall ?? 0,
-          season_points_sprint: row.season_points_sprint ?? 0,
-          season_points_climbing: row.season_points_climbing ?? 0,
+          id: normalizeString(row.rider_id) ?? normalizeString(row.id) ?? riderId,
+          display_name:
+            normalizeString(row.display_name) ??
+            normalizeString(row.rider_name) ??
+            normalizeString(row.rider_name_snapshot) ??
+            'Unknown rider',
+          country_code: normalizeString(row.country_code),
+          role: normalizeString(row.role) ?? '',
+          overall: normalizeNullableNumber(row.overall),
+          potential: normalizeNullableNumber(row.potential),
+          sprint: normalizeNullableNumber(row.sprint),
+          climbing: normalizeNullableNumber(row.climbing),
+          time_trial: normalizeNullableNumber(row.time_trial),
+          endurance: normalizeNullableNumber(row.endurance),
+          flat: normalizeNullableNumber(row.flat),
+          recovery: normalizeNullableNumber(row.recovery),
+          resistance: normalizeNullableNumber(row.resistance),
+          race_iq: normalizeNullableNumber(row.race_iq),
+          teamwork: normalizeNullableNumber(row.teamwork),
+          morale: normalizeNullableNumber(row.morale),
+          birth_date: normalizeString(row.birth_date),
+          market_value: normalizeNullableNumber(row.market_value),
+          salary: normalizeNullableNumber(row.salary),
+          contract_expires_season: normalizeNullableNumber(row.contract_expires_season),
+          availability_status: normalizeString(row.availability_status),
+          fatigue: normalizeNullableNumber(row.fatigue),
+          image_url: normalizeString(row.image_url),
+          club_id: normalizeString(row.club_id),
+          club_name:
+            normalizeString(row.club_name) ??
+            normalizeString(row.team_name) ??
+            normalizeString(row.latest_team_name_snapshot),
+          club_country_code: normalizeString(row.club_country_code),
+          club_tier: normalizeString(row.club_tier),
+          club_is_ai: typeof row.club_is_ai === 'boolean' ? row.club_is_ai : null,
+          club_is_active: typeof row.club_is_active === 'boolean' ? row.club_is_active : null,
+          age_years: normalizeNullableNumber(row.age_years),
+          season_points_overall: normalizeNumber(row.season_points_overall),
+          season_points_sprint: normalizeNumber(row.season_points_sprint),
+          season_points_climbing: normalizeNumber(row.season_points_climbing),
+          podiums: normalizeNumber(row.podiums),
+          jerseys: normalizeNumber(row.jerseys),
+          stage_wins: normalizeNumber(row.stage_wins),
+          final_jerseys: normalizeNumber(row.final_jerseys),
         }
 
         if (!mounted) return
+
         setRider(riderRow)
       } catch (e: any) {
         if (!mounted) return
@@ -151,6 +197,7 @@ export default function RiderProfilePublicPage() {
         >
           ← Back
         </button>
+
         <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
           {error ?? 'Rider profile not found.'}
         </div>
@@ -173,4 +220,4 @@ export default function RiderProfilePublicPage() {
       backButtonLabel="← Back"
     />
   )
-} 
+}
