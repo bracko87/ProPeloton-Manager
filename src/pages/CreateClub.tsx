@@ -739,24 +739,10 @@ export default function CreateClubPage(): JSX.Element {
   }
 
   async function saveSelectedHomeKit(clubId: string, kitUrl: string): Promise<void> {
-    const { error: kitError } = await supabase.from('team_kits').upsert(
-      {
-        team_id: clubId,
-        name: 'home',
-        config: {
-          version: 1,
-          mode: 'generic_pool',
-          template: 'generic_pool',
-          image_url: kitUrl,
-          image_data_url: null,
-          source: 'create_club',
-        },
-        updated_at: new Date().toISOString(),
-      },
-      {
-        onConflict: 'team_id,name',
-      },
-    )
+    const { error: kitError } = await supabase.rpc('save_club_home_kit_v1', {
+      p_club_id: clubId,
+      p_image_url: kitUrl,
+    })
 
     if (kitError) {
       throw kitError
