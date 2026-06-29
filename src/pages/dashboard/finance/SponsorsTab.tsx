@@ -325,38 +325,6 @@ function sponsorObjectiveTitleSuffix(objective: SponsorObjectiveUiRow): string {
   return title
 }
 
-function prettifyStatusValue(value: unknown): string {
-  const normalized = String(value || '').trim()
-  if (!normalized) return ''
-
-  return normalized
-    .replace(/_/g, ' ')
-    .replace(/-/g, ' ')
-    .replace(/\b\w/g, (letter) => letter.toUpperCase())
-}
-
-function sponsorObjectiveRaceStatusLabel(objective: SponsorObjectiveUiRow): string {
-  const metadata = objective.metadata || {}
-
-  const entryStatus =
-    objective.race_application_status_label ||
-    objective.race_application_status ||
-    objective.race_entry_status ||
-    metadata.race_application_status_label ||
-    metadata.race_application_status ||
-    metadata.race_entry_status
-
-  const raceStatus =
-    objective.race_status_label ||
-    objective.race_status ||
-    metadata.race_status_label ||
-    metadata.race_status
-
-  const parts = [prettifyStatusValue(entryStatus), prettifyStatusValue(raceStatus)].filter(Boolean)
-
-  return parts.length > 0 ? parts.join(' · ') : 'Not entered yet'
-}
-
 function getCountryName(countryCode: string | null | undefined): string {
   if (!countryCode) return 'Unknown country'
 
@@ -1343,22 +1311,6 @@ function SponsorObjectiveCards({
                   </span>
                 </div>
 
-                <div className="flex items-center justify-between gap-3">
-                  <span className="text-gray-500">Race status</span>
-                  <span className="font-semibold text-gray-900">
-                    {sponsorObjectiveRaceStatusLabel(objective)}
-                  </span>
-                </div>
-
-                {objective.payout_transaction_id ? (
-                  <div className="rounded-lg border border-green-300 bg-green-50 px-3 py-2 text-xs font-semibold text-green-800">
-                    Bonus paid
-                  </div>
-                ) : objective.objective_result_state === 'completed' ? (
-                  <div className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-800">
-                    Bonus ready for payout
-                  </div>
-                ) : null}
               </div>
             </div>
           ))}

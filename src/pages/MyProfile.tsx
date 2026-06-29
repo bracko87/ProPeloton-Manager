@@ -2,10 +2,10 @@
  * MyProfile.tsx
  * Full profile page with persistent profile + password update.
  *
- * Fixes:
- * 1) Removed all display_name references from frontend queries/types.
- * 2) "Display Name" edits/saves to `profiles.username`.
- * 3) Profile Details stays on top, Change Password stays below.
+ * Birthday rule:
+ * - Birthday is saved once during registration.
+ * - Birthday is read-only on My Profile.
+ * - Birthday is not included in the save payload.
  */
 
 import React, { useEffect, useMemo, useState } from 'react'
@@ -18,9 +18,13 @@ type ProfileRow = {
   email: string
   first_name: string | null
   last_name: string | null
-  birthday: string | null
   city: string | null
   country: string | null
+  birthday_month: number | null
+  birthday_day: number | null
+  birthday_year: number | null
+  birthday_locked: boolean
+  birthday_set_at: string | null
   has_created_club: boolean
   last_login_at: string | null
   created_at: string
@@ -28,15 +32,29 @@ type ProfileRow = {
 }
 
 type ProfileForm = {
-  // "Display Name" input maps to username column
   username: string
   email: string
   firstName: string
   lastName: string
-  birthday: string
   city: string
   country: string
 }
+
+const MONTH_NAMES = [
+  '',
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December',
+]
 
 function normalizeUsername(input: string): string {
   const trimmed = input.trim()
@@ -53,6 +71,17 @@ function buildFallbackUsername(email: string): string {
   return normalizeUsername(base) || `user_${Math.random().toString(36).slice(2, 8)}`
 }
 
+function formatBirthday(profile: ProfileRow | null): string {
+  if (!profile?.birthday_month || !profile?.birthday_day) {
+    return 'Not set'
+  }
+
+  const monthName = MONTH_NAMES[profile.birthday_month] || `Month ${profile.birthday_month}`
+  const yearPart = profile.birthday_year ? ` ${profile.birthday_year}` : ''
+
+  return `${monthName} ${profile.birthday_day}${yearPart}`
+}
+
 export default function MyProfilePage(): JSX.Element {
   const { user } = useAuth()
 
@@ -67,7 +96,6 @@ export default function MyProfilePage(): JSX.Element {
     email: user?.email || '',
     firstName: '',
     lastName: '',
-    birthday: '',
     city: '',
     country: '',
   })
@@ -78,13 +106,14 @@ export default function MyProfilePage(): JSX.Element {
   const [successMessage, setSuccessMessage] = useState('')
   const [errorMessage, setErrorMessage] = useState('')
 
+  const birthdayLabel = useMemo(() => formatBirthday(profile), [profile])
+
   const isDirty = useMemo(() => {
     if (!profile) {
       return (
         form.username.trim() !== '' ||
         form.firstName.trim() !== '' ||
         form.lastName.trim() !== '' ||
-        form.birthday.trim() !== '' ||
         form.city.trim() !== '' ||
         form.country.trim() !== '' ||
         form.email.trim() !== (user?.email || '')
@@ -96,7 +125,6 @@ export default function MyProfilePage(): JSX.Element {
       form.email !== (profile.email || user?.email || '') ||
       form.firstName !== (profile.first_name || '') ||
       form.lastName !== (profile.last_name || '') ||
-      form.birthday !== (profile.birthday || '') ||
       form.city !== (profile.city || '') ||
       form.country !== (profile.country || '')
     )
@@ -121,9 +149,13 @@ export default function MyProfilePage(): JSX.Element {
           email,
           first_name,
           last_name,
-          birthday,
           city,
           country,
+          birthday_month,
+          birthday_day,
+          birthday_year,
+          birthday_locked,
+          birthday_set_at,
           has_created_club,
           last_login_at,
           created_at,
@@ -147,7 +179,6 @@ export default function MyProfilePage(): JSX.Element {
         email: initialEmail,
         firstName: row?.first_name || '',
         lastName: row?.last_name || '',
-        birthday: row?.birthday || '',
         city: row?.city || '',
         country: row?.country || '',
       })
@@ -184,20 +215,17 @@ export default function MyProfilePage(): JSX.Element {
         throw new Error('Display Name must be between 3 and 24 characters.')
       }
 
-      // Update auth email if changed
       if (nextEmail !== currentEmail) {
         const { error: authError } = await supabase.auth.updateUser({ email: nextEmail })
         if (authError) throw authError
       }
 
-      // Save profile data
       const payload = {
         id: user.id,
         username: normalizedUsername,
         email: nextEmail,
         first_name: form.firstName.trim() || null,
         last_name: form.lastName.trim() || null,
-        birthday: form.birthday || null,
         city: form.city.trim() || null,
         country: form.country.trim() || null,
       }
@@ -211,9 +239,13 @@ export default function MyProfilePage(): JSX.Element {
           email,
           first_name,
           last_name,
-          birthday,
           city,
           country,
+          birthday_month,
+          birthday_day,
+          birthday_year,
+          birthday_locked,
+          birthday_set_at,
           has_created_club,
           last_login_at,
           created_at,
@@ -225,13 +257,23 @@ export default function MyProfilePage(): JSX.Element {
         throw profileError
       }
 
-      setProfile(savedProfile as ProfileRow)
-      setForm(prev => ({ ...prev, username: (savedProfile as ProfileRow).username }))
+      const savedRow = savedProfile as ProfileRow
+
+      setProfile(savedRow)
+      setForm(prev => ({
+        ...prev,
+        username: savedRow.username || prev.username,
+        email: savedRow.email || prev.email,
+        firstName: savedRow.first_name || '',
+        lastName: savedRow.last_name || '',
+        city: savedRow.city || '',
+        country: savedRow.country || '',
+      }))
 
       setSuccessMessage(
         nextEmail !== currentEmail
           ? 'Profile saved. If email confirmation is enabled, please confirm your new email address.'
-          : 'Profile saved successfully.'
+          : 'Profile saved successfully.',
       )
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to save profile.'
@@ -306,112 +348,111 @@ export default function MyProfilePage(): JSX.Element {
           </div>
         )}
 
-        <div className="w-full">
-          <form onSubmit={handleSaveProfile} className="space-y-6">
-            <div className="border border-gray-200 rounded p-4">
-              <h3 className="text-base font-semibold mb-4">Profile Details</h3>
+        <form onSubmit={handleSaveProfile} className="space-y-6">
+          <div className="border border-gray-200 rounded p-4">
+            <h3 className="text-base font-semibold mb-4">Profile Details</h3>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <label className="block">
-                  <div className="text-sm font-medium mb-1">Display Name</div>
-                  <input
-                    value={form.username}
-                    onChange={e => updateForm('username', e.target.value)}
-                    onBlur={() => updateForm('username', normalizeUsername(form.username))}
-                    className="w-full border border-gray-300 px-3 py-2 rounded"
-                    placeholder="Display name"
-                    autoComplete="nickname"
-                  />
-                  <div className="text-xs text-gray-500 mt-1">
-                    3–24 chars. Letters/numbers/underscore only (spaces become underscores).
-                  </div>
-                </label>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <label className="block">
+                <div className="text-sm font-medium mb-1">Display Name</div>
+                <input
+                  value={form.username}
+                  onChange={e => updateForm('username', e.target.value)}
+                  onBlur={() => updateForm('username', normalizeUsername(form.username))}
+                  className="w-full border border-gray-300 px-3 py-2 rounded"
+                  placeholder="Display name"
+                  autoComplete="nickname"
+                />
+                <div className="text-xs text-gray-500 mt-1">
+                  3–24 chars. Letters/numbers/underscore only. Spaces become underscores.
+                </div>
+              </label>
 
-                <label className="block">
-                  <div className="text-sm font-medium mb-1">Email</div>
-                  <input
-                    type="email"
-                    value={form.email}
-                    onChange={e => updateForm('email', e.target.value)}
-                    className="w-full border border-gray-300 px-3 py-2 rounded"
-                    placeholder="Email address"
-                    autoComplete="email"
-                  />
-                </label>
+              <label className="block">
+                <div className="text-sm font-medium mb-1">Email</div>
+                <input
+                  type="email"
+                  value={form.email}
+                  onChange={e => updateForm('email', e.target.value)}
+                  className="w-full border border-gray-300 px-3 py-2 rounded"
+                  placeholder="Email address"
+                  autoComplete="email"
+                />
+              </label>
 
-                <label className="block">
-                  <div className="text-sm font-medium mb-1">First Name</div>
-                  <input
-                    value={form.firstName}
-                    onChange={e => updateForm('firstName', e.target.value)}
-                    className="w-full border border-gray-300 px-3 py-2 rounded"
-                    placeholder="First name"
-                    autoComplete="given-name"
-                  />
-                </label>
+              <label className="block">
+                <div className="text-sm font-medium mb-1">First Name</div>
+                <input
+                  value={form.firstName}
+                  onChange={e => updateForm('firstName', e.target.value)}
+                  className="w-full border border-gray-300 px-3 py-2 rounded"
+                  placeholder="First name"
+                  autoComplete="given-name"
+                />
+              </label>
 
-                <label className="block">
-                  <div className="text-sm font-medium mb-1">Last Name</div>
-                  <input
-                    value={form.lastName}
-                    onChange={e => updateForm('lastName', e.target.value)}
-                    className="w-full border border-gray-300 px-3 py-2 rounded"
-                    placeholder="Last name"
-                    autoComplete="family-name"
-                  />
-                </label>
+              <label className="block">
+                <div className="text-sm font-medium mb-1">Last Name</div>
+                <input
+                  value={form.lastName}
+                  onChange={e => updateForm('lastName', e.target.value)}
+                  className="w-full border border-gray-300 px-3 py-2 rounded"
+                  placeholder="Last name"
+                  autoComplete="family-name"
+                />
+              </label>
 
-                <label className="block">
-                  <div className="text-sm font-medium mb-1">Birthday</div>
-                  <input
-                    type="date"
-                    value={form.birthday}
-                    onChange={e => updateForm('birthday', e.target.value)}
-                    className="w-full border border-gray-300 px-3 py-2 rounded"
-                  />
-                </label>
-
-                <label className="block">
-                  <div className="text-sm font-medium mb-1">City</div>
-                  <input
-                    value={form.city}
-                    onChange={e => updateForm('city', e.target.value)}
-                    className="w-full border border-gray-300 px-3 py-2 rounded"
-                    placeholder="City"
-                    autoComplete="address-level2"
-                  />
-                </label>
-
-                <label className="block md:col-span-2">
-                  <div className="text-sm font-medium mb-1">Country</div>
-                  <input
-                    value={form.country}
-                    onChange={e => updateForm('country', e.target.value)}
-                    className="w-full border border-gray-300 px-3 py-2 rounded"
-                    placeholder="Country"
-                    autoComplete="country-name"
-                  />
-                </label>
+              <div className="block">
+                <div className="text-sm font-medium mb-1">Birthday</div>
+                <div className="w-full rounded border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-800">
+                  {birthdayLabel}
+                </div>
+                <div className="mt-1 text-xs text-gray-500">
+                  Birthday rewards are configured during registration and cannot be changed later.
+                  You receive 10 coins on your birthday.
+                </div>
               </div>
 
-              <div className="pt-4">
-                <button
-                  type="submit"
-                  disabled={savingProfile || !isDirty}
-                  className="inline-flex items-center rounded bg-yellow-500 px-4 py-2 text-sm font-medium text-black disabled:opacity-50"
-                >
-                  {savingProfile ? 'Saving...' : 'Save Profile'}
-                </button>
-              </div>
+              <label className="block">
+                <div className="text-sm font-medium mb-1">City</div>
+                <input
+                  value={form.city}
+                  onChange={e => updateForm('city', e.target.value)}
+                  className="w-full border border-gray-300 px-3 py-2 rounded"
+                  placeholder="City"
+                  autoComplete="address-level2"
+                />
+              </label>
+
+              <label className="block md:col-span-2">
+                <div className="text-sm font-medium mb-1">Country</div>
+                <input
+                  value={form.country}
+                  onChange={e => updateForm('country', e.target.value)}
+                  className="w-full border border-gray-300 px-3 py-2 rounded"
+                  placeholder="Country"
+                  autoComplete="country-name"
+                />
+              </label>
             </div>
-          </form>
-        </div>
 
-        <div className="w-full mt-6">
+            <div className="pt-4">
+              <button
+                type="submit"
+                disabled={savingProfile || !isDirty}
+                className="inline-flex items-center rounded bg-yellow-500 px-4 py-2 text-sm font-medium text-black disabled:opacity-50"
+              >
+                {savingProfile ? 'Saving...' : 'Save Profile'}
+              </button>
+            </div>
+          </div>
+        </form>
+
+        <form onSubmit={handleChangePassword} className="mt-6 space-y-6">
           <div className="border border-gray-200 rounded p-4">
             <h3 className="text-base font-semibold mb-4">Change Password</h3>
 
-            <form onSubmit={handleChangePassword} className="space-y-4 max-w-xl">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <label className="block">
                 <div className="text-sm font-medium mb-1">New Password</div>
                 <input
@@ -419,7 +460,7 @@ export default function MyProfilePage(): JSX.Element {
                   value={newPassword}
                   onChange={e => setNewPassword(e.target.value)}
                   className="w-full border border-gray-300 px-3 py-2 rounded"
-                  placeholder="Minimum 8 characters"
+                  placeholder="New password"
                   autoComplete="new-password"
                 />
               </label>
@@ -435,19 +476,19 @@ export default function MyProfilePage(): JSX.Element {
                   autoComplete="new-password"
                 />
               </label>
+            </div>
 
+            <div className="pt-4">
               <button
                 type="submit"
                 disabled={savingPassword}
-                className="inline-flex items-center rounded bg-black px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+                className="inline-flex items-center rounded bg-gray-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
               >
                 {savingPassword ? 'Updating...' : 'Update Password'}
               </button>
-            </form>
+            </div>
           </div>
-        </div>
-
-        <div className="h-10" />
+        </form>
       </div>
     </div>
   )

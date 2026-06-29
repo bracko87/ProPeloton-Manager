@@ -1,5 +1,14 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router'
+import TutorialOverlay from '../../components/tutorial/TutorialOverlay'
+import {
+  statisticsTutorialSteps,
+  statisticsWelcomeTutorial,
+} from '../../lib/tutorials'
+import {
+  getTutorialProgress,
+  saveTutorialProgress,
+} from '../../lib/tutorialProgress'
 import { supabase } from '../../lib/supabase'
 import { normalizeGameDateValue } from '../../features/squad/utils/dates'
 import TeamStatisticsSection from '../../features/squad/components/TeamStatisticsSection'
@@ -396,11 +405,47 @@ function StatsTabGroup({
   )
 }
 
+function getStatisticsTabForTutorialStepKey(
+  stepKey?: string | null,
+): {
+  mainTab: MainTab
+  teamSubTab: TeamSubTab
+  riderSubTab: RiderSubTab
+} {
+  switch (stepKey) {
+    case 'statistics-teams-history':
+      return {
+        mainTab: 'teams',
+        teamSubTab: 'history',
+        riderSubTab: 'rankings',
+      }
+
+    case 'statistics-riders':
+      return {
+        mainTab: 'riders',
+        teamSubTab: 'current',
+        riderSubTab: 'rankings',
+      }
+
+    case 'statistics-teams-current':
+    default:
+      return {
+        mainTab: 'teams',
+        teamSubTab: 'current',
+        riderSubTab: 'rankings',
+      }
+  }
+}
+
 export default function StatisticsPage() {
   const navigate = useNavigate()
   const [mainTab, setMainTab] = useState<MainTab>('teams')
   const [teamSubTab, setTeamSubTab] = useState<TeamSubTab>('current')
   const [riderSubTab, setRiderSubTab] = useState<RiderSubTab>('rankings')
+
+  const [tutorialLoading, setTutorialLoading] = useState(true)
+  const [tutorialMode, setTutorialMode] = useState<'closed' | 'invite' | 'steps'>('closed')
+  const [tutorialStepIndex, setTutorialStepIndex] = useState(0)
 
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -427,6 +472,136 @@ export default function StatisticsPage() {
   const [teamCurrentPage, setTeamCurrentPage] = useState(1)
   const [teamHistoryPage, setTeamHistoryPage] = useState(1)
   const [ridersPage, setRidersPage] = useState(1)
+
+  useEffect(() => {
+    let alive = true
+
+    async function loadStatisticsTutorialProgress() {
+      setTutorialLoading(true)
+
+      const autoStartTutorial =
+        window.sessionStorage.getItem('ppm:auto-start-tutorial') === 'statistics'
+
+      if (autoStartTutorial) {
+        window.sessionStorage.removeItem('ppm:auto-start-tutorial')
+
+        const firstStep = statisticsTutorialSteps[0]
+
+        await saveTutorialProgress('statistics', 'started', firstStep?.key ?? null)
+
+        if (!alive) return
+
+        setMainTab('teams')
+        setTeamSubTab('current')
+        setRiderSubTab('rankings')
+        setTutorialStepIndex(0)
+        setTutorialMode('steps')
+        setTutorialLoading(false)
+        return
+      }
+
+      const progress = await getTutorialProgress('statistics')
+
+      if (!alive) return
+
+      if (progress?.status === 'started') {
+        const savedStepIndex = statisticsTutorialSteps.findIndex(
+          (step) => step.key === progress.last_step_key,
+        )
+
+        const nextStepIndex = savedStepIndex >= 0 ? savedStepIndex : 0
+        const tabs = getStatisticsTabForTutorialStepKey(
+          statisticsTutorialSteps[nextStepIndex]?.key,
+        )
+
+        setMainTab(tabs.mainTab)
+        setTeamSubTab(tabs.teamSubTab)
+        setRiderSubTab(tabs.riderSubTab)
+        setTutorialStepIndex(nextStepIndex)
+        setTutorialMode('steps')
+      } else {
+        setTutorialMode('closed')
+      }
+
+      setTutorialLoading(false)
+    }
+
+    void loadStatisticsTutorialProgress()
+
+    return () => {
+      alive = false
+    }
+  }, [])
+
+  async function handleStartStatisticsTutorial() {
+    const firstStep = statisticsTutorialSteps[0]
+
+    await saveTutorialProgress('statistics', 'started', firstStep?.key ?? null)
+
+    setMainTab('teams')
+    setTeamSubTab('current')
+    setRiderSubTab('rankings')
+    setTutorialStepIndex(0)
+    setTutorialMode('steps')
+  }
+
+  async function handleSkipStatisticsTutorial() {
+    await saveTutorialProgress('statistics', 'skipped', null)
+    setTutorialMode('closed')
+  }
+
+  async function handleNextStatisticsTutorialStep() {
+    const currentStep = statisticsTutorialSteps[tutorialStepIndex]
+    const isLastStep = tutorialStepIndex >= statisticsTutorialSteps.length - 1
+
+    if (!isLastStep) {
+      const nextIndex = tutorialStepIndex + 1
+      const nextStep = statisticsTutorialSteps[nextIndex]
+      const tabs = getStatisticsTabForTutorialStepKey(nextStep.key)
+
+      setMainTab(tabs.mainTab)
+      setTeamSubTab(tabs.teamSubTab)
+      setRiderSubTab(tabs.riderSubTab)
+
+      await saveTutorialProgress('statistics', 'started', nextStep.key)
+
+      setTutorialStepIndex(nextIndex)
+      return
+    }
+
+    await saveTutorialProgress('statistics', 'completed', currentStep?.key ?? null)
+
+    window.sessionStorage.setItem('ppm:auto-start-tutorial', 'transfers')
+    navigate('/dashboard/transfers')
+  }
+
+  async function handleFinishStatisticsTutorialForNow() {
+    const currentStep = statisticsTutorialSteps[tutorialStepIndex]
+
+    await saveTutorialProgress('statistics', 'completed', currentStep?.key ?? null)
+
+    setTutorialMode('closed')
+  }
+
+  async function handleCloseStatisticsTutorial() {
+    const currentStep = statisticsTutorialSteps[tutorialStepIndex]
+
+    if (tutorialMode === 'invite') {
+      await saveTutorialProgress('statistics', 'skipped', null)
+      setTutorialMode('closed')
+      return
+    }
+
+    if (tutorialMode === 'steps') {
+      await saveTutorialProgress(
+        'statistics',
+        'started',
+        currentStep?.key ?? null,
+      )
+    }
+
+    setTutorialMode('closed')
+  }
 
   function openTeamProfile(teamId: string) {
     navigate(`/dashboard/teams/${teamId}`)
@@ -1196,6 +1371,45 @@ export default function StatisticsPage() {
           moneyFormatter={moneyFormatter}
         />
       )}
+
+      {!tutorialLoading && tutorialMode === 'invite' ? (
+        <TutorialOverlay
+          open
+          variant="invite"
+          title={statisticsWelcomeTutorial.title}
+          body={statisticsWelcomeTutorial.body}
+          primaryAction={statisticsWelcomeTutorial.primaryAction}
+          secondaryAction={statisticsWelcomeTutorial.secondaryAction}
+          onPrimary={handleStartStatisticsTutorial}
+          onSecondary={handleSkipStatisticsTutorial}
+          onClose={handleCloseStatisticsTutorial}
+        />
+      ) : null}
+
+      {!tutorialLoading && tutorialMode === 'steps' ? (
+        <TutorialOverlay
+          open
+          variant="panel"
+          title={statisticsTutorialSteps[tutorialStepIndex].title}
+          body={statisticsTutorialSteps[tutorialStepIndex].body}
+          stepLabel={`${tutorialStepIndex + 1}/${statisticsTutorialSteps.length}`}
+          primaryAction={
+            statisticsTutorialSteps[tutorialStepIndex].primaryAction ?? 'Next'
+          }
+          secondaryAction={
+            tutorialStepIndex === statisticsTutorialSteps.length - 1
+              ? statisticsTutorialSteps[tutorialStepIndex].secondaryAction
+              : 'Skip tutorial'
+          }
+          onPrimary={handleNextStatisticsTutorialStep}
+          onSecondary={
+            tutorialStepIndex === statisticsTutorialSteps.length - 1
+              ? handleFinishStatisticsTutorialForNow
+              : handleSkipStatisticsTutorial
+          }
+          onClose={handleCloseStatisticsTutorial}
+        />
+      ) : null}
     </div>
   )
 }

@@ -1,5 +1,14 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router'
+import TutorialOverlay from '../../components/tutorial/TutorialOverlay'
+import {
+  transfersTutorialSteps,
+  transfersWelcomeTutorial,
+} from '../../lib/tutorials'
+import {
+  getTutorialProgress,
+  saveTutorialProgress,
+} from '../../lib/tutorialProgress'
 import { supabase } from '../../lib/supabase'
 import RiderTransferListPage from './transfers/RiderTransferListPage'
 import RiderFreeAgentsPage from './transfers/RiderFreeAgentsPage'
@@ -1179,6 +1188,34 @@ function UnderlineSubTabButton({
   )
 }
 
+function getTransfersTabForTutorialStepKey(
+  stepKey?: string | null,
+): {
+  activeTab: TransferTab
+  riderMarketSubTab: RiderMarketSubTab
+} {
+  switch (stepKey) {
+    case 'transfers-rider-free-agents':
+      return {
+        activeTab: 'riders',
+        riderMarketSubTab: 'free_agents',
+      }
+
+    case 'transfers-staff':
+      return {
+        activeTab: 'staff',
+        riderMarketSubTab: 'transfer_list',
+      }
+
+    case 'transfers-rider-transfer-list':
+    default:
+      return {
+        activeTab: 'riders',
+        riderMarketSubTab: 'transfer_list',
+      }
+  }
+}
+
 export default function TransfersPage() {
   const navigate = useNavigate()
   const location = useLocation()
@@ -1188,6 +1225,10 @@ export default function TransfersPage() {
     useState<RiderMarketSubTab>(readInitialRiderMarketSubTab)
   const [transferActivityMode, setTransferActivityMode] =
     useState<ActivityFilterMode>('incoming')
+
+  const [tutorialLoading, setTutorialLoading] = useState(true)
+  const [tutorialMode, setTutorialMode] = useState<'closed' | 'invite' | 'steps'>('closed')
+  const [tutorialStepIndex, setTutorialStepIndex] = useState(0)
 
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -1254,6 +1295,132 @@ export default function TransfersPage() {
 
   function showToast(message: string, tone: ToastTone = 'info') {
     setToast({ message, tone })
+  }
+
+  useEffect(() => {
+    let alive = true
+
+    async function loadTransfersTutorialProgress() {
+      setTutorialLoading(true)
+
+      const autoStartTutorial =
+        window.sessionStorage.getItem('ppm:auto-start-tutorial') === 'transfers'
+
+      if (autoStartTutorial) {
+        window.sessionStorage.removeItem('ppm:auto-start-tutorial')
+
+        const firstStep = transfersTutorialSteps[0]
+
+        await saveTutorialProgress('transfers', 'started', firstStep?.key ?? null)
+
+        if (!alive) return
+
+        setActiveTab('riders')
+        setRiderMarketSubTab('transfer_list')
+        setTutorialStepIndex(0)
+        setTutorialMode('steps')
+        setTutorialLoading(false)
+        return
+      }
+
+      const progress = await getTutorialProgress('transfers')
+
+      if (!alive) return
+
+      if (progress?.status === 'started') {
+        const savedStepIndex = transfersTutorialSteps.findIndex(
+          (step) => step.key === progress.last_step_key,
+        )
+
+        const nextStepIndex = savedStepIndex >= 0 ? savedStepIndex : 0
+        const tabs = getTransfersTabForTutorialStepKey(
+          transfersTutorialSteps[nextStepIndex]?.key,
+        )
+
+        setActiveTab(tabs.activeTab)
+        setRiderMarketSubTab(tabs.riderMarketSubTab)
+        setTutorialStepIndex(nextStepIndex)
+        setTutorialMode('steps')
+      } else {
+        setTutorialMode('closed')
+      }
+
+      setTutorialLoading(false)
+    }
+
+    void loadTransfersTutorialProgress()
+
+    return () => {
+      alive = false
+    }
+  }, [])
+
+  async function handleStartTransfersTutorial() {
+    const firstStep = transfersTutorialSteps[0]
+
+    await saveTutorialProgress('transfers', 'started', firstStep?.key ?? null)
+
+    setActiveTab('riders')
+    setRiderMarketSubTab('transfer_list')
+    setTutorialStepIndex(0)
+    setTutorialMode('steps')
+  }
+
+  async function handleSkipTransfersTutorial() {
+    await saveTutorialProgress('transfers', 'skipped', null)
+    setTutorialMode('closed')
+  }
+
+  async function handleNextTransfersTutorialStep() {
+    const currentStep = transfersTutorialSteps[tutorialStepIndex]
+    const isLastStep = tutorialStepIndex >= transfersTutorialSteps.length - 1
+
+    if (!isLastStep) {
+      const nextIndex = tutorialStepIndex + 1
+      const nextStep = transfersTutorialSteps[nextIndex]
+      const tabs = getTransfersTabForTutorialStepKey(nextStep.key)
+
+      setActiveTab(tabs.activeTab)
+      setRiderMarketSubTab(tabs.riderMarketSubTab)
+
+      await saveTutorialProgress('transfers', 'started', nextStep.key)
+
+      setTutorialStepIndex(nextIndex)
+      return
+    }
+
+    await saveTutorialProgress('transfers', 'completed', currentStep?.key ?? null)
+
+    window.sessionStorage.setItem('ppm:auto-start-tutorial', 'finance')
+    navigate('/dashboard/finance')
+  }
+
+  async function handleFinishTransfersTutorialForNow() {
+    const currentStep = transfersTutorialSteps[tutorialStepIndex]
+
+    await saveTutorialProgress('transfers', 'completed', currentStep?.key ?? null)
+
+    setTutorialMode('closed')
+  }
+
+  async function handleCloseTransfersTutorial() {
+    const currentStep = transfersTutorialSteps[tutorialStepIndex]
+
+    if (tutorialMode === 'invite') {
+      await saveTutorialProgress('transfers', 'skipped', null)
+      setTutorialMode('closed')
+      return
+    }
+
+    if (tutorialMode === 'steps') {
+      await saveTutorialProgress(
+        'transfers',
+        'started',
+        currentStep?.key ?? null,
+      )
+    }
+
+    setTutorialMode('closed')
   }
 
   function openClubProfile(item: any, activityView: 'incoming' | 'outgoing') {
@@ -3404,6 +3571,46 @@ export default function TransfersPage() {
           </div>
         </div>
       ) : null}
+
+      {!tutorialLoading && tutorialMode === 'invite' ? (
+        <TutorialOverlay
+          open
+          variant="invite"
+          title={transfersWelcomeTutorial.title}
+          body={transfersWelcomeTutorial.body}
+          primaryAction={transfersWelcomeTutorial.primaryAction}
+          secondaryAction={transfersWelcomeTutorial.secondaryAction}
+          onPrimary={handleStartTransfersTutorial}
+          onSecondary={handleSkipTransfersTutorial}
+          onClose={handleCloseTransfersTutorial}
+        />
+      ) : null}
+
+      {!tutorialLoading && tutorialMode === 'steps' ? (
+        <TutorialOverlay
+          open
+          variant="panel"
+          title={transfersTutorialSteps[tutorialStepIndex].title}
+          body={transfersTutorialSteps[tutorialStepIndex].body}
+          stepLabel={`${tutorialStepIndex + 1}/${transfersTutorialSteps.length}`}
+          primaryAction={
+            transfersTutorialSteps[tutorialStepIndex].primaryAction ?? 'Next'
+          }
+          secondaryAction={
+            tutorialStepIndex === transfersTutorialSteps.length - 1
+              ? transfersTutorialSteps[tutorialStepIndex].secondaryAction
+              : 'Skip tutorial'
+          }
+          onPrimary={handleNextTransfersTutorialStep}
+          onSecondary={
+            tutorialStepIndex === transfersTutorialSteps.length - 1
+              ? handleFinishTransfersTutorialForNow
+              : handleSkipTransfersTutorial
+          }
+          onClose={handleCloseTransfersTutorial}
+        />
+      ) : null}
+
     </div>
   )
 }

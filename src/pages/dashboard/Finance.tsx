@@ -13,7 +13,16 @@
  */
 
 import React, { useEffect, useMemo, useState } from 'react'
-import { useLocation } from 'react-router'
+import { useLocation, useNavigate } from 'react-router'
+import TutorialOverlay from '../../components/tutorial/TutorialOverlay'
+import {
+  financeTutorialSteps,
+  financeWelcomeTutorial,
+} from '../../lib/tutorials'
+import {
+  getTutorialProgress,
+  saveTutorialProgress,
+} from '../../lib/tutorialProgress'
 import { supabase } from './finance/supabase'
 import { ErrorBoundary } from './finance/ErrorBoundary'
 import { OverviewTab } from './finance/OverviewTab'
@@ -71,7 +80,6 @@ function formatTransactionFullLabel(raw: string): string {
 
   if (!cleaned) return 'Transaction'
 
-  // specific mappings first
   if (cleaned.includes('competition reward cash')) return 'Competition Reward'
   if (cleaned.includes('competition reward')) return 'Competition Reward'
   if (cleaned.includes('race reward cash')) return 'Race Reward'
@@ -116,7 +124,6 @@ function formatTransactionFullLabel(raw: string): string {
   if (cleaned.includes('hotel')) return 'Hotel'
   if (cleaned.includes('transport')) return 'Transport'
 
-  // generic cleanup fallback
   const genericWords = new Set([
     'payment',
     'payday',
@@ -197,9 +204,26 @@ function TabButton({
   )
 }
 
+function getFinanceTabForTutorialStepKey(stepKey?: string | null): TabKey {
+  switch (stepKey) {
+    case 'finance-sponsors':
+      return 'sponsors'
+    case 'finance-transactions':
+      return 'transactions'
+    case 'finance-tax':
+      return 'tax'
+    case 'finance-policies':
+      return 'teamPoliciesOperations'
+    case 'finance-overview':
+    default:
+      return 'overview'
+  }
+}
+
 export default function FinancePage(): JSX.Element {
   const [tab, setTab] = useState<TabKey>('overview')
   const location = useLocation()
+  const navigate = useNavigate()
 
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -209,6 +233,12 @@ export default function FinancePage(): JSX.Element {
   const [cashflowDaily, setCashflowDaily] = useState<CashflowPoint[]>([])
 
   const [statement, setStatement] = useState<StatementRow[]>([])
+
+  const [tutorialLoading, setTutorialLoading] = useState(true)
+  const [tutorialMode, setTutorialMode] = useState<'closed' | 'invite' | 'steps'>(
+    'closed',
+  )
+  const [tutorialStepIndex, setTutorialStepIndex] = useState(0)
 
   const currency: 'USD' = 'USD'
 
@@ -221,6 +251,60 @@ export default function FinancePage(): JSX.Element {
     }
   }, [location.search])
 
+  useEffect(() => {
+    let alive = true
+
+    async function loadFinanceTutorialProgress() {
+      setTutorialLoading(true)
+
+      const autoStartTutorial =
+        window.sessionStorage.getItem('ppm:auto-start-tutorial') === 'finance'
+
+      if (autoStartTutorial) {
+        window.sessionStorage.removeItem('ppm:auto-start-tutorial')
+
+        const firstStep = financeTutorialSteps[0]
+
+        await saveTutorialProgress('finance', 'started', firstStep?.key ?? null)
+
+        if (!alive) return
+
+        setTab('overview')
+        setTutorialStepIndex(0)
+        setTutorialMode('steps')
+        setTutorialLoading(false)
+        return
+      }
+
+      const progress = await getTutorialProgress('finance')
+
+      if (!alive) return
+
+      if (progress?.status === 'started') {
+        const savedStepIndex = financeTutorialSteps.findIndex(
+          step => step.key === progress.last_step_key,
+        )
+
+        const nextStepIndex = savedStepIndex >= 0 ? savedStepIndex : 0
+        const nextStep = financeTutorialSteps[nextStepIndex]
+
+        setTab(getFinanceTabForTutorialStepKey(nextStep?.key))
+        setTutorialStepIndex(nextStepIndex)
+        setTutorialMode('steps')
+      } else {
+        setTutorialMode('closed')
+      }
+
+      setTutorialLoading(false)
+    }
+
+    void loadFinanceTutorialProgress()
+
+    return () => {
+      alive = false
+    }
+  }, [])
+
   const overviewTransactions = useMemo(
     () =>
       statement.map(row => ({
@@ -231,7 +315,7 @@ export default function FinancePage(): JSX.Element {
         name: formatTransactionFullLabel(getTransactionLabel(row)),
         amount: row.net_amount,
       })),
-    [statement]
+    [statement],
   )
 
   function resetLoadedState(): void {
@@ -325,6 +409,72 @@ export default function FinancePage(): JSX.Element {
     void loadBase()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  async function handleStartFinanceTutorial() {
+    const firstStep = financeTutorialSteps[0]
+
+    await saveTutorialProgress('finance', 'started', firstStep?.key ?? null)
+
+    setTab('overview')
+    setTutorialStepIndex(0)
+    setTutorialMode('steps')
+  }
+
+  async function handleSkipFinanceTutorial() {
+    await saveTutorialProgress('finance', 'skipped', null)
+    setTutorialMode('closed')
+  }
+
+  async function handleNextFinanceTutorialStep() {
+    const currentStep = financeTutorialSteps[tutorialStepIndex]
+    const isLastStep = tutorialStepIndex >= financeTutorialSteps.length - 1
+
+    if (!isLastStep) {
+      const nextIndex = tutorialStepIndex + 1
+      const nextStep = financeTutorialSteps[nextIndex]
+      const nextTab = getFinanceTabForTutorialStepKey(nextStep.key)
+
+      setTab(nextTab)
+
+      await saveTutorialProgress('finance', 'started', nextStep.key)
+
+      setTutorialStepIndex(nextIndex)
+      return
+    }
+
+    await saveTutorialProgress('finance', 'completed', currentStep?.key ?? null)
+
+    window.sessionStorage.setItem('ppm:auto-start-tutorial', 'menu')
+    navigate('/dashboard/overview')
+  }
+
+  async function handleFinishFinanceTutorialForNow() {
+    const currentStep = financeTutorialSteps[tutorialStepIndex]
+
+    await saveTutorialProgress('finance', 'completed', currentStep?.key ?? null)
+
+    setTutorialMode('closed')
+  }
+
+  async function handleCloseFinanceTutorial() {
+    const currentStep = financeTutorialSteps[tutorialStepIndex]
+
+    if (tutorialMode === 'invite') {
+      await saveTutorialProgress('finance', 'skipped', null)
+      setTutorialMode('closed')
+      return
+    }
+
+    if (tutorialMode === 'steps') {
+      await saveTutorialProgress(
+        'finance',
+        'started',
+        currentStep?.key ?? null,
+      )
+    }
+
+    setTutorialMode('closed')
+  }
 
   return (
     <div className="w-full">
@@ -434,6 +584,45 @@ export default function FinancePage(): JSX.Element {
           )}
         </div>
       )}
+
+      {!tutorialLoading && tutorialMode === 'invite' ? (
+        <TutorialOverlay
+          open
+          variant="invite"
+          title={financeWelcomeTutorial.title}
+          body={financeWelcomeTutorial.body}
+          primaryAction={financeWelcomeTutorial.primaryAction}
+          secondaryAction={financeWelcomeTutorial.secondaryAction}
+          onPrimary={handleStartFinanceTutorial}
+          onSecondary={handleSkipFinanceTutorial}
+          onClose={handleCloseFinanceTutorial}
+        />
+      ) : null}
+
+      {!tutorialLoading && tutorialMode === 'steps' ? (
+        <TutorialOverlay
+          open
+          variant="panel"
+          title={financeTutorialSteps[tutorialStepIndex].title}
+          body={financeTutorialSteps[tutorialStepIndex].body}
+          stepLabel={`${tutorialStepIndex + 1}/${financeTutorialSteps.length}`}
+          primaryAction={
+            financeTutorialSteps[tutorialStepIndex].primaryAction ?? 'Next'
+          }
+          secondaryAction={
+            tutorialStepIndex === financeTutorialSteps.length - 1
+              ? financeTutorialSteps[tutorialStepIndex].secondaryAction
+              : 'Skip tutorial'
+          }
+          onPrimary={handleNextFinanceTutorialStep}
+          onSecondary={
+            tutorialStepIndex === financeTutorialSteps.length - 1
+              ? handleFinishFinanceTutorialForNow
+              : handleSkipFinanceTutorial
+          }
+          onClose={handleCloseFinanceTutorial}
+        />
+      ) : null}
     </div>
   )
 }

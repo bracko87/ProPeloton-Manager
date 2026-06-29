@@ -12,6 +12,15 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router'
 import { supabase } from '../../lib/supabase'
+import TutorialOverlay from '../../components/tutorial/TutorialOverlay'
+import {
+  squadTutorialSteps,
+  squadWelcomeTutorial,
+} from '../../lib/tutorials'
+import {
+  getTutorialProgress,
+  saveTutorialProgress,
+} from '../../lib/tutorialProgress'
 
 import type {
   ClubHealthOverviewRow,
@@ -60,7 +69,6 @@ function buildRiderFullName(
   return fullName || fallback || 'Unknown Rider'
 }
 
-
 function getSeasonYearFromGameDate(value: string | null): number {
   if (!value) return 2000
   const year = Number(value.slice(0, 4))
@@ -75,7 +83,6 @@ function normalizePointsValue(value: unknown, fallback = 0): number {
   }
   return fallback
 }
-
 
 type SquadSeasonDashboardChartPoint = {
   label: string
@@ -371,6 +378,9 @@ export default function SquadPage() {
   const [listView, setListView] = useState<SquadListView>('general')
   const [squadSeasonDashboardData, setSquadSeasonDashboardData] =
     useState<SquadSeasonDashboardData>(() => createEmptySquadSeasonDashboardData())
+  const [tutorialLoading, setTutorialLoading] = useState(true)
+  const [tutorialMode, setTutorialMode] = useState<'closed' | 'invite' | 'steps'>('closed')
+  const [tutorialStepIndex, setTutorialStepIndex] = useState(0)
 
   const [developingTeamStatus, setDevelopingTeamStatus] = useState<DevelopingTeamStatus | null>(
     null
@@ -667,6 +677,117 @@ export default function SquadPage() {
     void loadSquadPageData()
   }, [loadSquadPageData])
 
+  useEffect(() => {
+    let alive = true
+
+    async function loadSquadTutorialProgress() {
+      setTutorialLoading(true)
+
+      const autoStartTutorial =
+        window.sessionStorage.getItem('ppm:auto-start-tutorial') === 'squad'
+
+      if (autoStartTutorial) {
+        window.sessionStorage.removeItem('ppm:auto-start-tutorial')
+
+        const firstStep = squadTutorialSteps[0]
+
+        await saveTutorialProgress('squad', 'started', firstStep?.key ?? null)
+
+        if (!alive) return
+
+        setTutorialStepIndex(0)
+        setTutorialMode('steps')
+        setTutorialLoading(false)
+        return
+      }
+
+      const progress = await getTutorialProgress('squad')
+
+      if (!alive) return
+
+      if (progress?.status === 'started') {
+        const savedStepIndex = squadTutorialSteps.findIndex(
+          (step) => step.key === progress.last_step_key,
+        )
+
+        setTutorialStepIndex(savedStepIndex >= 0 ? savedStepIndex : 0)
+        setTutorialMode('steps')
+      } else {
+        setTutorialMode('closed')
+      }
+
+      setTutorialLoading(false)
+    }
+
+    void loadSquadTutorialProgress()
+
+    return () => {
+      alive = false
+    }
+  }, [])
+
+  async function handleStartSquadTutorial() {
+    const firstStep = squadTutorialSteps[0]
+
+    await saveTutorialProgress('squad', 'started', firstStep?.key ?? null)
+
+    setTutorialStepIndex(0)
+    setTutorialMode('steps')
+  }
+
+  async function handleSkipSquadTutorial() {
+    await saveTutorialProgress('squad', 'skipped', null)
+    setTutorialMode('closed')
+  }
+
+  async function handleNextSquadTutorialStep() {
+    const currentStep = squadTutorialSteps[tutorialStepIndex]
+    const isLastStep = tutorialStepIndex >= squadTutorialSteps.length - 1
+
+    if (!isLastStep) {
+      const nextIndex = tutorialStepIndex + 1
+      const nextStep = squadTutorialSteps[nextIndex]
+
+      await saveTutorialProgress('squad', 'started', nextStep.key)
+
+      setTutorialStepIndex(nextIndex)
+      return
+    }
+
+    await saveTutorialProgress('squad', 'completed', currentStep?.key ?? null)
+
+    window.sessionStorage.setItem('ppm:auto-start-tutorial', 'training')
+    navigate('/dashboard/training')
+  }
+
+  async function handleFinishSquadTutorialForNow() {
+    const currentStep = squadTutorialSteps[tutorialStepIndex]
+
+    await saveTutorialProgress('squad', 'completed', currentStep?.key ?? null)
+
+    setTutorialMode('closed')
+  }
+
+  async function handleCloseSquadTutorial() {
+    const currentStep = squadTutorialSteps[tutorialStepIndex]
+
+    if (tutorialMode === 'invite') {
+      await saveTutorialProgress('squad', 'skipped', null)
+      setTutorialMode('closed')
+      return
+    }
+
+    if (tutorialMode === 'steps') {
+      await saveTutorialProgress(
+        'squad',
+        'started',
+        currentStep?.key ?? null,
+      )
+    }
+
+    setTutorialMode('closed')
+  }
+
   function openRiderProfile(riderId: string) {
     navigate(`/dashboard/my-riders/${riderId}`)
   }
@@ -797,6 +918,45 @@ export default function SquadPage() {
         healthOverviewDisplayRows={healthOverviewDisplayRows}
         squadDisplayData={squadDisplayData}
       />
+
+      {!tutorialLoading && tutorialMode === 'invite' ? (
+        <TutorialOverlay
+          open
+          variant="invite"
+          title={squadWelcomeTutorial.title}
+          body={squadWelcomeTutorial.body}
+          primaryAction={squadWelcomeTutorial.primaryAction}
+          secondaryAction={squadWelcomeTutorial.secondaryAction}
+          onPrimary={handleStartSquadTutorial}
+          onSecondary={handleSkipSquadTutorial}
+          onClose={handleCloseSquadTutorial}
+        />
+      ) : null}
+
+      {!tutorialLoading && tutorialMode === 'steps' ? (
+        <TutorialOverlay
+          open
+          variant="panel"
+          title={squadTutorialSteps[tutorialStepIndex].title}
+          body={squadTutorialSteps[tutorialStepIndex].body}
+          stepLabel={`${tutorialStepIndex + 1}/${squadTutorialSteps.length}`}
+          primaryAction={
+            squadTutorialSteps[tutorialStepIndex].primaryAction ?? 'Next'
+          }
+          secondaryAction={
+            tutorialStepIndex === squadTutorialSteps.length - 1
+              ? squadTutorialSteps[tutorialStepIndex].secondaryAction
+              : 'Skip tutorial'
+          }
+          onPrimary={handleNextSquadTutorialStep}
+          onSecondary={
+            tutorialStepIndex === squadTutorialSteps.length - 1
+              ? handleFinishSquadTutorialForNow
+              : handleSkipSquadTutorial
+          }
+          onClose={handleCloseSquadTutorial}
+        />
+      ) : null}
     </div>
   )
 }

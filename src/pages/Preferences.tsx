@@ -394,6 +394,13 @@ export default function PreferencesPage(): JSX.Element {
                 />
 
                 <ToggleRow
+                  title="Stage plan reminders"
+                  description="Show notifications for stage plan locks, missing stage plans, and lock-soon reminders."
+                  checked={notifications.stagePlanReminders}
+                  onToggle={() => toggleNotification('stagePlanReminders')}
+                />
+
+                <ToggleRow
                   title="Transfer updates"
                   description="Show notifications for transfer offers, negotiations, and transfer activity."
                   checked={notifications.transferUpdates}

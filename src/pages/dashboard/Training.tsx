@@ -3,6 +3,15 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
 import { supabase } from '../../lib/supabase'
+import TutorialOverlay from '../../components/tutorial/TutorialOverlay'
+import {
+  trainingTutorialSteps,
+  trainingWelcomeTutorial
+} from '../../lib/tutorials'
+import {
+  getTutorialProgress,
+  saveTutorialProgress
+} from '../../lib/tutorialProgress'
 
 type TabKey = 'regular' | 'camps'
 type CampType = 'general' | 'sprint' | 'climbing' | 'flat' | 'time_trial'
@@ -1127,6 +1136,9 @@ export default function TrainingPage(): JSX.Element {
   const [regularSavingDefaultClubId, setRegularSavingDefaultClubId] = useState<string | null>(null)
   const [regularSavingRiderId, setRegularSavingRiderId] = useState<string | null>(null)
   const [regularMessage, setRegularMessage] = useState<string | null>(null)
+  const [tutorialLoading, setTutorialLoading] = useState(true)
+  const [tutorialMode, setTutorialMode] = useState<'closed' | 'invite' | 'steps'>('closed')
+  const [tutorialStepIndex, setTutorialStepIndex] = useState(0)
 
   const selectedCamp = useMemo(
     () => camps.find(camp => camp.id === selectedCampId) ?? null,
@@ -1877,6 +1889,62 @@ export default function TrainingPage(): JSX.Element {
   }, [])
 
   useEffect(() => {
+    let alive = true
+
+    async function loadTrainingTutorialProgress() {
+      setTutorialLoading(true)
+
+      const autoStartTutorial =
+        window.sessionStorage.getItem('ppm:auto-start-tutorial') === 'training'
+
+      if (autoStartTutorial) {
+        window.sessionStorage.removeItem('ppm:auto-start-tutorial')
+
+        const firstStep = trainingTutorialSteps[0]
+
+        await saveTutorialProgress('training', 'started', firstStep?.key ?? null)
+
+        if (!alive) return
+
+        setActiveTab('regular')
+        setTutorialStepIndex(0)
+        setTutorialMode('steps')
+        setTutorialLoading(false)
+        return
+      }
+
+      const progress = await getTutorialProgress('training')
+
+      if (!alive) return
+
+      if (progress?.status === 'started') {
+        const savedStepIndex = trainingTutorialSteps.findIndex(
+          step => step.key === progress.last_step_key
+        )
+
+        setTutorialStepIndex(savedStepIndex >= 0 ? savedStepIndex : 0)
+        setTutorialMode('steps')
+
+        if (trainingTutorialSteps[savedStepIndex]?.key === 'training-camps') {
+          setActiveTab('camps')
+        } else {
+          setActiveTab('regular')
+        }
+      } else {
+        setTutorialMode('closed')
+      }
+
+      setTutorialLoading(false)
+    }
+
+    void loadTrainingTutorialProgress()
+
+    return () => {
+      alive = false
+    }
+  }, [])
+
+  useEffect(() => {
     let cancelled = false
 
     async function loadAvailableStaff(): Promise<void> {
@@ -2355,6 +2423,73 @@ export default function TrainingPage(): JSX.Element {
 
       return [...current, staffId]
     })
+  }
+
+  async function handleStartTrainingTutorial() {
+    const firstStep = trainingTutorialSteps[0]
+
+    await saveTutorialProgress('training', 'started', firstStep?.key ?? null)
+
+    setActiveTab('regular')
+    setTutorialStepIndex(0)
+    setTutorialMode('steps')
+  }
+
+  async function handleSkipTrainingTutorial() {
+    await saveTutorialProgress('training', 'skipped', null)
+    setTutorialMode('closed')
+  }
+
+  async function handleNextTrainingTutorialStep() {
+    const currentStep = trainingTutorialSteps[tutorialStepIndex]
+    const isLastStep = tutorialStepIndex >= trainingTutorialSteps.length - 1
+
+    if (!isLastStep) {
+      const nextIndex = tutorialStepIndex + 1
+      const nextStep = trainingTutorialSteps[nextIndex]
+
+      if (nextStep.key === 'training-camps') {
+        setActiveTab('camps')
+      }
+
+      await saveTutorialProgress('training', 'started', nextStep.key)
+
+      setTutorialStepIndex(nextIndex)
+      return
+    }
+
+    await saveTutorialProgress('training', 'completed', currentStep?.key ?? null)
+
+    window.sessionStorage.setItem('ppm:auto-start-tutorial', 'equipment')
+    navigate('/dashboard/equipment')
+  }
+
+  async function handleFinishTrainingTutorialForNow() {
+    const currentStep = trainingTutorialSteps[tutorialStepIndex]
+
+    await saveTutorialProgress('training', 'completed', currentStep?.key ?? null)
+
+    setTutorialMode('closed')
+  }
+
+  async function handleCloseTrainingTutorial() {
+    const currentStep = trainingTutorialSteps[tutorialStepIndex]
+
+    if (tutorialMode === 'invite') {
+      await saveTutorialProgress('training', 'skipped', null)
+      setTutorialMode('closed')
+      return
+    }
+
+    if (tutorialMode === 'steps') {
+      await saveTutorialProgress(
+        'training',
+        'started',
+        currentStep?.key ?? null
+      )
+    }
+
+    setTutorialMode('closed')
   }
 
   if (loading) {
@@ -3724,6 +3859,45 @@ export default function TrainingPage(): JSX.Element {
             </div>
           </div>
         </div>
+      ) : null}
+
+      {!tutorialLoading && tutorialMode === 'invite' ? (
+        <TutorialOverlay
+          open
+          variant="invite"
+          title={trainingWelcomeTutorial.title}
+          body={trainingWelcomeTutorial.body}
+          primaryAction={trainingWelcomeTutorial.primaryAction}
+          secondaryAction={trainingWelcomeTutorial.secondaryAction}
+          onPrimary={handleStartTrainingTutorial}
+          onSecondary={handleSkipTrainingTutorial}
+          onClose={handleCloseTrainingTutorial}
+        />
+      ) : null}
+
+      {!tutorialLoading && tutorialMode === 'steps' ? (
+        <TutorialOverlay
+          open
+          variant="panel"
+          title={trainingTutorialSteps[tutorialStepIndex].title}
+          body={trainingTutorialSteps[tutorialStepIndex].body}
+          stepLabel={`${tutorialStepIndex + 1}/${trainingTutorialSteps.length}`}
+          primaryAction={
+            trainingTutorialSteps[tutorialStepIndex].primaryAction ?? 'Next'
+          }
+          secondaryAction={
+            tutorialStepIndex === trainingTutorialSteps.length - 1
+              ? trainingTutorialSteps[tutorialStepIndex].secondaryAction
+              : 'Skip tutorial'
+          }
+          onPrimary={handleNextTrainingTutorialStep}
+          onSecondary={
+            tutorialStepIndex === trainingTutorialSteps.length - 1
+              ? handleFinishTrainingTutorialForNow
+              : handleSkipTrainingTutorial
+          }
+          onClose={handleCloseTrainingTutorial}
+        />
       ) : null}
     </div>
   )

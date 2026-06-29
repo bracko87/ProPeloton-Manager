@@ -3,6 +3,15 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router'
 import { supabase } from '../../lib/supabase'
+import TutorialOverlay from '../../components/tutorial/TutorialOverlay'
+import {
+  calendarTutorialSteps,
+  calendarWelcomeTutorial,
+} from '../../lib/tutorials'
+import {
+  getTutorialProgress,
+  saveTutorialProgress,
+} from '../../lib/tutorialProgress'
 
 type GameDateParts = {
   season_number: number
@@ -745,6 +754,11 @@ export default function CalendarPage(): JSX.Element {
 
   const [raceCalendarNotice, setRaceCalendarNotice] = useState<string | null>(null)
 
+  const [tutorialLoading, setTutorialLoading] = useState(true)
+  const [tutorialMode, setTutorialMode] = useState<'closed' | 'invite' | 'steps'>('closed')
+  const [tutorialStepIndex, setTutorialStepIndex] = useState(0)
+  const [tutorialMessage, setTutorialMessage] = useState<string | null>(null)
+
   const [seasonFilters, setSeasonFilters] = useState<SeasonCalendarFilters>({
     races: true,
     trainingCamps: true,
@@ -1095,6 +1109,56 @@ export default function CalendarPage(): JSX.Element {
     })
   }, [loading, location.pathname, location.search, location.state, navigate])
 
+  useEffect(() => {
+    let alive = true
+
+    async function loadCalendarTutorialProgress() {
+      setTutorialLoading(true)
+
+      const autoStartTutorial =
+        window.sessionStorage.getItem('ppm:auto-start-tutorial') === 'calendar'
+
+      if (autoStartTutorial) {
+        window.sessionStorage.removeItem('ppm:auto-start-tutorial')
+
+        const firstStep = calendarTutorialSteps[0]
+
+        await saveTutorialProgress('calendar', 'started', firstStep?.key ?? null)
+
+        if (!alive) return
+
+        setActiveView('season')
+        setTutorialStepIndex(0)
+        setTutorialMode('steps')
+        setTutorialLoading(false)
+        return
+      }
+
+      const progress = await getTutorialProgress('calendar')
+
+      if (!alive) return
+
+      if (progress?.status === 'started') {
+        const savedStepIndex = calendarTutorialSteps.findIndex(
+          (step) => step.key === progress.last_step_key,
+        )
+
+        setTutorialStepIndex(savedStepIndex >= 0 ? savedStepIndex : 0)
+        setTutorialMode('steps')
+      } else {
+        setTutorialMode('closed')
+      }
+
+      setTutorialLoading(false)
+    }
+
+    void loadCalendarTutorialProgress()
+
+    return () => {
+      alive = false
+    }
+  }, [])
+
 
   const currentMonthStart = useMemo(() => {
     if (!currentGameDate || !gameDateParts) return null
@@ -1278,6 +1342,97 @@ export default function CalendarPage(): JSX.Element {
     navigate(`/dashboard/races/${raceId}?raceId=${raceId}`, {
       state: getCalendarReturnState(raceId),
     })
+  }
+
+  function getFirstAvailableRaceId(): string | null {
+    return activeMonthRaces[0]?.id ?? seasonRaceEntries[0]?.id ?? null
+  }
+
+  function moveCalendarTutorialToRaceView() {
+    const firstRaceMonth = seasonRaceEntries[0]?.startGameDate?.monthNumber
+
+    setActiveView('races')
+
+    if (typeof firstRaceMonth === 'number') {
+      setActiveRaceMonth(firstRaceMonth)
+    }
+  }
+
+  async function handleStartCalendarTutorial() {
+    const firstStep = calendarTutorialSteps[0]
+
+    await saveTutorialProgress('calendar', 'started', firstStep?.key ?? null)
+
+    setActiveView('season')
+    setTutorialStepIndex(0)
+    setTutorialMode('steps')
+  }
+
+  async function handleSkipCalendarTutorial() {
+    await saveTutorialProgress('calendar', 'skipped', null)
+    setTutorialMode('closed')
+  }
+
+  async function handleNextCalendarTutorialStep() {
+    const currentStep = calendarTutorialSteps[tutorialStepIndex]
+    const isLastStep = tutorialStepIndex >= calendarTutorialSteps.length - 1
+
+    if (currentStep?.key === 'calendar-season') {
+      moveCalendarTutorialToRaceView()
+    }
+
+    if (!isLastStep) {
+      const nextIndex = tutorialStepIndex + 1
+      const nextStep = calendarTutorialSteps[nextIndex]
+
+      await saveTutorialProgress('calendar', 'started', nextStep.key)
+
+      setTutorialStepIndex(nextIndex)
+      return
+    }
+
+    const raceId = getFirstAvailableRaceId()
+
+    if (!raceId) {
+      setTutorialMessage('No race is available to open yet.')
+      await saveTutorialProgress('calendar', 'completed', currentStep?.key ?? null)
+      setTutorialMode('closed')
+      return
+    }
+
+    await saveTutorialProgress('calendar', 'completed', currentStep?.key ?? null)
+
+    window.sessionStorage.setItem('ppm:auto-start-tutorial', 'race-detail')
+
+    openRaceDetail(raceId)
+  }
+
+  async function handleFinishCalendarTutorialForNow() {
+    const currentStep = calendarTutorialSteps[tutorialStepIndex]
+
+    await saveTutorialProgress('calendar', 'completed', currentStep?.key ?? null)
+
+    setTutorialMode('closed')
+  }
+
+  async function handleCloseCalendarTutorial() {
+    const currentStep = calendarTutorialSteps[tutorialStepIndex]
+
+    if (tutorialMode === 'invite') {
+      await saveTutorialProgress('calendar', 'skipped', null)
+      setTutorialMode('closed')
+      return
+    }
+
+    if (tutorialMode === 'steps') {
+      await saveTutorialProgress(
+        'calendar',
+        'started',
+        currentStep?.key ?? null,
+      )
+    }
+
+    setTutorialMode('closed')
   }
 
   if (loading) {
@@ -1749,6 +1904,51 @@ export default function CalendarPage(): JSX.Element {
           </>
         )}
       </div>
+
+      {tutorialMessage ? (
+        <div className="fixed bottom-6 right-6 z-[1001] rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 shadow-xl">
+          {tutorialMessage}
+        </div>
+      ) : null}
+
+      {!tutorialLoading && tutorialMode === 'invite' ? (
+        <TutorialOverlay
+          open
+          variant="invite"
+          title={calendarWelcomeTutorial.title}
+          body={calendarWelcomeTutorial.body}
+          primaryAction={calendarWelcomeTutorial.primaryAction}
+          secondaryAction={calendarWelcomeTutorial.secondaryAction}
+          onPrimary={handleStartCalendarTutorial}
+          onSecondary={handleSkipCalendarTutorial}
+          onClose={handleCloseCalendarTutorial}
+        />
+      ) : null}
+
+      {!tutorialLoading && tutorialMode === 'steps' ? (
+        <TutorialOverlay
+          open
+          variant="panel"
+          title={calendarTutorialSteps[tutorialStepIndex].title}
+          body={calendarTutorialSteps[tutorialStepIndex].body}
+          stepLabel={`${tutorialStepIndex + 1}/${calendarTutorialSteps.length}`}
+          primaryAction={
+            calendarTutorialSteps[tutorialStepIndex].primaryAction ?? 'Next'
+          }
+          secondaryAction={
+            tutorialStepIndex === calendarTutorialSteps.length - 1
+              ? calendarTutorialSteps[tutorialStepIndex].secondaryAction
+              : 'Skip tutorial'
+          }
+          onPrimary={handleNextCalendarTutorialStep}
+          onSecondary={
+            tutorialStepIndex === calendarTutorialSteps.length - 1
+              ? handleFinishCalendarTutorialForNow
+              : handleSkipCalendarTutorial
+          }
+          onClose={handleCloseCalendarTutorial}
+        />
+      ) : null}
     </div>
   )
 }

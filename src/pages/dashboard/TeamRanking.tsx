@@ -1,5 +1,14 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router'
+import TutorialOverlay from '../../components/tutorial/TutorialOverlay'
+import {
+  teamRankingTutorialSteps,
+  teamRankingWelcomeTutorial,
+} from '../../lib/tutorials'
+import {
+  getTutorialProgress,
+  saveTutorialProgress,
+} from '../../lib/tutorialProgress'
 import {
   AmateurDivision,
   AMATEUR_DIVISIONS,
@@ -99,7 +108,6 @@ type MyOwnedClubRecord = {
   tier3_division: Tier3Division | null
   amateur_division: AmateurDivision | null
 }
-
 
 type TeamInternationalPointsRow = {
   season_year: number | null
@@ -237,6 +245,64 @@ const TIER_OPTIONS: TierOption[] = [
   { value: TEAM_TIERS.CONTINENTAL, label: 'Continental' },
   { value: TEAM_TIERS.AMATEUR, label: 'Amateur' },
 ]
+
+function getDefaultDivisionForTier(
+  tier: TeamRankingRecord['tier'],
+): CompetitionDivision | null {
+  if (tier === TEAM_TIERS.PRO) {
+    return Object.values(TIER2_DIVISIONS)[0] ?? null
+  }
+
+  if (tier === TEAM_TIERS.CONTINENTAL) {
+    return Object.values(TIER3_DIVISIONS)[0] ?? null
+  }
+
+  if (tier === TEAM_TIERS.AMATEUR) {
+    return Object.values(AMATEUR_DIVISIONS)[0] ?? null
+  }
+
+  return null
+}
+
+function isDivisionAllowedForTier(
+  tier: TeamRankingRecord['tier'],
+  division: CompetitionDivision | null,
+): division is CompetitionDivision {
+  if (!division) return false
+
+  if (tier === TEAM_TIERS.WORLD) {
+    return division === 'WORLD'
+  }
+
+  if (tier === TEAM_TIERS.PRO) {
+    return Object.values(TIER2_DIVISIONS).includes(division as Tier2Division)
+  }
+
+  if (tier === TEAM_TIERS.CONTINENTAL) {
+    return Object.values(TIER3_DIVISIONS).includes(division as Tier3Division)
+  }
+
+  if (tier === TEAM_TIERS.AMATEUR) {
+    return Object.values(AMATEUR_DIVISIONS).includes(division as AmateurDivision)
+  }
+
+  return false
+}
+
+function resolveDivisionForTier(
+  tier: TeamRankingRecord['tier'],
+  division: CompetitionDivision | null,
+): CompetitionDivision | null {
+  if (tier === TEAM_TIERS.WORLD) {
+    return null
+  }
+
+  if (isDivisionAllowedForTier(tier, division)) {
+    return division
+  }
+
+  return getDefaultDivisionForTier(tier)
+}
 
 function safeCountryCode(countryCode?: string | null): string | null {
   const code = countryCode?.trim().toLowerCase()
@@ -382,6 +448,8 @@ function getStandingOption(
   tier: TeamRankingRecord['tier'],
   division: CompetitionDivision | null,
 ): StandingOption | null {
+  const resolvedDivision = resolveDivisionForTier(tier, division)
+
   if (tier === TEAM_TIERS.WORLD) {
     return {
       key: 'world',
@@ -393,7 +461,7 @@ function getStandingOption(
   }
 
   if (tier === TEAM_TIERS.PRO) {
-    if (division === 'PRO_WEST') {
+    if (resolvedDivision === 'PRO_WEST') {
       return {
         key: 'pro-west',
         label: DIVISION_LABELS.PRO_WEST,
@@ -405,7 +473,7 @@ function getStandingOption(
       }
     }
 
-    if (division === 'PRO_EAST') {
+    if (resolvedDivision === 'PRO_EAST') {
       return {
         key: 'pro-east',
         label: DIVISION_LABELS.PRO_EAST,
@@ -469,23 +537,23 @@ function getStandingOption(
       },
     }
 
-    if (division && division in standingMap) {
-      return standingMap[division as Tier3Division]
+    if (resolvedDivision && resolvedDivision in standingMap) {
+      return standingMap[resolvedDivision as Tier3Division]
     }
 
     return null
   }
 
   if (tier === TEAM_TIERS.AMATEUR) {
-    if (!division) return null
+    if (!resolvedDivision) return null
 
-    const amateurDetails = getAmateurStandingDetails(division)
+    const amateurDetails = getAmateurStandingDetails(resolvedDivision)
 
     return {
-      key: `amateur-${division}`,
-      label: `Amateur: ${DIVISION_LABELS[division as AmateurDivision]}`,
+      key: `amateur-${resolvedDivision}`,
+      label: `Amateur: ${DIVISION_LABELS[resolvedDivision as AmateurDivision]}`,
       type: 'AMATEUR',
-      division,
+      division: resolvedDivision,
       promotionLabel: amateurDetails.promotionLabel,
       playoffLabel: amateurDetails.playoffLabel,
     }
@@ -686,12 +754,8 @@ function getTeamRankingSelectionFromSearch(search: string): {
   const divisionParam = params.get('division')
 
   const tier = isValidRankingTier(tierParam) ? tierParam : TEAM_TIERS.WORLD
-  const division =
-    tier === TEAM_TIERS.WORLD
-      ? null
-      : isValidCompetitionDivision(divisionParam)
-        ? divisionParam
-        : null
+  const rawDivision = isValidCompetitionDivision(divisionParam) ? divisionParam : null
+  const division = resolveDivisionForTier(tier, rawDivision)
 
   return {
     tier,
@@ -706,13 +770,14 @@ function buildTeamRankingSearch(
   division: CompetitionDivision | null,
 ): string {
   const params = new URLSearchParams(currentSearch)
+  const resolvedDivision = resolveDivisionForTier(tier, division)
 
   params.set('tier', tier)
 
-  if (tier === TEAM_TIERS.WORLD || !division) {
+  if (tier === TEAM_TIERS.WORLD || !resolvedDivision) {
     params.delete('division')
   } else {
-    params.set('division', division)
+    params.set('division', resolvedDivision)
   }
 
   const nextSearch = params.toString()
@@ -920,6 +985,9 @@ export default function TeamRankingPage(): JSX.Element {
     Map<string, ClubPublicInactivityUi>
   >(new Map())
   const [isPastWinnersOpen, setIsPastWinnersOpen] = useState(false)
+  const [tutorialLoading, setTutorialLoading] = useState(true)
+  const [tutorialMode, setTutorialMode] = useState<'closed' | 'invite' | 'steps'>('closed')
+  const [tutorialStepIndex, setTutorialStepIndex] = useState(0)
 
   useEffect(() => {
     let mounted = true
@@ -968,14 +1036,23 @@ export default function TeamRankingPage(): JSX.Element {
                 mainClubDivision = mainClub.amateur_division ?? null
               }
 
+              const resolvedMainClubDivision = resolveDivisionForTier(
+                mainClubTier,
+                mainClubDivision,
+              )
+
               setSelectedTier(mainClubTier)
-              setSelectedDivision(mainClubDivision)
+              setSelectedDivision(resolvedMainClubDivision)
               shouldAutoSelectMyCompetitionRef.current = false
 
               navigate(
                 {
                   pathname: location.pathname,
-                  search: buildTeamRankingSearch(location.search, mainClubTier, mainClubDivision),
+                  search: buildTeamRankingSearch(
+                    location.search,
+                    mainClubTier,
+                    resolvedMainClubDivision,
+                  ),
                   hash: location.hash,
                 },
                 { replace: true },
@@ -1029,6 +1106,55 @@ export default function TeamRankingPage(): JSX.Element {
     }
   }, [location.hash, location.pathname, location.search, navigate])
 
+  useEffect(() => {
+    let alive = true
+
+    async function loadTeamRankingTutorialProgress() {
+      setTutorialLoading(true)
+
+      const autoStartTutorial =
+        window.sessionStorage.getItem('ppm:auto-start-tutorial') === 'team-ranking'
+
+      if (autoStartTutorial) {
+        window.sessionStorage.removeItem('ppm:auto-start-tutorial')
+
+        const firstStep = teamRankingTutorialSteps[0]
+
+        await saveTutorialProgress('team-ranking', 'started', firstStep?.key ?? null)
+
+        if (!alive) return
+
+        setTutorialStepIndex(0)
+        setTutorialMode('steps')
+        setTutorialLoading(false)
+        return
+      }
+
+      const progress = await getTutorialProgress('team-ranking')
+
+      if (!alive) return
+
+      if (progress?.status === 'started') {
+        const savedStepIndex = teamRankingTutorialSteps.findIndex(
+          (step) => step.key === progress.last_step_key,
+        )
+
+        setTutorialStepIndex(savedStepIndex >= 0 ? savedStepIndex : 0)
+        setTutorialMode('steps')
+      } else {
+        setTutorialMode('closed')
+      }
+
+      setTutorialLoading(false)
+    }
+
+    void loadTeamRankingTutorialProgress()
+
+    return () => {
+      alive = false
+    }
+  }, [])
+
   const divisionOptions = useMemo(() => getDivisionOptions(selectedTier), [selectedTier])
 
   const selectedStanding = useMemo(
@@ -1080,16 +1206,20 @@ export default function TeamRankingPage(): JSX.Element {
   }
 
   const handleTierChange = (value: TeamRankingRecord['tier']) => {
+    const nextDivision = resolveDivisionForTier(value, null)
+
     shouldAutoSelectMyCompetitionRef.current = false
     setSelectedTier(value)
-    setSelectedDivision(null)
-    replaceStandingUrl(value, null)
+    setSelectedDivision(nextDivision)
+    replaceStandingUrl(value, nextDivision)
   }
 
   const handleDivisionChange = (value: CompetitionDivision | null) => {
+    const nextDivision = resolveDivisionForTier(selectedTier, value)
+
     shouldAutoSelectMyCompetitionRef.current = false
-    setSelectedDivision(value)
-    replaceStandingUrl(selectedTier, value)
+    setSelectedDivision(nextDivision)
+    replaceStandingUrl(selectedTier, nextDivision)
   }
 
   const openClubProfile = (clubId: string) => {
@@ -1109,6 +1239,68 @@ export default function TeamRankingPage(): JSX.Element {
         teamRankingDivision: selectedDivision,
       },
     })
+  }
+
+  async function handleStartTeamRankingTutorial() {
+    const firstStep = teamRankingTutorialSteps[0]
+
+    await saveTutorialProgress('team-ranking', 'started', firstStep?.key ?? null)
+
+    setTutorialStepIndex(0)
+    setTutorialMode('steps')
+  }
+
+  async function handleSkipTeamRankingTutorial() {
+    await saveTutorialProgress('team-ranking', 'skipped', null)
+    setTutorialMode('closed')
+  }
+
+  async function handleNextTeamRankingTutorialStep() {
+    const currentStep = teamRankingTutorialSteps[tutorialStepIndex]
+    const isLastStep = tutorialStepIndex >= teamRankingTutorialSteps.length - 1
+
+    if (!isLastStep) {
+      const nextIndex = tutorialStepIndex + 1
+      const nextStep = teamRankingTutorialSteps[nextIndex]
+
+      await saveTutorialProgress('team-ranking', 'started', nextStep.key)
+
+      setTutorialStepIndex(nextIndex)
+      return
+    }
+
+    await saveTutorialProgress('team-ranking', 'completed', currentStep?.key ?? null)
+
+    window.sessionStorage.setItem('ppm:auto-start-tutorial', 'statistics')
+    navigate('/dashboard/statistics')
+  }
+
+  async function handleFinishTeamRankingTutorialForNow() {
+    const currentStep = teamRankingTutorialSteps[tutorialStepIndex]
+
+    await saveTutorialProgress('team-ranking', 'completed', currentStep?.key ?? null)
+
+    setTutorialMode('closed')
+  }
+
+  async function handleCloseTeamRankingTutorial() {
+    const currentStep = teamRankingTutorialSteps[tutorialStepIndex]
+
+    if (tutorialMode === 'invite') {
+      await saveTutorialProgress('team-ranking', 'skipped', null)
+      setTutorialMode('closed')
+      return
+    }
+
+    if (tutorialMode === 'steps') {
+      await saveTutorialProgress(
+        'team-ranking',
+        'started',
+        currentStep?.key ?? null,
+      )
+    }
+
+    setTutorialMode('closed')
   }
 
   return (
@@ -1148,7 +1340,7 @@ export default function TeamRankingPage(): JSX.Element {
               </label>
               <select
                 id="division-select"
-                value={selectedDivision ?? ''}
+                value={selectedTier === TEAM_TIERS.WORLD ? '' : selectedDivision ?? ''}
                 onChange={(e) =>
                   handleDivisionChange(
                     e.target.value ? (e.target.value as CompetitionDivision) : null,
@@ -1157,11 +1349,10 @@ export default function TeamRankingPage(): JSX.Element {
                 disabled={selectedTier === TEAM_TIERS.WORLD}
                 className="w-full rounded border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
               >
-                <option value="">
-                  {selectedTier === TEAM_TIERS.WORLD
-                    ? 'No division selection needed'
-                    : 'Choose division'}
-                </option>
+                {selectedTier === TEAM_TIERS.WORLD ? (
+                  <option value="">No division selection needed</option>
+                ) : null}
+
                 {divisionOptions.map((option) => (
                   <option key={option.value} value={option.value}>
                     {option.label}
@@ -1355,6 +1546,45 @@ export default function TeamRankingPage(): JSX.Element {
         division={selectedStanding?.division ?? null}
         standingLabel={selectedStanding?.label ?? null}
       />
+
+      {!tutorialLoading && tutorialMode === 'invite' ? (
+        <TutorialOverlay
+          open
+          variant="invite"
+          title={teamRankingWelcomeTutorial.title}
+          body={teamRankingWelcomeTutorial.body}
+          primaryAction={teamRankingWelcomeTutorial.primaryAction}
+          secondaryAction={teamRankingWelcomeTutorial.secondaryAction}
+          onPrimary={handleStartTeamRankingTutorial}
+          onSecondary={handleSkipTeamRankingTutorial}
+          onClose={handleCloseTeamRankingTutorial}
+        />
+      ) : null}
+
+      {!tutorialLoading && tutorialMode === 'steps' ? (
+        <TutorialOverlay
+          open
+          variant="panel"
+          title={teamRankingTutorialSteps[tutorialStepIndex].title}
+          body={teamRankingTutorialSteps[tutorialStepIndex].body}
+          stepLabel={`${tutorialStepIndex + 1}/${teamRankingTutorialSteps.length}`}
+          primaryAction={
+            teamRankingTutorialSteps[tutorialStepIndex].primaryAction ?? 'Next'
+          }
+          secondaryAction={
+            tutorialStepIndex === teamRankingTutorialSteps.length - 1
+              ? teamRankingTutorialSteps[tutorialStepIndex].secondaryAction
+              : 'Skip tutorial'
+          }
+          onPrimary={handleNextTeamRankingTutorialStep}
+          onSecondary={
+            tutorialStepIndex === teamRankingTutorialSteps.length - 1
+              ? handleFinishTeamRankingTutorialForNow
+              : handleSkipTeamRankingTutorial
+          }
+          onClose={handleCloseTeamRankingTutorial}
+        />
+      ) : null}
     </div>
   )
 }

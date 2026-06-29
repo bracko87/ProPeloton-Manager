@@ -11357,6 +11357,92 @@ STAGE_PLAN_MISSING_AT_LOCK: {
       MARK_READ_ACTION,
     ],
   },
+  MAIN_SPONSOR_OBJECTIVE_ACHIEVED: {
+  title: 'Sponsor objective achieved',
+  intro:
+    'Your team completed a main sponsor objective and received the bonus payment.',
+  imageUrl:
+    'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Event%20images/Sponsor%20bonus.png',
+  getTitle: payload =>
+    payload?.objective_name
+      ? `Sponsor objective achieved: ${payload.objective_name}`
+      : 'Sponsor objective achieved',
+  getMessage: payload => {
+    const sponsorName = payload?.sponsor_name ?? 'Your main sponsor'
+    const amount = Number(payload?.bonus_amount_cash ?? payload?.bonus_cash ?? 0)
+
+    if (amount > 0) {
+      return `${sponsorName} paid a bonus of $${amount.toLocaleString()} for completing this objective.`
+    }
+
+    return `${sponsorName} confirmed that your team completed this objective.`
+  },
+  getDetails: payload => [
+    payload?.sponsor_name
+      ? { label: 'Sponsor', value: payload.sponsor_name }
+      : null,
+    payload?.objective_name
+      ? { label: 'Objective', value: payload.objective_name }
+      : null,
+    payload?.bonus_amount_cash || payload?.bonus_cash
+      ? {
+          label: 'Bonus paid',
+          value: `$${Number(
+            payload.bonus_amount_cash ?? payload.bonus_cash
+          ).toLocaleString()}`,
+        }
+      : null,
+  ].filter(Boolean),
+  primaryAction: {
+    label: 'Open sponsors',
+    href: '/dashboard/sponsors',
+  },
+},
+
+MAIN_SPONSOR_OBJECTIVE_FAILED: {
+  title: 'Sponsor objective missed',
+  intro:
+    'Your team did not complete a main sponsor objective, so the bonus payment was not awarded.',
+  imageUrl:
+    'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Event%20images/Sponsor%20objective%20failed.png',
+  getTitle: payload =>
+    payload?.objective_name
+      ? `Sponsor objective missed: ${payload.objective_name}`
+      : 'Sponsor objective missed',
+  getMessage: payload => {
+    const sponsorName = payload?.sponsor_name ?? 'Your main sponsor'
+    const amount = Number(payload?.bonus_amount_cash ?? payload?.bonus_cash ?? 0)
+
+    if (amount > 0) {
+      return `${sponsorName} did not pay the $${amount.toLocaleString()} bonus because this objective was not completed.`
+    }
+
+    return `${sponsorName} marked this objective as missed.`
+  },
+  getDetails: payload => [
+    payload?.sponsor_name
+      ? { label: 'Sponsor', value: payload.sponsor_name }
+      : null,
+    payload?.objective_name
+      ? { label: 'Objective', value: payload.objective_name }
+      : null,
+    payload?.reason
+      ? { label: 'Reason', value: payload.reason }
+      : null,
+    payload?.bonus_amount_cash || payload?.bonus_cash
+      ? {
+          label: 'Missed bonus',
+          value: `$${Number(
+            payload.bonus_amount_cash ?? payload.bonus_cash
+          ).toLocaleString()}`,
+        }
+      : null,
+  ].filter(Boolean),
+  primaryAction: {
+    label: 'Open sponsors',
+    href: '/dashboard/sponsors',
+  },
+},
   INFRASTRUCTURE_ASSET_ORDERED: {
   defaultTitle: 'Asset ordered',
   defaultMessage:

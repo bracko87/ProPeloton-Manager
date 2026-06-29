@@ -72,14 +72,20 @@ type KitDesignerProps = {
   secondaryColor: string
 }
 
-type TeamKitMode = 'generic' | 'image_url' | 'uploaded_image'
+type TeamKitMode = 'generic_pool' | 'generic' | 'image_url' | 'uploaded_image'
 
 type TeamKitConfig = {
   version: 1
-  template: 'striped-tshirt'
+  template: 'generic_pool' | 'striped-tshirt'
   mode: TeamKitMode
   image_url: string | null
   image_data_url: string | null
+  /**
+   * Preserves the jersey selected during team creation, so "restore original"
+   * can bring the user back to the first chosen generic kit even after custom uploads.
+   */
+  original_generic_image_url?: string | null
+  source?: string | null
 }
 
 type TeamKitRow = {
@@ -95,7 +101,7 @@ const LOGO_BUCKET = 'club-logos'
 
 const MAX_JERSEY_FILE_SIZE = 1024 * 1024 // 1 MB
 const MAX_JERSEY_DIMENSION = 512
-const DEFAULT_TEAM_KIT_NAME = 'default'
+const DEFAULT_TEAM_KIT_NAME = 'home'
 
 function isValidHexColor(value: string): boolean {
   return /^#[0-9A-Fa-f]{6}$/.test(value)
@@ -318,13 +324,15 @@ async function upsertBaseTeamLogo(
 
 /** ---------------- Jersey / Kits ---------------- */
 
-function createGenericKitConfig(): TeamKitConfig {
+function createGenericKitConfig(originalGenericImageUrl: string | null = null): TeamKitConfig {
   return {
     version: 1,
-    template: 'striped-tshirt',
-    mode: 'generic',
-    image_url: null,
+    template: originalGenericImageUrl ? 'generic_pool' : 'striped-tshirt',
+    mode: originalGenericImageUrl ? 'generic_pool' : 'generic',
+    image_url: originalGenericImageUrl,
     image_data_url: null,
+    original_generic_image_url: originalGenericImageUrl,
+    source: originalGenericImageUrl ? 'create_club' : 'fallback',
   }
 }
 
@@ -335,29 +343,60 @@ function normalizeTeamKitConfig(value: unknown): TeamKitConfig {
     return fallback
   }
 
-  const raw = value as Partial<TeamKitConfig>
+  const raw = value as Partial<TeamKitConfig> & {
+    source?: unknown
+    original_generic_image_url?: unknown
+  }
+
+  const rawImageUrl = typeof raw.image_url === 'string' ? raw.image_url : null
+  const rawImageDataUrl = typeof raw.image_data_url === 'string' ? raw.image_data_url : null
+  const originalGenericImageUrl =
+    typeof raw.original_generic_image_url === 'string'
+      ? raw.original_generic_image_url
+      : raw.mode === 'generic_pool' && rawImageUrl
+        ? rawImageUrl
+        : null
 
   const mode: TeamKitMode =
-    raw.mode === 'image_url' || raw.mode === 'uploaded_image' || raw.mode === 'generic'
+    raw.mode === 'generic_pool' ||
+    raw.mode === 'image_url' ||
+    raw.mode === 'uploaded_image' ||
+    raw.mode === 'generic'
       ? raw.mode
-      : 'generic'
+      : rawImageUrl
+        ? 'generic_pool'
+        : 'generic'
 
   return {
     version: 1,
-    template: 'striped-tshirt',
+    template: mode === 'generic_pool' ? 'generic_pool' : 'striped-tshirt',
     mode,
-    image_url: typeof raw.image_url === 'string' ? raw.image_url : null,
-    image_data_url: typeof raw.image_data_url === 'string' ? raw.image_data_url : null,
+    image_url: mode === 'generic_pool' || mode === 'image_url' ? rawImageUrl : null,
+    image_data_url: mode === 'uploaded_image' ? rawImageDataUrl : null,
+    original_generic_image_url: originalGenericImageUrl,
+    source: typeof raw.source === 'string' ? raw.source : null,
   }
 }
 
 function getKitImageSrc(config: TeamKitConfig): string | null {
-  if (config.mode === 'image_url') {
+  if (config.mode === 'generic_pool' || config.mode === 'image_url') {
     return config.image_url
   }
 
   if (config.mode === 'uploaded_image') {
     return config.image_data_url
+  }
+
+  return null
+}
+
+function getOriginalGenericKitUrl(config: TeamKitConfig): string | null {
+  if (config.original_generic_image_url) {
+    return config.original_generic_image_url
+  }
+
+  if (config.mode === 'generic_pool' && config.image_url) {
+    return config.image_url
   }
 
   return null
@@ -369,7 +408,8 @@ function areKitConfigsEqual(a: TeamKitConfig, b: TeamKitConfig): boolean {
     a.template === b.template &&
     a.mode === b.mode &&
     a.image_url === b.image_url &&
-    a.image_data_url === b.image_data_url
+    a.image_data_url === b.image_data_url &&
+    (a.original_generic_image_url ?? null) === (b.original_generic_image_url ?? null)
   )
 }
 
@@ -448,7 +488,7 @@ function HeaderLogo({
 
   if (logoSrc) {
     return (
-      <div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-md border border-gray-200 bg-transparent">
+      <div className="flex h-40 w-40 items-center justify-center overflow-hidden rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
         <img src={logoSrc} alt="Club logo" className="max-h-full max-w-full object-contain" />
       </div>
     )
@@ -456,7 +496,7 @@ function HeaderLogo({
 
   return (
     <div
-      className="flex h-24 w-24 items-center justify-center rounded-md border border-gray-200 text-white text-lg font-bold"
+      className="flex h-40 w-40 items-center justify-center rounded-xl border border-slate-200 text-white text-2xl font-bold shadow-sm"
       style={{
         background: `linear-gradient(135deg, ${primaryColor} 0%, ${primaryColor} 58%, ${secondaryColor} 58%, ${secondaryColor} 100%)`,
       }}
@@ -471,6 +511,7 @@ function KitDesigner({ teamId, primaryColor, secondaryColor }: KitDesignerProps)
   const [saving, setSaving] = useState(false)
   const [appliedKitConfig, setAppliedKitConfig] = useState<TeamKitConfig>(createGenericKitConfig())
   const [draftKitConfig, setDraftKitConfig] = useState<TeamKitConfig>(createGenericKitConfig())
+  const [originalGenericKitUrl, setOriginalGenericKitUrl] = useState<string | null>(null)
   const [jerseyUrlInput, setJerseyUrlInput] = useState('')
   const [kitNotice, setKitNotice] = useState<string | null>(null)
 
@@ -492,8 +533,10 @@ function KitDesigner({ teamId, primaryColor, secondaryColor }: KitDesignerProps)
         if (!active) return
 
         if (error) {
-          setAppliedKitConfig(createGenericKitConfig())
-          setDraftKitConfig(createGenericKitConfig())
+          const fallback = createGenericKitConfig()
+          setAppliedKitConfig(fallback)
+          setDraftKitConfig(fallback)
+          setOriginalGenericKitUrl(null)
           setJerseyUrlInput('')
           setKitNotice(`Failed to load saved jersey: ${error.message}`)
           setLoaded(true)
@@ -506,14 +549,18 @@ function KitDesigner({ teamId, primaryColor, secondaryColor }: KitDesignerProps)
           const fallback = createGenericKitConfig()
           setAppliedKitConfig(fallback)
           setDraftKitConfig(fallback)
+          setOriginalGenericKitUrl(null)
           setJerseyUrlInput('')
           setLoaded(true)
           return
         }
 
         const normalized = normalizeTeamKitConfig(savedRow.config)
+        const originalUrl = getOriginalGenericKitUrl(normalized)
+
         setAppliedKitConfig(normalized)
         setDraftKitConfig(normalized)
+        setOriginalGenericKitUrl(originalUrl)
         setJerseyUrlInput(normalized.mode === 'image_url' ? normalized.image_url ?? '' : '')
         setLoaded(true)
       } catch {
@@ -522,6 +569,7 @@ function KitDesigner({ teamId, primaryColor, secondaryColor }: KitDesignerProps)
         const fallback = createGenericKitConfig()
         setAppliedKitConfig(fallback)
         setDraftKitConfig(fallback)
+        setOriginalGenericKitUrl(null)
         setJerseyUrlInput('')
         setKitNotice('Failed to load saved jersey.')
         setLoaded(true)
@@ -555,10 +603,12 @@ function KitDesigner({ teamId, primaryColor, secondaryColor }: KitDesignerProps)
         mode: 'uploaded_image',
         image_url: null,
         image_data_url: previewUrl,
+        original_generic_image_url: originalGenericKitUrl,
+        source: 'customize_team_upload',
       })
 
       setJerseyUrlInput('')
-      setKitNotice('Jersey image ready. Click Apply jersey to save it.')
+      setKitNotice('New jersey image is ready. Click Apply jersey to save it.')
     } catch {
       setKitNotice('Failed to preview jersey image.')
     } finally {
@@ -593,11 +643,11 @@ function KitDesigner({ teamId, primaryColor, secondaryColor }: KitDesignerProps)
         mode: 'image_url',
         image_url: trimmedUrl,
         image_data_url: null,
+        original_generic_image_url: originalGenericKitUrl,
+        source: 'customize_team_url',
       })
 
-      setKitNotice(
-        'Jersey URL accepted. It will be fitted in preview and in-game. Click Apply jersey.',
-      )
+      setKitNotice('Jersey URL accepted. Click Apply jersey to save it.')
       return true
     } catch {
       setKitNotice('Please provide a valid jersey image URL.')
@@ -605,10 +655,15 @@ function KitDesigner({ teamId, primaryColor, secondaryColor }: KitDesignerProps)
     }
   }
 
-  function handleRemoveJersey(): void {
-    setDraftKitConfig(createGenericKitConfig())
+  function handleRestoreOriginalJersey(): void {
+    const restored = createGenericKitConfig(originalGenericKitUrl)
+    setDraftKitConfig(restored)
     setJerseyUrlInput('')
-    setKitNotice('Generic jersey selected. Click Apply jersey to save it.')
+    setKitNotice(
+      originalGenericKitUrl
+        ? 'Original team jersey restored in preview. Click Apply jersey to save it.'
+        : 'Default color-based jersey restored in preview. Click Apply jersey to save it.',
+    )
   }
 
   async function handleApplyJersey(): Promise<void> {
@@ -626,6 +681,8 @@ function KitDesigner({ teamId, primaryColor, secondaryColor }: KitDesignerProps)
         mode: 'image_url',
         image_url: typedUrl,
         image_data_url: null,
+        original_generic_image_url: originalGenericKitUrl,
+        source: 'customize_team_url',
       }
     }
 
@@ -633,24 +690,23 @@ function KitDesigner({ teamId, primaryColor, secondaryColor }: KitDesignerProps)
       setSaving(true)
       setKitNotice(null)
 
-      const payload = {
-        team_id: teamId,
-        name: DEFAULT_TEAM_KIT_NAME,
-        config: {
-          version: 1,
-          template: 'striped-tshirt',
-          mode: nextConfig.mode,
-          image_url: nextConfig.mode === 'image_url' ? nextConfig.image_url : null,
-          image_data_url: nextConfig.mode === 'uploaded_image' ? nextConfig.image_data_url : null,
-        } satisfies TeamKitConfig,
-        updated_at: new Date().toISOString(),
-      }
+      const nextSavedConfig = {
+        version: 1,
+        template: nextConfig.mode === 'generic_pool' ? 'generic_pool' : 'striped-tshirt',
+        mode: nextConfig.mode,
+        image_url:
+          nextConfig.mode === 'generic_pool' || nextConfig.mode === 'image_url'
+            ? nextConfig.image_url
+            : null,
+        image_data_url: nextConfig.mode === 'uploaded_image' ? nextConfig.image_data_url : null,
+        original_generic_image_url: nextConfig.original_generic_image_url ?? originalGenericKitUrl,
+        source: nextConfig.source ?? 'customize_team',
+      } satisfies TeamKitConfig
 
-      const { data, error } = await supabase
-        .from('team_kits')
-        .upsert(payload, { onConflict: 'team_id,name' })
-        .select('id, team_id, name, config, updated_at')
-        .single()
+      const { data, error } = await supabase.rpc('save_club_home_kit_config_v1', {
+        p_club_id: teamId,
+        p_config: nextSavedConfig,
+      })
 
       setSaving(false)
 
@@ -659,11 +715,13 @@ function KitDesigner({ teamId, primaryColor, secondaryColor }: KitDesignerProps)
         return
       }
 
-      const savedRow = data as TeamKitRow
-      const normalized = normalizeTeamKitConfig(savedRow.config)
+      const savedRow = (Array.isArray(data) ? data[0] : data) as TeamKitRow | null
+      const normalized = normalizeTeamKitConfig(savedRow?.config ?? nextSavedConfig)
+      const originalUrl = getOriginalGenericKitUrl(normalized) ?? originalGenericKitUrl
 
       setAppliedKitConfig(normalized)
       setDraftKitConfig(normalized)
+      setOriginalGenericKitUrl(originalUrl)
       setJerseyUrlInput(normalized.mode === 'image_url' ? normalized.image_url ?? '' : '')
       setKitNotice('Jersey applied and saved.')
     } catch (err) {
@@ -674,28 +732,46 @@ function KitDesigner({ teamId, primaryColor, secondaryColor }: KitDesignerProps)
 
   const previewConfig = draftKitConfig
   const previewSrc = getKitImageSrc(previewConfig)
+  const originalPreviewSrc = originalGenericKitUrl
   const hasUnsavedChanges = !areKitConfigsEqual(draftKitConfig, appliedKitConfig)
 
   return (
-    <div className="grid grid-cols-1 xl:grid-cols-[220px_1fr] gap-4" data-team-id={teamId}>
-      <div className="rounded-xl border border-gray-200 bg-white p-4">
-        <div className="text-sm font-medium mb-3">Generic jersey</div>
-
-        <div className="flex items-center justify-center min-h-[220px] rounded-lg border border-gray-100 bg-gray-50">
-          <GenericJerseySvg
-            primaryColor={primaryColor}
-            secondaryColor={secondaryColor}
-            className="w-36 h-auto"
-          />
+    <div className="grid grid-cols-1 xl:grid-cols-[260px_1fr] gap-5" data-team-id={teamId}>
+      <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div className="text-sm font-semibold text-slate-900">Original team jersey</div>
+        <div className="mt-1 text-xs text-slate-500">
+          The generic kit selected when this team was created.
         </div>
 
-        <div className="mt-3 text-xs text-center text-gray-500">Default team jersey</div>
+        <div className="mt-4 flex min-h-[260px] items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-white p-4">
+          {originalPreviewSrc ? (
+            <img
+              src={originalPreviewSrc}
+              alt="Original selected team jersey"
+              className="max-h-[230px] max-w-full object-contain"
+            />
+          ) : (
+            <GenericJerseySvg
+              primaryColor={primaryColor}
+              secondaryColor={secondaryColor}
+              className="w-40 h-auto"
+            />
+          )}
+        </div>
+
+        <button
+          type="button"
+          onClick={handleRestoreOriginalJersey}
+          className="mt-4 w-full rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-800 shadow-sm hover:bg-slate-50"
+        >
+          Restore original jersey
+        </button>
       </div>
 
-      <div className="rounded-xl border border-gray-200 bg-gray-50 p-4 space-y-4">
-        <div className="flex flex-col lg:flex-row gap-3">
-          <label className="inline-flex items-center justify-center px-4 py-2 rounded-md border border-gray-300 bg-white cursor-pointer hover:bg-gray-50">
-            <span className="text-sm font-medium">Upload image</span>
+      <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5 shadow-sm space-y-5">
+        <div className="flex flex-col gap-3 lg:flex-row">
+          <label className="inline-flex items-center justify-center rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-900 shadow-sm cursor-pointer hover:bg-slate-50">
+            <span>Upload new jersey</span>
             <input
               type="file"
               accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
@@ -716,17 +792,9 @@ function KitDesigner({ teamId, primaryColor, secondaryColor }: KitDesignerProps)
                 void handleJerseyUrlCommit()
               }
             }}
-            placeholder="Paste jersey image URL and press Enter"
-            className="flex-1 border border-gray-300 px-3 py-2 rounded-md text-sm bg-white"
+            placeholder="Paste new jersey image URL and press Enter"
+            className="flex-1 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-300"
           />
-
-          <button
-            type="button"
-            onClick={handleRemoveJersey}
-            className="px-4 py-2 rounded-md border border-gray-300 bg-white text-slate-900 text-sm font-medium hover:bg-gray-50"
-          >
-            Use generic jersey
-          </button>
 
           <button
             type="button"
@@ -734,29 +802,36 @@ function KitDesigner({ teamId, primaryColor, secondaryColor }: KitDesignerProps)
               void handleApplyJersey()
             }}
             disabled={saving}
-            className="px-4 py-2 rounded-md border border-slate-900 bg-slate-900 text-white text-sm font-medium hover:bg-slate-800 disabled:opacity-60"
+            className="rounded-lg border border-slate-900 bg-slate-900 px-5 py-2 text-sm font-semibold text-white shadow-sm hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {saving ? 'Applying...' : 'Apply jersey'}
           </button>
         </div>
 
-        <div className="rounded-xl border border-gray-200 bg-white p-4">
-          <div className="flex items-center justify-between gap-3 mb-3">
-            <div className="text-sm font-medium">Current jersey preview</div>
+        <div className="rounded-2xl border border-slate-200 bg-white p-5">
+          <div className="flex items-center justify-between gap-3 mb-4">
+            <div>
+              <div className="text-sm font-semibold text-slate-900">Current jersey preview</div>
+              <div className="mt-1 text-xs text-slate-500">
+                This is the jersey that will appear on team profile and race screens.
+              </div>
+            </div>
             {loaded && hasUnsavedChanges ? (
-              <div className="text-xs font-medium text-amber-700">Unsaved changes</div>
+              <div className="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-800">
+                Unsaved changes
+              </div>
             ) : null}
           </div>
 
-          <div className="flex items-center justify-center min-h-[280px] rounded-lg border border-gray-100 bg-gray-50 overflow-hidden p-4">
+          <div className="flex min-h-[360px] items-center justify-center overflow-hidden rounded-2xl border border-dashed border-slate-200 bg-white p-6">
             {previewSrc ? (
               <img
                 src={previewSrc}
                 alt="Current jersey"
                 className="max-h-full max-w-full rounded-md object-contain"
                 style={{
-                  maxWidth: 512,
-                  maxHeight: 512,
+                  maxWidth: 560,
+                  maxHeight: 560,
                   width: 'auto',
                   height: 'auto',
                 }}
@@ -765,18 +840,18 @@ function KitDesigner({ teamId, primaryColor, secondaryColor }: KitDesignerProps)
               <GenericJerseySvg
                 primaryColor={primaryColor}
                 secondaryColor={secondaryColor}
-                className="w-44 h-auto"
+                className="w-52 h-auto"
               />
             )}
           </div>
         </div>
 
-        <div className="inline-flex self-start rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-900">
-          URL images can be any size. Preview fits to max 512 × 512. Uploads max 1 MB.
+        <div className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-900">
+          URL images can be any size and are fitted inside the preview. Uploaded files must be JPG, PNG, or WEBP, max 1 MB and max 512 × 512 px.
         </div>
 
         {kitNotice ? (
-          <div className="rounded-md border border-gray-200 bg-white px-4 py-3 text-sm text-gray-700">
+          <div className="rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700">
             {kitNotice}
           </div>
         ) : null}
@@ -1177,8 +1252,24 @@ export default function CustomizeTeamPage(): JSX.Element {
       return
     }
 
-    if (pendingLogoUrl) {
-      const updatedClub = await persistClub({ logo_path: pendingLogoUrl })
+    const typedLogoUrl = logoUrlInput.trim()
+
+    if (pendingLogoUrl || (!pendingLogoFile && typedLogoUrl)) {
+      const logoUrlToApply = pendingLogoUrl ?? typedLogoUrl
+
+      try {
+        const parsed = new URL(logoUrlToApply)
+
+        if (!['http:', 'https:'].includes(parsed.protocol)) {
+          setError('Logo URL must start with http:// or https://')
+          return
+        }
+      } catch {
+        setError('Please provide a valid logo image URL.')
+        return
+      }
+
+      const updatedClub = await persistClub({ logo_path: logoUrlToApply })
       if (!updatedClub) return
 
       setPendingLogoUrl(null)
@@ -1191,7 +1282,7 @@ export default function CustomizeTeamPage(): JSX.Element {
     }
 
     if (!pendingLogoFile) {
-      setError('Please upload a logo image or provide an image URL first.')
+      setError('Please upload a logo image or paste a logo image URL first.')
       return
     }
 
@@ -1266,7 +1357,13 @@ export default function CustomizeTeamPage(): JSX.Element {
         </div>
       ) : (
         <div className="space-y-6 w-full">
-          <div className="bg-white p-4 rounded-lg shadow space-y-6">
+          <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+            <div className="border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white px-6 py-5">
+              <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Team identity</div>
+              <h3 className="mt-1 text-lg font-bold text-slate-950">Name and colors</h3>
+              <p className="mt-1 text-sm text-slate-500">Update the public identity used across your team profile, race pages, and header.</p>
+            </div>
+            <div className="space-y-6 p-6">
             {identityLockedBySponsor && (
               <div className="rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
                 <div className="font-semibold">Team identity locked by naming-rights sponsor</div>
@@ -1399,14 +1496,20 @@ export default function CustomizeTeamPage(): JSX.Element {
               </div>
             </div>
           </div>
+            </div>
 
-          <div className="bg-white p-4 rounded-lg shadow">
-            <label className="block text-sm font-medium text-gray-800 mb-2">Team logo</label>
+          <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+            <div className="border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white px-6 py-5">
+              <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Team logo</div>
+              <h3 className="mt-1 text-lg font-bold text-slate-950">Logo and badge</h3>
+              <p className="mt-1 text-sm text-slate-500">Upload a custom logo or restore the generated team badge.</p>
+            </div>
 
-            <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
+            <div className="p-6">
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
               <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
-                <div className="flex-shrink-0 rounded-lg border border-gray-200 bg-white p-3">
-                  <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">
+                <div className="flex w-full flex-col items-center justify-center rounded-2xl border border-slate-200 bg-white p-5 shadow-sm lg:w-72 lg:min-h-[280px]">
+                  <div className="mb-3 text-center text-xs font-semibold uppercase tracking-wide text-slate-500">
                     Current logo
                   </div>
                   <div className="flex items-center justify-center">
@@ -1436,20 +1539,25 @@ export default function CustomizeTeamPage(): JSX.Element {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-2">
+                  <div>
                     <input
                       value={logoUrlInput}
-                      onChange={event => setLogoUrlInput(event.target.value)}
-                      placeholder="Or insert logo image URL (https://...)"
+                      onChange={event => {
+                        setLogoUrlInput(event.target.value)
+                        setPendingLogoUrl(null)
+                      }}
+                      onKeyDown={event => {
+                        if (event.key === 'Enter') {
+                          event.preventDefault()
+                          void handleApplyLogo()
+                        }
+                      }}
+                      placeholder="Paste logo image URL, then click Apply logo"
                       className="w-full border border-gray-300 px-3 py-2 rounded-md text-sm"
                     />
-                    <button
-                      type="button"
-                      onClick={handleLogoUrlSelection}
-                      className="px-4 py-2 rounded-md border border-gray-300 bg-white text-sm font-medium hover:bg-gray-50"
-                    >
-                      Preview URL
-                    </button>
+                    <div className="mt-1 text-xs text-slate-500">
+                      URL logos are saved when you click Apply logo. Preview URL is optional and no longer required.
+                    </div>
                   </div>
 
                   <div className="flex flex-col sm:flex-row sm:justify-end gap-2">
@@ -1476,10 +1584,16 @@ export default function CustomizeTeamPage(): JSX.Element {
                 </div>
               </div>
             </div>
+            </div>
           </div>
 
-          <div className="bg-white p-4 rounded-lg shadow space-y-4">
-            <h3 className="text-lg font-semibold">Jersey Creator</h3>
+          <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+            <div className="border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white px-6 py-5">
+              <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Team jersey</div>
+              <h3 className="mt-1 text-lg font-bold text-slate-950">Jersey management</h3>
+              <p className="mt-1 text-sm text-slate-500">Keep the jersey selected during team creation or replace it with a new upload or URL.</p>
+            </div>
+            <div className="p-6">
             {mainClubId ? (
               <KitDesigner
                 teamId={mainClubId}
@@ -1489,10 +1603,11 @@ export default function CustomizeTeamPage(): JSX.Element {
             ) : (
               <div className="text-sm text-gray-600">Team not loaded yet.</div>
             )}
+            </div>
           </div>
 
           {(error || success || saving) && (
-            <div className="bg-white p-4 rounded-lg shadow space-y-2">
+            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm space-y-2">
               {saving && <div className="text-sm text-gray-600">Saving changes...</div>}
               {success && <div className="text-sm text-green-600">{success}</div>}
               {error && <div className="text-sm text-red-600">{error}</div>}

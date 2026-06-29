@@ -10,7 +10,17 @@
  */
 
 import React, { useEffect, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router'
 import { supabase } from '@/lib/supabase'
+import TutorialOverlay from '../../components/tutorial/TutorialOverlay'
+import {
+  equipmentTutorialSteps,
+  equipmentWelcomeTutorial,
+} from '../../lib/tutorials'
+import {
+  getTutorialProgress,
+  saveTutorialProgress,
+} from '../../lib/tutorialProgress'
 import EquipmentOverviewTab from './equipment/components/EquipmentOverviewTab'
 import EquipmentInventoryTab from './equipment/components/EquipmentInventoryTab'
 import EquipmentMarketTab from './equipment/components/EquipmentMarketTab'
@@ -161,6 +171,26 @@ function setEquipmentTabInUrl(tab: EquipmentTabKey): void {
 }
 
 /**
+ * getEquipmentTabForTutorialStepKey
+ * Maps tutorial step keys to the Equipment tab that should be visible.
+ */
+function getEquipmentTabForTutorialStepKey(
+  stepKey?: string | null,
+): EquipmentTabKey {
+  switch (stepKey) {
+    case 'equipment-inventory':
+      return 'inventory'
+    case 'equipment-market':
+      return 'market'
+    case 'equipment-race-supplies':
+      return 'race-supplies'
+    case 'equipment-overview':
+    default:
+      return 'overview'
+  }
+}
+
+/**
  * tabs
  * Equipment dashboard tab configuration.
  */
@@ -209,6 +239,14 @@ export default function EquipmentPage(): JSX.Element {
   const [loadingClub, setLoadingClub] = useState(true)
   const [clubError, setClubError] = useState<string | null>(null)
 
+  const navigate = useNavigate()
+
+  const [tutorialLoading, setTutorialLoading] = useState(true)
+  const [tutorialMode, setTutorialMode] = useState<
+    'closed' | 'invite' | 'steps'
+  >('closed')
+  const [tutorialStepIndex, setTutorialStepIndex] = useState(0)
+
   /**
    * Sync active tab when browser URL changes.
    * This is important for notification buttons such as:
@@ -246,14 +284,17 @@ export default function EquipmentPage(): JSX.Element {
       setClubError(null)
 
       try {
-        const { data: authData, error: authError } = await supabase.auth.getUser()
+        const { data: authData, error: authError } =
+          await supabase.auth.getUser()
 
         if (authError) throw authError
         if (!authData.user) throw new Error('Not authenticated')
 
         let primaryClubId: string | null = null
 
-        const { data: primaryClubData } = await supabase.rpc('get_my_primary_club_id')
+        const { data: primaryClubData } = await supabase.rpc(
+          'get_my_primary_club_id'
+        )
 
         if (typeof primaryClubData === 'string') {
           primaryClubId = primaryClubData
@@ -306,6 +347,62 @@ export default function EquipmentPage(): JSX.Element {
     }
   }, [])
 
+  useEffect(() => {
+    let alive = true
+
+    async function loadEquipmentTutorialProgress() {
+      setTutorialLoading(true)
+
+      const autoStartTutorial =
+        window.sessionStorage.getItem('ppm:auto-start-tutorial') === 'equipment'
+
+      if (autoStartTutorial) {
+        window.sessionStorage.removeItem('ppm:auto-start-tutorial')
+
+        const firstStep = equipmentTutorialSteps[0]
+
+        await saveTutorialProgress('equipment', 'started', firstStep?.key ?? null)
+
+        if (!alive) return
+
+        setActiveTab('overview')
+        setEquipmentTabInUrl('overview')
+        setTutorialStepIndex(0)
+        setTutorialMode('steps')
+        setTutorialLoading(false)
+        return
+      }
+
+      const progress = await getTutorialProgress('equipment')
+
+      if (!alive) return
+
+      if (progress?.status === 'started') {
+        const savedStepIndex = equipmentTutorialSteps.findIndex(
+          (step) => step.key === progress.last_step_key,
+        )
+
+        const nextStepIndex = savedStepIndex >= 0 ? savedStepIndex : 0
+        const nextStep = equipmentTutorialSteps[nextStepIndex]
+
+        setActiveTab(getEquipmentTabForTutorialStepKey(nextStep?.key))
+        setEquipmentTabInUrl(getEquipmentTabForTutorialStepKey(nextStep?.key))
+        setTutorialStepIndex(nextStepIndex)
+        setTutorialMode('steps')
+      } else {
+        setTutorialMode('closed')
+      }
+
+      setTutorialLoading(false)
+    }
+
+    void loadEquipmentTutorialProgress()
+
+    return () => {
+      alive = false
+    }
+  }, [])
+
   /**
    * handleTabChange
    * Switch active Equipment tab and keep URL query aligned.
@@ -313,6 +410,74 @@ export default function EquipmentPage(): JSX.Element {
   function handleTabChange(tab: EquipmentTabKey): void {
     setActiveTab(tab)
     setEquipmentTabInUrl(tab)
+  }
+
+  async function handleStartEquipmentTutorial() {
+    const firstStep = equipmentTutorialSteps[0]
+
+    await saveTutorialProgress('equipment', 'started', firstStep?.key ?? null)
+
+    setActiveTab('overview')
+    setEquipmentTabInUrl('overview')
+    setTutorialStepIndex(0)
+    setTutorialMode('steps')
+  }
+
+  async function handleSkipEquipmentTutorial() {
+    await saveTutorialProgress('equipment', 'skipped', null)
+    setTutorialMode('closed')
+  }
+
+  async function handleNextEquipmentTutorialStep() {
+    const currentStep = equipmentTutorialSteps[tutorialStepIndex]
+    const isLastStep = tutorialStepIndex >= equipmentTutorialSteps.length - 1
+
+    if (!isLastStep) {
+      const nextIndex = tutorialStepIndex + 1
+      const nextStep = equipmentTutorialSteps[nextIndex]
+      const nextTab = getEquipmentTabForTutorialStepKey(nextStep.key)
+
+      setActiveTab(nextTab)
+      setEquipmentTabInUrl(nextTab)
+
+      await saveTutorialProgress('equipment', 'started', nextStep.key)
+
+      setTutorialStepIndex(nextIndex)
+      return
+    }
+
+    await saveTutorialProgress('equipment', 'completed', currentStep?.key ?? null)
+
+    window.sessionStorage.setItem('ppm:auto-start-tutorial', 'facilities')
+    navigate('/dashboard/infrastructure')
+  }
+
+  async function handleFinishEquipmentTutorialForNow() {
+    const currentStep = equipmentTutorialSteps[tutorialStepIndex]
+
+    await saveTutorialProgress('equipment', 'completed', currentStep?.key ?? null)
+
+    setTutorialMode('closed')
+  }
+
+  async function handleCloseEquipmentTutorial() {
+    const currentStep = equipmentTutorialSteps[tutorialStepIndex]
+
+    if (tutorialMode === 'invite') {
+      await saveTutorialProgress('equipment', 'skipped', null)
+      setTutorialMode('closed')
+      return
+    }
+
+    if (tutorialMode === 'steps') {
+      await saveTutorialProgress(
+        'equipment',
+        'started',
+        currentStep?.key ?? null,
+      )
+    }
+
+    setTutorialMode('closed')
   }
 
   /**
@@ -383,6 +548,45 @@ export default function EquipmentPage(): JSX.Element {
       </div>
 
       {activeContent}
+
+      {!tutorialLoading && tutorialMode === 'invite' ? (
+        <TutorialOverlay
+          open
+          variant="invite"
+          title={equipmentWelcomeTutorial.title}
+          body={equipmentWelcomeTutorial.body}
+          primaryAction={equipmentWelcomeTutorial.primaryAction}
+          secondaryAction={equipmentWelcomeTutorial.secondaryAction}
+          onPrimary={handleStartEquipmentTutorial}
+          onSecondary={handleSkipEquipmentTutorial}
+          onClose={handleCloseEquipmentTutorial}
+        />
+      ) : null}
+
+      {!tutorialLoading && tutorialMode === 'steps' ? (
+        <TutorialOverlay
+          open
+          variant="panel"
+          title={equipmentTutorialSteps[tutorialStepIndex].title}
+          body={equipmentTutorialSteps[tutorialStepIndex].body}
+          stepLabel={`${tutorialStepIndex + 1}/${equipmentTutorialSteps.length}`}
+          primaryAction={
+            equipmentTutorialSteps[tutorialStepIndex].primaryAction ?? 'Next'
+          }
+          secondaryAction={
+            tutorialStepIndex === equipmentTutorialSteps.length - 1
+              ? equipmentTutorialSteps[tutorialStepIndex].secondaryAction
+              : 'Skip tutorial'
+          }
+          onPrimary={handleNextEquipmentTutorialStep}
+          onSecondary={
+            tutorialStepIndex === equipmentTutorialSteps.length - 1
+              ? handleFinishEquipmentTutorialForNow
+              : handleSkipEquipmentTutorial
+          }
+          onClose={handleCloseEquipmentTutorial}
+        />
+      ) : null}
     </div>
   )
 }

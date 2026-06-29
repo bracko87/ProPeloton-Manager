@@ -12,7 +12,16 @@
  */
 
 import React, { useEffect, useMemo, useState } from "react";
-import { Link, useSearchParams } from "react-router";
+import { Link, useNavigate, useSearchParams } from "react-router";
+import TutorialOverlay from "../../components/tutorial/TutorialOverlay";
+import {
+  racePreparationTutorialSteps,
+  racePreparationWelcomeTutorial,
+} from "../../lib/tutorials";
+import {
+  getTutorialProgress,
+  saveTutorialProgress,
+} from "../../lib/tutorialProgress";
 import { supabase } from "../../lib/supabase";
 import RaceDetailPage from "./RaceDetailPage";
 import {
@@ -446,6 +455,20 @@ function normalizeRacePreparationTab(value: string | null): RacePreparationTab {
   }
 }
 
+function getRacePreparationTabForTutorialStepKey(
+  stepKey?: string | null,
+): RacePreparationTab {
+  switch (stepKey) {
+    case "race-preparation-race-plan":
+      return "racePackage";
+    case "race-preparation-stage-plans":
+      return "stagePlans";
+    case "race-preparation-accepted-races":
+    default:
+      return "acceptedRaces";
+  }
+}
+
 function buildSelectedRacePlanRiders(
   selectedRiderIds: UUID[],
   selectableData: RacePreparationSelectableData | null,
@@ -719,6 +742,8 @@ function statusClass(status?: string) {
 
 function getRacePlanStatusLabel(status?: string) {
   switch (status) {
+    case "missed_startlist":
+      return "Not Participating";
     case "draft":
     case "race_plan_open":
       return "Race Plan Open";
@@ -749,6 +774,10 @@ function getRacePlanUiStatus({
   isPackageDeadlinePassed: boolean;
   packageSubmitted: boolean;
 }) {
+  if (raceStatus === "missed_startlist" || prepStatus === "missed_startlist") {
+    return "missed_startlist";
+  }
+
   if (packageSubmitted) {
     return "submitted";
   }
@@ -808,6 +837,19 @@ function getAcceptedRacePreparationState(
     rowRecord.startlist_status ?? preparationRecord.startlist_status ?? "",
   ).toLowerCase();
 
+  const entryStatus = String(
+    rowRecord.status ?? rowRecord.entry_status ?? asRecord(rowRecord.entry).status ?? "",
+  ).toLowerCase();
+
+  const preparationMetadata = asRecord(preparationRecord.metadata);
+  const missedStartlist =
+    entryStatus === "missed_startlist" ||
+    packageStatus === "missed_startlist" ||
+    startlistStatus === "missed_startlist" ||
+    preparationMetadata.missed_startlist === true ||
+    String(preparationMetadata.display_status ?? "").toLowerCase() ===
+      "missed_startlist";
+
   /*
    * Important:
    * The accepted-races card must prefer the repaired race_preparations
@@ -849,12 +891,23 @@ function getAcceptedRacePreparationState(
       startlistStatus === "draft" ||
       packageStatus === "race_plan_open");
 
+  if (missedStartlist) {
+    return {
+      label: "Not Participating",
+      className: "bg-red-100 text-red-800 ring-1 ring-red-200",
+      racePlanEnabled: false,
+      stagePlansEnabled: false,
+      missedStartlist: true,
+    };
+  }
+
   if (raceStatus === "completed" || raceStatus === "archived") {
     return {
       label: "Race Finished",
       className: "bg-slate-100 text-slate-700",
       racePlanEnabled: false,
       stagePlansEnabled: false,
+      missedStartlist: false,
     };
   }
 
@@ -940,6 +993,7 @@ function getAcceptedRacePreparationState(
 
 export default function RacePreparationPage(): JSX.Element {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
 
   const [activeTab, setActiveTab] = useState<RacePreparationTab>(() =>
     normalizeRacePreparationTab(searchParams.get("tab")),
@@ -978,6 +1032,70 @@ export default function RacePreparationPage(): JSX.Element {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [racePreviewId, setRacePreviewId] = useState<UUID | null>(null);
   const [showSubmitConfirm, setShowSubmitConfirm] = useState(false);
+  const [tutorialLoading, setTutorialLoading] = useState(true);
+  const [tutorialMode, setTutorialMode] = useState<
+    "closed" | "invite" | "steps"
+  >("closed");
+  const [tutorialStepIndex, setTutorialStepIndex] = useState(0);
+
+  useEffect(() => {
+    let alive = true;
+
+    async function loadRacePreparationTutorialProgress() {
+      setTutorialLoading(true);
+
+      const autoStartTutorial =
+        window.sessionStorage.getItem("ppm:auto-start-tutorial") ===
+        "race-preparation";
+
+      if (autoStartTutorial) {
+        window.sessionStorage.removeItem("ppm:auto-start-tutorial");
+
+        const firstStep = racePreparationTutorialSteps[0];
+
+        await saveTutorialProgress(
+          "race-preparation",
+          "started",
+          firstStep?.key ?? null,
+        );
+
+        if (!alive) return;
+
+        setActiveTab("acceptedRaces");
+        setTutorialStepIndex(0);
+        setTutorialMode("steps");
+        setTutorialLoading(false);
+        return;
+      }
+
+      const progress = await getTutorialProgress("race-preparation");
+
+      if (!alive) return;
+
+      if (progress?.status === "started") {
+        const savedStepIndex = racePreparationTutorialSteps.findIndex(
+          (step) => step.key === progress.last_step_key,
+        );
+
+        const nextStepIndex = savedStepIndex >= 0 ? savedStepIndex : 0;
+        const nextStep = racePreparationTutorialSteps[nextStepIndex];
+
+        setActiveTab(getRacePreparationTabForTutorialStepKey(nextStep?.key));
+        setTutorialStepIndex(nextStepIndex);
+        setTutorialMode("steps");
+      } else {
+        setTutorialMode("closed");
+      }
+
+      setTutorialLoading(false);
+    }
+
+    void loadRacePreparationTutorialProgress();
+
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   const race = target?.race ?? null;
   const entryRules = target?.entry_rules ?? null;
@@ -1745,6 +1863,89 @@ export default function RacePreparationPage(): JSX.Element {
     void handleSubmit();
   }
 
+  async function handleStartRacePreparationTutorial() {
+    const firstStep = racePreparationTutorialSteps[0];
+
+    await saveTutorialProgress(
+      "race-preparation",
+      "started",
+      firstStep?.key ?? null,
+    );
+
+    setActiveTab("acceptedRaces");
+    setTutorialStepIndex(0);
+    setTutorialMode("steps");
+  }
+
+  async function handleSkipRacePreparationTutorial() {
+    await saveTutorialProgress("race-preparation", "skipped", null);
+    setTutorialMode("closed");
+  }
+
+  async function handleNextRacePreparationTutorialStep() {
+    const currentStep = racePreparationTutorialSteps[tutorialStepIndex];
+    const isLastStep =
+      tutorialStepIndex >= racePreparationTutorialSteps.length - 1;
+
+    if (!isLastStep) {
+      const nextIndex = tutorialStepIndex + 1;
+      const nextStep = racePreparationTutorialSteps[nextIndex];
+      const nextTab = getRacePreparationTabForTutorialStepKey(nextStep.key);
+
+      setActiveTab(nextTab);
+
+      await saveTutorialProgress(
+        "race-preparation",
+        "started",
+        nextStep.key,
+      );
+
+      setTutorialStepIndex(nextIndex);
+      return;
+    }
+
+    await saveTutorialProgress(
+      "race-preparation",
+      "completed",
+      currentStep?.key ?? null,
+    );
+
+    window.sessionStorage.setItem("ppm:auto-start-tutorial", "team-ranking");
+    navigate("/dashboard/team-ranking");
+  }
+
+  async function handleFinishRacePreparationTutorialForNow() {
+    const currentStep = racePreparationTutorialSteps[tutorialStepIndex];
+
+    await saveTutorialProgress(
+      "race-preparation",
+      "completed",
+      currentStep?.key ?? null,
+    );
+
+    setTutorialMode("closed");
+  }
+
+  async function handleCloseRacePreparationTutorial() {
+    const currentStep = racePreparationTutorialSteps[tutorialStepIndex];
+
+    if (tutorialMode === "invite") {
+      await saveTutorialProgress("race-preparation", "skipped", null);
+      setTutorialMode("closed");
+      return;
+    }
+
+    if (tutorialMode === "steps") {
+      await saveTutorialProgress(
+        "race-preparation",
+        "started",
+        currentStep?.key ?? null,
+      );
+    }
+
+    setTutorialMode("closed");
+  }
+
   function toggleRider(riderId: UUID) {
     if (!canEdit) return;
 
@@ -2398,6 +2599,47 @@ export default function RacePreparationPage(): JSX.Element {
           onClose={() => setRacePreviewId(null)}
         />
       )}
+
+      {!tutorialLoading && tutorialMode === "invite" ? (
+        <TutorialOverlay
+          open
+          variant="invite"
+          title={racePreparationWelcomeTutorial.title}
+          body={racePreparationWelcomeTutorial.body}
+          primaryAction={racePreparationWelcomeTutorial.primaryAction}
+          secondaryAction={racePreparationWelcomeTutorial.secondaryAction}
+          onPrimary={handleStartRacePreparationTutorial}
+          onSecondary={handleSkipRacePreparationTutorial}
+          onClose={handleCloseRacePreparationTutorial}
+        />
+      ) : null}
+
+      {!tutorialLoading && tutorialMode === "steps" ? (
+        <TutorialOverlay
+          open
+          variant="panel"
+          title={racePreparationTutorialSteps[tutorialStepIndex].title}
+          body={racePreparationTutorialSteps[tutorialStepIndex].body}
+          stepLabel={`${tutorialStepIndex + 1}/${racePreparationTutorialSteps.length}`}
+          primaryAction={
+            racePreparationTutorialSteps[tutorialStepIndex].primaryAction ??
+            "Next"
+          }
+          secondaryAction={
+            tutorialStepIndex === racePreparationTutorialSteps.length - 1
+              ? racePreparationTutorialSteps[tutorialStepIndex].secondaryAction
+              : "Skip tutorial"
+          }
+          onPrimary={handleNextRacePreparationTutorialStep}
+          onSecondary={
+            tutorialStepIndex === racePreparationTutorialSteps.length - 1
+              ? handleFinishRacePreparationTutorialForNow
+              : handleSkipRacePreparationTutorial
+          }
+          onClose={handleCloseRacePreparationTutorial}
+        />
+      ) : null}
+
     </div>
   );
 }
@@ -2439,6 +2681,9 @@ function AcceptedRacesTab({
             row,
             currentGameDate,
           );
+          const isMissedStartlist = Boolean(
+            (prepState as { missedStartlist?: boolean }).missedStartlist,
+          );
 
           const raceClass =
             String(
@@ -2469,9 +2714,11 @@ function AcceptedRacesTab({
             <div
               key={row.race_team_entry_id}
               className={`rounded-2xl border p-4 transition ${
-                selected
-                  ? "border-yellow-300 bg-yellow-50"
-                  : "border-slate-200 bg-white hover:bg-slate-50"
+                isMissedStartlist
+                  ? "border-red-200 bg-red-50"
+                  : selected
+                    ? "border-yellow-300 bg-yellow-50"
+                    : "border-slate-200 bg-white hover:bg-slate-50"
               }`}
             >
               <div className="grid gap-4 md:grid-cols-[80px_1fr_auto] md:items-center">
@@ -2517,12 +2764,23 @@ function AcceptedRacesTab({
                   </div>
                 </button>
 
-                <div className="flex flex-wrap items-center justify-start gap-2 md:justify-end">
-                  <span
-                    className={`rounded-full px-3 py-1 text-xs font-semibold ${prepState.className}`}
-                  >
-                    {prepState.label}
-                  </span>
+                <div className="flex flex-nowrap items-center justify-start gap-2 md:justify-end">
+                  {isMissedStartlist ? (
+                    <span className="inline-flex items-center gap-2 whitespace-nowrap rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-800">
+                      <span className="whitespace-nowrap">
+                        Your team missed the startlist and is not participating
+                      </span>
+                      <span className="shrink-0 rounded-full bg-red-100 px-2.5 py-0.5">
+                        Not Participating
+                      </span>
+                    </span>
+                  ) : (
+                    <span
+                      className={`rounded-full px-3 py-1 text-xs font-semibold ${prepState.className}`}
+                    >
+                      {prepState.label}
+                    </span>
+                  )}
 
                   {prepState.racePlanEnabled ? (
                     <button
@@ -2615,15 +2873,15 @@ function RaceHeaderCard({
 
   return (
     <section className="rounded-2xl border bg-white p-5 shadow-sm">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
+      <div className="grid gap-4 lg:grid-cols-[minmax(280px,auto)_1fr_auto] lg:items-start">
+        <div className="min-w-0">
           <div className="text-xs uppercase tracking-wide text-slate-500">
             Selected race
           </div>
 
           <div className="mt-1 flex items-center gap-2">
             <CountryFlag code={getText(race, "country_code")} />
-            <h2 className="text-xl font-semibold text-slate-900">
+            <h2 className="truncate text-xl font-semibold text-slate-900">
               {getText(race, "name") || "Unnamed race"}
             </h2>
           </div>
@@ -2644,15 +2902,28 @@ function RaceHeaderCard({
           </div>
         </div>
 
-        <div className="flex flex-col items-end gap-2 text-right">
-          <span
-            className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${statusClass(
-              raceStatus,
-            )}`}
-          >
-            {getRacePlanStatusLabel(raceStatus)}
-          </span>
+        <div className="flex min-w-0 items-start justify-end lg:pt-2">
+          {raceStatus === "missed_startlist" ? (
+            <div className="flex w-full max-w-3xl items-center justify-between gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-800">
+              <span className="min-w-0 truncate">
+                Your team missed the rider startlist and is not participating in this race.
+              </span>
+              <span className="shrink-0 rounded-full bg-red-100 px-3 py-1 text-xs font-bold text-red-800 ring-1 ring-red-200">
+                Not Participating
+              </span>
+            </div>
+          ) : (
+            <span
+              className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${statusClass(
+                raceStatus,
+              )}`}
+            >
+              {getRacePlanStatusLabel(raceStatus)}
+            </span>
+          )}
+        </div>
 
+        <div className="flex flex-col items-end gap-2 text-right">
           <InfoChip
             label="Current game date"
             value={formatFullGameDate(currentGameDate)}
@@ -4361,10 +4632,7 @@ function createStagePlanDraft({
   const savedSupplies = asRecord(savedPlan?.rider_supplies_json);
   const savedTactic = asRecord(savedPlan?.team_tactic_json);
   const savedIndividualTactics = asRecord(
-    savedPlan?.rider_individual_tactics_json ??
-      savedPlan?.individual_tactics_json ??
-      savedTactic.individual_tactics_by_rider ??
-      savedTactic.rider_individual_tactics_json,
+    savedPlan?.rider_individual_tactics_json,
   );
   const defaultPresetId = equipmentPresetOptions[0]?.id ?? "";
 
@@ -4817,6 +5085,14 @@ function StagePlansTab({
     setStageSaveError(null);
 
     try {
+      const stagePhaseRanges = getStagePhaseRanges(selectedStage);
+      const riderIndividualTacticsJson =
+        normalizeIndividualTacticsByRiderForStage(
+          selectedRiders,
+          selectedDraft.individualTacticsByRider,
+          selectedStage,
+        );
+
       const result = await saveRaceStagePlan({
         club_id: clubId,
         race_preparation_id: racePreparationId,
@@ -4824,24 +5100,18 @@ function StagePlansTab({
         stage_id: selectedStageId || null,
         stage_number: stageNumber,
         team_tactic_json: {
-          ...selectedDraft.teamTactic,
           plan: normalizeStageTacticPlan(
             selectedDraft.teamTactic.plan,
             selectedStage,
           ),
           engine_model_version: STAGE_TACTIC_ENGINE_MODEL_V1.version,
           race_situation_factors: getStageRaceSituationFactors(selectedStage),
-          individual_tactics_by_rider:
-            normalizeIndividualTacticsByRiderForStage(
-              selectedRiders,
-              selectedDraft.individualTacticsByRider,
-              selectedStage,
-            ),
-          stage_phase_ranges: getStagePhaseRanges(selectedStage),
-          phase_count: getStagePhaseRanges(selectedStage).length,
+          stage_phase_ranges: stagePhaseRanges,
+          phase_count: stagePhaseRanges.length,
           is_time_trial_stage: isTTStage,
           is_team_time_trial_stage: isTTTStage,
         },
+        rider_individual_tactics_json: riderIndividualTacticsJson,
         rider_roles_json: normalizeRiderRolesForStage(
           selectedRiders,
           selectedDraft.riderRolesByRider,
@@ -5089,7 +5359,7 @@ function StagePlansTab({
         </div>
       )}
 
-      {packageSubmitted && (
+      {packageSubmitted && !lockInfo.isLocked && (
         <div
           className={[
             "rounded-2xl border px-4 py-3 shadow-sm",
@@ -5191,8 +5461,9 @@ function StagePlansTab({
         }}
       />
 
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
-        <div className="space-y-1 text-sm text-slate-600">
+      {!lockInfo.isLocked && (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
+          <div className="space-y-1 text-sm text-slate-600">
           <div className="flex flex-wrap items-center gap-2">
             <span className="font-semibold text-slate-900">
               Selected stage save
@@ -5241,17 +5512,18 @@ function StagePlansTab({
           )}
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
-          <button
-            type="button"
-            onClick={() => void handleSaveStagePlan()}
-            disabled={stageSaveDisabled}
-            className="rounded-xl bg-yellow-400 px-4 py-2 text-sm font-semibold text-slate-950 shadow-sm hover:bg-yellow-300 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500"
-          >
-            {savingStagePlan ? "Saving…" : "Save Stage Plan"}
-          </button>
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={() => void handleSaveStagePlan()}
+              disabled={stageSaveDisabled}
+              className="rounded-xl bg-yellow-400 px-4 py-2 text-sm font-semibold text-slate-950 shadow-sm hover:bg-yellow-300 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500"
+            >
+              {savingStagePlan ? "Saving…" : "Save Stage Plan"}
+            </button>
+          </div>
         </div>
-      </div>
+      )}
 
       {stageSaveMessage && (
         <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800">
@@ -5359,6 +5631,7 @@ function StagePlansTab({
       <StageIndividualTacticsCard
         stage={selectedStage}
         riders={selectedRiders}
+        riderRolesByRider={selectedDraft.riderRolesByRider}
         individualTacticsByRider={selectedDraft.individualTacticsByRider}
         onChange={(riderId, phaseKey, command) =>
           updateSelectedStageDraft((current) => {
@@ -7634,8 +7907,8 @@ const STAGE_SUPPLY_RULES: Record<
     ],
   },
   race_jersey_complete: {
-    label: "Race Jersey Complete",
-    shortLabel: "Race Jersey",
+    label: "Race Jersey Kit",
+    shortLabel: "Jersey Kit",
     minPerRider: 1,
     maxPerRider: 1,
     defaultPerRider: 1,
@@ -7658,14 +7931,14 @@ const STAGE_SUPPLY_RULES: Record<
     useType: "durable",
     mandatory: false,
     durabilityText:
-      "Optional durable item. Each jacket has 25 stage uses. One use is counted whenever the jacket is assigned/used for a stage.",
+      "Automatic durable item. The team uses rain jackets for all riders when the stage is rainy or below 15°C. Each jacket has 25 stage uses.",
     positiveEffects: [
-      "Bad-weather protection: sickness risk ×0.50 in rain/cold/bad weather",
-      "Cold/rain fatigue support: -0.5% fatigue pressure",
+      "Bad-weather protection: sickness risk reduced in rain or cold below 15°C",
+      "Cold/rain fatigue support: lower fatigue and illness exposure",
     ],
     negativeEffects: [
-      "Efficiency penalty: -1% rider speed/efficiency when used",
-      "Uses 1 jacket durability use every assigned stage",
+      "Missing jackets do not block the start",
+      "No jacket in rain/cold: riders become more exposed to illness risk after repeated exposure",
     ],
   },
 };
@@ -7744,11 +8017,18 @@ function getStageWeatherRisk(stage: JsonRecord | null) {
 
   const isBadWeather = isRain || isCold || (isCold && isWindy) || textBad;
 
+  const rainJacketRequired = isRain || isCold || textBad;
+
   return {
     weather,
     temperature,
     wind,
     rain,
+    isRain,
+    isCold,
+    isWindy,
+    textBad,
+    rainJacketRequired,
     isBadWeather,
     reason: isBadWeather
       ? [
@@ -7783,8 +8063,13 @@ function getStageTeamSupplyPlan({
     return count + (suppliesByRider[riderId]?.rain_jacket ? 1 : 0);
   }, 0);
 
+  const weatherRisk = getStageWeatherRisk(stage);
+
   let rainJacketMode: StageRainJacketMode = "none";
-  if (riderCount > 0 && jacketCount === riderCount) {
+  if (
+    riderCount > 0 &&
+    (weatherRisk.rainJacketRequired || jacketCount === riderCount)
+  ) {
     rainJacketMode = "all";
   }
 
@@ -7815,7 +8100,10 @@ function getStageSupplyNeeds(
 ) {
   const riderCount = riders.length;
   const weatherRisk = getStageWeatherRisk(stage);
-  const rainJacketCount = plan.rainJacketMode === "all" ? riderCount : 0;
+  const rainJacketCount =
+    plan.rainJacketMode === "all" || weatherRisk.rainJacketRequired
+      ? riderCount
+      : 0;
 
   return {
     riderCount,
@@ -7833,7 +8121,9 @@ function buildSuppliesByRiderFromTeamPlan(
   plan: StageTeamSupplyPlan,
   stage: JsonRecord | null,
 ): Record<string, StageRiderSupplyDraft> {
-  const useRainJacket = plan.rainJacketMode === "all";
+  const weatherRisk = getStageWeatherRisk(stage);
+  const useRainJacket =
+    plan.rainJacketMode === "all" || weatherRisk.rainJacketRequired;
 
   return riders.reduce<Record<string, StageRiderSupplyDraft>>((acc, rider) => {
     const riderId = String(rider.id ?? "");
@@ -8006,7 +8296,8 @@ function StageRaceSuppliesCard({
     supplyOptions,
     "rain_jackets",
   );
-  const rainJacketSelected = teamPlan.rainJacketMode === "all";
+  const rainJacketSelected =
+    teamPlan.rainJacketMode === "all" || needs.weatherRisk.rainJacketRequired;
   const suppliesDisabledForTT = isTimeTrialStage(stage);
   const suppliesInputDisabled = disabled || suppliesDisabledForTT;
   const jerseyMissing =
@@ -8021,6 +8312,8 @@ function StageRaceSuppliesCard({
         rain_jackets: 0,
       }
     : needs;
+  const rainJacketsMissing =
+    !suppliesDisabledForTT && displayNeeds.rain_jackets > rainAvailable;
 
   function updatePlan(patch: Partial<StageTeamSupplyPlan>) {
     onApplyTeamPlan({
@@ -8046,7 +8339,7 @@ function StageRaceSuppliesCard({
           </h2>
           <p className="mt-1 text-sm text-slate-600">
             Team-level supply setup for this stage. Consumables are applied per
-            rider; Race Jersey Complete is mandatory and Rain Jackets are a
+            rider; Race Jersey Kit is mandatory and Rain Jackets are a
             team-wide yes/no choice.
           </p>
         </div>
@@ -8125,7 +8418,7 @@ function StageRaceSuppliesCard({
                         </span>
                       </div>
 
-                      <div className="mt-3 grid gap-3 md:grid-cols-2">
+                      <div className="mt-3 grid gap-3">
                         <div>
                           <div className="text-xs font-semibold text-emerald-700">
                             Positive
@@ -8167,9 +8460,16 @@ function StageRaceSuppliesCard({
 
       {jerseyMissing ? (
         <div className="mt-4 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm font-medium text-red-700">
-          Race Jersey Complete is mandatory. You need{" "}
+          Race Jersey Kit is mandatory. You need{" "}
           {displayNeeds.race_jersey_complete}, but only {jerseyAvailable} are
-          available.
+          available. This blocks saving/starting the stage.
+        </div>
+      ) : null}
+
+      {rainJacketsMissing ? (
+        <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-medium text-amber-800">
+          Rain jackets are needed because of {needs.weatherRisk.reason}, but only{" "}
+          {rainAvailable} are available for {displayNeeds.rain_jackets} riders. The stage can still start, but riders are more exposed to illness risk.
         </div>
       ) : null}
 
@@ -8190,106 +8490,103 @@ function StageRaceSuppliesCard({
           </span>
         </div>
 
-        <div className="mt-4 grid gap-4 xl:grid-cols-[minmax(0,1.25fr)_minmax(280px,0.75fr)]">
-          <div>
-            <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
-              Consumables per rider
-            </div>
-            <div className="space-y-2">
-              <StageSupplyRowInput
-                label="Bidons"
-                value={teamPlan.bidonsPerRider}
-                min={STAGE_SUPPLY_RULES.bidons_water_bottles.minPerRider}
-                max={STAGE_SUPPLY_RULES.bidons_water_bottles.maxPerRider}
-                disabled={suppliesInputDisabled}
-                onChange={(value) => updatePlan({ bidonsPerRider: value })}
-              />
-
-              <StageSupplyRowInput
-                label="Energy Gels"
-                value={teamPlan.gelsPerRider}
-                min={STAGE_SUPPLY_RULES.energy_gels.minPerRider}
-                max={STAGE_SUPPLY_RULES.energy_gels.maxPerRider}
-                disabled={suppliesInputDisabled}
-                onChange={(value) => updatePlan({ gelsPerRider: value })}
-              />
-
-              <StageSupplyRowInput
-                label="Nutrition Packs"
-                value={teamPlan.nutritionPacksPerRider}
-                min={STAGE_SUPPLY_RULES.nutrition_packs.minPerRider}
-                max={STAGE_SUPPLY_RULES.nutrition_packs.maxPerRider}
-                disabled={suppliesInputDisabled}
-                onChange={(value) =>
-                  updatePlan({ nutritionPacksPerRider: value })
-                }
-              />
-            </div>
+        <div className="mt-4 space-y-3">
+          <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+            Stage supplies
           </div>
 
-          <div>
-            <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
-              Reusable stage items
-            </div>
-            <div className="space-y-3">
-              <div
-                className={[
-                  "rounded-xl border bg-white p-3",
-                  jerseyMissing ? "border-red-200" : "border-slate-200",
-                ].join(" ")}
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <div className="text-sm font-semibold text-slate-900">
-                      Race Jersey Complete
-                    </div>
-                    <div className="mt-1 text-xs text-slate-500">
-                      Mandatory for all selected riders.
-                    </div>
-                    <div className="mt-1 text-xs text-slate-400">
-                      10 stage uses per kit.
-                    </div>
-                  </div>
+          <StageSupplyRowInput
+            label="Bidons"
+            value={teamPlan.bidonsPerRider}
+            min={STAGE_SUPPLY_RULES.bidons_water_bottles.minPerRider}
+            max={STAGE_SUPPLY_RULES.bidons_water_bottles.maxPerRider}
+            disabled={suppliesInputDisabled}
+            onChange={(value) => updatePlan({ bidonsPerRider: value })}
+          />
 
-                  <span
-                    className={[
-                      "shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold",
-                      jerseyMissing
-                        ? "bg-red-100 text-red-700"
-                        : "bg-emerald-100 text-emerald-700",
-                    ].join(" ")}
-                  >
-                    {displayNeeds.race_jersey_complete} needed
-                  </span>
+          <StageSupplyRowInput
+            label="Energy Gels"
+            value={teamPlan.gelsPerRider}
+            min={STAGE_SUPPLY_RULES.energy_gels.minPerRider}
+            max={STAGE_SUPPLY_RULES.energy_gels.maxPerRider}
+            disabled={suppliesInputDisabled}
+            onChange={(value) => updatePlan({ gelsPerRider: value })}
+          />
+
+          <StageSupplyRowInput
+            label="Nutrition Packs"
+            value={teamPlan.nutritionPacksPerRider}
+            min={STAGE_SUPPLY_RULES.nutrition_packs.minPerRider}
+            max={STAGE_SUPPLY_RULES.nutrition_packs.maxPerRider}
+            disabled={suppliesInputDisabled}
+            onChange={(value) => updatePlan({ nutritionPacksPerRider: value })}
+          />
+
+          <div
+            className={[
+              "rounded-xl border bg-white p-3",
+              jerseyMissing ? "border-red-200" : "border-slate-200",
+            ].join(" ")}
+          >
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <div className="text-sm font-semibold text-slate-900">
+                  Race Jersey Kit
+                </div>
+                <div className="mt-1 text-xs text-slate-500">
+                  Mandatory for all selected riders. Missing jersey kits block the stage setup.
+                </div>
+                <div className="mt-1 text-xs text-slate-400">
+                  10 stage uses per kit.
                 </div>
               </div>
 
-              <label className="block rounded-xl border border-slate-200 bg-white p-3">
-                <span className="mb-1 block text-sm font-semibold text-slate-900">
+              <span
+                className={[
+                  "shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold",
+                  jerseyMissing
+                    ? "bg-red-100 text-red-700"
+                    : "bg-emerald-100 text-emerald-700",
+                ].join(" ")}
+              >
+                {displayNeeds.race_jersey_complete} needed
+              </span>
+            </div>
+          </div>
+
+          <div
+            className={[
+              "rounded-xl border bg-white p-3",
+              rainJacketsMissing ? "border-amber-200" : "border-slate-200",
+            ].join(" ")}
+          >
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <div className="text-sm font-semibold text-slate-900">
                   Rain Jackets
-                </span>
-                <select
-                  value={teamPlan.rainJacketMode}
-                  disabled={suppliesInputDisabled}
-                  onChange={(event) =>
-                    updatePlan({
-                      rainJacketMode: event.target.value as StageRainJacketMode,
-                    })
-                  }
-                  className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm disabled:bg-slate-100"
-                >
-                  <option value="none">None</option>
-                  <option value="all">All riders</option>
-                </select>
-                <span className="mt-2 block text-xs text-slate-500">
-                  {rainJacketSelected
-                    ? `${displayNeeds.rain_jackets} jacket durability uses will be counted for this stage.`
-                    : "No rain jackets selected for this stage."}
-                </span>
-                <span className="mt-1 block text-xs text-slate-400">
-                  Weather: {needs.weatherRisk.reason}
-                </span>
-              </label>
+                </div>
+                <div className="mt-1 text-xs text-slate-500">
+                  Automatically used for all riders when the stage is rainy or below 15°C.
+                </div>
+                <div className="mt-1 text-xs text-slate-400">
+                  Weather: {needs.weatherRisk.reason}. Missing jackets do not block the start, but increase illness exposure.
+                </div>
+              </div>
+
+              <span
+                className={[
+                  "shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold",
+                  rainJacketsMissing
+                    ? "bg-amber-100 text-amber-800"
+                    : rainJacketSelected
+                      ? "bg-emerald-100 text-emerald-700"
+                      : "bg-slate-100 text-slate-600",
+                ].join(" ")}
+              >
+                {rainJacketSelected
+                  ? `${displayNeeds.rain_jackets} auto-needed`
+                  : "Not needed"}
+              </span>
             </div>
           </div>
         </div>
@@ -8341,7 +8638,7 @@ function StageRaceSuppliesCard({
             durabilityText=""
           />
           <StageSupplyInventoryLine
-            label="Race Jersey Complete"
+            label="Race Jersey Kit"
             needed={displayNeeds.race_jersey_complete}
             available={jerseyAvailable}
             durable
@@ -8528,7 +8825,7 @@ function StageFinalCalculationCard({
   );
   const raceBonusRows = getStagePlanRaceBonusRows(standardizedBonus);
   const jacketSelected = needs.rain_jackets > 0;
-  const jacketBenefitActive = jacketSelected && needs.weatherRisk.isBadWeather;
+  const jacketBenefitActive = jacketSelected && needs.weatherRisk.rainJacketRequired;
   const jerseyAvailable = getSupplyAvailableQuantity(
     supplyOptions,
     "race_jersey_complete",
@@ -8707,7 +9004,7 @@ function StageFinalCalculationCard({
 
           {missingJerseys > 0 ? (
             <div className="mt-4 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm font-semibold text-red-700">
-              Missing mandatory Race Jersey Complete units: {missingJerseys}.
+              Missing mandatory Race Jersey Kit units: {missingJerseys}.
               This should block the final stage setup.
             </div>
           ) : null}
@@ -8976,6 +9273,7 @@ function StageTeamTacticCard({
 function StageIndividualTacticsCard({
   stage,
   riders,
+  riderRolesByRider,
   individualTacticsByRider,
   onChange,
   onAskSportDirector,
@@ -8989,6 +9287,7 @@ function StageIndividualTacticsCard({
 }: {
   stage: JsonRecord | null;
   riders: JsonRecord[];
+  riderRolesByRider: Record<string, StageRiderRoleCode | string>;
   individualTacticsByRider: StageIndividualTacticsByRider;
   onChange: (riderId: string, phaseKey: string, command: string) => void;
   onAskSportDirector: () => void;
@@ -9143,6 +9442,19 @@ function StageIndividualTacticsCard({
               individualTacticsByRider[riderId],
               stage,
             );
+            const selectedStageRole = String(riderRolesByRider[riderId] ?? "");
+            const selectedStageRoleLabel = selectedStageRole
+              ? STAGE_RIDER_ROLE_LABELS[
+                  selectedStageRole as StageRiderRoleCode
+                ] ?? titleFromSnake(selectedStageRole)
+              : isTTStage
+                ? getTimeTrialStageRoleLabel(stage)
+                : getRiderRoleLabel(rider);
+            const riderBaseRoleLabel = getRiderRoleLabel(rider);
+            const individualTacticsRoleLine =
+              riderBaseRoleLabel.toLowerCase() === selectedStageRoleLabel.toLowerCase()
+                ? riderBaseRoleLabel
+                : `${riderBaseRoleLabel} - ${selectedStageRoleLabel}`;
 
             return (
               <div
@@ -9158,9 +9470,7 @@ function StageIndividualTacticsCard({
                     <RiderHoverCard rider={rider} />
                   </div>
                   <div className="mt-1 text-xs text-slate-500">
-                    {isTTStage
-                      ? getTimeTrialStageRoleLabel(stage)
-                      : getRiderRoleLabel(rider)}
+                    {individualTacticsRoleLine}
                   </div>
                 </div>
 

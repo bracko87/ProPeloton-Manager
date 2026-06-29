@@ -12,7 +12,19 @@
  */
 
 import React from "react";
+import TutorialOverlay from "../../components/tutorial/TutorialOverlay";
+import TutorialTargetFrame from "../../components/tutorial/TutorialTargetFrame";
 import { supabase } from "../../lib/supabase";
+import {
+  menuTutorialSteps,
+  menuWelcomeTutorial,
+  overviewTutorialSteps,
+  overviewWelcomeTutorial,
+} from "../../lib/tutorials";
+import {
+  getTutorialProgress,
+  saveTutorialProgress,
+} from "../../lib/tutorialProgress";
 
 type AlertLevel = "danger" | "warning" | "info" | "success";
 type FeedLevel =
@@ -723,12 +735,13 @@ function normalizeFinanceHealth(
         ? suppliedDebtMovements
         : summary.debtMovements,
   };
-
 }
 
 type OverviewFinanceStatementRow = Record<string, unknown>;
 
-function extractFinanceStatementRows(value: unknown): OverviewFinanceStatementRow[] {
+function extractFinanceStatementRows(
+  value: unknown,
+): OverviewFinanceStatementRow[] {
   if (Array.isArray(value)) return value as OverviewFinanceStatementRow[];
 
   const safe = asObject<Record<string, unknown>>(value, {});
@@ -743,7 +756,9 @@ function extractFinanceStatementRows(value: unknown): OverviewFinanceStatementRo
   );
 }
 
-function getFinanceStatementDate(row: OverviewFinanceStatementRow): Date | null {
+function getFinanceStatementDate(
+  row: OverviewFinanceStatementRow,
+): Date | null {
   const raw = asString(
     row.occurred_at ?? row.transaction_date ?? row.date ?? row.created_at,
     "",
@@ -751,9 +766,7 @@ function getFinanceStatementDate(row: OverviewFinanceStatementRow): Date | null 
 
   if (!raw) return null;
 
-  const value = /^\d{4}-\d{2}-\d{2}$/.test(raw)
-    ? `${raw}T00:00:00Z`
-    : raw;
+  const value = /^\d{4}-\d{2}-\d{2}$/.test(raw) ? `${raw}T00:00:00Z` : raw;
 
   const date = new Date(value);
   return Number.isNaN(date.getTime()) ? null : date;
@@ -794,7 +807,9 @@ function parseFinanceGameDateValue(value: unknown): Date | null {
   return null;
 }
 
-function getFinanceStatementGameDate(row: OverviewFinanceStatementRow): Date | null {
+function getFinanceStatementGameDate(
+  row: OverviewFinanceStatementRow,
+): Date | null {
   const metadata = asObject<Record<string, unknown>>(row.metadata, {});
 
   return (
@@ -813,18 +828,20 @@ function getFinanceStatementType(row: OverviewFinanceStatementRow): string {
   return normalizeTransactionType(row.type ?? row.transaction_type ?? row.kind);
 }
 
-function getFinanceStatementSignedAmount(row: OverviewFinanceStatementRow): number {
+function getFinanceStatementSignedAmount(
+  row: OverviewFinanceStatementRow,
+): number {
   const hasNetAmount = row.net_amount !== null && row.net_amount !== undefined;
 
   const amount = asNumber(
     hasNetAmount
       ? row.net_amount
-      : row.amount ??
+      : (row.amount ??
           row.amount_cash ??
           row.cash_amount ??
           row.total_amount ??
           row.signed_amount ??
-          row.value,
+          row.value),
     0,
   );
 
@@ -857,7 +874,9 @@ function buildFinancePeriodSummaryFromStatementRows(
       gameDate: getFinanceStatementGameDate(row),
     }))
     .filter(
-      (item): item is {
+      (
+        item,
+      ): item is {
         row: OverviewFinanceStatementRow;
         date: Date;
         gameDate: Date | null;
@@ -866,7 +885,9 @@ function buildFinancePeriodSummaryFromStatementRows(
 
   if (datedRows.length === 0) return null;
 
-  const latestDateMs = Math.max(...datedRows.map((item) => item.date.getTime()));
+  const latestDateMs = Math.max(
+    ...datedRows.map((item) => item.date.getTime()),
+  );
   if (!Number.isFinite(latestDateMs)) return null;
 
   const end = new Date(latestDateMs);
@@ -899,7 +920,11 @@ function buildFinancePeriodSummaryFromStatementRows(
       const selectedDate = dateSelector(item);
       if (!selectedDate) continue;
 
-      if (start && rangeEnd && !isDateInInclusiveRange(selectedDate, start, rangeEnd)) {
+      if (
+        start &&
+        rangeEnd &&
+        !isDateInInclusiveRange(selectedDate, start, rangeEnd)
+      ) {
         continue;
       }
 
@@ -2287,7 +2312,6 @@ async function loadOverviewFinancePeriodSummary(
   return null;
 }
 
-
 function normalizeOverviewAttentionItems(value: unknown): AlertItem[] {
   return asArray<Record<string, unknown>>(value).map((row, index) => {
     const rawLevel = asString(row.level, "info").toLowerCase();
@@ -2588,12 +2612,14 @@ function formatNextRepayment(debt: EmergencyDebtHealth) {
 function Card({
   children,
   className,
-}: {
+  ...props
+}: React.HTMLAttributes<HTMLDivElement> & {
   children: React.ReactNode;
   className?: string;
 }) {
   return (
     <div
+      {...props}
       className={cn(
         "rounded-2xl border border-slate-200 bg-white shadow-sm",
         className,
@@ -4505,12 +4531,115 @@ export default function OverviewPage() {
   const [loading, setLoading] = React.useState(true);
   const [refreshing, setRefreshing] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  const [tutorialLoading, setTutorialLoading] = React.useState(true);
+  const [tutorialMode, setTutorialMode] = React.useState<
+    "closed" | "invite" | "steps"
+  >("closed");
+  const [tutorialStepIndex, setTutorialStepIndex] = React.useState(0);
+  const [menuTutorialLoading, setMenuTutorialLoading] = React.useState(true);
+  const [menuTutorialMode, setMenuTutorialMode] = React.useState<
+    "closed" | "invite" | "steps"
+  >("closed");
+  const [menuTutorialStepIndex, setMenuTutorialStepIndex] = React.useState(0);
 
   const dataRef = React.useRef<DashboardOverviewData | null>(null);
 
   React.useEffect(() => {
     dataRef.current = data;
   }, [data]);
+
+  React.useEffect(() => {
+    let alive = true;
+
+    async function loadOverviewTutorialProgress() {
+      setTutorialLoading(true);
+
+      const autoStartMenuTutorial =
+        window.sessionStorage.getItem("ppm:auto-start-tutorial") === "menu";
+
+      if (autoStartMenuTutorial) {
+        if (!alive) return;
+
+        setTutorialMode("closed");
+        setTutorialLoading(false);
+        return;
+      }
+
+      const progress = await getTutorialProgress("overview");
+
+      if (!alive) return;
+
+      if (!progress || progress.status === "not_started") {
+        setTutorialMode("invite");
+      } else if (progress.status === "started") {
+        const savedStepIndex = overviewTutorialSteps.findIndex(
+          (step) => step.key === progress.last_step_key,
+        );
+
+        setTutorialStepIndex(savedStepIndex >= 0 ? savedStepIndex : 0);
+        setTutorialMode("steps");
+      } else {
+        setTutorialMode("closed");
+      }
+
+      setTutorialLoading(false);
+    }
+
+    loadOverviewTutorialProgress();
+
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  React.useEffect(() => {
+    let alive = true;
+
+    async function loadMenuTutorialProgress() {
+      setMenuTutorialLoading(true);
+
+      const autoStartTutorial =
+        window.sessionStorage.getItem("ppm:auto-start-tutorial") === "menu";
+
+      if (autoStartTutorial) {
+        window.sessionStorage.removeItem("ppm:auto-start-tutorial");
+
+        const firstStep = menuTutorialSteps[0];
+
+        await saveTutorialProgress("menu", "started", firstStep?.key ?? null);
+
+        if (!alive) return;
+
+        setMenuTutorialStepIndex(0);
+        setMenuTutorialMode("steps");
+        setMenuTutorialLoading(false);
+        return;
+      }
+
+      const progress = await getTutorialProgress("menu");
+
+      if (!alive) return;
+
+      if (progress?.status === "started") {
+        const savedStepIndex = menuTutorialSteps.findIndex(
+          (step) => step.key === progress.last_step_key,
+        );
+
+        setMenuTutorialStepIndex(savedStepIndex >= 0 ? savedStepIndex : 0);
+        setMenuTutorialMode("steps");
+      } else {
+        setMenuTutorialMode("closed");
+      }
+
+      setMenuTutorialLoading(false);
+    }
+
+    void loadMenuTutorialProgress();
+
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   React.useEffect(() => {
     let alive = true;
@@ -4759,6 +4888,137 @@ export default function OverviewPage() {
     };
   }, []);
 
+  async function handleStartOverviewTutorial() {
+    const firstStep = overviewTutorialSteps[0];
+
+    await saveTutorialProgress("overview", "started", firstStep?.key ?? null);
+
+    setTutorialStepIndex(0);
+    setTutorialMode("steps");
+  }
+
+  async function handleSkipOverviewTutorial() {
+    const tutorialKeys = [
+      "overview",
+      "squad",
+      "training",
+      "equipment",
+      "facilities",
+      "calendar",
+      "race-detail",
+      "race-preparation",
+      "team-ranking",
+      "statistics",
+      "transfers",
+      "finance",
+      "menu",
+    ] as const;
+
+    await Promise.all(
+      tutorialKeys.map((tutorialKey) =>
+        saveTutorialProgress(tutorialKey, "skipped", null),
+      ),
+    );
+
+    setTutorialMode("closed");
+  }
+
+  async function handleNextOverviewTutorialStep() {
+    const currentStep = overviewTutorialSteps[tutorialStepIndex];
+    const isLastStep = tutorialStepIndex >= overviewTutorialSteps.length - 1;
+
+    if (!isLastStep) {
+      const nextIndex = tutorialStepIndex + 1;
+      const nextStep = overviewTutorialSteps[nextIndex];
+
+      await saveTutorialProgress("overview", "started", nextStep.key);
+
+      setTutorialStepIndex(nextIndex);
+      return;
+    }
+
+    await saveTutorialProgress(
+      "overview",
+      "completed",
+      currentStep?.key ?? null,
+    );
+
+    window.sessionStorage.setItem("ppm:auto-start-tutorial", "squad");
+    window.location.hash = "#/dashboard/squad";
+  }
+
+  async function handleFinishOverviewTutorialForNow() {
+    const currentStep = overviewTutorialSteps[tutorialStepIndex];
+
+    await saveTutorialProgress(
+      "overview",
+      "completed",
+      currentStep?.key ?? null,
+    );
+
+    setTutorialMode("closed");
+  }
+
+  async function handleCloseOverviewTutorial() {
+    const currentStep = overviewTutorialSteps[tutorialStepIndex];
+
+    if (tutorialMode === "invite") {
+      await saveTutorialProgress("overview", "skipped", null);
+      setTutorialMode("closed");
+      return;
+    }
+
+    if (tutorialMode === "steps") {
+      await saveTutorialProgress(
+        "overview",
+        "started",
+        currentStep?.key ?? null,
+      );
+    }
+
+    setTutorialMode("closed");
+  }
+
+  async function handleStartMenuTutorial() {
+    const firstStep = menuTutorialSteps[0];
+
+    await saveTutorialProgress("menu", "started", firstStep?.key ?? null);
+
+    setMenuTutorialStepIndex(0);
+    setMenuTutorialMode("steps");
+  }
+
+  async function handleSkipMenuTutorial() {
+    await saveTutorialProgress("menu", "skipped", null);
+    setMenuTutorialMode("closed");
+  }
+
+  async function handleNextMenuTutorialStep() {
+    const currentStep = menuTutorialSteps[menuTutorialStepIndex];
+    const isLastStep = menuTutorialStepIndex >= menuTutorialSteps.length - 1;
+
+    if (!isLastStep) {
+      const nextIndex = menuTutorialStepIndex + 1;
+      const nextStep = menuTutorialSteps[nextIndex];
+
+      await saveTutorialProgress("menu", "started", nextStep.key);
+
+      setMenuTutorialStepIndex(nextIndex);
+      return;
+    }
+
+    await saveTutorialProgress("menu", "completed", currentStep?.key ?? null);
+    setMenuTutorialMode("closed");
+  }
+
+  async function handleCloseMenuTutorial() {
+    const currentStep = menuTutorialSteps[menuTutorialStepIndex];
+
+    await saveTutorialProgress("menu", "started", currentStep?.key ?? null);
+
+    setMenuTutorialMode("closed");
+  }
+
   if (loading && !data) {
     return <DashboardSkeleton />;
   }
@@ -4843,176 +5103,253 @@ export default function OverviewPage() {
         )}
       </Card>
 
-      <div className="grid grid-cols-12 gap-6">
-        <div className="col-span-12 space-y-6 xl:col-span-8">
-          {/* Main top-left area: newsletter instead of operations */}
-          <NewsCommandCenter
-            alerts={attentionItems}
-            feed={data.feed}
-            news={
-              raceWorld.worldNews.length > 0 ? raceWorld.worldNews : data.news
-            }
-            currentGameDateLabel={data.club.dateLabel}
-          />
-
-          <Card className="p-5">
-            <SectionTitle
-              title="Squad Pulse"
-              subtitle="Readiness, morale, health, and contract pressure."
+      <div className="space-y-6">
+        <div className="grid grid-cols-12 gap-6">
+          <div className="col-span-12 space-y-6 xl:col-span-8">
+            {/* Main top-left area: newsletter instead of operations */}
+            <NewsCommandCenter
+              alerts={attentionItems}
+              feed={data.feed}
+              news={
+                raceWorld.worldNews.length > 0 ? raceWorld.worldNews : data.news
+              }
+              currentGameDateLabel={data.club.dateLabel}
             />
 
-            <div className="mt-5 grid grid-cols-1 gap-6 lg:grid-cols-2">
-              <div className="space-y-5">
-                <ProgressMetric
-                  label="Fitness"
-                  value={visibleSquadPulse.fitness}
-                  colorClass="bg-blue-500"
+            <Card className="p-5">
+              <SectionTitle
+                title="Squad Pulse"
+                subtitle="Readiness, morale, health, and contract pressure."
+              />
+
+              <div className="mt-5 grid grid-cols-1 gap-6 lg:grid-cols-2">
+                <div className="space-y-5">
+                  <ProgressMetric
+                    label="Fitness"
+                    value={visibleSquadPulse.fitness}
+                    colorClass="bg-blue-500"
+                  />
+                  <ProgressMetric
+                    label="Morale"
+                    value={visibleSquadPulse.morale}
+                    colorClass="bg-emerald-500"
+                  />
+                  <ProgressMetric
+                    label="Readiness"
+                    value={visibleSquadPulse.readiness}
+                    colorClass="bg-violet-500"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <SmallStat
+                    label="Form"
+                    value={visibleSquadPulse.form}
+                    valueClassName="text-emerald-600"
+                  />
+                  <SmallStat
+                    label="Available Riders"
+                    value={visibleSquadPulse.availableRiders}
+                  />
+                  <SmallStat
+                    label="Injured"
+                    value={visibleSquadPulse.injured}
+                    valueClassName={
+                      visibleSquadPulse.injured > 0 ? "text-red-600" : ""
+                    }
+                  />
+                  <SmallStat
+                    label="Sick"
+                    value={visibleSquadPulse.sick}
+                    valueClassName={
+                      visibleSquadPulse.sick > 0 ? "text-red-600" : ""
+                    }
+                  />
+                  <SmallStat
+                    label="Not Fully Fit"
+                    value={visibleSquadPulse.notFullyFit}
+                    valueClassName={
+                      visibleSquadPulse.notFullyFit > 0 ? "text-yellow-600" : ""
+                    }
+                  />
+                  <SmallStat
+                    label="Expiring Contracts"
+                    value={visibleSquadPulse.expiringContracts}
+                    valueClassName={
+                      visibleSquadPulse.expiringContracts > 0
+                        ? "text-yellow-600"
+                        : ""
+                    }
+                  />
+                </div>
+              </div>
+            </Card>
+
+            <UpcomingRaceScheduleCard schedule={raceWorld.upcomingSchedule} />
+
+            <TodayRaceCard
+              dateLabel={data.club.dateLabel}
+              races={raceWorld.todayRaces}
+            />
+          </div>
+
+          <div className="col-span-12 space-y-6 xl:col-span-4">
+            {/* Main right-side replacement for Activity Feed */}
+            <NextTeamRaceCard
+              race={raceHub.nextTeamRace}
+              loading={raceHubLoading}
+            />
+            <LastTeamRaceCard
+              race={raceHub.lastTeamRace}
+              loading={raceHubLoading}
+            />
+
+            <Card className="p-5">
+              <SectionTitle
+                title="Main Sponsor"
+                subtitle="Primary sponsor branding and active partnership."
+              />
+              <div className="mt-5">
+                <MainSponsorPanel sponsor={data.mainSponsor} />
+              </div>
+            </Card>
+
+            <Card className="p-5">
+              <SectionTitle
+                title="Finance Health"
+                subtitle="Cash position, recurring cost pressure, and next forecasted spend."
+              />
+
+              <div className="mt-5 space-y-3">
+                <SmallStat
+                  label="Balance"
+                  value={formatCurrency(data.finance.balance)}
                 />
-                <ProgressMetric
-                  label="Morale"
-                  value={visibleSquadPulse.morale}
-                  colorClass="bg-emerald-500"
+                <SmallStat
+                  label="Weekly Net"
+                  value={formatSignedCurrency(data.finance.weeklyNet)}
+                  valueClassName={
+                    data.finance.weeklyNet >= 0
+                      ? "text-emerald-600"
+                      : "text-red-600"
+                  }
                 />
-                <ProgressMetric
-                  label="Readiness"
-                  value={visibleSquadPulse.readiness}
-                  colorClass="bg-violet-500"
+                <SmallStat
+                  label="Sponsor Income"
+                  value={formatCurrency(data.finance.sponsorIncome)}
+                />
+                <SmallStat
+                  label="Recurring Policy Cost"
+                  value={formatCurrency(data.finance.recurringPolicyCost)}
+                />
+                <SmallStat
+                  label="Next Trip Forecast"
+                  value={formatCurrency(data.finance.nextTripForecast)}
                 />
               </div>
 
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                <SmallStat
-                  label="Form"
-                  value={visibleSquadPulse.form}
-                  valueClassName="text-emerald-600"
-                />
-                <SmallStat
-                  label="Available Riders"
-                  value={visibleSquadPulse.availableRiders}
-                />
-                <SmallStat
-                  label="Injured"
-                  value={visibleSquadPulse.injured}
-                  valueClassName={
-                    visibleSquadPulse.injured > 0 ? "text-red-600" : ""
-                  }
-                />
-                <SmallStat
-                  label="Sick"
-                  value={visibleSquadPulse.sick}
-                  valueClassName={
-                    visibleSquadPulse.sick > 0 ? "text-red-600" : ""
-                  }
-                />
-                <SmallStat
-                  label="Not Fully Fit"
-                  value={visibleSquadPulse.notFullyFit}
-                  valueClassName={
-                    visibleSquadPulse.notFullyFit > 0 ? "text-yellow-600" : ""
-                  }
-                />
-                <SmallStat
-                  label="Expiring Contracts"
-                  value={visibleSquadPulse.expiringContracts}
-                  valueClassName={
-                    visibleSquadPulse.expiringContracts > 0
-                      ? "text-yellow-600"
-                      : ""
-                  }
-                />
+              <div className="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-4">
+                <div className="text-xs uppercase tracking-wide text-slate-500">
+                  Latest Major Transaction
+                </div>
+                <div className="mt-2 text-sm font-semibold text-slate-900">
+                  {data.finance.latestTransactionLabel}
+                </div>
+                <div
+                  className={cn(
+                    "mt-1 text-sm font-bold",
+                    data.finance.latestTransactionAmount >= 0
+                      ? "text-emerald-600"
+                      : "text-red-600",
+                  )}
+                >
+                  {formatSignedCurrency(data.finance.latestTransactionAmount)}
+                </div>
               </div>
-            </div>
-          </Card>
+            </Card>
 
-          <UpcomingRaceScheduleCard schedule={raceWorld.upcomingSchedule} />
+            <IncomeExpenseCard finance={data.finance} />
 
-          <TodayRaceCard
-            dateLabel={data.club.dateLabel}
-            races={raceWorld.todayRaces}
-          />
+            <CompactOperationsCard operations={data.operations} />
+          </div>
         </div>
 
-        <div className="col-span-12 space-y-6 xl:col-span-4">
-          {/* Main right-side replacement for Activity Feed */}
-          <NextTeamRaceCard
-            race={raceHub.nextTeamRace}
-            loading={raceHubLoading}
-          />
-          <LastTeamRaceCard
-            race={raceHub.lastTeamRace}
-            loading={raceHubLoading}
-          />
-
-          <Card className="p-5">
-            <SectionTitle
-              title="Main Sponsor"
-              subtitle="Primary sponsor branding and active partnership."
-            />
-            <div className="mt-5">
-              <MainSponsorPanel sponsor={data.mainSponsor} />
-            </div>
-          </Card>
-
-          <Card className="p-5">
-            <SectionTitle
-              title="Finance Health"
-              subtitle="Cash position, recurring cost pressure, and next forecasted spend."
-            />
-
-            <div className="mt-5 space-y-3">
-              <SmallStat
-                label="Balance"
-                value={formatCurrency(data.finance.balance)}
-              />
-              <SmallStat
-                label="Weekly Net"
-                value={formatSignedCurrency(data.finance.weeklyNet)}
-                valueClassName={
-                  data.finance.weeklyNet >= 0
-                    ? "text-emerald-600"
-                    : "text-red-600"
-                }
-              />
-              <SmallStat
-                label="Sponsor Income"
-                value={formatCurrency(data.finance.sponsorIncome)}
-              />
-              <SmallStat
-                label="Recurring Policy Cost"
-                value={formatCurrency(data.finance.recurringPolicyCost)}
-              />
-              <SmallStat
-                label="Next Trip Forecast"
-                value={formatCurrency(data.finance.nextTripForecast)}
-              />
-            </div>
-
-            <div className="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-4">
-              <div className="text-xs uppercase tracking-wide text-slate-500">
-                Latest Major Transaction
-              </div>
-              <div className="mt-2 text-sm font-semibold text-slate-900">
-                {data.finance.latestTransactionLabel}
-              </div>
-              <div
-                className={cn(
-                  "mt-1 text-sm font-bold",
-                  data.finance.latestTransactionAmount >= 0
-                    ? "text-emerald-600"
-                    : "text-red-600",
-                )}
-              >
-                {formatSignedCurrency(data.finance.latestTransactionAmount)}
-              </div>
-            </div>
-          </Card>
-
-          <IncomeExpenseCard finance={data.finance} />
-
-          <CompactOperationsCard operations={data.operations} />
-        </div>
+        <SeasonSnapshotCard stats={seasonSnapshot} />
       </div>
-      <SeasonSnapshotCard stats={seasonSnapshot} />
+
+      {!tutorialLoading && tutorialMode === "invite" ? (
+        <TutorialOverlay
+          open
+          variant="invite"
+          title={overviewWelcomeTutorial.title}
+          body={overviewWelcomeTutorial.body}
+          primaryAction={overviewWelcomeTutorial.primaryAction}
+          secondaryAction={overviewWelcomeTutorial.secondaryAction}
+          onPrimary={handleStartOverviewTutorial}
+          onSecondary={handleSkipOverviewTutorial}
+          onClose={handleCloseOverviewTutorial}
+        />
+      ) : null}
+
+      {!tutorialLoading && tutorialMode === "steps" ? (
+        <TutorialOverlay
+          open
+          variant="panel"
+          title={overviewTutorialSteps[tutorialStepIndex].title}
+          body={overviewTutorialSteps[tutorialStepIndex].body}
+          stepLabel={`${tutorialStepIndex + 1}/${overviewTutorialSteps.length}`}
+          primaryAction={
+            overviewTutorialSteps[tutorialStepIndex].primaryAction ?? "Next"
+          }
+          secondaryAction={
+            tutorialStepIndex === overviewTutorialSteps.length - 1
+              ? overviewTutorialSteps[tutorialStepIndex].secondaryAction
+              : "Skip tutorial"
+          }
+          onPrimary={handleNextOverviewTutorialStep}
+          onSecondary={
+            tutorialStepIndex === overviewTutorialSteps.length - 1
+              ? handleFinishOverviewTutorialForNow
+              : handleSkipOverviewTutorial
+          }
+          onClose={handleCloseOverviewTutorial}
+        />
+      ) : null}
+
+      {!menuTutorialLoading && menuTutorialMode === "invite" ? (
+        <TutorialOverlay
+          open
+          variant="invite"
+          title={menuWelcomeTutorial.title}
+          body={menuWelcomeTutorial.body}
+          primaryAction={menuWelcomeTutorial.primaryAction}
+          secondaryAction={menuWelcomeTutorial.secondaryAction}
+          onPrimary={handleStartMenuTutorial}
+          onSecondary={handleSkipMenuTutorial}
+          onClose={handleSkipMenuTutorial}
+        />
+      ) : null}
+
+      {!menuTutorialLoading && menuTutorialMode === "steps" ? (
+        <>
+          <TutorialTargetFrame
+            target={menuTutorialSteps[menuTutorialStepIndex].target}
+          />
+
+          <TutorialOverlay
+            open
+            variant="panel"
+            title={menuTutorialSteps[menuTutorialStepIndex].title}
+            body={menuTutorialSteps[menuTutorialStepIndex].body}
+            stepLabel={`${menuTutorialStepIndex + 1}/${menuTutorialSteps.length}`}
+            primaryAction={
+              menuTutorialSteps[menuTutorialStepIndex].primaryAction ?? "Next"
+            }
+            onPrimary={handleNextMenuTutorialStep}
+            onClose={handleCloseMenuTutorial}
+          />
+        </>
+      ) : null}
     </div>
   );
 }

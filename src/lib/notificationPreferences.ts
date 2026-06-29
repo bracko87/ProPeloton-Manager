@@ -19,6 +19,7 @@ export const NOTIFICATION_PREFERENCE_GROUP_CODES = [
   'transferUpdates',
   'teamUpdates',
   'financeAlerts',
+  'stagePlanReminders',
 ] as const
 
 /**
@@ -60,13 +61,24 @@ export const NOTIFICATION_PREFERENCE_GROUPS: Record<
     label: 'Finance alerts',
     description: 'Show notifications for important budget, cost, or income related updates.',
   },
+  stagePlanReminders: {
+    label: 'Stage plan reminders',
+    description: 'Show notifications for stage plan lock warnings and missing stage plan reminders.',
+  },
 }
 
 /**
  * NotificationSettings
  * Stored preferences toggle values.
  */
-export type NotificationSettings = Record<NotificationPreferenceGroup, boolean>
+export type NotificationSettings = {
+  raceInvitations: boolean
+  raceApplicationResults: boolean
+  transferUpdates: boolean
+  teamUpdates: boolean
+  financeAlerts: boolean
+  stagePlanReminders: boolean
+}
 
 type StoredPreferences = {
   notifications?: Partial<NotificationSettings>
@@ -80,7 +92,19 @@ export const DEFAULT_NOTIFICATION_SETTINGS: NotificationSettings = {
   transferUpdates: true,
   teamUpdates: true,
   financeAlerts: true,
+
+  // Off by default because these can become noisy.
+  stagePlanReminders: false,
 }
+
+const STAGE_PLAN_REMINDER_CODES = new Set([
+  'STAGE_PLAN_LOCK_REMINDER',
+  'STAGE_PLAN_LOCKED',
+  'STAGE_PLAN_MISSING_AT_LOCK',
+  'STAGE_PLAN_MISSING_REMINDER',
+  'STAGE_PLAN_LOCK_SOON',
+  'STAGE_PLANS_LOCK_SOON',
+])
 
 export function canReceiveNotification(
   preferences: NotificationSettings,
@@ -99,10 +123,11 @@ export function readNotificationPreferences(): NotificationSettings {
     if (!raw) return DEFAULT_NOTIFICATION_SETTINGS
 
     const parsed = JSON.parse(raw) as StoredPreferences
+    const savedNotifications = parsed.notifications ?? {}
 
     return {
       ...DEFAULT_NOTIFICATION_SETTINGS,
-      ...(parsed.notifications ?? {}),
+      ...savedNotifications,
     }
   } catch {
     return DEFAULT_NOTIFICATION_SETTINGS
@@ -148,6 +173,17 @@ export function getNotificationTypeFromEvent(
   typeCode?: string | null,
   source?: string | null
 ): NotificationPreferenceGroup | null {
+  const normalizedCode = String(typeCode ?? '').toUpperCase()
+
+  if (
+    STAGE_PLAN_REMINDER_CODES.has(normalizedCode) ||
+    normalizedCode.includes('STAGE_PLAN_LOCK') ||
+    normalizedCode.includes('STAGE_PLANS_LOCK') ||
+    normalizedCode.includes('STAGE_PLAN_MISSING')
+  ) {
+    return 'stagePlanReminders'
+  }
+
   const key = `${source ?? ''} ${typeCode ?? ''}`.toLowerCase()
 
   if (key.includes('transfer')) return 'transferUpdates'

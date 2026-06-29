@@ -41,7 +41,17 @@
  */
 
 import React, { useEffect, useMemo, useRef, useState } from 'react'
+import { useNavigate } from 'react-router'
 import { supabase } from '@/lib/supabase'
+import TutorialOverlay from '../../components/tutorial/TutorialOverlay'
+import {
+  facilitiesTutorialSteps,
+  facilitiesWelcomeTutorial,
+} from '../../lib/tutorials'
+import {
+  getTutorialProgress,
+  saveTutorialProgress,
+} from '../../lib/tutorialProgress'
 import { getMyClubContext } from '@/lib/clubContext'
 
 import { FacilitiesSection } from './infrastructure/FacilitiesSection'
@@ -373,7 +383,26 @@ function AssetActionConfirmModal({
   )
 }
 
+function getInfrastructureTabForTutorialStepKey(
+  stepKey?: string | null,
+): TabKey {
+  switch (stepKey) {
+    case 'facilities-assets':
+      return 'assets'
+    case 'facilities-buildings':
+    case 'facilities-projects':
+    default:
+      return 'facilities'
+  }
+}
+
 export default function InfrastructurePage({ clubId }: { clubId?: string }) {
+  const navigate = useNavigate()
+
+  const [tutorialLoading, setTutorialLoading] = useState(true)
+  const [tutorialMode, setTutorialMode] = useState<'closed' | 'invite' | 'steps'>('closed')
+  const [tutorialStepIndex, setTutorialStepIndex] = useState(0)
+
   const [activeTab, setActiveTab] = useState<TabKey>(() =>
     getInfrastructureTabFromUrl(),
   )
@@ -935,6 +964,63 @@ export default function InfrastructurePage({ clubId }: { clubId?: string }) {
       isMounted = false
     }
   }, [clubId])
+
+  useEffect(() => {
+    let alive = true
+
+    async function loadFacilitiesTutorialProgress() {
+      setTutorialLoading(true)
+
+      const autoStartTutorial =
+        window.sessionStorage.getItem('ppm:auto-start-tutorial') === 'facilities'
+
+      if (autoStartTutorial) {
+        window.sessionStorage.removeItem('ppm:auto-start-tutorial')
+
+        const firstStep = facilitiesTutorialSteps[0]
+
+        await saveTutorialProgress('facilities', 'started', firstStep?.key ?? null)
+
+        if (!alive) return
+
+        setActiveTab('facilities')
+        updateInfrastructureTabUrl('facilities')
+        setTutorialStepIndex(0)
+        setTutorialMode('steps')
+        setTutorialLoading(false)
+        return
+      }
+
+      const progress = await getTutorialProgress('facilities')
+
+      if (!alive) return
+
+      if (progress?.status === 'started') {
+        const savedStepIndex = facilitiesTutorialSteps.findIndex(
+          (step) => step.key === progress.last_step_key,
+        )
+
+        const nextStepIndex = savedStepIndex >= 0 ? savedStepIndex : 0
+        const nextStep = facilitiesTutorialSteps[nextStepIndex]
+        const nextTab = getInfrastructureTabForTutorialStepKey(nextStep?.key)
+
+        setActiveTab(nextTab)
+        updateInfrastructureTabUrl(nextTab)
+        setTutorialStepIndex(nextStepIndex)
+        setTutorialMode('steps')
+      } else {
+        setTutorialMode('closed')
+      }
+
+      setTutorialLoading(false)
+    }
+
+    void loadFacilitiesTutorialProgress()
+
+    return () => {
+      alive = false
+    }
+  }, [])
 
   useEffect(() => {
     const intervalId = window.setInterval(() => {
@@ -1824,6 +1910,74 @@ export default function InfrastructurePage({ clubId }: { clubId?: string }) {
     })
   }
 
+  async function handleStartFacilitiesTutorial() {
+    const firstStep = facilitiesTutorialSteps[0]
+
+    await saveTutorialProgress('facilities', 'started', firstStep?.key ?? null)
+
+    setActiveTab('facilities')
+    updateInfrastructureTabUrl('facilities')
+    setTutorialStepIndex(0)
+    setTutorialMode('steps')
+  }
+
+  async function handleSkipFacilitiesTutorial() {
+    await saveTutorialProgress('facilities', 'skipped', null)
+    setTutorialMode('closed')
+  }
+
+  async function handleNextFacilitiesTutorialStep() {
+    const currentStep = facilitiesTutorialSteps[tutorialStepIndex]
+    const isLastStep = tutorialStepIndex >= facilitiesTutorialSteps.length - 1
+
+    if (!isLastStep) {
+      const nextIndex = tutorialStepIndex + 1
+      const nextStep = facilitiesTutorialSteps[nextIndex]
+      const nextTab = getInfrastructureTabForTutorialStepKey(nextStep.key)
+
+      setActiveTab(nextTab)
+      updateInfrastructureTabUrl(nextTab)
+
+      await saveTutorialProgress('facilities', 'started', nextStep.key)
+
+      setTutorialStepIndex(nextIndex)
+      return
+    }
+
+    await saveTutorialProgress('facilities', 'completed', currentStep?.key ?? null)
+
+    window.sessionStorage.setItem('ppm:auto-start-tutorial', 'calendar')
+    navigate('/dashboard/calendar')
+  }
+
+  async function handleFinishFacilitiesTutorialForNow() {
+    const currentStep = facilitiesTutorialSteps[tutorialStepIndex]
+
+    await saveTutorialProgress('facilities', 'completed', currentStep?.key ?? null)
+
+    setTutorialMode('closed')
+  }
+
+  async function handleCloseFacilitiesTutorial() {
+    const currentStep = facilitiesTutorialSteps[tutorialStepIndex]
+
+    if (tutorialMode === 'invite') {
+      await saveTutorialProgress('facilities', 'skipped', null)
+      setTutorialMode('closed')
+      return
+    }
+
+    if (tutorialMode === 'steps') {
+      await saveTutorialProgress(
+        'facilities',
+        'started',
+        currentStep?.key ?? null,
+      )
+    }
+
+    setTutorialMode('closed')
+  }
+
   if (loading) {
     return (
       <div className="w-full">
@@ -2013,6 +2167,45 @@ export default function InfrastructurePage({ clubId }: { clubId?: string }) {
           onOpenAssetSell={handleOpenAssetSell}
         />
       )}
+
+      {!tutorialLoading && tutorialMode === 'invite' ? (
+        <TutorialOverlay
+          open
+          variant="invite"
+          title={facilitiesWelcomeTutorial.title}
+          body={facilitiesWelcomeTutorial.body}
+          primaryAction={facilitiesWelcomeTutorial.primaryAction}
+          secondaryAction={facilitiesWelcomeTutorial.secondaryAction}
+          onPrimary={handleStartFacilitiesTutorial}
+          onSecondary={handleSkipFacilitiesTutorial}
+          onClose={handleCloseFacilitiesTutorial}
+        />
+      ) : null}
+
+      {!tutorialLoading && tutorialMode === 'steps' ? (
+        <TutorialOverlay
+          open
+          variant="panel"
+          title={facilitiesTutorialSteps[tutorialStepIndex].title}
+          body={facilitiesTutorialSteps[tutorialStepIndex].body}
+          stepLabel={`${tutorialStepIndex + 1}/${facilitiesTutorialSteps.length}`}
+          primaryAction={
+            facilitiesTutorialSteps[tutorialStepIndex].primaryAction ?? 'Next'
+          }
+          secondaryAction={
+            tutorialStepIndex === facilitiesTutorialSteps.length - 1
+              ? facilitiesTutorialSteps[tutorialStepIndex].secondaryAction
+              : 'Skip tutorial'
+          }
+          onPrimary={handleNextFacilitiesTutorialStep}
+          onSecondary={
+            tutorialStepIndex === facilitiesTutorialSteps.length - 1
+              ? handleFinishFacilitiesTutorialForNow
+              : handleSkipFacilitiesTutorial
+          }
+          onClose={handleCloseFacilitiesTutorial}
+        />
+      ) : null}
 
       {assetActionModal && (
         <AssetActionConfirmModal

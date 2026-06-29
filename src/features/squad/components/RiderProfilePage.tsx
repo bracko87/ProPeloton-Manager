@@ -1068,10 +1068,26 @@ async function fetchRiderCareerHistoryById(riderId: string): Promise<RiderCareer
 
 async function fetchRiderSeasonOverviewById(riderId: string): Promise<RiderSeasonOverview> {
   const normalizeRow = (row: any): RiderSeasonOverview => ({
-    points: normalizeNumber(row.international_points ?? row.points ?? row.season_points ?? row.total_points, 0),
+    points: normalizeNumber(
+      row.international_points ?? row.season_points_overall ?? row.points ?? row.season_points ?? row.total_points,
+      0
+    ),
     podiums: normalizeNumber(row.podiums ?? row.podium_count ?? row.podium_finishes, 0),
     jerseys: normalizeNumber(row.jerseys ?? row.jersey_count ?? row.special_jerseys, 0),
   })
+
+  try {
+    const { data, error } = await supabase
+      .from('rider_statistics_page_international_v1')
+      .select('international_points, season_points_overall, podiums, jerseys')
+      .eq('rider_id', riderId)
+      .eq('season_year', 2000)
+      .maybeSingle()
+
+    if (!error && data) return normalizeRow(data)
+  } catch {
+    // fallback below
+  }
 
   try {
     const { data, error } = await supabase.rpc('get_rider_international_points_summary_v1', {
@@ -1081,13 +1097,7 @@ async function fetchRiderSeasonOverviewById(riderId: string): Promise<RiderSeaso
 
     if (!error) {
       const row = Array.isArray(data) ? data[0] : data
-      if (row) {
-        return {
-          points: normalizeNumber(row.international_points, 0),
-          podiums: 0,
-          jerseys: 0,
-        }
-      }
+      if (row) return normalizeRow(row)
     }
   } catch {
     // fallback below
@@ -1138,11 +1148,34 @@ async function fetchRiderSeasonOverviewById(riderId: string): Promise<RiderSeaso
 async function fetchRiderSeasonStatsById(riderId: string): Promise<RiderSeasonStatsBox> {
   const normalizeRow = (row: any): RiderSeasonStatsBox => ({
     races: normalizeNumber(row.races ?? row.races_count ?? row.total_races, 0),
-    wins: normalizeNumber(row.wins ?? row.win_count ?? row.victories, 0),
+    wins: normalizeNumber(row.wins ?? row.win_count ?? row.victories ?? row.stage_wins, 0),
     podiums: normalizeNumber(row.podiums ?? row.podium_count ?? row.podium_finishes, 0),
     top10: normalizeNumber(row.top10 ?? row.top_10 ?? row.top_ten_count, 0),
-    points: normalizeNumber(row.international_points ?? row.points ?? row.season_points ?? row.total_points, 0),
+    points: normalizeNumber(
+      row.international_points ?? row.season_points_overall ?? row.points ?? row.season_points ?? row.total_points,
+      0
+    ),
   })
+
+  try {
+    const { data, error } = await supabase
+      .from('rider_statistics_page_international_v1')
+      .select('international_points, season_points_overall, stage_wins, podiums')
+      .eq('rider_id', riderId)
+      .eq('season_year', 2000)
+      .maybeSingle()
+
+    if (!error && data) {
+      const normalized = normalizeRow(data)
+      return {
+        ...normalized,
+        races: 0,
+        top10: 0,
+      }
+    }
+  } catch {
+    // fallback below
+  }
 
   try {
     const { data, error } = await supabase.rpc('get_rider_international_points_summary_v1', {
@@ -1152,15 +1185,7 @@ async function fetchRiderSeasonStatsById(riderId: string): Promise<RiderSeasonSt
 
     if (!error) {
       const row = Array.isArray(data) ? data[0] : data
-      if (row) {
-        return {
-          races: normalizeNumber(row.scoring_races, 0),
-          wins: 0,
-          podiums: 0,
-          top10: 0,
-          points: normalizeNumber(row.international_points, 0),
-        }
-      }
+      if (row) return normalizeRow(row)
     }
   } catch {
     // fallback below
