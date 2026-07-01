@@ -3830,9 +3830,12 @@ function normalizeRoadReplayGroupsForDisplay(
   sortedByRoadPosition.forEach((frame, index) => {
     const size = getReplayEntitySize(frame)
     const baseGroupCode = getReplayBaseGroupCode(frame.group_code)
+    const isFrontendLowEnergyDropGroup =
+      (frame.metadata ?? {}).frontend_low_energy_drop_group_v1 === true
     const semanticBonus = baseGroupCode === 'main_peloton' ? 0.2 : 0
     const roadPenalty = index / 100000
-    const score = size + semanticBonus - roadPenalty
+    const energyDropPelotonPenalty = isFrontendLowEnergyDropGroup ? 100000 : 0
+    const score = size + semanticBonus - roadPenalty - energyDropPelotonPenalty
 
     if (score > bestPelotonScore) {
       bestPelotonScore = score
@@ -3932,6 +3935,213 @@ function normalizeRoadReplayGroupsForDisplay(
       },
     }
   })
+}
+
+
+function getExplicitReplayRiderLiveEnergyPct(
+  frame: RaceReplayFrame,
+  riderId: string
+): number | null {
+  const riderEnergyRecord = getRiderEnergyRecordFromFrame(frame, riderId)
+
+  return (
+    getRiderEnergyMetricFromRecord(riderEnergyRecord, [
+      'live_energy_pct',
+      'liveEnergyPct',
+      'green_energy_pct',
+      'green_bar_pct',
+      'energy_remaining_pct',
+      'remaining_energy_pct',
+      'stage_energy_remaining_pct',
+    ]) ??
+    getRiderEnergyPercentFromMap(frame, riderId, [
+      'rider_live_energy_pct',
+      'live_energy_pct_by_rider_id',
+      'rider_stage_energy_remaining_pct',
+    ])
+  )
+}
+
+function splitLowEnergyActiveRoadGroupsForDisplay(
+  frames: RaceReplayFrame[]
+): RaceReplayFrame[] {
+  const groupFrames = frames.filter(
+    (frame) =>
+      getReplayEntityType(frame) === 'group' && getReplayEntitySize(frame) > 0
+  )
+
+  if (groupFrames.length === 0) return frames
+
+  const pelotonFrame =
+    groupFrames.find(
+      (frame) => getReplayBaseGroupCode(frame.group_code) === 'main_peloton'
+    ) ??
+    [...groupFrames]
+      .filter(
+        (frame) => (frame.metadata ?? {}).frontend_low_energy_drop_group_v1 !== true
+      )
+      .sort((left, right) => getReplayEntitySize(right) - getReplayEntitySize(left))[0] ??
+    groupFrames[0]
+
+  if (!pelotonFrame) return frames
+
+  const pelotonOrder = Number(pelotonFrame.group_order ?? 1)
+  const pelotonGap = getReplayFrameGapSeconds(pelotonFrame)
+  const leaderKm = Math.max(
+    ...groupFrames.map((frame) => asNumber(frame.km_marker) ?? 0),
+    asNumber(pelotonFrame.km_marker) ?? 0,
+    0
+  )
+
+  const keptFrames: RaceReplayFrame[] = []
+  const syntheticDropFrames: RaceReplayFrame[] = []
+
+  groupFrames.forEach((frame) => {
+    const frameMetadata = frame.metadata ?? {}
+    const baseGroupCode = getReplayBaseGroupCode(frame.group_code)
+    const groupOrder = Number(frame.group_order ?? Number.MAX_SAFE_INTEGER)
+    const isAlreadyLowEnergyDropGroup =
+      frameMetadata.frontend_low_energy_drop_group_v1 === true
+
+    const isActiveRoadGroup =
+      !isAlreadyLowEnergyDropGroup &&
+      (baseGroupCode === 'front_group' ||
+        baseGroupCode === 'chase_group' ||
+        baseGroupCode === 'main_peloton' ||
+        groupOrder <= pelotonOrder)
+
+    if (!isActiveRoadGroup) {
+      keptFrames.push(frame)
+      return
+    }
+
+    const riderIds = Array.isArray(frame.rider_ids) ? frame.rider_ids : []
+    const riderNames = Array.isArray(frame.rider_names) ? frame.rider_names : []
+    const teamNames = Array.isArray(frame.team_names) ? frame.team_names : []
+
+    if (riderIds.length === 0) {
+      keptFrames.push(frame)
+      return
+    }
+
+    const lowEnergyIndexes: number[] = []
+    const keepIndexes: number[] = []
+
+    riderIds.forEach((riderId, index) => {
+      const liveEnergyPct = getExplicitReplayRiderLiveEnergyPct(frame, riderId)
+
+      if (
+        liveEnergyPct !== null &&
+        liveEnergyPct <= ROAD_REPLAY_LOW_ENERGY_DROP_THRESHOLD_PCT
+      ) {
+        lowEnergyIndexes.push(index)
+      } else {
+        keepIndexes.push(index)
+      }
+    })
+
+    if (lowEnergyIndexes.length === 0) {
+      keptFrames.push(frame)
+      return
+    }
+
+    if (keepIndexes.length > 0) {
+      const nextRiderIds = keepIndexes
+        .map((index) => riderIds[index])
+        .filter((value): value is string => Boolean(value))
+      const nextRiderNames = keepIndexes
+        .map((index) => riderNames[index])
+        .filter((value): value is string => Boolean(value))
+      const nextTeamNames = keepIndexes
+        .map((index) => teamNames[index])
+        .filter((value): value is string => Boolean(value))
+
+      keptFrames.push({
+        ...frame,
+        rider_ids: nextRiderIds,
+        rider_names: nextRiderNames,
+        team_names: nextTeamNames,
+        metadata: {
+          ...frameMetadata,
+          group_size: Math.max(
+            nextRiderIds.length,
+            nextRiderNames.length,
+            nextTeamNames.length
+          ),
+          frontend_low_energy_active_group_filtered_v1: true,
+          frontend_low_energy_drop_threshold_pct:
+            ROAD_REPLAY_LOW_ENERGY_DROP_THRESHOLD_PCT,
+          frontend_low_energy_removed_riders_count: lowEnergyIndexes.length,
+          frontend_original_group_size_before_low_energy_filter:
+            getReplayEntitySize(frame),
+        },
+      })
+    }
+
+    const lowRiderIds = lowEnergyIndexes
+      .map((index) => riderIds[index])
+      .filter((value): value is string => Boolean(value))
+    const lowRiderNames = lowEnergyIndexes
+      .map((index) => riderNames[index])
+      .filter((value): value is string => Boolean(value))
+    const lowTeamNames = lowEnergyIndexes
+      .map((index) => teamNames[index])
+      .filter((value): value is string => Boolean(value))
+
+    if (lowRiderIds.length === 0) return
+
+    const sourceGap = getReplayFrameGapSeconds(frame)
+    const avgSpeedKmh = Math.max(28, Math.min(46, asNumber(frame.avg_speed_kmh) ?? 38))
+    const lowEnergyGroupNumber = syntheticDropFrames.length + 1
+    const lowEnergyGap = Math.max(
+      pelotonGap + ROAD_REPLAY_LOW_ENERGY_DROP_GAP_SECONDS * lowEnergyGroupNumber,
+      sourceGap + ROAD_REPLAY_LOW_ENERGY_DROP_GAP_SECONDS
+    )
+    const lowEnergyKm = Math.max(
+      0,
+      leaderKm - (lowEnergyGap * avgSpeedKmh) / 3600
+    )
+
+    syntheticDropFrames.push({
+      ...frame,
+      id: `${frame.id}:frontend-low-energy-drop:${lowEnergyGroupNumber}`,
+      group_code:
+        lowEnergyGroupNumber === 1
+          ? 'dropped_group_energy'
+          : `outside_group_energy_${lowEnergyGroupNumber}`,
+      group_label:
+        lowEnergyGroupNumber === 1
+          ? 'Energy dropped group'
+          : `Energy dropped group ${lowEnergyGroupNumber}`,
+      group_order: Math.max(999, pelotonOrder + lowEnergyGroupNumber),
+      gap_seconds: Number(lowEnergyGap.toFixed(3)),
+      km_marker: Number(lowEnergyKm.toFixed(3)),
+      rider_ids: lowRiderIds,
+      rider_names: lowRiderNames,
+      team_names: lowTeamNames,
+      metadata: {
+        ...frameMetadata,
+        group_size: Math.max(
+          lowRiderIds.length,
+          lowRiderNames.length,
+          lowTeamNames.length
+        ),
+        frontend_low_energy_drop_group_v1: true,
+        frontend_low_energy_drop_rule:
+          'riders with live green energy <= 10% cannot remain in front/chase/peloton groups',
+        frontend_low_energy_drop_threshold_pct:
+          ROAD_REPLAY_LOW_ENERGY_DROP_THRESHOLD_PCT,
+        frontend_low_energy_source_group_code: frame.group_code,
+        frontend_low_energy_source_group_label: frame.group_label,
+        frontend_low_energy_source_gap_seconds: sourceGap,
+        frontend_low_energy_peloton_gap_seconds: pelotonGap,
+      },
+    })
+  })
+
+  return [...keptFrames, ...syntheticDropFrames]
+    .filter((frame) => getReplayEntitySize(frame) > 0)
+    .sort(sortReplayFrames)
 }
 
 function interpolateNumberValue(
@@ -4106,8 +4316,14 @@ function getNormalizedRoadReplayGroupsForExactFrameNumber(
   const rawGroupFrames = getRoadReplayFramesForExactFrameNumber(frames, frameNumber)
     .filter((frame) => getReplayEntityType(frame) === 'group')
 
-  return normalizeRoadReplayGroupsForDisplay(
+  const normalizedGroups = normalizeRoadReplayGroupsForDisplay(
     getDedupedRoadGroupFrames(rawGroupFrames)
+  )
+
+  return normalizeRoadReplayGroupsForDisplay(
+    getDedupedRoadGroupFrames(
+      splitLowEnergyActiveRoadGroupsForDisplay(normalizedGroups)
+    )
   )
 }
 
@@ -4150,6 +4366,9 @@ function normalizeInterpolatedRoadGroupSpacing(
 
 
 const ROAD_REPLAY_GROUP_TRANSITION_FRAME_WINDOW = 8
+const ROAD_REPLAY_MAX_DIRECT_MERGE_GAP_SECONDS = 10
+const ROAD_REPLAY_LOW_ENERGY_DROP_THRESHOLD_PCT = 10
+const ROAD_REPLAY_LOW_ENERGY_DROP_GAP_SECONDS = 12
 
 function getRoadGroupVisualSide(
   frame: RaceReplayFrame
@@ -4616,21 +4835,128 @@ function getNormalizedRoadReplayGroupsAtFramePosition(
     })
   })
 
-  /*
-   * Do not render unmatched previous groups as long-lived merge ghosts.
-   *
-   * The previous buffered version kept disappearing groups visible while they
-   * moved back toward the Peloton. At 4x speed this created exactly the visual
-   * bug the user reported: old B/G groups stayed on the profile even after
-   * Stage Standing had already removed them. For the canonical road display,
-   * the profile should show the current canonical group list only. New groups
-   * can still be born smoothly from a Peloton/front anchor; disappeared groups
-   * are removed immediately so closed groups do not remain as ghost markers.
-   */
+  const findForwardMergeTarget = (
+    sourceFrame: RaceReplayFrame
+  ): RaceReplayFrame | null => {
+    const sourceGap = getReplayFrameGapSeconds(sourceFrame)
+    const sourceKm = asNumber(sourceFrame.km_marker) ?? 0
 
-  return normalizeInterpolatedRoadGroupSpacing(
-    interpolatedGroups.filter((frame) => getReplayEntitySize(frame) > 0)
+    return [...nextGroups]
+      .filter((targetFrame) => {
+        if (targetFrame === nextMatchByPreviousFrame.get(sourceFrame)) return false
+
+        const targetGap = getReplayFrameGapSeconds(targetFrame)
+        const targetKm = asNumber(targetFrame.km_marker) ?? 0
+
+        /*
+         * Merge direction rule:
+         * a disappearing group may only move toward a group in front of it.
+         * For road-order gaps, "in front" means a smaller gap, or a larger km
+         * marker when gap data is almost equal. This prevents G1/G2 from
+         * visually snapping backward into the group behind.
+         */
+        return (
+          targetGap < sourceGap - 0.1 ||
+          (Math.abs(targetGap - sourceGap) <= 0.1 && targetKm > sourceKm)
+        )
+      })
+      .sort((left, right) => {
+        const leftGapDiff = Math.abs(
+          sourceGap - getReplayFrameGapSeconds(left)
+        )
+        const rightGapDiff = Math.abs(
+          sourceGap - getReplayFrameGapSeconds(right)
+        )
+
+        if (Math.abs(leftGapDiff - rightGapDiff) > 0.01) {
+          return leftGapDiff - rightGapDiff
+        }
+
+        return (asNumber(right.km_marker) ?? 0) - (asNumber(left.km_marker) ?? 0)
+      })[0] ?? null
+  }
+
+  const protectedMergeGroups = previousGroups
+    .filter((previousFrame) => !nextMatchByPreviousFrame.has(previousFrame))
+    .map((previousFrame): RaceReplayFrame | null => {
+      const mergeTarget = findForwardMergeTarget(previousFrame)
+      if (!mergeTarget) return null
+
+      const previousGap = getReplayFrameGapSeconds(previousFrame)
+      const targetGap = getReplayFrameGapSeconds(mergeTarget)
+      const gapToTarget = Math.abs(previousGap - targetGap)
+
+      /*
+       * Strict anti-teleport merge rule:
+       * groups may disappear/merge only when the previous adjacent road gap is
+       * below 10 seconds. If the gap is still 10+ seconds, the group remains a
+       * visible canonical road group and moves gradually toward the front group.
+       */
+      if (gapToTarget < ROAD_REPLAY_MAX_DIRECT_MERGE_GAP_SECONDS) {
+        return null
+      }
+
+      const rawGap = interpolateNumberValue(
+        previousFrame.gap_seconds,
+        mergeTarget.gap_seconds,
+        ratio
+      )
+      const protectedGap =
+        rawGap === null
+          ? previousGap
+          : previousGap >= targetGap
+            ? Math.max(
+                targetGap + ROAD_REPLAY_MAX_DIRECT_MERGE_GAP_SECONDS,
+                rawGap
+              )
+            : Math.min(
+                targetGap - ROAD_REPLAY_MAX_DIRECT_MERGE_GAP_SECONDS,
+                rawGap
+              )
+
+      const rawKm = interpolateNumberValue(
+        previousFrame.km_marker,
+        mergeTarget.km_marker,
+        ratio
+      )
+
+      return {
+        ...previousFrame,
+        id: `${previousFrame.id}:protected-anti-teleport-merge:${Math.round(safeFramePosition * 1000)}`,
+        frame_number: safeFramePosition,
+        km_marker:
+          rawKm === null
+            ? previousFrame.km_marker
+            : Number(rawKm.toFixed(3)),
+        gap_seconds: Number(Math.max(0, protectedGap).toFixed(3)),
+        metadata: {
+          ...(previousFrame.metadata ?? {}),
+          frontend_protected_anti_teleport_merge_v1: true,
+          frontend_protected_anti_teleport_merge_rule:
+            'group cannot visually merge/disappear until adjacent gap is below 10 seconds; merge target must be the group in front',
+          frontend_protected_merge_target_group_code: mergeTarget.group_code,
+          frontend_protected_merge_target_gap_seconds: targetGap,
+          frontend_protected_previous_gap_seconds: previousGap,
+          frontend_protected_gap_to_target_seconds: gapToTarget,
+        },
+      }
+    })
+    .filter((frame): frame is RaceReplayFrame => frame !== null)
+
+  const displayGroups = normalizeRoadReplayGroupsForDisplay(
+    getDedupedRoadGroupFrames(
+      [...interpolatedGroups, ...protectedMergeGroups]
+        .filter((frame) => getReplayEntitySize(frame) > 0)
+    )
   )
+
+  const energyAwareDisplayGroups = normalizeRoadReplayGroupsForDisplay(
+    getDedupedRoadGroupFrames(
+      splitLowEnergyActiveRoadGroupsForDisplay(displayGroups)
+    )
+  )
+
+  return normalizeInterpolatedRoadGroupSpacing(energyAwareDisplayGroups)
 }
 
 function isGeneralClassificationCode(value: string): boolean {
