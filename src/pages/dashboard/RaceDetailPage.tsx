@@ -4312,8 +4312,43 @@ function buildRoadGroupVisualMatches(
       bestPreviousFrame &&
       (bestOverlap > 0 || bestScore >= 90)
     ) {
-      matchByNextFrame.set(nextFrame, bestPreviousFrame)
-      usedPreviousFrames.add(bestPreviousFrame)
+      /*
+       * Merge rule:
+       * when several front groups combine, visually follow the group that was
+       * already in front. The catching group should move forward into it; the
+       * front group should not disappear and reappear behind.
+       */
+      const nextSide = getRoadGroupVisualSide(nextFrame)
+      const frontMergeCandidate =
+        nextSide === 'front'
+          ? previousGroups
+              .filter((previousFrame) => {
+                if (usedPreviousFrames.has(previousFrame)) return false
+                if (getRoadGroupVisualSide(previousFrame) !== 'front') return false
+                return getRoadGroupRiderOverlapCount(previousFrame, nextFrame) > 0
+              })
+              .sort((left, right) => {
+                const gapDiff =
+                  getReplayFrameGapSeconds(left) -
+                  getReplayFrameGapSeconds(right)
+                if (Math.abs(gapDiff) > 0.01) return gapDiff
+
+                const kmDiff =
+                  (asNumber(right.km_marker) ?? 0) -
+                  (asNumber(left.km_marker) ?? 0)
+                if (Math.abs(kmDiff) > 0.01) return kmDiff
+
+                return (
+                  (Number(left.group_order) || Number.MAX_SAFE_INTEGER) -
+                  (Number(right.group_order) || Number.MAX_SAFE_INTEGER)
+                )
+              })[0] ?? null
+          : null
+
+      const previousFrameToUse = frontMergeCandidate ?? bestPreviousFrame
+
+      matchByNextFrame.set(nextFrame, previousFrameToUse)
+      usedPreviousFrames.add(previousFrameToUse)
     }
   })
 
@@ -5359,7 +5394,9 @@ function ReplayStageProfile({
             0,
             Math.min(profilePayload.maxKm, rawGroupKm - visualGapKm)
           )
-          const coord = getInterpolatedProfileCoordinate(profilePayload.coordinates, groupKm)
+          const coord = isRoadGroupMarker
+            ? getSmoothedProfileCoordinate(profilePayload.coordinates, groupKm)
+            : getInterpolatedProfileCoordinate(profilePayload.coordinates, groupKm)
           if (!coord) return null
 
           const specialLeaderTypes =
@@ -5430,13 +5467,47 @@ function ReplayStageProfile({
               Math.min(42, 18 + displayedLabel.length * 7)
             )
             const minimumPillY = 4
-            const maximumStemTopY = Math.max(
-              minimumPillY + roadPillHeight + 2,
-              coord.y - preferredStemPixels
-            )
-            const roadPillY = Math.max(
+            const maximumPillY = Math.max(
               minimumPillY,
-              maximumStemTopY - roadPillHeight
+              coord.y - roadPillHeight - 8
+            )
+            const basePillY = Math.max(
+              minimumPillY,
+              coord.y - preferredStemPixels - roadPillHeight
+            )
+            /*
+             * Stagger road labels vertically by road order so nearby G/P/B
+             * pills remain readable. This does not change the profile curve or
+             * the actual road-dot coordinate; it only changes the pill lane.
+             */
+            const roadPillLane = Math.min(7, Math.max(0, index))
+            const roadLaneSpacing = compact ? 10 : 12
+            const roadLaneStackLimit = compact ? 48 : 64
+            const roadPillTopY = Math.max(
+              minimumPillY,
+              Math.min(maximumPillY, basePillY)
+            )
+            /*
+             * Keep road-group labels in a tight readable band. The previous
+             * lane stack could push G/P/B pills far down toward the road line
+             * when many groups existed, which looked strange on flat sections.
+             * This cap keeps the lowest pill close to the highest pill while
+             * still allowing a small vertical stagger to avoid overlap.
+             */
+            const roadPillLowestAllowedY = Math.max(
+              minimumPillY,
+              Math.min(
+                maximumPillY,
+                roadPillTopY + roadLaneStackLimit,
+                coord.y - roadPillHeight - 8
+              )
+            )
+            const roadPillY = Math.min(
+              roadPillLowestAllowedY,
+              Math.max(
+                minimumPillY,
+                roadPillTopY + roadPillLane * roadLaneSpacing
+              )
             )
             const roadStemTopY = roadPillY + roadPillHeight
             const roadMarkerRadius = coord.y < height * 0.48 ? 4.2 : 5.2
@@ -8669,6 +8740,96 @@ function getInterpolatedProfileCoordinate(
       return {
         x: previous.x + (next.x - previous.x) * ratio,
         y: previous.y + (next.y - previous.y) * ratio,
+      }
+    }
+  }
+
+  return null
+}
+
+
+function getCubicBezierValue(
+  p0: number,
+  p1: number,
+  p2: number,
+  p3: number,
+  t: number
+): number {
+  const oneMinusT = 1 - t
+
+  return (
+    oneMinusT * oneMinusT * oneMinusT * p0 +
+    3 * oneMinusT * oneMinusT * t * p1 +
+    3 * oneMinusT * t * t * p2 +
+    t * t * t * p3
+  )
+}
+
+function getSmoothedProfileCoordinate(
+  coordinates: { x: number; y: number; km: number; elevation_m: number }[],
+  targetKm: number
+): { x: number; y: number } | null {
+  /*
+   * Keep the existing stage-profile curve unchanged.
+   *
+   * buildStageProfilePath draws a cubic Bézier curve between profile points:
+   * C midX previousY, midX nextY, nextX nextY.
+   *
+   * Road-group dots must use the same cubic curve, not linear interpolation
+   * between profile points. Otherwise the dot can float above or below the
+   * visible line on climbs/descents even though the profile itself is correct.
+   */
+  if (coordinates.length === 0) return null
+
+  const sorted = [...coordinates].sort((a, b) => a.km - b.km)
+
+  if (targetKm <= sorted[0].km) return { x: sorted[0].x, y: sorted[0].y }
+
+  const last = sorted[sorted.length - 1]
+  if (targetKm >= last.km) return { x: last.x, y: last.y }
+
+  for (let index = 1; index < sorted.length; index += 1) {
+    const previous = sorted[index - 1]
+    const next = sorted[index]
+
+    if (targetKm >= previous.km && targetKm <= next.km) {
+      const kmSpan = Math.max(next.km - previous.km, 1)
+      const kmRatio = (targetKm - previous.km) / kmSpan
+      const targetX = previous.x + (next.x - previous.x) * kmRatio
+      const controlX = (previous.x + next.x) / 2
+
+      let low = 0
+      let high = 1
+
+      for (let iteration = 0; iteration < 18; iteration += 1) {
+        const mid = (low + high) / 2
+        const midX = getCubicBezierValue(
+          previous.x,
+          controlX,
+          controlX,
+          next.x,
+          mid
+        )
+
+        if (midX < targetX) {
+          low = mid
+        } else {
+          high = mid
+        }
+      }
+
+      const t = (low + high) / 2
+      const y = getCubicBezierValue(
+        previous.y,
+        previous.y,
+        next.y,
+        next.y,
+        t
+      )
+
+      return {
+        x: targetX,
+        y,
       }
     }
   }
