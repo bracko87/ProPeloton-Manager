@@ -2,6 +2,17 @@
   command = "npm run build"
   publish = "dist"
 
+[[headers]]
+  for = "/ads.txt"
+  [headers.values]
+    Content-Type = "text/plain; charset=utf-8"
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+[[redirects]]
+  from = "/ads.txt"
+  to = "/ads.txt"
+  status = 200
+
 [[redirects]]
   from = "/*"
   to = "/index.html"
