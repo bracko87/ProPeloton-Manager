@@ -1236,9 +1236,25 @@ export default function RacePreparationPage(): JSX.Element {
     return result;
   }, [cleanSelectedStaffIds, selectableData?.staff]);
 
+  const packageSubmitted =
+    raceStatus === "submitted" ||
+    raceStatus === "locked" ||
+    raceStatus === "sent_to_engine" ||
+    prepStatus === "submitted" ||
+    prepStatus === "locked" ||
+    prepStatus === "sent_to_engine";
+
   const visibleRiderOptions = useMemo(() => {
-    return selectableData?.riders ?? [];
-  }, [selectableData?.riders]);
+    const riders = selectableData?.riders ?? [];
+
+    if (!packageSubmitted) {
+      return riders;
+    }
+
+    const selectedIdSet = new Set(selectedRiderIds);
+
+    return riders.filter((option) => selectedIdSet.has(option.rider_id));
+  }, [packageSubmitted, selectableData?.riders, selectedRiderIds]);
 
   useEffect(() => {
     let mounted = true;
@@ -1379,14 +1395,6 @@ export default function RacePreparationPage(): JSX.Element {
       return changed ? next : current;
     });
   }, [blockedAssetIds, blockedRiderIds, blockedStaffIds, canEdit]);
-
-  const packageSubmitted =
-    raceStatus === "submitted" ||
-    raceStatus === "locked" ||
-    raceStatus === "sent_to_engine" ||
-    prepStatus === "submitted" ||
-    prepStatus === "locked" ||
-    prepStatus === "sent_to_engine";
 
   const stagePlansOpen = packageSubmitted;
 
@@ -2158,7 +2166,40 @@ export default function RacePreparationPage(): JSX.Element {
 
               <section className="grid gap-6 xl:grid-cols-[1.4fr_0.8fr]">
                 <div className="space-y-6">
-                  <RacePackageCard title="1. Riders">
+                  <RacePackageCard
+                    title="1. Riders"
+                    action={
+                      <InfoTooltip
+                        label="Rider freshness help"
+                        panelWidthClass="w-[30rem]"
+                      >
+                        <div className="text-sm font-semibold text-slate-900">
+                          Freshness, sharpness and fatigue
+                        </div>
+                        <p className="mt-2">
+                          Race sharpness shows whether a rider has enough recent
+                          racing rhythm. Higher sharpness helps a rider start
+                          sharper and perform more reliably.
+                        </p>
+                        <p className="mt-2">
+                          Fatigue is still the main limiter. A rider with good
+                          race sharpness but very high fatigue will not start the
+                          race fully fresh.
+                        </p>
+                        <p className="mt-2">
+                          The race-start red freshness bar combines fatigue and
+                          race sharpness. It is capped between 50 and 100 so no
+                          selected rider starts a race unrealistically empty.
+                        </p>
+                        {packageSubmitted ? (
+                          <p className="mt-2 font-semibold text-slate-800">
+                            Because this Race Plan is already submitted, only
+                            riders selected for this race are shown here.
+                          </p>
+                        ) : null}
+                      </InfoTooltip>
+                    }
+                  >
                     <div
                       className={`mb-3 text-sm ${
                         riderSelectionTooFew || riderSelectionTooMany
@@ -2222,7 +2263,33 @@ export default function RacePreparationPage(): JSX.Element {
                     </div>
                   </RacePackageCard>
 
-                  <RacePackageCard title="2. Race Staff">
+                  <RacePackageCard
+                    title="2. Race Staff"
+                    action={
+                      <InfoTooltip
+                        label="Race staff help"
+                        panelWidthClass="w-[30rem]"
+                      >
+                        <div className="text-sm font-semibold text-slate-900">
+                          Team Doctor benefit
+                        </div>
+                        <p className="mt-2">
+                          Only Sport Director, Team Doctor, Physio and Mechanic
+                          are available for Race Preparation.
+                        </p>
+                        <p className="mt-2">
+                          Clubs with an active Team Doctor receive medical
+                          fitness warnings when riders are not fully ready
+                          because of high fatigue, sickness, injury, cold or
+                          recovery problems.
+                        </p>
+                        <p className="mt-2 font-semibold text-slate-800">
+                          Without a Team Doctor, these rider fitness warnings are
+                          not created.
+                        </p>
+                      </InfoTooltip>
+                    }
+                  >
                     <div className="mb-3 text-sm text-slate-600">
                       Only Sport Director, Team Doctor, Physio, and Mechanic are
                       available for Race Preparation.
@@ -9834,14 +9901,19 @@ function InfoBox({ label, value }: { label: string; value: string }) {
 
 function RacePackageCard({
   title,
+  action,
   children,
 }: {
   title: string;
+  action?: React.ReactNode;
   children: React.ReactNode;
 }) {
   return (
     <section className="rounded-2xl border bg-white p-5 shadow-sm">
-      <h2 className="mb-4 text-lg font-semibold text-slate-900">{title}</h2>
+      <div className="mb-4 flex items-start justify-between gap-3">
+        <h2 className="text-lg font-semibold text-slate-900">{title}</h2>
+        {action ? <div className="shrink-0">{action}</div> : null}
+      </div>
       {children}
     </section>
   );
@@ -9941,6 +10013,10 @@ function RaceSharpnessDetailBox({
       <div className="mt-2 text-[11px] leading-relaxed opacity-85">
         {sharpness.race_sharpness_message}
       </div>
+      <div className="mt-2 rounded-lg bg-white/60 px-2 py-1.5 text-[11px] leading-relaxed opacity-90">
+        Race sharpness improves rhythm, but it does not cancel heavy fatigue.
+        Race-start freshness is calculated from both values.
+      </div>
     </div>
   );
 }
@@ -10017,6 +10093,10 @@ function RiderSelectionCard({
             <div className="mt-2 text-xs text-slate-500">
               Fatigue: {String(rider.fatigue ?? "—")} · Availability:{" "}
               {String(rider.availability_status ?? "fit")}
+            </div>
+            <div className="mt-2 text-[11px] leading-relaxed text-slate-400">
+              Starting freshness combines fatigue and race sharpness. High
+              fatigue can lower the red bar even when sharpness is good.
             </div>
           </>
         )}
@@ -10096,6 +10176,12 @@ function RiderInfoPopover({
           <RaceSharpnessDetailBox sharpness={raceSharpness} />
         </div>
       ) : null}
+
+      <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-[11px] leading-relaxed text-slate-600">
+        <span className="font-semibold text-slate-800">Race-start freshness:</span>{" "}
+        fatigue lowers the red bar, race sharpness helps it, and the minimum
+        starting freshness is 50/100.
+      </div>
 
       <div className="mt-4">
         <div className="mb-2 font-semibold text-slate-900">Key skills</div>

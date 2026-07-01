@@ -510,6 +510,26 @@ const DEFAULT_CURRENT_CLUB_ID = '49caba57-9a5e-4820-b4bf-06cfc684e8b2'
 
 const MAX_TIME_TRIAL_VISIBLE_MOVING_ENTITIES = 11
 const RACE_PROFILE_RETURN_STORAGE_KEY = 'pro_peloton_race_profile_return_state_v1'
+const RACE_DETAIL_SOURCE_RETURN_STORAGE_KEY =
+  'pro_peloton_race_detail_source_return_state_v1'
+
+type RaceDetailReturnState = {
+  from?: string
+  returnTo?: string
+  returnLabel?: string
+  returnScrollY?: number
+  returnScrollX?: number
+  restoreScrollY?: number
+  restoreScrollX?: number
+  returnRaceId?: string
+  returnCalendarView?: string
+  returnMonthNumber?: number
+  raceInfoExpanded?: boolean
+  restoreRaceInfoExpanded?: boolean
+  raceInfoTab?: RaceInfoTab
+  sourceRaceId?: string
+  createdAtMs?: number
+}
 
 const VIEWER_TEAM_ROW_HIGHLIGHT_CLASS =
   'bg-yellow-100/80 shadow-[inset_4px_0_0_rgba(234,179,8,0.65)]'
@@ -1444,6 +1464,17 @@ function getEstimatedReplayRiderEnergySnapshot({
 } {
   const metadata = frame.metadata ?? {}
   const riderEnergyRecord = getRiderEnergyRecordFromFrame(frame, riderId)
+  const baseGroupCode = getReplayBaseGroupCode(frame.group_code)
+  const groupSize = getReplayEntitySize(frame)
+  const gapSeconds = Math.max(0, Number(frame.gap_seconds ?? 0))
+  const stageProgress =
+    stageDistanceKm > 0
+      ? Math.max(0, Math.min(1, currentKm / stageDistanceKm))
+      : 0
+  const activeEnergyFloor =
+    baseGroupCode !== 'dropped_group' && baseGroupCode !== 'outside_group'
+      ? getEarlyActiveEnergyFloor(stageProgress)
+      : null
 
   const explicitPreStageFreshness =
     getRiderEnergyMetricFromRecord(riderEnergyRecord, [
@@ -1506,29 +1537,27 @@ function getEstimatedReplayRiderEnergySnapshot({
   )
 
   if (explicitLiveEnergy !== null) {
-    const liveEnergyPct = Math.max(0, Math.min(100, explicitLiveEnergy))
+    const rawLiveEnergyPct = Math.max(0, Math.min(100, explicitLiveEnergy))
+    const liveEnergyPct =
+      activeEnergyFloor !== null
+        ? Math.max(rawLiveEnergyPct, activeEnergyFloor)
+        : rawLiveEnergyPct
 
     return {
       preStageFreshnessPct,
       /*
        * Green bar = current stage energy.
-       * It is independent from pre-stage freshness and must be able to
-       * start at 100% even when the rider begins the stage tired.
+       * It is independent from pre-stage freshness and should not collapse to
+       * single digits in the opening kilometres of a calm active peloton.
        */
       liveEnergyPct,
       stageEnergyUsedPct:
-        explicitStageEnergyUsed ??
-        Math.max(0, 100 - liveEnergyPct),
+        explicitStageEnergyUsed !== null
+          ? Math.max(0, Math.min(100, Math.max(explicitStageEnergyUsed, 100 - liveEnergyPct)))
+          : Math.max(0, 100 - liveEnergyPct),
     }
   }
 
-  const stageProgress =
-    stageDistanceKm > 0
-      ? Math.max(0, Math.min(1, currentKm / stageDistanceKm))
-      : 0
-
-  const baseGroupCode = getReplayBaseGroupCode(frame.group_code)
-  const groupSize = getReplayEntitySize(frame)
   const isSmallFrontGroup =
     baseGroupCode === 'front_group' && groupSize > 0 && groupSize <= 18
 
@@ -1555,30 +1584,42 @@ function getEstimatedReplayRiderEnergySnapshot({
       ? 1.08
       : 1
 
-  const stageEnergyUsedPct =
-    explicitStageEnergyUsed ??
-    Math.max(
-      0,
-      Math.min(
-        100,
-        Math.round(
-          stageProgress *
-            52 *
-            groupEffortMultiplier *
-            frontPositionEffort *
-            weatherEffort
-        )
+  const freshnessDebt = Math.max(0, 100 - preStageFreshnessPct)
+  const riderVariation = ((riderIndex * 7) % 11) - 5
+
+  const fallbackEnergyUsedPct = Math.max(
+    0,
+    Math.min(
+      100,
+      Math.round(
+        stageProgress *
+          52 *
+          groupEffortMultiplier *
+          frontPositionEffort *
+          weatherEffort +
+          (baseGroupCode === 'dropped_group' || baseGroupCode === 'outside_group'
+            ? Math.min(46, gapSeconds * 0.32) + freshnessDebt * 0.28 + riderVariation
+            : 0)
       )
     )
+  )
+
+  const stageEnergyUsedPct = explicitStageEnergyUsed ?? fallbackEnergyUsedPct
+  const rawLiveEnergyPct = Math.max(0, Math.min(100, 100 - stageEnergyUsedPct))
+  const liveEnergyPct =
+    activeEnergyFloor !== null
+      ? Math.max(rawLiveEnergyPct, activeEnergyFloor)
+      : rawLiveEnergyPct
 
   return {
     preStageFreshnessPct,
     /*
-     * Fallback estimate also treats green as stage-local energy: every rider
-     * starts the stage at 100% and then spends energy during this stage.
+     * Fallback estimate also treats green as stage-local energy. Dropped/B
+     * groups without backend energy metadata are penalized by gap + low
+     * freshness so they no longer display as permanent 100% green.
      */
-    liveEnergyPct: Math.max(0, Math.min(100, 100 - stageEnergyUsedPct)),
-    stageEnergyUsedPct,
+    liveEnergyPct,
+    stageEnergyUsedPct: Math.max(0, Math.min(100, 100 - liveEnergyPct)),
   }
 }
 
@@ -2076,6 +2117,7 @@ type ReplayGroupLine = {
   entityState?: string
   gapLabel?: string
   timeTrialEntityKey?: string
+  usesSyntheticProfileGap?: boolean
 }
 
 function getReplayBaseGroupCode(code: string): string {
@@ -2223,6 +2265,102 @@ function getReplayGroupStroke(
     default:
       return '#334155'
   }
+}
+
+
+function getRoadGroupVisualGapKm(gapSeconds: number, currentKm: number, maxKm: number): number {
+  if (!Number.isFinite(gapSeconds) || gapSeconds <= 0) return 0
+
+  /*
+   * Visual-only road gap spacing.
+   * The database km_marker stays unchanged. This only separates markers on the
+   * stage profile so a B1/P group with +30–40s does not render as one dot.
+   */
+  const rawGapKm = gapSeconds * 0.035
+  const minimumVisibleGapKm =
+    gapSeconds >= 90 ? 2.25 :
+    gapSeconds >= 45 ? 1.45 :
+    gapSeconds >= 20 ? 0.9 :
+    0.35
+
+  const cappedGapKm = Math.min(8, Math.max(minimumVisibleGapKm, rawGapKm))
+
+  /*
+   * Near the start, do not push the group fully outside the visible profile.
+   * Keep at least a small part of the actual progress visible.
+   */
+  const earlyRaceCap = currentKm < 8 ? Math.max(0.25, currentKm * 0.65) : cappedGapKm
+  const safeGapKm = Math.min(cappedGapKm, earlyRaceCap)
+
+  return Math.max(0, Math.min(safeGapKm, Math.max(0, maxKm)))
+}
+
+
+function getRoadGroupProfileKmFromGap({
+  actualKm,
+  leaderKm,
+  gapSeconds,
+  avgSpeedKmh,
+  previousGroupKm,
+  maxKm,
+}: {
+  actualKm: number
+  leaderKm: number
+  gapSeconds: number
+  avgSpeedKmh?: number
+  previousGroupKm?: number | null
+  maxKm: number
+}): number {
+  if (!Number.isFinite(actualKm)) return 0
+  if (!Number.isFinite(gapSeconds) || gapSeconds <= 0) {
+    return Math.max(0, Math.min(maxKm, actualKm))
+  }
+
+  const speedKmh = Math.max(28, Math.min(46, Number(avgSpeedKmh ?? 38)))
+  const physicalGapKm = (gapSeconds * speedKmh) / 3600
+  const minimumVisibleGapKm =
+    gapSeconds >= 180 ? 1.6 :
+    gapSeconds >= 90 ? 0.9 :
+    gapSeconds >= 30 ? 0.35 :
+    0.12
+  const maximumVisibleGapKm =
+    gapSeconds >= 180 ? 3.2 :
+    gapSeconds >= 90 ? 2.2 :
+    gapSeconds >= 30 ? 1.4 :
+    0.55
+  const gapKm = Math.min(maximumVisibleGapKm, Math.max(minimumVisibleGapKm, physicalGapKm))
+
+  let displayKm = leaderKm - gapKm
+
+  if (previousGroupKm !== null && previousGroupKm !== undefined) {
+    displayKm = Math.min(displayKm, previousGroupKm - 0.08)
+  }
+
+  /*
+   * Do not allow new behind groups to jump backwards off-screen. The backend
+   * remains the source of truth; this is only visual spacing on the profile.
+   */
+  const safeLowerBound = Math.max(0, actualKm - 0.8)
+  displayKm = Math.max(safeLowerBound, displayKm)
+
+  return Math.max(0, Math.min(maxKm, displayKm))
+}
+
+function getEarlyActiveEnergyFloor(stageProgress: number): number | null {
+  if (!Number.isFinite(stageProgress)) return null
+
+  /*
+   * Green is stage-local energy. Every rider starts the stage near 100%.
+   * Red freshness controls how fast green drains; it should not make a rider
+   * start a stage with 40–70% green in the opening kilometres.
+   */
+  if (stageProgress <= 0.03) return 98
+  if (stageProgress <= 0.08) return 95
+  if (stageProgress <= 0.15) return 91
+  if (stageProgress <= 0.25) return 86
+  if (stageProgress <= 0.40) return 78
+
+  return null
 }
 
 function getReplaySpecialLeaderTypes(
@@ -3651,7 +3789,9 @@ function normalizeRoadReplayGroupsForDisplay(
 
   let previousGap = 0
 
-  return sortedFrames.map((frame, index) => {
+  return sortedFrames
+    .filter((frame) => getReplayEntitySize(frame) > 0)
+    .map((frame, index) => {
     const rawGap = Math.max(0, Number(frame.gap_seconds ?? 0))
     const semanticOrder = index + 1
 
@@ -4308,10 +4448,28 @@ function ReplayStageProfile({
     return entityType === 'rider' || entityType === 'team'
   })
   const profileReplayFrames = getVisibleTimeTrialProfileFrames(frames)
+  const sortedProfileReplayFrames = [...profileReplayFrames].sort((left, right) => {
+    const leftEntityType = getReplayEntityType(left)
+    const rightEntityType = getReplayEntityType(right)
+    if (leftEntityType !== rightEntityType) return leftEntityType === 'group' ? -1 : 1
+
+    const leftOrder = Number(left.group_order ?? left.provisional_rank ?? 9999)
+    const rightOrder = Number(right.group_order ?? right.provisional_rank ?? 9999)
+    if (leftOrder !== rightOrder) return leftOrder - rightOrder
+
+    return getReplayFrameGapSeconds(left) - getReplayFrameGapSeconds(right)
+  })
+  const roadLeaderFrame = sortedProfileReplayFrames.find(
+    (frame) => getReplayEntityType(frame) === 'group'
+  )
+  const roadLeaderKm = asNumber(roadLeaderFrame?.km_marker) ?? currentKm
+  let previousRoadGroupMarkerKm: number | null = null
 
   const replayGroups: ReplayGroupLine[] =
-    profileReplayFrames.length > 0
-      ? profileReplayFrames.map((frame, index) => {
+    sortedProfileReplayFrames.length > 0
+      ? sortedProfileReplayFrames
+          .filter((frame) => getReplayEntitySize(frame) > 0)
+          .map((frame, index) => {
           const entityType = getReplayEntityType(frame)
           const actualKm =
             asNumber(frame.km_marker) ?? 0
@@ -4322,6 +4480,20 @@ function ReplayStageProfile({
                   frame.group_code ||
                   `${entityType}-${frame.entity_id ?? index}`
           const gapSeconds = getReplayFrameGapSeconds(frame)
+          const displayKm = entityType === 'group'
+            ? getRoadGroupProfileKmFromGap({
+                actualKm,
+                leaderKm: roadLeaderKm,
+                gapSeconds,
+                avgSpeedKmh: asNumber(frame.avg_speed_kmh) ?? undefined,
+                previousGroupKm: previousRoadGroupMarkerKm,
+                maxKm: profilePayload.maxKm,
+              })
+            : actualKm
+
+          if (entityType === 'group') {
+            previousRoadGroupMarkerKm = displayKm
+          }
 
           return {
             code: entityCode,
@@ -4345,12 +4517,13 @@ function ReplayStageProfile({
             gapLabel: getReplayFrameGapLabel(frame),
             kmOffset: 0,
             actualKm,
-            kmMarker: Math.max(0, actualKm),
+            kmMarker: Math.max(0, displayKm),
             riderCount: getReplayEntitySize(frame),
             size: getReplayEntitySize(frame),
             entityType,
             teamName: getReplayFrameTeamName(frame),
             entityState: getReplayEntityState(frame),
+            usesSyntheticProfileGap: false,
             timeTrialEntityKey:
               entityType === 'rider' || entityType === 'team'
                 ? getReplayTimeTrialFrameKey(frame)
@@ -4373,6 +4546,7 @@ function ReplayStageProfile({
             actualKm: currentKm,
             kmMarker: currentKm,
             riderCount: group.size ?? 0,
+            usesSyntheticProfileGap: true,
             gapLabel:
               group.gapSeconds === 0
                 ? 'Leader'
@@ -4556,22 +4730,23 @@ function ReplayStageProfile({
 
           const entityType = group.entityType ?? 'group'
           const isRoadGroupMarker = entityType === 'group'
-          const visualGapKm = isRoadGroupMarker
-            ? Math.min(
-                18,
-                Math.max(
-                  0,
-                  Number(group.gapSeconds ?? 0) * 0.05
-                )
+
+          /*
+           * Real replay frames already contain physical km_marker separation.
+           * Do not subtract the full leader gap again, because that double-counts
+           * the backend gap and can make markers look more wrong.
+           *
+           * Only old synthetic summary markers need visual gap spacing, because
+           * they all start from the same currentKm fallback.
+           */
+          const visualGapKm = isRoadGroupMarker && group.usesSyntheticProfileGap
+            ? getRoadGroupVisualGapKm(
+                Number(group.gapSeconds ?? 0),
+                rawGroupKm,
+                profilePayload.maxKm
               )
             : 0
 
-          /*
-           * Data remains true race km. This is only the profile display position.
-           * Real road gaps of 60-120 seconds are less than 1-2 km on a 148 km
-           * SVG, so markers look stacked. Shift markers left by gap seconds so
-           * G1/P/B1/B2 can be visually read while keeping the time labels true.
-           */
           const groupKm = Math.max(
             0,
             Math.min(profilePayload.maxKm, rawGroupKm - visualGapKm)
@@ -6810,21 +6985,21 @@ function RaceReplayModal({
         <div
           className={
             isReplayPageMode
-              ? 'flex flex-wrap items-start justify-between gap-4 border-b border-slate-200 px-5 py-3'
-              : 'flex flex-wrap items-start justify-between gap-4 border-b border-slate-200 px-6 py-4'
+              ? 'grid grid-cols-1 gap-4 border-b border-slate-200 px-5 py-3 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-start'
+              : 'grid grid-cols-1 gap-4 border-b border-slate-200 px-6 py-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start'
           }
         >
-          <div>
+          <div className="min-w-0">
             <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
               Race replay
             </div>
 
-            <div className="mt-1 flex items-center gap-2">
+            <div className="mt-1 flex min-w-0 items-center gap-2">
               <RaceTitleFlag
                 code={race?.country_code || stage.host_country_code || 'ME'}
               />
 
-              <h2 className="text-xl font-semibold text-slate-950">
+              <h2 className="min-w-0 text-xl font-semibold text-slate-950">
                 {race?.name ?? 'Race replay'}
               </h2>
             </div>
@@ -6833,7 +7008,7 @@ function RaceReplayModal({
               Stage {stage.stage_number} · {stage.name || formatStageRoute(stage)}
             </div>
 
-            <div className="mt-1 text-sm text-slate-500">
+            <div className="mt-1 break-words text-sm text-slate-500">
               {formatStageRoute(stage)}
             </div>
 
@@ -6844,8 +7019,8 @@ function RaceReplayModal({
             ) : null}
           </div>
 
-          <div className="flex flex-wrap items-start justify-end gap-3">
-            <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
+          <div className="flex shrink-0 flex-wrap items-start justify-start gap-3 lg:justify-end lg:justify-self-end xl:justify-self-end">
+            <div className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm sm:w-auto sm:min-w-[205px]">
               <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
                 Stage weather
               </div>
@@ -7326,6 +7501,7 @@ function RaceReplayModal({
             <section className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
               <ReplayStagePointsPanel
                 pointResults={pointResults}
+                stagePoints={stage.points ?? []}
                 currentKm={currentLeaderKm}
               />
             </section>
@@ -7339,9 +7515,11 @@ function RaceReplayModal({
 
 function ReplayStagePointsPanel({
   pointResults,
+  stagePoints,
   currentKm,
 }: {
   pointResults: RacePointResultRow[]
+  stagePoints: RaceStagePoint[]
   currentKm: number
 }) {
   const pointOptions = useMemo(() => {
@@ -7355,6 +7533,27 @@ function ReplayStagePointsPanel({
         km: number
       }
     >()
+
+    stagePoints.forEach((point) => {
+      const pointType = String(point.point_type ?? '').toUpperCase()
+      if (pointType === 'START') return
+
+      const km = asNumber(point.km_from_start) ?? 0
+      const categoryLabel =
+        pointType === 'KOM' && point.kom_category
+          ? ` · Cat ${point.kom_category}`
+          : ''
+
+      uniquePoints.set(point.id, {
+        id: point.id,
+        label:
+          `${point.name || getStagePointLongLabel({ ...point, km })}` +
+          `${categoryLabel} · ${formatKm(km)}`,
+        reached: currentKm >= km,
+        sortOrder: Number(point.sort_order ?? 999),
+        km,
+      })
+    })
 
     pointResults.forEach((row) => {
       if (!row.point_id) return
@@ -7385,7 +7584,7 @@ function ReplayStagePointsPanel({
         left.sortOrder - right.sortOrder ||
         left.km - right.km
     )
-  }, [currentKm, pointResults])
+  }, [currentKm, pointResults, stagePoints])
 
   const [selectedPointId, setSelectedPointId] = useState<string>('')
 
@@ -13021,24 +13220,8 @@ export default function RaceDetailPage({
   const resolvedViewerClubId = currentClubId ?? DEFAULT_CURRENT_CLUB_ID
   const replayStageIdFromUrl = searchParams.get('replayStageId')
 
-  function getRaceDetailReturnState() {
-    return location.state as
-      | {
-          from?: string
-          returnTo?: string
-          returnLabel?: string
-          returnScrollY?: number
-          returnScrollX?: number
-          restoreScrollY?: number
-          restoreScrollX?: number
-          returnRaceId?: string
-          returnCalendarView?: string
-          returnMonthNumber?: number
-          raceInfoExpanded?: boolean
-          restoreRaceInfoExpanded?: boolean
-          raceInfoTab?: RaceInfoTab
-        }
-      | null
+  function getRaceDetailReturnState(): RaceDetailReturnState | null {
+    return location.state as RaceDetailReturnState | null
   }
 
   function getStoredRaceProfileReturnState() {
@@ -13059,6 +13242,118 @@ export default function RaceDetailPage({
     } catch {
       return null
     }
+  }
+
+  function hasReplayStageIdParam(value?: string | null): boolean {
+    if (!value) return false
+
+    try {
+      const baseUrl =
+        typeof window !== 'undefined' ? window.location.origin : 'http://localhost'
+      return new URL(value, baseUrl).searchParams.has('replayStageId')
+    } catch {
+      return /(?:[?&])replayStageId=/.test(value)
+    }
+  }
+
+  function stripReplayStageIdFromPath(value: string): string {
+    try {
+      const baseUrl =
+        typeof window !== 'undefined' ? window.location.origin : 'http://localhost'
+      const url = new URL(value, baseUrl)
+      url.searchParams.delete('replayStageId')
+      const search = url.searchParams.toString()
+
+      return `${url.pathname}${search ? `?${search}` : ''}${url.hash}`
+    } catch {
+      const [pathWithSearch, hashPart = ''] = value.split('#')
+      const [pathname, searchPart = ''] = pathWithSearch.split('?')
+      const params = new URLSearchParams(searchPart)
+      params.delete('replayStageId')
+      const search = params.toString()
+
+      return `${pathname}${search ? `?${search}` : ''}${hashPart ? `#${hashPart}` : ''}`
+    }
+  }
+
+  function getCurrentRaceDetailPathWithoutReplay(): string {
+    return stripReplayStageIdFromPath(
+      `${location.pathname}${location.search}${location.hash}`
+    )
+  }
+
+  function isCurrentRaceDetailReturnPath(value?: string | null): boolean {
+    if (!value) return false
+
+    return stripReplayStageIdFromPath(value) === getCurrentRaceDetailPathWithoutReplay()
+  }
+
+  function isValidRaceDetailSourceReturnState(
+    state?: RaceDetailReturnState | null
+  ): state is RaceDetailReturnState {
+    if (!state?.returnTo) return false
+    if (state.from === 'race_detail') return false
+    if (hasReplayStageIdParam(state.returnTo)) return false
+    if (isCurrentRaceDetailReturnPath(state.returnTo)) return false
+
+    return true
+  }
+
+  function getStoredRaceDetailSourceReturnState(): RaceDetailReturnState | null {
+    if (typeof window === 'undefined') return null
+
+    try {
+      const rawValue = window.sessionStorage.getItem(
+        RACE_DETAIL_SOURCE_RETURN_STORAGE_KEY
+      )
+      if (!rawValue) return null
+
+      const storedState = JSON.parse(rawValue) as RaceDetailReturnState
+
+      if (
+        raceId &&
+        storedState.sourceRaceId &&
+        storedState.sourceRaceId !== raceId
+      ) {
+        return null
+      }
+
+      if (!isValidRaceDetailSourceReturnState(storedState)) return null
+
+      return storedState
+    } catch {
+      return null
+    }
+  }
+
+  function saveRaceDetailSourceReturnState(
+    state?: RaceDetailReturnState | null
+  ): void {
+    if (typeof window === 'undefined') return
+    if (!isValidRaceDetailSourceReturnState(state)) return
+
+    window.sessionStorage.setItem(
+      RACE_DETAIL_SOURCE_RETURN_STORAGE_KEY,
+      JSON.stringify({
+        ...state,
+        sourceRaceId: raceId ?? state.returnRaceId,
+        createdAtMs: Date.now(),
+      })
+    )
+  }
+
+  function clearStoredRaceDetailSourceReturnState(): void {
+    if (typeof window === 'undefined') return
+
+    window.sessionStorage.removeItem(RACE_DETAIL_SOURCE_RETURN_STORAGE_KEY)
+  }
+
+  function getSafeRaceDetailSourceReturnState(): RaceDetailReturnState | null {
+    const state = getRaceDetailReturnState()
+
+    if (isValidRaceDetailSourceReturnState(state)) return state
+
+    return getStoredRaceDetailSourceReturnState()
   }
 
   function saveRaceProfileReturnState(state: {
@@ -13132,9 +13427,10 @@ export default function RaceDetailPage({
       return
     }
 
-    const state = getRaceDetailReturnState()
+    const state = getSafeRaceDetailSourceReturnState()
 
     if (state?.from === 'calendar' && state.returnTo) {
+      clearStoredRaceDetailSourceReturnState()
       navigate(state.returnTo, {
         state: {
           restoreCalendar: true,
@@ -13148,18 +13444,22 @@ export default function RaceDetailPage({
     }
 
     if (state?.returnTo) {
+      clearStoredRaceDetailSourceReturnState()
       navigate(state.returnTo)
       restorePreviousScroll(state.returnScrollX, state.returnScrollY)
       return
     }
 
-    if (typeof window !== 'undefined' && window.history.length > 1) {
-      navigate(-1)
-      return
-    }
-
     navigate('/dashboard/calendar')
   }
+
+  useEffect(() => {
+    const state = getRaceDetailReturnState()
+
+    if (isValidRaceDetailSourceReturnState(state)) {
+      saveRaceDetailSourceReturnState(state)
+    }
+  }, [raceId, location.key])
 
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -13255,20 +13555,32 @@ export default function RaceDetailPage({
   }, [replayStageIdFromUrl, replayStage?.id, stages])
 
   function handleOpenReplayPage(stage: RaceStage) {
+    const preservedReturnState =
+      getSafeRaceDetailSourceReturnState() ?? getRaceDetailReturnState() ?? undefined
+
+    saveRaceDetailSourceReturnState(preservedReturnState)
     setReplayStage(stage)
 
     const nextParams = new URLSearchParams(searchParams)
     nextParams.set('replayStageId', stage.id)
 
-    setSearchParams(nextParams, { replace: false })
+    setSearchParams(nextParams, {
+      replace: false,
+      state: preservedReturnState,
+    })
   }
 
   function handleCloseReplayPage() {
+    const preservedReturnState =
+      getSafeRaceDetailSourceReturnState() ?? getRaceDetailReturnState() ?? undefined
     const nextParams = new URLSearchParams(searchParams)
     nextParams.delete('replayStageId')
 
     setReplayStage(null)
-    setSearchParams(nextParams, { replace: false })
+    setSearchParams(nextParams, {
+      replace: true,
+      state: preservedReturnState,
+    })
   }
 
 

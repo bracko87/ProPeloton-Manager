@@ -25,6 +25,7 @@ import RegisterPage from './pages/Register'
 import CreateClubPage from './pages/CreateClub'
 import ClubDashboard from './pages/dashboard/ClubDashboard'
 import OverviewPage from './pages/dashboard/Overview'
+import ManualPage from './pages/dashboard/Manual'
 import SquadPage from './pages/dashboard/Squad'
 import DevelopingTeamPage from './pages/dashboard/DevelopingTeam'
 import StaffPage from './pages/dashboard/Staff'
@@ -225,7 +226,7 @@ function RequireClub({ children }: GuardProps): JSX.Element | null {
  *   the user back into the blocked dashboard.
  *
  * Help quick-link destinations are aligned to valid registered dashboard routes,
- * including overview, transfers, notifications, scouting, and invite-friends.
+ * including overview, transfers, notifications, scouting, invite-friends, and manual.
  *
  * Training camp routes:
  * - /dashboard/training/current-camp
@@ -234,6 +235,9 @@ function RequireClub({ children }: GuardProps): JSX.Element | null {
  * Race preparation routes:
  * - /dashboard/race-preparation
  * - /dashboard/team-schedule
+ *
+ * Manual route:
+ * - /dashboard/manual
  *
  * CurrentTrainingCampPage expects this RPC later:
  * - training_get_current_camp(p_camp_id uuid default null)
@@ -278,6 +282,7 @@ export default function App(): JSX.Element {
           >
             <Route index element={<OverviewPage />} />
             <Route path="overview" element={<OverviewPage />} />
+            <Route path="manual" element={<ManualPage />} />
             <Route path="squad" element={<SquadPage />} />
             <Route path="developing-team" element={<DevelopingTeamPage />} />
             <Route path="staff" element={<StaffPage />} />

@@ -2343,7 +2343,7 @@ function mergeOverviewAlerts(
     merged.push(item);
   }
 
-  return merged.slice(0, 6);
+  return merged;
 }
 
 function buildAttentionAlertsFromFeed(feed: FeedItem[]): AlertItem[] {
@@ -2378,8 +2378,7 @@ function buildAttentionAlertsFromFeed(feed: FeedItem[]): AlertItem[] {
             ? "warning"
             : "info",
       href: item.href,
-    }))
-    .slice(0, 6);
+    }));
 }
 
 async function loadOverviewAttentionItems(
@@ -2396,7 +2395,7 @@ async function loadOverviewAttentionItems(
       {
         p_club_id: mainClubId,
         p_user_id: userId,
-        p_limit: 6,
+        p_limit: 100,
       },
     );
 
@@ -2409,6 +2408,157 @@ async function loadOverviewAttentionItems(
   } catch (err) {
     console.warn("Overview attention lookup failed:", err);
     return [];
+  }
+}
+
+
+const OVERVIEW_OPENED_ATTENTION_STORAGE_KEY =
+  "ppm:overview-opened-attention-keys-v1";
+
+function getAttentionItemKey(alert: AlertItem): string {
+  return `${alert.id || ""}:${alert.href || ""}:${alert.label || ""}`
+    .trim()
+    .toLowerCase();
+}
+
+function readOpenedAttentionKeys(): Set<string> {
+  if (typeof window === "undefined") return new Set();
+
+  try {
+    const raw = window.localStorage.getItem(
+      OVERVIEW_OPENED_ATTENTION_STORAGE_KEY,
+    );
+    const values = raw ? JSON.parse(raw) : [];
+
+    return new Set(
+      Array.isArray(values)
+        ? values.filter((value): value is string => typeof value === "string")
+        : [],
+    );
+  } catch {
+    return new Set();
+  }
+}
+
+function persistOpenedAttentionKeys(keys: Set<string>) {
+  if (typeof window === "undefined") return;
+
+  try {
+    const values = Array.from(keys).slice(-250);
+    window.localStorage.setItem(
+      OVERVIEW_OPENED_ATTENTION_STORAGE_KEY,
+      JSON.stringify(values),
+    );
+  } catch {
+    // Local persistence is only a UI convenience. Ignore storage errors.
+  }
+}
+
+function getPersistableAttentionItemId(alert: AlertItem): string | null {
+  const cleanId = alert.id
+    .replace(/^feed-attention:/, "")
+    .replace(/^attention:/, "")
+    .trim();
+
+  if (!cleanId || cleanId.includes(":")) return null;
+
+  return cleanId;
+}
+
+async function markOverviewAttentionItemOpened(
+  alert: AlertItem,
+  mainClubId: string | null,
+): Promise<void> {
+  const attentionId = getPersistableAttentionItemId(alert);
+  let userId: string | null = null;
+
+  try {
+    const { data: userData } = await supabase.auth.getUser();
+    userId = userData.user?.id ?? null;
+  } catch {
+    userId = null;
+  }
+
+  const rpcAttempts: Array<{
+    functionName: string;
+    args: Record<string, unknown>;
+  }> = [
+    {
+      functionName: "mark_overview_attention_item_opened_v1",
+      args: {
+        p_attention_id: attentionId,
+        p_notification_id: attentionId,
+        p_club_id: mainClubId,
+        p_user_id: userId,
+        p_href: alert.href ?? null,
+        p_label: alert.label,
+      },
+    },
+    {
+      functionName: "dismiss_overview_attention_item_v1",
+      args: {
+        p_attention_id: attentionId,
+        p_club_id: mainClubId,
+        p_user_id: userId,
+      },
+    },
+    {
+      functionName: "mark_game_notification_read_v1",
+      args: {
+        p_notification_id: attentionId,
+        p_user_id: userId,
+      },
+    },
+    {
+      functionName: "mark_notification_read_v1",
+      args: {
+        p_notification_id: attentionId,
+        p_user_id: userId,
+      },
+    },
+  ];
+
+  for (const attempt of rpcAttempts) {
+    try {
+      const { error } = await supabase.rpc(attempt.functionName, attempt.args);
+      if (!error) return;
+    } catch {
+      // Try the next known notification/attention write shape.
+    }
+  }
+
+  if (!attentionId) return;
+
+  const now = new Date().toISOString();
+  const updateAttempts: Record<string, unknown>[] = [
+    {
+      read_at: now,
+      opened_at: now,
+      dismissed_at: now,
+      is_read: true,
+      status: "read",
+    },
+    { read_at: now, is_read: true },
+    { opened_at: now, status: "read" },
+    { dismissed_at: now, status: "dismissed" },
+    { status: "read" },
+    { is_read: true },
+  ];
+  const tableNames = ["game_notifications", "notifications", "user_notifications"];
+
+  for (const tableName of tableNames) {
+    for (const patch of updateAttempts) {
+      try {
+        const { error } = await supabase
+          .from(tableName)
+          .update(patch)
+          .eq("id", attentionId);
+
+        if (!error) return;
+      } catch {
+        // Continue trying the remaining table/column combinations.
+      }
+    }
   }
 }
 
@@ -2506,21 +2656,276 @@ async function loadOverviewSeasonSnapshot(
 
 /**
  * getAlertClasses
- * Returns Tailwind classes for an alert chip based on alert level.
+ * Returns Tailwind classes for the soft alert card surface.
  */
 function getAlertClasses(level: AlertLevel) {
   switch (level) {
     case "danger":
-      return "border-red-200 bg-red-50 text-red-700";
+      return "border-red-200 bg-red-50 text-red-800";
     case "warning":
-      return "border-yellow-200 bg-yellow-50 text-yellow-800";
+      return "border-amber-200 bg-amber-50 text-amber-900";
     case "success":
-      return "border-emerald-200 bg-emerald-50 text-emerald-700";
+      return "border-emerald-200 bg-emerald-50 text-emerald-800";
     case "info":
     default:
-      return "border-blue-200 bg-blue-50 text-blue-700";
+      return "border-sky-200 bg-sky-50 text-sky-800";
   }
 }
+
+function getAlertIconClasses(level: AlertLevel) {
+  switch (level) {
+    case "danger":
+      return "bg-red-600 text-white shadow-red-100";
+    case "warning":
+      return "bg-amber-500 text-white shadow-amber-100";
+    case "success":
+      return "bg-emerald-600 text-white shadow-emerald-100";
+    case "info":
+    default:
+      return "bg-sky-600 text-white shadow-sky-100";
+  }
+}
+
+function getAlertBadgeClasses(level: AlertLevel) {
+  switch (level) {
+    case "danger":
+      return "bg-red-100 text-red-700";
+    case "warning":
+      return "bg-amber-100 text-amber-800";
+    case "success":
+      return "bg-emerald-100 text-emerald-700";
+    case "info":
+    default:
+      return "bg-sky-100 text-sky-700";
+  }
+}
+
+function getAlertIcon(level: AlertLevel) {
+  switch (level) {
+    case "danger":
+      return "!";
+    case "warning":
+      return "⏱";
+    case "success":
+      return "✓";
+    case "info":
+    default:
+      return "i";
+  }
+}
+
+function getAlertLevelLabel(level: AlertLevel) {
+  switch (level) {
+    case "danger":
+      return "Urgent";
+    case "warning":
+      return "Soon";
+    case "success":
+      return "Done";
+    case "info":
+    default:
+      return "Info";
+  }
+}
+
+function splitAttentionLabel(label: string): { title: string; detail: string | null } {
+  const normalized = label.trim().replace(/\s+/g, " ");
+  const separatorIndex = normalized.indexOf(":");
+
+  if (separatorIndex <= 0 || separatorIndex >= normalized.length - 1) {
+    return {
+      title: normalized || "Attention item",
+      detail: null,
+    };
+  }
+
+  return {
+    title: normalized.slice(0, separatorIndex).trim(),
+    detail: normalized.slice(separatorIndex + 1).trim() || null,
+  };
+}
+
+function getAttentionActionLabel(label: string) {
+  const value = label.toLowerCase();
+
+  if (value.includes("stage plan")) return "Stage plan";
+  if (value.includes("race plan")) return "Race plan";
+  if (value.includes("application")) return "Race application";
+  if (value.includes("contract")) return "Contract";
+  if (value.includes("equipment") || value.includes("repair")) return "Equipment";
+  if (value.includes("scout")) return "Scouting";
+  if (value.includes("finance") || value.includes("loan")) return "Finance";
+  if (value.includes("sick") || value.includes("injured") || value.includes("health")) {
+    return "Health";
+  }
+
+  return "Review";
+}
+
+function getAlertDotClasses(level: AlertLevel) {
+  switch (level) {
+    case "danger":
+      return "bg-red-500";
+    case "warning":
+      return "bg-amber-500";
+    case "success":
+      return "bg-emerald-500";
+    case "info":
+    default:
+      return "bg-sky-500";
+  }
+}
+
+function getAlertCompactBorderClasses(level: AlertLevel) {
+  switch (level) {
+    case "danger":
+      return "border-l-red-400";
+    case "warning":
+      return "border-l-amber-400";
+    case "success":
+      return "border-l-emerald-400";
+    case "info":
+    default:
+      return "border-l-sky-400";
+  }
+}
+
+function getAlertBubbleClasses(level: AlertLevel) {
+  switch (level) {
+    case "danger":
+      return "border-red-200 bg-red-50 text-red-700 shadow-red-100/70";
+    case "warning":
+      return "border-amber-200 bg-amber-50 text-amber-800 shadow-amber-100/70";
+    case "success":
+      return "border-emerald-200 bg-emerald-50 text-emerald-700 shadow-emerald-100/70";
+    case "info":
+    default:
+      return "border-sky-200 bg-sky-50 text-sky-700 shadow-sky-100/70";
+  }
+}
+
+function getAlertBubbleIconClasses(level: AlertLevel) {
+  switch (level) {
+    case "danger":
+      return "bg-red-600 text-white ring-red-100";
+    case "warning":
+      return "bg-amber-500 text-white ring-amber-100";
+    case "success":
+      return "bg-emerald-600 text-white ring-emerald-100";
+    case "info":
+    default:
+      return "bg-sky-600 text-white ring-sky-100";
+  }
+}
+
+function AttentionBubbleItem({
+  alert,
+  onOpen,
+}: {
+  alert: AlertItem;
+  onOpen?: (alert: AlertItem) => void;
+}) {
+  const [expanded, setExpanded] = React.useState(false);
+  const { title, detail } = splitAttentionLabel(alert.label);
+  const displayTitle = detail ?? title;
+  const contextLabel = detail ? title : "Click to expand";
+  const actionLabel = getAttentionActionLabel(alert.label);
+  const levelLabel = getAlertLevelLabel(alert.level);
+
+  const handleOpenClick = (event: React.MouseEvent<HTMLAnchorElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+
+    onOpen?.(alert);
+
+    if (alert.href) {
+      window.location.href = alert.href;
+    }
+  };
+
+  return (
+    <div
+      className={cn(
+        "relative h-11 shrink-0 snap-start transition-[width] duration-200 ease-out",
+        expanded ? "w-[326px]" : "w-[178px]",
+      )}
+    >
+      <button
+        type="button"
+        aria-expanded={expanded}
+        title={alert.label}
+        onClick={() => setExpanded((value) => !value)}
+        className={cn(
+          "group flex h-11 w-full items-center overflow-hidden rounded-full border text-left shadow-sm transition duration-150 hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-slate-300 focus:ring-offset-2",
+          expanded ? "px-2.5 pr-20" : "px-2.5 pr-3",
+          getAlertBubbleClasses(alert.level),
+        )}
+      >
+        <span
+          className={cn(
+            "relative flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[10px] font-black ring-4",
+            getAlertBubbleIconClasses(alert.level),
+          )}
+        >
+          {getAlertIcon(alert.level)}
+          <span className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full border-2 border-white bg-current" />
+        </span>
+
+        <span className="ml-2 min-w-0 flex-1">
+          <span className="block truncate text-xs font-black leading-4 text-slate-950">
+            {actionLabel}
+          </span>
+          <span className="block truncate text-[10px] font-semibold leading-3 text-slate-500">
+            {expanded ? contextLabel : displayTitle}
+          </span>
+        </span>
+      </button>
+
+      {expanded ? (
+        <div className="pointer-events-none absolute right-1.5 top-1/2 flex -translate-y-1/2 items-center gap-1.5">
+          <span className="rounded-full bg-white/80 px-2 py-1 text-[9px] font-black uppercase tracking-wide text-slate-500 shadow-sm ring-1 ring-slate-200">
+            {levelLabel}
+          </span>
+          {alert.href ? (
+            <a
+              href={alert.href}
+              title={`Open ${actionLabel}`}
+              className="pointer-events-auto flex h-8 w-8 items-center justify-center rounded-full bg-white text-xs font-black text-slate-600 shadow-sm ring-1 ring-slate-200 transition hover:bg-slate-950 hover:text-white"
+              onClick={handleOpenClick}
+            >
+              →
+            </a>
+          ) : null}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function AttentionBubbleSlider({
+  alerts,
+  onOpen,
+}: {
+  alerts: AlertItem[];
+  onOpen?: (alert: AlertItem) => void;
+}) {
+  if (alerts.length === 0) {
+    return (
+      <div className="inline-flex h-10 items-center rounded-full border border-emerald-200 bg-emerald-50 px-4 text-xs font-semibold text-emerald-700">
+        All clear — no urgent tasks right now.
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex w-full snap-x snap-mandatory items-center gap-2 overflow-x-auto overscroll-x-contain scroll-smooth px-1 pb-1 [scrollbar-width:thin]">
+      {alerts.map((alert) => (
+        <AttentionBubbleItem key={alert.id} alert={alert} onOpen={onOpen} />
+      ))}
+    </div>
+  );
+}
+
 
 /**
  * getFeedAccent
@@ -4523,6 +4928,9 @@ export default function OverviewPage() {
     EMPTY_RACE_WORLD_DATA,
   );
   const [attentionAlerts, setAttentionAlerts] = React.useState<AlertItem[]>([]);
+  const [openedAttentionKeys, setOpenedAttentionKeys] = React.useState<Set<string>>(
+    () => readOpenedAttentionKeys(),
+  );
   const [squadPulseOverride, setSquadPulseOverride] =
     React.useState<SquadPulse | null>(null);
   const [seasonSnapshot, setSeasonSnapshot] =
@@ -5019,6 +5427,43 @@ export default function OverviewPage() {
     setMenuTutorialMode("closed");
   }
 
+  const handleOpenAttentionItem = React.useCallback(
+    (alert: AlertItem) => {
+      const key = getAttentionItemKey(alert);
+      const clubId =
+        data?.club.id && data.club.id.trim().length > 0 ? data.club.id : null;
+
+      setOpenedAttentionKeys((current) => {
+        const next = new Set(current);
+        next.add(key);
+        persistOpenedAttentionKeys(next);
+        return next;
+      });
+
+      setAttentionAlerts((current) =>
+        current.filter((item) => getAttentionItemKey(item) !== key),
+      );
+
+      setData((current) => {
+        if (!current) return current;
+
+        return {
+          ...current,
+          alerts: current.alerts.filter(
+            (item) => getAttentionItemKey(item) !== key,
+          ),
+          club: {
+            ...current.club,
+            notificationsUnread: Math.max(0, current.club.notificationsUnread - 1),
+          },
+        };
+      });
+
+      void markOverviewAttentionItemOpened(alert, clubId);
+    },
+    [data?.club.id],
+  );
+
   if (loading && !data) {
     return <DashboardSkeleton />;
   }
@@ -5038,69 +5483,69 @@ export default function OverviewPage() {
     );
   }
 
-  const attentionItems = mergeOverviewAlerts(data.alerts, attentionAlerts);
+  const attentionItems = mergeOverviewAlerts(data.alerts, attentionAlerts).filter(
+    (item) => !openedAttentionKeys.has(getAttentionItemKey(item)),
+  );
   const visibleSquadPulse = squadPulseOverride ?? data.squadPulse;
 
   return (
     <div className="w-full space-y-6">
-      {/* Attention stays as the main top command area */}
-      <Card className="p-4">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <SectionTitle
-            title="Attention"
-            subtitle="Important tasks that need action: race deadlines, contracts, equipment, health, finance, scouting, and operations."
-          />
-
-          <div className="flex flex-wrap items-center gap-2">
-            {refreshing ? (
-              <div className="rounded-full bg-slate-100 px-3 py-1.5 text-xs font-medium text-slate-500">
-                Refreshing...
+      {/* Attention bubbles: single-row horizontal slider with fixed-size collapsed and expanded chips. */}
+      <Card className="overflow-hidden border-slate-200/80 bg-white/95 shadow-sm">
+        <div className="px-4 py-3">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex min-w-0 items-center gap-3">
+              <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-950 text-sm font-black text-white shadow-sm">
+                !
+                {attentionItems.length > 0 ? (
+                  <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full border-2 border-white bg-red-500 px-1 text-[10px] font-black text-white">
+                    {attentionItems.length}
+                  </span>
+                ) : null}
               </div>
-            ) : null}
 
-            <a
-              href="#/dashboard/inbox"
-              className="rounded-full bg-slate-100 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-200"
-            >
-              Inbox {data.club.inboxUnread}
-            </a>
-            <a
-              href="#/dashboard/notifications"
-              className="rounded-full bg-slate-100 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-200"
-            >
-              Notifications {data.club.notificationsUnread}
-            </a>
+              <div className="min-w-0">
+                <div className="flex flex-wrap items-center gap-2">
+                  <h2 className="text-sm font-bold text-slate-950">Attention</h2>
+                  <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.12em] text-slate-500">
+                    Bubble tray
+                  </span>
+                  {refreshing ? (
+                    <span className="h-2 w-2 rounded-full bg-sky-500" title="Refreshing" />
+                  ) : null}
+                </div>
+                <p className="mt-0.5 hidden text-[11px] text-slate-500 sm:block">
+                  All bubbles stay in one horizontal slider row. Scroll sideways, then click a bubble to reveal status and the open shortcut.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex shrink-0 items-center gap-2">
+              <a
+                href="#/dashboard/inbox"
+                className="inline-flex h-9 items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 text-xs font-bold text-slate-700 transition hover:border-slate-300 hover:bg-white"
+              >
+                Inbox
+                <span className="rounded-full bg-white px-1.5 py-0.5 text-[10px] font-black text-slate-700">
+                  {data.club.inboxUnread}
+                </span>
+              </a>
+              <a
+                href="#/dashboard/notifications"
+                className="inline-flex h-9 items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 text-xs font-bold text-slate-700 transition hover:border-slate-300 hover:bg-white"
+              >
+                Notifications
+                <span className="rounded-full bg-white px-1.5 py-0.5 text-[10px] font-black text-slate-700">
+                  {data.club.notificationsUnread}
+                </span>
+              </a>
+            </div>
+          </div>
+
+          <div className="mt-3 border-t border-slate-100 pt-3">
+            <AttentionBubbleSlider alerts={attentionItems} onOpen={handleOpenAttentionItem} />
           </div>
         </div>
-
-        {attentionItems.length > 0 ? (
-          <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-            {attentionItems.slice(0, 6).map((alert) => {
-              const chip = (
-                <div
-                  className={cn(
-                    "rounded-xl border px-4 py-3 text-sm font-semibold transition hover:opacity-90",
-                    getAlertClasses(alert.level),
-                  )}
-                >
-                  {alert.label}
-                </div>
-              );
-
-              return alert.href ? (
-                <a key={alert.id} href={alert.href}>
-                  {chip}
-                </a>
-              ) : (
-                <div key={alert.id}>{chip}</div>
-              );
-            })}
-          </div>
-        ) : (
-          <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700">
-            No urgent issues right now.
-          </div>
-        )}
       </Card>
 
       <div className="space-y-6">
