@@ -1,5 +1,5 @@
 [build]
-  command = "npm run build"
+  command = "npm run build && cp public/ads.txt dist/ads.txt && echo '--- ADS TXT CHECK ---' && cat dist/ads.txt"
   publish = "dist"
 
 [[headers]]
