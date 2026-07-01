@@ -17,7 +17,7 @@ type HeroProps = {
 }
 
 const HERO_IMAGE_URL =
-  'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/ChatGPT%20Image%20Mar%201,%202026,%2010_24_31%20PM.png'
+  'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/4b6fb4ca-5ab1-4fea-b645-c20802671498.png'
 
 const HERO_BACKGROUND_URL =
   'https://pub-cdn.sider.ai/u/U0KAH9N4VLX/web-coder/69a48114fd11fbc8fc7d68f5/resource/ea527ef7-6896-413d-9d69-df332b440fd0.jpg'
@@ -115,7 +115,7 @@ export default function Hero({ gameTimeLabel }: HeroProps): JSX.Element {
           <div className="w-full max-w-[560px] overflow-hidden rounded-2xl border border-white/10 bg-white/5 shadow-2xl">
             <img
               src={HERO_IMAGE_URL}
-              alt="Cycling champions podium"
+              alt="Cyclists climbing a mountain"
               className="h-[360px] w-full object-cover sm:h-[430px]"
             />
           </div>

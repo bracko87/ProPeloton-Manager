@@ -1537,18 +1537,15 @@ function getEstimatedReplayRiderEnergySnapshot({
   )
 
   if (explicitLiveEnergy !== null) {
-    const rawLiveEnergyPct = Math.max(0, Math.min(100, explicitLiveEnergy))
-    const liveEnergyPct =
-      activeEnergyFloor !== null
-        ? Math.max(rawLiveEnergyPct, activeEnergyFloor)
-        : rawLiveEnergyPct
+    const liveEnergyPct = Math.max(0, Math.min(100, explicitLiveEnergy))
 
     return {
       preStageFreshnessPct,
       /*
-       * Green bar = current stage energy.
-       * It is independent from pre-stage freshness and should not collapse to
-       * single digits in the opening kilometres of a calm active peloton.
+       * Backend rider_energy_v1 is the source of truth.
+       * Do not apply the early active-energy floor to explicit backend values:
+       * that floor was only meant for old frames without energy metadata.
+       * Applying it here hides climb/KOM drain and makes riders look too fresh.
        */
       liveEnergyPct,
       stageEnergyUsedPct:
@@ -2303,6 +2300,7 @@ function getRoadGroupProfileKmFromGap({
   avgSpeedKmh,
   previousGroupKm,
   maxKm,
+  backendNormalized = false,
 }: {
   actualKm: number
   leaderKm: number
@@ -2310,38 +2308,41 @@ function getRoadGroupProfileKmFromGap({
   avgSpeedKmh?: number
   previousGroupKm?: number | null
   maxKm: number
+  backendNormalized?: boolean
 }): number {
   if (!Number.isFinite(actualKm)) return 0
-  if (!Number.isFinite(gapSeconds) || gapSeconds <= 0) {
+
+  /*
+   * If the backend already normalized km_marker from gap_seconds, trust it.
+   * Otherwise the frontend applies a second synthetic gap and can make P/B
+   * markers look wrong even after the SQL fix.
+   */
+  if (backendNormalized || !Number.isFinite(gapSeconds) || gapSeconds <= 0) {
     return Math.max(0, Math.min(maxKm, actualKm))
   }
 
   const speedKmh = Math.max(28, Math.min(46, Number(avgSpeedKmh ?? 38)))
   const physicalGapKm = (gapSeconds * speedKmh) / 3600
   const minimumVisibleGapKm =
-    gapSeconds >= 180 ? 1.6 :
-    gapSeconds >= 90 ? 0.9 :
-    gapSeconds >= 30 ? 0.35 :
+    gapSeconds >= 180 ? 1.8 :
+    gapSeconds >= 90 ? 1.0 :
+    gapSeconds >= 30 ? 0.4 :
     0.12
   const maximumVisibleGapKm =
-    gapSeconds >= 180 ? 3.2 :
-    gapSeconds >= 90 ? 2.2 :
-    gapSeconds >= 30 ? 1.4 :
-    0.55
-  const gapKm = Math.min(maximumVisibleGapKm, Math.max(minimumVisibleGapKm, physicalGapKm))
+    gapSeconds >= 180 ? 3.6 :
+    gapSeconds >= 90 ? 2.4 :
+    gapSeconds >= 30 ? 1.5 :
+    0.6
+  const gapKm = Math.min(
+    maximumVisibleGapKm,
+    Math.max(minimumVisibleGapKm, physicalGapKm)
+  )
 
   let displayKm = leaderKm - gapKm
 
   if (previousGroupKm !== null && previousGroupKm !== undefined) {
-    displayKm = Math.min(displayKm, previousGroupKm - 0.08)
+    displayKm = Math.min(displayKm, previousGroupKm - 0.12)
   }
-
-  /*
-   * Do not allow new behind groups to jump backwards off-screen. The backend
-   * remains the source of truth; this is only visual spacing on the profile.
-   */
-  const safeLowerBound = Math.max(0, actualKm - 0.8)
-  displayKm = Math.max(safeLowerBound, displayKm)
 
   return Math.max(0, Math.min(maxKm, displayKm))
 }
@@ -3439,6 +3440,27 @@ function getReplayPlaybackDurationMs(
   )
 }
 
+function getRoadReplayEffectivePlaybackSpeed(
+  speed: ReplayPlaybackSpeed
+): number {
+  /*
+   * Road replay has many dynamic split/merge moments. The UI buttons still
+   * represent faster watching, but we soften the real multiplier so 4x/8x
+   * does not jump several kilometres whenever a new group is created.
+   */
+  switch (speed) {
+    case 8:
+      return 4
+    case 4:
+      return 2.4
+    case 2:
+      return 1.55
+    case 1:
+    default:
+      return 1
+  }
+}
+
 
 function isTimeTrialLikeStage(
   stage: RaceStage | null | undefined
@@ -3765,15 +3787,22 @@ function getRoadGroupSemanticBucket(frame: RaceReplayFrame): number {
 function normalizeRoadReplayGroupsForDisplay(
   frames: RaceReplayFrame[]
 ): RaceReplayFrame[] {
-  if (frames.length <= 1) return frames
+  const visibleFrames = frames.filter(
+    (frame) =>
+      getReplayEntityType(frame) === 'group' &&
+      getReplayEntitySize(frame) > 0
+  )
 
-  const sortedFrames = [...frames].sort((left, right) => {
-    const bucketDiff = getRoadGroupSemanticBucket(left) - getRoadGroupSemanticBucket(right)
-    if (bucketDiff !== 0) return bucketDiff
+  if (visibleFrames.length === 0) return []
 
-    const leftGap = Number(left.gap_seconds ?? 0)
-    const rightGap = Number(right.gap_seconds ?? 0)
+  const sortedByRoadPosition = [...visibleFrames].sort((left, right) => {
+    const leftGap = Math.max(0, Number(left.gap_seconds ?? 0))
+    const rightGap = Math.max(0, Number(right.gap_seconds ?? 0))
     if (leftGap !== rightGap) return leftGap - rightGap
+
+    const leftKm = asNumber(left.km_marker) ?? 0
+    const rightKm = asNumber(right.km_marker) ?? 0
+    if (leftKm !== rightKm) return rightKm - leftKm
 
     const orderDiff =
       (Number(left.group_order) || Number.MAX_SAFE_INTEGER) -
@@ -3783,51 +3812,123 @@ function normalizeRoadReplayGroupsForDisplay(
     return sortReplayFrames(left, right)
   })
 
-  const pelotonIndex = sortedFrames.findIndex(
-    (frame) => getReplayBaseGroupCode(frame.group_code) === 'main_peloton'
+  /*
+   * Canonical road display rule for every single replay frame:
+   *
+   * - Biggest visible rider group = Peloton / P.
+   * - Every group physically in front of that Peloton = G1, G2, G3.
+   * - Every group physically behind that Peloton = B1, B2, B3.
+   *
+   * We deliberately calculate this per frame. We do not interpolate raw
+   * group_code identities across frames, because backend group_code values are
+   * not stable identities. Interpolating by raw code is what caused markers to
+   * cross over each other and turn a B group into a front group on the profile.
+   */
+  let pelotonSortedIndex = 0
+  let bestPelotonScore = Number.NEGATIVE_INFINITY
+
+  sortedByRoadPosition.forEach((frame, index) => {
+    const size = getReplayEntitySize(frame)
+    const baseGroupCode = getReplayBaseGroupCode(frame.group_code)
+    const semanticBonus = baseGroupCode === 'main_peloton' ? 0.2 : 0
+    const roadPenalty = index / 100000
+    const score = size + semanticBonus - roadPenalty
+
+    if (score > bestPelotonScore) {
+      bestPelotonScore = score
+      pelotonSortedIndex = index
+    }
+  })
+
+  const normalizedGaps: number[] = []
+
+  sortedByRoadPosition.forEach((frame, index) => {
+    const rawGap = Math.max(0, Number(frame.gap_seconds ?? 0))
+    normalizedGaps[index] =
+      index === 0
+        ? 0
+        : Math.max(rawGap, (normalizedGaps[index - 1] ?? 0) + 8)
+  })
+
+  const pelotonGap = normalizedGaps[pelotonSortedIndex] ?? 0
+
+  for (let index = pelotonSortedIndex + 1; index < normalizedGaps.length; index += 1) {
+    normalizedGaps[index] = Math.max(
+      normalizedGaps[index] ?? 0,
+      pelotonGap + 8 * (index - pelotonSortedIndex)
+    )
+  }
+
+  const leaderKm = Math.max(
+    ...sortedByRoadPosition.map((frame) => asNumber(frame.km_marker) ?? 0),
+    0
   )
 
-  let previousGap = 0
+  let previousDisplayKm: number | null = null
 
-  return sortedFrames
-    .filter((frame) => getReplayEntitySize(frame) > 0)
-    .map((frame, index) => {
-    const rawGap = Math.max(0, Number(frame.gap_seconds ?? 0))
-    const semanticOrder = index + 1
+  return sortedByRoadPosition.map((frame, index) => {
+    const isPeloton = index === pelotonSortedIndex
+    const isAheadOfPeloton = index < pelotonSortedIndex
+    const behindPelotonIndex = index - pelotonSortedIndex
+    const aheadGroupNumber = index + 1
+    const behindGroupNumber = Math.max(1, behindPelotonIndex)
+    const semanticGap = normalizedGaps[index] ?? 0
 
-    let semanticGap = index === 0 ? 0 : Math.max(rawGap, previousGap + 9)
+    const speedKmh = Math.max(
+      28,
+      Math.min(46, asNumber(frame.avg_speed_kmh) ?? 38)
+    )
+    const gapKm = (semanticGap * speedKmh) / 3600
+    let displayKm = index === 0 ? leaderKm : leaderKm - gapKm
 
-    /*
-     * Strong display rule: a B/dropped group is always behind the peloton.
-     * This protects the UI even when older replay rows carry the same raw
-     * gap for P and B1.
-     */
-    if (pelotonIndex >= 0 && index > pelotonIndex) {
-      const pelotonRawGap = Math.max(
-        0,
-        Number(sortedFrames[pelotonIndex]?.gap_seconds ?? 0)
-      )
-      semanticGap = Math.max(semanticGap, pelotonRawGap + 9 * (index - pelotonIndex))
+    if (previousDisplayKm !== null) {
+      displayKm = Math.min(displayKm, previousDisplayKm - 0.12)
     }
 
-    previousGap = semanticGap
+    displayKm = Math.max(0, displayKm)
+    previousDisplayKm = displayKm
 
-    if (
-      Number(frame.group_order) === semanticOrder &&
-      Number(frame.gap_seconds ?? 0) === semanticGap
-    ) {
-      return frame
-    }
+    const normalizedCode = isPeloton
+      ? 'main_peloton'
+      : isAheadOfPeloton
+        ? aheadGroupNumber === 1
+          ? 'front_group'
+          : `chase_group_${String(aheadGroupNumber).padStart(2, '0')}`
+        : behindGroupNumber === 1
+          ? 'dropped_group'
+          : `outside_group_${String(behindGroupNumber).padStart(2, '0')}`
+
+    const normalizedLabel = isPeloton
+      ? 'Peloton'
+      : isAheadOfPeloton
+        ? aheadGroupNumber === 1
+          ? 'Front group'
+          : `Chase group ${aheadGroupNumber}`
+        : behindGroupNumber === 1
+          ? 'Dropped group'
+          : `Dropped group ${behindGroupNumber}`
 
     return {
       ...frame,
-      group_order: semanticOrder,
+      group_code: normalizedCode,
+      group_label: normalizedLabel,
+      group_order: index + 1,
       gap_seconds: semanticGap,
+      km_marker: Number(displayKm.toFixed(3)),
       metadata: {
         ...(frame.metadata ?? {}),
-        frontend_semantic_group_gap_v1: true,
-        original_group_order: frame.group_order ?? null,
-        original_gap_seconds: frame.gap_seconds ?? null,
+        frontend_canonical_road_groups_v1: true,
+        frontend_canonical_rule:
+          'per frame: biggest visible rider group is Peloton; road-order groups ahead are G; road-order groups behind are B',
+        frontend_original_group_code: frame.group_code ?? null,
+        frontend_original_group_label: frame.group_label ?? null,
+        frontend_original_group_order: frame.group_order ?? null,
+        frontend_original_gap_seconds: frame.gap_seconds ?? null,
+        frontend_original_km_marker: frame.km_marker ?? null,
+        frontend_original_group_size: getReplayEntitySize(frame),
+        frontend_peloton_sorted_index: pelotonSortedIndex,
+        frontend_semantic_gap_seconds: semanticGap,
+        frontend_semantic_display_km_marker: Number(displayKm.toFixed(3)),
       },
     }
   })
@@ -3933,84 +4034,568 @@ function getInterpolatedRoadReplayFrame(
   }
 }
 
+function getRoadReplayFrameNumbers(frames: RaceReplayFrame[]): number[] {
+  return Array.from(
+    new Set(
+      frames
+        .map((frame) => Number(frame.frame_number))
+        .filter((value) => Number.isFinite(value))
+    )
+  ).sort((left, right) => left - right)
+}
+
+function getRoadReplayFramesForExactFrameNumber(
+  frames: RaceReplayFrame[],
+  frameNumber: number
+): RaceReplayFrame[] {
+  return frames
+    .filter((frame) => Number(frame.frame_number) === frameNumber)
+    .sort(sortReplayFrames)
+}
+
 function getRoadReplayFramesAtFramePosition(
   frames: RaceReplayFrame[],
   framePosition: number
 ): RaceReplayFrame[] {
   if (frames.length === 0) return []
 
-  const framesByKey = new Map<string, RaceReplayFrame[]>()
-
-  frames.forEach((frame) => {
-    const key = getRoadReplayFrameKey(frame)
-    framesByKey.set(key, [...(framesByKey.get(key) ?? []), frame])
-  })
-
-  const selectedFrames: RaceReplayFrame[] = []
   const safeFramePosition = Number.isFinite(framePosition)
     ? framePosition
     : 0
 
-  framesByKey.forEach((entityFrames) => {
-    const sortedFrames = [...entityFrames]
-      .filter((frame) => Number.isFinite(Number(frame.frame_number)))
-      .sort(
-        (left, right) =>
-          Number(left.frame_number) - Number(right.frame_number)
-      )
+  const frameNumbers = getRoadReplayFrameNumbers(frames)
+  if (frameNumbers.length === 0) return []
 
-    const firstFrame = sortedFrames[0]
-    const lastFrame = sortedFrames[sortedFrames.length - 1]
-
-    if (!firstFrame || !lastFrame) return
-
-    const firstFrameNumber = Number(firstFrame.frame_number)
-    const lastFrameNumber = Number(lastFrame.frame_number)
-
-    /*
-     * Important road replay rule:
-     * do not show a group before its first real frame and do not keep
-     * it visible after its last real frame.
-     *
-     * The previous interpolation patch pushed firstFrame when the replay
-     * was still before that group existed. That made future breakaways /
-     * chase groups appear at 0 km on a fresh replay start.
-     */
-    if (safeFramePosition < firstFrameNumber) return
-    if (safeFramePosition > lastFrameNumber) return
-
-    if (safeFramePosition === firstFrameNumber) {
-      selectedFrames.push(firstFrame)
-      return
-    }
-
-    if (safeFramePosition === lastFrameNumber) {
-      selectedFrames.push(lastFrame)
-      return
-    }
-
-    const previousFrame = [...sortedFrames]
+  const selectedFrameNumber =
+    [...frameNumbers]
       .reverse()
-      .find(
-        (frame) => Number(frame.frame_number) <= safeFramePosition
-      )
+      .find((frameNumber) => frameNumber <= safeFramePosition) ??
+    frameNumbers[0]
 
-    const nextFrame = sortedFrames.find(
-      (frame) => Number(frame.frame_number) > safeFramePosition
-    )
+  return getRoadReplayFramesForExactFrameNumber(frames, selectedFrameNumber)
+}
 
-    if (!previousFrame || !nextFrame) return
+function getCanonicalRoadGroupInterpolationKey(frame: RaceReplayFrame): string {
+  const baseGroupCode = getReplayBaseGroupCode(frame.group_code)
 
-    selectedFrames.push(
-      getInterpolatedRoadReplayFrame(
-        previousFrame,
-        nextFrame,
-        safeFramePosition
-      )
-    )
+  if (baseGroupCode === 'main_peloton') return 'P'
+
+  if (baseGroupCode === 'front_group') return 'G1'
+
+  if (baseGroupCode === 'chase_group') {
+    const code = String(frame.group_code ?? '')
+    const match = code.match(/_(\d+)$/)
+    return `G${Math.max(2, Number(match?.[1] ?? 2))}`
+  }
+
+  if (baseGroupCode === 'dropped_group') return 'B1'
+
+  if (baseGroupCode === 'outside_group') {
+    const code = String(frame.group_code ?? '')
+    const match = code.match(/_(\d+)$/)
+    return `B${Math.max(2, Number(match?.[1] ?? 2))}`
+  }
+
+  return String(frame.group_code ?? frame.group_label ?? frame.id)
+}
+
+function getNormalizedRoadReplayGroupsForExactFrameNumber(
+  frames: RaceReplayFrame[],
+  frameNumber: number
+): RaceReplayFrame[] {
+  const rawGroupFrames = getRoadReplayFramesForExactFrameNumber(frames, frameNumber)
+    .filter((frame) => getReplayEntityType(frame) === 'group')
+
+  return normalizeRoadReplayGroupsForDisplay(
+    getDedupedRoadGroupFrames(rawGroupFrames)
+  )
+}
+
+function normalizeInterpolatedRoadGroupSpacing(
+  frames: RaceReplayFrame[]
+): RaceReplayFrame[] {
+  let previousKm: number | null = null
+
+  return [...frames]
+    .sort((left, right) => {
+      const orderDiff =
+        (Number(left.group_order) || Number.MAX_SAFE_INTEGER) -
+        (Number(right.group_order) || Number.MAX_SAFE_INTEGER)
+
+      if (orderDiff !== 0) return orderDiff
+
+      return getReplayFrameGapSeconds(left) - getReplayFrameGapSeconds(right)
+    })
+    .map((frame, index) => {
+      let displayKm = asNumber(frame.km_marker) ?? 0
+
+      if (previousKm !== null) {
+        displayKm = Math.min(displayKm, previousKm - 0.12)
+      }
+
+      displayKm = Math.max(0, displayKm)
+      previousKm = displayKm
+
+      return {
+        ...frame,
+        group_order: index + 1,
+        km_marker: Number(displayKm.toFixed(3)),
+        metadata: {
+          ...(frame.metadata ?? {}),
+          frontend_interpolated_spacing_normalized_v1: true,
+        },
+      }
+    })
+}
+
+
+const ROAD_REPLAY_GROUP_TRANSITION_FRAME_WINDOW = 8
+
+function getRoadGroupVisualSide(
+  frame: RaceReplayFrame
+): 'front' | 'peloton' | 'behind' | 'unknown' {
+  const baseGroupCode = getReplayBaseGroupCode(frame.group_code)
+
+  if (baseGroupCode === 'main_peloton') return 'peloton'
+  if (baseGroupCode === 'front_group' || baseGroupCode === 'chase_group') return 'front'
+  if (baseGroupCode === 'dropped_group' || baseGroupCode === 'outside_group') return 'behind'
+
+  return 'unknown'
+}
+
+function getRoadGroupRiderIdentitySet(frame: RaceReplayFrame): Set<string> {
+  const riderIds = frame.rider_ids ?? []
+  const riderNames = frame.rider_names ?? []
+  const teamNames = frame.team_names ?? []
+  const slotCount = Math.max(
+    riderIds.length,
+    riderNames.length,
+    teamNames.length
+  )
+  const identities = new Set<string>()
+
+  for (let index = 0; index < slotCount; index += 1) {
+    const riderId = riderIds[index]?.trim()
+
+    if (riderId) {
+      identities.add(`id:${riderId}`)
+      continue
+    }
+
+    const riderName = riderNames[index]?.trim().toLowerCase()
+    if (!riderName) continue
+
+    const teamName = teamNames[index]?.trim().toLowerCase() ?? ''
+    identities.add(`name:${riderName}|team:${teamName}`)
+  }
+
+  return identities
+}
+
+function getRoadGroupRiderOverlapCount(
+  left: RaceReplayFrame,
+  right: RaceReplayFrame
+): number {
+  const leftSet = getRoadGroupRiderIdentitySet(left)
+  const rightSet = getRoadGroupRiderIdentitySet(right)
+
+  if (leftSet.size === 0 || rightSet.size === 0) return 0
+
+  const smaller = leftSet.size <= rightSet.size ? leftSet : rightSet
+  const larger = leftSet.size <= rightSet.size ? rightSet : leftSet
+
+  let overlap = 0
+
+  smaller.forEach((identity) => {
+    if (larger.has(identity)) overlap += 1
   })
 
-  return selectedFrames.sort(sortReplayFrames)
+  return overlap
+}
+
+function getRoadGroupVisualMatchScore(
+  previousFrame: RaceReplayFrame,
+  nextFrame: RaceReplayFrame
+): number {
+  const previousSide = getRoadGroupVisualSide(previousFrame)
+  const nextSide = getRoadGroupVisualSide(nextFrame)
+  const overlap = getRoadGroupRiderOverlapCount(previousFrame, nextFrame)
+  const previousSize = Math.max(1, getReplayEntitySize(previousFrame))
+  const nextSize = Math.max(1, getReplayEntitySize(nextFrame))
+  const overlapRatio =
+    overlap / Math.max(1, Math.min(previousSize, nextSize))
+  const sideBonus =
+    previousSide === nextSide
+      ? 80
+      : previousSide === 'peloton' || nextSide === 'peloton'
+        ? -25
+        : -60
+  const codeBonus =
+    getCanonicalRoadGroupInterpolationKey(previousFrame) ===
+    getCanonicalRoadGroupInterpolationKey(nextFrame)
+      ? 20
+      : 0
+  const gapPenalty =
+    Math.abs(
+      getReplayFrameGapSeconds(previousFrame) -
+        getReplayFrameGapSeconds(nextFrame)
+    ) * 0.08
+  const orderPenalty =
+    Math.abs(
+      (Number(previousFrame.group_order) || 0) -
+        (Number(nextFrame.group_order) || 0)
+    ) * 2
+
+  /*
+   * Rider overlap is the main identity. This fixes the old problem where
+   * "G1" in frame N was blindly matched to "G1" in frame N+1 even if a new
+   * breakaway appeared and the old G1 became G2. Without this, markers swap
+   * places and look like they jump through the Peloton.
+   */
+  return overlap * 140 + overlapRatio * 80 + sideBonus + codeBonus - gapPenalty - orderPenalty
+}
+
+function buildRoadGroupVisualMatches(
+  previousGroups: RaceReplayFrame[],
+  nextGroups: RaceReplayFrame[]
+): Map<RaceReplayFrame, RaceReplayFrame> {
+  const matchByNextFrame = new Map<RaceReplayFrame, RaceReplayFrame>()
+  const usedPreviousFrames = new Set<RaceReplayFrame>()
+
+  const previousPeloton = previousGroups.find(
+    (frame) => getRoadGroupVisualSide(frame) === 'peloton'
+  )
+  const nextPeloton = nextGroups.find(
+    (frame) => getRoadGroupVisualSide(frame) === 'peloton'
+  )
+
+  if (previousPeloton && nextPeloton) {
+    matchByNextFrame.set(nextPeloton, previousPeloton)
+    usedPreviousFrames.add(previousPeloton)
+  }
+
+  const nextFramesByPriority = [...nextGroups].sort((left, right) => {
+    const sideDiff =
+      (getRoadGroupVisualSide(left) === 'peloton' ? 0 : 1) -
+      (getRoadGroupVisualSide(right) === 'peloton' ? 0 : 1)
+    if (sideDiff !== 0) return sideDiff
+
+    return getReplayEntitySize(right) - getReplayEntitySize(left)
+  })
+
+  nextFramesByPriority.forEach((nextFrame) => {
+    if (matchByNextFrame.has(nextFrame)) return
+
+    let bestPreviousFrame: RaceReplayFrame | null = null
+    let bestScore = Number.NEGATIVE_INFINITY
+    let bestOverlap = 0
+
+    previousGroups.forEach((previousFrame) => {
+      if (usedPreviousFrames.has(previousFrame)) return
+
+      const score = getRoadGroupVisualMatchScore(previousFrame, nextFrame)
+      const overlap = getRoadGroupRiderOverlapCount(previousFrame, nextFrame)
+
+      if (score > bestScore) {
+        bestScore = score
+        bestPreviousFrame = previousFrame
+        bestOverlap = overlap
+      }
+    })
+
+    /*
+     * Do not force weak label-only matches. If a group is truly new, it should
+     * be born from the Peloton anchor and move out smoothly instead of stealing
+     * another group's visual track.
+     */
+    if (
+      bestPreviousFrame &&
+      (bestOverlap > 0 || bestScore >= 90)
+    ) {
+      matchByNextFrame.set(nextFrame, bestPreviousFrame)
+      usedPreviousFrames.add(bestPreviousFrame)
+    }
+  })
+
+  return matchByNextFrame
+}
+
+
+function getNormalizedRoadReplayGroupsAtFramePosition(
+  frames: RaceReplayFrame[],
+  framePosition: number
+): RaceReplayFrame[] {
+  if (frames.length === 0) return []
+
+  const safeFramePosition = Number.isFinite(framePosition)
+    ? framePosition
+    : 0
+
+  const frameNumbers = getRoadReplayFrameNumbers(frames)
+  if (frameNumbers.length === 0) return []
+
+  /*
+   * Use a small motion buffer instead of interpolating only between the exact
+   * previous and next backend frame. When a split is created, the raw frame
+   * list can change completely in one backend frame; the visual transition
+   * should take several frontend frames so the race does not freeze at 18 km
+   * and then jump to 20 km.
+   */
+  const targetFrameNumber =
+    frameNumbers.find((frameNumber) => frameNumber >= safeFramePosition) ??
+    frameNumbers[frameNumbers.length - 1]
+
+  const sourceFrameNumber =
+    [...frameNumbers]
+      .reverse()
+      .find(
+        (frameNumber) =>
+          frameNumber <=
+          Math.max(
+            frameNumbers[0],
+            safeFramePosition - ROAD_REPLAY_GROUP_TRANSITION_FRAME_WINDOW
+          )
+      ) ??
+    frameNumbers[0]
+
+  const previousFrameNumber = sourceFrameNumber
+  const nextFrameNumber = targetFrameNumber
+
+  const previousGroups = getNormalizedRoadReplayGroupsForExactFrameNumber(
+    frames,
+    previousFrameNumber
+  )
+
+  if (nextFrameNumber === previousFrameNumber || previousGroups.length === 0) {
+    return previousGroups
+  }
+
+  const nextGroups = getNormalizedRoadReplayGroupsForExactFrameNumber(
+    frames,
+    nextFrameNumber
+  )
+
+  if (nextGroups.length === 0) return previousGroups
+
+  const ratio = Math.max(
+    0,
+    Math.min(
+      1,
+      (safeFramePosition - previousFrameNumber) /
+        Math.max(1, nextFrameNumber - previousFrameNumber)
+    )
+  )
+
+  const previousMatchByNextFrame = buildRoadGroupVisualMatches(
+    previousGroups,
+    nextGroups
+  )
+
+  const nextMatchByPreviousFrame = new Map<RaceReplayFrame, RaceReplayFrame>()
+
+  previousMatchByNextFrame.forEach((previousFrame, nextFrame) => {
+    nextMatchByPreviousFrame.set(previousFrame, nextFrame)
+  })
+
+  const getPelotonAnchor = (sourceGroups: RaceReplayFrame[]) => {
+    return (
+      sourceGroups.find(
+        (frame) =>
+          getReplayBaseGroupCode(frame.group_code) === 'main_peloton'
+      ) ??
+      sourceGroups.find((frame) => getReplayEntitySize(frame) > 0) ??
+      null
+    )
+  }
+
+  const makeBirthAnchorFrame = (
+    targetFrame: RaceReplayFrame,
+    sourceGroups: RaceReplayFrame[]
+  ): RaceReplayFrame => {
+    const pelotonAnchor = getPelotonAnchor(sourceGroups) ?? targetFrame
+    const baseGroupCode = getReplayBaseGroupCode(targetFrame.group_code)
+    const pelotonKm = asNumber(pelotonAnchor.km_marker) ?? asNumber(targetFrame.km_marker) ?? 0
+    const pelotonGap = asNumber(pelotonAnchor.gap_seconds) ?? 0
+    const targetGap = asNumber(targetFrame.gap_seconds) ?? pelotonGap
+    const isAheadGroup = baseGroupCode === 'front_group' || baseGroupCode === 'chase_group'
+    const isBehindGroup = baseGroupCode === 'dropped_group' || baseGroupCode === 'outside_group'
+
+    const anchorKm = isAheadGroup
+      ? pelotonKm + 0.12
+      : isBehindGroup
+        ? Math.max(0, pelotonKm - 0.12)
+        : pelotonKm
+
+    const anchorGap = isAheadGroup
+      ? Math.max(0, pelotonGap - 8)
+      : isBehindGroup
+        ? Math.max(pelotonGap + 8, targetGap - 8)
+        : pelotonGap
+
+    return {
+      ...targetFrame,
+      km_marker: Number(anchorKm.toFixed(3)),
+      gap_seconds: Number(anchorGap.toFixed(3)),
+      race_seconds: pelotonAnchor.race_seconds ?? targetFrame.race_seconds,
+      avg_speed_kmh: pelotonAnchor.avg_speed_kmh ?? targetFrame.avg_speed_kmh,
+      rider_ids: [],
+      rider_names: [],
+      team_names: [],
+      metadata: {
+        ...(targetFrame.metadata ?? {}),
+        group_size: 0,
+        frontend_group_transition_anchor_v3: true,
+        frontend_group_transition_anchor_type: 'birth_from_peloton',
+      },
+    }
+  }
+
+  const makeMergeAnchorFrame = (
+    sourceFrame: RaceReplayFrame,
+    targetGroups: RaceReplayFrame[]
+  ): RaceReplayFrame => {
+    const pelotonAnchor = getPelotonAnchor(targetGroups) ?? sourceFrame
+    const baseGroupCode = getReplayBaseGroupCode(sourceFrame.group_code)
+    const pelotonKm = asNumber(pelotonAnchor.km_marker) ?? asNumber(sourceFrame.km_marker) ?? 0
+    const pelotonGap = asNumber(pelotonAnchor.gap_seconds) ?? 0
+    const isAheadGroup = baseGroupCode === 'front_group' || baseGroupCode === 'chase_group'
+    const isBehindGroup = baseGroupCode === 'dropped_group' || baseGroupCode === 'outside_group'
+
+    const anchorKm = isAheadGroup
+      ? pelotonKm + 0.12
+      : isBehindGroup
+        ? Math.max(0, pelotonKm - 0.12)
+        : pelotonKm
+
+    const anchorGap = isAheadGroup
+      ? Math.max(0, pelotonGap - 8)
+      : isBehindGroup
+        ? pelotonGap + 8
+        : pelotonGap
+
+    return {
+      ...sourceFrame,
+      km_marker: Number(anchorKm.toFixed(3)),
+      gap_seconds: Number(anchorGap.toFixed(3)),
+      race_seconds: pelotonAnchor.race_seconds ?? sourceFrame.race_seconds,
+      avg_speed_kmh: pelotonAnchor.avg_speed_kmh ?? sourceFrame.avg_speed_kmh,
+      rider_ids: [],
+      rider_names: [],
+      team_names: [],
+      metadata: {
+        ...(sourceFrame.metadata ?? {}),
+        group_size: 0,
+        frontend_group_transition_anchor_v3: true,
+        frontend_group_transition_anchor_type: 'merge_to_peloton',
+      },
+    }
+  }
+
+  const interpolateCanonicalGroupFrame = ({
+    sourceFrame,
+    targetFrame,
+    displayFrame,
+    interpolationState,
+  }: {
+    sourceFrame: RaceReplayFrame
+    targetFrame: RaceReplayFrame
+    displayFrame: RaceReplayFrame
+    interpolationState: string
+  }): RaceReplayFrame => {
+    const kmMarker = interpolateNumberValue(
+      sourceFrame.km_marker,
+      targetFrame.km_marker,
+      ratio
+    )
+    const gapSeconds = interpolateNumberValue(
+      sourceFrame.gap_seconds,
+      targetFrame.gap_seconds,
+      ratio
+    )
+    const avgSpeedKmh = interpolateNumberValue(
+      sourceFrame.avg_speed_kmh,
+      targetFrame.avg_speed_kmh,
+      ratio
+    )
+    const raceSeconds = interpolateNumberValue(
+      sourceFrame.race_seconds,
+      targetFrame.race_seconds,
+      ratio
+    )
+
+    const sourceSize = getReplayEntitySize(sourceFrame)
+    const targetSize = getReplayEntitySize(targetFrame)
+    const interpolatedSize =
+      sourceSize === 0 && targetSize > 0 && ratio > 0.02
+        ? Math.max(1, Math.round(targetSize * ratio))
+        : Math.max(
+            0,
+            Math.round(sourceSize + (targetSize - sourceSize) * ratio)
+          )
+
+    return {
+      ...displayFrame,
+      id: `${displayFrame.id}:canonical-road-transition:${Math.round(safeFramePosition * 1000)}`,
+      frame_number: safeFramePosition,
+      race_seconds:
+        raceSeconds === null
+          ? displayFrame.race_seconds
+          : Number(raceSeconds.toFixed(3)),
+      km_marker:
+        kmMarker === null
+          ? displayFrame.km_marker
+          : Number(kmMarker.toFixed(3)),
+      gap_seconds:
+        gapSeconds === null
+          ? displayFrame.gap_seconds
+          : Number(gapSeconds.toFixed(3)),
+      avg_speed_kmh:
+        avgSpeedKmh === null
+          ? displayFrame.avg_speed_kmh
+          : Number(avgSpeedKmh.toFixed(3)),
+      metadata: {
+        ...(displayFrame.metadata ?? {}),
+        group_size: interpolatedSize,
+        frontend_road_group_interpolation_v3: true,
+        frontend_road_group_interpolation_v2: true,
+        interpolation_state: interpolationState,
+        interpolated_from_frame_number: previousFrameNumber,
+        interpolated_to_frame_number: nextFrameNumber,
+        interpolated_ratio: ratio,
+      },
+    }
+  }
+
+  const interpolatedGroups: RaceReplayFrame[] = nextGroups.map((nextFrame) => {
+    const matchedPreviousFrame = previousMatchByNextFrame.get(nextFrame)
+    const previousFrame =
+      matchedPreviousFrame ?? makeBirthAnchorFrame(nextFrame, previousGroups)
+
+    return interpolateCanonicalGroupFrame({
+      sourceFrame: previousFrame,
+      targetFrame: nextFrame,
+      displayFrame: nextFrame,
+      interpolationState: matchedPreviousFrame
+        ? 'continuous_existing_group_by_rider_overlap'
+        : 'smooth_new_group_birth_from_peloton',
+    })
+  })
+
+  /*
+   * Do not render unmatched previous groups as long-lived merge ghosts.
+   *
+   * The previous buffered version kept disappearing groups visible while they
+   * moved back toward the Peloton. At 4x speed this created exactly the visual
+   * bug the user reported: old B/G groups stayed on the profile even after
+   * Stage Standing had already removed them. For the canonical road display,
+   * the profile should show the current canonical group list only. New groups
+   * can still be born smoothly from a Peloton/front anchor; disappeared groups
+   * are removed immediately so closed groups do not remain as ghost markers.
+   */
+
+  return normalizeInterpolatedRoadGroupSpacing(
+    interpolatedGroups.filter((frame) => getReplayEntitySize(frame) > 0)
+  )
 }
 
 function isGeneralClassificationCode(value: string): boolean {
@@ -4435,13 +5020,29 @@ function ReplayStageProfile({
     (frame) => getReplayEntityType(frame) === 'group'
   )
 
+  const largestProfileGroupFrame =
+    groupFrames.length > 0
+      ? [...groupFrames].sort((left, right) => {
+          const sizeDiff =
+            getReplayEntitySize(right) - getReplayEntitySize(left)
+          if (sizeDiff !== 0) return sizeDiff
+
+          return (
+            getReplayFrameGapSeconds(left) -
+            getReplayFrameGapSeconds(right)
+          )
+        })[0]
+      : null
+
   const pelotonGroupOrder =
     groupFrames.find(
       (frame) =>
         getReplayBaseGroupCode(
           frame.group_code
         ) === 'main_peloton'
-    )?.group_order ?? null
+    )?.group_order ??
+    largestProfileGroupFrame?.group_order ??
+    null
 
   const hasTimeTrialProfileFrames = frames.some((frame) => {
     const entityType = getReplayEntityType(frame)
@@ -4480,6 +5081,7 @@ function ReplayStageProfile({
                   frame.group_code ||
                   `${entityType}-${frame.entity_id ?? index}`
           const gapSeconds = getReplayFrameGapSeconds(frame)
+          const frameMetadata = frame.metadata ?? {}
           const displayKm = entityType === 'group'
             ? getRoadGroupProfileKmFromGap({
                 actualKm,
@@ -4488,6 +5090,12 @@ function ReplayStageProfile({
                 avgSpeedKmh: asNumber(frame.avg_speed_kmh) ?? undefined,
                 previousGroupKm: previousRoadGroupMarkerKm,
                 maxKm: profilePayload.maxKm,
+                backendNormalized:
+                  frameMetadata.frontend_canonical_road_groups_v1 === true ||
+                  frameMetadata.frontend_road_group_interpolation_v2 === true ||
+                  frameMetadata.km_marker_normalized_from_gap_v3 === true ||
+                  frameMetadata.km_marker_normalized_from_gap_v2 === true ||
+                  frameMetadata.dropped_group_km_marker_normalized_v1 === true,
               })
             : actualKm
 
@@ -4796,6 +5404,99 @@ function ReplayStageProfile({
             markerY - 12
           )
 
+          if (isRoadGroupMarker) {
+            /*
+             * Road-group profile marker v2:
+             * - Restore the P/G/B pill on top, because it is much easier to
+             *   read while watching the race.
+             * - Make the vertical stem visually meaningful: about 400 m on
+             *   low terrain, automatically shortened on climbs so it never
+             *   crosses the top altitude line.
+             * - Keep a small road dot anchored to the actual profile line.
+             */
+            const elevationSpan = Math.max(
+              profilePayload.maxElevation - profilePayload.minElevation,
+              1
+            )
+            const innerHeight = height - padding.top - padding.bottom
+            const pixelsPerMeter = innerHeight / elevationSpan
+            const preferredStemPixels = Math.max(
+              compact ? 74 : 92,
+              400 * pixelsPerMeter
+            )
+            const roadPillHeight = 18
+            const roadPillWidth = Math.max(
+              28,
+              Math.min(42, 18 + displayedLabel.length * 7)
+            )
+            const minimumPillY = 4
+            const maximumStemTopY = Math.max(
+              minimumPillY + roadPillHeight + 2,
+              coord.y - preferredStemPixels
+            )
+            const roadPillY = Math.max(
+              minimumPillY,
+              maximumStemTopY - roadPillHeight
+            )
+            const roadStemTopY = roadPillY + roadPillHeight
+            const roadMarkerRadius = coord.y < height * 0.48 ? 4.2 : 5.2
+
+            return (
+              <g key={group.code}>
+                <title>
+                  {[
+                    group.label,
+                    `${group.riderCount ?? 0} riders`,
+                    group.gapLabel,
+                  ]
+                    .filter(Boolean)
+                    .join(' · ')}
+                </title>
+
+                <line
+                  x1={coord.x}
+                  y1={roadStemTopY}
+                  x2={coord.x}
+                  y2={coord.y}
+                  stroke={markerStroke}
+                  strokeWidth="2"
+                  opacity={0.86}
+                />
+
+                <rect
+                  x={coord.x - roadPillWidth / 2}
+                  y={roadPillY}
+                  width={roadPillWidth}
+                  height={roadPillHeight}
+                  rx={9}
+                  fill={markerFill}
+                  stroke={markerStroke}
+                  strokeWidth={0}
+                />
+
+                <text
+                  x={coord.x}
+                  y={roadPillY + roadPillHeight / 2 + 3.5}
+                  textAnchor="middle"
+                  fontSize="10"
+                  fontWeight="800"
+                  fill={markerTextColor}
+                >
+                  {displayedLabel}
+                </text>
+
+                <circle
+                  cx={coord.x}
+                  cy={coord.y}
+                  r={roadMarkerRadius}
+                  fill={markerFill}
+                  stroke="#ffffff"
+                  strokeWidth={1.25}
+                />
+              </g>
+            )
+          }
+
           return (
             <g key={group.code}>
               <title>
@@ -5088,6 +5789,145 @@ function getReplayWeatherSummary(
   }
 }
 
+
+function getPointBattleEventType(pointType?: string | null): string {
+  const normalizedType = pointType?.toUpperCase() ?? ''
+
+  if (normalizedType === 'KOM') return 'kom'
+  if (normalizedType === 'FINISH') return 'finish'
+
+  return 'sprint'
+}
+
+function getPointBattleTitle(row: RacePointResultRow): string {
+  const pointType = row.point_type?.toUpperCase() ?? ''
+  const pointName = row.point_name?.trim()
+  const sortOrder = asNumber(row.sort_order)
+
+  if (pointName) return pointName
+
+  if (pointType === 'KOM') {
+    return row.kom_category
+      ? `KOM ${row.kom_category}`
+      : 'KOM'
+  }
+
+  if (pointType === 'FINISH') return 'Finish'
+
+  return sortOrder !== null && sortOrder > 0
+    ? `Sprint ${sortOrder}`
+    : 'Sprint'
+}
+
+function getPointBattleDescription(row: RacePointResultRow): string {
+  const riderName = row.rider_name_snapshot?.trim()
+  const teamName = row.team_name_snapshot?.trim()
+  const pointsAwarded = asNumber(row.points_awarded) ?? 0
+  const bonusSeconds = asNumber(row.bonus_seconds_awarded) ?? 0
+  const winnerLine = riderName
+    ? teamName
+      ? `${riderName} (${teamName})`
+      : riderName
+    : null
+
+  const rewardParts = [
+    pointsAwarded > 0
+      ? `${pointsAwarded} ${pointsAwarded === 1 ? 'point' : 'points'}`
+      : null,
+    bonusSeconds > 0
+      ? `${bonusSeconds}s bonus`
+      : null,
+  ].filter(Boolean)
+
+  if (winnerLine && rewardParts.length > 0) {
+    return `${winnerLine} takes ${rewardParts.join(' and ')}.`
+  }
+
+  if (winnerLine) {
+    return `${winnerLine} wins the point battle.`
+  }
+
+  return 'Point battle reached.'
+}
+
+function buildStagePointReplayEvents(
+  pointResults: RacePointResultRow[],
+  raceId: string,
+  stageId: string
+): RaceStageReportEvent[] {
+  const winnerRowsByPointKey = new Map<string, RacePointResultRow>()
+
+  pointResults.forEach((row) => {
+    const pointType = row.point_type?.toUpperCase() ?? ''
+
+    if (
+      pointType !== 'INTERMEDIATE_SPRINT' &&
+      pointType !== 'BONUS_SPRINT' &&
+      pointType !== 'KOM' &&
+      pointType !== 'FINISH'
+    ) {
+      return
+    }
+
+    const pointKm = asNumber(row.km_from_start)
+    if (pointKm === null) return
+
+    const pointKey =
+      row.point_id?.trim() ||
+      `${pointType}-${pointKm}-${row.point_name?.trim() ?? ''}-${row.sort_order ?? ''}`
+    const existingRow = winnerRowsByPointKey.get(pointKey)
+    const existingRank = asNumber(existingRow?.rank) ?? Number.MAX_SAFE_INTEGER
+    const nextRank = asNumber(row.rank) ?? Number.MAX_SAFE_INTEGER
+
+    if (!existingRow || nextRank < existingRank) {
+      winnerRowsByPointKey.set(pointKey, row)
+    }
+  })
+
+  return Array.from(winnerRowsByPointKey.values())
+    .sort((left, right) => {
+      const leftKm = asNumber(left.km_from_start) ?? Number.MAX_VALUE
+      const rightKm = asNumber(right.km_from_start) ?? Number.MAX_VALUE
+
+      if (leftKm !== rightKm) return leftKm - rightKm
+
+      return (asNumber(left.sort_order) ?? 0) - (asNumber(right.sort_order) ?? 0)
+    })
+    .map((row, index) => {
+      const pointKm = asNumber(row.km_from_start)
+      const pointType = row.point_type?.toUpperCase() ?? ''
+      const eventType = getPointBattleEventType(pointType)
+      const eventOrderBase = asNumber(row.sort_order) ?? index + 1
+
+      return {
+        id: `frontend-stage-point-${stageId}-${row.point_id ?? `${eventType}-${index}`}`,
+        race_id: raceId,
+        stage_id: stageId,
+        event_order: 100000 + eventOrderBase,
+        km_marker: pointKm,
+        race_time_label: null,
+        event_type: eventType,
+        title: getPointBattleTitle(row),
+        description: getPointBattleDescription(row),
+        rider_id: row.rider_id,
+        team_id: row.team_id,
+        rider_name_snapshot: row.rider_name_snapshot,
+        team_name_snapshot: row.team_name_snapshot,
+        metadata: {
+          source: 'frontend_stage_point_replay_events_fallback_v1',
+          display_event_type: 'point_battle_fallback',
+          point_id: row.point_id,
+          point_type: row.point_type,
+          point_name: row.point_name,
+          kom_category: row.kom_category,
+          rank: row.rank,
+          points_awarded: row.points_awarded,
+          bonus_seconds_awarded: row.bonus_seconds_awarded,
+        },
+      }
+    })
+}
+
 type ReplayPlaybackSpeed = 1 | 2 | 4 | 8
 
 function RaceReplayModal({
@@ -5283,7 +6123,7 @@ function RaceReplayModal({
 
     const interval = window.setInterval(
       updateLiveProgress,
-      1000
+      100
     )
 
     return () => window.clearInterval(interval)
@@ -5368,6 +6208,8 @@ function RaceReplayModal({
             return next
           })
         } else {
+          const effectiveRoadSpeed = getRoadReplayEffectivePlaybackSpeed(speed)
+
           setProgress((value) => {
             const safeDurationMs = Math.max(
               1000,
@@ -5375,7 +6217,7 @@ function RaceReplayModal({
             )
 
             const next =
-              value + (elapsedMs / safeDurationMs) * speed
+              value + (elapsedMs / safeDurationMs) * effectiveRoadSpeed
 
             return next >= 1 ? 1 : next
           })
@@ -5641,10 +6483,34 @@ function RaceReplayModal({
     return () => {
       cancelled = true
     }
-  }, [open, race?.id, stage?.id])
+  }, [open, race?.id, stage?.id, liveState?.simulation_run_id])
+
+  const hasBackendPointBattleEvents = useMemo(() => {
+    return events.some((event) => {
+      const metadata = event.metadata ?? {}
+
+      return (
+        metadata.source === 'race_engine_point_battle_report_events_v1' ||
+        metadata.display_event_type === 'point_battle' ||
+        String(metadata.source ?? '').includes('point_battle_report_events')
+      )
+    })
+  }, [events])
+
+  const stagePointEvents = useMemo(
+    () =>
+      !hasBackendPointBattleEvents && race?.id && stage?.id
+        ? buildStagePointReplayEvents(
+            pointResults,
+            race.id,
+            stage.id
+          )
+        : [],
+    [pointResults, race?.id, stage?.id, hasBackendPointBattleEvents]
+  )
 
   const replayEvents = useMemo(() => {
-    return [...events].sort((left, right) => {
+    return [...events, ...stagePointEvents].sort((left, right) => {
       const leftKm =
         asNumber(left.km_marker) ?? Number.MAX_VALUE
 
@@ -5657,7 +6523,7 @@ function RaceReplayModal({
 
       return left.event_order - right.event_order
     })
-  }, [events])
+  }, [events, stagePointEvents])
 
   if (!open || !stage) return null
 
@@ -5730,9 +6596,14 @@ function RaceReplayModal({
 
   const currentGroupFrames = isTimeTrialReplay
     ? rawCurrentGroupFrames
-    : normalizeRoadReplayGroupsForDisplay(
-        getDedupedRoadGroupFrames(rawCurrentGroupFrames)
+    : getNormalizedRoadReplayGroupsAtFramePosition(
+        replayFrames,
+        currentFramePosition
       )
+
+  const profileFrames = isTimeTrialReplay
+    ? currentFrames
+    : currentGroupFrames
 
   const currentTeamFrames = currentFrames.filter(
     (frame) => getReplayEntityType(frame) === 'team'
@@ -5750,7 +6621,11 @@ function RaceReplayModal({
         ) === 'main_peloton'
     )?.group_order ?? null
 
-  const currentLeaderKm = currentFrames.reduce(
+  const currentLeaderFramesForKm = isTimeTrialReplay
+    ? currentFrames
+    : currentGroupFrames
+
+  const currentLeaderKm = currentLeaderFramesForKm.reduce(
     (maximum, frame) =>
       Math.max(
         maximum,
@@ -5762,7 +6637,9 @@ function RaceReplayModal({
   const currentRaceSeconds = isTimeTrialReplay
     ? currentTimeTrialRaceSeconds ??
       getReplayTimeTrialCurrentRaceClockSeconds(currentFrames)
-    : currentFrames[0]?.race_seconds ?? 0
+    : currentGroupFrames[0]?.race_seconds ??
+      currentFrames[0]?.race_seconds ??
+      0
 
   const displayProgress =
     timeTrialClockBounds !== null &&
@@ -7174,7 +8051,7 @@ function RaceReplayModal({
               stage={stage}
               profile={replayProfile}
               groups={groups}
-              frames={currentFrames}
+              frames={profileFrames}
               allFrames={replayFrames}
               currentRaceSeconds={currentTimeTrialRaceSeconds}
               progress={displayProgress}
