@@ -2313,38 +2313,54 @@ function getRoadGroupProfileKmFromGap({
   if (!Number.isFinite(actualKm)) return 0
 
   /*
-   * Visual profile spacing must stay consistent with the shown time gap.
-   * Earlier versions trusted interpolated/backend km markers too much, so a
-   * group with +8–10 minutes could render almost on top of the leader. That
-   * made the profile impossible to read even when rider gap continuity was OK.
+   * V13 visual-only profile spacing.
    *
-   * We only return actualKm for leader/no-gap groups. For every real gap we
-   * calculate a visual road offset from the displayed gap and speed, then cap it
-   * to keep the marker on the visible profile. This does not rewrite DB data;
-   * it is only the stage-profile marker position.
+   * Backend v12 now keeps rider gaps, km movement, Peloton identity, and
+   * internal group span stable. The remaining problem is visual: a group with
+   * +10 to +25 minutes can still look too close to the leader if the profile
+   * marker trusts backend km too much or caps the visible offset too tightly.
+   *
+   * This function does not rewrite race data. It only places the dot on the
+   * stage profile so the marker distance better matches the displayed time gap.
    */
   if (!Number.isFinite(gapSeconds) || gapSeconds <= 0) {
     return Math.max(0, Math.min(maxKm, actualKm))
   }
 
-  const speedKmh = Math.max(24, Math.min(50, Number(avgSpeedKmh ?? 38)))
+  const speedKmh = Math.max(22, Math.min(50, Number(avgSpeedKmh ?? 38)))
   const physicalGapKm = (gapSeconds * speedKmh) / 3600
+
   const minimumVisibleGapKm =
-    gapSeconds >= 600 ? 5.5 :
-    gapSeconds >= 420 ? 4.0 :
-    gapSeconds >= 300 ? 3.0 :
-    gapSeconds >= 180 ? 1.8 :
-    gapSeconds >= 90 ? 1.0 :
-    gapSeconds >= 30 ? 0.4 :
-    0.12
-  const maximumVisibleGapKm =
-    gapSeconds >= 600 ? 8.5 :
-    gapSeconds >= 420 ? 7.0 :
-    gapSeconds >= 300 ? 5.8 :
-    gapSeconds >= 180 ? 4.2 :
-    gapSeconds >= 90 ? 2.8 :
-    gapSeconds >= 30 ? 1.6 :
-    0.7
+    gapSeconds >= 1500 ? 14.0 :
+    gapSeconds >= 1200 ? 11.5 :
+    gapSeconds >= 900 ? 9.0 :
+    gapSeconds >= 600 ? 6.5 :
+    gapSeconds >= 420 ? 4.8 :
+    gapSeconds >= 300 ? 3.5 :
+    gapSeconds >= 180 ? 2.2 :
+    gapSeconds >= 90 ? 1.2 :
+    gapSeconds >= 30 ? 0.5 :
+    0.15
+
+  const maximumVisibleGapKm = Math.max(
+    0.4,
+    Math.min(
+      // Keep the dot on the visible profile but allow very large gaps to look
+      // genuinely far behind, especially around 90–140 km.
+      Math.max(0.4, leaderKm - 0.35),
+      gapSeconds >= 1500 ? 24.0 :
+      gapSeconds >= 1200 ? 20.0 :
+      gapSeconds >= 900 ? 16.0 :
+      gapSeconds >= 600 ? 12.0 :
+      gapSeconds >= 420 ? 9.0 :
+      gapSeconds >= 300 ? 7.0 :
+      gapSeconds >= 180 ? 5.0 :
+      gapSeconds >= 90 ? 3.2 :
+      gapSeconds >= 30 ? 1.8 :
+      0.8
+    )
+  )
+
   const gapKm = Math.min(
     maximumVisibleGapKm,
     Math.max(minimumVisibleGapKm, physicalGapKm)
@@ -2353,7 +2369,9 @@ function getRoadGroupProfileKmFromGap({
   let displayKm = leaderKm - gapKm
 
   if (previousGroupKm !== null && previousGroupKm !== undefined) {
-    displayKm = Math.min(displayKm, previousGroupKm - 0.12)
+    // Maintain visual order and prevent groups with similar marker positions
+    // from drawing on top of each other.
+    displayKm = Math.min(displayKm, previousGroupKm - 0.28)
   }
 
   return Math.max(0, Math.min(maxKm, displayKm))
