@@ -3795,7 +3795,31 @@ function normalizeRoadReplayGroupsForDisplay(
 
   if (visibleFrames.length === 0) return []
 
-  const sortedByRoadPosition = [...visibleFrames].sort((left, right) => {
+  /*
+   * IMPORTANT: backend-stable road group semantics.
+   *
+   * Older frontend logic recalculated the Peloton every frame by choosing the
+   * biggest visible group. That was the reason the replay still looked wrong
+   * after the backend v11 patch: the database had a stable main_peloton row,
+   * but the frontend renamed another group to Peloton again on each frame.
+   *
+   * From v11 onward the backend owns group identity:
+   * - main_peloton is the stable Peloton lineage.
+   * - front/chase groups are ahead of that Peloton.
+   * - dropped/outside groups are behind it.
+   *
+   * The frontend may sort and annotate for display, but it must not rename a
+   * bigger/closer group into Peloton. This keeps P stable and prevents the
+   * confusing G2 -> P -> B1 -> P switching seen around 40–58 km.
+   */
+  const sortedByBackendRoadOrder = [...visibleFrames].sort((left, right) => {
+    const leftOrder = Number(left.group_order)
+    const rightOrder = Number(right.group_order)
+
+    if (Number.isFinite(leftOrder) && Number.isFinite(rightOrder) && leftOrder !== rightOrder) {
+      return leftOrder - rightOrder
+    }
+
     const leftGap = Math.max(0, Number(left.gap_seconds ?? 0))
     const rightGap = Math.max(0, Number(right.gap_seconds ?? 0))
     if (leftGap !== rightGap) return leftGap - rightGap
@@ -3804,134 +3828,33 @@ function normalizeRoadReplayGroupsForDisplay(
     const rightKm = asNumber(right.km_marker) ?? 0
     if (leftKm !== rightKm) return rightKm - leftKm
 
-    const orderDiff =
-      (Number(left.group_order) || Number.MAX_SAFE_INTEGER) -
-      (Number(right.group_order) || Number.MAX_SAFE_INTEGER)
-    if (orderDiff !== 0) return orderDiff
-
     return sortReplayFrames(left, right)
   })
 
-  /*
-   * Canonical road display rule for every single replay frame:
-   *
-   * - Biggest visible rider group = Peloton / P.
-   * - Every group physically in front of that Peloton = G1, G2, G3.
-   * - Every group physically behind that Peloton = B1, B2, B3.
-   *
-   * We deliberately calculate this per frame. We do not interpolate raw
-   * group_code identities across frames, because backend group_code values are
-   * not stable identities. Interpolating by raw code is what caused markers to
-   * cross over each other and turn a B group into a front group on the profile.
-   */
-  let pelotonSortedIndex = 0
-  let bestPelotonScore = Number.NEGATIVE_INFINITY
-
-  sortedByRoadPosition.forEach((frame, index) => {
-    const size = getReplayEntitySize(frame)
-    const baseGroupCode = getReplayBaseGroupCode(frame.group_code)
-    const isFrontendLowEnergyDropGroup =
-      (frame.metadata ?? {}).frontend_low_energy_drop_group_v1 === true
-    const semanticBonus = baseGroupCode === 'main_peloton' ? 0.2 : 0
-    const roadPenalty = index / 100000
-    const energyDropPelotonPenalty = isFrontendLowEnergyDropGroup ? 100000 : 0
-    const score = size + semanticBonus - roadPenalty - energyDropPelotonPenalty
-
-    if (score > bestPelotonScore) {
-      bestPelotonScore = score
-      pelotonSortedIndex = index
-    }
-  })
-
-  const normalizedGaps: number[] = []
-
-  sortedByRoadPosition.forEach((frame, index) => {
-    const rawGap = Math.max(0, Number(frame.gap_seconds ?? 0))
-    normalizedGaps[index] =
-      index === 0
-        ? 0
-        : Math.max(rawGap, (normalizedGaps[index - 1] ?? 0) + 8)
-  })
-
-  const pelotonGap = normalizedGaps[pelotonSortedIndex] ?? 0
-
-  for (let index = pelotonSortedIndex + 1; index < normalizedGaps.length; index += 1) {
-    normalizedGaps[index] = Math.max(
-      normalizedGaps[index] ?? 0,
-      pelotonGap + 8 * (index - pelotonSortedIndex)
-    )
-  }
-
-  const leaderKm = Math.max(
-    ...sortedByRoadPosition.map((frame) => asNumber(frame.km_marker) ?? 0),
-    0
+  const pelotonIndex = sortedByBackendRoadOrder.findIndex(
+    (frame) => getReplayBaseGroupCode(frame.group_code) === 'main_peloton'
   )
 
-  let previousDisplayKm: number | null = null
-
-  return sortedByRoadPosition.map((frame, index) => {
-    const isPeloton = index === pelotonSortedIndex
-    const isAheadOfPeloton = index < pelotonSortedIndex
-    const behindPelotonIndex = index - pelotonSortedIndex
-    const aheadGroupNumber = index + 1
-    const behindGroupNumber = Math.max(1, behindPelotonIndex)
-    const semanticGap = normalizedGaps[index] ?? 0
-
-    const speedKmh = Math.max(
-      28,
-      Math.min(46, asNumber(frame.avg_speed_kmh) ?? 38)
-    )
-    const gapKm = (semanticGap * speedKmh) / 3600
-    let displayKm = index === 0 ? leaderKm : leaderKm - gapKm
-
-    if (previousDisplayKm !== null) {
-      displayKm = Math.min(displayKm, previousDisplayKm - 0.12)
-    }
-
-    displayKm = Math.max(0, displayKm)
-    previousDisplayKm = displayKm
-
-    const normalizedCode = isPeloton
-      ? 'main_peloton'
-      : isAheadOfPeloton
-        ? aheadGroupNumber === 1
-          ? 'front_group'
-          : `chase_group_${String(aheadGroupNumber).padStart(2, '0')}`
-        : behindGroupNumber === 1
-          ? 'dropped_group'
-          : `outside_group_${String(behindGroupNumber).padStart(2, '0')}`
-
-    const normalizedLabel = isPeloton
-      ? 'Peloton'
-      : isAheadOfPeloton
-        ? aheadGroupNumber === 1
-          ? 'Front group'
-          : `Chase group ${aheadGroupNumber}`
-        : behindGroupNumber === 1
-          ? 'Dropped group'
-          : `Dropped group ${behindGroupNumber}`
+  return sortedByBackendRoadOrder.map((frame, index) => {
+    const backendBaseCode = getReplayBaseGroupCode(frame.group_code)
 
     return {
       ...frame,
-      group_code: normalizedCode,
-      group_label: normalizedLabel,
       group_order: index + 1,
-      gap_seconds: semanticGap,
-      km_marker: Number(displayKm.toFixed(3)),
       metadata: {
         ...(frame.metadata ?? {}),
-        frontend_canonical_road_groups_v1: true,
-        frontend_canonical_rule:
-          'per frame: biggest visible rider group is Peloton; road-order groups ahead are G; road-order groups behind are B',
+        frontend_backend_stable_road_groups_v1: true,
+        frontend_backend_stable_road_groups_rule:
+          'frontend preserves backend v11 stable group identity; it does not recalculate Peloton from biggest group per frame',
+        frontend_backend_stable_peloton_index:
+          pelotonIndex >= 0 ? pelotonIndex : null,
+        frontend_backend_stable_base_group_code: backendBaseCode,
         frontend_original_group_code: frame.group_code ?? null,
         frontend_original_group_label: frame.group_label ?? null,
         frontend_original_group_order: frame.group_order ?? null,
         frontend_original_gap_seconds: frame.gap_seconds ?? null,
         frontend_original_km_marker: frame.km_marker ?? null,
         frontend_original_group_size: getReplayEntitySize(frame),
-        frontend_peloton_sorted_index: pelotonSortedIndex,
-        frontend_semantic_gap_seconds: semanticGap,
-        frontend_semantic_display_km_marker: Number(displayKm.toFixed(3)),
       },
     }
   })
