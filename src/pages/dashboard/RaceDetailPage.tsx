@@ -2313,26 +2313,38 @@ function getRoadGroupProfileKmFromGap({
   if (!Number.isFinite(actualKm)) return 0
 
   /*
-   * If the backend already normalized km_marker from gap_seconds, trust it.
-   * Otherwise the frontend applies a second synthetic gap and can make P/B
-   * markers look wrong even after the SQL fix.
+   * Visual profile spacing must stay consistent with the shown time gap.
+   * Earlier versions trusted interpolated/backend km markers too much, so a
+   * group with +8–10 minutes could render almost on top of the leader. That
+   * made the profile impossible to read even when rider gap continuity was OK.
+   *
+   * We only return actualKm for leader/no-gap groups. For every real gap we
+   * calculate a visual road offset from the displayed gap and speed, then cap it
+   * to keep the marker on the visible profile. This does not rewrite DB data;
+   * it is only the stage-profile marker position.
    */
-  if (backendNormalized || !Number.isFinite(gapSeconds) || gapSeconds <= 0) {
+  if (!Number.isFinite(gapSeconds) || gapSeconds <= 0) {
     return Math.max(0, Math.min(maxKm, actualKm))
   }
 
-  const speedKmh = Math.max(28, Math.min(46, Number(avgSpeedKmh ?? 38)))
+  const speedKmh = Math.max(24, Math.min(50, Number(avgSpeedKmh ?? 38)))
   const physicalGapKm = (gapSeconds * speedKmh) / 3600
   const minimumVisibleGapKm =
+    gapSeconds >= 600 ? 5.5 :
+    gapSeconds >= 420 ? 4.0 :
+    gapSeconds >= 300 ? 3.0 :
     gapSeconds >= 180 ? 1.8 :
     gapSeconds >= 90 ? 1.0 :
     gapSeconds >= 30 ? 0.4 :
     0.12
   const maximumVisibleGapKm =
-    gapSeconds >= 180 ? 3.6 :
-    gapSeconds >= 90 ? 2.4 :
-    gapSeconds >= 30 ? 1.5 :
-    0.6
+    gapSeconds >= 600 ? 8.5 :
+    gapSeconds >= 420 ? 7.0 :
+    gapSeconds >= 300 ? 5.8 :
+    gapSeconds >= 180 ? 4.2 :
+    gapSeconds >= 90 ? 2.8 :
+    gapSeconds >= 30 ? 1.6 :
+    0.7
   const gapKm = Math.min(
     maximumVisibleGapKm,
     Math.max(minimumVisibleGapKm, physicalGapKm)
