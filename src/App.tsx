@@ -7,6 +7,7 @@
  * - Wrap the app with AuthProvider to keep Supabase auth state in memory.
  * - Add route guards for /create-club and /dashboard/* that rely on Supabase auth.
  * - Keep /create-club outside the dashboard route so the liquidation guard cannot block it.
+ * - Keep password reset routes public so users can recover access before login.
  * - Provide small loading and error states in guards instead of blank screens.
  */
 
@@ -22,6 +23,8 @@ import { HashRouter, Route, Routes, Navigate } from 'react-router'
 import HomePage from './pages/Home'
 import LoginPage from './pages/Login'
 import RegisterPage from './pages/Register'
+import ForgotPasswordPage from './pages/ForgotPassword'
+import ResetPasswordPage from './pages/ResetPassword'
 import CreateClubPage from './pages/CreateClub'
 import ClubDashboard from './pages/dashboard/ClubDashboard'
 import OverviewPage from './pages/dashboard/Overview'
@@ -225,22 +228,11 @@ function RequireClub({ children }: GuardProps): JSX.Element | null {
  *   because a liquidated club can still be returned by that RPC and would redirect
  *   the user back into the blocked dashboard.
  *
- * Help quick-link destinations are aligned to valid registered dashboard routes,
- * including overview, transfers, notifications, scouting, invite-friends, and manual.
+ * Password reset routes:
+ * - /forgot-password
+ * - /reset-password
  *
- * Training camp routes:
- * - /dashboard/training/current-camp
- * - /dashboard/training/current-camp/:campId
- *
- * Race preparation routes:
- * - /dashboard/race-preparation
- * - /dashboard/team-schedule
- *
- * Manual route:
- * - /dashboard/manual
- *
- * CurrentTrainingCampPage expects this RPC later:
- * - training_get_current_camp(p_camp_id uuid default null)
+ * These must remain public because users need them before login.
  */
 export default function App(): JSX.Element {
   return (
@@ -251,6 +243,8 @@ export default function App(): JSX.Element {
           <Route path="/" element={<HomePage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
           <Route path="/referral/:code" element={<ReferralCapturePage />} />
 
           {/* 

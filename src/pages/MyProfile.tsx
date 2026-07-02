@@ -1,11 +1,16 @@
 /**
  * MyProfile.tsx
- * Full profile page with persistent profile + password update.
+ * Full profile page with persistent profile data and password reset email flow.
  *
  * Birthday rule:
  * - Birthday is saved once during registration.
  * - Birthday is read-only on My Profile.
  * - Birthday is not included in the save payload.
+ *
+ * Password rule:
+ * - Password changes are completed through Supabase Auth email verification.
+ * - The page sends a reset-password email to the authenticated account email.
+ * - The user then lands on /#/reset-password and chooses a new password.
  */
 
 import React, { useEffect, useMemo, useState } from 'react'
@@ -82,12 +87,20 @@ function formatBirthday(profile: ProfileRow | null): string {
   return `${monthName} ${profile.birthday_day}${yearPart}`
 }
 
+/**
+ * The app uses HashRouter, so the reset page must be opened as:
+ * https://domain.com/#/reset-password
+ */
+function getPasswordResetRedirectUrl(): string {
+  return `${window.location.origin}/#/reset-password`
+}
+
 export default function MyProfilePage(): JSX.Element {
   const { user } = useAuth()
 
   const [loading, setLoading] = useState(true)
   const [savingProfile, setSavingProfile] = useState(false)
-  const [savingPassword, setSavingPassword] = useState(false)
+  const [sendingPasswordReset, setSendingPasswordReset] = useState(false)
 
   const [profile, setProfile] = useState<ProfileRow | null>(null)
 
@@ -100,13 +113,14 @@ export default function MyProfilePage(): JSX.Element {
     country: '',
   })
 
-  const [newPassword, setNewPassword] = useState('')
-  const [confirmPassword, setConfirmPassword] = useState('')
-
   const [successMessage, setSuccessMessage] = useState('')
   const [errorMessage, setErrorMessage] = useState('')
 
   const birthdayLabel = useMemo(() => formatBirthday(profile), [profile])
+
+  const accountEmail = useMemo(() => {
+    return (user?.email || profile?.email || form.email || '').trim()
+  }, [form.email, profile?.email, user?.email])
 
   const isDirty = useMemo(() => {
     if (!profile) {
@@ -283,37 +297,38 @@ export default function MyProfilePage(): JSX.Element {
     }
   }
 
-  async function handleChangePassword(e: React.FormEvent) {
+  async function handleSendPasswordReset(e: React.FormEvent) {
     e.preventDefault()
 
-    setSavingPassword(true)
+    setSendingPasswordReset(true)
     setErrorMessage('')
     setSuccessMessage('')
 
     try {
-      if (!newPassword || !confirmPassword) {
-        throw new Error('Please fill in both password fields.')
+      if (!accountEmail) {
+        throw new Error('No account email was found for password reset.')
       }
 
-      if (newPassword !== confirmPassword) {
-        throw new Error('New password and confirmation do not match.')
+      const { error } = await supabase.auth.resetPasswordForEmail(accountEmail, {
+        redirectTo: getPasswordResetRedirectUrl(),
+      })
+
+      if (error) {
+        throw error
       }
 
-      if (newPassword.length < 8) {
-        throw new Error('Password must be at least 8 characters long.')
-      }
-
-      const { error } = await supabase.auth.updateUser({ password: newPassword })
-      if (error) throw error
-
-      setNewPassword('')
-      setConfirmPassword('')
-      setSuccessMessage('Password updated successfully.')
+      setSuccessMessage(
+        `Password reset email sent to ${accountEmail}. Please check your inbox and spam folder, then follow the link to choose a new password.`,
+      )
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to update password.'
-      setErrorMessage(message)
+      // eslint-disable-next-line no-console
+      console.error('Profile password reset request error:', err)
+
+      setErrorMessage(
+        'We could not send the password reset email. Please try again in a moment.',
+      )
     } finally {
-      setSavingPassword(false)
+      setSendingPasswordReset(false)
     }
   }
 
@@ -378,6 +393,9 @@ export default function MyProfilePage(): JSX.Element {
                   placeholder="Email address"
                   autoComplete="email"
                 />
+                <div className="text-xs text-gray-500 mt-1">
+                  If you change your email, you may need to confirm the new address.
+                </div>
               </label>
 
               <label className="block">
@@ -448,44 +466,32 @@ export default function MyProfilePage(): JSX.Element {
           </div>
         </form>
 
-        <form onSubmit={handleChangePassword} className="mt-6 space-y-6">
+        <form onSubmit={handleSendPasswordReset} className="mt-6 space-y-6">
           <div className="border border-gray-200 rounded p-4">
-            <h3 className="text-base font-semibold mb-4">Change Password</h3>
+            <h3 className="text-base font-semibold mb-2">Change Password</h3>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <label className="block">
-                <div className="text-sm font-medium mb-1">New Password</div>
-                <input
-                  type="password"
-                  value={newPassword}
-                  onChange={e => setNewPassword(e.target.value)}
-                  className="w-full border border-gray-300 px-3 py-2 rounded"
-                  placeholder="New password"
-                  autoComplete="new-password"
-                />
-              </label>
+            <p className="text-sm text-gray-600">
+              For security, password changes are completed by email verification. We will send a
+              password reset link to your current account email.
+            </p>
 
-              <label className="block">
-                <div className="text-sm font-medium mb-1">Confirm New Password</div>
-                <input
-                  type="password"
-                  value={confirmPassword}
-                  onChange={e => setConfirmPassword(e.target.value)}
-                  className="w-full border border-gray-300 px-3 py-2 rounded"
-                  placeholder="Repeat new password"
-                  autoComplete="new-password"
-                />
-              </label>
+            <div className="mt-4 rounded border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-800">
+              {accountEmail || 'No account email found'}
             </div>
 
             <div className="pt-4">
               <button
                 type="submit"
-                disabled={savingPassword}
+                disabled={sendingPasswordReset || !accountEmail}
                 className="inline-flex items-center rounded bg-gray-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
               >
-                {savingPassword ? 'Updating...' : 'Update Password'}
+                {sendingPasswordReset ? 'Sending email...' : 'Send Password Change Email'}
               </button>
+            </div>
+
+            <div className="mt-3 text-xs text-gray-500">
+              After opening the email link, you will be able to choose a new password on the reset
+              password page.
             </div>
           </div>
         </form>

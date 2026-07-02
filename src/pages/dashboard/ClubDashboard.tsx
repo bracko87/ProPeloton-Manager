@@ -8,6 +8,7 @@
 import React from 'react'
 import { Outlet } from 'react-router'
 import MainLayout from '../../components/layout/MainLayout'
+import RestartTeamModal from '../../components/team/RestartTeamModal'
 import { supabase } from '../../lib/supabase'
 import { getMyClubContext } from '../../lib/clubContext'
 
@@ -25,95 +26,192 @@ type ClubAccessStatus = {
   message?: string
 }
 
+function clearCachedClubContext(): void {
+  try {
+    sessionStorage.removeItem('clubId')
+    sessionStorage.removeItem('selectedClubId')
+    localStorage.removeItem('clubId')
+    localStorage.removeItem('selectedClubId')
+    localStorage.removeItem('ppm-active-club')
+  } catch {
+    // Ignore storage cleanup errors
+  }
+}
+
+function navigateToHashRoute(path: string): void {
+  const normalizedPath = path.startsWith('/') ? path : `/${path}`
+  const targetUrl = `${window.location.origin}${window.location.pathname}${window.location.search}#${normalizedPath}`
+
+  if (window.location.href === targetUrl) {
+    window.location.reload()
+    return
+  }
+
+  window.location.replace(targetUrl)
+}
+
+function RestartWelcomeModal({
+  onClose,
+}: {
+  onClose: () => void
+}): JSX.Element {
+  return (
+    <div
+      className="fixed inset-0 z-[100] flex items-center justify-center p-4"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="restart-welcome-title"
+    >
+      <button
+        type="button"
+        aria-label="Close restart welcome"
+        className="absolute inset-0 bg-black/40 backdrop-blur-[2px]"
+        onClick={onClose}
+      />
+
+      <div
+        className="relative z-[101] w-full max-w-lg overflow-hidden rounded-2xl border border-emerald-200 bg-white shadow-2xl"
+        onClick={event => event.stopPropagation()}
+      >
+        <div className="border-b border-emerald-100 bg-emerald-50 px-6 py-5">
+          <h3
+            id="restart-welcome-title"
+            className="text-lg font-semibold text-emerald-800"
+          >
+            Welcome back to your restarted team
+          </h3>
+
+          <p className="mt-1 text-sm text-emerald-700">
+            Your club has been given a fresh start.
+          </p>
+        </div>
+
+        <div className="px-6 py-5 text-sm leading-6 text-gray-700">
+          <p>
+            Your team is active again with a new starter squad, starter
+            equipment, starter finances, and 0 season points.
+          </p>
+
+          <p className="mt-3">
+            Your club name, logo, jersey, country, and competition slot have
+            been preserved. The old riders were released as free agents, and the
+            club is ready for a new beginning.
+          </p>
+
+          <div className="mt-4 rounded-lg border border-yellow-200 bg-yellow-50 p-4 text-yellow-900">
+            Good luck this time. Build carefully, manage the budget, and bring
+            your club back stronger.
+          </div>
+        </div>
+
+        <div className="flex justify-end border-t border-gray-100 bg-gray-50 px-6 py-4">
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700"
+          >
+            Continue to dashboard
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function ClubLiquidatedScreen({
   status,
 }: {
   status: ClubAccessStatus
 }): JSX.Element {
-  const [showRestartNotice, setShowRestartNotice] = React.useState(false)
+  const [isRestartModalOpen, setIsRestartModalOpen] = React.useState(false)
 
   return (
-    <div className="w-full p-6">
-      <div className="mx-auto max-w-3xl rounded-xl border border-red-200 bg-white p-6 shadow-sm">
-        <div className="text-sm font-semibold uppercase tracking-wide text-red-600">
-          Club Liquidated
-        </div>
-
-        <h1 className="mt-2 text-2xl font-bold text-gray-900">
-          {status.club_name ?? 'Your club'} has been liquidated
-        </h1>
-
-        <p className="mt-3 text-sm leading-6 text-gray-600">
-          This club used all 3 lifetime emergency rescues and then failed to cover
-          another mandatory obligation. No further emergency loans are available,
-          and this team can no longer perform game actions.
-        </p>
-
-        <div className="mt-4 rounded-lg bg-red-50 p-4 text-sm text-red-800">
-          <div>
-            <strong>Rescues used:</strong>{' '}
-            {status.emergency_rescue_count ?? 3} / 3
+    <>
+      <div className="w-full p-6">
+        <div className="mx-auto max-w-3xl rounded-xl border border-red-200 bg-white p-6 shadow-sm">
+          <div className="text-sm font-semibold uppercase tracking-wide text-red-600">
+            Club Liquidated
           </div>
 
-          {status.liquidation_reason && (
-            <div className="mt-1">
-              <strong>Reason:</strong> {status.liquidation_reason}
+          <h1 className="mt-2 text-2xl font-bold text-gray-900">
+            {status.club_name ?? 'Your club'} has been liquidated
+          </h1>
+
+          <p className="mt-3 text-sm leading-6 text-gray-600">
+            This club used all 3 lifetime emergency rescues and then failed to
+            cover another mandatory obligation. No further emergency loans are
+            available, and this team can no longer perform game actions.
+          </p>
+
+          <div className="mt-4 rounded-lg bg-red-50 p-4 text-sm text-red-800">
+            <div>
+              <strong>Rescues used:</strong>{' '}
+              {status.emergency_rescue_count ?? 3} / 3
             </div>
-          )}
 
-          {status.liquidated_at && (
-            <div className="mt-1">
-              <strong>Closed at:</strong> {status.liquidated_at}
+            {status.liquidation_reason && (
+              <div className="mt-1">
+                <strong>Reason:</strong> {status.liquidation_reason}
+              </div>
+            )}
+
+            {status.liquidated_at && (
+              <div className="mt-1">
+                <strong>Closed at:</strong> {status.liquidated_at}
+              </div>
+            )}
+          </div>
+
+          <div className="mt-6 rounded-lg border border-yellow-200 bg-yellow-50 p-4 text-sm leading-6 text-yellow-900">
+            Your user account and coins are still active. Only this club is
+            closed. You can create a completely new club in the next available
+            free spot, or restart this team in the same competition slot with a
+            fresh squad, no staff, and 0 points.
+          </div>
+
+          <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-900">
+            <div className="font-semibold">
+              Restart Team keeps your club identity.
             </div>
-          )}
-        </div>
 
-        <div className="mt-6 rounded-lg border border-yellow-200 bg-yellow-50 p-4 text-sm text-yellow-900">
-          Your user account and coins are still active. Only this club is closed.
-          You can create a completely new club in the next available free spot, or
-          later restart this team in the same competition with a fresh squad, no
-          staff, and 0 points.
-        </div>
-
-        {showRestartNotice && (
-          <div className="mt-4 rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-blue-900">
-            <div className="font-semibold">Restart team is not active yet</div>
-
-            <div className="mt-1 leading-6">
-              This option will later reset the liquidated club in the same
-              competition. The old riders will be released to the free-agent
-              market, staff will be removed, points and active progress will
-              reset to 0, and the club will start again as a fresh team.
+            <div className="mt-1">
+              Your club ID, owner account, team name, logo, jersey, country, and
+              tier/division slot stay the same. Current riders are released to
+              the free-agent market, all season points are reset to 0, and the
+              club receives a new starter squad based on its current competition
+              tier.
             </div>
           </div>
-        )}
 
-        <div className="mt-6 flex flex-wrap gap-3">
-          <button
-            type="button"
-            onClick={() => {
-              sessionStorage.removeItem('clubId')
-              sessionStorage.removeItem('selectedClubId')
-              localStorage.removeItem('clubId')
-              localStorage.removeItem('selectedClubId')
+          <div className="mt-6 flex flex-wrap gap-3">
+            <button
+              type="button"
+              onClick={() => {
+                clearCachedClubContext()
+                navigateToHashRoute('/create-club')
+              }}
+              className="rounded-md bg-yellow-400 px-4 py-2 text-sm font-semibold text-black hover:bg-yellow-300"
+            >
+              Create new club
+            </button>
 
-              window.location.hash = '/create-club'
-            }}
-            className="rounded-md bg-yellow-400 px-4 py-2 text-sm font-semibold text-black hover:bg-yellow-300"
-          >
-            Create new club
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setShowRestartNotice(true)}
-            className="rounded-md border border-red-200 bg-red-50 px-4 py-2 text-sm font-semibold text-red-700 hover:bg-red-100"
-          >
-            Restart team
-          </button>
+            <button
+              type="button"
+              onClick={() => setIsRestartModalOpen(true)}
+              className="rounded-md border border-red-200 bg-red-50 px-4 py-2 text-sm font-semibold text-red-700 hover:bg-red-100"
+            >
+              Restart team
+            </button>
+          </div>
         </div>
       </div>
-    </div>
+
+      <RestartTeamModal
+        isOpen={isRestartModalOpen}
+        onClose={() => setIsRestartModalOpen(false)}
+        redirectTo="/dashboard/overview"
+      />
+    </>
   )
 }
 
@@ -144,6 +242,19 @@ export default function ClubDashboard(): JSX.Element {
     React.useState<ClubAccessStatus | null>(null)
 
   const [loadingAccess, setLoadingAccess] = React.useState(true)
+  const [showRestartWelcome, setShowRestartWelcome] = React.useState(false)
+
+  React.useEffect(() => {
+    try {
+      const raw = window.sessionStorage.getItem('ppm-team-restart-success')
+      if (!raw) return
+
+      window.sessionStorage.removeItem('ppm-team-restart-success')
+      setShowRestartWelcome(true)
+    } catch {
+      // Ignore session storage errors
+    }
+  }, [])
 
   React.useEffect(() => {
     let alive = true
@@ -230,5 +341,13 @@ export default function ClubDashboard(): JSX.Element {
     content = <Outlet />
   }
 
-  return <MainLayout>{content}</MainLayout>
+  return (
+    <MainLayout>
+      {content}
+
+      {showRestartWelcome && (
+        <RestartWelcomeModal onClose={() => setShowRestartWelcome(false)} />
+      )}
+    </MainLayout>
+  )
 }

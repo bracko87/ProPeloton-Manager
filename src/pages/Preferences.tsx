@@ -20,6 +20,8 @@
  * - Updated DevelopingTeamStatus to use the new backend shape.
  * - After successful Developing Team purchase, re-pin ppm-active-club
  *   to the MAIN club only using getMyClubContext().
+ * - Restart Team now opens the shared RestartTeamModal and calls
+ *   public.restart_my_team_v1 through that modal.
  *
  * Note:
  * - The one-time repair / global protection for broken old localStorage
@@ -29,6 +31,7 @@
  */
 
 import React, { useEffect, useState } from 'react'
+import RestartTeamModal from '@/components/team/RestartTeamModal'
 import { supabase } from '@/lib/supabase'
 import { getMyClubContext } from '@/lib/clubContext'
 import {
@@ -120,6 +123,7 @@ export default function PreferencesPage(): JSX.Element {
 
   const [isShuttingDown, setIsShuttingDown] = useState(false)
   const [isShutdownModalOpen, setIsShutdownModalOpen] = useState(false)
+  const [isRestartModalOpen, setIsRestartModalOpen] = useState(false)
   const [shutdownConfirmText, setShutdownConfirmText] = useState('')
   const [shutdownError, setShutdownError] = useState<string | null>(null)
 
@@ -185,15 +189,7 @@ export default function PreferencesPage(): JSX.Element {
   }
 
   const handleRestartTeam = (): void => {
-    const confirmed = window.confirm(
-      'Restart Team will reset this team back to a fresh starter state. This is a UI placeholder for now. Continue?'
-    )
-
-    if (!confirmed) return
-
-    // TODO:
-    // Connect this button to your backend reset logic.
-    window.alert('Restart Team button is ready. Connect it to the backend reset flow.')
+    setIsRestartModalOpen(true)
   }
 
   const handlePurchaseDevelopingTeam = async (): Promise<void> => {
@@ -218,11 +214,6 @@ export default function PreferencesPage(): JSX.Element {
           : 'Developing Team purchased successfully.'
       )
 
-      /**
-       * IMPORTANT:
-       * After successful purchase, force the active club payload back to MAIN club.
-       * Do NOT build ppm-active-club from the newly created developing club.
-       */
       try {
         const { data: authData, error: authError } = await supabase.auth.getUser()
         if (authError) {
@@ -539,12 +530,12 @@ export default function PreferencesPage(): JSX.Element {
               <div className="rounded-md border border-amber-200 bg-white p-4">
                 <h4 className="text-sm font-semibold text-gray-900">Restart Team</h4>
                 <p className="mt-2 text-sm text-gray-600">
-                  Reset this team back to the same starter state a brand-new user gets when creating a
-                  team for the first time.
+                  Restart this club back to a fresh starter state while keeping the same club name,
+                  logo, jersey, country, and competition slot.
                 </p>
                 <p className="mt-2 text-xs text-gray-500">
-                  This is a placeholder for the future full reset logic (riders, equipment, finances,
-                  etc.).
+                  Current riders become free agents, season points reset to 0, and the team receives
+                  a new starter squad based on its current tier.
                 </p>
 
                 <button
@@ -585,6 +576,12 @@ export default function PreferencesPage(): JSX.Element {
           </div>
         </div>
       </div>
+
+      <RestartTeamModal
+        isOpen={isRestartModalOpen}
+        onClose={() => setIsRestartModalOpen(false)}
+        redirectTo="/dashboard/overview"
+      />
 
       {isShutdownModalOpen && (
         <div

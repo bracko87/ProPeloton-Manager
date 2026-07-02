@@ -7,11 +7,16 @@
  * - Authenticate users with Supabase auth.signInWithPassword.
  * - After successful login, call rpc('get_my_club_id') to route to /create-club or /dashboard/overview.
  * - Show an inline error if the get_my_club_id RPC fails instead of misrouting.
+ * - Provide a Forgot password link connected to the password reset flow.
  */
 
-import React, { useState } from 'react'
-import { Link, useNavigate } from 'react-router'
+import React, { useEffect, useState } from 'react'
+import { Link, useLocation, useNavigate } from 'react-router'
 import { supabase } from '../lib/supabase'
+
+type LoginLocationState = {
+  passwordResetSuccess?: boolean
+} | null
 
 /**
  * LoginPage
@@ -19,17 +24,34 @@ import { supabase } from '../lib/supabase'
  */
 export default function LoginPage(): JSX.Element {
   const navigate = useNavigate()
+  const location = useLocation()
+
   const [form, setForm] = useState({ email: '', password: '' })
   const [error, setError] = useState<string | null>(null)
   const [info, setInfo] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    const state = location.state as LoginLocationState
+
+    if (state?.passwordResetSuccess) {
+      setInfo('Password updated successfully. Please sign in with your new password.')
+    }
+  }, [location.state])
 
   /**
    * handleChange
    * Update form state when inputs change.
    */
   function handleChange(e: React.ChangeEvent<HTMLInputElement>): void {
-    setForm({ ...form, [e.target.name]: e.target.value })
+    const { name, value } = e.target
+
+    setForm(prev => ({
+      ...prev,
+      [name]: value,
+    }))
+
+    if (error) setError(null)
   }
 
   /**
@@ -42,16 +64,20 @@ export default function LoginPage(): JSX.Element {
     setError(null)
     setInfo(null)
 
-    if (!form.email || !form.password) {
+    const email = form.email.trim()
+    const password = form.password
+
+    if (!email || !password) {
       setError('Please provide both email and password')
       return
     }
 
     setLoading(true)
+
     try {
       const { data, error: signInError } = await supabase.auth.signInWithPassword({
-        email: form.email,
-        password: form.password
+        email,
+        password,
       })
 
       if (signInError) {
@@ -60,7 +86,7 @@ export default function LoginPage(): JSX.Element {
         return
       }
 
-      // If no session is returned, likely email not confirmed
+      // If no session is returned, likely email not confirmed.
       if (!data?.session) {
         setInfo('Account exists but is not confirmed. Please check your email.')
         return
@@ -71,7 +97,7 @@ export default function LoginPage(): JSX.Element {
 
       if (rpcError) {
         setError(
-          'You are signed in, but we could not check your club status. Please try again in a moment.'
+          'You are signed in, but we could not check your club status. Please try again in a moment.',
         )
         return
       }
@@ -102,7 +128,7 @@ export default function LoginPage(): JSX.Element {
               WebkitMaskImage:
                 'linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 42%, rgba(0,0,0,0.78) 72%, rgba(0,0,0,0) 100%)',
               maskImage:
-                'linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 42%, rgba(0,0,0,0.78) 72%, rgba(0,0,0,0) 100%)'
+                'linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 42%, rgba(0,0,0,0.78) 72%, rgba(0,0,0,0) 100%)',
             } as React.CSSProperties
           }
         />
@@ -117,7 +143,7 @@ export default function LoginPage(): JSX.Element {
               WebkitMaskImage:
                 'linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 42%, rgba(0,0,0,0.78) 72%, rgba(0,0,0,0) 100%)',
               maskImage:
-                'linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 42%, rgba(0,0,0,0.78) 72%, rgba(0,0,0,0) 100%)'
+                'linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 42%, rgba(0,0,0,0.78) 72%, rgba(0,0,0,0) 100%)',
             } as React.CSSProperties
           }
         />
@@ -131,25 +157,43 @@ export default function LoginPage(): JSX.Element {
 
           <form onSubmit={handleSubmit} className="mt-6 grid grid-cols-1 gap-4">
             <div>
-              <label className="text-sm font-medium text-gray-700">Email</label>
+              <label htmlFor="email" className="text-sm font-medium text-gray-700">
+                Email
+              </label>
               <input
+                id="email"
                 name="email"
                 value={form.email}
                 onChange={handleChange}
-                className="mt-1 block w-full border rounded-md px-3 py-2"
+                className="mt-1 block w-full border rounded-md px-3 py-2 disabled:bg-gray-100"
                 type="email"
+                autoComplete="email"
                 disabled={loading}
               />
             </div>
 
             <div>
-              <label className="text-sm font-medium text-gray-700">Password</label>
+              <div className="flex items-center justify-between gap-3">
+                <label htmlFor="password" className="text-sm font-medium text-gray-700">
+                  Password
+                </label>
+
+                <Link
+                  to="/forgot-password"
+                  className="text-xs font-medium text-gray-600 hover:text-gray-900"
+                >
+                  Forgot password?
+                </Link>
+              </div>
+
               <input
+                id="password"
                 name="password"
                 value={form.password}
                 onChange={handleChange}
-                className="mt-1 block w-full border rounded-md px-3 py-2"
+                className="mt-1 block w-full border rounded-md px-3 py-2 disabled:bg-gray-100"
                 type="password"
+                autoComplete="current-password"
                 disabled={loading}
               />
             </div>

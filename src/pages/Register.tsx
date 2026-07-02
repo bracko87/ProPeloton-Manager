@@ -68,6 +68,10 @@ function parseOptionalYear(value: string): number | null {
   return parsed
 }
 
+function isProbablyValidEmail(value: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim())
+}
+
 /**
  * RegisterPage
  * Registration form connected to Supabase Auth.
@@ -89,6 +93,7 @@ export default function RegisterPage(): JSX.Element {
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
   const [messageType, setMessageType] = useState<StatusType>(null)
+  const [checkingEmail, setCheckingEmail] = useState(false)
 
   const birthdayYearNumber = useMemo(
     () => parseOptionalYear(form.birthdayYear),
@@ -122,6 +127,59 @@ export default function RegisterPage(): JSX.Element {
 
       return next
     })
+
+    setErrors(prev => {
+      if (!prev[name]) return prev
+
+      const nextErrors = { ...prev }
+      delete nextErrors[name]
+      return nextErrors
+    })
+  }
+
+  async function checkEmailAlreadyRegistered(
+    rawEmail: string,
+    options: { blockOnError?: boolean } = {},
+  ): Promise<boolean> {
+    const emailToCheck = rawEmail.trim()
+
+    if (!emailToCheck || !isProbablyValidEmail(emailToCheck)) {
+      return false
+    }
+
+    setCheckingEmail(true)
+
+    try {
+      const { data, error } = await supabase.rpc('is_email_registered_v1', {
+        p_email: emailToCheck,
+      })
+
+      if (error) {
+        if (options.blockOnError) {
+          setMessage(
+            'We could not verify if this email address is already in use. Please try again.',
+          )
+          setMessageType('error')
+          return true
+        }
+
+        return false
+      }
+
+      if (data === true) {
+        setErrors(prev => ({
+          ...prev,
+          email:
+            'This email address is already in use. Please sign in or use another email.',
+        }))
+
+        return true
+      }
+
+      return false
+    } finally {
+      setCheckingEmail(false)
+    }
   }
 
   async function handleSubmit(e: React.FormEvent): Promise<void> {
@@ -140,7 +198,12 @@ export default function RegisterPage(): JSX.Element {
     const currentYear = new Date().getFullYear()
 
     if (!username) nextErrors.username = 'Username required'
-    if (!email) nextErrors.email = 'Email required'
+
+    if (!email) {
+      nextErrors.email = 'Email required'
+    } else if (!isProbablyValidEmail(email)) {
+      nextErrors.email = 'Enter a valid email address'
+    }
 
     if (!form.password || form.password.length < 8) {
       nextErrors.password = 'Password must be 8+ chars'
@@ -180,6 +243,12 @@ export default function RegisterPage(): JSX.Element {
     setLoading(true)
 
     try {
+      const emailIsBlocked = await checkEmailAlreadyRegistered(email, {
+        blockOnError: true,
+      })
+
+      if (emailIsBlocked) return
+
       const { data, error } = await supabase.auth.signUp({
         email,
         password: form.password,
@@ -198,9 +267,15 @@ export default function RegisterPage(): JSX.Element {
         const msg = (error as any).message ?? 'Signup failed'
 
         if (/already registered|duplicate|exists/i.test(msg)) {
-          setErrors(prev => ({ ...prev, email: 'Email is already registered' }))
+          setErrors(prev => ({
+            ...prev,
+            email: 'Email is already registered',
+          }))
         } else if (/username/i.test(msg)) {
-          setErrors(prev => ({ ...prev, username: 'Username is already taken' }))
+          setErrors(prev => ({
+            ...prev,
+            username: 'Username is already taken',
+          }))
         } else {
           setMessage(msg)
           setMessageType('error')
@@ -215,7 +290,8 @@ export default function RegisterPage(): JSX.Element {
         return
       }
 
-      const { data: clubData, error: rpcError } = await supabase.rpc('get_my_club_id')
+      const { data: clubData, error: rpcError } =
+        await supabase.rpc('get_my_club_id')
 
       if (rpcError) {
         setMessage(
@@ -278,7 +354,9 @@ export default function RegisterPage(): JSX.Element {
       {/* Registration card */}
       <div className="relative z-10 max-w-2xl w-full bg-white rounded-lg shadow-xl overflow-hidden">
         <div className="p-8">
-          <h2 className="text-2xl font-bold text-gray-900">Create your Manager Account</h2>
+          <h2 className="text-2xl font-bold text-gray-900">
+            Create your Manager Account
+          </h2>
 
           <p className="mt-2 text-sm text-gray-600">
             Join the multiplayer world of ProPeloton Manager.
@@ -286,7 +364,9 @@ export default function RegisterPage(): JSX.Element {
 
           <form onSubmit={handleSubmit} className="mt-6 grid grid-cols-1 gap-4">
             <div>
-              <label className="text-sm font-medium text-gray-700">Username</label>
+              <label className="text-sm font-medium text-gray-700">
+                Username
+              </label>
               <input
                 name="username"
                 value={form.username}
@@ -297,16 +377,23 @@ export default function RegisterPage(): JSX.Element {
               />
 
               {errors.username && (
-                <div className="text-sm text-red-600 mt-1">{errors.username}</div>
+                <div className="text-sm text-red-600 mt-1">
+                  {errors.username}
+                </div>
               )}
             </div>
 
             <div>
-              <label className="text-sm font-medium text-gray-700">Email address</label>
+              <label className="text-sm font-medium text-gray-700">
+                Email address
+              </label>
               <input
                 name="email"
                 value={form.email}
                 onChange={handleChange}
+                onBlur={() => {
+                  if (!loading) void checkEmailAlreadyRegistered(form.email)
+                }}
                 className="mt-1 block w-full border rounded-md px-3 py-2"
                 placeholder="you@example.com"
                 type="email"
@@ -316,11 +403,19 @@ export default function RegisterPage(): JSX.Element {
               {errors.email && (
                 <div className="text-sm text-red-600 mt-1">{errors.email}</div>
               )}
+
+              {checkingEmail && !errors.email && (
+                <div className="text-sm text-gray-500 mt-1">
+                  Checking email availability...
+                </div>
+              )}
             </div>
 
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div>
-                <label className="text-sm font-medium text-gray-700">Password</label>
+                <label className="text-sm font-medium text-gray-700">
+                  Password
+                </label>
                 <input
                   name="password"
                   value={form.password}
@@ -332,7 +427,9 @@ export default function RegisterPage(): JSX.Element {
                 />
 
                 {errors.password && (
-                  <div className="text-sm text-red-600 mt-1">{errors.password}</div>
+                  <div className="text-sm text-red-600 mt-1">
+                    {errors.password}
+                  </div>
                 )}
               </div>
 
@@ -359,17 +456,22 @@ export default function RegisterPage(): JSX.Element {
             </div>
 
             <div className="rounded-md border border-yellow-200 bg-yellow-50 p-4">
-              <div className="text-sm font-semibold text-gray-900">Birthday</div>
+              <div className="text-sm font-semibold text-gray-900">
+                Birthday
+              </div>
 
               <p className="mt-1 text-xs leading-5 text-gray-700">
-                Your birthday is used for birthday rewards. We will send you birthday
-                congratulations and add 10 coins to your account. Birthday can only be
-                entered once during registration and cannot be changed later in the game.
+                Your birthday is used for birthday rewards. We will send you
+                birthday congratulations and add 10 coins to your account.
+                Birthday can only be entered once during registration and cannot
+                be changed later in the game.
               </p>
 
               <div className="mt-3 grid grid-cols-1 gap-4 md:grid-cols-3">
                 <div>
-                  <label className="text-sm font-medium text-gray-700">Month</label>
+                  <label className="text-sm font-medium text-gray-700">
+                    Month
+                  </label>
                   <select
                     name="birthdayMonth"
                     value={form.birthdayMonth}
@@ -393,7 +495,9 @@ export default function RegisterPage(): JSX.Element {
                 </div>
 
                 <div>
-                  <label className="text-sm font-medium text-gray-700">Day</label>
+                  <label className="text-sm font-medium text-gray-700">
+                    Day
+                  </label>
                   <select
                     name="birthdayDay"
                     value={form.birthdayDay}
@@ -452,9 +556,13 @@ export default function RegisterPage(): JSX.Element {
               <button
                 type="submit"
                 className="bg-yellow-400 px-6 py-2 rounded-md font-semibold disabled:opacity-70"
-                disabled={loading}
+                disabled={loading || checkingEmail}
               >
-                {loading ? 'Creating...' : 'Create Account'}
+                {loading
+                  ? 'Creating...'
+                  : checkingEmail
+                    ? 'Checking...'
+                    : 'Create Account'}
               </button>
 
               <Link to="/login" className="text-sm text-gray-600 hover:text-gray-900">
