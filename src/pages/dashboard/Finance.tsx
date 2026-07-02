@@ -4,12 +4,12 @@
  *
  * Purpose:
  * - Resolve the user's MAIN club only (club_type = 'main').
- * - Load club context (club id, summary, cashflow series) once.
- * - ALSO load statement rows up front so Overview has real transaction names immediately.
+ * - Load club context using restart-safe finance RPCs.
+ * - Do NOT read public.club_finance_summary directly because it is ledger-managed.
+ * - Load statement rows up front so Overview has real transaction names immediately.
+ * - Prevent stale pre-restart finance data from staying in page state.
  * - Provide tab navigation and an ErrorBoundary per tab so a single tab can
  *   fail without breaking the whole page.
- * - Keep the club id out of the header; if needed, it is surfaced only inside
- *   the Team Policies & Operations -> Debug panel.
  */
 
 import React, { useEffect, useMemo, useState } from 'react'
@@ -55,6 +55,84 @@ type StatementRow = {
 
 type ClubRow = {
   id: string
+}
+
+type RestartSafeSummary = {
+  club_id: string
+  current_balance: number
+  weekly_income: number
+  weekly_expenses: number
+  wage_total: number
+  updated_at?: string
+  restart_boundary?: string | null
+  source?: string
+}
+
+function toNumber(value: unknown): number {
+  if (typeof value === 'number') {
+    return Number.isFinite(value) ? value : 0
+  }
+
+  if (typeof value === 'string') {
+    const parsed = Number(value)
+    return Number.isFinite(parsed) ? parsed : 0
+  }
+
+  return 0
+}
+
+function normalizeCashflowPoint(point: CashflowPoint): CashflowPoint {
+  return {
+    bucket_date: point.bucket_date,
+    income: toNumber(point.income),
+    expenses: toNumber(point.expenses),
+    net: toNumber(point.net),
+  }
+}
+
+function createZeroCashflowSeries(days = 90): CashflowPoint[] {
+  const today = new Date()
+  const rows: CashflowPoint[] = []
+
+  for (let i = days - 1; i >= 0; i -= 1) {
+    const d = new Date(today)
+    d.setDate(today.getDate() - i)
+
+    rows.push({
+      bucket_date: d.toISOString().slice(0, 10),
+      income: 0,
+      expenses: 0,
+      net: 0,
+    })
+  }
+
+  return rows
+}
+
+function normalizeRestartSafeSummary(
+  raw: unknown,
+  clubId: string,
+): RestartSafeSummary {
+  const data =
+    raw && typeof raw === 'object' ? (raw as Record<string, unknown>) : {}
+
+  return {
+    club_id: String(data.club_id ?? clubId),
+    current_balance: toNumber(data.current_balance),
+    weekly_income: toNumber(data.weekly_income),
+    weekly_expenses: toNumber(data.weekly_expenses),
+    wage_total: toNumber(data.wage_total),
+    updated_at:
+      typeof data.updated_at === 'string' ? data.updated_at : undefined,
+    restart_boundary:
+      typeof data.restart_boundary === 'string'
+        ? data.restart_boundary
+        : null,
+    source:
+      typeof data.source === 'string'
+        ? data.source
+        : 'restart_safe_ledger_view',
+  }
 }
 
 function stripTrailingCode(raw: string): string {
@@ -229,9 +307,8 @@ export default function FinancePage(): JSX.Element {
   const [error, setError] = useState<string | null>(null)
 
   const [clubId, setClubId] = useState<string | null>(null)
-  const [summary, setSummary] = useState<any | null>(null)
+  const [summary, setSummary] = useState<RestartSafeSummary | null>(null)
   const [cashflowDaily, setCashflowDaily] = useState<CashflowPoint[]>([])
-
   const [statement, setStatement] = useState<StatementRow[]>([])
 
   const [tutorialLoading, setTutorialLoading] = useState(true)
@@ -313,7 +390,7 @@ export default function FinancePage(): JSX.Element {
         date: row.created_at,
         type: row.type,
         name: formatTransactionFullLabel(getTransactionLabel(row)),
-        amount: row.net_amount,
+        amount: toNumber(row.net_amount),
       })),
     [statement],
   )
@@ -351,48 +428,82 @@ export default function FinancePage(): JSX.Element {
     setLoading(true)
     setError(null)
 
+    /*
+      Important after Restart Team:
+      Clear previous tab data immediately so stale old finance numbers do not stay
+      visible while the refresh request is running.
+    */
+    resetLoadedState()
+
     try {
       const myClubId = await resolveMainClubId()
       setClubId(myClubId)
 
       if (!myClubId) {
-        resetLoadedState()
         setLoading(false)
         return
       }
 
-      const summaryRes = await supabase
-        .from('club_finance_summary')
-        .select('*')
-        .eq('club_id', myClubId)
-        .single()
+      /*
+        Restart-safe summary source.
+        Do not read public.club_finance_summary directly.
+        That table is ledger-managed and may contain stale weekly fields from before restart.
+      */
+      const summaryRes = await supabase.rpc('finance_get_restart_safe_overview_summary_v1', {
+        p_club_id: myClubId,
+      })
 
       if (!summaryRes.error) {
-        setSummary(summaryRes.data)
+        setSummary(normalizeRestartSafeSummary(summaryRes.data, myClubId))
       } else {
-        setSummary(null)
+        setSummary(
+          normalizeRestartSafeSummary(
+            {
+              club_id: myClubId,
+              current_balance: 0,
+              weekly_income: 0,
+              weekly_expenses: 0,
+              wage_total: 0,
+              source: 'restart_safe_summary_fallback',
+            },
+            myClubId,
+          ),
+        )
       }
 
+      /*
+        Restart-safe cashflow source.
+        The backend RPC filters ledger rows before latest restart.
+        If the RPC returns no rows, send an explicit zero series so OverviewTab
+        does not need to invent fallback/mock chart rows.
+      */
       const cashflowRes = await supabase.rpc('finance_get_club_cashflow_series', {
         p_club_id: myClubId,
         p_days: 90,
       })
 
       if (!cashflowRes.error) {
-        setCashflowDaily(((cashflowRes.data ?? []) as CashflowPoint[]) ?? [])
+        const rows = ((cashflowRes.data ?? []) as CashflowPoint[]).map(
+          normalizeCashflowPoint,
+        )
+
+        setCashflowDaily(rows.length > 0 ? rows : createZeroCashflowSeries(90))
       } else {
-        setCashflowDaily([])
+        setCashflowDaily(createZeroCashflowSeries(90))
       }
 
-      const txRes = await supabase.rpc('finance_get_club_statement', {
+      /*
+        Restart-safe transaction statement.
+        v2 filters immutable ledger rows before latest restart.
+      */
+      const txRes = await supabase.rpc('finance_get_club_statement_v2', {
         p_club_id: myClubId,
         p_limit: 500,
         p_before: null,
       })
 
       if (!txRes.error) {
-        const rows = (txRes.data ?? []) as StatementRow[]
-        setStatement(rows)
+        setStatement((txRes.data ?? []) as StatementRow[])
       } else {
         setStatement([])
       }
@@ -490,7 +601,7 @@ export default function FinancePage(): JSX.Element {
           <button
             type="button"
             onClick={() => void loadBase()}
-            className="px-3 py-2 rounded bg-white shadow text-sm hover:bg-gray-100"
+            className="px-3 py-2 rounded bg-white shadow text-sm hover:bg-gray-100 disabled:opacity-60 disabled:cursor-not-allowed"
             disabled={loading}
           >
             Refresh
