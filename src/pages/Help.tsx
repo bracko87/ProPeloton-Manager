@@ -567,7 +567,7 @@ export default function HelpPage(): JSX.Element {
           </Link>
 
           <a
-            href="https://discord.gg/9W6rSSjm"
+            href="https://discord.gg/GNDCCz5SW"
             target="_blank"
             rel="noreferrer"
             className="rounded-md border border-white/50 px-4 py-2 font-medium text-white hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-white"

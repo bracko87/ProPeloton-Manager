@@ -10,8 +10,19 @@
  * - Load live public homepage data from get_public_homepage_snapshot_v1().
  *
  * UPDATE: Public AdSense-readiness footer links
- * - Adds footer links to About, How to Play, Support, Privacy Policy, Terms, and Contact.
+ * - Adds footer links to About, How to Play, Privacy Policy, Terms, Contact, and Support.
  * - Keeps public pages reachable from the homepage without login.
+ *
+ * UPDATE: Homepage review section
+ * - Removes unfinished "No reviews yet" placeholder.
+ * - Adds a frontend review flow with localStorage persistence.
+ * - Shows one review at a time with previous/next arrows.
+ * - Keeps Add Review available.
+ *
+ * UPDATE: Public readiness cleanup
+ * - Removes closed beta popup.
+ * - Removes YouTube and X social icons.
+ * - Adds real Facebook and Discord links.
  */
 
 import React, { useEffect, useState } from 'react'
@@ -42,20 +53,31 @@ type RawHomeSnapshot = {
   total_stages?: unknown
 }
 
-const BETA_NOTICE_STORAGE_KEY = 'propeloton-beta-notice-seen'
+type PlayerReview = {
+  id: string
+  name: string
+  rating: number
+  message: string
+  createdAt: string
+}
+
+type ReviewFormErrors = {
+  name?: string
+  rating?: string
+  message?: string
+}
+
+const PLAYER_REVIEWS_STORAGE_KEY = 'propeloton-home-player-reviews'
 
 const SOCIAL_LINKS = {
-  facebook: '#',
-  youtube: '#',
-  discord: '#',
-  x: '#',
-  email: 'mailto:contact@propelotonmanager.com',
+  facebook: 'https://www.facebook.com/profile.php?id=61583549010426',
+  discord: 'https://discord.gg/GNDCCz5SW',
+  email: 'mailto:contact@propeller.com',
 }
 
 const FOOTER_GAME_LINKS = [
   { label: 'About', href: '#/about' },
   { label: 'How to Play', href: '#/how-to-play' },
-  { label: 'Support', href: '#/support' },
   { label: 'Contact', href: '#/contact' },
 ]
 
@@ -97,6 +119,75 @@ function normalizeHomeSnapshot(data: unknown): HomeSnapshot | null {
   }
 }
 
+function createReviewId(): string {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID()
+  }
+
+  return `review_${Date.now()}_${Math.random().toString(16).slice(2)}`
+}
+
+function loadStoredReviews(): PlayerReview[] {
+  if (typeof window === 'undefined') {
+    return []
+  }
+
+  try {
+    const rawValue = window.localStorage.getItem(PLAYER_REVIEWS_STORAGE_KEY)
+
+    if (!rawValue) {
+      return []
+    }
+
+    const parsedValue = JSON.parse(rawValue)
+
+    if (!Array.isArray(parsedValue)) {
+      return []
+    }
+
+    return parsedValue.filter((item): item is PlayerReview => {
+      return (
+        item &&
+        typeof item === 'object' &&
+        typeof item.id === 'string' &&
+        typeof item.name === 'string' &&
+        typeof item.message === 'string' &&
+        typeof item.createdAt === 'string' &&
+        typeof item.rating === 'number' &&
+        Number.isFinite(item.rating)
+      )
+    })
+  } catch {
+    return []
+  }
+}
+
+function saveStoredReviews(reviews: PlayerReview[]): void {
+  if (typeof window === 'undefined') {
+    return
+  }
+
+  try {
+    window.localStorage.setItem(PLAYER_REVIEWS_STORAGE_KEY, JSON.stringify(reviews))
+  } catch {
+    // Ignore localStorage write errors.
+  }
+}
+
+function formatReviewDate(value: string): string {
+  const date = new Date(value)
+
+  if (Number.isNaN(date.getTime())) {
+    return 'Recently'
+  }
+
+  return new Intl.DateTimeFormat('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  }).format(date)
+}
+
 /**
  * HomePage
  * Extended landing page with multiple sections: hero, features, screenshots,
@@ -108,21 +199,33 @@ export default function HomePage(): JSX.Element {
   const { user, loading } = useAuth()
   const [checkingClub, setCheckingClub] = useState(false)
   const [clubError, setClubError] = useState<string | null>(null)
-  const [showBetaNotice, setShowBetaNotice] = useState(false)
   const [homeSnapshot, setHomeSnapshot] = useState<HomeSnapshot | null>(null)
   const [homeSnapshotError, setHomeSnapshotError] = useState<string | null>(null)
   const [raceDays, setRaceDays] = useState<HomepageRaceDaysData | null>(null)
   const [raceDaysLoading, setRaceDaysLoading] = useState(false)
 
+  const [reviews, setReviews] = useState<PlayerReview[]>([])
+  const [activeReviewIndex, setActiveReviewIndex] = useState(0)
+  const [isReviewFormOpen, setIsReviewFormOpen] = useState(false)
+  const [reviewName, setReviewName] = useState('')
+  const [reviewRating, setReviewRating] = useState(5)
+  const [reviewMessage, setReviewMessage] = useState('')
+  const [reviewErrors, setReviewErrors] = useState<ReviewFormErrors>({})
+
   useEffect(() => {
-    if (typeof window === 'undefined') return
-
-    const hasSeenBetaNotice = window.sessionStorage.getItem(BETA_NOTICE_STORAGE_KEY)
-
-    if (!hasSeenBetaNotice) {
-      setShowBetaNotice(true)
-    }
+    setReviews(loadStoredReviews())
   }, [])
+
+  useEffect(() => {
+    if (reviews.length === 0) {
+      setActiveReviewIndex(0)
+      return
+    }
+
+    if (activeReviewIndex > reviews.length - 1) {
+      setActiveReviewIndex(reviews.length - 1)
+    }
+  }, [activeReviewIndex, reviews.length])
 
   useEffect(() => {
     let isMounted = true
@@ -194,14 +297,6 @@ export default function HomePage(): JSX.Element {
     }
   }, [])
 
-  function closeBetaNotice() {
-    setShowBetaNotice(false)
-
-    if (typeof window !== 'undefined') {
-      window.sessionStorage.setItem(BETA_NOTICE_STORAGE_KEY, 'true')
-    }
-  }
-
   /**
    * When auth is resolved and a user is present, call get_my_club_id()
    * to decide the next step:
@@ -253,6 +348,89 @@ export default function HomePage(): JSX.Element {
     }
   }, [user, loading, navigate])
 
+  function clearReviewError(field: keyof ReviewFormErrors): void {
+    setReviewErrors(current => {
+      if (!current[field]) {
+        return current
+      }
+
+      const nextErrors = { ...current }
+      delete nextErrors[field]
+      return nextErrors
+    })
+  }
+
+  function validateReviewForm(): boolean {
+    const nextErrors: ReviewFormErrors = {}
+
+    if (!reviewName.trim()) {
+      nextErrors.name = 'Please enter your name.'
+    }
+
+    if (!Number.isFinite(reviewRating) || reviewRating < 1 || reviewRating > 5) {
+      nextErrors.rating = 'Please choose a rating from 1 to 5.'
+    }
+
+    if (!reviewMessage.trim()) {
+      nextErrors.message = 'Please write your review.'
+    } else if (reviewMessage.trim().length < 20) {
+      nextErrors.message = 'Please write at least 20 characters.'
+    }
+
+    setReviewErrors(nextErrors)
+
+    return Object.keys(nextErrors).length === 0
+  }
+
+  function handleSubmitReview(event: React.FormEvent): void {
+    event.preventDefault()
+
+    if (!validateReviewForm()) {
+      return
+    }
+
+    const nextReview: PlayerReview = {
+      id: createReviewId(),
+      name: reviewName.trim(),
+      rating: reviewRating,
+      message: reviewMessage.trim(),
+      createdAt: new Date().toISOString(),
+    }
+
+    const nextReviews = [nextReview, ...reviews]
+
+    setReviews(nextReviews)
+    saveStoredReviews(nextReviews)
+    setActiveReviewIndex(0)
+    setReviewName('')
+    setReviewRating(5)
+    setReviewMessage('')
+    setReviewErrors({})
+    setIsReviewFormOpen(false)
+  }
+
+  function showPreviousReview(): void {
+    if (reviews.length <= 1) {
+      return
+    }
+
+    setActiveReviewIndex(current =>
+      current === 0 ? reviews.length - 1 : current - 1,
+    )
+  }
+
+  function showNextReview(): void {
+    if (reviews.length <= 1) {
+      return
+    }
+
+    setActiveReviewIndex(current =>
+      current === reviews.length - 1 ? 0 : current + 1,
+    )
+  }
+
+  const activeReview = reviews[activeReviewIndex]
+
   return (
     <div className="min-h-screen bg-[#081224] text-white">
       <header className="border-b border-white/15">
@@ -291,57 +469,6 @@ export default function HomePage(): JSX.Element {
       {clubError && (
         <div className="border-b border-red-500 bg-red-900/80 py-2 text-center text-sm text-red-50">
           {clubError}
-        </div>
-      )}
-
-      {showBetaNotice && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 py-8 backdrop-blur-sm"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="beta-notice-title"
-        >
-          <div className="w-full max-w-lg overflow-hidden rounded-2xl border border-yellow-400/40 bg-[#081224] shadow-2xl">
-            <div className="border-b border-white/10 bg-yellow-400 px-6 py-4 text-black">
-              <div className="text-xs font-bold uppercase tracking-[0.22em]">
-                Closed beta notice
-              </div>
-
-              <h2 id="beta-notice-title" className="mt-2 text-2xl font-bold">
-                ProPeloton Manager is still in beta
-              </h2>
-            </div>
-
-            <div className="space-y-4 px-6 py-6 text-sm leading-6 text-white/80">
-              <p>
-                The game is online for testing, but it is not fully playable yet.
-                Some features, race systems, results, balancing, notifications and UI
-                screens may still be unfinished or change during development.
-              </p>
-
-              <p className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-white/75">
-                You can explore the current beta version, but progress and data may be
-                adjusted while the game is being completed.
-              </p>
-            </div>
-
-            <div className="flex flex-col gap-3 border-t border-white/10 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
-              <a
-                href="#/login"
-                className="text-center text-sm font-semibold text-white/80 hover:text-white"
-              >
-                Tester sign in
-              </a>
-
-              <button
-                type="button"
-                onClick={closeBetaNotice}
-                className="rounded-md bg-yellow-400 px-5 py-2 text-sm font-bold text-black hover:bg-yellow-300"
-              >
-                I understand
-              </button>
-            </div>
-          </div>
         </div>
       )}
 
@@ -474,19 +601,154 @@ export default function HomePage(): JSX.Element {
 
         <section className="py-12">
           <div className="mx-auto max-w-7xl px-6">
-            <h3 className="text-2xl font-semibold">Player Reviews</h3>
+            <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+              <div>
+                <h3 className="text-2xl font-semibold">Player Reviews</h3>
 
-            <p className="mt-2 text-sm text-white/70">
-              Community reviews will be shown here once public reviews are available.
-            </p>
+                <p className="mt-2 text-sm text-white/70">
+                  Share your experience with ProPeloton Manager and help new players
+                  understand the game.
+                </p>
+              </div>
 
-            <div className="mt-6 rounded-xl border border-white/10 bg-white/5 px-6 py-8 text-center">
-              <div className="text-lg font-semibold text-white">No reviews yet</div>
-
-              <p className="mt-2 text-sm text-white/65">
-                Reviews will appear here after the review system is opened for players.
-              </p>
+              <button
+                type="button"
+                onClick={() => setIsReviewFormOpen(current => !current)}
+                className="self-start rounded-md bg-yellow-400 px-4 py-2 text-sm font-bold text-black hover:bg-yellow-300 md:self-auto"
+              >
+                {isReviewFormOpen ? 'Close Review Form' : 'Add Review'}
+              </button>
             </div>
+
+            {isReviewFormOpen && (
+              <form
+                onSubmit={handleSubmitReview}
+                className="mt-6 rounded-xl border border-white/10 bg-white/5 p-5"
+              >
+                <div className="grid gap-4 md:grid-cols-[1fr_160px]">
+                  <label className="block">
+                    <span className="text-sm font-semibold text-white">Name</span>
+                    <input
+                      value={reviewName}
+                      onChange={event => {
+                        setReviewName(event.target.value)
+                        clearReviewError('name')
+                      }}
+                      className="mt-1 w-full rounded-md border border-white/15 bg-[#101b31] px-3 py-2 text-white placeholder:text-white/35 focus:border-yellow-400 focus:outline-none focus:ring-2 focus:ring-yellow-400/30"
+                      placeholder="Your name"
+                    />
+                    {reviewErrors.name && (
+                      <div className="mt-1 text-sm text-red-300">{reviewErrors.name}</div>
+                    )}
+                  </label>
+
+                  <label className="block">
+                    <span className="text-sm font-semibold text-white">Rating</span>
+                    <select
+                      value={reviewRating}
+                      onChange={event => {
+                        setReviewRating(Number(event.target.value))
+                        clearReviewError('rating')
+                      }}
+                      className="mt-1 w-full rounded-md border border-white/15 bg-[#101b31] px-3 py-2 text-white focus:border-yellow-400 focus:outline-none focus:ring-2 focus:ring-yellow-400/30"
+                    >
+                      <option value={5}>5 stars</option>
+                      <option value={4}>4 stars</option>
+                      <option value={3}>3 stars</option>
+                      <option value={2}>2 stars</option>
+                      <option value={1}>1 star</option>
+                    </select>
+                    {reviewErrors.rating && (
+                      <div className="mt-1 text-sm text-red-300">{reviewErrors.rating}</div>
+                    )}
+                  </label>
+                </div>
+
+                <label className="mt-4 block">
+                  <span className="text-sm font-semibold text-white">Review</span>
+                  <textarea
+                    value={reviewMessage}
+                    onChange={event => {
+                      setReviewMessage(event.target.value)
+                      clearReviewError('message')
+                    }}
+                    className="mt-1 min-h-[120px] w-full rounded-md border border-white/15 bg-[#101b31] px-3 py-2 text-white placeholder:text-white/35 focus:border-yellow-400 focus:outline-none focus:ring-2 focus:ring-yellow-400/30"
+                    placeholder="Tell other players what you think about ProPeloton Manager..."
+                  />
+                  {reviewErrors.message && (
+                    <div className="mt-1 text-sm text-red-300">{reviewErrors.message}</div>
+                  )}
+                </label>
+
+                <button
+                  type="submit"
+                  className="mt-4 rounded-md bg-yellow-400 px-5 py-2 text-sm font-bold text-black hover:bg-yellow-300"
+                >
+                  Publish Review
+                </button>
+              </form>
+            )}
+
+            {activeReview ? (
+              <div className="mt-6 rounded-xl border border-white/10 bg-white/5 px-6 py-8">
+                <div className="flex items-center justify-between gap-4">
+                  <button
+                    type="button"
+                    onClick={showPreviousReview}
+                    disabled={reviews.length <= 1}
+                    className="flex h-10 w-10 items-center justify-center rounded-full border border-white/15 text-xl text-white/80 hover:border-yellow-400 hover:text-yellow-400 disabled:cursor-not-allowed disabled:opacity-35"
+                    aria-label="Previous review"
+                  >
+                    ‹
+                  </button>
+
+                  <article className="max-w-3xl text-center">
+                    <div className="text-lg font-semibold text-yellow-300">
+                      {'★'.repeat(activeReview.rating)}
+                      {'☆'.repeat(5 - activeReview.rating)}
+                    </div>
+
+                    <p className="mt-4 text-base leading-7 text-white/85">
+                      “{activeReview.message}”
+                    </p>
+
+                    <div className="mt-4 text-sm font-semibold text-white">
+                      {activeReview.name}
+                    </div>
+
+                    <div className="mt-1 text-xs text-white/50">
+                      {formatReviewDate(activeReview.createdAt)}
+                    </div>
+
+                    {reviews.length > 1 && (
+                      <div className="mt-3 text-xs text-white/45">
+                        Review {activeReviewIndex + 1} of {reviews.length}
+                      </div>
+                    )}
+                  </article>
+
+                  <button
+                    type="button"
+                    onClick={showNextReview}
+                    disabled={reviews.length <= 1}
+                    className="flex h-10 w-10 items-center justify-center rounded-full border border-white/15 text-xl text-white/80 hover:border-yellow-400 hover:text-yellow-400 disabled:cursor-not-allowed disabled:opacity-35"
+                    aria-label="Next review"
+                  >
+                    ›
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="mt-6 rounded-xl border border-white/10 bg-white/5 px-6 py-8 text-center">
+                <button
+                  type="button"
+                  onClick={() => setIsReviewFormOpen(true)}
+                  className="rounded-md bg-yellow-400 px-5 py-3 text-sm font-bold text-black hover:bg-yellow-300"
+                >
+                  Add the first review
+                </button>
+              </div>
+            )}
           </div>
         </section>
 
@@ -587,6 +849,8 @@ export default function HomePage(): JSX.Element {
                 href={SOCIAL_LINKS.facebook}
                 aria-label="Facebook"
                 className="hover:text-yellow-400"
+                target="_blank"
+                rel="noreferrer"
               >
                 <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M13.5 22v-8h2.7l.4-3h-3.1V9.1c0-.9.3-1.5 1.6-1.5h1.7V4.9c-.8-.1-1.6-.2-2.5-.2-2.5 0-4.2 1.5-4.2 4.2V11H7.4v3h2.7v8h3.4z" />
@@ -594,32 +858,22 @@ export default function HomePage(): JSX.Element {
               </a>
 
               <a
-                href={SOCIAL_LINKS.youtube}
-                aria-label="YouTube"
-                className="hover:text-yellow-400"
-              >
-                <svg className="h-6 w-6" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M21.6 7.2s-.2-1.5-.8-2.1c-.8-.8-1.7-.8-2.1-.9C15.8 4 12 4 12 4s-3.8 0-6.7.2c-.4.1-1.3.1-2.1.9-.6.6-.8 2.1-.8 2.1S2.2 9 2.2 10.8v1.7c0 1.8.2 3.6.2 3.6s.2 1.5.8 2.1c.8.8 1.9.8 2.4.9 1.7.2 6.4.2 6.4.2s3.8 0 6.7-.3c.4 0 1.3-.1 2.1-.9.6-.6.8-2.1.8-2.1s.2-1.8.2-3.6v-1.7c0-1.7-.2-3.5-.2-3.5zM10.1 14.6V8.4l5.8 3.1-5.8 3.1z" />
-                </svg>
-              </a>
-
-              <a
                 href={SOCIAL_LINKS.discord}
                 aria-label="Discord"
                 className="hover:text-yellow-400"
+                target="_blank"
+                rel="noreferrer"
               >
                 <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M19.5 5.2A16.3 16.3 0 0 0 15.4 4l-.2.4c1.5.4 2.2 1 2.2 1s-1.4-.8-4.1-1c-2.7-.2-4.8.6-4.8.6s.8-.7 2.4-1L10.7 4a16.5 16.5 0 0 0-4.1 1.2C4 9.1 3.3 13 3.5 16.8A16.7 16.7 0 0 0 8.6 19l.6-.9c-1.1-.4-1.7-1-1.7-1s.2.1.5.3c2 .9 4.1 1.1 6 1 1.5-.1 3-.4 4.3-1 .2-.1.4-.2.4-.2s-.6.7-1.8 1.1l.6.9a16.5 16.5 0 0 0 5.1-2.2c.3-4.4-.7-8.2-3.1-11.8zM9.3 14.5c-.8 0-1.5-.7-1.5-1.6s.7-1.6 1.5-1.6 1.5.7 1.5 1.6-.7 1.6-1.5 1.6zm5.4 0c-.8 0-1.5-.7-1.5-1.6s.7-1.6 1.5-1.6 1.5.7 1.5 1.6-.7 1.6-1.5 1.6z" />
                 </svg>
               </a>
 
-              <a href={SOCIAL_LINKS.x} aria-label="X" className="hover:text-yellow-400">
-                <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M18.9 3H22l-6.8 7.8 8 10.2h-6.3l-4.9-6.3L6.4 21H3.3l7.3-8.4L3 3h6.4l4.4 5.7L18.9 3zm-1.1 16.2h1.7L8.5 4.7H6.7l11.1 14.5z" />
-                </svg>
-              </a>
-
-              <a href={SOCIAL_LINKS.email} aria-label="Email" className="hover:text-yellow-400">
+              <a
+                href={SOCIAL_LINKS.email}
+                aria-label="Email"
+                className="hover:text-yellow-400"
+              >
                 <svg
                   className="h-5 w-5"
                   viewBox="0 0 24 24"

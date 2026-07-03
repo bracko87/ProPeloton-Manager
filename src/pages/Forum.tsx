@@ -44,7 +44,7 @@ export default function ForumPage(): JSX.Element {
 
             <div className="flex flex-col items-start gap-2 md:items-end">
               <a
-                href="https://discord.gg/9W6rSSjm"
+                href="https://discord.gg/GNDCCz5SW"
                 target="_blank"
                 rel="noreferrer"
                 className="rounded-md bg-white px-4 py-2 text-sm font-semibold text-indigo-600 transition hover:bg-indigo-50"
