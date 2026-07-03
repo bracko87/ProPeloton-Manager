@@ -62,20 +62,46 @@ export default function SupportPage(): JSX.Element {
               to="/contact"
               className="rounded-lg bg-yellow-400 px-5 py-3 text-sm font-bold text-black hover:bg-yellow-300"
             >
-              Contact Support
+              Send Support Message
             </Link>
 
-            <a
-              href={`mailto:${CONTACT_EMAIL}`}
+            <Link
+              to="/privacy-policy"
               className="rounded-lg border border-white/30 px-5 py-3 text-sm font-bold text-white hover:bg-white/10"
             >
-              Email Us
-            </a>
+              Privacy Policy
+            </Link>
           </div>
         </div>
       </section>
 
       <section className="mx-auto max-w-5xl px-6 py-12">
+        <div className="mb-8 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <h2 className="text-2xl font-bold">Contact support</h2>
+
+          <p className="mt-3 leading-relaxed text-slate-700">
+            The fastest way to contact support is through the contact form. It sends
+            your message directly to ProPeloton Manager support without opening your
+            email app.
+          </p>
+
+          <div className="mt-5 flex flex-wrap gap-3">
+            <Link
+              to="/contact"
+              className="rounded-lg bg-slate-900 px-5 py-3 text-sm font-bold text-white hover:bg-slate-800"
+            >
+              Open Contact Form
+            </Link>
+
+            <a
+              href={`mailto:${CONTACT_EMAIL}`}
+              className="rounded-lg border border-slate-300 px-5 py-3 text-sm font-bold text-slate-900 hover:bg-slate-50"
+            >
+              Manual Email Fallback
+            </a>
+          </div>
+        </div>
+
         <div className="grid gap-5 md:grid-cols-2">
           {supportTopics.map(topic => (
             <article

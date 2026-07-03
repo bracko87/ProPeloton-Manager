@@ -6,12 +6,15 @@
  * - /contact
  * - /dashboard/contact-us
  *
- * The form is frontend-functional through mailto because no backend
- * contact submission endpoint is currently wired.
+ * UPDATE:
+ * - Sends contact messages automatically through Supabase Edge Function:
+ *   send-contact-message
+ * - No longer opens the user's email app through mailto on submit.
  */
 
-import React, { useMemo, useState } from 'react'
+import React, { useState } from 'react'
 import { Link } from 'react-router'
+import { supabase } from '../lib/supabase'
 
 const CONTACT_EMAIL = 'contact@propelotonmanager.com'
 
@@ -21,31 +24,33 @@ type FormErrors = {
   message?: string
 }
 
+type SubmitStatus = 'idle' | 'sending' | 'success' | 'error'
+
 function isProbablyValidEmail(value: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim())
+}
+
+function getContactSource(): string {
+  if (typeof window === 'undefined') {
+    return 'contact-page'
+  }
+
+  return window.location.hash || window.location.pathname || 'contact-page'
 }
 
 export default function ContactUsPage(): JSX.Element {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [message, setMessage] = useState('')
-  const [sent, setSent] = useState(false)
+  const [status, setStatus] = useState<SubmitStatus>('idle')
+  const [submitError, setSubmitError] = useState<string | null>(null)
   const [errors, setErrors] = useState<FormErrors>({})
 
-  const mailtoHref = useMemo(() => {
-    const subject = encodeURIComponent('ProPeloton Manager support request')
-    const body = encodeURIComponent(
-      [
-        `Name: ${name.trim()}`,
-        `Email: ${email.trim()}`,
-        '',
-        'Message:',
-        message.trim(),
-      ].join('\n'),
-    )
-
-    return `mailto:${CONTACT_EMAIL}?subject=${subject}&body=${body}`
-  }, [name, email, message])
+  /**
+   * Honeypot anti-spam field.
+   * This is hidden from normal users.
+   */
+  const [website, setWebsite] = useState('')
 
   function validateForm(): boolean {
     const nextErrors: FormErrors = {}
@@ -71,15 +76,53 @@ export default function ContactUsPage(): JSX.Element {
     return Object.keys(nextErrors).length === 0
   }
 
-  function handleSubmit(event: React.FormEvent): void {
+  async function handleSubmit(event: React.FormEvent): Promise<void> {
     event.preventDefault()
+
+    if (status === 'sending') {
+      return
+    }
+
+    setSubmitError(null)
 
     if (!validateForm()) {
       return
     }
 
-    setSent(true)
-    window.location.href = mailtoHref
+    setStatus('sending')
+
+    const { data, error } = await supabase.functions.invoke('send-contact-message', {
+      body: {
+        name: name.trim(),
+        email: email.trim(),
+        message: message.trim(),
+        source: getContactSource(),
+        website,
+      },
+    })
+
+    if (error) {
+      setSubmitError(error.message || 'Could not send your message. Please try again.')
+      setStatus('error')
+      return
+    }
+
+    if (!data?.ok) {
+      setSubmitError(
+        typeof data?.error === 'string'
+          ? data.error
+          : 'Could not send your message. Please try again.',
+      )
+      setStatus('error')
+      return
+    }
+
+    setStatus('success')
+    setName('')
+    setEmail('')
+    setMessage('')
+    setWebsite('')
+    setErrors({})
   }
 
   function clearFieldError(field: keyof FormErrors): void {
@@ -125,7 +168,7 @@ export default function ContactUsPage(): JSX.Element {
             <h2 className="text-lg font-bold">Support email</h2>
 
             <p className="mt-3 text-sm leading-relaxed text-slate-700">
-              You can contact us directly at:
+              You can also contact us directly at:
             </p>
 
             <a
@@ -163,12 +206,42 @@ export default function ContactUsPage(): JSX.Element {
           <h2 className="text-2xl font-bold">Send a message</h2>
 
           <p className="mt-3 text-sm leading-relaxed text-slate-700">
-            Fill out the form below. Since the backend contact endpoint is not wired
-            yet, submitting this form opens your email app with the message prepared.
+            Fill out the form below. Your message will be sent directly to ProPeloton
+            Manager support. Your email app will not open.
           </p>
 
-          {!sent ? (
+          {status === 'success' ? (
+            <div className="mt-6 rounded-xl border border-green-200 bg-green-50 p-5 text-green-900">
+              <div className="font-bold">Thank you, your message has been sent.</div>
+
+              <p className="mt-2 text-sm leading-relaxed">
+                We received your support request. If a reply is needed, we will answer
+                using the email address you provided.
+              </p>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setStatus('idle')
+                  setSubmitError(null)
+                }}
+                className="mt-4 inline-flex rounded-lg bg-green-700 px-4 py-2 text-sm font-bold text-white hover:bg-green-800"
+              >
+                Send another message
+              </button>
+            </div>
+          ) : (
             <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+              <label className="hidden">
+                Website
+                <input
+                  value={website}
+                  onChange={event => setWebsite(event.target.value)}
+                  tabIndex={-1}
+                  autoComplete="off"
+                />
+              </label>
+
               <label className="block">
                 <span className="text-sm font-semibold text-slate-800">Name</span>
                 <input
@@ -179,6 +252,7 @@ export default function ContactUsPage(): JSX.Element {
                   }}
                   className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 focus:border-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-200"
                   placeholder="Your name"
+                  disabled={status === 'sending'}
                 />
                 {errors.name && (
                   <div className="mt-1 text-sm text-red-600">{errors.name}</div>
@@ -196,6 +270,7 @@ export default function ContactUsPage(): JSX.Element {
                   }}
                   className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 focus:border-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-200"
                   placeholder="you@example.com"
+                  disabled={status === 'sending'}
                 />
                 {errors.email && (
                   <div className="mt-1 text-sm text-red-600">{errors.email}</div>
@@ -212,38 +287,27 @@ export default function ContactUsPage(): JSX.Element {
                   }}
                   className="mt-1 min-h-[180px] w-full rounded-lg border border-slate-300 px-3 py-2 focus:border-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-200"
                   placeholder="Write your message..."
+                  disabled={status === 'sending'}
                 />
                 {errors.message && (
                   <div className="mt-1 text-sm text-red-600">{errors.message}</div>
                 )}
               </label>
 
+              {submitError && (
+                <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+                  {submitError}
+                </div>
+              )}
+
               <button
                 type="submit"
-                className="rounded-lg bg-yellow-400 px-5 py-3 text-sm font-bold text-black hover:bg-yellow-300"
+                disabled={status === 'sending'}
+                className="rounded-lg bg-yellow-400 px-5 py-3 text-sm font-bold text-black hover:bg-yellow-300 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                Send message
+                {status === 'sending' ? 'Sending...' : 'Send message'}
               </button>
             </form>
-          ) : (
-            <div className="mt-6 rounded-xl border border-green-200 bg-green-50 p-5 text-green-900">
-              <div className="font-bold">Your email app should open now.</div>
-
-              <p className="mt-2 text-sm leading-relaxed">
-                If it did not open, please send your message manually to{' '}
-                <a className="font-semibold underline" href={`mailto:${CONTACT_EMAIL}`}>
-                  {CONTACT_EMAIL}
-                </a>
-                .
-              </p>
-
-              <a
-                href={mailtoHref}
-                className="mt-4 inline-flex rounded-lg bg-green-700 px-4 py-2 text-sm font-bold text-white hover:bg-green-800"
-              >
-                Open email again
-              </a>
-            </div>
           )}
         </section>
       </section>

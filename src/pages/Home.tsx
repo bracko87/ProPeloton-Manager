@@ -13,11 +13,11 @@
  * - Adds footer links to About, How to Play, Privacy Policy, Terms, Contact, and Support.
  * - Keeps public pages reachable from the homepage without login.
  *
- * UPDATE: Homepage review section
- * - Removes unfinished "No reviews yet" placeholder.
- * - Adds a frontend review flow with localStorage persistence.
- * - Shows one review at a time with previous/next arrows.
- * - Keeps Add Review available.
+ * UPDATE: Sustainable homepage reviews
+ * - Reviews are loaded from Supabase using get_public_homepage_reviews_v1.
+ * - Review submissions go to Supabase using submit_homepage_player_review_v1.
+ * - New reviews are stored as pending and only appear after approval.
+ * - No localStorage is used.
  *
  * UPDATE: Public readiness cleanup
  * - Removes closed beta popup.
@@ -25,7 +25,7 @@
  * - Adds real Facebook and Discord links.
  */
 
-import React, { useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router'
 import Hero from '../components/home/Hero'
 import HomepageRaceDays, {
@@ -53,26 +53,28 @@ type RawHomeSnapshot = {
   total_stages?: unknown
 }
 
-type PlayerReview = {
+type PublicHomepageReview = {
   id: string
-  name: string
+  reviewer_name: string
   rating: number
-  message: string
-  createdAt: string
+  review_text: string
+  approved_at: string | null
+  created_at: string
 }
 
 type ReviewFormErrors = {
   name?: string
+  email?: string
   rating?: string
   message?: string
 }
 
-const PLAYER_REVIEWS_STORAGE_KEY = 'propeloton-home-player-reviews'
+const CONTACT_EMAIL = 'contact@propeller.com'
 
 const SOCIAL_LINKS = {
   facebook: 'https://www.facebook.com/profile.php?id=61583549010426',
   discord: 'https://discord.gg/GNDCCz5SW',
-  email: 'mailto:contact@propeller.com',
+  email: `mailto:${CONTACT_EMAIL}`,
 }
 
 const FOOTER_GAME_LINKS = [
@@ -119,62 +121,15 @@ function normalizeHomeSnapshot(data: unknown): HomeSnapshot | null {
   }
 }
 
-function createReviewId(): string {
-  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
-    return crypto.randomUUID()
-  }
-
-  return `review_${Date.now()}_${Math.random().toString(16).slice(2)}`
+function isProbablyValidEmail(value: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim())
 }
 
-function loadStoredReviews(): PlayerReview[] {
-  if (typeof window === 'undefined') {
-    return []
+function formatReviewDate(value: string | null): string {
+  if (!value) {
+    return 'Recently'
   }
 
-  try {
-    const rawValue = window.localStorage.getItem(PLAYER_REVIEWS_STORAGE_KEY)
-
-    if (!rawValue) {
-      return []
-    }
-
-    const parsedValue = JSON.parse(rawValue)
-
-    if (!Array.isArray(parsedValue)) {
-      return []
-    }
-
-    return parsedValue.filter((item): item is PlayerReview => {
-      return (
-        item &&
-        typeof item === 'object' &&
-        typeof item.id === 'string' &&
-        typeof item.name === 'string' &&
-        typeof item.message === 'string' &&
-        typeof item.createdAt === 'string' &&
-        typeof item.rating === 'number' &&
-        Number.isFinite(item.rating)
-      )
-    })
-  } catch {
-    return []
-  }
-}
-
-function saveStoredReviews(reviews: PlayerReview[]): void {
-  if (typeof window === 'undefined') {
-    return
-  }
-
-  try {
-    window.localStorage.setItem(PLAYER_REVIEWS_STORAGE_KEY, JSON.stringify(reviews))
-  } catch {
-    // Ignore localStorage write errors.
-  }
-}
-
-function formatReviewDate(value: string): string {
   const date = new Date(value)
 
   if (Number.isNaN(date.getTime())) {
@@ -186,6 +141,16 @@ function formatReviewDate(value: string): string {
     day: 'numeric',
     year: 'numeric',
   }).format(date)
+}
+
+function normalizeRating(value: unknown): number {
+  const parsedValue = Number(value)
+
+  if (!Number.isFinite(parsedValue)) {
+    return 5
+  }
+
+  return Math.max(1, Math.min(5, Math.round(parsedValue)))
 }
 
 /**
@@ -204,17 +169,47 @@ export default function HomePage(): JSX.Element {
   const [raceDays, setRaceDays] = useState<HomepageRaceDaysData | null>(null)
   const [raceDaysLoading, setRaceDaysLoading] = useState(false)
 
-  const [reviews, setReviews] = useState<PlayerReview[]>([])
+  const [reviews, setReviews] = useState<PublicHomepageReview[]>([])
+  const [reviewsLoading, setReviewsLoading] = useState(false)
+  const [reviewsError, setReviewsError] = useState<string | null>(null)
   const [activeReviewIndex, setActiveReviewIndex] = useState(0)
+
   const [isReviewFormOpen, setIsReviewFormOpen] = useState(false)
   const [reviewName, setReviewName] = useState('')
+  const [reviewEmail, setReviewEmail] = useState('')
   const [reviewRating, setReviewRating] = useState(5)
   const [reviewMessage, setReviewMessage] = useState('')
   const [reviewErrors, setReviewErrors] = useState<ReviewFormErrors>({})
+  const [reviewSubmitMessage, setReviewSubmitMessage] = useState<string | null>(null)
+  const [reviewSubmitTone, setReviewSubmitTone] = useState<'success' | 'error' | null>(null)
+  const [submittingReview, setSubmittingReview] = useState(false)
+
+  const loadHomepageReviews = useCallback(async (): Promise<void> => {
+    setReviewsLoading(true)
+    setReviewsError(null)
+
+    const { data, error } = await supabase.rpc('get_public_homepage_reviews_v1', {
+      p_limit: 20,
+    })
+
+    if (error) {
+      console.warn('Could not load homepage reviews:', error.message)
+      setReviews([])
+      setReviewsError('Reviews are temporarily unavailable.')
+      setReviewsLoading(false)
+      return
+    }
+
+    const rows = Array.isArray(data) ? (data as PublicHomepageReview[]) : []
+
+    setReviews(rows)
+    setActiveReviewIndex(0)
+    setReviewsLoading(false)
+  }, [])
 
   useEffect(() => {
-    setReviews(loadStoredReviews())
-  }, [])
+    void loadHomepageReviews()
+  }, [loadHomepageReviews])
 
   useEffect(() => {
     if (reviews.length === 0) {
@@ -365,6 +360,14 @@ export default function HomePage(): JSX.Element {
 
     if (!reviewName.trim()) {
       nextErrors.name = 'Please enter your name.'
+    } else if (reviewName.trim().length < 2) {
+      nextErrors.name = 'Please enter at least 2 characters.'
+    }
+
+    if (!reviewEmail.trim()) {
+      nextErrors.email = 'Please enter your email.'
+    } else if (!isProbablyValidEmail(reviewEmail)) {
+      nextErrors.email = 'Please enter a valid email address.'
     }
 
     if (!Number.isFinite(reviewRating) || reviewRating < 1 || reviewRating > 5) {
@@ -375,6 +378,8 @@ export default function HomePage(): JSX.Element {
       nextErrors.message = 'Please write your review.'
     } else if (reviewMessage.trim().length < 20) {
       nextErrors.message = 'Please write at least 20 characters.'
+    } else if (reviewMessage.trim().length > 1200) {
+      nextErrors.message = 'Please keep your review under 1200 characters.'
     }
 
     setReviewErrors(nextErrors)
@@ -382,31 +387,51 @@ export default function HomePage(): JSX.Element {
     return Object.keys(nextErrors).length === 0
   }
 
-  function handleSubmitReview(event: React.FormEvent): void {
+  async function handleSubmitReview(event: React.FormEvent): Promise<void> {
     event.preventDefault()
 
     if (!validateReviewForm()) {
       return
     }
 
-    const nextReview: PlayerReview = {
-      id: createReviewId(),
-      name: reviewName.trim(),
-      rating: reviewRating,
-      message: reviewMessage.trim(),
-      createdAt: new Date().toISOString(),
+    setSubmittingReview(true)
+    setReviewSubmitMessage(null)
+    setReviewSubmitTone(null)
+
+    const { data, error } = await supabase.rpc('submit_homepage_player_review_v1', {
+      p_reviewer_name: reviewName.trim(),
+      p_reviewer_email: reviewEmail.trim(),
+      p_rating: reviewRating,
+      p_review_text: reviewMessage.trim(),
+      p_metadata: {
+        source: 'homepage_form',
+      },
+    })
+
+    if (error) {
+      setReviewSubmitTone('error')
+      setReviewSubmitMessage(error.message || 'Could not submit review.')
+      setSubmittingReview(false)
+      return
     }
 
-    const nextReviews = [nextReview, ...reviews]
+    const result = data as { message?: string } | null
 
-    setReviews(nextReviews)
-    saveStoredReviews(nextReviews)
-    setActiveReviewIndex(0)
+    setReviewSubmitTone('success')
+    setReviewSubmitMessage(
+      result?.message ||
+        'Thank you. Your review was submitted and will appear after approval.',
+    )
+
     setReviewName('')
+    setReviewEmail('')
     setReviewRating(5)
     setReviewMessage('')
     setReviewErrors({})
     setIsReviewFormOpen(false)
+    setSubmittingReview(false)
+
+    void loadHomepageReviews()
   }
 
   function showPreviousReview(): void {
@@ -430,6 +455,7 @@ export default function HomePage(): JSX.Element {
   }
 
   const activeReview = reviews[activeReviewIndex]
+  const activeRating = normalizeRating(activeReview?.rating)
 
   return (
     <div className="min-h-screen bg-[#081224] text-white">
@@ -613,19 +639,36 @@ export default function HomePage(): JSX.Element {
 
               <button
                 type="button"
-                onClick={() => setIsReviewFormOpen(current => !current)}
+                onClick={() => {
+                  setIsReviewFormOpen(current => !current)
+                  setReviewSubmitMessage(null)
+                  setReviewSubmitTone(null)
+                }}
                 className="self-start rounded-md bg-yellow-400 px-4 py-2 text-sm font-bold text-black hover:bg-yellow-300 md:self-auto"
               >
                 {isReviewFormOpen ? 'Close Review Form' : 'Add Review'}
               </button>
             </div>
 
+            {reviewSubmitMessage && (
+              <div
+                className={[
+                  'mt-5 rounded-xl border px-4 py-3 text-sm',
+                  reviewSubmitTone === 'success'
+                    ? 'border-green-400/30 bg-green-500/10 text-green-100'
+                    : 'border-red-400/30 bg-red-500/10 text-red-100',
+                ].join(' ')}
+              >
+                {reviewSubmitMessage}
+              </div>
+            )}
+
             {isReviewFormOpen && (
               <form
                 onSubmit={handleSubmitReview}
                 className="mt-6 rounded-xl border border-white/10 bg-white/5 p-5"
               >
-                <div className="grid gap-4 md:grid-cols-[1fr_160px]">
+                <div className="grid gap-4 md:grid-cols-[1fr_1fr_160px]">
                   <label className="block">
                     <span className="text-sm font-semibold text-white">Name</span>
                     <input
@@ -639,6 +682,23 @@ export default function HomePage(): JSX.Element {
                     />
                     {reviewErrors.name && (
                       <div className="mt-1 text-sm text-red-300">{reviewErrors.name}</div>
+                    )}
+                  </label>
+
+                  <label className="block">
+                    <span className="text-sm font-semibold text-white">Email</span>
+                    <input
+                      type="email"
+                      value={reviewEmail}
+                      onChange={event => {
+                        setReviewEmail(event.target.value)
+                        clearReviewError('email')
+                      }}
+                      className="mt-1 w-full rounded-md border border-white/15 bg-[#101b31] px-3 py-2 text-white placeholder:text-white/35 focus:border-yellow-400 focus:outline-none focus:ring-2 focus:ring-yellow-400/30"
+                      placeholder="you@example.com"
+                    />
+                    {reviewErrors.email && (
+                      <div className="mt-1 text-sm text-red-300">{reviewErrors.email}</div>
                     )}
                   </label>
 
@@ -680,16 +740,34 @@ export default function HomePage(): JSX.Element {
                   )}
                 </label>
 
+                <p className="mt-3 text-xs leading-5 text-white/55">
+                  Reviews are checked before they appear publicly. Please do not include
+                  passwords, payment card details, or private account information.
+                </p>
+
                 <button
                   type="submit"
-                  className="mt-4 rounded-md bg-yellow-400 px-5 py-2 text-sm font-bold text-black hover:bg-yellow-300"
+                  disabled={submittingReview}
+                  className="mt-4 rounded-md bg-yellow-400 px-5 py-2 text-sm font-bold text-black hover:bg-yellow-300 disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  Publish Review
+                  {submittingReview ? 'Submitting...' : 'Submit Review'}
                 </button>
               </form>
             )}
 
-            {activeReview ? (
+            {reviewsLoading && (
+              <div className="mt-6 rounded-xl border border-white/10 bg-white/5 px-6 py-8 text-center text-sm text-white/65">
+                Loading reviews...
+              </div>
+            )}
+
+            {!reviewsLoading && reviewsError && (
+              <div className="mt-6 rounded-xl border border-yellow-400/25 bg-yellow-400/10 px-6 py-8 text-center text-sm text-yellow-100">
+                {reviewsError}
+              </div>
+            )}
+
+            {!reviewsLoading && !reviewsError && activeReview && (
               <div className="mt-6 rounded-xl border border-white/10 bg-white/5 px-6 py-8">
                 <div className="flex items-center justify-between gap-4">
                   <button
@@ -704,20 +782,20 @@ export default function HomePage(): JSX.Element {
 
                   <article className="max-w-3xl text-center">
                     <div className="text-lg font-semibold text-yellow-300">
-                      {'★'.repeat(activeReview.rating)}
-                      {'☆'.repeat(5 - activeReview.rating)}
+                      {'★'.repeat(activeRating)}
+                      {'☆'.repeat(5 - activeRating)}
                     </div>
 
                     <p className="mt-4 text-base leading-7 text-white/85">
-                      “{activeReview.message}”
+                      “{activeReview.review_text}”
                     </p>
 
                     <div className="mt-4 text-sm font-semibold text-white">
-                      {activeReview.name}
+                      {activeReview.reviewer_name}
                     </div>
 
                     <div className="mt-1 text-xs text-white/50">
-                      {formatReviewDate(activeReview.createdAt)}
+                      {formatReviewDate(activeReview.approved_at || activeReview.created_at)}
                     </div>
 
                     {reviews.length > 1 && (
@@ -738,7 +816,9 @@ export default function HomePage(): JSX.Element {
                   </button>
                 </div>
               </div>
-            ) : (
+            )}
+
+            {!reviewsLoading && !reviewsError && !activeReview && (
               <div className="mt-6 rounded-xl border border-white/10 bg-white/5 px-6 py-8 text-center">
                 <button
                   type="button"
