@@ -1,6 +1,11 @@
 /**
  * Footer.tsx
- * Global footer showing authoritative live game time and quick links.
+ * Global footer showing authoritative live game time and important public links.
+ *
+ * UPDATE: Public AdSense-readiness links
+ * - Adds always-visible public links:
+ *   About, How to Play, Privacy Policy, Terms, Support, Contact
+ * - Keeps dashboard/support links available.
  */
 
 import React, { useEffect, useState } from 'react'
@@ -102,7 +107,7 @@ export default function Footer({
       if (cancelled) return
 
       if (error) {
-        setGameTimeText((prev) =>
+        setGameTimeText(prev =>
           prev === 'Loading game time...' ? 'Game time unavailable' : prev
         )
         return
@@ -114,7 +119,7 @@ export default function Footer({
       if (nextRow) {
         setGameTimeText(formatGameTime(nextRow))
       } else {
-        setGameTimeText((prev) =>
+        setGameTimeText(prev =>
           prev === 'Loading game time...' ? 'Game time unavailable' : prev
         )
       }
@@ -133,18 +138,68 @@ export default function Footer({
   }, [refreshIntervalMs])
 
   return (
-    <footer className="border-t border-yellow-500 bg-yellow-400 py-3 px-6 flex items-center justify-between">
-      <div className="text-sm font-semibold text-black">{gameTimeText}</div>
+    <footer className="border-t border-yellow-500 bg-yellow-400 px-6 py-4">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <div>
+          <div className="text-sm font-semibold text-black">{gameTimeText}</div>
+          <div className="mt-1 text-xs text-black/70">
+            ProPeloton Manager is an online cycling management game currently in active development.
+          </div>
+        </div>
 
-      <div className="flex items-center gap-4">
-        <Link
-          to="/dashboard/overview"
-          className="text-sm font-semibold text-black hover:opacity-80"
+        <nav
+          aria-label="Footer navigation"
+          className="flex flex-wrap items-center gap-x-4 gap-y-2"
         >
-          Dashboard
-        </Link>
-        <a className="text-sm font-semibold text-black hover:opacity-80">Support</a>
-        <a className="text-sm font-semibold text-black hover:opacity-80">Terms</a>
+          <Link
+            to="/about"
+            className="text-sm font-semibold text-black hover:opacity-80"
+          >
+            About
+          </Link>
+
+          <Link
+            to="/how-to-play"
+            className="text-sm font-semibold text-black hover:opacity-80"
+          >
+            How to Play
+          </Link>
+
+          <Link
+            to="/privacy-policy"
+            className="text-sm font-semibold text-black hover:opacity-80"
+          >
+            Privacy Policy
+          </Link>
+
+          <Link
+            to="/terms"
+            className="text-sm font-semibold text-black hover:opacity-80"
+          >
+            Terms
+          </Link>
+
+          <Link
+            to="/support"
+            className="text-sm font-semibold text-black hover:opacity-80"
+          >
+            Support
+          </Link>
+
+          <Link
+            to="/contact"
+            className="text-sm font-semibold text-black hover:opacity-80"
+          >
+            Contact
+          </Link>
+
+          <Link
+            to="/dashboard/overview"
+            className="text-sm font-semibold text-black hover:opacity-80"
+          >
+            Dashboard
+          </Link>
+        </nav>
       </div>
     </footer>
   )

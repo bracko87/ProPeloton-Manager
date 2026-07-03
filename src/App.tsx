@@ -9,6 +9,10 @@
  * - Keep /create-club outside the dashboard route so the liquidation guard cannot block it.
  * - Keep password reset routes public so users can recover access before login.
  * - Provide small loading and error states in guards instead of blank screens.
+ *
+ * UPDATE: Public AdSense-readiness routes
+ * - Adds public /about, /how-to-play, /privacy-policy, /terms, /contact, and /support routes.
+ * - Reuses the existing ContactUsPage for both /contact and /dashboard/contact-us.
  */
 
 /**
@@ -26,6 +30,14 @@ import RegisterPage from './pages/Register'
 import ForgotPasswordPage from './pages/ForgotPassword'
 import ResetPasswordPage from './pages/ResetPassword'
 import CreateClubPage from './pages/CreateClub'
+
+/* Public AdSense-readiness pages */
+import AboutPage from './pages/About'
+import HowToPlayPage from './pages/HowToPlay'
+import PrivacyPolicyPage from './pages/PrivacyPolicy'
+import TermsPage from './pages/Terms'
+import SupportPage from './pages/Support'
+
 import ClubDashboard from './pages/dashboard/ClubDashboard'
 import OverviewPage from './pages/dashboard/Overview'
 import ManualPage from './pages/dashboard/Manual'
@@ -247,7 +259,15 @@ export default function App(): JSX.Element {
           <Route path="/reset-password" element={<ResetPasswordPage />} />
           <Route path="/referral/:code" element={<ReferralCapturePage />} />
 
-          {/* 
+          {/* Public AdSense-readiness pages */}
+          <Route path="/about" element={<AboutPage />} />
+          <Route path="/how-to-play" element={<HowToPlayPage />} />
+          <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
+          <Route path="/terms" element={<TermsPage />} />
+          <Route path="/contact" element={<ContactUsPage />} />
+          <Route path="/support" element={<SupportPage />} />
+
+          {/*
             Create club route.
 
             This route is intentionally outside /dashboard and does not use the old

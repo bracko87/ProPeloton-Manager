@@ -8,6 +8,10 @@
  *   to the correct next step based on get_my_club_id().
  * - Show lightweight loading/error banners without changing the main layout.
  * - Load live public homepage data from get_public_homepage_snapshot_v1().
+ *
+ * UPDATE: Public AdSense-readiness footer links
+ * - Adds footer links to About, How to Play, Support, Privacy Policy, Terms, and Contact.
+ * - Keeps public pages reachable from the homepage without login.
  */
 
 import React, { useEffect, useState } from 'react'
@@ -45,8 +49,20 @@ const SOCIAL_LINKS = {
   youtube: '#',
   discord: '#',
   x: '#',
-  email: 'mailto:contact@nextqueststudio.com',
+  email: 'mailto:contact@propelotonmanager.com',
 }
+
+const FOOTER_GAME_LINKS = [
+  { label: 'About', href: '#/about' },
+  { label: 'How to Play', href: '#/how-to-play' },
+  { label: 'Support', href: '#/support' },
+  { label: 'Contact', href: '#/contact' },
+]
+
+const FOOTER_LEGAL_LINKS = [
+  { label: 'Privacy Policy', href: '#/privacy-policy' },
+  { label: 'Terms', href: '#/terms' },
+]
 
 function toNumber(value: unknown): number {
   const parsedValue = Number(value)
@@ -498,35 +514,100 @@ export default function HomePage(): JSX.Element {
         </section>
       </main>
 
-      <footer className="border-t border-white/15 py-8">
-        <div className="mx-auto flex max-w-7xl flex-col gap-6 px-6 md:flex-row md:items-start md:justify-between">
+      <footer className="border-t border-white/15 py-10">
+        <div className="mx-auto grid max-w-7xl gap-8 px-6 md:grid-cols-[1.4fr_auto_auto_1fr] md:gap-x-10 lg:gap-x-14">
           <div>
             <div className="text-lg font-semibold">ProPeloton Manager</div>
 
-            <div className="mt-2 text-sm text-white/70">
-              A premium online cycling manager by Next Quest Studio.
+            <div className="mt-2 max-w-md text-sm leading-6 text-white/70">
+              A premium online cycling manager by Next Quest Studio. Build a team,
+              manage riders, prepare races, follow rankings, and develop your club
+              across a living cycling season.
+            </div>
+
+            <div className="mt-4 text-xs text-white/50">
+              © ProPeloton Manager. All rights reserved by Next Quest Studio.
             </div>
           </div>
 
-          <div className="flex flex-col items-start gap-4 md:items-end">
-            <div className="text-sm text-white/60">
-              © ProPeloton Manager. All rights reserved by Next Quest Studio.
+          <nav aria-label="Game information">
+            <div className="text-sm font-semibold text-white">Game</div>
+
+            <div className="mt-3 flex flex-col gap-2">
+              {FOOTER_GAME_LINKS.map(link => (
+                <a
+                  key={link.href}
+                  href={link.href}
+                  className="text-sm text-white/70 hover:text-yellow-400"
+                >
+                  {link.label}
+                </a>
+              ))}
+
+              <a href="#/login" className="text-sm text-white/70 hover:text-yellow-400">
+                Sign In
+              </a>
+
+              <a href="#/register" className="text-sm text-white/70 hover:text-yellow-400">
+                Start Playing
+              </a>
+            </div>
+          </nav>
+
+          <nav aria-label="Legal information">
+            <div className="text-sm font-semibold text-white">Legal</div>
+
+            <div className="mt-3 flex flex-col gap-2">
+              {FOOTER_LEGAL_LINKS.map(link => (
+                <a
+                  key={link.href}
+                  href={link.href}
+                  className="text-sm text-white/70 hover:text-yellow-400"
+                >
+                  {link.label}
+                </a>
+              ))}
+
+              <a href="#/support" className="text-sm text-white/70 hover:text-yellow-400">
+                Support
+              </a>
+            </div>
+          </nav>
+
+          <div>
+            <div className="text-sm font-semibold text-white">Connect</div>
+
+            <div className="mt-3 text-sm leading-6 text-white/70">
+              Questions, support requests, and feedback can be sent through the Contact
+              page or by email.
             </div>
 
-            <div className="flex items-center gap-3 text-white/70">
-              <a href={SOCIAL_LINKS.facebook} aria-label="Facebook" className="hover:text-yellow-400">
+            <div className="mt-4 flex items-center gap-3 text-white/70">
+              <a
+                href={SOCIAL_LINKS.facebook}
+                aria-label="Facebook"
+                className="hover:text-yellow-400"
+              >
                 <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M13.5 22v-8h2.7l.4-3h-3.1V9.1c0-.9.3-1.5 1.6-1.5h1.7V4.9c-.8-.1-1.6-.2-2.5-.2-2.5 0-4.2 1.5-4.2 4.2V11H7.4v3h2.7v8h3.4z" />
                 </svg>
               </a>
 
-              <a href={SOCIAL_LINKS.youtube} aria-label="YouTube" className="hover:text-yellow-400">
+              <a
+                href={SOCIAL_LINKS.youtube}
+                aria-label="YouTube"
+                className="hover:text-yellow-400"
+              >
                 <svg className="h-6 w-6" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M21.6 7.2s-.2-1.5-.8-2.1c-.8-.8-1.7-.8-2.1-.9C15.8 4 12 4 12 4s-3.8 0-6.7.2c-.4.1-1.3.1-2.1.9-.6.6-.8 2.1-.8 2.1S2.2 9 2.2 10.8v1.7c0 1.8.2 3.6.2 3.6s.2 1.5.8 2.1c.8.8 1.9.8 2.4.9 1.7.2 6.4.2 6.4.2s3.8 0 6.7-.3c.4 0 1.3-.1 2.1-.9.6-.6.8-2.1.8-2.1s.2-1.8.2-3.6v-1.7c0-1.7-.2-3.5-.2-3.5zM10.1 14.6V8.4l5.8 3.1-5.8 3.1z" />
                 </svg>
               </a>
 
-              <a href={SOCIAL_LINKS.discord} aria-label="Discord" className="hover:text-yellow-400">
+              <a
+                href={SOCIAL_LINKS.discord}
+                aria-label="Discord"
+                className="hover:text-yellow-400"
+              >
                 <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M19.5 5.2A16.3 16.3 0 0 0 15.4 4l-.2.4c1.5.4 2.2 1 2.2 1s-1.4-.8-4.1-1c-2.7-.2-4.8.6-4.8.6s.8-.7 2.4-1L10.7 4a16.5 16.5 0 0 0-4.1 1.2C4 9.1 3.3 13 3.5 16.8A16.7 16.7 0 0 0 8.6 19l.6-.9c-1.1-.4-1.7-1-1.7-1s.2.1.5.3c2 .9 4.1 1.1 6 1 1.5-.1 3-.4 4.3-1 .2-.1.4-.2.4-.2s-.6.7-1.8 1.1l.6.9a16.5 16.5 0 0 0 5.1-2.2c.3-4.4-.7-8.2-3.1-11.8zM9.3 14.5c-.8 0-1.5-.7-1.5-1.6s.7-1.6 1.5-1.6 1.5.7 1.5 1.6-.7 1.6-1.5 1.6zm5.4 0c-.8 0-1.5-.7-1.5-1.6s.7-1.6 1.5-1.6 1.5.7 1.5 1.6-.7 1.6-1.5 1.6z" />
                 </svg>
