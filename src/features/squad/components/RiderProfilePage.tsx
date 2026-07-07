@@ -3587,6 +3587,8 @@ export default function RiderProfilePage({
     currentHealthCase?.expected_full_recovery_on,
     gameDate ?? null
   )
+  const showAvailabilityMedicalHealthCaseRows =
+    selectedRider?.availability_status !== 'injured'
 
   const transferDaysRemaining = activeTransferListing?.expires_on_game_date
     ? getDaysRemaining(activeTransferListing.expires_on_game_date, gameDate ?? null)
@@ -3979,16 +3981,23 @@ export default function RiderProfilePage({
                       label="Race Sharpness"
                       value={<RaceSharpnessInlineBadge sharpness={raceSharpness} />}
                     />
-                    {healthCaseName ? <DetailRow label="Case" value={healthCaseName} /> : null}
-                    {healthSeverityLabel ? <DetailRow label="Severity" value={healthSeverityLabel} /> : null}
-                    {healthStageLabel ? <DetailRow label="Stage" value={healthStageLabel} /> : null}
-                    {selectedRider.unavailable_reason ? (
+                    {showAvailabilityMedicalHealthCaseRows && healthCaseName ? (
+                      <DetailRow label="Case" value={healthCaseName} />
+                    ) : null}
+                    {showAvailabilityMedicalHealthCaseRows && healthSeverityLabel ? (
+                      <DetailRow label="Severity" value={healthSeverityLabel} />
+                    ) : null}
+                    {showAvailabilityMedicalHealthCaseRows && healthStageLabel ? (
+                      <DetailRow label="Stage" value={healthStageLabel} />
+                    ) : null}
+                    {showAvailabilityMedicalHealthCaseRows && selectedRider.unavailable_reason ? (
                       <DetailRow
                         label="Reason"
                         value={formatUnavailableReason(selectedRider.unavailable_reason)}
                       />
                     ) : null}
-                    {currentHealthCase?.expected_full_recovery_on ? (
+                    {showAvailabilityMedicalHealthCaseRows &&
+                    currentHealthCase?.expected_full_recovery_on ? (
                       <DetailRow
                         label="Expected recovery"
                         value={

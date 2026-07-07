@@ -292,12 +292,53 @@ function formatTieBreakerNumber(value: number): string {
   })
 }
 
-async function loadTeamRankingTieBreakersByTeamId(): Promise<
-  Map<string, TeamRankingTieBreakerUi>
-> {
-  const { data, error } = await supabase
+async function loadCurrentTeamRankingSeasonYear(): Promise<number | null> {
+  try {
+    const { data, error } = await supabase.rpc('team_ranking_get_current_season_year_v1')
+
+    if (error) {
+      console.warn('Could not resolve current team ranking season year:', error.message)
+      return null
+    }
+
+    const seasonYear = normalizeTieBreakerValue(data)
+    return seasonYear > 0 ? seasonYear : null
+  } catch (error) {
+    console.warn('Current team ranking season year lookup failed:', error)
+    return null
+  }
+}
+
+async function loadTeamRankingTieBreakersByTeamId(
+  seasonYear?: number | null,
+): Promise<Map<string, TeamRankingTieBreakerUi>> {
+  let query = supabase
     .from('team_ranking_tiebreakers_by_season_v1')
-    .select('*')
+    .select(
+      'season_year, team_id, club_id, completed_race_count, race_count, races_done_count, total_races_done, team_race_count, race_reputation_value, team_race_reputation_value, race_reputation',
+    )
+
+  if (seasonYear) {
+    query = query.eq('season_year', seasonYear)
+  }
+
+  let { data, error } = await query
+
+  if (error && seasonYear) {
+    console.warn(
+      'Could not load filtered team ranking tie-breakers. Retrying without season filter:',
+      error.message,
+    )
+
+    const retry = await supabase
+      .from('team_ranking_tiebreakers_by_season_v1')
+      .select(
+        'season_year, team_id, club_id, completed_race_count, race_count, races_done_count, total_races_done, team_race_count, race_reputation_value, team_race_reputation_value, race_reputation',
+      )
+
+    data = retry.data
+    error = retry.error
+  }
 
   if (error) {
     console.warn(
@@ -308,11 +349,13 @@ async function loadTeamRankingTieBreakersByTeamId(): Promise<
   }
 
   const rows = (data ?? []) as TeamRankingTieBreakerRow[]
-  const latestSeasonYear = rows.reduce<number | null>((latest, row) => {
-    const seasonYear = normalizeTieBreakerValue(row.season_year)
-    if (seasonYear <= 0) return latest
-    return latest === null || seasonYear > latest ? seasonYear : latest
-  }, null)
+  const latestSeasonYear =
+    seasonYear ??
+    rows.reduce<number | null>((latest, row) => {
+      const rowSeasonYear = normalizeTieBreakerValue(row.season_year)
+      if (rowSeasonYear <= 0) return latest
+      return latest === null || rowSeasonYear > latest ? rowSeasonYear : latest
+    }, null)
 
   const map = new Map<string, TeamRankingTieBreakerUi>()
 
@@ -347,10 +390,32 @@ async function loadTeamRankingTieBreakersByTeamId(): Promise<
   return map
 }
 
-async function loadTeamInternationalPointsByTeamId(): Promise<Map<string, number>> {
-  const { data, error } = await supabase
+async function loadTeamInternationalPointsByTeamId(
+  seasonYear?: number | null,
+): Promise<Map<string, number>> {
+  let query = supabase
     .from('team_international_points_by_season_v1')
     .select('season_year, team_id, international_points, international_rank')
+
+  if (seasonYear) {
+    query = query.eq('season_year', seasonYear)
+  }
+
+  let { data, error } = await query
+
+  if (error && seasonYear) {
+    console.warn(
+      'Could not load filtered team international points. Retrying without season filter:',
+      error.message,
+    )
+
+    const retry = await supabase
+      .from('team_international_points_by_season_v1')
+      .select('season_year, team_id, international_points, international_rank')
+
+    data = retry.data
+    error = retry.error
+  }
 
   if (error) {
     console.error('Failed to load team international points:', error)
@@ -358,17 +423,28 @@ async function loadTeamInternationalPointsByTeamId(): Promise<Map<string, number
   }
 
   const rows = (data ?? []) as TeamInternationalPointsRow[]
-  const latestSeasonYear = rows.reduce<number | null>((latest, row) => {
-    const seasonYear = typeof row.season_year === 'number' ? row.season_year : null
-    if (seasonYear === null) return latest
-    return latest === null || seasonYear > latest ? seasonYear : latest
-  }, null)
+  const latestSeasonYear =
+    seasonYear ??
+    rows.reduce<number | null>((latest, row) => {
+      const rowSeasonYear =
+        typeof row.season_year === 'number'
+          ? row.season_year
+          : normalizeTieBreakerValue(row.season_year)
+      if (rowSeasonYear <= 0) return latest
+      return latest === null || rowSeasonYear > latest ? rowSeasonYear : latest
+    }, null)
 
   const map = new Map<string, number>()
 
   rows.forEach((row) => {
     if (!row.team_id) return
-    if (latestSeasonYear !== null && row.season_year !== latestSeasonYear) return
+
+    const rowSeasonYear =
+      typeof row.season_year === 'number'
+        ? row.season_year
+        : normalizeTieBreakerValue(row.season_year)
+
+    if (latestSeasonYear !== null && rowSeasonYear !== latestSeasonYear) return
     map.set(row.team_id, normalizePointsValue(row.international_points))
   })
 
@@ -1168,115 +1244,158 @@ export default function TeamRankingPage(): JSX.Element {
 
   useEffect(() => {
     let mounted = true
+    const initialPathname = location.pathname
+    const initialSearch = location.search
+    const initialHash = location.hash
+
+    async function hydrateMyClubContext(userId: string | null): Promise<void> {
+      if (!userId) {
+        if (mounted) {
+          setMyClubIds([])
+        }
+        return
+      }
+
+      try {
+        const { data: myClubs, error: myClubsError } = await supabase
+          .from('clubs')
+          .select('id, club_type, club_tier, tier2_division, tier3_division, amateur_division')
+          .eq('owner_user_id', userId)
+          .in('club_type', ['main', 'developing'])
+
+        if (!mounted) return
+
+        if (myClubsError) {
+          throw myClubsError
+        }
+
+        const ownedClubs = (myClubs ?? []) as MyOwnedClubRecord[]
+        const mainClub = ownedClubs.find((club) => club.club_type === 'main') ?? null
+
+        setMyClubIds(ownedClubs.map((club) => club.id))
+
+        if (mainClub && shouldAutoSelectMyCompetitionRef.current) {
+          const mainClubTier = mapClubTierToRankingTier(mainClub.club_tier)
+
+          if (mainClubTier) {
+            let mainClubDivision: CompetitionDivision | null = null
+
+            if (mainClubTier === TEAM_TIERS.PRO) {
+              mainClubDivision = mainClub.tier2_division ?? null
+            } else if (mainClubTier === TEAM_TIERS.CONTINENTAL) {
+              mainClubDivision = mainClub.tier3_division ?? null
+            } else if (mainClubTier === TEAM_TIERS.AMATEUR) {
+              mainClubDivision = mainClub.amateur_division ?? null
+            }
+
+            const resolvedMainClubDivision = resolveDivisionForTier(
+              mainClubTier,
+              mainClubDivision,
+            )
+
+            setSelectedTier(mainClubTier)
+            setSelectedDivision(resolvedMainClubDivision)
+            shouldAutoSelectMyCompetitionRef.current = false
+
+            navigate(
+              {
+                pathname: initialPathname,
+                search: buildTeamRankingSearch(
+                  initialSearch,
+                  mainClubTier,
+                  resolvedMainClubDivision,
+                ),
+                hash: initialHash,
+              },
+              { replace: true },
+            )
+          }
+        }
+      } catch (error) {
+        console.warn('Could not load owned clubs for team ranking:', error)
+      }
+    }
+
+    async function hydrateRankingMetadata(
+      baseTeams: TeamRankingRecord[],
+      seasonYear: number | null,
+    ): Promise<void> {
+      try {
+        const teamIds = baseTeams.map((team) => team.id)
+
+        const [
+          displayNameByClubId,
+          tieBreakersByTeamId,
+          publicInactivityByClubId,
+        ] = await Promise.all([
+          loadClubDisplayNameMap(teamIds),
+          loadTeamRankingTieBreakersByTeamId(seasonYear),
+          loadPublicClubInactivityMap(teamIds),
+        ])
+
+        if (!mounted) return
+
+        setInactivityByClubId(publicInactivityByClubId)
+
+        setTeams((currentTeams) =>
+          currentTeams.map((team) => {
+            const originalTeam = baseTeams.find((baseTeam) => baseTeam.id === team.id)
+            const tieBreakers = tieBreakersByTeamId.get(team.id)
+
+            return {
+              ...team,
+              name: displayNameByClubId.get(team.id) ?? team.name,
+              completedRaceCount:
+                tieBreakers?.completedRaceCount ??
+                getCompletedRaceCountFromTeam(originalTeam ?? team),
+              raceReputationValue:
+                tieBreakers?.raceReputationValue ??
+                getRaceReputationValueFromTeam(originalTeam ?? team),
+            }
+          }),
+        )
+      } catch (error) {
+        console.warn('Could not hydrate team ranking metadata:', error)
+      }
+    }
 
     async function load(): Promise<void> {
       try {
+        setLoading(true)
+
         const [
           { data: authData },
           teamsResult,
+          currentSeasonYear,
           internationalPointsByTeamId,
-          tieBreakersByTeamId,
         ] = await Promise.all([
           supabase.auth.getUser(),
           getTeamRankingTeams(),
+          loadCurrentTeamRankingSeasonYear(),
           loadTeamInternationalPointsByTeamId(),
-          loadTeamRankingTieBreakersByTeamId(),
         ])
 
         if (!mounted) return
 
         const userId = authData.user?.id ?? null
 
-        if (userId) {
-          const { data: myClubs, error: myClubsError } = await supabase
-            .from('clubs')
-            .select('id, club_type, club_tier, tier2_division, tier3_division, amateur_division')
-            .eq('owner_user_id', userId)
-            .in('club_type', ['main', 'developing'])
+        const teamsWithInternationalPoints = teamsResult.map((team) => ({
+          ...team,
+          seasonPoints: internationalPointsByTeamId.get(team.id) ?? 0,
+          completedRaceCount: getCompletedRaceCountFromTeam(team),
+          raceReputationValue: getRaceReputationValueFromTeam(team),
+        }))
 
-          if (!mounted) return
-
-          if (myClubsError) {
-            throw myClubsError
-          }
-
-          const ownedClubs = (myClubs ?? []) as MyOwnedClubRecord[]
-          const mainClub = ownedClubs.find((club) => club.club_type === 'main') ?? null
-
-          setMyClubIds(ownedClubs.map((club) => club.id))
-
-          if (mainClub && shouldAutoSelectMyCompetitionRef.current) {
-            const mainClubTier = mapClubTierToRankingTier(mainClub.club_tier)
-
-            if (mainClubTier) {
-              let mainClubDivision: CompetitionDivision | null = null
-
-              if (mainClubTier === TEAM_TIERS.PRO) {
-                mainClubDivision = mainClub.tier2_division ?? null
-              } else if (mainClubTier === TEAM_TIERS.CONTINENTAL) {
-                mainClubDivision = mainClub.tier3_division ?? null
-              } else if (mainClubTier === TEAM_TIERS.AMATEUR) {
-                mainClubDivision = mainClub.amateur_division ?? null
-              }
-
-              const resolvedMainClubDivision = resolveDivisionForTier(
-                mainClubTier,
-                mainClubDivision,
-              )
-
-              setSelectedTier(mainClubTier)
-              setSelectedDivision(resolvedMainClubDivision)
-              shouldAutoSelectMyCompetitionRef.current = false
-
-              navigate(
-                {
-                  pathname: location.pathname,
-                  search: buildTeamRankingSearch(
-                    location.search,
-                    mainClubTier,
-                    resolvedMainClubDivision,
-                  ),
-                  hash: location.hash,
-                },
-                { replace: true },
-              )
-            }
-          }
-        } else {
-          setMyClubIds([])
-        }
-
-        const displayNameByClubId = await loadClubDisplayNameMap(
-          teamsResult.map((team) => team.id),
-        )
-
-        if (!mounted) return
-
-        const teamsWithInternationalPoints = teamsResult.map((team) => {
-          const tieBreakers = tieBreakersByTeamId.get(team.id)
-
-          return {
-            ...team,
-            name: displayNameByClubId.get(team.id) ?? team.name,
-            seasonPoints: internationalPointsByTeamId.get(team.id) ?? 0,
-            completedRaceCount:
-              tieBreakers?.completedRaceCount ?? getCompletedRaceCountFromTeam(team),
-            raceReputationValue:
-              tieBreakers?.raceReputationValue ?? getRaceReputationValueFromTeam(team),
-          }
-        })
-
-        const publicInactivityByClubId = await loadPublicClubInactivityMap(
-          teamsWithInternationalPoints.map((team) => team.id),
-        )
-
-        if (!mounted) return
-
-        setInactivityByClubId(publicInactivityByClubId)
+        // First paint: show the actual standings as soon as the core ranking data is ready.
+        // Display names, inactivity badges and exact season-end tie-breakers hydrate below.
         setTeams(teamsWithInternationalPoints)
+        setLoading(false)
+
+        void hydrateMyClubContext(userId)
+        void hydrateRankingMetadata(teamsResult, currentSeasonYear)
       } catch (error) {
         console.error('Failed to load team ranking page:', error)
-      } finally {
+
         if (mounted) {
           setLoading(false)
         }
@@ -1285,17 +1404,13 @@ export default function TeamRankingPage(): JSX.Element {
 
     void load()
 
-    const onFocus = () => {
-      void load()
-    }
-
-    window.addEventListener('focus', onFocus)
-
     return () => {
       mounted = false
-      window.removeEventListener('focus', onFocus)
     }
-  }, [location.hash, location.pathname, location.search, navigate])
+    // Intentionally do not reload standings when only the URL query changes.
+    // Tier/division selection is controlled locally and should not refetch the whole page.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [navigate])
 
   useEffect(() => {
     let alive = true

@@ -363,6 +363,74 @@ type RaceReplayFrame = {
 const RACE_REPLAY_FRAME_PAGE_SIZE = 1000
 const RACE_REPLAY_FRAME_MAX_ROWS = 50000
 
+const RACE_DETAIL_FORBIDDEN_ENGINE_RPC_NAMES = new Set([
+  'run_race_stage_simulation_v1',
+  'run_race_stage_road_race_v1',
+  'run_race_stage_individual_time_trial_v1',
+  'run_race_stage_team_time_trial_v1',
+
+  'race_engine_admin_scheduler_tick_v1',
+  'race_engine_admin_process_next_due_stage_once_v1',
+  'race_engine_admin_process_stage_once_v1',
+  'race_engine_admin_process_stage_once_unlocked_v1',
+
+  'race_engine_process_stage_runner_only_v1',
+  'race_engine_process_stage_tail_repair_v1',
+  'race_engine_closeout_stage_after_tail_v1',
+  'race_engine_process_time_trial_stage_once_v1',
+
+  'race_engine_write_replay_frames_v1',
+  'race_engine_write_stage_results_v1',
+  'race_engine_write_stage_point_results_v1',
+  'race_engine_write_cumulative_classifications_v1',
+  'race_engine_write_replay_commentary_v1',
+
+  'race_engine_apply_stage_fatigue_v1',
+  'race_engine_finalize_time_trial_stage_v1',
+
+  'generate_race_ranking_point_awards_v1',
+  'generate_race_prize_awards_v1',
+  'race_engine_pay_prize_awards_v1',
+])
+
+function assertRaceDetailReadOnlyRpc(functionName: string) {
+  const normalizedName = functionName.trim()
+
+  const looksLikeForbiddenEngineMutation =
+    normalizedName.startsWith('run_race_stage_') ||
+    normalizedName.startsWith('race_engine_admin_') ||
+    normalizedName.startsWith('race_engine_process_') ||
+    normalizedName.startsWith('race_engine_closeout_') ||
+    normalizedName.startsWith('race_engine_write_') ||
+    normalizedName.startsWith('race_engine_apply_') ||
+    normalizedName.startsWith('race_engine_finalize_') ||
+    normalizedName.startsWith('race_engine_pay_') ||
+    normalizedName.startsWith('generate_race_ranking_') ||
+    normalizedName.startsWith('generate_race_prize_') ||
+    normalizedName === 'sync_race_stage_points_from_stage_json_v1'
+
+  if (
+    RACE_DETAIL_FORBIDDEN_ENGINE_RPC_NAMES.has(normalizedName) ||
+    looksLikeForbiddenEngineMutation
+  ) {
+    throw new Error(
+      `RaceDetailPage is read-only. Forbidden race-engine RPC blocked: ${normalizedName}`
+    )
+  }
+}
+
+function raceDetailReadRpc(
+  functionName: string,
+  args?: Record<string, unknown>
+) {
+  assertRaceDetailReadOnlyRpc(functionName)
+
+  return (supabase['rpc'] as unknown as (
+    fn: string,
+    rpcArgs?: Record<string, unknown>
+  ) => any)(functionName, args)
+}
+
 async function loadAllRaceStageReplayFrames(
   stageId: string
 ): Promise<{
@@ -375,8 +443,7 @@ async function loadAllRaceStageReplayFrames(
   while (from < RACE_REPLAY_FRAME_MAX_ROWS) {
     const to = from + RACE_REPLAY_FRAME_PAGE_SIZE - 1
 
-    const { data, error } = await supabase
-      .rpc('get_race_stage_replay_frames_v1', {
+    const { data, error } = await raceDetailReadRpc('get_race_stage_replay_frames_v1', {
         p_stage_id: stageId,
       })
       .range(from, to)
@@ -449,6 +516,35 @@ type ReplayStandingRow = {
   liveEnergyPct?: number | null
   stageEnergyUsedPct?: number | null
   standingEntityType?: 'rider' | 'team' | string | null
+}
+
+function getReplayStandingIdentityKey(row: ReplayStandingRow): string {
+  const entityType = row.standingEntityType ?? 'rider'
+  const riderId = row.rider_id?.trim()
+
+  if (riderId) {
+    return `${entityType}:id:${riderId}`
+  }
+
+  const riderName = row.rider_name.trim().toLowerCase()
+  const teamName = row.team_name.trim().toLowerCase()
+
+  return `${entityType}:name:${riderName}|team:${teamName}`
+}
+
+function getDedupedReplayStandingRows(
+  rows: ReplayStandingRow[]
+): ReplayStandingRow[] {
+  const seenKeys = new Set<string>()
+
+  return rows.filter((row) => {
+    const key = getReplayStandingIdentityKey(row)
+
+    if (seenKeys.has(key)) return false
+
+    seenKeys.add(key)
+    return true
+  })
 }
 
 type AggregatedStagePointResultRow = {
@@ -6715,26 +6811,26 @@ function RaceReplayModal({
           error: preStageLeaderError,
         },
       ] = await Promise.all([
-        supabase.rpc('get_race_stage_report_v1', {
+        raceDetailReadRpc('get_race_stage_report_v1', {
           p_stage_id: stage.id,
         }),
 
-        supabase.rpc('get_race_results_view_v1', {
+        raceDetailReadRpc('get_race_results_view_v1', {
           p_race_id: race.id,
           p_after_stage_id: stage.id,
         }),
 
-        supabase.rpc('get_race_stage_profile_detail_v1', {
+        raceDetailReadRpc('get_race_stage_profile_detail_v1', {
           p_stage_id: stage.id,
         }),
 
         loadAllRaceStageReplayFrames(stage.id),
 
-        supabase.rpc('get_race_stage_point_results_v1', {
+        raceDetailReadRpc('get_race_stage_point_results_v1', {
           p_stage_id: stage.id,
         }),
 
-        supabase.rpc(
+        raceDetailReadRpc(
           'get_race_stage_pre_stage_leaders_v1',
           {
             p_stage_id: stage.id,
@@ -6765,7 +6861,7 @@ function RaceReplayModal({
         const previousStageId = previousStageRows?.[0]?.id
 
         if (previousStageId) {
-          const { data: previousResultsData } = await supabase.rpc(
+          const { data: previousResultsData } = await raceDetailReadRpc(
             'get_race_results_view_v1',
             {
               p_race_id: race.id,
@@ -7794,6 +7890,7 @@ function RaceReplayModal({
                 null,
               gc_rank: previousGc?.rank ?? null,
               gc_gap_seconds: previousGc?.gapSeconds ?? null,
+              standingEntityType: 'rider',
               ...getEstimatedReplayRiderEnergySnapshot({
                 frame,
                 riderId,
@@ -7805,7 +7902,10 @@ function RaceReplayModal({
           })
         )
 
-  const startedTimeTrialElapsedRows = rawFrameStandingRows
+  const dedupedFrameStandingBaseRows =
+    getDedupedReplayStandingRows(rawFrameStandingRows)
+
+  const startedTimeTrialElapsedRows = dedupedFrameStandingBaseRows
     .map((row) => row.liveElapsedSeconds)
     .filter(
       (value): value is number =>
@@ -7820,7 +7920,7 @@ function RaceReplayModal({
       ? Math.min(...startedTimeTrialElapsedRows)
       : null
 
-  const finishedTimeTrialElapsedRows = rawFrameStandingRows
+  const finishedTimeTrialElapsedRows = dedupedFrameStandingBaseRows
     .filter((row) => row.timeTrialState === 'finished')
     .map((row) => row.liveElapsedSeconds)
     .filter(
@@ -7850,7 +7950,7 @@ function RaceReplayModal({
    */
   const provisionalGcEntries = isTeamTimeTrialReplay
     ? []
-    : rawFrameStandingRows.map((row) => {
+    : dedupedFrameStandingBaseRows.map((row) => {
       const previousGc =
         previousGcByRiderId.get(row.rider_id)
 
@@ -7969,7 +8069,7 @@ function RaceReplayModal({
     if (!riderId) return null
 
     return (
-      rawFrameStandingRows.find(
+      dedupedFrameStandingBaseRows.find(
         (row) => row.rider_id === riderId
       )?.group_code ?? null
     )
@@ -8017,7 +8117,7 @@ function RaceReplayModal({
       : null
 
   const frameStandingRows: ReplayStandingRow[] =
-    rawFrameStandingRows.map((row) => {
+    dedupedFrameStandingBaseRows.map((row) => {
       const provisionalGc =
         row.standingEntityType === 'team'
           ? null
@@ -8065,66 +8165,69 @@ function RaceReplayModal({
     })
 
   const alphabeticalStandingRows: ReplayStandingRow[] =
-    (resultsPayload?.stage_results ?? [])
-      .map((row) => {
-        const riderId = row.rider_id ?? ''
+    getDedupedReplayStandingRows(
+      (resultsPayload?.stage_results ?? [])
+        .map((row): ReplayStandingRow => {
+          const riderId = row.rider_id ?? ''
 
-        const previousGc =
-          previousGcByRiderId.get(riderId)
+          const previousGc =
+            previousGcByRiderId.get(riderId)
 
-        const participantRider =
-          participantRiderById.get(riderId)
+          const participantRider =
+            participantRiderById.get(riderId)
 
-        const fullName =
-          classificationNameByRiderId.get(riderId) ||
-          previousGc?.displayName?.trim() ||
-          (participantRider ? getRaceParticipantRiderDisplayName(participantRider) : null) ||
-          row.full_name?.trim() ||
-          row.rider_full_name?.trim() ||
-          row.display_name?.trim() ||
-          row.rider_name?.trim() ||
-          row.rider_name_snapshot?.trim() ||
-          'Rider'
+          const fullName =
+            classificationNameByRiderId.get(riderId) ||
+            previousGc?.displayName?.trim() ||
+            (participantRider ? getRaceParticipantRiderDisplayName(participantRider) : null) ||
+            row.full_name?.trim() ||
+            row.rider_full_name?.trim() ||
+            row.display_name?.trim() ||
+            row.rider_name?.trim() ||
+            row.rider_name_snapshot?.trim() ||
+            'Rider'
 
-        return {
-          rider_id: riderId,
-          rider_name: fullName,
+          return {
+            rider_id: riderId,
+            rider_name: fullName,
+            standingEntityType: 'rider',
 
-          team_name:
-            currentTeamNameByRiderId.get(riderId) ||
-            participantRider?.team_name_snapshot?.trim() ||
-            row.team_name_snapshot?.trim() ||
-            '',
+            team_name:
+              currentTeamNameByRiderId.get(riderId) ||
+              participantRider?.team_name_snapshot?.trim() ||
+              row.team_name_snapshot?.trim() ||
+              '',
 
-          group_code: 'main_peloton',
-          group_label: 'Peloton',
-          group_order: 1,
-          gap_seconds: 0,
+            group_code: 'main_peloton',
+            group_label: 'Peloton',
+            group_order: 1,
+            gap_seconds: 0,
 
-          rider_country_code:
-            riderCountryCodeById.get(riderId) ??
-            normalizeCountryCode(
-              participantRider?.country_code_snapshot ??
-                row.rider_country_code ??
-                row.nationality_code ??
-                row.country_code ??
-                null
-            ) ??
-            null,
+            rider_country_code:
+              riderCountryCodeById.get(riderId) ??
+              normalizeCountryCode(
+                participantRider?.country_code_snapshot ??
+                  row.rider_country_code ??
+                  row.nationality_code ??
+                  row.country_code ??
+                  null
+              ) ??
+              null,
 
-          gc_rank: previousGc?.rank ?? null,
-          gc_gap_seconds:
-            previousGc?.gapSeconds ?? null,
-          isGcLeader:
-            riderId === preStageGcLeaderRiderId,
+            gc_rank: previousGc?.rank ?? null,
+            gc_gap_seconds:
+              previousGc?.gapSeconds ?? null,
+            isGcLeader:
+              riderId === preStageGcLeaderRiderId,
 
-          isPointsLeader:
-            riderId === preStagePointsLeaderRiderId,
+            isPointsLeader:
+              riderId === preStagePointsLeaderRiderId,
 
-          isClimberLeader:
-            riderId === preStageClimberLeaderRiderId,
-        }
-      })
+            isClimberLeader:
+              riderId === preStageClimberLeaderRiderId,
+          }
+        })
+    )
       .sort((left, right) =>
         left.rider_name.localeCompare(
           right.rider_name
@@ -8488,7 +8591,7 @@ function RaceReplayModal({
                 <div className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
                   {isTeamTimeTrialReplay
                     ? 'Team standing'
-                    : 'Stage standing'}
+                    : 'Stage standing · riders'}
                 </div>
 
                 <div className="mt-4">
@@ -8605,7 +8708,7 @@ function RaceReplayModal({
 
                           return (
                             <div
-                              key={`${row.standingEntityType ?? 'rider'}-${row.rider_id}-${index}`}
+                              key={getReplayStandingIdentityKey(row)}
                               className={`grid ${
                                 isTimeTrialReplay
                                   ? 'grid-cols-[24px_38px_minmax(0,1fr)_minmax(82px,auto)_minmax(96px,auto)]'
@@ -9607,7 +9710,7 @@ function RaceLeadersCard({
 
       setLoading(true)
 
-      const { data, error } = await supabase.rpc('get_race_results_view_v1', {
+      const { data, error } = await raceDetailReadRpc('get_race_results_view_v1', {
         p_race_id: race.id,
         p_after_stage_id: classificationResultsStageId,
       })
@@ -10071,7 +10174,7 @@ function useRaceRewardsOverview(
       setLoading(true)
       setErrorMessage(null)
 
-      const { data, error } = await supabase.rpc('get_race_rewards_overview_v1', {
+      const { data, error } = await raceDetailReadRpc('get_race_rewards_overview_v1', {
         p_race_id: raceId,
         p_stage_id: selectedStageId ?? null,
       })
@@ -10174,7 +10277,7 @@ function RaceRewardsTotalsPanel({
       setLoading(true)
       setErrorMessage(null)
 
-      const { data, error } = await supabase.rpc('get_race_rewards_totals_v1', {
+      const { data, error } = await raceDetailReadRpc('get_race_rewards_totals_v1', {
         p_race_id: raceId,
         p_viewer_team_id: viewerTeamId ?? null,
       })
@@ -10526,7 +10629,7 @@ function RaceStageReportCard({
       setLoading(true)
       setErrorMessage(null)
 
-      const { data, error } = await supabase.rpc('get_race_stage_report_v1', {
+      const { data, error } = await raceDetailReadRpc('get_race_stage_report_v1', {
         p_stage_id: selectedStageId,
       })
 
@@ -11421,7 +11524,7 @@ async function loadParticipantTeamDisplayNames(
 ): Promise<Map<string, string>> {
   if (clubIds.length === 0) return new Map()
 
-  const { data, error } = await supabase.rpc('get_club_display_names_v1', {
+  const { data, error } = await raceDetailReadRpc('get_club_display_names_v1', {
     p_club_ids: clubIds,
   })
 
@@ -12359,7 +12462,7 @@ function usePublishedRaceStageIds(
       const results = await Promise.all(
         stageIds.map(async (stageId) => {
           const { data, error } =
-            await supabase.rpc(
+            await raceDetailReadRpc(
               'get_race_stage_live_state_v1',
               {
                 p_stage_id: stageId,
@@ -12654,7 +12757,7 @@ function RaceResultsHub({
       setRaceFavoritesLoading(true)
       setRaceFavoritesError(null)
 
-      const { data, error } = await supabase.rpc('get_race_favorites_v1', {
+      const { data, error } = await raceDetailReadRpc('get_race_favorites_v1', {
         p_race_id: race.id,
         p_limit: 5,
       })
@@ -12834,7 +12937,7 @@ function RaceResultsHub({
       setClassificationLoading(true)
       setClassificationError(null)
 
-      const { data, error } = await supabase.rpc('get_race_results_view_v1', {
+      const { data, error } = await raceDetailReadRpc('get_race_results_view_v1', {
         p_race_id: race.id,
         p_after_stage_id: classificationResultsStageId,
       })
@@ -12893,12 +12996,12 @@ function RaceResultsHub({
         { data: resultsData, error: resultsError },
         { data: pointData, error: pointError },
       ] = await Promise.all([
-        supabase.rpc('get_race_results_view_v1', {
+        raceDetailReadRpc('get_race_results_view_v1', {
           p_race_id: race.id,
           p_after_stage_id: stageId,
         }),
 
-        supabase.rpc('get_race_stage_point_results_v1', {
+        raceDetailReadRpc('get_race_stage_point_results_v1', {
           p_stage_id: stageId,
         }),
       ])
@@ -14521,7 +14624,7 @@ function RaceStageProfilePanel({
       setLoading(true)
       setErrorMessage(null)
 
-      const { data, error } = await supabase.rpc('get_race_stage_profile_detail_v1', {
+      const { data, error } = await raceDetailReadRpc('get_race_stage_profile_detail_v1', {
         p_stage_id: selectedStageId,
       })
 
@@ -15391,11 +15494,11 @@ export default function RaceDetailPage({
         entryRulesRes,
         stageStartTimesRes,
       ] = await Promise.all([
-        supabase.rpc('get_race_release_detail_v1', {
+        raceDetailReadRpc('get_race_release_detail_v1', {
           p_race_id: raceId,
         }),
-        supabase.rpc('get_current_game_date_date'),
-        supabase.rpc('get_current_game_date_parts'),
+        raceDetailReadRpc('get_current_game_date_date'),
+        raceDetailReadRpc('get_current_game_date_parts'),
         supabase
           .from('race_entry_rules')
           .select(RACE_ENTRY_RULES_DETAIL_SELECT)
@@ -15619,12 +15722,12 @@ export default function RaceDetailPage({
       try {
         let resolvedClubId: string | null = null
 
-        const primaryClubRes = await supabase.rpc('get_my_primary_club_id')
+        const primaryClubRes = await raceDetailReadRpc('get_my_primary_club_id')
 
         if (!primaryClubRes.error && primaryClubRes.data) {
           resolvedClubId = primaryClubRes.data as string
         } else {
-          const fallbackClubRes = await supabase.rpc('get_my_club_id')
+          const fallbackClubRes = await raceDetailReadRpc('get_my_club_id')
           if (!fallbackClubRes.error) {
             resolvedClubId = (fallbackClubRes.data as string | null) ?? null
           }
@@ -15803,7 +15906,7 @@ export default function RaceDetailPage({
     async function loadReplayAccess() {
       setReplayAccessLoading(true)
 
-      const { data, error } = await supabase.rpc(
+      const { data, error } = await raceDetailReadRpc(
         'can_view_race_replay_frames_v1',
         {
           p_race_id: raceId,
@@ -15847,7 +15950,7 @@ export default function RaceDetailPage({
     async function loadSelectedStageLiveState() {
       if (!selectedStage?.id) return
 
-      const { data, error } = await supabase.rpc(
+      const { data, error } = await raceDetailReadRpc(
         'get_race_stage_live_state_v1',
         {
           p_stage_id: selectedStage.id,
