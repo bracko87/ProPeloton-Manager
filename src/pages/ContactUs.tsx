@@ -10,10 +10,11 @@
  * - Sends contact messages automatically through Supabase Edge Function:
  *   send-contact-message
  * - No longer opens the user's email app through mailto on submit.
+ * - Hides the large public black hero/header when opened inside dashboard.
  */
 
 import React, { useState } from 'react'
-import { Link } from 'react-router'
+import { Link, useLocation } from 'react-router'
 import { supabase } from '../lib/supabase'
 
 const CONTACT_EMAIL = 'contact@propelotonmanager.com'
@@ -39,6 +40,9 @@ function getContactSource(): string {
 }
 
 export default function ContactUsPage(): JSX.Element {
+  const location = useLocation()
+  const isDashboardContact = location.pathname.startsWith('/dashboard')
+
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [message, setMessage] = useState('')
@@ -102,7 +106,12 @@ export default function ContactUsPage(): JSX.Element {
     })
 
     if (error) {
-      setSubmitError(error.message || 'Could not send your message. Please try again.')
+      console.error('Contact form Edge Function error:', error)
+
+      setSubmitError(
+        error.message ||
+          'Could not connect to the contact service. Please try again or email us manually.',
+      )
       setStatus('error')
       return
     }
@@ -136,33 +145,58 @@ export default function ContactUsPage(): JSX.Element {
   }
 
   return (
-    <main className="min-h-screen bg-slate-50 text-slate-900">
-      <section className="bg-slate-950 px-6 py-14 text-white">
-        <div className="mx-auto max-w-5xl">
-          <Link
-            to="/"
-            className="inline-flex items-center rounded-lg border border-white/20 px-4 py-2 text-sm font-semibold text-white/85 hover:bg-white/10 hover:text-white"
-          >
-            ← Back to Home
-          </Link>
+    <main className={isDashboardContact ? 'bg-slate-50 text-slate-900' : 'min-h-screen bg-slate-50 text-slate-900'}>
+      {!isDashboardContact && (
+        <section className="bg-slate-950 px-6 py-14 text-white">
+          <div className="mx-auto max-w-5xl">
+            <Link
+              to="/"
+              className="inline-flex items-center rounded-lg border border-white/20 px-4 py-2 text-sm font-semibold text-white/85 hover:bg-white/10 hover:text-white"
+            >
+              ← Back to Home
+            </Link>
 
-          <p className="mt-8 text-sm font-semibold uppercase tracking-[0.25em] text-yellow-300">
+            <p className="mt-8 text-sm font-semibold uppercase tracking-[0.25em] text-yellow-300">
+              Contact ProPeloton Manager
+            </p>
+
+            <h1 className="mt-4 text-4xl font-bold tracking-tight md:text-5xl">
+              Need help or want to report a problem?
+            </h1>
+
+            <p className="mt-5 max-w-3xl text-lg leading-relaxed text-slate-200">
+              Use this page for support requests, bug reports, account questions,
+              gameplay feedback, AdSense/privacy questions, and general contact about
+              ProPeloton Manager.
+            </p>
+          </div>
+        </section>
+      )}
+
+      {isDashboardContact && (
+        <section className="mx-auto max-w-5xl px-6 pt-6">
+          <p className="text-sm font-semibold uppercase tracking-[0.22em] text-yellow-700">
             Contact ProPeloton Manager
           </p>
 
-          <h1 className="mt-4 text-4xl font-bold tracking-tight md:text-5xl">
+          <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-950">
             Need help or want to report a problem?
           </h1>
 
-          <p className="mt-5 max-w-3xl text-lg leading-relaxed text-slate-200">
-            Use this page for support requests, bug reports, account questions,
-            gameplay feedback, AdSense/privacy questions, and general contact about
-            ProPeloton Manager.
+          <p className="mt-3 max-w-3xl text-sm leading-relaxed text-slate-600">
+            Send support requests, bug reports, account questions, gameplay feedback,
+            AdSense/privacy questions, or general contact messages directly to support.
           </p>
-        </div>
-      </section>
+        </section>
+      )}
 
-      <section className="mx-auto grid max-w-5xl gap-6 px-6 py-12 lg:grid-cols-[0.95fr_1.4fr]">
+      <section
+        className={
+          isDashboardContact
+            ? 'mx-auto grid max-w-5xl gap-6 px-6 py-6 lg:grid-cols-[0.95fr_1.4fr]'
+            : 'mx-auto grid max-w-5xl gap-6 px-6 py-12 lg:grid-cols-[0.95fr_1.4fr]'
+        }
+      >
         <aside className="space-y-4">
           <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
             <h2 className="text-lg font-bold">Support email</h2>

@@ -736,7 +736,7 @@ export function TeamPoliciesOperationsTab(): JSX.Element {
 
       if (res.error) throw res.error
 
-      setSaveMessage('Team policies saved.')
+      setSaveMessage('Team policies applied.')
       await loadPage()
     } catch (e: any) {
       setError(e?.message ?? 'Failed to save team policies.')
@@ -804,7 +804,7 @@ export function TeamPoliciesOperationsTab(): JSX.Element {
               disabled={saving || !hasUnsavedChanges}
               className="rounded border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {saving ? 'Saving…' : 'Save'}
+              {saving ? 'Applying…' : 'Apply'}
             </button>
           </div>
         </div>
@@ -1060,6 +1060,43 @@ export function TeamPoliciesOperationsTab(): JSX.Element {
           </div>
         </div>
       ))}
+
+      <div className="rounded bg-white p-4 shadow">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <div className="font-semibold text-gray-900">Apply Team Policy Changes</div>
+            <div className="mt-1 text-sm text-gray-600">
+              This applies all changed policy fields at once. Changes are only saved after you click Apply.
+            </div>
+            <div className="mt-2 min-h-[20px]">
+              {saveMessage && (
+                <div className="text-sm text-green-700">{saveMessage}</div>
+              )}
+              {error && <div className="text-sm text-red-600">{error}</div>}
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2 lg:justify-end">
+            <button
+              type="button"
+              onClick={resetPolicies}
+              disabled={saving || !hasUnsavedChanges}
+              className="rounded border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              Reset
+            </button>
+
+            <button
+              type="button"
+              onClick={() => void savePolicies()}
+              disabled={saving || !hasUnsavedChanges}
+              className="rounded bg-yellow-400 px-6 py-2 text-sm font-semibold text-black hover:bg-yellow-300 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {saving ? 'Applying…' : hasUnsavedChanges ? 'Apply Changes' : 'No Changes to Apply'}
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }

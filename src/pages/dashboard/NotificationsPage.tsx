@@ -48,6 +48,240 @@ type NotificationTab = 'unread' | 'read'
 const PAGE_SIZE = 10
 const MAX_FETCH_SIZE = 500
 
+const OVERVIEW_OPENED_ATTENTION_STORAGE_KEY = 'ppm:overview-opened-attention-keys-v1'
+const OVERVIEW_ATTENTION_DISMISSED_EVENT = 'ppm:overview-attention-dismissed-v1'
+
+function normalizeOverviewAttentionDismissalValue(value: unknown): string {
+  return String(value ?? '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/#/g, '')
+    .replace(/['"`´’]/g, '')
+    .replace(/&/g, ' and ')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
+function normalizeOverviewAttentionDismissalHref(value: unknown): string {
+  const raw = String(value ?? '').trim()
+  if (!raw) return ''
+
+  let normalized = raw
+
+  if (normalized.startsWith('#')) {
+    normalized = normalized.slice(1)
+  }
+
+  try {
+    if (/^https?:\/\//i.test(normalized)) {
+      const url = new URL(normalized)
+      normalized = `${url.pathname}${url.search}${url.hash}`
+    }
+  } catch {
+    // Keep original normalized value.
+  }
+
+  normalized = normalized.replace(/^#/, '')
+
+  if (normalized.startsWith('/#')) {
+    normalized = normalized.slice(2)
+  }
+
+  normalized = normalized.replace(/\/+$/, '')
+
+  return normalizeOverviewAttentionDismissalValue(normalized)
+}
+
+function getOverviewAttentionDismissalTopic(text: string): string | null {
+  if (!text) return null
+  if (text.includes('stage plan')) return 'stage_plan'
+  if (text.includes('race plan')) return 'race_plan'
+  if (text.includes('race result') || text.includes('stage result')) return 'race_result'
+  if (text.includes('race application') || text.includes('application')) return 'race_application'
+  if (text.includes('contract')) return 'contract'
+  if (text.includes('equipment') || text.includes('repair')) return 'equipment'
+  if (text.includes('scout')) return 'scouting'
+  if (text.includes('finance') || text.includes('loan')) return 'finance'
+  if (text.includes('sick') || text.includes('injured') || text.includes('health')) return 'health'
+  return null
+}
+
+function buildOverviewAttentionSemanticDismissalKey(value: unknown): string | null {
+  const normalized = normalizeOverviewAttentionDismissalValue(value)
+  const topic = getOverviewAttentionDismissalTopic(normalized)
+  if (!topic) return null
+
+  const subject = normalized
+    .replace(/\brace plan\b/g, ' ')
+    .replace(/\bstage plan\b/g, ' ')
+    .replace(/\brace result(s)?\b/g, ' ')
+    .replace(/\bstage result(s)?\b/g, ' ')
+    .replace(/\brace application\b/g, ' ')
+    .replace(/\b(open|opened|deadline|reminder|soon|missing|review|available|submitted|locked|lock|today|for|the|a|an|is|are|has|have|stage|race|plan|results?|classic|tour)\b/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+
+  // Do not create generic semantic keys like "race_plan" or "stage_plan".
+  // A semantic key must contain a real event/race/stage subject.
+  if (!subject || subject.length < 6 || subject.split(' ').length < 2) return null
+
+  return `semantic:${topic}:${subject}`
+}
+
+function isSpecificOverviewAttentionHrefKey(value: string): boolean {
+  // Generic routes like /dashboard/race-preparation must not dismiss all race-plan notifications.
+  return /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i.test(value)
+}
+
+function readOverviewAttentionDismissalKeys(): Set<string> {
+  if (typeof window === 'undefined') return new Set()
+
+  try {
+    const raw = window.localStorage.getItem(OVERVIEW_OPENED_ATTENTION_STORAGE_KEY)
+    const values = raw ? JSON.parse(raw) : []
+
+    return new Set(
+      Array.isArray(values)
+        ? values.filter((value): value is string => typeof value === 'string')
+        : []
+    )
+  } catch {
+    return new Set()
+  }
+}
+
+function persistOverviewAttentionDismissalKeys(keys: Set<string>) {
+  if (typeof window === 'undefined') return
+
+  try {
+    const values = Array.from(keys).slice(-250)
+    window.localStorage.setItem(OVERVIEW_OPENED_ATTENTION_STORAGE_KEY, JSON.stringify(values))
+    window.dispatchEvent(new CustomEvent(OVERVIEW_ATTENTION_DISMISSED_EVENT))
+  } catch {
+    // Local persistence is only a UI convenience. Ignore storage errors.
+  }
+}
+
+function getNotificationDismissalMetadataValues(item: NotificationItem): string[] {
+  const record = item as unknown as Record<string, unknown>
+  const metadata = (record.metadata && typeof record.metadata === 'object'
+    ? record.metadata
+    : null) as Record<string, unknown> | null
+
+  if (!metadata) return []
+
+  const keys = [
+    'attention_key',
+    'attentionKey',
+    'race_id',
+    'raceId',
+    'stage_id',
+    'stageId',
+    'related_id',
+    'relatedId',
+    'target_id',
+    'targetId',
+  ]
+
+  return keys
+    .map(key => metadata[key])
+    .filter((value): value is string => typeof value === 'string' && value.trim().length > 0)
+}
+
+function buildOverviewAttentionDismissalKeysForNotification(
+  item: NotificationItem,
+  actionUrl?: string | null
+): string[] {
+  const keys = new Set<string>()
+  const record = item as unknown as Record<string, unknown>
+
+  const url = actionUrl ?? getResolvedNotificationActionUrl(item)
+  const hrefKey = normalizeOverviewAttentionDismissalHref(url)
+  if (hrefKey && isSpecificOverviewAttentionHrefKey(hrefKey)) keys.add(`href:${hrefKey}`)
+
+  for (const rawId of [
+    record.user_notification_id,
+    record.notification_id,
+    record.id,
+    ...getNotificationDismissalMetadataValues(item),
+  ]) {
+    const idKey = normalizeOverviewAttentionDismissalValue(rawId)
+    if (idKey) keys.add(`id:${idKey}`)
+  }
+
+  // Only title/message are specific enough for cross-dismissal.
+  // Do not use type_code/source/preference_group here because those are category-wide
+  // and can accidentally hide all unread notifications in that category.
+  for (const rawText of [
+    item.title,
+    item.message,
+    `${item.title ?? ''} ${item.message ?? ''}`,
+  ]) {
+    const labelKey = normalizeOverviewAttentionDismissalValue(rawText)
+    if (labelKey && labelKey.length >= 8) keys.add(`label:${labelKey}`)
+
+    const semanticKey = buildOverviewAttentionSemanticDismissalKey(rawText)
+    if (semanticKey) keys.add(semanticKey)
+  }
+
+  return Array.from(keys)
+}
+
+function dismissMatchingOverviewAttentionForNotification(
+  item: NotificationItem,
+  actionUrl?: string | null
+) {
+  const dismissalKeys = buildOverviewAttentionDismissalKeysForNotification(item, actionUrl)
+  if (dismissalKeys.length === 0) return
+
+  const existingKeys = readOverviewAttentionDismissalKeys()
+  dismissalKeys.forEach(key => existingKeys.add(key))
+  persistOverviewAttentionDismissalKeys(existingKeys)
+}
+
+function isNotificationDismissedByOverviewAttention(
+  item: NotificationItem,
+  actionUrl?: string | null
+): boolean {
+  const dismissalKeys = buildOverviewAttentionDismissalKeysForNotification(item, actionUrl)
+  if (dismissalKeys.length === 0) return false
+
+  const existingKeys = readOverviewAttentionDismissalKeys()
+  return dismissalKeys.some(key => existingKeys.has(key))
+}
+
+async function markDismissedUnreadNotificationsRead(
+  items: NotificationItem[]
+): Promise<number> {
+  let markedCount = 0
+
+  for (const item of items) {
+    if (item.status !== 'unread') continue
+
+    try {
+      const { data, error } = await supabase.rpc('mark_my_notification_read', {
+        p_user_notification_id: item.user_notification_id,
+      })
+
+      if (error) {
+        // eslint-disable-next-line no-console
+        console.error('Failed to auto-mark dismissed notification as read:', error)
+        continue
+      }
+
+      if (data === true) markedCount += 1
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.error('Failed to auto-mark dismissed notification as read:', err)
+    }
+  }
+
+  return markedCount
+}
+
+
 type CategoryOption = {
   value: string
   label: string
@@ -172,6 +406,9 @@ export default function NotificationsPage(): JSX.Element {
     const templatedItems = applyNotificationTemplates((data ?? []) as NotificationItem[])
     const unread = templatedItems.filter(shouldDisplayNotification)
 
+    // Important: do not hide/auto-read notifications on page load only because a
+    // local Overview attention key exists. That can be too broad after old cached
+    // keys. Only explicit open/mark actions should change notification read state.
     setUnreadCount(unread.length)
   }, [shouldDisplayNotification])
 
@@ -196,9 +433,13 @@ export default function NotificationsPage(): JSX.Element {
       }
 
       const templatedItems = applyNotificationTemplates((data ?? []) as NotificationItem[])
-      const filteredItems = templatedItems.filter(shouldDisplayNotification)
+      const displayableItems = templatedItems.filter(shouldDisplayNotification)
 
-      setItems(filteredItems)
+      // Do not filter unread notifications using old local dismissal keys.
+      // Matching notifications are marked read by explicit actions:
+      // - opening/marking a notification
+      // - opening an Overview attention bubble
+      setItems(displayableItems)
       setLoading(false)
     },
     [shouldDisplayNotification]
@@ -247,11 +488,14 @@ export default function NotificationsPage(): JSX.Element {
       setReadItems(prev => [readItem, ...prev])
       setUnreadCount(prev => Math.max(0, prev - 1))
       setExpandedId(prev => (prev === item.user_notification_id ? null : prev))
+      dismissMatchingOverviewAttentionForNotification(item)
     }
   }, [])
 
   const handleOpenNotification = useCallback(
     async (item: NotificationItem, overrideUrl?: string | null) => {
+      const url = overrideUrl ?? getResolvedNotificationActionUrl(item)
+
       if (item.status === 'unread') {
         const { data, error } = await supabase.rpc('mark_my_notification_read', {
           p_user_notification_id: item.user_notification_id,
@@ -278,7 +522,8 @@ export default function NotificationsPage(): JSX.Element {
         }
       }
 
-      const url = overrideUrl ?? getResolvedNotificationActionUrl(item)
+      dismissMatchingOverviewAttentionForNotification(item, url)
+
       if (url) {
         navigate(url)
       }
@@ -334,6 +579,29 @@ export default function NotificationsPage(): JSX.Element {
   useEffect(() => {
     void loadNotifications(activeTab)
   }, [activeTab, loadNotifications])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return undefined
+
+    const refreshAfterAttentionDismissal = () => {
+      void loadUnreadCount()
+      void loadNotifications(activeTab)
+    }
+
+    const handleStorage = (event: StorageEvent) => {
+      if (event.key === OVERVIEW_OPENED_ATTENTION_STORAGE_KEY) {
+        refreshAfterAttentionDismissal()
+      }
+    }
+
+    window.addEventListener(OVERVIEW_ATTENTION_DISMISSED_EVENT, refreshAfterAttentionDismissal)
+    window.addEventListener('storage', handleStorage)
+
+    return () => {
+      window.removeEventListener(OVERVIEW_ATTENTION_DISMISSED_EVENT, refreshAfterAttentionDismissal)
+      window.removeEventListener('storage', handleStorage)
+    }
+  }, [activeTab, loadNotifications, loadUnreadCount])
 
   const allActiveItems = activeTab === 'unread' ? unreadItems : readItems
   const isActiveTabLoading = activeTab === 'unread' ? isLoadingUnread : isLoadingRead

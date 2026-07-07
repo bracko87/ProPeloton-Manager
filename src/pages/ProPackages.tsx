@@ -13,6 +13,7 @@
  *
  * UPDATE:
  * - Remove Stripe session column from Purchase History (do not show to user)
+ * - Add full daily coin transaction history with finance-style table and pagination
  */
 import React, { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../lib/supabase'
@@ -48,7 +49,23 @@ type PurchaseUi = {
   priceEur: number | null
 }
 
+type CoinLedgerRow = {
+  delta: number
+  reason: string
+  payload_json: any
+  created_at: string
+}
+
+type CoinTransactionUi = {
+  createdAt: string
+  delta: number
+  reason: string
+  description: string
+  packageCode: string | null
+}
+
 const COINS_PER_DAY = 2
+const COIN_HISTORY_PAGE_SIZE = 20
 
 function eur(n: number) {
   return new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(n)
@@ -79,6 +96,52 @@ function formatDateTime(iso: string) {
   } catch {
     return iso
   }
+}
+
+
+function titleFromSnake(value: string | null | undefined) {
+  if (!value) return 'Coin transaction'
+
+  return String(value)
+    .replace(/_/g, ' ')
+    .replace(/-/g, ' ')
+    .trim()
+    .replace(/\s+/g, ' ')
+    .replace(/\w\S*/g, (word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+}
+
+function describeCoinTransaction(reason: string, payload: any) {
+  const packageCode = typeof payload?.package_code === 'string' ? payload.package_code : null
+  const description =
+    typeof payload?.description === 'string'
+      ? payload.description
+      : typeof payload?.label === 'string'
+        ? payload.label
+        : typeof payload?.message === 'string'
+          ? payload.message
+          : null
+
+  if (description) return description
+  if (reason === 'purchase' && packageCode) return `Coin package purchase: ${packageCode}`
+  if (reason === 'daily_gameplay_unlock') return 'Daily gameplay unlock'
+  if (reason === 'referral_reward') return 'Referral reward'
+  if (reason === 'admin_adjustment') return 'Admin adjustment'
+  if (reason === 'developing_team_purchase') return 'Developing Team purchase'
+
+  return titleFromSnake(reason)
+}
+
+function slicePage<T>(items: T[], page: number, pageSize: number): T[] {
+  const start = (page - 1) * pageSize
+  return items.slice(start, start + pageSize)
+}
+
+function getTotalPages(totalItems: number, pageSize: number): number {
+  return Math.max(1, Math.ceil(totalItems / pageSize))
+}
+
+function clampPage(page: number, totalPages: number): number {
+  return Math.min(Math.max(page, 1), Math.max(totalPages, 1))
 }
 
 /**
@@ -118,6 +181,13 @@ export default function ProPackagesPage(): JSX.Element {
   const [historyError, setHistoryError] = useState<string | null>(null)
   const [purchases, setPurchases] = useState<PurchaseUi[]>([])
 
+  // Full coin transaction history
+  const [coinHistoryOpen, setCoinHistoryOpen] = useState(false)
+  const [loadingCoinHistory, setLoadingCoinHistory] = useState(false)
+  const [coinHistoryError, setCoinHistoryError] = useState<string | null>(null)
+  const [coinTransactions, setCoinTransactions] = useState<CoinTransactionUi[]>([])
+  const [coinHistoryPage, setCoinHistoryPage] = useState(1)
+
   const bestValueCode = useMemo(() => {
     if (packages.length === 0) return null
     let best = packages[0]
@@ -133,6 +203,22 @@ export default function ProPackagesPage(): JSX.Element {
     for (const p of packages) m.set(p.code, p.priceEur)
     return m
   }, [packages])
+
+  const coinHistoryTotalPages = useMemo(() => {
+    return getTotalPages(coinTransactions.length, COIN_HISTORY_PAGE_SIZE)
+  }, [coinTransactions.length])
+
+  const safeCoinHistoryPage = clampPage(coinHistoryPage, coinHistoryTotalPages)
+
+  const visibleCoinTransactions = useMemo(() => {
+    return slicePage(coinTransactions, safeCoinHistoryPage, COIN_HISTORY_PAGE_SIZE)
+  }, [coinTransactions, safeCoinHistoryPage])
+
+  useEffect(() => {
+    setCoinHistoryPage((current) =>
+      clampPage(current, getTotalPages(coinTransactions.length, COIN_HISTORY_PAGE_SIZE)),
+    )
+  }, [coinTransactions.length])
 
   async function loadCoinStatus() {
     setLoadingBalance(true)
@@ -214,6 +300,44 @@ export default function ProPackagesPage(): JSX.Element {
     }
   }
 
+  async function loadCoinTransactionHistory() {
+    setCoinHistoryError(null)
+    setLoadingCoinHistory(true)
+
+    try {
+      const { data, error } = await supabase
+        .from('user_coin_ledger')
+        .select('delta, reason, payload_json, created_at')
+        .order('created_at', { ascending: false })
+        .limit(500)
+
+      if (error) throw error
+
+      const rows = (data ?? []) as CoinLedgerRow[]
+      const mapped: CoinTransactionUi[] = rows.map((row) => {
+        const payload = (row.payload_json ?? {}) as any
+        const packageCode = typeof payload?.package_code === 'string' ? payload.package_code : null
+
+        return {
+          createdAt: row.created_at,
+          delta: Number(row.delta ?? 0),
+          reason: String(row.reason ?? 'coin_transaction'),
+          description: describeCoinTransaction(String(row.reason ?? ''), payload),
+          packageCode,
+        }
+      })
+
+      setCoinTransactions(mapped)
+      setCoinHistoryPage(1)
+    } catch (e: any) {
+      console.error('Failed to load coin transaction history:', e)
+      setCoinHistoryError(e?.message ?? 'Failed to load coin transaction history.')
+      setCoinTransactions([])
+    } finally {
+      setLoadingCoinHistory(false)
+    }
+  }
+
   useEffect(() => {
     let mounted = true
     ;(async () => {
@@ -276,6 +400,15 @@ export default function ProPackagesPage(): JSX.Element {
     }
   }
 
+  async function handleToggleCoinHistory() {
+    const next = !coinHistoryOpen
+    setCoinHistoryOpen(next)
+
+    if (next && coinTransactions.length === 0) {
+      await loadCoinTransactionHistory()
+    }
+  }
+
   return (
     <div className="w-full">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
@@ -290,7 +423,11 @@ export default function ProPackagesPage(): JSX.Element {
           <button
             type="button"
             onClick={() => {
-              void Promise.all([loadCoinStatus(), historyOpen ? loadPurchaseHistory() : Promise.resolve()])
+              void Promise.all([
+                loadCoinStatus(),
+                coinHistoryOpen ? loadCoinTransactionHistory() : Promise.resolve(),
+                historyOpen ? loadPurchaseHistory() : Promise.resolve(),
+              ])
             }}
             className="rounded-xl border border-black/10 bg-white px-4 py-3 text-sm font-semibold text-black shadow-sm hover:bg-gray-50"
           >
@@ -333,12 +470,12 @@ export default function ProPackagesPage(): JSX.Element {
                 </div>
 
                 <div className="text-sm font-semibold text-gray-700">Coin Pack</div>
-                <div className="mt-1 text-4xl font-extrabold text-black">◎ {p.coins.toLocaleString()}</div>
+                <div className="mt-1 text-4xl font-normal text-black">◎ {p.coins.toLocaleString()}</div>
                 <div className="mt-2 text-sm text-gray-600">{p.tagline}</div>
 
                 <div className="mt-5 flex items-end justify-between gap-4">
                   <div>
-                    <div className="text-2xl font-extrabold text-black">{eur(p.priceEur)}</div>
+                    <div className="text-2xl font-normal text-black">{eur(p.priceEur)}</div>
                     <div className="mt-1 text-xs text-gray-500">≈ {eur(perCoin(p.priceEur, p.coins))} per coin</div>
                   </div>
 
@@ -379,7 +516,7 @@ export default function ProPackagesPage(): JSX.Element {
             onClick={() => {
               void handleToggleHistory()
             }}
-            className="rounded-xl bg-black px-4 py-2.5 text-sm font-bold text-white hover:opacity-90"
+            className="h-10 min-w-[128px] rounded-xl bg-black px-4 py-2.5 text-sm font-bold text-white hover:opacity-90"
           >
             {historyOpen ? 'Hide history' : 'Show history'}
           </button>
@@ -432,9 +569,171 @@ export default function ProPackagesPage(): JSX.Element {
         ) : null}
       </div>
 
+      <div className="mt-8 rounded-2xl border border-black/10 bg-white p-5">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <div className="text-base font-semibold text-black">Daily coin transaction history</div>
+            <div className="mt-1 text-sm text-gray-600">
+              All coin ledger activity. Shows purchases, gameplay charges, rewards and adjustments.
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                void loadCoinTransactionHistory()
+              }}
+              className="h-10 min-w-[128px] rounded-xl border border-black/10 bg-white px-4 py-2.5 text-sm font-bold text-black hover:bg-gray-50"
+            >
+              Refresh
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                void handleToggleCoinHistory()
+              }}
+              className="h-10 min-w-[128px] rounded-xl bg-black px-4 py-2.5 text-sm font-bold text-white hover:opacity-90"
+            >
+              {coinHistoryOpen ? 'Hide history' : 'Show history'}
+            </button>
+          </div>
+        </div>
+
+        {coinHistoryOpen ? (
+          <div className="mt-4 overflow-hidden rounded shadow">
+            {coinHistoryError ? (
+              <div className="border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+                {coinHistoryError}
+              </div>
+            ) : null}
+
+            {loadingCoinHistory ? (
+              <div className="p-4 text-sm text-gray-600">Loading…</div>
+            ) : (
+              <>
+                <div className="overflow-x-auto">
+                  <table className="w-full table-auto text-sm">
+                    <thead className="bg-gray-50 text-gray-600">
+                      <tr>
+                        <th className="p-3 text-left whitespace-nowrap">Date</th>
+                        <th className="p-3 text-left">Type</th>
+                        <th className="p-3 text-left whitespace-nowrap">Coins</th>
+                        <th
+                          className="p-3 pr-4 text-right whitespace-nowrap"
+                          style={{ width: '1%' }}
+                        >
+                          Details
+                        </th>
+                      </tr>
+                    </thead>
+
+                    <tbody>
+                      {visibleCoinTransactions.length === 0 ? (
+                        <tr>
+                          <td colSpan={4} className="p-4 text-gray-600">
+                            No coin transactions found.
+                          </td>
+                        </tr>
+                      ) : (
+                        visibleCoinTransactions.map((transaction, idx) => {
+                          const amountColorClass =
+                            transaction.delta > 0
+                              ? 'text-green-700'
+                              : transaction.delta < 0
+                                ? 'text-red-700'
+                                : 'text-gray-700'
+
+                          return (
+                            <tr
+                              key={`${transaction.createdAt}_${transaction.reason}_${idx}`}
+                              className="border-t"
+                            >
+                              <td className="p-3 text-gray-700 whitespace-nowrap">
+                                {formatDateTime(transaction.createdAt)}
+                              </td>
+
+                              <td className="p-3 font-medium text-gray-800 whitespace-nowrap">
+                                <span title={transaction.reason || undefined}>
+                                  {titleFromSnake(transaction.reason)}
+                                </span>
+                              </td>
+
+                              <td className={`p-3 font-semibold whitespace-nowrap ${amountColorClass}`}>
+                                {transaction.delta >= 0 ? '+' : ''}
+                                {transaction.delta.toLocaleString()} Coins
+                              </td>
+
+                              <td
+                                className="p-3 pr-4 text-xs text-gray-700 whitespace-nowrap text-right"
+                                style={{ width: '1%' }}
+                              >
+                                <div className="font-medium text-gray-800">{transaction.description}</div>
+                                {transaction.packageCode ? (
+                                  <div className="mt-0.5 text-gray-500">{transaction.packageCode}</div>
+                                ) : null}
+                              </td>
+                            </tr>
+                          )
+                        })
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+
+                <div className="border-t bg-gray-50 p-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="text-xs text-gray-600">
+                    Showing {coinTransactions.length === 0 ? 0 : (safeCoinHistoryPage - 1) * COIN_HISTORY_PAGE_SIZE + 1}-
+                    {Math.min(safeCoinHistoryPage * COIN_HISTORY_PAGE_SIZE, coinTransactions.length)} of{' '}
+                    {coinTransactions.length} coin transactions.
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setCoinHistoryPage((prev) => Math.max(prev - 1, 1))}
+                      disabled={safeCoinHistoryPage <= 1}
+                      className={[
+                        'px-3 py-2 rounded text-sm shadow',
+                        safeCoinHistoryPage <= 1
+                          ? 'bg-gray-200 text-gray-500'
+                          : 'bg-white hover:bg-gray-100',
+                      ].join(' ')}
+                    >
+                      Previous
+                    </button>
+
+                    <div className="text-xs text-gray-600 min-w-[72px] text-center">
+                      Page {safeCoinHistoryPage} / {coinHistoryTotalPages}
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setCoinHistoryPage((prev) => Math.min(prev + 1, coinHistoryTotalPages))
+                      }
+                      disabled={safeCoinHistoryPage >= coinHistoryTotalPages}
+                      className={[
+                        'px-3 py-2 rounded text-sm shadow',
+                        safeCoinHistoryPage >= coinHistoryTotalPages
+                          ? 'bg-gray-200 text-gray-500'
+                          : 'bg-white hover:bg-gray-100',
+                      ].join(' ')}
+                    >
+                      Next
+                    </button>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        ) : null}
+      </div>
+
       <div className="mt-8 rounded-2xl border border-black/10 bg-white p-5 text-sm text-gray-600">
         <div className="font-semibold text-black">How it works</div>
-        <ul className="mt-2 list-disc pl-5 space-y-1">
+        <ul className="mt-2 list-disc space-y-1 pl-5">
           <li>Coins unlock each in-game day. You need {COINS_PER_DAY} coins to play today.</li>
           <li>Coins are added after payment confirmation (webhook).</li>
           <li>If your balance is below {COINS_PER_DAY}, gameplay is locked until you top up.</li>

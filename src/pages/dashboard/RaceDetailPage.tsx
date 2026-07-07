@@ -221,6 +221,7 @@ type RaceParticipantRider = {
   age_snapshot: number | null
   is_young_rider: boolean | null
   start_number: number | null
+  display_start_number?: number | null
   role_snapshot?: string | null
   overall_snapshot?: number | null
   can_view_exact_overall?: boolean | null
@@ -253,6 +254,21 @@ type RaceParticipantTeam = {
   competition_points?: number | null
   division_key?: string | null
   riders: RaceParticipantRider[]
+}
+
+type RaceFavoriteRow = {
+  favorite_rank: number | null
+  rider_id: string | null
+  rider_name: string | null
+  team_id: string | null
+  team_name: string | null
+  country_code: string | null
+  start_number: number | null
+  role_snapshot: string | null
+  favorite_score: number | string | null
+  skill_score: number | string | null
+  season_points: number | string | null
+  reason: string | null
 }
 
 type RaceStageResultRow = {
@@ -11035,8 +11051,42 @@ function getEmbeddedRiderRows(row: RaceParticipantTeamViewRow): unknown[] {
   return []
 }
 
+function getParticipantRiderLeaderPriority(rider: RaceParticipantRider): number {
+  const role = rider.role_snapshot?.toLowerCase().trim() ?? ''
+
+  if (
+    role === 'leader' ||
+    role === 'team leader' ||
+    role === 'team_leader' ||
+    role === 'gc leader' ||
+    role === 'gc_leader' ||
+    role === 'captain' ||
+    role === 'race captain' ||
+    role.includes('leader') ||
+    role.includes('captain')
+  ) {
+    return 0
+  }
+
+  return 1
+}
+
 function sortParticipantRiders(riders: RaceParticipantRider[]): RaceParticipantRider[] {
   return [...riders].sort((a, b) => {
+    const leaderPriorityA = getParticipantRiderLeaderPriority(a)
+    const leaderPriorityB = getParticipantRiderLeaderPriority(b)
+
+    if (leaderPriorityA !== leaderPriorityB) {
+      return leaderPriorityA - leaderPriorityB
+    }
+
+    const overallA = asNumber(a.overall_snapshot) ?? 0
+    const overallB = asNumber(b.overall_snapshot) ?? 0
+
+    if (overallA !== overallB) {
+      return overallB - overallA
+    }
+
     const numberA = a.start_number ?? Number.MAX_SAFE_INTEGER
     const numberB = b.start_number ?? Number.MAX_SAFE_INTEGER
 
@@ -11046,6 +11096,87 @@ function sortParticipantRiders(riders: RaceParticipantRider[]): RaceParticipantR
       String(b.rider_name_snapshot ?? '')
     )
   })
+}
+
+function getParticipantTeamTierOrder(team: RaceParticipantTeam): number {
+  const tier = team.club_tier?.toLowerCase().replace(/[\s_-]+/g, '') ?? ''
+
+  if (tier.includes('world')) return 1
+  if (tier.includes('pro')) return 2
+  if (tier.includes('continental')) return 3
+  if (tier.includes('amateur')) return 4
+
+  return 99
+}
+
+function getParticipantTeamRankValue(team: RaceParticipantTeam): number {
+  return (
+    asNumber(team.competition_rank) ??
+    asNumber(team.ranking_snapshot) ??
+    Number.MAX_SAFE_INTEGER
+  )
+}
+
+function getParticipantTeamPointsValue(team: RaceParticipantTeam): number {
+  return asNumber(team.competition_points) ?? 0
+}
+
+function getParticipantTeamWorldTierValue(team: RaceParticipantTeam): number {
+  const parsed = asNumber(team.world_tier)
+
+  if (parsed !== null) return parsed
+
+  const digits = team.world_tier?.match(/\d+/)?.[0]
+  const parsedDigits = digits ? Number(digits) : null
+
+  return Number.isFinite(parsedDigits) ? Number(parsedDigits) : Number.MAX_SAFE_INTEGER
+}
+
+function compareParticipantTeamsByRaceOrder(
+  left: RaceParticipantTeam,
+  right: RaceParticipantTeam
+): number {
+  const tierA = getParticipantTeamTierOrder(left)
+  const tierB = getParticipantTeamTierOrder(right)
+
+  if (tierA !== tierB) return tierA - tierB
+
+  const rankA = getParticipantTeamRankValue(left)
+  const rankB = getParticipantTeamRankValue(right)
+
+  if (rankA !== rankB) return rankA - rankB
+
+  const pointsA = getParticipantTeamPointsValue(left)
+  const pointsB = getParticipantTeamPointsValue(right)
+
+  if (pointsA !== pointsB) return pointsB - pointsA
+
+  const worldTierA = getParticipantTeamWorldTierValue(left)
+  const worldTierB = getParticipantTeamWorldTierValue(right)
+
+  if (worldTierA !== worldTierB) return worldTierA - worldTierB
+
+  return getParticipantTeamName(left).localeCompare(getParticipantTeamName(right))
+}
+
+function buildParticipantTeamsForRaceDisplay(
+  teams: RaceParticipantTeam[]
+): RaceParticipantTeam[] {
+  return [...teams]
+    .sort(compareParticipantTeamsByRaceOrder)
+    .map((team, teamIndex) => {
+      const baseStartNumber = teamIndex * 10 + 1
+      const riders = sortParticipantRiders(team.riders).map((rider, riderIndex) => ({
+        ...rider,
+        display_start_number: baseStartNumber + riderIndex,
+      }))
+
+      return {
+        ...team,
+        riders,
+        assigned_riders_count: riders.length,
+      }
+    })
 }
 
 function normalizeRaceParticipantTeamViewRow(
@@ -11662,7 +11793,12 @@ function attachRidersToParticipantTeams(
     (rider) => !matchedRiderIds.has(rider.id ?? rider.rider_id)
   )
 
-  if (missingRiders.length === 0) return teamsWithRiders
+  const sortTeamsByRaceOrder = (
+    participantTeams: RaceParticipantTeam[]
+  ): RaceParticipantTeam[] =>
+    [...participantTeams].sort(compareParticipantTeamsByRaceOrder)
+
+  if (missingRiders.length === 0) return sortTeamsByRaceOrder(teamsWithRiders)
 
   const missingRidersByTeamId = new Map<string, RaceParticipantRider[]>()
 
@@ -11721,9 +11857,7 @@ function attachRidersToParticipantTeams(
     }
   })
 
-  return [...teamsWithRiders, ...syntheticTeams].sort((left, right) =>
-    getParticipantTeamName(left).localeCompare(getParticipantTeamName(right))
-  )
+  return sortTeamsByRaceOrder([...teamsWithRiders, ...syntheticTeams])
 }
 
 function formatCompetitionName(value?: string | number | null): string | null {
@@ -11782,16 +11916,128 @@ function getRiderOverallDisplay(rider: RaceParticipantRider): string {
   return rider.overall_range_label ?? 'OVR —'
 }
 
+function RaceFavoritesBox({
+  favorites,
+  loading,
+  error,
+  displayStartNumberByRiderId,
+  onOpenRiderProfile,
+}: {
+  favorites: RaceFavoriteRow[]
+  loading: boolean
+  error: string | null
+  displayStartNumberByRiderId: Map<string, number>
+  onOpenRiderProfile: (riderId: string) => void
+}) {
+  if (loading) {
+    return (
+      <section className="mb-4 rounded-2xl border border-sky-100 bg-sky-50/70 p-4 shadow-sm">
+        <div className="text-sm font-semibold text-sky-950">
+          Calculating race favorites...
+        </div>
+        <div className="mt-1 text-xs text-sky-700">
+          Based on rider skills, selected race role and this season results.
+        </div>
+      </section>
+    )
+  }
+
+  if (error) {
+    return (
+      <section className="mb-4 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800 shadow-sm">
+        Top 5 favorites are not available yet: {error}
+      </section>
+    )
+  }
+
+  if (favorites.length === 0) {
+    return null
+  }
+
+  return (
+    <section className="mb-4 overflow-hidden rounded-2xl border border-sky-100 bg-gradient-to-r from-sky-50 via-white to-white shadow-sm">
+      <div className="border-b border-sky-100 px-4 py-3">
+        <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <div className="text-sm font-semibold text-sky-950">
+              Top 5 race favorites
+            </div>
+            <div className="text-xs text-sky-700">
+              Calculated from rider skills, this season results, race profile and assigned role.
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <div className="grid gap-2 p-3 lg:grid-cols-5">
+        {favorites.map((favorite) => {
+          const rank = asNumber(favorite.favorite_rank)
+          const startNumber =
+            (favorite.rider_id
+              ? displayStartNumberByRiderId.get(favorite.rider_id) ?? null
+              : null) ?? asNumber(favorite.start_number)
+          const riderName = favorite.rider_name?.trim() || 'Unknown rider'
+          const teamName = favorite.team_name?.trim() || 'Team'
+          const roleLabel = formatRiderRole(favorite.role_snapshot)
+
+          return (
+            <button
+              key={`${favorite.rider_id ?? riderName}-${rank ?? 0}`}
+              type="button"
+              onClick={() => {
+                if (favorite.rider_id) onOpenRiderProfile(favorite.rider_id)
+              }}
+              className="group rounded-xl border border-slate-200 bg-white p-3 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-sky-200 hover:shadow"
+            >
+              <div className="mb-2 flex items-center justify-between gap-2">
+                <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-sky-100 text-xs font-bold text-sky-800">
+                  {rank ? rank : '—'}
+                </span>
+
+                <span className="rounded-full bg-slate-100 px-2 py-1 text-[10px] font-semibold text-slate-600">
+                  {startNumber ? `#${startNumber}` : 'No #'}
+                </span>
+              </div>
+
+              <div className="truncate text-sm font-semibold text-slate-950 transition group-hover:text-sky-800">
+                {riderName}
+              </div>
+
+              <div className="mt-1 flex min-w-0 items-center gap-1.5 text-xs text-slate-500">
+                <SmallCountryFlag code={favorite.country_code} />
+                <span className="truncate">{teamName}</span>
+              </div>
+
+              <div className="mt-2 flex flex-wrap items-center gap-1.5 text-[10px] font-semibold">
+                <span className="rounded-full bg-slate-100 px-2 py-1 text-slate-600">
+                  {roleLabel}
+                </span>
+              </div>
+            </button>
+          )
+        })}
+      </div>
+    </section>
+  )
+}
+
 function RaceParticipantsGrid({
   teams,
   loading,
   error,
+  favorites,
+  favoritesLoading,
+  favoritesError,
   onOpenTeamProfile,
   onOpenRiderProfile,
 }: {
   teams: RaceParticipantTeam[]
   loading: boolean
   error: string | null
+  favorites: RaceFavoriteRow[]
+  favoritesLoading: boolean
+  favoritesError: string | null
   onOpenTeamProfile: (teamId: string) => void
   onOpenRiderProfile: (riderId: string) => void
 }) {
@@ -11820,19 +12066,38 @@ function RaceParticipantsGrid({
     )
   }
 
-  const assignedRiderTotal = teams.reduce(
+  const displayTeams = buildParticipantTeamsForRaceDisplay(teams)
+  const displayStartNumberByRiderId = new Map<string, number>()
+
+  for (const team of displayTeams) {
+    for (const rider of team.riders) {
+      if (rider.rider_id && rider.display_start_number) {
+        displayStartNumberByRiderId.set(rider.rider_id, rider.display_start_number)
+      }
+    }
+  }
+
+  const assignedRiderTotal = displayTeams.reduce(
     (total, team) => total + team.riders.length,
     0
   )
 
   return (
     <div>
+      <RaceFavoritesBox
+        favorites={favorites}
+        loading={favoritesLoading}
+        error={favoritesError}
+        displayStartNumberByRiderId={displayStartNumberByRiderId}
+        onOpenRiderProfile={onOpenRiderProfile}
+      />
+
       <div className="mb-4 text-sm font-semibold text-slate-700">
-        {teams.length} teams · {assignedRiderTotal} assigned riders
+        {displayTeams.length} teams · {assignedRiderTotal} assigned riders
       </div>
 
       <div className="grid gap-5 xl:grid-cols-2">
-        {teams.map((team) => {
+        {displayTeams.map((team) => {
           const teamName = getParticipantTeamName(team)
           const countryCode = team.country_code ?? team.country_code_snapshot
           const competitionLabel = getParticipantCompetitionLabel(team)
@@ -11899,9 +12164,9 @@ function RaceParticipantsGrid({
                         >
                           <div className="min-w-0">
                             <div className="truncate font-medium text-slate-900 transition group-hover:text-slate-950">
-                              {rider.start_number ? (
+                              {rider.display_start_number ?? rider.start_number ? (
                                 <span className="mr-2 text-xs font-semibold text-slate-500">
-                                  #{rider.start_number}
+                                  #{rider.display_start_number ?? rider.start_number}
                                 </span>
                               ) : null}
                               {getRaceParticipantRiderDisplayName(rider)}
@@ -11942,6 +12207,7 @@ function RaceParticipantsGrid({
     </div>
   )
 }
+
 
 
 function formatPendingApplicationNumber(value?: number | null): string {
@@ -12203,6 +12469,7 @@ function RaceResultsHub({
   restoreRaceInformationTab?: RaceInfoTab
 }) {
   const [activeTab, setActiveTab] = useState<RaceInfoTab>(restoreRaceInformationTab ?? 'participants')
+  const raceInformationSectionRef = useRef<HTMLElement | null>(null)
   const [classificationView, setClassificationView] =
     useState<ClassificationView>('general')
   const [stageId, setStageId] = useState<string>(stages[0]?.id ?? '')
@@ -12229,6 +12496,9 @@ function RaceResultsHub({
   const [inlineApplicationQuote, setInlineApplicationQuote] = useState<RaceApplicationQuote | null>(null)
   const [inlineApplicationQuoteLoading, setInlineApplicationQuoteLoading] = useState(false)
   const [inlineApplicationQuoteError, setInlineApplicationQuoteError] = useState<string | null>(null)
+  const [raceFavorites, setRaceFavorites] = useState<RaceFavoriteRow[]>([])
+  const [raceFavoritesLoading, setRaceFavoritesLoading] = useState(false)
+  const [raceFavoritesError, setRaceFavoritesError] = useState<string | null>(null)
 
   const publishedStageIds =
     usePublishedRaceStageIds(stages)
@@ -12310,6 +12580,17 @@ function RaceResultsHub({
     })
   }
 
+  function handleRaceInformationTabChange(nextTab: RaceInfoTab) {
+    setActiveTab(nextTab)
+
+    window.requestAnimationFrame(() => {
+      raceInformationSectionRef.current?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start',
+      })
+    })
+  }
+
   useEffect(() => {
     if (publishedStages.length === 0) {
       setStageId('')
@@ -12358,6 +12639,46 @@ function RaceResultsHub({
     !participantsError &&
     participantTeams.length === 0 &&
     !isRaceStartlistLocked(race.status)
+
+  useEffect(() => {
+    if (!race.id || !isUuid(race.id)) {
+      setRaceFavorites([])
+      setRaceFavoritesError(null)
+      setRaceFavoritesLoading(false)
+      return
+    }
+
+    let cancelled = false
+
+    async function loadRaceFavorites() {
+      setRaceFavoritesLoading(true)
+      setRaceFavoritesError(null)
+
+      const { data, error } = await supabase.rpc('get_race_favorites_v1', {
+        p_race_id: race.id,
+        p_limit: 5,
+      })
+
+      if (cancelled) return
+
+      if (error) {
+        console.warn('Could not load race favorites:', error.message)
+        setRaceFavorites([])
+        setRaceFavoritesError(error.message)
+      } else {
+        setRaceFavorites(((data ?? []) as RaceFavoriteRow[]).slice(0, 5))
+        setRaceFavoritesError(null)
+      }
+
+      setRaceFavoritesLoading(false)
+    }
+
+    void loadRaceFavorites()
+
+    return () => {
+      cancelled = true
+    }
+  }, [race.id])
 
   useEffect(() => {
     if (
@@ -12745,6 +13066,7 @@ function RaceResultsHub({
 
   return (
     <section
+      ref={raceInformationSectionRef}
       className="w-full rounded-3xl border border-slate-200 bg-white shadow-sm"
       aria-label={`Race information for ${race.name}`}
     >
@@ -12773,7 +13095,7 @@ function RaceResultsHub({
           <div className="flex rounded-2xl bg-slate-100 p-1">
             <button
               type="button"
-              onClick={() => setActiveTab('participants')}
+              onClick={() => handleRaceInformationTabChange('participants')}
               className={[
                 'rounded-xl px-4 py-2 text-sm font-semibold',
                 activeTab === 'participants'
@@ -12786,7 +13108,7 @@ function RaceResultsHub({
 
             <button
               type="button"
-              onClick={() => setActiveTab('results')}
+              onClick={() => handleRaceInformationTabChange('results')}
               className={[
                 'rounded-xl px-4 py-2 text-sm font-semibold',
                 activeTab === 'results'
@@ -12817,6 +13139,9 @@ function RaceResultsHub({
               teams={participantTeams}
               loading={participantsLoading}
               error={participantsError}
+              favorites={raceFavorites}
+              favoritesLoading={raceFavoritesLoading}
+              favoritesError={raceFavoritesError}
               onOpenTeamProfile={openTeamProfileFromRaceInfo}
               onOpenRiderProfile={openRiderProfileFromRaceInfo}
             />
@@ -15464,6 +15789,7 @@ export default function RaceDetailPage({
       cancelled = true
     }
   }, [raceId])
+
 
   useEffect(() => {
     if (!raceId || !isUuid(raceId)) {

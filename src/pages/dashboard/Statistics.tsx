@@ -191,6 +191,80 @@ type RiderSeasonOverviewRow = {
 const PAGE_SIZE = 20
 const RIDER_TOP_LIMIT = 50
 
+const STATISTICS_STATE_STORAGE_KEY = 'ppm:statistics-page-state:v1'
+const STATISTICS_RESTORE_SCROLL_KEY = 'ppm:statistics-page-restore-scroll-y'
+const STATISTICS_RESTORE_PENDING_KEY = 'ppm:statistics-page-restore-pending'
+
+type StoredStatisticsPageState = {
+  mainTab?: MainTab
+  teamSubTab?: TeamSubTab
+  riderSubTab?: RiderSubTab
+  search?: string
+  seasonFilter?: string
+  teamTypeFilter?: TeamTypeFilter
+  statusFilter?: StatusFilter
+  tierFilter?: string
+  divisionFilter?: string
+  countryFilter?: string
+  riderMetric?: RiderMetric
+  riderTableMetric?: RiderMetric
+  teamCurrentPage?: number
+  teamHistoryPage?: number
+  ridersPage?: number
+}
+
+function isMainTab(value: unknown): value is MainTab {
+  return value === 'teams' || value === 'riders'
+}
+
+function isTeamSubTab(value: unknown): value is TeamSubTab {
+  return value === 'current' || value === 'history'
+}
+
+function isRiderSubTab(value: unknown): value is RiderSubTab {
+  return value === 'rankings' || value === 'breakdown'
+}
+
+function isTeamTypeFilter(value: unknown): value is TeamTypeFilter {
+  return value === 'all' || value === 'user' || value === 'ai'
+}
+
+function isStatusFilter(value: unknown): value is StatusFilter {
+  return value === 'all' || value === 'active' || value === 'inactive'
+}
+
+function isRiderMetric(value: unknown): value is RiderMetric {
+  return (
+    value === 'season_points_overall' ||
+    value === 'season_points_sprint' ||
+    value === 'season_points_climbing'
+  )
+}
+
+function readStoredStatisticsPageState(): StoredStatisticsPageState | null {
+  if (typeof window === 'undefined') return null
+
+  try {
+    const raw = window.sessionStorage.getItem(STATISTICS_STATE_STORAGE_KEY)
+    if (!raw) return null
+
+    const parsed = JSON.parse(raw) as StoredStatisticsPageState | null
+    if (!parsed || typeof parsed !== 'object') return null
+
+    return parsed
+  } catch {
+    return null
+  }
+}
+
+function normalizeStoredPage(value: unknown, fallback: number) {
+  if (typeof value === 'number' && Number.isFinite(value) && value >= 1) {
+    return Math.floor(value)
+  }
+
+  return fallback
+}
+
 const moneyFormatter = new Intl.NumberFormat('en-US', {
   style: 'currency',
   currency: 'USD',
@@ -202,6 +276,11 @@ const COMPETITION_LABELS: Record<string, string> = {
   proteam: 'ProTeam',
   continental: 'Continental',
   amateur: 'Amateur',
+  tt: 'TT',
+  TT: 'TT',
+  time_trial: 'TT',
+  TIME_TRIAL: 'TT',
+  'time-trial': 'TT',
   WORLDTEAM: 'WorldTeam',
   PROTEAM: 'ProTeam',
   CONTINENTAL: 'Continental',
@@ -439,9 +518,20 @@ function getStatisticsTabForTutorialStepKey(
 
 export default function StatisticsPage() {
   const navigate = useNavigate()
-  const [mainTab, setMainTab] = useState<MainTab>('teams')
-  const [teamSubTab, setTeamSubTab] = useState<TeamSubTab>('current')
-  const [riderSubTab, setRiderSubTab] = useState<RiderSubTab>('rankings')
+  const storedStatisticsState = useMemo(() => readStoredStatisticsPageState(), [])
+  const storedMainTab = storedStatisticsState?.mainTab
+  const storedTeamSubTab = storedStatisticsState?.teamSubTab
+  const storedRiderSubTab = storedStatisticsState?.riderSubTab
+
+  const [mainTab, setMainTab] = useState<MainTab>(
+    isMainTab(storedMainTab) ? storedMainTab : 'teams'
+  )
+  const [teamSubTab, setTeamSubTab] = useState<TeamSubTab>(
+    isTeamSubTab(storedTeamSubTab) ? storedTeamSubTab : 'current'
+  )
+  const [riderSubTab, setRiderSubTab] = useState<RiderSubTab>(
+    isRiderSubTab(storedRiderSubTab) ? storedRiderSubTab : 'rankings'
+  )
 
   const [tutorialLoading, setTutorialLoading] = useState(true)
   const [tutorialMode, setTutorialMode] = useState<'closed' | 'invite' | 'steps'>('closed')
@@ -459,19 +549,136 @@ export default function StatisticsPage() {
 
   const [myClubIds, setMyClubIds] = useState<string[]>([])
 
-  const [search, setSearch] = useState('')
-  const [seasonFilter, setSeasonFilter] = useState<string>('all')
-  const [teamTypeFilter, setTeamTypeFilter] = useState<TeamTypeFilter>('all')
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
-  const [tierFilter, setTierFilter] = useState('all')
-  const [divisionFilter, setDivisionFilter] = useState('all')
-  const [countryFilter, setCountryFilter] = useState('all')
-  const [riderMetric, setRiderMetric] = useState<RiderMetric>('season_points_overall')
-  const [riderTableMetric, setRiderTableMetric] = useState<RiderMetric>('season_points_overall')
+  const [search, setSearch] = useState(storedStatisticsState?.search ?? '')
+  const [seasonFilter, setSeasonFilter] = useState<string>(
+    storedStatisticsState?.seasonFilter ?? 'all'
+  )
+  const storedTeamTypeFilter = storedStatisticsState?.teamTypeFilter
+  const storedStatusFilter = storedStatisticsState?.statusFilter
+  const storedRiderMetric = storedStatisticsState?.riderMetric
+  const storedRiderTableMetric = storedStatisticsState?.riderTableMetric
 
-  const [teamCurrentPage, setTeamCurrentPage] = useState(1)
-  const [teamHistoryPage, setTeamHistoryPage] = useState(1)
-  const [ridersPage, setRidersPage] = useState(1)
+  const [teamTypeFilter, setTeamTypeFilter] = useState<TeamTypeFilter>(
+    isTeamTypeFilter(storedTeamTypeFilter) ? storedTeamTypeFilter : 'all'
+  )
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>(
+    isStatusFilter(storedStatusFilter) ? storedStatusFilter : 'all'
+  )
+  const [tierFilter, setTierFilter] = useState(storedStatisticsState?.tierFilter ?? 'all')
+  const [divisionFilter, setDivisionFilter] = useState(
+    storedStatisticsState?.divisionFilter ?? 'all'
+  )
+  const [countryFilter, setCountryFilter] = useState(
+    storedStatisticsState?.countryFilter ?? 'all'
+  )
+  const [riderMetric, setRiderMetric] = useState<RiderMetric>(
+    isRiderMetric(storedRiderMetric) ? storedRiderMetric : 'season_points_overall'
+  )
+  const [riderTableMetric, setRiderTableMetric] = useState<RiderMetric>(
+    isRiderMetric(storedRiderTableMetric)
+      ? storedRiderTableMetric
+      : 'season_points_overall'
+  )
+
+  const [teamCurrentPage, setTeamCurrentPage] = useState(
+    normalizeStoredPage(storedStatisticsState?.teamCurrentPage, 1)
+  )
+  const [teamHistoryPage, setTeamHistoryPage] = useState(
+    normalizeStoredPage(storedStatisticsState?.teamHistoryPage, 1)
+  )
+  const [ridersPage, setRidersPage] = useState(
+    normalizeStoredPage(storedStatisticsState?.ridersPage, 1)
+  )
+
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+
+    const state: StoredStatisticsPageState = {
+      mainTab,
+      teamSubTab,
+      riderSubTab,
+      search,
+      seasonFilter,
+      teamTypeFilter,
+      statusFilter,
+      tierFilter,
+      divisionFilter,
+      countryFilter,
+      riderMetric,
+      riderTableMetric,
+      teamCurrentPage,
+      teamHistoryPage,
+      ridersPage,
+    }
+
+    window.sessionStorage.setItem(STATISTICS_STATE_STORAGE_KEY, JSON.stringify(state))
+  }, [
+    mainTab,
+    teamSubTab,
+    riderSubTab,
+    search,
+    seasonFilter,
+    teamTypeFilter,
+    statusFilter,
+    tierFilter,
+    divisionFilter,
+    countryFilter,
+    riderMetric,
+    riderTableMetric,
+    teamCurrentPage,
+    teamHistoryPage,
+    ridersPage,
+  ])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    if (loading) return
+
+    const shouldRestore = window.sessionStorage.getItem(STATISTICS_RESTORE_PENDING_KEY)
+    if (shouldRestore !== '1') return
+
+    const rawScrollY = window.sessionStorage.getItem(STATISTICS_RESTORE_SCROLL_KEY)
+    const scrollY = rawScrollY ? Number(rawScrollY) : 0
+    if (!Number.isFinite(scrollY)) return
+
+    window.sessionStorage.removeItem(STATISTICS_RESTORE_PENDING_KEY)
+
+    window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(() => {
+        window.scrollTo({
+          top: Math.max(0, scrollY),
+          behavior: 'auto',
+        })
+      })
+    })
+  }, [loading, mainTab, teamSubTab, riderSubTab])
+
+  function saveStatisticsReturnState() {
+    if (typeof window === 'undefined') return
+
+    const state: StoredStatisticsPageState = {
+      mainTab,
+      teamSubTab,
+      riderSubTab,
+      search,
+      seasonFilter,
+      teamTypeFilter,
+      statusFilter,
+      tierFilter,
+      divisionFilter,
+      countryFilter,
+      riderMetric,
+      riderTableMetric,
+      teamCurrentPage,
+      teamHistoryPage,
+      ridersPage,
+    }
+
+    window.sessionStorage.setItem(STATISTICS_STATE_STORAGE_KEY, JSON.stringify(state))
+    window.sessionStorage.setItem(STATISTICS_RESTORE_SCROLL_KEY, String(window.scrollY ?? 0))
+    window.sessionStorage.setItem(STATISTICS_RESTORE_PENDING_KEY, '1')
+  }
 
   useEffect(() => {
     let alive = true
@@ -604,7 +811,14 @@ export default function StatisticsPage() {
   }
 
   function openTeamProfile(teamId: string) {
-    navigate(`/dashboard/teams/${teamId}`)
+    saveStatisticsReturnState()
+
+    navigate(`/dashboard/teams/${teamId}`, {
+      state: {
+        returnTo: '/dashboard/statistics',
+        preserveStatisticsState: true,
+      },
+    })
   }
 
   function openRiderProfile(rider: Pick<RiderStatsRow, 'id' | 'club_id'> | null | undefined) {
@@ -617,10 +831,18 @@ export default function StatisticsPage() {
 
     const isMyRider = !!rider?.club_id && myClubIds.includes(rider.club_id)
 
+    saveStatisticsReturnState()
+
     navigate(
       isMyRider
         ? `/dashboard/my-riders/${riderId}`
-        : `/dashboard/external-riders/${riderId}`
+        : `/dashboard/external-riders/${riderId}`,
+      {
+        state: {
+          returnTo: '/dashboard/statistics',
+          preserveStatisticsState: true,
+        },
+      }
     )
   }
 

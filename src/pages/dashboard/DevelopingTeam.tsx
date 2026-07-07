@@ -396,8 +396,10 @@ async function fetchSquadSeasonDashboardData(
 
 function TopNav({
   isDevelopingTeamUnlocked,
+  isDevelopingTeamStatusResolved,
 }: {
   isDevelopingTeamUnlocked: boolean
+  isDevelopingTeamStatusResolved: boolean
 }) {
   const location = useLocation()
   const isActive = (path: string) => location.pathname === path
@@ -434,7 +436,7 @@ function TopNav({
           >
             Developing Team
           </a>
-        ) : (
+        ) : isDevelopingTeamStatusResolved ? (
           <span
             className="inline-flex cursor-not-allowed items-center gap-2 rounded-md px-4 py-2 text-sm font-medium text-gray-400"
             title="Unlock Developing Team in Preferences first."
@@ -442,6 +444,10 @@ function TopNav({
           >
             <span>Developing Team</span>
             <span aria-hidden="true">🔒</span>
+          </span>
+        ) : (
+          <span className="inline-flex items-center rounded-md px-4 py-2 text-sm font-medium text-gray-500">
+            Developing Team
           </span>
         )}
 
@@ -822,7 +828,10 @@ export default function DevelopingTeamPage() {
     setSelectedRiderId(null)
   }
 
-  const hasDevelopingTeam = developingTeamStatus?.is_purchased ?? false
+  const developingTeamStatusResolved =
+    developingTeamStatus !== null || statusError !== null || (!loading && !error)
+
+  const hasDevelopingTeam = developingTeamStatus?.is_purchased === true
   const movementWindowOpen = developingTeamStatus?.movement_window_open ?? false
 
   const movementWindowSummary = developingTeamStatus
@@ -838,7 +847,10 @@ export default function DevelopingTeamPage() {
   if (selectedRiderId) {
     return (
       <div className="w-full">
-        <TopNav isDevelopingTeamUnlocked={hasDevelopingTeam} />
+        <TopNav
+          isDevelopingTeamUnlocked={hasDevelopingTeam}
+          isDevelopingTeamStatusResolved={developingTeamStatusResolved}
+        />
 
         <RiderProfilePage
           riderId={selectedRiderId}
@@ -856,7 +868,10 @@ export default function DevelopingTeamPage() {
 
   return (
     <div className="w-full">
-      <TopNav isDevelopingTeamUnlocked={hasDevelopingTeam} />
+      <TopNav
+          isDevelopingTeamUnlocked={hasDevelopingTeam}
+          isDevelopingTeamStatusResolved={developingTeamStatusResolved}
+        />
 
       {loading && (
         <div className="rounded-lg bg-white p-4 text-sm text-gray-600 shadow">

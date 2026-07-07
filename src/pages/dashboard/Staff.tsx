@@ -245,8 +245,8 @@ const ROLE_TABS: RoleTabMeta[] = [
   {
     role: 'mechanic',
     label: 'Mechanic',
-    subtitle: 'Bike setup and reliability. Gameplay bonuses deferred until Equipment page.',
-    impactAreas: ['Equipment setup', 'Mechanical reliability', 'Race-day support'],
+    subtitle: 'Bike setup, maintenance efficiency and race-day mechanical reliability.',
+    impactAreas: ['Equipment setup', 'Maintenance efficiency', 'Mechanical reliability'],
   },
   {
     role: 'sport_director',
@@ -371,7 +371,13 @@ function getCourseGainMap(role: StaffRole | string | null | undefined): Array<[s
   ]
 }
 
-function TopNav({ hasDevelopingTeam }: { hasDevelopingTeam: boolean }) {
+function TopNav({
+  hasDevelopingTeam,
+  developingTeamStatusResolved,
+}: {
+  hasDevelopingTeam: boolean
+  developingTeamStatusResolved: boolean
+}) {
   const location = useLocation()
   const isActive = (path: string) => location.pathname === path
 
@@ -407,7 +413,7 @@ function TopNav({ hasDevelopingTeam }: { hasDevelopingTeam: boolean }) {
           >
             Developing Team
           </a>
-        ) : (
+        ) : developingTeamStatusResolved ? (
           <span
             className="inline-flex cursor-not-allowed items-center gap-2 rounded-md px-4 py-2 text-sm font-medium text-gray-400"
             title="Unlock Developing Team in Preferences first."
@@ -415,6 +421,10 @@ function TopNav({ hasDevelopingTeam }: { hasDevelopingTeam: boolean }) {
           >
             <span>Developing Team</span>
             <span aria-hidden="true">🔒</span>
+          </span>
+        ) : (
+          <span className="inline-flex items-center rounded-md px-4 py-2 text-sm font-medium text-gray-500">
+            Developing Team
           </span>
         )}
 
@@ -657,7 +667,7 @@ function getRoleInfrastructureWarning(
   }
 
   if (role === 'mechanic' && infrastructure.mechanics_workshop_level <= 0) {
-    return 'Mechanics Workshop Lv 0 caps part of mechanic bonuses. Gameplay bonuses are still deferred until Equipment page.'
+    return 'Mechanics Workshop Lv 0 caps maintenance speed and cost discounts. Basic setup, condition-loss and mechanical-risk support are live.'
   }
 
   if (role === 'scout_analyst' && infrastructure.scouting_level <= 0) {
@@ -1093,10 +1103,137 @@ function buildMedicalStaffEffects(
   ]
 }
 
+type MechanicLiveEffects = {
+  mechanicScore: number
+  setupQualityBonus: number
+  conditionLossReductionPct: number
+  mechanicalRiskReductionPct: number
+  maintenanceSpeedBonusPct: number
+  maintenanceCostDiscountPct: number
+  workshopLevel: number
+}
+
+function roundOne(value: number) {
+  return Math.round(value * 10) / 10
+}
+
+function getWorkshopMaintenanceSpeedBonusPct(workshopLevel: number) {
+  if (workshopLevel >= 4) return 30
+  if (workshopLevel >= 3) return 20
+  if (workshopLevel >= 2) return 10
+  return 0
+}
+
+function getWorkshopMaintenanceCostDiscountPct(workshopLevel: number) {
+  if (workshopLevel >= 4) return 30
+  if (workshopLevel >= 3) return 20
+  return 0
+}
+
+function calculateMechanicLiveEffects({
+  setup,
+  reliability,
+  innovation,
+  experience,
+  discipline,
+  loyalty,
+  infrastructure,
+}: {
+  setup: number
+  reliability: number
+  innovation: number
+  experience: number
+  discipline: number
+  loyalty: number
+  infrastructure: ClubInfrastructureRow | null
+}): MechanicLiveEffects {
+  const workshopLevel = clampNumber(
+    Number(infrastructure?.mechanics_workshop_level ?? 0),
+    0,
+    5
+  )
+
+  const mechanicScore = roundOne(
+    setup * 0.32 +
+      reliability * 0.25 +
+      experience * 0.18 +
+      innovation * 0.1 +
+      discipline * 0.1 +
+      loyalty * 0.05
+  )
+
+  const reliabilityScore = roundOne(
+    reliability * 0.45 +
+      experience * 0.25 +
+      setup * 0.2 +
+      discipline * 0.1
+  )
+
+  const setupQualityBonus = roundOne(clampNumber(mechanicScore / 12, 0, 8))
+  const conditionLossReductionPct = roundOne(clampNumber(reliabilityScore / 70, 0, 4))
+  const mechanicalRiskReductionPct = roundOne(clampNumber(reliabilityScore / 70, 0, 4))
+
+  const staffMaintenanceSpeedBonusPct =
+    workshopLevel >= 1 ? clampNumber(Math.floor(mechanicScore / 25), 0, 6) : 0
+
+  const staffMaintenanceCostDiscountPct =
+    workshopLevel >= 2 ? clampNumber(Math.floor(mechanicScore / 35), 0, 5) : 0
+
+  return {
+    mechanicScore,
+    setupQualityBonus,
+    conditionLossReductionPct,
+    mechanicalRiskReductionPct,
+    maintenanceSpeedBonusPct:
+      getWorkshopMaintenanceSpeedBonusPct(workshopLevel) + staffMaintenanceSpeedBonusPct,
+    maintenanceCostDiscountPct:
+      getWorkshopMaintenanceCostDiscountPct(workshopLevel) + staffMaintenanceCostDiscountPct,
+    workshopLevel,
+  }
+}
+
+function buildMechanicLiveEffects(
+  row: ClubStaffRow,
+  infrastructure: ClubInfrastructureRow | null,
+  isPaused: boolean
+): string[] {
+  if (isPaused) {
+    return [
+      'Mechanic equipment effects paused while this staff member is unavailable.',
+      '+0 setup quality bonus',
+      '-0% equipment condition loss',
+      '-0% mechanical risk',
+    ]
+  }
+
+  const effects = calculateMechanicLiveEffects({
+    setup: row.expertise,
+    reliability: row.efficiency,
+    innovation: row.potential,
+    experience: row.experience,
+    discipline: row.leadership,
+    loyalty: row.loyalty,
+    infrastructure,
+  })
+
+  return [
+    `+${effects.setupQualityBonus} setup quality bonus`,
+    `-${effects.conditionLossReductionPct}% equipment condition loss`,
+    `-${effects.mechanicalRiskReductionPct}% mechanical risk`,
+    effects.maintenanceSpeedBonusPct > 0
+      ? `+${effects.maintenanceSpeedBonusPct}% equipment maintenance speed`
+      : 'Maintenance speed bonus requires Mechanics Workshop Lv 1+',
+    effects.maintenanceCostDiscountPct > 0
+      ? `-${effects.maintenanceCostDiscountPct}% equipment maintenance cost`
+      : 'Maintenance cost discount requires Mechanics Workshop Lv 2+',
+  ]
+}
+
 function buildEffects(
   role: StaffRole,
   row: ClubStaffRow,
-  isPaused = false
+  isPaused = false,
+  infrastructure: ClubInfrastructureRow | null = null
 ): string[] {
   if (role === 'team_doctor' || role === 'physio' || role === 'nutritionist') {
     return buildMedicalStaffEffects(role, row, isPaused)
@@ -1131,11 +1268,7 @@ function buildEffects(
   }
 
   if (role === 'mechanic') {
-    return [
-      'Gameplay contribution deferred until Equipment page is live.',
-      'Future: setup quality and mechanical reliability.',
-      'Future: condition-specific bike preparation.',
-    ]
+    return buildMechanicLiveEffects(row, infrastructure, isPaused)
   }
 
   if (role === 'sport_director') {
@@ -1587,7 +1720,7 @@ function buildStaffQualityPanel(
       ],
       warning:
         facility && facility.level <= 0
-          ? `${facility.label} Lv ${facility.level} can cap part of mechanic bonuses.`
+          ? `${facility.label} Lv ${facility.level} can cap maintenance speed and cost discounts.`
           : null,
     }
   }
@@ -1756,16 +1889,17 @@ function buildStaffQualityExplanation(
     return {
       title: 'How Technical Quality Works',
       body:
-        'Mechanic quality is based on setup, reliability, innovation and experience. This profile prepares the mechanic for equipment reliability, race setup quality and future equipment/race-engine effects.',
+        'Mechanic quality is live. Setup, reliability, innovation and experience now support equipment setup quality, maintenance, equipment condition loss and race-day mechanical reliability.',
       boxes: [
         { label: 'Technical Ability', value: 'Overall mechanic profile' },
         { label: 'Bike Setup Quality', value: 'Race setup support' },
         { label: 'Reliability Support', value: 'Mechanical issue prevention' },
+        { label: 'Maintenance Support', value: 'Repair speed and cost with Workshop levels' },
       ],
       thresholdLabel: 'Quality thresholds',
       thresholdValue: 'Basic: below 55 · Solid: 55–69 · Strong: 70–84 · Elite: 85+',
       warning: facility
-        ? `${facility.label} can cap part of mechanic bonuses. Current level: Lv ${facility.level}.`
+        ? `${facility.label} controls how much maintenance speed and cost discount can be used. Current level: Lv ${facility.level}.`
         : null,
     }
   }
@@ -2121,7 +2255,7 @@ function mapStaffMember(
     birthDate: row.birth_date,
     ageYears: getStaffAge(row.birth_date, currentGameDate),
     stats: mapStats(row.role_type, row),
-    effects: buildEffects(row.role_type, row, isPausedForMainRole),
+    effects: buildEffects(row.role_type, row, isPausedForMainRole, infrastructure),
     activeCourse,
     facilityWarning: getRoleInfrastructureWarning(row.role_type, infrastructure),
     currentAssignmentLabel,
@@ -2187,7 +2321,11 @@ function getImpactRoleLimit(
   )
 }
 
-function buildAggregateEffectSummary(role: StaffRole, members: StaffListMember[]) {
+function buildAggregateEffectSummary(
+  role: StaffRole,
+  members: StaffListMember[],
+  infrastructure: ClubInfrastructureRow | null = null
+) {
   const activeMembers = members.filter((member) => !member.activeCourse)
 
   if (!members.length) {
@@ -2303,10 +2441,47 @@ function buildAggregateEffectSummary(role: StaffRole, members: StaffListMember[]
   }
 
   if (role === 'mechanic') {
+    const mechanicCount = activeMembers.length
+    const avgSetup =
+      activeMembers.reduce((sum, member) => sum + getStatValue(member, 'Setup'), 0) /
+      mechanicCount
+    const avgReliability =
+      activeMembers.reduce((sum, member) => sum + getStatValue(member, 'Reliability'), 0) /
+      mechanicCount
+    const avgInnovation =
+      activeMembers.reduce((sum, member) => sum + getStatValue(member, 'Innovation'), 0) /
+      mechanicCount
+    const avgExperience =
+      activeMembers.reduce((sum, member) => sum + getStatValue(member, 'Experience'), 0) /
+      mechanicCount
+    const avgDiscipline =
+      activeMembers.reduce((sum, member) => sum + getStatValue(member, 'Discipline'), 0) /
+      mechanicCount
+    const avgLoyalty =
+      activeMembers.reduce((sum, member) => sum + getStatValue(member, 'Loyalty'), 0) /
+      mechanicCount
+
+    const effects = calculateMechanicLiveEffects({
+      setup: avgSetup,
+      reliability: avgReliability,
+      innovation: avgInnovation,
+      experience: avgExperience,
+      discipline: avgDiscipline,
+      loyalty: avgLoyalty,
+      infrastructure,
+    })
+
     return [
-      'Mechanic gameplay bonuses are deferred until Equipment page is live.',
-      'Future impact: setup quality, reliability and condition-specific bike preparation.',
-      'Staff can be hired now, but live team bonuses should stay inactive for this role.',
+      `${mechanicCount} active mechanic${mechanicCount === 1 ? '' : 's'} contributing live technical support.`,
+      `+${effects.setupQualityBonus} combined setup quality bonus`,
+      `-${effects.conditionLossReductionPct}% combined equipment condition loss`,
+      `-${effects.mechanicalRiskReductionPct}% combined mechanical risk`,
+      effects.maintenanceSpeedBonusPct > 0
+        ? `+${effects.maintenanceSpeedBonusPct}% combined maintenance speed`
+        : 'Maintenance speed bonus requires Mechanics Workshop Lv 1+',
+      effects.maintenanceCostDiscountPct > 0
+        ? `-${effects.maintenanceCostDiscountPct}% combined maintenance cost`
+        : 'Maintenance cost discount requires Mechanics Workshop Lv 2+',
     ]
   }
 
@@ -2484,11 +2659,6 @@ function StaffListRow({
             )
           })()}
 
-          {staff.facilityWarning ? (
-            <div className="mt-2 rounded-lg bg-yellow-50 px-3 py-2 text-xs text-yellow-700">
-              {staff.facilityWarning}
-            </div>
-          ) : null}
         </div>
 
         <div className="flex w-full flex-col gap-3 xl:w-64 xl:items-end">
@@ -2544,7 +2714,7 @@ function RoleContributionPanel({
     ? buildMedicalCombinedEffects(medicalStaffEffect ?? null)
     : isCoachingGroup && backendHeadCoachImpact
       ? backendHeadCoachImpact
-      : buildAggregateEffectSummary(role, members)
+      : buildAggregateEffectSummary(role, members, infrastructure)
 
   const weeklyWages = members.reduce((sum, member) => sum + member.salaryWeekly, 0)
   const activeCourses = members.filter((member) => member.activeCourse !== null).length
@@ -2561,12 +2731,6 @@ function RoleContributionPanel({
           Assigned {members.length}/{roleLimit}
         </div>
       </div>
-
-      {facilityWarning ? (
-        <div className="mt-4 rounded-xl border border-yellow-200 bg-yellow-50 px-4 py-3 text-sm text-yellow-800">
-          {facilityWarning}
-        </div>
-      ) : null}
 
       <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
         <SummaryCard
@@ -3385,6 +3549,7 @@ export default function StaffPage() {
   const [clubName, setClubName] = useState<string | null>(null)
   const [clubId, setClubId] = useState<string | null>(null)
   const [hasDevelopingTeam, setHasDevelopingTeam] = useState(false)
+  const [developingTeamStatusResolved, setDevelopingTeamStatusResolved] = useState(false)
   const [currentGameDate, setCurrentGameDate] = useState<string | null>(null)
 
   const [staffRows, setStaffRows] = useState<ClubStaffRow[]>([])
@@ -3514,6 +3679,7 @@ export default function StaffPage() {
       try {
         setLoading(true)
         setError(null)
+        setDevelopingTeamStatusResolved(false)
 
         const {
           data: { user },
@@ -3544,15 +3710,18 @@ export default function StaffPage() {
         setClubId(resolvedClub.id)
 
         if (developingStatusError) {
+          console.error('get_developing_team_status failed:', developingStatusError)
           setHasDevelopingTeam(false)
+          setDevelopingTeamStatusResolved(true)
         } else {
           const normalizedDevStatus = Array.isArray(developingStatusData)
             ? developingStatusData[0]
             : developingStatusData
 
           setHasDevelopingTeam(
-            ((normalizedDevStatus ?? null) as DevelopingTeamStatusRow | null)?.is_purchased ?? false
+            ((normalizedDevStatus ?? null) as DevelopingTeamStatusRow | null)?.is_purchased === true
           )
+          setDevelopingTeamStatusResolved(true)
         }
 
         await reloadStaffPage(resolvedClub.id)
@@ -3972,7 +4141,10 @@ export default function StaffPage() {
   if (loading) {
     return (
       <div className="w-full">
-        <TopNav hasDevelopingTeam={hasDevelopingTeam} />
+        <TopNav
+          hasDevelopingTeam={hasDevelopingTeam}
+          developingTeamStatusResolved={developingTeamStatusResolved}
+        />
         <div className="rounded-lg bg-white p-6 shadow">
           <div className="text-sm text-gray-500">Loading staff...</div>
         </div>
@@ -3983,7 +4155,10 @@ export default function StaffPage() {
   if (error) {
     return (
       <div className="w-full">
-        <TopNav hasDevelopingTeam={hasDevelopingTeam} />
+        <TopNav
+          hasDevelopingTeam={hasDevelopingTeam}
+          developingTeamStatusResolved={developingTeamStatusResolved}
+        />
         <div className="rounded-lg bg-white p-6 shadow">
           <div className="text-sm text-red-600">{error}</div>
         </div>
@@ -3993,7 +4168,10 @@ export default function StaffPage() {
 
   return (
     <div className="w-full">
-      <TopNav hasDevelopingTeam={hasDevelopingTeam} />
+      <TopNav
+        hasDevelopingTeam={hasDevelopingTeam}
+        developingTeamStatusResolved={developingTeamStatusResolved}
+      />
 
       <div className="rounded-lg bg-white p-6 shadow">
         <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">

@@ -63,11 +63,32 @@ type StandingRow = {
   teamName: string
   countryCode: string
   points: number
+  completedRaceCount: number
+  raceReputationValue: number
   logoPath?: string | null
   isActive: boolean
   publicInactivityStatus: PublicInactivityStatus | null
   inactivityDaysSnapshot: number | null
   seasonEndTransitionPending: boolean
+}
+
+type TeamRankingTieBreakerRow = {
+  season_year?: number | string | null
+  team_id?: string | null
+  club_id?: string | null
+  completed_race_count?: number | string | null
+  race_count?: number | string | null
+  races_done_count?: number | string | null
+  total_races_done?: number | string | null
+  team_race_count?: number | string | null
+  race_reputation_value?: number | string | null
+  team_race_reputation_value?: number | string | null
+  race_reputation?: number | string | null
+}
+
+type TeamRankingTieBreakerUi = {
+  completedRaceCount: number
+  raceReputationValue: number
 }
 
 type TierOption = {
@@ -209,6 +230,121 @@ function normalizePointsValue(value: number | string | null | undefined): number
     return Number.isFinite(parsed) ? parsed : 0
   }
   return 0
+}
+
+function normalizeTieBreakerValue(value: unknown): number {
+  if (typeof value === 'number' && Number.isFinite(value)) return value
+  if (typeof value === 'string' && value.trim() !== '') {
+    const parsed = Number(value)
+    return Number.isFinite(parsed) ? parsed : 0
+  }
+  return 0
+}
+
+function getTeamRecordNumber(
+  team: TeamRankingRecord,
+  keys: string[],
+): number {
+  const record = team as unknown as Record<string, unknown>
+
+  for (const key of keys) {
+    const value = normalizeTieBreakerValue(record[key])
+
+    if (value !== 0) {
+      return value
+    }
+  }
+
+  return 0
+}
+
+function getCompletedRaceCountFromTeam(team: TeamRankingRecord): number {
+  return getTeamRecordNumber(team, [
+    'completedRaceCount',
+    'seasonRaceCount',
+    'racesDoneCount',
+    'totalRacesDone',
+    'teamRaceCount',
+    'completed_race_count',
+    'season_race_count',
+    'races_done_count',
+    'total_races_done',
+    'team_race_count',
+  ])
+}
+
+function getRaceReputationValueFromTeam(team: TeamRankingRecord): number {
+  return getTeamRecordNumber(team, [
+    'raceReputationValue',
+    'teamRaceReputationValue',
+    'raceReputation',
+    'race_reputation_value',
+    'team_race_reputation_value',
+    'race_reputation',
+  ])
+}
+
+function formatTieBreakerNumber(value: number): string {
+  if (!Number.isFinite(value)) return '0'
+
+  return value.toLocaleString(undefined, {
+    maximumFractionDigits: value % 1 === 0 ? 0 : 1,
+  })
+}
+
+async function loadTeamRankingTieBreakersByTeamId(): Promise<
+  Map<string, TeamRankingTieBreakerUi>
+> {
+  const { data, error } = await supabase
+    .from('team_ranking_tiebreakers_by_season_v1')
+    .select('*')
+
+  if (error) {
+    console.warn(
+      'Could not load team ranking tie-breakers. Falling back to team records:',
+      error.message,
+    )
+    return new Map()
+  }
+
+  const rows = (data ?? []) as TeamRankingTieBreakerRow[]
+  const latestSeasonYear = rows.reduce<number | null>((latest, row) => {
+    const seasonYear = normalizeTieBreakerValue(row.season_year)
+    if (seasonYear <= 0) return latest
+    return latest === null || seasonYear > latest ? seasonYear : latest
+  }, null)
+
+  const map = new Map<string, TeamRankingTieBreakerUi>()
+
+  for (const row of rows) {
+    const teamId = (row.team_id ?? row.club_id ?? '').trim()
+
+    if (!teamId) continue
+
+    if (
+      latestSeasonYear !== null &&
+      normalizeTieBreakerValue(row.season_year) !== latestSeasonYear
+    ) {
+      continue
+    }
+
+    map.set(teamId, {
+      completedRaceCount: normalizeTieBreakerValue(
+        row.completed_race_count ??
+          row.race_count ??
+          row.races_done_count ??
+          row.total_races_done ??
+          row.team_race_count,
+      ),
+      raceReputationValue: normalizeTieBreakerValue(
+        row.race_reputation_value ??
+          row.team_race_reputation_value ??
+          row.race_reputation,
+      ),
+    })
+  }
+
+  return map
 }
 
 async function loadTeamInternationalPointsByTeamId(): Promise<Map<string, number>> {
@@ -632,6 +768,8 @@ function toStandingRows(
       teamName: team.name,
       countryCode: team.country,
       points: team.seasonPoints,
+      completedRaceCount: getCompletedRaceCountFromTeam(team),
+      raceReputationValue: getRaceReputationValueFromTeam(team),
       logoPath: team.logoPath ?? null,
       isActive: team.isActive !== false,
       publicInactivityStatus: inactivity?.status ?? null,
@@ -639,6 +777,44 @@ function toStandingRows(
       seasonEndTransitionPending: inactivity?.seasonEndTransitionPending ?? false,
     }
   })
+}
+
+function compareStandingRowsBySeasonEndTieBreakers(
+  a: StandingRow,
+  b: StandingRow,
+): number {
+  if (b.points !== a.points) {
+    return b.points - a.points
+  }
+
+  if (b.completedRaceCount !== a.completedRaceCount) {
+    return b.completedRaceCount - a.completedRaceCount
+  }
+
+  if (b.raceReputationValue !== a.raceReputationValue) {
+    return b.raceReputationValue - a.raceReputationValue
+  }
+
+  const byName = a.teamName.localeCompare(b.teamName, undefined, {
+    sensitivity: 'base',
+    numeric: true,
+  })
+
+  if (byName !== 0) {
+    return byName
+  }
+
+  return a.id.localeCompare(b.id)
+}
+
+function applySeasonEndTieBreakers(rows: StandingRow[]): StandingRow[] {
+  return rows
+    .slice()
+    .sort(compareStandingRowsBySeasonEndTieBreakers)
+    .map((row, index) => ({
+      ...row,
+      position: index + 1,
+    }))
 }
 
 function getRowClass(
@@ -985,6 +1161,7 @@ export default function TeamRankingPage(): JSX.Element {
     Map<string, ClubPublicInactivityUi>
   >(new Map())
   const [isPastWinnersOpen, setIsPastWinnersOpen] = useState(false)
+  const [seasonRulesExpanded, setSeasonRulesExpanded] = useState(false)
   const [tutorialLoading, setTutorialLoading] = useState(true)
   const [tutorialMode, setTutorialMode] = useState<'closed' | 'invite' | 'steps'>('closed')
   const [tutorialStepIndex, setTutorialStepIndex] = useState(0)
@@ -994,10 +1171,16 @@ export default function TeamRankingPage(): JSX.Element {
 
     async function load(): Promise<void> {
       try {
-        const [{ data: authData }, teamsResult, internationalPointsByTeamId] = await Promise.all([
+        const [
+          { data: authData },
+          teamsResult,
+          internationalPointsByTeamId,
+          tieBreakersByTeamId,
+        ] = await Promise.all([
           supabase.auth.getUser(),
           getTeamRankingTeams(),
           loadTeamInternationalPointsByTeamId(),
+          loadTeamRankingTieBreakersByTeamId(),
         ])
 
         if (!mounted) return
@@ -1069,11 +1252,19 @@ export default function TeamRankingPage(): JSX.Element {
 
         if (!mounted) return
 
-        const teamsWithInternationalPoints = teamsResult.map((team) => ({
-          ...team,
-          name: displayNameByClubId.get(team.id) ?? team.name,
-          seasonPoints: internationalPointsByTeamId.get(team.id) ?? 0,
-        }))
+        const teamsWithInternationalPoints = teamsResult.map((team) => {
+          const tieBreakers = tieBreakersByTeamId.get(team.id)
+
+          return {
+            ...team,
+            name: displayNameByClubId.get(team.id) ?? team.name,
+            seasonPoints: internationalPointsByTeamId.get(team.id) ?? 0,
+            completedRaceCount:
+              tieBreakers?.completedRaceCount ?? getCompletedRaceCountFromTeam(team),
+            raceReputationValue:
+              tieBreakers?.raceReputationValue ?? getRaceReputationValueFromTeam(team),
+          }
+        })
 
         const publicInactivityByClubId = await loadPublicClubInactivityMap(
           teamsWithInternationalPoints.map((team) => team.id),
@@ -1168,26 +1359,34 @@ export default function TeamRankingPage(): JSX.Element {
     }
 
     if (selectedStanding.type === 'WORLD') {
-      return toStandingRows(getWorldStandings(teams), inactivityByClubId)
+      return applySeasonEndTieBreakers(
+        toStandingRows(getWorldStandings(teams), inactivityByClubId),
+      )
     }
 
     if (selectedStanding.type === 'TIER2') {
-      return toStandingRows(
-        getTier2DivisionStandings(teams, selectedStanding.division as Tier2Division),
-        inactivityByClubId,
+      return applySeasonEndTieBreakers(
+        toStandingRows(
+          getTier2DivisionStandings(teams, selectedStanding.division as Tier2Division),
+          inactivityByClubId,
+        ),
       )
     }
 
     if (selectedStanding.type === 'TIER3') {
-      return toStandingRows(
-        getTier3DivisionStandings(teams, selectedStanding.division as Tier3Division),
-        inactivityByClubId,
+      return applySeasonEndTieBreakers(
+        toStandingRows(
+          getTier3DivisionStandings(teams, selectedStanding.division as Tier3Division),
+          inactivityByClubId,
+        ),
       )
     }
 
-    return toStandingRows(
-      getAmateurDivisionStandings(teams, selectedStanding.division as AmateurDivision),
-      inactivityByClubId,
+    return applySeasonEndTieBreakers(
+      toStandingRows(
+        getAmateurDivisionStandings(teams, selectedStanding.division as AmateurDivision),
+        inactivityByClubId,
+      ),
     )
   }, [selectedStanding, teams, inactivityByClubId])
 
@@ -1391,7 +1590,7 @@ export default function TeamRankingPage(): JSX.Element {
               </h3>
               <p className="mt-1 text-sm text-slate-600">
                 {selectedStanding
-                  ? 'Current season standings based on international points from race results.'
+                  ? 'Current season standings based on international points. Ties are ordered by races completed, team race reputation, then team name A-Z.'
                   : 'Choose a tier and division to view the standings.'}
               </p>
             </div>
@@ -1422,6 +1621,12 @@ export default function TeamRankingPage(): JSX.Element {
                   Country
                 </th>
                 <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-600">
+                  Races
+                </th>
+                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-600">
+                  Race Rep.
+                </th>
+                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-600">
                   Points
                 </th>
               </tr>
@@ -1430,7 +1635,7 @@ export default function TeamRankingPage(): JSX.Element {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={4} className="px-4 py-6 text-center text-sm text-slate-500">
+                  <td colSpan={6} className="px-4 py-6 text-center text-sm text-slate-500">
                     Loading standings...
                   </td>
                 </tr>
@@ -1490,6 +1695,20 @@ export default function TeamRankingPage(): JSX.Element {
                         <CountryFlag countryCode={row.countryCode} />
                       </td>
 
+                      <td
+                        className="px-4 py-3 text-right text-sm text-slate-700"
+                        title="Season-end tie-breaker 1: teams with more completed races are placed higher when points are tied."
+                      >
+                        {formatTieBreakerNumber(row.completedRaceCount)}
+                      </td>
+
+                      <td
+                        className="px-4 py-3 text-right text-sm text-slate-700"
+                        title="Season-end tie-breaker 2: if points and completed races are tied, team race reputation decides."
+                      >
+                        {formatTieBreakerNumber(row.raceReputationValue)}
+                      </td>
+
                       <td className="px-4 py-3 text-right text-sm font-semibold text-slate-900">
                         {row.points.toLocaleString()}
                       </td>
@@ -1499,7 +1718,7 @@ export default function TeamRankingPage(): JSX.Element {
 
               {!loading && !selectedStanding ? (
                 <tr>
-                  <td colSpan={4} className="px-4 py-6 text-center text-sm text-slate-500">
+                  <td colSpan={6} className="px-4 py-6 text-center text-sm text-slate-500">
                     Select a tier and division to view standings.
                   </td>
                 </tr>
@@ -1507,7 +1726,7 @@ export default function TeamRankingPage(): JSX.Element {
 
               {!loading && selectedStanding && selectedRows.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="px-4 py-6 text-center text-sm text-slate-500">
+                  <td colSpan={6} className="px-4 py-6 text-center text-sm text-slate-500">
                     No teams available for this standing yet.
                   </td>
                 </tr>
@@ -1537,7 +1756,129 @@ export default function TeamRankingPage(): JSX.Element {
             <span className="h-3 w-3 rounded border border-slate-300 bg-slate-100" />
             <span>Inactive team</span>
           </div>
+          <div className="text-slate-500">
+            Tie-breakers: points → races completed → race reputation → A-Z.
+          </div>
         </div>
+      </div>
+
+      <div className="mt-4 rounded bg-white p-4 shadow">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <h3 className="text-lg font-semibold text-slate-900">
+              Season-end rules, playoffs and tie-breakers
+            </h3>
+            <div className="mt-1 text-sm text-slate-600">
+              Final ranking, promotion, playoff and relegation rules.
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setSeasonRulesExpanded((current) => !current)}
+            className="inline-flex shrink-0 items-center justify-center rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-yellow-400"
+            aria-expanded={seasonRulesExpanded}
+          >
+            {seasonRulesExpanded ? 'Hide rules' : 'Show rules'}
+            <span className="ml-2" aria-hidden="true">
+              {seasonRulesExpanded ? '▲' : '▼'}
+            </span>
+          </button>
+        </div>
+
+        {seasonRulesExpanded ? (
+          <>
+            <div className="mt-4 text-sm text-slate-600">
+              These rules are used when the season closes and the game decides final ranking,
+              promotion places, playoff places and relegation places.
+            </div>
+
+            <div className="mt-4 grid gap-4 lg:grid-cols-3">
+              <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+                <div className="text-sm font-semibold text-slate-900">
+                  Final ranking order
+                </div>
+                <ol className="mt-2 list-decimal space-y-1 pl-5 text-sm text-slate-700">
+                  <li>International points, highest first.</li>
+                  <li>If points are equal: completed races, highest first.</li>
+                  <li>If still equal: team race reputation, highest first.</li>
+                  <li>If still equal: team name alphabetically A-Z.</li>
+                </ol>
+                <div className="mt-3 text-xs text-slate-500">
+                  This also solves zero-point teams: teams with more completed races stay
+                  above teams with fewer completed races.
+                </div>
+              </div>
+
+              <div className="rounded-lg border border-green-200 bg-green-50 p-4">
+                <div className="text-sm font-semibold text-green-900">
+                  Direct promotion
+                </div>
+                <div className="mt-2 text-sm text-green-800">
+                  Green rows are automatic promotion places. These teams move up directly
+                  at the season transition if the backend season-end job confirms the same
+                  final order.
+                </div>
+                <div className="mt-3 text-xs text-green-700">
+                  Current view: {selectedStanding?.promotionLabel ?? 'No direct promotion places.'}
+                </div>
+              </div>
+
+              <div className="rounded-lg border border-sky-200 bg-sky-50 p-4">
+                <div className="text-sm font-semibold text-sky-900">
+                  Promotion playoffs
+                </div>
+                <div className="mt-2 text-sm text-sky-800">
+                  Blue rows are playoff places. These teams are not promoted directly.
+                  They enter a season-end playoff against other qualified teams, and the
+                  playoff result decides the remaining promotion places.
+                </div>
+                <div className="mt-3 text-xs text-sky-700">
+                  Current view: {selectedStanding?.playoffLabel ?? 'No playoff places.'}
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-4 grid gap-4 lg:grid-cols-2">
+              <div className="rounded-lg border border-red-200 bg-red-50 p-4">
+                <div className="text-sm font-semibold text-red-900">
+                  Relegation
+                </div>
+                <div className="mt-2 text-sm text-red-800">
+                  Red rows are relegation places. At the end of the season, teams in
+                  these positions move down to the lower tier or lower division according
+                  to the league structure.
+                </div>
+                <div className="mt-3 text-xs text-red-700">
+                  Current view: {selectedStanding?.relegationLabel ?? 'No relegation places.'}
+                </div>
+              </div>
+
+              <div className="rounded-lg border border-slate-200 bg-white p-4">
+                <div className="text-sm font-semibold text-slate-900">
+                  Division guide
+                </div>
+                <ul className="mt-2 space-y-1 text-sm text-slate-700">
+                  <li>
+                    <span className="font-medium">WorldTeam:</span> bottom 5 are relegated.
+                  </li>
+                  <li>
+                    <span className="font-medium">ProTeam West/East:</span> winner promoted directly,
+                    2nd-4th enter World playoff, bottom 5 are relegated.
+                  </li>
+                  <li>
+                    <span className="font-medium">Continental divisions:</span> winner promoted directly,
+                    2nd-4th enter Pro playoff, relegation count depends on the division.
+                  </li>
+                  <li>
+                    <span className="font-medium">Amateur divisions:</span> promotion and playoff
+                    places depend on the region. Oceania promotes the top 3 directly.
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </>
+        ) : null}
       </div>
 
       <PastWinnersModal

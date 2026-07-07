@@ -12,7 +12,7 @@
  */
 
 import React, { useEffect, useMemo, useState } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router";
+import { useNavigate, useSearchParams } from "react-router";
 import TutorialOverlay from "../../components/tutorial/TutorialOverlay";
 import {
   racePreparationTutorialSteps,
@@ -428,10 +428,6 @@ function formatBlockedResourceReason(
     : `Already assigned to ${raceName}`;
 }
 
-function getRacePagePath(raceId: UUID) {
-  return `/dashboard/races/${raceId}?raceId=${raceId}`;
-}
-
 function isUuid(value: unknown): value is string {
   return (
     typeof value === "string" &&
@@ -809,6 +805,78 @@ function titleFromSnake(value: string) {
     .join(" ");
 }
 
+function normalizeAvailabilityStatus(value: unknown): string {
+  return String(value ?? "")
+    .trim()
+    .toLowerCase()
+    .replace(/[\s-]+/g, "_");
+}
+
+function getRiderAvailabilityStatus(rider: JsonRecord): string {
+  return normalizeAvailabilityStatus(
+    rider.availability_status ??
+      rider.medical_status ??
+      rider.health_status ??
+      rider.fitness_status ??
+      "fit",
+  );
+}
+
+function isRiderMedicallyUnavailable(rider: JsonRecord): boolean {
+  const availabilityStatus = getRiderAvailabilityStatus(rider);
+
+  if (
+    rider.is_injured === true ||
+    rider.injured === true ||
+    rider.has_injury === true
+  ) {
+    return true;
+  }
+
+  if (
+    availabilityStatus === "" ||
+    availabilityStatus === "fit" ||
+    availabilityStatus === "available" ||
+    availabilityStatus === "not_fully_fit" ||
+    availabilityStatus === "partly_fit" ||
+    availabilityStatus === "tired" ||
+    availabilityStatus === "fatigued"
+  ) {
+    return false;
+  }
+
+  return [
+    "injured",
+    "injury",
+    "sick",
+    "ill",
+    "illness",
+    "cold",
+    "flu",
+    "unavailable",
+    "not_available",
+    "medical_unavailable",
+    "medical_blocked",
+    "recovering_from_injury",
+    "rehab",
+  ].includes(availabilityStatus);
+}
+
+function formatAvailabilityStatusLabel(value: string): string {
+  if (!value || value === "fit") return "Fit";
+  if (value === "not_fully_fit") return "Not fully fit";
+  return titleFromSnake(value);
+}
+
+function formatRiderMedicalUnavailableReason(rider: JsonRecord): string | null {
+  if (!isRiderMedicallyUnavailable(rider)) return null;
+
+  const status = getRiderAvailabilityStatus(rider);
+  const label = formatAvailabilityStatusLabel(status);
+
+  return `${label}: cannot be selected for this race.`;
+}
+
 function isRacePackageSubmitted(status?: string | null) {
   return (
     status === "submitted" || status === "locked" || status === "sent_to_engine"
@@ -1103,13 +1171,23 @@ export default function RacePreparationPage(): JSX.Element {
   const raceId = selectedRaceId ?? (getText(race, "id") || null);
   const raceStatus = target?.race_package_status ?? "not_created";
   const prepStatus = getText(preparation, "status");
-  const savedCostBreakdown = asRecord(preparation?.cost_breakdown_json);
-  const liveCostBreakdown = asRecord(quote?.cost_breakdown);
+  const cost = asRecord(
+    quote?.cost_breakdown ?? preparation?.cost_breakdown_json ?? {},
+  );
 
-  const costBreakdown =
-    Object.keys(liveCostBreakdown).length > 0
-      ? liveCostBreakdown
-      : savedCostBreakdown;
+  const travelTickets = Number(cost.policy_travel_cost_cash ?? 0);
+
+  const accommodation =
+    Number(cost.policy_accommodation_cost_cash ?? 0) +
+    Number(cost.policy_staff_accommodation_cost_cash ?? 0);
+
+  const assetTransport = Number(cost.asset_transport_cost_cash ?? 0);
+
+  const logistics = Number(
+    cost.policy_logistics_cost_cash ?? cost.operations_cost_cash ?? 0,
+  );
+
+  const total = Number(cost.total_cost_cash ?? 0);
 
   const validationSnapshot = asRecord(preparation?.validation_snapshot_json);
   const savedQuote = asRecord(validationSnapshot.quote);
@@ -1169,6 +1247,23 @@ export default function RacePreparationPage(): JSX.Element {
     [blockedRiderMap],
   );
 
+  const medicallyUnavailableRiderMap = useMemo(() => {
+    return new Map(
+      (selectableData?.riders ?? []).flatMap((option) => {
+        const reason = formatRiderMedicalUnavailableReason(
+          asRecord(option.rider),
+        );
+
+        return reason ? [[option.rider_id, reason] as const] : [];
+      }),
+    );
+  }, [selectableData?.riders]);
+
+  const medicallyUnavailableRiderIds = useMemo(
+    () => new Set(medicallyUnavailableRiderMap.keys()),
+    [medicallyUnavailableRiderMap],
+  );
+
   const blockedStaffIds = useMemo(
     () => new Set(blockedStaffMap.keys()),
     [blockedStaffMap],
@@ -1180,8 +1275,11 @@ export default function RacePreparationPage(): JSX.Element {
   );
 
   const cleanSelectedRiderIds = useMemo(() => {
-    return selectedRiderIds.filter((id) => !blockedRiderIds.has(id));
-  }, [blockedRiderIds, selectedRiderIds]);
+    return selectedRiderIds.filter(
+      (id) =>
+        !blockedRiderIds.has(id) && !medicallyUnavailableRiderIds.has(id),
+    );
+  }, [blockedRiderIds, medicallyUnavailableRiderIds, selectedRiderIds]);
 
   const cleanSelectedStaffIds = useMemo(() => {
     return selectedStaffIds.filter((id) => !blockedStaffIds.has(id));
@@ -1371,7 +1469,10 @@ export default function RacePreparationPage(): JSX.Element {
     if (!canEdit) return;
 
     setSelectedRiderIds((current) => {
-      const next = current.filter((id) => !blockedRiderIds.has(id));
+      const next = current.filter(
+        (id) =>
+          !blockedRiderIds.has(id) && !medicallyUnavailableRiderIds.has(id),
+      );
       return next.length === current.length ? current : next;
     });
 
@@ -1394,7 +1495,13 @@ export default function RacePreparationPage(): JSX.Element {
 
       return changed ? next : current;
     });
-  }, [blockedAssetIds, blockedRiderIds, blockedStaffIds, canEdit]);
+  }, [
+    blockedAssetIds,
+    blockedRiderIds,
+    blockedStaffIds,
+    canEdit,
+    medicallyUnavailableRiderIds,
+  ]);
 
   const stagePlansOpen = packageSubmitted;
 
@@ -1964,8 +2071,18 @@ export default function RacePreparationPage(): JSX.Element {
       return;
     }
 
+    const medicalUnavailableReason = medicallyUnavailableRiderMap.get(riderId);
+
+    if (medicalUnavailableReason) {
+      setErrorMessage(medicalUnavailableReason);
+      return;
+    }
+
     setSelectedRiderIds((current) => {
-      const currentClean = current.filter((id) => !blockedRiderIds.has(id));
+      const currentClean = current.filter(
+        (id) =>
+          !blockedRiderIds.has(id) && !medicallyUnavailableRiderIds.has(id),
+      );
 
       if (currentClean.includes(riderId)) {
         setErrorMessage(null);
@@ -2143,11 +2260,13 @@ export default function RacePreparationPage(): JSX.Element {
                 packageOpensOn={target.setup_window_opens_on}
                 riderDeadlineOn={target.rider_submission_deadline_on}
                 stageCount={target.stages?.length ?? 1}
+                stages={target.stages ?? []}
                 squadOptions={squadOptions}
                 participatingClubId={participatingClubId}
                 canChangeSquad={canEdit}
                 squadChangeLoading={actionLoading}
                 onParticipatingClubChange={requestParticipatingClubChange}
+                onOpenRacePreview={(id) => setRacePreviewId(id)}
               />
 
               {isPackageTooEarly && (
@@ -2235,6 +2354,15 @@ export default function RacePreparationPage(): JSX.Element {
                       </div>
                     ) : null}
 
+                    {medicallyUnavailableRiderIds.size > 0 ? (
+                      <div className="mt-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-medium text-red-800">
+                        {medicallyUnavailableRiderIds.size} rider
+                        {medicallyUnavailableRiderIds.size === 1 ? "" : "s"}{" "}
+                        medically unavailable and cannot be selected for this
+                        Race Plan.
+                      </div>
+                    ) : null}
+
                     <div className="grid gap-3 md:grid-cols-2">
                       {visibleRiderOptions.map((option) => {
                         const selected = cleanSelectedRiderIds.includes(
@@ -2256,6 +2384,11 @@ export default function RacePreparationPage(): JSX.Element {
                               null
                             }
                             blockedReason={blockedReason}
+                            medicalUnavailableReason={
+                              medicallyUnavailableRiderMap.get(
+                                option.rider_id,
+                              ) ?? null
+                            }
                             onToggle={() => toggleRider(option.rider_id)}
                           />
                         );
@@ -2433,32 +2566,15 @@ export default function RacePreparationPage(): JSX.Element {
                 <aside className="space-y-6">
                   <RacePackageCard title="Cost Preview">
                     <div className="space-y-2 text-sm">
+                      <CostLine label="Travel tickets" value={travelTickets} />
+                      <CostLine label="Accommodation" value={accommodation} />
+                      <CostLine label="Asset transport" value={assetTransport} />
                       <CostLine
-                        label="Participation"
-                        value={costBreakdown.participation_cost_cash}
-                      />
-                      <CostLine
-                        label="Rider travel"
-                        value={costBreakdown.rider_travel_cost_cash}
-                      />
-                      <CostLine
-                        label="Staff travel"
-                        value={costBreakdown.staff_travel_cost_cash}
-                      />
-                      <CostLine
-                        label="Asset transport"
-                        value={costBreakdown.asset_transport_cost_cash}
-                      />
-                      <CostLine
-                        label="Team Policies & Operations"
-                        value={costBreakdown.operations_cost_cash}
+                        label="Team logistics & operations"
+                        value={logistics}
                       />
                       <div className="border-t pt-3">
-                        <CostLine
-                          label="Total"
-                          value={costBreakdown.total_cost_cash}
-                          strong
-                        />
+                        <CostLine label="Total" value={total} strong />
                       </div>
                     </div>
 
@@ -2888,6 +3004,463 @@ function AcceptedRacesTab({
   );
 }
 
+
+function getStageHeaderProfileKind(stage: JsonRecord): {
+  label: string;
+  shortLabel: string;
+  className: string;
+} {
+  const format = String(stage.stage_format ?? "").toLowerCase();
+  const profile = String(
+    stage.profile_type ?? stage.terrain_type ?? stage.stage_type ?? "",
+  ).toLowerCase();
+  const combined = `${format} ${profile}`;
+
+  if (format === "team_time_trial") {
+    return {
+      label: "Team Time Trial",
+      shortLabel: "TTT",
+      className: "border-purple-200 bg-purple-50 text-purple-700",
+    };
+  }
+
+  if (isTimeTrialStage(stage)) {
+    return {
+      label: "Time Trial",
+      shortLabel: "TT",
+      className: "border-indigo-200 bg-indigo-50 text-indigo-700",
+    };
+  }
+
+  if (
+    combined.includes("mountain") ||
+    combined.includes("climb") ||
+    combined.includes("summit")
+  ) {
+    return {
+      label: "Mountain",
+      shortLabel: "M",
+      className: "border-red-200 bg-red-50 text-red-700",
+    };
+  }
+
+  if (
+    combined.includes("hilly") ||
+    combined.includes("hill") ||
+    combined.includes("puncheur")
+  ) {
+    return {
+      label: "Hilly",
+      shortLabel: "H",
+      className: "border-orange-200 bg-orange-50 text-orange-700",
+    };
+  }
+
+  if (combined.includes("cobble")) {
+    return {
+      label: "Cobbles",
+      shortLabel: "C",
+      className: "border-stone-200 bg-stone-50 text-stone-700",
+    };
+  }
+
+  if (combined.includes("sprint")) {
+    return {
+      label: "Sprint",
+      shortLabel: "S",
+      className: "border-emerald-200 bg-emerald-50 text-emerald-700",
+    };
+  }
+
+  return {
+    label: "Flat",
+    shortLabel: "F",
+    className: "border-sky-200 bg-sky-50 text-sky-700",
+  };
+}
+
+function getStageHeaderProfileSource(stage: JsonRecord): JsonRecord {
+  const metadata = asRecord(stage.metadata);
+  const routeProfile = asRecord(metadata.route_profile_v1);
+
+  if (Object.keys(routeProfile).length > 0) {
+    return routeProfile;
+  }
+
+  return stage;
+}
+
+function StageHeaderMiniProfile({
+  stage,
+  profileOverride,
+}: {
+  stage: JsonRecord;
+  profileOverride: JsonRecord;
+}) {
+  const profile = profileOverride;
+  const points = normalizeProfilePoints(profile, stage);
+
+  if (points.length < 2) {
+    return (
+      <div className="flex h-56 items-center justify-center rounded-xl border border-dashed border-slate-300 bg-slate-50 text-sm font-semibold text-slate-500">
+        Stage profile points are missing.
+      </div>
+    );
+  }
+
+  const width = 680;
+  const height = 230;
+  const padding = {
+    top: 18,
+    right: 18,
+    bottom: 34,
+    left: 46,
+  };
+
+  const innerWidth = width - padding.left - padding.right;
+  const innerHeight = height - padding.top - padding.bottom;
+
+  const distanceKm =
+    toFiniteNumberValue(profile.distance_km) ??
+    toFiniteNumberValue(stage.distance_km) ??
+    Math.max(...points.map((point) => point.km), 1);
+
+  const maxElevationRaw = Math.max(...points.map((point) => point.elevation_m));
+  const maxElevation = Math.max(
+    500,
+    Math.ceil((maxElevationRaw * 1.12) / 100) * 100,
+  );
+
+  const xForKm = (km: number) =>
+    padding.left +
+    (Math.max(0, Math.min(distanceKm, km)) / distanceKm) * innerWidth;
+
+  const yForElevation = (elevation: number) =>
+    padding.top +
+    innerHeight -
+    (Math.max(0, elevation) / maxElevation) * innerHeight;
+
+  const coordinates = points.map((point) => ({
+    x: xForKm(point.km),
+    y: yForElevation(point.elevation_m),
+    ...point,
+  }));
+
+  const linePath = coordinates.reduce((path, point, index) => {
+    if (index === 0) return `M ${point.x} ${point.y}`;
+
+    const previous = coordinates[index - 1];
+    const controlX = (previous.x + point.x) / 2;
+
+    return `${path} C ${controlX} ${previous.y}, ${controlX} ${point.y}, ${point.x} ${point.y}`;
+  }, "");
+
+  const baselineY = height - padding.bottom;
+  const areaPath = `${linePath} L ${
+    coordinates[coordinates.length - 1].x
+  } ${baselineY} L ${coordinates[0].x} ${baselineY} Z`;
+
+  const elevationTicks = [0, 0.33, 0.66, 1].map((ratio) =>
+    Math.round((maxElevation * ratio) / 100) * 100,
+  );
+
+  const distanceTicks = [0, 0.33, 0.66, 1].map((ratio) => ({
+    km: distanceKm * ratio,
+    x: xForKm(distanceKm * ratio),
+  }));
+
+  return (
+    <div className="w-full overflow-hidden rounded-xl border border-slate-200 bg-white">
+      <svg
+        viewBox={`0 0 ${width} ${height}`}
+        className="h-56 w-full"
+        role="img"
+        aria-label="Stage profile preview"
+      >
+        <rect width={width} height={height} fill="#ffffff" />
+
+        {elevationTicks.map((tick) => {
+          const y = yForElevation(tick);
+
+          return (
+            <g key={tick}>
+              <line
+                x1={padding.left}
+                x2={width - padding.right}
+                y1={y}
+                y2={y}
+                stroke="#e2e8f0"
+                strokeWidth="1"
+              />
+              <text
+                x={padding.left - 8}
+                y={y + 4}
+                textAnchor="end"
+                fontSize="11"
+                fill="#64748b"
+              >
+                {tick} m
+              </text>
+            </g>
+          );
+        })}
+
+        <path d={areaPath} fill="#fde68a" opacity="0.95" />
+        <path
+          d={linePath}
+          fill="none"
+          stroke="#334155"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth="3"
+        />
+
+        {distanceTicks.map((tick, index) => (
+          <text
+            key={`${tick.km}-${index}`}
+            x={tick.x}
+            y={height - 10}
+            textAnchor={index === 0 ? "start" : index === distanceTicks.length - 1 ? "end" : "middle"}
+            fontSize="11"
+            fontWeight="700"
+            fill="#334155"
+          >
+            {tick.km.toFixed(tick.km % 1 === 0 ? 0 : 1)} km
+          </text>
+        ))}
+      </svg>
+    </div>
+  );
+}
+
+
+
+
+function RaceHeaderStageChip({
+  stage,
+  index,
+  profile,
+  profileLoading,
+  profileError,
+}: {
+  stage: JsonRecord;
+  index: number;
+  profile: JsonRecord | null;
+  profileLoading: boolean;
+  profileError: string | null;
+}) {
+  const [hovered, setHovered] = useState(false);
+
+  const stageNumber = String(stage.stage_number ?? index + 1);
+  const kind = getStageHeaderProfileKind(stage);
+  const title = `Stage ${stageNumber}: ${getStageProfileLabel(stage)} · ${
+    getStageDistance(stage) || "Distance pending"
+  }`;
+  const hasProfileChart = profile
+    ? normalizeProfilePoints(profile, stage).length >= 2
+    : false;
+
+  return (
+    <div
+      className="relative shrink-0"
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      onFocus={() => setHovered(true)}
+      onBlur={() => setHovered(false)}
+    >
+      <button
+        type="button"
+        className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-300 bg-white text-xs font-bold text-slate-800 shadow-sm transition hover:border-yellow-400 hover:bg-yellow-50 focus:outline-none focus:ring-2 focus:ring-yellow-300"
+        aria-label={title}
+        title={title}
+      >
+        {stageNumber}
+      </button>
+
+      {hovered ? (
+        <div className="pointer-events-none absolute right-0 top-10 z-[80] w-[44rem] rounded-2xl border border-slate-200 bg-white p-4 text-left shadow-2xl">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                Stage {stageNumber}
+              </div>
+              <div className="mt-0.5 truncate text-sm font-semibold text-slate-950">
+                {getStageDisplayName(stage, stageNumber)}
+              </div>
+            </div>
+            <span className="shrink-0 rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[10px] font-bold text-slate-700">
+              {kind.label}
+            </span>
+          </div>
+
+          <div className="mt-2 text-xs text-slate-600">
+            <div className="truncate">
+              <span className="font-semibold text-slate-700">Route:</span>{" "}
+              {getStageRoute(stage)}
+            </div>
+            <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1">
+              <span>
+                <span className="font-semibold text-slate-700">Profile:</span>{" "}
+                {profile?.profile_type
+                  ? titleFromSnake(String(profile.profile_type))
+                  : getStageProfileLabel(stage)}
+              </span>
+              <span>
+                <span className="font-semibold text-slate-700">Distance:</span>{" "}
+                {profile?.distance_km
+                  ? `${Number(profile.distance_km).toFixed(
+                      Number(profile.distance_km) % 1 === 0 ? 0 : 1,
+                    )} km`
+                  : getStageDistance(stage) || "—"}
+              </span>
+            </div>
+          </div>
+
+          <div className="mt-3">
+            {profileLoading && !hasProfileChart ? (
+              <div className="flex h-56 items-center justify-center rounded-xl border border-dashed border-slate-300 bg-slate-50 text-sm font-semibold text-slate-500">
+                Loading stage profile…
+              </div>
+            ) : hasProfileChart && profile ? (
+              <StageHeaderMiniProfile stage={stage} profileOverride={profile} />
+            ) : (
+              <div className="flex h-56 items-center justify-center rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 text-center text-sm font-semibold text-slate-500">
+                {profileError
+                  ? "Stage profile could not be loaded."
+                  : "Stage profile data is not available yet."}
+              </div>
+            )}
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+
+
+
+function RaceHeaderStageStrip({
+  stages,
+  fallbackStageCount,
+}: {
+  stages: JsonRecord[];
+  fallbackStageCount: number;
+}) {
+  const visibleStages = stages.length > 0 ? stages : [];
+  const fallbackCount = Math.max(0, Number(fallbackStageCount) || 0);
+  const stageIds = useMemo(
+    () =>
+      visibleStages
+        .map((stage) => String(stage.id ?? ""))
+        .filter(Boolean),
+    [visibleStages],
+  );
+  const [profileByStageId, setProfileByStageId] = useState<
+    Record<string, { profile: JsonRecord | null; loading: boolean; error: string | null }>
+  >({});
+
+  useEffect(() => {
+    if (stageIds.length === 0) {
+      setProfileByStageId({});
+      return;
+    }
+
+    let cancelled = false;
+
+    setProfileByStageId((current) => {
+      const next = { ...current };
+
+      stageIds.forEach((stageId) => {
+        if (!next[stageId]) {
+          next[stageId] = { profile: null, loading: true, error: null };
+        }
+      });
+
+      return next;
+    });
+
+    stageIds.forEach((stageId) => {
+      loadRaceStageProfileDetail(stageId)
+        .then((result) => {
+          if (cancelled) return;
+
+          setProfileByStageId((current) => ({
+            ...current,
+            [stageId]: {
+              profile: result?.has_profile ? result : null,
+              loading: false,
+              error: null,
+            },
+          }));
+        })
+        .catch((error) => {
+          if (cancelled) return;
+
+          setProfileByStageId((current) => ({
+            ...current,
+            [stageId]: {
+              profile: null,
+              loading: false,
+              error:
+                error instanceof Error
+                  ? error.message
+                  : "Failed to load stage profile.",
+            },
+          }));
+        });
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [stageIds]);
+
+  if (visibleStages.length === 0 && fallbackCount <= 0) return null;
+
+  if (visibleStages.length === 0) {
+    return (
+      <div className="flex w-full items-center justify-end gap-2 overflow-visible text-xs">
+        <span className="shrink-0 font-semibold uppercase tracking-wide text-slate-500">
+          Stages:
+        </span>
+        <span className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-300 bg-white text-xs font-bold text-slate-800 shadow-sm">
+          {fallbackCount}
+        </span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex w-full items-center justify-end gap-2 overflow-visible text-xs">
+      <span className="shrink-0 font-semibold uppercase tracking-wide text-slate-500">
+        Stages:
+      </span>
+
+      <div className="flex min-w-0 flex-nowrap items-center gap-1.5 overflow-visible">
+        {visibleStages.map((stage, index) => {
+          const stageId = String(stage.id ?? "");
+          const profileState = stageId ? profileByStageId[stageId] : null;
+
+          return (
+            <RaceHeaderStageChip
+              key={String(stage.id ?? stage.stage_number ?? index)}
+              stage={stage}
+              index={index}
+              profile={profileState?.profile ?? null}
+              profileLoading={profileState?.loading ?? false}
+              profileError={profileState?.error ?? null}
+            />
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+
+
+
 function RaceHeaderCard({
   race,
   raceClassCode,
@@ -2898,11 +3471,13 @@ function RaceHeaderCard({
   packageOpensOn,
   riderDeadlineOn,
   stageCount,
+  stages,
   squadOptions,
   participatingClubId,
   canChangeSquad,
   squadChangeLoading,
   onParticipatingClubChange,
+  onOpenRacePreview,
 }: {
   race: unknown;
   raceClassCode: string;
@@ -2913,11 +3488,13 @@ function RaceHeaderCard({
   packageOpensOn?: string;
   riderDeadlineOn?: string;
   stageCount: number;
+  stages: JsonRecord[];
   squadOptions: RacePreparationSquadOption[];
   participatingClubId: UUID | null;
   canChangeSquad: boolean;
   squadChangeLoading: boolean;
   onParticipatingClubChange: (clubId: UUID) => void;
+  onOpenRacePreview: (raceId: UUID) => void;
 }) {
   const raceId = getText(race, "id");
 
@@ -2953,7 +3530,7 @@ function RaceHeaderCard({
             </h2>
           </div>
 
-          <div className="mt-3 flex flex-wrap gap-2">
+          <div className="mt-3 flex flex-wrap items-center gap-2">
             <InfoChip
               label="Race dates"
               value={formatGameDateRange(
@@ -2966,10 +3543,19 @@ function RaceHeaderCard({
               label="Riders"
               value={`${minRiders || "—"}–${maxRiders || "—"}`}
             />
+            {raceId && (
+              <button
+                type="button"
+                onClick={() => onOpenRacePreview(raceId)}
+                className="inline-flex h-[38px] items-center rounded-xl border border-blue-100 bg-blue-50 px-3 text-sm font-semibold text-blue-700 hover:bg-blue-100"
+              >
+                Open Race Page
+              </button>
+            )}
           </div>
         </div>
 
-        <div className="flex min-w-0 items-start justify-end lg:pt-2">
+        <div className="flex min-w-0 flex-col items-end gap-3 lg:pt-2">
           {raceStatus === "missed_startlist" ? (
             <div className="flex w-full max-w-3xl items-center justify-between gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-800">
               <span className="min-w-0 truncate">
@@ -2988,6 +3574,7 @@ function RaceHeaderCard({
               {getRacePlanStatusLabel(raceStatus)}
             </span>
           )}
+
         </div>
 
         <div className="flex flex-col items-end gap-2 text-right">
@@ -2997,15 +3584,11 @@ function RaceHeaderCard({
             alignRight
           />
 
-          {raceId && (
-            <Link
-              to={getRacePagePath(raceId)}
-              className="inline-flex rounded-full bg-blue-50 px-3 py-1 text-sm font-semibold text-blue-700 hover:bg-blue-100"
-            >
-              Open Race Page
-            </Link>
-          )}
         </div>
+      </div>
+
+      <div className="mt-3 flex justify-end border-t border-slate-100 pt-3">
+        <RaceHeaderStageStrip stages={stages} fallbackStageCount={stageCount} />
       </div>
 
       {hasDevelopingTeam && (
@@ -10028,6 +10611,7 @@ function RiderSelectionCard({
   currentGameDate,
   raceSharpness,
   blockedReason,
+  medicalUnavailableReason,
   onToggle,
 }: {
   option: RacePreparationSelectableData["riders"][number];
@@ -10036,50 +10620,88 @@ function RiderSelectionCard({
   currentGameDate?: string;
   raceSharpness?: RiderRaceSharpnessUiRow | null;
   blockedReason?: string | null;
+  medicalUnavailableReason?: string | null;
   onToggle: () => void;
 }) {
   const [open, setOpen] = useState(false);
   const rider = asRecord(option.rider);
   const blocked = Boolean(blockedReason);
+  const medicallyUnavailable = Boolean(medicalUnavailableReason);
+  const selectable = canEdit && !blocked && !medicallyUnavailable;
+  const availabilityStatus = getRiderAvailabilityStatus(rider);
+  const availabilityLabel = formatAvailabilityStatusLabel(availabilityStatus);
 
   return (
     <div className="relative">
       <button
         type="button"
-        disabled={!canEdit}
-        aria-disabled={blocked}
+        disabled={!canEdit || medicallyUnavailable}
+        aria-disabled={blocked || medicallyUnavailable}
         onClick={(event) => {
-          if (blocked) {
+          if (blocked || medicallyUnavailable) {
             event.preventDefault();
             return;
           }
 
           onToggle();
         }}
-        className={`w-full rounded-xl border p-4 text-left transition disabled:cursor-not-allowed disabled:opacity-60 ${
-          blocked
-            ? "cursor-not-allowed border-amber-200 bg-amber-50/70 opacity-80"
-            : selected
-              ? "border-blue-400 bg-blue-50"
-              : "border-slate-200 bg-white hover:bg-slate-50"
+        className={`w-full rounded-xl border p-4 text-left transition disabled:cursor-not-allowed ${
+          medicallyUnavailable
+            ? "border-red-200 bg-slate-100 opacity-70 grayscale"
+            : blocked
+              ? "cursor-not-allowed border-amber-200 bg-amber-50/70 opacity-80"
+              : selected
+                ? "border-blue-400 bg-blue-50"
+                : "border-slate-200 bg-white hover:bg-slate-50"
         }`}
       >
-        <div
-          className="inline-block rounded-md px-1 py-0.5 font-semibold text-slate-900"
-          onMouseEnter={() => {
-            if (!blocked) setOpen(true);
-          }}
-          onMouseLeave={() => setOpen(false)}
-          onFocus={() => {
-            if (!blocked) setOpen(true);
-          }}
-          onBlur={() => setOpen(false)}
-          tabIndex={blocked ? -1 : 0}
-        >
-          {getRiderName(option.rider)}
+        <div className="flex items-start justify-between gap-3">
+          <div
+            className={`inline-block rounded-md px-1 py-0.5 font-semibold ${
+              medicallyUnavailable ? "text-slate-500" : "text-slate-900"
+            }`}
+            onMouseEnter={() => {
+              if (selectable) setOpen(true);
+            }}
+            onMouseLeave={() => setOpen(false)}
+            onFocus={() => {
+              if (selectable) setOpen(true);
+            }}
+            onBlur={() => setOpen(false)}
+            tabIndex={selectable ? 0 : -1}
+          >
+            {getRiderName(option.rider)}
+          </div>
+
+          {medicallyUnavailable ? (
+            <span
+              className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-red-200 bg-red-100 text-sm font-black text-red-700"
+              title={medicalUnavailableReason ?? "Rider unavailable"}
+              aria-label={medicalUnavailableReason ?? "Rider unavailable"}
+            >
+              ✕
+            </span>
+          ) : null}
         </div>
 
-        {blockedReason ? (
+        {medicallyUnavailable ? (
+          <div className="mt-3 space-y-2">
+            <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
+              <span>Role: {String(option.assigned_role ?? "—")}</span>
+              <span>·</span>
+              <span>Availability: {availabilityLabel}</span>
+            </div>
+
+            <div className="rounded-lg border border-red-200 bg-red-50 px-2 py-1.5 text-xs font-semibold text-red-800">
+              {medicalUnavailableReason}
+            </div>
+
+            <div className="text-[11px] leading-relaxed text-slate-500">
+              This rider is medically unavailable, so race sharpness and
+              freshness preview are hidden and the rider cannot be selected.
+            </div>
+          </div>
+        ) : blockedReason ? (
           <div className="mt-3 rounded-lg border border-amber-200 bg-amber-100 px-2 py-1 text-xs font-medium text-amber-800">
             {blockedReason}
           </div>
@@ -10092,7 +10714,7 @@ function RiderSelectionCard({
 
             <div className="mt-2 text-xs text-slate-500">
               Fatigue: {String(rider.fatigue ?? "—")} · Availability:{" "}
-              {String(rider.availability_status ?? "fit")}
+              {availabilityLabel}
             </div>
             <div className="mt-2 text-[11px] leading-relaxed text-slate-400">
               Starting freshness combines fatigue and race sharpness. High
@@ -10102,7 +10724,7 @@ function RiderSelectionCard({
         )}
       </button>
 
-      {!blocked && open ? (
+      {selectable && open ? (
         <div
           className="absolute left-4 top-[54px] z-50"
           onMouseEnter={() => setOpen(true)}
@@ -10256,8 +10878,8 @@ function RacePreviewModal({
   onClose: () => void;
 }) {
   return (
-    <div className="fixed inset-0 z-50 bg-slate-950/60 p-4">
-      <div className="mx-auto flex h-full max-w-7xl flex-col overflow-hidden rounded-3xl bg-slate-100 shadow-2xl">
+    <div className="fixed inset-0 z-50 bg-slate-950/60 p-3 sm:p-4">
+      <div className="mx-auto flex h-[calc(100vh-1.5rem)] w-full max-w-[min(1680px,calc(100vw-2rem))] flex-col overflow-hidden rounded-3xl bg-slate-100 shadow-2xl sm:h-[calc(100vh-2rem)]">
         <div className="flex items-center justify-between border-b border-slate-200 bg-white px-5 py-3">
           <div className="font-semibold text-slate-900">Race Page Preview</div>
 

@@ -2415,6 +2415,167 @@ async function loadOverviewAttentionItems(
 const OVERVIEW_OPENED_ATTENTION_STORAGE_KEY =
   "ppm:overview-opened-attention-keys-v1";
 
+const OVERVIEW_ATTENTION_DISMISSED_EVENT =
+  "ppm:overview-attention-dismissed-v1";
+
+/**
+ * normalizeOverviewAttentionMatchValue
+ * Produces a stable text fingerprint used to match Overview attention bubbles
+ * with Notification Center items even when they come from different RPCs.
+ */
+function normalizeOverviewAttentionMatchValue(value: unknown): string {
+  return String(value ?? "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/#/g, "")
+    .replace(/['"`´’]/g, "")
+    .replace(/&/g, " and ")
+    .replace(/[^a-z0-9]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+/**
+ * normalizeOverviewAttentionHref
+ * Normalizes HashRouter and regular dashboard URLs to the same key.
+ */
+function normalizeOverviewAttentionHref(value: unknown): string {
+  const raw = String(value ?? "").trim();
+  if (!raw) return "";
+
+  let normalized = raw;
+
+  if (normalized.startsWith("#")) {
+    normalized = normalized.slice(1);
+  }
+
+  try {
+    if (/^https?:\/\//i.test(normalized)) {
+      const url = new URL(normalized);
+      normalized = `${url.pathname}${url.search}${url.hash}`;
+    }
+  } catch {
+    // Keep original normalized value.
+  }
+
+  normalized = normalized.replace(/^#/, "");
+
+  if (normalized.startsWith("/#")) {
+    normalized = normalized.slice(2);
+  }
+
+  normalized = normalized.replace(/\/+$/, "");
+
+  return normalizeOverviewAttentionMatchValue(normalized);
+}
+
+/**
+ * getOverviewAttentionTopic
+ * Groups text into the same broad action type used by both notifications and
+ * Overview attention bubbles.
+ */
+function getOverviewAttentionTopic(text: string): string | null {
+  if (!text) return null;
+  if (text.includes("stage plan")) return "stage_plan";
+  if (text.includes("race plan")) return "race_plan";
+  if (text.includes("race result") || text.includes("stage result")) return "race_result";
+  if (text.includes("race application") || text.includes("application")) return "race_application";
+  if (text.includes("contract")) return "contract";
+  if (text.includes("equipment") || text.includes("repair")) return "equipment";
+  if (text.includes("scout")) return "scouting";
+  if (text.includes("finance") || text.includes("loan")) return "finance";
+  if (text.includes("sick") || text.includes("injured") || text.includes("health")) return "health";
+  return null;
+}
+
+/**
+ * buildOverviewAttentionSemanticKey
+ * Creates a looser matching key like:
+ *   semantic:race_plan:darwin top end classic
+ * so notification titles and attention labels can match even with slightly
+ * different wording.
+ */
+function buildOverviewAttentionSemanticKey(value: unknown): string | null {
+  const normalized = normalizeOverviewAttentionMatchValue(value);
+  const topic = getOverviewAttentionTopic(normalized);
+  if (!topic) return null;
+
+  let subject = normalized
+    .replace(/\brace plan\b/g, " ")
+    .replace(/\bstage plan\b/g, " ")
+    .replace(/\brace result(s)?\b/g, " ")
+    .replace(/\bstage result(s)?\b/g, " ")
+    .replace(/\brace application\b/g, " ")
+    .replace(/\b(open|opened|deadline|reminder|soon|missing|review|available|submitted|locked|lock|today|for|the|a|an|is|are|has|have|stage|race|plan|results?|classic|tour)\b/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  // Avoid category-wide keys. The subject must contain a real race/stage/event name.
+  if (!subject || subject.length < 6 || subject.split(" ").length < 2) return null;
+
+  return `semantic:${topic}:${subject}`;
+}
+
+function isSpecificOverviewAttentionHrefKey(value: string): boolean {
+  // Generic routes like /dashboard/race-preparation should not match every
+  // race-plan notification. Only hrefs with a UUID are considered unique enough.
+  return /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i.test(value);
+}
+
+/**
+ * getAttentionDismissalKeysFromAlert
+ * Generates every key by which an attention bubble may be dismissed.
+ */
+function getAttentionDismissalKeysFromAlert(alert: AlertItem): string[] {
+  const keys = new Set<string>();
+
+  const exactKey = getAttentionItemKey(alert);
+  if (exactKey) keys.add(exactKey);
+
+  const attentionId = getPersistableAttentionItemId(alert);
+  if (attentionId) {
+    keys.add(`id:${normalizeOverviewAttentionMatchValue(attentionId)}`);
+  }
+
+  const hrefKey = normalizeOverviewAttentionHref(alert.href);
+  if (hrefKey && isSpecificOverviewAttentionHrefKey(hrefKey)) keys.add(`href:${hrefKey}`);
+
+  const labelKey = normalizeOverviewAttentionMatchValue(alert.label);
+  if (labelKey && labelKey.length >= 8) keys.add(`label:${labelKey}`);
+
+  const semanticKey = buildOverviewAttentionSemanticKey(alert.label);
+  if (semanticKey) keys.add(semanticKey);
+
+  return Array.from(keys);
+}
+
+/**
+ * isAttentionItemDismissed
+ * Checks whether any persisted notification/attention key matches this bubble.
+ */
+function isAttentionItemDismissed(
+  alert: AlertItem,
+  openedKeys: Set<string>,
+): boolean {
+  return getAttentionDismissalKeysFromAlert(alert).some((key) =>
+    openedKeys.has(key),
+  );
+}
+
+/**
+ * doAttentionDismissalKeysOverlap
+ * Used for immediate local removal after opening a bubble.
+ */
+function doAttentionDismissalKeysOverlap(
+  alert: AlertItem,
+  dismissalKeys: Set<string>,
+): boolean {
+  return getAttentionDismissalKeysFromAlert(alert).some((key) =>
+    dismissalKeys.has(key),
+  );
+}
+
 function getAttentionItemKey(alert: AlertItem): string {
   return `${alert.id || ""}:${alert.href || ""}:${alert.label || ""}`
     .trim()
@@ -2449,6 +2610,7 @@ function persistOpenedAttentionKeys(keys: Set<string>) {
       OVERVIEW_OPENED_ATTENTION_STORAGE_KEY,
       JSON.stringify(values),
     );
+    window.dispatchEvent(new CustomEvent(OVERVIEW_ATTENTION_DISMISSED_EVENT));
   } catch {
     // Local persistence is only a UI convenience. Ignore storage errors.
   }
@@ -2559,6 +2721,163 @@ async function markOverviewAttentionItemOpened(
         // Continue trying the remaining table/column combinations.
       }
     }
+  }
+}
+
+
+type OverviewNotificationMatchRow = {
+  user_notification_id?: number | string | null;
+  notification_id?: number | string | null;
+  id?: number | string | null;
+  title?: string | null;
+  message?: string | null;
+  type_code?: string | null;
+  source?: string | null;
+  preference_group?: string | null;
+  status?: string | null;
+  metadata?: Record<string, unknown> | null;
+  action_url?: string | null;
+  href?: string | null;
+  target_url?: string | null;
+  route?: string | null;
+  url?: string | null;
+};
+
+function getOverviewNotificationMetadataValues(
+  row: OverviewNotificationMatchRow,
+): string[] {
+  const metadata = row.metadata && typeof row.metadata === "object" ? row.metadata : null;
+  if (!metadata) return [];
+
+  const keys = [
+    "attention_key",
+    "attentionKey",
+    "race_id",
+    "raceId",
+    "stage_id",
+    "stageId",
+    "related_id",
+    "relatedId",
+    "target_id",
+    "targetId",
+  ];
+
+  return keys
+    .map((key) => metadata[key])
+    .filter((value): value is string => typeof value === "string" && value.trim().length > 0);
+}
+
+function getOverviewNotificationActionUrl(row: OverviewNotificationMatchRow): string | null {
+  const metadata = row.metadata && typeof row.metadata === "object" ? row.metadata : null;
+  const metadataUrl = metadata
+    ? (metadata.action_url ?? metadata.actionUrl ?? metadata.href ?? metadata.target_url ?? metadata.targetUrl)
+    : null;
+
+  const value =
+    row.action_url ??
+    row.href ??
+    row.target_url ??
+    row.route ??
+    row.url ??
+    metadataUrl ??
+    null;
+
+  return typeof value === "string" && value.trim().length > 0 ? value : null;
+}
+
+function getOverviewNotificationDismissalKeysFromRow(
+  row: OverviewNotificationMatchRow,
+): string[] {
+  const keys = new Set<string>();
+  const actionUrl = getOverviewNotificationActionUrl(row);
+  const hrefKey = normalizeOverviewAttentionHref(actionUrl);
+  if (hrefKey && isSpecificOverviewAttentionHrefKey(hrefKey)) keys.add(`href:${hrefKey}`);
+
+  for (const rawId of [
+    row.user_notification_id,
+    row.notification_id,
+    row.id,
+    ...getOverviewNotificationMetadataValues(row),
+  ]) {
+    const idKey = normalizeOverviewAttentionMatchValue(rawId);
+    if (idKey) keys.add(`id:${idKey}`);
+  }
+
+  // Only title/message are specific enough for cross-dismissal.
+  // Do not use type_code/source/preference_group, because they are category-wide.
+  for (const rawText of [
+    row.title,
+    row.message,
+    `${row.title ?? ""} ${row.message ?? ""}`,
+  ]) {
+    const labelKey = normalizeOverviewAttentionMatchValue(rawText);
+    if (labelKey && labelKey.length >= 8) keys.add(`label:${labelKey}`);
+
+    const semanticKey = buildOverviewAttentionSemanticKey(rawText);
+    if (semanticKey) keys.add(semanticKey);
+  }
+
+  return Array.from(keys);
+}
+
+function doOverviewAttentionKeyListsOverlap(
+  left: Iterable<string>,
+  right: Iterable<string>,
+): boolean {
+  const rightSet = right instanceof Set ? right : new Set(right);
+  for (const key of left) {
+    if (rightSet.has(key)) return true;
+  }
+  return false;
+}
+
+async function markMatchingUnreadNotificationsReadForAttention(
+  alert: AlertItem,
+): Promise<number> {
+  const attentionKeys = getAttentionDismissalKeysFromAlert(alert);
+  if (attentionKeys.length === 0) return 0;
+
+  try {
+    const { data, error } = await supabase.rpc("get_my_notifications", {
+      p_status: "unread",
+      p_page: 1,
+      p_page_size: 500,
+    });
+
+    if (error) {
+      console.warn("Could not load unread notifications for attention sync:", error.message);
+      return 0;
+    }
+
+    const rows = asArray<OverviewNotificationMatchRow>(data);
+    let markedCount = 0;
+
+    for (const row of rows) {
+      const notificationKeys = getOverviewNotificationDismissalKeysFromRow(row);
+      if (!doOverviewAttentionKeyListsOverlap(attentionKeys, notificationKeys)) continue;
+
+      const userNotificationId = row.user_notification_id;
+      if (userNotificationId === null || userNotificationId === undefined) continue;
+
+      const { data: marked, error: markError } = await supabase.rpc(
+        "mark_my_notification_read",
+        {
+          p_user_notification_id: userNotificationId,
+        },
+      );
+
+      if (markError) {
+        console.warn("Could not mark matching notification read:", markError.message);
+        continue;
+      }
+
+      if (marked === true) markedCount += 1;
+    }
+
+    return markedCount;
+  } catch (err) {
+    console.warn("Attention-to-notification sync failed:", err);
+    return 0;
   }
 }
 
@@ -4957,6 +5276,28 @@ export default function OverviewPage() {
   }, [data]);
 
   React.useEffect(() => {
+    const refreshOpenedAttentionKeys = () => {
+      setOpenedAttentionKeys(readOpenedAttentionKeys());
+    };
+
+    window.addEventListener("storage", refreshOpenedAttentionKeys);
+    window.addEventListener("focus", refreshOpenedAttentionKeys);
+    window.addEventListener(
+      OVERVIEW_ATTENTION_DISMISSED_EVENT,
+      refreshOpenedAttentionKeys,
+    );
+
+    return () => {
+      window.removeEventListener("storage", refreshOpenedAttentionKeys);
+      window.removeEventListener("focus", refreshOpenedAttentionKeys);
+      window.removeEventListener(
+        OVERVIEW_ATTENTION_DISMISSED_EVENT,
+        refreshOpenedAttentionKeys,
+      );
+    };
+  }, []);
+
+  React.useEffect(() => {
     let alive = true;
 
     async function loadOverviewTutorialProgress() {
@@ -5433,15 +5774,18 @@ export default function OverviewPage() {
       const clubId =
         data?.club.id && data.club.id.trim().length > 0 ? data.club.id : null;
 
+      const dismissalKeys = new Set(getAttentionDismissalKeysFromAlert(alert));
+      dismissalKeys.add(key);
+
       setOpenedAttentionKeys((current) => {
         const next = new Set(current);
-        next.add(key);
+        dismissalKeys.forEach((dismissalKey) => next.add(dismissalKey));
         persistOpenedAttentionKeys(next);
         return next;
       });
 
       setAttentionAlerts((current) =>
-        current.filter((item) => getAttentionItemKey(item) !== key),
+        current.filter((item) => !doAttentionDismissalKeysOverlap(item, dismissalKeys)),
       );
 
       setData((current) => {
@@ -5450,16 +5794,30 @@ export default function OverviewPage() {
         return {
           ...current,
           alerts: current.alerts.filter(
-            (item) => getAttentionItemKey(item) !== key,
+            (item) => !doAttentionDismissalKeysOverlap(item, dismissalKeys),
           ),
-          club: {
-            ...current.club,
-            notificationsUnread: Math.max(0, current.club.notificationsUnread - 1),
-          },
         };
       });
 
       void markOverviewAttentionItemOpened(alert, clubId);
+      void markMatchingUnreadNotificationsReadForAttention(alert).then((markedCount) => {
+        if (markedCount <= 0) return;
+
+        setData((current) => {
+          if (!current) return current;
+
+          return {
+            ...current,
+            club: {
+              ...current.club,
+              notificationsUnread: Math.max(
+                0,
+                current.club.notificationsUnread - markedCount,
+              ),
+            },
+          };
+        });
+      });
     },
     [data?.club.id],
   );
@@ -5484,7 +5842,7 @@ export default function OverviewPage() {
   }
 
   const attentionItems = mergeOverviewAlerts(data.alerts, attentionAlerts).filter(
-    (item) => !openedAttentionKeys.has(getAttentionItemKey(item)),
+    (item) => !isAttentionItemDismissed(item, openedAttentionKeys),
   );
   const visibleSquadPulse = squadPulseOverride ?? data.squadPulse;
 

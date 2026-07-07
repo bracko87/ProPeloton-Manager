@@ -833,7 +833,12 @@ export default function SquadPage() {
     return current === path
   }
 
-  const hasDevelopingTeam = developingTeamStatus?.is_purchased ?? false
+  const developingTeamStatusResolved =
+    developingTeamStatus !== null || developingTeamStatusError !== null
+
+  const hasDevelopingTeam = developingTeamStatus?.is_purchased === true
+  const showDevelopingTeamLockedState =
+    developingTeamStatusResolved && !hasDevelopingTeam
   const movementWindowOpen = developingTeamStatus?.movement_window_open ?? false
 
   const movementWindowSummary = developingTeamStatus
@@ -875,7 +880,7 @@ export default function SquadPage() {
             >
               Developing Team
             </a>
-          ) : (
+          ) : showDevelopingTeamLockedState ? (
             <span
               className="inline-flex cursor-not-allowed items-center gap-2 rounded-md px-4 py-2 text-sm font-medium text-gray-400"
               title="Unlock Developing Team in Preferences first."
@@ -883,6 +888,10 @@ export default function SquadPage() {
             >
               <span>Developing Team</span>
               <span aria-hidden="true">🔒</span>
+            </span>
+          ) : (
+            <span className="inline-flex items-center rounded-md px-4 py-2 text-sm font-medium text-gray-500">
+              Developing Team
             </span>
           )}
 

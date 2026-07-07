@@ -75,6 +75,12 @@ type RiderSeasonStatsBox = {
   points: number;
 };
 
+type CurrentRiderTeamInfo = {
+  clubId: string | null;
+  teamName: string;
+  logoUrl: string | null;
+};
+
 type RiderRecentRaceRow = {
   race_id?: string | null;
   race_name: string;
@@ -105,6 +111,38 @@ type ActiveFreeAgentRow = {
   rider_id: string;
   expires_on_game_date: string | null;
   status: string;
+};
+
+type ActivePremiumBidRow = {
+  id: string;
+  status: string;
+  ai_decision: string | null;
+  offer_amount_cash: number | null;
+  counteroffer_amount_cash: number | null;
+  expires_on_game_date: string | null;
+};
+
+
+type PremiumTransferBidQuote = {
+  success?: boolean;
+  can_submit?: boolean;
+  rider_id?: string;
+  buyer_club_id?: string;
+  seller_club_id?: string;
+  market_value?: number | string | null;
+  offer_amount?: number | string | null;
+  selling_club_stance?: string | null;
+  offer_strength?: string | null;
+  predicted_public_outcome?: string | null;
+  counteroffer_amount_cash?: number | string | null;
+  reasons?: string[] | null;
+};
+
+type PremiumTransferBidModalState = {
+  riderId: string;
+  riderName: string;
+  buyerClubId: string;
+  marketValue: number;
 };
 
 type ExternalProfileGameStateRow = {
@@ -1315,6 +1353,72 @@ function getEffectiveScoutBlockingReason(
   );
 }
 
+async function fetchCurrentRiderTeamById(
+  riderId: string,
+): Promise<CurrentRiderTeamInfo | null> {
+  const { data, error } = await supabase.rpc(
+    "get_external_rider_current_team_v1",
+    { p_rider_id: riderId },
+  );
+
+  if (error) throw error;
+
+  const payload = data && typeof data === "object"
+    ? (data as Record<string, unknown>)
+    : null;
+
+  if (!payload || payload.success === false || payload.found === false) {
+    return null;
+  }
+
+  return {
+    clubId: normalizeString(payload.club_id),
+    teamName: normalizeString(payload.team_name) ?? "—",
+    logoUrl: normalizeString(payload.logo_url),
+  };
+}
+
+async function fetchActivePremiumBidForRider(
+  riderId: string,
+  buyerClubId: string | null | undefined,
+): Promise<ActivePremiumBidRow | null> {
+  if (!riderId || !buyerClubId) return null;
+
+  const { data, error } = await supabase.rpc(
+    "get_active_unsolicited_transfer_bid_for_rider_v1",
+    {
+      p_rider_id: riderId,
+      p_buyer_club_id: buyerClubId,
+    },
+  );
+
+  if (error) throw error;
+
+  const payload = data && typeof data === "object"
+    ? (data as Record<string, unknown>)
+    : null;
+
+  if (!payload || payload.success === false || payload.has_active_bid !== true) {
+    return null;
+  }
+
+  const bid = payload.bid && typeof payload.bid === "object"
+    ? (payload.bid as Record<string, unknown>)
+    : null;
+
+  if (!bid) return null;
+
+  return {
+    id: normalizeString(bid.id) ?? "",
+    status: normalizeString(bid.status) ?? "active",
+    ai_decision: normalizeString(bid.ai_decision),
+    offer_amount_cash: normalizeNullableNumber(bid.offer_amount_cash),
+    counteroffer_amount_cash: normalizeNullableNumber(bid.counteroffer_amount_cash),
+    expires_on_game_date: normalizeString(bid.expires_on_game_date),
+  };
+}
+
+
 export default function ExternalRiderProfilePage({
   riderId: riderIdProp,
   gameDate: gameDateProp,
@@ -1340,6 +1444,9 @@ export default function ExternalRiderProfilePage({
   const [profileLoading, setProfileLoading] = useState(false);
   const [profileError, setProfileError] = useState<string | null>(null);
   const [selectedRider, setSelectedRider] = useState<RiderDetails | null>(null);
+  const [currentTeamInfo, setCurrentTeamInfo] =
+    useState<CurrentRiderTeamInfo | null>(null);
+  const [currentTeamLoading, setCurrentTeamLoading] = useState(false);
   const [secureProfile, setSecureProfile] =
     useState<ExternalRiderSecureProfilePayload | null>(null);
   const [activeTab, setActiveTab] =
@@ -1368,6 +1475,8 @@ export default function ExternalRiderProfilePage({
     useState<ActiveTransferListing | null>(null);
   const [activeFreeAgent, setActiveFreeAgent] =
     useState<ActiveFreeAgentRow | null>(null);
+  const [activePremiumBid, setActivePremiumBid] =
+    useState<ActivePremiumBidRow | null>(null);
   const [marketError, setMarketError] = useState<string | null>(null);
   const [marketActionMessage, setMarketActionMessage] = useState<string | null>(
     null,
@@ -1410,6 +1519,17 @@ export default function ExternalRiderProfilePage({
     null,
   );
   const [offerSubmitting, setOfferSubmitting] = useState(false);
+
+  const [premiumBidModal, setPremiumBidModal] =
+    useState<PremiumTransferBidModalState | null>(null);
+  const [premiumBidDraftPrice, setPremiumBidDraftPrice] = useState("");
+  const [premiumBidQuote, setPremiumBidQuote] =
+    useState<PremiumTransferBidQuote | null>(null);
+  const [premiumBidQuoteLoading, setPremiumBidQuoteLoading] = useState(false);
+  const [premiumBidSubmitting, setPremiumBidSubmitting] = useState(false);
+  const [premiumBidMessage, setPremiumBidMessage] = useState<string | null>(
+    null,
+  );
 
   const [historyLoading, setHistoryLoading] = useState(false);
   const [historyError, setHistoryError] = useState<string | null>(null);
@@ -1462,12 +1582,15 @@ export default function ExternalRiderProfilePage({
       setProfileLoading(true);
       setProfileError(null);
       setSelectedRider(null);
+      setCurrentTeamInfo(null);
+      setCurrentTeamLoading(false);
       setSecureProfile(null);
       setSeasonOverview({ points: 0, podiums: 0, jerseys: 0 });
       setSeasonStats({ races: 0, wins: 0, podiums: 0, top10: 0, points: 0 });
       setRecentRaces([]);
       setActiveTransferListing(null);
       setActiveFreeAgent(null);
+      setActivePremiumBid(null);
       setMarketError(null);
       setMarketActionMessage(null);
       setScoutActionMessage(null);
@@ -1486,6 +1609,12 @@ export default function ExternalRiderProfilePage({
       setOfferDraftPrice("");
       setOfferModalMessage(null);
       setOfferSubmitting(false);
+      setPremiumBidModal(null);
+      setPremiumBidDraftPrice("");
+      setPremiumBidQuote(null);
+      setPremiumBidQuoteLoading(false);
+      setPremiumBidSubmitting(false);
+      setPremiumBidMessage(null);
       setHistoryRows([]);
       setHistoryError(null);
       setActiveTab(defaultTab);
@@ -1606,19 +1735,22 @@ export default function ExternalRiderProfilePage({
       setMarketError(null);
 
       try {
-        const [listing, freeAgent] = await Promise.all([
+        const [listing, freeAgent, premiumBid] = await Promise.all([
           fetchActiveTransferListing(selectedRider.id),
           fetchActiveFreeAgent(selectedRider.id),
+          fetchActivePremiumBidForRider(selectedRider.id, secureProfile?.clubId),
         ]);
 
         if (!mounted) return;
         setActiveTransferListing(listing);
         setActiveFreeAgent(freeAgent);
+        setActivePremiumBid(premiumBid);
       } catch (e: any) {
         if (!mounted) return;
         setMarketError(e?.message ?? "Could not load rider market data.");
         setActiveTransferListing(null);
         setActiveFreeAgent(null);
+        setActivePremiumBid(null);
       } finally {
         if (!mounted) return;
         setMarketLoading(false);
@@ -1630,7 +1762,7 @@ export default function ExternalRiderProfilePage({
     return () => {
       mounted = false;
     };
-  }, [selectedRider?.id]);
+  }, [selectedRider?.id, secureProfile?.clubId]);
 
   useEffect(() => {
     let mounted = true;
@@ -1703,6 +1835,42 @@ export default function ExternalRiderProfilePage({
     "number"
       ? ((selectedRider as { age_years?: number }).age_years ?? null)
       : null;
+  useEffect(() => {
+    let mounted = true;
+
+    async function loadCurrentTeam() {
+      if (!selectedRider?.id) {
+        setCurrentTeamInfo(null);
+        setCurrentTeamLoading(false);
+        return;
+      }
+
+      setCurrentTeamLoading(true);
+
+      try {
+        const nextTeamInfo = await fetchCurrentRiderTeamById(selectedRider.id);
+        if (!mounted) return;
+        setCurrentTeamInfo(nextTeamInfo);
+      } catch (error) {
+        console.error(
+          "Failed to load current team for external rider profile:",
+          error,
+        );
+        if (!mounted) return;
+        setCurrentTeamInfo(null);
+      } finally {
+        if (!mounted) return;
+        setCurrentTeamLoading(false);
+      }
+    }
+
+    void loadCurrentTeam();
+
+    return () => {
+      mounted = false;
+    };
+  }, [selectedRider?.id]);
+
   const profileAge =
     getAgeFromBirthDate(selectedRider?.birth_date, resolvedGameDate) ??
     statsAge;
@@ -1793,6 +1961,18 @@ export default function ExternalRiderProfilePage({
   const scoutButtonLabel = secureProfile?.scoutReport
     ? "Scout Rider Again"
     : "Scout Rider";
+
+  const shouldShowPremiumOfferButton = Boolean(
+    selectedRider?.id &&
+      secureProfile?.clubId &&
+      !secureProfile?.isOwnRider &&
+      !activeTransferListing &&
+      !activeFreeAgent &&
+      !activePremiumBid,
+  );
+
+  const currentTeamDisplayName = currentTeamInfo?.teamName ?? "—";
+  const currentTeamLogoUrl = currentTeamInfo?.logoUrl ?? null;
 
   const tabButtonClass = (tab: ExternalRiderProfileTab) =>
     `border-b-2 px-4 py-3 text-sm font-medium transition ${
@@ -1900,6 +2080,270 @@ export default function ExternalRiderProfilePage({
     if (!digits) return null;
     const parsed = Number(digits);
     return Number.isFinite(parsed) ? parsed : null;
+  }
+
+
+  function normalizePremiumBidQuote(data: unknown): PremiumTransferBidQuote | null {
+    if (!data || typeof data !== "object") return null;
+    return data as PremiumTransferBidQuote;
+  }
+
+  function getPremiumBidQuoteNumber(
+    value: number | string | null | undefined,
+  ): number | null {
+    if (typeof value === "number" && Number.isFinite(value)) return value;
+    if (typeof value === "string" && value.trim() !== "") {
+      const parsed = Number(value);
+      return Number.isFinite(parsed) ? parsed : null;
+    }
+    return null;
+  }
+
+  function formatPremiumBidStatusLabel(value?: string | null): string {
+    switch (String(value || "").toLowerCase()) {
+      case "strongly_not_interested":
+        return "Strongly not interested";
+      case "not_interested":
+        return "Not interested";
+      case "unlikely_to_sell":
+        return "Unlikely to sell";
+      case "not_available":
+        return "Not available";
+      case "too_low":
+        return "Too low";
+      case "serious_but_short":
+        return "Serious, but short";
+      case "very_strong":
+        return "Very strong";
+      case "exceptional":
+        return "Exceptional";
+      case "likely_rejected":
+        return "Likely rejected";
+      case "likely_counteroffer":
+        return "Likely counteroffer";
+      case "may_be_accepted":
+        return "May be accepted";
+      case "blocked":
+        return "Blocked";
+      case "not_submitted":
+        return "Not submitted";
+      case "no_offer":
+        return "No offer yet";
+      default:
+        return value ? titleCaseFromSnake(value) : "—";
+    }
+  }
+
+  function getPremiumBidToneClass(value?: string | null): string {
+    const normalized = String(value || "").toLowerCase();
+
+    if (normalized === "exceptional" || normalized === "very_strong" || normalized === "may_be_accepted") {
+      return "border-emerald-200 bg-emerald-50 text-emerald-800";
+    }
+
+    if (normalized === "serious_but_short" || normalized === "likely_counteroffer") {
+      return "border-amber-200 bg-amber-50 text-amber-800";
+    }
+
+    if (normalized === "too_low" || normalized === "likely_rejected" || normalized === "not_available" || normalized === "blocked") {
+      return "border-rose-200 bg-rose-50 text-rose-700";
+    }
+
+    return "border-slate-200 bg-slate-50 text-slate-700";
+  }
+
+  async function loadPremiumBidQuote(nextOfferAmount?: number | null) {
+    if (!premiumBidModal) return;
+
+    const offerAmount =
+      nextOfferAmount ?? parseCurrencyInput(premiumBidDraftPrice) ?? null;
+
+    try {
+      setPremiumBidQuoteLoading(true);
+      setPremiumBidMessage(null);
+
+      const { data, error } = await supabase.rpc(
+        "quote_unsolicited_ai_transfer_bid_v1",
+        {
+          p_rider_id: premiumBidModal.riderId,
+          p_buyer_club_id: premiumBidModal.buyerClubId,
+          p_offer_amount_cash: offerAmount,
+        },
+      );
+
+      if (error) throw error;
+
+      setPremiumBidQuote(normalizePremiumBidQuote(data));
+    } catch (error: any) {
+      setPremiumBidQuote(null);
+      setPremiumBidMessage(
+        error?.message ?? "Could not quote this premium offer.",
+      );
+    } finally {
+      setPremiumBidQuoteLoading(false);
+    }
+  }
+
+  async function openPremiumBidModal() {
+    if (!selectedRider?.id) return;
+
+    const buyerClubId = normalizeString(secureProfile?.clubId);
+    if (!buyerClubId) {
+      setMarketActionMessage("Your primary club is not available.");
+      return;
+    }
+
+    const marketValue = Math.max(
+      normalizeNumber(selectedRider.market_value, 0),
+      normalizeNumber(secureProfile?.profile?.marketValue, 0),
+      0,
+    );
+    const startingOffer = Math.max(Math.round(marketValue * 3), 100000);
+
+    setPremiumBidModal({
+      riderId: selectedRider.id,
+      riderName,
+      buyerClubId,
+      marketValue,
+    });
+    setPremiumBidDraftPrice(formatCurrencyInput(String(startingOffer)));
+    setPremiumBidQuote(null);
+    setPremiumBidMessage(null);
+    setPremiumBidSubmitting(false);
+
+    try {
+      setPremiumBidQuoteLoading(true);
+
+      const { data, error } = await supabase.rpc(
+        "quote_unsolicited_ai_transfer_bid_v1",
+        {
+          p_rider_id: selectedRider.id,
+          p_buyer_club_id: buyerClubId,
+          p_offer_amount_cash: startingOffer,
+        },
+      );
+
+      if (error) throw error;
+
+      setPremiumBidQuote(normalizePremiumBidQuote(data));
+    } catch (error: any) {
+      setPremiumBidQuote(null);
+      setPremiumBidMessage(
+        error?.message ?? "Could not quote this premium offer.",
+      );
+    } finally {
+      setPremiumBidQuoteLoading(false);
+    }
+  }
+
+  async function handleSubmitPremiumBidFromProfile() {
+    if (!premiumBidModal) return;
+
+    const offeredPrice = parseCurrencyInput(premiumBidDraftPrice);
+
+    if (!offeredPrice || offeredPrice <= 0) {
+      setPremiumBidMessage("Please enter a valid offer amount.");
+      return;
+    }
+
+    if (premiumBidQuote?.can_submit === false) {
+      setPremiumBidMessage("This rider is not available for a premium bid right now.");
+      return;
+    }
+
+    try {
+      setPremiumBidSubmitting(true);
+      setPremiumBidMessage(null);
+
+      const { data, error } = await supabase.rpc(
+        "submit_unsolicited_ai_transfer_bid_v1",
+        {
+          p_rider_id: premiumBidModal.riderId,
+          p_buyer_club_id: premiumBidModal.buyerClubId,
+          p_offer_amount_cash: offeredPrice,
+        },
+      );
+
+      if (error) throw error;
+
+      const result = data && typeof data === "object" ? (data as Record<string, any>) : {};
+      const status = normalizeString(result.status);
+      const aiDecision = normalizeString(result.ai_decision);
+      const bidId = normalizeString(result.bid_id);
+      const counterofferAmount = getPremiumBidQuoteNumber(
+        result.counteroffer_amount_cash,
+      );
+
+      if (status === "accepted_pending_confirmation" && aiDecision === "accepted") {
+        if (!bidId) throw new Error("Accepted premium bid is missing bid id.");
+
+        const { data: confirmData, error: confirmError } = await supabase.rpc(
+          "confirm_unsolicited_ai_transfer_bid_v1",
+          {
+            p_bid_id: bidId,
+          },
+        );
+
+        if (confirmError) throw confirmError;
+
+        const confirmResult =
+          confirmData && typeof confirmData === "object"
+            ? (confirmData as Record<string, any>)
+            : {};
+        const negotiationId = normalizeString(confirmResult.negotiation_id);
+
+        setPremiumBidModal(null);
+        setPremiumBidDraftPrice("");
+        setPremiumBidQuote(null);
+        setPremiumBidMessage(null);
+        setMarketActionMessage(
+          `Premium offer of ${formatTransferAmount(
+            offeredPrice,
+          )} was accepted by the AI club. Continue rider contract negotiation.`,
+        );
+
+        if (negotiationId) {
+          navigate(`/dashboard/transfers/negotiations/${negotiationId}`);
+        }
+
+        return;
+      }
+
+      if (status === "countered" || aiDecision === "counteroffer") {
+        setPremiumBidMessage(
+          counterofferAmount
+            ? `The AI club wants ${formatTransferAmount(
+                counterofferAmount,
+              )}. You can close this modal and submit a new premium offer at that amount.`
+            : "The AI club sent a counteroffer.",
+        );
+        if (counterofferAmount) {
+          setPremiumBidDraftPrice(formatCurrencyInput(String(counterofferAmount)));
+        }
+        await loadPremiumBidQuote(counterofferAmount ?? offeredPrice);
+        return;
+      }
+
+      if (status === "rejected" || aiDecision === "rejected_low_offer" || aiDecision === "hard_rejected") {
+        setPremiumBidMessage(
+          normalizeString(result.message) ??
+            "The AI club rejected this premium offer.",
+        );
+        await loadPremiumBidQuote(offeredPrice);
+        return;
+      }
+
+      setPremiumBidMessage(
+        normalizeString(result.message) ?? "Premium bid submitted.",
+      );
+      await loadPremiumBidQuote(offeredPrice);
+    } catch (error: any) {
+      setPremiumBidMessage(
+        error?.message ?? "Failed to submit premium offer.",
+      );
+    } finally {
+      setPremiumBidSubmitting(false);
+    }
   }
 
   async function fetchClubNameById(clubId: string): Promise<string | null> {
@@ -2284,7 +2728,7 @@ export default function ExternalRiderProfilePage({
       </div>
 
       <div className="mb-6 border-b border-slate-200">
-        <div className="flex flex-wrap gap-1">
+        <div className="flex flex-wrap items-center gap-1">
           <button
             type="button"
             onClick={() => setActiveTab("overview")}
@@ -2299,8 +2743,104 @@ export default function ExternalRiderProfilePage({
           >
             History
           </button>
+
+          {shouldShowScoutButton ? (
+            <button
+              type="button"
+              onClick={() => {
+                void handleOpenScoutPicker();
+              }}
+              disabled={availableScoutsLoading || scoutTaskLoading}
+              className={`border-b-2 px-4 py-3 text-sm font-medium transition ${
+                availableScoutsLoading || scoutTaskLoading
+                  ? "cursor-not-allowed border-transparent text-slate-400"
+                  : "border-transparent text-slate-500 hover:text-slate-700"
+              }`}
+            >
+              {availableScoutsLoading
+                ? "Loading scouts…"
+                : scoutTaskLoading
+                  ? "Checking scout tasks…"
+                  : scoutButtonLabel}
+            </button>
+          ) : null}
+
+          {activeTransferListing ? (
+            <button
+              type="button"
+              onClick={() => {
+                void openTransferOfferModal(activeTransferListing);
+              }}
+              className="border-b-2 border-transparent px-4 py-3 text-sm font-medium text-slate-500 transition hover:text-slate-700"
+            >
+              Make Transfer Offer
+            </button>
+          ) : null}
+
+          {activeFreeAgent ? (
+            <button
+              type="button"
+              onClick={() => {
+                handleNegotiateWithFreeAgent();
+              }}
+              disabled={freeAgentActionLoading}
+              className={`border-b-2 px-4 py-3 text-sm font-medium transition ${
+                freeAgentActionLoading
+                  ? "cursor-not-allowed border-transparent text-slate-400"
+                  : "border-transparent text-slate-500 hover:text-slate-700"
+              }`}
+            >
+              {freeAgentActionLoading
+                ? "Opening negotiation..."
+                : "Negotiate with Free Agent"}
+            </button>
+          ) : null}
+
+          {shouldShowPremiumOfferButton ? (
+            <button
+              type="button"
+              onClick={() => {
+                void openPremiumBidModal();
+              }}
+              disabled={premiumBidQuoteLoading || premiumBidSubmitting}
+              className={`border-b-2 px-4 py-3 text-sm font-medium transition ${
+                premiumBidQuoteLoading || premiumBidSubmitting
+                  ? "cursor-not-allowed border-transparent text-slate-400"
+                  : "border-transparent text-slate-500 hover:text-slate-700"
+              }`}
+            >
+              {premiumBidQuoteLoading
+                ? "Checking premium offer..."
+                : "Make Premium Offer"}
+            </button>
+          ) : activePremiumBid && !activeTransferListing && !activeFreeAgent ? (
+            <button
+              type="button"
+              disabled
+              title="You already have an active premium offer or negotiation for this rider."
+              className="cursor-not-allowed border-b-2 border-transparent px-4 py-3 text-sm font-medium text-slate-400"
+            >
+              Premium Offer Active
+            </button>
+          ) : null}
         </div>
       </div>
+
+      {marketLoading ? (
+        <div className="mb-4 text-sm text-slate-500">Loading rider market data…</div>
+      ) : null}
+
+      {marketError ? (
+        <div className="mb-4 rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+          {marketError}
+        </div>
+      ) : null}
+
+      {marketActionMessage ? (
+        <div className="mb-4 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
+          {marketActionMessage}
+        </div>
+      ) : null}
 
       {profileLoading || gameDateLoading ? (
         <div className="rounded-lg bg-white p-4 shadow">
@@ -2355,148 +2895,11 @@ export default function ExternalRiderProfilePage({
                   )}
                 </SectionCard>
 
-                <SectionCard title="Market">
-                  {marketLoading ? (
-                    <div className="text-sm text-slate-600">
-                      Loading market data…
-                    </div>
-                  ) : marketError ? (
-                    <div className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
-                      {marketError}
-                    </div>
-                  ) : (
-                    <div className="space-y-3">
-                      <div className="divide-y divide-slate-100">
-                        <DetailRow label="Status" value={marketStatusLabel} />
-                        {activeTransferListing ? (
-                          <DetailRow
-                            label="Transfer Window"
-                            value={transferTimeLabel}
-                          />
-                        ) : null}
-                        {activeFreeAgent ? (
-                          <DetailRow
-                            label="Free Agent Window"
-                            value={freeAgentTimeLabel}
-                          />
-                        ) : null}
-                      </div>
-
-                      <div className="rounded-xl border border-slate-200 bg-white px-4 py-3">
-                        <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
-                          Scouting
-                        </div>
-
-                        {activeScoutTask ? (
-                          <div className="mt-3 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">
-                            <div className="font-medium text-blue-900">
-                              {activeScoutTask.scout_name ??
-                                activeScoutTask.scout_staff_name ??
-                                "Assigned scout"}{" "}
-                              is currently scouting this rider.
-                            </div>
-
-                            <div className="mt-1">
-                              Completes:{" "}
-                              {formatGameTimestampAsSeasonLabel(
-                                activeScoutTask.completes_at_game_ts,
-                              )}
-                            </div>
-                          </div>
-                        ) : secureProfile?.scoutReport ? (
-                          <div className="mt-3 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
-                            Scouting report available for this rider.
-                          </div>
-                        ) : secureProfile?.isOwnRider ? (
-                          <div className="mt-3 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
-                            Scouting is only available for external riders.
-                          </div>
-                        ) : null}
-
-                        {shouldShowScoutButton ? (
-                          <button
-                            type="button"
-                            onClick={() => {
-                              void handleOpenScoutPicker();
-                            }}
-                            disabled={
-                              availableScoutsLoading || scoutTaskLoading
-                            }
-                            className="mt-3 w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-900 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
-                          >
-                            {availableScoutsLoading
-                              ? "Loading scouts…"
-                              : scoutTaskLoading
-                                ? "Checking scout tasks…"
-                                : scoutButtonLabel}
-                          </button>
-                        ) : null}
-
-                        {scoutTaskError ? (
-                          <div className="mt-3 rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
-                            {scoutTaskError}
-                          </div>
-                        ) : null}
-
-                        {scoutActionMessage ? (
-                          <div className="mt-3 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
-                            {scoutActionMessage}
-                          </div>
-                        ) : null}
-                      </div>
-
-                      {activeTransferListing ? (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            void openTransferOfferModal(activeTransferListing);
-                          }}
-                          className="w-full rounded-lg bg-yellow-400 px-4 py-3 text-sm font-semibold text-slate-950 transition hover:bg-yellow-500"
-                        >
-                          Make Transfer Offer
-                        </button>
-                      ) : null}
-
-                      {activeFreeAgent ? (
-                        <div className="mt-4 space-y-3">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              handleNegotiateWithFreeAgent();
-                            }}
-                            disabled={freeAgentActionLoading}
-                            className={`w-full rounded-lg px-4 py-3 text-sm font-semibold transition ${
-                              freeAgentActionLoading
-                                ? "cursor-not-allowed bg-gray-200 text-gray-500"
-                                : "bg-yellow-400 text-black hover:bg-yellow-300"
-                            }`}
-                          >
-                            {freeAgentActionLoading
-                              ? "Opening negotiation..."
-                              : "Negotiate with Free Agent"}
-                          </button>
-
-                          {freeAgentActionError ? (
-                            <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-                              {freeAgentActionError}
-                            </div>
-                          ) : null}
-                        </div>
-                      ) : null}
-
-                      {marketActionMessage ? (
-                        <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
-                          {marketActionMessage}
-                        </div>
-                      ) : null}
-                    </div>
-                  )}
-                </SectionCard>
               </div>
 
               <div className="space-y-4">
                 <SectionCard title="Basic Information">
-                  <div className="grid grid-cols-1 gap-x-6 md:grid-cols-2">
+                  <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
                     <div className="divide-y divide-slate-100">
                       <DetailRow
                         label="Country"
@@ -2528,6 +2931,33 @@ export default function ExternalRiderProfilePage({
                         value={contractExpiryUi.label}
                         valueClassName={contractExpiryUi.valueClassName}
                       />
+                    </div>
+
+                    <div className="border-t border-slate-300 pt-5 xl:border-l xl:border-t-0 xl:pl-6 xl:pt-0">
+                      {currentTeamLoading ? (
+                        <div className="text-sm text-slate-500">Loading team…</div>
+                      ) : (
+                        <div>
+                          <div className="flex flex-wrap items-baseline gap-2 border-b border-slate-100 pb-3">
+                            <span className="text-sm text-slate-500">
+                              Current Team:
+                            </span>
+                            <span className="text-base font-semibold text-slate-900">
+                              {currentTeamDisplayName}
+                            </span>
+                          </div>
+
+                          {currentTeamLogoUrl ? (
+                            <div className="mt-5 flex min-h-[130px] items-center justify-start">
+                              <img
+                                src={currentTeamLogoUrl}
+                                alt={currentTeamDisplayName}
+                                className="max-h-36 max-w-[280px] object-contain"
+                              />
+                            </div>
+                          ) : null}
+                        </div>
+                      )}
                     </div>
                   </div>
                 </SectionCard>
@@ -3049,6 +3479,160 @@ export default function ExternalRiderProfilePage({
                 }`}
               >
                 {scoutSubmitLoading ? "Starting..." : "Start Scouting"}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {premiumBidModal ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/25 px-4 backdrop-blur-sm">
+          <div className="w-full max-w-lg rounded-xl bg-white p-5 shadow-xl">
+            <h3 className="text-lg font-semibold text-gray-900">
+              Make Premium Offer
+            </h3>
+
+
+            <div className="mt-4 space-y-2 text-sm text-gray-600">
+              <div>
+                <span className="font-semibold text-gray-900">Rider:</span>{" "}
+                {premiumBidModal.riderName}
+              </div>
+              <div>
+                <span className="font-semibold text-gray-900">
+                  Market value:
+                </span>{" "}
+                {formatTransferAmount(premiumBidModal.marketValue)}
+              </div>
+            </div>
+
+            <div className="mt-4">
+              <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-gray-500">
+                Premium Offer
+              </label>
+              <input
+                type="text"
+                inputMode="numeric"
+                value={premiumBidDraftPrice}
+                onChange={(e) => {
+                  setPremiumBidDraftPrice(formatCurrencyInput(e.target.value));
+                  setPremiumBidMessage(null);
+                }}
+                placeholder="$5,000,000"
+                className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700"
+              />
+            </div>
+
+            {premiumBidQuote ? (
+              <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                <div className={`rounded-lg border px-3 py-2 text-sm ${getPremiumBidToneClass(premiumBidQuote.selling_club_stance)}`}>
+                  <div className="text-xs font-semibold uppercase tracking-wide opacity-70">
+                    Club stance
+                  </div>
+                  <div className="mt-1 font-semibold">
+                    {formatPremiumBidStatusLabel(premiumBidQuote.selling_club_stance)}
+                  </div>
+                </div>
+
+                <div className={`rounded-lg border px-3 py-2 text-sm ${getPremiumBidToneClass(premiumBidQuote.offer_strength)}`}>
+                  <div className="text-xs font-semibold uppercase tracking-wide opacity-70">
+                    Offer strength
+                  </div>
+                  <div className="mt-1 font-semibold">
+                    {formatPremiumBidStatusLabel(premiumBidQuote.offer_strength)}
+                  </div>
+                </div>
+
+                <div className={`rounded-lg border px-3 py-2 text-sm ${getPremiumBidToneClass(premiumBidQuote.predicted_public_outcome)}`}>
+                  <div className="text-xs font-semibold uppercase tracking-wide opacity-70">
+                    Predicted result
+                  </div>
+                  <div className="mt-1 font-semibold">
+                    {formatPremiumBidStatusLabel(premiumBidQuote.predicted_public_outcome)}
+                  </div>
+                </div>
+
+                <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700">
+                  <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    AI counter
+                  </div>
+                  <div className="mt-1 font-semibold text-slate-900">
+                    {premiumBidQuote.counteroffer_amount_cash
+                      ? formatTransferAmount(
+                          getPremiumBidQuoteNumber(
+                            premiumBidQuote.counteroffer_amount_cash,
+                          ),
+                        )
+                      : "—"}
+                  </div>
+                </div>
+              </div>
+            ) : null}
+
+            {premiumBidQuote?.reasons?.length ? (
+              <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
+                {premiumBidQuote.reasons.slice(0, 3).map((reason) => (
+                  <div key={reason}>• {reason}</div>
+                ))}
+              </div>
+            ) : null}
+
+            {premiumBidMessage ? (
+              <div className="mt-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                {premiumBidMessage}
+              </div>
+            ) : null}
+
+            <div className="mt-5 flex flex-wrap items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setPremiumBidModal(null);
+                  setPremiumBidDraftPrice("");
+                  setPremiumBidQuote(null);
+                  setPremiumBidMessage(null);
+                  setPremiumBidSubmitting(false);
+                  setPremiumBidQuoteLoading(false);
+                }}
+                className="rounded-md border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                disabled={premiumBidQuoteLoading || premiumBidSubmitting}
+                onClick={() => {
+                  void loadPremiumBidQuote();
+                }}
+                className={`rounded-md border px-4 py-2 text-sm font-medium ${
+                  premiumBidQuoteLoading || premiumBidSubmitting
+                    ? "cursor-not-allowed border-gray-200 bg-gray-100 text-gray-400"
+                    : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
+                }`}
+              >
+                {premiumBidQuoteLoading ? "Checking..." : "Refresh Quote"}
+              </button>
+
+              <button
+                type="button"
+                disabled={
+                  premiumBidSubmitting ||
+                  premiumBidQuoteLoading ||
+                  premiumBidQuote?.can_submit === false
+                }
+                onClick={() => {
+                  void handleSubmitPremiumBidFromProfile();
+                }}
+                className={`rounded-md px-4 py-2 text-sm font-medium ${
+                  premiumBidSubmitting ||
+                  premiumBidQuoteLoading ||
+                  premiumBidQuote?.can_submit === false
+                    ? "cursor-not-allowed bg-gray-200 text-gray-500"
+                    : "bg-yellow-400 text-black hover:bg-yellow-300"
+                }`}
+              >
+                {premiumBidSubmitting ? "Submitting..." : "Submit Premium Offer"}
               </button>
             </div>
           </div>

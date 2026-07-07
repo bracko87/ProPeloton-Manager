@@ -522,6 +522,469 @@ function formatGcPosition(value?: number | null): string {
   return String(value)
 }
 
+
+type InjuryCaseCatalogueEntry = {
+  code: string
+  label: string
+  caseType: 'injury' | 'sickness'
+  likelyBodyParts: string[]
+  minorDays: string
+  moderateDays: string
+  majorDays: string
+  notes: string
+}
+
+type InjuryDescriptor = {
+  injuryLabel: string
+  specificLocationLabel: string
+  likelyBodyParts: string[]
+  isSpecific: boolean
+  typicalRecoveryLabel: string
+  catalogueEntry: InjuryCaseCatalogueEntry | null
+}
+
+type RiderMedicalSupportImpact = {
+  club_id: string
+  staff_name: string | null
+  specialization: string | null
+  risk_multiplier: number | null
+  recovery_duration_multiplier: number | null
+  daily_recovery_bonus: number | null
+  fatigue_floor_reduction: number | null
+  risk_reduction_pct: number | null
+  recovery_duration_reduction_pct: number | null
+  medical_center_level: number | null
+  infrastructure_recovery_bonus_pct: number | null
+}
+
+const HEALTH_CASE_CATALOGUE: InjuryCaseCatalogueEntry[] = [
+  {
+    code: 'fracture',
+    label: 'Fracture',
+    caseType: 'injury',
+    likelyBodyParts: ['collarbone', 'wrist/hand', 'ribs', 'shoulder', 'ankle', 'hip/femur'],
+    minorDays: '14–28 days',
+    moderateDays: '28–56 days',
+    majorDays: '56–84 days',
+    notes: 'Cycling fractures are often collarbone, wrist/hand, ribs, shoulder or ankle. The exact body part must come from backend case notes if you want one fixed location.',
+  },
+  {
+    code: 'concussion',
+    label: 'Concussion',
+    caseType: 'injury',
+    likelyBodyParts: ['head'],
+    minorDays: '7–14 days',
+    moderateDays: '14–28 days',
+    majorDays: '28–56 days',
+    notes: 'Requires cautious return-to-race timing because symptoms can return under effort.',
+  },
+  {
+    code: 'road_rash',
+    label: 'Road rash',
+    caseType: 'injury',
+    likelyBodyParts: ['shoulder', 'elbow', 'hip', 'knee', 'forearm'],
+    minorDays: '2–5 days',
+    moderateDays: '5–10 days',
+    majorDays: '10–18 days',
+    notes: 'Usually from crashes. It may not block all training after the acute phase.',
+  },
+  {
+    code: 'muscle_strain',
+    label: 'Muscle strain',
+    caseType: 'injury',
+    likelyBodyParts: ['hamstring', 'calf', 'quadriceps', 'lower back'],
+    minorDays: '4–8 days',
+    moderateDays: '8–21 days',
+    majorDays: '21–42 days',
+    notes: 'Often linked to overload, fatigue and hard training blocks.',
+  },
+  {
+    code: 'knee_pain',
+    label: 'Knee pain',
+    caseType: 'injury',
+    likelyBodyParts: ['knee'],
+    minorDays: '3–7 days',
+    moderateDays: '7–21 days',
+    majorDays: '21–45 days',
+    notes: 'Can come from overuse, bike fit issues or repeated climbing load.',
+  },
+  {
+    code: 'ankle_sprain',
+    label: 'Ankle sprain',
+    caseType: 'injury',
+    likelyBodyParts: ['ankle', 'foot'],
+    minorDays: '5–10 days',
+    moderateDays: '10–28 days',
+    majorDays: '28–56 days',
+    notes: 'More common after crashes or off-bike incidents.',
+  },
+  {
+    code: 'wrist_sprain',
+    label: 'Wrist sprain',
+    caseType: 'injury',
+    likelyBodyParts: ['wrist', 'hand'],
+    minorDays: '4–8 days',
+    moderateDays: '8–21 days',
+    majorDays: '21–42 days',
+    notes: 'Often caused by bracing during a crash.',
+  },
+  {
+    code: 'tendonitis',
+    label: 'Tendonitis',
+    caseType: 'injury',
+    likelyBodyParts: ['Achilles', 'knee tendon', 'patellar tendon'],
+    minorDays: '7–14 days',
+    moderateDays: '14–35 days',
+    majorDays: '35–70 days',
+    notes: 'Overuse condition. Recovery improves with reduced load and medical support.',
+  },
+  {
+    code: 'saddle_sore',
+    label: 'Saddle sore',
+    caseType: 'injury',
+    likelyBodyParts: ['saddle area', 'groin/hip contact area'],
+    minorDays: '2–4 days',
+    moderateDays: '4–10 days',
+    majorDays: '10–21 days',
+    notes: 'Common cycling-specific issue; usually shorter than fractures or muscle tears.',
+  },
+  {
+    code: 'flu',
+    label: 'Flu',
+    caseType: 'sickness',
+    likelyBodyParts: ['whole body', 'respiratory system'],
+    minorDays: '3–5 days',
+    moderateDays: '5–10 days',
+    majorDays: '10–18 days',
+    notes: 'Sickness affects the whole body, energy, recovery and training availability.',
+  },
+  {
+    code: 'cold',
+    label: 'Cold',
+    caseType: 'sickness',
+    likelyBodyParts: ['respiratory system'],
+    minorDays: '2–4 days',
+    moderateDays: '4–7 days',
+    majorDays: '7–12 days',
+    notes: 'Usually shorter than flu but still reduces training/racing readiness.',
+  },
+  {
+    code: 'stomach_bug',
+    label: 'Stomach bug',
+    caseType: 'sickness',
+    likelyBodyParts: ['stomach', 'digestive system'],
+    minorDays: '2–4 days',
+    moderateDays: '4–7 days',
+    majorDays: '7–12 days',
+    notes: 'Can sharply reduce hydration and energy for a few game days.',
+  },
+  {
+    code: 'food_poisoning',
+    label: 'Food poisoning',
+    caseType: 'sickness',
+    likelyBodyParts: ['stomach', 'digestive system'],
+    minorDays: '1–3 days',
+    moderateDays: '3–6 days',
+    majorDays: '6–10 days',
+    notes: 'Short but can temporarily block racing and hard training.',
+  },
+  {
+    code: 'respiratory_infection',
+    label: 'Respiratory infection',
+    caseType: 'sickness',
+    likelyBodyParts: ['lungs', 'respiratory system'],
+    minorDays: '5–8 days',
+    moderateDays: '8–21 days',
+    majorDays: '21–35 days',
+    notes: 'Longer illness that should strongly affect race readiness.',
+  },
+  {
+    code: 'heat_exhaustion',
+    label: 'Heat exhaustion / dehydration',
+    caseType: 'sickness',
+    likelyBodyParts: ['whole body', 'hydration system'],
+    minorDays: '1–3 days',
+    moderateDays: '3–7 days',
+    majorDays: '7–14 days',
+    notes: 'Often linked to heat, poor hydration, race load or insufficient recovery.',
+  },
+]
+
+function normalizeHealthCaseCode(value?: string | null): string {
+  return value?.toLowerCase().trim().replace(/[\s-]+/g, '_') ?? ''
+}
+
+function getCatalogueEntryForCaseCode(caseCode?: string | null): InjuryCaseCatalogueEntry | null {
+  const normalized = normalizeHealthCaseCode(caseCode)
+  if (!normalized) return null
+
+  return (
+    HEALTH_CASE_CATALOGUE.find((entry) => normalized === entry.code) ??
+    HEALTH_CASE_CATALOGUE.find((entry) => normalized.includes(entry.code)) ??
+    HEALTH_CASE_CATALOGUE.find((entry) => entry.code.includes(normalized)) ??
+    null
+  )
+}
+
+function getHealthCaseNotesSearchText(
+  healthCase: RiderCurrentHealthCase | null
+): string {
+  if (!healthCase) return ''
+
+  const rawCase = healthCase as unknown as Record<string, unknown>
+  const notes = rawCase.notes
+
+  const directValues = [
+    rawCase.body_part,
+    rawCase.injured_part,
+    rawCase.injury_location,
+    rawCase.location,
+    rawCase.affected_area,
+  ]
+
+  if (notes && typeof notes === 'object' && !Array.isArray(notes)) {
+    const record = notes as Record<string, unknown>
+
+    directValues.push(
+      record.body_part,
+      record.injured_part,
+      record.injury_location,
+      record.location,
+      record.affected_area,
+      record.specific_body_part,
+      record.body_area
+    )
+  }
+
+  return directValues
+    .map((value) => (value === null || value === undefined ? '' : String(value)))
+    .filter(Boolean)
+    .join(' ')
+}
+
+function getInjuryKeywordSource(
+  rider: RiderDetails | null,
+  healthCase: RiderCurrentHealthCase | null
+): string {
+  return [
+    rider?.unavailable_reason ?? '',
+    healthCase?.case_code ?? '',
+    getHealthCaseNotesSearchText(healthCase),
+    formatUnavailableReason(rider?.unavailable_reason),
+    formatHealthCaseCode(healthCase?.case_code),
+  ]
+    .filter(Boolean)
+    .join(' ')
+    .toLowerCase()
+}
+
+function shouldShowInjuryReport(
+  rider: RiderDetails | null,
+  healthCase: RiderCurrentHealthCase | null
+): boolean {
+  if (!rider) return false
+
+  if (rider.availability_status === 'injured') return true
+
+  const source = getInjuryKeywordSource(rider, healthCase)
+  return /(injur|fracture|broken|sprain|strain|tear|bruise|wound|laceration|disloc|crack|pain)/i.test(
+    source
+  )
+}
+
+function getRecoveryRangeForSeverity(
+  entry: InjuryCaseCatalogueEntry | null,
+  severity?: string | null
+): string {
+  if (!entry) return 'Depends on severity and recovery support'
+
+  switch (severity?.toLowerCase()) {
+    case 'minor':
+      return entry.minorDays
+    case 'moderate':
+      return entry.moderateDays
+    case 'major':
+      return entry.majorDays
+    default:
+      return `Minor ${entry.minorDays} · Moderate ${entry.moderateDays} · Major ${entry.majorDays}`
+  }
+}
+
+function detectSpecificBodyPartFromText(source: string): string | null {
+  const checks: Array<[RegExp, string]> = [
+    [/(collarbone|clavicle)/i, 'Collarbone'],
+    [/(shoulder)/i, 'Shoulder'],
+    [/(wrist)/i, 'Wrist'],
+    [/(hand|finger|thumb)/i, 'Hand'],
+    [/(rib|chest)/i, 'Ribs / chest'],
+    [/(head|concussion|skull|face|jaw)/i, 'Head / face'],
+    [/(neck)/i, 'Neck'],
+    [/(back|spine|lumbar)/i, 'Back'],
+    [/(hip|groin|pelvis)/i, 'Hip / groin'],
+    [/(knee|patella)/i, 'Knee'],
+    [/(ankle|achilles)/i, 'Ankle / Achilles'],
+    [/(foot|toe|heel)/i, 'Foot'],
+    [/(hamstring)/i, 'Hamstring'],
+    [/(calf)/i, 'Calf'],
+    [/(quad|quadricep)/i, 'Quadriceps'],
+    [/(leg|tibia|fibula|shin)/i, 'Leg'],
+    [/(elbow|arm|forearm)/i, 'Arm / elbow'],
+    [/(stomach|digestive|food)/i, 'Stomach / digestive system'],
+    [/(lung|respiratory|flu|cold|bronch)/i, 'Respiratory system'],
+  ]
+
+  for (const [regex, label] of checks) {
+    if (regex.test(source)) return label
+  }
+
+  return null
+}
+
+function getInjuryDescriptor(
+  rider: RiderDetails | null,
+  healthCase: RiderCurrentHealthCase | null
+): InjuryDescriptor {
+  const catalogueEntry = getCatalogueEntryForCaseCode(healthCase?.case_code)
+  const injuryLabel =
+    formatHealthCaseCode(healthCase?.case_code) ??
+    formatUnavailableReason(rider?.unavailable_reason) ??
+    'Injury'
+
+  const source = getInjuryKeywordSource(rider, healthCase)
+  const specificBodyPart = detectSpecificBodyPartFromText(source)
+  const likelyBodyParts =
+    catalogueEntry?.likelyBodyParts ??
+    (specificBodyPart ? [specificBodyPart] : ['body part not stored in current case data'])
+
+  const isSpecific = Boolean(specificBodyPart)
+
+  return {
+    injuryLabel,
+    specificLocationLabel: specificBodyPart ?? 'Exact body part not specified by backend',
+    likelyBodyParts,
+    isSpecific,
+    typicalRecoveryLabel: getRecoveryRangeForSeverity(catalogueEntry, healthCase?.severity),
+    catalogueEntry,
+  }
+}
+
+function getInjuryStatusSummary(healthCase: RiderCurrentHealthCase | null): string {
+  if (!healthCase?.health_case_id) {
+    return 'The rider is unavailable because of an injury. Detailed medical progress will be shown here while the case is active.'
+  }
+
+  if (healthCase.case_status === 'active') {
+    return 'The rider is in the active medical phase and cannot race until the injury stabilises and the blocked period ends.'
+  }
+
+  if (healthCase.case_status === 'recovering') {
+    return 'The rider has left the acute phase and is recovering back toward full fitness and race readiness.'
+  }
+
+  if (healthCase.case_status === 'resolved') {
+    return 'The injury case is marked as resolved, but this panel remains visible until the rider returns to a fit availability state.'
+  }
+
+  return 'Medical status is being monitored.'
+}
+
+function getRecoveryTimelineText(
+  recoveryDate: string | null | undefined,
+  gameDate: string | null | undefined
+): string {
+  if (!recoveryDate) return 'No recovery date set'
+
+  const label = formatShortGameDate(recoveryDate)
+  const days = getDaysRemaining(recoveryDate, gameDate ?? null)
+
+  if (days === null) return label
+  if (days <= 0) return `${label} (fit again today)`
+  return `${label} (${days} day${days === 1 ? '' : 's'} remaining)`
+}
+
+function getMedicalCenterRecoveryBonusPct(level: number | null | undefined): number | null {
+  if (level === null || level === undefined || !Number.isFinite(level)) return null
+
+  if (level >= 5) return 8
+  if (level === 4) return 6.5
+  if (level === 3) return 5
+  if (level === 2) return 3
+  if (level === 1) return 1.5
+
+  return 0
+}
+
+function formatSignedPercent(value: number | null | undefined): string {
+  if (value === null || value === undefined || !Number.isFinite(value)) return '—'
+
+  const rounded = Math.round(value * 10) / 10
+  const prefix = rounded > 0 ? '+' : ''
+  return `${prefix}${rounded}%`
+}
+
+function formatReductionPercent(value: number | null | undefined): string {
+  if (value === null || value === undefined || !Number.isFinite(value)) return '—'
+
+  return `${Math.round(value * 10) / 10}%`
+}
+
+function getHealthCaseContextString(
+  healthCase: RiderCurrentHealthCase | null,
+  key: string
+): string | null {
+  if (!healthCase) return null
+
+  const record = healthCase as unknown as Record<string, unknown>
+  const value = record[key]
+
+  if (typeof value === 'string' && value.trim() !== '') return value.trim()
+  return null
+}
+
+function getHealthCaseContextNumber(
+  healthCase: RiderCurrentHealthCase | null,
+  key: string
+): number | null {
+  if (!healthCase) return null
+
+  const record = healthCase as unknown as Record<string, unknown>
+  const value = record[key]
+
+  if (typeof value === 'number' && Number.isFinite(value)) return value
+  if (typeof value === 'string' && value.trim() !== '') {
+    const parsed = Number(value)
+    return Number.isFinite(parsed) ? parsed : null
+  }
+
+  return null
+}
+
+function formatHealthCaseSourceLabel(value?: string | null): string {
+  switch (value) {
+    case 'race':
+      return 'Race'
+    case 'training':
+      return 'Training'
+    case 'daily_life':
+      return 'Daily life'
+    case 'travel':
+      return 'Travel'
+    case 'weather':
+      return 'Weather'
+    case 'manual':
+      return 'Manual/admin'
+    case 'unknown':
+      return 'Unknown source'
+    default:
+      return value ? titleCaseFromSnake(value) : 'Unknown source'
+  }
+}
+
+function formatOptionalDays(value: number | null): string | null {
+  if (value === null || value === undefined || !Number.isFinite(value)) return null
+  return `${Math.round(value)} day${Math.round(value) === 1 ? '' : 's'}`
+}
+
 function SectionCard({
   title,
   subtitle,
@@ -565,6 +1028,235 @@ function DetailRow({
         {value}
       </div>
     </div>
+  )
+}
+
+
+function InjuryReportCard({
+  rider,
+  healthCase,
+  gameDate,
+  medicalSupport,
+  medicalSupportLoading,
+}: {
+  rider: RiderDetails
+  healthCase: RiderCurrentHealthCase | null
+  gameDate: string | null
+  medicalSupport: RiderMedicalSupportImpact | null
+  medicalSupportLoading: boolean
+}) {
+  if (!shouldShowInjuryReport(rider, healthCase)) return null
+
+  const descriptor = getInjuryDescriptor(rider, healthCase)
+  const healthUi = getRiderStatusUi(rider.availability_status)
+  const severityLabel = formatSeverityLabel(healthCase?.severity) ?? 'Not specified'
+  const stageLabel = formatCaseStageLabel(healthCase?.case_status) ?? 'Monitoring'
+  const caseLabel = formatHealthCaseCode(healthCase?.case_code) ?? 'Injury'
+  const recoveryDate = healthCase?.expected_full_recovery_on ?? rider.unavailable_until ?? null
+  const recoveryTimeline = getRecoveryTimelineText(recoveryDate, gameDate)
+  const statusSummary = getInjuryStatusSummary(healthCase)
+  const unavailableReasonLabel = rider.unavailable_reason
+    ? formatUnavailableReason(rider.unavailable_reason)
+    : 'Injury-related unavailability'
+
+  const sourceType =
+    getHealthCaseContextString(healthCase, 'source_type') ?? healthCase?.source ?? 'unknown'
+  const sourceLabel = formatHealthCaseSourceLabel(sourceType)
+  const bodyPart = getHealthCaseContextString(healthCase, 'body_part')
+  const exactLocationLabel =
+    bodyPart ??
+    (descriptor.isSpecific ? descriptor.specificLocationLabel : 'Exact body part is not stored for this case yet.')
+
+  const baseMinDays = getHealthCaseContextNumber(healthCase, 'base_min_days')
+  const baseMaxDays = getHealthCaseContextNumber(healthCase, 'base_max_days')
+  const selectedBaseDays = getHealthCaseContextNumber(healthCase, 'selected_base_days')
+  const finalRecoveryDays = getHealthCaseContextNumber(healthCase, 'final_recovery_days')
+  const medicalStaffReductionPct = getHealthCaseContextNumber(
+    healthCase,
+    'medical_staff_reduction_pct'
+  )
+  const infrastructureReductionPct = getHealthCaseContextNumber(
+    healthCase,
+    'infrastructure_reduction_pct'
+  )
+  const totalReductionPct = getHealthCaseContextNumber(healthCase, 'total_reduction_pct')
+
+  const baseRangeLabel =
+    baseMinDays !== null && baseMaxDays !== null
+      ? `${Math.round(baseMinDays)}–${Math.round(baseMaxDays)} days`
+      : null
+  const selectedBaseLabel = formatOptionalDays(selectedBaseDays)
+  const finalRecoveryLabel = formatOptionalDays(finalRecoveryDays)
+
+  const medicalCenterLevelLabel =
+    medicalSupport?.medical_center_level === null || medicalSupport?.medical_center_level === undefined
+      ? null
+      : `Medical Center Lv ${medicalSupport.medical_center_level}`
+
+  return (
+    <SectionCard
+      title="Injury overview"
+      subtitle="Unified current health case shown only while the rider is injured"
+      className="border border-rose-200"
+    >
+      <div className="space-y-4">
+        <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-4">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <div className="text-xs font-semibold uppercase tracking-[0.18em] text-rose-700">
+                Current injury
+              </div>
+              <div className="mt-1 text-lg font-semibold text-slate-900">{caseLabel}</div>
+              <div className="mt-1 text-sm text-slate-600">{unavailableReasonLabel}</div>
+              <div className="mt-2 text-sm text-slate-700">
+                <span className="font-semibold">Location:</span> {exactLocationLabel}
+              </div>
+              <div className="mt-1 text-sm text-slate-700">
+                <span className="font-semibold">Source:</span> {sourceLabel}
+              </div>
+            </div>
+
+            <span
+              className="inline-flex rounded-full border border-rose-200 bg-white px-3 py-1 text-sm font-semibold"
+              style={{ color: healthUi.color }}
+            >
+              {healthUi.label}
+            </span>
+          </div>
+
+          <div className="mt-3 text-sm leading-6 text-slate-700">{statusSummary}</div>
+        </div>
+
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
+          <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+            <div className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+              Current status
+            </div>
+            <div className="mt-2 text-sm font-semibold text-slate-900">{stageLabel}</div>
+          </div>
+
+          <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+            <div className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+              Severity
+            </div>
+            <div className="mt-2 text-sm font-semibold text-slate-900">{severityLabel}</div>
+          </div>
+
+          <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+            <div className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+              Base duration
+            </div>
+            <div className="mt-2 text-sm font-semibold text-slate-900">
+              {selectedBaseLabel ?? baseRangeLabel ?? '—'}
+            </div>
+          </div>
+
+          <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+            <div className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+              Fit again
+            </div>
+            <div className="mt-2 text-sm font-semibold text-slate-900">{recoveryTimeline}</div>
+            {finalRecoveryLabel ? (
+              <div className="mt-1 text-xs text-slate-500">Final duration: {finalRecoveryLabel}</div>
+            ) : null}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+          <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3">
+            <div className="text-xs font-semibold uppercase tracking-[0.16em] text-emerald-700">
+              Medical team help
+            </div>
+
+            <div className="mt-2 space-y-1 text-sm leading-6 text-emerald-900">
+              {medicalStaffReductionPct !== null ? (
+                <div>
+                  <span className="font-semibold">Applied to this case:</span>{' '}
+                  {formatReductionPercent(medicalStaffReductionPct)} shorter recovery
+                </div>
+              ) : null}
+
+              {medicalSupportLoading ? (
+                <div>Loading team medical support...</div>
+              ) : medicalSupport ? (
+                <>
+                  <div>
+                    <span className="font-semibold">Effective group:</span>{' '}
+                    {medicalSupport.staff_name ?? 'Team Doctor + Physio/Nutritionist group'}
+                  </div>
+                  <div>
+                    <span className="font-semibold">Risk prevention:</span>{' '}
+                    {formatReductionPercent(medicalSupport.risk_reduction_pct)} risk reduction
+                  </div>
+                  <div>
+                    <span className="font-semibold">Daily recovery:</span>{' '}
+                    +{medicalSupport.daily_recovery_bonus ?? 0}
+                  </div>
+                  <div>
+                    <span className="font-semibold">Fatigue floor after case:</span>{' '}
+                    -{medicalSupport.fatigue_floor_reduction ?? 0}
+                  </div>
+                </>
+              ) : medicalStaffReductionPct !== null ? (
+                <div>
+                  The exact staff reduction is stored on the unified health case. Staff names can be shown when the club support helper is available to this page.
+                </div>
+              ) : (
+                <div>
+                  Medical staff effect is not available for this rider yet.
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-3">
+            <div className="text-xs font-semibold uppercase tracking-[0.16em] text-blue-700">
+              Medical infrastructure help
+            </div>
+
+            <div className="mt-2 space-y-1 text-sm leading-6 text-blue-900">
+              {infrastructureReductionPct !== null ? (
+                <div>
+                  <span className="font-semibold">Applied to this case:</span>{' '}
+                  {formatReductionPercent(infrastructureReductionPct)} shorter recovery
+                </div>
+              ) : null}
+
+              {medicalSupportLoading ? (
+                <div>Loading medical infrastructure...</div>
+              ) : medicalSupport ? (
+                <>
+                  <div>
+                    <span className="font-semibold">
+                      {medicalCenterLevelLabel ?? 'Medical Center level not found'}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="font-semibold">Current infrastructure support:</span>{' '}
+                    {formatReductionPercent(medicalSupport.infrastructure_recovery_bonus_pct)}
+                  </div>
+                </>
+              ) : infrastructureReductionPct !== null ? (
+                <div>
+                  The exact infrastructure reduction is stored on the unified health case. Facility name/level can be shown when the club infrastructure helper is available to this page.
+                </div>
+              ) : (
+                <div>
+                  Medical infrastructure effect is not available for this rider yet.
+                </div>
+              )}
+
+              {totalReductionPct !== null ? (
+                <div className="mt-2 rounded-lg border border-blue-200 bg-white/70 px-3 py-2 text-blue-900">
+                  <span className="font-semibold">Total recovery reduction:</span>{' '}
+                  {formatReductionPercent(totalReductionPct)}
+                </div>
+              ) : null}
+            </div>
+          </div>
+        </div>
+      </div>
+    </SectionCard>
   )
 }
 
@@ -880,6 +1572,183 @@ async function fetchRiderCurrentHealthCaseById(
 
   const row = Array.isArray(data) ? data[0] : data
   return (row ?? null) as RiderCurrentHealthCase | null
+}
+
+
+async function fetchMedicalCenterLevelForClub(clubId: string): Promise<number | null> {
+  const tableCandidates = [
+    'club_facilities',
+    'club_infrastructure_facilities',
+    'club_facility_levels',
+    'facilities',
+  ]
+
+  for (const tableName of tableCandidates) {
+    try {
+      const { data, error } = await supabase
+        .from(tableName)
+        .select('*')
+        .eq('club_id', clubId)
+        .limit(50)
+
+      if (error || !Array.isArray(data)) continue
+
+      const medicalRow = data.find((row: any) => {
+        const code = String(
+          row.facility_type ??
+            row.facility_code ??
+            row.facility_key ??
+            row.code ??
+            row.type ??
+            row.name ??
+            ''
+        )
+          .toLowerCase()
+          .replace(/[\s-]+/g, '_')
+
+        return code.includes('medical') || code.includes('health')
+      }) as any | undefined
+
+      const rawLevel =
+        medicalRow?.level ??
+        medicalRow?.facility_level ??
+        medicalRow?.current_level ??
+        medicalRow?.upgrade_level ??
+        null
+
+      const level = normalizeNumber(rawLevel, NaN)
+
+      if (Number.isFinite(level)) {
+        return Math.max(0, Math.round(level))
+      }
+    } catch {
+      // Try next table candidate.
+    }
+  }
+
+  return null
+}
+
+async function resolveRiderMedicalSupportClubId(
+  riderId: string,
+  knownClubId?: string | null
+): Promise<string | null> {
+  if (knownClubId?.trim()) return knownClubId.trim()
+
+  const riderClubTableCandidates = [
+    'rider_contracts',
+    'club_riders',
+    'club_rosters',
+    'rider_rosters',
+    'riders',
+  ]
+
+  for (const tableName of riderClubTableCandidates) {
+    try {
+      const { data, error } = await supabase
+        .from(tableName)
+        .select('*')
+        .eq('rider_id', riderId)
+        .limit(5)
+
+      if (error || !Array.isArray(data)) continue
+
+      const activeRow =
+        data.find((row: any) =>
+          ['active', 'current', 'signed'].includes(String(row.status ?? '').toLowerCase())
+        ) ?? data[0]
+
+      const clubId =
+        activeRow?.club_id ??
+        activeRow?.team_id ??
+        activeRow?.current_club_id ??
+        activeRow?.owner_club_id ??
+        activeRow?.parent_club_id ??
+        null
+
+      if (typeof clubId === 'string' && clubId.trim() !== '') {
+        return clubId.trim()
+      }
+    } catch {
+      // Try next source.
+    }
+  }
+
+  try {
+    const { data, error } = await supabase.rpc('get_my_primary_club_id')
+
+    if (!error && typeof data === 'string' && data.trim() !== '') {
+      return data.trim()
+    }
+  } catch {
+    // No fallback.
+  }
+
+  return null
+}
+
+async function fetchRiderMedicalSupportImpactByClubId(
+  clubId: string
+): Promise<RiderMedicalSupportImpact | null> {
+  if (!clubId) return null
+
+  let medicalEffectRow: any | null = null
+
+  try {
+    const { data, error } = await supabase.rpc('get_team_doctor_effects', {
+      p_club_id: clubId,
+    })
+
+    if (!error) {
+      medicalEffectRow = Array.isArray(data) ? data[0] ?? null : data ?? null
+    }
+  } catch {
+    medicalEffectRow = null
+  }
+
+  const medicalCenterLevel = await fetchMedicalCenterLevelForClub(clubId)
+
+  if (!medicalEffectRow && medicalCenterLevel === null) {
+    return null
+  }
+
+  const riskMultiplier = normalizeNumber(medicalEffectRow?.risk_multiplier, NaN)
+  const recoveryDurationMultiplier = normalizeNumber(
+    medicalEffectRow?.recovery_duration_multiplier,
+    NaN
+  )
+  const dailyRecoveryBonus = normalizeNumber(medicalEffectRow?.daily_recovery_bonus, 0)
+  const fatigueFloorReduction = normalizeNumber(medicalEffectRow?.fatigue_floor_reduction, 0)
+
+  return {
+    club_id: clubId,
+    staff_name: medicalEffectRow?.staff_name ?? null,
+    specialization: medicalEffectRow?.specialization ?? null,
+    risk_multiplier: Number.isFinite(riskMultiplier) ? riskMultiplier : null,
+    recovery_duration_multiplier: Number.isFinite(recoveryDurationMultiplier)
+      ? recoveryDurationMultiplier
+      : null,
+    daily_recovery_bonus: dailyRecoveryBonus,
+    fatigue_floor_reduction: fatigueFloorReduction,
+    risk_reduction_pct: Number.isFinite(riskMultiplier)
+      ? Math.max(0, (1 - riskMultiplier) * 100)
+      : null,
+    recovery_duration_reduction_pct: Number.isFinite(recoveryDurationMultiplier)
+      ? Math.max(0, (1 - recoveryDurationMultiplier) * 100)
+      : null,
+    medical_center_level: medicalCenterLevel,
+    infrastructure_recovery_bonus_pct: getMedicalCenterRecoveryBonusPct(medicalCenterLevel),
+  }
+}
+
+async function fetchRiderMedicalSupportImpact(
+  riderId: string,
+  knownClubId?: string | null
+): Promise<RiderMedicalSupportImpact | null> {
+  const clubId = await resolveRiderMedicalSupportClubId(riderId, knownClubId)
+  if (!clubId) return null
+
+  return fetchRiderMedicalSupportImpactByClubId(clubId)
 }
 
 
@@ -1755,6 +2624,8 @@ export default function RiderProfilePage({
   const [profileError, setProfileError] = useState<string | null>(null)
   const [selectedRider, setSelectedRider] = useState<RiderDetails | null>(null)
   const [currentHealthCase, setCurrentHealthCase] = useState<RiderCurrentHealthCase | null>(null)
+  const [medicalSupportImpact, setMedicalSupportImpact] = useState<RiderMedicalSupportImpact | null>(null)
+  const [medicalSupportLoading, setMedicalSupportLoading] = useState(false)
   const [skillDeltaMap, setSkillDeltaMap] = useState<RiderSkillDeltaMap>({})
   const [activeTab, setActiveTab] = useState<RiderProfileTab>('overview')
   const [skillViewMode, setSkillViewMode] = useState<RiderSkillViewMode>(() =>
@@ -1835,6 +2706,50 @@ export default function RiderProfilePage({
     () => new Map(regularPlans.map((row) => [row.rider_id, row])),
     [regularPlans]
   )
+
+  useEffect(() => {
+    const riderIdForMedicalSupport = selectedRider?.id ?? null
+    const selectedRiderRecord = selectedRider as unknown as Record<string, unknown> | null
+    const knownClubId =
+      focusedTrainingRider?.club_id ??
+      (selectedRiderRecord?.club_id as string | null | undefined) ??
+      (selectedRiderRecord?.current_club_id as string | null | undefined) ??
+      null
+
+    if (!riderIdForMedicalSupport) {
+      setMedicalSupportImpact(null)
+      setMedicalSupportLoading(false)
+      return
+    }
+
+    let mounted = true
+
+    async function loadMedicalSupportImpact() {
+      setMedicalSupportLoading(true)
+
+      try {
+        const nextImpact = await fetchRiderMedicalSupportImpact(
+          riderIdForMedicalSupport,
+          knownClubId
+        )
+
+        if (!mounted) return
+        setMedicalSupportImpact(nextImpact)
+      } catch {
+        if (!mounted) return
+        setMedicalSupportImpact(null)
+      } finally {
+        if (!mounted) return
+        setMedicalSupportLoading(false)
+      }
+    }
+
+    void loadMedicalSupportImpact()
+
+    return () => {
+      mounted = false
+    }
+  }, [selectedRider?.id, focusedTrainingRider?.club_id])
 
   function upsertRegularPlanLocal(nextRow: RiderRegularTrainingPlanRow): void {
     setRegularPlans((current) => {
@@ -2038,6 +2953,8 @@ export default function RiderProfilePage({
       setProfileError(null)
       setSelectedRider(null)
       setCurrentHealthCase(null)
+      setMedicalSupportImpact(null)
+      setMedicalSupportLoading(false)
       setSkillDeltaMap({})
       setContractActionMessage(null)
       setRenewalBusy(false)
@@ -3045,6 +3962,14 @@ export default function RiderProfilePage({
                     </div>
                   </div>
                 </SectionCard>
+
+                <InjuryReportCard
+                  rider={selectedRider}
+                  healthCase={currentHealthCase}
+                  gameDate={gameDate ?? null}
+                  medicalSupport={medicalSupportImpact}
+                  medicalSupportLoading={medicalSupportLoading}
+                />
 
                 <SectionCard title="Availability & Medical">
                   <div className="divide-y divide-slate-100">

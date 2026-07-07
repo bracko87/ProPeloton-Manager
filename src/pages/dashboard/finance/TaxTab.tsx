@@ -1,6 +1,10 @@
 /**
  * TaxTab.tsx
  * Tax overview tab backed by finance_get_club_tax_audits + finance_get_club_statement_v2.
+ *
+ * UPDATE:
+ * - Tax statement uses 20 entries per page.
+ * - Audit history uses 20 entries per page.
  */
 
 import React, { useEffect, useMemo, useState } from 'react'
@@ -60,6 +64,8 @@ const TAX_TYPES = new Set([
   'tax_monthly_adjustment',
   'tax_monthly_refund',
 ])
+
+const TAX_PAGE_SIZE = 20
 
 function pad2(n: number): string {
   return String(n).padStart(2, '0')
@@ -136,6 +142,20 @@ function toNumber(v: unknown): number {
   return 0
 }
 
+function getTotalPages(totalItems: number, pageSize: number): number {
+  return Math.max(1, Math.ceil(totalItems / pageSize))
+}
+
+function clampPage(page: number, totalPages: number): number {
+  return Math.min(Math.max(page, 1), Math.max(totalPages, 1))
+}
+
+function slicePage<T>(items: T[], page: number, pageSize: number): T[] {
+  const safePage = clampPage(page, getTotalPages(items.length, pageSize))
+  const start = (safePage - 1) * pageSize
+  return items.slice(start, start + pageSize)
+}
+
 function formatMoney(n: number, currency: 'EUR' | 'USD' = 'EUR'): string {
   const formatted = new Intl.NumberFormat('en-US', {
     style: 'currency',
@@ -205,6 +225,68 @@ function statusBadgeClass(status: AuditRow['audit_status']): string {
   }
 }
 
+function TablePagination({
+  page,
+  totalPages,
+  totalItems,
+  pageSize,
+  onPageChange,
+  itemLabel,
+}: {
+  page: number
+  totalPages: number
+  totalItems: number
+  pageSize: number
+  onPageChange: (page: number) => void
+  itemLabel: string
+}): JSX.Element {
+  const safePage = clampPage(page, totalPages)
+  const firstVisible = totalItems === 0 ? 0 : (safePage - 1) * pageSize + 1
+  const lastVisible = Math.min(safePage * pageSize, totalItems)
+
+  return (
+    <div className="border-t bg-gray-50 p-3 flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center">
+      <div className="text-xs text-gray-600">
+        Showing {firstVisible}-{lastVisible} of {totalItems} {itemLabel}.
+      </div>
+
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={() => onPageChange(Math.max(safePage - 1, 1))}
+          disabled={safePage <= 1}
+          className={[
+            'px-3 py-2 rounded text-sm shadow',
+            safePage <= 1
+              ? 'bg-gray-200 text-gray-500'
+              : 'bg-white hover:bg-gray-100',
+          ].join(' ')}
+        >
+          Previous
+        </button>
+
+        <div className="text-xs text-gray-600 min-w-[72px] text-center">
+          Page {safePage} / {totalPages}
+        </div>
+
+        <button
+          type="button"
+          onClick={() => onPageChange(Math.min(safePage + 1, totalPages))}
+          disabled={safePage >= totalPages}
+          className={[
+            'px-3 py-2 rounded text-sm shadow',
+            safePage >= totalPages
+              ? 'bg-gray-200 text-gray-500'
+              : 'bg-white hover:bg-gray-100',
+          ].join(' ')}
+        >
+          Next
+        </button>
+      </div>
+    </div>
+  )
+}
+
 export function TaxTab({
   clubId,
   currency = 'EUR',
@@ -220,6 +302,9 @@ export function TaxTab({
   const [currentTaxPosition, setCurrentTaxPosition] =
     useState<TaxPositionRow | null>(null)
 
+  const [taxStatementPage, setTaxStatementPage] = useState(1)
+  const [auditPage, setAuditPage] = useState(1)
+
   useEffect(() => {
     let cancelled = false
 
@@ -229,6 +314,8 @@ export function TaxTab({
         setAllRows([])
         setGameState(null)
         setCurrentTaxPosition(null)
+        setTaxStatementPage(1)
+        setAuditPage(1)
         setLoading(false)
         return
       }
@@ -255,7 +342,7 @@ export function TaxTab({
       const [auditsRes, statementRes, taxPositionRes] = await Promise.all([
         supabase.rpc('finance_get_club_tax_audits', {
           p_club_id: clubId,
-          p_limit: 12,
+          p_limit: 500,
         }),
         supabase.rpc('finance_get_club_statement_v2', {
           p_club_id: clubId,
@@ -295,6 +382,8 @@ export function TaxTab({
       setCurrentTaxPosition(
         ((taxPositionRes.data ?? []) as TaxPositionRow[])[0] ?? null
       )
+      setTaxStatementPage(1)
+      setAuditPage(1)
       setLoading(false)
     }
 
@@ -358,6 +447,45 @@ export function TaxTab({
 
     return map
   }, [allRows])
+
+  const taxStatementTotalPages = useMemo(
+    () => getTotalPages(taxRows.length, TAX_PAGE_SIZE),
+    [taxRows.length]
+  )
+
+  const safeTaxStatementPage = clampPage(
+    taxStatementPage,
+    taxStatementTotalPages
+  )
+
+  const visibleTaxRows = useMemo(
+    () => slicePage(taxRows, safeTaxStatementPage, TAX_PAGE_SIZE),
+    [safeTaxStatementPage, taxRows]
+  )
+
+  const auditTotalPages = useMemo(
+    () => getTotalPages(audits.length, TAX_PAGE_SIZE),
+    [audits.length]
+  )
+
+  const safeAuditPage = clampPage(auditPage, auditTotalPages)
+
+  const visibleAudits = useMemo(
+    () => slicePage(audits, safeAuditPage, TAX_PAGE_SIZE),
+    [audits, safeAuditPage]
+  )
+
+  useEffect(() => {
+    setTaxStatementPage((current) =>
+      clampPage(current, getTotalPages(taxRows.length, TAX_PAGE_SIZE))
+    )
+  }, [taxRows.length])
+
+  useEffect(() => {
+    setAuditPage((current) =>
+      clampPage(current, getTotalPages(audits.length, TAX_PAGE_SIZE))
+    )
+  }, [audits.length])
 
   function getInGameTimeLabel(row: StatementRowV2): string {
     const meta = getMeta(row)
@@ -538,7 +666,7 @@ export function TaxTab({
               </thead>
 
               <tbody>
-                {taxRows.map(row => {
+                {visibleTaxRows.map(row => {
                   const amount = toNumber(row.net_amount)
 
                   return (
@@ -578,6 +706,17 @@ export function TaxTab({
             </table>
           </div>
         )}
+
+        {taxRows.length > 0 ? (
+          <TablePagination
+            page={safeTaxStatementPage}
+            totalPages={taxStatementTotalPages}
+            totalItems={taxRows.length}
+            pageSize={TAX_PAGE_SIZE}
+            itemLabel="tax statement row(s)"
+            onPageChange={setTaxStatementPage}
+          />
+        ) : null}
       </div>
 
       <div className="bg-white p-4 rounded shadow">
@@ -600,7 +739,7 @@ export function TaxTab({
               </thead>
 
               <tbody>
-                {audits.map(audit => (
+                {visibleAudits.map(audit => (
                   <tr
                     key={`${audit.period_start}-${audit.period_end}-${audit.created_at}`}
                     className="border-b last:border-b-0"
@@ -648,6 +787,17 @@ export function TaxTab({
             </table>
           </div>
         )}
+
+        {audits.length > 0 ? (
+          <TablePagination
+            page={safeAuditPage}
+            totalPages={auditTotalPages}
+            totalItems={audits.length}
+            pageSize={TAX_PAGE_SIZE}
+            itemLabel="audit row(s)"
+            onPageChange={setAuditPage}
+          />
+        ) : null}
       </div>
     </div>
   )
