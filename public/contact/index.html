@@ -23,6 +23,8 @@
           <a href="/contact/">Contact</a>
           <a href="/privacy-policy/">Privacy Policy</a>
           <a href="/terms/">Terms</a>
+          <a href="/#/login">Sign In</a>
+          <a href="/#/register">Start Playing</a>
         </nav>
       </div>
     </header>
@@ -30,33 +32,70 @@
     <section class="hero">
       <div class="hero-inner">
         <a class="back-link" href="/">← Back to Home</a>
-        <div class="kicker">Contact</div>
-        <h1>Contact ProPeloton Manager.</h1>
+        <div class="kicker">Contact ProPeloton Manager</div>
+        <h1>Need help or want to report a problem?</h1>
         <p>
-          Use this page for support requests, bug reports, account questions, privacy
-          questions, payment or coin questions, and general feedback about ProPeloton
-          Manager.
+          Use this page for support requests, bug reports, account questions, gameplay
+          feedback, privacy questions, payment or coin questions, and general contact
+          about ProPeloton Manager.
         </p>
       </div>
     </section>
 
     <main class="main">
+      <section class="grid grid-2">
+        <article class="card">
+          <h2>Support email</h2>
+          <p>You can also contact us directly at:</p>
+          <p>
+            <a href="mailto:contact@propelotonmanager.com">
+              contact@propelotonmanager.com
+            </a>
+          </p>
+          <p>
+            For account, privacy, payment or rewarded-ad questions, include the email
+            address connected to your game account. Do not send passwords or full
+            payment card details.
+          </p>
+        </article>
+
+        <article class="card">
+          <h2>Good bug reports include</h2>
+          <ul>
+            <li>The page where the issue happened.</li>
+            <li>Your team name, race name or rider name if relevant.</li>
+            <li>What you expected to happen.</li>
+            <li>What actually happened.</li>
+            <li>Screenshots or copied error messages if available.</li>
+          </ul>
+        </article>
+      </section>
+
       <section class="card">
         <h2>Send a message</h2>
         <p>
-          Fill out the form below. When you submit it, your email app will open with
-          the message prepared for contact@propelotonmanager.com. For a fully automatic
-          website form later, we can connect this page to a backend email service.
+          Fill out the form below. Your message will be sent directly to ProPeloton
+          Manager support. Your email app will not open.
         </p>
 
         <form class="form" id="contact-form">
+          <label class="hidden-field">
+            Website
+            <input
+              id="contact-website"
+              name="website"
+              type="text"
+              autocomplete="off"
+              tabindex="-1"
+            />
+          </label>
+
           <label>
             Name
             <input
               id="contact-name"
               name="name"
               type="text"
-              required
               placeholder="Your name"
             />
           </label>
@@ -67,7 +106,6 @@
               id="contact-email"
               name="email"
               type="email"
-              required
               placeholder="you@example.com"
             />
           </label>
@@ -75,12 +113,13 @@
           <label>
             Topic
             <select id="contact-topic" name="topic">
-              <option>General question</option>
-              <option>Account or login help</option>
-              <option>Bug report</option>
-              <option>Gameplay question</option>
-              <option>Payment or coins</option>
-              <option>Privacy question</option>
+              <option value="General question">General question</option>
+              <option value="Account or login help">Account or login help</option>
+              <option value="Bug report">Bug report</option>
+              <option value="Gameplay question">Gameplay question</option>
+              <option value="Payment or coins">Payment or coins</option>
+              <option value="Privacy question">Privacy question</option>
+              <option value="Rewarded ads">Rewarded ads</option>
             </select>
           </label>
 
@@ -89,8 +128,7 @@
             <textarea
               id="contact-message"
               name="message"
-              required
-              placeholder="Write your message here..."
+              placeholder="Write your message..."
             ></textarea>
           </label>
 
@@ -99,28 +137,31 @@
             authentication codes or secret keys.
           </p>
 
-          <button class="button button-primary" type="submit">Prepare Email</button>
+          <button class="button button-primary" id="contact-submit" type="submit">
+            Send message
+          </button>
+
+          <div id="contact-status" class="form-status" role="status"></div>
         </form>
       </section>
 
-      <section class="grid grid-2" style="margin-top: 24px">
-        <article class="card">
-          <h3>Direct email</h3>
-          <p>
-            You can also contact us directly at
-            <a href="mailto:contact@propelotonmanager.com">
-              contact@propelotonmanager.com
-            </a>.
-          </p>
-        </article>
+      <section class="card">
+        <h2>What happens after you send a message?</h2>
+        <p>
+          We receive your message through the contact service. If a reply is needed,
+          we will answer using the email address you provided. Clear reports with page
+          names, screenshots and exact error messages are much easier to investigate.
+        </p>
 
-        <article class="card">
-          <h3>Helpful support details</h3>
-          <p>
-            Include the page name, team name, race name, rider name, expected behavior,
-            actual behavior, and screenshots when possible.
-          </p>
-        </article>
+        <div class="button-row">
+          <a class="button button-secondary" href="/support/">
+            Read Support Information
+          </a>
+          <a class="button button-secondary" href="/privacy-policy/">
+            Privacy Policy
+          </a>
+          <a class="button button-secondary" href="/terms/">Terms</a>
+        </div>
       </section>
     </main>
 
@@ -137,25 +178,130 @@
       </div>
     </footer>
 
-    <script>
-      document.getElementById('contact-form').addEventListener('submit', function (event) {
+    <script type="module">
+      import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+
+      const SUPABASE_URL = 'https://okuravitxocyevkexfgi.supabase.co'
+      const SUPABASE_ANON_KEY = 'PASTE_YOUR_SUPABASE_ANON_KEY_HERE'
+
+      const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+
+      const form = document.getElementById('contact-form')
+      const submitButton = document.getElementById('contact-submit')
+      const statusBox = document.getElementById('contact-status')
+
+      const nameInput = document.getElementById('contact-name')
+      const emailInput = document.getElementById('contact-email')
+      const topicInput = document.getElementById('contact-topic')
+      const messageInput = document.getElementById('contact-message')
+      const websiteInput = document.getElementById('contact-website')
+
+      function setStatus(type, message) {
+        statusBox.className =
+          'form-status ' + (type === 'success' ? 'is-success' : 'is-error')
+        statusBox.textContent = message
+      }
+
+      function clearStatus() {
+        statusBox.className = 'form-status'
+        statusBox.textContent = ''
+      }
+
+      function isProbablyValidEmail(value) {
+        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim())
+      }
+
+      function validateForm() {
+        const name = nameInput.value.trim()
+        const email = emailInput.value.trim()
+        const message = messageInput.value.trim()
+
+        if (!name) {
+          setStatus('error', 'Please enter your name.')
+          return false
+        }
+
+        if (!email || !isProbablyValidEmail(email)) {
+          setStatus('error', 'Please enter a valid email address.')
+          return false
+        }
+
+        if (!message || message.length < 10) {
+          setStatus('error', 'Please write a little more detail in your message.')
+          return false
+        }
+
+        return true
+      }
+
+      form.addEventListener('submit', async function (event) {
         event.preventDefault()
+        clearStatus()
 
-        var name = document.getElementById('contact-name').value.trim()
-        var email = document.getElementById('contact-email').value.trim()
-        var topic = document.getElementById('contact-topic').value
-        var message = document.getElementById('contact-message').value.trim()
+        if (!validateForm()) {
+          return
+        }
 
-        var subject = encodeURIComponent('ProPeloton Manager contact: ' + topic)
-        var body = encodeURIComponent(
-          'Name: ' + name + '\n' +
-          'Email: ' + email + '\n' +
-          'Topic: ' + topic + '\n\n' +
-          'Message:\n' + message
+        if (SUPABASE_ANON_KEY === 'PASTE_YOUR_SUPABASE_ANON_KEY_HERE') {
+          setStatus(
+            'error',
+            'Contact form is not configured yet. Please add the public Supabase anon key in contact/index.html.'
+          )
+          return
+        }
+
+        submitButton.disabled = true
+        submitButton.textContent = 'Sending...'
+
+        const topic = topicInput.value
+        const messageWithTopic =
+          'Topic: ' + topic + '\n\n' + messageInput.value.trim()
+
+        const { data, error } = await supabase.functions.invoke(
+          'send-contact-message',
+          {
+            body: {
+              name: nameInput.value.trim(),
+              email: emailInput.value.trim(),
+              message: messageWithTopic,
+              source: '/contact/',
+              website: websiteInput.value.trim(),
+            },
+          }
         )
 
-        window.location.href =
-          'mailto:contact@propelotonmanager.com?subject=' + subject + '&body=' + body
+        submitButton.disabled = false
+        submitButton.textContent = 'Send message'
+
+        if (error) {
+          setStatus(
+            'error',
+            error.message ||
+              'Could not connect to the contact service. Please try again or email us manually.'
+          )
+          return
+        }
+
+        if (!data || data.ok !== true) {
+          setStatus(
+            'error',
+            typeof data?.error === 'string'
+              ? data.error
+              : 'Could not send your message. Please try again.'
+          )
+          return
+        }
+
+        nameInput.value = ''
+        emailInput.value = ''
+        topicInput.value = 'General question'
+        messageInput.value = ''
+        websiteInput.value = ''
+
+        setStatus(
+          'success',
+          'Thank you, your message has been sent. If a reply is needed, we will answer using the email address you provided.'
+        )
       })
     </script>
   </body>

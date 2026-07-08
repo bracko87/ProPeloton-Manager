@@ -351,3 +351,132 @@ ul {
     grid-template-columns: 1fr;
   }
 }
+
+/* ---------------------------------------------------------
+   Layout spacing fix for static public pages
+   --------------------------------------------------------- */
+
+.main {
+  display: block;
+}
+
+.main > .card,
+.main > .grid,
+.main > .logo-panel {
+  margin-top: 0;
+  margin-bottom: 28px;
+}
+
+.main > .card:last-child,
+.main > .grid:last-child,
+.main > .logo-panel:last-child {
+  margin-bottom: 0;
+}
+
+/* Old .card + .card rule was affecting grid cards.
+   These rules reset grid children and make cards equal height. */
+.grid {
+  align-items: stretch;
+}
+
+.grid > .card,
+.grid > article.card {
+  height: 100%;
+  margin-top: 0 !important;
+  margin-bottom: 0;
+}
+
+.grid-2,
+.grid-3 {
+  gap: 24px;
+}
+
+/* Make card spacing inside text cleaner */
+.card {
+  position: relative;
+  overflow: hidden;
+}
+
+.card h2 + p,
+.card h3 + p {
+  margin-top: 14px;
+}
+
+.card p:last-child,
+.card ul:last-child {
+  margin-bottom: 0;
+}
+
+/* Stronger desktop width behavior */
+@media (min-width: 1024px) {
+  .grid-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .grid-3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* Tablet: avoid squeezed three-column cards */
+@media (max-width: 1023px) {
+  .grid-3 {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Mobile: all cards one column */
+@media (max-width: 760px) {
+  .main {
+    padding-left: 18px;
+    padding-right: 18px;
+  }
+
+  .card,
+  .logo-panel {
+    padding: 22px;
+  }
+
+  .grid-2,
+  .grid-3 {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+}
+
+/* Contact page direct-send form states */
+.form-status {
+  display: none;
+  margin-top: 18px;
+  border-radius: 14px;
+  padding: 16px;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.form-status.is-success {
+  display: block;
+  border: 1px solid #bbf7d0;
+  background: #f0fdf4;
+  color: #166534;
+}
+
+.form-status.is-error {
+  display: block;
+  border: 1px solid #fecaca;
+  background: #fef2f2;
+  color: #991b1b;
+}
+
+.button[disabled] {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+.hidden-field {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
