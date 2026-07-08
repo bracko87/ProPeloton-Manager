@@ -9,9 +9,11 @@
  * - Show lightweight loading/error banners without changing the main layout.
  * - Load live public homepage data from get_public_homepage_snapshot_v1().
  *
- * UPDATE: Public AdSense-readiness footer links
- * - Adds footer links to About, How to Play, Privacy Policy, Terms, Contact, and Support.
+ * UPDATE: Public AdSense-readiness improvements
+ * - Adds more original readable homepage content.
+ * - Adds public navigation links in the header.
  * - Keeps public pages reachable from the homepage without login.
+ * - Uses contact@propelotonmanager.com as the visible contact email.
  *
  * UPDATE: Sustainable homepage reviews
  * - Reviews are loaded from Supabase using get_public_homepage_reviews_v1.
@@ -20,9 +22,10 @@
  * - No localStorage is used.
  *
  * UPDATE: Public readiness cleanup
- * - Removes closed beta popup.
- * - Removes YouTube and X social icons.
- * - Adds real Facebook and Discord links.
+ * - No beta popup.
+ * - No “under construction” wording.
+ * - No YouTube/X placeholder icons.
+ * - Real Facebook and Discord links.
  */
 
 import React, { useCallback, useEffect, useState } from 'react'
@@ -69,7 +72,7 @@ type ReviewFormErrors = {
   message?: string
 }
 
-const CONTACT_EMAIL = 'contact@propeller.com'
+const CONTACT_EMAIL = 'contact@propelotonmanager.com'
 
 const SOCIAL_LINKS = {
   facebook: 'https://www.facebook.com/profile.php?id=61583549010426',
@@ -77,15 +80,91 @@ const SOCIAL_LINKS = {
   email: `mailto:${CONTACT_EMAIL}`,
 }
 
+const HEADER_PUBLIC_LINKS = [
+  { label: 'About', href: '/about/' },
+  { label: 'How to Play', href: '/how-to-play/' },
+  { label: 'Support', href: '/support/' },
+  { label: 'Contact', href: '/contact/' },
+]
+
 const FOOTER_GAME_LINKS = [
-  { label: 'About', href: '#/about' },
-  { label: 'How to Play', href: '#/how-to-play' },
-  { label: 'Contact', href: '#/contact' },
+  { label: 'About', href: '/about/' },
+  { label: 'How to Play', href: '/how-to-play/' },
+  { label: 'Contact', href: '/contact/' },
 ]
 
 const FOOTER_LEGAL_LINKS = [
-  { label: 'Privacy Policy', href: '#/privacy-policy' },
-  { label: 'Terms', href: '#/terms' },
+  { label: 'Privacy Policy', href: '/privacy-policy/' },
+  { label: 'Terms', href: '/terms/' },
+]
+
+const HOMEPAGE_GUIDE_CARDS = [
+  {
+    title: 'What is ProPeloton Manager?',
+    text:
+      'ProPeloton Manager is an online cycling management game where you create and develop a cycling club. Instead of controlling a rider directly, you manage the team behind the race: riders, training, race plans, staff, equipment, finances, sponsors, transfers and long-term ranking progress.',
+  },
+  {
+    title: 'How do you play?',
+    text:
+      'Managers build a squad, study the race calendar, apply for suitable races, prepare race plans, choose riders, assign roles, manage supplies and follow results. Good decisions depend on rider skills, fatigue, morale, race profile, weather, budget and season goals.',
+  },
+  {
+    title: 'Why does preparation matter?',
+    text:
+      'A strong rider is not enough by itself. Race preparation connects riders, staff, vehicles, equipment, supplies and tactics. Planning ahead helps your team arrive ready for sprints, climbs, time trials, stage races and difficult weather conditions.',
+  },
+]
+
+const HOMEPAGE_GAMEPLAY_STEPS = [
+  {
+    title: 'Create and develop your club',
+    text:
+      'Start with a team identity and grow the club over time. Your choices affect the squad, finances, rankings, sponsors and future opportunities.',
+  },
+  {
+    title: 'Build a balanced squad',
+    text:
+      'Sprinters, climbers, time-trial riders, rouleurs, helpers and leaders all have different value depending on the race profile and season calendar.',
+  },
+  {
+    title: 'Plan races before deadlines',
+    text:
+      'Accepted races still need preparation. Select riders, staff, assets, equipment and supplies before important race-plan and stage-plan deadlines.',
+  },
+  {
+    title: 'Manage money carefully',
+    text:
+      'Salaries, transfers, staff, equipment, infrastructure, training camps, sponsors and taxes all affect the long-term health of your club.',
+  },
+  {
+    title: 'Follow rankings and results',
+    text:
+      'Teams earn points through race results. Rankings create long-term goals and make every season important for promotion, relegation and club reputation.',
+  },
+  {
+    title: 'Improve through feedback',
+    text:
+      'Players can contact support, report bugs and submit reviews. Approved reviews appear publicly, while support requests help improve the game experience.',
+  },
+]
+
+const HOMEPAGE_TRUST_ITEMS = [
+  {
+    title: 'Public information',
+    text:
+      'Visitors can read about the game, learn how to play, contact support, and review privacy and terms information before creating an account.',
+  },
+  {
+    title: 'Clear support access',
+    text:
+      'Support is available for account questions, gameplay questions, bug reports, payment questions and feedback about ProPeloton Manager.',
+  },
+  {
+    title: 'Privacy and transparency',
+    text:
+      'The public privacy policy and terms pages explain account data, gameplay data, payments, coins, advertising, cookies and fair-use rules.',
+  },
 ]
 
 function toNumber(value: unknown): number {
@@ -153,12 +232,6 @@ function normalizeRating(value: unknown): number {
   return Math.max(1, Math.min(5, Math.round(parsedValue)))
 }
 
-/**
- * HomePage
- * Extended landing page with multiple sections: hero, features, screenshots,
- * reviews and CTA. Also performs a post-confirmation club check for
- * authenticated users and routes them accordingly.
- */
 export default function HomePage(): JSX.Element {
   const navigate = useNavigate()
   const { user, loading } = useAuth()
@@ -292,13 +365,6 @@ export default function HomePage(): JSX.Element {
     }
   }, [])
 
-  /**
-   * When auth is resolved and a user is present, call get_my_club_id()
-   * to decide the next step:
-   * - No club: redirect to /create-club
-   * - Has club: redirect to /dashboard/overview
-   * On RPC error, stay on the homepage and show an inline error banner.
-   */
   useEffect(() => {
     let isMounted = true
 
@@ -435,9 +501,7 @@ export default function HomePage(): JSX.Element {
   }
 
   function showPreviousReview(): void {
-    if (reviews.length <= 1) {
-      return
-    }
+    if (reviews.length <= 1) return
 
     setActiveReviewIndex(current =>
       current === 0 ? reviews.length - 1 : current - 1,
@@ -445,9 +509,7 @@ export default function HomePage(): JSX.Element {
   }
 
   function showNextReview(): void {
-    if (reviews.length <= 1) {
-      return
-    }
+    if (reviews.length <= 1) return
 
     setActiveReviewIndex(current =>
       current === reviews.length - 1 ? 0 : current + 1,
@@ -471,14 +533,24 @@ export default function HomePage(): JSX.Element {
             <div className="text-xl font-semibold">ProPeloton Manager</div>
           </div>
 
-          <nav className="flex items-center gap-4">
-            <a href="#/login" className="text-white/80 hover:text-white">
+          <nav className="flex flex-wrap items-center justify-end gap-x-4 gap-y-2">
+            {HEADER_PUBLIC_LINKS.map(link => (
+              <a
+                key={link.href}
+                href={link.href}
+                className="hidden text-sm font-semibold text-white/70 hover:text-yellow-400 md:inline-flex"
+              >
+                {link.label}
+              </a>
+            ))}
+
+            <a href="#/login" className="text-sm font-semibold text-white/80 hover:text-white">
               Sign In
             </a>
 
             <a
               href="#/register"
-              className="rounded-md bg-yellow-400 px-4 py-2 font-semibold text-black hover:bg-yellow-300"
+              className="rounded-md bg-yellow-400 px-4 py-2 text-sm font-bold text-black hover:bg-yellow-300"
             >
               Start Playing
             </a>
@@ -618,6 +690,160 @@ export default function HomePage(): JSX.Element {
                   title="Market & Transfers"
                   description="Scout, bid and negotiate contracts in a dynamic transfer market."
                 />
+              </div>
+            </section>
+          </div>
+        </section>
+
+        <section className="bg-slate-50 py-16 text-slate-900">
+          <div className="mx-auto max-w-7xl px-6">
+            <div className="max-w-3xl">
+              <p className="text-sm font-bold uppercase tracking-[0.22em] text-yellow-700">
+                Game guide
+              </p>
+
+              <h2 className="mt-3 text-3xl font-bold tracking-tight md:text-4xl">
+                Learn what ProPeloton Manager offers before you join.
+              </h2>
+
+              <p className="mt-4 text-base leading-8 text-slate-700">
+                ProPeloton Manager is built around long-term cycling management. The
+                public pages explain the game, but the homepage also gives visitors a
+                direct overview of the main systems: team building, rider development,
+                race preparation, tactics, finances, support and season rankings.
+              </p>
+            </div>
+
+            <div className="mt-8 grid gap-5 lg:grid-cols-3">
+              {HOMEPAGE_GUIDE_CARDS.map(card => (
+                <article
+                  key={card.title}
+                  className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"
+                >
+                  <h3 className="text-xl font-bold text-slate-950">{card.title}</h3>
+
+                  <p className="mt-3 text-sm leading-7 text-slate-700">
+                    {card.text}
+                  </p>
+                </article>
+              ))}
+            </div>
+
+            <section className="mt-10 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+              <div className="grid gap-8 lg:grid-cols-[0.9fr_1.4fr]">
+                <div>
+                  <p className="text-sm font-bold uppercase tracking-[0.2em] text-yellow-700">
+                    How to play
+                  </p>
+
+                  <h3 className="mt-3 text-2xl font-bold text-slate-950">
+                    Manage the sporting and business side of a cycling team.
+                  </h3>
+
+                  <p className="mt-4 text-sm leading-7 text-slate-700">
+                    A successful manager must balance ambition with stability. Winning
+                    races is important, but so are training, recovery, scouting,
+                    transfers, staff, equipment, infrastructure, sponsor objectives and
+                    financial control.
+                  </p>
+
+                  <div className="mt-5 flex flex-wrap gap-3">
+                    <a
+                      href="/how-to-play/"
+                      className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-bold text-white hover:bg-slate-800"
+                    >
+                      Read How to Play
+                    </a>
+
+                    <a
+                      href="/about/"
+                      className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-bold text-slate-900 hover:bg-slate-50"
+                    >
+                      About the Game
+                    </a>
+                  </div>
+                </div>
+
+                <div className="grid gap-4 sm:grid-cols-2">
+                  {HOMEPAGE_GAMEPLAY_STEPS.map(step => (
+                    <article
+                      key={step.title}
+                      className="rounded-xl border border-slate-200 bg-slate-50 p-4"
+                    >
+                      <h4 className="font-bold text-slate-950">{step.title}</h4>
+
+                      <p className="mt-2 text-sm leading-6 text-slate-700">
+                        {step.text}
+                      </p>
+                    </article>
+                  ))}
+                </div>
+              </div>
+            </section>
+
+            <section className="mt-10 rounded-2xl border border-slate-200 bg-slate-950 p-6 text-white shadow-sm">
+              <div className="grid gap-8 lg:grid-cols-[0.9fr_1.4fr]">
+                <div>
+                  <p className="text-sm font-bold uppercase tracking-[0.2em] text-yellow-300">
+                    Support and transparency
+                  </p>
+
+                  <h3 className="mt-3 text-2xl font-bold">
+                    Public information is available before registration.
+                  </h3>
+
+                  <p className="mt-4 text-sm leading-7 text-slate-200">
+                    Visitors can read the main game explanation, review support
+                    information, check contact details and understand privacy and terms
+                    before creating an account. This makes the public website easier to
+                    navigate and more useful for new players.
+                  </p>
+
+                  <div className="mt-5 flex flex-wrap gap-3">
+                    <a
+                      href="/support/"
+                      className="rounded-lg bg-yellow-400 px-4 py-2 text-sm font-bold text-black hover:bg-yellow-300"
+                    >
+                      Support
+                    </a>
+
+                    <a
+                      href="/contact/"
+                      className="rounded-lg border border-white/25 px-4 py-2 text-sm font-bold text-white hover:bg-white/10"
+                    >
+                      Contact
+                    </a>
+
+                    <a
+                      href="/privacy-policy/"
+                      className="rounded-lg border border-white/25 px-4 py-2 text-sm font-bold text-white hover:bg-white/10"
+                    >
+                      Privacy Policy
+                    </a>
+
+                    <a
+                      href="/terms/"
+                      className="rounded-lg border border-white/25 px-4 py-2 text-sm font-bold text-white hover:bg-white/10"
+                    >
+                      Terms
+                    </a>
+                  </div>
+                </div>
+
+                <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-1">
+                  {HOMEPAGE_TRUST_ITEMS.map(item => (
+                    <article
+                      key={item.title}
+                      className="rounded-xl border border-white/10 bg-white/5 p-4"
+                    >
+                      <h4 className="font-bold text-white">{item.title}</h4>
+
+                      <p className="mt-2 text-sm leading-6 text-slate-200">
+                        {item.text}
+                      </p>
+                    </article>
+                  ))}
+                </div>
               </div>
             </section>
           </div>
@@ -910,7 +1136,7 @@ export default function HomePage(): JSX.Element {
                 </a>
               ))}
 
-              <a href="#/support" className="text-sm text-white/70 hover:text-yellow-400">
+              <a href="/support/" className="text-sm text-white/70 hover:text-yellow-400">
                 Support
               </a>
             </div>

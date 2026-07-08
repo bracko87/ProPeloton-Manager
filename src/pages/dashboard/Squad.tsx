@@ -451,57 +451,49 @@ export default function SquadPage() {
     setDevelopingTeamStatusError(null)
 
     try {
-      const { data: authData, error: authErr } = await supabase.auth.getUser()
+      const [{ data: authData, error: authErr }, { data: currentGameDate, error: gameDateErr }] =
+        await Promise.all([
+          supabase.auth.getUser(),
+          supabase.rpc('get_current_game_date'),
+        ])
+
       if (authErr) throw authErr
+      if (gameDateErr) throw gameDateErr
 
       const userId = authData.user?.id
       if (!userId) throw new Error('Not authenticated.')
 
-      const { data: currentGameDate, error: gameDateErr } = await supabase.rpc(
-        'get_current_game_date'
-      )
-
-      if (gameDateErr) throw gameDateErr
-
       const normalizedGameDate = normalizeGameDateValue(currentGameDate)
+      const seasonYear = getSeasonYearFromGameDate(normalizedGameDate)
+
       setGameDate(normalizedGameDate)
 
-      const { data: devStatusData, error: devStatusErr } = await supabase.rpc(
-        'get_developing_team_status'
-      )
-
-      if (devStatusErr) {
-        console.error('get_developing_team_status failed:', devStatusErr)
-        setDevelopingTeamStatus(null)
-        setDevelopingTeamStatusError(
-          devStatusErr.message ?? 'Could not load Developing Team status.'
-        )
-      } else {
-        const normalizedDevStatus = Array.isArray(devStatusData) ? devStatusData[0] : devStatusData
-        setDevelopingTeamStatus((normalizedDevStatus ?? null) as DevelopingTeamStatus | null)
-      }
-
-      const { data: club, error: clubErr } = await supabase
+      const devStatusPromise = supabase.rpc('get_developing_team_status')
+      const clubPromise = supabase
         .from('clubs')
         .select('id')
         .eq('owner_user_id', userId)
         .eq('club_type', 'main')
         .single()
 
-      if (clubErr) throw clubErr
-      if (!club?.id) throw new Error('No club found for this user.')
+      void devStatusPromise.then(({ data: devStatusData, error: devStatusErr }) => {
+        if (devStatusErr) {
+          console.error('get_developing_team_status failed:', devStatusErr)
+          setDevelopingTeamStatus(null)
+          setDevelopingTeamStatusError(
+            devStatusErr.message ?? 'Could not load Developing Team status.'
+          )
+          return
+        }
 
-      const dashboardData = await fetchSquadSeasonDashboardData(
-        club.id,
-        getSeasonYearFromGameDate(normalizedGameDate)
-      )
-      setSquadSeasonDashboardData(dashboardData)
-
-      const { data: healthData, error: healthErr } = await supabase.rpc('get_club_health_overview', {
-        p_club_id: club.id,
+        const normalizedDevStatus = Array.isArray(devStatusData) ? devStatusData[0] : devStatusData
+        setDevelopingTeamStatus((normalizedDevStatus ?? null) as DevelopingTeamStatus | null)
       })
 
-      if (healthErr) throw healthErr
+      const { data: club, error: clubErr } = await clubPromise
+
+      if (clubErr) throw clubErr
+      if (!club?.id) throw new Error('No club found for this user.')
 
       const { data: roster, error: rosterErr } = await supabase
         .from('club_roster')
@@ -516,64 +508,55 @@ export default function SquadPage() {
       const rosterRows = (roster ?? []) as SquadRosterRow[]
       const riderIds = rosterRows.map((row) => row.rider_id)
 
-      const { data: riderInternationalPointRows, error: riderInternationalPointErr } = await supabase
-        .from('rider_international_points_by_season_v1')
-        .select('rider_id, season_year, international_points')
-        .in('rider_id', riderIds.length > 0 ? riderIds : ['00000000-0000-0000-0000-000000000000'])
-        .eq('season_year', getSeasonYearFromGameDate(normalizedGameDate))
+      // First paint: show the roster immediately with the data already available
+      // from club_roster. Expensive dashboard/health/meta data hydrates below.
+      setRows(rosterRows)
+      setLoading(false)
 
-      if (riderInternationalPointErr) throw riderInternationalPointErr
+      void fetchSquadSeasonDashboardData(club.id, seasonYear)
+        .then((dashboardData) => {
+          setSquadSeasonDashboardData(dashboardData)
+        })
+        .catch((dashboardErr) => {
+          console.warn('Failed to load squad season dashboard data:', dashboardErr)
+          setSquadSeasonDashboardData(createEmptySquadSeasonDashboardData())
+        })
 
-      const internationalPointsByRiderId = new Map(
-        ((riderInternationalPointRows ?? []) as Array<{
-          rider_id: string
-          international_points: number | string | null
-        }>).map((row) => [row.rider_id, normalizePointsValue(row.international_points, 0)])
-      )
+      void supabase
+        .rpc('get_club_health_overview', {
+          p_club_id: club.id,
+        })
+        .then(({ data: healthData, error: healthErr }) => {
+          if (healthErr) {
+            console.warn('Failed to load club health overview:', healthErr)
+            return
+          }
 
-      const { data: transferMarketRows, error: transferMarketErr } = await supabase.rpc(
-        'get_transfer_market_listings',
-        {
+          setHealthOverviewRows((healthData ?? []) as ClubHealthOverviewRow[])
+        })
+
+      if (riderIds.length === 0) {
+        setTransferListedRiderIds(new Set())
+        return
+      }
+
+      const safeEmptyRiderId = '00000000-0000-0000-0000-000000000000'
+
+      const [
+        riderInternationalPointResult,
+        transferMarketResult,
+        riderMetaResult,
+      ] = await Promise.all([
+        supabase
+          .from('rider_international_points_by_season_v1')
+          .select('rider_id, season_year, international_points')
+          .in('rider_id', riderIds.length > 0 ? riderIds : [safeEmptyRiderId])
+          .eq('season_year', seasonYear),
+        supabase.rpc('get_transfer_market_listings', {
           p_page: 1,
           p_page_size: 500,
-        }
-      )
-
-      if (transferMarketErr) throw transferMarketErr
-
-      const activeListedIds = new Set(
-        ((transferMarketRows ?? []) as Array<{ rider_id: string }>).map((row) => row.rider_id)
-      )
-
-      setTransferListedRiderIds(new Set(riderIds.filter((id) => activeListedIds.has(id))))
-
-      let riderMetaMap = new Map<
-        string,
-        {
-          id: string
-          first_name: string | null
-          last_name: string | null
-          display_name: string | null
-          birth_date: string | null
-          salary: number | null
-          contract_expires_at: string | null
-          contract_expires_season: number | null
-          market_value: number | null
-          sprint: number | null
-          climbing: number | null
-          time_trial: number | null
-          flat: number | null
-          endurance: number | null
-          recovery: number | null
-          morale: number | null
-          potential: number | null
-          fatigue: number | null
-          availability_status: RiderAvailabilityStatus | null
-        }
-      >()
-
-      if (riderIds.length > 0) {
-        const { data: riderMetaRows, error: riderMetaErr } = await supabase
+        }),
+        supabase
           .from('riders')
           .select(
             `
@@ -598,36 +581,61 @@ export default function SquadPage() {
             availability_status
           `
           )
-          .in('id', riderIds)
+          .in('id', riderIds),
+      ])
 
-        if (riderMetaErr) throw riderMetaErr
-
-        riderMetaMap = new Map(
-          (
-            riderMetaRows as Array<{
-              id: string
-              first_name: string | null
-              last_name: string | null
-              display_name: string | null
-              birth_date: string | null
-              salary: number | null
-              contract_expires_at: string | null
-              contract_expires_season: number | null
-              market_value: number | null
-              sprint: number | null
-              climbing: number | null
-              time_trial: number | null
-              flat: number | null
-              endurance: number | null
-              recovery: number | null
-              morale: number | null
-              potential: number | null
-              fatigue: number | null
-              availability_status: RiderAvailabilityStatus | null
-            }>
-          ).map((row) => [row.id, row])
-        )
+      if (riderInternationalPointResult.error) {
+        console.warn('Failed to load rider international points:', riderInternationalPointResult.error)
       }
+
+      if (transferMarketResult.error) {
+        console.warn('Failed to load transfer market listings:', transferMarketResult.error)
+      }
+
+      if (riderMetaResult.error) {
+        console.warn('Failed to load rider metadata:', riderMetaResult.error)
+      }
+
+      const internationalPointsByRiderId = new Map(
+        ((riderInternationalPointResult.data ?? []) as Array<{
+          rider_id: string
+          international_points: number | string | null
+        }>).map((row) => [row.rider_id, normalizePointsValue(row.international_points, 0)])
+      )
+
+      const activeListedIds = new Set(
+        ((transferMarketResult.data ?? []) as Array<{ rider_id: string }>).map(
+          (row) => row.rider_id
+        )
+      )
+
+      setTransferListedRiderIds(new Set(riderIds.filter((id) => activeListedIds.has(id))))
+
+      const riderMetaMap = new Map(
+        (
+          (riderMetaResult.data ?? []) as Array<{
+            id: string
+            first_name: string | null
+            last_name: string | null
+            display_name: string | null
+            birth_date: string | null
+            salary: number | null
+            contract_expires_at: string | null
+            contract_expires_season: number | null
+            market_value: number | null
+            sprint: number | null
+            climbing: number | null
+            time_trial: number | null
+            flat: number | null
+            endurance: number | null
+            recovery: number | null
+            morale: number | null
+            potential: number | null
+            fatigue: number | null
+            availability_status: RiderAvailabilityStatus | null
+          }>
+        ).map((row) => [row.id, row])
+      )
 
       const mergedRows: SquadRosterRow[] = rosterRows.map((row) => {
         const riderMeta = riderMetaMap.get(row.rider_id)
@@ -664,11 +672,9 @@ export default function SquadPage() {
       })
 
       setRows(mergedRows)
-      setHealthOverviewRows((healthData ?? []) as ClubHealthOverviewRow[])
     } catch (e: any) {
       setSquadSeasonDashboardData(createEmptySquadSeasonDashboardData())
       setError(e?.message ?? 'Failed to load squad.')
-    } finally {
       setLoading(false)
     }
   }, [])

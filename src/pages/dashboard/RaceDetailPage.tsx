@@ -2220,6 +2220,9 @@ type ReplayGroupLine = {
   actualKm?: number
   kmMarker?: number
   riderCount?: number
+  riderIds?: string[]
+  riderNames?: string[]
+  teamNames?: string[]
   specialLeaderTypes?: ReplayLeaderBadgeType[]
   entityType?: RaceReplayEntityType
   teamName?: string
@@ -5553,6 +5556,9 @@ function ReplayStageProfile({
             actualKm,
             kmMarker: Math.max(0, displayKm),
             riderCount: getReplayEntitySize(frame),
+            riderIds: frame.rider_ids ?? [],
+            riderNames: frame.rider_names ?? [],
+            teamNames: frame.team_names ?? [],
             size: getReplayEntitySize(frame),
             entityType,
             teamName: getReplayFrameTeamName(frame),
@@ -5902,6 +5908,24 @@ function ReplayStageProfile({
             )
             const roadStemTopY = roadPillY + roadPillHeight
             const roadMarkerRadius = coord.y < height * 0.48 ? 4.2 : 5.2
+            const roadRiderIds = group.riderIds ?? []
+            const roadRiderNames = group.riderNames ?? []
+            const roadTeamNames = group.teamNames ?? []
+
+            const roadRiderTickBandWidth =
+              roadRiderIds.length >= 90
+                ? 44
+                : roadRiderIds.length >= 50
+                  ? 38
+                  : roadRiderIds.length >= 25
+                    ? 32
+                    : 26
+
+            const roadRiderTickHeight = compact ? 5 : 6
+            const roadRiderTickTopY = Math.min(
+              height - padding.bottom - roadRiderTickHeight,
+              coord.y + 8
+            )
 
             return (
               <g key={group.code}>
@@ -5914,6 +5938,54 @@ function ReplayStageProfile({
                     .filter(Boolean)
                     .join(' · ')}
                 </title>
+
+                {roadRiderIds.map((riderId, riderIndex) => {
+                  const riderCount = Math.max(roadRiderIds.length, 1)
+                  const centeredIndex =
+                    riderCount <= 1
+                      ? 0
+                      : riderIndex / (riderCount - 1) - 0.5
+
+                  const tickX =
+                    coord.x + centeredIndex * roadRiderTickBandWidth
+
+                  const tickY =
+                    roadRiderTickTopY + ((riderIndex % 3) - 1) * 1.8
+
+                  const riderName =
+                    roadRiderNames[riderIndex]?.trim() ||
+                    `Rider ${riderIndex + 1}`
+
+                  const teamName =
+                    roadTeamNames[riderIndex]?.trim() || null
+
+                  return (
+                    <g
+                      key={`${group.code}-rider-tick-${riderId || riderIndex}`}
+                    >
+                      <title>
+                        {[
+                          riderName,
+                          teamName,
+                          group.shortLabel,
+                          group.gapLabel,
+                        ]
+                          .filter(Boolean)
+                          .join(' · ')}
+                      </title>
+
+                      <line
+                        x1={tickX}
+                        y1={tickY}
+                        x2={tickX}
+                        y2={tickY + roadRiderTickHeight}
+                        stroke={markerStroke}
+                        strokeWidth={roadRiderIds.length >= 70 ? 0.9 : 1.15}
+                        opacity={0.48}
+                      />
+                    </g>
+                  )
+                })}
 
                 <line
                   x1={coord.x}

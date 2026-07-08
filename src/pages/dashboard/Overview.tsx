@@ -27,6 +27,7 @@ import {
 } from "../../lib/tutorialProgress";
 
 type AlertLevel = "danger" | "warning" | "info" | "success";
+type AttentionTone = AlertLevel | "violet";
 type FeedLevel =
   | "finance"
   | "training"
@@ -41,6 +42,11 @@ type AlertItem = {
   label: string;
   level: AlertLevel;
   href?: string;
+  status?: string;
+  deadlineAt?: string;
+  deadlineLabel?: string;
+  icon?: string;
+  tone?: AttentionTone;
 };
 
 type KpiItem = {
@@ -2313,20 +2319,58 @@ async function loadOverviewFinancePeriodSummary(
 }
 
 function normalizeOverviewAttentionItems(value: unknown): AlertItem[] {
-  return asArray<Record<string, unknown>>(value).map((row, index) => {
-    const rawLevel = asString(row.level, "info").toLowerCase();
-    const level: AlertLevel =
-      rawLevel === "danger" || rawLevel === "warning" || rawLevel === "success"
-        ? rawLevel
-        : "info";
+  return asArray<Record<string, unknown>>(value)
+    .map((row, index): AlertItem => {
+      const rawLevel = asString(row.level, "info").toLowerCase();
+      const level: AlertLevel =
+        rawLevel === "danger" || rawLevel === "warning" || rawLevel === "success"
+          ? rawLevel
+          : "info";
 
-    return {
-      id: asString(row.id, `attention:${index}`),
-      label: asString(row.label ?? row.title, "Attention item"),
-      level,
-      href: asString(row.href ?? row.action_url, "") || undefined,
-    };
-  });
+      const rawTone = asString(row.tone ?? row.visual_tone, "").toLowerCase();
+      const tone: AttentionTone | undefined =
+        rawTone === "danger" ||
+        rawTone === "warning" ||
+        rawTone === "info" ||
+        rawTone === "success" ||
+        rawTone === "violet"
+          ? rawTone
+          : undefined;
+
+      return {
+        id: asString(row.id, `attention:${index}`),
+        label: asString(row.label ?? row.title, "Attention item"),
+        level,
+        href: asString(row.href ?? row.action_url, "") || undefined,
+        status: asString(row.status ?? row.state ?? row.attention_status, "") || undefined,
+        deadlineAt:
+          asString(
+            row.deadlineAt ??
+              row.deadline_at ??
+              row.deadlineDate ??
+              row.deadline_date ??
+              row.dueDate ??
+              row.due_date ??
+              row.activeUntil ??
+              row.active_until ??
+              row.expires_at,
+            "",
+          ) || undefined,
+        deadlineLabel:
+          asString(
+            row.deadlineLabel ??
+              row.deadline_label ??
+              row.dueLabel ??
+              row.due_label ??
+              row.activeUntilLabel ??
+              row.active_until_label,
+            "",
+          ) || undefined,
+        icon: asString(row.icon ?? row.icon_name, "") || undefined,
+        tone,
+      };
+    })
+    .filter(shouldShowAttentionItem);
 }
 
 function mergeOverviewAlerts(
@@ -2337,6 +2381,8 @@ function mergeOverviewAlerts(
   const merged: AlertItem[] = [];
 
   for (const item of [...secondary, ...primary]) {
+    if (!shouldShowAttentionItem(item)) continue;
+
     const key = `${item.href ?? ""}:${item.label}`.toLowerCase();
     if (seen.has(key)) continue;
     seen.add(key);
@@ -2368,7 +2414,7 @@ function buildAttentionAlertsFromFeed(feed: FeedItem[]): AlertItem[] {
       const searchable = `${item.title} ${item.subtitle}`.toLowerCase();
       return actionKeywords.some((keyword) => searchable.includes(keyword));
     })
-    .map((item) => ({
+    .map((item): AlertItem => ({
       id: `feed-attention:${item.id}`,
       label: item.title,
       level:
@@ -2378,7 +2424,8 @@ function buildAttentionAlertsFromFeed(feed: FeedItem[]): AlertItem[] {
             ? "warning"
             : "info",
       href: item.href,
-    }));
+    }))
+    .filter(shouldShowAttentionItem);
 }
 
 async function loadOverviewAttentionItems(
@@ -2973,6 +3020,249 @@ async function loadOverviewSeasonSnapshot(
   }
 }
 
+
+function getAttentionSearchText(alertOrLabel: AlertItem | string): string {
+  if (typeof alertOrLabel === "string") {
+    return normalizeOverviewAttentionMatchValue(alertOrLabel);
+  }
+
+  return normalizeOverviewAttentionMatchValue(
+    `${alertOrLabel.label} ${alertOrLabel.status ?? ""} ${alertOrLabel.deadlineLabel ?? ""}`,
+  );
+}
+
+function shouldShowAttentionItem(alert: AlertItem): boolean {
+  const text = getAttentionSearchText(alert);
+  const status = normalizeOverviewAttentionMatchValue(alert.status ?? "");
+
+  if (status === "expired" || status === "closed" || status === "resolved") {
+    return false;
+  }
+
+  // Once a deadline has passed and the item becomes "locked", the manager
+  // can no longer change it, so it should leave the attention tray.
+  if (
+    /\blocked\b/.test(text) &&
+    !/\block soon\b/.test(text) &&
+    !/\block reminder\b/.test(text)
+  ) {
+    return false;
+  }
+
+  if (
+    text.includes("deadline passed") ||
+    text.includes("window closed") ||
+    text.includes("no longer editable") ||
+    text.includes("cannot be changed")
+  ) {
+    return false;
+  }
+
+  return true;
+}
+
+function formatAttentionDateLabel(value?: string): string | null {
+  if (!value) return null;
+
+  const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(value.trim());
+
+  if (!match) return value;
+
+  const monthIndex = Number(match[2]) - 1;
+  const day = match[3];
+  const months = [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec",
+  ];
+
+  return `${months[monthIndex] ?? match[2]} ${day}`;
+}
+
+function getAttentionDeadlineLabel(alert: AlertItem): string {
+  const text = getAttentionSearchText(alert);
+  const explicitLabel = alert.deadlineLabel?.trim();
+
+  if (explicitLabel) return explicitLabel;
+
+  const dateLabel = formatAttentionDateLabel(alert.deadlineAt);
+
+  if (dateLabel) {
+    if (
+      text.includes("deadline") ||
+      text.includes("lock soon") ||
+      text.includes("missing") ||
+      text.includes("stage plan") ||
+      text.includes("race plan")
+    ) {
+      return `Due ${dateLabel}`;
+    }
+
+    return `Until ${dateLabel}`;
+  }
+
+  if (text.includes("is today") || text.includes("today")) return "Due today";
+  if (text.includes("tomorrow")) return "Due tomorrow";
+  if (text.includes("deadline soon") || text.includes("lock soon")) return "Deadline";
+  if (text.includes("missing")) return "Missing";
+  if (text.includes("open") || text.includes("opened")) return "Open now";
+  if (text.includes("review") || text.includes("result")) return "Review";
+  if (text.includes("injured") || text.includes("sick") || text.includes("health")) return "Medical";
+
+  if (alert.level === "danger") return "Urgent";
+  if (alert.level === "warning") return "Action";
+  if (alert.level === "success") return "Done";
+
+  return "Info";
+}
+
+function getAttentionActionLabel(label: string) {
+  const value = label.toLowerCase();
+
+  if (value.includes("stage plan locked")) return "Closed setup";
+  if (value.includes("stage plan missing")) return "Missing setup";
+  if (value.includes("stage plans lock soon") || value.includes("stage plan lock soon")) {
+    return "Stage deadline";
+  }
+  if (value.includes("stage plans open") || value.includes("stage plan open")) {
+    return "Stage setup";
+  }
+  if (value.includes("stage plan")) return "Stage setup";
+
+  if (value.includes("race plan deadline")) return "Race deadline";
+  if (value.includes("race plan open")) return "Race entry";
+  if (value.includes("race plan")) return "Race planning";
+
+  if (value.includes("race result") || value.includes("stage result")) return "Results review";
+  if (value.includes("application")) return "Applications";
+  if (value.includes("contract")) return "Contracts";
+  if (value.includes("equipment") || value.includes("repair")) return "Equipment";
+  if (value.includes("scout")) return "Scouting";
+  if (value.includes("finance") || value.includes("loan")) return "Finance";
+  if (value.includes("sick") || value.includes("injured") || value.includes("health")) {
+    return "Medical";
+  }
+
+  return "Review";
+}
+
+function getAttentionTone(alert: AlertItem): AttentionTone {
+  if (alert.tone) return alert.tone;
+
+  const text = getAttentionSearchText(alert);
+
+  if (alert.level === "danger" || text.includes("missing") || text.includes("injured")) {
+    return "danger";
+  }
+
+  if (
+    text.includes("deadline") ||
+    text.includes("lock soon") ||
+    text.includes("due today") ||
+    text.includes("sick")
+  ) {
+    return "warning";
+  }
+
+  if (text.includes("result") || text.includes("review")) return "violet";
+  if (text.includes("finance") || text.includes("contract") || text.includes("sponsor")) {
+    return "success";
+  }
+
+  if (alert.level === "success") return "success";
+  if (alert.level === "warning") return "warning";
+
+  return "info";
+}
+
+function getAttentionIcon(alert: AlertItem): string {
+  if (alert.icon) return alert.icon;
+
+  const text = getAttentionSearchText(alert);
+
+  if (text.includes("race plan deadline")) return "📅";
+  if (text.includes("race plan")) return "📋";
+  if (text.includes("stage plan missing")) return "!";
+  if (text.includes("stage plans lock soon") || text.includes("stage plan lock soon")) return "🚩";
+  if (text.includes("stage plan")) return "🗺";
+  if (text.includes("result") || text.includes("review")) return "🏁";
+  if (text.includes("application")) return "✉";
+  if (text.includes("contract") || text.includes("sponsor")) return "✍";
+  if (text.includes("equipment") || text.includes("repair")) return "⚙";
+  if (text.includes("scout")) return "⌕";
+  if (text.includes("finance") || text.includes("loan")) return "$";
+  if (text.includes("sick") || text.includes("injured") || text.includes("health")) return "+";
+
+  switch (alert.level) {
+    case "danger":
+      return "!";
+    case "warning":
+      return "!";
+    case "success":
+      return "✓";
+    case "info":
+    default:
+      return "i";
+  }
+}
+
+function getAttentionBubbleClasses(tone: AttentionTone) {
+  switch (tone) {
+    case "danger":
+      return "border-red-200 bg-red-50 text-red-700 shadow-red-100/70";
+    case "warning":
+      return "border-amber-200 bg-amber-50 text-amber-800 shadow-amber-100/70";
+    case "success":
+      return "border-emerald-200 bg-emerald-50 text-emerald-700 shadow-emerald-100/70";
+    case "violet":
+      return "border-violet-200 bg-violet-50 text-violet-700 shadow-violet-100/70";
+    case "info":
+    default:
+      return "border-sky-200 bg-sky-50 text-sky-700 shadow-sky-100/70";
+  }
+}
+
+function getAttentionBubbleIconClasses(tone: AttentionTone) {
+  switch (tone) {
+    case "danger":
+      return "bg-red-600 text-white ring-red-100";
+    case "warning":
+      return "bg-amber-500 text-white ring-amber-100";
+    case "success":
+      return "bg-emerald-600 text-white ring-emerald-100";
+    case "violet":
+      return "bg-violet-600 text-white ring-violet-100";
+    case "info":
+    default:
+      return "bg-sky-600 text-white ring-sky-100";
+  }
+}
+
+function getAttentionBadgeClasses(tone: AttentionTone) {
+  switch (tone) {
+    case "danger":
+      return "bg-red-100 text-red-700 ring-red-200";
+    case "warning":
+      return "bg-amber-100 text-amber-800 ring-amber-200";
+    case "success":
+      return "bg-emerald-100 text-emerald-700 ring-emerald-200";
+    case "violet":
+      return "bg-violet-100 text-violet-700 ring-violet-200";
+    case "info":
+    default:
+      return "bg-sky-100 text-sky-700 ring-sky-200";
+  }
+}
+
 /**
  * getAlertClasses
  * Returns Tailwind classes for the soft alert card surface.
@@ -3064,23 +3354,6 @@ function splitAttentionLabel(label: string): { title: string; detail: string | n
   };
 }
 
-function getAttentionActionLabel(label: string) {
-  const value = label.toLowerCase();
-
-  if (value.includes("stage plan")) return "Stage plan";
-  if (value.includes("race plan")) return "Race plan";
-  if (value.includes("application")) return "Race application";
-  if (value.includes("contract")) return "Contract";
-  if (value.includes("equipment") || value.includes("repair")) return "Equipment";
-  if (value.includes("scout")) return "Scouting";
-  if (value.includes("finance") || value.includes("loan")) return "Finance";
-  if (value.includes("sick") || value.includes("injured") || value.includes("health")) {
-    return "Health";
-  }
-
-  return "Review";
-}
-
 function getAlertDotClasses(level: AlertLevel) {
   switch (level) {
     case "danger":
@@ -3149,7 +3422,9 @@ function AttentionBubbleItem({
   const displayTitle = detail ?? title;
   const contextLabel = detail ? title : "Click to expand";
   const actionLabel = getAttentionActionLabel(alert.label);
-  const levelLabel = getAlertLevelLabel(alert.level);
+  const tone = getAttentionTone(alert);
+  const attentionIcon = getAttentionIcon(alert);
+  const deadlineLabel = getAttentionDeadlineLabel(alert);
 
   const handleOpenClick = (event: React.MouseEvent<HTMLAnchorElement>) => {
     event.preventDefault();
@@ -3166,7 +3441,7 @@ function AttentionBubbleItem({
     <div
       className={cn(
         "relative h-11 shrink-0 snap-start transition-[width] duration-200 ease-out",
-        expanded ? "w-[326px]" : "w-[178px]",
+        expanded ? "w-[352px]" : "w-[194px]",
       )}
     >
       <button
@@ -3177,16 +3452,16 @@ function AttentionBubbleItem({
         className={cn(
           "group flex h-11 w-full items-center overflow-hidden rounded-full border text-left shadow-sm transition duration-150 hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-slate-300 focus:ring-offset-2",
           expanded ? "px-2.5 pr-20" : "px-2.5 pr-3",
-          getAlertBubbleClasses(alert.level),
+          getAttentionBubbleClasses(tone),
         )}
       >
         <span
           className={cn(
             "relative flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[10px] font-black ring-4",
-            getAlertBubbleIconClasses(alert.level),
+            getAttentionBubbleIconClasses(tone),
           )}
         >
-          {getAlertIcon(alert.level)}
+          {attentionIcon}
           <span className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full border-2 border-white bg-current" />
         </span>
 
@@ -3202,8 +3477,13 @@ function AttentionBubbleItem({
 
       {expanded ? (
         <div className="pointer-events-none absolute right-1.5 top-1/2 flex -translate-y-1/2 items-center gap-1.5">
-          <span className="rounded-full bg-white/80 px-2 py-1 text-[9px] font-black uppercase tracking-wide text-slate-500 shadow-sm ring-1 ring-slate-200">
-            {levelLabel}
+          <span
+            className={cn(
+              "rounded-full px-2 py-1 text-[9px] font-black uppercase tracking-wide shadow-sm ring-1",
+              getAttentionBadgeClasses(tone),
+            )}
+          >
+            {deadlineLabel}
           </span>
           {alert.href ? (
             <a
@@ -3228,7 +3508,9 @@ function AttentionBubbleSlider({
   alerts: AlertItem[];
   onOpen?: (alert: AlertItem) => void;
 }) {
-  if (alerts.length === 0) {
+  const visibleAlerts = alerts.filter(shouldShowAttentionItem);
+
+  if (visibleAlerts.length === 0) {
     return (
       <div className="inline-flex h-10 items-center rounded-full border border-emerald-200 bg-emerald-50 px-4 text-xs font-semibold text-emerald-700">
         All clear — no urgent tasks right now.
@@ -3238,7 +3520,7 @@ function AttentionBubbleSlider({
 
   return (
     <div className="flex w-full snap-x snap-mandatory items-center gap-2 overflow-x-auto overscroll-x-contain scroll-smooth px-1 pb-1 [scrollbar-width:thin]">
-      {alerts.map((alert) => (
+      {visibleAlerts.map((alert) => (
         <AttentionBubbleItem key={alert.id} alert={alert} onOpen={onOpen} />
       ))}
     </div>
@@ -5393,11 +5675,234 @@ export default function OverviewPage() {
   React.useEffect(() => {
     let alive = true;
     let inFlight = false;
+    let lastFastWidgetKey: string | null = null;
+
+    async function loadBootstrapMainClubId(): Promise<string | null> {
+      try {
+        const { data: authData, error: authError } = await supabase.auth.getUser();
+
+        if (authError) {
+          console.warn("Overview bootstrap auth lookup failed:", authError.message);
+          return null;
+        }
+
+        const userId = authData.user?.id ?? null;
+        if (!userId) return null;
+
+        const { data: club, error: clubError } = await supabase
+          .from("clubs")
+          .select("id")
+          .eq("owner_user_id", userId)
+          .eq("club_type", "main")
+          .is("deleted_at", null)
+          .order("created_at", { ascending: true })
+          .limit(1)
+          .maybeSingle();
+
+        if (clubError) {
+          console.warn("Overview bootstrap club lookup failed:", clubError.message);
+          return null;
+        }
+
+        return asString((club as Record<string, unknown> | null)?.id, "") || null;
+      } catch (err) {
+        console.warn("Overview bootstrap club lookup failed:", err);
+        return null;
+      }
+    }
+
+    function startFastOverviewWidgets(
+      mainClubId: string | null,
+      seasonYear: number,
+    ): void {
+      if (!mainClubId) return;
+
+      const key = `${mainClubId}:${seasonYear}`;
+      if (lastFastWidgetKey === key) return;
+      lastFastWidgetKey = key;
+
+      void loadOverviewAttentionItems(mainClubId).then((loadedAttentionAlerts) => {
+        if (alive) {
+          setAttentionAlerts(loadedAttentionAlerts);
+        }
+      }).catch((err) => {
+        console.warn("Fast overview attention load failed:", err);
+      });
+
+      setRaceHubLoading(true);
+      void loadOverviewTeamRaceHub(mainClubId, seasonYear).then((loadedRaceHub) => {
+        if (alive) {
+          setRaceHub(loadedRaceHub);
+        }
+      }).catch((err) => {
+        console.warn("Fast overview team race hub load failed:", err);
+      }).finally(() => {
+        if (alive) {
+          setRaceHubLoading(false);
+        }
+      });
+
+      void loadOverviewRaceWorldData(mainClubId, seasonYear).then((loadedRaceWorld) => {
+        if (alive) {
+          setRaceWorld(loadedRaceWorld);
+        }
+      }).catch((err) => {
+        console.warn("Fast overview race world load failed:", err);
+      });
+
+      void loadOverviewSquadPulse(mainClubId).then((loadedSquadPulse) => {
+        if (alive) {
+          setSquadPulseOverride(loadedSquadPulse);
+        }
+      }).catch((err) => {
+        console.warn("Fast overview squad pulse load failed:", err);
+      });
+
+      void loadOverviewSeasonSnapshot(mainClubId, seasonYear).then((loadedSeasonSnapshot) => {
+        if (alive) {
+          setSeasonSnapshot(loadedSeasonSnapshot);
+        }
+      }).catch((err) => {
+        console.warn("Fast overview season snapshot load failed:", err);
+      });
+    }
+
+    async function enrichOverviewPayload(normalizedInput: DashboardOverviewData): Promise<void> {
+      let normalized = normalizedInput;
+
+      try {
+        const clubId =
+          normalized.club.id && normalized.club.id.trim().length > 0
+            ? normalized.club.id
+            : null;
+
+        const { data: sponsorData, error: sponsorError } = await supabase.rpc(
+          "sponsor_get_dashboard",
+          {
+            p_club_id: clubId,
+          },
+        );
+
+        if (sponsorError) {
+          console.error("Sponsor dashboard RPC error", sponsorError);
+        } else if (sponsorData) {
+          const dashboard = sponsorData as SponsorDashboardForOverview;
+          const sponsorClubId = asString(dashboard.club_id);
+
+          if (sponsorClubId && !normalized.club.id) {
+            normalized = {
+              ...normalized,
+              club: {
+                ...normalized.club,
+                id: sponsorClubId,
+              },
+            };
+          }
+
+          const signedMain = Array.isArray(dashboard.signed_sponsors)
+            ? dashboard.signed_sponsors.find(
+                (s) =>
+                  (s.sponsor_kind ?? "").toString().toLowerCase() === "main",
+              )
+            : undefined;
+
+          if (signedMain) {
+            const logoUrl = resolveMainSponsorLogoUrlFromDashboard(signedMain);
+            const signedStatus = (signedMain.status ?? "")
+              .toString()
+              .toLowerCase();
+            const isSignedByStatus =
+              signedStatus === "signed" ||
+              signedStatus === "active" ||
+              signedStatus === "running" ||
+              signedStatus === "current";
+
+            normalized = {
+              ...normalized,
+              mainSponsor: {
+                ...normalized.mainSponsor,
+                name: signedMain.name || normalized.mainSponsor.name,
+                logoUrl: logoUrl || normalized.mainSponsor.logoUrl,
+                isActive: Boolean(logoUrl) || isSignedByStatus || true,
+                subtitle:
+                  normalized.mainSponsor.subtitle &&
+                  normalized.mainSponsor.subtitle !==
+                    "No main sponsor deal signed yet."
+                    ? normalized.mainSponsor.subtitle
+                    : "Signed main sponsor deal",
+              },
+            };
+          }
+        }
+      } catch (sponsorErr) {
+        console.error("Sponsor dashboard enrichment failed", sponsorErr);
+      }
+
+      try {
+        const mainClubIdForOperations =
+          normalized.club.id && normalized.club.id.trim().length > 0
+            ? normalized.club.id
+            : null;
+        const loadedOperations = await loadOverviewActiveOperations(
+          mainClubIdForOperations,
+        );
+
+        if (loadedOperations.length > 0) {
+          normalized = {
+            ...normalized,
+            operations: mergeOverviewOperations(
+              normalized.operations,
+              loadedOperations,
+            ),
+          };
+        }
+      } catch (operationErr) {
+        console.error("Active operations enrichment failed", operationErr);
+      }
+
+      try {
+        const mainClubIdForFinance =
+          normalized.club.id && normalized.club.id.trim().length > 0
+            ? normalized.club.id
+            : null;
+        const seasonYearForFinance = getSeasonYearFromOverview(normalized);
+        const loadedFinancePeriods =
+          (await loadOverviewFinanceStatementPeriodSummary(
+            mainClubIdForFinance,
+            seasonYearForFinance,
+          )) ??
+          (await loadOverviewFinancePeriodSummary(
+            mainClubIdForFinance,
+            seasonYearForFinance,
+          ));
+
+        if (loadedFinancePeriods) {
+          normalized = {
+            ...normalized,
+            finance: mergeFinancePeriodSummary(
+              normalized.finance,
+              loadedFinancePeriods,
+            ),
+          };
+        }
+      } catch (financeErr) {
+        console.error("Finance period enrichment failed", financeErr);
+      }
+
+      const nextSerialized = stableStringify(normalized);
+      const currentSerialized = stableStringify(dataRef.current);
+
+      if (alive && nextSerialized !== currentSerialized) {
+        setData(normalized);
+      }
+    }
 
     /**
      * loadDashboard
-     * Loads the main dashboard overview and enriches it with main sponsor logo
-     * information from the sponsor dashboard when available.
+     * Fast-loads the overview in three phases:
+     * 1. Header/club shell.
+     * 2. Attention + next/last race widgets immediately after club id is known.
+     * 3. Full dashboard payload and non-critical enrichments in the background.
      */
     async function loadDashboard(options?: { silent?: boolean }) {
       if (inFlight) return;
@@ -5405,6 +5910,7 @@ export default function OverviewPage() {
 
       const silent = options?.silent === true;
       const hasVisibleData = !!dataRef.current;
+      let bootstrappedVisibleData = hasVisibleData;
 
       try {
         if (!silent && !hasVisibleData) {
@@ -5417,12 +5923,96 @@ export default function OverviewPage() {
           setError(null);
         }
 
-        const { data: rpcData, error: rpcError } = await supabase.rpc(
-          "get_dashboard_overview",
-        );
+        const dashboardOverviewPromise = supabase.rpc("get_dashboard_overview");
+        const bootstrapClubIdPromise = loadBootstrapMainClubId();
+
+        let fastClubId: string | null = null;
+
+        if (!silent && !hasVisibleData) {
+          try {
+            const [{ data: headerData, error: headerError }, bootstrapClubId] =
+              await Promise.all([
+                supabase.rpc("get_dashboard_header"),
+                bootstrapClubIdPromise,
+              ]);
+
+            fastClubId = bootstrapClubId;
+
+            if (!headerError && headerData && alive) {
+              const shellData = normalizeDashboardPayload({
+                club: {
+                  ...(headerData as Record<string, unknown>),
+                  id:
+                    asString((headerData as Record<string, unknown>).id, "") ||
+                    bootstrapClubId ||
+                    "",
+                },
+                alerts: [],
+                kpis: [],
+                operations: [],
+                schedule: [],
+                dayRaces: [],
+                news: [],
+                feed: [],
+                quickActions: [],
+              });
+
+              setData(shellData);
+              setLoading(false);
+              setError(null);
+              bootstrappedVisibleData = true;
+
+              const shellClubId =
+                shellData.club.id && shellData.club.id.trim().length > 0
+                  ? shellData.club.id
+                  : bootstrapClubId;
+
+              startFastOverviewWidgets(
+                shellClubId,
+                getSeasonYearFromOverview(shellData),
+              );
+            } else if (headerError) {
+              console.warn("Dashboard header fast-load failed:", headerError.message);
+
+              if (bootstrapClubId) {
+                const fallbackShellData = normalizeDashboardPayload({
+                  club: { id: bootstrapClubId },
+                  alerts: [],
+                  kpis: [],
+                  operations: [],
+                  schedule: [],
+                  dayRaces: [],
+                  news: [],
+                  feed: [],
+                  quickActions: [],
+                });
+
+                setData(fallbackShellData);
+                setLoading(false);
+                setError(null);
+                bootstrappedVisibleData = true;
+                startFastOverviewWidgets(
+                  bootstrapClubId,
+                  getSeasonYearFromOverview(fallbackShellData),
+                );
+              }
+            }
+          } catch (headerErr) {
+            console.warn("Dashboard header fast-load failed:", headerErr);
+          }
+        } else {
+          fastClubId = await bootstrapClubIdPromise;
+          if (fastClubId && dataRef.current) {
+            startFastOverviewWidgets(
+              fastClubId,
+              getSeasonYearFromOverview(dataRef.current),
+            );
+          }
+        }
+
+        const { data: rpcData, error: rpcError } = await dashboardOverviewPromise;
 
         if (rpcError) {
-          // eslint-disable-next-line no-console
           console.error("Dashboard RPC error", rpcError);
           throw new Error(
             [
@@ -5440,177 +6030,33 @@ export default function OverviewPage() {
           throw new Error("Dashboard payload is empty.");
         }
 
-        let normalized = normalizeDashboardPayload(rpcData);
+        const normalized = normalizeDashboardPayload(rpcData);
+        const normalizedClubId =
+          normalized.club.id && normalized.club.id.trim().length > 0
+            ? normalized.club.id
+            : fastClubId;
 
-        // Try to enrich main sponsor with the signed main sponsor logo from the sponsor dashboard.
-        try {
-          const clubId =
-            normalized.club.id && normalized.club.id.trim().length > 0
-              ? normalized.club.id
-              : null;
-
-          const { data: sponsorData, error: sponsorError } = await supabase.rpc(
-            "sponsor_get_dashboard",
-            {
-              p_club_id: clubId,
-            },
-          );
-
-          if (sponsorError) {
-            // eslint-disable-next-line no-console
-            console.error("Sponsor dashboard RPC error", sponsorError);
-          } else if (sponsorData) {
-            const dashboard = sponsorData as SponsorDashboardForOverview;
-            const sponsorClubId = asString(dashboard.club_id);
-
-            if (sponsorClubId && !normalized.club.id) {
-              normalized = {
-                ...normalized,
-                club: {
-                  ...normalized.club,
-                  id: sponsorClubId,
-                },
-              };
-            }
-
-            const signedMain = Array.isArray(dashboard.signed_sponsors)
-              ? dashboard.signed_sponsors.find(
-                  (s) =>
-                    (s.sponsor_kind ?? "").toString().toLowerCase() === "main",
-                )
-              : undefined;
-
-            if (signedMain) {
-              const logoUrl =
-                resolveMainSponsorLogoUrlFromDashboard(signedMain);
-              const signedStatus = (signedMain.status ?? "")
-                .toString()
-                .toLowerCase();
-              const isSignedByStatus =
-                signedStatus === "signed" ||
-                signedStatus === "active" ||
-                signedStatus === "running" ||
-                signedStatus === "current";
-
-              normalized = {
-                ...normalized,
-                mainSponsor: {
-                  ...normalized.mainSponsor,
-                  name: signedMain.name || normalized.mainSponsor.name,
-                  logoUrl: logoUrl || normalized.mainSponsor.logoUrl,
-                  isActive: Boolean(logoUrl) || isSignedByStatus || true,
-                  subtitle:
-                    normalized.mainSponsor.subtitle &&
-                    normalized.mainSponsor.subtitle !==
-                      "No main sponsor deal signed yet."
-                      ? normalized.mainSponsor.subtitle
-                      : "Signed main sponsor deal",
-                },
-              };
-            }
-          }
-        } catch (sponsorErr) {
-          // Sponsor integration is non-critical for the overview; log and continue.
-          // eslint-disable-next-line no-console
-          console.error("Sponsor dashboard enrichment failed", sponsorErr);
+        if (normalizedClubId && !normalized.club.id) {
+          normalized.club.id = normalizedClubId;
         }
-
-        try {
-          const mainClubIdForOperations =
-            normalized.club.id && normalized.club.id.trim().length > 0
-              ? normalized.club.id
-              : null;
-          const loadedOperations = await loadOverviewActiveOperations(
-            mainClubIdForOperations,
-          );
-
-          if (loadedOperations.length > 0) {
-            normalized = {
-              ...normalized,
-              operations: mergeOverviewOperations(
-                normalized.operations,
-                loadedOperations,
-              ),
-            };
-          }
-        } catch (operationErr) {
-          console.error("Active operations enrichment failed", operationErr);
-        }
-
-        try {
-          const mainClubIdForFinance =
-            normalized.club.id && normalized.club.id.trim().length > 0
-              ? normalized.club.id
-              : null;
-          const seasonYearForFinance = getSeasonYearFromOverview(normalized);
-          const loadedFinancePeriods =
-            (await loadOverviewFinanceStatementPeriodSummary(
-              mainClubIdForFinance,
-              seasonYearForFinance,
-            )) ??
-            (await loadOverviewFinancePeriodSummary(
-              mainClubIdForFinance,
-              seasonYearForFinance,
-            ));
-
-          if (loadedFinancePeriods) {
-            normalized = {
-              ...normalized,
-              finance: mergeFinancePeriodSummary(
-                normalized.finance,
-                loadedFinancePeriods,
-              ),
-            };
-          }
-        } catch (financeErr) {
-          console.error("Finance period enrichment failed", financeErr);
-        }
-
-        const nextSerialized = stableStringify(normalized);
-        const currentSerialized = stableStringify(dataRef.current);
 
         if (alive) {
-          if (nextSerialized !== currentSerialized) {
-            setData(normalized);
-          }
+          setData(normalized);
           setError(null);
+          setLoading(false);
+          bootstrappedVisibleData = true;
         }
 
-        if (alive) {
-          setRaceHubLoading(true);
-          const mainClubId =
-            normalized.club.id && normalized.club.id.trim().length > 0
-              ? normalized.club.id
-              : null;
-          const seasonYear = getSeasonYearFromOverview(normalized);
+        startFastOverviewWidgets(
+          normalizedClubId,
+          getSeasonYearFromOverview(normalized),
+        );
 
-          const [
-            loadedRaceHub,
-            loadedRaceWorld,
-            loadedAttentionAlerts,
-            loadedSquadPulse,
-            loadedSeasonSnapshot,
-          ] = await Promise.all([
-            loadOverviewTeamRaceHub(mainClubId, seasonYear),
-            loadOverviewRaceWorldData(mainClubId, seasonYear),
-            loadOverviewAttentionItems(mainClubId),
-            loadOverviewSquadPulse(mainClubId),
-            loadOverviewSeasonSnapshot(mainClubId, seasonYear),
-          ]);
-
-          if (alive) {
-            setRaceHub(loadedRaceHub);
-            setRaceWorld(loadedRaceWorld);
-            setAttentionAlerts(loadedAttentionAlerts);
-            setSquadPulseOverride(loadedSquadPulse);
-            setSeasonSnapshot(loadedSeasonSnapshot);
-          }
-        }
+        void enrichOverviewPayload(normalized);
       } catch (err) {
-        // eslint-disable-next-line no-console
         console.error("Dashboard load failed", err);
 
-        if (alive && !hasVisibleData) {
+        if (alive && !bootstrappedVisibleData) {
           setError(
             err instanceof Error ? err.message : "Failed to load dashboard.",
           );
@@ -5619,7 +6065,6 @@ export default function OverviewPage() {
         if (alive) {
           setLoading(false);
           setRefreshing(false);
-          setRaceHubLoading(false);
         }
         inFlight = false;
       }
@@ -5629,7 +6074,7 @@ export default function OverviewPage() {
 
     const interval = window.setInterval(() => {
       void loadDashboard({ silent: true });
-    }, 30000);
+    }, 120000);
 
     return () => {
       alive = false;
