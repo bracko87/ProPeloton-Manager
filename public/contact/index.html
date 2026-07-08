@@ -33,56 +33,94 @@
         <div class="kicker">Contact</div>
         <h1>Contact ProPeloton Manager.</h1>
         <p>
-          Use this page for general questions, support requests, bug reports, account
-          questions, privacy questions and feedback about ProPeloton Manager.
+          Use this page for support requests, bug reports, account questions, privacy
+          questions, payment or coin questions, and general feedback about ProPeloton
+          Manager.
         </p>
       </div>
     </section>
 
     <main class="main">
       <section class="card">
-        <h2>Contact email</h2>
+        <h2>Send a message</h2>
         <p>
-          You can contact ProPeloton Manager by email. Helpful messages include the
-          page name, team name, race name, rider name, expected behavior, actual
-          behavior and screenshots when possible.
+          Fill out the form below. When you submit it, your email app will open with
+          the message prepared for contact@propelotonmanager.com. For a fully automatic
+          website form later, we can connect this page to a backend email service.
         </p>
-        <div class="button-row">
-          <a class="button button-primary" href="mailto:contact@propelotonmanager.com">
-            contact@propelotonmanager.com
-          </a>
-        </div>
+
+        <form class="form" id="contact-form">
+          <label>
+            Name
+            <input
+              id="contact-name"
+              name="name"
+              type="text"
+              required
+              placeholder="Your name"
+            />
+          </label>
+
+          <label>
+            Email
+            <input
+              id="contact-email"
+              name="email"
+              type="email"
+              required
+              placeholder="you@example.com"
+            />
+          </label>
+
+          <label>
+            Topic
+            <select id="contact-topic" name="topic">
+              <option>General question</option>
+              <option>Account or login help</option>
+              <option>Bug report</option>
+              <option>Gameplay question</option>
+              <option>Payment or coins</option>
+              <option>Privacy question</option>
+            </select>
+          </label>
+
+          <label>
+            Message
+            <textarea
+              id="contact-message"
+              name="message"
+              required
+              placeholder="Write your message here..."
+            ></textarea>
+          </label>
+
+          <p class="form-help">
+            Please do not include passwords, full payment card details, private
+            authentication codes or secret keys.
+          </p>
+
+          <button class="button button-primary" type="submit">Prepare Email</button>
+        </form>
       </section>
 
       <section class="grid grid-2" style="margin-top: 24px">
         <article class="card">
-          <h3>Support requests</h3>
+          <h3>Direct email</h3>
           <p>
-            For account, login, payment, coin or gameplay problems, include your
-            account email and enough detail for support to understand the issue.
+            You can also contact us directly at
+            <a href="mailto:contact@propelotonmanager.com">
+              contact@propelotonmanager.com
+            </a>.
           </p>
         </article>
 
         <article class="card">
-          <h3>Bug reports</h3>
+          <h3>Helpful support details</h3>
           <p>
-            For bugs, describe what you were trying to do, what happened, what should
-            have happened, and whether the issue can be repeated.
+            Include the page name, team name, race name, rider name, expected behavior,
+            actual behavior, and screenshots when possible.
           </p>
         </article>
-      </section>
-
-      <section class="card">
-        <h2>Privacy and sensitive information</h2>
-        <p>
-          Do not send passwords, full payment card details or private authentication
-          codes. For privacy questions, include the email address connected to your
-          account and a clear description of your request.
-        </p>
-        <div class="button-row">
-          <a class="button button-secondary" href="/privacy-policy/">Privacy Policy</a>
-          <a class="button button-secondary" href="/terms/">Terms</a>
-        </div>
       </section>
     </main>
 
@@ -98,5 +136,27 @@
         </span>
       </div>
     </footer>
+
+    <script>
+      document.getElementById('contact-form').addEventListener('submit', function (event) {
+        event.preventDefault()
+
+        var name = document.getElementById('contact-name').value.trim()
+        var email = document.getElementById('contact-email').value.trim()
+        var topic = document.getElementById('contact-topic').value
+        var message = document.getElementById('contact-message').value.trim()
+
+        var subject = encodeURIComponent('ProPeloton Manager contact: ' + topic)
+        var body = encodeURIComponent(
+          'Name: ' + name + '\n' +
+          'Email: ' + email + '\n' +
+          'Topic: ' + topic + '\n\n' +
+          'Message:\n' + message
+        )
+
+        window.location.href =
+          'mailto:contact@propelotonmanager.com?subject=' + subject + '&body=' + body
+      })
+    </script>
   </body>
 </html>

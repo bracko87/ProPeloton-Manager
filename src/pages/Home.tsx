@@ -56,6 +56,16 @@ type RawHomeSnapshot = {
   total_stages?: unknown
 }
 
+type GameTimeRow = {
+  season_number: number
+  month_number: number
+  month_name: string
+  day_number: number
+  hour_24: number
+  minute_2: number
+  display_text: string
+}
+
 type PublicHomepageReview = {
   id: string
   reviewer_name: string
@@ -167,6 +177,73 @@ const HOMEPAGE_TRUST_ITEMS = [
   },
 ]
 
+const MONTH_INDEX_BY_NAME: Record<string, number> = {
+  January: 0,
+  February: 1,
+  March: 2,
+  April: 3,
+  May: 4,
+  June: 5,
+  July: 6,
+  August: 7,
+  September: 8,
+  October: 9,
+  November: 10,
+  December: 11,
+}
+
+const WEEKDAY_NAMES = [
+  'Sunday',
+  'Monday',
+  'Tuesday',
+  'Wednesday',
+  'Thursday',
+  'Friday',
+  'Saturday',
+]
+
+function getWeekdayName(
+  seasonNumber: number,
+  monthName: string,
+  dayNumber: number
+): string | null {
+  const monthIndex = MONTH_INDEX_BY_NAME[monthName]
+
+  if (monthIndex === undefined || !Number.isInteger(dayNumber)) {
+    return null
+  }
+
+  const year = 1999 + seasonNumber
+  const date = new Date(Date.UTC(year, monthIndex, dayNumber))
+
+  if (Number.isNaN(date.getTime())) {
+    return null
+  }
+
+  return WEEKDAY_NAMES[date.getUTCDay()] ?? null
+}
+
+function formatTime(hour24: number, minute2: number): string {
+  const hour = String(hour24).padStart(2, '0')
+  const minute = String(minute2).padStart(2, '0')
+  return `${hour}:${minute}`
+}
+
+function formatGameTime(row: GameTimeRow): string {
+  const seasonText = `Season ${row.season_number}`
+  const weekdayText = getWeekdayName(
+    row.season_number,
+    row.month_name,
+    row.day_number
+  )
+  const dateText = `${row.month_name} ${row.day_number}`
+  const timeText = formatTime(row.hour_24, row.minute_2)
+
+  return weekdayText
+    ? `${seasonText} · ${weekdayText} · ${dateText} · ${timeText}`
+    : `${seasonText} · ${dateText} · ${timeText}`
+}
+
 function toNumber(value: unknown): number {
   const parsedValue = Number(value)
 
@@ -239,6 +316,7 @@ export default function HomePage(): JSX.Element {
   const [clubError, setClubError] = useState<string | null>(null)
   const [homeSnapshot, setHomeSnapshot] = useState<HomeSnapshot | null>(null)
   const [homeSnapshotError, setHomeSnapshotError] = useState<string | null>(null)
+  const [gameTimeText, setGameTimeText] = useState('Loading game time...')
   const [raceDays, setRaceDays] = useState<HomepageRaceDaysData | null>(null)
   const [raceDaysLoading, setRaceDaysLoading] = useState(false)
 
@@ -294,6 +372,46 @@ export default function HomePage(): JSX.Element {
       setActiveReviewIndex(reviews.length - 1)
     }
   }, [activeReviewIndex, reviews.length])
+
+  useEffect(() => {
+    let isMounted = true
+
+    async function loadGameTime(): Promise<void> {
+      const { data, error } = await supabase.rpc('get_authoritative_game_time')
+
+      if (!isMounted) return
+
+      if (error) {
+        console.warn('Could not load authoritative game time:', error.message)
+        setGameTimeText(current =>
+          current === 'Loading game time...' ? 'Game time unavailable' : current
+        )
+        return
+      }
+
+      const rows = data as GameTimeRow[] | null
+      const nextRow = rows?.[0]
+
+      if (nextRow) {
+        setGameTimeText(formatGameTime(nextRow))
+      } else {
+        setGameTimeText(current =>
+          current === 'Loading game time...' ? 'Game time unavailable' : current
+        )
+      }
+    }
+
+    void loadGameTime()
+
+    const intervalId = window.setInterval(() => {
+      void loadGameTime()
+    }, 30_000)
+
+    return () => {
+      isMounted = false
+      window.clearInterval(intervalId)
+    }
+  }, [])
 
   useEffect(() => {
     let isMounted = true
@@ -571,7 +689,7 @@ export default function HomePage(): JSX.Element {
       )}
 
       <main>
-        <Hero gameTimeLabel={homeSnapshot?.game_time_label ?? 'Loading game time...'} />
+        <Hero gameTimeLabel={gameTimeText} />
 
         <HomepageRaceDays data={raceDays} loading={raceDaysLoading} />
 
@@ -609,10 +727,8 @@ export default function HomePage(): JSX.Element {
 
               <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4">
                 <div className="rounded-md border border-white/10 bg-[#101b31]/85 p-4 backdrop-blur-sm">
-                  <div className="text-xs text-white/60">Active Managers</div>
-                  <div className="mt-1 text-2xl font-bold text-white">
-                    {formatNumber(homeSnapshot?.active_managers)}
-                  </div>
+                  <div className="text-xs text-white/60">Game Status</div>
+                  <div className="mt-1 text-2xl font-bold text-white">Open</div>
                 </div>
 
                 <div className="rounded-md border border-white/10 bg-[#101b31]/85 p-4 backdrop-blur-sm">
