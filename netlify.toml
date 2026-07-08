@@ -1,5 +1,5 @@
 [build]
-  command = "npm run build && mkdir -p dist/about dist/how-to-play dist/support dist/contact dist/privacy-policy dist/terms && cp public/ads.txt dist/ads.txt && cp public/robots.txt dist/robots.txt && cp public/sitemap.xml dist/sitemap.xml && cp public/static-site.css dist/static-site.css && cp public/about/index.html dist/about/index.html && cp public/how-to-play/index.html dist/how-to-play/index.html && cp public/support/index.html dist/support/index.html && cp public/contact/index.html dist/contact/index.html && cp public/privacy-policy/index.html dist/privacy-policy/index.html && cp public/terms/index.html dist/terms/index.html && echo '--- STATIC PUBLIC FILES CHECK ---' && test -f dist/about/index.html && test -f dist/how-to-play/index.html && test -f dist/support/index.html && test -f dist/contact/index.html && test -f dist/privacy-policy/index.html && test -f dist/terms/index.html && test -f dist/static-site.css && echo 'Static pages OK' && echo '--- ADS TXT CHECK ---' && cat dist/ads.txt"
+  command = "npm run build && mkdir -p dist/about dist/how-to-play dist/game-guide dist/support dist/contact dist/privacy-policy dist/terms && cp public/ads.txt dist/ads.txt && cp public/robots.txt dist/robots.txt && cp public/sitemap.xml dist/sitemap.xml && cp public/static-site.css dist/static-site.css && cp public/about/index.html dist/about/index.html && cp public/how-to-play/index.html dist/how-to-play/index.html && cp public/game-guide/index.html dist/game-guide/index.html && cp public/support/index.html dist/support/index.html && cp public/contact/index.html dist/contact/index.html && cp public/privacy-policy/index.html dist/privacy-policy/index.html && cp public/terms/index.html dist/terms/index.html && echo '--- STATIC PUBLIC FILES CHECK ---' && test -f dist/about/index.html && test -f dist/how-to-play/index.html && test -f dist/game-guide/index.html && test -f dist/support/index.html && test -f dist/contact/index.html && test -f dist/privacy-policy/index.html && test -f dist/terms/index.html && test -f dist/static-site.css && echo 'Static pages OK' && echo '--- ADS TXT CHECK ---' && cat dist/ads.txt"
   publish = "dist"
 
 [[headers]]
@@ -33,6 +33,11 @@
 
 [[headers]]
   for = "/how-to-play/*"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+[[headers]]
+  for = "/game-guide/*"
   [headers.values]
     Cache-Control = "public, max-age=0, must-revalidate"
 
@@ -75,6 +80,17 @@
 [[redirects]]
   from = "/how-to-play/"
   to = "/how-to-play/index.html"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/game-guide"
+  to = "/game-guide/"
+  status = 301
+
+[[redirects]]
+  from = "/game-guide/"
+  to = "/game-guide/index.html"
   status = 200
   force = true
 

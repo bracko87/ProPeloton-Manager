@@ -93,6 +93,7 @@ const SOCIAL_LINKS = {
 const HEADER_PUBLIC_LINKS = [
   { label: 'About', href: '/about/' },
   { label: 'How to Play', href: '/how-to-play/' },
+  { label: 'Game Guide', href: '/game-guide/' },
   { label: 'Support', href: '/support/' },
   { label: 'Contact', href: '/contact/' },
 ]
@@ -100,6 +101,7 @@ const HEADER_PUBLIC_LINKS = [
 const FOOTER_GAME_LINKS = [
   { label: 'About', href: '/about/' },
   { label: 'How to Play', href: '/how-to-play/' },
+  { label: 'Game Guide', href: '/game-guide/' },
   { label: 'Contact', href: '/contact/' },
 ]
 
@@ -123,39 +125,6 @@ const HOMEPAGE_GUIDE_CARDS = [
     title: 'Why does preparation matter?',
     text:
       'A strong rider is not enough by itself. Race preparation connects riders, staff, vehicles, equipment, supplies and tactics. Planning ahead helps your team arrive ready for sprints, climbs, time trials, stage races and difficult weather conditions.',
-  },
-]
-
-const HOMEPAGE_GAMEPLAY_STEPS = [
-  {
-    title: 'Create and develop your club',
-    text:
-      'Start with a team identity and grow the club over time. Your choices affect the squad, finances, rankings, sponsors and future opportunities.',
-  },
-  {
-    title: 'Build a balanced squad',
-    text:
-      'Sprinters, climbers, time-trial riders, rouleurs, helpers and leaders all have different value depending on the race profile and season calendar.',
-  },
-  {
-    title: 'Plan races before deadlines',
-    text:
-      'Accepted races still need preparation. Select riders, staff, assets, equipment and supplies before important race-plan and stage-plan deadlines.',
-  },
-  {
-    title: 'Manage money carefully',
-    text:
-      'Salaries, transfers, staff, equipment, infrastructure, training camps, sponsors and taxes all affect the long-term health of your club.',
-  },
-  {
-    title: 'Follow rankings and results',
-    text:
-      'Teams earn points through race results. Rankings create long-term goals and make every season important for promotion, relegation and club reputation.',
-  },
-  {
-    title: 'Improve through feedback',
-    text:
-      'Players can contact support, report bugs and submit reviews. Approved reviews appear publicly, while support requests help improve the game experience.',
   },
 ]
 
@@ -844,124 +813,6 @@ export default function HomePage(): JSX.Element {
                 </article>
               ))}
             </div>
-
-            <section className="mt-10 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-              <div className="grid gap-8 lg:grid-cols-[0.9fr_1.4fr]">
-                <div>
-                  <p className="text-sm font-bold uppercase tracking-[0.2em] text-yellow-700">
-                    How to play
-                  </p>
-
-                  <h3 className="mt-3 text-2xl font-bold text-slate-950">
-                    Manage the sporting and business side of a cycling team.
-                  </h3>
-
-                  <p className="mt-4 text-sm leading-7 text-slate-700">
-                    A successful manager must balance ambition with stability. Winning
-                    races is important, but so are training, recovery, scouting,
-                    transfers, staff, equipment, infrastructure, sponsor objectives and
-                    financial control.
-                  </p>
-
-                  <div className="mt-5 flex flex-wrap gap-3">
-                    <a
-                      href="/how-to-play/"
-                      className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-bold text-white hover:bg-slate-800"
-                    >
-                      Read How to Play
-                    </a>
-
-                    <a
-                      href="/about/"
-                      className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-bold text-slate-900 hover:bg-slate-50"
-                    >
-                      About the Game
-                    </a>
-                  </div>
-                </div>
-
-                <div className="grid gap-4 sm:grid-cols-2">
-                  {HOMEPAGE_GAMEPLAY_STEPS.map(step => (
-                    <article
-                      key={step.title}
-                      className="rounded-xl border border-slate-200 bg-slate-50 p-4"
-                    >
-                      <h4 className="font-bold text-slate-950">{step.title}</h4>
-
-                      <p className="mt-2 text-sm leading-6 text-slate-700">
-                        {step.text}
-                      </p>
-                    </article>
-                  ))}
-                </div>
-              </div>
-            </section>
-
-            <section className="mt-10 rounded-2xl border border-slate-200 bg-slate-950 p-6 text-white shadow-sm">
-              <div className="grid gap-8 lg:grid-cols-[0.9fr_1.4fr]">
-                <div>
-                  <p className="text-sm font-bold uppercase tracking-[0.2em] text-yellow-300">
-                    Support and transparency
-                  </p>
-
-                  <h3 className="mt-3 text-2xl font-bold">
-                    Public information is available before registration.
-                  </h3>
-
-                  <p className="mt-4 text-sm leading-7 text-slate-200">
-                    Visitors can read the main game explanation, review support
-                    information, check contact details and understand privacy and terms
-                    before creating an account. This makes the public website easier to
-                    navigate and more useful for new players.
-                  </p>
-
-                  <div className="mt-5 flex flex-wrap gap-3">
-                    <a
-                      href="/support/"
-                      className="rounded-lg bg-yellow-400 px-4 py-2 text-sm font-bold text-black hover:bg-yellow-300"
-                    >
-                      Support
-                    </a>
-
-                    <a
-                      href="/contact/"
-                      className="rounded-lg border border-white/25 px-4 py-2 text-sm font-bold text-white hover:bg-white/10"
-                    >
-                      Contact
-                    </a>
-
-                    <a
-                      href="/privacy-policy/"
-                      className="rounded-lg border border-white/25 px-4 py-2 text-sm font-bold text-white hover:bg-white/10"
-                    >
-                      Privacy Policy
-                    </a>
-
-                    <a
-                      href="/terms/"
-                      className="rounded-lg border border-white/25 px-4 py-2 text-sm font-bold text-white hover:bg-white/10"
-                    >
-                      Terms
-                    </a>
-                  </div>
-                </div>
-
-                <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-1">
-                  {HOMEPAGE_TRUST_ITEMS.map(item => (
-                    <article
-                      key={item.title}
-                      className="rounded-xl border border-white/10 bg-white/5 p-4"
-                    >
-                      <h4 className="font-bold text-white">{item.title}</h4>
-
-                      <p className="mt-2 text-sm leading-6 text-slate-200">
-                        {item.text}
-                      </p>
-                    </article>
-                  ))}
-                </div>
-              </div>
-            </section>
           </div>
         </section>
 
@@ -1171,6 +1022,80 @@ export default function HomePage(): JSX.Element {
                 </button>
               </div>
             )}
+          </div>
+        </section>
+
+        <section className="w-full bg-slate-950 py-16 text-white">
+          <div className="mx-auto max-w-7xl px-6">
+            <div className="grid gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
+              <div>
+                <p className="text-sm font-bold uppercase tracking-[0.22em] text-yellow-300">
+                  Support and transparency
+                </p>
+
+                <h2 className="mt-3 max-w-xl text-3xl font-bold tracking-tight md:text-4xl">
+                  Public information is available before registration.
+                </h2>
+
+                <p className="mt-5 max-w-2xl text-base leading-8 text-slate-200">
+                  Visitors can read the main game explanation, review support
+                  information, check contact details and understand privacy and terms
+                  before creating an account. This makes the public website easier to
+                  navigate and more useful for new players.
+                </p>
+
+                <p className="mt-4 max-w-2xl text-base leading-8 text-slate-300">
+                  ProPeloton Manager also keeps public support information visible for
+                  account questions, gameplay questions, bug reports, payment questions,
+                  coin questions, privacy questions and general feedback.
+                </p>
+
+                <div className="mt-7 flex flex-wrap gap-3">
+                  <a
+                    href="/support/"
+                    className="rounded-lg bg-yellow-400 px-5 py-3 text-sm font-bold text-black hover:bg-yellow-300"
+                  >
+                    Support
+                  </a>
+
+                  <a
+                    href="/contact/"
+                    className="rounded-lg border border-white/25 px-5 py-3 text-sm font-bold text-white hover:bg-white/10"
+                  >
+                    Contact
+                  </a>
+
+                  <a
+                    href="/privacy-policy/"
+                    className="rounded-lg border border-white/25 px-5 py-3 text-sm font-bold text-white hover:bg-white/10"
+                  >
+                    Privacy Policy
+                  </a>
+
+                  <a
+                    href="/terms/"
+                    className="rounded-lg border border-white/25 px-5 py-3 text-sm font-bold text-white hover:bg-white/10"
+                  >
+                    Terms
+                  </a>
+                </div>
+              </div>
+
+              <div className="grid gap-5">
+                {HOMEPAGE_TRUST_ITEMS.map(item => (
+                  <article
+                    key={item.title}
+                    className="rounded-2xl border border-white/10 bg-white/5 p-6 shadow-sm"
+                  >
+                    <h3 className="text-xl font-bold text-white">{item.title}</h3>
+
+                    <p className="mt-3 text-sm leading-7 text-slate-200">
+                      {item.text}
+                    </p>
+                  </article>
+                ))}
+              </div>
+            </div>
           </div>
         </section>
 
