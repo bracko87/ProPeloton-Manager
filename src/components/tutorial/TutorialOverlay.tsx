@@ -14,6 +14,7 @@ type TutorialOverlayProps = {
   onSecondary?: () => void
   onClose?: () => void
   primaryDisabled?: boolean
+  compact?: boolean
 }
 
 export default function TutorialOverlay({
@@ -28,12 +29,16 @@ export default function TutorialOverlay({
   onSecondary,
   onClose,
   primaryDisabled = false,
+  compact = false,
 }: TutorialOverlayProps) {
   if (!open) return null
 
   if (variant === 'invite') {
     return createPortal(
-      <div className="fixed right-4 top-28 z-[1000] flex max-w-[calc(100vw-32px)] items-start gap-3">
+      <div
+        data-tutorial-overlay-panel="true"
+        className="fixed right-4 top-28 z-[1000] flex max-w-[calc(100vw-32px)] items-start gap-3"
+      >
         <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl">
           <button
             type="button"
@@ -86,7 +91,12 @@ export default function TutorialOverlay({
     <>
       <div className="pointer-events-none fixed inset-0 z-[999] bg-black/10" />
 
-      <aside className="fixed bottom-4 right-4 top-20 z-[1000] flex w-[390px] max-w-[calc(100vw-32px)] flex-col overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl">
+      <aside
+        data-tutorial-overlay-panel="true"
+        className={`fixed right-4 top-24 z-[1000] flex max-h-[calc(100vh-112px)] max-w-[calc(100vw-32px)] flex-col overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl ${
+          compact ? 'w-[360px]' : 'w-[390px]'
+        }`}
+      >
         <div className="shrink-0 bg-black px-6 py-5 text-white">
           <div className="flex items-start justify-between gap-4">
             <div>
@@ -114,7 +124,11 @@ export default function TutorialOverlay({
           </div>
         </div>
 
-        <div className="min-h-0 flex-1 overflow-y-auto px-6 py-6">
+        <div
+          className={`min-h-0 flex-1 overflow-y-auto ${
+            compact ? 'px-5 py-5' : 'px-6 py-6'
+          }`}
+        >
           <div className="whitespace-pre-line text-sm font-normal leading-7 text-slate-700">
             {body}
           </div>

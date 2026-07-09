@@ -1557,6 +1557,70 @@ function getRiderEnergyPercentFromMap(
   return null
 }
 
+function getRiderEnergyPercentFromOrderedArray(
+  frame: RaceReplayFrame,
+  riderIndex: number,
+  keys: string[]
+): number | null {
+  if (!Number.isInteger(riderIndex) || riderIndex < 0) return null
+
+  const metadata = frame.metadata ?? {}
+
+  for (const key of keys) {
+    const values = metadata[key]
+
+    if (!Array.isArray(values)) continue
+    if (riderIndex >= values.length) continue
+
+    const value = clampPercentValue(
+      values[riderIndex] as number | string | null | undefined
+    )
+
+    if (value !== null) return value
+  }
+
+  return null
+}
+
+
+const REPLAY_ORDERED_RIDER_METADATA_ARRAY_KEYS = [
+  'rider_live_energy_pct_values',
+  'live_energy_pct_values_by_rider_index',
+  'rider_stage_energy_remaining_pct_values',
+
+  'rider_pre_stage_freshness_pct_values',
+  'pre_stage_freshness_pct_values_by_rider_index',
+  'rider_freshness_pct_values',
+
+  'rider_stage_energy_used_pct_values',
+  'stage_energy_used_pct_values_by_rider_index',
+
+  'rider_pre_stage_fatigue_pct_values',
+  'pre_stage_fatigue_pct_values_by_rider_index',
+  'rider_fatigue_pct_values',
+] as const
+
+function getReplayMetadataWithOrderedRiderArraysForIndexes(
+  metadata: Record<string, unknown> | null | undefined,
+  indexes: number[]
+): Record<string, unknown> {
+  const nextMetadata: Record<string, unknown> = {
+    ...(metadata ?? {}),
+  }
+
+  for (const key of REPLAY_ORDERED_RIDER_METADATA_ARRAY_KEYS) {
+    const values = metadata?.[key]
+
+    if (!Array.isArray(values)) continue
+
+    nextMetadata[key] = indexes.map((index) =>
+      index >= 0 && index < values.length ? values[index] ?? null : null
+    )
+  }
+
+  return nextMetadata
+}
+
 function getEstimatedReplayRiderEnergySnapshot({
   frame,
   riderId,
@@ -1595,6 +1659,11 @@ function getEstimatedReplayRiderEnergySnapshot({
       'freshness_pct',
       'freshnessPct',
     ]) ??
+    getRiderEnergyPercentFromOrderedArray(frame, riderIndex, [
+      'rider_pre_stage_freshness_pct_values',
+      'pre_stage_freshness_pct_values_by_rider_index',
+      'rider_freshness_pct_values',
+    ]) ??
     getRiderEnergyPercentFromMap(frame, riderId, [
       'rider_pre_stage_freshness_pct',
       'pre_stage_freshness_pct_by_rider_id',
@@ -1609,6 +1678,11 @@ function getEstimatedReplayRiderEnergySnapshot({
       'remaining_energy_pct',
       'stage_energy_remaining_pct',
     ]) ??
+    getRiderEnergyPercentFromOrderedArray(frame, riderIndex, [
+      'rider_live_energy_pct_values',
+      'live_energy_pct_values_by_rider_index',
+      'rider_stage_energy_remaining_pct_values',
+    ]) ??
     getRiderEnergyPercentFromMap(frame, riderId, [
       'rider_live_energy_pct',
       'live_energy_pct_by_rider_id',
@@ -1621,6 +1695,10 @@ function getEstimatedReplayRiderEnergySnapshot({
       'energy_used_pct',
       'used_energy_pct',
     ]) ??
+    getRiderEnergyPercentFromOrderedArray(frame, riderIndex, [
+      'rider_stage_energy_used_pct_values',
+      'stage_energy_used_pct_values_by_rider_index',
+    ]) ??
     getRiderEnergyPercentFromMap(frame, riderId, [
       'rider_stage_energy_used_pct',
       'stage_energy_used_pct_by_rider_id',
@@ -1632,6 +1710,11 @@ function getEstimatedReplayRiderEnergySnapshot({
       'pre_stage_fatigue_pct',
       'starting_fatigue',
       'fatigue',
+    ]) ??
+    getRiderEnergyPercentFromOrderedArray(frame, riderIndex, [
+      'rider_pre_stage_fatigue_pct_values',
+      'pre_stage_fatigue_pct_values_by_rider_index',
+      'rider_fatigue_pct_values',
     ]) ??
     getRiderEnergyPercentFromMap(frame, riderId, [
       'rider_pre_stage_fatigue_pct',
@@ -3875,13 +3958,18 @@ function getDedupedRoadGroupFrames(
         .map((index) => teamNames[index])
         .filter((value): value is string => Boolean(value))
 
+      const nextMetadata = getReplayMetadataWithOrderedRiderArraysForIndexes(
+        frame.metadata,
+        keptIndexes
+      )
+
       return {
         ...frame,
         rider_ids: nextRiderIds,
         rider_names: nextRiderNames,
         team_names: nextTeamNames,
         metadata: {
-          ...(frame.metadata ?? {}),
+          ...nextMetadata,
           group_size: Math.max(
             nextRiderIds.length,
             nextRiderNames.length,
@@ -4008,7 +4096,8 @@ function normalizeRoadReplayGroupsForDisplay(
 
 function getExplicitReplayRiderLiveEnergyPct(
   frame: RaceReplayFrame,
-  riderId: string
+  riderId: string,
+  riderIndex?: number
 ): number | null {
   const riderEnergyRecord = getRiderEnergyRecordFromFrame(frame, riderId)
 
@@ -4022,6 +4111,13 @@ function getExplicitReplayRiderLiveEnergyPct(
       'remaining_energy_pct',
       'stage_energy_remaining_pct',
     ]) ??
+    (typeof riderIndex === 'number'
+      ? getRiderEnergyPercentFromOrderedArray(frame, riderIndex, [
+          'rider_live_energy_pct_values',
+          'live_energy_pct_values_by_rider_index',
+          'rider_stage_energy_remaining_pct_values',
+        ])
+      : null) ??
     getRiderEnergyPercentFromMap(frame, riderId, [
       'rider_live_energy_pct',
       'live_energy_pct_by_rider_id',
@@ -4096,7 +4192,7 @@ function splitLowEnergyActiveRoadGroupsForDisplay(
     const keepIndexes: number[] = []
 
     riderIds.forEach((riderId, index) => {
-      const liveEnergyPct = getExplicitReplayRiderLiveEnergyPct(frame, riderId)
+      const liveEnergyPct = getExplicitReplayRiderLiveEnergyPct(frame, riderId, index)
 
       if (
         liveEnergyPct !== null &&
@@ -4124,13 +4220,18 @@ function splitLowEnergyActiveRoadGroupsForDisplay(
         .map((index) => teamNames[index])
         .filter((value): value is string => Boolean(value))
 
+      const nextFrameMetadata = getReplayMetadataWithOrderedRiderArraysForIndexes(
+        frameMetadata,
+        keepIndexes
+      )
+
       keptFrames.push({
         ...frame,
         rider_ids: nextRiderIds,
         rider_names: nextRiderNames,
         team_names: nextTeamNames,
         metadata: {
-          ...frameMetadata,
+          ...nextFrameMetadata,
           group_size: Math.max(
             nextRiderIds.length,
             nextRiderNames.length,
@@ -4170,6 +4271,11 @@ function splitLowEnergyActiveRoadGroupsForDisplay(
       leaderKm - (lowEnergyGap * avgSpeedKmh) / 3600
     )
 
+    const lowEnergyFrameMetadata = getReplayMetadataWithOrderedRiderArraysForIndexes(
+      frameMetadata,
+      lowEnergyIndexes
+    )
+
     syntheticDropFrames.push({
       ...frame,
       id: `${frame.id}:frontend-low-energy-drop:${lowEnergyGroupNumber}`,
@@ -4188,7 +4294,7 @@ function splitLowEnergyActiveRoadGroupsForDisplay(
       rider_names: lowRiderNames,
       team_names: lowTeamNames,
       metadata: {
-        ...frameMetadata,
+        ...lowEnergyFrameMetadata,
         group_size: Math.max(
           lowRiderIds.length,
           lowRiderNames.length,

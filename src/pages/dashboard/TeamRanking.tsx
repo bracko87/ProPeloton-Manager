@@ -64,31 +64,11 @@ type StandingRow = {
   countryCode: string
   points: number
   completedRaceCount: number
-  raceReputationValue: number
   logoPath?: string | null
   isActive: boolean
   publicInactivityStatus: PublicInactivityStatus | null
   inactivityDaysSnapshot: number | null
   seasonEndTransitionPending: boolean
-}
-
-type TeamRankingTieBreakerRow = {
-  season_year?: number | string | null
-  team_id?: string | null
-  club_id?: string | null
-  completed_race_count?: number | string | null
-  race_count?: number | string | null
-  races_done_count?: number | string | null
-  total_races_done?: number | string | null
-  team_race_count?: number | string | null
-  race_reputation_value?: number | string | null
-  team_race_reputation_value?: number | string | null
-  race_reputation?: number | string | null
-}
-
-type TeamRankingTieBreakerUi = {
-  completedRaceCount: number
-  raceReputationValue: number
 }
 
 type TierOption = {
@@ -131,10 +111,16 @@ type MyOwnedClubRecord = {
 }
 
 type TeamInternationalPointsRow = {
-  season_year: number | null
+  season_year: number | string | null
   team_id: string
   international_points: number | string | null
   international_rank?: number | string | null
+  scoring_races?: number | string | null
+}
+
+type TeamInternationalPointsUi = {
+  internationalPoints: number
+  completedRaceCount: number
 }
 
 type ClubDisplayNameLookupRow = {
@@ -273,16 +259,6 @@ function getCompletedRaceCountFromTeam(team: TeamRankingRecord): number {
   ])
 }
 
-function getRaceReputationValueFromTeam(team: TeamRankingRecord): number {
-  return getTeamRecordNumber(team, [
-    'raceReputationValue',
-    'teamRaceReputationValue',
-    'raceReputation',
-    'race_reputation_value',
-    'team_race_reputation_value',
-    'race_reputation',
-  ])
-}
 
 function formatTieBreakerNumber(value: number): string {
   if (!Number.isFinite(value)) return '0'
@@ -292,110 +268,12 @@ function formatTieBreakerNumber(value: number): string {
   })
 }
 
-async function loadCurrentTeamRankingSeasonYear(): Promise<number | null> {
-  try {
-    const { data, error } = await supabase.rpc('team_ranking_get_current_season_year_v1')
-
-    if (error) {
-      console.warn('Could not resolve current team ranking season year:', error.message)
-      return null
-    }
-
-    const seasonYear = normalizeTieBreakerValue(data)
-    return seasonYear > 0 ? seasonYear : null
-  } catch (error) {
-    console.warn('Current team ranking season year lookup failed:', error)
-    return null
-  }
-}
-
-async function loadTeamRankingTieBreakersByTeamId(
-  seasonYear?: number | null,
-): Promise<Map<string, TeamRankingTieBreakerUi>> {
-  let query = supabase
-    .from('team_ranking_tiebreakers_by_season_v1')
-    .select(
-      'season_year, team_id, club_id, completed_race_count, race_count, races_done_count, total_races_done, team_race_count, race_reputation_value, team_race_reputation_value, race_reputation',
-    )
-
-  if (seasonYear) {
-    query = query.eq('season_year', seasonYear)
-  }
-
-  let { data, error } = await query
-
-  if (error && seasonYear) {
-    console.warn(
-      'Could not load filtered team ranking tie-breakers. Retrying without season filter:',
-      error.message,
-    )
-
-    const retry = await supabase
-      .from('team_ranking_tiebreakers_by_season_v1')
-      .select(
-        'season_year, team_id, club_id, completed_race_count, race_count, races_done_count, total_races_done, team_race_count, race_reputation_value, team_race_reputation_value, race_reputation',
-      )
-
-    data = retry.data
-    error = retry.error
-  }
-
-  if (error) {
-    console.warn(
-      'Could not load team ranking tie-breakers. Falling back to team records:',
-      error.message,
-    )
-    return new Map()
-  }
-
-  const rows = (data ?? []) as TeamRankingTieBreakerRow[]
-  const latestSeasonYear =
-    seasonYear ??
-    rows.reduce<number | null>((latest, row) => {
-      const rowSeasonYear = normalizeTieBreakerValue(row.season_year)
-      if (rowSeasonYear <= 0) return latest
-      return latest === null || rowSeasonYear > latest ? rowSeasonYear : latest
-    }, null)
-
-  const map = new Map<string, TeamRankingTieBreakerUi>()
-
-  for (const row of rows) {
-    const teamId = (row.team_id ?? row.club_id ?? '').trim()
-
-    if (!teamId) continue
-
-    if (
-      latestSeasonYear !== null &&
-      normalizeTieBreakerValue(row.season_year) !== latestSeasonYear
-    ) {
-      continue
-    }
-
-    map.set(teamId, {
-      completedRaceCount: normalizeTieBreakerValue(
-        row.completed_race_count ??
-          row.race_count ??
-          row.races_done_count ??
-          row.total_races_done ??
-          row.team_race_count,
-      ),
-      raceReputationValue: normalizeTieBreakerValue(
-        row.race_reputation_value ??
-          row.team_race_reputation_value ??
-          row.race_reputation,
-      ),
-    })
-  }
-
-  return map
-}
-
 async function loadTeamInternationalPointsByTeamId(
   seasonYear?: number | null,
-): Promise<Map<string, number>> {
+): Promise<Map<string, TeamInternationalPointsUi>> {
   let query = supabase
     .from('team_international_points_by_season_v1')
-    .select('season_year, team_id, international_points, international_rank')
+    .select('season_year, team_id, international_points, international_rank, scoring_races')
 
   if (seasonYear) {
     query = query.eq('season_year', seasonYear)
@@ -411,7 +289,7 @@ async function loadTeamInternationalPointsByTeamId(
 
     const retry = await supabase
       .from('team_international_points_by_season_v1')
-      .select('season_year, team_id, international_points, international_rank')
+      .select('season_year, team_id, international_points, international_rank, scoring_races')
 
     data = retry.data
     error = retry.error
@@ -434,7 +312,7 @@ async function loadTeamInternationalPointsByTeamId(
       return latest === null || rowSeasonYear > latest ? rowSeasonYear : latest
     }, null)
 
-  const map = new Map<string, number>()
+  const map = new Map<string, TeamInternationalPointsUi>()
 
   rows.forEach((row) => {
     if (!row.team_id) return
@@ -445,7 +323,11 @@ async function loadTeamInternationalPointsByTeamId(
         : normalizeTieBreakerValue(row.season_year)
 
     if (latestSeasonYear !== null && rowSeasonYear !== latestSeasonYear) return
-    map.set(row.team_id, normalizePointsValue(row.international_points))
+
+    map.set(row.team_id, {
+      internationalPoints: normalizePointsValue(row.international_points),
+      completedRaceCount: normalizeTieBreakerValue(row.scoring_races),
+    })
   })
 
   return map
@@ -845,7 +727,6 @@ function toStandingRows(
       countryCode: team.country,
       points: team.seasonPoints,
       completedRaceCount: getCompletedRaceCountFromTeam(team),
-      raceReputationValue: getRaceReputationValueFromTeam(team),
       logoPath: team.logoPath ?? null,
       isActive: team.isActive !== false,
       publicInactivityStatus: inactivity?.status ?? null,
@@ -865,10 +746,6 @@ function compareStandingRowsBySeasonEndTieBreakers(
 
   if (b.completedRaceCount !== a.completedRaceCount) {
     return b.completedRaceCount - a.completedRaceCount
-  }
-
-  if (b.raceReputationValue !== a.raceReputationValue) {
-    return b.raceReputationValue - a.raceReputationValue
   }
 
   const byName = a.teamName.localeCompare(b.teamName, undefined, {
@@ -1318,18 +1195,15 @@ export default function TeamRankingPage(): JSX.Element {
 
     async function hydrateRankingMetadata(
       baseTeams: TeamRankingRecord[],
-      seasonYear: number | null,
     ): Promise<void> {
       try {
         const teamIds = baseTeams.map((team) => team.id)
 
         const [
           displayNameByClubId,
-          tieBreakersByTeamId,
           publicInactivityByClubId,
         ] = await Promise.all([
           loadClubDisplayNameMap(teamIds),
-          loadTeamRankingTieBreakersByTeamId(seasonYear),
           loadPublicClubInactivityMap(teamIds),
         ])
 
@@ -1338,21 +1212,10 @@ export default function TeamRankingPage(): JSX.Element {
         setInactivityByClubId(publicInactivityByClubId)
 
         setTeams((currentTeams) =>
-          currentTeams.map((team) => {
-            const originalTeam = baseTeams.find((baseTeam) => baseTeam.id === team.id)
-            const tieBreakers = tieBreakersByTeamId.get(team.id)
-
-            return {
-              ...team,
-              name: displayNameByClubId.get(team.id) ?? team.name,
-              completedRaceCount:
-                tieBreakers?.completedRaceCount ??
-                getCompletedRaceCountFromTeam(originalTeam ?? team),
-              raceReputationValue:
-                tieBreakers?.raceReputationValue ??
-                getRaceReputationValueFromTeam(originalTeam ?? team),
-            }
-          }),
+          currentTeams.map((team) => ({
+            ...team,
+            name: displayNameByClubId.get(team.id) ?? team.name,
+          })),
         )
       } catch (error) {
         console.warn('Could not hydrate team ranking metadata:', error)
@@ -1366,12 +1229,10 @@ export default function TeamRankingPage(): JSX.Element {
         const [
           { data: authData },
           teamsResult,
-          currentSeasonYear,
           internationalPointsByTeamId,
         ] = await Promise.all([
           supabase.auth.getUser(),
           getTeamRankingTeams(),
-          loadCurrentTeamRankingSeasonYear(),
           loadTeamInternationalPointsByTeamId(),
         ])
 
@@ -1379,12 +1240,16 @@ export default function TeamRankingPage(): JSX.Element {
 
         const userId = authData.user?.id ?? null
 
-        const teamsWithInternationalPoints = teamsResult.map((team) => ({
-          ...team,
-          seasonPoints: internationalPointsByTeamId.get(team.id) ?? 0,
-          completedRaceCount: getCompletedRaceCountFromTeam(team),
-          raceReputationValue: getRaceReputationValueFromTeam(team),
-        }))
+        const teamsWithInternationalPoints = teamsResult.map((team) => {
+          const internationalPoints = internationalPointsByTeamId.get(team.id)
+
+          return {
+            ...team,
+            seasonPoints: internationalPoints?.internationalPoints ?? 0,
+            completedRaceCount:
+              internationalPoints?.completedRaceCount ?? getCompletedRaceCountFromTeam(team),
+          }
+        })
 
         // First paint: show the actual standings as soon as the core ranking data is ready.
         // Display names, inactivity badges and exact season-end tie-breakers hydrate below.
@@ -1392,7 +1257,7 @@ export default function TeamRankingPage(): JSX.Element {
         setLoading(false)
 
         void hydrateMyClubContext(userId)
-        void hydrateRankingMetadata(teamsResult, currentSeasonYear)
+        void hydrateRankingMetadata(teamsResult)
       } catch (error) {
         console.error('Failed to load team ranking page:', error)
 
@@ -1705,7 +1570,7 @@ export default function TeamRankingPage(): JSX.Element {
               </h3>
               <p className="mt-1 text-sm text-slate-600">
                 {selectedStanding
-                  ? 'Current season standings based on international points. Ties are ordered by races completed, team race reputation, then team name A-Z.'
+                  ? 'Current season standings based on international points. Ties are ordered by races completed, then team name A-Z.'
                   : 'Choose a tier and division to view the standings.'}
               </p>
             </div>
@@ -1739,9 +1604,6 @@ export default function TeamRankingPage(): JSX.Element {
                   Races
                 </th>
                 <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-600">
-                  Race Rep.
-                </th>
-                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-600">
                   Points
                 </th>
               </tr>
@@ -1750,7 +1612,7 @@ export default function TeamRankingPage(): JSX.Element {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={6} className="px-4 py-6 text-center text-sm text-slate-500">
+                  <td colSpan={5} className="px-4 py-6 text-center text-sm text-slate-500">
                     Loading standings...
                   </td>
                 </tr>
@@ -1817,13 +1679,6 @@ export default function TeamRankingPage(): JSX.Element {
                         {formatTieBreakerNumber(row.completedRaceCount)}
                       </td>
 
-                      <td
-                        className="px-4 py-3 text-right text-sm text-slate-700"
-                        title="Season-end tie-breaker 2: if points and completed races are tied, team race reputation decides."
-                      >
-                        {formatTieBreakerNumber(row.raceReputationValue)}
-                      </td>
-
                       <td className="px-4 py-3 text-right text-sm font-semibold text-slate-900">
                         {row.points.toLocaleString()}
                       </td>
@@ -1833,7 +1688,7 @@ export default function TeamRankingPage(): JSX.Element {
 
               {!loading && !selectedStanding ? (
                 <tr>
-                  <td colSpan={6} className="px-4 py-6 text-center text-sm text-slate-500">
+                  <td colSpan={5} className="px-4 py-6 text-center text-sm text-slate-500">
                     Select a tier and division to view standings.
                   </td>
                 </tr>
@@ -1841,7 +1696,7 @@ export default function TeamRankingPage(): JSX.Element {
 
               {!loading && selectedStanding && selectedRows.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-4 py-6 text-center text-sm text-slate-500">
+                  <td colSpan={5} className="px-4 py-6 text-center text-sm text-slate-500">
                     No teams available for this standing yet.
                   </td>
                 </tr>
@@ -1872,7 +1727,7 @@ export default function TeamRankingPage(): JSX.Element {
             <span>Inactive team</span>
           </div>
           <div className="text-slate-500">
-            Tie-breakers: points → races completed → race reputation → A-Z.
+            Tie-breakers: points → races completed → A-Z.
           </div>
         </div>
       </div>
@@ -1916,7 +1771,6 @@ export default function TeamRankingPage(): JSX.Element {
                 <ol className="mt-2 list-decimal space-y-1 pl-5 text-sm text-slate-700">
                   <li>International points, highest first.</li>
                   <li>If points are equal: completed races, highest first.</li>
-                  <li>If still equal: team race reputation, highest first.</li>
                   <li>If still equal: team name alphabetically A-Z.</li>
                 </ol>
                 <div className="mt-3 text-xs text-slate-500">

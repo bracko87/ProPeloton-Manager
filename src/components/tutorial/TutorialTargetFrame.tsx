@@ -1,132 +1,177 @@
 // src/components/tutorial/TutorialTargetFrame.tsx
 import React, { useEffect, useState } from 'react'
-import { createPortal } from 'react-dom'
 
-type Rect = {
+type TutorialTargetFrameProps = {
+  target?: string | null
+}
+
+type FrameRect = {
   top: number
   left: number
   width: number
   height: number
 }
 
-function findTutorialTarget(target: string): HTMLElement | null {
-  const directTarget = document.querySelector<HTMLElement>(
+const FRAME_PADDING = 10
+const VIEWPORT_MARGIN = 10
+const MIN_FRAME_SIZE = 36
+
+function findTargetElement(target: string): HTMLElement | null {
+  return document.querySelector<HTMLElement>(
     `[data-tutorial-target="${target}"]`,
   )
+}
 
-  if (directTarget) return directTarget
+function clamp(value: number, min: number, max: number): number {
+  return Math.min(Math.max(value, min), max)
+}
 
-  const clickableElements = Array.from(
-    document.querySelectorAll<HTMLElement>('button, a, [role="button"]'),
+function buildFrameRect(targetElement: HTMLElement): FrameRect | null {
+  const targetRect = targetElement.getBoundingClientRect()
+
+  if (targetRect.width <= 0 || targetRect.height <= 0) {
+    return null
+  }
+
+  const left = clamp(
+    targetRect.left - FRAME_PADDING,
+    VIEWPORT_MARGIN,
+    window.innerWidth - VIEWPORT_MARGIN,
   )
 
-  if (target === 'header-coins') {
-    return (
-      clickableElements.find((element) => {
-        const text = element.innerText || element.textContent || ''
-        const aria = element.getAttribute('aria-label') || ''
-        const title = element.getAttribute('title') || ''
+  const top = clamp(
+    targetRect.top - FRAME_PADDING,
+    VIEWPORT_MARGIN,
+    window.innerHeight - VIEWPORT_MARGIN,
+  )
 
-        return /coin/i.test(`${text} ${aria} ${title}`)
-      }) ?? null
-    )
+  const right = clamp(
+    targetRect.right + FRAME_PADDING,
+    VIEWPORT_MARGIN,
+    window.innerWidth - VIEWPORT_MARGIN,
+  )
+
+  const bottom = clamp(
+    targetRect.bottom + FRAME_PADDING,
+    VIEWPORT_MARGIN,
+    window.innerHeight - VIEWPORT_MARGIN,
+  )
+
+  const width = Math.max(0, right - left)
+  const height = Math.max(0, bottom - top)
+
+  if (width < MIN_FRAME_SIZE || height < MIN_FRAME_SIZE) {
+    return null
   }
 
-  if (target === 'header-notifications') {
-    return (
-      clickableElements.find((element) => {
-        const text = element.innerText || element.textContent || ''
-        const aria = element.getAttribute('aria-label') || ''
-        const title = element.getAttribute('title') || ''
-
-        return (
-          /notification/i.test(`${text} ${aria} ${title}`) ||
-          /bell/i.test(`${text} ${aria} ${title}`)
-        )
-      }) ?? null
-    )
+  return {
+    top,
+    left,
+    width,
+    height,
   }
-
-  if (target === 'header-menu') {
-    return (
-      clickableElements.find((element) => {
-        const text = element.innerText || element.textContent || ''
-        const aria = element.getAttribute('aria-label') || ''
-        const title = element.getAttribute('title') || ''
-
-        return /menu/i.test(`${text} ${aria} ${title}`)
-      }) ?? null
-    )
-  }
-
-  return null
 }
 
 export default function TutorialTargetFrame({
   target,
-}: {
-  target?: string | null
-}) {
-  const [rect, setRect] = useState<Rect | null>(null)
+}: TutorialTargetFrameProps): JSX.Element | null {
+  const [frameRect, setFrameRect] = useState<FrameRect | null>(null)
 
   useEffect(() => {
     if (!target) {
-      setRect(null)
+      setFrameRect(null)
       return
     }
 
-    let alive = true
+    let animationFrameId = 0
+    let resizeObserver: ResizeObserver | null = null
+    let cancelled = false
 
-    function updateRect() {
-      if (!alive || !target) return
+    function updateFrame(): void {
+      window.cancelAnimationFrame(animationFrameId)
 
-      const element = findTutorialTarget(target)
+      animationFrameId = window.requestAnimationFrame(() => {
+        if (cancelled || !target) return
 
-      if (!element) {
-        setRect(null)
-        return
-      }
+        const targetElement = findTargetElement(target)
 
-      const nextRect = element.getBoundingClientRect()
-      const padding = 8
+        if (!targetElement) {
+          setFrameRect(null)
+          return
+        }
 
-      setRect({
-        top: Math.max(4, nextRect.top - padding),
-        left: Math.max(4, nextRect.left - padding),
-        width: nextRect.width + padding * 2,
-        height: nextRect.height + padding * 2,
+        setFrameRect(buildFrameRect(targetElement))
       })
     }
 
-    updateRect()
+    updateFrame()
 
-    const rafId = window.requestAnimationFrame(updateRect)
-    const intervalId = window.setInterval(updateRect, 250)
+    const targetElement = findTargetElement(target)
 
-    window.addEventListener('resize', updateRect)
-    window.addEventListener('scroll', updateRect, true)
+    if (typeof ResizeObserver !== 'undefined') {
+      resizeObserver = new ResizeObserver(updateFrame)
+
+      if (targetElement) {
+        resizeObserver.observe(targetElement)
+      }
+
+      resizeObserver.observe(document.body)
+    }
+
+    window.addEventListener('resize', updateFrame)
+    window.addEventListener('scroll', updateFrame, true)
+
+    const intervalId = window.setInterval(updateFrame, 250)
 
     return () => {
-      alive = false
-      window.cancelAnimationFrame(rafId)
+      cancelled = true
+      window.cancelAnimationFrame(animationFrameId)
+      window.removeEventListener('resize', updateFrame)
+      window.removeEventListener('scroll', updateFrame, true)
       window.clearInterval(intervalId)
-      window.removeEventListener('resize', updateRect)
-      window.removeEventListener('scroll', updateRect, true)
+      resizeObserver?.disconnect()
     }
   }, [target])
 
-  if (!rect) return null
+  if (!target || !frameRect) {
+    return null
+  }
 
-  return createPortal(
+  return (
     <div
-      className="pointer-events-none fixed z-[9999] rounded-full border-4 border-red-500 shadow-[0_0_0_4px_rgba(239,68,68,0.18),0_0_24px_rgba(239,68,68,0.55)]"
+      aria-hidden="true"
+      className="pointer-events-none fixed"
       style={{
-        top: rect.top,
-        left: rect.left,
-        width: rect.width,
-        height: rect.height,
+        top: frameRect.top,
+        left: frameRect.left,
+        width: frameRect.width,
+        height: frameRect.height,
+
+        /**
+         * Important:
+         * This must be BELOW the tutorial box.
+         * The tutorial overlay/panel should be z-index 1000 or higher.
+         */
+        zIndex: 800,
+
+        /**
+         * Sharp rectangle only.
+         * No rounded corners.
+         */
+        borderRadius: 0,
+        border: '4px solid rgba(239, 68, 68, 0.98)',
+
+        /**
+         * Glow around the rectangle.
+         */
+        boxShadow:
+          '0 0 0 2px rgba(255, 255, 255, 0.75), 0 0 22px rgba(239, 68, 68, 0.8)',
+
+        /**
+         * Keep it behind overlay but visible above page content.
+         */
+        background: 'transparent',
       }}
-    />,
-    document.body,
+    />
   )
 }

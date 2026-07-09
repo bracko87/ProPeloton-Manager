@@ -6290,12 +6290,25 @@ export default function OverviewPage() {
     (item) => !isAttentionItemDismissed(item, openedAttentionKeys),
   );
   const visibleSquadPulse = squadPulseOverride ?? data.squadPulse;
+  const steps = overviewTutorialSteps;
+  const currentIndex = tutorialStepIndex;
+  const activeStep =
+    tutorialMode === "steps" ? (steps[currentIndex] ?? null) : null;
+  const isTutorialOpen =
+    !tutorialLoading && tutorialMode === "steps" && Boolean(activeStep);
+  const handleNext = handleNextOverviewTutorialStep;
+  const handleSecondary =
+    currentIndex === steps.length - 1
+      ? handleFinishOverviewTutorialForNow
+      : handleSkipOverviewTutorial;
+  const handleClose = handleCloseOverviewTutorial;
 
   return (
     <div className="w-full space-y-6">
       {/* Attention bubbles: single-row horizontal slider with fixed-size collapsed and expanded chips. */}
-      <Card className="overflow-hidden border-slate-200/80 bg-white/95 shadow-sm">
-        <div className="px-4 py-3">
+      <div data-tutorial-target="overview-attention">
+        <Card className="overflow-hidden border-slate-200/80 bg-white/95 shadow-sm">
+          <div className="px-4 py-3">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <div className="flex min-w-0 items-center gap-3">
               <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-950 text-sm font-black text-white shadow-sm">
@@ -6348,21 +6361,24 @@ export default function OverviewPage() {
           <div className="mt-3 border-t border-slate-100 pt-3">
             <AttentionBubbleSlider alerts={attentionItems} onOpen={handleOpenAttentionItem} />
           </div>
-        </div>
-      </Card>
+          </div>
+        </Card>
+      </div>
 
       <div className="space-y-6">
         <div className="grid grid-cols-12 gap-6">
           <div className="col-span-12 space-y-6 xl:col-span-8">
             {/* Main top-left area: newsletter instead of operations */}
-            <NewsCommandCenter
-              alerts={attentionItems}
-              feed={data.feed}
-              news={
-                raceWorld.worldNews.length > 0 ? raceWorld.worldNews : data.news
-              }
-              currentGameDateLabel={data.club.dateLabel}
-            />
+            <div data-tutorial-target="overview-news-board">
+              <NewsCommandCenter
+                alerts={attentionItems}
+                feed={data.feed}
+                news={
+                  raceWorld.worldNews.length > 0 ? raceWorld.worldNews : data.news
+                }
+                currentGameDateLabel={data.club.dateLabel}
+              />
+            </div>
 
             <Card className="p-5">
               <SectionTitle
@@ -6443,24 +6459,30 @@ export default function OverviewPage() {
 
           <div className="col-span-12 space-y-6 xl:col-span-4">
             {/* Main right-side replacement for Activity Feed */}
-            <NextTeamRaceCard
-              race={raceHub.nextTeamRace}
-              loading={raceHubLoading}
-            />
-            <LastTeamRaceCard
-              race={raceHub.lastTeamRace}
-              loading={raceHubLoading}
-            />
-
-            <Card className="p-5">
-              <SectionTitle
-                title="Main Sponsor"
-                subtitle="Primary sponsor branding and active partnership."
+            <div data-tutorial-target="overview-next-team-race">
+              <NextTeamRaceCard
+                race={raceHub.nextTeamRace}
+                loading={raceHubLoading}
               />
-              <div className="mt-5">
-                <MainSponsorPanel sponsor={data.mainSponsor} />
-              </div>
-            </Card>
+            </div>
+            <div data-tutorial-target="overview-last-team-race">
+              <LastTeamRaceCard
+                race={raceHub.lastTeamRace}
+                loading={raceHubLoading}
+              />
+            </div>
+
+            <div data-tutorial-target="overview-main-sponsor">
+              <Card className="p-5">
+                <SectionTitle
+                  title="Main Sponsor"
+                  subtitle="Primary sponsor branding and active partnership."
+                />
+                <div className="mt-5">
+                  <MainSponsorPanel sponsor={data.mainSponsor} />
+                </div>
+              </Card>
+            </div>
 
             <Card className="p-5">
               <SectionTitle
@@ -6539,29 +6561,22 @@ export default function OverviewPage() {
         />
       ) : null}
 
-      {!tutorialLoading && tutorialMode === "steps" ? (
-        <TutorialOverlay
-          open
-          variant="panel"
-          title={overviewTutorialSteps[tutorialStepIndex].title}
-          body={overviewTutorialSteps[tutorialStepIndex].body}
-          stepLabel={`${tutorialStepIndex + 1}/${overviewTutorialSteps.length}`}
-          primaryAction={
-            overviewTutorialSteps[tutorialStepIndex].primaryAction ?? "Next"
-          }
-          secondaryAction={
-            tutorialStepIndex === overviewTutorialSteps.length - 1
-              ? overviewTutorialSteps[tutorialStepIndex].secondaryAction
-              : "Skip tutorial"
-          }
-          onPrimary={handleNextOverviewTutorialStep}
-          onSecondary={
-            tutorialStepIndex === overviewTutorialSteps.length - 1
-              ? handleFinishOverviewTutorialForNow
-              : handleSkipOverviewTutorial
-          }
-          onClose={handleCloseOverviewTutorial}
-        />
+      {isTutorialOpen && activeStep ? (
+        <>
+          <TutorialTargetFrame target={activeStep?.target ?? null} />
+
+          <TutorialOverlay
+            open={isTutorialOpen}
+            title={activeStep.title}
+            body={activeStep.body}
+            stepLabel={`${currentIndex + 1} / ${steps.length}`}
+            primaryAction={activeStep.primaryAction}
+            secondaryAction={activeStep.secondaryAction}
+            onPrimary={handleNext}
+            onSecondary={handleSecondary}
+            onClose={handleClose}
+          />
+        </>
       ) : null}
 
       {!menuTutorialLoading && menuTutorialMode === "invite" ? (

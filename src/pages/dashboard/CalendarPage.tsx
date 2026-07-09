@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router'
 import { supabase } from '../../lib/supabase'
 import TutorialOverlay from '../../components/tutorial/TutorialOverlay'
@@ -310,6 +310,18 @@ function getGameMonthName(monthNumber: number): string {
 
 function getGameMonthShortName(monthNumber: number): string {
   return GAME_MONTH_SHORT_NAMES[monthNumber - 1] ?? `M${monthNumber}`
+}
+
+function clampGameMonth(value: number | null | undefined): number | null {
+  if (typeof value !== 'number' || !Number.isFinite(value)) return null
+
+  const month = Number(value)
+
+  if (month < 1 || month > 12) {
+    return null
+  }
+
+  return month
 }
 
 function formatCompactGameDateDisplay(
@@ -732,11 +744,14 @@ export default function CalendarPage(): JSX.Element {
   const [error, setError] = useState<string | null>(null)
 
   const [activeView, setActiveView] = useState<CalendarView>('season')
-  const [activeRaceMonth, setActiveRaceMonth] = useState(1)
-  const [displayedSeasonMonth, setDisplayedSeasonMonth] = useState(1)
+  const [activeRaceMonth, setActiveRaceMonth] = useState<number | null>(null)
+  const [displayedSeasonMonth, setDisplayedSeasonMonth] = useState<number | null>(null)
 
   const location = useLocation()
   const navigate = useNavigate()
+
+  const hasAppliedInitialCalendarMonthRef = useRef(false)
+  const userSelectedRaceMonthRef = useRef(false)
 
   const [, setClubId] = useState<string | null>(null)
 
@@ -1043,15 +1058,25 @@ export default function CalendarPage(): JSX.Element {
   useEffect(() => {
     if (!gameDateParts) return
 
+    const currentGameMonth = clampGameMonth(gameDateParts.month_number) ?? 1
     const deepLink = getCalendarDeepLinkParams(location.search)
-    const resolvedMonth = deepLink.monthNumber ?? gameDateParts.month_number
+
+    const isRealRaceDeepLink = Boolean(deepLink.raceId)
+    const deepLinkMonth = isRealRaceDeepLink ? clampGameMonth(deepLink.monthNumber) : null
+
+    if (deepLink.view && isRealRaceDeepLink) {
+      setActiveView(deepLink.view)
+    }
+
+    if (hasAppliedInitialCalendarMonthRef.current && userSelectedRaceMonthRef.current) {
+      return
+    }
+
+    const resolvedMonth = deepLinkMonth ?? currentGameMonth
 
     setActiveRaceMonth(resolvedMonth)
     setDisplayedSeasonMonth(resolvedMonth)
-
-    if (deepLink.view) {
-      setActiveView(deepLink.view)
-    }
+    hasAppliedInitialCalendarMonthRef.current = true
   }, [gameDateParts, location.search])
 
   useEffect(() => {
@@ -1073,9 +1098,13 @@ export default function CalendarPage(): JSX.Element {
       setActiveView(state.restoreCalendarView)
     }
 
-    if (typeof state.restoreMonthNumber === 'number') {
-      setActiveRaceMonth(state.restoreMonthNumber)
-      setDisplayedSeasonMonth(state.restoreMonthNumber)
+    const restoredMonth = clampGameMonth(state.restoreMonthNumber)
+
+    if (restoredMonth) {
+      userSelectedRaceMonthRef.current = true
+      hasAppliedInitialCalendarMonthRef.current = true
+      setActiveRaceMonth(restoredMonth)
+      setDisplayedSeasonMonth(restoredMonth)
     }
 
     window.requestAnimationFrame(() => {
@@ -1160,6 +1189,14 @@ export default function CalendarPage(): JSX.Element {
   }, [])
 
 
+  const resolvedActiveRaceMonth = useMemo(() => {
+    return activeRaceMonth ?? gameDateParts?.month_number ?? 1
+  }, [activeRaceMonth, gameDateParts])
+
+  const resolvedDisplayedSeasonMonth = useMemo(() => {
+    return displayedSeasonMonth ?? gameDateParts?.month_number ?? 1
+  }, [displayedSeasonMonth, gameDateParts])
+
   const currentMonthStart = useMemo(() => {
     if (!currentGameDate || !gameDateParts) return null
     return getMonthStartFromGameDate(currentGameDate, gameDateParts.day_number)
@@ -1167,9 +1204,9 @@ export default function CalendarPage(): JSX.Element {
 
   const displayedMonthStart = useMemo(() => {
     if (!currentMonthStart || !gameDateParts) return null
-    const monthOffset = displayedSeasonMonth - gameDateParts.month_number
+    const monthOffset = resolvedDisplayedSeasonMonth - gameDateParts.month_number
     return addDays(currentMonthStart, monthOffset * GAME_MONTH_LENGTH)
-  }, [currentMonthStart, gameDateParts, displayedSeasonMonth])
+  }, [currentMonthStart, gameDateParts, resolvedDisplayedSeasonMonth])
 
   const monthDays = useMemo(() => {
     if (!displayedMonthStart || !currentMonthStart || !gameDateParts) return []
@@ -1225,7 +1262,7 @@ export default function CalendarPage(): JSX.Element {
 
   const activeMonthRaces = useMemo(() => {
     return seasonRaceEntries
-      .filter((race) => race.startGameDate.monthNumber === activeRaceMonth)
+      .filter((race) => race.startGameDate.monthNumber === resolvedActiveRaceMonth)
       .sort((a, b) => {
         const dateDiff =
           getRaceCalendarSortOrdinal(a.startGameDate) -
@@ -1235,7 +1272,7 @@ export default function CalendarPage(): JSX.Element {
 
         return a.name.localeCompare(b.name)
       })
-  }, [seasonRaceEntries, activeRaceMonth])
+  }, [seasonRaceEntries, resolvedActiveRaceMonth])
 
   useEffect(() => {
     if (loading) return
@@ -1255,7 +1292,7 @@ export default function CalendarPage(): JSX.Element {
     }, 120)
 
     return () => window.clearTimeout(timer)
-  }, [loading, activeView, activeRaceMonth, activeMonthRaces.length, location.search])
+  }, [loading, activeView, resolvedActiveRaceMonth, activeMonthRaces.length, location.search])
 
   const acceptedSeasonRaceEntries = useMemo(() => {
     return seasonRaceEntries.filter(race => isRaceAcceptedForUser(race))
@@ -1320,11 +1357,11 @@ export default function CalendarPage(): JSX.Element {
   }
 
   function handlePreviousSeasonMonth(): void {
-    setDisplayedSeasonMonth(current => Math.max(1, current - 1))
+    setDisplayedSeasonMonth(current => Math.max(1, (current ?? resolvedDisplayedSeasonMonth) - 1))
   }
 
   function handleNextSeasonMonth(): void {
-    setDisplayedSeasonMonth(current => Math.min(12, current + 1))
+    setDisplayedSeasonMonth(current => Math.min(12, (current ?? resolvedDisplayedSeasonMonth) + 1))
   }
 
   function getCalendarReturnState(raceId: string) {
@@ -1334,7 +1371,7 @@ export default function CalendarPage(): JSX.Element {
       returnScrollY: window.scrollY,
       returnRaceId: raceId,
       returnCalendarView: activeView,
-      returnMonthNumber: activeView === 'races' ? activeRaceMonth : displayedSeasonMonth,
+      returnMonthNumber: activeView === 'races' ? resolvedActiveRaceMonth : resolvedDisplayedSeasonMonth,
     }
   }
 
@@ -1354,7 +1391,9 @@ export default function CalendarPage(): JSX.Element {
     setActiveView('races')
 
     if (typeof firstRaceMonth === 'number') {
+      userSelectedRaceMonthRef.current = true
       setActiveRaceMonth(firstRaceMonth)
+      setDisplayedSeasonMonth(firstRaceMonth)
     }
   }
 
@@ -1530,7 +1569,7 @@ export default function CalendarPage(): JSX.Element {
               <div>
                 <h4 className="font-semibold text-gray-900">
                   {gameDateParts
-                    ? formatGameMonthLabel(gameDateParts.season_number, displayedSeasonMonth)
+                    ? formatGameMonthLabel(gameDateParts.season_number, resolvedDisplayedSeasonMonth)
                     : 'Current Month'}
                 </h4>
                 <p className="text-sm text-gray-500">
@@ -1550,9 +1589,9 @@ export default function CalendarPage(): JSX.Element {
                   <button
                     type="button"
                     onClick={handlePreviousSeasonMonth}
-                    disabled={displayedSeasonMonth === 1}
+                    disabled={resolvedDisplayedSeasonMonth === 1}
                     className={`rounded-md px-3 py-2 text-sm font-medium transition ${
-                      displayedSeasonMonth === 1
+                      resolvedDisplayedSeasonMonth === 1
                         ? 'cursor-not-allowed bg-gray-100 text-gray-400'
                         : 'text-gray-700 hover:bg-gray-100'
                     }`}
@@ -1561,15 +1600,15 @@ export default function CalendarPage(): JSX.Element {
                   </button>
 
                   <div className="min-w-[140px] px-3 text-center text-sm font-semibold text-gray-800">
-                    {getGameMonthName(displayedSeasonMonth)}
+                    {getGameMonthName(resolvedDisplayedSeasonMonth)}
                   </div>
 
                   <button
                     type="button"
                     onClick={handleNextSeasonMonth}
-                    disabled={displayedSeasonMonth === 12}
+                    disabled={resolvedDisplayedSeasonMonth === 12}
                     className={`rounded-md px-3 py-2 text-sm font-medium transition ${
-                      displayedSeasonMonth === 12
+                      resolvedDisplayedSeasonMonth === 12
                         ? 'cursor-not-allowed bg-gray-100 text-gray-400'
                         : 'text-gray-700 hover:bg-gray-100'
                     }`}
@@ -1771,20 +1810,28 @@ export default function CalendarPage(): JSX.Element {
 
             <div className="mb-4 w-full rounded-lg border border-gray-100 bg-white p-1 shadow-sm">
               <div className="grid w-full grid-cols-2 gap-1 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-12">
-                {Array.from({ length: 12 }, (_, index) => index + 1).map(monthNumber => (
-                  <button
-                    key={monthNumber}
-                    type="button"
-                    onClick={() => setActiveRaceMonth(monthNumber)}
-                    className={`w-full rounded-md px-3 py-2 text-center text-sm font-medium transition ${
-                      activeRaceMonth === monthNumber
-                        ? 'bg-yellow-400 text-black'
-                        : 'text-gray-600 hover:bg-gray-100'
-                    }`}
-                  >
-                    {getGameMonthName(monthNumber)}
-                  </button>
-                ))}
+                {Array.from({ length: 12 }, (_, index) => index + 1).map(monthNumber => {
+                  const isActive = monthNumber === resolvedActiveRaceMonth
+
+                  return (
+                    <button
+                      key={monthNumber}
+                      type="button"
+                      onClick={() => {
+                        userSelectedRaceMonthRef.current = true
+                        setActiveRaceMonth(monthNumber)
+                        setDisplayedSeasonMonth(monthNumber)
+                      }}
+                      className={`w-full rounded-md px-3 py-2 text-center text-sm font-medium transition ${
+                        isActive
+                          ? 'bg-yellow-400 text-black'
+                          : 'text-gray-600 hover:bg-gray-100'
+                      }`}
+                    >
+                      {getGameMonthName(monthNumber)}
+                    </button>
+                  )
+                })}
               </div>
             </div>
 
@@ -1796,7 +1843,7 @@ export default function CalendarPage(): JSX.Element {
 
             {activeMonthRaces.length === 0 ? (
               <div className="rounded-md border border-gray-200 p-4 text-sm text-gray-500">
-                No races scheduled for {getGameMonthName(activeRaceMonth)}.
+                No races scheduled for {getGameMonthName(resolvedActiveRaceMonth)}.
               </div>
             ) : (
               <ul className="space-y-3">

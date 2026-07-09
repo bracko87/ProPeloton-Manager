@@ -688,7 +688,7 @@ type FirstSquadTabProps = {
   moveActionMessage: string | null
   movingRiderId: string | null
   onMoveToDevelopingTeam: (riderId: string) => void | Promise<void>
-  onOpenRiderProfile: (riderId: string) => void
+  onOpenRiderProfile: (riderId: string) => void | Promise<void>
   healthOverviewDisplayRows: HealthOverviewDisplayRow[]
   squadDisplayData: SquadDisplayData
 }
@@ -879,7 +879,7 @@ export default function FirstSquadTab({
                 </thead>
 
                 <tbody>
-                  {riders.map((r) => {
+                  {riders.map((r, index) => {
                     const contractExpiryUi = getContractExpiryUi(
                       r.contractExpiresAt,
                       gameDate ?? null,
@@ -1061,6 +1061,9 @@ export default function FirstSquadTab({
                         <td className="p-2 text-right">
                           <button
                             type="button"
+                            data-tutorial-target={
+                              index === 0 ? 'squad-rider-view-button' : undefined
+                            }
                             onClick={() => onOpenRiderProfile(r.id)}
                             className="text-sm font-medium text-yellow-600 hover:text-yellow-700"
                           >

@@ -26,9 +26,10 @@ export type TutorialStep = {
 }
 
 export const overviewWelcomeTutorial = {
-  title: 'Need help getting started?',
+  title: 'Welcome to ProPeloton Manager',
   body:
-    'We can show you a short introduction to the Overview page and explain the most important areas of your team dashboard.',
+    'Welcome to the game. This tutorial can help you understand the main pages and the most important systems step by step.\n\n' +
+    'You can start the tutorial now, or skip it and use the game manual later.',
   primaryAction: 'Start tutorial',
   secondaryAction: 'No thanks',
 }
@@ -43,10 +44,54 @@ export const overviewSkippedTutorialMessage = {
 
 export const overviewTutorialSteps: TutorialStep[] = [
   {
+    key: 'welcome-game',
+    title: 'Welcome to ProPeloton Manager',
+    body:
+      'Welcome to ProPeloton Manager.\n\n' +
+      'You are now the manager of your own cycling team. Your job is to build the club, take care of your riders, prepare races, manage money, improve the team, and guide your club through the season.',
+    primaryAction: 'Next',
+  },
+  {
+    key: 'welcome-game-type',
+    title: 'What Kind of Game Is This?',
+    body:
+      'This is a cycling management game.\n\n' +
+      'You are not controlling the bike directly during the race. Instead, you make the important manager decisions before and during the season: which riders to keep, how to train them, which races to enter, what equipment to use, which staff to hire, and how to spend your money.',
+    primaryAction: 'Next',
+  },
+  {
+    key: 'welcome-simple-or-deep',
+    title: 'Play Simple or Go Deep',
+    body:
+      'You do not need to understand everything immediately.\n\n' +
+      'At the beginning, you can play in a simple way: follow alerts, check your squad, enter races, prepare your team, and watch results.\n\n' +
+      'Later, if you want more depth, you can use advanced systems like rider fatigue, morale, race sharpness, sponsor objectives, equipment bonuses, training camps, scouting, transfer negotiations, taxes, infrastructure, and promotion or relegation.',
+    primaryAction: 'Next',
+  },
+  {
+    key: 'welcome-tutorial-purpose',
+    title: 'What This Tutorial Will Do',
+    body:
+      'This tutorial will guide you through the main pages of the game one by one.\n\n' +
+      'You will learn what each page is for, which buttons are important, and what you should check as a new manager.\n\n' +
+      'The tutorial will not explain every small detail at once. For deeper explanations, you can always use the full game manual later.',
+    primaryAction: 'Next',
+  },
+  {
+    key: 'welcome-start-overview',
+    title: 'Let’s Start With the Overview Page',
+    body:
+      'We will start with the Overview page.\n\n' +
+      'This is your main manager dashboard. It gives you the fastest picture of your team: current alerts, news, finances, races, sponsor messages, rider condition, and season progress.\n\n' +
+      'After this introduction, I will explain the Overview page step by step.',
+    primaryAction: 'Start Overview tutorial',
+  },
+  {
     key: 'overview-dashboard',
     title: 'Your Manager Dashboard',
     body:
       'This is your Overview page — the main dashboard for your team.\n\n' +
+      'Think of this page as your daily control room. When you log in, this is usually the first place you should check.\n\n' +
       'Here you can quickly see the most important information about your club, including team status, current alerts, finances, races, rider condition, and season progress.',
     primaryAction: 'Next',
   },
@@ -55,7 +100,42 @@ export const overviewTutorialSteps: TutorialStep[] = [
     title: 'What Needs Your Attention',
     body:
       'The top part of the page helps you understand what needs action.\n\n' +
-      'Attention alerts, news, today’s races, upcoming events, and quick summaries will help you know what is happening and what you should check next.',
+      'Attention alerts, news, today’s races, upcoming events, and quick summaries help you know what is happening and what you should check next.\n\n' +
+      'If you see an alert, do not ignore it. It can point to important topics such as sponsor offers, race deadlines, unread messages, rider problems, finance warnings, or preparation tasks.',
+    primaryAction: 'Next',
+  },
+  {
+    key: 'overview-news-board',
+    title: 'News Board',
+    body:
+      'The News Board shows important team and world news.\n\n' +
+      'Some news is about your own team, such as sponsor offers, birthdays, or team updates. Other news can be about the wider race world, such as race results or important cycling events.\n\n' +
+      'Clicking a news row can reveal more information when extra details are available.',
+    primaryAction: 'Next',
+  },
+  {
+    key: 'overview-next-race',
+    title: 'Next Team Race',
+    body:
+      'The Next Team Race panel helps you see what is coming soon for your team.\n\n' +
+      'This is important because accepted races often still need preparation. You may need to select riders, staff, assets, equipment, supplies, and stage tactics before the deadlines.\n\n' +
+      'If this panel shows an upcoming race, you should check Race Preparation early.',
+    primaryAction: 'Next',
+  },
+  {
+    key: 'overview-last-race',
+    title: 'Last Team Race',
+    body:
+      'The Last Team Race panel shows your most recent finished race when available.\n\n' +
+      'Use this to quickly review how your team performed. Results can help you decide if riders need rest, if tactics worked well, or if your squad needs changes before the next event.',
+    primaryAction: 'Next',
+  },
+  {
+    key: 'overview-sponsor',
+    title: 'Main Sponsor',
+    body:
+      'The Main Sponsor panel shows your primary sponsor information when you have an active main sponsor.\n\n' +
+      'Sponsors are important because they can provide money, bonuses, objectives, and sometimes branding effects. Some sponsor contracts are simple, while naming-rights sponsors can temporarily change your team name during the season.',
     primaryAction: 'Next',
   },
   {
@@ -63,8 +143,8 @@ export const overviewTutorialSteps: TutorialStep[] = [
     title: 'Team Health and Season Progress',
     body:
       'The rest of the Overview helps you follow your team’s condition and progress.\n\n' +
-      'You can monitor Squad Pulse, finances, sponsors, race activity, and your Season Snapshot. This page is your first stop whenever you want to understand how your team is doing.\n\n' +
-      'When you are ready, we recommend continuing to the Squad page, where you can learn more about your riders.',
+      'You can monitor squad condition, finance health, sponsor activity, race activity, and season progress.\n\n' +
+      'The more you play, the more useful this page becomes. It helps you connect short-term decisions, like preparing the next race, with long-term goals, like building a stronger squad and climbing the rankings.',
     primaryAction: 'Continue to Squad',
     secondaryAction: 'Finish for now',
   },
