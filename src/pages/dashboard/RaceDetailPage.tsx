@@ -131,6 +131,9 @@ type RaceStage = {
   intermediate_sprints_json?: RaceStageSprint[] | null
   mountain_climbs_json?: RaceStageMountainClimb[] | null
   weather_summary?: string | null
+  weather_cancelled?: boolean | null
+  weather_cancellation_reason?: string | null
+  weather_cancelled_at?: string | null
   start_city: string
   finish_city: string
   host_city?: string | null
@@ -171,6 +174,9 @@ type RaceStageStartTimeRow = {
   planned_start_time_label?: string | null
   weather_summary?: string | null
   weather_snapshot?: JsonObject | null
+  weather_cancelled?: boolean | null
+  weather_cancellation_reason?: string | null
+  weather_cancelled_at?: string | null
 }
 
 type RaceDetailResponse = {
@@ -218,6 +224,7 @@ type RaceParticipantRider = {
   display_name?: string | null
   team_name_snapshot: string | null
   country_code_snapshot: string | null
+  country_code?: string | null
   age_snapshot: number | null
   is_young_rider: boolean | null
   start_number: number | null
@@ -1045,6 +1052,185 @@ function TeamJerseyImage({
   )
 }
 
+function normalizeResultTeamLookupName(value?: string | null): string {
+  return value?.trim().replace(/\s+/g, ' ').toLowerCase() ?? ''
+}
+
+const ORPHAN_RESULT_TEAM_GENERIC_JERSEY_URL =
+  'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/AI%20Teams%20Kits/Genkit37.png'
+
+function getResultParticipantTeam(
+  participantTeams: RaceParticipantTeam[],
+  teamId?: string | null,
+  teamName?: string | null
+): RaceParticipantTeam | null {
+  const normalizedTeamId = teamId?.trim() ?? ''
+  const normalizedTeamName = normalizeResultTeamLookupName(teamName)
+
+  if (normalizedTeamId) {
+    const teamById = participantTeams.find((team) =>
+      [
+        team.id,
+        team.team_id,
+        team.club_id,
+        team.owner_club_id,
+        team.participating_club_id,
+        team.parent_club_id,
+        team.race_team_entry_id,
+      ]
+        .map((value) => value?.trim())
+        .filter((value): value is string => Boolean(value))
+        .includes(normalizedTeamId)
+    )
+
+    if (teamById) return teamById
+  }
+
+  if (!normalizedTeamName) return null
+
+  return (
+    participantTeams.find((team) =>
+      [
+        getParticipantTeamName(team),
+        team.club_name,
+        team.team_name_snapshot,
+      ]
+        .map((value) => normalizeResultTeamLookupName(value))
+        .filter(Boolean)
+        .includes(normalizedTeamName)
+    ) ?? null
+  )
+}
+
+function ResultTeamJerseyCell({
+  teamId,
+  teamName,
+  participantTeams,
+  onOpenTeamProfile,
+}: {
+  teamId?: string | null
+  teamName?: string | null
+  participantTeams: RaceParticipantTeam[]
+  onOpenTeamProfile: (teamId: string) => void
+}) {
+  const participantTeam = getResultParticipantTeam(
+    participantTeams,
+    teamId,
+    teamName
+  )
+  const isOrphanResultTeam =
+    !participantTeam && Boolean(teamId?.trim() || teamName?.trim())
+  const resolvedTeamName =
+    teamName?.trim() ||
+    (participantTeam ? getParticipantTeamName(participantTeam) : '') ||
+    '—'
+  /*
+   * Result rows can carry a race-entry id, a snapshot team id or the real
+   * club id. A profile link is allowed only after the row resolves to a team
+   * from the official Teams & riders participant list. Never trust the raw
+   * result team_id as a profile destination on its own.
+   */
+  const resolvedTeamId = participantTeam
+    ? participantTeam.participating_club_id?.trim() ||
+      participantTeam.club_id?.trim() ||
+      participantTeam.owner_club_id?.trim() ||
+      participantTeam.team_id?.trim() ||
+      participantTeam.id?.trim() ||
+      participantTeam.parent_club_id?.trim() ||
+      null
+    : null
+  /*
+   * Defensive fallback for old/test race data: a result can reference a team
+   * that is not present in the official Teams & riders participant list.
+   * Such a row gets the neutral generic jersey and deliberately receives no
+   * team-profile link, even when the result contains a raw team_id.
+   */
+  const rawJerseyUrl =
+    participantTeam?.jersey_url_snapshot?.trim() ||
+    (isOrphanResultTeam ? ORPHAN_RESULT_TEAM_GENERIC_JERSEY_URL : null)
+  const teamCellTitle = isOrphanResultTeam
+    ? `${resolvedTeamName} · profile unavailable because this team is not in the race participant list`
+    : resolvedTeamName
+  const [jerseyLoadFailed, setJerseyLoadFailed] = useState(false)
+  const jerseyUrl = jerseyLoadFailed ? null : rawJerseyUrl
+
+  useEffect(() => {
+    setJerseyLoadFailed(false)
+  }, [rawJerseyUrl])
+
+  if (!jerseyUrl) {
+    if (!resolvedTeamId) {
+      return (
+        <span className={RESULT_TEAM_NAME_TRUNCATE_CLASS} title={teamCellTitle}>
+          {resolvedTeamName}
+        </span>
+      )
+    }
+
+    return (
+      <button
+        type="button"
+        onClick={() => onOpenTeamProfile(resolvedTeamId)}
+        className={`${RESULT_TEAM_NAME_TRUNCATE_CLASS} text-slate-600 transition hover:text-slate-950`}
+        title={teamCellTitle}
+      >
+        {resolvedTeamName}
+      </button>
+    )
+  }
+
+  const jerseyPreview = (
+    <>
+      <img
+        src={jerseyUrl}
+        alt=""
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 h-full w-full scale-[5] object-contain opacity-95 transition-transform duration-500 ease-out group-hover:scale-[5.2] group-focus-visible:scale-[5.2]"
+        style={{
+          objectPosition: '50% 37%',
+          transformOrigin: '50% 37%',
+        }}
+        loading="lazy"
+        referrerPolicy="no-referrer"
+        onError={() => setJerseyLoadFailed(true)}
+      />
+
+      <span className="pointer-events-none absolute inset-0 bg-gradient-to-b from-white/5 via-transparent to-slate-950/5" />
+
+      <span className="pointer-events-none absolute inset-y-0 right-0 w-[38%] bg-gradient-to-l from-white via-white/95 to-transparent transition-all duration-500 ease-out group-hover:w-[90%] group-focus-visible:w-[90%]" />
+
+      <span className="pointer-events-none absolute inset-y-0 left-[10%] right-0 flex translate-x-3 items-center justify-end px-3 text-right text-xs font-semibold text-slate-900 opacity-0 transition-all duration-500 ease-out group-hover:translate-x-0 group-hover:opacity-100 group-focus-visible:translate-x-0 group-focus-visible:opacity-100">
+        <span className="block max-w-full truncate">{resolvedTeamName}</span>
+      </span>
+
+      <span className="sr-only">{resolvedTeamName}</span>
+    </>
+  )
+
+  const sharedClassName =
+    'group relative block h-9 w-full overflow-hidden rounded-lg border border-slate-200 bg-white text-left shadow-sm outline-none transition duration-300 hover:border-slate-300 hover:shadow-md focus-visible:border-sky-400 focus-visible:ring-2 focus-visible:ring-sky-200'
+
+  if (!resolvedTeamId) {
+    return (
+      <div className={`${sharedClassName} cursor-default`} title={teamCellTitle}>
+        {jerseyPreview}
+      </div>
+    )
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={() => onOpenTeamProfile(resolvedTeamId)}
+      className={sharedClassName}
+      title={teamCellTitle}
+      aria-label={`Open ${resolvedTeamName} team profile`}
+    >
+      {jerseyPreview}
+    </button>
+  )
+}
+
 function parseDateOnly(value?: string | null): Date | null {
   if (!value) return null
 
@@ -1865,6 +2051,202 @@ function hasWeather(stage: RaceStage): boolean {
   return Object.keys(weather).length > 0 && weather.source !== 'missing_country_code'
 }
 
+
+function getRaceWeatherCancellationStatus(race?: Race | null): string | null {
+  const metadata = race?.metadata ?? {}
+  const value = metadata.weather_cancellation_status
+
+  return typeof value === 'string' && value.trim() !== ''
+    ? value.trim()
+    : null
+}
+
+function getRaceWeatherCanceledStageCount(race?: Race | null): number {
+  const metadata = race?.metadata ?? {}
+  const value = metadata.weather_cancelled_stage_count
+
+  if (typeof value === 'number' && Number.isFinite(value)) return value
+
+  if (typeof value === 'string' && value.trim() !== '') {
+    const parsed = Number(value)
+    return Number.isFinite(parsed) ? parsed : 0
+  }
+
+  return 0
+}
+
+function getRaceWeatherTotalStageCount(race?: Race | null): number {
+  const metadata = race?.metadata ?? {}
+  const value = metadata.weather_total_stage_count
+
+  if (typeof value === 'number' && Number.isFinite(value)) return value
+
+  if (typeof value === 'string' && value.trim() !== '') {
+    const parsed = Number(value)
+    return Number.isFinite(parsed) ? parsed : 0
+  }
+
+  return Number(race?.stage_count ?? 0)
+}
+
+function isRaceAllWeatherCanceled(race?: Race | null): boolean {
+  const metadata = race?.metadata ?? {}
+  const explicitValue = metadata.weather_all_stages_cancelled
+
+  if (typeof explicitValue === 'boolean') return explicitValue
+  if (typeof explicitValue === 'string') return explicitValue.toLowerCase() === 'true'
+
+  return getRaceWeatherCancellationStatus(race) === 'all_stages_weather_cancelled'
+}
+
+function isRacePartlyWeatherCanceled(race?: Race | null): boolean {
+  return getRaceWeatherCancellationStatus(race) === 'partly_weather_cancelled'
+}
+
+function getRaceWeatherCancellationDisplayStatus(race?: Race | null): string | null {
+  if (isRaceAllWeatherCanceled(race)) return 'Race canceled'
+  if (isRacePartlyWeatherCanceled(race)) return 'Weather affected'
+
+  return null
+}
+
+function isStageWeatherCanceled(stage?: RaceStage | null): boolean {
+  return stage?.weather_cancelled === true
+}
+
+function getWeatherCancellationReasonLabel(reason?: string | null): string {
+  switch (reason) {
+    case 'snow':
+      return 'Snow'
+    case 'temperature_below_5c':
+      return 'Average temperature below 5°C'
+    default:
+      return reason ? humanizeCode(reason) : 'Unsafe weather'
+  }
+}
+
+function getStageWeatherCancellationReasonLabel(stage?: RaceStage | null): string {
+  return getWeatherCancellationReasonLabel(stage?.weather_cancellation_reason ?? null)
+}
+
+function getStageWeatherCancellationRiskReason(stage?: RaceStage | null): string | null {
+  if (!stage || !hasWeather(stage)) return null
+
+  const weather = stage.weather_snapshot ?? {}
+  const conditionText = String(
+    weather.condition ??
+      weather.condition_label ??
+      weather.label ??
+      weather.name ??
+      ''
+  )
+    .trim()
+    .toLowerCase()
+
+  const avgTemp = asNumber(
+    (weather.avg_temp_c ??
+      weather.average_temp_c ??
+      weather.temperature_c ??
+      weather.temp_c) as number | string | null | undefined
+  )
+
+  if (conditionText === 'snow' || conditionText.includes('snow')) {
+    return 'snow'
+  }
+
+  if (avgTemp !== null && avgTemp < 5) {
+    return 'temperature_below_5c'
+  }
+
+  return null
+}
+
+function getStageWeatherDecisionText(stage?: RaceStage | null): string {
+  if (isStageWeatherCanceled(stage)) {
+    return 'The stage has already been canceled by the race engine.'
+  }
+
+  if (!stage || !hasWeather(stage)) {
+    return 'Weather is not generated yet, so no cancellation decision can be made.'
+  }
+
+  return 'Cancellation is decided automatically 24 in-game hours before the stage start, using the generated stage weather. Snow or an average temperature below 5°C cancels the stage.'
+}
+
+function getWeatherCancellationNoticeText(stage?: RaceStage | null, race?: Race | null): string {
+  if (!stage) {
+    if (isRaceAllWeatherCanceled(race)) {
+      return 'The race was canceled due to weather. No race result was generated.'
+    }
+
+    return 'This race has weather cancellation metadata.'
+  }
+
+  const reason = getStageWeatherCancellationReasonLabel(stage)
+
+  if (race?.is_stage_race) {
+    return `Stage ${stage.stage_number} was canceled due to weather (${reason}). No results, points, prize money, fatigue or replay were generated for this stage. The stage race continues with the next runnable stage.`
+  }
+
+  return `This one-day race was canceled due to weather (${reason}). No results, points, prize money, fatigue or replay were generated.`
+}
+
+function WeatherCancellationNotice({
+  stage,
+  race,
+  compact = false,
+}: {
+  stage?: RaceStage | null
+  race?: Race | null
+  compact?: boolean
+}) {
+  const raceStatus = getRaceWeatherCancellationStatus(race)
+  const shouldRender =
+    isStageWeatherCanceled(stage) ||
+    raceStatus === 'all_stages_weather_cancelled' ||
+    raceStatus === 'partly_weather_cancelled'
+
+  if (!shouldRender) return null
+
+  const title = isStageWeatherCanceled(stage)
+    ? 'Stage canceled due to weather'
+    : raceStatus === 'all_stages_weather_cancelled'
+      ? 'Race canceled due to weather'
+      : 'Race partly canceled by weather'
+
+  return (
+    <div
+      className={[
+        'rounded-2xl border border-red-200 bg-red-50 text-red-900',
+        compact ? 'px-3 py-2 text-xs' : 'px-4 py-3 text-sm',
+      ].join(' ')}
+    >
+      <div className="font-semibold">{title}</div>
+      <div className={compact ? 'mt-1 leading-5' : 'mt-1 leading-6'}>
+        {getWeatherCancellationNoticeText(stage, race)}
+      </div>
+    </div>
+  )
+}
+
+function StageWeatherRiskNotice({ stage }: { stage: RaceStage }) {
+  if (isStageWeatherCanceled(stage)) return null
+
+  const riskReason = getStageWeatherCancellationRiskReason(stage)
+  if (!riskReason) return null
+
+  return (
+    <div className="mt-4 rounded-2xl border border-orange-200 bg-orange-50 px-4 py-3 text-sm text-orange-800">
+      <div className="font-semibold">
+        Weather cancellation likely: {getWeatherCancellationReasonLabel(riskReason)}
+      </div>
+      <div className="mt-1 leading-6">
+        This is only a warning before the lock point. The final cancellation decision is made automatically 24 in-game hours before stage start.
+      </div>
+    </div>
+  )
+}
+
 function getWeatherIcon(condition: string | null | undefined): string {
   switch (condition) {
     case 'clear':
@@ -1905,7 +2287,7 @@ function getRaceApplicationBadgeLabel(status?: string | null): string {
     case 'race_finished':
       return 'Race finished'
     case 'cancelled':
-      return 'Cancelled'
+      return 'Race canceled'
     default:
       return 'Applications closed'
   }
@@ -1949,7 +2331,7 @@ function getTeamRaceEntryStatusLabel(status?: string | null): string | null {
     case 'missed_startlist':
       return 'Missed startlist'
     case 'cancelled':
-      return 'Cancelled'
+      return 'Canceled'
     default:
       return null
   }
@@ -1977,7 +2359,7 @@ function getRaceDetailStatusLabel(
   if (normalizedRaceStatus === 'completed' || normalizedRaceStatus === 'archived') {
     return 'Race finished'
   }
-  if (normalizedRaceStatus === 'cancelled') return 'Cancelled'
+  if (normalizedRaceStatus === 'cancelled') return 'Canceled'
 
   return (
     getTeamRaceEntryStatusLabel(existingApplicationStatus) ??
@@ -2036,8 +2418,12 @@ function getRaceDetailStatusBadgeClass(status: string): string {
       return 'bg-green-100 text-green-700'
     case 'Race finished':
       return 'bg-gray-200 text-gray-700'
-    case 'Cancelled':
-      return 'bg-red-100 text-red-700'
+    case 'Race canceled':
+    case 'Canceled':
+      return 'bg-red-100 text-red-700 ring-1 ring-red-200'
+    case 'Partly canceled':
+    case 'Weather affected':
+      return 'bg-orange-100 text-orange-700 ring-1 ring-orange-200'
     default:
       return 'bg-slate-100 text-slate-600'
   }
@@ -2291,6 +2677,179 @@ function buildStageProfilePath(
   })
 }
 
+
+const ROAD_PROFILE_SAME_GROUP_GAP_SECONDS = 10
+const ROAD_PROFILE_CLEAR_GROUP_GAP_SECONDS = 30
+
+/*
+ * Visual-only gap scaling for the profile replay.
+ *
+ * This does not change race data, standings, timing, or backend groups.
+ * It only prevents groups with real gaps like +1:18 from being drawn
+ * almost on top of the front group.
+ */
+function getReplayRoadProfileVisualGapKm(
+  gapSeconds: number,
+  stageDistanceKm: number,
+  terrainType?: string | null,
+  slopePercent?: number | null,
+  speedKmh?: number | null
+): number {
+  const safeGapSeconds = Math.max(0, gapSeconds)
+
+  if (safeGapSeconds <= ROAD_PROFILE_SAME_GROUP_GAP_SECONDS) {
+    return 0
+  }
+
+  const terrainGapFactor = getReplayRoadProfileTerrainGapFactor({
+    terrainType,
+    slopePercent,
+    speedKmh,
+  })
+
+  const stageScaleCapKm = Math.max(
+    1.4,
+    Math.min(8, stageDistanceKm * 0.052)
+  )
+
+  const gapAfterSameGroup =
+    safeGapSeconds - ROAD_PROFILE_SAME_GROUP_GAP_SECONDS
+
+  /*
+   * Terrain-aware profile spacing:
+   * - flat: normal visible distance
+   * - climb: same time gap is visually closer
+   * - descent/fast flat: visual distance can open again
+   */
+  const timeScaledGapKm =
+    gapAfterSameGroup * 0.068 * terrainGapFactor
+
+  const clearGroupMinimumKm =
+    (safeGapSeconds >= ROAD_PROFILE_CLEAR_GROUP_GAP_SECONDS
+      ? 1.15
+      : 1.15 *
+        ((safeGapSeconds - ROAD_PROFILE_SAME_GROUP_GAP_SECONDS) /
+          (ROAD_PROFILE_CLEAR_GROUP_GAP_SECONDS -
+            ROAD_PROFILE_SAME_GROUP_GAP_SECONDS))) * terrainGapFactor
+
+  return Math.max(
+    0,
+    Math.min(
+      stageScaleCapKm,
+      Math.max(timeScaledGapKm, clearGroupMinimumKm)
+    )
+  )
+}
+
+function getReplayRoadProfileLeaderKm(
+  frames: RaceReplayFrame[]
+): number | null {
+  const roadGroupFrames = frames.filter(
+    (frame) => getReplayEntityType(frame) === 'group'
+  )
+
+  if (roadGroupFrames.length === 0) return null
+
+  const leaderKms = roadGroupFrames
+    .filter((frame) => Math.max(0, Number(frame.gap_seconds ?? 0)) <= 0.5)
+    .map((frame) => asNumber(frame.km_marker))
+    .filter((km): km is number => km !== null && Number.isFinite(km))
+
+  if (leaderKms.length > 0) {
+    return Math.max(...leaderKms)
+  }
+
+  const allKms = roadGroupFrames
+    .map((frame) => asNumber(frame.km_marker))
+    .filter((km): km is number => km !== null && Number.isFinite(km))
+
+  return allKms.length > 0 ? Math.max(...allKms) : null
+}
+
+function getReplayRoadProfileGapAdjustedKm({
+  actualKm,
+  leaderKm,
+  gapSeconds,
+  stageDistanceKm,
+  maxKm,
+  terrainType,
+  slopePercent,
+  speedKmh,
+}: {
+  actualKm: number
+  leaderKm: number | null
+  gapSeconds: number
+  stageDistanceKm: number
+  maxKm: number
+  terrainType?: string | null
+  slopePercent?: number | null
+  speedKmh?: number | null
+}): number {
+  if (leaderKm === null || !Number.isFinite(leaderKm)) {
+    return actualKm
+  }
+
+  const visualGapKm = getReplayRoadProfileVisualGapKm(
+    gapSeconds,
+    stageDistanceKm,
+    terrainType,
+    slopePercent,
+    speedKmh
+  )
+
+  if (visualGapKm <= 0) {
+    return actualKm
+  }
+
+  /*
+   * Use the leader position as the reference, so large time gaps are
+   * visibly behind the front bundle even when backend km_marker values
+   * are too close together for profile visualization.
+   */
+  return Math.max(
+    0,
+    Math.min(
+      maxKm,
+      leaderKm - visualGapKm
+    )
+  )
+}
+
+function getReplayRoadGroupMarkerKm({
+  actualKm,
+  previousRoadGroupMarkerKm,
+  maxKm,
+  backendNormalized = false,
+}: {
+  actualKm: number
+  previousRoadGroupMarkerKm: number | null
+  maxKm: number
+  backendNormalized?: boolean
+}): number {
+  if (!Number.isFinite(actualKm)) return 0
+
+  const safeKm = Math.max(0, Math.min(maxKm, actualKm))
+
+  if (previousRoadGroupMarkerKm === null) {
+    return safeKm
+  }
+
+  /*
+   * Keep consecutive road groups readable without making same-group gaps look
+   * exaggerated. Backend-normalized frames need only a tiny anti-overlap nudge.
+   */
+  const minimumVisualSeparationKm = backendNormalized ? 0.06 : 0.16
+
+  if (safeKm >= previousRoadGroupMarkerKm - minimumVisualSeparationKm) {
+    return Math.max(
+      0,
+      Math.min(maxKm, previousRoadGroupMarkerKm - minimumVisualSeparationKm)
+    )
+  }
+
+  return safeKm
+}
+
 type ReplayLeaderBadgeType = 'gc' | 'cl' | 'pts'
 
 type ReplayGroupLine = {
@@ -2313,6 +2872,319 @@ type ReplayGroupLine = {
   gapLabel?: string
   timeTrialEntityKey?: string
   usesSyntheticProfileGap?: boolean
+
+  terrainType?: string | null
+  slopePercent?: number | null
+  liveSpeedKmh?: number | null
+  riderLiveSpeedKmhValues?: Array<number | null>
+}
+
+type ReplayProvisionalGcRow = {
+  rank: number
+  gapSeconds: number
+}
+
+type ReplayProfileHoverCardData = {
+  riderId: string
+  riderName: string
+  countryCode?: string | null
+  teamName?: string | null
+  jerseyUrl?: string | null
+
+  groupShortLabel?: string | null
+  groupGapLabel?: string | null
+
+  gcGapLabel?: string | null
+  pointsValue?: number | null
+  mountainPointsValue?: number | null
+
+  liveGcGapLabel?: string | null
+  liveGcRank?: number | null
+
+  speedKmh?: number | null
+  terrainLabel?: string | null
+
+  anchorX: number
+  anchorY: number
+}
+
+function buildReplayProfileHoverCardData({
+  riderId,
+  riderName,
+  teamName,
+  tickX,
+  tickTopY,
+  group,
+  participantRider,
+  jerseyUrl,
+  riderCountryCode,
+  riderGcGapLabel,
+  riderPoints,
+  riderMountainPoints,
+  liveGcGapLabel,
+  liveGcRank,
+  speedKmh,
+  terrainLabel,
+}: {
+  riderId: string
+  riderName: string
+  teamName: string | null
+  tickX: number
+  tickTopY: number
+  group: ReplayGroupLine
+  participantRider?: RaceParticipantRider | null
+  jerseyUrl?: string | null
+  riderCountryCode?: string | null
+  riderGcGapLabel?: string | null
+  riderPoints?: number | null
+  riderMountainPoints?: number | null
+  liveGcGapLabel?: string | null
+  liveGcRank?: number | null
+  speedKmh?: number | null
+  terrainLabel?: string | null
+}): ReplayProfileHoverCardData {
+  return {
+    riderId,
+    riderName,
+    countryCode:
+      riderCountryCode ??
+      participantRider?.country_code ??
+      participantRider?.country_code_snapshot ??
+      null,
+    teamName,
+    jerseyUrl: jerseyUrl ?? null,
+    groupShortLabel: group.shortLabel ?? null,
+    groupGapLabel: group.gapLabel ?? null,
+    gcGapLabel: riderGcGapLabel ?? null,
+    pointsValue: riderPoints ?? null,
+    mountainPointsValue: riderMountainPoints ?? null,
+    liveGcGapLabel: liveGcGapLabel ?? null,
+    liveGcRank: liveGcRank ?? null,
+    speedKmh: speedKmh ?? null,
+    terrainLabel: terrainLabel ?? null,
+    anchorX: tickX,
+    anchorY: tickTopY,
+  }
+}
+
+
+
+function getReplayMetadataNumberValue(
+  metadata: Record<string, unknown> | null | undefined,
+  keys: string[]
+): number | null {
+  if (!metadata) return null
+
+  for (const key of keys) {
+    const value = metadata[key]
+    const numericValue = asNumber(value as number | string | null | undefined)
+
+    if (numericValue !== null && Number.isFinite(numericValue)) {
+      return numericValue
+    }
+  }
+
+  return null
+}
+
+function getReplayMetadataStringValue(
+  metadata: Record<string, unknown> | null | undefined,
+  keys: string[]
+): string | null {
+  if (!metadata) return null
+
+  for (const key of keys) {
+    const value = metadata[key]
+
+    if (typeof value === 'string' && value.trim()) {
+      return value.trim()
+    }
+  }
+
+  return null
+}
+
+function getReplayFrameTerrainType(frame: RaceReplayFrame): string | null {
+  return getReplayMetadataStringValue(frame.metadata, [
+    'terrain_type',
+    'terrain',
+    'segment_terrain_type',
+    'current_terrain_type',
+  ])
+}
+
+function getReplayFrameSlopePercent(frame: RaceReplayFrame): number | null {
+  return getReplayMetadataNumberValue(frame.metadata, [
+    'slope_percent',
+    'slope_pct',
+    'avg_gradient',
+    'gradient_pct',
+  ])
+}
+
+function getReplayFrameLiveSpeedKmh(frame: RaceReplayFrame): number | null {
+  const metadataSpeed = getReplayMetadataNumberValue(frame.metadata, [
+    'group_live_speed_kmh',
+    'live_speed_kmh',
+    'replay_speed_kmh',
+    'avg_speed_kmh',
+  ])
+
+  if (metadataSpeed !== null) return metadataSpeed
+
+  const frameSpeed = asNumber(frame.avg_speed_kmh)
+  return frameSpeed !== null && Number.isFinite(frameSpeed) ? frameSpeed : null
+}
+
+function getReplayFrameRiderSpeedValues(
+  frame: RaceReplayFrame
+): Array<number | null> {
+  const metadata = frame.metadata ?? {}
+  const orderedSpeedArrayKeys = [
+    'rider_live_speed_kmh_values',
+    'live_speed_kmh_values_by_rider_index',
+    'rider_speed_kmh_values',
+    'rider_avg_speed_kmh_values',
+    'speed_kmh_by_rider_index',
+  ]
+
+  for (const key of orderedSpeedArrayKeys) {
+    const values = metadata[key]
+
+    if (!Array.isArray(values)) continue
+
+    return values.map((value) => {
+      const numericValue = asNumber(
+        value as number | string | null | undefined
+      )
+
+      return numericValue !== null && Number.isFinite(numericValue)
+        ? numericValue
+        : null
+    })
+  }
+
+  return []
+}
+
+function getReplayTerrainLabel({
+  terrainType,
+  slopePercent,
+}: {
+  terrainType?: string | null
+  slopePercent?: number | null
+}): string | null {
+  const normalizedTerrain = terrainType?.trim()
+
+  if (!normalizedTerrain && slopePercent === null) return null
+
+  const terrainLabel = normalizedTerrain
+    ? humanizeCode(normalizedTerrain)
+    : 'Road'
+
+  if (slopePercent === null || !Number.isFinite(slopePercent)) {
+    return terrainLabel
+  }
+
+  return `${terrainLabel} ${slopePercent >= 0 ? '+' : ''}${slopePercent.toFixed(
+    1
+  )}%`
+}
+
+function getReplayProfileSlopePercentAtKm(
+  points: Array<{ km: number; elevation_m: number }>,
+  kmValue: number
+): number | null {
+  if (points.length < 2 || !Number.isFinite(kmValue)) return null
+
+  const sortedPoints = [...points]
+    .filter(
+      (point) =>
+        Number.isFinite(Number(point.km)) &&
+        Number.isFinite(Number(point.elevation_m))
+    )
+    .sort((left, right) => Number(left.km) - Number(right.km))
+
+  if (sortedPoints.length < 2) return null
+
+  let leftPoint = sortedPoints[0]
+  let rightPoint = sortedPoints[1]
+
+  for (let index = 0; index < sortedPoints.length - 1; index += 1) {
+    const currentLeft = sortedPoints[index]
+    const currentRight = sortedPoints[index + 1]
+
+    if (kmValue >= currentLeft.km && kmValue <= currentRight.km) {
+      leftPoint = currentLeft
+      rightPoint = currentRight
+      break
+    }
+
+    if (kmValue > currentRight.km) {
+      leftPoint = currentLeft
+      rightPoint = currentRight
+    }
+  }
+
+  const horizontalDistanceMeters =
+    Math.abs(Number(rightPoint.km) - Number(leftPoint.km)) * 1000
+
+  if (horizontalDistanceMeters <= 0) return null
+
+  const elevationDifferenceMeters =
+    Number(rightPoint.elevation_m) - Number(leftPoint.elevation_m)
+  const slopePercent =
+    (elevationDifferenceMeters / horizontalDistanceMeters) * 100
+
+  if (!Number.isFinite(slopePercent)) return null
+
+  /* Avoid displaying impossible spikes from sparse or malformed profile data. */
+  const clampedSlope = Math.max(-25, Math.min(25, slopePercent))
+
+  return Math.abs(clampedSlope) < 0.05 ? 0 : clampedSlope
+}
+
+
+function getReplayRoadProfileTerrainGapFactor({
+  terrainType,
+  slopePercent,
+  speedKmh,
+}: {
+  terrainType?: string | null
+  slopePercent?: number | null
+  speedKmh?: number | null
+}): number {
+  const normalizedTerrain = terrainType?.trim().toLowerCase() ?? ''
+  const safeSlope = Number.isFinite(Number(slopePercent))
+    ? Number(slopePercent)
+    : 0
+  const safeSpeed = Number.isFinite(Number(speedKmh))
+    ? Math.max(8, Math.min(65, Number(speedKmh)))
+    : null
+
+  /*
+   * Same time gap should look shorter on climbs because road speed is lower.
+   * On flat roads, the visual gap returns closer to the normal distance.
+   */
+  let terrainFactor = 1
+
+  if (normalizedTerrain.includes('steep_climb') || safeSlope >= 7) {
+    terrainFactor = 0.48
+  } else if (normalizedTerrain.includes('climb') || safeSlope >= 4) {
+    terrainFactor = 0.58
+  } else if (normalizedTerrain.includes('false_flat') || safeSlope >= 1.5) {
+    terrainFactor = 0.74
+  } else if (normalizedTerrain.includes('descent') || safeSlope <= -2) {
+    terrainFactor = 1.08
+  } else {
+    terrainFactor = 1
+  }
+
+  if (safeSpeed === null) return terrainFactor
+
+  const speedFactor = Math.max(0.50, Math.min(1.12, safeSpeed / 42))
+
+  return Math.max(0.42, Math.min(1.12, terrainFactor * speedFactor))
 }
 
 function getReplayBaseGroupCode(code: string): string {
@@ -2362,6 +3234,113 @@ function isPelotonGroup(
   )
 }
 
+function getReplayFrameGroupOrder(frame: RaceReplayFrame): number | null {
+  const groupOrder = Number(frame.group_order)
+
+  return Number.isFinite(groupOrder) ? groupOrder : null
+}
+
+function isReplayGroupOrderPeloton(
+  groupOrder?: number | null,
+  pelotonGroupOrder?: number | null
+): boolean {
+  return (
+    groupOrder !== null &&
+    groupOrder !== undefined &&
+    pelotonGroupOrder !== null &&
+    pelotonGroupOrder !== undefined &&
+    Number(groupOrder) === Number(pelotonGroupOrder)
+  )
+}
+
+function getInferredRoadPelotonGroupOrder(
+  frames: RaceReplayFrame[]
+): number | null {
+  const groupFrames = frames.filter(
+    (frame) => getReplayEntityType(frame) === 'group'
+  )
+
+  if (groupFrames.length === 0) return null
+
+  const explicitPelotonFrame = groupFrames.find(
+    (frame) =>
+      getReplayBaseGroupCode(frame.group_code) === 'main_peloton' &&
+      getReplayFrameGroupOrder(frame) !== null
+  )
+
+  if (explicitPelotonFrame) {
+    return getReplayFrameGroupOrder(explicitPelotonFrame)
+  }
+
+  /*
+   * Important race-display rule:
+   * If the backend has only one road group, that group is the Peloton,
+   * even if the raw group_code says front_group.
+   */
+  if (groupFrames.length === 1) {
+    return getReplayFrameGroupOrder(groupFrames[0])
+  }
+
+  /*
+   * If there is no explicit main_peloton row, infer the peloton as the
+   * largest non-dropped road group.
+   *
+   * This fixes cases like:
+   * - race start: one front_group with all riders -> P
+   * - big bunch at front + dropped riders behind -> front bunch is P
+   * - small breakaway ahead + big bunch behind -> big bunch is P
+   */
+  const orderedCandidates = groupFrames
+    .map((frame) => {
+      const groupOrder = getReplayFrameGroupOrder(frame)
+      const baseGroupCode = getReplayBaseGroupCode(frame.group_code)
+
+      if (groupOrder === null) return null
+
+      return {
+        frame,
+        groupOrder,
+        baseGroupCode,
+        size: getReplayEntitySize(frame),
+        gapSeconds: Math.max(0, Number(frame.gap_seconds ?? 0)),
+      }
+    })
+    .filter(
+      (candidate): candidate is {
+        frame: RaceReplayFrame
+        groupOrder: number
+        baseGroupCode: string
+        size: number
+        gapSeconds: number
+      } => candidate !== null
+    )
+
+  if (orderedCandidates.length === 0) return null
+
+  const nonDroppedCandidates = orderedCandidates.filter(
+    (candidate) =>
+      candidate.baseGroupCode !== 'dropped_group' &&
+      candidate.baseGroupCode !== 'outside_group'
+  )
+
+  const candidatePool =
+    nonDroppedCandidates.length > 0
+      ? nonDroppedCandidates
+      : orderedCandidates
+
+  const [bestCandidate] = [...candidatePool].sort((left, right) => {
+    const sizeDiff = right.size - left.size
+    if (sizeDiff !== 0) return sizeDiff
+
+    const gapDiff = left.gapSeconds - right.gapSeconds
+    if (gapDiff !== 0) return gapDiff
+
+    return left.groupOrder - right.groupOrder
+  })
+
+  return bestCandidate?.groupOrder ?? null
+}
+
 function getReplayGroupShortLabel(
   code: string,
   groupOrder?: number | null,
@@ -2369,7 +3348,10 @@ function getReplayGroupShortLabel(
 ): string {
   const baseGroupCode = getReplayBaseGroupCode(code)
 
-  if (baseGroupCode === 'main_peloton') {
+  if (
+    baseGroupCode === 'main_peloton' ||
+    isReplayGroupOrderPeloton(groupOrder, pelotonGroupOrder)
+  ) {
     return 'P'
   }
 
@@ -2460,6 +3442,88 @@ function getReplayGroupStroke(
     default:
       return '#334155'
   }
+}
+
+
+function getReplayRoadGroupLineStroke(
+  shortLabel?: string | null,
+  code?: string | null
+): string {
+  const normalizedLabel = shortLabel?.trim().toUpperCase() ?? ''
+
+  /*
+   * Road profile rider lines should match the visible group identity:
+   * - Peloton = blue
+   * - Groups ahead = warm / attacking colors
+   * - Groups behind = dark / dropped colors
+   */
+  if (normalizedLabel === 'P') {
+    return '#2563eb'
+  }
+
+  const frontGroupMatch = normalizedLabel.match(/^G(\d+)$/)
+  if (frontGroupMatch) {
+    const groupNumber = Math.max(1, Number(frontGroupMatch[1] ?? 1))
+    const frontGroupPalette = [
+      '#059669', // G1 green
+      '#dc2626', // G2 red
+      '#9333ea', // G3 purple
+      '#f97316', // G4 orange
+      '#e11d48', // G5 rose
+      '#ea580c', // G6 dark orange
+    ]
+
+    return frontGroupPalette[(groupNumber - 1) % frontGroupPalette.length]
+  }
+
+  const backGroupMatch = normalizedLabel.match(/^B(\d+)$/)
+  if (backGroupMatch) {
+    const groupNumber = Math.max(1, Number(backGroupMatch[1] ?? 1))
+    const backGroupPalette = [
+      '#111827', // B1 near black
+      '#1e293b', // B2 dark slate
+      '#0f172a', // B3 navy black
+      '#334155', // B4 slate
+      '#475569', // B5 gray blue
+    ]
+
+    return backGroupPalette[(groupNumber - 1) % backGroupPalette.length]
+  }
+
+  /*
+   * Fallback for old replay rows where the short label is missing.
+   */
+  switch (code ? getReplayBaseGroupCode(code) : '') {
+    case 'front_group':
+      return '#dc2626'
+
+    case 'chase_group':
+      return '#f97316'
+
+    case 'main_peloton':
+      return '#2563eb'
+
+    case 'dropped_group':
+      return '#111827'
+
+    case 'outside_group':
+      return '#334155'
+
+    default:
+      return '#64748b'
+  }
+}
+
+function getReplayRoadGroupLineOpacity(
+  shortLabel?: string | null
+): number {
+  const normalizedLabel = shortLabel?.trim().toUpperCase() ?? ''
+
+  if (normalizedLabel === 'P') return 0.66
+  if (/^G\d+$/.test(normalizedLabel)) return 0.74
+  if (/^B\d+$/.test(normalizedLabel)) return 0.72
+
+  return 0.62
 }
 
 
@@ -2609,6 +3673,35 @@ function getReplaySpecialLeaderTypes(
   }
 
   if (pointsLeaderGroupCode === groupCode) {
+    types.push('pts')
+  }
+
+  return types
+}
+
+function getReplaySpecialLeaderTypesForRiderIds(
+  riderIds: Array<string | null | undefined>,
+  gcLeaderRiderId: string | null,
+  mountainLeaderRiderId: string | null,
+  pointsLeaderRiderId: string | null
+): ReplayLeaderBadgeType[] {
+  const riderIdSet = new Set(
+    riderIds
+      .map((riderId) => riderId?.trim())
+      .filter((riderId): riderId is string => Boolean(riderId))
+  )
+
+  const types: ReplayLeaderBadgeType[] = []
+
+  if (gcLeaderRiderId && riderIdSet.has(gcLeaderRiderId)) {
+    types.push('gc')
+  }
+
+  if (mountainLeaderRiderId && riderIdSet.has(mountainLeaderRiderId)) {
+    types.push('cl')
+  }
+
+  if (pointsLeaderRiderId && riderIdSet.has(pointsLeaderRiderId)) {
     types.push('pts')
   }
 
@@ -5139,6 +6232,30 @@ function isGeneralClassificationCode(value: string): boolean {
   )
 }
 
+function isPointsClassificationCode(value: string): boolean {
+  return [
+    'points',
+    'point',
+    'sprint',
+    'sprints',
+    'points_classification',
+    'sprint_classification',
+  ].includes(value.toLowerCase())
+}
+
+function isMountainClassificationCode(value: string): boolean {
+  return [
+    'mountain',
+    'mountains',
+    'climber',
+    'climbers',
+    'kom',
+    'mountain_classification',
+    'climber_classification',
+    'mountains_classification',
+  ].includes(value.toLowerCase())
+}
+
 function WeatherCard({ stage }: { stage: RaceStage }) {
   const weather = stage.weather_snapshot ?? {}
   const condition = String(weather.condition ?? '')
@@ -5168,7 +6285,8 @@ function WeatherCard({ stage }: { stage: RaceStage }) {
 
   return (
     <div className="w-full rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-      <div className="flex items-start justify-between gap-4">
+      <WeatherCancellationNotice stage={stage} compact />
+      <div className={isStageWeatherCanceled(stage) ? 'mt-4 flex items-start justify-between gap-4' : 'flex items-start justify-between gap-4'}>
         <div>
           <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
             Stage weather
@@ -5212,6 +6330,12 @@ function WeatherCard({ stage }: { stage: RaceStage }) {
             {rainMmLabel}
           </div>
         </div>
+      </div>
+
+      <StageWeatherRiskNotice stage={stage} />
+
+      <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs leading-5 text-slate-600">
+        {getStageWeatherDecisionText(stage)}
       </div>
     </div>
   )
@@ -5380,6 +6504,7 @@ function StageReplayAccessCard({
   )
   const userParticipated = canViewRaceReplay === true || localParticipationAccess
   const stageReached = isStageStartReached(stage, currentGameDate)
+  const stageWeatherCanceled = isStageWeatherCanceled(stage)
 
   useEffect(() => {
     if (!stage?.id) {
@@ -5411,7 +6536,7 @@ function StageReplayAccessCard({
     }
   }, [stage?.id])
 
-  const canWatch = Boolean(stage && userParticipated && hasResults)
+  const canWatch = Boolean(stage && userParticipated && hasResults && !stageWeatherCanceled)
   const checkingReplayAccess = loading || replayAccessLoading
 
   return (
@@ -5421,12 +6546,20 @@ function StageReplayAccessCard({
       </div>
 
       <h3 className="mt-2 text-lg font-semibold text-slate-950">
-        {hasResults ? 'Watch replay' : 'Watch race'}
+        {stageWeatherCanceled ? 'Stage canceled' : hasResults ? 'Watch replay' : 'Watch race'}
       </h3>
 
       <p className="mt-2 text-sm leading-5 text-slate-500">
-        Replay is available only for teams that participated in {race?.name ?? 'this race'}.
+        {stageWeatherCanceled
+          ? 'This stage was canceled by the race engine. No replay was generated.'
+          : `Replay is available only for teams that participated in ${race?.name ?? 'this race'}.`}
       </p>
+
+      {stageWeatherCanceled ? (
+        <div className="mt-4">
+          <WeatherCancellationNotice stage={stage} race={race} compact />
+        </div>
+      ) : null}
 
       <button
         type="button"
@@ -5440,15 +6573,17 @@ function StageReplayAccessCard({
             : 'cursor-not-allowed bg-slate-100 text-slate-400'
         }`}
       >
-        {checkingReplayAccess
-          ? 'Checking replay…'
-          : canWatch
-            ? 'Watch replay'
-            : !userParticipated
-              ? 'Your team did not participate'
-              : !stageReached && !hasResults
-                ? 'Race not started'
-                : 'Replay not available yet'}
+        {stageWeatherCanceled
+          ? 'Canceled — no replay'
+          : checkingReplayAccess
+            ? 'Checking replay…'
+            : canWatch
+              ? 'Watch replay'
+              : !userParticipated
+                ? 'Your team did not participate'
+                : !stageReached && !hasResults
+                  ? 'Race not started'
+                  : 'Replay not available yet'}
       </button>
     </div>
   )
@@ -5466,6 +6601,17 @@ function ReplayStageProfile({
   visibleGcLeaderGroupCode,
   visibleClLeaderGroupCode,
   visiblePointsLeaderGroupCode,
+  preStageGcLeaderRiderId,
+  preStageClimberLeaderRiderId,
+  preStagePointsLeaderRiderId,
+  participantRiders = [],
+  teamJerseyUrlByTeamName = new Map<string, string>(),
+  riderCountryCodeById = new Map<string, string>(),
+  riderTeamNameById = new Map<string, string>(),
+  riderGcGapLabelById = new Map<string, string>(),
+  riderPointsById = new Map<string, number>(),
+  riderMountainPointsById = new Map<string, number>(),
+  provisionalGcByRiderId = new Map<string, ReplayProvisionalGcRow>(),
   compact = false,
 }: {
   stage: RaceStage
@@ -5478,8 +6624,94 @@ function ReplayStageProfile({
   visibleGcLeaderGroupCode: string | null
   visibleClLeaderGroupCode: string | null
   visiblePointsLeaderGroupCode: string | null
+  preStageGcLeaderRiderId: string | null
+  preStageClimberLeaderRiderId: string | null
+  preStagePointsLeaderRiderId: string | null
+  participantRiders?: RaceParticipantRider[]
+  teamJerseyUrlByTeamName?: Map<string, string>
+  riderCountryCodeById?: Map<string, string>
+  riderTeamNameById?: Map<string, string>
+  riderGcGapLabelById?: Map<string, string>
+  riderPointsById?: Map<string, number>
+  riderMountainPointsById?: Map<string, number>
+  provisionalGcByRiderId?: Map<string, ReplayProvisionalGcRow>
   compact?: boolean
 }) {
+  const [hoveredProfileRider, setHoveredProfileRider] =
+    useState<ReplayProfileHoverCardData | null>(null)
+  const [lockedProfileRider, setLockedProfileRider] =
+    useState<ReplayProfileHoverCardData | null>(null)
+
+  const profileHoverLockTimerRef =
+    useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const activeProfileHoverRider =
+    lockedProfileRider ?? hoveredProfileRider
+  const isProfileHoverLocked = lockedProfileRider !== null
+
+  function clearProfileHoverLockTimer() {
+    if (profileHoverLockTimerRef.current) {
+      clearTimeout(profileHoverLockTimerRef.current)
+      profileHoverLockTimerRef.current = null
+    }
+  }
+
+  function handleProfileRiderMouseEnter(data: ReplayProfileHoverCardData) {
+    if (lockedProfileRider) return
+
+    clearProfileHoverLockTimer()
+    setHoveredProfileRider(data)
+
+    profileHoverLockTimerRef.current = setTimeout(() => {
+      setLockedProfileRider(data)
+      profileHoverLockTimerRef.current = null
+    }, 3000)
+  }
+
+  function handleProfileRiderMouseLeave(riderId?: string | null) {
+    clearProfileHoverLockTimer()
+
+    if (lockedProfileRider) return
+
+    setHoveredProfileRider((current) =>
+      current?.riderId === riderId ? null : current
+    )
+  }
+
+  function handleCloseLockedProfileRider() {
+    clearProfileHoverLockTimer()
+    setLockedProfileRider(null)
+    setHoveredProfileRider(null)
+  }
+
+  useEffect(() => {
+    return () => {
+      clearProfileHoverLockTimer()
+    }
+  }, [])
+
+  useEffect(() => {
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape') {
+        handleCloseLockedProfileRider()
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [])
+
+  const profileParticipantRiderById = useMemo(() => {
+    const entries = participantRiders
+      .map((rider) => [rider.rider_id, rider] as const)
+      .filter(([riderId]) => Boolean(riderId?.trim()))
+
+    return new Map(entries)
+  }, [participantRiders])
+
   const points =
     profile?.profile_points?.length
       ? profile.profile_points.map((point) => ({
@@ -5595,11 +6827,22 @@ function ReplayStageProfile({
 
     return getReplayFrameGapSeconds(left) - getReplayFrameGapSeconds(right)
   })
-  const roadLeaderFrame = sortedProfileReplayFrames.find(
+  const hasRoadProfileFrames = sortedProfileReplayFrames.some(
     (frame) => getReplayEntityType(frame) === 'group'
   )
-  const roadLeaderKm = asNumber(roadLeaderFrame?.km_marker) ?? currentKm
+
   let previousRoadGroupMarkerKm: number | null = null
+
+  const roadProfileLeaderKm =
+    hasRoadProfileFrames
+      ? getReplayRoadProfileLeaderKm(sortedProfileReplayFrames)
+      : null
+
+  const roadProfileStageDistanceKm =
+    Math.max(
+      1,
+      asNumber(stage.distance_km) ?? profilePayload.maxKm
+    )
 
   const replayGroups: ReplayGroupLine[] =
     sortedProfileReplayFrames.length > 0
@@ -5608,7 +6851,7 @@ function ReplayStageProfile({
           .map((frame, index) => {
           const entityType = getReplayEntityType(frame)
           const actualKm =
-            asNumber(frame.km_marker) ?? 0
+            asNumber(frame.km_marker) ?? currentKm
           const entityCode =
             entityType === 'group'
               ? frame.group_code
@@ -5617,22 +6860,40 @@ function ReplayStageProfile({
                   `${entityType}-${frame.entity_id ?? index}`
           const gapSeconds = getReplayFrameGapSeconds(frame)
           const frameMetadata = frame.metadata ?? {}
-          const displayKm = entityType === 'group'
-            ? getRoadGroupProfileKmFromGap({
-                actualKm,
-                leaderKm: roadLeaderKm,
-                gapSeconds,
-                avgSpeedKmh: asNumber(frame.avg_speed_kmh) ?? undefined,
-                previousGroupKm: previousRoadGroupMarkerKm,
-                maxKm: profilePayload.maxKm,
-                backendNormalized:
-                  frameMetadata.frontend_canonical_road_groups_v1 === true ||
-                  frameMetadata.frontend_road_group_interpolation_v2 === true ||
-                  frameMetadata.km_marker_normalized_from_gap_v3 === true ||
-                  frameMetadata.km_marker_normalized_from_gap_v2 === true ||
-                  frameMetadata.dropped_group_km_marker_normalized_v1 === true,
-              })
-            : actualKm
+          const terrainType = getReplayFrameTerrainType(frame)
+          const slopePercent = getReplayFrameSlopePercent(frame)
+          const liveSpeedKmh = getReplayFrameLiveSpeedKmh(frame)
+          const riderLiveSpeedKmhValues =
+            getReplayFrameRiderSpeedValues(frame)
+
+          const gapAdjustedActualKm =
+            entityType === 'group'
+              ? getReplayRoadProfileGapAdjustedKm({
+                  actualKm,
+                  leaderKm: roadProfileLeaderKm,
+                  gapSeconds,
+                  stageDistanceKm: roadProfileStageDistanceKm,
+                  maxKm: profilePayload.maxKm,
+                  terrainType,
+                  slopePercent,
+                  speedKmh: liveSpeedKmh,
+                })
+              : actualKm
+
+          const displayKm =
+            entityType === 'group'
+              ? getReplayRoadGroupMarkerKm({
+                  actualKm: gapAdjustedActualKm,
+                  previousRoadGroupMarkerKm,
+                  maxKm: profilePayload.maxKm,
+                  backendNormalized:
+                    frameMetadata.frontend_canonical_road_groups_v1 === true ||
+                    frameMetadata.frontend_road_group_interpolation_v2 === true ||
+                    frameMetadata.km_marker_normalized_from_gap_v3 === true ||
+                    frameMetadata.km_marker_normalized_from_gap_v2 === true ||
+                    frameMetadata.dropped_group_km_marker_normalized_v1 === true,
+                })
+              : actualKm
 
           if (entityType === 'group') {
             previousRoadGroupMarkerKm = displayKm
@@ -5650,12 +6911,19 @@ function ReplayStageProfile({
                   )
                 : getReplayTimeTrialMarkerShortLabel(frame),
             specialLeaderTypes:
-              getReplaySpecialLeaderTypes(
-                entityCode,
-                visibleGcLeaderGroupCode,
-                visibleClLeaderGroupCode,
-                visiblePointsLeaderGroupCode
-              ),
+              entityType === 'group'
+                ? getReplaySpecialLeaderTypesForRiderIds(
+                    frame.rider_ids ?? [],
+                    preStageGcLeaderRiderId,
+                    preStageClimberLeaderRiderId,
+                    preStagePointsLeaderRiderId
+                  )
+                : getReplaySpecialLeaderTypes(
+                    entityCode,
+                    visibleGcLeaderGroupCode,
+                    visibleClLeaderGroupCode,
+                    visiblePointsLeaderGroupCode
+                  ),
             gapSeconds,
             gapLabel: getReplayFrameGapLabel(frame),
             kmOffset: 0,
@@ -5669,7 +6937,14 @@ function ReplayStageProfile({
             entityType,
             teamName: getReplayFrameTeamName(frame),
             entityState: getReplayEntityState(frame),
-            usesSyntheticProfileGap: false,
+            usesSyntheticProfileGap:
+              entityType === 'group'
+                ? Math.abs(displayKm - actualKm) > 0.01
+                : false,
+            terrainType,
+            slopePercent,
+            liveSpeedKmh,
+            riderLiveSpeedKmhValues,
             timeTrialEntityKey:
               entityType === 'rider' || entityType === 'team'
                 ? getReplayTimeTrialFrameKey(frame)
@@ -5679,25 +6954,37 @@ function ReplayStageProfile({
       : hasTimeTrialProfileFrames
         ? []
         : buildReplayGroupLines(groups).map(
-          (group) => ({
-            ...group,
-            entityType: 'group',
-            specialLeaderTypes:
-              getReplaySpecialLeaderTypes(
-                group.code,
-                visibleGcLeaderGroupCode,
-                visibleClLeaderGroupCode,
-                visiblePointsLeaderGroupCode
-              ),
-            actualKm: currentKm,
-            kmMarker: currentKm,
-            riderCount: group.size ?? 0,
-            usesSyntheticProfileGap: true,
-            gapLabel:
-              group.gapSeconds === 0
-                ? 'Leader'
-                : `+${formatGapValue(group.gapSeconds)}`,
-          })
+          (group) => {
+            const fallbackActualKm = currentKm
+            const fallbackDisplayKm = getReplayRoadProfileGapAdjustedKm({
+              actualKm: fallbackActualKm,
+              leaderKm: currentKm,
+              gapSeconds: group.gapSeconds,
+              stageDistanceKm: roadProfileStageDistanceKm,
+              maxKm: profilePayload.maxKm,
+            })
+
+            return {
+              ...group,
+              entityType: 'group',
+              specialLeaderTypes:
+                getReplaySpecialLeaderTypes(
+                  group.code,
+                  visibleGcLeaderGroupCode,
+                  visibleClLeaderGroupCode,
+                  visiblePointsLeaderGroupCode
+                ),
+              actualKm: fallbackActualKm,
+              kmMarker: Math.max(0, fallbackDisplayKm),
+              riderCount: group.size ?? 0,
+              usesSyntheticProfileGap:
+                Math.abs(fallbackDisplayKm - fallbackActualKm) > 0.01,
+              gapLabel:
+                group.gapSeconds === 0
+                  ? 'Leader'
+                  : `+${formatGapValue(group.gapSeconds)}`,
+            }
+          }
         )
 
   const timeTrialSplitKm = hasTimeTrialProfileFrames
@@ -5728,8 +7015,20 @@ function ReplayStageProfile({
         })
       : new Map<string, TimeTrialSplitBadgeInfo>()
 
+  const hasVisibleGcLeaderMarker = replayGroups.some((group) =>
+    group.specialLeaderTypes?.includes('gc')
+  )
+
+  const hasVisibleClLeaderMarker = replayGroups.some((group) =>
+    group.specialLeaderTypes?.includes('cl')
+  )
+
+  const hasVisiblePointsLeaderMarker = replayGroups.some((group) =>
+    group.specialLeaderTypes?.includes('pts')
+  )
+
   return (
-    <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
+    <div className="relative rounded-2xl border border-slate-200 bg-white">
       <svg
         viewBox={`0 0 ${width} ${height}`}
         className={`${compact ? 'h-[34vh] min-h-[230px] max-h-[320px]' : 'h-[330px]'} w-full`}
@@ -5878,25 +7177,11 @@ function ReplayStageProfile({
           const isRoadGroupMarker = entityType === 'group'
 
           /*
-           * Real replay frames already contain physical km_marker separation.
-           * Do not subtract the full leader gap again, because that double-counts
-           * the backend gap and can make markers look more wrong.
-           *
-           * Only old synthetic summary markers need visual gap spacing, because
-           * they all start from the same currentKm fallback.
+           * Road-group profile spacing is already baked into group.kmMarker.
+           * Do not subtract another visual gap here, or large gaps get
+           * double-counted and appear too far behind.
            */
-          const visualGapKm = isRoadGroupMarker && group.usesSyntheticProfileGap
-            ? getRoadGroupVisualGapKm(
-                Number(group.gapSeconds ?? 0),
-                rawGroupKm,
-                profilePayload.maxKm
-              )
-            : 0
-
-          const groupKm = Math.max(
-            0,
-            Math.min(profilePayload.maxKm, rawGroupKm - visualGapKm)
-          )
+          const groupKm = rawGroupKm
           const coord = isRoadGroupMarker
             ? getSmoothedProfileCoordinate(profilePayload.coordinates, groupKm)
             : getInterpolatedProfileCoordinate(profilePayload.coordinates, groupKm)
@@ -5946,91 +7231,109 @@ function ReplayStageProfile({
 
           if (isRoadGroupMarker) {
             /*
-             * Road-group profile marker v2:
-             * - Restore the P/G/B pill on top, because it is much easier to
-             *   read while watching the race.
-             * - Make the vertical stem visually meaningful: about 400 m on
-             *   low terrain, automatically shortened on climbs so it never
-             *   crosses the top altitude line.
-             * - Keep a small road dot anchored to the actual profile line.
+             * Road profile rider-line marker v3:
+             * - No road group pill on the profile itself.
+             * - No G/P/B group dot on the road line.
+             * - Every rider is shown as a very slim vertical line colored by group identity.
+             * - Riders in the same group are kept visually close together, so a
+             *   peloton/breakaway does not look stretched across many kilometers.
+             *
+             * Group identity remains available in title/tooltip and Stage Standing,
+             * but the profile visualization is rider-based.
              */
-            const elevationSpan = Math.max(
-              profilePayload.maxElevation - profilePayload.minElevation,
-              1
-            )
-            const innerHeight = height - padding.top - padding.bottom
-            const pixelsPerMeter = innerHeight / elevationSpan
-            const preferredStemPixels = Math.max(
-              compact ? 74 : 92,
-              400 * pixelsPerMeter
-            )
-            const roadPillHeight = 18
-            const roadPillWidth = Math.max(
-              28,
-              Math.min(42, 18 + displayedLabel.length * 7)
-            )
-            const minimumPillY = 4
-            const maximumPillY = Math.max(
-              minimumPillY,
-              coord.y - roadPillHeight - 8
-            )
-            const basePillY = Math.max(
-              minimumPillY,
-              coord.y - preferredStemPixels - roadPillHeight
-            )
-            /*
-             * Stagger road labels vertically by road order so nearby G/P/B
-             * pills remain readable. This does not change the profile curve or
-             * the actual road-dot coordinate; it only changes the pill lane.
-             */
-            const roadPillLane = Math.min(7, Math.max(0, index))
-            const roadLaneSpacing = compact ? 10 : 12
-            const roadLaneStackLimit = compact ? 48 : 64
-            const roadPillTopY = Math.max(
-              minimumPillY,
-              Math.min(maximumPillY, basePillY)
-            )
-            /*
-             * Keep road-group labels in a tight readable band. The previous
-             * lane stack could push G/P/B pills far down toward the road line
-             * when many groups existed, which looked strange on flat sections.
-             * This cap keeps the lowest pill close to the highest pill while
-             * still allowing a small vertical stagger to avoid overlap.
-             */
-            const roadPillLowestAllowedY = Math.max(
-              minimumPillY,
-              Math.min(
-                maximumPillY,
-                roadPillTopY + roadLaneStackLimit,
-                coord.y - roadPillHeight - 8
-              )
-            )
-            const roadPillY = Math.min(
-              roadPillLowestAllowedY,
-              Math.max(
-                minimumPillY,
-                roadPillTopY + roadPillLane * roadLaneSpacing
-              )
-            )
-            const roadStemTopY = roadPillY + roadPillHeight
-            const roadMarkerRadius = coord.y < height * 0.48 ? 4.2 : 5.2
             const roadRiderIds = group.riderIds ?? []
             const roadRiderNames = group.riderNames ?? []
             const roadTeamNames = group.teamNames ?? []
 
-            const roadRiderTickBandWidth =
-              roadRiderIds.length >= 90
-                ? 44
-                : roadRiderIds.length >= 50
-                  ? 38
-                  : roadRiderIds.length >= 25
-                    ? 32
-                    : 26
+            const roadRiderSlotCount = Math.max(
+              roadRiderIds.length,
+              roadRiderNames.length,
+              roadTeamNames.length,
+              group.riderCount ?? 0
+            )
 
-            const roadRiderTickHeight = compact ? 5 : 6
-            const roadRiderTickTopY = Math.min(
-              height - padding.bottom - roadRiderTickHeight,
-              coord.y + 8
+            if (roadRiderSlotCount <= 0) return null
+
+            /*
+             * Keep same-group riders very tight.
+             *
+             * Previous version used up to ~44px, which made one group look too long.
+             * This is intentionally around 3x tighter.
+             */
+            const roadRiderTickBandWidth =
+              roadRiderSlotCount >= 90
+                ? 14
+                : roadRiderSlotCount >= 50
+                  ? 13
+                  : roadRiderSlotCount >= 25
+                    ? 12
+                    : roadRiderSlotCount >= 10
+                      ? 10
+                      : 8
+
+            /*
+             * Rider-line height follows the profile altitude scale.
+             *
+             * On flat / low-altitude parts, the line reaches about halfway from the
+             * road profile line toward the top altitude grid, so riders are clearly
+             * visible.
+             *
+             * On climbs / high-altitude parts, the available vertical headroom is
+             * smaller, so the line automatically becomes shorter and never crosses
+             * above the top altitude area.
+             */
+            const roadRiderLineBottomY = Math.max(
+              padding.top + 6,
+              Math.min(height - padding.bottom - 2, coord.y)
+            )
+
+            const roadRiderAvailableHeadroomPx = Math.max(
+              0,
+              roadRiderLineBottomY - (padding.top + 6)
+            )
+
+            const roadRiderPreferredTickHeight = roadRiderAvailableHeadroomPx * 0.52
+
+            const roadRiderMinimumTickHeight = compact ? 24 : 32
+
+            const roadRiderTickHeight = Math.max(
+              8,
+              Math.min(
+                roadRiderAvailableHeadroomPx,
+                Math.max(roadRiderMinimumTickHeight, roadRiderPreferredTickHeight)
+              )
+            )
+
+            const roadRiderTickTopY = Math.max(
+              padding.top + 6,
+              roadRiderLineBottomY - roadRiderTickHeight
+            )
+
+            const roadRiderStroke = getReplayRoadGroupLineStroke(
+              group.shortLabel,
+              group.code
+            )
+
+            const roadRiderStrokeOpacity = getReplayRoadGroupLineOpacity(
+              group.shortLabel
+            )
+
+            const roadRiderStrokeWidth =
+              roadRiderSlotCount >= 70
+                ? 0.55
+                : roadRiderSlotCount >= 35
+                  ? 0.65
+                  : 0.8
+
+            const roadLeaderDotTypes = specialLeaderTypes
+
+            /*
+             * Keep jersey markers clearly above the rider bundle,
+             * while still connecting them back to the rider position.
+             */
+            const roadLeaderDotY = Math.max(
+              padding.top + 16,
+              roadRiderTickTopY - 26
             )
 
             return (
@@ -6038,15 +7341,85 @@ function ReplayStageProfile({
                 <title>
                   {[
                     group.label,
-                    `${group.riderCount ?? 0} riders`,
+                    `${group.riderCount ?? roadRiderSlotCount} riders`,
                     group.gapLabel,
                   ]
                     .filter(Boolean)
                     .join(' · ')}
                 </title>
 
-                {roadRiderIds.map((riderId, riderIndex) => {
-                  const riderCount = Math.max(roadRiderIds.length, 1)
+                {roadLeaderDotTypes.length > 0 ? (
+                  <g>
+                    {roadLeaderDotTypes.map((type, leaderIndex) => {
+                      const dotSpacing = 11
+                      const dotX =
+                        coord.x +
+                        (leaderIndex - (roadLeaderDotTypes.length - 1) / 2) *
+                          dotSpacing
+
+                      const dotFill =
+                        type === 'gc'
+                          ? '#facc15'
+                          : type === 'cl'
+                            ? 'url(#komLeaderPattern)'
+                            : '#10b981'
+
+                      const dotStroke =
+                        type === 'gc'
+                          ? '#ca8a04'
+                          : type === 'cl'
+                            ? '#dc2626'
+                            : '#059669'
+
+                      const dotLabel =
+                        type === 'gc'
+                          ? 'GC'
+                          : type === 'cl'
+                            ? 'CL'
+                            : 'PTS'
+
+                      return (
+                        <g key={`${group.code}-leader-dot-${type}`}>
+                          <title>{getReplaySpecialLeaderTitle(type)}</title>
+
+                          <line
+                            x1={dotX}
+                            y1={roadLeaderDotY + 7}
+                            x2={dotX}
+                            y2={roadRiderTickTopY + 2}
+                            stroke="#64748b"
+                            strokeWidth={0.75}
+                            opacity={0.55}
+                            strokeDasharray="2 2"
+                          />
+
+                          <circle
+                            cx={dotX}
+                            cy={roadLeaderDotY}
+                            r={5.8}
+                            fill={dotFill}
+                            stroke={dotStroke}
+                            strokeWidth={1.3}
+                          />
+
+                          <text
+                            x={dotX}
+                            y={roadLeaderDotY + 3.2}
+                            textAnchor="middle"
+                            fontSize={type === 'pts' ? '4.6' : '5.2'}
+                            fontWeight="900"
+                            fill={type === 'gc' ? '#111827' : type === 'cl' ? '#b91c1c' : '#ffffff'}
+                          >
+                            {dotLabel}
+                          </text>
+                        </g>
+                      )
+                    })}
+                  </g>
+                ) : null}
+
+                {Array.from({ length: roadRiderSlotCount }).map((_, riderIndex) => {
+                  const riderCount = Math.max(roadRiderSlotCount, 1)
                   const centeredIndex =
                     riderCount <= 1
                       ? 0
@@ -6055,19 +7428,96 @@ function ReplayStageProfile({
                   const tickX =
                     coord.x + centeredIndex * roadRiderTickBandWidth
 
-                  const tickY =
-                    roadRiderTickTopY + ((riderIndex % 3) - 1) * 1.8
+                  /*
+                   * Keep every rider line anchored to the actual road/profile altitude.
+                   * Only the top is slightly staggered, so the bundle stays readable while
+                   * the bottom still represents the real group position.
+                   */
+                  const tickTopY = Math.max(
+                    padding.top + 6,
+                    Math.min(
+                      roadRiderLineBottomY - 4,
+                      roadRiderTickTopY + ((riderIndex % 5) - 2) * 1.1
+                    )
+                  )
 
+                  const riderId = roadRiderIds[riderIndex]?.trim() ?? ''
                   const riderName =
                     roadRiderNames[riderIndex]?.trim() ||
                     `Rider ${riderIndex + 1}`
 
                   const teamName =
-                    roadTeamNames[riderIndex]?.trim() || null
+                    (riderId ? riderTeamNameById.get(riderId) : null) ||
+                    roadTeamNames[riderIndex]?.trim() ||
+                    null
+
+                  const riderSpeedKmh =
+                    group.riderLiveSpeedKmhValues?.[riderIndex] ??
+                    group.liveSpeedKmh ??
+                    null
+
+                  const riderProfileKm =
+                    group.actualKm ?? group.kmMarker ?? currentKm
+                  const riderSlopePercent =
+                    group.slopePercent ??
+                    getReplayProfileSlopePercentAtKm(
+                      points,
+                      riderProfileKm
+                    ) ??
+                    0
+                  const riderTerrainLabel = getReplayTerrainLabel({
+                    terrainType:
+                      group.terrainType ?? stage.terrain_type ?? 'road',
+                    slopePercent: riderSlopePercent,
+                  })
 
                   return (
                     <g
-                      key={`${group.code}-rider-tick-${riderId || riderIndex}`}
+                      key={`${group.code}-rider-line-${riderId || riderIndex}`}
+                      className={riderId ? 'cursor-pointer' : undefined}
+                      onMouseEnter={() => {
+                        if (!riderId) return
+
+                        const participantRider =
+                          profileParticipantRiderById.get(riderId) ?? null
+                        const jerseyUrl =
+                          teamJerseyUrlByTeamName.get(teamName ?? '') ?? null
+                        const provisionalGc =
+                          provisionalGcByRiderId.get(riderId) ?? null
+
+                        const hoverCardData = buildReplayProfileHoverCardData({
+                          riderId,
+                          riderName,
+                          teamName,
+                          tickX,
+                          tickTopY,
+                          group,
+                          participantRider,
+                          jerseyUrl,
+                          riderCountryCode:
+                            riderCountryCodeById.get(riderId) ?? null,
+                          riderGcGapLabel:
+                            riderGcGapLabelById.get(riderId) ?? null,
+                          riderPoints:
+                            riderPointsById.get(riderId) ?? null,
+                          riderMountainPoints:
+                            riderMountainPointsById.get(riderId) ?? null,
+                          liveGcGapLabel:
+                            provisionalGc !== null
+                              ? provisionalGc.gapSeconds <= 0
+                                ? 'Leader'
+                                : `+${formatGapValue(provisionalGc.gapSeconds)}`
+                              : null,
+                          liveGcRank: provisionalGc?.rank ?? null,
+                          speedKmh: riderSpeedKmh,
+                          terrainLabel: riderTerrainLabel,
+                        })
+
+                        handleProfileRiderMouseEnter(hoverCardData)
+                      }}
+                      onMouseLeave={() => {
+                        handleProfileRiderMouseLeave(riderId)
+                      }}
                     >
                       <title>
                         {[
@@ -6075,6 +7525,10 @@ function ReplayStageProfile({
                           teamName,
                           group.shortLabel,
                           group.gapLabel,
+                          riderSpeedKmh !== null
+                            ? `${riderSpeedKmh.toFixed(1)} km/h`
+                            : null,
+                          riderTerrainLabel,
                         ]
                           .filter(Boolean)
                           .join(' · ')}
@@ -6082,57 +7536,29 @@ function ReplayStageProfile({
 
                       <line
                         x1={tickX}
-                        y1={tickY}
+                        y1={tickTopY}
                         x2={tickX}
-                        y2={tickY + roadRiderTickHeight}
-                        stroke={markerStroke}
-                        strokeWidth={roadRiderIds.length >= 70 ? 0.9 : 1.15}
-                        opacity={0.48}
+                        y2={roadRiderLineBottomY}
+                        stroke="transparent"
+                        strokeWidth={8}
+                        strokeLinecap="round"
+                        pointerEvents="stroke"
+                      />
+
+                      <line
+                        x1={tickX}
+                        y1={tickTopY}
+                        x2={tickX}
+                        y2={roadRiderLineBottomY}
+                        stroke={roadRiderStroke}
+                        strokeWidth={roadRiderStrokeWidth}
+                        opacity={roadRiderStrokeOpacity}
+                        strokeLinecap="round"
+                        pointerEvents="none"
                       />
                     </g>
                   )
                 })}
-
-                <line
-                  x1={coord.x}
-                  y1={roadStemTopY}
-                  x2={coord.x}
-                  y2={coord.y}
-                  stroke={markerStroke}
-                  strokeWidth="2"
-                  opacity={0.86}
-                />
-
-                <rect
-                  x={coord.x - roadPillWidth / 2}
-                  y={roadPillY}
-                  width={roadPillWidth}
-                  height={roadPillHeight}
-                  rx={9}
-                  fill={markerFill}
-                  stroke={markerStroke}
-                  strokeWidth={0}
-                />
-
-                <text
-                  x={coord.x}
-                  y={roadPillY + roadPillHeight / 2 + 3.5}
-                  textAnchor="middle"
-                  fontSize="10"
-                  fontWeight="800"
-                  fill={markerTextColor}
-                >
-                  {displayedLabel}
-                </text>
-
-                <circle
-                  cx={coord.x}
-                  cy={coord.y}
-                  r={roadMarkerRadius}
-                  fill={markerFill}
-                  stroke="#ffffff"
-                  strokeWidth={1.25}
-                />
               </g>
             )
           }
@@ -6328,11 +7754,139 @@ function ReplayStageProfile({
         </text>
       </svg>
 
-      {visibleGcLeaderGroupCode ||
-      visibleClLeaderGroupCode ||
-      visiblePointsLeaderGroupCode ? (
+      {activeProfileHoverRider ? (
+        <div
+          className={`absolute z-20 w-[340px] rounded-xl border border-slate-200 bg-white/95 shadow-xl backdrop-blur-sm ${
+            isProfileHoverLocked ? 'pointer-events-auto' : 'pointer-events-none'
+          }`}
+          style={{
+            left:
+              activeProfileHoverRider.anchorX < width * 0.55
+                ? Math.min(
+                    Math.max(activeProfileHoverRider.anchorX + 16, 12),
+                    width - 352
+                  )
+                : Math.max(
+                    12,
+                    activeProfileHoverRider.anchorX - 356
+                  ),
+            /* Keep the card high above the road profile and rider lines. */
+            top: 12,
+          }}
+        >
+          <div className="grid grid-cols-[1fr_88px] gap-3 p-3">
+            <div className="min-w-0">
+              <div className="flex min-w-0 items-center justify-between gap-2">
+                <div className="flex min-w-0 items-center gap-2">
+                  <SmallCountryFlag
+                    code={activeProfileHoverRider.countryCode}
+                  />
+                  <div className="truncate text-sm font-semibold text-slate-900">
+                    {activeProfileHoverRider.riderName}
+                  </div>
+                </div>
+
+                {isProfileHoverLocked ? (
+                  <button
+                    type="button"
+                    onClick={handleCloseLockedProfileRider}
+                    className="pointer-events-auto shrink-0 rounded-full border border-slate-200 bg-white px-2 py-0.5 text-[10px] font-semibold text-slate-500 hover:bg-slate-50"
+                  >
+                    Close
+                  </button>
+                ) : null}
+              </div>
+
+              <div className="mt-2 truncate text-xs text-slate-500">
+                {activeProfileHoverRider.teamName || 'Unknown team'}
+              </div>
+
+              <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                {activeProfileHoverRider.speedKmh != null ? (
+                  <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">
+                    {activeProfileHoverRider.speedKmh.toFixed(1)} km/h
+                  </span>
+                ) : null}
+
+                {activeProfileHoverRider.terrainLabel ? (
+                  <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600">
+                    {activeProfileHoverRider.terrainLabel}
+                  </span>
+                ) : null}
+              </div>
+            </div>
+
+            <div className="flex items-center justify-center">
+              {activeProfileHoverRider.jerseyUrl ? (
+                <img
+                  src={activeProfileHoverRider.jerseyUrl}
+                  alt={`${activeProfileHoverRider.teamName || 'Team'} jersey`}
+                  className="h-16 w-16 object-contain"
+                  loading="lazy"
+                  referrerPolicy="no-referrer"
+                />
+              ) : (
+                <div className="flex h-16 w-16 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-[10px] text-slate-400">
+                  No jersey
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div
+            className={`grid gap-2 border-t border-slate-200 px-3 py-3 text-xs ${
+              Number(stage.stage_number) > 1
+                ? 'grid-cols-4'
+                : 'grid-cols-1'
+            }`}
+          >
+            {Number(stage.stage_number) > 1 ? (
+              <div>
+                <div className="text-slate-400">GC gap</div>
+                <div className="mt-1 font-semibold text-slate-800">
+                  {activeProfileHoverRider.gcGapLabel || '—'}
+                </div>
+              </div>
+            ) : null}
+
+            <div>
+              <div className="text-slate-400">Live GC</div>
+              <div className="mt-1 font-semibold text-slate-800">
+                {activeProfileHoverRider.liveGcRank != null
+                  ? `#${activeProfileHoverRider.liveGcRank}${
+                      activeProfileHoverRider.liveGcGapLabel
+                        ? ` · ${activeProfileHoverRider.liveGcGapLabel}`
+                        : ''
+                    }`
+                  : '—'}
+              </div>
+            </div>
+
+            {Number(stage.stage_number) > 1 ? (
+              <>
+                <div>
+                  <div className="text-slate-400">Sprint pts</div>
+                  <div className="mt-1 font-semibold text-slate-800">
+                    {activeProfileHoverRider.pointsValue ?? '—'}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-slate-400">KOM pts</div>
+                  <div className="mt-1 font-semibold text-slate-800">
+                    {activeProfileHoverRider.mountainPointsValue ?? '—'}
+                  </div>
+                </div>
+              </>
+            ) : null}
+          </div>
+        </div>
+      ) : null}
+
+      {hasVisibleGcLeaderMarker ||
+      hasVisibleClLeaderMarker ||
+      hasVisiblePointsLeaderMarker ? (
         <div className="flex flex-wrap items-center gap-4 border-t border-slate-100 px-4 py-2 text-[11px] text-slate-600">
-          {visibleGcLeaderGroupCode && (
+          {hasVisibleGcLeaderMarker && (
             <div className="flex items-center gap-2">
               {renderSpecialLeaderBadge('gc')}
               <span>
@@ -6341,7 +7895,7 @@ function ReplayStageProfile({
             </div>
           )}
 
-          {visibleClLeaderGroupCode && (
+          {hasVisibleClLeaderMarker && (
             <div className="flex items-center gap-2">
               {renderSpecialLeaderBadge('cl')}
               <span>
@@ -6350,7 +7904,7 @@ function ReplayStageProfile({
             </div>
           )}
 
-          {visiblePointsLeaderGroupCode && (
+          {hasVisiblePointsLeaderMarker && (
             <div className="flex items-center gap-2">
               {renderSpecialLeaderBadge('pts')}
               <span>
@@ -6615,7 +8169,7 @@ function RaceReplayModal({
   ] = useState<RacePreStageLeaderSnapshot | null>(
     null
   )
-  const [previousGcClassifications, setPreviousGcClassifications] =
+  const [previousClassifications, setPreviousClassifications] =
     useState<RaceClassificationRow[]>([])
 
   const isReplayPageMode = displayMode === 'page'
@@ -6634,15 +8188,18 @@ function RaceReplayModal({
   const replayPlaybackDurationMs = getReplayPlaybackDurationMs(replayFrames)
   const replayInitialProgress = getReplayInitialProgress(replayFrames)
 
+  const participantRiders = useMemo(
+    () => participantTeams.flatMap((team) => team.riders),
+    [participantTeams]
+  )
+
   const participantRiderById = useMemo(() => {
-    const entries = participantTeams.flatMap((team) =>
-      team.riders.map(
-        (rider) => [rider.rider_id, rider] as const
-      )
+    const entries = participantRiders.map(
+      (rider) => [rider.rider_id, rider] as const
     )
 
     return new Map(entries)
-  }, [participantTeams])
+  }, [participantRiders])
 
 
   const currentTeamNameByRiderId = useMemo(() => {
@@ -6672,6 +8229,28 @@ function RaceReplayModal({
         .map((id) => id?.trim())
         .filter((id): id is string => Boolean(id))
         .map((id) => [id, currentTeamName] as const)
+    })
+
+    return new Map(entries)
+  }, [participantTeams])
+
+  const teamJerseyUrlByTeamName = useMemo(() => {
+    const entries: Array<[string, string]> = []
+
+    participantTeams.forEach((team) => {
+      const jerseyUrl = team.jersey_url_snapshot?.trim()
+      if (!jerseyUrl) return
+
+      ;[
+        getParticipantTeamName(team),
+        team.club_name,
+        team.team_name_snapshot,
+      ].forEach((teamName) => {
+        const normalizedTeamName = teamName?.trim()
+        if (normalizedTeamName) {
+          entries.push([normalizedTeamName, jerseyUrl])
+        }
+      })
     })
 
     return new Map(entries)
@@ -6960,7 +8539,7 @@ function RaceReplayModal({
       setReplayProfile(null)
       setReplayFrames([])
       setPreStageLeaderSnapshot(null)
-      setPreviousGcClassifications([])
+      setPreviousClassifications([])
       setPlaying(false)
       return
     }
@@ -7025,7 +8604,7 @@ function RaceReplayModal({
           ? preStageLeaderData[0]
           : preStageLeaderData
 
-      let previousGcRows: RaceClassificationRow[] = []
+      let previousClassificationRows: RaceClassificationRow[] = []
 
       if (Number(stage.stage_number) > 1) {
         const { data: previousStageRows } = await supabase
@@ -7054,13 +8633,14 @@ function RaceReplayModal({
               )
             )
 
-          previousGcRows =
+          /*
+           * Keep every rider classification from the previous stage.
+           * The hover card then reads pre-stage GC, sprint and KOM values
+           * from the same database snapshot without estimating them.
+           */
+          previousClassificationRows =
             previousPayload.classifications.filter(
-              (row) =>
-                row.entity_type === 'rider' &&
-                isGeneralClassificationCode(
-                  String(row.classification_type)
-                )
+              (row) => row.entity_type === 'rider'
             )
         }
       }
@@ -7115,7 +8695,7 @@ function RaceReplayModal({
             )
           : null
       )
-      setPreviousGcClassifications(previousGcRows)
+      setPreviousClassifications(previousClassificationRows)
     }
 
     loadReplayData()
@@ -7254,12 +8834,7 @@ function RaceReplayModal({
   )
 
   const currentPelotonGroupOrder =
-    currentGroupFrames.find(
-      (frame) =>
-        getReplayBaseGroupCode(
-          frame.group_code
-        ) === 'main_peloton'
-    )?.group_order ?? null
+    getInferredRoadPelotonGroupOrder(currentGroupFrames)
 
   const currentLeaderFramesForKm = isTimeTrialReplay
     ? currentFrames
@@ -7765,8 +9340,14 @@ function RaceReplayModal({
   >()
 
   if (Number(stage.stage_number) > 1) {
-    previousGcClassifications.forEach((row) => {
-      if (!row.rider_id) return
+    previousClassifications.forEach((row) => {
+      if (
+        row.entity_type !== 'rider' ||
+        !row.rider_id ||
+        !isGeneralClassificationCode(String(row.classification_type))
+      ) {
+        return
+      }
 
       previousGcByRiderId.set(row.rider_id, {
         rank: row.rank,
@@ -7776,6 +9357,11 @@ function RaceReplayModal({
       })
     })
   }
+
+  /*
+   * Pre-stage GC must come only from the latest completed stage before the
+   * selected replay. Stage 1 intentionally has no pre-stage GC values.
+   */
 
   /*
    * Only bonuses from gates already reached in the live replay
@@ -8045,6 +9631,13 @@ function RaceReplayModal({
               frame.rider_names?.[index]?.trim() ||
               'Rider'
 
+            const frameGroupOrder = getReplayFrameGroupOrder(frame)
+            const shouldDisplayAsPeloton =
+              isReplayGroupOrderPeloton(
+                frameGroupOrder,
+                currentPelotonGroupOrder
+              )
+
             return {
               rider_id: riderId,
               rider_name: fullName,
@@ -8053,8 +9646,12 @@ function RaceReplayModal({
                 participantRider?.team_name_snapshot?.trim() ||
                 frame.team_names?.[index]?.trim() ||
                 '',
-              group_code: frame.group_code,
-              group_label: frame.group_label,
+              group_code: shouldDisplayAsPeloton
+                ? 'main_peloton'
+                : frame.group_code,
+              group_label: shouldDisplayAsPeloton
+                ? 'Peloton'
+                : frame.group_label,
               group_order: frame.group_order,
               gap_seconds: Math.max(
                 Number(frame.gap_seconds ?? 0),
@@ -8467,6 +10064,70 @@ function RaceReplayModal({
           })
       : alphabeticalStandingRows
 
+  const riderGcGapLabelById = new Map<string, string>()
+
+  previousGcByRiderId.forEach((row, riderId) => {
+    const gapSeconds = row.gapSeconds
+
+    riderGcGapLabelById.set(
+      riderId,
+      gapSeconds !== null &&
+        gapSeconds !== undefined &&
+        Number.isFinite(Number(gapSeconds))
+        ? Number(gapSeconds) <= 0
+          ? 'Leader'
+          : `+${formatGapValue(gapSeconds)}`
+        : '—'
+    )
+  })
+
+  const riderPointsById = new Map<string, number>()
+  const riderMountainPointsById = new Map<string, number>()
+
+  function applyDatabasePointClassifications(
+    rows: RaceClassificationRow[],
+    preserveExisting: boolean
+  ) {
+    rows.forEach((row) => {
+      if (
+        row.entity_type !== 'rider' ||
+        !row.rider_id ||
+        row.points === null ||
+        row.points === undefined
+      ) {
+        return
+      }
+
+      const pointsValue = Number(row.points)
+      if (!Number.isFinite(pointsValue)) return
+
+      const classificationType = String(row.classification_type)
+
+      if (
+        isPointsClassificationCode(classificationType) &&
+        (!preserveExisting || !riderPointsById.has(row.rider_id))
+      ) {
+        riderPointsById.set(row.rider_id, pointsValue)
+      }
+
+      if (
+        isMountainClassificationCode(classificationType) &&
+        (!preserveExisting || !riderMountainPointsById.has(row.rider_id))
+      ) {
+        riderMountainPointsById.set(row.rider_id, pointsValue)
+      }
+    })
+  }
+
+  /*
+   * Sprint and KOM totals are pre-stage values. They must come only from the
+   * latest completed stage before the selected replay. Stage 1 therefore
+   * remains empty instead of leaking the selected stage's final results.
+   */
+  if (Number(stage.stage_number) > 1) {
+    applyDatabasePointClassifications(previousClassifications, false)
+  }
+
   const viewerRiderIds = new Set(
     participantTeams
       .filter(
@@ -8711,6 +10372,23 @@ function RaceReplayModal({
               visiblePointsLeaderGroupCode={
                 visiblePointsLeaderGroupCode
               }
+              preStageGcLeaderRiderId={
+                preStageGcLeaderRiderId
+              }
+              preStageClimberLeaderRiderId={
+                preStageClimberLeaderRiderId
+              }
+              preStagePointsLeaderRiderId={
+                preStagePointsLeaderRiderId
+              }
+              participantRiders={participantRiders}
+              teamJerseyUrlByTeamName={teamJerseyUrlByTeamName}
+              riderCountryCodeById={riderCountryCodeById}
+              riderTeamNameById={currentTeamNameByRiderId}
+              riderGcGapLabelById={riderGcGapLabelById}
+              riderPointsById={riderPointsById}
+              riderMountainPointsById={riderMountainPointsById}
+              provisionalGcByRiderId={provisionalGcByRiderId}
               compact={isReplayPageMode}
             />
           </div>
@@ -8843,7 +10521,10 @@ function RaceReplayModal({
                                 : row.timeTrialState === 'waiting'
                                   ? '#94a3b8'
                                   : '#f97316'
-                              : getReplayGroupStroke(row.group_code)
+                              : getReplayRoadGroupLineStroke(
+                                  standingBadgeLabel,
+                                  row.group_code
+                                )
 
                           const splitLabel =
                             isTimeTrialReplay &&
@@ -11149,6 +12830,12 @@ const TEAM_LOGO_NESTED_FIELD_KEYS = [
 ]
 
 const TEAM_JERSEY_FIELD_KEYS = [
+  'custom_jersey_url',
+  'customJerseyUrl',
+  'custom_jersey_image_url',
+  'customJerseyImageUrl',
+  'jersey_image_url',
+  'jerseyImageUrl',
   'jersey_url',
   'jerseyUrl',
   'jersey_url_snapshot',
@@ -11160,6 +12847,16 @@ const TEAM_JERSEY_FIELD_KEYS = [
   'teamJerseyUrl',
   'ai_kit_preview_url',
   'aiKitPreviewUrl',
+  'image_src',
+  'imageSrc',
+  'image_data_url',
+  'imageDataUrl',
+  'generated_image_url',
+  'generatedImageUrl',
+  'render_url',
+  'renderUrl',
+  'file_url',
+  'fileUrl',
   'preview_url',
   'previewUrl',
   'image_url',
@@ -11170,11 +12867,30 @@ const TEAM_JERSEY_FIELD_KEYS = [
   'path',
 ]
 
+const TEAM_JERSEY_NESTED_RECORD_KEYS = [
+  'config',
+  'kit_config',
+  'kitConfig',
+  'jersey_config',
+  'jerseyConfig',
+  'kit',
+  'jersey',
+  'metadata',
+]
+
 const TEAM_LOGO_STORAGE_BUCKETS = [
   'team-logos',
   'team_logos',
   'club-logos',
   'club_logos',
+  'team-kits',
+  'team_kits',
+  'club-kits',
+  'club_kits',
+  'team-jerseys',
+  'team_jerseys',
+  'jerseys',
+  'kits',
   'logos',
   'images',
   'public',
@@ -11250,15 +12966,95 @@ function getTeamLogoUrlFromRecord(record: Record<string, unknown>): string | nul
   return null
 }
 
-function getTeamJerseyUrlFromRecord(record: Record<string, unknown>): string | null {
-  for (const key of TEAM_JERSEY_FIELD_KEYS) {
-    const rawJerseyValue = getLogoStringFromUnknown(record[key])
-    const jerseyUrl = normalizeTeamLogoUrl(rawJerseyValue)
+function normalizeTeamJerseyColor(
+  value: unknown,
+  fallback: string
+): string {
+  return typeof value === 'string' && /^#[0-9a-f]{6}$/i.test(value.trim())
+    ? value.trim()
+    : fallback
+}
 
-    if (jerseyUrl) return jerseyUrl
+function getGenericTeamJerseyDataUrl(
+  record: Record<string, unknown>,
+  nestedRecords: Record<string, unknown>[]
+): string | null {
+  const configRecord = nestedRecords.find((nestedRecord) => {
+    const mode = getStringField(nestedRecord, ['mode', 'type', 'kind'])
+    return mode?.trim().toLowerCase() === 'generic'
+  })
+
+  if (!configRecord) return null
+
+  const primaryColor = normalizeTeamJerseyColor(
+    configRecord.primary_color ??
+      configRecord.primaryColor ??
+      record.primary_color ??
+      record.primaryColor,
+    '#2563eb'
+  )
+  const secondaryColor = normalizeTeamJerseyColor(
+    configRecord.secondary_color ??
+      configRecord.secondaryColor ??
+      record.secondary_color ??
+      record.secondaryColor,
+    '#f8fafc'
+  )
+  const accentColor = normalizeTeamJerseyColor(
+    configRecord.accent_color ??
+      configRecord.accentColor ??
+      record.accent_color ??
+      record.accentColor,
+    secondaryColor
+  )
+
+  const svg = `
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+      <defs>
+        <linearGradient id="body" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="${primaryColor}"/>
+          <stop offset="1" stop-color="${accentColor}"/>
+        </linearGradient>
+        <linearGradient id="shine" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stop-color="#ffffff" stop-opacity="0.05"/>
+          <stop offset="0.5" stop-color="#ffffff" stop-opacity="0.32"/>
+          <stop offset="1" stop-color="#ffffff" stop-opacity="0.03"/>
+        </linearGradient>
+      </defs>
+      <path d="M176 72 224 44h64l48 28 102 53-46 106-58-27v258H178V204l-58 27-46-106 102-53Z" fill="url(#body)"/>
+      <path d="M224 44c6 37 58 37 64 0l48 28c-23 52-137 52-160 0l48-28Z" fill="${secondaryColor}"/>
+      <path d="M178 228h156v54H178z" fill="${secondaryColor}" opacity="0.94"/>
+      <path d="M178 282h156v18H178z" fill="${accentColor}" opacity="0.95"/>
+      <path d="M120 125 74 125l46 106 58-27v-76Z" fill="${secondaryColor}" opacity="0.92"/>
+      <path d="M392 125h46l-46 106-58-27v-76Z" fill="${secondaryColor}" opacity="0.92"/>
+      <path d="M207 78h98v384h-98z" fill="url(#shine)" opacity="0.55"/>
+    </svg>
+  `.trim()
+
+  return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`
+}
+
+function getTeamJerseyUrlFromRecord(record: Record<string, unknown>): string | null {
+  const nestedRecords = TEAM_JERSEY_NESTED_RECORD_KEYS
+    .map((key) => getRecord(record[key]))
+    .filter((nestedRecord) => Object.keys(nestedRecord).length > 0)
+
+  for (const candidateRecord of [record, ...nestedRecords]) {
+    for (const key of TEAM_JERSEY_FIELD_KEYS) {
+      const rawJerseyValue = getLogoStringFromUnknown(candidateRecord[key])
+      const jerseyUrl = normalizeTeamLogoUrl(rawJerseyValue)
+
+      if (jerseyUrl) return jerseyUrl
+    }
   }
 
-  return null
+  /*
+   * The customization page can save a generated kit as
+   * team_kits.config = { mode: 'generic', imageSrc: null }.
+   * In that case there is no stored bitmap URL, so create a lightweight
+   * deterministic SVG from the saved club/kit colors.
+   */
+  return getGenericTeamJerseyDataUrl(record, nestedRecords)
 }
 
 function getRaceParticipantTeamLogoUrl(
@@ -11557,7 +13353,15 @@ function normalizeRaceParticipantTeamViewRows(rows: unknown): RaceParticipantTea
 function getParticipantTeamLookupIds(team: RaceParticipantTeam): string[] {
   return Array.from(
     new Set(
-      [team.club_id, team.team_id, team.id]
+      [
+        team.participating_club_id,
+        team.club_id,
+        team.owner_club_id,
+        team.parent_club_id,
+        team.team_id,
+        team.id,
+        team.race_team_entry_id,
+      ]
         .map((value) => value?.trim())
         .filter((value): value is string => Boolean(value))
     )
@@ -11578,6 +13382,26 @@ function getLogoRecordLookupIds(record: Record<string, unknown>): string[] {
   )
 }
 
+function getTeamAssetRowPriority(record: Record<string, unknown>): number {
+  const activeValue = record.is_active ?? record.active
+  const activeScore = activeValue === true ? 200 : activeValue === false ? 0 : 100
+  const name = getStringField(record, ['name', 'kit_name', 'jersey_name'])
+    ?.trim()
+    .toLowerCase()
+  const homeScore = name === 'home' || name === 'default' ? 20 : 0
+  const updatedAtRaw = getStringField(record, [
+    'updated_at',
+    'generated_at',
+    'created_at',
+  ])
+  const updatedAt = updatedAtRaw ? Date.parse(updatedAtRaw) : 0
+  const recencyScore = Number.isFinite(updatedAt)
+    ? Math.max(0, Math.min(19, Math.floor(updatedAt / 100000000000)))
+    : 0
+
+  return activeScore + homeScore + recencyScore
+}
+
 function mergeParticipantTeamLogoUrls(
   teams: RaceParticipantTeam[],
   logoRows: unknown
@@ -11585,8 +13409,26 @@ function mergeParticipantTeamLogoUrls(
   if (!Array.isArray(logoRows) || logoRows.length === 0) return teams
 
   const recordsById = new Map<string, Record<string, unknown>>()
+  const sortedRows = [...logoRows].sort((left, right) => {
+    const leftRecord = getRecord(left)
+    const rightRecord = getRecord(right)
+    const priorityDiff =
+      getTeamAssetRowPriority(leftRecord) - getTeamAssetRowPriority(rightRecord)
 
-  logoRows.forEach((logoRow) => {
+    if (priorityDiff !== 0) return priorityDiff
+
+    const leftUpdatedAt = Date.parse(
+      getStringField(leftRecord, ['updated_at', 'generated_at', 'created_at']) ?? ''
+    )
+    const rightUpdatedAt = Date.parse(
+      getStringField(rightRecord, ['updated_at', 'generated_at', 'created_at']) ?? ''
+    )
+
+    return (Number.isFinite(leftUpdatedAt) ? leftUpdatedAt : 0) -
+      (Number.isFinite(rightUpdatedAt) ? rightUpdatedAt : 0)
+  })
+
+  sortedRows.forEach((logoRow) => {
     const record = getRecord(logoRow)
 
     getLogoRecordLookupIds(record).forEach((lookupId) => {
@@ -11625,6 +13467,7 @@ async function loadParticipantTeamLogos(
   if (teamIds.length === 0) return teams
 
   let teamsWithLogos = teams
+  let clubRows: Record<string, unknown>[] = []
 
   const { data: clubData, error: clubError } = await supabase
     .from('clubs')
@@ -11634,21 +13477,14 @@ async function loadParticipantTeamLogos(
   if (clubError) {
     console.warn('Could not load participant club logos:', clubError.message)
   } else {
-    teamsWithLogos = mergeParticipantTeamLogoUrls(teamsWithLogos, clubData)
+    clubRows = (clubData ?? []).map((row) => getRecord(row))
+    teamsWithLogos = mergeParticipantTeamLogoUrls(teamsWithLogos, clubRows)
   }
 
-  const { data: aiKitData, error: aiKitError } = await supabase
-    .from('ai_team_kit_previews')
-    .select('*')
-    .in('club_id', teamIds)
-    .eq('is_active', true)
-
-  if (aiKitError) {
-    console.warn('Could not load participant team jersey previews:', aiKitError.message)
-  } else {
-    teamsWithLogos = mergeParticipantTeamLogoUrls(teamsWithLogos, aiKitData)
-  }
-
+  /*
+   * Race-entry snapshots remain a useful historical fallback, but current
+   * live kit sources below are allowed to override them.
+   */
   if (raceId) {
     const { data: entryData, error: entryError } = await supabase
       .from('race_team_entries')
@@ -11661,6 +13497,60 @@ async function loadParticipantTeamLogos(
     } else {
       teamsWithLogos = mergeParticipantTeamLogoUrls(teamsWithLogos, entryData)
     }
+  }
+
+  /*
+   * Do not use maybeSingle/single here. Some AI clubs have several preview
+   * generations. The merger deterministically prefers an active/latest row,
+   * and still uses the newest available preview when no row is flagged active.
+   */
+  const { data: aiKitData, error: aiKitError } = await supabase
+    .from('ai_team_kit_previews')
+    .select('*')
+    .in('club_id', teamIds)
+
+  if (aiKitError) {
+    console.warn('Could not load participant AI jersey previews:', aiKitError.message)
+  } else {
+    teamsWithLogos = mergeParticipantTeamLogoUrls(teamsWithLogos, aiKitData)
+  }
+
+  /*
+   * User-created and later customized jerseys are stored in team_kits.config,
+   * not necessarily as a direct clubs.jersey_url column. Load every matching
+   * kit row and let the preferred home/active/latest row win.
+   */
+  const { data: teamKitData, error: teamKitError } = await supabase
+    .from('team_kits')
+    .select('*')
+    .in('team_id', teamIds)
+
+  if (teamKitError) {
+    console.warn('Could not load participant custom team kits:', teamKitError.message)
+  } else {
+    const clubRecordById = new Map<string, Record<string, unknown>>()
+
+    clubRows.forEach((clubRecord) => {
+      getLogoRecordLookupIds(clubRecord).forEach((lookupId) => {
+        clubRecordById.set(lookupId, clubRecord)
+      })
+    })
+
+    const enrichedTeamKitRows = (teamKitData ?? []).map((teamKitRow) => {
+      const kitRecord = getRecord(teamKitRow)
+      const teamId = getStringField(kitRecord, ['team_id', 'club_id'])
+      const clubRecord = teamId ? clubRecordById.get(teamId) : null
+
+      return {
+        ...(clubRecord ?? {}),
+        ...kitRecord,
+      }
+    })
+
+    teamsWithLogos = mergeParticipantTeamLogoUrls(
+      teamsWithLogos,
+      enrichedTeamKitRows
+    )
   }
 
   return teamsWithLogos
@@ -12793,7 +14683,7 @@ function RaceResultsHub({
     () =>
       [...stages]
         .filter((stage) =>
-          publishedStageIdSet.has(stage.id)
+          publishedStageIdSet.has(stage.id) || isStageWeatherCanceled(stage)
         )
         .sort(
           (left, right) =>
@@ -12909,6 +14799,10 @@ function RaceResultsHub({
     isTeamTimeTrialLikeStage(selectedStage)
   const selectedStageAllowsSprintPointView =
     !selectedStageIsTeamTimeTrialLike
+  const selectedStageWeatherCanceled = isStageWeatherCanceled(selectedStage)
+  const raceAllStagesWeatherCanceled = isRaceAllWeatherCanceled(race)
+  const raceHasWeatherCancellation =
+    raceAllStagesWeatherCanceled || isRacePartlyWeatherCanceled(race)
 
   const viewerTeamId = getViewerTeamId(currentClubId)
   const viewerTeamIds = getViewerTeamIds(viewerTeamId, viewerClubFamilyIds)
@@ -13031,6 +14925,7 @@ function RaceResultsHub({
    */
   const classificationResultsStageId =
     selectedStage &&
+    !isStageWeatherCanceled(selectedStage) &&
     publishedStageIdSet.has(
       selectedStage.id
     ) &&
@@ -13155,15 +15050,33 @@ function RaceResultsHub({
     let mounted = true
 
     async function loadStageResults() {
+      const stageForResults =
+        stages.find((stage) => stage.id === stageId) ?? null
+
       if (
         !isExpanded ||
         !race.id ||
         !stageId ||
-        !publishedStageIdSet.has(stageId) ||
+        (!publishedStageIdSet.has(stageId) && !isStageWeatherCanceled(stageForResults)) ||
         activeTab !== 'results'
       ) {
         setStageResultsPayload(null)
         setStagePointResults([])
+        return
+      }
+
+      if (isStageWeatherCanceled(stageForResults)) {
+        setStageResultsPayload({
+          race_id: race.id,
+          stage_id: stageId,
+          stage_results: [],
+          point_results: [],
+          classifications: [],
+          leader_snapshot: {},
+        })
+        setStagePointResults([])
+        setStageResultsError(null)
+        setStageResultsLoading(false)
         return
       }
 
@@ -13238,6 +15151,7 @@ function RaceResultsHub({
     isExpanded,
     publishedStageIdSet,
     selectedStageIsTimeTrialLike,
+    stages,
   ])
 
   const classificationRows = useMemo(() => {
@@ -13407,6 +15321,12 @@ function RaceResultsHub({
         </div>
       ) : null}
 
+      {raceHasWeatherCancellation ? (
+        <div className="mt-5">
+          <WeatherCancellationNotice race={race} />
+        </div>
+      ) : null}
+
       {activeTab === 'participants' ? (
         <div className="mt-6">
           {showPendingApplicationInfo ? (
@@ -13430,7 +15350,7 @@ function RaceResultsHub({
         </div>
       ) : (
         <div className="mt-6 space-y-6">
-          <div className="grid gap-6 xl:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
+          <div className="grid gap-6 xl:grid-cols-[minmax(0,11fr)_minmax(0,9fr)]">
             <div className="rounded-2xl bg-slate-50 p-4">
               <div className="flex items-center justify-between gap-3">
                 <div>
@@ -13457,7 +15377,11 @@ function RaceResultsHub({
                 </select>
               </div>
 
-              {renderResultsState(
+              {raceAllStagesWeatherCanceled ? (
+                <div className="mt-4 rounded-xl border border-sky-200 bg-sky-50 p-4 text-sm text-sky-800">
+                  All stages were cancelled due to weather. No race classifications were generated.
+                </div>
+              ) : renderResultsState(
                 classificationLoading,
                 classificationError,
                 'race classifications',
@@ -13519,7 +15443,11 @@ function RaceResultsHub({
                 </div>
               </div>
 
-              {renderResultsState(
+              {selectedStageWeatherCanceled ? (
+                <div className="mt-4">
+                  <WeatherCancellationNotice stage={selectedStage} race={race} />
+                </div>
+              ) : renderResultsState(
                 stageResultsLoading,
                 stageResultsError,
                 'stage results',
@@ -13656,24 +15584,14 @@ function RaceClassificationTable({
     )
   }
 
-  const renderLinkedTeamName = (teamId?: string | null, label?: string | null) => {
-    const teamLabel = label?.trim() || '—'
-
-    if (!teamId) {
-      return <span className={RESULT_TEAM_NAME_TRUNCATE_CLASS}>{teamLabel}</span>
-    }
-
-    return (
-      <button
-        type="button"
-        onClick={() => onOpenTeamProfile(teamId)}
-        className={`${RESULT_TEAM_NAME_TRUNCATE_CLASS} text-slate-600 transition hover:text-slate-950`}
-        title={teamLabel}
-      >
-        {teamLabel}
-      </button>
-    )
-  }
+  const renderLinkedTeamName = (teamId?: string | null, label?: string | null) => (
+    <ResultTeamJerseyCell
+      teamId={teamId}
+      teamName={label}
+      participantTeams={participantTeams}
+      onOpenTeamProfile={onOpenTeamProfile}
+    />
+  )
 
   const renderRow = (row: RaceClassificationRow) => (
     <tr
@@ -13690,7 +15608,7 @@ function RaceClassificationTable({
           : renderLinkedRiderName(row)}
       </td>
 
-      <td className="max-w-0 px-3 py-3 text-slate-500">
+      <td className="max-w-0 px-2 py-1.5 text-slate-500">
         {row.entity_type === 'team'
           ? '—'
           : renderLinkedTeamName(row.team_id, row.team_name_snapshot)}
@@ -13714,10 +15632,10 @@ function RaceClassificationTable({
     <div className="mt-4 overflow-x-auto rounded-xl bg-white">
       <table className="min-w-full table-fixed text-sm">
         <colgroup>
-          <col className="w-[9%]" />
-          <col className={isPointsView ? 'w-[48%]' : 'w-[45%]'} />
-          <col className={isPointsView ? 'w-[27%]' : 'w-[24%]'} />
-          <col className={isPointsView ? 'w-[16%]' : 'w-[15%]'} />
+          <col className="w-[8%]" />
+          <col className={isPointsView ? 'w-[40%]' : 'w-[37%]'} />
+          <col className={isPointsView ? 'w-[35%]' : 'w-[32%]'} />
+          <col className={isPointsView ? 'w-[17%]' : 'w-[16%]'} />
           {!isPointsView ? <col className="w-[7%]" /> : null}
         </colgroup>
         <thead>
@@ -13868,24 +15786,14 @@ function StageResultsTable({
     )
   }
 
-  const renderLinkedStageResultTeamName = (row: RaceStageResultRow) => {
-    const label = row.team_name_snapshot?.trim() || '—'
-
-    if (!row.team_id) {
-      return <span className={RESULT_TEAM_NAME_TRUNCATE_CLASS}>{label}</span>
-    }
-
-    return (
-      <button
-        type="button"
-        onClick={() => onOpenTeamProfile(row.team_id as string)}
-        className={`${RESULT_TEAM_NAME_TRUNCATE_CLASS} text-slate-600 transition hover:text-slate-950`}
-        title={label}
-      >
-        {label}
-      </button>
-    )
-  }
+  const renderLinkedStageResultTeamName = (row: RaceStageResultRow) => (
+    <ResultTeamJerseyCell
+      teamId={row.team_id}
+      teamName={row.team_name_snapshot}
+      participantTeams={participantTeams}
+      onOpenTeamProfile={onOpenTeamProfile}
+    />
+  )
 
   const renderRow = (row: RaceStageResultRow) => (
     <tr
@@ -13900,7 +15808,7 @@ function StageResultsTable({
         {renderLinkedStageResultRiderName(row)}
       </td>
 
-      <td className="max-w-0 px-3 py-3 text-slate-500">
+      <td className="max-w-0 px-2 py-1.5 text-slate-500">
         {renderLinkedStageResultTeamName(row)}
       </td>
 
@@ -13917,8 +15825,8 @@ function StageResultsTable({
       <table className="min-w-full table-fixed text-sm">
         <colgroup>
           <col className="w-[8%]" />
-          <col className="w-[60%]" />
-          <col className="w-[20%]" />
+          <col className="w-[44%]" />
+          <col className="w-[36%]" />
           <col className="w-[12%]" />
         </colgroup>
         <thead>
@@ -14023,24 +15931,14 @@ function StagePointResultsTable({
     )
   }
 
-  const renderLinkedPointTeamName = (row: AggregatedStagePointResultRow) => {
-    const label = row.team_name_snapshot?.trim() || '—'
-
-    if (!row.team_id) {
-      return <span className={RESULT_TEAM_NAME_TRUNCATE_CLASS}>{label}</span>
-    }
-
-    return (
-      <button
-        type="button"
-        onClick={() => onOpenTeamProfile(row.team_id as string)}
-        className={`${RESULT_TEAM_NAME_TRUNCATE_CLASS} text-slate-600 transition hover:text-slate-950`}
-        title={label}
-      >
-        {label}
-      </button>
-    )
-  }
+  const renderLinkedPointTeamName = (row: AggregatedStagePointResultRow) => (
+    <ResultTeamJerseyCell
+      teamId={row.team_id}
+      teamName={row.team_name_snapshot}
+      participantTeams={participantTeams}
+      onOpenTeamProfile={onOpenTeamProfile}
+    />
+  )
 
   const renderRow = (row: AggregatedStagePointResultRow) => (
     <tr
@@ -14055,7 +15953,7 @@ function StagePointResultsTable({
         {renderLinkedPointRiderName(row)}
       </td>
 
-      <td className="max-w-0 px-3 py-3 text-slate-500">
+      <td className="max-w-0 px-2 py-1.5 text-slate-500">
         {renderLinkedPointTeamName(row)}
       </td>
 
@@ -14076,9 +15974,9 @@ function StagePointResultsTable({
       <table className="min-w-full table-fixed text-sm">
         <colgroup>
           <col className="w-[8%]" />
-          <col className={showBonus ? 'w-[52%]' : 'w-[60%]'} />
-          <col className={showBonus ? 'w-[20%]' : 'w-[20%]'} />
-          <col className={showBonus ? 'w-[10%]' : 'w-[12%]'} />
+          <col className={showBonus ? 'w-[38%]' : 'w-[44%]'} />
+          <col className={showBonus ? 'w-[34%]' : 'w-[32%]'} />
+          <col className={showBonus ? 'w-[10%]' : 'w-[16%]'} />
           {showBonus ? <col className="w-[10%]" /> : null}
         </colgroup>
         <thead>
@@ -15014,6 +16912,12 @@ function RaceStageProfilePanel({
           </div>
         </div>
 
+        {isStageWeatherCanceled(selectedStage) ? (
+          <div className="mt-4">
+            <WeatherCancellationNotice stage={selectedStage} race={race} />
+          </div>
+        ) : null}
+
         <div className="mt-4">
           <StageProfileChart
             points={profile.profile_points ?? []}
@@ -15692,7 +17596,10 @@ export default function RaceDetailPage({
             planned_start_minute,
             planned_start_time_label,
             weather_summary,
-            weather_snapshot
+            weather_snapshot,
+            weather_cancelled,
+            weather_cancellation_reason,
+            weather_cancelled_at
           `
           )
           .eq('race_id', raceId),
@@ -15874,6 +17781,16 @@ export default function RaceDetailPage({
                   Object.keys(getRecord(stageStartTime.weather_snapshot)).length > 0
                     ? stageStartTime.weather_snapshot
                     : stage.weather_snapshot ?? null,
+                weather_cancelled:
+                  stageStartTime.weather_cancelled ?? stage.weather_cancelled ?? false,
+                weather_cancellation_reason:
+                  stageStartTime.weather_cancellation_reason ??
+                  stage.weather_cancellation_reason ??
+                  null,
+                weather_cancelled_at:
+                  stageStartTime.weather_cancelled_at ??
+                  stage.weather_cancelled_at ??
+                  null,
               }
             : stage
         })
@@ -16262,12 +18179,15 @@ export default function RaceDetailPage({
     raceEntryStatus ?? race?.existing_application_status ?? entry?.existing_application_status ?? null
 
   const raceDetailStatus = useMemo(() => {
-    return getRaceDetailStatusLabel(
-      applicationsStatus,
-      normalizedRaceStatus,
-      effectiveTeamEntryStatus
+    return (
+      getRaceWeatherCancellationDisplayStatus(race) ??
+      getRaceDetailStatusLabel(
+        applicationsStatus,
+        normalizedRaceStatus,
+        effectiveTeamEntryStatus
+      )
     )
-  }, [applicationsStatus, normalizedRaceStatus, effectiveTeamEntryStatus])
+  }, [race, applicationsStatus, normalizedRaceStatus, effectiveTeamEntryStatus])
 
   const canApplyForRaceButton = canApplyForRace(
     applicationsStatus,
@@ -16601,6 +18521,8 @@ export default function RaceDetailPage({
 
   function renderStageCard(stage: RaceStage, compact = false) {
     const active = selectedStage?.id === stage.id
+    const weatherCanceled = isStageWeatherCanceled(stage)
+    const cancellationRiskReason = getStageWeatherCancellationRiskReason(stage)
 
     return (
       <button
@@ -16612,9 +18534,11 @@ export default function RaceDetailPage({
           compact
             ? 'min-h-[92px] min-w-[220px] snap-start rounded-2xl border px-4 py-3 text-left transition'
             : 'min-h-[92px] rounded-2xl border px-4 py-3 text-left transition',
-          active
-            ? 'border-yellow-200 bg-yellow-50 text-slate-950 shadow-sm'
-            : 'border-slate-200 bg-white text-slate-900 hover:bg-slate-50',
+          weatherCanceled
+            ? 'border-sky-200 bg-sky-50 text-sky-950 shadow-sm'
+            : active
+              ? 'border-yellow-200 bg-yellow-50 text-slate-950 shadow-sm'
+              : 'border-slate-200 bg-white text-slate-900 hover:bg-slate-50',
         ].join(' ')}
       >
         <div className="text-sm font-medium text-slate-500">
@@ -16638,6 +18562,16 @@ export default function RaceDetailPage({
         <div className="mt-1 text-xs opacity-75">
           {humanizeCode(stage.terrain_type)} · {formatKm(stage.distance_km)}
         </div>
+
+        {weatherCanceled ? (
+          <div className="mt-2 inline-flex rounded-full bg-red-100 px-2 py-1 text-[11px] font-semibold text-red-800 ring-1 ring-red-200">
+            Canceled · {getStageWeatherCancellationReasonLabel(stage)}
+          </div>
+        ) : cancellationRiskReason ? (
+          <div className="mt-2 inline-flex rounded-full bg-orange-100 px-2 py-1 text-[11px] font-semibold text-orange-800">
+            Weather cancellation likely
+          </div>
+        ) : null}
       </button>
     )
   }
@@ -16978,6 +18912,12 @@ export default function RaceDetailPage({
             {raceLifecycleNotice ? (
               <div className="mt-5 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800">
                 {raceLifecycleNotice}
+              </div>
+            ) : null}
+
+            {getRaceWeatherCancellationStatus(race) ? (
+              <div className="mt-5">
+                <WeatherCancellationNotice race={race} />
               </div>
             ) : null}
 

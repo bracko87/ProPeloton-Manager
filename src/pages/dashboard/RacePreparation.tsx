@@ -700,6 +700,160 @@ function getRaceRouteLine(race: unknown, stageCount?: number): string {
   return `${route} · One Day Race`;
 }
 
+
+function getWeatherCancellationStatusFromRace(race: unknown): string | null {
+  const metadata = asRecord(asRecord(race).metadata);
+  const value = metadata.weather_cancellation_status;
+
+  return typeof value === "string" && value.trim() !== ""
+    ? value.trim()
+    : null;
+}
+
+function isRaceAllWeatherCanceledInPreparation(race: unknown): boolean {
+  const metadata = asRecord(asRecord(race).metadata);
+  const explicitValue = metadata.weather_all_stages_cancelled;
+
+  if (typeof explicitValue === "boolean") return explicitValue;
+  if (typeof explicitValue === "string") {
+    return explicitValue.toLowerCase() === "true";
+  }
+
+  return getWeatherCancellationStatusFromRace(race) === "all_stages_weather_cancelled";
+}
+
+function isRacePartlyWeatherCanceledInPreparation(race: unknown): boolean {
+  return getWeatherCancellationStatusFromRace(race) === "partly_weather_cancelled";
+}
+
+function getWeatherCancellationDisplayStatusForPreparation(race: unknown): string | null {
+  if (isRaceAllWeatherCanceledInPreparation(race)) return "Race canceled";
+  if (isRacePartlyWeatherCanceledInPreparation(race)) return "Weather affected";
+
+  return null;
+}
+
+function isPreparationStageWeatherCanceled(stage: unknown): boolean {
+  return asRecord(stage).weather_cancelled === true;
+}
+
+function getPreparationWeatherCancellationReasonLabel(reason?: unknown): string {
+  switch (String(reason ?? "")) {
+    case "snow":
+      return "Snow";
+    case "temperature_below_5c":
+      return "Average temperature below 5°C";
+    default:
+      return reason ? titleFromSnake(String(reason)) : "Unsafe weather";
+  }
+}
+
+function getPreparationStageWeatherCancellationReason(stage: unknown): string | null {
+  const reason = asRecord(stage).weather_cancellation_reason;
+
+  return reason ? String(reason) : null;
+}
+
+function getPreparationStageWeatherRiskReason(stage: unknown): string | null {
+  const record = asRecord(stage);
+  const weather = firstNonEmptyRecord(
+    record.weather_snapshot,
+    record.weather_json,
+    record.weather_snapshot_json,
+    asRecord(record.metadata).weather_snapshot,
+    asRecord(record.metadata).weather,
+  );
+
+  if (Object.keys(weather).length === 0) return null;
+
+  const conditionText = String(
+    weather.condition ??
+      weather.condition_label ??
+      weather.label ??
+      weather.name ??
+      weather.summary ??
+      "",
+  )
+    .trim()
+    .toLowerCase();
+
+  const avgTemp = normalizeNumericValue(
+    weather.avg_temp_c ??
+      weather.average_temp_c ??
+      weather.temperature_c ??
+      weather.temp_c,
+    Number.NaN,
+  );
+
+  if (conditionText === "snow" || conditionText.includes("snow")) {
+    return "snow";
+  }
+
+  if (Number.isFinite(avgTemp) && avgTemp < 5) {
+    return "temperature_below_5c";
+  }
+
+  return null;
+}
+
+function WeatherCancellationPreparationNotice({
+  race,
+  stage,
+}: {
+  race?: unknown;
+  stage?: unknown;
+}) {
+  const raceStatus = getWeatherCancellationStatusFromRace(race);
+  const stageCanceled = isPreparationStageWeatherCanceled(stage);
+  const shouldRender =
+    stageCanceled ||
+    raceStatus === "all_stages_weather_cancelled" ||
+    raceStatus === "partly_weather_cancelled";
+
+  if (!shouldRender) return null;
+
+  const title = stageCanceled
+    ? "Stage canceled due to weather"
+    : raceStatus === "all_stages_weather_cancelled"
+      ? "Race canceled due to weather"
+      : "Race partly canceled by weather";
+
+  const reason = getPreparationWeatherCancellationReasonLabel(
+    getPreparationStageWeatherCancellationReason(stage),
+  );
+
+  const body = stageCanceled
+    ? `This stage was canceled by the race engine (${reason}). Stage Plans are locked because no result, points, prize money, fatigue or replay will be generated for this stage.`
+    : raceStatus === "all_stages_weather_cancelled"
+      ? "This race was canceled due to weather. Race preparation is no longer needed for this race."
+      : "At least one stage in this race was canceled due to weather. Remaining uncanceled stages can continue normally.";
+
+  return (
+    <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900">
+      <div className="font-semibold">{title}</div>
+      <div className="mt-1 leading-6">{body}</div>
+    </div>
+  );
+}
+
+function WeatherCancellationRiskPreparationNotice({ stage }: { stage: unknown }) {
+  if (isPreparationStageWeatherCanceled(stage)) return null;
+
+  const riskReason = getPreparationStageWeatherRiskReason(stage);
+  if (!riskReason) return null;
+
+  return (
+    <div className="mt-3 rounded-xl border border-orange-200 bg-orange-50 px-3 py-2 text-xs leading-5 text-orange-800">
+      <div className="font-semibold">
+        Weather cancellation likely: {getPreparationWeatherCancellationReasonLabel(riskReason)}
+      </div>
+      <div>
+        Current forecast is below the safety threshold. Final decision 24 in-game hours before start.
+      </div>
+    </div>
+  );
+}
+
 function getRaceLifecycleLabel(status?: string | null) {
   switch (status) {
     case "completed":
@@ -709,7 +863,7 @@ function getRaceLifecycleLabel(status?: string | null) {
     case "scheduled":
       return "Scheduled";
     case "cancelled":
-      return "Cancelled";
+      return "Canceled";
     default:
       return status ? titleFromSnake(status) : "Scheduled";
   }
@@ -717,6 +871,9 @@ function getRaceLifecycleLabel(status?: string | null) {
 
 function statusClass(status?: string) {
   switch (status) {
+    case "weather_cancelled":
+    case "cancelled":
+      return "bg-red-100 text-red-800 ring-1 ring-red-200";
     case "race_plan_open":
     case "draft":
       return "bg-yellow-100 text-yellow-800 ring-1 ring-yellow-200";
@@ -738,6 +895,9 @@ function statusClass(status?: string) {
 
 function getRacePlanStatusLabel(status?: string) {
   switch (status) {
+    case "weather_cancelled":
+    case "cancelled":
+      return "Race canceled";
     case "missed_startlist":
       return "Not Participating";
     case "draft":
@@ -958,6 +1118,16 @@ function getAcceptedRacePreparationState(
     (packageStatus === "draft" ||
       startlistStatus === "draft" ||
       packageStatus === "race_plan_open");
+
+  if (isRaceAllWeatherCanceledInPreparation(raceRecord)) {
+    return {
+      label: "Race canceled",
+      className: "bg-red-100 text-red-800 ring-1 ring-red-200",
+      racePlanEnabled: false,
+      stagePlansEnabled: false,
+      missedStartlist: false,
+    };
+  }
 
   if (missedStartlist) {
     return {
@@ -1459,7 +1629,11 @@ export default function RacePreparationPage(): JSX.Element {
     riderDeadlineTime !== null &&
     currentGameDateTime > riderDeadlineTime;
 
+  const selectedRaceAllWeatherCanceled =
+    isRaceAllWeatherCanceledInPreparation(race);
+
   const canEdit =
+    !selectedRaceAllWeatherCanceled &&
     isPackageWindowOpen &&
     (raceStatus === "not_created" ||
       raceStatus === "draft" ||
@@ -1503,15 +1677,17 @@ export default function RacePreparationPage(): JSX.Element {
     medicallyUnavailableRiderIds,
   ]);
 
-  const stagePlansOpen = packageSubmitted;
+  const stagePlansOpen = packageSubmitted && !selectedRaceAllWeatherCanceled;
 
-  const racePlanUiStatus = getRacePlanUiStatus({
-    raceStatus,
-    prepStatus,
-    isPackageTooEarly,
-    isPackageDeadlinePassed,
-    packageSubmitted,
-  });
+  const racePlanUiStatus = selectedRaceAllWeatherCanceled
+    ? "weather_cancelled"
+    : getRacePlanUiStatus({
+        raceStatus,
+        prepStatus,
+        isPackageTooEarly,
+        isPackageDeadlinePassed,
+        packageSubmitted,
+      });
 
   const minRiders = getNumber(entryRules, "min_riders_per_team");
   const maxRiders = getNumber(entryRules, "max_riders_per_team");
@@ -2269,14 +2445,18 @@ export default function RacePreparationPage(): JSX.Element {
                 onOpenRacePreview={(id) => setRacePreviewId(id)}
               />
 
-              {isPackageTooEarly && (
+              {selectedRaceAllWeatherCanceled ? (
+                <WeatherCancellationPreparationNotice race={race} />
+              ) : null}
+
+              {isPackageTooEarly && !selectedRaceAllWeatherCanceled && (
                 <div className="rounded-xl border border-orange-300 bg-orange-50 px-4 py-3 text-sm font-medium text-orange-800">
                   Race Plan is not open yet. It opens on{" "}
                   {formatFullGameDate(target.setup_window_opens_on)}.
                 </div>
               )}
 
-              {isPackageDeadlinePassed && (
+              {isPackageDeadlinePassed && !selectedRaceAllWeatherCanceled && (
                 <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
                   Rider submission deadline has passed. This Race Plan can no
                   longer be edited.
@@ -2588,7 +2768,7 @@ export default function RacePreparationPage(): JSX.Element {
                     <div className="mt-5 flex flex-col gap-2">
                       <button
                         type="button"
-                        disabled={actionLoading || !payload}
+                        disabled={actionLoading || !payload || selectedRaceAllWeatherCanceled}
                         onClick={handleQuote}
                         className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
                       >
@@ -2867,6 +3047,11 @@ function AcceptedRacesTab({
           const isMissedStartlist = Boolean(
             (prepState as { missedStartlist?: boolean }).missedStartlist,
           );
+          const raceWeatherStatus = getWeatherCancellationStatusFromRace(race);
+          const raceAllWeatherCanceled =
+            isRaceAllWeatherCanceledInPreparation(race);
+          const racePartlyWeatherCanceled =
+            isRacePartlyWeatherCanceledInPreparation(race);
 
           const raceClass =
             String(
@@ -2897,11 +3082,13 @@ function AcceptedRacesTab({
             <div
               key={row.race_team_entry_id}
               className={`rounded-2xl border p-4 transition ${
-                isMissedStartlist
+                raceAllWeatherCanceled
                   ? "border-red-200 bg-red-50"
-                  : selected
-                    ? "border-yellow-300 bg-yellow-50"
-                    : "border-slate-200 bg-white hover:bg-slate-50"
+                  : isMissedStartlist
+                    ? "border-red-200 bg-red-50"
+                    : selected
+                      ? "border-yellow-300 bg-yellow-50"
+                      : "border-slate-200 bg-white hover:bg-slate-50"
               }`}
             >
               <div className="grid gap-4 md:grid-cols-[80px_1fr_auto] md:items-center">
@@ -2930,6 +3117,21 @@ function AcceptedRacesTab({
                     <span className="rounded-full bg-purple-100 px-3 py-1 text-xs font-semibold text-purple-700">
                       {raceClass}
                     </span>
+
+                    {raceWeatherStatus ? (
+                      <span
+                        className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                          raceAllWeatherCanceled
+                            ? "bg-red-100 text-red-700 ring-1 ring-red-200"
+                            : racePartlyWeatherCanceled
+                              ? "bg-orange-100 text-orange-700 ring-1 ring-orange-200"
+                              : "bg-slate-100 text-slate-700"
+                        }`}
+                      >
+                        {getWeatherCancellationDisplayStatusForPreparation(race) ??
+                          titleFromSnake(raceWeatherStatus)}
+                      </span>
+                    ) : null}
 
                     <span
                       className={`rounded-full px-3 py-1 text-xs font-semibold ${
@@ -5488,14 +5690,29 @@ function StagePlansTab({
     useState<SportDirectorSuggestionResponse | null>(null);
 
   const selectedStage = stages[selectedStageIndex] ?? stages[0] ?? null;
+  const selectedStageWeatherCanceled =
+    isPreparationStageWeatherCanceled(selectedStage);
+  const selectedStageWeatherRiskReason =
+    getPreparationStageWeatherRiskReason(selectedStage);
+  const targetRaceWeatherStatus =
+    getWeatherCancellationStatusFromRace(target?.race);
+  const targetRaceAllWeatherCanceled =
+    isRaceAllWeatherCanceledInPreparation(target?.race);
+  const selectedStageLockedByWeather =
+    targetRaceAllWeatherCanceled || selectedStageWeatherCanceled;
   const isTTStage = isTimeTrialStage(selectedStage);
   const isTTTStage = selectedStage?.stage_format === "team_time_trial";
   const suppliesDisabledForTT = isTTStage;
   const selectedStageKey = getStagePlanKey(selectedStage);
-  const sportDirectorAutoFillDisabled = !hasSportDirectorAssigned;
-  const sportDirectorDisabledReason = sportDirectorAutoFillDisabled
-    ? "Assign a Sport Director in the Race Plan first."
-    : undefined;
+  const sportDirectorAutoFillDisabled =
+    !hasSportDirectorAssigned || selectedStageLockedByWeather;
+  const sportDirectorDisabledReason = targetRaceAllWeatherCanceled
+    ? "This race was canceled due to weather."
+    : selectedStageWeatherCanceled
+      ? "This stage was canceled due to weather."
+      : sportDirectorAutoFillDisabled
+        ? "Assign a Sport Director in the Race Plan first."
+        : undefined;
   const selectedSavedStagePlan = findSavedStagePlan(stagePlans, selectedStage);
   const racePreparationIdForStageReadiness = String(
     asRecord(target?.preparation).id ?? "",
@@ -5538,6 +5755,7 @@ function StagePlansTab({
     !packageSubmitted ||
     !selectedStage ||
     !selectedStageKey ||
+    selectedStageLockedByWeather ||
     lockInfo.isLocked ||
     savingStagePlan;
 
@@ -5725,8 +5943,22 @@ function StagePlansTab({
       return;
     }
 
+    if (targetRaceAllWeatherCanceled) {
+      setStageSaveError(
+        "This race was canceled due to weather, so Stage Plans are locked.",
+      );
+      return;
+    }
+
     if (lockInfo.isLocked) {
       setStageSaveError(lockInfo.lockMessage);
+      return;
+    }
+
+    if (selectedStageWeatherCanceled) {
+      setStageSaveError(
+        "This stage was canceled due to weather, so no Stage Plan can be saved.",
+      );
       return;
     }
 
@@ -5815,8 +6047,22 @@ function StagePlansTab({
       return;
     }
 
+    if (targetRaceAllWeatherCanceled) {
+      setStageSaveError(
+        "This race was canceled due to weather, so the Sport Director cannot create Stage Plans for it.",
+      );
+      return;
+    }
+
     if (lockInfo.isLocked) {
       setStageSaveError(lockInfo.lockMessage);
+      return;
+    }
+
+    if (selectedStageWeatherCanceled) {
+      setStageSaveError(
+        "This stage was canceled due to weather, so the Sport Director cannot create a Stage Plan for it.",
+      );
       return;
     }
 
@@ -6000,6 +6246,19 @@ function StagePlansTab({
         {selectedStage && (
           <SelectedStagePlanProfileCard stage={selectedStage} />
         )}
+
+        {targetRaceWeatherStatus ? (
+          <div className="mt-4">
+            <WeatherCancellationPreparationNotice
+              race={target?.race}
+              stage={selectedStage}
+            />
+          </div>
+        ) : null}
+
+        {selectedStage && selectedStageWeatherRiskReason && !targetRaceAllWeatherCanceled ? (
+          <WeatherCancellationRiskPreparationNotice stage={selectedStage} />
+        ) : null}
       </section>
 
       {!packageSubmitted && (
@@ -6009,7 +6268,7 @@ function StagePlansTab({
         </div>
       )}
 
-      {packageSubmitted && !lockInfo.isLocked && (
+      {packageSubmitted && !lockInfo.isLocked && !targetRaceAllWeatherCanceled && (
         <div
           className={[
             "rounded-2xl border px-4 py-3 shadow-sm",
@@ -6111,7 +6370,7 @@ function StagePlansTab({
         }}
       />
 
-      {!lockInfo.isLocked && (
+      {!lockInfo.isLocked && !targetRaceAllWeatherCanceled && (
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
           <div className="space-y-1 text-sm text-slate-600">
           <div className="flex flex-wrap items-center gap-2">
@@ -6133,6 +6392,11 @@ function StagePlansTab({
             >
               {lockInfo.statusLabel}
             </span>
+            {selectedStageWeatherCanceled ? (
+              <span className="inline-flex items-center rounded-full bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-700 ring-1 ring-red-200">
+                Stage canceled
+              </span>
+            ) : null}
             {selectedStageReadiness && (
               <span
                 className={[
@@ -6244,7 +6508,7 @@ function StagePlansTab({
           onSave={() => void handleSaveStagePlan()}
           saveDisabled={stageSaveDisabled}
           saving={savingStagePlan}
-          disabled={!packageSubmitted || lockInfo.isLocked}
+          disabled={!packageSubmitted || lockInfo.isLocked || selectedStageLockedByWeather}
         />
 
         <StageTeamTacticCard
@@ -6274,7 +6538,7 @@ function StagePlansTab({
           onSave={() => void handleSaveStagePlan()}
           saveDisabled={stageSaveDisabled}
           saving={savingStagePlan}
-          disabled={!packageSubmitted || lockInfo.isLocked}
+          disabled={!packageSubmitted || lockInfo.isLocked || selectedStageLockedByWeather}
         />
       </section>
 
@@ -6320,7 +6584,7 @@ function StagePlansTab({
         onSave={() => void handleSaveStagePlan()}
         saveDisabled={stageSaveDisabled}
         saving={savingStagePlan}
-        disabled={!packageSubmitted || lockInfo.isLocked}
+        disabled={!packageSubmitted || lockInfo.isLocked || selectedStageLockedByWeather}
       />
 
       <section className="grid gap-6 xl:grid-cols-2">
@@ -6343,7 +6607,10 @@ function StagePlansTab({
           saveDisabled={stageSaveDisabled || suppliesDisabledForTT}
           saving={savingStagePlan}
           disabled={
-            !packageSubmitted || lockInfo.isLocked || suppliesDisabledForTT
+            !packageSubmitted ||
+            lockInfo.isLocked ||
+            selectedStageLockedByWeather ||
+            suppliesDisabledForTT
           }
         />
 
@@ -6602,6 +6869,14 @@ function StageWeatherMiniCard({
         <span className="text-base">{getWeatherIcon(weather)}</span>
         Stage weather
       </div>
+
+      {isPreparationStageWeatherCanceled(stage) ? (
+        <div className="mt-2 rounded-lg border border-sky-200 bg-sky-50 px-3 py-2 text-xs leading-5 text-sky-800">
+          Canceled: {getPreparationWeatherCancellationReasonLabel(
+            getPreparationStageWeatherCancellationReason(stage),
+          )}
+        </div>
+      ) : null}
 
       {hasWeather ? (
         <div className="mt-2 grid gap-2 text-sm text-slate-700 sm:grid-cols-3">
@@ -7130,6 +7405,8 @@ function StageCardsScroller({
       stagePlanReadinessByStageKey ?? {},
       stage,
     );
+    const weatherCanceled = isPreparationStageWeatherCanceled(stage);
+    const weatherRiskReason = getPreparationStageWeatherRiskReason(stage);
 
     return (
       <button
@@ -7140,9 +7417,11 @@ function StageCardsScroller({
           compact
             ? "min-h-[92px] min-w-[220px] snap-start rounded-2xl border px-4 py-3 text-left transition"
             : "min-h-[92px] rounded-2xl border px-4 py-3 text-left transition",
-          active
-            ? "border-yellow-200 bg-yellow-50 text-slate-950 shadow-sm"
-            : "border-slate-200 bg-white text-slate-900 hover:bg-slate-50",
+          weatherCanceled
+            ? "border-red-200 bg-red-50 text-red-950 shadow-sm"
+            : active
+              ? "border-yellow-200 bg-yellow-50 text-slate-950 shadow-sm"
+              : "border-slate-200 bg-white text-slate-900 hover:bg-slate-50",
         ].join(" ")}
       >
         <div className="text-sm font-medium text-slate-500">
@@ -7173,11 +7452,21 @@ function StageCardsScroller({
           {getStageProfileLabel(stage)} · {getStageDistance(stage) || "—"}
         </div>
 
-        {readiness?.recommended_action && (
+        {weatherCanceled ? (
+          <div className="mt-2 inline-flex rounded-full bg-red-100 px-2 py-1 text-[11px] font-semibold text-red-800">
+            Canceled · {getPreparationWeatherCancellationReasonLabel(
+              getPreparationStageWeatherCancellationReason(stage),
+            )}
+          </div>
+        ) : weatherRiskReason ? (
+          <div className="mt-2 inline-flex rounded-full bg-orange-100 px-2 py-1 text-[11px] font-semibold text-orange-800">
+            Weather cancellation likely
+          </div>
+        ) : readiness?.recommended_action ? (
           <div className="mt-2 line-clamp-2 text-[11px] opacity-70">
             {readiness.recommended_action}
           </div>
-        )}
+        ) : null}
       </button>
     );
   }

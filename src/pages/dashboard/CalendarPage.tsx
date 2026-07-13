@@ -20,6 +20,8 @@ type GameDateParts = {
   hour_number: number
 }
 
+type JsonRecord = Record<string, unknown>
+
 type TrainingCampBooking = {
   id: string
   camp_id: string
@@ -82,6 +84,7 @@ type RaceCalendarItem = RaceCalendarEntry & {
   stage_count: number | null
   status: string | null
   description: string | null
+  metadata?: JsonRecord | null
 
   stored_stage_count?: number | null
   actual_stage_count?: number | null
@@ -111,6 +114,8 @@ type RaceStageCalendarRow = {
   race_id: string
   stage_number: number | null
   stage_date: string
+  weather_cancelled?: boolean | null
+  weather_cancellation_reason?: string | null
 }
 
 type SponsorObjectiveCalendarTarget = {
@@ -299,6 +304,73 @@ function titleCaseFromSnake(value: string | null | undefined): string {
     .join(' ')
 }
 
+
+function asRecord(value: unknown): JsonRecord {
+  return value && typeof value === 'object' && !Array.isArray(value)
+    ? (value as JsonRecord)
+    : {}
+}
+
+function getRaceWeatherCancellationStatus(race: RaceCalendarItem): string | null {
+  const metadata = asRecord(race.metadata)
+  const value = metadata.weather_cancellation_status
+
+  return typeof value === 'string' && value.trim() !== '' ? value.trim() : null
+}
+
+function isRaceAllStagesWeatherCanceled(race: RaceCalendarItem): boolean {
+  const metadata = asRecord(race.metadata)
+  const explicitValue = metadata.weather_all_stages_cancelled
+
+  if (typeof explicitValue === 'boolean') return explicitValue
+  if (typeof explicitValue === 'string') return explicitValue.toLowerCase() === 'true'
+
+  return getRaceWeatherCancellationStatus(race) === 'all_stages_weather_cancelled'
+}
+
+function isRacePartlyWeatherCanceled(race: RaceCalendarItem): boolean {
+  return getRaceWeatherCancellationStatus(race) === 'partly_weather_cancelled'
+}
+
+function getRaceWeatherCancellationDisplayStatus(race: RaceCalendarItem): RaceApplicationStatus | null {
+  /*
+   * Only a fully weather-cancelled race should replace the main race status.
+   * If one or more stages are cancelled but the race continues, keep the normal
+   * race status and show cancellation only on the affected stage/date.
+   */
+  if (isRaceAllStagesWeatherCanceled(race)) return 'race_cancelled'
+
+  return null
+}
+
+function getWeatherCancellationReasonLabel(reason?: string | null): string {
+  switch (reason) {
+    case 'snow':
+      return 'Snow'
+    case 'temperature_below_5c':
+      return 'Average temperature below 5°C'
+    default:
+      return titleCaseFromSnake(reason ?? 'weather_cancelled')
+  }
+}
+
+function getCalendarStageForDate(
+  race: RaceCalendarItem,
+  canonicalDateString: string,
+  stagesByRaceId: Record<string, RaceStageCalendarRow[]>
+): RaceStageCalendarRow | null {
+  const stages = stagesByRaceId[race.id] ?? []
+  return stages.find(stage => stage.stage_date === canonicalDateString) ?? null
+}
+
+function isCalendarRaceStageWeatherCanceled(
+  race: RaceCalendarItem,
+  canonicalDateString: string,
+  stagesByRaceId: Record<string, RaceStageCalendarRow[]>
+): boolean {
+  return getCalendarStageForDate(race, canonicalDateString, stagesByRaceId)?.weather_cancelled === true
+}
+
 function getMonthStartFromGameDate(currentGameDate: string, currentDayNumber: number): Date {
   const current = parseDateString(currentGameDate)
   return addDays(current, -(currentDayNumber - 1))
@@ -463,7 +535,13 @@ function formatRaceBadgeLabel(
   const matchingStage = stages.find(stage => stage.stage_date === canonicalDateString)
 
   if (matchingStage?.stage_number != null) {
-    return `${race.name} · Stage ${matchingStage.stage_number}`
+    const weatherSuffix = matchingStage.weather_cancelled
+      ? ` · Canceled (${getWeatherCancellationReasonLabel(
+          matchingStage.weather_cancellation_reason ?? null
+        )})`
+      : ''
+
+    return `${race.name} · Stage ${matchingStage.stage_number}${weatherSuffix}`
   }
 
   const raceStart = race.start_date ? parseDateString(race.start_date) : null
@@ -567,8 +645,11 @@ function getRaceApplicationBadgeClass(status?: string | null): string {
       return 'bg-green-100 text-green-700'
     case 'race_finished':
       return 'bg-gray-200 text-gray-700'
+    case 'race_cancelled':
     case 'cancelled':
-      return 'bg-red-100 text-red-700'
+      return 'bg-red-100 text-red-700 ring-1 ring-red-200'
+    case 'partly_cancelled':
+      return 'bg-orange-100 text-orange-700 ring-1 ring-orange-200'
     case 'closed':
     default:
       return 'bg-gray-100 text-gray-600'
@@ -597,19 +678,26 @@ function getRaceApplicationBadgeLabel(status?: string | null): string {
       return 'Race active'
     case 'race_finished':
       return 'Race finished'
+    case 'race_cancelled':
+      return 'Race canceled'
+    case 'partly_cancelled':
+      return 'Partly canceled'
     case 'cancelled':
-      return 'Cancelled'
+      return 'Race canceled'
     default:
       return 'Applications closed'
   }
 }
 
 function getEffectiveRaceCalendarStatus(race: RaceCalendarItem): RaceApplicationStatus | null {
+  const weatherDisplayStatus = getRaceWeatherCancellationDisplayStatus(race)
+  if (weatherDisplayStatus) return weatherDisplayStatus
+
   const raceStatus = race.status?.toLowerCase() ?? null
 
   if (raceStatus === 'active') return 'race_active'
   if (raceStatus === 'completed' || raceStatus === 'archived') return 'race_finished'
-  if (raceStatus === 'cancelled') return 'cancelled'
+  if (raceStatus === 'cancelled') return 'race_cancelled'
 
   return race.existing_application_status ?? race.applications_status
 }
@@ -898,9 +986,10 @@ export default function CalendarPage(): JSX.Element {
 
           let entryRulesByRaceId: Record<string, RaceEntryRules> = {}
           let userEntriesByRaceId: Record<string, RaceTeamEntry> = {}
+          let raceMetadataByRaceId: Record<string, JsonRecord | null> = {}
 
           if (raceIds.length > 0) {
-            const [entryRulesRes, userEntriesRes] = await Promise.all([
+            const [entryRulesRes, userEntriesRes, raceMetadataRes] = await Promise.all([
               supabase
                 .from('race_entry_rules')
                 .select(
@@ -912,7 +1001,11 @@ export default function CalendarPage(): JSX.Element {
                 .select('race_id, club_id, status')
                 .in('race_id', raceIds)
                 .eq('club_id', resolvedClubId)
-                .in('status', ['applied', 'accepted', 'declined', 'withdrawn', 'missed_startlist', 'cancelled'])
+                .in('status', ['applied', 'accepted', 'declined', 'withdrawn', 'missed_startlist', 'cancelled']),
+              supabase
+                .from('races')
+                .select('id, metadata')
+                .in('id', raceIds)
             ])
 
             if (!entryRulesRes.error) {
@@ -932,6 +1025,16 @@ export default function CalendarPage(): JSX.Element {
                 return acc
               }, {})
             }
+
+            if (!raceMetadataRes.error) {
+              raceMetadataByRaceId = ((raceMetadataRes.data ?? []) as Array<{
+                id?: string | null
+                metadata?: JsonRecord | null
+              }>).reduce<Record<string, JsonRecord | null>>((acc, row) => {
+                if (row.id) acc[row.id] = row.metadata ?? null
+                return acc
+              }, {})
+            }
           }
 
           resolvedRaces = raceRows.map(row => {
@@ -948,6 +1051,7 @@ export default function CalendarPage(): JSX.Element {
               category: toNullableString(row.category),
               applications_status: entryRules?.applications_status ?? null,
               status: toNullableString(row.status),
+              metadata: raceMetadataByRaceId[raceId] ?? asRecord(row.metadata),
               stored_stage_count: toNullableNumber(row.stored_stage_count),
               actual_stage_count: toNullableNumber(row.actual_stage_count),
               first_start_city: toNullableString(row.first_start_city),
@@ -970,7 +1074,7 @@ export default function CalendarPage(): JSX.Element {
           if (raceIds.length > 0) {
             const stagesRes = await supabase
               .from('race_stages')
-              .select('race_id, stage_number, stage_date')
+              .select('race_id, stage_number, stage_date, weather_cancelled, weather_cancellation_reason')
               .in('race_id', raceIds)
               .order('stage_date', { ascending: true })
               .order('stage_number', { ascending: true })
@@ -984,6 +1088,8 @@ export default function CalendarPage(): JSX.Element {
                   race_id: stage.race_id,
                   stage_number: stage.stage_number,
                   stage_date: stage.stage_date,
+                  weather_cancelled: stage.weather_cancelled ?? false,
+                  weather_cancellation_reason: stage.weather_cancellation_reason ?? null,
                 })
                 return acc
               }, {})
@@ -1691,11 +1797,24 @@ export default function CalendarPage(): JSX.Element {
                     </div>
 
                     <div className="mt-2 space-y-1">
-                      {dayRaces.map(race => (
+                      {dayRaces.map(race => {
+                        const stageWeatherCanceled = isCalendarRaceStageWeatherCanceled(
+                          race,
+                          day.canonicalDateString,
+                          raceStagesByRaceId
+                        )
+                        const raceAllWeatherCanceled = isRaceAllStagesWeatherCanceled(race)
+
+                        return (
                         <div
                           key={`${race.id}-${day.canonicalDateString}-race`}
                           data-race-id={race.id}
-                          className="rounded-md bg-blue-100 px-2 py-1 text-[11px] font-medium text-blue-700"
+                          className={[
+                            'rounded-md px-2 py-1 text-[11px] font-medium',
+                            stageWeatherCanceled || raceAllWeatherCanceled
+                              ? 'bg-red-100 text-red-800 ring-1 ring-red-200'
+                              : 'bg-blue-100 text-blue-700',
+                          ].join(' ')}
                         >
                           <button
                             type="button"
@@ -1705,7 +1824,8 @@ export default function CalendarPage(): JSX.Element {
                             {formatRaceBadgeLabel(race, day.canonicalDateString, raceStagesByRaceId)}
                           </button>
                         </div>
-                      ))}
+                        )
+                      })}
 
                       {dayBookings.map(booking => (
                         <div

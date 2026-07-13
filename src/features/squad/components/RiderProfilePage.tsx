@@ -1345,6 +1345,16 @@ function SimpleInfoRow({
   )
 }
 
+function getSkillDeltaBadgeClasses(
+  deltaDirection?: 'positive' | 'negative' | null
+) {
+  return deltaDirection === 'positive'
+    ? 'border-emerald-300 bg-emerald-50 text-emerald-700'
+    : deltaDirection === 'negative'
+      ? 'border-rose-300 bg-rose-50 text-rose-700'
+      : 'border-slate-200 bg-slate-100 text-slate-500'
+}
+
 function SimpleAttributeRow({
   label,
   attributeCode,
@@ -1362,13 +1372,7 @@ function SimpleAttributeRow({
 }) {
   const safeValue = Math.max(0, Math.min(100, value))
   const accent = getSkillAccentStyle(attributeCode)
-
-  const deltaClasses =
-    deltaDirection === 'positive'
-      ? 'border-emerald-300 bg-emerald-50 text-emerald-700'
-      : deltaDirection === 'negative'
-        ? 'border-rose-300 bg-rose-50 text-rose-700'
-        : 'border-slate-200 bg-slate-100 text-slate-500'
+  const deltaClasses = getSkillDeltaBadgeClasses(deltaDirection)
 
   return (
     <div className="relative overflow-hidden rounded-lg border border-slate-200 bg-white px-4 py-3">
@@ -1381,8 +1385,9 @@ function SimpleAttributeRow({
       />
 
       <div className="relative flex items-center justify-between gap-4">
-        <div className="flex min-w-0 items-center gap-2.5">
-          <div className="text-sm font-medium text-slate-700">{label}</div>
+        <div className="min-w-0 text-sm font-medium text-slate-700">{label}</div>
+
+        <div className="flex shrink-0 items-center gap-2">
           {deltaLabel ? (
             <span
               className={`inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-bold ${deltaClasses}`}
@@ -1391,10 +1396,10 @@ function SimpleAttributeRow({
               {deltaLabel}
             </span>
           ) : null}
-        </div>
 
-        <div className="w-10 shrink-0 text-right text-base font-semibold text-slate-900">
-          {safeValue}
+          <div className="w-10 text-right text-base font-semibold text-slate-900">
+            {safeValue}
+          </div>
         </div>
       </div>
     </div>
@@ -4066,23 +4071,19 @@ export default function RiderProfilePage({
                           {column.map((stat) => {
                             const delta = skillDeltaMap[stat.key]
                             const showDelta = Boolean(delta?.has_visible_delta && delta.delta_label)
-                            const deltaClasses =
-                              delta?.delta_direction === 'positive'
-                                ? 'border-emerald-300 bg-emerald-50 text-emerald-700'
-                                : delta?.delta_direction === 'negative'
-                                  ? 'border-rose-300 bg-rose-50 text-rose-700'
-                                  : 'border-slate-200 bg-slate-100 text-slate-500'
+                            const deltaClasses = getSkillDeltaBadgeClasses(delta?.delta_direction)
 
                             return (
                               <DetailRow
                                 key={stat.key}
                                 label={stat.label}
                                 value={
-                                  <span className="inline-flex items-center justify-end gap-2">
-                                    <span>{stat.value ?? 0}</span>
+                                  <span className="inline-flex min-w-[84px] items-center justify-end gap-2 whitespace-nowrap">
+                                    <span className="w-8 text-right">{stat.value ?? 0}</span>
+
                                     {showDelta ? (
                                       <span
-                                        className={`rounded-full border px-2 py-0.5 text-[11px] font-bold ${deltaClasses}`}
+                                        className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-bold ${deltaClasses}`}
                                         title={formatSkillDeltaSource(delta?.primary_source) ?? undefined}
                                       >
                                         {delta?.delta_label}

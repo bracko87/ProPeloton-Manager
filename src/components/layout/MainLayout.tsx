@@ -31,6 +31,19 @@
  * - Never use the developing club as a generic "active club".
  * - Persist only the main club under the dedicated storage key: ppm-main-club.
  *
+ * FALSE COIN-LOCK FIX:
+ * - Temporary RPC/network/token-refresh failures no longer overwrite the user's
+ *   real balance with 0 or mark gameplay as locked.
+ * - The lock modal appears only after a successful response confirms a real lock.
+ * - Refreshes are protected against stale overlapping responses after inactivity.
+ *
+ * INACTIVITY AUTO-LOGOUT:
+ * - Warn the user after 29 minutes without real user interaction.
+ * - Automatically sign out after 30 minutes of inactivity.
+ * - Activity is shared across browser tabs through localStorage.
+ * - Mouse, pointer, keyboard, touch, wheel, focus, and visibility activity reset
+ *   the timer without generating excessive storage writes.
+ *
  * UPDATE: Active club auto-repair
  * - On layout mount, repair ppm-active-club from the user's true main club context.
  * - Broadcast a fresh club-updated event so listeners recover automatically.
@@ -40,7 +53,13 @@
  *   - stale localStorage after reload/sign-in
  */
 
-import React, { useEffect, useState, useCallback, useMemo } from 'react'
+import React, {
+  useEffect,
+  useState,
+  useCallback,
+  useMemo,
+  useRef,
+} from 'react'
 import { Outlet, useNavigate, useLocation } from 'react-router'
 import Sidebar from './Sidebar'
 import Header from './Header'
@@ -62,8 +81,8 @@ interface ClubUiState {
 }
 
 interface CoinStatusRow {
-  balance: number
-  can_play: boolean
+  balance?: number | string | null
+  can_play?: boolean | null
 }
 
 interface MainClubRow {
@@ -82,14 +101,41 @@ const PRO_PAGE_PATH = '/dashboard/pro'
 const PRO_PAGE_ALIASES = new Set<string>(['/dashboard/pro', '/dashboard/pro-packages'])
 const MAIN_CLUB_STORAGE_KEY = 'ppm-main-club'
 
+const INACTIVITY_TIMEOUT_MS = 30 * 60 * 1000
+const INACTIVITY_WARNING_MS = 29 * 60 * 1000
+const INACTIVITY_CHECK_INTERVAL_MS = 15 * 1000
+const INACTIVITY_ACTIVITY_WRITE_THROTTLE_MS = 5 * 1000
+const LAST_ACTIVITY_STORAGE_KEY = 'ppm-last-user-activity'
+
 export default function MainLayout({ children }: MainLayoutProps) {
   const [collapsed, setCollapsed] = useState(false)
   const [coinBalance, setCoinBalance] = useState(0)
   const [canPlayToday, setCanPlayToday] = useState(true)
 
+  /*
+   * The modal must never open while the coin status is unknown.
+   * It may open only after a successful server response confirms a lock.
+   */
+  const [coinStatusResolved, setCoinStatusResolved] = useState(false)
+
+  /*
+   * Prevent an older request from overwriting a newer result when a browser
+   * tab wakes after inactivity and several refresh triggers fire together.
+   */
+  const coinStatusRequestVersionRef = useRef(0)
+
   // Controls whether the "locked" modal is currently shown.
   // We only show it when locked AND not on pro pages.
   const [showLockModal, setShowLockModal] = useState(false)
+
+  /*
+   * Inactivity warning appears during the final minute before automatic logout.
+   * The timestamp itself lives in localStorage so activity in any open game tab
+   * keeps the complete signed-in session active.
+   */
+  const [showInactivityWarning, setShowInactivityWarning] = useState(false)
+  const inactivityLogoutStartedRef = useRef(false)
+  const lastActivityWriteRef = useRef(0)
 
   const [clubUi, setClubUi] = useState<ClubUiState>({
     id: undefined,
@@ -105,6 +151,12 @@ export default function MainLayout({ children }: MainLayoutProps) {
   const isProPage = useMemo(() => {
     return PRO_PAGE_ALIASES.has(location.pathname)
   }, [location.pathname])
+
+  /*
+   * Unknown status is not a lock. Only a successfully resolved response that
+   * confirms the user cannot play may block the dashboard.
+   */
+  const isCoinLockConfirmed = coinStatusResolved && !canPlayToday
 
   const persistMainClubToStorage = useCallback(
     (club: MainClubRow, countryName: string, logoUrl: string | null) => {
@@ -134,17 +186,145 @@ export default function MainLayout({ children }: MainLayoutProps) {
   }, [])
 
   const loadCoinStatus = useCallback(async () => {
-    const { data, error } = await supabase.rpc('get_my_coin_status')
-    if (error) {
-      console.error('Failed to load coin status:', error)
-      setCoinBalance(0)
-      setCanPlayToday(false)
+    const requestVersion = ++coinStatusRequestVersionRef.current
+
+    try {
+      /*
+       * After an inactive tab wakes, Supabase may briefly be refreshing the
+       * authentication token. Do not interpret that temporary state as zero
+       * coins or a gameplay lock.
+       */
+      const {
+        data: { session },
+        error: sessionError,
+      } = await supabase.auth.getSession()
+
+      if (requestVersion !== coinStatusRequestVersionRef.current) return
+
+      if (sessionError) {
+        console.warn(
+          'Coin status session check failed; keeping last confirmed state:',
+          sessionError
+        )
+        return
+      }
+
+      if (!session?.user?.id) {
+        console.warn(
+          'Coin status was not refreshed because no active session was available.'
+        )
+        return
+      }
+
+      const { data, error } = await supabase.rpc('get_my_coin_status')
+
+      /*
+       * A newer request has already started. Ignore this older response,
+       * regardless of whether it succeeded or failed.
+       */
+      if (requestVersion !== coinStatusRequestVersionRef.current) return
+
+      if (error) {
+        /*
+         * This is the core false-lock fix:
+         * keep the last confirmed balance/access state on temporary failures.
+         */
+        console.warn(
+          'Failed to refresh coin status; keeping last confirmed state:',
+          error
+        )
+        return
+      }
+
+      /*
+       * Support either common Supabase RPC shape:
+       *   [{ balance, can_play }]
+       *   { balance, can_play }
+       */
+      const rawRow = Array.isArray(data) ? data[0] : data
+
+      if (!rawRow || typeof rawRow !== 'object') {
+        console.warn(
+          'Coin status RPC returned no usable row; keeping last confirmed state:',
+          data
+        )
+        return
+      }
+
+      const row = rawRow as CoinStatusRow
+      const parsedBalance = Number(row.balance)
+
+      if (!Number.isFinite(parsedBalance)) {
+        console.warn(
+          'Coin status RPC returned an invalid balance; keeping last confirmed state:',
+          data
+        )
+        return
+      }
+
+      const nextBalance = Math.max(parsedBalance, 0)
+
+      /*
+       * Fail safely when balance and can_play disagree:
+       * a balance of 2+ coins or explicit can_play=true keeps gameplay open.
+       * Real paid actions should still be enforced by the backend.
+       */
+      const nextCanPlay =
+        nextBalance >= COINS_NEEDED_TO_PLAY || row.can_play === true
+
+      if (
+        typeof row.can_play === 'boolean' &&
+        row.can_play !== (nextBalance >= COINS_NEEDED_TO_PLAY)
+      ) {
+        console.warn(
+          'Coin status RPC returned inconsistent balance/can_play values. ' +
+            'Using the unlocked result when either value permits play.',
+          data
+        )
+      }
+
+      setCoinBalance(nextBalance)
+      setCanPlayToday(nextCanPlay)
+      setCoinStatusResolved(true)
+    } catch (error) {
+      if (requestVersion !== coinStatusRequestVersionRef.current) return
+
+      /*
+       * An unexpected refresh failure is still an unknown state, not a
+       * confirmed zero balance.
+       */
+      console.warn(
+        'Unexpected coin status refresh failure; keeping last confirmed state:',
+        error
+      )
+    }
+  }, [])
+
+  const markUserActive = useCallback((force = false) => {
+    if (typeof window === 'undefined') return
+    if (inactivityLogoutStartedRef.current) return
+
+    const now = Date.now()
+
+    /*
+     * Mouse movement can fire hundreds of times per second. Most activity
+     * events therefore write at most once every five seconds. Explicit actions
+     * such as "Stay logged in", focus, or a newly visible tab use force=true.
+     */
+    if (
+      !force &&
+      now - lastActivityWriteRef.current <
+        INACTIVITY_ACTIVITY_WRITE_THROTTLE_MS
+    ) {
       return
     }
 
-    const row = ((data ?? []) as CoinStatusRow[])[0] ?? { balance: 0, can_play: false }
-    setCoinBalance(Math.max(Number(row.balance ?? 0), 0))
-    setCanPlayToday(Boolean(row.can_play))
+    lastActivityWriteRef.current = now
+    window.localStorage.setItem(
+      LAST_ACTIVITY_STORAGE_KEY,
+      String(now)
+    )
+    setShowInactivityWarning(false)
   }, [])
 
   const handleLogoutAndHome = useCallback(async () => {
@@ -154,6 +334,8 @@ export default function MainLayout({ children }: MainLayoutProps) {
       clearMainClubStorage()
 
       if (typeof window !== 'undefined') {
+        window.localStorage.removeItem(LAST_ACTIVITY_STORAGE_KEY)
+        window.localStorage.removeItem('ppm-active-club')
         window.location.href = '/'
       } else {
         navigate('/')
@@ -171,6 +353,139 @@ export default function MainLayout({ children }: MainLayoutProps) {
     },
     [navigate]
   )
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+
+    /*
+     * Mounting/reloading the authenticated dashboard is user activity.
+     * Reset here so a timestamp left from an older browser session can never
+     * cause an immediate logout after a fresh login or page reload.
+     */
+    inactivityLogoutStartedRef.current = false
+    markUserActive(true)
+
+    const readLastActivity = (): number => {
+      const storedValue = Number(
+        window.localStorage.getItem(LAST_ACTIVITY_STORAGE_KEY)
+      )
+
+      return Number.isFinite(storedValue) && storedValue > 0
+        ? storedValue
+        : Date.now()
+    }
+
+    const performAutomaticLogout = async () => {
+      if (inactivityLogoutStartedRef.current) return
+
+      inactivityLogoutStartedRef.current = true
+      setShowInactivityWarning(false)
+
+      try {
+        await handleLogoutAndHome()
+      } catch (error) {
+        /*
+         * handleLogoutAndHome already redirects in its finally block, but keep
+         * a diagnostic in case a browser blocks navigation unexpectedly.
+         */
+        console.error('Automatic inactivity logout failed:', error)
+      }
+    }
+
+    const checkInactivity = () => {
+      if (inactivityLogoutStartedRef.current) return
+
+      const inactiveFor = Date.now() - readLastActivity()
+
+      if (inactiveFor >= INACTIVITY_TIMEOUT_MS) {
+        void performAutomaticLogout()
+        return
+      }
+
+      setShowInactivityWarning(
+        inactiveFor >= INACTIVITY_WARNING_MS
+      )
+    }
+
+    const handleUserActivity = () => {
+      markUserActive(false)
+    }
+
+    const handleFocus = () => {
+      /*
+       * Returning focus is a real user action. Reset the timer immediately.
+       */
+      markUserActive(true)
+    }
+
+    const handleVisibility = () => {
+      if (document.visibilityState !== 'visible') return
+
+      /*
+       * Check first. If the tab has already exceeded the timeout, log out.
+       * Otherwise, becoming visible counts as renewed activity.
+       */
+      const inactiveFor = Date.now() - readLastActivity()
+
+      if (inactiveFor >= INACTIVITY_TIMEOUT_MS) {
+        void performAutomaticLogout()
+        return
+      }
+
+      markUserActive(true)
+    }
+
+    const handleStorage = (event: StorageEvent) => {
+      if (event.key !== LAST_ACTIVITY_STORAGE_KEY) return
+
+      /*
+       * Activity in another tab refreshes this tab's warning state too.
+       */
+      if (event.newValue) {
+        setShowInactivityWarning(false)
+      }
+    }
+
+    const activityEvents: Array<keyof WindowEventMap> = [
+      'pointerdown',
+      'keydown',
+      'touchstart',
+      'wheel',
+      'mousemove',
+    ]
+
+    activityEvents.forEach(eventName => {
+      window.addEventListener(eventName, handleUserActivity, {
+        passive: true,
+      })
+    })
+
+    window.addEventListener('focus', handleFocus)
+    window.addEventListener('storage', handleStorage)
+    document.addEventListener('visibilitychange', handleVisibility)
+
+    const intervalId = window.setInterval(
+      checkInactivity,
+      INACTIVITY_CHECK_INTERVAL_MS
+    )
+
+    checkInactivity()
+
+    return () => {
+      window.clearInterval(intervalId)
+
+      activityEvents.forEach(eventName => {
+        window.removeEventListener(eventName, handleUserActivity)
+      })
+
+      window.removeEventListener('focus', handleFocus)
+      window.removeEventListener('storage', handleStorage)
+      document.removeEventListener(
+        'visibilitychange',
+        handleVisibility
+      )
+    }
+  }, [handleLogoutAndHome, markUserActive])
 
   useEffect(() => {
     let cancelled = false
@@ -294,43 +609,129 @@ export default function MainLayout({ children }: MainLayoutProps) {
 
     void Promise.all([loadClubUi(), loadCoinStatus()])
 
+    const refreshCoinStatusWhenActive = () => {
+      const isVisible = document.visibilityState === 'visible'
+      const isOnline =
+        typeof navigator === 'undefined' || navigator.onLine
+
+      if (isVisible && isOnline) {
+        void loadCoinStatus()
+      }
+    }
+
+    /*
+     * Poll only while the tab is active and online. This avoids creating a
+     * burst of failed requests while the browser is sleeping.
+     */
     const intervalId = window.setInterval(() => {
-      void loadCoinStatus()
+      refreshCoinStatusWhenActive()
     }, 15000)
 
     const onVisibility = () => {
-      if (document.visibilityState === 'visible') void loadCoinStatus()
+      if (document.visibilityState === 'visible') {
+        void loadCoinStatus()
+      }
     }
+
+    const onFocus = () => {
+      void loadCoinStatus()
+    }
+
+    const onOnline = () => {
+      void loadCoinStatus()
+    }
+
     document.addEventListener('visibilitychange', onVisibility)
+    window.addEventListener('focus', onFocus)
+    window.addEventListener('online', onOnline)
+
+    const {
+      data: { subscription: authSubscription },
+    } = supabase.auth.onAuthStateChange(event => {
+      if (event === 'SIGNED_OUT') {
+        /*
+         * Invalidate requests still running for the old session and make sure
+         * an unresolved signed-out state cannot display the lock modal.
+         */
+        coinStatusRequestVersionRef.current += 1
+        setCoinBalance(0)
+        setCanPlayToday(true)
+        setCoinStatusResolved(false)
+        setShowLockModal(false)
+        setShowInactivityWarning(false)
+        inactivityLogoutStartedRef.current = false
+
+        if (typeof window !== 'undefined') {
+          window.localStorage.removeItem(LAST_ACTIVITY_STORAGE_KEY)
+        }
+
+        return
+      }
+
+      if (
+        event === 'SIGNED_IN' ||
+        event === 'TOKEN_REFRESHED' ||
+        event === 'USER_UPDATED'
+      ) {
+        if (event === 'SIGNED_IN') {
+          inactivityLogoutStartedRef.current = false
+          markUserActive(true)
+        }
+
+        /*
+         * Schedule the RPC outside the auth callback to avoid nested Supabase
+         * operations while the auth event is still being handled.
+         */
+        window.setTimeout(() => {
+          void loadCoinStatus()
+        }, 0)
+      }
+    })
 
     return () => {
       mounted = false
+
+      /*
+       * Ignore any response that completes after this layout unmounts.
+       */
+      coinStatusRequestVersionRef.current += 1
+
       window.clearInterval(intervalId)
       document.removeEventListener('visibilitychange', onVisibility)
+      window.removeEventListener('focus', onFocus)
+      window.removeEventListener('online', onOnline)
+      authSubscription.unsubscribe()
     }
-  }, [clearMainClubStorage, loadCoinStatus, persistMainClubToStorage])
+  }, [
+    clearMainClubStorage,
+    loadCoinStatus,
+    markUserActive,
+    persistMainClubToStorage,
+  ])
 
   /**
    * Lock behavior:
-   * - If locked and not on pro page: show modal.
-   * - If locked and on pro page: do NOT show modal (allow buying).
-   * - If unlocked: hide modal and allow normal browsing (including staying on pro page).
+   * - Unknown/unresolved status: never show the modal.
+   * - Confirmed locked and not on a Pro page: show the modal.
+   * - Confirmed locked on a Pro page: hide the modal so buying remains possible.
+   * - Confirmed unlocked: hide the modal.
    */
   useEffect(() => {
-    if (!canPlayToday) {
-      if (!isProPage) {
-        setShowLockModal(true)
-      } else {
-        setShowLockModal(false)
-      }
+    if (!coinStatusResolved) {
+      setShowLockModal(false)
+      return
+    }
+
+    if (isCoinLockConfirmed && !isProPage) {
+      setShowLockModal(true)
       return
     }
 
     setShowLockModal(false)
-  }, [canPlayToday, isProPage])
+  }, [coinStatusResolved, isCoinLockConfirmed, isProPage])
 
-  // When locked, block everything EXCEPT pro pages. This is the key fix.
-  const shouldBlockMain = !canPlayToday && !isProPage
+  // Block normal gameplay only after a successful response confirms the lock.
+  const shouldBlockMain = isCoinLockConfirmed && !isProPage
 
   const mainContent = useMemo(() => {
     if (children) return children
@@ -344,7 +745,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
 
   return (
     <div className="min-h-screen flex bg-gray-100">
-      <Sidebar collapsed={collapsed} locked={!canPlayToday} />
+      <Sidebar collapsed={collapsed} locked={isCoinLockConfirmed} />
 
       <div className="flex-1 flex flex-col min-w-0">
         <Header
@@ -368,6 +769,36 @@ export default function MainLayout({ children }: MainLayoutProps) {
 
         <Footer />
       </div>
+
+      {showInactivityWarning && !showLockModal ? (
+        <div className="fixed bottom-6 right-6 z-[130] w-[calc(100%-2rem)] max-w-sm rounded-2xl border border-amber-300 bg-white p-5 shadow-2xl">
+          <div className="flex items-start gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-100 text-xl text-amber-700">
+              ⏱
+            </div>
+
+            <div className="min-w-0">
+              <div className="text-base font-bold text-slate-900">
+                You will be logged out soon
+              </div>
+
+              <p className="mt-1 text-sm leading-6 text-slate-600">
+                Your game has been inactive for almost 30 minutes.
+                You will be logged out automatically in approximately
+                one minute.
+              </p>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => markUserActive(true)}
+            className="mt-4 w-full rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-slate-800"
+          >
+            Stay logged in
+          </button>
+        </div>
+      ) : null}
 
       {showLockModal ? (
         <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/55 backdrop-blur-[3px] p-4 pointer-events-auto">

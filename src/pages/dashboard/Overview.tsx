@@ -1640,6 +1640,65 @@ function isDateBefore(left?: string | null, right?: string | null): boolean {
   return compareDateOnly(left, right) < 0;
 }
 
+function isDateOnOrBefore(left?: string | null, right?: string | null): boolean {
+  if (!left || !right) return false;
+  return compareDateOnly(left, right) <= 0;
+}
+
+function getOverviewRaceStageDateRows(
+  raceId: string,
+  stagesByRaceId: Map<string, Record<string, unknown>[]>,
+): Record<string, unknown>[] {
+  return [...(stagesByRaceId.get(raceId) ?? [])].sort((left, right) => {
+    const leftNumber = asNumber(left.stage_number, 0);
+    const rightNumber = asNumber(right.stage_number, 0);
+
+    if (leftNumber !== rightNumber) return leftNumber - rightNumber;
+
+    return compareDateOnly(
+      asString(left.stage_date ?? left.date, ""),
+      asString(right.stage_date ?? right.date, ""),
+    );
+  });
+}
+
+function getOverviewRaceStartDate(
+  race: Record<string, unknown>,
+  stagesByRaceId: Map<string, Record<string, unknown>[]>,
+): string {
+  const raceId = asString(race.id, "");
+  const stages = getOverviewRaceStageDateRows(raceId, stagesByRaceId);
+
+  const firstStageDate =
+    stages
+      .map((stage) => asString(stage.stage_date ?? stage.date, ""))
+      .filter(Boolean)
+      .sort(compareDateOnly)[0] ?? "";
+
+  return firstStageDate || asString(race.start_date, "");
+}
+
+function getOverviewRaceEndDate(
+  race: Record<string, unknown>,
+  stagesByRaceId: Map<string, Record<string, unknown>[]>,
+): string {
+  const raceId = asString(race.id, "");
+  const stages = getOverviewRaceStageDateRows(raceId, stagesByRaceId);
+
+  const stageDates = stages
+    .map((stage) => asString(stage.stage_date ?? stage.date, ""))
+    .filter(Boolean)
+    .sort(compareDateOnly);
+
+  const lastStageDate = stageDates[stageDates.length - 1] ?? "";
+
+  return (
+    lastStageDate ||
+    asString(race.end_date, "") ||
+    asString(race.start_date, "")
+  );
+}
+
 function normalizeRaceStatusForOverview(value?: string | null): string {
   return (value ?? "").trim().toLowerCase();
 }
@@ -1656,21 +1715,16 @@ function isFinishedRaceStatusForOverview(value?: string | null): boolean {
   );
 }
 
-function isActiveOrClosedRaceStatusForOverview(value?: string | null): boolean {
+function isCancelledRaceStatusForOverview(value?: string | null): boolean {
   const normalized = normalizeRaceStatusForOverview(value);
 
   return (
-    normalized === "active" ||
-    normalized === "running" ||
-    normalized === "started" ||
-    normalized === "live" ||
-    normalized === "completed" ||
-    normalized === "archived" ||
-    normalized === "finished" ||
-    normalized === "race_finished" ||
-    normalized === "race_completed" ||
     normalized === "cancelled" ||
-    normalized === "canceled"
+    normalized === "canceled" ||
+    normalized === "weather_cancelled" ||
+    normalized === "cancelled_by_weather" ||
+    normalized === "race_cancelled" ||
+    normalized === "race_canceled"
   );
 }
 
@@ -1800,6 +1854,7 @@ async function loadOverviewTeamRaceHub(
     const [
       { data: preparationData, error: preparationError },
       { data: raceData, error: raceError },
+      { data: stageData, error: stageError },
     ] = await Promise.all([
       supabase
         .from("race_preparations")
@@ -1812,6 +1867,10 @@ async function loadOverviewTeamRaceHub(
           "id, name, short_name, category, country_code, start_date, end_date, stage_count, is_stage_race, status",
         )
         .in("id", raceIds),
+      supabase
+        .from("race_stages")
+        .select("id, race_id, stage_number, stage_date")
+        .in("race_id", raceIds),
     ]);
 
     if (preparationError) {
@@ -1829,11 +1888,32 @@ async function loadOverviewTeamRaceHub(
       return emptyHub;
     }
 
+    if (stageError) {
+      console.warn(
+        "Could not load race stages for overview race hub:",
+        stageError.message,
+      );
+    }
+
     const preparations = asArray<Record<string, unknown>>(preparationData);
     const races = asArray<Record<string, unknown>>(raceData);
+    const stages = asArray<Record<string, unknown>>(stageData);
+
     const raceById = new Map(
       races.map((race) => [asString(race.id, ""), race]),
     );
+
+    const stagesByRaceId = new Map<string, Record<string, unknown>[]>();
+
+    for (const stage of stages) {
+      const raceId = asString(stage.race_id, "");
+      if (!raceId) continue;
+
+      const existing = stagesByRaceId.get(raceId) ?? [];
+      existing.push(stage);
+      stagesByRaceId.set(raceId, existing);
+    }
+
     const preparationByClubRace = new Map(
       preparations.map((preparation) => [
         `${asString(preparation.club_id, "")}:${asString(preparation.race_id, "")}`,
@@ -1848,29 +1928,36 @@ async function loadOverviewTeamRaceHub(
 
       return Boolean(
         prep &&
-        (isSubmittedRacePreparationStatus(asString(prep.status, "")) ||
-          isSubmittedRacePreparationStatus(
-            asString(prep.startlist_status, ""),
-          )),
+          (isSubmittedRacePreparationStatus(asString(prep.status, "")) ||
+            isSubmittedRacePreparationStatus(
+              asString(prep.startlist_status, ""),
+            )),
       );
     });
 
+    /*
+     * Next Team Race rule:
+     * Keep showing the next submitted team race until the race start date arrives.
+     * Do not hide it early just because race.status changed to active/running.
+     */
     const nextEntries = submittedEntries
       .map((entry) => {
         const race = raceById.get(asString(entry.race_id, ""));
         const clubId = asString(entry.club_id, "");
 
         if (!race) return null;
-        if (!isDateAfter(asString(race.start_date, ""), currentGameDate))
-          return null;
-        if (isActiveOrClosedRaceStatusForOverview(asString(race.status, "")))
-          return null;
+
+        const startDate = getOverviewRaceStartDate(race, stagesByRaceId);
+        const status = asString(race.status, "");
+
+        if (!isDateAfter(startDate, currentGameDate)) return null;
+        if (isCancelledRaceStatusForOverview(status)) return null;
 
         return {
           entry,
           race,
           clubId,
-          startDate: asString(race.start_date, ""),
+          startDate,
         };
       })
       .filter(
@@ -1885,6 +1972,12 @@ async function loadOverviewTeamRaceHub(
       )
       .sort((left, right) => compareDateOnly(left.startDate, right.startDate));
 
+    /*
+     * Last Team Race rule:
+     * Only show a race after the full race has actually ended for this team.
+     * For stage races, every known stage must have a team result before it can
+     * become the Last Team Race.
+     */
     const finishedCandidateEntries = entries
       .map((entry) => {
         const race = raceById.get(asString(entry.race_id, ""));
@@ -1892,13 +1985,11 @@ async function loadOverviewTeamRaceHub(
 
         if (!race) return null;
 
-        const endDate = asString(race.end_date ?? race.start_date, "");
+        const endDate = getOverviewRaceEndDate(race, stagesByRaceId);
         const status = asString(race.status, "");
-        const isFinishedByStatus = isFinishedRaceStatusForOverview(status);
-        const isBeforeToday = isDateBefore(endDate, currentGameDate);
 
-        if (!isFinishedByStatus && !isBeforeToday) return null;
-        if (!isBeforeToday && !isFinishedByStatus) return null;
+        if (isCancelledRaceStatusForOverview(status)) return null;
+        if (!isDateOnOrBefore(endDate, currentGameDate)) return null;
 
         return {
           entry,
@@ -1918,13 +2009,15 @@ async function loadOverviewTeamRaceHub(
         } => Boolean(item),
       );
 
-    let raceIdsWithTeamResults = new Set<string>();
+    const resultStageIdsByClubRace = new Map<string, Set<string>>();
+    const raceIdsWithAnyTeamResultByClubRace = new Set<string>();
+    const stageLookupSucceeded = !stageError;
 
     if (finishedCandidateEntries.length > 0) {
       try {
         const { data: resultData, error: resultError } = await supabase
           .from("race_stage_results")
-          .select("race_id, team_id")
+          .select("race_id, stage_id, team_id")
           .in(
             "race_id",
             Array.from(
@@ -1943,29 +2036,63 @@ async function loadOverviewTeamRaceHub(
             resultError.message,
           );
         } else {
-          raceIdsWithTeamResults = new Set(
-            asArray<Record<string, unknown>>(resultData)
-              .map((row) => asString(row.race_id, ""))
-              .filter(Boolean),
-          );
+          for (const row of asArray<Record<string, unknown>>(resultData)) {
+            const raceId = asString(row.race_id, "");
+            const clubId = asString(row.team_id, "");
+            const stageId = asString(row.stage_id, "");
+
+            if (!raceId || !clubId) continue;
+
+            const key = `${clubId}:${raceId}`;
+            raceIdsWithAnyTeamResultByClubRace.add(key);
+
+            if (stageId) {
+              const existing = resultStageIdsByClubRace.get(key) ?? new Set<string>();
+              existing.add(stageId);
+              resultStageIdsByClubRace.set(key, existing);
+            }
+          }
         }
       } catch (err) {
         console.warn("Team result lookup failed for overview last race:", err);
       }
     }
 
+    const hasCompletedFullTeamRace = (item: {
+      race: Record<string, unknown>;
+      clubId: string;
+    }): boolean => {
+      const raceId = asString(item.race.id, "");
+      if (!raceId || !item.clubId) return false;
+
+      const key = `${item.clubId}:${raceId}`;
+      const raceStages = getOverviewRaceStageDateRows(raceId, stagesByRaceId);
+      const resultStageIds = resultStageIdsByClubRace.get(key) ?? new Set<string>();
+
+      if (stageLookupSucceeded && raceStages.length > 0) {
+        return raceStages.every((stage) => {
+          const stageId = asString(stage.id, "");
+          return Boolean(stageId && resultStageIds.has(stageId));
+        });
+      }
+
+      return (
+        isFinishedRaceStatusForOverview(asString(item.race.status, "")) &&
+        raceIdsWithAnyTeamResultByClubRace.has(key)
+      );
+    };
+
     const lastEntries = finishedCandidateEntries
-      .filter(
-        (item) =>
-          raceIdsWithTeamResults.size === 0 ||
-          raceIdsWithTeamResults.has(asString(item.race.id, "")),
-      )
+      .filter((item) => hasCompletedFullTeamRace(item))
       .sort((left, right) => compareDateOnly(right.endDate, left.endDate));
 
     const nextTeamRace = nextEntries[0]
       ? {
           ...buildOverviewRaceFromRaceRow(
-            nextEntries[0].race,
+            {
+              ...nextEntries[0].race,
+              start_date: nextEntries[0].startDate,
+            },
             clubLabelById.get(nextEntries[0].clubId) ?? "Team",
             "start_date",
           ),
@@ -1976,7 +2103,10 @@ async function loadOverviewTeamRaceHub(
     const lastTeamRace = lastEntries[0]
       ? {
           ...buildOverviewRaceFromRaceRow(
-            lastEntries[0].race,
+            {
+              ...lastEntries[0].race,
+              end_date: lastEntries[0].endDate,
+            },
             clubLabelById.get(lastEntries[0].clubId) ?? "Team",
             "end_date",
           ),
