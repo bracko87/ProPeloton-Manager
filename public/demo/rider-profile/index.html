@@ -16,6 +16,7 @@
     <header class="site-header">
       <div class="site-header-inner">
         <a class="brand" href="/">ProPeloton Manager</a>
+
         <nav class="site-nav" aria-label="Main navigation">
           <a href="/about/">About</a>
           <a href="/how-to-play/">How to Play</a>
@@ -34,12 +35,15 @@
     <section class="hero">
       <div class="hero-inner">
         <a class="back-link" href="/demo/">← Back to Demo Overview</a>
+
         <div class="kicker">Demo · Rider Profile</div>
+
         <h1>Understand every rider on your roster.</h1>
+
         <p>
-          The rider profile brings together attributes, results, form, fatigue and
-          development. It is the main tool for deciding how to use and train each
-          cyclist on your team.
+          The rider profile brings together attributes, results, form, fatigue
+          and development. It is the main tool for deciding how to use and train
+          each cyclist on your team.
         </p>
       </div>
     </section>
@@ -47,14 +51,90 @@
     <main class="main">
       <section class="card">
         <h2>Profile structure</h2>
-        <img
-          src="https://pub-cdn.sider.ai/u/U0KAH9N4VLX/web-coder/69a48114fd11fbc8fc7d68f5/resource/47e5c01b-103e-4431-9399-101368abe1c4.jpg"
-          alt="Static mockup of a rider profile with attributes and charts"
-          class="demo-image"
-        />
-        <p>
-          In the real game, a rider profile typically includes:
-        </p>
+
+        <div class="demo-gallery" data-demo-gallery>
+          <img
+            src="https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Rider%20profile%201.jpg"
+            alt="ProPeloton Manager rider profile screenshot"
+            class="demo-image"
+            data-demo-main-image
+          />
+
+          <p class="demo-caption" data-demo-caption>
+            Rider profile with attributes, condition, development and management
+            details.
+          </p>
+
+          <div class="demo-thumbnails" aria-label="Rider profile screenshots">
+            <button
+              class="demo-thumb is-active"
+              type="button"
+              data-demo-src="https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Rider%20profile%201.jpg"
+              data-demo-alt="ProPeloton Manager rider profile screenshot"
+              data-demo-caption="Rider profile with attributes, condition, development and management details."
+            >
+              <img
+                src="https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Rider%20profile%201.jpg"
+                alt=""
+              />
+            </button>
+
+            <button
+              class="demo-thumb"
+              type="button"
+              data-demo-src="https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Rider%20Profile%202.jpg"
+              data-demo-alt="Second ProPeloton Manager rider profile screenshot"
+              data-demo-caption="Additional rider profile view with more performance and profile information."
+            >
+              <img
+                src="https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Rider%20Profile%202.jpg"
+                alt=""
+              />
+            </button>
+
+            <button
+              class="demo-thumb"
+              type="button"
+              data-demo-src="https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Rider%20profile%203.jpg"
+              data-demo-alt="Third ProPeloton Manager rider profile screenshot"
+              data-demo-caption="Rider detail view showing how managers compare and evaluate cyclists."
+            >
+              <img
+                src="https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Rider%20profile%203.jpg"
+                alt=""
+              />
+            </button>
+
+            <button
+              class="demo-thumb"
+              type="button"
+              data-demo-src="https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Rider%20Profile%204.jpg"
+              data-demo-alt="Fourth ProPeloton Manager rider profile screenshot"
+              data-demo-caption="Profile example focused on rider data and development context."
+            >
+              <img
+                src="https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Rider%20Profile%204.jpg"
+                alt=""
+              />
+            </button>
+
+            <button
+              class="demo-thumb"
+              type="button"
+              data-demo-src="https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Rider%20profile%205.jpg"
+              data-demo-alt="Fifth ProPeloton Manager rider profile screenshot"
+              data-demo-caption="Further rider profile example from the game interface."
+            >
+              <img
+                src="https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Rider%20profile%205.jpg"
+                alt=""
+              />
+            </button>
+          </div>
+        </div>
+
+        <p>In the real game, a rider profile typically includes:</p>
+
         <ul>
           <li><strong>Basic details</strong> such as age, nationality and contract.</li>
           <li><strong>Attributes</strong> for climbing, sprinting, time trial, hills and flat.</li>
@@ -67,9 +147,9 @@
       <section class="grid grid-2">
         <article class="card">
           <h3>Decisions based on profiles</h3>
-          <p>
-            Managers might use this information to:
-          </p>
+
+          <p>Managers might use this information to:</p>
+
           <ul>
             <li>Assign the right role for an upcoming race.</li>
             <li>Rest a tired rider before an important objective.</li>
@@ -79,23 +159,26 @@
         </article>
 
         <article class="card">
-          <h3>Long‑term development</h3>
+          <h3>Long-term development</h3>
+
           <p>
-            The profile also reflects long‑term progress. As riders gain experience,
-            they may grow in some areas and reach their ceiling in others. Good clubs
-            build a balanced roster that mixes established leaders with developing
-            talent.
+            The profile also reflects long-term progress. As riders gain
+            experience, they may grow in some areas and reach their ceiling in
+            others. Good clubs build a balanced roster that mixes established
+            leaders with developing talent.
           </p>
         </article>
       </section>
 
       <section class="card">
-        <h2>From riders to club‑level decisions</h2>
+        <h2>From riders to club-level decisions</h2>
+
         <p>
           Riders are the foundation of your club’s success, but finances and
-          rankings decide how far you can take them. The next demos focus on those
-          club‑level views.
+          rankings decide how far you can take them. The next demos focus on
+          those club-level views.
         </p>
+
         <div class="button-row">
           <a class="button button-primary" href="/#/register">Start Playing</a>
           <a class="button button-secondary" href="/demo/finances/">View finances demo</a>
@@ -106,6 +189,7 @@
     <footer class="site-footer">
       <div class="site-footer-inner">
         <span>© ProPeloton Manager. All rights reserved by Next Quest Studio.</span>
+
         <span>
           <a href="/about/">About</a> ·
           <a href="/how-to-play/">How to Play</a> ·
@@ -118,5 +202,7 @@
         </span>
       </div>
     </footer>
+
+    <script src="/demo-gallery.js"></script>
   </body>
 </html>

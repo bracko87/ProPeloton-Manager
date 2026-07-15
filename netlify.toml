@@ -1,5 +1,5 @@
 [build]
-  command = "npm run build && mkdir -p dist/about dist/how-to-play dist/game-guide dist/demo dist/demo/overview dist/demo/calendar dist/demo/race-preparation dist/demo/stage-replay dist/demo/rider-profile dist/demo/finances dist/demo/rankings dist/support dist/contact dist/privacy-policy dist/terms && cp public/ads.txt dist/ads.txt && cp public/robots.txt dist/robots.txt && cp public/sitemap.xml dist/sitemap.xml && cp public/static-site.css dist/static-site.css && cp public/about/index.html dist/about/index.html && cp public/how-to-play/index.html dist/how-to-play/index.html && cp public/game-guide/index.html dist/game-guide/index.html && cp public/demo/index.html dist/demo/index.html && cp public/demo/overview/index.html dist/demo/overview/index.html && cp public/demo/calendar/index.html dist/demo/calendar/index.html && cp public/demo/race-preparation/index.html dist/demo/race-preparation/index.html && cp public/demo/stage-replay/index.html dist/demo/stage-replay/index.html && cp public/demo/rider-profile/index.html dist/demo/rider-profile/index.html && cp public/demo/finances/index.html dist/demo/finances/index.html && cp public/demo/rankings/index.html dist/demo/rankings/index.html && cp public/support/index.html dist/support/index.html && cp public/contact/index.html dist/contact/index.html && cp public/privacy-policy/index.html dist/privacy-policy/index.html && cp public/terms/index.html dist/terms/index.html && echo '--- STATIC PUBLIC FILES CHECK ---' && test -f dist/demo/index.html && test -f dist/demo/overview/index.html && test -f dist/demo/calendar/index.html && test -f dist/demo/race-preparation/index.html && test -f dist/demo/stage-replay/index.html && test -f dist/demo/rider-profile/index.html && test -f dist/demo/finances/index.html && test -f dist/demo/rankings/index.html && test -f dist/static-site.css && echo 'Static demo pages OK' && echo '--- ADS TXT CHECK ---' && cat dist/ads.txt"
+  command = "npm run build && mkdir -p dist/about dist/how-to-play dist/game-guide dist/demo dist/demo/overview dist/demo/calendar dist/demo/race-preparation dist/demo/stage-replay dist/demo/rider-profile dist/demo/finances dist/demo/rankings dist/support dist/contact dist/privacy-policy dist/terms && cp public/ads.txt dist/ads.txt && cp public/robots.txt dist/robots.txt && cp public/sitemap.xml dist/sitemap.xml && cp public/static-site.css dist/static-site.css && cp public/demo-gallery.js dist/demo-gallery.js && cp public/about/index.html dist/about/index.html && cp public/how-to-play/index.html dist/how-to-play/index.html && cp public/game-guide/index.html dist/game-guide/index.html && cp public/demo/index.html dist/demo/index.html && cp public/demo/overview/index.html dist/demo/overview/index.html && cp public/demo/calendar/index.html dist/demo/calendar/index.html && cp public/demo/race-preparation/index.html dist/demo/race-preparation/index.html && cp public/demo/stage-replay/index.html dist/demo/stage-replay/index.html && cp public/demo/rider-profile/index.html dist/demo/rider-profile/index.html && cp public/demo/finances/index.html dist/demo/finances/index.html && cp public/demo/rankings/index.html dist/demo/rankings/index.html && cp public/support/index.html dist/support/index.html && cp public/contact/index.html dist/contact/index.html && cp public/privacy-policy/index.html dist/privacy-policy/index.html && cp public/terms/index.html dist/terms/index.html && echo '--- STATIC PUBLIC FILES CHECK ---' && test -f dist/about/index.html && test -f dist/how-to-play/index.html && test -f dist/game-guide/index.html && test -f dist/demo/index.html && test -f dist/demo/overview/index.html && test -f dist/demo/calendar/index.html && test -f dist/demo/race-preparation/index.html && test -f dist/demo/stage-replay/index.html && test -f dist/demo/rider-profile/index.html && test -f dist/demo/finances/index.html && test -f dist/demo/rankings/index.html && test -f dist/support/index.html && test -f dist/contact/index.html && test -f dist/privacy-policy/index.html && test -f dist/terms/index.html && test -f dist/static-site.css && test -f dist/demo-gallery.js && echo 'Static pages OK' && echo '--- ADS TXT CHECK ---' && cat dist/ads.txt"
   publish = "dist"
 
 [[headers]]
@@ -27,6 +27,12 @@
     Cache-Control = "public, max-age=0, must-revalidate"
 
 [[headers]]
+  for = "/demo-gallery.js"
+  [headers.values]
+    Content-Type = "application/javascript; charset=utf-8"
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+[[headers]]
   for = "/about/*"
   [headers.values]
     Cache-Control = "public, max-age=0, must-revalidate"
@@ -38,6 +44,11 @@
 
 [[headers]]
   for = "/game-guide/*"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+[[headers]]
+  for = "/demo/*"
   [headers.values]
     Cache-Control = "public, max-age=0, must-revalidate"
 
@@ -58,11 +69,6 @@
 
 [[headers]]
   for = "/terms/*"
-  [headers.values]
-    Cache-Control = "public, max-age=0, must-revalidate"
-
-[[headers]]
-  for = "/demo/*"
   [headers.values]
     Cache-Control = "public, max-age=0, must-revalidate"
 
@@ -96,50 +102,6 @@
 [[redirects]]
   from = "/game-guide/"
   to = "/game-guide/index.html"
-  status = 200
-  force = true
-
-[[redirects]]
-  from = "/support"
-  to = "/support/"
-  status = 301
-
-[[redirects]]
-  from = "/support/"
-  to = "/support/index.html"
-  status = 200
-  force = true
-
-[[redirects]]
-  from = "/contact"
-  to = "/contact/"
-  status = 301
-
-[[redirects]]
-  from = "/contact/"
-  to = "/contact/index.html"
-  status = 200
-  force = true
-
-[[redirects]]
-  from = "/privacy-policy"
-  to = "/privacy-policy/"
-  status = 301
-
-[[redirects]]
-  from = "/privacy-policy/"
-  to = "/privacy-policy/index.html"
-  status = 200
-  force = true
-
-[[redirects]]
-  from = "/terms"
-  to = "/terms/"
-  status = 301
-
-[[redirects]]
-  from = "/terms/"
-  to = "/terms/index.html"
   status = 200
   force = true
 
@@ -228,6 +190,50 @@
 [[redirects]]
   from = "/demo/rankings/"
   to = "/demo/rankings/index.html"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/support"
+  to = "/support/"
+  status = 301
+
+[[redirects]]
+  from = "/support/"
+  to = "/support/index.html"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/contact"
+  to = "/contact/"
+  status = 301
+
+[[redirects]]
+  from = "/contact/"
+  to = "/contact/index.html"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/privacy-policy"
+  to = "/privacy-policy/"
+  status = 301
+
+[[redirects]]
+  from = "/privacy-policy/"
+  to = "/privacy-policy/index.html"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/terms"
+  to = "/terms/"
+  status = 301
+
+[[redirects]]
+  from = "/terms/"
+  to = "/terms/index.html"
   status = 200
   force = true
 

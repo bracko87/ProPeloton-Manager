@@ -12,54 +12,191 @@ type ScreenshotItem = {
 
 const SCREENSHOTS: ScreenshotItem[] = [
   {
-    src: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Screenshot%202026-06-22%20110739.jpg',
+    src: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Overview%201.jpg',
     alt: 'ProPeloton Manager screenshot 1',
   },
   {
-    src: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Screenshot%202026-06-22%20110813.jpg',
+    src: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Overview%202.jpg',
     alt: 'ProPeloton Manager screenshot 2',
   },
   {
-    src: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Screenshot%202026-06-22%20110910.jpg',
+    src: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Assets%20Page.jpg',
     alt: 'ProPeloton Manager screenshot 3',
   },
   {
-    src: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Screenshot%202026-06-22%20110948.jpg',
+    src: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Infrastracture%20page%202.jpg',
     alt: 'ProPeloton Manager screenshot 4',
   },
   {
-    src: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Screenshot%202026-06-22%20111017.jpg',
+    src: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Infrastracture%20page%203.jpg',
     alt: 'ProPeloton Manager screenshot 5',
   },
   {
-    src: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Screenshot%202026-06-22%20111035.jpg',
+    src: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Infrastracture%20Page.jpg',
     alt: 'ProPeloton Manager screenshot 6',
   },
   {
-    src: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Screenshot%202026-06-22%20111053.jpg',
+    src: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Calendar%201.jpg',
     alt: 'ProPeloton Manager screenshot 7',
   },
   {
-    src: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Screenshot%202026-06-25%20105504.jpg',
+    src: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Calendar%202.jpg',
     alt: 'ProPeloton Manager screenshot 8',
   },
   {
-    src: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Screenshot%202026-06-25%20105552.jpg',
+    src: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/calendar%203.jpg',
     alt: 'ProPeloton Manager screenshot 9',
   },
   {
-    src: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Screenshot%202026-06-25%20105619.jpg',
+    src: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Equipment%20Page%201.jpg',
     alt: 'ProPeloton Manager screenshot 10',
   },
   {
-    src: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Screenshot%202026-06-25%20105646.jpg',
+    src: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Equipment%20Page%202.jpg',
     alt: 'ProPeloton Manager screenshot 11',
   },
   {
-    src: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Screenshot%202026-06-25%20105720.jpg',
+    src: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Equipment%20Page%203.jpg',
     alt: 'ProPeloton Manager screenshot 12',
   },
+  {
+    src: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Equipment%20Page%204.jpg',
+    alt: 'ProPeloton Manager screenshot 13',
+  },
+  {
+    src: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Equipment%20Page%205.jpg',
+    alt: 'ProPeloton Manager screenshot 14',
+  },
+  {
+    src: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Equipment%20Page%206.jpg',
+    alt: 'ProPeloton Manager screenshot 15',
+  },
+  {
+    src: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Equipment%20Page%207.jpg',
+    alt: 'ProPeloton Manager screenshot 16',
+  },
+  {
+    src: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Equipment%20Page%208.jpg',
+    alt: 'ProPeloton Manager screenshot 17',
+  },
+  {
+    src: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Finance%20Page%201.jpg',
+    alt: 'ProPeloton Manager screenshot 18',
+  },
+  {
+    src: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Finance%20Page%202.jpg',
+    alt: 'ProPeloton Manager screenshot 19',
+  },
+  {
+    src: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Finance%20Page%203.jpg',
+    alt: 'ProPeloton Manager screenshot 20',
+  },
+  {
+    src: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Finance%20Page%204.jpg',
+    alt: 'ProPeloton Manager screenshot 21',
+  },
+  {
+    src: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Finance%20Page%205.jpg',
+    alt: 'ProPeloton Manager screenshot 22',
+  },
+  {
+    src: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Finance%20page%206.jpg',
+    alt: 'ProPeloton Manager screenshot 22',
+  },
+    {
+    src: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Race%20detail%201.jpg',
+    alt: 'ProPeloton Manager screenshot 23',
+  },
+  {
+    src: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Race%20Detail%202.jpg',
+    alt: 'ProPeloton Manager screenshot 24',
+  },
+  {
+    src: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Race%20Detais%203.jpg',
+    alt: 'ProPeloton Manager screenshot 25',
+  },
+  {
+    src: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Race%20preparatiomn%203.jpg',
+    alt: 'ProPeloton Manager screenshot 26',
+  },
+  {
+    src: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Race%20preparation%201.jpg',
+    alt: 'ProPeloton Manager screenshot 27',
+  },
+  {
+    src: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Race%20preparation%202.jpg',
+    alt: 'ProPeloton Manager screenshot 28',
+  },
+  {
+    src: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Race%20preparation%204.jpg',
+    alt: 'ProPeloton Manager screenshot 29',
+  },
+  {
+    src: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Race%20Preparation%205.jpg',
+    alt: 'ProPeloton Manager screenshot 30',
+  },
+  {
+    src: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Rider%20profile%201.jpg',
+    alt: 'ProPeloton Manager screenshot 31',
+  },
+  {
+    src: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Rider%20Profile%202.jpg',
+    alt: 'ProPeloton Manager screenshot 32',
+  },
+  {
+    src: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Rider%20profile%203.jpg',
+    alt: 'ProPeloton Manager screenshot 33',
+  },
+  {
+    src: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Rider%20Profile%204.jpg',
+    alt: 'ProPeloton Manager screenshot 34',
+  },
+  {
+    src: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Rider%20profile%205.jpg',
+    alt: 'ProPeloton Manager screenshot 35',
+  },
+  {
+    src: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Squad%20Page%202.jpg',
+    alt: 'ProPeloton Manager screenshot 36',
+  },
+  {
+    src: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Squad%20Page.jpg',
+    alt: 'ProPeloton Manager screenshot 37',
+  },
+  {
+    src: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Statistic%20Page%201.jpg',
+    alt: 'ProPeloton Manager screenshot 38',
+  },
+  {
+    src: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Statistic%20Page%202.jpg',
+    alt: 'ProPeloton Manager screenshot 39',
+  },
+  {
+    src: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Team%20ranking%20Page%201.jpg',
+    alt: 'ProPeloton Manager screenshot 40',
+  },
+  {
+    src: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Team%20Ranking%20Page%202.jpg',
+    alt: 'ProPeloton Manager screenshot 41',
+  },
+  {
+    src: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Team%20Ranking%20Page%203.jpg',
+    alt: 'ProPeloton Manager screenshot 42',
+  },
+  {
+    src: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Transfer%20Page%201.jpg',
+    alt: 'ProPeloton Manager screenshot 43',
+  },
+  {
+    src: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Transfer%20Page%202.jpg',
+    alt: 'ProPeloton Manager screenshot 44',
+  },
+  {
+    src: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Transfer%20page%203.jpg',
+    alt: 'ProPeloton Manager screenshot 45',
+  },
 ]
+
 
 const PAGE_SIZE = 6
 

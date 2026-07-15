@@ -16,6 +16,7 @@
     <header class="site-header">
       <div class="site-header-inner">
         <a class="brand" href="/">ProPeloton Manager</a>
+
         <nav class="site-nav" aria-label="Main navigation">
           <a href="/about/">About</a>
           <a href="/how-to-play/">How to Play</a>
@@ -34,12 +35,15 @@
     <section class="hero">
       <div class="hero-inner">
         <a class="back-link" href="/demo/">← Back to Demo Overview</a>
+
         <div class="kicker">Demo · Stage Replay</div>
+
         <h1>Relive the race through key moments.</h1>
+
         <p>
           The stage replay summarizes what happened during the race: breakaways,
-          splits, attacks, crashes, time gaps and the final sprint or climb. It lets
-          you understand why your tactics succeeded or failed.
+          splits, attacks, crashes, time gaps and the final sprint or climb. It
+          lets you understand why your tactics succeeded or failed.
         </p>
       </div>
     </section>
@@ -47,14 +51,64 @@
     <main class="main">
       <section class="card">
         <h2>Replay visualization</h2>
-        <img
-          src="https://pub-cdn.sider.ai/u/U0KAH9N4VLX/web-coder/69a48114fd11fbc8fc7d68f5/resource/d601b717-b3d7-4cc8-8987-c36a5ad83370.jpg"
-          alt="Static mockup of a stage replay timeline with key events"
-          class="demo-image"
-        />
-        <p>
-          In the full game, each stage replay can show:
-        </p>
+
+        <div class="demo-gallery" data-demo-gallery>
+          <img
+            src="https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Race%20detail%201.jpg"
+            alt="ProPeloton Manager race detail and replay screenshot"
+            class="demo-image"
+            data-demo-main-image
+          />
+
+          <p class="demo-caption" data-demo-caption>
+            Race detail screen showing route, replay context, standings and
+            race information.
+          </p>
+
+          <div class="demo-thumbnails" aria-label="Race detail and replay screenshots">
+            <button
+              class="demo-thumb is-active"
+              type="button"
+              data-demo-src="https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Race%20detail%201.jpg"
+              data-demo-alt="ProPeloton Manager race detail screenshot"
+              data-demo-caption="Race detail screen showing route, replay context, standings and race information."
+            >
+              <img
+                src="https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Race%20detail%201.jpg"
+                alt=""
+              />
+            </button>
+
+            <button
+              class="demo-thumb"
+              type="button"
+              data-demo-src="https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Race%20Detail%202.jpg"
+              data-demo-alt="Second ProPeloton Manager race detail screenshot"
+              data-demo-caption="Additional race detail view with more event and classification information."
+            >
+              <img
+                src="https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Race%20Detail%202.jpg"
+                alt=""
+              />
+            </button>
+
+            <button
+              class="demo-thumb"
+              type="button"
+              data-demo-src="https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Race%20Detais%203.jpg"
+              data-demo-alt="Third ProPeloton Manager race detail screenshot"
+              data-demo-caption="Race detail example showing how managers follow stage information and results."
+            >
+              <img
+                src="https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Race%20Detais%203.jpg"
+                alt=""
+              />
+            </button>
+          </div>
+        </div>
+
+        <p>In the full game, each stage replay can show:</p>
+
         <ul>
           <li>A timeline of key events with colored segments.</li>
           <li>Groups and gaps at important points on the route.</li>
@@ -67,29 +121,33 @@
       <section class="grid grid-2">
         <article class="card">
           <h3>Learning from each race</h3>
+
           <p>
             Stage replays are not just cosmetic. They help managers understand
-            patterns: which riders struggle in crosswinds, who recovers well, and how
-            different strategies perform in similar races.
+            patterns: which riders struggle in crosswinds, who recovers well,
+            and how different strategies perform in similar races.
           </p>
         </article>
 
         <article class="card">
           <h3>Decisions for the next event</h3>
+
           <p>
-            After reviewing a replay, you might decide to adjust future race plans,
-            change rider roles, bring in a different sprinter or modify your overall
-            season goals.
+            After reviewing a replay, you might decide to adjust future race
+            plans, change rider roles, bring in a different sprinter or modify
+            your overall season goals.
           </p>
         </article>
       </section>
 
       <section class="card">
         <h2>Continue exploring the demo</h2>
+
         <p>
-          Every race affects your riders and your club. The next step is to look at
-          how individual riders are represented inside the game.
+          Every race affects your riders and your club. The next step is to look
+          at how individual riders are represented inside the game.
         </p>
+
         <div class="button-row">
           <a class="button button-primary" href="/#/register">Start Playing</a>
           <a class="button button-secondary" href="/demo/rider-profile/">View rider profile demo</a>
@@ -100,6 +158,7 @@
     <footer class="site-footer">
       <div class="site-footer-inner">
         <span>© ProPeloton Manager. All rights reserved by Next Quest Studio.</span>
+
         <span>
           <a href="/about/">About</a> ·
           <a href="/how-to-play/">How to Play</a> ·
@@ -112,5 +171,7 @@
         </span>
       </div>
     </footer>
+
+    <script src="/demo-gallery.js"></script>
   </body>
 </html>
