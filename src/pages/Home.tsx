@@ -94,6 +94,7 @@ const HEADER_PUBLIC_LINKS = [
   { label: 'About', href: '/about/' },
   { label: 'How to Play', href: '/how-to-play/' },
   { label: 'Game Guide', href: '/game-guide/' },
+  { label: 'Demo', href: '/demo/' },
   { label: 'Support', href: '/support/' },
   { label: 'Contact', href: '/contact/' },
 ]
@@ -102,6 +103,7 @@ const FOOTER_GAME_LINKS = [
   { label: 'About', href: '/about/' },
   { label: 'How to Play', href: '/how-to-play/' },
   { label: 'Game Guide', href: '/game-guide/' },
+  { label: 'Demo', href: '/demo/' },
   { label: 'Contact', href: '/contact/' },
 ]
 
@@ -1052,8 +1054,15 @@ export default function HomePage(): JSX.Element {
 
                 <div className="mt-7 flex flex-wrap gap-3">
                   <a
-                    href="/support/"
+                    href="/demo/"
                     className="rounded-lg bg-yellow-400 px-5 py-3 text-sm font-bold text-black hover:bg-yellow-300"
+                  >
+                    View Demo
+                  </a>
+
+                  <a
+                    href="/support/"
+                    className="rounded-lg border border-white/25 px-5 py-3 text-sm font-bold text-white hover:bg-white/10"
                   >
                     Support
                   </a>

@@ -6,6 +6,7 @@
  * - Show the main public homepage message.
  * - Display live game time passed from Home.tsx.
  * - Present the main cycling image with stronger visual size.
+ * - Provide a public demo link for visitors and AdSense review.
  */
 
 import React from 'react'
@@ -78,6 +79,13 @@ export default function Hero({ gameTimeLabel }: HeroProps): JSX.Element {
             >
               Start Playing
             </Link>
+
+            <a
+              href="/demo/"
+              className="rounded-md border border-yellow-400/70 bg-yellow-400/10 px-6 py-3 font-semibold text-yellow-200 hover:bg-yellow-400 hover:text-black"
+            >
+              View Demo
+            </a>
 
             <Link
               to="/login"
