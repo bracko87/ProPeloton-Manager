@@ -15,7 +15,11 @@
 
 import React, { useMemo } from 'react'
 
-import { createInitialState, simulateTick } from '../../race-engine/simulation'
+import {
+  createCanonicalHashedValue,
+  createInitialState,
+  simulateTick,
+} from '../../race-engine/simulation'
 import { validateSimulationState } from '../../race-engine/validation/validateSimulationState'
 import type { SimulationState } from '../../race-engine/domain/SimulationState'
 import type { StageResult } from '../../race-engine/domain/SimulationOutput'
@@ -29,7 +33,8 @@ interface DiagnosticRun {
   readonly finalState: SimulationState
   readonly results: readonly StageResult[]
   readonly tickCount: number
-  readonly serializedOutput: string
+  readonly canonicalJson: string
+  readonly deterministicHash: string
 }
 
 /**
@@ -39,7 +44,8 @@ interface DiagnosticRun {
 interface DiagnosticChecks {
   readonly completeRunA: boolean
   readonly completeRunB: boolean
-  readonly identicalSerializedOutput: boolean
+  readonly identicalCanonicalJson: boolean
+  readonly identicalHash: boolean
   readonly identicalResults: boolean
   readonly identicalEvents: boolean
   readonly identicalRiders: boolean
@@ -178,10 +184,7 @@ const diagnosticStageInput: StageInput = {
  */
 const riderNameLookup: Readonly<Record<string, string>> =
   Object.fromEntries(
-    diagnosticStageInput.riders.map((rider) => [
-      rider.riderId,
-      rider.riderName,
-    ]),
+    diagnosticStageInput.riders.map((rider) => [rider.riderId, rider.riderName]),
   )
 
 /**
@@ -190,10 +193,7 @@ const riderNameLookup: Readonly<Record<string, string>> =
  */
 const riderTeamLookup: Readonly<Record<string, string>> =
   Object.fromEntries(
-    diagnosticStageInput.riders.map((rider) => [
-      rider.riderId,
-      rider.teamName,
-    ]),
+    diagnosticStageInput.riders.map((rider) => [rider.riderId, rider.teamName]),
   )
 
 /**
@@ -206,7 +206,7 @@ const riderTeamLookup: Readonly<Record<string, string>> =
  * - Validates initial and final state.
  * - Steps with simulateTick until completed or a 1000-tick safety limit.
  * - Captures the final StageResult list from the finishing tick.
- * - Produces a canonical JSON-serialized snapshot for comparison.
+ * - Produces a canonical JSON snapshot and deterministic hash for comparison.
  */
 function runDiagnosticStage(): DiagnosticRun {
   const initialState = createInitialState(diagnosticStageInput)
@@ -239,19 +239,20 @@ function runDiagnosticStage(): DiagnosticRun {
 
   validateSimulationState(state)
 
-  const canonical = {
+  const canonicalValue = {
     finalState: state,
     results,
     tickCount,
   }
 
-  const serializedOutput = JSON.stringify(canonical, null, 2)
+  const hashedValue = createCanonicalHashedValue(canonicalValue)
 
   return {
     finalState: state,
     results,
     tickCount,
-    serializedOutput,
+    canonicalJson: hashedValue.canonicalJson,
+    deterministicHash: hashedValue.hash,
   }
 }
 
@@ -289,8 +290,9 @@ export default function RaceEngineDeterminismDiagnostic(): JSX.Element {
       const runA = runDiagnosticStage()
       const runB = runDiagnosticStage()
 
-      const identicalSerializedOutput =
-        runA.serializedOutput === runB.serializedOutput
+      const identicalCanonicalJson = runA.canonicalJson === runB.canonicalJson
+
+      const identicalHash = runA.deterministicHash === runB.deterministicHash
 
       const identicalResults =
         JSON.stringify(runA.results) === JSON.stringify(runB.results)
@@ -310,7 +312,8 @@ export default function RaceEngineDeterminismDiagnostic(): JSX.Element {
       const identicalTickCount = runA.tickCount === runB.tickCount
 
       const allChecksPassed =
-        identicalSerializedOutput &&
+        identicalCanonicalJson &&
+        identicalHash &&
         identicalResults &&
         identicalEvents &&
         identicalRiders &&
@@ -322,7 +325,8 @@ export default function RaceEngineDeterminismDiagnostic(): JSX.Element {
       const checks: DiagnosticChecks = {
         completeRunA: runA.finalState.completed,
         completeRunB: runB.finalState.completed,
-        identicalSerializedOutput,
+        identicalCanonicalJson,
+        identicalHash,
         identicalResults,
         identicalEvents,
         identicalRiders,
@@ -340,10 +344,8 @@ export default function RaceEngineDeterminismDiagnostic(): JSX.Element {
         checks,
       }
     } catch (error: unknown) {
-      const message =
-        error instanceof Error ? error.message : String(error)
-      const stack =
-        error instanceof Error ? error.stack ?? null : null
+      const message = error instanceof Error ? error.message : String(error)
+      const stack = error instanceof Error ? error.stack ?? null : null
 
       return {
         ok: false,
@@ -366,13 +368,9 @@ export default function RaceEngineDeterminismDiagnostic(): JSX.Element {
 
   const winningRiderId = winningResult?.riderId ?? null
   const winningRiderName =
-    winningRiderId != null
-      ? riderNameLookup[winningRiderId] ?? winningRiderId
-      : '—'
+    winningRiderId != null ? riderNameLookup[winningRiderId] ?? winningRiderId : '—'
   const winningTeamName =
-    winningRiderId != null
-      ? riderTeamLookup[winningRiderId] ?? '—'
-      : '—'
+    winningRiderId != null ? riderTeamLookup[winningRiderId] ?? '—' : '—'
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-50">
@@ -421,9 +419,7 @@ export default function RaceEngineDeterminismDiagnostic(): JSX.Element {
                 diagnosticResult.checks.allChecksPassed ? (
                   <span className={getBadgeClasses('pass')}>All checks passed</span>
                 ) : (
-                  <span className={getBadgeClasses('fail')}>
-                    One or more checks failed
-                  </span>
+                  <span className={getBadgeClasses('fail')}>One or more checks failed</span>
                 )
               ) : (
                 <span className={getBadgeClasses('error')}>Engine error</span>
@@ -436,110 +432,53 @@ export default function RaceEngineDeterminismDiagnostic(): JSX.Element {
             {isOk ? (
               <>
                 <div className="flex items-center gap-2">
-                  <span
-                    className={getStatusColor(
-                      diagnosticResult.checks.completeRunA,
-                    )}
-                  >
-                    ●
-                  </span>
+                  <span className={getStatusColor(diagnosticResult.checks.completeRunA)}>●</span>
                   <span>Complete run A</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span
-                    className={getStatusColor(
-                      diagnosticResult.checks.completeRunB,
-                    )}
-                  >
-                    ●
-                  </span>
+                  <span className={getStatusColor(diagnosticResult.checks.completeRunB)}>●</span>
                   <span>Complete run B</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span
-                    className={getStatusColor(
-                      diagnosticResult.checks.identicalSerializedOutput,
-                    )}
-                  >
-                    ●
-                  </span>
-                  <span>Identical full serialized output</span>
+                  <span className={getStatusColor(diagnosticResult.checks.identicalCanonicalJson)}>●</span>
+                  <span>Identical canonical JSON</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span
-                    className={getStatusColor(
-                      diagnosticResult.checks.identicalResults,
-                    )}
-                  >
-                    ●
-                  </span>
+                  <span className={getStatusColor(diagnosticResult.checks.identicalHash)}>●</span>
+                  <span>Identical deterministic hash</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className={getStatusColor(diagnosticResult.checks.identicalResults)}>●</span>
                   <span>Identical results</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span
-                    className={getStatusColor(
-                      diagnosticResult.checks.identicalEvents,
-                    )}
-                  >
-                    ●
-                  </span>
+                  <span className={getStatusColor(diagnosticResult.checks.identicalEvents)}>●</span>
                   <span>Identical events</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span
-                    className={getStatusColor(
-                      diagnosticResult.checks.identicalRiders,
-                    )}
-                  >
-                    ●
-                  </span>
+                  <span className={getStatusColor(diagnosticResult.checks.identicalRiders)}>●</span>
                   <span>Identical riders</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span
-                    className={getStatusColor(
-                      diagnosticResult.checks.identicalGroups,
-                    )}
-                  >
-                    ●
-                  </span>
+                  <span className={getStatusColor(diagnosticResult.checks.identicalGroups)}>●</span>
                   <span>Identical groups</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span
-                    className={getStatusColor(
-                      diagnosticResult.checks.identicalTickCount,
-                    )}
-                  >
-                    ●
-                  </span>
+                  <span className={getStatusColor(diagnosticResult.checks.identicalTickCount)}>●</span>
                   <span>Identical tick count</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span
-                    className={getStatusColor(
-                      diagnosticResult.checks.finalStateAValidated,
-                    )}
-                  >
-                    ●
-                  </span>
+                  <span className={getStatusColor(diagnosticResult.checks.finalStateAValidated)}>●</span>
                   <span>Final state A validated</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span
-                    className={getStatusColor(
-                      diagnosticResult.checks.finalStateBValidated,
-                    )}
-                  >
-                    ●
-                  </span>
+                  <span className={getStatusColor(diagnosticResult.checks.finalStateBValidated)}>●</span>
                   <span>Final state B validated</span>
                 </div>
               </>
             ) : (
               <div className="text-xs text-amber-300">
-                The diagnostic failed before completing. See the error details
-                below.
+                The diagnostic failed before completing. See the error details below.
               </div>
             )}
           </div>
@@ -549,9 +488,7 @@ export default function RaceEngineDeterminismDiagnostic(): JSX.Element {
         {!isOk && (
           <section className="mb-6 rounded-lg border border-amber-700/70 bg-amber-950/40 p-4 text-xs text-amber-100">
             <p className="mb-1 font-semibold">Error details</p>
-            <p className="mb-2 break-words text-amber-200">
-              {diagnosticResult.message}
-            </p>
+            <p className="mb-2 break-words text-amber-200">{diagnosticResult.message}</p>
             {diagnosticResult.stack && (
               <pre className="max-h-48 overflow-auto rounded bg-black/40 p-2 text-[10px] leading-snug text-amber-200">
                 {diagnosticResult.stack}
@@ -630,69 +567,51 @@ export default function RaceEngineDeterminismDiagnostic(): JSX.Element {
                     <dt className="text-slate-400">Winning team</dt>
                     <dd>{winningTeamName}</dd>
                   </div>
+                  <div className="flex justify-between gap-4">
+                    <dt className="text-slate-400">Run A hash</dt>
+                    <dd className="font-mono text-[11px] break-all">{diagnosticResult.runA.deterministicHash}</dd>
+                  </div>
+                  <div className="flex justify-between gap-4">
+                    <dt className="text-slate-400">Run B hash</dt>
+                    <dd className="font-mono text-[11px] break-all">{diagnosticResult.runB.deterministicHash}</dd>
+                  </div>
                 </dl>
               </div>
             </section>
 
             {/* Results table */}
             <section className="mb-6 rounded-lg border border-slate-800 bg-slate-900/60 p-4">
-              <h2 className="mb-3 text-sm font-semibold text-slate-100">
-                Stage results (Run A)
-              </h2>
+              <h2 className="mb-3 text-sm font-semibold text-slate-100">Stage results (Run A)</h2>
               <div className="max-h-72 overflow-auto rounded border border-slate-800 bg-slate-950/40">
                 <table className="min-w-full border-collapse text-xs">
                   <thead className="bg-slate-900/80 text-slate-300">
                     <tr>
                       <th className="px-3 py-2 text-left font-medium">Rank</th>
-                      <th className="px-3 py-2 text-left font-medium">
-                        Rider ID
-                      </th>
-                      <th className="px-3 py-2 text-left font-medium">
-                        Rider name
-                      </th>
-                      <th className="px-3 py-2 text-left font-medium">
-                        Team
-                      </th>
-                      <th className="px-3 py-2 text-left font-medium">
-                        Status
-                      </th>
-                      <th className="px-3 py-2 text-right font-medium">
-                        Elapsed s
-                      </th>
-                      <th className="px-3 py-2 text-right font-medium">
-                        Gap s
-                      </th>
+                      <th className="px-3 py-2 text-left font-medium">Rider ID</th>
+                      <th className="px-3 py-2 text-left font-medium">Rider name</th>
+                      <th className="px-3 py-2 text-left font-medium">Team</th>
+                      <th className="px-3 py-2 text-left font-medium">Status</th>
+                      <th className="px-3 py-2 text-right font-medium">Elapsed s</th>
+                      <th className="px-3 py-2 text-right font-medium">Gap s</th>
                     </tr>
                   </thead>
                   <tbody>
                     {diagnosticResult.runA.results.map((result) => {
-                      const name =
-                        riderNameLookup[result.riderId] ?? result.riderId
-                      const teamName =
-                        riderTeamLookup[result.riderId] ?? result.teamId
+                      const name = riderNameLookup[result.riderId] ?? result.riderId
+                      const teamName = riderTeamLookup[result.riderId] ?? result.teamId
 
                       return (
                         <tr
                           key={result.rank}
                           className="border-t border-slate-800/80 odd:bg-slate-900/40"
                         >
-                          <td className="px-3 py-1.5 text-left">
-                            {result.rank}
-                          </td>
-                          <td className="px-3 py-1.5 font-mono text-[11px]">
-                            {result.riderId}
-                          </td>
+                          <td className="px-3 py-1.5 text-left">{result.rank}</td>
+                          <td className="px-3 py-1.5 font-mono text-[11px]">{result.riderId}</td>
                           <td className="px-3 py-1.5">{name}</td>
                           <td className="px-3 py-1.5">{teamName}</td>
-                          <td className="px-3 py-1.5 capitalize">
-                            {result.status}
-                          </td>
-                          <td className="px-3 py-1.5 text-right">
-                            {result.elapsedSeconds ?? '—'}
-                          </td>
-                          <td className="px-3 py-1.5 text-right">
-                            {result.gapSeconds ?? '—'}
-                          </td>
+                          <td className="px-3 py-1.5 capitalize">{result.status}</td>
+                          <td className="px-3 py-1.5 text-right">{result.elapsedSeconds ?? '—'}</td>
+                          <td className="px-3 py-1.5 text-right">{result.gapSeconds ?? '—'}</td>
                         </tr>
                       )
                     })}
@@ -703,31 +622,17 @@ export default function RaceEngineDeterminismDiagnostic(): JSX.Element {
 
             {/* Events table */}
             <section className="mb-6 rounded-lg border border-slate-800 bg-slate-900/60 p-4">
-              <h2 className="mb-3 text-sm font-semibold text-slate-100">
-                Events (Run A)
-              </h2>
+              <h2 className="mb-3 text-sm font-semibold text-slate-100">Events (Run A)</h2>
               <div className="max-h-72 overflow-auto rounded border border-slate-800 bg-slate-950/40">
                 <table className="min-w-full border-collapse text-xs">
                   <thead className="bg-slate-900/80 text-slate-300">
                     <tr>
-                      <th className="px-3 py-2 text-left font-medium">
-                        Seq #
-                      </th>
-                      <th className="px-3 py-2 text-left font-medium">
-                        Type
-                      </th>
-                      <th className="px-3 py-2 text-right font-medium">
-                        Race s
-                      </th>
-                      <th className="px-3 py-2 text-right font-medium">
-                        Km
-                      </th>
-                      <th className="px-3 py-2 text-left font-medium">
-                        Actor rider
-                      </th>
-                      <th className="px-3 py-2 text-left font-medium">
-                        Team
-                      </th>
+                      <th className="px-3 py-2 text-left font-medium">Seq #</th>
+                      <th className="px-3 py-2 text-left font-medium">Type</th>
+                      <th className="px-3 py-2 text-right font-medium">Race s</th>
+                      <th className="px-3 py-2 text-right font-medium">Km</th>
+                      <th className="px-3 py-2 text-left font-medium">Actor rider</th>
+                      <th className="px-3 py-2 text-left font-medium">Team</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -736,24 +641,12 @@ export default function RaceEngineDeterminismDiagnostic(): JSX.Element {
                         key={event.sequenceNumber}
                         className="border-t border-slate-800/80 odd:bg-slate-900/40"
                       >
-                        <td className="px-3 py-1.5 text-left">
-                          {event.sequenceNumber}
-                        </td>
-                        <td className="px-3 py-1.5 text-left">
-                          {event.eventType}
-                        </td>
-                        <td className="px-3 py-1.5 text-right">
-                          {event.raceSecond}
-                        </td>
-                        <td className="px-3 py-1.5 text-right">
-                          {event.kmMarker}
-                        </td>
-                        <td className="px-3 py-1.5 text-left">
-                          {event.actorRiderId ?? '—'}
-                        </td>
-                        <td className="px-3 py-1.5 text-left">
-                          {event.teamId ?? '—'}
-                        </td>
+                        <td className="px-3 py-1.5 text-left">{event.sequenceNumber}</td>
+                        <td className="px-3 py-1.5 text-left">{event.eventType}</td>
+                        <td className="px-3 py-1.5 text-right">{event.raceSecond}</td>
+                        <td className="px-3 py-1.5 text-right">{event.kmMarker}</td>
+                        <td className="px-3 py-1.5 text-left">{event.actorRiderId ?? '—'}</td>
+                        <td className="px-3 py-1.5 text-left">{event.teamId ?? '—'}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -764,19 +657,15 @@ export default function RaceEngineDeterminismDiagnostic(): JSX.Element {
             {/* JSON panels */}
             <section className="grid gap-4 md:grid-cols-2">
               <div className="rounded-lg border border-slate-800 bg-slate-900/60 p-3 text-xs">
-                <h2 className="mb-2 text-sm font-semibold text-slate-100">
-                  Run A canonical output
-                </h2>
+                <h2 className="mb-2 text-sm font-semibold text-slate-100">Run A canonical JSON</h2>
                 <pre className="max-h-72 overflow-auto rounded bg-black/60 p-2 text-[11px] leading-snug text-slate-100">
-                  {diagnosticResult.runA.serializedOutput}
+                  {diagnosticResult.runA.canonicalJson}
                 </pre>
               </div>
               <div className="rounded-lg border border-slate-800 bg-slate-900/60 p-3 text-xs">
-                <h2 className="mb-2 text-sm font-semibold text-slate-100">
-                  Run B canonical output
-                </h2>
+                <h2 className="mb-2 text-sm font-semibold text-slate-100">Run B canonical JSON</h2>
                 <pre className="max-h-72 overflow-auto rounded bg-black/60 p-2 text-[11px] leading-snug text-slate-100">
-                  {diagnosticResult.runB.serializedOutput}
+                  {diagnosticResult.runB.canonicalJson}
                 </pre>
               </div>
             </section>
