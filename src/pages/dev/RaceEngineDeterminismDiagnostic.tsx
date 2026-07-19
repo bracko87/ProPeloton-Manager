@@ -19,6 +19,11 @@ import {
   createCanonicalHashedValue,
   createInitialState,
   simulateTick,
+  createReplaySnapshot,
+  createReplaySnapshotCollection,
+  getReplaySnapshotBoundarySeconds,
+  type ReplaySnapshot,
+  type ReplaySnapshotCollection,
 } from '../../race-engine/simulation'
 import { validateSimulationState } from '../../race-engine/validation/validateSimulationState'
 import type { SimulationState } from '../../race-engine/domain/SimulationState'
@@ -35,6 +40,12 @@ interface DiagnosticRun {
   readonly tickCount: number
   readonly canonicalJson: string
   readonly deterministicHash: string
+
+  /** Replay snapshots captured during the diagnostic run. */
+  readonly replaySnapshots: readonly ReplaySnapshot[]
+
+  /** Canonical collection wrapper for the captured snapshots. */
+  readonly replayCollection: ReplaySnapshotCollection
 }
 
 /**
@@ -51,6 +62,14 @@ interface DiagnosticChecks {
   readonly identicalRiders: boolean
   readonly identicalGroups: boolean
   readonly identicalTickCount: boolean
+
+  /** Replay-specific checks */ 
+  readonly identicalReplaySnapshotCount: boolean
+  readonly identicalReplaySnapshotTiming: boolean
+  readonly identicalReplaySnapshotJson: boolean
+  readonly identicalReplaySnapshotHashes: boolean
+  readonly identicalReplayCollectionHash: boolean
+
   readonly finalStateAValidated: boolean
   readonly finalStateBValidated: boolean
   readonly allChecksPassed: boolean
@@ -212,12 +231,25 @@ function runDiagnosticStage(): DiagnosticRun {
   const initialState = createInitialState(diagnosticStageInput)
   validateSimulationState(initialState)
 
+  // Capture initial replay snapshot (sequenceNumber = 1)
+  const replaySnapshots: ReplaySnapshot[] = [
+    createReplaySnapshot({
+      state: initialState,
+      sequenceNumber: 1,
+    }),
+  ]
+
+  let nextReplaySequenceNumber = 2
+
   let state: SimulationState = initialState
   let results: readonly StageResult[] = []
   let tickCount = 0
 
   // Advance simulation until completion, with a safety limit.
   while (!state.completed) {
+    // Preserve previous tick state for boundary calculation.
+    const previousState = state
+
     const tickResult = simulateTick({
       state,
       settings: diagnosticStageInput.settings,
@@ -225,6 +257,31 @@ function runDiagnosticStage(): DiagnosticRun {
 
     state = tickResult.state
     tickCount += 1
+
+    // Capture replay snapshots for any boundaries crossed by this tick.
+    const crossedBoundaries = getReplaySnapshotBoundarySeconds(
+      previousState.raceSecond,
+      state.raceSecond,
+      diagnosticStageInput.settings.replaySnapshotIntervalSeconds,
+    )
+
+    for (const boundarySecond of crossedBoundaries) {
+      // The diagnostic engine expects snapshot boundaries to align with tick boundaries.
+      if (boundarySecond !== state.raceSecond) {
+        throw new Error(
+          'Diagnostic replay capture requires snapshot boundaries to match tick boundaries.',
+        )
+      }
+
+      replaySnapshots.push(
+        createReplaySnapshot({
+          state,
+          sequenceNumber: nextReplaySequenceNumber,
+        }),
+      )
+
+      nextReplaySequenceNumber += 1
+    }
 
     if (tickResult.finishedThisTick) {
       results = tickResult.results
@@ -239,10 +296,51 @@ function runDiagnosticStage(): DiagnosticRun {
 
   validateSimulationState(state)
 
+  // Validate captured replay snapshots match expected diagnostic boundaries.
+  const expectedReplaySeconds = [0, 30, 60, 90, 120]
+
+  if (replaySnapshots.length !== expectedReplaySeconds.length) {
+    throw new Error(
+      `Expected ${expectedReplaySeconds.length} replay snapshots, received ${replaySnapshots.length}.`,
+    )
+  }
+
+  for (let index = 0; index < replaySnapshots.length; index += 1) {
+    const snapshot = replaySnapshots[index]
+    const expectedSequence = index + 1
+    const expectedRaceSecond = expectedReplaySeconds[index]
+
+    if (snapshot.sequenceNumber !== expectedSequence) {
+      throw new Error(
+        `Replay snapshot sequence mismatch at index ${index}.`,
+      )
+    }
+
+    if (snapshot.raceSecond !== expectedRaceSecond) {
+      throw new Error(
+        `Replay snapshot timing mismatch at index ${index}.`,
+      )
+    }
+  }
+
+  const finalReplaySnapshot =
+    replaySnapshots[replaySnapshots.length - 1]
+
+  if (!finalReplaySnapshot.completed) {
+    throw new Error(
+      'Final replay snapshot must represent a completed simulation.',
+    )
+  }
+
+  // Create a canonical collection wrapper for the captured snapshots.
+  const replayCollection =
+    createReplaySnapshotCollection(replaySnapshots)
+
   const canonicalValue = {
     finalState: state,
     results,
     tickCount,
+    replayCollectionHash: replayCollection.deterministicHash,
   }
 
   const hashedValue = createCanonicalHashedValue(canonicalValue)
@@ -253,6 +351,8 @@ function runDiagnosticStage(): DiagnosticRun {
     tickCount,
     canonicalJson: hashedValue.canonicalJson,
     deterministicHash: hashedValue.hash,
+    replaySnapshots,
+    replayCollection,
   }
 }
 
@@ -311,6 +411,38 @@ export default function RaceEngineDeterminismDiagnostic(): JSX.Element {
 
       const identicalTickCount = runA.tickCount === runB.tickCount
 
+      // Replay comparisons
+      const identicalReplaySnapshotCount =
+        runA.replaySnapshots.length === runB.replaySnapshots.length
+
+      const identicalReplaySnapshotTiming =
+        JSON.stringify(
+          runA.replaySnapshots.map((snapshot) => snapshot.raceSecond),
+        ) ===
+        JSON.stringify(
+          runB.replaySnapshots.map((snapshot) => snapshot.raceSecond),
+        )
+
+      const identicalReplaySnapshotJson =
+        JSON.stringify(
+          runA.replaySnapshots.map((snapshot) => snapshot.canonicalJson),
+        ) ===
+        JSON.stringify(
+          runB.replaySnapshots.map((snapshot) => snapshot.canonicalJson),
+        )
+
+      const identicalReplaySnapshotHashes =
+        JSON.stringify(
+          runA.replaySnapshots.map((snapshot) => snapshot.deterministicHash),
+        ) ===
+        JSON.stringify(
+          runB.replaySnapshots.map((snapshot) => snapshot.deterministicHash),
+        )
+
+      const identicalReplayCollectionHash =
+        runA.replayCollection.deterministicHash ===
+        runB.replayCollection.deterministicHash
+
       const allChecksPassed =
         identicalCanonicalJson &&
         identicalHash &&
@@ -320,7 +452,12 @@ export default function RaceEngineDeterminismDiagnostic(): JSX.Element {
         identicalGroups &&
         runA.finalState.completed &&
         runB.finalState.completed &&
-        identicalTickCount
+        identicalTickCount &&
+        identicalReplaySnapshotCount &&
+        identicalReplaySnapshotTiming &&
+        identicalReplaySnapshotJson &&
+        identicalReplaySnapshotHashes &&
+        identicalReplayCollectionHash
 
       const checks: DiagnosticChecks = {
         completeRunA: runA.finalState.completed,
@@ -332,6 +469,11 @@ export default function RaceEngineDeterminismDiagnostic(): JSX.Element {
         identicalRiders,
         identicalGroups,
         identicalTickCount,
+        identicalReplaySnapshotCount,
+        identicalReplaySnapshotTiming,
+        identicalReplaySnapshotJson,
+        identicalReplaySnapshotHashes,
+        identicalReplayCollectionHash,
         finalStateAValidated: true,
         finalStateBValidated: true,
         allChecksPassed,
@@ -467,6 +609,61 @@ export default function RaceEngineDeterminismDiagnostic(): JSX.Element {
                   <span className={getStatusColor(diagnosticResult.checks.identicalTickCount)}>●</span>
                   <span>Identical tick count</span>
                 </div>
+
+                <div className="flex items-center gap-2">
+                  <span
+                    className={getStatusColor(
+                      diagnosticResult.checks.identicalReplaySnapshotCount,
+                    )}
+                  >
+                    ●
+                  </span>
+                  <span>Identical replay snapshot count</span>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <span
+                    className={getStatusColor(
+                      diagnosticResult.checks.identicalReplaySnapshotTiming,
+                    )}
+                  >
+                    ●
+                  </span>
+                  <span>Identical replay snapshot timing</span>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <span
+                    className={getStatusColor(
+                      diagnosticResult.checks.identicalReplaySnapshotJson,
+                    )}
+                  >
+                    ●
+                  </span>
+                  <span>Identical replay snapshot JSON</span>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <span
+                    className={getStatusColor(
+                      diagnosticResult.checks.identicalReplaySnapshotHashes,
+                    )}
+                  >
+                    ●
+                  </span>
+                  <span>Identical replay snapshot hashes</span>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <span
+                    className={getStatusColor(
+                      diagnosticResult.checks.identicalReplayCollectionHash,
+                    )}
+                  >
+                    ●
+                  </span>
+                  <span>Identical replay collection hash</span>
+                </div>
                 <div className="flex items-center gap-2">
                   <span className={getStatusColor(diagnosticResult.checks.finalStateAValidated)}>●</span>
                   <span>Final state A validated</span>
@@ -543,6 +740,11 @@ export default function RaceEngineDeterminismDiagnostic(): JSX.Element {
                     <dt className="text-slate-400">Run B race seconds</dt>
                     <dd>{diagnosticResult.runB.finalState.raceSecond}</dd>
                   </div>
+
+                  <div className="flex justify-between gap-4">
+                    <dt className="text-slate-400">Replay snapshot count</dt>
+                    <dd>{diagnosticResult.runA.replaySnapshots.length}</dd>
+                  </div>
                 </dl>
               </div>
 
@@ -574,6 +776,20 @@ export default function RaceEngineDeterminismDiagnostic(): JSX.Element {
                   <div className="flex justify-between gap-4">
                     <dt className="text-slate-400">Run B hash</dt>
                     <dd className="font-mono text-[11px] break-all">{diagnosticResult.runB.deterministicHash}</dd>
+                  </div>
+
+                  <div className="flex justify-between gap-4">
+                    <dt className="text-slate-400">Run A replay hash</dt>
+                    <dd className="font-mono text-[11px] break-all">
+                      {diagnosticResult.runA.replayCollection.deterministicHash}
+                    </dd>
+                  </div>
+
+                  <div className="flex justify-between gap-4">
+                    <dt className="text-slate-400">Run B replay hash</dt>
+                    <dd className="font-mono text-[11px] break-all">
+                      {diagnosticResult.runB.replayCollection.deterministicHash}
+                    </dd>
                   </div>
                 </dl>
               </div>
@@ -647,6 +863,46 @@ export default function RaceEngineDeterminismDiagnostic(): JSX.Element {
                         <td className="px-3 py-1.5 text-right">{event.kmMarker}</td>
                         <td className="px-3 py-1.5 text-left">{event.actorRiderId ?? '—'}</td>
                         <td className="px-3 py-1.5 text-left">{event.teamId ?? '—'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+
+            {/* Replay snapshots table */}
+            <section className="mb-6 rounded-lg border border-slate-800 bg-slate-900/60 p-4">
+              <h2 className="mb-3 text-sm font-semibold text-slate-100">Replay snapshots (Run A)</h2>
+              <div className="max-h-72 overflow-auto rounded border border-slate-800 bg-slate-950/40">
+                <table className="min-w-full border-collapse text-xs">
+                  <thead className="bg-slate-900/80 text-slate-300">
+                    <tr>
+                      <th className="px-3 py-2 text-left font-medium">Sequence</th>
+                      <th className="px-3 py-2 text-left font-medium">Race second</th>
+                      <th className="px-3 py-2 text-right font-medium">Kilometre</th>
+                      <th className="px-3 py-2 text-left font-medium">Completed</th>
+                      <th className="px-3 py-2 text-right font-medium">Riders</th>
+                      <th className="px-3 py-2 text-right font-medium">Groups</th>
+                      <th className="px-3 py-2 text-right font-medium">Active groups</th>
+                      <th className="px-3 py-2 text-right font-medium">Events</th>
+                      <th className="px-3 py-2 text-left font-medium">Snapshot hash</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {diagnosticResult.runA.replaySnapshots.map((snapshot) => (
+                      <tr
+                        key={snapshot.sequenceNumber}
+                        className="border-t border-slate-800/80 odd:bg-slate-900/40"
+                      >
+                        <td className="px-3 py-1.5 text-left">{snapshot.sequenceNumber}</td>
+                        <td className="px-3 py-1.5 text-left">{snapshot.raceSecond}</td>
+                        <td className="px-3 py-1.5 text-right">{snapshot.currentKm.toFixed(3)}</td>
+                        <td className="px-3 py-1.5 text-left">{snapshot.completed ? 'Yes' : 'No'}</td>
+                        <td className="px-3 py-1.5 text-right">{snapshot.riderCount}</td>
+                        <td className="px-3 py-1.5 text-right">{snapshot.groupCount}</td>
+                        <td className="px-3 py-1.5 text-right">{snapshot.activeGroupCount}</td>
+                        <td className="px-3 py-1.5 text-right">{snapshot.eventCount}</td>
+                        <td className="px-3 py-1.5 font-mono text-[11px] break-all">{snapshot.deterministicHash}</td>
                       </tr>
                     ))}
                   </tbody>
