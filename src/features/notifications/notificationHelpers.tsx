@@ -70,6 +70,114 @@ export function formatLabel(value: unknown): string {
     .replace(/\b\w/g, char => char.toUpperCase())
 }
 
+
+function readPayloadString(
+  payload: Record<string, unknown>,
+  keys: string[]
+): string | null {
+  for (const key of keys) {
+    const value = payload[key]
+    if (typeof value === 'string' && value.trim()) return value.trim()
+  }
+
+  return null
+}
+
+function readPayloadNumber(
+  payload: Record<string, unknown>,
+  keys: string[]
+): number | null {
+  for (const key of keys) {
+    const value = payload[key]
+    const parsed = Number(value)
+    if (Number.isFinite(parsed)) return parsed
+  }
+
+  return null
+}
+
+function normalizeDashboardRaceUrl(url: string | null): string | null {
+  if (!url) return null
+  if (url.startsWith('/races/')) return `/dashboard${url}`
+  return url
+}
+
+function formatOrdinal(value: number | null): string | null {
+  if (value === null || !Number.isFinite(value)) return null
+
+  const integer = Math.trunc(value)
+  const absolute = Math.abs(integer)
+  const mod100 = absolute % 100
+
+  if (mod100 >= 11 && mod100 <= 13) return `${integer}th`
+
+  switch (absolute % 10) {
+    case 1:
+      return `${integer}st`
+    case 2:
+      return `${integer}nd`
+    case 3:
+      return `${integer}rd`
+    default:
+      return `${integer}th`
+  }
+}
+
+type RaceResultEntry = {
+  position: number | null
+  riderName: string | null
+  teamName: string | null
+}
+
+function getRaceResultEntries(
+  payload: Record<string, unknown>,
+  key: string
+): RaceResultEntry[] {
+  const raw = payload[key]
+  if (!Array.isArray(raw)) return []
+
+  return raw
+    .map((entry): RaceResultEntry => {
+      if (!entry || typeof entry !== 'object' || Array.isArray(entry)) {
+        return { position: null, riderName: null, teamName: null }
+      }
+
+      const record = entry as Record<string, unknown>
+
+      return {
+        position: readPayloadNumber(record, ['position', 'rank', 'place']),
+        riderName: readPayloadString(record, [
+          'rider_name',
+          'riderName',
+          'rider_full_name',
+          'full_name',
+          'name',
+        ]),
+        teamName: readPayloadString(record, [
+          'team_name',
+          'teamName',
+          'club_name',
+          'clubName',
+        ]),
+      }
+    })
+    .filter(entry => entry.position !== null || entry.riderName || entry.teamName)
+}
+
+function formatRaceResultEntry(
+  entry: RaceResultEntry,
+  includeTeam = false
+): string | null {
+  const position = formatOrdinal(entry.position)
+  const rider = entry.riderName
+  const team = includeTeam ? entry.teamName : null
+
+  if (position && rider && team) return `${position} ${rider} (${team})`
+  if (position && rider) return `${position} ${rider}`
+  if (rider && team) return `${rider} (${team})`
+  return rider || team || position
+}
+
 /**
  * getNotificationActionLabel
  * Human-friendly labels for primary notification actions.
@@ -90,6 +198,8 @@ export function getNotificationActionLabel(item: NotificationItem): string {
   }
 
   if (item.type_code === 'FREE_AGENT_SIGNED') return 'Open free agents'
+  if (item.type_code === 'RIDER_UNHAPPY') return 'Open rider'
+  if (item.type_code === 'RACE_RESULTS_SUMMARY') return 'Open race'
   return 'Open'
 }
 
@@ -137,7 +247,46 @@ export function getResolvedNotificationActionUrl(item: NotificationItem): string
     return '/dashboard/transfers?subTab=free_agents'
   }
 
-  return item.action_url
+  if (item.type_code === 'RIDER_UNHAPPY') {
+    const directRiderUrl = readPayloadString(payload, [
+      'my_rider_profile_path',
+      'rider_profile_path',
+      'profile_path',
+    ])
+
+    if (directRiderUrl) return directRiderUrl
+
+    const riderId = readPayloadString(payload, ['rider_id'])
+    if (riderId) return `/dashboard/my-riders/${riderId}`
+
+    return (
+      readPayloadString(payload, [
+        'qr_page_path',
+        'morale_page_path',
+        'team_morale_path',
+        'team_squad_path',
+      ]) || '/dashboard/squad?focus=morale'
+    )
+  }
+
+  if (item.type_code === 'RACE_RESULTS_SUMMARY') {
+    const directRaceUrl = normalizeDashboardRaceUrl(
+      readPayloadString(payload, [
+        'action_url',
+        'race_url',
+        'race_path',
+        'race_profile_path',
+        'race_detail_path',
+      ]) || item.action_url
+    )
+
+    if (directRaceUrl) return directRaceUrl
+
+    const raceId = readPayloadString(payload, ['race_id'])
+    if (raceId) return `/dashboard/races/${raceId}`
+  }
+
+  return normalizeDashboardRaceUrl(item.action_url)
 }
 
 /**
@@ -474,6 +623,95 @@ export function renderExpandedNotificationText(
         {expiresOn ? (
           <div>
             Expires on: <strong>{expiresOn}</strong>
+          </div>
+        ) : null}
+      </div>
+    )
+  }
+
+
+  if (item.type_code === 'RACE_RESULTS_SUMMARY') {
+    const raceName =
+      readPayloadString(payload, ['race_name', 'race_title', 'name']) || 'this race'
+    const stageName = readPayloadString(payload, [
+      'stage_name',
+      'stage_title',
+      'result_stage_name',
+    ])
+    const stageNumber = readPayloadNumber(payload, [
+      'stage_number',
+      'result_stage_number',
+    ])
+    const bestResult = formatOrdinal(
+      readPayloadNumber(payload, [
+        'best_result_position',
+        'best_position',
+        'top_result_position',
+      ])
+    )
+    const participantsCount = readPayloadNumber(payload, [
+      'participants_count',
+      'your_riders_count',
+      'team_riders_count',
+    ])
+    const raceClass = readPayloadString(payload, [
+      'race_class_code',
+      'race_class',
+      'class_code',
+      'category',
+    ])
+    const stageLabel = stageName || (stageNumber !== null ? `Stage ${stageNumber}` : null)
+    const topThree = getRaceResultEntries(payload, 'top_10')
+      .slice(0, 3)
+      .map(entry => formatRaceResultEntry(entry, true))
+      .filter(Boolean)
+      .join(' • ')
+    const yourRiders = getRaceResultEntries(payload, 'your_riders')
+      .slice(0, 5)
+      .map(entry => formatRaceResultEntry(entry, false))
+      .filter(Boolean)
+      .join(' • ')
+
+    return (
+      <div className="mt-3 space-y-2 text-sm leading-6 text-gray-700">
+        <div>
+          Results are available for <strong>{raceName}</strong>. Open the race page
+          to review the full standings, top finishers, and your team results.
+        </div>
+
+        {stageLabel ? (
+          <div>
+            Stage: <strong>{stageLabel}</strong>
+          </div>
+        ) : null}
+
+        {raceClass ? (
+          <div>
+            Race class: <strong>{raceClass}</strong>
+          </div>
+        ) : null}
+
+        {bestResult ? (
+          <div>
+            Best team result: <strong>{bestResult}</strong>
+          </div>
+        ) : null}
+
+        {Number.isFinite(participantsCount) ? (
+          <div>
+            Your riders listed: <strong>{participantsCount}</strong>
+          </div>
+        ) : null}
+
+        {topThree ? (
+          <div>
+            Top 3: <strong>{topThree}</strong>
+          </div>
+        ) : null}
+
+        {yourRiders ? (
+          <div>
+            Your rider results: <strong>{yourRiders}</strong>
           </div>
         ) : null}
       </div>

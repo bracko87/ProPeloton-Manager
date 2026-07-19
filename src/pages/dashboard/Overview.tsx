@@ -124,6 +124,34 @@ type NewsItem = {
   relatedHref?: string;
 };
 
+/**
+ * ExternalCyclingNewsItem
+ * Cached real-world cycling headline supplied by the backend.
+ */
+type ExternalCyclingNewsItem = {
+  id: string;
+  title: string;
+  sourceName: string;
+  articleUrl: string;
+  publishedAt: string;
+};
+
+/**
+ * ClubHonourItem
+ * One historically significant result returned by the club honours RPC.
+ */
+type ClubHonourItem = {
+  id: string;
+  seasonLabel: string;
+  dateLabel: string;
+  raceName: string;
+  raceCountryCode?: string | null;
+  raceCategory?: string | null;
+  achievementLabel: string;
+  riderName?: string | null;
+  href?: string;
+};
+
 type TransactionSummaryItem = {
   id: string;
   type: string;
@@ -3348,16 +3376,16 @@ function getAttentionIcon(alert: AlertItem): string {
 function getAttentionBubbleClasses(tone: AttentionTone) {
   switch (tone) {
     case "danger":
-      return "border-red-200 bg-red-50 text-red-700 shadow-red-100/70";
+      return "border-red-200 bg-white text-red-700 shadow-slate-200/70";
     case "warning":
-      return "border-amber-200 bg-amber-50 text-amber-800 shadow-amber-100/70";
+      return "border-amber-200 bg-white text-amber-800 shadow-slate-200/70";
     case "success":
-      return "border-emerald-200 bg-emerald-50 text-emerald-700 shadow-emerald-100/70";
+      return "border-emerald-200 bg-white text-emerald-700 shadow-slate-200/70";
     case "violet":
-      return "border-violet-200 bg-violet-50 text-violet-700 shadow-violet-100/70";
+      return "border-violet-200 bg-white text-violet-700 shadow-slate-200/70";
     case "info":
     default:
-      return "border-sky-200 bg-sky-50 text-sky-700 shadow-sky-100/70";
+      return "border-sky-200 bg-white text-sky-700 shadow-slate-200/70";
   }
 }
 
@@ -5323,6 +5351,272 @@ function CompactSquadPulseCard({ pulse }: { pulse: SquadPulse }) {
 }
 
 /**
+ * normalizeExternalCyclingNews
+ * Accepts either a direct array or a wrapped RPC payload.
+ */
+function normalizeExternalCyclingNews(value: unknown): ExternalCyclingNewsItem[] {
+  const safe = asObject<Record<string, unknown>>(value, {});
+  const rows = Array.isArray(value)
+    ? value
+    : asArray<Record<string, unknown>>(
+        safe.items ?? safe.news ?? safe.rows ?? safe.data,
+      );
+
+  return asArray<Record<string, unknown>>(rows)
+    .map((row, index) => {
+      const title = asString(row.title ?? row.headline, "").trim();
+      const articleUrl = asString(
+        row.article_url ?? row.articleUrl ?? row.url ?? row.link,
+        "",
+      ).trim();
+
+      if (!title || !articleUrl) return null;
+
+      return {
+        id: asString(row.id ?? row.news_id, `cycling-news:${index}`),
+        title,
+        sourceName: asString(
+          row.source_name ?? row.sourceName ?? row.source,
+          "Cycling news",
+        ),
+        articleUrl,
+        publishedAt: asString(
+          row.published_at ?? row.publishedAt ?? row.date,
+          "",
+        ),
+      };
+    })
+    .filter((item): item is ExternalCyclingNewsItem => Boolean(item))
+    .slice(0, 5);
+}
+
+async function loadExternalCyclingNews(): Promise<ExternalCyclingNewsItem[]> {
+  try {
+    const { data, error } = await supabase.rpc(
+      "get_overview_external_cycling_news_v1",
+      { p_limit: 5 },
+    );
+
+    if (error) {
+      console.warn("Could not load external cycling news:", error.message);
+      return [];
+    }
+
+    return normalizeExternalCyclingNews(data);
+  } catch (err) {
+    console.warn("External cycling news lookup failed:", err);
+    return [];
+  }
+}
+
+function normalizeClubHonours(value: unknown): ClubHonourItem[] {
+  const safe = asObject<Record<string, unknown>>(value, {});
+  const rows = Array.isArray(value)
+    ? value
+    : asArray<Record<string, unknown>>(
+        safe.items ?? safe.honours ?? safe.rows ?? safe.data,
+      );
+
+  return asArray<Record<string, unknown>>(rows)
+    .map((row, index) => {
+      const raceName = asString(
+        row.race_name ?? row.raceName ?? row.title,
+        "",
+      ).trim();
+      const achievementLabel = asString(
+        row.achievement_label ??
+          row.achievementLabel ??
+          row.result_label ??
+          row.resultLabel,
+        "",
+      ).trim();
+
+      if (!raceName || !achievementLabel) return null;
+
+      const seasonYear = asNumber(row.season_year ?? row.seasonYear, 0);
+      const seasonLabel =
+        asString(row.season_label ?? row.seasonLabel, "") ||
+        (seasonYear >= 2000 ? `Season ${seasonYear - 1999}` : "History");
+
+      return {
+        id: asString(row.id ?? row.achievement_id, `club-honour:${index}`),
+        seasonLabel,
+        dateLabel: asString(
+          row.date_label ?? row.dateLabel ?? row.result_date ?? row.race_date,
+          seasonLabel,
+        ),
+        raceName,
+        raceCountryCode:
+          asString(
+            row.race_country_code ?? row.raceCountryCode ?? row.country_code,
+            "",
+          ) || null,
+        raceCategory:
+          asString(row.race_category ?? row.raceCategory ?? row.category, "") ||
+          null,
+        achievementLabel,
+        riderName:
+          asString(row.rider_name ?? row.riderName, "") || null,
+        href:
+          asString(row.href ?? row.race_href ?? row.raceHref, "") || undefined,
+      };
+    })
+    .filter((item): item is ClubHonourItem => Boolean(item))
+    .slice(0, 5);
+}
+
+async function loadClubHonours(
+  mainClubId: string | null,
+): Promise<ClubHonourItem[]> {
+  if (!mainClubId) return [];
+
+  try {
+    const { data, error } = await supabase.rpc(
+      "get_club_top_historical_results_v1",
+      {
+        p_club_id: mainClubId,
+        p_limit: 5,
+      },
+    );
+
+    if (error) {
+      console.warn("Could not load club honours:", error.message);
+      return [];
+    }
+
+    return normalizeClubHonours(data);
+  } catch (err) {
+    console.warn("Club honours lookup failed:", err);
+    return [];
+  }
+}
+
+function formatExternalNewsDate(value: string): string {
+  if (!value) return "Latest";
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+
+  return new Intl.DateTimeFormat("en", {
+    month: "short",
+    day: "2-digit",
+  }).format(date);
+}
+
+function CyclingWorldNewsCard({
+  items,
+  loading,
+}: {
+  items: ExternalCyclingNewsItem[];
+  loading: boolean;
+}) {
+  return (
+    <Card className="p-5">
+      <SectionTitle
+        title="Cycling World News"
+        subtitle="Latest professional cycling headlines from approved external sources."
+      />
+
+      {loading ? (
+        <div className="mt-4 space-y-2">
+          {Array.from({ length: 5 }).map((_, index) => (
+            <div
+              key={index}
+              className="h-14 animate-pulse rounded-xl border border-slate-200 bg-slate-50"
+            />
+          ))}
+        </div>
+      ) : items.length > 0 ? (
+        <div className="mt-4 space-y-2">
+          {items.map((item) => (
+            <a
+              key={item.id}
+              href={item.articleUrl}
+              target="_blank"
+              rel="noreferrer noopener"
+              className="grid grid-cols-[72px_minmax(0,1fr)] items-center gap-3 rounded-xl border border-slate-200 bg-slate-50/70 px-3 py-2.5 transition hover:border-slate-300 hover:bg-white"
+            >
+              <div className="text-xs font-semibold text-slate-600">
+                {formatExternalNewsDate(item.publishedAt)}
+              </div>
+              <div className="min-w-0">
+                <div className="line-clamp-1 text-sm font-bold text-slate-950">
+                  {item.title}
+                </div>
+                <div className="mt-0.5 flex items-center gap-1 text-xs text-slate-500">
+                  <span>{item.sourceName}</span>
+                  <span aria-hidden="true">↗</span>
+                </div>
+              </div>
+            </a>
+          ))}
+        </div>
+      ) : (
+        <div className="mt-4 rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 py-6 text-sm text-slate-500">
+          No external cycling headlines are available yet. The card will fill
+          automatically after the news importer and RPC are installed.
+        </div>
+      )}
+    </Card>
+  );
+}
+
+function ClubHonoursCard({
+  items,
+  loading,
+}: {
+  items: ClubHonourItem[];
+  loading: boolean;
+}) {
+  return (
+    <Card className="p-5">
+      <div className="flex items-start justify-between gap-3">
+        <SectionTitle
+          title="Club Honours"
+          subtitle="The five greatest results achieved in club history."
+        />
+        <a
+          href="#/dashboard/statistics/club-history"
+          className="shrink-0 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-bold text-slate-700 transition hover:border-slate-300 hover:bg-white"
+          aria-label="Open the complete club history"
+        >
+          View all
+        </a>
+      </div>
+
+      {loading ? (
+        <div className="mt-3 space-y-2">
+          {Array.from({ length: 5 }).map((_, index) => (
+            <div
+              key={index}
+              className="h-10 animate-pulse rounded-lg border border-slate-200 bg-slate-50"
+            />
+          ))}
+        </div>
+      ) : items.length > 0 ? (
+        <div className="mt-3">
+          {items.map((item) => (
+            <CompactRaceStrip
+              key={item.id}
+              dateLabel={item.dateLabel || item.seasonLabel}
+              countryCode={item.raceCountryCode}
+              title={item.raceName}
+              category={item.raceCategory}
+              details={item.achievementLabel}
+              href={item.href}
+            />
+          ))}
+        </div>
+      ) : (
+        <div className="mt-4 rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 py-6 text-sm text-slate-500">
+          No historical honours are available yet.
+        </div>
+      )}
+    </Card>
+  );
+}
+
+/**
  * CompactOperationsCard
  * Right-rail version of active operations without large boxes.
  */
@@ -5666,6 +5960,13 @@ export default function OverviewPage() {
     React.useState<SquadPulse | null>(null);
   const [seasonSnapshot, setSeasonSnapshot] =
     React.useState<OverviewSeasonSnapshot>(EMPTY_SEASON_SNAPSHOT);
+  const [externalCyclingNews, setExternalCyclingNews] = React.useState<
+    ExternalCyclingNewsItem[]
+  >([]);
+  const [clubHonours, setClubHonours] = React.useState<ClubHonourItem[]>([]);
+  const [externalCyclingNewsLoading, setExternalCyclingNewsLoading] =
+    React.useState(true);
+  const [clubHonoursLoading, setClubHonoursLoading] = React.useState(true);
   const [raceHubLoading, setRaceHubLoading] = React.useState(false);
   const [loading, setLoading] = React.useState(true);
   const [refreshing, setRefreshing] = React.useState(false);
@@ -5895,6 +6196,31 @@ export default function OverviewPage() {
       }).catch((err) => {
         console.warn("Fast overview season snapshot load failed:", err);
       });
+
+
+      setExternalCyclingNewsLoading(true);
+      void loadExternalCyclingNews()
+        .then((loadedNews) => {
+          if (alive) setExternalCyclingNews(loadedNews);
+        })
+        .catch((err) => {
+          console.warn("Fast external cycling news load failed:", err);
+        })
+        .finally(() => {
+          if (alive) setExternalCyclingNewsLoading(false);
+        });
+
+      setClubHonoursLoading(true);
+      void loadClubHonours(mainClubId)
+        .then((loadedHonours) => {
+          if (alive) setClubHonours(loadedHonours);
+        })
+        .catch((err) => {
+          console.warn("Fast club honours load failed:", err);
+        })
+        .finally(() => {
+          if (alive) setClubHonoursLoading(false);
+        });
     }
 
     async function enrichOverviewPayload(normalizedInput: DashboardOverviewData): Promise<void> {
@@ -6585,6 +6911,11 @@ export default function OverviewPage() {
               dateLabel={data.club.dateLabel}
               races={raceWorld.todayRaces}
             />
+
+            <CyclingWorldNewsCard
+              items={externalCyclingNews}
+              loading={externalCyclingNewsLoading}
+            />
           </div>
 
           <div className="col-span-12 space-y-6 xl:col-span-4">
@@ -6671,6 +7002,11 @@ export default function OverviewPage() {
             <IncomeExpenseCard finance={data.finance} />
 
             <CompactOperationsCard operations={data.operations} />
+
+            <ClubHonoursCard
+              items={clubHonours}
+              loading={clubHonoursLoading}
+            />
           </div>
         </div>
 

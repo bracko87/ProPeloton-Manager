@@ -268,6 +268,185 @@ const ROLE_TABS: RoleTabMeta[] = [
   },
 ]
 
+
+type StaffRoleInformation = {
+  statusLabel: string
+  statusClassName: string
+  capacitySummary: string
+  purpose: string
+  attributes: string[]
+  gameplay: string[]
+}
+
+const STAFF_ROLE_INFORMATION: Record<StaffRole, StaffRoleInformation> = {
+  head_coach: {
+    statusLabel: 'Live',
+    statusClassName: 'bg-emerald-100 text-emerald-700',
+    capacitySummary: 'One Head Coach for the first team.',
+    purpose:
+      'Leads regular training strategy, training quality, fatigue-aware planning and long-term rider development.',
+    attributes: [
+      'Training controls session quality and focus precision.',
+      'Recovery Planning improves load balancing, intensity selection and rest decisions.',
+      'Youth Development strengthens plans and development support for younger riders.',
+      'Experience and Leadership improve consistency, role awareness and team-wide coordination.',
+      'Loyalty provides a smaller reliability contribution.',
+    ],
+    gameplay: [
+      'Provides passive training, development, youth-development and overload-risk effects.',
+      'Can optionally manage the rolling Today, Tomorrow and Day +2 regular-training plan.',
+      'Courses and overlapping assignments can reduce or pause the contribution.',
+    ],
+  },
+  trainer: {
+    statusLabel: 'Live',
+    statusClassName: 'bg-emerald-100 text-emerald-700',
+    capacitySummary: 'Up to five Trainers can support the first team.',
+    purpose:
+      'Supports the Head Coach by improving daily training delivery, progression quality and workload management.',
+    attributes: [
+      'Daily Training improves training contribution.',
+      'Training Efficiency supports session delivery and workload handling.',
+      'Potential Growth supports long-term development.',
+      'Experience and Leadership improve consistency and coaching coordination.',
+      'Loyalty provides a smaller reliability contribution.',
+    ],
+    gameplay: [
+      'Trainer contributions combine with the Head Coach in the live regular-training system.',
+      'More Trainers increase support, but each active course or assignment reduces available contribution.',
+      'Trainers support planning; the Head Coach remains the automation owner.',
+    ],
+  },
+  team_doctor: {
+    statusLabel: 'Live',
+    statusClassName: 'bg-emerald-100 text-emerald-700',
+    capacitySummary: 'Capacity follows the live medical-staff role limit.',
+    purpose:
+      'Leads diagnosis, injury and sickness prevention, medical recovery and return-to-fitness decisions.',
+    attributes: [
+      'Recovery and Prevention reduce health risk and recovery duration.',
+      'Diagnosis and Experience support medical-case quality.',
+      'Leadership coordinates the medical group.',
+      'Potential and Loyalty provide supporting contributions.',
+    ],
+    gameplay: [
+      'Contributes to combined injury and sickness risk reduction.',
+      'Improves return-to-fitness speed, daily recovery support and health-case fatigue floors.',
+      'The contribution can pause while the staff member is unavailable or on a course.',
+    ],
+  },
+  physio: {
+    statusLabel: 'Live',
+    statusClassName: 'bg-emerald-100 text-emerald-700',
+    capacitySummary: 'Capacity follows the live medical-staff role limit.',
+    purpose:
+      'Specialises in rehabilitation, physical recovery, fatigue management and a safe return to full fitness.',
+    attributes: [
+      'Rehabilitation drives recovery support.',
+      'Recovery Speed improves the return-to-fitness process.',
+      'Experience supports difficult rehabilitation cases.',
+      'Leadership, Potential and Loyalty provide secondary support.',
+    ],
+    gameplay: [
+      'Combines with the Team Doctor and Nutritionist in the live medical-support calculation.',
+      'Supports recovery duration, daily recovery and health-case fatigue handling.',
+      'The contribution can pause while unavailable or on a course.',
+    ],
+  },
+  nutritionist: {
+    statusLabel: 'Live',
+    statusClassName: 'bg-emerald-100 text-emerald-700',
+    capacitySummary: 'Capacity follows the live medical-staff role limit.',
+    purpose:
+      'Supports recovery routines, rider fitness consistency and nutrition planning around training and competition.',
+    attributes: [
+      'Nutrition Planning improves the main contribution.',
+      'Recovery Support helps fatigue and health recovery.',
+      'Consistency is represented by Loyalty.',
+      'Experience, Potential and Leadership provide secondary support.',
+    ],
+    gameplay: [
+      'Combines with the Team Doctor and Physio in the live medical-support calculation.',
+      'Supports daily recovery, health-risk reduction and fitness consistency.',
+      'Race-specific nutrition workflows can be expanded separately from the club-wide medical effect.',
+    ],
+  },
+  mechanic: {
+    statusLabel: 'Live',
+    statusClassName: 'bg-emerald-100 text-emerald-700',
+    capacitySummary: 'Capacity follows the live mechanic role limit.',
+    purpose:
+      'Controls bike setup quality, maintenance efficiency, equipment condition protection and mechanical reliability.',
+    attributes: [
+      'Setup improves equipment configuration quality.',
+      'Reliability reduces equipment wear and mechanical risk.',
+      'Experience supports consistent race-day technical work.',
+      'Discipline, Innovation and Loyalty provide supporting contributions.',
+    ],
+    gameplay: [
+      'Provides setup-quality, condition-loss and mechanical-risk effects.',
+      'Supports maintenance speed and cost when the Mechanics Workshop is sufficiently developed.',
+      'The canonical backend mechanic effects are used by maintenance and race systems.',
+    ],
+  },
+  sport_director: {
+    statusLabel: 'Planned connection',
+    statusClassName: 'bg-amber-100 text-amber-800',
+    capacitySummary: 'Capacity follows the live Sport Director role limit.',
+    purpose:
+      'Owns race tactics, in-race organisation, motivation, teamwork and domestique coordination.',
+    attributes: [
+      'Tactics improves race-plan decision quality.',
+      'Organization supports execution and staff coordination.',
+      'Motivation and Leadership support morale and teamwork.',
+      'Experience, Long-Term Vision and Loyalty provide secondary value.',
+    ],
+    gameplay: [
+      'The role, contracts, courses and capacity are live.',
+      'The full end-to-end race-tactics bonus connection remains a planned gameplay integration.',
+      'Until that connection is completed, do not assume every displayed tactical effect changes race results.',
+    ],
+  },
+  scout_analyst: {
+    statusLabel: 'Core live',
+    statusClassName: 'bg-emerald-100 text-emerald-700',
+    capacitySummary: 'Capacity follows the live scouting role limit.',
+    purpose:
+      'Evaluates riders, improves scouting accuracy, discovers prospects and supports transfer research.',
+    attributes: [
+      'Evaluation improves report quality.',
+      'Accuracy improves confidence in revealed information.',
+      'Network supports discovery coverage.',
+      'Prospect Sense, Communication and Loyalty provide supporting value.',
+    ],
+    gameplay: [
+      'Rider scouting tasks and due-task completion are live.',
+      'Scouting quality and prospect visibility use the staff role.',
+      'Broader transfer-intelligence features can continue to expand around the live scouting core.',
+    ],
+  },
+  u23_head_coach: {
+    statusLabel: 'Training live',
+    statusClassName: 'bg-indigo-100 text-indigo-700',
+    capacitySummary:
+      'One U23 Head Coach after the Developing Team is unlocked.',
+    purpose:
+      'Manages developing-team training, young-rider development and the future U23 race-tactical workflow.',
+    attributes: [
+      'Youth Training controls regular-training quality for the developing team.',
+      'Training Efficiency supports load and recovery planning.',
+      'Youth Development improves long-term progression decisions.',
+      'Experience and Leadership improve consistency and race readiness.',
+      'Loyalty provides a smaller reliability contribution.',
+    ],
+    gameplay: [
+      'Can manage the same rolling three-day training system for U23 riders once hired and enabled.',
+      'First-team and U23 automation remain separate.',
+      'Automatic stage-by-stage U23 race planning is a later dedicated integration.',
+    ],
+  },
+}
+
 const gainLabelsByRole: Record<StaffRole, Record<string, string>> = {
   head_coach: {
     expertise_gain: 'Training',
@@ -3543,6 +3722,124 @@ function StaffCourseModal({
   )
 }
 
+
+function StaffRolesInformationModal({
+  open,
+  roleLimitMap,
+  membersByRole,
+  onClose,
+}: {
+  open: boolean
+  roleLimitMap: Map<StaffRole, StaffRoleLimitRow>
+  membersByRole: Record<StaffRole, StaffListMember[]>
+  onClose: () => void
+}) {
+  if (!open) return null
+
+  return (
+    <div
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/45 p-4"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="staff-roles-information-title"
+    >
+      <div className="max-h-[90vh] w-full max-w-5xl overflow-y-auto rounded-2xl bg-white shadow-2xl">
+        <div className="sticky top-0 z-10 flex items-start justify-between border-b border-gray-200 bg-white px-6 py-4">
+          <div>
+            <h3
+              id="staff-roles-information-title"
+              className="text-lg font-semibold text-gray-900"
+            >
+              Staff Positions Explained
+            </h3>
+            <p className="mt-1 text-sm text-gray-500">
+              Responsibilities, important attributes and current gameplay connection for every staff role.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex h-9 w-9 items-center justify-center rounded-lg border border-gray-300 bg-white text-lg text-gray-600 hover:bg-gray-50"
+            aria-label="Close staff positions information"
+          >
+            ×
+          </button>
+        </div>
+
+        <div className="grid gap-4 p-6 lg:grid-cols-2">
+          {ROLE_TABS.map((roleMeta) => {
+            const information = STAFF_ROLE_INFORMATION[roleMeta.role]
+            const assigned = membersByRole[roleMeta.role]?.length ?? 0
+            const limit = getRoleLimit(roleMeta.role, roleLimitMap)
+
+            return (
+              <section
+                key={roleMeta.role}
+                className="rounded-2xl border border-gray-200 bg-gray-50 p-5"
+              >
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <h4 className="text-base font-semibold text-gray-900">
+                      {roleMeta.label}
+                    </h4>
+                    <p className="mt-1 text-sm text-gray-600">
+                      {information.purpose}
+                    </p>
+                  </div>
+
+                  <div className="flex flex-col items-end gap-2">
+                    <span
+                      className={`rounded-full px-2.5 py-1 text-xs font-medium ${information.statusClassName}`}
+                    >
+                      {information.statusLabel}
+                    </span>
+                    <span className="rounded-full bg-white px-2.5 py-1 text-xs text-gray-600">
+                      Assigned {assigned}/{limit}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="mt-4 rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs text-gray-600">
+                  {information.capacitySummary}
+                </div>
+
+                <div className="mt-4">
+                  <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                    Important attributes
+                  </div>
+                  <ul className="mt-2 space-y-1.5 text-sm text-gray-700">
+                    {information.attributes.map(item => (
+                      <li key={item} className="flex gap-2">
+                        <span className="mt-1 text-yellow-500">•</span>
+                        <span>{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                <div className="mt-4">
+                  <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                    Gameplay connection
+                  </div>
+                  <ul className="mt-2 space-y-1.5 text-sm text-gray-700">
+                    {information.gameplay.map(item => (
+                      <li key={item} className="flex gap-2">
+                        <span className="mt-1 text-blue-500">•</span>
+                        <span>{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </section>
+            )
+          })}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function StaffPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -3560,6 +3857,7 @@ export default function StaffPage() {
   const [headCoachEffects, setHeadCoachEffects] = useState<HeadCoachEffectRow[]>([])
   const [medicalStaffEffect, setMedicalStaffEffect] = useState<MedicalStaffEffectRow | null>(null)
   const [selectedRole, setSelectedRole] = useState<StaffRole>('head_coach')
+  const [showRoleInformation, setShowRoleInformation] = useState(false)
   const [selectedStaff, setSelectedStaff] = useState<StaffListMember | null>(null)
   const [releaseConfirmStaff, setReleaseConfirmStaff] = useState<StaffListMember | null>(null)
   const [pageMessage, setPageMessage] = useState<string | null>(null)
@@ -4183,9 +4481,15 @@ export default function StaffPage() {
             {clubName ? <div className="mt-1 text-xs text-gray-400">{clubName}</div> : null}
           </div>
 
-          <div className="text-xs text-gray-500">
-            Staff limits now use live backend capacity values. Infrastructure-linked scaling can still be refined later.
-          </div>
+          <button
+            type="button"
+            onClick={() => setShowRoleInformation(true)}
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-gray-300 bg-white text-sm font-semibold text-gray-700 hover:bg-gray-50"
+            aria-label="Explain all staff positions"
+            title="Explain all staff positions"
+          >
+            i
+          </button>
         </div>
 
         {pageMessage ? (
@@ -4329,6 +4633,13 @@ export default function StaffPage() {
           </div>
         </div>
       </div>
+
+      <StaffRolesInformationModal
+        open={showRoleInformation}
+        roleLimitMap={roleLimitMap}
+        membersByRole={membersByRole}
+        onClose={() => setShowRoleInformation(false)}
+      />
 
       <StaffDetailModal
         staff={selectedStaff}

@@ -33,10 +33,12 @@ import {
   loadRacePreparationSelectableData,
   loadRacePreparationSquadOptions,
   loadRaceStageProfileDetail,
+  loadU23StagePlanAutomationDashboard,
   quoteRacePreparation,
   resolveCurrentClubId,
   saveRacePreparationDraft,
   saveRaceStagePlan,
+  setU23StagePlanAutomation,
   submitRacePreparation,
 } from "./race-preparation/racePreparationApi";
 import type {
@@ -44,14 +46,18 @@ import type {
   BlockedRacePreparationResource,
   EquipmentSetupPresetOption,
   JsonRecord,
+  RacePrepAssetInventoryKey,
   RacePrepAssetKey,
   RacePreparationPayload,
   RacePreparationQuote,
   RacePreparationSelectableData,
   RacePreparationSquadOption,
   RacePreparationTab,
+  RacePreparationTacticalPlannerChoice,
   RacePreparationTarget,
   RaceSupplyOption,
+  U23StagePlanAutomationDashboard,
+  U23StagePlanDashboardStage,
   UUID,
 } from "./race-preparation/racePreparationTypes";
 
@@ -146,11 +152,7 @@ type SportDirectorSuggestionResponse = {
 };
 
 type SportDirectorSuggestionSection =
-  | "equipment"
-  | "team"
-  | "individual"
-  | "supplies";
-
+  "equipment" | "team" | "individual" | "supplies";
 
 const assetLabels: Record<RacePrepAssetKey, string> = {
   team_bus: "Team Bus",
@@ -178,7 +180,9 @@ const stagePlanReadinessBadgeClasses: Record<StagePlanUiTone, string> = {
   gray: "border-slate-200 bg-slate-50 text-slate-600",
 };
 
-function getAssetInventoryKey(assetKey: RacePrepAssetKey): string {
+function getAssetInventoryKey(
+  assetKey: RacePrepAssetKey,
+): RacePrepAssetInventoryKey {
   if (
     assetKey === "team_car_1" ||
     assetKey === "team_car_2" ||
@@ -187,7 +191,7 @@ function getAssetInventoryKey(assetKey: RacePrepAssetKey): string {
     return "team_car";
   }
 
-  return assetKey;
+  return assetKey as RacePrepAssetInventoryKey;
 }
 
 function createEmptySelectedAssets(): Record<RacePrepAssetKey, UUID | ""> {
@@ -214,6 +218,12 @@ function isAssetSelectedInAnotherSlot(
 
 const staffRoleLabels: Record<string, string> = {
   sport_director: "Sport Director",
+  team_doctor: "Team Doctor",
+  physio: "Physio",
+  mechanic: "Mechanic",
+};
+
+const supportStaffRoleLabels: Record<string, string> = {
   team_doctor: "Team Doctor",
   physio: "Physio",
   mechanic: "Mechanic",
@@ -297,6 +307,17 @@ function normalizeNumericValue(value: unknown, fallback = 0): number {
   return fallback;
 }
 
+function getPlannerQualityTierLabel(value: unknown): string {
+  const score = normalizeNumericValue(value, 0);
+
+  if (score >= 85) return "Elite";
+  if (score >= 70) return "Strong";
+  if (score >= 55) return "Solid";
+  if (score > 0) return "Basic";
+
+  return "Planning quality pending";
+}
+
 async function fetchRiderRaceSharpnessForClub(
   clubId: UUID,
 ): Promise<RiderRaceSharpnessUiRow[]> {
@@ -335,6 +356,81 @@ function parseGameDateTime(value: unknown): number | null {
   if (!parts) return null;
 
   return Date.UTC(parts.year, parts.month - 1, parts.day);
+}
+
+const GAME_DAY_MILLISECONDS = 24 * 60 * 60 * 1000;
+const FINISHED_RACE_VISIBILITY_DAYS = 3;
+
+function getAcceptedRaceLifecycleStatus(
+  row: AcceptedRacePreparationRow,
+): string {
+  return String(asRecord(asRecord(row).race).status ?? "")
+    .trim()
+    .toLowerCase();
+}
+
+function shouldShowAcceptedRacePreparation(
+  row: AcceptedRacePreparationRow,
+  currentGameDate?: string,
+): boolean {
+  const raceRecord = asRecord(asRecord(row).race);
+  const raceMetadata = asRecord(raceRecord.metadata);
+  const raceStatus = getAcceptedRaceLifecycleStatus(row);
+
+  /*
+   * Historical chains closed by the forward-only repair are not actionable
+   * preparation targets and should disappear immediately.
+   */
+  if (raceMetadata.forward_only_terminal_closure === true) {
+    return false;
+  }
+
+  /*
+   * A cancelled race cannot be prepared anymore. Do not let an old submitted
+   * race_preparations row keep it inside Accepted Races.
+   */
+  if (
+    raceStatus === "cancelled" ||
+    raceStatus === "canceled" ||
+    raceStatus === "weather_cancelled"
+  ) {
+    return false;
+  }
+
+  if (raceStatus === "archived") {
+    return false;
+  }
+
+  if (raceStatus !== "completed") {
+    return true;
+  }
+
+  /*
+   * Finished races remain visible for three in-game days so the manager has
+   * time to review the final state, then they leave Race Preparation.
+   */
+  const currentTime = parseGameDateTime(currentGameDate);
+  const endTime = parseGameDateTime(
+    raceRecord.end_date ?? raceRecord.start_date,
+  );
+
+  if (currentTime === null || endTime === null) {
+    return true;
+  }
+
+  return (
+    currentTime - endTime <=
+    FINISHED_RACE_VISIBILITY_DAYS * GAME_DAY_MILLISECONDS
+  );
+}
+
+function filterAcceptedRacePreparations(
+  rows: AcceptedRacePreparationRow[],
+  currentGameDate?: string,
+): AcceptedRacePreparationRow[] {
+  return rows.filter((row) =>
+    shouldShowAcceptedRacePreparation(row, currentGameDate),
+  );
 }
 
 function formatGameDate(value: unknown) {
@@ -700,14 +796,11 @@ function getRaceRouteLine(race: unknown, stageCount?: number): string {
   return `${route} · One Day Race`;
 }
 
-
 function getWeatherCancellationStatusFromRace(race: unknown): string | null {
   const metadata = asRecord(asRecord(race).metadata);
   const value = metadata.weather_cancellation_status;
 
-  return typeof value === "string" && value.trim() !== ""
-    ? value.trim()
-    : null;
+  return typeof value === "string" && value.trim() !== "" ? value.trim() : null;
 }
 
 function isRaceAllWeatherCanceledInPreparation(race: unknown): boolean {
@@ -719,14 +812,21 @@ function isRaceAllWeatherCanceledInPreparation(race: unknown): boolean {
     return explicitValue.toLowerCase() === "true";
   }
 
-  return getWeatherCancellationStatusFromRace(race) === "all_stages_weather_cancelled";
+  return (
+    getWeatherCancellationStatusFromRace(race) ===
+    "all_stages_weather_cancelled"
+  );
 }
 
 function isRacePartlyWeatherCanceledInPreparation(race: unknown): boolean {
-  return getWeatherCancellationStatusFromRace(race) === "partly_weather_cancelled";
+  return (
+    getWeatherCancellationStatusFromRace(race) === "partly_weather_cancelled"
+  );
 }
 
-function getWeatherCancellationDisplayStatusForPreparation(race: unknown): string | null {
+function getWeatherCancellationDisplayStatusForPreparation(
+  race: unknown,
+): string | null {
   if (isRaceAllWeatherCanceledInPreparation(race)) return "Race canceled";
   if (isRacePartlyWeatherCanceledInPreparation(race)) return "Weather affected";
 
@@ -737,7 +837,9 @@ function isPreparationStageWeatherCanceled(stage: unknown): boolean {
   return asRecord(stage).weather_cancelled === true;
 }
 
-function getPreparationWeatherCancellationReasonLabel(reason?: unknown): string {
+function getPreparationWeatherCancellationReasonLabel(
+  reason?: unknown,
+): string {
   switch (String(reason ?? "")) {
     case "snow":
       return "Snow";
@@ -748,7 +850,9 @@ function getPreparationWeatherCancellationReasonLabel(reason?: unknown): string 
   }
 }
 
-function getPreparationStageWeatherCancellationReason(stage: unknown): string | null {
+function getPreparationStageWeatherCancellationReason(
+  stage: unknown,
+): string | null {
   const reason = asRecord(stage).weather_cancellation_reason;
 
   return reason ? String(reason) : null;
@@ -836,7 +940,11 @@ function WeatherCancellationPreparationNotice({
   );
 }
 
-function WeatherCancellationRiskPreparationNotice({ stage }: { stage: unknown }) {
+function WeatherCancellationRiskPreparationNotice({
+  stage,
+}: {
+  stage: unknown;
+}) {
   if (isPreparationStageWeatherCanceled(stage)) return null;
 
   const riskReason = getPreparationStageWeatherRiskReason(stage);
@@ -845,10 +953,12 @@ function WeatherCancellationRiskPreparationNotice({ stage }: { stage: unknown })
   return (
     <div className="mt-3 rounded-xl border border-orange-200 bg-orange-50 px-3 py-2 text-xs leading-5 text-orange-800">
       <div className="font-semibold">
-        Weather cancellation likely: {getPreparationWeatherCancellationReasonLabel(riskReason)}
+        Weather cancellation likely:{" "}
+        {getPreparationWeatherCancellationReasonLabel(riskReason)}
       </div>
       <div>
-        Current forecast is below the safety threshold. Final decision 24 in-game hours before start.
+        Current forecast is below the safety threshold. Final decision 24
+        in-game hours before start.
       </div>
     </div>
   );
@@ -874,6 +984,9 @@ function statusClass(status?: string) {
     case "weather_cancelled":
     case "cancelled":
       return "bg-red-100 text-red-800 ring-1 ring-red-200";
+    case "completed":
+    case "archived":
+      return "bg-slate-100 text-slate-700 ring-1 ring-slate-200";
     case "race_plan_open":
     case "draft":
       return "bg-yellow-100 text-yellow-800 ring-1 ring-yellow-200";
@@ -898,6 +1011,9 @@ function getRacePlanStatusLabel(status?: string) {
     case "weather_cancelled":
     case "cancelled":
       return "Race canceled";
+    case "completed":
+    case "archived":
+      return "Race Finished";
     case "missed_startlist":
       return "Not Participating";
     case "draft":
@@ -1066,7 +1182,10 @@ function getAcceptedRacePreparationState(
   ).toLowerCase();
 
   const entryStatus = String(
-    rowRecord.status ?? rowRecord.entry_status ?? asRecord(rowRecord.entry).status ?? "",
+    rowRecord.status ??
+      rowRecord.entry_status ??
+      asRecord(rowRecord.entry).status ??
+      "",
   ).toLowerCase();
 
   const preparationMetadata = asRecord(preparationRecord.metadata);
@@ -1120,6 +1239,20 @@ function getAcceptedRacePreparationState(
       packageStatus === "race_plan_open");
 
   if (isRaceAllWeatherCanceledInPreparation(raceRecord)) {
+    return {
+      label: "Race canceled",
+      className: "bg-red-100 text-red-800 ring-1 ring-red-200",
+      racePlanEnabled: false,
+      stagePlansEnabled: false,
+      missedStartlist: false,
+    };
+  }
+
+  if (
+    raceStatus === "cancelled" ||
+    raceStatus === "canceled" ||
+    raceStatus === "weather_cancelled"
+  ) {
     return {
       label: "Race canceled",
       className: "bg-red-100 text-red-800 ring-1 ring-red-200",
@@ -1259,6 +1392,11 @@ export default function RacePreparationPage(): JSX.Element {
 
   const [selectedRiderIds, setSelectedRiderIds] = useState<UUID[]>([]);
   const [selectedStaffIds, setSelectedStaffIds] = useState<UUID[]>([]);
+  const [tacticalPlannerChoice, setTacticalPlannerChoice] =
+    useState<RacePreparationTacticalPlannerChoice>("sport_director");
+  const [selectedU23HeadCoachId, setSelectedU23HeadCoachId] =
+    useState<UUID | null>(null);
+  const [u23AutomationEnabled, setU23AutomationEnabled] = useState(false);
   const [selectedAssets, setSelectedAssets] = useState<
     Record<RacePrepAssetKey, UUID | "">
   >(() => createEmptySelectedAssets());
@@ -1446,8 +1584,7 @@ export default function RacePreparationPage(): JSX.Element {
 
   const cleanSelectedRiderIds = useMemo(() => {
     return selectedRiderIds.filter(
-      (id) =>
-        !blockedRiderIds.has(id) && !medicallyUnavailableRiderIds.has(id),
+      (id) => !blockedRiderIds.has(id) && !medicallyUnavailableRiderIds.has(id),
     );
   }, [blockedRiderIds, medicallyUnavailableRiderIds, selectedRiderIds]);
 
@@ -1559,6 +1696,54 @@ export default function RacePreparationPage(): JSX.Element {
     );
   }, [participatingClubId, squadOptions]);
 
+  const isDevelopingTeamSelected =
+    selectedSquadOption?.club_type === "developing" &&
+    selectedSquadOption.parent_club_id === clubId;
+
+  const effectiveTacticalPlannerChoice: RacePreparationTacticalPlannerChoice =
+    isDevelopingTeamSelected ? tacticalPlannerChoice : "sport_director";
+
+  const selectedU23HeadCoach = useMemo(() => {
+    if (!selectedU23HeadCoachId) return null;
+
+    return (
+      (selectableData?.staff ?? []).find(
+        (staff) =>
+          staff.id === selectedU23HeadCoachId &&
+          staff.role_type === "u23_head_coach",
+      ) ?? null
+    );
+  }, [selectableData?.staff, selectedU23HeadCoachId]);
+
+  const raceStaffIdsForPayload = useMemo(() => {
+    const staffById = new Map(
+      (selectableData?.staff ?? []).map((staff) => [staff.id, staff]),
+    );
+
+    return cleanSelectedStaffIds.filter((staffId) => {
+      const roleType = staffById.get(staffId)?.role_type;
+
+      if (roleType === "u23_head_coach") {
+        return false;
+      }
+
+      if (
+        isDevelopingTeamSelected &&
+        effectiveTacticalPlannerChoice === "u23_head_coach" &&
+        roleType === "sport_director"
+      ) {
+        return false;
+      }
+
+      return true;
+    });
+  }, [
+    cleanSelectedStaffIds,
+    effectiveTacticalPlannerChoice,
+    isDevelopingTeamSelected,
+    selectableData?.staff,
+  ]);
+
   const pendingSquadOption = useMemo(() => {
     return (
       squadOptions.find((option) => option.id === pendingParticipatingClubId) ??
@@ -1590,7 +1775,7 @@ export default function RacePreparationPage(): JSX.Element {
       club_id: clubId,
       participating_club_id: participatingClubId ?? clubId,
       rider_ids: cleanSelectedRiderIds,
-      staff_ids: cleanSelectedStaffIds,
+      staff_ids: raceStaffIdsForPayload,
       asset_assignments: assetAssignments,
       supply_reservations: supplyReservations,
       default_equipment_setup_id: defaultEquipmentSetupId,
@@ -1598,8 +1783,8 @@ export default function RacePreparationPage(): JSX.Element {
   }, [
     cleanSelectedAssets,
     cleanSelectedRiderIds,
-    cleanSelectedStaffIds,
     clubId,
+    raceStaffIdsForPayload,
     defaultEquipmentSetupId,
     participatingClubId,
     raceId,
@@ -1677,17 +1862,38 @@ export default function RacePreparationPage(): JSX.Element {
     medicallyUnavailableRiderIds,
   ]);
 
-  const stagePlansOpen = packageSubmitted && !selectedRaceAllWeatherCanceled;
+  const selectedRaceLifecycleStatus = getText(race, "status")
+    .trim()
+    .toLowerCase();
 
-  const racePlanUiStatus = selectedRaceAllWeatherCanceled
-    ? "weather_cancelled"
-    : getRacePlanUiStatus({
-        raceStatus,
-        prepStatus,
-        isPackageTooEarly,
-        isPackageDeadlinePassed,
-        packageSubmitted,
-      });
+  const selectedRaceCancelled =
+    selectedRaceLifecycleStatus === "cancelled" ||
+    selectedRaceLifecycleStatus === "canceled" ||
+    selectedRaceLifecycleStatus === "weather_cancelled";
+
+  const selectedRaceFinished =
+    selectedRaceLifecycleStatus === "completed" ||
+    selectedRaceLifecycleStatus === "archived";
+
+  const selectedRaceClosed = selectedRaceCancelled || selectedRaceFinished;
+
+  const stagePlansOpen =
+    packageSubmitted &&
+    !selectedRaceAllWeatherCanceled &&
+    !selectedRaceClosed;
+
+  const racePlanUiStatus =
+    selectedRaceAllWeatherCanceled || selectedRaceCancelled
+      ? "cancelled"
+      : selectedRaceFinished
+        ? "completed"
+        : getRacePlanUiStatus({
+            raceStatus,
+            prepStatus,
+            isPackageTooEarly,
+            isPackageDeadlinePassed,
+            packageSubmitted,
+          });
 
   const minRiders = getNumber(entryRules, "min_riders_per_team");
   const maxRiders = getNumber(entryRules, "max_riders_per_team");
@@ -1700,16 +1906,49 @@ export default function RacePreparationPage(): JSX.Element {
 
   const riderSelectionValid = !riderSelectionTooFew && !riderSelectionTooMany;
 
-  const canSaveRacePlan = canEdit && !riderSelectionTooMany;
-  const canSubmitRacePlan = canEdit && riderSelectionValid;
+  const tacticalPlannerSelectionValid = isDevelopingTeamSelected
+    ? effectiveTacticalPlannerChoice === "u23_head_coach"
+      ? Boolean(selectedU23HeadCoachId)
+      : Boolean(selectedStaffByRole.sport_director)
+    : Boolean(selectedStaffByRole.sport_director);
 
-  const selectedStaffCount = cleanSelectedStaffIds.length;
+  /*
+   * Missing race staff is an incomplete-plan warning, not a reason to disable
+   * Save or Submit. The submit confirmation already allows the manager to
+   * continue with missing staff and assets.
+   *
+   * Keep only one blocking planner case: a Developing Team explicitly set to
+   * U23 Head Coach without an actual coach selected, because that automation
+   * choice cannot be persisted safely.
+   */
+  const u23PlannerChoiceIncomplete =
+    isDevelopingTeamSelected &&
+    effectiveTacticalPlannerChoice === "u23_head_coach" &&
+    !selectedU23HeadCoachId;
+
+  const canSaveRacePlan =
+    canEdit && !riderSelectionTooMany && !u23PlannerChoiceIncomplete;
+
+  const canSubmitRacePlan =
+    canEdit && riderSelectionValid && !u23PlannerChoiceIncomplete;
+
+  const selectedSupportStaffCount = Object.keys(supportStaffRoleLabels).filter(
+    (roleType) => Boolean(selectedStaffByRole[roleType]),
+  ).length;
+
+  const selectedPlannerCount = tacticalPlannerSelectionValid ? 1 : 0;
+  const selectedStaffCount = selectedSupportStaffCount + selectedPlannerCount;
   const maxStaffSlots = Object.keys(staffRoleLabels).length;
   const selectedAssetCount =
     Object.values(cleanSelectedAssets).filter(Boolean).length;
   const maxAssetSlots = raceAssetKeys.length;
 
   const submitPlanWarnings = [
+    !tacticalPlannerSelectionValid
+      ? isDevelopingTeamSelected
+        ? "Choose either a Sport Director or a U23 Head Coach."
+        : "Select a Sport Director."
+      : null,
     maxRiders > 0 && selectedRiderCount < maxRiders
       ? `Maximum riders allowed: ${maxRiders}. You selected: ${selectedRiderCount}.`
       : null,
@@ -1782,6 +2021,8 @@ export default function RacePreparationPage(): JSX.Element {
 
     setParticipatingClubId(nextParticipatingClubId);
 
+    let nextSquadIsDeveloping = false;
+
     if (currentClubId) {
       const [squadOptionResult, selectableResult] = await Promise.all([
         loadRacePreparationSquadOptions(currentClubId),
@@ -1795,6 +2036,14 @@ export default function RacePreparationPage(): JSX.Element {
 
       setSquadOptions(squadOptionResult);
       setSelectableData(selectableResult);
+
+      const contextSquad = squadOptionResult.find(
+        (option) => option.id === nextParticipatingClubId,
+      );
+
+      nextSquadIsDeveloping =
+        contextSquad?.club_type === "developing" &&
+        contextSquad.parent_club_id === currentClubId;
     } else {
       setSquadOptions([]);
       setSelectableData(null);
@@ -1808,11 +2057,59 @@ export default function RacePreparationPage(): JSX.Element {
         ...createEmptySelectedAssets(),
         ...draft.assetAssignments,
       });
+
+      if (
+        nextSquadIsDeveloping &&
+        draft.tacticalPlannerChoice === "u23_head_coach" &&
+        draft.u23HeadCoachId
+      ) {
+        setTacticalPlannerChoice("u23_head_coach");
+        setSelectedU23HeadCoachId(draft.u23HeadCoachId);
+        setU23AutomationEnabled(draft.u23AutomationEnabled);
+      } else {
+        setTacticalPlannerChoice("sport_director");
+        setSelectedU23HeadCoachId(null);
+        setU23AutomationEnabled(false);
+      }
     } else {
       setSelectedRiderIds([]);
       setSelectedStaffIds([]);
+      setTacticalPlannerChoice("sport_director");
+      setSelectedU23HeadCoachId(null);
+      setU23AutomationEnabled(false);
       setSelectedAssets(createEmptySelectedAssets());
     }
+  }
+
+  async function applyNoVisibleAcceptedRaceState(
+    resolvedClubId: UUID,
+  ): Promise<void> {
+    const [squadOptionResult, selectableResult] = await Promise.all([
+      loadRacePreparationSquadOptions(resolvedClubId),
+      loadRacePreparationSelectableData(
+        resolvedClubId,
+        null,
+        null,
+        resolvedClubId,
+      ),
+    ]);
+
+    setAcceptedRaces([]);
+    setSelectedRaceId(null);
+    setSquadOptions(squadOptionResult);
+    setParticipatingClubId(resolvedClubId);
+    setPendingParticipatingClubId(null);
+    setSelectableData(selectableResult);
+    setSelectedRiderIds([]);
+    setSelectedStaffIds([]);
+    setTacticalPlannerChoice("sport_director");
+    setSelectedU23HeadCoachId(null);
+    setU23AutomationEnabled(false);
+    setSelectedAssets(createEmptySelectedAssets());
+    setTarget({
+      has_target: false,
+      message: "No accepted races found for this club.",
+    });
   }
 
   async function loadPage(preferredRaceId?: UUID | null) {
@@ -1825,38 +2122,72 @@ export default function RacePreparationPage(): JSX.Element {
       const resolvedClubId = await resolveCurrentClubId();
       setClubId(resolvedClubId);
 
-      const acceptedResult = await loadAcceptedRacePreparations(resolvedClubId);
+      const rawAcceptedResult =
+        await loadAcceptedRacePreparations(resolvedClubId);
 
-      setAcceptedRaces(acceptedResult);
+      /*
+       * The first pass does not need the game date to remove cancelled races.
+       * This prevents a stale cancelled race from becoming the default target.
+       */
+      const provisionallyVisibleResult =
+        filterAcceptedRacePreparations(rawAcceptedResult);
 
-      const raceToLoad =
-        preferredRaceId ?? selectedRaceId ?? acceptedResult[0]?.race_id ?? null;
+      const preferredRaceIsVisible = Boolean(
+        preferredRaceId &&
+          provisionallyVisibleResult.some(
+            (row) => row.race_id === preferredRaceId,
+          ),
+      );
+
+      const selectedRaceIsVisible = Boolean(
+        selectedRaceId &&
+          provisionallyVisibleResult.some(
+            (row) => row.race_id === selectedRaceId,
+          ),
+      );
+
+      let raceToLoad = preferredRaceIsVisible
+        ? preferredRaceId!
+        : selectedRaceIsVisible
+          ? selectedRaceId!
+          : provisionallyVisibleResult[0]?.race_id ?? null;
 
       if (!raceToLoad) {
-        const [squadOptionResult, selectableResult] = await Promise.all([
-          loadRacePreparationSquadOptions(resolvedClubId),
-          loadRacePreparationSelectableData(
-            resolvedClubId,
-            null,
-            null,
-            resolvedClubId,
-          ),
-        ]);
-
-        setSquadOptions(squadOptionResult);
-        setParticipatingClubId(resolvedClubId);
-        setSelectableData(selectableResult);
-        setTarget({
-          has_target: false,
-          message: "No accepted races found for this club.",
-        });
+        await applyNoVisibleAcceptedRaceState(resolvedClubId);
         return;
       }
 
-      const context = await loadRacePreparationContext(
+      let context = await loadRacePreparationContext(
         resolvedClubId,
         raceToLoad,
       );
+
+      /*
+       * The selected context contains the authoritative current game date.
+       * Use it for the three-day retention rule for completed races.
+       */
+      const visibleAcceptedResult = filterAcceptedRacePreparations(
+        rawAcceptedResult,
+        context.current_game_date,
+      );
+
+      if (
+        !visibleAcceptedResult.some((row) => row.race_id === raceToLoad)
+      ) {
+        raceToLoad = visibleAcceptedResult[0]?.race_id ?? null;
+
+        if (!raceToLoad) {
+          await applyNoVisibleAcceptedRaceState(resolvedClubId);
+          return;
+        }
+
+        context = await loadRacePreparationContext(
+          resolvedClubId,
+          raceToLoad,
+        );
+      }
+
+      setAcceptedRaces(visibleAcceptedResult);
       await applyContext(context, resolvedClubId);
     } catch (error) {
       setErrorMessage(
@@ -1879,6 +2210,9 @@ export default function RacePreparationPage(): JSX.Element {
     setPendingParticipatingClubId(null);
     setSelectedRiderIds([]);
     setSelectedStaffIds([]);
+    setTacticalPlannerChoice("sport_director");
+    setSelectedU23HeadCoachId(null);
+    setU23AutomationEnabled(false);
     setSelectedAssets(createEmptySelectedAssets());
 
     try {
@@ -1899,12 +2233,37 @@ export default function RacePreparationPage(): JSX.Element {
   async function refreshSelectedRace() {
     if (!clubId || !raceId) return;
 
-    const [acceptedResult, context] = await Promise.all([
+    const [rawAcceptedResult, context] = await Promise.all([
       loadAcceptedRacePreparations(clubId),
       loadRacePreparationContext(clubId, raceId),
     ]);
 
-    setAcceptedRaces(acceptedResult);
+    const visibleAcceptedResult = filterAcceptedRacePreparations(
+      rawAcceptedResult,
+      context.current_game_date,
+    );
+
+    setAcceptedRaces(visibleAcceptedResult);
+
+    if (
+      !visibleAcceptedResult.some((row) => row.race_id === raceId)
+    ) {
+      const fallbackRaceId = visibleAcceptedResult[0]?.race_id ?? null;
+
+      if (!fallbackRaceId) {
+        await applyNoVisibleAcceptedRaceState(clubId);
+        return;
+      }
+
+      const fallbackContext = await loadRacePreparationContext(
+        clubId,
+        fallbackRaceId,
+      );
+
+      await applyContext(fallbackContext, clubId);
+      return;
+    }
+
     await applyContext(context, clubId);
   }
 
@@ -2000,6 +2359,10 @@ export default function RacePreparationPage(): JSX.Element {
         (option) => option.id === nextParticipatingClubId,
       );
 
+      setTacticalPlannerChoice("sport_director");
+      setSelectedU23HeadCoachId(null);
+      setU23AutomationEnabled(false);
+
       setMessage(
         nextOption
           ? `Competing squad changed to ${nextOption.name}.`
@@ -2048,6 +2411,57 @@ export default function RacePreparationPage(): JSX.Element {
     void applyParticipatingClub(nextParticipatingClubId);
   }
 
+  async function resolveRacePreparationIdAfterSave(
+    saveResult?: unknown,
+  ): Promise<UUID | null> {
+    const directId = String(
+      asRecord(saveResult).race_preparation_id ??
+        asRecord(saveResult).id ??
+        asRecord(preparation).id ??
+        "",
+    );
+
+    if (isUuid(directId)) {
+      return directId;
+    }
+
+    if (!clubId || !raceId) {
+      return null;
+    }
+
+    const refreshedContext = await loadRacePreparationContext(clubId, raceId);
+    const refreshedPreparationId = String(
+      asRecord(refreshedContext.preparation).id ?? "",
+    );
+
+    return isUuid(refreshedPreparationId) ? refreshedPreparationId : null;
+  }
+
+  async function persistPendingU23PlannerChoice(
+    racePreparationId: UUID,
+  ): Promise<void> {
+    if (
+      !isDevelopingTeamSelected ||
+      effectiveTacticalPlannerChoice !== "u23_head_coach"
+    ) {
+      return;
+    }
+
+    if (!selectedU23HeadCoachId) {
+      throw new Error(
+        "Select a U23 Head Coach before saving this Developing Team Race Plan.",
+      );
+    }
+
+    const result = await setU23StagePlanAutomation({
+      racePreparationId,
+      enabled: false,
+      plannerStaffId: selectedU23HeadCoachId,
+    });
+
+    setU23AutomationEnabled(Boolean(result.is_enabled));
+  }
+
   async function handleQuote() {
     if (!payload) return;
 
@@ -2082,13 +2496,33 @@ export default function RacePreparationPage(): JSX.Element {
       return;
     }
 
+    if (u23PlannerChoiceIncomplete) {
+      setErrorMessage(
+        "Select a U23 Head Coach or switch the tactical planner back to Sport Director before saving the Race Plan.",
+      );
+      return;
+    }
+
     setActionLoading(true);
     setErrorMessage(null);
     setMessage(null);
 
     try {
-      await saveRacePreparationDraft(payload);
-      setMessage("Race Plan saved.");
+      const saveResult = await saveRacePreparationDraft(payload);
+      const savedRacePreparationId =
+        await resolveRacePreparationIdAfterSave(saveResult);
+
+      if (savedRacePreparationId) {
+        await persistPendingU23PlannerChoice(savedRacePreparationId);
+      }
+
+      setMessage(
+        isDevelopingTeamSelected &&
+          effectiveTacticalPlannerChoice === "u23_head_coach"
+          ? "Race Plan saved. The U23 Head Coach will take control when the Race Plan is submitted."
+          : "Race Plan saved.",
+      );
+
       await refreshSelectedRace();
     } catch (error) {
       setErrorMessage(
@@ -2107,6 +2541,13 @@ export default function RacePreparationPage(): JSX.Element {
       return;
     }
 
+    if (u23PlannerChoiceIncomplete) {
+      setErrorMessage(
+        "Select a U23 Head Coach or switch the tactical planner back to Sport Director before submitting the Race Plan.",
+      );
+      return;
+    }
+
     if (!raceId || !clubId || !payload) return;
 
     setActionLoading(true);
@@ -2114,8 +2555,16 @@ export default function RacePreparationPage(): JSX.Element {
     setMessage(null);
 
     try {
+      let savedRacePreparationId = String(asRecord(preparation).id ?? "");
+
       if (canEdit) {
-        await saveRacePreparationDraft(payload);
+        const saveResult = await saveRacePreparationDraft(payload);
+        savedRacePreparationId =
+          (await resolveRacePreparationIdAfterSave(saveResult)) ?? "";
+
+        if (savedRacePreparationId) {
+          await persistPendingU23PlannerChoice(savedRacePreparationId);
+        }
       }
 
       const result = await submitRacePreparation({
@@ -2123,7 +2572,59 @@ export default function RacePreparationPage(): JSX.Element {
         club_id: clubId,
       });
 
-      setMessage(String(result.message ?? "Race Plan submitted successfully."));
+      const submittedRacePreparationId = String(
+        result.race_preparation_id ??
+          savedRacePreparationId ??
+          asRecord(preparation).id ??
+          "",
+      );
+
+      let u23ActivationMessage = "";
+
+      if (
+        isDevelopingTeamSelected &&
+        effectiveTacticalPlannerChoice === "u23_head_coach"
+      ) {
+        if (!selectedU23HeadCoachId) {
+          throw new Error(
+            "The Race Plan was submitted, but no U23 Head Coach was selected.",
+          );
+        }
+
+        if (!isUuid(submittedRacePreparationId)) {
+          throw new Error(
+            "The Race Plan was submitted, but its preparation ID could not be resolved for U23 automation.",
+          );
+        }
+
+        const automationResult = await setU23StagePlanAutomation({
+          racePreparationId: submittedRacePreparationId,
+          enabled: true,
+          plannerStaffId: selectedU23HeadCoachId,
+        });
+
+        const initialGeneration = asRecord(automationResult.initial_generation);
+
+        if (String(initialGeneration.status ?? "") === "error") {
+          throw new Error(
+            String(
+              initialGeneration.message ??
+                "The Race Plan was submitted, but the U23 Head Coach could not generate the first Stage Plan.",
+            ),
+          );
+        }
+
+        setU23AutomationEnabled(Boolean(automationResult.is_enabled));
+        u23ActivationMessage = Boolean(initialGeneration.applied)
+          ? " The U23 Head Coach generated the first eligible Stage Plan."
+          : " U23 automation is active.";
+      }
+
+      setMessage(
+        `${String(
+          result.message ?? "Race Plan submitted successfully.",
+        )}${u23ActivationMessage}`,
+      );
 
       await refreshSelectedRace();
       setActiveTab("stagePlans");
@@ -2140,6 +2641,13 @@ export default function RacePreparationPage(): JSX.Element {
     if (!riderSelectionValid) {
       setErrorMessage(
         `Select ${minRiders}–${maxRiders} riders before submitting the Race Plan.`,
+      );
+      return;
+    }
+
+    if (u23PlannerChoiceIncomplete) {
+      setErrorMessage(
+        "Select a U23 Head Coach or switch the tactical planner back to Sport Director before submitting the Race Plan.",
       );
       return;
     }
@@ -2185,11 +2693,7 @@ export default function RacePreparationPage(): JSX.Element {
 
       setActiveTab(nextTab);
 
-      await saveTutorialProgress(
-        "race-preparation",
-        "started",
-        nextStep.key,
-      );
+      await saveTutorialProgress("race-preparation", "started", nextStep.key);
 
       setTutorialStepIndex(nextIndex);
       return;
@@ -2300,6 +2804,44 @@ export default function RacePreparationPage(): JSX.Element {
 
       return staffId ? [...withoutThisRole, staffId] : withoutThisRole;
     });
+
+    if (roleType === "sport_director" && isDevelopingTeamSelected && staffId) {
+      setTacticalPlannerChoice("sport_director");
+      setSelectedU23HeadCoachId(null);
+      setU23AutomationEnabled(false);
+    }
+  }
+
+  function selectTacticalPlanner(choice: "sport_director" | "u23_head_coach") {
+    if (!canEdit || !isDevelopingTeamSelected) return;
+
+    setTacticalPlannerChoice(choice);
+    setErrorMessage(null);
+
+    if (choice === "u23_head_coach") {
+      setStaffForRole("sport_director", "");
+      return;
+    }
+
+    setSelectedU23HeadCoachId(null);
+    setU23AutomationEnabled(false);
+  }
+
+  function selectU23HeadCoach(staffId: UUID | "") {
+    if (!canEdit || !isDevelopingTeamSelected) return;
+
+    if (staffId && blockedStaffIds.has(staffId)) {
+      setErrorMessage(
+        "This U23 Head Coach is already assigned to an overlapping submitted race.",
+      );
+      return;
+    }
+
+    setTacticalPlannerChoice("u23_head_coach");
+    setSelectedU23HeadCoachId(staffId || null);
+    setU23AutomationEnabled(false);
+    setStaffForRole("sport_director", "");
+    setErrorMessage(null);
   }
 
   function updateSelectedAsset(assetKey: RacePrepAssetKey, assetId: UUID | "") {
@@ -2482,8 +3024,8 @@ export default function RacePreparationPage(): JSX.Element {
                         </p>
                         <p className="mt-2">
                           Fatigue is still the main limiter. A rider with good
-                          race sharpness but very high fatigue will not start the
-                          race fully fresh.
+                          race sharpness but very high fatigue will not start
+                          the race fully fresh.
                         </p>
                         <p className="mt-2">
                           The race-start red freshness bar combines fatigue and
@@ -2537,7 +3079,9 @@ export default function RacePreparationPage(): JSX.Element {
                     {medicallyUnavailableRiderIds.size > 0 ? (
                       <div className="mt-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-medium text-red-800">
                         {medicallyUnavailableRiderIds.size} rider
-                        {medicallyUnavailableRiderIds.size === 1 ? "" : "s"}{" "}
+                        {medicallyUnavailableRiderIds.size === 1
+                          ? ""
+                          : "s"}{" "}
                         medically unavailable and cannot be selected for this
                         Race Plan.
                       </div>
@@ -2584,28 +3128,34 @@ export default function RacePreparationPage(): JSX.Element {
                         panelWidthClass="w-[30rem]"
                       >
                         <div className="text-sm font-semibold text-slate-900">
-                          Team Doctor benefit
+                          Tactical planner and support staff
                         </div>
                         <p className="mt-2">
-                          Only Sport Director, Team Doctor, Physio and Mechanic
-                          are available for Race Preparation.
+                          First Team races use a Sport Director. For a
+                          Developing Team race, choose exactly one tactical
+                          planner: Sport Director or U23 Head Coach.
                         </p>
                         <p className="mt-2">
-                          Clubs with an active Team Doctor receive medical
-                          fitness warnings when riders are not fully ready
-                          because of high fatigue, sickness, injury, cold or
-                          recovery problems.
+                          A U23 Head Coach automatically prepares the first
+                          eligible Stage Plan after submission and continues
+                          stage by stage. These Stage Plans are view-only.
+                          Switch back to Sport Director to edit them manually.
+                        </p>
+                        <p className="mt-2">
+                          Team Doctor, Physio and Mechanic remain independent
+                          support-staff choices.
                         </p>
                         <p className="mt-2 font-semibold text-slate-800">
-                          Without a Team Doctor, these rider fitness warnings are
+                          Without a Team Doctor, medical fitness warnings are
                           not created.
                         </p>
                       </InfoTooltip>
                     }
                   >
                     <div className="mb-3 text-sm text-slate-600">
-                      Only Sport Director, Team Doctor, Physio, and Mechanic are
-                      available for Race Preparation.
+                      {isDevelopingTeamSelected
+                        ? "Choose one tactical planner for the Developing Team. Team Doctor, Physio and Mechanic remain separate."
+                        : "First Team races use a Sport Director. Team Doctor, Physio and Mechanic remain optional support staff."}
                     </div>
 
                     {blockedStaffIds.size > 0 ? (
@@ -2617,28 +3167,91 @@ export default function RacePreparationPage(): JSX.Element {
                       </div>
                     ) : null}
 
-                    <div className="grid gap-4 md:grid-cols-2">
-                      {Object.entries(staffRoleLabels).map(
-                        ([roleType, label]) => {
-                          const staffOptionsForRole = (
-                            selectableData?.staff ?? []
-                          ).filter((staff) => staff.role_type === roleType);
+                    {isDevelopingTeamSelected ? (
+                      <div className="mb-5 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                        <div className="text-sm font-semibold text-slate-900">
+                          Tactical Planner
+                        </div>
+                        <div className="mt-1 text-xs leading-5 text-slate-600">
+                          Choose either manual Sport Director planning or
+                          automatic U23 Head Coach planning. Both cannot be
+                          active together.
+                        </div>
 
-                          return (
-                            <label key={roleType} className="block">
-                              <span className="text-sm font-medium text-slate-700">
-                                {label}
-                              </span>
-                              <select
-                                disabled={!canEdit}
-                                value={selectedStaffByRole[roleType] ?? ""}
-                                onChange={(event) =>
-                                  setStaffForRole(roleType, event.target.value)
-                                }
-                                className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm disabled:opacity-60"
-                              >
-                                <option value="">No {label} selected</option>
-                                {staffOptionsForRole.map((staff) => {
+                        <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                          <button
+                            type="button"
+                            disabled={!canEdit}
+                            onClick={() =>
+                              selectTacticalPlanner("sport_director")
+                            }
+                            className={[
+                              "rounded-xl border px-4 py-3 text-left transition disabled:cursor-not-allowed disabled:opacity-60",
+                              effectiveTacticalPlannerChoice ===
+                              "sport_director"
+                                ? "border-blue-400 bg-blue-50 ring-2 ring-blue-100"
+                                : "border-slate-200 bg-white hover:border-slate-300",
+                            ].join(" ")}
+                          >
+                            <div className="font-semibold text-slate-900">
+                              Sport Director
+                            </div>
+                            <div className="mt-1 text-xs leading-5 text-slate-600">
+                              You manage Stage Plans manually and may ask the
+                              Sport Director for suggestions.
+                            </div>
+                          </button>
+
+                          <button
+                            type="button"
+                            disabled={!canEdit}
+                            onClick={() =>
+                              selectTacticalPlanner("u23_head_coach")
+                            }
+                            className={[
+                              "rounded-xl border px-4 py-3 text-left transition disabled:cursor-not-allowed disabled:opacity-60",
+                              effectiveTacticalPlannerChoice ===
+                              "u23_head_coach"
+                                ? "border-emerald-400 bg-emerald-50 ring-2 ring-emerald-100"
+                                : "border-slate-200 bg-white hover:border-slate-300",
+                            ].join(" ")}
+                          >
+                            <div className="font-semibold text-slate-900">
+                              U23 Head Coach
+                            </div>
+                            <div className="mt-1 text-xs leading-5 text-slate-600">
+                              The coach automatically prepares Stage Plans.
+                              Plans remain view-only until you switch back to a
+                              Sport Director.
+                            </div>
+                          </button>
+                        </div>
+
+                        {effectiveTacticalPlannerChoice === "sport_director" ? (
+                          <label className="mt-4 block">
+                            <span className="text-sm font-medium text-slate-700">
+                              Sport Director
+                            </span>
+                            <select
+                              disabled={!canEdit}
+                              value={selectedStaffByRole.sport_director ?? ""}
+                              onChange={(event) =>
+                                setStaffForRole(
+                                  "sport_director",
+                                  event.target.value,
+                                )
+                              }
+                              className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm disabled:opacity-60"
+                            >
+                              <option value="">
+                                No Sport Director selected
+                              </option>
+                              {(selectableData?.staff ?? [])
+                                .filter(
+                                  (staff) =>
+                                    staff.role_type === "sport_director",
+                                )
+                                .map((staff) => {
                                   const blockedReason =
                                     formatBlockedResourceReason(
                                       blockedStaffMap.get(staff.id),
@@ -2657,11 +3270,144 @@ export default function RacePreparationPage(): JSX.Element {
                                     </option>
                                   );
                                 })}
+                            </select>
+                          </label>
+                        ) : (
+                          <div className="mt-4">
+                            <label className="block">
+                              <span className="text-sm font-medium text-slate-700">
+                                U23 Head Coach
+                              </span>
+                              <select
+                                disabled={!canEdit}
+                                value={selectedU23HeadCoachId ?? ""}
+                                onChange={(event) =>
+                                  selectU23HeadCoach(event.target.value)
+                                }
+                                className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm disabled:opacity-60"
+                              >
+                                <option value="">
+                                  No U23 Head Coach selected
+                                </option>
+                                {(selectableData?.staff ?? [])
+                                  .filter(
+                                    (staff) =>
+                                      staff.role_type === "u23_head_coach",
+                                  )
+                                  .map((staff) => {
+                                    const blockedReason =
+                                      formatBlockedResourceReason(
+                                        blockedStaffMap.get(staff.id),
+                                      );
+
+                                    const availabilityFactor =
+                                      normalizeNumericValue(
+                                        staff.current_availability_factor,
+                                        1,
+                                      );
+                                    const coachUnavailable =
+                                      availabilityFactor <= 0;
+
+                                    const details = [
+                                      staff.expertise
+                                        ? `Expertise ${Math.round(
+                                            staff.expertise,
+                                          )}`
+                                        : null,
+                                      staff.leadership
+                                        ? `Leadership ${Math.round(
+                                            staff.leadership,
+                                          )}`
+                                        : null,
+                                      staff.specialization ?? null,
+                                      coachUnavailable
+                                        ? "Unavailable"
+                                        : availabilityFactor < 1
+                                          ? `${Math.round(
+                                              availabilityFactor * 100,
+                                            )}% available`
+                                          : null,
+                                    ]
+                                      .filter(Boolean)
+                                      .join(" · ");
+
+                                    return (
+                                      <option
+                                        key={staff.id}
+                                        value={staff.id}
+                                        disabled={
+                                          Boolean(blockedReason) ||
+                                          coachUnavailable
+                                        }
+                                      >
+                                        {staff.staff_name}
+                                        {details ? ` · ${details}` : ""}
+                                        {blockedReason
+                                          ? ` — ${blockedReason}`
+                                          : ""}
+                                      </option>
+                                    );
+                                  })}
                               </select>
                             </label>
-                          );
-                        },
-                      )}
+
+                            <div className="mt-3 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs leading-5 text-emerald-800">
+                              {packageSubmitted && u23AutomationEnabled
+                                ? "U23 automation is active. The coach manages eligible stages automatically."
+                                : selectedU23HeadCoach
+                                  ? `${selectedU23HeadCoach.staff_name} will take control when the Race Plan is submitted.`
+                                  : "Select the U23 Head Coach who should manage this race."}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ) : null}
+
+                    <div className="grid gap-4 md:grid-cols-2">
+                      {Object.entries(
+                        isDevelopingTeamSelected
+                          ? supportStaffRoleLabels
+                          : staffRoleLabels,
+                      ).map(([roleType, label]) => {
+                        const staffOptionsForRole = (
+                          selectableData?.staff ?? []
+                        ).filter((staff) => staff.role_type === roleType);
+
+                        return (
+                          <label key={roleType} className="block">
+                            <span className="text-sm font-medium text-slate-700">
+                              {label}
+                            </span>
+                            <select
+                              disabled={!canEdit}
+                              value={selectedStaffByRole[roleType] ?? ""}
+                              onChange={(event) =>
+                                setStaffForRole(roleType, event.target.value)
+                              }
+                              className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm disabled:opacity-60"
+                            >
+                              <option value="">No {label} selected</option>
+                              {staffOptionsForRole.map((staff) => {
+                                const blockedReason =
+                                  formatBlockedResourceReason(
+                                    blockedStaffMap.get(staff.id),
+                                  );
+
+                                return (
+                                  <option
+                                    key={staff.id}
+                                    value={staff.id}
+                                    disabled={Boolean(blockedReason)}
+                                  >
+                                    {staff.staff_name}
+                                    {blockedReason ? ` — ${blockedReason}` : ""}
+                                  </option>
+                                );
+                              })}
+                            </select>
+                          </label>
+                        );
+                      })}
                     </div>
                   </RacePackageCard>
 
@@ -2748,7 +3494,10 @@ export default function RacePreparationPage(): JSX.Element {
                     <div className="space-y-2 text-sm">
                       <CostLine label="Travel tickets" value={travelTickets} />
                       <CostLine label="Accommodation" value={accommodation} />
-                      <CostLine label="Asset transport" value={assetTransport} />
+                      <CostLine
+                        label="Asset transport"
+                        value={assetTransport}
+                      />
                       <CostLine
                         label="Team logistics & operations"
                         value={logistics}
@@ -2768,7 +3517,11 @@ export default function RacePreparationPage(): JSX.Element {
                     <div className="mt-5 flex flex-col gap-2">
                       <button
                         type="button"
-                        disabled={actionLoading || !payload || selectedRaceAllWeatherCanceled}
+                        disabled={
+                          actionLoading ||
+                          !payload ||
+                          selectedRaceAllWeatherCanceled
+                        }
                         onClick={handleQuote}
                         className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
                       >
@@ -2851,6 +3604,9 @@ export default function RacePreparationPage(): JSX.Element {
           standardizedBonus={standardizedBonus}
           exactBonusPreview={bonusPreview}
           hasSportDirectorAssigned={Boolean(selectedStaffByRole.sport_director)}
+          tacticalPlannerChoice={effectiveTacticalPlannerChoice}
+          u23HeadCoachId={selectedU23HeadCoachId}
+          u23AutomationEnabled={u23AutomationEnabled}
           selectedStageIdFromUrl={searchParams.get("stageId")}
           onOpenRacePreview={setRacePreviewId}
         />
@@ -2865,8 +3621,9 @@ export default function RacePreparationPage(): JSX.Element {
 
             <p className="mt-3 text-sm leading-6 text-slate-600">
               Changing to <strong>{pendingSquadOption.name}</strong> will remove
-              the currently selected riders. Staff, assets, supplies and
-              equipment settings will remain unchanged.
+              the currently selected riders and reset the tactical planner.
+              Support staff, assets, supplies and equipment settings will remain
+              unchanged.
             </p>
 
             <div className="mt-6 flex flex-wrap justify-end gap-3">
@@ -3002,7 +3759,6 @@ export default function RacePreparationPage(): JSX.Element {
           onClose={handleCloseRacePreparationTutorial}
         />
       ) : null}
-
     </div>
   );
 }
@@ -3128,8 +3884,9 @@ function AcceptedRacesTab({
                               : "bg-slate-100 text-slate-700"
                         }`}
                       >
-                        {getWeatherCancellationDisplayStatusForPreparation(race) ??
-                          titleFromSnake(raceWeatherStatus)}
+                        {getWeatherCancellationDisplayStatusForPreparation(
+                          race,
+                        ) ?? titleFromSnake(raceWeatherStatus)}
                       </span>
                     ) : null}
 
@@ -3205,7 +3962,6 @@ function AcceptedRacesTab({
     </section>
   );
 }
-
 
 function getStageHeaderProfileKind(stage: JsonRecord): {
   label: string;
@@ -3362,8 +4118,8 @@ function StageHeaderMiniProfile({
     coordinates[coordinates.length - 1].x
   } ${baselineY} L ${coordinates[0].x} ${baselineY} Z`;
 
-  const elevationTicks = [0, 0.33, 0.66, 1].map((ratio) =>
-    Math.round((maxElevation * ratio) / 100) * 100,
+  const elevationTicks = [0, 0.33, 0.66, 1].map(
+    (ratio) => Math.round((maxElevation * ratio) / 100) * 100,
   );
 
   const distanceTicks = [0, 0.33, 0.66, 1].map((ratio) => ({
@@ -3422,7 +4178,13 @@ function StageHeaderMiniProfile({
             key={`${tick.km}-${index}`}
             x={tick.x}
             y={height - 10}
-            textAnchor={index === 0 ? "start" : index === distanceTicks.length - 1 ? "end" : "middle"}
+            textAnchor={
+              index === 0
+                ? "start"
+                : index === distanceTicks.length - 1
+                  ? "end"
+                  : "middle"
+            }
             fontSize="11"
             fontWeight="700"
             fill="#334155"
@@ -3434,9 +4196,6 @@ function StageHeaderMiniProfile({
     </div>
   );
 }
-
-
-
 
 function RaceHeaderStageChip({
   stage,
@@ -3539,9 +4298,6 @@ function RaceHeaderStageChip({
   );
 }
 
-
-
-
 function RaceHeaderStageStrip({
   stages,
   fallbackStageCount,
@@ -3552,14 +4308,14 @@ function RaceHeaderStageStrip({
   const visibleStages = stages.length > 0 ? stages : [];
   const fallbackCount = Math.max(0, Number(fallbackStageCount) || 0);
   const stageIds = useMemo(
-    () =>
-      visibleStages
-        .map((stage) => String(stage.id ?? ""))
-        .filter(Boolean),
+    () => visibleStages.map((stage) => String(stage.id ?? "")).filter(Boolean),
     [visibleStages],
   );
   const [profileByStageId, setProfileByStageId] = useState<
-    Record<string, { profile: JsonRecord | null; loading: boolean; error: string | null }>
+    Record<
+      string,
+      { profile: JsonRecord | null; loading: boolean; error: string | null }
+    >
   >({});
 
   useEffect(() => {
@@ -3660,9 +4416,6 @@ function RaceHeaderStageStrip({
   );
 }
 
-
-
-
 function RaceHeaderCard({
   race,
   raceClassCode,
@@ -3761,7 +4514,8 @@ function RaceHeaderCard({
           {raceStatus === "missed_startlist" ? (
             <div className="flex w-full max-w-3xl items-center justify-between gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-800">
               <span className="min-w-0 truncate">
-                Your team missed the rider startlist and is not participating in this race.
+                Your team missed the rider startlist and is not participating in
+                this race.
               </span>
               <span className="shrink-0 rounded-full bg-red-100 px-3 py-1 text-xs font-bold text-red-800 ring-1 ring-red-200">
                 Not Participating
@@ -3776,7 +4530,6 @@ function RaceHeaderCard({
               {getRacePlanStatusLabel(raceStatus)}
             </span>
           )}
-
         </div>
 
         <div className="flex flex-col items-end gap-2 text-right">
@@ -3785,7 +4538,6 @@ function RaceHeaderCard({
             value={formatFullGameDate(currentGameDate)}
             alignRight
           />
-
         </div>
       </div>
 
@@ -4511,73 +5263,43 @@ const STAGE_RIDER_ROLE_OPTIONS: Array<{
     value: "team_leader_gc",
     label: "Team Leader (GC)",
     description:
-      "Main protected rider for the general classification. The team should protect this rider, reduce unnecessary fatigue, and support key race moments.",
+      "Main protected rider for the general classification and the rider teammates should protect during key race moments.",
   },
   {
     value: "sprinter",
     label: "Sprinter",
     description:
-      "Focuses on intermediate sprints and sprint finishes whenever points or a stage win are realistically available.",
-  },
-  {
-    value: "lead_out_rider",
-    label: "Lead-out Rider",
-    description:
-      "Final helper before the sprinter launches. Gives a sprint launch and positioning bonus, but spends extra stamina late in the stage.",
-  },
-  {
-    value: "sprint_train_rider",
-    label: "Sprint Train Rider",
-    description:
-      "Earlier rider in the sprint train. Keeps speed high, protects the sprinter before the lead-out, and spends extra stamina.",
+      "Primary rider for flat sprint finishes and suitable intermediate sprint opportunities.",
   },
   {
     value: "climber",
     label: "Climber",
     description:
-      "Focuses on climbs and KOM points. Should contest mountain points and perform better on climbing sections.",
-  },
-  {
-    value: "mountain_domestique",
-    label: "Mountain Domestique",
-    description:
-      "Climbing helper for the Team Leader or Climber. Gives a small climbing/protection bonus while using extra stamina on climbs.",
+      "Primary rider for difficult climbs, mountain finishes and suitable KOM opportunities.",
   },
   {
     value: "helper_domestique",
     label: "Helper / Domestique",
     description:
-      "General support rider. Protects important riders, helps chase and control, and usually loses more fatigue because he works for others.",
+      "General support rider who protects teammates, carries out team work and assists with positioning or pace control.",
   },
   {
     value: "breakaway_rider",
     label: "Breakaway Rider",
     description:
-      "Assigned to attack or join the breakaway. Higher escape priority, but faster stamina loss during the stage.",
+      "Rider selected to attack or join a breakaway when an individual phase instruction allows it.",
   },
   {
     value: "breakaway_chaser",
     label: "Breakaway Chaser",
     description:
-      "Stays near the front of the peloton and helps chase dangerous breakaways. Uses extra stamina while chasing.",
-  },
-  {
-    value: "rouleur",
-    label: "Rouleur",
-    description:
-      "Strong flat/rolling-road tempo rider. Controls pace, rides in wind, protects leaders, and chases on flat or rolling terrain.",
-  },
-  {
-    value: "protected_rider",
-    label: "Protected Rider",
-    description:
-      "Tries to stay safe in the main group, avoids attacks/chases, and loses less stamina when helpers protect him.",
+      "Rider selected to help close dangerous breakaways and support peloton pursuit work.",
   },
   {
     value: "free_role",
     label: "Free Role",
     description:
-      "Neutral role. Stays in the group and reacts normally without special protection, attack priority, or major extra fatigue cost.",
+      "Neutral role without a fixed team duty. The rider follows phase instructions and reacts to the race situation.",
   },
 ];
 
@@ -4591,6 +5313,14 @@ const STAGE_RIDER_ROLE_LABELS = {
   ),
   time_trial_rider: "Time Trial Rider",
   team_time_trial_rider: "Team Time Trial Rider",
+};
+
+const LEGACY_STAGE_RIDER_ROLE_MAP: Record<string, StageRiderRoleCode> = {
+  lead_out_rider: "helper_domestique",
+  sprint_train_rider: "helper_domestique",
+  mountain_domestique: "helper_domestique",
+  rouleur: "helper_domestique",
+  protected_rider: "free_role",
 };
 
 const STAGE_TACTIC_PLAN_OPTIONS: Array<{
@@ -5114,83 +5844,146 @@ const STAGE_TACTIC_ENGINE_MODEL_V1 = {
   },
 } as const;
 
-const STAGE_INDIVIDUAL_TACTIC_OPTIONS: Array<{
+type StageIndividualTacticOption = {
   value: string;
   label: string;
   description: string;
-}> = [
+};
+
+const ROAD_PHASE_1_TO_3_TACTIC_OPTIONS: StageIndividualTacticOption[] = [
   {
     value: "follow_team_plan",
-    label: "Follow Team Plan",
+    label: "Follow Stage Role",
     description:
-      "Default command. The rider follows the selected team tactic and role without extra individual risk or extra stamina cost.",
+      "Default command. The rider follows the selected stage role and reacts normally to the race situation.",
   },
   {
     value: "protect_leader",
     label: "Protect Leader",
     description:
-      "The rider focuses on protecting the Team Leader or Protected Rider. Helpful for safety and fatigue protection, but costs more stamina.",
-  },
-  {
-    value: "conserve_energy",
-    label: "Conserve Energy",
-    description:
-      "The rider stays sheltered and avoids unnecessary work. Lower stamina cost, but lower chance to attack, chase or contest points.",
+      "Stay with and protect the Team Leader, helping with positioning and reducing unnecessary exposure.",
   },
   {
     value: "stay_near_front",
     label: "Stay Near Front",
     description:
-      "The rider tries to stay in the front part of the peloton for positioning, safety and tactical reaction.",
+      "Maintain a forward peloton position to improve safety and tactical reaction.",
+  },
+  {
+    value: "conserve_energy",
+    label: "Conserve Energy",
+    description:
+      "Stay sheltered and avoid unnecessary work to save stamina for later phases.",
   },
   {
     value: "control_tempo",
     label: "Control Tempo",
     description:
-      "The rider works on the front to control pace. Useful for GC or sprint teams, but increases fatigue.",
+      "Work near the front to control the peloton speed and discourage attacks.",
   },
   {
     value: "chase_breakaway",
     label: "Chase Breakaway",
     description:
-      "The rider helps close gaps to breakaways. Strong effect in chase phases, but uses extra stamina.",
+      "Help reduce the gap to a dangerous breakaway at an increased stamina cost.",
   },
   {
     value: "attack",
     label: "Attack",
     description:
-      "The rider looks for an attacking move in this phase. Higher chance to create a split or escape, with higher stamina cost.",
+      "Attempt an attacking move during this phase when the race situation permits it.",
   },
   {
     value: "join_breakaway",
     label: "Join Breakaway",
     description:
-      "The rider actively tries to enter or follow a breakaway move during this phase.",
+      "Attempt to follow or bridge to a forming breakaway during this phase.",
   },
   {
-    value: "lead_out",
-    label: "Lead-out",
+    value: "fight_sprint_points",
+    label: "Fight for Sprint Points",
     description:
-      "The rider works to position and launch a sprinter. Best used in the final phase before a likely sprint.",
+      "Contest an intermediate sprint located in this phase when the rider remains eligible.",
   },
   {
-    value: "sprint",
-    label: "Sprint",
+    value: "fight_kom_points",
+    label: "Fight for KOM Points",
     description:
-      "The rider contests sprint points or the finish if a sprint opportunity exists in this phase.",
-  },
-  {
-    value: "climb_hard",
-    label: "Climb Hard",
-    description:
-      "The rider increases effort on climbs. Useful for KOM points, climbing attacks or protecting a leader uphill.",
+      "Contest a KOM gate located in this phase when the rider remains eligible.",
   },
   {
     value: "avoid_risks",
     label: "Avoid Risks",
     description:
-      "The rider prioritizes safety and finishing in the group over attacks, sprints or aggressive chasing.",
+      "Prioritize safety and group position rather than attacks, chases or point contests.",
   },
+];
+
+const ROAD_PHASE_4_TACTIC_OPTIONS: StageIndividualTacticOption[] = [
+  {
+    value: "follow_team_plan",
+    label: "Follow Stage Role",
+    description:
+      "Default final-phase command. Follow the selected stage role and react to the finish situation.",
+  },
+  {
+    value: "protect_leader",
+    label: "Protect Leader",
+    description:
+      "Protect the Team Leader through the final part of the stage.",
+  },
+  {
+    value: "stay_near_front",
+    label: "Stay Near Front",
+    description:
+      "Hold a forward position before the finish or final decisive section.",
+  },
+  {
+    value: "fight_sprint_points",
+    label: "Fight for Sprint Points",
+    description:
+      "Contest an intermediate sprint that falls inside the final phase.",
+  },
+  {
+    value: "fight_kom_points",
+    label: "Fight for KOM Points",
+    description:
+      "Contest a KOM gate that falls inside the final phase.",
+  },
+  {
+    value: "sprint_train_rider",
+    label: "Sprint Train Rider",
+    description:
+      "Ride in the sprint train before the final lead-out, helping keep speed and position for the team sprinter.",
+  },
+  {
+    value: "lead_out_rider",
+    label: "Lead-out Rider",
+    description:
+      "Act as the final rider before the sprinter launches. Multiple train riders plus one lead-out improve the sprinter setup.",
+  },
+  {
+    value: "final_sprint",
+    label: "Final Sprint",
+    description:
+      "Contest the stage finish as the designated sprinter when a sprint finish is available.",
+  },
+  {
+    value: "avoid_risks",
+    label: "Avoid Risks",
+    description:
+      "Prioritize a safe finish rather than joining the final sprint battle.",
+  },
+];
+
+const STAGE_INDIVIDUAL_TACTIC_OPTIONS: StageIndividualTacticOption[] = [
+  ...ROAD_PHASE_1_TO_3_TACTIC_OPTIONS,
+  ...ROAD_PHASE_4_TACTIC_OPTIONS.filter(
+    (option) =>
+      !ROAD_PHASE_1_TO_3_TACTIC_OPTIONS.some(
+        (existing) => existing.value === option.value,
+      ),
+  ),
 ];
 
 const STAGE_INDIVIDUAL_TACTIC_LABELS = STAGE_INDIVIDUAL_TACTIC_OPTIONS.reduce(
@@ -5200,6 +5993,13 @@ const STAGE_INDIVIDUAL_TACTIC_LABELS = STAGE_INDIVIDUAL_TACTIC_OPTIONS.reduce(
   },
   {} as Record<string, string>,
 );
+
+const LEGACY_INDIVIDUAL_TACTIC_MAP: Record<string, string> = {
+  lead_out: "lead_out_rider",
+  sprint: "fight_sprint_points",
+  climb_hard: "fight_kom_points",
+};
+
 
 const TT_PACING_OPTIONS = [
   {
@@ -5234,10 +6034,13 @@ const TT_PACING_LABELS = TT_PACING_OPTIONS.reduce(
 
 function getStageIndividualTacticOptions(
   stage?: { stage_format?: string | null } | null,
+  phaseKey?: string,
 ) {
-  return isTimeTrialStage(stage)
-    ? TT_PACING_OPTIONS
-    : STAGE_INDIVIDUAL_TACTIC_OPTIONS;
+  if (isTimeTrialStage(stage)) return TT_PACING_OPTIONS;
+
+  return phaseKey === "phase_4"
+    ? ROAD_PHASE_4_TACTIC_OPTIONS
+    : ROAD_PHASE_1_TO_3_TACTIC_OPTIONS;
 }
 
 function getStageIndividualTacticLabels(
@@ -5388,9 +6191,17 @@ function normalizeIndividualTacticsForRider(
 
   getStagePhaseRanges(stage).forEach((phase) => {
     const savedPhase = asRecord(saved[phase.key]);
-    const savedCommand = String(savedPhase.command ?? saved[phase.key] ?? "");
-    const labels = getStageIndividualTacticLabels(stage);
-    const command = labels[savedCommand] ? savedCommand : "follow_team_plan";
+    const rawSavedCommand = String(
+      savedPhase.command ?? saved[phase.key] ?? "",
+    );
+    const savedCommand =
+      LEGACY_INDIVIDUAL_TACTIC_MAP[rawSavedCommand] ?? rawSavedCommand;
+    const allowedOptions = getStageIndividualTacticOptions(stage, phase.key);
+    const command = allowedOptions.some(
+      (option) => option.value === savedCommand,
+    )
+      ? savedCommand
+      : "follow_team_plan";
 
     fallback[phase.key] = {
       command,
@@ -5426,9 +6237,12 @@ function normalizeStageRiderRole(
   }
 
   const savedRole = String(value ?? "");
+  const normalizedRole = LEGACY_STAGE_RIDER_ROLE_MAP[savedRole] ?? savedRole;
 
-  return STAGE_RIDER_ROLE_LABELS[savedRole]
-    ? savedRole
+  return STAGE_RIDER_ROLE_OPTIONS.some(
+    (option) => option.value === normalizedRole,
+  )
+    ? normalizedRole
     : DEFAULT_STAGE_RIDER_ROLE;
 }
 
@@ -5654,6 +6468,9 @@ function StagePlansTab({
   standardizedBonus,
   exactBonusPreview,
   hasSportDirectorAssigned,
+  tacticalPlannerChoice,
+  u23HeadCoachId,
+  u23AutomationEnabled,
   selectedStageIdFromUrl,
   onOpenRacePreview,
 }: {
@@ -5666,6 +6483,9 @@ function StagePlansTab({
   standardizedBonus: JsonRecord;
   exactBonusPreview: JsonRecord;
   hasSportDirectorAssigned: boolean;
+  tacticalPlannerChoice: RacePreparationTacticalPlannerChoice;
+  u23HeadCoachId: UUID | null;
+  u23AutomationEnabled: boolean;
   selectedStageIdFromUrl?: string | null;
   onOpenRacePreview: (raceId: UUID) => void;
 }) {
@@ -5688,31 +6508,46 @@ function StagePlansTab({
   const [sportDirectorLoading, setSportDirectorLoading] = useState(false);
   const [sportDirectorSuggestion, setSportDirectorSuggestion] =
     useState<SportDirectorSuggestionResponse | null>(null);
+  const [u23AutomationDashboard, setU23AutomationDashboard] =
+    useState<U23StagePlanAutomationDashboard | null>(null);
+  const [u23AutomationDashboardLoading, setU23AutomationDashboardLoading] =
+    useState(false);
 
   const selectedStage = stages[selectedStageIndex] ?? stages[0] ?? null;
   const selectedStageWeatherCanceled =
     isPreparationStageWeatherCanceled(selectedStage);
   const selectedStageWeatherRiskReason =
     getPreparationStageWeatherRiskReason(selectedStage);
-  const targetRaceWeatherStatus =
-    getWeatherCancellationStatusFromRace(target?.race);
-  const targetRaceAllWeatherCanceled =
-    isRaceAllWeatherCanceledInPreparation(target?.race);
+  const targetRaceWeatherStatus = getWeatherCancellationStatusFromRace(
+    target?.race,
+  );
+  const targetRaceAllWeatherCanceled = isRaceAllWeatherCanceledInPreparation(
+    target?.race,
+  );
   const selectedStageLockedByWeather =
     targetRaceAllWeatherCanceled || selectedStageWeatherCanceled;
   const isTTStage = isTimeTrialStage(selectedStage);
   const isTTTStage = selectedStage?.stage_format === "team_time_trial";
   const suppliesDisabledForTT = isTTStage;
   const selectedStageKey = getStagePlanKey(selectedStage);
+  const u23Setting = asRecord(u23AutomationDashboard?.setting);
+  const isU23ManagedRace =
+    tacticalPlannerChoice === "u23_head_coach" ||
+    Boolean(u23Setting.planner_staff_id) ||
+    u23AutomationEnabled;
   const sportDirectorAutoFillDisabled =
-    !hasSportDirectorAssigned || selectedStageLockedByWeather;
+    isU23ManagedRace ||
+    !hasSportDirectorAssigned ||
+    selectedStageLockedByWeather;
   const sportDirectorDisabledReason = targetRaceAllWeatherCanceled
     ? "This race was canceled due to weather."
     : selectedStageWeatherCanceled
       ? "This stage was canceled due to weather."
-      : sportDirectorAutoFillDisabled
-        ? "Assign a Sport Director in the Race Plan first."
-        : undefined;
+      : isU23ManagedRace
+        ? "This Developing Team race is managed by the U23 Head Coach."
+        : sportDirectorAutoFillDisabled
+          ? "Assign a Sport Director in the Race Plan first."
+          : undefined;
   const selectedSavedStagePlan = findSavedStagePlan(stagePlans, selectedStage);
   const racePreparationIdForStageReadiness = String(
     asRecord(target?.preparation).id ?? "",
@@ -5720,6 +6555,106 @@ function StagePlansTab({
   const raceIdForStageReadiness = String(
     asRecord(target?.race).id ?? raceId ?? "",
   );
+
+  const u23DashboardStages = toArray<U23StagePlanDashboardStage>(
+    u23AutomationDashboard?.stages,
+  );
+  const selectedU23DashboardStage =
+    u23DashboardStages.find((row) => {
+      const stageId = String(asRecord(selectedStage).id ?? "");
+      const stageNumber = getNumber(selectedStage, "stage_number");
+
+      return (
+        (stageId && String(row.stage_id ?? "") === stageId) ||
+        (stageNumber > 0 && Number(row.stage_number ?? 0) === stageNumber)
+      );
+    }) ?? null;
+  const selectedStageManagement = asRecord(
+    selectedU23DashboardStage?.management,
+  );
+  const selectedStageManagementMode = String(
+    selectedStageManagement.management_mode ?? "",
+  );
+  const selectedStageManagementSource = String(
+    selectedStageManagement.source_type ?? "",
+  );
+  const selectedStageQualityScore =
+    selectedStageManagement.decision_quality_score;
+  const selectedStageQualityTier = getPlannerQualityTierLabel(
+    selectedStageQualityScore,
+  );
+  const selectedStageBasedOnStageId = String(
+    selectedStageManagement.based_on_stage_id ?? "",
+  );
+  const selectedStageBasedOnStageNumber = getNumber(
+    stages.find(
+      (stage) =>
+        String(asRecord(stage).id ?? "") === selectedStageBasedOnStageId,
+    ),
+    "stage_number",
+  );
+  const u23PlannerStaffName = String(
+    toArray<JsonRecord>(u23AutomationDashboard?.eligible_u23_head_coaches).find(
+      (coach) =>
+        String(coach.staff_id ?? coach.id ?? "") ===
+        String(u23HeadCoachId ?? u23Setting.planner_staff_id ?? ""),
+    )?.staff_name ?? "U23 Head Coach",
+  );
+
+  const u23GeneratedStageCount = u23DashboardStages.filter((row) => {
+    const management = asRecord(row.management);
+
+    return (
+      Boolean(row.last_saved_at) &&
+      String(management.management_mode ?? "") === "coach" &&
+      String(management.source_type ?? "") === "u23_head_coach"
+    );
+  }).length;
+
+  const u23ExistingManualStageCount = u23DashboardStages.filter((row) => {
+    const management = asRecord(row.management);
+    return String(management.management_mode ?? "") === "manual";
+  }).length;
+
+  const u23WeatherCancelledStageCount = stages.filter((stage) =>
+    isPreparationStageWeatherCanceled(stage),
+  ).length;
+
+  const u23ScheduledStageCount = Math.max(
+    stages.length -
+      u23GeneratedStageCount -
+      u23ExistingManualStageCount -
+      u23WeatherCancelledStageCount,
+    0,
+  );
+
+  const selectedU23StageHasSavedPlan = Boolean(
+    selectedU23DashboardStage?.last_saved_at ??
+      asRecord(selectedSavedStagePlan).last_saved_at,
+  );
+
+  const selectedU23StageStatusLabel =
+    selectedStageManagementMode === "manual"
+      ? "Existing manual plan · view only"
+      : selectedStageManagementSource === "u23_head_coach" &&
+          selectedU23StageHasSavedPlan
+        ? "Coach plan"
+        : "Scheduled";
+
+  const selectedU23StageStatusHint =
+    selectedStageManagementMode === "manual"
+      ? "This older manual plan remains visible, but it cannot be changed while U23 automation is active."
+      : selectedStageManagementSource === "u23_head_coach" &&
+          selectedU23StageHasSavedPlan
+        ? `${u23PlannerStaffName} generated and saved this Stage Plan automatically.`
+        : getNumber(selectedStage, "stage_number") > 1
+          ? `The U23 Head Coach will generate this plan after Stage ${Math.max(
+              getNumber(selectedStage, "stage_number") - 1,
+              1,
+            )} finishes.`
+          : "The U23 Head Coach will generate Stage 1 immediately after automation is activated.";
+
+  const stagePlanControlsReadOnly = packageSubmitted && isU23ManagedRace;
 
   const stagePlanReadinessByStageKey = useMemo(() => {
     const next: Record<string, StagePlanReadinessStage> = {};
@@ -5757,7 +6692,32 @@ function StagePlansTab({
     !selectedStageKey ||
     selectedStageLockedByWeather ||
     lockInfo.isLocked ||
+    stagePlanControlsReadOnly ||
     savingStagePlan;
+
+  async function loadU23AutomationDashboardForCurrentTarget() {
+    if (!racePreparationIdForStageReadiness || !packageSubmitted) {
+      setU23AutomationDashboard(null);
+      return;
+    }
+
+    setU23AutomationDashboardLoading(true);
+
+    try {
+      const dashboard = await loadU23StagePlanAutomationDashboard(
+        racePreparationIdForStageReadiness,
+      );
+      setU23AutomationDashboard(dashboard);
+    } catch (error) {
+      console.warn(
+        "Could not load U23 Stage Plan automation dashboard:",
+        error,
+      );
+      setU23AutomationDashboard(null);
+    } finally {
+      setU23AutomationDashboardLoading(false);
+    }
+  }
 
   async function loadStagePlanReadinessForCurrentTarget() {
     if (!racePreparationIdForStageReadiness || !packageSubmitted) {
@@ -5848,15 +6808,63 @@ function StagePlansTab({
   ]);
 
   useEffect(() => {
-    if (!hasSportDirectorAssigned) {
+    let cancelled = false;
+
+    async function loadDashboard() {
+      if (!racePreparationIdForStageReadiness || !packageSubmitted) {
+        setU23AutomationDashboard(null);
+        return;
+      }
+
+      setU23AutomationDashboardLoading(true);
+
+      try {
+        const dashboard = await loadU23StagePlanAutomationDashboard(
+          racePreparationIdForStageReadiness,
+        );
+
+        if (!cancelled) {
+          setU23AutomationDashboard(dashboard);
+        }
+      } catch (error) {
+        console.warn(
+          "Could not load U23 Stage Plan automation dashboard:",
+          error,
+        );
+
+        if (!cancelled) {
+          setU23AutomationDashboard(null);
+        }
+      } finally {
+        if (!cancelled) {
+          setU23AutomationDashboardLoading(false);
+        }
+      }
+    }
+
+    void loadDashboard();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    racePreparationIdForStageReadiness,
+    packageSubmitted,
+    tacticalPlannerChoice,
+    u23AutomationEnabled,
+  ]);
+
+  useEffect(() => {
+    if (!hasSportDirectorAssigned || isU23ManagedRace) {
       setSportDirectorSuggestion(null);
       setStageSaveError((current) =>
-        current === "A Sport Director must be assigned in the Race Plan before auto-fill can be used."
+        current ===
+        "A Sport Director must be assigned in the Race Plan before auto-fill can be used."
           ? null
           : current,
       );
     }
-  }, [hasSportDirectorAssigned]);
+  }, [hasSportDirectorAssigned, isU23ManagedRace]);
 
   useEffect(() => {
     if (!selectedStageIdFromUrl) return;
@@ -5962,6 +6970,13 @@ function StagePlansTab({
       return;
     }
 
+    if (stagePlanControlsReadOnly) {
+      setStageSaveError(
+        "This Stage Plan is managed by the U23 Head Coach and is view-only. Switch the Tactical Planner to Sport Director in the Race Plan before making manual changes.",
+      );
+      return;
+    }
+
     setSavingStagePlan(true);
     setStageSaveMessage(null);
     setStageSaveError(null);
@@ -6015,7 +7030,10 @@ function StagePlansTab({
       }));
 
       setStageSaveMessage("Stage Plan saved for this stage.");
-      await loadStagePlanReadinessForCurrentTarget();
+      await Promise.all([
+        loadStagePlanReadinessForCurrentTarget(),
+        loadU23AutomationDashboardForCurrentTarget(),
+      ]);
     } catch (error) {
       setStageSaveError(
         error instanceof Error ? error.message : "Failed to save Stage Plan.",
@@ -6025,11 +7043,12 @@ function StagePlansTab({
     }
   }
 
-
-  async function handleAskSportDirector(section: SportDirectorSuggestionSection) {
+  async function handleAskSportDirector(
+    section: SportDirectorSuggestionSection,
+  ) {
     if (!target || !selectedStage || !selectedStageKey) return;
 
-    if (!hasSportDirectorAssigned) {
+    if (!hasSportDirectorAssigned || isU23ManagedRace) {
       return;
     }
 
@@ -6142,7 +7161,10 @@ function StagePlansTab({
             );
           }
 
-          if (section === "supplies" && suggestedSupplies[riderId] !== undefined) {
+          if (
+            section === "supplies" &&
+            suggestedSupplies[riderId] !== undefined
+          ) {
             nextSuppliesByRider[riderId] = normalizeRiderSupplyDraft(
               suggestedSupplies[riderId],
             );
@@ -6201,7 +7223,6 @@ function StagePlansTab({
               section,
             ).toLowerCase()}. Review it and click Save Stage Plan.`,
       );
-
     } catch (error) {
       setStageSaveError(
         error instanceof Error
@@ -6256,7 +7277,9 @@ function StagePlansTab({
           </div>
         ) : null}
 
-        {selectedStage && selectedStageWeatherRiskReason && !targetRaceAllWeatherCanceled ? (
+        {selectedStage &&
+        selectedStageWeatherRiskReason &&
+        !targetRaceAllWeatherCanceled ? (
           <WeatherCancellationRiskPreparationNotice stage={selectedStage} />
         ) : null}
       </section>
@@ -6268,52 +7291,148 @@ function StagePlansTab({
         </div>
       )}
 
-      {packageSubmitted && !lockInfo.isLocked && !targetRaceAllWeatherCanceled && (
+      {packageSubmitted &&
+        !lockInfo.isLocked &&
+        !targetRaceAllWeatherCanceled && (
+          <div
+            className={[
+              "rounded-2xl border px-4 py-3 shadow-sm",
+              isU23ManagedRace
+                ? stagePlanReadinessToneClasses.green
+                : stagePlanReadinessSummary
+                  ? stagePlanReadinessToneClasses[
+                      stagePlanReadinessSummary.ui_tone
+                    ]
+                  : stagePlanReadinessToneClasses.gray,
+            ].join(" ")}
+          >
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <div className="text-sm font-bold">
+                  {isU23ManagedRace
+                    ? "U23 Head Coach Stage Plan schedule"
+                    : stagePlanReadinessLoading
+                      ? "Checking Stage Plans…"
+                      : (stagePlanReadinessSummary?.readiness_label ??
+                        "Stage Plan readiness")}
+                </div>
+
+                <div className="mt-1 text-sm opacity-90">
+                  {isU23ManagedRace
+                    ? "Stage 1 is generated immediately when automation is activated. Each later stage is generated after the previous stage finishes, using the latest results, fatigue, health, weather and race situation."
+                    : (stagePlanReadinessSummary?.recommended_action ??
+                      "Stage Plan readiness will appear after the Race Plan is submitted.")}
+                </div>
+              </div>
+
+              {isU23ManagedRace ? (
+                <div className="text-right text-xs font-semibold opacity-90">
+                  <div>
+                    Generated {u23GeneratedStageCount}/{stages.length} stages
+                  </div>
+                  {u23ScheduledStageCount > 0 ? (
+                    <div>Scheduled {u23ScheduledStageCount}</div>
+                  ) : null}
+                  {u23ExistingManualStageCount > 0 ? (
+                    <div>Existing manual {u23ExistingManualStageCount}</div>
+                  ) : null}
+                </div>
+              ) : stagePlanReadinessSummary ? (
+                <div className="text-right text-xs font-semibold opacity-90">
+                  <div>
+                    Saved {stagePlanReadinessSummary.saved_stage_plans}/
+                    {stagePlanReadinessSummary.total_stage_plans} stages
+                  </div>
+                  {stagePlanReadinessSummary.missing_stage_plans > 0 && (
+                    <div>
+                      Missing {stagePlanReadinessSummary.missing_stage_plans}
+                    </div>
+                  )}
+                  {stagePlanReadinessSummary.saved_without_supplies > 0 && (
+                    <div>
+                      No supplies{" "}
+                      {stagePlanReadinessSummary.saved_without_supplies}
+                    </div>
+                  )}
+                </div>
+              ) : null}
+            </div>
+          </div>
+        )}
+
+      {packageSubmitted && isU23ManagedRace ? (
         <div
           className={[
             "rounded-2xl border px-4 py-3 shadow-sm",
-            stagePlanReadinessSummary
-              ? stagePlanReadinessToneClasses[stagePlanReadinessSummary.ui_tone]
-              : stagePlanReadinessToneClasses.gray,
+            selectedStageManagementMode === "manual"
+              ? "border-amber-200 bg-amber-50 text-amber-900"
+              : "border-emerald-200 bg-emerald-50 text-emerald-900",
           ].join(" ")}
         >
-          <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <div className="text-sm font-bold">
-                {stagePlanReadinessLoading
-                  ? "Checking Stage Plans…"
-                  : (stagePlanReadinessSummary?.readiness_label ??
-                    "Stage Plan readiness")}
+                {u23AutomationDashboardLoading
+                  ? "Loading U23 Head Coach status…"
+                  : selectedStageManagementMode === "manual"
+                    ? "Existing manual plan"
+                    : selectedStageManagementSource === "u23_head_coach"
+                      ? "Managed by U23 Head Coach"
+                      : "U23 Head Coach automation active"}
               </div>
 
-              <div className="mt-1 text-sm opacity-90">
-                {stagePlanReadinessSummary?.recommended_action ??
-                  "Stage Plan readiness will appear after the Race Plan is submitted."}
+              <div className="mt-1 text-sm leading-6 opacity-90">
+                {selectedStageManagementMode === "manual"
+                  ? "This older manual plan remains visible but is now view-only. The U23 Head Coach continues with the next eligible stage."
+                  : selectedStageManagementSource === "u23_head_coach"
+                    ? `${u23PlannerStaffName} generated this plan automatically.${
+                        selectedStageBasedOnStageNumber > 0
+                          ? ` It was adapted after Stage ${selectedStageBasedOnStageNumber}.`
+                          : ""
+                      }`
+                    : "The coach will generate this stage when it becomes eligible."}
               </div>
             </div>
 
-            {stagePlanReadinessSummary && (
-              <div className="text-right text-xs font-semibold opacity-90">
-                <div>
-                  Saved {stagePlanReadinessSummary.saved_stage_plans}/
-                  {stagePlanReadinessSummary.total_stage_plans} stages
-                </div>
-                {stagePlanReadinessSummary.missing_stage_plans > 0 && (
-                  <div>
-                    Missing {stagePlanReadinessSummary.missing_stage_plans}
-                  </div>
-                )}
-                {stagePlanReadinessSummary.saved_without_supplies > 0 && (
-                  <div>
-                    No supplies{" "}
-                    {stagePlanReadinessSummary.saved_without_supplies}
-                  </div>
-                )}
-              </div>
-            )}
+            <div className="flex flex-wrap items-center gap-2 text-xs font-semibold">
+              {selectedStageManagementSource === "u23_head_coach" &&
+              selectedStageQualityScore !== undefined &&
+              selectedStageQualityScore !== null ? (
+                <span className="rounded-full border border-emerald-300 bg-white/70 px-2.5 py-1">
+                  {selectedStageQualityTier} ·{" "}
+                  {Math.round(
+                    normalizeNumericValue(selectedStageQualityScore, 0),
+                  )}
+                </span>
+              ) : null}
+
+              <span className="rounded-full border border-current/20 bg-white/70 px-2.5 py-1">
+                View only
+              </span>
+
+              <span className="rounded-full border border-current/20 bg-white/70 px-2.5 py-1">
+                {u23AutomationEnabled || Boolean(u23Setting.is_enabled)
+                  ? "Automation on"
+                  : "Planner selected"}
+              </span>
+            </div>
           </div>
         </div>
-      )}
+      ) : null}
+
+      {stagePlanControlsReadOnly ? (
+        <div className="rounded-2xl border border-slate-300 bg-slate-100 px-4 py-3 text-sm text-slate-700 shadow-sm">
+          <div className="font-semibold text-slate-900">
+            Stage Plans are view-only
+          </div>
+          <div className="mt-1 leading-6">
+            You can review every value selected by {u23PlannerStaffName}, but
+            equipment, tactics, roles, supplies and Save actions are disabled.
+            Switch the Tactical Planner to Sport Director in the Race Plan to
+            manage Stage Plans manually.
+          </div>
+        </div>
+      ) : null}
 
       <div
         className={[
@@ -6362,6 +7481,8 @@ function StagePlansTab({
         stages={stages}
         selectedStageIndex={selectedStageIndex}
         stagePlanReadinessByStageKey={stagePlanReadinessByStageKey}
+        isU23ManagedRace={isU23ManagedRace}
+        u23DashboardStages={u23DashboardStages}
         onSelectStage={(index) => {
           setSelectedStageIndex(index);
           setStageSaveMessage(null);
@@ -6373,58 +7494,66 @@ function StagePlansTab({
       {!lockInfo.isLocked && !targetRaceAllWeatherCanceled && (
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
           <div className="space-y-1 text-sm text-slate-600">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="font-semibold text-slate-900">
-              Selected stage save
-            </span>
-            <span className="text-slate-400">·</span>
-            <span>{lockInfo.lockLabel}</span>
-            <span className="text-slate-400">·</span>
-            <span>Lock time: {lockInfo.lockAtLabel}</span>
-            <span className="text-slate-400">·</span>
-            <span
-              className={[
-                "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold",
-                lockInfo.statusTone === "locked"
-                  ? "bg-red-100 text-red-700"
-                  : "bg-emerald-100 text-emerald-700",
-              ].join(" ")}
-            >
-              {lockInfo.statusLabel}
-            </span>
-            {selectedStageWeatherCanceled ? (
-              <span className="inline-flex items-center rounded-full bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-700 ring-1 ring-red-200">
-                Stage canceled
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="font-semibold text-slate-900">
+                Selected stage save
               </span>
-            ) : null}
-            {selectedStageReadiness && (
+              <span className="text-slate-400">·</span>
+              <span>{lockInfo.lockLabel}</span>
+              <span className="text-slate-400">·</span>
+              <span>Lock time: {lockInfo.lockAtLabel}</span>
+              <span className="text-slate-400">·</span>
               <span
                 className={[
-                  "inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-semibold",
-                  stagePlanReadinessBadgeClasses[
-                    selectedStageReadiness.ui_tone
-                  ],
+                  "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold",
+                  lockInfo.statusTone === "locked"
+                    ? "bg-red-100 text-red-700"
+                    : "bg-emerald-100 text-emerald-700",
                 ].join(" ")}
               >
-                {selectedStageReadiness.readiness_label}
+                {lockInfo.statusLabel}
               </span>
-            )}
-          </div>
-          <div>
-            {selectedDraft.lastSavedAt ? (
-              <span>
-                Last saved {formatTimestampLabel(selectedDraft.lastSavedAt)}
-              </span>
-            ) : (
-              <span>Not saved yet</span>
-            )}
-          </div>
-          {selectedStageReadiness?.recommended_action && (
-            <div className="text-xs text-slate-500">
-              {selectedStageReadiness.recommended_action}
+              {selectedStageWeatherCanceled ? (
+                <span className="inline-flex items-center rounded-full bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-700 ring-1 ring-red-200">
+                  Stage canceled
+                </span>
+              ) : null}
+              {isU23ManagedRace ? (
+                <span className="inline-flex items-center rounded-full border border-slate-300 bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700">
+                  {selectedU23StageStatusLabel}
+                </span>
+              ) : selectedStageReadiness ? (
+                <span
+                  className={[
+                    "inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-semibold",
+                    stagePlanReadinessBadgeClasses[
+                      selectedStageReadiness.ui_tone
+                    ],
+                  ].join(" ")}
+                >
+                  {selectedStageReadiness.readiness_label}
+                </span>
+              ) : null}
             </div>
-          )}
-        </div>
+            <div>
+              {selectedDraft.lastSavedAt ? (
+                <span>
+                  Last saved {formatTimestampLabel(selectedDraft.lastSavedAt)}
+                </span>
+              ) : (
+                <span>Not saved yet</span>
+              )}
+            </div>
+            {isU23ManagedRace ? (
+              <div className="text-xs text-slate-500">
+                {selectedU23StageStatusHint}
+              </div>
+            ) : selectedStageReadiness?.recommended_action ? (
+              <div className="text-xs text-slate-500">
+                {selectedStageReadiness.recommended_action}
+              </div>
+            ) : null}
+          </div>
 
           <div className="flex flex-wrap items-center gap-2">
             <button
@@ -6433,7 +7562,11 @@ function StagePlansTab({
               disabled={stageSaveDisabled}
               className="rounded-xl bg-yellow-400 px-4 py-2 text-sm font-semibold text-slate-950 shadow-sm hover:bg-yellow-300 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500"
             >
-              {savingStagePlan ? "Saving…" : "Save Stage Plan"}
+              {stagePlanControlsReadOnly
+                ? "View only"
+                : savingStagePlan
+                  ? "Saving…"
+                  : "Save Stage Plan"}
             </button>
           </div>
         </div>
@@ -6459,17 +7592,22 @@ function StagePlansTab({
             {String(
               asRecord(sportDirectorSuggestion.sport_director).name ??
                 "Sport Director",
-            )} · {titleFromSnake(
+            )}{" "}
+            ·{" "}
+            {titleFromSnake(
               String(
                 asRecord(sportDirectorSuggestion.sport_director).quality ??
                   "quality_unknown",
               ),
-            )} · {Math.round(
+            )}{" "}
+            ·{" "}
+            {Math.round(
               Number(
                 asRecord(sportDirectorSuggestion.sport_director)
                   .accuracy_factor ?? 0,
               ) * 100,
-            )}% confidence
+            )}
+            % confidence
           </div>
 
           <ul className="mt-3 list-disc space-y-1 pl-5 text-indigo-800">
@@ -6501,6 +7639,7 @@ function StagePlansTab({
               },
             }))
           }
+          showSportDirectorAction={!isU23ManagedRace}
           onAskSportDirector={() => void handleAskSportDirector("equipment")}
           sportDirectorLoading={sportDirectorLoading}
           sportDirectorDisabled={sportDirectorAutoFillDisabled}
@@ -6508,7 +7647,12 @@ function StagePlansTab({
           onSave={() => void handleSaveStagePlan()}
           saveDisabled={stageSaveDisabled}
           saving={savingStagePlan}
-          disabled={!packageSubmitted || lockInfo.isLocked || selectedStageLockedByWeather}
+          disabled={
+            !packageSubmitted ||
+            lockInfo.isLocked ||
+            selectedStageLockedByWeather ||
+            stagePlanControlsReadOnly
+          }
         />
 
         <StageTeamTacticCard
@@ -6531,6 +7675,7 @@ function StagePlansTab({
               },
             }))
           }
+          showSportDirectorAction={!isU23ManagedRace}
           onAskSportDirector={() => void handleAskSportDirector("team")}
           sportDirectorLoading={sportDirectorLoading}
           sportDirectorDisabled={sportDirectorAutoFillDisabled}
@@ -6538,7 +7683,12 @@ function StagePlansTab({
           onSave={() => void handleSaveStagePlan()}
           saveDisabled={stageSaveDisabled}
           saving={savingStagePlan}
-          disabled={!packageSubmitted || lockInfo.isLocked || selectedStageLockedByWeather}
+          disabled={
+            !packageSubmitted ||
+            lockInfo.isLocked ||
+            selectedStageLockedByWeather ||
+            stagePlanControlsReadOnly
+          }
         />
       </section>
 
@@ -6577,6 +7727,7 @@ function StagePlansTab({
             };
           })
         }
+        showSportDirectorAction={!isU23ManagedRace}
         onAskSportDirector={() => void handleAskSportDirector("individual")}
         sportDirectorLoading={sportDirectorLoading}
         sportDirectorDisabled={sportDirectorAutoFillDisabled}
@@ -6584,7 +7735,12 @@ function StagePlansTab({
         onSave={() => void handleSaveStagePlan()}
         saveDisabled={stageSaveDisabled}
         saving={savingStagePlan}
-        disabled={!packageSubmitted || lockInfo.isLocked || selectedStageLockedByWeather}
+        disabled={
+          !packageSubmitted ||
+          lockInfo.isLocked ||
+          selectedStageLockedByWeather ||
+          stagePlanControlsReadOnly
+        }
       />
 
       <section className="grid gap-6 xl:grid-cols-2">
@@ -6610,7 +7766,8 @@ function StagePlansTab({
             !packageSubmitted ||
             lockInfo.isLocked ||
             selectedStageLockedByWeather ||
-            suppliesDisabledForTT
+            suppliesDisabledForTT ||
+            stagePlanControlsReadOnly
           }
         />
 
@@ -6872,7 +8029,8 @@ function StageWeatherMiniCard({
 
       {isPreparationStageWeatherCanceled(stage) ? (
         <div className="mt-2 rounded-lg border border-sky-200 bg-sky-50 px-3 py-2 text-xs leading-5 text-sky-800">
-          Canceled: {getPreparationWeatherCancellationReasonLabel(
+          Canceled:{" "}
+          {getPreparationWeatherCancellationReasonLabel(
             getPreparationStageWeatherCancellationReason(stage),
           )}
         </div>
@@ -7376,11 +8534,15 @@ function StageCardsScroller({
   stages,
   selectedStageIndex,
   stagePlanReadinessByStageKey,
+  isU23ManagedRace = false,
+  u23DashboardStages = [],
   onSelectStage,
 }: {
   stages: JsonRecord[];
   selectedStageIndex: number;
   stagePlanReadinessByStageKey?: Record<string, StagePlanReadinessStage>;
+  isU23ManagedRace?: boolean;
+  u23DashboardStages?: U23StagePlanDashboardStage[];
   onSelectStage: (index: number) => void;
 }) {
   const stageSliderRef = React.useRef<HTMLDivElement | null>(null);
@@ -7405,6 +8567,48 @@ function StageCardsScroller({
       stagePlanReadinessByStageKey ?? {},
       stage,
     );
+    const u23Stage =
+      u23DashboardStages.find((row) => {
+        const stageId = String(stage.id ?? "");
+        const rowStageId = String(row.stage_id ?? "");
+        const rowStageNumber = Number(row.stage_number ?? 0);
+
+        return (
+          (stageId && rowStageId === stageId) ||
+          rowStageNumber === Number(stage.stage_number ?? index + 1)
+        );
+      }) ?? null;
+    const u23Management = asRecord(u23Stage?.management);
+    const u23ManagementMode = String(
+      u23Management.management_mode ?? "",
+    );
+    const u23ManagementSource = String(
+      u23Management.source_type ?? "",
+    );
+    const u23HasSavedPlan = Boolean(u23Stage?.last_saved_at);
+    const u23BadgeLabel =
+      u23ManagementMode === "manual"
+        ? "Manual plan"
+        : u23ManagementSource === "u23_head_coach" && u23HasSavedPlan
+          ? "Coach plan"
+          : "Scheduled";
+    const u23BadgeClasses =
+      u23ManagementMode === "manual"
+        ? "border-amber-200 bg-amber-50 text-amber-800"
+        : u23ManagementSource === "u23_head_coach" && u23HasSavedPlan
+          ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+          : "border-slate-200 bg-slate-100 text-slate-700";
+    const u23StageHint =
+      u23ManagementMode === "manual"
+        ? "Existing manual plan · view only."
+        : u23ManagementSource === "u23_head_coach" && u23HasSavedPlan
+          ? "Generated automatically by the U23 Head Coach."
+          : Number(stage.stage_number ?? index + 1) > 1
+            ? `Generated after Stage ${Math.max(
+                Number(stage.stage_number ?? index + 1) - 1,
+                1,
+              )} finishes.`
+            : "Generated immediately when U23 automation is activated.";
     const weatherCanceled = isPreparationStageWeatherCanceled(stage);
     const weatherRiskReason = getPreparationStageWeatherRiskReason(stage);
 
@@ -7432,7 +8636,16 @@ function StageCardsScroller({
           <div className="truncate text-base font-semibold">
             Stage {stageNumber}
           </div>
-          {readiness && (
+          {isU23ManagedRace ? (
+            <span
+              className={[
+                "shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-semibold",
+                u23BadgeClasses,
+              ].join(" ")}
+            >
+              {u23BadgeLabel}
+            </span>
+          ) : readiness ? (
             <span
               className={[
                 "shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-semibold",
@@ -7441,7 +8654,7 @@ function StageCardsScroller({
             >
               {readiness.readiness_label}
             </span>
-          )}
+          ) : null}
         </div>
 
         <div className="mt-1 truncate text-xs opacity-80">
@@ -7454,13 +8667,18 @@ function StageCardsScroller({
 
         {weatherCanceled ? (
           <div className="mt-2 inline-flex rounded-full bg-red-100 px-2 py-1 text-[11px] font-semibold text-red-800">
-            Canceled · {getPreparationWeatherCancellationReasonLabel(
+            Canceled ·{" "}
+            {getPreparationWeatherCancellationReasonLabel(
               getPreparationStageWeatherCancellationReason(stage),
             )}
           </div>
         ) : weatherRiskReason ? (
           <div className="mt-2 inline-flex rounded-full bg-orange-100 px-2 py-1 text-[11px] font-semibold text-orange-800">
             Weather cancellation likely
+          </div>
+        ) : isU23ManagedRace ? (
+          <div className="mt-2 line-clamp-2 text-[11px] opacity-70">
+            {u23StageHint}
           </div>
         ) : readiness?.recommended_action ? (
           <div className="mt-2 line-clamp-2 text-[11px] opacity-70">
@@ -8130,8 +9348,6 @@ function getEquipmentCapacityConflicts({
   });
 }
 
-
-
 type SportDirectorEquipmentFocus = "climbing" | "flat" | "standard" | "tt";
 
 type SportDirectorEquipmentPresetScore = {
@@ -8149,7 +9365,8 @@ function getEquipmentPresetSearchText(
   if (!preset) return "";
 
   const record = asRecord(preset);
-  const { weightedBonuses, selectedItems, caps } = getPresetBonusPreview(preset);
+  const { weightedBonuses, selectedItems, caps } =
+    getPresetBonusPreview(preset);
 
   const selectedText = Array.isArray(selectedItems)
     ? selectedItems.map((item) => JSON.stringify(item)).join(" ")
@@ -8205,8 +9422,11 @@ function getSportDirectorEquipmentPresetScores(
   return equipmentPresetOptions.map((preset) => {
     const text = getEquipmentPresetSearchText(preset);
     const { weightedBonuses } = getPresetBonusPreview(preset);
-    const defaultOrStandard = isDefaultEquipmentPreset(preset)
-      || /\b(default|standard|balanced|all[ -]?round|regular|normal)\b/i.test(text);
+    const defaultOrStandard =
+      isDefaultEquipmentPreset(preset) ||
+      /\b(default|standard|balanced|all[ -]?round|regular|normal)\b/i.test(
+        text,
+      );
 
     const climbingKeywordScore = [
       "climb",
@@ -8359,11 +9579,12 @@ function getRiderEquipmentFocus({
     riderText.includes("chaser");
 
   const isHelperLike =
-    riderText.includes("domestique") ||
-    riderText.includes("helper");
+    riderText.includes("domestique") || riderText.includes("helper");
 
   const isMixedPuncheurSprintStage =
-    stageProfile.isPuncheur && stageProfile.isSprintOrFlatFinish && !stageProfile.isMountain;
+    stageProfile.isPuncheur &&
+    stageProfile.isSprintOrFlatFinish &&
+    !stageProfile.isMountain;
 
   if (stageProfile.isTT || roleCode.includes("time_trial")) {
     return "tt";
@@ -8453,15 +9674,23 @@ function buildSportDirectorEquipmentSuggestion({
   suggestedRoles: JsonRecord;
   backendEquipment: JsonRecord;
 }): Record<string, string> {
-  const validPresetIds = new Set(equipmentPresetOptions.map((preset) => preset.id));
+  const validPresetIds = new Set(
+    equipmentPresetOptions.map((preset) => preset.id),
+  );
   const scores = getSportDirectorEquipmentPresetScores(equipmentPresetOptions);
-  const presetById = new Map(equipmentPresetOptions.map((preset) => [preset.id, preset]));
+  const presetById = new Map(
+    equipmentPresetOptions.map((preset) => [preset.id, preset]),
+  );
   const plannedCounts: Record<string, number> = {};
   const result: Record<string, string> = {};
 
   const sortedRiders = [...riders].sort((a, b) => {
-    const aRole = String(suggestedRoles[String(a.id ?? "")] ?? "").toLowerCase();
-    const bRole = String(suggestedRoles[String(b.id ?? "")] ?? "").toLowerCase();
+    const aRole = String(
+      suggestedRoles[String(a.id ?? "")] ?? "",
+    ).toLowerCase();
+    const bRole = String(
+      suggestedRoles[String(b.id ?? "")] ?? "",
+    ).toLowerCase();
     const priority = (role: string) =>
       role.includes("leader") || role.includes("gc")
         ? 1
@@ -8493,7 +9722,11 @@ function buildSportDirectorEquipmentSuggestion({
     if (!riderId) return;
 
     const backendPresetId = String(backendEquipment[riderId] ?? "");
-    if (backendPresetId && validPresetIds.has(backendPresetId) && canUsePreset(backendPresetId)) {
+    if (
+      backendPresetId &&
+      validPresetIds.has(backendPresetId) &&
+      canUsePreset(backendPresetId)
+    ) {
       result[riderId] = backendPresetId;
       addUse(backendPresetId);
       return;
@@ -8516,7 +9749,9 @@ function buildSportDirectorEquipmentSuggestion({
 
     const bestPresetId = ranked[0]?.presetId;
     const currentStillUsable =
-      currentPresetId && validPresetIds.has(currentPresetId) && canUsePreset(currentPresetId);
+      currentPresetId &&
+      validPresetIds.has(currentPresetId) &&
+      canUsePreset(currentPresetId);
 
     /*
      * Important availability rule:
@@ -8550,6 +9785,7 @@ function StageRiderEquipmentCard({
   equipmentPresetOptions,
   equipmentByRider,
   onChange,
+  showSportDirectorAction,
   onAskSportDirector,
   sportDirectorLoading,
   sportDirectorDisabled,
@@ -8563,6 +9799,7 @@ function StageRiderEquipmentCard({
   equipmentPresetOptions: EquipmentSetupPresetOption[];
   equipmentByRider: Record<string, string>;
   onChange: (riderId: string, presetId: string) => void;
+  showSportDirectorAction: boolean;
   onAskSportDirector: () => void;
   sportDirectorLoading: boolean;
   sportDirectorDisabled: boolean;
@@ -8591,15 +9828,23 @@ function StageRiderEquipmentCard({
           </p>
         </div>
         <div className="flex flex-wrap items-center justify-end gap-2">
-          <button
-            type="button"
-            onClick={onAskSportDirector}
-            disabled={disabled || equipmentSaveDisabled || sportDirectorDisabled || sportDirectorLoading || saving}
-            title={sportDirectorDisabledReason}
-            className="rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500"
-          >
-            {sportDirectorLoading ? "Preparing…" : "Ask Sport Director"}
-          </button>
+          {showSportDirectorAction ? (
+            <button
+              type="button"
+              onClick={onAskSportDirector}
+              disabled={
+                disabled ||
+                equipmentSaveDisabled ||
+                sportDirectorDisabled ||
+                sportDirectorLoading ||
+                saving
+              }
+              title={sportDirectorDisabledReason}
+              className="rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500"
+            >
+              {sportDirectorLoading ? "Preparing…" : "Ask Sport Director"}
+            </button>
+          ) : null}
           <button
             type="button"
             onClick={onSave}
@@ -8793,7 +10038,7 @@ const STAGE_SUPPLY_RULES: Record<
     label: "Bidons / Water Bottles",
     shortLabel: "Bidons",
     minPerRider: 1,
-    maxPerRider: 4,
+    maxPerRider: 10,
     defaultPerRider: 2,
     useType: "consumable",
     mandatory: false,
@@ -8805,7 +10050,7 @@ const STAGE_SUPPLY_RULES: Record<
     ],
     negativeEffects: [
       "Below minimum: +1% fatigue risk",
-      "No extra benefit after 4 bidons per rider",
+      "No extra benefit after 10 bidons per rider",
     ],
   },
   energy_gels: {
@@ -9278,8 +10523,8 @@ function StageRaceSuppliesCard({
           </h2>
           <p className="mt-1 text-sm text-slate-600">
             Team-level supply setup for this stage. Consumables are applied per
-            rider; Race Jersey Kit is mandatory and Rain Jackets are a
-            team-wide yes/no choice.
+            rider; Race Jersey Kit is mandatory and Rain Jackets are a team-wide
+            yes/no choice.
           </p>
         </div>
 
@@ -9407,8 +10652,10 @@ function StageRaceSuppliesCard({
 
       {rainJacketsMissing ? (
         <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-medium text-amber-800">
-          Rain jackets are needed because of {needs.weatherRisk.reason}, but only{" "}
-          {rainAvailable} are available for {displayNeeds.rain_jackets} riders. The stage can still start, but riders are more exposed to illness risk.
+          Rain jackets are needed because of {needs.weatherRisk.reason}, but
+          only {rainAvailable} are available for {displayNeeds.rain_jackets}{" "}
+          riders. The stage can still start, but riders are more exposed to
+          illness risk.
         </div>
       ) : null}
 
@@ -9473,7 +10720,8 @@ function StageRaceSuppliesCard({
                   Race Jersey Kit
                 </div>
                 <div className="mt-1 text-xs text-slate-500">
-                  Mandatory for all selected riders. Missing jersey kits block the stage setup.
+                  Mandatory for all selected riders. Missing jersey kits block
+                  the stage setup.
                 </div>
                 <div className="mt-1 text-xs text-slate-400">
                   10 stage uses per kit.
@@ -9505,10 +10753,12 @@ function StageRaceSuppliesCard({
                   Rain Jackets
                 </div>
                 <div className="mt-1 text-xs text-slate-500">
-                  Automatically used for all riders when the stage is rainy or below 15°C.
+                  Automatically used for all riders when the stage is rainy or
+                  below 15°C.
                 </div>
                 <div className="mt-1 text-xs text-slate-400">
-                  Weather: {needs.weatherRisk.reason}. Missing jackets do not block the start, but increase illness exposure.
+                  Weather: {needs.weatherRisk.reason}. Missing jackets do not
+                  block the start, but increase illness exposure.
                 </div>
               </div>
 
@@ -9764,7 +11014,8 @@ function StageFinalCalculationCard({
   );
   const raceBonusRows = getStagePlanRaceBonusRows(standardizedBonus);
   const jacketSelected = needs.rain_jackets > 0;
-  const jacketBenefitActive = jacketSelected && needs.weatherRisk.rainJacketRequired;
+  const jacketBenefitActive =
+    jacketSelected && needs.weatherRisk.rainJacketRequired;
   const jerseyAvailable = getSupplyAvailableQuantity(
     supplyOptions,
     "race_jersey_complete",
@@ -9943,8 +11194,8 @@ function StageFinalCalculationCard({
 
           {missingJerseys > 0 ? (
             <div className="mt-4 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm font-semibold text-red-700">
-              Missing mandatory Race Jersey Kit units: {missingJerseys}.
-              This should block the final stage setup.
+              Missing mandatory Race Jersey Kit units: {missingJerseys}. This
+              should block the final stage setup.
             </div>
           ) : null}
 
@@ -10027,6 +11278,7 @@ function StageTeamTacticCard({
   riderRolesByRider,
   onChange,
   onRoleChange,
+  showSportDirectorAction,
   onAskSportDirector,
   sportDirectorLoading,
   sportDirectorDisabled,
@@ -10042,6 +11294,7 @@ function StageTeamTacticCard({
   riderRolesByRider: Record<string, StageRiderRoleCode | string>;
   onChange: (next: { plan: string; notes: string }) => void;
   onRoleChange: (riderId: string, role: StageRiderRoleCode) => void;
+  showSportDirectorAction: boolean;
   onAskSportDirector: () => void;
   sportDirectorLoading: boolean;
   sportDirectorDisabled: boolean;
@@ -10064,24 +11317,32 @@ function StageTeamTacticCard({
       <div className="flex items-start justify-between gap-3">
         <div>
           <h2 className="text-lg font-semibold text-slate-900">
-            2. Team Tactic
+            {isTTStage ? "2. Time Trial Pacing" : "2. Stage Roles"}
           </h2>
           <p className="mt-1 text-sm text-slate-600">
             {isTTStage
               ? "Time-trial pacing plan and read-only engine roles for this selected stage."
-              : "General stage tactic and rider roles for this selected stage."}
+              : "Choose one clear role for each rider. Detailed race orders are set below in Individual Tactics."}
           </p>
         </div>
         <div className="flex flex-wrap items-center justify-end gap-2">
-          <button
-            type="button"
-            onClick={onAskSportDirector}
-            disabled={disabled || saveDisabled || sportDirectorDisabled || sportDirectorLoading || saving}
-            title={sportDirectorDisabledReason}
-            className="rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500"
-          >
-            {sportDirectorLoading ? "Preparing…" : "Ask Sport Director"}
-          </button>
+          {showSportDirectorAction ? (
+            <button
+              type="button"
+              onClick={onAskSportDirector}
+              disabled={
+                disabled ||
+                saveDisabled ||
+                sportDirectorDisabled ||
+                sportDirectorLoading ||
+                saving
+              }
+              title={sportDirectorDisabledReason}
+              className="rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500"
+            >
+              {sportDirectorLoading ? "Preparing…" : "Ask Sport Director"}
+            </button>
+          ) : null}
           <button
             type="button"
             onClick={onSave}
@@ -10095,32 +11356,34 @@ function StageTeamTacticCard({
       </div>
 
       <div className="mt-4 flex-1 space-y-4">
-        <div>
-          <div className="mb-1">
-            <label className="block text-sm font-medium text-slate-700">
-              Tactic plan
-            </label>
-          </div>
+        {isTTStage ? (
+          <div>
+            <div className="mb-1">
+              <label className="block text-sm font-medium text-slate-700">
+                Pacing plan
+              </label>
+            </div>
 
-          <select
-            value={normalizedPlan}
-            disabled={disabled}
-            onChange={(event) =>
-              onChange({
-                ...value,
-                plan: event.target.value,
-                notes: "",
-              })
-            }
-            className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm disabled:bg-slate-100"
-          >
-            {tacticOptions.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        </div>
+            <select
+              value={normalizedPlan}
+              disabled={disabled}
+              onChange={(event) =>
+                onChange({
+                  ...value,
+                  plan: event.target.value,
+                  notes: "",
+                })
+              }
+              className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm disabled:bg-slate-100"
+            >
+              {tacticOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </div>
+        ) : null}
 
         <div>
           <div className="mb-2 text-sm font-semibold text-slate-900">
@@ -10215,6 +11478,7 @@ function StageIndividualTacticsCard({
   riderRolesByRider,
   individualTacticsByRider,
   onChange,
+  showSportDirectorAction,
   onAskSportDirector,
   sportDirectorLoading,
   sportDirectorDisabled,
@@ -10229,6 +11493,7 @@ function StageIndividualTacticsCard({
   riderRolesByRider: Record<string, StageRiderRoleCode | string>;
   individualTacticsByRider: StageIndividualTacticsByRider;
   onChange: (riderId: string, phaseKey: string, command: string) => void;
+  showSportDirectorAction: boolean;
   onAskSportDirector: () => void;
   sportDirectorLoading: boolean;
   sportDirectorDisabled: boolean;
@@ -10240,8 +11505,6 @@ function StageIndividualTacticsCard({
 }) {
   const phases = getStagePhaseRanges(stage);
   const isTTStage = isTimeTrialStage(stage);
-  const tacticOptions = getStageIndividualTacticOptions(stage);
-  const tacticLabels = getStageIndividualTacticLabels(stage);
   const phaseGridTemplate = `250px repeat(${phases.length}, minmax(150px, 1fr))`;
 
   return (
@@ -10254,20 +11517,28 @@ function StageIndividualTacticsCard({
           <p className="mt-1 text-sm text-slate-600">
             {isTTStage
               ? "Time-trial pacing is split into Before split and After split."
-              : "Optional per-rider phase commands. If left as Follow Team Plan, the race engine uses the team tactic and rider role above."}
+              : "Phases 1–3 contain general race orders. Phase 4 contains finish preparation, sprint-train and lead-out orders."}
           </p>
         </div>
 
         <div className="flex flex-wrap items-center justify-end gap-2">
-          <button
-            type="button"
-            onClick={onAskSportDirector}
-            disabled={disabled || saveDisabled || sportDirectorDisabled || sportDirectorLoading || saving}
-            title={sportDirectorDisabledReason}
-            className="rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500"
-          >
-            {sportDirectorLoading ? "Preparing…" : "Ask Sport Director"}
-          </button>
+          {showSportDirectorAction ? (
+            <button
+              type="button"
+              onClick={onAskSportDirector}
+              disabled={
+                disabled ||
+                saveDisabled ||
+                sportDirectorDisabled ||
+                sportDirectorLoading ||
+                saving
+              }
+              title={sportDirectorDisabledReason}
+              className="rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500"
+            >
+              {sportDirectorLoading ? "Preparing…" : "Ask Sport Director"}
+            </button>
+          ) : null}
           <button
             type="button"
             onClick={onSave}
@@ -10325,8 +11596,8 @@ function StageIndividualTacticsCard({
                 </div>
                 <p className="mt-2">
                   These commands are optional. They override the general team
-                  tactic only for this rider and only for the selected phase of
-                  the stage.
+                  stage role only for this rider and only for the selected phase of
+                  the stage. Phases 1–3 and Phase 4 intentionally use different command lists.
                 </p>
                 <div className="mt-3 space-y-2">
                   {STAGE_INDIVIDUAL_TACTIC_OPTIONS.map((option) => (
@@ -10383,15 +11654,16 @@ function StageIndividualTacticsCard({
             );
             const selectedStageRole = String(riderRolesByRider[riderId] ?? "");
             const selectedStageRoleLabel = selectedStageRole
-              ? STAGE_RIDER_ROLE_LABELS[
+              ? (STAGE_RIDER_ROLE_LABELS[
                   selectedStageRole as StageRiderRoleCode
-                ] ?? titleFromSnake(selectedStageRole)
+                ] ?? titleFromSnake(selectedStageRole))
               : isTTStage
                 ? getTimeTrialStageRoleLabel(stage)
                 : getRiderRoleLabel(rider);
             const riderBaseRoleLabel = getRiderRoleLabel(rider);
             const individualTacticsRoleLine =
-              riderBaseRoleLabel.toLowerCase() === selectedStageRoleLabel.toLowerCase()
+              riderBaseRoleLabel.toLowerCase() ===
+              selectedStageRoleLabel.toLowerCase()
                 ? riderBaseRoleLabel
                 : `${riderBaseRoleLabel} - ${selectedStageRoleLabel}`;
 
@@ -10414,9 +11686,15 @@ function StageIndividualTacticsCard({
                 </div>
 
                 {phases.map((phase) => {
+                  const phaseOptions = getStageIndividualTacticOptions(
+                    stage,
+                    phase.key,
+                  );
                   const savedCommand =
                     riderTactics[phase.key]?.command ?? "follow_team_plan";
-                  const command = tacticLabels[savedCommand]
+                  const command = phaseOptions.some(
+                    (option) => option.value === savedCommand,
+                  )
                     ? savedCommand
                     : "follow_team_plan";
 
@@ -10430,7 +11708,7 @@ function StageIndividualTacticsCard({
                       }
                       className="h-10 rounded-xl border border-slate-300 px-2 text-sm disabled:bg-slate-100"
                     >
-                      {tacticOptions.map((option) => (
+                      {phaseOptions.map((option) => (
                         <option key={option.value} value={option.value}>
                           {option.label}
                         </option>
@@ -11089,7 +12367,9 @@ function RiderInfoPopover({
       ) : null}
 
       <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-[11px] leading-relaxed text-slate-600">
-        <span className="font-semibold text-slate-800">Race-start freshness:</span>{" "}
+        <span className="font-semibold text-slate-800">
+          Race-start freshness:
+        </span>{" "}
         fatigue lowers the red bar, race sharpness helps it, and the minimum
         starting freshness is 50/100.
       </div>

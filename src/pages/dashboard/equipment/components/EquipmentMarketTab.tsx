@@ -38,13 +38,30 @@ type MarketPurchaseDraft = {
   quantity: number
 }
 
+type EquipmentTerrainRole =
+  | 'all_round'
+  | 'endurance_cobble'
+  | 'climbing'
+  | 'aero_flat'
+  | 'time_trial'
+  | 'general'
+
 type EquipmentEffectEntry = {
   key: string
   label: string
   value: number
 }
 
-const PAGE_SIZE = 20
+const PAGE_SIZE = 200
+
+const terrainRoleOptions: Array<{ value: EquipmentTerrainRole; label: string }> = [
+  { value: 'all_round', label: 'All-round' },
+  { value: 'endurance_cobble', label: 'Endurance / Cobble' },
+  { value: 'climbing', label: 'Climbing' },
+  { value: 'aero_flat', label: 'Aero / Flat' },
+  { value: 'time_trial', label: 'Time Trial' },
+  { value: 'general', label: 'General' },
+]
 
 const effectLabels: Record<string, string> = {
   flat_bonus_pct: 'Flat Bonus',
@@ -365,6 +382,24 @@ function getQualityBadgeClass(item: EquipmentMarketItem): string {
   return 'border-gray-200 bg-gray-50 text-gray-700'
 }
 
+function getTerrainRole(item: EquipmentMarketItem): EquipmentTerrainRole {
+  const role =
+    getMetadataString(item.metadata, 'terrain_role') ??
+    getMetadataString(item.metadata, 'market_role')
+
+  if (
+    role === 'all_round' ||
+    role === 'endurance_cobble' ||
+    role === 'climbing' ||
+    role === 'aero_flat' ||
+    role === 'time_trial'
+  ) {
+    return role
+  }
+
+  return 'general'
+}
+
 function getTerrainRoleLabel(item: EquipmentMarketItem): string {
   const role =
     getMetadataString(item.metadata, 'terrain_role') ??
@@ -504,6 +539,7 @@ export default function EquipmentMarketTab({
   const [totalCount, setTotalCount] = useState(0)
   const [search, setSearch] = useState('')
   const [category, setCategory] = useState<EquipmentCategory>('frame')
+  const [terrainRole, setTerrainRole] = useState<EquipmentTerrainRole | ''>('')
   const [sort, setSort] = useState('price_asc')
   const [page, setPage] = useState(0)
   const [imagePreview, setImagePreview] = useState<MarketImagePreview | null>(null)
@@ -563,7 +599,16 @@ export default function EquipmentMarketTab({
     void loadMarket()
   }, [clubId, category, sort, page])
 
-  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE))
+  const filteredItems = useMemo(
+    () =>
+      terrainRole
+        ? items.filter(item => getTerrainRole(item) === terrainRole)
+        : items,
+    [items, terrainRole]
+  )
+
+  const filteredTotalCount = terrainRole ? filteredItems.length : totalCount
+  const totalPages = Math.max(1, Math.ceil(filteredTotalCount / PAGE_SIZE))
 
   const categoryOptions = useMemo(
     () =>
@@ -631,7 +676,7 @@ export default function EquipmentMarketTab({
   return (
     <div className="space-y-6">
       <div className="rounded-lg bg-white p-4 shadow-sm">
-        <div className="grid gap-3 md:grid-cols-4">
+        <div className="grid gap-3 lg:grid-cols-4">
           <input
             value={search}
             onChange={event => setSearch(event.target.value)}
@@ -661,6 +706,22 @@ export default function EquipmentMarketTab({
           </select>
 
           <select
+            value={terrainRole}
+            onChange={event => {
+              setTerrainRole(event.target.value as EquipmentTerrainRole | '')
+              setPage(0)
+            }}
+            className="rounded border border-gray-200 px-3 py-2 text-sm"
+          >
+            <option value="">All equipment roles</option>
+            {terrainRoleOptions.map(option => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+
+          <select
             value={sort}
             onChange={event => {
               setSort(event.target.value)
@@ -675,17 +736,18 @@ export default function EquipmentMarketTab({
             <option value="category_asc">Category</option>
           </select>
 
-          <button
-            type="button"
-            onClick={() => {
-              setPage(0)
-              void loadMarket()
-            }}
-            className="rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
-          >
-            Search
-          </button>
         </div>
+
+        <button
+          type="button"
+          onClick={() => {
+            setPage(0)
+            void loadMarket()
+          }}
+          className="mt-3 rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+        >
+          Search
+        </button>
       </div>
 
       {message ? (
@@ -704,20 +766,24 @@ export default function EquipmentMarketTab({
         <div className="border-b border-gray-100 p-4">
           <h3 className="font-semibold text-gray-900">Equipment Market</h3>
           <p className="text-xs text-gray-500">
-            Showing {items.length} of {totalCount}{' '}
-            {equipmentCategoryLabels[category].toLowerCase()}.
+            Showing {filteredItems.length} of {filteredTotalCount}{' '}
+            {equipmentCategoryLabels[category].toLowerCase()}
+            {terrainRole
+              ? ` for ${terrainRoleOptions.find(option => option.value === terrainRole)?.label ?? terrainRole}`
+              : ''}
+            .
           </p>
         </div>
 
         {loading ? (
           <div className="p-4 text-sm text-gray-500">Loading market...</div>
-        ) : items.length === 0 ? (
+        ) : filteredItems.length === 0 ? (
           <div className="p-4 text-sm text-gray-500">
             No market items found for {equipmentCategoryLabels[category].toLowerCase()}.
           </div>
         ) : (
           <div className="space-y-4 p-4">
-            {items.map(item => {
+            {filteredItems.map(item => {
               const effectEntries = getEffectEntries(item.effects)
               const imageUrl = getMarketItemImageUrl(item)
               const sponsorDiscount = sponsorDiscountsByItemId[item.id]

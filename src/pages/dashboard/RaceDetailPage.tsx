@@ -128,6 +128,7 @@ type RaceStage = {
   route_label?: string | null
   notes?: string | null
   profile_type?: string | null
+  stage_format?: string | null
   intermediate_sprints_json?: RaceStageSprint[] | null
   mountain_climbs_json?: RaceStageMountainClimb[] | null
   weather_summary?: string | null
@@ -353,6 +354,7 @@ type RaceReplayFrame = {
   rider_names: string[]
   team_names: string[]
   metadata: Record<string, unknown> | null
+  replay_mode?: string | null
 
   entity_type?: RaceReplayEntityType | null
   entity_id?: string | null
@@ -4652,14 +4654,58 @@ function buildTimeTrialSplitBadgeByEntityKey({
   return badgeByKey
 }
 
+function isIssue01PhysicalOverlayFrame(
+  frame: RaceReplayFrame
+): boolean {
+  const overlayValue = frame.metadata?.issue01_overlay
+
+  return overlayValue === true || overlayValue === 'true'
+}
+
+function isExplicitTimeTrialReplayMode(
+  replayMode?: string | null
+): boolean {
+  const normalizedMode = String(replayMode ?? '')
+    .trim()
+    .toLowerCase()
+
+  return (
+    normalizedMode === 'individual_time_trial' ||
+    normalizedMode === 'team_time_trial' ||
+    normalizedMode === 'pair_time_trial' ||
+    normalizedMode === 'prologue'
+  )
+}
+
 function getTimeTrialReplayPrimaryEntityType(
   frames: RaceReplayFrame[]
 ): 'rider' | 'team' | null {
-  if (frames.some((frame) => getReplayEntityType(frame) === 'team')) {
+  /*
+   * Rider-level physical overlays can exist inside a normal road-race replay.
+   * They must never turn the whole replay into an ITT/TTT presentation.
+   *
+   * Time-trial detection is therefore limited to non-overlay rows whose
+   * replay_mode explicitly identifies a time-trial discipline.
+   */
+  const timeTrialFrames = frames.filter(
+    (frame) =>
+      !isIssue01PhysicalOverlayFrame(frame) &&
+      isExplicitTimeTrialReplayMode(frame.replay_mode)
+  )
+
+  if (
+    timeTrialFrames.some(
+      (frame) => getReplayEntityType(frame) === 'team'
+    )
+  ) {
     return 'team'
   }
 
-  if (frames.some((frame) => getReplayEntityType(frame) === 'rider')) {
+  if (
+    timeTrialFrames.some(
+      (frame) => getReplayEntityType(frame) === 'rider'
+    )
+  ) {
     return 'rider'
   }
 
@@ -8758,16 +8804,24 @@ function RaceReplayModal({
   const timeTrialPrimaryEntityType =
     getTimeTrialReplayPrimaryEntityType(replayFrames)
   const isTimeTrialReplay =
+    isTimeTrialLikeStage(stage) ||
     timeTrialPrimaryEntityType !== null
   const isTeamTimeTrialReplay =
     isTeamTimeTrialLikeStage(stage) ||
     timeTrialPrimaryEntityType === 'team'
-  const timeTrialClockBounds = isTimeTrialReplay
-    ? getReplayTimeTrialClockBounds(
-        replayFrames,
-        timeTrialPrimaryEntityType
-      )
-    : null
+  const resolvedTimeTrialPrimaryEntityType =
+    timeTrialPrimaryEntityType ??
+    (isTeamTimeTrialReplay ? 'team' : isTimeTrialReplay ? 'rider' : null)
+
+  const timeTrialClockBounds =
+    isTimeTrialReplay && resolvedTimeTrialPrimaryEntityType
+      ? getReplayTimeTrialClockBounds(
+          replayFrames.filter(
+            (frame) => !isIssue01PhysicalOverlayFrame(frame)
+          ),
+          resolvedTimeTrialPrimaryEntityType
+        )
+      : null
   const currentTimeTrialRaceSeconds =
     timeTrialClockBounds !== null
       ? Math.min(
@@ -13368,8 +13422,67 @@ function getParticipantTeamLookupIds(team: RaceParticipantTeam): string[] {
   )
 }
 
+function isDevelopingParticipantTeam(team: RaceParticipantTeam): boolean {
+  const clubType = team.club_type?.trim().toLowerCase() ?? ''
+  const participatingClubId = team.participating_club_id?.trim() ?? ''
+  const ownerClubId = team.owner_club_id?.trim() ?? ''
+  const parentClubId = team.parent_club_id?.trim() ?? ''
+
+  return (
+    clubType === 'developing' ||
+    Boolean(
+      participatingClubId &&
+        ownerClubId &&
+        participatingClubId !== ownerClubId &&
+        (!parentClubId || parentClubId === ownerClubId)
+    )
+  )
+}
+
+/*
+ * Developing/U23 squads are part of the parent organization and intentionally
+ * use the First Team's visual identity. Keep the U23 club id for riders,
+ * results, highlighting and profile navigation, but resolve logo/kit assets
+ * from the parent/owner club first.
+ */
+function getParticipantTeamAssetLookupIds(
+  team: RaceParticipantTeam
+): string[] {
+  const ownAssetIds = [
+    team.participating_club_id,
+    team.club_id,
+    team.team_id,
+    team.id,
+    team.race_team_entry_id,
+  ]
+
+  const organizationAssetIds = [
+    team.parent_club_id,
+    team.owner_club_id,
+  ]
+
+  const orderedIds = isDevelopingParticipantTeam(team)
+    ? [...organizationAssetIds, ...ownAssetIds]
+    : [...ownAssetIds, ...organizationAssetIds]
+
+  return Array.from(
+    new Set(
+      orderedIds
+        .map((value) => value?.trim())
+        .filter((value): value is string => Boolean(value))
+    )
+  )
+}
+
 function getUniqueParticipantTeamIds(teams: RaceParticipantTeam[]): string[] {
-  return Array.from(new Set(teams.flatMap((team) => getParticipantTeamLookupIds(team))))
+  return Array.from(
+    new Set(
+      teams.flatMap((team) => [
+        ...getParticipantTeamLookupIds(team),
+        ...getParticipantTeamAssetLookupIds(team),
+      ])
+    )
+  )
 }
 
 function getLogoRecordLookupIds(record: Record<string, unknown>): string[] {
@@ -13437,11 +13550,28 @@ function mergeParticipantTeamLogoUrls(
   })
 
   return teams.map((team) => {
-    const logoRecord = getParticipantTeamLookupIds(team)
+    const assetRecords = getParticipantTeamAssetLookupIds(team)
       .map((lookupId) => recordsById.get(lookupId))
-      .find((record): record is Record<string, unknown> => Boolean(record))
-    const liveLogoUrl = logoRecord ? getTeamLogoUrlFromRecord(logoRecord) : null
-    const liveJerseyUrl = logoRecord ? getTeamJerseyUrlFromRecord(logoRecord) : null
+      .filter(
+        (record): record is Record<string, unknown> =>
+          Boolean(record)
+      )
+
+    /*
+     * Resolve logo and jersey independently. A clubs row can contain a logo
+     * while the actual jersey lives in team_kits.config or an AI preview row.
+     * Stopping at the first existing record caused U23 teams to miss the
+     * parent jersey even though that jersey had been loaded.
+     */
+    const liveLogoUrl =
+      assetRecords
+        .map((record) => getTeamLogoUrlFromRecord(record))
+        .find((value): value is string => Boolean(value)) ?? null
+
+    const liveJerseyUrl =
+      assetRecords
+        .map((record) => getTeamJerseyUrlFromRecord(record))
+        .find((value): value is string => Boolean(value)) ?? null
 
     if (
       (!liveLogoUrl || liveLogoUrl === team.logo_url_snapshot) &&
@@ -13519,6 +13649,10 @@ async function loadParticipantTeamLogos(
    * User-created and later customized jerseys are stored in team_kits.config,
    * not necessarily as a direct clubs.jersey_url column. Load every matching
    * kit row and let the preferred home/active/latest row win.
+   *
+   * teamIds includes the parent/owner club of every Developing Team. The asset
+   * merger then prefers that parent record for U23 squads, so both squads use
+   * the same organization logo and home kit without changing U23 identity.
    */
   const { data: teamKitData, error: teamKitError } = await supabase
     .from('team_kits')

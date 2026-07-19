@@ -96,6 +96,16 @@ type RiderRecentRaceRow = {
   result_source?: string | null;
 };
 
+type RiderCareerHonourRow = {
+  id: string;
+  dateLabel: string;
+  raceId: string;
+  raceName: string;
+  raceCountryCode: string | null;
+  raceCategory: string | null;
+  achievementLabel: string;
+};
+
 type ActiveTransferListing = {
   id: string;
   rider_id: string;
@@ -1015,6 +1025,116 @@ async function fetchRiderLastFiveRacesById(
   return [];
 }
 
+
+async function fetchRiderCareerHonoursById(
+  riderId: string,
+): Promise<RiderCareerHonourRow[]> {
+  const { data, error } = await supabase.rpc(
+    "get_rider_top_historical_results_v1",
+    {
+      p_rider_id: riderId,
+      p_limit: 5,
+    },
+  );
+
+  if (error) throw error;
+
+  return (Array.isArray(data) ? data : []).map(
+    (row: Record<string, unknown>, index): RiderCareerHonourRow => ({
+      id: normalizeString(row.id ?? row.achievement_id) ?? `honour:${index}`,
+      dateLabel: normalizeString(row.date_label) ?? "—",
+      raceId: normalizeString(row.race_id) ?? "",
+      raceName: normalizeString(row.race_name) ?? "Unknown race",
+      raceCountryCode: normalizeString(row.race_country_code),
+      raceCategory: normalizeString(row.race_category),
+      achievementLabel:
+        normalizeString(row.achievement_label) ?? "Career result",
+    }),
+  );
+}
+
+function RiderCareerHonoursCard({
+  rows,
+  loading,
+  raceLinkState,
+}: {
+  rows: RiderCareerHonourRow[];
+  loading: boolean;
+  raceLinkState: Record<string, unknown>;
+}) {
+  const [expanded, setExpanded] = useState(false);
+
+  return (
+    <SectionCard
+      title="Career Honours"
+      subtitle="The five greatest results across the rider's whole career"
+      headerAction={
+        <button
+          type="button"
+          onClick={() => setExpanded((value) => !value)}
+          className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-50"
+          aria-expanded={expanded}
+        >
+          {expanded ? "Collapse" : "Expand"}
+          <span
+            aria-hidden="true"
+            className={`transition-transform ${expanded ? "rotate-180" : ""}`}
+          >
+            ⌄
+          </span>
+        </button>
+      }
+    >
+      {!expanded ? (
+        <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
+          Career honours are collapsed. Select Expand to view the rider's top five career results.
+        </div>
+      ) : loading ? (
+        <div className="text-sm text-slate-500">
+          Loading career honours…
+        </div>
+      ) : rows.length === 0 ? (
+        <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
+          No career honours found for this rider yet.
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {rows.map((item) => (
+            <Link
+              key={item.id}
+              to={`/dashboard/races/${item.raceId}`}
+              state={raceLinkState}
+              className="flex min-w-0 items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm shadow-sm transition hover:bg-white"
+            >
+              <div className="w-[58px] shrink-0 whitespace-nowrap text-xs font-semibold text-slate-900">
+                {item.dateLabel}
+              </div>
+              <div className="h-7 w-px shrink-0 bg-emerald-400" />
+              <div className="flex min-w-0 flex-1 items-center gap-2 overflow-hidden">
+                <CountryFlag countryCode={item.raceCountryCode} />
+                <div
+                  className="min-w-0 flex-1 truncate font-semibold text-slate-900"
+                  title={item.raceName}
+                >
+                  {item.raceName}
+                </div>
+                {item.raceCategory ? (
+                  <span className="shrink-0 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-medium text-emerald-700">
+                    {item.raceCategory}
+                  </span>
+                ) : null}
+                <span className="min-w-0 truncate text-xs text-slate-500">
+                  · {item.achievementLabel}
+                </span>
+              </div>
+            </Link>
+          ))}
+        </div>
+      )}
+    </SectionCard>
+  );
+}
+
 async function fetchActiveTransferListing(
   riderId: string,
 ): Promise<ActiveTransferListing | null> {
@@ -1356,26 +1476,108 @@ function getEffectiveScoutBlockingReason(
 async function fetchCurrentRiderTeamById(
   riderId: string,
 ): Promise<CurrentRiderTeamInfo | null> {
-  const { data, error } = await supabase.rpc(
-    "get_external_rider_current_team_v1",
-    { p_rider_id: riderId },
-  );
+  try {
+    const { data, error } = await supabase.rpc(
+      "get_external_rider_current_team_v1",
+      { p_rider_id: riderId },
+    );
 
-  if (error) throw error;
+    if (!error) {
+      const rawPayload = Array.isArray(data) ? data[0] : data;
+      const payload =
+        rawPayload && typeof rawPayload === "object"
+          ? (rawPayload as Record<string, unknown>)
+          : null;
 
-  const payload = data && typeof data === "object"
-    ? (data as Record<string, unknown>)
-    : null;
+      const nestedTeam =
+        payload?.team && typeof payload.team === "object"
+          ? (payload.team as Record<string, unknown>)
+          : null;
 
-  if (!payload || payload.success === false || payload.found === false) {
-    return null;
+      const clubId =
+        normalizeString(
+          payload?.club_id ??
+            payload?.team_id ??
+            payload?.current_club_id ??
+            payload?.current_team_id ??
+            nestedTeam?.id ??
+            nestedTeam?.club_id,
+        ) ?? null;
+
+      const teamName =
+        normalizeString(
+          payload?.team_name ??
+            payload?.club_name ??
+            payload?.current_team_name ??
+            payload?.current_club_name ??
+            payload?.display_name ??
+            nestedTeam?.name ??
+            nestedTeam?.team_name ??
+            nestedTeam?.club_name,
+        ) ?? null;
+
+      const logoUrl =
+        normalizeString(
+          payload?.logo_url ??
+            payload?.club_logo_url ??
+            payload?.team_logo_url ??
+            nestedTeam?.logo_url ??
+            nestedTeam?.logo_path,
+        ) ?? null;
+
+      if (
+        payload &&
+        payload.success !== false &&
+        payload.found !== false &&
+        (clubId || teamName)
+      ) {
+        return {
+          clubId,
+          teamName: teamName ?? "Current Team",
+          logoUrl,
+        };
+      }
+    }
+  } catch (error) {
+    console.warn(
+      "Current-team RPC failed for external rider; using direct fallback:",
+      error,
+    );
   }
 
-  return {
-    clubId: normalizeString(payload.club_id),
-    teamName: normalizeString(payload.team_name) ?? "—",
-    logoUrl: normalizeString(payload.logo_url),
-  };
+  try {
+    const { data: riderRow, error: riderError } = await supabase
+      .from("riders")
+      .select("club_id")
+      .eq("id", riderId)
+      .maybeSingle();
+
+    if (riderError) throw riderError;
+
+    const clubId = normalizeString(riderRow?.club_id);
+    if (!clubId) return null;
+
+    const { data: clubRow, error: clubError } = await supabase
+      .from("clubs")
+      .select("id, name, logo_path")
+      .eq("id", clubId)
+      .maybeSingle();
+
+    if (clubError) throw clubError;
+    if (!clubRow) return null;
+
+    return {
+      clubId,
+      teamName: normalizeString(clubRow.name) ?? "Current Team",
+      logoUrl: normalizeString(clubRow.logo_path),
+    };
+  } catch (error) {
+    console.warn(
+      "Direct current-team lookup failed for external rider:",
+      error,
+    );
+    return null;
+  }
 }
 
 async function fetchActivePremiumBidForRider(
@@ -1468,6 +1670,7 @@ export default function ExternalRiderProfilePage({
     points: 0,
   });
   const [recentRaces, setRecentRaces] = useState<RiderRecentRaceRow[]>([]);
+  const [careerHonours, setCareerHonours] = useState<RiderCareerHonourRow[]>([]);
   const [overviewLoading, setOverviewLoading] = useState(false);
 
   const [marketLoading, setMarketLoading] = useState(false);
@@ -1659,20 +1862,30 @@ export default function ExternalRiderProfilePage({
           ? gameDatePartsResult.data[0]
           : gameDatePartsResult.data;
 
-        const typedGameState =
-          gameDateParts &&
-          typeof gameDateParts.season_number === "number" &&
-          typeof gameDateParts.month_number === "number" &&
-          typeof gameDateParts.day_number === "number" &&
-          typeof gameDateParts.hour_number === "number" &&
-          typeof gameDateParts.minute_number === "number"
-            ? (gameDateParts as ExternalProfileGameStateRow)
+        const gameStateRecord =
+          gameDateParts && typeof gameDateParts === "object"
+            ? (gameDateParts as Record<string, unknown>)
             : null;
 
+        const seasonFromParts = normalizeNumber(
+          gameStateRecord?.season_number ??
+            gameStateRecord?.season ??
+            gameStateRecord?.current_season,
+          0,
+        );
+
+        const normalizedResolvedDate = normalizeGameDateInput(
+          gameStateRecord?.game_date ??
+            gameStateRecord?.current_game_date ??
+            resolvedGameDate,
+        );
+
+        const seasonFromDate = normalizedResolvedDate
+          ? Math.max(1, Number(normalizedResolvedDate.slice(0, 4)) - 1999)
+          : 1;
+
         setCurrentSeasonNumber(
-          typeof typedGameState?.season_number === "number"
-            ? typedGameState.season_number
-            : null,
+          seasonFromParts > 0 ? seasonFromParts : seasonFromDate,
         );
       } catch (e: any) {
         if (!mounted) return;
@@ -1698,21 +1911,25 @@ export default function ExternalRiderProfilePage({
       setOverviewLoading(true);
 
       try {
-        const [overviewData, statsData, racesData] = await Promise.all([
-          fetchRiderSeasonOverviewById(selectedRider.id),
-          fetchRiderSeasonStatsById(selectedRider.id),
-          fetchRiderLastFiveRacesById(selectedRider.id),
-        ]);
+        const [overviewData, statsData, racesData, honoursData] =
+          await Promise.all([
+            fetchRiderSeasonOverviewById(selectedRider.id),
+            fetchRiderSeasonStatsById(selectedRider.id),
+            fetchRiderLastFiveRacesById(selectedRider.id),
+            fetchRiderCareerHonoursById(selectedRider.id),
+          ]);
 
         if (!mounted) return;
         setSeasonOverview(overviewData);
         setSeasonStats(statsData);
         setRecentRaces(racesData);
+        setCareerHonours(honoursData);
       } catch {
         if (!mounted) return;
         setSeasonOverview({ points: 0, podiums: 0, jerseys: 0 });
         setSeasonStats({ races: 0, wins: 0, podiums: 0, top10: 0, points: 0 });
         setRecentRaces([]);
+        setCareerHonours([]);
       } finally {
         if (!mounted) return;
         setOverviewLoading(false);
@@ -1989,17 +2206,30 @@ export default function ExternalRiderProfilePage({
   const displayHistoryRows = useMemo(() => {
     const currentHistoryRow = historyRows.find((row) => row.is_current_season);
 
-    const currentSeasonRow =
-      currentSeasonNumber == null
-        ? null
-        : {
-            season: currentSeasonNumber,
-            season_label: `Season ${currentSeasonNumber}`,
-            club_id: currentHistoryRow?.club_id ?? null,
-            team_name: currentHistoryRow?.team_name ?? "Current Team",
-            points: seasonOverview.points,
-            is_current_season: true,
-          };
+    const effectiveSeasonNumber =
+      currentSeasonNumber && currentSeasonNumber > 0
+        ? currentSeasonNumber
+        : resolvedGameDate
+          ? Math.max(1, Number(resolvedGameDate.slice(0, 4)) - 1999)
+          : 1;
+
+    const currentSeasonRow = {
+      season: effectiveSeasonNumber,
+      season_label: `Season ${effectiveSeasonNumber}`,
+      club_id:
+        currentHistoryRow?.club_id ??
+        currentTeamInfo?.clubId ??
+        selectedRider?.club_id ??
+        null,
+      team_name:
+        currentHistoryRow?.team_name ??
+        currentTeamInfo?.teamName ??
+        selectedRider?.club_name ??
+        selectedRider?.team_name ??
+        "Current Team",
+      points: seasonOverview.points,
+      is_current_season: true,
+    };
 
     const filteredRows = historyRows.filter((row) => {
       if (currentSeasonRow == null) return true;
@@ -2014,8 +2244,15 @@ export default function ExternalRiderProfilePage({
       return true;
     });
 
-    return currentSeasonRow ? [currentSeasonRow, ...filteredRows] : historyRows;
-  }, [currentSeasonNumber, historyRows, seasonOverview.points]);
+    return [currentSeasonRow, ...filteredRows];
+  }, [
+    currentSeasonNumber,
+    currentTeamInfo,
+    historyRows,
+    resolvedGameDate,
+    seasonOverview.points,
+    selectedRider,
+  ]);
 
   const skillRows = [
     { label: "Sprint", key: "sprint" },
@@ -2736,14 +2973,6 @@ export default function ExternalRiderProfilePage({
           >
             Overview
           </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab("history")}
-            className={tabButtonClass("history")}
-          >
-            History
-          </button>
-
           {shouldShowScoutButton ? (
             <button
               type="button"
@@ -2823,6 +3052,14 @@ export default function ExternalRiderProfilePage({
               Premium Offer Active
             </button>
           ) : null}
+
+          <button
+            type="button"
+            onClick={() => setActiveTab("history")}
+            className={tabButtonClass("history")}
+          >
+            History
+          </button>
         </div>
       </div>
 
@@ -3166,10 +3403,11 @@ export default function ExternalRiderProfilePage({
           )}
 
           {activeTab === "history" && (
-            <SectionCard
-              title="History"
-              subtitle="Current season plus previous teams and points per season"
-            >
+            <div className="space-y-4">
+              <SectionCard
+                title="History"
+                subtitle="Current season plus previous teams and points per season"
+              >
               {historyLoading ? (
                 <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
                   Loading career history…
@@ -3177,6 +3415,10 @@ export default function ExternalRiderProfilePage({
               ) : historyError ? (
                 <div className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
                   {historyError}
+                </div>
+              ) : currentTeamLoading ? (
+                <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
+                  Loading current team…
                 </div>
               ) : displayHistoryRows.length === 0 ? (
                 <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
@@ -3220,7 +3462,21 @@ export default function ExternalRiderProfilePage({
                   </table>
                 </div>
               )}
-            </SectionCard>
+              </SectionCard>
+
+              <RiderCareerHonoursCard
+                rows={careerHonours}
+                loading={overviewLoading}
+                raceLinkState={{
+                  returnTo: `${location.pathname}${location.search}${location.hash}`,
+                  returnScrollY:
+                    typeof window !== "undefined" ? window.scrollY : 0,
+                  returnScrollX:
+                    typeof window !== "undefined" ? window.scrollX : 0,
+                  returnLabel: "Back to rider profile",
+                }}
+              />
+            </div>
           )}
         </>
       )}

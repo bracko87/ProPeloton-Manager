@@ -8,7 +8,6 @@
  * - Add route guards for /create-club and /dashboard/* that rely on Supabase auth.
  * - Keep /create-club outside the dashboard route so the liquidation guard cannot block it.
  * - Keep password reset routes public so users can recover access before login.
- * - Provide small loading and error states in guards instead of blank screens.
  *
  * UPDATE: Public AdSense-readiness routes
  * - Adds public /about, /how-to-play, /privacy-policy, /terms, /contact, and /support routes.
@@ -62,6 +61,7 @@ import ScoutingPage from './pages/dashboard/ScoutingPage'
 import RiderTransferNegotiationPage from './pages/dashboard/transfers/RiderTransferNegotiationPage'
 import RiderFreeAgentNegotiationPage from './pages/dashboard/transfers/RiderFreeAgentNegotiationPage'
 import StatisticsPage from './pages/dashboard/Statistics'
+import ClubHistoryPage from './pages/dashboard/ClubHistory'
 import RiderProfilePublicPage from './pages/dashboard/riders/RiderProfilePublicPage'
 import RiderProfileOwnPage from './pages/dashboard/riders/RiderProfileOwnPage'
 import CompareRidersPage from './pages/dashboard/CompareRiders'
@@ -81,6 +81,7 @@ import ReferralCapturePage from './pages/ReferralCapture'
 import { AuthProvider, useAuth } from './context/AuthProvider'
 import { validateTeamRankingConfig } from './constants/teamRanking.validation'
 import { supabase } from './lib/supabase'
+import RaceEngineDeterminismDiagnostic from './pages/dev/RaceEngineDeterminismDiagnostic'
 
 /**
  * Validate team ranking configuration at startup to catch config mistakes early.
@@ -267,6 +268,13 @@ export default function App(): JSX.Element {
           <Route path="/contact" element={<ContactUsPage />} />
           <Route path="/support" element={<SupportPage />} />
 
+          {/* Temporary Phase 2 deterministic-engine diagnostic.
+              Remove this route after automated test infrastructure is available. */}
+          <Route
+            path="/dev/race-engine-determinism"
+            element={<RaceEngineDeterminismDiagnostic />}
+          />
+
           {/*
             Create club route.
 
@@ -318,7 +326,10 @@ export default function App(): JSX.Element {
 
             <Route path="training" element={<TrainingPage />} />
             <Route path="training/current-camp" element={<CurrentTrainingCampPage />} />
-            <Route path="training/current-camp/:campId" element={<CurrentTrainingCampPage />} />
+            <Route
+              path="training/current-camp/:campId"
+              element={<CurrentTrainingCampPage />}
+            />
 
             <Route path="equipment" element={<EquipmentPage />} />
             <Route path="infrastructure" element={<InfrastructurePage />} />
@@ -341,6 +352,10 @@ export default function App(): JSX.Element {
             />
 
             <Route path="statistics" element={<StatisticsPage />} />
+            <Route
+              path="statistics/club-history"
+              element={<ClubHistoryPage />}
+            />
             <Route path="riders/:riderId" element={<RiderProfilePublicPage />} />
             <Route path="my-riders/:riderId" element={<RiderProfileOwnPage />} />
             <Route path="external-riders/:riderId" element={<ExternalRiderProfilePage />} />

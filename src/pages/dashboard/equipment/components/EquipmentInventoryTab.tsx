@@ -39,6 +39,14 @@ type EquipmentInventoryTabProps = {
 
 type ActionMode = 'repair' | 'sell' | 'discard'
 
+type EquipmentTerrainRole =
+  | 'all_round'
+  | 'endurance_cobble'
+  | 'climbing'
+  | 'aero_flat'
+  | 'time_trial'
+  | 'general'
+
 type ActionModalState = {
   mode: ActionMode
   item: EquipmentInventoryItem
@@ -67,6 +75,83 @@ const activeStatusOptions: Array<{ value: EquipmentStatus; label: string }> = [
   { value: 'in_maintenance', label: equipmentStatusLabels.in_maintenance },
   { value: 'worn', label: equipmentStatusLabels.worn },
 ]
+
+const terrainRoleOptions: Array<{ value: EquipmentTerrainRole; label: string }> = [
+  { value: 'all_round', label: 'All-round' },
+  { value: 'endurance_cobble', label: 'Endurance / Cobble' },
+  { value: 'climbing', label: 'Climbing' },
+  { value: 'aero_flat', label: 'Aero / Flat' },
+  { value: 'time_trial', label: 'Time Trial' },
+  { value: 'general', label: 'General' },
+]
+
+function getInventoryItemMetadata(
+  item: EquipmentInventoryItem
+): Record<string, unknown> {
+  const metadata = (
+    item as EquipmentInventoryItem & {
+      metadata?: Record<string, unknown> | null
+    }
+  ).metadata
+
+  return metadata ?? {}
+}
+
+function getInventoryItemTerrainRole(
+  item: EquipmentInventoryItem
+): EquipmentTerrainRole {
+  const metadata = getInventoryItemMetadata(item)
+  const metadataRole =
+    typeof metadata.terrain_role === 'string'
+      ? metadata.terrain_role
+      : typeof metadata.market_role === 'string'
+        ? metadata.market_role
+        : null
+
+  if (
+    metadataRole === 'all_round' ||
+    metadataRole === 'endurance_cobble' ||
+    metadataRole === 'climbing' ||
+    metadataRole === 'aero_flat' ||
+    metadataRole === 'time_trial'
+  ) {
+    return metadataRole
+  }
+
+  const effects = item.effects ?? {}
+  const effectValue = (key: string): number => Number(effects[key] ?? 0)
+
+  const scoredRoles: Array<{ role: EquipmentTerrainRole; score: number }> = [
+    {
+      role: 'endurance_cobble',
+      score: Math.max(
+        effectValue('cobble_bonus_pct'),
+        effectValue('fatigue_reduction_pct')
+      ),
+    },
+    { role: 'climbing', score: effectValue('mountain_bonus_pct') },
+    {
+      role: 'aero_flat',
+      score: Math.max(
+        effectValue('flat_bonus_pct'),
+        effectValue('sprint_bonus_pct')
+      ),
+    },
+    { role: 'time_trial', score: effectValue('time_trial_bonus_pct') },
+    {
+      role: 'all_round',
+      score: Math.min(
+        Math.max(effectValue('flat_bonus_pct'), 0),
+        Math.max(effectValue('hilly_bonus_pct'), 0),
+        Math.max(effectValue('mountain_bonus_pct'), 0)
+      ),
+    },
+  ]
+
+  const bestMatch = scoredRoles.sort((a, b) => b.score - a.score)[0]
+
+  return bestMatch && bestMatch.score > 0 ? bestMatch.role : 'general'
+}
 
 function isActiveInventoryItem(item: EquipmentInventoryItem): boolean {
   return item.status !== 'sold' && item.status !== 'discarded'
@@ -195,6 +280,7 @@ export default function EquipmentInventoryTab({
   const [search, setSearch] = useState('')
   const [category, setCategory] = useState<EquipmentCategory>('frame')
   const [status, setStatus] = useState<EquipmentStatus | ''>('')
+  const [terrainRole, setTerrainRole] = useState<EquipmentTerrainRole | ''>('')
   const [sort, setSort] = useState('condition_asc')
   const [page, setPage] = useState(0)
 
@@ -241,7 +327,7 @@ export default function EquipmentInventoryTab({
 
   useEffect(() => {
     setExpandedGroupKeys(new Set())
-  }, [clubId, category, status, sort, search])
+  }, [clubId, category, status, terrainRole, sort, search])
 
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE))
 
@@ -255,7 +341,18 @@ export default function EquipmentInventoryTab({
   )
 
 
-  const groupedItems = useMemo(() => buildInventoryGroups(items), [items])
+  const filteredItems = useMemo(
+    () =>
+      terrainRole
+        ? items.filter(item => getInventoryItemTerrainRole(item) === terrainRole)
+        : items,
+    [items, terrainRole]
+  )
+
+  const groupedItems = useMemo(
+    () => buildInventoryGroups(filteredItems),
+    [filteredItems]
+  )
 
   function toggleGroup(groupKey: string): void {
     setExpandedGroupKeys(current => {
@@ -518,7 +615,7 @@ export default function EquipmentInventoryTab({
   return (
     <div className="space-y-4">
       <div className="rounded-lg bg-white p-4 shadow-sm">
-        <div className="grid gap-3 md:grid-cols-4">
+        <div className="grid gap-3 lg:grid-cols-5">
           <input
             value={search}
             onChange={event => setSearch(event.target.value)}
@@ -557,6 +654,22 @@ export default function EquipmentInventoryTab({
           >
             <option value="">Active statuses</option>
             {activeStatusOptions.map(option => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+
+          <select
+            value={terrainRole}
+            onChange={event => {
+              setTerrainRole(event.target.value as EquipmentTerrainRole | '')
+              setPage(0)
+            }}
+            className="rounded border border-gray-200 px-3 py-2 text-sm"
+          >
+            <option value="">All equipment roles</option>
+            {terrainRoleOptions.map(option => (
               <option key={option.value} value={option.value}>
                 {option.label}
               </option>
@@ -605,14 +718,19 @@ export default function EquipmentInventoryTab({
         <div className="border-b border-gray-100 p-4">
           <h3 className="font-semibold text-gray-900">Owned Equipment</h3>
           <p className="text-xs text-gray-500">
-            Showing {items.length} active {equipmentCategoryLabels[category].toLowerCase()} item
-            {items.length === 1 ? '' : 's'}.
+            Showing {filteredItems.length} active{' '}
+            {equipmentCategoryLabels[category].toLowerCase()} item
+            {filteredItems.length === 1 ? '' : 's'}
+            {terrainRole
+              ? ` for ${terrainRoleOptions.find(option => option.value === terrainRole)?.label ?? terrainRole}`
+              : ''}
+            .
           </p>
         </div>
 
         {loading ? (
           <div className="p-4 text-sm text-gray-500">Loading inventory...</div>
-        ) : items.length === 0 ? (
+        ) : filteredItems.length === 0 ? (
           <div className="p-4 text-sm text-gray-500">
             No active {equipmentCategoryLabels[category].toLowerCase()} found.
           </div>

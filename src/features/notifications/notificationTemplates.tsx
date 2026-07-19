@@ -405,9 +405,132 @@ function getImageSrcFromItem(item: NotificationItem): string | null {
       'avatar_url',
       'logo_url',
       'banner_url',
+      'race_logo_url',
+      'race_profile_image_url',
+      'profile_image_url',
     ])
   )
 }
+
+
+function formatOrdinal(value: number | null): string | null {
+  if (value === null || !Number.isFinite(value)) return null
+
+  const integer = Math.trunc(value)
+  const absolute = Math.abs(integer)
+  const mod100 = absolute % 100
+
+  if (mod100 >= 11 && mod100 <= 13) return `${integer}th`
+
+  switch (absolute % 10) {
+    case 1:
+      return `${integer}st`
+    case 2:
+      return `${integer}nd`
+    case 3:
+      return `${integer}rd`
+    default:
+      return `${integer}th`
+  }
+}
+
+type RaceResultEntry = {
+  position: number | null
+  riderName: string | null
+  teamName: string | null
+}
+
+function getRaceResultEntries(
+  payload: Record<string, unknown> | null,
+  key: string
+): RaceResultEntry[] {
+  if (!payload) return []
+
+  const raw = payload[key]
+  if (!Array.isArray(raw)) return []
+
+  return raw
+    .map((entry): RaceResultEntry => {
+      const record = asRecord(entry)
+
+      if (!record) {
+        return {
+          position: null,
+          riderName: null,
+          teamName: null,
+        }
+      }
+
+      return {
+        position:
+          readNumber(record.position) ??
+          readNumber(record.rank) ??
+          readNumber(record.place),
+        riderName:
+          readString(record.rider_name) ||
+          readString(record.riderName) ||
+          readString(record.rider_full_name) ||
+          readString(record.full_name) ||
+          readString(record.name),
+        teamName:
+          readString(record.team_name) ||
+          readString(record.teamName) ||
+          readString(record.club_name) ||
+          readString(record.clubName),
+      }
+    })
+    .filter((entry) => entry.position !== null || entry.riderName || entry.teamName)
+}
+
+function formatRaceResultEntry(
+  entry: RaceResultEntry,
+  includeTeam = false
+): string | null {
+  const positionLabel = formatOrdinal(entry.position)
+  const riderLabel = entry.riderName
+  const teamLabel = includeTeam ? entry.teamName : null
+
+  if (positionLabel && riderLabel && teamLabel) {
+    return `${positionLabel} ${riderLabel} (${teamLabel})`
+  }
+
+  if (positionLabel && riderLabel) {
+    return `${positionLabel} ${riderLabel}`
+  }
+
+  if (riderLabel && teamLabel) {
+    return `${riderLabel} (${teamLabel})`
+  }
+
+  return riderLabel || teamLabel || positionLabel
+}
+
+function normalizeRaceHref(href: string | null): string | null {
+  if (!href) return null
+  if (href.startsWith('/races/')) return `/dashboard${href}`
+  return href
+}
+
+function getRacePageHref(item: NotificationItem): string | null {
+  const payload = getPayload(item)
+
+  const directHref = normalizeRaceHref(
+    pickFirstString(payload, [
+      'action_url',
+      'race_url',
+      'race_path',
+      'race_profile_path',
+      'race_detail_path',
+      'calendar_race_path',
+    ]) || getActionHrefFromItem(item)
+  )
+
+  if (directHref) return directHref
+
+  const raceId = pickFirstString(payload, ['race_id'])
+  return raceId ? `/dashboard/races/${raceId}` : null
+}
+
 
 function isUnread(item: NotificationItem): boolean {
   const status = getItemFieldString(item, 'status')
@@ -860,6 +983,490 @@ function getNegotiationTransferFee(item: NotificationItem): number | null {
 /* -------------------------------------------------------------------------- */
 
 export const NOTIFICATION_TEMPLATES: Record<string, NotificationTemplate> = {
+
+  RIDER_UNHAPPY: {
+    defaultTitle: 'Rider morale is low',
+    defaultMessage:
+      'A rider is unhappy. Review morale, race selection, training load, and team situation.',
+
+    imageSrc:
+      'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Event%20images/rider%20morale%20is%20low.png',
+
+    getImageSrc: (item) =>
+      getImageSrcFromItem(item) ||
+      'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Event%20images/rider%20morale%20is%20low.png',
+
+    enrich: (item) => {
+      const payload = getPayload(item) ?? {}
+      const riderName = getPreferredRiderName(item) || 'A rider'
+
+      const moraleScore = pickFirstNumber(payload, [
+        'morale_score',
+        'morale',
+        'current_morale',
+        'morale_value',
+      ])
+
+      const moraleLabel =
+        moraleScore !== null ? `${moraleScore}/100` : 'below the safe level'
+
+      return {
+        ...item,
+        title:
+          riderName !== 'A rider'
+            ? `Rider morale is low: ${riderName}`
+            : item.title || 'Rider morale is low',
+        message:
+          riderName !== 'A rider'
+            ? `${riderName} is unhappy. His morale is ${moraleLabel}. Review recent race selection, training load, team role, contract situation, and upcoming race opportunities before morale drops further.`
+            : item.message ||
+              'A rider is unhappy. Review recent race selection, training load, team role, contract situation, and upcoming race opportunities before morale drops further.',
+      }
+    },
+
+    getIntroText: (item) => {
+      const payload = getPayload(item)
+      const riderName = getPreferredRiderName(item) || 'This rider'
+
+      const moraleScore = pickFirstNumber(payload, [
+        'morale_score',
+        'morale',
+        'current_morale',
+        'morale_value',
+      ])
+
+      const missedSelections = pickFirstNumber(payload, [
+        'missed_selection_days',
+        'days_without_race_selection',
+        'days_since_last_selection',
+        'no_selection_days',
+      ])
+
+      if (moraleScore !== null && missedSelections !== null) {
+        return `${riderName}'s morale is low at ${moraleScore}/100 after ${missedSelections} day${missedSelections === 1 ? '' : 's'} without enough race selection. Review his role, recent workload, upcoming races, and squad situation.`
+      }
+
+      if (moraleScore !== null) {
+        return `${riderName}'s morale is low at ${moraleScore}/100. Review his role, recent workload, race selection, contract situation, and squad plans.`
+      }
+
+      return `${riderName} is unhappy. Review his morale, recent race selection, training load, role expectations, and team situation before this becomes a bigger problem.`
+    },
+
+    getDetailRows: (item) => {
+      const payload = getPayload(item)
+
+      const moraleScore = pickFirstNumber(payload, [
+        'morale_score',
+        'morale',
+        'current_morale',
+        'morale_value',
+      ])
+
+      const previousMorale = pickFirstNumber(payload, [
+        'previous_morale',
+        'morale_before',
+        'old_morale',
+      ])
+
+      const moraleDelta = pickFirstNumber(payload, [
+        'morale_delta',
+        'delta',
+        'morale_change',
+      ])
+
+      const missedSelections = pickFirstNumber(payload, [
+        'missed_selection_days',
+        'days_without_race_selection',
+        'days_since_last_selection',
+        'no_selection_days',
+      ])
+
+      return compactRows([
+        detailRow('Rider', getPreferredRiderName(item)),
+        detailRow(
+          'Morale',
+          moraleScore !== null ? `${moraleScore}/100` : null
+        ),
+        detailRow(
+          'Previous morale',
+          previousMorale !== null ? `${previousMorale}/100` : null
+        ),
+        detailRow(
+          'Morale change',
+          moraleDelta !== null
+            ? `${moraleDelta > 0 ? '+' : ''}${moraleDelta}`
+            : null
+        ),
+        detailRow(
+          'Morale status',
+          formatLabel(
+            pickFirstString(payload, [
+              'morale_status',
+              'morale_state',
+              'status',
+              'rider_status',
+            ])
+          ) || 'Low morale'
+        ),
+        detailRow(
+          'Reason',
+          pickFirstString(payload, [
+            'morale_reason',
+            'reason',
+            'trigger_reason',
+            'unhappy_reason',
+          ])
+        ),
+        detailRow(
+          'Days without selection',
+          missedSelections !== null ? `${missedSelections}` : null
+        ),
+        detailRow(
+          'Last race',
+          pickFirstString(payload, [
+            'last_race_name',
+            'recent_race_name',
+            'last_selected_race_name',
+          ])
+        ),
+        detailRow(
+          'Rider role',
+          formatLabel(
+            pickFirstString(payload, [
+              'rider_role',
+              'role',
+              'team_role',
+            ])
+          )
+        ),
+        detailRow(
+          'Club',
+          pickFirstString(payload, [
+            'club_name',
+            'team_name',
+          ])
+        ),
+        detailRow(
+          'Contract ends',
+          formatContractSeasonLabel(
+            pickFirstString(payload, [
+              'contract_expires_on',
+              'contract_until',
+              'expires_on_game_date',
+            ])
+          )
+        ),
+      ])
+    },
+
+    getExtraText: (item) => {
+      const riderName = getPreferredRiderName(item) || 'this rider'
+
+      return `Low morale can reduce commitment and may later lead to stronger complaints or a release request. Open ${riderName}'s profile and the morale page to plan race selection, training load, and squad role adjustments.`
+    },
+
+    actions: [
+      {
+        key: 'open-rider-profile',
+        label: 'Open rider',
+        variant: 'primary',
+        kind: 'navigate',
+        getHref: (item) => {
+          const payload = getPayload(item)
+
+          return (
+            pickFirstString(payload, [
+              'my_rider_profile_path',
+              'rider_profile_path',
+              'profile_path',
+            ]) ||
+            (() => {
+              const riderId = pickFirstString(payload, ['rider_id'])
+              return riderId ? `/dashboard/my-riders/${riderId}` : null
+            })() ||
+            getRiderProfileHref(item)
+          )
+        },
+        show: (item) => {
+          const payload = getPayload(item)
+
+          return Boolean(
+            pickFirstString(payload, [
+              'my_rider_profile_path',
+              'rider_profile_path',
+              'profile_path',
+              'rider_id',
+            ]) || getRiderProfileHref(item)
+          )
+        },
+      },
+      {
+        key: 'open-morale-page',
+        label: 'Morale page',
+        variant: 'secondary',
+        kind: 'navigate',
+        getHref: (item) => {
+          const payload = getPayload(item)
+          const riderId = pickFirstString(payload, ['rider_id'])
+
+          return (
+            pickFirstString(payload, [
+              'qr_page_path',
+              'morale_page_path',
+              'team_morale_path',
+              'team_squad_path',
+            ]) ||
+            (riderId
+              ? `/dashboard/squad?focus=morale&riderId=${riderId}`
+              : '/dashboard/squad?focus=morale')
+          )
+        },
+        show: () => true,
+      },
+      {
+        key: 'open-team-squad',
+        label: 'Team squad',
+        variant: 'secondary',
+        kind: 'navigate',
+        getHref: (item) => {
+          const payload = getPayload(item)
+
+          return (
+            pickFirstString(payload, [
+              'team_squad_path',
+              'squad_path',
+            ]) || getTeamSquadHref(item)
+          )
+        },
+        show: () => true,
+      },
+      MARK_READ_ACTION,
+    ],
+  },
+
+
+  RACE_RESULTS_SUMMARY: {
+    defaultTitle: 'Race results available',
+    defaultMessage:
+      'Race results are available. Open the race page to review the standings and your riders.',
+
+    getImageSrc: (item) => {
+      const payload = getPayload(item)
+
+      return (
+        pickFirstString(payload, [
+          'race_logo_url',
+          'image_url',
+          'logo_url',
+          'race_profile_image_url',
+          'profile_image_url',
+        ]) || getImageSrcFromItem(item)
+      )
+    },
+
+    enrich: (item) => {
+      const payload = getPayload(item)
+
+      const raceName =
+        pickFirstString(payload, [
+          'race_name',
+          'race_title',
+          'name',
+        ]) || 'Race'
+
+      const stageName = pickFirstString(payload, [
+        'stage_name',
+        'stage_title',
+        'result_stage_name',
+      ])
+
+      const stageNumber = pickFirstNumber(payload, [
+        'stage_number',
+        'result_stage_number',
+      ])
+
+      const bestResultPosition = pickFirstNumber(payload, [
+        'best_result_position',
+        'best_position',
+        'top_result_position',
+      ])
+
+      const bestResultLabel = formatOrdinal(bestResultPosition)
+
+      const stageLabel =
+        stageName ||
+        (stageNumber !== null ? `Stage ${stageNumber}` : null)
+
+      return {
+        ...item,
+        title: `Race results: ${raceName}`,
+        message:
+          item.message ||
+          (stageLabel && bestResultLabel
+            ? `${stageLabel} results are available for ${raceName}. Your best result was ${bestResultLabel}. Open the race page to review the standings and your riders.`
+            : stageLabel
+              ? `${stageLabel} results are available for ${raceName}. Open the race page to review the standings and your riders.`
+              : bestResultLabel
+                ? `Results are available for ${raceName}. Your best result was ${bestResultLabel}. Open the race page to review the standings and your riders.`
+                : `Results are available for ${raceName}. Open the race page to review the standings and your riders.`),
+      }
+    },
+
+    getIntroText: (item) => {
+      const payload = getPayload(item)
+
+      const raceName =
+        pickFirstString(payload, [
+          'race_name',
+          'race_title',
+          'name',
+        ]) || 'this race'
+
+      const stageName = pickFirstString(payload, [
+        'stage_name',
+        'stage_title',
+        'result_stage_name',
+      ])
+
+      const stageNumber = pickFirstNumber(payload, [
+        'stage_number',
+        'result_stage_number',
+      ])
+
+      const bestResultPosition = pickFirstNumber(payload, [
+        'best_result_position',
+        'best_position',
+        'top_result_position',
+      ])
+
+      const bestResultLabel = formatOrdinal(bestResultPosition)
+
+      const stageLabel =
+        stageName ||
+        (stageNumber !== null ? `Stage ${stageNumber}` : null)
+
+      if (stageLabel && bestResultLabel) {
+        return `${stageLabel} results are now available for ${raceName}. Your best placed rider finished ${bestResultLabel}. Open the race page to review the full standings, top finishers, and your team results.`
+      }
+
+      if (stageLabel) {
+        return `${stageLabel} results are now available for ${raceName}. Open the race page to review the full standings, top finishers, and your team results.`
+      }
+
+      if (bestResultLabel) {
+        return `Results are now available for ${raceName}. Your best placed rider finished ${bestResultLabel}. Open the race page to review the full standings, top finishers, and your team results.`
+      }
+
+      return `Results are now available for ${raceName}. Open the race page to review the full standings, top finishers, and your team results.`
+    },
+
+    getDetailRows: (item) => {
+      const payload = getPayload(item)
+
+      const raceName = pickFirstString(payload, [
+        'race_name',
+        'race_title',
+        'name',
+      ])
+
+      const stageName = pickFirstString(payload, [
+        'stage_name',
+        'stage_title',
+        'result_stage_name',
+      ])
+
+      const stageNumber = pickFirstNumber(payload, [
+        'stage_number',
+        'result_stage_number',
+      ])
+
+      const bestResultPosition = pickFirstNumber(payload, [
+        'best_result_position',
+        'best_position',
+        'top_result_position',
+      ])
+
+      const participantsCount = pickFirstNumber(payload, [
+        'participants_count',
+        'your_riders_count',
+        'team_riders_count',
+      ])
+
+      const topTen = getRaceResultEntries(payload, 'top_10')
+      const yourRiders = getRaceResultEntries(payload, 'your_riders')
+
+      const topThreeLabel = topTen
+        .slice(0, 3)
+        .map((resultEntry) => formatRaceResultEntry(resultEntry, true))
+        .filter(Boolean)
+        .join(' • ')
+
+      const yourRidersLabel = yourRiders
+        .slice(0, 5)
+        .map((resultEntry) => formatRaceResultEntry(resultEntry, false))
+        .filter(Boolean)
+        .join(' • ')
+
+      return compactRows([
+        detailRow('Race', raceName),
+        detailRow(
+          'Stage',
+          stageName || (stageNumber !== null ? `Stage ${stageNumber}` : null)
+        ),
+        detailRow(
+          'Race class',
+          pickFirstString(payload, [
+            'race_class_code',
+            'race_class',
+            'class_code',
+            'category',
+          ])
+        ),
+        detailRow('Best team result', formatOrdinal(bestResultPosition)),
+        detailRow(
+          'Your riders listed',
+          participantsCount !== null ? String(participantsCount) : null
+        ),
+        detailRow('Top 3', topThreeLabel || null),
+        detailRow('Your rider results', yourRidersLabel || null),
+      ])
+    },
+
+    getExtraText: (item) => {
+      const payload = getPayload(item)
+
+      const raceName =
+        pickFirstString(payload, [
+          'race_name',
+          'race_title',
+          'name',
+        ]) || 'this race'
+
+      return `Open the race page for ${raceName} to review the complete classification, your rider placements, and the full result details.`
+    },
+
+    actions: [
+      {
+        key: 'open-race-page',
+        label: 'Open race',
+        variant: 'primary',
+        kind: 'navigate',
+        getHref: (item) => getRacePageHref(item) || '/dashboard/calendar',
+        show: () => true,
+      },
+      {
+        key: 'open-calendar',
+        label: 'Calendar',
+        variant: 'secondary',
+        kind: 'navigate',
+        getHref: () => '/dashboard/calendar',
+        show: () => true,
+      },
+      MARK_READ_ACTION,
+    ],
+  },
+
   SPONSOR_SELECTION_REQUIRED: {
     defaultTitle: 'Sponsor selection required',
     defaultMessage:
@@ -4717,6 +5324,133 @@ export const NOTIFICATION_TEMPLATES: Record<string, NotificationTemplate> = {
       variant: 'secondary',
       kind: 'navigate',
       getHref: () => '/dashboard/training',
+      show: () => true,
+    },
+    MARK_READ_ACTION,
+  ],
+},
+  BIRTHDAY_GIFT_10_COINS: {
+  defaultTitle: 'Happy birthday, ProPeloton!',
+  defaultMessage:
+    'Your birthday gift is here. We added 10 coins to your ProPeloton Manager account.',
+
+  imageSrc:
+    'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Event%20images/Happy%20Birthday.png',
+
+  getImageSrc: (item) =>
+    getImageSrcFromItem(item) ||
+    'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Event%20images/Happy%20Birthday.png',
+
+  enrich: (item) => {
+    const payload = getPayload(item)
+
+    const coinsAmount =
+      pickFirstNumber(payload, [
+        'gift_coins',
+        'coins_awarded',
+        'coins_added',
+        'coins_reward',
+        'reward_coins',
+        'coins_amount',
+        'coin_amount',
+        'amount_coins',
+      ]) ?? 10
+
+    return {
+      ...item,
+      title: item.title || 'Happy birthday, ProPeloton!',
+      message:
+        item.message ||
+        `Your birthday gift is here. We added ${coinsAmount} coins to your ProPeloton Manager account.`,
+    }
+  },
+
+  getIntroText: (item) => {
+    const payload = getPayload(item)
+
+    const coinsAmount =
+      pickFirstNumber(payload, [
+        'gift_coins',
+        'coins_awarded',
+        'coins_added',
+        'coins_reward',
+        'reward_coins',
+        'coins_amount',
+        'coin_amount',
+        'amount_coins',
+      ]) ?? 10
+
+    return (
+      buildIntroFromMessage(item) ||
+      `Happy birthday from ProPeloton Manager. Your account has been credited with ${coinsAmount} bonus coins as a birthday gift.`
+    )
+  },
+
+  getDetailRows: (item) => {
+    const payload = getPayload(item)
+
+    const coinsAmount =
+      pickFirstNumber(payload, [
+        'gift_coins',
+        'coins_awarded',
+        'coins_added',
+        'coins_reward',
+        'reward_coins',
+        'coins_amount',
+        'coin_amount',
+        'amount_coins',
+      ]) ?? 10
+
+    return compactRows([
+      detailRow('Gift', 'Birthday bonus'),
+      detailRow('Coins added', `${coinsAmount} coins`),
+      detailRow(
+        'Granted on',
+        formatDateLabel(
+          pickFirstString(payload, [
+            'granted_at',
+            'gift_created_at',
+            'reward_created_at',
+            'created_at',
+          ]) || getItemFieldString(item, 'notification_created_at')
+        )
+      ),
+      detailRow(
+        'Account',
+        pickFirstString(payload, ['account_name', 'wallet_name']) ||
+          'ProPeloton Manager account'
+      ),
+    ])
+  },
+
+  getExtraText: () =>
+    'Enjoy your birthday reward. You can use these coins for eligible in-game features, and you can open Pro Packages if you want to add more coins or review available package options.',
+
+  actions: [
+    {
+      key: 'open-pro-packages',
+      label: 'Pro Packages',
+      variant: 'primary',
+      kind: 'navigate',
+      getHref: (item) => {
+        const payload = getPayload(item)
+        return (
+          pickFirstString(payload, [
+            'pro_packages_path',
+            'pro_packages_url',
+            'coin_packages_path',
+            'shop_path',
+          ]) || '/dashboard/pro-packages'
+        )
+      },
+      show: () => true,
+    },
+    {
+      key: 'open-dashboard',
+      label: 'Dashboard',
+      variant: 'secondary',
+      kind: 'navigate',
+      getHref: () => '/dashboard',
       show: () => true,
     },
     MARK_READ_ACTION,
@@ -10368,6 +11102,192 @@ RIDER_TRANSFER_LISTING_EXPIRED: {
     MARK_READ_ACTION,
   ],
 },
+   race_missed_startlist: {
+    defaultTitle: 'Missed rider submission deadline',
+    defaultMessage:
+      'Your team missed the rider submission deadline for a race. Review the race and prepare future rider submissions earlier.',
+    imageSrc:
+      'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Event%20images/Missed%20rider%20submission%20deadline.png',
+
+    enrich: (item) => {
+      const payload = getPayload(item) ?? {}
+
+      const raceName = pickFirstString(payload, [
+        'race_name',
+        'race_title',
+        'event_name',
+        'name',
+      ])
+
+      const requiredRiders = pickFirstNumber(payload, [
+        'required_riders',
+        'min_riders',
+        'minimum_riders',
+      ])
+
+      const assignedRiders = pickFirstNumber(payload, [
+        'assigned_riders',
+        'submitted_riders',
+        'selected_riders',
+      ])
+
+      return {
+        ...item,
+        title: raceName
+          ? `Missed rider submission deadline: ${raceName}`
+          : item.title || 'Missed rider submission deadline',
+        message:
+          raceName && requiredRiders !== null && assignedRiders !== null
+            ? `Your team missed the rider submission deadline for ${raceName}. Required ${requiredRiders} riders, assigned ${assignedRiders}.`
+            : item.message ||
+              'Your team missed a rider submission deadline for an upcoming race.',
+      }
+    },
+
+    getIntroText: (item) => {
+      const payload = getPayload(item)
+
+      const raceName = pickFirstString(payload, [
+        'race_name',
+        'race_title',
+        'event_name',
+        'name',
+      ])
+
+      if (raceName) {
+        return `Your team did not submit enough riders before the deadline for ${raceName}.`
+      }
+
+      return (
+        buildIntroFromMessage(item) ||
+        'Your team missed a rider submission deadline.'
+      )
+    },
+
+    getDetailRows: (item) => {
+      const payload = getPayload(item)
+
+      const requiredRiders = pickFirstNumber(payload, [
+        'required_riders',
+        'min_riders',
+        'minimum_riders',
+      ])
+
+      const assignedRiders = pickFirstNumber(payload, [
+        'assigned_riders',
+        'submitted_riders',
+        'selected_riders',
+      ])
+
+      const penaltyCash = pickFirstNumber(payload, [
+        'cash_penalty',
+        'penalty_cash',
+        'fine_cash',
+        'fine_amount',
+      ])
+
+      const commitmentPenalty = pickFirstNumber(payload, [
+        'score_delta',
+        'commitment_score_penalty',
+        'race_commitment_score_penalty',
+        'commitment_penalty',
+      ])
+
+      return compactRows([
+        detailRow(
+          'Race',
+          pickFirstString(payload, [
+            'race_name',
+            'race_title',
+            'event_name',
+            'name',
+          ])
+        ),
+        detailRow(
+          'Required riders',
+          requiredRiders !== null ? `${requiredRiders}` : null
+        ),
+        detailRow(
+          'Assigned riders',
+          assignedRiders !== null ? `${assignedRiders}` : null
+        ),
+        detailRow(
+          'Cash penalty',
+          penaltyCash !== null ? formatCurrencyLabel(penaltyCash, '$') : null
+        ),
+        detailRow(
+          'Commitment score penalty',
+          commitmentPenalty !== null ? `${commitmentPenalty}` : null
+        ),
+      ])
+    },
+
+    getExtraText: () =>
+      'Missing this deadline can block your team from starting the race and may affect race commitment. Use the race page or Race Preparation page to review what happened and prepare future rider submissions earlier.',
+
+    actions: [
+      {
+        key: 'open-race',
+        label: 'Open race',
+        variant: 'primary',
+        kind: 'navigate',
+        getHref: (item) => {
+          const payload = getPayload(item)
+
+          const raceId = pickFirstString(payload, ['race_id'])
+          if (raceId) return `/dashboard/races/${raceId}`
+
+          const directHref =
+            getActionHrefFromItem(item) ||
+            pickFirstString(payload, [
+              'race_path',
+              'race_url',
+              'action_url',
+              'href',
+            ])
+
+          if (!directHref) return null
+
+          if (directHref.startsWith('/races/')) {
+            return `/dashboard${directHref}`
+          }
+
+          return directHref
+        },
+        show: (item) => {
+          const payload = getPayload(item)
+
+          return Boolean(
+            pickFirstString(payload, ['race_id']) ||
+              getActionHrefFromItem(item) ||
+              pickFirstString(payload, [
+                'race_path',
+                'race_url',
+                'action_url',
+                'href',
+              ])
+          )
+        },
+      },
+      {
+        key: 'open-race-preparation',
+        label: 'Race preparation',
+        variant: 'secondary',
+        kind: 'navigate',
+        getHref: () => '/dashboard/race-preparation',
+        show: () => true,
+      },
+      {
+        key: 'open-calendar',
+        label: 'Calendar',
+        variant: 'secondary',
+        kind: 'navigate',
+        getHref: () => '/dashboard/calendar',
+        show: () => true,
+      },
+      MARK_READ_ACTION,
+    ],
+  }, 
 RACE_PLAN_OPEN: {
   defaultTitle: 'Race plan open',
   defaultMessage:

@@ -4,6 +4,9 @@ import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
 import { supabase } from '../../lib/supabase'
 import TutorialOverlay from '../../components/tutorial/TutorialOverlay'
+import HeadCoachTrainingPanel, {
+  type HeadCoachAutomationSnapshot
+} from '../../components/training/HeadCoachTrainingPanel'
 import {
   trainingTutorialSteps,
   trainingWelcomeTutorial
@@ -1136,6 +1139,13 @@ export default function TrainingPage(): JSX.Element {
   const [regularSavingDefaultClubId, setRegularSavingDefaultClubId] = useState<string | null>(null)
   const [regularSavingRiderId, setRegularSavingRiderId] = useState<string | null>(null)
   const [regularMessage, setRegularMessage] = useState<string | null>(null)
+  const [isTeamDefaultsExpanded, setIsTeamDefaultsExpanded] = useState(false)
+  const [headCoachAutomation, setHeadCoachAutomation] =
+    useState<HeadCoachAutomationSnapshot>({
+      enabledByClubId: {},
+      todayPlanByRiderId: {}
+    })
+  const [regularDirtyRiderIds, setRegularDirtyRiderIds] = useState<string[]>([])
   const [tutorialLoading, setTutorialLoading] = useState(true)
   const [tutorialMode, setTutorialMode] = useState<'closed' | 'invite' | 'steps'>('closed')
   const [tutorialStepIndex, setTutorialStepIndex] = useState(0)
@@ -1353,8 +1363,40 @@ export default function TrainingPage(): JSX.Element {
     }
   }
 
+  function isHeadCoachEnabledForRider(rider: RosterRider): boolean {
+    return Boolean(headCoachAutomation.enabledByClubId[rider.club_id])
+  }
+
+  function getHeadCoachTodayPlan(rider: RosterRider) {
+    return headCoachAutomation.todayPlanByRiderId[rider.rider_id] ?? null
+  }
+
   function buildPlanRowForRider(rider: RosterRider): RiderRegularTrainingPlanRow {
     const existing = regularPlansByRiderId.get(rider.rider_id)
+    const hasDirtyDraft = regularDirtyRiderIds.includes(rider.rider_id)
+
+    if (hasDirtyDraft && existing) {
+      return existing
+    }
+
+    const coachPlan = getHeadCoachTodayPlan(rider)
+
+    if (
+      isHeadCoachEnabledForRider(rider) &&
+      coachPlan?.focus_code &&
+      coachPlan.intensity
+    ) {
+      return {
+        rider_id: rider.rider_id,
+        club_id: rider.club_id,
+        focus_code: coachPlan.focus_code,
+        intensity: coachPlan.intensity,
+        is_active: true,
+        auto_when_free: true,
+        preferred_days: null
+      }
+    }
+
     if (existing) return existing
 
     const defaultRow = regularDefaultsByClubId.get(rider.club_id)
@@ -1371,13 +1413,33 @@ export default function TrainingPage(): JSX.Element {
   }
 
   function getEffectiveRegularTraining(rider: RosterRider): {
-    source: 'override' | 'default' | 'none'
+    source: 'head_coach' | 'manual_today' | 'override' | 'default' | 'none'
     focus_code: string | null
     intensity: RegularTrainingIntensity | null
     auto_when_free: boolean
     is_active: boolean
   } {
+    const coachPlan = getHeadCoachTodayPlan(rider)
+
+    if (
+      isHeadCoachEnabledForRider(rider) &&
+      coachPlan?.focus_code &&
+      coachPlan.intensity
+    ) {
+      return {
+        source:
+          coachPlan.source_type === 'manual_override'
+            ? 'manual_today'
+            : 'head_coach',
+        focus_code: coachPlan.focus_code,
+        intensity: coachPlan.intensity,
+        auto_when_free: true,
+        is_active: true
+      }
+    }
+
     const plan = regularPlansByRiderId.get(rider.rider_id)
+
     if (plan && plan.is_active) {
       return {
         source: 'override',
@@ -1389,6 +1451,7 @@ export default function TrainingPage(): JSX.Element {
     }
 
     const defaultRow = regularDefaultsByClubId.get(rider.club_id)
+
     if (defaultRow) {
       return {
         source: 'default',
@@ -1411,17 +1474,27 @@ export default function TrainingPage(): JSX.Element {
   const regularTrainingSummary = useMemo(() => {
     const totalRiders = roster.length
     const blockedRiders = roster.filter(
-      rider => rider.availability_status === 'injured' || rider.availability_status === 'sick'
+      rider =>
+        rider.availability_status === 'injured' ||
+        rider.availability_status === 'sick'
     ).length
 
     const overrideCount = roster.filter(rider => {
-      const plan = regularPlansByRiderId.get(rider.rider_id)
-      return Boolean(plan?.is_active)
+      const effective = getEffectiveRegularTraining(rider)
+      return (
+        effective.source === 'override' ||
+        effective.source === 'manual_today'
+      )
     }).length
 
     const defaultOnlyCount = roster.filter(rider => {
       const effective = getEffectiveRegularTraining(rider)
       return effective.source === 'default'
+    }).length
+
+    const headCoachManagedCount = roster.filter(rider => {
+      const effective = getEffectiveRegularTraining(rider)
+      return effective.source === 'head_coach'
     }).length
 
     const noPlanCount = roster.filter(rider => {
@@ -1434,9 +1507,15 @@ export default function TrainingPage(): JSX.Element {
       blockedRiders,
       overrideCount,
       defaultOnlyCount,
+      headCoachManagedCount,
       noPlanCount
     }
-  }, [roster, regularPlansByRiderId, regularDefaultsByClubId])
+  }, [
+    roster,
+    regularPlansByRiderId,
+    regularDefaultsByClubId,
+    headCoachAutomation
+  ])
 
   function updateRegularDefaultDraft(
     clubIdValue: string,
@@ -1473,6 +1552,12 @@ export default function TrainingPage(): JSX.Element {
         patch.intensity ?? base.intensity
       )
     })
+
+    setRegularDirtyRiderIds(current =>
+      current.includes(rider.rider_id)
+        ? current
+        : [...current, rider.rider_id]
+    )
   }
 
   async function loadRegularTrainingConfig(familyClubIds: string[]): Promise<void> {
@@ -1498,6 +1583,7 @@ export default function TrainingPage(): JSX.Element {
 
     setRegularDefaults((defaultsRes.data ?? []) as ClubRegularTrainingDefaultRow[])
     setRegularPlans((plansRes.data ?? []) as RiderRegularTrainingPlanRow[])
+    setRegularDirtyRiderIds([])
   }
 
   async function loadCurrentCampBooking(nextClubId: string): Promise<void> {
@@ -2124,13 +2210,49 @@ export default function TrainingPage(): JSX.Element {
   async function saveRegularTrainingPlan(rider: RosterRider): Promise<void> {
     const row = buildPlanRowForRider(rider)
     const riderName = getFullRiderName(rider)
-    const normalizedIntensity = normalizeTrainingIntensityForSave(row.focus_code, row.intensity)
+    const normalizedIntensity = normalizeTrainingIntensityForSave(
+      row.focus_code,
+      row.intensity
+    )
+    const coachEnabled = isHeadCoachEnabledForRider(rider)
 
     setRegularSavingRiderId(rider.rider_id)
     setRegularMessage(null)
     setError(null)
 
     try {
+      if (coachEnabled) {
+        if (!currentGameDate) {
+          throw new Error('Current game date could not be resolved.')
+        }
+
+        const { error: overrideError } = await supabase.rpc(
+          'set_rider_daily_training_override_v1',
+          {
+            p_club_id: rider.club_id,
+            p_rider_id: rider.rider_id,
+            p_plan_date: currentGameDate,
+            p_focus_code: row.focus_code,
+            p_intensity: normalizedIntensity
+          }
+        )
+
+        if (overrideError) throw overrideError
+
+        await loadRegularTrainingConfig(
+          familyClubs.map(team => team.club_id)
+        )
+
+        window.dispatchEvent(
+          new CustomEvent('ppm:head-coach-training-refresh')
+        )
+
+        setRegularMessage(
+          `Saved a one-day training override for ${riderName}. The Head Coach resumes control next game day.`
+        )
+        return
+      }
+
       const payload = {
         rider_id: row.rider_id,
         club_id: row.club_id,
@@ -2147,11 +2269,17 @@ export default function TrainingPage(): JSX.Element {
 
       if (error) throw error
 
-      await loadRegularTrainingConfig(familyClubs.map(row => row.club_id))
-      setRegularMessage(`Saved regular training override for ${riderName}.`)
+      await loadRegularTrainingConfig(
+        familyClubs.map(team => team.club_id)
+      )
+      setRegularMessage(
+        `Saved regular training override for ${riderName}.`
+      )
     } catch (err) {
       const message =
-        err instanceof Error ? err.message : 'Failed to save rider regular training override.'
+        err instanceof Error
+          ? err.message
+          : 'Failed to save rider regular training override.'
       setError(message)
     } finally {
       setRegularSavingRiderId(null)
@@ -2160,12 +2288,52 @@ export default function TrainingPage(): JSX.Element {
 
   async function clearRegularTrainingPlan(rider: RosterRider): Promise<void> {
     const riderName = getFullRiderName(rider)
+    const coachEnabled = isHeadCoachEnabledForRider(rider)
+    const todayCoachPlan = getHeadCoachTodayPlan(rider)
 
     setRegularSavingRiderId(rider.rider_id)
     setRegularMessage(null)
     setError(null)
 
     try {
+      if (
+        coachEnabled &&
+        todayCoachPlan?.source_type === 'manual_override'
+      ) {
+        const { error: clearError } = await supabase.rpc(
+          'clear_rider_daily_training_override_v1',
+          {
+            p_club_id: rider.club_id,
+            p_rider_id: rider.rider_id,
+            p_plan_date: todayCoachPlan.plan_date
+          }
+        )
+
+        if (clearError) throw clearError
+
+        const { error: refreshError } = await supabase.rpc(
+          'refresh_regular_training_coach_plan_v1',
+          {
+            p_club_id: rider.club_id
+          }
+        )
+
+        if (refreshError) throw refreshError
+
+        await loadRegularTrainingConfig(
+          familyClubs.map(team => team.club_id)
+        )
+
+        window.dispatchEvent(
+          new CustomEvent('ppm:head-coach-training-refresh')
+        )
+
+        setRegularMessage(
+          `Removed today's manual override for ${riderName}. The Head Coach plan was restored.`
+        )
+        return
+      }
+
       const { error } = await supabase
         .from('rider_regular_training_plans')
         .delete()
@@ -2173,11 +2341,17 @@ export default function TrainingPage(): JSX.Element {
 
       if (error) throw error
 
-      await loadRegularTrainingConfig(familyClubs.map(row => row.club_id))
-      setRegularMessage(`Removed regular training override for ${riderName}.`)
+      await loadRegularTrainingConfig(
+        familyClubs.map(team => team.club_id)
+      )
+      setRegularMessage(
+        `Removed regular training override for ${riderName}.`
+      )
     } catch (err) {
       const message =
-        err instanceof Error ? err.message : 'Failed to remove rider regular training override.'
+        err instanceof Error
+          ? err.message
+          : 'Failed to remove rider regular training override.'
       setError(message)
     } finally {
       setRegularSavingRiderId(null)
@@ -2502,7 +2676,7 @@ export default function TrainingPage(): JSX.Element {
         <div>
           <h2 className="text-2xl font-semibold text-gray-900">Training</h2>
           <p className="mt-1 text-sm text-gray-600">
-            Training Camps are live first. Regular Training stays as the next phase.
+            Plan regular training manually or delegate a rolling three-day plan to your Head Coach.
           </p>
         </div>
 
@@ -2681,6 +2855,15 @@ export default function TrainingPage(): JSX.Element {
 
       {activeTab === 'regular' ? (
         <div className="space-y-6">
+          <HeadCoachTrainingPanel
+            familyClubs={familyClubs}
+            roster={roster}
+            currentGameDate={currentGameDate}
+            onMessage={setRegularMessage}
+            onError={setError}
+            onAutomationStateChange={setHeadCoachAutomation}
+          />
+
           <div className="grid gap-4 md:grid-cols-5">
             <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
               <div className="text-xs font-medium uppercase tracking-wide text-gray-500">
@@ -2711,10 +2894,10 @@ export default function TrainingPage(): JSX.Element {
 
             <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
               <div className="text-xs font-medium uppercase tracking-wide text-gray-500">
-                No plan yet
+                Head Coach managed
               </div>
               <div className="mt-2 text-2xl font-semibold text-gray-900">
-                {regularTrainingSummary.noPlanCount}
+                {regularTrainingSummary.headCoachManagedCount}
               </div>
             </div>
 
@@ -2729,24 +2912,43 @@ export default function TrainingPage(): JSX.Element {
           </div>
 
           <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
-            <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+            <div
+              className={`flex flex-col gap-3 md:flex-row md:items-start md:justify-between ${
+                isTeamDefaultsExpanded ? 'mb-4' : ''
+              }`}
+            >
               <div>
                 <h3 className="text-lg font-semibold text-gray-900">Team Defaults</h3>
                 <p className="mt-1 text-sm text-gray-600">
-                  These defaults apply when a rider does not have a personal override.
+                  These defaults apply when Head Coach automation is disabled and a rider has no persistent override.
                 </p>
               </div>
 
-              <button
-                type="button"
-                onClick={() => void loadRegularTrainingConfig(familyClubs.map(row => row.club_id))}
-                className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
-              >
-                Refresh Training Config
-              </button>
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsTeamDefaultsExpanded(current => !current)}
+                  className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                  aria-expanded={isTeamDefaultsExpanded}
+                  aria-controls="team-defaults-content"
+                >
+                  {isTeamDefaultsExpanded ? 'Collapse' : 'Expand'}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    void loadRegularTrainingConfig(familyClubs.map(row => row.club_id))
+                  }
+                  className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                >
+                  Refresh Training Config
+                </button>
+              </div>
             </div>
 
-            <div className="grid gap-4 lg:grid-cols-2">
+            {isTeamDefaultsExpanded ? (
+              <div id="team-defaults-content" className="grid gap-4 lg:grid-cols-2">
               {familyClubs.map(team => {
                 const row = buildDefaultRowForClub(team.club_id)
                 const hasSavedDefault = regularDefaultsByClubId.has(team.club_id)
@@ -2868,14 +3070,15 @@ export default function TrainingPage(): JSX.Element {
                   </div>
                 )
               })}
-            </div>
+              </div>
+            ) : null}
           </div>
 
           <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
             <div className="mb-4">
               <h3 className="text-lg font-semibold text-gray-900">Rider Overrides</h3>
               <p className="mt-1 text-sm text-gray-600">
-                Use this only when a rider should train differently from the team default.
+                Head Coach assignments appear here as today's effective training. Editing a coach-managed rider creates a one-day override; the coach resumes next game day.
               </p>
             </div>
 
@@ -2883,7 +3086,16 @@ export default function TrainingPage(): JSX.Element {
               {orderedRegularRoster.map(rider => {
                 const effective = getEffectiveRegularTraining(rider)
                 const draft = buildPlanRowForRider(rider)
-                const hasOverride = regularPlansByRiderId.has(rider.rider_id)
+                const coachEnabled = isHeadCoachEnabledForRider(rider)
+                const todayCoachPlan = getHeadCoachTodayPlan(rider)
+                const hasPersistentOverride = regularPlansByRiderId.has(
+                  rider.rider_id
+                )
+                const hasTodayOverride =
+                  todayCoachPlan?.source_type === 'manual_override'
+                const hasClearableOverride = coachEnabled
+                  ? hasTodayOverride
+                  : hasPersistentOverride
                 const isFocusedRider = focusedRiderId === rider.rider_id
                 const draftIsDayOff = isDayOffFocus(draft.focus_code)
 
@@ -2929,9 +3141,17 @@ export default function TrainingPage(): JSX.Element {
                             Fatigue {rider.fatigue ?? 0}
                           </span>
 
-                          {effective.source === 'override' ? (
+                          {effective.source === 'head_coach' ? (
+                            <span className="rounded-full bg-yellow-100 px-2.5 py-1 text-xs font-medium text-yellow-800">
+                              Head Coach
+                            </span>
+                          ) : effective.source === 'manual_today' ? (
                             <span className="rounded-full bg-blue-100 px-2.5 py-1 text-xs font-medium text-blue-700">
-                              Personal override
+                              Manual today
+                            </span>
+                          ) : effective.source === 'override' ? (
+                            <span className="rounded-full bg-blue-100 px-2.5 py-1 text-xs font-medium text-blue-700">
+                              Persistent override
                             </span>
                           ) : effective.source === 'default' ? (
                             <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-medium text-emerald-700">
@@ -2956,11 +3176,14 @@ export default function TrainingPage(): JSX.Element {
                               effective.intensity
                             )}
                           </span>
-                          {' · '}
-                          {effective.auto_when_free ? 'Auto when free' : 'Manual only'}
-
                           <div className="mt-1 text-xs text-gray-500">
-                            Source: {effective.source}
+                            {effective.source === 'head_coach'
+                              ? 'Selected automatically by the Head Coach.'
+                              : effective.source === 'manual_today'
+                                ? 'One-day override. Head Coach resumes next game day.'
+                                : effective.auto_when_free
+                                  ? 'Auto when free.'
+                                  : 'Manual only.'}
                           </div>
                         </div>
                       </div>
@@ -3019,31 +3242,39 @@ export default function TrainingPage(): JSX.Element {
                           ) : null}
                         </div>
 
-                        <label className="flex items-center gap-2 text-sm text-gray-700">
-                          <input
-                            type="checkbox"
-                            checked={draft.is_active}
-                            onChange={event =>
-                              updateRegularPlanDraft(rider, {
-                                is_active: event.target.checked
-                              })
-                            }
-                          />
-                          Override active
-                        </label>
+                        {coachEnabled ? (
+                          <div className="rounded-lg border border-yellow-200 bg-yellow-50 px-3 py-2 text-xs text-yellow-800">
+                            Saving changes applies only to the current game day. Head Coach control resumes automatically on the next game day.
+                          </div>
+                        ) : (
+                          <>
+                            <label className="flex items-center gap-2 text-sm text-gray-700">
+                              <input
+                                type="checkbox"
+                                checked={draft.is_active}
+                                onChange={event =>
+                                  updateRegularPlanDraft(rider, {
+                                    is_active: event.target.checked
+                                  })
+                                }
+                              />
+                              Override active
+                            </label>
 
-                        <label className="flex items-center gap-2 text-sm text-gray-700">
-                          <input
-                            type="checkbox"
-                            checked={draft.auto_when_free}
-                            onChange={event =>
-                              updateRegularPlanDraft(rider, {
-                                auto_when_free: event.target.checked
-                              })
-                            }
-                          />
-                          Auto when free
-                        </label>
+                            <label className="flex items-center gap-2 text-sm text-gray-700">
+                              <input
+                                type="checkbox"
+                                checked={draft.auto_when_free}
+                                onChange={event =>
+                                  updateRegularPlanDraft(rider, {
+                                    auto_when_free: event.target.checked
+                                  })
+                                }
+                              />
+                              Auto when free
+                            </label>
+                          </>
+                        )}
                       </div>
 
                       <div className="flex flex-col gap-2 xl:items-end">
@@ -3055,18 +3286,27 @@ export default function TrainingPage(): JSX.Element {
                         >
                           {regularSavingRiderId === rider.rider_id
                             ? 'Saving…'
-                            : hasOverride
-                              ? 'Save Override'
-                              : 'Create Override'}
+                            : coachEnabled
+                              ? hasTodayOverride
+                                ? 'Save Today Override'
+                                : 'Override Today'
+                              : hasPersistentOverride
+                                ? 'Save Override'
+                                : 'Create Override'}
                         </button>
 
                         <button
                           type="button"
                           onClick={() => void clearRegularTrainingPlan(rider)}
-                          disabled={!hasOverride || regularSavingRiderId === rider.rider_id}
+                          disabled={
+                            !hasClearableOverride ||
+                            regularSavingRiderId === rider.rider_id
+                          }
                           className="rounded-lg border border-red-300 bg-white px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
                         >
-                          Clear Override
+                          {coachEnabled
+                            ? 'Clear Today Override'
+                            : 'Clear Override'}
                         </button>
                       </div>
                     </div>

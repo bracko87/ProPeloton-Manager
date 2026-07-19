@@ -148,6 +148,16 @@ type RiderRecentRaceRow = {
   result_source?: string | null
 }
 
+type RiderCareerHonourRow = {
+  id: string
+  dateLabel: string
+  raceId: string
+  raceName: string
+  raceCountryCode: string | null
+  raceCategory: string | null
+  achievementLabel: string
+}
+
 type RiderRaceSharpnessUiRow = {
   rider_id: string
   rider_name: string
@@ -2197,6 +2207,118 @@ async function fetchRiderLastFiveRacesById(riderId: string): Promise<RiderRecent
   return []
 }
 
+
+async function fetchRiderCareerHonoursById(
+  riderId: string
+): Promise<RiderCareerHonourRow[]> {
+  const { data, error } = await supabase.rpc('get_rider_top_historical_results_v1', {
+    p_rider_id: riderId,
+    p_limit: 5,
+  })
+
+  if (error) throw error
+
+  return (Array.isArray(data) ? data : []).map(
+    (row: Record<string, unknown>, index): RiderCareerHonourRow => ({
+      id: String(row.id ?? row.achievement_id ?? `honour:${index}`),
+      dateLabel: typeof row.date_label === 'string' ? row.date_label : '—',
+      raceId: typeof row.race_id === 'string' ? row.race_id : '',
+      raceName:
+        typeof row.race_name === 'string' ? row.race_name : 'Unknown race',
+      raceCountryCode:
+        typeof row.race_country_code === 'string'
+          ? row.race_country_code
+          : null,
+      raceCategory:
+        typeof row.race_category === 'string' ? row.race_category : null,
+      achievementLabel:
+        typeof row.achievement_label === 'string'
+          ? row.achievement_label
+          : 'Career result',
+    })
+  )
+}
+
+function RiderCareerHonoursCard({
+  rows,
+  loading,
+  raceLinkState,
+}: {
+  rows: RiderCareerHonourRow[]
+  loading: boolean
+  raceLinkState: Record<string, unknown>
+}) {
+  const [expanded, setExpanded] = useState(false)
+
+  return (
+    <SectionCard
+      title="Career Honours"
+      subtitle="The five greatest results across the rider's whole career"
+      headerAction={
+        <button
+          type="button"
+          onClick={() => setExpanded((value) => !value)}
+          className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-50"
+          aria-expanded={expanded}
+        >
+          {expanded ? 'Collapse' : 'Expand'}
+          <span
+            aria-hidden="true"
+            className={`transition-transform ${expanded ? 'rotate-180' : ''}`}
+          >
+            ⌄
+          </span>
+        </button>
+      }
+    >
+      {!expanded ? (
+        <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
+          Career honours are collapsed. Select Expand to view the rider's top five career results.
+        </div>
+      ) : loading ? (
+        <div className="text-sm text-slate-500">Loading career honours…</div>
+      ) : rows.length === 0 ? (
+        <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
+          No career honours found for this rider yet.
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {rows.map((item) => (
+            <Link
+              key={item.id}
+              to={`/dashboard/races/${item.raceId}`}
+              state={raceLinkState}
+              className="flex min-w-0 items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm shadow-sm transition hover:bg-white"
+            >
+              <div className="w-[58px] shrink-0 whitespace-nowrap text-xs font-semibold text-slate-900">
+                {item.dateLabel}
+              </div>
+              <div className="h-7 w-px shrink-0 bg-emerald-400" />
+              <div className="flex min-w-0 flex-1 items-center gap-2 overflow-hidden">
+                <CountryFlag countryCode={item.raceCountryCode} />
+                <div
+                  className="min-w-0 flex-1 truncate font-semibold text-slate-900"
+                  title={item.raceName}
+                >
+                  {item.raceName}
+                </div>
+                {item.raceCategory ? (
+                  <span className="shrink-0 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-medium text-emerald-700">
+                    {item.raceCategory}
+                  </span>
+                ) : null}
+                <span className="min-w-0 truncate text-xs text-slate-500">
+                  · {item.achievementLabel}
+                </span>
+              </div>
+            </Link>
+          ))}
+        </div>
+      )}
+    </SectionCard>
+  )
+}
+
 async function fetchRiderRaceSharpnessById(
   riderId: string
 ): Promise<RiderRaceSharpnessUiRow | null> {
@@ -2651,6 +2773,7 @@ export default function RiderProfilePage({
     points: 0,
   })
   const [recentRaces, setRecentRaces] = useState<RiderRecentRaceRow[]>([])
+  const [careerHonours, setCareerHonours] = useState<RiderCareerHonourRow[]>([])
   const [raceSharpness, setRaceSharpness] = useState<RiderRaceSharpnessUiRow | null>(null)
   const [overviewLoading, setOverviewLoading] = useState(false)
 
@@ -3071,12 +3194,14 @@ export default function RiderProfilePage({
       setOverviewLoading(true)
 
       try {
-        const [overviewData, statsData, racesData, sharpnessData] = await Promise.all([
-          fetchRiderSeasonOverviewById(selectedRider.id),
-          fetchRiderSeasonStatsById(selectedRider.id),
-          fetchRiderLastFiveRacesById(selectedRider.id),
-          fetchRiderRaceSharpnessById(selectedRider.id),
-        ])
+        const [overviewData, statsData, racesData, sharpnessData, honoursData] =
+          await Promise.all([
+            fetchRiderSeasonOverviewById(selectedRider.id),
+            fetchRiderSeasonStatsById(selectedRider.id),
+            fetchRiderLastFiveRacesById(selectedRider.id),
+            fetchRiderRaceSharpnessById(selectedRider.id),
+            fetchRiderCareerHonoursById(selectedRider.id),
+          ])
 
         if (!mounted) return
 
@@ -3084,12 +3209,14 @@ export default function RiderProfilePage({
         setSeasonStats(statsData)
         setRecentRaces(racesData)
         setRaceSharpness(sharpnessData)
+        setCareerHonours(honoursData)
       } catch {
         if (!mounted) return
         setSeasonOverview({ points: 0, podiums: 0, jerseys: 0 })
         setSeasonStats({ races: 0, wins: 0, podiums: 0, top10: 0, points: 0 })
         setRecentRaces([])
         setRaceSharpness(null)
+        setCareerHonours([])
       } finally {
         if (!mounted) return
         setOverviewLoading(false)
@@ -3935,6 +4062,7 @@ export default function RiderProfilePage({
                     </div>
                   )}
                 </SectionCard>
+
               </div>
 
               <div className="space-y-4">
@@ -4600,7 +4728,11 @@ export default function RiderProfilePage({
           )}
 
           {activeTab === 'history' && (
-            <SectionCard title="History" subtitle="Current season plus previous teams and points per season">
+            <div className="space-y-4">
+              <SectionCard
+                title="History"
+                subtitle="Current season plus previous teams and points per season"
+              >
               {historyLoading ? (
                 <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
                   Loading career history…
@@ -4647,7 +4779,14 @@ export default function RiderProfilePage({
                   </table>
                 </div>
               )}
-            </SectionCard>
+              </SectionCard>
+
+              <RiderCareerHonoursCard
+                rows={careerHonours}
+                loading={overviewLoading}
+                raceLinkState={getRaceDetailReturnState()}
+              />
+            </div>
           )}
         </>
       )}
