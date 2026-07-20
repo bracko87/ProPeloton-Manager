@@ -750,6 +750,7 @@ function getRiderProfileHref(item: NotificationItem): string | null {
       'FREE_AGENT_SIGNED',
       'TRANSFER_COMPLETED',
       'RETIREMENT_ANNOUNCED',
+      'RIDER_CONTRACT_EXPIRING',
     ].includes(typeCode)
 
   return shouldUseOwnRiderProfile
@@ -1245,6 +1246,251 @@ export const NOTIFICATION_TEMPLATES: Record<string, NotificationTemplate> = {
     ],
   },
 
+
+  RIDER_CONTRACT_EXPIRING: {
+    defaultTitle: 'Rider contract expiring',
+    defaultMessage:
+      'A rider contract is close to expiring. Review renewal plans before the deadline.',
+
+    imageSrc:
+      'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Event%20images/Rider%20contract%20expiring.png',
+
+    getImageSrc: (item) =>
+      getImageSrcFromItem(item) ||
+      'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Event%20images/Rider%20contract%20expiring.png',
+
+    enrich: (item) => {
+      const payload = getPayload(item) ?? {}
+      const riderName = getPreferredRiderName(item) || 'A rider'
+
+      const daysRemaining = pickFirstNumber(payload, [
+        'days_left',
+        'days_remaining',
+        'days_until_expiry',
+        'expires_in_days',
+        'contract_days_remaining',
+      ])
+
+      const contractEnd =
+        pickFirstString(payload, [
+          'contract_season_label',
+          'contract_end_season_label',
+          'season_label',
+        ]) ||
+        formatContractSeasonLabel(
+          pickFirstString(payload, [
+            'contract_expires_at',
+            'contract_end_date',
+            'expires_at',
+            'expires_on',
+            'contract_expires_on',
+          ])
+        )
+
+      const title =
+        riderName !== 'A rider'
+          ? `Rider contract expiring: ${riderName}`
+          : 'Rider contract expiring'
+
+      const message = (() => {
+        if (riderName !== 'A rider' && daysRemaining !== null && contractEnd) {
+          return `${riderName}'s contract expires in ${daysRemaining} in-game day${daysRemaining === 1 ? '' : 's'} (${contractEnd}). Review renewal terms, rider role, salary, and squad plans before the deadline.`
+        }
+
+        if (riderName !== 'A rider' && daysRemaining !== null) {
+          return `${riderName}'s contract expires in ${daysRemaining} in-game day${daysRemaining === 1 ? '' : 's'}. Review renewal terms, rider role, salary, and squad plans before the deadline.`
+        }
+
+        if (riderName !== 'A rider') {
+          return `${riderName}'s contract is close to expiring. Review renewal terms and squad plans before the deadline.`
+        }
+
+        return 'A rider contract is close to expiring. Review renewal plans before the deadline.'
+      })()
+
+      return {
+        ...item,
+        title,
+        message,
+      }
+    },
+
+    getIntroText: (item) => {
+      const payload = getPayload(item)
+      const riderName = getPreferredRiderName(item) || 'This rider'
+
+      const daysRemaining = pickFirstNumber(payload, [
+        'days_left',
+        'days_remaining',
+        'days_until_expiry',
+        'expires_in_days',
+        'contract_days_remaining',
+      ])
+
+      const salaryWeekly = pickFirstNumber(payload, [
+        'salary_weekly',
+        'weekly_salary',
+        'current_salary_weekly',
+        'contract_salary_weekly',
+        'salary',
+      ])
+
+      if (daysRemaining !== null && salaryWeekly !== null) {
+        return `${riderName}'s contract expires in ${daysRemaining} in-game day${daysRemaining === 1 ? '' : 's'}. Current weekly salary: ${formatCurrencyLabel(salaryWeekly, '$')}. Decide soon whether to renew or plan a replacement.`
+      }
+
+      if (daysRemaining !== null) {
+        return `${riderName}'s contract expires in ${daysRemaining} in-game day${daysRemaining === 1 ? '' : 's'}. Review renewal terms and your squad plan before the deadline.`
+      }
+
+      return `${riderName}'s contract is close to expiring. Review renewal terms and squad planning.`
+    },
+
+    getDetailRows: (item) => {
+      const payload = getPayload(item)
+
+      const daysRemaining = pickFirstNumber(payload, [
+        'days_left',
+        'days_remaining',
+        'days_until_expiry',
+        'expires_in_days',
+        'contract_days_remaining',
+      ])
+
+      const salaryWeekly = pickFirstNumber(payload, [
+        'salary_weekly',
+        'weekly_salary',
+        'current_salary_weekly',
+        'contract_salary_weekly',
+        'salary',
+      ])
+
+      const contractEnd =
+        pickFirstString(payload, [
+          'contract_season_label',
+          'contract_end_season_label',
+          'season_label',
+        ]) ||
+        (() => {
+          const seasonNumber = pickFirstNumber(payload, [
+            'contract_expires_season',
+            'contract_end_season',
+            'season_number',
+          ])
+
+          if (seasonNumber !== null) return `Season ${seasonNumber}`
+
+          return formatContractSeasonLabel(
+            pickFirstString(payload, [
+              'contract_expires_at',
+              'contract_end_date',
+              'expires_at',
+              'expires_on',
+              'contract_expires_on',
+            ])
+          )
+        })()
+
+      return compactRows([
+        detailRow('Rider', getPreferredRiderName(item)),
+        detailRow(
+          'Role',
+          (() => {
+            const role = pickFirstString(payload, [
+              'rider_role',
+              'role',
+              'team_role',
+              'specialty',
+            ])
+            return role ? formatLabel(role) : null
+          })()
+        ),
+        detailRow(
+          'Current weekly salary',
+          salaryWeekly !== null ? `${formatCurrencyLabel(salaryWeekly, '$')}/week` : null
+        ),
+        detailRow('Contract end', contractEnd),
+        detailRow(
+          'Days remaining',
+          daysRemaining !== null
+            ? `${daysRemaining} day${daysRemaining === 1 ? '' : 's'}`
+            : null
+        ),
+        detailRow(
+          'Club',
+          pickFirstString(payload, ['club_name', 'team_name'])
+        ),
+        detailRow(
+          'Warning window',
+          (() => {
+            const windowDays = pickFirstNumber(payload, [
+              'warning_window_days',
+              'notification_window_days',
+            ])
+            return windowDays !== null
+              ? `${windowDays} day${windowDays === 1 ? '' : 's'}`
+              : '60 days'
+          })()
+        ),
+      ])
+    },
+
+    getExtraText: (item) => {
+      const riderName = getPreferredRiderName(item) || 'this rider'
+
+      return `Open ${riderName}'s profile to review contract terms, salary, and future role. If you do not plan to renew, use the remaining time to prepare a replacement and protect your squad depth.`
+    },
+
+    actions: [
+      {
+        key: 'open-rider-profile',
+        label: 'Open rider',
+        variant: 'primary',
+        kind: 'navigate',
+        getHref: (item) => {
+          const payload = getPayload(item)
+
+          return (
+            pickFirstString(payload, [
+              'my_rider_profile_path',
+              'rider_profile_path',
+              'profile_path',
+            ]) || getRiderProfileHref(item)
+          )
+        },
+        show: (item) => {
+          const payload = getPayload(item)
+
+          return Boolean(
+            pickFirstString(payload, [
+              'my_rider_profile_path',
+              'rider_profile_path',
+              'profile_path',
+              'rider_id',
+            ]) || getRiderProfileHref(item)
+          )
+        },
+      },
+      {
+        key: 'open-team-squad',
+        label: 'Team squad',
+        variant: 'secondary',
+        kind: 'navigate',
+        getHref: (item) => {
+          const payload = getPayload(item)
+
+          return (
+            pickFirstString(payload, [
+              'team_squad_path',
+              'squad_path',
+            ]) || '/dashboard/squad'
+          )
+        },
+        show: () => true,
+      },
+      MARK_READ_ACTION,
+    ],
+  },
 
   RACE_RESULTS_SUMMARY: {
     defaultTitle: 'Race results available',

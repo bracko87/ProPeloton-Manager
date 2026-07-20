@@ -1,27 +1,32 @@
 /**
  * validateStageInput.ts
  *
- * Validation utilities for deterministic race-engine StageInput values.
+ * Validation for immutable StageInput domain data.
  *
- * Responsibilities:
- * - Validate the complete input contract before simulation state is created.
- * - Collect every detected issue before throwing.
- * - Avoid mutating any input object or array.
+ * This validator checks:
+ * - stage identity and scalar settings;
+ * - rider and team identity relationships;
+ * - captain and team membership;
+ * - profile-point integrity;
+ * - basic input-array structure.
  */
 
-import type { StageInput } from '../domain/StageInput'
+import type {
+  StageInput,
+  StageProfilePoint,
+  StageRiderInput,
+  StageTeamInput,
+} from '../domain/StageInput'
 
 /**
- * StageInputValidationError
- *
- * Thrown when one or more StageInput validation issues are detected.
+ * Error containing every StageInput validation issue found.
  */
 export class StageInputValidationError extends Error {
   readonly issues: readonly string[]
 
   constructor(issues: readonly string[]) {
     super(
-      `Invalid stage input:\n${issues
+      `Invalid StageInput:\n${issues
         .map((issue) => `- ${issue}`)
         .join('\n')}`,
     )
@@ -31,16 +36,14 @@ export class StageInputValidationError extends Error {
   }
 }
 
-/**
- * Checks whether a value is a finite number.
- */
+function isNonBlankString(value: unknown): value is string {
+  return typeof value === 'string' && value.trim().length > 0
+}
+
 function isFiniteNumber(value: unknown): value is number {
   return typeof value === 'number' && Number.isFinite(value)
 }
 
-/**
- * Checks whether a value is a positive integer.
- */
 function isPositiveInteger(value: unknown): value is number {
   return (
     typeof value === 'number' &&
@@ -49,211 +52,205 @@ function isPositiveInteger(value: unknown): value is number {
   )
 }
 
-/**
- * Checks whether a value is a non-negative integer.
- */
-function isNonNegativeInteger(value: unknown): value is number {
-  return (
-    typeof value === 'number' &&
-    Number.isInteger(value) &&
-    value >= 0
-  )
+function validateProfilePoints(
+  profilePoints: readonly StageProfilePoint[],
+  distanceKm: number,
+  issues: string[],
+): void {
+  if (!Array.isArray(profilePoints)) {
+    issues.push('profilePoints must be an array.')
+    return
+  }
+
+  if (profilePoints.length < 2) {
+    issues.push('profilePoints must contain at least two points.')
+    return
+  }
+
+  for (let index = 0; index < profilePoints.length; index += 1) {
+    const point = profilePoints[index]
+
+    if (!isFiniteNumber(point.kilometre)) {
+      issues.push(
+        `profilePoints[${index}].kilometre must be finite.`,
+      )
+    }
+
+    if (!isFiniteNumber(point.elevationMetres)) {
+      issues.push(
+        `profilePoints[${index}].elevationMetres must be finite.`,
+      )
+    }
+
+    if (
+      isFiniteNumber(point.kilometre) &&
+      (point.kilometre < 0 || point.kilometre > distanceKm)
+    ) {
+      issues.push(
+        `profilePoints[${index}].kilometre must be between 0 and distanceKm.`,
+      )
+    }
+
+    if (index > 0) {
+      const previousPoint = profilePoints[index - 1]
+
+      if (
+        isFiniteNumber(previousPoint.kilometre) &&
+        isFiniteNumber(point.kilometre) &&
+        point.kilometre <= previousPoint.kilometre
+      ) {
+        issues.push(
+          `profilePoints[${index}].kilometre must be strictly greater than the previous point.`,
+        )
+      }
+    }
+  }
+
+  const firstPoint = profilePoints[0]
+  const lastPoint = profilePoints[profilePoints.length - 1]
+
+  if (
+    isFiniteNumber(firstPoint.kilometre) &&
+    firstPoint.kilometre !== 0
+  ) {
+    issues.push('The first profile point must be at kilometre 0.')
+  }
+
+  if (
+    isFiniteNumber(lastPoint.kilometre) &&
+    lastPoint.kilometre !== distanceKm
+  ) {
+    issues.push(
+      'The final profile point must be at exactly distanceKm.',
+    )
+  }
 }
 
-/**
- * Checks whether a string is blank.
- */
-function isBlank(value: unknown): boolean {
-  return typeof value !== 'string' || value.trim() === ''
-}
+function validateRiders(
+  riders: readonly StageRiderInput[],
+  issues: string[],
+): Map<string, StageRiderInput> {
+  const riderById = new Map<string, StageRiderInput>()
 
-/**
- * validateStageInput
- *
- * Validates all StageInput invariants and throws only after every check has
- * completed.
- */
-export function validateStageInput(input: StageInput): void {
-  const issues: string[] = []
-
-  /**
-   * BASIC STAGE DATA
-   */
-
-  if (isBlank(input.raceId)) {
-    issues.push('raceId must not be blank')
+  if (!Array.isArray(riders)) {
+    issues.push('riders must be an array.')
+    return riderById
   }
 
-  if (isBlank(input.stageId)) {
-    issues.push('stageId must not be blank')
+  if (riders.length === 0) {
+    issues.push('At least one rider is required.')
   }
 
-  if (isBlank(input.seed)) {
-    issues.push('seed must not be blank')
-  }
+  for (let index = 0; index < riders.length; index += 1) {
+    const rider = riders[index]
 
-  if (input.stageFormat !== 'road_race') {
-    issues.push('stageFormat must be exactly "road_race"')
-  }
-
-  if (!isFiniteNumber(input.distanceKm) || input.distanceKm <= 0) {
-    issues.push('distanceKm must be finite and greater than zero')
-  }
-
-  /**
-   * COLLECTION REQUIREMENTS
-   */
-
-  if (!Array.isArray(input.teams) || input.teams.length < 2) {
-    issues.push('At least two teams must exist')
-  }
-
-  if (!Array.isArray(input.riders) || input.riders.length < 2) {
-    issues.push('At least two riders must exist')
-  }
-
-  if (!Array.isArray(input.orders)) {
-    issues.push('orders must be an array')
-  }
-
-  /**
-   * BUILD LOOKUP MAPS
-   */
-
-  const teamById = new Map<
-    string,
-    StageInput['teams'][number]
-  >()
-
-  const riderById = new Map<
-    string,
-    StageInput['riders'][number]
-  >()
-
-  const duplicateTeamIds = new Set<string>()
-  const duplicateRiderIds = new Set<string>()
-  const duplicateOrderIds = new Set<string>()
-
-  /**
-   * TEAM ID VALIDATION
-   */
-
-  for (const team of input.teams) {
-    if (isBlank(team.teamId)) {
-      issues.push('Every team must have a non-blank teamId')
-      continue
-    }
-
-    if (teamById.has(team.teamId)) {
-      duplicateTeamIds.add(team.teamId)
-    } else {
-      teamById.set(team.teamId, team)
-    }
-  }
-
-  for (const duplicateTeamId of duplicateTeamIds) {
-    issues.push(`Duplicate team ID "${duplicateTeamId}"`)
-  }
-
-  /**
-   * RIDER ID VALIDATION
-   */
-
-  for (const rider of input.riders) {
-    if (isBlank(rider.riderId)) {
-      issues.push('Every rider must have a non-blank riderId')
-      continue
-    }
-
-    if (riderById.has(rider.riderId)) {
-      duplicateRiderIds.add(rider.riderId)
+    if (!isNonBlankString(rider.riderId)) {
+      issues.push(`riders[${index}].riderId must not be blank.`)
+    } else if (riderById.has(rider.riderId)) {
+      issues.push(`Duplicate riderId "${rider.riderId}".`)
     } else {
       riderById.set(rider.riderId, rider)
     }
-  }
 
-  for (const duplicateRiderId of duplicateRiderIds) {
-    issues.push(`Duplicate rider ID "${duplicateRiderId}"`)
-  }
-
-  /**
-   * RIDER VALIDATION
-   */
-
-  const attributeNames = [
-    'flat',
-    'sprint',
-    'acceleration',
-    'stamina',
-    'resistance',
-    'recovery',
-    'teamwork',
-  ] as const
-
-  for (const rider of input.riders) {
-    if (!teamById.has(rider.teamId)) {
-      issues.push(
-        `Rider "${rider.riderId}" references missing team "${rider.teamId}"`,
-      )
+    if (!isNonBlankString(rider.teamId)) {
+      issues.push(`riders[${index}].teamId must not be blank.`)
     }
 
-    for (const attributeName of attributeNames) {
-      const value = rider.attributes[attributeName]
-
-      if (
-        !isFiniteNumber(value) ||
-        value < 0 ||
-        value > 100
-      ) {
-        issues.push(
-          `Rider "${rider.riderId}" attribute "${attributeName}" must be finite and between 0 and 100`,
-        )
-      }
+    if (!isNonBlankString(rider.riderName)) {
+      issues.push(`riders[${index}].riderName must not be blank.`)
     }
-  }
 
-  /**
-   * TEAM MEMBERSHIP VALIDATION
-   */
+    if (!isNonBlankString(rider.teamName)) {
+      issues.push(`riders[${index}].teamName must not be blank.`)
+    }
 
-  const riderMembershipCount = new Map<string, number>()
-
-  for (const team of input.teams) {
     if (
-      !Array.isArray(team.riderIds) ||
-      team.riderIds.length === 0
+      rider.attributes === null ||
+      typeof rider.attributes !== 'object'
     ) {
-      issues.push(
-        `Team "${team.teamId}" must have at least one rider`,
-      )
+      issues.push(`riders[${index}].attributes must be an object.`)
+    }
+  }
+
+  return riderById
+}
+
+function validateTeams(
+  teams: readonly StageTeamInput[],
+  riderById: ReadonlyMap<string, StageRiderInput>,
+  issues: string[],
+): void {
+  if (!Array.isArray(teams)) {
+    issues.push('teams must be an array.')
+    return
+  }
+
+  if (teams.length === 0) {
+    issues.push('At least one team is required.')
+  }
+
+  const teamById = new Map<string, StageTeamInput>()
+  const riderMembershipCounts = new Map<string, number>()
+
+  for (let index = 0; index < teams.length; index += 1) {
+    const team = teams[index]
+
+    if (!isNonBlankString(team.teamId)) {
+      issues.push(`teams[${index}].teamId must not be blank.`)
+    } else if (teamById.has(team.teamId)) {
+      issues.push(`Duplicate teamId "${team.teamId}".`)
+    } else {
+      teamById.set(team.teamId, team)
     }
 
-    const seenTeamRiderIds = new Set<string>()
+    if (!isNonBlankString(team.teamName)) {
+      issues.push(`teams[${index}].teamName must not be blank.`)
+    }
+
+    if (!Array.isArray(team.riderIds)) {
+      issues.push(`teams[${index}].riderIds must be an array.`)
+      continue
+    }
+
+    if (team.riderIds.length === 0) {
+      issues.push(`Team "${team.teamId}" must contain at least one rider.`)
+    }
+
+    const riderIdsSeenInTeam = new Set<string>()
 
     for (const riderId of team.riderIds) {
-      riderMembershipCount.set(
+      riderMembershipCounts.set(
         riderId,
-        (riderMembershipCount.get(riderId) ?? 0) + 1,
+        (riderMembershipCounts.get(riderId) ?? 0) + 1,
       )
 
-      if (seenTeamRiderIds.has(riderId)) {
+      if (riderIdsSeenInTeam.has(riderId)) {
         issues.push(
-          `Team "${team.teamId}" contains duplicate riderId "${riderId}"`,
+          `Team "${team.teamId}" contains duplicate riderId "${riderId}".`,
         )
-      } else {
-        seenTeamRiderIds.add(riderId)
+        continue
       }
+
+      riderIdsSeenInTeam.add(riderId)
 
       const rider = riderById.get(riderId)
 
       if (!rider) {
         issues.push(
-          `Team "${team.teamId}" references missing rider "${riderId}"`,
+          `Team "${team.teamId}" references missing riderId "${riderId}".`,
         )
-      } else if (rider.teamId !== team.teamId) {
-        issues.push(
-          `Rider "${riderId}" is listed in team "${team.teamId}" but belongs to team "${rider.teamId}"`,
-        )
+      } else {
+        if (rider.teamId !== team.teamId) {
+          issues.push(
+            `Rider "${riderId}" belongs to team "${rider.teamId}" but is listed by team "${team.teamId}".`,
+          )
+        }
+
+        if (rider.teamName !== team.teamName) {
+          issues.push(
+            `Rider "${riderId}" has teamName "${rider.teamName}" but team "${team.teamId}" has teamName "${team.teamName}".`,
+          )
+        }
       }
     }
 
@@ -261,180 +258,149 @@ export function validateStageInput(input: StageInput): void {
 
     if (!captain) {
       issues.push(
-        `Team "${team.teamId}" captain "${team.captainRiderId}" does not exist`,
+        `Team "${team.teamId}" captainRiderId "${team.captainRiderId}" does not reference an existing rider.`,
       )
-    } else if (captain.teamId !== team.teamId) {
-      issues.push(
-        `Team "${team.teamId}" captain "${team.captainRiderId}" does not belong to that team`,
-      )
-    }
-
-    if (!team.riderIds.includes(team.captainRiderId)) {
-      issues.push(
-        `Team "${team.teamId}" captain "${team.captainRiderId}" is not listed in team.riderIds`,
-      )
-    }
-  }
-
-  for (const rider of input.riders) {
-    const count =
-      riderMembershipCount.get(rider.riderId) ?? 0
-
-    if (count === 0) {
-      issues.push(
-        `Rider "${rider.riderId}" does not appear in any team.riderIds list`,
-      )
-    } else if (count > 1) {
-      issues.push(
-        `Rider "${rider.riderId}" appears in more than one team.riderIds list`,
-      )
-    }
-  }
-
-  /**
-   * ORDER VALIDATION
-   */
-
-  const orderIdSet = new Set<string>()
-
-  for (const order of input.orders) {
-    if (isBlank(order.orderId)) {
-      issues.push('Every order must have a non-blank orderId')
-    } else if (orderIdSet.has(order.orderId)) {
-      duplicateOrderIds.add(order.orderId)
     } else {
-      orderIdSet.add(order.orderId)
-    }
+      if (captain.teamId !== team.teamId) {
+        issues.push(
+          `Captain "${captain.riderId}" does not belong to team "${team.teamId}".`,
+        )
+      }
 
-    const team = teamById.get(order.teamId)
-    const rider = riderById.get(order.riderId)
+      if (!team.riderIds.includes(team.captainRiderId)) {
+        issues.push(
+          `Captain "${team.captainRiderId}" must appear in team "${team.teamId}" riderIds.`,
+        )
+      }
+    }
+  }
+
+  for (const rider of riderById.values()) {
+    const team = teamById.get(rider.teamId)
 
     if (!team) {
       issues.push(
-        `Order "${order.orderId}" references missing team "${order.teamId}"`,
+        `Rider "${rider.riderId}" references missing teamId "${rider.teamId}".`,
       )
     }
 
-    if (!rider) {
-      issues.push(
-        `Order "${order.orderId}" references missing rider "${order.riderId}"`,
-      )
-    } else if (rider.teamId !== order.teamId) {
-      issues.push(
-        `Order "${order.orderId}" rider "${order.riderId}" does not belong to team "${order.teamId}"`,
-      )
-    }
+    const membershipCount =
+      riderMembershipCounts.get(rider.riderId) ?? 0
 
-    if (
-      !isFiniteNumber(order.eligibleFromKm) ||
-      order.eligibleFromKm < 0
-    ) {
+    if (membershipCount === 0) {
       issues.push(
-        `Order "${order.orderId}" eligibleFromKm must be finite and not below zero`,
+        `Rider "${rider.riderId}" does not appear in any team riderIds list.`,
       )
-    }
-
-    if (
-      !isFiniteNumber(order.eligibleUntilKm) ||
-      order.eligibleUntilKm > input.distanceKm
-    ) {
+    } else if (membershipCount > 1) {
       issues.push(
-        `Order "${order.orderId}" eligibleUntilKm must be finite and not greater than stage distance`,
-      )
-    }
-
-    if (
-      isFiniteNumber(order.eligibleFromKm) &&
-      isFiniteNumber(order.eligibleUntilKm) &&
-      order.eligibleUntilKm < order.eligibleFromKm
-    ) {
-      issues.push(
-        `Order "${order.orderId}" eligibleUntilKm must not be lower than eligibleFromKm`,
-      )
-    }
-
-    if (
-      !isFiniteNumber(order.priority) ||
-      order.priority < 0
-    ) {
-      issues.push(
-        `Order "${order.orderId}" priority must be finite and non-negative`,
-      )
-    }
-
-    if (
-      order.maximumFollowers !== null &&
-      !isNonNegativeInteger(order.maximumFollowers)
-    ) {
-      issues.push(
-        `Order "${order.orderId}" maximumFollowers must be null or a non-negative integer`,
-      )
-    }
-
-    if (
-      order.targetRiderId !== null &&
-      !riderById.has(order.targetRiderId)
-    ) {
-      issues.push(
-        `Order "${order.orderId}" targetRiderId "${order.targetRiderId}" does not reference an existing rider`,
+        `Rider "${rider.riderId}" appears in multiple team riderIds lists.`,
       )
     }
   }
+}
 
-  for (const duplicateOrderId of duplicateOrderIds) {
-    issues.push(`Duplicate order ID "${duplicateOrderId}"`)
+/**
+ * Validate a complete StageInput.
+ */
+export function validateStageInput(stageInput: StageInput): void {
+  const issues: string[] = []
+
+  if (!isNonBlankString(stageInput.raceId)) {
+    issues.push('raceId must not be blank.')
   }
 
-  /**
-   * SETTINGS VALIDATION
-   */
-
-  const settings = input.settings
-
-  if (!isPositiveInteger(settings.tickSeconds)) {
-    issues.push('tickSeconds must be a positive integer')
+  if (!isNonBlankString(stageInput.stageId)) {
+    issues.push('stageId must not be blank.')
   }
 
-  if (
-    !isPositiveInteger(
-      settings.replaySnapshotIntervalSeconds,
-    )
-  ) {
+  if (!isNonBlankString(stageInput.stageName)) {
+    issues.push('stageName must not be blank.')
+  }
+
+  if (stageInput.stageFormat !== 'road_race') {
     issues.push(
-      'replaySnapshotIntervalSeconds must be a positive integer',
+      `stageFormat "${stageInput.stageFormat}" is not supported by the current engine.`,
     )
   }
 
   if (
-    !isPositiveInteger(settings.maximumBreakawaySize)
+    !isFiniteNumber(stageInput.distanceKm) ||
+    stageInput.distanceKm <= 0
   ) {
-    issues.push(
-      'maximumBreakawaySize must be a positive integer',
-    )
+    issues.push('distanceKm must be a positive finite number.')
+  }
+
+  if (!isNonBlankString(stageInput.seed)) {
+    issues.push('seed must not be blank.')
+  }
+
+  const settings = stageInput.settings
+
+  if (!settings || typeof settings !== 'object') {
+    issues.push('settings must be an object.')
+  } else {
+    if (!isPositiveInteger(settings.tickSeconds)) {
+      issues.push('settings.tickSeconds must be a positive integer.')
+    }
+
+    if (!isPositiveInteger(settings.replaySnapshotIntervalSeconds)) {
+      issues.push(
+        'settings.replaySnapshotIntervalSeconds must be a positive integer.',
+      )
+    }
+
+    if (!isPositiveInteger(settings.maximumBreakawaySize)) {
+      issues.push(
+        'settings.maximumBreakawaySize must be a positive integer.',
+      )
+    }
+
+    if (
+      !isFiniteNumber(settings.minimumSpeedKmh) ||
+      settings.minimumSpeedKmh <= 0
+    ) {
+      issues.push(
+        'settings.minimumSpeedKmh must be a positive finite number.',
+      )
+    }
+
+    if (
+      !isFiniteNumber(settings.maximumSpeedKmh) ||
+      settings.maximumSpeedKmh <= 0
+    ) {
+      issues.push(
+        'settings.maximumSpeedKmh must be a positive finite number.',
+      )
+    }
+
+    if (
+      isFiniteNumber(settings.minimumSpeedKmh) &&
+      isFiniteNumber(settings.maximumSpeedKmh) &&
+      settings.maximumSpeedKmh < settings.minimumSpeedKmh
+    ) {
+      issues.push(
+        'settings.maximumSpeedKmh must be greater than or equal to settings.minimumSpeedKmh.',
+      )
+    }
+  }
+
+  const riderById = validateRiders(stageInput.riders, issues)
+  validateTeams(stageInput.teams, riderById, issues)
+
+  if (!Array.isArray(stageInput.orders)) {
+    issues.push('orders must be an array.')
   }
 
   if (
-    !isFiniteNumber(settings.minimumSpeedKmh) ||
-    settings.minimumSpeedKmh <= 0
+    isFiniteNumber(stageInput.distanceKm) &&
+    stageInput.distanceKm > 0
   ) {
-    issues.push(
-      'minimumSpeedKmh must be finite and greater than zero',
+    validateProfilePoints(
+      stageInput.profilePoints,
+      stageInput.distanceKm,
+      issues,
     )
   }
-
-  if (
-    !isFiniteNumber(settings.maximumSpeedKmh) ||
-    settings.maximumSpeedKmh <=
-      settings.minimumSpeedKmh
-  ) {
-    issues.push(
-      'maximumSpeedKmh must be finite and greater than minimumSpeedKmh',
-    )
-  }
-
-  /**
-   * THROW AFTER ALL CHECKS
-   */
 
   if (issues.length > 0) {
     throw new StageInputValidationError(issues)

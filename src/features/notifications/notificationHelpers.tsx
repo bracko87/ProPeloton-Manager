@@ -199,6 +199,7 @@ export function getNotificationActionLabel(item: NotificationItem): string {
 
   if (item.type_code === 'FREE_AGENT_SIGNED') return 'Open free agents'
   if (item.type_code === 'RIDER_UNHAPPY') return 'Open rider'
+  if (item.type_code === 'RIDER_CONTRACT_EXPIRING') return 'Open rider'
   if (item.type_code === 'RACE_RESULTS_SUMMARY') return 'Open race'
   return 'Open'
 }
@@ -267,6 +268,22 @@ export function getResolvedNotificationActionUrl(item: NotificationItem): string
         'team_squad_path',
       ]) || '/dashboard/squad?focus=morale'
     )
+  }
+
+  if (item.type_code === 'RIDER_CONTRACT_EXPIRING') {
+    const directRiderUrl = readPayloadString(payload, [
+      'my_rider_profile_path',
+      'rider_profile_path',
+      'profile_path',
+      'action_url',
+    ])
+
+    if (directRiderUrl) return directRiderUrl
+
+    const riderId = readPayloadString(payload, ['rider_id'])
+    if (riderId) return `/dashboard/my-riders/${riderId}`
+
+    return '/dashboard/squad'
   }
 
   if (item.type_code === 'RACE_RESULTS_SUMMARY') {

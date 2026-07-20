@@ -194,6 +194,16 @@ const diagnosticStageInput: StageInput = {
       },
     },
   ],
+  profilePoints: [
+    {
+      kilometre: 0,
+      elevationMetres: 100,
+    },
+    {
+      kilometre: 1,
+      elevationMetres: 100,
+    },
+  ],
   orders: [],
 }
 
