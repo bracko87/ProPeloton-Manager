@@ -1492,6 +1492,469 @@ export const NOTIFICATION_TEMPLATES: Record<string, NotificationTemplate> = {
     ],
   },
 
+  RACE_WEATHER_CANCELLED: {
+    defaultTitle: 'Race cancelled due to weather',
+    defaultMessage:
+      'The race was cancelled because the weather conditions were unsafe.',
+
+    getImageSrc: (item) => {
+      const payload = getPayload(item)
+
+      return (
+        pickFirstString(payload, [
+          'event_image_url',
+          'weather_cancelled_image_url',
+          'race_weather_cancelled_image_url',
+          'image_url',
+          'race_logo_url',
+          'race_profile_image_url',
+          'profile_image_url',
+        ]) || getImageSrcFromItem(item)
+      )
+    },
+
+    enrich: (item) => {
+      const payload = getPayload(item) ?? {}
+
+      const raceName =
+        pickFirstString(payload, [
+          'race_name',
+          'race_title',
+          'name',
+        ]) || 'Race'
+
+      const reasonLabel =
+        pickFirstString(payload, [
+          'reason_label',
+          'weather_reason_label',
+          'cancellation_reason_label',
+        ]) || 'unsafe weather conditions'
+
+      const cancelledStageCount = pickFirstNumber(payload, [
+        'cancelled_stage_count',
+        'weather_cancelled_stage_count',
+      ])
+
+      const totalStageCount = pickFirstNumber(payload, [
+        'total_stage_count',
+        'weather_total_stage_count',
+        'stage_count',
+      ])
+
+      const isAllStageRace =
+        totalStageCount !== null &&
+        totalStageCount > 1 &&
+        cancelledStageCount !== null &&
+        cancelledStageCount >= totalStageCount
+
+      return {
+        ...item,
+        title: `Race cancelled due to weather: ${raceName}`,
+        message:
+          item.message ||
+          (isAllStageRace
+            ? `${raceName} was cancelled because all ${totalStageCount} stages were cancelled by weather. Reason: ${reasonLabel}. No results, points, prize money, fatigue, or replay will be generated for the cancelled race.`
+            : `${raceName} was cancelled because of ${reasonLabel}. No results, points, prize money, fatigue, or replay will be generated for this race.`),
+      }
+    },
+
+    getIntroText: (item) => {
+      const payload = getPayload(item)
+
+      const raceName =
+        pickFirstString(payload, [
+          'race_name',
+          'race_title',
+          'name',
+        ]) || 'this race'
+
+      const reasonLabel =
+        pickFirstString(payload, [
+          'reason_label',
+          'weather_reason_label',
+          'cancellation_reason_label',
+        ]) || 'unsafe weather conditions'
+
+      const cancelledStageCount = pickFirstNumber(payload, [
+        'cancelled_stage_count',
+        'weather_cancelled_stage_count',
+      ])
+
+      const totalStageCount = pickFirstNumber(payload, [
+        'total_stage_count',
+        'weather_total_stage_count',
+        'stage_count',
+      ])
+
+      if (
+        cancelledStageCount !== null &&
+        totalStageCount !== null &&
+        totalStageCount > 1 &&
+        cancelledStageCount >= totalStageCount
+      ) {
+        return `${raceName} has been cancelled because all ${totalStageCount} stages were cancelled by weather. Reason: ${reasonLabel}.`
+      }
+
+      return `${raceName} has been cancelled because the weather conditions were unsafe. Reason: ${reasonLabel}.`
+    },
+
+    getDetailRows: (item) => {
+      const payload = getPayload(item)
+
+      const stageNumber = pickFirstNumber(payload, ['stage_number'])
+
+      return compactRows([
+        detailRow(
+          'Race',
+          pickFirstString(payload, [
+            'race_name',
+            'race_title',
+            'name',
+          ])
+        ),
+        detailRow(
+          'Race status',
+          formatLabel(
+            pickFirstString(payload, [
+              'race_status',
+              'weather_cancellation_status',
+            ])
+          ) || 'Cancelled'
+        ),
+        detailRow(
+          'Reason',
+          pickFirstString(payload, [
+            'reason_label',
+            'weather_reason_label',
+            'cancellation_reason_label',
+            'reason',
+          ])
+        ),
+        detailRow(
+          'Affected stage',
+          stageNumber !== null
+            ? `Stage ${stageNumber}`
+            : pickFirstString(payload, ['stage_name', 'stage_title'])
+        ),
+        detailRow(
+          'Stage date',
+          formatContractSeasonLabel(
+            pickFirstString(payload, [
+              'stage_date',
+              'race_date',
+              'cancelled_stage_date',
+            ])
+          )
+        ),
+        detailRow(
+          'Cancelled stages',
+          (() => {
+            const cancelledStageCount = pickFirstNumber(payload, [
+              'cancelled_stage_count',
+              'weather_cancelled_stage_count',
+            ])
+            const totalStageCount = pickFirstNumber(payload, [
+              'total_stage_count',
+              'weather_total_stage_count',
+              'stage_count',
+            ])
+
+            if (cancelledStageCount !== null && totalStageCount !== null) {
+              return `${cancelledStageCount} / ${totalStageCount}`
+            }
+
+            return cancelledStageCount !== null ? `${cancelledStageCount}` : null
+          })()
+        ),
+        detailRow('Results', 'No results'),
+        detailRow('Points', 'No points'),
+        detailRow('Prize money', 'No prize money'),
+        detailRow('Fatigue', 'No fatigue'),
+      ])
+    },
+
+    getExtraText: (item) => {
+      const payload = getPayload(item)
+      const raceName =
+        pickFirstString(payload, [
+          'race_name',
+          'race_title',
+          'name',
+        ]) || 'this race'
+
+      return `${raceName} is treated as cancelled. Open the race page to review the calendar entry, affected stage information, and weather cancellation details.`
+    },
+
+    actions: [
+      {
+        key: 'open-race',
+        label: 'Open race',
+        variant: 'primary',
+        kind: 'navigate',
+        getHref: (item) => {
+          const payload = getPayload(item)
+
+          const directPath = pickFirstString(payload, [
+            'race_path',
+            'race_url',
+            'race_detail_path',
+            'action_url',
+          ])
+
+          if (directPath) return directPath
+
+          const raceId = pickFirstString(payload, ['race_id'])
+          return raceId ? `/dashboard/races/${raceId}` : getActionHrefFromItem(item)
+        },
+        show: () => true,
+      },
+      {
+        key: 'open-stage',
+        label: 'Open stage',
+        variant: 'secondary',
+        kind: 'navigate',
+        getHref: (item) => {
+          const payload = getPayload(item)
+
+          const directPath = pickFirstString(payload, [
+            'stage_path',
+            'stage_url',
+            'stage_detail_path',
+          ])
+
+          if (directPath) return directPath
+
+          const raceId = pickFirstString(payload, ['race_id'])
+          const stageId = pickFirstString(payload, ['stage_id'])
+
+          return raceId && stageId
+            ? `/dashboard/races/${raceId}?stageId=${stageId}`
+            : null
+        },
+        show: (item) => {
+          const payload = getPayload(item)
+          return Boolean(
+            pickFirstString(payload, [
+              'stage_path',
+              'stage_url',
+              'stage_detail_path',
+              'stage_id',
+            ])
+          )
+        },
+      },
+      MARK_READ_ACTION,
+    ],
+  },
+
+  RACE_STAGE_WEATHER_CANCELLED: {
+    defaultTitle: 'Stage cancelled due to weather',
+    defaultMessage:
+      'A race stage was cancelled because the weather conditions were unsafe.',
+
+    getImageSrc: (item) => {
+      const payload = getPayload(item)
+
+      return (
+        pickFirstString(payload, [
+          'event_image_url',
+          'stage_weather_cancelled_image_url',
+          'weather_cancelled_image_url',
+          'image_url',
+          'stage_profile_image_url',
+          'race_logo_url',
+          'race_profile_image_url',
+          'profile_image_url',
+        ]) || getImageSrcFromItem(item)
+      )
+    },
+
+    enrich: (item) => {
+      const payload = getPayload(item) ?? {}
+
+      const raceName =
+        pickFirstString(payload, [
+          'race_name',
+          'race_title',
+          'name',
+        ]) || 'Race'
+
+      const stageNumber = pickFirstNumber(payload, ['stage_number'])
+      const stageName = pickFirstString(payload, ['stage_name', 'stage_title'])
+
+      const stageLabel =
+        stageNumber !== null && stageName
+          ? `Stage ${stageNumber}: ${stageName}`
+          : stageNumber !== null
+            ? `Stage ${stageNumber}`
+            : stageName || 'A stage'
+
+      const reasonLabel =
+        pickFirstString(payload, [
+          'reason_label',
+          'weather_reason_label',
+          'cancellation_reason_label',
+        ]) || 'unsafe weather conditions'
+
+      return {
+        ...item,
+        title: `Stage cancelled due to weather: ${raceName}`,
+        message:
+          item.message ||
+          `${stageLabel} of ${raceName} was cancelled because of ${reasonLabel}. The race can continue if other stages are still active. No results, points, prize money, fatigue, or replay will be generated for this cancelled stage.`,
+      }
+    },
+
+    getIntroText: (item) => {
+      const payload = getPayload(item)
+
+      const raceName =
+        pickFirstString(payload, [
+          'race_name',
+          'race_title',
+          'name',
+        ]) || 'this race'
+
+      const stageNumber = pickFirstNumber(payload, ['stage_number'])
+      const stageName = pickFirstString(payload, ['stage_name', 'stage_title'])
+
+      const stageLabel =
+        stageNumber !== null && stageName
+          ? `Stage ${stageNumber}: ${stageName}`
+          : stageNumber !== null
+            ? `Stage ${stageNumber}`
+            : stageName || 'This stage'
+
+      const reasonLabel =
+        pickFirstString(payload, [
+          'reason_label',
+          'weather_reason_label',
+          'cancellation_reason_label',
+        ]) || 'unsafe weather conditions'
+
+      return `${stageLabel} of ${raceName} was cancelled because of ${reasonLabel}. The stage is neutralized: no results, points, prize money, fatigue, or replay are generated for it.`
+    },
+
+    getDetailRows: (item) => {
+      const payload = getPayload(item)
+      const stageNumber = pickFirstNumber(payload, ['stage_number'])
+
+      return compactRows([
+        detailRow(
+          'Race',
+          pickFirstString(payload, [
+            'race_name',
+            'race_title',
+            'name',
+          ])
+        ),
+        detailRow(
+          'Stage',
+          stageNumber !== null
+            ? `Stage ${stageNumber}`
+            : pickFirstString(payload, ['stage_name', 'stage_title'])
+        ),
+        detailRow(
+          'Stage name',
+          pickFirstString(payload, ['stage_name', 'stage_title'])
+        ),
+        detailRow(
+          'Stage date',
+          formatContractSeasonLabel(
+            pickFirstString(payload, [
+              'stage_date',
+              'cancelled_stage_date',
+            ])
+          )
+        ),
+        detailRow(
+          'Reason',
+          pickFirstString(payload, [
+            'reason_label',
+            'weather_reason_label',
+            'cancellation_reason_label',
+            'reason',
+          ])
+        ),
+        detailRow(
+          'Race continues',
+          pickFirstBoolean(payload, ['race_fully_cancelled', 'race_cancelled']) === false
+            ? 'Yes'
+            : null
+        ),
+        detailRow('Stage results', 'No results'),
+        detailRow('Stage points', 'No points'),
+        detailRow('Prize money', 'No prize money'),
+        detailRow('Fatigue', 'No fatigue'),
+      ])
+    },
+
+    getExtraText: () =>
+      'This is a stage-only cancellation. The race can continue if at least one other stage remains active. Open the stage or race page to review the updated race status.',
+
+    actions: [
+      {
+        key: 'open-stage',
+        label: 'Open stage',
+        variant: 'primary',
+        kind: 'navigate',
+        getHref: (item) => {
+          const payload = getPayload(item)
+
+          const directPath = pickFirstString(payload, [
+            'stage_path',
+            'stage_url',
+            'stage_detail_path',
+          ])
+
+          if (directPath) return directPath
+
+          const raceId = pickFirstString(payload, ['race_id'])
+          const stageId = pickFirstString(payload, ['stage_id'])
+
+          if (raceId && stageId) return `/dashboard/races/${raceId}?stageId=${stageId}`
+          if (raceId) return `/dashboard/races/${raceId}`
+          return getActionHrefFromItem(item)
+        },
+        show: () => true,
+      },
+      {
+        key: 'open-race',
+        label: 'Open race',
+        variant: 'secondary',
+        kind: 'navigate',
+        getHref: (item) => {
+          const payload = getPayload(item)
+
+          const directPath = pickFirstString(payload, [
+            'race_path',
+            'race_url',
+            'race_detail_path',
+            'action_url',
+          ])
+
+          if (directPath) return directPath
+
+          const raceId = pickFirstString(payload, ['race_id'])
+          return raceId ? `/dashboard/races/${raceId}` : null
+        },
+        show: (item) => {
+          const payload = getPayload(item)
+          return Boolean(
+            pickFirstString(payload, [
+              'race_path',
+              'race_url',
+              'race_detail_path',
+              'action_url',
+              'race_id',
+            ])
+          )
+        },
+      },
+      MARK_READ_ACTION,
+    ],
+  },
+
   RACE_RESULTS_SUMMARY: {
     defaultTitle: 'Race results available',
     defaultMessage:

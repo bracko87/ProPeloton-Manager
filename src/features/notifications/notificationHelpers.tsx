@@ -200,6 +200,8 @@ export function getNotificationActionLabel(item: NotificationItem): string {
   if (item.type_code === 'FREE_AGENT_SIGNED') return 'Open free agents'
   if (item.type_code === 'RIDER_UNHAPPY') return 'Open rider'
   if (item.type_code === 'RIDER_CONTRACT_EXPIRING') return 'Open rider'
+  if (item.type_code === 'RACE_STAGE_WEATHER_CANCELLED') return 'Open stage'
+  if (item.type_code === 'RACE_WEATHER_CANCELLED') return 'Open race'
   if (item.type_code === 'RACE_RESULTS_SUMMARY') return 'Open race'
   return 'Open'
 }
@@ -284,6 +286,43 @@ export function getResolvedNotificationActionUrl(item: NotificationItem): string
     if (riderId) return `/dashboard/my-riders/${riderId}`
 
     return '/dashboard/squad'
+  }
+
+  if (item.type_code === 'RACE_STAGE_WEATHER_CANCELLED') {
+    const directStageUrl = readPayloadString(payload, [
+      'stage_path',
+      'stage_url',
+      'stage_detail_path',
+      'stage_results_path',
+    ])
+
+    if (directStageUrl) return directStageUrl
+
+    const raceId = readPayloadString(payload, ['race_id'])
+    const stageId = readPayloadString(payload, ['stage_id'])
+
+    if (raceId && stageId) return `/dashboard/races/${raceId}?stageId=${stageId}`
+    if (raceId) return `/dashboard/races/${raceId}`
+
+    return normalizeDashboardRaceUrl(item.action_url)
+  }
+
+  if (item.type_code === 'RACE_WEATHER_CANCELLED') {
+    const directRaceUrl = normalizeDashboardRaceUrl(
+      readPayloadString(payload, [
+        'race_path',
+        'race_url',
+        'race_detail_path',
+        'action_url',
+      ]) || item.action_url
+    )
+
+    if (directRaceUrl) return directRaceUrl
+
+    const raceId = readPayloadString(payload, ['race_id'])
+    if (raceId) return `/dashboard/races/${raceId}`
+
+    return null
   }
 
   if (item.type_code === 'RACE_RESULTS_SUMMARY') {
