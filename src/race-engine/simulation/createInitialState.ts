@@ -41,14 +41,21 @@ export function createInitialState(input: StageInput): SimulationState {
   validateStageInput(input)
 
   // 2. Deterministic ordering without mutating input arrays.
-  const sortedTeams = [...input.teams].sort((a, b) => a.teamId.localeCompare(b.teamId))
-  const sortedRiders = [...input.riders].sort((a, b) => a.riderId.localeCompare(b.riderId))
-  const sortedOrders = [...input.orders].sort((a, b) => a.orderId.localeCompare(b.orderId))
+  const sortedTeams = [...input.teams].sort((a, b) =>
+    a.teamId.localeCompare(b.teamId),
+  )
+  const sortedRiders = [...input.riders].sort((a, b) =>
+    a.riderId.localeCompare(b.riderId),
+  )
+  const sortedOrders = [...input.orders].sort((a, b) =>
+    a.orderId.localeCompare(b.orderId),
+  )
 
   const minimumSpeedKmh = input.settings.minimumSpeedKmh
 
   // 4. Build riders record keyed by riderId.
   const ridersRecord: Record<string, RiderState> = {}
+
   for (const rider of sortedRiders) {
     const riderState: RiderState = {
       riderId: rider.riderId,
@@ -75,6 +82,7 @@ export function createInitialState(input: StageInput): SimulationState {
 
   // 6. Build orders record keyed by orderId.
   const ordersRecord: Record<string, TeamOrder> = {}
+
   for (const order of sortedOrders) {
     // Shallow copy to avoid mutating input orders.
     ordersRecord[order.orderId] = {
@@ -94,15 +102,18 @@ export function createInitialState(input: StageInput): SimulationState {
 
   // Helper sets for team-based queries.
   const ordersByTeam: Record<string, TeamOrder[]> = {}
+
   for (const order of sortedOrders) {
     if (!ordersByTeam[order.teamId]) {
       ordersByTeam[order.teamId] = []
     }
+
     ordersByTeam[order.teamId].push(order)
   }
 
   // 5. Build team states.
   const teamStatesRecord: Record<string, TeamState> = {}
+
   for (const teamInput of sortedTeams) {
     const teamOrders = ordersByTeam[teamInput.teamId] ?? []
 
@@ -121,7 +132,9 @@ export function createInitialState(input: StageInput): SimulationState {
       .map(order => order.orderId)
       .sort((a, b) => a.localeCompare(b))
 
-    const sortedRiderIds = [...teamInput.riderIds].sort((a, b) => a.localeCompare(b))
+    const sortedRiderIds = [...teamInput.riderIds].sort((a, b) =>
+      a.localeCompare(b),
+    )
 
     const teamState: TeamState = {
       teamId: teamInput.teamId,
@@ -216,6 +229,7 @@ export function createInitialState(input: StageInput): SimulationState {
 
   // 9. Assemble SimulationState (readonly by type).
   const simulationState: SimulationState = {
+    input,
     raceId: input.raceId,
     stageId: input.stageId,
     seed: input.seed,

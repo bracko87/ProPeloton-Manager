@@ -200,6 +200,12 @@ export function getNotificationActionLabel(item: NotificationItem): string {
   if (item.type_code === 'FREE_AGENT_SIGNED') return 'Open free agents'
   if (item.type_code === 'RIDER_UNHAPPY') return 'Open rider'
   if (item.type_code === 'RIDER_CONTRACT_EXPIRING') return 'Open rider'
+  if (item.type_code === 'RIDER_WANTS_MORE_RACE_SELECTION') return 'Open rider'
+  if (item.type_code === 'RIDER_REQUESTS_RELEASE') return 'Open rider'
+  if (item.type_code === 'COINS_LOW_WARNING') return 'Pro Packages'
+  if (item.type_code === 'MAIN_SPONSOR_OBJECTIVE_ACHIEVED') return 'Open sponsors'
+  if (item.type_code === 'MAIN_SPONSOR_OBJECTIVE_FAILED') return 'Open sponsors'
+  if (item.type_code === 'RACE_SUPPLIES_LOW_STOCK') return 'Race supplies'
   if (item.type_code === 'RACE_STAGE_WEATHER_CANCELLED') return 'Open stage'
   if (item.type_code === 'RACE_WEATHER_CANCELLED') return 'Open race'
   if (item.type_code === 'RACE_RESULTS_SUMMARY') return 'Open race'
@@ -286,6 +292,60 @@ export function getResolvedNotificationActionUrl(item: NotificationItem): string
     if (riderId) return `/dashboard/my-riders/${riderId}`
 
     return '/dashboard/squad'
+  }
+
+  if (
+    item.type_code === 'RIDER_WANTS_MORE_RACE_SELECTION' ||
+    item.type_code === 'RIDER_REQUESTS_RELEASE'
+  ) {
+    const directRiderUrl = readPayloadString(payload, [
+      'my_rider_profile_path',
+      'rider_profile_path',
+      'profile_path',
+      'action_url',
+    ])
+
+    if (directRiderUrl && directRiderUrl !== '/dashboard/squad') return directRiderUrl
+
+    const riderId = readPayloadString(payload, ['rider_id'])
+    if (riderId) return `/dashboard/my-riders/${riderId}`
+
+    return '/dashboard/squad'
+  }
+
+  if (item.type_code === 'COINS_LOW_WARNING') {
+    return (
+      readPayloadString(payload, [
+        'pro_packages_path',
+        'coin_packages_path',
+        'shop_path',
+      ]) || '/dashboard/pro-packages'
+    )
+  }
+
+  if (
+    item.type_code === 'MAIN_SPONSOR_OBJECTIVE_ACHIEVED' ||
+    item.type_code === 'MAIN_SPONSOR_OBJECTIVE_FAILED'
+  ) {
+    return (
+      readPayloadString(payload, [
+        'finance_sponsor_path',
+        'finance_sponsors_path',
+        'sponsor_path',
+        'sponsors_path',
+        'objectives_path',
+      ]) || '/dashboard/finance?tab=sponsors'
+    )
+  }
+
+  if (item.type_code === 'RACE_SUPPLIES_LOW_STOCK') {
+    return (
+      readPayloadString(payload, [
+        'race_supplies_path',
+        'supplies_path',
+        'equipment_path',
+      ]) || '/dashboard/equipment?tab=race-supplies'
+    )
   }
 
   if (item.type_code === 'RACE_STAGE_WEATHER_CANCELLED') {

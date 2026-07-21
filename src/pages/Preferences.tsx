@@ -35,14 +35,14 @@ import RestartTeamModal from '@/components/team/RestartTeamModal'
 import { supabase } from '@/lib/supabase'
 import { getMyClubContext } from '@/lib/clubContext'
 import {
+  NotificationPreferenceGroup,
   NotificationSettings,
-  PREFERENCES_STORAGE_KEY,
+  NOTIFICATION_PREFERENCE_GROUP_ORDER,
+  NOTIFICATION_PREFERENCE_GROUPS,
+  NOTIFICATION_PREFERENCE_SECTIONS,
   readNotificationPreferences,
+  writeNotificationPreferences,
 } from '@/lib/notificationPreferences'
-
-type StoredPreferences = {
-  notifications: NotificationSettings
-}
 
 type ToggleRowProps = {
   title: string
@@ -153,12 +153,7 @@ export default function PreferencesPage(): JSX.Element {
   }, [])
 
   useEffect(() => {
-    try {
-      const payload: StoredPreferences = { notifications }
-      window.localStorage.setItem(PREFERENCES_STORAGE_KEY, JSON.stringify(payload))
-    } catch {
-      // Ignore local storage write errors
-    }
+    writeNotificationPreferences(notifications)
   }, [notifications])
 
   useEffect(() => {
@@ -181,7 +176,7 @@ export default function PreferencesPage(): JSX.Element {
     }
   }, [isShutdownModalOpen, isShuttingDown])
 
-  const toggleNotification = (key: keyof NotificationSettings): void => {
+  const toggleNotification = (key: NotificationPreferenceGroup): void => {
     setNotifications(prev => ({
       ...prev,
       [key]: !prev[key],
@@ -369,48 +364,49 @@ export default function PreferencesPage(): JSX.Element {
                 These toggles control which notifications are shown to the user inside the game UI.
               </p>
 
-              <div className="mt-4 divide-y divide-gray-100">
-                <ToggleRow
-                  title="Race invitations"
-                  description="Show notifications when your team receives a race invitation."
-                  checked={notifications.raceInvitations}
-                  onToggle={() => toggleNotification('raceInvitations')}
-                />
+              <div className="mt-5 grid grid-cols-1 gap-4 xl:grid-cols-2">
+                {NOTIFICATION_PREFERENCE_SECTIONS.map(section => {
+                  const sectionGroups = NOTIFICATION_PREFERENCE_GROUP_ORDER.filter(
+                    groupCode => NOTIFICATION_PREFERENCE_GROUPS[groupCode].section === section.code
+                  )
 
-                <ToggleRow
-                  title="Race application results"
-                  description="Show notifications when your team is accepted or declined for a race."
-                  checked={notifications.raceApplicationResults}
-                  onToggle={() => toggleNotification('raceApplicationResults')}
-                />
+                  const enabledCount = sectionGroups.filter(
+                    groupCode => notifications[groupCode] !== false
+                  ).length
 
-                <ToggleRow
-                  title="Stage plan reminders"
-                  description="Show notifications for stage plan locks, missing stage plans, and lock-soon reminders."
-                  checked={notifications.stagePlanReminders}
-                  onToggle={() => toggleNotification('stagePlanReminders')}
-                />
+                  return (
+                    <div
+                      key={section.code}
+                      className="overflow-hidden rounded-xl border border-gray-200 bg-gray-50/60"
+                    >
+                      <div className="flex items-start justify-between gap-4 border-b border-gray-200 bg-white px-4 py-3">
+                        <div>
+                          <h4 className="text-sm font-semibold text-gray-900">{section.title}</h4>
+                          <p className="mt-1 text-xs text-gray-500">{section.description}</p>
+                        </div>
+                        <span className="shrink-0 rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-600">
+                          {enabledCount}/{sectionGroups.length} on
+                        </span>
+                      </div>
 
-                <ToggleRow
-                  title="Transfer updates"
-                  description="Show notifications for transfer offers, negotiations, and transfer activity."
-                  checked={notifications.transferUpdates}
-                  onToggle={() => toggleNotification('transferUpdates')}
-                />
+                      <div className="divide-y divide-gray-200 px-4">
+                        {sectionGroups.map(groupCode => {
+                          const group = NOTIFICATION_PREFERENCE_GROUPS[groupCode]
 
-                <ToggleRow
-                  title="Team updates"
-                  description="Show notifications related to important team events and internal team changes."
-                  checked={notifications.teamUpdates}
-                  onToggle={() => toggleNotification('teamUpdates')}
-                />
-
-                <ToggleRow
-                  title="Finance alerts"
-                  description="Show notifications for important budget, cost, or income related updates."
-                  checked={notifications.financeAlerts}
-                  onToggle={() => toggleNotification('financeAlerts')}
-                />
+                          return (
+                            <ToggleRow
+                              key={groupCode}
+                              title={group.label}
+                              description={group.description}
+                              checked={notifications[groupCode] !== false}
+                              onToggle={() => toggleNotification(groupCode)}
+                            />
+                          )
+                        })}
+                      </div>
+                    </div>
+                  )
+                })}
               </div>
             </section>
           </div>

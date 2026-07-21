@@ -732,7 +732,15 @@ function getRiderProfileHref(item: NotificationItem): string | null {
     'public_rider_profile_path',
   ])
 
-  if (directPath) return directPath
+  const genericRiderFallbackPaths = new Set([
+    '/dashboard',
+    '/dashboard/overview',
+    '/dashboard/squad',
+    '/dashboard/notifications',
+    '#',
+  ])
+
+  if (directPath && !genericRiderFallbackPaths.has(directPath)) return directPath
 
   const riderId = pickFirstString(payload, ['rider_id'])
   if (!riderId) return null
@@ -751,6 +759,8 @@ function getRiderProfileHref(item: NotificationItem): string | null {
       'TRANSFER_COMPLETED',
       'RETIREMENT_ANNOUNCED',
       'RIDER_CONTRACT_EXPIRING',
+      'RIDER_WANTS_MORE_RACE_SELECTION',
+      'RIDER_REQUESTS_RELEASE',
     ].includes(typeCode)
 
   return shouldUseOwnRiderProfile
@@ -12491,6 +12501,320 @@ RACE_PLAN_OPEN: {
     MARK_READ_ACTION,
   ],
 },
+
+  RIDER_WANTS_MORE_RACE_SELECTION: {
+    defaultTitle: 'Rider wants more race selection',
+    defaultMessage:
+      'A rider wants more race opportunities. Review race selection and keep morale stable before the situation gets worse.',
+
+    imageSrc:
+      'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Event%20images/Rider%20wants%20more%20race%20selection.png',
+
+    getImageSrc: (item) =>
+      getImageSrcFromItem(item) ||
+      'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Event%20images/Rider%20wants%20more%20race%20selection.png',
+
+    enrich: (item) => {
+      const payload = getPayload(item)
+      const riderName = getPreferredRiderName(item) || pickFirstString(payload, ['rider_name', 'name'])
+
+      return {
+        ...item,
+        title: riderName
+          ? `Rider wants more race selection: ${riderName}`
+          : item.title || 'Rider wants more race selection',
+        message:
+          item.message ||
+          (riderName
+            ? `${riderName} wants more chances to race. Review upcoming races and add the rider to suitable selections before morale drops further.`
+            : 'A rider wants more race opportunities. Review upcoming races and add the rider to suitable selections before morale drops further.'),
+      }
+    },
+
+    getIntroText: (item) => {
+      const riderName = getPreferredRiderName(item) || 'This rider'
+
+      return (
+        buildIntroFromMessage(item) ||
+        `${riderName} is asking for more race days. A fair race calendar helps protect morale and reduces the risk of release requests later in the season.`
+      )
+    },
+
+    getDetailRows: (item) => {
+      const payload = getPayload(item)
+
+      return compactRows([
+        detailRow('Rider', getPreferredRiderName(item) || pickFirstString(payload, ['rider_name', 'name'])),
+        detailRow('Current morale', pickFirstNumber(payload, ['morale', 'morale_score', 'current_morale']) !== null ? `${pickFirstNumber(payload, ['morale', 'morale_score', 'current_morale'])}` : null),
+        detailRow('Recent race days', pickFirstNumber(payload, ['recent_race_days', 'race_days_recent', 'recent_participation_count']) !== null ? `${pickFirstNumber(payload, ['recent_race_days', 'race_days_recent', 'recent_participation_count'])}` : null),
+        detailRow('Requested action', 'Review upcoming race selection'),
+      ])
+    },
+
+    getExtraText: () =>
+      'Open the rider profile to check morale and role expectations, then review upcoming race preparation to find a suitable race slot.',
+
+    actions: [
+      {
+        key: 'open-rider',
+        label: 'Open rider',
+        variant: 'primary',
+        kind: 'navigate',
+        getHref: (item) => getRiderProfileHref(item) || getTeamSquadHref(item),
+        show: () => true,
+      },
+      {
+        key: 'open-race-selection',
+        label: 'Race planning',
+        variant: 'secondary',
+        kind: 'navigate',
+        getHref: (item) => {
+          const payload = getPayload(item)
+          return (
+            pickFirstString(payload, [
+              'race_selection_path',
+              'race_preparation_path',
+              'planning_path',
+            ]) || '/dashboard/race-preparation'
+          )
+        },
+        show: () => true,
+      },
+      MARK_READ_ACTION,
+    ],
+  },
+
+  RIDER_REQUESTS_RELEASE: {
+    defaultTitle: 'Rider requests release',
+    defaultMessage:
+      'A rider has formally asked to leave the team. Review the rider profile and decide how to respond.',
+
+    imageSrc:
+      'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Event%20images/Rider%20request%20release.png',
+
+    getImageSrc: (item) =>
+      getImageSrcFromItem(item) ||
+      'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Event%20images/Rider%20request%20release.png',
+
+    enrich: (item) => {
+      const payload = getPayload(item)
+      const riderName = getPreferredRiderName(item) || pickFirstString(payload, ['rider_name', 'name'])
+
+      return {
+        ...item,
+        title: riderName
+          ? `Rider requests release: ${riderName}`
+          : item.title || 'Rider requests release',
+        message:
+          item.message ||
+          (riderName
+            ? `${riderName} has asked to leave the team. Review morale, contract status, and recent race selection before making a decision.`
+            : 'A rider has asked to leave the team. Review morale, contract status, and recent race selection before making a decision.'),
+      }
+    },
+
+    getIntroText: (item) => {
+      const riderName = getPreferredRiderName(item) || 'This rider'
+
+      return (
+        buildIntroFromMessage(item) ||
+        `${riderName} has escalated the situation and requested a release. This should be handled quickly because it can affect squad stability and long-term planning.`
+      )
+    },
+
+    getDetailRows: (item) => {
+      const payload = getPayload(item)
+
+      return compactRows([
+        detailRow('Rider', getPreferredRiderName(item) || pickFirstString(payload, ['rider_name', 'name'])),
+        detailRow('Current morale', pickFirstNumber(payload, ['morale', 'morale_score', 'current_morale']) !== null ? `${pickFirstNumber(payload, ['morale', 'morale_score', 'current_morale'])}` : null),
+        detailRow('Days unhappy', pickFirstNumber(payload, ['days_unhappy', 'consecutive_unhappy_days', 'low_morale_days']) !== null ? `${pickFirstNumber(payload, ['days_unhappy', 'consecutive_unhappy_days', 'low_morale_days'])}` : null),
+        detailRow('Contract status', formatLabel(pickFirstString(payload, ['contract_status', 'release_status']))),
+      ])
+    },
+
+    getExtraText: () =>
+      'Open the rider profile first. Then review squad planning and transfer/contract options before deciding whether to repair morale or allow the rider to leave.',
+
+    actions: [
+      {
+        key: 'open-rider',
+        label: 'Open rider',
+        variant: 'primary',
+        kind: 'navigate',
+        getHref: (item) => getRiderProfileHref(item) || getTeamSquadHref(item),
+        show: () => true,
+      },
+      {
+        key: 'open-release-options',
+        label: 'Release options',
+        variant: 'secondary',
+        kind: 'navigate',
+        getHref: (item) => {
+          const payload = getPayload(item)
+          return (
+            pickFirstString(payload, [
+              'release_action_path',
+              'contract_path',
+              'transfers_path',
+            ]) || '/dashboard/transfers'
+          )
+        },
+        show: () => true,
+      },
+      MARK_READ_ACTION,
+    ],
+  },
+
+  COINS_LOW_WARNING: {
+    defaultTitle: 'Coins are running low',
+    defaultMessage:
+      'Your coin balance is low. Add more coins before your balance reaches zero.',
+
+    imageSrc:
+      'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Event%20images/Coins%20Low%20Warning.png',
+
+    getImageSrc: (item) =>
+      getImageSrcFromItem(item) ||
+      'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Event%20images/Coins%20Low%20Warning.png',
+
+    enrich: (item) => {
+      const payload = getPayload(item)
+      const balance = pickFirstNumber(payload, ['coin_balance', 'coins_balance', 'coins', 'balance'])
+      return {
+        ...item,
+        title: item.title || 'Coins are running low',
+        message:
+          item.message ||
+          (balance !== null
+            ? `Your coin balance is down to ${balance} coin${balance === 1 ? '' : 's'}. Add more coins before your balance reaches zero.`
+            : 'Your coin balance is low. Add more coins before your balance reaches zero.'),
+      }
+    },
+
+    getIntroText: (item) => {
+      const payload = getPayload(item)
+      const balance = pickFirstNumber(payload, ['coin_balance', 'coins_balance', 'coins', 'balance'])
+
+      return (
+        buildIntroFromMessage(item) ||
+        (balance !== null
+          ? `Your account currently has ${balance} coin${balance === 1 ? '' : 's'} left. Review Pro Packages now so gameplay is not interrupted later.`
+          : 'Your account coin balance is low. Review Pro Packages now so gameplay is not interrupted later.')
+      )
+    },
+
+    getDetailRows: (item) => {
+      const payload = getPayload(item)
+      const balance = pickFirstNumber(payload, ['coin_balance', 'coins_balance', 'coins', 'balance'])
+      const threshold = pickFirstNumber(payload, ['threshold', 'warning_threshold', 'low_coin_threshold'])
+
+      return compactRows([
+        detailRow('Current balance', balance !== null ? `${balance} coin${balance === 1 ? '' : 's'}` : null),
+        detailRow('Warning threshold', threshold !== null ? `${threshold} coin${threshold === 1 ? '' : 's'}` : null),
+        detailRow('Recommended action', 'Open Pro Packages'),
+      ])
+    },
+
+    getExtraText: () =>
+      'Coins are used for eligible game access and premium actions. Top up before the balance reaches zero.',
+
+    actions: [
+      {
+        key: 'open-pro-packages',
+        label: 'Pro Packages',
+        variant: 'primary',
+        kind: 'navigate',
+        getHref: (item) => {
+          const payload = getPayload(item)
+          return (
+            pickFirstString(payload, [
+              'pro_packages_path',
+              'coin_packages_path',
+              'shop_path',
+            ]) || '/dashboard/pro-packages'
+          )
+        },
+        show: () => true,
+      },
+      {
+        key: 'open-dashboard',
+        label: 'Dashboard',
+        variant: 'secondary',
+        kind: 'navigate',
+        getHref: () => '/dashboard',
+        show: () => true,
+      },
+      MARK_READ_ACTION,
+    ],
+  },
+
+  RACE_SUPPLIES_LOW_STOCK: {
+    defaultTitle: 'Race supplies low stock',
+    defaultMessage:
+      'Some race supplies are running low. Restock before upcoming races.',
+
+    imageSrc:
+      'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Event%20images/Race%20Supplies%20low.png',
+
+    getImageSrc: (item) =>
+      getImageSrcFromItem(item) ||
+      'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Event%20images/Race%20Supplies%20low.png',
+
+    enrich: (item) => {
+      const payload = getPayload(item)
+      const lowCount = pickFirstNumber(payload, ['low_stock_count', 'low_supply_count', 'item_count', 'count'])
+
+      return {
+        ...item,
+        title:
+          lowCount !== null
+            ? `Race supplies low stock: ${lowCount} item${lowCount === 1 ? '' : 's'}`
+            : item.title || 'Race supplies low stock',
+        message:
+          item.message ||
+          'Some race supplies are below the recommended stock level. Restock early so upcoming race preparation is not blocked.',
+      }
+    },
+
+    getIntroText: (item) =>
+      buildIntroFromMessage(item) ||
+      'Some race supplies are below the recommended stock level. This is not yet a critical shortage, but restocking early protects your next race preparation.',
+
+    getDetailRows: (item) => {
+      const payload = getPayload(item)
+      const lowCount = pickFirstNumber(payload, ['low_stock_count', 'low_supply_count', 'item_count', 'count'])
+
+      return compactRows([
+        detailRow('Low-stock items', lowCount !== null ? `${lowCount}` : null),
+        detailRow('Supply status', pickFirstString(payload, ['low_stock_summary', 'supplies_summary', 'stock_summary'])),
+        detailRow('Recommended action', 'Open Race Supplies and restock'),
+      ])
+    },
+
+    getExtraText: () =>
+      'Low stock is an early warning. Critical supply shortage notifications appear when your team may not have enough supplies for upcoming race preparation.',
+
+    actions: [
+      {
+        key: 'open-race-supplies',
+        label: 'Race supplies',
+        variant: 'primary',
+        kind: 'navigate',
+        getHref: () => '/dashboard/equipment?tab=race-supplies',
+        show: () => true,
+      },
+      {
+        key: 'open-equipment',
+        label: 'Equipment page',
+        variant: 'secondary',
+        kind: 'navigate',
+        getHref: () => '/dashboard/equipment',
+        show: () => true,
+      },
+      MARK_READ_ACTION,
+    ],
+  },
 RACE_SUPPLIES_LOW: {
   defaultTitle: 'Race supplies low',
   defaultMessage:
@@ -12986,92 +13310,183 @@ STAGE_PLAN_MISSING_AT_LOCK: {
       MARK_READ_ACTION,
     ],
   },
+
   MAIN_SPONSOR_OBJECTIVE_ACHIEVED: {
-  title: 'Sponsor objective achieved',
-  intro:
-    'Your team completed a main sponsor objective and received the bonus payment.',
-  imageUrl:
-    'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Event%20images/Sponsor%20bonus.png',
-  getTitle: payload =>
-    payload?.objective_name
-      ? `Sponsor objective achieved: ${payload.objective_name}`
-      : 'Sponsor objective achieved',
-  getMessage: payload => {
-    const sponsorName = payload?.sponsor_name ?? 'Your main sponsor'
-    const amount = Number(payload?.bonus_amount_cash ?? payload?.bonus_cash ?? 0)
+    defaultTitle: 'Main sponsor objective achieved',
+    defaultMessage:
+      'Your team achieved a main sponsor objective. Review sponsor progress and bonus details.',
 
-    if (amount > 0) {
-      return `${sponsorName} paid a bonus of $${amount.toLocaleString()} for completing this objective.`
-    }
+    imageSrc:
+      'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Event%20images/Main%20sponsor%20objecitve%20achived.png',
 
-    return `${sponsorName} confirmed that your team completed this objective.`
+    getImageSrc: (item) =>
+      getImageSrcFromItem(item) ||
+      'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Event%20images/Main%20sponsor%20objecitve%20achived.png',
+
+    enrich: (item) => {
+      const payload = getPayload(item)
+      const objectiveName = pickFirstString(payload, ['objective_name', 'goal_name', 'target_name'])
+      const sponsorName = pickFirstString(payload, ['sponsor_name', 'company_name', 'main_sponsor_name']) || 'Main sponsor'
+      const bonus = pickFirstNumber(payload, ['bonus_amount_cash', 'bonus_cash', 'bonus_amount', 'reward_cash'])
+
+      return {
+        ...item,
+        title: objectiveName
+          ? `Sponsor objective achieved: ${objectiveName}`
+          : item.title || 'Main sponsor objective achieved',
+        message:
+          item.message ||
+          (bonus !== null
+            ? `${sponsorName} confirmed the objective and awarded ${formatCurrencyOrZero(bonus)}.`
+            : `${sponsorName} confirmed that your team achieved the objective.`),
+      }
+    },
+
+    getIntroText: (item) => {
+      const payload = getPayload(item)
+      const sponsorName = pickFirstString(payload, ['sponsor_name', 'company_name', 'main_sponsor_name']) || 'Your main sponsor'
+
+      return (
+        buildIntroFromMessage(item) ||
+        `${sponsorName} is satisfied with your progress. The objective is complete and any related bonus or sponsor impact can now be reviewed.`
+      )
+    },
+
+    getDetailRows: (item) => {
+      const payload = getPayload(item)
+      const bonus = pickFirstNumber(payload, ['bonus_amount_cash', 'bonus_cash', 'bonus_amount', 'reward_cash'])
+
+      return compactRows([
+        detailRow('Sponsor', pickFirstString(payload, ['sponsor_name', 'company_name', 'main_sponsor_name'])),
+        detailRow('Objective', pickFirstString(payload, ['objective_name', 'goal_name', 'target_name'])),
+        detailRow('Bonus paid', formatCurrencyLabel(bonus, '$')),
+        detailRow('Result', 'Achieved'),
+      ])
+    },
+
+    getExtraText: () =>
+      'Open Sponsors to review the completed objective, bonus details, and remaining season targets.',
+
+    actions: [
+      {
+        key: 'open-sponsors',
+        label: 'Open sponsors',
+        variant: 'primary',
+        kind: 'navigate',
+        getHref: (item) => {
+          const payload = getPayload(item)
+          return (
+            pickFirstString(payload, [
+              'finance_sponsor_path',
+              'finance_sponsors_path',
+              'sponsor_path',
+              'sponsors_path',
+              'objectives_path',
+            ]) || '/dashboard/finance?tab=sponsors'
+          )
+        },
+        show: () => true,
+      },
+      {
+        key: 'open-dashboard',
+        label: 'Dashboard',
+        variant: 'secondary',
+        kind: 'navigate',
+        getHref: () => '/dashboard/overview',
+        show: () => true,
+      },
+      MARK_READ_ACTION,
+    ],
   },
-  getDetails: payload => [
-    payload?.sponsor_name
-      ? { label: 'Sponsor', value: payload.sponsor_name }
-      : null,
-    payload?.objective_name
-      ? { label: 'Objective', value: payload.objective_name }
-      : null,
-    payload?.bonus_amount_cash || payload?.bonus_cash
-      ? {
-          label: 'Bonus paid',
-          value: `$${Number(
-            payload.bonus_amount_cash ?? payload.bonus_cash
-          ).toLocaleString()}`,
-        }
-      : null,
-  ].filter(Boolean),
-  primaryAction: {
-    label: 'Open sponsors',
-    href: '/dashboard/sponsors',
-  },
-},
 
-MAIN_SPONSOR_OBJECTIVE_FAILED: {
-  title: 'Sponsor objective missed',
-  intro:
-    'Your team did not complete a main sponsor objective, so the bonus payment was not awarded.',
-  imageUrl:
-    'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Event%20images/Sponsor%20objective%20failed.png',
-  getTitle: payload =>
-    payload?.objective_name
-      ? `Sponsor objective missed: ${payload.objective_name}`
-      : 'Sponsor objective missed',
-  getMessage: payload => {
-    const sponsorName = payload?.sponsor_name ?? 'Your main sponsor'
-    const amount = Number(payload?.bonus_amount_cash ?? payload?.bonus_cash ?? 0)
+  MAIN_SPONSOR_OBJECTIVE_FAILED: {
+    defaultTitle: 'Main sponsor objective failed',
+    defaultMessage:
+      'Your team failed a main sponsor objective. Review the missed target and sponsor impact.',
 
-    if (amount > 0) {
-      return `${sponsorName} did not pay the $${amount.toLocaleString()} bonus because this objective was not completed.`
-    }
+    imageSrc:
+      'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Event%20images/Main%20sponsor%20objecitve%20faild.png',
 
-    return `${sponsorName} marked this objective as missed.`
+    getImageSrc: (item) =>
+      getImageSrcFromItem(item) ||
+      'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Event%20images/Main%20sponsor%20objecitve%20faild.png',
+
+    enrich: (item) => {
+      const payload = getPayload(item)
+      const objectiveName = pickFirstString(payload, ['objective_name', 'goal_name', 'target_name'])
+      const sponsorName = pickFirstString(payload, ['sponsor_name', 'company_name', 'main_sponsor_name']) || 'Main sponsor'
+      const missedBonus = pickFirstNumber(payload, ['bonus_amount_cash', 'bonus_cash', 'missed_bonus_cash', 'missed_bonus_amount'])
+
+      return {
+        ...item,
+        title: objectiveName
+          ? `Sponsor objective failed: ${objectiveName}`
+          : item.title || 'Main sponsor objective failed',
+        message:
+          item.message ||
+          (missedBonus !== null
+            ? `${sponsorName} marked the objective as failed, so the ${formatCurrencyOrZero(missedBonus)} bonus was not paid.`
+            : `${sponsorName} marked this objective as failed. Review the missed target and sponsor impact.`),
+      }
+    },
+
+    getIntroText: (item) => {
+      const payload = getPayload(item)
+      const sponsorName = pickFirstString(payload, ['sponsor_name', 'company_name', 'main_sponsor_name']) || 'Your main sponsor'
+
+      return (
+        buildIntroFromMessage(item) ||
+        `${sponsorName} marked an objective as missed. Review what failed, which bonus was lost, and which remaining objectives can still protect sponsor satisfaction.`
+      )
+    },
+
+    getDetailRows: (item) => {
+      const payload = getPayload(item)
+      const missedBonus = pickFirstNumber(payload, ['bonus_amount_cash', 'bonus_cash', 'missed_bonus_cash', 'missed_bonus_amount'])
+
+      return compactRows([
+        detailRow('Sponsor', pickFirstString(payload, ['sponsor_name', 'company_name', 'main_sponsor_name'])),
+        detailRow('Objective', pickFirstString(payload, ['objective_name', 'goal_name', 'target_name'])),
+        detailRow('Missed bonus', formatCurrencyLabel(missedBonus, '$')),
+        detailRow('Reason', pickFirstString(payload, ['reason', 'failure_reason', 'missed_reason'])),
+        detailRow('Result', 'Failed'),
+      ])
+    },
+
+    getExtraText: () =>
+      'Open Sponsors to review the failed objective and decide which remaining targets should become the priority.',
+
+    actions: [
+      {
+        key: 'open-sponsors',
+        label: 'Open sponsors',
+        variant: 'primary',
+        kind: 'navigate',
+        getHref: (item) => {
+          const payload = getPayload(item)
+          return (
+            pickFirstString(payload, [
+              'finance_sponsor_path',
+              'finance_sponsors_path',
+              'sponsor_path',
+              'sponsors_path',
+              'objectives_path',
+            ]) || '/dashboard/finance?tab=sponsors'
+          )
+        },
+        show: () => true,
+      },
+      {
+        key: 'open-dashboard',
+        label: 'Dashboard',
+        variant: 'secondary',
+        kind: 'navigate',
+        getHref: () => '/dashboard/overview',
+        show: () => true,
+      },
+      MARK_READ_ACTION,
+    ],
   },
-  getDetails: payload => [
-    payload?.sponsor_name
-      ? { label: 'Sponsor', value: payload.sponsor_name }
-      : null,
-    payload?.objective_name
-      ? { label: 'Objective', value: payload.objective_name }
-      : null,
-    payload?.reason
-      ? { label: 'Reason', value: payload.reason }
-      : null,
-    payload?.bonus_amount_cash || payload?.bonus_cash
-      ? {
-          label: 'Missed bonus',
-          value: `$${Number(
-            payload.bonus_amount_cash ?? payload.bonus_cash
-          ).toLocaleString()}`,
-        }
-      : null,
-  ].filter(Boolean),
-  primaryAction: {
-    label: 'Open sponsors',
-    href: '/dashboard/sponsors',
-  },
-},
   INFRASTRUCTURE_ASSET_ORDERED: {
   defaultTitle: 'Asset ordered',
   defaultMessage:

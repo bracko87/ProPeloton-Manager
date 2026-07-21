@@ -11,7 +11,10 @@
  */
 
 import type { SimulationState } from '../domain/SimulationState'
-import type { RiderState, RiderStageStatus } from '../domain/RiderState'
+import type {
+  RiderState,
+  RiderStageStatus,
+} from '../domain/RiderState'
 import type { GroupState } from '../domain/GroupState'
 import type { StageSimulationSettings } from '../domain/StageInput'
 import type { StageResult } from '../domain/SimulationOutput'
@@ -19,6 +22,10 @@ import { advanceRaceClock } from './raceClock'
 import { validateSimulationState } from '../validation/validateSimulationState'
 import { INITIAL_PELOTON_GROUP_ID } from './createInitialState'
 import { finishBasicPelotonStage } from './finishStage'
+import { getStageTerrainSample } from './stageProfile'
+import { calculateTerrainSpeed } from './terrainSpeed'
+import { calculatePelotonBasePace } from './pelotonPace'
+import { calculateRiderEnergyCost } from './energyCost'
 
 /**
  * SimulateTickInput
@@ -94,7 +101,10 @@ export function simulateTick(input: SimulateTickInput): SimulateTickResult {
     )
   }
 
-  if (!isFiniteNumber(settings.minimumSpeedKmh) || settings.minimumSpeedKmh <= 0) {
+  if (
+    !isFiniteNumber(settings.minimumSpeedKmh) ||
+    settings.minimumSpeedKmh <= 0
+  ) {
     throw new RangeError(
       'simulateTick: settings.minimumSpeedKmh must be a finite number greater than zero.',
     )
@@ -132,6 +142,7 @@ export function simulateTick(input: SimulateTickInput): SimulateTickResult {
 
   // All non-terminal riders must belong to this peloton group.
   const ridersArray: readonly RiderState[] = Object.values(state.riders)
+
   for (const rider of ridersArray) {
     if (!terminalStageStatuses.has(rider.stageStatus)) {
       if (rider.currentGroupId !== peloton.groupId) {
@@ -148,15 +159,75 @@ export function simulateTick(input: SimulateTickInput): SimulateTickResult {
     }
   }
 
-  // 4. Determine peloton speed (clamped between minimum and maximum).
-  const pelotonSpeedKmh = Math.min(
-    settings.maximumSpeedKmh,
-    Math.max(settings.minimumSpeedKmh, peloton.speedKmh),
+  // 4. Sample terrain at the peloton's current position.
+  const terrainSample = getStageTerrainSample(
+    state.input,
+    peloton.distanceKm,
   )
+
+  /*
+   * Phase 3 rider-based baseline speed:
+   *
+   * Calculate a stable intended peloton pace from the attributes of riders
+   * currently racing in peloton_main.
+   *
+   * Terrain is applied separately afterward. We deliberately do not use
+   * peloton.speedKmh as the next tick's base because it already contains the
+   * previous tick's terrain adjustment and would cause terrain effects to
+   * compound repeatedly.
+   */
+  const pelotonRiders = peloton.riderIds.map(
+    (riderId) => {
+      const rider = state.riders[riderId]
+
+      if (!rider) {
+        throw new Error(
+          `simulateTick: peloton rider ${riderId} does not exist in state.riders.`,
+        )
+      }
+
+      return rider
+    },
+  )
+
+  const pelotonPaceResult =
+    calculatePelotonBasePace({
+      riders: pelotonRiders,
+      minimumSpeedKmh:
+        settings.minimumSpeedKmh,
+      maximumSpeedKmh:
+        settings.maximumSpeedKmh,
+    })
+
+  const basePelotonSpeedKmh =
+    pelotonPaceResult.baseSpeedKmh
+
+  /*
+   * calculateTerrainSpeed clamps its final output to a minimum speed.
+   *
+   * The normal configured minimumSpeedKmh is the baseline cruising speed, not
+   * the absolute speed floor after terrain. Derive the terrain floor from the
+   * utility's minimum allowed multiplier of 0.35.
+   */
+  const terrainMinimumSpeedKmh =
+    basePelotonSpeedKmh * 0.35
+
+  const terrainSpeedResult = calculateTerrainSpeed({
+    baseSpeedKmh: basePelotonSpeedKmh,
+    gradientPercent: terrainSample.gradientPercent,
+    minimumSpeedKmh: terrainMinimumSpeedKmh,
+    maximumSpeedKmh: settings.maximumSpeedKmh,
+  })
+
+  const pelotonSpeedKmh =
+    terrainSpeedResult.speedKmh
 
   // 5. Advance race time using the deterministic race clock.
   const previousRaceSecond = state.raceSecond
-  const clockAdvance = advanceRaceClock(previousRaceSecond, settings.tickSeconds)
+  const clockAdvance = advanceRaceClock(
+    previousRaceSecond,
+    settings.tickSeconds,
+  )
   const nextRaceSecond = clockAdvance.nextRaceSecond
 
   // 6. Calculate tick distance.
@@ -190,26 +261,53 @@ export function simulateTick(input: SimulateTickInput): SimulateTickResult {
     [INITIAL_PELOTON_GROUP_ID]: updatedPeloton,
   }
 
-  // 10. Update all riders immutably for stageStatus = 'racing'.
+  // 10. Update all racing riders immutably.
+  //
+  // Every racing rider:
+  // - moves with the peloton;
+  // - receives the same applied group speed;
+  // - spends deterministic energy according to terrain, duration, and
+  //   individual stamina/resistance/recovery attributes.
   const nextRidersEntries: Array<[string, RiderState]> = []
 
   for (const [riderId, rider] of Object.entries(state.riders)) {
     if (rider.stageStatus === 'racing') {
+      const energyResult =
+        calculateRiderEnergyCost({
+          currentEnergy: rider.energy,
+          speedKmh: pelotonSpeedKmh,
+          baseSpeedKmh: basePelotonSpeedKmh,
+          gradientPercent:
+            terrainSample.gradientPercent,
+          tickSeconds: settings.tickSeconds,
+          stamina: rider.attributes.stamina,
+          resistance:
+            rider.attributes.resistance,
+          recovery: rider.attributes.recovery,
+        })
+
       const updatedRider: RiderState = {
         ...rider,
         distanceKm: nextDistanceKm,
         speedKmh: pelotonSpeedKmh,
+        energy: energyResult.nextEnergy,
       }
-      nextRidersEntries.push([riderId, updatedRider])
+
+      nextRidersEntries.push([
+        riderId,
+        updatedRider,
+      ])
     } else {
-      // Do not modify riders with terminal or non-racing statuses.
-      nextRidersEntries.push([riderId, rider])
+      // Terminal or otherwise non-racing riders are not modified.
+      nextRidersEntries.push([
+        riderId,
+        rider,
+      ])
     }
   }
 
-  const nextRiders: typeof state.riders = Object.fromEntries(
-    nextRidersEntries,
-  )
+  const nextRiders: typeof state.riders =
+    Object.fromEntries(nextRidersEntries)
 
   // 11. Determine if finish distance was reached.
   const reachedFinish = nextDistanceKm >= state.stageDistanceKm
@@ -293,8 +391,53 @@ export function simulateTick(input: SimulateTickInput): SimulateTickResult {
   }
 
   // Invariant: every racing rider matches peloton distance and speed,
-  // remains in peloton_main, and rider/team/order/event counts are stable.
-  const pelotonAfter = nextState.groups[INITIAL_PELOTON_GROUP_ID]
+  // remains in peloton_main, has valid non-increasing energy, and
+  // rider/team/order/event counts are stable.
+  const pelotonAfter =
+    nextState.groups[INITIAL_PELOTON_GROUP_ID]
+
+  if (!Number.isFinite(terrainSample.gradientPercent)) {
+    throw new Error(
+      'simulateTick invariant: terrain gradient is not finite.',
+    )
+  }
+
+  if (!Number.isFinite(terrainSample.elevationMetres)) {
+    throw new Error(
+      'simulateTick invariant: terrain elevation is not finite.',
+    )
+  }
+
+  if (
+    !Number.isFinite(
+      pelotonPaceResult.averageCapabilityScore,
+    )
+  ) {
+    throw new Error(
+      'simulateTick invariant: peloton capability score is not finite.',
+    )
+  }
+
+  if (
+    !Number.isFinite(basePelotonSpeedKmh) ||
+    basePelotonSpeedKmh <
+      settings.minimumSpeedKmh ||
+    basePelotonSpeedKmh >
+      settings.maximumSpeedKmh
+  ) {
+    throw new Error(
+      'simulateTick invariant: rider-based peloton base speed is outside configured limits.',
+    )
+  }
+
+  if (
+    pelotonAfter.speedKmh < terrainMinimumSpeedKmh ||
+    pelotonAfter.speedKmh > settings.maximumSpeedKmh
+  ) {
+    throw new Error(
+      'simulateTick invariant: terrain-adjusted peloton speed is outside terrain speed limits.',
+    )
+  }
 
   for (const rider of Object.values(nextState.riders)) {
     if (rider.stageStatus === 'racing') {
@@ -313,6 +456,31 @@ export function simulateTick(input: SimulateTickInput): SimulateTickResult {
       if (rider.speedKmh !== pelotonAfter.speedKmh) {
         throw new Error(
           `simulateTick invariant: racing rider ${rider.riderId} speed does not match peloton speed.`,
+        )
+      }
+
+      if (
+        !Number.isFinite(rider.energy) ||
+        rider.energy < 0 ||
+        rider.energy > 100
+      ) {
+        throw new Error(
+          `simulateTick invariant: racing rider ${rider.riderId} energy is outside 0 to 100.`,
+        )
+      }
+
+      const previousRider =
+        state.riders[rider.riderId]
+
+      if (!previousRider) {
+        throw new Error(
+          `simulateTick invariant: previous rider ${rider.riderId} is missing.`,
+        )
+      }
+
+      if (rider.energy > previousRider.energy) {
+        throw new Error(
+          `simulateTick invariant: racing rider ${rider.riderId} gained energy during a movement tick.`,
         )
       }
     }

@@ -1,35 +1,73 @@
+/**
+ * RiderState.ts
+ *
+ * Canonical rider domain types used by the deterministic race engine.
+ *
+ * These definitions match the rider state constructed by createInitialState()
+ * and consumed by the active simulation modules.
+ */
+
+/**
+ * Tactical role assigned to a rider for one stage simulation.
+ */
 export type RiderRole =
   | 'captain'
   | 'sprinter'
   | 'leadout'
+  | 'rouleur'
   | 'domestique'
   | 'breakaway'
   | 'free_role'
 
-export type RiderRaceStatus = 'not_started' | 'racing' | 'finished' | 'dnf' | 'dns'
+/**
+ * Lifecycle status of a rider during a stage simulation.
+ */
+export type RiderRaceStatus =
+  | 'not_started'
+  | 'racing'
+  | 'finished'
+  | 'dnf'
+  | 'dns'
 
+/**
+ * Performance attributes consumed by the active deterministic engine.
+ */
 export interface RiderAttributes {
   readonly flat: number
   readonly sprint: number
-  readonly endurance: number
   readonly acceleration: number
+  readonly stamina: number
   readonly resistance: number
   readonly recovery: number
+  readonly teamwork: number
 }
 
+/**
+ * Runtime state for one rider during a stage simulation.
+ */
 export interface RiderState {
-  readonly id: string
+  readonly riderId: string
   readonly teamId: string
-  readonly participationId: string
-  readonly name: string
+  readonly riderName: string
+  readonly teamName: string
+
   readonly role: RiderRole
   readonly attributes: RiderAttributes
-  readonly groupId: string
+
+  readonly currentGroupId: string
+
   readonly distanceKm: number
   readonly speedKmh: number
   readonly energy: number
+
   readonly attackAttempts: number
-  readonly status: RiderRaceStatus
-  readonly finishTimeSeconds?: number
-  readonly finishPosition?: number
+
+  readonly acceptedOrderIds: readonly string[]
+  readonly completedOrderIds: readonly string[]
+
+  readonly stageStatus: RiderRaceStatus
+  readonly finished: boolean
+
+  readonly finishTimeSeconds: number | null
+  readonly finishPosition: number | null
 }

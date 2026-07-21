@@ -60,6 +60,7 @@ import { supabase } from '@/lib/supabase'
 import {
   canReceiveNotification,
   getNotificationTypeFromEvent,
+  isNotificationPreferenceGroup,
   readNotificationPreferences,
 } from '@/lib/notificationPreferences'
 
@@ -879,9 +880,8 @@ export default function Header({
   const shouldDisplayNotification = useCallback((item: NotificationItem) => {
     const preferences = readNotificationPreferences()
 
-    const pg = item.preference_group as any
-    if (pg && pg in preferences) {
-      return canReceiveNotification(preferences, pg)
+    if (isNotificationPreferenceGroup(item.preference_group)) {
+      return canReceiveNotification(preferences, item.preference_group)
     }
 
     const notificationType = getNotificationTypeFromEvent(item.type_code, item.source)
