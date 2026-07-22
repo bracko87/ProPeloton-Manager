@@ -765,7 +765,7 @@ const manualSections: ManualSection[] = [
       "User and club identifiers are masked for privacy."
     ],
     "tips": [
-      "Use Invite Friends to grow community and earn coins."
+      "Use Invite Friends to grow the community."
     ],
     "relatedLinks": [
       {

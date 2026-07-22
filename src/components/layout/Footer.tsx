@@ -2,7 +2,7 @@
  * Footer.tsx
  * Global footer showing authoritative live game time and important public links.
  *
- * UPDATE: Public AdSense-readiness links
+ * UPDATE: Public information links
  * - Adds always-visible public links:
  *   About, How to Play, Privacy Policy, Terms, Support, Contact
  * - Keeps dashboard/support links available.

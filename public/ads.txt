@@ -1,1 +1,2 @@
-google.com, pub-4758774858168039, DIRECT, f08c47fec0942fa0
+# This file is intentionally empty.
+# No advertising systems are configured for this site.

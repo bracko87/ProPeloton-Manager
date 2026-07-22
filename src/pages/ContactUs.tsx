@@ -166,7 +166,7 @@ export default function ContactUsPage(): JSX.Element {
 
             <p className="mt-5 max-w-3xl text-lg leading-relaxed text-slate-200">
               Use this page for support requests, bug reports, account questions,
-              gameplay feedback, AdSense/privacy questions, and general contact about
+              gameplay feedback, privacy questions, and general contact about
               ProPeloton Manager.
             </p>
           </div>
@@ -185,7 +185,7 @@ export default function ContactUsPage(): JSX.Element {
 
           <p className="mt-3 max-w-3xl text-sm leading-relaxed text-slate-600">
             Send support requests, bug reports, account questions, gameplay feedback,
-            AdSense/privacy questions, or general contact messages directly to support.
+            privacy questions, or general contact messages directly to support.
           </p>
         </section>
       )}

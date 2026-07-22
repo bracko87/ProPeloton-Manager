@@ -5,7 +5,7 @@
  * LOCK FLOW (corrected):
  * - When user has <2 coins:
  *   - Show a modal first (do NOT auto-redirect)
- *   - Modal offers: Buy Coins / Watch Video (disabled) / Log out
+ *   - Modal offers: Buy Coins / Log out
  * - When user clicks Buy Coins:
  *   - Navigate to /dashboard/pro
  *   - Pro page remains interactive so user can purchase
@@ -827,7 +827,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
               </div>
             </div>
 
-            <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-3">
               <button
                 type="button"
                 onClick={() => {
@@ -837,15 +837,6 @@ export default function MainLayout({ children }: MainLayoutProps) {
                 className="rounded-lg bg-yellow-400 px-4 py-3 text-sm font-semibold text-black hover:bg-yellow-300"
               >
                 Buy Coins
-              </button>
-
-              <button
-                type="button"
-                disabled
-                className="rounded-lg border border-gray-300 px-4 py-3 text-sm font-semibold text-gray-400 cursor-not-allowed"
-                title="Reward videos are coming soon"
-              >
-                Watch Video (Soon)
               </button>
 
               <button

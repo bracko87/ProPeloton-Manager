@@ -9,7 +9,7 @@
  * - Show lightweight loading/error banners without changing the main layout.
  * - Load live public homepage data from get_public_homepage_snapshot_v1().
  *
- * UPDATE: Public AdSense-readiness improvements
+ * UPDATE: Public information improvements
  * - Adds more original readable homepage content.
  * - Adds public navigation links in the header.
  * - Keeps public pages reachable from the homepage without login.

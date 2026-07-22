@@ -6,7 +6,7 @@
  * - Show the main public homepage message.
  * - Display live game time passed from Home.tsx.
  * - Present the main cycling image with stronger visual size.
- * - Provide a public demo link for visitors and AdSense review.
+ * - Provide a public demo link for visitors and public reviewers.
  */
 
 import React from 'react'

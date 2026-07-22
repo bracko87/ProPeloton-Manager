@@ -16,6 +16,12 @@ import {
   saveTutorialProgress,
 } from '../../lib/tutorialProgress'
 
+import {
+  GenericRaceReplayView,
+  type GenericReplayStageMarker,
+  type ReplayStageModel,
+} from '../../race-replay'
+
 type JsonValue = string | number | boolean | null | JsonObject | JsonValue[]
 type JsonObject = { [key: string]: JsonValue }
 
@@ -8170,7 +8176,124 @@ function buildStagePointReplayEvents(
 
 type ReplayPlaybackSpeed = 1 | 2 | 4 | 8
 
-function RaceReplayModal({
+type RaceReplayModalProps = {
+  open: boolean
+  race: Race | null
+  stage: RaceStage | null
+  currentClubId?: string | null
+  viewerClubFamilyIds?: string[]
+  participantTeams: RaceParticipantTeam[]
+  canViewRaceReplay?: boolean | null
+  liveState: RaceStageLiveState | null
+  lockReplaySpeed: boolean
+  displayMode?: 'modal' | 'page'
+  onClose: () => void
+  genericReplayModel?: ReplayStageModel | null
+}
+
+function getGenericReplayStageMarkerKind(
+  pointType: string
+): GenericReplayStageMarker['kind'] {
+  switch (pointType.toUpperCase()) {
+    case 'START':
+      return 'start'
+    case 'INTERMEDIATE_SPRINT':
+    case 'BONUS_SPRINT':
+      return 'sprint'
+    case 'KOM':
+      return 'kom'
+    case 'FINISH':
+      return 'finish'
+    default:
+      return 'other'
+  }
+}
+
+function getGenericReplayStageMarkers(
+  stage: RaceStage
+): GenericReplayStageMarker[] {
+  return (stage.points ?? [])
+    .map((point) => {
+      const kilometre = asNumber(
+        point.km_from_start
+      )
+
+      if (kilometre === null) {
+        return null
+      }
+
+      return {
+        id: point.id,
+        kilometre,
+        label: getStagePointShortLabel({
+          ...point,
+          km: kilometre,
+        }),
+        kind: getGenericReplayStageMarkerKind(
+          point.point_type
+        ),
+      }
+    })
+    .filter(
+      (
+        marker
+      ): marker is GenericReplayStageMarker =>
+        marker !== null
+    )
+}
+
+function RaceReplayModal(
+  props: RaceReplayModalProps
+) {
+  const genericReplayModel =
+    props.genericReplayModel ?? null
+
+  if (genericReplayModel) {
+    return (
+      <GenericRaceReplayView
+        model={genericReplayModel}
+        displayMode={
+          props.displayMode ?? 'modal'
+        }
+        onClose={props.onClose}
+        raceName={
+          props.race?.name ??
+          genericReplayModel.stageName
+        }
+        stageLabel={
+          props.stage
+            ? `Stage ${props.stage.stage_number} · ${
+                props.stage.name ||
+                formatStageRoute(props.stage)
+              }`
+            : genericReplayModel.stageName
+        }
+        stageMarkers={
+          props.stage
+            ? getGenericReplayStageMarkers(
+                props.stage
+              )
+            : []
+        }
+        highlightedTeamIds={
+          getViewerTeamIds(
+            props.currentClubId,
+            props.viewerClubFamilyIds
+          )
+        }
+      />
+    )
+  }
+
+  return (
+    <LegacyRaceReplayModal
+      {...props}
+    />
+  )
+}
+
+
+function LegacyRaceReplayModal({
   open,
   race,
   stage,
@@ -17135,6 +17258,9 @@ type RaceDetailPageProps = {
   onBack?: () => void
   onOpenTeamProfile?: (teamId: string) => void
   onOpenRiderProfile?: (riderId: string) => void
+  replayStageIdOverride?: string | null
+  genericReplayModelOverride?: ReplayStageModel | null
+  onCloseReplayOverride?: () => void
 }
 
 type ClubFamilyLookupRow = {
@@ -17172,6 +17298,9 @@ export default function RaceDetailPage({
   onBack,
   onOpenTeamProfile,
   onOpenRiderProfile,
+  replayStageIdOverride = null,
+  genericReplayModelOverride = null,
+  onCloseReplayOverride,
 }: RaceDetailPageProps) {
   const navigate = useNavigate()
   const location = useLocation()
@@ -17179,7 +17308,9 @@ export default function RaceDetailPage({
   const routeRaceId = useRaceIdFromRoute()
   const raceId = raceIdOverride ?? routeRaceId
   const resolvedViewerClubId = currentClubId ?? DEFAULT_CURRENT_CLUB_ID
-  const replayStageIdFromUrl = searchParams.get('replayStageId')
+  const replayStageIdFromUrl =
+    replayStageIdOverride ??
+    searchParams.get('replayStageId')
 
   function getRaceDetailReturnState(): RaceDetailReturnState | null {
     return location.state as RaceDetailReturnState | null
@@ -17532,6 +17663,12 @@ export default function RaceDetailPage({
   }
 
   function handleCloseReplayPage() {
+    if (onCloseReplayOverride) {
+      setReplayStage(null)
+      onCloseReplayOverride()
+      return
+    }
+
     const preservedReturnState =
       getSafeRaceDetailSourceReturnState() ?? getRaceDetailReturnState() ?? undefined
     const nextParams = new URLSearchParams(searchParams)
@@ -18759,6 +18896,15 @@ export default function RaceDetailPage({
         lockReplaySpeed={replayStageLiveState?.speed_locked === true}
         displayMode="page"
         onClose={handleCloseReplayPage}
+        genericReplayModel={
+          genericReplayModelOverride &&
+          genericReplayModelOverride.raceId ===
+            race.id &&
+          genericReplayModelOverride.stageId ===
+            replayStage.id
+            ? genericReplayModelOverride
+            : null
+        }
       />
     )
   }
