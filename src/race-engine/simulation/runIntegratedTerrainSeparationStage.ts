@@ -7,14 +7,14 @@
  * 1. calculate terrain-aware movement
  * 2. apply movement
  * 3. apply energy
- * 4. evaluate terrain capability, shelter, hold status, and sustained pressure
+ * 4. evaluate terrain capability, shelter, hold status, and authoritative state pressure
  * 5. either create a dropped group or consolidate into a nearby one
  * 6. detect finish candidates
  * 7. apply partial or final finishes
  *
  * This runner is not imported by simulateMultiGroupTick() or
- * runMultiGroupStage(). It emits no transition event and performs no
- * persistence or external access.
+ * runMultiGroupStage(). Optional transition events are disabled by default.
+ * It performs no persistence or external access.
  */
 
 import type {
@@ -34,6 +34,9 @@ import {
   applyDroppedWaveConsolidationProposal,
   type ApplyDroppedWaveConsolidationProposalResult,
 } from './applyDroppedWaveConsolidationProposal'
+import {
+  applyDroppedTransitionRaceEvent,
+} from './applyDroppedTransitionRaceEvent'
 import {
   applyMultiGroupEnergy,
   type ApplyMultiGroupEnergyResult,
@@ -84,6 +87,11 @@ import {
   type TerrainAwareMultiGroupMovementResult,
 } from './terrainAwareMultiGroupMovement'
 import {
+  calculateSteepGradientTerrainSeverity,
+  type SteepGradientSeverityModel,
+  type SteepGradientTerrainSeverityResult,
+} from './steepGradientTerrainSeverity'
+import {
   validateSimulationState,
 } from '../validation/validateSimulationState'
 
@@ -99,6 +107,34 @@ export interface IntegratedTerrainSeparationOptions {
   readonly droppedWaveConsolidationThresholdSeconds?: number
   readonly droppedWaveConsolidationGapDifferenceSeconds?: number
 
+  /**
+   * Disabled by default. When enabled, every applied dropped-group creation or
+   * consolidation appends exactly one deterministic race event.
+   */
+  readonly droppedTransitionEventsEnabled?: boolean
+
+  /**
+   * Disabled by default. When enabled, the selected candidate affects pressure
+   * evaluation.
+   */
+  readonly steepGradientSeverityEnabled?: boolean
+  readonly steepGradientSeverityModel?:
+    SteepGradientSeverityModel
+
+  /**
+   * Separately disabled by default. When enabled, movement uses the same
+   * rider-specific adjusted capability above 8%, without shelter or demand.
+   */
+  readonly steepGradientMovementSeverityEnabled?: boolean
+  readonly steepGradientMovementSeverityModel?:
+    SteepGradientSeverityModel
+
+  /**
+   * Disabled by default. When enabled, finish times are interpolated inside
+   * the crossing tick from movement distance and speed.
+   */
+  readonly subTickFinishInterpolationEnabled?: boolean
+
   readonly maximumTickCount?: number
 }
 
@@ -111,6 +147,9 @@ export interface IntegratedRiderPressureEvaluation {
   readonly shelterBonus: number
   readonly terrainCapability:
     RiderTerrainCapabilityResult
+  readonly steepGradientSeverity:
+    SteepGradientTerrainSeverityResult | null
+  readonly additionalDemandPoints: number
   readonly effectiveCapabilityScore: number
   readonly hold:
     RiderGroupHoldResult
@@ -137,6 +176,11 @@ export interface IntegratedDroppedTransition {
   readonly application:
     | ApplyDroppedGroupTransitionProposalResult
     | ApplyDroppedWaveConsolidationProposalResult
+
+  /**
+   * Present only when droppedTransitionEventsEnabled is true.
+   */
+  readonly event?: RaceEvent
 }
 
 export interface IntegratedTerrainSeparationTickResult {
@@ -150,6 +194,9 @@ export interface IntegratedTerrainSeparationTickResult {
     ApplyMultiGroupEnergyResult
   readonly pressureEvaluations:
     readonly IntegratedRiderPressureEvaluation[]
+  /**
+   * Compatibility alias of state.separationPressureSecondsByRiderId.
+   */
   readonly pressureDurationByRiderId:
     Readonly<Record<string, number>>
   readonly transitions:
@@ -179,6 +226,9 @@ export interface RunIntegratedTerrainSeparationStageResult {
     readonly StageResult[]
   readonly events:
     readonly RaceEvent[]
+  /**
+   * Compatibility alias of finalState.separationPressureSecondsByRiderId.
+   */
   readonly finalPressureDurationByRiderId:
     Readonly<Record<string, number>>
   readonly deterministicHash: string
@@ -199,6 +249,26 @@ const DEFAULT_DROPPED_WAVE_CONSOLIDATION_THRESHOLD_SECONDS =
 
 const DEFAULT_DROPPED_WAVE_CONSOLIDATION_GAP_DIFFERENCE_SECONDS =
   5
+
+const DEFAULT_DROPPED_TRANSITION_EVENTS_ENABLED =
+  false
+
+const DEFAULT_STEEP_GRADIENT_SEVERITY_ENABLED =
+  false
+
+const DEFAULT_STEEP_GRADIENT_SEVERITY_MODEL:
+  SteepGradientSeverityModel =
+  'progressive_resilience'
+
+const DEFAULT_STEEP_GRADIENT_MOVEMENT_SEVERITY_ENABLED =
+  false
+
+const DEFAULT_STEEP_GRADIENT_MOVEMENT_SEVERITY_MODEL:
+  SteepGradientSeverityModel =
+  'progressive_resilience'
+
+const DEFAULT_SUB_TICK_FINISH_INTERPOLATION_ENABLED =
+  false
 
 const DEFAULT_MAXIMUM_TICK_COUNT =
   100_000
@@ -234,6 +304,20 @@ function assertPositiveInteger(
   }
 }
 
+function assertSteepGradientSeverityModel(
+  value: SteepGradientSeverityModel,
+): void {
+  if (
+    value !== 'current_saturated' &&
+    value !== 'shelter_extension' &&
+    value !== 'progressive_resilience'
+  ) {
+    throw new Error(
+      'runIntegratedTerrainSeparationStage: steepGradientSeverityModel is invalid.',
+    )
+  }
+}
+
 function average(
   values: readonly number[],
 ): number {
@@ -248,29 +332,6 @@ function average(
       sum + value,
     0,
   ) / values.length
-}
-
-function createInitialPressureRecord(
-  state: SimulationState,
-): Readonly<Record<string, number>> {
-  return Object.fromEntries(
-    Object.keys(
-      state.riders,
-    )
-      .slice()
-      .sort(
-        (left, right) =>
-          left.localeCompare(
-            right,
-          ),
-      )
-      .map(
-        (riderId) => [
-          riderId,
-          0,
-        ],
-      ),
-  )
 }
 
 function createProposalMap(
@@ -313,6 +374,9 @@ function evaluatePressure(
   previousPressure:
     Readonly<Record<string, number>>,
   separationWindowSeconds: number,
+  steepGradientSeverityEnabled: boolean,
+  steepGradientSeverityModel:
+    SteepGradientSeverityModel,
 ): PressureEvaluationResult {
   const proposalByGroupId =
     createProposalMap(
@@ -447,14 +511,6 @@ function evaluatePressure(
           }),
       )
 
-    const groupDemandScore =
-      average(
-        capabilities.map(
-          (result) =>
-            result.capabilityScore,
-        ),
-      )
-
     const shelter =
       calculateGroupShelter({
         groupType:
@@ -466,6 +522,77 @@ function evaluatePressure(
             .gradientPercent,
       })
 
+    const steepSeverityByRiderId =
+      new Map<
+        string,
+        SteepGradientTerrainSeverityResult
+      >()
+
+    if (
+      steepGradientSeverityEnabled
+    ) {
+      for (
+        const rider of
+        riders
+      ) {
+        const severity =
+          calculateSteepGradientTerrainSeverity({
+            riderId:
+              rider.riderId,
+            attributes:
+              rider.attributes,
+            currentEnergy:
+              rider.energy,
+            groupType:
+              group.groupType,
+            groupSize:
+              riders.length,
+            gradientPercent:
+              proposal
+                .gradientPercent,
+            model:
+              steepGradientSeverityModel,
+          })
+
+        steepSeverityByRiderId.set(
+          rider.riderId,
+          severity,
+        )
+      }
+    }
+
+    const firstSeverity =
+      steepGradientSeverityEnabled
+        ? steepSeverityByRiderId
+            .values()
+            .next()
+            .value as
+              | SteepGradientTerrainSeverityResult
+              | undefined
+        : undefined
+
+    const additionalDemandPoints =
+      firstSeverity
+        ?.additionalDemandPoints ??
+      0
+
+    const groupDemandScore =
+      Math.min(
+        100,
+        average(
+          capabilities.map(
+            (result) =>
+              steepSeverityByRiderId
+                .get(
+                  result.riderId,
+                )
+                ?.adjustedCapabilityScore ??
+              result.capabilityScore,
+          ),
+        ) +
+          additionalDemandPoints,
+      )
+
     for (
       const capability of
       capabilities
@@ -474,13 +601,25 @@ function evaluatePressure(
         capability.riderId,
       )
 
+      const steepGradientSeverity =
+        steepSeverityByRiderId.get(
+          capability.riderId,
+        ) ?? null
+
       const effectiveCapabilityScore =
+        steepGradientSeverity
+          ?.effectiveCapabilityScore ??
         Math.min(
           100,
           capability
             .capabilityScore +
             shelter.shelterBonus,
         )
+
+      const appliedShelterBonus =
+        steepGradientSeverity
+          ?.adjustedShelterBonus ??
+        shelter.shelterBonus
 
       const hold =
         calculateRiderGroupHold({
@@ -532,9 +671,11 @@ function evaluatePressure(
             .appliedSpeedKmh,
         groupDemandScore,
         shelterBonus:
-          shelter.shelterBonus,
+          appliedShelterBonus,
         terrainCapability:
           capability,
+        steepGradientSeverity,
+        additionalDemandPoints,
         effectiveCapabilityScore,
         hold,
         eligibility,
@@ -635,6 +776,7 @@ function applyEligibleTransitions(
   droppedWaveConsolidationEnabled: boolean,
   droppedWaveConsolidationThresholdSeconds: number,
   droppedWaveConsolidationGapDifferenceSeconds: number,
+  droppedTransitionEventsEnabled: boolean,
 ): {
   readonly state:
     SimulationState
@@ -744,7 +886,24 @@ function applyEligibleTransitions(
               consolidationProposal,
           })
 
+        const transitionEventApplication =
+          droppedTransitionEventsEnabled
+            ? applyDroppedTransitionRaceEvent({
+                state:
+                  consolidationApplication
+                    .state,
+                transitionKind:
+                  'consolidated',
+                proposal:
+                  consolidationProposal,
+                application:
+                  consolidationApplication,
+              })
+            : null
+
         nextState =
+          transitionEventApplication
+            ?.state ??
           consolidationApplication
             .state
 
@@ -778,6 +937,15 @@ function applyEligibleTransitions(
             consolidationProposal,
           application:
             consolidationApplication,
+          ...(
+            transitionEventApplication
+              ? {
+                  event:
+                    transitionEventApplication
+                      .event,
+                }
+              : {}
+          ),
         })
 
         continue
@@ -805,7 +973,24 @@ function applyEligibleTransitions(
           creationProposal,
       })
 
+    const transitionEventApplication =
+      droppedTransitionEventsEnabled
+        ? applyDroppedTransitionRaceEvent({
+            state:
+              creationApplication
+                .state,
+            transitionKind:
+              'created',
+            proposal:
+              creationProposal,
+            application:
+              creationApplication,
+          })
+        : null
+
     nextState =
+      transitionEventApplication
+        ?.state ??
       creationApplication.state
 
     for (
@@ -838,6 +1023,15 @@ function applyEligibleTransitions(
         creationProposal,
       application:
         creationApplication,
+      ...(
+        transitionEventApplication
+          ? {
+              event:
+                transitionEventApplication
+                  .event,
+            }
+          : {}
+      ),
     })
   }
 
@@ -888,8 +1082,6 @@ function resetTerminalPressure(
  */
 export function simulateIntegratedTerrainSeparationTick(
   state: SimulationState,
-  previousPressureDurationByRiderId:
-    Readonly<Record<string, number>>,
   options:
     IntegratedTerrainSeparationOptions = {},
 ): IntegratedTerrainSeparationTickResult {
@@ -924,6 +1116,36 @@ export function simulateIntegratedTerrainSeparationTick(
       .droppedWaveConsolidationGapDifferenceSeconds ??
     DEFAULT_DROPPED_WAVE_CONSOLIDATION_GAP_DIFFERENCE_SECONDS
 
+  const droppedTransitionEventsEnabled =
+    options
+      .droppedTransitionEventsEnabled ??
+    DEFAULT_DROPPED_TRANSITION_EVENTS_ENABLED
+
+  const steepGradientSeverityEnabled =
+    options
+      .steepGradientSeverityEnabled ??
+    DEFAULT_STEEP_GRADIENT_SEVERITY_ENABLED
+
+  const steepGradientSeverityModel =
+    options
+      .steepGradientSeverityModel ??
+    DEFAULT_STEEP_GRADIENT_SEVERITY_MODEL
+
+  const steepGradientMovementSeverityEnabled =
+    options
+      .steepGradientMovementSeverityEnabled ??
+    DEFAULT_STEEP_GRADIENT_MOVEMENT_SEVERITY_ENABLED
+
+  const steepGradientMovementSeverityModel =
+    options
+      .steepGradientMovementSeverityModel ??
+    DEFAULT_STEEP_GRADIENT_MOVEMENT_SEVERITY_MODEL
+
+  const subTickFinishInterpolationEnabled =
+    options
+      .subTickFinishInterpolationEnabled ??
+    DEFAULT_SUB_TICK_FINISH_INTERPOLATION_ENABLED
+
   assertFiniteRange(
     terrainCapabilityInfluence,
     0,
@@ -950,10 +1172,24 @@ export function simulateIntegratedTerrainSeparationTick(
     'droppedWaveConsolidationGapDifferenceSeconds',
   )
 
+  assertSteepGradientSeverityModel(
+    steepGradientSeverityModel,
+  )
+
+  assertSteepGradientSeverityModel(
+    steepGradientMovementSeverityModel,
+  )
+
   const movement =
     calculateTerrainAwareMultiGroupMovement(
       state,
       terrainCapabilityInfluence,
+      {
+        steepGradientSeverityEnabled:
+          steepGradientMovementSeverityEnabled,
+        steepGradientSeverityModel:
+          steepGradientMovementSeverityModel,
+      },
     )
 
   const appliedMovement =
@@ -975,8 +1211,11 @@ export function simulateIntegratedTerrainSeparationTick(
     evaluatePressure(
       appliedEnergy.state,
       movement,
-      previousPressureDurationByRiderId,
+      appliedEnergy.state
+        .separationPressureSecondsByRiderId,
       separationWindowSeconds,
+      steepGradientSeverityEnabled,
+      steepGradientSeverityModel,
     )
 
   const transitionApplication =
@@ -989,11 +1228,18 @@ export function simulateIntegratedTerrainSeparationTick(
       droppedWaveConsolidationEnabled,
       droppedWaveConsolidationThresholdSeconds,
       droppedWaveConsolidationGapDifferenceSeconds,
+      droppedTransitionEventsEnabled,
     )
 
   const finishDetection =
     detectMultiGroupFinishCandidates(
       transitionApplication.state,
+      {
+        movement:
+          movement.movement,
+        subTickInterpolationEnabled:
+          subTickFinishInterpolationEnabled,
+      },
     )
 
   const appliedFinish =
@@ -1007,21 +1253,28 @@ export function simulateIntegratedTerrainSeparationTick(
         })
       : null
 
-  const nextState =
+  const nextStateBeforePressure =
     appliedFinish
       ? appliedFinish.state
       : transitionApplication.state
 
-  validateSimulationState(
-    nextState,
-  )
-
   const finalPressure =
     resetTerminalPressure(
-      nextState,
+      nextStateBeforePressure,
       transitionApplication
         .pressureDurationByRiderId,
     )
+
+  const nextState:
+    SimulationState = {
+      ...nextStateBeforePressure,
+      separationPressureSecondsByRiderId:
+        finalPressure,
+    }
+
+  validateSimulationState(
+    nextState,
+  )
 
   return {
     previousState:
@@ -1094,11 +1347,6 @@ export function runIntegratedTerrainSeparationStage(
   let state =
     initialState
 
-  let pressure =
-    createInitialPressureRecord(
-      initialState,
-    )
-
   while (!state.completed) {
     if (
       ticks.length >=
@@ -1112,7 +1360,6 @@ export function runIntegratedTerrainSeparationStage(
     const tick =
       simulateIntegratedTerrainSeparationTick(
         state,
-        pressure,
         options,
       )
 
@@ -1133,10 +1380,6 @@ export function runIntegratedTerrainSeparationStage(
 
     state =
       tick.state
-
-    pressure =
-      tick
-        .pressureDurationByRiderId
   }
 
   const orderedResults =
@@ -1152,6 +1395,26 @@ export function runIntegratedTerrainSeparationStage(
     options
       .droppedWaveConsolidationEnabled ??
     DEFAULT_DROPPED_WAVE_CONSOLIDATION_ENABLED
+
+  const droppedTransitionEventsEnabledForHash =
+    options
+      .droppedTransitionEventsEnabled ??
+    DEFAULT_DROPPED_TRANSITION_EVENTS_ENABLED
+
+  const steepGradientSeverityEnabledForHash =
+    options
+      .steepGradientSeverityEnabled ??
+    DEFAULT_STEEP_GRADIENT_SEVERITY_ENABLED
+
+  const steepGradientMovementSeverityEnabledForHash =
+    options
+      .steepGradientMovementSeverityEnabled ??
+    DEFAULT_STEEP_GRADIENT_MOVEMENT_SEVERITY_ENABLED
+
+  const subTickFinishInterpolationEnabledForHash =
+    options
+      .subTickFinishInterpolationEnabled ??
+    DEFAULT_SUB_TICK_FINISH_INTERPOLATION_ENABLED
 
   const compactTicks =
     ticks.map(
@@ -1280,6 +1543,46 @@ export function runIntegratedTerrainSeparationStage(
               }
             : {}
         ),
+        ...(
+          droppedTransitionEventsEnabledForHash
+            ? {
+                droppedTransitionEventsEnabled:
+                  true,
+              }
+            : {}
+        ),
+        ...(
+          steepGradientSeverityEnabledForHash
+            ? {
+                steepGradientSeverityEnabled:
+                  true,
+                steepGradientSeverityModel:
+                  options
+                    .steepGradientSeverityModel ??
+                  DEFAULT_STEEP_GRADIENT_SEVERITY_MODEL,
+              }
+            : {}
+        ),
+        ...(
+          steepGradientMovementSeverityEnabledForHash
+            ? {
+                steepGradientMovementSeverityEnabled:
+                  true,
+                steepGradientMovementSeverityModel:
+                  options
+                    .steepGradientMovementSeverityModel ??
+                  DEFAULT_STEEP_GRADIENT_MOVEMENT_SEVERITY_MODEL,
+              }
+            : {}
+        ),
+        ...(
+          subTickFinishInterpolationEnabledForHash
+            ? {
+                subTickFinishInterpolationEnabled:
+                  true,
+              }
+            : {}
+        ),
       },
       compactTicks,
       transitions:
@@ -1318,7 +1621,8 @@ export function runIntegratedTerrainSeparationStage(
       finalState:
         state,
       finalPressure:
-        pressure,
+        state
+          .separationPressureSecondsByRiderId,
     }).hash
 
   return {
@@ -1335,7 +1639,8 @@ export function runIntegratedTerrainSeparationStage(
       state.events
         .slice(),
     finalPressureDurationByRiderId:
-      pressure,
+      state
+        .separationPressureSecondsByRiderId,
     deterministicHash,
     completed:
       state.completed,

@@ -9,6 +9,9 @@
  */
 
 import type {
+  GroupType,
+} from '../domain/GroupState'
+import type {
   RiderState,
 } from '../domain/RiderState'
 import {
@@ -17,6 +20,10 @@ import {
 import {
   calculateRiderTerrainCapability,
 } from './riderTerrainCapability'
+import {
+  calculateSteepGradientTerrainSeverity,
+  type SteepGradientSeverityModel,
+} from './steepGradientTerrainSeverity'
 import {
   calculateTerrainSpeed,
 } from './terrainSpeed'
@@ -33,6 +40,15 @@ export interface GroupTerrainPaceInput {
    * 1 applies the full relative terrain-capability ratio.
    */
   readonly terrainCapabilityInfluence: number
+
+  /**
+   * Optional inactive extension. When omitted or false, the runtime result is
+   * byte-for-byte equivalent to the Phase 7B.7 calculation.
+   */
+  readonly groupType?: GroupType
+  readonly steepGradientSeverityEnabled?: boolean
+  readonly steepGradientSeverityModel?:
+    SteepGradientSeverityModel
 }
 
 export interface GroupTerrainPaceResult {
@@ -52,6 +68,15 @@ export interface GroupTerrainPaceResult {
   readonly terrainMultiplier: number
   readonly unclampedAppliedSpeedKmh: number
   readonly appliedSpeedKmh: number
+
+  /**
+   * Present only when movement severity is explicitly enabled.
+   */
+  readonly steepGradientSeverityEnabled?: true
+  readonly steepGradientSeverityModel?:
+    SteepGradientSeverityModel
+  readonly averageLegacyTerrainCapabilityScore?: number
+  readonly averageSteepAdjustedTerrainCapabilityScore?: number
 }
 
 const MINIMUM_CAPABILITY_RATIO =
@@ -128,6 +153,20 @@ export function calculateGroupTerrainPace(
     terrainCapabilityInfluence,
   } = input
 
+  const groupType =
+    input.groupType ??
+    'peloton'
+
+  const steepGradientSeverityEnabled =
+    input
+      .steepGradientSeverityEnabled ??
+    false
+
+  const steepGradientSeverityModel =
+    input
+      .steepGradientSeverityModel ??
+    'progressive_resilience'
+
   if (!Array.isArray(riders)) {
     throw new Error(
       'calculateGroupTerrainPace: riders must be an array.',
@@ -196,7 +235,7 @@ export function calculateGroupTerrainPace(
         }).capabilityScore,
     )
 
-  const terrainCapabilities =
+  const legacyTerrainCapabilities =
     racingRiders.map(
       (rider) =>
         calculateRiderTerrainCapability({
@@ -209,6 +248,27 @@ export function calculateGroupTerrainPace(
           gradientPercent,
         }).capabilityScore,
     )
+
+  const terrainCapabilities =
+    steepGradientSeverityEnabled
+      ? racingRiders.map(
+          (rider) =>
+            calculateSteepGradientTerrainSeverity({
+              riderId:
+                rider.riderId,
+              attributes:
+                rider.attributes,
+              currentEnergy:
+                rider.energy,
+              groupType,
+              groupSize:
+                racingRiders.length,
+              gradientPercent,
+              model:
+                steepGradientSeverityModel,
+            }).adjustedCapabilityScore,
+        )
+      : legacyTerrainCapabilities
 
   const averageFlatCapabilityScore =
     average(
@@ -292,5 +352,21 @@ export function calculateGroupTerrainPace(
         .unclampedSpeedKmh,
     appliedSpeedKmh:
       terrainSpeed.speedKmh,
+
+    ...(
+      steepGradientSeverityEnabled
+        ? {
+            steepGradientSeverityEnabled:
+              true as const,
+            steepGradientSeverityModel,
+            averageLegacyTerrainCapabilityScore:
+              average(
+                legacyTerrainCapabilities,
+              ),
+            averageSteepAdjustedTerrainCapabilityScore:
+              averageTerrainCapabilityScore,
+          }
+        : {}
+    ),
   }
 }

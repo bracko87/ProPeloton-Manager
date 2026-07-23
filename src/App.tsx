@@ -121,6 +121,12 @@ import TerrainSeparationCascadeDiagnostic from './pages/dev/TerrainSeparationCas
 import DroppedWaveConsolidationDiagnostic from './pages/dev/DroppedWaveConsolidationDiagnostic'
 import DroppedWaveConsolidationApplicationDiagnostic from './pages/dev/DroppedWaveConsolidationApplicationDiagnostic'
 import GradientSeverityBeyondEightDiagnostic from './pages/dev/GradientSeverityBeyondEightDiagnostic'
+import ProgressiveSteepSeverityIntegrationDiagnostic from './pages/dev/ProgressiveSteepSeverityIntegrationDiagnostic'
+import ProgressiveSteepMovementConsistencyDiagnostic from './pages/dev/ProgressiveSteepMovementConsistencyDiagnostic'
+import SubTickFinishInterpolationDiagnostic from './pages/dev/SubTickFinishInterpolationDiagnostic'
+import DroppedTransitionEventsDiagnostic from './pages/dev/DroppedTransitionEventsDiagnostic'
+import AuthoritativeSeparationPressureDiagnostic from './pages/dev/AuthoritativeSeparationPressureDiagnostic'
+import CalibratedSimulationModeDiagnostic from './pages/dev/CalibratedSimulationModeDiagnostic'
 
 /**
  * Validate team ranking configuration at startup to catch config mistakes early.
@@ -568,6 +574,48 @@ export default function App(): JSX.Element {
             path="/dev/gradient-severity-beyond-eight"
             element={
               <GradientSeverityBeyondEightDiagnostic />
+            }
+          />
+
+          <Route
+            path="/dev/progressive-steep-severity-integration"
+            element={
+              <ProgressiveSteepSeverityIntegrationDiagnostic />
+            }
+          />
+
+          <Route
+            path="/dev/progressive-steep-movement-consistency"
+            element={
+              <ProgressiveSteepMovementConsistencyDiagnostic />
+            }
+          />
+
+          <Route
+            path="/dev/sub-tick-finish-interpolation"
+            element={
+              <SubTickFinishInterpolationDiagnostic />
+            }
+          />
+
+          <Route
+            path="/dev/dropped-transition-events"
+            element={
+              <DroppedTransitionEventsDiagnostic />
+            }
+          />
+
+          <Route
+            path="/dev/authoritative-separation-pressure"
+            element={
+              <AuthoritativeSeparationPressureDiagnostic />
+            }
+          />
+
+          <Route
+            path="/dev/calibrated-simulation-mode"
+            element={
+              <CalibratedSimulationModeDiagnostic />
             }
           />
 

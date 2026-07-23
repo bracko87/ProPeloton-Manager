@@ -1,31 +1,60 @@
 /**
  * createMultiGroupSimulationOutput.ts
  *
- * Pure adapter from the isolated full-stage multi-group runner result to the
- * authoritative SimulationOutput domain contract.
+ * Pure adapter from a completed multi-group stage source to the authoritative
+ * SimulationOutput domain contract.
+ *
+ * The accepted source is intentionally structural so both:
+ * - the existing runMultiGroupStage result; and
+ * - the calibrated terrain-separation stage result
+ *
+ * can use the same output mapping without casts or duplicated replay logic.
  */
 
 import type {
   ReplaySnapshot as OutputReplaySnapshot,
   SimulationOutput,
 } from '../domain/SimulationOutput'
-import type { GroupState } from '../domain/GroupState'
-import type { RiderState } from '../domain/RiderState'
-import type { RunMultiGroupStageResult } from './runMultiGroupStage'
+import type {
+  GroupState,
+} from '../domain/GroupState'
+import type {
+  RaceEvent,
+} from '../domain/RaceEvent'
+import type {
+  RiderState,
+} from '../domain/RiderState'
+import type {
+  SimulationState,
+} from '../domain/SimulationState'
+import type {
+  ReplaySnapshot,
+} from './replaySnapshots'
 
-/**
- * compareGroups
- *
- * Compare two GroupState entries for ordering in replay snapshots.
- * Orders primarily by distance (descending), then gapFromLeaderSeconds
- * (ascending), and finally by groupId.
- */
+export interface MultiGroupSimulationOutputSource {
+  readonly initialState:
+    SimulationState
+  readonly finalState:
+    SimulationState
+  readonly completed: boolean
+  readonly events:
+    readonly RaceEvent[]
+  readonly replaySnapshots:
+    readonly ReplaySnapshot[]
+}
+
 function compareGroups(
   groupA: GroupState,
   groupB: GroupState,
 ): number {
-  if (groupA.distanceKm !== groupB.distanceKm) {
-    return groupB.distanceKm - groupA.distanceKm
+  if (
+    groupA.distanceKm !==
+    groupB.distanceKm
+  ) {
+    return (
+      groupB.distanceKm -
+      groupA.distanceKm
+    )
   }
 
   if (
@@ -38,17 +67,12 @@ function compareGroups(
     )
   }
 
-  return groupA.groupId.localeCompare(
-    groupB.groupId,
-  )
+  return groupA.groupId
+    .localeCompare(
+      groupB.groupId,
+    )
 }
 
-/**
- * compareFinalRiders
- *
- * Compare two RiderState entries for final ordering in the output.
- * Orders by finishPosition when present, otherwise falls back to riderId.
- */
 function compareFinalRiders(
   riderA: RiderState,
   riderB: RiderState,
@@ -61,29 +85,31 @@ function compareFinalRiders(
     riderB.finishPosition ??
     Number.POSITIVE_INFINITY
 
-  if (positionA !== positionB) {
-    return positionA - positionB
+  if (
+    positionA !==
+    positionB
+  ) {
+    return (
+      positionA -
+      positionB
+    )
   }
 
-  return riderA.riderId.localeCompare(
-    riderB.riderId,
-  )
+  return riderA.riderId
+    .localeCompare(
+      riderB.riderId,
+    )
 }
 
-/**
- * createOutputReplaySnapshot
- *
- * Build an output-facing replay snapshot object from the stage runner's
- * internal ReplaySnapshot at the provided index.
- *
- * Throws if the requested snapshot index is missing.
- */
 function createOutputReplaySnapshot(
-  stage: RunMultiGroupStageResult,
+  stage:
+    MultiGroupSimulationOutputSource,
   snapshotIndex: number,
 ): OutputReplaySnapshot {
   const snapshot =
-    stage.replaySnapshots[snapshotIndex]
+    stage.replaySnapshots[
+      snapshotIndex
+    ]
 
   if (!snapshot) {
     throw new Error(
@@ -92,9 +118,13 @@ function createOutputReplaySnapshot(
   }
 
   const orderedGroups =
-    Object.values(snapshot.groups)
+    Object.values(
+      snapshot.groups,
+    )
       .slice()
-      .sort(compareGroups)
+      .sort(
+        compareGroups,
+      )
 
   const eventSequenceNumbers =
     stage.events
@@ -108,8 +138,12 @@ function createOutputReplaySnapshot(
           event.sequenceNumber,
       )
       .sort(
-        (sequenceA, sequenceB) =>
-          sequenceA - sequenceB,
+        (
+          sequenceA,
+          sequenceB,
+        ) =>
+          sequenceA -
+          sequenceB,
       )
 
   return {
@@ -130,18 +164,14 @@ function createOutputReplaySnapshot(
   }
 }
 
-/**
- * createMultiGroupSimulationOutput
- *
- * Convert a completed RunMultiGroupStageResult into the canonical
- * SimulationOutput contract. Validates completion and identifier stability.
- */
 export function createMultiGroupSimulationOutput(
-  stage: RunMultiGroupStageResult,
+  stage:
+    MultiGroupSimulationOutputSource,
 ): SimulationOutput {
   if (
     stage.completed !== true ||
-    stage.finalState.completed !== true
+    stage.finalState.completed !==
+      true
   ) {
     throw new Error(
       'createMultiGroupSimulationOutput: the full-stage run must be completed.',
@@ -161,9 +191,27 @@ export function createMultiGroupSimulationOutput(
     )
   }
 
+  if (
+    stage.events !==
+    stage.finalState.events &&
+    JSON.stringify(
+      stage.events,
+    ) !==
+    JSON.stringify(
+      stage.finalState.events,
+    )
+  ) {
+    throw new Error(
+      'createMultiGroupSimulationOutput: stage events do not match finalState.events.',
+    )
+  }
+
   const snapshots =
     stage.replaySnapshots.map(
-      (_snapshot, snapshotIndex) =>
+      (
+        _snapshot,
+        snapshotIndex,
+      ) =>
         createOutputReplaySnapshot(
           stage,
           snapshotIndex,
@@ -175,7 +223,9 @@ export function createMultiGroupSimulationOutput(
       stage.finalState.riders,
     )
       .slice()
-      .sort(compareFinalRiders)
+      .sort(
+        compareFinalRiders,
+      )
 
   return {
     raceId:

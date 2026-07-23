@@ -4,117 +4,152 @@
  * Immutable deterministic application of previously detected multi-group
  * finish candidates.
  *
- * This utility marks only the supplied candidates as finished, creates their
- * finish events, and deactivates groups that no longer contain racing riders.
- * Unfinished groups and riders remain active. The simulation is completed only
- * when no racing riders remain.
+ * Optional sub-tick candidate times are stored on riders and stage results.
+ * RaceEvent.raceSecond remains the integer tick-end clock required by the
+ * existing event validator; exact elapsed time is stored in the event payload.
  */
 
-import type { GroupState } from '../domain/GroupState'
-import type { RaceEvent } from '../domain/RaceEvent'
-import type { RiderState } from '../domain/RiderState'
-import type { SimulationState } from '../domain/SimulationState'
-import type { StageResult } from '../domain/SimulationOutput'
+import type {
+  GroupState,
+} from '../domain/GroupState'
+import type {
+  RaceEvent,
+} from '../domain/RaceEvent'
+import type {
+  RiderState,
+} from '../domain/RiderState'
+import type {
+  SimulationState,
+} from '../domain/SimulationState'
+import type {
+  StageResult,
+} from '../domain/SimulationOutput'
 import type {
   MultiGroupFinishCandidate,
   MultiGroupFinishCandidateResult,
 } from './multiGroupFinishCandidates'
 
 export interface ApplyMultiGroupFinishInput {
-  readonly state: SimulationState
-  readonly detection: MultiGroupFinishCandidateResult
+  readonly state:
+    SimulationState
+  readonly detection:
+    MultiGroupFinishCandidateResult
 }
 
 export interface ApplyMultiGroupFinishResult {
-  readonly state: SimulationState
-  readonly newlyFinishedRiderIds: readonly string[]
-  readonly newlyFinishedGroupIds: readonly string[]
-  readonly newEvents: readonly RaceEvent[]
-  readonly newResults: readonly StageResult[]
-  readonly completedThisApplication: boolean
+  readonly state:
+    SimulationState
+  readonly newlyFinishedRiderIds:
+    readonly string[]
+  readonly newlyFinishedGroupIds:
+    readonly string[]
+  readonly newEvents:
+    readonly RaceEvent[]
+  readonly newResults:
+    readonly StageResult[]
+  readonly completedThisApplication:
+    boolean
 }
 
-/**
- * getExistingMaximumFinishPosition
- *
- * Returns the highest numeric finishPosition already present on riders, or 0
- * if no riders have a numeric finishPosition.
- *
- * @param state - current simulation state
- * @returns maximum finish position number found
- */
+const PRECISION_DIGITS =
+  9
+
+function normalizePrecision(
+  value: number,
+): number {
+  return Number(
+    value.toFixed(
+      PRECISION_DIGITS,
+    ),
+  )
+}
+
 function getExistingMaximumFinishPosition(
-  state: SimulationState,
+  state:
+    SimulationState,
 ): number {
   let maximum = 0
 
-  for (const rider of Object.values(state.riders)) {
+  for (
+    const rider of
+    Object.values(
+      state.riders,
+    )
+  ) {
     if (
-      typeof rider.finishPosition === 'number' &&
-      rider.finishPosition > maximum
+      typeof rider.finishPosition ===
+        'number' &&
+      rider.finishPosition >
+        maximum
     ) {
-      maximum = rider.finishPosition
+      maximum =
+        rider.finishPosition
     }
   }
 
   return maximum
 }
 
-/**
- * getWinnerFinishTimeSeconds
- *
- * Determines the reference winner finish time for gap calculation. If any
- * riders are already finished, use the minimum existing finish time. Otherwise
- * use the raceSecond from the first candidate (caller must supply at least one).
- *
- * @param state - current simulation state
- * @param candidates - ordered finish candidates
- * @returns winner finish time in seconds
- */
 function getWinnerFinishTimeSeconds(
-  state: SimulationState,
-  candidates: readonly MultiGroupFinishCandidate[],
+  state:
+    SimulationState,
+  candidates:
+    readonly MultiGroupFinishCandidate[],
 ): number {
   const existingFinishTimes =
-    Object.values(state.riders)
+    Object.values(
+      state.riders,
+    )
       .filter(
         (rider) =>
-          rider.stageStatus === 'finished' &&
-          typeof rider.finishTimeSeconds === 'number',
+          rider.stageStatus ===
+            'finished' &&
+          typeof rider.finishTimeSeconds ===
+            'number',
       )
       .map(
         (rider) =>
           rider.finishTimeSeconds as number,
       )
 
-  if (existingFinishTimes.length > 0) {
-    return Math.min(...existingFinishTimes)
+  if (
+    existingFinishTimes.length >
+    0
+  ) {
+    return Math.min(
+      ...existingFinishTimes,
+    )
   }
 
-  if (candidates.length === 0) {
+  if (
+    candidates.length ===
+    0
+  ) {
     throw new Error(
       'applyMultiGroupFinish: cannot resolve winner time without existing finishers or candidates.',
     )
   }
 
-  return candidates[0].raceSecond
+  return Math.min(
+    ...candidates.map(
+      (candidate) =>
+        candidate
+          .finishTimeSeconds ??
+        candidate.raceSecond,
+    ),
+  )
 }
 
-/**
- * validateCandidate
- *
- * Validate an individual finish candidate against the provided state. Throws
- * if any invariant does not hold.
- *
- * @param state - current simulation state
- * @param candidate - finish candidate to validate
- */
 function validateCandidate(
-  state: SimulationState,
-  candidate: MultiGroupFinishCandidate,
+  state:
+    SimulationState,
+  candidate:
+    MultiGroupFinishCandidate,
 ): void {
   const rider =
-    state.riders[candidate.riderId]
+    state.riders[
+      candidate.riderId
+    ]
 
   if (!rider) {
     throw new Error(
@@ -122,7 +157,10 @@ function validateCandidate(
     )
   }
 
-  if (rider.stageStatus !== 'racing') {
+  if (
+    rider.stageStatus !==
+    'racing'
+  ) {
     throw new Error(
       `applyMultiGroupFinish: candidate rider ${candidate.riderId} is not racing.`,
     )
@@ -138,9 +176,14 @@ function validateCandidate(
   }
 
   const group =
-    state.groups[candidate.groupId]
+    state.groups[
+      candidate.groupId
+    ]
 
-  if (!group || !group.active) {
+  if (
+    !group ||
+    !group.active
+  ) {
     throw new Error(
       `applyMultiGroupFinish: candidate group ${candidate.groupId} is missing or inactive.`,
     )
@@ -163,20 +206,88 @@ function validateCandidate(
       `applyMultiGroupFinish: candidate ${candidate.riderId} race second does not match state.`,
     )
   }
+
+  const finishTimeSeconds =
+    candidate.finishTimeSeconds ??
+    candidate.raceSecond
+
+  const tickSeconds =
+    candidate.tickSeconds ??
+    state.input.settings.tickSeconds
+
+  const previousRaceSecond =
+    candidate.previousRaceSecond ??
+    Math.max(
+      0,
+      candidate.raceSecond -
+        tickSeconds,
+    )
+
+  const crossingFraction =
+    candidate.crossingFraction ??
+    1
+
+  if (
+    !Number.isFinite(
+      finishTimeSeconds,
+    ) ||
+    finishTimeSeconds <
+      0
+  ) {
+    throw new Error(
+      `applyMultiGroupFinish: candidate ${candidate.riderId} finishTimeSeconds is invalid.`,
+    )
+  }
+
+  if (
+    !Number.isFinite(
+      previousRaceSecond,
+    ) ||
+    !Number.isFinite(
+      tickSeconds,
+    ) ||
+    tickSeconds <=
+      0
+  ) {
+    throw new Error(
+      `applyMultiGroupFinish: candidate ${candidate.riderId} tick timing is invalid.`,
+    )
+  }
+
+  const lowerBound =
+    previousRaceSecond -
+    0.000000001
+
+  const upperBound =
+    candidate.raceSecond +
+    0.000000001
+
+  if (
+    finishTimeSeconds <
+      lowerBound ||
+    finishTimeSeconds >
+      upperBound
+  ) {
+    throw new Error(
+      `applyMultiGroupFinish: candidate ${candidate.riderId} finish time is outside its crossing tick.`,
+    )
+  }
+
+  if (
+    crossingFraction <
+      0 ||
+    crossingFraction >
+      1
+  ) {
+    throw new Error(
+      `applyMultiGroupFinish: candidate ${candidate.riderId} crossingFraction must be between 0 and 1.`,
+    )
+  }
 }
 
-/**
- * applyMultiGroupFinish
- *
- * Apply a previously-detected set of multi-group finish candidates. Returns a
- * new state with riders marked finished, groups deactivated if empty of racing
- * riders, appended events, and metadata about the application.
- *
- * @param input - state and detection result
- * @returns application result with updated state and artifacts
- */
 export function applyMultiGroupFinish(
-  input: ApplyMultiGroupFinishInput,
+  input:
+    ApplyMultiGroupFinishInput,
 ): ApplyMultiGroupFinishResult {
   const {
     state,
@@ -207,7 +318,10 @@ export function applyMultiGroupFinish(
     )
   }
 
-  if (detection.candidates.length === 0) {
+  if (
+    detection.candidates.length ===
+    0
+  ) {
     throw new Error(
       'applyMultiGroupFinish: at least one finish candidate is required.',
     )
@@ -215,7 +329,8 @@ export function applyMultiGroupFinish(
 
   if (
     JSON.stringify(
-      detection.candidateRiderIds,
+      detection
+        .candidateRiderIds,
     ) !==
     JSON.stringify(
       detection.candidates.map(
@@ -231,12 +346,15 @@ export function applyMultiGroupFinish(
 
   const uniqueCandidateIds =
     new Set(
-      detection.candidateRiderIds,
+      detection
+        .candidateRiderIds,
     )
 
   if (
     uniqueCandidateIds.size !==
-    detection.candidateRiderIds.length
+    detection
+      .candidateRiderIds
+      .length
   ) {
     throw new Error(
       'applyMultiGroupFinish: duplicate finish candidate rider IDs.',
@@ -265,30 +383,65 @@ export function applyMultiGroupFinish(
     )
 
   const rankByRiderId =
-    new Map<string, number>()
+    new Map<
+      string,
+      number
+    >()
 
-  detection.candidates.forEach(
-    (candidate, index) => {
-      rankByRiderId.set(
-        candidate.riderId,
-        previousMaximumPosition +
-          index +
-          1,
-      )
-    },
-  )
+  const finishTimeByRiderId =
+    new Map<
+      string,
+      number
+    >()
+
+  detection.candidates
+    .forEach(
+      (
+        candidate,
+        index,
+      ) => {
+        rankByRiderId.set(
+          candidate.riderId,
+          previousMaximumPosition +
+            index +
+            1,
+        )
+
+        finishTimeByRiderId.set(
+          candidate.riderId,
+          candidate
+            .finishTimeSeconds ??
+          candidate.raceSecond,
+        )
+      },
+    )
 
   const nextRidersEntries:
-    Array<[string, RiderState]> = []
+    Array<
+      [
+        string,
+        RiderState,
+      ]
+    > = []
 
   for (
-    const [riderId, rider] of
-    Object.entries(state.riders)
+    const [
+      riderId,
+      rider,
+    ] of
+    Object.entries(
+      state.riders,
+    )
   ) {
     const rank =
-      rankByRiderId.get(riderId)
+      rankByRiderId.get(
+        riderId,
+      )
 
-    if (rank === undefined) {
+    if (
+      rank ===
+      undefined
+    ) {
       nextRidersEntries.push([
         riderId,
         rider,
@@ -296,15 +449,30 @@ export function applyMultiGroupFinish(
       continue
     }
 
+    const finishTimeSeconds =
+      finishTimeByRiderId.get(
+        riderId,
+      )
+
+    if (
+      finishTimeSeconds ===
+      undefined
+    ) {
+      throw new Error(
+        `applyMultiGroupFinish: missing finish time for ${riderId}.`,
+      )
+    }
+
     nextRidersEntries.push([
       riderId,
       {
         ...rider,
-        stageStatus: 'finished',
+        stageStatus:
+          'finished',
         finished: true,
-        finishPosition: rank,
-        finishTimeSeconds:
-          state.raceSecond,
+        finishPosition:
+          rank,
+        finishTimeSeconds,
         distanceKm:
           state.stageDistanceKm,
         speedKmh: 0,
@@ -321,19 +489,31 @@ export function applyMultiGroupFinish(
     string[] = []
 
   const nextGroupsEntries:
-    Array<[string, GroupState]> = []
+    Array<
+      [
+        string,
+        GroupState,
+      ]
+    > = []
 
   for (
-    const [groupId, group] of
-    Object.entries(state.groups)
+    const [
+      groupId,
+      group,
+    ] of
+    Object.entries(
+      state.groups,
+    )
   ) {
     const hasRacingRider =
-      group.riderIds.some(
-        (riderId) =>
-          nextRiders[riderId]
-            ?.stageStatus ===
-          'racing',
-      )
+      group.riderIds
+        .some(
+          (riderId) =>
+            nextRiders[
+              riderId
+            ]?.stageStatus ===
+            'racing',
+        )
 
     if (
       group.active &&
@@ -350,7 +530,8 @@ export function applyMultiGroupFinish(
           distanceKm:
             Math.min(
               group.distanceKm,
-              state.stageDistanceKm,
+              state
+                .stageDistanceKm,
             ),
           speedKmh: 0,
           active: false,
@@ -366,7 +547,10 @@ export function applyMultiGroupFinish(
   }
 
   newlyFinishedGroupIds.sort(
-    (groupIdA, groupIdB) =>
+    (
+      groupIdA,
+      groupIdB,
+    ) =>
       groupIdA.localeCompare(
         groupIdB,
       ),
@@ -379,7 +563,8 @@ export function applyMultiGroupFinish(
     StageResult[] = []
 
   let nextSequenceNumber =
-    state.nextEventSequenceNumber
+    state
+      .nextEventSequenceNumber
 
   for (
     const candidate of
@@ -390,15 +575,28 @@ export function applyMultiGroupFinish(
         candidate.riderId,
       )
 
-    if (rank === undefined) {
+    if (
+      rank ===
+      undefined
+    ) {
       throw new Error(
         `applyMultiGroupFinish: missing rank for ${candidate.riderId}.`,
       )
     }
 
+    const elapsedSeconds =
+      candidate
+        .finishTimeSeconds ??
+      candidate.raceSecond
+
     const gapSeconds =
-      state.raceSecond -
-      winnerFinishTimeSeconds
+      normalizePrecision(
+        Math.max(
+          0,
+          elapsedSeconds -
+            winnerFinishTimeSeconds,
+        ),
+      )
 
     newResults.push({
       rank,
@@ -407,8 +605,7 @@ export function applyMultiGroupFinish(
       teamId:
         candidate.teamId,
       status: 'finished',
-      elapsedSeconds:
-        state.raceSecond,
+      elapsedSeconds,
       gapSeconds,
     })
 
@@ -417,8 +614,13 @@ export function applyMultiGroupFinish(
         nextSequenceNumber,
       eventType:
         'RIDER_FINISHED',
+
+      /**
+       * Event clock remains the validated integer simulation clock.
+       */
       raceSecond:
         state.raceSecond,
+
       kmMarker:
         state.stageDistanceKm,
       actorRiderId:
@@ -433,20 +635,55 @@ export function applyMultiGroupFinish(
       ],
       payload: {
         rank,
-        elapsedSeconds:
-          state.raceSecond,
+        elapsedSeconds,
         gapSeconds,
+        finishTimingRule:
+          candidate
+            .finishTimingRule ??
+          'tick_end_v1',
+        crossingFraction:
+          candidate
+            .crossingFraction ??
+          1,
+        previousRaceSecond:
+          candidate
+            .previousRaceSecond ??
+          Math.max(
+            0,
+            candidate.raceSecond -
+              (
+                candidate.tickSeconds ??
+                state.input.settings.tickSeconds
+              ),
+          ),
+        tickEndRaceSecond:
+          state.raceSecond,
+        previousDistanceKm:
+          candidate
+            .previousDistanceKm ??
+          state.stageDistanceKm,
+        projectedNextDistanceKm:
+          candidate
+            .projectedNextDistanceKm ??
+          state.stageDistanceKm,
         temporaryFinishRule:
-          'multi_group_finish_candidates_v1',
+          candidate
+            .finishTimingRule ===
+            'sub_tick_group_crossing_v1'
+            ? 'multi_group_finish_sub_tick_v1'
+            : 'multi_group_finish_candidates_v1',
       },
       commentaryText: null,
     })
 
-    nextSequenceNumber += 1
+    nextSequenceNumber +=
+      1
   }
 
   const racingRiderCount =
-    Object.values(nextRiders)
+    Object.values(
+      nextRiders,
+    )
       .filter(
         (rider) =>
           rider.stageStatus ===
@@ -455,9 +692,12 @@ export function applyMultiGroupFinish(
       .length
 
   const completedThisApplication =
-    racingRiderCount === 0
+    racingRiderCount ===
+    0
 
-  if (completedThisApplication) {
+  if (
+    completedThisApplication
+  ) {
     newEvents.push({
       sequenceNumber:
         nextSequenceNumber,
@@ -482,18 +722,39 @@ export function applyMultiGroupFinish(
         totalFinishedRiderCount:
           Object.values(
             nextRiders,
-          ).filter(
-            (rider) =>
-              rider.stageStatus ===
-              'finished',
-          ).length,
+          )
+            .filter(
+              (rider) =>
+                rider.stageStatus ===
+                'finished',
+            )
+            .length,
+        latestExactFinishTimeSeconds:
+          Math.max(
+            ...detection.candidates
+              .map(
+                (candidate) =>
+                  candidate
+                    .finishTimeSeconds ??
+                  candidate.raceSecond,
+              ),
+          ),
+        finishTimingRule:
+          detection
+            .finishTimingRule ??
+          'tick_end_v1',
         temporaryFinishRule:
-          'multi_group_finish_candidates_v1',
+          detection
+            .finishTimingRule ===
+            'sub_tick_group_crossing_v1'
+            ? 'multi_group_finish_sub_tick_v1'
+            : 'multi_group_finish_candidates_v1',
       },
       commentaryText: null,
     })
 
-    nextSequenceNumber += 1
+    nextSequenceNumber +=
+      1
   }
 
   const nextEvents = [
@@ -510,15 +771,20 @@ export function applyMultiGroupFinish(
         Object.fromEntries(
           nextGroupsEntries,
         ),
-      events: nextEvents,
+      events:
+        nextEvents,
       nextEventSequenceNumber:
         nextSequenceNumber,
-      completed: completedThisApplication,
+      completed:
+        completedThisApplication,
     },
     newlyFinishedRiderIds:
-      detection.candidateRiderIds.slice(),
+      detection
+        .candidateRiderIds
+        .slice(),
     newlyFinishedGroupIds:
-      newlyFinishedGroupIds.slice(),
+      newlyFinishedGroupIds
+        .slice(),
     newEvents,
     newResults,
     completedThisApplication,

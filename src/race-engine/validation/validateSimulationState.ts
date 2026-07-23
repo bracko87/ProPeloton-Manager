@@ -148,6 +148,140 @@ export function validateSimulationState(state: SimulationState): void {
   const teamIdSet = new Set(teamIds)
   const groupIdSet = new Set(groupIds)
 
+  // AUTHORITATIVE SEPARATION PRESSURE
+  const separationPressure =
+    state
+      .separationPressureSecondsByRiderId
+
+  if (
+    !separationPressure ||
+    typeof separationPressure !==
+      'object' ||
+    Array.isArray(
+      separationPressure,
+    )
+  ) {
+    issues.push(
+      'SEPARATION_PRESSURE: separationPressureSecondsByRiderId must be a record.',
+    )
+  } else {
+    const pressureRiderIds =
+      Object.keys(
+        separationPressure,
+      )
+
+    const pressureRiderIdSet =
+      new Set(
+        pressureRiderIds,
+      )
+
+    for (
+      const riderId of
+      riderIds
+    ) {
+      if (
+        !pressureRiderIdSet.has(
+          riderId,
+        )
+      ) {
+        issues.push(
+          `SEPARATION_PRESSURE: missing pressure entry for rider ${riderId}.`,
+        )
+      }
+    }
+
+    for (
+      const riderId of
+      pressureRiderIds
+    ) {
+      if (
+        !riderIdSet.has(
+          riderId,
+        )
+      ) {
+        issues.push(
+          `SEPARATION_PRESSURE: pressure record contains unknown riderId "${riderId}".`,
+        )
+        continue
+      }
+
+      const seconds =
+        separationPressure[
+          riderId
+        ]
+
+      if (
+        !isNonNegativeInteger(
+          seconds,
+        )
+      ) {
+        issues.push(
+          `SEPARATION_PRESSURE: rider ${riderId} pressure must be a non-negative integer.`,
+        )
+        continue
+      }
+
+      if (
+        seconds >
+        state.raceSecond
+      ) {
+        issues.push(
+          `SEPARATION_PRESSURE: rider ${riderId} pressure may not exceed raceSecond.`,
+        )
+      }
+
+      const rider =
+        riders[
+          riderId
+        ]
+
+      const group =
+        rider
+          ? groups[
+              rider
+                .currentGroupId
+            ]
+          : null
+
+      if (
+        rider &&
+        terminalStageStatuses.has(
+          rider.stageStatus,
+        ) &&
+        seconds !== 0
+      ) {
+        issues.push(
+          `SEPARATION_PRESSURE: terminal rider ${riderId} must have zero pressure.`,
+        )
+      }
+
+      if (
+        rider &&
+        group &&
+        (
+          group.groupType ===
+            'dropped' ||
+          group.groupType ===
+            'finished'
+        ) &&
+        seconds !== 0
+      ) {
+        issues.push(
+          `SEPARATION_PRESSURE: rider ${riderId} in ${group.groupType} group "${group.groupId}" must have zero pressure.`,
+        )
+      }
+    }
+
+    if (
+      pressureRiderIds.length !==
+      riderIds.length
+    ) {
+      issues.push(
+        `SEPARATION_PRESSURE: pressure entry count ${pressureRiderIds.length} must equal rider count ${riderIds.length}.`,
+      )
+    }
+  }
+
   // RIDERS
   if (riderIds.length < 2) {
     issues.push('RIDERS: at least two riders must exist.')

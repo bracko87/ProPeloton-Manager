@@ -28,6 +28,9 @@ import {
 import {
   getStageTerrainSample,
 } from './stageProfile'
+import type {
+  SteepGradientSeverityModel,
+} from './steepGradientTerrainSeverity'
 
 export interface TerrainAwareGroupMovementDiagnostic {
   readonly groupId: string
@@ -40,6 +43,16 @@ export interface TerrainAwareMultiGroupMovementResult {
     MultiGroupMovementResult
   readonly groupDiagnostics:
     readonly TerrainAwareGroupMovementDiagnostic[]
+}
+
+export interface TerrainAwareMultiGroupMovementOptions {
+  /**
+   * Disabled by default. When disabled, movement remains exactly equivalent to
+   * the existing Phase 7B.7 terrain-aware calculation.
+   */
+  readonly steepGradientSeverityEnabled?: boolean
+  readonly steepGradientSeverityModel?:
+    SteepGradientSeverityModel
 }
 
 function getRacingGroupRiders(
@@ -97,6 +110,8 @@ function getRacingGroupRiders(
 export function calculateTerrainAwareMultiGroupMovement(
   state: SimulationState,
   terrainCapabilityInfluence: number,
+  options:
+    TerrainAwareMultiGroupMovementOptions = {},
 ): TerrainAwareMultiGroupMovementResult {
   if (state.completed) {
     throw new Error(
@@ -179,6 +194,14 @@ export function calculateTerrainAwareMultiGroupMovement(
               state.input.settings
                 .maximumSpeedKmh,
             terrainCapabilityInfluence,
+            groupType:
+              group.groupType,
+            steepGradientSeverityEnabled:
+              options
+                .steepGradientSeverityEnabled,
+            steepGradientSeverityModel:
+              options
+                .steepGradientSeverityModel,
           })
 
         const unclampedNextDistanceKm =
