@@ -169,14 +169,27 @@ export function validateSimulationState(state: SimulationState): void {
       )
     }
 
-    const group = groups[rider.currentGroupId]
+    const isTerminal =
+      terminalStageStatuses.has(
+        rider.stageStatus,
+      )
+
+    const group =
+      groups[
+        rider.currentGroupId
+      ]
+
     if (!group) {
       issues.push(
         `RIDERS: rider ${rider.riderId} references missing currentGroupId "${rider.currentGroupId}".`,
       )
-    } else if (!group.active && !state.completed) {
+    } else if (
+      !group.active &&
+      !state.completed &&
+      !isTerminal
+    ) {
       issues.push(
-        `RIDERS: rider ${rider.riderId} references inactive group "${rider.currentGroupId}" before completion.`,
+        `RIDERS: non-terminal rider ${rider.riderId} references inactive group "${rider.currentGroupId}" before completion.`,
       )
     }
 
@@ -212,9 +225,10 @@ export function validateSimulationState(state: SimulationState): void {
       )
     }
 
-    const isTerminal = terminalStageStatuses.has(rider.stageStatus)
     if (!isTerminal) {
-      nonTerminalRiderIds.add(rider.riderId)
+      nonTerminalRiderIds.add(
+        rider.riderId,
+      )
     }
 
     // Finished flag and status consistency.
@@ -507,11 +521,16 @@ export function validateSimulationState(state: SimulationState): void {
       )
     }
 
-    if (!state.completed) {
-      // Before completion, riders must be in exactly one active group.
+    if (
+      !state.completed &&
+      !terminalStageStatuses.has(
+        rider.stageStatus,
+      )
+    ) {
+      // Before completion, every non-terminal rider must be in an active group.
       if (!currentGroup.active) {
         issues.push(
-          `GROUPS: rider ${rider.riderId} is assigned to inactive group "${currentGroup.groupId}" before completion.`,
+          `GROUPS: non-terminal rider ${rider.riderId} is assigned to inactive group "${currentGroup.groupId}" before completion.`,
         )
       }
     }

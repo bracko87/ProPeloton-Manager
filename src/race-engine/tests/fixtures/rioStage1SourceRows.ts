@@ -13,7 +13,11 @@ import type {
   CreateStageInputFromSourceRowsParams,
 } from '../../integration/createStageInputFromSourceRows'
 
-export const rioStage1SourceRows = {
+import {
+  rioStage1RiderPerformanceAttributes,
+} from './rioStage1RiderPerformanceAttributes'
+
+const rioStage1SourceRowsBase = {
   "race": {
     "id": "65739034-f9e5-4b5c-8f21-4ea27451e0d4",
     "name": "Rio Tour"
@@ -2089,4 +2093,32 @@ export const rioStage1SourceRows = {
       "elevation": 5
     }
   ]
-} satisfies CreateStageInputFromSourceRowsParams
+} as const
+
+const mergedRioStage1Riders =
+  rioStage1SourceRowsBase.riders.map(
+    (rider) => {
+      const performance =
+        rioStage1RiderPerformanceAttributes[
+          rider.id
+        ]
+
+      if (!performance) {
+        throw new Error(
+          `Missing Rio Stage 1 performance attributes for rider ${rider.id}.`,
+        )
+      }
+
+      return {
+        ...rider,
+        ...performance,
+      }
+    },
+  )
+
+export const rioStage1SourceRows:
+  CreateStageInputFromSourceRowsParams = {
+    ...rioStage1SourceRowsBase,
+    riders:
+      mergedRioStage1Riders,
+  }

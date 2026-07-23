@@ -107,6 +107,20 @@ import RioStage1ReplayAdapterDiagnostic from './pages/dev/RioStage1ReplayAdapter
 import RioStage1ReplayControllerDiagnostic from './pages/dev/RioStage1ReplayControllerDiagnostic'
 import RioStage1GenericReplayViewDiagnostic from './pages/dev/RioStage1GenericReplayViewDiagnostic'
 import RioStage1RaceDetailReplayDiagnostic from './pages/dev/RioStage1RaceDetailReplayDiagnostic'
+import TerrainSpeedFloorDiagnostic from './pages/dev/TerrainSpeedFloorDiagnostic'
+import GroupSeparationDiagnostic from './pages/dev/GroupSeparationDiagnostic'
+import RiderAttributeTransportDiagnostic from './pages/dev/RiderAttributeTransportDiagnostic'
+import TerrainRiderCapabilityDiagnostic from './pages/dev/TerrainRiderCapabilityDiagnostic'
+import SustainedSeparationEligibilityDiagnostic from './pages/dev/SustainedSeparationEligibilityDiagnostic'
+import DroppedGroupTransitionDiagnostic from './pages/dev/DroppedGroupTransitionDiagnostic'
+import DroppedGroupMovementDiagnostic from './pages/dev/DroppedGroupMovementDiagnostic'
+import TerrainAwareGroupPaceDiagnostic from './pages/dev/TerrainAwareGroupPaceDiagnostic'
+import PartialMultiGroupFinishDiagnostic from './pages/dev/PartialMultiGroupFinishDiagnostic'
+import IntegratedTerrainSeparationDiagnostic from './pages/dev/IntegratedTerrainSeparationDiagnostic'
+import TerrainSeparationCascadeDiagnostic from './pages/dev/TerrainSeparationCascadeDiagnostic'
+import DroppedWaveConsolidationDiagnostic from './pages/dev/DroppedWaveConsolidationDiagnostic'
+import DroppedWaveConsolidationApplicationDiagnostic from './pages/dev/DroppedWaveConsolidationApplicationDiagnostic'
+import GradientSeverityBeyondEightDiagnostic from './pages/dev/GradientSeverityBeyondEightDiagnostic'
 
 /**
  * Validate team ranking configuration at startup to catch config mistakes early.
@@ -456,6 +470,104 @@ export default function App(): JSX.Element {
             path="/dev/rio-stage-1-race-detail-replay"
             element={
               <RioStage1RaceDetailReplayDiagnostic />
+            }
+          />
+
+          <Route
+            path="/dev/terrain-speed-floor"
+            element={
+              <TerrainSpeedFloorDiagnostic />
+            }
+          />
+
+          <Route
+            path="/dev/group-separation"
+            element={
+              <GroupSeparationDiagnostic />
+            }
+          />
+
+          <Route
+            path="/dev/rider-attribute-transport"
+            element={
+              <RiderAttributeTransportDiagnostic />
+            }
+          />
+
+          <Route
+            path="/dev/terrain-rider-capability"
+            element={
+              <TerrainRiderCapabilityDiagnostic />
+            }
+          />
+
+          <Route
+            path="/dev/sustained-separation-eligibility"
+            element={
+              <SustainedSeparationEligibilityDiagnostic />
+            }
+          />
+
+          <Route
+            path="/dev/dropped-group-transition"
+            element={
+              <DroppedGroupTransitionDiagnostic />
+            }
+          />
+
+          <Route
+            path="/dev/dropped-group-movement"
+            element={
+              <DroppedGroupMovementDiagnostic />
+            }
+          />
+
+          <Route
+            path="/dev/terrain-aware-group-pace"
+            element={
+              <TerrainAwareGroupPaceDiagnostic />
+            }
+          />
+
+          <Route
+            path="/dev/partial-multi-group-finish"
+            element={
+              <PartialMultiGroupFinishDiagnostic />
+            }
+          />
+
+          <Route
+            path="/dev/integrated-terrain-separation"
+            element={
+              <IntegratedTerrainSeparationDiagnostic />
+            }
+          />
+
+          <Route
+            path="/dev/terrain-separation-cascade"
+            element={
+              <TerrainSeparationCascadeDiagnostic />
+            }
+          />
+
+          <Route
+            path="/dev/dropped-wave-consolidation"
+            element={
+              <DroppedWaveConsolidationDiagnostic />
+            }
+          />
+
+          <Route
+            path="/dev/dropped-wave-consolidation-application"
+            element={
+              <DroppedWaveConsolidationApplicationDiagnostic />
+            }
+          />
+
+          <Route
+            path="/dev/gradient-severity-beyond-eight"
+            element={
+              <GradientSeverityBeyondEightDiagnostic />
             }
           />
 

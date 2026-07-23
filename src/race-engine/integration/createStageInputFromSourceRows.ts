@@ -60,7 +60,9 @@ export interface RiderSourceRow {
   readonly display_name: string | null
 
   readonly flat: number
+  readonly climbing?: number
   readonly sprint: number
+  readonly time_trial?: number
   readonly endurance: number
   readonly resistance: number
   readonly recovery: number
@@ -287,10 +289,22 @@ function createAttributes(
       `rider ${rider.id} flat`,
     )
 
+  const climbing =
+    normalizeAttribute(
+      rider.climbing,
+      `rider ${rider.id} climbing`,
+    )
+
   const sprint =
     normalizeAttribute(
       rider.sprint,
       `rider ${rider.id} sprint`,
+    )
+
+  const timeTrial =
+    normalizeAttribute(
+      rider.time_trial,
+      `rider ${rider.id} time_trial`,
     )
 
   const stamina =
@@ -325,7 +339,9 @@ function createAttributes(
 
   return {
     flat,
+    climbing,
     sprint,
+    timeTrial,
     acceleration:
       deriveAcceleration(
         sprint,
@@ -335,6 +351,7 @@ function createAttributes(
     stamina,
     resistance,
     recovery,
+    raceIq,
     teamwork,
   }
 }

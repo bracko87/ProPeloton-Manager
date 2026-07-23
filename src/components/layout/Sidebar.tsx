@@ -15,7 +15,6 @@ import {
   BarChart2,
   DollarSign,
   LogOut,
-  Lock,
   ClipboardCheck
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
@@ -23,7 +22,6 @@ import BugReportButton from '../dashboard/BugReportButton'
 
 interface SidebarProps {
   collapsed?: boolean
-  locked?: boolean
 }
 
 interface NavItem {
@@ -118,11 +116,9 @@ function isPathActive(pathname: string, item: NavItem): boolean {
 /**
  * Sidebar
  * Black sidebar with yellow active state and larger menu text.
- * Supports locked mode for days when the player cannot interact.
  */
 export default function Sidebar({
-  collapsed = false,
-  locked = false
+  collapsed = false
 }: SidebarProps) {
   const navigate = useNavigate()
   const location = useLocation()
@@ -144,11 +140,9 @@ export default function Sidebar({
       collapsed
         ? 'flex items-center justify-center px-2 py-3'
         : 'flex items-start gap-3 px-3 py-3',
-      locked
-        ? 'pointer-events-none opacity-50 cursor-not-allowed'
-        : isActive
-          ? 'bg-yellow-400/20 text-yellow-400'
-          : 'text-white/90 hover:bg-white/5'
+      isActive
+        ? 'bg-yellow-400/20 text-yellow-400'
+        : 'text-white/90 hover:bg-white/5'
     ].join(' ')
 
   return (
@@ -185,23 +179,6 @@ export default function Sidebar({
           </div>
         </div>
 
-        {locked && !collapsed && (
-          <div className="px-4 pt-4">
-            <div className="flex items-start gap-3 rounded-md border border-yellow-400/20 bg-yellow-400/10 px-3 py-3 text-yellow-300">
-              <Lock size={16} className="mt-0.5 flex-shrink-0" />
-              <div className="min-w-0">
-                <div className="text-sm font-semibold leading-tight">
-                  Dashboard Locked
-                </div>
-                <div className="text-xs text-yellow-200/80 mt-1 leading-tight">
-                  You cannot make changes right now because you have already
-                  played today.
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
         <nav className="p-4 space-y-2">
           {navItems.map(item => {
             const Icon = item.icon
@@ -210,13 +187,8 @@ export default function Sidebar({
             return (
               <NavLink
                 key={item.to}
-                to={locked ? '#' : item.to}
+                to={item.to}
                 className={linkClass(active)}
-                onClick={event => {
-                  if (locked) event.preventDefault()
-                }}
-                aria-disabled={locked}
-                tabIndex={locked ? -1 : 0}
               >
                 <Icon size={18} className="mt-0.5 flex-shrink-0" />
 

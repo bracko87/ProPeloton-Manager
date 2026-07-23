@@ -408,7 +408,7 @@ function ReplayProfile({
 }): JSX.Element {
   const width = 1000
   const height = 260
-  const paddingX = 42
+  const paddingX = 64
   const paddingTop = 28
   const paddingBottom = 38
   const plotWidth =
@@ -422,20 +422,70 @@ function ReplayProfile({
         point.elevationMetres,
     )
 
-  const minimumElevation =
+  const rawMinimumElevation =
     elevations.length > 0
       ? Math.min(...elevations)
       : 0
 
-  const maximumElevation =
+  const rawMaximumElevation =
     elevations.length > 0
       ? Math.max(...elevations)
       : 1
 
+  /*
+   * Never stretch a tiny elevation difference across the full chart.
+   *
+   * Rio Stage 1 ranges only from roughly 5 m to 30 m. Without a minimum
+   * display range, that almost-flat coastal profile looks like a mountain.
+   *
+   * A minimum 300 m visible range preserves realistic proportions while
+   * still allowing genuine hilly and mountain stages to use larger ranges.
+   */
+  const rawElevationRange = Math.max(
+    1,
+    rawMaximumElevation -
+      rawMinimumElevation,
+  )
+
+  const displayElevationRange =
+    Math.max(
+      300,
+      Math.ceil(
+        rawElevationRange / 100,
+      ) * 100,
+    )
+
+  const elevationMidpoint =
+    (
+      rawMinimumElevation +
+      rawMaximumElevation
+    ) / 2
+
+  let displayMinimumElevation =
+    Math.floor(
+      (
+        elevationMidpoint -
+        displayElevationRange / 2
+      ) / 100,
+    ) * 100
+
+  let displayMaximumElevation =
+    displayMinimumElevation +
+    displayElevationRange
+
+  if (
+    rawMinimumElevation >= 0 &&
+    displayMinimumElevation < 0
+  ) {
+    displayMinimumElevation = 0
+    displayMaximumElevation =
+      displayElevationRange
+  }
+
   const elevationRange = Math.max(
     1,
-    maximumElevation -
-      minimumElevation,
+    displayMaximumElevation -
+      displayMinimumElevation,
   )
 
   const getX = (
@@ -458,7 +508,7 @@ function ReplayProfile({
       clamp(
         (
           elevation -
-          minimumElevation
+          displayMinimumElevation
         ) / elevationRange,
         0,
         1,
@@ -519,6 +569,42 @@ function ReplayProfile({
           height={height}
           fill="#f8fafc"
         />
+
+        {[0, 0.5, 1].map(
+          (fraction) => {
+            const y =
+              paddingTop +
+              plotHeight * fraction
+
+            const elevation =
+              displayMaximumElevation -
+              elevationRange * fraction
+
+            return (
+              <g key={`elevation-${fraction}`}>
+                <line
+                  x1={paddingX}
+                  y1={y}
+                  x2={width - paddingX}
+                  y2={y}
+                  stroke="#e2e8f0"
+                  strokeWidth="1"
+                />
+
+                <text
+                  x={paddingX - 10}
+                  y={y + 4}
+                  textAnchor="end"
+                  fontSize="11"
+                  fill="#64748b"
+                >
+                  {Math.round(elevation)}
+                  {' m'}
+                </text>
+              </g>
+            )
+          },
+        )}
 
         {[0, 0.25, 0.5, 0.75, 1].map(
           (fraction) => {

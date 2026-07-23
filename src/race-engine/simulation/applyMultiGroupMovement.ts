@@ -80,11 +80,11 @@ function getProposalByGroupId(
 }
 
 /**
- * applyMultiGroupMovement
+ * Applies a previously-calculated MultiGroupMovementResult.
  *
- * Applies a previously-calculated MultiGroupMovementResult to the provided
- * SimulationState, returning a new SimulationState and metadata about the
- * tick application.
+ * currentKm is the furthest race progress ever reached. It must not move
+ * backwards after a leading group finishes and becomes inactive while another
+ * active group is still approaching the finish.
  */
 export function applyMultiGroupMovement(
   input: ApplyMultiGroupMovementInput,
@@ -302,12 +302,23 @@ export function applyMultiGroupMovement(
     previousRaceSecond +
     movement.tickSeconds
 
+  /*
+   * Once any group has reached the finish, currentKm is stageDistanceKm.
+   * Later movement of a trailing active group must not move this global race
+   * progress marker backwards.
+   */
+  const nextCurrentKm =
+    Math.max(
+      state.currentKm,
+      movement.leaderDistanceKm,
+    )
+
   const nextState: SimulationState = {
     ...state,
     raceSecond:
       nextRaceSecond,
     currentKm:
-      movement.leaderDistanceKm,
+      nextCurrentKm,
     groups:
       Object.fromEntries(
         nextGroupsEntries,
@@ -325,8 +336,7 @@ export function applyMultiGroupMovement(
     nextRaceSecond,
     previousCurrentKm:
       state.currentKm,
-    nextCurrentKm:
-      movement.leaderDistanceKm,
+    nextCurrentKm,
     appliedGroupIds:
       movement.proposals
         .map(

@@ -956,7 +956,8 @@ export default function Header({
           data-tutorial-target="header-coins"
           className="rounded-md border border-black/35 bg-yellow-300/70 px-3 py-1.5 text-sm font-semibold text-black min-w-[130px] text-center"
         >
-          ◎ {coinBalance.toLocaleString()} Coins
+          ◎ {coinBalance.toLocaleString()}{' '}
+          {coinBalance === 1 ? 'Coin' : 'Coins'}
         </div>
 
         <button

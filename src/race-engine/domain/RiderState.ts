@@ -30,15 +30,26 @@ export type RiderRaceStatus =
   | 'dns'
 
 /**
- * Performance attributes consumed by the active deterministic engine.
+ * Performance attributes consumed by the deterministic engine.
+ *
+ * climbing, timeTrial, and raceIq are temporarily optional so older isolated
+ * synthetic fixtures continue to compile during the attribute-transport
+ * migration. The production-shaped source adapter always supplies them and
+ * the development diagnostic verifies all Rio riders receive them.
  */
 export interface RiderAttributes {
   readonly flat: number
+  readonly climbing?: number
+
   readonly sprint: number
+  readonly timeTrial?: number
   readonly acceleration: number
+
   readonly stamina: number
   readonly resistance: number
   readonly recovery: number
+
+  readonly raceIq?: number
   readonly teamwork: number
 }
 

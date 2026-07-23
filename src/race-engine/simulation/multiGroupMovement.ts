@@ -90,7 +90,11 @@ function getRacingGroupRiders(
  * Calculates proposed movement for every active group in stable group-ID order.
  *
  * Every group receives its own fatigue-adjusted rider capability, base pace,
- * terrain adjustment, distance advance, and gap from the proposed leader.
+ * terrain adjustment, distance advance, and gap from the race leader.
+ *
+ * When a leading group has already finished and become inactive, state.currentKm
+ * remains at the finish. Active trailing groups keep a positive estimated gap
+ * to that finished race leader until they also reach the finish.
  */
 export function calculateMultiGroupMovement(
   state: SimulationState,
@@ -157,6 +161,12 @@ export function calculateMultiGroupMovement(
           group.distanceKm,
         )
 
+      const terrainMinimumSpeedKmh =
+        Math.max(
+          1,
+          pace.baseSpeedKmh * 0.35,
+        )
+
       const terrainSpeed =
         calculateTerrainSpeed({
           baseSpeedKmh:
@@ -165,8 +175,7 @@ export function calculateMultiGroupMovement(
             terrainSample
               .gradientPercent,
           minimumSpeedKmh:
-            state.input.settings
-              .minimumSpeedKmh,
+            terrainMinimumSpeedKmh,
           maximumSpeedKmh:
             state.input.settings
               .maximumSpeedKmh,
@@ -219,30 +228,96 @@ export function calculateMultiGroupMovement(
     )
   }
 
-  const leaderDistanceKm =
+  const activeLeaderDistanceKm =
     leaderEntry.nextDistanceKm
 
-  const leaderSpeedKmh = Math.max(
+  const raceLeaderDistanceKm =
+    Math.max(
+      state.currentKm,
+      activeLeaderDistanceKm,
+    )
+
+  const activeLeaderSpeedKmh = Math.max(
     leaderEntry.terrainSpeed.speedKmh,
     0.000001,
   )
+
+  const finishedLeaderIsAhead =
+    raceLeaderDistanceKm >
+    activeLeaderDistanceKm
+
+  const existingFinishTimes =
+    Object.values(state.riders)
+      .filter(
+        (rider) =>
+          rider.stageStatus ===
+            'finished' &&
+          typeof rider.finishTimeSeconds ===
+            'number',
+      )
+      .map(
+        (rider) =>
+          rider.finishTimeSeconds as number,
+      )
+
+  const winnerFinishTimeSeconds =
+    existingFinishTimes.length > 0
+      ? Math.min(
+          ...existingFinishTimes,
+        )
+      : null
+
+  const predictedRaceSecond =
+    state.raceSecond +
+    tickSeconds
 
   const proposals:
     MultiGroupMovementProposal[] =
     preliminary.map((entry) => {
       const distanceGapKm = Math.max(
         0,
-        leaderDistanceKm -
+        raceLeaderDistanceKm -
           entry.nextDistanceKm,
       )
 
-      const gapFromLeaderSeconds =
+      /*
+       * Before any group has finished, preserve the existing leader-speed gap
+       * calculation exactly.
+       *
+       * After the race leader has finished, there is no active leader proposal
+       * whose speed can be used. Combine:
+       * - elapsed time since the winner finished; and
+       * - the trailing group's estimated remaining time to the finish.
+       */
+      const gapReferenceSpeedKmh =
+        finishedLeaderIsAhead
+          ? Math.max(
+              entry.terrainSpeed.speedKmh,
+              0.000001,
+            )
+          : activeLeaderSpeedKmh
+
+      const remainingTimeToLeaderSeconds =
         distanceGapKm === 0
           ? 0
           : (
               distanceGapKm /
-              leaderSpeedKmh
+              gapReferenceSpeedKmh
             ) * 3600
+
+      const elapsedSinceWinnerSeconds =
+        finishedLeaderIsAhead &&
+        winnerFinishTimeSeconds !== null
+          ? Math.max(
+              0,
+              predictedRaceSecond -
+                winnerFinishTimeSeconds,
+            )
+          : 0
+
+      const gapFromLeaderSeconds =
+        remainingTimeToLeaderSeconds +
+        elapsedSinceWinnerSeconds
 
       return {
         groupId:
@@ -286,7 +361,8 @@ export function calculateMultiGroupMovement(
     tickSeconds,
     leaderGroupId:
       leaderEntry.group.groupId,
-    leaderDistanceKm,
+    leaderDistanceKm:
+      activeLeaderDistanceKm,
     proposals,
   }
 }

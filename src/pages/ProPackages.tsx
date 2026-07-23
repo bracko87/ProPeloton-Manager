@@ -1,24 +1,45 @@
 /**
  * ProPackages.tsx
- * Coin packages shop page (DB-driven) + Purchase History.
+ * Premium membership + optional coin packages shop page.
  *
- * - Loads packages from coin_packages
- * - Shows current balance (get_my_coin_status)
- * - Buy Now -> create-coin-checkout Edge Function
- * - Purchase history -> user_coin_ledger (reason='purchase')
+ * - Loads Premium plan details from premium_plans.
+ * - Loads the current Premium state through get_my_premium_status.
+ * - Starts Premium subscription Checkout through create-premium-checkout.
+ * - Loads coin packages from coin_packages.
+ * - Shows the current wallet balance through get_my_coin_status.
+ * - Buy Now calls the existing create-coin-checkout Edge Function.
+ * - Purchase and wallet history remain available.
  *
- * FIXES:
- * - No import.meta.env usage
- * - Uses Supabase client internal config for URL + anonKey
- *
- * UPDATE:
- * - Remove Stripe session column from Purchase History (do not show to user)
- * - Add full daily coin transaction history with finance-style table and pagination
+ * Normal gameplay remains free. Premium and coins are optional.
  */
 import React, { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../lib/supabase'
 
 type CoinStatusRow = { balance: number; can_play: boolean }
+
+type PremiumPlanRow = {
+  code: string
+  name: string
+  description: string | null
+  price_cents: number
+  currency: string
+  interval_unit: string
+  interval_count: number
+  coins_per_paid_invoice: number
+  active: boolean
+}
+
+type PremiumStatusRow = {
+  access_tier: string
+  is_premium: boolean
+  plan_code: string | null
+  plan_name: string | null
+  stripe_status: string
+  access_until: string | null
+  cancel_at_period_end: boolean
+  current_period_end: string | null
+  coins_per_paid_invoice: number
+}
 
 type DbCoinPackage = {
   code: string
@@ -64,7 +85,6 @@ type CoinTransactionUi = {
   packageCode: string | null
 }
 
-const COINS_PER_DAY = 2
 const COIN_HISTORY_PAGE_SIZE = 20
 
 function eur(n: number) {
@@ -98,6 +118,24 @@ function formatDateTime(iso: string) {
   }
 }
 
+function formatDate(iso: string | null | undefined) {
+  if (!iso) return null
+
+  try {
+    const d = new Date(iso)
+    return d.toLocaleDateString(undefined, {
+      year: 'numeric',
+      month: 'long',
+      day: '2-digit',
+    })
+  } catch {
+    return iso
+  }
+}
+
+function coinLabel(value: number) {
+  return value === 1 ? 'Coin' : 'Coins'
+}
 
 function titleFromSnake(value: string | null | undefined) {
   if (!value) return 'Coin transaction'
@@ -123,10 +161,14 @@ function describeCoinTransaction(reason: string, payload: any) {
 
   if (description) return description
   if (reason === 'purchase' && packageCode) return `Coin package purchase: ${packageCode}`
-  if (reason === 'daily_gameplay_unlock') return 'Daily gameplay unlock'
+  if (reason === 'daily_charge') return 'Historical daily gameplay charge'
+  if (reason === 'daily_gameplay_unlock') return 'Historical daily gameplay unlock'
   if (reason === 'referral_reward') return 'Referral reward'
   if (reason === 'admin_adjustment') return 'Admin adjustment'
   if (reason === 'developing_team_purchase') return 'Developing Team purchase'
+  if (reason === 'developing_team_unlock') return 'Developing Team purchase'
+  if (reason === 'scout_report_extra') return 'Extra scouting report'
+  if (reason === 'premium_monthly_grant') return 'Premium monthly coin grant'
 
   return titleFromSnake(reason)
 }
@@ -169,6 +211,13 @@ export default function ProPackagesPage(): JSX.Element {
   const [balance, setBalance] = useState<number>(0)
   const [loadingBalance, setLoadingBalance] = useState(true)
 
+  const [premiumPlan, setPremiumPlan] = useState<PremiumPlanRow | null>(null)
+  const [premiumStatus, setPremiumStatus] = useState<PremiumStatusRow | null>(null)
+  const [loadingPremium, setLoadingPremium] = useState(true)
+  const [startingPremiumCheckout, setStartingPremiumCheckout] = useState(false)
+  const [premiumError, setPremiumError] = useState<string | null>(null)
+  const [premiumNotice, setPremiumNotice] = useState<string | null>(null)
+
   const [packages, setPackages] = useState<UiCoinPackage[]>([])
   const [loadingPackages, setLoadingPackages] = useState(true)
 
@@ -187,6 +236,27 @@ export default function ProPackagesPage(): JSX.Element {
   const [coinHistoryError, setCoinHistoryError] = useState<string | null>(null)
   const [coinTransactions, setCoinTransactions] = useState<CoinTransactionUi[]>([])
   const [coinHistoryPage, setCoinHistoryPage] = useState(1)
+
+  const premiumCheckoutBlocked = useMemo(() => {
+    const status = premiumStatus?.stripe_status ?? 'free'
+
+    return [
+      'trialing',
+      'active',
+      'past_due',
+      'unpaid',
+      'incomplete',
+      'paused',
+    ].includes(status)
+  }, [premiumStatus?.stripe_status])
+
+  const premiumAccessUntilLabel = useMemo(() => {
+    return formatDate(premiumStatus?.access_until)
+  }, [premiumStatus?.access_until])
+
+  const premiumPeriodEndLabel = useMemo(() => {
+    return formatDate(premiumStatus?.current_period_end)
+  }, [premiumStatus?.current_period_end])
 
   const bestValueCode = useMemo(() => {
     if (packages.length === 0) return null
@@ -232,6 +302,40 @@ export default function ProPackagesPage(): JSX.Element {
     const row = ((data ?? []) as CoinStatusRow[])[0]
     setBalance(Math.max(Number(row?.balance ?? 0), 0))
     setLoadingBalance(false)
+  }
+
+  async function loadPremiumData() {
+    setLoadingPremium(true)
+    setPremiumError(null)
+
+    try {
+      const [planResult, statusResult] = await Promise.all([
+        supabase
+          .from('premium_plans')
+          .select(
+            'code, name, description, price_cents, currency, interval_unit, interval_count, coins_per_paid_invoice, active',
+          )
+          .eq('code', 'premium_monthly')
+          .eq('active', true)
+          .maybeSingle(),
+        supabase.rpc('get_my_premium_status'),
+      ])
+
+      if (planResult.error) throw planResult.error
+      if (statusResult.error) throw statusResult.error
+
+      setPremiumPlan((planResult.data as PremiumPlanRow | null) ?? null)
+
+      const statusRows = (statusResult.data ?? []) as PremiumStatusRow[]
+      setPremiumStatus(statusRows[0] ?? null)
+    } catch (e: any) {
+      console.error('Failed to load Premium data:', e)
+      setPremiumPlan(null)
+      setPremiumStatus(null)
+      setPremiumError(e?.message ?? 'Failed to load Premium membership details.')
+    } finally {
+      setLoadingPremium(false)
+    }
   }
 
   async function loadPackages() {
@@ -342,7 +446,7 @@ export default function ProPackagesPage(): JSX.Element {
     let mounted = true
     ;(async () => {
       try {
-        await Promise.all([loadCoinStatus(), loadPackages()])
+        await Promise.all([loadCoinStatus(), loadPremiumData(), loadPackages()])
       } finally {
         if (!mounted) return
       }
@@ -352,6 +456,90 @@ export default function ProPackagesPage(): JSX.Element {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+
+    const hash = window.location.hash
+    const queryIndex = hash.indexOf('?')
+    if (queryIndex < 0) return
+
+    const params = new URLSearchParams(hash.slice(queryIndex + 1))
+    const premiumResult = params.get('premium')
+
+    if (premiumResult === 'success') {
+      setPremiumNotice(
+        'Payment completed. Premium activation and the 50-coin grant may take a few seconds while Stripe confirms the invoice.',
+      )
+
+      const refreshTimer = window.setTimeout(() => {
+        void Promise.all([loadPremiumData(), loadCoinStatus()])
+      }, 2500)
+
+      return () => {
+        window.clearTimeout(refreshTimer)
+      }
+    }
+
+    if (premiumResult === 'cancel') {
+      setPremiumNotice('Premium checkout was canceled. No payment was taken.')
+    }
+  }, [])
+
+  async function handleStartPremiumCheckout() {
+    setPremiumError(null)
+    setPremiumNotice(null)
+    setStartingPremiumCheckout(true)
+
+    try {
+      const { url: supabaseUrl, anonKey } = getSupabaseConfig()
+
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession()
+      if (sessionError) throw sessionError
+
+      const token = sessionData.session?.access_token
+      if (!token) throw new Error('Not authenticated. Please log in again.')
+
+      const res = await fetch(`${supabaseUrl}/functions/v1/create-premium-checkout`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          apikey: anonKey,
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ plan_code: 'premium_monthly' }),
+      })
+
+      const responseText = await res.text().catch(() => '')
+      let responseJson: { url?: string; error?: string; code?: string } = {}
+
+      if (responseText) {
+        try {
+          responseJson = JSON.parse(responseText) as {
+            url?: string
+            error?: string
+            code?: string
+          }
+        } catch {
+          responseJson = {}
+        }
+      }
+
+      if (!res.ok) {
+        throw new Error(
+          responseJson.error || responseText || `Edge function error: ${res.status}`,
+        )
+      }
+
+      if (!responseJson.url) throw new Error('Premium Checkout URL missing')
+
+      window.location.href = responseJson.url
+    } catch (e: any) {
+      setPremiumError(e?.message ?? 'Premium checkout failed.')
+      setStartingPremiumCheckout(false)
+    }
+  }
 
   async function handleBuy(code: string) {
     setError(null)
@@ -413,9 +601,9 @@ export default function ProPackagesPage(): JSX.Element {
     <div className="w-full">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h2 className="text-2xl font-extrabold text-black">Buy Coins</h2>
+          <h2 className="text-2xl font-extrabold text-black">Pro Packages</h2>
           <p className="mt-1 text-sm text-gray-600">
-            Coins unlock each in-game day. <span className="font-semibold">1 day = {COINS_PER_DAY} coins</span>.
+            Normal gameplay is free. Premium membership and coin packages are optional.
           </p>
         </div>
 
@@ -425,6 +613,8 @@ export default function ProPackagesPage(): JSX.Element {
             onClick={() => {
               void Promise.all([
                 loadCoinStatus(),
+                loadPremiumData(),
+                loadPackages(),
                 coinHistoryOpen ? loadCoinTransactionHistory() : Promise.resolve(),
                 historyOpen ? loadPurchaseHistory() : Promise.resolve(),
               ])
@@ -436,10 +626,177 @@ export default function ProPackagesPage(): JSX.Element {
 
           <div className="rounded-xl border border-black/10 bg-white px-4 py-3 shadow-sm">
             <div className="text-xs text-gray-500">Your balance</div>
-            <div className="text-lg font-bold text-black">◎ {loadingBalance ? '…' : balance.toLocaleString()} Coins</div>
+            <div className="text-lg font-bold text-black">
+              ◎ {loadingBalance ? '…' : balance.toLocaleString()}{' '}
+              {!loadingBalance ? coinLabel(balance) : ''}
+            </div>
           </div>
         </div>
       </div>
+
+      {premiumNotice ? (
+        <div className="mt-4 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-900">
+          {premiumNotice}
+        </div>
+      ) : null}
+
+      {premiumError ? (
+        <div className="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+          {premiumError}
+        </div>
+      ) : null}
+
+      <section className="mt-6 overflow-hidden rounded-2xl border border-yellow-400 bg-white shadow-sm">
+        <div className="grid grid-cols-1 lg:grid-cols-[1.45fr_0.75fr]">
+          <div className="p-6 sm:p-8">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="rounded-full bg-yellow-400 px-3 py-1 text-xs font-extrabold text-black">
+                PREMIUM
+              </span>
+
+              {!loadingPremium && premiumStatus?.is_premium ? (
+                <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-bold text-green-800">
+                  Active
+                </span>
+              ) : !loadingPremium && premiumCheckoutBlocked ? (
+                <span className="rounded-full bg-orange-100 px-3 py-1 text-xs font-bold text-orange-800">
+                  {titleFromSnake(premiumStatus?.stripe_status)}
+                </span>
+              ) : (
+                <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-bold text-gray-700">
+                  Optional membership
+                </span>
+              )}
+            </div>
+
+            <h3 className="mt-4 text-2xl font-extrabold text-black">
+              {premiumPlan?.name ?? 'ProPeloton Premium'}
+            </h3>
+
+            <p className="mt-2 max-w-3xl text-sm text-gray-600">
+              {premiumPlan?.description ??
+                'Monthly Premium membership with 50 coins after every successful payment.'}
+            </p>
+
+            <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-3">
+              <div className="rounded-xl border border-black/10 bg-gray-50 p-4">
+                <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                  Monthly price
+                </div>
+                <div className="mt-1 text-xl font-extrabold text-black">
+                  {premiumPlan ? eur(Number(premiumPlan.price_cents) / 100) : '€4.99'}
+                </div>
+                <div className="mt-1 text-xs text-gray-500">Automatic monthly renewal</div>
+              </div>
+
+              <div className="rounded-xl border border-black/10 bg-gray-50 p-4">
+                <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                  Monthly coins
+                </div>
+                <div className="mt-1 text-xl font-extrabold text-black">
+                  ◎ {premiumPlan?.coins_per_paid_invoice ?? 50}
+                </div>
+                <div className="mt-1 text-xs text-gray-500">
+                  After every successful payment
+                </div>
+              </div>
+
+              <div className="rounded-xl border border-black/10 bg-gray-50 p-4">
+                <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                  Gameplay access
+                </div>
+                <div className="mt-1 text-xl font-extrabold text-black">Always free</div>
+                <div className="mt-1 text-xs text-gray-500">
+                  Premium is never required to play
+                </div>
+              </div>
+            </div>
+
+            <ul className="mt-5 list-disc space-y-1 pl-5 text-sm text-gray-700">
+              <li>50 coins after the first successful payment and every successful monthly renewal.</li>
+              <li>A failed payment grants no coins and does not extend Premium access.</li>
+              <li>Cancellation stops future renewals; paid access remains until the current period ends.</li>
+              <li>Premium data remains stored and becomes available again after renewal.</li>
+              <li>No voluntary refunds, except where required by law.</li>
+            </ul>
+
+            {!loadingPremium && premiumStatus?.is_premium ? (
+              <div className="mt-5 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-900">
+                <div className="font-bold">Premium is active.</div>
+                <div className="mt-1">
+                  {premiumStatus.cancel_at_period_end
+                    ? `Your subscription is canceled for renewal, but Premium remains available until ${
+                        premiumAccessUntilLabel ?? premiumPeriodEndLabel ?? 'the end of the paid period'
+                      }.`
+                    : `Your current paid period ${
+                        premiumPeriodEndLabel
+                          ? `ends on ${premiumPeriodEndLabel}`
+                          : 'is active'
+                      }.`}
+                </div>
+              </div>
+            ) : !loadingPremium && premiumCheckoutBlocked ? (
+              <div className="mt-5 rounded-xl border border-orange-200 bg-orange-50 px-4 py-3 text-sm text-orange-900">
+                An existing subscription is currently marked as{' '}
+                <span className="font-bold">
+                  {titleFromSnake(premiumStatus?.stripe_status)}
+                </span>
+                . A second subscription cannot be started.
+              </div>
+            ) : null}
+          </div>
+
+          <div className="flex flex-col justify-center border-t border-black/10 bg-yellow-50 p-6 sm:p-8 lg:border-l lg:border-t-0">
+            <div className="text-sm font-semibold text-gray-700">Premium membership</div>
+            <div className="mt-2 text-4xl font-extrabold text-black">
+              {premiumPlan ? eur(Number(premiumPlan.price_cents) / 100) : '€4.99'}
+            </div>
+            <div className="mt-1 text-sm text-gray-600">per real-life month</div>
+
+            <button
+              type="button"
+              onClick={() => {
+                void handleStartPremiumCheckout()
+              }}
+              disabled={
+                loadingPremium ||
+                startingPremiumCheckout ||
+                !premiumPlan ||
+                premiumCheckoutBlocked ||
+                Boolean(premiumStatus?.is_premium)
+              }
+              className="mt-6 w-full rounded-xl bg-yellow-400 px-4 py-3 text-sm font-extrabold text-black hover:bg-yellow-300 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {loadingPremium
+                ? 'Loading Premium…'
+                : startingPremiumCheckout
+                  ? 'Redirecting…'
+                  : premiumStatus?.is_premium
+                    ? 'Premium active'
+                    : premiumCheckoutBlocked
+                      ? 'Subscription already exists'
+                      : premiumPlan
+                        ? `Subscribe for ${eur(Number(premiumPlan.price_cents) / 100)} / month`
+                        : 'Premium unavailable'}
+            </button>
+
+            <div className="mt-3 text-xs text-gray-500">
+              Secure recurring Stripe checkout. The subscription renews automatically each month
+              until canceled.
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="mt-10">
+        <div>
+          <h3 className="text-xl font-extrabold text-black">Buy Coins</h3>
+          <p className="mt-1 text-sm text-gray-600">
+            Buy optional coins without Premium. Coins can be used for special features,
+            expansions and additional services.
+          </p>
+        </div>
+      </section>
 
       {error ? (
         <div className="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{error}</div>
@@ -450,7 +807,6 @@ export default function ProPackagesPage(): JSX.Element {
       ) : (
         <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
           {packages.map((p) => {
-            const days = Math.floor(p.coins / COINS_PER_DAY)
             const isBestValue = bestValueCode && p.code === bestValueCode
             const isBuying = buyingCode === p.code
 
@@ -473,15 +829,10 @@ export default function ProPackagesPage(): JSX.Element {
                 <div className="mt-1 text-4xl font-normal text-black">◎ {p.coins.toLocaleString()}</div>
                 <div className="mt-2 text-sm text-gray-600">{p.tagline}</div>
 
-                <div className="mt-5 flex items-end justify-between gap-4">
-                  <div>
-                    <div className="text-2xl font-normal text-black">{eur(p.priceEur)}</div>
-                    <div className="mt-1 text-xs text-gray-500">≈ {eur(perCoin(p.priceEur, p.coins))} per coin</div>
-                  </div>
-
-                  <div className="text-right">
-                    <div className="text-sm font-semibold text-black">{days.toLocaleString()} days</div>
-                    <div className="text-xs text-gray-500">of gameplay</div>
+                <div className="mt-5">
+                  <div className="text-2xl font-normal text-black">{eur(p.priceEur)}</div>
+                  <div className="mt-1 text-xs text-gray-500">
+                    ≈ {eur(perCoin(p.priceEur, p.coins))} per coin
                   </div>
                 </div>
 
@@ -572,9 +923,9 @@ export default function ProPackagesPage(): JSX.Element {
       <div className="mt-8 rounded-2xl border border-black/10 bg-white p-5">
         <div className="flex items-center justify-between gap-3">
           <div>
-            <div className="text-base font-semibold text-black">Daily coin transaction history</div>
+            <div className="text-base font-semibold text-black">Coin transaction history</div>
             <div className="mt-1 text-sm text-gray-600">
-              All coin ledger activity. Shows purchases, gameplay charges, rewards and adjustments.
+              All wallet activity, including purchases, rewards, optional feature costs and historical adjustments.
             </div>
           </div>
 
@@ -662,7 +1013,7 @@ export default function ProPackagesPage(): JSX.Element {
 
                               <td className={`p-3 font-semibold whitespace-nowrap ${amountColorClass}`}>
                                 {transaction.delta >= 0 ? '+' : ''}
-                                {transaction.delta.toLocaleString()} Coins
+                                {transaction.delta.toLocaleString()} {coinLabel(Math.abs(transaction.delta))}
                               </td>
 
                               <td
@@ -734,9 +1085,10 @@ export default function ProPackagesPage(): JSX.Element {
       <div className="mt-8 rounded-2xl border border-black/10 bg-white p-5 text-sm text-gray-600">
         <div className="font-semibold text-black">How it works</div>
         <ul className="mt-2 list-disc space-y-1 pl-5">
-          <li>Coins unlock each in-game day. You need {COINS_PER_DAY} coins to play today.</li>
-          <li>Coins are added after payment confirmation (webhook).</li>
-          <li>If your balance is below {COINS_PER_DAY}, gameplay is locked until you top up.</li>
+          <li>Normal gameplay is free and is never locked because of your coin balance.</li>
+          <li>Coins are used only for optional coin-priced features and services.</li>
+          <li>Purchased coins are added after successful payment confirmation.</li>
+          <li>Unused coins remain in your wallet.</li>
         </ul>
       </div>
     </div>
