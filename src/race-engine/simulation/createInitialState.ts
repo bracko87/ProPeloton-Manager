@@ -5,6 +5,7 @@
  * Responsibilities:
  * - Validate the provided StageInput.
  * - Build deterministic rider, team, group, order, event, and pressure structures.
+ * - Transport optional live starting condition without changing legacy fixtures.
  * - Ensure all initial data is immutable by type (readonly) and independent of randomness.
  */
 
@@ -51,6 +52,8 @@ export const INITIAL_PELOTON_GROUP_ID =
  * - Does not mutate the input.
  * - Does not consume any randomness.
  * - Uses deterministic sorting rules for teams, riders, orders, and pressure.
+ * - Uses rider.condition.startingEnergy when condition is present.
+ * - Preserves the historic 100-energy start when condition is absent.
  *
  * @param input - Immutable stage configuration for the simulation.
  * @returns Initial SimulationState ready for ticking.
@@ -58,12 +61,10 @@ export const INITIAL_PELOTON_GROUP_ID =
 export function createInitialState(
   input: StageInput,
 ): SimulationState {
-  // 1. Validate input before creating any state.
   validateStageInput(
     input,
   )
 
-  // 2. Deterministic ordering without mutating input arrays.
   const sortedTeams = [
     ...input.teams,
   ].sort(
@@ -104,7 +105,6 @@ export function createInitialState(
     input.settings
       .minimumSpeedKmh
 
-  // 3. Build riders record keyed by riderId.
   const ridersRecord:
     Record<
       string,
@@ -115,6 +115,24 @@ export function createInitialState(
     const rider of
     sortedRiders
   ) {
+    const startingCondition =
+      rider.condition
+        ? {
+            startingEnergy:
+              rider.condition
+                .startingEnergy,
+            fatigueBeforeStage:
+              rider.condition
+                .fatigueBeforeStage,
+            morale:
+              rider.condition
+                .morale,
+            availabilityStatus:
+              rider.condition
+                .availabilityStatus,
+          }
+        : null
+
     const riderState:
       RiderState = {
         riderId:
@@ -129,12 +147,22 @@ export function createInitialState(
           rider.role,
         attributes:
           rider.attributes,
+
+        ...(startingCondition
+          ? {
+              startingCondition,
+            }
+          : {}),
+
         currentGroupId:
           INITIAL_PELOTON_GROUP_ID,
         distanceKm: 0,
         speedKmh:
           minimumSpeedKmh,
-        energy: 100,
+        energy:
+          startingCondition
+            ?.startingEnergy ??
+          100,
         attackAttempts: 0,
         acceptedOrderIds: [],
         completedOrderIds: [],
@@ -151,7 +179,6 @@ export function createInitialState(
       riderState
   }
 
-  // 4. Build authoritative pressure record with one zero entry per rider.
   const separationPressureSecondsByRiderId:
     Record<
       string,
@@ -166,7 +193,6 @@ export function createInitialState(
         ),
       )
 
-  // 5. Build orders record keyed by orderId.
   const ordersRecord:
     Record<
       string,
@@ -232,7 +258,6 @@ export function createInitialState(
     )
   }
 
-  // 6. Build team states.
   const teamStatesRecord:
     Record<
       string,
@@ -327,7 +352,6 @@ export function createInitialState(
       teamState
   }
 
-  // 7. Create the initial peloton group.
   const allRiderIdsSorted =
     sortedRiders.map(
       (rider) =>
@@ -360,7 +384,6 @@ export function createInitialState(
         pelotonGroup,
     }
 
-  // 8. Create initial events.
   const teamCount =
     input.teams.length
 
@@ -455,7 +478,6 @@ export function createInitialState(
     )
   }
 
-  // 9. Assemble SimulationState.
   const simulationState:
     SimulationState = {
       input,

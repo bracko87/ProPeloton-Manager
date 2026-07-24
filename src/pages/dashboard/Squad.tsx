@@ -84,6 +84,14 @@ function normalizePointsValue(value: unknown, fallback = 0): number {
   return fallback
 }
 
+function getPremiumAccessFromResult(value: unknown): boolean {
+  const normalizedValue = Array.isArray(value) ? value[0] : value
+
+  if (!normalizedValue || typeof normalizedValue !== 'object') return false
+
+  return (normalizedValue as Record<string, unknown>).is_premium === true
+}
+
 type SquadSeasonDashboardChartPoint = {
   label: string
   value: number
@@ -204,6 +212,18 @@ function createEmptySquadSeasonDashboardData(): SquadSeasonDashboardData {
       { label: 'Mountain days', value: 0 },
       { label: 'Time trials', value: 0 },
     ],
+  }
+}
+
+function createOperationalSquadSeasonDashboardData(
+  dashboardData: SquadSeasonDashboardData,
+): SquadSeasonDashboardData {
+  const fallback = createEmptySquadSeasonDashboardData()
+
+  return {
+    ...fallback,
+    lastTeamRace: dashboardData.lastTeamRace,
+    nextRaceSelection: dashboardData.nextRaceSelection,
   }
 }
 
@@ -376,6 +396,8 @@ export default function SquadPage() {
   const [error, setError] = useState<string | null>(null)
   const [gameDate, setGameDate] = useState<string | null>(null)
   const [listView, setListView] = useState<SquadListView>('general')
+  const [isPremium, setIsPremium] = useState(false)
+  const [isPremiumLoading, setIsPremiumLoading] = useState(true)
   const [squadSeasonDashboardData, setSquadSeasonDashboardData] =
     useState<SquadSeasonDashboardData>(() => createEmptySquadSeasonDashboardData())
   const [tutorialLoading, setTutorialLoading] = useState(true)
@@ -385,6 +407,7 @@ export default function SquadPage() {
   const [developingTeamStatus, setDevelopingTeamStatus] = useState<DevelopingTeamStatus | null>(
     null
   )
+  const [developingTeamExistsFallback, setDevelopingTeamExistsFallback] = useState(false)
   const [developingTeamStatusError, setDevelopingTeamStatusError] = useState<string | null>(null)
   const [movingRiderId, setMovingRiderId] = useState<string | null>(null)
   const [moveActionMessage, setMoveActionMessage] = useState<string | null>(null)
@@ -449,16 +472,38 @@ export default function SquadPage() {
     setLoading(true)
     setError(null)
     setDevelopingTeamStatusError(null)
+    setIsPremiumLoading(true)
 
     try {
-      const [{ data: authData, error: authErr }, { data: currentGameDate, error: gameDateErr }] =
-        await Promise.all([
-          supabase.auth.getUser(),
-          supabase.rpc('get_current_game_date'),
-        ])
+      const [
+        { data: authData, error: authErr },
+        { data: currentGameDate, error: gameDateErr },
+        { data: premiumStatusData, error: premiumStatusErr },
+      ] = await Promise.all([
+        supabase.auth.getUser(),
+        supabase.rpc('get_current_game_date'),
+        supabase.rpc('get_my_premium_status'),
+      ])
 
       if (authErr) throw authErr
       if (gameDateErr) throw gameDateErr
+
+      if (premiumStatusErr) {
+        console.warn('Failed to load Premium status:', premiumStatusErr)
+      }
+
+      const hasPremiumAccess =
+        !premiumStatusErr && getPremiumAccessFromResult(premiumStatusData)
+
+      setIsPremium(hasPremiumAccess)
+      setIsPremiumLoading(false)
+
+      if (!hasPremiumAccess) {
+        setHealthOverviewRows([])
+        setSquadSeasonDashboardData((currentData) =>
+          createOperationalSquadSeasonDashboardData(currentData)
+        )
+      }
 
       const userId = authData.user?.id
       if (!userId) throw new Error('Not authenticated.')
@@ -469,6 +514,15 @@ export default function SquadPage() {
       setGameDate(normalizedGameDate)
 
       const devStatusPromise = supabase.rpc('get_developing_team_status')
+      const developingClubFallbackPromise = supabase
+        .from('clubs')
+        .select('id')
+        .eq('owner_user_id', userId)
+        .eq('club_type', 'developing')
+        .is('deleted_at', null)
+        .order('created_at', { ascending: true })
+        .limit(1)
+        .maybeSingle()
       const clubPromise = supabase
         .from('clubs')
         .select('id')
@@ -476,19 +530,45 @@ export default function SquadPage() {
         .eq('club_type', 'main')
         .single()
 
-      void devStatusPromise.then(({ data: devStatusData, error: devStatusErr }) => {
-        if (devStatusErr) {
-          console.error('get_developing_team_status failed:', devStatusErr)
-          setDevelopingTeamStatus(null)
-          setDevelopingTeamStatusError(
-            devStatusErr.message ?? 'Could not load Developing Team status.'
-          )
-          return
-        }
+      void Promise.all([devStatusPromise, developingClubFallbackPromise]).then(
+        ([
+          { data: devStatusData, error: devStatusErr },
+          { data: fallbackDevelopingClub, error: fallbackDevelopingClubErr },
+        ]) => {
+          const fallbackTeamExists = Boolean(fallbackDevelopingClub?.id)
+          setDevelopingTeamExistsFallback(fallbackTeamExists)
 
-        const normalizedDevStatus = Array.isArray(devStatusData) ? devStatusData[0] : devStatusData
-        setDevelopingTeamStatus((normalizedDevStatus ?? null) as DevelopingTeamStatus | null)
-      })
+          if (fallbackDevelopingClubErr) {
+            console.warn(
+              'Could not verify Developing Team directly from clubs:',
+              fallbackDevelopingClubErr
+            )
+          }
+
+          if (devStatusErr) {
+            console.error('get_developing_team_status failed:', devStatusErr)
+            setDevelopingTeamStatus(null)
+
+            if (fallbackTeamExists) {
+              setDevelopingTeamStatusError(null)
+              return
+            }
+
+            setDevelopingTeamStatusError(
+              devStatusErr.message ?? 'Could not load Developing Team status.'
+            )
+            return
+          }
+
+          const normalizedDevStatus = Array.isArray(devStatusData)
+            ? devStatusData[0]
+            : devStatusData
+
+          setDevelopingTeamStatus(
+            (normalizedDevStatus ?? null) as DevelopingTeamStatus | null
+          )
+        }
+      )
 
       const { data: club, error: clubErr } = await clubPromise
 
@@ -513,27 +593,38 @@ export default function SquadPage() {
       setRows(rosterRows)
       setLoading(false)
 
+      // This shared RPC currently includes both operational Last/Next Team Race data
+      // and Premium analytics. Keep loading it for all users until the backend payload
+      // is separated, but remove every Premium analytical field for Free users.
       void fetchSquadSeasonDashboardData(club.id, seasonYear)
         .then((dashboardData) => {
-          setSquadSeasonDashboardData(dashboardData)
+          setSquadSeasonDashboardData(
+            hasPremiumAccess
+              ? dashboardData
+              : createOperationalSquadSeasonDashboardData(dashboardData)
+          )
         })
         .catch((dashboardErr) => {
           console.warn('Failed to load squad season dashboard data:', dashboardErr)
           setSquadSeasonDashboardData(createEmptySquadSeasonDashboardData())
         })
 
-      void supabase
-        .rpc('get_club_health_overview', {
-          p_club_id: club.id,
-        })
-        .then(({ data: healthData, error: healthErr }) => {
-          if (healthErr) {
-            console.warn('Failed to load club health overview:', healthErr)
-            return
-          }
+      if (hasPremiumAccess) {
+        void supabase
+          .rpc('get_club_health_overview', {
+            p_club_id: club.id,
+          })
+          .then(({ data: healthData, error: healthErr }) => {
+            if (healthErr) {
+              console.warn('Failed to load club health overview:', healthErr)
+              return
+            }
 
-          setHealthOverviewRows((healthData ?? []) as ClubHealthOverviewRow[])
-        })
+            setHealthOverviewRows((healthData ?? []) as ClubHealthOverviewRow[])
+          })
+      } else {
+        setHealthOverviewRows([])
+      }
 
       if (riderIds.length === 0) {
         setTransferListedRiderIds(new Set())
@@ -673,6 +764,9 @@ export default function SquadPage() {
 
       setRows(mergedRows)
     } catch (e: any) {
+      setIsPremium(false)
+      setIsPremiumLoading(false)
+      setHealthOverviewRows([])
       setSquadSeasonDashboardData(createEmptySquadSeasonDashboardData())
       setError(e?.message ?? 'Failed to load squad.')
       setLoading(false)
@@ -682,6 +776,12 @@ export default function SquadPage() {
   useEffect(() => {
     void loadSquadPageData()
   }, [loadSquadPageData])
+
+  useEffect(() => {
+    if (!isPremium && listView !== 'general') {
+      setListView('general')
+    }
+  }, [isPremium, listView])
 
   useEffect(() => {
     let alive = true
@@ -842,7 +942,10 @@ export default function SquadPage() {
   const developingTeamStatusResolved =
     developingTeamStatus !== null || developingTeamStatusError !== null
 
-  const hasDevelopingTeam = developingTeamStatus?.is_purchased === true
+  const hasDevelopingTeam =
+    developingTeamExistsFallback ||
+    developingTeamStatus?.is_purchased === true ||
+    Boolean((developingTeamStatus as unknown as { team_exists?: boolean } | null)?.team_exists)
   const showDevelopingTeamLockedState =
     developingTeamStatusResolved && !hasDevelopingTeam
   const movementWindowOpen = developingTeamStatus?.movement_window_open ?? false
@@ -921,6 +1024,8 @@ export default function SquadPage() {
         gameDate={gameDate}
         listView={listView}
         onListViewChange={setListView}
+        isPremium={isPremium}
+        isPremiumLoading={isPremiumLoading}
         squadMax={SQUAD_MAX}
         hasDevelopingTeam={hasDevelopingTeam}
         movementWindowOpen={movementWindowOpen}

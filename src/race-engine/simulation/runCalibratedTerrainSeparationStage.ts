@@ -69,6 +69,11 @@ function validateMaximumTickCount(
  * - deterministic transition events
  * - sub-tick finish interpolation
  * - authoritative state-owned pressure
+ * - deterministic weather speed and runtime energy/stamina consumption when
+ *   canonical StageInput.weather is present
+ *
+ * The weather marker is attached only inside this calibrated wrapper.
+ * existing_v1 and weather-free synthetic inputs retain their original path.
  */
 export function runCalibratedTerrainSeparationStage(
   initialState:
@@ -84,9 +89,18 @@ export function runCalibratedTerrainSeparationStage(
     maximumTickCount,
   )
 
+  const calibratedInitialState =
+    initialState.input.weather
+      ? {
+          ...initialState,
+          weatherPerformanceEffectsEnabled:
+            true,
+        }
+      : initialState
+
   const stage =
     runIntegratedTerrainSeparationStage(
-      initialState,
+      calibratedInitialState,
       {
         terrainCapabilityInfluence:
           0.5,

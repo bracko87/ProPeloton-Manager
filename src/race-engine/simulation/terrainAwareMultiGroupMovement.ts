@@ -28,9 +28,9 @@ import {
 import {
   getStageTerrainSample,
 } from './stageProfile'
-import type {
-  SteepGradientSeverityModel,
-} from './steepGradientTerrainSeverity'
+import {
+  calculateWeatherPerformanceEffects,
+} from './weatherPerformanceEffects'
 
 export interface TerrainAwareGroupMovementDiagnostic {
   readonly groupId: string
@@ -43,16 +43,6 @@ export interface TerrainAwareMultiGroupMovementResult {
     MultiGroupMovementResult
   readonly groupDiagnostics:
     readonly TerrainAwareGroupMovementDiagnostic[]
-}
-
-export interface TerrainAwareMultiGroupMovementOptions {
-  /**
-   * Disabled by default. When disabled, movement remains exactly equivalent to
-   * the existing Phase 7B.7 terrain-aware calculation.
-   */
-  readonly steepGradientSeverityEnabled?: boolean
-  readonly steepGradientSeverityModel?:
-    SteepGradientSeverityModel
 }
 
 function getRacingGroupRiders(
@@ -101,17 +91,10 @@ function getRacingGroupRiders(
 
 /**
  * Calculates one candidate movement proposal for every active group.
- *
- * Partial-finish gap semantics match multiGroupMovement:
- * - before a winner exists, gaps use the active leader's speed;
- * - after a winner exists, a trailing group's gap is elapsed time since the
- *   winner finished plus its estimated remaining time to the finish.
  */
 export function calculateTerrainAwareMultiGroupMovement(
   state: SimulationState,
   terrainCapabilityInfluence: number,
-  options:
-    TerrainAwareMultiGroupMovementOptions = {},
 ): TerrainAwareMultiGroupMovementResult {
   if (state.completed) {
     throw new Error(
@@ -133,6 +116,29 @@ export function calculateTerrainAwareMultiGroupMovement(
       'calculateTerrainAwareMultiGroupMovement: tickSeconds must be a positive integer.',
     )
   }
+
+  const weatherEffects =
+    state
+      .weatherPerformanceEffectsEnabled ===
+      true
+      ? calculateWeatherPerformanceEffects(
+          state.input.weather,
+        )
+      : calculateWeatherPerformanceEffects(
+          undefined,
+        )
+
+  const weatherAdjustedMinimumSpeedKmh =
+    state.input.settings
+      .minimumSpeedKmh *
+    weatherEffects
+      .speedMultiplier
+
+  const weatherAdjustedMaximumSpeedKmh =
+    state.input.settings
+      .maximumSpeedKmh *
+    weatherEffects
+      .speedMultiplier
 
   const activeGroups =
     Object.values(
@@ -188,20 +194,10 @@ export function calculateTerrainAwareMultiGroupMovement(
               terrainSample
                 .gradientPercent,
             minimumSpeedKmh:
-              state.input.settings
-                .minimumSpeedKmh,
+              weatherAdjustedMinimumSpeedKmh,
             maximumSpeedKmh:
-              state.input.settings
-                .maximumSpeedKmh,
+              weatherAdjustedMaximumSpeedKmh,
             terrainCapabilityInfluence,
-            groupType:
-              group.groupType,
-            steepGradientSeverityEnabled:
-              options
-                .steepGradientSeverityEnabled,
-            steepGradientSeverityModel:
-              options
-                .steepGradientSeverityModel,
           })
 
         const unclampedNextDistanceKm =
@@ -258,52 +254,17 @@ export function calculateTerrainAwareMultiGroupMovement(
     )
   }
 
-  const activeLeaderDistanceKm =
+  const leaderDistanceKm =
     leaderEntry
       .nextDistanceKm
 
-  const raceLeaderDistanceKm =
-    Math.max(
-      state.currentKm,
-      activeLeaderDistanceKm,
-    )
-
-  const activeLeaderSpeedKmh =
+  const leaderSpeedKmh =
     Math.max(
       leaderEntry
         .pace
         .appliedSpeedKmh,
       0.000001,
     )
-
-  const finishedLeaderIsAhead =
-    raceLeaderDistanceKm >
-    activeLeaderDistanceKm
-
-  const existingFinishTimes =
-    Object.values(state.riders)
-      .filter(
-        (rider) =>
-          rider.stageStatus ===
-            'finished' &&
-          typeof rider.finishTimeSeconds ===
-            'number',
-      )
-      .map(
-        (rider) =>
-          rider.finishTimeSeconds as number,
-      )
-
-  const winnerFinishTimeSeconds =
-    existingFinishTimes.length > 0
-      ? Math.min(
-          ...existingFinishTimes,
-        )
-      : null
-
-  const predictedRaceSecond =
-    state.raceSecond +
-    tickSeconds
 
   const proposals:
     MultiGroupMovementProposal[] =
@@ -312,41 +273,18 @@ export function calculateTerrainAwareMultiGroupMovement(
         const distanceGapKm =
           Math.max(
             0,
-            raceLeaderDistanceKm -
+            leaderDistanceKm -
               entry.nextDistanceKm,
           )
 
-        const gapReferenceSpeedKmh =
-          finishedLeaderIsAhead
-            ? Math.max(
-                entry.pace
-                  .appliedSpeedKmh,
-                0.000001,
-              )
-            : activeLeaderSpeedKmh
-
-        const remainingTimeToLeaderSeconds =
+        const gapFromLeaderSeconds =
           distanceGapKm === 0
             ? 0
             : (
                 distanceGapKm /
-                gapReferenceSpeedKmh
+                leaderSpeedKmh
               ) *
               3600
-
-        const elapsedSinceWinnerSeconds =
-          finishedLeaderIsAhead &&
-          winnerFinishTimeSeconds !== null
-            ? Math.max(
-                0,
-                predictedRaceSecond -
-                  winnerFinishTimeSeconds,
-              )
-            : 0
-
-        const gapFromLeaderSeconds =
-          remainingTimeToLeaderSeconds +
-          elapsedSinceWinnerSeconds
 
         return {
           groupId:
@@ -395,8 +333,7 @@ export function calculateTerrainAwareMultiGroupMovement(
       tickSeconds,
       leaderGroupId:
         leaderEntry.group.groupId,
-      leaderDistanceKm:
-        activeLeaderDistanceKm,
+      leaderDistanceKm,
       proposals,
     },
     groupDiagnostics:

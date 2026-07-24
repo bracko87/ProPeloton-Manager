@@ -69,6 +69,150 @@ type DevelopingTeamRiderView = {
   potential?: number | null
 }
 
+type DevelopingTeamPageStatus = DevelopingTeamStatus & {
+  current_competition_name?: string | null
+  current_competition_place?: number | null
+  current_competition_total_teams?: number | null
+  team_exists?: boolean
+}
+
+function hasDevelopingTeamAccess(status: DevelopingTeamPageStatus | null): boolean {
+  return status?.is_purchased === true || status?.team_exists === true
+}
+
+type DevelopingCompetitionSummary = {
+  name: string
+  place: number | null
+  totalTeams: number | null
+}
+
+type DevelopingClubFallbackRow = {
+  id: string
+  name: string
+  parent_club_id: string | null
+}
+
+type ClubCurrentRankingPositionRow = {
+  competition_label?: string | null
+  rank_position?: number | string | null
+  total_teams?: number | string | null
+}
+
+function normalizeOptionalRankingInteger(
+  value?: number | string | null,
+): number | null {
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return Math.trunc(value)
+  }
+
+  if (typeof value === 'string' && value.trim()) {
+    const parsed = Number(value)
+    return Number.isFinite(parsed) ? Math.trunc(parsed) : null
+  }
+
+  return null
+}
+
+function normalizeCompetitionLabel(value?: string | null): string | null {
+  const label = String(value ?? '').trim()
+
+  if (!label) return null
+
+  return label
+    .replace(/^Amateur\s+-\s+/i, 'Amateur: ')
+    .replace(/Southern Balkan Europe/i, 'Southern & Balkan Europe')
+}
+
+async function fetchDevelopingTeamCompetitionSummary(
+  clubId: string,
+): Promise<DevelopingCompetitionSummary | null> {
+  const { data, error } = await supabase.rpc(
+    'get_club_current_ranking_position_v1',
+    {
+      p_club_id: clubId,
+    },
+  )
+
+  if (error) {
+    console.warn(
+      'Could not load canonical Developing Team competition position:',
+      error,
+    )
+    return null
+  }
+
+  const normalized = Array.isArray(data) ? data[0] : data
+  const row =
+    normalized && typeof normalized === 'object'
+      ? (normalized as ClubCurrentRankingPositionRow)
+      : null
+
+  if (!row) return null
+
+  const name = normalizeCompetitionLabel(row.competition_label)
+  const place = normalizeOptionalRankingInteger(row.rank_position)
+  const totalTeams = normalizeOptionalRankingInteger(row.total_teams)
+
+  if (!name && place === null && totalTeams === null) {
+    return null
+  }
+
+  return {
+    name: name ?? 'Competition unavailable',
+    place,
+    totalTeams,
+  }
+}
+
+
+const DEVELOPING_TEAM_COMPETITION_CACHE_PREFIX =
+  'ppm:developing-team-competition:'
+
+function readCompetitionSummaryCache(
+  clubId: string,
+): DevelopingCompetitionSummary | null {
+  if (typeof window === 'undefined') return null
+
+  try {
+    const raw = window.sessionStorage.getItem(
+      `${DEVELOPING_TEAM_COMPETITION_CACHE_PREFIX}${clubId}`,
+    )
+
+    if (!raw) return null
+
+    const parsed = JSON.parse(raw) as Partial<DevelopingCompetitionSummary>
+    const name = String(parsed.name ?? '').trim()
+    const place = normalizeOptionalRankingInteger(parsed.place ?? null)
+    const totalTeams = normalizeOptionalRankingInteger(parsed.totalTeams ?? null)
+
+    if (!name && place === null && totalTeams === null) return null
+
+    return {
+      name: name || 'Competition unavailable',
+      place,
+      totalTeams,
+    }
+  } catch {
+    return null
+  }
+}
+
+function writeCompetitionSummaryCache(
+  clubId: string,
+  summary: DevelopingCompetitionSummary,
+): void {
+  if (typeof window === 'undefined') return
+
+  try {
+    window.sessionStorage.setItem(
+      `${DEVELOPING_TEAM_COMPETITION_CACHE_PREFIX}${clubId}`,
+      JSON.stringify(summary),
+    )
+  } catch {
+    // Ignore storage failures. Live data remains the source of truth.
+  }
+}
+
 function buildRiderFullName(
   firstName?: string | null,
   lastName?: string | null,
@@ -111,6 +255,13 @@ function normalizePointsValue(value: unknown, fallback = 0): number {
   return fallback
 }
 
+function getPremiumAccessFromResult(value: unknown): boolean {
+  const normalizedValue = Array.isArray(value) ? value[0] : value
+
+  if (!normalizedValue || typeof normalizedValue !== 'object') return false
+
+  return (normalizedValue as Record<string, unknown>).is_premium === true
+}
 
 type SquadSeasonDashboardChartPoint = {
   label: string
@@ -232,6 +383,18 @@ function createEmptySquadSeasonDashboardData(): SquadSeasonDashboardData {
       { label: 'Mountain days', value: 0 },
       { label: 'Time trials', value: 0 },
     ],
+  }
+}
+
+function createOperationalSquadSeasonDashboardData(
+  dashboardData: SquadSeasonDashboardData,
+): SquadSeasonDashboardData {
+  const fallback = createEmptySquadSeasonDashboardData()
+
+  return {
+    ...fallback,
+    lastTeamRace: dashboardData.lastTeamRace,
+    nextRaceSelection: dashboardData.nextRaceSelection,
   }
 }
 
@@ -473,14 +636,18 @@ export default function DevelopingTeamPage() {
   const [error, setError] = useState<string | null>(null)
   const [statusError, setStatusError] = useState<string | null>(null)
   const [gameDate, setGameDate] = useState<string | null>(null)
-  const [developingTeamStatus, setDevelopingTeamStatus] = useState<DevelopingTeamStatus | null>(
-    null
-  )
+  const [developingTeamStatus, setDevelopingTeamStatus] =
+    useState<DevelopingTeamPageStatus | null>(null)
+  const [competitionSummary, setCompetitionSummary] =
+    useState<DevelopingCompetitionSummary | null>(null)
+  const [competitionLoading, setCompetitionLoading] = useState(true)
   const [firstSquadRiderCount, setFirstSquadRiderCount] = useState(0)
   const [selectedRiderId, setSelectedRiderId] = useState<string | null>(null)
   const [movingRiderId, setMovingRiderId] = useState<string | null>(null)
   const [moveActionMessage, setMoveActionMessage] = useState<string | null>(null)
   const [listView, setListView] = useState<SquadListView>('general')
+  const [isPremium, setIsPremium] = useState(false)
+  const [isPremiumLoading, setIsPremiumLoading] = useState(true)
   const [developingTeamSeasonDashboardData, setDevelopingTeamSeasonDashboardData] =
     useState<SquadSeasonDashboardData>(() => createEmptySquadSeasonDashboardData())
 
@@ -544,86 +711,148 @@ export default function DevelopingTeamPage() {
     setLoading(true)
     setError(null)
     setStatusError(null)
+    setIsPremiumLoading(true)
 
     try {
-      const { data: authData, error: authErr } = await supabase.auth.getUser()
+      const [
+        { data: authData, error: authErr },
+        { data: currentGameDate, error: gameDateErr },
+        { data: premiumStatusData, error: premiumStatusErr },
+        { data: devStatusData, error: devStatusErr },
+      ] = await Promise.all([
+        supabase.auth.getUser(),
+        supabase.rpc('get_current_game_date'),
+        supabase.rpc('get_my_premium_status'),
+        supabase.rpc('get_developing_team_status'),
+      ])
+
       if (authErr) throw authErr
+      if (gameDateErr) throw gameDateErr
+
+      if (premiumStatusErr) {
+        console.warn('Failed to load Premium status:', premiumStatusErr)
+      }
+
+      const hasPremiumAccess =
+        !premiumStatusErr && getPremiumAccessFromResult(premiumStatusData)
+
+      setIsPremium(hasPremiumAccess)
+      setIsPremiumLoading(false)
+
+      if (!hasPremiumAccess) {
+        setHealthOverviewRows([])
+        setDevelopingTeamSeasonDashboardData((currentData) =>
+          createOperationalSquadSeasonDashboardData(currentData)
+        )
+      }
 
       const userId = authData.user?.id
       if (!userId) throw new Error('Not authenticated.')
 
-      const { data: currentGameDate, error: gameDateErr } = await supabase.rpc(
-        'get_current_game_date'
-      )
-      if (gameDateErr) throw gameDateErr
       const normalizedGameDate = normalizeGameDateValue(currentGameDate)
+      const seasonYear = getSeasonYearFromGameDate(normalizedGameDate)
       setGameDate(normalizedGameDate)
 
-      const { data: devStatusData, error: devStatusErr } = await supabase.rpc(
-        'get_developing_team_status'
-      )
+      let status: DevelopingTeamPageStatus | null = null
 
       if (devStatusErr) {
         console.error('get_developing_team_status failed:', devStatusErr)
-        setDevelopingTeamStatus(null)
-        setStatusError(devStatusErr.message ?? 'Could not load Developing Team status.')
-        setRows([])
-        setHealthOverviewRows([])
-        setFirstSquadRiderCount(0)
-        return
+
+        const { data: fallbackDevelopingClubData, error: fallbackDevelopingClubErr } =
+          await supabase
+            .from('clubs')
+            .select('id, name, parent_club_id')
+            .eq('owner_user_id', userId)
+            .eq('club_type', 'developing')
+            .is('deleted_at', null)
+            .order('created_at', { ascending: true })
+            .limit(1)
+            .maybeSingle()
+
+        if (fallbackDevelopingClubErr) {
+          console.error(
+            'Could not recover Developing Team directly from clubs:',
+            fallbackDevelopingClubErr
+          )
+        }
+
+        const fallbackDevelopingClub =
+          (fallbackDevelopingClubData ?? null) as DevelopingClubFallbackRow | null
+
+        if (!fallbackDevelopingClub?.id) {
+          setDevelopingTeamStatus(null)
+          setStatusError(devStatusErr.message ?? 'Could not load Developing Team status.')
+          setRows([])
+          setHealthOverviewRows([])
+          setFirstSquadRiderCount(0)
+          setCompetitionSummary(null)
+          setCompetitionLoading(false)
+          return
+        }
+
+        status = {
+          main_club_id: fallbackDevelopingClub.parent_club_id,
+          main_club_name: null,
+          developing_club_id: fallbackDevelopingClub.id,
+          developing_club_name: fallbackDevelopingClub.name,
+          is_purchased: true,
+          movement_window_open: false,
+          current_window_label: null,
+          next_window_label: null,
+        } as unknown as DevelopingTeamPageStatus
+
+        setStatusError(null)
+      } else {
+        const normalizedDevStatus = Array.isArray(devStatusData)
+          ? devStatusData[0]
+          : devStatusData
+
+        status = (normalizedDevStatus ?? null) as DevelopingTeamPageStatus | null
       }
 
-      const normalizedDevStatus = Array.isArray(devStatusData) ? devStatusData[0] : devStatusData
-      const status = (normalizedDevStatus ?? null) as DevelopingTeamStatus | null
       setDevelopingTeamStatus(status)
 
-      if (status?.developing_club_id) {
-        const dashboardData = await fetchSquadSeasonDashboardData(
-          status.developing_club_id,
-          getSeasonYearFromGameDate(normalizedGameDate)
-        )
-        setDevelopingTeamSeasonDashboardData(dashboardData)
-
-        const { data: healthData, error: healthErr } = await supabase.rpc(
-          'get_club_health_overview',
-          {
-            p_club_id: status.developing_club_id,
-          }
-        )
-
-        if (healthErr) throw healthErr
-        setHealthOverviewRows((healthData ?? []) as ClubHealthOverviewRow[])
-      } else {
-        setHealthOverviewRows([])
-        setDevelopingTeamSeasonDashboardData(createEmptySquadSeasonDashboardData())
-      }
-
-      const mainClubId = status?.main_club_id
-      if (mainClubId) {
-        const { data: mainRoster, error: mainRosterErr } = await supabase
-          .from('club_roster')
-          .select('rider_id')
-          .eq('club_id', mainClubId)
-
-        if (mainRosterErr) throw mainRosterErr
-        setFirstSquadRiderCount((mainRoster ?? []).length)
-      } else {
-        setFirstSquadRiderCount(0)
-      }
-
-      if (!status?.is_purchased || !status.developing_club_id) {
+      if (!hasDevelopingTeamAccess(status) || !status?.developing_club_id) {
         setRows([])
         setHealthOverviewRows([])
+        setCompetitionSummary(null)
+        setCompetitionLoading(false)
         setDevelopingTeamSeasonDashboardData(createEmptySquadSeasonDashboardData())
         return
       }
 
+      const developingClubId = status.developing_club_id
+      const cachedCompetitionSummary = readCompetitionSummaryCache(developingClubId)
+
+      if (
+        status.current_competition_name ||
+        status.current_competition_place != null ||
+        status.current_competition_total_teams != null
+      ) {
+        const statusCompetitionSummary = {
+          name: status.current_competition_name ?? 'Competition unavailable',
+          place: status.current_competition_place ?? null,
+          totalTeams: status.current_competition_total_teams ?? null,
+        }
+
+        setCompetitionSummary(statusCompetitionSummary)
+        writeCompetitionSummaryCache(developingClubId, statusCompetitionSummary)
+        setCompetitionLoading(false)
+      } else if (cachedCompetitionSummary) {
+        setCompetitionSummary(cachedCompetitionSummary)
+        setCompetitionLoading(true)
+      } else {
+        setCompetitionSummary(null)
+        setCompetitionLoading(true)
+      }
+
+      // Load the roster first. This is the only request that blocks first paint.
       const { data: roster, error: rosterErr } = await supabase
         .from('club_roster')
         .select(
           'club_id, rider_id, display_name, country_code, assigned_role, age_years, overall, availability_status, fatigue'
         )
-        .eq('club_id', status.developing_club_id)
+        .eq('club_id', developingClubId)
         .order('overall', { ascending: false })
 
       if (rosterErr) throw rosterErr
@@ -631,36 +860,79 @@ export default function DevelopingTeamPage() {
       const rosterRows = (roster ?? []) as DevelopingRosterRow[]
       const riderIds = rosterRows.map((row) => row.rider_id)
 
-      let riderMetaMap = new Map<
-        string,
-        {
-          id: string
-          first_name: string | null
-          last_name: string | null
-          display_name: string | null
-          birth_date: string | null
-          salary: number | null
-          contract_expires_at: string | null
-          contract_expires_season: number | null
-          market_value: number | null
-          sprint: number | null
-          climbing: number | null
-          time_trial: number | null
-          flat: number | null
-          endurance: number | null
-          recovery: number | null
-          resistance: number | null
-          race_iq: number | null
-          teamwork: number | null
-          morale: number | null
-          potential: number | null
-          fatigue: number | null
-          availability_status: RiderAvailabilityStatus | null
-        }
-      >()
+      setRows(rosterRows)
+      setLoading(false)
 
+      // Competition is operational data, but it must never delay the roster.
+      void fetchDevelopingTeamCompetitionSummary(developingClubId)
+        .then((summary) => {
+          if (summary) {
+            setCompetitionSummary(summary)
+            writeCompetitionSummaryCache(developingClubId, summary)
+          }
+        })
+        .catch((competitionError) => {
+          console.warn(
+            'Could not load Developing Team competition summary:',
+            competitionError
+          )
+        })
+        .finally(() => {
+          setCompetitionLoading(false)
+        })
+
+      // Last/Next Team Race remain Free. Premium analytics are sanitized for Free users.
+      void fetchSquadSeasonDashboardData(developingClubId, seasonYear)
+        .then((dashboardData) => {
+          setDevelopingTeamSeasonDashboardData(
+            hasPremiumAccess
+              ? dashboardData
+              : createOperationalSquadSeasonDashboardData(dashboardData)
+          )
+        })
+        .catch((dashboardError) => {
+          console.warn('Failed to load Developing Team dashboard data:', dashboardError)
+          setDevelopingTeamSeasonDashboardData(createEmptySquadSeasonDashboardData())
+        })
+
+      if (hasPremiumAccess) {
+        void supabase
+          .rpc('get_club_health_overview', {
+            p_club_id: developingClubId,
+          })
+          .then(({ data: healthData, error: healthErr }) => {
+            if (healthErr) {
+              console.warn('Failed to load Developing Team health overview:', healthErr)
+              return
+            }
+
+            setHealthOverviewRows((healthData ?? []) as ClubHealthOverviewRow[])
+          })
+      } else {
+        setHealthOverviewRows([])
+      }
+
+      // The First Squad count is needed only for movement capacity checks.
+      if (status.main_club_id) {
+        void supabase
+          .from('club_roster')
+          .select('rider_id')
+          .eq('club_id', status.main_club_id)
+          .then(({ data: mainRoster, error: mainRosterErr }) => {
+            if (mainRosterErr) {
+              console.warn('Failed to load First Squad rider count:', mainRosterErr)
+              return
+            }
+
+            setFirstSquadRiderCount((mainRoster ?? []).length)
+          })
+      } else {
+        setFirstSquadRiderCount(0)
+      }
+
+      // Hydrate advanced rider fields after the table is already visible.
       if (riderIds.length > 0) {
-        const { data: riderMetaRows, error: riderMetaErr } = await supabase
+        void supabase
           .from('riders')
           .select(
             `
@@ -689,79 +961,87 @@ export default function DevelopingTeamPage() {
           `
           )
           .in('id', riderIds)
+          .then(({ data: riderMetaRows, error: riderMetaErr }) => {
+            if (riderMetaErr) {
+              console.warn('Failed to load Developing Team rider metadata:', riderMetaErr)
+              return
+            }
 
-        if (riderMetaErr) throw riderMetaErr
+            const riderMetaMap = new Map(
+              (
+                (riderMetaRows ?? []) as Array<{
+                  id: string
+                  first_name: string | null
+                  last_name: string | null
+                  display_name: string | null
+                  birth_date: string | null
+                  salary: number | null
+                  contract_expires_at: string | null
+                  contract_expires_season: number | null
+                  market_value: number | null
+                  sprint: number | null
+                  climbing: number | null
+                  time_trial: number | null
+                  flat: number | null
+                  endurance: number | null
+                  recovery: number | null
+                  resistance: number | null
+                  race_iq: number | null
+                  teamwork: number | null
+                  morale: number | null
+                  potential: number | null
+                  fatigue: number | null
+                  availability_status: RiderAvailabilityStatus | null
+                }>
+              ).map((row) => [row.id, row])
+            )
 
-        riderMetaMap = new Map(
-          (
-            riderMetaRows as Array<{
-              id: string
-              first_name: string | null
-              last_name: string | null
-              display_name: string | null
-              birth_date: string | null
-              salary: number | null
-              contract_expires_at: string | null
-              contract_expires_season: number | null
-              market_value: number | null
-              sprint: number | null
-              climbing: number | null
-              time_trial: number | null
-              flat: number | null
-              endurance: number | null
-              recovery: number | null
-              resistance: number | null
-              race_iq: number | null
-              teamwork: number | null
-              morale: number | null
-              potential: number | null
-              fatigue: number | null
-              availability_status: RiderAvailabilityStatus | null
-            }>
-          ).map((row) => [row.id, row])
-        )
+            const mergedRows: DevelopingRosterRow[] = rosterRows.map((row) => {
+              const riderMeta = riderMetaMap.get(row.rider_id)
+              const fullName = buildRiderFullName(
+                riderMeta?.first_name,
+                riderMeta?.last_name,
+                riderMeta?.display_name ?? row.display_name
+              )
+
+              return {
+                ...row,
+                display_name: fullName,
+                full_name: fullName,
+                first_name: riderMeta?.first_name ?? null,
+                last_name: riderMeta?.last_name ?? null,
+                birth_date: riderMeta?.birth_date ?? null,
+                market_value: riderMeta?.market_value ?? null,
+                salary: riderMeta?.salary ?? null,
+                contract_expires_at: riderMeta?.contract_expires_at ?? null,
+                contract_expires_season: riderMeta?.contract_expires_season ?? null,
+                sprint: riderMeta?.sprint ?? null,
+                climbing: riderMeta?.climbing ?? null,
+                time_trial: riderMeta?.time_trial ?? null,
+                flat: riderMeta?.flat ?? null,
+                endurance: riderMeta?.endurance ?? null,
+                recovery: riderMeta?.recovery ?? null,
+                resistance: riderMeta?.resistance ?? null,
+                race_iq: riderMeta?.race_iq ?? null,
+                teamwork: riderMeta?.teamwork ?? null,
+                morale: riderMeta?.morale ?? null,
+                potential: riderMeta?.potential ?? null,
+                fatigue: row.fatigue ?? riderMeta?.fatigue ?? null,
+                availability_status:
+                  row.availability_status ?? riderMeta?.availability_status ?? null,
+              }
+            })
+
+            setRows(mergedRows)
+          })
       }
-
-      const mergedRows: DevelopingRosterRow[] = rosterRows.map((row) => {
-        const riderMeta = riderMetaMap.get(row.rider_id)
-        const fullName = buildRiderFullName(
-          riderMeta?.first_name,
-          riderMeta?.last_name,
-          riderMeta?.display_name ?? row.display_name
-        )
-
-        return {
-          ...row,
-          display_name: fullName,
-          full_name: fullName,
-          first_name: riderMeta?.first_name ?? null,
-          last_name: riderMeta?.last_name ?? null,
-          birth_date: riderMeta?.birth_date ?? null,
-          market_value: riderMeta?.market_value ?? null,
-          salary: riderMeta?.salary ?? null,
-          contract_expires_at: riderMeta?.contract_expires_at ?? null,
-          contract_expires_season: riderMeta?.contract_expires_season ?? null,
-          sprint: riderMeta?.sprint ?? null,
-          climbing: riderMeta?.climbing ?? null,
-          time_trial: riderMeta?.time_trial ?? null,
-          flat: riderMeta?.flat ?? null,
-          endurance: riderMeta?.endurance ?? null,
-          recovery: riderMeta?.recovery ?? null,
-          resistance: riderMeta?.resistance ?? null,
-          race_iq: riderMeta?.race_iq ?? null,
-          teamwork: riderMeta?.teamwork ?? null,
-          morale: riderMeta?.morale ?? null,
-          potential: riderMeta?.potential ?? null,
-          fatigue: row.fatigue ?? riderMeta?.fatigue ?? null,
-          availability_status:
-            row.availability_status ?? riderMeta?.availability_status ?? null,
-        }
-      })
-
-      setRows(mergedRows)
     } catch (e: any) {
+      setIsPremium(false)
+      setIsPremiumLoading(false)
       setRows([])
       setHealthOverviewRows([])
+      setCompetitionSummary(null)
+      setCompetitionLoading(false)
       setDevelopingTeamSeasonDashboardData(createEmptySquadSeasonDashboardData())
       setError(e?.message ?? 'Failed to load Developing Team.')
     } finally {
@@ -774,7 +1054,13 @@ export default function DevelopingTeamPage() {
   }, [loadDevelopingTeamPageData])
 
   useEffect(() => {
-    if (!loading && !error && developingTeamStatus && !developingTeamStatus.is_purchased) {
+    if (!isPremium && listView !== 'general') {
+      setListView('general')
+    }
+  }, [isPremium, listView])
+
+  useEffect(() => {
+    if (!loading && !error && developingTeamStatus && !hasDevelopingTeamAccess(developingTeamStatus)) {
       navigate('/dashboard/squad', { replace: true })
     }
   }, [loading, error, developingTeamStatus, navigate])
@@ -831,7 +1117,7 @@ export default function DevelopingTeamPage() {
   const developingTeamStatusResolved =
     developingTeamStatus !== null || statusError !== null || (!loading && !error)
 
-  const hasDevelopingTeam = developingTeamStatus?.is_purchased === true
+  const hasDevelopingTeam = hasDevelopingTeamAccess(developingTeamStatus)
   const movementWindowOpen = developingTeamStatus?.movement_window_open ?? false
 
   const movementWindowSummary = developingTeamStatus
@@ -840,7 +1126,22 @@ export default function DevelopingTeamPage() {
       : `Movement window closed. Next window: ${developingTeamStatus.next_window_label ?? 'Unknown'}`
     : 'Movement window information unavailable.'
 
-  if (!loading && !error && developingTeamStatus && !developingTeamStatus.is_purchased) {
+  const currentCompetitionName =
+    competitionSummary?.name ??
+    developingTeamStatus?.current_competition_name ??
+    (competitionLoading ? 'Loading competition…' : 'Competition unavailable')
+
+  const currentCompetitionPlace =
+    competitionSummary?.place ??
+    developingTeamStatus?.current_competition_place ??
+    null
+
+  const currentCompetitionTotalTeams =
+    competitionSummary?.totalTeams ??
+    developingTeamStatus?.current_competition_total_teams ??
+    null
+
+  if (!loading && !error && developingTeamStatus && !hasDevelopingTeam) {
     return null
   }
 
@@ -923,7 +1224,7 @@ export default function DevelopingTeamPage() {
                   Current Competition
                 </div>
                 <div className="mt-1 text-base font-semibold text-slate-900">
-                  {developingTeamStatus?.current_competition_name ?? 'Competition unavailable'}
+                  {currentCompetitionName}
                 </div>
               </div>
 
@@ -932,11 +1233,11 @@ export default function DevelopingTeamPage() {
                   Current Place
                 </div>
                 <div className="mt-1 text-2xl font-semibold tracking-tight text-slate-900">
-                  {formatOrdinal(developingTeamStatus?.current_competition_place)}
+                  {formatOrdinal(currentCompetitionPlace)}
                 </div>
-                {developingTeamStatus?.current_competition_total_teams ? (
+                {currentCompetitionTotalTeams ? (
                   <div className="text-xs text-slate-500">
-                    of {developingTeamStatus.current_competition_total_teams} teams
+                    of {currentCompetitionTotalTeams} teams
                   </div>
                 ) : null}
               </div>
@@ -950,6 +1251,8 @@ export default function DevelopingTeamPage() {
             gameDate={gameDate}
             listView={listView}
             onListViewChange={setListView}
+            isPremium={isPremium}
+            isPremiumLoading={isPremiumLoading}
             squadMax={DEVELOPING_TEAM_MAX}
             firstSquadRiderCount={firstSquadRiderCount}
             movementWindowOpen={movementWindowOpen}

@@ -4,9 +4,10 @@
  * Pure deterministic rider-energy application for one verified multi-group
  * movement result.
  *
- * This utility applies group-specific speed, base pace, gradient, and tick
- * duration to every racing rider. It does not move groups, advance the clock,
- * finish riders, create events, or activate runtime execution.
+ * This utility applies group-specific speed, base pace, gradient, tick
+ * duration, and the optional calibrated weather-consumption multiplier to
+ * every racing rider. It does not move groups, advance the clock, finish
+ * riders, create events, or activate production execution.
  */
 
 import type { RiderState } from '../domain/RiderState'
@@ -19,6 +20,9 @@ import type {
   MultiGroupMovementProposal,
   MultiGroupMovementResult,
 } from './multiGroupMovement'
+import {
+  calculateWeatherPerformanceEffects,
+} from './weatherPerformanceEffects'
 
 /**
  * MultiGroupRiderEnergyApplication
@@ -45,7 +49,7 @@ export interface MultiGroupRiderEnergyApplication {
   readonly appliedSpeedKmh: number
   /** Gradient percent used for the energy calculation */
   readonly gradientPercent: number
-  /** Full result from calculateRiderEnergyCost */
+  /** Full result from calculateRiderEnergyCost after weather adjustment */
   readonly result: RiderEnergyCostResult
 }
 
@@ -75,15 +79,6 @@ export interface ApplyMultiGroupEnergyResult {
     readonly MultiGroupRiderEnergyApplication[]
 }
 
-/**
- * createProposalMap
- *
- * Create a lookup map keyed by groupId from an array of movement proposals.
- * Validates duplicate proposals.
- *
- * @param proposals - movement proposals
- * @returns record mapping groupId -> proposal
- */
 function createProposalMap(
   proposals:
     readonly MultiGroupMovementProposal[],
@@ -122,16 +117,22 @@ function createProposalMap(
   return Object.fromEntries(entries)
 }
 
+function roundEnergy(
+  value: number,
+): number {
+  return Number(
+    value.toFixed(6),
+  )
+}
+
 /**
- * applyMultiGroupEnergy
+ * Applies deterministic energy cost to every racing rider.
  *
- * Applies deterministic energy cost to every racing rider using the supplied
- * movement result. The function validates that the state matches the movement
- * (positions and speeds) and returns a new state object with updated rider
- * energies plus a list of per-rider application details.
- *
- * @param input - input state and movement result
- * @returns updated state and applications
+ * Runtime rider.energy is the engine's stage stamina/energy reserve. When the
+ * calibrated wrapper enables weather performance, the larger of the weather
+ * energy-consumption and stamina-consumption multipliers is applied to the
+ * canonical energy cost. Current weather rules keep those two multipliers
+ * equal, while the maximum preserves safe behavior if they diverge later.
  */
 export function applyMultiGroupEnergy(
   input: ApplyMultiGroupEnergyInput,
@@ -155,6 +156,25 @@ export function applyMultiGroupEnergy(
       'applyMultiGroupEnergy: movement tick duration does not match simulation settings.',
     )
   }
+
+  const weatherEffects =
+    state
+      .weatherPerformanceEffectsEnabled ===
+      true
+      ? calculateWeatherPerformanceEffects(
+          state.input.weather,
+        )
+      : calculateWeatherPerformanceEffects(
+          undefined,
+        )
+
+  const weatherConsumptionMultiplier =
+    Math.max(
+      weatherEffects
+        .energyConsumptionMultiplier,
+      weatherEffects
+        .staminaConsumptionMultiplier,
+    )
 
   const proposalByGroupId =
     createProposalMap(
@@ -237,7 +257,7 @@ export function applyMultiGroupEnergy(
             )
           }
 
-          const result =
+          const unadjustedResult =
             calculateRiderEnergyCost({
               currentEnergy:
                 rider.energy,
@@ -261,6 +281,34 @@ export function applyMultiGroupEnergy(
                 rider.attributes
                   .recovery,
             })
+
+          const weatherAdjustedEnergyCost =
+            roundEnergy(
+              Math.min(
+                rider.energy,
+                unadjustedResult
+                  .energyCost *
+                  weatherConsumptionMultiplier,
+              ),
+            )
+
+          const weatherAdjustedNextEnergy =
+            roundEnergy(
+              Math.max(
+                0,
+                rider.energy -
+                  weatherAdjustedEnergyCost,
+              ),
+            )
+
+          const result:
+            RiderEnergyCostResult = {
+              ...unadjustedResult,
+              energyCost:
+                weatherAdjustedEnergyCost,
+              nextEnergy:
+                weatherAdjustedNextEnergy,
+            }
 
           applications.push({
             riderId,

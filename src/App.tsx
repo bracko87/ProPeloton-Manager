@@ -127,6 +127,7 @@ import SubTickFinishInterpolationDiagnostic from './pages/dev/SubTickFinishInter
 import DroppedTransitionEventsDiagnostic from './pages/dev/DroppedTransitionEventsDiagnostic'
 import AuthoritativeSeparationPressureDiagnostic from './pages/dev/AuthoritativeSeparationPressureDiagnostic'
 import CalibratedSimulationModeDiagnostic from './pages/dev/CalibratedSimulationModeDiagnostic'
+import LiveSupabaseCalibratedShadowDiagnostic from './pages/dev/LiveSupabaseCalibratedShadowDiagnostic'
 
 /**
  * Validate team ranking configuration at startup to catch config mistakes early.
@@ -616,6 +617,17 @@ export default function App(): JSX.Element {
             path="/dev/calibrated-simulation-mode"
             element={
               <CalibratedSimulationModeDiagnostic />
+            }
+          />
+
+          <Route
+            path="/dev/live-supabase-calibrated-shadow"
+            element={
+              <RequireAuth>
+                <RequireClub>
+                  <LiveSupabaseCalibratedShadowDiagnostic />
+                </RequireClub>
+              </RequireAuth>
             }
           />
 

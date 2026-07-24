@@ -126,6 +126,77 @@ function validateProfilePoints(
   }
 }
 
+function validateRiderCondition(
+  rider: StageRiderInput,
+  riderIndex: number,
+  issues: string[],
+): void {
+  const condition =
+    rider.condition
+
+  if (condition === undefined) {
+    return
+  }
+
+  if (
+    condition === null ||
+    typeof condition !== 'object'
+  ) {
+    issues.push(
+      `riders[${riderIndex}].condition must be an object when provided.`,
+    )
+    return
+  }
+
+  const boundedValues:
+    ReadonlyArray<
+      readonly [
+        fieldName: string,
+        value: unknown,
+      ]
+    > = [
+      [
+        'startingEnergy',
+        condition.startingEnergy,
+      ],
+      [
+        'fatigueBeforeStage',
+        condition.fatigueBeforeStage,
+      ],
+      [
+        'morale',
+        condition.morale,
+      ],
+    ]
+
+  for (
+    const [
+      fieldName,
+      value,
+    ] of boundedValues
+  ) {
+    if (
+      !isFiniteNumber(value) ||
+      value < 0 ||
+      value > 100
+    ) {
+      issues.push(
+        `riders[${riderIndex}].condition.${fieldName} must be finite and between 0 and 100.`,
+      )
+    }
+  }
+
+  if (
+    !isNonBlankString(
+      condition.availabilityStatus,
+    )
+  ) {
+    issues.push(
+      `riders[${riderIndex}].condition.availabilityStatus must not be blank.`,
+    )
+  }
+}
+
 function validateRiders(
   riders: readonly StageRiderInput[],
   issues: string[],
@@ -170,6 +241,12 @@ function validateRiders(
     ) {
       issues.push(`riders[${index}].attributes must be an object.`)
     }
+
+    validateRiderCondition(
+      rider,
+      index,
+      issues,
+    )
   }
 
   return riderById
@@ -299,6 +376,160 @@ function validateTeams(
   }
 }
 
+
+function validateOptionalBoundedNumber(
+  value: unknown,
+  fieldName: string,
+  minimum: number,
+  maximum: number,
+  issues: string[],
+): void {
+  if (value === null) {
+    return
+  }
+
+  if (
+    !isFiniteNumber(value) ||
+    value < minimum ||
+    value > maximum
+  ) {
+    issues.push(
+      `${fieldName} must be null or a finite number between ${minimum} and ${maximum}.`,
+    )
+  }
+}
+
+function validateWeather(
+  weather: StageInput['weather'],
+  issues: string[],
+): void {
+  if (weather === undefined) {
+    return
+  }
+
+  if (
+    weather === null ||
+    typeof weather !== 'object'
+  ) {
+    issues.push(
+      'weather must be an object when provided.',
+    )
+    return
+  }
+
+  if (
+    weather.authority !==
+      'stage_weather_snapshot' &&
+    weather.authority !==
+      'profile_weather_snapshot'
+  ) {
+    issues.push(
+      'weather.authority must be stage_weather_snapshot or profile_weather_snapshot.',
+    )
+  }
+
+  if (!isNonBlankString(weather.source)) {
+    issues.push(
+      'weather.source must not be blank.',
+    )
+  }
+
+  if (!isNonBlankString(weather.condition)) {
+    issues.push(
+      'weather.condition must not be blank.',
+    )
+  }
+
+  if (
+    weather.summary !== null &&
+    typeof weather.summary !== 'string'
+  ) {
+    issues.push(
+      'weather.summary must be a string or null.',
+    )
+  }
+
+  validateOptionalBoundedNumber(
+    weather.averageTemperatureC,
+    'weather.averageTemperatureC',
+    -100,
+    100,
+    issues,
+  )
+
+  validateOptionalBoundedNumber(
+    weather.minimumTemperatureC,
+    'weather.minimumTemperatureC',
+    -100,
+    100,
+    issues,
+  )
+
+  validateOptionalBoundedNumber(
+    weather.maximumTemperatureC,
+    'weather.maximumTemperatureC',
+    -100,
+    100,
+    issues,
+  )
+
+  validateOptionalBoundedNumber(
+    weather.windSpeedKmh,
+    'weather.windSpeedKmh',
+    0,
+    500,
+    issues,
+  )
+
+  validateOptionalBoundedNumber(
+    weather.precipitationMm,
+    'weather.precipitationMm',
+    0,
+    1000,
+    issues,
+  )
+
+  if (
+    isFiniteNumber(
+      weather.minimumTemperatureC,
+    ) &&
+    isFiniteNumber(
+      weather.maximumTemperatureC,
+    ) &&
+    weather.maximumTemperatureC <
+      weather.minimumTemperatureC
+  ) {
+    issues.push(
+      'weather.maximumTemperatureC must be greater than or equal to weather.minimumTemperatureC.',
+    )
+  }
+
+  for (
+    const [
+      fieldName,
+      value,
+    ] of [
+      [
+        'hostCity',
+        weather.hostCity,
+      ],
+      [
+        'countryCode',
+        weather.countryCode,
+      ],
+    ] as const
+  ) {
+    if (
+      value !== null &&
+      !isNonBlankString(value)
+    ) {
+      issues.push(
+        `weather.${fieldName} must be a non-blank string or null.`,
+      )
+    }
+  }
+}
+
 /**
  * Validate a complete StageInput.
  */
@@ -383,6 +614,11 @@ export function validateStageInput(stageInput: StageInput): void {
       )
     }
   }
+
+  validateWeather(
+    stageInput.weather,
+    issues,
+  )
 
   const riderById = validateRiders(stageInput.riders, issues)
   validateTeams(stageInput.teams, riderById, issues)

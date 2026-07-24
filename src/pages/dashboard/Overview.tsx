@@ -1,7 +1,7 @@
 /**
  * Overview.tsx
  * Redesigned dashboard overview page for ProPeloton-style club management.
- * v26: keeps race flags fixed and aligns overview income/expenses with Finance Overview statement rows.
+ * v28: compacts the Staff Briefing Centre placeholder while preserving existing dashboard data and Premium-gated widgets.
  *
  * Notes:
  * - Built for HashRouter links (`#/dashboard/...`).
@@ -257,6 +257,30 @@ type DashboardOverviewData = {
   emergencyDebt: EmergencyDebtHealth;
   quickActions: QuickActionItem[];
   mainSponsor: MainSponsor;
+};
+
+type PremiumStatusRow = {
+  access_tier: string;
+  is_premium: boolean;
+  plan_code: string | null;
+  plan_name: string | null;
+  stripe_status: string;
+  access_until: string | null;
+  cancel_at_period_end: boolean;
+  current_period_end: string | null;
+  coins_per_paid_invoice: number;
+};
+
+type CoinStatusRow = {
+  balance: number;
+  can_play: boolean;
+};
+
+type StaffBriefingRole = {
+  key: string;
+  label: string;
+  initials: string;
+  description: string;
 };
 
 type OverviewNextRaceRow = {
@@ -3686,6 +3710,207 @@ function AttentionBubbleSlider({
 }
 
 
+const STAFF_BRIEFING_ROLES: StaffBriefingRole[] = [
+  {
+    key: "head-coach",
+    label: "Head Coach",
+    initials: "HC",
+    description: "Readiness and preparation",
+  },
+  {
+    key: "sports-director",
+    label: "Sports Director",
+    initials: "SD",
+    description: "Race planning and strategy",
+  },
+  {
+    key: "team-doctor",
+    label: "Team Doctor",
+    initials: "TD",
+    description: "Health and recovery",
+  },
+  {
+    key: "chief-mechanic",
+    label: "Chief Mechanic",
+    initials: "CM",
+    description: "Equipment and maintenance",
+  },
+  {
+    key: "scout",
+    label: "Scout",
+    initials: "SC",
+    description: "Recruitment and prospects",
+  },
+];
+
+function StaffBriefingCentre({
+  alerts,
+  inboxUnread,
+  notificationsUnread,
+  coinBalance,
+  coinBalanceLoading,
+  refreshing,
+  onOpenAlert,
+}: {
+  alerts: AlertItem[];
+  inboxUnread: number;
+  notificationsUnread: number;
+  coinBalance: number | null;
+  coinBalanceLoading: boolean;
+  refreshing: boolean;
+  onOpenAlert?: (alert: AlertItem) => void;
+}) {
+  void alerts;
+  void coinBalance;
+  void coinBalanceLoading;
+  void onOpenAlert;
+
+  return (
+    <Card className="border-slate-200/80 bg-white p-4 shadow-sm">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <h2 className="text-base font-black tracking-tight text-slate-950">
+              Staff Briefing Centre
+            </h2>
+            <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.12em] text-slate-600">
+              Coming soon
+            </span>
+            {refreshing ? (
+              <span
+                className="h-1.5 w-1.5 rounded-full bg-sky-500"
+                title="Refreshing"
+              />
+            ) : null}
+          </div>
+          <p className="mt-0.5 text-[11px] font-medium text-slate-500">
+            Your coaching and support team
+          </p>
+        </div>
+
+        <div className="flex shrink-0 flex-wrap items-center gap-1.5">
+          <a
+            href="#/dashboard/inbox"
+            className="inline-flex h-8 items-center gap-1.5 rounded-full border border-slate-200 bg-white px-2.5 text-[11px] font-bold text-slate-700 transition hover:bg-slate-50"
+          >
+            Inbox
+            <span className="rounded-full bg-slate-100 px-1.5 py-0.5 text-[9px] font-black text-slate-700">
+              {inboxUnread}
+            </span>
+          </a>
+          <a
+            href="#/dashboard/notifications"
+            className="inline-flex h-8 items-center gap-1.5 rounded-full border border-slate-200 bg-white px-2.5 text-[11px] font-bold text-slate-700 transition hover:bg-slate-50"
+          >
+            Notifications
+            <span className="rounded-full bg-slate-100 px-1.5 py-0.5 text-[9px] font-black text-slate-700">
+              {notificationsUnread}
+            </span>
+          </a>
+          <a
+            href="#/dashboard/staff"
+            className="inline-flex h-8 items-center rounded-full bg-slate-950 px-3 text-[11px] font-black text-white transition hover:bg-slate-800"
+          >
+            Manage staff
+          </a>
+        </div>
+      </div>
+
+      <div className="mt-3 grid auto-cols-[176px] grid-flow-col gap-2.5 overflow-x-auto pb-1 lg:grid-flow-row lg:grid-cols-5 lg:overflow-visible lg:pb-0">
+        {STAFF_BRIEFING_ROLES.map((role) => (
+          <div
+            key={role.key}
+            className="flex h-[104px] flex-col rounded-xl border border-slate-200 bg-slate-50/80 p-2.5"
+          >
+            <div className="flex items-center justify-between gap-2">
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-white text-[9px] font-black text-slate-800 ring-1 ring-slate-200">
+                {role.initials}
+              </span>
+              <span className="truncate rounded-full bg-slate-200 px-1.5 py-0.5 text-[8px] font-black uppercase tracking-[0.08em] text-slate-600">
+                Coming soon
+              </span>
+            </div>
+            <div className="mt-1.5 truncate text-xs font-black text-slate-950">
+              {role.label}
+            </div>
+            <div className="mt-0.5 truncate text-[10px] leading-4 text-slate-500">
+              {role.description}
+            </div>
+            <div className="mt-auto text-[10px] font-bold text-slate-700">
+              10 coins / 30 days
+            </div>
+          </div>
+        ))}
+      </div>
+    </Card>
+  );
+}
+
+function openPremiumPage() {
+  window.location.hash = "#/dashboard/pro";
+}
+
+function PremiumFeatureGate({
+  isPremium,
+  loading,
+  title,
+  description,
+  children,
+}: {
+  isPremium: boolean;
+  loading: boolean;
+  title: string;
+  description: string;
+  children: React.ReactNode;
+}) {
+  if (loading) {
+    return (
+      <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+        <div className="flex min-h-[80px] animate-pulse items-center gap-3">
+          <div className="h-7 w-20 rounded-full bg-slate-100" />
+          <div className="min-w-0 flex-1">
+            <div className="h-4 w-40 rounded bg-slate-100" />
+            <div className="mt-2 h-3 w-64 max-w-full rounded bg-slate-50" />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (isPremium) {
+    return <>{children}</>;
+  }
+
+  return (
+    <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
+      <div className="flex min-h-[112px] flex-col justify-center gap-4 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-5">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-amber-700">
+              <span aria-hidden="true">🔒</span>
+              Premium
+            </span>
+            <h3 className="text-sm font-semibold text-slate-800">{title}</h3>
+          </div>
+
+          <p className="mt-2 max-w-2xl text-sm leading-5 text-slate-500">
+            {description}
+          </p>
+        </div>
+
+        <button
+          type="button"
+          onClick={openPremiumPage}
+          className="shrink-0 self-start rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-sm transition hover:border-slate-400 hover:bg-slate-50 sm:self-auto"
+        >
+          Unlock with Premium
+        </button>
+      </div>
+    </div>
+  );
+}
+
+
 /**
  * getFeedAccent
  * Returns Tailwind background classes for a feed item icon.
@@ -5968,6 +6193,11 @@ export default function OverviewPage() {
     React.useState(true);
   const [clubHonoursLoading, setClubHonoursLoading] = React.useState(true);
   const [raceHubLoading, setRaceHubLoading] = React.useState(false);
+  const [premiumStatus, setPremiumStatus] =
+    React.useState<PremiumStatusRow | null>(null);
+  const [premiumStatusLoading, setPremiumStatusLoading] = React.useState(true);
+  const [coinBalance, setCoinBalance] = React.useState<number | null>(null);
+  const [coinBalanceLoading, setCoinBalanceLoading] = React.useState(true);
   const [loading, setLoading] = React.useState(true);
   const [refreshing, setRefreshing] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
@@ -6007,6 +6237,73 @@ export default function OverviewPage() {
         OVERVIEW_ATTENTION_DISMISSED_EVENT,
         refreshOpenedAttentionKeys,
       );
+    };
+  }, []);
+
+  React.useEffect(() => {
+    let alive = true;
+
+    async function loadOverviewMonetizationStatus() {
+      setPremiumStatusLoading(true);
+      setCoinBalanceLoading(true);
+
+      const [premiumResult, coinResult] = await Promise.all([
+        supabase.rpc("get_my_premium_status"),
+        supabase.rpc("get_my_coin_status"),
+      ]);
+
+      if (!alive) return;
+
+      if (premiumResult.error) {
+        console.warn(
+          "Could not load Overview Premium status:",
+          premiumResult.error.message,
+        );
+        setPremiumStatus(null);
+      } else {
+        const premiumRows = Array.isArray(premiumResult.data)
+          ? (premiumResult.data as PremiumStatusRow[])
+          : premiumResult.data
+            ? [premiumResult.data as PremiumStatusRow]
+            : [];
+
+        setPremiumStatus(premiumRows[0] ?? null);
+      }
+
+      if (coinResult.error) {
+        console.warn(
+          "Could not load Overview coin balance:",
+          coinResult.error.message,
+        );
+        setCoinBalance(null);
+      } else {
+        const coinRows = Array.isArray(coinResult.data)
+          ? (coinResult.data as CoinStatusRow[])
+          : coinResult.data
+            ? [coinResult.data as CoinStatusRow]
+            : [];
+
+        const nextBalance = Number(coinRows[0]?.balance ?? Number.NaN);
+        setCoinBalance(
+          Number.isFinite(nextBalance) ? Math.max(0, nextBalance) : null,
+        );
+      }
+
+      setPremiumStatusLoading(false);
+      setCoinBalanceLoading(false);
+    }
+
+    void loadOverviewMonetizationStatus();
+
+    const handleFocus = () => {
+      void loadOverviewMonetizationStatus();
+    };
+
+    window.addEventListener("focus", handleFocus);
+
+    return () => {
+      alive = false;
+      window.removeEventListener("focus", handleFocus);
     };
   }, []);
 
@@ -6746,6 +7043,7 @@ export default function OverviewPage() {
     (item) => !isAttentionItemDismissed(item, openedAttentionKeys),
   );
   const visibleSquadPulse = squadPulseOverride ?? data.squadPulse;
+  const isPremium = premiumStatus?.is_premium === true;
   const steps = overviewTutorialSteps;
   const currentIndex = tutorialStepIndex;
   const activeStep =
@@ -6761,64 +7059,17 @@ export default function OverviewPage() {
 
   return (
     <div className="w-full space-y-6">
-      {/* Attention bubbles: single-row horizontal slider with fixed-size collapsed and expanded chips. */}
+      {/* Compact Staff Briefing Centre design placeholder. */}
       <div data-tutorial-target="overview-attention">
-        <Card className="overflow-hidden border-slate-200/80 bg-white/95 shadow-sm">
-          <div className="px-4 py-3">
-          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-            <div className="flex min-w-0 items-center gap-3">
-              <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-950 text-sm font-black text-white shadow-sm">
-                !
-                {attentionItems.length > 0 ? (
-                  <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full border-2 border-white bg-red-500 px-1 text-[10px] font-black text-white">
-                    {attentionItems.length}
-                  </span>
-                ) : null}
-              </div>
-
-              <div className="min-w-0">
-                <div className="flex flex-wrap items-center gap-2">
-                  <h2 className="text-sm font-bold text-slate-950">Attention</h2>
-                  <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.12em] text-slate-500">
-                    Bubble tray
-                  </span>
-                  {refreshing ? (
-                    <span className="h-2 w-2 rounded-full bg-sky-500" title="Refreshing" />
-                  ) : null}
-                </div>
-                <p className="mt-0.5 hidden text-[11px] text-slate-500 sm:block">
-                  All bubbles stay in one horizontal slider row. Scroll sideways, then click a bubble to reveal status and the open shortcut.
-                </p>
-              </div>
-            </div>
-
-            <div className="flex shrink-0 items-center gap-2">
-              <a
-                href="#/dashboard/inbox"
-                className="inline-flex h-9 items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 text-xs font-bold text-slate-700 transition hover:border-slate-300 hover:bg-white"
-              >
-                Inbox
-                <span className="rounded-full bg-white px-1.5 py-0.5 text-[10px] font-black text-slate-700">
-                  {data.club.inboxUnread}
-                </span>
-              </a>
-              <a
-                href="#/dashboard/notifications"
-                className="inline-flex h-9 items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 text-xs font-bold text-slate-700 transition hover:border-slate-300 hover:bg-white"
-              >
-                Notifications
-                <span className="rounded-full bg-white px-1.5 py-0.5 text-[10px] font-black text-slate-700">
-                  {data.club.notificationsUnread}
-                </span>
-              </a>
-            </div>
-          </div>
-
-          <div className="mt-3 border-t border-slate-100 pt-3">
-            <AttentionBubbleSlider alerts={attentionItems} onOpen={handleOpenAttentionItem} />
-          </div>
-          </div>
-        </Card>
+        <StaffBriefingCentre
+          alerts={attentionItems}
+          inboxUnread={data.club.inboxUnread}
+          notificationsUnread={data.club.notificationsUnread}
+          coinBalance={coinBalance}
+          coinBalanceLoading={coinBalanceLoading}
+          refreshing={refreshing}
+          onOpenAlert={handleOpenAttentionItem}
+        />
       </div>
 
       <div className="space-y-6">
@@ -6836,6 +7087,12 @@ export default function OverviewPage() {
               />
             </div>
 
+            <PremiumFeatureGate
+              isPremium={isPremium}
+              loading={premiumStatusLoading}
+              title="Squad Pulse"
+              description="See squad readiness, fitness, morale, health, availability, and contract pressure in one place."
+            >
             <Card className="p-5">
               <SectionTitle
                 title="Squad Pulse"
@@ -6904,6 +7161,7 @@ export default function OverviewPage() {
                 </div>
               </div>
             </Card>
+            </PremiumFeatureGate>
 
             <UpcomingRaceScheduleCard schedule={raceWorld.upcomingSchedule} />
 
@@ -6999,14 +7257,28 @@ export default function OverviewPage() {
               </div>
             </Card>
 
-            <IncomeExpenseCard finance={data.finance} />
+            <PremiumFeatureGate
+              isPremium={isPremium}
+              loading={premiumStatusLoading}
+              title="Income & Expenses"
+              description="Unlock weekly, monthly, and season operating charts with a clear income, expense, and net-balance summary."
+            >
+              <IncomeExpenseCard finance={data.finance} />
+            </PremiumFeatureGate>
 
             <CompactOperationsCard operations={data.operations} />
 
-            <ClubHonoursCard
-              items={clubHonours}
-              loading={clubHonoursLoading}
-            />
+            <PremiumFeatureGate
+              isPremium={isPremium}
+              loading={premiumStatusLoading}
+              title="Club Honours"
+              description="Unlock a convenient historical summary of the five greatest results achieved in club history."
+            >
+              <ClubHonoursCard
+                items={clubHonours}
+                loading={clubHonoursLoading}
+              />
+            </PremiumFeatureGate>
           </div>
         </div>
 

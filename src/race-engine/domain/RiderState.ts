@@ -35,7 +35,7 @@ export type RiderRaceStatus =
  * climbing, timeTrial, and raceIq are temporarily optional so older isolated
  * synthetic fixtures continue to compile during the attribute-transport
  * migration. The production-shaped source adapter always supplies them and
- * the development diagnostic verifies all Rio riders receive them.
+ * the development diagnostic verifies all live riders receive them.
  */
 export interface RiderAttributes {
   readonly flat: number
@@ -54,6 +54,21 @@ export interface RiderAttributes {
 }
 
 /**
+ * Immutable condition snapshot at the start of one stage.
+ *
+ * startingEnergy is the canonical runtime energy value.
+ * fatigueBeforeStage and morale are preserved as source metadata for later
+ * calibrated rules. availabilityStatus is transported without changing the
+ * current participant-eligibility policy.
+ */
+export interface RiderStartingCondition {
+  readonly startingEnergy: number
+  readonly fatigueBeforeStage: number
+  readonly morale: number
+  readonly availabilityStatus: string
+}
+
+/**
  * Runtime state for one rider during a stage simulation.
  */
 export interface RiderState {
@@ -64,6 +79,12 @@ export interface RiderState {
 
   readonly role: RiderRole
   readonly attributes: RiderAttributes
+
+  /**
+   * Present for live condition-aware inputs and absent for legacy synthetic
+   * fixtures. The object is copied during initial-state creation.
+   */
+  readonly startingCondition?: RiderStartingCondition
 
   readonly currentGroupId: string
 

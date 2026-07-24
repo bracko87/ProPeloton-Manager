@@ -20,10 +20,12 @@ import type {
   StageRiderInput,
   StageSimulationSettings,
   StageTeamInput,
+  StageWeatherInput,
 } from '../domain/StageInput'
 import type {
   RiderAttributes,
   RiderRole,
+  RiderStartingCondition,
 } from '../domain/RiderState'
 
 export interface RaceSourceRow {
@@ -37,6 +39,21 @@ export interface StageSourceRow {
   readonly name: string
   readonly stage_format: string
   readonly distance_km: number
+}
+
+
+export type JsonSourceObject =
+  Readonly<Record<string, unknown>>
+
+export interface StageWeatherSourceRows {
+  readonly stageSnapshot?:
+    JsonSourceObject | null
+  readonly stageSummary?:
+    string | null
+  readonly profileSnapshot?:
+    JsonSourceObject | null
+  readonly profileSummary?:
+    string | null
 }
 
 export interface ParticipantTeamSourceRow {
@@ -68,6 +85,12 @@ export interface RiderSourceRow {
   readonly recovery: number
   readonly race_iq: number
   readonly teamwork: number
+
+  readonly fatigue?: number | null
+  readonly fatigue_before_stage?: number | null
+  readonly start_stamina?: number | null
+  readonly morale?: number | null
+  readonly availability_status?: string | null
 }
 
 export interface StagePlanMetadataSource {
@@ -111,6 +134,9 @@ export interface CreateStageInputFromSourceRowsParams {
 
   readonly profilePoints:
     readonly ProfilePointSourceRow[]
+
+  readonly weather?:
+    StageWeatherSourceRows
 }
 
 const SETTINGS: StageSimulationSettings = {
@@ -209,6 +235,250 @@ function normalizeAttribute(
       Math.round(numericValue),
     ),
   )
+}
+
+function hasConditionSource(
+  rider: RiderSourceRow,
+): boolean {
+  return (
+    rider.fatigue !== undefined ||
+    rider.fatigue_before_stage !== undefined ||
+    rider.start_stamina !== undefined ||
+    rider.morale !== undefined ||
+    rider.availability_status !== undefined
+  )
+}
+
+function normalizeConditionMetric(
+  value: number | null | undefined,
+  fallback: number,
+  fieldName: string,
+): number {
+  const rawValue =
+    value ?? fallback
+
+  const numericValue =
+    requireFiniteNumber(
+      rawValue,
+      fieldName,
+    )
+
+  return Math.max(
+    0,
+    Math.min(
+      100,
+      numericValue,
+    ),
+  )
+}
+
+function normalizeAvailabilityStatus(
+  value: string | null | undefined,
+): string {
+  const normalized =
+    value
+      ?.trim()
+      .toLowerCase()
+
+  return normalized &&
+    normalized.length > 0
+    ? normalized
+    : 'unknown'
+}
+
+function asSourceObject(
+  value: unknown,
+): JsonSourceObject {
+  return (
+    value !== null &&
+    typeof value === 'object' &&
+    !Array.isArray(value)
+  )
+    ? value as JsonSourceObject
+    : {}
+}
+
+function optionalSourceString(
+  value: unknown,
+): string | null {
+  return (
+    typeof value === 'string' &&
+    value.trim().length > 0
+  )
+    ? value.trim()
+    : null
+}
+
+function optionalSourceNumber(
+  value: unknown,
+  fieldName: string,
+): number | null {
+  if (
+    value === null ||
+    value === undefined ||
+    value === ''
+  ) {
+    return null
+  }
+
+  const numericValue =
+    typeof value === 'number'
+      ? value
+      : Number(value)
+
+  if (!Number.isFinite(numericValue)) {
+    throw new Error(
+      `${fieldName} must be a finite number when provided.`,
+    )
+  }
+
+  return numericValue
+}
+
+function hasSourceKeys(
+  value: JsonSourceObject,
+): boolean {
+  return Object.keys(value).length > 0
+}
+
+function createStageWeather(
+  source:
+    StageWeatherSourceRows | undefined,
+): StageWeatherInput | null {
+  if (!source) {
+    return null
+  }
+
+  const stageSnapshot =
+    asSourceObject(
+      source.stageSnapshot,
+    )
+
+  const profileSnapshot =
+    asSourceObject(
+      source.profileSnapshot,
+    )
+
+  const useStageSnapshot =
+    hasSourceKeys(
+      stageSnapshot,
+    )
+
+  const useProfileSnapshot =
+    !useStageSnapshot &&
+    hasSourceKeys(
+      profileSnapshot,
+    )
+
+  if (
+    !useStageSnapshot &&
+    !useProfileSnapshot
+  ) {
+    return null
+  }
+
+  const snapshot =
+    useStageSnapshot
+      ? stageSnapshot
+      : profileSnapshot
+
+  const authority =
+    useStageSnapshot
+      ? 'stage_weather_snapshot'
+      : 'profile_weather_snapshot'
+
+  const summary =
+    useStageSnapshot
+      ? optionalSourceString(
+          source.stageSummary,
+        )
+      : optionalSourceString(
+          source.profileSummary,
+        )
+
+  return {
+    authority,
+    source:
+      optionalSourceString(
+        snapshot.source,
+      ) ??
+      authority,
+    condition:
+      optionalSourceString(
+        snapshot.condition,
+      ) ??
+      'unknown',
+    summary,
+
+    averageTemperatureC:
+      optionalSourceNumber(
+        snapshot.avg_temp_c,
+        `${authority}.avg_temp_c`,
+      ),
+    minimumTemperatureC:
+      optionalSourceNumber(
+        snapshot.avg_min_temp_c,
+        `${authority}.avg_min_temp_c`,
+      ),
+    maximumTemperatureC:
+      optionalSourceNumber(
+        snapshot.avg_max_temp_c,
+        `${authority}.avg_max_temp_c`,
+      ),
+    windSpeedKmh:
+      optionalSourceNumber(
+        snapshot.avg_wind_kmh,
+        `${authority}.avg_wind_kmh`,
+      ),
+    precipitationMm:
+      optionalSourceNumber(
+        snapshot.avg_precip_mm,
+        `${authority}.avg_precip_mm`,
+      ),
+
+    hostCity:
+      optionalSourceString(
+        snapshot.host_city,
+      ),
+    countryCode:
+      optionalSourceString(
+        snapshot.country_code,
+      ),
+  }
+}
+
+function createStartingCondition(
+  rider: RiderSourceRow,
+): RiderStartingCondition | null {
+  if (!hasConditionSource(rider)) {
+    return null
+  }
+
+  return {
+    startingEnergy:
+      normalizeConditionMetric(
+        rider.start_stamina,
+        100,
+        `rider ${rider.id} start_stamina`,
+      ),
+    fatigueBeforeStage:
+      normalizeConditionMetric(
+        rider.fatigue_before_stage ??
+          rider.fatigue,
+        0,
+        `rider ${rider.id} fatigue_before_stage`,
+      ),
+    morale:
+      normalizeConditionMetric(
+        rider.morale,
+        50,
+        `rider ${rider.id} morale`,
+      ),
+    availabilityStatus:
+      normalizeAvailabilityStatus(
+        rider.availability_status,
+      ),
+  }
 }
 
 /**
@@ -903,6 +1173,11 @@ export function createStageInputFromSourceRows(
               participantRole
             )
 
+      const condition =
+        createStartingCondition(
+          rider,
+        )
+
       riders.push({
         riderId:
           participant.rider_id,
@@ -913,6 +1188,12 @@ export function createStageInputFromSourceRows(
         role,
         attributes:
           createAttributes(rider),
+
+        ...(condition
+          ? {
+              condition,
+            }
+          : {}),
       })
     }
   }
@@ -984,6 +1265,11 @@ export function createStageInputFromSourceRows(
       distanceKm,
     )
 
+  const weather =
+    createStageWeather(
+      params.weather,
+    )
+
   return {
     raceId,
     stageId,
@@ -995,6 +1281,12 @@ export function createStageInputFromSourceRows(
       `race_engine_ts_v1:${raceId}:${stageId}`,
 
     settings: SETTINGS,
+
+    ...(weather
+      ? {
+          weather,
+        }
+      : {}),
 
     teams,
     riders,

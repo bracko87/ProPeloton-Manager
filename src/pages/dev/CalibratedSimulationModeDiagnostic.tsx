@@ -1,7 +1,11 @@
 /**
  * CalibratedSimulationModeDiagnostic.tsx
  *
- * Phase 7B.8L browser-only diagnostic.
+ * Phase 8G.5 browser-only diagnostic.
+ *
+ * In addition to the accepted calibrated simulation-mode checks, this page
+ * verifies both the pure weather model and its calibrated-runner integration.
+ * The default existing_v1 path remains weather-neutral.
  *
  * Verifies safe mode selection at runDeterministicRoadRace:
  * - omitted mode;
@@ -23,6 +27,7 @@ import type {
 } from '../../race-engine/domain/SimulationOutput'
 import type {
   StageInput,
+  StageWeatherInput,
 } from '../../race-engine/domain/StageInput'
 import {
   createStageInputFromSourceRows,
@@ -46,6 +51,10 @@ import {
   type MultiGroupSimulationMode,
 } from '../../race-engine/simulation/runDeterministicRoadRace'
 import {
+  calculateWeatherPerformanceEffects,
+  type WeatherPerformanceEffects,
+} from '../../race-engine/simulation/weatherPerformanceEffects'
+import {
   rioStage1SourceRows,
 } from '../../race-engine/tests/fixtures/rioStage1SourceRows'
 import {
@@ -54,6 +63,81 @@ import {
 import {
   createReplayStageModelFromSimulationOutput,
 } from '../../race-replay/createReplayStageModelFromSimulationOutput'
+
+
+type WeatherScenarioKey =
+  | 'neutral'
+  | 'strongWind'
+  | 'heat'
+  | 'coldRain'
+  | 'combinedSevere'
+
+interface WeatherScenarioDefinition {
+  readonly key:
+    WeatherScenarioKey
+  readonly label: string
+  readonly weather:
+    StageWeatherInput
+}
+
+interface WeatherScenarioAudit {
+  readonly definition:
+    WeatherScenarioDefinition
+  readonly effects:
+    WeatherPerformanceEffects
+  readonly repeatedEffects:
+    WeatherPerformanceEffects
+  readonly deterministicHash:
+    string
+  readonly repeatedHash:
+    string
+}
+
+
+interface ActiveWeatherRaceAudit {
+  readonly definition:
+    WeatherScenarioDefinition
+  readonly baselineOutput:
+    SimulationOutput
+  readonly weatherOutput:
+    SimulationOutput
+  readonly repeatedWeatherOutput:
+    SimulationOutput
+  readonly existingBaselineOutput:
+    SimulationOutput
+  readonly existingWeatherOutput:
+    SimulationOutput
+
+  readonly baselineOutputHash:
+    string
+  readonly weatherOutputHash:
+    string
+  readonly repeatedWeatherOutputHash:
+    string
+  readonly existingBaselineOutputHash:
+    string
+  readonly existingWeatherOutputHash:
+    string
+
+  readonly baselineWinnerTimeSeconds:
+    number
+  readonly weatherWinnerTimeSeconds:
+    number
+  readonly winnerTimeDifferenceSeconds:
+    number
+
+  readonly baselineAverageFinalEnergy:
+    number
+  readonly weatherAverageFinalEnergy:
+    number
+  readonly averageFinalEnergyDifference:
+    number
+
+  readonly replayFrameCount:
+    number
+  readonly replayEventCount:
+    number
+}
 
 type ScenarioKey =
   | 'gradient8'
@@ -177,6 +261,23 @@ interface DiagnosticResult {
     >
   readonly invalidModeRejected:
     boolean
+  readonly weatherScenarios:
+    Readonly<
+      Record<
+        WeatherScenarioKey,
+        WeatherScenarioAudit
+      >
+    >
+  readonly activeWeatherRaces:
+    Readonly<
+      Record<
+        Exclude<
+          WeatherScenarioKey,
+          'neutral'
+        >,
+        ActiveWeatherRaceAudit
+      >
+    >
   readonly checks:
     readonly CheckResult[]
 }
@@ -186,6 +287,383 @@ const CONTROLLED_DISTANCE_KM =
 
 const EPSILON =
   0.0000001
+
+
+function createWeather(
+  overrides:
+    Partial<StageWeatherInput>,
+): StageWeatherInput {
+  return {
+    authority:
+      'stage_weather_snapshot',
+    source:
+      'phase_8g4_controlled_fixture',
+    condition:
+      'clear',
+    summary:
+      null,
+    averageTemperatureC:
+      20,
+    minimumTemperatureC:
+      15,
+    maximumTemperatureC:
+      25,
+    windSpeedKmh:
+      5,
+    precipitationMm:
+      0,
+    hostCity:
+      'Controlled test',
+    countryCode:
+      'XX',
+    ...overrides,
+  }
+}
+
+function weatherDefinitions():
+  readonly WeatherScenarioDefinition[] {
+  return [
+    {
+      key:
+        'neutral',
+      label:
+        'Neutral · 20°C · 5 km/h · dry',
+      weather:
+        createWeather({}),
+    },
+    {
+      key:
+        'strongWind',
+      label:
+        'Strong wind · 20°C · 35 km/h · dry',
+      weather:
+        createWeather({
+          windSpeedKmh:
+            35,
+        }),
+    },
+    {
+      key:
+        'heat',
+      label:
+        'Heat · 34°C · 5 km/h · dry',
+      weather:
+        createWeather({
+          averageTemperatureC:
+            34,
+          minimumTemperatureC:
+            29,
+          maximumTemperatureC:
+            39,
+        }),
+    },
+    {
+      key:
+        'coldRain',
+      label:
+        'Cold rain · 5°C · 8 km/h',
+      weather:
+        createWeather({
+          condition:
+            'rain',
+          averageTemperatureC:
+            5,
+          minimumTemperatureC:
+            2,
+          maximumTemperatureC:
+            8,
+          windSpeedKmh:
+            8,
+          precipitationMm:
+            8,
+        }),
+    },
+    {
+      key:
+        'combinedSevere',
+      label:
+        'Combined · 34°C · 35 km/h · heavy rain',
+      weather:
+        createWeather({
+          condition:
+            'heavy_rain',
+          averageTemperatureC:
+            34,
+          minimumTemperatureC:
+            30,
+          maximumTemperatureC:
+            39,
+          windSpeedKmh:
+            35,
+          precipitationMm:
+            18,
+        }),
+    },
+  ]
+}
+
+function weatherScenarioAudit(
+  definition:
+    WeatherScenarioDefinition,
+): WeatherScenarioAudit {
+  const effects =
+    calculateWeatherPerformanceEffects(
+      definition.weather,
+    )
+
+  const repeatedEffects =
+    calculateWeatherPerformanceEffects(
+      definition.weather,
+    )
+
+  return {
+    definition,
+    effects,
+    repeatedEffects,
+    deterministicHash:
+      createCanonicalHashedValue(
+        effects,
+      ).hash,
+    repeatedHash:
+      createCanonicalHashedValue(
+        repeatedEffects,
+      ).hash,
+  }
+}
+
+
+const CONTROLLED_WEATHER_DISTANCE_KM =
+  4
+
+function createControlledWeatherRaceInput(
+  weather?:
+    StageWeatherInput,
+): StageInput {
+  const base =
+    createStageInputFromSourceRows(
+      rioStage1SourceRows,
+    )
+
+  const {
+    weather:
+      _baseWeather,
+    ...weatherFreeBase
+  } = base
+
+  return {
+    ...weatherFreeBase,
+    raceId:
+      `${base.raceId}-active-weather`,
+    stageId:
+      `${base.stageId}-active-weather`,
+    stageName:
+      'Active deterministic weather integration',
+    distanceKm:
+      CONTROLLED_WEATHER_DISTANCE_KM,
+    profilePoints: [
+      {
+        kilometre: 0,
+        elevationMetres: 0,
+      },
+      {
+        kilometre:
+          CONTROLLED_WEATHER_DISTANCE_KM,
+        elevationMetres: 0,
+      },
+    ],
+    orders: [],
+    ...(weather
+      ? {
+          weather,
+        }
+      : {}),
+  }
+}
+
+function getWinnerTimeSeconds(
+  output:
+    SimulationOutput,
+): number {
+  const winner =
+    output.finalRiderStates.find(
+      (rider) =>
+        rider.finishPosition ===
+          1 &&
+        rider.finishTimeSeconds !==
+          null,
+    )
+
+  if (
+    !winner ||
+    winner.finishTimeSeconds ===
+      null
+  ) {
+    throw new Error(
+      'CalibratedSimulationModeDiagnostic: active weather scenario has no winner.',
+    )
+  }
+
+  return winner
+    .finishTimeSeconds
+}
+
+function averageFinalEnergy(
+  output:
+    SimulationOutput,
+): number {
+  if (
+    output.finalRiderStates.length ===
+    0
+  ) {
+    return 0
+  }
+
+  return (
+    output.finalRiderStates.reduce(
+      (
+        sum,
+        rider,
+      ) =>
+        sum +
+        rider.energy,
+      0,
+    ) /
+    output.finalRiderStates.length
+  )
+}
+
+function activeWeatherRaceAudit(
+  definition:
+    WeatherScenarioDefinition,
+): ActiveWeatherRaceAudit {
+  const baselineInput =
+    createControlledWeatherRaceInput()
+
+  const weatherInput =
+    createControlledWeatherRaceInput(
+      definition.weather,
+    )
+
+  const baselineOutput =
+    runDeterministicRoadRace(
+      baselineInput,
+      {
+        simulationMode:
+          'terrain_separation_calibrated_v1',
+      },
+    )
+
+  const weatherOutput =
+    runDeterministicRoadRace(
+      weatherInput,
+      {
+        simulationMode:
+          'terrain_separation_calibrated_v1',
+      },
+    )
+
+  const repeatedWeatherOutput =
+    runDeterministicRoadRace(
+      weatherInput,
+      {
+        simulationMode:
+          'terrain_separation_calibrated_v1',
+      },
+    )
+
+  const existingBaselineOutput =
+    runDeterministicRoadRace(
+      baselineInput,
+      {
+        simulationMode:
+          'existing_v1',
+      },
+    )
+
+  const existingWeatherOutput =
+    runDeterministicRoadRace(
+      weatherInput,
+      {
+        simulationMode:
+          'existing_v1',
+      },
+    )
+
+  const replayModel =
+    createReplayStageModelFromSimulationOutput({
+      stageInput:
+        weatherInput,
+      simulationOutput:
+        weatherOutput,
+    })
+
+  const baselineWinnerTimeSeconds =
+    getWinnerTimeSeconds(
+      baselineOutput,
+    )
+
+  const weatherWinnerTimeSeconds =
+    getWinnerTimeSeconds(
+      weatherOutput,
+    )
+
+  const baselineAverageFinalEnergy =
+    averageFinalEnergy(
+      baselineOutput,
+    )
+
+  const weatherAverageFinalEnergy =
+    averageFinalEnergy(
+      weatherOutput,
+    )
+
+  return {
+    definition,
+    baselineOutput,
+    weatherOutput,
+    repeatedWeatherOutput,
+    existingBaselineOutput,
+    existingWeatherOutput,
+
+    baselineOutputHash:
+      outputHash(
+        baselineOutput,
+      ),
+    weatherOutputHash:
+      outputHash(
+        weatherOutput,
+      ),
+    repeatedWeatherOutputHash:
+      outputHash(
+        repeatedWeatherOutput,
+      ),
+    existingBaselineOutputHash:
+      outputHash(
+        existingBaselineOutput,
+      ),
+    existingWeatherOutputHash:
+      outputHash(
+        existingWeatherOutput,
+      ),
+
+    baselineWinnerTimeSeconds,
+    weatherWinnerTimeSeconds,
+    winnerTimeDifferenceSeconds:
+      weatherWinnerTimeSeconds -
+      baselineWinnerTimeSeconds,
+
+    baselineAverageFinalEnergy,
+    weatherAverageFinalEnergy,
+    averageFinalEnergyDifference:
+      weatherAverageFinalEnergy -
+      baselineAverageFinalEnergy,
+
+    replayFrameCount:
+      replayModel.frames.length,
+    replayEventCount:
+      replayModel.events.length,
+  }
+}
 
 function definitions():
   readonly ScenarioDefinition[] {
@@ -993,8 +1471,252 @@ function buildDiagnostic():
   const invalidRejected =
     invalidModeRejected()
 
+  const weatherScenarios =
+    Object.fromEntries(
+      weatherDefinitions().map(
+        (definition) => [
+          definition.key,
+          weatherScenarioAudit(
+            definition,
+          ),
+        ],
+      ),
+    ) as Record<
+      WeatherScenarioKey,
+      WeatherScenarioAudit
+    >
+
+  const activeWeatherRaces =
+    Object.fromEntries(
+      weatherDefinitions()
+        .filter(
+          (
+            definition,
+          ): definition is
+            WeatherScenarioDefinition &
+            {
+              readonly key:
+                Exclude<
+                  WeatherScenarioKey,
+                  'neutral'
+                >
+            } =>
+            definition.key !==
+            'neutral',
+        )
+        .map(
+          (definition) => [
+            definition.key,
+            activeWeatherRaceAudit(
+              definition,
+            ),
+          ],
+        ),
+    ) as Record<
+      Exclude<
+        WeatherScenarioKey,
+        'neutral'
+      >,
+      ActiveWeatherRaceAudit
+    >
+
+  const neutralWeather =
+    weatherScenarios.neutral
+      .effects
+
+  const strongWindWeather =
+    weatherScenarios.strongWind
+      .effects
+
+  const heatWeather =
+    weatherScenarios.heat
+      .effects
+
+  const coldRainWeather =
+    weatherScenarios.coldRain
+      .effects
+
+  const combinedWeather =
+    weatherScenarios
+      .combinedSevere
+      .effects
+
   const checks:
     CheckResult[] = [
+      {
+        label:
+          'Missing and neutral weather preserve identity multipliers',
+        passed:
+          calculateWeatherPerformanceEffects(
+            undefined,
+          ).speedMultiplier ===
+            1 &&
+          neutralWeather
+            .speedMultiplier ===
+            1 &&
+          neutralWeather
+            .energyConsumptionMultiplier ===
+            1 &&
+          neutralWeather
+            .staminaConsumptionMultiplier ===
+            1 &&
+          neutralWeather
+            .fatigueGainMultiplier ===
+            1 &&
+          neutralWeather
+            .incidentProbabilityMultiplier ===
+            1,
+      },
+      {
+        label:
+          'Strong wind reduces speed and increases energy and stamina consumption',
+        passed:
+          strongWindWeather
+            .speedMultiplier <
+            1 &&
+          strongWindWeather
+            .energyConsumptionMultiplier >
+            1 &&
+          strongWindWeather
+            .staminaConsumptionMultiplier >
+            1,
+      },
+      {
+        label:
+          'Strong wind increases the future incident-probability input',
+        passed:
+          strongWindWeather
+            .incidentProbabilityMultiplier >
+            1,
+      },
+      {
+        label:
+          'Temperatures above 30°C increase energy, stamina, and fatigue demand',
+        passed:
+          heatWeather
+            .energyConsumptionMultiplier >
+            1 &&
+          heatWeather
+            .staminaConsumptionMultiplier >
+            1 &&
+          heatWeather
+            .fatigueGainMultiplier >
+            1,
+      },
+      {
+        label:
+          'Cold rain reduces speed and increases rider demand and incident input',
+        passed:
+          coldRainWeather
+            .speedMultiplier <
+            1 &&
+          coldRainWeather
+            .energyConsumptionMultiplier >
+            1 &&
+          coldRainWeather
+            .fatigueGainMultiplier >
+            1 &&
+          coldRainWeather
+            .incidentProbabilityMultiplier >
+            1,
+      },
+      {
+        label:
+          'Combined severe weather is deterministic, bounded, and stronger than isolated weather',
+        passed:
+          weatherScenarios
+            .combinedSevere
+            .deterministicHash ===
+          weatherScenarios
+            .combinedSevere
+            .repeatedHash &&
+          combinedWeather
+            .speedMultiplier >=
+            0.75 &&
+          combinedWeather
+            .speedMultiplier <
+            strongWindWeather
+              .speedMultiplier &&
+          combinedWeather
+            .energyConsumptionMultiplier >
+            strongWindWeather
+              .energyConsumptionMultiplier &&
+          combinedWeather
+            .fatigueGainMultiplier >
+            heatWeather
+              .fatigueGainMultiplier &&
+          combinedWeather
+            .incidentProbabilityMultiplier >
+            strongWindWeather
+              .incidentProbabilityMultiplier,
+      },
+      {
+        label:
+          'Active calibrated weather races remain deterministic',
+        passed:
+          Object.values(
+            activeWeatherRaces,
+          ).every(
+            (audit) =>
+              audit.weatherOutputHash ===
+              audit
+                .repeatedWeatherOutputHash,
+          ),
+      },
+      {
+        label:
+          'Active weather slows calibrated race completion',
+        passed:
+          Object.values(
+            activeWeatherRaces,
+          ).every(
+            (audit) =>
+              audit
+                .winnerTimeDifferenceSeconds >
+              0,
+          ),
+      },
+      {
+        label:
+          'Active weather increases runtime energy and stamina consumption',
+        passed:
+          Object.values(
+            activeWeatherRaces,
+          ).every(
+            (audit) =>
+              audit
+                .averageFinalEnergyDifference <
+              0,
+          ),
+      },
+      {
+        label:
+          'Active weather outputs remain replay-compatible',
+        passed:
+          Object.values(
+            activeWeatherRaces,
+          ).every(
+            (audit) =>
+              audit.replayFrameCount >
+                1 &&
+              audit.replayEventCount >
+                0,
+          ),
+      },
+      {
+        label:
+          'existing_v1 remains weather-neutral',
+        passed:
+          Object.values(
+            activeWeatherRaces,
+          ).every(
+            (audit) =>
+              audit
+                .existingBaselineOutputHash ===
+              audit
+                .existingWeatherOutputHash,
+          ),
+      },
       {
         label:
           'Omitted mode equals explicit existing_v1 for every scenario',
@@ -1221,6 +1943,8 @@ function buildDiagnostic():
     scenarios,
     invalidModeRejected:
       invalidRejected,
+    weatherScenarios,
+    activeWeatherRaces,
     checks,
   }
 }
@@ -1259,6 +1983,142 @@ function Check({
           : 'FAIL'}
       </span>
     </div>
+  )
+}
+
+
+
+function ActiveWeatherRaceCard({
+  audit,
+}: {
+  readonly audit:
+    ActiveWeatherRaceAudit
+}): JSX.Element {
+  return (
+    <article className="rounded-3xl border border-slate-800 bg-slate-900 p-5">
+      <h3 className="text-lg font-semibold">
+        {audit.definition.label}
+      </h3>
+
+      <dl className="mt-4 space-y-2 text-sm text-slate-300">
+        <Row
+          label="Winner time baseline / weather"
+          value={`${format(audit.baselineWinnerTimeSeconds)} / ${format(audit.weatherWinnerTimeSeconds)}s`}
+        />
+
+        <Row
+          label="Weather time loss"
+          value={`${format(audit.winnerTimeDifferenceSeconds)}s`}
+        />
+
+        <Row
+          label="Average final energy baseline / weather"
+          value={`${format(audit.baselineAverageFinalEnergy)} / ${format(audit.weatherAverageFinalEnergy)}`}
+        />
+
+        <Row
+          label="Average energy difference"
+          value={format(audit.averageFinalEnergyDifference)}
+        />
+
+        <Row
+          label="Calibrated hashes"
+          value={
+            <span className="font-mono text-xs">
+              {audit.weatherOutputHash}
+              <br />
+              {audit.repeatedWeatherOutputHash}
+            </span>
+          }
+        />
+
+        <Row
+          label="existing_v1 hashes"
+          value={
+            <span className="font-mono text-xs">
+              {audit.existingBaselineOutputHash}
+              <br />
+              {audit.existingWeatherOutputHash}
+            </span>
+          }
+        />
+
+        <Row
+          label="Replay frames / events"
+          value={`${audit.replayFrameCount} / ${audit.replayEventCount}`}
+        />
+      </dl>
+    </article>
+  )
+}
+
+function WeatherCard({
+  scenario,
+}: {
+  readonly scenario:
+    WeatherScenarioAudit
+}): JSX.Element {
+  const effects =
+    scenario.effects
+
+  return (
+    <article className="rounded-3xl border border-slate-800 bg-slate-900 p-5">
+      <h3 className="text-lg font-semibold">
+        {scenario.definition.label}
+      </h3>
+
+      <dl className="mt-4 space-y-2 text-sm text-slate-300">
+        <Row
+          label="Speed"
+          value={`${format(effects.speedMultiplier, 3)}x`}
+        />
+
+        <Row
+          label="Energy consumption"
+          value={`${format(effects.energyConsumptionMultiplier, 3)}x`}
+        />
+
+        <Row
+          label="Stamina consumption"
+          value={`${format(effects.staminaConsumptionMultiplier, 3)}x`}
+        />
+
+        <Row
+          label="Fatigue gain"
+          value={`${format(effects.fatigueGainMultiplier, 3)}x`}
+        />
+
+        <Row
+          label="Incident probability input"
+          value={`${format(effects.incidentProbabilityMultiplier, 3)}x`}
+        />
+
+        <Row
+          label="Rain intensity"
+          value={effects.rainIntensity}
+        />
+
+        <Row
+          label="Reasons"
+          value={
+            effects.reasons.length > 0
+              ? effects.reasons.join(', ')
+              : 'neutral'
+          }
+        />
+
+        <Row
+          label="Repeated hash"
+          value={
+            <span className="font-mono text-xs">
+              {scenario.deterministicHash}
+              <br />
+              {scenario.repeatedHash}
+            </span>
+          }
+        />
+      </dl>
+    </article>
   )
 }
 
@@ -1526,11 +2386,11 @@ export default function CalibratedSimulationModeDiagnostic():
       <main className="min-h-screen bg-slate-950 px-6 py-10 text-slate-100">
         <section className="mx-auto max-w-5xl rounded-3xl border border-red-400 bg-red-950/30 p-6">
           <div className="text-xs font-semibold uppercase tracking-[0.18em] text-red-200">
-            Phase 7B.8L development diagnostic
+            Phase 8G.5 development diagnostic
           </div>
 
           <h1 className="mt-2 text-3xl font-semibold">
-            Calibrated simulation-mode integration failed
+            Weather-performance model diagnostic failed
           </h1>
 
           <pre className="mt-5 whitespace-pre-wrap break-words rounded-2xl bg-slate-950 p-4 text-sm text-red-100">
@@ -1561,16 +2421,18 @@ export default function CalibratedSimulationModeDiagnostic():
       <div className="mx-auto max-w-[1950px] space-y-6">
         <header className="rounded-3xl border border-slate-800 bg-slate-900 p-6">
           <div className="text-xs font-semibold uppercase tracking-[0.18em] text-sky-300">
-            Phase 7B.8L development diagnostic
+            Phase 8G.5 development diagnostic
           </div>
 
           <h1 className="mt-2 text-3xl font-semibold">
-            Safe calibrated simulation mode
+            Safe calibrated mode with active weather performance
           </h1>
 
           <p className="mt-3 max-w-5xl text-sm leading-6 text-slate-300">
-            Preserves existing_v1 as the default and exposes the accepted
-            terrain-separation package only through one explicit coherent mode.
+            Preserves existing_v1 as the default, retains the accepted calibrated
+            terrain-separation package, and applies deterministic weather only
+            inside the explicit calibrated runner when StageInput.weather is
+            present.
           </p>
         </header>
 
@@ -1584,9 +2446,78 @@ export default function CalibratedSimulationModeDiagnostic():
         >
           <h2 className="text-2xl font-semibold">
             {value.passed
-              ? 'PASS — existing output remains the default and calibrated mode is deterministic, valid, and replay-compatible'
-              : 'FAIL — calibrated simulation-mode integration needs correction'}
+              ? 'PASS — existing calibrated fixtures remain stable and active weather changes calibrated race performance deterministically'
+              : 'FAIL — calibrated or weather-model verification needs correction'}
           </h2>
+        </section>
+
+
+        <section className="rounded-3xl border border-slate-800 bg-slate-900 p-6">
+          <div>
+            <div className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-300">
+              Phase 8G.4 isolated model
+            </div>
+
+            <h2 className="mt-2 text-xl font-semibold">
+              Deterministic weather-performance effects
+            </h2>
+
+            <p className="mt-3 max-w-5xl text-sm leading-6 text-slate-300">
+              These multipliers are verified in isolation. They are not yet
+              connected to terrain-aware movement, rider-energy application,
+              fatigue persistence, incidents, crashes, or production output.
+            </p>
+          </div>
+
+          <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+            {[
+              value.weatherScenarios.neutral,
+              value.weatherScenarios.strongWind,
+              value.weatherScenarios.heat,
+              value.weatherScenarios.coldRain,
+              value.weatherScenarios.combinedSevere,
+            ].map(
+              (scenario) => (
+                <WeatherCard
+                  key={scenario.definition.key}
+                  scenario={scenario}
+                />
+              ),
+            )}
+          </div>
+        </section>
+
+
+        <section className="rounded-3xl border border-slate-800 bg-slate-900 p-6">
+          <div className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-300">
+            Phase 8G.5 active calibrated integration
+          </div>
+
+          <h2 className="mt-2 text-xl font-semibold">
+            Weather changes race movement and runtime energy
+          </h2>
+
+          <p className="mt-3 max-w-5xl text-sm leading-6 text-slate-300">
+            These controlled four-kilometre races use the active calibrated
+            runner. Weather must slow completion and reduce average final
+            energy, while existing_v1 must remain weather-neutral.
+          </p>
+
+          <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            {[
+              value.activeWeatherRaces.strongWind,
+              value.activeWeatherRaces.heat,
+              value.activeWeatherRaces.coldRain,
+              value.activeWeatherRaces.combinedSevere,
+            ].map(
+              (audit) => (
+                <ActiveWeatherRaceCard
+                  key={audit.definition.key}
+                  audit={audit}
+                />
+              ),
+            )}
+          </div>
         </section>
 
         <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
@@ -1671,9 +2602,11 @@ export default function CalibratedSimulationModeDiagnostic():
 
           <p className="mt-3">
             Omitted mode and explicit existing_v1 use the original runner.
-            terrain_separation_calibrated_v1 is opt-in and remains an in-memory
-            engine mode only. No database flag, production route, persistence,
-            scheduler, RPC, or Supabase integration is added.
+            terrain_separation_calibrated_v1 remains opt-in. The weather model remains pure. Its speed and runtime energy/stamina
+            multipliers are enabled only by the calibrated wrapper when
+            canonical weather is present. Fatigue persistence, incidents,
+            crashes, equipment, database writes, scheduler activity, RPC
+            behavior, and production execution remain unchanged.
           </p>
         </section>
       </div>

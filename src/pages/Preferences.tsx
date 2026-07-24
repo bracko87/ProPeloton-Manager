@@ -2,7 +2,7 @@
  * Preferences.tsx
  * Practical preferences page:
  * - In-game notification controls
- * - Developing Team purchase section
+ * - Developing Team seasonal access management
  * - Danger zone
  *
  * Uses shared notification preferences helper so types/keys are centralized.
@@ -14,11 +14,11 @@
  * - Shutdown now explicitly fetches the current session token and sends
  *   Authorization: Bearer <token> to the shutdown-team Edge Function.
  * - Added a user-facing guard when the session/token is missing.
- * - Added Developing Team purchase/status section wired to:
+ * - Developing Team seasonal access is wired to:
  *   - get_developing_team_status()
- *   - purchase_developing_team()
- * - Updated DevelopingTeamStatus to use the new backend shape.
- * - After successful Developing Team purchase, re-pin ppm-active-club
+ *   - activate_developing_team_for_season_v1()
+ *   - set_developing_team_auto_renew_v1()
+ * - After successful first-time Developing Team activation, re-pin ppm-active-club
  *   to the MAIN club only using getMyClubContext().
  * - Restart Team now opens the shared RestartTeamModal and calls
  *   public.restart_my_team_v1 through that modal.
@@ -26,7 +26,7 @@
  * Note:
  * - The one-time repair / global protection for broken old localStorage
  *   belongs in the top-level dashboard layout, not here.
- * - This page only ensures the purchase flow does not incorrectly switch
+ * - This page only ensures the activation flow does not incorrectly switch
  *   active club context to the newly created developing club.
  */
 
@@ -56,14 +56,34 @@ type DevelopingTeamStatus = {
   main_club_name: string | null
   developing_club_id: string | null
   developing_club_name: string | null
-  is_purchased: boolean
+
+  team_exists: boolean
+  access_status: 'active' | 'expired' | 'not_activated'
+  is_active: boolean
+  is_read_only: boolean
+
+  current_season: number
+  active_season: number | null
+  expires_after_season: number | null
+  next_renewal_season: number | null
+
+  auto_renew: boolean
+  activation_coin_cost: number
+  renewal_coin_cost: number
+
+  coin_balance: number
+  coin_requirement_met: boolean
+  activation_coin_requirement_met?: boolean
+  renewal_coin_requirement_met?: boolean
+
   real_days_played: number
   game_days_played: number
   time_requirement_met: boolean
-  coin_balance: number
-  coin_cost: number
-  coin_requirement_met: boolean
-  can_purchase: boolean
+
+  can_activate: boolean
+  can_reactivate: boolean
+  can_change_auto_renew: boolean
+
   movement_window_open: boolean
   current_window_label: string | null
   next_window_label: string | null
@@ -88,6 +108,16 @@ type ActiveClubPayload = {
   secondary_color?: string | undefined
   club_type: 'main'
   updated_at_ms: number
+}
+
+// Display fallbacks only. get_developing_team_status() is the authoritative source.
+const DEFAULT_DEVELOPING_TEAM_ACTIVATION_COIN_COST = 200
+const DEFAULT_DEVELOPING_TEAM_RENEWAL_COIN_COST = 100
+
+function normalizeCoinCost(value: unknown, fallback: number): number {
+  const parsed = Number(value)
+
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback
 }
 
 function ToggleRow({ title, description, checked, onToggle }: ToggleRowProps): JSX.Element {
@@ -116,7 +146,13 @@ export default function PreferencesPage(): JSX.Element {
   const [developingTeamStatus, setDevelopingTeamStatus] = useState<DevelopingTeamStatus | null>(null)
   const [isLoadingDevelopingTeamStatus, setIsLoadingDevelopingTeamStatus] = useState(true)
   const [developingTeamError, setDevelopingTeamError] = useState<string | null>(null)
-  const [isPurchasingDevelopingTeam, setIsPurchasingDevelopingTeam] = useState(false)
+  const [isActivatingDevelopingTeam, setIsActivatingDevelopingTeam] = useState(false)
+  const [
+    isUpdatingDevelopingTeamAutoRenew,
+    setIsUpdatingDevelopingTeamAutoRenew,
+  ] = useState(false)
+  const [isDevelopingTeamActivationModalOpen, setIsDevelopingTeamActivationModalOpen] =
+    useState(false)
   const [developingTeamSuccessMessage, setDevelopingTeamSuccessMessage] = useState<string | null>(
     null
   )
@@ -187,15 +223,17 @@ export default function PreferencesPage(): JSX.Element {
     setIsRestartModalOpen(true)
   }
 
-  const handlePurchaseDevelopingTeam = async (): Promise<void> => {
-    if (isPurchasingDevelopingTeam) return
+  const handleActivateDevelopingTeam = async (): Promise<void> => {
+    if (isActivatingDevelopingTeam) return
 
     setDevelopingTeamError(null)
     setDevelopingTeamSuccessMessage(null)
-    setIsPurchasingDevelopingTeam(true)
+    setIsActivatingDevelopingTeam(true)
 
     try {
-      const { data, error } = await supabase.rpc('purchase_developing_team')
+      const { data, error } = await supabase.rpc(
+        'activate_developing_team_for_season_v1'
+      )
 
       if (error) {
         throw error
@@ -204,9 +242,11 @@ export default function PreferencesPage(): JSX.Element {
       const normalized = Array.isArray(data) ? data[0] : data
 
       setDevelopingTeamSuccessMessage(
-        normalized?.developing_club_name
-          ? `${normalized.developing_club_name} has been created successfully.`
-          : 'Developing Team purchased successfully.'
+        normalized?.access_status === 'active'
+          ? `Developing Team activated for Season ${
+              normalized.active_season ?? normalized.current_season
+            }. Automatic renewal is ${normalized.auto_renew === false ? 'off' : 'on'}.`
+          : 'Developing Team activated successfully.'
       )
 
       try {
@@ -238,16 +278,65 @@ export default function PreferencesPage(): JSX.Element {
           }
         }
       } catch (contextError) {
-        console.error('Failed to re-pin active club to main club after purchase:', contextError)
+        console.error('Failed to re-pin active club to main club after activation:', contextError)
       }
 
+      setIsDevelopingTeamActivationModalOpen(false)
       await loadDevelopingTeamStatus()
-    } catch (e: any) {
-      console.error('purchase_developing_team failed:', e)
-      setDevelopingTeamError(e?.message ?? 'Failed to purchase Developing Team.')
+    } catch (error: any) {
+      console.error('activate_developing_team_for_season_v1 failed:', error)
+      setDevelopingTeamError(error?.message ?? 'Failed to activate Developing Team.')
     } finally {
-      setIsPurchasingDevelopingTeam(false)
+      setIsActivatingDevelopingTeam(false)
     }
+  }
+
+  const handleDevelopingTeamAutoRenewChange = async (
+    enabled: boolean
+  ): Promise<void> => {
+    if (isUpdatingDevelopingTeamAutoRenew) return
+
+    setDevelopingTeamError(null)
+    setDevelopingTeamSuccessMessage(null)
+    setIsUpdatingDevelopingTeamAutoRenew(true)
+
+    try {
+      const { error } = await supabase.rpc(
+        'set_developing_team_auto_renew_v1',
+        {
+          p_enabled: enabled,
+        }
+      )
+
+      if (error) {
+        throw error
+      }
+
+      setDevelopingTeamSuccessMessage(
+        enabled
+          ? 'Developing Team automatic renewal enabled.'
+          : 'Developing Team automatic renewal disabled.'
+      )
+
+      await loadDevelopingTeamStatus()
+    } catch (error: any) {
+      console.error('set_developing_team_auto_renew_v1 failed:', error)
+      setDevelopingTeamError(error?.message ?? 'Failed to update automatic renewal.')
+    } finally {
+      setIsUpdatingDevelopingTeamAutoRenew(false)
+    }
+  }
+
+  const openDevelopingTeamActivationModal = (): void => {
+    if (isActivatingDevelopingTeam) return
+    setDevelopingTeamError(null)
+    setDevelopingTeamSuccessMessage(null)
+    setIsDevelopingTeamActivationModalOpen(true)
+  }
+
+  const closeDevelopingTeamActivationModal = (): void => {
+    if (isActivatingDevelopingTeam) return
+    setIsDevelopingTeamActivationModalOpen(false)
   }
 
   const openShutdownModal = (): void => {
@@ -320,9 +409,15 @@ export default function PreferencesPage(): JSX.Element {
     ? `${developingTeamStatus.game_days_played} / 60`
     : '—'
 
-  const coinProgressLabel = developingTeamStatus
-    ? `${developingTeamStatus.coin_balance} / ${developingTeamStatus.coin_cost}`
-    : '—'
+  const activationCoinCost = normalizeCoinCost(
+    developingTeamStatus?.activation_coin_cost,
+    DEFAULT_DEVELOPING_TEAM_ACTIVATION_COIN_COST
+  )
+
+  const renewalCoinCost = normalizeCoinCost(
+    developingTeamStatus?.renewal_coin_cost,
+    DEFAULT_DEVELOPING_TEAM_RENEWAL_COIN_COST
+  )
 
   const movementWindowText = developingTeamStatus
     ? developingTeamStatus.movement_window_open
@@ -330,21 +425,36 @@ export default function PreferencesPage(): JSX.Element {
       : `Movement window closed. Next window: ${developingTeamStatus.next_window_label ?? 'Unknown'}`
     : 'Movement window unavailable.'
 
-  const developingTeamButtonLabel = developingTeamStatus?.is_purchased
-    ? 'Already Unlocked'
-    : isPurchasingDevelopingTeam
-      ? 'Purchasing...'
-      : 'Purchase Developing Team'
+  const developingTeamAccessStatus = developingTeamStatus?.access_status ?? 'not_activated'
+  const developingTeamIsActive = developingTeamStatus?.is_active === true
+  const developingTeamIsExpired = developingTeamAccessStatus === 'expired'
+  const developingTeamIsNotActivated = developingTeamAccessStatus === 'not_activated'
+  const developingTeamIsEligible = developingTeamStatus?.time_requirement_met === true
+  const developingTeamTargetSeason = developingTeamStatus?.current_season ?? 1
+  const developingTeamActionCost = developingTeamIsExpired
+    ? renewalCoinCost
+    : activationCoinCost
+  const developingTeamHasEnoughCoins =
+    Number(developingTeamStatus?.coin_balance ?? 0) >= developingTeamActionCost
 
-  const developingTeamBlockedReason = !developingTeamStatus
-    ? null
-    : developingTeamStatus.is_purchased
-      ? 'Developing Team already unlocked.'
-      : !developingTeamStatus.time_requirement_met
-        ? 'You must first reach 30 real-life days or 60 in-game days.'
-        : !developingTeamStatus.coin_requirement_met
-          ? 'You need at least 50 coins.'
-          : null
+  const coinProgressLabel = developingTeamStatus
+    ? `${developingTeamStatus.coin_balance} / ${developingTeamActionCost}`
+    : '—'
+
+  const developingTeamActivationLabel = developingTeamIsExpired
+    ? `Reactivate for Season ${developingTeamTargetSeason} — ${renewalCoinCost} Coins`
+    : `Activate Developing Team — ${activationCoinCost} Coins`
+
+  const developingTeamCanSubmitActivation = Boolean(
+    developingTeamStatus &&
+      developingTeamIsEligible &&
+      developingTeamHasEnoughCoins &&
+      !developingTeamIsActive &&
+      (
+        (developingTeamIsNotActivated && developingTeamStatus.can_activate) ||
+        (developingTeamIsExpired && developingTeamStatus.can_reactivate)
+      )
+  )
 
   return (
     <>
@@ -412,10 +522,25 @@ export default function PreferencesPage(): JSX.Element {
           </div>
 
           <section className="w-full rounded-lg border border-gray-100 bg-white p-5 shadow-sm">
-            <h3 className="text-base font-semibold">Developing Team</h3>
-            <p className="mt-1 text-xs text-gray-500">
-              Unlock a U23 team for your club. This team can race normally, but it cannot be promoted
-              above Continental level.
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <h3 className="text-base font-semibold">Developing Team</h3>
+                <p className="mt-1 text-xs text-gray-500">
+                  Build and manage a U23 development squad with seasonal coin access.
+                </p>
+              </div>
+
+              <div className="shrink-0 rounded-full border border-gray-200 bg-gray-50 px-3 py-1 text-xs font-semibold text-gray-600">
+                {developingTeamIsActive || developingTeamIsExpired
+                  ? `${renewalCoinCost} coins per renewal`
+                  : `${activationCoinCost} coins to activate`}
+              </div>
+            </div>
+
+            <p className="mt-3 text-sm text-gray-600">
+              Available to Free and Premium players. First activation costs {activationCoinCost}{' '}
+              coins. Each later season renewal or reactivation costs {renewalCoinCost} coins.
+              Premium membership does not waive these service costs.
             </p>
 
             {isLoadingDevelopingTeamStatus ? (
@@ -441,28 +566,208 @@ export default function PreferencesPage(): JSX.Element {
 
                   <div className="rounded-md border border-gray-200 p-3">
                     <div className="text-xs text-gray-500">Coins</div>
-                    <div className="mt-1 text-lg font-semibold text-gray-900">{coinProgressLabel}</div>
-                    <div className="mt-1 text-xs text-gray-500">Cost: 50 coins</div>
+                    <div className="mt-1 text-lg font-semibold text-gray-900">
+                      {coinProgressLabel}
+                    </div>
+                    <div className="mt-1 text-xs text-gray-500">
+                      {developingTeamIsExpired
+                        ? `Reactivation price: ${renewalCoinCost} coins`
+                        : developingTeamIsActive
+                          ? `Next renewal: ${renewalCoinCost} coins`
+                          : `First activation: ${activationCoinCost} coins`}
+                    </div>
                   </div>
                 </div>
 
-                <div className="mt-4 rounded-md border border-blue-200 bg-blue-50 p-4 text-sm text-blue-800">
-                  {movementWindowText}
+                <div className="mt-4 rounded-md border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
+                  Eligibility: 30 real-life days or 60 in-game days. First activation:{' '}
+                  {activationCoinCost} coins. Renewal and reactivation: {renewalCoinCost} coins per
+                  season.
                 </div>
 
-                <div className="mt-4 rounded-md border border-yellow-200 bg-yellow-50 p-4 text-sm text-yellow-800">
-                  Requirements: 30 real-life days or 60 in-game days, plus 50 coins. Maximum roster
-                  size: 8 riders. Only riders aged 23 or younger are eligible. Riders can move between
-                  First Squad and Developing Team only during movement windows.
-                </div>
+                {developingTeamIsActive ? (
+                  <div className="mt-4 rounded-xl border border-green-200 bg-green-50/60 p-4">
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                      <div>
+                        <div className="text-sm font-semibold text-green-900">
+                          Developing Team active
+                        </div>
+                        <div className="mt-1 text-sm text-green-800">
+                          Access remains available until the end of Season{' '}
+                          {developingTeamStatus?.expires_after_season ??
+                            developingTeamStatus?.active_season ??
+                            developingTeamStatus?.current_season}.
+                        </div>
+                      </div>
+
+                      <span className="shrink-0 rounded-full border border-green-200 bg-white px-2.5 py-1 text-xs font-semibold text-green-700">
+                        Active
+                      </span>
+                    </div>
+
+                    <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                      <div>
+                        <div className="text-xs text-green-700">Current season</div>
+                        <div className="mt-1 text-sm font-semibold text-green-950">
+                          Season {developingTeamStatus?.current_season ?? '—'}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-xs text-green-700">Access ends</div>
+                        <div className="mt-1 text-sm font-semibold text-green-950">
+                          End of Season{' '}
+                          {developingTeamStatus?.expires_after_season ??
+                            developingTeamStatus?.active_season ??
+                            '—'}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-xs text-green-700">Renewal price</div>
+                        <div className="mt-1 text-sm font-semibold text-green-950">
+                          {renewalCoinCost} coins
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-xs text-green-700">Next renewal</div>
+                        <div className="mt-1 text-sm font-semibold text-green-950">
+                          Start of Season{' '}
+                          {developingTeamStatus?.next_renewal_season ??
+                            (developingTeamStatus?.current_season ?? 0) + 1}
+                        </div>
+                      </div>
+                    </div>
+
+                    <label className="mt-5 flex cursor-pointer items-start justify-between gap-4 rounded-lg border border-green-200 bg-white p-4">
+                      <div>
+                        <div className="text-sm font-semibold text-gray-900">
+                          Automatically renew each season
+                        </div>
+                        <div className="mt-1 text-xs leading-5 text-gray-600">
+                          When enabled, {renewalCoinCost} coins will be deducted at the beginning of
+                          the next season. If your balance is too low, renewal will fail and the
+                          Developing Team will become read-only.
+                        </div>
+                      </div>
+
+                      <input
+                        type="checkbox"
+                        checked={developingTeamStatus?.auto_renew === true}
+                        disabled={
+                          !developingTeamStatus?.can_change_auto_renew ||
+                          isUpdatingDevelopingTeamAutoRenew
+                        }
+                        onChange={event => {
+                          void handleDevelopingTeamAutoRenewChange(event.target.checked)
+                        }}
+                        className="mt-1 h-4 w-4 shrink-0 rounded border-gray-300"
+                      />
+                    </label>
+                  </div>
+                ) : developingTeamIsExpired ? (
+                  <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50/60 p-4">
+                    <div className="text-sm font-semibold text-amber-900">
+                      Developing Team access expired
+                    </div>
+                    <p className="mt-2 text-sm leading-6 text-amber-800">
+                      Your team, riders, contracts, results and history remain stored. The Developing
+                      Team is currently read-only.
+                    </p>
+
+                    <div className="mt-4 flex flex-wrap items-center gap-3">
+                      <button
+                        type="button"
+                        onClick={openDevelopingTeamActivationModal}
+                        disabled={!developingTeamCanSubmitActivation || isActivatingDevelopingTeam}
+                        className="inline-flex items-center rounded-md bg-yellow-400 px-4 py-2 text-sm font-medium text-black transition-colors hover:bg-yellow-500 disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        {isActivatingDevelopingTeam
+                          ? 'Reactivating...'
+                          : developingTeamActivationLabel}
+                      </button>
+
+                      {!developingTeamHasEnoughCoins ? (
+                        <a
+                          href="#/dashboard/pro"
+                          className="text-sm font-semibold text-yellow-700 hover:text-yellow-800"
+                        >
+                          Get coins
+                        </a>
+                      ) : null}
+                    </div>
+                  </div>
+                ) : !developingTeamIsEligible ? (
+                  <div className="mt-4 rounded-xl border border-gray-200 bg-gray-50 p-4">
+                    <div className="text-sm font-semibold text-gray-900">Not yet eligible</div>
+                    <p className="mt-2 text-sm text-gray-600">
+                      Developing Team becomes available after 30 real-life days or 60 in-game days.
+                    </p>
+                    <button
+                      type="button"
+                      disabled
+                      className="mt-4 inline-flex cursor-not-allowed items-center rounded-md border border-gray-200 bg-gray-100 px-4 py-2 text-sm font-medium text-gray-400"
+                    >
+                      Not yet eligible
+                    </button>
+                  </div>
+                ) : (
+                  <div className="mt-4 rounded-xl border border-yellow-200 bg-yellow-50/50 p-4">
+                    <div className="text-sm font-semibold text-gray-900">
+                      Activate for Season {developingTeamTargetSeason}
+                    </div>
+                    <p className="mt-2 text-sm text-gray-700">
+                      {developingTeamStatus?.team_exists
+                        ? 'Your existing Developing Team will be activated for this season.'
+                        : 'A Developing Team will be created and activated for this season.'}{' '}
+                      Access lasts until the end of the current in-game season. Automatic renewal is
+                      enabled by default and can be switched off at any time.
+                    </p>
+
+                    {!developingTeamHasEnoughCoins ? (
+                      <div className="mt-3 rounded-lg border border-amber-200 bg-white px-3 py-2 text-sm text-amber-800">
+                        You need {activationCoinCost} coins to activate Developing Team access. Current
+                        balance: {developingTeamStatus?.coin_balance ?? 0} coins.
+                      </div>
+                    ) : null}
+
+                    <div className="mt-4 flex flex-wrap items-center gap-3">
+                      <button
+                        type="button"
+                        onClick={openDevelopingTeamActivationModal}
+                        disabled={!developingTeamCanSubmitActivation || isActivatingDevelopingTeam}
+                        className="inline-flex items-center rounded-md bg-yellow-400 px-4 py-2 text-sm font-medium text-black transition-colors hover:bg-yellow-500 disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        {isActivatingDevelopingTeam
+                          ? 'Activating...'
+                          : developingTeamActivationLabel}
+                      </button>
+
+                      {!developingTeamHasEnoughCoins ? (
+                        <a
+                          href="#/dashboard/pro"
+                          className="text-sm font-semibold text-yellow-700 hover:text-yellow-800"
+                        >
+                          Get coins
+                        </a>
+                      ) : null}
+                    </div>
+                  </div>
+                )}
+
+                {developingTeamIsActive ? (
+                  <div className="mt-4 rounded-md border border-blue-200 bg-blue-50 p-4 text-sm text-blue-800">
+                    {movementWindowText}
+                  </div>
+                ) : null}
 
                 <div className="mt-4 rounded-md border border-gray-200 bg-gray-50 p-4 text-sm text-gray-700">
                   <div className="font-medium text-gray-900">Special rules</div>
                   <ul className="mt-2 list-disc space-y-1 pl-5">
                     <li>The team name will be your main club name plus U23.</li>
-                    <li>This team can apply to races normally.</li>
+                    <li>This team can apply to races normally while seasonal access is active.</li>
                     <li>This team cannot be promoted above Continental level.</li>
-                    <li>Riders in this team are still part of the main club structure.</li>
+                    <li>Maximum roster size: 8 riders.</li>
+                    <li>Only riders aged 23 or younger are eligible.</li>
+                    <li>Riders move between squads only during movement windows.</li>
                   </ul>
                 </div>
 
@@ -478,32 +783,12 @@ export default function PreferencesPage(): JSX.Element {
                   </div>
                 ) : null}
 
-                <div className="mt-4">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      void handlePurchaseDevelopingTeam()
-                    }}
-                    disabled={
-                      !!developingTeamStatus?.is_purchased ||
-                      !developingTeamStatus?.can_purchase ||
-                      isPurchasingDevelopingTeam
-                    }
-                    className="inline-flex items-center rounded-md bg-yellow-400 px-4 py-2 text-sm font-medium text-black transition-colors hover:bg-yellow-500 disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    {developingTeamButtonLabel}
-                  </button>
-
-                  {developingTeamBlockedReason ? (
-                    <div className="mt-2 text-xs text-gray-500">{developingTeamBlockedReason}</div>
-                  ) : null}
-
-                  {developingTeamStatus?.is_purchased && developingTeamStatus.developing_club_name ? (
-                    <div className="mt-2 text-xs text-gray-500">
-                      Unlocked: {developingTeamStatus.developing_club_name}
-                    </div>
-                  ) : null}
-                </div>
+                {developingTeamStatus?.team_exists &&
+                developingTeamStatus.developing_club_name ? (
+                  <div className="mt-4 text-xs text-gray-500">
+                    Team: {developingTeamStatus.developing_club_name}
+                  </div>
+                ) : null}
               </>
             )}
           </section>
@@ -578,6 +863,64 @@ export default function PreferencesPage(): JSX.Element {
         onClose={() => setIsRestartModalOpen(false)}
         redirectTo="/dashboard/overview"
       />
+
+      {isDevelopingTeamActivationModalOpen && developingTeamStatus ? (
+        <div
+          className="fixed inset-0 z-[90] flex items-center justify-center p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="developing-team-activation-modal-title"
+        >
+          <button
+            type="button"
+            aria-label="Close Developing Team activation confirmation"
+            className="absolute inset-0 bg-black/40"
+            onClick={closeDevelopingTeamActivationModal}
+          />
+
+          <div className="relative z-[91] w-full max-w-lg overflow-hidden rounded-2xl border border-yellow-200 bg-white shadow-2xl">
+            <div className="border-b border-yellow-100 bg-yellow-50 px-6 py-5">
+              <h3
+                id="developing-team-activation-modal-title"
+                className="text-lg font-semibold text-gray-900"
+              >
+                {developingTeamIsExpired ? 'Reactivate' : 'Activate'} Developing Team for Season{' '}
+                {developingTeamTargetSeason}?
+              </h3>
+            </div>
+
+            <div className="space-y-3 px-6 py-5 text-sm leading-6 text-gray-700">
+              <p>{developingTeamActionCost} coins will be deducted from your wallet.</p>
+              <p>Access lasts until the end of this in-game season.</p>
+              <p>Automatic renewal will be enabled by default. You can switch it off at any time in Preferences or Premium &amp; Billing.</p>
+            </div>
+
+            <div className="flex flex-col-reverse gap-3 border-t border-gray-100 bg-gray-50 px-6 py-4 sm:flex-row sm:justify-end">
+              <button
+                type="button"
+                onClick={closeDevelopingTeamActivationModal}
+                disabled={isActivatingDevelopingTeam}
+                className="inline-flex items-center justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  void handleActivateDevelopingTeam()
+                }}
+                disabled={isActivatingDevelopingTeam}
+                className="inline-flex items-center justify-center rounded-md bg-yellow-400 px-4 py-2 text-sm font-semibold text-black hover:bg-yellow-500 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {isActivatingDevelopingTeam
+                  ? 'Activating...'
+                  : `${developingTeamIsExpired ? 'Reactivate' : 'Activate'} for ${developingTeamActionCost} Coins`}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       {isShutdownModalOpen && (
         <div

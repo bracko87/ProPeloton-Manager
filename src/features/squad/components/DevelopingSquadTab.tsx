@@ -1,4 +1,10 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
+
+import {
+  openPremiumPage,
+  PremiumFeatureLoading,
+  PremiumFeatureLock,
+} from '../../../components/premium/PremiumFeatureLock'
 
 import type {
   ChartPoint,
@@ -123,6 +129,128 @@ const SQUAD_LIST_VIEW_OPTIONS: Array<{ value: SquadListView; label: string }> = 
   { value: 'skills', label: 'Skills View' },
   { value: 'form', label: 'Form & Development' },
 ]
+
+type DevelopingSquadListViewPickerProps = {
+  value: SquadListView
+  isPremium: boolean
+  isPremiumLoading: boolean
+  onChange: (value: SquadListView) => void
+}
+
+function DevelopingSquadListViewPicker({
+  value,
+  isPremium,
+  isPremiumLoading,
+  onChange,
+}: DevelopingSquadListViewPickerProps) {
+  const [open, setOpen] = useState(false)
+  const pickerRef = useRef<HTMLDivElement>(null)
+
+  const selectedOption =
+    SQUAD_LIST_VIEW_OPTIONS.find((option) => option.value === value) ??
+    SQUAD_LIST_VIEW_OPTIONS[0]
+
+  useEffect(() => {
+    if (!open) return
+
+    function handlePointerDown(event: MouseEvent) {
+      if (!pickerRef.current?.contains(event.target as Node)) {
+        setOpen(false)
+      }
+    }
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape') {
+        setOpen(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handlePointerDown)
+    document.addEventListener('keydown', handleKeyDown)
+
+    return () => {
+      document.removeEventListener('mousedown', handlePointerDown)
+      document.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [open])
+
+  return (
+    <div ref={pickerRef} className="relative">
+      <button
+        id="developing-team-list-view"
+        type="button"
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        disabled={isPremiumLoading}
+        onClick={() => setOpen((current) => !current)}
+        className="flex min-w-[210px] items-center justify-between gap-3 rounded-lg border border-gray-300 bg-white px-3 py-2 text-left text-sm text-gray-800 outline-none transition hover:border-gray-400 focus:border-yellow-400 disabled:cursor-wait disabled:bg-gray-50 disabled:text-gray-500"
+      >
+        <span>{isPremiumLoading ? 'Checking Premium access…' : selectedOption.label}</span>
+        <span aria-hidden="true" className="text-xs text-gray-400">
+          {open ? '▲' : '▼'}
+        </span>
+      </button>
+
+      {open && !isPremiumLoading ? (
+        <div
+          role="listbox"
+          aria-labelledby="developing-team-list-view-label"
+          className="absolute right-0 z-30 mt-2 w-[260px] overflow-visible rounded-xl border border-slate-200 bg-white p-1.5 shadow-lg"
+        >
+          {SQUAD_LIST_VIEW_OPTIONS.map((option) => {
+            const isLocked = !isPremium && option.value !== 'general'
+            const isSelected = option.value === value
+
+            return (
+              <div key={option.value} className="group relative">
+                <button
+                  type="button"
+                  role="option"
+                  aria-selected={isSelected}
+                  aria-disabled={isLocked}
+                  disabled={isLocked}
+                  title={isLocked ? 'Only for Premium users' : undefined}
+                  onClick={() => {
+                    onChange(option.value)
+                    setOpen(false)
+                  }}
+                  className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm transition ${
+                    isLocked
+                      ? 'cursor-not-allowed text-slate-400'
+                      : isSelected
+                        ? 'bg-slate-100 font-semibold text-slate-900'
+                        : 'text-slate-700 hover:bg-slate-50'
+                  }`}
+                >
+                  <span>{option.label}</span>
+
+                  {isLocked ? (
+                    <span aria-label="Premium only" className="text-xs text-slate-400">
+                      🔒
+                    </span>
+                  ) : isSelected ? (
+                    <span aria-hidden="true" className="text-xs text-slate-500">
+                      ✓
+                    </span>
+                  ) : null}
+                </button>
+
+                {isLocked ? (
+                  <div
+                    role="tooltip"
+                    className="pointer-events-none absolute right-[calc(100%+8px)] top-1/2 z-40 hidden -translate-y-1/2 whitespace-nowrap rounded-md bg-slate-900 px-2.5 py-1.5 text-[11px] font-medium text-white shadow-lg group-hover:block group-focus-within:block"
+                  >
+                    Only for Premium users
+                  </div>
+                ) : null}
+              </div>
+            )
+          })}
+        </div>
+      ) : null}
+    </div>
+  )
+}
 
 function getBestRiderSkillValue(rider: {
   sprint?: number | null
@@ -709,6 +837,8 @@ type DevelopingSquadTabProps = {
   gameDate: string | null
   listView: SquadListView
   onListViewChange: (value: SquadListView) => void
+  isPremium: boolean
+  isPremiumLoading?: boolean
   squadMax: number
   firstSquadRiderCount: number
   firstSquadMax?: number
@@ -728,6 +858,8 @@ export default function DevelopingSquadTab({
   gameDate,
   listView,
   onListViewChange,
+  isPremium,
+  isPremiumLoading = false,
   squadMax,
   firstSquadRiderCount,
   firstSquadMax = 18,
@@ -738,14 +870,17 @@ export default function DevelopingSquadTab({
   squadDisplayData,
   movingRiderId,
 }: DevelopingSquadTabProps) {
+  const activeListView: SquadListView =
+    isPremium && !isPremiumLoading ? listView : 'general'
+
   const squadTableClassName = [
     'w-full text-sm',
-    listView === 'skills' ? 'table-fixed' : '',
-    listView === 'financial'
+    activeListView === 'skills' ? 'table-fixed' : '',
+    activeListView === 'financial'
       ? 'min-w-[980px]'
-      : listView === 'form'
+      : activeListView === 'form'
         ? 'min-w-[1020px]'
-        : listView === 'general'
+        : activeListView === 'general'
           ? 'min-w-[900px]'
           : '',
   ]
@@ -753,16 +888,16 @@ export default function DevelopingSquadTab({
     .join(' ')
 
   const squadTableColSpan =
-    listView === 'skills'
+    activeListView === 'skills'
       ? 11
-      : listView === 'financial'
+      : activeListView === 'financial'
         ? 8
-        : listView === 'form'
+        : activeListView === 'form'
           ? 9
           : 9
 
   const currentViewLabel =
-    SQUAD_LIST_VIEW_OPTIONS.find((option) => option.value === listView)?.label ?? 'General View'
+    SQUAD_LIST_VIEW_OPTIONS.find((option) => option.value === activeListView)?.label ?? 'General View'
 
   const visibleLastTeamRace = getVisibleLastTeamRace(squadDisplayData.lastTeamRace)
   const visibleNextRaceSelection = getVisibleNextRaceSelection(
@@ -785,29 +920,36 @@ export default function DevelopingSquadTab({
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
-            <div className="text-sm text-gray-500">
-              First Squad:{' '}
-              <span className="font-medium text-gray-700">
-                {firstSquadRiderCount}/{firstSquadMax}
-              </span>
-            </div>
+            <div className="flex flex-col items-start gap-2 md:items-end">
+              <div className="flex items-center gap-2">
+                <span
+                  id="developing-team-list-view-label"
+                  className="text-sm font-medium text-gray-600"
+                >
+                  View
+                </span>
 
-            <div className="flex items-center gap-2">
-              <label htmlFor="developing-team-list-view" className="text-sm font-medium text-gray-600">
-                View
-              </label>
-              <select
-                id="developing-team-list-view"
-                value={listView}
-                onChange={(e) => onListViewChange(e.target.value as SquadListView)}
-                className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 outline-none transition focus:border-yellow-400"
-              >
-                {SQUAD_LIST_VIEW_OPTIONS.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
+                <DevelopingSquadListViewPicker
+                  value={activeListView}
+                  isPremium={isPremium}
+                  isPremiumLoading={isPremiumLoading}
+                  onChange={onListViewChange}
+                />
+              </div>
+
+              {!isPremiumLoading && !isPremium ? (
+                <div className="flex items-center gap-1.5 text-[11px] text-slate-500">
+                  <span aria-hidden="true">🔒</span>
+                  <span>Advanced squad views require Premium.</span>
+                  <button
+                    type="button"
+                    onClick={openPremiumPage}
+                    className="font-semibold text-slate-700 underline decoration-slate-300 underline-offset-2 hover:text-slate-950"
+                  >
+                    View Premium
+                  </button>
+                </div>
+              ) : null}
             </div>
           </div>
         </div>
@@ -816,12 +958,12 @@ export default function DevelopingSquadTab({
           <table className={squadTableClassName}>
             <thead>
               <tr className="text-left text-gray-600">
-                <th className={`p-2 ${listView === 'skills' ? 'w-[42px]' : ''}`}>#</th>
-                <th className={`p-2 ${listView === 'skills' ? 'w-[190px]' : ''}`}>Name</th>
-                <th className={`p-2 ${listView === 'skills' ? 'w-[110px]' : ''}`}>Country</th>
-                <th className={`p-2 ${listView === 'skills' ? 'w-[130px]' : ''}`}>Role</th>
+                <th className={`p-2 ${activeListView === 'skills' ? 'w-[42px]' : ''}`}>#</th>
+                <th className={`p-2 ${activeListView === 'skills' ? 'w-[190px]' : ''}`}>Name</th>
+                <th className={`p-2 ${activeListView === 'skills' ? 'w-[110px]' : ''}`}>Country</th>
+                <th className={`p-2 ${activeListView === 'skills' ? 'w-[130px]' : ''}`}>Role</th>
 
-                {listView === 'general' && (
+                {activeListView === 'general' && (
                   <>
                     <th className="p-2">Age</th>
                     <th className="p-2">Overall</th>
@@ -830,7 +972,7 @@ export default function DevelopingSquadTab({
                   </>
                 )}
 
-                {listView === 'financial' && (
+                {activeListView === 'financial' && (
                   <>
                     <th className="p-2">Value</th>
                     <th className="p-2">Wage</th>
@@ -838,7 +980,7 @@ export default function DevelopingSquadTab({
                   </>
                 )}
 
-                {listView === 'skills' && (
+                {activeListView === 'skills' && (
                   <>
                     <th className="p-2 w-[64px] text-center">SP</th>
                     <th className="p-2 w-[64px] text-center">CL</th>
@@ -849,7 +991,7 @@ export default function DevelopingSquadTab({
                   </>
                 )}
 
-                {listView === 'form' && (
+                {activeListView === 'form' && (
                   <>
                     <th className="p-2">Potential</th>
                     <th className="p-2">Morale</th>
@@ -859,7 +1001,7 @@ export default function DevelopingSquadTab({
                 )}
 
                 <th
-                  className={`p-2 text-right ${listView === 'skills' ? 'w-[72px]' : 'w-[90px]'}`}
+                  className={`p-2 text-right ${activeListView === 'skills' ? 'w-[72px]' : 'w-[90px]'}`}
                 >
                   View
                 </th>
@@ -894,7 +1036,7 @@ export default function DevelopingSquadTab({
                 const isBusy = movingRiderId === r.id
 
                 const ageWarning =
-                  listView === 'general'
+                  activeListView === 'general'
                     ? getDevelopingTeamAgeWarning(r.age ?? null, movementWindowOpen)
                     : null
 
@@ -919,7 +1061,7 @@ export default function DevelopingSquadTab({
 
                     <td
                       className={`p-2 ${
-                        listView === 'skills'
+                        activeListView === 'skills'
                           ? 'truncate whitespace-nowrap'
                           : 'whitespace-nowrap'
                       }`}
@@ -936,7 +1078,7 @@ export default function DevelopingSquadTab({
                     <td className="p-2">
                       <div
                         className={`flex items-center gap-2 ${
-                          listView === 'skills' ? 'whitespace-nowrap' : ''
+                          activeListView === 'skills' ? 'whitespace-nowrap' : ''
                         }`}
                         title={getCountryName(
                           displayedCountryCode === '—' ? undefined : displayedCountryCode
@@ -948,13 +1090,13 @@ export default function DevelopingSquadTab({
                     </td>
 
                     <td
-                      className={`p-2 ${listView === 'skills' ? 'truncate' : ''}`}
+                      className={`p-2 ${activeListView === 'skills' ? 'truncate' : ''}`}
                       title={r.role ?? undefined}
                     >
                       {r.role ?? '—'}
                     </td>
 
-                    {listView === 'general' && (
+                    {activeListView === 'general' && (
                       <>
                         <td className="p-2">{r.age ?? '—'}</td>
                         <td className="p-2">{r.overall}%</td>
@@ -983,7 +1125,7 @@ export default function DevelopingSquadTab({
                       </>
                     )}
 
-                    {listView === 'financial' && (
+                    {activeListView === 'financial' && (
                       <>
                         <td className="p-2">
                           <div className="text-gray-800">
@@ -1005,7 +1147,7 @@ export default function DevelopingSquadTab({
                       </>
                     )}
 
-                    {listView === 'skills' && (
+                    {activeListView === 'skills' && (
                       <>
                         {renderSkillCell(r.sprint)}
                         {renderSkillCell(r.climbing)}
@@ -1016,7 +1158,7 @@ export default function DevelopingSquadTab({
                       </>
                     )}
 
-                    {listView === 'form' && (
+                    {activeListView === 'form' && (
                       <>
                         <td className="p-2">
                           {r.potential == null ? (
@@ -1069,6 +1211,9 @@ export default function DevelopingSquadTab({
         </div>
       </div>
 
+      {isPremiumLoading ? (
+        <PremiumFeatureLoading className="mt-6" />
+      ) : isPremium ? (
       <div className="mt-6 rounded-lg bg-white p-4 shadow">
         <div className="mb-4">
           <div className="text-base font-semibold text-gray-800">Health Report</div>
@@ -1143,13 +1288,33 @@ export default function DevelopingSquadTab({
           </div>
         )}
       </div>
+      ) : (
+        <PremiumFeatureLock
+          className="mt-6"
+          title="Developing Team Health Report"
+          description="See squad-wide injury, illness and recovery information for your development riders in one consolidated report."
+        />
+      )}
 
-          <div className="mt-6 grid grid-cols-2 gap-3 md:grid-cols-4">
-            <CompactValueTile label="Season Wins" value={`${squadDisplayData.summary.wins}`} />
-            <CompactValueTile label="Season Podiums" value={`${squadDisplayData.summary.podiums}`} />
-            <CompactValueTile label="Top 10 Results" value={`${squadDisplayData.summary.top10s}`} />
-            <CompactValueTile label="Best GC" value={formatBestGcValue(squadDisplayData.summary.bestGC)} />
-          </div>
+          {isPremiumLoading ? (
+            <PremiumFeatureLoading className="mt-6" />
+          ) : isPremium ? (
+            <div className="mt-6 grid grid-cols-2 gap-3 md:grid-cols-4">
+              <CompactValueTile label="Season Wins" value={`${squadDisplayData.summary.wins}`} />
+              <CompactValueTile label="Season Podiums" value={`${squadDisplayData.summary.podiums}`} />
+              <CompactValueTile label="Top 10 Results" value={`${squadDisplayData.summary.top10s}`} />
+              <CompactValueTile
+                label="Best GC"
+                value={formatBestGcValue(squadDisplayData.summary.bestGC)}
+              />
+            </div>
+          ) : (
+            <PremiumFeatureLock
+              className="mt-6"
+              title="Season performance summary"
+              description="Unlock season wins, podiums, Top 10 results and best general-classification performance."
+            />
+          )}
 
           <div className="mt-6 grid grid-cols-1 gap-4 xl:grid-cols-2">
             <div className="rounded-lg bg-white p-4 shadow">
@@ -1250,33 +1415,68 @@ export default function DevelopingSquadTab({
           </div>
 
           <div className="mt-6 grid grid-cols-1 gap-4 xl:grid-cols-3">
-            <div className="rounded-lg bg-white p-4 shadow xl:col-span-2">
-              <div className="text-base font-semibold text-gray-800">Team Results This Season</div>
-              <div className="mt-4">
-                <LineChart data={squadDisplayData.seasonTrend} />
+            {isPremiumLoading ? (
+              <PremiumFeatureLoading className="xl:col-span-2" />
+            ) : isPremium ? (
+              <div className="rounded-lg bg-white p-4 shadow xl:col-span-2">
+                <div className="text-base font-semibold text-gray-800">
+                  Team Results This Season
+                </div>
+                <div className="mt-4">
+                  <LineChart data={squadDisplayData.seasonTrend} />
+                </div>
               </div>
-            </div>
+            ) : (
+              <PremiumFeatureLock
+                className="xl:col-span-2"
+                title="Developing Team Results This Season"
+                description="View monthly development-team performance trends across the current season."
+              />
+            )}
 
-            <div className="rounded-lg bg-white p-4 shadow">
-              <div className="text-base font-semibold text-gray-800">Podiums & Placings</div>
-              <div className="mt-4">
-                <VerticalBarChart data={squadDisplayData.podiumChart} />
+            {isPremiumLoading ? (
+              <PremiumFeatureLoading />
+            ) : isPremium ? (
+              <div className="rounded-lg bg-white p-4 shadow">
+                <div className="text-base font-semibold text-gray-800">
+                  Podiums & Placings
+                </div>
+                <div className="mt-4">
+                  <VerticalBarChart data={squadDisplayData.podiumChart} />
+                </div>
               </div>
-            </div>
+            ) : (
+              <PremiumFeatureLock
+                title="Developing Team Podiums & Placings"
+                description="Analyse wins, podiums and finishing-position distribution for your development squad."
+              />
+            )}
 
-            <div className="rounded-lg bg-white p-4 shadow xl:col-span-3">
-              <div className="text-base font-semibold text-gray-800">Race Type Snapshot</div>
-              <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
-                {(squadDisplayData.raceTypeSnapshot ?? []).map((item) => (
-                  <HorizontalMetricBar
-                    key={item.label}
-                    label={item.label}
-                    value={item.value}
-                    max={getRaceTypeSnapshotMax(squadDisplayData.raceTypeSnapshot ?? [])}
-                  />
-                ))}
+            {isPremiumLoading ? (
+              <PremiumFeatureLoading className="xl:col-span-3" />
+            ) : isPremium ? (
+              <div className="rounded-lg bg-white p-4 shadow xl:col-span-3">
+                <div className="text-base font-semibold text-gray-800">
+                  Race Type Snapshot
+                </div>
+                <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+                  {(squadDisplayData.raceTypeSnapshot ?? []).map((item) => (
+                    <HorizontalMetricBar
+                      key={item.label}
+                      label={item.label}
+                      value={item.value}
+                      max={getRaceTypeSnapshotMax(squadDisplayData.raceTypeSnapshot ?? [])}
+                    />
+                  ))}
+                </div>
               </div>
-            </div>
+            ) : (
+              <PremiumFeatureLock
+                className="xl:col-span-3"
+                title="Developing Team Race Type Snapshot"
+                description="Compare development-team results across classics, mountain days, stage finishes and time trials."
+              />
+            )}
           </div>
     </>
   )

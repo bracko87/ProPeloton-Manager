@@ -7,7 +7,11 @@
  * Gradient and terrain effects are derived by simulation rules.
  */
 
-import type { RiderAttributes, RiderRole } from './RiderState'
+import type {
+  RiderAttributes,
+  RiderRole,
+  RiderStartingCondition,
+} from './RiderState'
 import type { TeamOrder } from './TeamOrder'
 
 /**
@@ -34,8 +38,46 @@ export interface StageSimulationSettings {
   readonly maximumSpeedKmh: number
 }
 
+
+/**
+ * Authority used to create the canonical stage-weather input.
+ *
+ * The live integration prefers the weather snapshot stored directly on the
+ * race stage. Profile-detail weather is a deterministic fallback only when
+ * the stage snapshot is absent.
+ */
+export type StageWeatherAuthority =
+  | 'stage_weather_snapshot'
+  | 'profile_weather_snapshot'
+
+/**
+ * Normalized immutable weather metadata for one stage.
+ *
+ * Phase 8G.3 transports this metadata without applying performance, stamina,
+ * fatigue, crash, or incident effects.
+ */
+export interface StageWeatherInput {
+  readonly authority: StageWeatherAuthority
+  readonly source: string
+  readonly condition: string
+  readonly summary: string | null
+
+  readonly averageTemperatureC: number | null
+  readonly minimumTemperatureC: number | null
+  readonly maximumTemperatureC: number | null
+  readonly windSpeedKmh: number | null
+  readonly precipitationMm: number | null
+
+  readonly hostCity: string | null
+  readonly countryCode: string | null
+}
+
 /**
  * Immutable rider input for one stage.
+ *
+ * condition is optional so older isolated and synthetic fixtures continue to
+ * use the historic 100-energy start without changing their canonical shape.
+ * Live Supabase-backed inputs provide the complete condition object.
  */
 export interface StageRiderInput {
   readonly riderId: string
@@ -44,6 +86,7 @@ export interface StageRiderInput {
   readonly teamName: string
   readonly role: RiderRole
   readonly attributes: RiderAttributes
+  readonly condition?: RiderStartingCondition
 }
 
 /**
@@ -75,6 +118,7 @@ export interface StageInput {
   readonly distanceKm: number
   readonly seed: string
   readonly settings: StageSimulationSettings
+  readonly weather?: StageWeatherInput
   readonly teams: readonly StageTeamInput[]
   readonly riders: readonly StageRiderInput[]
   readonly profilePoints: readonly StageProfilePoint[]

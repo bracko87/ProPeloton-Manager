@@ -66,6 +66,31 @@ type PremiumInvoiceRow = {
   processed_at: string
 }
 
+type DevelopingTeamServiceStatus = {
+  main_club_id: string | null
+  developing_club_id: string | null
+  developing_club_name: string | null
+
+  team_exists: boolean
+  access_status: 'active' | 'expired' | 'not_activated'
+  is_active: boolean
+  is_read_only: boolean
+
+  current_season: number
+  active_season: number | null
+  expires_after_season: number | null
+  next_renewal_season: number | null
+
+  auto_renew: boolean
+  activation_coin_cost: number
+  renewal_coin_cost: number
+  coin_balance: number
+
+  can_activate: boolean
+  can_reactivate: boolean
+  can_change_auto_renew: boolean
+}
+
 type DbCoinPackage = {
   code: string
   coins: number
@@ -117,6 +142,15 @@ type EdgeResponse = {
 }
 
 const COIN_HISTORY_PAGE_SIZE = 20
+// Display fallbacks only. get_developing_team_status() is the authoritative source.
+const DEFAULT_DEVELOPING_TEAM_ACTIVATION_COIN_COST = 200
+const DEFAULT_DEVELOPING_TEAM_RENEWAL_COIN_COST = 100
+
+function normalizeCoinCost(value: unknown, fallback: number): number {
+  const parsed = Number(value)
+
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback
+}
 
 const COMPARISON_ROWS = [
   ['Create and manage a club', '✓', '✓'],
@@ -238,6 +272,32 @@ function describeCoinTransaction(reason: string, payload: any) {
   if (reason === 'admin_adjustment') return 'Admin adjustment'
   if (reason === 'developing_team_purchase') return 'Developing Team purchase'
   if (reason === 'developing_team_unlock') return 'Developing Team purchase'
+  if (reason === 'developing_team_legacy_creation') return 'Developing Team first activation'
+
+  if (reason === 'developing_team_season_activation') {
+    const season = Number(payload?.season)
+
+    return Number.isFinite(season)
+      ? `Developing Team activation — Season ${season}`
+      : 'Developing Team seasonal activation'
+  }
+
+  if (reason === 'developing_team_season_renewal') {
+    const season = Number(payload?.season)
+
+    return Number.isFinite(season)
+      ? `Developing Team renewal — Season ${season}`
+      : 'Developing Team seasonal renewal'
+  }
+
+  if (reason === 'developing_team_season_reactivation') {
+    const season = Number(payload?.season)
+
+    return Number.isFinite(season)
+      ? `Developing Team reactivation — Season ${season}`
+      : 'Developing Team seasonal reactivation'
+  }
+
   if (reason === 'scout_report_extra') return 'Extra scouting report'
   if (reason === 'premium_monthly_grant') return 'Premium monthly coin grant'
 
@@ -355,6 +415,31 @@ export default function ProPackagesPage(): JSX.Element {
   const [buyingCode, setBuyingCode] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
+  const [
+    developingTeamService,
+    setDevelopingTeamService,
+  ] = useState<DevelopingTeamServiceStatus | null>(null)
+  const [
+    loadingDevelopingTeamService,
+    setLoadingDevelopingTeamService,
+  ] = useState(true)
+  const [
+    developingTeamServiceError,
+    setDevelopingTeamServiceError,
+  ] = useState<string | null>(null)
+  const [
+    developingTeamServiceNotice,
+    setDevelopingTeamServiceNotice,
+  ] = useState<string | null>(null)
+  const [
+    developingTeamServiceActionError,
+    setDevelopingTeamServiceActionError,
+  ] = useState<string | null>(null)
+  const [
+    updatingDevelopingTeamAutoRenew,
+    setUpdatingDevelopingTeamAutoRenew,
+  ] = useState(false)
+
   const [premiumInvoicesOpen, setPremiumInvoicesOpen] = useState(false)
   const [premiumInvoices, setPremiumInvoices] =
     useState<PremiumInvoiceRow[]>([])
@@ -431,6 +516,23 @@ export default function ProPackagesPage(): JSX.Element {
         premiumStatus.current_period_end,
     )
   }, [premiumDetails?.current_period_end, premiumStatus])
+
+  const developingTeamActivationCost = normalizeCoinCost(
+    developingTeamService?.activation_coin_cost,
+    DEFAULT_DEVELOPING_TEAM_ACTIVATION_COIN_COST,
+  )
+
+  const developingTeamRenewalCost = normalizeCoinCost(
+    developingTeamService?.renewal_coin_cost,
+    DEFAULT_DEVELOPING_TEAM_RENEWAL_COIN_COST,
+  )
+
+  const developingTeamServiceStatusLabel =
+    developingTeamService?.access_status === 'active'
+      ? 'Active'
+      : developingTeamService?.access_status === 'expired'
+        ? 'Expired'
+        : 'Not activated'
 
   const bestValueCode = useMemo(() => {
     if (packages.length === 0) return null
@@ -589,6 +691,85 @@ export default function ProPackagesPage(): JSX.Element {
     setLoadingPackages(false)
   }
 
+  async function loadDevelopingTeamService() {
+    setLoadingDevelopingTeamService(true)
+    setDevelopingTeamServiceError(null)
+
+    try {
+      const { data, error } = await supabase.rpc(
+        'get_developing_team_status'
+      )
+
+      if (error) {
+        throw error
+      }
+
+      const normalized = Array.isArray(data) ? data[0] : data
+
+      setDevelopingTeamService(
+        (normalized ?? null) as DevelopingTeamServiceStatus | null,
+      )
+    } catch (error: any) {
+      console.error('Failed to load Developing Team service:', error)
+      setDevelopingTeamService(null)
+      setDevelopingTeamServiceError(
+        error?.message ??
+          'Failed to load Developing Team service.',
+      )
+    } finally {
+      setLoadingDevelopingTeamService(false)
+    }
+  }
+
+  async function handleDevelopingTeamAutoRenewChange(
+    enabled: boolean,
+  ) {
+    if (
+      updatingDevelopingTeamAutoRenew ||
+      !developingTeamService?.is_active ||
+      !developingTeamService.can_change_auto_renew
+    ) {
+      return
+    }
+
+    setDevelopingTeamServiceActionError(null)
+    setDevelopingTeamServiceNotice(null)
+    setUpdatingDevelopingTeamAutoRenew(true)
+
+    try {
+      const { error } = await supabase.rpc(
+        'set_developing_team_auto_renew_v1',
+        {
+          p_enabled: enabled,
+        },
+      )
+
+      if (error) throw error
+
+      setDevelopingTeamServiceNotice(
+        enabled
+          ? `Automatic renewal enabled. ${developingTeamRenewalCost} coins will be charged at the beginning of the next season.`
+          : 'Automatic renewal disabled. No Developing Team renewal charge will be made automatically.',
+      )
+
+      await Promise.all([
+        loadDevelopingTeamService(),
+        loadCoinStatus(),
+      ])
+    } catch (updateError: any) {
+      console.error(
+        'Failed to update Developing Team automatic renewal:',
+        updateError,
+      )
+      setDevelopingTeamServiceActionError(
+        updateError?.message ??
+          'Failed to update Developing Team automatic renewal.',
+      )
+    } finally {
+      setUpdatingDevelopingTeamAutoRenew(false)
+    }
+  }
+
   async function loadPremiumInvoiceHistory() {
     setPremiumInvoicesError(null)
     setLoadingPremiumInvoices(true)
@@ -714,6 +895,7 @@ export default function ProPackagesPage(): JSX.Element {
       loadCoinStatus(),
       loadPremiumData(),
       loadPackages(),
+      loadDevelopingTeamService(),
       premiumInvoicesOpen
         ? loadPremiumInvoiceHistory()
         : Promise.resolve(),
@@ -729,6 +911,7 @@ export default function ProPackagesPage(): JSX.Element {
       loadCoinStatus(),
       loadPremiumData(),
       loadPackages(),
+      loadDevelopingTeamService(),
     ])
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -1077,6 +1260,18 @@ export default function ProPackagesPage(): JSX.Element {
                   </td>
                 </tr>
               ))}
+
+              <tr className="border-t border-black/5">
+                <td className="px-5 py-4 font-medium text-gray-900">
+                  Developing Team service
+                </td>
+                <td className="px-5 py-4 text-center text-gray-700">
+                  {developingTeamActivationCost} activation / {developingTeamRenewalCost} renewal
+                </td>
+                <td className="px-5 py-4 text-center font-bold text-gray-900">
+                  {developingTeamActivationCost} activation / {developingTeamRenewalCost} renewal
+                </td>
+              </tr>
             </tbody>
           </table>
         </div>
@@ -1226,7 +1421,203 @@ export default function ProPackagesPage(): JSX.Element {
         ) : null}
       </section>
 
-      {/* Section 5 — Billing and purchase history */}
+      {/* Section 5 — Active coin services */}
+      <section className="mt-10">
+        <div>
+          <h3 className="text-xl font-extrabold text-black">
+            Active coin services
+          </h3>
+          <p className="mt-1 text-sm text-gray-600">
+            Manage optional club services purchased with coins. These services are available to Free
+            and Premium players.
+          </p>
+        </div>
+
+        {loadingDevelopingTeamService ? (
+          <div className="mt-5 rounded-2xl border border-black/10 bg-white p-6 text-sm text-gray-600 shadow-sm">
+            Loading coin services...
+          </div>
+        ) : developingTeamServiceError ? (
+          <div className="mt-5 rounded-2xl border border-amber-200 bg-amber-50 p-6 shadow-sm">
+            <div className="text-sm font-semibold text-amber-900">
+              Developing Team service information is currently unavailable.
+            </div>
+            <p className="mt-1 text-sm text-amber-800">
+              The rest of Premium, billing and coin management remains available.
+            </p>
+          </div>
+        ) : (
+          <div className="mt-5 rounded-2xl border border-black/10 bg-white p-5 shadow-sm">
+            <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+              <div className="min-w-0">
+                <div className="flex flex-wrap items-center gap-2">
+                  <h4 className="text-lg font-extrabold text-black">
+                    Developing Team
+                  </h4>
+
+                  <span
+                    className={`rounded-full px-2.5 py-1 text-xs font-bold ${
+                      developingTeamService?.access_status === 'active'
+                        ? 'bg-green-100 text-green-800'
+                        : developingTeamService?.access_status === 'expired'
+                          ? 'bg-amber-100 text-amber-800'
+                          : 'bg-gray-100 text-gray-700'
+                    }`}
+                  >
+                    {developingTeamServiceStatusLabel}
+                  </span>
+                </div>
+
+                <p className="mt-2 text-sm text-gray-600">
+                  Build and manage a U23 development squad.
+                </p>
+
+                {developingTeamService?.access_status === 'expired' ? (
+                  <p className="mt-3 text-sm text-amber-800">
+                    The team and all stored data remain available in read-only mode.
+                  </p>
+                ) : null}
+
+                {!developingTeamService?.is_active ? (
+                  <div className="mt-3 space-y-1 text-sm text-gray-600">
+                    {developingTeamService?.access_status === 'expired' ? (
+                      <p>Reactivation price: {developingTeamRenewalCost} coins.</p>
+                    ) : (
+                      <>
+                        <p>First activation price: {developingTeamActivationCost} coins.</p>
+                        <p>Later renewal or reactivation: {developingTeamRenewalCost} coins per season.</p>
+                      </>
+                    )}
+                  </div>
+                ) : null}
+              </div>
+
+              <a
+                href="#/dashboard/preferences"
+                className="inline-flex shrink-0 items-center justify-center rounded-xl border border-black/10 bg-white px-4 py-3 text-sm font-semibold text-black shadow-sm transition hover:bg-gray-50"
+              >
+                {developingTeamService?.access_status === 'expired'
+                  ? 'Reactivate in Preferences'
+                  : developingTeamService?.is_active
+                    ? 'Manage service'
+                    : 'Manage in Preferences'}
+              </a>
+            </div>
+
+            {developingTeamServiceNotice ? (
+              <div className="mt-5 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
+                {developingTeamServiceNotice}
+              </div>
+            ) : null}
+
+            {developingTeamServiceActionError ? (
+              <div className="mt-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+                {developingTeamServiceActionError}
+              </div>
+            ) : null}
+
+            {developingTeamService?.is_active ? (
+              <div className="mt-5 border-t border-black/5 pt-5">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-6">
+                <MembershipItem
+                  label="Team created"
+                  value={developingTeamService.team_exists ? 'Yes' : 'No'}
+                />
+                <MembershipItem
+                  label="Status"
+                  value="Active"
+                />
+                <MembershipItem
+                  label="Current season"
+                  value={`Season ${developingTeamService.current_season}`}
+                />
+                <MembershipItem
+                  label="Access ends"
+                  value={`End of Season ${
+                    developingTeamService.expires_after_season ??
+                    developingTeamService.active_season ??
+                    developingTeamService.current_season
+                  }`}
+                />
+                <MembershipItem
+                  label="Renewal price"
+                  value={`${developingTeamRenewalCost} coins`}
+                />
+                <MembershipItem
+                  label="Next renewal"
+                  value={`Start of Season ${
+                    developingTeamService.next_renewal_season ??
+                    developingTeamService.current_season + 1
+                  }`}
+                />
+                </div>
+
+                <label className="mt-5 flex cursor-pointer items-start justify-between gap-4 rounded-xl border border-black/10 bg-gray-50 p-4">
+                  <div>
+                    <div className="text-sm font-semibold text-black">
+                      Automatically renew each season
+                    </div>
+                    <div className="mt-1 text-xs leading-5 text-gray-600">
+                      When enabled, {developingTeamRenewalCost} coins will be deducted at the
+                      beginning of the next season. If the wallet balance is too low, renewal will
+                      fail and the Developing Team will become read-only.
+                    </div>
+                  </div>
+
+                  <input
+                    type="checkbox"
+                    checked={developingTeamService.auto_renew === true}
+                    disabled={
+                      !developingTeamService.can_change_auto_renew ||
+                      updatingDevelopingTeamAutoRenew
+                    }
+                    onChange={(event) => {
+                      void handleDevelopingTeamAutoRenewChange(event.target.checked)
+                    }}
+                    className="mt-1 h-4 w-4 shrink-0 rounded border-gray-300"
+                  />
+                </label>
+              </div>
+            ) : developingTeamService?.access_status === 'expired' ? (
+              <div className="mt-5 grid grid-cols-1 gap-4 border-t border-black/5 pt-5 sm:grid-cols-3">
+                <MembershipItem
+                  label="Team created"
+                  value={developingTeamService.team_exists ? 'Yes' : 'No'}
+                />
+                <MembershipItem
+                  label="Status"
+                  value="Expired"
+                />
+                <MembershipItem
+                  label="Reactivation price"
+                  value={`${developingTeamRenewalCost} coins`}
+                />
+              </div>
+            ) : (
+              <div className="mt-5 grid grid-cols-1 gap-4 border-t border-black/5 pt-5 sm:grid-cols-3">
+                <MembershipItem
+                  label="Team created"
+                  value={developingTeamService?.team_exists ? 'Yes' : 'No'}
+                />
+                <MembershipItem
+                  label="Status"
+                  value="Not activated"
+                />
+                <MembershipItem
+                  label="First activation"
+                  value={`${developingTeamActivationCost} coins`}
+                />
+                <MembershipItem
+                  label="Later renewals"
+                  value={`${developingTeamRenewalCost} coins per season`}
+                />
+              </div>
+            )}
+          </div>
+        )}
+      </section>
+
+      {/* Section 6 — Billing and purchase history */}
       <section className="mt-10">
         <div>
           <h3 className="text-xl font-extrabold text-black">

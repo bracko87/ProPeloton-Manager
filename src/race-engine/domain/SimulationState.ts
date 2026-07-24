@@ -5,7 +5,7 @@
  *
  * The original StageInput is preserved on the state so all deterministic
  * simulation rules can access stage configuration, terrain profile data,
- * settings, teams, riders, and orders without external dependencies.
+ * settings, teams, riders, orders, and weather without external dependencies.
  */
 
 import type {
@@ -32,6 +32,16 @@ export interface SimulationState {
    * Complete immutable input used to construct this simulation.
    */
   readonly input: StageInput
+
+  /**
+   * Internal calibrated-runner feature marker.
+   *
+   * Undefined and false preserve the original execution paths. The calibrated
+   * wrapper sets this to true only when StageInput contains canonical weather.
+   * This keeps existing_v1 and condition-free synthetic fixtures unchanged.
+   */
+  readonly weatherPerformanceEffectsEnabled?:
+    boolean
 
   readonly raceId: string
   readonly stageId: string
