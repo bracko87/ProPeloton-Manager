@@ -1,8 +1,13 @@
 import React, { useEffect, useMemo, useState } from 'react'
+import EquipmentOptionPreviewPopover from './EquipmentOptionPreviewPopover'
 import {
   calculateEquipmentCatalogSetupBonusPreview,
   getEquipmentSetupPresets,
   saveEquipmentSetupPreset,
+} from '../equipmentApi'
+import {
+  unlockEquipmentSetupSlot,
+  type EquipmentPremiumAccess,
 } from '../equipmentApi'
 
 type EquipmentCategory =
@@ -26,6 +31,11 @@ type SetupOption = {
   available_count?: number
   catalog_item_id: string
   unavailable_count?: number
+  image_url?: string | null
+  quality_label?: string | null
+  terrain_role?: string | null
+  effects?: Record<string, unknown> | null
+  metadata?: Record<string, unknown> | null
 }
 
 type SetupCategoryOptions = {
@@ -349,9 +359,13 @@ function PresetBonusLine({
 
 export default function EquipmentSetupPresetsBox({
   clubId,
+  equipmentAccess,
+  onAccessChanged,
   onSaved,
 }: {
   clubId: string
+  equipmentAccess: EquipmentPremiumAccess | null
+  onAccessChanged?: (access: EquipmentPremiumAccess) => void
   onSaved?: () => void
 }): JSX.Element {
   const [data, setData] = useState<SetupPresetsResponse | null>(null)
@@ -364,6 +378,7 @@ export default function EquipmentSetupPresetsBox({
   )
   const [error, setError] = useState<string | null>(null)
   const [savedMessage, setSavedMessage] = useState<string | null>(null)
+  const [unlockingSlot, setUnlockingSlot] = useState<number | null>(null)
 
   const presets = useMemo(() => data?.presets ?? [], [data?.presets])
   const options = useMemo(() => data?.options ?? [], [data?.options])
@@ -475,6 +490,36 @@ export default function EquipmentSetupPresetsBox({
     void loadDraftPreview(nextDraft)
   }
 
+
+  function isSlotUnlocked(slot: number): boolean {
+    if (slot <= 2) return true
+    if (equipmentAccess?.is_premium) return true
+    if (slot === 3) return equipmentAccess?.slot_3_unlocked === true
+    if (slot === 4) return equipmentAccess?.slot_4_unlocked === true
+    return false
+  }
+
+  async function handleUnlockSlot(slot: 3 | 4): Promise<void> {
+    setUnlockingSlot(slot)
+    setError(null)
+    setSavedMessage(null)
+
+    try {
+      const nextAccess = await unlockEquipmentSetupSlot(clubId, slot)
+      onAccessChanged?.(nextAccess)
+      setSavedMessage(`Setup slot ${slot} unlocked permanently.`)
+      window.dispatchEvent(new CustomEvent('coin-balance-changed'))
+    } catch (caughtError) {
+      setError(
+        caughtError instanceof Error
+          ? caughtError.message
+          : 'Failed to unlock setup slot.',
+      )
+    } finally {
+      setUnlockingSlot(null)
+    }
+  }
+
   async function saveDraft(draft: SetupDraft): Promise<void> {
     if (!isDraftComplete(draft)) {
       setError('Please select all six equipment types before saving this setup.')
@@ -568,6 +613,59 @@ export default function EquipmentSetupPresetsBox({
           const capacity = getSetupCapacity(draft, options)
           const missingCategories = getMissingDraftCategories(draft)
           const canSave = isDraftComplete(draft)
+          const isUnlocked = isSlotUnlocked(preset.setup_slot)
+
+          if (!isUnlocked) {
+            const setupSlot = preset.setup_slot as 3 | 4
+            const isUnlocking = unlockingSlot === setupSlot
+
+            return (
+              <div
+                key={preset.id}
+                className="rounded-lg border border-slate-200 bg-white p-4"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-yellow-100 text-sm font-semibold text-yellow-800">
+                    {preset.setup_slot}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h4 className="font-semibold text-slate-900">Additional setup slot</h4>
+                      <span className="rounded-full border border-yellow-300 bg-yellow-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-yellow-800">
+                        Premium
+                      </span>
+                      <span aria-hidden="true" className="text-slate-400">🔒</span>
+                    </div>
+                    <p className="mt-1 text-sm text-slate-600">
+                      Save another preferred equipment configuration for faster Stage Plan preparation.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <a
+                    href="/dashboard/premium"
+                    className="inline-flex items-center justify-center rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                  >
+                    Unlock with Premium
+                  </a>
+                  <button
+                    type="button"
+                    onClick={() => void handleUnlockSlot(setupSlot)}
+                    disabled={isUnlocking || Number(equipmentAccess?.coin_balance ?? 0) < 10}
+                    className="inline-flex items-center justify-center rounded-md border border-yellow-400 bg-yellow-50 px-3 py-2 text-sm font-semibold text-yellow-900 hover:bg-yellow-100 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {isUnlocking ? 'Unlocking…' : 'Unlock permanently · 10 coins'}
+                  </button>
+                </div>
+
+                <p className="mt-2 text-xs text-slate-500">
+                  Current balance: {Number(equipmentAccess?.coin_balance ?? 0).toLocaleString()} coins.
+                  Purchased slots remain available after Premium ends.
+                </p>
+              </div>
+            )
+          }
 
           return (
             <div
@@ -616,33 +714,46 @@ export default function EquipmentSetupPresetsBox({
                         {category.label}
                       </span>
 
-                      <select
-                        value={selectedValue}
-                        onChange={event =>
-                          updateDraftCategory(
-                            preset.setup_slot,
-                            category.key,
-                            event.target.value
-                          )
-                        }
-                        disabled={categoryOptions.length === 0 || isSaving}
-                        className="mt-1 w-full rounded border border-gray-200 bg-white px-3 py-2 text-sm disabled:bg-gray-100 disabled:text-gray-400"
-                      >
-                        <option value="">
-                          {categoryOptions.length === 0
-                            ? `No owned ${category.label.toLowerCase()}`
-                            : `No ${category.label.toLowerCase()} selected`}
-                        </option>
-
-                        {categoryOptions.map(option => (
-                          <option
-                            key={option.catalog_item_id}
-                            value={option.catalog_item_id}
+                      <div className="mt-1">
+                        <EquipmentOptionPreviewPopover
+                          clubId={clubId}
+                          category={category.key}
+                          option={
+                            categoryOptions.find(
+                              option => option.catalog_item_id === selectedValue,
+                            ) ?? null
+                          }
+                          disabled={categoryOptions.length === 0 || isSaving}
+                        >
+                          <select
+                            value={selectedValue}
+                            onChange={event =>
+                              updateDraftCategory(
+                                preset.setup_slot,
+                                category.key,
+                                event.target.value
+                              )
+                            }
+                            disabled={categoryOptions.length === 0 || isSaving}
+                            className="w-full rounded border border-gray-200 bg-white px-3 py-2 text-sm disabled:bg-gray-100 disabled:text-gray-400"
                           >
-                            {formatOptionLabel(option)}
-                          </option>
-                        ))}
-                      </select>
+                            <option value="">
+                              {categoryOptions.length === 0
+                                ? `No owned ${category.label.toLowerCase()}`
+                                : `No ${category.label.toLowerCase()} selected`}
+                            </option>
+
+                            {categoryOptions.map(option => (
+                              <option
+                                key={option.catalog_item_id}
+                                value={option.catalog_item_id}
+                              >
+                                {formatOptionLabel(option)}
+                              </option>
+                            ))}
+                          </select>
+                        </EquipmentOptionPreviewPopover>
+                      </div>
                     </label>
                   )
                 })}

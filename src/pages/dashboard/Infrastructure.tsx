@@ -73,7 +73,7 @@ import {
   formatGameDays,
   normalizeSingleRow,
   toNumber,
-} from './infrastructure/infrastructureUtils'
+} from './infrastructure/infrastructureHelpers'
 
 import type {
   ActiveJobView,
@@ -92,6 +92,8 @@ import type {
   InfrastructureAssetConfigRow,
   InfrastructureAssetRepairQuoteRow,
   InfrastructureAssetSaleQuoteRow,
+  InfrastructureAssetSlotAccessMap,
+  InfrastructureAssetRpcKey,
   InfrastructureCancellationQuoteRow,
   InfrastructureItem,
   InfrastructureJobRow,
@@ -454,6 +456,12 @@ export default function InfrastructurePage({ clubId }: { clubId?: string }) {
   const [medicalVanGarageSummary, setMedicalVanGarageSummary] =
     useState<MedicalVanGarageSummaryRow | null>(null)
 
+
+  const [assetSlotAccessByKey, setAssetSlotAccessByKey] =
+    useState<InfrastructureAssetSlotAccessMap>({})
+  const [unlockingAssetSlotKey, setUnlockingAssetSlotKey] =
+    useState<string | null>(null)
+
   const [capacityRows, setCapacityRows] = useState<StaffCapacityRow[]>([])
   const [coachingEffect, setCoachingEffect] = useState<CoachingEffectRow | null>(null)
   const [medicalEffect, setMedicalEffect] = useState<MedicalEffectRow | null>(null)
@@ -614,6 +622,76 @@ export default function InfrastructurePage({ clubId }: { clubId?: string }) {
     setTeamCarGarageSummary(normalizeSingleRow<TeamCarGarageSummaryRow>(summaryResult.data))
   }
 
+  async function handleRenameTeamCar(
+    carId: string,
+    displayName: string,
+  ): Promise<void> {
+    if (!resolvedClubId) {
+      throw new Error('Club context is not available.')
+    }
+
+    const nextName = displayName.trim()
+
+    if (!nextName) {
+      throw new Error('Enter a Team Car name.')
+    }
+
+    const { error } = await supabase.rpc('rename_club_team_car_v1', {
+      p_car_id: carId,
+      p_display_name: nextName,
+    })
+
+    if (error) {
+      throw new Error(error.message)
+    }
+
+    await fetchTeamCarContext(resolvedClubId)
+  }
+
+
+  async function handleRenameAsset(
+    assetKey: 'team_bus' | 'equipment_van' | 'mobile_workshop' | 'medical_van',
+    assetId: string,
+    displayName: string,
+  ): Promise<void> {
+    if (!resolvedClubId) {
+      throw new Error('Club context is not available.')
+    }
+
+    const nextName = displayName.trim()
+
+    if (!nextName) {
+      throw new Error('Enter an asset name.')
+    }
+
+    const { error } = await supabase.rpc('rename_club_asset_v1', {
+      p_asset_key: assetKey,
+      p_asset_id: assetId,
+      p_display_name: nextName,
+    })
+
+    if (error) {
+      throw new Error(error.message)
+    }
+
+    if (assetKey === 'team_bus') {
+      await fetchTeamBusContext(resolvedClubId)
+      return
+    }
+
+    if (assetKey === 'equipment_van') {
+      await fetchEquipmentVanContext(resolvedClubId)
+      return
+    }
+
+    if (assetKey === 'mobile_workshop') {
+      await fetchMobileWorkshopContext(resolvedClubId)
+      return
+    }
+
+    await fetchMedicalVanContext(resolvedClubId)
+  }
+
   async function fetchTeamBusContext(targetClubId: string) {
     const [rosterResult, summaryResult] = await Promise.all([
       supabase.rpc('get_club_team_bus_roster', {
@@ -686,6 +764,107 @@ export default function InfrastructurePage({ clubId }: { clubId?: string }) {
     setMedicalVanGarageSummary(
       normalizeSingleRow<MedicalVanGarageSummaryRow>(summaryResult.data),
     )
+  }
+
+  async function fetchAssetSlotAccess(targetClubId: string) {
+    const { data, error } = await supabase.rpc(
+      'infrastructure_get_asset_slot_access_v1',
+      {
+        p_club_id: targetClubId,
+      },
+    )
+
+    if (error) throw new Error(error.message)
+
+    const payload = Array.isArray(data) ? data[0] : data
+    const rows =
+      payload && typeof payload === 'object' && !Array.isArray(payload)
+        ? ((payload as { assets?: unknown }).assets ?? [])
+        : []
+
+    const nextMap: InfrastructureAssetSlotAccessMap = {}
+
+    if (Array.isArray(rows)) {
+      rows.forEach(rawRow => {
+        if (!rawRow || typeof rawRow !== 'object') return
+        const row = rawRow as Record<string, unknown>
+        const assetKey = row.asset_key as InfrastructureAssetRpcKey
+
+        if (
+          assetKey !== 'team_car' &&
+          assetKey !== 'team_bus' &&
+          assetKey !== 'equipment_van' &&
+          assetKey !== 'mobile_workshop' &&
+          assetKey !== 'medical_van'
+        ) {
+          return
+        }
+
+        nextMap[assetKey] = {
+          asset_key: assetKey,
+          free_slots: Number(row.free_slots ?? 0),
+          premium_slots: Number(row.premium_slots ?? 0),
+          absolute_max_slots: Number(row.absolute_max_slots ?? 0),
+          effective_slots: Number(row.effective_slots ?? 0),
+          highest_permanent_slot: Number(row.highest_permanent_slot ?? 0),
+          permanently_unlocked_slots: Array.isArray(row.permanently_unlocked_slots)
+            ? row.permanently_unlocked_slots.map(value => Number(value))
+            : [],
+          is_premium: Boolean(row.is_premium),
+          coin_balance: Number(row.coin_balance ?? 0),
+          coin_cost: Number(row.coin_cost ?? 20),
+        }
+      })
+    }
+
+    setAssetSlotAccessByKey(nextMap)
+  }
+
+  async function handleUnlockAssetSlot(
+    assetKey: InfrastructureAssetRpcKey,
+    slotNumber: number,
+  ) {
+    if (!resolvedClubId) return
+
+    const unlockKey = `${assetKey}:${slotNumber}`
+
+    try {
+      setUnlockingAssetSlotKey(unlockKey)
+      setActionError(null)
+      setSuccessMessage(null)
+
+      const { error } = await supabase.rpc(
+        'infrastructure_unlock_asset_slot_v1',
+        {
+          p_club_id: resolvedClubId,
+          p_asset_key: assetKey,
+          p_slot_number: slotNumber,
+        },
+      )
+
+      if (error) throw new Error(error.message)
+
+      await fetchAssetSlotAccess(resolvedClubId)
+      setSuccessMessage(
+        `${assetNameMap[
+          assetKey === 'team_car'
+            ? 'team_car_fleet'
+            : assetKey
+        ] ?? 'Asset'} slot ${slotNumber} unlocked permanently.`,
+      )
+
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('coin-balance-changed'))
+      }
+    } catch (err) {
+      setActionError(
+        err instanceof Error
+          ? err.message
+          : 'Failed to unlock the garage slot.',
+      )
+    } finally {
+      setUnlockingAssetSlotKey(null)
+    }
   }
 
   async function fetchInfrastructure(targetClubId: string) {
@@ -841,6 +1020,7 @@ export default function InfrastructurePage({ clubId }: { clubId?: string }) {
       fetchInfrastructure(targetClubId),
       fetchPendingJobs(targetClubId),
       fetchFacilityJobCapacity(targetClubId),
+      fetchAssetSlotAccess(targetClubId),
     ])
 
     const jobs = fetchResults[8] as InfrastructureJobRow[]
@@ -921,6 +1101,7 @@ export default function InfrastructurePage({ clubId }: { clubId?: string }) {
           setMedicalVanConfigRows([])
           setMedicalVanRosterRows([])
           setMedicalVanGarageSummary(null)
+          setAssetSlotAccessByKey({})
           setLoadError('No club found for current user')
           setLoading(false)
           return
@@ -2165,6 +2346,11 @@ export default function InfrastructurePage({ clubId }: { clubId?: string }) {
           onStartAssetRepair={handleStartAssetRepair}
           onOpenAssetRepair={handleOpenAssetRepair}
           onOpenAssetSell={handleOpenAssetSell}
+          onRenameTeamCar={handleRenameTeamCar}
+          onRenameAsset={handleRenameAsset}
+          assetSlotAccessByKey={assetSlotAccessByKey}
+          unlockingSlotKey={unlockingAssetSlotKey}
+          onUnlockAssetSlot={handleUnlockAssetSlot}
         />
       )}
 

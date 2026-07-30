@@ -65,7 +65,7 @@ describe('SeededRandom', () => {
   it('keeps inclusive integers inside their requested bounds', () => {
     const generator = createSeededRandom('integer-bounds')
 
-    for (let index = 0; index &lt; 5_000; index += 1) {
+    for (let index = 0; index < 5_000; index += 1) {
       const value = generator.nextInt(3, 7)
       expect(value).toBeGreaterThanOrEqual(3)
       expect(value).toBeLessThanOrEqual(7)

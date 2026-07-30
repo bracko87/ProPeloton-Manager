@@ -99,7 +99,9 @@ function createFixture():
         last_name: 'One',
         display_name: null,
         flat: 80,
+        climbing: 68,
         sprint: 70,
+        time_trial: 72,
         endurance: 75,
         resistance: 72,
         recovery: 71,
@@ -112,7 +114,9 @@ function createFixture():
         last_name: 'Two',
         display_name: 'Alex Display',
         flat: 76,
+        climbing: 60,
         sprint: 88,
+        time_trial: 69,
         endurance: 73,
         resistance: 70,
         recovery: 68,
@@ -125,7 +129,9 @@ function createFixture():
         last_name: 'One',
         display_name: null,
         flat: 79,
+        climbing: 74,
         sprint: 84,
+        time_trial: 76,
         endurance: 77,
         resistance: 76,
         recovery: 74,
@@ -138,7 +144,9 @@ function createFixture():
         last_name: 'Two',
         display_name: null,
         flat: 82,
+        climbing: 78,
         sprint: 65,
+        time_trial: 73,
         endurance: 86,
         resistance: 85,
         recovery: 81,
@@ -151,7 +159,9 @@ function createFixture():
         last_name: 'Rider',
         display_name: null,
         flat: 50,
+        climbing: 50,
         sprint: 50,
+        time_trial: 50,
         endurance: 50,
         resistance: 50,
         recovery: 50,
@@ -365,11 +375,14 @@ describe(
 
         expect(rider?.attributes).toEqual({
           flat: 80,
+          climbing: 68,
           sprint: 70,
+          timeTrial: 72,
           acceleration: 73,
           stamina: 75,
           resistance: 72,
           recovery: 71,
+          raceIq: 74,
           teamwork: 79,
         })
       },
@@ -419,6 +432,146 @@ describe(
           0.5,
           1,
         ])
+      },
+    )
+
+    it(
+      'creates an executable order only for an explicit attack command',
+      () => {
+        const fixture =
+          createFixture()
+
+        const output =
+          createStageInputFromSourceRows({
+            ...fixture,
+
+            stagePlans:
+              fixture.stagePlans.map(
+                (
+                  plan,
+                ) =>
+                  plan.id ===
+                    'plan-team-a'
+                    ? {
+                        ...plan,
+
+                        rider_phase_commands_json: {
+                          'rider-a1': {
+                            phase_1:
+                              'attack',
+                            phase_2:
+                              'follow_team_plan',
+                            phase_3:
+                              'follow_team_plan',
+                            phase_4:
+                              'follow_team_plan',
+                          },
+                        },
+                      }
+                    : plan,
+              ),
+          })
+
+        expect(
+          output.orders,
+        ).toHaveLength(
+          1,
+        )
+
+        expect(
+          output.orders[0],
+        ).toMatchObject({
+          orderId:
+            'live-stage-plan:plan-team-a:rider-a1:phase_1:attack',
+          teamId:
+            'team-a',
+          riderId:
+            'rider-a1',
+          type:
+            'attack',
+          status:
+            'scheduled',
+          eligibleFromKm:
+            0,
+          eligibleUntilKm:
+            0.25,
+          priority:
+            400,
+          targetRiderId:
+            null,
+          maximumFollowers:
+            null,
+          metadata: {
+            source:
+              'stage_plan_phase_command',
+            stagePlanId:
+              'plan-team-a',
+            phase:
+              'phase_1',
+            resolvedCommand:
+              'attack',
+            fromFraction:
+              0,
+            untilFraction:
+              0.25,
+          },
+        })
+      },
+    )
+
+    it(
+      'does not create orders from legacy team-plan values or unimplemented individual commands',
+      () => {
+        const fixture =
+          createFixture()
+
+        const output =
+          createStageInputFromSourceRows({
+            ...fixture,
+
+            stagePlans:
+              fixture.stagePlans.map(
+                (
+                  plan,
+                ) =>
+                  plan.id ===
+                    'plan-team-a'
+                    ? {
+                        ...plan,
+
+                        rider_phase_commands_json: {
+                          'rider-a1': {
+                            phase_1:
+                              'balanced',
+                            phase_2:
+                              'aggressive',
+                            phase_3:
+                              'join_breakaway',
+                            phase_4:
+                              'final_sprint',
+                          },
+
+                          'rider-a2': {
+                            phase_1:
+                              'gc_protection',
+                            phase_2:
+                              'breakaway',
+                            phase_3:
+                              'chase_breakaway',
+                            phase_4:
+                              'follow_team_plan',
+                          },
+                        },
+                      }
+                    : plan,
+              ),
+          })
+
+        expect(
+          output.orders,
+        ).toEqual(
+          [],
+        )
       },
     )
 

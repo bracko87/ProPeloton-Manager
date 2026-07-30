@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import TransferHistoryPanel, { type TransferHistoryRow } from './TransferHistoryPanel'
+import RiderShortlistButton from './RiderShortlistButton'
 
 const FREE_AGENT_ACTIVITY_ITEMS_PER_PAGE = 5
 
@@ -339,6 +340,7 @@ function MarketListRow({
   onSelect,
   onQuickAction,
   onOpenRiderProfile,
+  clubId,
 }: {
   item: FreeAgentMarketItem
   gameState: GameStateRow | null
@@ -346,6 +348,7 @@ function MarketListRow({
   onSelect: () => void
   onQuickAction: () => void
   onOpenRiderProfile: () => void
+  clubId: string
 }) {
   const riderName = getPreferredRiderName(item.raw)
   const countdown = getGameCountdownLabel(item.expires_on_game_date, gameState)
@@ -442,6 +445,14 @@ function MarketListRow({
               <span>{formatCurrency(item.amount_value)}/week</span>
             </div>
 
+            <RiderShortlistButton
+              clubId={clubId}
+              riderId={item.rider_id}
+              riderName={riderName}
+              sourceType="free_agent"
+              sourceId={item.free_agent_id}
+            />
+
             <MarketActionButton
               label="Contract Negotiate"
               onClick={onQuickAction}
@@ -455,6 +466,7 @@ function MarketListRow({
 }
 
 type RiderFreeAgentsPageProps = {
+  clubId: string
   riderLoading: boolean
   gameState: GameStateRow | null
   marketSearch?: string
@@ -466,6 +478,7 @@ type RiderFreeAgentsPageProps = {
   setMarketSort: (value: RiderMarketSort) => void
   marketOnlyActive: boolean
   setMarketOnlyActive: (value: boolean) => void
+  onSaveCurrentSearch: () => void
   paginatedUnifiedMarketRows?: FreeAgentMarketItem[]
   selectedFreeAgentId: string | null
   onSelectMarketItem: (item: FreeAgentMarketItem) => void
@@ -495,6 +508,7 @@ type RiderFreeAgentsPageProps = {
 }
 
 export default function RiderFreeAgentsPage({
+  clubId,
   riderLoading,
   gameState,
   marketSearch = '',
@@ -506,6 +520,7 @@ export default function RiderFreeAgentsPage({
   setMarketSort,
   marketOnlyActive,
   setMarketOnlyActive,
+  onSaveCurrentSearch,
   paginatedUnifiedMarketRows = [],
   selectedFreeAgentId,
   onSelectMarketItem,
@@ -677,7 +692,7 @@ export default function RiderFreeAgentsPage({
             </div>
           </div>
 
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-6">
             <div className="xl:col-span-2">
               <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-gray-500">
                 Search
@@ -745,6 +760,15 @@ export default function RiderFreeAgentsPage({
 
               <div className="h-6" />
             </div>
+            <div className="flex items-end">
+              <button
+                type="button"
+                onClick={onSaveCurrentSearch}
+                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+              >
+                Save this search
+              </button>
+            </div>
           </div>
         </div>
 
@@ -767,6 +791,7 @@ export default function RiderFreeAgentsPage({
                 onSelect={() => onSelectMarketItem(item)}
                 onQuickAction={() => onQuickActionMarketItem(item)}
                 onOpenRiderProfile={() => onOpenRiderProfile(item)}
+                clubId={clubId}
               />
             ))
           )}

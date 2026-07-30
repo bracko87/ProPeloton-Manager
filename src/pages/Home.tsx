@@ -9,11 +9,11 @@
  * - Show lightweight loading/error banners without changing the main layout.
  * - Load live public homepage data from get_public_homepage_snapshot_v1().
  *
- * UPDATE: Public information improvements
- * - Adds more original readable homepage content.
- * - Adds public navigation links in the header.
- * - Keeps public pages reachable from the homepage without login.
- * - Uses contact@propelotonmanager.com as the visible contact email.
+ * UPDATE: Public homepage cleanup
+ * - Keeps the header focused on Sign In and Start Playing.
+ * - Removes outdated demo links and the redundant support/transparency block.
+ * - Shows the current registered-user total in Quick Stats.
+ * - Keeps useful public and legal pages available from the footer.
  *
  * UPDATE: Sustainable homepage reviews
  * - Reviews are loaded from Supabase using get_public_homepage_reviews_v1.
@@ -90,20 +90,11 @@ const SOCIAL_LINKS = {
   email: `mailto:${CONTACT_EMAIL}`,
 }
 
-const HEADER_PUBLIC_LINKS = [
-  { label: 'About', href: '/about/' },
-  { label: 'How to Play', href: '/how-to-play/' },
-  { label: 'Game Guide', href: '/game-guide/' },
-  { label: 'Demo', href: '/demo/' },
-  { label: 'Support', href: '/support/' },
-  { label: 'Contact', href: '/contact/' },
-]
 
 const FOOTER_GAME_LINKS = [
   { label: 'About', href: '/about/' },
   { label: 'How to Play', href: '/how-to-play/' },
   { label: 'Game Guide', href: '/game-guide/' },
-  { label: 'Demo', href: '/demo/' },
   { label: 'Contact', href: '/contact/' },
 ]
 
@@ -130,23 +121,6 @@ const HOMEPAGE_GUIDE_CARDS = [
   },
 ]
 
-const HOMEPAGE_TRUST_ITEMS = [
-  {
-    title: 'Public information',
-    text:
-      'Visitors can read about the game, learn how to play, contact support, and review privacy and terms information before creating an account.',
-  },
-  {
-    title: 'Clear support access',
-    text:
-      'Support is available for account questions, gameplay questions, bug reports, payment questions and feedback about ProPeloton Manager.',
-  },
-  {
-    title: 'Privacy and transparency',
-    text:
-      'The public privacy policy and terms pages explain account data, gameplay data, payments, coins, advertising, cookies and fair-use rules.',
-  },
-]
 
 const MONTH_INDEX_BY_NAME: Record<string, number> = {
   January: 0,
@@ -622,16 +596,7 @@ export default function HomePage(): JSX.Element {
             <div className="text-xl font-semibold">ProPeloton Manager</div>
           </div>
 
-          <nav className="flex flex-wrap items-center justify-end gap-x-4 gap-y-2">
-            {HEADER_PUBLIC_LINKS.map(link => (
-              <a
-                key={link.href}
-                href={link.href}
-                className="hidden text-sm font-semibold text-white/70 hover:text-yellow-400 md:inline-flex"
-              >
-                {link.label}
-              </a>
-            ))}
+          <nav className="flex items-center justify-end gap-3 sm:gap-4">
 
             <a href="#/login" className="text-sm font-semibold text-white/80 hover:text-white">
               Sign In
@@ -698,8 +663,10 @@ export default function HomePage(): JSX.Element {
 
               <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4">
                 <div className="rounded-md border border-white/10 bg-[#101b31]/85 p-4 backdrop-blur-sm">
-                  <div className="text-xs text-white/60">Game Status</div>
-                  <div className="mt-1 text-2xl font-bold text-white">Open</div>
+                  <div className="text-xs text-white/60">Registered Users</div>
+                  <div className="mt-1 text-2xl font-bold text-white">
+                    {formatNumber(homeSnapshot?.active_managers)}
+                  </div>
                 </div>
 
                 <div className="rounded-md border border-white/10 bg-[#101b31]/85 p-4 backdrop-blur-sm">
@@ -1024,87 +991,6 @@ export default function HomePage(): JSX.Element {
                 </button>
               </div>
             )}
-          </div>
-        </section>
-
-        <section className="w-full bg-slate-950 py-16 text-white">
-          <div className="mx-auto max-w-7xl px-6">
-            <div className="grid gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
-              <div>
-                <p className="text-sm font-bold uppercase tracking-[0.22em] text-yellow-300">
-                  Support and transparency
-                </p>
-
-                <h2 className="mt-3 max-w-xl text-3xl font-bold tracking-tight md:text-4xl">
-                  Public information is available before registration.
-                </h2>
-
-                <p className="mt-5 max-w-2xl text-base leading-8 text-slate-200">
-                  Visitors can read the main game explanation, review support
-                  information, check contact details and understand privacy and terms
-                  before creating an account. This makes the public website easier to
-                  navigate and more useful for new players.
-                </p>
-
-                <p className="mt-4 max-w-2xl text-base leading-8 text-slate-300">
-                  ProPeloton Manager also keeps public support information visible for
-                  account questions, gameplay questions, bug reports, payment questions,
-                  coin questions, privacy questions and general feedback.
-                </p>
-
-                <div className="mt-7 flex flex-wrap gap-3">
-                  <a
-                    href="/demo/"
-                    className="rounded-lg bg-yellow-400 px-5 py-3 text-sm font-bold text-black hover:bg-yellow-300"
-                  >
-                    View Demo
-                  </a>
-
-                  <a
-                    href="/support/"
-                    className="rounded-lg border border-white/25 px-5 py-3 text-sm font-bold text-white hover:bg-white/10"
-                  >
-                    Support
-                  </a>
-
-                  <a
-                    href="/contact/"
-                    className="rounded-lg border border-white/25 px-5 py-3 text-sm font-bold text-white hover:bg-white/10"
-                  >
-                    Contact
-                  </a>
-
-                  <a
-                    href="/privacy-policy/"
-                    className="rounded-lg border border-white/25 px-5 py-3 text-sm font-bold text-white hover:bg-white/10"
-                  >
-                    Privacy Policy
-                  </a>
-
-                  <a
-                    href="/terms/"
-                    className="rounded-lg border border-white/25 px-5 py-3 text-sm font-bold text-white hover:bg-white/10"
-                  >
-                    Terms
-                  </a>
-                </div>
-              </div>
-
-              <div className="grid gap-5">
-                {HOMEPAGE_TRUST_ITEMS.map(item => (
-                  <article
-                    key={item.title}
-                    className="rounded-2xl border border-white/10 bg-white/5 p-6 shadow-sm"
-                  >
-                    <h3 className="text-xl font-bold text-white">{item.title}</h3>
-
-                    <p className="mt-3 text-sm leading-7 text-slate-200">
-                      {item.text}
-                    </p>
-                  </article>
-                ))}
-              </div>
-            </div>
           </div>
         </section>
 

@@ -25,6 +25,10 @@ import EquipmentOverviewTab from './equipment/components/EquipmentOverviewTab'
 import EquipmentInventoryTab from './equipment/components/EquipmentInventoryTab'
 import EquipmentMarketTab from './equipment/components/EquipmentMarketTab'
 import EquipmentRaceSuppliesTab from './equipment/components/EquipmentRaceSuppliesTab'
+import {
+  getEquipmentPremiumAccess,
+  type EquipmentPremiumAccess,
+} from './equipment/equipmentApi'
 
 /**
  * EquipmentTabKey
@@ -238,6 +242,7 @@ export default function EquipmentPage(): JSX.Element {
   const [club, setClub] = useState<ClubContext | null>(null)
   const [loadingClub, setLoadingClub] = useState(true)
   const [clubError, setClubError] = useState<string | null>(null)
+  const [equipmentAccess, setEquipmentAccess] = useState<EquipmentPremiumAccess | null>(null)
 
   const navigate = useNavigate()
 
@@ -346,6 +351,36 @@ export default function EquipmentPage(): JSX.Element {
       cancelled = true
     }
   }, [])
+
+
+  useEffect(() => {
+    if (!club) {
+      setEquipmentAccess(null)
+      return
+    }
+
+    let cancelled = false
+
+    async function loadEquipmentAccess(): Promise<void> {
+      try {
+        const access = await getEquipmentPremiumAccess(club.id)
+        if (!cancelled) setEquipmentAccess(access)
+      } catch (error) {
+        console.error('Failed to load Equipment Premium access:', error)
+        if (!cancelled) setEquipmentAccess(null)
+      }
+    }
+
+    void loadEquipmentAccess()
+
+    const handlePremiumStatusChanged = () => void loadEquipmentAccess()
+    window.addEventListener('premium-status-changed', handlePremiumStatusChanged)
+
+    return () => {
+      cancelled = true
+      window.removeEventListener('premium-status-changed', handlePremiumStatusChanged)
+    }
+  }, [club])
 
   useEffect(() => {
     let alive = true
@@ -488,23 +523,23 @@ export default function EquipmentPage(): JSX.Element {
     if (!club) return null
 
     if (activeTab === 'overview') {
-      return <EquipmentOverviewTab clubId={club.id} />
+      return <EquipmentOverviewTab clubId={club.id} equipmentAccess={equipmentAccess} onAccessChanged={setEquipmentAccess} />
     }
 
     if (activeTab === 'inventory') {
-      return <EquipmentInventoryTab clubId={club.id} />
+      return <EquipmentInventoryTab clubId={club.id} equipmentAccess={equipmentAccess} />
     }
 
     if (activeTab === 'market') {
-      return <EquipmentMarketTab clubId={club.id} />
+      return <EquipmentMarketTab clubId={club.id} equipmentAccess={equipmentAccess} />
     }
 
     if (activeTab === 'race-supplies') {
-      return <EquipmentRaceSuppliesTab clubId={club.id} />
+      return <EquipmentRaceSuppliesTab clubId={club.id} equipmentAccess={equipmentAccess} />
     }
 
-    return <EquipmentOverviewTab clubId={club.id} />
-  }, [activeTab, club])
+    return <EquipmentOverviewTab clubId={club.id} equipmentAccess={equipmentAccess} onAccessChanged={setEquipmentAccess} />
+  }, [activeTab, club, equipmentAccess])
 
   if (loadingClub) {
     return (

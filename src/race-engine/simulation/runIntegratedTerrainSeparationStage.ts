@@ -31,6 +31,14 @@ import {
   type ApplyDroppedGroupTransitionProposalResult,
 } from './applyDroppedGroupTransitionProposal'
 import {
+  applyEligibleTeamOrders,
+  type ApplyEligibleTeamOrdersResult,
+} from './applyEligibleTeamOrders'
+import {
+  applyExecutedTeamOrderEffects,
+  type ApplyExecutedTeamOrderEffectsResult,
+} from './applyExecutedTeamOrderEffects'
+import {
   applyDroppedWaveConsolidationProposal,
   type ApplyDroppedWaveConsolidationProposalResult,
 } from './applyDroppedWaveConsolidationProposal'
@@ -49,6 +57,10 @@ import {
   applyMultiGroupMovement,
   type ApplyMultiGroupMovementResult,
 } from './applyMultiGroupMovement'
+import {
+  reconcileBreakawayGroups,
+  type ReconcileBreakawayGroupsResult,
+} from './reconcileBreakawayGroups'
 import {
   calculateDroppedGroupTransitionProposal,
   type DroppedGroupTransitionProposal,
@@ -94,6 +106,27 @@ import {
 import {
   validateSimulationState,
 } from '../validation/validateSimulationState'
+import {
+  ensureIndividualCrashRuntime,
+  integrateIndividualCrashTick,
+  resolveIndividualCrashIntegrationOptions,
+  type IndividualCrashIntegrationOptions,
+  type IntegratedIndividualCrashTickResult,
+} from './individualCrashIntegration'
+import {
+  ensureCrashIncidentRuntime,
+  integrateCrashIncidentTick,
+  resolveCrashIncidentIntegrationOptions,
+  type CrashIncidentIntegrationOptions,
+  type IntegratedCrashIncidentTickResult,
+} from './crashIncidentIntegration'
+import {
+  ensureRaceIncidentRuntime,
+  integrateRaceIncidentTick,
+  resolveRaceIncidentIntegrationOptions,
+  type IntegratedRaceIncidentTickResult,
+  type RaceIncidentIntegrationOptions,
+} from './raceIncidentIntegration'
 
 export interface IntegratedTerrainSeparationOptions {
   readonly terrainCapabilityInfluence?: number
@@ -134,6 +167,28 @@ export interface IntegratedTerrainSeparationOptions {
    * the crossing tick from movement distance and speed.
    */
   readonly subTickFinishInterpolationEnabled?: boolean
+
+  /**
+   * Disabled by default. Used only by the explicit crash-enabled calibrated
+   * development wrapper. The accepted calibrated and existing_v1 paths omit
+   * this option and preserve their historical output.
+   */
+  readonly individualCrashIntegration?:
+    IndividualCrashIntegrationOptions
+
+  /**
+   * Shared individual/group crash integration. Mutually exclusive with the
+   * Phase 8H.2B individual-only integration option.
+   */
+  readonly crashIncidentIntegration?:
+    CrashIncidentIntegrationOptions
+
+  /**
+   * Shared individual/group/technical incident integration. Mutually exclusive
+   * with both earlier development incident integration options.
+   */
+  readonly raceIncidentIntegration?:
+    RaceIncidentIntegrationOptions
 
   readonly maximumTickCount?: number
 }
@@ -186,12 +241,31 @@ export interface IntegratedDroppedTransition {
 export interface IntegratedTerrainSeparationTickResult {
   readonly previousState:
     SimulationState
+
+  readonly appliedOrders:
+    ApplyEligibleTeamOrdersResult
+
+  readonly appliedOrderEffects:
+    ApplyExecutedTeamOrderEffectsResult
+
   readonly movement:
     TerrainAwareMultiGroupMovementResult
   readonly appliedMovement:
     ApplyMultiGroupMovementResult
   readonly appliedEnergy:
     ApplyMultiGroupEnergyResult
+  readonly individualCrash:
+    IntegratedIndividualCrashTickResult | null
+  readonly crashIncident:
+    IntegratedCrashIncidentTickResult | null
+
+  /**
+   * Present only when raceIncidentIntegration is enabled. It stays optional so
+   * accepted earlier runner output objects preserve their exact shape.
+   */
+  readonly raceIncident?:
+    IntegratedRaceIncidentTickResult
+
   readonly pressureEvaluations:
     readonly IntegratedRiderPressureEvaluation[]
   /**
@@ -201,6 +275,8 @@ export interface IntegratedTerrainSeparationTickResult {
     Readonly<Record<string, number>>
   readonly transitions:
     readonly IntegratedDroppedTransition[]
+  readonly reconciledBreakaways:
+    ReconcileBreakawayGroupsResult
   readonly finishDetection:
     MultiGroupFinishCandidateResult
   readonly appliedFinish:
@@ -1180,9 +1256,20 @@ export function simulateIntegratedTerrainSeparationTick(
     steepGradientMovementSeverityModel,
   )
 
+  const appliedOrders =
+    applyEligibleTeamOrders(
+      state,
+    )
+
+  const appliedOrderEffects =
+    applyExecutedTeamOrderEffects(
+      appliedOrders.state,
+      appliedOrders.executedOrders,
+    )
+
   const movement =
     calculateTerrainAwareMultiGroupMovement(
-      state,
+      appliedOrderEffects.state,
       terrainCapabilityInfluence,
       {
         steepGradientSeverityEnabled:
@@ -1194,7 +1281,8 @@ export function simulateIntegratedTerrainSeparationTick(
 
   const appliedMovement =
     applyMultiGroupMovement({
-      state,
+      state:
+        appliedOrderEffects.state,
       movement:
         movement.movement,
     })
@@ -1207,11 +1295,88 @@ export function simulateIntegratedTerrainSeparationTick(
         movement.movement,
     })
 
+  const enabledIncidentIntegrationCount =
+    Number(
+      Boolean(
+        options
+          .individualCrashIntegration,
+      ),
+    ) +
+    Number(
+      Boolean(
+        options
+          .crashIncidentIntegration,
+      ),
+    ) +
+    Number(
+      Boolean(
+        options
+          .raceIncidentIntegration,
+      ),
+    )
+
+  if (
+    enabledIncidentIntegrationCount >
+    1
+  ) {
+    throw new Error(
+      'runIntegratedTerrainSeparationStage: individualCrashIntegration, crashIncidentIntegration, and raceIncidentIntegration are mutually exclusive.',
+    )
+  }
+
+  const individualCrash =
+    options
+      .individualCrashIntegration
+      ? integrateIndividualCrashTick({
+          state:
+            appliedEnergy.state,
+          movement,
+          options:
+            options
+              .individualCrashIntegration,
+        })
+      : null
+
+  const crashIncident =
+    options
+      .crashIncidentIntegration
+      ? integrateCrashIncidentTick({
+          state:
+            appliedEnergy.state,
+          movement,
+          options:
+            options
+              .crashIncidentIntegration,
+        })
+      : null
+
+  const raceIncident =
+    options
+      .raceIncidentIntegration
+      ? integrateRaceIncidentTick({
+          state:
+            appliedEnergy.state,
+          movement,
+          options:
+            options
+              .raceIncidentIntegration,
+        })
+      : null
+
+  const stateAfterCrashIncident =
+    raceIncident
+      ?.state ??
+    crashIncident
+      ?.state ??
+    individualCrash
+      ?.state ??
+    appliedEnergy.state
+
   const pressure =
     evaluatePressure(
-      appliedEnergy.state,
+      stateAfterCrashIncident,
       movement,
-      appliedEnergy.state
+      stateAfterCrashIncident
         .separationPressureSecondsByRiderId,
       separationWindowSeconds,
       steepGradientSeverityEnabled,
@@ -1220,7 +1385,7 @@ export function simulateIntegratedTerrainSeparationTick(
 
   const transitionApplication =
     applyEligibleTransitions(
-      appliedEnergy.state,
+      stateAfterCrashIncident,
       pressure
         .eligibleRiderIdsBySourceGroupId,
       pressure
@@ -1231,9 +1396,22 @@ export function simulateIntegratedTerrainSeparationTick(
       droppedTransitionEventsEnabled,
     )
 
+  const stateBeforeBreakawayReconciliation:
+    SimulationState = {
+    ...transitionApplication.state,
+    separationPressureSecondsByRiderId:
+      transitionApplication
+        .pressureDurationByRiderId,
+  }
+
+  const reconciledBreakaways =
+    reconcileBreakawayGroups(
+      stateBeforeBreakawayReconciliation,
+    )
+
   const finishDetection =
     detectMultiGroupFinishCandidates(
-      transitionApplication.state,
+      reconciledBreakaways.state,
       {
         movement:
           movement.movement,
@@ -1247,7 +1425,7 @@ export function simulateIntegratedTerrainSeparationTick(
       .length > 0
       ? applyMultiGroupFinish({
           state:
-            transitionApplication.state,
+            reconciledBreakaways.state,
           detection:
             finishDetection,
         })
@@ -1256,7 +1434,7 @@ export function simulateIntegratedTerrainSeparationTick(
   const nextStateBeforePressure =
     appliedFinish
       ? appliedFinish.state
-      : transitionApplication.state
+      : reconciledBreakaways.state
 
   const finalPressure =
     resetTerminalPressure(
@@ -1279,9 +1457,20 @@ export function simulateIntegratedTerrainSeparationTick(
   return {
     previousState:
       state,
+    appliedOrders,
+    appliedOrderEffects,
     movement,
     appliedMovement,
     appliedEnergy,
+    individualCrash,
+    crashIncident,
+    ...(
+      raceIncident
+        ? {
+            raceIncident,
+          }
+        : {}
+    ),
     pressureEvaluations:
       pressure.evaluations,
     pressureDurationByRiderId:
@@ -1289,6 +1478,7 @@ export function simulateIntegratedTerrainSeparationTick(
     transitions:
       transitionApplication
         .transitions,
+    reconciledBreakaways,
     finishDetection,
     appliedFinish,
     state:
@@ -1320,8 +1510,61 @@ export function runIntegratedTerrainSeparationStage(
     )
   }
 
+  const enabledIncidentIntegrationCount =
+    Number(
+      Boolean(
+        options
+          .individualCrashIntegration,
+      ),
+    ) +
+    Number(
+      Boolean(
+        options
+          .crashIncidentIntegration,
+      ),
+    ) +
+    Number(
+      Boolean(
+        options
+          .raceIncidentIntegration,
+      ),
+    )
+
+  if (
+    enabledIncidentIntegrationCount >
+    1
+  ) {
+    throw new Error(
+      'runIntegratedTerrainSeparationStage: individualCrashIntegration, crashIncidentIntegration, and raceIncidentIntegration are mutually exclusive.',
+    )
+  }
+
+  const effectiveInitialState =
+    options
+      .raceIncidentIntegration
+      ? ensureRaceIncidentRuntime(
+          initialState,
+          options
+            .raceIncidentIntegration,
+        )
+      : options
+          .crashIncidentIntegration
+        ? ensureCrashIncidentRuntime(
+            initialState,
+            options
+              .crashIncidentIntegration,
+          )
+        : options
+            .individualCrashIntegration
+          ? ensureIndividualCrashRuntime(
+              initialState,
+              options
+                .individualCrashIntegration,
+            )
+          : initialState
+
   validateSimulationState(
-    initialState,
+    effectiveInitialState,
   )
 
   const maximumTickCount =
@@ -1345,7 +1588,7 @@ export function runIntegratedTerrainSeparationStage(
     StageResult[] = []
 
   let state =
-    initialState
+    effectiveInitialState
 
   while (!state.completed) {
     if (
@@ -1415,6 +1658,33 @@ export function runIntegratedTerrainSeparationStage(
     options
       .subTickFinishInterpolationEnabled ??
     DEFAULT_SUB_TICK_FINISH_INTERPOLATION_ENABLED
+
+  const individualCrashIntegrationForHash =
+    options
+      .individualCrashIntegration
+      ? resolveIndividualCrashIntegrationOptions(
+          options
+            .individualCrashIntegration,
+        )
+      : null
+
+  const crashIncidentIntegrationForHash =
+    options
+      .crashIncidentIntegration
+      ? resolveCrashIncidentIntegrationOptions(
+          options
+            .crashIncidentIntegration,
+        )
+      : null
+
+  const raceIncidentIntegrationForHash =
+    options
+      .raceIncidentIntegration
+      ? resolveRaceIncidentIntegrationOptions(
+          options
+            .raceIncidentIntegration,
+        )
+      : null
 
   const compactTicks =
     ticks.map(
@@ -1503,6 +1773,155 @@ export function runIntegratedTerrainSeparationStage(
                   .kilometre,
             }),
           ),
+        ...(
+          individualCrashIntegrationForHash
+            ? {
+                individualCrash:
+                  tick
+                    .individualCrash
+                    ? {
+                        candidateCount:
+                          tick
+                            .individualCrash
+                            .candidateCount,
+                        eligibleCandidateCount:
+                          tick
+                            .individualCrash
+                            .eligibleCandidateCount,
+                        triggeredCandidateCount:
+                          tick
+                            .individualCrash
+                            .triggeredCandidateCount,
+                        stageLimitReached:
+                          tick
+                            .individualCrash
+                            .stageLimitReached,
+                        selectedEntityId:
+                          tick
+                            .individualCrash
+                            .selectedRisk
+                            ?.entityId ??
+                          null,
+                        severity:
+                          tick
+                            .individualCrash
+                            .severity,
+                        eventSequenceNumber:
+                          tick
+                            .individualCrash
+                            .application
+                            ?.event
+                            .sequenceNumber ??
+                          null,
+                      }
+                    : null,
+              }
+            : {}
+        ),
+        ...(
+          crashIncidentIntegrationForHash
+            ? {
+                crashIncident:
+                  tick
+                    .crashIncident
+                    ? {
+                        candidateCountByKind:
+                          tick
+                            .crashIncident
+                            .candidateCountByKind,
+                        eligibleCandidateCountByKind:
+                          tick
+                            .crashIncident
+                            .eligibleCandidateCountByKind,
+                        triggeredCandidateCountByKind:
+                          tick
+                            .crashIncident
+                            .triggeredCandidateCountByKind,
+                        stageLimitReached:
+                          tick
+                            .crashIncident
+                            .stageLimitReached,
+                        selectedIncidentKind:
+                          tick
+                            .crashIncident
+                            .selectedIncidentKind,
+                        selectedEntityId:
+                          tick
+                            .crashIncident
+                            .selectedRisk
+                            ?.entityId ??
+                          null,
+                        severity:
+                          tick
+                            .crashIncident
+                            .severity,
+                        eventSequenceNumber:
+                          tick
+                            .crashIncident
+                            .application
+                            ?.result
+                            .event
+                            .sequenceNumber ??
+                          null,
+                      }
+                    : null,
+              }
+            : {}
+        ),
+        ...(
+          raceIncidentIntegrationForHash
+            ? {
+                raceIncident:
+                  tick
+                    .raceIncident
+                    ? {
+                        candidateCountByKind:
+                          tick
+                            .raceIncident
+                            .candidateCountByKind,
+                        eligibleCandidateCountByKind:
+                          tick
+                            .raceIncident
+                            .eligibleCandidateCountByKind,
+                        triggeredCandidateCountByKind:
+                          tick
+                            .raceIncident
+                            .triggeredCandidateCountByKind,
+                        stageLimitReached:
+                          tick
+                            .raceIncident
+                            .stageLimitReached,
+                        selectedIncidentKind:
+                          tick
+                            .raceIncident
+                            .selectedIncidentKind,
+                        selectedEntityId:
+                          tick
+                            .raceIncident
+                            .selectedRisk
+                            ?.entityId ??
+                          null,
+                        severity:
+                          tick
+                            .raceIncident
+                            .severity,
+                        technicalType:
+                          tick
+                            .raceIncident
+                            .technicalType,
+                        eventSequenceNumber:
+                          tick
+                            .raceIncident
+                            .application
+                            ?.result
+                            .event
+                            .sequenceNumber ??
+                          null,
+                      }
+                    : null,
+              }
+            : {}
+        ),
         finishedRiderIds:
           tick.finishedRiderIds,
         completed:
@@ -1583,6 +2002,30 @@ export function runIntegratedTerrainSeparationStage(
               }
             : {}
         ),
+        ...(
+          individualCrashIntegrationForHash
+            ? {
+                individualCrashIntegration:
+                  individualCrashIntegrationForHash,
+              }
+            : {}
+        ),
+        ...(
+          crashIncidentIntegrationForHash
+            ? {
+                crashIncidentIntegration:
+                  crashIncidentIntegrationForHash,
+              }
+            : {}
+        ),
+        ...(
+          raceIncidentIntegrationForHash
+            ? {
+                raceIncidentIntegration:
+                  raceIncidentIntegrationForHash,
+              }
+            : {}
+        ),
       },
       compactTicks,
       transitions:
@@ -1626,7 +2069,8 @@ export function runIntegratedTerrainSeparationStage(
     }).hash
 
   return {
-    initialState,
+    initialState:
+      effectiveInitialState,
     finalState:
       state,
     ticks,

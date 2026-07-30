@@ -32,9 +32,14 @@ import {
   getStatusBadgeClass,
   makeIdempotencyKey,
 } from '../equipmentFormatters'
+import {
+  saveEquipmentMaintenanceReminder,
+  type EquipmentPremiumAccess,
+} from '../equipmentApi'
 
 type EquipmentInventoryTabProps = {
   clubId: string
+  equipmentAccess: EquipmentPremiumAccess | null
 }
 
 type ActionMode = 'repair' | 'sell' | 'discard'
@@ -274,6 +279,7 @@ function buildInventoryGroups(items: EquipmentInventoryItem[]): EquipmentInvento
 
 export default function EquipmentInventoryTab({
   clubId,
+  equipmentAccess,
 }: EquipmentInventoryTabProps): JSX.Element {
   const [items, setItems] = useState<EquipmentInventoryItem[]>([])
   const [totalCount, setTotalCount] = useState(0)
@@ -294,6 +300,10 @@ export default function EquipmentInventoryTab({
   const [message, setMessage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [expandedGroupKeys, setExpandedGroupKeys] = useState<Set<string>>(new Set())
+  const [maintenanceThreshold, setMaintenanceThreshold] = useState(
+    Number(equipmentAccess?.maintenance_reminder_threshold ?? 80),
+  )
+  const [bulkRepairLoading, setBulkRepairLoading] = useState(false)
 
   async function loadInventory(): Promise<void> {
     setLoading(true)
@@ -493,6 +503,71 @@ export default function EquipmentInventoryTab({
     return 'bg-red-600 hover:bg-red-700'
   }
 
+
+
+  useEffect(() => {
+    setMaintenanceThreshold(Number(equipmentAccess?.maintenance_reminder_threshold ?? 80))
+  }, [equipmentAccess?.maintenance_reminder_threshold])
+
+  const premiumRepairCandidates = useMemo(
+    () =>
+      items.filter(
+        item =>
+          canRepair(item) &&
+          Number(item.condition_percent ?? 100) <= maintenanceThreshold,
+      ),
+    [items, maintenanceThreshold],
+  )
+
+  async function handleSaveMaintenanceReminder(): Promise<void> {
+    setError(null)
+    setMessage(null)
+
+    try {
+      await saveEquipmentMaintenanceReminder({
+        clubId,
+        threshold: maintenanceThreshold,
+      })
+      setMessage(`Maintenance reminder saved at ${maintenanceThreshold}% condition.`)
+    } catch (caughtError) {
+      setError(
+        caughtError instanceof Error
+          ? caughtError.message
+          : 'Failed to save maintenance reminder.',
+      )
+    }
+  }
+
+  async function handleBulkRepair(): Promise<void> {
+    if (!equipmentAccess?.is_premium || premiumRepairCandidates.length === 0) return
+
+    setBulkRepairLoading(true)
+    setError(null)
+    setMessage(null)
+
+    try {
+      for (const item of premiumRepairCandidates) {
+        await startEquipmentMaintenance({
+          clubId,
+          inventoryItemId: item.id,
+          idempotencyKey: makeIdempotencyKey('equipment_bulk_maintenance'),
+        })
+      }
+
+      setMessage(
+        `${premiumRepairCandidates.length} repair job${premiumRepairCandidates.length === 1 ? '' : 's'} started. Normal cash costs and repair durations still apply.`,
+      )
+      await loadInventory()
+    } catch (caughtError) {
+      setError(
+        caughtError instanceof Error
+          ? caughtError.message
+          : 'Bulk maintenance failed.',
+      )
+    } finally {
+      setBulkRepairLoading(false)
+    }
+  }
 
   function renderInventoryItemRow(item: EquipmentInventoryItem): JSX.Element {
     const bonuses = getShortBonuses(item)
@@ -701,6 +776,79 @@ export default function EquipmentInventoryTab({
           Search
         </button>
       </div>
+
+      {equipmentAccess?.is_premium ? (
+        <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="font-semibold text-slate-900">Maintenance Planner</h3>
+                <span className="rounded-full border border-yellow-300 bg-yellow-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-yellow-800">Premium</span>
+              </div>
+              <p className="mt-1 text-xs text-slate-500">
+                Save a reminder threshold and start eligible repairs together. Every repair keeps its normal cash cost and duration.
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => void handleBulkRepair()}
+              disabled={bulkRepairLoading || premiumRepairCandidates.length === 0}
+              className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {bulkRepairLoading
+                ? 'Starting repairs…'
+                : `Repair ${premiumRepairCandidates.length} below threshold`}
+            </button>
+          </div>
+
+          <div className="mt-3 rounded-md bg-slate-50 px-3 py-2 text-xs text-slate-600">
+            {premiumRepairCandidates.length > 0
+              ? `${premiumRepairCandidates.length} loaded item${premiumRepairCandidates.length === 1 ? '' : 's'} can be repaired at or below ${maintenanceThreshold}%.`
+              : `No loaded ${equipmentCategoryLabels[category].toLowerCase()} can currently be repaired at or below ${maintenanceThreshold}%.`}
+          </div>
+
+          <div className="mt-4 flex flex-wrap items-center gap-3">
+            <label className="text-sm text-slate-700">
+              Reminder at or below
+              <select
+                value={maintenanceThreshold}
+                onChange={event => setMaintenanceThreshold(Number(event.target.value))}
+                className="ml-2 rounded-md border border-slate-300 bg-white px-3 py-2 text-sm"
+              >
+                {[90, 85, 80, 75, 70, 60].map(value => (
+                  <option key={value} value={value}>{value}%</option>
+                ))}
+              </select>
+            </label>
+            <button
+              type="button"
+              onClick={() => void handleSaveMaintenanceReminder()}
+              className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+            >
+              Save reminder
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="font-semibold text-slate-900">Maintenance Planner</h3>
+                <span className="rounded-full border border-yellow-300 bg-yellow-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-yellow-800">Premium</span>
+                <span aria-hidden="true" className="text-slate-400">🔒</span>
+              </div>
+              <p className="mt-1 text-sm text-slate-600">
+                Set condition reminders and start multiple normal repair jobs together.
+              </p>
+            </div>
+            <a href="/dashboard/premium" className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
+              Unlock with Premium
+            </a>
+          </div>
+        </div>
+      )}
 
       {message ? (
         <div className="rounded border border-green-200 bg-green-50 p-3 text-sm text-green-700">

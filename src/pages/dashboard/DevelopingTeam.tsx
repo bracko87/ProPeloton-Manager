@@ -98,6 +98,51 @@ type ClubCurrentRankingPositionRow = {
   total_teams?: number | string | null
 }
 
+type DevelopingTeamCompetitionRpcRow = {
+  developing_club_id?: string | null
+  developing_club_name?: string | null
+  competition_name?: string | null
+  current_place?: number | string | null
+  total_teams?: number | string | null
+  season_year?: number | string | null
+  international_points?: number | string | null
+}
+
+type CompetitionClubRow = {
+  id: string
+  name: string
+  club_tier: string | null
+  tier2_division: string | null
+  tier3_division: string | null
+  amateur_division: string | null
+}
+
+type CompetitionPointsRow = {
+  season_year?: number | string | null
+  team_id?: string | null
+  international_points?: number | string | null
+}
+
+type CompetitionTieBreakerRow = {
+  season_year?: number | string | null
+  team_id?: string | null
+  club_id?: string | null
+  completed_race_count?: number | string | null
+  race_count?: number | string | null
+  races_done_count?: number | string | null
+  total_races_done?: number | string | null
+  team_race_count?: number | string | null
+  race_reputation_value?: number | string | null
+  team_race_reputation_value?: number | string | null
+  race_reputation?: number | string | null
+}
+
+type CompetitionRankedRow = CompetitionClubRow & {
+  internationalPoints: number
+  completedRaceCount: number
+  raceReputationValue: number
+}
+
 function normalizeOptionalRankingInteger(
   value?: number | string | null,
 ): number | null {
@@ -113,6 +158,17 @@ function normalizeOptionalRankingInteger(
   return null
 }
 
+function normalizeRankingNumber(value: unknown): number {
+  if (typeof value === 'number' && Number.isFinite(value)) return value
+
+  if (typeof value === 'string' && value.trim()) {
+    const parsed = Number(value)
+    return Number.isFinite(parsed) ? parsed : 0
+  }
+
+  return 0
+}
+
 function normalizeCompetitionLabel(value?: string | null): string | null {
   const label = String(value ?? '').trim()
 
@@ -123,50 +179,277 @@ function normalizeCompetitionLabel(value?: string | null): string | null {
     .replace(/Southern Balkan Europe/i, 'Southern & Balkan Europe')
 }
 
+function getCompetitionDivisionKey(club: CompetitionClubRow): string | null {
+  if (club.club_tier === 'worldteam') return 'WORLD'
+  if (club.club_tier === 'proteam') return club.tier2_division
+  if (club.club_tier === 'continental') return club.tier3_division
+  if (club.club_tier === 'amateur') return club.amateur_division
+  return null
+}
+
+function formatCompetitionName(
+  tier: string | null,
+  divisionKey: string | null,
+): string | null {
+  if (!tier) return null
+  if (tier === 'worldteam') return 'WorldTeam'
+
+  const normalizedDivision = String(divisionKey ?? '')
+    .replace(/^PRO_/, '')
+    .replace(/^CONTINENTAL_/, '')
+    .split('_')
+    .filter(Boolean)
+    .map((word) => `${word.charAt(0)}${word.slice(1).toLowerCase()}`)
+    .join(' ')
+    .replace(/Southern Balkan Europe/i, 'Southern & Balkan Europe')
+
+  if (!normalizedDivision) return null
+  if (tier === 'amateur') return `Amateur: ${normalizedDivision}`
+  if (tier === 'proteam') return `ProTeam - ${normalizedDivision}`
+  if (tier === 'continental') return `Continental - ${normalizedDivision}`
+
+  return normalizedDivision
+}
+
+function getTieBreakerCompletedRaceCount(
+  row?: CompetitionTieBreakerRow,
+): number {
+  return normalizeRankingNumber(
+    row?.completed_race_count ??
+      row?.race_count ??
+      row?.races_done_count ??
+      row?.total_races_done ??
+      row?.team_race_count,
+  )
+}
+
+function getTieBreakerRaceReputation(
+  row?: CompetitionTieBreakerRow,
+): number {
+  return normalizeRankingNumber(
+    row?.race_reputation_value ??
+      row?.team_race_reputation_value ??
+      row?.race_reputation,
+  )
+}
+
+function compareCompetitionRows(
+  left: CompetitionRankedRow,
+  right: CompetitionRankedRow,
+): number {
+  if (right.internationalPoints !== left.internationalPoints) {
+    return right.internationalPoints - left.internationalPoints
+  }
+
+  if (right.completedRaceCount !== left.completedRaceCount) {
+    return right.completedRaceCount - left.completedRaceCount
+  }
+
+  if (right.raceReputationValue !== left.raceReputationValue) {
+    return right.raceReputationValue - left.raceReputationValue
+  }
+
+  const byName = left.name.localeCompare(right.name, undefined, {
+    sensitivity: 'base',
+    numeric: true,
+  })
+
+  if (byName !== 0) return byName
+  return left.id.localeCompare(right.id)
+}
+
+async function fetchCompetitionSummaryFromRankingTables(
+  clubId: string,
+): Promise<DevelopingCompetitionSummary | null> {
+  const { data: targetData, error: targetError } = await supabase
+    .from('clubs')
+    .select('id, name, club_tier, tier2_division, tier3_division, amateur_division')
+    .eq('id', clubId)
+    .is('deleted_at', null)
+    .maybeSingle()
+
+  if (targetError) {
+    console.warn('Could not load Developing Team competition assignment:', targetError)
+    return null
+  }
+
+  const target = (targetData ?? null) as CompetitionClubRow | null
+  const divisionKey = target ? getCompetitionDivisionKey(target) : null
+
+  if (!target?.club_tier || !divisionKey) return null
+
+  let clubsQuery = supabase
+    .from('clubs')
+    .select('id, name, club_tier, tier2_division, tier3_division, amateur_division')
+    .eq('club_tier', target.club_tier)
+    .is('deleted_at', null)
+
+  if (target.club_tier === 'proteam') {
+    clubsQuery = clubsQuery.eq('tier2_division', divisionKey)
+  } else if (target.club_tier === 'continental') {
+    clubsQuery = clubsQuery.eq('tier3_division', divisionKey)
+  } else if (target.club_tier === 'amateur') {
+    clubsQuery = clubsQuery.eq('amateur_division', divisionKey)
+  }
+
+  const [clubsResult, seasonResult] = await Promise.all([
+    clubsQuery,
+    supabase.rpc('team_ranking_get_current_season_year_v1'),
+  ])
+
+  if (clubsResult.error) {
+    console.warn('Could not load Developing Team competition clubs:', clubsResult.error)
+    return null
+  }
+
+  const seasonYear = normalizeOptionalRankingInteger(seasonResult.data)
+  const competitionClubs = (clubsResult.data ?? []) as CompetitionClubRow[]
+
+  if (competitionClubs.length === 0) return null
+
+  let pointsQuery = supabase
+    .from('team_international_points_by_season_v1')
+    .select('season_year, team_id, international_points')
+
+  let tieBreakersQuery = supabase
+    .from('team_ranking_tiebreakers_by_season_v1')
+    .select(
+      'season_year, team_id, club_id, completed_race_count, race_count, races_done_count, total_races_done, team_race_count, race_reputation_value, team_race_reputation_value, race_reputation',
+    )
+
+  if (seasonYear) {
+    pointsQuery = pointsQuery.eq('season_year', seasonYear)
+    tieBreakersQuery = tieBreakersQuery.eq('season_year', seasonYear)
+  }
+
+  const [pointsResult, tieBreakersResult] = await Promise.all([
+    pointsQuery,
+    tieBreakersQuery,
+  ])
+
+  if (pointsResult.error) {
+    console.warn('Could not load Developing Team ranking points:', pointsResult.error)
+  }
+
+  if (tieBreakersResult.error) {
+    console.warn('Could not load Developing Team ranking tie-breakers:', tieBreakersResult.error)
+  }
+
+  const pointsByTeamId = new Map<string, number>()
+  for (const row of (pointsResult.data ?? []) as CompetitionPointsRow[]) {
+    const teamId = String(row.team_id ?? '').trim()
+    if (!teamId) continue
+    pointsByTeamId.set(teamId, normalizeRankingNumber(row.international_points))
+  }
+
+  const tieBreakersByTeamId = new Map<string, CompetitionTieBreakerRow>()
+  for (const row of (tieBreakersResult.data ?? []) as CompetitionTieBreakerRow[]) {
+    const teamId = String(row.team_id ?? row.club_id ?? '').trim()
+    if (!teamId) continue
+    tieBreakersByTeamId.set(teamId, row)
+  }
+
+  const rankedRows = competitionClubs
+    .map<CompetitionRankedRow>((club) => {
+      const tieBreaker = tieBreakersByTeamId.get(club.id)
+
+      return {
+        ...club,
+        internationalPoints: pointsByTeamId.get(club.id) ?? 0,
+        completedRaceCount: getTieBreakerCompletedRaceCount(tieBreaker),
+        raceReputationValue: getTieBreakerRaceReputation(tieBreaker),
+      }
+    })
+    .sort(compareCompetitionRows)
+
+  const positionIndex = rankedRows.findIndex((club) => club.id === clubId)
+  if (positionIndex < 0) return null
+
+  return {
+    name:
+      formatCompetitionName(target.club_tier, divisionKey) ??
+      'Competition unavailable',
+    place: positionIndex + 1,
+    totalTeams: rankedRows.length,
+  }
+}
+
+const COMPETITION_REQUEST_TIMEOUT_MS = 4000
+
 async function fetchDevelopingTeamCompetitionSummary(
   clubId: string,
 ): Promise<DevelopingCompetitionSummary | null> {
-  const { data, error } = await supabase.rpc(
-    'get_club_current_ranking_position_v1',
-    {
-      p_club_id: clubId,
-    },
-  )
+  /*
+   * Fallback only. The primary competition values now arrive through
+   * get_developing_team_status(). This direct-by-club RPC is kept for
+   * compatibility, but it may never leave the UI in a loading state.
+   */
+  let timeoutId: ReturnType<typeof setTimeout> | null = null
 
-  if (error) {
+  try {
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      timeoutId = setTimeout(() => {
+        reject(new Error('Developing Team competition request timed out.'))
+      }, COMPETITION_REQUEST_TIMEOUT_MS)
+    })
+
+    const requestPromise = supabase.rpc(
+      'get_developing_team_competition_by_club_v1',
+      {
+        p_developing_club_id: clubId,
+      },
+    )
+
+    const { data, error } = await Promise.race([
+      requestPromise,
+      timeoutPromise,
+    ])
+
+    if (error) {
+      console.warn(
+        'Developing Team competition fallback failed:',
+        error,
+      )
+      return null
+    }
+
+    const normalized = Array.isArray(data) ? data[0] : data
+    const row =
+      normalized && typeof normalized === 'object'
+        ? (normalized as DevelopingTeamCompetitionRpcRow)
+        : null
+
+    if (!row) return null
+
+    const name = normalizeCompetitionLabel(row.competition_name)
+    const place = normalizeOptionalRankingInteger(row.current_place)
+    const totalTeams = normalizeOptionalRankingInteger(row.total_teams)
+
+    if (!name || place === null || totalTeams === null) {
+      return null
+    }
+
+    return {
+      name,
+      place,
+      totalTeams,
+    }
+  } catch (error) {
     console.warn(
-      'Could not load canonical Developing Team competition position:',
+      'Developing Team competition RPC did not complete:',
       error,
     )
-    return null
+  } finally {
+    if (timeoutId) clearTimeout(timeoutId)
   }
 
-  const normalized = Array.isArray(data) ? data[0] : data
-  const row =
-    normalized && typeof normalized === 'object'
-      ? (normalized as ClubCurrentRankingPositionRow)
-      : null
-
-  if (!row) return null
-
-  const name = normalizeCompetitionLabel(row.competition_label)
-  const place = normalizeOptionalRankingInteger(row.rank_position)
-  const totalTeams = normalizeOptionalRankingInteger(row.total_teams)
-
-  if (!name && place === null && totalTeams === null) {
-    return null
-  }
-
-  return {
-    name: name ?? 'Competition unavailable',
-    place,
-    totalTeams,
-  }
+  // Final non-blocking fallback: reproduce the Team Ranking inputs directly.
+  return fetchCompetitionSummaryFromRankingTables(clubId)
 }
 
 
 const DEVELOPING_TEAM_COMPETITION_CACHE_PREFIX =
-  'ppm:developing-team-competition:'
+  'ppm:developing-team-competition:v10:'
 
 function readCompetitionSummaryCache(
   clubId: string,
@@ -185,10 +468,15 @@ function readCompetitionSummaryCache(
     const place = normalizeOptionalRankingInteger(parsed.place ?? null)
     const totalTeams = normalizeOptionalRankingInteger(parsed.totalTeams ?? null)
 
-    if (!name && place === null && totalTeams === null) return null
+    if (
+      (!name && place === null && totalTeams === null) ||
+      name.toLowerCase() === 'competition unavailable'
+    ) {
+      return null
+    }
 
     return {
-      name: name || 'Competition unavailable',
+      name,
       place,
       totalTeams,
     }
@@ -202,6 +490,8 @@ function writeCompetitionSummaryCache(
   summary: DevelopingCompetitionSummary,
 ): void {
   if (typeof window === 'undefined') return
+
+  if (summary.name.toLowerCase() === 'competition unavailable') return
 
   try {
     window.sessionStorage.setItem(
@@ -712,18 +1002,17 @@ export default function DevelopingTeamPage() {
     setError(null)
     setStatusError(null)
     setIsPremiumLoading(true)
+    setCompetitionLoading(true)
 
     try {
       const [
         { data: authData, error: authErr },
         { data: currentGameDate, error: gameDateErr },
         { data: premiumStatusData, error: premiumStatusErr },
-        { data: devStatusData, error: devStatusErr },
       ] = await Promise.all([
         supabase.auth.getUser(),
         supabase.rpc('get_current_game_date'),
         supabase.rpc('get_my_premium_status'),
-        supabase.rpc('get_developing_team_status'),
       ])
 
       if (authErr) throw authErr
@@ -753,100 +1042,70 @@ export default function DevelopingTeamPage() {
       const seasonYear = getSeasonYearFromGameDate(normalizedGameDate)
       setGameDate(normalizedGameDate)
 
-      let status: DevelopingTeamPageStatus | null = null
+      /*
+       * Access and first paint use the real Developing Team club row directly.
+       * Reporting RPCs are optional background hydration and can never block
+       * access to an existing paid team.
+       */
+      const { data: developingClubData, error: developingClubError } =
+        await supabase
+          .from('clubs')
+          .select('id, name, parent_club_id')
+          .eq('owner_user_id', userId)
+          .eq('club_type', 'developing')
+          .is('deleted_at', null)
+          .order('created_at', { ascending: true })
+          .limit(1)
+          .maybeSingle()
 
-      if (devStatusErr) {
-        console.error('get_developing_team_status failed:', devStatusErr)
+      if (developingClubError) throw developingClubError
 
-        const { data: fallbackDevelopingClubData, error: fallbackDevelopingClubErr } =
-          await supabase
-            .from('clubs')
-            .select('id, name, parent_club_id')
-            .eq('owner_user_id', userId)
-            .eq('club_type', 'developing')
-            .is('deleted_at', null)
-            .order('created_at', { ascending: true })
-            .limit(1)
-            .maybeSingle()
+      const developingClub =
+        (developingClubData ?? null) as DevelopingClubFallbackRow | null
 
-        if (fallbackDevelopingClubErr) {
-          console.error(
-            'Could not recover Developing Team directly from clubs:',
-            fallbackDevelopingClubErr
-          )
-        }
-
-        const fallbackDevelopingClub =
-          (fallbackDevelopingClubData ?? null) as DevelopingClubFallbackRow | null
-
-        if (!fallbackDevelopingClub?.id) {
-          setDevelopingTeamStatus(null)
-          setStatusError(devStatusErr.message ?? 'Could not load Developing Team status.')
-          setRows([])
-          setHealthOverviewRows([])
-          setFirstSquadRiderCount(0)
-          setCompetitionSummary(null)
-          setCompetitionLoading(false)
-          return
-        }
-
-        status = {
-          main_club_id: fallbackDevelopingClub.parent_club_id,
-          main_club_name: null,
-          developing_club_id: fallbackDevelopingClub.id,
-          developing_club_name: fallbackDevelopingClub.name,
-          is_purchased: true,
-          movement_window_open: false,
-          current_window_label: null,
-          next_window_label: null,
-        } as unknown as DevelopingTeamPageStatus
-
-        setStatusError(null)
-      } else {
-        const normalizedDevStatus = Array.isArray(devStatusData)
-          ? devStatusData[0]
-          : devStatusData
-
-        status = (normalizedDevStatus ?? null) as DevelopingTeamPageStatus | null
-      }
-
-      setDevelopingTeamStatus(status)
-
-      if (!hasDevelopingTeamAccess(status) || !status?.developing_club_id) {
+      if (!developingClub?.id) {
+        setDevelopingTeamStatus({
+          team_exists: false,
+          is_purchased: false,
+        } as unknown as DevelopingTeamPageStatus)
         setRows([])
         setHealthOverviewRows([])
         setCompetitionSummary(null)
         setCompetitionLoading(false)
-        setDevelopingTeamSeasonDashboardData(createEmptySquadSeasonDashboardData())
+        setDevelopingTeamSeasonDashboardData(
+          createEmptySquadSeasonDashboardData()
+        )
         return
       }
 
-      const developingClubId = status.developing_club_id
-      const cachedCompetitionSummary = readCompetitionSummaryCache(developingClubId)
+      const fallbackStatus = {
+        main_club_id: developingClub.parent_club_id,
+        main_club_name: null,
+        developing_club_id: developingClub.id,
+        developing_club_name: developingClub.name,
+        team_exists: true,
+        is_purchased: true,
+        is_active: true,
+        is_read_only: false,
+        movement_window_open: false,
+        current_window_label: null,
+        next_window_label: null,
+      } as unknown as DevelopingTeamPageStatus
 
-      if (
-        status.current_competition_name ||
-        status.current_competition_place != null ||
-        status.current_competition_total_teams != null
-      ) {
-        const statusCompetitionSummary = {
-          name: status.current_competition_name ?? 'Competition unavailable',
-          place: status.current_competition_place ?? null,
-          totalTeams: status.current_competition_total_teams ?? null,
-        }
+      setDevelopingTeamStatus(fallbackStatus)
 
-        setCompetitionSummary(statusCompetitionSummary)
-        writeCompetitionSummaryCache(developingClubId, statusCompetitionSummary)
-        setCompetitionLoading(false)
-      } else if (cachedCompetitionSummary) {
+      const developingClubId = developingClub.id
+      const cachedCompetitionSummary =
+        readCompetitionSummaryCache(developingClubId)
+
+      if (cachedCompetitionSummary) {
         setCompetitionSummary(cachedCompetitionSummary)
-        setCompetitionLoading(true)
+        setCompetitionLoading(false)
       } else {
         setCompetitionSummary(null)
-        setCompetitionLoading(true)
       }
 
-      // Load the roster first. This is the only request that blocks first paint.
+      // Only the roster query blocks first paint.
       const { data: roster, error: rosterErr } = await supabase
         .from('club_roster')
         .select(
@@ -863,23 +1122,116 @@ export default function DevelopingTeamPage() {
       setRows(rosterRows)
       setLoading(false)
 
-      // Competition is operational data, but it must never delay the roster.
-      void fetchDevelopingTeamCompetitionSummary(developingClubId)
-        .then((summary) => {
-          if (summary) {
+      /*
+       * Hydrate seasonal access and movement-window data in the background.
+       * A timeout or reporting failure does not remove access and is not shown
+       * as a destructive page error.
+       */
+      void (async () => {
+        let timeoutId: ReturnType<typeof setTimeout> | null = null
+
+        try {
+          const timeoutPromise = new Promise<never>((_, reject) => {
+            timeoutId = setTimeout(() => {
+              reject(new Error('Developing Team status request timed out.'))
+            }, 2500)
+          })
+
+          const { data: statusData, error: statusRpcError } =
+            await Promise.race([
+              supabase.rpc('get_developing_team_status'),
+              timeoutPromise,
+            ])
+
+          if (statusRpcError) {
+            console.warn(
+              'Could not hydrate Developing Team status:',
+              statusRpcError
+            )
+            return
+          }
+
+          const normalizedStatus = Array.isArray(statusData)
+            ? statusData[0]
+            : statusData
+
+          if (!normalizedStatus || typeof normalizedStatus !== 'object') {
+            return
+          }
+
+          const liveStatus =
+            normalizedStatus as DevelopingTeamPageStatus
+
+          if (
+            liveStatus.developing_club_id &&
+            liveStatus.developing_club_id !== developingClubId
+          ) {
+            return
+          }
+
+          setDevelopingTeamStatus((currentStatus) => ({
+            ...currentStatus,
+            ...liveStatus,
+            developing_club_id: developingClubId,
+            developing_club_name:
+              liveStatus.developing_club_name ??
+              developingClub.name,
+            main_club_id:
+              liveStatus.main_club_id ??
+              developingClub.parent_club_id,
+            team_exists: true,
+            is_purchased: true,
+          }))
+
+          const hasStatusCompetition =
+            Boolean(liveStatus.current_competition_name?.trim()) &&
+            liveStatus.current_competition_place != null &&
+            liveStatus.current_competition_total_teams != null
+
+          if (hasStatusCompetition) {
+            const statusCompetitionSummary = {
+              name: liveStatus.current_competition_name!.trim(),
+              place: liveStatus.current_competition_place!,
+              totalTeams:
+                liveStatus.current_competition_total_teams!,
+            }
+
+            setCompetitionSummary(statusCompetitionSummary)
+            writeCompetitionSummaryCache(
+              developingClubId,
+              statusCompetitionSummary
+            )
+            setCompetitionLoading(false)
+          }
+        } catch (statusHydrationError) {
+          console.warn(
+            'Developing Team status hydration was skipped:',
+            statusHydrationError
+          )
+        } finally {
+          if (timeoutId) clearTimeout(timeoutId)
+        }
+      })()
+
+      // Competition is fully separate from access and never blocks the roster.
+      if (!cachedCompetitionSummary) {
+        void fetchDevelopingTeamCompetitionSummary(developingClubId)
+          .then((summary) => {
+            if (!summary) return
+
             setCompetitionSummary(summary)
             writeCompetitionSummaryCache(developingClubId, summary)
-          }
-        })
-        .catch((competitionError) => {
-          console.warn(
-            'Could not load Developing Team competition summary:',
-            competitionError
-          )
-        })
-        .finally(() => {
-          setCompetitionLoading(false)
-        })
+          })
+          .catch((competitionError) => {
+            console.warn(
+              'Could not load Developing Team competition:',
+              competitionError
+            )
+          })
+          .finally(() => {
+            setCompetitionLoading(false)
+          })
+      }
 
       // Last/Next Team Race remain Free. Premium analytics are sanitized for Free users.
       void fetchSquadSeasonDashboardData(developingClubId, seasonYear)
@@ -891,8 +1243,13 @@ export default function DevelopingTeamPage() {
           )
         })
         .catch((dashboardError) => {
-          console.warn('Failed to load Developing Team dashboard data:', dashboardError)
-          setDevelopingTeamSeasonDashboardData(createEmptySquadSeasonDashboardData())
+          console.warn(
+            'Failed to load Developing Team dashboard data:',
+            dashboardError
+          )
+          setDevelopingTeamSeasonDashboardData(
+            createEmptySquadSeasonDashboardData()
+          )
         })
 
       if (hasPremiumAccess) {
@@ -902,25 +1259,34 @@ export default function DevelopingTeamPage() {
           })
           .then(({ data: healthData, error: healthErr }) => {
             if (healthErr) {
-              console.warn('Failed to load Developing Team health overview:', healthErr)
+              console.warn(
+                'Failed to load Developing Team health overview:',
+                healthErr
+              )
               return
             }
 
-            setHealthOverviewRows((healthData ?? []) as ClubHealthOverviewRow[])
+            setHealthOverviewRows(
+              (healthData ?? []) as ClubHealthOverviewRow[]
+            )
           })
       } else {
         setHealthOverviewRows([])
       }
 
-      // The First Squad count is needed only for movement capacity checks.
-      if (status.main_club_id) {
+      // Still load the First Squad count for movement capacity, but do not show
+      // a separate First Squad summary line in the page header.
+      if (developingClub.parent_club_id) {
         void supabase
           .from('club_roster')
           .select('rider_id')
-          .eq('club_id', status.main_club_id)
+          .eq('club_id', developingClub.parent_club_id)
           .then(({ data: mainRoster, error: mainRosterErr }) => {
             if (mainRosterErr) {
-              console.warn('Failed to load First Squad rider count:', mainRosterErr)
+              console.warn(
+                'Failed to load First Squad rider count:',
+                mainRosterErr
+              )
               return
             }
 
@@ -963,7 +1329,10 @@ export default function DevelopingTeamPage() {
           .in('id', riderIds)
           .then(({ data: riderMetaRows, error: riderMetaErr }) => {
             if (riderMetaErr) {
-              console.warn('Failed to load Developing Team rider metadata:', riderMetaErr)
+              console.warn(
+                'Failed to load Developing Team rider metadata:',
+                riderMetaErr
+              )
               return
             }
 
@@ -991,46 +1360,68 @@ export default function DevelopingTeamPage() {
                   morale: number | null
                   potential: number | null
                   fatigue: number | null
-                  availability_status: RiderAvailabilityStatus | null
+                  availability_status:
+                    RiderAvailabilityStatus | null
                 }>
               ).map((row) => [row.id, row])
             )
 
-            const mergedRows: DevelopingRosterRow[] = rosterRows.map((row) => {
-              const riderMeta = riderMetaMap.get(row.rider_id)
-              const fullName = buildRiderFullName(
-                riderMeta?.first_name,
-                riderMeta?.last_name,
-                riderMeta?.display_name ?? row.display_name
-              )
+            const mergedRows: DevelopingRosterRow[] =
+              rosterRows.map((row) => {
+                const riderMeta = riderMetaMap.get(row.rider_id)
+                const fullName = buildRiderFullName(
+                  riderMeta?.first_name,
+                  riderMeta?.last_name,
+                  riderMeta?.display_name ??
+                    row.display_name
+                )
 
-              return {
-                ...row,
-                display_name: fullName,
-                full_name: fullName,
-                first_name: riderMeta?.first_name ?? null,
-                last_name: riderMeta?.last_name ?? null,
-                birth_date: riderMeta?.birth_date ?? null,
-                market_value: riderMeta?.market_value ?? null,
-                salary: riderMeta?.salary ?? null,
-                contract_expires_at: riderMeta?.contract_expires_at ?? null,
-                contract_expires_season: riderMeta?.contract_expires_season ?? null,
-                sprint: riderMeta?.sprint ?? null,
-                climbing: riderMeta?.climbing ?? null,
-                time_trial: riderMeta?.time_trial ?? null,
-                flat: riderMeta?.flat ?? null,
-                endurance: riderMeta?.endurance ?? null,
-                recovery: riderMeta?.recovery ?? null,
-                resistance: riderMeta?.resistance ?? null,
-                race_iq: riderMeta?.race_iq ?? null,
-                teamwork: riderMeta?.teamwork ?? null,
-                morale: riderMeta?.morale ?? null,
-                potential: riderMeta?.potential ?? null,
-                fatigue: row.fatigue ?? riderMeta?.fatigue ?? null,
-                availability_status:
-                  row.availability_status ?? riderMeta?.availability_status ?? null,
-              }
-            })
+                return {
+                  ...row,
+                  display_name: fullName,
+                  full_name: fullName,
+                  first_name:
+                    riderMeta?.first_name ?? null,
+                  last_name:
+                    riderMeta?.last_name ?? null,
+                  birth_date:
+                    riderMeta?.birth_date ?? null,
+                  market_value:
+                    riderMeta?.market_value ?? null,
+                  salary: riderMeta?.salary ?? null,
+                  contract_expires_at:
+                    riderMeta?.contract_expires_at ?? null,
+                  contract_expires_season:
+                    riderMeta?.contract_expires_season ??
+                    null,
+                  sprint: riderMeta?.sprint ?? null,
+                  climbing: riderMeta?.climbing ?? null,
+                  time_trial:
+                    riderMeta?.time_trial ?? null,
+                  flat: riderMeta?.flat ?? null,
+                  endurance:
+                    riderMeta?.endurance ?? null,
+                  recovery:
+                    riderMeta?.recovery ?? null,
+                  resistance:
+                    riderMeta?.resistance ?? null,
+                  race_iq:
+                    riderMeta?.race_iq ?? null,
+                  teamwork:
+                    riderMeta?.teamwork ?? null,
+                  morale: riderMeta?.morale ?? null,
+                  potential:
+                    riderMeta?.potential ?? null,
+                  fatigue:
+                    row.fatigue ??
+                    riderMeta?.fatigue ??
+                    null,
+                  availability_status:
+                    row.availability_status ??
+                    riderMeta?.availability_status ??
+                    null,
+                }
+              })
 
             setRows(mergedRows)
           })
@@ -1042,7 +1433,9 @@ export default function DevelopingTeamPage() {
       setHealthOverviewRows([])
       setCompetitionSummary(null)
       setCompetitionLoading(false)
-      setDevelopingTeamSeasonDashboardData(createEmptySquadSeasonDashboardData())
+      setDevelopingTeamSeasonDashboardData(
+        createEmptySquadSeasonDashboardData()
+      )
       setError(e?.message ?? 'Failed to load Developing Team.')
     } finally {
       setLoading(false)
@@ -1123,23 +1516,15 @@ export default function DevelopingTeamPage() {
   const movementWindowSummary = developingTeamStatus
     ? developingTeamStatus.movement_window_open
       ? `Movement window open now: ${developingTeamStatus.current_window_label ?? 'Current window'}`
-      : `Movement window closed. Next window: ${developingTeamStatus.next_window_label ?? 'Unknown'}`
-    : 'Movement window information unavailable.'
+      : developingTeamStatus.next_window_label
+        ? `Movement window closed. Next window: ${developingTeamStatus.next_window_label}`
+        : null
+    : null
 
   const currentCompetitionName =
     competitionSummary?.name ??
     developingTeamStatus?.current_competition_name ??
     (competitionLoading ? 'Loading competition…' : 'Competition unavailable')
-
-  const currentCompetitionPlace =
-    competitionSummary?.place ??
-    developingTeamStatus?.current_competition_place ??
-    null
-
-  const currentCompetitionTotalTeams =
-    competitionSummary?.totalTeams ??
-    developingTeamStatus?.current_competition_total_teams ??
-    null
 
   if (!loading && !error && developingTeamStatus && !hasDevelopingTeam) {
     return null
@@ -1189,9 +1574,11 @@ export default function DevelopingTeamPage() {
 
       {!loading && !error && hasDevelopingTeam && (
         <>
-          <div className="mb-4 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">
-            {movementWindowSummary}
-          </div>
+          {movementWindowSummary ? (
+            <div className="mb-4 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">
+              {movementWindowSummary}
+            </div>
+          ) : null}
 
           {statusError && (
             <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
@@ -1218,28 +1605,12 @@ export default function DevelopingTeamPage() {
           </div>
 
           <div className="mb-4 rounded-lg border border-slate-200 bg-white px-4 py-3 shadow-sm">
-            <div className="flex items-center justify-between gap-4">
-              <div>
-                <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">
-                  Current Competition
-                </div>
-                <div className="mt-1 text-base font-semibold text-slate-900">
-                  {currentCompetitionName}
-                </div>
+            <div>
+              <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">
+                Current Competition
               </div>
-
-              <div className="text-right">
-                <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">
-                  Current Place
-                </div>
-                <div className="mt-1 text-2xl font-semibold tracking-tight text-slate-900">
-                  {formatOrdinal(currentCompetitionPlace)}
-                </div>
-                {currentCompetitionTotalTeams ? (
-                  <div className="text-xs text-slate-500">
-                    of {currentCompetitionTotalTeams} teams
-                  </div>
-                ) : null}
+              <div className="mt-1 text-base font-semibold text-slate-900">
+                {currentCompetitionName}
               </div>
             </div>
           </div>

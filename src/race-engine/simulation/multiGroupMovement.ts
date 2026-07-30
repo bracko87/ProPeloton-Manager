@@ -8,6 +8,10 @@
  * or activate any runtime execution.
  */
 
+/**
+ * File-level: multiGroupMovement contains pure calculations only and must not
+ * import runtime side-effects.
+ */
 import type {
   GroupState,
 } from '../domain/GroupState'
@@ -18,11 +22,26 @@ import type {
   SimulationState,
 } from '../domain/SimulationState'
 import {
+  calculateFlatStageChaseEffort,
+  type FlatStageChaseEffortResult,
+} from './flatStageChaseEffort'
+import {
+  calculateFinalStagePelotonEffort,
+  type FinalStagePelotonEffortResult,
+} from './finalStagePelotonEffort'
+import {
+  calculateGroupCooperationPace,
+  type GroupCooperationPaceResult,
+} from './groupCooperationPace'
+import {
   calculatePelotonBasePace,
 } from './pelotonPace'
 import {
   getStageTerrainSample,
 } from './stageProfile'
+import {
+  calculateStageProfileCategory,
+} from './stageProfileCategory'
 import {
   calculateTerrainSpeed,
 } from './terrainSpeed'
@@ -45,6 +64,43 @@ export interface MultiGroupMovementProposal {
     number
   readonly baseSpeedKmh:
     number
+
+  /**
+   * Present only when shared-effort pace adjustments are enabled.
+   */
+  readonly baseSpeedBeforeCooperationKmh?:
+    number
+  readonly cooperationPaceBonusPercent?:
+    number
+  readonly cooperationPaceMultiplier?:
+    number
+  readonly cooperationResult?:
+    GroupCooperationPaceResult
+
+  /**
+   * Present only when flat-stage chase effort is enabled.
+   */
+  readonly baseSpeedBeforeChaseEffortKmh?:
+    number
+  readonly chaseEffortBonusPercent?:
+    number
+  readonly chaseEffortMultiplier?:
+    number
+  readonly chaseEffortResult?:
+    FlatStageChaseEffortResult
+
+  /**
+   * Present only when final-stage peloton effort is enabled.
+   */
+  readonly baseSpeedBeforeFinalStageEffortKmh?:
+    number
+  readonly finalStageEffortBonusPercent?:
+    number
+  readonly finalStageEffortMultiplier?:
+    number
+  readonly finalStageEffortResult?:
+    FinalStagePelotonEffortResult
+
   readonly terrainMultiplier:
     number
   readonly appliedSpeedKmh:
@@ -189,6 +245,11 @@ export function calculateMultiGroupMovement(
     )
   }
 
+  const stageProfileCategory =
+    calculateStageProfileCategory(
+      state.input,
+    )
+
   const preliminary =
     activeGroups.map(
       (group) => {
@@ -224,17 +285,128 @@ export function calculateMultiGroupMovement(
             group.distanceKm,
           )
 
+        const cooperationPaceEnabled =
+          state
+            .groupCooperationPaceEnabled ===
+          true
+
+        const averageTeamwork =
+          riders.reduce(
+            (
+              sum,
+              rider,
+            ) =>
+              sum +
+              rider.attributes
+                .teamwork,
+            0,
+          ) /
+          riders.length
+
+        const averageEnergy =
+          riders.reduce(
+            (
+              sum,
+              rider,
+            ) =>
+              sum +
+              rider.energy,
+            0,
+          ) /
+          riders.length
+
+        const cooperationResult =
+          cooperationPaceEnabled
+            ? calculateGroupCooperationPace({
+                groupType:
+                  group.groupType,
+                groupSize:
+                  riders.length,
+                averageTeamwork,
+                gradientPercent:
+                  terrainSample
+                    .gradientPercent,
+              })
+            : null
+
+        const cooperationAdjustedBaseSpeedKmh =
+          cooperationResult
+            ? pace.baseSpeedKmh *
+              cooperationResult
+                .paceMultiplier
+            : pace.baseSpeedKmh
+
+        const flatStageChaseEffortEnabled =
+          state
+            .flatStageChaseEffortEnabled ===
+          true
+
+        const chaseEffortResult =
+          flatStageChaseEffortEnabled
+            ? calculateFlatStageChaseEffort({
+                groupType:
+                  group.groupType,
+                profileCategory:
+                  stageProfileCategory
+                    .category,
+                currentDistanceKm:
+                  group.distanceKm,
+                stageDistanceKm:
+                  state.stageDistanceKm,
+                gapFromLeaderSeconds:
+                  group
+                    .gapFromLeaderSeconds,
+                groupSize:
+                  riders.length,
+                averageTeamwork,
+                averageEnergy,
+              })
+            : null
+
+        const chaseAdjustedBaseSpeedKmh =
+          chaseEffortResult
+            ? cooperationAdjustedBaseSpeedKmh *
+              chaseEffortResult
+                .chaseMultiplier
+            : cooperationAdjustedBaseSpeedKmh
+
+        const finalStagePelotonEffortEnabled =
+          state
+            .finalStagePelotonEffortEnabled ===
+          true
+
+        const finalStageEffortResult =
+          finalStagePelotonEffortEnabled
+            ? calculateFinalStagePelotonEffort({
+                groupType:
+                  group.groupType,
+                currentDistanceKm:
+                  group.distanceKm,
+                stageDistanceKm:
+                  state.stageDistanceKm,
+                averageTeamwork,
+                averageEnergy,
+              })
+            : null
+
+        const finalStageAdjustedBaseSpeedKmh =
+          finalStageEffortResult
+            ? chaseAdjustedBaseSpeedKmh *
+              finalStageEffortResult
+                .effortMultiplier
+            : chaseAdjustedBaseSpeedKmh
+
         const terrainMinimumSpeedKmh =
           Math.max(
             1,
-            pace.baseSpeedKmh *
+            finalStageAdjustedBaseSpeedKmh *
               0.35,
           )
 
         const terrainSpeed =
           calculateTerrainSpeed({
             baseSpeedKmh:
-              pace.baseSpeedKmh,
+              finalStageAdjustedBaseSpeedKmh,
             gradientPercent:
               terrainSample
                 .gradientPercent,
@@ -263,6 +435,12 @@ export function calculateMultiGroupMovement(
           group,
           terrainSample,
           pace,
+          cooperationResult,
+          cooperationAdjustedBaseSpeedKmh,
+          chaseEffortResult,
+          chaseAdjustedBaseSpeedKmh,
+          finalStageEffortResult,
+          finalStageAdjustedBaseSpeedKmh,
           terrainSpeed,
           nextDistanceKm,
           distanceAdvancedKm:
@@ -434,8 +612,65 @@ export function calculateMultiGroupMovement(
             entry.terrainSample
               .gradientPercent,
           baseSpeedKmh:
-            entry.pace
-              .baseSpeedKmh,
+            entry
+              .finalStageAdjustedBaseSpeedKmh,
+          ...(entry
+            .cooperationResult
+            ? {
+                baseSpeedBeforeCooperationKmh:
+                  entry.pace
+                    .baseSpeedKmh,
+                cooperationPaceBonusPercent:
+                  entry
+                    .cooperationResult
+                    .paceBonusPercent,
+                cooperationPaceMultiplier:
+                  entry
+                    .cooperationResult
+                    .paceMultiplier,
+                cooperationResult:
+                  entry
+                    .cooperationResult,
+              }
+            : {}),
+          ...(entry
+            .chaseEffortResult
+            ? {
+                baseSpeedBeforeChaseEffortKmh:
+                  entry
+                    .cooperationAdjustedBaseSpeedKmh,
+                chaseEffortBonusPercent:
+                  entry
+                    .chaseEffortResult
+                    .chaseBonusPercent,
+                chaseEffortMultiplier:
+                  entry
+                    .chaseEffortResult
+                    .chaseMultiplier,
+                chaseEffortResult:
+                  entry
+                    .chaseEffortResult,
+              }
+            : {}),
+          ...(entry
+            .finalStageEffortResult
+            ? {
+                baseSpeedBeforeFinalStageEffortKmh:
+                  entry
+                    .chaseAdjustedBaseSpeedKmh,
+                finalStageEffortBonusPercent:
+                  entry
+                    .finalStageEffortResult
+                    .effortBonusPercent,
+                finalStageEffortMultiplier:
+                  entry
+                    .finalStageEffortResult
+                    .effortMultiplier,
+                finalStageEffortResult:
+                  entry
+                    .finalStageEffortResult,
+              }
+            : {}),
           terrainMultiplier:
             entry.terrainSpeed
               .terrainMultiplier,

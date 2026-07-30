@@ -22,6 +22,24 @@ export type InfrastructureAssetRpcKey =
   | 'mobile_workshop'
   | 'medical_van'
 
+
+export type InfrastructureAssetSlotAccess = {
+  asset_key: InfrastructureAssetRpcKey
+  free_slots: number
+  premium_slots: number
+  absolute_max_slots: number
+  effective_slots: number
+  highest_permanent_slot: number
+  permanently_unlocked_slots: number[]
+  is_premium: boolean
+  coin_balance: number
+  coin_cost: number
+}
+
+export type InfrastructureAssetSlotAccessMap = Partial<
+  Record<InfrastructureAssetRpcKey, InfrastructureAssetSlotAccess>
+>
+
 export type ClubInfrastructureRow = {
   club_id: string
   hq_level: number

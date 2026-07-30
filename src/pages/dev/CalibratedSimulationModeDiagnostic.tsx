@@ -43,6 +43,9 @@ import {
   createMultiGroupSimulationOutput,
 } from '../../race-engine/simulation/createMultiGroupSimulationOutput'
 import {
+  TERRAIN_AWARE_MULTI_GROUP_MOVEMENT_VERSION,
+} from '../../race-engine/simulation/terrainAwareMultiGroupMovement'
+import {
   runCalibratedTerrainSeparationStage,
   type RunCalibratedTerrainSeparationStageResult,
 } from '../../race-engine/simulation/runCalibratedTerrainSeparationStage'
@@ -133,6 +136,13 @@ interface ActiveWeatherRaceAudit {
   readonly averageFinalEnergyDifference:
     number
 
+  readonly baselineAverageFinalRuntimeFatigue:
+    number
+  readonly weatherAverageFinalRuntimeFatigue:
+    number
+  readonly averageFinalRuntimeFatigueDifference:
+    number
+
   readonly replayFrameCount:
     number
   readonly replayEventCount:
@@ -195,6 +205,46 @@ interface ScenarioSummary {
   readonly replayCollectionHash: string
   readonly auditHash: string
 
+  readonly requirementsEnabledOutputHash:
+    string
+  readonly repeatedRequirementsEnabledOutputHash:
+    string
+  readonly requirementsEnabledStageHash:
+    string
+  readonly requirementsEnabledReplayCollectionHash:
+    string
+
+  readonly requirementsEnabledEqualsRepeated:
+    boolean
+  readonly requirementsEnabledCompleted:
+    boolean
+
+  readonly requirementsEnabledTickCount:
+    number
+  readonly requirementsEnabledSnapshotCount:
+    number
+  readonly requirementsEnabledOutputFrameCount:
+    number
+  readonly requirementsEnabledReplayModelFrameCount:
+    number
+  readonly requirementsEnabledEventCount:
+    number
+  readonly requirementsEnabledReplayModelEventCount:
+    number
+  readonly requirementsEnabledResultCount:
+    number
+
+  readonly requirementsEnabledAllStatesValid:
+    boolean
+  readonly requirementsEnabledSnapshotsValid:
+    boolean
+  readonly requirementsEnabledOutputContractValid:
+    boolean
+  readonly requirementsEnabledResultRanksContiguous:
+    boolean
+  readonly requirementsEnabledEventSequencesContiguous:
+    boolean
+
   readonly omittedEqualsExplicit:
     boolean
   readonly calibratedEqualsRepeated:
@@ -244,6 +294,16 @@ interface ScenarioAudit {
     SimulationOutput
   readonly calibratedStage:
     RunCalibratedTerrainSeparationStageResult
+
+  readonly requirementsEnabledOutput:
+    SimulationOutput
+
+  readonly repeatedRequirementsEnabledOutput:
+    SimulationOutput
+
+  readonly requirementsEnabledStage:
+    RunCalibratedTerrainSeparationStageResult
+
   readonly summary:
     ScenarioSummary
   readonly transitions:
@@ -532,6 +592,34 @@ function averageFinalEnergy(
   )
 }
 
+function averageFinalRuntimeFatigue(
+  output:
+    SimulationOutput,
+): number {
+  if (
+    output.finalRiderStates.length ===
+    0
+  ) {
+    return 0
+  }
+
+  return (
+    output.finalRiderStates.reduce(
+      (
+        sum,
+        rider,
+      ) =>
+        sum +
+        (
+          rider.runtimeFatigue ??
+          0
+        ),
+      0,
+    ) /
+    output.finalRiderStates.length
+  )
+}
+
 function activeWeatherRaceAudit(
   definition:
     WeatherScenarioDefinition,
@@ -617,6 +705,16 @@ function activeWeatherRaceAudit(
       weatherOutput,
     )
 
+  const baselineAverageFinalRuntimeFatigue =
+    averageFinalRuntimeFatigue(
+      baselineOutput,
+    )
+
+  const weatherAverageFinalRuntimeFatigue =
+    averageFinalRuntimeFatigue(
+      weatherOutput,
+    )
+
   return {
     definition,
     baselineOutput,
@@ -657,6 +755,12 @@ function activeWeatherRaceAudit(
     averageFinalEnergyDifference:
       weatherAverageFinalEnergy -
       baselineAverageFinalEnergy,
+
+    baselineAverageFinalRuntimeFatigue,
+    weatherAverageFinalRuntimeFatigue,
+    averageFinalRuntimeFatigueDifference:
+      weatherAverageFinalRuntimeFatigue -
+      baselineAverageFinalRuntimeFatigue,
 
     replayFrameCount:
       replayModel.frames.length,
@@ -736,15 +840,21 @@ function createInput(
       rioStage1SourceRows,
     )
 
+  const {
+    weather:
+      _fixtureWeather,
+    ...weatherFreeBase
+  } = base
+
   if (
     definition.gradientPercent ===
     null
   ) {
-    return base
+    return weatherFreeBase
   }
 
   return {
-    ...base,
+    ...weatherFreeBase,
     raceId:
       `${base.raceId}-calibrated-mode-${definition.key}`,
     stageId:
@@ -1203,6 +1313,51 @@ function scenarioAudit(
       calibratedStage,
     )
 
+  const createRequirementsEnabledInitialState =
+    () => ({
+      ...createInitialState(
+        input,
+      ),
+      groupShelterEnergyEnabled:
+        true,
+      groupCooperationPaceEnabled:
+        true,
+      controlledAttackLaunchEnabled:
+        true,
+      finalStagePelotonEffortEnabled:
+        true,
+      flatStageChaseEffortEnabled:
+        true,
+    })
+
+  const requirementsEnabledStage =
+    runCalibratedTerrainSeparationStage(
+      createRequirementsEnabledInitialState(),
+    )
+
+  const repeatedRequirementsEnabledStage =
+    runCalibratedTerrainSeparationStage(
+      createRequirementsEnabledInitialState(),
+    )
+
+  const requirementsEnabledOutput =
+    createMultiGroupSimulationOutput(
+      requirementsEnabledStage,
+    )
+
+  const repeatedRequirementsEnabledOutput =
+    createMultiGroupSimulationOutput(
+      repeatedRequirementsEnabledStage,
+    )
+
+  const requirementsEnabledReplayModel =
+    createReplayStageModelFromSimulationOutput({
+      stageInput:
+        input,
+      simulationOutput:
+        requirementsEnabledOutput,
+    })
+
   const replayModel =
     createReplayStageModelFromSimulationOutput({
       stageInput:
@@ -1272,6 +1427,23 @@ function scenarioAudit(
       calibratedStage
         .replayCollection
         .deterministicHash,
+
+    requirementsEnabledOutputHash:
+      outputHash(
+        requirementsEnabledOutput,
+      ),
+    repeatedRequirementsEnabledOutputHash:
+      outputHash(
+        repeatedRequirementsEnabledOutput,
+      ),
+    requirementsEnabledStageHash:
+      requirementsEnabledStage
+        .deterministicHash,
+    requirementsEnabledReplayCollectionHash:
+      requirementsEnabledStage
+        .replayCollection
+        .deterministicHash,
+
     transitions,
   }
 
@@ -1307,6 +1479,29 @@ function scenarioAudit(
         auditBase
           .replayCollectionHash,
       auditHash,
+
+      requirementsEnabledOutputHash:
+        auditBase
+          .requirementsEnabledOutputHash,
+      repeatedRequirementsEnabledOutputHash:
+        auditBase
+          .repeatedRequirementsEnabledOutputHash,
+      requirementsEnabledStageHash:
+        auditBase
+          .requirementsEnabledStageHash,
+      requirementsEnabledReplayCollectionHash:
+        auditBase
+          .requirementsEnabledReplayCollectionHash,
+
+      requirementsEnabledEqualsRepeated:
+        outputsEqual(
+          requirementsEnabledOutput,
+          repeatedRequirementsEnabledOutput,
+        ),
+      requirementsEnabledCompleted:
+        requirementsEnabledStage
+          .finalState
+          .completed,
 
       omittedEqualsExplicit:
         outputsEqual(
@@ -1356,6 +1551,34 @@ function scenarioAudit(
       replayModelEventCount:
         replayModel.events.length,
 
+      requirementsEnabledTickCount:
+        requirementsEnabledStage
+          .tickCount,
+      requirementsEnabledSnapshotCount:
+        requirementsEnabledStage
+          .replaySnapshots
+          .length,
+      requirementsEnabledOutputFrameCount:
+        requirementsEnabledOutput
+          .snapshots
+          .length,
+      requirementsEnabledReplayModelFrameCount:
+        requirementsEnabledReplayModel
+          .frames
+          .length,
+      requirementsEnabledEventCount:
+        requirementsEnabledOutput
+          .events
+          .length,
+      requirementsEnabledReplayModelEventCount:
+        requirementsEnabledReplayModel
+          .events
+          .length,
+      requirementsEnabledResultCount:
+        requirementsEnabledStage
+          .results
+          .length,
+
       winnerRiderName:
         winner.riderName,
       winnerGroupId:
@@ -1388,6 +1611,30 @@ function scenarioAudit(
         eventSequencesContiguous(
           calibratedOutput,
         ),
+
+      requirementsEnabledAllStatesValid:
+        allStatesValid(
+          requirementsEnabledStage,
+        ),
+      requirementsEnabledSnapshotsValid:
+        snapshotsValid(
+          requirementsEnabledStage,
+        ),
+      requirementsEnabledOutputContractValid:
+        outputContractValid(
+          requirementsEnabledOutput,
+          input,
+          requirementsEnabledStage,
+        ),
+      requirementsEnabledResultRanksContiguous:
+        ranksContiguous(
+          requirementsEnabledStage,
+        ),
+      requirementsEnabledEventSequencesContiguous:
+        eventSequencesContiguous(
+          requirementsEnabledOutput,
+        ),
+
       transitionEventsMatch:
         transitionEventsMatch(
           calibratedStage,
@@ -1414,6 +1661,9 @@ function scenarioAudit(
     calibratedOutput,
     repeatedCalibratedOutput,
     calibratedStage,
+    requirementsEnabledOutput,
+    repeatedRequirementsEnabledOutput,
+    requirementsEnabledStage,
     summary,
     transitions,
   }
@@ -1543,6 +1793,13 @@ function buildDiagnostic():
 
   const checks:
     CheckResult[] = [
+      {
+        label:
+          'Latest accepted terrain-aware movement implementation is loaded',
+        passed:
+          TERRAIN_AWARE_MULTI_GROUP_MOVEMENT_VERSION ===
+          'phase_8g5c_latest_weather_direct_v1',
+      },
       {
         label:
           'Missing and neutral weather preserve identity multipliers',
@@ -1687,6 +1944,106 @@ function buildDiagnostic():
               audit
                 .averageFinalEnergyDifference <
               0,
+          ),
+      },
+      {
+        label:
+          'Strong wind alone preserves neutral runtime fatigue',
+        passed:
+          activeWeatherRaces
+            .strongWind
+            .averageFinalRuntimeFatigueDifference ===
+          0,
+      },
+      {
+        label:
+          'Temperatures above 30°C create deterministic runtime fatigue',
+        passed:
+          activeWeatherRaces
+            .heat
+            .averageFinalRuntimeFatigueDifference >
+          0,
+      },
+      {
+        label:
+          'Cold rain creates deterministic runtime fatigue',
+        passed:
+          activeWeatherRaces
+            .coldRain
+            .averageFinalRuntimeFatigueDifference >
+          0,
+      },
+      {
+        label:
+          'Combined severe weather creates the greatest runtime fatigue',
+        passed:
+          activeWeatherRaces
+            .combinedSevere
+            .averageFinalRuntimeFatigueDifference >
+            activeWeatherRaces
+              .heat
+              .averageFinalRuntimeFatigueDifference &&
+          activeWeatherRaces
+            .combinedSevere
+            .averageFinalRuntimeFatigueDifference >
+            activeWeatherRaces
+              .coldRain
+              .averageFinalRuntimeFatigueDifference,
+      },
+      {
+        label:
+          'Runtime fatigue remains metadata-only for accepted controlled finish times',
+        passed:
+          Math.abs(
+            activeWeatherRaces
+              .strongWind
+              .weatherWinnerTimeSeconds -
+            353.496
+          ) <=
+            0.001 &&
+          Math.abs(
+            activeWeatherRaces
+              .heat
+              .weatherWinnerTimeSeconds -
+            334.966
+          ) <=
+            0.001 &&
+          Math.abs(
+            activeWeatherRaces
+              .coldRain
+              .weatherWinnerTimeSeconds -
+            345.151
+          ) <=
+            0.001 &&
+          Math.abs(
+            activeWeatherRaces
+              .combinedSevere
+              .weatherWinnerTimeSeconds -
+            379.092
+          ) <=
+            0.001,
+      },
+      {
+        label:
+          'Every runtime-fatigue value remains bounded between zero and one hundred',
+        passed:
+          Object.values(
+            activeWeatherRaces,
+          ).every(
+            (audit) =>
+              audit.weatherOutput
+                .finalRiderStates
+                .every(
+                  (rider) =>
+                    (
+                      rider.runtimeFatigue ??
+                      0
+                    ) >= 0 &&
+                    (
+                      rider.runtimeFatigue ??
+                      0
+                    ) <= 100,
+                ),
           ),
       },
       {
@@ -2019,6 +2376,16 @@ function ActiveWeatherRaceCard({
         <Row
           label="Average energy difference"
           value={format(audit.averageFinalEnergyDifference)}
+        />
+
+        <Row
+          label="Average runtime fatigue baseline / weather"
+          value={`${format(audit.baselineAverageFinalRuntimeFatigue)} / ${format(audit.weatherAverageFinalRuntimeFatigue)}`}
+        />
+
+        <Row
+          label="Average runtime-fatigue difference"
+          value={format(audit.averageFinalRuntimeFatigueDifference)}
         />
 
         <Row
@@ -2386,7 +2753,7 @@ export default function CalibratedSimulationModeDiagnostic():
       <main className="min-h-screen bg-slate-950 px-6 py-10 text-slate-100">
         <section className="mx-auto max-w-5xl rounded-3xl border border-red-400 bg-red-950/30 p-6">
           <div className="text-xs font-semibold uppercase tracking-[0.18em] text-red-200">
-            Phase 8G.5 development diagnostic
+            Phase 8G.6 development diagnostic
           </div>
 
           <h1 className="mt-2 text-3xl font-semibold">
@@ -2421,18 +2788,18 @@ export default function CalibratedSimulationModeDiagnostic():
       <div className="mx-auto max-w-[1950px] space-y-6">
         <header className="rounded-3xl border border-slate-800 bg-slate-900 p-6">
           <div className="text-xs font-semibold uppercase tracking-[0.18em] text-sky-300">
-            Phase 8G.5 development diagnostic
+            Phase 8G.6 development diagnostic
           </div>
 
           <h1 className="mt-2 text-3xl font-semibold">
-            Safe calibrated mode with active weather performance
+            Safe calibrated mode with runtime weather fatigue
           </h1>
 
           <p className="mt-3 max-w-5xl text-sm leading-6 text-slate-300">
-            Preserves existing_v1 as the default, retains the accepted calibrated
-            terrain-separation package, and applies deterministic weather only
-            inside the explicit calibrated runner when StageInput.weather is
-            present.
+            Preserves existing_v1 as the default, retains the accepted
+            calibrated terrain-separation package, and accumulates bounded
+            weather-only runtime fatigue as non-authoritative in-memory rider
+            metadata.
           </p>
         </header>
 
@@ -2446,7 +2813,7 @@ export default function CalibratedSimulationModeDiagnostic():
         >
           <h2 className="text-2xl font-semibold">
             {value.passed
-              ? 'PASS — existing calibrated fixtures remain stable and active weather changes calibrated race performance deterministically'
+              ? 'PASS — existing calibrated fixtures remain stable and heat plus rain accumulate deterministic runtime fatigue'
               : 'FAIL — calibrated or weather-model verification needs correction'}
           </h2>
         </section>
@@ -2455,7 +2822,7 @@ export default function CalibratedSimulationModeDiagnostic():
         <section className="rounded-3xl border border-slate-800 bg-slate-900 p-6">
           <div>
             <div className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-300">
-              Phase 8G.4 isolated model
+              Phase 8G.6 weather and fatigue model
             </div>
 
             <h2 className="mt-2 text-xl font-semibold">
@@ -2463,9 +2830,11 @@ export default function CalibratedSimulationModeDiagnostic():
             </h2>
 
             <p className="mt-3 max-w-5xl text-sm leading-6 text-slate-300">
-              These multipliers are verified in isolation. They are not yet
-              connected to terrain-aware movement, rider-energy application,
-              fatigue persistence, incidents, crashes, or production output.
+              Weather multipliers are verified in isolation and used by the
+              active calibrated scenarios below. Runtime fatigue is accumulated
+              only in memory and remains separate from immutable pre-stage
+              fatigue. Incidents, crashes, database persistence, and production
+              output remain disconnected.
             </p>
           </div>
 
@@ -2490,17 +2859,18 @@ export default function CalibratedSimulationModeDiagnostic():
 
         <section className="rounded-3xl border border-slate-800 bg-slate-900 p-6">
           <div className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-300">
-            Phase 8G.5 active calibrated integration
+            Phase 8G.6 active calibrated integration
           </div>
 
           <h2 className="mt-2 text-xl font-semibold">
-            Weather changes race movement and runtime energy
+            Weather changes movement, energy, and runtime fatigue
           </h2>
 
           <p className="mt-3 max-w-5xl text-sm leading-6 text-slate-300">
             These controlled four-kilometre races use the active calibrated
-            runner. Weather must slow completion and reduce average final
-            energy, while existing_v1 must remain weather-neutral.
+            runner. Weather must slow completion, reduce average final
+            energy, and create bounded runtime fatigue only when the resolved
+            fatigue multiplier exceeds one. existing_v1 remains neutral.
           </p>
 
           <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -2602,11 +2972,13 @@ export default function CalibratedSimulationModeDiagnostic():
 
           <p className="mt-3">
             Omitted mode and explicit existing_v1 use the original runner.
-            terrain_separation_calibrated_v1 remains opt-in. The weather model remains pure. Its speed and runtime energy/stamina
-            multipliers are enabled only by the calibrated wrapper when
-            canonical weather is present. Fatigue persistence, incidents,
-            crashes, equipment, database writes, scheduler activity, RPC
-            behavior, and production execution remain unchanged.
+            terrain_separation_calibrated_v1 remains opt-in. Weather speed,
+            energy/stamina consumption, and bounded runtime fatigue are enabled
+            only by the calibrated wrapper when canonical weather is present.
+            Runtime fatigue is metadata-only and does not feed movement,
+            separation, finishing, or incidents. Database writes, persistent
+            fatigue, crashes, equipment, schedulers, RPC behavior, and
+            production execution remain unchanged.
           </p>
         </section>
       </div>

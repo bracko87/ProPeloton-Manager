@@ -12,7 +12,14 @@ import type {
   RiderRole,
   RiderStartingCondition,
 } from './RiderState'
+import type {
+  StageRiderEquipmentInput,
+} from './RiderEquipment'
 import type { TeamOrder } from './TeamOrder'
+
+export type {
+  StageRiderEquipmentInput,
+} from './RiderEquipment'
 
 /**
  * Stage formats supported by the domain contract.
@@ -38,7 +45,6 @@ export interface StageSimulationSettings {
   readonly maximumSpeedKmh: number
 }
 
-
 /**
  * Authority used to create the canonical stage-weather input.
  *
@@ -52,9 +58,6 @@ export type StageWeatherAuthority =
 
 /**
  * Normalized immutable weather metadata for one stage.
- *
- * Phase 8G.3 transports this metadata without applying performance, stamina,
- * fatigue, crash, or incident effects.
  */
 export interface StageWeatherInput {
   readonly authority: StageWeatherAuthority
@@ -75,9 +78,8 @@ export interface StageWeatherInput {
 /**
  * Immutable rider input for one stage.
  *
- * condition is optional so older isolated and synthetic fixtures continue to
- * use the historic 100-energy start without changing their canonical shape.
- * Live Supabase-backed inputs provide the complete condition object.
+ * condition and equipment remain optional so historical isolated fixtures
+ * preserve their exact canonical shape.
  */
 export interface StageRiderInput {
   readonly riderId: string
@@ -87,6 +89,7 @@ export interface StageRiderInput {
   readonly role: RiderRole
   readonly attributes: RiderAttributes
   readonly condition?: RiderStartingCondition
+  readonly equipment?: StageRiderEquipmentInput
 }
 
 /**

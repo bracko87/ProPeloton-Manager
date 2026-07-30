@@ -2,14 +2,12 @@
  * RiderState.ts
  *
  * Canonical rider domain types used by the deterministic race engine.
- *
- * These definitions match the rider state constructed by createInitialState()
- * and consumed by the active simulation modules.
  */
 
-/**
- * Tactical role assigned to a rider for one stage simulation.
- */
+import type {
+  StageRiderEquipmentInput,
+} from './RiderEquipment'
+
 export type RiderRole =
   | 'captain'
   | 'sprinter'
@@ -19,9 +17,6 @@ export type RiderRole =
   | 'breakaway'
   | 'free_role'
 
-/**
- * Lifecycle status of a rider during a stage simulation.
- */
 export type RiderRaceStatus =
   | 'not_started'
   | 'racing'
@@ -29,14 +24,6 @@ export type RiderRaceStatus =
   | 'dnf'
   | 'dns'
 
-/**
- * Performance attributes consumed by the deterministic engine.
- *
- * climbing, timeTrial, and raceIq are temporarily optional so older isolated
- * synthetic fixtures continue to compile during the attribute-transport
- * migration. The production-shaped source adapter always supplies them and
- * the development diagnostic verifies all live riders receive them.
- */
 export interface RiderAttributes {
   readonly flat: number
   readonly climbing?: number
@@ -53,14 +40,6 @@ export interface RiderAttributes {
   readonly teamwork: number
 }
 
-/**
- * Immutable condition snapshot at the start of one stage.
- *
- * startingEnergy is the canonical runtime energy value.
- * fatigueBeforeStage and morale are preserved as source metadata for later
- * calibrated rules. availabilityStatus is transported without changing the
- * current participant-eligibility policy.
- */
 export interface RiderStartingCondition {
   readonly startingEnergy: number
   readonly fatigueBeforeStage: number
@@ -68,9 +47,6 @@ export interface RiderStartingCondition {
   readonly availabilityStatus: string
 }
 
-/**
- * Runtime state for one rider during a stage simulation.
- */
 export interface RiderState {
   readonly riderId: string
   readonly teamId: string
@@ -80,17 +56,25 @@ export interface RiderState {
   readonly role: RiderRole
   readonly attributes: RiderAttributes
 
+  readonly startingCondition?:
+    RiderStartingCondition
+
   /**
-   * Present for live condition-aware inputs and absent for legacy synthetic
-   * fixtures. The object is copied during initial-state creation.
+   * Immutable start-of-stage equipment snapshot.
+   *
+   * Phase 8H.4B transports this metadata only. It is not worn down, repaired,
+   * damaged, persisted, or used by active stage execution in this phase.
    */
-  readonly startingCondition?: RiderStartingCondition
+  readonly startingEquipment?:
+    StageRiderEquipmentInput
 
   readonly currentGroupId: string
 
   readonly distanceKm: number
   readonly speedKmh: number
   readonly energy: number
+
+  readonly runtimeFatigue?: number
 
   readonly attackAttempts: number
 

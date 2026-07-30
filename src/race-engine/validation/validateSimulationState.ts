@@ -65,6 +65,310 @@ const terminalStageStatuses: ReadonlySet<string> = new Set([
   'otl',
 ])
 
+const technicalIncidentTypes:
+  ReadonlySet<string> = new Set([
+    'dropped_chain',
+    'puncture',
+    'wheel_damage',
+    'drivetrain_failure',
+    'bike_change',
+  ])
+
+const technicalIncidentSeverities:
+  ReadonlySet<string> = new Set([
+    'minor',
+    'moderate',
+    'serious',
+  ])
+
+const equipmentCategories:
+  ReadonlySet<string> = new Set([
+    'frame',
+    'wheelset',
+    'tires',
+    'groupset',
+    'helmet',
+    'shoes',
+  ])
+
+function isIntegerInRange(
+  value: unknown,
+  minimum: number,
+  maximum: number,
+): value is number {
+  return (
+    typeof value ===
+      'number' &&
+    Number.isInteger(
+      value,
+    ) &&
+    value >= minimum &&
+    value <= maximum
+  )
+}
+
+function validateStartingEquipment(
+  riderId: string,
+  equipment:
+    NonNullable<
+      SimulationState[
+        'riders'
+      ][string][
+        'startingEquipment'
+      ]
+    >,
+  issues: string[],
+): void {
+  const prefix =
+    `RIDERS: rider ${riderId} startingEquipment`
+
+  if (
+    equipment.conditionSource !==
+    'race_engine_resolve_stage_rider_equipment_condition_v1'
+  ) {
+    issues.push(
+      `${prefix} has unsupported conditionSource.`,
+    )
+  }
+
+  if (
+    equipment.preparationSource !==
+    'race_engine_get_stage_rider_preparation_modifiers_v2'
+  ) {
+    issues.push(
+      `${prefix} has unsupported preparationSource.`,
+    )
+  }
+
+  if (
+    equipment.equipmentSetupId !==
+      null &&
+    (
+      typeof equipment
+        .equipmentSetupId !==
+        'string' ||
+      !equipment
+        .equipmentSetupId
+        .trim()
+    )
+  ) {
+    issues.push(
+      `${prefix}.equipmentSetupId must be null or non-blank.`,
+    )
+  }
+
+  if (
+    !isIntegerInRange(
+      equipment
+        .selectedComponentCount,
+      0,
+      6,
+    ) ||
+    !isIntegerInRange(
+      equipment
+        .matchedComponentCount,
+      0,
+      6,
+    )
+  ) {
+    issues.push(
+      `${prefix} component counts must be integers between 0 and 6.`,
+    )
+  } else if (
+    equipment
+      .matchedComponentCount >
+    equipment
+      .selectedComponentCount
+  ) {
+    issues.push(
+      `${prefix}.matchedComponentCount may not exceed selectedComponentCount.`,
+    )
+  }
+
+  const derivedComplete =
+    equipment
+      .selectedComponentCount >
+      0 &&
+    equipment
+      .matchedComponentCount ===
+      equipment
+        .selectedComponentCount
+
+  if (
+    equipment.completeSource !==
+    derivedComplete
+  ) {
+    issues.push(
+      `${prefix}.completeSource does not match component counts.`,
+    )
+  }
+
+  if (
+    equipment
+      .minimumConditionPercent !==
+      null &&
+    (
+      !isFiniteNumber(
+        equipment
+          .minimumConditionPercent,
+      ) ||
+      equipment
+        .minimumConditionPercent <
+        0 ||
+      equipment
+        .minimumConditionPercent >
+        100
+    )
+  ) {
+    issues.push(
+      `${prefix}.minimumConditionPercent must be null or between 0 and 100.`,
+    )
+  }
+
+  if (
+    !isFiniteNumber(
+      equipment
+        .effectiveConditionPercent,
+    ) ||
+    equipment
+      .effectiveConditionPercent <
+      0 ||
+    equipment
+      .effectiveConditionPercent >
+      100
+  ) {
+    issues.push(
+      `${prefix}.effectiveConditionPercent must be between 0 and 100.`,
+    )
+  }
+
+  const missingCategories =
+    equipment
+      .missingComponentCategories
+
+  if (!Array.isArray(missingCategories)) {
+    issues.push(
+      `${prefix}.missingComponentCategories must be an array.`,
+    )
+  } else {
+    const seen =
+      new Set<string>()
+
+    for (
+      const category of
+      missingCategories
+    ) {
+      if (
+        !equipmentCategories.has(
+          category,
+        )
+      ) {
+        issues.push(
+          `${prefix}.missingComponentCategories contains unsupported category "${String(category)}".`,
+        )
+      }
+
+      if (seen.has(category)) {
+        issues.push(
+          `${prefix}.missingComponentCategories must not contain duplicates.`,
+        )
+      }
+
+      seen.add(category)
+    }
+  }
+
+  if (equipment.completeSource) {
+    if (
+      equipment
+        .equipmentSetupId ===
+      null
+    ) {
+      issues.push(
+        `${prefix}.completeSource requires equipmentSetupId.`,
+      )
+    }
+
+    if (
+      equipment
+        .minimumConditionPercent ===
+      null
+    ) {
+      issues.push(
+        `${prefix}.completeSource requires minimumConditionPercent.`,
+      )
+    }
+
+    if (
+      equipment
+        .minimumConditionPercent !==
+        null &&
+      Math.abs(
+        equipment
+          .effectiveConditionPercent -
+        equipment
+          .minimumConditionPercent
+      ) >
+      0.000001
+    ) {
+      issues.push(
+        `${prefix}.effectiveConditionPercent must equal minimumConditionPercent for complete source.`,
+      )
+    }
+
+    if (
+      missingCategories.length >
+      0
+    ) {
+      issues.push(
+        `${prefix}.completeSource may not list missing component categories.`,
+      )
+    }
+  } else if (
+    equipment
+      .effectiveConditionPercent !==
+    100
+  ) {
+    issues.push(
+      `${prefix}.incomplete source must use neutral effective condition 100.`,
+    )
+  }
+
+  if (
+    !isFiniteNumber(
+      equipment
+        .mechanicalIncidentRiskMultiplier,
+    ) ||
+    equipment
+      .mechanicalIncidentRiskMultiplier <
+      0.75 ||
+    equipment
+      .mechanicalIncidentRiskMultiplier >
+      1
+  ) {
+    issues.push(
+      `${prefix}.mechanicalIncidentRiskMultiplier must be between 0.75 and 1.`,
+    )
+  }
+
+  if (
+    !isFiniteNumber(
+      equipment
+        .mechanicalTimeLossMultiplier,
+    ) ||
+    equipment
+      .mechanicalTimeLossMultiplier <
+      0.82 ||
+    equipment
+      .mechanicalTimeLossMultiplier >
+      1
+  ) {
+    issues.push(
+      `${prefix}.mechanicalTimeLossMultiplier must be between 0.82 and 1.`,
+    )
+  }
+}
+
 /**
  * validateSimulationState
  * Performs a comprehensive validation of a SimulationState.
@@ -282,6 +586,641 @@ export function validateSimulationState(state: SimulationState): void {
     }
   }
 
+  // INDIVIDUAL CRASH RUNTIME
+  const crashRuntime =
+    state.individualCrashRuntime
+
+  if (crashRuntime) {
+    if (
+      crashRuntime.enabled !==
+      true
+    ) {
+      issues.push(
+        'INDIVIDUAL_CRASH_RUNTIME: enabled must be true when runtime is present.',
+      )
+    }
+
+    if (
+      !isNonNegativeInteger(
+        crashRuntime
+          .occurrenceIndex,
+      )
+    ) {
+      issues.push(
+        'INDIVIDUAL_CRASH_RUNTIME: occurrenceIndex must be a non-negative integer.',
+      )
+    }
+
+    if (
+      !isNonNegativeInteger(
+        crashRuntime
+          .crashCount,
+      )
+    ) {
+      issues.push(
+        'INDIVIDUAL_CRASH_RUNTIME: crashCount must be a non-negative integer.',
+      )
+    }
+
+    if (
+      !isPositiveInteger(
+        crashRuntime
+          .maximumCrashesPerStage,
+      )
+    ) {
+      issues.push(
+        'INDIVIDUAL_CRASH_RUNTIME: maximumCrashesPerStage must be a positive integer.',
+      )
+    }
+
+    if (
+      crashRuntime.crashCount >
+      crashRuntime
+        .maximumCrashesPerStage
+    ) {
+      issues.push(
+        'INDIVIDUAL_CRASH_RUNTIME: crashCount may not exceed maximumCrashesPerStage.',
+      )
+    }
+
+    if (
+      crashRuntime
+        .occurrenceIndex !==
+      crashRuntime.crashCount
+    ) {
+      issues.push(
+        'INDIVIDUAL_CRASH_RUNTIME: occurrenceIndex must equal crashCount in Phase 8H.2B.',
+      )
+    }
+
+    if (
+      !isPositiveInteger(
+        crashRuntime
+          .globalCooldownSeconds,
+      ) ||
+      !isPositiveInteger(
+        crashRuntime
+          .riderCooldownSeconds,
+      )
+    ) {
+      issues.push(
+        'INDIVIDUAL_CRASH_RUNTIME: configured cooldowns must be positive integers.',
+      )
+    }
+
+    if (
+      !isNonNegativeInteger(
+        crashRuntime
+          .globalCooldownSecondsRemaining,
+      ) ||
+      crashRuntime
+        .globalCooldownSecondsRemaining >
+      crashRuntime
+        .globalCooldownSeconds
+    ) {
+      issues.push(
+        'INDIVIDUAL_CRASH_RUNTIME: global cooldown remaining must be within its configured bound.',
+      )
+    }
+
+    const crashCooldownRiderIds =
+      Object.keys(
+        crashRuntime
+          .cooldownSecondsRemainingByRiderId,
+      )
+
+    if (
+      crashCooldownRiderIds.length !==
+      riderIds.length
+    ) {
+      issues.push(
+        'INDIVIDUAL_CRASH_RUNTIME: rider cooldown record must cover every rider exactly once.',
+      )
+    }
+
+    for (
+      const riderId of
+      crashCooldownRiderIds
+    ) {
+      if (
+        !riderIdSet.has(
+          riderId,
+        )
+      ) {
+        issues.push(
+          `INDIVIDUAL_CRASH_RUNTIME: cooldown record contains unknown riderId "${riderId}".`,
+        )
+        continue
+      }
+
+      const seconds =
+        crashRuntime
+          .cooldownSecondsRemainingByRiderId[
+            riderId
+          ]
+
+      if (
+        !isNonNegativeInteger(
+          seconds,
+        ) ||
+        seconds >
+        crashRuntime
+          .riderCooldownSeconds
+      ) {
+        issues.push(
+          `INDIVIDUAL_CRASH_RUNTIME: rider ${riderId} cooldown must be within its configured bound.`,
+        )
+      }
+    }
+
+    const crashedRiderIdSet =
+      new Set(
+        crashRuntime
+          .crashedRiderIds,
+      )
+
+    if (
+      crashedRiderIdSet.size !==
+      crashRuntime
+        .crashedRiderIds
+        .length
+    ) {
+      issues.push(
+        'INDIVIDUAL_CRASH_RUNTIME: crashedRiderIds must not contain duplicates.',
+      )
+    }
+
+    if (
+      crashRuntime
+        .crashedRiderIds
+        .length !==
+      crashRuntime.crashCount
+    ) {
+      issues.push(
+        'INDIVIDUAL_CRASH_RUNTIME: crashed rider count must equal crashCount.',
+      )
+    }
+
+    for (
+      const riderId of
+      crashRuntime
+        .crashedRiderIds
+    ) {
+      if (
+        !riderIdSet.has(
+          riderId,
+        )
+      ) {
+        issues.push(
+          `INDIVIDUAL_CRASH_RUNTIME: crashedRiderIds contains unknown riderId "${riderId}".`,
+        )
+      }
+    }
+  }
+
+  // SHARED CRASH INCIDENT RUNTIME
+  const sharedCrashRuntime =
+    state.crashIncidentRuntime
+
+  if (sharedCrashRuntime) {
+    if (
+      sharedCrashRuntime.enabled !==
+      true
+    ) {
+      issues.push(
+        'CRASH_INCIDENT_RUNTIME: enabled must be true when runtime is present.',
+      )
+    }
+
+    const enabledKindSet =
+      new Set(
+        sharedCrashRuntime
+          .enabledIncidentKinds,
+      )
+
+    if (
+      enabledKindSet.size ===
+        0 ||
+      enabledKindSet.size !==
+        sharedCrashRuntime
+          .enabledIncidentKinds
+          .length
+    ) {
+      issues.push(
+        'CRASH_INCIDENT_RUNTIME: enabledIncidentKinds must be non-empty and unique.',
+      )
+    }
+
+    for (
+      const incidentKind of
+      sharedCrashRuntime
+        .enabledIncidentKinds
+    ) {
+      if (
+        incidentKind !==
+          'individual_crash' &&
+        incidentKind !==
+          'group_crash'
+      ) {
+        issues.push(
+          `CRASH_INCIDENT_RUNTIME: unsupported incident kind "${String(incidentKind)}".`,
+        )
+      }
+    }
+
+    if (
+      !isNonNegativeInteger(
+        sharedCrashRuntime
+          .occurrenceIndex,
+      ) ||
+      !isNonNegativeInteger(
+        sharedCrashRuntime
+          .incidentCount,
+      ) ||
+      sharedCrashRuntime
+        .occurrenceIndex !==
+        sharedCrashRuntime
+          .incidentCount
+    ) {
+      issues.push(
+        'CRASH_INCIDENT_RUNTIME: occurrenceIndex and incidentCount must be equal non-negative integers.',
+      )
+    }
+
+    if (
+      !isNonNegativeInteger(
+        sharedCrashRuntime
+          .individualCrashCount,
+      ) ||
+      !isNonNegativeInteger(
+        sharedCrashRuntime
+          .groupCrashCount,
+      ) ||
+      sharedCrashRuntime
+        .individualCrashCount +
+        sharedCrashRuntime
+          .groupCrashCount !==
+        sharedCrashRuntime
+          .incidentCount
+    ) {
+      issues.push(
+        'CRASH_INCIDENT_RUNTIME: kind counts must be non-negative and sum to incidentCount.',
+      )
+    }
+
+    if (
+      !isPositiveInteger(
+        sharedCrashRuntime
+          .maximumIncidentsPerStage,
+      ) ||
+      sharedCrashRuntime
+        .incidentCount >
+        sharedCrashRuntime
+          .maximumIncidentsPerStage
+    ) {
+      issues.push(
+        'CRASH_INCIDENT_RUNTIME: incident count must stay within the positive stage maximum.',
+      )
+    }
+
+    if (
+      !isPositiveInteger(
+        sharedCrashRuntime
+          .globalCooldownSeconds,
+      ) ||
+      !isPositiveInteger(
+        sharedCrashRuntime
+          .riderCooldownSeconds,
+      )
+    ) {
+      issues.push(
+        'CRASH_INCIDENT_RUNTIME: configured cooldowns must be positive integers.',
+      )
+    }
+
+    if (
+      !isNonNegativeInteger(
+        sharedCrashRuntime
+          .globalCooldownSecondsRemaining,
+      ) ||
+      sharedCrashRuntime
+        .globalCooldownSecondsRemaining >
+        sharedCrashRuntime
+          .globalCooldownSeconds
+    ) {
+      issues.push(
+        'CRASH_INCIDENT_RUNTIME: global cooldown remaining is outside its configured bound.',
+      )
+    }
+
+    const sharedCooldownRiderIds =
+      Object.keys(
+        sharedCrashRuntime
+          .cooldownSecondsRemainingByRiderId,
+      )
+
+    if (
+      sharedCooldownRiderIds.length !==
+      riderIds.length
+    ) {
+      issues.push(
+        'CRASH_INCIDENT_RUNTIME: rider cooldown record must cover every rider exactly once.',
+      )
+    }
+
+    for (
+      const riderId of
+      sharedCooldownRiderIds
+    ) {
+      if (
+        !riderIdSet.has(
+          riderId,
+        )
+      ) {
+        issues.push(
+          `CRASH_INCIDENT_RUNTIME: cooldown record contains unknown riderId "${riderId}".`,
+        )
+        continue
+      }
+
+      const seconds =
+        sharedCrashRuntime
+          .cooldownSecondsRemainingByRiderId[
+            riderId
+          ]
+
+      if (
+        !isNonNegativeInteger(
+          seconds,
+        ) ||
+        seconds >
+        sharedCrashRuntime
+          .riderCooldownSeconds
+      ) {
+        issues.push(
+          `CRASH_INCIDENT_RUNTIME: rider ${riderId} cooldown is outside its configured bound.`,
+        )
+      }
+    }
+
+    const affectedRiderIdSet =
+      new Set(
+        sharedCrashRuntime
+          .affectedRiderIds,
+      )
+
+    if (
+      affectedRiderIdSet.size !==
+      sharedCrashRuntime
+        .affectedRiderIds
+        .length
+    ) {
+      issues.push(
+        'CRASH_INCIDENT_RUNTIME: affectedRiderIds must not contain duplicates.',
+      )
+    }
+
+    for (
+      const riderId of
+      sharedCrashRuntime
+        .affectedRiderIds
+    ) {
+      if (
+        !riderIdSet.has(
+          riderId,
+        )
+      ) {
+        issues.push(
+          `CRASH_INCIDENT_RUNTIME: affectedRiderIds contains unknown riderId "${riderId}".`,
+        )
+      }
+    }
+  }
+
+  // SHARED CRASH / TECHNICAL INCIDENT RUNTIME
+  const sharedRaceRuntime =
+    state.raceIncidentRuntime
+
+  if (sharedRaceRuntime) {
+    if (
+      sharedRaceRuntime.enabled !==
+      true
+    ) {
+      issues.push(
+        'RACE_INCIDENT_RUNTIME: enabled must be true when runtime is present.',
+      )
+    }
+
+    const enabledKindSet =
+      new Set(
+        sharedRaceRuntime
+          .enabledIncidentKinds,
+      )
+
+    if (
+      enabledKindSet.size ===
+        0 ||
+      enabledKindSet.size !==
+        sharedRaceRuntime
+          .enabledIncidentKinds
+          .length
+    ) {
+      issues.push(
+        'RACE_INCIDENT_RUNTIME: enabledIncidentKinds must be non-empty and unique.',
+      )
+    }
+
+    for (
+      const incidentKind of
+      sharedRaceRuntime
+        .enabledIncidentKinds
+    ) {
+      if (
+        incidentKind !==
+          'individual_crash' &&
+        incidentKind !==
+          'group_crash' &&
+        incidentKind !==
+          'technical_incident'
+      ) {
+        issues.push(
+          `RACE_INCIDENT_RUNTIME: unsupported incident kind "${String(incidentKind)}".`,
+        )
+      }
+    }
+
+    if (
+      !isNonNegativeInteger(
+        sharedRaceRuntime
+          .occurrenceIndex,
+      ) ||
+      !isNonNegativeInteger(
+        sharedRaceRuntime
+          .incidentCount,
+      ) ||
+      sharedRaceRuntime
+        .occurrenceIndex !==
+        sharedRaceRuntime
+          .incidentCount
+    ) {
+      issues.push(
+        'RACE_INCIDENT_RUNTIME: occurrenceIndex and incidentCount must be equal non-negative integers.',
+      )
+    }
+
+    if (
+      !isNonNegativeInteger(
+        sharedRaceRuntime
+          .individualCrashCount,
+      ) ||
+      !isNonNegativeInteger(
+        sharedRaceRuntime
+          .groupCrashCount,
+      ) ||
+      !isNonNegativeInteger(
+        sharedRaceRuntime
+          .technicalIncidentCount,
+      ) ||
+      sharedRaceRuntime
+        .individualCrashCount +
+        sharedRaceRuntime
+          .groupCrashCount +
+        sharedRaceRuntime
+          .technicalIncidentCount !==
+        sharedRaceRuntime
+          .incidentCount
+    ) {
+      issues.push(
+        'RACE_INCIDENT_RUNTIME: kind counts must be non-negative and sum to incidentCount.',
+      )
+    }
+
+    if (
+      !isPositiveInteger(
+        sharedRaceRuntime
+          .maximumIncidentsPerStage,
+      ) ||
+      sharedRaceRuntime
+        .incidentCount >
+        sharedRaceRuntime
+          .maximumIncidentsPerStage
+    ) {
+      issues.push(
+        'RACE_INCIDENT_RUNTIME: incident count must stay within the positive stage maximum.',
+      )
+    }
+
+    if (
+      !isPositiveInteger(
+        sharedRaceRuntime
+          .globalCooldownSeconds,
+      ) ||
+      !isPositiveInteger(
+        sharedRaceRuntime
+          .riderCooldownSeconds,
+      )
+    ) {
+      issues.push(
+        'RACE_INCIDENT_RUNTIME: configured cooldowns must be positive integers.',
+      )
+    }
+
+    if (
+      !isNonNegativeInteger(
+        sharedRaceRuntime
+          .globalCooldownSecondsRemaining,
+      ) ||
+      sharedRaceRuntime
+        .globalCooldownSecondsRemaining >
+        sharedRaceRuntime
+          .globalCooldownSeconds
+    ) {
+      issues.push(
+        'RACE_INCIDENT_RUNTIME: global cooldown remaining is outside its configured bound.',
+      )
+    }
+
+    const cooldownRiderIds =
+      Object.keys(
+        sharedRaceRuntime
+          .cooldownSecondsRemainingByRiderId,
+      )
+
+    if (
+      cooldownRiderIds.length !==
+      riderIds.length
+    ) {
+      issues.push(
+        'RACE_INCIDENT_RUNTIME: rider cooldown record must cover every rider exactly once.',
+      )
+    }
+
+    for (const riderId of cooldownRiderIds) {
+      if (
+        !riderIdSet.has(
+          riderId,
+        )
+      ) {
+        issues.push(
+          `RACE_INCIDENT_RUNTIME: cooldown record contains unknown riderId "${riderId}".`,
+        )
+        continue
+      }
+
+      const seconds =
+        sharedRaceRuntime
+          .cooldownSecondsRemainingByRiderId[
+            riderId
+          ]
+
+      if (
+        !isNonNegativeInteger(
+          seconds,
+        ) ||
+        seconds >
+        sharedRaceRuntime
+          .riderCooldownSeconds
+      ) {
+        issues.push(
+          `RACE_INCIDENT_RUNTIME: rider ${riderId} cooldown is outside its configured bound.`,
+        )
+      }
+    }
+
+    const affectedRiderIdSet =
+      new Set(
+        sharedRaceRuntime
+          .affectedRiderIds,
+      )
+
+    if (
+      affectedRiderIdSet.size !==
+      sharedRaceRuntime
+        .affectedRiderIds
+        .length
+    ) {
+      issues.push(
+        'RACE_INCIDENT_RUNTIME: affectedRiderIds must not contain duplicates.',
+      )
+    }
+
+    for (
+      const riderId of
+      sharedRaceRuntime
+        .affectedRiderIds
+    ) {
+      if (
+        !riderIdSet.has(
+          riderId,
+        )
+      ) {
+        issues.push(
+          `RACE_INCIDENT_RUNTIME: affectedRiderIds contains unknown riderId "${riderId}".`,
+        )
+      }
+    }
+  }
+
   // RIDERS
   if (riderIds.length < 2) {
     issues.push('RIDERS: at least two riders must exist.')
@@ -350,6 +1289,33 @@ export function validateSimulationState(state: SimulationState): void {
     ) {
       issues.push(
         `RIDERS: rider ${rider.riderId} energy must be finite and between 0 and 100.`,
+      )
+    }
+
+    if (
+      rider.startingEquipment !==
+      undefined
+    ) {
+      validateStartingEquipment(
+        rider.riderId,
+        rider.startingEquipment,
+        issues,
+      )
+    }
+
+    if (
+      rider.runtimeFatigue !==
+        undefined &&
+      (
+        !isFiniteNumber(
+          rider.runtimeFatigue,
+        ) ||
+        rider.runtimeFatigue < 0 ||
+        rider.runtimeFatigue > 100
+      )
+    ) {
+      issues.push(
+        `RIDERS: rider ${rider.riderId} runtimeFatigue must be finite and between 0 and 100 when present.`,
       )
     }
 
@@ -839,6 +1805,818 @@ export function validateSimulationState(state: SimulationState): void {
       if (!riderIdSet.has(riderId)) {
         issues.push(
           `EVENTS: event ${event.sequenceNumber} relatedRiderIds contains missing riderId "${riderId}".`,
+        )
+      }
+    }
+
+    if (
+      event.eventType ===
+      'RIDER_CRASHED'
+    ) {
+      if (
+        event.actorRiderId ===
+        null
+      ) {
+        issues.push(
+          `EVENTS: RIDER_CRASHED event ${event.sequenceNumber} requires actorRiderId.`,
+        )
+      }
+
+      if (
+        event.sourceGroupId ===
+          null ||
+        event.targetGroupId ===
+          null
+      ) {
+        issues.push(
+          `EVENTS: RIDER_CRASHED event ${event.sequenceNumber} requires sourceGroupId and targetGroupId.`,
+        )
+      }
+
+      if (
+        event.actorRiderId !==
+          null &&
+        (
+          event
+            .relatedRiderIds
+            .length !==
+            1 ||
+          event
+            .relatedRiderIds[0] !==
+            event.actorRiderId
+        )
+      ) {
+        issues.push(
+          `EVENTS: RIDER_CRASHED event ${event.sequenceNumber} must relate exactly its actor rider.`,
+        )
+      }
+
+      const crashPayload =
+        event.payload as
+          Readonly<
+            Record<
+              string,
+              unknown
+            >
+          >
+
+      if (
+        crashPayload
+          .incidentKind !==
+        'individual_crash'
+      ) {
+        issues.push(
+          `EVENTS: RIDER_CRASHED event ${event.sequenceNumber} requires incidentKind "individual_crash".`,
+        )
+      }
+
+      if (
+        crashPayload.severity !==
+          'minor' &&
+        crashPayload.severity !==
+          'moderate' &&
+        crashPayload.severity !==
+          'serious'
+      ) {
+        issues.push(
+          `EVENTS: RIDER_CRASHED event ${event.sequenceNumber} has invalid severity.`,
+        )
+      }
+
+      if (
+        typeof crashPayload
+          .incidentId !==
+          'string' ||
+        !crashPayload
+          .incidentId
+          .trim()
+      ) {
+        issues.push(
+          `EVENTS: RIDER_CRASHED event ${event.sequenceNumber} requires a non-empty incidentId.`,
+        )
+      }
+
+      if (
+        typeof crashPayload
+          .timeLossSeconds !==
+          'number' ||
+        !isFiniteNumber(
+          crashPayload
+            .timeLossSeconds,
+        ) ||
+        crashPayload
+          .timeLossSeconds <=
+          0
+      ) {
+        issues.push(
+          `EVENTS: RIDER_CRASHED event ${event.sequenceNumber} requires positive finite timeLossSeconds.`,
+        )
+      }
+
+      if (
+        typeof crashPayload
+          .distanceLossKm !==
+          'number' ||
+        !isFiniteNumber(
+          crashPayload
+            .distanceLossKm,
+        ) ||
+        crashPayload
+          .distanceLossKm <
+          0
+      ) {
+        issues.push(
+          `EVENTS: RIDER_CRASHED event ${event.sequenceNumber} requires non-negative finite distanceLossKm.`,
+        )
+      }
+    }
+
+    if (
+      event.eventType ===
+      'GROUP_CRASHED'
+    ) {
+      if (
+        event.actorRiderId !==
+        null
+      ) {
+        issues.push(
+          `EVENTS: GROUP_CRASHED event ${event.sequenceNumber} must have actorRiderId = null.`,
+        )
+      }
+
+      if (
+        event.teamId !==
+        null
+      ) {
+        issues.push(
+          `EVENTS: GROUP_CRASHED event ${event.sequenceNumber} must have teamId = null.`,
+        )
+      }
+
+      if (
+        event.sourceGroupId ===
+          null ||
+        event.targetGroupId ===
+          null
+      ) {
+        issues.push(
+          `EVENTS: GROUP_CRASHED event ${event.sequenceNumber} requires sourceGroupId and targetGroupId.`,
+        )
+      } else if (
+        event.sourceGroupId ===
+        event.targetGroupId
+      ) {
+        issues.push(
+          `EVENTS: GROUP_CRASHED event ${event.sequenceNumber} source and target groups must differ.`,
+        )
+      }
+
+      const relatedRiderIdSet =
+        new Set(
+          event
+            .relatedRiderIds,
+        )
+
+      if (
+        event
+          .relatedRiderIds
+          .length <
+        2
+      ) {
+        issues.push(
+          `EVENTS: GROUP_CRASHED event ${event.sequenceNumber} must relate at least two riders.`,
+        )
+      }
+
+      if (
+        relatedRiderIdSet.size !==
+        event
+          .relatedRiderIds
+          .length
+      ) {
+        issues.push(
+          `EVENTS: GROUP_CRASHED event ${event.sequenceNumber} relatedRiderIds must not contain duplicates.`,
+        )
+      }
+
+      const crashPayload =
+        event.payload as
+          Readonly<
+            Record<
+              string,
+              unknown
+            >
+          >
+
+      if (
+        crashPayload
+          .incidentKind !==
+        'group_crash'
+      ) {
+        issues.push(
+          `EVENTS: GROUP_CRASHED event ${event.sequenceNumber} requires incidentKind "group_crash".`,
+        )
+      }
+
+      if (
+        crashPayload.severity !==
+          'minor' &&
+        crashPayload.severity !==
+          'moderate' &&
+        crashPayload.severity !==
+          'serious'
+      ) {
+        issues.push(
+          `EVENTS: GROUP_CRASHED event ${event.sequenceNumber} has invalid severity.`,
+        )
+      }
+
+      if (
+        typeof crashPayload
+          .incidentId !==
+          'string' ||
+        !crashPayload
+          .incidentId
+          .trim()
+      ) {
+        issues.push(
+          `EVENTS: GROUP_CRASHED event ${event.sequenceNumber} requires a non-empty incidentId.`,
+        )
+      }
+
+      if (
+        typeof crashPayload
+          .affectedRiderCount !==
+          'number' ||
+        !Number.isInteger(
+          crashPayload
+            .affectedRiderCount,
+        ) ||
+        crashPayload
+          .affectedRiderCount !==
+          event
+            .relatedRiderIds
+            .length
+      ) {
+        issues.push(
+          `EVENTS: GROUP_CRASHED event ${event.sequenceNumber} affectedRiderCount must equal relatedRiderIds length.`,
+        )
+      }
+
+      const payloadAffectedRiderIds =
+        crashPayload
+          .affectedRiderIds
+
+      if (
+        !Array.isArray(
+          payloadAffectedRiderIds,
+        ) ||
+        payloadAffectedRiderIds
+          .length !==
+          event
+            .relatedRiderIds
+            .length ||
+        payloadAffectedRiderIds
+          .some(
+            (
+              riderId,
+              index,
+            ) =>
+              riderId !==
+              event
+                .relatedRiderIds[
+                  index
+                ],
+          )
+      ) {
+        issues.push(
+          `EVENTS: GROUP_CRASHED event ${event.sequenceNumber} affectedRiderIds must exactly match relatedRiderIds.`,
+        )
+      }
+
+      if (
+        typeof crashPayload
+          .timeLossSeconds !==
+          'number' ||
+        !isFiniteNumber(
+          crashPayload
+            .timeLossSeconds,
+        ) ||
+        crashPayload
+          .timeLossSeconds <=
+          0
+      ) {
+        issues.push(
+          `EVENTS: GROUP_CRASHED event ${event.sequenceNumber} requires positive finite timeLossSeconds.`,
+        )
+      }
+
+      if (
+        typeof crashPayload
+          .distanceLossKm !==
+          'number' ||
+        !isFiniteNumber(
+          crashPayload
+            .distanceLossKm,
+        ) ||
+        crashPayload
+          .distanceLossKm <
+          0
+      ) {
+        issues.push(
+          `EVENTS: GROUP_CRASHED event ${event.sequenceNumber} requires non-negative finite distanceLossKm.`,
+        )
+      }
+    }
+
+    if (
+      event.eventType ===
+      'RIDER_TECHNICAL_INCIDENT'
+    ) {
+      if (
+        event.actorRiderId ===
+        null
+      ) {
+        issues.push(
+          `EVENTS: RIDER_TECHNICAL_INCIDENT event ${event.sequenceNumber} requires actorRiderId.`,
+        )
+      }
+
+      if (
+        event.teamId ===
+        null
+      ) {
+        issues.push(
+          `EVENTS: RIDER_TECHNICAL_INCIDENT event ${event.sequenceNumber} requires teamId.`,
+        )
+      }
+
+      if (
+        event.actorRiderId !==
+          null &&
+        event.teamId !==
+          null &&
+        riders[
+          event.actorRiderId
+        ] &&
+        riders[
+          event.actorRiderId
+        ]!.teamId !==
+          event.teamId
+      ) {
+        issues.push(
+          `EVENTS: RIDER_TECHNICAL_INCIDENT event ${event.sequenceNumber} teamId must match the actor rider team.`,
+        )
+      }
+
+      if (
+        event.sourceGroupId ===
+          null ||
+        event.targetGroupId ===
+          null
+      ) {
+        issues.push(
+          `EVENTS: RIDER_TECHNICAL_INCIDENT event ${event.sequenceNumber} requires sourceGroupId and targetGroupId.`,
+        )
+      } else if (
+        event.sourceGroupId ===
+        event.targetGroupId
+      ) {
+        issues.push(
+          `EVENTS: RIDER_TECHNICAL_INCIDENT event ${event.sequenceNumber} source and target groups must differ.`,
+        )
+      }
+
+      if (
+        event.actorRiderId !==
+          null &&
+        (
+          event
+            .relatedRiderIds
+            .length !==
+            1 ||
+          event
+            .relatedRiderIds[0] !==
+            event.actorRiderId
+        )
+      ) {
+        issues.push(
+          `EVENTS: RIDER_TECHNICAL_INCIDENT event ${event.sequenceNumber} must relate exactly its actor rider.`,
+        )
+      }
+
+      const technicalPayload =
+        event.payload as
+          Readonly<
+            Record<
+              string,
+              unknown
+            >
+          >
+
+      if (
+        technicalPayload
+          .incidentKind !==
+        'technical_incident'
+      ) {
+        issues.push(
+          `EVENTS: RIDER_TECHNICAL_INCIDENT event ${event.sequenceNumber} requires incidentKind "technical_incident".`,
+        )
+      }
+
+      if (
+        typeof technicalPayload
+          .technicalType !==
+          'string' ||
+        !technicalIncidentTypes.has(
+          technicalPayload
+            .technicalType,
+        )
+      ) {
+        issues.push(
+          `EVENTS: RIDER_TECHNICAL_INCIDENT event ${event.sequenceNumber} has invalid technicalType.`,
+        )
+      }
+
+      if (
+        typeof technicalPayload
+          .severity !==
+          'string' ||
+        !technicalIncidentSeverities.has(
+          technicalPayload
+            .severity,
+        )
+      ) {
+        issues.push(
+          `EVENTS: RIDER_TECHNICAL_INCIDENT event ${event.sequenceNumber} has invalid severity.`,
+        )
+      }
+
+      if (
+        typeof technicalPayload
+          .incidentId !==
+          'string' ||
+        !technicalPayload
+          .incidentId
+          .trim()
+      ) {
+        issues.push(
+          `EVENTS: RIDER_TECHNICAL_INCIDENT event ${event.sequenceNumber} requires a non-empty incidentId.`,
+        )
+      }
+
+      if (
+        technicalPayload
+          .timeLossModelVersion !==
+        'technical_incident_time_loss_v1'
+      ) {
+        issues.push(
+          `EVENTS: RIDER_TECHNICAL_INCIDENT event ${event.sequenceNumber} has invalid timeLossModelVersion.`,
+        )
+      }
+
+      if (
+        typeof technicalPayload
+          .equipmentConditionPercent !==
+          'number' ||
+        !isFiniteNumber(
+          technicalPayload
+            .equipmentConditionPercent,
+        ) ||
+        technicalPayload
+          .equipmentConditionPercent <
+          0 ||
+        technicalPayload
+          .equipmentConditionPercent >
+          100
+      ) {
+        issues.push(
+          `EVENTS: RIDER_TECHNICAL_INCIDENT event ${event.sequenceNumber} requires equipmentConditionPercent between 0 and 100.`,
+        )
+      }
+
+      if (
+        technicalPayload
+          .equipmentConditionAppliedToTimeLoss !==
+        false
+      ) {
+        issues.push(
+          `EVENTS: RIDER_TECHNICAL_INCIDENT event ${event.sequenceNumber} must not apply equipment condition a second time to time loss.`,
+        )
+      }
+
+      if (
+        typeof technicalPayload
+          .mechanicalTimeLossMultiplier !==
+          'number' ||
+        !isFiniteNumber(
+          technicalPayload
+            .mechanicalTimeLossMultiplier,
+        ) ||
+        technicalPayload
+          .mechanicalTimeLossMultiplier <
+          0.82 ||
+        technicalPayload
+          .mechanicalTimeLossMultiplier >
+          1
+      ) {
+        issues.push(
+          `EVENTS: RIDER_TECHNICAL_INCIDENT event ${event.sequenceNumber} requires mechanicalTimeLossMultiplier between 0.82 and 1.`,
+        )
+      }
+
+      const rawBaseTimeLoss =
+        technicalPayload
+          .baseTimeLossSeconds
+
+      if (
+        typeof rawBaseTimeLoss !==
+          'number' ||
+        !Number.isInteger(
+          rawBaseTimeLoss,
+        ) ||
+        rawBaseTimeLoss <=
+          0
+      ) {
+        issues.push(
+          `EVENTS: RIDER_TECHNICAL_INCIDENT event ${event.sequenceNumber} requires positive integer baseTimeLossSeconds.`,
+        )
+      }
+
+      const rawTimeLoss =
+        technicalPayload
+          .timeLossSeconds
+
+      if (
+        typeof rawTimeLoss !==
+          'number' ||
+        !Number.isInteger(
+          rawTimeLoss,
+        ) ||
+        rawTimeLoss <=
+          0
+      ) {
+        issues.push(
+          `EVENTS: RIDER_TECHNICAL_INCIDENT event ${event.sequenceNumber} requires positive integer timeLossSeconds.`,
+        )
+      }
+
+      const rawMultiplier =
+        technicalPayload
+          .mechanicalTimeLossMultiplier
+
+      if (
+        typeof rawBaseTimeLoss ===
+          'number' &&
+        Number.isInteger(
+          rawBaseTimeLoss,
+        ) &&
+        rawBaseTimeLoss >
+          0 &&
+        typeof rawMultiplier ===
+          'number' &&
+        isFiniteNumber(
+          rawMultiplier,
+        ) &&
+        rawMultiplier >=
+          0.82 &&
+        rawMultiplier <=
+          1 &&
+        typeof rawTimeLoss ===
+          'number' &&
+        Number.isInteger(
+          rawTimeLoss,
+        ) &&
+        rawTimeLoss !==
+          Math.max(
+            1,
+            Math.round(
+              rawBaseTimeLoss *
+                rawMultiplier,
+            ),
+          )
+      ) {
+        issues.push(
+          `EVENTS: RIDER_TECHNICAL_INCIDENT event ${event.sequenceNumber} timeLossSeconds must equal rounded base time multiplied by mechanicalTimeLossMultiplier.`,
+        )
+      }
+
+      if (
+        typeof technicalPayload
+          .responseSavingsSeconds !==
+          'number' ||
+        !Number.isInteger(
+          technicalPayload
+            .responseSavingsSeconds,
+        ) ||
+        (
+          typeof rawBaseTimeLoss ===
+            'number' &&
+          typeof rawTimeLoss ===
+            'number' &&
+          technicalPayload
+            .responseSavingsSeconds !==
+            rawBaseTimeLoss -
+              rawTimeLoss
+        )
+      ) {
+        issues.push(
+          `EVENTS: RIDER_TECHNICAL_INCIDENT event ${event.sequenceNumber} responseSavingsSeconds must equal baseTimeLossSeconds minus timeLossSeconds.`,
+        )
+      }
+
+      const affectedCategories =
+        technicalPayload
+          .affectedEquipmentCategories
+
+      if (
+        !Array.isArray(
+          affectedCategories,
+        ) ||
+        affectedCategories.length ===
+          0
+      ) {
+        issues.push(
+          `EVENTS: RIDER_TECHNICAL_INCIDENT event ${event.sequenceNumber} requires affectedEquipmentCategories.`,
+        )
+      } else {
+        const categorySet =
+          new Set<string>()
+
+        for (
+          const category of
+          affectedCategories
+        ) {
+          if (
+            typeof category !==
+              'string' ||
+            !equipmentCategories.has(
+              category,
+            )
+          ) {
+            issues.push(
+              `EVENTS: RIDER_TECHNICAL_INCIDENT event ${event.sequenceNumber} contains unsupported equipment category "${String(category)}".`,
+            )
+          }
+
+          if (
+            typeof category ===
+              'string' &&
+            categorySet.has(
+              category,
+            )
+          ) {
+            issues.push(
+              `EVENTS: RIDER_TECHNICAL_INCIDENT event ${event.sequenceNumber} affectedEquipmentCategories must not contain duplicates.`,
+            )
+          }
+
+          if (
+            typeof category ===
+            'string'
+          ) {
+            categorySet.add(
+              category,
+            )
+          }
+        }
+      }
+
+      const rawDistanceLoss =
+        technicalPayload
+          .distanceLossKm
+
+      if (
+        typeof rawDistanceLoss !==
+          'number' ||
+        !isFiniteNumber(
+          rawDistanceLoss,
+        ) ||
+        rawDistanceLoss <
+          0
+      ) {
+        issues.push(
+          `EVENTS: RIDER_TECHNICAL_INCIDENT event ${event.sequenceNumber} requires non-negative finite distanceLossKm.`,
+        )
+      }
+
+      const rawSourceDistance =
+        technicalPayload
+          .sourceDistanceKm
+
+      const rawTargetDistance =
+        technicalPayload
+          .targetDistanceKm
+
+      if (
+        typeof rawSourceDistance !==
+          'number' ||
+        !isFiniteNumber(
+          rawSourceDistance,
+        ) ||
+        rawSourceDistance <
+          0 ||
+        typeof rawTargetDistance !==
+          'number' ||
+        !isFiniteNumber(
+          rawTargetDistance,
+        ) ||
+        rawTargetDistance <
+          0 ||
+        rawTargetDistance >
+          rawSourceDistance
+      ) {
+        issues.push(
+          `EVENTS: RIDER_TECHNICAL_INCIDENT event ${event.sequenceNumber} has invalid source or target distance.`,
+        )
+      } else if (
+        typeof rawDistanceLoss ===
+          'number' &&
+        Math.abs(
+          (
+            rawSourceDistance -
+            rawTargetDistance
+          ) -
+          rawDistanceLoss
+        ) >
+        0.000001
+      ) {
+        issues.push(
+          `EVENTS: RIDER_TECHNICAL_INCIDENT event ${event.sequenceNumber} distanceLossKm must equal sourceDistanceKm minus targetDistanceKm.`,
+        )
+      }
+
+      const rawSourceGap =
+        technicalPayload
+          .sourceGapFromLeaderSeconds
+
+      const rawTargetGap =
+        technicalPayload
+          .targetGapFromLeaderSeconds
+
+      if (
+        typeof rawSourceGap !==
+          'number' ||
+        !isFiniteNumber(
+          rawSourceGap,
+        ) ||
+        rawSourceGap <
+          0 ||
+        typeof rawTargetGap !==
+          'number' ||
+        !isFiniteNumber(
+          rawTargetGap,
+        ) ||
+        rawTargetGap <
+          rawSourceGap
+      ) {
+        issues.push(
+          `EVENTS: RIDER_TECHNICAL_INCIDENT event ${event.sequenceNumber} has invalid source or target gap.`,
+        )
+      } else if (
+        typeof rawTimeLoss ===
+          'number' &&
+        Math.abs(
+          (
+            rawTargetGap -
+            rawSourceGap
+          ) -
+          rawTimeLoss
+        ) >
+        0.000001
+      ) {
+        issues.push(
+          `EVENTS: RIDER_TECHNICAL_INCIDENT event ${event.sequenceNumber} target gap must increase by timeLossSeconds.`,
+        )
+      }
+
+      if (
+        technicalPayload
+          .equipmentDamagePersistence !==
+        'not_applied_in_phase_8h5a'
+      ) {
+        issues.push(
+          `EVENTS: RIDER_TECHNICAL_INCIDENT event ${event.sequenceNumber} must not persist equipment damage in Phase 8H.5A.`,
+        )
+      }
+
+      if (
+        technicalPayload
+          .equipmentWearPersistence !==
+        'not_applied_in_phase_8h5a'
+      ) {
+        issues.push(
+          `EVENTS: RIDER_TECHNICAL_INCIDENT event ${event.sequenceNumber} must not persist equipment wear in Phase 8H.5A.`,
+        )
+      }
+
+      if (
+        technicalPayload
+          .technicalRunnerIntegration !==
+        'not_active_in_phase_8h5a'
+      ) {
+        issues.push(
+          `EVENTS: RIDER_TECHNICAL_INCIDENT event ${event.sequenceNumber} must remain isolated from the active runner in Phase 8H.5A.`,
         )
       }
     }

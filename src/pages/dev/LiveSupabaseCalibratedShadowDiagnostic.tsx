@@ -1,7 +1,7 @@
 /**
  * LiveSupabaseCalibratedShadowDiagnostic.tsx
  *
- * Phase 8G.5 browser-only, read-only active weather-performance diagnostic.
+ * Phase 8G.6 browser-only, read-only runtime weather-fatigue diagnostic.
  *
  * Flow:
  * authenticated user
@@ -15,7 +15,7 @@
  * → official SQL winner comparison
  *
  * This page performs no insert, update, delete, scheduler call, writer call,
- * classification update, fatigue update, prize update, or replay persistence.
+ * classification update, persistent fatigue update, prize update, or replay persistence.
  */
 
 import {
@@ -225,6 +225,12 @@ interface DiagnosticResult {
   readonly weatherWinnerTimeDifferenceSeconds:
     number
   readonly weatherAverageFinalEnergyDifference:
+    number
+  readonly weatherFreeAverageFinalRuntimeFatigue:
+    number
+  readonly weatherAverageFinalRuntimeFatigue:
+    number
+  readonly weatherAverageFinalRuntimeFatigueDifference:
     number
 
   readonly sourceHash: string
@@ -1503,6 +1509,37 @@ function getOutputAverageFinalEnergy(
   )
 }
 
+function getOutputAverageFinalRuntimeFatigue(
+  output:
+    ReturnType<
+      typeof runDeterministicRoadRace
+    >,
+): number {
+  if (
+    output.finalRiderStates.length ===
+    0
+  ) {
+    return 0
+  }
+
+  return (
+    output.finalRiderStates.reduce(
+      (
+        sum,
+        rider,
+      ) =>
+        sum +
+        (
+          rider.runtimeFatigue ??
+          0
+        ),
+      0,
+    ) /
+    output.finalRiderStates.length
+  )
+}
+
+
 function createDiagnosticResult(
   bundle: SourceBundle,
 ): DiagnosticResult {
@@ -1868,6 +1905,20 @@ function createDiagnosticResult(
       weatherFreeOutput,
     )
 
+  const weatherFreeAverageFinalRuntimeFatigue =
+    getOutputAverageFinalRuntimeFatigue(
+      weatherFreeOutput,
+    )
+
+  const weatherAverageFinalRuntimeFatigue =
+    getOutputAverageFinalRuntimeFatigue(
+      outputA,
+    )
+
+  const weatherAverageFinalRuntimeFatigueDifference =
+    weatherAverageFinalRuntimeFatigue -
+    weatherFreeAverageFinalRuntimeFatigue
+
   const sourceHashB =
     createCanonicalHashedValue(
       sourceRows,
@@ -2108,6 +2159,30 @@ function createDiagnosticResult(
         passed:
           weatherAverageFinalEnergyDifference <
           0,
+      },
+      {
+        label:
+          'Live heat or precipitation creates deterministic runtime fatigue',
+        passed:
+          weatherAverageFinalRuntimeFatigueDifference >
+          0,
+      },
+      {
+        label:
+          'Every live runtime-fatigue value remains bounded',
+        passed:
+          outputA.finalRiderStates
+            .every(
+              (rider) =>
+                (
+                  rider.runtimeFatigue ??
+                  0
+                ) >= 0 &&
+                (
+                  rider.runtimeFatigue ??
+                  0
+                ) <= 100,
+            ),
       },
       {
         label:
@@ -2456,6 +2531,9 @@ function createDiagnosticResult(
       weatherFreeOutputHash.hash,
     weatherWinnerTimeDifferenceSeconds,
     weatherAverageFinalEnergyDifference,
+    weatherFreeAverageFinalRuntimeFatigue,
+    weatherAverageFinalRuntimeFatigue,
+    weatherAverageFinalRuntimeFatigueDifference,
 
     sourceHash:
       sourceHashA.hash,
@@ -2748,7 +2826,7 @@ export default function LiveSupabaseCalibratedShadowDiagnostic():
       <div className="mx-auto max-w-6xl space-y-8">
         <header>
           <div className="text-xs font-semibold uppercase tracking-[0.18em] text-cyan-300">
-            Phase 8G.5 development diagnostic
+            Phase 8G.6 development diagnostic
           </div>
 
           <h1 className="mt-2 text-3xl font-semibold">
@@ -2756,11 +2834,11 @@ export default function LiveSupabaseCalibratedShadowDiagnostic():
           </h1>
 
           <p className="mt-3 max-w-4xl text-sm leading-6 text-slate-300">
-            Loads the compact read-only Supabase source bundle, transports live
-            rider condition plus the authoritative stage weather snapshot into
-            the canonical StageInput, executes terrain_separation_calibrated_v1
-            twice in the browser, proves weather is metadata-only in this
-            phase, validates the generic replay model, and performs no write.
+            Loads the compact read-only Supabase source bundle, transports
+            live rider condition plus authoritative stage weather, executes
+            terrain_separation_calibrated_v1 twice, compares it with a
+            weather-free calibrated run, verifies bounded in-memory runtime
+            fatigue, validates the generic replay model, and performs no write.
           </p>
         </header>
 
@@ -3032,6 +3110,14 @@ export default function LiveSupabaseCalibratedShadowDiagnostic():
                 <DataRow
                   label="Weather average final-energy effect"
                   value={formatNumber(result.weatherAverageFinalEnergyDifference)}
+                />
+                <DataRow
+                  label="Average runtime fatigue weather-free / weather"
+                  value={`${formatNumber(result.weatherFreeAverageFinalRuntimeFatigue)} / ${formatNumber(result.weatherAverageFinalRuntimeFatigue)}`}
+                />
+                <DataRow
+                  label="Weather average runtime-fatigue effect"
+                  value={formatNumber(result.weatherAverageFinalRuntimeFatigueDifference)}
                 />
                 <DataRow
                   label="Snapshots"

@@ -8,6 +8,7 @@
 
 import React, { useEffect, useMemo, useState } from 'react'
 import EquipmentSetupPresetsBox from './EquipmentSetupPresetsBox'
+import EquipmentOptionPreviewPopover from './EquipmentOptionPreviewPopover'
 import {
   getActiveTechnicalSponsorSupport,
   getEquipmentDashboard,
@@ -21,9 +22,12 @@ import type {
   TechnicalSponsor,
 } from '../types'
 import { formatCondition, formatPercent, getStockBadgeClass } from '../equipmentFormatters'
+import type { EquipmentPremiumAccess } from '../equipmentApi'
 
 type EquipmentOverviewTabProps = {
   clubId: string
+  equipmentAccess: EquipmentPremiumAccess | null
+  onAccessChanged?: (access: EquipmentPremiumAccess) => void
 }
 
 type DefaultSetupSelection = {
@@ -171,6 +175,8 @@ function getCategoryHelper(category: EquipmentDefaultSetupCategoryOption): strin
 
 export default function EquipmentOverviewTab({
   clubId,
+  equipmentAccess,
+  onAccessChanged,
 }: EquipmentOverviewTabProps): JSX.Element {
   const [dashboard, setDashboard] = useState<EquipmentDashboard | null>(null)
   const [technicalSupport, setTechnicalSupport] =
@@ -390,30 +396,41 @@ export default function EquipmentOverviewTab({
                   </div>
 
                   <div>
-                    <select
-                      value={selectedValue}
-                      disabled={category.options.length === 0}
-                      onChange={event =>
-                        setSelection(current => ({
-                          ...current,
-                          [category.equipment_category]: event.target.value,
-                        }))
+                    <EquipmentOptionPreviewPopover
+                      clubId={clubId}
+                      category={category.equipment_category}
+                      option={
+                        (category.options.find(
+                          option => option.catalog_item_id === selectedValue,
+                        ) ?? null) as never
                       }
-                      className="w-full rounded border border-gray-200 px-3 py-2 text-sm disabled:bg-gray-50 disabled:text-gray-400"
+                      disabled={category.options.length === 0}
                     >
-                      {category.options.length === 0 ? (
-                        <option value="">No owned {category.label.toLowerCase()}</option>
-                      ) : (
-                        category.options.map(option => (
-                          <option
-                            key={option.catalog_item_id}
-                            value={option.catalog_item_id}
-                          >
-                            {getDefaultSetupOptionLabel(option)}
-                          </option>
-                        ))
-                      )}
-                    </select>
+                      <select
+                        value={selectedValue}
+                        disabled={category.options.length === 0}
+                        onChange={event =>
+                          setSelection(current => ({
+                            ...current,
+                            [category.equipment_category]: event.target.value,
+                          }))
+                        }
+                        className="w-full rounded border border-gray-200 px-3 py-2 text-sm disabled:bg-gray-50 disabled:text-gray-400"
+                      >
+                        {category.options.length === 0 ? (
+                          <option value="">No owned {category.label.toLowerCase()}</option>
+                        ) : (
+                          category.options.map(option => (
+                            <option
+                              key={option.catalog_item_id}
+                              value={option.catalog_item_id}
+                            >
+                              {getDefaultSetupOptionLabel(option)}
+                            </option>
+                          ))
+                        )}
+                      </select>
+                    </EquipmentOptionPreviewPopover>
 
                     <div className="mt-1 text-xs text-gray-400">
                       {getCategoryHelper(category)}
@@ -594,7 +611,95 @@ export default function EquipmentOverviewTab({
         </div>
       </div>
 
-      <EquipmentSetupPresetsBox clubId={clubId} />
+      {equipmentAccess?.is_premium ? (
+        <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="font-semibold text-slate-900">Equipment Intelligence</h3>
+                <span className="rounded-full border border-yellow-300 bg-yellow-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-yellow-800">
+                  Premium
+                </span>
+              </div>
+              <p className="mt-1 text-xs text-slate-500">
+                Planning support based on the equipment already owned by your club. No hidden performance bonus is added.
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-4 grid gap-3 md:grid-cols-3">
+            <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+              <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Readiness watch</div>
+              <div className="mt-1 text-lg font-semibold text-slate-900">
+                {dashboard.overall.critical_items > 0
+                  ? `${dashboard.overall.critical_items} critical item${dashboard.overall.critical_items === 1 ? '' : 's'}`
+                  : 'No critical items'}
+              </div>
+              <div className="mt-1 text-xs text-slate-600">
+                {dashboard.overall.maintenance_needed} item{dashboard.overall.maintenance_needed === 1 ? '' : 's'} currently need maintenance.
+              </div>
+            </div>
+
+            <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+              <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Lowest condition category</div>
+              {(() => {
+                const lowest = [...dashboard.category_summary].sort(
+                  (a, b) => Number(a.avg_condition ?? 0) - Number(b.avg_condition ?? 0),
+                )[0]
+                return (
+                  <>
+                    <div className="mt-1 text-lg font-semibold text-slate-900">{lowest?.label ?? '—'}</div>
+                    <div className="mt-1 text-xs text-slate-600">
+                      {lowest ? `Average condition ${formatCondition(lowest.avg_condition)}.` : 'No inventory data available.'}
+                    </div>
+                  </>
+                )
+              })()}
+            </div>
+
+            <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+              <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Setup capacity hint</div>
+              {(() => {
+                const limiting = [...dashboard.category_summary].sort(
+                  (a, b) => Number(a.ready_count ?? 0) - Number(b.ready_count ?? 0),
+                )[0]
+                return (
+                  <>
+                    <div className="mt-1 text-lg font-semibold text-slate-900">{limiting?.label ?? '—'}</div>
+                    <div className="mt-1 text-xs text-slate-600">
+                      {limiting ? `${limiting.ready_count} ready unit${limiting.ready_count === 1 ? '' : 's'}; this may limit complete rider setups.` : 'No inventory data available.'}
+                    </div>
+                  </>
+                )
+              })()}
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="font-semibold text-slate-900">Equipment Intelligence</h3>
+                <span className="rounded-full border border-yellow-300 bg-yellow-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-yellow-800">Premium</span>
+                <span aria-hidden="true" className="text-slate-400">🔒</span>
+              </div>
+              <p className="mt-1 text-sm text-slate-600">
+                See maintenance priorities, limiting setup categories and compact equipment planning insights.
+              </p>
+            </div>
+            <a href="/dashboard/premium" className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
+              Unlock with Premium
+            </a>
+          </div>
+        </div>
+      )}
+
+      <EquipmentSetupPresetsBox
+        clubId={clubId}
+        equipmentAccess={equipmentAccess}
+        onAccessChanged={onAccessChanged}
+      />
     </div>
   )
 }

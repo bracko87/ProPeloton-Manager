@@ -304,24 +304,125 @@ function resolveSnapshotGroups(
     sourceById.set(groupId, source)
   }
 
-  const seen = new Set<string>()
-  const ordered = snapshot.groupOrder.map((groupId) => {
-    if (seen.has(groupId)) {
-      fail(`snapshot ${snapshotIndex} repeats group ${groupId} in groupOrder.`)
-    }
-    const source = sourceById.get(groupId)
-    if (!source) {
-      fail(`snapshot ${snapshotIndex} groupOrder references unknown group ${groupId}.`)
-    }
-    seen.add(groupId)
-    return { source, groupId, groupType: getGroupType(source) }
-  })
+  const seen =
+    new Set<string>()
 
-  if (ordered.length !== sourceById.size) {
-    fail(`snapshot ${snapshotIndex} groupOrder must contain every group exactly once.`)
+  const sourceOrderIndexByGroupId =
+    new Map<string, number>()
+
+  const resolved =
+    snapshot.groupOrder.map(
+      (
+        groupId,
+        sourceOrderIndex,
+      ) => {
+        if (
+          seen.has(
+            groupId,
+          )
+        ) {
+          fail(
+            `snapshot ${snapshotIndex} repeats group ${groupId} in groupOrder.`,
+          )
+        }
+
+        const source =
+          sourceById.get(
+            groupId,
+          )
+
+        if (
+          !source
+        ) {
+          fail(
+            `snapshot ${snapshotIndex} groupOrder references unknown group ${groupId}.`,
+          )
+        }
+
+        seen.add(
+          groupId,
+        )
+
+        sourceOrderIndexByGroupId.set(
+          groupId,
+          sourceOrderIndex,
+        )
+
+        return {
+          source,
+          groupId,
+          groupType:
+            getGroupType(
+              source,
+            ),
+        }
+      },
+    )
+
+  if (
+    resolved.length !==
+    sourceById.size
+  ) {
+    fail(
+      `snapshot ${snapshotIndex} groupOrder must contain every group exactly once.`,
+    )
   }
 
-  return ordered
+  /*
+   * Replay presentation order is derived from the authoritative leader gaps.
+   *
+   * Source groupOrder remains a deterministic tie-breaker when two groups have
+   * the same gap, such as inactive groups parked on the group that absorbed
+   * them.
+   */
+  return resolved
+    .slice()
+    .sort(
+      (
+        left,
+        right,
+      ) => {
+        const gapDifference =
+          left.source
+            .gapFromLeaderSeconds -
+          right.source
+            .gapFromLeaderSeconds
+
+        if (
+          Math.abs(
+            gapDifference,
+          ) >
+          0.001
+        ) {
+          return gapDifference
+        }
+
+        const distanceDifference =
+          right.source
+            .distanceKm -
+          left.source
+            .distanceKm
+
+        if (
+          Math.abs(
+            distanceDifference,
+          ) >
+          0.000001
+        ) {
+          return distanceDifference
+        }
+
+        return (
+          sourceOrderIndexByGroupId.get(
+            left.groupId,
+          ) ?? 0
+        ) - (
+          sourceOrderIndexByGroupId.get(
+            right.groupId,
+          ) ?? 0
+        )
+      },
+    )
 }
 
 function validateRiderCoverage(

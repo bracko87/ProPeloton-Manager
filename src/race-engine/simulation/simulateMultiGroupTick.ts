@@ -5,17 +5,30 @@
  * tick.
  *
  * The orchestration order is:
- * 1. calculate movement proposals
- * 2. apply group and rider movement
- * 3. apply rider energy costs
- * 4. detect finish candidates
- * 5. apply finishes when candidates exist
+ * 1. apply eligible pre-race order lifecycle transitions
+ * 2. apply executed tactical order effects
+ * 3. calculate movement proposals
+ * 4. apply group and rider movement
+ * 5. apply rider energy costs
+ * 6. reconcile breakaway groups
+ * 7. detect finish candidates
+ * 8. apply finishes when candidates exist
  *
  * This utility does not read or write Supabase, schedule work, persist output,
  * or activate any production runtime.
  */
 
-import type { SimulationState } from '../domain/SimulationState'
+import type {
+  SimulationState,
+} from '../domain/SimulationState'
+import {
+  applyEligibleTeamOrders,
+  type ApplyEligibleTeamOrdersResult,
+} from './applyEligibleTeamOrders'
+import {
+  applyExecutedTeamOrderEffects,
+  type ApplyExecutedTeamOrderEffectsResult,
+} from './applyExecutedTeamOrderEffects'
 import {
   applyMultiGroupEnergy,
   type ApplyMultiGroupEnergyResult,
@@ -36,17 +49,47 @@ import {
   calculateMultiGroupMovement,
   type MultiGroupMovementResult,
 } from './multiGroupMovement'
+import {
+  reconcileBreakawayGroups,
+  type ReconcileBreakawayGroupsResult,
+} from './reconcileBreakawayGroups'
 
 export interface SimulateMultiGroupTickResult {
-  readonly previousState: SimulationState
-  readonly movement: MultiGroupMovementResult
-  readonly appliedMovement: ApplyMultiGroupMovementResult
-  readonly appliedEnergy: ApplyMultiGroupEnergyResult
-  readonly finishDetection: MultiGroupFinishCandidateResult
-  readonly appliedFinish: ApplyMultiGroupFinishResult | null
-  readonly state: SimulationState
-  readonly finishedRiderIds: readonly string[]
-  readonly completedThisTick: boolean
+  readonly previousState:
+    SimulationState
+
+  readonly appliedOrders:
+    ApplyEligibleTeamOrdersResult
+
+  readonly appliedOrderEffects:
+    ApplyExecutedTeamOrderEffectsResult
+
+  readonly movement:
+    MultiGroupMovementResult
+
+  readonly appliedMovement:
+    ApplyMultiGroupMovementResult
+
+  readonly appliedEnergy:
+    ApplyMultiGroupEnergyResult
+
+  readonly reconciledBreakaways:
+    ReconcileBreakawayGroupsResult
+
+  readonly finishDetection:
+    MultiGroupFinishCandidateResult
+
+  readonly appliedFinish:
+    ApplyMultiGroupFinishResult | null
+
+  readonly state:
+    SimulationState
+
+  readonly finishedRiderIds:
+    readonly string[]
+
+  readonly completedThisTick:
+    boolean
 }
 
 /**
@@ -61,53 +104,84 @@ export function simulateMultiGroupTick(
     )
   }
 
+  const appliedOrders =
+    applyEligibleTeamOrders(
+      state,
+    )
+
+  const appliedOrderEffects =
+    applyExecutedTeamOrderEffects(
+      appliedOrders.state,
+      appliedOrders.executedOrders,
+    )
+
   const movement =
-    calculateMultiGroupMovement(state)
+    calculateMultiGroupMovement(
+      appliedOrderEffects.state,
+    )
 
   const appliedMovement =
     applyMultiGroupMovement({
-      state,
+      state:
+        appliedOrderEffects.state,
       movement,
     })
 
   const appliedEnergy =
     applyMultiGroupEnergy({
-      state: appliedMovement.state,
+      state:
+        appliedMovement.state,
       movement,
     })
 
-  const finishDetection =
-    detectMultiGroupFinishCandidates(
+  const reconciledBreakaways =
+    reconcileBreakawayGroups(
       appliedEnergy.state,
     )
 
+  const finishDetection =
+    detectMultiGroupFinishCandidates(
+      reconciledBreakaways.state,
+    )
+
   const appliedFinish =
-    finishDetection.candidates.length > 0
+    finishDetection.candidates.length >
+    0
       ? applyMultiGroupFinish({
-          state: appliedEnergy.state,
-          detection: finishDetection,
+          state:
+            reconciledBreakaways.state,
+          detection:
+            finishDetection,
         })
       : null
 
   const nextState =
     appliedFinish
       ? appliedFinish.state
-      : appliedEnergy.state
+      : reconciledBreakaways.state
 
   return {
-    previousState: state,
+    previousState:
+      state,
+    appliedOrders,
+    appliedOrderEffects,
     movement,
     appliedMovement,
     appliedEnergy,
+    reconciledBreakaways,
     finishDetection,
     appliedFinish,
-    state: nextState,
+    state:
+      nextState,
     finishedRiderIds:
       appliedFinish
-        ? appliedFinish.newlyFinishedRiderIds.slice()
+        ? appliedFinish
+            .newlyFinishedRiderIds
+            .slice()
         : [],
     completedThisTick:
-      appliedFinish?.completedThisApplication ??
+      appliedFinish
+        ?.completedThisApplication ??
       false,
   }
 }

@@ -513,7 +513,6 @@ export default function SquadPage() {
 
       setGameDate(normalizedGameDate)
 
-      const devStatusPromise = supabase.rpc('get_developing_team_status')
       const developingClubFallbackPromise = supabase
         .from('clubs')
         .select('id')
@@ -523,6 +522,7 @@ export default function SquadPage() {
         .order('created_at', { ascending: true })
         .limit(1)
         .maybeSingle()
+
       const clubPromise = supabase
         .from('clubs')
         .select('id')
@@ -530,33 +530,43 @@ export default function SquadPage() {
         .eq('club_type', 'main')
         .single()
 
-      void Promise.all([devStatusPromise, developingClubFallbackPromise]).then(
-        ([
-          { data: devStatusData, error: devStatusErr },
-          { data: fallbackDevelopingClub, error: fallbackDevelopingClubErr },
-        ]) => {
-          const fallbackTeamExists = Boolean(fallbackDevelopingClub?.id)
-          setDevelopingTeamExistsFallback(fallbackTeamExists)
-
+      // Developing Team existence is independent from the status RPC.
+      // This keeps the navigation available even when movement-window reporting
+      // is temporarily unavailable.
+      void developingClubFallbackPromise.then(
+        ({ data: fallbackDevelopingClub, error: fallbackDevelopingClubErr }) => {
           if (fallbackDevelopingClubErr) {
             console.warn(
               'Could not verify Developing Team directly from clubs:',
               fallbackDevelopingClubErr
             )
+            return
           }
 
+          setDevelopingTeamExistsFallback(Boolean(fallbackDevelopingClub?.id))
+        }
+      )
+
+      // Movement-window details are optional page metadata. Never let this
+      // request block the squad page or Developing Team navigation.
+      void (async () => {
+        let timeoutId: ReturnType<typeof setTimeout> | null = null
+
+        try {
+          const timeoutPromise = new Promise<never>((_, reject) => {
+            timeoutId = setTimeout(() => {
+              reject(new Error('Developing Team status request timed out.'))
+            }, 2500)
+          })
+
+          const { data: devStatusData, error: devStatusErr } =
+            await Promise.race([
+              supabase.rpc('get_developing_team_status'),
+              timeoutPromise,
+            ])
+
           if (devStatusErr) {
-            console.error('get_developing_team_status failed:', devStatusErr)
-            setDevelopingTeamStatus(null)
-
-            if (fallbackTeamExists) {
-              setDevelopingTeamStatusError(null)
-              return
-            }
-
-            setDevelopingTeamStatusError(
-              devStatusErr.message ?? 'Could not load Developing Team status.'
-            )
+            console.warn('get_developing_team_status failed:', devStatusErr)
             return
           }
 
@@ -567,8 +577,16 @@ export default function SquadPage() {
           setDevelopingTeamStatus(
             (normalizedDevStatus ?? null) as DevelopingTeamStatus | null
           )
+          setDevelopingTeamStatusError(null)
+        } catch (statusError) {
+          console.warn(
+            'Developing Team status was not available in time:',
+            statusError
+          )
+        } finally {
+          if (timeoutId) clearTimeout(timeoutId)
         }
-      )
+      })()
 
       const { data: club, error: clubErr } = await clubPromise
 
@@ -953,8 +971,10 @@ export default function SquadPage() {
   const movementWindowSummary = developingTeamStatus
     ? developingTeamStatus.movement_window_open
       ? `Movement window open now: ${developingTeamStatus.current_window_label ?? 'Current window'}`
-      : `Movement window closed. Next window: ${developingTeamStatus.next_window_label ?? 'Unknown'}`
-    : 'Movement window information unavailable.'
+      : developingTeamStatus.next_window_label
+        ? `Movement window closed. Next window: ${developingTeamStatus.next_window_label}`
+        : ''
+    : ''
 
   return (
     <div className="w-full">
@@ -989,18 +1009,20 @@ export default function SquadPage() {
             >
               Developing Team
             </a>
-          ) : showDevelopingTeamLockedState ? (
+          ) : (
             <span
-              className="inline-flex cursor-not-allowed items-center gap-2 rounded-md px-4 py-2 text-sm font-medium text-gray-400"
-              title="Unlock Developing Team in Preferences first."
+              className="inline-flex cursor-not-allowed select-none items-center gap-2 rounded-md bg-gray-50 px-4 py-2 text-sm font-medium text-gray-400 opacity-80"
+              title={
+                developingTeamStatusError
+                  ? 'Developing Team is currently unavailable.'
+                  : 'Unlock Developing Team in Preferences first.'
+              }
               aria-disabled="true"
+              role="link"
+              tabIndex={-1}
             >
               <span>Developing Team</span>
               <span aria-hidden="true">🔒</span>
-            </span>
-          ) : (
-            <span className="inline-flex items-center rounded-md px-4 py-2 text-sm font-medium text-gray-500">
-              Developing Team
             </span>
           )}
 

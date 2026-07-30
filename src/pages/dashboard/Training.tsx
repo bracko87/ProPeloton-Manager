@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useEffect, useMemo, useRef, useState } from 'react'
-import { useNavigate, useSearchParams } from 'react-router'
+import { Link, useNavigate, useSearchParams } from 'react-router'
 import { supabase } from '../../lib/supabase'
 import TutorialOverlay from '../../components/tutorial/TutorialOverlay'
 import HeadCoachTrainingPanel, {
@@ -348,6 +348,24 @@ function renderStars(count: number): string {
 function toArray<T>(value: T | T[] | null | undefined): T[] {
   if (value == null) return []
   return Array.isArray(value) ? value : [value]
+}
+
+function resolvePremiumStatus(data: unknown): boolean {
+  const firstRow = Array.isArray(data) ? data[0] : data
+  const row =
+    firstRow && typeof firstRow === 'object' && !Array.isArray(firstRow)
+      ? (firstRow as Record<string, unknown>)
+      : {}
+
+  const possibleValues = [
+    row.is_premium,
+    row.premium_active,
+    row.is_active,
+    row.active,
+    row.has_premium
+  ]
+
+  return possibleValues.some(value => value === true || value === 'true' || value === 1)
 }
 
 function titleCaseFromSnake(value: string | null | undefined): string {
@@ -1093,6 +1111,8 @@ export default function TrainingPage(): JSX.Element {
 
   const [activeTab, setActiveTab] = useState<TabKey>('regular')
   const [loading, setLoading] = useState(true)
+  const [isPremium, setIsPremium] = useState(false)
+  const [premiumStatusLoading, setPremiumStatusLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   const [clubId, setClubId] = useState<string | null>(null)
@@ -1700,6 +1720,48 @@ export default function TrainingPage(): JSX.Element {
   }
 
   useEffect(() => {
+    let alive = true
+
+    async function loadPremiumStatus(): Promise<void> {
+      setPremiumStatusLoading(true)
+
+      const { data, error: premiumError } = await supabase.rpc('get_my_premium_status')
+
+      if (!alive) return
+
+      if (premiumError) {
+        setIsPremium(false)
+      } else {
+        setIsPremium(resolvePremiumStatus(data))
+      }
+
+      setPremiumStatusLoading(false)
+    }
+
+    void loadPremiumStatus()
+
+    function handlePremiumStatusChanged(): void {
+      void loadPremiumStatus()
+    }
+
+    window.addEventListener('premium-status-changed', handlePremiumStatusChanged)
+
+    return () => {
+      alive = false
+      window.removeEventListener('premium-status-changed', handlePremiumStatusChanged)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!isPremium && !premiumStatusLoading) {
+      setHeadCoachAutomation({
+        enabledByClubId: {},
+        todayPlanByRiderId: {}
+      })
+    }
+  }, [isPremium, premiumStatusLoading])
+
+  useEffect(() => {
     if (focusedRiderId) {
       setActiveTab('regular')
     }
@@ -2258,8 +2320,8 @@ export default function TrainingPage(): JSX.Element {
         club_id: row.club_id,
         focus_code: row.focus_code,
         intensity: normalizedIntensity,
-        is_active: row.is_active,
-        auto_when_free: row.auto_when_free,
+        is_active: true,
+        auto_when_free: true,
         preferred_days: row.preferred_days
       }
 
@@ -2855,14 +2917,48 @@ export default function TrainingPage(): JSX.Element {
 
       {activeTab === 'regular' ? (
         <div className="space-y-6">
-          <HeadCoachTrainingPanel
-            familyClubs={familyClubs}
-            roster={roster}
-            currentGameDate={currentGameDate}
-            onMessage={setRegularMessage}
-            onError={setError}
-            onAutomationStateChange={setHeadCoachAutomation}
-          />
+          {premiumStatusLoading ? (
+            <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+              <div className="text-sm text-slate-500">Checking Premium access…</div>
+            </div>
+          ) : isPremium ? (
+            <HeadCoachTrainingPanel
+              familyClubs={familyClubs}
+              roster={roster}
+              currentGameDate={currentGameDate}
+              onMessage={setRegularMessage}
+              onError={setError}
+              onAutomationStateChange={setHeadCoachAutomation}
+            />
+          ) : (
+            <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h3 className="text-lg font-semibold text-slate-900">
+                      Head Coach Training Automation
+                    </h3>
+                    <span className="rounded-full border border-yellow-300 bg-yellow-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-yellow-800">
+                      Premium
+                    </span>
+                    <span aria-hidden="true" className="text-sm text-slate-500">
+                      🔒
+                    </span>
+                  </div>
+                  <p className="mt-1 max-w-3xl text-sm leading-6 text-slate-600">
+                    Let your Head Coach maintain a rolling three-day training plan. You keep full manual control through Team Defaults and Rider Overrides below.
+                  </p>
+                </div>
+
+                <Link
+                  to="/dashboard/premium"
+                  className="inline-flex shrink-0 items-center justify-center rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-800 transition hover:border-yellow-400 hover:bg-yellow-50"
+                >
+                  Unlock with Premium
+                </Link>
+              </div>
+            </div>
+          )}
 
           <div className="grid gap-4 md:grid-cols-5">
             <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
@@ -3074,11 +3170,19 @@ export default function TrainingPage(): JSX.Element {
             ) : null}
           </div>
 
+          {isPremium && regularTrainingSummary.headCoachManagedCount > 0 ? (
+            <div className="rounded-xl border border-yellow-200 bg-yellow-50 px-4 py-3 text-sm text-yellow-800 shadow-sm">
+              Saving changes for a Head Coach-managed rider applies only to the current game day. Head Coach control resumes automatically on the next game day.
+            </div>
+          ) : null}
+
           <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
             <div className="mb-4">
               <h3 className="text-lg font-semibold text-gray-900">Rider Overrides</h3>
               <p className="mt-1 text-sm text-gray-600">
-                Head Coach assignments appear here as today's effective training. Editing a coach-managed rider creates a one-day override; the coach resumes next game day.
+                {isPremium
+                  ? "Head Coach assignments appear here as today's effective training. Editing a coach-managed rider creates a one-day override; the coach resumes next game day."
+                  : 'Set individual training here. Manual rider controls and Team Defaults remain fully available without Premium.'}
               </p>
             </div>
 
@@ -3111,9 +3215,12 @@ export default function TrainingPage(): JSX.Element {
                     <div className="grid gap-4 xl:grid-cols-[1.3fr_1fr_auto]">
                       <div>
                         <div className="flex flex-wrap items-center gap-2">
-                          <div className="text-base font-semibold text-gray-900">
+                          <Link
+                            to={`/dashboard/my-riders/${rider.rider_id}`}
+                            className="text-base font-semibold text-gray-900 underline-offset-2 hover:text-blue-700 hover:underline"
+                          >
                             {getFullRiderName(rider)}
-                          </div>
+                          </Link>
 
                           {isFocusedRider ? (
                             <span className="rounded-full bg-blue-100 px-2 py-0.5 text-[11px] font-medium text-blue-700">
@@ -3242,39 +3349,6 @@ export default function TrainingPage(): JSX.Element {
                           ) : null}
                         </div>
 
-                        {coachEnabled ? (
-                          <div className="rounded-lg border border-yellow-200 bg-yellow-50 px-3 py-2 text-xs text-yellow-800">
-                            Saving changes applies only to the current game day. Head Coach control resumes automatically on the next game day.
-                          </div>
-                        ) : (
-                          <>
-                            <label className="flex items-center gap-2 text-sm text-gray-700">
-                              <input
-                                type="checkbox"
-                                checked={draft.is_active}
-                                onChange={event =>
-                                  updateRegularPlanDraft(rider, {
-                                    is_active: event.target.checked
-                                  })
-                                }
-                              />
-                              Override active
-                            </label>
-
-                            <label className="flex items-center gap-2 text-sm text-gray-700">
-                              <input
-                                type="checkbox"
-                                checked={draft.auto_when_free}
-                                onChange={event =>
-                                  updateRegularPlanDraft(rider, {
-                                    auto_when_free: event.target.checked
-                                  })
-                                }
-                              />
-                              Auto when free
-                            </label>
-                          </>
-                        )}
                       </div>
 
                       <div className="flex flex-col gap-2 xl:items-end">
@@ -3308,6 +3382,15 @@ export default function TrainingPage(): JSX.Element {
                             ? 'Clear Today Override'
                             : 'Clear Override'}
                         </button>
+
+                        {isPremium ? (
+                          <Link
+                            to={`/dashboard/my-riders/${rider.rider_id}?tab=analysis#training-and-skill-development`}
+                            className="inline-flex items-center justify-center rounded-lg border border-slate-300 bg-white px-4 py-2 text-center text-sm font-semibold text-slate-800 transition hover:border-yellow-400 hover:bg-yellow-50"
+                          >
+                            Training Development
+                          </Link>
+                        ) : null}
                       </div>
                     </div>
                   </div>

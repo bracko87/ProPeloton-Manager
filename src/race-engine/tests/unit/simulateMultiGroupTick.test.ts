@@ -143,6 +143,100 @@ const stageInput: StageInput = {
   orders: [],
 }
 
+const orderedStageInput:
+  StageInput = {
+    ...stageInput,
+    orders: [
+      {
+        orderId:
+          'order-rider-a1-attack',
+        teamId:
+          'team-a',
+        riderId:
+          'rider-a1',
+        type:
+          'attack',
+        status:
+          'scheduled',
+        eligibleFromKm:
+          0.2,
+        eligibleUntilKm:
+          0.8,
+        priority:
+          100,
+        targetRiderId:
+          null,
+        maximumFollowers:
+          null,
+        metadata: {
+          source:
+            'simulateMultiGroupTick.test',
+          phase:
+            'phase_2',
+        },
+      },
+    ],
+  }
+
+const conflictingOrdersStageInput:
+  StageInput = {
+    ...stageInput,
+    orders: [
+      {
+        orderId:
+          'order-low-priority',
+        teamId:
+          'team-a',
+        riderId:
+          'rider-a1',
+        type:
+          'hold_position',
+        status:
+          'scheduled',
+        eligibleFromKm:
+          0.1,
+        eligibleUntilKm:
+          0.9,
+        priority:
+          10,
+        targetRiderId:
+          null,
+        maximumFollowers:
+          null,
+        metadata: {
+          source:
+            'simulateMultiGroupTick.test',
+        },
+      },
+      {
+        orderId:
+          'order-high-priority',
+        teamId:
+          'team-a',
+        riderId:
+          'rider-a1',
+        type:
+          'attack',
+        status:
+          'scheduled',
+        eligibleFromKm:
+          0.2,
+        eligibleUntilKm:
+          0.8,
+        priority:
+          100,
+        targetRiderId:
+          null,
+        maximumFollowers:
+          null,
+        metadata: {
+          source:
+            'simulateMultiGroupTick.test',
+        },
+      },
+    ],
+  }
+
 function createSeparatedState() {
   return createDroppedGroup({
     state:
@@ -157,6 +251,92 @@ function createSeparatedState() {
     ],
     speedKmh: 34,
   }).state
+}
+
+function createOrderedState(
+  currentKm: number,
+) {
+  const state =
+    createInitialState(
+      orderedStageInput,
+    )
+
+  return {
+    ...state,
+    currentKm,
+    groups: {
+      ...state.groups,
+      peloton_main: {
+        ...state.groups
+          .peloton_main,
+        distanceKm:
+          currentKm,
+      },
+    },
+    riders:
+      Object.fromEntries(
+        Object.entries(
+          state.riders,
+        ).map(
+          (
+            [
+              riderId,
+              rider,
+            ],
+          ) => [
+            riderId,
+            {
+              ...rider,
+              distanceKm:
+                currentKm,
+            },
+          ],
+        ),
+      ),
+  }
+}
+
+function createConflictingOrdersState(
+  currentKm: number,
+) {
+  const state =
+    createInitialState(
+      conflictingOrdersStageInput,
+    )
+
+  return {
+    ...state,
+    currentKm,
+    groups: {
+      ...state.groups,
+      peloton_main: {
+        ...state.groups
+          .peloton_main,
+        distanceKm:
+          currentKm,
+      },
+    },
+    riders:
+      Object.fromEntries(
+        Object.entries(
+          state.riders,
+        ).map(
+          (
+            [
+              riderId,
+              rider,
+            ],
+          ) => [
+            riderId,
+            {
+              ...rider,
+              distanceKm:
+                currentKm,
+            },
+          ],
+        ),
+      ),
+  }
 }
 
 describe(
@@ -255,7 +435,7 @@ describe(
             peloton_main: {
               ...separatedState
                 .groups.peloton_main,
-              distanceKm: 0.8,
+              distanceKm: 0.5,
             },
           },
           riders: {
@@ -273,12 +453,12 @@ describe(
             'rider-a1': {
               ...separatedState
                 .riders['rider-a1'],
-              distanceKm: 0.8,
+              distanceKm: 0.5,
             },
             'rider-b1': {
               ...separatedState
                 .riders['rider-b1'],
-              distanceKm: 0.8,
+              distanceKm: 0.5,
             },
           },
         }
@@ -353,6 +533,416 @@ describe(
         expect(resultA).toStrictEqual(
           resultB,
         )
+      },
+    )
+
+    it(
+      'does not execute an order before its eligible kilometre',
+      () => {
+        const state =
+          createOrderedState(
+            0.1,
+          )
+
+        const result =
+          simulateMultiGroupTick(
+            state,
+          )
+
+        expect(
+          result.appliedOrders
+            .executedOrders,
+        ).toStrictEqual([])
+
+        expect(
+          result.state.orders[
+            'order-rider-a1-attack'
+          ].status,
+        ).toBe(
+          'scheduled',
+        )
+
+        expect(
+          result.state.events
+            .filter(
+              (event) =>
+                event.eventType ===
+                'ORDER_EXECUTED',
+            ),
+        ).toStrictEqual([])
+      },
+    )
+
+    it(
+      'executes an eligible order exactly once',
+      () => {
+        const state =
+          createOrderedState(
+            0.2,
+          )
+
+        const firstResult =
+          simulateMultiGroupTick(
+            state,
+          )
+
+        expect(
+          firstResult
+            .appliedOrders
+            .executedOrders
+            .map(
+              (order) =>
+                order.orderId,
+            ),
+        ).toStrictEqual([
+          'order-rider-a1-attack',
+        ])
+
+        expect(
+          firstResult.state.orders[
+            'order-rider-a1-attack'
+          ].status,
+        ).toBe(
+          'executed',
+        )
+
+        expect(
+          firstResult.state.orders[
+            'order-rider-a1-attack'
+          ].executionRaceSecond,
+        ).toBe(
+          state.raceSecond,
+        )
+
+        expect(
+          firstResult.state.teams[
+            'team-a'
+          ].activeOrderIds,
+        ).not.toContain(
+          'order-rider-a1-attack',
+        )
+
+        expect(
+          firstResult.state.riders[
+            'rider-a1'
+          ].acceptedOrderIds,
+        ).toContain(
+          'order-rider-a1-attack',
+        )
+
+        const firstExecutionEvents =
+          firstResult.state.events
+            .filter(
+              (event) =>
+                event.eventType ===
+                'ORDER_EXECUTED',
+            )
+
+        expect(
+          firstExecutionEvents,
+        ).toHaveLength(1)
+
+        expect(
+          firstExecutionEvents[0]
+            .payload.orderId,
+        ).toBe(
+          'order-rider-a1-attack',
+        )
+
+        const secondResult =
+          simulateMultiGroupTick(
+            firstResult.state,
+          )
+
+        expect(
+          secondResult
+            .appliedOrders
+            .executedOrders,
+        ).toStrictEqual([])
+
+        expect(
+          secondResult.state.events
+            .filter(
+              (event) =>
+                event.eventType ===
+                'ORDER_EXECUTED',
+            ),
+        ).toHaveLength(1)
+      },
+    )
+
+    it(
+      'creates and moves a breakaway for an eligible attack order',
+      () => {
+        const state =
+          createOrderedState(
+            0.2,
+          )
+
+        const result =
+          simulateMultiGroupTick(
+            state,
+          )
+
+        expect(
+          result
+            .appliedOrderEffects
+            .attackEffects,
+        ).toHaveLength(
+          1,
+        )
+
+        expect(
+          result
+            .appliedOrderEffects
+            .attackEffects[0]
+            .order.orderId,
+        ).toBe(
+          'order-rider-a1-attack',
+        )
+
+        expect(
+          result
+            .appliedOrderEffects
+            .attackEffects[0]
+            .separation
+            .breakawayGroupId,
+        ).toBe(
+          'breakaway_1',
+        )
+
+        expect(
+          result
+            .appliedOrderEffects
+            .state.groups[
+              'breakaway_1'
+            ].distanceKm,
+        ).toBe(
+          0.2555555555555556,
+        )
+
+        expect(
+          result.movement.proposals
+            .map(
+              (proposal) =>
+                proposal.groupId,
+            ),
+        ).toContain(
+          'breakaway_1',
+        )
+
+        expect(
+          result.state.groups[
+            'breakaway_1'
+          ].distanceKm,
+        ).toBeGreaterThan(
+          result
+            .appliedOrderEffects
+            .state.groups[
+              'breakaway_1'
+            ].distanceKm,
+        )
+
+        expect(
+          result.state.riders[
+            'rider-a1'
+          ].currentGroupId,
+        ).toBe(
+          'breakaway_1',
+        )
+
+        expect(
+          result.state.groups
+            .peloton_main
+            .riderIds,
+        ).not.toContain(
+          'rider-a1',
+        )
+
+        expect(
+          result.state.events
+            .filter(
+              (event) =>
+                event.eventType ===
+                'ATTACK_STARTED',
+            ),
+        ).toHaveLength(
+          1,
+        )
+
+        expect(
+          result.state.events
+            .filter(
+              (event) =>
+                event.eventType ===
+                'GROUP_CREATED',
+            ),
+        ).toHaveLength(
+          1,
+        )
+
+        const nextResult =
+          simulateMultiGroupTick(
+            result.state,
+          )
+
+        expect(
+          nextResult
+            .appliedOrderEffects
+            .attackEffects,
+        ).toStrictEqual([])
+
+        expect(
+          nextResult.state.groups[
+            'breakaway_2'
+          ],
+        ).toBeUndefined()
+
+        expect(
+          nextResult.state.events
+            .filter(
+              (event) =>
+                event.eventType ===
+                'ATTACK_STARTED',
+            ),
+        ).toHaveLength(
+          1,
+        )
+      },
+    )
+
+    it(
+      'does not execute an order at its exclusive upper kilometre boundary',
+      () => {
+        const state =
+          createOrderedState(
+            0.8,
+          )
+
+        const result =
+          simulateMultiGroupTick(
+            state,
+          )
+
+        expect(
+          result.appliedOrders
+            .executedOrders,
+        ).toStrictEqual([])
+
+        expect(
+          result.state.orders[
+            'order-rider-a1-attack'
+          ].status,
+        ).toBe(
+          'scheduled',
+        )
+      },
+    )
+
+    it(
+      'keeps order lifecycle application deterministic',
+      () => {
+        const state =
+          createOrderedState(
+            0.4,
+          )
+
+        const resultA =
+          simulateMultiGroupTick(
+            state,
+          )
+
+        const resultB =
+          simulateMultiGroupTick(
+            state,
+          )
+
+        expect(
+          resultA.appliedOrders,
+        ).toStrictEqual(
+          resultB.appliedOrders,
+        )
+
+        expect(
+          resultA.state.orders,
+        ).toStrictEqual(
+          resultB.state.orders,
+        )
+      },
+    )
+
+    it(
+      'selects the highest-priority eligible order for a rider',
+      () => {
+        const state =
+          createConflictingOrdersState(
+            0.4,
+          )
+
+        const result =
+          simulateMultiGroupTick(
+            state,
+          )
+
+        expect(
+          result.appliedOrders
+            .selection
+            .eligibleOrderIds,
+        ).toStrictEqual([
+          'order-high-priority',
+          'order-low-priority',
+        ])
+
+        expect(
+          result.appliedOrders
+            .selection
+            .selectedOrders
+            .map(
+              (order) =>
+                order.orderId,
+            ),
+        ).toStrictEqual([
+          'order-high-priority',
+        ])
+
+        expect(
+          result.appliedOrders
+            .selection
+            .ignoredOrderIds,
+        ).toStrictEqual([
+          'order-low-priority',
+        ])
+
+        expect(
+          result.state.orders[
+            'order-high-priority'
+          ].status,
+        ).toBe(
+          'executed',
+        )
+
+        expect(
+          result.state.orders[
+            'order-low-priority'
+          ].status,
+        ).toBe(
+          'scheduled',
+        )
+
+        expect(
+          result.state.events
+            .filter(
+              (event) =>
+                event.eventType ===
+                'ORDER_EXECUTED',
+            )
+            .map(
+              (event) =>
+                event.payload.orderId,
+            ),
+        ).toStrictEqual([
+          'order-high-priority',
+        ])
       },
     )
 

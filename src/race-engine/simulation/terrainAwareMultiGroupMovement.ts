@@ -3,9 +3,17 @@
  *
  * Pure deterministic candidate multi-group movement using groupTerrainPace.
  *
- * This is an inactive diagnostic alternative to calculateMultiGroupMovement().
- * It does not mutate SimulationState, create events, apply energy, finish
- * riders, or activate production execution.
+ * This is the terrain-aware movement calculator used by the calibrated
+ * deterministic runner.
+ *
+ * It does not mutate SimulationState, create events, apply rider energy,
+ * finish riders, or persist production output.
+ *
+ * When the calibrated wrapper enables weather performance, the final
+ * terrain-aware applied speed is multiplied directly by the canonical weather
+ * speed multiplier. The terrain pace calculation, steep-gradient severity,
+ * group-type handling, physical gap ordering, and finish-gap semantics remain
+ * unchanged. A multiplier of exactly 1 preserves the original speed value.
  */
 
 import type {
@@ -31,6 +39,12 @@ import {
 import {
   calculateWeatherPerformanceEffects,
 } from './weatherPerformanceEffects'
+import type {
+  SteepGradientSeverityModel,
+} from './steepGradientTerrainSeverity'
+
+export const TERRAIN_AWARE_MULTI_GROUP_MOVEMENT_VERSION =
+  'phase_8g5c_latest_weather_direct_v1'
 
 export interface TerrainAwareGroupMovementDiagnostic {
   readonly groupId: string
@@ -43,6 +57,16 @@ export interface TerrainAwareMultiGroupMovementResult {
     MultiGroupMovementResult
   readonly groupDiagnostics:
     readonly TerrainAwareGroupMovementDiagnostic[]
+}
+
+export interface TerrainAwareMultiGroupMovementOptions {
+  /**
+   * Disabled by default. When disabled, movement remains exactly equivalent to
+   * the existing Phase 7B.7 terrain-aware calculation.
+   */
+  readonly steepGradientSeverityEnabled?: boolean
+  readonly steepGradientSeverityModel?:
+    SteepGradientSeverityModel
 }
 
 function getRacingGroupRiders(
@@ -91,10 +115,23 @@ function getRacingGroupRiders(
 
 /**
  * Calculates one candidate movement proposal for every active group.
+ *
+ * Physical replay-gap semantics:
+ * - every active group in the same tick uses one common reference speed;
+ * - groups ordered by distance therefore have non-decreasing leader gaps;
+ * - after a winner exists, elapsed time since the winner is added equally to
+ *   every remaining active group.
+ *
+ * Using each trailing group's own speed after the winner finished produced
+ * predicted finish deficits rather than physical replay gaps. A closer but
+ * slower group could receive a larger gap than a group physically behind it,
+ * which violated the authoritative replay group-order contract.
  */
 export function calculateTerrainAwareMultiGroupMovement(
   state: SimulationState,
   terrainCapabilityInfluence: number,
+  options:
+    TerrainAwareMultiGroupMovementOptions = {},
 ): TerrainAwareMultiGroupMovementResult {
   if (state.completed) {
     throw new Error(
@@ -127,18 +164,6 @@ export function calculateTerrainAwareMultiGroupMovement(
       : calculateWeatherPerformanceEffects(
           undefined,
         )
-
-  const weatherAdjustedMinimumSpeedKmh =
-    state.input.settings
-      .minimumSpeedKmh *
-    weatherEffects
-      .speedMultiplier
-
-  const weatherAdjustedMaximumSpeedKmh =
-    state.input.settings
-      .maximumSpeedKmh *
-    weatherEffects
-      .speedMultiplier
 
   const activeGroups =
     Object.values(
@@ -194,15 +219,38 @@ export function calculateTerrainAwareMultiGroupMovement(
               terrainSample
                 .gradientPercent,
             minimumSpeedKmh:
-              weatherAdjustedMinimumSpeedKmh,
+              state.input.settings
+                .minimumSpeedKmh,
             maximumSpeedKmh:
-              weatherAdjustedMaximumSpeedKmh,
+              state.input.settings
+                .maximumSpeedKmh,
             terrainCapabilityInfluence,
+            groupType:
+              group.groupType,
+            steepGradientSeverityEnabled:
+              options
+                .steepGradientSeverityEnabled,
+            steepGradientSeverityModel:
+              options
+                .steepGradientSeverityModel,
           })
+
+        const weatherAdjustedAppliedSpeedKmh =
+          weatherEffects
+            .speedMultiplier ===
+            1
+            ? pace.appliedSpeedKmh
+            : Number(
+                (
+                  pace.appliedSpeedKmh *
+                  weatherEffects
+                    .speedMultiplier
+                ).toFixed(6),
+              )
 
         const unclampedNextDistanceKm =
           group.distanceKm +
-          pace.appliedSpeedKmh *
+          weatherAdjustedAppliedSpeedKmh *
             (
               tickSeconds /
               3600
@@ -218,6 +266,7 @@ export function calculateTerrainAwareMultiGroupMovement(
           group,
           terrainSample,
           pace,
+          weatherAdjustedAppliedSpeedKmh,
           nextDistanceKm,
           distanceAdvancedKm:
             nextDistanceKm -
@@ -254,17 +303,51 @@ export function calculateTerrainAwareMultiGroupMovement(
     )
   }
 
-  const leaderDistanceKm =
+  const activeLeaderDistanceKm =
     leaderEntry
       .nextDistanceKm
 
-  const leaderSpeedKmh =
+  const raceLeaderDistanceKm =
+    Math.max(
+      state.currentKm,
+      activeLeaderDistanceKm,
+    )
+
+  const commonGapReferenceSpeedKmh =
     Math.max(
       leaderEntry
-        .pace
-        .appliedSpeedKmh,
+        .weatherAdjustedAppliedSpeedKmh,
       0.000001,
     )
+
+  const finishedLeaderIsAhead =
+    raceLeaderDistanceKm >
+    activeLeaderDistanceKm
+
+  const existingFinishTimes =
+    Object.values(state.riders)
+      .filter(
+        (rider) =>
+          rider.stageStatus ===
+            'finished' &&
+          typeof rider.finishTimeSeconds ===
+            'number',
+      )
+      .map(
+        (rider) =>
+          rider.finishTimeSeconds as number,
+      )
+
+  const winnerFinishTimeSeconds =
+    existingFinishTimes.length > 0
+      ? Math.min(
+          ...existingFinishTimes,
+        )
+      : null
+
+  const predictedRaceSecond =
+    state.raceSecond +
+    tickSeconds
 
   const proposals:
     MultiGroupMovementProposal[] =
@@ -273,18 +356,42 @@ export function calculateTerrainAwareMultiGroupMovement(
         const distanceGapKm =
           Math.max(
             0,
-            leaderDistanceKm -
+            raceLeaderDistanceKm -
               entry.nextDistanceKm,
           )
 
-        const gapFromLeaderSeconds =
+        /*
+         * Use one common speed for every active group in this tick.
+         *
+         * This converts physical distance differences into physical replay
+         * gaps and guarantees that groups ordered by distance also have
+         * non-decreasing gapFromLeaderSeconds values.
+         *
+         * After the winner has finished, elapsedSinceWinnerSeconds is added
+         * equally to all trailing groups below.
+         */
+        const remainingTimeToLeaderSeconds =
           distanceGapKm === 0
             ? 0
             : (
                 distanceGapKm /
-                leaderSpeedKmh
+                commonGapReferenceSpeedKmh
               ) *
               3600
+
+        const elapsedSinceWinnerSeconds =
+          finishedLeaderIsAhead &&
+          winnerFinishTimeSeconds !== null
+            ? Math.max(
+                0,
+                predictedRaceSecond -
+                  winnerFinishTimeSeconds,
+              )
+            : 0
+
+        const gapFromLeaderSeconds =
+          remainingTimeToLeaderSeconds +
+          elapsedSinceWinnerSeconds
 
         return {
           groupId:
@@ -320,8 +427,8 @@ export function calculateTerrainAwareMultiGroupMovement(
             entry.pace
               .terrainMultiplier,
           appliedSpeedKmh:
-            entry.pace
-              .appliedSpeedKmh,
+            entry
+              .weatherAdjustedAppliedSpeedKmh,
           gapFromLeaderSeconds,
           active: true,
         }
@@ -333,7 +440,8 @@ export function calculateTerrainAwareMultiGroupMovement(
       tickSeconds,
       leaderGroupId:
         leaderEntry.group.groupId,
-      leaderDistanceKm,
+      leaderDistanceKm:
+        activeLeaderDistanceKm,
       proposals,
     },
     groupDiagnostics:

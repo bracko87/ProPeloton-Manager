@@ -150,6 +150,24 @@ type SeasonCalendarFilters = {
   holidays: boolean
 }
 
+type PremiumRaceFilters = {
+  countryCode: string
+  category: string
+  raceType: string
+  myRaceStatus: string
+  applicationStatus: string
+  sponsorTargetsOnly: boolean
+}
+
+const DEFAULT_PREMIUM_RACE_FILTERS: PremiumRaceFilters = {
+  countryCode: 'all',
+  category: 'all',
+  raceType: 'all',
+  myRaceStatus: 'all',
+  applicationStatus: 'all',
+  sponsorTargetsOnly: false,
+}
+
 type MonthDayItem = {
   dayNumber: number
   canonicalDate: Date
@@ -574,6 +592,19 @@ function normalizeCountryCode(code: string | null | undefined): string | null {
   return normalized
 }
 
+function getCountryDisplayName(code: string | null | undefined): string {
+  const normalized = normalizeCountryCode(code)
+
+  if (!normalized) return 'Unknown country'
+
+  try {
+    const regionNames = new Intl.DisplayNames(['en'], { type: 'region' })
+    return regionNames.of(normalized) ?? normalized
+  } catch {
+    return normalized
+  }
+}
+
 function getFlagImageUrl(code: string | null | undefined): string | null {
   const normalized = normalizeCountryCode(code)
 
@@ -700,6 +731,34 @@ function getEffectiveRaceCalendarStatus(race: RaceCalendarItem): RaceApplication
   if (raceStatus === 'cancelled') return 'race_cancelled'
 
   return race.existing_application_status ?? race.applications_status
+}
+
+function getBaseRaceCalendarStatus(race: RaceCalendarItem): RaceApplicationStatus | null {
+  const weatherDisplayStatus = getRaceWeatherCancellationDisplayStatus(race)
+  if (weatherDisplayStatus) return weatherDisplayStatus
+
+  const raceStatus = race.status?.toLowerCase() ?? null
+
+  if (raceStatus === 'active') return 'race_active'
+  if (raceStatus === 'completed' || raceStatus === 'archived') return 'race_finished'
+  if (raceStatus === 'cancelled') return 'race_cancelled'
+
+  return race.applications_status
+}
+
+function resolvePremiumStatus(data: unknown): boolean {
+  const firstRow = Array.isArray(data) ? data[0] : data
+  const row = asRecord(firstRow)
+
+  const possibleValues = [
+    row.is_premium,
+    row.premium_active,
+    row.is_active,
+    row.active,
+    row.has_premium,
+  ]
+
+  return possibleValues.some(value => value === true || value === 'true' || value === 1)
 }
 
 function isRaceAcceptedForUser(race: RaceCalendarItem): boolean {
@@ -868,6 +927,49 @@ export default function CalendarPage(): JSX.Element {
     events: false,
     holidays: false
   })
+
+
+  const [isPremium, setIsPremium] = useState(false)
+  const [premiumStatusLoading, setPremiumStatusLoading] = useState(true)
+  const [premiumFiltersOpen, setPremiumFiltersOpen] = useState(false)
+  const [countryFilterMenuOpen, setCountryFilterMenuOpen] = useState(false)
+  const countryFilterMenuRef = useRef<HTMLDivElement | null>(null)
+  const [premiumRaceFilters, setPremiumRaceFilters] = useState<PremiumRaceFilters>(
+    DEFAULT_PREMIUM_RACE_FILTERS
+  )
+
+  useEffect(() => {
+    let alive = true
+
+    async function loadPremiumStatus(): Promise<void> {
+      setPremiumStatusLoading(true)
+
+      const { data, error: premiumError } = await supabase.rpc('get_my_premium_status')
+
+      if (!alive) return
+
+      if (premiumError) {
+        setIsPremium(false)
+      } else {
+        setIsPremium(resolvePremiumStatus(data))
+      }
+
+      setPremiumStatusLoading(false)
+    }
+
+    void loadPremiumStatus()
+
+    function handlePremiumStatusChanged(): void {
+      void loadPremiumStatus()
+    }
+
+    window.addEventListener('premium-status-changed', handlePremiumStatusChanged)
+
+    return () => {
+      alive = false
+      window.removeEventListener('premium-status-changed', handlePremiumStatusChanged)
+    }
+  }, [])
 
   useEffect(() => {
     let cancelled = false
@@ -1380,6 +1482,73 @@ export default function CalendarPage(): JSX.Element {
       })
   }, [seasonRaceEntries, resolvedActiveRaceMonth])
 
+
+  const premiumCountryOptions = useMemo(() => {
+    return Array.from(
+      new Set(
+        activeMonthRaces
+          .map(race => normalizeCountryCode(race.country_code))
+          .filter((code): code is string => Boolean(code))
+      )
+    ).sort((a, b) =>
+      getCountryDisplayName(a).localeCompare(getCountryDisplayName(b))
+    )
+  }, [activeMonthRaces])
+
+  useEffect(() => {
+    if (
+      premiumRaceFilters.countryCode !== 'all' &&
+      !premiumCountryOptions.includes(premiumRaceFilters.countryCode)
+    ) {
+      setPremiumRaceFilters(current => ({
+        ...current,
+        countryCode: 'all',
+      }))
+    }
+  }, [premiumCountryOptions, premiumRaceFilters.countryCode])
+
+  useEffect(() => {
+    function handleDocumentPointerDown(event: MouseEvent): void {
+      if (
+        countryFilterMenuRef.current &&
+        !countryFilterMenuRef.current.contains(event.target as Node)
+      ) {
+        setCountryFilterMenuOpen(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handleDocumentPointerDown)
+
+    return () => {
+      document.removeEventListener('mousedown', handleDocumentPointerDown)
+    }
+  }, [])
+
+  const premiumCategoryOptions = useMemo(() => {
+    return Array.from(
+      new Set(
+        seasonRaceEntries
+          .map(race => race.category?.trim())
+          .filter((category): category is string => Boolean(category))
+      )
+    ).sort((a, b) => a.localeCompare(b, undefined, { numeric: true }))
+  }, [seasonRaceEntries])
+
+  const activePremiumFilterCount = useMemo(() => {
+    if (!isPremium) return 0
+
+    return [
+      premiumRaceFilters.countryCode !== 'all',
+      premiumRaceFilters.category !== 'all',
+      premiumRaceFilters.raceType !== 'all',
+      premiumRaceFilters.myRaceStatus !== 'all',
+      premiumRaceFilters.applicationStatus !== 'all',
+      premiumRaceFilters.sponsorTargetsOnly,
+    ].filter(Boolean).length
+  }, [isPremium, premiumRaceFilters])
+
+
+
   useEffect(() => {
     if (loading) return
 
@@ -1419,6 +1588,63 @@ export default function CalendarPage(): JSX.Element {
     )
   }, [sponsorObjectiveTargets])
 
+
+  const filteredActiveMonthRaces = useMemo(() => {
+    if (!isPremium) return activeMonthRaces
+
+    return activeMonthRaces.filter(race => {
+      if (
+        premiumRaceFilters.countryCode !== 'all' &&
+        normalizeCountryCode(race.country_code) !== premiumRaceFilters.countryCode
+      ) {
+        return false
+      }
+
+      if (
+        premiumRaceFilters.category !== 'all' &&
+        race.category !== premiumRaceFilters.category
+      ) {
+        return false
+      }
+
+      if (
+        premiumRaceFilters.raceType !== 'all' &&
+        race.race_type !== premiumRaceFilters.raceType
+      ) {
+        return false
+      }
+
+      const myRaceStatus = race.existing_application_status?.toLowerCase() ?? 'not_entered'
+      if (
+        premiumRaceFilters.myRaceStatus !== 'all' &&
+        myRaceStatus !== premiumRaceFilters.myRaceStatus
+      ) {
+        return false
+      }
+
+      const applicationStatus = getBaseRaceCalendarStatus(race)?.toLowerCase() ?? 'closed'
+      if (
+        premiumRaceFilters.applicationStatus !== 'all' &&
+        applicationStatus !== premiumRaceFilters.applicationStatus
+      ) {
+        return false
+      }
+
+      if (
+        premiumRaceFilters.sponsorTargetsOnly &&
+        !(sponsorObjectiveTargetsByRaceId[race.id]?.length > 0)
+      ) {
+        return false
+      }
+
+      return true
+    })
+  }, [
+    activeMonthRaces,
+    isPremium,
+    premiumRaceFilters,
+    sponsorObjectiveTargetsByRaceId,
+  ])
   const weekdayHeaders = useMemo(() => {
     return WEEKDAY_NAMES_MONDAY_FIRST
   }, [])
@@ -1454,6 +1680,20 @@ export default function CalendarPage(): JSX.Element {
 
     return [...leadingEmptyCells, ...dayCells, ...trailingEmptyCells]
   }, [monthDays])
+
+  function updatePremiumRaceFilter<K extends keyof PremiumRaceFilters>(
+    key: K,
+    value: PremiumRaceFilters[K]
+  ): void {
+    setPremiumRaceFilters(current => ({
+      ...current,
+      [key]: value,
+    }))
+  }
+
+  function clearPremiumRaceFilters(): void {
+    setPremiumRaceFilters(DEFAULT_PREMIUM_RACE_FILTERS)
+  }
 
   function toggleSeasonFilter(key: keyof SeasonCalendarFilters): void {
     setSeasonFilters(current => ({
@@ -1955,19 +2195,261 @@ export default function CalendarPage(): JSX.Element {
               </div>
             </div>
 
+            <div className="mb-4">
+              <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5">
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-sm font-semibold text-gray-900">Race filters</span>
+                    <span className="rounded-full border border-yellow-300 bg-yellow-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-yellow-800">
+                      Premium
+                    </span>
+                    {isPremium && activePremiumFilterCount > 0 ? (
+                      <span className="text-xs text-gray-500">
+                        {activePremiumFilterCount} active
+                      </span>
+                    ) : null}
+                  </div>
+                  <p className="mt-0.5 text-xs text-gray-500">
+                    Filter this month by country, category, format, status, and sponsor goals.
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  {isPremium && activePremiumFilterCount > 0 ? (
+                    <button
+                      type="button"
+                      onClick={clearPremiumRaceFilters}
+                      className="rounded-md px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-white hover:text-gray-900"
+                    >
+                      Clear
+                    </button>
+                  ) : null}
+
+                  <button
+                    type="button"
+                    onClick={() => setPremiumFiltersOpen(current => !current)}
+                    disabled={premiumStatusLoading}
+                    className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-gray-800 transition hover:border-yellow-400 hover:bg-yellow-50 disabled:cursor-wait disabled:text-gray-400"
+                    aria-expanded={premiumFiltersOpen}
+                  >
+                    {premiumStatusLoading
+                      ? 'Checking Premium…'
+                      : isPremium
+                        ? premiumFiltersOpen
+                          ? 'Hide filters'
+                          : 'Open filters'
+                        : 'Premium Filters 🔒'}
+                  </button>
+                </div>
+              </div>
+
+              {premiumFiltersOpen ? (
+                isPremium ? (
+                  <div className="mt-2 rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+                    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+                      <div
+                        ref={countryFilterMenuRef}
+                        className="relative text-xs font-medium text-gray-600"
+                      >
+                        <div>Country</div>
+                        <button
+                          type="button"
+                          onClick={() => setCountryFilterMenuOpen(current => !current)}
+                          className="mt-1 flex w-full items-center justify-between gap-3 rounded-md border border-gray-200 bg-white px-2.5 py-2 text-left text-sm text-gray-800 transition focus:border-yellow-400 focus:outline-none focus:ring-1 focus:ring-yellow-400"
+                          aria-haspopup="listbox"
+                          aria-expanded={countryFilterMenuOpen}
+                        >
+                          <span className="flex min-w-0 items-center gap-2">
+                            {premiumRaceFilters.countryCode === 'all' ? (
+                              <span className="inline-block h-4 w-6 shrink-0 rounded-sm border border-gray-200 bg-gray-100" />
+                            ) : (
+                              <CountryFlag code={premiumRaceFilters.countryCode} />
+                            )}
+                            <span className="truncate">
+                              {premiumRaceFilters.countryCode === 'all'
+                                ? 'All countries'
+                                : getCountryDisplayName(premiumRaceFilters.countryCode)}
+                            </span>
+                          </span>
+                          <span aria-hidden="true" className="shrink-0 text-gray-400">⌄</span>
+                        </button>
+
+                        {countryFilterMenuOpen ? (
+                          <div
+                            role="listbox"
+                            className="absolute left-0 right-0 z-30 mt-1 max-h-64 overflow-y-auto rounded-md border border-gray-200 bg-white py-1 shadow-lg"
+                          >
+                            <button
+                              type="button"
+                              role="option"
+                              aria-selected={premiumRaceFilters.countryCode === 'all'}
+                              onClick={() => {
+                                updatePremiumRaceFilter('countryCode', 'all')
+                                setCountryFilterMenuOpen(false)
+                              }}
+                              className={`flex w-full items-center gap-2 px-3 py-2 text-left text-sm transition hover:bg-yellow-50 ${
+                                premiumRaceFilters.countryCode === 'all'
+                                  ? 'bg-yellow-50 font-semibold text-gray-900'
+                                  : 'text-gray-700'
+                              }`}
+                            >
+                              <span className="inline-block h-4 w-6 shrink-0 rounded-sm border border-gray-200 bg-gray-100" />
+                              <span>All countries</span>
+                            </button>
+
+                            {premiumCountryOptions.map(code => (
+                              <button
+                                key={code}
+                                type="button"
+                                role="option"
+                                aria-selected={premiumRaceFilters.countryCode === code}
+                                onClick={() => {
+                                  updatePremiumRaceFilter('countryCode', code)
+                                  setCountryFilterMenuOpen(false)
+                                }}
+                                className={`flex w-full items-center gap-2 px-3 py-2 text-left text-sm transition hover:bg-yellow-50 ${
+                                  premiumRaceFilters.countryCode === code
+                                    ? 'bg-yellow-50 font-semibold text-gray-900'
+                                    : 'text-gray-700'
+                                }`}
+                              >
+                                <CountryFlag code={code} />
+                                <span>{getCountryDisplayName(code)}</span>
+                              </button>
+                            ))}
+                          </div>
+                        ) : null}
+                      </div>
+
+                      <label className="text-xs font-medium text-gray-600">
+                        Category
+                        <select
+                          value={premiumRaceFilters.category}
+                          onChange={event => updatePremiumRaceFilter('category', event.target.value)}
+                          className="mt-1 w-full rounded-md border border-gray-200 bg-white px-2.5 py-2 text-sm text-gray-800 focus:border-yellow-400 focus:outline-none focus:ring-1 focus:ring-yellow-400"
+                        >
+                          <option value="all">All categories</option>
+                          {premiumCategoryOptions.map(category => (
+                            <option key={category} value={category}>
+                              {category}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+
+                      <label className="text-xs font-medium text-gray-600">
+                        Race format
+                        <select
+                          value={premiumRaceFilters.raceType}
+                          onChange={event => updatePremiumRaceFilter('raceType', event.target.value)}
+                          className="mt-1 w-full rounded-md border border-gray-200 bg-white px-2.5 py-2 text-sm text-gray-800 focus:border-yellow-400 focus:outline-none focus:ring-1 focus:ring-yellow-400"
+                        >
+                          <option value="all">All formats</option>
+                          <option value="one_day">One Day</option>
+                          <option value="stage_race">Stage Race</option>
+                        </select>
+                      </label>
+
+                      <label className="text-xs font-medium text-gray-600">
+                        My race status
+                        <select
+                          value={premiumRaceFilters.myRaceStatus}
+                          onChange={event =>
+                            updatePremiumRaceFilter('myRaceStatus', event.target.value)
+                          }
+                          className="mt-1 w-full rounded-md border border-gray-200 bg-white px-2.5 py-2 text-sm text-gray-800 focus:border-yellow-400 focus:outline-none focus:ring-1 focus:ring-yellow-400"
+                        >
+                          <option value="all">All races</option>
+                          <option value="not_entered">Not entered</option>
+                          <option value="applied">Applied</option>
+                          <option value="accepted">Accepted</option>
+                          <option value="declined">Declined</option>
+                          <option value="withdrawn">Withdrawn</option>
+                          <option value="missed_startlist">Missed start list</option>
+                        </select>
+                      </label>
+
+                      <label className="text-xs font-medium text-gray-600">
+                        Application status
+                        <select
+                          value={premiumRaceFilters.applicationStatus}
+                          onChange={event =>
+                            updatePremiumRaceFilter('applicationStatus', event.target.value)
+                          }
+                          className="mt-1 w-full rounded-md border border-gray-200 bg-white px-2.5 py-2 text-sm text-gray-800 focus:border-yellow-400 focus:outline-none focus:ring-1 focus:ring-yellow-400"
+                        >
+                          <option value="all">All statuses</option>
+                          <option value="open">Open for applications</option>
+                          <option value="not_open">Applications not open</option>
+                          <option value="closed">Applications closed</option>
+                          <option value="race_active">Race active</option>
+                          <option value="race_finished">Race finished</option>
+                          <option value="race_cancelled">Race cancelled</option>
+                        </select>
+                      </label>
+                    </div>
+
+                    <div className="mt-3 flex flex-wrap items-center justify-between gap-3 border-t border-gray-100 pt-3">
+                      <label className="flex cursor-pointer items-center gap-2 text-sm text-gray-700">
+                        <input
+                          type="checkbox"
+                          checked={premiumRaceFilters.sponsorTargetsOnly}
+                          onChange={event =>
+                            updatePremiumRaceFilter('sponsorTargetsOnly', event.target.checked)
+                          }
+                          className="h-4 w-4 rounded border-gray-300 text-yellow-400 focus:ring-yellow-400"
+                        />
+                        Sponsor-goal races only
+                      </label>
+
+                      <div className="text-xs text-gray-500">
+                        Showing {filteredActiveMonthRaces.length} of {activeMonthRaces.length} races in{' '}
+                        {getGameMonthName(resolvedActiveRaceMonth)}
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="mt-2 flex flex-col gap-3 rounded-lg border border-slate-200 bg-white px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span aria-hidden="true">🔒</span>
+                        <span className="text-sm font-semibold text-gray-900">
+                          Premium race filters
+                        </span>
+                      </div>
+                      <p className="mt-1 text-xs text-gray-500">
+                        Filter races by country, category, race format, application status, and sponsor objectives.
+                      </p>
+                    </div>
+
+                    <Link
+                      to="/dashboard/premium"
+                      className="shrink-0 rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-gray-800 transition hover:border-yellow-400 hover:bg-yellow-50"
+                    >
+                      Unlock with Premium
+                    </Link>
+                  </div>
+                )
+              ) : null}
+            </div>
+
             {raceCalendarNotice ? (
               <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
                 {raceCalendarNotice}
               </div>
             ) : null}
 
-            {activeMonthRaces.length === 0 ? (
+            {filteredActiveMonthRaces.length === 0 ? (
               <div className="rounded-md border border-gray-200 p-4 text-sm text-gray-500">
-                No races scheduled for {getGameMonthName(resolvedActiveRaceMonth)}.
+                {isPremium && activePremiumFilterCount > 0
+                  ? `No races match the selected Premium filters for ${getGameMonthName(
+                      resolvedActiveRaceMonth
+                    )}.`
+                  : `No races scheduled for ${getGameMonthName(resolvedActiveRaceMonth)}.`}
               </div>
             ) : (
               <ul className="space-y-3">
-                {activeMonthRaces.map((race) => {
+                {filteredActiveMonthRaces.map((race) => {
                   const dateBadge = formatCalendarDateBadge(race)
                   const effectiveRaceStatus = getEffectiveRaceCalendarStatus(race)
                   const sponsorTargetsForRace = sponsorObjectiveTargetsByRaceId[race.id] ?? []

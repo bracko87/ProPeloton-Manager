@@ -95,6 +95,9 @@ const EVENT_TITLE_BY_TYPE:
     GROUP_CREATED: 'New group formed',
     GROUP_CAUGHT: 'Group caught',
     SPRINT_STARTED: 'Sprint started',
+    RIDER_CRASHED: 'Rider crashed',
+    GROUP_CRASHED: 'Group crash',
+    RIDER_TECHNICAL_INCIDENT: 'Technical incident',
     RIDER_FINISHED: 'Rider finished',
     RACE_COMPLETED: 'Race completed',
     SIMULATION_COMPLETED: 'Race completed',
@@ -242,6 +245,191 @@ function getEventDescription(
 
     case 'SPRINT_STARTED':
       return 'The deterministic replay entered a sprint phase.'
+
+    case 'RIDER_CRASHED': {
+      const rawTimeLoss =
+        event.payload
+          .timeLossSeconds
+
+      const timeLossSeconds =
+        typeof rawTimeLoss ===
+          'number' &&
+        Number.isFinite(
+          rawTimeLoss,
+        )
+          ? Math.max(
+              0,
+              Math.round(
+                rawTimeLoss,
+              ),
+            )
+          : null
+
+      const rawSeverity =
+        event.payload
+          .severity
+
+      const severity =
+        typeof rawSeverity ===
+          'string' &&
+        rawSeverity.trim()
+          ? humanizeCode(
+              rawSeverity,
+            )
+          : null
+
+      const riderPrefix =
+        riderName
+          ? `${riderName} crashed`
+          : 'A rider crashed'
+
+      const severityText =
+        severity
+          ? ` (${severity})`
+          : ''
+
+      const lossText =
+        timeLossSeconds !==
+        null
+          ? ` and lost ${timeLossSeconds} seconds before continuing`
+          : ' and lost time before continuing'
+
+      return `${riderPrefix}${severityText}${lossText}.`
+    }
+
+    case 'GROUP_CRASHED': {
+      const rawAffectedRiderCount =
+        event.payload
+          .affectedRiderCount
+
+      const affectedRiderCount =
+        typeof rawAffectedRiderCount ===
+          'number' &&
+        Number.isInteger(
+          rawAffectedRiderCount,
+        ) &&
+        rawAffectedRiderCount >=
+          2
+          ? rawAffectedRiderCount
+          : event.riderIds.length >=
+              2
+            ? event.riderIds.length
+            : null
+
+      const rawTimeLoss =
+        event.payload
+          .timeLossSeconds
+
+      const timeLossSeconds =
+        typeof rawTimeLoss ===
+          'number' &&
+        Number.isFinite(
+          rawTimeLoss,
+        )
+          ? Math.max(
+              0,
+              Math.round(
+                rawTimeLoss,
+              ),
+            )
+          : null
+
+      const rawSeverity =
+        event.payload
+          .severity
+
+      const severity =
+        typeof rawSeverity ===
+          'string' &&
+        rawSeverity.trim()
+          ? humanizeCode(
+              rawSeverity,
+            )
+          : null
+
+      const affectedText =
+        affectedRiderCount !==
+        null
+          ? `A group crash affected ${affectedRiderCount} riders`
+          : 'A group crash affected multiple riders'
+
+      const severityText =
+        severity
+          ? ` (${severity})`
+          : ''
+
+      const lossText =
+        timeLossSeconds !==
+        null
+          ? ` and cost them ${timeLossSeconds} seconds before continuing`
+          : ' and cost them time before continuing'
+
+      return `${affectedText}${severityText}${lossText}.`
+    }
+
+    case 'RIDER_TECHNICAL_INCIDENT': {
+      const rawTechnicalType =
+        event.payload
+          .technicalType
+
+      const technicalType =
+        typeof rawTechnicalType ===
+          'string' &&
+        rawTechnicalType.trim()
+          ? humanizeCode(
+              rawTechnicalType,
+            )
+          : 'Technical problem'
+
+      const rawSeverity =
+        event.payload
+          .severity
+
+      const severity =
+        typeof rawSeverity ===
+          'string' &&
+        rawSeverity.trim()
+          ? humanizeCode(
+              rawSeverity,
+            )
+          : null
+
+      const rawTimeLoss =
+        event.payload
+          .timeLossSeconds
+
+      const timeLossSeconds =
+        typeof rawTimeLoss ===
+          'number' &&
+        Number.isFinite(
+          rawTimeLoss,
+        )
+          ? Math.max(
+              0,
+              Math.round(
+                rawTimeLoss,
+              ),
+            )
+          : null
+
+      const riderPrefix =
+        riderName
+          ? `${riderName} suffered a ${technicalType.toLowerCase()}`
+          : `A rider suffered a ${technicalType.toLowerCase()}`
+
+      const severityText =
+        severity
+          ? ` (${severity})`
+          : ''
+
+      const lossText =
+        timeLossSeconds !==
+        null
+          ? ` and lost ${timeLossSeconds} seconds before continuing`
+          : ' and lost time before continuing'
+
+      return `${riderPrefix}${severityText}${lossText}.`
+    }
 
     case 'RIDER_FINISHED':
       return riderName

@@ -7203,59 +7203,66 @@ export default function OverviewPage() {
               </Card>
             </div>
 
-            <Card className="p-5">
-              <SectionTitle
-                title="Finance Health"
-                subtitle="Cash position, recurring cost pressure, and next forecasted spend."
-              />
+            <PremiumFeatureGate
+              isPremium={isPremium}
+              loading={premiumStatusLoading}
+              title="Finance Health"
+              description="Unlock cash position, recurring cost pressure, weekly net performance, sponsor income, and forecasted spending insights."
+            >
+              <Card className="p-5">
+                <SectionTitle
+                  title="Finance Health"
+                  subtitle="Cash position, recurring cost pressure, and next forecasted spend."
+                />
 
-              <div className="mt-5 space-y-3">
-                <SmallStat
-                  label="Balance"
-                  value={formatCurrency(data.finance.balance)}
-                />
-                <SmallStat
-                  label="Weekly Net"
-                  value={formatSignedCurrency(data.finance.weeklyNet)}
-                  valueClassName={
-                    data.finance.weeklyNet >= 0
-                      ? "text-emerald-600"
-                      : "text-red-600"
-                  }
-                />
-                <SmallStat
-                  label="Sponsor Income"
-                  value={formatCurrency(data.finance.sponsorIncome)}
-                />
-                <SmallStat
-                  label="Recurring Policy Cost"
-                  value={formatCurrency(data.finance.recurringPolicyCost)}
-                />
-                <SmallStat
-                  label="Next Trip Forecast"
-                  value={formatCurrency(data.finance.nextTripForecast)}
-                />
-              </div>
+                <div className="mt-5 space-y-3">
+                  <SmallStat
+                    label="Balance"
+                    value={formatCurrency(data.finance.balance)}
+                  />
+                  <SmallStat
+                    label="Weekly Net"
+                    value={formatSignedCurrency(data.finance.weeklyNet)}
+                    valueClassName={
+                      data.finance.weeklyNet >= 0
+                        ? "text-emerald-600"
+                        : "text-red-600"
+                    }
+                  />
+                  <SmallStat
+                    label="Sponsor Income"
+                    value={formatCurrency(data.finance.sponsorIncome)}
+                  />
+                  <SmallStat
+                    label="Recurring Policy Cost"
+                    value={formatCurrency(data.finance.recurringPolicyCost)}
+                  />
+                  <SmallStat
+                    label="Next Trip Forecast"
+                    value={formatCurrency(data.finance.nextTripForecast)}
+                  />
+                </div>
 
-              <div className="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-4">
-                <div className="text-xs uppercase tracking-wide text-slate-500">
-                  Latest Major Transaction
+                <div className="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-4">
+                  <div className="text-xs uppercase tracking-wide text-slate-500">
+                    Latest Major Transaction
+                  </div>
+                  <div className="mt-2 text-sm font-semibold text-slate-900">
+                    {data.finance.latestTransactionLabel}
+                  </div>
+                  <div
+                    className={cn(
+                      "mt-1 text-sm font-bold",
+                      data.finance.latestTransactionAmount >= 0
+                        ? "text-emerald-600"
+                        : "text-red-600",
+                    )}
+                  >
+                    {formatSignedCurrency(data.finance.latestTransactionAmount)}
+                  </div>
                 </div>
-                <div className="mt-2 text-sm font-semibold text-slate-900">
-                  {data.finance.latestTransactionLabel}
-                </div>
-                <div
-                  className={cn(
-                    "mt-1 text-sm font-bold",
-                    data.finance.latestTransactionAmount >= 0
-                      ? "text-emerald-600"
-                      : "text-red-600",
-                  )}
-                >
-                  {formatSignedCurrency(data.finance.latestTransactionAmount)}
-                </div>
-              </div>
-            </Card>
+              </Card>
+            </PremiumFeatureGate>
 
             <PremiumFeatureGate
               isPremium={isPremium}
@@ -7266,7 +7273,14 @@ export default function OverviewPage() {
               <IncomeExpenseCard finance={data.finance} />
             </PremiumFeatureGate>
 
-            <CompactOperationsCard operations={data.operations} />
+            <PremiumFeatureGate
+              isPremium={isPremium}
+              loading={premiumStatusLoading}
+              title="Active Operations"
+              description="Unlock a live overview of current jobs, running processes, operational statuses, and active club workflows."
+            >
+              <CompactOperationsCard operations={data.operations} />
+            </PremiumFeatureGate>
 
             <PremiumFeatureGate
               isPremium={isPremium}
@@ -7282,7 +7296,14 @@ export default function OverviewPage() {
           </div>
         </div>
 
-        <SeasonSnapshotCard stats={seasonSnapshot} />
+        <PremiumFeatureGate
+          isPremium={isPremium}
+          loading={premiumStatusLoading}
+          title="Season Snapshot"
+          description="Unlock current-season race volume, international points, wins, podiums, Top 10 results, jerseys, and best general-classification performance."
+        >
+          <SeasonSnapshotCard stats={seasonSnapshot} />
+        </PremiumFeatureGate>
       </div>
 
       {!tutorialLoading && tutorialMode === "invite" ? (

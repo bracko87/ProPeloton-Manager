@@ -24,9 +24,16 @@ import {
   getStockBadgeClass,
   makeIdempotencyKey,
 } from '../equipmentFormatters'
+import {
+  getEquipmentAutoRestockRules,
+  saveEquipmentAutoRestockRule,
+  type EquipmentAutoRestockRule,
+  type EquipmentPremiumAccess,
+} from '../equipmentApi'
 
 type EquipmentRaceSuppliesTabProps = {
   clubId: string
+  equipmentAccess: EquipmentPremiumAccess | null
 }
 
 type JsonRecord = Record<string, unknown>
@@ -732,6 +739,7 @@ function DurableSupplyOverviewPanel({
 
 export default function EquipmentRaceSuppliesTab({
   clubId,
+  equipmentAccess,
 }: EquipmentRaceSuppliesTabProps): JSX.Element {
   const [items, setItems] = useState<RaceSupplyItem[]>([])
   const [quantities, setQuantities] = useState<Record<string, number>>({})
@@ -739,8 +747,124 @@ export default function EquipmentRaceSuppliesTab({
   const [actionLoadingKey, setActionLoadingKey] = useState<string | null>(null)
   const [message, setMessage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [autoRestockRules, setAutoRestockRules] = useState<EquipmentAutoRestockRule[]>([])
+  const [autoRestockLoading, setAutoRestockLoading] = useState(false)
+  const [autoRestockExpanded, setAutoRestockExpanded] = useState(false)
+  const autoRestockRanRef = React.useRef(false)
 
   const sortedItems = useMemo(() => sortRaceSupplyItems(items), [items])
+
+
+  async function loadAutoRestockRules(): Promise<void> {
+    if (!equipmentAccess?.is_premium) {
+      setAutoRestockRules([])
+      return
+    }
+
+    try {
+      const rules = await getEquipmentAutoRestockRules(clubId)
+      setAutoRestockRules(rules)
+    } catch (caughtError) {
+      console.error('Failed to load auto-restock rules:', caughtError)
+      setAutoRestockRules([])
+    }
+  }
+
+  function getAutoRestockRule(supplyKey: string): EquipmentAutoRestockRule {
+    return autoRestockRules.find(rule => rule.supply_key === supplyKey) ?? {
+      supply_key: supplyKey,
+      enabled: false,
+      minimum_stock: getRaceSupplyRule(supplyKey)?.stockLowThreshold ?? 20,
+      order_quantity: getRaceSupplyRule(supplyKey)?.defaultPurchaseQuantity ?? 10,
+    }
+  }
+
+  function updateAutoRestockRule(
+    supplyKey: string,
+    patch: Partial<EquipmentAutoRestockRule>,
+  ): void {
+    setAutoRestockRules(current => {
+      const existing = getAutoRestockRule(supplyKey)
+      const next = { ...existing, ...patch, supply_key: supplyKey }
+      const without = current.filter(rule => rule.supply_key !== supplyKey)
+      return [...without, next]
+    })
+  }
+
+  async function handleSaveAutoRestockRules(): Promise<void> {
+    if (!equipmentAccess?.is_premium) return
+
+    setAutoRestockLoading(true)
+    setError(null)
+    setMessage(null)
+
+    try {
+      for (const item of sortedItems) {
+        const rule = getAutoRestockRule(item.supply_key)
+        await saveEquipmentAutoRestockRule({
+          clubId,
+          supplyKey: item.supply_key,
+          enabled: rule.enabled,
+          minimumStock: rule.minimum_stock,
+          orderQuantity: rule.order_quantity,
+        })
+      }
+
+      setMessage('Automatic restocking rules saved. Normal club-cash prices always apply.')
+      autoRestockRanRef.current = false
+    } catch (caughtError) {
+      setError(
+        caughtError instanceof Error
+          ? caughtError.message
+          : 'Failed to save automatic restocking rules.',
+      )
+    } finally {
+      setAutoRestockLoading(false)
+    }
+  }
+
+  async function runAutomaticRestock(): Promise<void> {
+    if (!equipmentAccess?.is_premium || autoRestockLoading) return
+
+    const purchases = sortedItems.flatMap(item => {
+      const rule = getAutoRestockRule(item.supply_key)
+      if (!rule.enabled || !item.catalog_item_id) return []
+      if (Number(item.quantity_available ?? 0) >= rule.minimum_stock) return []
+      return [{ item, quantity: Math.max(1, Math.floor(rule.order_quantity)) }]
+    })
+
+    if (purchases.length === 0) {
+      setMessage('Automatic restocking checked: no enabled supply is below its threshold.')
+      return
+    }
+
+    setAutoRestockLoading(true)
+    setError(null)
+
+    try {
+      for (const purchase of purchases) {
+        await purchaseRaceSupplies({
+          clubId,
+          catalogItemId: purchase.item.catalog_item_id!,
+          quantity: purchase.quantity,
+          idempotencyKey: makeIdempotencyKey('race_supplies_auto_restock'),
+        })
+      }
+
+      setMessage(
+        `Automatic restocking completed for ${purchases.length} supply item${purchases.length === 1 ? '' : 's'}.`,
+      )
+      await loadSupplies()
+    } catch (caughtError) {
+      setError(
+        caughtError instanceof Error
+          ? caughtError.message
+          : 'Automatic restocking failed. Check club cash and purchase limits.',
+      )
+    } finally {
+      setAutoRestockLoading(false)
+    }
+  }
 
   async function loadSupplies(): Promise<void> {
     setLoading(true)
@@ -775,6 +899,22 @@ export default function EquipmentRaceSuppliesTab({
     void loadSupplies()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [clubId])
+
+
+  useEffect(() => {
+    void loadAutoRestockRules()
+    autoRestockRanRef.current = false
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [clubId, equipmentAccess?.is_premium])
+
+  useEffect(() => {
+    if (!equipmentAccess?.is_premium || autoRestockRanRef.current) return
+    if (loading || items.length === 0 || autoRestockRules.length === 0) return
+
+    autoRestockRanRef.current = true
+    void runAutomaticRestock()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading, items, autoRestockRules, equipmentAccess?.is_premium])
 
   async function handleBuy(item: RaceSupplyItem): Promise<void> {
     if (!item.catalog_item_id) {
@@ -843,6 +983,75 @@ export default function EquipmentRaceSuppliesTab({
           supplies with stage-use limits.
         </p>
       </div>
+
+
+      {equipmentAccess?.is_premium ? (
+        <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="font-semibold text-slate-900">Automatic Restocking</h3>
+                <span className="rounded-full border border-yellow-300 bg-yellow-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-yellow-800">Premium</span>
+              </div>
+              <p className="mt-1 text-xs text-slate-500">
+                When this page checks stock, enabled rules buy the normal catalog quantity with club cash. No discount or extra stock is granted.
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <button type="button" onClick={() => setAutoRestockExpanded(value => !value)} className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
+                {autoRestockExpanded ? 'Hide rules' : 'Manage rules'}
+              </button>
+              <button type="button" onClick={() => void runAutomaticRestock()} disabled={autoRestockLoading} className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50">
+                Run now
+              </button>
+              {autoRestockExpanded ? (
+                <button type="button" onClick={() => void handleSaveAutoRestockRules()} disabled={autoRestockLoading} className="rounded-md bg-slate-900 px-3 py-2 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-50">
+                  {autoRestockLoading ? 'Working…' : 'Save rules'}
+                </button>
+              ) : null}
+            </div>
+          </div>
+
+          {!autoRestockExpanded ? (
+            <div className="mt-3 flex flex-wrap gap-2 text-xs text-slate-500">
+              <span>{autoRestockRules.filter(rule => rule.enabled).length} enabled rule{autoRestockRules.filter(rule => rule.enabled).length === 1 ? '' : 's'}</span>
+              <span aria-hidden="true">·</span>
+              <span>{sortedItems.filter(item => { const rule = getAutoRestockRule(item.supply_key); return rule.enabled && Number(item.quantity_available ?? 0) < rule.minimum_stock }).length} currently below threshold</span>
+            </div>
+          ) : null}
+
+          {autoRestockExpanded ? (
+          <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+            {sortedItems.map(item => {
+              const rule = getAutoRestockRule(item.supply_key)
+              return (
+                <div key={item.supply_key} className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                  <label className="flex items-center gap-2 text-sm font-semibold text-slate-900">
+                    <input type="checkbox" checked={rule.enabled} onChange={event => updateAutoRestockRule(item.supply_key, { enabled: event.target.checked })} className="h-4 w-4 rounded border-slate-300 text-yellow-500 focus:ring-yellow-400" />
+                    {item.display_name}
+                  </label>
+                  <div className="mt-3 grid grid-cols-2 gap-2">
+                    <label className="text-xs text-slate-600">Below<input type="number" min={0} value={rule.minimum_stock} onChange={event => updateAutoRestockRule(item.supply_key, { minimum_stock: Math.max(0, Number(event.target.value)) })} className="mt-1 w-full rounded border border-slate-300 bg-white px-2 py-1.5 text-sm text-slate-900" /></label>
+                    <label className="text-xs text-slate-600">Buy<input type="number" min={1} value={rule.order_quantity} onChange={event => updateAutoRestockRule(item.supply_key, { order_quantity: Math.max(1, Number(event.target.value)) })} className="mt-1 w-full rounded border border-slate-300 bg-white px-2 py-1.5 text-sm text-slate-900" /></label>
+                  </div>
+                  <div className="mt-2 text-xs text-slate-500">Current stock: {Number(item.quantity_available ?? 0).toLocaleString()}</div>
+                </div>
+              )
+            })}
+          </div>
+          ) : null}
+        </div>
+      ) : (
+        <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <div className="flex items-center gap-2"><h3 className="font-semibold text-slate-900">Automatic Restocking</h3><span className="rounded-full border border-yellow-300 bg-yellow-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-yellow-800">Premium</span><span aria-hidden="true" className="text-slate-400">🔒</span></div>
+              <p className="mt-1 text-sm text-slate-600">Set stock thresholds and normal club-cash order quantities for race supplies.</p>
+            </div>
+            <a href="/dashboard/premium" className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">Unlock with Premium</a>
+          </div>
+        </div>
+      )}
 
       {message ? (
         <div className="rounded border border-green-200 bg-green-50 p-3 text-sm text-green-700">

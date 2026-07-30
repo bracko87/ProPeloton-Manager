@@ -18,11 +18,12 @@
  * - Repair / Sell buttons open quote / confirm modals from Infrastructure.tsx.
  */
 
-import React, { useMemo, useState } from 'react'
+import React, { createContext, useContext, useMemo, useState } from 'react'
 import type {
   AssetSubTabKey,
   InfrastructureAssetActionTarget,
   InfrastructureAssetConfigRow,
+  InfrastructureAssetSlotAccessMap,
   InfrastructureJobRow,
   TeamBusGarageSummaryRow,
   TeamBusRosterRow,
@@ -36,7 +37,7 @@ import {
   formatGameDate,
   formatGameDays,
   toNumber,
-} from './infrastructureUtils'
+} from './infrastructureHelpers'
 
 function getConfiguredGarageSize(
   configRows: InfrastructureAssetConfigRow[],
@@ -122,6 +123,19 @@ const EMPTY_MOBILE_WORKSHOP_ROWS: MobileWorkshopRosterRow[] = []
 const EMPTY_MEDICAL_VAN_ROWS: MedicalVanRosterRow[] = []
 const EMPTY_JOBS: InfrastructureJobRow[] = []
 const EMPTY_JOBS_BY_LEVEL = new Map<number, InfrastructureJobRow[]>()
+
+
+type AssetSlotAccessContextValue = {
+  accessByAssetKey: InfrastructureAssetSlotAccessMap
+  unlockingSlotKey: string | null
+  onUnlockSlot: (assetKey: AssetGarageKey, slotNumber: number) => void
+}
+
+const AssetSlotAccessContext = createContext<AssetSlotAccessContextValue>({
+  accessByAssetKey: {},
+  unlockingSlotKey: null,
+  onUnlockSlot: () => undefined,
+})
 
 function getMetadataString(
   metadata: Record<string, unknown> | null | undefined,
@@ -211,6 +225,10 @@ type GarageSlot<T> =
     }
   | {
       kind: 'empty'
+      slotNumber: number
+    }
+  | {
+      kind: 'locked'
       slotNumber: number
     }
 
@@ -348,7 +366,8 @@ function countPendingForLevel(
 function buildGarageSlots<T>(
   ownedRows: T[],
   pendingDeliveryJobs: InfrastructureJobRow[],
-  maxSlots: number,
+  absoluteMaxSlots: number,
+  effectiveSlots: number,
 ): GarageSlot<T>[] {
   const pendingSlots: Array<{
     job: InfrastructureJobRow
@@ -368,7 +387,8 @@ function buildGarageSlots<T>(
     }
   })
 
-  const slotCount = Math.max(maxSlots, ownedRows.length + pendingSlots.length, 1)
+  const committedCount = ownedRows.length + pendingSlots.length
+  const slotCount = Math.max(absoluteMaxSlots, committedCount, 1)
   const slots: GarageSlot<T>[] = []
   let slotNumber = 1
 
@@ -394,7 +414,7 @@ function buildGarageSlots<T>(
 
   while (slots.length < slotCount) {
     slots.push({
-      kind: 'empty',
+      kind: slotNumber <= effectiveSlots ? 'empty' : 'locked',
       slotNumber,
     })
     slotNumber += 1
@@ -702,6 +722,7 @@ function TeamCarGaragePanel({
   onCancelDelivery,
   onOpenAssetRepair,
   onOpenAssetSell,
+  onRenameTeamCar,
 }: {
   configRows: InfrastructureAssetConfigRow[]
   rosterRows: TeamCarRosterRow[]
@@ -715,8 +736,21 @@ function TeamCarGaragePanel({
   onCancelDelivery: (job: InfrastructureJobRow) => void
   onOpenAssetRepair: (target: InfrastructureAssetActionTarget) => void
   onOpenAssetSell: (target: InfrastructureAssetActionTarget) => void
+  onRenameTeamCar: (carId: string, displayName: string) => Promise<void>
 }): JSX.Element {
   const [isAcquireModalOpen, setIsAcquireModalOpen] = useState(false)
+  const [editingCarId, setEditingCarId] = useState<string | null>(null)
+  const [renameDraft, setRenameDraft] = useState('')
+  const [renameSavingCarId, setRenameSavingCarId] = useState<string | null>(null)
+  const [renameError, setRenameError] = useState<string | null>(null)
+  const assetKey: AssetGarageKey = 'team_car'
+  const {
+    accessByAssetKey,
+    unlockingSlotKey,
+    onUnlockSlot,
+  } = useContext(AssetSlotAccessContext)
+
+  const slotAccess = accessByAssetKey.team_car
 
   const ownedByLevel = useMemo(() => {
     const map = new Map<number, number>()
@@ -729,16 +763,31 @@ function TeamCarGaragePanel({
     return map
   }, [rosterRows])
 
-  const maxTotalCars = summary ? toNumber(summary.max_total_cars, 0) : 0
+  const configuredMaximum = summary ? toNumber(summary.max_total_cars, 0) : 0
+  const absoluteMaxSlots = Math.max(
+    slotAccess?.absolute_max_slots ?? 0,
+    configuredMaximum,
+    10,
+  )
+  const effectiveSlots = Math.min(
+    absoluteMaxSlots,
+    Math.max(slotAccess?.effective_slots ?? configuredMaximum, 1),
+  )
   const totalCars = summary ? toNumber(summary.total_cars, rosterRows.length) : rosterRows.length
   const counts = useMemo(() => getRosterCounts(rosterRows), [rosterRows])
   const potentialTier = useMemo(() => getPotentialTierLabel(configRows), [configRows])
   const bestOwnedSupport = useMemo(() => getBestOwnedSupport(rosterRows), [rosterRows])
-  const isFull = maxTotalCars > 0 && totalCars + pendingQuantity >= maxTotalCars
+  const isFull = totalCars + pendingQuantity >= effectiveSlots
 
   const garageSlots = useMemo(
-    () => buildGarageSlots(rosterRows, pendingDeliveryJobs, maxTotalCars),
-    [rosterRows, pendingDeliveryJobs, maxTotalCars],
+    () =>
+      buildGarageSlots(
+        rosterRows,
+        pendingDeliveryJobs,
+        absoluteMaxSlots,
+        effectiveSlots,
+      ),
+    [rosterRows, pendingDeliveryJobs, absoluteMaxSlots, effectiveSlots],
   )
 
   const bonusCards = useMemo<BonusCard[]>(
@@ -804,12 +853,12 @@ function TeamCarGaragePanel({
         <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3 mt-4">
           <SummaryMetric
             label="Garage size"
-            value={
-              maxTotalCars > 0
-                ? `${totalCars + pendingQuantity} / ${maxTotalCars}`
-                : `${totalCars + pendingQuantity}`
+            value={`${totalCars + pendingQuantity} / ${effectiveSlots}`}
+            helper={
+              slotAccess
+                ? `Free ${slotAccess.free_slots} · Premium ${slotAccess.premium_slots} · Max ${absoluteMaxSlots}`
+                : `Owned ${totalCars} · Pending ${pendingQuantity}`
             }
-            helper={`Owned ${totalCars} · Pending ${pendingQuantity}`}
           />
           <SummaryMetric label="Available" value={counts.available} />
           <SummaryMetric label="Assigned" value={counts.assigned} />
@@ -843,7 +892,7 @@ function TeamCarGaragePanel({
           </div>
 
           <div className="text-xs text-gray-500">
-            {garageSlots.length} slot{garageSlots.length === 1 ? '' : 's'}
+            {effectiveSlots} active of {absoluteMaxSlots} maximum slots
           </div>
         </div>
 
@@ -859,11 +908,12 @@ function TeamCarGaragePanel({
                   className="rounded-xl border border-gray-100 bg-gray-50 p-3"
                 >
                   <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-                    <div className="min-w-0">
+                    <div className="min-w-0 lg:w-[300px] lg:shrink-0">
                       <div className="flex flex-wrap items-center gap-2">
                         <div className="text-sm font-semibold text-gray-900">
                           Slot #{slot.slotNumber}
                         </div>
+
                         <span
                           className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-semibold ${getStatusBadgeClass(
                             car.status,
@@ -871,15 +921,127 @@ function TeamCarGaragePanel({
                         >
                           {formatStatusLabel(car.status)}
                         </span>
-                      </div>
 
-                      <div className="mt-1 text-sm text-gray-900">{car.display_name}</div>
-
-                      <div className="mt-1">
-                        <div className="inline-flex rounded-md border border-green-300 bg-green-50 px-2 py-0.5 text-xs font-medium text-green-700">
+                        <span className="inline-flex rounded-md border border-green-300 bg-green-50 px-2 py-0.5 text-xs font-medium text-green-700">
                           {assetLabel}
-                        </div>
+                        </span>
                       </div>
+
+                      {editingCarId === car.car_id ? (
+                        <div className="mt-2">
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="text"
+                              value={renameDraft}
+                              maxLength={40}
+                              autoFocus
+                              onChange={event => {
+                                setRenameDraft(event.target.value)
+                                setRenameError(null)
+                              }}
+                              onKeyDown={event => {
+                                if (event.key === 'Escape') {
+                                  setEditingCarId(null)
+                                  setRenameError(null)
+                                }
+
+                                if (event.key === 'Enter') {
+                                  event.preventDefault()
+                                  const nextName = renameDraft.trim()
+
+                                  if (!nextName) {
+                                    setRenameError('Enter a Team Car name.')
+                                    return
+                                  }
+
+                                  void (async () => {
+                                    try {
+                                      setRenameSavingCarId(car.car_id)
+                                      setRenameError(null)
+                                      await onRenameTeamCar(car.car_id, nextName)
+                                      setEditingCarId(null)
+                                    } catch (error) {
+                                      setRenameError(
+                                        error instanceof Error
+                                          ? error.message
+                                          : 'Failed to rename Team Car.',
+                                      )
+                                    } finally {
+                                      setRenameSavingCarId(null)
+                                    }
+                                  })()
+                                }
+                              }}
+                              className="min-w-0 flex-1 rounded-md border border-gray-300 bg-white px-2.5 py-1.5 text-sm text-gray-900 outline-none focus:border-blue-500"
+                              aria-label={`Rename ${car.display_name}`}
+                            />
+
+                            <button
+                              type="button"
+                              disabled={renameSavingCarId === car.car_id}
+                              onClick={() => {
+                                const nextName = renameDraft.trim()
+
+                                if (!nextName) {
+                                  setRenameError('Enter a Team Car name.')
+                                  return
+                                }
+
+                                void (async () => {
+                                  try {
+                                    setRenameSavingCarId(car.car_id)
+                                    setRenameError(null)
+                                    await onRenameTeamCar(car.car_id, nextName)
+                                    setEditingCarId(null)
+                                  } catch (error) {
+                                    setRenameError(
+                                      error instanceof Error
+                                        ? error.message
+                                        : 'Failed to rename Team Car.',
+                                    )
+                                  } finally {
+                                    setRenameSavingCarId(null)
+                                  }
+                                })()
+                              }}
+                              className="rounded-md bg-blue-600 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-60"
+                            >
+                              {renameSavingCarId === car.car_id ? 'Saving…' : 'Save'}
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setEditingCarId(null)
+                                setRenameError(null)
+                              }}
+                              className="rounded-md border border-gray-200 bg-white px-2.5 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+
+                          {renameError ? (
+                            <div className="mt-1 text-xs text-red-600">{renameError}</div>
+                          ) : null}
+                        </div>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEditingCarId(car.car_id)
+                            setRenameDraft(car.display_name)
+                            setRenameError(null)
+                          }}
+                          className="mt-2 inline-flex max-w-full items-center gap-1.5 text-left text-sm font-semibold text-gray-900 hover:text-blue-700"
+                          title="Rename Team Car"
+                        >
+                          <span className="truncate">{car.display_name}</span>
+                          <span aria-hidden="true" className="shrink-0 text-xs text-gray-400">
+                            ✎
+                          </span>
+                        </button>
+                      )}
                     </div>
 
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs text-gray-700 lg:flex-1 lg:max-w-3xl">
@@ -907,9 +1069,12 @@ function TeamCarGaragePanel({
                         </div>
                       </div>
 
-                      <div>
+                      <div className="min-w-0">
                         <div className="text-xs text-gray-400">Current status</div>
-                        <div className="text-sm font-semibold text-gray-900">
+                        <div
+                          className="mt-0.5 max-w-[250px] truncate whitespace-nowrap text-sm font-semibold text-gray-900"
+                          title={getAssetCurrentStatusLabel(car)}
+                        >
                           {getAssetCurrentStatusLabel(car)}
                         </div>
                       </div>
@@ -1050,6 +1215,83 @@ function TeamCarGaragePanel({
               )
             }
 
+            if (slot.kind === 'locked') {
+              const isUnlocking =
+                unlockingSlotKey === `${assetKey}:${slot.slotNumber}`
+              const isPremiumCapacity =
+                slotAccess != null &&
+                slot.slotNumber > slotAccess.free_slots &&
+                slot.slotNumber <= slotAccess.premium_slots
+              const hasEnoughCoins =
+                Number(slotAccess?.coin_balance ?? 0) >=
+                Number(slotAccess?.coin_cost ?? 20)
+
+              return (
+                <div
+                  key={`team_car_locked_${slot.slotNumber}`}
+                  className="rounded-xl border border-slate-200 bg-white p-4"
+                >
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <div className="text-sm font-semibold text-slate-800">
+                          Slot #{slot.slotNumber}
+                        </div>
+
+                        {isPremiumCapacity ? (
+                          <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-slate-600">
+                            Premium
+                          </span>
+                        ) : null}
+
+                        <span aria-hidden="true" className="text-sm text-slate-400">
+                          🔒
+                        </span>
+                      </div>
+
+                      <div className="mt-1 text-xs leading-5 text-slate-500">
+                        {isPremiumCapacity
+                          ? 'Available automatically while Premium is active, or permanently with coins.'
+                          : 'Additional permanent Team Car garage capacity.'}
+                      </div>
+
+                      <div className="mt-1 text-xs text-slate-400">
+                        Current coin balance:{' '}
+                        {Number(slotAccess?.coin_balance ?? 0).toLocaleString('en-US')}
+                      </div>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-2">
+                      {isPremiumCapacity ? (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (typeof window !== 'undefined') {
+                              window.location.hash = '#/dashboard/pro'
+                            }
+                          }}
+                          className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                        >
+                          Unlock with Premium
+                        </button>
+                      ) : null}
+
+                      <button
+                        type="button"
+                        onClick={() => onUnlockSlot(assetKey, slot.slotNumber)}
+                        disabled={isUnlocking || !hasEnoughCoins}
+                        className="rounded-lg border border-yellow-300 bg-yellow-50 px-3 py-2 text-xs font-semibold text-yellow-900 hover:bg-yellow-100 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        {isUnlocking
+                          ? 'Unlocking…'
+                          : `Unlock permanently · ${Number(slotAccess?.coin_cost ?? 20)} coins`}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )
+            }
+
             return (
               <div
                 key={`team_car_empty_${slot.slotNumber}`}
@@ -1134,6 +1376,7 @@ function GenericAssetGaragePanel<T extends GenericAssetRosterRow>({
   onCancelDelivery,
   onOpenAssetRepair,
   onOpenAssetSell,
+  onRenameAsset,
 }: {
   assetKey: AssetGarageKey
   assetLabel: string
@@ -1165,8 +1408,20 @@ function GenericAssetGaragePanel<T extends GenericAssetRosterRow>({
   onCancelDelivery: (job: InfrastructureJobRow) => void
   onOpenAssetRepair: (target: InfrastructureAssetActionTarget) => void
   onOpenAssetSell: (target: InfrastructureAssetActionTarget) => void
+  onRenameAsset: (assetKey: AssetGarageKey, assetId: string, displayName: string) => Promise<void>
 }): JSX.Element {
   const [isAcquireModalOpen, setIsAcquireModalOpen] = useState(false)
+  const [editingAssetId, setEditingAssetId] = useState<string | null>(null)
+  const [renameDraft, setRenameDraft] = useState('')
+  const [renameSavingAssetId, setRenameSavingAssetId] = useState<string | null>(null)
+  const [renameError, setRenameError] = useState<string | null>(null)
+  const {
+    accessByAssetKey,
+    unlockingSlotKey,
+    onUnlockSlot,
+  } = useContext(AssetSlotAccessContext)
+
+  const slotAccess = accessByAssetKey[assetKey]
 
   const ownedByLevel = useMemo(() => {
     const map = new Map<number, number>()
@@ -1183,9 +1438,23 @@ function GenericAssetGaragePanel<T extends GenericAssetRosterRow>({
     garageSizeOverride ??
     (garageSizeFallback > 0 ? getConfiguredGarageSize(configRows, garageSizeFallback) : 0)
 
-  const maxTotalAssets = Math.max(
+  const configuredMaximum = Math.max(
     getSummaryNumber(summary, maxTotalKeys, 0),
     configuredGarageSize,
+  )
+
+  const absoluteMaxSlots = Math.max(
+    slotAccess?.absolute_max_slots ?? 0,
+    configuredMaximum,
+    1,
+  )
+
+  const effectiveSlots = Math.min(
+    absoluteMaxSlots,
+    Math.max(
+      slotAccess?.effective_slots ?? configuredMaximum,
+      1,
+    ),
   )
 
   const totalAssets = getSummaryNumber(summary, totalKeys, rosterRows.length)
@@ -1193,11 +1462,17 @@ function GenericAssetGaragePanel<T extends GenericAssetRosterRow>({
   const potentialTier = useMemo(() => getPotentialTierLabel(configRows), [configRows])
   const bestOwnedSupport = useMemo(() => getBestOwnedSupport(rosterRows), [rosterRows])
   const supportTier = getSummaryText(summary, ['support_tier'], 'N/A')
-  const isFull = maxTotalAssets > 0 && totalAssets + pendingQuantity >= maxTotalAssets
+  const isFull = totalAssets + pendingQuantity >= effectiveSlots
 
   const garageSlots = useMemo(
-    () => buildGarageSlots(rosterRows, pendingDeliveryJobs, maxTotalAssets),
-    [rosterRows, pendingDeliveryJobs, maxTotalAssets],
+    () =>
+      buildGarageSlots(
+        rosterRows,
+        pendingDeliveryJobs,
+        absoluteMaxSlots,
+        effectiveSlots,
+      ),
+    [rosterRows, pendingDeliveryJobs, absoluteMaxSlots, effectiveSlots],
   )
 
   const bonusCards = useMemo<BonusCard[]>(
@@ -1254,11 +1529,13 @@ function GenericAssetGaragePanel<T extends GenericAssetRosterRow>({
           <SummaryMetric
             label="Garage size"
             value={
-              maxTotalAssets > 0
-                ? `${totalAssets + pendingQuantity} / ${maxTotalAssets}`
-                : `${totalAssets + pendingQuantity}`
+              `${totalAssets + pendingQuantity} / ${effectiveSlots}`
             }
-            helper={`Owned ${totalAssets} · Pending ${pendingQuantity}`}
+            helper={
+              slotAccess
+                ? `Free ${slotAccess.free_slots} · Premium ${slotAccess.premium_slots} · Max ${absoluteMaxSlots}`
+                : `Owned ${totalAssets} · Pending ${pendingQuantity}`
+            }
           />
           <SummaryMetric label="Available" value={counts.available} />
           <SummaryMetric label="Assigned" value={counts.assigned} />
@@ -1309,7 +1586,7 @@ function GenericAssetGaragePanel<T extends GenericAssetRosterRow>({
                   className="rounded-xl border border-gray-100 bg-gray-50 p-3"
                 >
                   <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-                    <div className="min-w-0">
+                    <div className="min-w-0 lg:w-[300px] lg:shrink-0">
                       <div className="flex flex-wrap items-center gap-2">
                         <div className="text-sm font-semibold text-gray-900">
                           Slot #{slot.slotNumber}
@@ -1321,15 +1598,126 @@ function GenericAssetGaragePanel<T extends GenericAssetRosterRow>({
                         >
                           {formatStatusLabel(row.status)}
                         </span>
-                      </div>
-
-                      <div className="mt-1 text-sm text-gray-900">{row.display_name}</div>
-
-                      <div className="mt-1">
-                        <div className="inline-flex rounded-md border border-green-300 bg-green-50 px-2 py-0.5 text-xs font-medium text-green-700">
+                        <span className="inline-flex rounded-md border border-green-300 bg-green-50 px-2 py-0.5 text-xs font-medium text-green-700">
                           {ownedAssetLabel}
-                        </div>
+                        </span>
                       </div>
+
+                      {editingAssetId === assetId ? (
+                        <div className="mt-2">
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="text"
+                              value={renameDraft}
+                              maxLength={40}
+                              autoFocus
+                              onChange={event => {
+                                setRenameDraft(event.target.value)
+                                setRenameError(null)
+                              }}
+                              onKeyDown={event => {
+                                if (event.key === 'Escape') {
+                                  setEditingAssetId(null)
+                                  setRenameError(null)
+                                }
+
+                                if (event.key === 'Enter') {
+                                  event.preventDefault()
+                                  const nextName = renameDraft.trim()
+
+                                  if (!nextName) {
+                                    setRenameError(`Enter a ${assetLabel} name.`)
+                                    return
+                                  }
+
+                                  void (async () => {
+                                    try {
+                                      setRenameSavingAssetId(assetId)
+                                      setRenameError(null)
+                                      await onRenameAsset(assetKey, assetId, nextName)
+                                      setEditingAssetId(null)
+                                    } catch (error) {
+                                      setRenameError(
+                                        error instanceof Error
+                                          ? error.message
+                                          : `Failed to rename ${assetLabel}.`,
+                                      )
+                                    } finally {
+                                      setRenameSavingAssetId(null)
+                                    }
+                                  })()
+                                }
+                              }}
+                              className="min-w-0 flex-1 rounded-md border border-gray-300 bg-white px-2.5 py-1.5 text-sm text-gray-900 outline-none focus:border-blue-500"
+                              aria-label={`Rename ${row.display_name}`}
+                            />
+
+                            <button
+                              type="button"
+                              disabled={renameSavingAssetId === assetId}
+                              onClick={() => {
+                                const nextName = renameDraft.trim()
+
+                                if (!nextName) {
+                                  setRenameError(`Enter a ${assetLabel} name.`)
+                                  return
+                                }
+
+                                void (async () => {
+                                  try {
+                                    setRenameSavingAssetId(assetId)
+                                    setRenameError(null)
+                                    await onRenameAsset(assetKey, assetId, nextName)
+                                    setEditingAssetId(null)
+                                  } catch (error) {
+                                    setRenameError(
+                                      error instanceof Error
+                                        ? error.message
+                                        : `Failed to rename ${assetLabel}.`,
+                                    )
+                                  } finally {
+                                    setRenameSavingAssetId(null)
+                                  }
+                                })()
+                              }}
+                              className="rounded-md bg-blue-600 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-60"
+                            >
+                              {renameSavingAssetId === assetId ? 'Saving…' : 'Save'}
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setEditingAssetId(null)
+                                setRenameError(null)
+                              }}
+                              className="rounded-md border border-gray-200 bg-white px-2.5 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+
+                          {renameError ? (
+                            <div className="mt-1 text-xs text-red-600">{renameError}</div>
+                          ) : null}
+                        </div>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEditingAssetId(assetId)
+                            setRenameDraft(row.display_name)
+                            setRenameError(null)
+                          }}
+                          className="mt-2 inline-flex max-w-full items-center gap-1.5 text-left text-sm font-semibold text-gray-900 hover:text-blue-700"
+                          title={`Rename ${assetLabel}`}
+                        >
+                          <span className="truncate">{row.display_name}</span>
+                          <span aria-hidden="true" className="shrink-0 text-xs text-gray-400">
+                            ✎
+                          </span>
+                        </button>
+                      )}
                     </div>
 
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs text-gray-700 lg:flex-1 lg:max-w-3xl">
@@ -1496,6 +1884,80 @@ function GenericAssetGaragePanel<T extends GenericAssetRosterRow>({
               )
             }
 
+            if (slot.kind === 'locked') {
+              const isUnlocking =
+                unlockingSlotKey === `${assetKey}:${slot.slotNumber}`
+              const isPremiumCapacity =
+                slotAccess != null &&
+                slot.slotNumber > slotAccess.free_slots &&
+                slot.slotNumber <= slotAccess.premium_slots
+              const hasEnoughCoins =
+                Number(slotAccess?.coin_balance ?? 0) >=
+                Number(slotAccess?.coin_cost ?? 20)
+
+              return (
+                <div
+                  key={`${assetKey}_locked_${slot.slotNumber}`}
+                  className="rounded-xl border border-slate-200 bg-white p-4"
+                >
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <div className="text-sm font-semibold text-slate-800">
+                          Slot #{slot.slotNumber}
+                        </div>
+                        {isPremiumCapacity ? (
+                          <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-slate-600">
+                            Premium
+                          </span>
+                        ) : null}
+                        <span aria-hidden="true" className="text-sm text-slate-400">
+                          🔒
+                        </span>
+                      </div>
+
+                      <div className="mt-1 text-xs leading-5 text-slate-500">
+                        {isPremiumCapacity
+                          ? 'Available automatically while Premium is active, or permanently with coins.'
+                          : 'Additional permanent garage capacity.'}
+                      </div>
+
+                      <div className="mt-1 text-xs text-slate-400">
+                        Current coin balance: {Number(slotAccess?.coin_balance ?? 0).toLocaleString('en-US')}
+                      </div>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-2">
+                      {isPremiumCapacity ? (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (typeof window !== 'undefined') {
+                              window.location.hash = '#/dashboard/pro'
+                            }
+                          }}
+                          className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                        >
+                          Unlock with Premium
+                        </button>
+                      ) : null}
+
+                      <button
+                        type="button"
+                        onClick={() => onUnlockSlot(assetKey, slot.slotNumber)}
+                        disabled={isUnlocking || !hasEnoughCoins}
+                        className="rounded-lg border border-yellow-300 bg-yellow-50 px-3 py-2 text-xs font-semibold text-yellow-900 hover:bg-yellow-100 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        {isUnlocking
+                          ? 'Unlocking…'
+                          : `Unlock permanently · ${Number(slotAccess?.coin_cost ?? 20)} coins`}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )
+            }
+
             return (
               <div
                 key={`${assetKey}_empty_${slot.slotNumber}`}
@@ -1560,6 +2022,7 @@ function TeamBusGaragePanel({
   onCancelDelivery,
   onOpenAssetRepair,
   onOpenAssetSell,
+  onRenameAsset,
 }: {
   configRows: InfrastructureAssetConfigRow[]
   rosterRows: TeamBusRosterRow[]
@@ -1573,6 +2036,7 @@ function TeamBusGaragePanel({
   onCancelDelivery: (job: InfrastructureJobRow) => void
   onOpenAssetRepair: (target: InfrastructureAssetActionTarget) => void
   onOpenAssetSell: (target: InfrastructureAssetActionTarget) => void
+  onRenameAsset: (assetKey: AssetGarageKey, assetId: string, displayName: string) => Promise<void>
 }): JSX.Element {
   return (
     <GenericAssetGaragePanel
@@ -1617,6 +2081,7 @@ function TeamBusGaragePanel({
       onCancelDelivery={onCancelDelivery}
       onOpenAssetRepair={onOpenAssetRepair}
       onOpenAssetSell={onOpenAssetSell}
+      onRenameAsset={onRenameAsset}
     />
   )
 }
@@ -1634,6 +2099,7 @@ function EquipmentVanGaragePanel({
   onCancelDelivery,
   onOpenAssetRepair,
   onOpenAssetSell,
+  onRenameAsset,
 }: {
   configRows: InfrastructureAssetConfigRow[]
   rosterRows: EquipmentVanRosterRow[]
@@ -1647,6 +2113,7 @@ function EquipmentVanGaragePanel({
   onCancelDelivery: (job: InfrastructureJobRow) => void
   onOpenAssetRepair: (target: InfrastructureAssetActionTarget) => void
   onOpenAssetSell: (target: InfrastructureAssetActionTarget) => void
+  onRenameAsset: (assetKey: AssetGarageKey, assetId: string, displayName: string) => Promise<void>
 }): JSX.Element {
   const maxVans = Math.max(
     toNumber(summary?.max_total_vans, 0),
@@ -1704,6 +2171,7 @@ function EquipmentVanGaragePanel({
       onCancelDelivery={onCancelDelivery}
       onOpenAssetRepair={onOpenAssetRepair}
       onOpenAssetSell={onOpenAssetSell}
+      onRenameAsset={onRenameAsset}
     />
   )
 }
@@ -1721,6 +2189,7 @@ function MobileWorkshopGaragePanel({
   onCancelDelivery,
   onOpenAssetRepair,
   onOpenAssetSell,
+  onRenameAsset,
 }: {
   configRows: InfrastructureAssetConfigRow[]
   rosterRows: MobileWorkshopRosterRow[]
@@ -1734,6 +2203,7 @@ function MobileWorkshopGaragePanel({
   onCancelDelivery: (job: InfrastructureJobRow) => void
   onOpenAssetRepair: (target: InfrastructureAssetActionTarget) => void
   onOpenAssetSell: (target: InfrastructureAssetActionTarget) => void
+  onRenameAsset: (assetKey: AssetGarageKey, assetId: string, displayName: string) => Promise<void>
 }): JSX.Element {
   const maxWorkshops = Math.max(
     toNumber(summary?.max_total_workshops, 0),
@@ -1791,6 +2261,7 @@ function MobileWorkshopGaragePanel({
       onCancelDelivery={onCancelDelivery}
       onOpenAssetRepair={onOpenAssetRepair}
       onOpenAssetSell={onOpenAssetSell}
+      onRenameAsset={onRenameAsset}
     />
   )
 }
@@ -1808,6 +2279,7 @@ function MedicalVanGaragePanel({
   onCancelDelivery,
   onOpenAssetRepair,
   onOpenAssetSell,
+  onRenameAsset,
 }: {
   configRows: InfrastructureAssetConfigRow[]
   rosterRows: MedicalVanRosterRow[]
@@ -1821,6 +2293,7 @@ function MedicalVanGaragePanel({
   onCancelDelivery: (job: InfrastructureJobRow) => void
   onOpenAssetRepair: (target: InfrastructureAssetActionTarget) => void
   onOpenAssetSell: (target: InfrastructureAssetActionTarget) => void
+  onRenameAsset: (assetKey: AssetGarageKey, assetId: string, displayName: string) => Promise<void>
 }): JSX.Element {
   const maxVans = Math.max(
     toNumber(summary?.max_total_medical_vans, 0),
@@ -1881,6 +2354,7 @@ function MedicalVanGaragePanel({
       onCancelDelivery={onCancelDelivery}
       onOpenAssetRepair={onOpenAssetRepair}
       onOpenAssetSell={onOpenAssetSell}
+      onRenameAsset={onRenameAsset}
     />
   )
 }
@@ -1928,6 +2402,11 @@ export function AssetsSection({
   onCancelDelivery,
   onOpenAssetRepair,
   onOpenAssetSell,
+  onRenameTeamCar,
+  onRenameAsset,
+  assetSlotAccessByKey,
+  unlockingSlotKey,
+  onUnlockAssetSlot,
 }: {
   activeAssetSubTab: AssetSubTabKey
   setActiveAssetSubTab: (tab: AssetSubTabKey) => void
@@ -1979,6 +2458,11 @@ export function AssetsSection({
 
   onOpenAssetRepair: (target: InfrastructureAssetActionTarget) => void
   onOpenAssetSell: (target: InfrastructureAssetActionTarget) => void
+  onRenameTeamCar: (carId: string, displayName: string) => Promise<void>
+  onRenameAsset: (assetKey: AssetGarageKey, assetId: string, displayName: string) => Promise<void>
+  assetSlotAccessByKey: InfrastructureAssetSlotAccessMap
+  unlockingSlotKey: string | null
+  onUnlockAssetSlot: (assetKey: AssetGarageKey, slotNumber: number) => void
 
   /**
    * Kept as an optional compatibility prop in case Infrastructure.tsx still passes it.
@@ -1987,7 +2471,14 @@ export function AssetsSection({
   onStartAssetRepair?: StartAssetRepairHandler
 }): JSX.Element {
   return (
-    <div className="space-y-4">
+    <AssetSlotAccessContext.Provider
+      value={{
+        accessByAssetKey: assetSlotAccessByKey,
+        unlockingSlotKey,
+        onUnlockSlot: onUnlockAssetSlot,
+      }}
+    >
+      <div className="space-y-4">
       <div className="rounded-lg bg-white border border-gray-100 p-2 shadow-sm">
         <div className="flex flex-wrap gap-2">
           {assetSubTabs.map(tab => (
@@ -2021,6 +2512,7 @@ export function AssetsSection({
           onCancelDelivery={onCancelDelivery}
           onOpenAssetRepair={onOpenAssetRepair}
           onOpenAssetSell={onOpenAssetSell}
+          onRenameTeamCar={onRenameTeamCar}
         />
       )}
 
@@ -2038,6 +2530,7 @@ export function AssetsSection({
           onCancelDelivery={onCancelDelivery}
           onOpenAssetRepair={onOpenAssetRepair}
           onOpenAssetSell={onOpenAssetSell}
+          onRenameAsset={onRenameAsset}
         />
       )}
 
@@ -2055,6 +2548,7 @@ export function AssetsSection({
           onCancelDelivery={onCancelDelivery}
           onOpenAssetRepair={onOpenAssetRepair}
           onOpenAssetSell={onOpenAssetSell}
+          onRenameAsset={onRenameAsset}
         />
       )}
 
@@ -2072,6 +2566,7 @@ export function AssetsSection({
           onCancelDelivery={onCancelDelivery}
           onOpenAssetRepair={onOpenAssetRepair}
           onOpenAssetSell={onOpenAssetSell}
+          onRenameAsset={onRenameAsset}
         />
       )}
 
@@ -2089,8 +2584,10 @@ export function AssetsSection({
           onCancelDelivery={onCancelDelivery}
           onOpenAssetRepair={onOpenAssetRepair}
           onOpenAssetSell={onOpenAssetSell}
+          onRenameAsset={onRenameAsset}
         />
       )}
-    </div>
+      </div>
+    </AssetSlotAccessContext.Provider>
   )
 }

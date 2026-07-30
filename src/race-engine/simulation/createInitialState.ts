@@ -5,7 +5,7 @@
  * Responsibilities:
  * - Validate the provided StageInput.
  * - Build deterministic rider, team, group, order, event, and pressure structures.
- * - Transport optional live starting condition without changing legacy fixtures.
+ * - Transport optional live starting condition and equipment metadata without changing legacy fixtures.
  * - Ensure all initial data is immutable by type (readonly) and independent of randomness.
  */
 
@@ -133,6 +133,51 @@ export function createInitialState(
           }
         : null
 
+    const startingEquipment =
+      rider.equipment
+        ? {
+            conditionSource:
+              rider.equipment
+                .conditionSource,
+            preparationSource:
+              rider.equipment
+                .preparationSource,
+
+            equipmentSetupId:
+              rider.equipment
+                .equipmentSetupId,
+
+            selectedComponentCount:
+              rider.equipment
+                .selectedComponentCount,
+            matchedComponentCount:
+              rider.equipment
+                .matchedComponentCount,
+            completeSource:
+              rider.equipment
+                .completeSource,
+
+            minimumConditionPercent:
+              rider.equipment
+                .minimumConditionPercent,
+            effectiveConditionPercent:
+              rider.equipment
+                .effectiveConditionPercent,
+
+            missingComponentCategories:
+              rider.equipment
+                .missingComponentCategories
+                .slice(),
+
+            mechanicalIncidentRiskMultiplier:
+              rider.equipment
+                .mechanicalIncidentRiskMultiplier,
+            mechanicalTimeLossMultiplier:
+              rider.equipment
+                .mechanicalTimeLossMultiplier,
+          }
+        : null
+
     const riderState:
       RiderState = {
         riderId:
@@ -151,6 +196,12 @@ export function createInitialState(
         ...(startingCondition
           ? {
               startingCondition,
+            }
+          : {}),
+
+        ...(startingEquipment
+          ? {
+              startingEquipment,
             }
           : {}),
 

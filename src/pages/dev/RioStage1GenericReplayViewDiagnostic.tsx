@@ -27,8 +27,14 @@ import {
   createCanonicalHashedValue,
 } from '../../race-engine/simulation/canonicalSerialization'
 import {
-  runDeterministicRoadRace,
-} from '../../race-engine/simulation/runDeterministicRoadRace'
+  createInitialState,
+} from '../../race-engine/simulation/createInitialState'
+import {
+  createMultiGroupSimulationOutput,
+} from '../../race-engine/simulation/createMultiGroupSimulationOutput'
+import {
+  runCalibratedTerrainSeparationStage,
+} from '../../race-engine/simulation/runCalibratedTerrainSeparationStage'
 import {
   rioStage1SourceRows,
 } from '../../race-engine/tests/fixtures/rioStage1SourceRows'
@@ -181,9 +187,30 @@ function createDiagnosticBundle(): DiagnosticBundle {
       stageInput,
     )
 
-  const simulationOutput =
-    runDeterministicRoadRace(
+  const requirementsEnabledInitialState = {
+    ...createInitialState(
       stageInput,
+    ),
+    groupShelterEnergyEnabled:
+      true,
+    groupCooperationPaceEnabled:
+      true,
+    controlledAttackLaunchEnabled:
+      true,
+    finalStagePelotonEffortEnabled:
+      true,
+    flatStageChaseEffortEnabled:
+      true,
+  }
+
+  const requirementsEnabledStage =
+    runCalibratedTerrainSeparationStage(
+      requirementsEnabledInitialState,
+    )
+
+  const simulationOutput =
+    createMultiGroupSimulationOutput(
+      requirementsEnabledStage,
     )
 
   const simulationOutputBefore =

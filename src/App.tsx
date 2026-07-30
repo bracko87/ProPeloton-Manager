@@ -128,6 +128,26 @@ import DroppedTransitionEventsDiagnostic from './pages/dev/DroppedTransitionEven
 import AuthoritativeSeparationPressureDiagnostic from './pages/dev/AuthoritativeSeparationPressureDiagnostic'
 import CalibratedSimulationModeDiagnostic from './pages/dev/CalibratedSimulationModeDiagnostic'
 import LiveSupabaseCalibratedShadowDiagnostic from './pages/dev/LiveSupabaseCalibratedShadowDiagnostic'
+import IncidentRiskDiagnostic from './pages/dev/IncidentRiskDiagnostic'
+import IndividualRiderCrashDiagnostic from './pages/dev/IndividualRiderCrashDiagnostic'
+import ActiveIndividualCrashIntegrationDiagnostic from './pages/dev/ActiveIndividualCrashIntegrationDiagnostic'
+import GroupCrashDiagnostic from './pages/dev/GroupCrashDiagnostic'
+import ActiveGroupCrashIntegrationDiagnostic from './pages/dev/ActiveGroupCrashIntegrationDiagnostic'
+import EquipmentConditionTransportDiagnostic from './pages/dev/EquipmentConditionTransportDiagnostic'
+import LiveEquipmentConditionTransportDiagnostic from './pages/dev/LiveEquipmentConditionTransportDiagnostic'
+import TechnicalIncidentDiagnostic from './pages/dev/TechnicalIncidentDiagnostic'
+import ActiveTechnicalIncidentIntegrationDiagnostic from './pages/dev/ActiveTechnicalIncidentIntegrationDiagnostic'
+import DeterministicEngineClosureDiagnostic from './pages/dev/DeterministicEngineClosureDiagnostic'
+import StagingMigrationDesignDiagnostic from './pages/dev/StagingMigrationDesignDiagnostic'
+import MigrationModeResolverDiagnostic from './pages/dev/MigrationModeResolverDiagnostic'
+import ShadowDualRunOrchestrationDiagnostic from './pages/dev/ShadowDualRunOrchestrationDiagnostic'
+import ShadowEvidenceAggregationDiagnostic from './pages/dev/ShadowEvidenceAggregationDiagnostic'
+import StagingCanaryEligibilityDiagnostic from './pages/dev/StagingCanaryEligibilityDiagnostic'
+import AuthoritativePersistenceDesignDiagnostic from './pages/dev/AuthoritativePersistenceDesignDiagnostic'
+import ReplayRoutingDesignDiagnostic from './pages/dev/ReplayRoutingDesignDiagnostic'
+import StagingIntegrationBoundaryDiagnostic from './pages/dev/StagingIntegrationBoundaryDiagnostic'
+import LiveStagingShadowValidationDiagnostic from './pages/dev/LiveStagingShadowValidationDiagnostic'
+import ControlledBreakawayReplayDiagnostic from './pages/dev/ControlledBreakawayReplayDiagnostic'
 
 /**
  * Validate team ranking configuration at startup to catch config mistakes early.
@@ -476,7 +496,9 @@ export default function App(): JSX.Element {
           <Route
             path="/dev/rio-stage-1-race-detail-replay"
             element={
-              <RioStage1RaceDetailReplayDiagnostic />
+              <RequireAuth>
+                <RioStage1RaceDetailReplayDiagnostic />
+              </RequireAuth>
             }
           />
 
@@ -628,6 +650,148 @@ export default function App(): JSX.Element {
                   <LiveSupabaseCalibratedShadowDiagnostic />
                 </RequireClub>
               </RequireAuth>
+            }
+          />
+
+          <Route
+            path="/dev/incident-risk"
+            element={
+              <IncidentRiskDiagnostic />
+            }
+          />
+
+          <Route
+            path="/dev/individual-rider-crash"
+            element={
+              <IndividualRiderCrashDiagnostic />
+            }
+          />
+
+          <Route
+            path="/dev/active-individual-crash"
+            element={
+              <ActiveIndividualCrashIntegrationDiagnostic />
+            }
+          />
+
+          <Route
+            path="/dev/group-crash"
+            element={
+              <GroupCrashDiagnostic />
+            }
+          />
+
+          <Route
+            path="/dev/active-group-crash"
+            element={
+              <ActiveGroupCrashIntegrationDiagnostic />
+            }
+          />
+
+          <Route
+            path="/dev/equipment-condition-transport"
+            element={
+              <EquipmentConditionTransportDiagnostic />
+            }
+          />
+
+          <Route
+            path="/dev/live-equipment-condition-transport"
+            element={
+              <LiveEquipmentConditionTransportDiagnostic />
+            }
+          />
+
+          <Route
+            path="/dev/technical-incident"
+            element={
+              <TechnicalIncidentDiagnostic />
+            }
+          />
+
+          <Route
+            path="/dev/active-technical-incident"
+            element={
+              <ActiveTechnicalIncidentIntegrationDiagnostic />
+            }
+          />
+
+          <Route
+            path="/dev/deterministic-engine-closure"
+            element={
+              <DeterministicEngineClosureDiagnostic />
+            }
+          />
+
+          <Route
+            path="/dev/staging-migration-design"
+            element={
+              <StagingMigrationDesignDiagnostic />
+            }
+          />
+
+          <Route
+            path="/dev/migration-mode-resolver"
+            element={
+              <MigrationModeResolverDiagnostic />
+            }
+          />
+
+          <Route
+            path="/dev/shadow-dual-run"
+            element={
+              <ShadowDualRunOrchestrationDiagnostic />
+            }
+          />
+
+          <Route
+            path="/dev/shadow-evidence-aggregation"
+            element={
+              <ShadowEvidenceAggregationDiagnostic />
+            }
+          />
+
+          <Route
+            path="/dev/staging-canary-eligibility"
+            element={
+              <StagingCanaryEligibilityDiagnostic />
+            }
+          />
+
+          <Route
+            path="/dev/authoritative-persistence-design"
+            element={
+              <AuthoritativePersistenceDesignDiagnostic />
+            }
+          />
+
+          <Route
+            path="/dev/replay-routing-design"
+            element={
+              <ReplayRoutingDesignDiagnostic />
+            }
+          />
+
+          <Route
+            path="/dev/staging-integration-boundary"
+            element={
+              <StagingIntegrationBoundaryDiagnostic />
+            }
+          />
+
+          <Route
+            path="/dev/live-staging-shadow-validation"
+            element={
+              <RequireAuth>
+                <LiveStagingShadowValidationDiagnostic />
+              </RequireAuth>
+            }
+          />
+
+          <Route
+            path="/dev/controlled-breakaway-replay"
+            element={
+              <ControlledBreakawayReplayDiagnostic />
             }
           />
 

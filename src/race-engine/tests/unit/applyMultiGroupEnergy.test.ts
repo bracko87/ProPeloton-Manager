@@ -345,6 +345,275 @@ describe(
     )
 
     it(
+      'reduces energy cost when group shelter is enabled',
+      () => {
+        const {
+          movement,
+          movedState,
+        } = createScenario()
+
+        const withoutShelter =
+          applyMultiGroupEnergy({
+            state:
+              movedState,
+            movement,
+          })
+
+        const withShelter =
+          applyMultiGroupEnergy({
+            state: {
+              ...movedState,
+              groupShelterEnergyEnabled:
+                true,
+            },
+            movement,
+          })
+
+        for (
+          const shelteredApplication of
+          withShelter.applications
+        ) {
+          const baselineApplication =
+            withoutShelter
+              .applications
+              .find(
+                (
+                  application,
+                ) =>
+                  application
+                    .riderId ===
+                  shelteredApplication
+                    .riderId,
+              )
+
+          expect(
+            baselineApplication,
+          ).toBeDefined()
+
+          expect(
+            shelteredApplication
+              .energyCost,
+          ).toBeLessThan(
+            baselineApplication!
+              .energyCost,
+          )
+
+          expect(
+            shelteredApplication
+              .nextEnergy,
+          ).toBeGreaterThan(
+            baselineApplication!
+              .nextEnergy,
+          )
+        }
+      },
+    )
+
+    it(
+      'exposes shelter diagnostics only when shelter is enabled',
+      () => {
+        const {
+          movement,
+          movedState,
+        } = createScenario()
+
+        const withoutShelter =
+          applyMultiGroupEnergy({
+            state:
+              movedState,
+            movement,
+          })
+
+        const withShelter =
+          applyMultiGroupEnergy({
+            state: {
+              ...movedState,
+              groupShelterEnergyEnabled:
+                true,
+            },
+            movement,
+          })
+
+        for (
+          const application of
+          withoutShelter
+            .applications
+        ) {
+          expect(
+            application
+              .shelterBonus,
+          ).toBeUndefined()
+
+          expect(
+            application
+              .shelterResult,
+          ).toBeUndefined()
+        }
+
+        for (
+          const application of
+          withShelter
+            .applications
+        ) {
+          expect(
+            application
+              .shelterBonus,
+          ).toBeGreaterThan(
+            0,
+          )
+
+          expect(
+            application
+              .shelterMultiplier,
+          ).toBeLessThan(
+            1,
+          )
+
+          expect(
+            application
+              .energyCostBeforeShelter,
+          ).toBeGreaterThan(
+            application
+              .energyCost,
+          )
+
+          expect(
+            application
+              .shelterEnergySaved,
+          ).toBeGreaterThan(
+            0,
+          )
+
+          expect(
+            application
+              .shelterResult,
+          ).toBeDefined()
+        }
+      },
+    )
+
+    it(
+      'does not reduce energy for a solo rider group',
+      () => {
+        const initialState =
+          createInitialState(
+            stageInput,
+          )
+
+        const separatedState =
+          createDroppedGroup({
+            state:
+              initialState,
+            sourceGroupId:
+              'peloton_main',
+            riderIds: [
+              'rider-a2',
+            ],
+            speedKmh:
+              34,
+          }).state
+
+        const movement =
+          calculateMultiGroupMovement(
+            separatedState,
+          )
+
+        const movedState =
+          applyMultiGroupMovement({
+            state:
+              separatedState,
+            movement,
+          }).state
+
+        const withoutShelter =
+          applyMultiGroupEnergy({
+            state:
+              movedState,
+            movement,
+          })
+
+        const withShelter =
+          applyMultiGroupEnergy({
+            state: {
+              ...movedState,
+              groupShelterEnergyEnabled:
+                true,
+            },
+            movement,
+          })
+
+        const baselineApplication =
+          withoutShelter
+            .applications
+            .find(
+              (
+                application,
+              ) =>
+                application
+                  .riderId ===
+                'rider-a2',
+            )
+
+        const shelteredApplication =
+          withShelter
+            .applications
+            .find(
+              (
+                application,
+              ) =>
+                application
+                  .riderId ===
+                'rider-a2',
+            )
+
+        expect(
+          baselineApplication,
+        ).toBeDefined()
+
+        expect(
+          shelteredApplication,
+        ).toBeDefined()
+
+        expect(
+          shelteredApplication!
+            .shelterBonus,
+        ).toBe(
+          0,
+        )
+
+        expect(
+          shelteredApplication!
+            .shelterMultiplier,
+        ).toBe(
+          1,
+        )
+
+        expect(
+          shelteredApplication!
+            .shelterEnergySaved,
+        ).toBe(
+          0,
+        )
+
+        expect(
+          shelteredApplication!
+            .energyCost,
+        ).toBe(
+          baselineApplication!
+            .energyCost,
+        )
+
+        expect(
+          shelteredApplication!
+            .nextEnergy,
+        ).toBe(
+          baselineApplication!
+            .nextEnergy,
+        )
+      },
+    )
+
+    it(
       'rejects a rider position that does not match its movement proposal',
       () => {
         const {

@@ -974,11 +974,11 @@ export default function FirstSquadTab({
 
       {!loading && !error && (
         <>
-          {hasDevelopingTeam && (
+          {hasDevelopingTeam && movementWindowSummary.trim() ? (
             <div className="mb-4 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">
               {movementWindowSummary}
             </div>
-          )}
+          ) : null}
 
           {developingTeamStatusError && (
             <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">

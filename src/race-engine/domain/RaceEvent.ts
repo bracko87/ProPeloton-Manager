@@ -1,4 +1,14 @@
+/**
+ * RaceEvent.ts
+ *
+ * Canonical event contract used by the active deterministic engine.
+ *
+ * The engine producers, state validator, SimulationOutput adapter, and replay
+ * adapter use eventType, kmMarker, relatedRiderIds, and commentaryText.
+ */
+
 export type RaceEventType =
+  | 'SIMULATION_STARTED'
   | 'RACE_STARTED'
   | 'ORDER_LOADED'
   | 'ORDER_ACCEPTED'
@@ -11,19 +21,25 @@ export type RaceEventType =
   | 'GROUP_CREATED'
   | 'GROUP_CAUGHT'
   | 'SPRINT_STARTED'
+  | 'RIDER_CRASHED'
+  | 'GROUP_CRASHED'
+  | 'RIDER_TECHNICAL_INCIDENT'
   | 'RIDER_FINISHED'
+  | 'SIMULATION_COMPLETED'
   | 'RACE_COMPLETED'
 
 export interface RaceEvent {
-  readonly id: string
   readonly sequenceNumber: number
-  readonly type: RaceEventType
+  readonly eventType: RaceEventType
   readonly raceSecond: number
-  readonly km: number
-  readonly actorRiderId?: string
-  readonly teamId?: string
-  readonly sourceGroupId?: string
-  readonly targetGroupId?: string
-  readonly riderIds?: readonly string[]
+  readonly kmMarker: number
+
+  readonly actorRiderId: string | null
+  readonly teamId: string | null
+  readonly sourceGroupId: string | null
+  readonly targetGroupId: string | null
+
+  readonly relatedRiderIds: readonly string[]
   readonly payload: Readonly<Record<string, unknown>>
+  readonly commentaryText: string | null
 }

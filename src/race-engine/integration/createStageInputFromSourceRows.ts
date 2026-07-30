@@ -18,6 +18,7 @@ import type {
   StageInput,
   StageProfilePoint,
   StageRiderInput,
+  StageRiderEquipmentInput,
   StageSimulationSettings,
   StageTeamInput,
   StageWeatherInput,
@@ -93,8 +94,54 @@ export interface RiderSourceRow {
   readonly availability_status?: string | null
 }
 
+/**
+ * Direct output shape from
+ * race_engine_resolve_stage_rider_equipment_condition_v1.
+ */
+export interface RiderEquipmentConditionSourceRow {
+  readonly rider_id: string
+  readonly equipment_setup_id:
+    string | null
+
+  readonly selected_component_count:
+    number
+  readonly matched_component_count:
+    number
+
+  readonly complete_source:
+    boolean
+
+  readonly minimum_condition_percent:
+    number | null
+  readonly effective_condition_percent:
+    number
+
+  readonly missing_component_categories:
+    readonly string[] | null
+}
+
+/**
+ * Relevant output fields from
+ * race_engine_get_stage_rider_preparation_modifiers_v2.
+ */
+export interface RiderPreparationModifierSourceRow {
+  readonly rider_id: string
+
+  readonly mechanical_incident_risk_multiplier:
+    number
+  readonly mechanical_time_loss_multiplier:
+    number
+}
+
 export interface StagePlanMetadataSource {
   readonly default_race_captain_rider_id?: string | null
+}
+
+export interface StagePlanRiderPhaseCommandsSource {
+  readonly phase_1?: string | null
+  readonly phase_2?: string | null
+  readonly phase_3?: string | null
+  readonly phase_4?: string | null
 }
 
 export interface StagePlanSourceRow {
@@ -107,6 +154,15 @@ export interface StagePlanSourceRow {
 
   readonly rider_roles_json:
     | Readonly<Record<string, string>>
+    | null
+
+  readonly rider_phase_commands_json?:
+    | Readonly<
+        Record<
+          string,
+          StagePlanRiderPhaseCommandsSource
+        >
+      >
     | null
 }
 
@@ -137,6 +193,18 @@ export interface CreateStageInputFromSourceRowsParams {
 
   readonly weather?:
     StageWeatherSourceRows
+
+  /**
+   * Both arrays are optional as one pair.
+   *
+   * When omitted, every historical fixture keeps its exact rider shape.
+   * When supplied, both arrays must cover every executable rider exactly once.
+   */
+  readonly equipmentConditions?:
+    readonly RiderEquipmentConditionSourceRow[]
+
+  readonly preparationModifiers?:
+    readonly RiderPreparationModifierSourceRow[]
 }
 
 const SETTINGS: StageSimulationSettings = {
@@ -481,6 +549,385 @@ function createStartingCondition(
   }
 }
 
+const EQUIPMENT_CATEGORIES =
+  [
+    'frame',
+    'wheelset',
+    'tires',
+    'groupset',
+    'helmet',
+    'shoes',
+  ] as const
+
+function normalizeInteger(
+  value: unknown,
+  minimum: number,
+  maximum: number,
+  fieldName: string,
+): number {
+  const numericValue =
+    requireFiniteNumber(
+      value,
+      fieldName,
+    )
+
+  if (
+    !Number.isInteger(
+      numericValue,
+    ) ||
+    numericValue < minimum ||
+    numericValue > maximum
+  ) {
+    throw new Error(
+      `${fieldName} must be an integer between ${minimum} and ${maximum}.`,
+    )
+  }
+
+  return numericValue
+}
+
+function normalizeBoundedMetric(
+  value: unknown,
+  minimum: number,
+  maximum: number,
+  fieldName: string,
+): number {
+  const numericValue =
+    requireFiniteNumber(
+      value,
+      fieldName,
+    )
+
+  if (
+    numericValue < minimum ||
+    numericValue > maximum
+  ) {
+    throw new Error(
+      `${fieldName} must be between ${minimum} and ${maximum}.`,
+    )
+  }
+
+  return numericValue
+}
+
+function normalizeOptionalEquipmentCondition(
+  value: number | null,
+  fieldName: string,
+): number | null {
+  if (value === null) {
+    return null
+  }
+
+  return normalizeBoundedMetric(
+    value,
+    0,
+    100,
+    fieldName,
+  )
+}
+
+function normalizeEquipmentCategories(
+  values:
+    readonly string[] | null,
+  fieldName: string,
+): StageRiderEquipmentInput[
+  'missingComponentCategories'
+] {
+  if (values === null) {
+    return []
+  }
+
+  if (!Array.isArray(values)) {
+    throw new Error(
+      `${fieldName} must be an array or null.`,
+    )
+  }
+
+  const normalized =
+    values.map(
+      (
+        value,
+        index,
+      ) => {
+        const category =
+          requireNonEmptyString(
+            value,
+            `${fieldName}[${index}]`,
+          )
+
+        if (
+          !EQUIPMENT_CATEGORIES.includes(
+            category as typeof EQUIPMENT_CATEGORIES[number],
+          )
+        ) {
+          throw new Error(
+            `${fieldName}[${index}] has unsupported category ${category}.`,
+          )
+        }
+
+        return category as
+          typeof EQUIPMENT_CATEGORIES[number]
+      },
+    )
+
+  if (
+    new Set(
+      normalized,
+    ).size !==
+    normalized.length
+  ) {
+    throw new Error(
+      `${fieldName} must not contain duplicates.`,
+    )
+  }
+
+  return normalized.sort(
+    (left, right) =>
+      left.localeCompare(
+        right,
+      ),
+  )
+}
+
+function buildSourceRowMap<
+  TRow extends {
+    readonly rider_id: string
+  },
+>(
+  rows:
+    readonly TRow[],
+  fieldName: string,
+): ReadonlyMap<string, TRow> {
+  const map =
+    new Map<string, TRow>()
+
+  for (
+    const row of
+    rows
+  ) {
+    const riderId =
+      requireNonEmptyString(
+        row.rider_id,
+        `${fieldName}.rider_id`,
+      )
+
+    if (map.has(riderId)) {
+      throw new Error(
+        `${fieldName} contains duplicate rider ${riderId}.`,
+      )
+    }
+
+    map.set(
+      riderId,
+      row,
+    )
+  }
+
+  return map
+}
+
+function createEquipmentInput(
+  riderId: string,
+  condition:
+    RiderEquipmentConditionSourceRow,
+  preparation:
+    RiderPreparationModifierSourceRow,
+): StageRiderEquipmentInput {
+  const conditionRiderId =
+    requireNonEmptyString(
+      condition.rider_id,
+      'equipment condition rider_id',
+    )
+
+  const preparationRiderId =
+    requireNonEmptyString(
+      preparation.rider_id,
+      'preparation modifier rider_id',
+    )
+
+  if (
+    conditionRiderId !== riderId ||
+    preparationRiderId !== riderId
+  ) {
+    throw new Error(
+      `Equipment source rider mismatch for ${riderId}.`,
+    )
+  }
+
+  const equipmentSetupId =
+    condition
+      .equipment_setup_id ===
+      null
+      ? null
+      : requireNonEmptyString(
+          condition
+            .equipment_setup_id,
+          `rider ${riderId} equipment_setup_id`,
+        )
+
+  const selectedComponentCount =
+    normalizeInteger(
+      condition
+        .selected_component_count,
+      0,
+      6,
+      `rider ${riderId} selected_component_count`,
+    )
+
+  const matchedComponentCount =
+    normalizeInteger(
+      condition
+        .matched_component_count,
+      0,
+      6,
+      `rider ${riderId} matched_component_count`,
+    )
+
+  if (
+    matchedComponentCount >
+    selectedComponentCount
+  ) {
+    throw new Error(
+      `rider ${riderId} matched_component_count may not exceed selected_component_count.`,
+    )
+  }
+
+  if (
+    typeof condition
+      .complete_source !==
+    'boolean'
+  ) {
+    throw new Error(
+      `rider ${riderId} complete_source must be boolean.`,
+    )
+  }
+
+  const completeSource =
+    condition.complete_source
+
+  const derivedCompleteSource =
+    selectedComponentCount >
+      0 &&
+    matchedComponentCount ===
+      selectedComponentCount
+
+  if (
+    completeSource !==
+    derivedCompleteSource
+  ) {
+    throw new Error(
+      `rider ${riderId} complete_source does not match component counts.`,
+    )
+  }
+
+  const minimumConditionPercent =
+    normalizeOptionalEquipmentCondition(
+      condition
+        .minimum_condition_percent,
+      `rider ${riderId} minimum_condition_percent`,
+    )
+
+  const effectiveConditionPercent =
+    normalizeBoundedMetric(
+      condition
+        .effective_condition_percent,
+      0,
+      100,
+      `rider ${riderId} effective_condition_percent`,
+    )
+
+  const missingComponentCategories =
+    normalizeEquipmentCategories(
+      condition
+        .missing_component_categories,
+      `rider ${riderId} missing_component_categories`,
+    )
+
+  if (completeSource) {
+    if (equipmentSetupId === null) {
+      throw new Error(
+        `rider ${riderId} complete equipment source requires equipment_setup_id.`,
+      )
+    }
+
+    if (
+      minimumConditionPercent ===
+      null
+    ) {
+      throw new Error(
+        `rider ${riderId} complete equipment source requires minimum_condition_percent.`,
+      )
+    }
+
+    if (
+      Math.abs(
+        effectiveConditionPercent -
+        minimumConditionPercent
+      ) >
+      0.000001
+    ) {
+      throw new Error(
+        `rider ${riderId} complete equipment source must use minimum condition as effective condition.`,
+      )
+    }
+
+    if (
+      missingComponentCategories
+        .length >
+      0
+    ) {
+      throw new Error(
+        `rider ${riderId} complete equipment source may not list missing categories.`,
+      )
+    }
+  } else if (
+    effectiveConditionPercent !==
+    100
+  ) {
+    throw new Error(
+      `rider ${riderId} incomplete equipment source must use neutral effective condition 100.`,
+    )
+  }
+
+  const mechanicalIncidentRiskMultiplier =
+    normalizeBoundedMetric(
+      preparation
+        .mechanical_incident_risk_multiplier,
+      0.75,
+      1,
+      `rider ${riderId} mechanical_incident_risk_multiplier`,
+    )
+
+  const mechanicalTimeLossMultiplier =
+    normalizeBoundedMetric(
+      preparation
+        .mechanical_time_loss_multiplier,
+      0.82,
+      1,
+      `rider ${riderId} mechanical_time_loss_multiplier`,
+    )
+
+  return {
+    conditionSource:
+      'race_engine_resolve_stage_rider_equipment_condition_v1',
+    preparationSource:
+      'race_engine_get_stage_rider_preparation_modifiers_v2',
+
+    equipmentSetupId,
+
+    selectedComponentCount,
+    matchedComponentCount,
+    completeSource,
+
+    minimumConditionPercent,
+    effectiveConditionPercent,
+    missingComponentCategories,
+
+    mechanicalIncidentRiskMultiplier,
+    mechanicalTimeLossMultiplier,
+  }
+}
+
 /**
  * Deterministic acceleration derivation.
  *
@@ -682,6 +1129,232 @@ function getStagePlanRole(
   }
 
   return null
+}
+
+function normalizePhaseCommand(
+  value: string | null | undefined,
+): string | null {
+  if (
+    typeof value !==
+      'string'
+  ) {
+    return null
+  }
+
+  const normalized =
+    value
+      .trim()
+      .toLowerCase()
+
+  return normalized.length >
+    0
+    ? normalized
+    : null
+}
+
+function createAttackOrders(
+  plans:
+    readonly StagePlanSourceRow[],
+  includedRiderIds:
+    ReadonlySet<string>,
+  distanceKm: number,
+): StageInput['orders'] {
+  const phaseDefinitions =
+    [
+      {
+        phase:
+          'phase_1',
+        fromFraction:
+          0,
+        untilFraction:
+          0.25,
+        priority:
+          400,
+      },
+      {
+        phase:
+          'phase_2',
+        fromFraction:
+          0.25,
+        untilFraction:
+          0.5,
+        priority:
+          300,
+      },
+      {
+        phase:
+          'phase_3',
+        fromFraction:
+          0.5,
+        untilFraction:
+          0.75,
+        priority:
+          200,
+      },
+      {
+        phase:
+          'phase_4',
+        fromFraction:
+          0.75,
+        untilFraction:
+          1,
+        priority:
+          100,
+      },
+    ] as const
+
+  const orders:
+    Array<
+      StageInput[
+        'orders'
+      ][number]
+    > = []
+
+  const sortedPlans =
+    plans
+      .slice()
+      .sort(
+        (
+          left,
+          right,
+        ) =>
+          left.id.localeCompare(
+            right.id,
+          ),
+      )
+
+  for (
+    const plan of
+    sortedPlans
+  ) {
+    const teamId =
+      getTeamIdForPlan(
+        plan,
+      )
+
+    if (
+      !teamId
+    ) {
+      continue
+    }
+
+    const commandsByRider =
+      plan
+        .rider_phase_commands_json ??
+      {}
+
+    const riderIds =
+      Object.keys(
+        commandsByRider,
+      ).sort(
+        (
+          left,
+          right,
+        ) =>
+          left.localeCompare(
+            right,
+          ),
+      )
+
+    for (
+      const riderId of
+      riderIds
+    ) {
+      if (
+        !includedRiderIds.has(
+          riderId,
+        )
+      ) {
+        continue
+      }
+
+      const commands =
+        commandsByRider[
+          riderId
+        ]
+
+      if (
+        !commands
+      ) {
+        continue
+      }
+
+      for (
+        const definition of
+        phaseDefinitions
+      ) {
+        const command =
+          normalizePhaseCommand(
+            commands[
+              definition.phase
+            ],
+          )
+
+        /*
+         * Engine v1.1 UI milestone:
+         * only attack has an implemented sporting effect.
+         * Other resolved commands remain intentionally unmapped.
+         */
+        if (
+          command !==
+          'attack'
+        ) {
+          continue
+        }
+
+        orders.push({
+          orderId:
+            `live-stage-plan:${plan.id}:${riderId}:${definition.phase}:attack`,
+          teamId,
+          riderId,
+          type:
+            'attack',
+          status:
+            'scheduled',
+          eligibleFromKm:
+            distanceKm *
+            definition
+              .fromFraction,
+          eligibleUntilKm:
+            distanceKm *
+            definition
+              .untilFraction,
+          priority:
+            definition.priority,
+          targetRiderId:
+            null,
+          maximumFollowers:
+            null,
+          metadata: {
+            source:
+              'stage_plan_phase_command',
+            stagePlanId:
+              plan.id,
+            phase:
+              definition.phase,
+            resolvedCommand:
+              command,
+            fromFraction:
+              definition
+                .fromFraction,
+            untilFraction:
+              definition
+                .untilFraction,
+          },
+        })
+      }
+    }
+  }
+
+  return orders.sort(
+    (
+      left,
+      right,
+    ) =>
+      left.orderId.localeCompare(
+        right.orderId,
+      ),
+  )
 }
 
 function getValidStoredCaptain(
@@ -992,6 +1665,67 @@ export function createStageInputFromSourceRows(
     )
   }
 
+  const equipmentConditionsProvided =
+    params.equipmentConditions !==
+    undefined
+
+  const preparationModifiersProvided =
+    params.preparationModifiers !==
+    undefined
+
+  if (
+    equipmentConditionsProvided !==
+    preparationModifiersProvided
+  ) {
+    throw new Error(
+      'equipmentConditions and preparationModifiers must be supplied together.',
+    )
+  }
+
+  const equipmentConditionByRiderId =
+    equipmentConditionsProvided
+      ? buildSourceRowMap(
+          params.equipmentConditions ??
+            [],
+          'equipmentConditions',
+        )
+      : null
+
+  const preparationModifierByRiderId =
+    preparationModifiersProvided
+      ? buildSourceRowMap(
+          params.preparationModifiers ??
+            [],
+          'preparationModifiers',
+        )
+      : null
+
+  for (
+    const riderId of
+    equipmentConditionByRiderId
+      ?.keys() ??
+    []
+  ) {
+    if (!riderById.has(riderId)) {
+      throw new Error(
+        `Equipment condition references unknown rider ${riderId}.`,
+      )
+    }
+  }
+
+  for (
+    const riderId of
+    preparationModifierByRiderId
+      ?.keys() ??
+    []
+  ) {
+    if (!riderById.has(riderId)) {
+      throw new Error(
+        `Preparation modifier references unknown rider ${riderId}.`,
+      )
+    }
+  }
+
   const participantByRiderId =
     new Map<
       string,
@@ -1178,6 +1912,30 @@ export function createStageInputFromSourceRows(
           rider,
         )
 
+      const equipment =
+        equipmentConditionByRiderId &&
+        preparationModifierByRiderId
+          ? createEquipmentInput(
+              participant.rider_id,
+              equipmentConditionByRiderId.get(
+                participant.rider_id,
+              ) ??
+                (() => {
+                  throw new Error(
+                    `Missing equipment condition source row for ${participant.rider_id}.`,
+                  )
+                })(),
+              preparationModifierByRiderId.get(
+                participant.rider_id,
+              ) ??
+                (() => {
+                  throw new Error(
+                    `Missing preparation modifier source row for ${participant.rider_id}.`,
+                  )
+                })(),
+            )
+          : null
+
       riders.push({
         riderId:
           participant.rider_id,
@@ -1194,7 +1952,57 @@ export function createStageInputFromSourceRows(
               condition,
             }
           : {}),
+
+        ...(equipment
+          ? {
+              equipment,
+            }
+          : {}),
       })
+    }
+  }
+
+  if (
+    equipmentConditionByRiderId &&
+    preparationModifierByRiderId
+  ) {
+    const executableRiderIds =
+      new Set(
+        riders.map(
+          (rider) =>
+            rider.riderId,
+        ),
+      )
+
+    if (
+      equipmentConditionByRiderId
+        .size !==
+      executableRiderIds.size ||
+      preparationModifierByRiderId
+        .size !==
+      executableRiderIds.size
+    ) {
+      throw new Error(
+        'Equipment source rows must cover every executable rider exactly once.',
+      )
+    }
+
+    for (
+      const riderId of
+      executableRiderIds
+    ) {
+      if (
+        !equipmentConditionByRiderId.has(
+          riderId,
+        ) ||
+        !preparationModifierByRiderId.has(
+          riderId,
+        )
+      ) {
+        throw new Error(
+          `Equipment source coverage is incomplete for rider ${riderId}.`,
+        )
+      }
     }
   }
 
@@ -1259,6 +2067,13 @@ export function createStageInputFromSourceRows(
     }
   }
 
+  const orders =
+    createAttackOrders(
+      params.stagePlans,
+      includedRiderIds,
+      distanceKm,
+    )
+
   const profilePoints =
     createProfilePoints(
       params.profilePoints,
@@ -1292,6 +2107,6 @@ export function createStageInputFromSourceRows(
     riders,
     profilePoints,
 
-    orders: [],
+    orders,
   }
 }

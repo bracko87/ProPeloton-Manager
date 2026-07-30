@@ -64,6 +64,44 @@ type PolicySection = {
 
 type PolicyState = Record<string, string>
 
+type PremiumStatusRow = {
+  is_premium?: boolean | null
+  premium_active?: boolean | null
+  has_premium?: boolean | null
+  active?: boolean | null
+  stripe_status?: string | null
+  access_until?: string | null
+}
+
+function getPremiumAccessFromResult(data: unknown): boolean {
+  if (typeof data === 'boolean') return data
+
+  const row = (
+    Array.isArray(data) ? data[0] : data
+  ) as PremiumStatusRow | null
+
+  const accessUntilMs = row?.access_until
+    ? Date.parse(row.access_until)
+    : Number.NaN
+
+  const hasCurrentAccessUntil =
+    Number.isFinite(accessUntilMs) && accessUntilMs > Date.now()
+
+  const hasActiveStripeStatus = [
+    'trialing',
+    'active',
+    'past_due',
+  ].includes(String(row?.stripe_status ?? '').toLowerCase())
+
+  return Boolean(
+    row?.is_premium ??
+      row?.premium_active ??
+      row?.has_premium ??
+      row?.active ??
+      (hasActiveStripeStatus && hasCurrentAccessUntil)
+  )
+}
+
 type CatalogRow = {
   policy_key: string
   option_code: string
@@ -520,6 +558,7 @@ function SelectedOptionCard({
 export function TeamPoliciesOperationsTab(): JSX.Element {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [isPremium, setIsPremium] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [saveMessage, setSaveMessage] = useState<string | null>(null)
 
@@ -547,7 +586,7 @@ export function TeamPoliciesOperationsTab(): JSX.Element {
 
       setClubId(resolvedClubId)
 
-      const [catalogRes, policyRes] = await Promise.all([
+      const [catalogRes, policyRes, premiumStatusRes] = await Promise.all([
         supabase
           .from('team_policy_option_catalog')
           .select(
@@ -559,10 +598,21 @@ export function TeamPoliciesOperationsTab(): JSX.Element {
         supabase.rpc('get_club_team_policies', {
           p_club_id: resolvedClubId,
         }),
+        supabase.rpc('get_my_premium_status'),
       ])
 
       if (catalogRes.error) throw catalogRes.error
       if (policyRes.error) throw policyRes.error
+
+      if (premiumStatusRes.error) {
+        console.error(
+          'Failed to load Premium status for Team Policies & Operations:',
+          premiumStatusRes.error
+        )
+        setIsPremium(false)
+      } else {
+        setIsPremium(getPremiumAccessFromResult(premiumStatusRes.data))
+      }
 
       const catalogRows = (catalogRes.data ?? []) as CatalogRow[]
       const policyRow = policyRes.data as ClubPolicyRow
@@ -657,6 +707,22 @@ export function TeamPoliciesOperationsTab(): JSX.Element {
 
   useEffect(() => {
     void loadPage()
+
+    const handlePremiumStatusChanged = () => {
+      void loadPage()
+    }
+
+    window.addEventListener(
+      'premium-status-changed',
+      handlePremiumStatusChanged
+    )
+
+    return () => {
+      window.removeEventListener(
+        'premium-status-changed',
+        handlePremiumStatusChanged
+      )
+    }
   }, [])
 
   const selectedCount = useMemo(() => {
@@ -712,6 +778,28 @@ export function TeamPoliciesOperationsTab(): JSX.Element {
 
   async function savePolicies(): Promise<void> {
     if (!clubId) return
+
+    if (!isPremium) {
+      const premiumSelections = sections
+        .flatMap(section => section.items)
+        .filter(item => {
+          const selectedValue = policyState[item.key]
+          const selectedIndex = item.options.findIndex(
+            option => option.value === selectedValue
+          )
+          return selectedIndex > 0
+        })
+        .map(item => item.title)
+
+      if (premiumSelections.length > 0) {
+        setError(
+          `Premium is required for the selected options in: ${premiumSelections.join(
+            ', '
+          )}. Free players can use the first option in each dropdown.`
+        )
+        return
+      }
+    }
 
     setSaving(true)
     setError(null)
@@ -808,6 +896,35 @@ export function TeamPoliciesOperationsTab(): JSX.Element {
             </button>
           </div>
         </div>
+      </div>
+
+      <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-slate-600">
+            Premium
+          </span>
+          <span className="text-sm font-medium text-slate-800">
+            Advanced policy levels
+          </span>
+        </div>
+        <p className="mt-2 text-sm leading-6 text-slate-600">
+          Free players can use the first option in every dropdown. All later
+          options are available with Premium and remain visible below with a
+          lock label.
+        </p>
+        {!isPremium ? (
+          <button
+            type="button"
+            onClick={() => {
+              if (typeof window !== 'undefined') {
+                window.location.hash = '#/dashboard/pro'
+              }
+            }}
+            className="mt-3 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50"
+          >
+            Unlock with Premium
+          </button>
+        ) : null}
       </div>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-4">
@@ -1042,14 +1159,48 @@ export function TeamPoliciesOperationsTab(): JSX.Element {
                         id={item.key}
                         className="w-full rounded border border-gray-300 px-3 py-2 text-sm"
                         value={selectedValue}
-                        onChange={event => updatePolicy(item.key, event.target.value)}
+                        onChange={event => {
+                          const nextValue = event.target.value
+                          const nextIndex = item.options.findIndex(
+                            option => option.value === nextValue
+                          )
+
+                          if (!isPremium && nextIndex > 0) {
+                            setSaveMessage(null)
+                            setError(
+                              `${item.title}: this option requires Premium.`
+                            )
+                            return
+                          }
+
+                          updatePolicy(item.key, nextValue)
+                        }}
                       >
-                        {item.options.map(option => (
-                          <option key={option.value} value={option.value}>
-                            {option.label}
-                          </option>
-                        ))}
+                        {item.options.map((option, optionIndex) => {
+                          const isPremiumOption = optionIndex > 0
+
+                          return (
+                            <option
+                              key={option.value}
+                              value={option.value}
+                              disabled={!isPremium && isPremiumOption}
+                            >
+                              {option.label}
+                              {!isPremium
+                                ? isPremiumOption
+                                  ? ' — Premium 🔒'
+                                  : ' — Free'
+                                : ''}
+                            </option>
+                          )
+                        })}
                       </select>
+
+                      {!isPremium ? (
+                        <div className="mt-1 text-xs text-slate-500">
+                          Only the first option is available without Premium.
+                        </div>
+                      ) : null}
                     </div>
                   </div>
 

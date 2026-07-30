@@ -22,7 +22,7 @@ import {
   formatGameDays,
   formatTimeRemaining,
   toNumber,
-} from './infrastructureUtils'
+} from './infrastructureHelpers'
 
 /**
  * ActiveJobsPanel

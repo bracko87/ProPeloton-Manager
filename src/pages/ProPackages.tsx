@@ -10,7 +10,7 @@
  * - Premium invoices, coin-package purchases and the coin ledger are shown
  *   as separate history sections.
  */
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { supabase } from '../lib/supabase'
 
 type CoinStatusRow = {
@@ -145,6 +145,67 @@ const COIN_HISTORY_PAGE_SIZE = 20
 // Display fallbacks only. get_developing_team_status() is the authoritative source.
 const DEFAULT_DEVELOPING_TEAM_ACTIVATION_COIN_COST = 200
 const DEFAULT_DEVELOPING_TEAM_RENEWAL_COIN_COST = 100
+const STRIPE_RETURN_RETRY_DELAYS_MS = [0, 1500, 3000, 5000, 8000, 12000]
+
+type StripeReturnResult = 'success' | 'cancel' | 'portal_return'
+
+function readStripeReturnParams(): {
+  result: StripeReturnResult | null
+  sessionId: string | null
+} {
+  if (typeof window === 'undefined') {
+    return { result: null, sessionId: null }
+  }
+
+  const hash = window.location.hash
+  const queryIndex = hash.indexOf('?')
+
+  if (queryIndex < 0) {
+    return { result: null, sessionId: null }
+  }
+
+  const params = new URLSearchParams(hash.slice(queryIndex + 1))
+  const rawResult = params.get('premium')
+  const result: StripeReturnResult | null =
+    rawResult === 'success' ||
+    rawResult === 'cancel' ||
+    rawResult === 'portal_return'
+      ? rawResult
+      : null
+
+  return {
+    result,
+    sessionId: params.get('session_id'),
+  }
+}
+
+function cleanStripeReturnUrl() {
+  if (typeof window === 'undefined') return
+
+  const hash = window.location.hash
+  const queryIndex = hash.indexOf('?')
+  const cleanHash = queryIndex >= 0 ? hash.slice(0, queryIndex) : hash
+  const normalizedHash = cleanHash || '#/dashboard/pro'
+
+  window.history.replaceState(
+    window.history.state,
+    document.title,
+    `${window.location.pathname}${window.location.search}${normalizedHash}`,
+  )
+}
+
+function dispatchPremiumRefreshEvents() {
+  if (typeof window === 'undefined') return
+
+  window.dispatchEvent(new CustomEvent('premium-status-changed'))
+  window.dispatchEvent(new CustomEvent('coin-balance-changed'))
+}
+
+function wait(delayMs: number): Promise<void> {
+  return new Promise((resolve) => {
+    window.setTimeout(resolve, delayMs)
+  })
+}
 
 function normalizeCoinCost(value: unknown, fallback: number): number {
   const parsed = Number(value)
@@ -161,6 +222,16 @@ const COMPARISON_ROWS = [
   ['Monthly Premium coin reward', '—', '50'],
   ['Buy additional coin packages', '✓', '✓'],
   ['Use optional coin features', '✓', '✓'],
+] as const
+
+const PREMIUM_ADVANTAGES = [
+  '50 coins after every successful monthly Premium payment.',
+  'Advanced training automation and rider-development analysis.',
+  'Premium transfer tools: saved searches, automatic alerts, shortlist and negotiation analysis.',
+  'Additional equipment setup slots and expanded included garage capacity.',
+  'Access to advanced team-policy options and selected calendar filters.',
+  'Additional external-rider history, recent results and career-honours views.',
+  'Premium convenience features never improve race results, transfer acceptance or hidden rider skills.',
 ] as const
 
 function eur(value: number) {
@@ -393,6 +464,7 @@ async function callAuthenticatedEdgeFunction(
 }
 
 export default function ProPackagesPage(): JSX.Element {
+  const stripeReturnHandledRef = useRef(false)
   const [balance, setBalance] = useState(0)
   const [loadingBalance, setLoadingBalance] = useState(true)
 
@@ -590,7 +662,7 @@ export default function ProPackagesPage(): JSX.Element {
     )
   }, [coinTransactions.length])
 
-  async function loadCoinStatus() {
+  async function loadCoinStatus(): Promise<number> {
     setLoadingBalance(true)
 
     const { data, error: coinError } =
@@ -600,15 +672,19 @@ export default function ProPackagesPage(): JSX.Element {
       console.error('Failed to load coin status:', coinError)
       setBalance(0)
       setLoadingBalance(false)
-      return
+      return 0
     }
 
     const row = ((data ?? []) as CoinStatusRow[])[0]
-    setBalance(Math.max(Number(row?.balance ?? 0), 0))
+    const nextBalance = Math.max(Number(row?.balance ?? 0), 0)
+
+    setBalance(nextBalance)
     setLoadingBalance(false)
+
+    return nextBalance
   }
 
-  async function loadPremiumData() {
+  async function loadPremiumData(): Promise<PremiumStatusRow | null> {
     setLoadingPremium(true)
     setPremiumError(null)
 
@@ -648,6 +724,8 @@ export default function ProPackagesPage(): JSX.Element {
         (detailsResult.data as PremiumSubscriptionDetailRow | null) ??
           null,
       )
+
+      return statusRows[0] ?? null
     } catch (loadError: any) {
       console.error('Failed to load Premium data:', loadError)
       setPremiumPlan(null)
@@ -657,6 +735,7 @@ export default function ProPackagesPage(): JSX.Element {
         loadError?.message ??
           'Failed to load Premium membership details.',
       )
+      return null
     } finally {
       setLoadingPremium(false)
     }
@@ -904,6 +983,8 @@ export default function ProPackagesPage(): JSX.Element {
         ? loadCoinTransactionHistory()
         : Promise.resolve(),
     ])
+
+    dispatchPremiumRefreshEvents()
   }
 
   useEffect(() => {
@@ -918,41 +999,128 @@ export default function ProPackagesPage(): JSX.Element {
 
   useEffect(() => {
     if (typeof window === 'undefined') return
+    if (stripeReturnHandledRef.current) return
 
-    const hash = window.location.hash
-    const queryIndex = hash.indexOf('?')
-    if (queryIndex < 0) return
+    const { result: premiumResult } = readStripeReturnParams()
+    if (!premiumResult) return
 
-    const params = new URLSearchParams(hash.slice(queryIndex + 1))
-    const premiumResult = params.get('premium')
+    stripeReturnHandledRef.current = true
+    let cancelled = false
 
-    if (premiumResult === 'success') {
+    async function processStripeReturn() {
+      const { data: initialSessionData } =
+        await supabase.auth.getSession()
+
+      let activeSession = initialSessionData.session
+
+      if (!activeSession) {
+        const { data: refreshedSessionData, error: refreshError } =
+          await supabase.auth.refreshSession()
+
+        if (refreshError) {
+          console.error(
+            'Failed to restore the session after Stripe return:',
+            refreshError,
+          )
+        }
+
+        activeSession = refreshedSessionData.session
+      }
+
+      if (!activeSession) {
+        setPremiumError(
+          'Your payment return was received, but the login session could not be restored. Please sign in again; the completed Stripe payment remains recorded.',
+        )
+        return
+      }
+
+      if (premiumResult === 'cancel') {
+        setPremiumNotice(
+          'Premium checkout was canceled. No payment was taken.',
+        )
+        cleanStripeReturnUrl()
+        return
+      }
+
       setPremiumNotice(
-        'Payment completed. Premium activation and the 50-coin grant may take a few seconds while Stripe confirms the invoice.',
+        premiumResult === 'success'
+          ? 'Payment completed. Confirming Premium access and the 50-coin grant…'
+          : 'Billing management completed. Refreshing your subscription status…',
       )
-    } else if (premiumResult === 'cancel') {
-      setPremiumNotice(
-        'Premium checkout was canceled. No payment was taken.',
-      )
-    } else if (premiumResult === 'portal_return') {
-      setPremiumNotice(
-        'Billing management completed. Subscription changes may take a few seconds to appear.',
-      )
-    } else {
-      return
+
+      cleanStripeReturnUrl()
+
+      for (const delayMs of STRIPE_RETURN_RETRY_DELAYS_MS) {
+        if (cancelled) return
+        if (delayMs > 0) await wait(delayMs)
+        if (cancelled) return
+
+        const [status] = await Promise.all([
+          loadPremiumData(),
+          loadCoinStatus(),
+          premiumInvoicesOpen
+            ? loadPremiumInvoiceHistory()
+            : Promise.resolve(),
+        ])
+
+        dispatchPremiumRefreshEvents()
+
+        if (
+          premiumResult === 'success' &&
+          status?.is_premium
+        ) {
+          setPremiumNotice(
+            'Premium is active and your monthly coin reward has been added.',
+          )
+          return
+        }
+
+        if (premiumResult === 'portal_return' && status) {
+          setPremiumNotice(
+            'Your billing and subscription status has been refreshed.',
+          )
+          return
+        }
+      }
+
+      if (premiumResult === 'success') {
+        setPremiumNotice(
+          'Payment was completed, but Stripe confirmation is still processing. Use Refresh in a few moments; do not purchase again.',
+        )
+      }
     }
 
-    const refreshTimer = window.setTimeout(() => {
-      void Promise.all([
-        loadPremiumData(),
-        loadCoinStatus(),
-        premiumInvoicesOpen
-          ? loadPremiumInvoiceHistory()
-          : Promise.resolve(),
-      ])
-    }, 2500)
+    void processStripeReturn()
 
-    return () => window.clearTimeout(refreshTimer)
+    return () => {
+      cancelled = true
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  useEffect(() => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      if (!session) return
+
+      if (
+        event === 'SIGNED_IN' ||
+        event === 'TOKEN_REFRESHED' ||
+        event === 'INITIAL_SESSION'
+      ) {
+        void Promise.all([
+          loadPremiumData(),
+          loadCoinStatus(),
+        ]).then(() => {
+          dispatchPremiumRefreshEvents()
+        })
+      }
+    })
+
+    return () => {
+      subscription.unsubscribe()
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -971,7 +1139,11 @@ export default function ProPackagesPage(): JSX.Element {
         throw new Error('Premium Checkout URL missing')
       }
 
-      window.location.href = response.url
+      window.sessionStorage.setItem(
+        'ppm-stripe-return-path',
+        `${window.location.origin}/#/dashboard/pro`,
+      )
+      window.location.assign(response.url)
     } catch (checkoutError: any) {
       setPremiumError(
         checkoutError?.message ?? 'Premium checkout failed.',
@@ -1071,14 +1243,6 @@ export default function ProPackagesPage(): JSX.Element {
           >
             Refresh
           </button>
-
-          <div className="rounded-xl border border-black/10 bg-white px-4 py-3 shadow-sm">
-            <div className="text-xs text-gray-500">Your balance</div>
-            <div className="text-lg font-bold text-black">
-              ◎ {loadingBalance ? '…' : balance.toLocaleString()}{' '}
-              {!loadingBalance ? coinLabel(balance) : ''}
-            </div>
-          </div>
         </div>
       </div>
 
@@ -1095,9 +1259,36 @@ export default function ProPackagesPage(): JSX.Element {
       ) : null}
 
       {/* Section 1 — Premium Membership */}
-      <section className="mt-6 overflow-hidden rounded-2xl border border-yellow-400 bg-white shadow-sm">
-        <div className="grid grid-cols-1 lg:grid-cols-[1.35fr_0.65fr]">
-          <div className="p-6 sm:p-8">
+      <section className="relative z-20 mt-6 overflow-visible rounded-2xl border border-yellow-400 bg-white shadow-sm">
+        <div className="grid grid-cols-1 overflow-visible lg:grid-cols-[1.35fr_0.65fr]">
+          <div className="relative p-6 sm:p-8">
+            <div className="group absolute right-6 top-6 z-20 sm:right-8 sm:top-8">
+              <button
+                type="button"
+                aria-label="Show all Premium advantages"
+                className="flex h-9 w-9 items-center justify-center rounded-full border border-yellow-400 bg-yellow-50 text-sm font-extrabold text-black shadow-sm transition hover:bg-yellow-100 focus:outline-none focus:ring-2 focus:ring-yellow-400"
+              >
+                i
+              </button>
+
+              <div
+                role="tooltip"
+                className="pointer-events-none invisible absolute right-0 top-11 z-[100] max-h-[min(70vh,520px)] w-[320px] translate-y-1 overflow-y-auto rounded-2xl border border-yellow-300 bg-white p-4 opacity-0 shadow-2xl transition duration-150 group-hover:pointer-events-auto group-hover:visible group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:visible group-focus-within:translate-y-0 group-focus-within:opacity-100 sm:w-[380px]"
+              >
+                <div className="text-sm font-extrabold text-black">
+                  All Premium advantages
+                </div>
+                <ul className="mt-3 space-y-2 text-xs leading-5 text-gray-700">
+                  {PREMIUM_ADVANTAGES.map((advantage) => (
+                    <li key={advantage} className="flex gap-2">
+                      <span className="font-bold text-green-700">✓</span>
+                      <span>{advantage}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+
             <div className="flex flex-wrap items-center gap-2">
               <span className="rounded-full bg-yellow-400 px-3 py-1 text-xs font-extrabold text-black">
                 PREMIUM
@@ -1130,7 +1321,21 @@ export default function ProPackagesPage(): JSX.Element {
             <ul className="mt-5 space-y-2 text-sm text-gray-700">
               <li className="flex gap-2">
                 <span className="font-bold text-green-700">✓</span>
-                <span>Unlock Premium game features.</span>
+                <span>
+                  Advanced training, transfer, scouting and management tools.
+                </span>
+              </li>
+              <li className="flex gap-2">
+                <span className="font-bold text-green-700">✓</span>
+                <span>
+                  Saved searches, market alerts, rider shortlist and deeper analysis.
+                </span>
+              </li>
+              <li className="flex gap-2">
+                <span className="font-bold text-green-700">✓</span>
+                <span>
+                  Extra equipment and infrastructure convenience capacity.
+                </span>
               </li>
               <li className="flex gap-2">
                 <span className="font-bold text-green-700">✓</span>
@@ -1140,15 +1345,9 @@ export default function ProPackagesPage(): JSX.Element {
               </li>
               <li className="flex gap-2">
                 <span className="font-bold text-green-700">✓</span>
-                <span>Automatically renews each month.</span>
-              </li>
-              <li className="flex gap-2">
-                <span className="font-bold text-green-700">✓</span>
-                <span>Cancel at any time.</span>
-              </li>
-              <li className="flex gap-2">
-                <span className="font-bold text-green-700">✓</span>
-                <span>Basic game access remains free after cancellation.</span>
+                <span>
+                  Cancel at any time; normal gameplay remains free.
+                </span>
               </li>
             </ul>
 
@@ -1333,7 +1532,7 @@ export default function ProPackagesPage(): JSX.Element {
                   <div className="text-sm font-semibold text-gray-700">
                     Coin Pack
                   </div>
-                  <div className="mt-1 text-4xl font-normal text-black">
+                  <div className="mt-1 text-4xl font-bold text-black">
                     ◎ {item.coins.toLocaleString()}
                   </div>
                   <div className="mt-2 text-sm text-gray-600">
@@ -1852,7 +2051,7 @@ function MembershipItem(props: {
       <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">
         {props.label}
       </div>
-      <div className="mt-1 text-base font-bold text-black">
+      <div className="mt-1 text-base font-normal text-black">
         {props.value}
       </div>
     </div>

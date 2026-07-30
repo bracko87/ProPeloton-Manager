@@ -13,9 +13,11 @@ import { supabase } from '../../lib/supabase'
 import RiderTransferListPage from './transfers/RiderTransferListPage'
 import RiderFreeAgentsPage from './transfers/RiderFreeAgentsPage'
 import StaffFreeAgentPage from './transfers/StaffFreeAgentPage'
+import TransferIntelligencePanel from './transfers/TransferIntelligencePanel'
+import TransferShortlistPage from './transfers/TransferShortlistPage'
 
 type TransferTab = 'riders' | 'staff'
-type RiderMarketSubTab = 'transfer_list' | 'free_agents'
+type RiderMarketSubTab = 'transfer_list' | 'free_agents' | 'shortlist'
 type ActivityFilterMode = 'incoming' | 'outgoing'
 
 type StaffRole =
@@ -372,7 +374,7 @@ const STAFF_ROLES: StaffRole[] = [
 ]
 
 function isValidRiderMarketSubTab(value: unknown): value is RiderMarketSubTab {
-  return value === 'transfer_list' || value === 'free_agents'
+  return value === 'transfer_list' || value === 'free_agents' || value === 'shortlist'
 }
 
 function readInitialRiderMarketSubTab(): RiderMarketSubTab {
@@ -1287,6 +1289,7 @@ export default function TransfersPage() {
   const [riderActionLoading, setRiderActionLoading] = useState(false)
 
   const [marketSearch, setMarketSearch] = useState('')
+  const [transferSaveSearchRequestToken, setTransferSaveSearchRequestToken] = useState(0)
   const [marketRoleFilter, setMarketRoleFilter] = useState<RiderRoleFilter>('all')
   const [marketOnlyActive, setMarketOnlyActive] = useState(false)
   const [marketHideOwn, setMarketHideOwn] = useState(false)
@@ -3182,6 +3185,16 @@ export default function TransfersPage() {
                     })
                   }}
                 />
+                <UnderlineSubTabButton
+                  active={riderMarketSubTab === 'shortlist'}
+                  label="Shortlist"
+                  onClick={() => {
+                    setRiderMarketSubTab('shortlist')
+                    updateTransfersQuery({
+                      riderSubTab: 'shortlist',
+                    })
+                  }}
+                />
               </div>
             </div>
           ) : null}
@@ -3201,9 +3214,95 @@ export default function TransfersPage() {
         </div>
       </div>
 
+      {clubId && riderMarketSubTab !== 'shortlist' ? (
+        <TransferIntelligencePanel
+          clubId={clubId}
+          marketType={
+            activeTab === 'staff'
+              ? 'staff'
+              : riderMarketSubTab
+          }
+          currentSearch={marketSearch}
+          currentRole={
+            activeTab === 'staff'
+              ? roleFilter
+              : marketRoleFilter
+          }
+          currentSort={
+            activeTab === 'staff'
+              ? `${sortField}:${sortDirection}`
+              : marketSort
+          }
+          onlyActive={marketOnlyActive}
+          hideOwn={marketHideOwn}
+          saveRequestToken={transferSaveSearchRequestToken}
+          onApplySavedSearch={criteria => {
+            const searchValue =
+              typeof criteria.search === 'string'
+                ? criteria.search
+                : ''
+            const roleValue =
+              typeof criteria.role === 'string'
+                ? criteria.role
+                : 'all'
+            const sortValue =
+              typeof criteria.sort === 'string'
+                ? criteria.sort
+                : 'active'
+
+            setMarketSearch(searchValue)
+            setMarketRoleFilter(roleValue)
+            if (
+              [
+                'active',
+                'expires',
+                'scouted',
+                'overall_desc',
+                'overall_asc',
+                'price_desc',
+                'price_asc',
+                'name_asc',
+                'name_desc',
+                'age_asc',
+                'age_desc',
+              ].includes(sortValue)
+            ) {
+              setMarketSort(sortValue as RiderMarketSort)
+            }
+            setMarketOnlyActive(criteria.only_active !== false)
+            setMarketHideOwn(criteria.hide_own !== false)
+          }}
+        />
+      ) : null}
+
       {activeTab === 'riders' ? (
-        riderMarketSubTab === 'transfer_list' ? (
+        riderMarketSubTab === 'shortlist' && clubId ? (
+          <TransferShortlistPage
+            clubId={clubId}
+            onOpenTransferOffer={(listingId, riderId) => {
+              const listing = marketListings.find(
+                row => row.listing_id === listingId || row.rider_id === riderId
+              )
+              if (listing) {
+                openOfferModal(listing)
+              } else {
+                openRiderProfilePage(riderId, false)
+              }
+            }}
+            onOpenFreeAgentNegotiation={(freeAgentId, riderId) => {
+              const agent = freeAgents.find(
+                row => row.free_agent_id === freeAgentId || row.rider_id === riderId
+              )
+              if (agent) {
+                void handleStartFreeAgentNegotiation(agent)
+              } else {
+                openRiderProfilePage(riderId, false)
+              }
+            }}
+          />
+        ) : riderMarketSubTab === 'transfer_list' ? (
           <RiderTransferListPage
+            clubId={clubId}
             riderLoading={riderLoading}
             gameState={gameState}
             marketSearch={marketSearch}
@@ -3217,6 +3316,9 @@ export default function TransfersPage() {
             setMarketOnlyActive={setMarketOnlyActive}
             marketHideOwn={marketHideOwn}
             setMarketHideOwn={setMarketHideOwn}
+            onSaveCurrentSearch={() =>
+              setTransferSaveSearchRequestToken(value => value + 1)
+            }
             paginatedUnifiedMarketRows={paginatedTransferMarketRows}
             selectedMarketListingId={selectedMarketListingId}
             onSelectMarketItem={(item) => {
@@ -3284,6 +3386,7 @@ export default function TransfersPage() {
           />
         ) : (
           <RiderFreeAgentsPage
+            clubId={clubId}
             riderLoading={riderLoading}
             gameState={gameState}
             marketSearch={marketSearch}
@@ -3295,6 +3398,9 @@ export default function TransfersPage() {
             setMarketSort={setMarketSort}
             marketOnlyActive={marketOnlyActive}
             setMarketOnlyActive={setMarketOnlyActive}
+            onSaveCurrentSearch={() =>
+              setTransferSaveSearchRequestToken(value => value + 1)
+            }
             paginatedUnifiedMarketRows={paginatedFreeAgentMarketRows}
             selectedFreeAgentId={selectedFreeAgentId}
             onSelectMarketItem={(item) => {

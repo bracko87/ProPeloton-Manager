@@ -6525,6 +6525,33 @@ function isStageStartReached(
   return new Date() >= stageRealDate
 }
 
+type RaceReplayCoinAccess = {
+  race_id: string
+  coin_cost: number
+  coin_balance: number
+  has_coin_unlock: boolean
+}
+
+function normalizeRaceReplayCoinAccess(data: unknown): RaceReplayCoinAccess | null {
+  const value = Array.isArray(data) ? data[0] : data
+
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return null
+  }
+
+  const row = value as Record<string, unknown>
+
+  return {
+    race_id: String(row.race_id ?? ''),
+    coin_cost: Number(row.coin_cost ?? 2),
+    coin_balance: Number(row.coin_balance ?? 0),
+    has_coin_unlock:
+      row.has_coin_unlock === true ||
+      row.has_coin_unlock === 'true' ||
+      row.has_coin_unlock === 1,
+  }
+}
+
 function StageReplayAccessCard({
   race,
   stage,
@@ -6548,6 +6575,11 @@ function StageReplayAccessCard({
 }) {
   const [hasResults, setHasResults] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [coinAccess, setCoinAccess] = useState<RaceReplayCoinAccess | null>(null)
+  const [coinAccessLoading, setCoinAccessLoading] = useState(false)
+  const [coinPurchaseLoading, setCoinPurchaseLoading] = useState(false)
+  const [coinPurchaseError, setCoinPurchaseError] = useState<string | null>(null)
+  const [coinPurchaseMessage, setCoinPurchaseMessage] = useState<string | null>(null)
 
   const viewerTeamIds = getViewerTeamIds(currentClubId, viewerClubFamilyIds)
   const localParticipationAccess = userTeamParticipatedInRace(
@@ -6555,6 +6587,8 @@ function StageReplayAccessCard({
     viewerTeamIds
   )
   const userParticipated = canViewRaceReplay === true || localParticipationAccess
+  const hasCoinReplayUnlock = coinAccess?.has_coin_unlock === true
+  const hasReplayAccess = userParticipated || hasCoinReplayUnlock
   const stageReached = isStageStartReached(stage, currentGameDate)
   const stageWeatherCanceled = isStageWeatherCanceled(stage)
 
@@ -6588,8 +6622,85 @@ function StageReplayAccessCard({
     }
   }, [stage?.id])
 
-  const canWatch = Boolean(stage && userParticipated && hasResults && !stageWeatherCanceled)
-  const checkingReplayAccess = loading || replayAccessLoading
+  useEffect(() => {
+    if (!race?.id || userParticipated) {
+      setCoinAccess(null)
+      setCoinAccessLoading(false)
+      setCoinPurchaseError(null)
+      setCoinPurchaseMessage(null)
+      return
+    }
+
+    let cancelled = false
+
+    async function loadCoinAccess(): Promise<void> {
+      setCoinAccessLoading(true)
+      setCoinPurchaseError(null)
+
+      const { data, error } = await supabase.rpc(
+        'get_race_replay_coin_access_v1',
+        {
+          p_race_id: race.id,
+        }
+      )
+
+      if (cancelled) return
+
+      if (error) {
+        console.warn('Could not load coin replay access:', error.message)
+        setCoinAccess(null)
+      } else {
+        setCoinAccess(normalizeRaceReplayCoinAccess(data))
+      }
+
+      setCoinAccessLoading(false)
+    }
+
+    void loadCoinAccess()
+
+    return () => {
+      cancelled = true
+    }
+  }, [race?.id, userParticipated])
+
+  async function purchaseReplayAccess(): Promise<void> {
+    if (!race?.id || coinPurchaseLoading) return
+
+    setCoinPurchaseLoading(true)
+    setCoinPurchaseError(null)
+    setCoinPurchaseMessage(null)
+
+    try {
+      const { data, error } = await supabase.rpc(
+        'purchase_race_replay_access_v1',
+        {
+          p_race_id: race.id,
+        }
+      )
+
+      if (error) throw error
+
+      const nextAccess = normalizeRaceReplayCoinAccess(data)
+      setCoinAccess(nextAccess)
+      setCoinPurchaseMessage(
+        `Replay unlocked for ${nextAccess?.coin_cost ?? 2} coins.`
+      )
+
+      window.dispatchEvent(new CustomEvent('coin-balance-changed'))
+    } catch (caught) {
+      setCoinPurchaseError(
+        caught instanceof Error
+          ? caught.message
+          : 'Failed to unlock this race replay.'
+      )
+    } finally {
+      setCoinPurchaseLoading(false)
+    }
+  }
+
+  const canWatch = Boolean(stage && hasReplayAccess && hasResults && !stageWeatherCanceled)
+  const checkingReplayAccess =
+    loading || replayAccessLoading || coinAccessLoading
 
   return (
     <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
@@ -6604,12 +6715,55 @@ function StageReplayAccessCard({
       <p className="mt-2 text-sm leading-5 text-slate-500">
         {stageWeatherCanceled
           ? 'This stage was canceled by the race engine. No replay was generated.'
-          : `Replay is available only for teams that participated in ${race?.name ?? 'this race'}.`}
+          : userParticipated
+            ? `Your team participated in ${race?.name ?? 'this race'}, so the replay is included.`
+            : hasCoinReplayUnlock
+              ? `You unlocked the complete ${race?.name ?? 'race'} replay with coins.`
+              : `Teams that did not participate can unlock the complete ${race?.name ?? 'race'} replay for ${coinAccess?.coin_cost ?? 2} coins.`}
       </p>
 
       {stageWeatherCanceled ? (
         <div className="mt-4">
           <WeatherCancellationNotice stage={stage} race={race} compact />
+        </div>
+      ) : null}
+
+      {!stageWeatherCanceled &&
+      hasResults &&
+      !userParticipated &&
+      !hasCoinReplayUnlock ? (
+        <div className="mt-5 space-y-3">
+          <button
+            type="button"
+            onClick={() => void purchaseReplayAccess()}
+            disabled={
+              coinPurchaseLoading ||
+              coinAccessLoading ||
+              Number(coinAccess?.coin_balance ?? 0) <
+                Number(coinAccess?.coin_cost ?? 2)
+            }
+            className="w-full rounded-2xl border border-yellow-300 bg-yellow-50 px-4 py-3 text-sm font-semibold text-yellow-950 transition hover:bg-yellow-100 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {coinPurchaseLoading
+              ? 'Unlocking replay…'
+              : `Unlock replay · ${coinAccess?.coin_cost ?? 2} coins`}
+          </button>
+
+          <div className="text-center text-xs text-slate-500">
+            Coin balance: {Number(coinAccess?.coin_balance ?? 0).toLocaleString('en-US')}
+          </div>
+
+          {coinPurchaseError ? (
+            <div className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+              {coinPurchaseError}
+            </div>
+          ) : null}
+        </div>
+      ) : null}
+
+      {coinPurchaseMessage ? (
+        <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-700">
+          {coinPurchaseMessage}
         </div>
       ) : null}
 
@@ -6631,8 +6785,10 @@ function StageReplayAccessCard({
             ? 'Checking replay…'
             : canWatch
               ? 'Watch replay'
-              : !userParticipated
-                ? 'Your team did not participate'
+              : !hasReplayAccess
+                ? hasResults
+                  ? `Unlock for ${coinAccess?.coin_cost ?? 2} coins`
+                  : 'Your team did not participate'
                 : !stageReached && !hasResults
                   ? 'Race not started'
                   : 'Replay not available yet'}
@@ -14882,6 +15038,8 @@ function RaceResultsHub({
   onOpenRiderProfile,
   restoreRaceInformationOpen = false,
   restoreRaceInformationTab,
+  stageResultsOverride = null,
+  engineTestModeLabel = null,
 }: {
   race: Race
   stages: RaceStage[]
@@ -14895,6 +15053,12 @@ function RaceResultsHub({
   onOpenRiderProfile: (riderId: string, context?: { raceInfoExpanded?: boolean; raceInfoTab?: RaceInfoTab }) => void
   restoreRaceInformationOpen?: boolean
   restoreRaceInformationTab?: RaceInfoTab
+  stageResultsOverride?: {
+    readonly stageId: string
+    readonly rows:
+      readonly RaceStageResultRow[]
+  } | null
+  engineTestModeLabel?: string | null
 }) {
   const [activeTab, setActiveTab] = useState<RaceInfoTab>(restoreRaceInformationTab ?? 'participants')
   const raceInformationSectionRef = useRef<HTMLElement | null>(null)
@@ -15337,6 +15501,28 @@ function RaceResultsHub({
         return
       }
 
+      if (
+        stageResultsOverride &&
+        stageResultsOverride.stageId === stageId
+      ) {
+        setStageResultsPayload({
+          race_id: race.id,
+          stage_id: stageId,
+          stage_results: stageResultsOverride.rows.map(
+            (row) => ({
+              ...row,
+            })
+          ),
+          point_results: [],
+          classifications: [],
+          leader_snapshot: {},
+        })
+        setStagePointResults([])
+        setStageResultsError(null)
+        setStageResultsLoading(false)
+        return
+      }
+
       setStageResultsLoading(true)
       setStageResultsError(null)
 
@@ -15408,6 +15594,7 @@ function RaceResultsHub({
     isExpanded,
     publishedStageIdSet,
     selectedStageIsTimeTrialLike,
+    stageResultsOverride,
     stages,
   ])
 
@@ -15657,6 +15844,18 @@ function RaceResultsHub({
             </div>
 
             <div className="rounded-2xl bg-slate-50 p-4">
+              {engineTestModeLabel ? (
+                <div className="mb-4 rounded-2xl border border-sky-300 bg-sky-50 px-4 py-3 text-sm text-sky-950">
+                  <div className="font-semibold">
+                    {engineTestModeLabel}
+                  </div>
+
+                  <div className="mt-1 text-xs text-sky-800">
+                    Classification and replay are generated in browser memory. Persisted official results have not been changed.
+                  </div>
+                </div>
+              ) : null}
+
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
                   <div className="font-semibold text-slate-950">
@@ -17261,6 +17460,12 @@ type RaceDetailPageProps = {
   replayStageIdOverride?: string | null
   genericReplayModelOverride?: ReplayStageModel | null
   onCloseReplayOverride?: () => void
+  stageResultsOverride?: {
+    readonly stageId: string
+    readonly rows:
+      readonly RaceStageResultRow[]
+  } | null
+  engineTestModeLabel?: string | null
 }
 
 type ClubFamilyLookupRow = {
@@ -17301,6 +17506,8 @@ export default function RaceDetailPage({
   replayStageIdOverride = null,
   genericReplayModelOverride = null,
   onCloseReplayOverride,
+  stageResultsOverride = null,
+  engineTestModeLabel = null,
 }: RaceDetailPageProps) {
   const navigate = useNavigate()
   const location = useLocation()
@@ -19353,6 +19560,8 @@ export default function RaceDetailPage({
               restoreRaceInformationTab={getRaceInformationRestoreState().tab}
               onOpenTeamProfile={handleOpenTeamProfile}
               onOpenRiderProfile={handleOpenRiderProfile}
+              stageResultsOverride={stageResultsOverride}
+              engineTestModeLabel={engineTestModeLabel}
             />
           ) : null}
         </div>

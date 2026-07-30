@@ -5,9 +5,10 @@
  * movement result.
  *
  * This utility applies group-specific speed, base pace, gradient, tick
- * duration, and the optional calibrated weather-consumption multiplier to
- * every racing rider. It does not move groups, advance the clock, finish
- * riders, create events, or activate production execution.
+ * duration, the optional calibrated weather-consumption multiplier, and
+ * optional weather-only runtime fatigue to every racing rider. It does not
+ * move groups, advance the clock, finish riders, create events, or activate
+ * production execution.
  */
 
 import type { RiderState } from '../domain/RiderState'
@@ -16,6 +17,10 @@ import {
   calculateRiderEnergyCost,
   type RiderEnergyCostResult,
 } from './energyCost'
+import {
+  calculateGroupShelter,
+  type GroupShelterResult,
+} from './groupShelter'
 import type {
   MultiGroupMovementProposal,
   MultiGroupMovementResult,
@@ -23,6 +28,10 @@ import type {
 import {
   calculateWeatherPerformanceEffects,
 } from './weatherPerformanceEffects'
+import {
+  calculateRuntimeWeatherFatigue,
+  type RuntimeWeatherFatigueResult,
+} from './runtimeWeatherFatigue'
 
 /**
  * MultiGroupRiderEnergyApplication
@@ -49,8 +58,30 @@ export interface MultiGroupRiderEnergyApplication {
   readonly appliedSpeedKmh: number
   /** Gradient percent used for the energy calculation */
   readonly gradientPercent: number
-  /** Full result from calculateRiderEnergyCost after weather adjustment */
+  /** Full result after weather and optional shelter adjustment */
   readonly result: RiderEnergyCostResult
+
+  /**
+   * Present only when group-shelter energy savings are enabled.
+   */
+  readonly shelterBonus?: number
+  readonly shelterMultiplier?: number
+  readonly energyCostBeforeShelter?: number
+  readonly shelterEnergySaved?: number
+  readonly shelterResult?: GroupShelterResult
+
+  /**
+   * Present only when calibrated weather creates runtime fatigue.
+   * Neutral, weather-free, and strong-wind-only ticks omit these fields.
+   */
+  readonly previousRuntimeFatigue?:
+    number
+  readonly nextRuntimeFatigue?:
+    number
+  readonly runtimeFatigueGain?:
+    number
+  readonly runtimeFatigueResult?:
+    RuntimeWeatherFatigueResult
 }
 
 /**
@@ -133,6 +164,10 @@ function roundEnergy(
  * energy-consumption and stamina-consumption multipliers is applied to the
  * canonical energy cost. Current weather rules keep those two multipliers
  * equal, while the maximum preserves safe behavior if they diverge later.
+ *
+ * Exact neutral identity is mandatory: when the resolved multiplier is 1,
+ * calculateRiderEnergyCost() is returned without rebuilding or rounding it.
+ * This preserves every pre-weather existing_v1 and calibrated fixture hash.
  */
 export function applyMultiGroupEnergy(
   input: ApplyMultiGroupEnergyInput,
@@ -175,6 +210,14 @@ export function applyMultiGroupEnergy(
       weatherEffects
         .staminaConsumptionMultiplier,
     )
+
+  const runtimeWeatherFatigueEnabled =
+    state
+      .weatherPerformanceEffectsEnabled ===
+      true &&
+    weatherEffects
+      .fatigueGainMultiplier >
+      1
 
   const proposalByGroupId =
     createProposalMap(
@@ -282,33 +325,124 @@ export function applyMultiGroupEnergy(
                   .recovery,
             })
 
-          const weatherAdjustedEnergyCost =
-            roundEnergy(
-              Math.min(
-                rider.energy,
-                unadjustedResult
-                  .energyCost *
-                  weatherConsumptionMultiplier,
-              ),
-            )
+          const weatherAdjustedResult:
+            RiderEnergyCostResult =
+            weatherConsumptionMultiplier ===
+              1
+              ? unadjustedResult
+              : {
+                  ...unadjustedResult,
+                  energyCost:
+                    roundEnergy(
+                      Math.min(
+                        rider.energy,
+                        unadjustedResult
+                          .energyCost *
+                          weatherConsumptionMultiplier,
+                      ),
+                    ),
+                  nextEnergy:
+                    roundEnergy(
+                      Math.max(
+                        0,
+                        rider.energy -
+                          Math.min(
+                            rider.energy,
+                            unadjustedResult
+                              .energyCost *
+                              weatherConsumptionMultiplier,
+                          ),
+                      ),
+                    ),
+                }
 
-          const weatherAdjustedNextEnergy =
-            roundEnergy(
-              Math.max(
-                0,
-                rider.energy -
-                  weatherAdjustedEnergyCost,
-              ),
-            )
+          const shelterEnergyEnabled =
+            state
+              .groupShelterEnergyEnabled ===
+            true
+
+          const shelterResult =
+            shelterEnergyEnabled
+              ? calculateGroupShelter({
+                  groupType:
+                    proposal.groupType,
+                  groupSize:
+                    proposal.riderIds
+                      .length,
+                  gradientPercent:
+                    proposal
+                      .gradientPercent,
+                })
+              : null
+
+          const shelterApplies =
+            shelterResult !==
+              null &&
+            shelterResult
+              .shelterBonus >
+              0
+
+          const shelterMultiplier =
+            shelterResult
+              ? Math.max(
+                  0,
+                  1 -
+                    shelterResult
+                      .shelterBonus /
+                      100,
+                )
+              : 1
+
+          const shelteredEnergyCost =
+            shelterApplies
+              ? roundEnergy(
+                  Math.min(
+                    rider.energy,
+                    weatherAdjustedResult
+                      .energyCost *
+                      shelterMultiplier,
+                  ),
+                )
+              : weatherAdjustedResult
+                  .energyCost
 
           const result:
-            RiderEnergyCostResult = {
-              ...unadjustedResult,
-              energyCost:
-                weatherAdjustedEnergyCost,
-              nextEnergy:
-                weatherAdjustedNextEnergy,
-            }
+            RiderEnergyCostResult =
+            shelterApplies
+              ? {
+                  ...weatherAdjustedResult,
+                  energyCost:
+                    shelteredEnergyCost,
+                  nextEnergy:
+                    roundEnergy(
+                      Math.max(
+                        0,
+                        rider.energy -
+                          shelteredEnergyCost,
+                      ),
+                    ),
+                }
+              : weatherAdjustedResult
+
+          const runtimeFatigueResult =
+            runtimeWeatherFatigueEnabled
+              ? calculateRuntimeWeatherFatigue({
+                  currentRuntimeFatigue:
+                    rider.runtimeFatigue ??
+                    0,
+                  tickSeconds:
+                    movement.tickSeconds,
+                  fatigueGainMultiplier:
+                    weatherEffects
+                      .fatigueGainMultiplier,
+                  resistance:
+                    rider.attributes
+                      .resistance,
+                  recovery:
+                    rider.attributes
+                      .recovery,
+                })
+              : null
 
           applications.push({
             riderId,
@@ -330,6 +464,38 @@ export function applyMultiGroupEnergy(
               proposal
                 .gradientPercent,
             result,
+            ...(shelterResult
+              ? {
+                  shelterBonus:
+                    shelterResult
+                      .shelterBonus,
+                  shelterMultiplier,
+                  energyCostBeforeShelter:
+                    weatherAdjustedResult
+                      .energyCost,
+                  shelterEnergySaved:
+                    roundEnergy(
+                      weatherAdjustedResult
+                        .energyCost -
+                        result.energyCost,
+                    ),
+                  shelterResult,
+                }
+              : {}),
+            ...(runtimeFatigueResult
+              ? {
+                  previousRuntimeFatigue:
+                    runtimeFatigueResult
+                      .previousRuntimeFatigue,
+                  nextRuntimeFatigue:
+                    runtimeFatigueResult
+                      .nextRuntimeFatigue,
+                  runtimeFatigueGain:
+                    runtimeFatigueResult
+                      .fatigueGain,
+                  runtimeFatigueResult,
+                }
+              : {}),
           })
 
           return [
@@ -338,6 +504,13 @@ export function applyMultiGroupEnergy(
               ...rider,
               energy:
                 result.nextEnergy,
+              ...(runtimeFatigueResult
+                ? {
+                    runtimeFatigue:
+                      runtimeFatigueResult
+                        .nextRuntimeFatigue,
+                  }
+                : {}),
             },
           ]
         },

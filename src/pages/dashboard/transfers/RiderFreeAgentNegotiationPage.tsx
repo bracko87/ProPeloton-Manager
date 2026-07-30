@@ -25,6 +25,7 @@ import {
   getCountryName,
   getFlagImageUrl,
 } from '../../../features/squad/utils/formatters'
+import TransferNegotiationIntelligence from './TransferNegotiationIntelligence'
 
 /**
  * NegotiationStatus
@@ -1758,6 +1759,22 @@ export default function RiderFreeAgentNegotiationPage(): JSX.Element {
                 />
               </div>
             </div>
+
+            <TransferNegotiationIntelligence
+              riderId={effectiveRiderProfile?.id ?? null}
+              accessKey={`free_agent:${draftFreeAgent?.id ?? negotiationId ?? effectiveRiderProfile?.id ?? 'unknown'}`}
+              transferFee={0}
+              weeklySalary={normalizeSalaryInput(salaryInput) ?? 0}
+              contractSeasons={Number(durationInput) || 1}
+              signingBonus={parsedSigningBonusPreview}
+              agentFee={parsedAgentFeePreview}
+              riderRole={effectiveRiderProfile?.role}
+              salaryScore={offerPreview?.salaryScore}
+              durationScore={offerPreview?.durationScore}
+              bonusScore={offerPreview?.bonusScore}
+              feeScore={offerPreview?.feeScore}
+              tierScore={offerPreview?.tierScore}
+            />
 
             <div className="mt-4 flex justify-end">
               <button

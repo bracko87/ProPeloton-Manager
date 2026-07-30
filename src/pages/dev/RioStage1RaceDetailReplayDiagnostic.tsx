@@ -1,67 +1,139 @@
 /**
  * RioStage1RaceDetailReplayDiagnostic.tsx
  *
- * Phase 6 development-only route.
+ * Deterministic Engine v1 live staging UI integration.
  *
  * This page:
- * - builds the frozen Rio Stage 1 deterministic replay in browser memory
- * - verifies the frozen StageInput, SimulationOutput, and ReplayStageModel hashes
+ * - loads the fixed allow-listed Rio Stage 1 source bundle through the
+ *   authenticated read-only staging RPC
+ * - runs the calibrated deterministic engine twice in browser memory
+ * - verifies repeatable StageInput, SimulationOutput, and ReplayStageModel hashes
  * - passes the generic ReplayStageModel into the actual RaceDetailPage replay branch
  * - keeps the normal production RaceDetailPage route and legacy replay fallback unchanged
  *
  * It does not write to Supabase, persist results, activate a scheduler,
- * or make the browser replay authoritative.
+ * mutate official results, or make the browser replay authoritative.
  */
 
-import { useMemo } from 'react'
-import { useNavigate } from 'react-router'
+import {
+  useEffect,
+  useState,
+} from 'react'
+import {
+  useNavigate,
+  useSearchParams,
+} from 'react-router'
 
 import RaceDetailPage from '../dashboard/RaceDetailPage'
 import {
-  createStageInputFromSourceRows,
-  type CreateStageInputFromSourceRowsParams,
-} from '../../race-engine/integration/createStageInputFromSourceRows'
+  supabase,
+} from '../../lib/supabase'
 import {
-  createCanonicalHashedValue,
-} from '../../race-engine/simulation/canonicalSerialization'
+  executeLiveStagingShadowStageValidation,
+  LIVE_STAGING_SHADOW_STAGES,
+  type LiveShadowSourceBundle,
+  type LiveStagingShadowStageReport,
+} from '../../race-engine/migration/liveStagingShadowValidation'
 import {
-  runDeterministicRoadRace,
-} from '../../race-engine/simulation/runDeterministicRoadRace'
-import {
-  rioStage1SourceRows,
-} from '../../race-engine/tests/fixtures/rioStage1SourceRows'
-import {
-  createReplayStageModelFromSimulationOutput,
-  validateReplayStageModel,
   type ReplayStageModel,
 } from '../../race-replay'
 
-const RIO_RACE_ID =
-  '65739034-f9e5-4b5c-8f21-4ea27451e0d4'
+type EngineV1UiTestProfile =
+  | 'flat'
+  | 'hilly'
+  | 'mountain'
 
-const RIO_STAGE_ID =
-  '24709c46-b258-4db3-a3aa-fd92dc37630e'
-
-const EXPECTED_STAGE_INPUT_HASH =
-  '85993905d61e0cc5'
-
-const EXPECTED_SIMULATION_OUTPUT_HASH =
-  '229fef0b88e36b02'
-
-const EXPECTED_REPLAY_MODEL_HASH =
-  '91f4bad38bc33e21'
-
-type RioRaceDetailReplayBundle = {
-  readonly model: ReplayStageModel
-  readonly stageInputHash: string
-  readonly simulationOutputHash: string
-  readonly replayModelHash: string
+type EngineV1UiTestStage = {
+  readonly profile:
+    EngineV1UiTestProfile
+  readonly stageId: string
+  readonly expectedRaceId:
+    string | null
+  readonly label: string
 }
 
-type RioRaceDetailReplayPreparation = {
-  readonly bundle: RioRaceDetailReplayBundle | null
-  readonly errorMessage: string | null
+const ENGINE_V1_UI_TEST_STAGES:
+  readonly EngineV1UiTestStage[] = [
+    {
+      profile: 'flat',
+      stageId:
+        '24709c46-b258-4db3-a3aa-fd92dc37630e',
+      expectedRaceId:
+        '65739034-f9e5-4b5c-8f21-4ea27451e0d4',
+      label:
+        'Rio Tour Stage 1 · Flat',
+    },
+    {
+      profile: 'hilly',
+      stageId:
+        '3ca7d3dd-6a45-4829-b08e-6b118309fdd8',
+      expectedRaceId: null,
+      label:
+        'Japan Road Cup Stage 1 · Hilly',
+    },
+    {
+      profile: 'mountain',
+      stageId:
+        '2d33de11-3a34-412a-b90a-847d4839c8d9',
+      expectedRaceId: null,
+      label:
+        'Mentougou International Road Race Stage 3 · Mountain',
+    },
+  ]
+
+type DeterministicStageResultOverrideRow = {
+  readonly rank: number | null
+  readonly rider_id: string | null
+  readonly team_id: string | null
+  readonly rider_name_snapshot:
+    string | null
+  readonly team_name_snapshot:
+    string | null
+  readonly elapsed_seconds:
+    number | null
+  readonly gap_seconds:
+    number | null
+  readonly bonus_seconds:
+    number | null
+  readonly penalty_seconds:
+    number | null
+  readonly finish_points:
+    number | null
+  readonly sprint_points:
+    number | null
+  readonly mountain_points:
+    number | null
+  readonly status: string | null
 }
+
+type RaceDetailReplayBundle = {
+  readonly raceId: string
+  readonly stageId: string
+  readonly model:
+    ReplayStageModel
+  readonly report:
+    LiveStagingShadowStageReport
+  readonly stageResultRows:
+    readonly DeterministicStageResultOverrideRow[]
+}
+
+type RaceDetailReplayState = {
+  readonly loading: boolean
+  readonly bundle:
+    RaceDetailReplayBundle | null
+  readonly errorMessage:
+    string | null
+}
+
+type JsonObject =
+  Record<string, unknown>
+
+const INITIAL_STATE:
+  RaceDetailReplayState = {
+    loading: true,
+    bundle: null,
+    errorMessage: null,
+  }
 
 function getErrorMessage(
   error: unknown,
@@ -71,149 +143,354 @@ function getErrorMessage(
     : String(error)
 }
 
-function assertExpectedHash({
-  label,
-  actual,
-  expected,
-}: {
-  readonly label: string
-  readonly actual: string
-  readonly expected: string
-}): void {
-  if (actual !== expected) {
+function asObject(
+  value: unknown,
+): JsonObject {
+  return (
+    value !== null &&
+    typeof value ===
+      'object' &&
+    !Array.isArray(value)
+  )
+    ? value as JsonObject
+    : {}
+}
+
+function asObjectArray(
+  value: unknown,
+): readonly JsonObject[] {
+  return Array.isArray(value)
+    ? value.map(asObject)
+    : []
+}
+
+function requireString(
+  value: unknown,
+  fieldName: string,
+): string {
+  if (
+    typeof value !==
+      'string' ||
+    value.trim().length ===
+      0
+  ) {
     throw new Error(
-      `${label} hash changed. Expected ${expected}, received ${actual}.`,
+      `${fieldName} must be a non-empty string.`,
     )
+  }
+
+  return value.trim()
+}
+
+function normalizeBundle(
+  value: unknown,
+): LiveShadowSourceBundle {
+  const source =
+    asObject(value)
+
+  return {
+    status:
+      requireString(
+        source.status,
+        'bundle.status',
+      ),
+
+    bundle_version:
+      requireString(
+        source.bundle_version,
+        'bundle.bundle_version',
+      ),
+
+    generated_at:
+      source.generated_at,
+
+    race_id:
+      requireString(
+        source.race_id,
+        'bundle.race_id',
+      ),
+
+    stage_id:
+      requireString(
+        source.stage_id,
+        'bundle.stage_id',
+      ),
+
+    stage_format:
+      requireString(
+        source.stage_format,
+        'bundle.stage_format',
+      ),
+
+    stage:
+      asObject(
+        source.stage,
+      ),
+
+    profile_detail:
+      asObject(
+        source.profile_detail,
+      ),
+
+    teams:
+      asObjectArray(
+        source.teams,
+      ),
+
+    participants:
+      asObjectArray(
+        source.participants,
+      ),
+
+    rider_inputs:
+      asObjectArray(
+        source.rider_inputs,
+      ),
+
+    phase_commands:
+      asObjectArray(
+        source.phase_commands,
+      ),
+
+    official_results:
+      asObjectArray(
+        source.official_results,
+      ),
+
+    official_simulation_runs:
+      asObjectArray(
+        source.official_simulation_runs,
+      ),
+
+    counts:
+      asObject(
+        source.counts,
+      ),
+
+    safety:
+      asObject(
+        source.safety,
+      ),
   }
 }
 
-function createRioRaceDetailReplayBundle():
-  RioRaceDetailReplayBundle {
-  const sourceRows:
-    CreateStageInputFromSourceRowsParams =
-      rioStage1SourceRows
+async function loadSourceBundle(
+  stageId: string,
+): Promise<LiveShadowSourceBundle> {
+  const {
+    data,
+    error,
+  } = await supabase.rpc(
+    'race_engine_get_calibrated_shadow_source_bundle_dev_v1',
+    {
+      p_stage_id:
+        stageId,
+    },
+  )
 
-  const sourceBefore =
-    createCanonicalHashedValue(
-      sourceRows,
-    )
-
-  const stageInput =
-    createStageInputFromSourceRows(
-      sourceRows,
-    )
-
-  const canonicalStageInput =
-    createCanonicalHashedValue(
-      stageInput,
-    )
-
-  assertExpectedHash({
-    label: 'StageInput',
-    actual:
-      canonicalStageInput.hash,
-    expected:
-      EXPECTED_STAGE_INPUT_HASH,
-  })
-
-  if (
-    stageInput.raceId !==
-      RIO_RACE_ID ||
-    stageInput.stageId !==
-      RIO_STAGE_ID
-  ) {
+  if (error) {
     throw new Error(
-      'The Rio fixture race or stage ID no longer matches the Phase 6 development route.',
+      `Unable to load the staging source bundle: ${error.message}`,
     )
   }
 
-  const simulationOutput =
-    runDeterministicRoadRace(
-      stageInput,
+  if (
+    data === null ||
+    typeof data !==
+      'object' ||
+    Array.isArray(data)
+  ) {
+    throw new Error(
+      'The staging source RPC returned an invalid source bundle.',
+    )
+  }
+
+  return normalizeBundle(
+    data,
+  )
+}
+
+async function createLiveRaceDetailReplayBundle(
+  selectedStage:
+    EngineV1UiTestStage,
+): Promise<RaceDetailReplayBundle> {
+  const sourceBundle =
+    await loadSourceBundle(
+      selectedStage.stageId,
     )
 
-  const canonicalSimulationOutput =
-    createCanonicalHashedValue(
-      simulationOutput,
+  const definition =
+    LIVE_STAGING_SHADOW_STAGES
+      .find(
+        (candidate) =>
+          candidate.stageId ===
+          selectedStage.stageId,
+      )
+
+  if (!definition) {
+    throw new Error(
+      `${selectedStage.label} is missing from the live staging shadow allow-list.`,
     )
+  }
 
-  assertExpectedHash({
-    label: 'SimulationOutput',
-    actual:
-      canonicalSimulationOutput.hash,
-    expected:
-      EXPECTED_SIMULATION_OUTPUT_HASH,
-  })
+  if (
+    sourceBundle.stage_id !==
+      selectedStage.stageId
+  ) {
+    throw new Error(
+      `Expected stage ${selectedStage.stageId}, received ${sourceBundle.stage_id}.`,
+    )
+  }
 
-  const model =
-    createReplayStageModelFromSimulationOutput({
-      stageInput,
-      simulationOutput,
+  if (
+    selectedStage.expectedRaceId &&
+    sourceBundle.race_id !==
+      selectedStage.expectedRaceId
+  ) {
+    throw new Error(
+      `Expected race ${selectedStage.expectedRaceId}, received ${sourceBundle.race_id}.`,
+    )
+  }
+
+  const execution =
+    executeLiveStagingShadowStageValidation({
+      definition,
+      bundle:
+        sourceBundle,
     })
 
-  const validation =
-    validateReplayStageModel(
-      model,
-    )
-
   if (
-    !validation.valid ||
-    validation.issues.length > 0
+    !execution.report
+      .executionPassed
   ) {
-    const messages =
-      validation.issues
-        .map(
-          (issue) =>
-            `${issue.path}: ${issue.message}`,
-        )
-        .join('\n')
-
     throw new Error(
-      `ReplayStageModel validation failed.${
-        messages
-          ? `\n${messages}`
-          : ''
-      }`,
+      `The live ${selectedStage.profile} deterministic execution did not pass its safety and completeness checks.`,
     )
   }
 
-  const canonicalReplayModel =
-    createCanonicalHashedValue(
-      model,
-    )
-
-  assertExpectedHash({
-    label: 'ReplayStageModel',
-    actual:
-      canonicalReplayModel.hash,
-    expected:
-      EXPECTED_REPLAY_MODEL_HASH,
-  })
-
-  const sourceAfter =
-    createCanonicalHashedValue(
-      sourceRows,
-    )
-
   if (
-    sourceBefore.hash !==
-      sourceAfter.hash ||
-    sourceBefore.canonicalJson !==
-      sourceAfter.canonicalJson
+    execution.report
+      .databaseWritesPerformed !==
+      false ||
+    execution.report
+      .replayPersisted !==
+      false ||
+    execution.report
+      .officialResultMutationAllowed !==
+      false
   ) {
     throw new Error(
-      'The Rio source fixture was mutated while preparing the Phase 6 replay.',
+      `The live ${selectedStage.profile} execution did not preserve the required read-only safety contract.`,
     )
   }
+
+  const finishedRiderTimes =
+    execution
+      .simulationOutput
+      .finalRiderStates
+      .filter(
+        (rider) =>
+          rider.finished &&
+          typeof rider
+            .finishTimeSeconds ===
+            'number',
+      )
+      .map(
+        (rider) =>
+          rider
+            .finishTimeSeconds as number,
+      )
+
+  if (
+    finishedRiderTimes.length ===
+      0
+  ) {
+    throw new Error(
+      'The deterministic simulation produced no finished riders.',
+    )
+  }
+
+  const winnerTimeSeconds =
+    Math.min(
+      ...finishedRiderTimes,
+    )
+
+  const stageResultRows =
+    execution
+      .simulationOutput
+      .finalRiderStates
+      .slice()
+      .sort(
+        (
+          left,
+          right,
+        ) =>
+          (
+            left.finishPosition ??
+            Number.MAX_SAFE_INTEGER
+          ) -
+          (
+            right.finishPosition ??
+            Number.MAX_SAFE_INTEGER
+          ) ||
+          left.riderId
+            .localeCompare(
+              right.riderId,
+            ),
+      )
+      .map(
+        (
+          rider,
+        ):
+          DeterministicStageResultOverrideRow => {
+          const elapsedSeconds =
+            rider.finishTimeSeconds
+
+          return {
+            rank:
+              rider.finishPosition,
+            rider_id:
+              rider.riderId,
+            team_id:
+              rider.teamId,
+            rider_name_snapshot:
+              rider.riderName,
+            team_name_snapshot:
+              rider.teamName,
+            elapsed_seconds:
+              elapsedSeconds,
+            gap_seconds:
+              elapsedSeconds !==
+                  null
+                ? Math.max(
+                    0,
+                    elapsedSeconds -
+                      winnerTimeSeconds,
+                  )
+                : null,
+            bonus_seconds: 0,
+            penalty_seconds: 0,
+            finish_points: 0,
+            sprint_points: 0,
+            mountain_points: 0,
+            status:
+              rider.finished
+                ? 'finished'
+                : rider.stageStatus,
+          }
+        },
+      )
 
   return {
-    model,
-    stageInputHash:
-      canonicalStageInput.hash,
-    simulationOutputHash:
-      canonicalSimulationOutput.hash,
-    replayModelHash:
-      canonicalReplayModel.hash,
+    raceId:
+      sourceBundle.race_id,
+    stageId:
+      sourceBundle.stage_id,
+    model:
+      execution.replayModel,
+    report:
+      execution.report,
+    stageResultRows,
   }
 }
 
@@ -222,45 +499,114 @@ export default function RioStage1RaceDetailReplayDiagnostic():
   const navigate =
     useNavigate()
 
-  const preparation =
-    useMemo<
-      RioRaceDetailReplayPreparation
-    >(
-      () => {
+  const [
+    searchParams,
+  ] = useSearchParams()
+
+  const requestedProfile =
+    searchParams.get(
+      'profile',
+    )
+
+  const selectedStage =
+    ENGINE_V1_UI_TEST_STAGES.find(
+      (candidate) =>
+        candidate.profile ===
+        requestedProfile,
+    ) ??
+    ENGINE_V1_UI_TEST_STAGES[0]
+
+  const [
+    state,
+    setState,
+  ] = useState<
+    RaceDetailReplayState
+  >(INITIAL_STATE)
+
+  useEffect(() => {
+    let mounted = true
+
+    const load =
+      async (): Promise<void> => {
+        setState({
+          loading: true,
+          bundle: null,
+          errorMessage: null,
+        })
+
         try {
-          return {
-            bundle:
-              createRioRaceDetailReplayBundle(),
-            errorMessage: null,
+          const bundle =
+            await createLiveRaceDetailReplayBundle(
+              selectedStage,
+            )
+
+          if (!mounted) {
+            return
           }
+
+          setState({
+            loading: false,
+            bundle,
+            errorMessage: null,
+          })
         } catch (error) {
-          return {
+          if (!mounted) {
+            return
+          }
+
+          setState({
+            loading: false,
             bundle: null,
             errorMessage:
               getErrorMessage(error),
-          }
+          })
         }
-      },
-      [],
+      }
+
+    void load()
+
+    return () => {
+      mounted = false
+    }
+  }, [selectedStage.stageId])
+
+  if (state.loading) {
+    return (
+      <main className="min-h-screen bg-slate-950 px-6 py-10 text-slate-100">
+        <section className="mx-auto max-w-4xl rounded-3xl border border-sky-500/40 bg-slate-900 p-6">
+          <div className="text-xs font-semibold uppercase tracking-[0.18em] text-sky-300">
+            Deterministic Engine v1 test
+          </div>
+
+          <h1 className="mt-2 text-3xl font-semibold">
+            Preparing live Engine v1 replay
+          </h1>
+
+          <p className="mt-3 text-sm text-slate-300">
+            Loading the authenticated read-only staging source bundle and running the deterministic engine in browser memory.
+          </p>
+        </section>
+      </main>
     )
+  }
 
   if (
-    preparation.errorMessage ||
-    !preparation.bundle
+    state.errorMessage ||
+    !state.bundle
   ) {
     return (
       <main className="min-h-screen bg-slate-950 px-6 py-10 text-slate-100">
         <section className="mx-auto max-w-4xl rounded-3xl border border-red-400 bg-red-950/40 p-6">
           <div className="text-xs font-semibold uppercase tracking-[0.18em] text-red-200">
-            Phase 6 development route
+            Deterministic Engine v1 live UI integration
           </div>
 
           <h1 className="mt-2 text-3xl font-semibold">
-            Rio RaceDetailPage replay preparation failed
+            Live Engine v1 replay preparation failed
           </h1>
 
           <pre className="mt-5 whitespace-pre-wrap break-words rounded-2xl bg-slate-950 p-4 text-sm text-red-100">
-            {preparation.errorMessage ??
+            {state.errorMessage ??
               'Unknown preparation error.'}
           </pre>
         </section>
@@ -269,53 +615,150 @@ export default function RioStage1RaceDetailReplayDiagnostic():
   }
 
   const {
+    raceId,
+    stageId,
     model,
-    stageInputHash,
-    simulationOutputHash,
-    replayModelHash,
-  } = preparation.bundle
+    report,
+    stageResultRows,
+  } = state.bundle
+
+  const repeatabilityPassed =
+    report.stageInputHash ===
+      report.repeatedStageInputHash &&
+    report.deterministicOutputHash ===
+      report.repeatedDeterministicOutputHash &&
+    report.replayModelHash ===
+      report.repeatedReplayModelHash
+
+  const zeroWritesPreserved =
+    report.databaseWritesPerformed ===
+      false &&
+    report.deterministicWriterCalls ===
+      0 &&
+    report.replayPersisted ===
+      false &&
+    report.officialResultMutationAllowed ===
+      false
 
   return (
     <div className="min-h-screen bg-slate-100">
       <section className="border-b border-slate-800 bg-slate-950 px-4 py-3 text-slate-100 sm:px-6">
-        <div className="mx-auto flex max-w-[1500px] flex-wrap items-center justify-between gap-3">
+        <div className="mx-auto flex max-w-[1500px] flex-wrap items-start justify-between gap-4">
           <div>
             <div className="text-xs font-semibold uppercase tracking-[0.18em] text-sky-300">
-              Phase 6 development route
+              Deterministic Engine v1 · Live staging test
             </div>
 
             <div className="mt-1 text-sm text-slate-300">
-              Actual RaceDetailPage · generic Rio replay · legacy production fallback preserved
+              Actual RaceDetailPage · live calibrated Engine v1 replay · read-only in-memory execution
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2 text-xs">
+          <div className="flex flex-wrap gap-2">
+            {ENGINE_V1_UI_TEST_STAGES.map(
+              (candidate) => (
+                <button
+                  key={
+                    candidate.profile
+                  }
+                  type="button"
+                  onClick={() => {
+                    navigate(
+                      `/dev/rio-stage-1-race-detail-replay?profile=${candidate.profile}`,
+                    )
+                  }}
+                  className={
+                    candidate.profile ===
+                    selectedStage.profile
+                      ? 'rounded-full bg-sky-500 px-3 py-1 text-xs font-semibold text-white'
+                      : 'rounded-full border border-slate-600 px-3 py-1 text-xs text-slate-300'
+                  }
+                >
+                  {candidate.profile}
+                </button>
+              ),
+            )}
+          </div>
+
+          <div className="flex max-w-4xl flex-wrap items-center justify-end gap-2 text-xs">
             <span className="rounded-full border border-emerald-400 bg-emerald-950/50 px-3 py-1 font-semibold text-emerald-200">
-              Model verified
+              {report.executionPassed
+                ? 'Execution passed'
+                : 'Execution failed'}
+            </span>
+
+            <span
+              className={
+                repeatabilityPassed
+                  ? 'rounded-full border border-emerald-400 bg-emerald-950/50 px-3 py-1 font-semibold text-emerald-200'
+                  : 'rounded-full border border-red-400 bg-red-950/50 px-3 py-1 font-semibold text-red-200'
+              }
+            >
+              {repeatabilityPassed
+                ? 'Repeatability passed'
+                : 'Repeatability failed'}
+            </span>
+
+            <span
+              className={
+                zeroWritesPreserved
+                  ? 'rounded-full border border-emerald-400 bg-emerald-950/50 px-3 py-1 font-semibold text-emerald-200'
+                  : 'rounded-full border border-red-400 bg-red-950/50 px-3 py-1 font-semibold text-red-200'
+              }
+            >
+              {zeroWritesPreserved
+                ? 'Zero writes'
+                : 'Write safety failed'}
+            </span>
+
+            <span className="rounded-full border border-amber-400 bg-amber-950/50 px-3 py-1 font-semibold text-amber-200">
+              {report.strictMigrationComparisonPassed
+                ? 'Strict legacy comparison passed'
+                : 'Strict legacy comparison blocked'}
             </span>
 
             <code className="rounded-full border border-slate-700 bg-slate-900 px-3 py-1 text-slate-300">
-              {stageInputHash}
+              StageInput: {report.stageInputHash}
             </code>
 
             <code className="rounded-full border border-slate-700 bg-slate-900 px-3 py-1 text-slate-300">
-              {simulationOutputHash}
+              Repeated: {report.repeatedStageInputHash}
             </code>
 
             <code className="rounded-full border border-slate-700 bg-slate-900 px-3 py-1 text-slate-300">
-              {replayModelHash}
+              Output: {report.deterministicOutputHash}
+            </code>
+
+            <code className="rounded-full border border-slate-700 bg-slate-900 px-3 py-1 text-slate-300">
+              Repeated: {report.repeatedDeterministicOutputHash}
+            </code>
+
+            <code className="rounded-full border border-slate-700 bg-slate-900 px-3 py-1 text-slate-300">
+              Replay: {report.replayModelHash}
+            </code>
+
+            <code className="rounded-full border border-slate-700 bg-slate-900 px-3 py-1 text-slate-300">
+              Repeated: {report.repeatedReplayModelHash}
             </code>
           </div>
         </div>
       </section>
 
       <RaceDetailPage
-        raceIdOverride={RIO_RACE_ID}
-        replayStageIdOverride={RIO_STAGE_ID}
+        raceIdOverride={raceId}
+        replayStageIdOverride={stageId}
         genericReplayModelOverride={model}
+        stageResultsOverride={{
+          stageId,
+          rows:
+            stageResultRows,
+        }}
+        engineTestModeLabel={
+          `Deterministic Engine v1 test mode · ${selectedStage.label}`
+        }
         onCloseReplayOverride={() => {
           navigate(
-            '/dev/rio-stage-1-generic-replay-view',
+            `/dev/rio-stage-1-race-detail-replay?profile=${selectedStage.profile}`,
           )
         }}
       />

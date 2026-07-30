@@ -7,6 +7,7 @@
  * - Transfer-list state is visible in the header area
  * - Added optional roster refresh and compare callbacks
  * - Compare now behaves like an in-page tab instead of navigating away
+ * - Generalized the medical report card so both injuries and sicknesses show full details
  */
 
 import React, { useEffect, useMemo, useState } from 'react'
@@ -55,8 +56,66 @@ import {
   getRiderStatusUi,
 } from '../utils/rider-ui'
 
-type RiderProfileTab = 'overview' | 'contract' | 'training' | 'compare' | 'history'
+type RiderProfileTab = 'overview' | 'contract' | 'training' | 'analysis' | 'compare' | 'history'
+
+const RIDER_PROFILE_TABS: RiderProfileTab[] = [
+  'overview',
+  'contract',
+  'training',
+  'analysis',
+  'compare',
+  'history',
+]
+
+function getRequestedRiderProfileTab(search: string): RiderProfileTab {
+  const requestedTab = new URLSearchParams(search).get('tab')
+
+  return RIDER_PROFILE_TABS.includes(requestedTab as RiderProfileTab)
+    ? (requestedTab as RiderProfileTab)
+    : 'overview'
+}
 type OfferExtensionValue = '1' | '2'
+
+type PremiumStatusRow = {
+  is_premium: boolean
+  stripe_status?: string | null
+  access_until?: string | null
+}
+
+type RiderPerformanceAnalysis = {
+  rider_id: string
+  generated_at: string
+  development_stage: string
+  recommended_roles: Array<{
+    role: string
+    score: number
+  }>
+  race_suitability: Array<{
+    race_type: string
+    score: number
+    rating: string
+  }>
+  strengths: Array<{
+    key: string
+    label: string
+    value: number
+  }>
+  weaknesses: Array<{
+    key: string
+    label: string
+    value: number
+  }>
+  training_recommendation: {
+    focus: string
+    intensity: string
+    reason: string
+  } | null
+  performance_trend: {
+    direction: string
+    recent_races_used: number
+  } | null
+  coach_note: string | null
+}
 type RiderSkillViewMode = 'basic' | 'modern'
 
 const RIDER_SKILL_VIEW_MODE_STORAGE_KEY = 'ppm:rider-profile.skill-attributes-view-mode'
@@ -110,6 +169,20 @@ type RiderSkillDeltaRow = {
 
 type RiderSkillDeltaMap = Partial<Record<RiderSkillAttributeCode, RiderSkillDeltaRow>>
 
+type RiderSkillProgressPoint = {
+  week_start_date: string
+  week_label: string
+  sprint: number
+  climbing: number
+  time_trial: number
+  endurance: number
+  flat: number
+  recovery: number
+  resistance: number
+  race_iq: number
+  teamwork: number
+}
+
 type RiderCareerHistoryRow = {
   season: number | null
   season_label: string
@@ -131,6 +204,14 @@ type RiderSeasonStatsBox = {
   podiums: number
   top10: number
   points: number
+}
+
+type RiderMonthlyPointsRow = {
+  month_start: string
+  month_label: string
+  international_points: number
+  sprint_points: number
+  climb_points: number
 }
 
 type RiderRecentRaceRow = {
@@ -788,16 +869,22 @@ function getInjuryKeywordSource(
     .toLowerCase()
 }
 
-function shouldShowInjuryReport(
+function shouldShowHealthCaseReport(
   rider: RiderDetails | null,
   healthCase: RiderCurrentHealthCase | null
 ): boolean {
   if (!rider) return false
 
-  if (rider.availability_status === 'injured') return true
+  if (rider.availability_status === 'injured' || rider.availability_status === 'sick') {
+    return true
+  }
+
+  if (healthCase?.health_case_id && healthCase.case_status !== 'resolved') {
+    return true
+  }
 
   const source = getInjuryKeywordSource(rider, healthCase)
-  return /(injur|fracture|broken|sprain|strain|tear|bruise|wound|laceration|disloc|crack|pain)/i.test(
+  return /(injur|sick|illness|flu|cold|infection|stomach|poison|heat exhaustion|fracture|broken|sprain|strain|tear|bruise|wound|laceration|disloc|crack|pain)/i.test(
     source
   )
 }
@@ -878,21 +965,30 @@ function getInjuryDescriptor(
   }
 }
 
-function getInjuryStatusSummary(healthCase: RiderCurrentHealthCase | null): string {
+function getHealthCaseStatusSummary(
+  healthCase: RiderCurrentHealthCase | null,
+  isSickness: boolean
+): string {
+  const caseNoun = isSickness ? 'illness' : 'injury'
+
   if (!healthCase?.health_case_id) {
-    return 'The rider is unavailable because of an injury. Detailed medical progress will be shown here while the case is active.'
+    return `The rider is unavailable because of an ${caseNoun}. Detailed medical progress will be shown here while the case is active.`
   }
 
   if (healthCase.case_status === 'active') {
-    return 'The rider is in the active medical phase and cannot race until the injury stabilises and the blocked period ends.'
+    return isSickness
+      ? 'The rider is in the active illness phase and cannot race or train until the blocked period ends.'
+      : 'The rider is in the active medical phase and cannot race until the injury stabilises and the blocked period ends.'
   }
 
   if (healthCase.case_status === 'recovering') {
-    return 'The rider has left the acute phase and is recovering back toward full fitness and race readiness.'
+    return isSickness
+      ? 'The acute illness has passed and the rider is rebuilding fitness and race readiness.'
+      : 'The rider has left the acute phase and is recovering back toward full fitness and race readiness.'
   }
 
   if (healthCase.case_status === 'resolved') {
-    return 'The injury case is marked as resolved, but this panel remains visible until the rider returns to a fit availability state.'
+    return `The ${caseNoun} case is marked as resolved, but this panel remains visible until the rider returns to a fit availability state.`
   }
 
   return 'Medical status is being monitored.'
@@ -1042,7 +1138,1675 @@ function DetailRow({
 }
 
 
-function InjuryReportCard({
+
+function PremiumLockedPanel({
+  title,
+  description,
+}: {
+  title: string
+  description: string
+}) {
+  return (
+    <div className="rounded-xl border border-slate-200 bg-white px-5 py-5">
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-slate-600">
+          Premium
+        </span>
+        <span aria-hidden="true" className="text-sm text-slate-500">
+          🔒
+        </span>
+      </div>
+
+      <div className="mt-3 text-base font-semibold text-slate-900">{title}</div>
+      <div className="mt-1 max-w-2xl text-sm leading-6 text-slate-600">{description}</div>
+
+      <button
+        type="button"
+        onClick={() => {
+          if (typeof window !== 'undefined') {
+            window.location.hash = '#/dashboard/pro'
+          }
+        }}
+        className="mt-4 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-800 transition hover:bg-slate-50"
+      >
+        Unlock with Premium
+      </button>
+    </div>
+  )
+}
+
+function RiderPerformanceAnalysisPanel({
+  analysis,
+  loading,
+  error,
+}: {
+  analysis: RiderPerformanceAnalysis | null
+  loading: boolean
+  error: string | null
+}) {
+  if (loading) {
+    return (
+      <SectionCard
+        title="Performance Analysis"
+        subtitle="Premium coaching analysis for this rider"
+      >
+        <div className="text-sm text-slate-500">Loading rider analysis…</div>
+      </SectionCard>
+    )
+  }
+
+  if (error) {
+    return (
+      <SectionCard
+        title="Performance Analysis"
+        subtitle="Premium coaching analysis for this rider"
+      >
+        <div className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+          {error}
+        </div>
+      </SectionCard>
+    )
+  }
+
+  if (!analysis) {
+    return (
+      <SectionCard
+        title="Performance Analysis"
+        subtitle="Premium coaching analysis for this rider"
+      >
+        <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
+          No performance analysis is available for this rider yet.
+        </div>
+      </SectionCard>
+    )
+  }
+
+  return (
+    <SectionCard
+      title="Performance Analysis"
+      subtitle="Coaching interpretation based on current skills, age, potential and recent data"
+    >
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+        <div className="space-y-4">
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+            <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+              Development stage
+            </div>
+            <div className="mt-1 text-base font-semibold text-slate-900">
+              {titleCaseFromSnake(analysis.development_stage)}
+            </div>
+          </div>
+
+          <div>
+            <div className="text-sm font-semibold text-slate-900">Strengths</div>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {analysis.strengths.map((item) => (
+                <span
+                  key={item.key}
+                  className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-sm text-emerald-800"
+                >
+                  {item.label}: {item.value}
+                </span>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <div className="text-sm font-semibold text-slate-900">Development priorities</div>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {analysis.weaknesses.map((item) => (
+                <span
+                  key={item.key}
+                  className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1.5 text-sm text-amber-800"
+                >
+                  {item.label}: {item.value}
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="space-y-4">
+          <div>
+            <div className="text-sm font-semibold text-slate-900">Recommended roles</div>
+            <div className="mt-2 space-y-2">
+              {analysis.recommended_roles.map((item) => (
+                <div
+                  key={item.role}
+                  className="flex items-center justify-between rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
+                >
+                  <span>{item.role}</span>
+                  <span className="font-semibold text-slate-900">{item.score}/100</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {analysis.training_recommendation ? (
+            <div className="rounded-xl border border-blue-200 bg-blue-50 p-4">
+              <div className="text-xs font-semibold uppercase tracking-wide text-blue-700">
+                Training recommendation
+              </div>
+              <div className="mt-1 text-sm font-semibold text-blue-950">
+                {titleCaseFromSnake(analysis.training_recommendation.focus)} ·{' '}
+                {titleCaseFromSnake(analysis.training_recommendation.intensity)}
+              </div>
+              <div className="mt-2 text-sm leading-6 text-blue-900">
+                {analysis.training_recommendation.reason}
+              </div>
+            </div>
+          ) : null}
+
+          {analysis.coach_note ? (
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+              <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                Coach note
+              </div>
+              <div className="mt-2 text-sm leading-6 text-slate-700">
+                {analysis.coach_note}
+              </div>
+            </div>
+          ) : null}
+        </div>
+      </div>
+    </SectionCard>
+  )
+}
+
+
+
+function PerformanceRadarChart({
+  items,
+}: {
+  items: Array<{ label: string; value: number }>
+}) {
+  const size = 320
+  const center = size / 2
+  const radius = 112
+  const levels = [0.25, 0.5, 0.75, 1]
+  const safeItems = items.slice(0, 8)
+  const count = Math.max(safeItems.length, 3)
+
+  const pointFor = (index: number, value: number) => {
+    const angle = -Math.PI / 2 + (index / count) * Math.PI * 2
+    const r = radius * Math.max(0, Math.min(100, value)) / 100
+    return {
+      x: center + Math.cos(angle) * r,
+      y: center + Math.sin(angle) * r,
+    }
+  }
+
+  const polygonPoints = safeItems
+    .map((item, index) => {
+      const point = pointFor(index, item.value)
+      return `${point.x},${point.y}`
+    })
+    .join(' ')
+
+  return (
+    <div className="overflow-x-auto">
+      <svg
+        viewBox={`0 0 ${size} ${size}`}
+        className="mx-auto h-auto w-full max-w-[360px]"
+        role="img"
+        aria-label="Rider performance radar chart"
+      >
+        {levels.map((level) => {
+          const points = Array.from({ length: count }, (_, index) => {
+            const point = pointFor(index, level * 100)
+            return `${point.x},${point.y}`
+          }).join(' ')
+
+          return (
+            <polygon
+              key={level}
+              points={points}
+              fill="none"
+              stroke="#cbd5e1"
+              strokeWidth="1"
+            />
+          )
+        })}
+
+        {safeItems.map((item, index) => {
+          const outer = pointFor(index, 100)
+          const label = pointFor(index, 119)
+          const anchor =
+            label.x < center - 10
+              ? 'end'
+              : label.x > center + 10
+                ? 'start'
+                : 'middle'
+
+          return (
+            <g key={item.label}>
+              <line
+                x1={center}
+                y1={center}
+                x2={outer.x}
+                y2={outer.y}
+                stroke="#e2e8f0"
+                strokeWidth="1"
+              />
+              <text
+                x={label.x}
+                y={label.y}
+                textAnchor={anchor}
+                dominantBaseline="middle"
+                className="fill-slate-600 text-[10px]"
+              >
+                {item.label}
+              </text>
+            </g>
+          )
+        })}
+
+        <polygon
+          points={polygonPoints}
+          fill="rgba(250, 204, 21, 0.28)"
+          stroke="#eab308"
+          strokeWidth="3"
+        />
+
+        {safeItems.map((item, index) => {
+          const point = pointFor(index, item.value)
+          return (
+            <g key={`${item.label}-point`}>
+              <circle cx={point.x} cy={point.y} r="4" fill="#111827" />
+              <circle cx={point.x} cy={point.y} r="8" fill="transparent">
+                <title>
+                  {item.label}: {item.value}
+                </title>
+              </circle>
+            </g>
+          )
+        })}
+      </svg>
+    </div>
+  )
+}
+
+function MultiLineTrendChart({
+  series,
+  labels,
+  height = 280,
+  yMin,
+  yMax,
+  yTickCount = 5,
+  showVerticalGridLines = false,
+  selectableSeries = false,
+  lineWidth = 3,
+  dotRadius = 4.5,
+}: {
+  series: Array<{
+    name: string
+    values: Array<number | null>
+    strokeClass: string
+  }>
+  labels: string[]
+  height?: number
+  yMin?: number
+  yMax?: number
+  yTickCount?: number
+  showVerticalGridLines?: boolean
+  selectableSeries?: boolean
+  lineWidth?: number
+  dotRadius?: number
+}) {
+  const [hiddenSeriesNames, setHiddenSeriesNames] = useState<Set<string>>(
+    () => new Set(),
+  )
+
+  useEffect(() => {
+    setHiddenSeriesNames((current) => {
+      const availableNames = new Set(series.map((item) => item.name))
+      const next = new Set(
+        [...current].filter((name) => availableNames.has(name)),
+      )
+
+      return next.size === current.size ? current : next
+    })
+  }, [series])
+
+  const width = 760
+  const paddingX = 52
+  const paddingTop = 24
+  const paddingBottom = 38
+  const plotWidth = width - paddingX * 2
+  const plotHeight = height - paddingTop - paddingBottom
+  const maxLength = Math.max(
+    2,
+    labels.length,
+    ...series.map((item) => item.values.length),
+  )
+
+  const visibleSeries = series.filter(
+    (item) => !hiddenSeriesNames.has(item.name),
+  )
+
+  const numericValues = visibleSeries.flatMap((item) =>
+    item.values.filter(
+      (value): value is number =>
+        typeof value === 'number' && Number.isFinite(value),
+    ),
+  )
+
+  const resolvedMin =
+    typeof yMin === 'number'
+      ? yMin
+      : numericValues.length > 0
+        ? Math.min(...numericValues)
+        : 0
+
+  const resolvedMax =
+    typeof yMax === 'number'
+      ? yMax
+      : numericValues.length > 0
+        ? Math.max(...numericValues)
+        : 100
+
+  const range = Math.max(1, resolvedMax - resolvedMin)
+
+  const xFor = (index: number) =>
+    paddingX + (index / Math.max(maxLength - 1, 1)) * plotWidth
+
+  const yFor = (value: number) =>
+    paddingTop +
+    plotHeight -
+    ((value - resolvedMin) / range) * plotHeight
+
+  const gridValues = Array.from(
+    { length: Math.max(2, yTickCount) },
+    (_, index) =>
+      resolvedMin +
+      (range / Math.max(yTickCount - 1, 1)) * index,
+  )
+
+  const buildSegments = (values: Array<number | null>) => {
+    const segments: Array<Array<{ index: number; value: number }>> = []
+    let current: Array<{ index: number; value: number }> = []
+
+    values.forEach((value, index) => {
+      if (typeof value === 'number' && Number.isFinite(value)) {
+        current.push({ index, value })
+      } else if (current.length > 0) {
+        segments.push(current)
+        current = []
+      }
+    })
+
+    if (current.length > 0) segments.push(current)
+    return segments
+  }
+
+  const labelStep =
+    labels.length > 12 ? Math.ceil(labels.length / 10) : 1
+
+  const toggleSeries = (seriesName: string) => {
+    if (!selectableSeries) return
+
+    setHiddenSeriesNames((current) => {
+      const next = new Set(current)
+
+      if (next.has(seriesName)) {
+        next.delete(seriesName)
+      } else if (series.length - next.size > 1) {
+        next.add(seriesName)
+      }
+
+      return next
+    })
+  }
+
+  return (
+    <div className="overflow-x-auto">
+      <svg
+        viewBox={`0 0 ${width} ${height}`}
+        className="min-w-[680px] w-full"
+        role="img"
+        aria-label="Performance trend chart"
+      >
+        <rect
+          x="0"
+          y="0"
+          width={width}
+          height={height}
+          rx="16"
+          fill="#f8fafc"
+        />
+
+        {showVerticalGridLines
+          ? labels.slice(0, maxLength).map((label, index) => {
+              const x = xFor(index)
+
+              return (
+                <line
+                  key={`vertical-grid-${label}-${index}`}
+                  x1={x}
+                  x2={x}
+                  y1={paddingTop}
+                  y2={paddingTop + plotHeight}
+                  stroke="#f1f5f9"
+                  strokeWidth="1"
+                />
+              )
+            })
+          : null}
+
+        {gridValues.map((value) => {
+          const y = yFor(value)
+
+          return (
+            <g key={value}>
+              <line
+                x1={paddingX}
+                x2={width - paddingX}
+                y1={y}
+                y2={y}
+                stroke="#edf2f7"
+                strokeWidth="1"
+              />
+              <text
+                x={paddingX - 12}
+                y={y}
+                textAnchor="end"
+                dominantBaseline="middle"
+                className="fill-slate-400 text-[10px]"
+              >
+                {Math.round(value)}
+              </text>
+            </g>
+          )
+        })}
+
+        {labels.slice(0, maxLength).map((label, index) => {
+          const shouldShow =
+            index === 0 ||
+            index === labels.length - 1 ||
+            index % labelStep === 0
+
+          if (!shouldShow) return null
+
+          return (
+            <text
+              key={`${label}-${index}`}
+              x={xFor(index)}
+              y={height - 10}
+              textAnchor="middle"
+              className="fill-slate-400 text-[10px]"
+            >
+              {label}
+            </text>
+          )
+        })}
+
+        {visibleSeries.map((item) => {
+          const segments = buildSegments(item.values)
+
+          return (
+            <g key={item.name}>
+              {segments.map((segment, segmentIndex) => {
+                const points = segment
+                  .map(
+                    ({ index, value }) =>
+                      `${xFor(index)},${yFor(value)}`,
+                  )
+                  .join(' ')
+
+                if (segment.length === 1) {
+                  const point = segment[0]
+                  const x = xFor(point.index)
+                  const y = yFor(point.value)
+
+                  return (
+                    <line
+                      key={`${item.name}-single-${segmentIndex}`}
+                      x1={Math.max(paddingX, x - 6)}
+                      x2={Math.min(width - paddingX, x + 6)}
+                      y1={y}
+                      y2={y}
+                      className={item.strokeClass}
+                      strokeWidth={lineWidth}
+                      strokeLinecap="round"
+                    />
+                  )
+                }
+
+                return (
+                  <polyline
+                    key={`${item.name}-segment-${segmentIndex}`}
+                    points={points}
+                    fill="none"
+                    className={item.strokeClass}
+                    strokeWidth={lineWidth}
+                    strokeLinejoin="round"
+                    strokeLinecap="round"
+                  />
+                )
+              })}
+
+              {item.values.map((value, index) => {
+                if (
+                  typeof value !== 'number' ||
+                  !Number.isFinite(value)
+                ) {
+                  return null
+                }
+
+                return (
+                  <circle
+                    key={`${item.name}-${index}`}
+                    cx={xFor(index)}
+                    cy={yFor(value)}
+                    r={dotRadius}
+                    className={item.strokeClass.replace(
+                      'stroke-',
+                      'fill-',
+                    )}
+                  >
+                    <title>
+                      {item.name}: {value}
+                    </title>
+                  </circle>
+                )
+              })}
+            </g>
+          )
+        })}
+      </svg>
+
+      <div className="mt-3 flex flex-wrap gap-x-2 gap-y-2">
+        {series.map((item) => {
+          const isHidden = hiddenSeriesNames.has(item.name)
+
+          if (!selectableSeries) {
+            return (
+              <div
+                key={item.name}
+                className="inline-flex items-center gap-2 text-xs text-slate-600"
+              >
+                <span
+                  className={`h-2.5 w-2.5 rounded-full ${item.strokeClass.replace(
+                    'stroke-',
+                    'bg-',
+                  )}`}
+                />
+                {item.name}
+              </div>
+            )
+          }
+
+          return (
+            <button
+              key={item.name}
+              type="button"
+              onClick={() => toggleSeries(item.name)}
+              aria-pressed={!isHidden}
+              className={`inline-flex items-center gap-2 rounded-full border px-2.5 py-1.5 text-xs font-medium transition ${
+                isHidden
+                  ? 'border-slate-200 bg-white text-slate-400 opacity-60 hover:opacity-100'
+                  : 'border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100'
+              }`}
+              title={isHidden ? `Show ${item.name}` : `Hide ${item.name}`}
+            >
+              <span
+                className={`h-2.5 w-2.5 rounded-full ${item.strokeClass.replace(
+                  'stroke-',
+                  'bg-',
+                )}`}
+              />
+              {item.name}
+            </button>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+function SkillHeatmap({
+  items,
+}: {
+  items: Array<{ label: string; value: number }>
+}) {
+  function tone(value: number) {
+    if (value >= 85) return 'bg-emerald-600 text-white'
+    if (value >= 78) return 'bg-emerald-400 text-emerald-950'
+    if (value >= 70) return 'bg-yellow-300 text-yellow-950'
+    if (value >= 60) return 'bg-amber-200 text-amber-950'
+    return 'bg-rose-200 text-rose-950'
+  }
+
+  return (
+    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-5">
+      {items.map((item) => (
+        <div
+          key={item.label}
+          className={`rounded-xl p-4 ${tone(item.value)}`}
+        >
+          <div className="text-xs font-semibold uppercase tracking-wide opacity-80">
+            {item.label}
+          </div>
+          <div className="mt-2 text-2xl font-semibold">{item.value}</div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function CircularGauge({
+  label,
+  value,
+  note,
+}: {
+  label: string
+  value: number
+  note?: string
+}) {
+  const clamped = Math.max(0, Math.min(100, value))
+  const degrees = clamped * 3.6
+
+  return (
+    <div className="rounded-2xl border border-slate-200 bg-white p-4 text-center">
+      <div
+        className="mx-auto flex h-28 w-28 items-center justify-center rounded-full"
+        style={{
+          background: `conic-gradient(#facc15 0deg ${degrees}deg, #e2e8f0 ${degrees}deg 360deg)`,
+        }}
+      >
+        <div className="flex h-20 w-20 items-center justify-center rounded-full bg-white">
+          <div>
+            <div className="text-2xl font-semibold text-slate-950">
+              {clamped}
+            </div>
+            <div className="text-[10px] uppercase tracking-wide text-slate-500">
+              /100
+            </div>
+          </div>
+        </div>
+      </div>
+      <div className="mt-3 text-sm font-semibold text-slate-900">{label}</div>
+      {note ? <div className="mt-1 text-xs text-slate-500">{note}</div> : null}
+    </div>
+  )
+}
+
+function RichRiderPerformanceAnalysisPage({
+  rider,
+  analysis,
+  analysisLoading,
+  analysisError,
+  skillRows,
+  seasonOverview,
+  seasonStats,
+  recentRaces,
+  monthlyPointsHistory,
+  recentTrainingSessions,
+  skillProgressHistory,
+  careerHistory,
+  raceSharpness,
+  profileAge,
+  gameDate,
+}: {
+  rider: RiderDetails
+  analysis: RiderPerformanceAnalysis | null
+  analysisLoading: boolean
+  analysisError: string | null
+  skillRows: Array<{
+    label: string
+    key: RiderSkillAttributeCode
+    value?: number | null
+  }>
+  seasonOverview: RiderSeasonOverview
+  seasonStats: RiderSeasonStatsBox
+  recentRaces: RiderRecentRaceRow[]
+  monthlyPointsHistory: RiderMonthlyPointsRow[]
+  recentTrainingSessions: RiderTrainingSessionPoint[]
+  skillProgressHistory: RiderSkillProgressPoint[]
+  careerHistory: RiderCareerHistoryRow[]
+  raceSharpness: RiderRaceSharpnessUiRow | null
+  profileAge: number | null
+  gameDate?: string | null
+}) {
+  const [skillHistoryWeeks, setSkillHistoryWeeks] = useState<26 | 52>(52)
+  const [showInternationalPoints, setShowInternationalPoints] = useState(true)
+  const [showSprintPoints, setShowSprintPoints] = useState(false)
+  const [showClimbPoints, setShowClimbPoints] = useState(false)
+
+  const sortedSkills = [...skillRows].sort(
+    (a, b) => normalizeNumber(b.value) - normalizeNumber(a.value),
+  )
+  const strongestSkill = sortedSkills[0] ?? null
+  const weakestSkill = sortedSkills[sortedSkills.length - 1] ?? null
+  const averageSkill =
+    skillRows.length > 0
+      ? Math.round(
+          skillRows.reduce(
+            (sum, item) => sum + normalizeNumber(item.value),
+            0,
+          ) / skillRows.length,
+        )
+      : 0
+
+  const racePositions = recentRaces
+    .map((race) => race.finish_position)
+    .filter(
+      (value): value is number =>
+        typeof value === 'number' && Number.isFinite(value),
+    )
+
+  const averageFinish =
+    racePositions.length > 0
+      ? Math.round(
+          (racePositions.reduce((sum, value) => sum + value, 0) /
+            racePositions.length) *
+            10,
+        ) / 10
+      : null
+
+  const bestRecentFinish =
+    racePositions.length > 0 ? Math.min(...racePositions) : null
+
+  const totalRecentPoints = recentRaces.reduce(
+    (sum, race) => sum + normalizeNumber(race.ci_points),
+    0,
+  )
+
+  const trainingValues = recentTrainingSessions.map((item) =>
+    normalizeNumber(item.value),
+  )
+  const trainingAverage =
+    trainingValues.length > 0
+      ? Math.round(
+          (trainingValues.reduce((sum, value) => sum + value, 0) /
+            trainingValues.length) *
+            10,
+        ) / 10
+      : null
+
+  const trainingTrend =
+    trainingValues.length >= 2
+      ? trainingValues[trainingValues.length - 1] -
+        trainingValues[0]
+      : 0
+
+  const careerRows = [...careerHistory]
+    .filter((row) => Number.isFinite(row.points))
+    .reverse()
+
+  const maxCareerPoints = Math.max(
+    1,
+    ...careerRows.map((row) => normalizeNumber(row.points)),
+  )
+  const maxTrainingValue = Math.max(1, ...trainingValues)
+  const maxRacePosition = Math.max(1, ...racePositions)
+
+  const sharpnessPercent = raceSharpness
+    ? Math.max(
+        0,
+        Math.min(
+          100,
+          Math.round(
+            normalizeNumber(raceSharpness.race_sharpness_percent, 50),
+          ),
+        ),
+      )
+    : null
+
+  const ageStage =
+    analysis?.development_stage ??
+    (profileAge == null
+      ? 'stable'
+      : profileAge <= 23
+        ? 'developing'
+        : profileAge >= 35
+          ? 'declining'
+          : profileAge >= 31
+            ? 'near_peak'
+            : 'stable')
+
+  const valuePerOverall =
+    rider.market_value && rider.overall
+      ? rider.market_value / Math.max(rider.overall, 1)
+      : null
+
+  const radarItems = skillRows.map((item) => ({
+    label: item.label,
+    value: normalizeNumber(item.value),
+  }))
+
+  const trainingLabels = recentTrainingSessions.map(
+    (item, index) => item.label || `T${index + 1}`,
+  )
+  const trainingSeries = [
+    {
+      name: 'Training value',
+      values: recentTrainingSessions.map((item) =>
+        normalizeNumber(item.value),
+      ),
+      strokeClass: 'stroke-blue-500',
+    },
+  ]
+
+  const careerLabels = careerRows.map((row) => row.season_label)
+  const careerSeries = [
+    {
+      name: 'Season points',
+      values: careerRows.map((row) => normalizeNumber(row.points)),
+      strokeClass: 'stroke-slate-800',
+    },
+  ]
+
+  const currentSeasonNumber =
+    parseSeasonNumber(
+      careerRows.find((row) => row.is_current_season)?.season_label,
+    ) ??
+    parseSeasonNumber(careerRows[careerRows.length - 1]?.season_label) ??
+    1
+
+  const currentGameDate = parseGameDate(gameDate)
+
+  const visibleSkillHistory = [...skillProgressHistory]
+    .filter((row) => {
+      const snapshotDate = parseGameDate(row.week_start_date)
+      return snapshotDate.getTime() <= currentGameDate.getTime()
+    })
+    .sort(
+      (a, b) =>
+        parseGameDate(a.week_start_date).getTime() -
+        parseGameDate(b.week_start_date).getTime(),
+    )
+    .slice(-skillHistoryWeeks)
+
+  const skillHistoryLabels = visibleSkillHistory.map((row) => {
+    if (row.week_label?.trim()) return row.week_label
+
+    const snapshotDate = parseGameDate(row.week_start_date)
+    return snapshotDate.toLocaleDateString('en-GB', {
+      day: '2-digit',
+      month: 'short',
+      timeZone: 'UTC',
+    })
+  })
+
+  const skillHistorySeries = [
+    { name: 'Sprint', key: 'sprint', strokeClass: 'stroke-amber-500' },
+    { name: 'Climbing', key: 'climbing', strokeClass: 'stroke-emerald-500' },
+    { name: 'Time Trial', key: 'time_trial', strokeClass: 'stroke-blue-500' },
+    { name: 'Endurance', key: 'endurance', strokeClass: 'stroke-violet-500' },
+    { name: 'Flat', key: 'flat', strokeClass: 'stroke-cyan-500' },
+    { name: 'Recovery', key: 'recovery', strokeClass: 'stroke-green-600' },
+    { name: 'Resistance', key: 'resistance', strokeClass: 'stroke-rose-500' },
+    { name: 'Race IQ', key: 'race_iq', strokeClass: 'stroke-indigo-500' },
+    { name: 'Teamwork', key: 'teamwork', strokeClass: 'stroke-pink-500' },
+  ].map((series) => ({
+    name: series.name,
+    strokeClass: series.strokeClass,
+    values: visibleSkillHistory.map((row) =>
+      normalizeNumber(
+        row[series.key as keyof RiderSkillProgressPoint],
+      ),
+    ),
+  }))
+
+  const loadedSkillSnapshotCount = visibleSkillHistory.length
+
+  const monthlyCareerTrendLabels = monthlyPointsHistory.map(
+    (row) =>
+      formatGameMonthSeasonLabel(
+        row.month_start,
+        gameDate,
+        currentSeasonNumber,
+      ),
+  )
+
+
+  const monthlyCareerTrendSeries = [
+    showInternationalPoints
+      ? {
+          name: 'International points',
+          values: monthlyPointsHistory.map(
+            (row) => row.international_points,
+          ),
+          strokeClass: 'stroke-slate-800',
+        }
+      : null,
+    showSprintPoints
+      ? {
+          name: 'Sprint points',
+          values: monthlyPointsHistory.map(
+            (row) => row.sprint_points,
+          ),
+          strokeClass: 'stroke-emerald-500',
+        }
+      : null,
+    showClimbPoints
+      ? {
+          name: 'Climb points',
+          values: monthlyPointsHistory.map(
+            (row) => row.climb_points,
+          ),
+          strokeClass: 'stroke-rose-500',
+        }
+      : null,
+  ].filter(
+    (
+      series,
+    ): series is {
+      name: string
+      values: number[]
+      strokeClass: string
+    } => Boolean(series),
+  )
+
+  const seasonCareerRows = careerRows.slice(-10)
+  const seasonCareerTrendLabels = seasonCareerRows.map(
+    (row) => row.season_label,
+  )
+
+  const seasonCareerTrendSeries = [
+    {
+      name: 'Season points',
+      values: seasonCareerRows.map((row) =>
+        normalizeNumber(row.points),
+      ),
+      strokeClass: 'stroke-violet-500',
+    },
+  ]
+
+  const raceLabels = recentRaces.slice(0, 5).map(
+    (race, index) =>
+      race.race_name?.slice(0, 10) || `R${index + 1}`,
+  )
+  const raceSeries = [
+    {
+      name: 'Finish position',
+      values: recentRaces.slice(0, 5).map((race) =>
+        normalizeNumber(race.finish_position, 0),
+      ),
+      strokeClass: 'stroke-emerald-500',
+    },
+    {
+      name: 'Race points',
+      values: recentRaces.slice(0, 5).map((race) =>
+        normalizeNumber(race.ci_points, 0),
+      ),
+      strokeClass: 'stroke-amber-500',
+    },
+  ]
+
+  return (
+    <div className="space-y-5">
+      <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+          <div>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="rounded-full border border-yellow-300 bg-yellow-50 px-3 py-1 text-xs font-bold uppercase tracking-wide text-yellow-800">
+                Premium
+              </span>
+              <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-600">
+                Performance Centre
+              </span>
+            </div>
+
+            <h3 className="mt-3 text-2xl font-semibold text-slate-950">
+              Rider Performance Centre
+            </h3>
+            <p className="mt-1 max-w-3xl text-sm leading-6 text-slate-600">
+              A combined coaching, racing, training, development and financial
+              view for {rider.display_name ?? `${rider.first_name} ${rider.last_name}`}.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <AnalysisMetric
+              label="Overall"
+              value={`${rider.overall ?? '—'}%`}
+              note={`Average skill ${averageSkill}`}
+            />
+            <AnalysisMetric
+              label="Development"
+              value={titleCaseFromSnake(ageStage)}
+              note={`Age ${profileAge ?? '—'}`}
+            />
+            <AnalysisMetric
+              label="Sharpness"
+              value={sharpnessPercent == null ? '—' : `${sharpnessPercent}/100`}
+              note={raceSharpness?.race_sharpness_label ?? 'No data'}
+            />
+            <AnalysisMetric
+              label="Market value"
+              value={formatCompactMoneyValue(rider.market_value)}
+              note={
+                valuePerOverall == null
+                  ? 'No ratio available'
+                  : `${formatCompactMoneyValue(valuePerOverall)} per OVR point`
+              }
+            />
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 gap-5 xl:grid-cols-[1.1fr_0.9fr]">
+        <AnalysisCard
+          title="Performance radar"
+          subtitle="Eight-dimensional rider profile for immediate visual comparison"
+        >
+          <PerformanceRadarChart items={radarItems} />
+        </AnalysisCard>
+
+        <AnalysisCard
+          title="Premium performance gauges"
+          subtitle="High-level readiness and value indicators"
+        >
+          <div className="grid grid-cols-2 gap-4">
+            <CircularGauge
+              label="Overall quality"
+              value={normalizeNumber(rider.overall)}
+              note="Current OVR"
+            />
+            <CircularGauge
+              label="Race readiness"
+              value={sharpnessPercent ?? 50}
+              note={raceSharpness?.race_sharpness_label ?? 'Estimated'}
+            />
+            <CircularGauge
+              label="Development room"
+              value={Math.max(
+                0,
+                Math.min(
+                  100,
+                  normalizeNumber(rider.potential) -
+                    normalizeNumber(rider.overall) +
+                    50,
+                ),
+              )}
+              note="Potential vs current level"
+            />
+            <CircularGauge
+              label="Squad value"
+              value={Math.max(
+                0,
+                Math.min(
+                  100,
+                  valuePerOverall == null
+                    ? 50
+                    : Math.round(100 - valuePerOverall / 300),
+                ),
+              )}
+              note="Simple value efficiency"
+            />
+          </div>
+        </AnalysisCard>
+      </div>
+
+      <AnalysisCard
+        title="Attribute heatmap"
+        subtitle="Instant visual classification of elite, strong, average and weak areas"
+      >
+        <SkillHeatmap items={radarItems} />
+      </AnalysisCard>
+
+      {analysisLoading ? (
+        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="text-sm text-slate-500">
+            Loading Premium rider analysis…
+          </div>
+        </div>
+      ) : analysisError ? (
+        <div className="rounded-2xl border border-rose-200 bg-rose-50 p-5 text-sm text-rose-700">
+          {analysisError}
+        </div>
+      ) : null}
+
+      <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
+        <AnalysisCard
+          title="Recent race performance"
+          subtitle="Latest completed races, positions and points"
+        >
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <AnalysisMetric
+              label="Races used"
+              value={String(recentRaces.length)}
+              note="Latest results"
+            />
+            <AnalysisMetric
+              label="Average finish"
+              value={averageFinish == null ? '—' : String(averageFinish)}
+              note="Lower is better"
+            />
+            <AnalysisMetric
+              label="Best finish"
+              value={bestRecentFinish == null ? '—' : String(bestRecentFinish)}
+              note="Recent sample"
+            />
+            <AnalysisMetric
+              label="Recent points"
+              value={String(totalRecentPoints)}
+              note="From loaded races"
+            />
+          </div>
+
+          {recentRaces.length > 0 ? (
+            <>
+              <div className="mt-5">
+                <MultiLineTrendChart
+                  series={raceSeries}
+                  labels={raceLabels}
+                  height={300}
+                />
+              </div>
+              <div className="mt-5 space-y-3">
+              {recentRaces.slice(0, 5).map((race, index) => {
+                const position = race.finish_position
+                const width =
+                  position == null
+                    ? 0
+                    : Math.max(
+                        8,
+                        100 -
+                          (Math.max(position, 1) / maxRacePosition) * 85,
+                      )
+
+                return (
+                  <div
+                    key={`${race.race_id ?? race.race_name}-${index}`}
+                    className="rounded-xl border border-slate-200 bg-slate-50 p-3"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <div className="flex min-w-0 items-center gap-2">
+                          <CountryFlag
+                            countryCode={race.race_country_code}
+                            className="h-3.5 w-5"
+                          />
+                          <div className="truncate text-sm font-semibold text-slate-900">
+                            {race.race_name}
+                          </div>
+                        </div>
+                        <div className="mt-1 text-xs text-slate-500">
+                          {formatRecentRaceDateRange(race)} ·{' '}
+                          {getRecentRaceSubtitle(race)}
+                        </div>
+                      </div>
+                      <div className="shrink-0 text-right">
+                        <div className="text-sm font-semibold text-slate-950">
+                          P{position ?? '—'}
+                        </div>
+                        <div className="text-xs text-slate-500">
+                          {normalizeNumber(race.ci_points)} pts
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="mt-3 h-2 overflow-hidden rounded-full bg-white">
+                      <div
+                        className="h-full rounded-full bg-emerald-500"
+                        style={{ width: `${width}%` }}
+                      />
+                    </div>
+                  </div>
+                )
+              })}
+              </div>
+            </>
+          ) : (
+            <div className="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-500">
+              No recent race data is available.
+            </div>
+          )}
+        </AnalysisCard>
+
+        <AnalysisCard
+          title="Career points trend"
+          subtitle="Monthly and season-by-season point development"
+        >
+          <div>
+            <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <div className="text-sm font-semibold text-slate-900">
+                  Monthly points
+                </div>
+                <div className="mt-1 text-xs text-slate-500">
+                  Rolling 12-month period ending with the current month
+                </div>
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-700">
+                  <input
+                    type="checkbox"
+                    checked={showInternationalPoints}
+                    onChange={(event) =>
+                      setShowInternationalPoints(event.target.checked)
+                    }
+                    className="h-3.5 w-3.5"
+                  />
+                  <span className="h-2.5 w-2.5 rounded-full bg-slate-800" />
+                  International
+                </label>
+
+                <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-700">
+                  <input
+                    type="checkbox"
+                    checked={showSprintPoints}
+                    onChange={(event) =>
+                      setShowSprintPoints(event.target.checked)
+                    }
+                    className="h-3.5 w-3.5"
+                  />
+                  <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" />
+                  Sprint
+                </label>
+
+                <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-700">
+                  <input
+                    type="checkbox"
+                    checked={showClimbPoints}
+                    onChange={(event) =>
+                      setShowClimbPoints(event.target.checked)
+                    }
+                    className="h-3.5 w-3.5"
+                  />
+                  <span className="h-2.5 w-2.5 rounded-full bg-rose-500" />
+                  Climb
+                </label>
+              </div>
+            </div>
+
+            {monthlyCareerTrendSeries.length > 0 ? (
+              <MultiLineTrendChart
+                series={monthlyCareerTrendSeries}
+                labels={monthlyCareerTrendLabels}
+                height={280}
+                yMin={0}
+              />
+            ) : (
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-500">
+                Select at least one available point classification.
+              </div>
+            )}
+          </div>
+
+          <div className="mt-7 border-t border-slate-200 pt-6">
+            <div className="mb-3">
+              <div className="text-sm font-semibold text-slate-900">
+                Season points
+              </div>
+              <div className="mt-1 text-xs text-slate-500">
+                Latest 10 seasons
+              </div>
+            </div>
+
+            {seasonCareerTrendSeries[0].values.length > 0 ? (
+              <MultiLineTrendChart
+                series={seasonCareerTrendSeries}
+                labels={seasonCareerTrendLabels}
+                height={260}
+                yMin={0}
+              />
+            ) : (
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-500">
+                Season history will appear after completed season records are available.
+              </div>
+            )}
+          </div>
+        </AnalysisCard>
+      </div>
+
+      <div id="training-and-skill-development" className="scroll-mt-24">
+        <AnalysisCard
+          title="Training and skill development"
+          subtitle="Long-term Premium tracking of every rider skill and recent training activity"
+        >
+        <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+          <div>
+            <div className="text-sm font-semibold text-slate-900">
+              Skill progression
+            </div>
+            <div className="mt-1 text-sm text-slate-500">
+              Follow all nine attributes across the selected in-game weeks.
+            </div>
+          </div>
+
+          <div className="inline-flex self-start rounded-xl border border-slate-200 bg-slate-50 p-1">
+            <button
+              type="button"
+              onClick={() => setSkillHistoryWeeks(26)}
+              className={`rounded-lg px-3 py-2 text-xs font-semibold transition ${
+                skillHistoryWeeks === 26
+                  ? 'bg-white text-slate-950 shadow-sm'
+                  : 'text-slate-500 hover:text-slate-800'
+              }`}
+            >
+              Last 26 weeks
+            </button>
+            <button
+              type="button"
+              onClick={() => setSkillHistoryWeeks(52)}
+              className={`rounded-lg px-3 py-2 text-xs font-semibold transition ${
+                skillHistoryWeeks === 52
+                  ? 'bg-white text-slate-950 shadow-sm'
+                  : 'text-slate-500 hover:text-slate-800'
+              }`}
+            >
+              Last 52 weeks
+            </button>
+          </div>
+        </div>
+
+        <div className="mt-4">
+          <MultiLineTrendChart
+            series={skillHistorySeries}
+            labels={skillHistoryLabels}
+            height={320}
+            yMin={0}
+            yMax={100}
+            yTickCount={11}
+            showVerticalGridLines
+            selectableSeries
+            lineWidth={1.5}
+            dotRadius={2.25}
+          />
+
+          {loadedSkillSnapshotCount <= 1 ? (
+            <div className="mt-3 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-xs leading-5 text-blue-800">
+              {loadedSkillSnapshotCount === 1
+                ? `The database currently contains one in-game weekly skill snapshot for this rider. Future in-game weeks with skill changes will create the line history automatically.`
+                : 'No weekly skill snapshot exists for this rider in the database yet.'}
+            </div>
+          ) : null}
+        </div>
+
+      </AnalysisCard>
+
+      <AnalysisCard
+        title="Performance matrix"
+        subtitle="Premium snapshot across sporting, development and financial dimensions"
+      >
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-6">
+          <AnalysisMetric
+            label="Technical"
+            value={String(
+              Math.round(
+                (
+                  normalizeNumber(rider.sprint) +
+                  normalizeNumber(rider.climbing) +
+                  normalizeNumber(rider.time_trial) +
+                  normalizeNumber(rider.flat)
+                ) / 4,
+              ),
+            )}
+            note="Core racing skills"
+          />
+          <AnalysisMetric
+            label="Physical"
+            value={String(
+              Math.round(
+                (
+                  normalizeNumber(rider.endurance) +
+                  normalizeNumber(rider.recovery) +
+                  normalizeNumber(rider.resistance)
+                ) / 3,
+              ),
+            )}
+            note="Durability profile"
+          />
+          <AnalysisMetric
+            label="Tactical"
+            value={String(
+              Math.round(
+                (
+                  normalizeNumber(rider.race_iq) +
+                  normalizeNumber(rider.teamwork)
+                ) / 2,
+              ),
+            )}
+            note="Race IQ and teamwork"
+          />
+          <AnalysisMetric
+            label="Recent form"
+            value={
+              averageFinish == null
+                ? '—'
+                : averageFinish <= 10
+                  ? 'Strong'
+                  : averageFinish <= 30
+                    ? 'Solid'
+                    : 'Developing'
+            }
+            note={averageFinish == null ? 'No sample' : `Avg P${averageFinish}`}
+          />
+          <AnalysisMetric
+            label="Development"
+            value={titleCaseFromSnake(ageStage)}
+            note={`Age ${profileAge ?? '—'}`}
+          />
+          <AnalysisMetric
+            label="Value"
+            value={
+              valuePerOverall == null
+                ? '—'
+                : valuePerOverall < 10000
+                  ? 'Efficient'
+                  : valuePerOverall < 15000
+                    ? 'Fair'
+                    : 'Expensive'
+            }
+            note={
+              valuePerOverall == null
+                ? 'No ratio'
+                : formatCompactMoneyValue(valuePerOverall)
+            }
+          />
+        </div>
+      </AnalysisCard>
+      </div>
+
+      <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
+        <AnalysisCard
+          title="Financial intelligence"
+          subtitle="Modern valuation signals for contract and transfer planning"
+        >
+          <div className="grid grid-cols-1 gap-5 lg:grid-cols-[0.85fr_1.15fr]">
+            <div className="flex items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 p-5">
+              <CircularGauge
+                label="Value efficiency"
+                value={Math.max(
+                  0,
+                  Math.min(
+                    100,
+                    valuePerOverall == null
+                      ? 50
+                      : Math.round(100 - valuePerOverall / 300),
+                  ),
+                )}
+                note="Market value relative to OVR"
+              />
+            </div>
+
+            <div className="space-y-3">
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                <div className="flex items-center justify-between gap-4">
+                  <span className="text-sm text-slate-500">Market value</span>
+                  <span className="text-xl font-semibold text-slate-950">
+                    {formatCompactMoneyValue(rider.market_value)}
+                  </span>
+                </div>
+              </div>
+
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                <div className="flex items-center justify-between gap-4">
+                  <span className="text-sm text-slate-500">Asking price</span>
+                  <span className="text-xl font-semibold text-slate-950">
+                    {formatCompactMoneyValue(rider.asking_price)}
+                  </span>
+                </div>
+              </div>
+
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                <div className="flex items-center justify-between gap-4">
+                  <span className="text-sm text-slate-500">Value per OVR</span>
+                  <span className="text-xl font-semibold text-slate-950">
+                    {valuePerOverall == null
+                      ? '—'
+                      : formatCompactMoneyValue(valuePerOverall)}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-5 rounded-2xl border border-yellow-200 bg-yellow-50 p-5">
+            <div className="text-xs font-semibold uppercase tracking-wide text-yellow-800">
+              Valuation signal
+            </div>
+            <div className="mt-2 text-lg font-semibold text-yellow-950">
+              {valuePerOverall == null
+                ? 'Insufficient financial data'
+                : valuePerOverall < 10000
+                  ? 'Strong value efficiency'
+                  : valuePerOverall < 15000
+                    ? 'Balanced market valuation'
+                    : 'Premium-priced asset'}
+            </div>
+            <div className="mt-2 text-sm leading-6 text-yellow-900">
+              {rider.market_value && rider.overall
+                ? rider.market_value / Math.max(rider.overall, 1) >
+                  12_000
+                  ? 'The current market value is relatively high for this OVR. Retention should be justified by role importance, potential and recent output.'
+                  : 'The current valuation is reasonable relative to OVR. Development upside and role fit support retaining the rider.'
+                : 'More market and contract data is required for a stronger recommendation.'}
+            </div>
+          </div>
+        </AnalysisCard>
+
+        <AnalysisCard
+          title="Coach intelligence"
+          subtitle="A visual coaching verdict built from skills, racing and training"
+        >
+          <div className="grid grid-cols-2 gap-4">
+            <CircularGauge
+              label="Technical profile"
+              value={Math.round(
+                (
+                  normalizeNumber(rider.sprint) +
+                  normalizeNumber(rider.climbing) +
+                  normalizeNumber(rider.time_trial) +
+                  normalizeNumber(rider.flat)
+                ) / 4,
+              )}
+              note="Core race skills"
+            />
+            <CircularGauge
+              label="Physical profile"
+              value={Math.round(
+                (
+                  normalizeNumber(rider.endurance) +
+                  normalizeNumber(rider.recovery) +
+                  normalizeNumber(rider.resistance)
+                ) / 3,
+              )}
+              note="Durability and recovery"
+            />
+          </div>
+
+          <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <AnalysisMetric
+              label="Primary strength"
+              value={strongestSkill?.label ?? '—'}
+              note={
+                strongestSkill
+                  ? `${normalizeNumber(strongestSkill.value)}/100`
+                  : '—'
+              }
+            />
+            <AnalysisMetric
+              label="Priority area"
+              value={weakestSkill?.label ?? '—'}
+              note={
+                weakestSkill
+                  ? `${normalizeNumber(weakestSkill.value)}/100`
+                  : '—'
+              }
+            />
+            <AnalysisMetric
+              label="Recent racing"
+              value={
+                averageFinish == null
+                  ? 'No sample'
+                  : `Average P${averageFinish}`
+              }
+              note={`${Math.min(recentRaces.length, 5)} races used`}
+            />
+            <AnalysisMetric
+              label="Training direction"
+              value={
+                trainingValues.length < 2
+                  ? 'No sample'
+                  : trainingTrend > 0
+                    ? 'Improving'
+                    : trainingTrend < 0
+                      ? 'Declining'
+                      : 'Stable'
+              }
+              note={`${recentTrainingSessions.length} sessions used`}
+            />
+          </div>
+
+        </AnalysisCard>
+      </div>
+    </div>
+  )
+}
+
+function AnalysisCard({
+  title,
+  subtitle,
+  children,
+}: {
+  title: string
+  subtitle?: string
+  children: React.ReactNode
+}) {
+  return (
+    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+      <div className="mb-4">
+        <div className="text-lg font-semibold text-slate-950">{title}</div>
+        {subtitle ? (
+          <div className="mt-1 text-sm text-slate-500">{subtitle}</div>
+        ) : null}
+      </div>
+      {children}
+    </div>
+  )
+}
+
+function AnalysisMetric({
+  label,
+  value,
+  note,
+}: {
+  label: string
+  value: string
+  note?: string
+}) {
+  return (
+    <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+      <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+        {label}
+      </div>
+      <div className="mt-1 text-base font-semibold text-slate-950">
+        {value}
+      </div>
+      {note ? (
+        <div className="mt-1 text-xs leading-5 text-slate-500">{note}</div>
+      ) : null}
+    </div>
+  )
+}
+
+function HealthCaseReportCard({
   rider,
   healthCase,
   gameDate,
@@ -1055,19 +2819,28 @@ function InjuryReportCard({
   medicalSupport: RiderMedicalSupportImpact | null
   medicalSupportLoading: boolean
 }) {
-  if (!shouldShowInjuryReport(rider, healthCase)) return null
+  if (!shouldShowHealthCaseReport(rider, healthCase)) return null
 
   const descriptor = getInjuryDescriptor(rider, healthCase)
   const healthUi = getRiderStatusUi(rider.availability_status)
   const severityLabel = formatSeverityLabel(healthCase?.severity) ?? 'Not specified'
   const stageLabel = formatCaseStageLabel(healthCase?.case_status) ?? 'Monitoring'
-  const caseLabel = formatHealthCaseCode(healthCase?.case_code) ?? 'Injury'
+  const catalogueEntry = getCatalogueEntryForCaseCode(healthCase?.case_code)
+  const isSickness =
+    healthCase?.case_type === 'sickness' ||
+    catalogueEntry?.caseType === 'sickness' ||
+    rider.availability_status === 'sick'
+  const caseLabel =
+    formatHealthCaseCode(healthCase?.case_code) ??
+    (isSickness ? 'Illness' : 'Injury')
   const recoveryDate = healthCase?.expected_full_recovery_on ?? rider.unavailable_until ?? null
   const recoveryTimeline = getRecoveryTimelineText(recoveryDate, gameDate)
-  const statusSummary = getInjuryStatusSummary(healthCase)
+  const statusSummary = getHealthCaseStatusSummary(healthCase, isSickness)
   const unavailableReasonLabel = rider.unavailable_reason
     ? formatUnavailableReason(rider.unavailable_reason)
-    : 'Injury-related unavailability'
+    : isSickness
+      ? 'Illness-related unavailability'
+      : 'Injury-related unavailability'
 
   const sourceType =
     getHealthCaseContextString(healthCase, 'source_type') ?? healthCase?.source ?? 'unknown'
@@ -1103,23 +2876,42 @@ function InjuryReportCard({
       ? null
       : `Medical Center Lv ${medicalSupport.medical_center_level}`
 
+  const panelTitle = isSickness ? 'Illness overview' : 'Injury overview'
+  const panelSubtitle = isSickness
+    ? 'Unified current health case shown while the rider is sick or recovering'
+    : 'Unified current health case shown while the rider is injured or recovering'
+  const panelBorderClass = isSickness ? 'border border-amber-200' : 'border border-rose-200'
+  const heroClass = isSickness
+    ? 'rounded-xl border border-amber-200 bg-amber-50 px-4 py-4'
+    : 'rounded-xl border border-rose-200 bg-rose-50 px-4 py-4'
+  const eyebrowClass = isSickness
+    ? 'text-xs font-semibold uppercase tracking-[0.18em] text-amber-700'
+    : 'text-xs font-semibold uppercase tracking-[0.18em] text-rose-700'
+  const statusBadgeClass = isSickness
+    ? 'inline-flex rounded-full border border-amber-200 bg-white px-3 py-1 text-sm font-semibold'
+    : 'inline-flex rounded-full border border-rose-200 bg-white px-3 py-1 text-sm font-semibold'
+  const locationLabel = isSickness ? 'Affected system' : 'Location'
+  const locationValue = isSickness
+    ? bodyPart ?? descriptor.specificLocationLabel
+    : exactLocationLabel
+
   return (
     <SectionCard
-      title="Injury overview"
-      subtitle="Unified current health case shown only while the rider is injured"
-      className="border border-rose-200"
+      title={panelTitle}
+      subtitle={panelSubtitle}
+      className={panelBorderClass}
     >
       <div className="space-y-4">
-        <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-4">
+        <div className={heroClass}>
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
-              <div className="text-xs font-semibold uppercase tracking-[0.18em] text-rose-700">
-                Current injury
+              <div className={eyebrowClass}>
+                {isSickness ? 'Current illness' : 'Current injury'}
               </div>
               <div className="mt-1 text-lg font-semibold text-slate-900">{caseLabel}</div>
               <div className="mt-1 text-sm text-slate-600">{unavailableReasonLabel}</div>
               <div className="mt-2 text-sm text-slate-700">
-                <span className="font-semibold">Location:</span> {exactLocationLabel}
+                <span className="font-semibold">{locationLabel}:</span> {locationValue}
               </div>
               <div className="mt-1 text-sm text-slate-700">
                 <span className="font-semibold">Source:</span> {sourceLabel}
@@ -1127,7 +2919,7 @@ function InjuryReportCard({
             </div>
 
             <span
-              className="inline-flex rounded-full border border-rose-200 bg-white px-3 py-1 text-sm font-semibold"
+              className={statusBadgeClass}
               style={{ color: healthUi.color }}
             >
               {healthUi.label}
@@ -2119,6 +3911,197 @@ async function fetchRiderSeasonStatsById(riderId: string): Promise<RiderSeasonSt
   }
 }
 
+
+function parseGameDate(value?: string | null): Date {
+  if (!value) return new Date()
+
+  const parsed = new Date(
+    value.length <= 10 ? `${value.slice(0, 10)}T00:00:00Z` : value,
+  )
+
+  return Number.isNaN(parsed.getTime()) ? new Date() : parsed
+}
+
+
+function parseSeasonNumber(value?: string | null): number | null {
+  if (!value) return null
+  const match = value.match(/(\d+)/)
+  return match ? Number(match[1]) : null
+}
+
+function formatGameMonthSeasonLabel(
+  dateValue: string | Date,
+  currentGameDate: string | null | undefined,
+  currentSeasonNumber: number,
+): string {
+  const date =
+    dateValue instanceof Date
+      ? dateValue
+      : new Date(`${String(dateValue).slice(0, 10)}T00:00:00Z`)
+  const gameDate = parseGameDate(currentGameDate)
+
+  if (Number.isNaN(date.getTime())) return ''
+
+  const seasonNumber = Math.max(
+    1,
+    currentSeasonNumber -
+      (gameDate.getUTCFullYear() - date.getUTCFullYear()),
+  )
+
+  const month = date.toLocaleDateString('en-GB', {
+    month: 'short',
+    timeZone: 'UTC',
+  })
+
+  return `${month} S${seasonNumber}`
+}
+
+function buildLastTwelveMonthPointBuckets(
+  gameDate?: string | null,
+): RiderMonthlyPointsRow[] {
+  const currentGameDate = parseGameDate(gameDate)
+
+  return Array.from({ length: 12 }, (_, index) => {
+    const target = new Date(currentGameDate)
+    target.setUTCHours(0, 0, 0, 0)
+    target.setUTCDate(1)
+    target.setUTCMonth(target.getUTCMonth() - (11 - index))
+
+    return {
+      month_start: target.toISOString().slice(0, 10),
+      month_label: target.toLocaleDateString('en-GB', {
+        month: 'short',
+        year: '2-digit',
+        timeZone: 'UTC',
+      }),
+      international_points: 0,
+      sprint_points: 0,
+      climb_points: 0,
+    }
+  })
+}
+
+function normalizeLastTwelveMonthPointRows(
+  rows: any[],
+  gameDate?: string | null,
+): RiderMonthlyPointsRow[] {
+  const buckets = buildLastTwelveMonthPointBuckets(gameDate)
+  const bucketMap = new Map(
+    buckets.map((bucket) => [bucket.month_start.slice(0, 7), bucket]),
+  )
+
+  for (const row of rows) {
+    const rawDate =
+      row.month_start ??
+      row.race_end_date ??
+      row.race_start_date ??
+      row.race_date ??
+      row.event_date ??
+      row.date ??
+      row.completed_at ??
+      null
+
+    if (!rawDate) continue
+
+    const rawDateText = String(rawDate)
+    const parsed = new Date(
+      rawDateText.length <= 10
+        ? `${rawDateText.slice(0, 10)}T00:00:00Z`
+        : rawDateText,
+    )
+
+    if (Number.isNaN(parsed.getTime())) continue
+
+    const monthKey = `${parsed.getUTCFullYear()}-${String(
+      parsed.getUTCMonth() + 1,
+    ).padStart(2, '0')}`
+
+    const bucket = bucketMap.get(monthKey)
+    if (!bucket) continue
+
+    bucket.international_points += normalizeNumber(
+      row.international_points ??
+        row.ci_points ??
+        row.rider_points ??
+        row.ranking_points ??
+        row.classification_points,
+      0,
+    )
+
+    bucket.sprint_points += normalizeNumber(
+      row.sprint_points ??
+        row.points_sprint ??
+        row.sprint_classification_points ??
+        row.green_jersey_points,
+      0,
+    )
+
+    bucket.climb_points += normalizeNumber(
+      row.climb_points ??
+        row.climbing_points ??
+        row.points_climb ??
+        row.kom_points ??
+        row.mountain_points ??
+        row.climb_classification_points,
+      0,
+    )
+  }
+
+  return buckets
+}
+
+
+function buildMonthlyPointsFromRecentRaces(
+  races: RiderRecentRaceRow[],
+  gameDate?: string | null,
+): RiderMonthlyPointsRow[] {
+  return normalizeLastTwelveMonthPointRows(
+    races.map((race) => ({
+      race_end_date:
+        race.race_end_date ??
+        race.race_date ??
+        race.race_start_date,
+      international_points: race.ci_points ?? 0,
+      sprint_points: 0,
+      climb_points: 0,
+    })),
+    gameDate,
+  )
+}
+
+async function fetchRiderLastTwelveMonthPointsById(
+  riderId: string,
+  gameDate?: string | null,
+): Promise<RiderMonthlyPointsRow[] | null> {
+  try {
+    const { data, error } = await supabase.rpc(
+      'get_rider_last_12_month_points_v1',
+      {
+        p_rider_id: riderId,
+        p_game_date: gameDate ?? null,
+      },
+    )
+
+    if (error) {
+      console.warn(
+        'Monthly point history RPC is unavailable:',
+        error,
+      )
+      return null
+    }
+
+    if (!Array.isArray(data)) return null
+
+    return normalizeLastTwelveMonthPointRows(data, gameDate)
+  } catch (error) {
+    console.warn(
+      'Monthly point history could not be loaded:',
+      error,
+    )
+    return null
+  }
+}
+
 async function fetchRiderLastFiveRacesById(riderId: string): Promise<RiderRecentRaceRow[]> {
   const normalizeRows = (rows: any[]): RiderRecentRaceRow[] =>
     rows
@@ -2754,11 +4737,58 @@ export default function RiderProfilePage({
   const [medicalSupportImpact, setMedicalSupportImpact] = useState<RiderMedicalSupportImpact | null>(null)
   const [medicalSupportLoading, setMedicalSupportLoading] = useState(false)
   const [skillDeltaMap, setSkillDeltaMap] = useState<RiderSkillDeltaMap>({})
-  const [activeTab, setActiveTab] = useState<RiderProfileTab>('overview')
+  const [skillProgressHistory, setSkillProgressHistory] =
+    useState<RiderSkillProgressPoint[]>([])
+  const [activeTab, setActiveTab] = useState<RiderProfileTab>(() =>
+    getRequestedRiderProfileTab(location.search)
+  )
+  const [isPremium, setIsPremium] = useState(false)
+  const [premiumStatusLoading, setPremiumStatusLoading] = useState(true)
+  const [performanceAnalysis, setPerformanceAnalysis] =
+    useState<RiderPerformanceAnalysis | null>(null)
+  const [performanceAnalysisLoading, setPerformanceAnalysisLoading] = useState(false)
+  const [performanceAnalysisError, setPerformanceAnalysisError] = useState<string | null>(null)
   const [skillViewMode, setSkillViewMode] = useState<RiderSkillViewMode>(() =>
     getStoredRiderSkillViewMode()
   )
   const [contractActionMessage, setContractActionMessage] = useState<string | null>(null)
+
+  useEffect(() => {
+    const requestedTab = getRequestedRiderProfileTab(location.search)
+    setActiveTab(requestedTab)
+  }, [location.search, riderId])
+
+  useEffect(() => {
+    if (!location.hash || activeTab !== 'analysis' || profileLoading) return
+
+    const targetId = location.hash.replace(/^#/, '')
+    if (!targetId) return
+
+    let cancelled = false
+    let attempt = 0
+    const maxAttempts = 12
+
+    const scrollToTarget = () => {
+      if (cancelled) return
+
+      const target = document.getElementById(targetId)
+      if (target) {
+        target.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        return
+      }
+
+      attempt += 1
+      if (attempt < maxAttempts) {
+        window.setTimeout(scrollToTarget, 100)
+      }
+    }
+
+    window.setTimeout(scrollToTarget, 0)
+
+    return () => {
+      cancelled = true
+    }
+  }, [activeTab, location.hash, profileLoading, selectedRider?.id])
 
   const [seasonOverview, setSeasonOverview] = useState<RiderSeasonOverview>({
     points: 0,
@@ -2773,6 +4803,8 @@ export default function RiderProfilePage({
     points: 0,
   })
   const [recentRaces, setRecentRaces] = useState<RiderRecentRaceRow[]>([])
+  const [monthlyPointsHistory, setMonthlyPointsHistory] =
+    useState<RiderMonthlyPointsRow[]>([])
   const [careerHonours, setCareerHonours] = useState<RiderCareerHonourRow[]>([])
   const [raceSharpness, setRaceSharpness] = useState<RiderRaceSharpnessUiRow | null>(null)
   const [overviewLoading, setOverviewLoading] = useState(false)
@@ -2834,6 +4866,89 @@ export default function RiderProfilePage({
     () => new Map(regularPlans.map((row) => [row.rider_id, row])),
     [regularPlans]
   )
+
+  useEffect(() => {
+    let mounted = true
+
+    async function loadPremiumStatus() {
+      setPremiumStatusLoading(true)
+
+      try {
+        const { data, error } = await supabase.rpc('get_my_premium_status')
+        if (error) throw error
+
+        const row = (Array.isArray(data) ? data[0] : data) as PremiumStatusRow | null
+        if (!mounted) return
+        setIsPremium(Boolean(row?.is_premium))
+      } catch (error) {
+        console.error('Failed to load rider-profile Premium status:', error)
+        if (!mounted) return
+        setIsPremium(false)
+      } finally {
+        if (!mounted) return
+        setPremiumStatusLoading(false)
+      }
+    }
+
+    void loadPremiumStatus()
+
+    const handlePremiumStatusChanged = () => {
+      void loadPremiumStatus()
+    }
+
+    window.addEventListener('premium-status-changed', handlePremiumStatusChanged)
+
+    return () => {
+      mounted = false
+      window.removeEventListener('premium-status-changed', handlePremiumStatusChanged)
+    }
+  }, [])
+
+  useEffect(() => {
+    let mounted = true
+
+    async function loadPerformanceAnalysis() {
+      if (!isPremium || !selectedRider?.id || !focusedTrainingRider?.rider_id) {
+        setPerformanceAnalysis(null)
+        setPerformanceAnalysisError(null)
+        setPerformanceAnalysisLoading(false)
+        return
+      }
+
+      setPerformanceAnalysisLoading(true)
+      setPerformanceAnalysisError(null)
+
+      try {
+        const { data, error } = await supabase.rpc(
+          'get_my_rider_performance_analysis_v1',
+          {
+            p_rider_id: selectedRider.id,
+          }
+        )
+
+        if (error) throw error
+        if (!mounted) return
+
+        const row = Array.isArray(data) ? data[0] : data
+        setPerformanceAnalysis((row ?? null) as RiderPerformanceAnalysis | null)
+      } catch (error: any) {
+        if (!mounted) return
+        setPerformanceAnalysis(null)
+        setPerformanceAnalysisError(
+          error?.message ?? 'Could not load rider performance analysis.'
+        )
+      } finally {
+        if (!mounted) return
+        setPerformanceAnalysisLoading(false)
+      }
+    }
+
+    void loadPerformanceAnalysis()
+
+    return () => {
+      mounted = false
+    }
+  }, [isPremium, selectedRider?.id, focusedTrainingRider?.rider_id])
 
   useEffect(() => {
     const riderIdForMedicalSupport = selectedRider?.id ?? null
@@ -3104,7 +5219,7 @@ export default function RiderProfilePage({
       setHistoryLoading(false)
       setHistoryError(null)
       setHistoryRows([])
-      setActiveTab('overview')
+      setActiveTab(getRequestedRiderProfileTab(location.search))
       setSeasonOverview({ points: 0, podiums: 0, jerseys: 0 })
       setSeasonStats({ races: 0, wins: 0, podiums: 0, top10: 0, points: 0 })
       setRecentRaces([])
@@ -3193,34 +5308,87 @@ export default function RiderProfilePage({
 
       setOverviewLoading(true)
 
-      try {
-        const [overviewData, statsData, racesData, sharpnessData, honoursData] =
-          await Promise.all([
-            fetchRiderSeasonOverviewById(selectedRider.id),
-            fetchRiderSeasonStatsById(selectedRider.id),
-            fetchRiderLastFiveRacesById(selectedRider.id),
-            fetchRiderRaceSharpnessById(selectedRider.id),
-            fetchRiderCareerHonoursById(selectedRider.id),
-          ])
+      const riderId = selectedRider.id
 
-        if (!mounted) return
+      const [
+        overviewResult,
+        statsResult,
+        racesResult,
+        monthlyPointsResult,
+        sharpnessResult,
+        honoursResult,
+      ] = await Promise.allSettled([
+        fetchRiderSeasonOverviewById(riderId),
+        fetchRiderSeasonStatsById(riderId),
+        fetchRiderLastFiveRacesById(riderId),
+        fetchRiderLastTwelveMonthPointsById(riderId, gameDate),
+        fetchRiderRaceSharpnessById(riderId),
+        fetchRiderCareerHonoursById(riderId),
+      ])
 
-        setSeasonOverview(overviewData)
-        setSeasonStats(statsData)
-        setRecentRaces(racesData)
-        setRaceSharpness(sharpnessData)
-        setCareerHonours(honoursData)
-      } catch {
-        if (!mounted) return
-        setSeasonOverview({ points: 0, podiums: 0, jerseys: 0 })
-        setSeasonStats({ races: 0, wins: 0, podiums: 0, top10: 0, points: 0 })
-        setRecentRaces([])
-        setRaceSharpness(null)
-        setCareerHonours([])
-      } finally {
-        if (!mounted) return
-        setOverviewLoading(false)
+      if (!mounted) return
+
+      const loadedRaces =
+        racesResult.status === 'fulfilled'
+          ? racesResult.value
+          : []
+
+      if (overviewResult.status === 'fulfilled') {
+        setSeasonOverview(overviewResult.value)
+      } else {
+        console.warn(
+          'Rider season overview is unavailable:',
+          overviewResult.reason,
+        )
       }
+
+      if (statsResult.status === 'fulfilled') {
+        setSeasonStats(statsResult.value)
+      } else {
+        console.warn(
+          'Rider season statistics are unavailable:',
+          statsResult.reason,
+        )
+      }
+
+      if (racesResult.status === 'fulfilled') {
+        setRecentRaces(loadedRaces)
+      } else {
+        console.warn(
+          'Recent rider races are unavailable:',
+          racesResult.reason,
+        )
+      }
+
+      const authoritativeMonthlyPoints =
+        monthlyPointsResult.status === 'fulfilled'
+          ? monthlyPointsResult.value
+          : null
+
+      setMonthlyPointsHistory(
+        authoritativeMonthlyPoints ??
+          buildMonthlyPointsFromRecentRaces(loadedRaces, gameDate),
+      )
+
+      if (sharpnessResult.status === 'fulfilled') {
+        setRaceSharpness(sharpnessResult.value)
+      } else {
+        console.warn(
+          'Rider race sharpness is unavailable:',
+          sharpnessResult.reason,
+        )
+      }
+
+      if (honoursResult.status === 'fulfilled') {
+        setCareerHonours(honoursResult.value)
+      } else {
+        console.warn(
+          'Rider career honours are unavailable:',
+          honoursResult.reason,
+        )
+      }
+
+      setOverviewLoading(false)
     }
 
     void loadOverviewExtras()
@@ -3228,7 +5396,7 @@ export default function RiderProfilePage({
     return () => {
       mounted = false
     }
-  }, [selectedRider?.id])
+  }, [selectedRider?.id, gameDate])
 
   useEffect(() => {
     let mounted = true
@@ -3322,6 +5490,59 @@ export default function RiderProfilePage({
   useEffect(() => {
     let mounted = true
 
+    async function loadSkillProgressHistory() {
+      if (!focusedTrainingRider?.rider_id || !isPremium) {
+        setSkillProgressHistory([])
+        return
+      }
+
+      try {
+        const { data, error } = await supabase.rpc(
+          'get_rider_skill_progress_history_v1',
+          {
+            p_rider_id: focusedTrainingRider.rider_id,
+            p_weeks: 60,
+            p_game_date: gameDate ?? null,
+          },
+        )
+
+        if (error) throw error
+        if (!mounted) return
+
+        const rows = (Array.isArray(data) ? data : []) as any[]
+
+        setSkillProgressHistory(
+          rows.map((row) => ({
+            week_start_date: String(row.week_start_date),
+            week_label: String(row.week_label ?? ''),
+            sprint: normalizeNumber(row.sprint),
+            climbing: normalizeNumber(row.climbing),
+            time_trial: normalizeNumber(row.time_trial),
+            endurance: normalizeNumber(row.endurance),
+            flat: normalizeNumber(row.flat),
+            recovery: normalizeNumber(row.recovery),
+            resistance: normalizeNumber(row.resistance),
+            race_iq: normalizeNumber(row.race_iq),
+            teamwork: normalizeNumber(row.teamwork),
+          })),
+        )
+      } catch (error) {
+        if (!mounted) return
+        console.warn('Skill progress history is unavailable:', error)
+        // Keep the previously loaded graph instead of blanking it.
+      }
+    }
+
+    void loadSkillProgressHistory()
+
+    return () => {
+      mounted = false
+    }
+  }, [focusedTrainingRider?.rider_id, isPremium, gameDate])
+
+  useEffect(() => {
+    let mounted = true
+
     async function loadRecentTrainingSessions() {
       if (!focusedTrainingRider?.rider_id) {
         setRecentTrainingSessions([])
@@ -3334,7 +5555,7 @@ export default function RiderProfilePage({
       try {
         const { data, error } = await supabase.rpc('get_rider_recent_training_sessions', {
           p_rider_id: focusedTrainingRider.rider_id,
-          p_limit: 5,
+          p_limit: 20,
         })
 
         if (error) throw error
@@ -3380,7 +5601,7 @@ export default function RiderProfilePage({
     let mounted = true
 
     async function loadHistory() {
-      if (activeTab !== 'history' || !selectedRider?.id) return
+      if (activeTab !== 'history' || !selectedRider?.id || !isPremium) return
 
       setHistoryLoading(true)
       setHistoryError(null)
@@ -3404,7 +5625,7 @@ export default function RiderProfilePage({
     return () => {
       mounted = false
     }
-  }, [activeTab, selectedRider?.id])
+  }, [activeTab, selectedRider?.id, isPremium])
 
   async function applyImageChange() {
     if (!selectedRider) return
@@ -3413,21 +5634,37 @@ export default function RiderProfilePage({
     setImageSaveMessage(null)
 
     try {
-      const nextImageUrl = getRiderImageUrl(imageUrlInput.trim())
+      const nextImageUrl = imageUrlInput.trim()
 
-      const { error } = await supabase
-        .from('riders')
-        .update({ image_url: nextImageUrl })
-        .eq('id', selectedRider.id)
+      if (!/^https?:\/\//i.test(nextImageUrl)) {
+        throw new Error('Please enter a valid http or https image URL.')
+      }
+
+      const { data, error } = await supabase.rpc(
+        'update_owned_rider_image_with_coins_v1',
+        {
+          p_rider_id: selectedRider.id,
+          p_image_url: nextImageUrl,
+        }
+      )
 
       if (error) throw error
 
+      const result = Array.isArray(data) ? data[0] : data
+      const savedImageUrl = String(result?.image_url ?? nextImageUrl)
+
       setSelectedRider({
         ...selectedRider,
-        image_url: nextImageUrl,
+        image_url: savedImageUrl,
       })
-      setImageUrlInput(nextImageUrl)
-      setImageSaveMessage('Image updated successfully.')
+      setImageUrlInput(savedImageUrl)
+      setImageSaveMessage(
+        `Image updated successfully. ${Number(result?.coins_charged ?? 5)} coins charged.`
+      )
+
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('coin-balance-changed'))
+      }
     } catch (e: any) {
       setImageSaveMessage(e?.message ?? 'Failed to update rider image.')
     } finally {
@@ -3932,10 +6169,18 @@ export default function RiderProfilePage({
 
           <button
             type="button"
+            onClick={() => setActiveTab('analysis')}
+            className={tabButtonClass('analysis')}
+          >
+            Performance {!premiumStatusLoading && !isPremium ? '🔒' : ''}
+          </button>
+
+          <button
+            type="button"
             onClick={() => setActiveTab('compare')}
             className={tabButtonClass('compare')}
           >
-            Compare
+            Compare {!premiumStatusLoading && !isPremium ? '🔒' : ''}
           </button>
 
           <button
@@ -3943,7 +6188,7 @@ export default function RiderProfilePage({
             onClick={() => setActiveTab('history')}
             className={tabButtonClass('history')}
           >
-            History
+            History {!premiumStatusLoading && !isPremium ? '🔒' : ''}
           </button>
         </div>
       </div>
@@ -3966,7 +6211,10 @@ export default function RiderProfilePage({
           {activeTab === 'overview' && (
             <div className="grid grid-cols-1 gap-4 xl:grid-cols-[320px_minmax(0,1fr)]">
               <div className="space-y-4">
-                <SectionCard title="Rider Image">
+                <SectionCard
+                  title="Rider Image"
+                  subtitle="Changing the rider image costs 5 coins"
+                >
                   <div className="flex h-[340px] items-center justify-center rounded-lg bg-slate-100 p-4">
                     <img
                       src={getRiderImageUrl(selectedRider.image_url)}
@@ -3994,7 +6242,7 @@ export default function RiderProfilePage({
                       disabled={imageSaving}
                       className="mt-3 w-full rounded-lg bg-yellow-400 px-4 py-3 text-sm font-semibold text-slate-950 transition hover:bg-yellow-500 disabled:cursor-not-allowed disabled:opacity-60"
                     >
-                      {imageSaving ? 'Saving image...' : 'Save Image URL'}
+                      {imageSaving ? 'Saving image...' : 'Save Image URL · 5 coins'}
                     </button>
 
                     {imageSaveMessage ? (
@@ -4098,7 +6346,7 @@ export default function RiderProfilePage({
                   </div>
                 </SectionCard>
 
-                <InjuryReportCard
+                <HealthCaseReportCard
                   rider={selectedRider}
                   healthCase={currentHealthCase}
                   gameDate={gameDate ?? null}
@@ -4250,6 +6498,7 @@ export default function RiderProfilePage({
                   )}
                 </SectionCard>
 
+                {isPremium ? (
                 <SectionCard title="Last 5 Races" subtitle="Finished races only · final race position shown">
                   {overviewLoading ? (
                     <div className="text-sm text-slate-500">Loading recent races…</div>
@@ -4354,6 +6603,17 @@ export default function RiderProfilePage({
                     </div>
                   )}
                 </SectionCard>
+                ) : (
+                  <SectionCard
+                    title="Last 5 Races"
+                    subtitle="Recent race history is included with Premium"
+                  >
+                    <PremiumLockedPanel
+                      title="Premium race history"
+                      description="See this rider’s latest five completed races, finishing positions and points."
+                    />
+                  </SectionCard>
+                )}
               </div>
             </div>
           )}
@@ -4710,9 +6970,53 @@ export default function RiderProfilePage({
             </div>
           )}
 
+          {activeTab === 'analysis' && (
+            <div className="space-y-4">
+              {!isPremium ? (
+                <SectionCard
+                  title="Rider Performance Centre"
+                  subtitle="Advanced rider analytics are included with Premium"
+                >
+                  <PremiumLockedPanel
+                    title="Premium rider performance centre"
+                    description="Unlock skill distribution, race and training trends, season efficiency, career progression, role suitability, financial context and coaching recommendations."
+                  />
+                </SectionCard>
+              ) : (
+                <RichRiderPerformanceAnalysisPage
+                  rider={selectedRider}
+                  analysis={performanceAnalysis}
+                  analysisLoading={performanceAnalysisLoading}
+                  analysisError={performanceAnalysisError}
+                  skillRows={skillRows}
+                  seasonOverview={seasonOverview}
+                  seasonStats={seasonStats}
+                  recentRaces={recentRaces}
+                  monthlyPointsHistory={monthlyPointsHistory}
+                  recentTrainingSessions={recentTrainingSessions}
+                  skillProgressHistory={skillProgressHistory}
+                  careerHistory={displayHistoryRows}
+                  raceSharpness={raceSharpness}
+                  profileAge={profileAge}
+                  gameDate={gameDate}
+                />
+              )}
+            </div>
+          )}
+
           {activeTab === 'compare' && (
             <div className="space-y-4">
-              {!compareClubId ? (
+              {!isPremium ? (
+                <SectionCard
+                  title="Compare"
+                  subtitle="Rider comparison is included with Premium"
+                >
+                  <PremiumLockedPanel
+                    title="Premium rider comparison"
+                    description="Compare riders side by side across your First Team and Developing Team."
+                  />
+                </SectionCard>
+              ) : !compareClubId ? (
                 <SectionCard
                   title="Compare"
                   subtitle="Compare this rider without leaving the rider profile page"
@@ -4729,6 +7033,18 @@ export default function RiderProfilePage({
 
           {activeTab === 'history' && (
             <div className="space-y-4">
+              {!isPremium ? (
+                <SectionCard
+                  title="History"
+                  subtitle="Career history and honours are included with Premium"
+                >
+                  <PremiumLockedPanel
+                    title="Premium rider history"
+                    description="Unlock season-by-season team history, points and career honours."
+                  />
+                </SectionCard>
+              ) : (
+                <>
               <SectionCard
                 title="History"
                 subtitle="Current season plus previous teams and points per season"
@@ -4786,6 +7102,8 @@ export default function RiderProfilePage({
                 loading={overviewLoading}
                 raceLinkState={getRaceDetailReturnState()}
               />
+                </>
+              )}
             </div>
           )}
         </>

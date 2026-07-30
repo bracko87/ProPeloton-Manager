@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { useLocation } from 'react-router'
 import { supabase } from '../../lib/supabase'
+import PremiumFeatureLock from '../../components/premium/PremiumFeatureLock'
 
 type StaffRole =
   | 'head_coach'
@@ -630,6 +631,18 @@ function normalizeRpcSingle<T>(value: unknown): T | null {
   return (value as T) ?? null
 }
 
+function getPremiumAccessFromResult(value: unknown): boolean {
+  const normalized = Array.isArray(value) ? value[0] : value
+
+  if (!normalized || typeof normalized !== 'object') {
+    return false
+  }
+
+  return (
+    normalized as Record<string, unknown>
+  ).is_premium === true
+}
+
 function getErrorMessage(err: unknown, fallback: string) {
   if (err && typeof err === 'object' && 'message' in err) {
     return String((err as { message?: unknown }).message)
@@ -1165,6 +1178,23 @@ function buildCourseOptions(role: StaffRole): CourseOption[] {
   }
 
   return []
+}
+
+function PremiumFeatureLoading() {
+  return (
+    <div
+      className="animate-pulse rounded-xl border border-slate-200 bg-white px-4 py-5 shadow-sm"
+      aria-label="Loading Premium access"
+    >
+      <div className="flex items-center justify-between gap-4">
+        <div className="min-w-0 flex-1">
+          <div className="h-4 w-36 rounded bg-slate-200" />
+          <div className="mt-3 h-3 w-full max-w-md rounded bg-slate-100" />
+        </div>
+        <div className="h-9 w-36 shrink-0 rounded-lg bg-slate-100" />
+      </div>
+    </div>
+  )
 }
 
 function SummaryCard({
@@ -2874,6 +2904,8 @@ function RoleContributionPanel({
   backendHeadCoachImpact,
   activeHeadCoachEffect,
   medicalStaffEffect,
+  isPremium,
+  isPremiumLoading,
 }: {
   role: StaffRole
   members: StaffListMember[]
@@ -2882,6 +2914,8 @@ function RoleContributionPanel({
   backendHeadCoachImpact?: string[] | null
   activeHeadCoachEffect?: HeadCoachEffectRow | null
   medicalStaffEffect?: MedicalStaffEffectRow | null
+  isPremium: boolean
+  isPremiumLoading: boolean
 }) {
   const roleMeta = getRoleMeta(role)
   const facilityWarning = getRoleInfrastructureWarning(role, infrastructure)
@@ -2934,66 +2968,82 @@ function RoleContributionPanel({
         />
       </div>
 
-      <div className="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-[1.1fr_1fr]">
-        <div>
-          <SectionTitle
-            title="Combined Team Impact"
-            subtitle={
-              isMedicalGroup
-                ? 'Combined medical support from Team Doctor, Physio and Nutritionist.'
-                : isCoachingGroup && activeHeadCoachEffect
-                  ? `Backend-applied coaching effect from ${activeHeadCoachEffect.staff_name}.`
-                  : 'Current combined impact from active staff in this group.'
-            }
-          />
-          <div className="space-y-2">
-            {aggregateEffects.map((effect) => (
-              <div
-                key={effect}
-                className="rounded-lg border border-gray-100 bg-white px-4 py-3 text-sm text-gray-700"
-              >
-                {effect}
+      <div className="mt-6">
+        {isPremiumLoading ? (
+          <PremiumFeatureLoading />
+        ) : isPremium ? (
+          <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1.1fr_1fr]">
+            <div>
+              <SectionTitle
+                title="Combined Team Impact"
+                subtitle={
+                  isMedicalGroup
+                    ? 'Combined medical support from Team Doctor, Physio and Nutritionist.'
+                    : isCoachingGroup && activeHeadCoachEffect
+                      ? `Backend-applied coaching effect from ${activeHeadCoachEffect.staff_name}.`
+                      : 'Current combined impact from active staff in this group.'
+                }
+              />
+              <div className="space-y-2">
+                {aggregateEffects.map((effect) => (
+                  <div
+                    key={effect}
+                    className="rounded-lg border border-gray-100 bg-white px-4 py-3 text-sm text-gray-700"
+                  >
+                    {effect}
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
-
-          <div className="mt-5">
-            <SectionTitle
-              title="Where This Role Helps"
-              subtitle="Main game systems influenced by this role."
-            />
-            <div className="flex flex-wrap gap-2">
-              {roleMeta.impactAreas.map((area) => (
-                <span
-                  key={area}
-                  className="rounded-full border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700"
-                >
-                  {area}
-                </span>
-              ))}
             </div>
-          </div>
-        </div>
 
-        <div>
-          <SectionTitle
-            title="Average Skill Profile"
-            subtitle="Average values across staff currently assigned to this impact group."
-          />
-          {averageStats.length > 0 ? (
-            <div className="grid grid-cols-2 gap-3">
-              {averageStats.map((stat) => (
-                <div key={stat.label} className="rounded-lg border border-gray-100 bg-white px-4 py-3">
-                  <div className="text-xs text-gray-500">{stat.label}</div>
-                  <div className="mt-1 text-sm font-semibold text-gray-900">{stat.value}</div>
+            <div>
+              <SectionTitle
+                title="Average Skill Profile"
+                subtitle="Average values across staff currently assigned to this impact group."
+              />
+              {averageStats.length > 0 ? (
+                <div className="grid grid-cols-2 gap-3">
+                  {averageStats.map((stat) => (
+                    <div
+                      key={stat.label}
+                      className="rounded-lg border border-gray-100 bg-white px-4 py-3"
+                    >
+                      <div className="text-xs text-gray-500">{stat.label}</div>
+                      <div className="mt-1 text-sm font-semibold text-gray-900">
+                        {stat.value}
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              ))}
+              ) : (
+                <div className="rounded-xl border border-dashed border-gray-200 bg-white px-4 py-5 text-sm text-gray-500">
+                  No staff assigned to this impact group yet, so there is no active skill profile to summarize.
+                </div>
+              )}
             </div>
-          ) : (
-            <div className="rounded-xl border border-dashed border-gray-200 bg-white px-4 py-5 text-sm text-gray-500">
-              No staff assigned to this impact group yet, so there is no active skill profile to summarize.
-            </div>
-          )}
+          </div>
+        ) : (
+          <PremiumFeatureLock
+            title="Premium staff analysis"
+            description="View combined staff impact, average skill profiles, and completed course results."
+          />
+        )}
+      </div>
+
+      <div className="mt-5">
+        <SectionTitle
+          title="Where This Role Helps"
+          subtitle="Main game systems influenced by this role."
+        />
+        <div className="flex flex-wrap gap-2">
+          {roleMeta.impactAreas.map((area) => (
+            <span
+              key={area}
+              className="rounded-full border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700"
+            >
+              {area}
+            </span>
+          ))}
         </div>
       </div>
     </div>
@@ -3003,6 +3053,8 @@ function RoleContributionPanel({
 function StaffDetailModal({
   staff,
   infrastructure,
+  isPremium,
+  isPremiumLoading,
   onClose,
   onRequestRelease,
   onRequestExtend,
@@ -3010,6 +3062,8 @@ function StaffDetailModal({
 }: {
   staff: StaffListMember | null
   infrastructure: ClubInfrastructureRow | null
+  isPremium: boolean
+  isPremiumLoading: boolean
   onClose: () => void
   onRequestRelease: (staff: StaffListMember) => void
   onRequestExtend: (staff: StaffListMember) => void
@@ -3147,13 +3201,17 @@ function StaffDetailModal({
                 </div>
               </div>
 
-              {staff.facilityWarning ? (
-                <div className="mt-4 rounded-lg bg-yellow-50 px-3 py-2 text-sm text-yellow-700">
-                  {staff.facilityWarning}
-                </div>
-              ) : null}
+              {isPremiumLoading ? null : isPremium ? (
+                <>
+                  {staff.facilityWarning ? (
+                    <div className="mt-4 rounded-lg bg-yellow-50 px-3 py-2 text-sm text-yellow-700">
+                      {staff.facilityWarning}
+                    </div>
+                  ) : null}
 
-              <StaffQualityExplanationPanel data={qualityExplanation} />
+                  <StaffQualityExplanationPanel data={qualityExplanation} />
+                </>
+              ) : null}
             </div>
 
             <div className="rounded-xl border border-gray-100 p-4">
@@ -3170,7 +3228,18 @@ function StaffDetailModal({
                 ))}
               </div>
 
-              <StaffQualityPanel data={qualityPanel} />
+              <div className="mt-4">
+                {isPremiumLoading ? (
+                  <PremiumFeatureLoading />
+                ) : isPremium ? (
+                  <StaffQualityPanel data={qualityPanel} />
+                ) : (
+                  <PremiumFeatureLock
+                    title="Premium staff analysis"
+                    description="See calculated coaching quality, infrastructure limits, staff comparisons, and recommended development paths."
+                  />
+                )}
+              </div>
 
               {staff.lastCourseGains.length > 0 ? (
                 <div className="mt-4 rounded-xl border border-green-100 bg-green-50 p-4">
@@ -3848,6 +3917,8 @@ export default function StaffPage() {
   const [hasDevelopingTeam, setHasDevelopingTeam] = useState(false)
   const [developingTeamStatusResolved, setDevelopingTeamStatusResolved] = useState(false)
   const [currentGameDate, setCurrentGameDate] = useState<string | null>(null)
+  const [isPremium, setIsPremium] = useState(false)
+  const [isPremiumLoading, setIsPremiumLoading] = useState(true)
 
   const [staffRows, setStaffRows] = useState<ClubStaffRow[]>([])
   const [activeCourseRows, setActiveCourseRows] = useState<ActiveStaffCourseRow[]>([])
@@ -3877,16 +3948,29 @@ export default function StaffPage() {
   const [courseStartLoadingCode, setCourseStartLoadingCode] = useState<string | null>(null)
   const [courseError, setCourseError] = useState<string | null>(null)
 
-  async function reloadStaffPage(targetClubId: string) {
+  async function reloadStaffPage(targetClubId: string, hasPremiumAccess: boolean) {
+    const premiumAnalyticsPromise = hasPremiumAccess
+      ? Promise.all([
+          supabase.rpc('get_club_recent_staff_course_results', {
+            p_club_id: targetClubId,
+            p_limit: 6,
+          }),
+          supabase.rpc('get_head_coach_effects', {
+            p_club_id: targetClubId,
+          }),
+          supabase.rpc('get_team_doctor_effects', {
+            p_club_id: targetClubId,
+          }),
+        ])
+      : Promise.resolve([null, null, null] as const)
+
     const [
       staffResult,
       infraResult,
       gameDateResult,
       activeCoursesResult,
-      recentCourseResultsResult,
       roleLimitsResult,
-      headCoachEffectsResult,
-      medicalEffectsResult,
+      premiumAnalyticsResults,
     ] = await Promise.all([
       supabase.rpc('get_club_staff_with_current_assignments', {
         p_club_id: targetClubId,
@@ -3908,29 +3992,26 @@ export default function StaffPage() {
       supabase.rpc('get_club_active_staff_courses', {
         p_club_id: targetClubId,
       }),
-      supabase.rpc('get_club_recent_staff_course_results', {
-        p_club_id: targetClubId,
-        p_limit: 6,
-      }),
       supabase.rpc('get_staff_role_capacity_overview_for_club', {
         p_club_id: targetClubId,
       }),
-      supabase.rpc('get_head_coach_effects', {
-        p_club_id: targetClubId,
-      }),
-      supabase.rpc('get_team_doctor_effects', {
-        p_club_id: targetClubId,
-      }),
+      premiumAnalyticsPromise,
     ])
+
+    const [
+      recentCourseResultsResult,
+      headCoachEffectsResult,
+      medicalEffectsResult,
+    ] = premiumAnalyticsResults
 
     if (staffResult.error) throw staffResult.error
     if (infraResult.error) throw infraResult.error
     if (gameDateResult.error) throw gameDateResult.error
     if (activeCoursesResult.error) throw activeCoursesResult.error
-    if (recentCourseResultsResult.error) throw recentCourseResultsResult.error
     if (roleLimitsResult.error) throw roleLimitsResult.error
-    if (headCoachEffectsResult.error) throw headCoachEffectsResult.error
-    if (medicalEffectsResult.error) throw medicalEffectsResult.error
+    if (recentCourseResultsResult?.error) throw recentCourseResultsResult.error
+    if (headCoachEffectsResult?.error) throw headCoachEffectsResult.error
+    if (medicalEffectsResult?.error) throw medicalEffectsResult.error
 
     const nextStaffRows = (staffResult.data || []) as ClubStaffRow[]
     const nextInfrastructure = (infraResult.data as ClubInfrastructureRow | null) || null
@@ -3938,16 +4019,20 @@ export default function StaffPage() {
     const nextActiveCourseRows = Array.isArray(activeCoursesResult.data)
       ? (activeCoursesResult.data as ActiveStaffCourseRow[])
       : []
-    const nextRecentCourseResults = Array.isArray(recentCourseResultsResult.data)
-      ? (recentCourseResultsResult.data as RecentStaffCourseResultRow[])
-      : []
+    const nextRecentCourseResults =
+      hasPremiumAccess && Array.isArray(recentCourseResultsResult?.data)
+        ? (recentCourseResultsResult.data as RecentStaffCourseResultRow[])
+        : []
     const nextRoleLimits = Array.isArray(roleLimitsResult.data)
       ? (roleLimitsResult.data as StaffRoleLimitRow[])
       : []
-    const nextHeadCoachEffects = Array.isArray(headCoachEffectsResult.data)
-      ? (headCoachEffectsResult.data as HeadCoachEffectRow[])
-      : []
-    const nextMedicalStaffEffect = normalizeRpcSingle<MedicalStaffEffectRow>(medicalEffectsResult.data)
+    const nextHeadCoachEffects =
+      hasPremiumAccess && Array.isArray(headCoachEffectsResult?.data)
+        ? (headCoachEffectsResult.data as HeadCoachEffectRow[])
+        : []
+    const nextMedicalStaffEffect = hasPremiumAccess
+      ? normalizeRpcSingle<MedicalStaffEffectRow>(medicalEffectsResult?.data)
+      : null
 
     setStaffRows(nextStaffRows)
     setInfrastructure(nextInfrastructure)
@@ -4004,6 +4089,21 @@ export default function StaffPage() {
 
         if (!mounted) return
 
+        const { data: premiumStatusData, error: premiumStatusError } =
+          await supabase.rpc('get_my_premium_status')
+
+        if (!mounted) return
+
+        const hasPremiumAccess = premiumStatusError
+          ? false
+          : getPremiumAccessFromResult(premiumStatusData)
+
+        if (premiumStatusError) {
+          console.error('get_my_premium_status failed:', premiumStatusError)
+        }
+
+        setIsPremium(hasPremiumAccess)
+        setIsPremiumLoading(false)
         setClubName(resolvedClub.name || null)
         setClubId(resolvedClub.id)
 
@@ -4022,14 +4122,17 @@ export default function StaffPage() {
           setDevelopingTeamStatusResolved(true)
         }
 
-        await reloadStaffPage(resolvedClub.id)
+        await reloadStaffPage(resolvedClub.id, hasPremiumAccess)
       } catch (err) {
         const message = getErrorMessage(err, 'Failed to load staff page.')
 
         if (!mounted) return
         setError(message)
       } finally {
-        if (mounted) setLoading(false)
+        if (mounted) {
+          setLoading(false)
+          setIsPremiumLoading(false)
+        }
       }
     }
 
@@ -4206,7 +4309,7 @@ export default function StaffPage() {
 
       if (releaseError) throw releaseError
 
-      await reloadStaffPage(clubId)
+      await reloadStaffPage(clubId, isPremium)
 
       const releasedName = releaseConfirmStaff.name
       const releasedRole = releaseConfirmStaff.roleLabel
@@ -4260,7 +4363,7 @@ export default function StaffPage() {
         decision_message?: string
       }>(data)
 
-      const refreshedPage = await reloadStaffPage(clubId)
+      const refreshedPage = await reloadStaffPage(clubId, isPremium)
 
       const refreshedActiveCourseByStaffId = new Map<string, StaffActiveCourse>()
       for (const row of refreshedPage.activeCourseRows) {
@@ -4365,7 +4468,7 @@ export default function StaffPage() {
         completes_on_game_date: string
       }>(data)
 
-      const refreshedPage = await reloadStaffPage(clubId)
+      const refreshedPage = await reloadStaffPage(clubId, isPremium)
 
       const refreshedActiveCourseMap = new Map<string, StaffActiveCourse>()
       for (const row of refreshedPage.activeCourseRows) {
@@ -4586,51 +4689,63 @@ export default function StaffPage() {
             backendHeadCoachImpact={backendHeadCoachImpact}
             activeHeadCoachEffect={activeHeadCoachEffect}
             medicalStaffEffect={medicalStaffEffect}
+            isPremium={isPremium}
+            isPremiumLoading={isPremiumLoading}
           />
         </div>
 
-        {recentCourseResultsToShow.length > 0 ? (
-          <div className="mt-8">
-            <SectionTitle
+        <div className="mt-8">
+          {isPremiumLoading ? (
+            <PremiumFeatureLoading />
+          ) : isPremium ? (
+            recentCourseResultsToShow.length > 0 ? (
+              <>
+                <SectionTitle
+                  title="Recent Course Results"
+                  subtitle="Completed staff development courses and applied stat gains."
+                />
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+                  {recentCourseResultsToShow.map((result) => {
+                    const gains = formatCourseGains(result)
+
+                    return (
+                      <div
+                        key={result.course_id}
+                        className="rounded-xl border border-green-100 bg-green-50 p-4"
+                      >
+                        <div className="text-sm font-semibold text-green-900">
+                          {result.course_title}
+                        </div>
+                        <div className="mt-1 text-sm text-green-800">{result.staff_name}</div>
+                        <div className="mt-1 text-xs text-green-700">
+                          Focus: {result.focus_label}
+                        </div>
+                        <div className="mt-1 text-xs text-green-700">
+                          Completed: {formatGameDateShort(result.completed_game_date)}
+                        </div>
+
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          {gains.map((gain) => (
+                            <span
+                              key={gain}
+                              className="rounded-full bg-white px-2.5 py-1 text-xs font-medium text-green-800"
+                            >
+                              {gain}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </>
+            ) : null
+          ) : (
+            <PremiumFeatureLock
               title="Recent Course Results"
-              subtitle="Completed staff development courses and applied stat gains."
+              description="View completed staff development courses and applied stat gains."
             />
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-              {recentCourseResultsToShow.map((result) => {
-                const gains = formatCourseGains(result)
-
-                return (
-                  <div key={result.course_id} className="rounded-xl border border-green-100 bg-green-50 p-4">
-                    <div className="text-sm font-semibold text-green-900">{result.course_title}</div>
-                    <div className="mt-1 text-sm text-green-800">{result.staff_name}</div>
-                    <div className="mt-1 text-xs text-green-700">Focus: {result.focus_label}</div>
-                    <div className="mt-1 text-xs text-green-700">
-                      Completed: {formatGameDateShort(result.completed_game_date)}
-                    </div>
-
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      {gains.map((gain) => (
-                        <span
-                          key={gain}
-                          className="rounded-full bg-white px-2.5 py-1 text-xs font-medium text-green-800"
-                        >
-                          {gain}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          </div>
-        ) : null}
-
-        <div className="mt-8 rounded-2xl border border-blue-100 bg-blue-50 p-5">
-          <div className="text-sm font-semibold text-blue-900">Next iteration later</div>
-          <div className="mt-2 text-sm text-blue-800">
-            Role capacities now come from backend data. The next step later is refining how
-            infrastructure, unlocks and contribution formulas scale those limits and bonuses.
-          </div>
+          )}
         </div>
       </div>
 
@@ -4644,6 +4759,8 @@ export default function StaffPage() {
       <StaffDetailModal
         staff={selectedStaff}
         infrastructure={infrastructure}
+        isPremium={isPremium}
+        isPremiumLoading={isPremiumLoading}
         onClose={() => setSelectedStaff(null)}
         onRequestRelease={openReleaseFlow}
         onRequestExtend={openExtendFlow}

@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router";
 import { supabase } from "../../../lib/supabase";
+import RiderShortlistButton from "../../../pages/dashboard/transfers/RiderShortlistButton";
 
 import type { RiderDetails } from "../types";
 
@@ -19,6 +20,12 @@ import {
 } from "../utils/rider-ui";
 
 type ExternalRiderProfileTab = "overview" | "history";
+
+type PremiumStatusRow = {
+  is_premium: boolean;
+  stripe_status?: string | null;
+  access_until?: string | null;
+};
 
 type RiderSkillViewMode = "basic" | "modern";
 
@@ -492,6 +499,44 @@ function SectionCard({
   );
 }
 
+function PremiumLockedPanel({
+  title,
+  description,
+}: {
+  title: string;
+  description: string;
+}) {
+  return (
+    <div className="rounded-xl border border-slate-200 bg-white px-5 py-5">
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-slate-600">
+          Premium
+        </span>
+        <span aria-hidden="true" className="text-sm text-slate-500">
+          🔒
+        </span>
+      </div>
+
+      <div className="mt-3 text-base font-semibold text-slate-900">{title}</div>
+      <div className="mt-1 max-w-2xl text-sm leading-6 text-slate-600">
+        {description}
+      </div>
+
+      <button
+        type="button"
+        onClick={() => {
+          if (typeof window !== "undefined") {
+            window.location.hash = "#/dashboard/pro";
+          }
+        }}
+        className="mt-4 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-800 transition hover:bg-slate-50"
+      >
+        Unlock with Premium
+      </button>
+    </div>
+  );
+}
+
 function DetailRow({
   label,
   value,
@@ -733,7 +778,7 @@ async function fetchRiderCareerHistoryById(
   }
 
   try {
-    const { data, error } = await supabase.rpc("get_rider_career_history", {
+    const { data, error } = await supabase.rpc("get_external_rider_career_history_premium_v1", {
       p_rider_id: riderId,
     });
 
@@ -986,7 +1031,7 @@ async function fetchRiderLastFiveRacesById(
       .slice(0, 5);
 
   try {
-    const { data, error } = await supabase.rpc("get_rider_last_five_races", {
+    const { data, error } = await supabase.rpc("get_external_rider_last_five_races_premium_v1", {
       p_rider_id: riderId,
       p_limit: 5,
     });
@@ -1734,12 +1779,70 @@ export default function ExternalRiderProfilePage({
     null,
   );
 
+  const [isPremium, setIsPremium] = useState(false);
+  const [premiumStatusLoading, setPremiumStatusLoading] = useState(true);
+
   const [historyLoading, setHistoryLoading] = useState(false);
   const [historyError, setHistoryError] = useState<string | null>(null);
   const [historyRows, setHistoryRows] = useState<RiderCareerHistoryRow[]>([]);
   const [currentSeasonNumber, setCurrentSeasonNumber] = useState<number | null>(
     null,
   );
+
+  useEffect(() => {
+    let mounted = true;
+
+    async function loadPremiumStatus() {
+      setPremiumStatusLoading(true);
+
+      try {
+        const { data, error } = await supabase.rpc("get_my_premium_status");
+        if (error) throw error;
+
+        const row = (Array.isArray(data) ? data[0] : data) as
+          | PremiumStatusRow
+          | null;
+
+        if (!mounted) return;
+        setIsPremium(Boolean(row?.is_premium));
+      } catch (error) {
+        console.error(
+          "Failed to load Premium status for external rider profile:",
+          error,
+        );
+
+        if (!mounted) return;
+        setIsPremium(false);
+      } finally {
+        if (!mounted) return;
+        setPremiumStatusLoading(false);
+      }
+    }
+
+    function handlePremiumStatusChanged() {
+      void loadPremiumStatus();
+    }
+
+    void loadPremiumStatus();
+
+    if (typeof window !== "undefined") {
+      window.addEventListener(
+        "premium-status-changed",
+        handlePremiumStatusChanged,
+      );
+    }
+
+    return () => {
+      mounted = false;
+
+      if (typeof window !== "undefined") {
+        window.removeEventListener(
+          "premium-status-changed",
+          handlePremiumStatusChanged,
+        );
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (gameDateProp !== undefined) {
@@ -1907,17 +2010,24 @@ export default function ExternalRiderProfilePage({
     let mounted = true;
 
     async function loadOverviewExtras() {
-      if (!selectedRider?.id) return;
+      if (!selectedRider?.id || premiumStatusLoading) return;
       setOverviewLoading(true);
 
       try {
-        const [overviewData, statsData, racesData, honoursData] =
-          await Promise.all([
-            fetchRiderSeasonOverviewById(selectedRider.id),
-            fetchRiderSeasonStatsById(selectedRider.id),
+        const [overviewData, statsData] = await Promise.all([
+          fetchRiderSeasonOverviewById(selectedRider.id),
+          fetchRiderSeasonStatsById(selectedRider.id),
+        ]);
+
+        let racesData: RiderRecentRaceRow[] = [];
+        let honoursData: RiderCareerHonourRow[] = [];
+
+        if (isPremium) {
+          [racesData, honoursData] = await Promise.all([
             fetchRiderLastFiveRacesById(selectedRider.id),
             fetchRiderCareerHonoursById(selectedRider.id),
           ]);
+        }
 
         if (!mounted) return;
         setSeasonOverview(overviewData);
@@ -1941,7 +2051,7 @@ export default function ExternalRiderProfilePage({
     return () => {
       mounted = false;
     };
-  }, [selectedRider?.id]);
+  }, [isPremium, premiumStatusLoading, selectedRider?.id]);
 
   useEffect(() => {
     let mounted = true;
@@ -2021,7 +2131,17 @@ export default function ExternalRiderProfilePage({
     let mounted = true;
 
     async function loadHistory() {
-      if (activeTab !== "history" || !selectedRider?.id) return;
+      if (
+        activeTab !== "history" ||
+        !selectedRider?.id ||
+        premiumStatusLoading ||
+        !isPremium
+      ) {
+        setHistoryRows([]);
+        setHistoryError(null);
+        setHistoryLoading(false);
+        return;
+      }
 
       setHistoryLoading(true);
       setHistoryError(null);
@@ -2045,7 +2165,7 @@ export default function ExternalRiderProfilePage({
     return () => {
       mounted = false;
     };
-  }, [activeTab, selectedRider?.id]);
+  }, [activeTab, isPremium, premiumStatusLoading, selectedRider?.id]);
 
   const statsAge =
     typeof (selectedRider as { age_years?: unknown } | null)?.age_years ===
@@ -2400,7 +2520,7 @@ export default function ExternalRiderProfilePage({
       setPremiumBidMessage(null);
 
       const { data, error } = await supabase.rpc(
-        "quote_unsolicited_ai_transfer_bid_v1",
+        "quote_unsolicited_ai_transfer_bid_v2",
         {
           p_rider_id: premiumBidModal.riderId,
           p_buyer_club_id: premiumBidModal.buyerClubId,
@@ -2452,7 +2572,7 @@ export default function ExternalRiderProfilePage({
       setPremiumBidQuoteLoading(true);
 
       const { data, error } = await supabase.rpc(
-        "quote_unsolicited_ai_transfer_bid_v1",
+        "quote_unsolicited_ai_transfer_bid_v2",
         {
           p_rider_id: selectedRider.id,
           p_buyer_club_id: buyerClubId,
@@ -2994,6 +3114,33 @@ export default function ExternalRiderProfilePage({
             </button>
           ) : null}
 
+          {selectedRider?.id &&
+          secureProfile?.clubId &&
+          !secureProfile?.isOwnRider ? (
+            <div className="px-1 py-1.5">
+              <RiderShortlistButton
+                clubId={secureProfile.clubId}
+                riderId={selectedRider.id}
+                riderName={riderName}
+                sourceType={
+                  activeTransferListing
+                    ? "transfer_list"
+                    : activeFreeAgent
+                      ? "free_agent"
+                      : marketMode === "scouting"
+                        ? "scouting"
+                        : "external_profile"
+                }
+                sourceId={
+                  activeTransferListing?.id ??
+                  activeFreeAgent?.id ??
+                  null
+                }
+                compact
+              />
+            </div>
+          ) : null}
+
           {activeTransferListing ? (
             <button
               type="button"
@@ -3058,7 +3205,12 @@ export default function ExternalRiderProfilePage({
             onClick={() => setActiveTab("history")}
             className={tabButtonClass("history")}
           >
-            History
+            <span>History</span>
+            {!premiumStatusLoading && !isPremium ? (
+              <span aria-hidden="true" className="ml-1 text-xs text-slate-400">
+                🔒
+              </span>
+            ) : null}
           </button>
         </div>
       </div>
@@ -3307,7 +3459,16 @@ export default function ExternalRiderProfilePage({
                   title="Last 5 Races"
                   subtitle="Finished races only · final race position shown"
                 >
-                  {overviewLoading ? (
+                  {premiumStatusLoading ? (
+                    <div className="text-sm text-slate-500">
+                      Checking Premium access…
+                    </div>
+                  ) : !isPremium ? (
+                    <PremiumLockedPanel
+                      title="Premium race history"
+                      description="Review this rider’s five latest completed races, finishing positions and international points."
+                    />
+                  ) : overviewLoading ? (
                     <div className="text-sm text-slate-500">
                       Loading recent races…
                     </div>
@@ -3403,6 +3564,16 @@ export default function ExternalRiderProfilePage({
           )}
 
           {activeTab === "history" && (
+            premiumStatusLoading ? (
+              <div className="rounded-lg border border-slate-200 bg-white px-5 py-5 text-sm text-slate-500 shadow">
+                Checking Premium access…
+              </div>
+            ) : !isPremium ? (
+              <PremiumLockedPanel
+                title="Premium rider history"
+                description="View previous teams, points by season and this rider’s greatest career results."
+              />
+            ) : (
             <div className="space-y-4">
               <SectionCard
                 title="History"
@@ -3477,6 +3648,7 @@ export default function ExternalRiderProfilePage({
                 }}
               />
             </div>
+            )
           )}
         </>
       )}
@@ -3657,12 +3829,17 @@ export default function ExternalRiderProfilePage({
 
                         <div className="rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-700">
                           <span className="font-semibold text-slate-900">
-                            Next report coin cost:
+                            Next report cost:
                           </span>{" "}
                           {normalizeNumber(
                             selectedScoutOption.next_report_coin_cost,
                             0,
-                          )}
+                          ) > 0
+                            ? `${normalizeNumber(
+                                selectedScoutOption.next_report_coin_cost,
+                                0,
+                              )} coins`
+                            : "Free"}
                         </div>
 
                         {selectedScoutEffectiveBlockingReason ? (
@@ -3681,26 +3858,26 @@ export default function ExternalRiderProfilePage({
             normalizeNumber(selectedScoutOption.next_report_coin_cost, 0) >
               0 ? (
               <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-                This scout has no free reports left today. Starting this
-                scouting task will cost{" "}
+                This scout has used today’s free report. Starting another
+                report with this scout will cost{" "}
                 <span className="font-semibold">
                   {normalizeNumber(
                     selectedScoutOption.next_report_coin_cost,
                     0,
                   )}{" "}
-                  coin
+                  coins
                 </span>
                 . You currently have{" "}
                 <span className="font-semibold">
-                  {normalizeNumber(selectedScoutOption.wallet_balance, 0)} coin
+                  {normalizeNumber(selectedScoutOption.wallet_balance, 0)} coins
                 </span>
                 .
               </div>
             ) : null}
 
             <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-600">
-              Each scout includes 1 free report per in-game day. Additional
-              reports cost 1 coin.
+              Each scout includes 1 free report per in-game day. Every
+              additional report by that scout costs 3 coins.
             </div>
 
             <div className="mt-5 flex items-center justify-end gap-2">
@@ -3779,7 +3956,18 @@ export default function ExternalRiderProfilePage({
               />
             </div>
 
-            {premiumBidQuote ? (
+            {premiumStatusLoading ? (
+              <div className="mt-4 text-sm text-slate-500">
+                Checking Premium access…
+              </div>
+            ) : !isPremium ? (
+              <div className="mt-4">
+                <PremiumLockedPanel
+                  title="Premium negotiation intelligence"
+                  description="See the selling club’s stance, offer strength, predicted response and likely counteroffer."
+                />
+              </div>
+            ) : premiumBidQuote ? (
               <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
                 <div className={`rounded-lg border px-3 py-2 text-sm ${getPremiumBidToneClass(premiumBidQuote.selling_club_stance)}`}>
                   <div className="text-xs font-semibold uppercase tracking-wide opacity-70">
@@ -3825,7 +4013,7 @@ export default function ExternalRiderProfilePage({
               </div>
             ) : null}
 
-            {premiumBidQuote?.reasons?.length ? (
+            {isPremium && premiumBidQuote?.reasons?.length ? (
               <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
                 {premiumBidQuote.reasons.slice(0, 3).map((reason) => (
                   <div key={reason}>• {reason}</div>
@@ -3855,6 +4043,7 @@ export default function ExternalRiderProfilePage({
                 Cancel
               </button>
 
+              {isPremium ? (
               <button
                 type="button"
                 disabled={premiumBidQuoteLoading || premiumBidSubmitting}
@@ -3869,6 +4058,7 @@ export default function ExternalRiderProfilePage({
               >
                 {premiumBidQuoteLoading ? "Checking..." : "Refresh Quote"}
               </button>
+              ) : null}
 
               <button
                 type="button"

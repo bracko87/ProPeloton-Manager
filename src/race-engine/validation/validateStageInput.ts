@@ -197,6 +197,328 @@ function validateRiderCondition(
   }
 }
 
+const EQUIPMENT_CATEGORIES:
+  ReadonlySet<string> = new Set([
+    'frame',
+    'wheelset',
+    'tires',
+    'groupset',
+    'helmet',
+    'shoes',
+  ])
+
+function isIntegerInRange(
+  value: unknown,
+  minimum: number,
+  maximum: number,
+): value is number {
+  return (
+    typeof value ===
+      'number' &&
+    Number.isInteger(
+      value,
+    ) &&
+    value >= minimum &&
+    value <= maximum
+  )
+}
+
+function isNumberInRange(
+  value: unknown,
+  minimum: number,
+  maximum: number,
+): value is number {
+  return (
+    isFiniteNumber(value) &&
+    value >= minimum &&
+    value <= maximum
+  )
+}
+
+function validateRiderEquipment(
+  rider:
+    StageRiderInput,
+  riderIndex: number,
+  issues: string[],
+): void {
+  const equipment =
+    rider.equipment
+
+  if (!equipment) {
+    return
+  }
+
+  const prefix =
+    `riders[${riderIndex}].equipment`
+
+  if (
+    equipment.conditionSource !==
+    'race_engine_resolve_stage_rider_equipment_condition_v1'
+  ) {
+    issues.push(
+      `${prefix}.conditionSource is unsupported.`,
+    )
+  }
+
+  if (
+    equipment.preparationSource !==
+    'race_engine_get_stage_rider_preparation_modifiers_v2'
+  ) {
+    issues.push(
+      `${prefix}.preparationSource is unsupported.`,
+    )
+  }
+
+  if (
+    equipment.equipmentSetupId !==
+      null &&
+    !isNonBlankString(
+      equipment.equipmentSetupId,
+    )
+  ) {
+    issues.push(
+      `${prefix}.equipmentSetupId must be null or a non-blank string.`,
+    )
+  }
+
+  if (
+    !isIntegerInRange(
+      equipment
+        .selectedComponentCount,
+      0,
+      6,
+    )
+  ) {
+    issues.push(
+      `${prefix}.selectedComponentCount must be an integer between 0 and 6.`,
+    )
+  }
+
+  if (
+    !isIntegerInRange(
+      equipment
+        .matchedComponentCount,
+      0,
+      6,
+    )
+  ) {
+    issues.push(
+      `${prefix}.matchedComponentCount must be an integer between 0 and 6.`,
+    )
+  }
+
+  if (
+    isIntegerInRange(
+      equipment
+        .selectedComponentCount,
+      0,
+      6,
+    ) &&
+    isIntegerInRange(
+      equipment
+        .matchedComponentCount,
+      0,
+      6,
+    ) &&
+    equipment
+      .matchedComponentCount >
+    equipment
+      .selectedComponentCount
+  ) {
+    issues.push(
+      `${prefix}.matchedComponentCount may not exceed selectedComponentCount.`,
+    )
+  }
+
+  if (
+    typeof equipment
+      .completeSource !==
+    'boolean'
+  ) {
+    issues.push(
+      `${prefix}.completeSource must be boolean.`,
+    )
+  }
+
+  const derivedCompleteSource =
+    equipment
+      .selectedComponentCount >
+      0 &&
+    equipment
+      .matchedComponentCount ===
+      equipment
+        .selectedComponentCount
+
+  if (
+    typeof equipment
+      .completeSource ===
+      'boolean' &&
+    equipment.completeSource !==
+      derivedCompleteSource
+  ) {
+    issues.push(
+      `${prefix}.completeSource does not match component counts.`,
+    )
+  }
+
+  if (
+    equipment
+      .minimumConditionPercent !==
+      null &&
+    !isNumberInRange(
+      equipment
+        .minimumConditionPercent,
+      0,
+      100,
+    )
+  ) {
+    issues.push(
+      `${prefix}.minimumConditionPercent must be null or between 0 and 100.`,
+    )
+  }
+
+  if (
+    !isNumberInRange(
+      equipment
+        .effectiveConditionPercent,
+      0,
+      100,
+    )
+  ) {
+    issues.push(
+      `${prefix}.effectiveConditionPercent must be between 0 and 100.`,
+    )
+  }
+
+  if (
+    !Array.isArray(
+      equipment
+        .missingComponentCategories,
+    )
+  ) {
+    issues.push(
+      `${prefix}.missingComponentCategories must be an array.`,
+    )
+  } else {
+    const categorySet =
+      new Set<string>()
+
+    for (
+      const category of
+      equipment
+        .missingComponentCategories
+    ) {
+      if (
+        !EQUIPMENT_CATEGORIES.has(
+          category,
+        )
+      ) {
+        issues.push(
+          `${prefix}.missingComponentCategories contains unsupported category "${String(category)}".`,
+        )
+      }
+
+      if (
+        categorySet.has(
+          category,
+        )
+      ) {
+        issues.push(
+          `${prefix}.missingComponentCategories must not contain duplicates.`,
+        )
+      }
+
+      categorySet.add(
+        category,
+      )
+    }
+  }
+
+  if (equipment.completeSource) {
+    if (
+      equipment
+        .equipmentSetupId ===
+      null
+    ) {
+      issues.push(
+        `${prefix}.completeSource requires equipmentSetupId.`,
+      )
+    }
+
+    if (
+      equipment
+        .minimumConditionPercent ===
+      null
+    ) {
+      issues.push(
+        `${prefix}.completeSource requires minimumConditionPercent.`,
+      )
+    }
+
+    if (
+      equipment
+        .minimumConditionPercent !==
+        null &&
+      Math.abs(
+        equipment
+          .effectiveConditionPercent -
+        equipment
+          .minimumConditionPercent
+      ) >
+      0.000001
+    ) {
+      issues.push(
+        `${prefix}.effectiveConditionPercent must equal minimumConditionPercent for a complete source.`,
+      )
+    }
+
+    if (
+      equipment
+        .missingComponentCategories
+        .length >
+      0
+    ) {
+      issues.push(
+        `${prefix}.completeSource may not list missing component categories.`,
+      )
+    }
+  } else if (
+    equipment
+      .effectiveConditionPercent !==
+    100
+  ) {
+    issues.push(
+      `${prefix}.incomplete source must use neutral effectiveConditionPercent 100.`,
+    )
+  }
+
+  if (
+    !isNumberInRange(
+      equipment
+        .mechanicalIncidentRiskMultiplier,
+      0.75,
+      1,
+    )
+  ) {
+    issues.push(
+      `${prefix}.mechanicalIncidentRiskMultiplier must be between 0.75 and 1.`,
+    )
+  }
+
+  if (
+    !isNumberInRange(
+      equipment
+        .mechanicalTimeLossMultiplier,
+      0.82,
+      1,
+    )
+  ) {
+    issues.push(
+      `${prefix}.mechanicalTimeLossMultiplier must be between 0.82 and 1.`,
+    )
+  }
+}
+
 function validateRiders(
   riders: readonly StageRiderInput[],
   issues: string[],
@@ -241,6 +563,13 @@ function validateRiders(
     ) {
       issues.push(`riders[${index}].attributes must be an object.`)
     }
+
+
+    validateRiderEquipment(
+      rider,
+      index,
+      issues,
+    )
 
     validateRiderCondition(
       rider,

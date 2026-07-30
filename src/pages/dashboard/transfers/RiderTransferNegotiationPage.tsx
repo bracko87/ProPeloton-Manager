@@ -12,6 +12,7 @@ import {
   getCountryName,
   getFlagImageUrl,
 } from '../../../features/squad/utils/formatters'
+import TransferNegotiationIntelligence from './TransferNegotiationIntelligence'
 
 type NegotiationStatus =
   | 'open'
@@ -1246,6 +1247,22 @@ export default function RiderTransferNegotiationPage(): JSX.Element {
                 />
               </div>
             </div>
+
+            <TransferNegotiationIntelligence
+              riderId={contextRow.rider_id}
+              accessKey={`transfer:${contextRow.listing_id ?? contextRow.negotiation_id}`}
+              transferFee={Number(contextRow.offered_price ?? 0)}
+              weeklySalary={normalizeSalaryInput(salaryOffer) ?? 0}
+              contractSeasons={Number(contractYears) || 1}
+              signingBonus={parsedSigningBonusPreview}
+              agentFee={parsedAgentFeePreview}
+              riderRole={contextRow.rider_role}
+              salaryScore={offerPreview?.salaryScore}
+              durationScore={offerPreview?.durationScore}
+              bonusScore={offerPreview?.bonusScore}
+              feeScore={offerPreview?.feeScore}
+              tierScore={offerPreview?.tierScore}
+            />
 
             <div className="mt-4 flex justify-end">
               <button

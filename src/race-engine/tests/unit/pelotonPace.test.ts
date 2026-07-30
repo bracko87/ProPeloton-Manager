@@ -168,6 +168,205 @@ describe(
     )
 
     it(
+      'gives one rider and identical organized riders the same base speed',
+      () => {
+        const soloRider =
+          createRider(
+            'solo-rider',
+            {
+              flat: 80,
+              stamina: 80,
+              resistance: 80,
+              teamwork: 80,
+            },
+          )
+
+        const groupRiders =
+          [
+            'group-rider-a',
+            'group-rider-b',
+            'group-rider-c',
+            'group-rider-d',
+          ].map(
+            (
+              riderId,
+            ) =>
+              createRider(
+                riderId,
+                {
+                  flat: 80,
+                  stamina: 80,
+                  resistance: 80,
+                  teamwork: 80,
+                },
+              ),
+          )
+
+        const solo =
+          calculatePelotonBasePace({
+            riders: [
+              soloRider,
+            ],
+            minimumSpeedKmh:
+              36,
+            maximumSpeedKmh:
+              60,
+          })
+
+        const group =
+          calculatePelotonBasePace({
+            riders:
+              groupRiders,
+            minimumSpeedKmh:
+              36,
+            maximumSpeedKmh:
+              60,
+          })
+
+        expect(
+          group
+            .averageCapabilityScore,
+        ).toBe(
+          solo
+            .averageCapabilityScore,
+        )
+
+        expect(
+          group.baseSpeedKmh,
+        ).toBe(
+          solo.baseSpeedKmh,
+        )
+      },
+    )
+
+    it(
+      'does not currently grant a drafting or shared-effort speed benefit',
+      () => {
+        const riders =
+          [
+            'rider-a',
+            'rider-b',
+            'rider-c',
+            'rider-d',
+            'rider-e',
+            'rider-f',
+          ].map(
+            (
+              riderId,
+            ) =>
+              createRider(
+                riderId,
+                {
+                  flat: 75,
+                  stamina: 75,
+                  resistance: 75,
+                  teamwork: 90,
+                },
+              ),
+          )
+
+        const solo =
+          calculatePelotonBasePace({
+            riders: [
+              riders[0],
+            ],
+            minimumSpeedKmh:
+              36,
+            maximumSpeedKmh:
+              60,
+          })
+
+        const organizedGroup =
+          calculatePelotonBasePace({
+            riders,
+            minimumSpeedKmh:
+              36,
+            maximumSpeedKmh:
+              60,
+          })
+
+        expect(
+          organizedGroup
+            .eligibleRiderCount,
+        ).toBe(
+          6,
+        )
+
+        expect(
+          organizedGroup
+            .baseSpeedKmh,
+        ).toBe(
+          solo.baseSpeedKmh,
+        )
+      },
+    )
+
+    it(
+      'allows a weaker rider to reduce the group average and base speed',
+      () => {
+        const strongRider =
+          createRider(
+            'strong-rider',
+            {
+              flat: 90,
+              stamina: 90,
+              resistance: 90,
+              teamwork: 90,
+            },
+          )
+
+        const weakRider =
+          createRider(
+            'weak-rider',
+            {
+              flat: 30,
+              stamina: 30,
+              resistance: 30,
+              teamwork: 30,
+            },
+          )
+
+        const solo =
+          calculatePelotonBasePace({
+            riders: [
+              strongRider,
+            ],
+            minimumSpeedKmh:
+              36,
+            maximumSpeedKmh:
+              60,
+          })
+
+        const mixedGroup =
+          calculatePelotonBasePace({
+            riders: [
+              strongRider,
+              weakRider,
+            ],
+            minimumSpeedKmh:
+              36,
+            maximumSpeedKmh:
+              60,
+          })
+
+        expect(
+          mixedGroup
+            .averageCapabilityScore,
+        ).toBeLessThan(
+          solo
+            .averageCapabilityScore,
+        )
+
+        expect(
+          mixedGroup
+            .baseSpeedKmh,
+        ).toBeLessThan(
+          solo.baseSpeedKmh,
+        )
+      },
+    )
+
+    it(
       'ignores riders who are not racing',
       () => {
         const result =
