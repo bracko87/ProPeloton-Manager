@@ -15,6 +15,56 @@ import {
   getTutorialProgress,
   saveTutorialProgress,
 } from '../../lib/tutorialProgress'
+import {
+  createDeterministicStageResults,
+} from '../../race-simulator-v2/core/deterministicStageResults'
+import {
+  runB1TerrainRoadStageSimulation,
+} from '../../race-simulator-v2/core/runB1TerrainRoadStageSimulation'
+import {
+  buildStagePlanRoadStageDefinition,
+  type StagePlanSimulationPlanSource,
+  type StagePlanSimulationRiderSource,
+} from '../../race-simulator-v2/core/buildStagePlanRoadStageDefinition'
+import type {
+  B1RoadStageSimulationDefinition,
+} from '../../race-simulator-v2/core/runB1RoadStageSimulation'
+import type {
+  BreakawayOutcome,
+} from '../../race-simulator-v2/core/breakawayOutcomeCheckpointSequence'
+import {
+  createCanonicalRoadStageProfile,
+} from '../../race-simulator-v2/core/canonicalRoadStageProfile'
+import {
+  calculateTerrainMovement,
+  calculateTerrainSpeedMultiplier,
+} from '../../race-simulator-v2/core/terrainMovement'
+import {
+  calculateRiderEnergyStep,
+} from '../../race-simulator-v2/core/riderEnergy'
+import {
+  createRoadStageProfile,
+  getTerrainPhaseAtKm,
+} from '../../race-simulator-v2/core/roadStageProfile'
+import type {
+  Checkpoint,
+} from '../../race-simulator-v2/types/checkpoint'
+import type {
+  CanonicalRoadStageProfileKey,
+  CanonicalRoadStageProfileSnapshot,
+  CanonicalRoadStageReference,
+} from '../../race-simulator-v2/types/canonicalRoadStageProfile'
+import type {
+  RoadStageFinishType,
+  RoadStageProfile,
+  RoadStageType,
+} from '../../race-simulator-v2/types/stageProfile'
+import {
+  flatStageFixture,
+} from '../../race-simulator-v2/fixtures/flatStage1'
+import {
+  RIO_TOUR_RACE_ID,
+} from '../../race-simulator-v2/fixtures/rioCanonicalRoadStages'
 
 
 type JsonValue = string | number | boolean | null | JsonObject | JsonValue[]
@@ -236,6 +286,31 @@ type RaceParticipantRider = {
   can_view_exact_overall?: boolean | null
   overall_range_label?: string | null
 }
+
+type RacePreparationSimulationRow = {
+  id: string
+  club_id: string | null
+  participating_club_id: string | null
+  status: string | null
+  startlist_status: string | null
+}
+
+type RaceStagePlanSimulationRow = {
+  id: string
+  race_preparation_id: string
+  race_id: string
+  stage_id: string | null
+  stage_number: number | null
+  status: string | null
+  team_tactic_json: JsonObject | null
+  rider_roles_json: JsonObject | null
+  rider_individual_tactics_json: JsonObject | null
+}
+
+type RoadStageReplayInputMode =
+  | 'real_stage_orders'
+  | 'controlled_catch'
+  | 'controlled_survival'
 
 type RaceParticipantTeam = {
   id: string
@@ -2534,6 +2609,34 @@ function formatRaceClock(seconds?: number | null): string {
   const secs = total % 60
 
   return `${hours}:${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`
+}
+
+
+function formatPreciseRaceClock(seconds?: number | null): string {
+  if (seconds === null || seconds === undefined || Number.isNaN(Number(seconds))) {
+    return '—'
+  }
+
+  const totalMilliseconds = Math.max(0, Math.round(Number(seconds) * 1000))
+  const wholeSeconds = Math.floor(totalMilliseconds / 1000)
+  const milliseconds = totalMilliseconds % 1000
+  const hours = Math.floor(wholeSeconds / 3600)
+  const minutes = Math.floor((wholeSeconds % 3600) / 60)
+  const secs = wholeSeconds % 60
+
+  return `${hours}:${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}.${String(milliseconds).padStart(3, '0')}`
+}
+
+function formatTerrainModelLabel(value: string): string {
+  return value.length === 0
+    ? value
+    : `${value.charAt(0).toUpperCase()}${value.slice(1)}`
+}
+
+function formatSignedTerrainValue(value: number, digits = 1): string {
+  const prefix = value > 0 ? '+' : ''
+
+  return `${prefix}${value.toFixed(digits)}`
 }
 
 
@@ -7944,12 +8047,14 @@ function StageProfileChart({
   distanceKm,
   terrainType,
   mountainClimbs = [],
+  replayProgressPercent = null,
 }: {
   points: BackendStageProfilePoint[]
   markers: StageRouteMarker[]
   distanceKm: number
   terrainType?: string | null
   mountainClimbs?: StageProfileDetailItem[]
+  replayProgressPercent?: number | null
 }) {
   if (!points.length || !distanceKm) {
     return (
@@ -8051,6 +8156,21 @@ function StageProfileChart({
         <path d={parsed.areaPath} fill="rgba(250, 204, 21, 0.55)" />
         <path d={parsed.linePath} fill="none" stroke="#334155" strokeWidth="3" />
 
+        {replayProgressPercent !== null ? (
+          <g aria-label={`Replay progress ${Math.round(replayProgressPercent)} percent`}>
+            <line
+              x1={xForKm((safeDistanceKm * Math.max(0, Math.min(100, replayProgressPercent))) / 100)}
+              y1={padding.top + 6}
+              x2={xForKm((safeDistanceKm * Math.max(0, Math.min(100, replayProgressPercent))) / 100)}
+              y2={height - padding.bottom}
+              stroke="#2563eb"
+              strokeWidth="7"
+              strokeLinecap="round"
+              opacity="0.95"
+            />
+          </g>
+        ) : null}
+
         {chartMarkers.map((marker, index) => {
           const x = xForKm(Number(marker.km))
           const markerType = marker.chartType
@@ -8110,20 +8230,3273 @@ function StageProfileChart({
   )
 }
 
+
+function userTeamParticipatedInRace(
+  participantTeams: RaceParticipantTeam[],
+  viewerTeamIds?: ViewerTeamIdSource
+): boolean {
+  const viewerIds = normalizeViewerTeamIds(viewerTeamIds)
+  if (viewerIds.size === 0) return false
+
+  return participantTeams.some((team) => isViewerTeamRow(team, viewerIds))
+}
+
+function isStageStartReached(
+  stage: RaceStage | null,
+  currentGameDate?: string | null
+): boolean {
+  if (!stage?.stage_date) return false
+
+  const stageDate = parseDateOnly(stage.stage_date)
+  if (!stageDate) return false
+
+  if (currentGameDate) {
+    const currentDate = parseDateOnly(currentGameDate)
+    if (!currentDate) return false
+
+    return currentDate >= stageDate
+  }
+
+  const stageRealDate = new Date(`${stage.stage_date}T00:00:00`)
+  if (Number.isNaN(stageRealDate.getTime())) return false
+
+  return new Date() >= stageRealDate
+}
+
+const RIO_TOUR_INTEGRATION_STAGE_COUNT = 6
+
+/**
+ * Temporary frontend-only integration gate for the six-stage Rio Tour test.
+ *
+ * This deliberately does not depend on hostname, build mode, stage status or
+ * stored replay results. It changes only Watch-button access in this page and
+ * performs no database mutation. Remove or set to false after the six-stage
+ * integration review is complete.
+ */
+const ENABLE_RIO_TOUR_INTEGRATION_REPLAYS = true
+
+function isRioTourDevelopmentReplayUnlocked(
+  race: Race | null,
+  stage: RaceStage | null
+): boolean {
+  const stageNumber = Number(stage?.stage_number)
+  const normalizedRaceName = String(race?.name ?? '')
+    .trim()
+    .toLowerCase()
+  const isRioTour =
+    race?.id === RIO_TOUR_RACE_ID ||
+    normalizedRaceName === 'rio tour'
+
+  return Boolean(
+    ENABLE_RIO_TOUR_INTEGRATION_REPLAYS &&
+      isRioTour &&
+      stage &&
+      Number.isInteger(stageNumber) &&
+      stageNumber >= 1 &&
+      stageNumber <= RIO_TOUR_INTEGRATION_STAGE_COUNT &&
+      !isTimeTrialLikeStage(stage)
+  )
+}
+
+type RaceReplayCoinAccess = {
+  race_id: string
+  coin_cost: number
+  coin_balance: number
+  has_coin_unlock: boolean
+}
+
+function normalizeRaceReplayCoinAccess(data: unknown): RaceReplayCoinAccess | null {
+  const value = Array.isArray(data) ? data[0] : data
+
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return null
+  }
+
+  const row = value as Record<string, unknown>
+
+  return {
+    race_id: String(row.race_id ?? ''),
+    coin_cost: Number(row.coin_cost ?? 2),
+    coin_balance: Number(row.coin_balance ?? 0),
+    has_coin_unlock:
+      row.has_coin_unlock === true ||
+      row.has_coin_unlock === 'true' ||
+      row.has_coin_unlock === 1,
+  }
+}
+
+function StageReplayAccessCard({
+  race,
+  stage,
+  currentClubId,
+  viewerClubFamilyIds,
+  participantTeams,
+  currentGameDate,
+  canViewRaceReplay,
+  replayAccessLoading = false,
+  onOpenReplay,
+}: {
+  race: Race | null
+  stage: RaceStage | null
+  currentClubId?: string | null
+  viewerClubFamilyIds?: string[]
+  participantTeams: RaceParticipantTeam[]
+  currentGameDate?: string | null
+  canViewRaceReplay?: boolean | null
+  replayAccessLoading?: boolean
+  onOpenReplay: (stage: RaceStage) => void
+}) {
+  const [hasResults, setHasResults] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [coinAccess, setCoinAccess] = useState<RaceReplayCoinAccess | null>(null)
+  const [coinAccessLoading, setCoinAccessLoading] = useState(false)
+  const [coinPurchaseLoading, setCoinPurchaseLoading] = useState(false)
+  const [coinPurchaseError, setCoinPurchaseError] = useState<string | null>(null)
+  const [coinPurchaseMessage, setCoinPurchaseMessage] = useState<string | null>(null)
+
+  const viewerTeamIds = getViewerTeamIds(currentClubId, viewerClubFamilyIds)
+  const localParticipationAccess = userTeamParticipatedInRace(
+    participantTeams,
+    viewerTeamIds
+  )
+  const userParticipated = canViewRaceReplay === true || localParticipationAccess
+  const developmentReplayUnlocked = isRioTourDevelopmentReplayUnlocked(race, stage)
+  const hasCoinReplayUnlock = coinAccess?.has_coin_unlock === true
+  const hasReplayAccess =
+    developmentReplayUnlocked || userParticipated || hasCoinReplayUnlock
+  const stageReached = isStageStartReached(stage, currentGameDate)
+  const stageWeatherCanceled = isStageWeatherCanceled(stage)
+
+  useEffect(() => {
+    if (!stage?.id) {
+      setHasResults(false)
+      setLoading(false)
+      return
+    }
+
+    let cancelled = false
+
+    async function checkResults() {
+      setLoading(true)
+
+      const { count, error } = await supabase
+        .from('race_stage_results')
+        .select('id', { count: 'exact', head: true })
+        .eq('stage_id', stage.id)
+
+      if (cancelled) return
+
+      setHasResults(!error && Boolean(count && count > 0))
+      setLoading(false)
+    }
+
+    checkResults()
+
+    return () => {
+      cancelled = true
+    }
+  }, [stage?.id])
+
+  useEffect(() => {
+    if (!race?.id || userParticipated || developmentReplayUnlocked) {
+      setCoinAccess(null)
+      setCoinAccessLoading(false)
+      setCoinPurchaseError(null)
+      setCoinPurchaseMessage(null)
+      return
+    }
+
+    let cancelled = false
+
+    async function loadCoinAccess(): Promise<void> {
+      setCoinAccessLoading(true)
+      setCoinPurchaseError(null)
+
+      const { data, error } = await supabase.rpc(
+        'get_race_replay_coin_access_v1',
+        {
+          p_race_id: race.id,
+        }
+      )
+
+      if (cancelled) return
+
+      if (error) {
+        console.warn('Could not load coin replay access:', error.message)
+        setCoinAccess(null)
+      } else {
+        setCoinAccess(normalizeRaceReplayCoinAccess(data))
+      }
+
+      setCoinAccessLoading(false)
+    }
+
+    void loadCoinAccess()
+
+    return () => {
+      cancelled = true
+    }
+  }, [developmentReplayUnlocked, race?.id, userParticipated])
+
+  async function purchaseReplayAccess(): Promise<void> {
+    if (!race?.id || coinPurchaseLoading) return
+
+    setCoinPurchaseLoading(true)
+    setCoinPurchaseError(null)
+    setCoinPurchaseMessage(null)
+
+    try {
+      const { data, error } = await supabase.rpc(
+        'purchase_race_replay_access_v1',
+        {
+          p_race_id: race.id,
+        }
+      )
+
+      if (error) throw error
+
+      const nextAccess = normalizeRaceReplayCoinAccess(data)
+      setCoinAccess(nextAccess)
+      setCoinPurchaseMessage(
+        `Replay unlocked for ${nextAccess?.coin_cost ?? 2} coins.`
+      )
+
+      window.dispatchEvent(new CustomEvent('coin-balance-changed'))
+    } catch (caught) {
+      setCoinPurchaseError(
+        caught instanceof Error
+          ? caught.message
+          : 'Failed to unlock this race replay.'
+      )
+    } finally {
+      setCoinPurchaseLoading(false)
+    }
+  }
+
+  const canWatch = Boolean(
+    stage &&
+      !stageWeatherCanceled &&
+      (developmentReplayUnlocked || (hasReplayAccess && hasResults))
+  )
+  const checkingReplayAccess = developmentReplayUnlocked
+    ? false
+    : loading || replayAccessLoading || coinAccessLoading
+
+  return (
+    <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+      <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+        Live race
+      </div>
+
+      <h3 className="mt-2 text-lg font-semibold text-slate-950">
+        {stageWeatherCanceled
+          ? 'Stage canceled'
+          : developmentReplayUnlocked
+            ? 'Development stage replay'
+            : hasResults
+              ? 'Watch replay'
+              : 'Watch race'}
+      </h3>
+
+      <p className="mt-2 text-sm leading-5 text-slate-500">
+        {stageWeatherCanceled
+          ? 'This stage was canceled by the race engine. No replay was generated.'
+          : developmentReplayUnlocked
+            ? 'Local Rio Tour integration mode uses this stage’s own profile and the shared race-simulator-v2 path. It creates no official results and writes nothing to the database.'
+            : userParticipated
+              ? `Your team participated in ${race?.name ?? 'this race'}, so the replay is included.`
+              : hasCoinReplayUnlock
+                ? `You unlocked the complete ${race?.name ?? 'race'} replay with coins.`
+                : `Teams that did not participate can unlock the complete ${race?.name ?? 'race'} replay for ${coinAccess?.coin_cost ?? 2} coins.`}
+      </p>
+
+      {stageWeatherCanceled ? (
+        <div className="mt-4">
+          <WeatherCancellationNotice stage={stage} race={race} compact />
+        </div>
+      ) : null}
+
+      {!developmentReplayUnlocked &&
+      !stageWeatherCanceled &&
+      hasResults &&
+      !userParticipated &&
+      !hasCoinReplayUnlock ? (
+        <div className="mt-5 space-y-3">
+          <button
+            type="button"
+            onClick={() => void purchaseReplayAccess()}
+            disabled={
+              coinPurchaseLoading ||
+              coinAccessLoading ||
+              Number(coinAccess?.coin_balance ?? 0) <
+                Number(coinAccess?.coin_cost ?? 2)
+            }
+            className="w-full rounded-2xl border border-yellow-300 bg-yellow-50 px-4 py-3 text-sm font-semibold text-yellow-950 transition hover:bg-yellow-100 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {coinPurchaseLoading
+              ? 'Unlocking replay…'
+              : `Unlock replay · ${coinAccess?.coin_cost ?? 2} coins`}
+          </button>
+
+          <div className="text-center text-xs text-slate-500">
+            Coin balance: {Number(coinAccess?.coin_balance ?? 0).toLocaleString('en-US')}
+          </div>
+
+          {coinPurchaseError ? (
+            <div className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+              {coinPurchaseError}
+            </div>
+          ) : null}
+        </div>
+      ) : null}
+
+      {coinPurchaseMessage ? (
+        <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-700">
+          {coinPurchaseMessage}
+        </div>
+      ) : null}
+
+      <button
+        type="button"
+        disabled={!canWatch || checkingReplayAccess}
+        onClick={() => {
+          if (stage && canWatch) onOpenReplay(stage)
+        }}
+        className={`mt-5 w-full rounded-2xl px-4 py-3 text-sm font-semibold transition ${
+          canWatch
+            ? 'bg-slate-950 text-white hover:bg-slate-800'
+            : 'cursor-not-allowed bg-slate-100 text-slate-400'
+        }`}
+      >
+        {stageWeatherCanceled
+          ? 'Canceled — no replay'
+          : developmentReplayUnlocked
+            ? 'Watch development replay'
+            : checkingReplayAccess
+              ? 'Checking replay…'
+              : canWatch
+                ? 'Watch replay'
+                : !hasReplayAccess
+                  ? hasResults
+                    ? `Unlock for ${coinAccess?.coin_cost ?? 2} coins`
+                    : 'Your team did not participate'
+                  : !stageReached && !hasResults
+                    ? 'Race not started'
+                    : 'Replay not available yet'}
+      </button>
+    </div>
+  )
+}
+
+type SimpleReplayStandingSource = {
+  riderId: string
+  riderName: string
+  teamName: string
+  countryCode: string | null
+  finalRank: number
+  finalGapSeconds: number
+  finalElapsedSeconds: number | null
+}
+
+type SimpleReplayStandingRow = SimpleReplayStandingSource & {
+  liveRank: number
+  groupLabel: string
+  liveGapSeconds: number
+  freshness: number
+  energy: number
+  movementEnergyCost: number
+  attackEnergyCost: number
+  chaseEnergyCost: number
+  shelterEnergySaving: number
+  energyCostSincePreviousCheckpoint: number
+}
+
+type SimpleReplayComment = {
+  progress: number
+  title: string
+  description: string
+}
+
+type IntegratedRoadStageReplayStep = {
+  fromCheckpointIndex: number
+  toCheckpointIndex: number
+  movement: ReturnType<typeof calculateTerrainMovement>
+}
+
+type IntegratedRoadStageReplay = {
+  checkpoints: Checkpoint[]
+  steps: IntegratedRoadStageReplayStep[]
+  comments: SimpleReplayComment[]
+  phaseBoundaryCrossingCount: number
+}
+
+const INTEGRATION_BASE_GROUP_SPEED_KMH = 40
+const INTEGRATION_CHECKPOINT_SECONDS = 600
+const INTEGRATION_GROUP_ID = 'peloton-1'
+const INTEGRATION_COOPERATION_LEVEL = 0.9
+const INTEGRATION_ROUNDING_FACTOR = 1_000_000
+
+function roundIntegrationValue(value: number): number {
+  return (
+    Math.round(value * INTEGRATION_ROUNDING_FACTOR) /
+    INTEGRATION_ROUNDING_FACTOR
+  )
+}
+
+function normalizeRioIntegrationStageType(value: string): RoadStageType {
+  const normalized = value.trim().toLowerCase()
+
+  if (normalized === 'mountain') return 'mountain'
+  if (normalized === 'hilly') return 'hilly'
+
+  return 'flat'
+}
+
+function inferRioIntegrationFinishType(
+  stage: RaceStage,
+  stageType: RoadStageType
+): RoadStageFinishType {
+  const finishHint = `${stage.finish_type ?? ''} ${stage.profile_type ?? ''}`
+    .trim()
+    .toLowerCase()
+
+  return stageType === 'flat' &&
+    (stage.stage_number === 1 || /sprint|sprinter/.test(finishHint))
+    ? 'sprint'
+    : 'standard'
+}
+
+function getRioIntegrationReferenceKey(
+  stageNumber: number
+): CanonicalRoadStageProfileKey {
+  if (stageNumber === 3) return 'rio-stage-3-mountain'
+  if (stageNumber === 6) return 'rio-stage-6-hilly'
+
+  return 'rio-stage-1-flat'
+}
+
+function createRioIntegrationStageReference(
+  race: Race,
+  stage: RaceStage
+): CanonicalRoadStageReference {
+  const stageType = normalizeRioIntegrationStageType(stage.terrain_type)
+
+  return {
+    key: getRioIntegrationReferenceKey(stage.stage_number),
+    raceId: race.id,
+    stageId: stage.id,
+    stageNumber: stage.stage_number,
+    stageType,
+    finishType: inferRioIntegrationFinishType(stage, stageType),
+    buttonLabel: `Rio Stage ${stage.stage_number} · ${formatTerrainModelLabel(stageType)}`,
+    fallbackStageTitle:
+      stage.name?.trim() ||
+      `Rio Tour Stage ${stage.stage_number}: ${formatStageRoute(stage)}`,
+  }
+}
+
+function createIntegratedRoadStageReplay(
+  profile: RoadStageProfile
+): IntegratedRoadStageReplay {
+  const firstPhase = profile.terrainPhases[0]
+
+  if (!firstPhase) {
+    throw new Error('The integrated replay requires at least one terrain phase')
+  }
+
+  const initialSpeedKmh = roundIntegrationValue(
+    INTEGRATION_BASE_GROUP_SPEED_KMH *
+      calculateTerrainSpeedMultiplier(
+        firstPhase.terrainType,
+        firstPhase.averageGradientPercent
+      )
+  )
+  const riderIds = flatStageFixture.riders.map((rider) => rider.riderId)
+  const initialCheckpoint: Checkpoint = {
+    checkpointIndex: 0,
+    raceSecond: 0,
+    currentKm: 0,
+    groups: [
+      {
+        groupId: INTEGRATION_GROUP_ID,
+        riderIds: [...riderIds],
+        distanceKm: 0,
+        speedKmh: initialSpeedKmh,
+        gapSecondsToLeader: 0,
+        active: true,
+        baseSpeedBeforeGroupAdvantageKmh: INTEGRATION_BASE_GROUP_SPEED_KMH,
+        cooperationLevel: INTEGRATION_COOPERATION_LEVEL,
+      },
+    ],
+    riderSnapshots: flatStageFixture.riders.map((rider) => ({
+      riderId: rider.riderId,
+      distanceKm: 0,
+      speedKmh: initialSpeedKmh,
+      currentGroupId: INTEGRATION_GROUP_ID,
+      freshness: rider.startingFreshness,
+      energy: rider.startingFreshness,
+      movementEnergyCost: 0,
+      attackEnergyCost: 0,
+      chaseEnergyCost: 0,
+      shelterEnergySaving: 0,
+      energyCostSincePreviousCheckpoint: 0,
+    })),
+  }
+  const checkpoints: Checkpoint[] = [initialCheckpoint]
+  const steps: IntegratedRoadStageReplayStep[] = []
+  const comments: SimpleReplayComment[] = [
+    {
+      progress: 0,
+      title: 'Stage simulation starts',
+      description: `All ${riderIds.length} controlled riders start together. The shared runner begins on ${formatTerrainModelLabel(firstPhase.terrainType).toLowerCase()} terrain at ${initialSpeedKmh.toFixed(3)} km/h.`,
+    },
+  ]
+  let phaseBoundaryCrossingCount = 0
+
+  while (
+    checkpoints[checkpoints.length - 1].currentKm <
+    profile.distanceKm - 0.000001
+  ) {
+    if (checkpoints.length > 500) {
+      throw new Error('The integrated replay exceeded its checkpoint safety limit')
+    }
+
+    const previousCheckpoint = checkpoints[checkpoints.length - 1]
+    const movement = calculateTerrainMovement({
+      profile,
+      startKm: previousCheckpoint.currentKm,
+      durationSeconds: INTEGRATION_CHECKPOINT_SECONDS,
+      baseSpeedKmh: INTEGRATION_BASE_GROUP_SPEED_KMH,
+    })
+
+    if (movement.elapsedDurationSeconds <= 0 || movement.distanceKm <= 0) {
+      throw new Error('The integrated replay could not advance the stage')
+    }
+
+    const lastSegment = movement.segments[movement.segments.length - 1]
+
+    if (!lastSegment) {
+      throw new Error('The integrated replay movement returned no terrain segment')
+    }
+
+    const averageSpeedKmh = roundIntegrationValue(
+      (movement.distanceKm / movement.elapsedDurationSeconds) * 3600
+    )
+    const previousRiderById = new Map(
+      previousCheckpoint.riderSnapshots.map((snapshot) => [
+        snapshot.riderId,
+        snapshot,
+      ] as const)
+    )
+    const riderSnapshots = flatStageFixture.riders.map((rider) => {
+      const previousSnapshot = previousRiderById.get(rider.riderId)
+
+      if (!previousSnapshot) {
+        throw new Error(`Missing integrated rider snapshot: ${rider.riderId}`)
+      }
+
+      const energyStep = calculateRiderEnergyStep({
+        currentEnergy: previousSnapshot.energy,
+        freshness: rider.startingFreshness,
+        endurance: rider.endurance,
+        speedKmh: averageSpeedKmh,
+        elapsedSeconds: movement.elapsedDurationSeconds,
+        riderCount: riderIds.length,
+        cooperationLevel: INTEGRATION_COOPERATION_LEVEL,
+      })
+
+      return {
+        riderId: rider.riderId,
+        distanceKm: movement.endKm,
+        speedKmh: lastSegment.effectiveSpeedKmh,
+        currentGroupId: INTEGRATION_GROUP_ID,
+        freshness: energyStep.freshness,
+        energy: energyStep.energyAfter,
+        movementEnergyCost: energyStep.movementEnergyCost,
+        attackEnergyCost: 0,
+        chaseEnergyCost: 0,
+        shelterEnergySaving: energyStep.shelterEnergySaving,
+        energyCostSincePreviousCheckpoint:
+          energyStep.energyCostSincePreviousCheckpoint,
+      }
+    })
+    const checkpointIndex = checkpoints.length
+    const checkpoint: Checkpoint = {
+      checkpointIndex,
+      raceSecond: roundIntegrationValue(
+        previousCheckpoint.raceSecond + movement.elapsedDurationSeconds
+      ),
+      currentKm: movement.endKm,
+      groups: [
+        {
+          groupId: INTEGRATION_GROUP_ID,
+          riderIds: [...riderIds],
+          distanceKm: movement.endKm,
+          speedKmh: lastSegment.effectiveSpeedKmh,
+          gapSecondsToLeader: 0,
+          active: true,
+          baseSpeedBeforeGroupAdvantageKmh: INTEGRATION_BASE_GROUP_SPEED_KMH,
+          cooperationLevel: INTEGRATION_COOPERATION_LEVEL,
+        },
+      ],
+      riderSnapshots,
+    }
+
+    checkpoints.push(checkpoint)
+    steps.push({
+      fromCheckpointIndex: previousCheckpoint.checkpointIndex,
+      toCheckpointIndex: checkpointIndex,
+      movement,
+    })
+    phaseBoundaryCrossingCount += movement.phaseBoundaryCrossingCount
+
+    const terrainSequence = movement.segments
+      .map((segment) => formatTerrainModelLabel(segment.terrainType))
+      .filter((value, index, values) => index === 0 || value !== values[index - 1])
+      .join(' → ')
+    const progress = Math.max(
+      0,
+      Math.min(100, (movement.endKm / profile.distanceKm) * 100)
+    )
+    const finished = movement.stageFinished
+
+    comments.push({
+      progress,
+      title: finished
+        ? 'Stage finish reached'
+        : movement.crossedPhaseBoundary
+          ? `Terrain transition: ${terrainSequence}`
+          : `${terrainSequence} phase`,
+      description: finished
+        ? `The shared runner reaches ${profile.distanceKm.toFixed(1)} km after ${formatPreciseRaceClock(checkpoint.raceSecond)}. All riders remain in one group because terrain-driven separation is scheduled for a later B2 milestone.`
+        : `From ${movement.startKm.toFixed(1)} to ${movement.endKm.toFixed(1)} km, terrain changes the base ${INTEGRATION_BASE_GROUP_SPEED_KMH.toFixed(1)} km/h group speed to an average ${averageSpeedKmh.toFixed(3)} km/h across ${movement.segments.length} segment${movement.segments.length === 1 ? '' : 's'}.`,
+    })
+  }
+
+  return {
+    checkpoints,
+    steps,
+    comments,
+    phaseBoundaryCrossingCount,
+  }
+}
+
+function calculateIntegratedReplayKm(
+  step: IntegratedRoadStageReplayStep | undefined,
+  elapsedSeconds: number,
+  fallbackKm: number
+): number {
+  if (!step || elapsedSeconds <= 0) return fallbackKm
+
+  let remainingSeconds = elapsedSeconds
+
+  for (const segment of step.movement.segments) {
+    if (remainingSeconds >= segment.durationSeconds) {
+      remainingSeconds -= segment.durationSeconds
+      fallbackKm = segment.endKm
+      continue
+    }
+
+    return roundIntegrationValue(
+      segment.startKm +
+        (segment.effectiveSpeedKmh * remainingSeconds) / 3600
+    )
+  }
+
+  return step.movement.endKm
+}
+
+function createIntegratedReplayHash(value: unknown): string {
+  const source = JSON.stringify(value)
+  let hash = 2166136261
+
+  for (let index = 0; index < source.length; index += 1) {
+    hash ^= source.charCodeAt(index)
+    hash = Math.imul(hash, 16777619)
+  }
+
+  return `fnv1a-${(hash >>> 0).toString(16).padStart(8, '0')}`
+}
+
+function getSimpleReplayFallbackRows(
+  participantTeams: RaceParticipantTeam[]
+): SimpleReplayStandingSource[] {
+  return participantTeams
+    .flatMap((team) =>
+      team.riders.map((rider) => ({
+        riderId: rider.rider_id,
+        riderName: getRaceParticipantRiderDisplayName(rider),
+        teamName: getParticipantTeamName(team),
+        countryCode: rider.country_code ?? rider.country_code_snapshot ?? team.country_code,
+      }))
+    )
+    .slice(0, 40)
+    .map((row, index) => ({
+      ...row,
+      finalRank: index + 1,
+      finalGapSeconds: index === 0 ? 0 : Math.floor(index / 4) * 8,
+      finalElapsedSeconds: null,
+    }))
+}
+
+function getSimpleReplayResultRows(
+  resultRows: RaceStageResultRow[],
+  participantTeams: RaceParticipantTeam[]
+): SimpleReplayStandingSource[] {
+  const participantRiderLookup = new Map<
+    string,
+    {
+      riderName: string
+      teamName: string
+      countryCode: string | null
+    }
+  >()
+
+  participantTeams.forEach((team) => {
+    team.riders.forEach((rider) => {
+      participantRiderLookup.set(rider.rider_id, {
+        riderName: getRaceParticipantRiderDisplayName(rider),
+        teamName: getParticipantTeamName(team),
+        countryCode:
+          rider.country_code ??
+          rider.country_code_snapshot ??
+          team.country_code ??
+          team.country_code_snapshot,
+      })
+    })
+  })
+
+  const normalizedRows = [...resultRows]
+    .filter((row) => row.rider_id)
+    .sort(
+      (left, right) =>
+        Number(left.rank ?? Number.MAX_SAFE_INTEGER) -
+        Number(right.rank ?? Number.MAX_SAFE_INTEGER)
+    )
+    .map((row, index) => {
+      const riderId = row.rider_id ?? `result-rider-${index}`
+      const participant = participantRiderLookup.get(riderId)
+
+      return {
+        riderId,
+        riderName:
+          row.full_name?.trim() ||
+          row.rider_full_name?.trim() ||
+          row.display_name?.trim() ||
+          row.rider_name?.trim() ||
+          row.rider_name_snapshot?.trim() ||
+          participant?.riderName ||
+          'Unknown rider',
+        teamName:
+          row.team_name_snapshot?.trim() ||
+          participant?.teamName ||
+          'Unknown team',
+        countryCode:
+          row.rider_country_code ??
+          row.nationality_code ??
+          row.country_code ??
+          participant?.countryCode ??
+          null,
+        finalRank: Number(row.rank ?? index + 1),
+        finalGapSeconds: Math.max(0, Number(row.gap_seconds ?? 0)),
+        finalElapsedSeconds:
+          row.elapsed_seconds === null || row.elapsed_seconds === undefined
+            ? null
+            : Number(row.elapsed_seconds),
+      }
+    })
+
+  return normalizedRows.length > 0
+    ? normalizedRows
+    : getSimpleReplayFallbackRows(participantTeams)
+}
+
+function getRoadStageReplayTeamId(team: RaceParticipantTeam): string {
+  return (
+    team.participating_club_id?.trim() ||
+    team.club_id?.trim() ||
+    team.owner_club_id?.trim() ||
+    team.team_id?.trim() ||
+    team.id.trim()
+  )
+}
+
+function buildRealStageRiderSources(
+  participantTeams: RaceParticipantTeam[]
+): StagePlanSimulationRiderSource[] {
+  const seenRiderIds = new Set<string>()
+
+  return participantTeams.flatMap((team) => {
+    const teamId = getRoadStageReplayTeamId(team)
+    const teamName = getParticipantTeamName(team)
+
+    return team.riders.flatMap((rider) => {
+      const riderId = rider.rider_id?.trim()
+      if (!riderId || seenRiderIds.has(riderId)) return []
+      seenRiderIds.add(riderId)
+
+      return [{
+        riderId,
+        displayName: getRaceParticipantRiderDisplayName(rider),
+        teamId,
+        teamName,
+        overall: rider.overall_snapshot,
+      }]
+    })
+  })
+}
+
+function buildRealStageStandingSource(
+  participantTeams: RaceParticipantTeam[]
+): SimpleReplayStandingSource[] {
+  const seenRiderIds = new Set<string>()
+
+  return participantTeams
+    .flatMap((team) =>
+      team.riders.flatMap((rider) => {
+        const riderId = rider.rider_id?.trim()
+        if (!riderId || seenRiderIds.has(riderId)) return []
+        seenRiderIds.add(riderId)
+
+        return [{
+          riderId,
+          riderName: getRaceParticipantRiderDisplayName(rider),
+          teamName: getParticipantTeamName(team),
+          countryCode:
+            rider.country_code ??
+            rider.country_code_snapshot ??
+            team.country_code ??
+            team.country_code_snapshot,
+          startNumber:
+            rider.display_start_number ?? rider.start_number ?? null,
+        }]
+      })
+    )
+    .sort(
+      (left, right) =>
+        Number(left.startNumber ?? Number.MAX_SAFE_INTEGER) -
+          Number(right.startNumber ?? Number.MAX_SAFE_INTEGER) ||
+        left.riderName.localeCompare(right.riderName)
+    )
+    .map((row, index) => ({
+      riderId: row.riderId,
+      riderName: row.riderName,
+      teamName: row.teamName,
+      countryCode: row.countryCode,
+      finalRank: index + 1,
+      finalGapSeconds: 0,
+      finalElapsedSeconds: null,
+    }))
+}
+
+function buildVisibleStagePlanSources(
+  preparationRows: RacePreparationSimulationRow[],
+  stagePlanRows: RaceStagePlanSimulationRow[]
+): StagePlanSimulationPlanSource[] {
+  const preparationById = new Map(
+    preparationRows.map((row) => [row.id, row] as const)
+  )
+
+  return stagePlanRows.map((row) => {
+    const preparation = preparationById.get(row.race_preparation_id)
+
+    return {
+      planId: row.id,
+      teamId:
+        preparation?.participating_club_id?.trim() ||
+        preparation?.club_id?.trim() ||
+        row.race_preparation_id,
+      status: row.status,
+      teamTacticJson: row.team_tactic_json,
+      riderRolesJson: row.rider_roles_json,
+      riderIndividualTacticsJson: row.rider_individual_tactics_json,
+    }
+  })
+}
+
+function buildOptionBControlledStandingSource(
+  availableRows: SimpleReplayStandingSource[]
+): SimpleReplayStandingSource[] {
+  return flatStageFixture.riders.map((fixtureRider, index) => {
+    const availableRow = availableRows[index]
+
+    if (availableRow) {
+      return {
+        ...availableRow,
+        riderId: fixtureRider.riderId,
+        finalRank: index + 1,
+        finalGapSeconds: 0,
+        finalElapsedSeconds: null,
+      }
+    }
+
+    return {
+      riderId: fixtureRider.riderId,
+      riderName: fixtureRider.displayName,
+      teamName: 'Controlled fixture',
+      countryCode: null,
+      finalRank: index + 1,
+      finalGapSeconds: 0,
+      finalElapsedSeconds: null,
+    }
+  })
+}
+
+function buildSimpleReplayStandingRows(
+  rows: SimpleReplayStandingSource[],
+  checkpoint: Checkpoint
+): SimpleReplayStandingRow[] {
+  const rowByRiderId = new Map(
+    rows.map((row) => [row.riderId, row] as const)
+  )
+  const groupById = new Map(
+    checkpoint.groups.map((group) => [group.groupId, group] as const)
+  )
+  const orderedRiderIds = checkpoint.groups.flatMap((group) => group.riderIds)
+  const checkpointRiderIds = new Set(orderedRiderIds)
+  const completeOrder = [
+    ...orderedRiderIds,
+    ...rows
+      .map((row) => row.riderId)
+      .filter((riderId) => !checkpointRiderIds.has(riderId)),
+  ]
+
+  return completeOrder.flatMap((riderId, index) => {
+    const row = rowByRiderId.get(riderId)
+    const riderSnapshot = checkpoint.riderSnapshots.find(
+      (snapshot) => snapshot.riderId === riderId
+    )
+    const riderGroup = riderSnapshot
+      ? groupById.get(riderSnapshot.currentGroupId)
+      : null
+
+    if (!row) return []
+
+    return [{
+      ...row,
+      liveRank: index + 1,
+      groupLabel:
+        riderSnapshot?.currentGroupId === 'peloton-1'
+          ? 'Peloton'
+          : 'Breakaway',
+      liveGapSeconds: Math.max(0, riderGroup?.gapSecondsToLeader ?? 0),
+      freshness: riderSnapshot?.freshness ?? 0,
+      energy: riderSnapshot?.energy ?? 0,
+      movementEnergyCost: riderSnapshot?.movementEnergyCost ?? 0,
+      attackEnergyCost: riderSnapshot?.attackEnergyCost ?? 0,
+      chaseEnergyCost: riderSnapshot?.chaseEnergyCost ?? 0,
+      shelterEnergySaving: riderSnapshot?.shelterEnergySaving ?? 0,
+      energyCostSincePreviousCheckpoint:
+        riderSnapshot?.energyCostSincePreviousCheckpoint ?? 0,
+    }]
+  })
+}
+
+function buildSimpleReplayComments(
+  distanceKm: number,
+  checkpoints: Checkpoint[],
+  definition: B1RoadStageSimulationDefinition,
+  inputLabel: string,
+  attackEnabled: boolean
+): SimpleReplayComment[] {
+  const riderCount = checkpoints[0]?.riderSnapshots.length ?? 0
+
+  return checkpoints.map((checkpoint, index) => {
+    const previousCheckpoint = checkpoints[index - 1]
+    const attackCreated =
+      checkpoint.groups.length === 2 &&
+      previousCheckpoint?.groups.length === 1
+    const catchCreated =
+      checkpoint.groups.length === 1 &&
+      previousCheckpoint?.groups.length === 2 &&
+      checkpoint.currentKm < distanceKm - 0.000001
+    const controlledFinishReached =
+      checkpoint.currentKm >= distanceKm - 0.000001
+    const breakawayGroup = checkpoint.groups.find(
+      (group) => group.groupId === definition.separateGroupMovement.breakawayGroupId
+    )
+    const pelotonGroup = checkpoint.groups.find(
+      (group) => group.groupId === definition.separateGroupMovement.pelotonGroupId
+    )
+    const previousPelotonGroup = previousCheckpoint?.groups.find(
+      (group) => group.groupId === definition.separateGroupMovement.pelotonGroupId
+    )
+    const pelotonGapSeconds = Math.max(
+      0,
+      pelotonGroup?.gapSecondsToLeader ?? 0
+    )
+    const previousPelotonGapSeconds = Math.max(
+      0,
+      previousPelotonGroup?.gapSecondsToLeader ?? 0
+    )
+    const breakawaySurvived =
+      controlledFinishReached &&
+      Boolean(breakawayGroup) &&
+      pelotonGapSeconds > 0
+    const caughtPelotonFinished =
+      controlledFinishReached &&
+      checkpoint.groups.length === 1 &&
+      previousCheckpoint?.groups.length === 1 &&
+      checkpoint.checkpointIndex > 0
+    const cooperationActive =
+      Boolean(breakawayGroup && pelotonGroup) &&
+      checkpoint.checkpointIndex >=
+        definition.groupCooperation.splitCheckpointIndex
+    const chaseActive = pelotonGroup?.chaseActive === true
+    const chaseStarted =
+      chaseActive && previousPelotonGroup?.chaseActive !== true
+    const chaseClosedGap =
+      chaseActive &&
+      previousPelotonGapSeconds > 0 &&
+      pelotonGapSeconds < previousPelotonGapSeconds
+    const breakawayAdvantage = Math.max(
+      0,
+      breakawayGroup?.totalGroupAdvantageKmh ?? 0
+    )
+    const pelotonAdvantage = Math.max(
+      0,
+      pelotonGroup?.totalGroupAdvantageKmh ?? 0
+    )
+    const averageEnergy =
+      checkpoint.riderSnapshots.reduce(
+        (sum, riderSnapshot) => sum + riderSnapshot.energy,
+        0
+      ) / Math.max(checkpoint.riderSnapshots.length, 1)
+    const lowestEnergy = Math.min(
+      ...checkpoint.riderSnapshots.map((riderSnapshot) => riderSnapshot.energy)
+    )
+    const totalAttackCost = checkpoint.riderSnapshots.reduce(
+      (sum, riderSnapshot) => sum + riderSnapshot.attackEnergyCost,
+      0
+    )
+    const totalChaseCost = checkpoint.riderSnapshots.reduce(
+      (sum, riderSnapshot) => sum + (riderSnapshot.chaseEnergyCost ?? 0),
+      0
+    )
+    const breakawayRiderIds = new Set(breakawayGroup?.riderIds ?? [])
+    const pelotonRiderIds = new Set(pelotonGroup?.riderIds ?? [])
+    const breakawayEnergyValues = checkpoint.riderSnapshots
+      .filter((riderSnapshot) => breakawayRiderIds.has(riderSnapshot.riderId))
+      .map((riderSnapshot) => riderSnapshot.energy)
+    const pelotonEnergyValues = checkpoint.riderSnapshots
+      .filter((riderSnapshot) => pelotonRiderIds.has(riderSnapshot.riderId))
+      .map((riderSnapshot) => riderSnapshot.energy)
+    const breakawayAverageEnergy =
+      breakawayEnergyValues.reduce((sum, energy) => sum + energy, 0) /
+      Math.max(breakawayEnergyValues.length, 1)
+    const pelotonAverageEnergy =
+      pelotonEnergyValues.reduce((sum, energy) => sum + energy, 0) /
+      Math.max(pelotonEnergyValues.length, 1)
+    const stageProgress = Math.max(
+      0,
+      Math.min(1, checkpoint.currentKm / Math.max(distanceKm, 1))
+    )
+
+    return {
+      progress: stageProgress * 100,
+      title:
+        checkpoint.checkpointIndex === 0
+          ? 'Initial freshness and live energy'
+          : attackCreated
+            ? 'Controlled attack adds an extra energy cost'
+            : catchCreated
+              ? 'Peloton catches the breakaway'
+              : breakawaySurvived
+                ? 'Breakaway survives to the finish'
+                : caughtPelotonFinished
+                  ? attackEnabled
+                  ? 'Caught peloton reaches the finish'
+                  : 'Peloton reaches the finish'
+                  : chaseStarted
+                    ? 'Late-stage peloton chase begins'
+                    : chaseClosedGap
+                      ? 'Peloton chase closes the breakaway gap'
+                      : cooperationActive && pelotonGapSeconds > 0
+                        ? `Energy and cooperation shape checkpoint ${checkpoint.checkpointIndex + 1}`
+                        : cooperationActive
+                          ? 'Drafting, cooperation and energy state applied'
+                          : `Peloton energy checkpoint ${checkpoint.checkpointIndex + 1}`,
+      description:
+        checkpoint.checkpointIndex === 0
+          ? `All ${riderCount} ${inputLabel} riders start together with live energy equal to their starting freshness. Average energy is ${averageEnergy.toFixed(1)} and the lowest rider starts at ${lowestEnergy.toFixed(1)}.`
+          : attackCreated
+            ? `At ${formatRaceClock(checkpoint.raceSecond)}, ${definition.controlledAttack.attackerRiderIds.length} saved-order riders attack and pay ${(definition.energyModel.attackEnergyCost ?? 0).toFixed(1)} energy each (${totalAttackCost.toFixed(1)} total). Drafting and cooperation lift the breakaway by ${breakawayAdvantage.toFixed(3)} km/h and the peloton by ${pelotonAdvantage.toFixed(3)} km/h. Breakaway average energy is ${breakawayAverageEnergy.toFixed(1)} versus ${pelotonAverageEnergy.toFixed(1)} in the peloton.`
+            : catchCreated
+              ? `At ${formatRaceClock(checkpoint.raceSecond)}, the peloton closes the final gap at ${checkpoint.currentKm.toFixed(3)} km. All ${riderCount} riders merge into one peloton, and the former peloton riders pay ${totalChaseCost.toFixed(1)} total chase energy during the catch interval.`
+              : breakawaySurvived
+                ? `At ${formatRaceClock(checkpoint.raceSecond)}, the breakaway reaches the real ${distanceKm.toFixed(0)} km finish first. Two groups remain and the peloton finishes the live checkpoint ${formatGapValue(pelotonGapSeconds)} behind.`
+                : caughtPelotonFinished
+                  ? attackEnabled
+                    ? `At ${formatRaceClock(checkpoint.raceSecond)}, the merged ${riderCount}-rider peloton reaches the real ${distanceKm.toFixed(1)} km finish together. Deterministic final ranks, one shared finish time and zero winner gaps are now available.`
+                    : `At ${formatRaceClock(checkpoint.raceSecond)}, the ${riderCount}-rider peloton reaches the real ${distanceKm.toFixed(1)} km finish without an artificial breakaway. Deterministic final ranks and one shared physical time are now available.`
+                  : chaseStarted
+                    ? `At ${formatRaceClock(checkpoint.raceSecond)}, the leader reaches ${(stageProgress * 100).toFixed(1)}% of the real stage. The peloton's B1 chase speed is ${((pelotonGroup?.baseSpeedBeforeChaseKmh ?? 0) + (pelotonGroup?.chaseSpeedBonusKmh ?? 0)).toFixed(3)} km/h before B2 terrain, and ${(pelotonGroup?.speedKmh ?? 0).toFixed(3)} km/h on the active terrain and pays ${totalChaseCost.toFixed(1)} extra energy in total. The gap remains ${formatGapValue(pelotonGapSeconds)} at activation.`
+                    : chaseClosedGap
+                      ? `At ${formatRaceClock(checkpoint.raceSecond)}, the late chase reduces the peloton deficit from ${formatGapValue(previousPelotonGapSeconds)} to ${formatGapValue(pelotonGapSeconds)}. The breakaway remains narrowly ahead, while the peloton pays another ${totalChaseCost.toFixed(1)} energy in chase effort.`
+                      : cooperationActive && pelotonGapSeconds > 0
+                        ? `At ${formatRaceClock(checkpoint.raceSecond)}, the breakaway reaches ${formatKm(breakawayGroup?.distanceKm)} and leads by ${formatGapValue(pelotonGapSeconds)}. Average live energy is ${breakawayAverageEnergy.toFixed(1)} in the breakaway and ${pelotonAverageEnergy.toFixed(1)} in the sheltered peloton.`
+                        : cooperationActive
+                          ? `At ${formatRaceClock(checkpoint.raceSecond)}, both groups remain together at the split while drafting and shelter reduce movement costs. Average energy is ${averageEnergy.toFixed(1)}.`
+                          : `At ${formatRaceClock(checkpoint.raceSecond)}, all ${riderCount} riders remain together at ${formatKm(checkpoint.currentKm)}. Average live energy falls to ${averageEnergy.toFixed(1)}, with the lowest rider at ${lowestEnergy.toFixed(1)}.`,
+    }
+  })
+}
+
+function getSimpleReplayStagePointLabel(point: RaceStagePoint): string {
+  const pointType = String(point.point_type ?? '').toUpperCase()
+
+  if (point.name?.trim()) return point.name.trim()
+  if (pointType === 'INTERMEDIATE_SPRINT') return 'Intermediate sprint'
+  if (pointType === 'BONUS_SPRINT') return 'Bonus sprint'
+  if (pointType === 'KOM') {
+    return point.kom_category ? `KOM · Cat ${point.kom_category}` : 'KOM'
+  }
+  if (pointType === 'FINISH') return 'Finish sprint'
+
+  return humanizeCode(pointType)
+}
+
+function SimpleReplayStagePointsPanel({
+  pointResults,
+  stagePoints,
+  currentKm,
+}: {
+  pointResults: RacePointResultRow[]
+  stagePoints: RaceStagePoint[]
+  currentKm: number
+}) {
+  const pointOptions = useMemo(() => {
+    const options = stagePoints
+      .filter((point) => String(point.point_type ?? '').toUpperCase() !== 'START')
+      .map((point) => {
+        const km = Math.max(0, Number(point.km_from_start ?? 0))
+        const categoryLabel =
+          String(point.point_type ?? '').toUpperCase() === 'KOM' && point.kom_category
+            ? ` · Cat ${point.kom_category}`
+            : ''
+
+        return {
+          id: point.id,
+          label: `${getSimpleReplayStagePointLabel(point)}${categoryLabel} · ${formatKm(km)}`,
+          reached: currentKm >= km,
+          sortOrder: Number(point.sort_order ?? 999),
+          km,
+        }
+      })
+      .sort(
+        (left, right) =>
+          left.sortOrder - right.sortOrder || left.km - right.km
+      )
+
+    return options
+  }, [currentKm, stagePoints])
+
+  const [selectedPointId, setSelectedPointId] = useState('')
+
+  useEffect(() => {
+    const selectedStillExists = pointOptions.some(
+      (point) => point.id === selectedPointId
+    )
+
+    if (selectedStillExists) return
+
+    const firstReached = pointOptions.find((point) => point.reached)
+    setSelectedPointId(firstReached?.id ?? pointOptions[0]?.id ?? '')
+  }, [pointOptions, selectedPointId])
+
+  const selectedPoint = pointOptions.find(
+    (point) => point.id === selectedPointId
+  )
+
+  const rows = selectedPoint?.reached
+    ? pointResults
+        .filter(
+          (row) =>
+            row.point_id === selectedPointId &&
+            row.rank !== null
+        )
+        .sort((left, right) => Number(left.rank ?? 999) - Number(right.rank ?? 999))
+    : []
+
+  return (
+    <div className="rounded-3xl border border-slate-200 bg-white p-4">
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <div className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+            Stage points
+          </div>
+          <div className="mt-1 text-sm text-slate-500">
+            Sprint, KOM and finish point winners.
+          </div>
+        </div>
+
+        <select
+          value={selectedPointId}
+          onChange={(event) => setSelectedPointId(event.target.value)}
+          className="min-w-[260px] rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm"
+          disabled={pointOptions.length === 0}
+        >
+          {pointOptions.length === 0 ? (
+            <option>No stage points available</option>
+          ) : (
+            pointOptions.map((point) => (
+              <option
+                key={point.id}
+                value={point.id}
+                disabled={!point.reached}
+              >
+                {point.label}
+              </option>
+            ))
+          )}
+        </select>
+      </div>
+
+      {pointOptions.length === 0 ? (
+        <div className="rounded-2xl bg-slate-50 p-4 text-sm text-slate-500">
+          This stage has no sprint, KOM, or finish point definitions.
+        </div>
+      ) : !selectedPoint?.reached ? (
+        <div className="rounded-2xl bg-slate-50 p-4 text-sm text-slate-500">
+          This point has not been reached yet.
+        </div>
+      ) : rows.length === 0 ? (
+        <div className="rounded-2xl bg-amber-50 px-4 py-4 text-sm text-amber-800">
+          This point has been reached, but its result rows have not been generated.
+        </div>
+      ) : (
+        <div className="overflow-hidden rounded-2xl border border-slate-200">
+          <table className="w-full text-sm">
+            <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+              <tr>
+                <th className="px-3 py-2 text-left">#</th>
+                <th className="px-3 py-2 text-left">Rider</th>
+                <th className="px-3 py-2 text-left">Team</th>
+                <th className="px-3 py-2 text-right">Points</th>
+                <th className="px-3 py-2 text-right">Bonus</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((row) => (
+                <tr
+                  key={`${row.point_id}-${row.rank}-${row.rider_id ?? row.rider_name_snapshot ?? 'row'}`}
+                  className="border-t border-slate-100"
+                >
+                  <td className="px-3 py-2 font-semibold">{row.rank}</td>
+                  <td className="px-3 py-2">{row.rider_name_snapshot ?? '—'}</td>
+                  <td className="px-3 py-2 text-slate-600">{row.team_name_snapshot ?? '—'}</td>
+                  <td className="px-3 py-2 text-right font-semibold">{row.points_awarded ?? 0}</td>
+                  <td className="px-3 py-2 text-right">{row.bonus_seconds_awarded ? `${row.bonus_seconds_awarded}s` : '—'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function B1RestoredRaceReplayPage({
+  race,
+  stage,
+  participantTeams,
+  onClose,
+}: {
+  race: Race
+  stage: RaceStage
+  participantTeams: RaceParticipantTeam[]
+  onClose: () => void
+}) {
+  const [profile, setProfile] = useState<StageProfileDetailPayload | null>(null)
+  const [profileSnapshot, setProfileSnapshot] =
+    useState<CanonicalRoadStageProfileSnapshot | null>(null)
+  const [resultRows, setResultRows] = useState<RaceStageResultRow[]>([])
+  const [pointResults, setPointResults] = useState<RacePointResultRow[]>([])
+  const [racePreparationRows, setRacePreparationRows] =
+    useState<RacePreparationSimulationRow[]>([])
+  const [stagePlanRows, setStagePlanRows] =
+    useState<RaceStagePlanSimulationRow[]>([])
+  const [inputMode, setInputMode] =
+    useState<RoadStageReplayInputMode>('real_stage_orders')
+  const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState<string | null>(null)
+  const [presentationRaceSeconds, setPresentationRaceSeconds] = useState(0)
+  const [playing, setPlaying] = useState(false)
+  const [replayStarted, setReplayStarted] = useState(false)
+  const [playbackSpeed, setPlaybackSpeed] = useState<1 | 2 | 4 | 8>(1)
+  const [outcomeScenario, setOutcomeScenario] =
+    useState<BreakawayOutcome>('caught')
+
+  const integrationReference = useMemo(
+    () => createRioIntegrationStageReference(race, stage),
+    [race, stage]
+  )
+
+  useEffect(() => {
+    let cancelled = false
+
+    async function loadReplayShellData(): Promise<void> {
+      setLoading(true)
+      setLoadError(null)
+      setProfileSnapshot(null)
+
+      const [
+        profileResponse,
+        resultsResponse,
+        pointResultsResponse,
+        preparationsResponse,
+        stagePlansResponse,
+      ] = await Promise.all([
+        raceDetailReadRpc('get_race_stage_profile_detail_v1', {
+          p_stage_id: stage.id,
+        }),
+        supabase
+          .from('race_stage_results')
+          .select(
+            'rank,rider_id,team_id,rider_name_snapshot,team_name_snapshot,elapsed_seconds,gap_seconds,bonus_seconds,penalty_seconds,finish_points,sprint_points,mountain_points,status'
+          )
+          .eq('stage_id', stage.id)
+          .order('rank', { ascending: true })
+          .limit(200),
+        raceDetailReadRpc('get_race_stage_point_results_v1', {
+          p_stage_id: stage.id,
+        }),
+        supabase
+          .from('race_preparations')
+          .select('id,club_id,participating_club_id,status,startlist_status')
+          .eq('race_id', race.id)
+          .limit(200),
+        supabase
+          .from('race_stage_plans')
+          .select(
+            'id,race_preparation_id,race_id,stage_id,stage_number,status,team_tactic_json,rider_roles_json,rider_individual_tactics_json'
+          )
+          .eq('race_id', race.id)
+          .limit(500),
+      ])
+
+      if (cancelled) return
+
+      if (profileResponse.error) {
+        setProfile(null)
+        setProfileSnapshot(null)
+      } else {
+        try {
+          const normalizedProfile = normalizeStageProfileDetailPayload(
+            profileResponse.data
+          )
+          setProfile(normalizedProfile)
+          setProfileSnapshot(
+            createCanonicalRoadStageProfile(
+              integrationReference,
+              normalizedProfile
+            )
+          )
+        } catch (caught) {
+          setProfile(null)
+          setProfileSnapshot(null)
+          setLoadError(
+            caught instanceof Error
+              ? `Stage profile could not be normalized: ${caught.message}`
+              : 'Stage profile could not be normalized.'
+          )
+        }
+      }
+
+      setResultRows(
+        Array.isArray(resultsResponse.data)
+          ? (resultsResponse.data as RaceStageResultRow[])
+          : []
+      )
+
+      setPointResults(
+        !pointResultsResponse.error && Array.isArray(pointResultsResponse.data)
+          ? (pointResultsResponse.data as RacePointResultRow[])
+          : []
+      )
+
+      setRacePreparationRows(
+        !preparationsResponse.error && Array.isArray(preparationsResponse.data)
+          ? (preparationsResponse.data as RacePreparationSimulationRow[])
+          : []
+      )
+
+      setStagePlanRows(
+        !stagePlansResponse.error && Array.isArray(stagePlansResponse.data)
+          ? (stagePlansResponse.data as RaceStagePlanSimulationRow[]).filter(
+              (row) =>
+                row.stage_id === stage.id ||
+                Number(row.stage_number) === Number(stage.stage_number)
+            )
+          : []
+      )
+
+      const errors = [
+        profileResponse.error ? 'stage profile' : null,
+        resultsResponse.error ? 'stage standings' : null,
+        pointResultsResponse.error ? 'stage-point results' : null,
+        preparationsResponse.error ? 'authorized race preparations' : null,
+        stagePlansResponse.error ? 'authorized Stage Plans' : null,
+      ].filter((value): value is string => Boolean(value))
+
+      if (errors.length > 0) {
+        setLoadError(
+          `Some replay data could not be loaded: ${errors.join(', ')}. The page is using available fallback data.`
+        )
+      }
+
+      setLoading(false)
+    }
+
+    void loadReplayShellData()
+
+    return () => {
+      cancelled = true
+    }
+  }, [integrationReference, race.id, stage.id])
+
+  const fallbackDistanceKm = Math.max(
+    1,
+    Number(profile?.distance_km ?? stage.distance_km ?? 1)
+  )
+
+  const selectedTerrainProfile = useMemo(
+    () =>
+      profileSnapshot?.normalizedProfile ??
+      createRoadStageProfile({
+        profileId: `fallback:${stage.id}`,
+        stageType: normalizeRioIntegrationStageType(stage.terrain_type),
+        finishType: inferRioIntegrationFinishType(
+          stage,
+          normalizeRioIntegrationStageType(stage.terrain_type)
+        ),
+        distanceKm: fallbackDistanceKm,
+        profilePoints: [
+          { km: 0, elevationM: 0 },
+          { km: fallbackDistanceKm, elevationM: 0 },
+        ],
+      }),
+    [fallbackDistanceKm, profileSnapshot, stage]
+  )
+
+  const distanceKm = selectedTerrainProfile.distanceKm
+
+  const realStageRiderSources = useMemo(
+    () => buildRealStageRiderSources(participantTeams),
+    [participantTeams]
+  )
+  const realStageStandingSource = useMemo(
+    () => buildRealStageStandingSource(participantTeams),
+    [participantTeams]
+  )
+  const visibleStagePlanSources = useMemo(
+    () => buildVisibleStagePlanSources(racePreparationRows, stagePlanRows),
+    [racePreparationRows, stagePlanRows]
+  )
+
+  const realStageBuild = useMemo(() => {
+    try {
+      return {
+        value: buildStagePlanRoadStageDefinition(flatStageFixture, {
+          stageId: stage.id,
+          raceId: race.id,
+          distanceKm,
+          riders: realStageRiderSources,
+          stagePlans: visibleStagePlanSources,
+        }),
+        error: null as string | null,
+      }
+    } catch (caught) {
+      return {
+        value: null,
+        error:
+          caught instanceof Error
+            ? caught.message
+            : 'Real stage input could not be constructed.',
+      }
+    }
+  }, [
+    distanceKm,
+    race.id,
+    realStageRiderSources,
+    stage.id,
+    visibleStagePlanSources,
+  ])
+
+  const realStageInputAvailable =
+    realStageBuild.value !== null && realStageRiderSources.length >= 2
+  const realStageModeActive =
+    inputMode === 'real_stage_orders' && realStageInputAvailable
+  const activeDefinition = realStageModeActive
+    ? realStageBuild.value!.definition
+    : flatStageFixture
+  const activeTacticalSummary = realStageModeActive
+    ? realStageBuild.value!.summary
+    : null
+  const activeOutcome: BreakawayOutcome = realStageModeActive
+    ? activeTacticalSummary!.requestedOutcome
+    : outcomeScenario
+  const activeAttackEnabled = realStageModeActive
+    ? activeTacticalSummary!.attackEnabled
+    : true
+  const activeInputLabel = realStageModeActive
+    ? 'real-stage'
+    : 'controlled diagnostic'
+
+  const optionBSimulation = useMemo(
+    () =>
+      runB1TerrainRoadStageSimulation(
+        activeDefinition,
+        {
+          stageId: stage.id,
+          raceId: race.id,
+          profile: selectedTerrainProfile,
+        },
+        {
+          outcome: activeOutcome,
+          terrainEnabled: true,
+          foundationDefinition: realStageModeActive
+            ? flatStageFixture
+            : undefined,
+        }
+      ),
+    [
+      activeDefinition,
+      activeOutcome,
+      race.id,
+      realStageModeActive,
+      selectedTerrainProfile,
+      stage.id,
+    ]
+  )
+
+  const optionBStageInput = optionBSimulation.stage
+  const optionBOutcomeResult = optionBSimulation.outcomeSequence
+  const optionBStageResults = optionBSimulation.stageResults
+
+  const optionBCheckpoints = optionBOutcomeResult.checkpoints
+
+  const initialOptionBCheckpoint = optionBCheckpoints[0]
+  const finalOptionBCheckpoint =
+    optionBCheckpoints[optionBCheckpoints.length - 1]
+  const finalOptionBRaceSeconds = finalOptionBCheckpoint.raceSecond
+
+  useEffect(() => {
+    if (!playing) return
+
+    const intervalId = window.setInterval(() => {
+      setPresentationRaceSeconds((current) => {
+        const baseStep = Math.max(finalOptionBRaceSeconds / 50, 1)
+        const next = Math.min(
+          finalOptionBRaceSeconds,
+          current + baseStep * playbackSpeed
+        )
+
+        if (next >= finalOptionBRaceSeconds) {
+          window.clearInterval(intervalId)
+          setPlaying(false)
+        }
+
+        return next
+      })
+    }, 200)
+
+    return () => {
+      window.clearInterval(intervalId)
+    }
+  }, [finalOptionBRaceSeconds, playing, playbackSpeed])
+
+  const controlledStandingSource = useMemo(
+    () =>
+      buildOptionBControlledStandingSource(
+        getSimpleReplayResultRows(resultRows, participantTeams)
+      ),
+    [participantTeams, resultRows]
+  )
+  const standingsSource = realStageModeActive
+    ? realStageStandingSource
+    : controlledStandingSource
+
+  const optionBFinalResultRows = useMemo(() => {
+    const standingByRiderId = new Map(
+      standingsSource.map((row) => [row.riderId, row] as const)
+    )
+
+    return optionBStageResults.results.map((result) => {
+      const standing = standingByRiderId.get(result.riderId)
+      const isBreakaway =
+        result.finishingGroupId ===
+        activeDefinition.separateGroupMovement.breakawayGroupId
+
+      return {
+        ...result,
+        riderName: standing?.riderName ?? result.displayName,
+        teamName: standing?.teamName ?? (realStageModeActive ? 'Race participant' : 'Controlled fixture'),
+        countryCode: standing?.countryCode ?? null,
+        groupBadge: isBreakaway ? 'B1' : 'P',
+        groupLabel: isBreakaway ? 'Breakaway' : 'Peloton',
+      }
+    })
+  }, [activeDefinition, optionBStageResults, realStageModeActive, standingsSource])
+
+  const startingStandings = useMemo(() => {
+    const initialSnapshotByRiderId = new Map(
+      initialOptionBCheckpoint.riderSnapshots.map((snapshot) => [
+        snapshot.riderId,
+        snapshot,
+      ])
+    )
+
+    return [...standingsSource]
+      .sort((left, right) => left.riderName.localeCompare(right.riderName))
+      .map((row, index) => {
+        const riderSnapshot = initialSnapshotByRiderId.get(row.riderId)
+
+        return {
+          ...row,
+          liveRank: index + 1,
+          groupLabel: 'Peloton',
+          liveGapSeconds: 0,
+          freshness: riderSnapshot?.freshness ?? 0,
+          energy: riderSnapshot?.energy ?? 0,
+          movementEnergyCost: 0,
+          attackEnergyCost: 0,
+          chaseEnergyCost: 0,
+          shelterEnergySaving: 0,
+          energyCostSincePreviousCheckpoint: 0,
+        }
+      })
+  }, [initialOptionBCheckpoint, standingsSource])
+
+  const baseComments = useMemo(
+    () =>
+      buildSimpleReplayComments(
+        optionBStageInput.distanceKm,
+        optionBCheckpoints,
+        activeDefinition,
+        activeInputLabel,
+        activeAttackEnabled
+      ),
+    [
+      activeAttackEnabled,
+      activeDefinition,
+      activeInputLabel,
+      optionBCheckpoints,
+      optionBStageInput.distanceKm,
+    ]
+  )
+
+  const reachedCheckpointArrayIndex = optionBCheckpoints.reduce(
+    (reachedIndex, checkpoint, index) =>
+      checkpoint.raceSecond <= presentationRaceSeconds ? index : reachedIndex,
+    0
+  )
+  const reachedCheckpoint = optionBCheckpoints[reachedCheckpointArrayIndex]
+  const nextCheckpoint =
+    optionBCheckpoints[
+      Math.min(reachedCheckpointArrayIndex + 1, optionBCheckpoints.length - 1)
+    ]
+  const checkpointSegmentSeconds = Math.max(
+    0,
+    nextCheckpoint.raceSecond - reachedCheckpoint.raceSecond
+  )
+  const checkpointSegmentRatio =
+    checkpointSegmentSeconds > 0
+      ? Math.max(
+          0,
+          Math.min(
+            1,
+            (presentationRaceSeconds - reachedCheckpoint.raceSecond) /
+              checkpointSegmentSeconds
+          )
+        )
+      : 0
+  const currentKm = replayStarted
+    ? reachedCheckpoint.currentKm +
+      (nextCheckpoint.currentKm - reachedCheckpoint.currentKm) *
+        checkpointSegmentRatio
+    : initialOptionBCheckpoint.currentKm
+  const currentRaceSeconds = replayStarted
+    ? Math.round(presentationRaceSeconds)
+    : initialOptionBCheckpoint.raceSecond
+  const progress = Math.max(
+    0,
+    Math.min(100, (currentKm / optionBStageInput.distanceKm) * 100)
+  )
+  const activeTerrainPhase = getTerrainPhaseAtKm(
+    selectedTerrainProfile,
+    Math.min(currentKm, selectedTerrainProfile.distanceKm)
+  )
+  const activeTerrainMultiplier = calculateTerrainSpeedMultiplier(
+    activeTerrainPhase.terrainType,
+    activeTerrainPhase.averageGradientPercent
+  )
+  const visibleComments = replayStarted
+    ? baseComments.filter((comment) => comment.progress <= progress + 0.000001)
+    : []
+
+  const currentCheckpointStandings = useMemo(
+    () => buildSimpleReplayStandingRows(standingsSource, reachedCheckpoint),
+    [reachedCheckpoint, standingsSource]
+  )
+  const displayedStandings = replayStarted
+    ? currentCheckpointStandings
+    : startingStandings
+  const displayedGroupCount = replayStarted
+    ? reachedCheckpoint.groups.length
+    : initialOptionBCheckpoint.groups.length
+  const displayedBreakawayGroup = replayStarted
+    ? reachedCheckpoint.groups.find(
+        (group) =>
+          group.groupId ===
+          activeDefinition.separateGroupMovement.breakawayGroupId
+      ) ?? null
+    : null
+  const displayedPelotonGroup = replayStarted
+    ? reachedCheckpoint.groups.find(
+        (group) =>
+          group.groupId ===
+          activeDefinition.separateGroupMovement.pelotonGroupId
+      ) ?? null
+    : initialOptionBCheckpoint.groups[0] ?? null
+  const displayedGapSeconds = Math.max(
+    0,
+    displayedPelotonGroup?.gapSecondsToLeader ?? 0
+  )
+  const displayedEnergySnapshots = replayStarted
+    ? reachedCheckpoint.riderSnapshots
+    : initialOptionBCheckpoint.riderSnapshots
+  const displayedAverageEnergy =
+    displayedEnergySnapshots.reduce(
+      (sum, riderSnapshot) => sum + riderSnapshot.energy,
+      0
+    ) / Math.max(displayedEnergySnapshots.length, 1)
+  const displayedLowestEnergy = Math.min(
+    ...displayedEnergySnapshots.map((riderSnapshot) => riderSnapshot.energy)
+  )
+  const displayedAttackCost = displayedEnergySnapshots.reduce(
+    (sum, riderSnapshot) => sum + riderSnapshot.attackEnergyCost,
+    0
+  )
+  const displayedChaseCost = displayedEnergySnapshots.reduce(
+    (sum, riderSnapshot) => sum + (riderSnapshot.chaseEnergyCost ?? 0),
+    0
+  )
+  const displayedChaseActive = displayedPelotonGroup?.chaseActive === true
+  const displayedControlledStageProgress = Math.max(
+    0,
+    Math.min(100, (currentKm / optionBStageInput.distanceKm) * 100)
+  )
+  const displayedOutcomeReached =
+    replayStarted &&
+    reachedCheckpoint.checkpointIndex >= optionBOutcomeResult.outcomeCheckpointIndex
+  const displayedFinishReached =
+    replayStarted &&
+    reachedCheckpoint.checkpointIndex >= optionBOutcomeResult.finishCheckpointIndex
+  const finalCheckpointReached =
+    replayStarted && presentationRaceSeconds >= finalOptionBRaceSeconds
+  const exactCheckpointArrayIndex = optionBCheckpoints.findIndex(
+    (checkpoint) =>
+      Math.abs(checkpoint.raceSecond - presentationRaceSeconds) < 0.000001
+  )
+  const checkpointStatusLabel =
+    exactCheckpointArrayIndex >= 0
+      ? `Checkpoint ${exactCheckpointArrayIndex + 1}/${optionBCheckpoints.length}`
+      : `Checkpoint ${reachedCheckpointArrayIndex + 1}→${Math.min(
+          reachedCheckpointArrayIndex + 2,
+          optionBCheckpoints.length
+        )}`
+
+  const weather = stage.weather_snapshot ?? {}
+  const temperature = asNumber(
+    (weather.avg_temp_c ?? weather.temperature_c ?? weather.temp_c) as
+      | number
+      | string
+      | null
+      | undefined
+  )
+  const wind = asNumber(
+    (weather.avg_wind_kmh ?? weather.wind_kmh) as
+      | number
+      | string
+      | null
+      | undefined
+  )
+  const rain = asNumber(
+    (weather.avg_precip_mm ?? weather.precip_mm ?? weather.rain_mm) as
+      | number
+      | string
+      | null
+      | undefined
+  )
+
+  const replayWeather = {
+    temperature: temperature === null ? '—' : `${temperature.toFixed(1)}°C`,
+    wind: wind === null ? '—' : `${wind.toFixed(0)} km/h`,
+    rain: rain === null ? '—' : `${rain.toFixed(1)} mm`,
+  }
+
+  function resetReplayPresentation(): void {
+    setPresentationRaceSeconds(0)
+    setPlaying(false)
+    setReplayStarted(false)
+  }
+
+  function selectRealStageOrders(): void {
+    if (!realStageInputAvailable) return
+    setInputMode('real_stage_orders')
+    resetReplayPresentation()
+  }
+
+  function selectOutcomeScenario(nextScenario: BreakawayOutcome): void {
+    setOutcomeScenario(nextScenario)
+    setInputMode(
+      nextScenario === 'caught'
+        ? 'controlled_catch'
+        : 'controlled_survival'
+    )
+    resetReplayPresentation()
+  }
+
+  function togglePlayback(): void {
+    setReplayStarted(true)
+
+    if (presentationRaceSeconds >= finalOptionBRaceSeconds) {
+      setPresentationRaceSeconds(0)
+      setPlaying(true)
+      return
+    }
+
+    setPlaying((current) => !current)
+  }
+
+  function goToNextCheckpoint(): void {
+    setReplayStarted(true)
+    setPlaying(false)
+
+    const next = optionBCheckpoints.find(
+      (checkpoint) => checkpoint.raceSecond > presentationRaceSeconds
+    )
+
+    setPresentationRaceSeconds(
+      next?.raceSecond ?? finalOptionBRaceSeconds
+    )
+  }
+
+  return (
+    <div className="min-h-screen bg-slate-50 p-3 sm:p-4 lg:p-6">
+      <div className="mb-4 flex flex-wrap items-center gap-4">
+        <button
+          type="button"
+          onClick={onClose}
+          className="text-sm font-medium text-slate-600 hover:text-slate-900"
+        >
+          ← Back
+        </button>
+      </div>
+
+      <div className="mx-auto flex min-h-[calc(100vh-7rem)] max-w-[1500px] flex-col overflow-hidden rounded-3xl bg-white shadow-xl">
+        <div className="grid grid-cols-1 gap-4 border-b border-slate-200 px-5 py-3 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-start">
+          <div className="min-w-0">
+            <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+              Race replay
+            </div>
+
+            <div className="mt-1 flex min-w-0 items-center gap-2">
+              <RaceTitleFlag
+                code={race.country_code || stage.host_country_code || 'ME'}
+              />
+              <h1 className="min-w-0 truncate text-xl font-semibold text-slate-950">
+                {race.name}
+              </h1>
+            </div>
+
+            <div className="mt-1 text-sm text-slate-500">
+              Stage {stage.stage_number} · {stage.name || formatStageRoute(stage)}
+            </div>
+
+            <div className="mt-1 break-words text-sm text-slate-500">
+              {profile?.route_label || stage.route_label || formatStageRoute(stage)}
+            </div>
+          </div>
+
+          <div className="flex shrink-0 flex-wrap items-start justify-start gap-3 xl:justify-self-end">
+            <div className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm sm:w-auto sm:min-w-[205px]">
+              <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                Stage weather
+              </div>
+
+              <div className="mt-2 grid grid-cols-3 gap-4">
+                <div>
+                  <div className="text-[10px] uppercase tracking-wide text-slate-400">
+                    Temp
+                  </div>
+                  <div className="mt-0.5 whitespace-nowrap text-xs font-semibold text-slate-800">
+                    {replayWeather.temperature}
+                  </div>
+                </div>
+
+                <div>
+                  <div className="text-[10px] uppercase tracking-wide text-slate-400">
+                    Wind
+                  </div>
+                  <div className="mt-0.5 whitespace-nowrap text-xs font-semibold text-slate-800">
+                    {replayWeather.wind}
+                  </div>
+                </div>
+
+                <div>
+                  <div className="text-[10px] uppercase tracking-wide text-slate-400">
+                    Rain
+                  </div>
+                  <div className="mt-0.5 whitespace-nowrap text-xs font-semibold text-slate-800">
+                    {replayWeather.rain}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden p-4 sm:p-5">
+          {loadError ? (
+            <div className="shrink-0 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+              {loadError}
+            </div>
+          ) : null}
+
+          {inputMode === 'real_stage_orders' && !realStageInputAvailable ? (
+            <div className="shrink-0 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+              Real stage input is unavailable: {realStageBuild.error ?? 'fewer than two participant riders were returned'}. The replay is temporarily showing the controlled Catch diagnostic and writes nothing.
+            </div>
+          ) : null}
+
+          {realStageModeActive && visibleStagePlanSources.length === 0 ? (
+            <div className="shrink-0 rounded-2xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-800">
+              The actual participant field is loaded, but no Stage Plan rows are visible to this user for this stage. The real mode therefore remains one neutral peloton with no artificial attack.
+            </div>
+          ) : null}
+
+          <div className="shrink-0 rounded-3xl border border-slate-200 bg-slate-50 p-4 shadow-sm">
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+              <div className="text-sm font-semibold text-slate-950">
+                Unified road-stage replay
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={selectRealStageOrders}
+                  disabled={!realStageInputAvailable}
+                  className={`rounded-full border px-3 py-2 text-xs font-semibold ${
+                    realStageModeActive
+                      ? 'border-blue-700 bg-blue-700 text-white'
+                      : 'border-slate-200 bg-white text-slate-600'
+                  } disabled:cursor-not-allowed disabled:opacity-50`}
+                  title={
+                    realStageInputAvailable
+                      ? 'Use the actual race field and authorized saved Stage Plans'
+                      : realStageBuild.error ?? 'Real stage field is unavailable'
+                  }
+                >
+                  Real stage orders
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => selectOutcomeScenario('caught')}
+                  className={`rounded-full border px-3 py-2 text-xs font-semibold ${
+                    inputMode === 'controlled_catch'
+                      ? 'border-emerald-700 bg-emerald-700 text-white'
+                      : 'border-slate-200 bg-white text-slate-600'
+                  }`}
+                >
+                  Controlled Catch
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => selectOutcomeScenario('survived')}
+                  className={`rounded-full border px-3 py-2 text-xs font-semibold ${
+                    inputMode === 'controlled_survival'
+                      ? 'border-orange-600 bg-orange-600 text-white'
+                      : 'border-slate-200 bg-white text-slate-600'
+                  }`}
+                >
+                  Controlled Survival
+                </button>
+
+                <button
+                  type="button"
+                  onClick={togglePlayback}
+                  className="rounded-full bg-slate-950 px-4 py-2 text-xs font-semibold text-white"
+                >
+                  {playing ? 'Pause' : 'Play'}
+                </button>
+
+                {([1, 2, 4, 8] as const).map((value) => (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => setPlaybackSpeed(value)}
+                    className={`rounded-full border px-3 py-2 text-xs font-semibold ${
+                      playbackSpeed === value
+                        ? 'border-slate-950 bg-slate-950 text-white'
+                        : 'border-slate-200 bg-white text-slate-600'
+                    }`}
+                  >
+                    {value}x
+                  </button>
+                ))}
+
+                <button
+                  type="button"
+                  onClick={goToNextCheckpoint}
+                  disabled={finalCheckpointReached}
+                  className="rounded-full border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  Next checkpoint
+                </button>
+
+                <div className="text-xs font-semibold text-slate-500">
+                  {checkpointStatusLabel}
+                </div>
+              </div>
+            </div>
+
+            <div className="mb-3 flex flex-wrap items-center gap-x-4 gap-y-1 rounded-2xl border border-blue-200 bg-blue-50 px-4 py-2 text-xs font-semibold text-blue-800">
+              <span>Option B · true integrated B1 + B2 road-stage runner</span>
+              <span>{finalOptionBCheckpoint.riderSnapshots.length} riders</span>
+              <span>{optionBCheckpoints.length} checkpoints</span>
+              <span>
+                Input {realStageModeActive ? 'Real field + visible Stage Plans' : 'Controlled diagnostic'}
+              </span>
+              {realStageModeActive ? (
+                <>
+                  <span>Actual field {activeTacticalSummary?.fieldRiderCount ?? 0} riders</span>
+                  <span>Visible plans {activeTacticalSummary?.visibleStagePlanCount ?? 0}</span>
+                  <span>Visible teams {activeTacticalSummary?.visibleTeamCount ?? 0}</span>
+                  <span>Explicit attackers {activeTacticalSummary?.attackerRiderIds.length ?? 0}</span>
+                  {(activeTacticalSummary?.deferredAttackCommandCount ?? 0) > 0 ? (
+                    <span>Later attack commands deferred {activeTacticalSummary?.deferredAttackCommandCount}</span>
+                  ) : null}
+                  <span>Chase signals {activeTacticalSummary?.explicitChaseSignalCount ?? 0}</span>
+                  <span>Neutral overall attribute bridge</span>
+                </>
+              ) : null}
+              <span>
+                Requested behavior {
+                  realStageModeActive && !activeAttackEnabled
+                    ? 'No explicit attack'
+                    : activeOutcome === 'caught'
+                      ? 'Attack + chase'
+                      : 'Attack without chase closure'
+                }
+              </span>
+              <span>
+                Outcome checkpoint {optionBOutcomeResult.outcomeCheckpointIndex + 1}
+              </span>
+              <span>
+                Finish checkpoint {optionBOutcomeResult.finishCheckpointIndex + 1}
+              </span>
+              <span>Stage {stage.stage_number}/{RIO_TOUR_INTEGRATION_STAGE_COUNT}</span>
+              <span>{formatTerrainModelLabel(selectedTerrainProfile.stageType)}</span>
+              <span>Real distance {optionBStageInput.distanceKm.toFixed(1)} km</span>
+              <span>{selectedTerrainProfile.terrainPhases.length} terrain phases</span>
+              <span>{optionBSimulation.phaseBoundaryCrossingCount} unique terrain boundaries crossed</span>
+              <span>Active {formatTerrainModelLabel(activeTerrainPhase.terrainType)} · ×{activeTerrainMultiplier.toFixed(4)}</span>
+              <span>
+                {activeAttackEnabled
+                  ? `Attack at checkpoint ${activeDefinition.controlledAttack.attackCheckpointIndex + 1}`
+                  : 'No explicit attack order'}
+              </span>
+              <span>Chase threshold {Math.round(activeDefinition.lateStageChase.chaseStartProgress * 100)}%</span>
+              <span>Stage progress {displayedControlledStageProgress.toFixed(1)}%</span>
+              {activeAttackEnabled ? (
+                <span>
+                  Closing bonus +
+                  {(activeOutcome === 'caught'
+                    ? activeDefinition.breakawayCatchScenario.pelotonClosingSpeedBonusKmh
+                    : activeDefinition.breakawaySurvivalScenario.pelotonClosingSpeedBonusKmh
+                  ).toFixed(3)} km/h
+                </span>
+              ) : null}
+              <span>
+                {displayedOutcomeReached
+                  ? !activeAttackEnabled
+                    ? 'Physical outcome: peloton finish · no breakaway'
+                    : `Physical outcome: ${optionBSimulation.physicalOutcome}`
+                  : 'Outcome pending'}
+              </span>
+              {displayedFinishReached ? <span>Real stage finish reached</span> : null}
+              {displayedFinishReached ? (
+                <>
+                  <span>Final results {optionBStageResults.results.length}/{activeDefinition.riders.length}</span>
+                  <span>
+                    Winner {optionBFinalResultRows[0]?.riderName ?? optionBStageResults.winnerRiderId}
+                    {' '}· {formatPreciseRaceClock(optionBStageResults.winnerFinishTimeSeconds)}
+                  </span>
+                  <span>
+                    Result groups {new Set(optionBStageResults.results.map((result) => result.finishingGroupId)).size}
+                  </span>
+                </>
+              ) : null}
+              <span>{displayedGroupCount} live {displayedGroupCount === 1 ? 'group' : 'groups'}</span>
+              <span>Leader {currentKm.toFixed(3)} km</span>
+              {displayedBreakawayGroup ? (
+                <>
+                  <span>
+                    B1 {displayedBreakawayGroup.distanceKm.toFixed(3)} km ·{' '}
+                    {displayedBreakawayGroup.speedKmh.toFixed(3)} km/h
+                  </span>
+                  {displayedBreakawayGroup.totalGroupAdvantageKmh !== undefined ? (
+                    <span>
+                      B1 group +{displayedBreakawayGroup.totalGroupAdvantageKmh.toFixed(3)}
+                      {' '}km/h · draft +
+                      {(displayedBreakawayGroup.draftingBonusKmh ?? 0).toFixed(3)} · coop +
+                      {(displayedBreakawayGroup.cooperationBonusKmh ?? 0).toFixed(3)} ·{' '}
+                      {Math.round((displayedBreakawayGroup.cooperationLevel ?? 0) * 100)}% cooperation
+                    </span>
+                  ) : null}
+                  {displayedBreakawayGroup.baseSpeedBeforeTerrainKmh !== undefined ? (
+                    <span>
+                      B1 speed {displayedBreakawayGroup.baseSpeedBeforeTerrainKmh.toFixed(3)}
+                      {' '}× B2 {formatTerrainModelLabel(displayedBreakawayGroup.terrainType ?? activeTerrainPhase.terrainType)}
+                      {' '}×{(displayedBreakawayGroup.terrainSpeedMultiplier ?? 1).toFixed(4)}
+                      {' '}= {displayedBreakawayGroup.speedKmh.toFixed(3)} km/h
+                    </span>
+                  ) : null}
+                </>
+              ) : null}
+              {displayedPelotonGroup ? (
+                <>
+                  <span>
+                    P {displayedPelotonGroup.distanceKm.toFixed(3)} km ·{' '}
+                    {displayedPelotonGroup.speedKmh.toFixed(3)} km/h
+                  </span>
+                  {displayedPelotonGroup.totalGroupAdvantageKmh !== undefined ? (
+                    <span>
+                      P group +{displayedPelotonGroup.totalGroupAdvantageKmh.toFixed(3)}
+                      {' '}km/h · draft +
+                      {(displayedPelotonGroup.draftingBonusKmh ?? 0).toFixed(3)} · coop +
+                      {(displayedPelotonGroup.cooperationBonusKmh ?? 0).toFixed(3)} ·{' '}
+                      {Math.round((displayedPelotonGroup.cooperationLevel ?? 0) * 100)}% cooperation
+                    </span>
+                  ) : null}
+                  {displayedPelotonGroup.baseSpeedBeforeTerrainKmh !== undefined ? (
+                    <span>
+                      B1 speed {displayedPelotonGroup.baseSpeedBeforeTerrainKmh.toFixed(3)}
+                      {' '}× B2 {formatTerrainModelLabel(displayedPelotonGroup.terrainType ?? activeTerrainPhase.terrainType)}
+                      {' '}×{(displayedPelotonGroup.terrainSpeedMultiplier ?? 1).toFixed(4)}
+                      {' '}= {displayedPelotonGroup.speedKmh.toFixed(3)} km/h
+                    </span>
+                  ) : null}
+                  {displayedChaseActive ? (
+                    <span>
+                      P chase active · B1 base{' '}
+                      {(displayedPelotonGroup.baseSpeedBeforeChaseKmh ?? 0).toFixed(3)}
+                      {' '}+{' '}
+                      {(displayedPelotonGroup.chaseSpeedBonusKmh ?? 0).toFixed(3)}
+                      {' '}then terrain ×{(displayedPelotonGroup.terrainSpeedMultiplier ?? activeTerrainMultiplier).toFixed(4)} ={' '}
+                      {displayedPelotonGroup.speedKmh.toFixed(3)} km/h
+                    </span>
+                  ) : null}
+                </>
+              ) : null}
+              <span>Gap {displayedGapSeconds <= 0 ? '0.000 s' : `+${displayedGapSeconds.toFixed(3)} s`}</span>
+              <span>00:00:00 → {formatRaceClock(finalOptionBCheckpoint.raceSecond)}</span>
+              <span>Energy avg {displayedAverageEnergy.toFixed(1)} · low {displayedLowestEnergy.toFixed(1)}</span>
+              {activeAttackEnabled ? (
+                <span>Attack cost {(activeDefinition.energyModel.attackEnergyCost ?? 0).toFixed(1)} per attacker</span>
+              ) : null}
+              {displayedAttackCost > 0 ? (
+                <span>Attack checkpoint charged {displayedAttackCost.toFixed(1)} total</span>
+              ) : null}
+              {displayedChaseActive ? (
+                <span>
+                  Chase cost {activeDefinition.lateStageChase.chaseEnergyCost.toFixed(1)} per peloton rider
+                </span>
+              ) : null}
+              {displayedChaseCost > 0 ? (
+                <span>Chase checkpoint charged {displayedChaseCost.toFixed(1)} total</span>
+              ) : null}
+            </div>
+
+            {loading ? (
+              <div className="flex min-h-[260px] items-center justify-center rounded-2xl border border-slate-200 bg-white text-sm text-slate-500">
+                Loading stage profile…
+              </div>
+            ) : profile?.has_profile ? (
+              <StageProfileChart
+                points={profile.profile_points ?? []}
+                markers={profile.route_markers ?? []}
+                distanceKm={distanceKm}
+                terrainType={profile.terrain_type}
+                mountainClimbs={profile.mountain_climbs ?? []}
+                replayProgressPercent={replayStarted ? progress : 0}
+              />
+            ) : stage.profile_image_url ? (
+              <div className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white">
+                <img
+                  src={stage.profile_image_url}
+                  alt={`Stage ${stage.stage_number} profile`}
+                  className="h-auto w-full object-contain"
+                />
+                <div
+                  className="pointer-events-none absolute inset-y-4 w-1.5 -translate-x-1/2 rounded-full bg-blue-600 shadow-md transition-[left] duration-150"
+                  style={{ left: `${Math.max(0, Math.min(100, progress))}%` }}
+                />
+              </div>
+            ) : (
+              <div className="flex min-h-[260px] items-center justify-center rounded-2xl border border-slate-200 bg-white text-sm text-slate-500">
+                Stage profile is not available.
+              </div>
+            )}
+
+            <div className="mt-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-xs leading-5 text-emerald-900">
+              Real stage mode uses the actual participant field and only Stage Plans that the current user is authorized to read. Explicit attack or join-breakaway commands create the breakaway; chase orders and roles determine the requested chase behavior. Missing or private plans remain neutral and never create a fake attack. Detailed rider attributes are still represented by the documented neutral overall bridge. Controlled Catch and Survival remain regression diagnostics. No official result is written.
+            </div>
+
+            <div className="mt-3 overflow-x-auto rounded-2xl border border-slate-200 bg-white">
+              <table className="w-full min-w-[720px] text-xs">
+                <thead className="bg-slate-50 uppercase tracking-wide text-slate-500">
+                  <tr>
+                    <th className="px-3 py-2 text-left">#</th>
+                    <th className="px-3 py-2 text-left">Terrain</th>
+                    <th className="px-3 py-2 text-left">Range</th>
+                    <th className="px-3 py-2 text-right">Gradient</th>
+                    <th className="px-3 py-2 text-right">B2 multiplier</th>
+                    <th className="px-3 py-2 text-right">Active</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {selectedTerrainProfile.terrainPhases.map((phase) => {
+                    const multiplier = calculateTerrainSpeedMultiplier(
+                      phase.terrainType,
+                      phase.averageGradientPercent
+                    )
+                    const active = phase.phaseId === activeTerrainPhase.phaseId
+
+                    return (
+                      <tr key={phase.phaseId} className={active ? 'bg-blue-50' : 'bg-white'}>
+                        <td className="px-3 py-2 font-semibold">{phase.phaseIndex + 1}</td>
+                        <td className="px-3 py-2 font-semibold">{formatTerrainModelLabel(phase.terrainType)}</td>
+                        <td className="px-3 py-2">{phase.startKm.toFixed(1)}–{phase.endKm.toFixed(1)} km</td>
+                        <td className="px-3 py-2 text-right">{phase.averageGradientPercent >= 0 ? '+' : ''}{phase.averageGradientPercent.toFixed(2)}%</td>
+                        <td className="px-3 py-2 text-right">×{multiplier.toFixed(4)}</td>
+                        <td className="px-3 py-2 text-right">{active ? 'Yes' : '—'}</td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div className="min-h-0 flex-1 space-y-4 overflow-auto pr-1">
+            <div className="grid min-h-[420px] gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+              <section className="overflow-hidden rounded-3xl border border-slate-200 bg-white">
+                <div className="border-b border-slate-200 bg-slate-50 px-4 py-3 text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+                  Live commentary
+                </div>
+
+                <div className="max-h-[520px] overflow-auto divide-y divide-slate-100">
+                  {visibleComments.length === 0 ? (
+                    <div className="px-4 py-6 text-sm text-slate-500">
+                      {!replayStarted
+                        ? 'Press Play to start live commentary.'
+                        : 'No commentary event has been reached yet.'}
+                    </div>
+                  ) : (
+                    [...visibleComments].reverse().map((comment) => (
+                      <div
+                        key={`${comment.progress}-${comment.title}-${comment.description}`}
+                        className="grid grid-cols-[74px_1fr] gap-3 px-4 py-2.5 text-sm"
+                      >
+                        <div className="font-semibold text-slate-500">
+                          {formatKm((optionBStageInput.distanceKm * comment.progress) / 100)}
+                        </div>
+
+                        <div>
+                          <span className="font-semibold text-slate-950">
+                            {comment.title}
+                          </span>
+                          <span className="ml-2 text-slate-600">
+                            {comment.description}
+                          </span>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </section>
+
+              <aside className="min-w-0 overflow-hidden rounded-3xl border border-slate-200 bg-white">
+                <div className="border-b border-slate-200 bg-slate-50 px-4 py-3 text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+                  Stage standing · riders
+                </div>
+
+                <div className="p-3">
+                  <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
+                    <div className="flex items-center justify-between border-b border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-500">
+                      <span>
+                        {replayStarted ? formatRaceClock(currentRaceSeconds) : '00:00:00'}
+                      </span>
+                      <span>
+                        {replayStarted ? formatKm(currentKm) : 'Race not started'}
+                      </span>
+                    </div>
+
+                    <div className="max-h-[480px] overflow-auto divide-y divide-slate-100">
+                      {displayedStandings.slice(0, 60).map((row, index) => {
+                        const isBreakaway = row.groupLabel === 'Breakaway'
+                        const badgeLabel = isBreakaway ? 'B1' : 'P'
+                        const badgeColor = isBreakaway ? '#f97316' : '#2563eb'
+                        const standingTimeLabel =
+                          !replayStarted
+                            ? '—'
+                            : index === 0
+                              ? 'Leader'
+                              : row.liveGapSeconds <= 0
+                                ? 's.t.'
+                                : `+${formatGapValue(row.liveGapSeconds)}`
+
+                        return (
+                          <div
+                            key={row.riderId}
+                            className="grid grid-cols-[28px_44px_minmax(0,1.05fr)_minmax(170px,0.95fr)_minmax(96px,0.55fr)] items-center gap-3 bg-white px-3 py-3"
+                          >
+                            <div className="text-sm font-semibold text-slate-500">
+                              {replayStarted ? index + 1 : '—'}
+                            </div>
+
+                            <span
+                              className="inline-flex h-6 min-w-[34px] items-center justify-center rounded-full px-2 text-[10px] font-bold text-white"
+                              style={{ backgroundColor: badgeColor }}
+                              title={row.groupLabel}
+                            >
+                              {badgeLabel}
+                            </span>
+
+                            <div className="grid min-w-0 grid-cols-[18px_minmax(0,1fr)] items-start gap-x-2">
+                              <SmallCountryFlag code={row.countryCode} />
+                              <div className="min-w-0">
+                                <div
+                                  className="truncate whitespace-nowrap text-sm font-semibold leading-snug text-slate-950"
+                                  title={row.riderName}
+                                >
+                                  {row.riderName}
+                                </div>
+                                <div className="mt-0.5 truncate text-xs text-slate-500">
+                                  {row.teamName || '—'}
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="min-w-0 space-y-1">
+                              <div className="flex items-center justify-between gap-2 text-[10px] font-semibold text-slate-500">
+                                <span>Fresh {row.freshness.toFixed(0)}</span>
+                                <span>Energy {row.energy.toFixed(1)}</span>
+                              </div>
+                              <div className="h-1.5 overflow-hidden rounded-full bg-slate-200">
+                                <div
+                                  className="h-full rounded-full bg-slate-400"
+                                  style={{
+                                    width: `${Math.max(0, Math.min(100, row.freshness))}%`,
+                                  }}
+                                />
+                              </div>
+                              <div className="h-2 overflow-hidden rounded-full bg-blue-100">
+                                <div
+                                  className="h-full rounded-full bg-blue-600 transition-[width] duration-200"
+                                  style={{
+                                    width: `${Math.max(0, Math.min(100, row.energy))}%`,
+                                  }}
+                                />
+                              </div>
+                              <div className="truncate text-[10px] font-medium text-slate-500">
+                                Cost {row.energyCostSincePreviousCheckpoint.toFixed(2)}
+                                {' · '}move {row.movementEnergyCost.toFixed(2)}
+                                {row.attackEnergyCost > 0
+                                  ? ` · attack ${row.attackEnergyCost.toFixed(1)}`
+                                  : ''}
+                                {row.chaseEnergyCost > 0
+                                  ? ` · chase ${row.chaseEnergyCost.toFixed(1)}`
+                                  : ''}
+                                {' · '}shelter {row.shelterEnergySaving.toFixed(2)}
+                              </div>
+                            </div>
+
+                            <div className="min-w-0 text-right">
+                              <span className="whitespace-nowrap text-xs font-semibold text-slate-700">
+                                {standingTimeLabel}
+                              </span>
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                </div>
+              </aside>
+            </div>
+
+            {displayedFinishReached ? (
+              <section className="overflow-hidden rounded-3xl border border-emerald-200 bg-white shadow-sm">
+                <div className="flex flex-wrap items-center justify-between gap-3 border-b border-emerald-200 bg-emerald-50 px-4 py-3">
+                  <div>
+                    <div className="text-xs font-semibold uppercase tracking-[0.16em] text-emerald-800">
+                      Final stage results · deterministic
+                    </div>
+                    <div className="mt-1 text-sm text-emerald-900">
+                      {!activeAttackEnabled
+                        ? 'No saved attack order was available, so the real field finishes as one physical peloton. Ranks use the temporary neutral attribute bridge.'
+                        : optionBSimulation.physicalOutcome === 'caught'
+                          ? 'The physically caught field shares one group time. Ranks use the current deterministic tie-break.'
+                          : 'The breakaway wins at one shared time; the peloton receives its calculated physical finish time and positive winner gap.'}
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-emerald-900">
+                    <span>{optionBStageResults.results.length} finished</span>
+                    <span>·</span>
+                    <span>
+                      Tie-break sprint → flat → endurance → riderId
+                    </span>
+                  </div>
+                </div>
+
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[920px] text-sm">
+                    <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+                      <tr>
+                        <th className="px-3 py-2 text-left">#</th>
+                        <th className="px-3 py-2 text-left">Group</th>
+                        <th className="px-3 py-2 text-left">Rider</th>
+                        <th className="px-3 py-2 text-left">Team</th>
+                        <th className="px-3 py-2 text-left">Status</th>
+                        <th className="px-3 py-2 text-right">Finish time</th>
+                        <th className="px-3 py-2 text-right">Winner gap</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {optionBFinalResultRows.map((result) => {
+                        const isWinner = result.rank === 1
+                        const sameTimeAsWinner = result.gapSecondsToWinner <= 0
+                        const badgeColor = result.groupBadge === 'B1' ? '#f97316' : '#2563eb'
+
+                        return (
+                          <tr key={result.riderId} className={isWinner ? 'bg-amber-50' : 'bg-white'}>
+                            <td className="px-3 py-2.5 font-semibold text-slate-700">
+                              {result.rank}
+                            </td>
+                            <td className="px-3 py-2.5">
+                              <div className="flex items-center gap-2">
+                                <span
+                                  className="inline-flex h-6 min-w-[34px] items-center justify-center rounded-full px-2 text-[10px] font-bold text-white"
+                                  style={{ backgroundColor: badgeColor }}
+                                  title={result.groupLabel}
+                                >
+                                  {result.groupBadge}
+                                </span>
+                                <span className="text-xs text-slate-500">
+                                  Group {result.finishingGroupRank}
+                                </span>
+                              </div>
+                            </td>
+                            <td className="px-3 py-2.5">
+                              <div className="flex items-center gap-2">
+                                <SmallCountryFlag code={result.countryCode} />
+                                <span className="font-semibold text-slate-950">
+                                  {result.riderName}
+                                </span>
+                              </div>
+                            </td>
+                            <td className="px-3 py-2.5 text-slate-600">
+                              {result.teamName}
+                            </td>
+                            <td className="px-3 py-2.5">
+                              <span className="rounded-full bg-emerald-100 px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-emerald-800">
+                                {result.status}
+                              </span>
+                            </td>
+                            <td className="px-3 py-2.5 text-right font-mono text-xs font-semibold text-slate-700">
+                              {formatPreciseRaceClock(result.finishTimeSeconds)}
+                            </td>
+                            <td className="px-3 py-2.5 text-right font-semibold text-slate-700">
+                              {isWinner
+                                ? 'Winner'
+                                : sameTimeAsWinner
+                                  ? 's.t.'
+                                  : `+${result.gapSecondsToWinner.toFixed(3)}s`}
+                            </td>
+                          </tr>
+                        )
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            ) : (
+              <section className="rounded-3xl border border-dashed border-slate-300 bg-slate-50 px-4 py-4 text-sm text-slate-500">
+                Final deterministic rider results appear when this stage reaches its real finish.
+              </section>
+            )}
+
+            <section className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
+              <SimpleReplayStagePointsPanel
+                pointResults={pointResults}
+                stagePoints={stage.points ?? []}
+                currentKm={currentKm}
+              />
+            </section>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+
+function RioTourTerrainRaceReplayPage({
+  race,
+  stage,
+  participantTeams,
+  onClose,
+}: {
+  race: Race
+  stage: RaceStage
+  participantTeams: RaceParticipantTeam[]
+  onClose: () => void
+}) {
+  const [profile, setProfile] = useState<StageProfileDetailPayload | null>(null)
+  const [profileSnapshot, setProfileSnapshot] =
+    useState<CanonicalRoadStageProfileSnapshot | null>(null)
+  const [resultRows, setResultRows] = useState<RaceStageResultRow[]>([])
+  const [pointResults, setPointResults] = useState<RacePointResultRow[]>([])
+  const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState<string | null>(null)
+  const [presentationRaceSeconds, setPresentationRaceSeconds] = useState(0)
+  const [playing, setPlaying] = useState(false)
+  const [replayStarted, setReplayStarted] = useState(false)
+  const [playbackSpeed, setPlaybackSpeed] = useState<1 | 2 | 4 | 8>(1)
+
+  const integrationReference = useMemo(
+    () => createRioIntegrationStageReference(race, stage),
+    [race, stage]
+  )
+
+  useEffect(() => {
+    let cancelled = false
+
+    async function loadStageIntegrationData(): Promise<void> {
+      setLoading(true)
+      setLoadError(null)
+      setProfile(null)
+      setProfileSnapshot(null)
+      setPresentationRaceSeconds(0)
+      setPlaying(false)
+      setReplayStarted(false)
+
+      const [profileResponse, resultsResponse, pointResultsResponse] =
+        await Promise.all([
+          raceDetailReadRpc('get_race_stage_profile_detail_v1', {
+            p_stage_id: stage.id,
+          }),
+          supabase
+            .from('race_stage_results')
+            .select(
+              'rank,rider_id,team_id,rider_name_snapshot,team_name_snapshot,elapsed_seconds,gap_seconds,bonus_seconds,penalty_seconds,finish_points,sprint_points,mountain_points,status'
+            )
+            .eq('stage_id', stage.id)
+            .order('rank', { ascending: true })
+            .limit(200),
+          raceDetailReadRpc('get_race_stage_point_results_v1', {
+            p_stage_id: stage.id,
+          }),
+        ])
+
+      if (cancelled) return
+
+      const errors: string[] = []
+
+      if (profileResponse.error) {
+        errors.push(
+          `stage profile: ${profileResponse.error.message ?? 'profile RPC failed'}`
+        )
+      } else {
+        try {
+          const normalizedProfile = normalizeStageProfileDetailPayload(
+            profileResponse.data
+          )
+          const normalizedSnapshot = createCanonicalRoadStageProfile(
+            integrationReference,
+            normalizedProfile
+          )
+
+          setProfile(normalizedProfile)
+          setProfileSnapshot(normalizedSnapshot)
+        } catch (caught) {
+          errors.push(
+            caught instanceof Error
+              ? `stage profile: ${caught.message}`
+              : 'stage profile could not be normalized'
+          )
+        }
+      }
+
+      setResultRows(
+        Array.isArray(resultsResponse.data)
+          ? (resultsResponse.data as RaceStageResultRow[])
+          : []
+      )
+
+      if (resultsResponse.error) {
+        errors.push(`official standings: ${resultsResponse.error.message}`)
+      }
+
+      setPointResults(
+        !pointResultsResponse.error && Array.isArray(pointResultsResponse.data)
+          ? (pointResultsResponse.data as RacePointResultRow[])
+          : []
+      )
+
+      if (pointResultsResponse.error) {
+        errors.push(
+          `stage-point results: ${pointResultsResponse.error.message ?? 'RPC failed'}`
+        )
+      }
+
+      setLoadError(errors.length > 0 ? errors.join(' · ') : null)
+      setLoading(false)
+    }
+
+    void loadStageIntegrationData()
+
+    return () => {
+      cancelled = true
+    }
+  }, [integrationReference, stage.id])
+
+  const selectedTerrainProfile = profileSnapshot?.normalizedProfile ?? null
+
+  const integratedReplay = useMemo(
+    () =>
+      selectedTerrainProfile
+        ? createIntegratedRoadStageReplay(selectedTerrainProfile)
+        : null,
+    [selectedTerrainProfile]
+  )
+
+  const integratedStageInput = useMemo(() => {
+    if (!selectedTerrainProfile || !profile) return null
+
+    return {
+      stageId: stage.id,
+      raceId: race.id,
+      distanceKm: selectedTerrainProfile.distanceKm,
+      profilePoints: profile.profile_points.map((point) => ({
+        km: point.km,
+        elevationM: point.elevation,
+      })),
+    }
+  }, [profile, race.id, selectedTerrainProfile, stage.id])
+
+  const integratedStageResults = useMemo(() => {
+    if (!integratedReplay || !integratedStageInput) return null
+
+    const finishCheckpointIndex = integratedReplay.checkpoints.length - 1
+
+    return createDeterministicStageResults(
+      integratedStageInput,
+      flatStageFixture.riders,
+      {
+        outcome: 'caught',
+        outcomeCheckpointIndex: finishCheckpointIndex,
+        finishCheckpointIndex,
+        checkpoints: integratedReplay.checkpoints,
+      },
+      flatStageFixture.finalResultModel
+    )
+  }, [integratedReplay, integratedStageInput])
+
+  const checkpoints = integratedReplay?.checkpoints ?? []
+  const initialCheckpoint = checkpoints[0] ?? null
+  const finalCheckpoint = checkpoints[checkpoints.length - 1] ?? null
+  const finalRaceSeconds = finalCheckpoint?.raceSecond ?? 0
+
+  useEffect(() => {
+    if (!playing || finalRaceSeconds <= 0) return
+
+    const intervalId = window.setInterval(() => {
+      setPresentationRaceSeconds((current) => {
+        const baseStep = Math.max(finalRaceSeconds / 70, 1)
+        const next = Math.min(
+          finalRaceSeconds,
+          current + baseStep * playbackSpeed
+        )
+
+        if (next >= finalRaceSeconds) {
+          window.clearInterval(intervalId)
+          setPlaying(false)
+        }
+
+        return next
+      })
+    }, 200)
+
+    return () => {
+      window.clearInterval(intervalId)
+    }
+  }, [finalRaceSeconds, playing, playbackSpeed])
+
+  const standingsSource = useMemo(
+    () =>
+      buildOptionBControlledStandingSource(
+        getSimpleReplayResultRows(resultRows, participantTeams)
+      ),
+    [participantTeams, resultRows]
+  )
+
+  const finalResultRows = useMemo(() => {
+    if (!integratedStageResults) return []
+
+    const standingByRiderId = new Map(
+      standingsSource.map((row) => [row.riderId, row] as const)
+    )
+
+    return integratedStageResults.results.map((result) => {
+      const standing = standingByRiderId.get(result.riderId)
+
+      return {
+        ...result,
+        riderName: standing?.riderName ?? result.displayName,
+        teamName: standing?.teamName ?? 'Controlled fixture',
+        countryCode: standing?.countryCode ?? null,
+      }
+    })
+  }, [integratedStageResults, standingsSource])
+
+  const startingStandings = useMemo(() => {
+    if (!initialCheckpoint) return []
+
+    const initialSnapshotByRiderId = new Map(
+      initialCheckpoint.riderSnapshots.map((snapshot) => [
+        snapshot.riderId,
+        snapshot,
+      ] as const)
+    )
+
+    return [...standingsSource]
+      .sort((left, right) => left.riderName.localeCompare(right.riderName))
+      .map((row, index) => {
+        const riderSnapshot = initialSnapshotByRiderId.get(row.riderId)
+
+        return {
+          ...row,
+          liveRank: index + 1,
+          groupLabel: 'Peloton',
+          liveGapSeconds: 0,
+          freshness: riderSnapshot?.freshness ?? 0,
+          energy: riderSnapshot?.energy ?? 0,
+          movementEnergyCost: 0,
+          attackEnergyCost: 0,
+          chaseEnergyCost: 0,
+          shelterEnergySaving: 0,
+          energyCostSincePreviousCheckpoint: 0,
+        }
+      })
+  }, [initialCheckpoint, standingsSource])
+
+  const simulationHash = useMemo(() => {
+    if (!integratedReplay || !integratedStageResults || !selectedTerrainProfile) {
+      return 'pending'
+    }
+
+    return createIntegratedReplayHash({
+      stageId: stage.id,
+      profileId: selectedTerrainProfile.profileId,
+      checkpoints: integratedReplay.checkpoints.map((checkpoint) => ({
+        checkpointIndex: checkpoint.checkpointIndex,
+        raceSecond: checkpoint.raceSecond,
+        currentKm: checkpoint.currentKm,
+        speedKmh: checkpoint.groups[0]?.speedKmh ?? 0,
+        energy: checkpoint.riderSnapshots.map((snapshot) => snapshot.energy),
+      })),
+      results: integratedStageResults.results,
+    })
+  }, [integratedReplay, integratedStageResults, selectedTerrainProfile, stage.id])
+
+  const reachedCheckpointArrayIndex = checkpoints.reduce(
+    (reachedIndex, checkpoint, index) =>
+      checkpoint.raceSecond <= presentationRaceSeconds ? index : reachedIndex,
+    0
+  )
+  const reachedCheckpoint =
+    checkpoints[reachedCheckpointArrayIndex] ?? initialCheckpoint
+  const nextCheckpoint =
+    checkpoints[
+      Math.min(reachedCheckpointArrayIndex + 1, checkpoints.length - 1)
+    ] ?? reachedCheckpoint
+  const activeStep = integratedReplay?.steps.find(
+    (step) =>
+      step.fromCheckpointIndex === reachedCheckpointArrayIndex &&
+      step.toCheckpointIndex === reachedCheckpointArrayIndex + 1
+  )
+  const currentKm =
+    replayStarted && reachedCheckpoint
+      ? calculateIntegratedReplayKm(
+          activeStep,
+          Math.max(0, presentationRaceSeconds - reachedCheckpoint.raceSecond),
+          reachedCheckpoint.currentKm
+        )
+      : initialCheckpoint?.currentKm ?? 0
+  const currentRaceSeconds = replayStarted
+    ? presentationRaceSeconds
+    : initialCheckpoint?.raceSecond ?? 0
+  const distanceKm = selectedTerrainProfile?.distanceKm ?? Number(stage.distance_km)
+  const progress = Math.max(
+    0,
+    Math.min(100, distanceKm > 0 ? (currentKm / distanceKm) * 100 : 0)
+  )
+  const visibleComments = replayStarted
+    ? (integratedReplay?.comments ?? []).filter(
+        (comment) => comment.progress <= progress + 0.000001
+      )
+    : []
+  const currentCheckpointStandings = reachedCheckpoint
+    ? buildSimpleReplayStandingRows(standingsSource, reachedCheckpoint)
+    : []
+  const displayedStandings = replayStarted
+    ? currentCheckpointStandings
+    : startingStandings
+  const displayedGroup = reachedCheckpoint?.groups[0] ?? null
+  const displayedEnergySnapshots =
+    reachedCheckpoint?.riderSnapshots ?? initialCheckpoint?.riderSnapshots ?? []
+  const displayedAverageEnergy =
+    displayedEnergySnapshots.reduce(
+      (sum, riderSnapshot) => sum + riderSnapshot.energy,
+      0
+    ) / Math.max(displayedEnergySnapshots.length, 1)
+  const displayedLowestEnergy =
+    displayedEnergySnapshots.length > 0
+      ? Math.min(
+          ...displayedEnergySnapshots.map((riderSnapshot) => riderSnapshot.energy)
+        )
+      : 0
+  const displayedFinishReached =
+    replayStarted && finalRaceSeconds > 0 &&
+    presentationRaceSeconds >= finalRaceSeconds - 0.000001
+  const activeTerrainPhase = selectedTerrainProfile
+    ? getTerrainPhaseAtKm(selectedTerrainProfile, currentKm)
+    : null
+  const exactCheckpointArrayIndex = checkpoints.findIndex(
+    (checkpoint) =>
+      Math.abs(checkpoint.raceSecond - presentationRaceSeconds) < 0.000001
+  )
+  const checkpointStatusLabel =
+    exactCheckpointArrayIndex >= 0
+      ? `Checkpoint ${exactCheckpointArrayIndex + 1}/${checkpoints.length}`
+      : `Checkpoint ${reachedCheckpointArrayIndex + 1}→${Math.min(
+          reachedCheckpointArrayIndex + 2,
+          checkpoints.length
+        )}`
+
+  const weather = stage.weather_snapshot ?? {}
+  const temperature = asNumber(
+    (weather.avg_temp_c ?? weather.temperature_c ?? weather.temp_c) as
+      | number
+      | string
+      | null
+      | undefined
+  )
+  const wind = asNumber(
+    (weather.avg_wind_kmh ?? weather.wind_kmh) as
+      | number
+      | string
+      | null
+      | undefined
+  )
+  const rain = asNumber(
+    (weather.avg_precip_mm ?? weather.precip_mm ?? weather.rain_mm) as
+      | number
+      | string
+      | null
+      | undefined
+  )
+  const replayWeather = {
+    temperature: temperature === null ? '—' : `${temperature.toFixed(1)}°C`,
+    wind: wind === null ? '—' : `${wind.toFixed(0)} km/h`,
+    rain: rain === null ? '—' : `${rain.toFixed(1)} mm`,
+  }
+
+  function togglePlayback(): void {
+    if (finalRaceSeconds <= 0) return
+
+    setReplayStarted(true)
+
+    if (presentationRaceSeconds >= finalRaceSeconds) {
+      setPresentationRaceSeconds(0)
+      setPlaying(true)
+      return
+    }
+
+    setPlaying((current) => !current)
+  }
+
+  function goToNextCheckpoint(): void {
+    if (finalRaceSeconds <= 0) return
+
+    setReplayStarted(true)
+    setPlaying(false)
+
+    const next = checkpoints.find(
+      (checkpoint) => checkpoint.raceSecond > presentationRaceSeconds
+    )
+
+    setPresentationRaceSeconds(next?.raceSecond ?? finalRaceSeconds)
+  }
+
+  if (
+    loading ||
+    !profile ||
+    !profileSnapshot ||
+    !selectedTerrainProfile ||
+    !integratedReplay ||
+    !initialCheckpoint ||
+    !finalCheckpoint ||
+    !integratedStageResults
+  ) {
+    return (
+      <div className="min-h-screen bg-slate-50 p-3 sm:p-4 lg:p-6">
+        <button
+          type="button"
+          onClick={onClose}
+          className="text-sm font-medium text-slate-600 hover:text-slate-900"
+        >
+          ← Back
+        </button>
+
+        <div className="mx-auto mt-4 max-w-4xl rounded-3xl border border-slate-200 bg-white p-6 shadow-xl">
+          <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+            Rio Tour shared-engine integration
+          </div>
+          <h1 className="mt-2 text-xl font-semibold text-slate-950">
+            Stage {stage.stage_number} · {stage.name || formatStageRoute(stage)}
+          </h1>
+          <div className="mt-5 rounded-2xl bg-slate-50 px-4 py-6 text-sm text-slate-600">
+            {loading
+              ? 'Loading this stage’s production profile and building its deterministic local replay…'
+              : loadError || 'This stage could not be normalized into the shared road-stage runner.'}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="min-h-screen bg-slate-50 p-3 sm:p-4 lg:p-6">
+      <div className="mb-4 flex flex-wrap items-center gap-4">
+        <button
+          type="button"
+          onClick={onClose}
+          className="text-sm font-medium text-slate-600 hover:text-slate-900"
+        >
+          ← Back
+        </button>
+      </div>
+
+      <div className="mx-auto flex min-h-[calc(100vh-7rem)] max-w-[1500px] flex-col overflow-hidden rounded-3xl bg-white shadow-xl">
+        <div className="grid grid-cols-1 gap-4 border-b border-slate-200 px-5 py-3 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-start">
+          <div className="min-w-0">
+            <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+              Rio Tour development replay · shared race-simulator-v2
+            </div>
+            <div className="mt-1 flex min-w-0 items-center gap-2">
+              <RaceTitleFlag code={race.country_code || stage.host_country_code || 'ME'} />
+              <h1 className="min-w-0 truncate text-xl font-semibold text-slate-950">
+                {race.name}
+              </h1>
+            </div>
+            <div className="mt-1 text-sm font-semibold text-slate-700">
+              Stage {stage.stage_number} · {profileSnapshot.stageTitle}
+            </div>
+            <div className="mt-1 break-words text-sm text-slate-500">
+              {profileSnapshot.routeLabel || stage.route_label || formatStageRoute(stage)}
+            </div>
+          </div>
+
+          <div className="flex shrink-0 flex-wrap items-start justify-start gap-3 xl:justify-self-end">
+            <div className="rounded-2xl border border-violet-200 bg-violet-50 px-4 py-3 text-xs font-semibold text-violet-900">
+              <div>Local development unlock</div>
+              <div className="mt-1">No official result writes</div>
+            </div>
+            <div className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm sm:w-auto sm:min-w-[205px]">
+              <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                Stage weather
+              </div>
+              <div className="mt-2 grid grid-cols-3 gap-4">
+                <div><div className="text-[10px] uppercase tracking-wide text-slate-400">Temp</div><div className="mt-0.5 whitespace-nowrap text-xs font-semibold text-slate-800">{replayWeather.temperature}</div></div>
+                <div><div className="text-[10px] uppercase tracking-wide text-slate-400">Wind</div><div className="mt-0.5 whitespace-nowrap text-xs font-semibold text-slate-800">{replayWeather.wind}</div></div>
+                <div><div className="text-[10px] uppercase tracking-wide text-slate-400">Rain</div><div className="mt-0.5 whitespace-nowrap text-xs font-semibold text-slate-800">{replayWeather.rain}</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden p-4 sm:p-5">
+          {loadError ? (
+            <div className="shrink-0 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+              Read-only data warning: {loadError}
+            </div>
+          ) : null}
+
+          <div className="shrink-0 rounded-3xl border border-slate-200 bg-slate-50 p-4 shadow-sm">
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <div className="text-sm font-semibold text-slate-950">
+                  Stage-specific replay
+                </div>
+                <div className="mt-1 text-xs text-slate-500">
+                  This page runs only Stage {stage.stage_number}; there is no cross-stage profile selector.
+                </div>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2">
+                <button type="button" onClick={togglePlayback} className="rounded-full bg-slate-950 px-4 py-2 text-xs font-semibold text-white">
+                  {playing ? 'Pause' : 'Play'}
+                </button>
+                {([1, 2, 4, 8] as const).map((value) => (
+                  <button key={value} type="button" onClick={() => setPlaybackSpeed(value)} className={`rounded-full border px-3 py-2 text-xs font-semibold ${playbackSpeed === value ? 'border-blue-600 bg-blue-600 text-white' : 'border-slate-200 bg-white text-slate-600'}`}>
+                    {value}x
+                  </button>
+                ))}
+                <button type="button" onClick={goToNextCheckpoint} className="rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-700">
+                  Next checkpoint
+                </button>
+                <span className="rounded-full bg-slate-200 px-3 py-2 text-xs font-semibold text-slate-700">
+                  {checkpointStatusLabel}
+                </span>
+              </div>
+            </div>
+
+            <div className="mb-3 flex flex-wrap items-center gap-x-4 gap-y-1 rounded-2xl border border-blue-200 bg-blue-50 px-4 py-2 text-xs font-semibold text-blue-800">
+              <span>Option B · Rio Tour six-stage integration gate</span>
+              <span>Stage {stage.stage_number}/{RIO_TOUR_INTEGRATION_STAGE_COUNT}</span>
+              <span>{formatTerrainModelLabel(selectedTerrainProfile.stageType)}</span>
+              <span>{selectedTerrainProfile.distanceKm.toFixed(1)} km</span>
+              <span>{selectedTerrainProfile.terrainPhases.length} terrain phases</span>
+              <span>{checkpoints.length} checkpoints</span>
+              <span>{integratedReplay.phaseBoundaryCrossingCount} boundary crossings</span>
+              <span>Base group speed {INTEGRATION_BASE_GROUP_SPEED_KMH.toFixed(3)} km/h</span>
+              <span>Active terrain {activeTerrainPhase ? formatTerrainModelLabel(activeTerrainPhase.terrainType) : '—'}</span>
+              <span>Live speed {displayedGroup?.speedKmh.toFixed(3) ?? '—'} km/h</span>
+              <span>Progress {progress.toFixed(1)}%</span>
+              <span>Finish time {formatPreciseRaceClock(finalRaceSeconds)}</span>
+              <span>Results {integratedStageResults.results.length}/{flatStageFixture.riders.length}</span>
+              <span>Hash {simulationHash}</span>
+            </div>
+
+            <div className="mb-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs leading-5 text-amber-900">
+              Current integration boundary: the real stage profile and terrain determine stage movement and total time. All riders remain in one group because rider-attribute speed differences, roles, terrain splitting and sprint resolution have not yet been connected. The provisional result order still uses the existing deterministic B1 tie-break.
+            </div>
+
+            {profile.has_profile ? (
+              <StageProfileChart
+                points={profile.profile_points ?? []}
+                markers={profile.route_markers ?? []}
+                distanceKm={distanceKm}
+                terrainType={profile.terrain_type}
+                mountainClimbs={profile.mountain_climbs ?? []}
+                replayProgressPercent={replayStarted ? progress : 0}
+              />
+            ) : stage.profile_image_url ? (
+              <div className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white">
+                <img src={stage.profile_image_url} alt={`Stage ${stage.stage_number} profile`} className="h-auto w-full object-contain" />
+                <div className="pointer-events-none absolute inset-y-4 w-1.5 -translate-x-1/2 rounded-full bg-blue-600 shadow-md transition-[left] duration-150" style={{ left: `${progress}%` }} />
+              </div>
+            ) : (
+              <div className="flex min-h-[260px] items-center justify-center rounded-2xl border border-slate-200 bg-white text-sm text-slate-500">
+                Stage profile is not available.
+              </div>
+            )}
+
+            <div className="mt-3 overflow-x-auto rounded-2xl border border-slate-200 bg-white">
+              <table className="w-full min-w-[850px] text-xs">
+                <thead className="bg-slate-50 uppercase tracking-wide text-slate-500">
+                  <tr>
+                    <th className="px-3 py-2 text-left">#</th>
+                    <th className="px-3 py-2 text-left">Terrain</th>
+                    <th className="px-3 py-2 text-left">Range</th>
+                    <th className="px-3 py-2 text-right">Gradient</th>
+                    <th className="px-3 py-2 text-right">Multiplier</th>
+                    <th className="px-3 py-2 text-right">Effective speed</th>
+                    <th className="px-3 py-2 text-right">Finish</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {selectedTerrainProfile.terrainPhases.map((phase) => {
+                    const multiplier = calculateTerrainSpeedMultiplier(phase.terrainType, phase.averageGradientPercent)
+                    const effectiveSpeed = INTEGRATION_BASE_GROUP_SPEED_KMH * multiplier
+                    const active = activeTerrainPhase?.phaseId === phase.phaseId
+
+                    return (
+                      <tr key={phase.phaseId} className={active ? 'bg-blue-50' : 'bg-white'}>
+                        <td className="px-3 py-2 font-semibold">{phase.phaseIndex + 1}</td>
+                        <td className="px-3 py-2 font-semibold">{formatTerrainModelLabel(phase.terrainType)}</td>
+                        <td className="px-3 py-2">{phase.startKm.toFixed(1)}–{phase.endKm.toFixed(1)} km</td>
+                        <td className="px-3 py-2 text-right">{phase.averageGradientPercent >= 0 ? '+' : ''}{phase.averageGradientPercent.toFixed(2)}%</td>
+                        <td className="px-3 py-2 text-right">×{multiplier.toFixed(4)}</td>
+                        <td className="px-3 py-2 text-right">{effectiveSpeed.toFixed(3)} km/h</td>
+                        <td className="px-3 py-2 text-right">{phase.isFinishPhase ? 'Yes' : '—'}</td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div className="min-h-0 flex-1 space-y-4 overflow-auto pr-1">
+            <div className="grid min-h-[420px] gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+              <section className="overflow-hidden rounded-3xl border border-slate-200 bg-white">
+                <div className="border-b border-slate-200 bg-slate-50 px-4 py-3 text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+                  Live commentary
+                </div>
+                <div className="max-h-[520px] overflow-auto divide-y divide-slate-100">
+                  {visibleComments.length === 0 ? (
+                    <div className="px-4 py-6 text-sm text-slate-500">
+                      {!replayStarted ? 'Press Play to start this stage replay.' : 'No commentary event has been reached yet.'}
+                    </div>
+                  ) : (
+                    [...visibleComments].reverse().map((comment) => (
+                      <div key={`${comment.progress}-${comment.title}-${comment.description}`} className="grid grid-cols-[74px_1fr] gap-3 px-4 py-2.5 text-sm">
+                        <div className="font-semibold text-slate-500">{formatKm((distanceKm * comment.progress) / 100)}</div>
+                        <div><span className="font-semibold text-slate-950">{comment.title}</span><span className="ml-2 text-slate-600">{comment.description}</span></div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </section>
+
+              <aside className="min-w-0 overflow-hidden rounded-3xl border border-slate-200 bg-white">
+                <div className="border-b border-slate-200 bg-slate-50 px-4 py-3 text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+                  Stage standing · riders
+                </div>
+                <div className="p-3">
+                  <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
+                    <div className="flex items-center justify-between border-b border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-500">
+                      <span>{replayStarted ? formatRaceClock(currentRaceSeconds) : '00:00:00'}</span>
+                      <span>{replayStarted ? formatKm(currentKm) : 'Race not started'}</span>
+                    </div>
+                    <div className="max-h-[480px] overflow-auto divide-y divide-slate-100">
+                      {displayedStandings.slice(0, 60).map((row, index) => {
+                        const standingTimeLabel = !replayStarted ? '—' : index === 0 ? 'Leader' : 's.t.'
+
+                        return (
+                          <div key={row.riderId} className="grid grid-cols-[28px_44px_minmax(0,1.05fr)_minmax(170px,0.95fr)_minmax(96px,0.55fr)] items-center gap-3 bg-white px-3 py-3">
+                            <div className="text-sm font-semibold text-slate-500">{replayStarted ? index + 1 : '—'}</div>
+                            <span className="inline-flex h-6 min-w-[34px] items-center justify-center rounded-full bg-blue-600 px-2 text-[10px] font-bold text-white" title="Peloton">P</span>
+                            <div className="grid min-w-0 grid-cols-[18px_minmax(0,1fr)] items-start gap-x-2">
+                              <SmallCountryFlag code={row.countryCode} />
+                              <div className="min-w-0"><div className="truncate whitespace-nowrap text-sm font-semibold leading-snug text-slate-950" title={row.riderName}>{row.riderName}</div><div className="mt-0.5 truncate text-xs text-slate-500">{row.teamName || '—'}</div></div>
+                            </div>
+                            <div className="min-w-0 space-y-1">
+                              <div className="flex items-center justify-between gap-2 text-[10px] font-semibold text-slate-500"><span>Fresh {row.freshness.toFixed(0)}</span><span>Energy {row.energy.toFixed(1)}</span></div>
+                              <div className="h-1.5 overflow-hidden rounded-full bg-slate-200"><div className="h-full rounded-full bg-slate-400" style={{ width: `${Math.max(0, Math.min(100, row.freshness))}%` }} /></div>
+                              <div className="h-2 overflow-hidden rounded-full bg-blue-100"><div className="h-full rounded-full bg-blue-600 transition-[width] duration-200" style={{ width: `${Math.max(0, Math.min(100, row.energy))}%` }} /></div>
+                              <div className="truncate text-[10px] font-medium text-slate-500">Cost {row.energyCostSincePreviousCheckpoint.toFixed(2)} · move {row.movementEnergyCost.toFixed(2)} · shelter {row.shelterEnergySaving.toFixed(2)}</div>
+                            </div>
+                            <div className="min-w-0 text-right"><span className="whitespace-nowrap text-xs font-semibold text-slate-700">{standingTimeLabel}</span></div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                </div>
+              </aside>
+            </div>
+
+            {displayedFinishReached ? (
+              <section className="overflow-hidden rounded-3xl border border-emerald-200 bg-white shadow-sm">
+                <div className="flex flex-wrap items-center justify-between gap-3 border-b border-emerald-200 bg-emerald-50 px-4 py-3">
+                  <div>
+                    <div className="text-xs font-semibold uppercase tracking-[0.16em] text-emerald-800">Stage {stage.stage_number} integration results · deterministic</div>
+                    <div className="mt-1 text-sm text-emerald-900">One shared finishing group is expected at B2.2. Terrain changes the stage time; rider-specific movement and terrain separation are intentionally still pending.</div>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-emerald-900"><span>{integratedStageResults.results.length} finished</span><span>·</span><span>{formatPreciseRaceClock(integratedStageResults.winnerFinishTimeSeconds)}</span><span>·</span><span>{simulationHash}</span></div>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[920px] text-sm">
+                    <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500"><tr><th className="px-3 py-2 text-left">#</th><th className="px-3 py-2 text-left">Group</th><th className="px-3 py-2 text-left">Rider</th><th className="px-3 py-2 text-left">Team</th><th className="px-3 py-2 text-left">Status</th><th className="px-3 py-2 text-right">Finish time</th><th className="px-3 py-2 text-right">Winner gap</th></tr></thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {finalResultRows.map((result) => {
+                        const isWinner = result.rank === 1
+                        return (
+                          <tr key={result.riderId} className={isWinner ? 'bg-amber-50' : 'bg-white'}>
+                            <td className="px-3 py-2.5 font-semibold text-slate-700">{result.rank}</td>
+                            <td className="px-3 py-2.5"><div className="flex items-center gap-2"><span className="inline-flex h-6 min-w-[34px] items-center justify-center rounded-full bg-blue-600 px-2 text-[10px] font-bold text-white">P</span><span className="text-xs text-slate-500">Group 1</span></div></td>
+                            <td className="px-3 py-2.5"><div className="flex items-center gap-2"><SmallCountryFlag code={result.countryCode} /><span className="font-semibold text-slate-950">{result.riderName}</span></div></td>
+                            <td className="px-3 py-2.5 text-slate-600">{result.teamName}</td>
+                            <td className="px-3 py-2.5"><span className="rounded-full bg-emerald-100 px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-emerald-800">{result.status}</span></td>
+                            <td className="px-3 py-2.5 text-right font-mono text-xs font-semibold text-slate-700">{formatPreciseRaceClock(result.finishTimeSeconds)}</td>
+                            <td className="px-3 py-2.5 text-right font-semibold text-slate-700">{isWinner ? 'Winner' : 's.t.'}</td>
+                          </tr>
+                        )
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            ) : (
+              <section className="rounded-3xl border border-dashed border-slate-300 bg-slate-50 px-4 py-4 text-sm text-slate-500">Final deterministic results appear when this stage reaches its own finish.</section>
+            )}
+
+            <section className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
+              <SimpleReplayStagePointsPanel pointResults={pointResults} stagePoints={stage.points ?? []} currentKm={currentKm} />
+            </section>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+
+
+function SimpleRaceReplayPage(props: {
+  race: Race
+  stage: RaceStage
+  participantTeams: RaceParticipantTeam[]
+  onClose: () => void
+}) {
+  return <B1RestoredRaceReplayPage {...props} />
+}
+
+
 function RaceStageProfilePanel({
   selectedStageId,
   classificationResultsStageId,
   selectedStage,
   race,
   currentGameDate,
+  currentClubId,
+  viewerClubFamilyIds,
+  participantTeams,
   hideLiveResults,
+  onOpenReplay,
 }: {
   selectedStageId: string | null
   classificationResultsStageId: string | null
   selectedStage: RaceStage | null
   race: Race | null
   currentGameDate: string | null
+  currentClubId?: string | null
+  viewerClubFamilyIds?: string[]
+  participantTeams: RaceParticipantTeam[]
   hideLiveResults: boolean
+  onOpenReplay: (stage: RaceStage) => void
 }) {
   const [profile, setProfile] = useState<StageProfileDetailPayload | null>(null)
   const [loading, setLoading] = useState(false)
@@ -8409,6 +11782,16 @@ function RaceStageProfilePanel({
       </div>
 
       <div className="space-y-6">
+        <StageReplayAccessCard
+          race={race}
+          stage={selectedStage}
+          currentClubId={currentClubId}
+          viewerClubFamilyIds={viewerClubFamilyIds}
+          participantTeams={participantTeams}
+          currentGameDate={currentGameDate}
+          onOpenReplay={onOpenReplay}
+        />
+
         <TerrainSplitCard terrainSplit={profileTerrainSplit} />
 
         {selectedStage ? (
@@ -8432,6 +11815,8 @@ type RaceDetailPageProps = {
   onBack?: () => void
   onOpenTeamProfile?: (teamId: string) => void
   onOpenRiderProfile?: (riderId: string) => void
+  replayStageIdOverride?: string | null
+  onCloseReplayOverride?: () => void
   stageResultsOverride?: {
     readonly stageId: string
     readonly rows:
@@ -8475,11 +11860,14 @@ export default function RaceDetailPage({
   onBack,
   onOpenTeamProfile,
   onOpenRiderProfile,
+  replayStageIdOverride = null,
+  onCloseReplayOverride,
   stageResultsOverride = null,
   engineTestModeLabel = null,
 }: RaceDetailPageProps) {
   const navigate = useNavigate()
   const location = useLocation()
+  const [searchParams, setSearchParams] = useSearchParams()
   const routeRaceId = useRaceIdFromRoute()
   const raceId = raceIdOverride ?? routeRaceId
   const resolvedViewerClubId = currentClubId ?? DEFAULT_CURRENT_CLUB_ID
@@ -8769,6 +12157,42 @@ export default function RaceDetailPage({
     availableClassificationStageIds,
     setAvailableClassificationStageIds,
   ] = useState<string[]>([])
+
+  const replayStageIdFromUrl =
+    replayStageIdOverride ?? searchParams.get('replayStageId')
+
+  const replayStage = useMemo(
+    () =>
+      replayStageIdFromUrl
+        ? stages.find((stage) => stage.id === replayStageIdFromUrl) ?? null
+        : null,
+    [replayStageIdFromUrl, stages]
+  )
+
+  function handleOpenReplayPage(stage: RaceStage): void {
+    const nextSearchParams = new URLSearchParams(searchParams)
+    nextSearchParams.set('replayStageId', stage.id)
+    setSearchParams(nextSearchParams)
+
+    if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, behavior: 'auto' })
+    }
+  }
+
+  function handleCloseReplayPage(): void {
+    if (onCloseReplayOverride) {
+      onCloseReplayOverride()
+      return
+    }
+
+    const nextSearchParams = new URLSearchParams(searchParams)
+    nextSearchParams.delete('replayStageId')
+    setSearchParams(nextSearchParams, { replace: true })
+
+    if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, behavior: 'auto' })
+    }
+  }
 
 
   useEffect(() => {
@@ -9921,6 +13345,17 @@ export default function RaceDetailPage({
     )
   }
 
+  if (replayStageIdFromUrl && replayStage) {
+    return (
+      <SimpleRaceReplayPage
+        race={race}
+        stage={replayStage}
+        participantTeams={participantTeams}
+        onClose={handleCloseReplayPage}
+      />
+    )
+  }
+
 
   return (
     <>
@@ -10343,7 +13778,11 @@ export default function RaceDetailPage({
             selectedStage={selectedStage}
             race={race}
             currentGameDate={currentGameDate}
+            currentClubId={resolvedViewerClubId}
+            viewerClubFamilyIds={viewerClubFamilyIds}
+            participantTeams={participantTeams}
             hideLiveResults={hideRaceInformation}
+            onOpenReplay={handleOpenReplayPage}
           />
 
           {!hideRaceInformation ? (
