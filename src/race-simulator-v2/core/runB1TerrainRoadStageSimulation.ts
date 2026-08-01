@@ -444,6 +444,7 @@ function applyEnergyInterval({
       riderCount: outputGroup.snapshot.riderIds.length,
       cooperationLevel,
       attackEnergyCost: 0,
+      resistance: rider.resistance,
     })
     const adjustedMovementCost = roundEnergy(
       energyStep.movementEnergyCost * effortMultiplier,

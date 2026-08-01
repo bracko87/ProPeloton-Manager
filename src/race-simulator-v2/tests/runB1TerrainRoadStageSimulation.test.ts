@@ -55,6 +55,21 @@ function runMountain(outcome: 'caught' | 'survived') {
   )
 }
 
+function runFlatWithResistance(riderId: string, resistance: number) {
+  const definition = {
+    ...flatStageFixture,
+    riders: flatStageFixture.riders.map((rider) =>
+      rider.riderId === riderId ? { ...rider, resistance } : rider,
+    ),
+  }
+
+  return runB1TerrainRoadStageSimulation(
+    definition,
+    { stageId: 'rio-1', raceId: 'rio', profile: flat142 },
+    { outcome: 'caught' },
+  )
+}
+
 function averageMovementCost(
   checkpoint: ReturnType<typeof runMountain>['checkpoints'][number],
 ): number {
@@ -190,5 +205,72 @@ describe('true integrated B1 + B2 road-stage runner', () => {
   it('is deterministic for repeated true integrated runs', () => {
     expect(runMountain('caught')).toEqual(runMountain('caught'))
     expect(runMountain('survived')).toEqual(runMountain('survived'))
+  })
+
+  it('uses resistance only for integrated energy cost without changing movement or results', () => {
+    const lowResistance = runFlatWithResistance('r03', 10)
+    const highResistance = runFlatWithResistance('r03', 90)
+
+    const lowResistanceSnapshot =
+      lowResistance.checkpoints
+        .at(-1)
+        ?.riderSnapshots.find(
+          (rider) => rider.riderId === 'r03',
+        )
+    const highResistanceSnapshot =
+      highResistance.checkpoints
+        .at(-1)
+        ?.riderSnapshots.find(
+          (rider) => rider.riderId === 'r03',
+        )
+
+    const lowResistanceResult =
+      lowResistance.stageResults.results.find(
+        (row) => row.riderId === 'r03',
+      )
+    const highResistanceResult =
+      highResistance.stageResults.results.find(
+        (row) => row.riderId === 'r03',
+      )
+
+    expect(lowResistanceSnapshot).toBeDefined()
+    expect(highResistanceSnapshot).toBeDefined()
+    expect(lowResistanceResult).toBeDefined()
+    expect(highResistanceResult).toBeDefined()
+
+    expect(
+      highResistanceSnapshot!.movementEnergyCost,
+    ).toBeLessThan(
+      lowResistanceSnapshot!.movementEnergyCost,
+    )
+    expect(highResistanceSnapshot!.energy).toBeGreaterThan(
+      lowResistanceSnapshot!.energy,
+    )
+
+    expect(highResistanceSnapshot!.distanceKm).toBe(
+      lowResistanceSnapshot!.distanceKm,
+    )
+    expect(highResistanceSnapshot!.speedKmh).toBe(
+      lowResistanceSnapshot!.speedKmh,
+    )
+
+    expect(highResistanceResult!.finishTimeSeconds).toBe(
+      lowResistanceResult!.finishTimeSeconds,
+    )
+    expect(highResistanceResult!.gapSecondsToWinner).toBe(
+      lowResistanceResult!.gapSecondsToWinner,
+    )
+    expect(highResistanceResult!.finishingGroupId).toBe(
+      lowResistanceResult!.finishingGroupId,
+    )
+
+    expect(
+      highResistance.stageResults.winnerFinishTimeSeconds,
+    ).toBe(
+      lowResistance.stageResults.winnerFinishTimeSeconds,
+    )
+    expect(highResistance.physicalOutcome).toBe(
+      lowResistance.physicalOutcome,
+    )
   })
 })

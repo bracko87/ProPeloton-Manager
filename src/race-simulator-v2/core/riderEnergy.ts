@@ -4,7 +4,8 @@
  * Pure deterministic live-energy calculation for B1.7.
  *
  * The model intentionally remains transparent:
- * - normal movement consumes energy according to duration, speed and endurance;
+ * - normal movement consumes energy according to duration, speed, endurance
+ *   and resistance;
  * - larger and better-organized groups reduce that movement cost through shelter;
  * - configured attackers pay one additional energy cost at the attack checkpoint;
  * - energy is clamped between zero and the rider's starting freshness.
@@ -28,6 +29,7 @@ export interface RiderEnergyStepInput {
   riderCount: number
   cooperationLevel: number
   attackEnergyCost?: number
+  resistance?: number
 }
 
 export interface RiderEnergyStepResult {
@@ -60,6 +62,10 @@ function validateInput(input: RiderEnergyStepInput): void {
   validatePercentage(input.freshness, 'freshness')
   validatePercentage(input.currentEnergy, 'currentEnergy')
   validatePercentage(input.endurance, 'endurance')
+
+  if (input.resistance !== undefined) {
+    validatePercentage(input.resistance, 'resistance')
+  }
 
   if (input.currentEnergy > input.freshness) {
     throw new Error('currentEnergy cannot exceed freshness')
@@ -113,12 +119,19 @@ export function calculateShelterSavingPercent(
 
   if (riderCount === 1) return 0
 
-  const sizeSaving = Math.log2(riderCount) * SHELTER_PERCENT_PER_LOG2_RIDER
+  const sizeSaving =
+    Math.log2(riderCount) *
+    SHELTER_PERCENT_PER_LOG2_RIDER
+
   const cooperationSaving =
-    cooperationLevel * MAX_COOPERATION_SHELTER_PERCENT
+    cooperationLevel *
+    MAX_COOPERATION_SHELTER_PERCENT
 
   return roundPercent(
-    Math.min(MAX_SHELTER_SAVING_PERCENT, sizeSaving + cooperationSaving),
+    Math.min(
+      MAX_SHELTER_SAVING_PERCENT,
+      sizeSaving + cooperationSaving,
+    ),
   )
 }
 
@@ -130,36 +143,76 @@ export function calculateRiderEnergyStep(
 ): RiderEnergyStepResult {
   validateInput(input)
 
-  const elapsedHours = input.elapsedSeconds / 3600
-  const speedMultiplier = 0.8 + input.speedKmh / 200
-  const enduranceMultiplier = 1.15 - input.endurance * 0.004
-  const grossMovementEnergyCost = roundEnergy(
-    BASE_MOVEMENT_ENERGY_COST_PER_HOUR *
-      elapsedHours *
-      speedMultiplier *
-      enduranceMultiplier,
-  )
-  const shelterSavingPercent = calculateShelterSavingPercent(
-    input.riderCount,
-    input.cooperationLevel,
-  )
-  const shelterEnergySaving = roundEnergy(
-    grossMovementEnergyCost * shelterSavingPercent,
-  )
-  const movementEnergyCost = roundEnergy(
-    Math.max(0, grossMovementEnergyCost - shelterEnergySaving),
-  )
-  const attackEnergyCost = roundEnergy(input.attackEnergyCost ?? 0)
-  const energyCostSincePreviousCheckpoint = roundEnergy(
-    movementEnergyCost + attackEnergyCost,
-  )
-  const energyAfter = roundEnergy(
-    Math.max(0, input.currentEnergy - energyCostSincePreviousCheckpoint),
-  )
+  const elapsedHours =
+    input.elapsedSeconds / 3600
+
+  const speedMultiplier =
+    0.8 + input.speedKmh / 200
+
+  const enduranceMultiplier =
+    1.15 - input.endurance * 0.004
+
+  const resistance =
+    input.resistance ?? 50
+
+  const resistanceMultiplier =
+    1.05 - resistance * 0.001
+
+  const grossMovementEnergyCost =
+    roundEnergy(
+      BASE_MOVEMENT_ENERGY_COST_PER_HOUR *
+        elapsedHours *
+        speedMultiplier *
+        enduranceMultiplier *
+        resistanceMultiplier,
+    )
+
+  const shelterSavingPercent =
+    calculateShelterSavingPercent(
+      input.riderCount,
+      input.cooperationLevel,
+    )
+
+  const shelterEnergySaving =
+    roundEnergy(
+      grossMovementEnergyCost *
+        shelterSavingPercent,
+    )
+
+  const movementEnergyCost =
+    roundEnergy(
+      Math.max(
+        0,
+        grossMovementEnergyCost -
+          shelterEnergySaving,
+      ),
+    )
+
+  const attackEnergyCost =
+    roundEnergy(
+      input.attackEnergyCost ?? 0,
+    )
+
+  const energyCostSincePreviousCheckpoint =
+    roundEnergy(
+      movementEnergyCost +
+        attackEnergyCost,
+    )
+
+  const energyAfter =
+    roundEnergy(
+      Math.max(
+        0,
+        input.currentEnergy -
+          energyCostSincePreviousCheckpoint,
+      ),
+    )
 
   return {
-    freshness: roundEnergy(input.freshness),
-    energyBefore: roundEnergy(input.currentEnergy),
+    freshness:
+      roundEnergy(input.freshness),
+    energyBefore:
+      roundEnergy(input.currentEnergy),
     grossMovementEnergyCost,
     shelterSavingPercent,
     shelterEnergySaving,

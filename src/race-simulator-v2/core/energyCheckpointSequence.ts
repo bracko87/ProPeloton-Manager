@@ -32,9 +32,11 @@ function cloneCheckpoint(checkpoint: Checkpoint): Checkpoint {
       ...group,
       riderIds: [...group.riderIds],
     })),
-    riderSnapshots: checkpoint.riderSnapshots.map((riderSnapshot) => ({
-      ...riderSnapshot,
-    })),
+    riderSnapshots: checkpoint.riderSnapshots.map(
+      (riderSnapshot) => ({
+        ...riderSnapshot,
+      }),
+    ),
   }
 }
 
@@ -43,8 +45,14 @@ function validateRider(rider: RiderInput): void {
     throw new Error('Every energy rider requires a riderId')
   }
 
-  if (!Number.isFinite(rider.endurance) || rider.endurance < 0 || rider.endurance > 100) {
-    throw new Error(`Invalid endurance for rider: ${rider.riderId}`)
+  if (
+    !Number.isFinite(rider.endurance) ||
+    rider.endurance < 0 ||
+    rider.endurance > 100
+  ) {
+    throw new Error(
+      `Invalid endurance for rider: ${rider.riderId}`,
+    )
   }
 
   if (
@@ -52,7 +60,9 @@ function validateRider(rider: RiderInput): void {
     rider.startingFreshness < 0 ||
     rider.startingFreshness > 100
   ) {
-    throw new Error(`Invalid starting freshness for rider: ${rider.riderId}`)
+    throw new Error(
+      `Invalid starting freshness for rider: ${rider.riderId}`,
+    )
   }
 }
 
@@ -62,7 +72,9 @@ function validateInputs(
   options: EnergyCheckpointSequenceOptions,
 ): void {
   if (checkpoints.length < 2) {
-    throw new Error('Energy progression requires at least two checkpoints')
+    throw new Error(
+      'Energy progression requires at least two checkpoints',
+    )
   }
 
   if (!Number.isInteger(options.attackCheckpointIndex)) {
@@ -71,10 +83,14 @@ function validateInputs(
 
   if (
     !checkpoints.some(
-      (checkpoint) => checkpoint.checkpointIndex === options.attackCheckpointIndex,
+      (checkpoint) =>
+        checkpoint.checkpointIndex ===
+        options.attackCheckpointIndex,
     )
   ) {
-    throw new Error('attackCheckpointIndex was not found in the checkpoint collection')
+    throw new Error(
+      'attackCheckpointIndex was not found in the checkpoint collection',
+    )
   }
 
   if (riders.length === 0) {
@@ -87,7 +103,9 @@ function validateInputs(
     validateRider(rider)
 
     if (riderIds.has(rider.riderId)) {
-      throw new Error(`Duplicate energy rider: ${rider.riderId}`)
+      throw new Error(
+        `Duplicate energy rider: ${rider.riderId}`,
+      )
     }
 
     riderIds.add(rider.riderId)
@@ -101,7 +119,9 @@ function validateInputs(
     initialRiderIds.length !== riders.length ||
     initialRiderIds.some((riderId) => !riderIds.has(riderId))
   ) {
-    throw new Error('Energy riders must match the checkpoint rider collection')
+    throw new Error(
+      'Energy riders must match the checkpoint rider collection',
+    )
   }
 
   const attackerIds = new Set(options.attackerRiderIds)
@@ -112,14 +132,22 @@ function validateInputs(
 
   for (const attackerId of attackerIds) {
     if (!riderIds.has(attackerId)) {
-      throw new Error(`Unknown energy attacker: ${attackerId}`)
+      throw new Error(
+        `Unknown energy attacker: ${attackerId}`,
+      )
     }
   }
 
-  const attackEnergyCost = options.attackEnergyCost ?? ATTACK_ENERGY_COST
+  const attackEnergyCost =
+    options.attackEnergyCost ?? ATTACK_ENERGY_COST
 
-  if (!Number.isFinite(attackEnergyCost) || attackEnergyCost < 0) {
-    throw new Error('attackEnergyCost must be a non-negative finite number')
+  if (
+    !Number.isFinite(attackEnergyCost) ||
+    attackEnergyCost < 0
+  ) {
+    throw new Error(
+      'attackEnergyCost must be a non-negative finite number',
+    )
   }
 }
 
@@ -127,10 +155,13 @@ function getCooperationLevel(
   options: EnergyCheckpointSequenceOptions,
   groupId: string,
 ): number {
-  const cooperationLevel = options.cooperationLevelByGroupId[groupId]
+  const cooperationLevel =
+    options.cooperationLevelByGroupId[groupId]
 
   if (cooperationLevel === undefined) {
-    throw new Error(`Missing energy cooperation level for group: ${groupId}`)
+    throw new Error(
+      `Missing energy cooperation level for group: ${groupId}`,
+    )
   }
 
   return cooperationLevel
@@ -161,80 +192,127 @@ export function createEnergyCheckpointSequence(
 ): Checkpoint[] {
   validateInputs(checkpoints, riders, options)
 
-  const riderById = new Map(riders.map((rider) => [rider.riderId, rider]))
+  const riderById = new Map(
+    riders.map((rider) => [rider.riderId, rider]),
+  )
   const attackerIds = new Set(options.attackerRiderIds)
-  const attackEnergyCost = options.attackEnergyCost ?? ATTACK_ENERGY_COST
+  const attackEnergyCost =
+    options.attackEnergyCost ?? ATTACK_ENERGY_COST
   const output: Checkpoint[] = []
 
   for (const sourceCheckpoint of checkpoints) {
     if (output.length === 0) {
       output.push({
         ...cloneCheckpoint(sourceCheckpoint),
-        riderSnapshots: sourceCheckpoint.riderSnapshots.map((sourceSnapshot) => {
-          const rider = riderById.get(sourceSnapshot.riderId)
+        riderSnapshots: sourceCheckpoint.riderSnapshots.map(
+          (sourceSnapshot) => {
+            const rider = riderById.get(
+              sourceSnapshot.riderId,
+            )
 
-          if (!rider) {
-            throw new Error(`Missing energy rider: ${sourceSnapshot.riderId}`)
-          }
+            if (!rider) {
+              throw new Error(
+                `Missing energy rider: ${sourceSnapshot.riderId}`,
+              )
+            }
 
-          return createInitialEnergySnapshot(sourceSnapshot, rider)
-        }),
+            return createInitialEnergySnapshot(
+              sourceSnapshot,
+              rider,
+            )
+          },
+        ),
       })
       continue
     }
 
     const previousCheckpoint = output[output.length - 1]
-    const elapsedSeconds = sourceCheckpoint.raceSecond - previousCheckpoint.raceSecond
+    const elapsedSeconds =
+      sourceCheckpoint.raceSecond -
+      previousCheckpoint.raceSecond
 
-    if (!Number.isFinite(elapsedSeconds) || elapsedSeconds <= 0) {
-      throw new Error('Race time must increase between energy checkpoints')
+    if (
+      !Number.isFinite(elapsedSeconds) ||
+      elapsedSeconds <= 0
+    ) {
+      throw new Error(
+        'Race time must increase between energy checkpoints',
+      )
     }
 
     const previousRiderById = new Map(
-      previousCheckpoint.riderSnapshots.map((riderSnapshot) => [
-        riderSnapshot.riderId,
-        riderSnapshot,
+      previousCheckpoint.riderSnapshots.map(
+        (riderSnapshot) => [
+          riderSnapshot.riderId,
+          riderSnapshot,
+        ],
+      ),
+    )
+
+    const groupById = new Map(
+      sourceCheckpoint.groups.map((group) => [
+        group.groupId,
+        group,
       ]),
     )
-    const groupById = new Map(
-      sourceCheckpoint.groups.map((group) => [group.groupId, group]),
+
+    const riderSnapshots = sourceCheckpoint.riderSnapshots.map(
+      (sourceSnapshot) => {
+        const rider = riderById.get(sourceSnapshot.riderId)
+        const previousSnapshot = previousRiderById.get(
+          sourceSnapshot.riderId,
+        )
+        const group = groupById.get(
+          sourceSnapshot.currentGroupId,
+        )
+
+        if (!rider || !previousSnapshot || !group) {
+          throw new Error(
+            `Incomplete energy state for rider: ${sourceSnapshot.riderId}`,
+          )
+        }
+
+        const isAttackCheckpoint =
+          sourceCheckpoint.checkpointIndex ===
+          options.attackCheckpointIndex
+
+        const isAttacker = attackerIds.has(
+          sourceSnapshot.riderId,
+        )
+
+        const energyStep = calculateRiderEnergyStep({
+          currentEnergy: previousSnapshot.energy,
+          freshness: rider.startingFreshness,
+          endurance: rider.endurance,
+          speedKmh: group.speedKmh,
+          elapsedSeconds,
+          riderCount: group.riderIds.length,
+          cooperationLevel: getCooperationLevel(
+            options,
+            group.groupId,
+          ),
+          attackEnergyCost:
+            isAttackCheckpoint && isAttacker
+              ? attackEnergyCost
+              : 0,
+          resistance: rider.resistance,
+        })
+
+        return {
+          ...sourceSnapshot,
+          freshness: energyStep.freshness,
+          energy: energyStep.energyAfter,
+          movementEnergyCost:
+            energyStep.movementEnergyCost,
+          attackEnergyCost:
+            energyStep.attackEnergyCost,
+          shelterEnergySaving:
+            energyStep.shelterEnergySaving,
+          energyCostSincePreviousCheckpoint:
+            energyStep.energyCostSincePreviousCheckpoint,
+        }
+      },
     )
-
-    const riderSnapshots = sourceCheckpoint.riderSnapshots.map((sourceSnapshot) => {
-      const rider = riderById.get(sourceSnapshot.riderId)
-      const previousSnapshot = previousRiderById.get(sourceSnapshot.riderId)
-      const group = groupById.get(sourceSnapshot.currentGroupId)
-
-      if (!rider || !previousSnapshot || !group) {
-        throw new Error(`Incomplete energy state for rider: ${sourceSnapshot.riderId}`)
-      }
-
-      const isAttackCheckpoint =
-        sourceCheckpoint.checkpointIndex === options.attackCheckpointIndex
-      const isAttacker = attackerIds.has(sourceSnapshot.riderId)
-      const energyStep = calculateRiderEnergyStep({
-        currentEnergy: previousSnapshot.energy,
-        freshness: rider.startingFreshness,
-        endurance: rider.endurance,
-        speedKmh: group.speedKmh,
-        elapsedSeconds,
-        riderCount: group.riderIds.length,
-        cooperationLevel: getCooperationLevel(options, group.groupId),
-        attackEnergyCost:
-          isAttackCheckpoint && isAttacker ? attackEnergyCost : 0,
-      })
-
-      return {
-        ...sourceSnapshot,
-        freshness: energyStep.freshness,
-        energy: energyStep.energyAfter,
-        movementEnergyCost: energyStep.movementEnergyCost,
-        attackEnergyCost: energyStep.attackEnergyCost,
-        shelterEnergySaving: energyStep.shelterEnergySaving,
-        energyCostSincePreviousCheckpoint:
-          energyStep.energyCostSincePreviousCheckpoint,
-      }
-    })
 
     output.push({
       ...cloneCheckpoint(sourceCheckpoint),

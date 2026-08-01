@@ -18,6 +18,8 @@
  * sprint: relative sprint ability (0-100) - present for future use
  * endurance: resistance to normal race-energy expenditure (0-100)
  * startingFreshness: available energy at the start of the stage (0-100)
+ * resistance: optional resistance to high-intensity energy expenditure (0-100);
+ * defaults to the neutral value 50 when omitted
  */
 export interface RiderInput {
   riderId: string
@@ -27,4 +29,5 @@ export interface RiderInput {
   sprint: number
   endurance: number
   startingFreshness: number
+  readonly resistance?: number
 }

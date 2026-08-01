@@ -326,4 +326,110 @@ describe('B1.7 live energy and attack cost', () => {
       ),
     ).toThrow('Missing energy cooperation level for group: peloton-1')
   })
+
+  it('makes higher resistance reduce movement energy cost under equal conditions', () => {
+    const common = {
+      currentEnergy: 90,
+      freshness: 90,
+      endurance: 70,
+      speedKmh: 44,
+      elapsedSeconds: 600,
+      riderCount: 4,
+      cooperationLevel: 0.8,
+    }
+    const lowResistance = calculateRiderEnergyStep({
+      ...common,
+      resistance: 0,
+    })
+    const highResistance = calculateRiderEnergyStep({
+      ...common,
+      resistance: 100,
+    })
+
+    expect(highResistance.movementEnergyCost).toBeLessThan(
+      lowResistance.movementEnergyCost,
+    )
+    expect(highResistance.energyAfter).toBeGreaterThan(
+      lowResistance.energyAfter,
+    )
+  })
+
+  it('treats omitted resistance as neutral resistance 50', () => {
+    const common = {
+      currentEnergy: 90,
+      freshness: 90,
+      endurance: 70,
+      speedKmh: 44,
+      elapsedSeconds: 600,
+      riderCount: 4,
+      cooperationLevel: 0.8,
+    }
+    const omitted = calculateRiderEnergyStep(common)
+    const explicitFifty = calculateRiderEnergyStep({
+      ...common,
+      resistance: 50,
+    })
+
+    expect(omitted).toEqual(explicitFifty)
+  })
+
+  it('rejects resistance outside the controlled range', () => {
+    const common = {
+      currentEnergy: 90,
+      freshness: 90,
+      endurance: 70,
+      speedKmh: 44,
+      elapsedSeconds: 600,
+      riderCount: 4,
+      cooperationLevel: 0.8,
+    }
+
+    expect(() =>
+      calculateRiderEnergyStep({
+        ...common,
+        resistance: -1,
+      }),
+    ).toThrow('resistance must be between 0 and 100')
+
+    expect(() =>
+      calculateRiderEnergyStep({
+        ...common,
+        resistance: 101,
+      }),
+    ).toThrow('resistance must be between 0 and 100')
+  })
+
+  it('forwards rider resistance through the B1 energy checkpoint sequence', () => {
+    const source = createB16Sequence()
+    const lowResistanceRiders = flatStageFixture.riders.map((rider) =>
+      rider.riderId === 'r03'
+        ? { ...rider, resistance: 10 }
+        : rider,
+    )
+    const highResistanceRiders = flatStageFixture.riders.map((rider) =>
+      rider.riderId === 'r03'
+        ? { ...rider, resistance: 90 }
+        : rider,
+    )
+
+    const lowResistanceSequence = createEnergyCheckpointSequence(
+      source,
+      lowResistanceRiders,
+      flatStageFixture.energyModel,
+    )
+    const highResistanceSequence = createEnergyCheckpointSequence(
+      source,
+      highResistanceRiders,
+      flatStageFixture.energyModel,
+    )
+    const lowResistanceRider = getRider(lowResistanceSequence[1], 'r03')
+    const highResistanceRider = getRider(highResistanceSequence[1], 'r03')
+
+    expect(highResistanceRider.movementEnergyCost).toBeLessThan(
+      lowResistanceRider.movementEnergyCost,
+    )
+    expect(highResistanceRider.energy).toBeGreaterThan(
+      lowResistanceRider.energy,
+    )
+  })
 })
