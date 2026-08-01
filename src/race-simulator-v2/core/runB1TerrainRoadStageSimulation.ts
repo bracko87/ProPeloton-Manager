@@ -217,6 +217,35 @@ function calculateWeightedTerrainEffort(
   return round(weighted / movement.elapsedDurationSeconds)
 }
 
+function calculateClimbShare(
+  movement: TerrainMovementResult | undefined,
+): number {
+  if (
+    !movement ||
+    movement.segments.length === 0 ||
+    movement.elapsedDurationSeconds <= 0
+  ) {
+    return 0
+  }
+
+  const climbDurationSeconds = movement.segments.reduce(
+    (sum, segment) =>
+      sum + (segment.terrainType === 'climb' ? segment.durationSeconds : 0),
+    0,
+  )
+
+  return round(climbDurationSeconds / movement.elapsedDurationSeconds)
+}
+
+function calculateClimbingBlendMultiplier(
+  climbShare: number,
+  climbing: number,
+): number {
+  const climbingMultiplier = 1.05 - climbing * 0.001
+
+  return round((1 - climbShare) + climbShare * climbingMultiplier)
+}
+
 function collectCrossedBoundaries(
   profile: RoadStageProfile,
   movement: TerrainMovementResult,
@@ -426,6 +455,11 @@ function applyEnergyInterval({
       movementByPreviousGroupId.get(outputGroup.snapshot.groupId)
     const averageSpeedKmh = movement?.averageEffectiveSpeedKmh ?? outputGroup.snapshot.speedKmh
     const effortMultiplier = movement?.weightedTerrainEffortMultiplier ?? 1
+    const climbShare = calculateClimbShare(movement?.movement)
+    const climbBlendMultiplier = calculateClimbingBlendMultiplier(
+      climbShare,
+      rider.climbing,
+    )
     const cooperationLevel = outputGroup.cooperationLevel
     const attackEnergyCost =
       attackCheckpoint && attackerIds.has(rider.riderId)
@@ -447,7 +481,7 @@ function applyEnergyInterval({
       resistance: rider.resistance,
     })
     const adjustedMovementCost = roundEnergy(
-      energyStep.movementEnergyCost * effortMultiplier,
+      energyStep.movementEnergyCost * effortMultiplier * climbBlendMultiplier,
     )
     const adjustedShelterSaving = roundEnergy(
       energyStep.shelterEnergySaving * effortMultiplier,

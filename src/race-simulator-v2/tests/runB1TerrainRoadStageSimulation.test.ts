@@ -55,11 +55,16 @@ function runMountain(outcome: 'caught' | 'survived') {
   )
 }
 
-function runFlatWithResistance(riderId: string, resistance: number) {
+function runFlatWithResistance(
+  riderId: string,
+  resistance: number,
+) {
   const definition = {
     ...flatStageFixture,
     riders: flatStageFixture.riders.map((rider) =>
-      rider.riderId === riderId ? { ...rider, resistance } : rider,
+      rider.riderId === riderId
+        ? { ...rider, resistance }
+        : rider,
     ),
   }
 
@@ -70,8 +75,78 @@ function runFlatWithResistance(riderId: string, resistance: number) {
   )
 }
 
+function runMountainWithClimbing(
+  riderId: string,
+  climbing: number,
+) {
+  const definition = {
+    ...flatStageFixture,
+    riders: flatStageFixture.riders.map((rider) =>
+      rider.riderId === riderId
+        ? { ...rider, climbing }
+        : rider,
+    ),
+  }
+
+  return runB1TerrainRoadStageSimulation(
+    definition,
+    {
+      stageId: 'rio-3',
+      raceId: 'rio',
+      profile: mountain136,
+    },
+    { outcome: 'caught' },
+  )
+}
+
+function runFlatWithClimbing(
+  riderId: string,
+  climbing: number,
+) {
+  const definition = {
+    ...flatStageFixture,
+    riders: flatStageFixture.riders.map((rider) =>
+      rider.riderId === riderId
+        ? { ...rider, climbing }
+        : rider,
+    ),
+  }
+
+  return runB1TerrainRoadStageSimulation(
+    definition,
+    {
+      stageId: 'rio-1',
+      raceId: 'rio',
+      profile: flat142,
+    },
+    { outcome: 'caught' },
+  )
+}
+
+function findClimbCheckpointForRider(
+  result: ReturnType<typeof runMountainWithClimbing>,
+  riderId: string,
+) {
+  const checkpoint = result.checkpoints.find((candidate) => {
+    const riderGroup = candidate.groups.find((group) =>
+      group.riderIds.includes(riderId),
+    )
+
+    return (
+      candidate.checkpointIndex > 0 &&
+      riderGroup?.terrainType === 'climb'
+    )
+  })
+
+  return checkpoint?.riderSnapshots.find(
+    (rider) => rider.riderId === riderId,
+  )
+}
+
 function averageMovementCost(
-  checkpoint: ReturnType<typeof runMountain>['checkpoints'][number],
+  checkpoint: ReturnType<
+    typeof runMountain
+  >['checkpoints'][number],
 ): number {
   return (
     checkpoint.riderSnapshots.reduce(
@@ -93,7 +168,9 @@ describe('true integrated B1 + B2 road-stage runner', () => {
       { outcome: 'caught', terrainEnabled: false },
     )
 
-    expect(result.stageResults.winnerFinishTimeSeconds).toBe(4050.184)
+    expect(result.stageResults.winnerFinishTimeSeconds).toBe(
+      4050.184,
+    )
     expect(result.stageResults.results).toHaveLength(12)
     expect(result.outcomeSequence.checkpoints).toEqual(
       result.foundation.outcomeSequence.checkpoints,
@@ -149,16 +226,22 @@ describe('true integrated B1 + B2 road-stage runner', () => {
   it('uses terrain-adjusted movement to create physical gaps and catch timing', () => {
     const flat = runFlat('caught')
     const mountain = runMountain('caught')
-    const mountainPositiveGaps = mountain.checkpoints.flatMap(
-      (checkpoint) =>
-        checkpoint.groups.map((group) => group.gapSecondsToLeader),
-    )
+    const mountainPositiveGaps =
+      mountain.checkpoints.flatMap((checkpoint) =>
+        checkpoint.groups.map(
+          (group) => group.gapSecondsToLeader,
+        ),
+      )
 
-    expect(mountainPositiveGaps.some((gap) => gap > 0)).toBe(true)
-    expect(mountain.stageResults.winnerFinishTimeSeconds).not.toBe(
-      flat.stageResults.winnerFinishTimeSeconds,
-    )
-    expect(mountain.outcomeSequence.outcomeCheckpointIndex).not.toBe(
+    expect(
+      mountainPositiveGaps.some((gap) => gap > 0),
+    ).toBe(true)
+    expect(
+      mountain.stageResults.winnerFinishTimeSeconds,
+    ).not.toBe(flat.stageResults.winnerFinishTimeSeconds)
+    expect(
+      mountain.outcomeSequence.outcomeCheckpointIndex,
+    ).not.toBe(
       flat.outcomeSequence.outcomeCheckpointIndex,
     )
   })
@@ -166,17 +249,20 @@ describe('true integrated B1 + B2 road-stage runner', () => {
   it('makes climb energy cost greater than an earlier flat checkpoint in terrain-enabled mode', () => {
     const result = runMountain('caught')
     const flatCheckpoint = result.checkpoints.find(
-      (checkpoint) => checkpoint.groups[0]?.terrainType === 'flat' && checkpoint.checkpointIndex > 0,
+      (checkpoint) =>
+        checkpoint.groups[0]?.terrainType === 'flat' &&
+        checkpoint.checkpointIndex > 0,
     )
     const climbCheckpoint = result.checkpoints.find(
-      (checkpoint) => checkpoint.groups[0]?.terrainType === 'climb',
+      (checkpoint) =>
+        checkpoint.groups[0]?.terrainType === 'climb',
     )
 
     expect(flatCheckpoint).toBeDefined()
     expect(climbCheckpoint).toBeDefined()
-    expect(averageMovementCost(climbCheckpoint!)).toBeGreaterThan(
-      averageMovementCost(flatCheckpoint!),
-    )
+    expect(
+      averageMovementCost(climbCheckpoint!),
+    ).toBeGreaterThan(averageMovementCost(flatCheckpoint!))
   })
 
   it('derives catch and survival from the integrated physical finish state', () => {
@@ -191,6 +277,7 @@ describe('true integrated B1 + B2 road-stage runner', () => {
         ),
       ).size,
     ).toBe(1)
+
     expect(survived.physicalOutcome).toBe('survived')
     expect(
       new Set(
@@ -199,12 +286,21 @@ describe('true integrated B1 + B2 road-stage runner', () => {
         ),
       ).size,
     ).toBe(2)
-    expect(survived.stageResults.results.some((row) => row.gapSecondsToWinner > 0)).toBe(true)
+
+    expect(
+      survived.stageResults.results.some(
+        (row) => row.gapSecondsToWinner > 0,
+      ),
+    ).toBe(true)
   })
 
   it('is deterministic for repeated true integrated runs', () => {
-    expect(runMountain('caught')).toEqual(runMountain('caught'))
-    expect(runMountain('survived')).toEqual(runMountain('survived'))
+    expect(runMountain('caught')).toEqual(
+      runMountain('caught'),
+    )
+    expect(runMountain('survived')).toEqual(
+      runMountain('survived'),
+    )
   })
 
   it('uses resistance only for integrated energy cost without changing movement or results', () => {
@@ -243,9 +339,9 @@ describe('true integrated B1 + B2 road-stage runner', () => {
     ).toBeLessThan(
       lowResistanceSnapshot!.movementEnergyCost,
     )
-    expect(highResistanceSnapshot!.energy).toBeGreaterThan(
-      lowResistanceSnapshot!.energy,
-    )
+    expect(
+      highResistanceSnapshot!.energy,
+    ).toBeGreaterThan(lowResistanceSnapshot!.energy)
 
     expect(highResistanceSnapshot!.distanceKm).toBe(
       lowResistanceSnapshot!.distanceKm,
@@ -271,6 +367,153 @@ describe('true integrated B1 + B2 road-stage runner', () => {
     )
     expect(highResistance.physicalOutcome).toBe(
       lowResistance.physicalOutcome,
+    )
+  })
+
+  it('gives higher climbing lower cumulative movement cost and higher remaining energy on a mountain stage', () => {
+    const lowClimbing = runMountainWithClimbing('r03', 0)
+    const highClimbing = runMountainWithClimbing('r03', 100)
+
+    expect(
+      findClimbCheckpointForRider(lowClimbing, 'r03'),
+    ).not.toBeNull()
+    expect(
+      findClimbCheckpointForRider(highClimbing, 'r03'),
+    ).not.toBeNull()
+
+    const totalMovementCost = (
+      result: ReturnType<typeof runMountainWithClimbing>,
+    ) =>
+      result.checkpoints.reduce((total, checkpoint) => {
+        const riderSnapshot = checkpoint.riderSnapshots.find(
+          (rider) => rider.riderId === 'r03',
+        )
+
+        return total + (riderSnapshot?.movementEnergyCost ?? 0)
+      }, 0)
+
+    const lowFinalRider = lowClimbing.checkpoints
+      .at(-1)
+      ?.riderSnapshots.find(
+        (rider) => rider.riderId === 'r03',
+      )
+    const highFinalRider = highClimbing.checkpoints
+      .at(-1)
+      ?.riderSnapshots.find(
+        (rider) => rider.riderId === 'r03',
+      )
+
+    expect(lowFinalRider).toBeDefined()
+    expect(highFinalRider).toBeDefined()
+
+    expect(totalMovementCost(highClimbing)).toBeLessThan(
+      totalMovementCost(lowClimbing),
+    )
+    expect(highFinalRider!.energy).toBeGreaterThan(
+      lowFinalRider!.energy,
+    )
+  })
+
+  it('does not change flat-stage energy cost regardless of climbing', () => {
+    const lowClimbing = runFlatWithClimbing('r03', 0)
+    const highClimbing = runFlatWithClimbing('r03', 100)
+
+    const lowClimbingRider = lowClimbing.checkpoints
+      .at(-1)
+      ?.riderSnapshots.find(
+        (rider) => rider.riderId === 'r03',
+      )
+    const highClimbingRider = highClimbing.checkpoints
+      .at(-1)
+      ?.riderSnapshots.find(
+        (rider) => rider.riderId === 'r03',
+      )
+
+    expect(lowClimbingRider).toBeDefined()
+    expect(highClimbingRider).toBeDefined()
+
+    expect(
+      highClimbingRider!.movementEnergyCost,
+    ).toBe(lowClimbingRider!.movementEnergyCost)
+    expect(highClimbingRider!.energy).toBe(
+      lowClimbingRider!.energy,
+    )
+  })
+
+  it('is deterministic with climbing applied', () => {
+    expect(
+      runMountainWithClimbing('r03', 100),
+    ).toEqual(runMountainWithClimbing('r03', 100))
+  })
+
+  it('preserves movement, groups, gaps, finish times and outcome when climbing differs', () => {
+    const lowClimbing = runMountainWithClimbing('r03', 0)
+    const highClimbing = runMountainWithClimbing(
+      'r03',
+      100,
+    )
+
+    expect(
+      highClimbing.checkpoints.map((checkpoint) => ({
+        checkpointIndex: checkpoint.checkpointIndex,
+        currentKm: checkpoint.currentKm,
+        groups: checkpoint.groups.map((group) => ({
+          groupId: group.groupId,
+          riderIds: group.riderIds,
+          distanceKm: group.distanceKm,
+          speedKmh: group.speedKmh,
+          gapSecondsToLeader: group.gapSecondsToLeader,
+        })),
+        riderMovement: checkpoint.riderSnapshots.map(
+          (rider) => ({
+            riderId: rider.riderId,
+            groupId: rider.groupId,
+            distanceKm: rider.distanceKm,
+            speedKmh: rider.speedKmh,
+            gapSecondsToLeader:
+              rider.gapSecondsToLeader,
+          }),
+        ),
+      })),
+    ).toEqual(
+      lowClimbing.checkpoints.map((checkpoint) => ({
+        checkpointIndex: checkpoint.checkpointIndex,
+        currentKm: checkpoint.currentKm,
+        groups: checkpoint.groups.map((group) => ({
+          groupId: group.groupId,
+          riderIds: group.riderIds,
+          distanceKm: group.distanceKm,
+          speedKmh: group.speedKmh,
+          gapSecondsToLeader: group.gapSecondsToLeader,
+        })),
+        riderMovement: checkpoint.riderSnapshots.map(
+          (rider) => ({
+            riderId: rider.riderId,
+            groupId: rider.groupId,
+            distanceKm: rider.distanceKm,
+            speedKmh: rider.speedKmh,
+            gapSecondsToLeader:
+              rider.gapSecondsToLeader,
+          }),
+        ),
+      })),
+    )
+
+    expect(highClimbing.stageResults.results).toEqual(
+      lowClimbing.stageResults.results,
+    )
+    expect(
+      highClimbing.stageResults.winnerFinishTimeSeconds,
+    ).toBe(
+      lowClimbing.stageResults.winnerFinishTimeSeconds,
+    )
+    expect(highClimbing.physicalOutcome).toBe(
+      lowClimbing.physicalOutcome,
+    )
+    expect(
+      highClimbing.outcomeSequence.outcomeCheckpointIndex,
+    ).toBe(
+      lowClimbing.outcomeSequence.outcomeCheckpointIndex,
     )
   })
 })
