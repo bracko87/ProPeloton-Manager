@@ -8,9 +8,6 @@ const corsHeaders = {
 
 const jsonHeaders = { ...corsHeaders, 'Content-Type': 'application/json' }
 
-const DEFAULT_COIN_PRICE = 10
-const DEFAULT_DURATION_DAYS = 30
-
 type QuoteBody = {
   action: 'quote'
   club_id: string
@@ -34,14 +31,6 @@ type RequestBody = QuoteBody | ActivateBody | SetPinsBody
 
 function response(status: number, body: unknown): Response {
   return new Response(JSON.stringify(body), { status, headers: jsonHeaders })
-}
-
-function readPositiveIntegerEnv(name: string, fallback: number): number {
-  const raw = Deno.env.get(name)
-  if (!raw) return fallback
-
-  const value = Number(raw)
-  return Number.isInteger(value) && value > 0 ? value : fallback
 }
 
 Deno.serve(async (req) => {
@@ -83,14 +72,6 @@ Deno.serve(async (req) => {
     }
 
     const body = (await req.json()) as RequestBody
-    const coinPrice = readPositiveIntegerEnv(
-      'STAFF_ADVISORY_COIN_PRICE',
-      DEFAULT_COIN_PRICE,
-    )
-    const durationDays = readPositiveIntegerEnv(
-      'STAFF_ADVISORY_DURATION_DAYS',
-      DEFAULT_DURATION_DAYS,
-    )
 
     if (!body?.action || !body.club_id) {
       return response(400, { ok: false, message: 'Missing action or club_id.' })
@@ -101,26 +82,16 @@ Deno.serve(async (req) => {
         return response(400, { ok: false, message: 'Missing staff_id.' })
       }
 
-      const { data, error } = await supabase.rpc('staff_advisory_quote_v1', {
+      const { data, error } = await supabase.rpc('staff_advisory_quote_secure_v1', {
         p_club_id: body.club_id,
         p_staff_id: body.staff_id,
-        p_coin_price: coinPrice,
-        p_duration_days: durationDays,
       })
 
       if (error) {
         return response(400, { ok: false, message: error.message })
       }
 
-      return response(200, {
-        ok: true,
-        quote: data,
-        commercial_terms: {
-          coin_price: coinPrice,
-          duration_days: durationDays,
-          automatic_renewal: false,
-        },
-      })
+      return response(200, { ok: true, quote: data })
     }
 
     if (body.action === 'activate') {
@@ -131,12 +102,10 @@ Deno.serve(async (req) => {
         })
       }
 
-      const { data, error } = await supabase.rpc('staff_advisory_activate_v1', {
+      const { data, error } = await supabase.rpc('staff_advisory_activate_secure_v1', {
         p_club_id: body.club_id,
         p_staff_id: body.staff_id,
         p_idempotency_key: body.idempotency_key.trim(),
-        p_coin_price: coinPrice,
-        p_duration_days: durationDays,
       })
 
       if (error) {
@@ -152,12 +121,18 @@ Deno.serve(async (req) => {
       }
 
       if (body.staff_ids.length > 5) {
-        return response(400, { ok: false, message: 'A maximum of five staff cards can be pinned.' })
+        return response(400, {
+          ok: false,
+          message: 'A maximum of five staff cards can be pinned.',
+        })
       }
 
       const uniqueIds = Array.from(new Set(body.staff_ids))
       if (uniqueIds.length !== body.staff_ids.length) {
-        return response(400, { ok: false, message: 'Duplicate staff IDs are not allowed.' })
+        return response(400, {
+          ok: false,
+          message: 'Duplicate staff IDs are not allowed.',
+        })
       }
 
       const { error } = await supabase.rpc('staff_advisory_set_pins_v1', {
