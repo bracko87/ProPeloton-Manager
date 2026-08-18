@@ -26,13 +26,13 @@ export type AdvisoryCommercialDefaults = {
 }
 
 /**
- * These values remain provisional until the notification audit is complete.
- * Do not use this object as an irreversible billing contract.
+ * Audited launch terms. The database-owned staff_advisory_config row remains the
+ * authoritative runtime source so clients cannot override price or duration.
  */
 export const ADVISORY_COMMERCIAL_DEFAULTS: AdvisoryCommercialDefaults = {
   coinPrice: 10,
   durationRealDays: 30,
-  finalPricingConfirmed: false,
+  finalPricingConfirmed: true,
   automaticRenewal: false,
 }
 
@@ -101,7 +101,7 @@ export const STAFF_ADVISORY_REPORTS: ReadonlyArray<AdvisoryReportDefinition> = [
     title: 'Team Health Review',
     description:
       'Summarises visible injuries, sickness, recovery status and team-health trends without changing medical outcomes.',
-    cadence: 'event',
+    cadence: 'daily',
     allowedContent: [
       'Summarise visible injury and sickness cases',
       'Highlight recovery trends and clusters',
