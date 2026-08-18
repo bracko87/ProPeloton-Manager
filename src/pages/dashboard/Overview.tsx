@@ -278,9 +278,60 @@ type CoinStatusRow = {
 
 type StaffBriefingRole = {
   key: string;
+  roleType: "head_coach" | "sport_director" | "team_doctor" | "mechanic" | "scout_analyst";
   label: string;
-  initials: string;
-  description: string;
+  skills: Array<{ key: StaffBriefingSkillKey; label: string }>;
+};
+
+type StaffBriefingSkillKey =
+  | "expertise"
+  | "experience"
+  | "potential"
+  | "leadership"
+  | "efficiency"
+  | "loyalty";
+
+type StaffBriefingMember = {
+  id: string;
+  role_type: string;
+  staff_name: string;
+  country_code: string | null;
+  expertise: number;
+  experience: number;
+  potential: number;
+  leadership: number;
+  efficiency: number;
+  loyalty: number;
+  is_active: boolean;
+};
+
+
+type StaffAdvisoryOverviewRow = {
+  role_type: StaffBriefingRole["roleType"];
+  eligible_staff_count: number;
+  advisor_staff_id: string | null;
+  advisor_staff_name: string | null;
+  advisor_country_code: string | null;
+  advisor_expertise: number | null;
+  advisor_experience: number | null;
+  advisor_potential: number | null;
+  advisor_leadership: number | null;
+  advisor_efficiency: number | null;
+  advisor_loyalty: number | null;
+  advisory_status: "no_staff" | "unassigned" | "active" | "expired";
+  advisory_expires_at: string | null;
+};
+
+type StaffAdvisoryQuoteRow = {
+  staff_id: string;
+  staff_name: string;
+  role_type: string;
+  coin_price: number;
+  duration_real_days: number;
+  current_expires_at: string | null;
+  proposed_expires_at: string;
+  is_renewal: boolean;
+  automatic_renewal: boolean;
 };
 
 type OverviewNextRaceRow = {
@@ -3713,78 +3764,332 @@ function AttentionBubbleSlider({
 const STAFF_BRIEFING_ROLES: StaffBriefingRole[] = [
   {
     key: "head-coach",
+    roleType: "head_coach",
     label: "Head Coach",
-    initials: "HC",
-    description: "Readiness and preparation",
+    skills: [
+      { key: "expertise", label: "Training" },
+      { key: "efficiency", label: "Recovery Planning" },
+      { key: "potential", label: "Youth Development" },
+    ],
   },
   {
     key: "sports-director",
+    roleType: "sport_director",
     label: "Sports Director",
-    initials: "SD",
-    description: "Race planning and strategy",
+    skills: [
+      { key: "expertise", label: "Tactics" },
+      { key: "efficiency", label: "Organization" },
+      { key: "leadership", label: "Motivation" },
+    ],
   },
   {
     key: "team-doctor",
+    roleType: "team_doctor",
     label: "Team Doctor",
-    initials: "TD",
-    description: "Health and recovery",
+    skills: [
+      { key: "expertise", label: "Recovery" },
+      { key: "experience", label: "Diagnosis" },
+      { key: "efficiency", label: "Prevention" },
+    ],
   },
   {
     key: "chief-mechanic",
+    roleType: "mechanic",
     label: "Chief Mechanic",
-    initials: "CM",
-    description: "Equipment and maintenance",
+    skills: [
+      { key: "expertise", label: "Setup" },
+      { key: "efficiency", label: "Reliability" },
+      { key: "experience", label: "Experience" },
+    ],
   },
   {
     key: "scout",
+    roleType: "scout_analyst",
     label: "Scout",
-    initials: "SC",
-    description: "Recruitment and prospects",
+    skills: [
+      { key: "expertise", label: "Evaluation" },
+      { key: "efficiency", label: "Accuracy" },
+      { key: "experience", label: "Network" },
+    ],
   },
 ];
 
 function StaffBriefingCentre({
-  alerts,
+  clubId,
   inboxUnread,
   notificationsUnread,
   coinBalance,
   coinBalanceLoading,
   refreshing,
-  onOpenAlert,
 }: {
-  alerts: AlertItem[];
+  clubId: string | null;
   inboxUnread: number;
   notificationsUnread: number;
   coinBalance: number | null;
   coinBalanceLoading: boolean;
   refreshing: boolean;
-  onOpenAlert?: (alert: AlertItem) => void;
 }) {
-  void alerts;
-  void coinBalance;
-  void coinBalanceLoading;
-  void onOpenAlert;
+  const [overviewRows, setOverviewRows] = React.useState<StaffAdvisoryOverviewRow[]>([]);
+  const [staffLoading, setStaffLoading] = React.useState(true);
+  const [staffError, setStaffError] = React.useState<string | null>(null);
+
+  const [assignRole, setAssignRole] = React.useState<StaffBriefingRole | null>(null);
+  const [eligibleStaff, setEligibleStaff] = React.useState<StaffBriefingMember[]>([]);
+  const [eligibleStaffLoading, setEligibleStaffLoading] = React.useState(false);
+  const [selectedStaffId, setSelectedStaffId] = React.useState<string>("");
+  const [quote, setQuote] = React.useState<StaffAdvisoryQuoteRow | null>(null);
+  const [quoteLoading, setQuoteLoading] = React.useState(false);
+  const [activationLoading, setActivationLoading] = React.useState(false);
+  const [assignError, setAssignError] = React.useState<string | null>(null);
+
+  const formatAdvisoryDate = React.useCallback((value: string | null) => {
+    if (!value) return "—";
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return value;
+
+    return new Intl.DateTimeFormat(undefined, {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    }).format(date);
+  }, []);
+
+  const loadOverview = React.useCallback(async () => {
+    if (!clubId) {
+      setOverviewRows([]);
+      setStaffLoading(false);
+      return;
+    }
+
+    setStaffLoading(true);
+    setStaffError(null);
+
+    try {
+      const { data, error } = await supabase.rpc(
+        "staff_advisory_get_overview_v1",
+        { p_club_id: clubId },
+      );
+
+      if (error) throw error;
+
+      setOverviewRows(asArray<StaffAdvisoryOverviewRow>(data));
+    } catch (err) {
+      console.warn("Could not load Staff Advisory overview:", err);
+      setOverviewRows([]);
+      setStaffError("Staff Advisory details are temporarily unavailable.");
+    } finally {
+      setStaffLoading(false);
+    }
+  }, [clubId]);
+
+  React.useEffect(() => {
+    void loadOverview();
+  }, [loadOverview]);
+
+  const overviewByRole = React.useMemo(() => {
+    const map = new Map<string, StaffAdvisoryOverviewRow>();
+
+    for (const row of overviewRows) {
+      map.set(row.role_type, row);
+    }
+
+    return map;
+  }, [overviewRows]);
+
+  async function openAssignAdvisor(role: StaffBriefingRole, preferredStaffId?: string | null) {
+    if (!clubId) return;
+
+    setAssignRole(role);
+    setEligibleStaff([]);
+    setEligibleStaffLoading(true);
+    setSelectedStaffId(preferredStaffId ?? "");
+    setQuote(null);
+    setAssignError(null);
+
+    try {
+      const { data, error } = await supabase.rpc(
+        "get_club_staff_with_current_assignments",
+        { p_club_id: clubId },
+      );
+
+      if (error) throw error;
+
+      const matching = asArray<StaffBriefingMember>(data).filter(
+        (member) =>
+          member.is_active !== false &&
+          member.role_type === role.roleType,
+      );
+
+      setEligibleStaff(matching);
+
+      const nextSelected =
+        preferredStaffId && matching.some((member) => member.id === preferredStaffId)
+          ? preferredStaffId
+          : matching[0]?.id ?? "";
+
+      setSelectedStaffId(nextSelected);
+
+      if (nextSelected) {
+        await loadQuote(nextSelected);
+      }
+    } catch (err) {
+      console.warn("Could not load eligible advisors:", err);
+      setAssignError(
+        err instanceof Error ? err.message : "Could not load eligible staff.",
+      );
+    } finally {
+      setEligibleStaffLoading(false);
+    }
+  }
+
+  async function loadQuote(staffId: string) {
+    if (!clubId || !staffId) {
+      setQuote(null);
+      return;
+    }
+
+    setQuoteLoading(true);
+    setQuote(null);
+    setAssignError(null);
+
+    try {
+      const { data, error } = await supabase.rpc("staff_advisory_quote_v1", {
+        p_club_id: clubId,
+        p_staff_id: staffId,
+      });
+
+      if (error) throw error;
+
+      const nextQuote = asArray<StaffAdvisoryQuoteRow>(data)[0] ?? null;
+      setQuote(nextQuote);
+    } catch (err) {
+      setAssignError(
+        err instanceof Error ? err.message : "Could not load advisory quote.",
+      );
+    } finally {
+      setQuoteLoading(false);
+    }
+  }
+
+  async function handleAdvisorSelection(staffId: string) {
+    setSelectedStaffId(staffId);
+    await loadQuote(staffId);
+  }
+
+  async function confirmAdvisorActivation() {
+    if (!clubId || !selectedStaffId || !quote) return;
+
+    if ((coinBalance ?? 0) < quote.coin_price) {
+      setAssignError(
+        `Not enough coins. ${quote.coin_price} coins are required and your current balance is ${coinBalance ?? 0}.`,
+      );
+      return;
+    }
+
+    setActivationLoading(true);
+    setAssignError(null);
+
+    try {
+      const idempotencyKey =
+        typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
+          ? crypto.randomUUID()
+          : `staff-advisory-${selectedStaffId}-${Date.now()}`;
+
+      const { data, error } = await supabase.functions.invoke(
+        "staff-advisory-activate",
+        {
+          body: {
+            clubId,
+            staffId: selectedStaffId,
+            idempotencyKey,
+          },
+        },
+      );
+
+      if (error) {
+        let detailedMessage =
+          error.message || "Staff Advisory activation failed.";
+
+        try {
+          const context = (error as { context?: Response }).context;
+
+          if (context && typeof context.clone === "function") {
+            const responseBody = await context.clone().json().catch(() => null) as {
+              error?: unknown;
+              details?: unknown;
+              hint?: unknown;
+              code?: unknown;
+            } | null;
+
+            const parts = [
+              responseBody?.error,
+              responseBody?.details,
+              responseBody?.hint,
+              responseBody?.code ? `Code: ${responseBody.code}` : null,
+            ]
+              .filter(
+                (value) =>
+                  value !== null &&
+                  value !== undefined &&
+                  String(value).trim() !== "",
+              )
+              .map((value) => String(value));
+
+            if (parts.length > 0) {
+              detailedMessage = parts.join(" · ");
+            }
+          }
+        } catch (contextError) {
+          console.warn(
+            "Could not read Staff Advisory Edge Function error body:",
+            contextError,
+          );
+        }
+
+        console.error("Staff Advisory activation failed:", error);
+        throw new Error(detailedMessage);
+      }
+
+      const responseError =
+        data && typeof data === "object" && "error" in data
+          ? String((data as { error?: unknown }).error ?? "")
+          : "";
+
+      if (responseError) {
+        throw new Error(responseError);
+      }
+
+      setAssignRole(null);
+      setEligibleStaff([]);
+      setSelectedStaffId("");
+      setQuote(null);
+      await loadOverview();
+    } catch (err) {
+      setAssignError(
+        err instanceof Error ? err.message : "Could not activate Staff Advisory.",
+      );
+    } finally {
+      setActivationLoading(false);
+    }
+  }
 
   return (
     <Card className="border-slate-200/80 bg-white p-4 shadow-sm">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
-            <h2 className="text-base font-black tracking-tight text-slate-950">
+            <h2 className="text-sm font-black tracking-tight text-slate-950">
               Staff Briefing Centre
             </h2>
-            <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.12em] text-slate-600">
-              Coming soon
-            </span>
-            {refreshing ? (
+            {refreshing || staffLoading ? (
               <span
                 className="h-1.5 w-1.5 rounded-full bg-sky-500"
                 title="Refreshing"
               />
             ) : null}
           </div>
-          <p className="mt-0.5 text-[11px] font-medium text-slate-500">
-            Your coaching and support team
+          <p className="mt-0.5 text-[10px] font-medium text-slate-500">
+            Assign staff as optional advisors for additional analysis and reports.
           </p>
         </div>
 
@@ -3816,35 +4121,291 @@ function StaffBriefingCentre({
         </div>
       </div>
 
-      <div className="mt-3 grid auto-cols-[176px] grid-flow-col gap-2.5 overflow-x-auto pb-1 lg:grid-flow-row lg:grid-cols-5 lg:overflow-visible lg:pb-0">
-        {STAFF_BRIEFING_ROLES.map((role) => (
-          <div
-            key={role.key}
-            className="flex h-[104px] flex-col rounded-xl border border-slate-200 bg-slate-50/80 p-2.5"
-          >
-            <div className="flex items-center justify-between gap-2">
-              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-white text-[9px] font-black text-slate-800 ring-1 ring-slate-200">
-                {role.initials}
-              </span>
-              <span className="truncate rounded-full bg-slate-200 px-1.5 py-0.5 text-[8px] font-black uppercase tracking-[0.08em] text-slate-600">
-                Coming soon
-              </span>
+      {staffError ? (
+        <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[11px] font-medium text-amber-800">
+          {staffError}
+        </div>
+      ) : null}
+
+      <div className="mt-2.5 grid auto-cols-[195px] grid-flow-col gap-2 overflow-x-auto pb-1 lg:grid-flow-row lg:grid-cols-5 lg:overflow-visible lg:pb-0">
+        {STAFF_BRIEFING_ROLES.map((role) => {
+          const row = overviewByRole.get(role.roleType);
+          const status = row?.advisory_status ?? "no_staff";
+          const hasAdvisor =
+            Boolean(row?.advisor_staff_id) &&
+            (status === "active" || status === "expired");
+
+          const advisorStatMap: Record<StaffBriefingSkillKey, number> = {
+            expertise: Number(row?.advisor_expertise ?? 0),
+            experience: Number(row?.advisor_experience ?? 0),
+            potential: Number(row?.advisor_potential ?? 0),
+            leadership: Number(row?.advisor_leadership ?? 0),
+            efficiency: Number(row?.advisor_efficiency ?? 0),
+            loyalty: Number(row?.advisor_loyalty ?? 0),
+          };
+
+          const countryCode =
+            row?.advisor_country_code?.trim().toUpperCase() ?? "";
+
+          return (
+            <div
+              key={role.key}
+              className={`flex min-h-[132px] flex-col rounded-xl border p-2.5 ${
+                status === "no_staff"
+                  ? "border-slate-200 bg-slate-100/80 text-slate-400"
+                  : "border-slate-200 bg-white"
+              }`}
+            >
+              <div className="flex items-start justify-between gap-2">
+                <div
+                  className={`text-[11px] font-black ${
+                    status === "no_staff" ? "text-slate-500" : "text-slate-950"
+                  }`}
+                >
+                  {role.label}
+                </div>
+
+                {status === "active" && row?.advisor_staff_id ? (
+                  <a
+                    href={`#/dashboard/notifications?advisor_staff_id=${encodeURIComponent(row.advisor_staff_id)}&advisor_role=${encodeURIComponent(role.roleType)}`}
+                    title={`Open advisory notifications from ${row.advisor_staff_name ?? role.label}`}
+                    aria-label={`Open advisory notifications from ${row.advisor_staff_name ?? role.label}`}
+                    className="relative inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-red-200 bg-red-50 text-[13px] text-red-600 transition hover:bg-red-100"
+                  >
+                    <span aria-hidden="true">🔔</span>
+                    <span className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full border border-white bg-red-500" />
+                  </a>
+                ) : null}
+              </div>
+
+              {staffLoading ? (
+                <div className="mt-2 space-y-2">
+                  <div className="h-4 w-3/4 animate-pulse rounded bg-slate-200" />
+                  <div className="h-3 w-full animate-pulse rounded bg-slate-100" />
+                  <div className="h-3 w-5/6 animate-pulse rounded bg-slate-100" />
+                </div>
+              ) : status === "no_staff" ? (
+                <>
+                  <div className="mt-1.5 text-[10px] font-bold text-slate-500">
+                    No staff available
+                  </div>
+                  <div className="mt-1 text-[8px] leading-3.5 text-slate-400">
+                    Hire an eligible {role.label.toLowerCase()} on the Staff page before assigning an advisor.
+                  </div>
+                  <div className="mt-auto pt-1.5 text-[8px] font-semibold text-slate-400">
+                    Advisory unavailable
+                  </div>
+                </>
+              ) : status === "unassigned" ? (
+                <>
+                  <div className="mt-1.5 text-[10px] font-bold text-slate-700">
+                    No advisor assigned
+                  </div>
+                  <div className="mt-1 text-[8px] leading-3.5 text-slate-500">
+                    {row?.eligible_staff_count === 1
+                      ? "1 eligible staff member is available."
+                      : `${row?.eligible_staff_count ?? 0} eligible staff members are available.`}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => void openAssignAdvisor(role)}
+                    className="mt-auto inline-flex self-start rounded-lg bg-slate-950 px-2 py-1 text-[8px] font-black text-white transition hover:bg-slate-800"
+                  >
+                    Assign advisor
+                  </button>
+                </>
+              ) : hasAdvisor ? (
+                <>
+                  <div className="mt-1.5 flex min-w-0 items-center gap-1.5">
+                    {countryCode ? (
+                      <img
+                        src={getCountryFlagUrl(countryCode)}
+                        alt={`${countryCode} flag`}
+                        title={countryCode}
+                        className="h-3.5 w-5 shrink-0 rounded-[2px] object-cover ring-1 ring-slate-200"
+                        loading="lazy"
+                      />
+                    ) : null}
+                    <span className="truncate text-[10px] font-bold text-slate-800">
+                      {row?.advisor_staff_name ?? "Advisor"}
+                    </span>
+                  </div>
+
+                  <div className="mt-1.5 space-y-0.5">
+                    {role.skills.map((skill) => (
+                      <div
+                        key={skill.key}
+                        className="flex items-center justify-between gap-2 text-[8px] leading-3.5"
+                      >
+                        <span className="truncate text-slate-500">{skill.label}</span>
+                        <span className="shrink-0 font-black tabular-nums text-slate-800">
+                          {Math.round(advisorStatMap[skill.key])}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="mt-auto flex items-end justify-between gap-2 pt-2">
+                    <div
+                      className={`text-[8px] font-semibold ${
+                        status === "active" ? "text-emerald-700" : "text-amber-700"
+                      }`}
+                    >
+                      {status === "active"
+                        ? `Active until ${formatAdvisoryDate(row?.advisory_expires_at ?? null)}`
+                        : `Expired ${formatAdvisoryDate(row?.advisory_expires_at ?? null)}`}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        void openAssignAdvisor(role, row?.advisor_staff_id ?? null)
+                      }
+                      className="shrink-0 rounded-lg border border-slate-300 bg-white px-2 py-1 text-[8px] font-black text-slate-700 transition hover:bg-slate-50"
+                    >
+                      Renew
+                    </button>
+                  </div>
+                </>
+              ) : null}
             </div>
-            <div className="mt-1.5 truncate text-xs font-black text-slate-950">
-              {role.label}
+          );
+        })}
+      </div>
+
+      {assignRole ? (
+        <div className="fixed inset-0 z-[80] flex items-center justify-center bg-slate-950/50 p-4">
+          <div className="w-full max-w-lg rounded-2xl bg-white p-5 shadow-2xl">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <div className="text-base font-black text-slate-950">
+                  {quote?.is_renewal ? "Renew advisor" : "Assign advisor"}
+                </div>
+                <div className="mt-1 text-xs text-slate-500">
+                  {assignRole.label}
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  if (activationLoading) return;
+                  setAssignRole(null);
+                  setQuote(null);
+                  setAssignError(null);
+                }}
+                className="rounded-lg border border-slate-200 px-2 py-1 text-xs font-bold text-slate-600"
+              >
+                Close
+              </button>
             </div>
-            <div className="mt-0.5 truncate text-[10px] leading-4 text-slate-500">
-              {role.description}
-            </div>
-            <div className="mt-auto text-[10px] font-bold text-slate-700">
-              10 coins / 30 days
+
+            {eligibleStaffLoading ? (
+              <div className="mt-4 text-sm text-slate-500">Loading eligible staff…</div>
+            ) : eligibleStaff.length > 0 ? (
+              <div className="mt-4">
+                <label className="text-[11px] font-bold text-slate-700">
+                  Staff member
+                </label>
+                <select
+                  value={selectedStaffId}
+                  onChange={(event) => void handleAdvisorSelection(event.target.value)}
+                  disabled={activationLoading}
+                  className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800"
+                >
+                  {eligibleStaff.map((staff) => (
+                    <option key={staff.id} value={staff.id}>
+                      {staff.staff_name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            ) : (
+              <div className="mt-4 rounded-xl bg-slate-50 px-3 py-3 text-sm text-slate-500">
+                No eligible staff members are available for this role.
+              </div>
+            )}
+
+            {quoteLoading ? (
+              <div className="mt-4 text-sm text-slate-500">Loading quote…</div>
+            ) : quote ? (
+              <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-3">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="font-semibold text-slate-600">Price</span>
+                  <span className="font-black text-slate-950">
+                    {quote.coin_price} coins
+                  </span>
+                </div>
+                <div className="mt-2 flex items-center justify-between text-sm">
+                  <span className="font-semibold text-slate-600">Duration</span>
+                  <span className="font-black text-slate-950">
+                    {quote.duration_real_days} real-life days
+                  </span>
+                </div>
+                <div className="mt-2 flex items-center justify-between gap-4 text-sm">
+                  <span className="font-semibold text-slate-600">New expiry</span>
+                  <span className="text-right font-black text-slate-950">
+                    {formatAdvisoryDate(quote.proposed_expires_at)}
+                  </span>
+                </div>
+                <div className="mt-2 flex items-center justify-between text-sm">
+                  <span className="font-semibold text-slate-600">Automatic renewal</span>
+                  <span className="font-black text-slate-950">No</span>
+                </div>
+                <div className="mt-2 flex items-center justify-between text-sm">
+                  <span className="font-semibold text-slate-600">Coin balance</span>
+                  <span className="font-black text-slate-950">
+                    {coinBalanceLoading ? "…" : coinBalance ?? 0}
+                  </span>
+                </div>
+              </div>
+            ) : null}
+
+            {assignError ? (
+              <div className="mt-4 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700">
+                {assignError}
+              </div>
+            ) : null}
+
+            <div className="mt-5 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  if (activationLoading) return;
+                  setAssignRole(null);
+                  setQuote(null);
+                  setAssignError(null);
+                }}
+                className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-black text-slate-700"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => void confirmAdvisorActivation()}
+                disabled={
+                  activationLoading ||
+                  quoteLoading ||
+                  !quote ||
+                  !selectedStaffId ||
+                  (coinBalance ?? 0) < (quote?.coin_price ?? Number.POSITIVE_INFINITY)
+                }
+                className="rounded-xl bg-slate-950 px-3 py-2 text-xs font-black text-white disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                {activationLoading
+                  ? "Activating…"
+                  : quote?.is_renewal
+                    ? `Renew for ${quote.coin_price} coins`
+                    : quote
+                      ? `Assign for ${quote.coin_price} coins`
+                      : "Confirm"}
+              </button>
             </div>
           </div>
-        ))}
-      </div>
+        </div>
+      ) : null}
     </Card>
   );
 }
+
 
 function openPremiumPage() {
   window.location.hash = "#/dashboard/pro";
@@ -7062,13 +7623,12 @@ export default function OverviewPage() {
       {/* Compact Staff Briefing Centre design placeholder. */}
       <div data-tutorial-target="overview-attention">
         <StaffBriefingCentre
-          alerts={attentionItems}
+          clubId={data.club.id?.trim() || null}
           inboxUnread={data.club.inboxUnread}
           notificationsUnread={data.club.notificationsUnread}
           coinBalance={coinBalance}
           coinBalanceLoading={coinBalanceLoading}
           refreshing={refreshing}
-          onOpenAlert={handleOpenAttentionItem}
         />
       </div>
 

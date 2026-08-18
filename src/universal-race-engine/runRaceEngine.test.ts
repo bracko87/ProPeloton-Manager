@@ -10690,11 +10690,15 @@ describe('Phase 7 read-only replay page integration — Task 7.3', () => {
     expect(source).not.toContain('function buildUniversalShadowCommentary')
   })
 
-  it('runs the universal race calculation exactly once for the replay', () => {
+  it('runs the universal race calculation exactly once on the backend and never in the replay page', () => {
     const source = readReplayPageSource()
-    const calls = source.match(/runRaceEngine\(/g) ?? []
+    const runnerSource = readFileSync(
+      new URL('../../netlify/functions/universal-race-stage-runner.ts', import.meta.url),
+      'utf8',
+    )
 
-    expect(calls).toHaveLength(1)
+    expect(source.match(/runRaceEngine\(/g) ?? []).toHaveLength(0)
+    expect(runnerSource.match(/runRaceEngine\(/g) ?? []).toHaveLength(1)
     expect(source).not.toContain('buildUniversalPhase6SprintAudit')
     expect(source).not.toContain('__PPM_PHASE6_SPRINT_AUDIT__')
   })
@@ -11224,7 +11228,7 @@ describe('Phase 7 final replay-to-result synchronization — Task 7.5', () => {
     expect(source).toContain(
       'result.replaySynchronization.issues.join',
     )
-    expect(source.match(/runRaceEngine\(/g) ?? []).toHaveLength(1)
+    expect(source.match(/runRaceEngine\(/g) ?? []).toHaveLength(0)
   })
 })
 
@@ -11245,23 +11249,29 @@ describe('Phase 7 final replay-page closeout', () => {
     expect(source).toContain('Race replay')
   })
 
-  it('uses phase-neutral replay and finish error messages', () => {
+  it('uses phase-neutral stored-replay error messages and never offers a browser calculation fallback', () => {
     const source = readReplayPageSource()
 
+    expect(source).toContain('Stored backend replay could not be loaded:')
     expect(source).toContain(
-      'Universal replay calculation stopped: real production rider inputs were not loaded.',
+      'The stored universal replay payload is unavailable or does not match this stage.',
     )
-    expect(source).toContain(
+    expect(source).toContain('No browser fallback calculation was executed.')
+    expect(source).not.toContain('Universal shadow calculation failed.')
+    expect(source).not.toContain(
       'The universal finish resolution did not return a complete winner and classification.',
     )
-    expect(source).toContain('Some replay inputs were unavailable:')
-    expect(source).not.toContain('Universal shadow calculation failed.')
   })
 
-  it('preserves one calculation, synchronization rejection and all playback speeds', () => {
+  it('preserves backend-only calculation, synchronization rejection and all playback speeds', () => {
     const source = readReplayPageSource()
+    const runnerSource = readFileSync(
+      new URL('../../netlify/functions/universal-race-stage-runner.ts', import.meta.url),
+      'utf8',
+    )
 
-    expect(source.match(/runRaceEngine\(/g) ?? []).toHaveLength(1)
+    expect(source.match(/runRaceEngine\(/g) ?? []).toHaveLength(0)
+    expect(runnerSource.match(/runRaceEngine\(/g) ?? []).toHaveLength(1)
     expect(source).toContain('if (!result.replaySynchronization.synchronized)')
     expect(source).toContain('[1, 2, 4, 8].map')
     expect(source).toContain('Finish replay')
@@ -12171,8 +12181,9 @@ describe('Combined Phase 7 + Phase 8 engine and UI acceptance audit', () => {
 
     expect(replayStart).toBeGreaterThanOrEqual(0)
     expect(replayEnd).toBeGreaterThan(replayStart)
-    expect(runCalls).toHaveLength(1)
+    expect(runCalls).toHaveLength(0)
     expect(replaySource).toContain('result.replayTimeline.checkpoints')
+    expect(replaySource).toContain('get_universal_race_stage_replay_payload_v1')
     expect(replaySource).toContain('result.phase78Acceptance')
     expect(replaySource).toContain('Phase 7 + Phase 8 acceptance audit')
     expect(replaySource).toContain('downloadPhase78AcceptanceReport')
@@ -13209,6 +13220,9 @@ describe('Phase 7 replay continuity and measured chase pacing', () => {
     expect(source).toContain("checkpointIdSuffix: 'late-front-selection-formed'")
     expect(source).toContain("title: 'A front group forms under pressure'")
     expect(source).toContain('nonOpeningFrontGapAtKm')
+    expect(source).toContain('decisiveFrontTransferRiderIds')
+    expect(source).toContain("preDecisiveGroupByRiderId.get(riderId) === 'P'")
+    expect(source).toContain("decisiveGroupByRiderId.get(riderId)?.startsWith('F')")
     expect(source).not.toContain(
       "(openingFormationCheckpointIndex < 0 && eventTypes.has('late_chase'))",
     )
@@ -13795,55 +13809,46 @@ describe('Phase 9 unified weather, preparation and resource modifiers', () => {
     )
   })
 
-  it('loads canonical Phase 9 production inputs into the same browser engine call', () => {
+  it('loads canonical Phase 9 production inputs into the single backend engine call', () => {
     const pageSource = readFileSync(
       new URL('../pages/dashboard/RaceDetailPage.tsx', import.meta.url),
       'utf8',
     )
-
-    expect(pageSource).toContain(
-      "raceDetailReadRpc('race_engine_get_stage_phase9_inputs_v1'",
+    const runnerSource = readFileSync(
+      new URL('../../netlify/functions/universal-race-stage-runner.ts', import.meta.url),
+      'utf8',
     )
-    expect(pageSource).toContain(
-      'phase9ProductionPayload: UniversalPhase9ProductionPayload | null',
-    )
-    expect(pageSource).toContain(
-      'phase9Modifier.in_stage_energy_cost_multiplier',
-    )
-    expect(pageSource).toContain(
-      'phase9Modifier.post_stage_fatigue_multiplier',
-    )
-    expect(pageSource).toContain(
-      'phase9Modifier.post_stage_recovery_bonus_points',
-    )
-    expect(pageSource).toContain(
-      'productionPayload.preparation.equipment',
-    )
-    expect(pageSource).toContain(
-      'productionPayload.preparation.raceSupplies',
+    const migrationSource = readFileSync(
+      new URL(
+        '../../supabase/migrations/20260818_phase11b_universal_production_cutover.sql',
+        import.meta.url,
+      ),
+      'utf8',
     )
 
-    const engineCalls = pageSource.match(/const result = runRaceEngine\(input\)/g)
-    expect(engineCalls).toHaveLength(1)
+    expect(migrationSource).toContain('race_engine_get_stage_phase9_inputs_v1')
+    expect(migrationSource).toContain("'phase9_inputs'")
+    expect(runnerSource).toContain('phase9Payload: firstObject(payload.phase9_inputs)')
+    expect(runnerSource).toContain('buildProductionUniversalRaceEngineInput(sources)')
+    expect(pageSource.match(/runRaceEngine\(/g) ?? []).toHaveLength(0)
+    expect(runnerSource.match(/runRaceEngine\(/g) ?? []).toHaveLength(1)
   })
 
-  it('keeps Phase 9 production loading read-only and on the single browser engine call', () => {
+  it('keeps Phase 9 production loading backend-only while the replay page remains read-only', () => {
     const pageSource = readFileSync(
       new URL('../pages/dashboard/RaceDetailPage.tsx', import.meta.url),
       'utf8',
     )
-
-    expect(pageSource).toContain(
-      "raceDetailReadRpc('race_engine_get_stage_phase9_inputs_v1'",
+    const runnerSource = readFileSync(
+      new URL('../../netlify/functions/universal-race-stage-runner.ts', import.meta.url),
+      'utf8',
     )
+
     expect(pageSource).toContain('directDatabaseWritePerformed: false')
     expect(pageSource).toContain('persistenceAppliedByThisPage: false')
-    expect(pageSource).toContain(
-      "productionPayload.source ?? 'race_engine_get_stage_phase9_inputs_v1'",
-    )
-
-    const engineCalls = pageSource.match(/const result = runRaceEngine\(input\)/g)
-    expect(engineCalls).toHaveLength(1)
+    expect(pageSource).toContain('get_universal_race_stage_replay_payload_v1')
+    expect(pageSource.match(/runRaceEngine\(/g) ?? []).toHaveLength(0)
+    expect(runnerSource.match(/runRaceEngine\(/g) ?? []).toHaveLength(1)
   })
 
   it('merges server-normalized equipment and supplies into the Phase 9 engine input', () => {
@@ -15118,47 +15123,39 @@ describe('Phase 10 deterministic incidents, availability and final statuses', ()
     })
   })
 
-  it('promotes existing mechanic/equipment preparation fields into Phase 10 instead of recalculating them', () => {
+  it('keeps Phase 9/10 calculation ownership in the universal backend engine instead of the production page', () => {
     const pageSource = readFileSync(
       new URL('../pages/dashboard/RaceDetailPage.tsx', import.meta.url),
+      'utf8',
+    )
+    const runnerSource = readFileSync(
+      new URL(
+        '../../netlify/functions/universal-race-stage-runner.ts',
+        import.meta.url,
+      ),
       'utf8',
     )
 
     expect(pageSource).toContain('phase9Modifier.mechanical_incident_risk_multiplier')
     expect(pageSource).toContain('phase9Modifier.mechanical_time_loss_multiplier')
     expect(pageSource).toContain('phase9Modifier.equipment_condition_factor')
-    expect(pageSource).toContain('mechanicalIncidentRiskMultiplier')
-    expect(pageSource).toContain('mechanicalTimeLossMultiplier')
-    expect(pageSource).toContain('equipmentConditionPercent')
-    expect(pageSource.match(/runRaceEngine\(/g) ?? []).toHaveLength(1)
+    expect(pageSource.match(/runRaceEngine\(/g) ?? []).toHaveLength(0)
+    expect(runnerSource.match(/runRaceEngine\(/g) ?? []).toHaveLength(1)
   })
 
-  it('opens all six Rio Tour acceptance stages through the same production-input universal replay path', () => {
+  it('keeps every Rio Tour replay behind the same stored backend lifecycle with no development unlock', () => {
     const pageSource = readFileSync(
       new URL('../pages/dashboard/RaceDetailPage.tsx', import.meta.url),
       'utf8',
     )
 
-    expect(pageSource).toContain(
-      'const RIO_TOUR_ACCEPTANCE_REPLAY_STAGE_NUMBERS = new Set([1, 2, 3, 4, 5, 6])',
-    )
-    expect(pageSource).toContain(
-      'RIO_TOUR_ACCEPTANCE_REPLAY_STAGE_NUMBERS.has(stageNumber)',
-    )
-    expect(pageSource).toContain(
-      "raceDetailReadRpc('race_engine_get_stage_rider_inputs_v1'",
-    )
-    expect(pageSource).toContain(
-      "raceDetailReadRpc('race_engine_get_stage_phase_commands_v1'",
-    )
-    expect(pageSource).toContain(
-      "raceDetailReadRpc('race_engine_get_stage_phase9_inputs_v1'",
-    )
-    expect(pageSource).toContain('p_stage_id: stage.id')
-    expect(pageSource).toContain(
-      "Watch Rio Tour Stage ${stage?.stage_number ?? '—'} using its real profile",
-    )
-    expect(pageSource.match(/runRaceEngine\(/g) ?? []).toHaveLength(1)
+    expect(pageSource).not.toContain('ENABLE_RIO_TOUR_INTEGRATION_REPLAYS')
+    expect(pageSource).not.toContain('isRioTourDevelopmentReplayUnlocked')
+    expect(pageSource).toContain('get_universal_race_stage_replay_payload_v1')
+    expect(pageSource).toContain('Awaiting backend calculation')
+    expect(pageSource).toContain('Replay not open yet')
+    expect(pageSource).toContain('no browser fallback')
+    expect(pageSource.match(/runRaceEngine\(/g) ?? []).toHaveLength(0)
   })
 
   it('publishes every road group behind the peloton as one C-family chase colour, including incident groups', () => {
@@ -15205,7 +15202,7 @@ describe('Phase 10 deterministic incidents, availability and final statuses', ()
 })
 
 
-describe('Phase 11A production verification bridge', () => {
+describe('Phase 11B production lifecycle cutover', () => {
   it('maps one completed universal result into the production output contract without persistence side effects', () => {
     const input = createValidInput()
     const result = runRaceEngine(input)
@@ -15413,14 +15410,14 @@ describe('Phase 11A production verification bridge', () => {
     expect(() => runRaceEngine(productionInput)).not.toThrow()
   })
 
-  it('keeps Phase 11A verification read-only and makes the production replay prefer stored authoritative output', () => {
+  it('installs one disabled Phase 11B lifecycle, one scheduled backend calculation path, exact-once persistence and a read-only production replay', () => {
     const pageSource = readFileSync(
       new URL('../pages/dashboard/RaceDetailPage.tsx', import.meta.url),
       'utf8',
     )
     const migrationSource = readFileSync(
       new URL(
-        '../../supabase/migrations/20260818_phase11a_universal_production_verification_bridge.sql',
+        '../../supabase/migrations/20260818_phase11b_universal_production_cutover.sql',
         import.meta.url,
       ),
       'utf8',
@@ -15436,30 +15433,35 @@ describe('Phase 11A production verification bridge', () => {
     expect(pageSource).toContain('get_universal_race_stage_replay_payload_v1')
     expect(pageSource).toContain("production_authoritative_run")
     expect(pageSource).toContain("production_authoritative_pending")
-    expect(pageSource.match(/runRaceEngine\(/g) ?? []).toHaveLength(1)
+    expect(pageSource.match(/runRaceEngine\(/g) ?? []).toHaveLength(0)
+    expect(pageSource).not.toContain('ENABLE_RIO_TOUR_INTEGRATION_REPLAYS')
+
+    expect(runnerSource).toContain("schedule: '* * * * *'")
     expect(runnerSource.match(/runRaceEngine\(/g) ?? []).toHaveLength(1)
-    expect(migrationSource).not.toContain('insert into public.race_stage_results')
-    expect(migrationSource).not.toContain('update public.riders')
-    expect(migrationSource).not.toContain('health_create_rider_case_v1(')
-    expect(migrationSource).not.toContain('apply_race_stage_supply_usage_v1(')
-    expect(migrationSource).not.toContain('race_engine_apply_stage_equipment_asset_wear_v1(')
+    expect(runnerSource).toContain('universal_race_stage_claim_next_due_v1')
+    expect(runnerSource).toContain('universal_race_stage_process_lifecycle_v1')
+    expect(runnerSource).toContain('UNIVERSAL_RACE_WORKER_SECRET')
+    expect(runnerSource).not.toContain('workerSecret(request) === serviceRoleKey')
+
+    expect(migrationSource).toContain('typescript_lifecycle_enabled = false')
     expect(migrationSource).toContain(
-      'create or replace function public.universal_race_stage_claim_calculation_v1',
+      'create or replace function public.universal_race_stage_claim_next_due_v1',
     )
     expect(migrationSource).toContain(
-      'create or replace function public.universal_race_stage_fail_calculation_v1',
+      'create or replace function public.universal_race_stage_finalize_v1',
     )
-    expect(migrationSource).not.toContain(
-      'prerequisite missing: universal_race_stage_claim_calculation_v1',
-    )
+    expect(migrationSource).toContain('universal_phase11b_calculated_hidden_v1')
+    expect(migrationSource).toContain('race_engine_apply_stage_fatigue_v1')
+    expect(migrationSource).toContain('apply_race_stage_supply_usage_v1')
+    expect(migrationSource).toContain('race_engine_apply_stage_equipment_asset_wear_v1')
+    expect(migrationSource).toContain('health_create_rider_case_v1')
+    expect(migrationSource).toContain('race_engine_write_cumulative_classifications_v1')
     expect(migrationSource).toContain("'race_engine_ts_v1'")
     expect(migrationSource).toContain("'deterministic_road_race_v1'")
     expect(migrationSource).toContain(
       "set_config('app.race_engine_writer_family', 'typescript', true)",
     )
-    expect(migrationSource).not.toContain('team.team_id')
-    expect(migrationSource).toContain(
-      "jsonb_agg(to_jsonb(team) order by to_jsonb(team)::text)",
-    )
+    expect(migrationSource).not.toContain('cron.schedule')
+    expect(migrationSource).not.toContain('order by team.team_id')
   })
 })

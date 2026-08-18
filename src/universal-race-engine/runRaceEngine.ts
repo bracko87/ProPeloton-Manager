@@ -20468,6 +20468,33 @@ function buildUniversalReplayTimeline(
       })
     })
 
+  const preDecisiveSplitKm = deterministicRound(
+    Math.max(
+      0,
+      decisiveSplitKm - Math.max(0.01, Math.min(0.1, stageDistanceKm * 0.0005)),
+    ),
+    6,
+  )
+  const preDecisiveGroupByRiderId = new Map<string, string>()
+  groupsAtKm(preDecisiveSplitKm).forEach((group) => {
+    group.riderIds.forEach((riderId) => {
+      preDecisiveGroupByRiderId.set(riderId, group.displayCode)
+    })
+  })
+  const decisiveGroupByRiderId = new Map<string, string>()
+  groupsAtKm(decisiveSplitKm).forEach((group) => {
+    group.riderIds.forEach((riderId) => {
+      decisiveGroupByRiderId.set(riderId, group.displayCode)
+    })
+  })
+  const decisiveFrontTransferRiderIds = eligibleStarterIds
+    .filter(
+      (riderId) =>
+        preDecisiveGroupByRiderId.get(riderId) === 'P' &&
+        decisiveGroupByRiderId.get(riderId)?.startsWith('F'),
+    )
+    .sort()
+
   if (nonOpeningFrontFormationActive) {
     const formationGroups = groupsAtKm(nonOpeningFrontFormationKm)
     eventDefinitions.push({
@@ -20490,7 +20517,10 @@ function buildUniversalReplayTimeline(
         ),
       ).sort(),
     })
-  } else if (phase3Groups.length > 1) {
+  } else if (
+    phase3Groups.length > 1 ||
+    decisiveFrontTransferRiderIds.length > 0
+  ) {
     eventDefinitions.push({
       checkpointIdSuffix: 'decisive-group-split',
       checkpointKind: 'event',
@@ -20502,8 +20532,14 @@ function buildUniversalReplayTimeline(
       eventType: 'group_split',
       title: 'The race splits under pressure',
       description: `${groupsAtKm(decisiveSplitKm).length} groups are now on the road.`,
-      riderIds: [],
-      teamIds: [],
+      riderIds: decisiveFrontTransferRiderIds,
+      teamIds: Array.from(
+        new Set(
+          decisiveFrontTransferRiderIds
+            .map((riderId) => riderById.get(riderId)?.teamId)
+            .filter((teamId): teamId is string => Boolean(teamId)),
+        ),
+      ).sort(),
     })
   }
 

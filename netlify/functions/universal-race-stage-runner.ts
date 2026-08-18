@@ -1,11 +1,15 @@
 /**
- * Phase 11A universal production runner.
+ * Phase 11B universal production lifecycle worker.
  *
- * One stage claim -> one immutable production input -> exactly one runRaceEngine
- * call -> one immutable output snapshot. No official result/resource/health
- * mutation occurs in Phase 11A.
+ * ONE backend lifecycle:
+ *   game clock -> due-stage claim -> production input -> exactly one runRaceEngine
+ *   call -> immutable hidden output -> replay gate -> exact-once finalization.
+ *
+ * React never calculates an official production race. Legacy race schedulers
+ * remain disabled. Netlify invokes this same function once per real minute.
  */
-import { createClient } from '@supabase/supabase-js'
+import { createHash } from 'node:crypto'
+import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import { runRaceEngine } from '../../src/universal-race-engine/runRaceEngine'
 import {
   buildProductionUniversalRaceEngineInput,
@@ -13,7 +17,13 @@ import {
 } from '../../src/universal-race-engine/buildProductionRaceInput'
 import { buildProductionUniversalRaceOutput } from '../../src/universal-race-engine/buildProductionRaceOutput'
 
-const FUNCTION_CONTRACT = 'phase11a_universal_production_runner_v1'
+export const config = {
+  schedule: '* * * * *',
+}
+
+const FUNCTION_CONTRACT = 'phase11b_universal_production_lifecycle_v1'
+const MAX_CALCULATIONS_PER_TICK = 2
+const MAX_PUBLICATIONS_PER_TICK = 4
 
 type JsonObject = Record<string, unknown>
 
@@ -37,9 +47,25 @@ function env(name: string): string {
   return value
 }
 
-function bearerToken(request: Request): string | null {
-  const header = request.headers.get('authorization')
-  return header?.replace(/^Bearer\s+/i, '').trim() || null
+function isScheduledInvocation(request: Request): boolean {
+  const event = (
+    request.headers.get('x-nf-event') ??
+    request.headers.get('x-netlify-event') ??
+    ''
+  ).trim().toLowerCase()
+  return event === 'schedule'
+}
+
+function workerSecret(request: Request): string | null {
+  const explicit = request.headers.get('x-universal-race-worker-secret')?.trim()
+  if (explicit) return explicit
+  const bearer = request.headers.get('authorization')
+  return bearer?.replace(/^Bearer\s+/i, '').trim() || null
+}
+
+function manualInvocationAuthorized(request: Request): boolean {
+  const configured = process.env.UNIVERSAL_RACE_WORKER_SECRET?.trim()
+  return Boolean(configured && workerSecret(request) === configured)
 }
 
 function jsonResponse(body: unknown, status = 200): Response {
@@ -49,10 +75,8 @@ function jsonResponse(body: unknown, status = 200): Response {
   })
 }
 
-async function sha256(value: unknown): Promise<string> {
-  const bytes = new TextEncoder().encode(JSON.stringify(value))
-  const digest = await crypto.subtle.digest('SHA-256', bytes)
-  return [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, '0')).join('')
+function sha256(value: unknown): string {
+  return createHash('sha256').update(JSON.stringify(value)).digest('hex')
 }
 
 function errorPayload(error: unknown): JsonObject {
@@ -60,6 +84,16 @@ function errorPayload(error: unknown): JsonObject {
     return { name: error.name, message: error.message, stack: error.stack ?? null }
   }
   return { name: 'UnknownError', message: String(error) }
+}
+
+async function rpc<T>(
+  supabase: SupabaseClient,
+  name: string,
+  args: JsonObject = {},
+): Promise<T> {
+  const { data, error } = await supabase.rpc(name, args)
+  if (error) throw new Error(`${name}: ${error.message}`)
+  return data as T
 }
 
 function buildSources(payloadValue: unknown, simulationRunId: string): ProductionUniversalRaceSources {
@@ -74,92 +108,55 @@ function buildSources(payloadValue: unknown, simulationRunId: string): Productio
     race: race as ProductionUniversalRaceSources['race'],
     stage: stage as ProductionUniversalRaceSources['stage'],
     profile: firstObject(payload.profile) as ProductionUniversalRaceSources['profile'],
-    stagePoints: rows(payload.stage_points) as ProductionUniversalRaceSources['stagePoints'],
-    participantTeams: rows(payload.participant_teams) as ProductionUniversalRaceSources['participantTeams'],
-    participantRiders: rows(payload.participant_riders) as ProductionUniversalRaceSources['participantRiders'],
-    riderInputRows: rows(payload.rider_inputs) as ProductionUniversalRaceSources['riderInputRows'],
-    phaseCommandRows: rows(payload.phase_commands) as ProductionUniversalRaceSources['phaseCommandRows'],
-    lockedPlanRows: rows(payload.locked_plans ?? payload.stage_plans) as ProductionUniversalRaceSources['lockedPlanRows'],
+    stagePoints: rows(payload.stage_points) as unknown as ProductionUniversalRaceSources['stagePoints'],
+    participantTeams: rows(payload.participant_teams) as unknown as ProductionUniversalRaceSources['participantTeams'],
+    participantRiders: rows(payload.participant_riders) as unknown as ProductionUniversalRaceSources['participantRiders'],
+    riderInputRows: rows(payload.rider_inputs) as unknown as ProductionUniversalRaceSources['riderInputRows'],
+    phaseCommandRows: rows(payload.phase_commands) as unknown as ProductionUniversalRaceSources['phaseCommandRows'],
+    lockedPlanRows: rows(payload.locked_plans ?? payload.stage_plans) as unknown as ProductionUniversalRaceSources['lockedPlanRows'],
     preStageLeaders: payload.pre_stage_leaders,
     phase9Payload: firstObject(payload.phase9_inputs) as ProductionUniversalRaceSources['phase9Payload'],
     deterministicSeed: `universal-production:${raceId}:${stageId}:${simulationRunId}`,
   }
 }
 
-export default async function handler(request: Request): Promise<Response> {
-  if (request.method === 'OPTIONS') return new Response(null, { status: 204 })
+async function calculateClaimedStage(
+  supabase: SupabaseClient,
+  claimValue: unknown,
+): Promise<JsonObject> {
+  const claim = object(claimValue)
+  const stageId = typeof claim.stage_id === 'string' ? claim.stage_id : ''
+  const simulationRunId = typeof claim.simulation_run_id === 'string'
+    ? claim.simulation_run_id
+    : ''
 
-  const url = new URL(request.url)
-  const body = request.method === 'POST'
-    ? await request.json().catch(() => ({})) as JsonObject
-    : {}
-  const action = String(body.action ?? url.searchParams.get('action') ?? 'health').toLowerCase()
-
-  if (action === 'health') {
-    return jsonResponse({
-      status: 'ok',
-      contract: FUNCTION_CONTRACT,
-      mutation_mode: 'verification_only',
-      official_outputs_written: false,
-      phase11_persistence_applied: false,
-    })
+  if (!stageId || !simulationRunId || claim.status !== 'claimed') {
+    throw new Error('Claim did not contain a valid stage and simulation-run identity.')
   }
 
-  const supabaseUrl = env('SUPABASE_URL')
-  const serviceRoleKey = env('SUPABASE_SERVICE_ROLE_KEY')
-  if (bearerToken(request) !== serviceRoleKey) {
-    return jsonResponse({ status: 'forbidden', contract: FUNCTION_CONTRACT }, 403)
-  }
-
-  if (action !== 'calculate') {
-    return jsonResponse({ status: 'invalid_action', contract: FUNCTION_CONTRACT }, 400)
-  }
-
-  const stageId = typeof body.stage_id === 'string' ? body.stage_id.trim() : ''
-  if (!stageId) return jsonResponse({ status: 'invalid_request', message: 'stage_id is required.' }, 400)
-
-  const supabase = createClient(supabaseUrl, serviceRoleKey, {
-    auth: { autoRefreshToken: false, persistSession: false },
-    global: { headers: { 'X-PPM-Worker': FUNCTION_CONTRACT } },
-  })
-
-  let simulationRunId: string | null = null
   try {
-    const { data: claimData, error: claimError } = await supabase.rpc(
-      'universal_race_stage_claim_calculation_v1',
-      { p_stage_id: stageId },
-    )
-    if (claimError) throw new Error(`Calculation claim failed: ${claimError.message}`)
-    const claim = object(claimData)
-    if (claim.status !== 'claimed') return jsonResponse({ contract: FUNCTION_CONTRACT, ...claim })
-
-    simulationRunId = typeof claim.simulation_run_id === 'string' ? claim.simulation_run_id : null
-    if (!simulationRunId) throw new Error('Calculation claim did not return simulation_run_id.')
-
     const sources = buildSources(claim.payload, simulationRunId)
     const input = buildProductionUniversalRaceEngineInput(sources)
 
-    // Exactly one authoritative race calculation for this claimed stage.
+    // Exactly one authoritative calculation for this claimed production stage.
     const result = runRaceEngine(input)
     const output = buildProductionUniversalRaceOutput(input, result)
+    const inputHash = sha256(input)
+    const outputHash = sha256(output)
 
-    const [inputHash, outputHash] = await Promise.all([sha256(input), sha256(output)])
-    const { data: submitData, error: submitError } = await supabase.rpc(
+    const submit = await rpc<unknown>(
+      supabase,
       'universal_race_stage_submit_calculation_v1',
       {
         p_stage_id: stageId,
         p_simulation_run_id: simulationRunId,
         p_input_snapshot: input,
-        // Signature intentionally reused. Phase 11A stores the complete output
-        // contract in this existing jsonb argument rather than adding another RPC.
         p_universal_result: output,
       },
     )
-    if (submitError) throw new Error(`Calculation submit failed: ${submitError.message}`)
 
-    return jsonResponse({
+    return {
       status: 'calculated_hidden',
-      contract: FUNCTION_CONTRACT,
       stage_id: stageId,
       simulation_run_id: simulationRunId,
       engine_key: result.engineKey,
@@ -170,21 +167,135 @@ export default async function handler(request: Request): Promise<Response> {
       accepted_rider_count: input.riders.length,
       classification_rider_count: result.finishResolution.classification.length,
       phase11_manifest_ready: output.applicationManifest.readyForApplication,
-      official_outputs_written: false,
-      phase11_persistence_applied: false,
-      submit_result: submitData,
-    })
+      submit_result: submit,
+    }
   } catch (error) {
     const serialized = errorPayload(error)
-    if (simulationRunId) {
-      await supabase.rpc('universal_race_stage_fail_calculation_v1', {
+    try {
+      await rpc<unknown>(supabase, 'universal_race_stage_fail_calculation_v1', {
         p_stage_id: stageId,
         p_simulation_run_id: simulationRunId,
-        p_error_message: String(serialized.message ?? 'Phase 11A calculation failed'),
+        p_error_message: String(serialized.message ?? 'Phase 11B calculation failed'),
         p_error_details: serialized,
-      }).catch(() => undefined)
+      })
+    } catch {
+      // Preserve the original calculation error in the worker response. The
+      // next scheduled tick will retry safely if failure recording itself was
+      // unavailable.
     }
-    console.error(JSON.stringify({ contract: FUNCTION_CONTRACT, stage_id: stageId, simulation_run_id: simulationRunId, error: serialized }))
-    return jsonResponse({ status: 'failed', contract: FUNCTION_CONTRACT, stage_id: stageId, simulation_run_id: simulationRunId, error: serialized }, 500)
+
+    return {
+      status: 'failed',
+      stage_id: stageId,
+      simulation_run_id: simulationRunId,
+      error: serialized,
+    }
+  }
+}
+
+async function runLifecycleTick(supabase: SupabaseClient): Promise<JsonObject> {
+  const before = object(await rpc<unknown>(
+    supabase,
+    'universal_race_stage_process_lifecycle_v1',
+    { p_max_publications: MAX_PUBLICATIONS_PER_TICK },
+  ))
+
+  const calculations: JsonObject[] = []
+  for (let index = 0; index < MAX_CALCULATIONS_PER_TICK; index += 1) {
+    const claim = object(await rpc<unknown>(
+      supabase,
+      'universal_race_stage_claim_next_due_v1',
+      { p_worker_id: 'netlify_phase11b_v1' },
+    ))
+    if (claim.status !== 'claimed') break
+    calculations.push(await calculateClaimedStage(supabase, claim))
+  }
+
+  const after = object(await rpc<unknown>(
+    supabase,
+    'universal_race_stage_process_lifecycle_v1',
+    { p_max_publications: MAX_PUBLICATIONS_PER_TICK },
+  ))
+
+  return {
+    status: 'completed',
+    contract: FUNCTION_CONTRACT,
+    before,
+    calculations,
+    after,
+    processed_at_real: new Date().toISOString(),
+  }
+}
+
+export default async function handler(request: Request): Promise<Response> {
+  if (request.method === 'OPTIONS') return new Response(null, { status: 204 })
+
+  const url = new URL(request.url)
+  const body = request.method === 'POST'
+    ? await request.json().catch(() => ({})) as JsonObject
+    : {}
+  const scheduled = isScheduledInvocation(request)
+  const action = String(
+    body.action ?? url.searchParams.get('action') ?? (scheduled ? 'tick' : 'health'),
+  ).toLowerCase()
+
+  if (action === 'health') {
+    return jsonResponse({
+      status: 'ok',
+      contract: FUNCTION_CONTRACT,
+      schedule: '* * * * *',
+      production_lifecycle: true,
+      browser_calculation_required: false,
+      legacy_execution_enabled: false,
+    })
+  }
+
+  if (!scheduled && !manualInvocationAuthorized(request)) {
+    return jsonResponse({ status: 'forbidden', contract: FUNCTION_CONTRACT }, 403)
+  }
+
+  const supabaseUrl = env('SUPABASE_URL')
+  const serviceRoleKey = env('SUPABASE_SERVICE_ROLE_KEY')
+  const supabase = createClient(supabaseUrl, serviceRoleKey, {
+    auth: { autoRefreshToken: false, persistSession: false },
+    global: { headers: { 'X-PPM-Worker': FUNCTION_CONTRACT } },
+  })
+
+  try {
+    if (action === 'tick') {
+      return jsonResponse(await runLifecycleTick(supabase))
+    }
+
+    // Manual admin diagnostic only. The database still enforces the normal due
+    // time and stage-order gate, so this cannot force a future calculation.
+    if (action === 'calculate') {
+      const stageId = typeof body.stage_id === 'string' ? body.stage_id.trim() : ''
+      if (!stageId) {
+        return jsonResponse({ status: 'invalid_request', message: 'stage_id is required.' }, 400)
+      }
+      const claim = object(await rpc<unknown>(
+        supabase,
+        'universal_race_stage_claim_calculation_v1',
+        { p_stage_id: stageId },
+      ))
+      if (claim.status !== 'claimed') {
+        return jsonResponse({ contract: FUNCTION_CONTRACT, ...claim })
+      }
+      return jsonResponse({
+        contract: FUNCTION_CONTRACT,
+        ...(await calculateClaimedStage(supabase, claim)),
+      })
+    }
+
+    return jsonResponse({ status: 'invalid_action', contract: FUNCTION_CONTRACT }, 400)
+  } catch (error) {
+    const serialized = errorPayload(error)
+    console.error(JSON.stringify({ contract: FUNCTION_CONTRACT, action, error: serialized }))
+    return jsonResponse({
+      status: 'failed',
+      contract: FUNCTION_CONTRACT,
+      action,
+      error: serialized,
+    }, 500)
   }
 }

@@ -17,8 +17,6 @@ import {
   ROAD_COMMAND_INPUTS,
   ROAD_TEAM_TACTICS,
   RIDER_STAGE_ROLES,
-  UniversalRaceEngineValidationError,
-  runRaceEngine,
   type AvailabilityStatus,
   type FinishType,
   type RoadCommandInput,
@@ -8685,60 +8683,11 @@ function userTeamParticipatedInRace(
   return participantTeams.some((team) => isViewerTeamRow(team, viewerIds))
 }
 
-function isStageStartReached(
-  stage: RaceStage | null,
-  currentGameDate?: string | null
-): boolean {
-  if (!stage?.stage_date) return false
-
-  const stageDate = parseDateOnly(stage.stage_date)
-  if (!stageDate) return false
-
-  if (currentGameDate) {
-    const currentDate = parseDateOnly(currentGameDate)
-    if (!currentDate) return false
-
-    return currentDate >= stageDate
-  }
-
-  const stageRealDate = new Date(`${stage.stage_date}T00:00:00`)
-  if (Number.isNaN(stageRealDate.getTime())) return false
-
-  return new Date() >= stageRealDate
-}
-
-
-/**
- * Temporary frontend-only acceptance gate for all six Rio Tour road stages.
- *
- * This lets the current six-stage Rio Tour fixture be calculated and reviewed
- * through the same production-input universal replay path before the scheduled
- * game dates. It performs no database mutation and does not unlock any other
- * race.
- */
-const ENABLE_RIO_TOUR_INTEGRATION_REPLAYS = true
-const RIO_TOUR_ACCEPTANCE_REPLAY_STAGE_NUMBERS = new Set([1, 2, 3, 4, 5, 6])
-
-function isRioTourDevelopmentReplayUnlocked(
-  race: Race | null,
-  stage: RaceStage | null
-): boolean {
-  const stageNumber = Number(stage?.stage_number)
-  const normalizedRaceName = String(race?.name ?? '')
-    .trim()
-    .toLowerCase()
-  const isRioTour =
-    race?.id === RIO_TOUR_RACE_ID ||
-    normalizedRaceName === 'rio tour'
-
-  return Boolean(
-    ENABLE_RIO_TOUR_INTEGRATION_REPLAYS &&
-      isRioTour &&
-      stage &&
-      Number.isInteger(stageNumber) &&
-      RIO_TOUR_ACCEPTANCE_REPLAY_STAGE_NUMBERS.has(stageNumber) &&
-      !isTimeTrialLikeStage(stage)
-  )
+type StageReplayAvailability = {
+  status: 'loading' | 'not_available' | 'not_open' | 'available' | 'error'
+  calculated: boolean
+  reason: string | null
+  replayOpensGameAt: string | null
 }
 
 type RaceReplayCoinAccess = {
@@ -8768,6 +8717,47 @@ function normalizeRaceReplayCoinAccess(data: unknown): RaceReplayCoinAccess | nu
   }
 }
 
+function normalizeStageReplayAvailability(
+  data: unknown,
+  errorMessage?: string | null
+): StageReplayAvailability {
+  if (errorMessage) {
+    return {
+      status: 'error',
+      calculated: false,
+      reason: errorMessage,
+      replayOpensGameAt: null,
+    }
+  }
+
+  const value = Array.isArray(data) ? data[0] : data
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return {
+      status: 'error',
+      calculated: false,
+      reason: 'Replay lifecycle returned no readable payload.',
+      replayOpensGameAt: null,
+    }
+  }
+
+  const row = value as Record<string, unknown>
+  const rawStatus = String(row.status ?? 'not_available')
+  const status: StageReplayAvailability['status'] =
+    rawStatus === 'available' || rawStatus === 'not_open' || rawStatus === 'not_available'
+      ? rawStatus
+      : 'error'
+
+  return {
+    status,
+    calculated: row.calculated === true || row.calculated === 'true',
+    reason: typeof row.reason === 'string' ? row.reason : null,
+    replayOpensGameAt:
+      typeof row.replay_opens_game_at === 'string'
+        ? row.replay_opens_game_at
+        : null,
+  }
+}
+
 function StageReplayAccessCard({
   race,
   stage,
@@ -8789,8 +8779,17 @@ function StageReplayAccessCard({
   replayAccessLoading?: boolean
   onOpenReplay: (stage: RaceStage) => void
 }) {
-  const [hasResults, setHasResults] = useState(false)
-  const [loading, setLoading] = useState(false)
+  // Kept in the public component contract because the page already passes it;
+  // replay timing itself is authoritative backend state, never a browser date guess.
+  void currentGameDate
+
+  const [replayAvailability, setReplayAvailability] =
+    useState<StageReplayAvailability>({
+      status: 'loading',
+      calculated: false,
+      reason: null,
+      replayOpensGameAt: null,
+    })
   const [coinAccess, setCoinAccess] = useState<RaceReplayCoinAccess | null>(null)
   const [coinAccessLoading, setCoinAccessLoading] = useState(false)
   const [coinPurchaseLoading, setCoinPurchaseLoading] = useState(false)
@@ -8803,45 +8802,48 @@ function StageReplayAccessCard({
     viewerTeamIds
   )
   const userParticipated = canViewRaceReplay === true || localParticipationAccess
-  const developmentReplayUnlocked = isRioTourDevelopmentReplayUnlocked(race, stage)
   const hasCoinReplayUnlock = coinAccess?.has_coin_unlock === true
-  const hasReplayAccess =
-    developmentReplayUnlocked || userParticipated || hasCoinReplayUnlock
-  const stageReached = isStageStartReached(stage, currentGameDate)
+  const hasReplayAccess = userParticipated || hasCoinReplayUnlock
+  const replayAvailable = replayAvailability.status === 'available'
   const stageWeatherCanceled = isStageWeatherCanceled(stage)
 
   useEffect(() => {
-    if (!stage?.id) {
-      setHasResults(false)
-      setLoading(false)
+    if (!stage?.id || stageWeatherCanceled) {
+      setReplayAvailability({
+        status: 'not_available',
+        calculated: false,
+        reason: stageWeatherCanceled ? 'weather_cancelled' : 'stage_missing',
+        replayOpensGameAt: null,
+      })
       return
     }
 
     let cancelled = false
 
-    async function checkResults() {
-      setLoading(true)
+    async function loadReplayAvailability(): Promise<void> {
+      setReplayAvailability((current) => ({ ...current, status: 'loading' }))
 
-      const { count, error } = await supabase
-        .from('race_stage_results')
-        .select('id', { count: 'exact', head: true })
-        .eq('stage_id', stage.id)
+      const { data, error } = await supabase.rpc(
+        'get_universal_race_stage_replay_payload_v1',
+        { p_stage_id: stage.id }
+      )
 
       if (cancelled) return
 
-      setHasResults(!error && Boolean(count && count > 0))
-      setLoading(false)
+      setReplayAvailability(
+        normalizeStageReplayAvailability(data, error?.message ?? null)
+      )
     }
 
-    checkResults()
+    void loadReplayAvailability()
 
     return () => {
       cancelled = true
     }
-  }, [stage?.id])
+  }, [stage?.id, stageWeatherCanceled])
 
   useEffect(() => {
-    if (!race?.id || userParticipated || developmentReplayUnlocked) {
+    if (!race?.id || userParticipated) {
       setCoinAccess(null)
       setCoinAccessLoading(false)
       setCoinPurchaseError(null)
@@ -8879,10 +8881,10 @@ function StageReplayAccessCard({
     return () => {
       cancelled = true
     }
-  }, [developmentReplayUnlocked, race?.id, userParticipated])
+  }, [race?.id, userParticipated])
 
   async function purchaseReplayAccess(): Promise<void> {
-    if (!race?.id || coinPurchaseLoading) return
+    if (!race?.id || !replayAvailable || coinPurchaseLoading) return
 
     setCoinPurchaseLoading(true)
     setCoinPurchaseError(null)
@@ -8917,13 +8919,26 @@ function StageReplayAccessCard({
   }
 
   const canWatch = Boolean(
-    stage &&
-      !stageWeatherCanceled &&
-      (developmentReplayUnlocked || (hasReplayAccess && hasResults))
+    stage && !stageWeatherCanceled && replayAvailable && hasReplayAccess
   )
-  const checkingReplayAccess = developmentReplayUnlocked
-    ? false
-    : loading || replayAccessLoading || coinAccessLoading
+  const checkingReplayAccess =
+    replayAvailability.status === 'loading' ||
+    replayAccessLoading ||
+    coinAccessLoading
+
+  const replayStatusText = stageWeatherCanceled
+    ? 'This stage was canceled. No replay is available.'
+    : replayAvailability.status === 'not_open'
+      ? 'Replay will be available at the scheduled stage time.'
+      : replayAvailability.status === 'not_available'
+        ? 'Replay is not available yet.'
+        : replayAvailability.status === 'error'
+          ? 'Replay is temporarily unavailable.'
+          : userParticipated
+            ? `Replay is available for ${race?.name ?? 'this race'}.`
+            : hasCoinReplayUnlock
+              ? `Replay is available for ${race?.name ?? 'this race'}.`
+              : `Replay is available. Teams that did not participate can unlock it for ${coinAccess?.coin_cost ?? 2} coins.`
 
   return (
     <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
@@ -8934,24 +8949,21 @@ function StageReplayAccessCard({
       <h3 className="mt-2 text-lg font-semibold text-slate-950">
         {stageWeatherCanceled
           ? 'Stage canceled'
-          : developmentReplayUnlocked
-            ? 'Watch replay'
-            : hasResults
-              ? 'Watch replay'
-              : 'Watch race'}
+          : replayAvailable
+            ? 'Replay available'
+            : 'Replay unavailable'}
       </h3>
 
       <p className="mt-2 text-sm leading-5 text-slate-500">
-        {stageWeatherCanceled
-          ? 'This stage was canceled by the race engine. No replay was generated.'
-          : developmentReplayUnlocked
-            ? `Watch Rio Tour Stage ${stage?.stage_number ?? '—'} using its real profile, participants, saved plans, commands, weather and the current universal race engine.`
-            : userParticipated
-              ? `Your team participated in ${race?.name ?? 'this race'}, so the replay is included.`
-              : hasCoinReplayUnlock
-                ? `You unlocked the complete ${race?.name ?? 'race'} replay with coins.`
-                : `Teams that did not participate can unlock the complete ${race?.name ?? 'race'} replay for ${coinAccess?.coin_cost ?? 2} coins.`}
+        {replayStatusText}
       </p>
+
+      {replayAvailability.replayOpensGameAt &&
+      replayAvailability.status !== 'available' ? (
+        <div className="mt-3 text-xs font-medium text-slate-500">
+          Replay available at the scheduled stage time: {replayAvailability.replayOpensGameAt}
+        </div>
+      ) : null}
 
       {stageWeatherCanceled ? (
         <div className="mt-4">
@@ -8959,9 +8971,8 @@ function StageReplayAccessCard({
         </div>
       ) : null}
 
-      {!developmentReplayUnlocked &&
-      !stageWeatherCanceled &&
-      hasResults &&
+      {!stageWeatherCanceled &&
+      replayAvailable &&
       !userParticipated &&
       !hasCoinReplayUnlock ? (
         <div className="mt-5 space-y-3">
@@ -9012,20 +9023,18 @@ function StageReplayAccessCard({
         }`}
       >
         {stageWeatherCanceled
-          ? 'Canceled — no replay'
-          : developmentReplayUnlocked
-            ? 'Watch replay'
-            : checkingReplayAccess
-              ? 'Checking replay…'
+          ? 'Replay unavailable'
+          : checkingReplayAccess
+            ? 'Checking replay…'
+            : replayAvailability.status === 'not_open' ||
+                replayAvailability.status === 'not_available' ||
+                replayAvailability.status === 'error'
+              ? 'Replay unavailable'
               : canWatch
                 ? 'Watch replay'
                 : !hasReplayAccess
-                  ? hasResults
-                    ? `Unlock for ${coinAccess?.coin_cost ?? 2} coins`
-                    : 'Your team did not participate'
-                  : !stageReached && !hasResults
-                    ? 'Race not started'
-                    : 'Replay not available yet'}
+                  ? `Unlock for ${coinAccess?.coin_cost ?? 2} coins`
+                  : 'Replay unavailable'}
       </button>
     </div>
   )
@@ -12255,14 +12264,8 @@ function UniversalRaceReplayPage({
   onShadowPreview?: (preview: RaceStageResultsOverride) => void
 }) {
   const [profile, setProfile] = useState<StageProfileDetailPayload | null>(null)
-  const [riderInputRows, setRiderInputRows] =
-    useState<UniversalStageRiderInputRow[]>([])
-  const [phaseCommandRows, setPhaseCommandRows] =
-    useState<UniversalStagePhaseCommandRow[]>([])
-  const [phase9ProductionPayload, setPhase9ProductionPayload] =
-    useState<UniversalPhase9ProductionPayload | null>(null)
   const [inputSource, setInputSource] = useState<UniversalReplayInputSource>(
-    'production_stage_input_rpc'
+    'production_authoritative_pending'
   )
   const [authoritativePayload, setAuthoritativePayload] =
     useState<UniversalAuthoritativeReplayPayload | null>(null)
@@ -12279,24 +12282,10 @@ function UniversalRaceReplayPage({
       setLoading(true)
       setLoadError(null)
       setAuthoritativePayload(null)
+      setInputSource('production_authoritative_pending')
 
-      const [
-        profileResponse,
-        riderInputsResponse,
-        phaseCommandsResponse,
-        phase9InputsResponse,
-        authoritativeResponse,
-      ] = await Promise.all([
+      const [profileResponse, authoritativeResponse] = await Promise.all([
         raceDetailReadRpc('get_race_stage_profile_detail_v1', {
-          p_stage_id: stage.id,
-        }),
-        raceDetailReadRpc('race_engine_get_stage_rider_inputs_v1', {
-          p_stage_id: stage.id,
-        }),
-        raceDetailReadRpc('race_engine_get_stage_phase_commands_v1', {
-          p_stage_id: stage.id,
-        }),
-        raceDetailReadRpc('race_engine_get_stage_phase9_inputs_v1', {
           p_stage_id: stage.id,
         }),
         raceDetailReadRpc('get_universal_race_stage_replay_payload_v1', {
@@ -12306,29 +12295,37 @@ function UniversalRaceReplayPage({
 
       if (cancelled) return
 
-      const errors: string[] = []
-
       if (profileResponse.error) {
         setProfile(null)
-        errors.push('stage profile')
       } else {
         try {
           setProfile(normalizeStageProfileDetailPayload(profileResponse.data))
         } catch {
           setProfile(null)
-          errors.push('stage profile normalization')
         }
+      }
+
+      if (authoritativeResponse.error) {
+        setAuthoritativePayload(null)
+        setLoadError(
+          'Replay could not be loaded. Please try again shortly.'
+        )
+        setLoading(false)
+        return
       }
 
       const authoritativeValue = Array.isArray(authoritativeResponse.data)
         ? authoritativeResponse.data[0]
         : authoritativeResponse.data
       const nextAuthoritativePayload =
-        !authoritativeResponse.error &&
         authoritativeValue &&
-        typeof authoritativeValue === 'object'
+        typeof authoritativeValue === 'object' &&
+        !Array.isArray(authoritativeValue)
           ? (authoritativeValue as UniversalAuthoritativeReplayPayload)
           : null
+
+      setAuthoritativePayload(nextAuthoritativePayload)
+
       const authoritativeInput = nextAuthoritativePayload?.input_snapshot
       const authoritativeResult =
         nextAuthoritativePayload?.output_snapshot?.universalResult
@@ -12340,89 +12337,25 @@ function UniversalRaceReplayPage({
         authoritativeInput?.stage?.stageId === stage.id &&
         authoritativeResult?.raceId === race.id &&
         authoritativeResult?.stageId === stage.id
-      const hasPendingAuthoritativeLifecycle =
-        nextAuthoritativePayload?.status === 'not_open'
 
       if (hasAuthoritativeReplay) {
-        setAuthoritativePayload(nextAuthoritativePayload)
-        setRiderInputRows([])
-        setPhaseCommandRows([])
-        setPhase9ProductionPayload(null)
         setInputSource('production_authoritative_run')
-      } else if (hasPendingAuthoritativeLifecycle) {
-        // Never calculate a browser shadow while a stored production result is
-        // waiting for its scheduled replay opening; that would reveal a second
-        // result before the official replay is available.
-        setAuthoritativePayload(nextAuthoritativePayload)
-        setRiderInputRows([])
-        setPhaseCommandRows([])
-        setPhase9ProductionPayload(null)
-        setInputSource('production_authoritative_pending')
       } else {
-        setAuthoritativePayload(null)
-        const expectedParticipantRiderCount = participantTeams.reduce(
-          (sum, team) => sum + team.riders.length,
-          0
-        )
-        const productionRiderRows = riderInputsResponse.error
-          ? []
-          : normalizeUniversalRpcRows<UniversalStageRiderInputRow>(
-              riderInputsResponse.data
-            )
-        const riderInputError = riderInputsResponse.error as
-          | {
-              message?: string | null
-              code?: string | null
-              details?: string | null
-              hint?: string | null
-            }
-          | null
-
-        if (riderInputError) {
-          errors.push(
-            `production rider-input RPC: ${riderInputError.message ?? riderInputError.code ?? 'unknown error'}`
-          )
-        }
-
-        if (
-          productionRiderRows.length === expectedParticipantRiderCount &&
-          productionRiderRows.length >= 2
-        ) {
-          setRiderInputRows(productionRiderRows)
-          setInputSource('production_stage_input_rpc')
-        } else {
-          setRiderInputRows([])
-          setInputSource('participant_snapshot_fallback')
-          errors.push(
-            `production rider-input RPC failed validation (${productionRiderRows.length}/${expectedParticipantRiderCount} rows)`
-          )
-        }
-
-        setPhaseCommandRows(
-          !phaseCommandsResponse.error && Array.isArray(phaseCommandsResponse.data)
-            ? (phaseCommandsResponse.data as UniversalStagePhaseCommandRow[])
-            : []
-        )
-        if (phaseCommandsResponse.error) errors.push('resolved phase commands')
-
-        if (phase9InputsResponse.error) {
-          setPhase9ProductionPayload(null)
-          errors.push(
-            `Phase 9 production input RPC: ${phase9InputsResponse.error.message ?? phase9InputsResponse.error.code ?? 'unknown error'}`
+        setInputSource('production_authoritative_pending')
+        const status = String(nextAuthoritativePayload?.status ?? 'not_available')
+        if (status === 'not_open') {
+          setLoadError(null)
+        } else if (status === 'not_available') {
+          setLoadError(
+            'Replay is not available yet.'
           )
         } else {
-          const normalizedPhase9 =
-            normalizeUniversalPhase9ProductionPayload(phase9InputsResponse.data)
-          setPhase9ProductionPayload(normalizedPhase9)
-          if (!normalizedPhase9) errors.push('Phase 9 production input normalization')
+          setLoadError(
+            'Replay is unavailable for this stage.'
+          )
         }
       }
 
-      setLoadError(
-        errors.length > 0
-          ? `Some replay inputs were unavailable: ${errors.join(', ')}.`
-          : null
-      )
       setLoading(false)
     }
 
@@ -12431,21 +12364,9 @@ function UniversalRaceReplayPage({
     return () => {
       cancelled = true
     }
-  }, [participantTeams, race, stage])
+  }, [race.id, stage.id])
 
   const shadowBuild = useMemo<UniversalShadowBuild>(() => {
-    if (inputSource === 'production_authoritative_pending') {
-      return {
-        input: null,
-        result: null,
-        error: null,
-        warnings: [
-          'The universal engine has already calculated this stage, but the stored production replay remains locked until the scheduled stage start.',
-        ],
-        source: inputSource,
-      }
-    }
-
     if (inputSource === 'production_authoritative_run') {
       const input = authoritativePayload?.input_snapshot ?? null
       const result =
@@ -12454,7 +12375,7 @@ function UniversalRaceReplayPage({
         return {
           input: null,
           result: null,
-          error: 'The authoritative universal replay payload is incomplete.',
+          error: 'Replay data is incomplete.',
           warnings: [],
           source: inputSource,
         }
@@ -12468,7 +12389,7 @@ function UniversalRaceReplayPage({
         return {
           input: null,
           result: null,
-          error: 'The authoritative universal replay identity does not match this stage.',
+          error: 'Replay data does not match this stage.',
           warnings: [],
           source: inputSource,
         }
@@ -12477,7 +12398,7 @@ function UniversalRaceReplayPage({
         return {
           input: null,
           result: null,
-          error: `Stored universal replay synchronization failed: ${result.replaySynchronization.issues.join(', ')}`,
+          error: 'Replay data could not be synchronized.',
           warnings: [],
           source: inputSource,
         }
@@ -12495,98 +12416,19 @@ function UniversalRaceReplayPage({
       }
     }
 
-    if (inputSource !== 'production_stage_input_rpc' || riderInputRows.length < 2) {
-      return {
-        input: null,
-        result: null,
-        error:
-          'Universal replay calculation stopped: real production rider inputs were not loaded. No fallback calculation was executed.',
-        warnings: [],
-        source: inputSource,
-      }
+    return {
+      input: null,
+      result: null,
+      error: loadError,
+      warnings:
+        authoritativePayload?.status === 'not_open'
+          ? [
+              'Replay will be available at the scheduled stage time.',
+            ]
+          : [],
+      source: inputSource,
     }
-
-    try {
-      const input = buildUniversalRaceEngineInput({
-        race,
-        stage,
-        profile,
-        participantTeams,
-        riderInputRows,
-        phaseCommandRows,
-        phase9ProductionPayload,
-        shadowMode: 'real_stage_orders',
-      })
-      const result = runRaceEngine(input)
-
-      if (
-        !result.finishResolution.complete ||
-        !result.finishResolution.winnerRiderId ||
-        !result.finishResolution.winnerTeamId
-      ) {
-        throw new Error(
-          'The universal finish resolution did not return a complete winner and classification.'
-        )
-      }
-      if (
-        !result.replayTimeline.active ||
-        !result.replayTimeline.completeBeforePlayback ||
-        result.replayTimeline.playbackRecalculatesRace ||
-        result.replayTimeline.checkpoints.length === 0
-      ) {
-        throw new Error(
-          'The universal engine did not return a complete read-only replay timeline.'
-        )
-      }
-      if (!result.replaySynchronization.synchronized) {
-        throw new Error(
-          `The universal replay is not synchronized with the calculated result: ${result.replaySynchronization.issues.join(', ')}`
-        )
-      }
-
-      return {
-        input,
-        result,
-        error: null,
-        warnings:
-          phaseCommandRows.length === 0
-            ? [
-                'No resolved phase-command rows were visible; neutral fallback commands are being used.',
-              ]
-            : [],
-        source: inputSource,
-      }
-    } catch (caught) {
-      const error =
-        caught instanceof UniversalRaceEngineValidationError
-          ? caught.errors
-              .slice(0, 8)
-              .map((row) => `${row.field}: ${row.message}`)
-              .join(' · ')
-          : caught instanceof Error
-            ? caught.message
-            : 'Universal replay calculation failed.'
-
-      return {
-        input: null,
-        result: null,
-        error,
-        warnings: [],
-        source: inputSource,
-      }
-    }
-  }, [
-    authoritativePayload,
-    inputSource,
-    loading,
-    participantTeams,
-    phaseCommandRows,
-    phase9ProductionPayload,
-    profile,
-    race,
-    riderInputRows,
-    stage,
-  ])
+  }, [authoritativePayload, inputSource, loadError, loading, race.id, stage.id])
 
   const replayFrames = useMemo(
     () => shadowBuild.result?.replayTimeline.checkpoints ?? [],
@@ -12809,7 +12651,7 @@ function UniversalRaceReplayPage({
         replayUsesEngineTimeline:
           replayFrames === result.replayTimeline.checkpoints,
         finalResultsCurrentlyVisible: resultsVisible,
-        runRaceEngineCallsForReplay: 1,
+        runRaceEngineCallsForReplay: 0,
         liveGapDisplayMode: 'autonomous_incident_group_interpolation_with_exact_phase10_events',
         openingBreakawayLineageStable:
           result.phase78Acceptance.phase7.openingBreakawayLineageStable,
@@ -12888,7 +12730,7 @@ function UniversalRaceReplayPage({
       inputSource,
       uiVerification: {
         visibleAfterFinish: resultsVisible,
-        runRaceEngineCallsForReplay: 1,
+        runRaceEngineCallsForReplay: 0,
         reportReadsCompletedEngineResult: true,
         replaySynchronized: result.replaySynchronization.synchronized,
         incidentSynchronizationStatus:
@@ -12974,7 +12816,7 @@ function UniversalRaceReplayPage({
       inputSource,
       uiVerification: {
         visibleAfterFinish: resultsVisible,
-        runRaceEngineCallsForReplay: 1,
+        runRaceEngineCallsForReplay: 0,
         reportReadsCompletedEngineResult: true,
         directDatabaseWritePerformed: false,
         persistenceAppliedByThisPage: false,
@@ -14352,7 +14194,7 @@ function RaceStageProfilePanel({
           Stage profile
         </div>
         <div className="mt-4 rounded-2xl bg-slate-50 px-4 py-8 text-sm text-slate-500">
-          Stage profile data is not available from the backend yet.
+          Stage profile data is not available yet.
         </div>
       </div>
     )
