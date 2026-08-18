@@ -70,12 +70,16 @@ describe('unified B1 road-stage runner', () => {
     expect(result.outcomeSequence.finishCheckpointIndex).toBe(8)
     expect(result.stageResults.winnerRiderId).toBe('r06')
     expect(result.stageResults.winnerFinishTimeSeconds).toBe(4050.184)
-    expect(new Set(result.stageResults.results.map((row) => row.finishTimeSeconds))).toEqual(
-      new Set([4050.184]),
-    )
-    expect(new Set(result.stageResults.results.map((row) => row.gapSecondsToWinner))).toEqual(
-      new Set([0]),
-    )
+    expect(
+      new Set(
+        result.stageResults.results.map((row) => row.finishTimeSeconds),
+      ),
+    ).toEqual(new Set([4050.184]))
+    expect(
+      new Set(
+        result.stageResults.results.map((row) => row.gapSecondsToWinner),
+      ),
+    ).toEqual(new Set([0]))
   })
 
   it('preserves the exact accepted survival result', () => {
@@ -91,12 +95,12 @@ describe('unified B1 road-stage runner', () => {
     expect(result.stageResults.winnerRiderId).toBe('r06')
     expect(result.stageResults.winnerFinishTimeSeconds).toBe(4048.485)
     expect(breakawayRows.map((row) => row.riderId)).toEqual(['r06', 'r01'])
-    expect(new Set(pelotonRows.map((row) => row.finishTimeSeconds))).toEqual(
-      new Set([4050.705]),
-    )
-    expect(new Set(pelotonRows.map((row) => row.gapSecondsToWinner))).toEqual(
-      new Set([2.22]),
-    )
+    expect(
+      new Set(pelotonRows.map((row) => row.finishTimeSeconds)),
+    ).toEqual(new Set([4050.705]))
+    expect(
+      new Set(pelotonRows.map((row) => row.gapSecondsToWinner)),
+    ).toEqual(new Set([2.22]))
   })
 
   it('creates one contiguous deterministic result row per rider', () => {
@@ -107,7 +111,9 @@ describe('unified B1 road-stage runner', () => {
       expect(result.stageResults.results.map((row) => row.rank)).toEqual([
         1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12,
       ])
-      expect(new Set(result.stageResults.results.map((row) => row.riderId)).size).toBe(12)
+      expect(
+        new Set(result.stageResults.results.map((row) => row.riderId)).size,
+      ).toBe(12)
     }
   })
 })
