@@ -13,6 +13,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router'
 import { supabase } from '../../lib/supabase'
 import TutorialOverlay from '../../components/tutorial/TutorialOverlay'
+import TutorialTargetFrame from '../../components/tutorial/TutorialTargetFrame'
 import {
   squadTutorialSteps,
   squadWelcomeTutorial,
@@ -912,7 +913,21 @@ export default function SquadPage() {
     setTutorialMode('closed')
   }
 
-  function openRiderProfile(riderId: string) {
+  async function openRiderProfile(riderId: string) {
+    const currentStep = squadTutorialSteps[tutorialStepIndex]
+
+    if (
+      tutorialMode === 'steps' &&
+      currentStep?.key === 'squad-rider-details' &&
+      tutorialStepIndex < squadTutorialSteps.length - 1
+    ) {
+      const nextIndex = tutorialStepIndex + 1
+      const nextStep = squadTutorialSteps[nextIndex]
+
+      await saveTutorialProgress('squad', 'started', nextStep.key)
+      setTutorialStepIndex(nextIndex)
+    }
+
     navigate(`/dashboard/my-riders/${riderId}`)
   }
 
@@ -1076,28 +1091,35 @@ export default function SquadPage() {
       ) : null}
 
       {!tutorialLoading && tutorialMode === 'steps' ? (
-        <TutorialOverlay
-          open
-          variant="panel"
-          title={squadTutorialSteps[tutorialStepIndex].title}
-          body={squadTutorialSteps[tutorialStepIndex].body}
-          stepLabel={`${tutorialStepIndex + 1}/${squadTutorialSteps.length}`}
-          primaryAction={
-            squadTutorialSteps[tutorialStepIndex].primaryAction ?? 'Next'
-          }
-          secondaryAction={
-            tutorialStepIndex === squadTutorialSteps.length - 1
-              ? squadTutorialSteps[tutorialStepIndex].secondaryAction
-              : 'Skip tutorial'
-          }
-          onPrimary={handleNextSquadTutorialStep}
-          onSecondary={
-            tutorialStepIndex === squadTutorialSteps.length - 1
-              ? handleFinishSquadTutorialForNow
-              : handleSkipSquadTutorial
-          }
-          onClose={handleCloseSquadTutorial}
-        />
+        <>
+          <TutorialTargetFrame
+            target={squadTutorialSteps[tutorialStepIndex].target ?? null}
+          />
+
+          <TutorialOverlay
+            open
+            variant="panel"
+            title={squadTutorialSteps[tutorialStepIndex].title}
+            body={squadTutorialSteps[tutorialStepIndex].body}
+            stepLabel={`${tutorialStepIndex + 1}/${squadTutorialSteps.length}`}
+            primaryAction={
+              squadTutorialSteps[tutorialStepIndex].primaryAction ?? 'Next'
+            }
+            secondaryAction={
+              tutorialStepIndex === squadTutorialSteps.length - 1
+                ? squadTutorialSteps[tutorialStepIndex].secondaryAction
+                : 'Skip tutorial'
+            }
+            onPrimary={handleNextSquadTutorialStep}
+            onSecondary={
+              tutorialStepIndex === squadTutorialSteps.length - 1
+                ? handleFinishSquadTutorialForNow
+                : handleSkipSquadTutorial
+            }
+            onClose={handleCloseSquadTutorial}
+            compact={squadTutorialSteps[tutorialStepIndex].compact}
+          />
+        </>
       ) : null}
     </div>
   )

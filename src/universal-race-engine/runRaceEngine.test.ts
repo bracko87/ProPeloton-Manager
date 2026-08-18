@@ -15457,5 +15457,9 @@ describe('Phase 11A production verification bridge', () => {
     expect(migrationSource).toContain(
       "set_config('app.race_engine_writer_family', 'typescript', true)",
     )
+    expect(migrationSource).not.toContain('team.team_id')
+    expect(migrationSource).toContain(
+      "jsonb_agg(to_jsonb(team) order by to_jsonb(team)::text)",
+    )
   })
 })

@@ -1,5 +1,6 @@
--- PPM Phase 11A1 — universal production verification bridge
+-- PPM Phase 11A2 — universal production verification bridge
 --
+-- Phase 11A2 schema-compatibility hotfix for the existing verification bridge.
 -- Self-contained verification bridge for the CURRENT production schema.
 -- Reuses:
 --   * race_stage_simulation_runs
@@ -123,7 +124,7 @@ begin
   from public.race_stage_points point
   where point.stage_id = p_stage_id;
 
-  select coalesce(jsonb_agg(to_jsonb(team) order by coalesce(team.team_id::text, team.club_id::text)), '[]'::jsonb)
+  select coalesce(jsonb_agg(to_jsonb(team) order by to_jsonb(team)::text), '[]'::jsonb)
   into v_participant_teams
   from public.race_participant_teams_v1 team
   where team.race_id = v_race_id

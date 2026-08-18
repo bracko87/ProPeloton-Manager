@@ -992,7 +992,7 @@ export default function FirstSquadTab({
             </div>
           )}
 
-          <div className="w-full rounded-lg bg-white p-4 shadow">
+          <div data-tutorial-target="squad-riders-table" className="w-full rounded-lg bg-white p-4 shadow">
             <div className="mb-3 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
               <div>
                 <div className="text-base font-semibold text-gray-800">First Squad</div>

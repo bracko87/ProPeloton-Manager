@@ -1077,7 +1077,7 @@ export default function Header({
       <div className="flex items-center gap-3 shrink-0">
         <button
           type="button"
-          data-tutorial-target="header-membership"
+          data-tutorial-target="header-premium"
           onClick={() => {
             handleNavigate('/dashboard/pro')
           }}

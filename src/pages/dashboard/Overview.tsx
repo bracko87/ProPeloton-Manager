@@ -7334,6 +7334,7 @@ export default function OverviewPage() {
             onPrimary={handleNext}
             onSecondary={handleSecondary}
             onClose={handleClose}
+            compact={activeStep.compact}
           />
         </>
       ) : null}
@@ -7369,6 +7370,7 @@ export default function OverviewPage() {
             }
             onPrimary={handleNextMenuTutorialStep}
             onClose={handleCloseMenuTutorial}
+            compact={menuTutorialSteps[menuTutorialStepIndex].compact}
           />
         </>
       ) : null}

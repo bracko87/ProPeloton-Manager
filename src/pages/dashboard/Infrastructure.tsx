@@ -44,6 +44,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { supabase } from '@/lib/supabase'
 import TutorialOverlay from '../../components/tutorial/TutorialOverlay'
+import TutorialTargetFrame from '../../components/tutorial/TutorialTargetFrame'
 import {
   facilitiesTutorialSteps,
   facilitiesWelcomeTutorial,
@@ -2275,7 +2276,8 @@ export default function InfrastructurePage({ clubId }: { clubId?: string }) {
       )}
 
       {activeTab === 'facilities' && (
-        <FacilitiesSection
+        <div data-tutorial-target="facilities-buildings">
+          <FacilitiesSection
           activeJobs={activeJobs}
           nowMs={nowMs}
           facilityCapacity={facilityJobCapacity}
@@ -2293,10 +2295,12 @@ export default function InfrastructurePage({ clubId }: { clubId?: string }) {
           }
           onCloseDetails={() => setSelectedItemKey(null)}
         />
+        </div>
       )}
 
       {activeTab === 'assets' && (
-        <AssetsSection
+        <div data-tutorial-target="facilities-assets">
+          <AssetsSection
           activeAssetSubTab={activeAssetSubTab}
           setActiveAssetSubTab={setActiveAssetSubTab}
 
@@ -2352,6 +2356,7 @@ export default function InfrastructurePage({ clubId }: { clubId?: string }) {
           unlockingSlotKey={unlockingAssetSlotKey}
           onUnlockAssetSlot={handleUnlockAssetSlot}
         />
+        </div>
       )}
 
       {!tutorialLoading && tutorialMode === 'invite' ? (
@@ -2369,28 +2374,35 @@ export default function InfrastructurePage({ clubId }: { clubId?: string }) {
       ) : null}
 
       {!tutorialLoading && tutorialMode === 'steps' ? (
-        <TutorialOverlay
-          open
-          variant="panel"
-          title={facilitiesTutorialSteps[tutorialStepIndex].title}
-          body={facilitiesTutorialSteps[tutorialStepIndex].body}
-          stepLabel={`${tutorialStepIndex + 1}/${facilitiesTutorialSteps.length}`}
-          primaryAction={
-            facilitiesTutorialSteps[tutorialStepIndex].primaryAction ?? 'Next'
-          }
-          secondaryAction={
-            tutorialStepIndex === facilitiesTutorialSteps.length - 1
-              ? facilitiesTutorialSteps[tutorialStepIndex].secondaryAction
-              : 'Skip tutorial'
-          }
-          onPrimary={handleNextFacilitiesTutorialStep}
-          onSecondary={
-            tutorialStepIndex === facilitiesTutorialSteps.length - 1
-              ? handleFinishFacilitiesTutorialForNow
-              : handleSkipFacilitiesTutorial
-          }
-          onClose={handleCloseFacilitiesTutorial}
-        />
+        <>
+          <TutorialTargetFrame
+            target={facilitiesTutorialSteps[tutorialStepIndex].target ?? null}
+          />
+
+          <TutorialOverlay
+            open
+            variant="panel"
+            title={facilitiesTutorialSteps[tutorialStepIndex].title}
+            body={facilitiesTutorialSteps[tutorialStepIndex].body}
+            stepLabel={`${tutorialStepIndex + 1}/${facilitiesTutorialSteps.length}`}
+            primaryAction={
+              facilitiesTutorialSteps[tutorialStepIndex].primaryAction ?? 'Next'
+            }
+            secondaryAction={
+              tutorialStepIndex === facilitiesTutorialSteps.length - 1
+                ? facilitiesTutorialSteps[tutorialStepIndex].secondaryAction
+                : 'Skip tutorial'
+            }
+            onPrimary={handleNextFacilitiesTutorialStep}
+            onSecondary={
+              tutorialStepIndex === facilitiesTutorialSteps.length - 1
+                ? handleFinishFacilitiesTutorialForNow
+                : handleSkipFacilitiesTutorial
+            }
+            onClose={handleCloseFacilitiesTutorial}
+            compact={facilitiesTutorialSteps[tutorialStepIndex].compact}
+          />
+        </>
       ) : null}
 
       {assetActionModal && (

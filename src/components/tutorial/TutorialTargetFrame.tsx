@@ -12,14 +12,21 @@ type FrameRect = {
   height: number
 }
 
-const FRAME_PADDING = 10
-const VIEWPORT_MARGIN = 10
-const MIN_FRAME_SIZE = 36
+const FRAME_PADDING = 8
+const VIEWPORT_MARGIN = 6
+const MIN_FRAME_SIZE = 28
+
+function getTutorialTargetSelector(target: string): string {
+  const escapedTarget =
+    typeof CSS !== 'undefined' && typeof CSS.escape === 'function'
+      ? CSS.escape(target)
+      : target.replace(/"/g, '\\"')
+
+  return `[data-tutorial-target="${escapedTarget}"]`
+}
 
 function findTargetElement(target: string): HTMLElement | null {
-  return document.querySelector<HTMLElement>(
-    `[data-tutorial-target="${target}"]`,
-  )
+  return document.querySelector<HTMLElement>(getTutorialTargetSelector(target))
 }
 
 function clamp(value: number, min: number, max: number): number {
@@ -83,8 +90,11 @@ export default function TutorialTargetFrame({
       return
     }
 
-    let animationFrameId = 0
     let resizeObserver: ResizeObserver | null = null
+    let animationFrameId = 0
+    let secondAnimationFrameId = 0
+    let timeoutId = 0
+    let intervalId = 0
     let cancelled = false
 
     function updateFrame(): void {
@@ -106,7 +116,17 @@ export default function TutorialTargetFrame({
 
     updateFrame()
 
+    secondAnimationFrameId = window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(updateFrame)
+    })
+
+    timeoutId = window.setTimeout(updateFrame, 120)
+    intervalId = window.setInterval(updateFrame, 250)
+
     const targetElement = findTargetElement(target)
+    const overlayPanel = document.querySelector<HTMLElement>(
+      '[data-tutorial-overlay-panel="true"]',
+    )
 
     if (typeof ResizeObserver !== 'undefined') {
       resizeObserver = new ResizeObserver(updateFrame)
@@ -115,20 +135,24 @@ export default function TutorialTargetFrame({
         resizeObserver.observe(targetElement)
       }
 
+      if (overlayPanel) {
+        resizeObserver.observe(overlayPanel)
+      }
+
       resizeObserver.observe(document.body)
     }
 
     window.addEventListener('resize', updateFrame)
     window.addEventListener('scroll', updateFrame, true)
 
-    const intervalId = window.setInterval(updateFrame, 250)
-
     return () => {
       cancelled = true
       window.cancelAnimationFrame(animationFrameId)
+      window.cancelAnimationFrame(secondAnimationFrameId)
+      window.clearTimeout(timeoutId)
+      window.clearInterval(intervalId)
       window.removeEventListener('resize', updateFrame)
       window.removeEventListener('scroll', updateFrame, true)
-      window.clearInterval(intervalId)
       resizeObserver?.disconnect()
     }
   }, [target])
@@ -146,30 +170,11 @@ export default function TutorialTargetFrame({
         left: frameRect.left,
         width: frameRect.width,
         height: frameRect.height,
-
-        /**
-         * Important:
-         * This must be BELOW the tutorial box.
-         * The tutorial overlay/panel should be z-index 1000 or higher.
-         */
         zIndex: 800,
-
-        /**
-         * Sharp rectangle only.
-         * No rounded corners.
-         */
         borderRadius: 0,
         border: '4px solid rgba(239, 68, 68, 0.98)',
-
-        /**
-         * Glow around the rectangle.
-         */
         boxShadow:
           '0 0 0 2px rgba(255, 255, 255, 0.75), 0 0 22px rgba(239, 68, 68, 0.8)',
-
-        /**
-         * Keep it behind overlay but visible above page content.
-         */
         background: 'transparent',
       }}
     />

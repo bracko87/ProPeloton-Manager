@@ -23,6 +23,8 @@ export type TutorialStep = {
   primaryAction?: string
   secondaryAction?: string
   target?: string
+  compact?: boolean
+  requireTargetClick?: boolean
 }
 
 export const overviewWelcomeTutorial = {
@@ -96,13 +98,15 @@ export const overviewTutorialSteps: TutorialStep[] = [
     primaryAction: 'Next',
   },
   {
-    key: 'overview-attention',
-    title: 'What Needs Your Attention',
+    key: 'overview-staff-briefing',
+    title: 'Staff Briefing Centre',
     body:
-      'The top part of the page helps you understand what needs action.\n\n' +
-      'Attention alerts, news, today’s races, upcoming events, and quick summaries help you know what is happening and what you should check next.\n\n' +
-      'If you see an alert, do not ignore it. It can point to important topics such as sponsor offers, race deadlines, unread messages, rider problems, finance warnings, or preparation tasks.',
+      'This panel shows your support staff and assistant roles.\n\n' +
+      'Here you can see important team helpers such as the Head Coach, Sports Director, Team Doctor, Chief Mechanic, and other assistant roles when available.\n\n' +
+      'These assistants help you manage important parts of your club more efficiently, such as race planning, rider health, preparation, and equipment support.\n\n' +
+      'Some assistant functions, staff tools, or automation-related features may require a Premium account or coin purchase to use fully.',
     primaryAction: 'Next',
+    target: 'overview-attention',
   },
   {
     key: 'overview-news-board',
@@ -112,6 +116,7 @@ export const overviewTutorialSteps: TutorialStep[] = [
       'Some news is about your own team, such as sponsor offers, birthdays, or team updates. Other news can be about the wider race world, such as race results or important cycling events.\n\n' +
       'Clicking a news row can reveal more information when extra details are available.',
     primaryAction: 'Next',
+    target: 'overview-news-board',
   },
   {
     key: 'overview-next-race',
@@ -121,6 +126,7 @@ export const overviewTutorialSteps: TutorialStep[] = [
       'This is important because accepted races often still need preparation. You may need to select riders, staff, assets, equipment, supplies, and stage tactics before the deadlines.\n\n' +
       'If this panel shows an upcoming race, you should check Race Preparation early.',
     primaryAction: 'Next',
+    target: 'overview-next-team-race',
   },
   {
     key: 'overview-last-race',
@@ -129,6 +135,7 @@ export const overviewTutorialSteps: TutorialStep[] = [
       'The Last Team Race panel shows your most recent finished race when available.\n\n' +
       'Use this to quickly review how your team performed. Results can help you decide if riders need rest, if tactics worked well, or if your squad needs changes before the next event.',
     primaryAction: 'Next',
+    target: 'overview-last-team-race',
   },
   {
     key: 'overview-sponsor',
@@ -137,14 +144,16 @@ export const overviewTutorialSteps: TutorialStep[] = [
       'The Main Sponsor panel shows your primary sponsor information when you have an active main sponsor.\n\n' +
       'Sponsors are important because they can provide money, bonuses, objectives, and sometimes branding effects. Some sponsor contracts are simple, while naming-rights sponsors can temporarily change your team name during the season.',
     primaryAction: 'Next',
+    target: 'overview-main-sponsor',
   },
   {
     key: 'overview-progress',
     title: 'Team Health and Season Progress',
     body:
-      'The rest of the Overview helps you follow your team’s condition and progress.\n\n' +
-      'You can monitor squad condition, finance health, sponsor activity, race activity, and season progress.\n\n' +
-      'The more you play, the more useful this page becomes. It helps you connect short-term decisions, like preparing the next race, with long-term goals, like building a stronger squad and climbing the rankings.',
+      'The rest of the Overview page helps you follow your team’s condition and progress.\n\n' +
+      'Here you can monitor rider condition, finance health, sponsor activity, race activity, active operations, season snapshot data, and general season progress.\n\n' +
+      'Some advanced dashboard sections, summaries, or additional data views may require a Premium account or coin purchase to unlock. If a panel is locked, you can still play normally, but Premium or coins can make the game easier and give you a deeper view of your club.\n\n' +
+      'As your club grows, this page becomes more useful because it helps you connect short-term actions, like preparing the next race, with long-term goals such as building a stronger squad and improving your ranking.',
     primaryAction: 'Continue to Squad',
     secondaryAction: 'Finish for now',
   },
@@ -167,6 +176,7 @@ export const squadTutorialSteps: TutorialStep[] = [
       'In the general view, you can see important rider information such as age, country, role, overall level, condition, market value, wages, contract details, and international points.\n\n' +
       'Use this page whenever you want to understand the current strength and structure of your team.',
     primaryAction: 'Next',
+    target: 'squad-riders-table',
   },
   {
     key: 'squad-rider-details',
@@ -174,8 +184,11 @@ export const squadTutorialSteps: TutorialStep[] = [
     body:
       'The Squad page gives you different ways to look at your riders.\n\n' +
       'You can check financial information, skills, form, development, health, and availability. Skills can improve over time, so this page helps you follow how each rider is developing.\n\n' +
-      'By clicking the View button, you can open the full rider profile with more detailed information.',
+      'By clicking the View button, you can open the full rider profile with more detailed information.\n\n' +
+      'Some advanced rider tools, additional dashboards, or convenience features may require a Premium account or coin purchase.',
     primaryAction: 'Next',
+    target: 'squad-rider-view-button',
+    compact: true,
   },
   {
     key: 'squad-developing-team',
@@ -183,8 +196,10 @@ export const squadTutorialSteps: TutorialStep[] = [
     body:
       'Your Developing Team is your second team. It can be used for young riders who are not yet ready for the first squad but can still race in assigned competitions.\n\n' +
       'The Developing Team must be unlocked first. You can find more about this in Preferences.\n\n' +
-      'Riders can only be moved between the First Squad and Developing Team during movement windows. These windows open four times per year, and the Squad page shows when the next movement window is available.',
+      'Riders can only be moved between the First Squad and Developing Team during movement windows. These windows open four times per year, and the Squad page shows when the next movement window is available.\n\n' +
+      'Some extra management tools, extended views, or convenience features related to this area may require a Premium account or coin purchase.',
     primaryAction: 'Next',
+    target: 'squad-developing-team',
   },
   {
     key: 'squad-staff',
@@ -195,6 +210,7 @@ export const squadTutorialSteps: TutorialStep[] = [
       'After Squad, the next recommended page is Training, where you can set regular training and plan training camps for your riders.',
     primaryAction: 'Continue to Training',
     secondaryAction: 'Finish for now',
+    target: 'squad-staff',
   },
 ]
 
@@ -298,6 +314,7 @@ export const facilitiesTutorialSteps: TutorialStep[] = [
       'Later, you can build and upgrade important facilities such as the Training Center, Medical Center, Youth Academy, Mechanics Workshop, and Scouting Office.\n\n' +
       'Facilities are important because they improve your club and can also define how many staff members you are allowed to have.',
     primaryAction: 'Next',
+    target: 'facilities-buildings',
   },
   {
     key: 'facilities-projects',
@@ -307,16 +324,19 @@ export const facilitiesTutorialSteps: TutorialStep[] = [
       'You can start a build or upgrade project when your club has enough money and available project capacity.\n\n' +
       'You can also cancel an infrastructure project. If you cancel immediately, you receive a full refund. If you cancel later, the refund can be smaller.',
     primaryAction: 'Next',
+    target: 'facilities-buildings',
   },
   {
     key: 'facilities-assets',
     title: 'Team Assets',
     body:
       'The Assets tab shows vehicles and support assets your team can use.\n\n' +
-      'This includes team cars, team buses, equipment vans, mobile workshops, and medical vans. These assets can support your team during races and training camps.\n\n' +
-      'Each asset can have different levels, costs, condition, bonuses, and limits. Open the details for each asset to understand what it brings and how it can help your team perform better.',
+      'This includes team cars, team buses, equipment vans, mobile workshops, and medical vans. These assets can support your team during races, travel, preparation, and training camps.\n\n' +
+      'Each asset can have different levels, costs, condition, bonuses, and limits. Open the details for each asset to understand what it brings and how it can help your team perform better.\n\n' +
+      'To use this page fully, some advanced functions, management options, or extended tools may require a Premium account or coin purchase.',
     primaryAction: 'Continue to Calendar',
     secondaryAction: 'Finish for now',
+    target: 'facilities-assets',
   },
 ]
 
@@ -610,7 +630,7 @@ export const menuTutorialSteps: TutorialStep[] = [
     target: 'header-menu',
     body:
       'This is the main Menu button in the top-right corner.\n\n' +
-      'Inside the menu, you can find Inbox for internal messages, profile settings, themes and customization settings, forum or Discord links, game preferences, help with the in-game manual and frequently asked questions, Contact Us, Coin Packages, and Invite Friends referral progress.\n\n' +
+      'Inside the menu, you can find Inbox for internal messages, profile settings, themes and customization settings, forum or Discord links, game preferences, help with the in-game manual and frequently asked questions, Contact Us, Pro Packages, and Invite Friends referral progress.\n\n' +
       'Use this menu whenever you need account settings, help, support, preferences, or extra game options.',
     primaryAction: 'Next',
   },
@@ -630,8 +650,20 @@ export const menuTutorialSteps: TutorialStep[] = [
     target: 'header-coins',
     body:
       'This shows your current coin balance.\n\n' +
-      'Please make sure you always have enough coins available. If your coin balance is too low, your account can be suspended until coins are available again.\n\n' +
-      'Coins can be checked here and purchased from Menu → Coin Packages.',
+      'Coins are used for selected game features, unlocks, and convenience options inside ProPeloton Manager.\n\n' +
+      'You can check your balance here at any time and purchase more through Menu → Pro Packages.\n\n' +
+      'Running low on coins does not suspend your account. You can continue playing, but some optional features or premium-style actions may not be available until you add more coins.',
+    primaryAction: 'Next',
+  },
+  {
+    key: 'menu-premium',
+    title: 'Premium Account',
+    target: 'header-premium',
+    body:
+      'This is your Premium access area.\n\n' +
+      'A Premium account can make the game easier and more comfortable by giving access to extra features, more advanced views, and useful convenience tools.\n\n' +
+      'Premium can also help you unlock more of the game’s full management experience.\n\n' +
+      'By purchasing Premium or Pro Packages, you also directly support our team and help us continue developing ProPeloton Manager faster and better.',
     primaryAction: 'Next',
   },
   {
