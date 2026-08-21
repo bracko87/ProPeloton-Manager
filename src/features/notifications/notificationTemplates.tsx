@@ -990,6 +990,571 @@ function getNegotiationTransferFee(item: NotificationItem): number | null {
 }
 
 /* -------------------------------------------------------------------------- */
+/* Head Coach / Staff Advisory                                                */
+/* -------------------------------------------------------------------------- */
+
+const HEAD_COACH_ADVISORY_IMAGE =
+  'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Event%20images/Head%20Coach%20Advisory.png'
+
+function getHeadCoachSnapshot(payload: Record<string, unknown> | null): Record<string, unknown> | null {
+  return payload ? asRecord(payload.snapshot) : null
+}
+
+function getHeadCoachAttentionRiders(
+  payload: Record<string, unknown> | null
+): Array<Record<string, unknown>> {
+  if (!payload || !Array.isArray(payload.attention_riders)) return []
+
+  return payload.attention_riders
+    .map((entry) => asRecord(entry))
+    .filter((entry): entry is Record<string, unknown> => Boolean(entry))
+}
+
+function getHeadCoachRecommendations(payload: Record<string, unknown> | null): string[] {
+  if (!payload || !Array.isArray(payload.recommendations)) return []
+
+  return payload.recommendations
+    .map((value) => readString(value))
+    .filter((value): value is string => Boolean(value))
+}
+
+function getHeadCoachVariant(payload: Record<string, unknown> | null): string {
+  return (
+    pickFirstString(payload, ['report_variant', 'event_variant', 'variant']) ||
+    'training_readiness'
+  )
+}
+
+const HEAD_COACH_TRAINING_READINESS_ADVISORY_TEMPLATE: NotificationTemplate = {
+  defaultTitle: 'Head Coach Advisory — Training & Readiness',
+  defaultMessage:
+    'Your Head Coach has prepared a new advisory update using the current squad and training data.',
+
+  imageSrc: HEAD_COACH_ADVISORY_IMAGE,
+
+  // All paid Head Coach advisory variants use the same dedicated image.
+  getImageSrc: () => HEAD_COACH_ADVISORY_IMAGE,
+
+  enrich: (item) => {
+    const payload = getPayload(item) ?? {}
+
+    return {
+      ...item,
+      title:
+        item.title ||
+        pickFirstString(payload, ['title', 'report_title', 'advisory_title']) ||
+        'Head Coach Advisory — Training & Readiness',
+      message:
+        item.message ||
+        pickFirstString(payload, ['summary', 'report_summary', 'advisory_summary']) ||
+        'Your Head Coach has prepared a new advisory update using the current squad and training data.',
+    }
+  },
+
+  getIntroText: (item) => {
+    const payload = getPayload(item)
+
+    return (
+      pickFirstString(payload, [
+        'summary',
+        'advisory_summary',
+        'report_summary',
+        'briefing_summary',
+        'intro_text',
+      ]) ||
+      readString(item.message) ||
+      'Your Head Coach has reviewed the current squad and training situation.'
+    )
+  },
+
+  getDetailRows: (item) => {
+    const payload = getPayload(item)
+    const snapshot = getHeadCoachSnapshot(payload)
+
+    const advisorName =
+      pickFirstString(payload, [
+        'advisor_staff_name',
+        'advisor_name',
+        'head_coach_name',
+        'coach_name',
+        'staff_name',
+        'staff_full_name',
+        'full_name',
+        'display_name',
+      ]) ||
+      pickFirstString(asRecord(payload?.staff), ['name', 'staff_name'])
+
+    const variant = getHeadCoachVariant(payload)
+
+    const skillRiderName = pickFirstString(payload, [
+      'rider_name',
+      'rider_display_name',
+    ])
+    const skillLabel = pickFirstString(payload, ['skill_label', 'skill_name'])
+    const skillOldValue = pickFirstNumber(payload, ['old_value', 'previous_value'])
+    const skillNewValue = pickFirstNumber(payload, ['new_value', 'current_value'])
+    const skillDelta = pickFirstNumber(payload, ['delta', 'skill_delta'])
+
+    const attentionRiders = getHeadCoachAttentionRiders(payload)
+    const attentionNames = attentionRiders
+      .map((rider) =>
+        readString(rider.name) ||
+        readString(rider.rider_name) ||
+        readString(rider.display_name)
+      )
+      .filter((name): name is string => Boolean(name))
+
+    const currentGameDate =
+      pickFirstString(snapshot, ['current_game_date', 'game_date']) ||
+      pickFirstString(payload, [
+        'current_game_date',
+        'report_game_date',
+        'advisory_game_date',
+        'game_date',
+      ])
+
+    const squadRiders = pickFirstNumber(snapshot, ['squad_riders', 'total_riders'])
+    const highFatigue = pickFirstNumber(snapshot, ['high_fatigue', 'high_fatigue_riders'])
+    const elevatedFatigue = pickFirstNumber(snapshot, ['elevated_fatigue', 'elevated_fatigue_riders'])
+    const notFullyFit = pickFirstNumber(snapshot, ['not_fully_fit', 'not_fully_fit_riders'])
+    const unavailable = pickFirstNumber(snapshot, ['unavailable', 'unavailable_riders', 'affected_riders'])
+    const plannedSessions = pickFirstNumber(snapshot, [
+      'planned_training_sessions_next_3_game_days',
+      'planned_sessions_next_3_game_days',
+      'planned_sessions',
+    ])
+    const manualOverrides = pickFirstNumber(snapshot, [
+      'manual_training_overrides_next_3_game_days',
+      'manual_overrides_next_3_game_days',
+      'manual_overrides',
+    ])
+    const highestFatigue = pickFirstNumber(snapshot, ['highest_fatigue'])
+    const windowStart = pickFirstString(snapshot, ['window_start'])
+    const windowEnd = pickFirstString(snapshot, ['window_end'])
+
+    return compactRows([
+      detailRow('Advisor', advisorName),
+      detailRow('Role', 'Head Coach'),
+      detailRow('Advisory', formatLabel(variant)),
+      detailRow('Rider', skillRiderName),
+      detailRow('Skill', skillLabel ? formatLabel(skillLabel) : null),
+      detailRow(
+        'Previous value',
+        skillOldValue !== null ? `${skillOldValue}` : null
+      ),
+      detailRow(
+        'New value',
+        skillNewValue !== null ? `${skillNewValue}` : null
+      ),
+      detailRow(
+        'Change',
+        skillDelta !== null
+          ? `${skillDelta > 0 ? '+' : ''}${skillDelta}`
+          : null
+      ),
+      detailRow('Squad riders', squadRiders !== null ? `${squadRiders}` : null),
+      detailRow('High fatigue', highFatigue !== null ? `${highFatigue}` : null),
+      detailRow('Elevated fatigue', elevatedFatigue !== null ? `${elevatedFatigue}` : null),
+      detailRow('Not fully fit', notFullyFit !== null ? `${notFullyFit}` : null),
+      detailRow('Affected / unavailable', unavailable !== null ? `${unavailable}` : null),
+      detailRow('Highest fatigue', highestFatigue !== null ? `${highestFatigue}` : null),
+      detailRow(
+        'Planned sessions · next 3 game days',
+        plannedSessions !== null ? `${plannedSessions}` : null
+      ),
+      detailRow(
+        'Manual overrides · next 3 game days',
+        manualOverrides !== null ? `${manualOverrides}` : null
+      ),
+      detailRow(
+        'Riders needing attention',
+        attentionNames.length > 0 ? attentionNames.join(', ') : null
+      ),
+      detailRow(
+        'Training window',
+        windowStart && windowEnd ? `${windowStart} – ${windowEnd}` : null
+      ),
+      detailRow(
+        'Game date',
+        currentGameDate ? formatContractSeasonLabel(currentGameDate) : null
+      ),
+    ])
+  },
+
+  getExtraText: (item) => {
+    const payload = getPayload(item)
+    const recommendations = getHeadCoachRecommendations(payload)
+    const attentionRiders = getHeadCoachAttentionRiders(payload)
+
+    const variant = getHeadCoachVariant(payload)
+    const riderName = pickFirstString(payload, ['rider_name', 'rider_display_name'])
+    const skillLabel = pickFirstString(payload, ['skill_label', 'skill_name'])
+    const oldValue = pickFirstNumber(payload, ['old_value', 'previous_value'])
+    const newValue = pickFirstNumber(payload, ['new_value', 'current_value'])
+    const delta = pickFirstNumber(payload, ['delta', 'skill_delta'])
+
+    if (
+      variant === 'rider_skill_change' &&
+      riderName &&
+      skillLabel &&
+      oldValue !== null &&
+      newValue !== null
+    ) {
+      const direction = delta !== null && delta < 0 ? 'decreased' : 'increased'
+      return `${riderName}'s ${formatLabel(skillLabel) || skillLabel} has ${direction} from ${oldValue} to ${newValue}${delta !== null ? ` (${delta > 0 ? '+' : ''}${delta})` : ''}. Open the rider profile or Training page to review current development.`
+    }
+
+    const riderDetails = attentionRiders
+      .slice(0, 5)
+      .map((rider) => {
+        const name = readString(rider.name) || readString(rider.rider_name) || 'Rider'
+        const fatigue = readNumber(rider.fatigue)
+        const availability = formatLabel(readString(rider.availability))
+        const reason = readString(rider.flag_reason)
+
+        const details = [
+          fatigue !== null ? `fatigue ${fatigue}` : null,
+          availability,
+          reason,
+        ].filter(Boolean)
+
+        return details.length > 0 ? `${name}: ${details.join(' · ')}` : name
+      })
+
+    const parts: string[] = []
+
+    if (riderDetails.length > 0) {
+      parts.push(`Riders: ${riderDetails.join('; ')}.`)
+    }
+
+    if (recommendations.length > 0) {
+      parts.push(`Head Coach recommendation: ${recommendations.join(' ')}`)
+    }
+
+    return (
+      parts.join(' ') ||
+      'Review the current squad and training situation before changing workload or race preparation.'
+    )
+  },
+
+  actions: [
+    {
+      key: 'open-staff-briefing-centre',
+      label: 'Staff Briefing Centre',
+      variant: 'primary',
+      kind: 'navigate',
+      getHref: () => '/dashboard/overview',
+      show: () => true,
+    },
+    {
+      key: 'open-training-page',
+      label: 'Training page',
+      variant: 'secondary',
+      kind: 'navigate',
+      getHref: () => '/dashboard/training',
+      show: () => true,
+    },
+    {
+      key: 'open-team-squad',
+      label: 'Team squad',
+      variant: 'secondary',
+      kind: 'navigate',
+      getHref: () => '/dashboard/squad',
+      show: () => true,
+    },
+    {
+      key: 'open-staff-page',
+      label: 'Staff page',
+      variant: 'secondary',
+      kind: 'navigate',
+      getHref: () => '/dashboard/staff',
+      show: () => true,
+    },
+    MARK_READ_ACTION,
+  ],
+}
+
+function isHeadCoachTrainingReadinessAdvisoryType(
+  typeCode: string | null | undefined
+): boolean {
+  if (!typeCode) return false
+
+  const normalized = typeCode.toUpperCase()
+
+  return (
+    normalized === 'HEAD_COACH_ADVISORY' ||
+    normalized === 'HEAD_COACH_ADVISORY_READY' ||
+    normalized === 'HEAD_COACH_TRAINING_READINESS_ADVISORY' ||
+    normalized === 'STAFF_ADVISORY_READY' ||
+    normalized === 'STAFF_ADVISORY_REPORT_READY' ||
+    normalized === 'TRAINING_READINESS_ADVISORY' ||
+    normalized === 'TRAINING_AND_READINESS_ADVISORY' ||
+    ((normalized.includes('HEAD_COACH') || normalized.includes('STAFF')) &&
+      normalized.includes('ADVISOR')) ||
+    ((normalized.includes('HEAD_COACH') || normalized.includes('STAFF')) &&
+      normalized.includes('ADVISORY')) ||
+    (normalized.includes('TRAINING') &&
+      normalized.includes('READINESS') &&
+      (normalized.includes('ADVISOR') || normalized.includes('ADVISORY')))
+  )
+}
+
+
+const SPORT_DIRECTOR_ADVISORY_IMAGE =
+  'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Event%20images/Sport%20Director%20Advisory.png'
+
+function getSportDirectorData(
+  payload: Record<string, unknown> | null
+): Record<string, unknown> | null {
+  if (!payload) return null
+  return asRecord(payload.data) || asRecord(payload.snapshot) || null
+}
+
+function getSportDirectorRecommendations(
+  payload: Record<string, unknown> | null
+): string[] {
+  if (!payload || !Array.isArray(payload.recommendations)) return []
+
+  return payload.recommendations
+    .map((value) => readString(value))
+    .filter((value): value is string => Boolean(value))
+}
+
+function getSportDirectorVariant(payload: Record<string, unknown> | null): string {
+  return (
+    pickFirstString(payload, ['report_variant', 'event_variant', 'variant']) ||
+    'race_programme'
+  )
+}
+
+const SPORT_DIRECTOR_ADVISORY_TEMPLATE: NotificationTemplate = {
+  defaultTitle: 'Sports Director Advisory — Race Programme',
+  defaultMessage:
+    'Your Sports Director has prepared a new race-programme advisory.',
+
+  imageSrc: SPORT_DIRECTOR_ADVISORY_IMAGE,
+
+  // All Sports Director advisory variants use the same dedicated image.
+  getImageSrc: () => SPORT_DIRECTOR_ADVISORY_IMAGE,
+
+  enrich: (item) => {
+    const payload = getPayload(item) ?? {}
+
+    return {
+      ...item,
+      title:
+        item.title ||
+        pickFirstString(payload, ['title', 'report_title', 'advisory_title']) ||
+        'Sports Director Advisory — Race Programme',
+      message:
+        item.message ||
+        pickFirstString(payload, ['summary', 'report_summary', 'advisory_summary']) ||
+        'Your Sports Director has prepared a new race-programme advisory.',
+    }
+  },
+
+  getIntroText: (item) => {
+    const payload = getPayload(item)
+
+    return (
+      pickFirstString(payload, [
+        'summary',
+        'advisory_summary',
+        'report_summary',
+        'briefing_summary',
+        'intro_text',
+      ]) ||
+      readString(item.message) ||
+      'Your Sports Director has reviewed the current race programme and preparation situation.'
+    )
+  },
+
+  getDetailRows: (item) => {
+    const payload = getPayload(item)
+    const data = getSportDirectorData(payload)
+
+    const advisorName =
+      pickFirstString(payload, [
+        'advisor_staff_name',
+        'advisor_name',
+        'sports_director_name',
+        'sport_director_name',
+        'staff_name',
+        'staff_full_name',
+        'full_name',
+        'display_name',
+      ]) ||
+      pickFirstString(asRecord(payload?.staff), ['name', 'staff_name'])
+
+    const variant = getSportDirectorVariant(payload)
+
+    const nextRaceName = pickFirstString(data, ['next_race_name'])
+    const nextRaceDate = pickFirstString(data, ['next_race_start_date'])
+    const acceptedRaces = pickFirstNumber(data, ['accepted_races_next_30_game_days'])
+    const prepStatus = pickFirstString(data, ['race_preparation_status'])
+    const startlistStatus = pickFirstString(data, ['startlist_status'])
+    const deadline = pickFirstString(data, ['rider_submission_deadline_on'])
+    const missingStagePlans = pickFirstNumber(data, ['missing_stage_plans'])
+    const problemStagePlans = pickFirstNumber(data, ['problem_stage_plans'])
+    const readinessStatus = pickFirstString(data, ['readiness_status'])
+    const currentGameDate = pickFirstString(data, ['current_game_date'])
+    const programmeStatus = pickFirstString(data, ['programme_status'])
+    const activeRaceName = pickFirstString(data, ['active_race_name'])
+    const nextFutureRaceName = pickFirstString(data, ['next_future_race_name'])
+    const nextFutureRaceStart = pickFirstString(data, ['next_future_race_start_date'])
+    const programmeGapDays = pickFirstNumber(data, ['programme_gap_days'])
+    const futureAcceptedRaces = pickFirstNumber(data, [
+      'future_accepted_races_next_30_game_days',
+    ])
+    const actionableMissing = pickFirstNumber(data, [
+      'actionable_missing_stage_plans',
+    ])
+    const actionableProblem = pickFirstNumber(data, [
+      'actionable_problem_stage_plans',
+    ])
+    const priorityCount = pickFirstNumber(data, ['management_priority_count'])
+
+    return compactRows([
+      detailRow('Advisor', advisorName),
+      detailRow('Role', 'Sports Director'),
+      detailRow('Advisory', formatLabel(variant)),
+      detailRow('Current race', activeRaceName),
+      detailRow('Next race', nextRaceName),
+      detailRow('Next accepted future race', nextFutureRaceName),
+      detailRow(
+        'Next future race date',
+        nextFutureRaceStart ? formatContractSeasonLabel(nextFutureRaceStart) : null
+      ),
+      detailRow(
+        'Programme status',
+        programmeStatus ? formatLabel(programmeStatus) : null
+      ),
+      detailRow(
+        'Programme gap',
+        programmeGapDays !== null ? `${programmeGapDays} game days` : null
+      ),
+      detailRow(
+        'Future accepted races · next 30 game days',
+        futureAcceptedRaces !== null ? `${futureAcceptedRaces}` : null
+      ),
+      detailRow(
+        'Management priorities',
+        priorityCount !== null ? `${priorityCount}` : null
+      ),
+      detailRow(
+        'Race date',
+        nextRaceDate ? formatContractSeasonLabel(nextRaceDate) : null
+      ),
+      detailRow(
+        'Accepted races · next 30 game days',
+        acceptedRaces !== null ? `${acceptedRaces}` : null
+      ),
+      detailRow(
+        'Preparation status',
+        prepStatus ? formatLabel(prepStatus) : null
+      ),
+      detailRow(
+        'Startlist status',
+        startlistStatus ? formatLabel(startlistStatus) : null
+      ),
+      detailRow(
+        'Submission deadline',
+        deadline ? formatContractSeasonLabel(deadline) : null
+      ),
+      detailRow(
+        'Missing stage plans',
+        missingStagePlans !== null ? `${missingStagePlans}` : null
+      ),
+      detailRow(
+        'Actionable missing plans',
+        actionableMissing !== null ? `${actionableMissing}` : null
+      ),
+      detailRow(
+        'Problem stage plans',
+        problemStagePlans !== null ? `${problemStagePlans}` : null
+      ),
+      detailRow(
+        'Actionable incomplete plans',
+        actionableProblem !== null ? `${actionableProblem}` : null
+      ),
+      detailRow(
+        'Readiness',
+        readinessStatus ? formatLabel(readinessStatus) : null
+      ),
+      detailRow(
+        'Game date',
+        currentGameDate ? formatContractSeasonLabel(currentGameDate) : null
+      ),
+    ])
+  },
+
+  getExtraText: (item) => {
+    const payload = getPayload(item)
+    const recommendations = getSportDirectorRecommendations(payload)
+
+    if (recommendations.length > 0) {
+      return `Sports Director recommendation: ${recommendations.join(' ')}`
+    }
+
+    return 'Review the current race programme, preparation package, startlist and stage-plan status.'
+  },
+
+  actions: [
+    {
+      key: 'open-staff-briefing-centre',
+      label: 'Staff Briefing Centre',
+      variant: 'primary',
+      kind: 'navigate',
+      getHref: () => '/dashboard/overview',
+      show: () => true,
+    },
+    {
+      key: 'open-race-preparation-page',
+      label: 'Race Preparation',
+      variant: 'secondary',
+      kind: 'navigate',
+      getHref: () => '/dashboard/race-preparation',
+      show: () => true,
+    },
+    {
+      key: 'open-races-page',
+      label: 'Races',
+      variant: 'secondary',
+      kind: 'navigate',
+      getHref: () => '/dashboard/races',
+      show: () => true,
+    },
+    {
+      key: 'open-staff-page',
+      label: 'Staff page',
+      variant: 'secondary',
+      kind: 'navigate',
+      getHref: () => '/dashboard/staff',
+      show: () => true,
+    },
+    MARK_READ_ACTION,
+  ],
+}
+
+function isSportDirectorAdvisoryType(
+  typeCode: string | null | undefined
+): boolean {
+  if (!typeCode) return false
+  const normalized = typeCode.toUpperCase()
+
+  return (
+    normalized === 'ADVISOR_SPORT_DIRECTOR_REPORT' ||
+    normalized === 'SPORT_DIRECTOR_ADVISORY' ||
+    normalized === 'SPORTS_DIRECTOR_ADVISORY' ||
+    normalized === 'SPORT_DIRECTOR_REPORT' ||
+    (normalized.includes('SPORT') &&
+      normalized.includes('DIRECTOR') &&
+      (normalized.includes('ADVISORY') || normalized.includes('ADVISOR')))
+  )
+}
+
+
+/* -------------------------------------------------------------------------- */
 /* Template Registry                                                          */
 /* -------------------------------------------------------------------------- */
 
@@ -13698,11 +14263,649 @@ STAGE_PLAN_MISSING_AT_LOCK: {
 /* Public API                                                                 */
 /* -------------------------------------------------------------------------- */
 
+
+
+// ============================================================================
+// STAFF ADVISORY — TEAM DOCTOR
+// Added after Head Coach + Sports Director advisory implementation.
+// Common image for every paid Team Doctor advisory:
+// https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Event%20images/Team%20Doctor%20Advisory.png
+// ============================================================================
+
+const TEAM_DOCTOR_ADVISORY_IMAGE =
+  'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Event%20images/Team%20Doctor%20Advisory.png'
+
+const TEAM_DOCTOR_ADVISORY_TEMPLATE: NotificationTemplate = {
+  defaultTitle: 'Team Doctor Advisory — Medical & Treatment Report',
+  defaultMessage:
+    'Your Team Doctor has prepared a medical treatment and recovery advisory.',
+
+  imageSrc: TEAM_DOCTOR_ADVISORY_IMAGE,
+
+  getImageSrc: () => TEAM_DOCTOR_ADVISORY_IMAGE,
+
+  enrich: (item) => {
+    const payload = getPayload(item)
+    const advisorName = pickFirstString(payload, [
+      'advisor_staff_name',
+      'advisor_name',
+      'team_doctor_name',
+      'doctor_name',
+      'staff_name',
+    ])
+
+    return {
+      ...item,
+      title:
+        item.title ||
+        pickFirstString(payload, ['title', 'report_title', 'advisory_title']) ||
+        'Team Doctor Advisory',
+      message:
+        item.message ||
+        pickFirstString(payload, [
+          'summary',
+          'report_summary',
+          'advisory_summary',
+          'message',
+        ]) ||
+        (advisorName
+          ? `${advisorName} has prepared a medical treatment and recovery advisory.`
+          : 'Your Team Doctor has prepared a medical treatment and recovery advisory.'),
+    }
+  },
+
+  getIntroText: (item) => {
+    const payload = getPayload(item)
+    return (
+      pickFirstString(payload, [
+        'summary',
+        'report_summary',
+        'advisory_summary',
+        'intro_text',
+      ]) ||
+      buildIntroFromMessage(item) ||
+      'Review the latest medical-case, treatment, and recovery information from your Team Doctor.'
+    )
+  },
+
+  getDetailRows: (item) => {
+    const payload = getPayload(item)
+    const data =
+      payload && typeof payload.data === 'object' && payload.data !== null
+        ? (payload.data as Record<string, unknown>)
+        : payload
+
+    const advisorName = pickFirstString(payload, [
+      'advisor_staff_name',
+      'advisor_name',
+      'team_doctor_name',
+      'doctor_name',
+      'staff_name',
+    ])
+
+    const riderName = pickFirstString(data, [
+      'rider_name',
+      'display_name',
+      'rider_display_name',
+    ])
+
+    const caseType = formatLabel(
+      pickFirstString(data, ['case_type', 'health_case_type'])
+    )
+
+    const caseCode = formatLabel(
+      pickFirstString(data, [
+        'case_code',
+        'health_case_code',
+        'injury_code',
+        'sickness_type',
+        'condition',
+      ])
+    )
+
+    const severity = formatLabel(
+      pickFirstString(data, [
+        'severity',
+        'case_severity',
+        'health_severity',
+      ])
+    )
+
+    const bodyPart = formatLabel(
+      pickFirstString(data, ['body_part', 'injury_body_part'])
+    )
+
+    const baseRecoveryDays = pickFirstNumber(data, [
+      'selected_base_days',
+      'base_recovery_days',
+      'expected_base_days',
+    ])
+
+    const adjustedRecoveryDays = pickFirstNumber(data, [
+      'final_recovery_days',
+      'adjusted_recovery_days',
+      'expected_days_out',
+      'recovery_days',
+    ])
+
+    const recoveryDaysSaved = pickFirstNumber(data, [
+      'recovery_days_saved',
+      'days_saved',
+      'treatment_days_saved',
+    ])
+
+    const medicalReduction = pickFirstNumber(data, [
+      'medical_staff_reduction_pct',
+      'medical_reduction_pct',
+    ])
+
+    const infrastructureReduction = pickFirstNumber(data, [
+      'infrastructure_reduction_pct',
+      'facility_reduction_pct',
+    ])
+
+    const totalReduction = pickFirstNumber(data, [
+      'total_reduction_pct',
+      'recovery_reduction_pct',
+    ])
+
+    const expectedReturn = pickFirstString(data, [
+      'expected_full_recovery_on',
+      'expected_return_game_date',
+      'unavailable_until',
+      'recovery_until',
+    ])
+
+    const previousExpectedReturn = pickFirstString(data, [
+      'previous_expected_full_recovery_on',
+      'previous_expected_return_game_date',
+    ])
+
+    const injuredCount = pickFirstNumber(data, [
+      'injured_riders',
+      'injured_count',
+    ])
+
+    const sickCount = pickFirstNumber(data, [
+      'sick_riders',
+      'sick_count',
+    ])
+
+    const activeCases = pickFirstNumber(data, [
+      'active_or_recovering_health_cases',
+      'active_health_cases',
+      'active_cases',
+    ])
+
+    const totalSaved = pickFirstNumber(data, [
+      'total_recovery_days_saved',
+      'recovery_days_saved_total',
+    ])
+
+    return compactRows([
+      detailRow('Advisor', advisorName),
+      detailRow('Rider', riderName),
+      detailRow('Medical case', caseCode || caseType),
+      detailRow('Case type', caseType),
+      detailRow('Severity', severity),
+      detailRow('Body part', bodyPart),
+
+      detailRow(
+        'Base recovery',
+        baseRecoveryDays !== null
+          ? `${baseRecoveryDays} game day${baseRecoveryDays === 1 ? '' : 's'}`
+          : null
+      ),
+      detailRow(
+        'Adjusted recovery',
+        adjustedRecoveryDays !== null
+          ? `${adjustedRecoveryDays} game day${adjustedRecoveryDays === 1 ? '' : 's'}`
+          : null
+      ),
+      detailRow(
+        'Recovery time saved',
+        recoveryDaysSaved !== null
+          ? `${recoveryDaysSaved} game day${recoveryDaysSaved === 1 ? '' : 's'}`
+          : null
+      ),
+      detailRow(
+        'Medical staff effect',
+        medicalReduction !== null ? `${medicalReduction}% reduction` : null
+      ),
+      detailRow(
+        'Medical Center effect',
+        infrastructureReduction !== null
+          ? `${infrastructureReduction}% reduction`
+          : null
+      ),
+      detailRow(
+        'Total recovery reduction',
+        totalReduction !== null ? `${totalReduction}%` : null
+      ),
+      detailRow(
+        'Expected return',
+        expectedReturn ? formatContractSeasonLabel(expectedReturn) : null
+      ),
+      detailRow(
+        'Previous expected return',
+        previousExpectedReturn
+          ? formatContractSeasonLabel(previousExpectedReturn)
+          : null
+      ),
+
+      detailRow(
+        'Injured riders',
+        injuredCount !== null ? `${injuredCount}` : null
+      ),
+      detailRow('Sick riders', sickCount !== null ? `${sickCount}` : null),
+      detailRow(
+        'Active medical cases',
+        activeCases !== null ? `${activeCases}` : null
+      ),
+      detailRow(
+        'Total recovery time saved',
+        totalSaved !== null
+          ? `${totalSaved} game day${totalSaved === 1 ? '' : 's'}`
+          : null
+      ),
+    ])
+  },
+
+  getExtraText: (item) => {
+    const payload = getPayload(item)
+    const variant = pickFirstString(payload, [
+      'report_variant',
+      'variant',
+      'event_code',
+    ])
+
+    if (variant === 'medical_clearance') {
+      return 'The rider is medically available again. Sporting workload and race selection can now be managed normally.'
+    }
+
+    if (variant === 'recovery_setback') {
+      return 'The recovery estimate has worsened. Review the current medical case before planning a return to full training or racing.'
+    }
+
+    if (variant === 'recovery_improvement') {
+      return 'The recovery outlook has improved. Continue treatment and reassess the rider before restoring full workload.'
+    }
+
+    return 'Review the medical case and expected recovery before assigning the rider to hard training, training camps, or races.'
+  },
+
+  actions: [
+    {
+      key: 'open-team-page',
+      label: 'Open squad',
+      variant: 'primary',
+      kind: 'navigate',
+      getHref: () => '/dashboard/squad',
+      show: () => true,
+    },
+    {
+      key: 'open-staff-page',
+      label: 'Open staff',
+      variant: 'secondary',
+      kind: 'navigate',
+      getHref: () => '/dashboard/staff',
+      show: () => true,
+    },
+    MARK_READ_ACTION,
+  ],
+}
+
+
+
+// ============================================================================
+// STAFF ADVISORY — CHIEF MECHANIC
+// ============================================================================
+const CHIEF_MECHANIC_ADVISORY_IMAGE =
+  'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Event%20images/Chief%20Mechanic%20Advisory.png'
+
+const CHIEF_MECHANIC_ADVISORY_TEMPLATE: NotificationTemplate = {
+  defaultTitle: 'Chief Mechanic Advisory — Equipment & Workshop Review',
+  defaultMessage:
+    'Your Chief Mechanic has prepared an equipment and workshop advisory.',
+
+  imageSrc: CHIEF_MECHANIC_ADVISORY_IMAGE,
+  getImageSrc: () => CHIEF_MECHANIC_ADVISORY_IMAGE,
+
+  enrich: (item) => {
+    const payload = getPayload(item) ?? {}
+    return {
+      ...item,
+      title:
+        item.title ||
+        pickFirstString(payload, ['title', 'report_title', 'advisory_title']) ||
+        'Chief Mechanic Advisory — Equipment & Workshop Review',
+      message:
+        item.message ||
+        pickFirstString(payload, ['summary', 'report_summary', 'advisory_summary']) ||
+        'Your Chief Mechanic has prepared an equipment and workshop advisory.',
+    }
+  },
+
+  getIntroText: (item) => {
+    const payload = getPayload(item)
+    return (
+      pickFirstString(payload, ['summary', 'advisory_summary', 'report_summary']) ||
+      buildIntroFromMessage(item) ||
+      'Review the current equipment condition, maintenance queue, workshop status, and race-supply stock.'
+    )
+  },
+
+  getDetailRows: (item) => {
+    const payload = getPayload(item)
+    const data = asRecord(payload?.data) || asRecord(payload?.snapshot)
+    const advisorName =
+      pickFirstString(payload, [
+        'advisor_staff_name',
+        'advisor_name',
+        'chief_mechanic_name',
+        'mechanic_name',
+        'staff_name',
+      ]) || pickFirstString(asRecord(payload?.staff), ['name', 'staff_name'])
+
+    return compactRows([
+      detailRow('Advisor', advisorName),
+      detailRow('Role', 'Chief Mechanic'),
+      detailRow(
+        'Advisory',
+        formatLabel(pickFirstString(payload, ['report_variant', 'variant']))
+      ),
+      detailRow(
+        'Equipment items',
+        pickFirstNumber(data, ['total_items'])?.toString() || null
+      ),
+      detailRow(
+        'Ready items',
+        pickFirstNumber(data, ['ready_items'])?.toString() || null
+      ),
+      detailRow(
+        'Average condition',
+        (() => {
+          const value = pickFirstNumber(data, ['average_condition_percent'])
+          return value !== null ? `${value}%` : null
+        })()
+      ),
+      detailRow(
+        'Needs attention',
+        pickFirstNumber(data, [
+          'maintenance_needed',
+          'equipment_needing_attention_count',
+        ])?.toString() || null
+      ),
+      detailRow(
+        'Critical items',
+        pickFirstNumber(data, ['critical_items'])?.toString() || null
+      ),
+      detailRow(
+        'Pending maintenance',
+        pickFirstNumber(data, ['pending_maintenance_jobs'])?.toString() || null
+      ),
+      detailRow(
+        'Empty supply types',
+        pickFirstNumber(data, ['empty_supply_types'])?.toString() || null
+      ),
+      detailRow(
+        'Low supply types',
+        pickFirstNumber(data, ['low_supply_types'])?.toString() || null
+      ),
+    ])
+  },
+
+  getExtraText: () =>
+    'Review the listed equipment and supply priorities before committing assets to the next race preparation.',
+
+  actions: [
+    {
+      key: 'open-staff-briefing-centre',
+      label: 'Staff Briefing Centre',
+      variant: 'primary',
+      kind: 'navigate',
+      getHref: () => '/dashboard/overview',
+      show: () => true,
+    },
+    {
+      key: 'open-equipment',
+      label: 'Equipment',
+      variant: 'secondary',
+      kind: 'navigate',
+      getHref: () => '/dashboard/equipment',
+      show: () => true,
+    },
+    {
+      key: 'open-maintenance',
+      label: 'Maintenance',
+      variant: 'secondary',
+      kind: 'navigate',
+      getHref: () => '/dashboard/equipment?tab=maintenance',
+      show: () => true,
+    },
+    {
+      key: 'open-race-supplies',
+      label: 'Race Supplies',
+      variant: 'secondary',
+      kind: 'navigate',
+      getHref: () => '/dashboard/equipment?tab=race-supplies',
+      show: () => true,
+    },
+    MARK_READ_ACTION,
+  ],
+}
+
+
+
+// ============================================================================
+// STAFF ADVISORY — SCOUT / CHIEF SCOUT
+// ============================================================================
+const SCOUT_ADVISORY_IMAGE =
+  'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Event%20images/Chief%20Scout%20Advisory.png'
+
+const SCOUT_ADVISORY_TEMPLATE: NotificationTemplate = {
+  defaultTitle: 'Scout Advisory — Recruitment & Scouting Review',
+  defaultMessage:
+    'Your Scout has prepared a recruitment and scouting advisory.',
+
+  imageSrc: SCOUT_ADVISORY_IMAGE,
+  getImageSrc: () => SCOUT_ADVISORY_IMAGE,
+
+  enrich: (item) => {
+    const payload = getPayload(item) ?? {}
+
+    return {
+      ...item,
+      title:
+        item.title ||
+        pickFirstString(payload, ['title', 'report_title', 'advisory_title']) ||
+        'Scout Advisory — Recruitment & Scouting Review',
+      message:
+        item.message ||
+        pickFirstString(payload, ['summary', 'report_summary', 'advisory_summary']) ||
+        'Your Scout has prepared a recruitment and scouting advisory.',
+    }
+  },
+
+  getIntroText: (item) => {
+    const payload = getPayload(item)
+
+    return (
+      pickFirstString(payload, [
+        'summary',
+        'advisory_summary',
+        'report_summary',
+        'intro_text',
+      ]) ||
+      buildIntroFromMessage(item) ||
+      'Review the latest scouting intelligence, active assignments, and recruitment priorities.'
+    )
+  },
+
+  getDetailRows: (item) => {
+    const payload = getPayload(item)
+    const data = asRecord(payload?.data) || asRecord(payload?.snapshot)
+
+    const advisorName =
+      pickFirstString(payload, [
+        'advisor_staff_name',
+        'advisor_name',
+        'scout_name',
+        'chief_scout_name',
+        'staff_name',
+      ]) || pickFirstString(asRecord(payload?.staff), ['name', 'staff_name'])
+
+    const riderName = pickFirstString(data, ['rider_name'])
+    const country = formatCountryName(
+      pickFirstString(data, ['rider_country_code', 'country_code'])
+    )
+
+    return compactRows([
+      detailRow('Advisor', advisorName),
+      detailRow('Role', 'Scout'),
+      detailRow(
+        'Advisory',
+        formatLabel(pickFirstString(payload, ['report_variant', 'variant']))
+      ),
+      detailRow('Rider', riderName),
+      detailRow('Country', country),
+      detailRow(
+        'Overall',
+        (() => {
+          const exact = pickFirstNumber(data, ['overall_exact'])
+          const label = pickFirstString(data, ['overall_label'])
+          if (exact !== null && label) return `${exact} (${label})`
+          if (exact !== null) return `${exact}`
+          return label
+        })()
+      ),
+      detailRow(
+        'Potential',
+        (() => {
+          const exact = pickFirstNumber(data, ['potential_exact'])
+          const label = pickFirstString(data, ['potential_label'])
+          if (exact !== null && label) return `${label} (${exact})`
+          if (exact !== null) return `${exact}`
+          return label
+        })()
+      ),
+      detailRow(
+        'Precision',
+        (() => {
+          const score = pickFirstNumber(data, ['precision_score'])
+          return score !== null ? `${score}` : null
+        })()
+      ),
+      detailRow(
+        'Completed reports',
+        pickFirstNumber(data, ['completed_reports'])?.toString() || null
+      ),
+      detailRow(
+        'Reports · last 7 real days',
+        pickFirstNumber(data, ['reports_last_7_real_days'])?.toString() || null
+      ),
+      detailRow(
+        'High / Elite prospects',
+        pickFirstNumber(data, ['high_or_elite_potential_reports'])?.toString() || null
+      ),
+      detailRow(
+        'Active scouting assignments',
+        pickFirstNumber(data, ['active_scouting_tasks'])?.toString() || null
+      ),
+    ])
+  },
+
+  getExtraText: (item) => {
+    const payload = getPayload(item)
+    const data = asRecord(payload?.data)
+    const riderName = pickFirstString(data, ['rider_name'])
+    const variant = pickFirstString(payload, ['report_variant', 'variant'])
+
+    if (variant === 'priority_prospect' && riderName) {
+      return `Review ${riderName} against your squad needs before making a recruitment decision.`
+    }
+
+    return 'Use the Scouting page to review the complete report, compare prospects, and assign the next scouting target.'
+  },
+
+  actions: [
+    {
+      key: 'open-staff-briefing-centre',
+      label: 'Staff Briefing Centre',
+      variant: 'primary',
+      kind: 'navigate',
+      getHref: () => '/dashboard/overview',
+      show: () => true,
+    },
+    {
+      key: 'open-scouting',
+      label: 'Scouting',
+      variant: 'secondary',
+      kind: 'navigate',
+      getHref: () => '/dashboard/scouting',
+      show: () => true,
+    },
+    {
+      key: 'open-scouted-rider',
+      label: 'Open rider',
+      variant: 'secondary',
+      kind: 'navigate',
+      getHref: (item) => {
+        const payload = getPayload(item)
+        const data = asRecord(payload?.data)
+
+        return (
+          pickFirstString(data, ['rider_profile_path']) ||
+          (() => {
+            const riderId = pickFirstString(data, ['rider_id'])
+            return riderId ? `/dashboard/external-riders/${riderId}` : null
+          })()
+        )
+      },
+      show: (item) => {
+        const payload = getPayload(item)
+        const data = asRecord(payload?.data)
+        return Boolean(
+          pickFirstString(data, ['rider_profile_path', 'rider_id'])
+        )
+      },
+    },
+    MARK_READ_ACTION,
+  ],
+}
+
 export function getNotificationTemplate(
   typeCode: string | null | undefined
 ): NotificationTemplate | null {
+
+  if (typeCode === 'ADVISOR_SCOUT_REPORT') {
+    return SCOUT_ADVISORY_TEMPLATE
+  }
+
+  if (typeCode === 'ADVISOR_CHIEF_MECHANIC_REPORT') {
+    return CHIEF_MECHANIC_ADVISORY_TEMPLATE
+  }
+
+
+
+  if (typeCode === 'ADVISOR_TEAM_DOCTOR_REPORT') {
+    return TEAM_DOCTOR_ADVISORY_TEMPLATE
+  }
+
   if (!typeCode) return null
-  return NOTIFICATION_TEMPLATES[typeCode] || null
+
+  const exactTemplate = NOTIFICATION_TEMPLATES[typeCode]
+  if (exactTemplate) return exactTemplate
+
+  if (isHeadCoachTrainingReadinessAdvisoryType(typeCode)) {
+    return HEAD_COACH_TRAINING_READINESS_ADVISORY_TEMPLATE
+  }
+
+  if (isSportDirectorAdvisoryType(typeCode)) {
+    return SPORT_DIRECTOR_ADVISORY_TEMPLATE
+  }
+
+  return null
 }
 
 /**

@@ -16,6 +16,60 @@ export const UNIVERSAL_PHASE11_MANIFEST_CONTRACT = 'universal_phase11_applicatio
 
 type JsonRecord = Record<string, unknown>
 
+export type UniversalReplayProductionQuality = 'full' | 'degraded'
+
+const REPLAY_ONLY_SYNCHRONIZATION_ISSUE_PREFIXES = [
+  'duplicate_group_display_code:',
+  'duplicate_physical_group_gap:',
+  'group_gap_cardinality_mismatch:',
+  'group_gap_identity_mismatch:',
+  'rider_group_gap_mismatch:',
+  'same_kilometre_physical_state_mismatch:',
+  'front_group_transfer_without_physical_transition:',
+  'post_catch_group_transfer_without_physical_transition:',
+  'opening_breakaway_lineage_changed:',
+  'opening_breakaway_lineage_changed_without_bridge_merge:',
+  'gap_change_exceeds_distance_bound:',
+] as const
+
+function isReplayOnlySynchronizationIssue(issue: string): boolean {
+  return REPLAY_ONLY_SYNCHRONIZATION_ISSUE_PREFIXES.some((prefix) =>
+    issue.startsWith(prefix),
+  )
+}
+
+function replayProductionAssessment(result: UniversalRaceEngineResult): {
+  readonly acceptable: boolean
+  readonly quality: UniversalReplayProductionQuality
+  readonly replayOnlyIssues: readonly string[]
+  readonly blockingIssues: readonly string[]
+} {
+  const issues = result.replaySynchronization.issues ?? []
+  if (result.replaySynchronization.synchronized) {
+    return {
+      acceptable: true,
+      quality: 'full',
+      replayOnlyIssues: [],
+      blockingIssues: [],
+    }
+  }
+
+  const replayOnlyIssues = issues.filter(isReplayOnlySynchronizationIssue)
+  const blockingIssues = issues.filter(
+    (issue) => !isReplayOnlySynchronizationIssue(issue),
+  )
+
+  // A non-synchronized summary with no explicit issue is never bypassed.
+  const acceptable = issues.length > 0 && blockingIssues.length === 0
+
+  return {
+    acceptable,
+    quality: acceptable ? 'degraded' : 'full',
+    replayOnlyIssues,
+    blockingIssues,
+  }
+}
+
 export interface ProductionStageResultOutputRow {
   readonly riderId: string
   readonly teamId: string
@@ -98,8 +152,15 @@ export interface UniversalPhase11ApplicationManifest {
     readonly everyAcceptedRiderHasExactlyOneStatus: boolean
     readonly acceptedRiderCount: number
     readonly classificationRiderCount: number
+    readonly riderStateRiderCount: number
     readonly persistenceRiderCount: number
+    readonly writeEligibleRiderCount: number
+    readonly dnsRiderCount: number
     readonly replaySynchronized: boolean
+    readonly replayProductionAcceptable: boolean
+    readonly replayQuality: UniversalReplayProductionQuality
+    readonly replayOnlyIssueCount: number
+    readonly replayBlockingIssueCount: number
     readonly replayCompleteBeforePlayback: boolean
     readonly playbackRecalculatesRace: false
     readonly finalResultsHiddenUntilFinalCheckpoint: boolean
@@ -127,6 +188,9 @@ export interface ProductionUniversalRaceOutput {
     readonly oneEngineResult: true
     readonly oneReplayTimeline: true
     readonly resultVisibleCheckpointCount: number
+    readonly replayQuality: UniversalReplayProductionQuality
+    readonly replayOnlyIssues: readonly string[]
+    readonly officialResultsUnchangedByReplayFallback: true
     readonly readyForProductionComparison: boolean
   }
 }
@@ -292,37 +356,53 @@ function buildApplicationManifest(
   input: UniversalRaceEngineInput,
   result: UniversalRaceEngineResult,
 ): UniversalPhase11ApplicationManifest {
-  const classificationByRider = new Map(result.finishResolution.classification.map((row) => [row.riderId, row] as const))
-  const updateByRider = new Map(result.postStageUpdate.riderUpdates.map((row) => [row.riderId, row] as const))
-  const riderStateRows: UniversalPhase11RiderStateManifestRow[] = result.postStageUpdate.persistenceContract.rows.map((row) => {
-    const official = classificationByRider.get(row.riderId)
-    const update = updateByRider.get(row.riderId)
-    if (!official || !update) throw new Error(`Phase 11 manifest cannot resolve rider ${row.riderId}.`)
-    return {
-      riderId: row.riderId,
-      teamId: row.teamId,
-      finishStatus: row.finishStatus,
-      finishPosition: official.rank,
-      finishTimeSeconds: official.officialTimeSeconds,
-      gapSeconds: official.gapSeconds,
-      fatigueBeforeStage: row.fatigueBefore,
-      fatigueGain: row.fatigueGained,
-      fatigueAfterStage: row.fatigueAfter,
-      finishStamina: row.finishStamina,
-      staminaSpent: row.energySpent,
-      writeKey: row.writeKey,
-    }
-  })
+  const classificationByRider = new Map(
+    result.finishResolution.classification.map(
+      (row) => [row.riderId, row] as const,
+    ),
+  )
+  const riderStateRows: UniversalPhase11RiderStateManifestRow[] =
+    result.postStageUpdate.riderUpdates.map((update) => {
+      const official = classificationByRider.get(update.riderId)
+      if (!official) {
+        throw new Error(
+          `Phase 11 manifest cannot resolve rider ${update.riderId}.`,
+        )
+      }
+      return {
+        riderId: update.riderId,
+        teamId: update.teamId,
+        finishStatus: update.finishStatus,
+        finishPosition: official.rank,
+        finishTimeSeconds: official.officialTimeSeconds,
+        gapSeconds: official.gapSeconds,
+        fatigueBeforeStage: update.fatigueBefore,
+        fatigueGain: update.fatigueGained,
+        fatigueAfterStage: update.fatigueAfter,
+        finishStamina: update.previousStageSeed.finishStamina,
+        staminaSpent: update.energySpent,
+        writeKey: update.writeKey,
+      }
+    })
 
+  const replayAssessment = replayProductionAssessment(result)
   const visibleCheckpointCount = result.replayTimeline.checkpoints.filter((checkpoint) => checkpoint.finalResultsVisible).length
   const finalIndex = result.replayTimeline.checkpoints.length - 1
   const finalResultsHiddenUntilFinalCheckpoint = result.replayTimeline.checkpoints.every((checkpoint, index) => checkpoint.finalResultsVisible === (index === finalIndex))
   const validation = {
-    everyAcceptedRiderHasExactlyOneStatus: result.phase10Incidents.allAcceptedRidersHaveExactlyOneStatus,
+    everyAcceptedRiderHasExactlyOneStatus:
+      result.phase10Incidents.allAcceptedRidersHaveExactlyOneStatus,
     acceptedRiderCount: input.riders.length,
     classificationRiderCount: result.finishResolution.classification.length,
+    riderStateRiderCount: riderStateRows.length,
     persistenceRiderCount: result.postStageUpdate.persistenceContract.rowCount,
+    writeEligibleRiderCount: result.postStageUpdate.writeEligibleCount,
+    dnsRiderCount: result.postStageUpdate.dnsCount,
     replaySynchronized: result.replaySynchronization.synchronized,
+    replayProductionAcceptable: replayAssessment.acceptable,
+    replayQuality: replayAssessment.quality,
+    replayOnlyIssueCount: replayAssessment.replayOnlyIssues.length,
+    replayBlockingIssueCount: replayAssessment.blockingIssues.length,
     replayCompleteBeforePlayback: result.replayTimeline.completeBeforePlayback,
     playbackRecalculatesRace: false as const,
     finalResultsHiddenUntilFinalCheckpoint: finalResultsHiddenUntilFinalCheckpoint && visibleCheckpointCount === 1,
@@ -333,8 +413,11 @@ function buildApplicationManifest(
     result.finishResolution.complete &&
     validation.everyAcceptedRiderHasExactlyOneStatus &&
     validation.acceptedRiderCount === validation.classificationRiderCount &&
-    validation.acceptedRiderCount === validation.persistenceRiderCount &&
-    validation.replaySynchronized &&
+    validation.acceptedRiderCount === validation.riderStateRiderCount &&
+    validation.persistenceRiderCount === validation.writeEligibleRiderCount &&
+    validation.acceptedRiderCount ===
+      validation.writeEligibleRiderCount + validation.dnsRiderCount &&
+    validation.replayProductionAcceptable &&
     validation.finalResultsHiddenUntilFinalCheckpoint &&
     result.postStageUpdate.persistenceContract.payloadValid
 
@@ -359,8 +442,18 @@ export function buildProductionUniversalRaceOutput(
   if (result.raceId !== input.race.raceId || result.stageId !== input.stage.stageId) {
     throw new Error('Universal output identity does not match its immutable production input.')
   }
-  if (!result.finishResolution.complete || !result.replaySynchronization.synchronized) {
-    throw new Error('Universal output is not finalized and synchronized.')
+  const replayAssessment = replayProductionAssessment(result)
+  if (!result.finishResolution.complete) {
+    throw new Error('Universal output sporting finish is not finalized.')
+  }
+  if (!replayAssessment.acceptable) {
+    throw new Error(
+      `Universal output has blocking replay synchronization issues: ${
+        replayAssessment.blockingIssues.length > 0
+          ? replayAssessment.blockingIssues.join(', ')
+          : 'unsynchronized replay without classified issues'
+      }`,
+    )
   }
   const pointResults = buildPointRows(input, result)
   const stageResults = buildStageRows(input, result, pointResults)
@@ -384,6 +477,9 @@ export function buildProductionUniversalRaceOutput(
       oneEngineResult: true,
       oneReplayTimeline: true,
       resultVisibleCheckpointCount: result.replayTimeline.checkpoints.filter((checkpoint) => checkpoint.finalResultsVisible).length,
+      replayQuality: replayAssessment.quality,
+      replayOnlyIssues: replayAssessment.replayOnlyIssues,
+      officialResultsUnchangedByReplayFallback: true,
       readyForProductionComparison: true,
     },
   }

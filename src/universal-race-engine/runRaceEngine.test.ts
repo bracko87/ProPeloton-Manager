@@ -77,6 +77,7 @@ import {
   type UniversalFinishRiderContext,
   type UniversalRaceEngineInput,
   type UniversalPhase5RoadGroupCandidate,
+  applyUniversalReplayProgressGuarantee,
 } from './runRaceEngine'
 import {
   buildProductionUniversalRaceEngineInput,
@@ -10726,13 +10727,27 @@ describe('Phase 7 read-only replay page integration — Task 7.3', () => {
     expect(source).toContain('!resultsVisible ||')
   })
 
-  it('preserves the existing playback-speed controls', () => {
+  it('preserves playback controls and presents time trials with deterministic staggered starters', () => {
     const source = readReplayPageSource()
 
     expect(source).toContain('useState<1 | 2 | 4 | 8>(1)')
     expect(source).toContain('{[1, 2, 4, 8].map((value) => (')
     expect(source).toContain('onClick={finishReplay}')
     expect(source).toContain('onClick={restartReplay}')
+    expect(source).toContain("stageFormat === 'individual_time_trial' || stageFormat === 'prologue'")
+    expect(source).toContain("stageFormat === 'team_time_trial' || stageFormat === 'pair_time_trial'")
+    expect(source).toContain('const timeTrialReplayPresentation = useMemo(() => {')
+    expect(source).toContain('result.favourites.timeTrialFavourites.map(')
+    expect(source).toContain('result.riderSuitability.map(')
+    expect(source).toContain('Number(row.suitabilityScore)')
+    expect(source).toContain('result.teamStrength.map(')
+    expect(source).toContain('Number(row.teamStrengthScore)')
+    expect(source).toContain('left.strength - right.strength')
+    expect(source).toContain("state: 'waiting' | 'on_course' | 'finished'")
+    expect(source).toContain('replayEntityMarkers={')
+    expect(source).toContain('isTimeTrialReplay ? null : distanceReplayProgress * 100')
+    expect(source).toContain('Waiting to start')
+    expect(source).toContain('Compressed replay starts')
   })
 
   it('preserves the production replay-access RPCs', () => {
@@ -11226,8 +11241,9 @@ describe('Phase 7 final replay-to-result synchronization — Task 7.5', () => {
       'if (!result.replaySynchronization.synchronized)',
     )
     expect(source).toContain(
-      'result.replaySynchronization.issues.join',
+      "error: 'Replay data could not be synchronized.'",
     )
+    expect(source).not.toContain('result.replaySynchronization.issues.join')
     expect(source.match(/runRaceEngine\(/g) ?? []).toHaveLength(0)
   })
 })
@@ -11249,18 +11265,19 @@ describe('Phase 7 final replay-page closeout', () => {
     expect(source).toContain('Race replay')
   })
 
-  it('uses phase-neutral stored-replay error messages and never offers a browser calculation fallback', () => {
+  it('uses player-facing stored-replay error messages and never offers a browser calculation fallback', () => {
     const source = readReplayPageSource()
 
-    expect(source).toContain('Stored backend replay could not be loaded:')
-    expect(source).toContain(
-      'The stored universal replay payload is unavailable or does not match this stage.',
-    )
-    expect(source).toContain('No browser fallback calculation was executed.')
+    expect(source).toContain('Replay could not be loaded. Please try again shortly.')
+    expect(source).toContain('Replay is unavailable for this stage.')
+    expect(source).toContain('Replay data could not be synchronized.')
+    expect(source).not.toContain('Stored backend replay could not be loaded:')
+    expect(source).not.toContain('No browser fallback calculation was executed.')
     expect(source).not.toContain('Universal shadow calculation failed.')
     expect(source).not.toContain(
       'The universal finish resolution did not return a complete winner and classification.',
     )
+    expect(source.match(/runRaceEngine\(/g) ?? []).toHaveLength(0)
   })
 
   it('preserves backend-only calculation, synchronization rejection and all playback speeds', () => {
@@ -14112,6 +14129,86 @@ describe('Phase 10 deterministic incidents, availability and final statuses', ()
     return enablePhase10HighRisk(createExpandedFieldInput(96), seed)
   }
 
+  it('keeps a competition point at the finish kilometre before the authoritative final checkpoint', () => {
+    const base = createPhase10HighRiskInput('phase10-high-0')
+    const finishKm = base.stage.distanceKm
+    const finishLineSprintId = 'point-sprint-at-finish'
+
+    const input: UniversalRaceEngineInput = {
+      ...base,
+      points: base.points.map((point) =>
+        point.pointType === 'INTERMEDIATE_SPRINT'
+          ? {
+              ...point,
+              pointId: finishLineSprintId,
+              kmFromStart: finishKm,
+            }
+          : point,
+      ),
+    }
+
+    const result = runRaceEngine(input)
+
+    const pointCheckpointId =
+      `${result.stageId}|replay|point-${finishLineSprintId}`
+
+    const pointCheckpointIndex =
+      result.replayTimeline.checkpoints.findIndex(
+        (checkpoint) => checkpoint.checkpointId === pointCheckpointId,
+      )
+
+    const finalCheckpointIndex =
+      result.replayTimeline.checkpoints.findIndex(
+        (checkpoint) =>
+          checkpoint.checkpointId === result.replayTimeline.finalCheckpointId,
+      )
+
+    expect(pointCheckpointIndex).toBeGreaterThanOrEqual(0)
+    expect(finalCheckpointIndex).toBeGreaterThan(pointCheckpointIndex)
+    expect(finalCheckpointIndex).toBe(
+      result.replayTimeline.checkpoints.length - 1,
+    )
+
+    const pointCheckpoint =
+      result.replayTimeline.checkpoints[pointCheckpointIndex]
+    const finalCheckpoint =
+      result.replayTimeline.checkpoints[finalCheckpointIndex]
+
+    expect(pointCheckpoint.raceProgress.kmFromStart).toBe(finishKm)
+    expect(finalCheckpoint.raceProgress.kmFromStart).toBe(finishKm)
+    expect(pointCheckpoint.finalResultsVisible).toBe(false)
+    expect(finalCheckpoint.finalResultsVisible).toBe(true)
+    expect(pointCheckpoint.groups).toEqual(finalCheckpoint.groups)
+
+    expect(
+      pointCheckpoint.gaps.map((gap) => ({
+        groupCode: gap.groupCode,
+        displayCode: gap.displayCode,
+        gapSeconds: gap.gapSeconds,
+      })),
+    ).toEqual(
+      finalCheckpoint.gaps.map((gap) => ({
+        groupCode: gap.groupCode,
+        displayCode: gap.displayCode,
+        gapSeconds: gap.gapSeconds,
+      })),
+    )
+
+    expect(
+      pointCheckpoint.intermediateResults.some(
+        (event) => event.pointId === finishLineSprintId,
+      ),
+    ).toBe(true)
+    expect(result.replaySynchronization.synchronized).toBe(true)
+    expect(
+      result.replaySynchronization.issues.some(
+        (issue) =>
+          issue === 'final_checkpoint_identity_mismatch' ||
+          issue.startsWith('same_kilometre_physical_state_mismatch:'),
+      ),
+    ).toBe(false)
+  })
+
   it('defines exactly the four supported official rider statuses and assigns one to every accepted rider', () => {
     expect(UNIVERSAL_PHASE10_OFFICIAL_STATUSES).toEqual([
       'finished',
@@ -15152,9 +15249,13 @@ describe('Phase 10 deterministic incidents, availability and final statuses', ()
     expect(pageSource).not.toContain('ENABLE_RIO_TOUR_INTEGRATION_REPLAYS')
     expect(pageSource).not.toContain('isRioTourDevelopmentReplayUnlocked')
     expect(pageSource).toContain('get_universal_race_stage_replay_payload_v1')
-    expect(pageSource).toContain('Awaiting backend calculation')
-    expect(pageSource).toContain('Replay not open yet')
-    expect(pageSource).toContain('no browser fallback')
+    expect(pageSource).toContain('Replay unavailable')
+    expect(pageSource).toContain(
+      'Replay will be available at the scheduled stage time.',
+    )
+    expect(pageSource).not.toContain('Awaiting backend calculation')
+    expect(pageSource).not.toContain('Replay not open yet')
+    expect(pageSource).not.toContain('no browser fallback')
     expect(pageSource.match(/runRaceEngine\(/g) ?? []).toHaveLength(0)
   })
 
@@ -15198,6 +15299,71 @@ describe('Phase 10 deterministic incidents, availability and final statuses', ()
     expect(engineSource).not.toContain("from('rider_health_cases')")
     expect(engineSource).not.toContain('health_create_rider_case_v1(')
     expect(pageSource).toContain('Download Phase 10 JSON report')
+  })
+})
+
+
+
+describe('Phase 11 replay progress guarantee', () => {
+  it('allows replay-only synchronization defects without changing official results', () => {
+    const result = runRaceEngine(createValidInput())
+    const degraded = applyUniversalReplayProgressGuarantee({
+      ...result.replaySynchronization,
+      synchronized: false,
+      allSameKilometreStatesConsistent: false,
+      allFrontGroupTransfersPhysicallyValid: false,
+      postCatchStateStable: false,
+      issues: [
+        'duplicate_group_display_code:stage-1|replay|post-catch',
+        'same_kilometre_physical_state_mismatch:checkpoint-a->checkpoint-b',
+        'front_group_transfer_without_physical_transition:rider-1:P->F1:checkpoint-c',
+        'post_catch_group_transfer_without_physical_transition:rider-2:C4->C3:checkpoint-d',
+      ],
+    })
+
+    expect(degraded.synchronized).toBe(true)
+    expect(degraded.issues).toHaveLength(4)
+    expect(degraded.allSameKilometreStatesConsistent).toBe(true)
+    expect(degraded.allFrontGroupTransfersPhysicallyValid).toBe(true)
+    expect(degraded.postCatchStateStable).toBe(true)
+    expect(result.finishResolution.complete).toBe(true)
+    expect(result.finishResolution.classification).toHaveLength(
+      createValidInput().riders.length,
+    )
+  })
+
+  it('still blocks hard sporting/final-result synchronization defects', () => {
+    const result = runRaceEngine(createValidInput())
+    const blocked = applyUniversalReplayProgressGuarantee({
+      ...result.replaySynchronization,
+      synchronized: false,
+      finalCheckpointMatchesClassification: false,
+      issues: ['final_checkpoint_identity_mismatch'],
+    })
+
+    expect(blocked.synchronized).toBe(false)
+    expect(blocked.finalCheckpointMatchesClassification).toBe(false)
+    expect(blocked.issues).toContain('final_checkpoint_identity_mismatch')
+  })
+
+  it('keeps result-visibility and rider-coverage failures hard', () => {
+    const result = runRaceEngine(createValidInput())
+
+    const visibleEarly = applyUniversalReplayProgressGuarantee({
+      ...result.replaySynchronization,
+      synchronized: false,
+      allResultFieldsHiddenBeforeFinish: false,
+      issues: ['result_fields_visible_before_finish:checkpoint-a'],
+    })
+    expect(visibleEarly.synchronized).toBe(false)
+
+    const missingRider = applyUniversalReplayProgressGuarantee({
+      ...result.replaySynchronization,
+      synchronized: false,
+      allCheckpointRidersComplete: false,
+      issues: ['checkpoint_rider_coverage_mismatch:checkpoint-b'],
+    })
+    expect(missingRider.synchronized).toBe(false)
   })
 })
 
@@ -15463,5 +15629,43 @@ describe('Phase 11B production lifecycle cutover', () => {
     )
     expect(migrationSource).not.toContain('cron.schedule')
     expect(migrationSource).not.toContain('order by team.team_id')
+  })
+
+  it('repairs Phase 11B publication so static profile reports cannot block results and one broken stage cannot starve the queue', () => {
+    const repairSource = readFileSync(
+      new URL(
+        '../../supabase/migrations/20260819_phase11b_publication_queue_repair.sql',
+        import.meta.url,
+      ),
+      'utf8',
+    )
+
+    expect(repairSource).toContain(
+      'create or replace function public.universal_race_stage_finalize_v1',
+    )
+    expect(repairSource).toContain(
+      "report_event.metadata ->> 'output_contract' = 'universal_race_stage_output_v1'",
+    )
+    expect(repairSource).toContain(
+      "delete from public.race_stage_report_events report_event",
+    )
+    expect(repairSource).toContain(
+      "nullif(report_event.metadata ->> 'simulation_run_id', '') is null",
+    )
+    expect(repairSource).toContain('v_removed_setup_report_event_count')
+    expect(repairSource).toContain(
+      "nullif(report_event.metadata ->> 'simulation_run_id', '') is not null",
+    )
+    expect(repairSource).not.toContain(
+      'or exists (select 1 from public.race_stage_report_events report_event where report_event.stage_id = p_stage_id)',
+    )
+    expect(repairSource).toContain(
+      'create or replace function public.universal_race_stage_process_lifecycle_v1',
+    )
+    expect(repairSource).toContain('exception when others then')
+    expect(repairSource).toContain("'publication_failure_count'")
+    expect(repairSource).toContain("'publication_failures'")
+    expect(repairSource).toContain("last_error = sqlerrm")
+    expect(repairSource).toContain('typescript_replay_duration_real_seconds')
   })
 })

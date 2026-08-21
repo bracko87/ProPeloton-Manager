@@ -535,6 +535,14 @@ type RaceClassificationRow = {
 }
 
 
+type ReplayPreStageStanding = {
+  generalRank: number | null
+  generalGapSeconds: number | null
+  mountainPoints: number
+  sprintPoints: number
+}
+
+
 type RaceResultsViewPayload = {
   race_id?: string | null
   stage_id?: string | null
@@ -1689,6 +1697,17 @@ function getStageWeatherCancellationReasonLabel(stage?: RaceStage | null): strin
 function getStageWeatherCancellationRiskReason(stage?: RaceStage | null): string | null {
   if (!stage || !hasWeather(stage)) return null
 
+  const finalDecisionStatus = String(
+    stage.metadata?.weather_final_decision_status ?? ''
+  )
+    .trim()
+    .toLowerCase()
+
+  // A forecast can remain cold/snowy after the 24h race-organization check has
+  // explicitly cleared the stage. Do not keep showing "cancellation likely"
+  // once the authoritative final decision says the stage may proceed.
+  if (finalDecisionStatus === 'cleared') return null
+
   const weather = stage.weather_snapshot ?? {}
   const conditionText = String(
     weather.condition ??
@@ -2726,6 +2745,59 @@ function sortRankedRows<T extends { rank: number | null }>(rows: T[]): T[] {
     const rankB = b.rank ?? Number.MAX_SAFE_INTEGER
     return rankA - rankB
   })
+}
+
+const ROAD_REPLAY_NON_PARTICIPATING_STATUSES = new Set([
+  'dns',
+  'did_not_start',
+  'did-not-start',
+  'dnf',
+  'did_not_finish',
+  'did-not-finish',
+  'otl',
+  'out_of_time_limit',
+  'out-of-time-limit',
+  'dq',
+  'dsq',
+  'disqualified',
+  'withdrawn',
+  'retired',
+  'abandoned',
+  'out',
+])
+
+function isRoadReplayParticipatingStatus(value?: string | null): boolean {
+  const normalized = String(value ?? '').trim().toLowerCase()
+  if (!normalized) return true
+  return !ROAD_REPLAY_NON_PARTICIPATING_STATUSES.has(normalized)
+}
+
+function isDnsLikeStatus(value?: string | null): boolean {
+  const normalized = String(value ?? '').trim().toLowerCase()
+  return normalized === 'dns' || normalized === 'did_not_start' || normalized === 'did-not-start'
+}
+
+function getStageResultStatusReason(row: RaceStageResultRow): string {
+  const record = row as unknown as Record<string, unknown>
+  const metadata = getRecord(record.metadata)
+  const candidates = [
+    record.status_reason,
+    record.reason,
+    record.disqualification_reason,
+    record.withdrawal_reason,
+    record.dnf_reason,
+    metadata.status_reason,
+    metadata.reason,
+    metadata.disqualification_reason,
+    metadata.withdrawal_reason,
+    metadata.dnf_reason,
+  ]
+
+  for (const candidate of candidates) {
+    if (typeof candidate === 'string' && candidate.trim()) return candidate.trim()
+  }
+
+  return '—'
 }
 
 
@@ -6211,6 +6283,8 @@ function RaceResultsHub({
   const [stageResultView, setStageResultView] =
     useState<StageResultView>('stage_general')
   const [isExpanded, setIsExpanded] = useState(Boolean(restoreRaceInformationOpen))
+  const [fullStandingModal, setFullStandingModal] =
+    useState<'race' | 'stage' | null>(null)
 
   const [classificationPayload, setClassificationPayload] =
     useState<RaceResultsViewPayload | null>(null)
@@ -6786,6 +6860,64 @@ function RaceResultsHub({
     )
   }, [classificationPayload, classificationView])
 
+  const fullGeneralClassificationRows = useMemo(
+    () =>
+      sortRankedRows(
+        (classificationPayload?.classifications ?? []).filter(
+          (row) =>
+            row.classification_type === 'general' &&
+            row.entity_type === 'rider'
+        )
+      ),
+    [classificationPayload]
+  )
+
+  const fullRaceStandingExtraRows = useMemo(
+    () => {
+      const rankedRiderIds = new Set(
+        fullGeneralClassificationRows
+          .map((row) => row.rider_id)
+          .filter((value): value is string => Boolean(value))
+      )
+
+      return sortRankedRows(stageResultsPayload?.stage_results ?? []).filter((row) => {
+        const riderId = row.rider_id ?? null
+        if (!riderId || rankedRiderIds.has(riderId)) return false
+        return isDnsLikeStatus(row.status)
+      })
+    },
+    [fullGeneralClassificationRows, stageResultsPayload]
+  )
+
+  const fullStageStandingRows = useMemo(
+    () =>
+      sortRankedRows(stageResultsPayload?.stage_results ?? []).filter(
+        (row) => !isDnsLikeStatus(row.status)
+      ),
+    [stageResultsPayload]
+  )
+
+  const fullStandingParticipantRiderById = useMemo(
+    () =>
+      new Map(
+        participantTeams.flatMap((team) =>
+          team.riders.map((rider) => [rider.rider_id, rider] as const)
+        )
+      ),
+    [participantTeams]
+  )
+
+  const fullStageWinnerElapsedSeconds = useMemo(() => {
+    const winner = fullStageStandingRows.find(
+      (row) =>
+        row.elapsed_seconds !== null &&
+        row.elapsed_seconds !== undefined &&
+        String(row.status ?? 'finished').toLowerCase() === 'finished'
+    )
+    const parsed = Number(winner?.elapsed_seconds)
+    return Number.isFinite(parsed) ? parsed : null
+  }, [fullStageStandingRows])
+
   const classificationViewOptions = useMemo(
     () => {
       const availableClassificationTypes = new Set(
@@ -7023,6 +7155,17 @@ function RaceResultsHub({
                   onOpenRiderProfile={openRiderProfileFromRaceInfo}
                 />
               )}
+
+              <div className="mt-4 flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => setFullStandingModal('race')}
+                  disabled={fullGeneralClassificationRows.length === 0}
+                  className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  Full race standing
+                </button>
+              </div>
             </div>
 
             <div className="rounded-2xl bg-slate-50 p-4">
@@ -7039,15 +7182,8 @@ function RaceResultsHub({
               ) : null}
 
               <div className="flex flex-wrap items-center justify-between gap-3">
-                <div>
-                  <div className="font-semibold text-slate-950">
-                    Stage results
-                  </div>
-                  {selectedStage ? (
-                    <div className="mt-0.5 text-xs text-slate-500">
-                      Stage {selectedStage.stage_number} · {formatStageRoute(selectedStage)}
-                    </div>
-                  ) : null}
+                <div className="font-semibold text-slate-950">
+                  Stage results{selectedStage ? ` – Stage ${selectedStage.stage_number}` : ''}
                 </div>
 
                 <div className="flex gap-2">
@@ -7116,6 +7252,17 @@ function RaceResultsHub({
                   />
                 )
               )}
+
+              <div className="mt-4 flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => setFullStandingModal('stage')}
+                  disabled={fullStageStandingRows.length === 0}
+                  className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  Full stage standing
+                </button>
+              </div>
             </div>
           </div>
 
@@ -7140,6 +7287,200 @@ function RaceResultsHub({
           </CollapsibleRaceSection>
         </div>
           )}
+        </div>
+      ) : null}
+
+      {fullStandingModal ? (
+        <div
+          className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-950/35 backdrop-blur-sm p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-label={fullStandingModal === 'race' ? 'Full race standing' : 'Full stage standing'}
+          onMouseDown={(event) => {
+            if (event.currentTarget === event.target) setFullStandingModal(null)
+          }}
+        >
+          <div className="flex max-h-[88vh] w-full max-w-6xl flex-col overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl">
+            <div className="flex items-center justify-between gap-4 border-b border-slate-200 px-5 py-4">
+              <div>
+                <div className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
+                  {fullStandingModal === 'race'
+                    ? 'General classification'
+                    : selectedStage
+                      ? `Stage ${selectedStage.stage_number}`
+                      : 'Stage'}
+                </div>
+                <h3 className="mt-1 text-xl font-bold text-slate-950">
+                  {fullStandingModal === 'race' ? 'Full race standing' : 'Full stage standing'}
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setFullStandingModal(null)}
+                className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50"
+              >
+                Close
+              </button>
+            </div>
+
+            <div className="overflow-auto">
+              {fullStandingModal === 'race' ? (
+                <table className="min-w-[820px] w-full text-sm">
+                  <thead className="sticky top-0 bg-slate-100 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    <tr>
+                      <th className="px-3 py-3">#</th>
+                      <th className="px-3 py-3">Country</th>
+                      <th className="px-3 py-3">Rider</th>
+                      <th className="px-3 py-3">Team</th>
+                      <th className="px-3 py-3 text-right">Time</th>
+                      <th className="px-3 py-3 text-right">Gap</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {fullGeneralClassificationRows.map((row) => {
+                      const participantRider = row.rider_id
+                        ? fullStandingParticipantRiderById.get(row.rider_id)
+                        : null
+                      const riderName =
+                        participantRider?.rider_full_name?.trim() ||
+                        row.display_name_snapshot?.trim() ||
+                        participantRider?.rider_name_snapshot?.trim() ||
+                        '—'
+                      const countryCode =
+                        participantRider?.country_code_snapshot ||
+                        participantRider?.country_code ||
+                        null
+
+                      return (
+                        <tr key={`full-race-${row.rider_id ?? row.rank}`} className="border-b border-slate-100">
+                          <td className="px-3 py-3 font-semibold">{row.rank ?? '—'}</td>
+                          <td className="px-3 py-3">
+                            <div className="flex items-center gap-2">
+                              <SmallCountryFlag code={countryCode} />
+                              <span>{normalizeCountryCode(countryCode) ?? '—'}</span>
+                            </div>
+                          </td>
+                          <td className="px-3 py-3 font-semibold text-slate-950">{riderName}</td>
+                          <td className="px-3 py-3 text-slate-600">{row.team_name_snapshot ?? '—'}</td>
+                          <td className="px-3 py-3 text-right font-semibold">{formatRaceClock(row.total_time_seconds)}</td>
+                          <td className="px-3 py-3 text-right text-slate-600">{formatClassificationGap(row.gap_seconds)}</td>
+                        </tr>
+                      )
+                    })}
+                    {fullRaceStandingExtraRows.map((row) => {
+                      const participantRider = row.rider_id
+                        ? fullStandingParticipantRiderById.get(row.rider_id)
+                        : null
+                      const countryCode =
+                        row.rider_country_code ||
+                        row.nationality_code ||
+                        row.country_code ||
+                        participantRider?.country_code_snapshot ||
+                        participantRider?.country_code ||
+                        null
+                      const riderName =
+                        row.full_name?.trim() ||
+                        row.rider_full_name?.trim() ||
+                        participantRider?.rider_full_name?.trim() ||
+                        row.display_name?.trim() ||
+                        row.rider_name?.trim() ||
+                        participantRider?.rider_name_snapshot?.trim() ||
+                        row.rider_name_snapshot?.trim() ||
+                        '—'
+                      const normalizedStatus = String(row.status ?? 'dns').trim().toUpperCase()
+
+                      return (
+                        <tr key={`full-race-extra-${row.rider_id ?? riderName}`} className="border-b border-slate-100 bg-slate-50/50">
+                          <td className="px-3 py-3 font-semibold">—</td>
+                          <td className="px-3 py-3">
+                            <div className="flex items-center gap-2">
+                              <SmallCountryFlag code={countryCode} />
+                              <span>{normalizeCountryCode(countryCode) ?? '—'}</span>
+                            </div>
+                          </td>
+                          <td className="px-3 py-3 font-semibold text-slate-950">{riderName}</td>
+                          <td className="px-3 py-3 text-slate-600">{row.team_name_snapshot ?? '—'}</td>
+                          <td className="px-3 py-3 text-right font-semibold">—</td>
+                          <td className="px-3 py-3 text-right text-slate-600">{normalizedStatus}</td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              ) : (
+                <table className="min-w-[940px] w-full text-sm">
+                  <thead className="sticky top-0 bg-slate-100 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    <tr>
+                      <th className="px-3 py-3">#</th>
+                      <th className="px-3 py-3">Country</th>
+                      <th className="px-3 py-3">Rider</th>
+                      <th className="px-3 py-3">Team</th>
+                      <th className="px-3 py-3 text-right">Time</th>
+                      <th className="px-3 py-3 text-right">Gap</th>
+                      <th className="px-3 py-3">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {fullStageStandingRows.map((row) => {
+                      const participantRider = row.rider_id
+                        ? fullStandingParticipantRiderById.get(row.rider_id)
+                        : null
+                      const countryCode =
+                        row.rider_country_code ||
+                        row.nationality_code ||
+                        row.country_code ||
+                        participantRider?.country_code_snapshot ||
+                        participantRider?.country_code ||
+                        null
+                      const riderName =
+                        row.full_name?.trim() ||
+                        row.rider_full_name?.trim() ||
+                        participantRider?.rider_full_name?.trim() ||
+                        row.display_name?.trim() ||
+                        row.rider_name?.trim() ||
+                        participantRider?.rider_name_snapshot?.trim() ||
+                        row.rider_name_snapshot?.trim() ||
+                        '—'
+                      const normalizedStatus = String(row.status ?? 'finished').trim().toLowerCase()
+                      const isFinished = normalizedStatus === 'finished'
+                      const gapSeconds = getStageResultGapSeconds(row, fullStageWinnerElapsedSeconds)
+
+                      return (
+                        <tr key={`full-stage-${row.rider_id ?? row.rank}`} className="border-b border-slate-100">
+                          <td className="px-3 py-3 font-semibold">{row.rank ?? '—'}</td>
+                          <td className="px-3 py-3">
+                            <div className="flex items-center gap-2">
+                              <SmallCountryFlag code={countryCode} />
+                              <span>{normalizeCountryCode(countryCode) ?? '—'}</span>
+                            </div>
+                          </td>
+                          <td className="px-3 py-3 font-semibold text-slate-950">{riderName}</td>
+                          <td className="px-3 py-3 text-slate-600">{row.team_name_snapshot ?? '—'}</td>
+                          <td className="px-3 py-3 text-right font-semibold">
+                            {isFinished ? formatRaceClock(row.elapsed_seconds) : '—'}
+                          </td>
+                          <td className="px-3 py-3 text-right text-slate-600">
+                            {isFinished
+                              ? row.rank === 1
+                                ? 'Leader'
+                                : gapSeconds === 0
+                                  ? 's.t.'
+                                  : gapSeconds !== null
+                                    ? `+${formatGapValue(gapSeconds)}`
+                                    : '—'
+                              : '—'}
+                          </td>
+                          <td className="px-3 py-3 font-semibold text-slate-700">
+                            {normalizedStatus ? normalizedStatus.toUpperCase() : '—'}
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </div>
         </div>
       ) : null}
     </section>
@@ -8315,6 +8656,23 @@ function buildStageProfileChartMarkers(
     })
 }
 
+type StageProfileReplayEntityMarker = {
+  id: string
+  label: string
+  progressPercent: number
+  startOrder: number
+  highlighted?: boolean
+  topLabel?: string | null
+  topLabelColor?: string
+}
+
+type StageProfileAuxiliaryMarker = {
+  id: string
+  km: number
+  label: string
+  color?: string
+}
+
 function StageProfileChart({
   points,
   markers,
@@ -8322,7 +8680,11 @@ function StageProfileChart({
   terrainType,
   mountainClimbs = [],
   replayProgressPercent = null,
+  replayEntityMarkers = [],
+  replayEntityMarkerStyle = 'badge',
+  auxiliaryMarkers = [],
   compact = false,
+  roadReplayCompactUi = false,
 }: {
   points: BackendStageProfilePoint[]
   markers: StageRouteMarker[]
@@ -8330,7 +8692,11 @@ function StageProfileChart({
   terrainType?: string | null
   mountainClimbs?: StageProfileDetailItem[]
   replayProgressPercent?: number | null
+  replayEntityMarkers?: StageProfileReplayEntityMarker[]
+  replayEntityMarkerStyle?: 'badge' | 'line'
+  auxiliaryMarkers?: StageProfileAuxiliaryMarker[]
   compact?: boolean
+  roadReplayCompactUi?: boolean
 }) {
   const chartInstanceId = useId().replace(/:/g, '')
 
@@ -8415,6 +8781,7 @@ function StageProfileChart({
       : safeDistanceKm * replayProgressFraction
   const progressTrailGradientId = `stage-progress-trail-gradient-${chartInstanceId}`
   const progressAreaGradientId = `stage-progress-area-gradient-${chartInstanceId}`
+  const profileAboveMaskId = `stage-profile-above-mask-${chartInstanceId}`
 
   const getProfileElevationAtKm = (km: number): number => {
     const coordinates = [...parsed.coordinates].sort(
@@ -8448,6 +8815,28 @@ function StageProfileChart({
     replayProgressKm === null
       ? null
       : yForElevation(getProfileElevationAtKm(replayProgressKm))
+  const activeReplayEntityMarkers = replayEntityMarkers
+    .map((marker) => {
+      const progressFraction = Math.max(
+        0,
+        Math.min(1, Number(marker.progressPercent) / 100)
+      )
+      const km = safeDistanceKm * progressFraction
+      return {
+        ...marker,
+        km,
+        x: xForKm(km),
+        y: yForElevation(getProfileElevationAtKm(km)),
+      }
+    })
+    .filter((marker) => marker.progressPercent > 0 && marker.progressPercent < 100)
+  const activeAuxiliaryMarkers = auxiliaryMarkers
+    .map((marker) => ({
+      ...marker,
+      x: xForKm(Number(marker.km)),
+      color: marker.color ?? '#16a34a',
+    }))
+    .filter((marker) => marker.km > 0 && marker.km < safeDistanceKm)
 
   const progressTrailPath = (() => {
     if (replayProgressKm === null || replayProgressKm <= 0) return ''
@@ -8522,6 +8911,12 @@ function StageProfileChart({
   return (
     <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
       <svg viewBox={`0 0 ${width} ${height}`} className="h-auto w-full">
+        <defs>
+          <mask id={profileAboveMaskId} maskUnits="userSpaceOnUse">
+            <rect x="0" y="0" width={width} height={height} fill="white" />
+            <path d={parsed.areaPath} fill="black" />
+          </mask>
+        </defs>
         {replayProgressX !== null ? (
           <defs>
             <linearGradient
@@ -8569,7 +8964,7 @@ function StageProfileChart({
                 x={padding.left - 12}
                 y={y + 4}
                 textAnchor="end"
-                fontSize="12"
+                fontSize={roadReplayCompactUi ? '9' : '12'}
                 fill="#64748b"
               >
                 {tick} m
@@ -8613,6 +9008,134 @@ function StageProfileChart({
           </g>
         ) : null}
 
+        {activeReplayEntityMarkers.map((marker) => {
+          const highlighted = marker.highlighted === true
+
+          if (replayEntityMarkerStyle === 'line') {
+            return (
+              <g
+                key={`replay-entity-${marker.id}`}
+                aria-label={`${marker.label}, start order ${marker.startOrder}, ${marker.km.toFixed(1)} kilometres`}
+              >
+                <g mask={`url(#${profileAboveMaskId})`}>
+                  {highlighted ? (
+                    <rect
+                      x={marker.x - (compact ? 7 : 8)}
+                      y={padding.top}
+                      width={compact ? 14 : 16}
+                      height={innerHeight}
+                      fill="#2563eb"
+                      opacity="0.08"
+                    />
+                  ) : null}
+                  <line
+                    x1={marker.x}
+                    y1={padding.top}
+                    x2={marker.x}
+                    y2={height - padding.bottom}
+                    stroke={highlighted ? '#2563eb' : '#60a5fa'}
+                    strokeWidth={highlighted ? (compact ? 2.8 : 3.2) : (compact ? 1.4 : 1.8)}
+                    strokeLinecap="round"
+                  />
+                </g>
+                {marker.topLabel ? (
+                  <g>
+                    <rect
+                      x={marker.x - (compact ? 18 : 22)}
+                      y={Math.max(padding.top + 2, marker.y - (compact ? 22 : 26))}
+                      width={compact ? 36 : 44}
+                      height={compact ? 16 : 18}
+                      rx={compact ? 8 : 9}
+                      fill="white"
+                      stroke={marker.topLabelColor ?? '#cbd5e1'}
+                      strokeWidth="1"
+                      opacity="0.98"
+                    />
+                    <text
+                      x={marker.x}
+                      y={Math.max(padding.top + 13, marker.y - (compact ? 11 : 13))}
+                      textAnchor="middle"
+                      fontSize={compact ? '8' : '9'}
+                      fontWeight="800"
+                      fill={marker.topLabelColor ?? '#0f172a'}
+                    >
+                      {marker.topLabel}
+                    </text>
+                  </g>
+                ) : null}
+              </g>
+            )
+          }
+
+          return (
+            <g
+              key={`replay-entity-${marker.id}`}
+              aria-label={`${marker.label}, start order ${marker.startOrder}, ${marker.km.toFixed(1)} kilometres`}
+            >
+              <circle
+                cx={marker.x}
+                cy={marker.y}
+                r={compact ? 9 : 10}
+                fill="#0f172a"
+                stroke="white"
+                strokeWidth="2"
+              />
+              <text
+                x={marker.x}
+                y={marker.y + 3}
+                textAnchor="middle"
+                fontSize={marker.startOrder >= 100 ? '6.5' : marker.startOrder >= 10 ? '7.5' : '8.5'}
+                fontWeight="800"
+                fill="white"
+              >
+                {marker.startOrder}
+              </text>
+            </g>
+          )
+        })}
+
+        {replayEntityMarkerStyle === 'line' ? (
+          <path
+            d={parsed.linePath}
+            fill="none"
+            stroke="#334155"
+            strokeWidth="3"
+            pointerEvents="none"
+          />
+        ) : null}
+
+        {activeAuxiliaryMarkers.map((marker) => (
+          <g key={`aux-marker-${marker.id}`} aria-label={`${marker.label} at ${marker.km.toFixed(1)} kilometres`}>
+            <line
+              x1={marker.x}
+              y1={padding.top}
+              x2={marker.x}
+              y2={height - padding.bottom}
+              stroke={marker.color}
+              strokeDasharray="5 4"
+              strokeWidth="2"
+            />
+            <rect
+              x={marker.x - 34}
+              y={padding.top - 24}
+              width="68"
+              height="20"
+              rx="10"
+              fill={marker.color}
+            />
+            <text
+              x={marker.x}
+              y={padding.top - 10}
+              textAnchor="middle"
+              fontSize="10"
+              fontWeight="700"
+              fill="white"
+            >
+              {marker.label}
+            </text>
+          </g>
+        ))}
+
         {chartMarkers.map((marker, index) => {
           const x = xForKm(Number(marker.km))
           const markerType = marker.chartType
@@ -8633,21 +9156,21 @@ function StageProfileChart({
                 y2={height - padding.bottom}
                 stroke={fill}
                 strokeDasharray="4 4"
-                strokeWidth="1.5"
+                strokeWidth={roadReplayCompactUi ? '1.1' : '1.5'}
               />
               <rect
-                x={x - 28}
-                y={padding.top - 24}
-                width="56"
-                height="20"
-                rx="10"
+                x={x - (roadReplayCompactUi ? 22 : 28)}
+                y={padding.top - (roadReplayCompactUi ? 20 : 24)}
+                width={roadReplayCompactUi ? 44 : 56}
+                height={roadReplayCompactUi ? 16 : 20}
+                rx={roadReplayCompactUi ? 8 : 10}
                 fill={fill}
               />
               <text
                 x={x}
-                y={padding.top - 10}
+                y={padding.top - (roadReplayCompactUi ? 9 : 10)}
                 textAnchor="middle"
-                fontSize="10"
+                fontSize={roadReplayCompactUi ? '8' : '10'}
                 fontWeight="700"
                 fill="white"
               >
@@ -8658,7 +9181,7 @@ function StageProfileChart({
                 x={x}
                 y={height - 14}
                 textAnchor="middle"
-                fontSize="12"
+                fontSize={roadReplayCompactUi ? '9' : '12'}
                 fontWeight="700"
                 fill="#334155"
               >
@@ -12274,6 +12797,9 @@ function UniversalRaceReplayPage({
   const [replayProgress, setReplayProgress] = useState(0)
   const [playing, setPlaying] = useState(false)
   const [playbackSpeed, setPlaybackSpeed] = useState<1 | 2 | 4 | 8>(1)
+  const [preStageStandingByRiderId, setPreStageStandingByRiderId] = useState<
+    Record<string, ReplayPreStageStanding>
+  >({})
 
   useEffect(() => {
     let cancelled = false
@@ -12394,7 +12920,10 @@ function UniversalRaceReplayPage({
           source: inputSource,
         }
       }
-      if (!result.replaySynchronization.synchronized) {
+      const replayCanProgress =
+        result.replaySynchronization.synchronized ||
+        result.replayProgressGuarantee?.canProgress === true
+      if (!replayCanProgress) {
         return {
           input: null,
           result: null,
@@ -12403,7 +12932,16 @@ function UniversalRaceReplayPage({
           source: inputSource,
         }
       }
-      return { input, result, error: null, warnings: [], source: inputSource }
+      return {
+        input,
+        result,
+        error: null,
+        warnings:
+          result.replayProgressGuarantee?.mode === 'degraded'
+            ? ['Replay is available with simplified playback for this stage.']
+            : [],
+        source: inputSource,
+      }
     }
 
     if (loading) {
@@ -12535,6 +13073,10 @@ function UniversalRaceReplayPage({
       ),
     [input]
   )
+  const participantRiderLookup = useMemo(
+    () => getUniversalParticipantRiderLookup(participantTeams),
+    [participantTeams]
+  )
   const readinessByRiderId = useMemo(
     () =>
       new Map(
@@ -12544,6 +13086,406 @@ function UniversalRaceReplayPage({
       ),
     [result]
   )
+
+  const stageFormat = input?.stage.stageFormat ?? 'road_race'
+  const isIndividualTimeTrialReplay =
+    stageFormat === 'individual_time_trial' || stageFormat === 'prologue'
+  const isTeamTimeTrialReplay =
+    stageFormat === 'team_time_trial' || stageFormat === 'pair_time_trial'
+  const isTimeTrialReplay =
+    isIndividualTimeTrialReplay || isTeamTimeTrialReplay
+
+  useEffect(() => {
+    let cancelled = false
+
+    async function loadPreStageStandings(): Promise<void> {
+      setPreStageStandingByRiderId({})
+
+      const currentStageNumber = Number(stage.stage_number ?? 1)
+
+      if (
+        isTimeTrialReplay ||
+        !Number.isFinite(currentStageNumber) ||
+        currentStageNumber <= 1
+      ) {
+        return
+      }
+
+      const { data: previousStages, error: previousStagesError } = await supabase
+        .from('race_stages')
+        .select('id, stage_number')
+        .eq('race_id', race.id)
+        .lt('stage_number', currentStageNumber)
+        .order('stage_number', { ascending: false })
+
+      if (cancelled) return
+
+      if (previousStagesError) {
+        console.warn(
+          'Could not load previous race stages for replay standings:',
+          previousStagesError.message
+        )
+        return
+      }
+
+      const previousStageRows = (previousStages ?? [])
+        .map((row) => ({
+          id: String(row.id ?? ''),
+          stageNumber: Number(row.stage_number ?? 0),
+        }))
+        .filter(
+          (row) =>
+            row.id.length > 0 &&
+            Number.isFinite(row.stageNumber) &&
+            row.stageNumber < currentStageNumber
+        )
+        .sort((left, right) => right.stageNumber - left.stageNumber)
+
+      const previousStageIds = previousStageRows.map((row) => row.id)
+
+      if (previousStageIds.length === 0) return
+
+      const { data: standings, error: standingsError } = await supabase
+        .from('race_classification_standings')
+        .select(
+          'after_stage_id, classification_type, entity_type, rider_id, rank, gap_seconds, points'
+        )
+        .eq('race_id', race.id)
+        .eq('entity_type', 'rider')
+        .in('after_stage_id', previousStageIds)
+        .in('classification_type', ['general', 'points', 'mountain'])
+
+      if (cancelled) return
+
+      if (standingsError) {
+        console.warn(
+          'Could not load pre-stage replay standings:',
+          standingsError.message
+        )
+        return
+      }
+
+      const standingRows = (standings ?? []) as Array<{
+        after_stage_id?: string | null
+        classification_type?: string | null
+        rider_id?: string | null
+        rank?: number | null
+        gap_seconds?: number | null
+        points?: number | null
+      }>
+
+      const latestClassificationStageId =
+        previousStageRows.find((previousStage) =>
+          standingRows.some(
+            (row) =>
+              row.after_stage_id === previousStage.id &&
+              row.classification_type === 'general' &&
+              Boolean(row.rider_id)
+          )
+        )?.id ?? null
+
+      if (!latestClassificationStageId) return
+
+      const nextByRiderId: Record<string, ReplayPreStageStanding> = {}
+
+      for (const row of standingRows) {
+        if (
+          row.after_stage_id !== latestClassificationStageId ||
+          !row.rider_id
+        ) {
+          continue
+        }
+
+        const current: ReplayPreStageStanding =
+          nextByRiderId[row.rider_id] ?? {
+            generalRank: null,
+            generalGapSeconds: null,
+            mountainPoints: 0,
+            sprintPoints: 0,
+          }
+
+        if (row.classification_type === 'general') {
+          current.generalRank =
+            row.rank === null || row.rank === undefined
+              ? null
+              : Number(row.rank)
+          current.generalGapSeconds =
+            row.gap_seconds === null || row.gap_seconds === undefined
+              ? null
+              : Number(row.gap_seconds)
+        } else if (row.classification_type === 'mountain') {
+          current.mountainPoints = Math.max(0, Number(row.points ?? 0))
+        } else if (row.classification_type === 'points') {
+          current.sprintPoints = Math.max(0, Number(row.points ?? 0))
+        }
+
+        nextByRiderId[row.rider_id] = current
+      }
+
+      if (!cancelled) {
+        setPreStageStandingByRiderId(nextByRiderId)
+      }
+    }
+
+    void loadPreStageStandings()
+
+    return () => {
+      cancelled = true
+    }
+  }, [
+    isTimeTrialReplay,
+    race.id,
+    stage.id,
+    stage.stage_number,
+  ])
+
+  const currentReplayDisplaySecond = isTimeTrialReplay
+    ? replayProgress * 15 * 60
+    : currentRaceSecond
+
+  const timeTrialReplayPresentation = useMemo(() => {
+    if (!input || !result || !isTimeTrialReplay) {
+      return {
+        units: [] as Array<{
+          id: string
+          label: string
+          secondaryLabel: string
+          riderIds: string[]
+          startOrder: number
+          startOffsetSeconds: number
+          state: 'waiting' | 'on_course' | 'finished'
+          courseProgressFraction: number
+          elapsedFraction: number
+          countdownSeconds: number
+          highlight: boolean
+        }>,
+        visualStartIntervalSeconds: 0,
+        presentationDurationSeconds: 0,
+        rideWindowSeconds: 0,
+        splitDistanceFraction: 0.5,
+        splitElapsedFraction: 0.5,
+        onCourseCount: 0,
+        waitingCount: 0,
+        finishedCount: 0,
+      }
+    }
+
+    const dnsRiderIds = new Set(
+      result.phase10Incidents.preRaceAvailability
+        .filter((row) => row.dns)
+        .map((row) => row.riderId)
+    )
+    const riderSuitabilityById = new Map(
+      result.riderSuitability.map(
+        (row) => [row.riderId, Number(row.suitabilityScore)] as const
+      )
+    )
+    const timeTrialFavouriteRankByRiderId = new Map(
+      result.favourites.timeTrialFavourites.map(
+        (row) => [row.riderId, row.rank] as const
+      )
+    )
+    const teamStrengthById = new Map(
+      result.teamStrength.map(
+        (row) => [row.teamId, Number(row.teamStrengthScore)] as const
+      )
+    )
+    const eligibleRiders = input.riders.filter(
+      (rider) => !dnsRiderIds.has(rider.riderId)
+    )
+    const stageNumber = Math.max(1, Number(stage.stage_number ?? 1))
+
+    const rawUnits = isIndividualTimeTrialReplay
+      ? eligibleRiders
+          .map((rider) => {
+            const participant = participantRiderLookup.get(rider.riderId)?.rider
+            const explicitStartOrder =
+              participant?.display_start_number ??
+              participant?.start_number ??
+              Number(rider.snapshot.startNumber ?? Number.MAX_SAFE_INTEGER)
+            const overall = participant?.overall_snapshot ?? null
+
+            return {
+              id: rider.riderId,
+              label: rider.snapshot.displayName?.trim() || rider.riderId,
+              secondaryLabel:
+                teamInputById.get(rider.teamId)?.snapshot.teamName?.trim() ||
+                rider.teamId,
+              riderIds: [rider.riderId],
+              strength: Number(riderSuitabilityById.get(rider.riderId) ?? 0),
+              favouriteRank:
+                timeTrialFavouriteRankByRiderId.get(rider.riderId) ?? null,
+              tieBreak:
+                Number(rider.snapshot.startNumber ?? Number.MAX_SAFE_INTEGER),
+              explicitStartOrder: Number.isFinite(Number(explicitStartOrder))
+                ? Number(explicitStartOrder)
+                : Number.MAX_SAFE_INTEGER,
+              overall: Number.isFinite(Number(overall))
+                ? Number(overall)
+                : null,
+            }
+          })
+          .sort((left, right) => {
+            if (stageNumber > 1) {
+              const explicitOrderDiff =
+                left.explicitStartOrder - right.explicitStartOrder
+              if (Number.isFinite(explicitOrderDiff) && explicitOrderDiff !== 0) {
+                return explicitOrderDiff
+              }
+            }
+
+            if (
+              left.overall !== null &&
+              right.overall !== null &&
+              left.overall !== right.overall
+            ) {
+              return left.overall - right.overall
+            }
+
+            const leftFavourite = left.favouriteRank !== null
+            const rightFavourite = right.favouriteRank !== null
+
+            if (leftFavourite !== rightFavourite) {
+              return leftFavourite ? 1 : -1
+            }
+
+            if (
+              left.favouriteRank !== null &&
+              right.favouriteRank !== null &&
+              left.favouriteRank !== right.favouriteRank
+            ) {
+              return right.favouriteRank - left.favouriteRank
+            }
+
+            return (
+              left.strength - right.strength ||
+              left.tieBreak - right.tieBreak ||
+              left.id.localeCompare(right.id)
+            )
+          })
+      : Array.from(
+          eligibleRiders.reduce((map, rider) => {
+            const riders = map.get(rider.teamId) ?? []
+            riders.push(rider)
+            map.set(rider.teamId, riders)
+            return map
+          }, new Map<string, typeof eligibleRiders>())
+        )
+          .map(([teamId, riders]) => {
+            const participantTeam = participantTeams.find(
+              (team) => team.team_id === teamId || team.id === teamId
+            )
+            return {
+              id: teamId,
+              label:
+                teamInputById.get(teamId)?.snapshot.teamName?.trim() || teamId,
+              secondaryLabel: `${riders.length} riders`,
+              riderIds: riders.map((rider) => rider.riderId).sort(),
+              strength: Number(teamStrengthById.get(teamId) ?? 0),
+              favouriteRank: null,
+              tieBreak: Number.MAX_SAFE_INTEGER,
+              competitionRank:
+                participantTeam?.competition_rank ?? participantTeam?.ranking_snapshot ?? null,
+            }
+          })
+          .sort((left, right) => {
+            if (
+              left.competitionRank !== null &&
+              right.competitionRank !== null &&
+              left.competitionRank !== right.competitionRank
+            ) {
+              return Number(right.competitionRank) - Number(left.competitionRank)
+            }
+
+            return (
+              left.strength - right.strength ||
+              left.id.localeCompare(right.id)
+            )
+          })
+
+    const visualStartIntervalSeconds = rawUnits.length <= 1 ? 0 : 15
+    const lastStartOffsetSeconds =
+      Math.max(0, rawUnits.length - 1) * visualStartIntervalSeconds
+    const rideWindowSeconds = Math.max(
+      6 * 60,
+      input.stage.distanceKm <= 30 ? 6 * 60 : 8 * 60
+    )
+    const presentationDurationSeconds = Math.max(
+      15 * 60,
+      lastStartOffsetSeconds + rideWindowSeconds
+    )
+    const presentationSecond = replayProgress * presentationDurationSeconds
+    const splitDistanceFraction = 0.5
+    const splitElapsedFraction = getTerrainAwareElapsedProgressFractionForDistance(
+      splitDistanceFraction,
+      terrainReplayTimingModel
+    )
+
+    const units = rawUnits.map((unit, index) => {
+      const startOffsetSeconds = index * visualStartIntervalSeconds
+      const localElapsedSeconds = presentationSecond - startOffsetSeconds
+      const state: 'waiting' | 'on_course' | 'finished' =
+        localElapsedSeconds < 0
+          ? 'waiting'
+          : localElapsedSeconds >= rideWindowSeconds
+            ? 'finished'
+            : 'on_course'
+      const elapsedFraction = universalClamp(
+        localElapsedSeconds / rideWindowSeconds,
+        0,
+        1
+      )
+      const courseProgressFraction =
+        getTerrainAwareDistanceProgressFraction(
+          elapsedFraction,
+          terrainReplayTimingModel
+        )
+
+      return {
+        id: unit.id,
+        label: unit.label,
+        secondaryLabel: unit.secondaryLabel,
+        riderIds: unit.riderIds,
+        startOrder: index + 1,
+        startOffsetSeconds,
+        state,
+        courseProgressFraction,
+        elapsedFraction,
+        countdownSeconds: Math.max(0, startOffsetSeconds - presentationSecond),
+        highlight: false,
+      }
+    })
+
+    const highlightedUnitId = [...units]
+      .filter((unit) => unit.state === 'on_course')
+      .sort((left, right) => right.startOrder - left.startOrder)[0]?.id ?? null
+
+    return {
+      units: units.map((unit) => ({
+        ...unit,
+        highlight: highlightedUnitId !== null && unit.id === highlightedUnitId,
+      })),
+      visualStartIntervalSeconds,
+      presentationDurationSeconds,
+      rideWindowSeconds,
+      splitDistanceFraction,
+      splitElapsedFraction,
+      onCourseCount: units.filter((unit) => unit.state === 'on_course').length,
+      waitingCount: units.filter((unit) => unit.state === 'waiting').length,
+      finishedCount: units.filter((unit) => unit.state === 'finished').length,
+    }
+  }, [
+    input,
+    isIndividualTimeTrialReplay,
+    isTimeTrialReplay,
+    participantRiderLookup,
+    participantTeams,
+    replayProgress,
+    result,
+    stage.stage_number,
+    teamInputById,
+    terrainReplayTimingModel,
+  ])
 
   const phase78AuditRiderRows = useMemo(() => {
     if (!input || !result) return []
@@ -12980,6 +13922,422 @@ function UniversalRaceReplayPage({
     teamInputById,
   ])
 
+  const participatingRoadRiderRows = useMemo(() => {
+    const participatingRows = visibleRiderRows.filter((row) =>
+      isRoadReplayParticipatingStatus(row.status)
+    )
+
+    if (resultsVisible) return participatingRows
+
+    return participatingRows.map((row, index) => ({
+      ...row,
+      position: index + 1,
+    }))
+  }, [resultsVisible, visibleRiderRows])
+
+  const timeTrialReplayContext = useMemo(() => {
+    if (!input || !result || !isTimeTrialReplay) {
+      return {
+        splitDistanceKm: 0,
+        units: [] as Array<{
+          id: string
+          riderIds: string[]
+          label: string
+          secondaryLabel: string
+          countryCode: string | null
+          startOrder: number
+          state: 'waiting' | 'on_course' | 'finished'
+          courseProgressFraction: number
+          countdownSeconds: number
+          startEnergy: number
+          currentEnergy: number
+          elapsedTimeSeconds: number | null
+          finalTimeSeconds: number | null
+          gapSeconds: number | null
+          splitTimeSeconds: number | null
+          splitGapSeconds: number | null
+          splitRank: number | null
+          splitPassed: boolean
+          liveRank: number | null
+          liveGapSeconds: number | null
+          highlight: boolean
+        }>,
+        splitStandings: [] as Array<{
+          id: string
+          label: string
+          timeSeconds: number
+          gapSeconds: number
+        }>,
+        commentary: [] as UniversalShadowCommentaryItem[],
+      }
+    }
+
+    const rowByRiderId = new Map(
+      visibleRiderRows.map((row) => [row.riderId, row] as const)
+    )
+    const officialByRiderId = new Map(
+      result.finishResolution.classification.map(
+        (row) => [row.riderId, row] as const
+      )
+    )
+    const average = (values: number[]) =>
+      values.length === 0
+        ? 0
+        : values.reduce((sum, value) => sum + value, 0) / values.length
+    const splitDistanceKm =
+      input.stage.distanceKm * timeTrialReplayPresentation.splitDistanceFraction
+
+    const units = timeTrialReplayPresentation.units.map((unit) => {
+      const memberRows = unit.riderIds
+        .map((riderId) => rowByRiderId.get(riderId))
+        .filter((row): row is (typeof visibleRiderRows)[number] => row !== undefined)
+      const firstMemberRow = memberRows[0] ?? null
+      const participantRecord =
+        unit.riderIds.length > 0
+          ? participantRiderLookup.get(unit.riderIds[0])
+          : undefined
+      const officialRows = unit.riderIds
+        .map((riderId) => officialByRiderId.get(riderId))
+        .filter((row): row is NonNullable<ReturnType<typeof officialByRiderId.get>> => row !== undefined)
+      const finishTimes = officialRows
+        .map((row) => row.officialTimeSeconds)
+        .filter((value): value is number => value !== null && value !== undefined)
+      const gapValues = officialRows
+        .map((row) => row.gapSeconds)
+        .filter((value): value is number => value !== null && value !== undefined)
+      const startEnergyValues = memberRows.map((row) => Number(row.startEnergy ?? 0))
+      const currentEnergyValues = memberRows.map((row) => Number(row.energy ?? row.startEnergy ?? 0))
+      const finalTimeSeconds =
+        finishTimes.length === 0
+          ? null
+          : isIndividualTimeTrialReplay
+            ? finishTimes[0]
+            : Math.max(...finishTimes)
+      const gapSeconds =
+        gapValues.length === 0
+          ? null
+          : isIndividualTimeTrialReplay
+            ? gapValues[0]
+            : Math.max(...gapValues)
+      const splitPassed =
+        unit.state === 'finished' ||
+        unit.elapsedFraction >= timeTrialReplayPresentation.splitElapsedFraction
+      const splitTimeSeconds =
+        splitPassed && finalTimeSeconds !== null
+          ? finalTimeSeconds * timeTrialReplayPresentation.splitElapsedFraction
+          : null
+      const elapsedTimeSeconds =
+        unit.state === 'waiting'
+          ? null
+          : finalTimeSeconds !== null
+            ? finalTimeSeconds * unit.elapsedFraction
+            : timeTrialReplayPresentation.rideWindowSeconds * unit.elapsedFraction
+
+      return {
+        id: unit.id,
+        riderIds: unit.riderIds,
+        label: unit.label,
+        secondaryLabel: unit.secondaryLabel,
+        countryCode:
+          firstMemberRow?.countryCode ??
+          participantRecord?.rider.country_code_snapshot ??
+          null,
+        startOrder: unit.startOrder,
+        state: unit.state,
+        courseProgressFraction: unit.courseProgressFraction,
+        countdownSeconds: unit.countdownSeconds,
+        startEnergy:
+          startEnergyValues.length > 0 ? average(startEnergyValues) : 0,
+        currentEnergy:
+          currentEnergyValues.length > 0 ? average(currentEnergyValues) : 0,
+        elapsedTimeSeconds,
+        finalTimeSeconds,
+        gapSeconds,
+        splitTimeSeconds,
+        splitGapSeconds: null as number | null,
+        splitRank: null as number | null,
+        splitPassed,
+        liveRank: null as number | null,
+        liveGapSeconds: null as number | null,
+        highlight: unit.highlight,
+      }
+    })
+
+    const splitReadyUnits = units
+      .filter(
+        (unit) => unit.splitPassed && unit.splitTimeSeconds !== null
+      )
+      .sort(
+        (left, right) =>
+          Number(left.splitTimeSeconds ?? Number.MAX_SAFE_INTEGER) -
+            Number(right.splitTimeSeconds ?? Number.MAX_SAFE_INTEGER) ||
+          left.startOrder - right.startOrder
+      )
+    const splitLeaderTime = splitReadyUnits[0]?.splitTimeSeconds ?? null
+    const splitRankById = new Map<string, number>()
+    splitReadyUnits.forEach((unit, index) => {
+      splitRankById.set(unit.id, index + 1)
+    })
+
+    const finishedUnits = units
+      .filter((unit) => unit.state === 'finished' && unit.finalTimeSeconds !== null)
+      .sort(
+        (left, right) =>
+          Number(left.finalTimeSeconds ?? Number.MAX_SAFE_INTEGER) -
+            Number(right.finalTimeSeconds ?? Number.MAX_SAFE_INTEGER) ||
+          left.startOrder - right.startOrder
+      )
+    const liveRankById = new Map<string, number>()
+    finishedUnits.forEach((unit, index) => {
+      liveRankById.set(unit.id, index + 1)
+    })
+    const finishedLeaderTime = finishedUnits[0]?.finalTimeSeconds ?? null
+
+    const enrichedUnits = units.map((unit) => ({
+      ...unit,
+      splitGapSeconds:
+        unit.splitTimeSeconds !== null && splitLeaderTime !== null
+          ? Math.max(0, unit.splitTimeSeconds - splitLeaderTime)
+          : null,
+      splitRank: splitRankById.get(unit.id) ?? null,
+      liveRank: liveRankById.get(unit.id) ?? null,
+      liveGapSeconds:
+        unit.finalTimeSeconds !== null && finishedLeaderTime !== null
+          ? Math.max(0, unit.finalTimeSeconds - finishedLeaderTime)
+          : null,
+    }))
+
+    const splitStandings = splitReadyUnits.slice(0, 10).map((unit) => ({
+      id: unit.id,
+      label: unit.label,
+      timeSeconds: Number(unit.splitTimeSeconds ?? 0),
+      gapSeconds:
+        splitLeaderTime === null || unit.splitTimeSeconds === null
+          ? 0
+          : Math.max(0, unit.splitTimeSeconds - splitLeaderTime),
+    }))
+
+    const commentary: UniversalShadowCommentaryItem[] = []
+
+    enrichedUnits
+      .slice()
+      .sort(
+        (left, right) =>
+          left.startOrder - right.startOrder || left.id.localeCompare(right.id)
+      )
+      .forEach((unit) => {
+        commentary.push({
+          id: `${unit.id}:start`,
+          progress: 0,
+          kilometre: 0,
+          raceSecond: timeTrialReplayPresentation.visualStartIntervalSeconds === 0
+            ? 0
+            : (unit.startOrder - 1) * timeTrialReplayPresentation.visualStartIntervalSeconds,
+          title: isTeamTimeTrialReplay ? 'Team start' : 'Rider start',
+          description: isTeamTimeTrialReplay
+            ? `${unit.label} starts its time trial run as starter #${unit.startOrder}.`
+            : `${unit.label} leaves the start ramp as starter #${unit.startOrder}.`,
+        })
+      })
+
+    let bestSplitSoFar: number | null = null
+    const splitArrivals: Array<{ label: string; time: number }> = []
+    enrichedUnits
+      .filter((unit) => unit.splitTimeSeconds !== null)
+      .slice()
+      .sort(
+        (left, right) =>
+          ((left.startOrder - 1) * timeTrialReplayPresentation.visualStartIntervalSeconds +
+            timeTrialReplayPresentation.rideWindowSeconds *
+              timeTrialReplayPresentation.splitElapsedFraction) -
+            ((right.startOrder - 1) * timeTrialReplayPresentation.visualStartIntervalSeconds +
+              timeTrialReplayPresentation.rideWindowSeconds *
+                timeTrialReplayPresentation.splitElapsedFraction) ||
+          left.startOrder - right.startOrder
+      )
+      .forEach((unit) => {
+        const splitTime = Number(unit.splitTimeSeconds ?? 0)
+        const splitGap =
+          bestSplitSoFar === null ? 0 : Math.max(0, splitTime - bestSplitSoFar)
+        const isNewBest = bestSplitSoFar === null || splitTime < bestSplitSoFar
+
+        splitArrivals.push({ label: unit.label, time: splitTime })
+        splitArrivals.sort(
+          (left, right) => left.time - right.time || left.label.localeCompare(right.label)
+        )
+
+        if (isNewBest) bestSplitSoFar = splitTime
+
+        const currentLeaderTime = splitArrivals[0]?.time ?? splitTime
+        const liveTopThree = splitArrivals
+          .slice(0, 3)
+          .map((entry, index) =>
+            `${index + 1}. ${entry.label} ${
+              index === 0
+                ? '0s'
+                : `+${formatGapValue(entry.time - currentLeaderTime)}`
+            }`
+          )
+          .join(' · ')
+
+        commentary.push({
+          id: `${unit.id}:split`,
+          progress: timeTrialReplayPresentation.splitDistanceFraction,
+          kilometre: splitDistanceKm,
+          raceSecond:
+            (unit.startOrder - 1) *
+              timeTrialReplayPresentation.visualStartIntervalSeconds +
+            timeTrialReplayPresentation.rideWindowSeconds *
+              timeTrialReplayPresentation.splitElapsedFraction,
+          title: isNewBest
+            ? 'New leader at the time check'
+            : 'Time check',
+          description: isNewBest
+            ? `${unit.label} sets the new best midpoint time: ${formatRaceClock(splitTime)}. Live check: ${liveTopThree}.`
+            : `${unit.label} reaches the midpoint in ${formatRaceClock(splitTime)} · +${formatGapValue(splitGap)}. Live check: ${liveTopThree}.`,
+        })
+      })
+
+    let bestFinishSoFar: number | null = null
+    const finishArrivals: Array<{ label: string; time: number }> = []
+    enrichedUnits
+      .filter((unit) => unit.finalTimeSeconds !== null)
+      .slice()
+      .sort(
+        (left, right) =>
+          ((left.startOrder - 1) * timeTrialReplayPresentation.visualStartIntervalSeconds +
+            timeTrialReplayPresentation.rideWindowSeconds) -
+            ((right.startOrder - 1) * timeTrialReplayPresentation.visualStartIntervalSeconds +
+              timeTrialReplayPresentation.rideWindowSeconds) ||
+          left.startOrder - right.startOrder
+      )
+      .forEach((unit) => {
+        const finishTime = Number(unit.finalTimeSeconds ?? 0)
+        const finishGap =
+          bestFinishSoFar === null
+            ? 0
+            : Math.max(0, finishTime - bestFinishSoFar)
+        const isNewLeader = bestFinishSoFar === null || finishTime < bestFinishSoFar
+
+        finishArrivals.push({ label: unit.label, time: finishTime })
+        finishArrivals.sort(
+          (left, right) => left.time - right.time || left.label.localeCompare(right.label)
+        )
+
+        if (isNewLeader) bestFinishSoFar = finishTime
+
+        const currentLeaderTime = finishArrivals[0]?.time ?? finishTime
+        const livePlace =
+          finishArrivals.findIndex(
+            (entry) => entry.label === unit.label && entry.time === finishTime
+          ) + 1
+        const liveTopThree = finishArrivals
+          .slice(0, 3)
+          .map((entry, index) =>
+            `${index + 1}. ${entry.label} ${
+              index === 0
+                ? '0s'
+                : `+${formatGapValue(entry.time - currentLeaderTime)}`
+            }`
+          )
+          .join(' · ')
+
+        commentary.push({
+          id: `${unit.id}:finish`,
+          progress: 1,
+          kilometre: input.stage.distanceKm,
+          raceSecond:
+            (unit.startOrder - 1) *
+              timeTrialReplayPresentation.visualStartIntervalSeconds +
+            timeTrialReplayPresentation.rideWindowSeconds,
+          title: isNewLeader
+            ? 'New leader at the finish'
+            : 'Rider finishes',
+          description: isNewLeader
+            ? `${unit.label} stops the clock in ${formatRaceClock(finishTime)} and takes the live lead. Live finish: ${liveTopThree}.`
+            : `${unit.label} finishes in ${formatRaceClock(finishTime)}, live place ${livePlace}, +${formatGapValue(finishTime - currentLeaderTime)}. Live finish: ${liveTopThree}.`,
+        })
+      })
+
+    const stateOrder = {
+      finished: 0,
+      on_course: 1,
+      waiting: 2,
+    } as const
+
+    const orderedUnits = enrichedUnits.slice().sort((left, right) => {
+      if (left.state === 'finished' && right.state === 'finished') {
+        return (
+          Number(left.liveRank ?? Number.MAX_SAFE_INTEGER) -
+            Number(right.liveRank ?? Number.MAX_SAFE_INTEGER) ||
+          left.startOrder - right.startOrder
+        )
+      }
+
+      if (left.state !== right.state) {
+        return stateOrder[left.state] - stateOrder[right.state]
+      }
+
+      if (left.state === 'on_course' && right.state === 'on_course') {
+        return (
+          right.courseProgressFraction - left.courseProgressFraction ||
+          left.startOrder - right.startOrder
+        )
+      }
+
+      return left.startOrder - right.startOrder
+    })
+
+    return {
+      splitDistanceKm,
+      units: orderedUnits,
+      splitStandings,
+      commentary: commentary.sort(
+        (left, right) =>
+          right.raceSecond - left.raceSecond ||
+          right.kilometre - left.kilometre ||
+          right.id.localeCompare(left.id)
+      ),
+    }
+  }, [
+    input,
+    isIndividualTimeTrialReplay,
+    isTeamTimeTrialReplay,
+    isTimeTrialReplay,
+    participantRiderLookup,
+    result,
+    timeTrialReplayPresentation,
+    visibleRiderRows,
+  ])
+
+  const timeTrialProfileMarkers = useMemo<StageProfileReplayEntityMarker[]>(
+    () =>
+      timeTrialReplayContext.units
+        .filter((unit) => unit.state === 'on_course')
+        .map((unit) => ({
+          id: unit.id,
+          label: unit.label,
+          progressPercent: unit.courseProgressFraction * 100,
+          startOrder: unit.startOrder,
+          highlighted: unit.highlight,
+          topLabel:
+            unit.splitPassed &&
+            unit.splitGapSeconds !== null &&
+            (unit.splitRank ?? Number.MAX_SAFE_INTEGER) <= 10
+              ? unit.splitGapSeconds === 0
+                ? '0s'
+                : `+${formatGapValue(unit.splitGapSeconds)}`
+              : null,
+          topLabelColor:
+            unit.splitPassed && unit.splitGapSeconds !== null
+              ? unit.splitGapSeconds === 0
+                ? '#15803d'
+                : '#dc2626'
+              : undefined,
+        })),
+    [timeTrialReplayContext.units]
+  )
+
   const commentary = useMemo((): UniversalShadowCommentaryItem[] => {
     if (!input || !result) return []
 
@@ -13036,17 +14394,29 @@ function UniversalRaceReplayPage({
   const visibleCommentary =
     replayProgress <= 0
       ? []
-      : commentary
-          .filter(
-            (event) =>
-              event.progress <= distanceReplayProgress + 0.000001
-          )
-          .sort(
-            (left, right) =>
-              right.progress - left.progress ||
-              right.kilometre - left.kilometre ||
-              right.id.localeCompare(left.id)
-          )
+      : isTimeTrialReplay
+        ? timeTrialReplayContext.commentary
+            .filter(
+              (event) =>
+                event.raceSecond <= currentReplayDisplaySecond + 0.000001
+            )
+            .sort(
+              (left, right) =>
+                right.raceSecond - left.raceSecond ||
+                right.kilometre - left.kilometre ||
+                right.id.localeCompare(left.id)
+            )
+        : commentary
+            .filter(
+              (event) =>
+                event.progress <= distanceReplayProgress + 0.000001
+            )
+            .sort(
+              (left, right) =>
+                right.progress - left.progress ||
+                right.kilometre - left.kilometre ||
+                right.id.localeCompare(left.id)
+            )
 
   const effectiveStagePoints = useMemo(
     () =>
@@ -13305,7 +14675,11 @@ function UniversalRaceReplayPage({
               Race replay
             </span>
             <span className="ml-2 text-xs text-violet-800">
-              Follow the groups, gaps, attacks and points as the stage unfolds
+              {isIndividualTimeTrialReplay
+                ? 'Riders start one by one, from the lowest-ranked favourite to the strongest favourite'
+                : isTeamTimeTrialReplay
+                  ? 'Teams start one by one, from the lowest-ranked team to the strongest team'
+                  : 'Follow the groups, gaps, attacks and points as the stage unfolds'}
             </span>
           </div>
 
@@ -13857,7 +15231,11 @@ function UniversalRaceReplayPage({
                     <button
                       type="button"
                       onClick={togglePlayback}
-                      className="rounded-full bg-slate-950 px-4 py-2 text-xs font-semibold text-white"
+                      className={
+                        isTimeTrialReplay
+                          ? 'rounded-full bg-slate-950 px-4 py-2 text-xs font-semibold text-white'
+                          : 'rounded-full bg-slate-950 px-3 py-1.5 text-[10px] font-semibold text-white'
+                      }
                     >
                       {playing ? 'Pause' : 'Play'}
                     </button>
@@ -13871,7 +15249,11 @@ function UniversalRaceReplayPage({
                             value as 1 | 2 | 4 | 8
                           )
                         }
-                        className={`rounded-full border px-3 py-2 text-xs font-semibold ${
+                        className={`rounded-full border ${
+                          isTimeTrialReplay
+                            ? 'px-3 py-2 text-xs'
+                            : 'px-2.5 py-1.5 text-[10px]'
+                        } font-semibold ${
                           playbackSpeed === value
                             ? 'border-slate-950 bg-slate-950 text-white'
                             : 'border-slate-200 bg-white text-slate-600'
@@ -13884,7 +15266,11 @@ function UniversalRaceReplayPage({
                     <button
                       type="button"
                       onClick={finishReplay}
-                      className="rounded-full border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50"
+                      className={
+                        isTimeTrialReplay
+                          ? 'rounded-full border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50'
+                          : 'rounded-full border border-slate-200 bg-white px-2.5 py-1.5 text-[10px] font-semibold text-slate-600 hover:bg-slate-50'
+                      }
                     >
                       Finish replay
                     </button>
@@ -13893,13 +15279,23 @@ function UniversalRaceReplayPage({
                       type="button"
                       onClick={restartReplay}
                       disabled={replayProgress <= 0}
-                      className="rounded-full border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+                      className={
+                        isTimeTrialReplay
+                          ? 'rounded-full border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40'
+                          : 'rounded-full border border-slate-200 bg-white px-2.5 py-1.5 text-[10px] font-semibold text-slate-600 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40'
+                      }
                     >
                       Restart
                     </button>
 
-                    <div className="w-10 text-right text-xs font-semibold text-slate-500">
-                      {Math.round(distanceReplayProgress * 100)}%
+                    <div
+                      className={
+                        isTimeTrialReplay
+                          ? 'w-10 text-right text-xs font-semibold text-slate-500'
+                          : 'w-9 text-right text-[10px] font-semibold text-slate-500'
+                      }
+                    >
+                      {Math.round((isTimeTrialReplay ? replayProgress : distanceReplayProgress) * 100)}%
                     </div>
                   </div>
                 </div>
@@ -13910,9 +15306,75 @@ function UniversalRaceReplayPage({
                   distanceKm={input.stage.distanceKm}
                   terrainType={input.stage.terrainType}
                   mountainClimbs={profile?.mountain_climbs ?? []}
-                  replayProgressPercent={distanceReplayProgress * 100}
+                  replayProgressPercent={
+                    isTimeTrialReplay ? null : distanceReplayProgress * 100
+                  }
+                  replayEntityMarkers={
+                    isTimeTrialReplay ? timeTrialProfileMarkers : []
+                  }
+                  replayEntityMarkerStyle={
+                    isTimeTrialReplay ? 'line' : 'badge'
+                  }
+                  auxiliaryMarkers={
+                    isTimeTrialReplay
+                      ? [
+                          {
+                            id: 'tt-time-check',
+                            km: timeTrialReplayContext.splitDistanceKm,
+                            label: 'Time check',
+                            color: '#16a34a',
+                          },
+                        ]
+                      : []
+                  }
                   compact
+                  roadReplayCompactUi={!isTimeTrialReplay}
                 />
+
+                {isTimeTrialReplay ? (
+                  <div className="mt-3 space-y-2 text-[11px] font-semibold">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-sky-800">
+                        On course {timeTrialReplayPresentation.onCourseCount}
+                      </span>
+                      <span className="rounded-full border border-slate-200 bg-white px-3 py-1 text-slate-600">
+                        Waiting {timeTrialReplayPresentation.waitingCount}
+                      </span>
+                      <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-emerald-800">
+                        Finished {timeTrialReplayPresentation.finishedCount}
+                      </span>
+                      <span className="rounded-full border border-emerald-200 bg-white px-3 py-1 text-emerald-700">
+                        Time check · {formatKm(timeTrialReplayContext.splitDistanceKm)}
+                      </span>
+                      <span className="text-slate-500">
+                        Compressed replay starts · {timeTrialReplayPresentation.visualStartIntervalSeconds.toFixed(1)}s apart
+                      </span>
+                    </div>
+
+                    {timeTrialReplayContext.splitStandings.length > 0 ? (
+                      <div className="flex flex-wrap items-center gap-2">
+                        {timeTrialReplayContext.splitStandings.map((entry, index) => (
+                          <span
+                            key={entry.id}
+                            className={`rounded-full border px-3 py-1 ${
+                              index === 0
+                                ? 'border-emerald-200 bg-emerald-50 text-emerald-800'
+                                : 'border-red-200 bg-red-50 text-red-700'
+                            }`}
+                          >
+                            {index === 0
+                              ? `${entry.label} 0s`
+                              : `${entry.label} +${formatGapValue(entry.gapSeconds)}`}
+                          </span>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-slate-500">
+                        The live time check activates once the first rider reaches halfway.
+                      </div>
+                    )}
+                  </div>
+                ) : null}
               </section>
 
               <section className="grid min-h-[430px] gap-4 xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
@@ -13960,114 +15422,304 @@ function UniversalRaceReplayPage({
                     <div className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
                       {resultsVisible
                         ? 'Final stage result · riders'
-                        : 'Stage standing · riders'}
+                        : isIndividualTimeTrialReplay
+                          ? 'Time trial · riders'
+                          : isTeamTimeTrialReplay
+                            ? 'Time trial · teams'
+                            : 'Stage standing · riders'}
                     </div>
                     <div className="text-xs font-semibold text-slate-500">
-                      {formatRaceClock(currentRaceSecond)}
+                      {formatRaceClock(currentReplayDisplaySecond)}
                     </div>
                   </div>
 
                   <div className="max-h-[430px] overflow-auto">
-                    <div className="min-w-[680px]">
-                      {visibleRiderRows.map((row) => (
-                        <div
-                          key={row.riderId}
-                          className="grid grid-cols-[38px_42px_minmax(190px,1fr)_170px_76px] items-center gap-2 border-b border-slate-100 bg-white px-3 py-2.5 text-xs"
-                        >
-                          <div className="text-center font-semibold text-slate-500">
-                            {replayProgress <= 0 || row.position === null
-                              ? '—'
-                              : row.position}
-                          </div>
-
-                          <div className="flex justify-center">
-                            <span
-                              className={`rounded-full px-3 py-1 text-[10px] font-bold text-white ${getUniversalReplayGroupBadgeClass(
-                                row.displayCode,
-                                row.colorKey
-                              )}`}
-                            >
-                              {getUniversalReplayGroupBadge(
-                                row.displayCode
-                              )}
-                            </span>
-                          </div>
-
-                          <div className="min-w-0">
-                            <div className="flex min-w-0 items-center gap-2">
-                              <SmallCountryFlag
-                                code={row.countryCode}
-                              />
-                              <span className="truncate font-semibold text-slate-950">
-                                {row.riderName}
-                              </span>
-                            </div>
-                            <div className="mt-0.5 truncate text-[11px] text-slate-500">
-                              {row.teamName}
-                              {row.command
-                                ? ` · ${humanizeCode(row.command)}`
-                                : ''}
-                            </div>
-                          </div>
-
-                          <div className="space-y-1">
-                            <div className="flex items-center gap-1.5">
-                              <div className="h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-red-100">
-                                <div
-                                  className="h-full rounded-full bg-red-500"
-                                  style={{
-                                    width: `${universalClamp(
-                                      row.startEnergy,
-                                      0,
-                                      100
-                                    )}%`,
-                                  }}
-                                />
-                              </div>
-                              <span className="w-7 text-right text-[9px] font-semibold text-red-700">
-                                {Math.round(row.startEnergy)}%
-                              </span>
-                            </div>
-
-                            <div className="flex items-center gap-1.5">
-                              <div className="h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-emerald-100">
-                                <div
-                                  className="h-full rounded-full bg-emerald-500"
-                                  style={{
-                                    width: `${universalClamp(
-                                      row.energy,
-                                      0,
-                                      100
-                                    )}%`,
-                                  }}
-                                />
-                              </div>
-                              <span className="w-7 text-right text-[9px] font-semibold text-emerald-700">
-                                {Math.round(row.energy)}%
-                              </span>
-                            </div>
-                          </div>
-
-                          <div className="text-right font-semibold text-slate-600">
-                            {replayProgress <= 0
-                              ? '—'
-                              : resultsVisible
-                                ? row.status !== 'finished'
-                                  ? row.status.toUpperCase()
-                                  : row.position === 1
-                                    ? 'Winner'
-                                    : `+${formatGapValue(row.gapSeconds)}`
-                                : row.gapSeconds <= 0
-                                  ? row.position === 1
-                                    ? 'Leader'
-                                    : 's.t.'
-                                  : `+${formatGapValue(
-                                      row.gapSeconds
-                                    )}`}
-                          </div>
+                    {isTimeTrialReplay && !resultsVisible ? (
+                      <div className="min-w-[670px]">
+                        <div className="grid grid-cols-[52px_68px_190px_150px_100px_82px] gap-1.5 border-b border-slate-200 bg-slate-100 px-2.5 py-2 text-[10px] font-semibold uppercase tracking-[0.10em] text-slate-500">
+                          <div className="text-center">Start</div>
+                          <div className="text-center">Status</div>
+                          <div>Rider / team</div>
+                          <div>Energy</div>
+                          <div className="text-right">Time</div>
+                          <div className="text-right">Gap</div>
                         </div>
-                      ))}
-                    </div>
+
+                        {timeTrialReplayContext.units.map((unit) => {
+                          const distanceKm =
+                            input.stage.distanceKm * unit.courseProgressFraction
+                          const statusLabel =
+                            unit.state === 'waiting'
+                              ? 'WAIT'
+                              : unit.state === 'on_course'
+                                ? 'COURSE'
+                                : 'FIN'
+                          const statusClass =
+                            unit.state === 'waiting'
+                              ? 'border-slate-200 bg-slate-100 text-slate-600'
+                              : unit.state === 'on_course'
+                                ? 'border-sky-200 bg-sky-100 text-sky-800'
+                                : 'border-emerald-200 bg-emerald-100 text-emerald-800'
+                          const gapLabel =
+                            unit.state === 'finished'
+                              ? unit.liveGapSeconds === 0
+                                ? '0s'
+                                : `+${formatGapValue(unit.liveGapSeconds)}`
+                              : unit.splitPassed && unit.splitGapSeconds !== null
+                                ? unit.splitGapSeconds === 0
+                                  ? '0s'
+                                  : `+${formatGapValue(unit.splitGapSeconds)}`
+                                : '—'
+                          const gapClass =
+                            unit.state === 'finished'
+                              ? unit.liveGapSeconds === 0
+                                ? 'text-emerald-700'
+                                : 'text-red-600'
+                              : unit.splitPassed && unit.splitGapSeconds !== null
+                                ? unit.splitGapSeconds === 0
+                                  ? 'text-emerald-700'
+                                  : 'text-red-600'
+                                : 'text-slate-400'
+
+                          return (
+                            <div
+                              key={unit.id}
+                              className="grid grid-cols-[52px_68px_190px_150px_100px_82px] items-center gap-1.5 border-b border-slate-100 bg-white px-2.5 py-2.5 text-xs"
+                            >
+                              <div className="text-center">
+                                <div className="font-semibold text-slate-700">#{unit.startOrder}</div>
+                                <div className="mt-0.5 text-[10px] text-slate-400">
+                                  {unit.liveRank !== null ? `P${unit.liveRank}` : '—'}
+                                </div>
+                              </div>
+
+                              <div className="flex justify-center">
+                                <span
+                                  className={`rounded-full border px-2.5 py-1 text-[9px] font-bold ${statusClass}`}
+                                >
+                                  {statusLabel}
+                                </span>
+                              </div>
+
+                              <div className="min-w-0">
+                                <div className="flex min-w-0 items-center gap-2">
+                                  {isIndividualTimeTrialReplay ? (
+                                    <SmallCountryFlag code={unit.countryCode} />
+                                  ) : null}
+                                  <span className="truncate font-semibold text-slate-950">
+                                    {unit.label}
+                                  </span>
+                                </div>
+                                <div className="mt-0.5 truncate text-[11px] text-slate-500">
+                                  {unit.secondaryLabel}
+                                </div>
+                              </div>
+
+                              <div className="space-y-1">
+                                <div className="flex items-center gap-1.5">
+                                  <div className="h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-red-100">
+                                    <div
+                                      className="h-full rounded-full bg-red-500"
+                                      style={{
+                                        width: `${universalClamp(
+                                          unit.startEnergy,
+                                          0,
+                                          100
+                                        )}%`,
+                                      }}
+                                    />
+                                  </div>
+                                  <span className="w-7 text-right text-[9px] font-semibold text-red-700">
+                                    {Math.round(unit.startEnergy)}%
+                                  </span>
+                                </div>
+
+                                <div className="flex items-center gap-1.5">
+                                  <div className="h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-emerald-100">
+                                    <div
+                                      className="h-full rounded-full bg-emerald-500"
+                                      style={{
+                                        width: `${universalClamp(
+                                          unit.currentEnergy,
+                                          0,
+                                          100
+                                        )}%`,
+                                      }}
+                                    />
+                                  </div>
+                                  <span className="w-7 text-right text-[9px] font-semibold text-emerald-700">
+                                    {Math.round(unit.currentEnergy)}%
+                                  </span>
+                                </div>
+                              </div>
+
+                              <div className="text-right">
+                                <div className="font-semibold text-slate-700">
+                                  {unit.state === 'waiting'
+                                    ? '—'
+                                    : unit.state === 'finished'
+                                      ? formatRaceClock(unit.finalTimeSeconds)
+                                      : formatRaceClock(unit.elapsedTimeSeconds)}
+                                </div>
+                                <div className="mt-0.5 text-[10px] text-slate-400">
+                                  {unit.state === 'waiting'
+                                    ? `Starts in ${formatRaceClock(unit.countdownSeconds)}`
+                                    : unit.state === 'finished'
+                                      ? 'Finished'
+                                      : `${formatKm(distanceKm)} · ${Math.round(
+                                          unit.courseProgressFraction * 100
+                                        )}%`}
+                                </div>
+                              </div>
+
+                              <div className="text-right">
+                                <div className={`font-semibold ${gapClass}`}>
+                                  {gapLabel}
+                                </div>
+                                <div className="mt-0.5 text-[10px] text-slate-400">
+                                  {unit.state === 'finished'
+                                    ? 'Finish'
+                                    : unit.splitPassed
+                                      ? 'Time check'
+                                      : unit.state === 'on_course'
+                                        ? 'Before check'
+                                        : 'Waiting'}
+                                </div>
+                              </div>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    ) : (
+                      <div className="w-full min-w-[600px]">
+                        <div className="grid grid-cols-[38px_44px_minmax(140px,1fr)_128px_76px_142px] items-center gap-0 border-b border-slate-200 bg-slate-100 px-2.5 py-2 text-[9px] font-semibold uppercase tracking-[0.08em] text-slate-500">
+                          <div className="px-1 text-center">Pos.</div>
+                          <div className="border-l border-slate-200 px-2 text-center">Group</div>
+                          <div className="border-l border-slate-200 px-2.5">Rider</div>
+                          <div className="border-l border-slate-200 px-2.5">Energy</div>
+                          <div className="border-l border-slate-200 px-2 text-right">Stage result</div>
+                          <div className="border-l border-slate-200 px-2.5">General classification</div>
+                        </div>
+
+                        {participatingRoadRiderRows.map((row) => {
+                          const preStage =
+                            preStageStandingByRiderId[row.riderId] ?? null
+
+                          return (
+                            <div
+                              key={row.riderId}
+                              className="grid grid-cols-[38px_44px_minmax(140px,1fr)_128px_76px_142px] items-center gap-0 border-b border-slate-100 bg-white px-2.5 py-2.5 text-xs"
+                            >
+                              <div className="px-1 text-center font-semibold text-slate-500">
+                                {replayProgress <= 0 || row.position === null
+                                  ? '—'
+                                  : row.position}
+                              </div>
+
+                              <div className="flex justify-center border-l border-slate-200 px-2">
+                                <span
+                                  className={`rounded-full px-3 py-1 text-[10px] font-bold text-white ${getUniversalReplayGroupBadgeClass(
+                                    row.displayCode,
+                                    row.colorKey
+                                  )}`}
+                                >
+                                  {getUniversalReplayGroupBadge(
+                                    row.displayCode
+                                  )}
+                                </span>
+                              </div>
+
+                              <div className="min-w-0 border-l border-slate-200 px-2.5">
+                                <div className="flex min-w-0 items-center gap-1.5">
+                                  <SmallCountryFlag
+                                    code={row.countryCode}
+                                  />
+                                  <span className="truncate font-semibold text-slate-950">
+                                    {row.riderName}
+                                  </span>
+                                </div>
+                                <div className="mt-0.5 truncate text-[10px] text-slate-500">
+                                  {row.teamName}
+                                </div>
+                              </div>
+
+                              <div className="space-y-1 border-l border-slate-200 px-2.5">
+                                <div className="flex items-center gap-1">
+                                  <div className="h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-red-100">
+                                    <div
+                                      className="h-full rounded-full bg-red-500"
+                                      style={{
+                                        width: `${universalClamp(
+                                          row.startEnergy,
+                                          0,
+                                          100
+                                        )}%`,
+                                      }}
+                                    />
+                                  </div>
+                                  <span className="w-6 text-right text-[8px] font-semibold text-red-700">
+                                    {Math.round(row.startEnergy)}%
+                                  </span>
+                                </div>
+
+                                <div className="flex items-center gap-1">
+                                  <div className="h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-emerald-100">
+                                    <div
+                                      className="h-full rounded-full bg-emerald-500"
+                                      style={{
+                                        width: `${universalClamp(
+                                          row.energy,
+                                          0,
+                                          100
+                                        )}%`,
+                                      }}
+                                    />
+                                  </div>
+                                  <span className="w-6 text-right text-[8px] font-semibold text-emerald-700">
+                                    {Math.round(row.energy)}%
+                                  </span>
+                                </div>
+                              </div>
+
+                              <div className="border-l border-slate-200 px-2 text-right font-semibold text-slate-600">
+                                {replayProgress <= 0
+                                  ? '—'
+                                  : resultsVisible
+                                    ? row.status !== 'finished'
+                                      ? row.status.toUpperCase()
+                                      : row.position === 1
+                                        ? 'Winner'
+                                        : `+${formatGapValue(row.gapSeconds)}`
+                                    : row.gapSeconds <= 0
+                                      ? row.position === 1
+                                        ? 'Leader'
+                                        : 's.t.'
+                                      : `+${formatGapValue(
+                                          row.gapSeconds
+                                        )}`}
+                              </div>
+
+                              <div className="min-w-0 border-l border-slate-200 px-2.5 leading-tight">
+                                <div className="flex items-center justify-between gap-2 text-[10px] font-semibold text-slate-700">
+                                  <span>GC: {preStage?.generalRank ?? '—'}</span>
+                                  <span className="text-slate-500">
+                                    {preStage
+                                      ? formatClassificationGap(
+                                          preStage.generalGapSeconds
+                                        )
+                                      : '—'}
+                                  </span>
+                                </div>
+                                <div className="mt-1 whitespace-nowrap text-[9px] text-slate-500">
+                                  KOM {preStage?.mountainPoints ?? 0}
+                                  {' · '}SPR {preStage?.sprintPoints ?? 0}
+                                </div>
+                              </div>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    )}
                   </div>
                 </aside>
               </section>

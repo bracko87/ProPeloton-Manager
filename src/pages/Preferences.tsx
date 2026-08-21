@@ -40,6 +40,12 @@ import {
   NOTIFICATION_PREFERENCE_GROUP_ORDER,
   NOTIFICATION_PREFERENCE_GROUPS,
   NOTIFICATION_PREFERENCE_SECTIONS,
+  ADVISOR_NOTIFICATION_CATEGORY_DEFINITIONS,
+  ADVISOR_NOTIFICATION_CATEGORY_ORDER,
+  type AdvisorNotificationCategoryKey,
+  type AdvisorNotificationSettings,
+  readAdvisorNotificationPreferences,
+  writeAdvisorNotificationPreferences,
   readNotificationPreferences,
   writeNotificationPreferences,
 } from '@/lib/notificationPreferences'
@@ -49,6 +55,7 @@ type ToggleRowProps = {
   description: string
   checked: boolean
   onToggle: () => void
+  disabled?: boolean
 }
 
 type DevelopingTeamStatus = {
@@ -120,9 +127,9 @@ function normalizeCoinCost(value: unknown, fallback: number): number {
   return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback
 }
 
-function ToggleRow({ title, description, checked, onToggle }: ToggleRowProps): JSX.Element {
+function ToggleRow({ title, description, checked, onToggle, disabled = false }: ToggleRowProps): JSX.Element {
   return (
-    <label className="flex cursor-pointer items-start justify-between gap-4 py-3">
+    <label className={`flex items-start justify-between gap-4 py-3 ${disabled ? 'cursor-not-allowed opacity-45' : 'cursor-pointer'}`}>
       <div className="min-w-0">
         <div className="text-sm font-medium text-gray-900">{title}</div>
         <div className="mt-1 text-xs text-gray-500">{description}</div>
@@ -131,8 +138,9 @@ function ToggleRow({ title, description, checked, onToggle }: ToggleRowProps): J
       <input
         type="checkbox"
         checked={checked}
+        disabled={disabled}
         onChange={onToggle}
-        className="mt-1 h-4 w-4 shrink-0 rounded border-gray-300"
+        className="mt-1 h-4 w-4 shrink-0 rounded border-gray-300 disabled:cursor-not-allowed"
       />
     </label>
   )
@@ -142,6 +150,9 @@ export default function PreferencesPage(): JSX.Element {
   const [notifications, setNotifications] = useState<NotificationSettings>(() =>
     readNotificationPreferences()
   )
+  const [advisorNotifications, setAdvisorNotifications] = useState<AdvisorNotificationSettings>(() => readAdvisorNotificationPreferences())
+  const [staffAdvisoryOverview, setStaffAdvisoryOverview] = useState<any[]>([])
+  const [isLoadingStaffAdvisoryOverview, setIsLoadingStaffAdvisoryOverview] = useState(true)
 
   const [developingTeamStatus, setDevelopingTeamStatus] = useState<DevelopingTeamStatus | null>(null)
   const [isLoadingDevelopingTeamStatus, setIsLoadingDevelopingTeamStatus] = useState(true)
@@ -189,6 +200,34 @@ export default function PreferencesPage(): JSX.Element {
   }, [])
 
   useEffect(() => {
+    let cancelled = false
+    async function loadAdvisorOverview() {
+      try {
+        const context = (await getMyClubContext()) as { mainClub?: MainClubContextClub | null }
+        const clubId = context?.mainClub?.id ?? null
+
+        if (!clubId) {
+          if (!cancelled) setStaffAdvisoryOverview([])
+          return
+        }
+
+        const { data, error } = await supabase.rpc('staff_advisory_get_overview_v1', {
+          p_club_id: clubId,
+        })
+        if (error) throw error
+        if (!cancelled) setStaffAdvisoryOverview(Array.isArray(data) ? data : data ? [data] : [])
+      } catch (error) {
+        console.error('Failed to load Staff Advisory notification availability:', error)
+        if (!cancelled) setStaffAdvisoryOverview([])
+      } finally { if (!cancelled) setIsLoadingStaffAdvisoryOverview(false) }
+    }
+    void loadAdvisorOverview()
+    return () => { cancelled = true }
+  }, [])
+
+  useEffect(() => { writeAdvisorNotificationPreferences(advisorNotifications) }, [advisorNotifications])
+
+  useEffect(() => {
     writeNotificationPreferences(notifications)
   }, [notifications])
 
@@ -213,10 +252,14 @@ export default function PreferencesPage(): JSX.Element {
   }, [isShutdownModalOpen, isShuttingDown])
 
   const toggleNotification = (key: NotificationPreferenceGroup): void => {
-    setNotifications(prev => ({
-      ...prev,
-      [key]: !prev[key],
-    }))
+    setNotifications(prev => ({ ...prev, [key]: !prev[key] }))
+  }
+
+  const toggleAdvisorNotificationCategory = (key: AdvisorNotificationCategoryKey): void => {
+    const definition = ADVISOR_NOTIFICATION_CATEGORY_DEFINITIONS[key]
+    const active = staffAdvisoryOverview.some(row => row.role_type === definition.requiredRole && row.advisory_status === 'active')
+    if (!active) return
+    setAdvisorNotifications(prev => ({ ...prev, [key]: !prev[key] }))
   }
 
   const handleRestartTeam = (): void => {
@@ -470,53 +513,46 @@ export default function PreferencesPage(): JSX.Element {
           <div>
             <section className="w-full rounded-lg border border-gray-100 bg-white p-5 shadow-sm">
               <h3 className="text-base font-semibold">In-Game Notifications</h3>
-              <p className="mt-1 text-xs text-gray-500">
-                These toggles control which notifications are shown to the user inside the game UI.
-              </p>
+              <p className="mt-1 text-xs text-gray-500">Core game notifications and paid Staff Advisor notifications are controlled separately.</p>
 
-              <div className="mt-5 grid grid-cols-1 gap-4 xl:grid-cols-2">
-                {NOTIFICATION_PREFERENCE_SECTIONS.map(section => {
-                  const sectionGroups = NOTIFICATION_PREFERENCE_GROUP_ORDER.filter(
-                    groupCode => NOTIFICATION_PREFERENCE_GROUPS[groupCode].section === section.code
-                  )
-
-                  const enabledCount = sectionGroups.filter(
-                    groupCode => notifications[groupCode] !== false
-                  ).length
-
-                  return (
-                    <div
-                      key={section.code}
-                      className="overflow-hidden rounded-xl border border-gray-200 bg-gray-50/60"
-                    >
-                      <div className="flex items-start justify-between gap-4 border-b border-gray-200 bg-white px-4 py-3">
-                        <div>
-                          <h4 className="text-sm font-semibold text-gray-900">{section.title}</h4>
-                          <p className="mt-1 text-xs text-gray-500">{section.description}</p>
+              <div className="mt-5">
+                <h4 className="text-sm font-semibold text-gray-900">Core Notifications</h4>
+                <p className="mt-1 text-xs text-gray-500">Normal game notifications that remain available without a paid Staff Advisor.</p>
+                <div className="mt-3 grid grid-cols-1 gap-4 xl:grid-cols-2">
+                  {NOTIFICATION_PREFERENCE_SECTIONS.map(section => {
+                    const sectionGroups = NOTIFICATION_PREFERENCE_GROUP_ORDER.filter(groupCode => NOTIFICATION_PREFERENCE_GROUPS[groupCode].section === section.code)
+                    const enabledCount = sectionGroups.filter(groupCode => notifications[groupCode] !== false).length
+                    return (
+                      <div key={section.code} className="overflow-hidden rounded-xl border border-gray-200 bg-gray-50/60">
+                        <div className="flex items-start justify-between gap-4 border-b border-gray-200 bg-white px-4 py-3">
+                          <div><h5 className="text-sm font-semibold text-gray-900">{section.title}</h5><p className="mt-1 text-xs text-gray-500">{section.description}</p></div>
+                          <span className="shrink-0 rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-600">{enabledCount}/{sectionGroups.length} on</span>
                         </div>
-                        <span className="shrink-0 rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-600">
-                          {enabledCount}/{sectionGroups.length} on
-                        </span>
+                        <div className="divide-y divide-gray-200 px-4">
+                          {sectionGroups.map(groupCode => {
+                            const group = NOTIFICATION_PREFERENCE_GROUPS[groupCode]
+                            return <ToggleRow key={groupCode} title={group.label} description={group.description} checked={notifications[groupCode] !== false} onToggle={() => toggleNotification(groupCode)} />
+                          })}
+                        </div>
                       </div>
+                    )
+                  })}
+                </div>
+              </div>
 
-                      <div className="divide-y divide-gray-200 px-4">
-                        {sectionGroups.map(groupCode => {
-                          const group = NOTIFICATION_PREFERENCE_GROUPS[groupCode]
-
-                          return (
-                            <ToggleRow
-                              key={groupCode}
-                              title={group.label}
-                              description={group.description}
-                              checked={notifications[groupCode] !== false}
-                              onToggle={() => toggleNotification(groupCode)}
-                            />
-                          )
-                        })}
-                      </div>
-                    </div>
-                  )
-                })}
+              <div className="mt-6 border-t border-gray-200 pt-5">
+                <h4 className="text-sm font-semibold text-gray-900">Staff Advisor Notifications</h4>
+                <p className="mt-1 text-xs text-gray-500">Paid advisor notifications grouped by topic. Each category controls all paid advisory notifications in that topic and unlocks only while the required Staff Advisor is active.</p>
+                <div className="mt-3 overflow-hidden rounded-xl border border-gray-200 bg-gray-50/60">
+                  <div className="divide-y divide-gray-200 px-4">
+                    {ADVISOR_NOTIFICATION_CATEGORY_ORDER.map(key => {
+                      const definition = ADVISOR_NOTIFICATION_CATEGORY_DEFINITIONS[key]
+                      const active = staffAdvisoryOverview.some(row => row.role_type === definition.requiredRole && row.advisory_status === 'active')
+                      return <ToggleRow key={key} title={definition.label} description={active ? definition.description : `${definition.description} Activate the required Staff Advisor to control this notification.`} checked={advisorNotifications[key] !== false} disabled={!active || isLoadingStaffAdvisoryOverview} onToggle={() => toggleAdvisorNotificationCategory(key)} />
+                    })}
+                  </div>
+                </div>
+                <div className="mt-3 rounded-lg border border-blue-100 bg-blue-50 px-3 py-2 text-xs leading-5 text-blue-800">A Core notification and an Advisor notification may cover the same topic without being the same event. Example: Race Supplies Low remains Core, while Equipment & Workshop Review is paid analysis.</div>
               </div>
             </section>
           </div>

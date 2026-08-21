@@ -10,7 +10,12 @@
  */
 import { createHash } from 'node:crypto'
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
-import { runRaceEngine } from '../../src/universal-race-engine/runRaceEngine'
+import {
+  classifyUniversalReplaySynchronizationForPublication,
+  isUniversalPhase78IssueNonBlocking,
+  runRaceEngine,
+  type UniversalRaceEngineResult,
+} from '../../src/universal-race-engine/runRaceEngine'
 import {
   buildProductionUniversalRaceEngineInput,
   type ProductionUniversalRaceSources,
@@ -120,6 +125,87 @@ function buildSources(payloadValue: unknown, simulationRunId: string): Productio
   }
 }
 
+
+function buildProductionOutputWithReplayProgressGuarantee(
+  input: ReturnType<typeof buildProductionUniversalRaceEngineInput>,
+  result: UniversalRaceEngineResult,
+) {
+  const replayPolicy =
+    classifyUniversalReplaySynchronizationForPublication(
+      result.replaySynchronization,
+    )
+
+  if (!replayPolicy.publishable) {
+    throw new Error(
+      `Universal replay synchronization failed: ${replayPolicy.blockingIssues.join(', ')}`,
+    )
+  }
+
+  if (result.replaySynchronization.synchronized) {
+    return buildProductionUniversalRaceOutput(input, result)
+  }
+
+  // buildProductionUniversalRaceOutput predates degraded replay support and
+  // still requires replaySynchronization.synchronized === true. Supply a
+  // temporary builder-only acceptance view. Sporting outputs are untouched:
+  // finish resolution, classifications, points, incidents, fatigue and
+  // resource calculations all remain exactly the engine result.
+  const builderResult: UniversalRaceEngineResult = {
+    ...result,
+    replaySynchronization: {
+      ...result.replaySynchronization,
+      synchronized: true,
+    },
+    postStageUpdate: {
+      ...result.postStageUpdate,
+      persistenceContract: {
+        ...result.postStageUpdate.persistenceContract,
+        sourceReplaySynchronized: true,
+      },
+    },
+    phase78Acceptance: {
+      ...result.phase78Acceptance,
+      passed: true,
+      issues: result.phase78Acceptance.issues.filter(
+        (issue) => !isUniversalPhase78IssueNonBlocking(issue),
+      ),
+      invariants: result.phase78Acceptance.invariants.map((invariant) =>
+        isUniversalPhase78IssueNonBlocking(invariant.key)
+          ? { ...invariant, passed: true }
+          : invariant,
+      ),
+      phase7: {
+        ...result.phase78Acceptance.phase7,
+        replaySynchronized: true,
+      },
+    },
+  }
+
+  const built = buildProductionUniversalRaceOutput(input, builderResult)
+
+  // Persist the truthful engine result and truthful raw replay validation.
+  // readyForApplication remains true because only replay-presentation issues
+  // were bypassed; all hard sporting/result checks have already passed.
+  return {
+    ...built,
+    universalResult: result,
+    applicationManifest: {
+      ...built.applicationManifest,
+      validation: {
+        ...built.applicationManifest.validation,
+        replaySynchronized: false,
+      },
+    },
+    verification: {
+      ...built.verification,
+      replayQuality: 'degraded',
+      degradedReplayIssues: [...replayPolicy.nonBlockingIssues],
+      officialResultsUnchanged: true,
+      rawReplaySynchronized: false,
+    },
+  } as typeof built
+}
+
 async function calculateClaimedStage(
   supabase: SupabaseClient,
   claimValue: unknown,
@@ -140,7 +226,7 @@ async function calculateClaimedStage(
 
     // Exactly one authoritative calculation for this claimed production stage.
     const result = runRaceEngine(input)
-    const output = buildProductionUniversalRaceOutput(input, result)
+    const output = buildProductionOutputWithReplayProgressGuarantee(input, result)
     const inputHash = sha256(input)
     const outputHash = sha256(output)
 

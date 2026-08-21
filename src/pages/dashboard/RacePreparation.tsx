@@ -11,7 +11,8 @@
  * Button → Supabase Edge Function → SQL RPC → Database
  */
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useNavigate, useSearchParams } from "react-router";
 import TutorialOverlay from "../../components/tutorial/TutorialOverlay";
 import {
@@ -79,6 +80,33 @@ type RiderRaceSharpnessUiRow = {
   overload_penalty: number | string;
   overload_warning: boolean;
   race_sharpness_message: string;
+};
+
+
+type RiderCurrentRaceClassificationUiRow = {
+  rider_id: UUID;
+  gc_position: number | null;
+  gc_gap_seconds: number | null;
+  gc_time_gap: string;
+  points_classification_position: number | null;
+  points_classification_points: number;
+  mountain_classification_position: number | null;
+  mountain_classification_points: number;
+  young_classification_position: number | null;
+};
+
+type CurrentRaceClassificationSnapshot = {
+  hasPublishedClassification: boolean;
+  afterStageId: UUID | null;
+  afterStageNumber: number | null;
+  byRiderId: Map<UUID, RiderCurrentRaceClassificationUiRow>;
+};
+
+const EMPTY_CURRENT_RACE_CLASSIFICATION_SNAPSHOT: CurrentRaceClassificationSnapshot = {
+  hasPublishedClassification: false,
+  afterStageId: null,
+  afterStageNumber: null,
+  byRiderId: new Map(),
 };
 
 type StagePlanUiTone = "green" | "yellow" | "orange" | "red" | "gray";
@@ -331,6 +359,178 @@ async function fetchRiderRaceSharpnessForClub(
   return (data ?? []) as RiderRaceSharpnessUiRow[];
 }
 
+
+function formatCurrentRaceGapSeconds(value: unknown): string {
+  const raw = Number(value);
+  if (!Number.isFinite(raw) || raw <= 0) return "0:00";
+
+  const totalSeconds = Math.max(0, Math.round(raw));
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+
+  if (hours > 0) {
+    return `+${hours}:${String(minutes).padStart(2, "0")}:${String(
+      seconds,
+    ).padStart(2, "0")}`;
+  }
+
+  return `+${minutes}:${String(seconds).padStart(2, "0")}`;
+}
+
+async function fetchCurrentRaceClassifications(
+  raceId: UUID,
+  stages: JsonRecord[],
+  riderIds: UUID[],
+): Promise<CurrentRaceClassificationSnapshot> {
+  if (!raceId || riderIds.length === 0) {
+    return {
+      ...EMPTY_CURRENT_RACE_CLASSIFICATION_SNAPSHOT,
+      byRiderId: new Map(),
+    };
+  }
+
+  const { data, error } = await supabase
+    .from("race_classification_standings")
+    .select(
+      "after_stage_id, classification_type, rider_id, rank, total_time_seconds, gap_seconds, points, created_at",
+    )
+    .eq("race_id", raceId)
+    .eq("entity_type", "rider")
+    .in("rider_id", riderIds);
+
+  if (error) throw error;
+
+  const rows = toArray<JsonRecord>(data);
+  if (rows.length === 0) {
+    return {
+      ...EMPTY_CURRENT_RACE_CLASSIFICATION_SNAPSHOT,
+      byRiderId: new Map(),
+    };
+  }
+
+  const stageNumberById = new Map<string, number>();
+  stages.forEach((stage, index) => {
+    const stageId = String(stage.id ?? stage.stage_id ?? "");
+    if (!stageId) return;
+
+    const stageNumber = Number(stage.stage_number ?? index + 1);
+    stageNumberById.set(
+      stageId,
+      Number.isFinite(stageNumber) ? stageNumber : index + 1,
+    );
+  });
+
+  let latestStageId: string | null = null;
+  let latestStageNumber = -1;
+  let latestCreatedAt = -1;
+
+  rows.forEach((row) => {
+    const stageId = String(row.after_stage_id ?? "");
+    if (!stageId) return;
+
+    const stageNumber = stageNumberById.get(stageId) ?? -1;
+    const createdAt = Date.parse(String(row.created_at ?? ""));
+    const createdAtValue = Number.isFinite(createdAt) ? createdAt : 0;
+
+    if (
+      stageNumber > latestStageNumber ||
+      (stageNumber === latestStageNumber && createdAtValue > latestCreatedAt)
+    ) {
+      latestStageId = stageId;
+      latestStageNumber = stageNumber;
+      latestCreatedAt = createdAtValue;
+    }
+  });
+
+  if (!latestStageId) {
+    const latestRow = [...rows].sort((a, b) => {
+      return (
+        Date.parse(String(b.created_at ?? "")) -
+        Date.parse(String(a.created_at ?? ""))
+      );
+    })[0];
+
+    latestStageId = latestRow ? String(latestRow.after_stage_id ?? "") : null;
+    latestStageNumber = latestStageId
+      ? (stageNumberById.get(latestStageId) ?? -1)
+      : -1;
+  }
+
+  const latestRows = latestStageId
+    ? rows.filter((row) => String(row.after_stage_id ?? "") === latestStageId)
+    : rows;
+
+  const byRiderId = new Map<UUID, RiderCurrentRaceClassificationUiRow>();
+
+  riderIds.forEach((riderId) => {
+    byRiderId.set(riderId, {
+      rider_id: riderId,
+      gc_position: null,
+      gc_gap_seconds: null,
+      gc_time_gap: "0:00",
+      points_classification_position: null,
+      points_classification_points: 0,
+      mountain_classification_position: null,
+      mountain_classification_points: 0,
+      young_classification_position: null,
+    });
+  });
+
+  latestRows.forEach((row) => {
+    const riderId = String(row.rider_id ?? "");
+    if (!riderId || !byRiderId.has(riderId)) return;
+
+    const current = byRiderId.get(riderId)!;
+    const classificationType = String(row.classification_type ?? "")
+      .trim()
+      .toLowerCase();
+    const rank = Number(row.rank);
+    const points = Number(row.points);
+    const gapSeconds = Number(row.gap_seconds);
+
+    if (classificationType === "general" || classificationType === "gc") {
+      current.gc_position = Number.isFinite(rank) ? rank : null;
+      current.gc_gap_seconds = Number.isFinite(gapSeconds) ? gapSeconds : null;
+      current.gc_time_gap = formatCurrentRaceGapSeconds(gapSeconds);
+      return;
+    }
+
+    if (classificationType === "points" || classificationType === "sprint") {
+      current.points_classification_position = Number.isFinite(rank)
+        ? rank
+        : null;
+      current.points_classification_points = Number.isFinite(points)
+        ? points
+        : 0;
+      return;
+    }
+
+    if (classificationType === "mountain" || classificationType === "kom") {
+      current.mountain_classification_position = Number.isFinite(rank)
+        ? rank
+        : null;
+      current.mountain_classification_points = Number.isFinite(points)
+        ? points
+        : 0;
+      return;
+    }
+
+    if (classificationType === "young" || classificationType === "youth") {
+      current.young_classification_position = Number.isFinite(rank)
+        ? rank
+        : null;
+    }
+  });
+
+  return {
+    hasPublishedClassification: true,
+    afterStageId: latestStageId || null,
+    afterStageNumber: latestStageNumber > 0 ? latestStageNumber : null,
+    byRiderId,
+  };
+}
+
 function parseDateParts(value: unknown) {
   if (!value) return null;
 
@@ -356,6 +556,81 @@ function parseGameDateTime(value: unknown): number | null {
   if (!parts) return null;
 
   return Date.UTC(parts.year, parts.month - 1, parts.day);
+}
+
+const GAME_DAY_MILLISECONDS = 24 * 60 * 60 * 1000;
+const FINISHED_RACE_VISIBILITY_DAYS = 3;
+
+function getAcceptedRaceLifecycleStatus(
+  row: AcceptedRacePreparationRow,
+): string {
+  return String(asRecord(asRecord(row).race).status ?? "")
+    .trim()
+    .toLowerCase();
+}
+
+function shouldShowAcceptedRacePreparation(
+  row: AcceptedRacePreparationRow,
+  currentGameDate?: string,
+): boolean {
+  const raceRecord = asRecord(asRecord(row).race);
+  const raceMetadata = asRecord(raceRecord.metadata);
+  const raceStatus = getAcceptedRaceLifecycleStatus(row);
+
+  /*
+   * Historical chains closed by the forward-only repair are not actionable
+   * preparation targets and should disappear immediately.
+   */
+  if (raceMetadata.forward_only_terminal_closure === true) {
+    return false;
+  }
+
+  /*
+   * A cancelled race cannot be prepared anymore. Do not let an old submitted
+   * race_preparations row keep it inside Accepted Races.
+   */
+  if (
+    raceStatus === "cancelled" ||
+    raceStatus === "canceled" ||
+    raceStatus === "weather_cancelled"
+  ) {
+    return false;
+  }
+
+  if (raceStatus === "archived") {
+    return false;
+  }
+
+  if (raceStatus !== "completed") {
+    return true;
+  }
+
+  /*
+   * Finished races remain visible for three in-game days so the manager has
+   * time to review the final state, then they leave Race Preparation.
+   */
+  const currentTime = parseGameDateTime(currentGameDate);
+  const endTime = parseGameDateTime(
+    raceRecord.end_date ?? raceRecord.start_date,
+  );
+
+  if (currentTime === null || endTime === null) {
+    return true;
+  }
+
+  return (
+    currentTime - endTime <=
+    FINISHED_RACE_VISIBILITY_DAYS * GAME_DAY_MILLISECONDS
+  );
+}
+
+function filterAcceptedRacePreparations(
+  rows: AcceptedRacePreparationRow[],
+  currentGameDate?: string,
+): AcceptedRacePreparationRow[] {
+  return rows.filter((row) =>
+    shouldShowAcceptedRacePreparation(row, currentGameDate),
+  );
 }
 
 function formatGameDate(value: unknown) {
@@ -909,6 +1184,9 @@ function statusClass(status?: string) {
     case "weather_cancelled":
     case "cancelled":
       return "bg-red-100 text-red-800 ring-1 ring-red-200";
+    case "completed":
+    case "archived":
+      return "bg-slate-100 text-slate-700 ring-1 ring-slate-200";
     case "race_plan_open":
     case "draft":
       return "bg-yellow-100 text-yellow-800 ring-1 ring-yellow-200";
@@ -933,6 +1211,9 @@ function getRacePlanStatusLabel(status?: string) {
     case "weather_cancelled":
     case "cancelled":
       return "Race canceled";
+    case "completed":
+    case "archived":
+      return "Race Finished";
     case "missed_startlist":
       return "Not Participating";
     case "draft":
@@ -1167,6 +1448,20 @@ function getAcceptedRacePreparationState(
     };
   }
 
+  if (
+    raceStatus === "cancelled" ||
+    raceStatus === "canceled" ||
+    raceStatus === "weather_cancelled"
+  ) {
+    return {
+      label: "Race canceled",
+      className: "bg-red-100 text-red-800 ring-1 ring-red-200",
+      racePlanEnabled: false,
+      stagePlansEnabled: false,
+      missedStartlist: false,
+    };
+  }
+
   if (missedStartlist) {
     return {
       label: "Not Participating",
@@ -1286,6 +1581,11 @@ export default function RacePreparationPage(): JSX.Element {
   const [riderRaceSharpnessById, setRiderRaceSharpnessById] = useState<
     Map<UUID, RiderRaceSharpnessUiRow>
   >(() => new Map());
+  const [currentRaceClassificationSnapshot, setCurrentRaceClassificationSnapshot] =
+    useState<CurrentRaceClassificationSnapshot>(() => ({
+      ...EMPTY_CURRENT_RACE_CLASSIFICATION_SNAPSHOT,
+      byRiderId: new Map(),
+    }));
   const [squadOptions, setSquadOptions] = useState<
     RacePreparationSquadOption[]
   >([]);
@@ -1518,21 +1818,55 @@ export default function RacePreparationPage(): JSX.Element {
     ).map((rider) => {
       const riderId = String(rider.rider_id ?? rider.id ?? "");
       const raceSharpness = riderRaceSharpnessById.get(riderId);
-
-      if (!raceSharpness) return rider;
+      const currentRaceClassification =
+        currentRaceClassificationSnapshot.byRiderId.get(riderId);
+      const raceHasPublishedClassification =
+        currentRaceClassificationSnapshot.hasPublishedClassification;
 
       return {
         ...rider,
-        race_sharpness: raceSharpness.race_sharpness,
-        race_sharpness_percent: raceSharpness.race_sharpness_percent,
-        race_sharpness_label: raceSharpness.race_sharpness_label,
-        race_sharpness_status: raceSharpness.race_sharpness_status,
-        race_sharpness_message: raceSharpness.race_sharpness_message,
-        race_days_last_14: raceSharpness.race_days_last_14,
-        overload_warning: raceSharpness.overload_warning,
+        ...(raceSharpness
+          ? {
+              race_sharpness: raceSharpness.race_sharpness,
+              race_sharpness_percent: raceSharpness.race_sharpness_percent,
+              race_sharpness_label: raceSharpness.race_sharpness_label,
+              race_sharpness_status: raceSharpness.race_sharpness_status,
+              race_sharpness_message: raceSharpness.race_sharpness_message,
+              race_days_last_14: raceSharpness.race_days_last_14,
+              overload_warning: raceSharpness.overload_warning,
+            }
+          : {}),
+        current_race_classification_live: raceHasPublishedClassification,
+        current_race_classification_after_stage_id:
+          currentRaceClassificationSnapshot.afterStageId,
+        current_race_classification_after_stage_number:
+          currentRaceClassificationSnapshot.afterStageNumber,
+        gc_position:
+          currentRaceClassification?.gc_position ??
+          (raceHasPublishedClassification ? null : 0),
+        gc_time_gap:
+          currentRaceClassification?.gc_time_gap ??
+          (raceHasPublishedClassification ? "—" : "0:00"),
+        points:
+          currentRaceClassification?.points_classification_points ?? 0,
+        sprint_points:
+          currentRaceClassification?.points_classification_points ?? 0,
+        points_classification_position:
+          currentRaceClassification?.points_classification_position ?? null,
+        mountain_points:
+          currentRaceClassification?.mountain_classification_points ?? 0,
+        mountain_classification_position:
+          currentRaceClassification?.mountain_classification_position ?? null,
+        young_classification_position:
+          currentRaceClassification?.young_classification_position ?? null,
       };
     });
-  }, [cleanSelectedRiderIds, riderRaceSharpnessById, selectableData]);
+  }, [
+    cleanSelectedRiderIds,
+    currentRaceClassificationSnapshot,
+    riderRaceSharpnessById,
+    selectableData,
+  ]);
 
   const selectedStaffByRole = useMemo(() => {
     const result: Record<string, UUID> = {};
@@ -1594,6 +1928,66 @@ export default function RacePreparationPage(): JSX.Element {
       mounted = false;
     };
   }, [clubId, participatingClubId]);
+
+
+  useEffect(() => {
+    let mounted = true;
+    let refreshTimer: number | null = null;
+    const classificationRaceId = raceId;
+    const classificationStages = target?.stages ?? [];
+    const classificationRiderIds = cleanSelectedRiderIds;
+
+    async function loadCurrentRaceClassifications() {
+      if (!classificationRaceId || classificationRiderIds.length === 0) {
+        if (mounted) {
+          setCurrentRaceClassificationSnapshot({
+            ...EMPTY_CURRENT_RACE_CLASSIFICATION_SNAPSHOT,
+            byRiderId: new Map(),
+          });
+        }
+        return;
+      }
+
+      try {
+        const snapshot = await fetchCurrentRaceClassifications(
+          classificationRaceId,
+          classificationStages,
+          classificationRiderIds,
+        );
+
+        if (mounted) {
+          setCurrentRaceClassificationSnapshot(snapshot);
+        }
+      } catch (error) {
+        console.error("Failed to load current race classifications", error);
+        if (mounted) {
+          setCurrentRaceClassificationSnapshot({
+            ...EMPTY_CURRENT_RACE_CLASSIFICATION_SNAPSHOT,
+            byRiderId: new Map(),
+          });
+        }
+      }
+    }
+
+    void loadCurrentRaceClassifications();
+
+    const lifecycleStatus = String(asRecord(target?.race).status ?? "")
+      .trim()
+      .toLowerCase();
+
+    if (lifecycleStatus === "active") {
+      refreshTimer = window.setInterval(() => {
+        void loadCurrentRaceClassifications();
+      }, 30_000);
+    }
+
+    return () => {
+      mounted = false;
+      if (refreshTimer !== null) {
+        window.clearInterval(refreshTimer);
+      }
+    };
+  }, [raceId, target?.race, target?.stages, cleanSelectedRiderIds]);
 
   const selectedSquadOption = useMemo(() => {
     return (
@@ -1767,17 +2161,38 @@ export default function RacePreparationPage(): JSX.Element {
     medicallyUnavailableRiderIds,
   ]);
 
-  const stagePlansOpen = packageSubmitted && !selectedRaceAllWeatherCanceled;
+  const selectedRaceLifecycleStatus = getText(race, "status")
+    .trim()
+    .toLowerCase();
 
-  const racePlanUiStatus = selectedRaceAllWeatherCanceled
-    ? "weather_cancelled"
-    : getRacePlanUiStatus({
-        raceStatus,
-        prepStatus,
-        isPackageTooEarly,
-        isPackageDeadlinePassed,
-        packageSubmitted,
-      });
+  const selectedRaceCancelled =
+    selectedRaceLifecycleStatus === "cancelled" ||
+    selectedRaceLifecycleStatus === "canceled" ||
+    selectedRaceLifecycleStatus === "weather_cancelled";
+
+  const selectedRaceFinished =
+    selectedRaceLifecycleStatus === "completed" ||
+    selectedRaceLifecycleStatus === "archived";
+
+  const selectedRaceClosed = selectedRaceCancelled || selectedRaceFinished;
+
+  const stagePlansOpen =
+    packageSubmitted &&
+    !selectedRaceAllWeatherCanceled &&
+    !selectedRaceClosed;
+
+  const racePlanUiStatus =
+    selectedRaceAllWeatherCanceled || selectedRaceCancelled
+      ? "cancelled"
+      : selectedRaceFinished
+        ? "completed"
+        : getRacePlanUiStatus({
+            raceStatus,
+            prepStatus,
+            isPackageTooEarly,
+            isPackageDeadlinePassed,
+            packageSubmitted,
+          });
 
   const minRiders = getNumber(entryRules, "min_riders_per_team");
   const maxRiders = getNumber(entryRules, "max_riders_per_team");
@@ -1796,10 +2211,25 @@ export default function RacePreparationPage(): JSX.Element {
       : Boolean(selectedStaffByRole.sport_director)
     : Boolean(selectedStaffByRole.sport_director);
 
+  /*
+   * Missing race staff is an incomplete-plan warning, not a reason to disable
+   * Save or Submit. The submit confirmation already allows the manager to
+   * continue with missing staff and assets.
+   *
+   * Keep only one blocking planner case: a Developing Team explicitly set to
+   * U23 Head Coach without an actual coach selected, because that automation
+   * choice cannot be persisted safely.
+   */
+  const u23PlannerChoiceIncomplete =
+    isDevelopingTeamSelected &&
+    effectiveTacticalPlannerChoice === "u23_head_coach" &&
+    !selectedU23HeadCoachId;
+
   const canSaveRacePlan =
-    canEdit && !riderSelectionTooMany && tacticalPlannerSelectionValid;
+    canEdit && !riderSelectionTooMany && !u23PlannerChoiceIncomplete;
+
   const canSubmitRacePlan =
-    canEdit && riderSelectionValid && tacticalPlannerSelectionValid;
+    canEdit && riderSelectionValid && !u23PlannerChoiceIncomplete;
 
   const selectedSupportStaffCount = Object.keys(supportStaffRoleLabels).filter(
     (roleType) => Boolean(selectedStaffByRole[roleType]),
@@ -1950,6 +2380,37 @@ export default function RacePreparationPage(): JSX.Element {
     }
   }
 
+  async function applyNoVisibleAcceptedRaceState(
+    resolvedClubId: UUID,
+  ): Promise<void> {
+    const [squadOptionResult, selectableResult] = await Promise.all([
+      loadRacePreparationSquadOptions(resolvedClubId),
+      loadRacePreparationSelectableData(
+        resolvedClubId,
+        null,
+        null,
+        resolvedClubId,
+      ),
+    ]);
+
+    setAcceptedRaces([]);
+    setSelectedRaceId(null);
+    setSquadOptions(squadOptionResult);
+    setParticipatingClubId(resolvedClubId);
+    setPendingParticipatingClubId(null);
+    setSelectableData(selectableResult);
+    setSelectedRiderIds([]);
+    setSelectedStaffIds([]);
+    setTacticalPlannerChoice("sport_director");
+    setSelectedU23HeadCoachId(null);
+    setU23AutomationEnabled(false);
+    setSelectedAssets(createEmptySelectedAssets());
+    setTarget({
+      has_target: false,
+      message: "No accepted races found for this club.",
+    });
+  }
+
   async function loadPage(preferredRaceId?: UUID | null) {
     setLoading(true);
     setErrorMessage(null);
@@ -1960,41 +2421,72 @@ export default function RacePreparationPage(): JSX.Element {
       const resolvedClubId = await resolveCurrentClubId();
       setClubId(resolvedClubId);
 
-      const acceptedResult = await loadAcceptedRacePreparations(resolvedClubId);
+      const rawAcceptedResult =
+        await loadAcceptedRacePreparations(resolvedClubId);
 
-      setAcceptedRaces(acceptedResult);
+      /*
+       * The first pass does not need the game date to remove cancelled races.
+       * This prevents a stale cancelled race from becoming the default target.
+       */
+      const provisionallyVisibleResult =
+        filterAcceptedRacePreparations(rawAcceptedResult);
 
-      const raceToLoad =
-        preferredRaceId ?? selectedRaceId ?? acceptedResult[0]?.race_id ?? null;
+      const preferredRaceIsVisible = Boolean(
+        preferredRaceId &&
+          provisionallyVisibleResult.some(
+            (row) => row.race_id === preferredRaceId,
+          ),
+      );
+
+      const selectedRaceIsVisible = Boolean(
+        selectedRaceId &&
+          provisionallyVisibleResult.some(
+            (row) => row.race_id === selectedRaceId,
+          ),
+      );
+
+      let raceToLoad = preferredRaceIsVisible
+        ? preferredRaceId!
+        : selectedRaceIsVisible
+          ? selectedRaceId!
+          : provisionallyVisibleResult[0]?.race_id ?? null;
 
       if (!raceToLoad) {
-        const [squadOptionResult, selectableResult] = await Promise.all([
-          loadRacePreparationSquadOptions(resolvedClubId),
-          loadRacePreparationSelectableData(
-            resolvedClubId,
-            null,
-            null,
-            resolvedClubId,
-          ),
-        ]);
-
-        setSquadOptions(squadOptionResult);
-        setParticipatingClubId(resolvedClubId);
-        setSelectableData(selectableResult);
-        setTacticalPlannerChoice("sport_director");
-        setSelectedU23HeadCoachId(null);
-        setU23AutomationEnabled(false);
-        setTarget({
-          has_target: false,
-          message: "No accepted races found for this club.",
-        });
+        await applyNoVisibleAcceptedRaceState(resolvedClubId);
         return;
       }
 
-      const context = await loadRacePreparationContext(
+      let context = await loadRacePreparationContext(
         resolvedClubId,
         raceToLoad,
       );
+
+      /*
+       * The selected context contains the authoritative current game date.
+       * Use it for the three-day retention rule for completed races.
+       */
+      const visibleAcceptedResult = filterAcceptedRacePreparations(
+        rawAcceptedResult,
+        context.current_game_date,
+      );
+
+      if (
+        !visibleAcceptedResult.some((row) => row.race_id === raceToLoad)
+      ) {
+        raceToLoad = visibleAcceptedResult[0]?.race_id ?? null;
+
+        if (!raceToLoad) {
+          await applyNoVisibleAcceptedRaceState(resolvedClubId);
+          return;
+        }
+
+        context = await loadRacePreparationContext(
+          resolvedClubId,
+          raceToLoad,
+        );
+      }
+
+      setAcceptedRaces(visibleAcceptedResult);
       await applyContext(context, resolvedClubId);
     } catch (error) {
       setErrorMessage(
@@ -2040,12 +2532,37 @@ export default function RacePreparationPage(): JSX.Element {
   async function refreshSelectedRace() {
     if (!clubId || !raceId) return;
 
-    const [acceptedResult, context] = await Promise.all([
+    const [rawAcceptedResult, context] = await Promise.all([
       loadAcceptedRacePreparations(clubId),
       loadRacePreparationContext(clubId, raceId),
     ]);
 
-    setAcceptedRaces(acceptedResult);
+    const visibleAcceptedResult = filterAcceptedRacePreparations(
+      rawAcceptedResult,
+      context.current_game_date,
+    );
+
+    setAcceptedRaces(visibleAcceptedResult);
+
+    if (
+      !visibleAcceptedResult.some((row) => row.race_id === raceId)
+    ) {
+      const fallbackRaceId = visibleAcceptedResult[0]?.race_id ?? null;
+
+      if (!fallbackRaceId) {
+        await applyNoVisibleAcceptedRaceState(clubId);
+        return;
+      }
+
+      const fallbackContext = await loadRacePreparationContext(
+        clubId,
+        fallbackRaceId,
+      );
+
+      await applyContext(fallbackContext, clubId);
+      return;
+    }
+
     await applyContext(context, clubId);
   }
 
@@ -2278,11 +2795,9 @@ export default function RacePreparationPage(): JSX.Element {
       return;
     }
 
-    if (!tacticalPlannerSelectionValid) {
+    if (u23PlannerChoiceIncomplete) {
       setErrorMessage(
-        isDevelopingTeamSelected
-          ? "Choose a Sport Director or a U23 Head Coach before saving the Race Plan."
-          : "Select a Sport Director before saving the Race Plan.",
+        "Select a U23 Head Coach or switch the tactical planner back to Sport Director before saving the Race Plan.",
       );
       return;
     }
@@ -2325,11 +2840,9 @@ export default function RacePreparationPage(): JSX.Element {
       return;
     }
 
-    if (!tacticalPlannerSelectionValid) {
+    if (u23PlannerChoiceIncomplete) {
       setErrorMessage(
-        isDevelopingTeamSelected
-          ? "Choose a Sport Director or a U23 Head Coach before submitting the Race Plan."
-          : "Select a Sport Director before submitting the Race Plan.",
+        "Select a U23 Head Coach or switch the tactical planner back to Sport Director before submitting the Race Plan.",
       );
       return;
     }
@@ -2431,11 +2944,9 @@ export default function RacePreparationPage(): JSX.Element {
       return;
     }
 
-    if (!tacticalPlannerSelectionValid) {
+    if (u23PlannerChoiceIncomplete) {
       setErrorMessage(
-        isDevelopingTeamSelected
-          ? "Choose a Sport Director or a U23 Head Coach before submitting the Race Plan."
-          : "Select a Sport Director before submitting the Race Plan.",
+        "Select a U23 Head Coach or switch the tactical planner back to Sport Director before submitting the Race Plan.",
       );
       return;
     }
@@ -4985,6 +5496,7 @@ type StageTeamSupplyPlan = {
 
 type StageIndividualTacticPhaseCommand = {
   command: string;
+  ui_command?: string;
   from_km: number;
   to_km: number;
   label: string;
@@ -5051,73 +5563,43 @@ const STAGE_RIDER_ROLE_OPTIONS: Array<{
     value: "team_leader_gc",
     label: "Team Leader (GC)",
     description:
-      "Main protected rider for the general classification. The team should protect this rider, reduce unnecessary fatigue, and support key race moments.",
+      "Main protected rider for the general classification and the rider teammates should protect during key race moments.",
   },
   {
     value: "sprinter",
     label: "Sprinter",
     description:
-      "Focuses on intermediate sprints and sprint finishes whenever points or a stage win are realistically available.",
-  },
-  {
-    value: "lead_out_rider",
-    label: "Lead-out Rider",
-    description:
-      "Final helper before the sprinter launches. Gives a sprint launch and positioning bonus, but spends extra stamina late in the stage.",
-  },
-  {
-    value: "sprint_train_rider",
-    label: "Sprint Train Rider",
-    description:
-      "Earlier rider in the sprint train. Keeps speed high, protects the sprinter before the lead-out, and spends extra stamina.",
+      "Primary rider for flat sprint finishes and suitable intermediate sprint opportunities.",
   },
   {
     value: "climber",
     label: "Climber",
     description:
-      "Focuses on climbs and KOM points. Should contest mountain points and perform better on climbing sections.",
-  },
-  {
-    value: "mountain_domestique",
-    label: "Mountain Domestique",
-    description:
-      "Climbing helper for the Team Leader or Climber. Gives a small climbing/protection bonus while using extra stamina on climbs.",
+      "Primary rider for difficult climbs, mountain finishes and suitable KOM opportunities.",
   },
   {
     value: "helper_domestique",
     label: "Helper / Domestique",
     description:
-      "General support rider. Protects important riders, helps chase and control, and usually loses more fatigue because he works for others.",
+      "General support rider who protects teammates, carries out team work and assists with positioning or pace control.",
   },
   {
     value: "breakaway_rider",
     label: "Breakaway Rider",
     description:
-      "Assigned to attack or join the breakaway. Higher escape priority, but faster stamina loss during the stage.",
+      "Rider selected to attack or join a breakaway when an individual phase instruction allows it.",
   },
   {
     value: "breakaway_chaser",
     label: "Breakaway Chaser",
     description:
-      "Stays near the front of the peloton and helps chase dangerous breakaways. Uses extra stamina while chasing.",
-  },
-  {
-    value: "rouleur",
-    label: "Rouleur",
-    description:
-      "Strong flat/rolling-road tempo rider. Controls pace, rides in wind, protects leaders, and chases on flat or rolling terrain.",
-  },
-  {
-    value: "protected_rider",
-    label: "Protected Rider",
-    description:
-      "Tries to stay safe in the main group, avoids attacks/chases, and loses less stamina when helpers protect him.",
+      "Rider selected to help close dangerous breakaways and support peloton pursuit work.",
   },
   {
     value: "free_role",
     label: "Free Role",
     description:
-      "Neutral role. Stays in the group and reacts normally without special protection, attack priority, or major extra fatigue cost.",
+      "Neutral role without a fixed team duty. The rider follows phase instructions and reacts to the race situation.",
   },
 ];
 
@@ -5131,6 +5613,14 @@ const STAGE_RIDER_ROLE_LABELS = {
   ),
   time_trial_rider: "Time Trial Rider",
   team_time_trial_rider: "Team Time Trial Rider",
+};
+
+const LEGACY_STAGE_RIDER_ROLE_MAP: Record<string, StageRiderRoleCode> = {
+  lead_out_rider: "helper_domestique",
+  sprint_train_rider: "helper_domestique",
+  mountain_domestique: "helper_domestique",
+  rouleur: "helper_domestique",
+  protected_rider: "free_role",
 };
 
 const STAGE_TACTIC_PLAN_OPTIONS: Array<{
@@ -5654,83 +6144,146 @@ const STAGE_TACTIC_ENGINE_MODEL_V1 = {
   },
 } as const;
 
-const STAGE_INDIVIDUAL_TACTIC_OPTIONS: Array<{
+type StageIndividualTacticOption = {
   value: string;
   label: string;
   description: string;
-}> = [
+};
+
+const ROAD_PHASE_1_TO_3_TACTIC_OPTIONS: StageIndividualTacticOption[] = [
   {
     value: "follow_team_plan",
-    label: "Follow Team Plan",
+    label: "Follow Stage Role",
     description:
-      "Default command. The rider follows the selected team tactic and role without extra individual risk or extra stamina cost.",
+      "Default command. The rider follows the selected stage role and reacts normally to the race situation.",
   },
   {
     value: "protect_leader",
     label: "Protect Leader",
     description:
-      "The rider focuses on protecting the Team Leader or Protected Rider. Helpful for safety and fatigue protection, but costs more stamina.",
-  },
-  {
-    value: "conserve_energy",
-    label: "Conserve Energy",
-    description:
-      "The rider stays sheltered and avoids unnecessary work. Lower stamina cost, but lower chance to attack, chase or contest points.",
+      "Stay with and protect the Team Leader, helping with positioning and reducing unnecessary exposure.",
   },
   {
     value: "stay_near_front",
     label: "Stay Near Front",
     description:
-      "The rider tries to stay in the front part of the peloton for positioning, safety and tactical reaction.",
+      "Maintain a forward peloton position to improve safety and tactical reaction.",
+  },
+  {
+    value: "conserve_energy",
+    label: "Conserve Energy",
+    description:
+      "Stay sheltered and avoid unnecessary work to save stamina for later phases.",
   },
   {
     value: "control_tempo",
     label: "Control Tempo",
     description:
-      "The rider works on the front to control pace. Useful for GC or sprint teams, but increases fatigue.",
+      "Work near the front to control the peloton speed and discourage attacks.",
   },
   {
     value: "chase_breakaway",
     label: "Chase Breakaway",
     description:
-      "The rider helps close gaps to breakaways. Strong effect in chase phases, but uses extra stamina.",
+      "Help reduce the gap to a dangerous breakaway at an increased stamina cost.",
   },
   {
     value: "attack",
     label: "Attack",
     description:
-      "The rider looks for an attacking move in this phase. Higher chance to create a split or escape, with higher stamina cost.",
+      "Attempt an attacking move during this phase when the race situation permits it.",
   },
   {
     value: "join_breakaway",
     label: "Join Breakaway",
     description:
-      "The rider actively tries to enter or follow a breakaway move during this phase.",
+      "Attempt to follow or bridge to a forming breakaway during this phase.",
   },
   {
-    value: "lead_out",
-    label: "Lead-out",
+    value: "fight_sprint_points",
+    label: "Fight for Sprint Points",
     description:
-      "The rider works to position and launch a sprinter. Best used in the final phase before a likely sprint.",
+      "Contest an intermediate sprint located in this phase when the rider remains eligible.",
   },
   {
-    value: "sprint",
-    label: "Sprint",
+    value: "fight_kom_points",
+    label: "Fight for KOM Points",
     description:
-      "The rider contests sprint points or the finish if a sprint opportunity exists in this phase.",
-  },
-  {
-    value: "climb_hard",
-    label: "Climb Hard",
-    description:
-      "The rider increases effort on climbs. Useful for KOM points, climbing attacks or protecting a leader uphill.",
+      "Contest a KOM gate located in this phase when the rider remains eligible.",
   },
   {
     value: "avoid_risks",
     label: "Avoid Risks",
     description:
-      "The rider prioritizes safety and finishing in the group over attacks, sprints or aggressive chasing.",
+      "Prioritize safety and group position rather than attacks, chases or point contests.",
   },
+];
+
+const ROAD_PHASE_4_TACTIC_OPTIONS: StageIndividualTacticOption[] = [
+  {
+    value: "follow_team_plan",
+    label: "Follow Stage Role",
+    description:
+      "Default final-phase command. Follow the selected stage role and react to the finish situation.",
+  },
+  {
+    value: "protect_leader",
+    label: "Protect Leader",
+    description:
+      "Protect the Team Leader through the final part of the stage.",
+  },
+  {
+    value: "stay_near_front",
+    label: "Stay Near Front",
+    description:
+      "Hold a forward position before the finish or final decisive section.",
+  },
+  {
+    value: "fight_sprint_points",
+    label: "Fight for Sprint Points",
+    description:
+      "Contest an intermediate sprint that falls inside the final phase.",
+  },
+  {
+    value: "fight_kom_points",
+    label: "Fight for KOM Points",
+    description:
+      "Contest a KOM gate that falls inside the final phase.",
+  },
+  {
+    value: "sprint_train_rider",
+    label: "Sprint Train Rider",
+    description:
+      "Ride in the sprint train before the final lead-out, helping keep speed and position for the team sprinter.",
+  },
+  {
+    value: "lead_out_rider",
+    label: "Lead-out Rider",
+    description:
+      "Act as the final rider before the sprinter launches. Multiple train riders plus one lead-out improve the sprinter setup.",
+  },
+  {
+    value: "final_sprint",
+    label: "Final Sprint",
+    description:
+      "Contest the stage finish as the designated sprinter when a sprint finish is available.",
+  },
+  {
+    value: "avoid_risks",
+    label: "Avoid Risks",
+    description:
+      "Prioritize a safe finish rather than joining the final sprint battle.",
+  },
+];
+
+const STAGE_INDIVIDUAL_TACTIC_OPTIONS: StageIndividualTacticOption[] = [
+  ...ROAD_PHASE_1_TO_3_TACTIC_OPTIONS,
+  ...ROAD_PHASE_4_TACTIC_OPTIONS.filter(
+    (option) =>
+      !ROAD_PHASE_1_TO_3_TACTIC_OPTIONS.some(
+        (existing) => existing.value === option.value,
+      ),
+  ),
 ];
 
 const STAGE_INDIVIDUAL_TACTIC_LABELS = STAGE_INDIVIDUAL_TACTIC_OPTIONS.reduce(
@@ -5740,6 +6293,45 @@ const STAGE_INDIVIDUAL_TACTIC_LABELS = STAGE_INDIVIDUAL_TACTIC_OPTIONS.reduce(
   },
   {} as Record<string, string>,
 );
+
+const ROAD_UI_TO_ENGINE_INDIVIDUAL_TACTIC_COMMAND: Record<string, string> = {
+  follow_team_plan: "follow_team_plan",
+  protect_leader: "protect_leader",
+  conserve_energy: "conserve_energy",
+  stay_near_front: "stay_near_front",
+  control_tempo: "control_tempo",
+  chase_breakaway: "chase_breakaway",
+  attack: "attack",
+  join_breakaway: "join_breakaway",
+  // The current point-award writer is not command-aware yet. Preserve the UI
+  // choice, but pass a safe canonical fallback to the locked race engine.
+  fight_sprint_points: "follow_team_plan",
+  fight_kom_points: "follow_team_plan",
+  sprint_train_rider: "lead_out",
+  lead_out_rider: "lead_out",
+  final_sprint: "sprint",
+  avoid_risks: "avoid_risks",
+};
+
+function getRoadEngineIndividualTacticCommand(uiCommand: string): string {
+  return ROAD_UI_TO_ENGINE_INDIVIDUAL_TACTIC_COMMAND[uiCommand] ?? uiCommand;
+}
+
+function getRoadUiIndividualTacticCommand(
+  savedCommand: string,
+  phaseKey: string,
+): string {
+  switch (savedCommand) {
+    case "lead_out":
+      return phaseKey === "phase_4" ? "lead_out_rider" : "follow_team_plan";
+    case "sprint":
+      return phaseKey === "phase_4" ? "final_sprint" : "fight_sprint_points";
+    case "climb_hard":
+      return "fight_kom_points";
+    default:
+      return savedCommand;
+  }
+}
 
 const TT_PACING_OPTIONS = [
   {
@@ -5774,10 +6366,13 @@ const TT_PACING_LABELS = TT_PACING_OPTIONS.reduce(
 
 function getStageIndividualTacticOptions(
   stage?: { stage_format?: string | null } | null,
+  phaseKey?: string,
 ) {
-  return isTimeTrialStage(stage)
-    ? TT_PACING_OPTIONS
-    : STAGE_INDIVIDUAL_TACTIC_OPTIONS;
+  if (isTimeTrialStage(stage)) return TT_PACING_OPTIONS;
+
+  return phaseKey === "phase_4"
+    ? ROAD_PHASE_4_TACTIC_OPTIONS
+    : ROAD_PHASE_1_TO_3_TACTIC_OPTIONS;
 }
 
 function getStageIndividualTacticLabels(
@@ -5928,12 +6523,28 @@ function normalizeIndividualTacticsForRider(
 
   getStagePhaseRanges(stage).forEach((phase) => {
     const savedPhase = asRecord(saved[phase.key]);
-    const savedCommand = String(savedPhase.command ?? saved[phase.key] ?? "");
-    const labels = getStageIndividualTacticLabels(stage);
-    const command = labels[savedCommand] ? savedCommand : "follow_team_plan";
+    const rawSavedCommand = String(
+      savedPhase.command ?? saved[phase.key] ?? "",
+    );
+    const rawSavedUiCommand = String(
+      savedPhase.ui_command ?? savedPhase.uiCommand ?? "",
+    );
+
+    const candidateCommand = isTimeTrialStage(stage)
+      ? rawSavedUiCommand || rawSavedCommand
+      : rawSavedUiCommand ||
+        getRoadUiIndividualTacticCommand(rawSavedCommand, phase.key);
+
+    const allowedOptions = getStageIndividualTacticOptions(stage, phase.key);
+    const command = allowedOptions.some(
+      (option) => option.value === candidateCommand,
+    )
+      ? candidateCommand
+      : "follow_team_plan";
 
     fallback[phase.key] = {
       command,
+      ui_command: command,
       from_km: phase.fromKm,
       to_km: phase.toKm,
       label: `${phase.label}: ${phase.rangeLabel}`,
@@ -5966,9 +6577,12 @@ function normalizeStageRiderRole(
   }
 
   const savedRole = String(value ?? "");
+  const normalizedRole = LEGACY_STAGE_RIDER_ROLE_MAP[savedRole] ?? savedRole;
 
-  return STAGE_RIDER_ROLE_LABELS[savedRole]
-    ? savedRole
+  return STAGE_RIDER_ROLE_OPTIONS.some(
+    (option) => option.value === normalizedRole,
+  )
+    ? normalizedRole
     : DEFAULT_STAGE_RIDER_ROLE;
 }
 
@@ -5998,10 +6612,27 @@ function normalizeIndividualTacticsByRiderForStage(
     const riderId = String(rider.id ?? "");
     if (!riderId) return acc;
 
-    acc[riderId] = normalizeIndividualTacticsForRider(
+    const normalizedUiTactics = normalizeIndividualTacticsForRider(
       individualTacticsByRider[riderId],
       stage,
     );
+
+    if (isTimeTrialStage(stage)) {
+      acc[riderId] = normalizedUiTactics;
+      return acc;
+    }
+
+    acc[riderId] = Object.entries(normalizedUiTactics).reduce<
+      Record<string, StageIndividualTacticPhaseCommand>
+    >((phaseAcc, [phaseKey, phaseCommand]) => {
+      phaseAcc[phaseKey] = {
+        ...phaseCommand,
+        ui_command: phaseCommand.command,
+        command: getRoadEngineIndividualTacticCommand(phaseCommand.command),
+      };
+      return phaseAcc;
+    }, {});
+
     return acc;
   }, {});
 }
@@ -6068,6 +6699,88 @@ function createStagePlanDraft({
     lastSavedAt: savedPlan?.last_saved_at
       ? String(savedPlan.last_saved_at)
       : null,
+  };
+}
+
+function getSavedStagePlanDraftSignature(savedPlan?: JsonRecord | null): string {
+  if (!savedPlan) return "no-saved-plan";
+
+  return JSON.stringify({
+    id: savedPlan.id ?? null,
+    last_saved_at: savedPlan.last_saved_at ?? null,
+    updated_at: savedPlan.updated_at ?? null,
+    status: savedPlan.status ?? null,
+    team_tactic_json: savedPlan.team_tactic_json ?? null,
+    rider_roles_json: savedPlan.rider_roles_json ?? null,
+    rider_individual_tactics_json:
+      savedPlan.rider_individual_tactics_json ?? null,
+    rider_equipment_json:
+      savedPlan.rider_equipment_json ?? savedPlan.equipment_json ?? null,
+    rider_supplies_json: savedPlan.rider_supplies_json ?? null,
+  });
+}
+
+function reconcileStagePlanDraftWithCurrentData({
+  current,
+  riders,
+  equipmentPresetOptions,
+  savedPlan,
+  stage,
+}: {
+  current: StagePlanDraft;
+  riders: JsonRecord[];
+  equipmentPresetOptions: EquipmentSetupPresetOption[];
+  savedPlan?: JsonRecord | null;
+  stage?: JsonRecord | null;
+}): StagePlanDraft {
+  /*
+   * Background Race Preparation refreshes can replace riders/options/stages
+   * with new array/object references even though the manager is still editing
+   * the same Stage Plan. Reconcile structural data without replacing local
+   * selections. This keeps unsaved roles, tactics, equipment and supplies
+   * stable until the manager explicitly saves or changes race/preparation.
+   */
+  const fallback = createStagePlanDraft({
+    riders,
+    equipmentPresetOptions,
+    savedPlan,
+    stage,
+  });
+
+  riders.forEach((rider) => {
+    const riderId = String(rider.id ?? "");
+    if (!riderId) return;
+
+    if (current.equipmentByRider[riderId] !== undefined) {
+      fallback.equipmentByRider[riderId] = current.equipmentByRider[riderId];
+    }
+
+    if (current.riderRolesByRider[riderId] !== undefined) {
+      fallback.riderRolesByRider[riderId] = normalizeStageRiderRole(
+        current.riderRolesByRider[riderId],
+        stage,
+      );
+    }
+
+    if (current.individualTacticsByRider[riderId] !== undefined) {
+      fallback.individualTacticsByRider[riderId] =
+        normalizeIndividualTacticsForRider(
+          current.individualTacticsByRider[riderId],
+          stage,
+        );
+    }
+
+    if (current.suppliesByRider[riderId] !== undefined) {
+      fallback.suppliesByRider[riderId] = {
+        ...current.suppliesByRider[riderId],
+      };
+    }
+  });
+
+  return {
+    ...fallback,
+    teamTactic: { ...current.teamTactic },
+    lastSavedAt: current.lastSavedAt ?? fallback.lastSavedAt ?? null,
   };
 }
 
@@ -6221,6 +6934,9 @@ function StagePlansTab({
   const [stageDraftsByStageKey, setStageDraftsByStageKey] = useState<
     Record<string, StagePlanDraft>
   >({});
+  const stageDraftPreparationIdRef = React.useRef<string | null>(null);
+  const dirtyStageDraftKeysRef = React.useRef<Set<string>>(new Set());
+  const savedStagePlanSignaturesRef = React.useRef<Record<string, string>>({});
   const [savingStagePlan, setSavingStagePlan] = useState(false);
   const [stageSaveMessage, setStageSaveMessage] = useState<string | null>(null);
   const [stageSaveError, setStageSaveError] = useState<string | null>(null);
@@ -6605,24 +7321,89 @@ function StagePlansTab({
   }, [selectedStageIdFromUrl, stages]);
 
   useEffect(() => {
-    const next: Record<string, StagePlanDraft> = {};
+    const preparationId = String(target?.preparation?.id ?? "");
+    const preparationChanged =
+      stageDraftPreparationIdRef.current !== preparationId;
+    const previousSavedSignatures = savedStagePlanSignaturesRef.current;
 
-    stages.forEach((stage) => {
+    const stageSources = stages.flatMap((stage) => {
       const key = getStagePlanKey(stage);
-      if (!key) return;
+      if (!key) return [];
 
-      next[key] = createStagePlanDraft({
-        riders: selectedRiders,
-        equipmentPresetOptions,
-        savedPlan: findSavedStagePlan(stagePlans, stage),
-        stage,
-      });
+      const savedPlan = findSavedStagePlan(stagePlans, stage);
+
+      return [
+        {
+          key,
+          stage,
+          savedPlan,
+          savedSignature: getSavedStagePlanDraftSignature(savedPlan),
+        },
+      ];
     });
 
-    setStageDraftsByStageKey(next);
-    setStageSaveMessage(null);
-    setStageSaveError(null);
-    setSportDirectorSuggestion(null);
+    const nextSavedSignatures = stageSources.reduce<Record<string, string>>(
+      (acc, source) => {
+        acc[source.key] = source.savedSignature;
+        return acc;
+      },
+      {},
+    );
+
+    if (preparationChanged) {
+      dirtyStageDraftKeysRef.current.clear();
+    }
+
+    setStageDraftsByStageKey((previousDrafts) => {
+      const next: Record<string, StagePlanDraft> = {};
+
+      stageSources.forEach(({ key, stage, savedPlan, savedSignature }) => {
+        const previousDraft = preparationChanged
+          ? undefined
+          : previousDrafts[key];
+        const isDirty =
+          !preparationChanged && dirtyStageDraftKeysRef.current.has(key);
+        const previousSavedSignature = previousSavedSignatures[key];
+        const serverSavedPlanChanged =
+          !preparationChanged &&
+          previousSavedSignature !== undefined &&
+          previousSavedSignature !== savedSignature;
+
+        /*
+         * Never overwrite a locally edited Stage Plan because some unrelated
+         * background request refreshed riders/options/stage objects. Only a
+         * genuine server Stage Plan change may replace a clean local draft.
+         */
+        if (!previousDraft || (!isDirty && serverSavedPlanChanged)) {
+          next[key] = createStagePlanDraft({
+            riders: selectedRiders,
+            equipmentPresetOptions,
+            savedPlan,
+            stage,
+          });
+          return;
+        }
+
+        next[key] = reconcileStagePlanDraftWithCurrentData({
+          current: previousDraft,
+          riders: selectedRiders,
+          equipmentPresetOptions,
+          savedPlan,
+          stage,
+        });
+      });
+
+      return next;
+    });
+
+    stageDraftPreparationIdRef.current = preparationId;
+    savedStagePlanSignaturesRef.current = nextSavedSignatures;
+
+    if (preparationChanged) {
+      setStageSaveMessage(null);
+      setStageSaveError(null);
+      setSportDirectorSuggestion(null);
+    }
   }, [
     target?.preparation?.id,
     stages,
@@ -6635,6 +7416,8 @@ function StagePlansTab({
     updater: (current: StagePlanDraft) => StagePlanDraft,
   ) {
     if (!selectedStageKey) return;
+
+    dirtyStageDraftKeysRef.current.add(selectedStageKey);
 
     setStageDraftsByStageKey((prev) => {
       const current =
@@ -6755,6 +7538,7 @@ function StagePlansTab({
         },
       }));
 
+      dirtyStageDraftKeysRef.current.delete(selectedStageKey);
       setStageSaveMessage("Stage Plan saved for this stage.");
       await Promise.all([
         loadStagePlanReadinessForCurrentTarget(),
@@ -7441,6 +8225,7 @@ function StagePlansTab({
                   ...riderTactics,
                   [phaseKey]: {
                     command,
+                    ui_command: command,
                     from_km:
                       phase?.fromKm ?? riderTactics[phaseKey]?.from_km ?? 0,
                     to_km: phase?.toKm ?? riderTactics[phaseKey]?.to_km ?? 0,
@@ -9764,7 +10549,7 @@ const STAGE_SUPPLY_RULES: Record<
     label: "Bidons / Water Bottles",
     shortLabel: "Bidons",
     minPerRider: 1,
-    maxPerRider: 4,
+    maxPerRider: 10,
     defaultPerRider: 2,
     useType: "consumable",
     mandatory: false,
@@ -9776,7 +10561,7 @@ const STAGE_SUPPLY_RULES: Record<
     ],
     negativeEffects: [
       "Below minimum: +1% fatigue risk",
-      "No extra benefit after 4 bidons per rider",
+      "No extra benefit after 10 bidons per rider",
     ],
   },
   energy_gels: {
@@ -10760,15 +11545,8 @@ function StageFinalCalculationCard({
   const ttAverage = getAverageRiderSkill(riders, ["time_trial", "timetrial"]);
   const countingRiderCount =
     riders.length > 0 ? Math.max(1, Math.ceil(riders.length * 0.75)) : 0;
-  const stageDistanceKm = Number(stage?.distance_km ?? stage?.distance ?? 0);
-  const equipmentWearDistanceFactor =
-    Number.isFinite(stageDistanceKm) && stageDistanceKm > 0
-      ? stageDistanceKm / 100
-      : 0;
-  const exactBonusSourceCount =
-    toArray<JsonRecord>(exactBonusPreview.staff).length +
-    toArray<JsonRecord>(exactBonusPreview.assets).length +
-    toArray<JsonRecord>(exactBonusPreview.policies).length;
+
+  void exactBonusPreview;
 
   return (
     <section className="rounded-2xl border bg-white p-5 shadow-sm">
@@ -10816,10 +11594,9 @@ function StageFinalCalculationCard({
                   supplies, team tactic, rider roles and individual commands.
                 </p>
                 <p className="mt-2">
-                  Weather, equipment condition, durable supply availability,
-                  fatigue, health and sickness risk are recalculated by the
-                  authoritative race engine when the stage is processed. Saving
-                  this plan does not consume stock or reduce condition.
+                  Weather, crashes, mechanicals, fatigue, health and sickness
+                  risk should be applied later by the race engine during stage
+                  processing.
                 </p>
               </>
             )}
@@ -10915,38 +11692,14 @@ function StageFinalCalculationCard({
               )} / ${formatBonusPercent(equipmentTotals.negative)}%`}
             />
             <InfoBox
-              label="Authoritative equipment rule"
-              value="weighted UI % ×5 · condition-scaled"
-            />
-            <InfoBox
-              label="Expected equipment wear"
-              value={
-                equipmentWearDistanceFactor > 0
-                  ? `catalog wear × ${equipmentWearDistanceFactor.toFixed(2)}`
-                  : "Calculated from stage distance at race time"
-              }
-            />
-            <InfoBox
-              label="Expected asset wear"
-              value="asset-level wear × clamped stage-distance factor"
-            />
-            <InfoBox
-              label="Durable stage uses"
-              value={`Jerseys ${needs.race_jersey_complete} ×1 · Jackets ${needs.rain_jackets} ×1`}
-            />
-            <InfoBox
               label="Rain jacket effect"
               value={
                 jacketBenefitActive
-                  ? "-50% sickness risk / -0.5% fatigue / -1% efficiency"
+                  ? "-50% sickness risk / -1% efficiency"
                   : jacketSelected
-                    ? "-1% efficiency · 1 durability use"
+                    ? "-1% efficiency"
                     : "Not active"
               }
-            />
-            <InfoBox
-              label="Exact Race Plan sources"
-              value={String(exactBonusSourceCount)}
             />
           </div>
 
@@ -11017,11 +11770,9 @@ function StageFinalCalculationCard({
                 </div>
               </div>
               <div className="mt-3 rounded-lg bg-blue-50 px-3 py-2 text-sm text-blue-800">
-                Jerseys: 10 stage uses each and lose one use for every assigned
-                stage. Rain jackets: 25 stage uses each and also lose one use
-                whenever assigned. Jackets always add -1% rider efficiency; in
-                rain/cold/bad weather they also reduce sickness risk by 50% and
-                fatigue pressure by 0.5%. Saving this plan consumes nothing.
+                Jerseys: 10 stage uses each. Rain jackets: 25 stage uses each.
+                Jackets reduce bad-weather sickness risk by 50%, but add -1%
+                rider efficiency whenever used.
               </div>
             </div>
           </div>
@@ -11077,12 +11828,12 @@ function StageTeamTacticCard({
       <div className="flex items-start justify-between gap-3">
         <div>
           <h2 className="text-lg font-semibold text-slate-900">
-            2. Team Tactic
+            {isTTStage ? "2. Time Trial Pacing" : "2. Stage Roles"}
           </h2>
           <p className="mt-1 text-sm text-slate-600">
             {isTTStage
               ? "Time-trial pacing plan and read-only engine roles for this selected stage."
-              : "General stage tactic and rider roles for this selected stage."}
+              : "Choose one clear role for each rider. Detailed race orders are set below in Individual Tactics."}
           </p>
         </div>
         <div className="flex flex-wrap items-center justify-end gap-2">
@@ -11116,32 +11867,34 @@ function StageTeamTacticCard({
       </div>
 
       <div className="mt-4 flex-1 space-y-4">
-        <div>
-          <div className="mb-1">
-            <label className="block text-sm font-medium text-slate-700">
-              Tactic plan
-            </label>
-          </div>
+        {isTTStage ? (
+          <div>
+            <div className="mb-1">
+              <label className="block text-sm font-medium text-slate-700">
+                Pacing plan
+              </label>
+            </div>
 
-          <select
-            value={normalizedPlan}
-            disabled={disabled}
-            onChange={(event) =>
-              onChange({
-                ...value,
-                plan: event.target.value,
-                notes: "",
-              })
-            }
-            className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm disabled:bg-slate-100"
-          >
-            {tacticOptions.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        </div>
+            <select
+              value={normalizedPlan}
+              disabled={disabled}
+              onChange={(event) =>
+                onChange({
+                  ...value,
+                  plan: event.target.value,
+                  notes: "",
+                })
+              }
+              className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm disabled:bg-slate-100"
+            >
+              {tacticOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </div>
+        ) : null}
 
         <div>
           <div className="mb-2 text-sm font-semibold text-slate-900">
@@ -11263,8 +12016,6 @@ function StageIndividualTacticsCard({
 }) {
   const phases = getStagePhaseRanges(stage);
   const isTTStage = isTimeTrialStage(stage);
-  const tacticOptions = getStageIndividualTacticOptions(stage);
-  const tacticLabels = getStageIndividualTacticLabels(stage);
   const phaseGridTemplate = `250px repeat(${phases.length}, minmax(150px, 1fr))`;
 
   return (
@@ -11277,7 +12028,7 @@ function StageIndividualTacticsCard({
           <p className="mt-1 text-sm text-slate-600">
             {isTTStage
               ? "Time-trial pacing is split into Before split and After split."
-              : "Optional per-rider phase commands. If left as Follow Team Plan, the race engine uses the team tactic and rider role above."}
+              : "Phases 1–3 contain general race orders. Phase 4 contains finish preparation, sprint-train and lead-out orders."}
           </p>
         </div>
 
@@ -11356,8 +12107,8 @@ function StageIndividualTacticsCard({
                 </div>
                 <p className="mt-2">
                   These commands are optional. They override the general team
-                  tactic only for this rider and only for the selected phase of
-                  the stage.
+                  stage role only for this rider and only for the selected phase of
+                  the stage. Phases 1–3 and Phase 4 intentionally use different command lists.
                 </p>
                 <div className="mt-3 space-y-2">
                   {STAGE_INDIVIDUAL_TACTIC_OPTIONS.map((option) => (
@@ -11446,9 +12197,15 @@ function StageIndividualTacticsCard({
                 </div>
 
                 {phases.map((phase) => {
+                  const phaseOptions = getStageIndividualTacticOptions(
+                    stage,
+                    phase.key,
+                  );
                   const savedCommand =
                     riderTactics[phase.key]?.command ?? "follow_team_plan";
-                  const command = tacticLabels[savedCommand]
+                  const command = phaseOptions.some(
+                    (option) => option.value === savedCommand,
+                  )
                     ? savedCommand
                     : "follow_team_plan";
 
@@ -11462,7 +12219,7 @@ function StageIndividualTacticsCard({
                       }
                       className="h-10 rounded-xl border border-slate-300 px-2 text-sm disabled:bg-slate-100"
                     >
-                      {tacticOptions.map((option) => (
+                      {phaseOptions.map((option) => (
                         <option key={option.value} value={option.value}>
                           {option.label}
                         </option>
@@ -11559,73 +12316,203 @@ function RiderHoverCard({ rider }: { rider: JsonRecord }) {
   const skills = getRiderSkillEntries(rider);
   const topSkillNames = new Set(skills.slice(0, 3).map((skill) => skill.label));
   const score = getRiderRaceScore(rider);
+  const anchorRef = useRef<HTMLSpanElement | null>(null);
+  const popoverRef = useRef<HTMLDivElement | null>(null);
+  const [open, setOpen] = useState(false);
+  const [position, setPosition] = useState({
+    left: 0,
+    top: 0,
+    ready: false,
+  });
+
+  useEffect(() => {
+    const anchor = anchorRef.current?.parentElement;
+    if (!anchor) return;
+
+    const show = () => {
+      setPosition((current) => ({ ...current, ready: false }));
+      setOpen(true);
+    };
+    const hide = () => setOpen(false);
+
+    anchor.addEventListener("mouseenter", show);
+    anchor.addEventListener("mouseleave", hide);
+    anchor.addEventListener("focusin", show);
+    anchor.addEventListener("focusout", hide);
+
+    return () => {
+      anchor.removeEventListener("mouseenter", show);
+      anchor.removeEventListener("mouseleave", hide);
+      anchor.removeEventListener("focusin", show);
+      anchor.removeEventListener("focusout", hide);
+    };
+  }, []);
+
+  useLayoutEffect(() => {
+    if (!open || typeof window === "undefined") return;
+
+    function updatePosition() {
+      const anchor = anchorRef.current?.parentElement;
+      const popover = popoverRef.current;
+      if (!anchor || !popover) return;
+
+      const anchorRect = anchor.getBoundingClientRect();
+      const popoverRect = popover.getBoundingClientRect();
+      const viewportPadding = 12;
+      const gap = 10;
+
+      const maxLeft = Math.max(
+        viewportPadding,
+        window.innerWidth - popoverRect.width - viewportPadding,
+      );
+      const left = Math.min(
+        Math.max(anchorRect.left, viewportPadding),
+        maxLeft,
+      );
+
+      const roomAbove = anchorRect.top - gap - viewportPadding;
+      const roomBelow =
+        window.innerHeight - anchorRect.bottom - gap - viewportPadding;
+      const placeAbove =
+        roomAbove >= popoverRect.height || roomAbove >= roomBelow;
+
+      const unclampedTop = placeAbove
+        ? anchorRect.top - popoverRect.height - gap
+        : anchorRect.bottom + gap;
+      const maxTop = Math.max(
+        viewportPadding,
+        window.innerHeight - popoverRect.height - viewportPadding,
+      );
+      const top = Math.min(
+        Math.max(unclampedTop, viewportPadding),
+        maxTop,
+      );
+
+      setPosition({ left, top, ready: true });
+    }
+
+    updatePosition();
+    window.addEventListener("resize", updatePosition);
+    window.addEventListener("scroll", updatePosition, true);
+
+    return () => {
+      window.removeEventListener("resize", updatePosition);
+      window.removeEventListener("scroll", updatePosition, true);
+    };
+  }, [open, rider]);
+
+  const afterStageNumber = Number(
+    rider.current_race_classification_after_stage_number ?? 0,
+  );
+  const classificationLive = rider.current_race_classification_live === true;
 
   return (
-    <div className="pointer-events-none absolute left-0 top-full z-40 mt-2 hidden w-80 rounded-2xl border border-slate-200 bg-white p-4 text-left shadow-xl group-hover:block">
-      <div className="font-semibold text-slate-900">
-        {getRiderDisplayName(rider)}
-      </div>
+    <>
+      <span
+        ref={anchorRef}
+        className="pointer-events-none absolute h-0 w-0"
+        aria-hidden="true"
+      />
 
-      <div className="mt-1 text-xs text-slate-500">
-        Age {getRiderAge(rider)} · Overall {getRiderOverall(rider)} ·{" "}
-        {getRiderRoleLabel(rider)}
-      </div>
-
-      <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
-        <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-          Current race classifications
-        </div>
-
-        <div className="grid grid-cols-2 gap-2 text-xs">
-          <RiderRaceScorePopoverItem label="GC" value={score.position} />
-          <RiderRaceScorePopoverItem label="Time" value={score.time} />
-          <RiderRaceScorePopoverItem label="Points" value={score.points} />
-          <RiderRaceScorePopoverItem
-            label="Sprint"
-            value={score.sprintPoints}
-          />
-          <RiderRaceScorePopoverItem label="KOM" value={score.mountainPoints} />
-        </div>
-      </div>
-
-      <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
-        {skills.length > 0 ? (
-          skills.slice(0, 8).map((skill) => {
-            const isTopSkill = topSkillNames.has(skill.label);
-
-            return (
-              <div
-                key={skill.label}
-                className="flex items-center justify-between rounded-lg bg-slate-50 px-2 py-1"
-              >
-                <span
-                  className={
-                    isTopSkill
-                      ? "font-semibold text-slate-900"
-                      : "text-slate-500"
-                  }
-                >
-                  {skill.label}
-                </span>
-                <span
-                  className={
-                    isTopSkill
-                      ? "font-bold text-slate-900"
-                      : "font-medium text-slate-700"
-                  }
-                >
-                  {skill.value.toFixed(0)}
-                </span>
+      {open && typeof document !== "undefined"
+        ? createPortal(
+            <div
+              ref={popoverRef}
+              className="pointer-events-none fixed z-[10000] w-80 rounded-2xl border border-slate-200 bg-white p-4 text-left shadow-2xl"
+              style={{
+                left: position.left,
+                top: position.top,
+                visibility: position.ready ? "visible" : "hidden",
+              }}
+            >
+              <div className="font-semibold text-slate-900">
+                {getRiderDisplayName(rider)}
               </div>
-            );
-          })
-        ) : (
-          <div className="col-span-2 text-slate-500">
-            Rider skill details are not available yet.
-          </div>
-        )}
-      </div>
-    </div>
+
+              <div className="mt-1 text-xs text-slate-500">
+                Age {getRiderAge(rider)} · Overall {getRiderOverall(rider)} ·{" "}
+                {getRiderRoleLabel(rider)}
+              </div>
+
+              <div className="mt-3 rounded-xl border border-yellow-200 bg-yellow-50 p-3">
+                <div className="mb-2 flex items-center justify-between gap-2">
+                  <div className="text-[11px] font-semibold uppercase tracking-wide text-amber-800">
+                    Current race classifications
+                  </div>
+                  <div className="text-[10px] font-semibold text-amber-700">
+                    {classificationLive && afterStageNumber > 0
+                      ? `After Stage ${afterStageNumber}`
+                      : "Race not started"}
+                  </div>
+                </div>
+
+                <div className="space-y-2 text-xs">
+                  <div className="grid grid-cols-2 gap-2">
+                    <RiderRaceScorePopoverItem
+                      label="GC #"
+                      value={score.position}
+                    />
+                    <RiderRaceScorePopoverItem
+                      label="Time"
+                      value={score.time}
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <RiderRaceScorePopoverItem
+                      label="Sprint"
+                      value={score.sprintPoints}
+                    />
+                    <RiderRaceScorePopoverItem
+                      label="KOM"
+                      value={score.mountainPoints}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
+                {skills.length > 0 ? (
+                  skills.slice(0, 8).map((skill) => {
+                    const isTopSkill = topSkillNames.has(skill.label);
+
+                    return (
+                      <div
+                        key={skill.label}
+                        className="flex items-center justify-between rounded-lg bg-slate-50 px-2 py-1"
+                      >
+                        <span
+                          className={
+                            isTopSkill
+                              ? "font-semibold text-slate-900"
+                              : "text-slate-500"
+                          }
+                        >
+                          {skill.label}
+                        </span>
+                        <span
+                          className={
+                            isTopSkill
+                              ? "font-bold text-slate-900"
+                              : "font-medium text-slate-700"
+                          }
+                        >
+                          {skill.value.toFixed(0)}
+                        </span>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <div className="col-span-2 text-slate-500">
+                    Rider skill details are not available yet.
+                  </div>
+                )}
+              </div>
+            </div>,
+            document.body,
+          )
+        : null}
+    </>
   );
 }
 
@@ -11637,9 +12524,9 @@ function RiderRaceScorePopoverItem({
   value: unknown;
 }) {
   return (
-    <div className="flex items-center justify-between rounded-lg bg-white px-2 py-1">
-      <span className="text-slate-500">{label}</span>
-      <span className="font-semibold text-slate-800">
+    <div className="flex items-center justify-between rounded-lg border border-yellow-200 bg-yellow-100 px-2 py-1">
+      <span className="font-medium text-amber-800">{label}</span>
+      <span className="font-semibold text-slate-900">
         {String(value ?? "—")}
       </span>
     </div>
@@ -11653,21 +12540,14 @@ function getRiderRaceScore(rider: JsonRecord) {
     rider.race_position ??
     rider.standing_position ??
     rider.tour_position ??
-    null;
+    0;
 
   const time =
     rider.gc_time_gap ??
     rider.general_time_gap ??
     rider.time_gap ??
     rider.race_time_gap ??
-    null;
-
-  const points =
-    rider.points ??
-    rider.points_score ??
-    rider.race_points ??
-    rider.classification_points ??
-    0;
+    "0:00";
 
   const sprintPoints =
     rider.sprint_points ??
@@ -11689,7 +12569,6 @@ function getRiderRaceScore(rider: JsonRecord) {
         : String(position),
     time:
       time === null || time === undefined || time === "" ? "—" : String(time),
-    points: Number.isFinite(Number(points)) ? Number(points) : 0,
     sprintPoints: Number.isFinite(Number(sprintPoints))
       ? Number(sprintPoints)
       : 0,
@@ -11705,7 +12584,7 @@ function RiderRaceScoreLine({ rider }: { rider: JsonRecord }) {
   return (
     <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-slate-500">
       <span>
-        GC:{" "}
+        GC #:{" "}
         <strong className="font-semibold text-slate-700">
           {score.position}
         </strong>
@@ -11718,12 +12597,6 @@ function RiderRaceScoreLine({ rider }: { rider: JsonRecord }) {
         <strong className="font-semibold text-slate-700">{score.time}</strong>
       </span>
 
-      <span className="text-slate-300">|</span>
-
-      <span>
-        Points:{" "}
-        <strong className="font-semibold text-slate-700">{score.points}</strong>
-      </span>
 
       <span className="text-slate-300">|</span>
 

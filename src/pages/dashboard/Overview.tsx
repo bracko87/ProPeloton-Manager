@@ -320,6 +320,7 @@ type StaffAdvisoryOverviewRow = {
   advisor_loyalty: number | null;
   advisory_status: "no_staff" | "unassigned" | "active" | "expired";
   advisory_expires_at: string | null;
+  advisor_notification_count?: number | null;
 };
 
 type StaffAdvisoryQuoteRow = {
@@ -3841,6 +3842,34 @@ function StaffBriefingCentre({
   const [quoteLoading, setQuoteLoading] = React.useState(false);
   const [activationLoading, setActivationLoading] = React.useState(false);
   const [assignError, setAssignError] = React.useState<string | null>(null);
+  const [advisoryInfoOpen, setAdvisoryInfoOpen] = React.useState(false);
+  const advisoryInfoHoverTimer = React.useRef<number | null>(null);
+
+  const openAdvisoryInfoAfterDelay = React.useCallback(() => {
+    if (advisoryInfoHoverTimer.current !== null) {
+      window.clearTimeout(advisoryInfoHoverTimer.current);
+    }
+
+    advisoryInfoHoverTimer.current = window.setTimeout(() => {
+      setAdvisoryInfoOpen(true);
+      advisoryInfoHoverTimer.current = null;
+    }, 3000);
+  }, []);
+
+  const cancelAdvisoryInfoDelay = React.useCallback(() => {
+    if (advisoryInfoHoverTimer.current !== null) {
+      window.clearTimeout(advisoryInfoHoverTimer.current);
+      advisoryInfoHoverTimer.current = null;
+    }
+  }, []);
+
+  React.useEffect(() => {
+    return () => {
+      if (advisoryInfoHoverTimer.current !== null) {
+        window.clearTimeout(advisoryInfoHoverTimer.current);
+      }
+    };
+  }, []);
 
   const formatAdvisoryDate = React.useCallback((value: string | null) => {
     if (!value) return "—";
@@ -4075,46 +4104,163 @@ function StaffBriefingCentre({
 
   return (
     <Card className="border-slate-200/80 bg-white p-4 shadow-sm">
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-2">
-            <h2 className="text-sm font-black tracking-tight text-slate-950">
+          <div className="relative flex items-center gap-2">
+            <h2 className="text-xl font-semibold tracking-tight text-slate-950">
               Staff Briefing Centre
             </h2>
+
+            <button
+              type="button"
+              aria-label="What Staff Advisory provides"
+              aria-expanded={advisoryInfoOpen}
+              onMouseEnter={openAdvisoryInfoAfterDelay}
+              onMouseLeave={cancelAdvisoryInfoDelay}
+              onFocus={() => setAdvisoryInfoOpen(true)}
+              onBlur={(event) => {
+                const nextTarget = event.relatedTarget as Node | null;
+                if (!event.currentTarget.parentElement?.contains(nextTarget)) {
+                  setAdvisoryInfoOpen(false);
+                }
+              }}
+              onClick={() => {
+                cancelAdvisoryInfoDelay();
+                setAdvisoryInfoOpen((current) => !current);
+              }}
+              className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-slate-300 bg-white text-[12px] font-semibold text-slate-600 transition hover:border-slate-400 hover:bg-slate-50"
+            >
+              i
+            </button>
+
             {refreshing || staffLoading ? (
               <span
-                className="h-1.5 w-1.5 rounded-full bg-sky-500"
+                className="inline-flex h-2 w-2 rounded-full bg-sky-500"
                 title="Refreshing"
               />
             ) : null}
+
+            {advisoryInfoOpen ? (
+              <div
+                role="dialog"
+                aria-label="Staff Advisory information"
+                onMouseEnter={cancelAdvisoryInfoDelay}
+                onMouseLeave={() => setAdvisoryInfoOpen(false)}
+                className="absolute left-0 top-8 z-[70] w-[min(560px,calc(100vw-2rem))] rounded-2xl border border-slate-200 bg-white p-4 shadow-2xl"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <div className="text-sm font-semibold text-slate-950">
+                      What do I get with an advisor?
+                    </div>
+                    <p className="mt-1 text-[11px] leading-5 text-slate-500">
+                      Hiring staff and buying Staff Advisory are separate. Your employees continue their normal jobs without Staff Advisory. The 5-coin option adds proactive analysis and role-specific reports for 30 real-life days.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setAdvisoryInfoOpen(false)}
+                    className="inline-flex h-7 items-center rounded-lg border border-slate-200 px-2 text-[10px] font-semibold text-slate-600 hover:bg-slate-50"
+                  >
+                    Close
+                  </button>
+                </div>
+
+                <div className="mt-3 max-h-[360px] overflow-y-auto pr-1">
+                  <div className="rounded-xl bg-slate-50 p-3">
+                    <div className="text-[11px] font-semibold text-slate-900">
+                      Without Staff Advisory
+                    </div>
+                    <p className="mt-1 text-[10px] leading-5 text-slate-600">
+                      You still receive all normal gameplay notifications and essential warnings: race and stage-plan deadlines, injuries and sickness, rider/staff contract expiry, race-supply shortages, sponsor and finance warnings, scouting-task completion, transfers, and other normal game events. Hired staff also continue performing their normal gameplay jobs.
+                    </p>
+                  </div>
+
+                  <div className="mt-3 rounded-xl border border-slate-200 p-3">
+                    <div className="text-[11px] font-semibold text-slate-900">
+                      With Staff Advisory — 5 coins / 30 real-life days
+                    </div>
+                    <p className="mt-1 text-[10px] leading-5 text-slate-600">
+                      The selected employee becomes your advisor for that role. Advisor access adds proactive analytical reports and advisor-only notifications. These reports interpret information you already have; they do not reveal hidden attributes, change race calculations, improve rider stats, or replace Free warnings.
+                    </p>
+                  </div>
+
+                  <div className="mt-3 space-y-2">
+                    <div className="rounded-xl border border-slate-200 px-3 py-2.5">
+                      <div className="text-[11px] font-semibold text-slate-900">Head Coach</div>
+                      <div className="mt-1 text-[10px] leading-5 text-slate-600">
+                        Weekly training and readiness review: workload trends, repeated fatigue, morale/readiness patterns, development trends, and riders who may need closer management.
+                      </div>
+                    </div>
+
+                    <div className="rounded-xl border border-slate-200 px-3 py-2.5">
+                      <div className="text-[11px] font-semibold text-slate-900">Sports Director</div>
+                      <div className="mt-1 text-[10px] leading-5 text-slate-600">
+                        Weekly race-program review: calendar congestion, rider-selection load, preparation risks, overlapping commitments, and areas of the race programme worth reviewing.
+                      </div>
+                    </div>
+
+                    <div className="rounded-xl border border-slate-200 px-3 py-2.5">
+                      <div className="text-[11px] font-semibold text-slate-900">Team Doctor</div>
+                      <div className="mt-1 text-[10px] leading-5 text-slate-600">
+                        Health and recovery analysis, at most once per real-life day: squad availability, repeated injury/sickness patterns, recovery trends, and health situations worth monitoring.
+                      </div>
+                    </div>
+
+                    <div className="rounded-xl border border-slate-200 px-3 py-2.5">
+                      <div className="text-[11px] font-semibold text-slate-900">Chief Mechanic</div>
+                      <div className="mt-1 text-[10px] leading-5 text-slate-600">
+                        Weekly equipment review: condition and maintenance trends, recurring equipment issues, workload on the workshop, and race-supply usage worth reviewing.
+                      </div>
+                    </div>
+
+                    <div className="rounded-xl border border-slate-200 px-3 py-2.5">
+                      <div className="text-[11px] font-semibold text-slate-900">Scout</div>
+                      <div className="mt-1 text-[10px] leading-5 text-slate-600">
+                        Weekly recruitment review using already-known scouting information: completed report summary, recruitment gaps, known prospects worth revisiting, and suggestions for where to scout next.
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-3 rounded-xl bg-amber-50 p-3">
+                    <div className="text-[11px] font-semibold text-amber-900">
+                      What Staff Advisory never locks
+                    </div>
+                    <p className="mt-1 text-[10px] leading-5 text-amber-800">
+                      Essential warnings and normal game results remain available without Staff Advisory. Advisory is additional interpretation and planning support only.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ) : null}
           </div>
-          <p className="mt-0.5 text-[10px] font-medium text-slate-500">
+          <p className="mt-1 text-xs leading-5 text-slate-500">
             Assign staff as optional advisors for additional analysis and reports.
           </p>
         </div>
 
-        <div className="flex shrink-0 flex-wrap items-center gap-1.5">
+        <div className="flex shrink-0 flex-wrap items-center gap-2">
           <a
             href="#/dashboard/inbox"
-            className="inline-flex h-8 items-center gap-1.5 rounded-full border border-slate-200 bg-white px-2.5 text-[11px] font-bold text-slate-700 transition hover:bg-slate-50"
+            className="inline-flex h-8 items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 text-[11px] font-semibold text-slate-700 transition hover:bg-slate-50"
           >
             Inbox
-            <span className="rounded-full bg-slate-100 px-1.5 py-0.5 text-[9px] font-black text-slate-700">
+            <span className="inline-flex min-w-[20px] items-center justify-center rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-700">
               {inboxUnread}
             </span>
           </a>
           <a
             href="#/dashboard/notifications"
-            className="inline-flex h-8 items-center gap-1.5 rounded-full border border-slate-200 bg-white px-2.5 text-[11px] font-bold text-slate-700 transition hover:bg-slate-50"
+            className="inline-flex h-8 items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 text-[11px] font-semibold text-slate-700 transition hover:bg-slate-50"
           >
             Notifications
-            <span className="rounded-full bg-slate-100 px-1.5 py-0.5 text-[9px] font-black text-slate-700">
+            <span className="inline-flex min-w-[20px] items-center justify-center rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-700">
               {notificationsUnread}
             </span>
           </a>
           <a
             href="#/dashboard/staff"
-            className="inline-flex h-8 items-center rounded-full bg-slate-950 px-3 text-[11px] font-black text-white transition hover:bg-slate-800"
+            className="inline-flex h-8 items-center rounded-full bg-slate-950 px-3.5 text-[11px] font-semibold text-white transition hover:bg-slate-800"
           >
             Manage staff
           </a>
@@ -4122,12 +4268,12 @@ function StaffBriefingCentre({
       </div>
 
       {staffError ? (
-        <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[11px] font-medium text-amber-800">
+        <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-800">
           {staffError}
         </div>
       ) : null}
 
-      <div className="mt-2.5 grid auto-cols-[195px] grid-flow-col gap-2 overflow-x-auto pb-1 lg:grid-flow-row lg:grid-cols-5 lg:overflow-visible lg:pb-0">
+      <div className="mt-4 grid grid-cols-1 gap-2.5 md:grid-cols-2 xl:grid-cols-5">
         {STAFF_BRIEFING_ROLES.map((role) => {
           const row = overviewByRole.get(role.roleType);
           const status = row?.advisory_status ?? "no_staff";
@@ -4147,120 +4293,150 @@ function StaffBriefingCentre({
           const countryCode =
             row?.advisor_country_code?.trim().toUpperCase() ?? "";
 
+          const advisorNotificationCount = Math.max(
+            0,
+            Number(row?.advisor_notification_count ?? 0),
+          );
+
+          const hasAdvisorNotifications =
+            hasAdvisor && advisorNotificationCount > 0;
+
           return (
             <div
               key={role.key}
-              className={`flex min-h-[132px] flex-col rounded-xl border p-2.5 ${
+              className={`flex min-h-[180px] flex-col rounded-2xl border p-3.5 shadow-sm transition ${
                 status === "no_staff"
-                  ? "border-slate-200 bg-slate-100/80 text-slate-400"
-                  : "border-slate-200 bg-white"
+                  ? "border-slate-200 bg-slate-50 text-slate-400"
+                  : "border-slate-200 bg-white hover:border-slate-300"
               }`}
             >
-              <div className="flex items-start justify-between gap-2">
-                <div
-                  className={`text-[11px] font-black ${
-                    status === "no_staff" ? "text-slate-500" : "text-slate-950"
-                  }`}
-                >
-                  {role.label}
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <div
+                    className={`text-[13px] font-semibold ${
+                      status === "no_staff" ? "text-slate-500" : "text-slate-950"
+                    }`}
+                  >
+                    {role.label}
+                  </div>
+
+                  {hasAdvisor ? (
+                    <div className="mt-2 flex min-w-0 items-center gap-2">
+                      {countryCode ? (
+                        <img
+                          src={getCountryFlagUrl(countryCode)}
+                          alt={`${countryCode} flag`}
+                          title={countryCode}
+                          className="h-3.5 w-5 shrink-0 rounded-[2px] object-cover ring-1 ring-slate-200"
+                          loading="lazy"
+                        />
+                      ) : (
+                        <div className="h-3.5 w-5 shrink-0 rounded-[2px] bg-slate-100 ring-1 ring-slate-200" />
+                      )}
+
+                      <span className="truncate text-[13px] font-medium text-slate-900">
+                        {row?.advisor_staff_name ?? "Advisor"}
+                      </span>
+                    </div>
+                  ) : (
+                    <div className="mt-2 text-[12px] font-medium text-slate-800">
+                      {status === "unassigned" ? "No advisor assigned" : "No staff available"}
+                    </div>
+                  )}
                 </div>
 
-                {status === "active" && row?.advisor_staff_id ? (
-                  <a
-                    href={`#/dashboard/notifications?advisor_staff_id=${encodeURIComponent(row.advisor_staff_id)}&advisor_role=${encodeURIComponent(role.roleType)}`}
-                    title={`Open advisory notifications from ${row.advisor_staff_name ?? role.label}`}
-                    aria-label={`Open advisory notifications from ${row.advisor_staff_name ?? role.label}`}
-                    className="relative inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-red-200 bg-red-50 text-[13px] text-red-600 transition hover:bg-red-100"
-                  >
-                    <span aria-hidden="true">🔔</span>
-                    <span className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full border border-white bg-red-500" />
-                  </a>
+                {hasAdvisor ? (
+                  hasAdvisorNotifications ? (
+                    <a
+                      href={`#/dashboard/notifications?advisor_staff_id=${encodeURIComponent(row?.advisor_staff_id ?? "")}&advisor_role=${encodeURIComponent(role.roleType)}&mode=advisor`}
+                      title={`Show advisor notifications from ${row?.advisor_staff_name ?? role.label}`}
+                      aria-label={`Show advisor notifications from ${row?.advisor_staff_name ?? role.label}`}
+                      className="inline-flex h-7 min-w-[30px] items-center justify-center rounded-lg bg-red-500 px-2 text-[11px] font-semibold text-white transition hover:bg-red-600"
+                    >
+                      {advisorNotificationCount}
+                    </a>
+                  ) : (
+                    <span
+                      title="Advisor notifications: 0"
+                      aria-label="Advisor notifications: 0"
+                      className="inline-flex h-7 min-w-[30px] items-center justify-center rounded-lg bg-slate-100 px-2 text-[11px] font-semibold text-slate-500"
+                    >
+                      0
+                    </span>
+                  )
                 ) : null}
               </div>
 
               {staffLoading ? (
-                <div className="mt-2 space-y-2">
-                  <div className="h-4 w-3/4 animate-pulse rounded bg-slate-200" />
-                  <div className="h-3 w-full animate-pulse rounded bg-slate-100" />
-                  <div className="h-3 w-5/6 animate-pulse rounded bg-slate-100" />
+                <div className="mt-5 space-y-3">
+                  <div className="h-5 w-2/3 animate-pulse rounded-full bg-slate-200" />
+                  <div className="h-4 w-full animate-pulse rounded-full bg-slate-100" />
+                  <div className="h-4 w-5/6 animate-pulse rounded-full bg-slate-100" />
                 </div>
               ) : status === "no_staff" ? (
                 <>
-                  <div className="mt-1.5 text-[10px] font-bold text-slate-500">
-                    No staff available
-                  </div>
-                  <div className="mt-1 text-[8px] leading-3.5 text-slate-400">
+                  <div className="mt-3 text-[11px] leading-4.5 text-slate-500">
                     Hire an eligible {role.label.toLowerCase()} on the Staff page before assigning an advisor.
                   </div>
-                  <div className="mt-auto pt-1.5 text-[8px] font-semibold text-slate-400">
+                  <div className="mt-auto pt-3 text-[11px] font-medium text-slate-400">
                     Advisory unavailable
                   </div>
                 </>
               ) : status === "unassigned" ? (
                 <>
-                  <div className="mt-1.5 text-[10px] font-bold text-slate-700">
-                    No advisor assigned
-                  </div>
-                  <div className="mt-1 text-[8px] leading-3.5 text-slate-500">
+                  <div className="mt-3 text-[11px] leading-4.5 text-slate-500">
                     {row?.eligible_staff_count === 1
-                      ? "1 eligible staff member is available."
-                      : `${row?.eligible_staff_count ?? 0} eligible staff members are available.`}
+                      ? "1 eligible staff member is available for advisory support."
+                      : `${row?.eligible_staff_count ?? 0} eligible staff members are available for advisory support.`}
                   </div>
+
                   <button
                     type="button"
                     onClick={() => void openAssignAdvisor(role)}
-                    className="mt-auto inline-flex self-start rounded-lg bg-slate-950 px-2 py-1 text-[8px] font-black text-white transition hover:bg-slate-800"
+                    className="mt-auto inline-flex h-8 self-start items-center rounded-lg bg-slate-950 px-3 text-[11px] font-semibold text-white transition hover:bg-slate-800"
                   >
                     Assign advisor
                   </button>
                 </>
               ) : hasAdvisor ? (
                 <>
-                  <div className="mt-1.5 flex min-w-0 items-center gap-1.5">
-                    {countryCode ? (
-                      <img
-                        src={getCountryFlagUrl(countryCode)}
-                        alt={`${countryCode} flag`}
-                        title={countryCode}
-                        className="h-3.5 w-5 shrink-0 rounded-[2px] object-cover ring-1 ring-slate-200"
-                        loading="lazy"
-                      />
-                    ) : null}
-                    <span className="truncate text-[10px] font-bold text-slate-800">
-                      {row?.advisor_staff_name ?? "Advisor"}
-                    </span>
-                  </div>
-
-                  <div className="mt-1.5 space-y-0.5">
-                    {role.skills.map((skill) => (
-                      <div
-                        key={skill.key}
-                        className="flex items-center justify-between gap-2 text-[8px] leading-3.5"
-                      >
-                        <span className="truncate text-slate-500">{skill.label}</span>
-                        <span className="shrink-0 font-black tabular-nums text-slate-800">
-                          {Math.round(advisorStatMap[skill.key])}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="mt-auto flex items-end justify-between gap-2 pt-2">
-                    <div
-                      className={`text-[8px] font-semibold ${
-                        status === "active" ? "text-emerald-700" : "text-amber-700"
-                      }`}
-                    >
-                      {status === "active"
-                        ? `Active until ${formatAdvisoryDate(row?.advisory_expires_at ?? null)}`
-                        : `Expired ${formatAdvisoryDate(row?.advisory_expires_at ?? null)}`}
+                  <div className="mt-3 rounded-xl bg-slate-50 px-3 py-2.5">
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="text-[11px] font-medium text-slate-500">
+                        Advisor rating
+                      </span>
+                      <span className="text-lg font-semibold tabular-nums text-slate-950">
+                        {Math.round(
+                          role.skills.reduce(
+                            (total, skill) => total + advisorStatMap[skill.key],
+                            0,
+                          ) / Math.max(role.skills.length, 1),
+                        )}
+                      </span>
                     </div>
+                  </div>
+
+                  <div className="mt-auto flex items-end justify-between gap-2 pt-3">
+                    <div className="text-[10px] font-medium leading-4">
+                      <div
+                        className={
+                          status === "active" ? "text-emerald-700" : "text-amber-700"
+                        }
+                      >
+                        {status === "active" ? "Advisory active" : "Advisory expired"}
+                      </div>
+                      <div className="text-slate-500">
+                        {status === "active" ? "Until" : "Expired"}{" "}
+                        {formatAdvisoryDate(row?.advisory_expires_at ?? null)}
+                      </div>
+                    </div>
+
                     <button
                       type="button"
                       onClick={() =>
                         void openAssignAdvisor(role, row?.advisor_staff_id ?? null)
                       }
-                      className="shrink-0 rounded-lg border border-slate-300 bg-white px-2 py-1 text-[8px] font-black text-slate-700 transition hover:bg-slate-50"
+                      className="inline-flex h-8 shrink-0 items-center rounded-lg border border-slate-300 bg-white px-3 text-[11px] font-semibold text-slate-700 transition hover:bg-slate-50"
                     >
                       Renew
                     </button>
@@ -4274,16 +4450,17 @@ function StaffBriefingCentre({
 
       {assignRole ? (
         <div className="fixed inset-0 z-[80] flex items-center justify-center bg-slate-950/50 p-4">
-          <div className="w-full max-w-lg rounded-2xl bg-white p-5 shadow-2xl">
+          <div className="w-full max-w-xl rounded-2xl bg-white p-5 shadow-2xl">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <div className="text-base font-black text-slate-950">
+                <div className="text-xl font-semibold tracking-tight text-slate-950">
                   {quote?.is_renewal ? "Renew advisor" : "Assign advisor"}
                 </div>
-                <div className="mt-1 text-xs text-slate-500">
+                <div className="mt-1 text-sm text-slate-500">
                   {assignRole.label}
                 </div>
               </div>
+
               <button
                 type="button"
                 onClick={() => {
@@ -4292,7 +4469,7 @@ function StaffBriefingCentre({
                   setQuote(null);
                   setAssignError(null);
                 }}
-                className="rounded-lg border border-slate-200 px-2 py-1 text-xs font-bold text-slate-600"
+                className="inline-flex h-8 items-center rounded-lg border border-slate-200 bg-white px-3 text-[11px] font-semibold text-slate-600 transition hover:bg-slate-50"
               >
                 Close
               </button>
@@ -4301,15 +4478,15 @@ function StaffBriefingCentre({
             {eligibleStaffLoading ? (
               <div className="mt-4 text-sm text-slate-500">Loading eligible staff…</div>
             ) : eligibleStaff.length > 0 ? (
-              <div className="mt-4">
-                <label className="text-[11px] font-bold text-slate-700">
+              <div className="mt-5">
+                <label className="text-sm font-medium text-slate-800">
                   Staff member
                 </label>
                 <select
                   value={selectedStaffId}
                   onChange={(event) => void handleAdvisorSelection(event.target.value)}
                   disabled={activationLoading}
-                  className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800"
+                  className="mt-2 h-10 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm text-slate-800 outline-none transition focus:border-slate-500"
                 >
                   {eligibleStaff.map((staff) => (
                     <option key={staff.id} value={staff.id}>
@@ -4327,40 +4504,31 @@ function StaffBriefingCentre({
             {quoteLoading ? (
               <div className="mt-4 text-sm text-slate-500">Loading quote…</div>
             ) : quote ? (
-              <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-3">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="font-semibold text-slate-600">Price</span>
-                  <span className="font-black text-slate-950">
-                    {quote.coin_price} coins
-                  </span>
-                </div>
-                <div className="mt-2 flex items-center justify-between text-sm">
-                  <span className="font-semibold text-slate-600">Duration</span>
-                  <span className="font-black text-slate-950">
-                    {quote.duration_real_days} real-life days
-                  </span>
-                </div>
-                <div className="mt-2 flex items-center justify-between gap-4 text-sm">
-                  <span className="font-semibold text-slate-600">New expiry</span>
-                  <span className="text-right font-black text-slate-950">
-                    {formatAdvisoryDate(quote.proposed_expires_at)}
-                  </span>
-                </div>
-                <div className="mt-2 flex items-center justify-between text-sm">
-                  <span className="font-semibold text-slate-600">Automatic renewal</span>
-                  <span className="font-black text-slate-950">No</span>
-                </div>
-                <div className="mt-2 flex items-center justify-between text-sm">
-                  <span className="font-semibold text-slate-600">Coin balance</span>
-                  <span className="font-black text-slate-950">
-                    {coinBalanceLoading ? "…" : coinBalance ?? 0}
-                  </span>
+              <div className="mt-5 rounded-2xl border border-slate-200 bg-slate-50 p-3">
+                <div className="space-y-2">
+                  {[
+                    ["Price", `${quote.coin_price} coins`],
+                    ["Duration", `${quote.duration_real_days} real-life days`],
+                    ["New expiry", formatAdvisoryDate(quote.proposed_expires_at)],
+                    ["Automatic renewal", "No"],
+                    ["Coin balance", coinBalanceLoading ? "…" : String(coinBalance ?? 0)],
+                  ].map(([label, value]) => (
+                    <div
+                      key={label}
+                      className="flex items-center justify-between gap-4 rounded-xl bg-white px-3 py-2"
+                    >
+                      <span className="text-sm text-slate-500">{label}</span>
+                      <span className="text-sm font-semibold text-slate-950">
+                        {value}
+                      </span>
+                    </div>
+                  ))}
                 </div>
               </div>
             ) : null}
 
             {assignError ? (
-              <div className="mt-4 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700">
+              <div className="mt-4 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-medium text-red-700">
                 {assignError}
               </div>
             ) : null}
@@ -4374,7 +4542,7 @@ function StaffBriefingCentre({
                   setQuote(null);
                   setAssignError(null);
                 }}
-                className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-black text-slate-700"
+                className="inline-flex h-9 items-center rounded-lg border border-slate-300 bg-white px-4 text-[12px] font-semibold text-slate-700 transition hover:bg-slate-50"
               >
                 Cancel
               </button>
@@ -4388,7 +4556,7 @@ function StaffBriefingCentre({
                   !selectedStaffId ||
                   (coinBalance ?? 0) < (quote?.coin_price ?? Number.POSITIVE_INFINITY)
                 }
-                className="rounded-xl bg-slate-950 px-3 py-2 text-xs font-black text-white disabled:cursor-not-allowed disabled:opacity-40"
+                className="inline-flex h-9 items-center rounded-lg bg-slate-950 px-4 text-[12px] font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 {activationLoading
                   ? "Activating…"
@@ -4405,6 +4573,7 @@ function StaffBriefingCentre({
     </Card>
   );
 }
+
 
 
 function openPremiumPage() {

@@ -5,7 +5,7 @@
  * Purpose:
  * - Display current club identity (name, country, logo) and competition summary.
  * - Show live notification + inbox unread counts and a profile/menu dropdown.
- * - Surface the current membership tier and coin wallet balance.
+ * - Surface the current coin wallet balance (without any ad-based rewards).
  *
  * UPDATE: Menu route alignment
  * - The header menu’s Pro Packages item is aligned to the canonical paywall route
@@ -43,14 +43,11 @@ import React, {
 } from 'react'
 import {
   Bell,
-  Crown,
   Settings,
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import {
-  canReceiveNotification,
-  getNotificationTypeFromEvent,
-  isNotificationPreferenceGroup,
+  canReceiveNotificationItem,
   readNotificationPreferences,
 } from '@/lib/notificationPreferences'
 
@@ -87,6 +84,8 @@ type NotificationItem = {
   source: string
   type_code: string
   preference_group: string | null
+  payload_json?: Record<string, unknown> | null
+  metadata?: Record<string, unknown> | null
 }
 
 /**
@@ -137,20 +136,6 @@ type ClubDisplayIdentity = {
   locked_by_sponsor: boolean
   locked_until_game_date: string | null
   source_sponsor_id: string | null
-}
-
-/**
- * PremiumStatusRow
- * Tolerant shape for get_my_premium_status so the header remains compatible
- * if the RPC returns either a boolean or a row with an explicit Premium flag.
- */
-type PremiumStatusRow = {
-  is_premium?: boolean | null
-  premium_active?: boolean | null
-  has_premium?: boolean | null
-  active?: boolean | null
-  stripe_status?: string | null
-  access_until?: string | null
 }
 
 const LOGO_BUCKET = 'club-logos'
@@ -330,9 +315,6 @@ export default function Header({
     setClubDisplayIdentity,
   ] = useState<ClubDisplayIdentity | null>(null)
   const [identityRefreshKey, setIdentityRefreshKey] = useState(0)
-  const [isPremium, setIsPremium] = useState(false)
-  const [isPremiumStatusLoading, setIsPremiumStatusLoading] =
-    useState(true)
 
   const liveClubIdRef = useRef<string | undefined>(clubId)
   const currentUserIdRef = useRef<string | undefined>(undefined)
@@ -609,28 +591,7 @@ export default function Header({
   const shouldDisplayNotification = useCallback(
     (item: NotificationItem) => {
       const preferences = readNotificationPreferences()
-
-      if (
-        isNotificationPreferenceGroup(
-          item.preference_group,
-        )
-      ) {
-        return canReceiveNotification(
-          preferences,
-          item.preference_group,
-        )
-      }
-
-      const notificationType =
-        getNotificationTypeFromEvent(
-          item.type_code,
-          item.source,
-        )
-      if (!notificationType) return true
-      return canReceiveNotification(
-        preferences,
-        notificationType,
-      )
+      return canReceiveNotificationItem(preferences, item)
     },
     [],
   )
@@ -759,64 +720,6 @@ export default function Header({
   )
 
   /**
-   * loadPremiumStatus
-   * Resolve the signed-in user's current Premium membership.
-   */
-  const loadPremiumStatus = useCallback(async () => {
-    const { data, error } = await supabase.rpc(
-      'get_my_premium_status',
-    )
-
-    if (error) {
-      // eslint-disable-next-line no-console
-      console.error(
-        'Failed to load Premium status:',
-        error,
-      )
-      setIsPremium(false)
-      setIsPremiumStatusLoading(false)
-      return
-    }
-
-    if (typeof data === 'boolean') {
-      setIsPremium(data)
-      setIsPremiumStatusLoading(false)
-      return
-    }
-
-    const row = (
-      Array.isArray(data) ? data[0] : data
-    ) as PremiumStatusRow | null
-
-    const accessUntilMs = row?.access_until
-      ? Date.parse(row.access_until)
-      : Number.NaN
-
-    const hasCurrentAccessUntil =
-      Number.isFinite(accessUntilMs) &&
-      accessUntilMs > Date.now()
-
-    const hasActiveStripeStatus = [
-      'trialing',
-      'active',
-      'past_due',
-    ].includes(
-      String(row?.stripe_status ?? '').toLowerCase(),
-    )
-
-    const resolvedIsPremium = Boolean(
-      row?.is_premium ??
-        row?.premium_active ??
-        row?.has_premium ??
-        row?.active ??
-        (hasActiveStripeStatus && hasCurrentAccessUntil),
-    )
-
-    setIsPremium(resolvedIsPremium)
-    setIsPremiumStatusLoading(false)
-  }, [])
-
-  /**
    * loadUnreadCount
    * Fetch unread notifications count via RPC.
    */
@@ -890,53 +793,6 @@ export default function Header({
     void loadTeamCompetitionSummary()
   }, [loadTeamCompetitionSummary])
 
-  // Load and periodically refresh Premium membership state.
-  useEffect(() => {
-    void loadPremiumStatus()
-
-    const intervalId = window.setInterval(() => {
-      void loadPremiumStatus()
-    }, 60000)
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(() => {
-      void loadPremiumStatus()
-    })
-
-    function handlePremiumStatusChanged() {
-      void loadPremiumStatus()
-    }
-
-    function handleVisibilityChange() {
-      if (document.visibilityState === 'visible') {
-        void loadPremiumStatus()
-      }
-    }
-
-    window.addEventListener(
-      'premium-status-changed',
-      handlePremiumStatusChanged,
-    )
-    document.addEventListener(
-      'visibilitychange',
-      handleVisibilityChange,
-    )
-
-    return () => {
-      window.clearInterval(intervalId)
-      subscription.unsubscribe()
-      window.removeEventListener(
-        'premium-status-changed',
-        handlePremiumStatusChanged,
-      )
-      document.removeEventListener(
-        'visibilitychange',
-        handleVisibilityChange,
-      )
-    }
-  }, [loadPremiumStatus])
-
   // Poll notifications + inbox unread counts.
   useEffect(() => {
     void Promise.all([
@@ -951,8 +807,12 @@ export default function Header({
       ])
     }, 60000)
 
+    const handleNotificationPreferencesUpdated = (): void => { void loadUnreadCount() }
+    window.addEventListener('notification-preferences-updated', handleNotificationPreferencesUpdated)
+
     return () => {
       window.clearInterval(intervalId)
+      window.removeEventListener('notification-preferences-updated', handleNotificationPreferencesUpdated)
     }
   }, [loadUnreadCount, loadInboxUnreadCount])
 
@@ -1075,40 +935,6 @@ export default function Header({
       </div>
 
       <div className="flex items-center gap-3 shrink-0">
-        <button
-          type="button"
-          data-tutorial-target="header-premium"
-          onClick={() => {
-            handleNavigate('/dashboard/pro')
-          }}
-          className={`inline-flex min-w-[104px] items-center justify-center gap-1.5 rounded-md border px-3 py-1.5 text-sm font-semibold transition-colors ${
-            isPremium
-              ? 'border-black/20 bg-white/80 text-black hover:bg-white'
-              : 'border-black/20 bg-white/45 text-black/75 hover:bg-white/65'
-          }`}
-          aria-label={
-            isPremium
-              ? 'Premium account member'
-              : 'Free account member. View Premium'
-          }
-          title={
-            isPremium
-              ? 'Premium account'
-              : 'Free account — view Premium'
-          }
-        >
-          {isPremiumStatusLoading ? (
-            <span>Account</span>
-          ) : isPremium ? (
-            <>
-              <Crown size={15} aria-hidden="true" />
-              <span>Premium</span>
-            </>
-          ) : (
-            <span>Free</span>
-          )}
-        </button>
-
         <div
           data-tutorial-target="header-coins"
           className="rounded-md border border-black/35 bg-yellow-300/70 px-3 py-1.5 text-sm font-semibold text-black min-w-[130px] text-center"

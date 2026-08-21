@@ -119,7 +119,7 @@ export default function LoginPage(): JSX.Element {
       {/* Background image */}
       <div className="absolute inset-0 z-0 pointer-events-none" aria-hidden="true">
         <img
-          src="https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/ChatGPT%20Image%20Mar%201,%202026,%2008_31_42%20PM.png"
+          src="https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/New%20image%20sign%20up.png"
           alt="background"
           className="object-cover w-full h-full"
           style={
@@ -152,14 +152,20 @@ export default function LoginPage(): JSX.Element {
       {/* Card sits above background */}
       <div className="relative z-10 max-w-md w-full bg-white rounded-lg shadow-xl overflow-hidden">
         <div className="p-8">
-          <h2 className="text-2xl font-bold text-gray-900">Sign in to ProPeloton Manager</h2>
-          <p className="mt-2 text-sm text-gray-600">Enter your credentials to continue.</p>
+          <h2 className="text-2xl font-bold text-gray-900">
+            Sign in to ProPeloton Manager
+          </h2>
+
+          <p className="mt-2 text-sm text-gray-600">
+            Enter your credentials to continue.
+          </p>
 
           <form onSubmit={handleSubmit} className="mt-6 grid grid-cols-1 gap-4">
             <div>
               <label htmlFor="email" className="text-sm font-medium text-gray-700">
                 Email
               </label>
+
               <input
                 id="email"
                 name="email"
@@ -174,7 +180,10 @@ export default function LoginPage(): JSX.Element {
 
             <div>
               <div className="flex items-center justify-between gap-3">
-                <label htmlFor="password" className="text-sm font-medium text-gray-700">
+                <label
+                  htmlFor="password"
+                  className="text-sm font-medium text-gray-700"
+                >
                   Password
                 </label>
 
@@ -210,11 +219,17 @@ export default function LoginPage(): JSX.Element {
                 {loading ? 'Signing in...' : 'Sign In'}
               </button>
 
-              <Link to="/register" className="text-sm text-gray-600 hover:text-gray-900">
+              <Link
+                to="/register"
+                className="text-sm text-gray-600 hover:text-gray-900"
+              >
                 Create account
               </Link>
 
-              <Link to="/" className="ml-auto text-sm text-gray-600 hover:text-gray-900">
+              <Link
+                to="/"
+                className="ml-auto text-sm text-gray-600 hover:text-gray-900"
+              >
                 Home
               </Link>
             </div>
