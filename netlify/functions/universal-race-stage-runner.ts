@@ -141,7 +141,10 @@ function buildProductionOutputWithReplayProgressGuarantee(
     )
   }
 
-  if (result.replaySynchronization.synchronized) {
+  if (
+    result.replaySynchronization.synchronized &&
+    replayPolicy.nonBlockingIssues.length === 0
+  ) {
     return buildProductionUniversalRaceOutput(input, result)
   }
 

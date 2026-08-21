@@ -2809,6 +2809,57 @@ export function isUniversalReplaySoftIssue(issue: string): boolean {
   )
 }
 
+
+export interface UniversalReplayPublicationClassification {
+  readonly publishable: boolean
+  readonly blockingIssues: readonly string[]
+  readonly nonBlockingIssues: readonly string[]
+  readonly degradedReplay: boolean
+}
+
+/**
+ * Classify replay synchronization for the Phase 11 publication boundary.
+ *
+ * Official sporting/result integrity remains hard-blocking. Only issues that
+ * are explicitly whitelisted as replay presentation/physical-continuity
+ * problems may pass in degraded replay mode.
+ */
+export function classifyUniversalReplaySynchronizationForPublication(
+  summary: UniversalReplaySynchronizationSummary,
+): UniversalReplayPublicationClassification {
+  const nonBlockingIssues = summary.issues.filter(isUniversalReplaySoftIssue)
+  const blockingIssues = summary.issues.filter(
+    (issue) => !isUniversalReplaySoftIssue(issue),
+  )
+
+  return {
+    publishable: summary.synchronized || blockingIssues.length === 0,
+    blockingIssues,
+    nonBlockingIssues,
+    degradedReplay: nonBlockingIssues.length > 0,
+  }
+}
+
+const UNIVERSAL_PHASE78_NON_BLOCKING_ISSUE_KEYS = new Set<string>([
+  'phase7_replay_synchronized',
+  'phase7_same_kilometre_states_consistent',
+  'phase7_gap_changes_distance_bounded',
+  'phase7_opening_breakaway_lineage_stable',
+  'phase7_front_group_transfers_physically_valid',
+  'phase7_bridge_sequences_physically_valid',
+  'phase7_post_catch_state_stable',
+])
+
+/**
+ * Phase 7/8 acceptance keys that are replay-only and therefore may be accepted
+ * when the replay Progress Guarantee is active. Phase 8 persistence, fatigue,
+ * coverage, classification, and other sporting-integrity checks are never
+ * downgraded here.
+ */
+export function isUniversalPhase78IssueNonBlocking(issue: string): boolean {
+  return UNIVERSAL_PHASE78_NON_BLOCKING_ISSUE_KEYS.has(issue)
+}
+
 export function applyUniversalReplayProgressGuarantee(
   summary: UniversalReplaySynchronizationSummary,
 ): UniversalReplaySynchronizationSummary {
