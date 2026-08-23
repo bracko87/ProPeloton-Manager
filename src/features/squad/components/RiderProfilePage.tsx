@@ -314,6 +314,28 @@ type RiderTrainingSessionPoint = {
   participated: boolean
 }
 
+type RiderRecentActivityDay = {
+  date: string | null
+  label: string
+  source: string
+  activityType: string
+  intensity: string
+  fatigueLoad: number
+  recoveryBonus: number
+  focus: string
+  developmentValue: number
+  participated: boolean
+  raceId: string | null
+  raceName: string | null
+  stageName: string | null
+  stageNumber: number | null
+  campName: string | null
+  campCity: string | null
+  campCountryCode: string | null
+  campType: string | null
+  campEndDate: string | null
+}
+
 type ActiveTransferListing = {
   id: string
   rider_id: string
@@ -3227,94 +3249,184 @@ function RenewalFeedbackBox({
   return <div className={`rounded-lg border px-4 py-3 text-sm ${classes}`}>{message}</div>
 }
 
-function TrainingTrendChart({
-  sessions,
+function getRiderActivityBadge(activity: RiderRecentActivityDay): {
+  label: string
+  className: string
+} {
+  switch (activity.source) {
+    case 'race':
+      return {
+        label: 'Race',
+        className: 'border-blue-200 bg-blue-50 text-blue-700',
+      }
+    case 'training_camp':
+      return {
+        label: 'Training camp',
+        className: 'border-amber-200 bg-amber-50 text-amber-700',
+      }
+    case 'regular_training':
+      return {
+        label: 'Training',
+        className: 'border-emerald-200 bg-emerald-50 text-emerald-700',
+      }
+    case 'recovery':
+      return {
+        label: 'Recovery',
+        className: 'border-violet-200 bg-violet-50 text-violet-700',
+      }
+    default:
+      return {
+        label: titleCaseFromSnake(activity.activityType || activity.source || 'activity'),
+        className: 'border-slate-200 bg-slate-50 text-slate-600',
+      }
+  }
+}
+
+function getRiderActivityMainText(activity: RiderRecentActivityDay): string {
+  if (activity.source === 'race') {
+    return activity.raceName ?? 'Race participation'
+  }
+
+  if (activity.source === 'training_camp') {
+    return activity.campName ?? 'Training camp'
+  }
+
+  if (activity.source === 'regular_training') {
+    return `${formatTrainingFocusLabel(activity.focus)} training`
+  }
+
+  return titleCaseFromSnake(activity.activityType || activity.source)
+}
+
+function getRiderActivitySecondaryText(activity: RiderRecentActivityDay): string | null {
+  if (activity.source === 'race') {
+    if (activity.stageName) return activity.stageName
+    if (activity.stageNumber !== null) return `Stage ${activity.stageNumber}`
+    return 'Participated in race'
+  }
+
+  if (activity.source === 'training_camp') {
+    const parts = [
+      activity.campCity,
+      activity.campType ? `${formatTrainingFocusLabel(activity.campType)} camp` : null,
+      activity.campEndDate ? `until ${formatShortGameDate(activity.campEndDate)}` : null,
+    ].filter(Boolean)
+
+    return parts.length > 0 ? parts.join(' · ') : null
+  }
+
+  if (activity.source === 'regular_training') {
+    return `${formatTrainingIntensityLabel(
+      (['light', 'normal', 'hard'].includes(activity.intensity)
+        ? activity.intensity
+        : 'normal') as 'light' | 'normal' | 'hard'
+    )} intensity`
+  }
+
+  return null
+}
+
+function RiderRecentActivityList({
+  activities,
 }: {
-  sessions: RiderTrainingSessionPoint[]
+  activities: RiderRecentActivityDay[]
 }) {
-  const chartWidth = 760
-  const chartHeight = 280
-  const leftPad = 48
-  const rightPad = 18
-  const topPad = 18
-  const bottomPad = 40
-
-  const safeSessions = sessions.slice(-5)
-  const maxValue = Math.max(0.02, ...safeSessions.map((s) => s.value || 0))
-  const midValue = maxValue / 2
-  const innerWidth = chartWidth - leftPad - rightPad
-  const innerHeight = chartHeight - topPad - bottomPad
-  const baselineY = chartHeight - bottomPad
-
-  const points = safeSessions.map((session, index) => {
-    const x =
-      leftPad +
-      (safeSessions.length === 1
-        ? innerWidth / 2
-        : (index / Math.max(1, safeSessions.length - 1)) * innerWidth)
-
-    const y = topPad + innerHeight - ((session.value || 0) / maxValue) * innerHeight
-    return { ...session, x, y }
-  })
-
-  const linePath = points.map((p, index) => `${index === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ')
-  const areaPath = points.length
-    ? `${linePath} L ${points[points.length - 1].x} ${baselineY} L ${points[0].x} ${baselineY} Z`
-    : ''
-
-  const guides = [
-    { value: maxValue, y: topPad },
-    { value: midValue, y: topPad + innerHeight / 2 },
-    { value: 0, y: baselineY },
-  ]
+  const rows = activities.slice(0, 5)
 
   return (
-    <svg viewBox={`0 0 ${chartWidth} ${chartHeight}`} className="h-[280px] w-full">
-      <line
-        x1={leftPad}
-        y1={topPad}
-        x2={leftPad}
-        y2={baselineY}
-        stroke="rgba(148,163,184,0.35)"
-        strokeWidth="1"
-      />
-      <line
-        x1={leftPad}
-        y1={baselineY}
-        x2={chartWidth - rightPad}
-        y2={baselineY}
-        stroke="rgba(148,163,184,0.35)"
-        strokeWidth="1"
-      />
+    <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+      <div className="hidden grid-cols-[100px_130px_minmax(220px,1fr)_120px_130px] gap-3 border-b border-slate-200 bg-slate-50 px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-slate-500 md:grid">
+        <div>Date</div>
+        <div>Activity</div>
+        <div>Details</div>
+        <div>Intensity</div>
+        <div>Development</div>
+      </div>
 
-      {guides.map((guide, index) => (
-        <g key={index}>
-          <line
-            x1={leftPad}
-            y1={guide.y}
-            x2={chartWidth - rightPad}
-            y2={guide.y}
-            stroke="rgba(148,163,184,0.16)"
-            strokeWidth="1"
-          />
-          <text x={leftPad - 8} y={guide.y + 4} textAnchor="end" fontSize="11" fill="#64748b">
-            {formatChartAxisLabel(guide.value)}
-          </text>
-        </g>
-      ))}
+      <div className="divide-y divide-slate-200">
+        {rows.map((activity, index) => {
+          const badge = getRiderActivityBadge(activity)
+          const mainText = getRiderActivityMainText(activity)
+          const secondaryText = getRiderActivitySecondaryText(activity)
+          const isTraining =
+            activity.source === 'regular_training' || activity.source === 'training_camp'
 
-      {points.length > 0 ? <path d={areaPath} fill="rgba(234,179,8,0.18)" /> : null}
-      {points.length > 0 ? <path d={linePath} fill="none" stroke="#d4a106" strokeWidth="3" /> : null}
+          return (
+            <div
+              key={`${activity.date ?? 'unknown'}-${activity.source}-${index}`}
+              className="grid gap-3 px-4 py-3 md:grid-cols-[100px_130px_minmax(220px,1fr)_120px_130px] md:items-center"
+            >
+              <div>
+                <div className="text-xs font-semibold uppercase tracking-wide text-slate-400 md:hidden">
+                  Date
+                </div>
+                <div className="text-sm font-medium text-slate-800">
+                  {activity.date ? formatShortGameDate(activity.date) : activity.label}
+                </div>
+              </div>
 
-      {points.map((p) => (
-        <g key={`${p.label}-${p.date ?? ''}`}>
-          <circle cx={p.x} cy={p.y} r="4" fill="#d4a106" />
-          <text x={p.x} y={chartHeight - 12} textAnchor="middle" fontSize="11" fill="#64748b">
-            {p.label}
-          </text>
-        </g>
-      ))}
-    </svg>
+              <div>
+                <div className="text-xs font-semibold uppercase tracking-wide text-slate-400 md:hidden">
+                  Activity
+                </div>
+                <span
+                  className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold ${badge.className}`}
+                >
+                  {badge.label}
+                </span>
+              </div>
+
+              <div className="min-w-0">
+                <div className="text-xs font-semibold uppercase tracking-wide text-slate-400 md:hidden">
+                  Details
+                </div>
+                <div className="truncate text-sm font-semibold text-slate-900" title={mainText}>
+                  {mainText}
+                </div>
+                {secondaryText ? (
+                  <div
+                    className="mt-0.5 truncate text-xs text-slate-500"
+                    title={secondaryText}
+                  >
+                    {secondaryText}
+                  </div>
+                ) : null}
+              </div>
+
+              <div>
+                <div className="text-xs font-semibold uppercase tracking-wide text-slate-400 md:hidden">
+                  Intensity
+                </div>
+                <div className="text-sm text-slate-700">
+                  {isTraining
+                    ? formatTrainingIntensityLabel(
+                        (['light', 'normal', 'hard'].includes(activity.intensity)
+                          ? activity.intensity
+                          : 'normal') as 'light' | 'normal' | 'hard'
+                      )
+                    : '—'}
+                </div>
+              </div>
+
+              <div>
+                <div className="text-xs font-semibold uppercase tracking-wide text-slate-400 md:hidden">
+                  Development
+                </div>
+                <div className="text-sm font-medium text-slate-800">
+                  {isTraining ? formatChartAxisLabel(activity.developmentValue) : '—'}
+                </div>
+                {isTraining && activity.fatigueLoad !== 0 ? (
+                  <div className="mt-0.5 text-xs text-slate-500">
+                    Fatigue {activity.fatigueLoad > 0 ? '+' : ''}
+                    {activity.fatigueLoad}
+                  </div>
+                ) : null}
+              </div>
+            </div>
+          )
+        })}
+      </div>
+    </div>
   )
 }
 
@@ -4854,7 +4966,9 @@ export default function RiderProfilePage({
   const [recentTrainingSessions, setRecentTrainingSessions] = useState<RiderTrainingSessionPoint[]>(
     []
   )
+  const [recentActivityDays, setRecentActivityDays] = useState<RiderRecentActivityDay[]>([])
   const [trainingSessionsLoading, setTrainingSessionsLoading] = useState(false)
+  const [trainingActivityError, setTrainingActivityError] = useState<string | null>(null)
   const [compareClubId, setCompareClubId] = useState<string | null>(null)
 
   const regularDefaultsByClubId = useMemo(
@@ -5228,7 +5342,9 @@ export default function RiderProfilePage({
       setImageSaveMessage(null)
       setCurrentSeasonNumber(null)
       setRecentTrainingSessions([])
+      setRecentActivityDays([])
       setTrainingSessionsLoading(false)
+      setTrainingActivityError(null)
       setCompareClubId(null)
 
       try {
@@ -5543,17 +5659,20 @@ export default function RiderProfilePage({
   useEffect(() => {
     let mounted = true
 
-    async function loadRecentTrainingSessions() {
+    async function loadRecentTrainingActivity() {
       if (!focusedTrainingRider?.rider_id) {
         setRecentTrainingSessions([])
+        setRecentActivityDays([])
+        setTrainingActivityError(null)
         setTrainingSessionsLoading(false)
         return
       }
 
       setTrainingSessionsLoading(true)
+      setTrainingActivityError(null)
 
       try {
-        const { data, error } = await supabase.rpc('get_rider_recent_training_sessions', {
+        const { data, error } = await supabase.rpc('get_rider_recent_activity_v1', {
           p_rider_id: focusedTrainingRider.rider_id,
           p_limit: 20,
         })
@@ -5563,39 +5682,81 @@ export default function RiderProfilePage({
 
         const rows = Array.isArray(data) ? data : []
 
-        const normalized: RiderTrainingSessionPoint[] = rows
-          .map((row: any, index: number) => ({
+        const normalizedActivities: RiderRecentActivityDay[] = rows.map(
+          (row: any, index: number) => ({
+            date: row.activity_date ?? null,
             label: row.activity_date
-              ? new Date(row.activity_date).toLocaleDateString('en-GB', {
+              ? new Date(`${row.activity_date}T00:00:00Z`).toLocaleDateString('en-GB', {
                   day: '2-digit',
                   month: '2-digit',
+                  timeZone: 'UTC',
                 })
               : `Day ${index + 1}`,
-            value: Number(row.chart_value ?? 0),
-            focus: String(row.focus_code ?? 'general'),
+            source: String(row.source ?? row.activity_type ?? 'activity'),
+            activityType: String(row.activity_type ?? row.source ?? 'activity'),
             intensity: String(row.intensity ?? 'normal'),
-            source: String(row.source ?? 'regular_training'),
-            date: row.activity_date ?? null,
+            fatigueLoad: Number(row.fatigue_load ?? 0),
+            recoveryBonus: Number(row.recovery_bonus ?? 0),
+            focus: String(row.focus_code ?? 'general'),
+            developmentValue: Number(row.development_value_base ?? 0),
             participated: Boolean(row.session_participated ?? true),
-          }))
-          .reverse()
+            raceId: row.race_id ? String(row.race_id) : null,
+            raceName: row.race_name ? String(row.race_name) : null,
+            stageName: row.stage_name ? String(row.stage_name) : null,
+            stageNumber:
+              row.stage_number === null || row.stage_number === undefined
+                ? null
+                : Number(row.stage_number),
+            campName: row.camp_name ? String(row.camp_name) : null,
+            campCity: row.camp_city ? String(row.camp_city) : null,
+            campCountryCode: row.camp_country_code ? String(row.camp_country_code) : null,
+            campType: row.camp_type ? String(row.camp_type) : null,
+            campEndDate: row.camp_end_date ? String(row.camp_end_date) : null,
+          })
+        )
 
-        setRecentTrainingSessions(normalized)
-      } catch {
+        setRecentActivityDays(normalizedActivities.slice(0, 5))
+
+        const normalizedTrainingSessions: RiderTrainingSessionPoint[] =
+          normalizedActivities
+            .filter(
+              (activity) =>
+                activity.source === 'regular_training' ||
+                activity.source === 'training_camp'
+            )
+            .map((activity) => ({
+              label: activity.label,
+              value: activity.developmentValue,
+              focus: activity.focus,
+              intensity: activity.intensity,
+              source: activity.source,
+              date: activity.date,
+              participated: activity.participated,
+            }))
+            .reverse()
+
+        setRecentTrainingSessions(normalizedTrainingSessions)
+      } catch (error: any) {
         if (!mounted) return
+        console.warn('Recent rider activity could not be loaded:', error)
         setRecentTrainingSessions([])
+        setRecentActivityDays([])
+        setTrainingActivityError(
+          error?.message ?? 'Recent rider activity could not be loaded.'
+        )
       } finally {
         if (!mounted) return
         setTrainingSessionsLoading(false)
       }
     }
 
-    void loadRecentTrainingSessions()
+    void loadRecentTrainingActivity()
 
     return () => {
       mounted = false
     }
   }, [focusedTrainingRider?.rider_id])
+
 
   useEffect(() => {
     let mounted = true
@@ -6840,109 +7001,168 @@ export default function RiderProfilePage({
                       ) : null}
                     </div>
 
-                    <div className="grid gap-5 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
-                      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-1">
-                        <label className="block">
-                          <span className="mb-1 block text-sm font-medium text-gray-700">
-                            Focus
-                          </span>
-                          <select
-                            value={focusedTrainingDraft.focus_code}
-                            onChange={(event) =>
-                              updateRegularPlanDraft(focusedTrainingRider, {
-                                focus_code: event.target.value,
-                              })
-                            }
-                            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500"
-                          >
-                            {REGULAR_TRAINING_FOCUS_OPTIONS.map((option) => (
-                              <option key={option} value={option}>
-                                {formatTrainingFocusLabel(option)}
-                              </option>
-                            ))}
-                          </select>
-                        </label>
+                    <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
+                      <div className="self-start overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+                        <div className="border-b border-slate-200 bg-slate-50 px-5 py-4">
+                          <div className="flex items-start justify-between gap-4">
+                            <div>
+                              <div className="text-base font-semibold text-slate-900">
+                                Regular training settings
+                              </div>
+                              <div className="mt-1 text-xs leading-5 text-slate-500">
+                                Rider-specific setup used whenever this rider is available for normal training.
+                              </div>
+                            </div>
+                            <span className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold ${
+                              focusedTrainingDraft.is_active
+                                ? 'bg-blue-100 text-blue-700'
+                                : 'bg-slate-200 text-slate-600'
+                            }`}>
+                              {focusedTrainingDraft.is_active ? 'Override on' : 'Team default'}
+                            </span>
+                          </div>
+                        </div>
 
-                        <label className="block">
-                          <span className="mb-1 block text-sm font-medium text-gray-700">
-                            Intensity
-                          </span>
-                          <select
-                            value={focusedTrainingDraft.intensity}
-                            onChange={(event) =>
-                              updateRegularPlanDraft(focusedTrainingRider, {
-                                intensity: event.target.value as 'light' | 'normal' | 'hard',
-                              })
-                            }
-                            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500"
-                          >
-                            {REGULAR_TRAINING_INTENSITY_OPTIONS.map((option) => (
-                              <option key={option} value={option}>
-                                {formatTrainingIntensityLabel(option)}
-                              </option>
-                            ))}
-                          </select>
-                        </label>
+                        <div className="p-5">
+                          <div className="grid gap-4 sm:grid-cols-2">
+                            <label className="block">
+                              <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+                                Training focus
+                              </span>
+                              <select
+                                value={focusedTrainingDraft.focus_code}
+                                onChange={(event) =>
+                                  updateRegularPlanDraft(focusedTrainingRider, {
+                                    focus_code: event.target.value,
+                                  })
+                                }
+                                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm font-medium text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                              >
+                                {REGULAR_TRAINING_FOCUS_OPTIONS.map((option) => (
+                                  <option key={option} value={option}>
+                                    {formatTrainingFocusLabel(option)}
+                                  </option>
+                                ))}
+                              </select>
+                            </label>
 
-                        <label className="flex items-center gap-2 text-sm text-gray-700">
-                          <input
-                            type="checkbox"
-                            checked={focusedTrainingDraft.is_active}
-                            onChange={(event) =>
-                              updateRegularPlanDraft(focusedTrainingRider, {
-                                is_active: event.target.checked,
-                              })
-                            }
-                          />
-                          Override active
-                        </label>
+                            <label className="block">
+                              <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+                                Intensity
+                              </span>
+                              <select
+                                value={focusedTrainingDraft.intensity}
+                                onChange={(event) =>
+                                  updateRegularPlanDraft(focusedTrainingRider, {
+                                    intensity: event.target.value as 'light' | 'normal' | 'hard',
+                                  })
+                                }
+                                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm font-medium text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                              >
+                                {REGULAR_TRAINING_INTENSITY_OPTIONS.map((option) => (
+                                  <option key={option} value={option}>
+                                    {formatTrainingIntensityLabel(option)}
+                                  </option>
+                                ))}
+                              </select>
+                            </label>
+                          </div>
 
-                        <label className="flex items-center gap-2 text-sm text-gray-700">
-                          <input
-                            type="checkbox"
-                            checked={focusedTrainingDraft.auto_when_free}
-                            onChange={(event) =>
-                              updateRegularPlanDraft(focusedTrainingRider, {
-                                auto_when_free: event.target.checked,
-                              })
-                            }
-                          />
-                          Auto when free
-                        </label>
+                          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                            <label className={`flex cursor-pointer items-start gap-3 rounded-lg border p-3.5 transition ${
+                              focusedTrainingDraft.is_active
+                                ? 'border-blue-200 bg-blue-50/70'
+                                : 'border-slate-200 bg-slate-50'
+                            }`}>
+                              <input
+                                type="checkbox"
+                                checked={focusedTrainingDraft.is_active}
+                                onChange={(event) =>
+                                  updateRegularPlanDraft(focusedTrainingRider, {
+                                    is_active: event.target.checked,
+                                  })
+                                }
+                                className="mt-0.5 h-4 w-4 shrink-0 accent-blue-600"
+                              />
+                              <span>
+                                <span className="block text-sm font-semibold text-slate-900">
+                                  Override active
+                                </span>
+                                <span className="mt-0.5 block text-xs leading-5 text-slate-500">
+                                  Use these rider settings instead of the team training default.
+                                </span>
+                              </span>
+                            </label>
 
-                        <div className="pt-1">
-                          <button
-                            type="button"
-                            onClick={() => void saveRegularTrainingPlan(focusedTrainingRider)}
-                            disabled={regularSavingRiderId === focusedTrainingRider.rider_id}
-                            className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-300"
-                          >
-                            {regularSavingRiderId === focusedTrainingRider.rider_id
-                              ? 'Saving…'
-                              : focusedHasOverride
-                                ? 'Save Override'
-                                : 'Create Override'}
-                          </button>
+                            <label className={`flex cursor-pointer items-start gap-3 rounded-lg border p-3.5 transition ${
+                              focusedTrainingDraft.auto_when_free
+                                ? 'border-emerald-200 bg-emerald-50/70'
+                                : 'border-slate-200 bg-slate-50'
+                            }`}>
+                              <input
+                                type="checkbox"
+                                checked={focusedTrainingDraft.auto_when_free}
+                                onChange={(event) =>
+                                  updateRegularPlanDraft(focusedTrainingRider, {
+                                    auto_when_free: event.target.checked,
+                                  })
+                                }
+                                className="mt-0.5 h-4 w-4 shrink-0 accent-emerald-600"
+                              />
+                              <span>
+                                <span className="block text-sm font-semibold text-slate-900">
+                                  Auto when free
+                                </span>
+                                <span className="mt-0.5 block text-xs leading-5 text-slate-500">
+                                  Apply automatically only when the rider is not racing or at camp.
+                                </span>
+                              </span>
+                            </label>
+                          </div>
+
+                          <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-4">
+                            <div className="text-xs leading-5 text-slate-500">
+                              Changes affect regular training only.
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => void saveRegularTrainingPlan(focusedTrainingRider)}
+                              disabled={regularSavingRiderId === focusedTrainingRider.rider_id}
+                              className="min-w-[150px] rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-300"
+                            >
+                              {regularSavingRiderId === focusedTrainingRider.rider_id
+                                ? 'Saving…'
+                                : focusedHasOverride
+                                  ? 'Save Override'
+                                  : 'Create Override'}
+                            </button>
+                          </div>
                         </div>
                       </div>
 
                       <div className="rounded-lg bg-white p-5 shadow">
                         <div className="text-lg font-semibold text-slate-900">
-                          Training process in last 5 training days
+                          Rider activity in last 5 recorded days
                         </div>
                         <div className="mt-1 text-sm text-slate-500">
-                          Real rider activity from backend
+                          Training, training camps and race participation from the backend
                         </div>
 
                         {trainingSessionsLoading ? (
-                          <div className="mt-6 text-sm text-slate-500">Loading training sessions…</div>
-                        ) : recentTrainingSessions.length === 0 ? (
+                          <div className="mt-6 text-sm text-slate-500">
+                            Loading recent rider activity…
+                          </div>
+                        ) : trainingActivityError ? (
+                          <div className="mt-6 rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+                            {trainingActivityError}
+                          </div>
+                        ) : recentActivityDays.length === 0 ? (
                           <div className="mt-6 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-500">
-                            No recorded training sessions yet.
+                            No recorded rider activity is available yet.
                           </div>
                         ) : (
-                          <div className="mt-5 rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                            <TrainingTrendChart sessions={recentTrainingSessions} />
+                          <div className="mt-5">
+                            <RiderRecentActivityList activities={recentActivityDays} />
                           </div>
                         )}
                       </div>
@@ -6956,12 +7176,13 @@ export default function RiderProfilePage({
                       </div>
 
                       <div className="mt-4 text-sm leading-relaxed text-slate-600">
-                        The chart reads the last 5 backend training entries returned by
+                        The activity panel reads the rider&apos;s latest backend activity through
                         <code className="mx-1 rounded bg-slate-200 px-1 py-0.5 text-xs">
-                          get_rider_recent_training_sessions
+                          get_rider_recent_activity_v1
                         </code>
-                        . Left-side axis labels show the backend training value scale. Focus labels
-                        above each point were removed to keep the chart cleaner.
+                        . Training days show focus, intensity, development value and fatigue load.
+                        Race days show the race and stage instead of incorrectly appearing as missed
+                        training. Training-camp days show the camp and location.
                       </div>
                     </div>
                   </div>

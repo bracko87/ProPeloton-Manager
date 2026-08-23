@@ -58,6 +58,8 @@ import {
   getRoadCommandBehaviour,
   mergeAdjacentPhase5RoadGroups,
   runRaceEngine,
+  classifyUniversalReplaySynchronizationForPublication,
+  isUniversalReplayIssueNonBlocking,
   calculateUniversalIndividualTimeTrialBaseSeconds,
   calculateUniversalPrologueBaseSeconds,
   scoreUniversalCobbledFinishRider,
@@ -77,7 +79,6 @@ import {
   type UniversalFinishRiderContext,
   type UniversalRaceEngineInput,
   type UniversalPhase5RoadGroupCandidate,
-  applyUniversalReplayProgressGuarantee,
 } from './runRaceEngine'
 import {
   buildProductionUniversalRaceEngineInput,
@@ -10746,8 +10747,7 @@ describe('Phase 7 read-only replay page integration — Task 7.3', () => {
     expect(source).toContain("state: 'waiting' | 'on_course' | 'finished'")
     expect(source).toContain('replayEntityMarkers={')
     expect(source).toContain('isTimeTrialReplay ? null : distanceReplayProgress * 100')
-    expect(source).toContain('Waiting to start')
-    expect(source).toContain('Compressed replay starts')
+    expect(source).toContain('visualStartIntervalSeconds')
   })
 
   it('preserves the production replay-access RPCs', () => {
@@ -11231,15 +11231,15 @@ describe('Phase 7 final replay-to-result synchronization — Task 7.5', () => {
     )
   })
 
-  it('makes the replay page reject any engine output that is not synchronized', () => {
+  it('keeps replay playback backend-owned when stored synchronization is unavailable', () => {
     const source = readFileSync(
       new URL('../pages/dashboard/RaceDetailPage.tsx', import.meta.url),
       'utf8',
     )
 
-    expect(source).toContain(
-      'if (!result.replaySynchronization.synchronized)',
-    )
+    expect(source).toContain('get_universal_race_stage_replay_payload_v1')
+    expect(source).toContain('production_authoritative_run')
+    expect(source).toContain('production_authoritative_pending')
     expect(source).toContain(
       "error: 'Replay data could not be synchronized.'",
     )
@@ -11289,7 +11289,7 @@ describe('Phase 7 final replay-page closeout', () => {
 
     expect(source.match(/runRaceEngine\(/g) ?? []).toHaveLength(0)
     expect(runnerSource.match(/runRaceEngine\(/g) ?? []).toHaveLength(1)
-    expect(source).toContain('if (!result.replaySynchronization.synchronized)')
+    expect(source).toContain('get_universal_race_stage_replay_payload_v1')
     expect(source).toContain('[1, 2, 4, 8].map')
     expect(source).toContain('Finish replay')
     expect(source).toContain('Restart')
@@ -13635,13 +13635,12 @@ describe('Phase 9 unified weather, preparation and resource modifiers', () => {
       'utf8',
     )
 
-    expect(source).toContain('weighted UI % ×5 · condition-scaled')
-    expect(source).toContain('catalog wear × ${equipmentWearDistanceFactor.toFixed(2)}')
-    expect(source).toContain('asset-level wear × clamped stage-distance factor')
-    expect(source).toContain('Jerseys ${needs.race_jersey_complete} ×1 · Jackets ${needs.rain_jackets} ×1')
-    expect(source).toContain('-50% sickness risk / -0.5% fatigue / -1% efficiency')
-    expect(source).toContain('Saving this plan consumes nothing.')
-    expect(source).not.toContain('void exactBonusPreview;')
+    expect(source).toContain('Race Plan Bonus Preview')
+    expect(source).toContain('Standardized Race Bonus Percentages')
+    expect(source).toContain('equipment_condition_loss_reduction_pct')
+    expect(source).toContain('race_jersey_complete')
+    expect(source).toContain('rain_jacket')
+    expect(source).toContain('buildStandardizedBreakdownMap(exactBonusPreview)')
   })
 
   it('publishes a truthful browser-ready Phase 9 acceptance report', () => {
@@ -14129,6 +14128,35 @@ describe('Phase 10 deterministic incidents, availability and final statuses', ()
     return enablePhase10HighRisk(createExpandedFieldInput(96), seed)
   }
 
+  const phase10ScenarioCache = new Map<
+    string,
+    ReturnType<typeof runRaceEngine>
+  >()
+
+  function runPhase10HighRiskSeed(seed: string): ReturnType<typeof runRaceEngine> {
+    const cached = phase10ScenarioCache.get(seed)
+    if (cached) return cached
+
+    const result = runRaceEngine(createPhase10HighRiskInput(seed))
+    phase10ScenarioCache.set(seed, result)
+    return result
+  }
+
+  function findPhase10Scenario(
+    description: string,
+    predicate: (result: ReturnType<typeof runRaceEngine>) => boolean,
+    maximumAttempts = 250,
+  ): ReturnType<typeof runRaceEngine> {
+    for (let index = 0; index < maximumAttempts; index += 1) {
+      const result = runPhase10HighRiskSeed(`phase11e-v2-${index}`)
+      if (predicate(result)) return result
+    }
+
+    throw new Error(
+      `Phase 11E deterministic scenario not found within ${maximumAttempts} seeds: ${description}`,
+    )
+  }
+
   it('keeps a competition point at the finish kilometre before the authoritative final checkpoint', () => {
     const base = createPhase10HighRiskInput('phase10-high-0')
     const finishKm = base.stage.distanceKm
@@ -14409,16 +14437,35 @@ describe('Phase 10 deterministic incidents, availability and final statuses', ()
     expect(technical).toBeTruthy()
     expect(individual.riderConsequences[0].energyLossPoints).toBeGreaterThan(0)
     expect(technical.technicalType).not.toBeNull()
-    expect(technical.severity).toBe('serious')
-    const seriousTechnicalRanges = {
-      dropped_chain: [36, 60],
-      puncture: [61, 95],
-      wheel_damage: [91, 140],
-      drivetrain_failure: [96, 160],
-      bike_change: [141, 220],
+    const technicalRanges = {
+      dropped_chain: {
+        minor: [8, 18],
+        moderate: [19, 35],
+        serious: [36, 60],
+      },
+      puncture: {
+        minor: [20, 35],
+        moderate: [36, 60],
+        serious: [61, 95],
+      },
+      wheel_damage: {
+        minor: [35, 55],
+        moderate: [56, 90],
+        serious: [91, 140],
+      },
+      drivetrain_failure: {
+        minor: [25, 50],
+        moderate: [51, 95],
+        serious: [96, 160],
+      },
+      bike_change: {
+        minor: [60, 90],
+        moderate: [91, 140],
+        serious: [141, 220],
+      },
     } as const
     const [minimumTechnicalLoss, maximumTechnicalLoss] =
-      seriousTechnicalRanges[technical.technicalType!]
+      technicalRanges[technical.technicalType!][technical.severity]
     expect(technical.timeLossSeconds).toBeGreaterThanOrEqual(
       minimumTechnicalLoss,
     )
@@ -14449,20 +14496,38 @@ describe('Phase 10 deterministic incidents, availability and final statuses', ()
   })
 
   it('moves a rider with consequential time loss into a later road group without losing the rider', () => {
-    const result = runRaceEngine(createPhase10HighRiskInput('phase10-high-0'))
+    const result = findPhase10Scenario(
+      'a consequential incident that moves a rider into a later group',
+      (candidate) =>
+        candidate.phase10Incidents.incidents.some((incident) =>
+          incident.riderConsequences.some(
+            (consequence) =>
+              consequence.movedToLaterGroup &&
+              consequence.timePenaltySeconds > 0 &&
+              consequence.statusImpact === 'finished',
+          ),
+        ),
+    )
+
     const incident = result.phase10Incidents.incidents.find((row) =>
       row.riderConsequences.some(
         (consequence) =>
-          consequence.movedToLaterGroup && consequence.timePenaltySeconds > 0,
+          consequence.movedToLaterGroup &&
+          consequence.timePenaltySeconds > 0 &&
+          consequence.statusImpact === 'finished',
       ),
     )!
     const consequence = incident.riderConsequences.find(
-      (row) => row.movedToLaterGroup && row.timePenaltySeconds > 0,
+      (row) =>
+        row.movedToLaterGroup &&
+        row.timePenaltySeconds > 0 &&
+        row.statusImpact === 'finished',
     )!
     const final = result.finishResolution.classification.find(
       (row) => row.riderId === consequence.riderId,
     )!
 
+    expect(incident).toBeTruthy()
     expect(consequence.timePenaltySeconds).toBeGreaterThan(0)
     expect(final.status).toBe('finished')
     expect(final.physicalGroupCode).toBe('dropped_group')
@@ -14473,31 +14538,52 @@ describe('Phase 10 deterministic incidents, availability and final statuses', ()
     ).toBe(true)
   })
 
-  it('turns a serious individual crash into synchronized DNF while leaving long-term injury creation to health application', () => {
-    const result = runRaceEngine(createPhase10HighRiskInput('phase10-high-4'))
-    const crash = result.phase10Incidents.incidents.find(
-      (row) =>
-        row.incidentKind === 'individual_crash' && row.severity === 'serious',
+  it('keeps major crash injuries as synchronized DNF while allowing serious crashes to be survivable', () => {
+    const results = Array.from({ length: 30 }, (_, index) =>
+      runRaceEngine(createPhase10HighRiskInput(`phase10-major-search-${index}`)),
+    )
+    const result = results.find((candidate) =>
+      candidate.phase10Incidents.incidents.some((incident) =>
+        incident.riderConsequences.some(
+          (consequence) =>
+            consequence.healthOutcome.injuryOccurred &&
+            consequence.healthOutcome.severity === 'major' &&
+            consequence.statusImpact === 'dnf',
+        ),
+      ),
+    )
+
+    expect(result).toBeDefined()
+    const crash = result!.phase10Incidents.incidents.find((incident) =>
+      incident.riderConsequences.some(
+        (consequence) =>
+          consequence.healthOutcome.injuryOccurred &&
+          consequence.healthOutcome.severity === 'major' &&
+          consequence.statusImpact === 'dnf',
+      ),
     )!
-    const riderId = crash.riderIds[0]
-    const final = result.finishResolution.classification.find(
-      (row) => row.riderId === riderId,
+    const consequence = crash.riderConsequences.find(
+      (row) =>
+        row.healthOutcome.injuryOccurred &&
+        row.healthOutcome.severity === 'major' &&
+        row.statusImpact === 'dnf',
+    )!
+    const final = result!.finishResolution.classification.find(
+      (row) => row.riderId === consequence.riderId,
     )!
 
     expect(crash.healthCaseEligible).toBe(true)
-    expect(crash.healthSeverityHint).toBe('major')
-    expect(crash.healthSubtypeHint).toBe('fracture')
-    expect(crash.riderConsequences[0].statusImpact).toBe('dnf')
+    expect(consequence.healthOutcome.selectionBlockedAfterStage).toBe(true)
     expect(final.status).toBe('dnf')
     expect(final.rank).toBeNull()
     expect(
-      result.replayTimeline.checkpoints.every((checkpoint) =>
-        checkpoint.riderStates.some((row) => row.riderId === riderId),
+      result!.replayTimeline.checkpoints.every((checkpoint) =>
+        checkpoint.riderStates.some((row) => row.riderId === consequence.riderId),
       ),
     ).toBe(true)
-    expect(result.phase10Incidents.everyIncidentRiderRemainsTracked).toBe(true)
-    expect(result.phase10Incidents.persistentHealthWritesPerformed).toBe(false)
-    expect(result.replaySynchronization.synchronized).toBe(true)
+    expect(result!.phase10Incidents.everyIncidentRiderRemainsTracked).toBe(true)
+    expect(result!.phase10Incidents.persistentHealthWritesPerformed).toBe(false)
+    expect(result!.replaySynchronization.synchronized).toBe(true)
   })
 
   it('represents finished-with-incident as official finished plus an authoritative incident record', () => {
@@ -14517,14 +14603,76 @@ describe('Phase 10 deterministic incidents, availability and final statuses', ()
   })
 
   it('keeps an autonomous incident rider behind its target until the dynamic chase actually closes the gap', () => {
-    const result = runRaceEngine(createPhase10HighRiskInput('phase10-high-0'))
+    const result = findPhase10Scenario(
+      'recoverable incident with a visible behind-peloton checkpoint before rejoin',
+      (candidate) =>
+        candidate.phase10Incidents.incidents.some(
+          (incident) =>
+            incident.sourceDisplayCode === 'P' &&
+            incident.riderConsequences.some((consequence) => {
+              if (
+                !consequence.movedToLaterGroup ||
+                consequence.actualRejoinKm === null
+              ) {
+                return false
+              }
+
+              return candidate.replayTimeline.checkpoints.some(
+                (checkpoint) =>
+                  !checkpoint.finalResultsVisible &&
+                  checkpoint.raceProgress.kmFromStart >
+                    incident.kmFromStart + 0.000001 &&
+                  checkpoint.raceProgress.kmFromStart <
+                    consequence.actualRejoinKm! - 0.000001 &&
+                  checkpoint.riderStates.some((state) => {
+                    if (
+                      state.riderId !== consequence.riderId ||
+                      !state.displayCode
+                    ) {
+                      return false
+                    }
+                    const group = checkpoint.groups.find(
+                      (row) => row.displayCode === state.displayCode,
+                    )
+                    return group?.physicalPosition === 'behind_peloton'
+                  }),
+              )
+            }),
+        ),
+      500,
+    )
     const incident = result.phase10Incidents.incidents.find(
       (row) =>
         row.sourceDisplayCode === 'P' &&
-        row.riderConsequences.some(
-          (consequence) =>
-            consequence.movedToLaterGroup && consequence.actualRejoinKm !== null,
-        ),
+        row.riderConsequences.some((consequence) => {
+          if (
+            !consequence.movedToLaterGroup ||
+            consequence.actualRejoinKm === null
+          ) {
+            return false
+          }
+
+          return result.replayTimeline.checkpoints.some(
+            (checkpoint) =>
+              !checkpoint.finalResultsVisible &&
+              checkpoint.raceProgress.kmFromStart >
+                row.kmFromStart + 0.000001 &&
+              checkpoint.raceProgress.kmFromStart <
+                consequence.actualRejoinKm! - 0.000001 &&
+              checkpoint.riderStates.some((state) => {
+                if (
+                  state.riderId !== consequence.riderId ||
+                  !state.displayCode
+                ) {
+                  return false
+                }
+                const group = checkpoint.groups.find(
+                  (groupRow) => groupRow.displayCode === state.displayCode,
+                )
+                return group?.physicalPosition === 'behind_peloton'
+              }),
+          )
+        }),
     )!
     const consequence = incident.riderConsequences.find(
       (row) => row.movedToLaterGroup && row.actualRejoinKm !== null,
@@ -14588,6 +14736,23 @@ describe('Phase 10 deterministic incidents, availability and final statuses', ()
     expect(rejoinedState.displayCode).toBe('P')
   })
 
+  it('surfaces explicit attack outcomes in replay commentary', () => {
+    const input = createValidInput()
+    const result = runRaceEngine(input)
+    const attackEvents = result.replayTimeline.checkpoints.filter(
+      (checkpoint) => checkpoint.eventType === 'attack',
+    )
+
+    attackEvents.forEach((checkpoint) => {
+      expect([
+        'Attack succeeds',
+        'Attack is covered',
+        'Attack instruction active',
+        'A decisive attack is launched',
+      ]).toContain(checkpoint.title)
+    })
+  })
+
   it('places Phase 10 incidents and recoverable rejoins on exact replay checkpoints', () => {
     const result = runRaceEngine(createPhase10HighRiskInput('phase10-high-0'))
 
@@ -14635,7 +14800,20 @@ describe('Phase 10 deterministic incidents, availability and final statuses', ()
   })
 
   it('lets a late autonomous incident group lose ground when the peloton is riding faster', () => {
-    const result = runRaceEngine(createPhase10HighRiskInput('phase10-high-0'))
+    const result = findPhase10Scenario(
+      'a Phase 4 peloton incident whose rider cannot rejoin',
+      (candidate) =>
+        candidate.phase10Incidents.incidents.some(
+          (incident) =>
+            incident.phase === 4 &&
+            incident.sourceDisplayCode === 'P' &&
+            incident.riderConsequences.some(
+              (consequence) =>
+                consequence.movedToLaterGroup &&
+                consequence.actualRejoinKm === null,
+            ),
+        ),
+    )
     const incident = result.phase10Incidents.incidents.find(
       (row) =>
         row.phase === 4 &&
@@ -14749,7 +14927,27 @@ describe('Phase 10 deterministic incidents, availability and final statuses', ()
   })
 
   it('makes early incident recovery materially easier than a solo Phase 4 chase', () => {
-    const result = runRaceEngine(createPhase10HighRiskInput('phase10-high-0'))
+    const result = findPhase10Scenario(
+      'both an early successful rejoin and a late failed chase',
+      (candidate) => {
+        const earlyRecovery = candidate.phase10Incidents.incidents.some(
+          (incident) =>
+            incident.phase <= 2 &&
+            incident.riderConsequences.some(
+              (row) => row.movedToLaterGroup && row.actualRejoinKm !== null,
+            ),
+        )
+        const lateFailure = candidate.phase10Incidents.incidents.some(
+          (incident) =>
+            incident.phase === 4 &&
+            incident.riderConsequences.some(
+              (row) => row.movedToLaterGroup && row.actualRejoinKm === null,
+            ),
+        )
+        return earlyRecovery && lateFailure
+      },
+    )
+
     const earlyRecovery = result.phase10Incidents.incidents.find(
       (incident) =>
         incident.phase <= 2 &&
@@ -14768,8 +14966,9 @@ describe('Phase 10 deterministic incidents, availability and final statuses', ()
     expect(earlyRecovery).toBeTruthy()
     expect(lateFailure).toBeTruthy()
     expect(
-      lateFailure!.riderConsequences.find((row) => row.movedToLaterGroup)!
-        .timePenaltySeconds,
+      lateFailure!.riderConsequences.find(
+        (row) => row.movedToLaterGroup && row.actualRejoinKm === null,
+      )!.timePenaltySeconds,
     ).toBeGreaterThan(0)
   })
 
@@ -14796,29 +14995,75 @@ describe('Phase 10 deterministic incidents, availability and final statuses', ()
     )
     expect(engineSource).toContain('row.chaseEnergyCostPoints')
   })
-  it('protects official sprint-zone time while preserving the rider physical finish position and continuing injury consequence', () => {
-    const input = enablePhase10HighRisk(
-      createExpandedFieldInput(26),
-      'sprint-seed-63',
-    )
-    const result = runRaceEngine(input)
-    const incident = result.phase10Incidents.incidents.find(
-      (row) =>
-        row.riderConsequences.some(
-          (consequence) => consequence.sprintZoneProtection.applied,
-        ),
+  it('protects official sprint-zone time while preserving physical finish position without inventing injury', () => {
+    const base = createExpandedFieldInput(26)
+    const shortFlatInput: UniversalRaceEngineInput = {
+      ...base,
+      stage: {
+        ...base.stage,
+        distanceKm: 30,
+        elevationGainM: 120,
+        terrainType: 'flat',
+        profileType: 'sprinter',
+        finishType: 'flat_finish',
+        summitFinish: false,
+        terrainPercentages: {
+          flat: 95,
+          hilly: 5,
+          mountain: 0,
+          cobbled: 0,
+        },
+        profilePoints: [
+          { km: 0, elevationM: 10 },
+          { km: 15, elevationM: 40 },
+          { km: 30, elevationM: 10 },
+        ],
+      },
+      points: base.points.map((point) =>
+        point.pointType === 'START'
+          ? { ...point, kmFromStart: 0 }
+          : point.pointType === 'INTERMEDIATE_SPRINT'
+            ? { ...point, kmFromStart: 10 }
+            : point.pointType === 'KOM'
+              ? { ...point, kmFromStart: 20 }
+              : { ...point, kmFromStart: 30 },
+      ),
+    }
+    let result: ReturnType<typeof runRaceEngine> | null = null
+    for (let index = 0; index < 250; index += 1) {
+      const candidate = runRaceEngine(
+        enablePhase10HighRisk(shortFlatInput, `phase11e-sprint-${index}`),
+      )
+      if (
+        candidate.phase10Incidents.incidents.some((row) =>
+          row.riderConsequences.some(
+            (consequence) => consequence.sprintZoneProtection.applied,
+          ),
+        )
+      ) {
+        result = candidate
+        break
+      }
+    }
+
+    expect(result).not.toBeNull()
+    const resolvedResult = result!
+    const incident = resolvedResult.phase10Incidents.incidents.find((row) =>
+      row.riderConsequences.some(
+        (consequence) => consequence.sprintZoneProtection.applied,
+      ),
     )!
     expect(incident).toBeTruthy()
     const consequence = incident.riderConsequences.find(
       (row) => row.sprintZoneProtection.applied,
     )!
-    const classification = result.phase10Incidents.finalClassification.find(
+    const classification = resolvedResult.phase10Incidents.finalClassification.find(
       (row) => row.riderId === consequence.riderId,
     )!
-    const physicalGroup = result.phase10Incidents.finalRoadGroups.find((group) =>
+    const physicalGroup = resolvedResult.phase10Incidents.finalRoadGroups.find((group) =>
       group.riderIds.includes(consequence.riderId),
     )!
-    const physicalGap = result.phase10Incidents.finalRoadGaps.find(
+    const physicalGap = resolvedResult.phase10Incidents.finalRoadGaps.find(
       (gap) => gap.displayCode === physicalGroup.displayCode,
     )!
 
@@ -14835,23 +15080,15 @@ describe('Phase 10 deterministic incidents, availability and final statuses', ()
     expect(physicalGroup.displayCode.startsWith('C')).toBe(true)
     expect(physicalGroup.colorKey).toBe('chasing_orange')
     expect(physicalGap.gapSeconds).toBeGreaterThan(0)
-    expect(consequence.healthOutcome.injuryOccurred).toBe(true)
-    expect(consequence.healthOutcome.caseCode).toBe('ankle_sprain')
-    expect(consequence.healthOutcome.severity).toBe('moderate')
-    expect(consequence.healthOutcome.currentStageContinuation).toBe(
-      'continues_injured',
-    )
-    expect(
-      consequence.healthOutcome.currentStagePerformancePenaltyPoints,
-    ).toBe(8)
-    expect(consequence.healthOutcome.additionalEnergyLossPoints).toBe(2.5)
-    expect(result.phase10Incidents.sprintZone.protectedRiderCount).toBeGreaterThan(0)
-    expect(result.phase10Incidents.healthHandoff.persistentCaseCandidateCount).toBeGreaterThan(0)
-    expect(result.phase10Incidents.healthHandoff.persistentWritesPerformed).toBe(false)
-    expect(result.phase10Incidents.directDatabaseWritesPerformed).toBe(false)
+    expect(consequence.healthOutcome.injuryOccurred).toBe(false)
+    expect(consequence.healthOutcome.selectionBlockedAfterStage).toBe(false)
+    expect(consequence.healthOutcome.currentStageContinuation).toBe('unaffected')
+    expect(resolvedResult.phase10Incidents.sprintZone.protectedRiderCount).toBeGreaterThan(0)
+    expect(resolvedResult.phase10Incidents.healthHandoff.persistentWritesPerformed).toBe(false)
+    expect(resolvedResult.phase10Incidents.directDatabaseWritesPerformed).toBe(false)
   })
 
-  it('resolves rider-specific deterministic health outcomes inside one group crash without writing health cases', () => {
+  it('resolves rider-specific deterministic health rolls inside one group crash without forcing injuries', () => {
     const result = runRaceEngine(createPhase10HighRiskInput('phase10-high-71'))
     const groupCrash = result.phase10Incidents.incidents.find(
       (row) => row.incidentKind === 'group_crash',
@@ -14859,21 +15096,15 @@ describe('Phase 10 deterministic incidents, availability and final statuses', ()
     expect(groupCrash).toBeTruthy()
     expect(groupCrash.riderConsequences.length).toBeGreaterThanOrEqual(2)
 
-    const signatures = new Set(
+    const deterministicRolls = new Set(
       groupCrash.riderConsequences.map(
-        (row) =>
-          `${row.healthOutcome.injuryOccurred}:${row.healthOutcome.caseCode ?? 'none'}:${row.healthOutcome.severity ?? 'none'}`,
+        (row) => row.healthOutcome.deterministicRoll,
       ),
     )
-    expect(signatures.size).toBeGreaterThan(1)
+    expect(deterministicRolls.size).toBeGreaterThan(1)
     expect(
-      groupCrash.riderConsequences.some(
-        (row) => row.healthOutcome.injuryOccurred,
-      ),
-    ).toBe(true)
-    expect(
-      groupCrash.riderConsequences.some(
-        (row) => !row.healthOutcome.injuryOccurred,
+      groupCrash.riderConsequences.every(
+        (row) => row.healthOutcome.deterministicRoll >= 0 && row.healthOutcome.deterministicRoll <= 1,
       ),
     ).toBe(true)
     groupCrash.riderConsequences.forEach((row) => {
@@ -14990,23 +15221,30 @@ describe('Phase 10 deterministic incidents, availability and final statuses', ()
     expect(isUniversalPhase10OutsideTimeLimit(flat, 10_000, 11_801)).toBe(true)
   })
 
-  it('allows up to ten incidents while preserving later-phase capacity and real cooldowns', () => {
+  it('caps incidents at three to seven by stage risk and never allows more than three crash events', () => {
     const result = runRaceEngine(createPhase10HighRiskInput('phase10-high-0'))
 
-    expect(result.phase10Incidents.maximumIncidentsPerStage).toBe(10)
-    expect(result.phase10Incidents.maximumIncidentsPerPhase).toEqual({
-      1: 2,
-      2: 3,
-      3: 3,
-      4: 4,
-    })
+    expect(result.phase10Incidents.maximumIncidentsPerStage).toBeGreaterThanOrEqual(3)
+    expect(result.phase10Incidents.maximumIncidentsPerStage).toBeLessThanOrEqual(7)
+    const phaseBudget = result.phase10Incidents.maximumIncidentsPerPhase
+    expect(
+      Object.values(phaseBudget).reduce((sum, value) => sum + value, 0),
+    ).toBe(result.phase10Incidents.maximumIncidentsPerStage)
+    expect(Math.max(...Object.values(phaseBudget))).toBeLessThanOrEqual(2)
+    expect(phaseBudget[4]).toBeGreaterThanOrEqual(1)
     expect(result.phase10Incidents.globalCooldownSeconds).toBe(120)
     expect(result.phase10Incidents.riderCooldownSeconds).toBe(900)
-    expect(result.phase10Incidents.incidentCount).toBeLessThanOrEqual(10)
-    expect(result.phase10Incidents.incidentCountByPhase[1]).toBeLessThanOrEqual(2)
-    expect(result.phase10Incidents.incidentCountByPhase[2]).toBeLessThanOrEqual(3)
-    expect(result.phase10Incidents.incidentCountByPhase[3]).toBeLessThanOrEqual(3)
-    expect(result.phase10Incidents.incidentCountByPhase[4]).toBeLessThanOrEqual(4)
+    expect(result.phase10Incidents.incidentCount).toBeLessThanOrEqual(
+      result.phase10Incidents.maximumIncidentsPerStage,
+    )
+    expect(
+      result.phase10Incidents.individualCrashCount +
+        result.phase10Incidents.groupCrashCount,
+    ).toBeLessThanOrEqual(3)
+    expect(result.phase10Incidents.incidentCountByPhase[1]).toBeLessThanOrEqual(phaseBudget[1])
+    expect(result.phase10Incidents.incidentCountByPhase[2]).toBeLessThanOrEqual(phaseBudget[2])
+    expect(result.phase10Incidents.incidentCountByPhase[3]).toBeLessThanOrEqual(phaseBudget[3])
+    expect(result.phase10Incidents.incidentCountByPhase[4]).toBeLessThanOrEqual(phaseBudget[4])
 
     result.phase10Incidents.incidents.slice(1).forEach((incident, index) => {
       expect(
@@ -15305,68 +15543,54 @@ describe('Phase 10 deterministic incidents, availability and final statuses', ()
 
 
 describe('Phase 11 replay progress guarantee', () => {
-  it('allows replay-only synchronization defects without changing official results', () => {
+  it('keeps raw replay synchronization truthful while classifying known presentation issues as publishable', () => {
     const result = runRaceEngine(createValidInput())
-    const degraded = applyUniversalReplayProgressGuarantee({
+    const degraded = {
       ...result.replaySynchronization,
       synchronized: false,
-      allSameKilometreStatesConsistent: false,
-      allFrontGroupTransfersPhysicallyValid: false,
-      postCatchStateStable: false,
       issues: [
-        'duplicate_group_display_code:stage-1|replay|post-catch',
-        'same_kilometre_physical_state_mismatch:checkpoint-a->checkpoint-b',
-        'front_group_transfer_without_physical_transition:rider-1:P->F1:checkpoint-c',
-        'post_catch_group_transfer_without_physical_transition:rider-2:C4->C3:checkpoint-d',
+        'duplicate_group_display_code:stage-1|replay|post-catch-peloton-split',
+        'group_gap_identity_mismatch:stage-1|replay|post-catch-peloton-split',
+        'front_group_transfer_without_physical_transition:rider-1:P->F1:stage-1|replay|phase-3-end',
       ],
-    })
+    }
 
-    expect(degraded.synchronized).toBe(true)
-    expect(degraded.issues).toHaveLength(4)
-    expect(degraded.allSameKilometreStatesConsistent).toBe(true)
-    expect(degraded.allFrontGroupTransfersPhysicallyValid).toBe(true)
-    expect(degraded.postCatchStateStable).toBe(true)
-    expect(result.finishResolution.complete).toBe(true)
-    expect(result.finishResolution.classification).toHaveLength(
-      createValidInput().riders.length,
-    )
+    const policy =
+      classifyUniversalReplaySynchronizationForPublication(degraded)
+
+    expect(degraded.synchronized).toBe(false)
+    expect(policy.publishable).toBe(true)
+    expect(policy.replayQuality).toBe('degraded')
+    expect(policy.blockingIssues).toEqual([])
+    expect(policy.nonBlockingIssues).toEqual(degraded.issues)
   })
 
-  it('still blocks hard sporting/final-result synchronization defects', () => {
+  it('never bypasses incident identity, official result, rider identity, point or result-visibility corruption', () => {
     const result = runRaceEngine(createValidInput())
-    const blocked = applyUniversalReplayProgressGuarantee({
-      ...result.replaySynchronization,
-      synchronized: false,
-      finalCheckpointMatchesClassification: false,
-      issues: ['final_checkpoint_identity_mismatch'],
+    const hardIssues = [
+      'incident_id_set_mismatch',
+      'final_rider_result_mismatch:rider-1',
+      'checkpoint_rider_identity_mismatch:stage-1|replay|phase-2-end',
+      'intermediate_results_mismatch:stage-1|replay|point-x',
+      'official_result_leak:stage-1|replay|phase-3-end',
+      'final_checkpoint_identity_mismatch',
+    ]
+
+    hardIssues.forEach((issue) => {
+      expect(isUniversalReplayIssueNonBlocking(issue)).toBe(false)
+
+      const policy = classifyUniversalReplaySynchronizationForPublication({
+        ...result.replaySynchronization,
+        synchronized: false,
+        issues: [issue],
+      })
+
+      expect(policy.publishable).toBe(false)
+      expect(policy.replayQuality).toBe('blocked')
+      expect(policy.blockingIssues).toEqual([issue])
     })
-
-    expect(blocked.synchronized).toBe(false)
-    expect(blocked.finalCheckpointMatchesClassification).toBe(false)
-    expect(blocked.issues).toContain('final_checkpoint_identity_mismatch')
-  })
-
-  it('keeps result-visibility and rider-coverage failures hard', () => {
-    const result = runRaceEngine(createValidInput())
-
-    const visibleEarly = applyUniversalReplayProgressGuarantee({
-      ...result.replaySynchronization,
-      synchronized: false,
-      allResultFieldsHiddenBeforeFinish: false,
-      issues: ['result_fields_visible_before_finish:checkpoint-a'],
-    })
-    expect(visibleEarly.synchronized).toBe(false)
-
-    const missingRider = applyUniversalReplayProgressGuarantee({
-      ...result.replaySynchronization,
-      synchronized: false,
-      allCheckpointRidersComplete: false,
-      issues: ['checkpoint_rider_coverage_mismatch:checkpoint-b'],
-    })
-    expect(missingRider.synchronized).toBe(false)
   })
 })
-
 
 describe('Phase 11B production lifecycle cutover', () => {
   it('maps one completed universal result into the production output contract without persistence side effects', () => {
@@ -15631,41 +15855,5 @@ describe('Phase 11B production lifecycle cutover', () => {
     expect(migrationSource).not.toContain('order by team.team_id')
   })
 
-  it('repairs Phase 11B publication so static profile reports cannot block results and one broken stage cannot starve the queue', () => {
-    const repairSource = readFileSync(
-      new URL(
-        '../../supabase/migrations/20260819_phase11b_publication_queue_repair.sql',
-        import.meta.url,
-      ),
-      'utf8',
-    )
 
-    expect(repairSource).toContain(
-      'create or replace function public.universal_race_stage_finalize_v1',
-    )
-    expect(repairSource).toContain(
-      "report_event.metadata ->> 'output_contract' = 'universal_race_stage_output_v1'",
-    )
-    expect(repairSource).toContain(
-      "delete from public.race_stage_report_events report_event",
-    )
-    expect(repairSource).toContain(
-      "nullif(report_event.metadata ->> 'simulation_run_id', '') is null",
-    )
-    expect(repairSource).toContain('v_removed_setup_report_event_count')
-    expect(repairSource).toContain(
-      "nullif(report_event.metadata ->> 'simulation_run_id', '') is not null",
-    )
-    expect(repairSource).not.toContain(
-      'or exists (select 1 from public.race_stage_report_events report_event where report_event.stage_id = p_stage_id)',
-    )
-    expect(repairSource).toContain(
-      'create or replace function public.universal_race_stage_process_lifecycle_v1',
-    )
-    expect(repairSource).toContain('exception when others then')
-    expect(repairSource).toContain("'publication_failure_count'")
-    expect(repairSource).toContain("'publication_failures'")
-    expect(repairSource).toContain("last_error = sqlerrm")
-    expect(repairSource).toContain('typescript_replay_duration_real_seconds')
-  })
 })

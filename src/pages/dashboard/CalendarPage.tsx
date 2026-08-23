@@ -886,6 +886,19 @@ function toCount(value: unknown): number {
   return Number.isFinite(parsed) ? parsed : 0
 }
 
+function chunkValues<T>(values: T[], chunkSize = 150): T[][] {
+  if (values.length === 0) return []
+
+  const safeChunkSize = Math.max(1, Math.floor(chunkSize))
+  const chunks: T[][] = []
+
+  for (let index = 0; index < values.length; index += safeChunkSize) {
+    chunks.push(values.slice(index, index + safeChunkSize))
+  }
+
+  return chunks
+}
+
 export default function CalendarPage(): JSX.Element {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -1091,52 +1104,102 @@ export default function CalendarPage(): JSX.Element {
           let raceMetadataByRaceId: Record<string, JsonRecord | null> = {}
 
           if (raceIds.length > 0) {
-            const [entryRulesRes, userEntriesRes, raceMetadataRes] = await Promise.all([
-              supabase
-                .from('race_entry_rules')
-                .select(
-                  'race_id, applications_status, target_teams, max_teams, min_riders_per_team, max_riders_per_team'
+            /*
+             * IMPORTANT:
+             * Do not send the complete race calendar ID list through one
+             * PostgREST .in(...) filter. The race database is now large enough
+             * that this can exceed practical request limits and silently remove
+             * all team-entry statuses from the Season Calendar.
+             *
+             * The user's own race entries are already scoped by club_id, so
+             * load those directly without any race-ID filter. Optional
+             * race-wide data is loaded in bounded chunks.
+             */
+            const userEntriesRes = await supabase
+              .from('race_team_entries')
+              .select('race_id, club_id, status')
+              .eq('club_id', resolvedClubId)
+              .in('status', [
+                'applied',
+                'accepted',
+                'declined',
+                'withdrawn',
+                'missed_startlist',
+                'cancelled',
+              ])
+
+            if (userEntriesRes.error) {
+              throw new Error(
+                `Failed to load your race entries: ${userEntriesRes.error.message}`
+              )
+            }
+
+            userEntriesByRaceId = ((userEntriesRes.data ?? []) as RaceTeamEntry[]).reduce<
+              Record<string, RaceTeamEntry>
+            >((acc, entry) => {
+              acc[entry.race_id] = entry
+              return acc
+            }, {})
+
+            const raceIdChunks = chunkValues(raceIds)
+
+            const [entryRuleResponses, raceMetadataResponses] = await Promise.all([
+              Promise.all(
+                raceIdChunks.map(chunk =>
+                  supabase
+                    .from('race_entry_rules')
+                    .select(
+                      'race_id, applications_status, target_teams, max_teams, min_riders_per_team, max_riders_per_team'
+                    )
+                    .in('race_id', chunk)
                 )
-                .in('race_id', raceIds),
-              supabase
-                .from('race_team_entries')
-                .select('race_id, club_id, status')
-                .in('race_id', raceIds)
-                .eq('club_id', resolvedClubId)
-                .in('status', ['applied', 'accepted', 'declined', 'withdrawn', 'missed_startlist', 'cancelled']),
-              supabase
-                .from('races')
-                .select('id, metadata')
-                .in('id', raceIds)
+              ),
+              Promise.all(
+                raceIdChunks.map(chunk =>
+                  supabase
+                    .from('races')
+                    .select('id, metadata')
+                    .in('id', chunk)
+                )
+              ),
             ])
 
-            if (!entryRulesRes.error) {
-              entryRulesByRaceId = ((entryRulesRes.data ?? []) as RaceEntryRules[]).reduce<
-                Record<string, RaceEntryRules>
-              >((acc, rule) => {
+            const entryRuleRows = entryRuleResponses.flatMap(response => {
+              if (response.error) {
+                console.warn('Calendar: race entry rules chunk failed', response.error)
+                return []
+              }
+
+              return (response.data ?? []) as RaceEntryRules[]
+            })
+
+            entryRulesByRaceId = entryRuleRows.reduce<Record<string, RaceEntryRules>>(
+              (acc, rule) => {
                 acc[rule.race_id] = rule
                 return acc
-              }, {})
-            }
+              },
+              {}
+            )
 
-            if (!userEntriesRes.error) {
-              userEntriesByRaceId = ((userEntriesRes.data ?? []) as RaceTeamEntry[]).reduce<
-                Record<string, RaceTeamEntry>
-              >((acc, entry) => {
-                acc[entry.race_id] = entry
-                return acc
-              }, {})
-            }
+            const metadataRows = raceMetadataResponses.flatMap(response => {
+              if (response.error) {
+                console.warn('Calendar: race metadata chunk failed', response.error)
+                return []
+              }
 
-            if (!raceMetadataRes.error) {
-              raceMetadataByRaceId = ((raceMetadataRes.data ?? []) as Array<{
+              return (response.data ?? []) as Array<{
                 id?: string | null
                 metadata?: JsonRecord | null
-              }>).reduce<Record<string, JsonRecord | null>>((acc, row) => {
+              }>
+            })
+
+            raceMetadataByRaceId = metadataRows.reduce<Record<string, JsonRecord | null>>(
+              (acc, row) => {
                 if (row.id) acc[row.id] = row.metadata ?? null
                 return acc
-              }, {})
-            }
+              },
+              {}
+            )
           }
 
           resolvedRaces = raceRows.map(row => {
@@ -1174,28 +1237,50 @@ export default function CalendarPage(): JSX.Element {
 
 
           if (raceIds.length > 0) {
-            const stagesRes = await supabase
-              .from('race_stages')
-              .select('race_id, stage_number, stage_date, weather_cancelled, weather_cancellation_reason')
-              .in('race_id', raceIds)
-              .order('stage_date', { ascending: true })
-              .order('stage_number', { ascending: true })
+            const stageResponses = await Promise.all(
+              chunkValues(raceIds).map(chunk =>
+                supabase
+                  .from('race_stages')
+                  .select(
+                    'race_id, stage_number, stage_date, weather_cancelled, weather_cancellation_reason'
+                  )
+                  .in('race_id', chunk)
+                  .order('stage_date', { ascending: true })
+                  .order('stage_number', { ascending: true })
+              )
+            )
 
-            if (!stagesRes.error) {
-              resolvedRaceStagesByRaceId = ((stagesRes.data ?? []) as RaceStageCalendarRow[]).reduce<
-                Record<string, RaceStageCalendarRow[]>
-              >((acc, stage) => {
-                if (!acc[stage.race_id]) acc[stage.race_id] = []
-                acc[stage.race_id].push({
-                  race_id: stage.race_id,
-                  stage_number: stage.stage_number,
-                  stage_date: stage.stage_date,
-                  weather_cancelled: stage.weather_cancelled ?? false,
-                  weather_cancellation_reason: stage.weather_cancellation_reason ?? null,
-                })
-                return acc
-              }, {})
-            }
+            const stageRows = stageResponses.flatMap(response => {
+              if (response.error) {
+                console.warn('Calendar: race stages chunk failed', response.error)
+                return []
+              }
+
+              return (response.data ?? []) as RaceStageCalendarRow[]
+            })
+
+            resolvedRaceStagesByRaceId = stageRows.reduce<
+              Record<string, RaceStageCalendarRow[]>
+            >((acc, stage) => {
+              if (!acc[stage.race_id]) acc[stage.race_id] = []
+              acc[stage.race_id].push({
+                race_id: stage.race_id,
+                stage_number: stage.stage_number,
+                stage_date: stage.stage_date,
+                weather_cancelled: stage.weather_cancelled ?? false,
+                weather_cancellation_reason: stage.weather_cancellation_reason ?? null,
+              })
+              return acc
+            }, {})
+
+            Object.values(resolvedRaceStagesByRaceId).forEach(stages => {
+              stages.sort((left, right) => {
+                const dateDiff = left.stage_date.localeCompare(right.stage_date)
+                if (dateDiff !== 0) return dateDiff
+
+                return Number(left.stage_number ?? 0) - Number(right.stage_number ?? 0)
+              })
+            })
           }
         } catch {
           resolvedRaceNotice = 'Race Calendar is ready, but the race source is not available yet.'

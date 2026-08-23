@@ -19,7 +19,7 @@
  *   or later create a dedicated RPC that supports search/filter/total_count.
  */
 
-import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { supabase } from '@/lib/supabase'
 import {
@@ -439,6 +439,54 @@ function getAdvisorPayload(item: NotificationItem): StaffAdvisoryPayload | null 
   return payload
 }
 
+function getNotificationPayloadRecord(
+  item: NotificationItem
+): Record<string, unknown> {
+  const record = item as unknown as Record<string, unknown>
+
+  if (
+    record.payload_json &&
+    typeof record.payload_json === 'object' &&
+    !Array.isArray(record.payload_json)
+  ) {
+    return record.payload_json as Record<string, unknown>
+  }
+
+  if (
+    record.metadata &&
+    typeof record.metadata === 'object' &&
+    !Array.isArray(record.metadata)
+  ) {
+    return record.metadata as Record<string, unknown>
+  }
+
+  return {}
+}
+
+function getNotificationRiderDefaultScope(
+  item: NotificationItem
+): AdvisorRiderScope {
+  const payload = getNotificationPayloadRecord(item)
+  const explicitScope = String(payload.rider_scope ?? '').trim().toLowerCase()
+
+  if (explicitScope === 'external') return 'external'
+  if (explicitScope === 'internal') return 'internal'
+
+  const profilePath = String(
+    payload.rider_profile_path ??
+      payload.external_rider_profile_path ??
+      payload.my_rider_profile_path ??
+      ''
+  ).trim()
+
+  if (profilePath.startsWith('/dashboard/external-riders/')) return 'external'
+  if (profilePath.startsWith('/dashboard/my-riders/')) return 'internal'
+
+  return String(item.type_code ?? '').toUpperCase() === 'SCOUT_REPORT_COMPLETED'
+    ? 'external'
+    : 'internal'
+}
+
 function formatAdvisorValue(value: unknown): string {
   if (value === null || value === undefined || value === '') return '—'
   if (typeof value === 'number') return Number.isInteger(value) ? String(value) : value.toFixed(1)
@@ -576,7 +624,80 @@ function getAdvisorRiderHref(
     : `/dashboard/my-riders/${riderId}`
 }
 
-function renderAdvisorRiderIdentity(options: {
+type AdvisorResolvedRiderIdentity = {
+  rider_id: string
+  rider_first_name: string | null
+  rider_last_name: string | null
+  rider_full_name: string | null
+  rider_country_code: string | null
+}
+
+const advisorRiderIdentityCache = new Map<string, AdvisorResolvedRiderIdentity | null>()
+const advisorRiderIdentityPending = new Map<
+  string,
+  Promise<AdvisorResolvedRiderIdentity | null>
+>()
+
+async function loadAdvisorResolvedRiderIdentity(
+  riderId: string
+): Promise<AdvisorResolvedRiderIdentity | null> {
+  const normalizedId = riderId.trim()
+  if (!normalizedId) return null
+
+  if (advisorRiderIdentityCache.has(normalizedId)) {
+    return advisorRiderIdentityCache.get(normalizedId) ?? null
+  }
+
+  const existingRequest = advisorRiderIdentityPending.get(normalizedId)
+  if (existingRequest) return existingRequest
+
+  const request = (async (): Promise<AdvisorResolvedRiderIdentity | null> => {
+    const { data, error } = await supabase
+      .from('riders')
+      .select('id, first_name, last_name, display_name, country_code')
+      .eq('id', normalizedId)
+      .maybeSingle()
+
+    if (error || !data) {
+      advisorRiderIdentityCache.set(normalizedId, null)
+      return null
+    }
+
+    const firstName = String(data.first_name ?? '').trim()
+    const lastName = String(data.last_name ?? '').trim()
+    const databaseDisplayName = String(data.display_name ?? '').trim()
+    const fullName =
+      [firstName, lastName].filter(Boolean).join(' ').trim() ||
+      databaseDisplayName ||
+      null
+
+    const resolved: AdvisorResolvedRiderIdentity = {
+      rider_id: String(data.id ?? normalizedId),
+      rider_first_name: firstName || null,
+      rider_last_name: lastName || null,
+      rider_full_name: fullName,
+      rider_country_code: String(data.country_code ?? '').trim() || null,
+    }
+
+    advisorRiderIdentityCache.set(normalizedId, resolved)
+    return resolved
+  })().finally(() => {
+    advisorRiderIdentityPending.delete(normalizedId)
+  })
+
+  advisorRiderIdentityPending.set(normalizedId, request)
+  return request
+}
+
+function AdvisorRiderIdentity({
+  value,
+  source,
+  navigate,
+  defaultScope = 'internal',
+  showFlag = true,
+  wrapperClassName = '',
+  textClassName = 'font-medium text-slate-900',
+}: {
   value: unknown
   source?: Record<string, unknown>
   navigate: ReturnType<typeof useNavigate>
@@ -584,21 +705,58 @@ function renderAdvisorRiderIdentity(options: {
   showFlag?: boolean
   wrapperClassName?: string
   textClassName?: string
-}) {
-  const {
-    value,
-    source,
-    navigate,
-    defaultScope = 'internal',
-    showFlag = true,
-    wrapperClassName = '',
-    textClassName = 'font-medium text-slate-900',
-  } = options
+}): JSX.Element {
+  const riderId = String(source?.rider_id ?? source?.id ?? '').trim()
+  const [resolvedIdentity, setResolvedIdentity] =
+    useState<AdvisorResolvedRiderIdentity | null>(() =>
+      riderId ? advisorRiderIdentityCache.get(riderId) ?? null : null
+    )
 
-  const riderName = getAdvisorRiderDisplayName(value, source)
-  const riderHref = getAdvisorRiderHref(source, defaultScope)
+  useEffect(() => {
+    let cancelled = false
+
+    if (!riderId) {
+      setResolvedIdentity(null)
+      return () => {
+        cancelled = true
+      }
+    }
+
+    const cached = advisorRiderIdentityCache.get(riderId)
+    if (cached !== undefined) {
+      setResolvedIdentity(cached)
+      return () => {
+        cancelled = true
+      }
+    }
+
+    void loadAdvisorResolvedRiderIdentity(riderId).then(result => {
+      if (!cancelled) setResolvedIdentity(result)
+    })
+
+    return () => {
+      cancelled = true
+    }
+  }, [riderId])
+
+  const mergedSource: Record<string, unknown> = {
+    ...(source ?? {}),
+    ...(resolvedIdentity
+      ? {
+          rider_first_name: resolvedIdentity.rider_first_name,
+          rider_last_name: resolvedIdentity.rider_last_name,
+          rider_full_name: resolvedIdentity.rider_full_name,
+          rider_country_code: resolvedIdentity.rider_country_code,
+        }
+      : {}),
+  }
+
+  const riderName = getAdvisorRiderDisplayName(value, mergedSource)
+  const riderHref = getAdvisorRiderHref(mergedSource, defaultScope)
   const countryCode = getAdvisorCountryCode(
-    source?.rider_country_code ?? source?.country_code ?? source?.country
+    mergedSource.rider_country_code ??
+      mergedSource.country_code ??
+      mergedSource.country
   )
   const flagUrl = getAdvisorCountryFlagUrl(countryCode)
 
@@ -609,7 +767,7 @@ function renderAdvisorRiderIdentity(options: {
           src={flagUrl}
           alt={countryCode.toUpperCase()}
           title={countryCode.toUpperCase()}
-          className="h-[14px] w-5 shrink-0 rounded-sm object-cover ring-1 ring-slate-200"
+          className="h-3.5 w-5 shrink-0 rounded-[2px] border border-black/10 object-cover"
           loading="lazy"
         />
       ) : null}
@@ -624,10 +782,23 @@ function renderAdvisorRiderIdentity(options: {
       type="button"
       onClick={() => navigate(riderHref)}
       className="inline-flex max-w-full items-center text-left hover:underline underline-offset-2"
+      title={riderName}
     >
       {content}
     </button>
   )
+}
+
+function renderAdvisorRiderIdentity(options: {
+  value: unknown
+  source?: Record<string, unknown>
+  navigate: ReturnType<typeof useNavigate>
+  defaultScope?: AdvisorRiderScope
+  showFlag?: boolean
+  wrapperClassName?: string
+  textClassName?: string
+}) {
+  return <AdvisorRiderIdentity {...options} />
 }
 
 export default function NotificationsPage(): JSX.Element {
@@ -648,6 +819,9 @@ export default function NotificationsPage(): JSX.Element {
   const [isMarkingAllRead, setIsMarkingAllRead] = useState(false)
 
   const [expandedId, setExpandedId] = useState<number | null>(null)
+  const [retainedReadUnreadId, setRetainedReadUnreadId] = useState<number | null>(null)
+  const retainedReadUnreadItemRef = useRef<NotificationItem | null>(null)
+  const suppressNextLocalAttentionRefreshRef = useRef(false)
 
   const [pageByTab, setPageByTab] = useState<Record<NotificationTab, number>>({
     unread: 1,
@@ -749,7 +923,23 @@ export default function NotificationsPage(): JSX.Element {
           mapAdvisorNotificationRow(row as Record<string, unknown>)
         )
 
-        setItems(advisorItems)
+        if (tab === 'unread') {
+          const retainedItem = retainedReadUnreadItemRef.current
+          if (
+            retainedItem &&
+            !advisorItems.some(
+              existing =>
+                existing.user_notification_id === retainedItem.user_notification_id
+            )
+          ) {
+            setItems([retainedItem, ...advisorItems])
+          } else {
+            setItems(advisorItems)
+          }
+        } else {
+          setItems(advisorItems)
+        }
+
         setLoading(false)
         return
       }
@@ -774,13 +964,37 @@ export default function NotificationsPage(): JSX.Element {
       // Matching notifications are marked read by explicit actions:
       // - opening/marking a notification
       // - opening an Overview attention bubble
-      setItems(displayableItems)
+      if (tab === 'unread') {
+        const retainedItem = retainedReadUnreadItemRef.current
+        if (
+          retainedItem &&
+          !displayableItems.some(
+            existing =>
+              existing.user_notification_id === retainedItem.user_notification_id
+          )
+        ) {
+          setItems([retainedItem, ...displayableItems])
+        } else {
+          setItems(displayableItems)
+        }
+      } else {
+        setItems(displayableItems)
+      }
+
       setLoading(false)
     },
     [advisorFilter, shouldDisplayNotification]
   )
 
   const handleTabChange = useCallback((tab: NotificationTab) => {
+    const retainedId = retainedReadUnreadItemRef.current?.user_notification_id ?? null
+    if (retainedId !== null) {
+      setUnreadItems(prev =>
+        prev.filter(n => n.user_notification_id !== retainedId)
+      )
+    }
+    retainedReadUnreadItemRef.current = null
+    setRetainedReadUnreadId(null)
     setActiveTab(tab)
     setExpandedId(null)
     setPageByTab(prev => ({
@@ -790,6 +1004,14 @@ export default function NotificationsPage(): JSX.Element {
   }, [])
 
   const resetActivePage = useCallback(() => {
+    const retainedId = retainedReadUnreadItemRef.current?.user_notification_id ?? null
+    if (retainedId !== null) {
+      setUnreadItems(prev =>
+        prev.filter(n => n.user_notification_id !== retainedId)
+      )
+    }
+    retainedReadUnreadItemRef.current = null
+    setRetainedReadUnreadId(null)
     setExpandedId(null)
     setPageByTab(prev => ({
       ...prev,
@@ -797,35 +1019,110 @@ export default function NotificationsPage(): JSX.Element {
     }))
   }, [activeTab])
 
-  const handleMarkAsRead = useCallback(async (item: NotificationItem) => {
-    if (item.status !== 'unread') return
+  const markNotificationReadWithoutClosing = useCallback(
+    async (item: NotificationItem) => {
+      if (item.status !== 'unread') return
 
-    const { data, error } = await supabase.rpc('mark_my_notification_read', {
-      p_user_notification_id: item.user_notification_id,
-    })
+      const { data, error } = await supabase.rpc('mark_my_notification_read', {
+        p_user_notification_id: item.user_notification_id,
+      })
 
-    if (error) {
-      // eslint-disable-next-line no-console
-      console.error('Failed to mark notification as read:', error)
-      return
-    }
-
-    if (data === true) {
-      const readItem: NotificationItem = {
-        ...item,
-        status: 'read',
-        read_at: new Date().toISOString(),
+      if (error) {
+        // eslint-disable-next-line no-console
+        console.error('Failed to auto-mark opened notification as read:', error)
+        return
       }
 
-      setUnreadItems(prev =>
-        prev.filter(n => n.user_notification_id !== item.user_notification_id)
-      )
-      setReadItems(prev => [readItem, ...prev])
-      setUnreadCount(prev => Math.max(0, prev - 1))
-      setExpandedId(prev => (prev === item.user_notification_id ? null : prev))
-      dismissMatchingOverviewAttentionForNotification(item)
-    }
-  }, [])
+      if (data === true) {
+        const readItem: NotificationItem = {
+          ...item,
+          status: 'read',
+          read_at: new Date().toISOString(),
+        }
+
+        // Keep the opened notification in its current Unread-list shape while
+        // the user is reading it. We record the backend read state separately.
+        // This prevents the current filter from removing the item immediately.
+        retainedReadUnreadItemRef.current = item
+        setRetainedReadUnreadId(item.user_notification_id)
+
+        setReadItems(prev => {
+          const withoutDuplicate = prev.filter(
+            n => n.user_notification_id !== item.user_notification_id
+          )
+          return [readItem, ...withoutDuplicate]
+        })
+
+        setUnreadCount(prev => Math.max(0, prev - 1))
+
+        // dismissMatchingOverviewAttentionForNotification dispatches a same-window
+        // event that normally refreshes the whole notification list. For this
+        // local Open = Read action, that refresh is unnecessary and causes a
+        // visible flicker. Keep the local UI stable and suppress this one refresh.
+        suppressNextLocalAttentionRefreshRef.current = true
+        dismissMatchingOverviewAttentionForNotification(item)
+      }
+    },
+    []
+  )
+
+  const flushRetainedReadUnread = useCallback(
+    (exceptId?: number | null) => {
+      setRetainedReadUnreadId(currentRetainedId => {
+        if (
+          currentRetainedId === null ||
+          currentRetainedId === exceptId
+        ) {
+          return currentRetainedId
+        }
+
+        setUnreadItems(prev =>
+          prev.filter(
+            n => n.user_notification_id !== currentRetainedId
+          )
+        )
+
+        retainedReadUnreadItemRef.current = null
+        return null
+      })
+    },
+    []
+  )
+
+  const handleToggleNotificationDetails = useCallback(
+    async (item: NotificationItem) => {
+      const isCurrentlyExpanded =
+        expandedId === item.user_notification_id
+
+      if (isCurrentlyExpanded) {
+        // Closing the notification means the user has finished viewing it.
+        setExpandedId(null)
+        flushRetainedReadUnread(null)
+        return
+      }
+
+      // Moving to another notification removes the previously opened/read
+      // notification from the Unread list first.
+      flushRetainedReadUnread(item.user_notification_id)
+
+      // Universal notification rule:
+      // opening/expanding any notification means the user has read it.
+      setExpandedId(item.user_notification_id)
+
+      if (
+        item.status === 'unread' &&
+        retainedReadUnreadId !== item.user_notification_id
+      ) {
+        await markNotificationReadWithoutClosing(item)
+      }
+    },
+    [
+      expandedId,
+      flushRetainedReadUnread,
+      markNotificationReadWithoutClosing,
+      retainedReadUnreadId,
+    ]
+  )
 
   const handleOpenNotification = useCallback(
     async (item: NotificationItem, overrideUrl?: string | null) => {
@@ -868,17 +1165,16 @@ export default function NotificationsPage(): JSX.Element {
 
   const handleTemplateAction = useCallback(
     async (item: NotificationItem, action: NotificationActionTemplate) => {
-      if (action.kind === 'markRead') {
-        await handleMarkAsRead(item)
-        return
-      }
+      // Standalone "Mark as read" actions are intentionally no longer used.
+      // Opening the notification detail box is now the universal read action.
+      if (action.kind === 'markRead') return
 
       const href = getNotificationActionHref(action, item)
       if (!href) return
 
       await handleOpenNotification(item, href)
     },
-    [handleMarkAsRead, handleOpenNotification]
+    [handleOpenNotification]
   )
 
   const handleMarkAllAsRead = useCallback(async () => {
@@ -915,6 +1211,8 @@ export default function NotificationsPage(): JSX.Element {
     ])
 
     setIsMarkingAllRead(false)
+    retainedReadUnreadItemRef.current = null
+    setRetainedReadUnreadId(null)
     setExpandedId(null)
     setPageByTab({
       unread: 1,
@@ -934,6 +1232,11 @@ export default function NotificationsPage(): JSX.Element {
     if (typeof window === 'undefined') return undefined
 
     const refreshAfterAttentionDismissal = () => {
+      if (suppressNextLocalAttentionRefreshRef.current) {
+        suppressNextLocalAttentionRefreshRef.current = false
+        return
+      }
+
       void loadUnreadCount()
       void loadNotifications(activeTab)
     }
@@ -1194,7 +1497,9 @@ export default function NotificationsPage(): JSX.Element {
                   const introText = getNotificationIntroText(item)
                   const detailRows = getNotificationDetailRows(item)
                   const extraText = getNotificationExtraText(item)
-                  const templateActions = getNotificationActions(item)
+                  const templateActions = getNotificationActions(item).filter(
+                    action => action.kind !== 'markRead'
+                  )
 
                   return (
                     <div
@@ -1205,11 +1510,9 @@ export default function NotificationsPage(): JSX.Element {
                     >
                       <button
                         type="button"
-                        onClick={() =>
-                          setExpandedId(prev =>
-                            prev === item.user_notification_id ? null : item.user_notification_id
-                          )
-                        }
+                        onClick={() => {
+                          void handleToggleNotificationDetails(item)
+                        }}
                         className="flex w-full items-start gap-3 text-left"
                       >
                         <span
@@ -1278,26 +1581,85 @@ export default function NotificationsPage(): JSX.Element {
                             ? advisorPayload.actions
                             : []
 
-                          const snapshotEntries = [
-                            ['Squad riders', snapshot.squad_riders],
-                            ['High fatigue', snapshot.high_fatigue ?? snapshot.affected_riders],
-                            ['Elevated fatigue', snapshot.elevated_fatigue],
-                            ['Not fully fit', snapshot.not_fully_fit],
-                            ['Unavailable', snapshot.unavailable],
-                            [
-                              'Planned sessions · next 3 game days',
-                              snapshot.planned_training_sessions_next_3_game_days ??
-                                snapshot.planned_sessions,
-                            ],
-                            [
-                              'Manual overrides · next 3 game days',
-                              snapshot.manual_training_overrides_next_3_game_days ??
-                                snapshot.manual_overrides,
-                            ],
-                            ['Highest fatigue', snapshot.highest_fatigue],
-                            ['Window start', formatAdvisorGameDateTime(snapshot.window_start)],
-                            ['Window end', formatAdvisorGameDateTime(snapshot.window_end)],
-                          ].filter(([, value]) => value !== undefined && value !== null)
+                          const headCoachPayloadRecord =
+                            advisorPayload as unknown as Record<string, unknown>
+                          const headCoachVariant = String(
+                            advisorPayload.report_variant ??
+                              headCoachPayloadRecord.report_variant ??
+                              ''
+                          ).trim()
+                          const isRiderSkillChange =
+                            headCoachVariant === 'rider_skill_change' ||
+                            String(headCoachPayloadRecord.report_code ?? '').trim() ===
+                              'hc_rider_skill_change'
+
+                          const skillRiderName =
+                            String(
+                              headCoachPayloadRecord.rider_full_name ??
+                                headCoachPayloadRecord.rider_name ??
+                                ''
+                            ).trim() || 'Rider'
+                          const skillLabel = String(
+                            headCoachPayloadRecord.skill_label ??
+                              headCoachPayloadRecord.skill_name ??
+                              ''
+                          ).trim()
+                          const skillOldValue =
+                            headCoachPayloadRecord.old_value ??
+                            headCoachPayloadRecord.previous_value
+                          const skillNewValue =
+                            headCoachPayloadRecord.new_value ??
+                            headCoachPayloadRecord.current_value
+                          const skillDelta =
+                            headCoachPayloadRecord.delta ??
+                            headCoachPayloadRecord.skill_delta
+
+                          const skillChangeSummary =
+                            isRiderSkillChange &&
+                            skillLabel &&
+                            skillOldValue !== undefined &&
+                            skillOldValue !== null &&
+                            skillNewValue !== undefined &&
+                            skillNewValue !== null
+                              ? `${skillRiderName} ${
+                                  Number(skillDelta ?? 0) < 0
+                                    ? `${skillLabel} decreased`
+                                    : `improved ${skillLabel}`
+                                } from ${formatAdvisorValue(skillOldValue)} to ${formatAdvisorValue(skillNewValue)} (${
+                                  Number(skillDelta ?? 0) > 0 ? '+' : ''
+                                }${formatAdvisorValue(skillDelta)}).`
+                              : null
+
+                          const snapshotEntries = (
+                            isRiderSkillChange
+                              ? [
+                                  ['Rider', skillRiderName],
+                                  ['Skill', skillLabel],
+                                  ['Previous value', skillOldValue],
+                                  ['New value', skillNewValue],
+                                  ['Change', Number(skillDelta ?? 0) > 0 ? `+${formatAdvisorValue(skillDelta)}` : formatAdvisorValue(skillDelta)],
+                                ]
+                              : [
+                                  ['Squad riders', snapshot.squad_riders],
+                                  ['High fatigue', snapshot.high_fatigue ?? snapshot.affected_riders],
+                                  ['Elevated fatigue', snapshot.elevated_fatigue],
+                                  ['Not fully fit', snapshot.not_fully_fit],
+                                  ['Unavailable', snapshot.unavailable],
+                                  [
+                                    'Planned sessions · next 3 game days',
+                                    snapshot.planned_training_sessions_next_3_game_days ??
+                                      snapshot.planned_sessions,
+                                  ],
+                                  [
+                                    'Manual overrides · next 3 game days',
+                                    snapshot.manual_training_overrides_next_3_game_days ??
+                                      snapshot.manual_overrides,
+                                  ],
+                                  ['Highest fatigue', snapshot.highest_fatigue],
+                                  ['Window start', formatAdvisorGameDateTime(snapshot.window_start)],
+                                  ['Window end', formatAdvisorGameDateTime(snapshot.window_end)],
+                                ]
+                          ).filter(([, value]) => value !== undefined && value !== null && value !== '')
 
                           return (
                             <div className="ml-5 mt-4 overflow-hidden rounded-xl border border-slate-300 bg-slate-50 shadow-sm">
@@ -1332,7 +1694,7 @@ export default function NotificationsPage(): JSX.Element {
                                 >
                                   <div className="min-w-0">
                                     <p className="text-sm leading-6 text-slate-700">
-                                      {advisorPayload.summary || item.message}
+                                      {skillChangeSummary || advisorPayload.summary || item.message}
                                     </p>
 
                                     {snapshotEntries.length > 0 ? (
@@ -1346,7 +1708,14 @@ export default function NotificationsPage(): JSX.Element {
                                               {label}
                                             </div>
                                             <div className="mt-1 text-lg font-semibold text-slate-900">
-                                              {formatAdvisorValue(value)}
+                                              {label === 'Rider' && isRiderSkillChange
+                                                ? renderAdvisorRiderIdentity({
+                                                    value,
+                                                    source: headCoachPayloadRecord,
+                                                    navigate,
+                                                    defaultScope: 'internal',
+                                                  })
+                                                : formatAdvisorValue(value)}
                                             </div>
                                           </div>
                                         ))}
@@ -1614,7 +1983,7 @@ export default function NotificationsPage(): JSX.Element {
                                             <div className="mt-1 text-lg font-semibold text-slate-900">
                                               {label === 'Rider' ? renderAdvisorRiderIdentity({
                                                 value,
-                                                source: doctorData as Record<string, unknown>,
+                                                source: sportData as Record<string, unknown>,
                                                 navigate,
                                                 defaultScope: 'internal',
                                               }) : formatAdvisorDisplayValue(value)}
@@ -1886,7 +2255,14 @@ export default function NotificationsPage(): JSX.Element {
                                               {label}
                                             </div>
                                             <div className="mt-1 text-lg font-semibold text-slate-900">
-                                              {formatAdvisorDisplayValue(value)}
+                                              {label === 'Rider'
+                                                ? renderAdvisorRiderIdentity({
+                                                    value,
+                                                    source: doctorData as Record<string, unknown>,
+                                                    navigate,
+                                                    defaultScope: 'internal',
+                                                  })
+                                                : formatAdvisorDisplayValue(value)}
                                             </div>
                                           </div>
                                         ))}
@@ -2668,9 +3044,22 @@ export default function NotificationsPage(): JSX.Element {
                                           className="text-sm leading-6 text-slate-700"
                                         >
                                           <span className="text-slate-600">{row.label}: </span>
-                                          <strong className="font-semibold text-slate-900">
-                                            {row.value}
-                                          </strong>
+                                          {String(row.label).trim().toLowerCase() === 'rider' ? (
+                                            renderAdvisorRiderIdentity({
+                                              value: row.value,
+                                              source: getNotificationPayloadRecord(item),
+                                              navigate,
+                                              defaultScope:
+                                                getNotificationRiderDefaultScope(item),
+                                              showFlag: true,
+                                              textClassName:
+                                                'font-semibold text-slate-900',
+                                            })
+                                          ) : (
+                                            <strong className="font-semibold text-slate-900">
+                                              {row.value}
+                                            </strong>
+                                          )}
                                         </div>
                                       ))}
                                     </div>
@@ -2736,6 +3125,15 @@ export default function NotificationsPage(): JSX.Element {
                 type="button"
                 onClick={() => {
                   if (!canGoPrevious) return
+                  const retainedId =
+                    retainedReadUnreadItemRef.current?.user_notification_id ?? null
+                  if (retainedId !== null) {
+                    setUnreadItems(prev =>
+                      prev.filter(n => n.user_notification_id !== retainedId)
+                    )
+                  }
+                  retainedReadUnreadItemRef.current = null
+                  setRetainedReadUnreadId(null)
                   setExpandedId(null)
                   setPageByTab(prev => ({
                     ...prev,
@@ -2752,6 +3150,15 @@ export default function NotificationsPage(): JSX.Element {
                 type="button"
                 onClick={() => {
                   if (!canGoPrevious) return
+                  const retainedId =
+                    retainedReadUnreadItemRef.current?.user_notification_id ?? null
+                  if (retainedId !== null) {
+                    setUnreadItems(prev =>
+                      prev.filter(n => n.user_notification_id !== retainedId)
+                    )
+                  }
+                  retainedReadUnreadItemRef.current = null
+                  setRetainedReadUnreadId(null)
                   setExpandedId(null)
                   setPageByTab(prev => ({
                     ...prev,
@@ -2768,6 +3175,15 @@ export default function NotificationsPage(): JSX.Element {
                 type="button"
                 onClick={() => {
                   if (!canGoNext) return
+                  const retainedId =
+                    retainedReadUnreadItemRef.current?.user_notification_id ?? null
+                  if (retainedId !== null) {
+                    setUnreadItems(prev =>
+                      prev.filter(n => n.user_notification_id !== retainedId)
+                    )
+                  }
+                  retainedReadUnreadItemRef.current = null
+                  setRetainedReadUnreadId(null)
                   setExpandedId(null)
                   setPageByTab(prev => ({
                     ...prev,
@@ -2784,6 +3200,15 @@ export default function NotificationsPage(): JSX.Element {
                 type="button"
                 onClick={() => {
                   if (!canGoNext) return
+                  const retainedId =
+                    retainedReadUnreadItemRef.current?.user_notification_id ?? null
+                  if (retainedId !== null) {
+                    setUnreadItems(prev =>
+                      prev.filter(n => n.user_notification_id !== retainedId)
+                    )
+                  }
+                  retainedReadUnreadItemRef.current = null
+                  setRetainedReadUnreadId(null)
                   setExpandedId(null)
                   setPageByTab(prev => ({
                     ...prev,

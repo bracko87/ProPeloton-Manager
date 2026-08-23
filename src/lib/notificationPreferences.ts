@@ -280,15 +280,15 @@ export const NOTIFICATION_PREFERENCE_GROUPS: Record<
     section: 'race',
   },
   racePreparation: {
-    label: 'Race preparation',
+    label: 'Race preparation status',
     description:
-      'Show notifications for race plan openings, deadlines, finalisation, and preparation attention.',
+      'Show Core status and consequence notifications for race preparation. Proactive rider-deadline advice belongs to Sports Director Advisory.',
     section: 'race',
   },
   stagePlanReminders: {
-    label: 'Stage plan reminders',
+    label: 'Stage plan status',
     description:
-      'Show notifications for stage plan locks, missing stage plans, and lock-soon reminders.',
+      'Show Core stage-plan opening and lock-state notifications. Missing-plan advice belongs to Sports Director Advisory.',
     section: 'race',
   },
   raceWeather: {
@@ -421,17 +421,20 @@ type StoredPreferences = {
   notifications?: Partial<NotificationSettings>
 }
 
+const RETIRED_CORE_ADVISORY_OVERLAP_TYPES = new Set([
+  'RACE_PLAN_DEADLINE_REMINDER',
+  'STAGE_PLAN_MISSING_REMINDER',
+])
+
 const EXACT_TYPE_GROUPS: Record<string, NotificationPreferenceGroup> = {
   RACE_APPLICATION_ACCEPTED: 'raceApplicationResults',
   RACE_APPLICATION_DECLINED: 'raceApplicationResults',
-  RACE_PLAN_DEADLINE_REMINDER: 'racePreparation',
   RACE_PLAN_FINALISED: 'racePreparation',
   RACE_PLAN_NEEDS_ATTENTION: 'racePreparation',
   RACE_PLAN_OPEN: 'racePreparation',
   STAGE_PLAN_LOCK_REMINDER: 'stagePlanReminders',
   STAGE_PLAN_LOCKED: 'stagePlanReminders',
   STAGE_PLAN_MISSING_AT_LOCK: 'stagePlanReminders',
-  STAGE_PLAN_MISSING_REMINDER: 'stagePlanReminders',
   STAGE_PLANS_OPEN: 'stagePlanReminders',
   RACE_STAGE_WEATHER_CANCELLED: 'raceWeather',
   RACE_WEATHER_CANCELLED: 'raceWeather',
@@ -523,6 +526,12 @@ export function getNotificationTypeFromEvent(
   const upper = rawCode.toUpperCase()
   const normalizedSource = source?.trim().toLowerCase() ?? ''
 
+  // Retired Core/advisor overlaps are filtered by canReceiveNotificationItem.
+  // Keep this fallback deterministic if called directly elsewhere.
+  if (RETIRED_CORE_ADVISORY_OVERLAP_TYPES.has(upper)) {
+    return 'racePreparation'
+  }
+
   if (EXACT_TYPE_GROUPS[rawCode]) return EXACT_TYPE_GROUPS[rawCode]
   if (EXACT_TYPE_GROUPS[upper]) return EXACT_TYPE_GROUPS[upper]
 
@@ -574,8 +583,24 @@ export function canReceiveNotificationItem(
 ): boolean {
   const group = String(item.preference_group ?? '')
   const typeCode = String(item.type_code ?? '').toUpperCase()
-  if (group === 'staffAdvisory' || typeCode.startsWith('ADVISOR_')) return canReceiveAdvisorNotification(item)
-  return canReceiveNotification(preferences, resolveNotificationPreferenceGroup(item.preference_group, item.type_code, item.source))
+
+  // These proactive Core reminders were retired because the paid Sports
+  // Director now owns the same information. Keep stale historical rows hidden
+  // even if an older RPC still returns them.
+  if (RETIRED_CORE_ADVISORY_OVERLAP_TYPES.has(typeCode)) return false
+
+  if (group === 'staffAdvisory' || typeCode.startsWith('ADVISOR_')) {
+    return canReceiveAdvisorNotification(item)
+  }
+
+  return canReceiveNotification(
+    preferences,
+    resolveNotificationPreferenceGroup(
+      item.preference_group,
+      item.type_code,
+      item.source
+    )
+  )
 }
 
 export function canReceiveNotification(

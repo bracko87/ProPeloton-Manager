@@ -59,7 +59,7 @@ export const PPM_UNIVERSAL_RACE_ENGINE_KEY =
   'ppm_universal_race_v1' as const
 export const PPM_UNIVERSAL_RACE_ENGINE_VERSION = 1 as const
 export const UNIVERSAL_RACE_ENGINE_DEBUG_BUILD =
-  'phase10-unified-chase-display-gap-evolution-2026-08-18-10e4c' as const
+  'phase11e-balanced-incidents-v2-2026-08-22' as const
 
 export const RACE_TYPES = ['one_day', 'stage_race'] as const
 export type RaceType = (typeof RACE_TYPES)[number]
@@ -2460,7 +2460,7 @@ export interface UniversalPhase10IncidentSummary {
   readonly individualCrashCount: number
   readonly groupCrashCount: number
   readonly technicalIncidentCount: number
-  readonly maximumIncidentsPerStage: 10
+  readonly maximumIncidentsPerStage: number
   readonly maximumIncidentsPerPhase: Readonly<Record<RoadRacePhaseNumber, number>>
   readonly incidentCountByPhase: Readonly<Record<RoadRacePhaseNumber, number>>
   readonly globalCooldownSeconds: 120
@@ -2771,122 +2771,6 @@ export interface UniversalReplaySynchronizationSummary {
   readonly issues: readonly string[]
   readonly deterministic: true
   readonly modelVersion: 'universal_replay_synchronization_v1'
-}
-
-
-const UNIVERSAL_REPLAY_SOFT_ISSUE_PREFIXES = [
-  'same_kilometre_physical_state_mismatch:',
-  'gap_change_not_distance_bounded:',
-  'duplicate_group_display_code:',
-  'group_gap_cardinality_mismatch:',
-  'duplicate_physical_group_gap:',
-  'group_gap_identity_mismatch:',
-  'rider_group_gap_mismatch:',
-  'opening_breakaway_lineage_changed:',
-  'opening_breakaway_lineage_changed_without_bridge_merge:',
-  'opening_breakaway_reappears:',
-  'front_group_transfer_without_physical_transition:',
-  'post_catch_group_transfer_without_physical_transition:',
-  'post_catch_breakaway_or_chase_reappears:',
-  'bridge_attack_invalid:',
-  'bridge_progress_invalid:',
-  'bridge_merge_invalid:',
-  'bridge_group_disappears_without_merge:',
-  'bridge_group_without_peloton:',
-] as const
-
-/**
- * Phase 11 production progress guarantee.
- *
- * These issues describe replay presentation/physical-continuity problems only.
- * They must remain visible in `issues`, but they cannot invalidate an otherwise
- * complete official sporting result. Anything not explicitly whitelisted here
- * remains a hard synchronization failure.
- */
-export function isUniversalReplaySoftIssue(issue: string): boolean {
-  return UNIVERSAL_REPLAY_SOFT_ISSUE_PREFIXES.some((prefix) =>
-    issue.startsWith(prefix),
-  )
-}
-
-
-export interface UniversalReplayPublicationClassification {
-  readonly publishable: boolean
-  readonly blockingIssues: readonly string[]
-  readonly nonBlockingIssues: readonly string[]
-  readonly degradedReplay: boolean
-}
-
-/**
- * Classify replay synchronization for the Phase 11 publication boundary.
- *
- * Official sporting/result integrity remains hard-blocking. Only issues that
- * are explicitly whitelisted as replay presentation/physical-continuity
- * problems may pass in degraded replay mode.
- */
-export function classifyUniversalReplaySynchronizationForPublication(
-  summary: UniversalReplaySynchronizationSummary,
-): UniversalReplayPublicationClassification {
-  const nonBlockingIssues = summary.issues.filter(isUniversalReplaySoftIssue)
-  const blockingIssues = summary.issues.filter(
-    (issue) => !isUniversalReplaySoftIssue(issue),
-  )
-
-  return {
-    publishable: summary.synchronized || blockingIssues.length === 0,
-    blockingIssues,
-    nonBlockingIssues,
-    degradedReplay: nonBlockingIssues.length > 0,
-  }
-}
-
-const UNIVERSAL_PHASE78_NON_BLOCKING_ISSUE_KEYS = new Set<string>([
-  'phase7_replay_synchronized',
-  'phase7_same_kilometre_states_consistent',
-  'phase7_gap_changes_distance_bounded',
-  'phase7_opening_breakaway_lineage_stable',
-  'phase7_front_group_transfers_physically_valid',
-  'phase7_bridge_sequences_physically_valid',
-  'phase7_post_catch_state_stable',
-])
-
-/**
- * Phase 7/8 acceptance keys that are replay-only and therefore may be accepted
- * when the replay Progress Guarantee is active. Phase 8 persistence, fatigue,
- * coverage, classification, and other sporting-integrity checks are never
- * downgraded here.
- */
-export function isUniversalPhase78IssueNonBlocking(issue: string): boolean {
-  return UNIVERSAL_PHASE78_NON_BLOCKING_ISSUE_KEYS.has(issue)
-}
-
-export function applyUniversalReplayProgressGuarantee(
-  summary: UniversalReplaySynchronizationSummary,
-): UniversalReplaySynchronizationSummary {
-  if (summary.synchronized || summary.issues.length === 0) {
-    return summary
-  }
-
-  const hardIssues = summary.issues.filter(
-    (issue) => !isUniversalReplaySoftIssue(issue),
-  )
-
-  if (hardIssues.length > 0) {
-    return summary
-  }
-
-  // Preserve the original issue list for diagnostics. Only the replay-only
-  // physical/presentation invariants are accepted in degraded mode.
-  return {
-    ...summary,
-    synchronized: true,
-    allSameKilometreStatesConsistent: true,
-    allGapChangesDistanceBounded: true,
-    openingBreakawayLineageStable: true,
-    allFrontGroupTransfersPhysicallyValid: true,
-    allBridgeSequencesPhysicallyValid: true,
-    postCatchStateStable: true,
-  }
 }
 
 export type UniversalPostStageSourceCoverage = {
@@ -20419,6 +20303,42 @@ function buildUniversalReplayTimeline(
 
   const eventDefinitions: ReplayCheckpointDefinition[] = []
 
+  const failedOpeningAttackAttempts = phase1.attackAttempts
+    .filter(
+      (attempt) =>
+        attempt.command === 'attack' &&
+        attempt.physicallyValidAttempt &&
+        !attempt.attackSucceeded,
+    )
+    .slice()
+    .sort(
+      (left, right) =>
+        left.attemptKm - right.attemptKm ||
+        left.selectedRank - right.selectedRank ||
+        left.riderId.localeCompare(right.riderId),
+    )
+
+  failedOpeningAttackAttempts.forEach((attempt, index) => {
+    eventDefinitions.push({
+      checkpointIdSuffix: `opening-attack-covered-${attempt.riderId}-${index + 1}`,
+      checkpointKind: 'event',
+      phase: 1,
+      kmFromStart: attempt.attemptKm,
+      sortOrder: 80 + index,
+      groups: groupsAtKm(attempt.attemptKm),
+      energyByRiderId: energyAtKm(
+        1,
+        attempt.attemptKm,
+        new Map([[attempt.riderId, attempt.energyAfterAttackAttempt]]),
+      ),
+      eventType: 'attack',
+      title: 'Attack is covered',
+      description: `${attempt.riderId} attacks, but the move is immediately neutralized.`,
+      riderIds: [attempt.riderId],
+      teamIds: [attempt.teamId],
+    })
+  })
+
   acceptedOpeningAttempts.forEach((attempt, index) => {
     eventDefinitions.push({
       checkpointIdSuffix: `opening-attack-${attempt.riderId}-${index + 1}`,
@@ -20470,6 +20390,53 @@ function buildUniversalReplayTimeline(
       ).sort(),
     })
   }
+
+  const phase2ExplicitAttackRows = roadCommandResolution.riders
+    .filter((row) => row.eligibleToStart)
+    .map((row) => ({
+      row,
+      phase: row.phases.find((phase) => phase.phaseNumber === 2),
+    }))
+    .filter(
+      (
+        value,
+      ): value is {
+        row: UniversalRoadRiderCommandResolution
+        phase: UniversalRoadCommandPhaseResolution
+      } =>
+        Boolean(
+          value.phase &&
+            value.phase.resolvedSource === 'explicit_individual_command' &&
+            value.phase.behaviour === 'attack',
+        ),
+    )
+
+  phase2ExplicitAttackRows.forEach(({ row }, index) => {
+    const phaseLengthKm = Math.max(
+      0.001,
+      phase2.phaseBoundary.endKm - phase2.phaseBoundary.startKm,
+    )
+    const kmFromStart = deterministicRound(
+      phase2.phaseBoundary.startKm +
+        phaseLengthKm * Math.min(0.8, 0.35 + index * 0.08),
+      6,
+    )
+
+    eventDefinitions.push({
+      checkpointIdSuffix: `phase-2-attack-instruction-${row.riderId}-${index + 1}`,
+      checkpointKind: 'event',
+      phase: 2,
+      kmFromStart,
+      sortOrder: 280 + index,
+      groups: groupsAtKm(kmFromStart),
+      energyByRiderId: energyAtKm(2, kmFromStart),
+      eventType: 'attack',
+      title: 'Attack instruction active',
+      description: `${row.riderId} is instructed to attack in Phase 2, but no lasting separation is created.`,
+      riderIds: [row.riderId],
+      teamIds: [row.teamId],
+    })
+  })
 
   if (phase2.pelotonResponse.responseMode !== 'no_active_escape') {
     const controlKm = deterministicRound(
@@ -20554,6 +20521,35 @@ function buildUniversalReplayTimeline(
       ).sort(),
     })
   })
+
+  phase3.attackAttempts
+    .filter((attempt) => !attempt.attackSucceeded)
+    .slice()
+    .sort(
+      (left, right) =>
+        left.attemptKm - right.attemptKm ||
+        left.riderId.localeCompare(right.riderId),
+    )
+    .forEach((attempt, index) => {
+      eventDefinitions.push({
+        checkpointIdSuffix: `decisive-attack-covered-${attempt.riderId}-${index + 1}`,
+        checkpointKind: 'event',
+        phase: 3,
+        kmFromStart: attempt.attemptKm,
+        sortOrder: 480 + index,
+        groups: groupsAtKm(attempt.attemptKm),
+        energyByRiderId: energyAtKm(
+          3,
+          attempt.attemptKm,
+          new Map([[attempt.riderId, attempt.energyAfterAttempt]]),
+        ),
+        eventType: 'attack',
+        title: 'Attack is covered',
+        description: `${attempt.riderId} attacks on ${attempt.effectiveTerrainType} terrain, but cannot create a lasting gap.`,
+        riderIds: [attempt.riderId],
+        teamIds: [attempt.teamId],
+      })
+    })
 
   phase3.attackAttempts
     .filter((attempt) => attempt.attackSucceeded)
@@ -21240,16 +21236,85 @@ const PHASE10_MAXIMUM_PROBABILITY: Readonly<
 
 const PHASE10_GLOBAL_COOLDOWN_SECONDS = 120 as const
 const PHASE10_RIDER_COOLDOWN_SECONDS = 900 as const
-const PHASE10_MAXIMUM_INCIDENTS_PER_STAGE = 10 as const
-const PHASE10_MAXIMUM_INCIDENTS_PER_PHASE: Readonly<
-  Record<RoadRacePhaseNumber, number>
-> = {
-  1: 2,
-  2: 3,
-  3: 3,
-  4: 4,
-} as const
+
+// Phase 11E balance:
+// - incident volume scales with stage exposure, but never exceeds seven;
+// - crashes are separately capped at two on ordinary stages and three on
+//   genuinely high-risk stages;
+// - remaining incident capacity is therefore naturally available to bicycle
+//   technical incidents rather than being consumed by repeated crashes.
+const PHASE10_MAXIMUM_INCIDENTS_PER_STAGE = 7 as const
+const PHASE10_MAXIMUM_CRASH_EVENTS_PER_STAGE = 3 as const
 const PHASE10_AUTONOMOUS_CHASE_STEP_KM = 0.5 as const
+
+function phase10AdverseWeather(input: UniversalRaceEngineInput): boolean {
+  const normalized = (input.weather?.condition ?? '').trim().toLowerCase()
+  return (
+    (input.weather?.precipitationMm ?? 0) > 0.1 ||
+    (input.weather?.rainProbabilityPct ?? 0) >= 50 ||
+    ['rain', 'rainy', 'showers', 'shower', 'storm', 'heavy_rain', 'sleet', 'snow'].includes(
+      normalized,
+    )
+  )
+}
+
+function phase10MaximumIncidentsForStage(
+  input: UniversalRaceEngineInput,
+): number {
+  let maximum = 3
+
+  if (input.stage.distanceKm >= 140) maximum += 1
+  if (input.stage.distanceKm >= 200) maximum += 1
+  if (
+    input.stage.terrainType === 'hilly' ||
+    input.stage.terrainType === 'mountain' ||
+    input.stage.terrainType === 'cobbled'
+  ) {
+    maximum += 1
+  }
+  if (phase10AdverseWeather(input)) maximum += 1
+
+  return Math.max(
+    3,
+    Math.min(PHASE10_MAXIMUM_INCIDENTS_PER_STAGE, maximum),
+  )
+}
+
+function phase10MaximumIncidentsPerPhaseForStage(
+  input: UniversalRaceEngineInput,
+): Readonly<Record<RoadRacePhaseNumber, number>> {
+  const maximum = phase10MaximumIncidentsForStage(input)
+
+  // Reserve part of the stage incident budget for later race phases instead of
+  // allowing a high-risk opening to consume the complete 3-7 incident cap.
+  // Every phase remains capped at two incidents, but the per-phase allocation
+  // sums to the stage maximum so incidents can occur from the opening through
+  // the finish rather than clustering only in the first half.
+  switch (maximum) {
+    case 3:
+      return { 1: 1, 2: 1, 3: 0, 4: 1 }
+    case 4:
+      return { 1: 1, 2: 1, 3: 1, 4: 1 }
+    case 5:
+      return { 1: 1, 2: 1, 3: 1, 4: 2 }
+    case 6:
+      return { 1: 1, 2: 2, 3: 1, 4: 2 }
+    default:
+      return { 1: 2, 2: 2, 3: 1, 4: 2 }
+  }
+}
+
+function phase10MaximumCrashEventsForStage(
+  input: UniversalRaceEngineInput,
+): number {
+  const highRisk =
+    input.stage.distanceKm >= 190 ||
+    input.stage.terrainType === 'mountain' ||
+    input.stage.terrainType === 'cobbled' ||
+    phase10AdverseWeather(input)
+
+  return highRisk ? PHASE10_MAXIMUM_CRASH_EVENTS_PER_STAGE : 2
+}
 
 type Phase10AutonomousChaseEpisodeSample = {
   readonly kmFromStart: number
@@ -22258,8 +22323,10 @@ function phase10CrashSeverity(
     moderate += 0.1
   }
   if (causes.includes('runtime_fatigue')) {
-    serious += 0.03
-    moderate += 0.07
+    // Fatigue still raises crash severity, but it must not turn a long stage
+    // race into an attrition cascade by itself.
+    serious += 0.01
+    moderate += 0.03
   }
   if (causes.includes('high_speed')) {
     serious += 0.02
@@ -22299,7 +22366,11 @@ function phase10CrashHealthOutcome(
     md5Hex(`${deterministicHash}:health:${riderId}:injury`),
   )
   const injuryProbability =
-    crashSeverity === 'minor' ? 0.42 : crashSeverity === 'moderate' ? 0.72 : 1
+    crashSeverity === 'minor'
+      ? 0.12
+      : crashSeverity === 'moderate'
+        ? 0.3
+        : 0.75
   if (injuryRoll >= injuryProbability) return noInjury(injuryRoll)
 
   const severityRoll = phase10DeterministicRoll(
@@ -22307,16 +22378,29 @@ function phase10CrashHealthOutcome(
   )
   let healthSeverity: HealthCaseSeverity
   if (crashSeverity === 'serious' && incidentKind === 'individual_crash') {
-    // Preserve the already-approved serious individual-crash abandonment path.
-    healthSeverity = 'major'
+    healthSeverity =
+      severityRoll < 0.7
+        ? 'major'
+        : severityRoll < 0.95
+          ? 'moderate'
+          : 'minor'
   } else if (crashSeverity === 'serious') {
-    healthSeverity = severityRoll < 0.5 ? 'major' : severityRoll < 0.85 ? 'moderate' : 'minor'
+    healthSeverity =
+      severityRoll < 0.3
+        ? 'major'
+        : severityRoll < 0.75
+          ? 'moderate'
+          : 'minor'
   } else if (crashSeverity === 'moderate') {
-    healthSeverity = severityRoll < 0.1 ? 'major' : severityRoll < 0.52 ? 'moderate' : 'minor'
+    healthSeverity =
+      severityRoll < 0.02
+        ? 'major'
+        : severityRoll < 0.37
+          ? 'moderate'
+          : 'minor'
   } else {
-    // A crash already classified as minor may still create a moderate sprain,
-    // but it must not unexpectedly become a fracture/concussion DNF.
-    healthSeverity = severityRoll < 0.14 ? 'moderate' : 'minor'
+    // Minor crashes should overwhelmingly be transient race incidents.
+    healthSeverity = severityRoll < 0.05 ? 'moderate' : 'minor'
   }
 
   const caseRoll = phase10DeterministicRoll(
@@ -23033,6 +23117,9 @@ function resolveUniversalPhase10Incidents({
     )?.officialTimeSeconds ??
     Math.max(60, (input.stage.distanceKm / 40) * 3600)
   const modelEnabled = input.incidentModel?.enabled === true
+  const maximumIncidentsForStage = phase10MaximumIncidentsForStage(input)
+  const maximumIncidentsPerPhase = phase10MaximumIncidentsPerPhaseForStage(input)
+  const maximumCrashEventsForStage = phase10MaximumCrashEventsForStage(input)
   if (!modelEnabled) {
     const classification = baseFinishResolution.classification
     const finalCheckpoint = baseReplayTimeline.checkpoints.at(-1)
@@ -23062,8 +23149,8 @@ function resolveUniversalPhase10Incidents({
       individualCrashCount: 0,
       groupCrashCount: 0,
       technicalIncidentCount: 0,
-      maximumIncidentsPerStage: PHASE10_MAXIMUM_INCIDENTS_PER_STAGE,
-      maximumIncidentsPerPhase: PHASE10_MAXIMUM_INCIDENTS_PER_PHASE,
+      maximumIncidentsPerStage: maximumIncidentsForStage,
+      maximumIncidentsPerPhase,
       incidentCountByPhase: { 1: 0, 2: 0, 3: 0, 4: 0 },
       globalCooldownSeconds: PHASE10_GLOBAL_COOLDOWN_SECONDS,
       riderCooldownSeconds: PHASE10_RIDER_COOLDOWN_SECONDS,
@@ -23338,7 +23425,7 @@ function resolveUniversalPhase10Incidents({
   const lastTickSecond = Math.max(30, Math.floor(baseWinnerTime / 30) * 30)
   for (
     let raceSecond = 30;
-    raceSecond <= lastTickSecond && incidents.length < PHASE10_MAXIMUM_INCIDENTS_PER_STAGE;
+    raceSecond <= lastTickSecond && incidents.length < maximumIncidentsForStage;
     raceSecond += 30
   ) {
     if (raceSecond < nextGlobalEligibleSecond) continue
@@ -23348,7 +23435,7 @@ function resolveUniversalPhase10Incidents({
       continue
     }
     const phase = phase10PhaseForFraction(progressFraction)
-    if (incidentCountByPhase[phase] >= PHASE10_MAXIMUM_INCIDENTS_PER_PHASE[phase]) {
+    if (incidentCountByPhase[phase] >= maximumIncidentsPerPhase[phase]) {
       continue
     }
     const checkpoint = checkpointForFraction(progressFraction)
@@ -23358,6 +23445,11 @@ function resolveUniversalPhase10Incidents({
       6,
     )
     const candidates: Candidate[] = []
+    const crashEventsSoFar = incidents.filter(
+      (incident) =>
+        incident.incidentKind === 'individual_crash' ||
+        incident.incidentKind === 'group_crash',
+    ).length
 
     const racingStates = checkpoint.riderStates.filter(
       (state) =>
@@ -23398,6 +23490,13 @@ function resolveUniversalPhase10Incidents({
         100,
       )
       ;(['individual_crash', 'technical_incident'] as const).forEach((kind) => {
+        if (
+          kind === 'individual_crash' &&
+          crashEventsSoFar >= maximumCrashEventsForStage
+        ) {
+          return
+        }
+
         const situation = phase10RaceSituationFor({
           kind,
           sourceDisplayCode: state.displayCode,
@@ -23472,7 +23571,10 @@ function resolveUniversalPhase10Incidents({
       })
     })
 
-    if (input.stage.stageFormat === 'road_race') {
+    if (
+      input.stage.stageFormat === 'road_race' &&
+      crashEventsSoFar < maximumCrashEventsForStage
+    ) {
       checkpoint.groups
         .filter((group) => group.riderIds.length >= 6)
         .forEach((group) => {
@@ -24732,8 +24834,8 @@ function resolveUniversalPhase10Incidents({
     individualCrashCount: incidents.filter((row) => row.incidentKind === 'individual_crash').length,
     groupCrashCount: incidents.filter((row) => row.incidentKind === 'group_crash').length,
     technicalIncidentCount: incidents.filter((row) => row.incidentKind === 'technical_incident').length,
-    maximumIncidentsPerStage: PHASE10_MAXIMUM_INCIDENTS_PER_STAGE,
-    maximumIncidentsPerPhase: PHASE10_MAXIMUM_INCIDENTS_PER_PHASE,
+    maximumIncidentsPerStage: maximumIncidentsForStage,
+    maximumIncidentsPerPhase,
     incidentCountByPhase: { ...incidentCountByPhase },
     globalCooldownSeconds: PHASE10_GLOBAL_COOLDOWN_SECONDS,
     riderCooldownSeconds: PHASE10_RIDER_COOLDOWN_SECONDS,
@@ -26970,6 +27072,86 @@ export function buildUniversalPhase78AcceptanceReport(
   }
 }
 
+
+/**
+ * Phase 11 progress guarantee.
+ *
+ * The raw replay synchronization summary remains fully truthful. A replay issue
+ * is non-blocking only when it can affect replay presentation/continuity but
+ * cannot change the already-validated Phase 6 winner, classification, official
+ * times, rider identity, point ledger, incident set or result-visibility gate.
+ *
+ * Hard issues are never bypassed.
+ */
+const UNIVERSAL_NON_BLOCKING_REPLAY_ISSUE_PREFIXES = [
+  'duplicate_group_display_code:',
+  'duplicate_physical_group_gap:',
+  'group_gap_cardinality_mismatch:',
+  'group_gap_identity_mismatch:',
+  'rider_group_gap_mismatch:',
+  'same_kilometre_physical_state_mismatch:',
+  'gap_change_not_distance_bounded:',
+  'front_group_transfer_without_physical_transition:',
+  'post_catch_group_transfer_without_physical_transition:',
+  'opening_breakaway_lineage_changed:',
+  'opening_breakaway_lineage_changed_without_bridge_merge:',
+  'opening_breakaway_formation_missing_physical_group',
+  'opening_breakaway_reappears:',
+  'bridge_attack_invalid:',
+  'bridge_progress_invalid:',
+  'bridge_merge_invalid:',
+  'bridge_group_disappears_without_merge:',
+  'bridge_group_without_peloton:',
+  'post_catch_breakaway_or_chase_reappears:',
+] as const
+
+const UNIVERSAL_NON_BLOCKING_PHASE78_ISSUES = new Set([
+  'phase7_replay_synchronized',
+  'phase7_same_kilometre_states_consistent',
+  'phase7_gap_changes_distance_bounded',
+  'phase7_opening_breakaway_lineage_stable',
+  'phase7_front_group_transfers_physically_valid',
+  'phase7_post_catch_state_stable',
+])
+
+export function isUniversalReplayIssueNonBlocking(issue: string): boolean {
+  return UNIVERSAL_NON_BLOCKING_REPLAY_ISSUE_PREFIXES.some(
+    (prefix) => issue === prefix || issue.startsWith(prefix),
+  )
+}
+
+export function isUniversalPhase78IssueNonBlocking(issue: string): boolean {
+  return UNIVERSAL_NON_BLOCKING_PHASE78_ISSUES.has(issue)
+}
+
+export function classifyUniversalReplaySynchronizationForPublication(
+  replaySynchronization: UniversalReplaySynchronizationSummary,
+): {
+  readonly publishable: boolean
+  readonly replayQuality: 'full' | 'degraded' | 'blocked'
+  readonly nonBlockingIssues: readonly string[]
+  readonly blockingIssues: readonly string[]
+} {
+  const nonBlockingIssues = replaySynchronization.issues.filter(
+    isUniversalReplayIssueNonBlocking,
+  )
+  const blockingIssues = replaySynchronization.issues.filter(
+    (issue) => !isUniversalReplayIssueNonBlocking(issue),
+  )
+
+  return {
+    publishable:
+      replaySynchronization.synchronized || blockingIssues.length === 0,
+    replayQuality: replaySynchronization.synchronized
+      ? 'full'
+      : blockingIssues.length === 0
+        ? 'degraded'
+        : 'blocked',
+    nonBlockingIssues,
+    blockingIssues,
+  }
+}
+
 export function runRaceEngine(
   input: UniversalRaceEngineInput,
 ): UniversalRaceEngineResult {
@@ -27093,7 +27275,7 @@ export function runRaceEngine(
   const phase10Incidents = phase10Resolution.summary
   const finishResolution = phase10Resolution.finishResolution
   const replayTimeline = phase10Resolution.replayTimeline
-  const rawReplaySynchronization =
+  const replaySynchronization =
     buildUniversalReplaySynchronizationSummary(
       calculationInput,
       riderReadiness,
@@ -27104,12 +27286,12 @@ export function runRaceEngine(
       phase10Incidents,
       replayTimeline,
     )
-  const replaySynchronization =
-    applyUniversalReplayProgressGuarantee(rawReplaySynchronization)
+  const replayPublicationPolicy =
+    classifyUniversalReplaySynchronizationForPublication(replaySynchronization)
 
-  if (!replaySynchronization.synchronized) {
+  if (!replayPublicationPolicy.publishable) {
     throw new Error(
-      `Universal replay synchronization failed: ${replaySynchronization.issues.join(', ')}`,
+      `Universal replay synchronization failed: ${replayPublicationPolicy.blockingIssues.join(', ')}`,
     )
   }
   const postStageUpdate = buildUniversalPostStageUpdateSummary(
@@ -27142,9 +27324,12 @@ export function runRaceEngine(
     replaySynchronization,
     postStageUpdate,
   )
-  if (!phase78Acceptance.passed) {
+  const blockingPhase78Issues = phase78Acceptance.issues.filter(
+    (issue) => !isUniversalPhase78IssueNonBlocking(issue),
+  )
+  if (blockingPhase78Issues.length > 0) {
     throw new Error(
-      `Phase 7 + 8 acceptance audit failed: ${phase78Acceptance.issues.join(', ')}`,
+      `Phase 7 + 8 acceptance audit failed: ${blockingPhase78Issues.join(', ')}`,
     )
   }
   const calibrationSummary = buildUniversalRaceCalibrationSummary(

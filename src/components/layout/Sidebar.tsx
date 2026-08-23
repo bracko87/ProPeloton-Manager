@@ -229,7 +229,7 @@ export default function Sidebar({
 
           {!collapsed && (
             <div className="text-xs text-white/60">
-              ProPeloton Manager • Premium UI
+              ProPeloton Manager • Version 1.0.3
             </div>
           )}
         </div>

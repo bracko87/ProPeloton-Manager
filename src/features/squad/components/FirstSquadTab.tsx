@@ -31,6 +31,11 @@ import {
 
 import { getFirstSquadMoveState } from '../utils/movement'
 
+import {
+  RiderCurrentActivityBadge,
+  useRiderCurrentActivities,
+} from './RiderCurrentActivityBadge'
+
 export type SquadListView = 'general' | 'financial' | 'skills' | 'form'
 
 export type FirstSquadRiderRow = {
@@ -910,28 +915,39 @@ export default function FirstSquadTab({
   const activeListView: SquadListView =
     isPremium && !isPremiumLoading ? listView : 'general'
 
+  const {
+    activitiesByRiderId: currentActivityByRiderId,
+    loading: currentActivityLoading,
+    error: currentActivityError,
+  } = useRiderCurrentActivities(
+    riders.map((rider) => rider.id),
+    gameDate,
+  )
+
   const squadTableClassName = [
     'w-full text-sm',
     activeListView === 'skills' ? 'table-fixed' : '',
     activeListView === 'financial'
-      ? 'min-w-[980px]'
+      ? 'min-w-[1100px]'
       : activeListView === 'form'
-        ? 'min-w-[1020px]'
+        ? 'min-w-[1140px]'
         : activeListView === 'general'
-          ? 'min-w-[900px]'
-          : '',
+          ? 'min-w-[1020px]'
+          : activeListView === 'skills'
+            ? 'min-w-[1040px]'
+            : '',
   ]
     .filter(Boolean)
     .join(' ')
 
   const squadTableColSpan =
     activeListView === 'skills'
-      ? 11
+      ? 12
       : activeListView === 'financial'
-        ? 8
+        ? 9
         : activeListView === 'form'
-          ? 9
-          : 9
+          ? 10
+          : 10
 
   const currentViewLabel =
     SQUAD_LIST_VIEW_OPTIONS.find((option) => option.value === activeListView)?.label ??
@@ -1044,6 +1060,9 @@ export default function FirstSquadTab({
                     <th className={`p-2 ${activeListView === 'skills' ? 'w-[190px]' : ''}`}>Name</th>
                     <th className={`p-2 ${activeListView === 'skills' ? 'w-[110px]' : ''}`}>Country</th>
                     <th className={`p-2 ${activeListView === 'skills' ? 'w-[130px]' : ''}`}>Role</th>
+                    <th className={`p-2 ${activeListView === 'skills' ? 'w-[122px]' : 'w-[130px]'}`}>
+                      Activity
+                    </th>
 
                     {activeListView === 'general' && (
                       <>
@@ -1166,6 +1185,14 @@ export default function FirstSquadTab({
                           title={r.role}
                         >
                           {r.role}
+                        </td>
+
+                        <td className="p-2">
+                          <RiderCurrentActivityBadge
+                            activity={currentActivityByRiderId[r.id]}
+                            loading={currentActivityLoading}
+                            error={currentActivityError}
+                          />
                         </td>
 
                         {activeListView === 'general' && (

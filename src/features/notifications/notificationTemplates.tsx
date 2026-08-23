@@ -1560,6 +1560,291 @@ function isSportDirectorAdvisoryType(
 
 export const NOTIFICATION_TEMPLATES: Record<string, NotificationTemplate> = {
 
+  RACE_PLAN_NEEDS_ATTENTION: {
+    defaultTitle: 'Race plan needs attention',
+
+    getImageSrc: (item) => {
+      const payload = getPayload(item)
+      const eventType = pickFirstString(payload, ['event_type'])
+
+      if (eventType === 'missed_startlist') {
+        return 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Event%20images/Startlist%20missed.png'
+      }
+
+      return getImageSrcFromItem(item)
+    },
+
+    getIntroText: (item) => {
+      const payload = getPayload(item) ?? {}
+      const eventType = pickFirstString(payload, ['event_type'])
+
+      if (eventType !== 'missed_startlist') {
+        return item.message || null
+      }
+
+      const raceName =
+        pickFirstString(payload, ['race_name']) || 'the affected race'
+      const teamName =
+        pickFirstString(payload, ['team_name', 'club_name']) || 'Your team'
+      const scoreDelta = pickFirstNumber(payload, ['score_delta'])
+      const cashPenalty = pickFirstNumber(payload, ['cash_penalty'])
+      const deadline = formatContractSeasonLabel(
+        pickFirstString(payload, ['rider_deadline'])
+      )
+
+      const penaltyText = [
+        scoreDelta !== null
+          ? `Commitment score ${scoreDelta >= 0 ? '+' : ''}${scoreDelta}`
+          : null,
+        cashPenalty !== null
+          ? `cash fine $${Math.round(cashPenalty).toLocaleString('en-US')}`
+          : null,
+      ]
+        .filter(Boolean)
+        .join(' and ')
+
+      return `${teamName} missed the rider submission deadline${
+        deadline ? ` (${deadline})` : ''
+      } for ${raceName}. No valid Race Plan was submitted in time${
+        penaltyText ? `; ${penaltyText} were applied` : ''
+      }. Review the missed preparation and the affected race before the next planning deadline.`
+    },
+
+    getDetailRows: (item) => {
+      const payload = getPayload(item) ?? {}
+      const eventType = pickFirstString(payload, ['event_type'])
+
+      if (eventType !== 'missed_startlist') return []
+
+      const scoreBefore = pickFirstNumber(payload, ['score_before'])
+      const scoreDelta = pickFirstNumber(payload, ['score_delta'])
+      const scoreAfter = pickFirstNumber(payload, ['score_after'])
+      const cashPenalty = pickFirstNumber(payload, ['cash_penalty'])
+      const riderDeadline = formatContractSeasonLabel(
+        pickFirstString(payload, ['rider_deadline'])
+      )
+
+      return compactRows([
+        detailRow(
+          'Team',
+          pickFirstString(payload, ['team_name', 'club_name'])
+        ),
+        detailRow('Race', pickFirstString(payload, ['race_name'])),
+        detailRow('Race class', pickFirstString(payload, ['race_class_code'])),
+        detailRow('Rider deadline', riderDeadline),
+        detailRow('Status', 'Startlist missed'),
+        detailRow(
+          'Commitment before',
+          scoreBefore !== null ? String(scoreBefore) : null
+        ),
+        detailRow(
+          'Commitment penalty',
+          scoreDelta !== null
+            ? `${scoreDelta >= 0 ? '+' : ''}${scoreDelta}`
+            : null
+        ),
+        detailRow(
+          'Commitment after',
+          scoreAfter !== null ? String(scoreAfter) : null
+        ),
+        detailRow(
+          'Cash fine',
+          cashPenalty !== null
+            ? `$${Math.round(cashPenalty).toLocaleString('en-US')}`
+            : null
+        ),
+        detailRow('Submission', 'No valid Race Plan submitted'),
+      ])
+    },
+
+    getExtraText: (item) => {
+      const payload = getPayload(item) ?? {}
+      const eventType = pickFirstString(payload, ['event_type'])
+
+      if (eventType !== 'missed_startlist') return null
+
+      return 'The deadline has already passed and the recorded penalties have been applied. Open Race Preparation to review the missed submission, then open the Race Page to inspect the affected event. Check your other accepted races as well so another rider deadline is not missed.'
+    },
+
+    actions: [
+      {
+        key: 'open-missed-race-preparation',
+        label: 'Race Preparation',
+        variant: 'primary',
+        kind: 'navigate',
+        getHref: (item) => {
+          const payload = getPayload(item)
+          if (pickFirstString(payload, ['event_type']) !== 'missed_startlist') {
+            return null
+          }
+
+          return (
+            pickFirstString(payload, ['race_preparation_path']) ||
+            (() => {
+              const raceId = pickFirstString(payload, ['race_id'])
+              return raceId
+                ? `/dashboard/race-preparation?tab=acceptedRaces&raceId=${raceId}`
+                : '/dashboard/race-preparation'
+            })()
+          )
+        },
+        show: (item) => {
+          const payload = getPayload(item)
+          return pickFirstString(payload, ['event_type']) === 'missed_startlist'
+        },
+      },
+      {
+        key: 'open-missed-race-page',
+        label: 'Race Page',
+        variant: 'secondary',
+        kind: 'navigate',
+        getHref: (item) => {
+          const payload = getPayload(item)
+          if (pickFirstString(payload, ['event_type']) !== 'missed_startlist') {
+            return null
+          }
+
+          const direct = pickFirstString(payload, [
+            'race_path',
+            'race_page_path',
+            'race_detail_path',
+          ])
+          if (direct) return direct
+
+          const raceId = pickFirstString(payload, ['race_id'])
+          return raceId ? `/dashboard/races/${raceId}` : null
+        },
+        show: (item) => {
+          const payload = getPayload(item)
+          return (
+            pickFirstString(payload, ['event_type']) === 'missed_startlist' &&
+            Boolean(
+              pickFirstString(payload, [
+                'race_path',
+                'race_page_path',
+                'race_detail_path',
+                'race_id',
+              ])
+            )
+          )
+        },
+      },
+    ],
+  },
+
+  RACE_JERSEYS_MANDATORY_WARNING: {
+    defaultTitle: 'Mandatory Race Jersey Kits missing',
+    defaultMessage:
+      'Your team does not have enough usable Race Jersey Kits for an upcoming stage. Resupply before the stage eligibility check to avoid race removal.',
+
+    imageSrc:
+      'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Event%20images/mandatory%20race%20jersey.png',
+
+    // This dedicated image is used only for the mandatory jersey-shortage event.
+    getImageSrc: () =>
+      'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Event%20images/mandatory%20race%20jersey.png',
+
+    getIntroText: (item) => {
+      const payload = getPayload(item) ?? {}
+      const raceName =
+        pickFirstString(payload, ['race_name']) || 'the upcoming race'
+      const stageNumber = pickFirstNumber(payload, ['stage_number'])
+      const missing = pickFirstNumber(payload, ['missing_jersey_units'])
+      const available = pickFirstNumber(payload, ['available_jersey_units'])
+      const required = pickFirstNumber(payload, ['required_jersey_units'])
+
+      const stageLabel =
+        stageNumber !== null ? `Stage ${stageNumber}` : 'the upcoming stage'
+
+      if (missing !== null && available !== null && required !== null) {
+        return `Critical supply shortage for ${raceName} — ${stageLabel}. You currently have ${available} usable Race Jersey Kit${available === 1 ? '' : 's'}, but ${required} are required. Buy ${missing} additional kit${missing === 1 ? '' : 's'} before the eligibility check.`
+      }
+
+      return (
+        item.message ||
+        'Your team does not have enough usable Race Jersey Kits for the upcoming stage. Resupply before the eligibility check.'
+      )
+    },
+
+    getDetailRows: (item) => {
+      const payload = getPayload(item) ?? {}
+
+      const raceName = pickFirstString(payload, ['race_name'])
+      const teamName = pickFirstString(payload, ['team_name'])
+      const stageNumber = pickFirstNumber(payload, ['stage_number'])
+      const required = pickFirstNumber(payload, ['required_jersey_units'])
+      const available = pickFirstNumber(payload, ['available_jersey_units'])
+      const missing = pickFirstNumber(payload, ['missing_jersey_units'])
+
+      return compactRows([
+        detailRow('Team', teamName),
+        detailRow('Race', raceName),
+        detailRow(
+          'Stage',
+          stageNumber !== null ? `Stage ${stageNumber}` : null
+        ),
+        detailRow(
+          'Required kits',
+          required !== null ? String(required) : null
+        ),
+        detailRow(
+          'Usable kits',
+          available !== null ? String(available) : null
+        ),
+        detailRow(
+          'Missing kits',
+          missing !== null ? String(missing) : null
+        ),
+        detailRow(
+          'Supply status',
+          missing !== null && missing > 0 ? 'Critical shortage' : 'Ready'
+        ),
+        detailRow(
+          'If unresolved',
+          'Team removed from this stage and all remaining stages'
+        ),
+      ])
+    },
+
+    getExtraText: (item) => {
+      const payload = getPayload(item) ?? {}
+      const missing = pickFirstNumber(payload, ['missing_jersey_units'])
+
+      if (missing !== null && missing > 0) {
+        return `Immediate action required: purchase at least ${missing} additional usable Race Jersey Kit${missing === 1 ? '' : 's'}. The eligibility guard checks usable supply, so worn-out or unavailable kits do not satisfy the requirement.`
+      }
+
+      return 'Open Race Supplies to verify your usable Race Jersey Kit stock before the stage eligibility check.'
+    },
+
+    actions: [
+      {
+        key: 'resupply-race-jerseys',
+        label: 'Resupply Now',
+        variant: 'primary',
+        kind: 'navigate',
+        getHref: () => '/dashboard/equipment?tab=race-supplies',
+        show: () => true,
+      },
+      {
+        key: 'open-race',
+        label: 'Open Race',
+        variant: 'secondary',
+        kind: 'navigate',
+        getHref: (item) => {
+          const payload = getPayload(item)
+          const raceId = pickFirstString(payload, ['race_id'])
+          return raceId ? `/dashboard/races/${raceId}` : null
+        },
+        show: (item) => {
+          const payload = getPayload(item)
+          return Boolean(pickFirstString(payload, ['race_id']))
+        },
+      },
+    ],
+  },
+
+
   RIDER_UNHAPPY: {
     defaultTitle: 'Rider morale is low',
     defaultMessage:
