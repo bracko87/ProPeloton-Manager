@@ -1,0 +1,31 @@
+{
+  "coins": {
+    "perRenewal": "{{cost}} Coins po obnovi",
+    "toActivate": "{{cost}} Coins za aktivaciju",
+    "reactivationPrice": "Cena ponovne aktivacije: {{cost}} Coins",
+    "nextRenewal": "Sledeća obnova: {{cost}} Coins",
+    "firstActivation": "Prva aktivacija: {{cost}} Coins"
+  },
+  "movement": {
+    "open": "Movement window je trenutno otvoren: {{label}}",
+    "closed": "Movement window je zatvoren. Sledeći period: {{label}}",
+    "unavailable": "Movement window trenutno nije dostupan.",
+    "currentWindow": "Trenutni period",
+    "unknown": "Nepoznato"
+  },
+  "activation": {
+    "reactivateForSeason": "Ponovo aktiviraj za sezonu {{season}} — {{cost}} Coins",
+    "activate": "Aktiviraj Razvojni tim — {{cost}} Coins",
+    "activatedForSeason": "Razvojni tim je aktiviran za sezonu {{season}}. Automatska obnova je {{renewal}}.",
+    "activatedSuccessfully": "Razvojni tim je uspešno aktiviran.",
+    "renewalEnabled": "Automatska obnova Razvojnog tima je uključena.",
+    "renewalDisabled": "Automatska obnova Razvojnog tima je isključena.",
+    "on": "uključena",
+    "off": "isključena"
+  },
+  "errors": {
+    "loadStatus": "Nije moguće učitati status Razvojnog tima.",
+    "activate": "Nije moguće aktivirati Razvojni tim.",
+    "renewal": "Nije moguće ažurirati automatsku obnovu."
+  }
+}
