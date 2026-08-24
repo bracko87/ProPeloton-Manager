@@ -5,6 +5,7 @@
   "staff": "Staff",
   "calendar": "Calendar",
   "racePreparation": "Race Preparation",
+  "teamRanking": "Team Ranking",
   "training": "Training",
   "equipment": "Equipment",
   "infrastructure": "Infrastructure",
@@ -16,5 +17,20 @@
   "myProfile": "My Profile",
   "preferences": "Preferences",
   "help": "Help",
-  "signIn": "Sign In"
+  "signIn": "Sign In",
+  "signOut": "Sign Out",
+  "subtitle": "Multiplayer cycling management",
+  "descriptions": {
+    "overview": "Club snapshot and updates",
+    "squad": "Manage riders and roster",
+    "calendar": "Upcoming races and events",
+    "racePreparation": "Startlist, logistics and stage plans",
+    "teamRanking": "Rankings and standings",
+    "training": "Rider training and sessions",
+    "equipment": "Bikes, wheels and gear",
+    "infrastructure": "Facilities and development",
+    "finance": "Budget, income and costs",
+    "transfers": "Buy, sell and negotiate",
+    "statistics": "Performance and analytics"
+  }
 }
