@@ -84,10 +84,11 @@ type ReviewFormErrors = {
 }
 
 const CONTACT_EMAIL = 'contact@propelotonmanager.com'
+const DISCORD_INVITE_URL = 'https://discord.gg/BpgqTXsjAW'
 
 const SOCIAL_LINKS = {
   facebook: 'https://www.facebook.com/profile.php?id=61583549010426',
-  discord: 'https://discord.gg/BpgqTXsjAW',
+  discord: DISCORD_INVITE_URL,
   email: `mailto:${CONTACT_EMAIL}`,
 }
 

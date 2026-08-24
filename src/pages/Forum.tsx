@@ -5,6 +5,8 @@
 
 import React from 'react'
 
+const DISCORD_INVITE_URL = 'https://discord.gg/BpgqTXsjAW'
+
 /**
  * ForumPage
  * Shows a notice that all community discussions will be handled on Discord.
@@ -44,7 +46,7 @@ export default function ForumPage(): JSX.Element {
 
             <div className="flex flex-col items-start gap-2 md:items-end">
               <a
-                href="https://discord.gg/BpgqTXsjAW"
+                href={DISCORD_INVITE_URL}
                 target="_blank"
                 rel="noreferrer"
                 className="rounded-md bg-white px-4 py-2 text-sm font-semibold text-indigo-600 transition hover:bg-indigo-50"

@@ -6,6 +6,8 @@
 import React, { useState } from 'react'
 import { Link } from 'react-router'
 
+const DISCORD_INVITE_URL = 'https://discord.gg/BpgqTXsjAW'
+
 /**
  * HelpPage
  * Presents onboarding, game basics, manual sections, and support information.
@@ -330,7 +332,7 @@ export default function HelpPage(): JSX.Element {
 
           <a
             className="rounded-md border border-white/50 px-4 py-2 font-medium text-white hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-white"
-            href="https://discord.gg/9W6rSSjm"
+            href={DISCORD_INVITE_URL}
             target="_blank"
             rel="noreferrer"
           >
@@ -567,7 +569,7 @@ export default function HelpPage(): JSX.Element {
           </Link>
 
           <a
-            href="https://discord.gg/BpgqTXsjAW"
+            href={DISCORD_INVITE_URL}
             target="_blank"
             rel="noreferrer"
             className="rounded-md border border-white/50 px-4 py-2 font-medium text-white hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-white"
