@@ -81,6 +81,7 @@
     "previous": "Previous screenshots",
     "next": "Next screenshots",
     "close": "Close screenshot",
+    "openPage": "Open screenshot page {{page}}",
     "page": "Page {{current}} of {{total}}"
   },
   "reviews": {
