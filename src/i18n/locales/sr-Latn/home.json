@@ -1,0 +1,18 @@
+{
+  "header": {
+    "signIn": "Prijava",
+    "startPlaying": "Počni da igraš"
+  },
+  "beta": {
+    "badge": "Beta verzija",
+    "title": "ProPeloton Manager je trenutno u beta testiranju.",
+    "body": "Igra se još uvek testira i unapređuje. Ako želite da postanete test igrač i pomognete nam da testiramo ProPeloton Manager, prvo nas kontaktirajte na našem Discord serveru. Tamo ćemo vam dati sledeće korake.",
+    "discord": "Kontaktirajte nas na Discord-u",
+    "continue": "Nastavi na sajt",
+    "closeLabel": "Zatvori beta obaveštenje"
+  },
+  "stats": {
+    "title": "Brza statistika",
+    "subtitle": "Pregled sveta ProPeloton Manager-a uživo."
+  }
+}

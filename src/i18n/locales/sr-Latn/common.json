@@ -1,0 +1,21 @@
+{
+  "language": {
+    "label": "Jezik",
+    "applicationLanguage": "Jezik aplikacije",
+    "description": "Izaberite jezik koji će se koristiti u ProPeloton Manager-u.",
+    "english": "Engleski",
+    "serbian": "Srpski"
+  },
+  "actions": {
+    "save": "Sačuvaj",
+    "cancel": "Otkaži",
+    "close": "Zatvori",
+    "continue": "Nastavi",
+    "confirm": "Potvrdi",
+    "back": "Nazad"
+  },
+  "status": {
+    "loading": "Učitavanje...",
+    "error": "Došlo je do greške"
+  }
+}
