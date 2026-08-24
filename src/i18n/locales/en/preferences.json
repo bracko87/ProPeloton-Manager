@@ -1,0 +1,216 @@
+{
+  "page": {
+    "title": "Preferences",
+    "description": "Real usable settings: in-game notification control and team danger-zone actions."
+  },
+  "notifications": {
+    "title": "In-Game Notifications",
+    "description": "Core game notifications and paid Staff Advisor notifications are controlled separately.",
+    "coreTitle": "Core Notifications",
+    "coreDescription": "Normal game notifications that remain available without a paid Staff Advisor.",
+    "advisorTitle": "Staff Advisor Notifications",
+    "advisorDescription": "Paid advisor notifications grouped by topic. Switching a category off mutes every notification type in that topic. Individual notification types can then be unmuted from their notification card without changing this category checkbox.",
+    "advisorSaveError": "Could not save the Staff Advisor notification setting. Please try again.",
+    "advisorInactiveSuffix": "Activate the required Staff Advisor to control this notification.",
+    "coreAdvisorNote": "A Core notification and an Advisor notification may cover the same topic without being the same event. Example: Race Supplies Low remains Core, while Equipment & Workshop Review is paid analysis.",
+    "enabledCount": "{{enabled}}/{{total}} on"
+  },
+  "sections": {
+    "race": {
+      "title": "Race notifications",
+      "description": "Invitations, preparation, weather, stage plans, race-day issues, and results."
+    },
+    "team": {
+      "title": "Team & rider notifications",
+      "description": "Riders, staff, transfers, training camps, scouting, and retirements."
+    },
+    "club": {
+      "title": "Club management notifications",
+      "description": "Finance, coins, rewards, supplies, equipment, tax, and infrastructure."
+    },
+    "account": {
+      "title": "Account & system notifications",
+      "description": "Official game messages and onboarding information."
+    }
+  },
+  "groups": {
+    "raceInvitations": {
+      "label": "Race invitations",
+      "description": "Show notifications when your team receives a race invitation."
+    },
+    "raceApplicationResults": {
+      "label": "Race application results",
+      "description": "Show notifications when your team is accepted or declined for a race."
+    },
+    "races": {
+      "label": "Race day updates",
+      "description": "Show startlist, missed-startlist, race-day, and race penalty updates."
+    },
+    "racePreparation": {
+      "label": "Race preparation status",
+      "description": "Show Core status and consequence notifications for race preparation. Proactive rider-deadline advice belongs to Sports Director Advisory."
+    },
+    "stagePlanReminders": {
+      "label": "Stage plan status",
+      "description": "Show Core stage-plan opening and lock-state notifications. Missing-plan advice belongs to Sports Director Advisory."
+    },
+    "raceWeather": {
+      "label": "Race weather",
+      "description": "Show notifications when stages, races, or race-related activities are affected by weather."
+    },
+    "raceResults": {
+      "label": "Race results",
+      "description": "Show notifications for finished races, stage results, classifications, and race summaries."
+    },
+    "teamUpdates": {
+      "label": "Team updates",
+      "description": "Show notifications related to riders, morale, health, contracts, staff, and internal team changes."
+    },
+    "staffContracts": {
+      "label": "Staff contracts",
+      "description": "Show notifications about expiring staff contracts and renewal timing."
+    },
+    "staffCourses": {
+      "label": "Staff courses",
+      "description": "Show notifications when a staff course is completed and gains are applied."
+    },
+    "transferUpdates": {
+      "label": "Transfer updates",
+      "description": "Show rider transfer, free agent, bid, offer, and negotiation notifications."
+    },
+    "trainingCamps": {
+      "label": "Training camps",
+      "description": "Show notifications for training camp starts, daily reports, weather warnings, and completions."
+    },
+    "scoutingReports": {
+      "label": "Scouting reports",
+      "description": "Show notifications when a scouting report is completed."
+    },
+    "retirementUpdates": {
+      "label": "Retirement updates",
+      "description": "Show notifications when riders or staff announce retirement and when retirements are finalized."
+    },
+    "financeAlerts": {
+      "label": "Finance alerts",
+      "description": "Show important finance warnings, sponsor objectives, emergency loans, tax alerts, payroll issues, and insolvency notices."
+    },
+    "walletRewards": {
+      "label": "Coins & rewards",
+      "description": "Show coin purchases, coin credits, birthday gifts, referral rewards, and wallet reward messages."
+    },
+    "competitionRewards": {
+      "label": "Competition rewards",
+      "description": "Show season rollover rewards for league and competition results."
+    },
+    "taxUpdates": {
+      "label": "Tax updates",
+      "description": "Show notifications for tax audits and tax-related finance events."
+    },
+    "raceSupplies": {
+      "label": "Race supplies",
+      "description": "Show notifications when race supplies are low, missing, or need restocking before events."
+    },
+    "equipmentUpdates": {
+      "label": "Equipment updates",
+      "description": "Show notifications for equipment maintenance, sales, discard actions, and equipment lifecycle updates."
+    },
+    "infrastructureUpdates": {
+      "label": "Infrastructure updates",
+      "description": "Show notifications for infrastructure orders, deliveries, repairs, sales, upgrades, and condition warnings."
+    },
+    "systemMessages": {
+      "label": "System messages",
+      "description": "Show welcome messages and general official game messages."
+    }
+  },
+  "advisorCategories": {
+    "trainingReadiness": {
+      "label": "Training & Rider Readiness",
+      "description": "Training load, fatigue, rider availability, training gaps, squad readiness and rider development advisories."
+    },
+    "raceProgrammePreparation": {
+      "label": "Race Programme & Preparation",
+      "description": "Race programme reviews and gaps, missing race preparation and preparation-ready advisories."
+    },
+    "startlistStagePlans": {
+      "label": "Startlist & Stage Plans",
+      "description": "Startlist deadline alerts plus missing or incomplete stage-plan advisories."
+    },
+    "medicalRecovery": {
+      "label": "Medical & Recovery",
+      "description": "Medical reports, injury and illness treatment plans, recovery changes and medical-clearance advisories."
+    },
+    "equipmentWorkshopSupplies": {
+      "label": "Equipment, Workshop & Race Supplies",
+      "description": "Equipment condition, workshop readiness and analytical race-supply review advisories."
+    },
+    "scoutingRecruitment": {
+      "label": "Scouting & Recruitment",
+      "description": "Recruitment intelligence, scouting review and priority-prospect advisories."
+    }
+  },
+  "developingTeam": {
+    "title": "Developing Team",
+    "description": "Build and manage a U23 development squad with seasonal coin access.",
+    "loading": "Loading Developing Team status...",
+    "realLifeProgress": "Real-life progress",
+    "realLifeMinimum": "Minimum 30 days required",
+    "gameProgress": "In-game progress",
+    "gameMinimum": "Minimum 60 days required",
+    "coins": "Coins",
+    "eligibility": "Eligibility: 30 real-life days or 60 in-game days.",
+    "active": "Developing Team active",
+    "activeBadge": "Active",
+    "currentSeason": "Current season",
+    "accessEnds": "Access ends",
+    "renewalPrice": "Renewal price",
+    "nextRenewal": "Next renewal",
+    "autoRenew": "Automatically renew each season",
+    "expired": "Developing Team access expired",
+    "expiredDescription": "Your team, riders, contracts, results and history remain stored. The Developing Team is currently read-only.",
+    "reactivating": "Reactivating...",
+    "activating": "Activating...",
+    "getCoins": "Get coins",
+    "notEligible": "Not yet eligible",
+    "notEligibleDescription": "Developing Team becomes available after 30 real-life days or 60 in-game days.",
+    "specialRules": "Special rules",
+    "teamNameRule": "The team name will be your main club name plus U23.",
+    "raceRule": "This team can apply to races normally while seasonal access is active.",
+    "competitionRule": "This team cannot be promoted above Continental level.",
+    "rosterRule": "Maximum roster size: 8 riders.",
+    "ageRule": "Only riders aged 23 or younger are eligible.",
+    "movementRule": "Riders move between squads only during movement windows.",
+    "teamLabel": "Team"
+  },
+  "dangerZone": {
+    "title": "Danger Zone",
+    "description": "These are destructive actions and should stay separated from normal preferences.",
+    "badge": "High-impact actions",
+    "restartTitle": "Restart Team",
+    "restartDescription": "Restart this club back to a fresh starter state while keeping the same club name, logo, jersey, country, and competition slot.",
+    "restartDetail": "Current riders become free agents, season points reset to 0, and the team receives a new starter squad based on its current tier.",
+    "restartButton": "Restart Team",
+    "shutdownTitle": "Shut Down Team",
+    "shutdownDescription": "Permanently delete this user team AND the authentication account. After successful deletion, you will be redirected to the homepage and may sign up again with the same email.",
+    "shutdownDetail": "This should delete only the current user’s team data, not other users or other teams.",
+    "shuttingDown": "Shutting down...",
+    "shutdownButton": "Shut Down Team",
+    "systemNote": "The notification system should check these saved preferences before creating or showing each notification type.",
+    "confirmTitle": "Confirm Team Shutdown",
+    "confirmDescription": "This action is permanent and cannot be undone.",
+    "aboutToDelete": "You are about to permanently delete:",
+    "deleteTeam": "Your current team",
+    "deleteGameData": "Your team riders, equipment, and team-related game data",
+    "deleteAccount": "Your authentication account for this email",
+    "afterDelete": "After successful deletion, you will be signed out and redirected to the homepage. You may then register again with the same email address as a brand-new user.",
+    "typeDelete": "Type DELETE to confirm",
+    "placeholder": "Type DELETE here",
+    "cancel": "Cancel",
+    "permanentButton": "Permanently Shut Down Team",
+    "exactDeleteError": "You must type DELETE exactly to confirm this action.",
+    "missingSession": "Your session is missing. Please sign in again and retry.",
+    "shutdownFailed": "Failed to shut down team.",
+    "shutdownUnexpected": "Failed to shut down team due to an unexpected error.",
+    "closeAria": "Close shutdown team confirmation"
+  }
+}
