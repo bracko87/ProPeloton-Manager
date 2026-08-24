@@ -31,8 +31,8 @@
  * - BACKEND FLOW: Frontend uploads logo, then calls public.create_club(...) only.
  * - SAFETY: Keeps best-effort logo cleanup for failed creation flow before club creation succeeds.
  * - RPC FIX: Uses rpcCreatedClubId for the Supabase return value, then assigns into mutable createdClubId.
- * - CUSTOM LOGO: Optional local upload (PNG/JPEG/BMP, max 2 MB, max 250x250 px) or external image URL.
- * - CUSTOM LOGO PREVIEW: Selected custom logo replaces the generated badge in Team Preview immediately.
+ * - CUSTOM LOGO: Optional local upload (PNG/JPEG/BMP, max 2 MB) or external image URL.
+ * - CUSTOM LOGO PREVIEW: Selected custom logo replaces the generated badge in Team Preview immediately and can be scaled live.
  * - CUSTOM LOGO STORAGE: Uploaded files use club-logos; URL logos are saved directly through p_logo_path.
  */
 
@@ -197,7 +197,6 @@ const GENERIC_TEAM_KITS = [
 ]
 
 const MAX_CUSTOM_LOGO_BYTES = 2 * 1024 * 1024
-const MAX_CUSTOM_LOGO_DIMENSION = 250
 const ALLOWED_CUSTOM_LOGO_TYPES = new Set([
   'image/png',
   'image/jpeg',
@@ -817,6 +816,7 @@ export default function CreateClubPage(): JSX.Element {
   const [appliedCustomLogoUrl, setAppliedCustomLogoUrl] = useState<string | null>(null)
   const [customLogoError, setCustomLogoError] = useState<string | null>(null)
   const [applyingLogoUrl, setApplyingLogoUrl] = useState(false)
+  const [customLogoScale, setCustomLogoScale] = useState(100)
   const customLogoInputRef = useRef<HTMLInputElement | null>(null)
 
   // Only customization left: interior pattern (in Team Preview panel)
@@ -848,6 +848,7 @@ export default function CreateClubPage(): JSX.Element {
     setAppliedCustomLogoUrl(null)
     setCustomLogoUrlInput('')
     setCustomLogoError(null)
+    setCustomLogoScale(100)
 
     if (customLogoInputRef.current) {
       customLogoInputRef.current.value = ''
@@ -880,34 +881,15 @@ export default function CreateClubPage(): JSX.Element {
       return
     }
 
-    try {
-      const dimensions = await getImageDimensionsFromFile(file)
+    clearCustomLogoPreviewObjectUrl()
 
-      if (
-        dimensions.width > MAX_CUSTOM_LOGO_DIMENSION ||
-        dimensions.height > MAX_CUSTOM_LOGO_DIMENSION
-      ) {
-        setCustomLogoError(
-          `Logo dimensions must not exceed ${MAX_CUSTOM_LOGO_DIMENSION} × ${MAX_CUSTOM_LOGO_DIMENSION} pixels.`
-        )
-        if (customLogoInputRef.current) customLogoInputRef.current.value = ''
-        return
-      }
-
-      clearCustomLogoPreviewObjectUrl()
-
-      const previewUrl = URL.createObjectURL(file)
-      setCustomLogoFile(file)
-      setCustomLogoPreviewUrl(previewUrl)
-      setCustomLogoSource('file')
-      setAppliedCustomLogoUrl(null)
-      setCustomLogoUrlInput('')
-    } catch (logoError) {
-      setCustomLogoError(
-        logoError instanceof Error ? logoError.message : 'Could not validate the logo image.'
-      )
-      if (customLogoInputRef.current) customLogoInputRef.current.value = ''
-    }
+    const previewUrl = URL.createObjectURL(file)
+    setCustomLogoFile(file)
+    setCustomLogoPreviewUrl(previewUrl)
+    setCustomLogoSource('file')
+    setAppliedCustomLogoUrl(null)
+    setCustomLogoUrlInput('')
+    setCustomLogoScale(100)
   }
 
   async function applyCustomLogoUrl(): Promise<void> {
@@ -936,23 +918,15 @@ export default function CreateClubPage(): JSX.Element {
     setApplyingLogoUrl(true)
 
     try {
-      const dimensions = await getImageDimensionsFromSource(parsedUrl.toString())
-
-      if (
-        dimensions.width > MAX_CUSTOM_LOGO_DIMENSION ||
-        dimensions.height > MAX_CUSTOM_LOGO_DIMENSION
-      ) {
-        setCustomLogoError(
-          `Logo dimensions must not exceed ${MAX_CUSTOM_LOGO_DIMENSION} × ${MAX_CUSTOM_LOGO_DIMENSION} pixels.`
-        )
-        return
-      }
+      // Confirm that the URL resolves to an image before applying it.
+      await getImageDimensionsFromSource(parsedUrl.toString())
 
       clearCustomLogoPreviewObjectUrl()
       setCustomLogoFile(null)
       setCustomLogoPreviewUrl(parsedUrl.toString())
       setAppliedCustomLogoUrl(parsedUrl.toString())
       setCustomLogoSource('url')
+      setCustomLogoScale(100)
 
       if (customLogoInputRef.current) {
         customLogoInputRef.current.value = ''
@@ -1190,7 +1164,6 @@ export default function CreateClubPage(): JSX.Element {
   const isTeamNameValid = form.name.trim().length >= 3
   const canCreateTeam = Boolean(isTeamNameValid && form.countryCode && selectedKitUrl && !loadingCountries && !submitting)
   const flagUrl = form.countryCode ? `https://flagcdn.com/w40/${form.countryCode.toLowerCase()}.png` : ''
-  const overlaySummary = 'No symbol / letter selected'
 
   return (
     <div className="relative isolate min-h-screen bg-[#081224] flex items-center justify-center p-6 overflow-hidden">
@@ -1342,12 +1315,16 @@ export default function CreateClubPage(): JSX.Element {
                 <h3 className="text-2xl font-bold text-gray-900">Team Preview</h3>
                 <p className="text-sm text-gray-600 mt-2">Interior layout and colors update live.</p>
 
-                <div className="mt-6 flex h-56 w-56 items-center justify-center">
+                <div className="mt-6 flex h-56 w-56 items-center justify-center overflow-hidden">
                   {customLogoSource !== 'generated' && customLogoPreviewUrl ? (
                     <img
                       src={customLogoPreviewUrl}
                       alt="Custom team logo preview"
-                      className="max-h-56 max-w-56 object-contain"
+                      className="object-contain transition-all duration-150"
+                      style={{
+                        width: `${Math.round(180 * (customLogoScale / 100))}px`,
+                        height: `${Math.round(180 * (customLogoScale / 100))}px`,
+                      }}
                     />
                   ) : (
                     <BadgePreview
@@ -1360,14 +1337,44 @@ export default function CreateClubPage(): JSX.Element {
                   )}
                 </div>
 
-                <div className="mt-4 text-lg font-semibold text-gray-900">{form.name || 'My Team'}</div>
-
-                <div className="mt-1 text-sm text-gray-500 flex items-center gap-2">
-                  <span>{flagEmojiFromCode(form.countryCode)}</span>
-                  <span>{selectedCountry?.name || 'Selected country'}</span>
+                <div className="mt-4 text-lg font-semibold text-gray-900">
+                  {form.name || 'My Team'}
                 </div>
 
-                <div className="mt-2 text-xs text-gray-500">{overlaySummary}</div>
+                {customLogoSource !== 'generated' && customLogoPreviewUrl ? (
+                  <div className="mt-4 w-full max-w-sm rounded-lg border border-gray-200 bg-white px-4 py-3 text-left">
+                    <div className="flex items-center justify-between gap-3">
+                      <label
+                        htmlFor="custom-logo-scale"
+                        className="text-xs font-semibold text-gray-700"
+                      >
+                        Logo size
+                      </label>
+                      <span className="text-xs font-medium text-gray-500">
+                        {customLogoScale}%
+                      </span>
+                    </div>
+
+                    <input
+                      id="custom-logo-scale"
+                      type="range"
+                      min="50"
+                      max="120"
+                      step="5"
+                      value={customLogoScale}
+                      onChange={event =>
+                        setCustomLogoScale(Number(event.target.value))
+                      }
+                      className="mt-2 w-full"
+                      disabled={submitting}
+                    />
+
+                    <div className="mt-1 flex justify-between text-[11px] text-gray-400">
+                      <span>Smaller</span>
+                      <span>Larger</span>
+                    </div>
+                  </div>
+                ) : null}
 
 
                 {/* Consolidated Interior Style selector into the Team Preview area */}
@@ -1444,7 +1451,7 @@ export default function CreateClubPage(): JSX.Element {
                       className="block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 file:mr-3 file:rounded-md file:border-0 file:bg-slate-900 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-white hover:file:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
                     />
                     <p className="mt-1 text-xs text-gray-500">
-                      PNG, JPEG/JPG or BMP · maximum 2 MB · maximum 250 × 250 px.
+                      PNG, JPEG/JPG or BMP · maximum 2 MB.
                     </p>
                   </div>
 
