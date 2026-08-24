@@ -5,10 +5,10 @@ import { useTranslation } from 'react-i18next'
  * Temporary migration helper for the large legacy Home.tsx page.
  *
  * New/reusable homepage components must use useTranslation() directly.
- * This bridge only covers existing hardcoded text in Home.tsx while that file
- * is migrated section-by-section. It deliberately matches a fixed allow-list
- * of UI strings so user-generated review text, race names, team names and
- * other dynamic content are never translated.
+ * This bridge only covers existing hardcoded text in Home.tsx and other legacy
+ * homepage-only UI while those files are migrated section-by-section. It
+ * deliberately matches a fixed allow-list so user-generated review text, race
+ * names, team names and other dynamic game content are never translated.
  */
 
 const textKeyBySource = new Map<string, string>([
@@ -24,6 +24,8 @@ const textKeyBySource = new Map<string, string>([
   ['Contact us on Discord', 'beta.discord'],
   ['Continue to website', 'beta.continue'],
   ['Preparing your manager account...', 'status.preparingAccount'],
+  ['Loading game time...', 'status.loadingGameTime'],
+  ['Game time unavailable', 'status.gameTimeUnavailable'],
   ['Quick Stats', 'stats.title'],
   ['Live snapshot of the ProPeloton world.', 'stats.subtitle'],
   ['Registered Users', 'stats.registeredUsers'],
@@ -68,6 +70,11 @@ const textKeyBySource = new Map<string, string>([
     'A strong rider is not enough by itself. Race preparation connects riders, staff, vehicles, equipment, supplies and tactics. Planning ahead helps your team arrive ready for sprints, climbs, time trials, stage races and difficult weather conditions.',
     'guide.preparationText',
   ],
+  ['In-game Screenshots', 'screenshots.title'],
+  [
+    'A look inside team management, race preparation, tactics and the cycling world of ProPeloton Manager.',
+    'screenshots.subtitle',
+  ],
   ['Player Reviews', 'reviews.title'],
   [
     'Share your experience with ProPeloton Manager and help new players understand the game.',
@@ -93,6 +100,7 @@ const textKeyBySource = new Map<string, string>([
   ['Loading reviews...', 'reviews.loading'],
   ['Add the first review', 'reviews.addFirst'],
   ['Reviews are temporarily unavailable.', 'reviews.unavailable'],
+  ['Recently', 'reviews.recently'],
   ['Please enter your name.', 'reviews.nameRequired'],
   ['Please enter at least 2 characters.', 'reviews.nameMin'],
   ['Please enter your email.', 'reviews.emailRequired'],
@@ -146,66 +154,72 @@ const textKeyBySource = new Map<string, string>([
 const attributeKeys: Array<{
   selector: string
   attribute: 'title' | 'aria-label' | 'placeholder'
-  source: string
   key: string
 }> = [
   {
     selector: '[title="Temporarily unavailable while the game is in development"]',
     attribute: 'title',
-    source: 'Temporarily unavailable while the game is in development',
     key: 'header.registrationUnavailable',
   },
   {
     selector: '[aria-label="Close beta notice"]',
     attribute: 'aria-label',
-    source: 'Close beta notice',
     key: 'beta.closeLabel',
+  },
+  {
+    selector: '[aria-label="Previous screenshots"]',
+    attribute: 'aria-label',
+    key: 'screenshots.previous',
+  },
+  {
+    selector: '[aria-label="Next screenshots"]',
+    attribute: 'aria-label',
+    key: 'screenshots.next',
+  },
+  {
+    selector: '[aria-label="Close screenshot"]',
+    attribute: 'aria-label',
+    key: 'screenshots.close',
   },
   {
     selector: '[aria-label="Previous review"]',
     attribute: 'aria-label',
-    source: 'Previous review',
     key: 'reviews.previous',
   },
   {
     selector: '[aria-label="Next review"]',
     attribute: 'aria-label',
-    source: 'Next review',
     key: 'reviews.next',
   },
   {
     selector: '[placeholder="Your name"]',
     attribute: 'placeholder',
-    source: 'Your name',
     key: 'reviews.yourName',
   },
   {
     selector: '[placeholder="you@example.com"]',
     attribute: 'placeholder',
-    source: 'you@example.com',
     key: 'reviews.emailPlaceholder',
   },
   {
     selector: '[placeholder="Tell other players what you think about ProPeloton Manager..."]',
     attribute: 'placeholder',
-    source: 'Tell other players what you think about ProPeloton Manager...',
     key: 'reviews.reviewPlaceholder',
   },
   {
     selector: '[aria-label="Game information"]',
     attribute: 'aria-label',
-    source: 'Game information',
     key: 'footer.gameAria',
   },
   {
     selector: '[aria-label="Legal information"]',
     attribute: 'aria-label',
-    source: 'Legal information',
     key: 'footer.legalAria',
   },
 ]
 
 const nodeKey = new WeakMap<Node, string>()
+const dynamicReviewPosition = new WeakMap<Node, { current: string; total: string }>()
 const attributeKey = new WeakMap<Element, Map<string, string>>()
 
 function normalizeText(value: string): string {
@@ -237,14 +251,29 @@ export default function HomeLegacyLocalizationBridge(): JSX.Element | null {
 
           if (sourceKey) {
             nodeKey.set(textNode, sourceKey)
-            textNode.nodeValue = t(sourceKey)
+            const translated = t(sourceKey)
+            if (normalizeText(textNode.nodeValue ?? '') !== normalizeText(translated)) {
+              textNode.nodeValue = translated
+            }
           } else {
-            const reviewMatch = normalized.match(/^Review\s+(\d+)\s+of\s+(\d+)$/)
-            if (reviewMatch) {
-              textNode.nodeValue = t('reviews.reviewPosition', {
-                current: reviewMatch[1],
-                total: reviewMatch[2],
-              })
+            let reviewPosition = dynamicReviewPosition.get(textNode)
+
+            if (!reviewPosition) {
+              const reviewMatch = normalized.match(/^Review\s+(\d+)\s+of\s+(\d+)$/)
+              if (reviewMatch) {
+                reviewPosition = {
+                  current: reviewMatch[1],
+                  total: reviewMatch[2],
+                }
+                dynamicReviewPosition.set(textNode, reviewPosition)
+              }
+            }
+
+            if (reviewPosition) {
+              const translated = t('reviews.reviewPosition', reviewPosition)
+              if (normalizeText(textNode.nodeValue ?? '') !== normalizeText(translated)) {
+                textNode.nodeValue = translated
+              }
             }
           }
 
@@ -263,18 +292,35 @@ export default function HomeLegacyLocalizationBridge(): JSX.Element | null {
               keys.set(config.attribute, config.key)
             }
 
-            element.setAttribute(config.attribute, t(config.key))
+            const translated = t(config.key)
+            if (element.getAttribute(config.attribute) !== translated) {
+              element.setAttribute(config.attribute, translated)
+            }
           })
         }
 
-        // Re-apply already tagged attributes after a language switch even if the
-        // translated value no longer matches the original selector.
+        // Re-apply tagged attributes after a language switch even if the translated
+        // value no longer matches the original English selector.
         root.querySelectorAll('*').forEach(element => {
           const keys = attributeKey.get(element)
           if (!keys) return
           keys.forEach((key, attribute) => {
-            element.setAttribute(attribute, t(key))
+            const translated = t(key)
+            if (element.getAttribute(attribute) !== translated) {
+              element.setAttribute(attribute, translated)
+            }
           })
+        })
+
+        // Screenshot pagination labels are generated dynamically.
+        root.querySelectorAll('[aria-label^="Open screenshot page "]').forEach(element => {
+          const label = element.getAttribute('aria-label') ?? ''
+          const match = label.match(/^Open screenshot page\s+(\d+)$/)
+          if (!match) return
+          element.setAttribute(
+            'aria-label',
+            t('screenshots.page', { current: match[1], total: match[1] }),
+          )
         })
       } finally {
         applying = false
