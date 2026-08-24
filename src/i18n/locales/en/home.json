@@ -1,7 +1,8 @@
 {
   "header": {
     "signIn": "Sign In",
-    "startPlaying": "Start Playing"
+    "startPlaying": "Start Playing",
+    "registrationUnavailable": "Temporarily unavailable while the game is in development"
   },
   "beta": {
     "badge": "Beta version",
@@ -9,10 +10,116 @@
     "body": "The game is still being tested and improved. If you would like to become a test player and help us test ProPeloton Manager, please contact us first in our Discord server. We will provide the next steps there.",
     "discord": "Contact us on Discord",
     "continue": "Continue to website",
+    "close": "Close",
     "closeLabel": "Close beta notice"
+  },
+  "hero": {
+    "seasonalMultiplayer": "Seasonal Multiplayer",
+    "titleLine1": "Build your cycling legacy.",
+    "titleLine2": "Manage the team.",
+    "titleLine3": "Master the season.",
+    "description": "ProPeloton Manager is an online cycling management game where you create your club, develop riders, plan race calendars, negotiate transfers and compete against real managers in a season-based cycling world.",
+    "gameTime": "Game Time",
+    "multiplayer": "Multiplayer",
+    "liveManagerLeagues": "Live manager leagues",
+    "progression": "Progression",
+    "progressionValue": "Tournaments, rankings & rewards",
+    "imageAlt": "Cyclists climbing a mountain",
+    "loadingGameTime": "Loading game time...",
+    "season": "Season"
+  },
+  "raceSchedule": {
+    "title": "Race Schedule",
+    "subtitle": "Yesterday, today and tomorrow in the ProPeloton world.",
+    "loading": "Loading races...",
+    "yesterday": "Yesterday Races",
+    "today": "Today Races",
+    "tomorrow": "Tomorrow Races",
+    "emptyYesterday": "No stages were scheduled yesterday.",
+    "emptyToday": "No stages are scheduled today.",
+    "emptyTomorrow": "No stages are scheduled tomorrow.",
+    "flagAlt": "{{country}} flag"
   },
   "stats": {
     "title": "Quick Stats",
-    "subtitle": "Live snapshot of the ProPeloton world."
+    "subtitle": "Live snapshot of the ProPeloton world.",
+    "activeManagers": "Active Managers",
+    "teams": "Teams",
+    "races": "Races",
+    "stages": "Stages"
+  },
+  "guide": {
+    "title": "How ProPeloton Manager works",
+    "subtitle": "Build the club behind the riders and make the decisions that shape every season.",
+    "whatTitle": "What is ProPeloton Manager?",
+    "whatText": "ProPeloton Manager is an online cycling management game where you create and develop a cycling club. Instead of controlling a rider directly, you manage the team behind the race: riders, training, race plans, staff, equipment, finances, sponsors, transfers and long-term ranking progress.",
+    "howTitle": "How do you play?",
+    "howText": "Managers build a squad, study the race calendar, apply for suitable races, prepare race plans, choose riders, assign roles, manage supplies and follow results. Good decisions depend on rider skills, fatigue, morale, race profile, weather, budget and season goals.",
+    "preparationTitle": "Why does preparation matter?",
+    "preparationText": "A strong rider is not enough by itself. Race preparation connects riders, staff, vehicles, equipment, supplies and tactics. Planning ahead helps your team arrive ready for sprints, climbs, time trials, stage races and difficult weather conditions."
+  },
+  "screenshots": {
+    "title": "In-game Screenshots",
+    "subtitle": "A look inside team management, race preparation, tactics and the cycling world of ProPeloton Manager.",
+    "previous": "Previous screenshots",
+    "next": "Next screenshots",
+    "close": "Close screenshot",
+    "page": "Page {{current}} of {{total}}"
+  },
+  "reviews": {
+    "title": "Player Reviews",
+    "subtitle": "Feedback from managers testing ProPeloton Manager.",
+    "loading": "Loading reviews...",
+    "unavailable": "Reviews are temporarily unavailable.",
+    "recently": "Recently",
+    "previous": "Previous review",
+    "next": "Next review",
+    "leaveReview": "Leave a review",
+    "yourName": "Your name",
+    "yourEmail": "Your email",
+    "rating": "Rating",
+    "review": "Review",
+    "submit": "Submit review",
+    "submitting": "Submitting...",
+    "nameRequired": "Please enter your name.",
+    "nameMin": "Please enter at least 2 characters.",
+    "emailRequired": "Please enter your email.",
+    "emailInvalid": "Please enter a valid email address.",
+    "ratingInvalid": "Please choose a rating from 1 to 5.",
+    "messageRequired": "Please write your review.",
+    "messageMin": "Please write at least 20 characters.",
+    "messageMax": "Please keep your review under 1200 characters.",
+    "submitFailed": "Could not submit review.",
+    "submitSuccess": "Thank you. Your review was submitted and will appear after approval."
+  },
+  "cta": {
+    "badge": "Join the competition",
+    "title": "Ready to build your dynasty?",
+    "body": "Create your club, recruit riders and compete in seasonal leagues.",
+    "createClub": "Create Club",
+    "signIn": "Sign In"
+  },
+  "footer": {
+    "game": "Game",
+    "legal": "Legal",
+    "community": "Community",
+    "about": "About",
+    "howToPlay": "How to Play",
+    "gameGuide": "Game Guide",
+    "contact": "Contact",
+    "privacyPolicy": "Privacy Policy",
+    "terms": "Terms",
+    "facebook": "Facebook",
+    "discord": "Discord",
+    "email": "Email"
+  },
+  "status": {
+    "preparingAccount": "Preparing your manager account...",
+    "loadingGameTime": "Loading game time...",
+    "gameTimeUnavailable": "Game time unavailable",
+    "homepageDataUnavailable": "Live homepage data is temporarily unavailable.",
+    "homepageDataUnexpected": "Live homepage data returned an unexpected format.",
+    "clubStatusError": "You are signed in, but we could not load your club status. Please refresh or try again.",
+    "clubCreationDisabled": "New club creation is temporarily disabled while ProPeloton Manager is still in development. Existing managers can continue to sign in."
   }
 }
