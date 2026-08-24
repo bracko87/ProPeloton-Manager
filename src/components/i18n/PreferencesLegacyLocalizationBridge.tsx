@@ -273,19 +273,17 @@ export default function PreferencesLegacyLocalizationBridge(): null {
         )
         if (shutdownModal) translateRoot(shutdownModal)
 
-        document
-          .querySelectorAll('[placeholder="Type DELETE here"]')
-          .forEach(element => {
-            if (element instanceof HTMLInputElement) {
-              element.placeholder = t('dangerZone.placeholder')
-            }
-          })
+        const shutdownInput = document.getElementById('shutdown-confirm-input')
+        if (shutdownInput instanceof HTMLInputElement) {
+          shutdownInput.placeholder = t('dangerZone.placeholder')
+        }
 
-        document
-          .querySelectorAll('[aria-label="Close shutdown team confirmation"]')
-          .forEach(element => {
-            element.setAttribute('aria-label', t('dangerZone.closeAria'))
-          })
+        const shutdownBackdrop = shutdownModal?.querySelector(
+          ':scope > button[type="button"]',
+        )
+        if (shutdownBackdrop) {
+          shutdownBackdrop.setAttribute('aria-label', t('dangerZone.closeAria'))
+        }
       } finally {
         applying = false
       }
