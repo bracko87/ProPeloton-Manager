@@ -60,6 +60,6 @@
     "originalClub": "Originalni klub:",
     "clubCountry": "Država kluba",
     "manager": "Menadžer",
-    "ranking": "{{position}}. mesto u {{competition}}"
+    "ranking": "{{positionNumber}}. mesto u {{competition}}"
   }
 }
