@@ -1,0 +1,31 @@
+{
+  "coins": {
+    "perRenewal": "{{cost}} coins per renewal",
+    "toActivate": "{{cost}} coins to activate",
+    "reactivationPrice": "Reactivation price: {{cost}} coins",
+    "nextRenewal": "Next renewal: {{cost}} coins",
+    "firstActivation": "First activation: {{cost}} coins"
+  },
+  "movement": {
+    "open": "Movement window open now: {{label}}",
+    "closed": "Movement window closed. Next window: {{label}}",
+    "unavailable": "Movement window unavailable.",
+    "currentWindow": "Current window",
+    "unknown": "Unknown"
+  },
+  "activation": {
+    "reactivateForSeason": "Reactivate for Season {{season}} — {{cost}} Coins",
+    "activate": "Activate Developing Team — {{cost}} Coins",
+    "activatedForSeason": "Developing Team activated for Season {{season}}. Automatic renewal is {{renewal}}.",
+    "activatedSuccessfully": "Developing Team activated successfully.",
+    "renewalEnabled": "Developing Team automatic renewal enabled.",
+    "renewalDisabled": "Developing Team automatic renewal disabled.",
+    "on": "on",
+    "off": "off"
+  },
+  "errors": {
+    "loadStatus": "Failed to load Developing Team status.",
+    "activate": "Failed to activate Developing Team.",
+    "renewal": "Failed to update automatic renewal."
+  }
+}
