@@ -5,6 +5,7 @@
   "staff": "Osoblje",
   "calendar": "Kalendar",
   "racePreparation": "Priprema trke",
+  "teamRanking": "Rang-lista timova",
   "training": "Trening",
   "equipment": "Oprema",
   "infrastructure": "Infrastruktura",
@@ -16,5 +17,20 @@
   "myProfile": "Moj profil",
   "preferences": "Podešavanja",
   "help": "Pomoć",
-  "signIn": "Prijava"
+  "signIn": "Prijava",
+  "signOut": "Odjava",
+  "subtitle": "Multiplayer biciklistički menadžment",
+  "descriptions": {
+    "overview": "Pregled kluba i ažuriranja",
+    "squad": "Upravljanje vozačima i sastavom",
+    "calendar": "Predstojeće trke i događaji",
+    "racePreparation": "Startlist, logistika i Stage Plans",
+    "teamRanking": "Rang-liste i plasmani",
+    "training": "Trening vozača i sesije",
+    "equipment": "Bicikli, točkovi i oprema",
+    "infrastructure": "Objekti i razvoj",
+    "finance": "Budžet, prihodi i troškovi",
+    "transfers": "Kupovina, prodaja i pregovori",
+    "statistics": "Učinak i analitika"
+  }
 }
