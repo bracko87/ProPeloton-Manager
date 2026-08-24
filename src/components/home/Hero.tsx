@@ -13,6 +13,7 @@ import React from 'react'
 import { Link } from 'react-router'
 import { Award } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import type { TFunction } from 'i18next'
 
 type HeroProps = {
   gameTimeLabel: string
@@ -24,23 +25,98 @@ const HERO_IMAGE_URL =
 const HERO_BACKGROUND_URL =
   'https://pub-cdn.sider.ai/u/U0KAH9N4VLX/web-coder/69a48114fd11fbc8fc7d68f5/resource/ea527ef7-6896-413d-9d69-df332b440fd0.jpg'
 
-function formatGameTimeLabel(
-  label: string,
-  loadingLabel: string,
-  seasonLabel: string,
-): string {
-  if (!label) return loadingLabel
+const WEEKDAY_NAMES = [
+  'Sunday',
+  'Monday',
+  'Tuesday',
+  'Wednesday',
+  'Thursday',
+  'Friday',
+  'Saturday',
+]
 
-  return label.replace(/^S(\d+)\s*·/, `${seasonLabel} $1 ·`)
+const MONTH_NAMES = [
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December',
+]
+
+function formatGameTimeLabel(label: string, t: TFunction): string {
+  if (!label || label === 'Loading game time...') {
+    return t('hero.loadingGameTime')
+  }
+
+  if (label === 'Game time unavailable') {
+    return t('status.gameTimeUnavailable')
+  }
+
+  const parts = label
+    .split('·')
+    .map(part => part.trim())
+    .filter(Boolean)
+
+  const seasonMatch = parts[0]?.match(/^(?:Season\s+|S)(\d+)$/i)
+
+  if (!seasonMatch) {
+    return label.replace(/^S(\d+)\s*·/, `${t('hero.season')} $1 ·`)
+  }
+
+  const seasonNumber = seasonMatch[1]
+  const possibleWeekday = parts[1] ?? ''
+  const hasWeekday = WEEKDAY_NAMES.includes(possibleWeekday)
+  const weekday = hasWeekday
+    ? t(`calendar:weekdays.${possibleWeekday}`)
+    : null
+  const datePart = hasWeekday ? parts[2] : parts[1]
+  const time = hasWeekday ? parts[3] : parts[2]
+
+  const dateMatch = datePart?.match(/^([A-Za-z]+)\s+(\d{1,2})$/)
+  const englishMonth = dateMatch?.[1] ?? ''
+  const day = dateMatch?.[2] ?? ''
+
+  if (!dateMatch || !MONTH_NAMES.includes(englishMonth) || !time) {
+    return label.replace(
+      /^(?:Season\s+|S)(\d+)/i,
+      `${t('hero.season')} $1`,
+    )
+  }
+
+  const month = t(`calendar:months.${englishMonth}`)
+  const localizedDate = t('calendar:date', {
+    month,
+    day,
+  })
+
+  if (weekday) {
+    return t('calendar:gameTimeWithWeekday', {
+      season: t('hero.season'),
+      seasonNumber,
+      weekday,
+      date: localizedDate,
+      time,
+    })
+  }
+
+  return t('calendar:gameTimeWithoutWeekday', {
+    season: t('hero.season'),
+    seasonNumber,
+    date: localizedDate,
+    time,
+  })
 }
 
 export default function Hero({ gameTimeLabel }: HeroProps): JSX.Element {
-  const { t } = useTranslation('home')
-  const displayGameTime = formatGameTimeLabel(
-    gameTimeLabel,
-    t('hero.loadingGameTime'),
-    t('hero.season'),
-  )
+  const { t } = useTranslation(['home', 'calendar'])
+  const displayGameTime = formatGameTimeLabel(gameTimeLabel, t)
 
   return (
     <section className="relative w-full overflow-hidden border-b border-white/15 bg-[#0a1730] py-16 lg:py-20">
