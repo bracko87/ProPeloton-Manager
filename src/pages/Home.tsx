@@ -87,7 +87,7 @@ const CONTACT_EMAIL = 'contact@propelotonmanager.com'
 
 const SOCIAL_LINKS = {
   facebook: 'https://www.facebook.com/profile.php?id=61583549010426',
-  discord: 'https://discord.gg/GNDCCz5SW',
+  discord: 'https://discord.gg/BpgqTXsjAW',
   email: `mailto:${CONTACT_EMAIL}`,
 }
 
