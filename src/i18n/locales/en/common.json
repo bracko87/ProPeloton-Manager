@@ -1,0 +1,21 @@
+{
+  "language": {
+    "label": "Language",
+    "applicationLanguage": "Application language",
+    "description": "Choose the language used across ProPeloton Manager.",
+    "english": "English",
+    "serbian": "Serbian"
+  },
+  "actions": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "close": "Close",
+    "continue": "Continue",
+    "confirm": "Confirm",
+    "back": "Back"
+  },
+  "status": {
+    "loading": "Loading...",
+    "error": "Something went wrong"
+  }
+}
