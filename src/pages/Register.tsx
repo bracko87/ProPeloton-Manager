@@ -10,6 +10,8 @@
  * - Birthday is sent through Supabase signup metadata.
  * - Backend trigger public.handle_new_user() stores birthday fields in profiles.
  * - Birthday cannot be changed later in the game.
+ * - Users can resend the signup activation email from the registration page.
+ * - First-send and resent activation links both use one canonical /create-club redirect.
  */
 
 import React, { useMemo, useState } from 'react'
@@ -17,6 +19,9 @@ import { Link, useNavigate } from 'react-router'
 import { supabase } from '../lib/supabase'
 
 type StatusType = 'success' | 'error' | 'info' | null
+
+const EMAIL_CONFIRMATION_REDIRECT_URL =
+  'https://propelotonmanager.com/create-club'
 
 type RegisterForm = {
   username: string
@@ -94,6 +99,7 @@ export default function RegisterPage(): JSX.Element {
   const [message, setMessage] = useState<string | null>(null)
   const [messageType, setMessageType] = useState<StatusType>(null)
   const [checkingEmail, setCheckingEmail] = useState(false)
+  const [resendingActivation, setResendingActivation] = useState(false)
 
   const birthdayYearNumber = useMemo(
     () => parseOptionalYear(form.birthdayYear),
@@ -182,6 +188,84 @@ export default function RegisterPage(): JSX.Element {
     }
   }
 
+  async function handleResendActivationEmail(): Promise<void> {
+    const email = form.email.trim()
+
+    setMessage(null)
+    setMessageType(null)
+
+    if (!email) {
+      setErrors(prev => ({
+        ...prev,
+        email: 'Enter your email address first',
+      }))
+      return
+    }
+
+    if (!isProbablyValidEmail(email)) {
+      setErrors(prev => ({
+        ...prev,
+        email: 'Enter a valid email address',
+      }))
+      return
+    }
+
+    setErrors(prev => {
+      if (!prev.email) return prev
+      const nextErrors = { ...prev }
+      delete nextErrors.email
+      return nextErrors
+    })
+
+    setResendingActivation(true)
+
+    try {
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email,
+        options: {
+          emailRedirectTo: EMAIL_CONFIRMATION_REDIRECT_URL,
+        },
+      })
+
+      if (error) {
+        const msg = error.message ?? 'Could not resend activation email'
+
+        if (
+          /already confirmed|email.*confirmed|user.*confirmed/i.test(msg)
+        ) {
+          setMessage(
+            'This email address is already confirmed. Please sign in and continue to team creation.',
+          )
+          setMessageType('info')
+          return
+        }
+
+        if (/rate limit|too many requests|security purposes/i.test(msg)) {
+          setMessage(
+            'Please wait a moment before requesting another activation email.',
+          )
+          setMessageType('info')
+          return
+        }
+
+        setMessage(msg)
+        setMessageType('error')
+        return
+      }
+
+      setMessage(
+        'A new activation email has been sent. Open the latest email and use the activation link to continue.',
+      )
+      setMessageType('success')
+    } catch (err: any) {
+      setMessage(err?.message ?? 'Could not resend activation email')
+      setMessageType('error')
+    } finally {
+      setResendingActivation(false)
+    }
+  }
+
   async function handleSubmit(e: React.FormEvent): Promise<void> {
     e.preventDefault()
 
@@ -253,7 +337,7 @@ export default function RegisterPage(): JSX.Element {
         email,
         password: form.password,
         options: {
-          emailRedirectTo: 'https://propelotonmanager.com/create-club',
+          emailRedirectTo: EMAIL_CONFIRMATION_REDIRECT_URL,
           data: {
             username,
             birthday_month: birthdayMonth,
@@ -285,7 +369,9 @@ export default function RegisterPage(): JSX.Element {
       }
 
       if (!data?.session) {
-        setMessage('Account created. Please confirm your email before signing in.')
+        setMessage(
+          'Account created. Please confirm your email before signing in. If the activation email does not arrive, use "Resend activation email" below.',
+        )
         setMessageType('success')
         return
       }
@@ -409,6 +495,30 @@ export default function RegisterPage(): JSX.Element {
                   Checking email availability...
                 </div>
               )}
+
+              <div className="mt-2 flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    void handleResendActivationEmail()
+                  }}
+                  disabled={
+                    loading ||
+                    checkingEmail ||
+                    resendingActivation ||
+                    !form.email.trim()
+                  }
+                  className="text-sm font-medium text-blue-700 hover:text-blue-900 disabled:cursor-not-allowed disabled:text-gray-400"
+                >
+                  {resendingActivation
+                    ? 'Resending activation email...'
+                    : 'Resend activation email'}
+                </button>
+
+                <span className="text-xs text-gray-500">
+                  Use this if you already registered but did not receive or lost the activation email.
+                </span>
+              </div>
             </div>
 
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -556,13 +666,15 @@ export default function RegisterPage(): JSX.Element {
               <button
                 type="submit"
                 className="bg-yellow-400 px-6 py-2 rounded-md font-semibold disabled:opacity-70"
-                disabled={loading || checkingEmail}
+                disabled={loading || checkingEmail || resendingActivation}
               >
                 {loading
                   ? 'Creating...'
                   : checkingEmail
                     ? 'Checking...'
-                    : 'Create Account'}
+                    : resendingActivation
+                      ? 'Please wait...'
+                      : 'Create Account'}
               </button>
 
               <Link to="/login" className="text-sm text-gray-600 hover:text-gray-900">
