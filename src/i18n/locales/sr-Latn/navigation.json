@@ -19,6 +19,12 @@
   "help": "Pomoć",
   "signIn": "Prijava",
   "signOut": "Odjava",
+  "logout": "Odjava",
+  "customizeTeam": "Prilagodi tim",
+  "forum": "Forum",
+  "contactUs": "Kontaktirajte nas",
+  "proPackages": "Pro paketi",
+  "inviteFriends": "Pozovi prijatelje",
   "subtitle": "Multiplayer biciklistički menadžment",
   "descriptions": {
     "overview": "Pregled kluba i ažuriranja",
@@ -32,5 +38,28 @@
     "finance": "Budžet, prihodi i troškovi",
     "transfers": "Kupovina, prodaja i pregovori",
     "statistics": "Učinak i analitika"
+  },
+  "header": {
+    "toggleSidebar": "Prikaži ili sakrij bočnu navigaciju",
+    "teamName": "Ime tima:",
+    "namingRights": "Naming rights",
+    "premiumAccountMember": "Premium član naloga",
+    "freeAccountMember": "Free nalog. Pogledaj Premium",
+    "premiumAccount": "Premium nalog",
+    "freeAccount": "Free nalog — pogledaj Premium",
+    "account": "Nalog",
+    "premium": "Premium",
+    "free": "Free",
+    "coin": "Coin",
+    "coins": "Coins",
+    "notifications": "Obaveštenja",
+    "openProfileMenu": "Otvori meni profila",
+    "menu": "Meni",
+    "profileMenu": "Meni profila",
+    "team": "Tim:",
+    "originalClub": "Originalni klub:",
+    "clubCountry": "Država kluba",
+    "manager": "Menadžer",
+    "ranking": "{{position}}. mesto u {{competition}}"
   }
 }
