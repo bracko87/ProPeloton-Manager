@@ -60,6 +60,6 @@
     "originalClub": "Original club:",
     "clubCountry": "Club country",
     "manager": "Manager",
-    "ranking": "{{position}} in {{competition}} Ranking"
+    "ranking": "{{positionOrdinal}} in {{competition}} Ranking"
   }
 }
