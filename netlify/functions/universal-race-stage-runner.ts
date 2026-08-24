@@ -101,7 +101,11 @@ async function rpc<T>(
   return data as T
 }
 
-function buildSources(payloadValue: unknown, simulationRunId: string): ProductionUniversalRaceSources {
+function buildSources(
+  payloadValue: unknown,
+  simulationRunId: string,
+  preStageStandings: unknown,
+): ProductionUniversalRaceSources {
   const payload = object(payloadValue)
   const race = object(payload.race)
   const stage = object(payload.stage)
@@ -120,6 +124,7 @@ function buildSources(payloadValue: unknown, simulationRunId: string): Productio
     phaseCommandRows: rows(payload.phase_commands) as unknown as ProductionUniversalRaceSources['phaseCommandRows'],
     lockedPlanRows: rows(payload.locked_plans ?? payload.stage_plans) as unknown as ProductionUniversalRaceSources['lockedPlanRows'],
     preStageLeaders: payload.pre_stage_leaders,
+    preStageStandings,
     phase9Payload: firstObject(payload.phase9_inputs) as ProductionUniversalRaceSources['phase9Payload'],
     deterministicSeed: `universal-production:${raceId}:${stageId}:${simulationRunId}`,
   }
@@ -224,7 +229,18 @@ async function calculateClaimedStage(
   }
 
   try {
-    const sources = buildSources(claim.payload, simulationRunId)
+    // Phase 11F adds one read-only tactical snapshot. It never writes or
+    // calculates results; the universal engine still runs exactly once below.
+    const preStageStandings = await rpc<unknown>(
+      supabase,
+      'get_race_stage_pre_stage_standings_v1',
+      { p_stage_id: stageId },
+    )
+    const sources = buildSources(
+      claim.payload,
+      simulationRunId,
+      preStageStandings,
+    )
     const input = buildProductionUniversalRaceEngineInput(sources)
 
     // Exactly one authoritative calculation for this claimed production stage.

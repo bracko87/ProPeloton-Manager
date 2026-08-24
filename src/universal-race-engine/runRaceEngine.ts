@@ -59,7 +59,7 @@ export const PPM_UNIVERSAL_RACE_ENGINE_KEY =
   'ppm_universal_race_v1' as const
 export const PPM_UNIVERSAL_RACE_ENGINE_VERSION = 1 as const
 export const UNIVERSAL_RACE_ENGINE_DEBUG_BUILD =
-  'phase11e-balanced-incidents-v2-2026-08-22' as const
+  'phase11f-dynamic-race-tactics-v1-2026-08-24' as const
 
 export const RACE_TYPES = ['one_day', 'stage_race'] as const
 export type RaceType = (typeof RACE_TYPES)[number]
@@ -712,6 +712,17 @@ export interface UniversalPreStageLeadersInput {
   readonly mountain?: UniversalPreStageLeaderInput | null
 }
 
+export interface UniversalPreStageStandingInput {
+  readonly classificationType: UniversalPreStageClassificationType
+  readonly riderId: string
+  readonly teamId: string
+  readonly rank: number
+  /** GC gap to the classification leader. Null for points/KOM standings. */
+  readonly gapSeconds: number | null
+  /** Classification points. Null for GC standings. */
+  readonly points: number | null
+}
+
 export interface UniversalIncidentModelInput {
   /** Explicit activation gate for Phase 10 in-race incident occurrence and OTL adjudication. */
   readonly enabled: boolean
@@ -731,6 +742,11 @@ export interface UniversalRaceEngineInput {
   readonly incidentModel?: UniversalIncidentModelInput
   /** Immutable jersey-owner snapshot captured before the stage. */
   readonly preStageLeaders?: UniversalPreStageLeadersInput | null
+  /**
+   * Immutable pre-stage classification snapshot used only for tactical
+   * decisions. It never rewrites classifications and is absent on stage 1.
+   */
+  readonly preStageStandings?: readonly UniversalPreStageStandingInput[]
 }
 
 export type UniversalStageClassification =
@@ -1718,11 +1734,12 @@ export interface UniversalRoadPointBattleResult {
 
 export type UniversalRoadDevelopmentGroupCode =
   | 'breakaway'
+  | 'front_group'
   | 'main_peloton'
 
 export interface UniversalRoadDevelopmentGroup {
   readonly groupCode: UniversalRoadDevelopmentGroupCode
-  readonly groupOrder: 1 | 2
+  readonly groupOrder: 1 | 2 | 3
   readonly riderIds: readonly string[]
   readonly gapSeconds: number
 }
@@ -1754,6 +1771,15 @@ export interface UniversalRoadPhase2DevelopmentResult {
   readonly pelotonRiderIdsAtEnd: readonly string[]
   readonly breakawayCooperation: UniversalRoadBreakawayCooperationResult | null
   readonly pelotonResponse: UniversalRoadPelotonResponseResult
+  /** Real Phase-2 attack attempts resolved by the same deterministic attack model. */
+  readonly attackAttempts: readonly UniversalRoadDecisiveAttackAttempt[]
+  readonly successfulAttackRiderIds: readonly string[]
+  /**
+   * Successful Phase-2 attackers that retain a physical position ahead of the
+   * peloton at the 50% boundary without replacing the original B lineage.
+   */
+  readonly secondaryFrontRiderIdsAtEnd: readonly string[]
+  readonly secondaryFrontGapToPelotonSeconds: number
   readonly supportActions: readonly UniversalRoadSupportAction[]
   readonly pointBattles: readonly UniversalRoadPointBattleResult[]
   readonly riderEnergy: readonly UniversalRoadDevelopmentRiderEnergy[]
@@ -1853,6 +1879,11 @@ export type UniversalRoadDecisiveStatus =
   | 'main_group_remains_together'
   | 'all_riders_depleted'
 
+export interface UniversalRoadPhysicalGapSample {
+  readonly kmFromStart: number
+  readonly gapSeconds: number
+}
+
 export interface UniversalRoadPhase3DecisiveResult {
   readonly phaseNumber: 3
   readonly phaseBoundary: UniversalRoadPhaseBoundary
@@ -1861,6 +1892,12 @@ export interface UniversalRoadPhase3DecisiveResult {
   readonly attackAttempts: readonly UniversalRoadDecisiveAttackAttempt[]
   readonly successfulAttackRiderIds: readonly string[]
   readonly pointBattles: readonly UniversalRoadPointBattleResult[]
+  /** Phase 11F physical escape state at the 70% boundary. */
+  readonly physicalEscapeRiderIdsAtEnd: readonly string[]
+  readonly physicalStartGapSeconds: number
+  readonly physicalEndGapSeconds: number
+  readonly physicalChasingTeamIds: readonly string[]
+  readonly physicalGapTrajectory: readonly UniversalRoadPhysicalGapSample[]
   readonly riderStates: readonly UniversalRoadDecisiveRiderState[]
   readonly groups: readonly UniversalRoadDecisiveGroup[]
   readonly finishEligibleRiderIds: readonly string[]
@@ -4243,6 +4280,48 @@ export function validateRunInput(
           'must equal 1',
         )
       }
+    })
+  }
+
+  if (input.preStageStandings) {
+    const riderIds = new Set(input.riders.map((rider) => rider.riderId))
+    const teamIds = new Set(input.teams.map((team) => team.teamId))
+    const seen = new Set<string>()
+    input.preStageStandings.forEach((standing, index) => {
+      const prefix = `preStageStandings[${index}]`
+      if (!['general', 'points', 'mountain'].includes(standing.classificationType)) {
+        pushError(
+          errors,
+          `${prefix}.classificationType`,
+          `unsupported classification: ${String(standing.classificationType)}`,
+        )
+      }
+      if (!riderIds.has(standing.riderId)) {
+        pushError(errors, `${prefix}.riderId`, 'must reference an accepted rider')
+      }
+      if (!teamIds.has(standing.teamId)) {
+        pushError(errors, `${prefix}.teamId`, 'must reference an accepted team')
+      }
+      if (!Number.isInteger(standing.rank) || standing.rank < 1) {
+        pushError(errors, `${prefix}.rank`, 'must be a positive integer')
+      }
+      if (
+        standing.gapSeconds !== null &&
+        (!Number.isFinite(standing.gapSeconds) || standing.gapSeconds < 0)
+      ) {
+        pushError(errors, `${prefix}.gapSeconds`, 'must be null or a non-negative number')
+      }
+      if (
+        standing.points !== null &&
+        (!Number.isFinite(standing.points) || standing.points < 0)
+      ) {
+        pushError(errors, `${prefix}.points`, 'must be null or a non-negative number')
+      }
+      const key = `${standing.classificationType}:${standing.riderId}`
+      if (seen.has(key)) {
+        pushError(errors, prefix, `duplicate pre-stage standing: ${key}`)
+      }
+      seen.add(key)
     })
   }
 
@@ -8391,19 +8470,24 @@ function calculateOpeningAttackOutcome(
   else if (stageProgressFraction < 0.9) timingProbabilityPoints = -0.03
   else timingProbabilityPoints = -0.08
 
+  /*
+   * Phase 11F: an attack command is an attempt, not a near-guaranteed gap.
+   * Strong riders, coordinated waves and suitable terrain still matter, but
+   * ordinary attacks should often be covered. The old +0.18 universal boost
+   * made too many valid attempts succeed and flattened tactical variance.
+   */
   const rawProbability =
-    0.08 +
-    (attackIntentScore / 100) * 0.25 +
-    (attackExecutionSkillScore / 100) * 0.2 +
-    energyReadinessFraction * 0.15 +
-    roleProbabilityPoints +
+    0.04 +
+    (attackIntentScore / 100) * 0.20 +
+    (attackExecutionSkillScore / 100) * 0.16 +
+    energyReadinessFraction * 0.11 +
+    roleProbabilityPoints * 0.75 +
     terrainProbabilityPoints +
-    timingProbabilityPoints +
-    0.18 +
-    Math.min(0.12, Math.max(0, waveSize - 1) * 0.04) -
+    timingProbabilityPoints * 0.8 +
+    Math.min(0.08, Math.max(0, waveSize - 1) * 0.025) -
     Math.min(0.24, Math.max(0, riderAttemptSequence - 1) * 0.1) -
     Math.min(0.09, Math.max(0, teamAttemptSequence - 1) * 0.03)
-  const probability = clamp(rawProbability, 0.03, 0.92)
+  const probability = clamp(rawProbability, 0.04, 0.72)
   const burstSpeedMultiplier = Math.min(
     1.14,
     1 +
@@ -8961,6 +9045,84 @@ export function resolveRoadPhase1Opening(
   }
 }
 
+function getPreStageGeneralStandings(
+  input: UniversalRaceEngineInput,
+): readonly UniversalPreStageStandingInput[] {
+  return (input.preStageStandings ?? [])
+    .filter((row) => row.classificationType === 'general')
+    .slice()
+    .sort(
+      (left, right) =>
+        left.rank - right.rank ||
+        (left.gapSeconds ?? Number.POSITIVE_INFINITY) -
+          (right.gapSeconds ?? Number.POSITIVE_INFINITY) ||
+        left.riderId.localeCompare(right.riderId),
+    )
+}
+
+function getGcThreatChasingTeamIds(
+  input: UniversalRaceEngineInput,
+  escapeRiderIds: readonly string[],
+): readonly string[] {
+  if (
+    input.race.raceType !== 'stage_race' ||
+    input.stage.stageNumber <= 1 ||
+    escapeRiderIds.length === 0
+  ) {
+    return []
+  }
+
+  const standings = getPreStageGeneralStandings(input)
+  if (standings.length === 0) return []
+
+  const escapeSet = new Set(escapeRiderIds)
+  const escapeTeamIds = new Set(
+    input.riders
+      .filter((rider) => escapeSet.has(rider.riderId))
+      .map((rider) => rider.teamId),
+  )
+  const threateningRows = standings.filter(
+    (row) =>
+      escapeSet.has(row.riderId) &&
+      row.gapSeconds !== null &&
+      (row.rank <= 20 || row.gapSeconds <= 180),
+  )
+  if (threateningRows.length === 0) return []
+
+  const bestThreatGap = Math.min(
+    ...threateningRows.map((row) => row.gapSeconds ?? Number.POSITIVE_INFINITY),
+  )
+  const bestThreatRank = Math.min(...threateningRows.map((row) => row.rank))
+
+  return Array.from(
+    new Set(
+      standings
+        .filter((row) => !escapeTeamIds.has(row.teamId))
+        .filter((row) => {
+          const gap = row.gapSeconds ?? Number.POSITIVE_INFINITY
+          return (
+            row.rank === 1 ||
+            row.rank < bestThreatRank ||
+            (row.rank <= 10 && gap <= bestThreatGap + 60)
+          )
+        })
+        .map((row) => row.teamId),
+    ),
+  ).sort()
+}
+
+function phase11fPaceVariationKmh(
+  deterministicSeed: string,
+  label: string,
+  kmFromStart: number,
+  amplitudeKmh: number,
+): number {
+  const roll = calculateDeterministicUnitRoll(
+    `${deterministicSeed}|phase11f|${label}|${deterministicRound(kmFromStart, 3)}`,
+  )
+  return deterministicRound((roll - 0.5) * 2 * amplitudeKmh, 6)
+}
+
 interface PelotonResponseComponents {
   readonly chaseInterestScore: number
   readonly chaseCapacityScore: number
@@ -9071,7 +9233,7 @@ function calculatePelotonResponseComponents(
     !refinedChaseInterestModel || (chasingTeams > 0 && chaseAssets > 0)
   const largeCoalitionBonus =
     refinedChaseInterestModel && chasingTeams > 4
-      ? Math.min(0.012, Math.log2(chasingTeams / 4) * 0.007)
+      ? Math.min(0.03, Math.log2(chasingTeams / 4) * 0.012)
       : 0
   const chaseInterestScore = hasOrganizedChaseInterest
     ? clamp(
@@ -9130,7 +9292,7 @@ function calculatePelotonResponseComponents(
   const targetGapLowerSeconds = targetGapUpperSeconds * 0.65
   const maximumPursuitMultiplier = hasOrganizedChaseInterest
     ? Math.min(
-        1.065,
+        1.09,
         1 + 0.05 * chaseInterestScore * chaseCapacityScore + largeCoalitionBonus,
       )
     : 1
@@ -9219,7 +9381,10 @@ function calculatePelotonResponseComponents(
     }
     case 'organized_chase':
       selectedResponseMultiplier = clamp(
-        requiredHoldMultiplier + 0.006 + chaseUrgencyScore * 0.024,
+        requiredHoldMultiplier +
+          0.006 +
+          chaseUrgencyScore * 0.024 +
+          largeCoalitionBonus * 0.6,
         0.97,
         maximumPursuitMultiplier,
       )
@@ -9477,37 +9642,238 @@ export function resolveRoadPhase2Development(
     row,
     phase: row.phases.find((phase) => phase.phaseNumber === 2)!,
   }))
-  const controllingTeamIds = Array.from(
+  const phase2TeamPlanByTeamId = new Map(
+    input.stagePlans.map((plan) => [
+      plan.teamId,
+      plan.teamTactic as RoadTeamTactic,
+    ]),
+  )
+  const phase2AttackTerrain = selectDecisiveTerrain(
+    input.stage,
+    phaseBoundary,
+  )
+  const explicitPhase2AttackRows = phase2Rows
+    .filter(({ row, phase }) =>
+      row.eligibleToStart &&
+      !phase1.breakawayRiderIds.includes(row.riderId) &&
+      phase.deliberateAttack.eligible &&
+      phase.resolvedCommand === 'attack',
+    )
+    .sort((left, right) => {
+      const leftSuitability =
+        suitabilityByRiderId.get(left.row.riderId)?.suitabilityScore ?? 0
+      const rightSuitability =
+        suitabilityByRiderId.get(right.row.riderId)?.suitabilityScore ?? 0
+      return (
+        rightSuitability - leftSuitability ||
+        left.row.riderId.localeCompare(right.row.riderId)
+      )
+    })
+  const selectedPhase2AttackRows: typeof explicitPhase2AttackRows = []
+  const selectedPhase2AttackTeams = new Set<string>()
+  for (const candidate of explicitPhase2AttackRows) {
+    if (
+      selectedPhase2AttackRows.length >= 4 ||
+      selectedPhase2AttackTeams.has(candidate.row.teamId)
+    ) {
+      continue
+    }
+    selectedPhase2AttackRows.push(candidate)
+    selectedPhase2AttackTeams.add(candidate.row.teamId)
+  }
+
+  const phase2AttackEnergyCostByRiderId = new Map<string, number>()
+  const phase2AttackAttempts: UniversalRoadDecisiveAttackAttempt[] =
+    selectedPhase2AttackRows.map(({ row }, index) => {
+      const rider = ridersById.get(row.riderId)!
+      const readiness = readinessByRiderId.get(row.riderId)!
+      const startEnergy = phase1EnergyByRiderId.get(row.riderId) ?? 0
+      const attemptKm = deterministicRound(
+        clamp(
+          (phase2AttackTerrain.kmStart + phase2AttackTerrain.kmEnd) / 2,
+          phaseBoundary.startKm + 0.5,
+          phaseBoundary.endKm - 0.5,
+        ),
+        6,
+      )
+      const energyBeforeAttempt = deterministicRound(
+        Math.max(
+          0,
+          startEnergy -
+            calculateRoadEnergyCostForRange(
+              input,
+              rider,
+              readiness,
+              1,
+              phaseBoundary.startKm,
+              attemptKm,
+            ),
+        ),
+        6,
+      )
+      const routeSegment: RoadOpeningRouteSegment = {
+        kmStart: phase2AttackTerrain.kmStart,
+        kmEnd: phase2AttackTerrain.kmEnd,
+        distanceKm: phase2AttackTerrain.distanceKm,
+        slopePercent: phase2AttackTerrain.averageGradientPercent,
+        terrainType: phase2AttackTerrain.terrainType,
+      }
+      const pointGateCount = phase2Points.filter(
+        (point) => Math.abs(point.kmFromStart - attemptKm) < 0.5,
+      ).length
+      const intent = calculateOpeningAttackIntent(
+        rider,
+        row.stageRole,
+        phase2TeamPlanByTeamId.get(row.teamId) ?? 'balanced',
+        'attack',
+        attemptKm,
+        input.stage.distanceKm,
+        0,
+        routeSegment,
+        energyBeforeAttempt,
+        pointGateCount,
+      )
+      const outcome = calculateOpeningAttackOutcome(
+        rider,
+        row.stageRole,
+        routeSegment,
+        attemptKm / input.stage.distanceKm,
+        intent.attackIntentScore,
+        energyBeforeAttempt,
+        Math.max(1, selectedPhase2AttackRows.length),
+        1,
+        index + 1,
+      )
+      const deterministicOutcomeRoll = calculateDeterministicUnitRoll(
+        `${input.engine.deterministicSeed}|${input.stage.stageId}|phase_2_dynamic_attack|${row.riderId}`,
+      )
+      const physicallyValid = intent.eligible && energyBeforeAttempt >= 20
+      const attackSucceeded =
+        physicallyValid &&
+        deterministicOutcomeRoll <= outcome.attackSuccessProbability
+      const attackEnergyCost = physicallyValid
+        ? Math.min(energyBeforeAttempt, outcome.projectedAttackEnergyCostPct)
+        : 0
+      phase2AttackEnergyCostByRiderId.set(row.riderId, attackEnergyCost)
+
+      return {
+        riderId: row.riderId,
+        teamId: row.teamId,
+        sourceGroupCode: 'main_peloton',
+        attemptKm,
+        effectiveTerrainType: phase2AttackTerrain.terrainType,
+        energyBeforeAttempt,
+        attackIntentScore: intent.attackIntentScore,
+        attackExecutionSkillScore: outcome.attackExecutionSkillScore,
+        attackSuccessProbability: outcome.attackSuccessProbability,
+        deterministicOutcomeRoll,
+        attackSucceeded,
+        attackEnergyCost: deterministicRound(attackEnergyCost, 6),
+        energyAfterAttempt: deterministicRound(
+          Math.max(0, energyBeforeAttempt - attackEnergyCost),
+          6,
+        ),
+        positionScoreBonus: attackSucceeded
+          ? deterministicRound(
+              4 + outcome.attackExecutionSkillScore * 0.03,
+              6,
+            )
+          : 0,
+        modelVersion: 'production_attack_outcome_v2',
+      }
+    })
+  const successfulPhase2AttackRiderIds = phase2AttackAttempts
+    .filter((attempt) => attempt.attackSucceeded)
+    .map((attempt) => attempt.riderId)
+    .sort()
+  const rawSecondaryFrontGapToPelotonSeconds =
+    successfulPhase2AttackRiderIds.length > 0
+      ? deterministicRound(
+          clamp(
+            8 +
+              average(
+                phase2AttackAttempts
+                  .filter((attempt) => attempt.attackSucceeded)
+                  .map((attempt) => attempt.attackExecutionSkillScore),
+              ) *
+                0.12 +
+              calculateDeterministicUnitRoll(
+                `${input.engine.deterministicSeed}|phase11f|phase2-secondary-front-gap`,
+              ) *
+                8,
+            8,
+            30,
+          ),
+          6,
+        )
+      : 0
+
+  const breakawayTeamIds = new Set(
+    phase1.breakawayRiderIds
+      .map((riderId) => ridersById.get(riderId)?.teamId)
+      .filter((teamId): teamId is string => Boolean(teamId)),
+  )
+  const explicitControllingTeamIds = Array.from(
     new Set(
       phase2Rows
-        .filter(({ phase }) => phase.behaviour === 'race_control')
+        .filter(({ row, phase }) =>
+          !breakawayTeamIds.has(row.teamId) &&
+          phase.behaviour === 'race_control',
+        )
         .map(({ row }) => row.teamId),
     ),
   ).sort()
+  const explicitChasingTeamIds = Array.from(
+    new Set(
+      phase2Rows
+        .filter(({ row, phase }) =>
+          !breakawayTeamIds.has(row.teamId) &&
+          phase.behaviour === 'chase',
+        )
+        .map(({ row }) => row.teamId),
+    ),
+  ).sort()
+  const gcThreatChasingTeamIds = getGcThreatChasingTeamIds(
+    input,
+    phase1.breakawayRiderIds,
+  ).filter((teamId) => !breakawayTeamIds.has(teamId))
   const chasingTeamIds = Array.from(
-    new Set(
-      phase2Rows
-        .filter(({ phase }) => phase.behaviour === 'chase')
-        .map(({ row }) => row.teamId),
-    ),
+    new Set([...explicitChasingTeamIds, ...gcThreatChasingTeamIds]),
   ).sort()
+  const controllingTeamIds = explicitControllingTeamIds
+  const interestedTeamIds = new Set([
+    ...chasingTeamIds,
+    ...controllingTeamIds,
+  ])
   const availableChaseAssets = phase2Rows.filter(
-    ({ phase }) =>
-      phase.behaviour === 'chase' ||
-      phase.behaviour === 'race_control' ||
-      phase.behaviour === 'team_work',
+    ({ row, phase }) =>
+      interestedTeamIds.has(row.teamId) &&
+      (
+        phase.behaviour === 'chase' ||
+        phase.behaviour === 'race_control' ||
+        phase.behaviour === 'team_work' ||
+        row.stageRole === 'helper_domestique' ||
+        row.stageRole === 'rouleur' ||
+        row.stageRole === 'breakaway_chaser'
+      ),
   ).length
   const totalSprintAssets = phase2Rows.filter(
     ({ row, phase }) =>
-      row.stageRole === 'sprinter' ||
-      row.stageRole === 'lead_out_rider' ||
-      row.stageRole === 'sprint_train_rider' ||
-      phase.behaviour === 'sprint_preparation',
+      interestedTeamIds.has(row.teamId) &&
+      (
+        row.stageRole === 'sprinter' ||
+        row.stageRole === 'lead_out_rider' ||
+        row.stageRole === 'sprint_train_rider' ||
+        phase.behaviour === 'sprint_preparation'
+      ),
   ).length
   const totalProtectedAssets = phase2Rows.filter(
     ({ row }) =>
-      row.stageRole === 'team_leader_gc' ||
-      row.stageRole === 'protected_rider',
+      interestedTeamIds.has(row.teamId) &&
+      (
+        row.stageRole === 'team_leader_gc' ||
+        row.stageRole === 'protected_rider'
+      ),
   ).length
 
   const baselinePelotonPaceKmh = 40
@@ -9536,6 +9902,7 @@ export function resolveRoadPhase2Development(
       (point) => Math.abs(point.kmFromStart - phaseBoundary.startKm) <= 5,
     ),
     false,
+    true,
   )
 
   const averageAttackCost = average(
@@ -9549,6 +9916,7 @@ export function resolveRoadPhase2Development(
   let currentGapSeconds = breakawayActive ? phase1.initialGapSeconds : 0
   let currentKm = phaseBoundary.startKm
   let effectivePelotonPaceKmh = baselinePelotonPaceKmh
+  let phase2CatchKm: number | null = null
 
   while (
     breakawayActive &&
@@ -9583,18 +9951,47 @@ export function resolveRoadPhase2Development(
       projectedEscapePaceKmh,
       isPointGateNear,
       false,
+      true,
     )
-    effectivePelotonPaceKmh =
-      baselinePelotonPaceKmh * pelotonComponents.selectedResponseMultiplier
+    const pelotonVariationKmh = phase11fPaceVariationKmh(
+      input.engine.deterministicSeed,
+      'phase2-peloton',
+      stepEndKm,
+      0.9,
+    )
+    const escapeVariationKmh = phase11fPaceVariationKmh(
+      input.engine.deterministicSeed,
+      'phase2-escape',
+      stepEndKm,
+      0.75,
+    )
+    effectivePelotonPaceKmh = clamp(
+      baselinePelotonPaceKmh * pelotonComponents.selectedResponseMultiplier +
+        pelotonVariationKmh,
+      32,
+      52,
+    )
+    const variedEscapePaceKmh = clamp(
+      effectiveEscapePaceKmh + escapeVariationKmh,
+      31,
+      50,
+    )
     const pelotonStepSeconds =
       (stepDistanceKm / Math.max(5, effectivePelotonPaceKmh)) * 3600
     const escapeStepSeconds =
-      (stepDistanceKm / Math.max(5, effectiveEscapePaceKmh)) * 3600
+      (stepDistanceKm / Math.max(5, variedEscapePaceKmh)) * 3600
     currentGapSeconds = Math.max(
       0,
       currentGapSeconds + pelotonStepSeconds - escapeStepSeconds,
     )
     currentKm = stepEndKm
+    if (
+      phase2CatchKm === null &&
+      currentGapSeconds <= PHASE5_GROUP_MERGE_TOLERANCE_SECONDS
+    ) {
+      phase2CatchKm = stepEndKm
+      currentGapSeconds = 0
+    }
   }
 
   const endGapSeconds = deterministicRound(currentGapSeconds, 6)
@@ -9602,12 +9999,48 @@ export function resolveRoadPhase2Development(
   const breakawayRiderIdsAtEnd = breakawaySurvivesPhase2
     ? [...phase1.breakawayRiderIds]
     : []
+  const canHoldDistinctSecondaryFrontBehindBreakaway =
+    breakawaySurvivesPhase2 &&
+    endGapSeconds > PHASE5_GROUP_MERGE_TOLERANCE_SECONDS * 2 + 1
+  const secondaryFrontRiderIdsAtEnd =
+    successfulPhase2AttackRiderIds.length === 0
+      ? []
+      : breakawaySurvivesPhase2
+        ? canHoldDistinctSecondaryFrontBehindBreakaway
+          ? [...successfulPhase2AttackRiderIds]
+          : []
+        : [...successfulPhase2AttackRiderIds]
+  const secondaryFrontGapToPelotonSeconds =
+    secondaryFrontRiderIdsAtEnd.length === 0
+      ? 0
+      : breakawaySurvivesPhase2
+        ? deterministicRound(
+            clamp(
+              rawSecondaryFrontGapToPelotonSeconds,
+              PHASE5_GROUP_MERGE_TOLERANCE_SECONDS + 1,
+              Math.max(
+                PHASE5_GROUP_MERGE_TOLERANCE_SECONDS + 1,
+                endGapSeconds - PHASE5_GROUP_MERGE_TOLERANCE_SECONDS - 1,
+              ),
+            ),
+            6,
+          )
+        : deterministicRound(
+            Math.max(
+              PHASE5_GROUP_MERGE_TOLERANCE_SECONDS + 1,
+              rawSecondaryFrontGapToPelotonSeconds,
+            ),
+            6,
+          )
   const eligibleRiderIds = roadCommandResolution.riders
     .filter((row) => row.eligibleToStart)
     .map((row) => row.riderId)
     .sort()
+  const secondaryFrontSet = new Set(secondaryFrontRiderIdsAtEnd)
   const pelotonRiderIdsAtEnd = eligibleRiderIds.filter(
-    (riderId) => !breakawayRiderIdsAtEnd.includes(riderId),
+    (riderId) =>
+      !breakawayRiderIdsAtEnd.includes(riderId) &&
+      !secondaryFrontSet.has(riderId),
   )
 
   const supportActions = resolvePhase2SupportActions(
@@ -9727,7 +10160,36 @@ export function resolveRoadPhase2Development(
         point.pointsScheme.length,
         point.timeBonusSeconds.length,
       )
-      const rankings: UniversalRoadPointBattleRanking[] = contestants
+      const openingBreakawayStillAheadAtPoint =
+        breakawayActive &&
+        (phase2CatchKm === null || point.kmFromStart < phase2CatchKm)
+      const phase2AttackLaunchKm = phase2AttackAttempts
+        .filter((attempt) => attempt.attackSucceeded)
+        .reduce<number | null>(
+          (minimum, attempt) =>
+            minimum === null ? attempt.attemptKm : Math.min(minimum, attempt.attemptKm),
+          null,
+        )
+      const physicalFrontOccupantIds = new Set<string>([
+        ...(openingBreakawayStillAheadAtPoint ? phase1.breakawayRiderIds : []),
+        ...(phase2AttackLaunchKm !== null &&
+        point.kmFromStart >= phase2AttackLaunchKm &&
+        secondaryFrontRiderIdsAtEnd.length > 0
+          ? secondaryFrontRiderIdsAtEnd
+          : []),
+      ])
+      const availablePelotonScoringSlots = Math.max(
+        0,
+        awardDepth - physicalFrontOccupantIds.size,
+      )
+      const frontContestants = contestants.filter((contestant) =>
+        physicalFrontOccupantIds.has(contestant.riderId),
+      )
+      const behindContestants = contestants
+        .filter((contestant) => !physicalFrontOccupantIds.has(contestant.riderId))
+        .slice(0, availablePelotonScoringSlots)
+      const effectiveContestants = [...frontContestants, ...behindContestants]
+      const rankings: UniversalRoadPointBattleRanking[] = effectiveContestants
         .slice(0, awardDepth)
         .map((contestant, index) => ({
           rank: index + 1,
@@ -9745,8 +10207,8 @@ export function resolveRoadPhase2Development(
         pointName: point.name,
         kmFromStart: point.kmFromStart,
         phaseNumber: 2,
-        eligibleContestantIds: contestants.map((row) => row.riderId),
-        status: contestants.length > 0 ? 'contested' : 'not_contested',
+        eligibleContestantIds: effectiveContestants.map((row) => row.riderId),
+        status: effectiveContestants.length > 0 ? 'contested' : 'not_contested',
         winnerRiderId: rankings[0]?.riderId ?? null,
         rankings,
         scoringModel: isSprint
@@ -9778,8 +10240,10 @@ export function resolveRoadPhase2Development(
         )
         const objectiveEnergyCost =
           objectiveEnergyCostByRiderId.get(row.riderId) ?? 0
+        const attackEnergyCost =
+          phase2AttackEnergyCostByRiderId.get(row.riderId) ?? 0
         const totalPhaseEnergyCost = deterministicRound(
-          baselinePhaseEnergyCost + objectiveEnergyCost,
+          baselinePhaseEnergyCost + objectiveEnergyCost + attackEnergyCost,
           6,
         )
         return {
@@ -9804,7 +10268,9 @@ export function resolveRoadPhase2Development(
           ),
           finalGroupCode: breakawayRiderIdsAtEnd.includes(row.riderId)
             ? 'breakaway'
-            : 'main_peloton',
+            : secondaryFrontSet.has(row.riderId)
+              ? 'front_group'
+              : 'main_peloton',
           modelVersion: 'production_step_energy_v2' as const,
         }
       })
@@ -9819,29 +10285,54 @@ export function resolveRoadPhase2Development(
     status = 'organized_chase'
   } else status = 'gap_controlled'
 
-  const groups: UniversalRoadDevelopmentGroup[] = breakawaySurvivesPhase2
-    ? [
-        {
-          groupCode: 'breakaway',
-          groupOrder: 1,
-          riderIds: breakawayRiderIdsAtEnd,
-          gapSeconds: 0,
-        },
-        {
-          groupCode: 'main_peloton',
-          groupOrder: 2,
-          riderIds: pelotonRiderIdsAtEnd,
-          gapSeconds: endGapSeconds,
-        },
-      ]
-    : [
-        {
-          groupCode: 'main_peloton',
-          groupOrder: 1,
-          riderIds: eligibleRiderIds,
-          gapSeconds: 0,
-        },
-      ]
+  const groups: UniversalRoadDevelopmentGroup[] = []
+  if (breakawaySurvivesPhase2) {
+    groups.push({
+      groupCode: 'breakaway',
+      groupOrder: 1,
+      riderIds: breakawayRiderIdsAtEnd,
+      gapSeconds: 0,
+    })
+    if (secondaryFrontRiderIdsAtEnd.length > 0) {
+      groups.push({
+        groupCode: 'front_group',
+        groupOrder: 2,
+        riderIds: secondaryFrontRiderIdsAtEnd,
+        gapSeconds: deterministicRound(
+          Math.max(0, endGapSeconds - secondaryFrontGapToPelotonSeconds),
+          6,
+        ),
+      })
+    }
+    groups.push({
+      groupCode: 'main_peloton',
+      groupOrder: groups.length + 1 as 2 | 3,
+      riderIds: pelotonRiderIdsAtEnd,
+      gapSeconds: endGapSeconds,
+    })
+  } else if (secondaryFrontRiderIdsAtEnd.length > 0) {
+    groups.push(
+      {
+        groupCode: 'front_group',
+        groupOrder: 1,
+        riderIds: secondaryFrontRiderIdsAtEnd,
+        gapSeconds: 0,
+      },
+      {
+        groupCode: 'main_peloton',
+        groupOrder: 2,
+        riderIds: pelotonRiderIdsAtEnd,
+        gapSeconds: secondaryFrontGapToPelotonSeconds,
+      },
+    )
+  } else {
+    groups.push({
+      groupCode: 'main_peloton',
+      groupOrder: 1,
+      riderIds: eligibleRiderIds,
+      gapSeconds: 0,
+    })
+  }
 
   return {
     ...phase1Resolution,
@@ -9887,6 +10378,10 @@ export function resolveRoadPhase2Development(
         ),
         modelVersion: 'production_peloton_response_components_v2',
       },
+      attackAttempts: phase2AttackAttempts,
+      successfulAttackRiderIds: successfulPhase2AttackRiderIds,
+      secondaryFrontRiderIdsAtEnd,
+      secondaryFrontGapToPelotonSeconds,
       supportActions,
       pointBattles,
       riderEnergy,
@@ -10043,7 +10538,9 @@ function getStartDevelopmentGroupCode(
 ): UniversalRoadDevelopmentGroupCode {
   return phase2.breakawayRiderIdsAtEnd.includes(riderId)
     ? 'breakaway'
-    : 'main_peloton'
+    : phase2.secondaryFrontRiderIdsAtEnd.includes(riderId)
+      ? 'front_group'
+      : 'main_peloton'
 }
 
 function isSelectiveRoadTerrain(
@@ -10294,6 +10791,209 @@ export function resolveRoadPhase3Decisive(
     .map((attempt) => attempt.riderId)
     .sort()
 
+  const phase3StartEscapeRiderIds =
+    phase2.breakawayRiderIdsAtEnd.length > 0
+      ? [...phase2.breakawayRiderIdsAtEnd]
+      : [...phase2.secondaryFrontRiderIdsAtEnd]
+  const phase3StartGapSeconds =
+    phase2.breakawayRiderIdsAtEnd.length > 0
+      ? phase2.endGapSeconds
+      : phase2.secondaryFrontGapToPelotonSeconds
+  const newPhase3AttackEscapeRiderIds =
+    phase3StartEscapeRiderIds.length === 0
+      ? successfulAttackRiderIds
+      : []
+  let physicalEscapeRiderIds =
+    phase3StartEscapeRiderIds.length > 0
+      ? [...phase3StartEscapeRiderIds]
+      : [...newPhase3AttackEscapeRiderIds]
+  const physicalEscapeRiderIdsAtLaunch = [...physicalEscapeRiderIds]
+  let physicalCurrentGapSeconds =
+    phase3StartGapSeconds > PHASE5_GROUP_MERGE_TOLERANCE_SECONDS
+      ? phase3StartGapSeconds
+      : physicalEscapeRiderIds.length > 0
+        ? deterministicRound(
+            clamp(
+              8 +
+                average(
+                  attackAttempts
+                    .filter((attempt) => attempt.attackSucceeded)
+                    .map((attempt) => attempt.attackExecutionSkillScore),
+                ) * 0.12 +
+                calculateDeterministicUnitRoll(
+                  `${input.engine.deterministicSeed}|phase11f|phase3-new-front-gap`,
+                ) * 8,
+              PHASE5_GROUP_MERGE_TOLERANCE_SECONDS + 1,
+              30,
+            ),
+            6,
+          )
+        : 0
+  const phase3PhysicalStartKm =
+    phase3StartEscapeRiderIds.length > 0
+      ? phaseBoundary.startKm
+      : attackAttempts
+          .filter((attempt) => attempt.attackSucceeded)
+          .reduce<number | null>(
+            (minimum, attempt) =>
+              minimum === null ? attempt.attemptKm : Math.min(minimum, attempt.attemptKm),
+            null,
+          ) ?? phaseBoundary.endKm
+  const physicalEscapeTeamIds = new Set(
+    physicalEscapeRiderIds
+      .map((riderId) => ridersById.get(riderId)?.teamId)
+      .filter((teamId): teamId is string => Boolean(teamId)),
+  )
+  const phase3Rows = roadCommandResolution.riders.map((row) => ({
+    row,
+    phase: row.phases.find((entry) => entry.phaseNumber === 3)!,
+  }))
+  const explicitPhase3ChasingTeamIds = Array.from(
+    new Set(
+      phase3Rows
+        .filter(({ row, phase }) =>
+          !physicalEscapeTeamIds.has(row.teamId) &&
+          (phase.behaviour === 'chase' || phase.behaviour === 'race_control'),
+        )
+        .map(({ row }) => row.teamId),
+    ),
+  ).sort()
+  const phase3GcThreatTeamIds = getGcThreatChasingTeamIds(
+    input,
+    physicalEscapeRiderIds,
+  ).filter((teamId) => !physicalEscapeTeamIds.has(teamId))
+  const physicalChasingTeamIds = Array.from(
+    new Set([...explicitPhase3ChasingTeamIds, ...phase3GcThreatTeamIds]),
+  ).sort()
+  const physicalChasingTeamSet = new Set(physicalChasingTeamIds)
+  const phase3AvailableChaseAssets = phase3Rows.filter(({ row, phase }) =>
+    physicalChasingTeamSet.has(row.teamId) &&
+    (phase.behaviour === 'chase' ||
+      phase.behaviour === 'race_control' ||
+      phase.behaviour === 'team_work' ||
+      row.stageRole === 'helper_domestique' ||
+      row.stageRole === 'rouleur' ||
+      row.stageRole === 'breakaway_chaser'),
+  ).length
+  const phase3SprintAssets = phase3Rows.filter(({ row }) =>
+    physicalChasingTeamSet.has(row.teamId) &&
+    (row.stageRole === 'sprinter' || row.stageRole === 'lead_out_rider'),
+  ).length
+  const phase3ProtectedAssets = phase3Rows.filter(({ row }) =>
+    physicalChasingTeamSet.has(row.teamId) &&
+    (row.stageRole === 'team_leader_gc' || row.stageRole === 'protected_rider'),
+  ).length
+  const phase3BaselinePelotonPaceKmh =
+    decisiveTerrain.terrainType === 'steep_climb'
+      ? 34
+      : decisiveTerrain.terrainType === 'climb'
+        ? 36
+        : decisiveTerrain.terrainType === 'cobbled' ||
+            decisiveTerrain.terrainType === 'cobble' ||
+            decisiveTerrain.terrainType === 'gravel'
+          ? 38
+          : decisiveTerrain.terrainType === 'descent' ||
+              decisiveTerrain.terrainType === 'technical_descent'
+            ? 44
+            : 41
+  const phase3EscapePaceKmh = deterministicRound(
+    physicalEscapeRiderIds.length > 0
+      ? average(
+          physicalEscapeRiderIds.map((riderId) => {
+            const rider = ridersById.get(riderId)!
+            const suitability = suitabilityByRiderId.get(riderId)?.suitabilityScore ?? 50
+            return clamp(
+              phase3BaselinePelotonPaceKmh *
+                (0.97 + rider.endurance * 0.00022 + rider.raceIQ * 0.00012) +
+                (suitability - 50) * 0.005,
+              28,
+              50,
+            )
+          }),
+        )
+      : phase3BaselinePelotonPaceKmh,
+    6,
+  )
+  const physicalGapTrajectory: UniversalRoadPhysicalGapSample[] = []
+  if (physicalEscapeRiderIds.length > 0 && physicalCurrentGapSeconds > 0) {
+    physicalGapTrajectory.push({
+      kmFromStart: deterministicRound(phase3PhysicalStartKm, 6),
+      gapSeconds: deterministicRound(physicalCurrentGapSeconds, 6),
+    })
+  }
+  let phase3PhysicalKm = phase3PhysicalStartKm
+  while (
+    physicalEscapeRiderIds.length > 0 &&
+    physicalCurrentGapSeconds > PHASE5_GROUP_MERGE_TOLERANCE_SECONDS &&
+    phase3PhysicalKm < phaseBoundary.endKm - 0.000001
+  ) {
+    const stepEndKm = Math.min(phaseBoundary.endKm, phase3PhysicalKm + 5)
+    const stepDistanceKm = stepEndKm - phase3PhysicalKm
+    const isPointGateNear = phase3Points.some(
+      (point) =>
+        point.kmFromStart >= phase3PhysicalKm - 0.000001 &&
+        point.kmFromStart <= stepEndKm + 5,
+    )
+    const response = calculatePelotonResponseComponents(
+      stepEndKm / input.stage.distanceKm,
+      input.stage.distanceKm - stepEndKm,
+      physicalCurrentGapSeconds,
+      Math.max(1, physicalEscapeRiderIds.length),
+      Math.max(1, physicalEscapeTeamIds.size),
+      physicalChasingTeamIds.length,
+      phase3AvailableChaseAssets,
+      phase3SprintAssets,
+      phase3ProtectedAssets,
+      phase3BaselinePelotonPaceKmh,
+      phase3EscapePaceKmh,
+      isPointGateNear,
+      false,
+      true,
+    )
+    const pelotonPaceKmh = clamp(
+      phase3BaselinePelotonPaceKmh *
+        Math.max(1, response.selectedResponseMultiplier) +
+        phase11fPaceVariationKmh(
+          input.engine.deterministicSeed,
+          'phase3-peloton',
+          stepEndKm,
+          1,
+        ),
+      27,
+      53,
+    )
+    const escapePaceKmh = clamp(
+      phase3EscapePaceKmh +
+        phase11fPaceVariationKmh(
+          input.engine.deterministicSeed,
+          'phase3-escape',
+          stepEndKm,
+          0.85,
+        ),
+      27,
+      51,
+    )
+    physicalCurrentGapSeconds = Math.max(
+      0,
+      physicalCurrentGapSeconds +
+        (stepDistanceKm / Math.max(5, pelotonPaceKmh)) * 3600 -
+        (stepDistanceKm / Math.max(5, escapePaceKmh)) * 3600,
+    )
+    phase3PhysicalKm = stepEndKm
+    if (physicalCurrentGapSeconds <= PHASE5_GROUP_MERGE_TOLERANCE_SECONDS) {
+      physicalCurrentGapSeconds = 0
+      physicalEscapeRiderIds = []
+    }
+    physicalGapTrajectory.push({
+      kmFromStart: deterministicRound(stepEndKm, 6),
+      gapSeconds: deterministicRound(physicalCurrentGapSeconds, 6),
+    })
+  }
+  const physicalEndGapSeconds = deterministicRound(
+    physicalEscapeRiderIds.length > 0 ? physicalCurrentGapSeconds : 0,
+    6,
+  )
+
   const objectiveEnergyCostByRiderId = new Map<string, number>()
   const pointBattles: UniversalRoadPointBattleResult[] = phase3Points.map((point) => {
     const isSprint =
@@ -10362,7 +11062,28 @@ export function resolveRoadPhase3Decisive(
           left.riderId.localeCompare(right.riderId),
       )
     const awardDepth = Math.max(point.pointsScheme.length, point.timeBonusSeconds.length)
-    const rankings: UniversalRoadPointBattleRanking[] = contestants
+    const trajectoryBeforePoint = [...physicalGapTrajectory]
+      .filter((sample) => sample.kmFromStart <= point.kmFromStart + 0.000001)
+      .sort((left, right) => right.kmFromStart - left.kmFromStart)[0]
+    const escapeAheadAtPoint =
+      physicalEscapeRiderIds.length > 0 &&
+      (trajectoryBeforePoint?.gapSeconds ?? physicalEndGapSeconds) >
+        PHASE5_GROUP_MERGE_TOLERANCE_SECONDS
+    const physicalFrontOccupantIds = new Set(
+      escapeAheadAtPoint ? physicalEscapeRiderIdsAtLaunch : [],
+    )
+    const availablePelotonScoringSlots = Math.max(
+      0,
+      awardDepth - physicalFrontOccupantIds.size,
+    )
+    const frontContestants = contestants.filter((contestant) =>
+      physicalFrontOccupantIds.has(contestant.riderId),
+    )
+    const behindContestants = contestants
+      .filter((contestant) => !physicalFrontOccupantIds.has(contestant.riderId))
+      .slice(0, availablePelotonScoringSlots)
+    const effectiveContestants = [...frontContestants, ...behindContestants]
+    const rankings: UniversalRoadPointBattleRanking[] = effectiveContestants
       .slice(0, awardDepth)
       .map((contestant, index) => ({
         rank: index + 1,
@@ -10379,8 +11100,8 @@ export function resolveRoadPhase3Decisive(
       pointName: point.name,
       kmFromStart: point.kmFromStart,
       phaseNumber: 3,
-      eligibleContestantIds: contestants.map((row) => row.riderId),
-      status: contestants.length > 0 ? 'contested' : 'not_contested',
+      eligibleContestantIds: effectiveContestants.map((row) => row.riderId),
+      status: effectiveContestants.length > 0 ? 'contested' : 'not_contested',
       winnerRiderId: rankings[0]?.riderId ?? null,
       rankings,
       scoringModel: isSprint
@@ -10609,6 +11330,11 @@ export function resolveRoadPhase3Decisive(
       attackAttempts,
       successfulAttackRiderIds,
       pointBattles,
+      physicalEscapeRiderIdsAtEnd: physicalEscapeRiderIds,
+      physicalStartGapSeconds: deterministicRound(phase3StartGapSeconds, 6),
+      physicalEndGapSeconds,
+      physicalChasingTeamIds,
+      physicalGapTrajectory,
       riderStates,
       groups,
       finishEligibleRiderIds,
@@ -10908,18 +11634,10 @@ function buildPersistentOpeningBreakawayPhysicalState(
   const phase2 = phase3Resolution.phase2Development
   const phase3 = phase3Resolution.phase3Decisive
   const physicallyAvailableSet = new Set(physicallyAvailableRiderIds)
-  const sourceRiderIds = phase2
-    ? phase2.breakawayRiderIdsAtEnd
-    : phase1?.breakawayRiderIds ?? []
-  const riderIds = sourceRiderIds
-    .filter((riderId) => physicallyAvailableSet.has(riderId))
-    .slice()
-    .sort()
-  const riderIdSet = new Set(riderIds)
 
-  if (!phase1 || !phase2 || !phase3 || riderIds.length === 0) {
+  if (!phase1 || !phase2 || !phase3) {
     return {
-      riderIds,
+      riderIds: [],
       openingGapSeconds: 0,
       developmentGapSeconds: 0,
       rawPhase3PelotonGapSeconds: 0,
@@ -10932,100 +11650,58 @@ function buildPersistentOpeningBreakawayPhysicalState(
     }
   }
 
+  const riderIds = phase3.physicalEscapeRiderIdsAtEnd
+    .filter((riderId) => physicallyAvailableSet.has(riderId))
+    .slice()
+    .sort()
+  const riderIdSet = new Set(riderIds)
   const teamByRiderId = new Map(
     input.riders.map((rider) => [rider.riderId, rider.teamId] as const),
   )
   const openingTeamCount = new Set(
-    riderIds.map((riderId) => teamByRiderId.get(riderId) ?? riderId),
+    phase1.breakawayRiderIds.map(
+      (riderId) => teamByRiderId.get(riderId) ?? riderId,
+    ),
   ).size
   const openingGapSeconds = calculatePhase5OpeningBreakawayGapSeconds(
-    riderIds.length,
-    openingTeamCount,
+    phase1.breakawayRiderIds.length,
+    Math.max(1, openingTeamCount),
     phase1.initialGapSeconds,
   )
-  const rawDevelopmentGapSeconds =
-    calculatePhase5DevelopmentBreakawayGapSeconds(
-      openingGapSeconds,
-      phase2.pelotonResponse.responseMode,
-      phase2.pelotonResponse.controllingTeamIds.length,
-      phase2.pelotonResponse.chasingTeamIds.length,
-      phase2.breakawayCooperation?.cooperationScore ?? 0,
-    )
-  const developmentGapSeconds = Math.max(
-    90,
-    phase2.pelotonResponse.responseMode === 'release_escape'
-      ? Math.max(openingGapSeconds + 30, rawDevelopmentGapSeconds)
-      : phase2.pelotonResponse.responseMode === 'control_gap'
-        ? Math.max(openingGapSeconds, rawDevelopmentGapSeconds)
-        : Math.max(90, rawDevelopmentGapSeconds),
-  )
-
-  const authoritativePelotonCandidate = phase3.groups
-    .map((group) => ({
-      group,
-      pelotonMembershipCount: group.riderIds.filter(
-        (riderId) =>
-          physicallyAvailableSet.has(riderId) && !riderIdSet.has(riderId),
-      ).length,
-      openingBreakawayMembershipCount: group.riderIds.filter((riderId) =>
-        riderIdSet.has(riderId),
-      ).length,
-    }))
-    .filter(
-      (candidate) =>
-        candidate.pelotonMembershipCount > 0 &&
-        candidate.openingBreakawayMembershipCount === 0,
-    )
-    .sort(
-      (left, right) =>
-        right.pelotonMembershipCount - left.pelotonMembershipCount ||
-        right.group.riderIds.length - left.group.riderIds.length ||
-        left.group.groupOrder - right.group.groupOrder,
-    )[0]
-  const rawPhase3PelotonGapSeconds = deterministicRound(
-    Math.max(
-      0,
-      authoritativePelotonCandidate?.group.gapSeconds ??
-        developmentGapSeconds,
-    ),
+  const developmentGapSeconds = deterministicRound(
+    phase2.breakawayRiderIdsAtEnd.length > 0
+      ? phase2.endGapSeconds
+      : phase2.secondaryFrontRiderIdsAtEnd.length > 0
+        ? phase2.secondaryFrontGapToPelotonSeconds
+        : 0,
     6,
   )
   const phase3GapSeconds = deterministicRound(
-    limitRoadChaseGapClosure(
-      developmentGapSeconds,
-      rawPhase3PelotonGapSeconds,
-      phase2.phaseBoundary.endKm,
-      phase3.phaseBoundary.endKm,
-      input.stage.distanceKm,
-      input.stage.terrainType,
-    ),
+    riderIds.length > 0 ? phase3.physicalEndGapSeconds : 0,
     6,
   )
-  const authoritativePelotonRiderSet = new Set(
-    authoritativePelotonCandidate?.group.riderIds.filter((riderId) =>
-      physicallyAvailableSet.has(riderId),
-    ) ?? [],
-  )
-  const droppedRiderIds = Array.from(
-    new Set(
-      phase3.groups
-        .filter(
-          (group) =>
-            group.groupCode === 'dropped_group' &&
-            group !== authoritativePelotonCandidate?.group,
-        )
-        .flatMap((group) => group.riderIds)
-        .filter(
-          (riderId) =>
-            physicallyAvailableSet.has(riderId) &&
-            !riderIdSet.has(riderId) &&
-            !authoritativePelotonRiderSet.has(riderId),
-        ),
-    ),
-  ).sort()
+  const rawPhase3PelotonGapSeconds = phase3GapSeconds
+  const phase3PhysicalSelectionActive =
+    isSelectiveRoadTerrain(phase3.decisiveTerrain.terrainType) &&
+    phase3.decisiveTerrain.selectionSeverity >= 0.2
+  const droppedRiderIds = phase3.riderStates
+    .filter(
+      (state) =>
+        physicallyAvailableSet.has(state.riderId) &&
+        !riderIdSet.has(state.riderId) &&
+        (state.energyAfterPhase <= 3 ||
+          (phase3PhysicalSelectionActive &&
+            state.finalGroupCode === 'dropped_group')),
+    )
+    .map((state) => state.riderId)
+    .sort()
   const droppedSet = new Set(droppedRiderIds)
-  const lateFrontRiderIds = Array.from(
-    new Set(phase3.successfulAttackRiderIds),
+
+  const secondaryCandidates = Array.from(
+    new Set([
+      ...phase2.secondaryFrontRiderIdsAtEnd,
+      ...phase3.successfulAttackRiderIds,
+    ]),
   )
     .filter(
       (riderId) =>
@@ -11034,11 +11710,21 @@ function buildPersistentOpeningBreakawayPhysicalState(
         !droppedSet.has(riderId),
     )
     .sort()
+  const canHoldSecondaryFront =
+    riderIds.length > 0 &&
+    phase3GapSeconds > PHASE5_GROUP_MERGE_TOLERANCE_SECONDS * 2 + 1
+  const lateFrontRiderIds = canHoldSecondaryFront ? secondaryCandidates : []
   const lateFrontSet = new Set(lateFrontRiderIds)
-  const lateFrontGapSeconds = Math.max(
-    PHASE5_GROUP_MERGE_TOLERANCE_SECONDS + 1,
-    Math.round(phase3GapSeconds * 0.55),
-  )
+  const lateFrontGapBehindLeaderSeconds = canHoldSecondaryFront
+    ? deterministicRound(
+        clamp(
+          phase3GapSeconds * 0.45,
+          PHASE5_GROUP_MERGE_TOLERANCE_SECONDS + 1,
+          phase3GapSeconds - PHASE5_GROUP_MERGE_TOLERANCE_SECONDS - 1,
+        ),
+        6,
+      )
+    : 0
   const phase3StateByRiderId = new Map(
     phase3.riderStates.map((row) => [row.riderId, row] as const),
   )
@@ -11050,7 +11736,7 @@ function buildPersistentOpeningBreakawayPhysicalState(
       return
     }
     if (lateFrontSet.has(riderId)) {
-      physicalGapByRiderId.set(riderId, lateFrontGapSeconds)
+      physicalGapByRiderId.set(riderId, lateFrontGapBehindLeaderSeconds)
       return
     }
     if (droppedSet.has(riderId)) {
@@ -11072,7 +11758,7 @@ function buildPersistentOpeningBreakawayPhysicalState(
   return {
     riderIds,
     openingGapSeconds: deterministicRound(openingGapSeconds, 6),
-    developmentGapSeconds: deterministicRound(developmentGapSeconds, 6),
+    developmentGapSeconds,
     rawPhase3PelotonGapSeconds,
     phase3GapSeconds,
     lateFrontRiderIds,
@@ -11158,14 +11844,13 @@ export function resolveRoadPhase4Finish(
         .filter((riderId) => physicallyAvailableSet.has(riderId))
         .sort()
     : []
-  const fallbackFrontRiderIds =
-    successfulLateAttackRiderIds.length > 0
-      ? successfulLateAttackRiderIds
-      : naturalFrontSelectionRiderIds
   const escapeRiderIdsAtStart =
-    persistentOpeningState.riderIds.length > 0
-      ? [...persistentOpeningState.riderIds]
-      : fallbackFrontRiderIds
+    phase3.physicalEscapeRiderIdsAtEnd.length > 0
+      ? phase3.physicalEscapeRiderIdsAtEnd
+          .filter((riderId) => physicallyAvailableSet.has(riderId))
+          .slice()
+          .sort()
+      : naturalFrontSelectionRiderIds
   const escapeSetAtStart = new Set(escapeRiderIdsAtStart)
 
   const authoritativePelotonGroup = phase3.groups
@@ -11186,10 +11871,14 @@ export function resolveRoadPhase4Finish(
     )[0]
 
   const startGapSeconds =
-    persistentOpeningState.riderIds.length > 0
-      ? persistentOpeningState.phase3GapSeconds
+    phase3.physicalEscapeRiderIdsAtEnd.length > 0
+      ? phase3.physicalEndGapSeconds
       : escapeRiderIdsAtStart.length > 0 && authoritativePelotonGroup
-        ? authoritativePelotonGroup.gapSeconds
+        ? Math.max(
+            0,
+            authoritativePelotonGroup.gapSeconds -
+              (phase3FrontGroup?.gapSeconds ?? 0),
+          )
         : 0
   const activeEscape =
     escapeRiderIdsAtStart.length > 0 &&
@@ -11200,7 +11889,7 @@ export function resolveRoadPhase4Finish(
   const phase3PhysicalGapByRiderId = new Map<string, number>()
   phase3.riderStates.forEach((state) => {
     if (!physicallyAvailableSet.has(state.riderId)) return
-    if (persistentOpeningState.riderIds.length > 0) {
+    if (phase3.physicalEscapeRiderIdsAtEnd.length > 0) {
       phase3PhysicalGapByRiderId.set(
         state.riderId,
         persistentOpeningState.physicalGapByRiderId.get(state.riderId) ??
@@ -11234,9 +11923,17 @@ export function resolveRoadPhase4Finish(
       physicallyDropped ? Math.max(15, state.gapSeconds) : 0,
     )
   })
-  const chaseStartFraction = calculateRoadPhase4ChaseStartFraction(
+  const requestedChaseStartFraction = calculateRoadPhase4ChaseStartFraction(
     startGapSeconds,
     input.stage.terrainType,
+  )
+  // Phase 11F keeps the existing late-race automatic chase, but it must not
+  // begin before the real Phase 4 boundary (70% of a road stage). Larger gaps
+  // can therefore activate immediately at 70%, while smaller gaps may still
+  // wait until the later dynamic threshold.
+  const chaseStartFraction = deterministicRound(
+    Math.max(phaseBoundary.startFraction, requestedChaseStartFraction),
+    6,
   )
   const chaseStartKm = deterministicRound(
     input.stage.distanceKm * chaseStartFraction,
@@ -11859,8 +12556,14 @@ export function resolveRoadPhase4Finish(
   const averageChasingStrength = average(
     chasingTeamStrength.map((row) => row.strengthScore),
   )
+  const chaseCoalitionPaceBonusKmh =
+    chasingTeamStrength.length > 4
+      ? Math.min(1.4, Math.log2(chasingTeamStrength.length / 4) * 0.7)
+      : 0
   const baselinePelotonPaceKmh = deterministicRound(
-    39.5 + Math.min(3, averageChasingStrength * 0.03),
+    39.5 +
+      Math.min(3, averageChasingStrength * 0.03) +
+      chaseCoalitionPaceBonusKmh,
     6,
   )
   const totalSprintAssets = roadCommandResolution.riders.filter(
@@ -15006,27 +15709,16 @@ function buildUniversalPhase5GroupingSummary(
     phaseGroups.push(...phase1Groups)
   }
 
-  const rawDevelopmentGap =
-    openingBreakawayRiderIds.length > 0 && p2
-      ? calculatePhase5DevelopmentBreakawayGapSeconds(
-          openingGapSeconds,
-          p2.pelotonResponse.responseMode,
-          p2.pelotonResponse.controllingTeamIds.length,
-          p2.pelotonResponse.chasingTeamIds.length,
-          p2.breakawayCooperation?.cooperationScore ?? 0,
-        )
-      : 0
-  const developmentGapSeconds =
-    openingBreakawayRiderIds.length > 0
-      ? Math.max(
-          90,
-          p2?.pelotonResponse.responseMode === 'release_escape'
-            ? Math.max(openingGapSeconds + 30, rawDevelopmentGap)
-            : p2?.pelotonResponse.responseMode === 'control_gap'
-              ? Math.max(openingGapSeconds, rawDevelopmentGap)
-              : Math.max(90, rawDevelopmentGap),
-        )
-      : 0
+  const developmentGapSeconds = p2
+    ? deterministicRound(
+        p2.breakawayRiderIdsAtEnd.length > 0
+          ? p2.endGapSeconds
+          : p2.secondaryFrontRiderIdsAtEnd.length > 0
+            ? p2.secondaryFrontGapToPelotonSeconds
+            : 0,
+        6,
+      )
+    : 0
 
   if (p2) {
     const phase2Scores = Object.fromEntries(
@@ -15044,35 +15736,41 @@ function buildUniversalPhase5GroupingSummary(
       }),
     )
     const phase2Groups: UniversalPhase5GroupSnapshot[] = []
-    if (openingBreakawayRiderIds.length > 0) {
+    p2.groups.forEach((group) => {
+      const isOpeningBreakaway = group.groupCode === 'breakaway'
+      const isSecondaryFront = group.groupCode === 'front_group'
       phase2Groups.push(
         makeLifecycleGroup({
           phaseNumber: 2,
-          groupOrder: 1,
-          groupCode: 'breakaway',
-          displayCode: `${PHASE5_BREAKAWAY_DISPLAY_PREFIX}${1}`,
-          colorKey: 'breakaway_red',
-          riderIds: openingBreakawayRiderIds,
-          gapSeconds: 0,
+          groupOrder: phase2Groups.length + 1,
+          groupCode: isOpeningBreakaway
+            ? 'breakaway'
+            : isSecondaryFront
+              ? 'front_favourites'
+              : 'main_peloton',
+          displayCode: isOpeningBreakaway
+            ? `${PHASE5_BREAKAWAY_DISPLAY_PREFIX}${1}`
+            : isSecondaryFront
+              ? 'F1'
+              : 'P',
+          colorKey: isOpeningBreakaway
+            ? 'breakaway_red'
+            : isSecondaryFront
+              ? 'front_yellow'
+              : 'peloton_blue',
+          riderIds: group.riderIds,
+          gapSeconds: group.gapSeconds,
           scores: phase2Scores,
-          formationReason: 'opening_escape',
+          formationReason: isOpeningBreakaway
+            ? 'opening_escape'
+            : isSecondaryFront
+              ? 'late_front_attack'
+              : p2.status === 'breakaway_caught'
+                ? 'breakaway_catch'
+                : 'peloton_cohesion',
         }),
       )
-    }
-    phase2Groups.push(
-      makeLifecycleGroup({
-        phaseNumber: 2,
-        groupOrder: phase2Groups.length + 1,
-        groupCode: 'main_peloton',
-        displayCode: 'P',
-        colorKey: 'peloton_blue',
-        riderIds: pelotonStarterIds,
-        gapSeconds:
-          openingBreakawayRiderIds.length > 0 ? developmentGapSeconds : 0,
-        scores: phase2Scores,
-        formationReason: 'peloton_cohesion',
-      }),
-    )
+    })
     phaseGroups.push(...phase2Groups)
   }
 
@@ -15085,61 +15783,68 @@ function buildUniversalPhase5GroupingSummary(
           0,
       ]),
     )
-    /*
-     * Keep the opening breakaway on one physical lineage. Decisive performance
-     * groups can create a separate F group, but they cannot replace the
-     * opening-breakaway-to-peloton gap or move riders across that gap without
-     * a physical catch.
-     */
-    const persistentOpeningPhysicalState =
-      buildPersistentOpeningBreakawayPhysicalState(
-        input,
-        roadRaceResolution,
-        starterIds,
-      )
-    const droppedSet = new Set(
-      persistentOpeningPhysicalState.droppedRiderIds,
+    const persistentPhysicalState = buildPersistentOpeningBreakawayPhysicalState(
+      input,
+      roadRaceResolution,
+      starterIds,
     )
-    const lateFrontRiderIds = [
-      ...persistentOpeningPhysicalState.lateFrontRiderIds,
-    ]
+    const physicalLeaderRiderIds = [...persistentPhysicalState.riderIds]
+    const physicalLeaderSet = new Set(physicalLeaderRiderIds)
+    const openingBreakawaySetAtPhase3 = new Set(
+      p2?.breakawayRiderIdsAtEnd ?? [],
+    )
+    const leaderIsOpeningBreakaway = physicalLeaderRiderIds.some((riderId) =>
+      openingBreakawaySetAtPhase3.has(riderId),
+    )
+    const lateFrontRiderIds = [...persistentPhysicalState.lateFrontRiderIds]
     const lateFrontSet = new Set(lateFrontRiderIds)
-    const phase3PelotonIds = pelotonStarterIds.filter(
-      (riderId) => !lateFrontSet.has(riderId) && !droppedSet.has(riderId),
+    const droppedSet = new Set(persistentPhysicalState.droppedRiderIds)
+    const phase3PelotonIds = starterIds.filter(
+      (riderId) =>
+        !physicalLeaderSet.has(riderId) &&
+        !lateFrontSet.has(riderId) &&
+        !droppedSet.has(riderId),
     )
-    const phase3GapSeconds =
-      openingBreakawayRiderIds.length > 0
-        ? persistentOpeningPhysicalState.phase3GapSeconds
-        : 0
     const phase3Groups: UniversalPhase5GroupSnapshot[] = []
-    if (openingBreakawayRiderIds.length > 0) {
+    if (physicalLeaderRiderIds.length > 0) {
       phase3Groups.push(
         makeLifecycleGroup({
           phaseNumber: 3,
           groupOrder: 1,
-          groupCode: 'breakaway',
-          displayCode: `${PHASE5_BREAKAWAY_DISPLAY_PREFIX}${1}`,
-          colorKey: 'breakaway_red',
-          riderIds: openingBreakawayRiderIds,
+          groupCode: leaderIsOpeningBreakaway
+            ? 'breakaway'
+            : 'front_favourites',
+          displayCode: leaderIsOpeningBreakaway
+            ? `${PHASE5_BREAKAWAY_DISPLAY_PREFIX}${1}`
+            : 'F1',
+          colorKey: leaderIsOpeningBreakaway
+            ? 'breakaway_red'
+            : 'front_yellow',
+          riderIds: physicalLeaderRiderIds,
           gapSeconds: 0,
           scores: phase3Scores,
-          formationReason: 'opening_escape',
+          formationReason: leaderIsOpeningBreakaway
+            ? 'opening_escape'
+            : 'late_front_attack',
         }),
       )
     }
     if (lateFrontRiderIds.length > 0) {
+      const lateFrontGap = Math.min(
+        ...lateFrontRiderIds.map(
+          (riderId) =>
+            persistentPhysicalState.physicalGapByRiderId.get(riderId) ?? 0,
+        ),
+      )
       phase3Groups.push(
         makeLifecycleGroup({
           phaseNumber: 3,
           groupOrder: phase3Groups.length + 1,
           groupCode: 'front_favourites',
-          displayCode: 'F1',
+          displayCode: leaderIsOpeningBreakaway ? 'F1' : 'F2',
           colorKey: 'front_yellow',
           riderIds: lateFrontRiderIds,
-          gapSeconds:
-            openingBreakawayRiderIds.length > 0
-              ? Math.max(6, Math.round(phase3GapSeconds * 0.55))
-              : 0,
+          gapSeconds: lateFrontGap,
           scores: phase3Scores,
           formationReason: 'late_front_attack',
         }),
@@ -15154,13 +15859,14 @@ function buildUniversalPhase5GroupingSummary(
         colorKey: 'peloton_blue',
         riderIds: phase3PelotonIds,
         gapSeconds:
-          openingBreakawayRiderIds.length > 0
-            ? phase3GapSeconds
-            : lateFrontRiderIds.length > 0
-              ? Math.max(6, Math.round(profile === 'flat_large_groups' ? 12 : 24))
-              : 0,
+          physicalLeaderRiderIds.length > 0
+            ? persistentPhysicalState.phase3GapSeconds
+            : 0,
         scores: phase3Scores,
-        formationReason: 'peloton_cohesion',
+        formationReason:
+          p3.physicalStartGapSeconds > 0 && p3.physicalEndGapSeconds === 0
+            ? 'breakaway_catch'
+            : 'peloton_cohesion',
       }),
     )
     if (droppedSet.size > 0) {
@@ -15172,9 +15878,14 @@ function buildUniversalPhase5GroupingSummary(
           displayCode: 'C1',
           colorKey: 'chasing_orange',
           riderIds: [...droppedSet],
-          gapSeconds:
+          gapSeconds: Math.max(
             (phase3Groups.find((group) => group.displayCode === 'P')
-              ?.gapSeconds ?? 0) + Math.max(30, Math.round(gapCap * 0.08)),
+              ?.gapSeconds ?? 0) + 30,
+            ...[...droppedSet].map(
+              (riderId) =>
+                persistentPhysicalState.physicalGapByRiderId.get(riderId) ?? 0,
+            ),
+          ),
           scores: phase3Scores,
           formationReason: 'decisive_selection',
         }),
@@ -19131,6 +19842,41 @@ function buildUniversalReplayTimeline(
   const phase1Groups = normalizeReplayGroups(rawPhase1Groups)
   const phase2Groups = normalizeReplayGroups(rawPhase2Groups)
   const phase3Groups = normalizeReplayGroups(rawPhase3Groups)
+  const successfulPhase2AttackAttempts = phase2.attackAttempts
+    .filter((attempt) => attempt.attackSucceeded)
+    .slice()
+    .sort(
+      (left, right) =>
+        left.attemptKm - right.attemptKm ||
+        left.riderId.localeCompare(right.riderId),
+    )
+  const phase2FrontFormationKm =
+    successfulPhase2AttackAttempts.length > 0
+      ? successfulPhase2AttackAttempts[0].attemptKm
+      : null
+  const phase2SecondaryFrontRiderIdSet = new Set(
+    phase2.secondaryFrontRiderIdsAtEnd,
+  )
+  const phase2GroupsBeforeDynamicAttack =
+    phase2SecondaryFrontRiderIdSet.size === 0
+      ? phase2Groups
+      : normalizeReplayGroups(
+          phase2Groups
+            .filter((group) => !group.displayCode.startsWith('F'))
+            .map((group) =>
+              group.displayCode === 'P'
+                ? {
+                    ...group,
+                    riderIds: Array.from(
+                      new Set([
+                        ...group.riderIds,
+                        ...phase2.secondaryFrontRiderIdsAtEnd,
+                      ]),
+                    ).sort(),
+                  }
+                : group,
+            ),
+        )
   const finalGroups = groupAndTimeResolution.finalGroups
     .slice()
     .sort(
@@ -20060,7 +20806,12 @@ function buildUniversalReplayTimeline(
           : rawPelotonGap(rawPhase3Groups, 0),
       )
     } else if (km >= phase1.phaseBoundary.endKm - 0.000001) {
-      groups = adjustGroupsToPelotonGap(phase2Groups, gapAtKm(km))
+      const activePhase2Groups =
+        phase2FrontFormationKm !== null &&
+        km < phase2FrontFormationKm - 0.000001
+          ? phase2GroupsBeforeDynamicAttack
+          : phase2Groups
+      groups = adjustGroupsToPelotonGap(activePhase2Groups, gapAtKm(km))
     } else if (
       openingBreakawayActive &&
       Number.isFinite(formationKm) &&
@@ -20391,50 +21142,28 @@ function buildUniversalReplayTimeline(
     })
   }
 
-  const phase2ExplicitAttackRows = roadCommandResolution.riders
-    .filter((row) => row.eligibleToStart)
-    .map((row) => ({
-      row,
-      phase: row.phases.find((phase) => phase.phaseNumber === 2),
-    }))
-    .filter(
-      (
-        value,
-      ): value is {
-        row: UniversalRoadRiderCommandResolution
-        phase: UniversalRoadCommandPhaseResolution
-      } =>
-        Boolean(
-          value.phase &&
-            value.phase.resolvedSource === 'explicit_individual_command' &&
-            value.phase.behaviour === 'attack',
-        ),
-    )
-
-  phase2ExplicitAttackRows.forEach(({ row }, index) => {
-    const phaseLengthKm = Math.max(
-      0.001,
-      phase2.phaseBoundary.endKm - phase2.phaseBoundary.startKm,
-    )
-    const kmFromStart = deterministicRound(
-      phase2.phaseBoundary.startKm +
-        phaseLengthKm * Math.min(0.8, 0.35 + index * 0.08),
-      6,
-    )
-
+  phase2.attackAttempts.forEach((attempt, index) => {
+    const riderName =
+      riderById.get(attempt.riderId)?.snapshot.displayName ?? attempt.riderId
     eventDefinitions.push({
-      checkpointIdSuffix: `phase-2-attack-instruction-${row.riderId}-${index + 1}`,
+      checkpointIdSuffix: `phase-2-attack-${attempt.riderId}-${index + 1}`,
       checkpointKind: 'event',
       phase: 2,
-      kmFromStart,
+      kmFromStart: attempt.attemptKm,
       sortOrder: 280 + index,
-      groups: groupsAtKm(kmFromStart),
-      energyByRiderId: energyAtKm(2, kmFromStart),
+      groups: groupsAtKm(attempt.attemptKm),
+      energyByRiderId: energyAtKm(
+        2,
+        attempt.attemptKm,
+        new Map([[attempt.riderId, attempt.energyAfterAttempt]]),
+      ),
       eventType: 'attack',
-      title: 'Attack instruction active',
-      description: `${row.riderId} is instructed to attack in Phase 2, but no lasting separation is created.`,
-      riderIds: [row.riderId],
-      teamIds: [row.teamId],
+      title: attempt.attackSucceeded ? 'Attack succeeds' : 'Attack is covered',
+      description: attempt.attackSucceeded
+        ? `${riderName} attacks and opens a real gap from the main group.`
+        : `${riderName} attacks, but the move is covered before a lasting gap forms.`,
+      riderIds: [attempt.riderId],
+      teamIds: [attempt.teamId],
     })
   })
 
@@ -25779,7 +26508,8 @@ export function buildUniversalReplaySynchronizationSummary(
       } else if (previousIsPeloton && currentIsLateFront) {
         transitionValid =
           hasBridgeAttack ||
-          eventTypes.has('group_split')
+          sameKilometreEventTypes.has('attack') ||
+          sameKilometreEventTypes.has('group_split')
       } else if (previousIsLateFront && currentIsOpeningBreakaway) {
         transitionValid = hasBridgeMerge
       }

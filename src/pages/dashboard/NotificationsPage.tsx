@@ -831,6 +831,154 @@ export default function NotificationsPage(): JSX.Element {
   const [searchQuery, setSearchQuery] = useState('')
   const [categoryFilter, setCategoryFilter] = useState('all')
 
+  const [mutedAdvisorReportCodes, setMutedAdvisorReportCodes] =
+    useState<Set<string>>(() => new Set())
+  const [advisorMuteBusyCode, setAdvisorMuteBusyCode] = useState<string | null>(null)
+  const [advisorMuteError, setAdvisorMuteError] = useState<string | null>(null)
+
+  const loadAdvisorNotificationMutes = useCallback(async () => {
+    const { data, error } = await supabase.rpc(
+      'get_my_staff_advisory_notification_mutes_v1'
+    )
+
+    if (error) {
+      // eslint-disable-next-line no-console
+      console.error('Failed to load Staff Advisory notification mutes:', error)
+      return
+    }
+
+    const nextMuted = new Set<string>()
+
+    for (const row of data ?? []) {
+      const reportCode = String(
+        (row as Record<string, unknown>).report_code ?? ''
+      )
+        .trim()
+        .toLowerCase()
+
+      const isMuted =
+        (row as Record<string, unknown>).is_muted === true
+
+      if (reportCode && isMuted) {
+        nextMuted.add(reportCode)
+      }
+    }
+
+    setMutedAdvisorReportCodes(nextMuted)
+  }, [])
+
+  const handleToggleAdvisorReportMute = useCallback(
+    async (reportCodeValue: unknown) => {
+      const reportCode = String(reportCodeValue ?? '')
+        .trim()
+        .toLowerCase()
+
+      if (!reportCode || advisorMuteBusyCode) return
+
+      const wasMuted = mutedAdvisorReportCodes.has(reportCode)
+      const nextMuted = !wasMuted
+
+      setAdvisorMuteError(null)
+      setAdvisorMuteBusyCode(reportCode)
+
+      setMutedAdvisorReportCodes(prev => {
+        const next = new Set(prev)
+        if (nextMuted) next.add(reportCode)
+        else next.delete(reportCode)
+        return next
+      })
+
+      const { data, error } = await supabase.rpc(
+        'set_my_staff_advisory_notification_mute_v1',
+        {
+          p_report_code: reportCode,
+          p_muted: nextMuted,
+        }
+      )
+
+      if (error) {
+        setMutedAdvisorReportCodes(prev => {
+          const next = new Set(prev)
+          if (wasMuted) next.add(reportCode)
+          else next.delete(reportCode)
+          return next
+        })
+        setAdvisorMuteError(
+          `Could not ${nextMuted ? 'mute' : 'unmute'} this notification type. Please try again.`
+        )
+        // eslint-disable-next-line no-console
+        console.error(
+          `Failed to ${nextMuted ? 'mute' : 'unmute'} advisor notification type ${reportCode}:`,
+          error
+        )
+        setAdvisorMuteBusyCode(null)
+        return
+      }
+
+      const savedRow = Array.isArray(data) ? data[0] : data
+      const savedMuted =
+        (savedRow as Record<string, unknown> | null)?.is_muted === true
+
+      setMutedAdvisorReportCodes(prev => {
+        const next = new Set(prev)
+        if (savedMuted) next.add(reportCode)
+        else next.delete(reportCode)
+        return next
+      })
+
+      setAdvisorMuteBusyCode(null)
+    },
+    [advisorMuteBusyCode, mutedAdvisorReportCodes]
+  )
+
+  const renderAdvisorMuteButton = useCallback(
+    (payload: StaffAdvisoryPayload) => {
+      const reportCode = String(payload.report_code ?? '')
+        .trim()
+        .toLowerCase()
+
+      if (!reportCode) return null
+
+      const isMuted = mutedAdvisorReportCodes.has(reportCode)
+      const isBusy = advisorMuteBusyCode === reportCode
+
+      return (
+        <button
+          type="button"
+          onClick={() => {
+            void handleToggleAdvisorReportMute(reportCode)
+          }}
+          disabled={isBusy}
+          title={
+            isMuted
+              ? 'Resume future notifications of this exact Staff Advisory report type.'
+              : 'Stop future notifications of this exact Staff Advisory report type. Other advisor notifications are not affected.'
+          }
+          className={
+            isMuted
+              ? 'rounded-md border border-amber-300 bg-amber-50 px-3 py-1.5 text-xs font-medium text-amber-800 hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-50'
+              : 'rounded-md border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50'
+          }
+        >
+          {isBusy
+            ? 'Saving…'
+            : isMuted
+              ? 'Unmute this type'
+              : 'Mute this type'}
+        </button>
+      )
+    },
+    [
+      advisorMuteBusyCode,
+      handleToggleAdvisorReportMute,
+      mutedAdvisorReportCodes,
+    ]
+  )
+
+  useEffect(() => {
+    void loadAdvisorNotificationMutes()
+  }, [loadAdvisorNotificationMutes])
+
   useEffect(() => {
     if (typeof window === 'undefined') return undefined
 
@@ -1489,7 +1637,14 @@ export default function NotificationsPage(): JSX.Element {
                       : 'No read notifications yet.'}
               </div>
             ) : (
-              <div className="divide-y divide-slate-100">
+              <>
+                {advisorMuteError ? (
+                  <div className="border-b border-amber-200 bg-amber-50 px-4 py-2 text-sm text-amber-800">
+                    {advisorMuteError}
+                  </div>
+                ) : null}
+
+                <div className="divide-y divide-slate-100">
                 {visibleItems.map(item => {
                   const isUnread = item.status === 'unread'
                   const isExpanded = expandedId === item.user_notification_id
@@ -1797,6 +1952,7 @@ export default function NotificationsPage(): JSX.Element {
 
                               <div className="border-t border-slate-300 bg-white px-4 py-3">
                                 <div className="flex flex-wrap items-center justify-end gap-2">
+                                  {renderAdvisorMuteButton(advisorPayload)}
                                   {advisorActions.map((action, index) => (
                                     <button
                                       key={`${action.label ?? 'action'}-${index}`}
@@ -2098,6 +2254,7 @@ export default function NotificationsPage(): JSX.Element {
 
                               <div className="border-t border-slate-300 bg-white px-4 py-3">
                                 <div className="flex flex-wrap items-center justify-end gap-2">
+                                  {renderAdvisorMuteButton(advisorPayload)}
                                   {(advisorActions.length > 0
                                     ? advisorActions.map((action, index) => ({
                                         key: `${action.label ?? 'action'}-${index}`,
@@ -2384,6 +2541,7 @@ export default function NotificationsPage(): JSX.Element {
 
                               <div className="border-t border-slate-300 bg-white px-4 py-3">
                                 <div className="flex flex-wrap items-center justify-end gap-2">
+                                  {renderAdvisorMuteButton(advisorPayload)}
                                   {(advisorActions.length > 0
                                     ? advisorActions.map((action, index) => ({
                                         key: `${action.label ?? 'action'}-${index}`,
@@ -2595,6 +2753,7 @@ export default function NotificationsPage(): JSX.Element {
 
                               <div className="border-t border-slate-300 bg-white px-4 py-3">
                                 <div className="flex flex-wrap items-center justify-end gap-2">
+                                  {renderAdvisorMuteButton(advisorPayload)}
                                   {(advisorActions.length > 0 ? advisorActions.map((action, index) => ({
                                     key: `${action.label ?? 'action'}-${index}`,
                                     label: action.label ?? 'Open',
@@ -2956,6 +3115,7 @@ export default function NotificationsPage(): JSX.Element {
 
                               <div className="border-t border-slate-300 bg-white px-4 py-3">
                                 <div className="flex flex-wrap items-center justify-end gap-2">
+                                  {renderAdvisorMuteButton(advisorPayload)}
                                   {isPriorityProspect && scoutData.rider_profile_path ? (
                                     <button
                                       type="button"
@@ -3111,7 +3271,8 @@ export default function NotificationsPage(): JSX.Element {
                     </div>
                   )
                 })}
-              </div>
+                </div>
+              </>
             )}
           </div>
 

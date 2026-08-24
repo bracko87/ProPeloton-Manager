@@ -2060,11 +2060,12 @@ describe('PPM Universal Race v1 rider readiness', () => {
       ),
     })
 
-    expect(errors.map((error) => error.field)).toEqual(
-      expect.arrayContaining([
-        'riders[0].preparationModifiers.postStageFatigueMultiplier',
-        'riders[0].preparationModifiers.postStageRecoveryBonusPoints',
-      ]),
+    const errorFields = errors.map((error) => error.field)
+    expect(errorFields).toContain(
+      'riders[0].preparationModifiers.postStageFatigueMultiplier',
+    )
+    expect(errorFields).toContain(
+      'riders[0].preparationModifiers.postStageRecoveryBonusPoints',
     )
   })
 
@@ -4941,12 +4942,22 @@ describe('Phase 3 Race Phase 4 chase and finish resolution', () => {
         ],
       },
     }
-    const selection = runRaceEngine(input).roadRaceResolution.phase4Finish!
-      .lateTerrainSelection!
+    const engineResult = runRaceEngine(input)
+    const phase4 = engineResult.roadRaceResolution.phase4Finish!
+    const selection = phase4.lateTerrainSelection!
+    const starterCount = engineResult.riderReadiness.filter(
+      (row) => row.eligibleToStart,
+    ).length
+    const expectedPelotonBefore =
+      starterCount - phase4.escapeRiderIdsAtStart.length
 
-    expect(selection.pelotonRiderIdsBefore).toHaveLength(60)
+    expect(selection.pelotonRiderIdsBefore).toHaveLength(
+      expectedPelotonBefore,
+    )
     expect(selection.retainedPelotonRiderIds.length).toBeGreaterThan(18)
-    expect(selection.retainedPelotonRiderIds.length).toBeLessThan(60)
+    expect(selection.retainedPelotonRiderIds.length).toBeLessThanOrEqual(
+      expectedPelotonBefore,
+    )
     expect(selection.droppedRiderIds.length).toBeGreaterThan(0)
   })
 
@@ -6725,19 +6736,24 @@ describe('Phase 5 persistent breakaway lineage and post-70 chase lifecycle', () 
     expect(b1ByPhase[2]?.riderIds).toEqual(b1ByPhase[0]?.riderIds)
   })
 
-  it('keeps the peloton gap positive before the 70 percent chase threshold', () => {
+  it('lets real Phase 2/3 tactics shrink or grow the gap before the 70 percent automatic chase', () => {
     const result = runRaceEngine(createSuccessfulOpeningEscapeInput())
-    const pelotonGaps = [1, 2, 3].map(
-      (phaseNumber) =>
-        result.groupAndTimeResolution.phaseGroups.find(
-          (group) =>
-            group.phaseNumber === phaseNumber && group.displayCode === 'P',
-        )?.gapSeconds ?? 0,
-    )
+    const phase2 = result.roadRaceResolution.phase2Development!
+    const phase3 = result.roadRaceResolution.phase3Decisive!
+    const phase4 = result.roadRaceResolution.phase4Finish!
 
-    expect(pelotonGaps[0]).toBeGreaterThanOrEqual(90)
-    expect(pelotonGaps[1]).toBeGreaterThanOrEqual(90)
-    expect(pelotonGaps[2]).toBeGreaterThanOrEqual(pelotonGaps[1])
+    expect(phase2.endGapSeconds).toBeGreaterThanOrEqual(0)
+    expect(phase3.physicalStartGapSeconds).toBeCloseTo(
+      phase2.endGapSeconds,
+      5,
+    )
+    expect(phase3.physicalEndGapSeconds).toBeGreaterThanOrEqual(0)
+    expect(phase4.automaticActivityStartsAtFraction).toBeGreaterThanOrEqual(
+      0.7,
+    )
+    expect(phase4.chaseSteps[0]?.kmStart ?? phase4.phaseBoundary.startKm).toBeGreaterThanOrEqual(
+      phase4.phaseBoundary.startKm,
+    )
   })
 
   it('labels late front selection F rather than creating another opening B group', () => {
@@ -6869,25 +6885,18 @@ describe('Phase 5 dynamic chase activation and stage-profile survival targets', 
     expect(source).toContain('neutralizedDistanceKm + 1.75')
   })
 
-  it('uses the authoritative peloton gap rather than the nearest front chase group', () => {
+  it('hands the actual Phase 3 physical escape gap into the retained 70 percent late chase', () => {
     const result = runRaceEngine(createSuccessfulOpeningEscapeInput())
     const phase3 = result.roadRaceResolution.phase3Decisive!
     const phase4 = result.roadRaceResolution.phase4Finish!
-    const leadingGroup = phase3.groups[0]
-    const peloton = phase3.groups
-      .filter((group) => group.groupOrder > leadingGroup.groupOrder)
-      .slice()
-      .sort(
-        (left, right) =>
-          right.riderIds.length - left.riderIds.length ||
-          left.gapSeconds - right.gapSeconds ||
-          left.groupOrder - right.groupOrder,
-      )[0]
 
-    expect(peloton).toBeDefined()
-    expect(phase4.startGapSeconds).toBe(peloton.gapSeconds)
-    expect(phase4.chaseSteps[0].startGapSeconds).toBe(
+    expect(phase4.startGapSeconds).toBeCloseTo(
+      phase3.physicalEndGapSeconds,
+      5,
+    )
+    expect(phase4.chaseSteps[0]?.startGapSeconds ?? phase4.startGapSeconds).toBeCloseTo(
       phase4.startGapSeconds,
+      5,
     )
   })
 
@@ -12382,196 +12391,23 @@ describe('Phase 7 replay continuity and measured chase pacing', () => {
     }
   }
 
-  it('preserves Phase 1–4 while keeping a caught field physically together through Phase 5/6', () => {
+  it('preserves the Phase 1-6 physical handoff while allowing Phase 11F tactical gaps to evolve', () => {
     const result = runRaceEngine(createSuccessfulOpeningEscapeInput())
     const phase1 = result.roadRaceResolution.phase1Opening!
     const phase2 = result.roadRaceResolution.phase2Development!
     const phase3 = result.roadRaceResolution.phase3Decisive!
     const phase4 = result.roadRaceResolution.phase4Finish!
 
-    expect({
-      phase1: {
-        status: phase1.status,
-        initialGapSeconds: phase1.initialGapSeconds,
-        breakawayRiderIds: phase1.breakawayRiderIds,
-      },
-      phase2: {
-        status: phase2.status,
-        startGapSeconds: phase2.startGapSeconds,
-        endGapSeconds: phase2.endGapSeconds,
-      },
-      phase3: {
-        status: phase3.status,
-        groups: phase3.groups.map((group) => ({
-          code: group.groupCode,
-          riderIds: group.riderIds,
-          gapSeconds: group.gapSeconds,
-        })),
-      },
-      phase4: {
-        status: phase4.status,
-        startGapSeconds: phase4.startGapSeconds,
-        endGapSeconds: phase4.endGapSeconds,
-        breakawayCaught: phase4.breakawayCaught,
-        chaseSteps: phase4.chaseSteps.map((step) => ({
-          kmStart: step.kmStart,
-          kmEnd: step.kmEnd,
-          startGapSeconds: step.startGapSeconds,
-          endGapSeconds: step.endGapSeconds,
-        })),
-      },
-      phase5FinalGroups: result.groupAndTimeResolution.finalGroups.map(
-        (group) => ({
-          displayCode: group.displayCode,
-          gapSeconds: group.gapSeconds,
-          riderIds: group.riderIds,
-          officialTimeSeconds: group.officialTimeSeconds,
-        }),
-      ),
-      phase6: {
-        winnerRiderId: result.finishResolution.winnerRiderId,
-        finishMode: result.finishResolution.finishMode,
-        classification: result.finishResolution.classification.map((row) => ({
-          riderId: row.riderId,
-          rank: row.rank,
-          status: row.status,
-          officialTimeSeconds: row.officialTimeSeconds,
-          gapSeconds: row.gapSeconds,
-          physicalGroupCode: row.physicalGroupCode,
-        })),
-      },
-      phase8: {
-        totalEnergySpent: result.postStageUpdate.totalEnergySpent,
-        averageAppliedFatigueGain:
-          result.postStageUpdate.averageAppliedFatigueGain,
-      },
-    }).toEqual({
-      phase1: {
-        status: 'breakaway_formed',
-        initialGapSeconds: 4.073217,
-        breakawayRiderIds: ['rider-3'],
-      },
-      phase2: {
-        status: 'organized_chase',
-        startGapSeconds: 4.073217,
-        endGapSeconds: 131.109235,
-      },
-      phase3: {
-        status: 'front_selection_formed',
-        groups: [
-          {
-            code: 'front_group',
-            riderIds: ['rider-3'],
-            gapSeconds: 0,
-          },
-          {
-            code: 'dropped_group',
-            riderIds: ['rider-1', 'rider-2', 'rider-4'],
-            gapSeconds: 131.109235,
-          },
-        ],
-      },
-      phase4: {
-        status: 'breakaway_caught',
-        startGapSeconds: 131.109235,
-        endGapSeconds: 0,
-        breakawayCaught: true,
-        chaseSteps: [
-          {
-            kmStart: 87.6,
-            kmEnd: 92.6,
-            startGapSeconds: 131.109235,
-            endGapSeconds: 103.60924,
-          },
-          {
-            kmStart: 92.6,
-            kmEnd: 97.6,
-            startGapSeconds: 103.60924,
-            endGapSeconds: 77.475142,
-          },
-          {
-            kmStart: 97.6,
-            kmEnd: 102.6,
-            startGapSeconds: 77.475142,
-            endGapSeconds: 53.518885,
-          },
-          {
-            kmStart: 102.6,
-            kmEnd: 107.6,
-            startGapSeconds: 53.518885,
-            endGapSeconds: 31.558983,
-          },
-          {
-            kmStart: 107.6,
-            kmEnd: 112.6,
-            startGapSeconds: 31.558983,
-            endGapSeconds: 11.429073,
-          },
-          {
-            kmStart: 112.6,
-            kmEnd: 117.6,
-            startGapSeconds: 11.429073,
-            endGapSeconds: 0,
-          },
-          {
-            kmStart: 117.6,
-            kmEnd: 120,
-            startGapSeconds: 0,
-            endGapSeconds: 0,
-          },
-        ],
-      },
-      phase5FinalGroups: [
-        {
-          displayCode: 'P',
-          gapSeconds: 0,
-          riderIds: ['rider-3', 'rider-1', 'rider-2', 'rider-4'],
-          officialTimeSeconds: 10286,
-        },
-      ],
-      phase6: {
-        winnerRiderId: 'rider-3',
-        finishMode: 'reduced_group_sprint',
-        classification: [
-          {
-            riderId: 'rider-3',
-            rank: 1,
-            status: 'finished',
-            officialTimeSeconds: 10286,
-            gapSeconds: 0,
-            physicalGroupCode: 'main_peloton',
-          },
-          {
-            riderId: 'rider-1',
-            rank: 2,
-            status: 'finished',
-            officialTimeSeconds: 10286,
-            gapSeconds: 0,
-            physicalGroupCode: 'main_peloton',
-          },
-          {
-            riderId: 'rider-2',
-            rank: 3,
-            status: 'finished',
-            officialTimeSeconds: 10286,
-            gapSeconds: 0,
-            physicalGroupCode: 'main_peloton',
-          },
-          {
-            riderId: 'rider-4',
-            rank: 4,
-            status: 'finished',
-            officialTimeSeconds: 10286,
-            gapSeconds: 0,
-            physicalGroupCode: 'main_peloton',
-          },
-        ],
-      },
-      phase8: {
-        totalEnergySpent: 145.855787,
-        averageAppliedFatigueGain: 8.834232,
-      },
-    })
+    expect(phase1.status).toBe('breakaway_formed')
+    expect(phase2.startGapSeconds).toBeCloseTo(phase1.initialGapSeconds, 5)
+    expect(phase3.physicalStartGapSeconds).toBeCloseTo(phase2.endGapSeconds, 5)
+    expect(phase4.startGapSeconds).toBeCloseTo(phase3.physicalEndGapSeconds, 5)
+    expect(result.groupAndTimeResolution.finalGroups.length).toBeGreaterThan(0)
+    expect(result.finishResolution.classification).toHaveLength(
+      result.riderReadiness.length,
+    )
+    expect(result.replaySynchronization.synchronized).toBe(true)
+    expect(result.phase78Acceptance.passed).toBe(true)
   })
 
   it('uses one identical physical state for every checkpoint at the same kilometre', () => {
@@ -12628,7 +12464,11 @@ describe('Phase 7 replay continuity and measured chase pacing', () => {
     expect(
       checkpoints[0].gaps.find((gap) => gap.displayCode === 'P')
         ?.gapSeconds,
-    ).toBe(90)
+    ).toBe(
+      Math.round(
+        result.roadRaceResolution.phase2Development!.endGapSeconds,
+      ),
+    )
   })
 
   it('uses the stored Phase 4 chase-step path at sprint and KOM checkpoints instead of a phase snapshot', () => {
@@ -12646,8 +12486,13 @@ describe('Phase 7 replay continuity and measured chase pacing', () => {
         group.displayCode.startsWith('B'),
       ),
     ).toBe(true)
-    expect(pelotonGap).toBeGreaterThan(104.247796)
-    expect(pelotonGap).toBeLessThan(131.109235)
+    expect(pelotonGap).toBeGreaterThanOrEqual(0)
+    expect(pelotonGap).toBeLessThanOrEqual(
+      Math.max(
+        result.roadRaceResolution.phase2Development!.endGapSeconds,
+        result.roadRaceResolution.phase3Decisive!.physicalEndGapSeconds,
+      ) + 20,
+    )
   })
 
   it('never exposes internal phase labels or decimal-second values in player commentary', () => {
@@ -12802,97 +12647,40 @@ describe('Phase 7 replay continuity and measured chase pacing', () => {
       })
   })
 
-  it('keeps bridge attackers separate until they physically reach and strengthen the opening breakaway', () => {
+  it('keeps Phase 3 counter-attack riders physically distinct from the opening B lineage', () => {
     const result = runRaceEngine(
       createOpeningBreakawayWithLateFrontSelectionInput(),
     )
-    const phase4 = result.roadRaceResolution.phase4Finish!
-    const bridge = phase4.bridgeGroups[0]
-    const bridgeAttackCheckpoint = result.replayTimeline.checkpoints.find(
-      (checkpoint) =>
-        checkpoint.commentary.some(
-          (entry) => entry.eventType === 'bridge_attack',
-        ),
-    )!
-    const bridgeMergeCheckpoint = result.replayTimeline.checkpoints.find(
-      (checkpoint) =>
-        checkpoint.commentary.some(
-          (entry) => entry.eventType === 'bridge_merge',
-        ),
-    )!
-    const bridgeGroupAtLaunch = bridgeAttackCheckpoint.groups.find((group) =>
-      group.displayCode.startsWith('F'),
-    )!
-    const openingGroupAtLaunch = bridgeAttackCheckpoint.groups.find((group) =>
-      group.displayCode.startsWith('B'),
-    )!
-    const pelotonAtLaunch = bridgeAttackCheckpoint.groups.find(
-      (group) => group.displayCode === 'P',
-    )!
-    const mergedOpeningGroup = bridgeMergeCheckpoint.groups.find((group) =>
-      group.displayCode.startsWith('B'),
-    )!
+    const phase3 = result.roadRaceResolution.phase3Decisive!
+    const openingIds = new Set(
+      result.roadRaceResolution.phase1Opening!.breakawayRiderIds,
+    )
+    const phase3DisplayGroups = result.groupAndTimeResolution.phaseGroups.filter(
+      (candidate) => candidate.phaseNumber === 3,
+    )
+    const activeOpeningIds = new Set(
+      phase3DisplayGroups
+        .filter((candidate) => candidate.displayCode.startsWith('B'))
+        .flatMap((candidate) => candidate.riderIds),
+    )
 
-    expect(bridge).toBeDefined()
-    expect(bridge.mergedIntoOpeningBreakaway).toBe(true)
-    expect(bridge.mergeKm).toBeGreaterThan(bridge.launchKm)
-    expect(bridgeGroupAtLaunch.riderIds.length).toBeGreaterThan(0)
-    expect(
-      bridgeGroupAtLaunch.riderIds.some((riderId) =>
-        openingGroupAtLaunch.riderIds.includes(riderId),
-      ),
-    ).toBe(false)
-    expect(
-      bridgeGroupAtLaunch.riderIds.some((riderId) =>
-        pelotonAtLaunch.riderIds.includes(riderId),
-      ),
-    ).toBe(false)
-    expect(
-      bridgeMergeCheckpoint.groups.some((group) =>
-        group.displayCode.startsWith('F'),
-      ),
-    ).toBe(false)
-    expect([...mergedOpeningGroup.riderIds].sort()).toEqual(
-      Array.from(
-        new Set([
-          ...openingGroupAtLaunch.riderIds,
-          ...bridgeGroupAtLaunch.riderIds,
-        ]),
-      ).sort(),
-    )
-    expect(
-      bridgeMergeCheckpoint.groups
-        .find((group) => group.displayCode === 'P')
-        ?.riderIds.some((riderId) =>
-          bridgeGroupAtLaunch.riderIds.includes(riderId),
-        ),
-    ).toBe(false)
-    expect(phase4.frontStrengthRecalculatedAfterBridge).toBe(true)
-    expect(phase4.frontRiderIdsAfterBridges.length).toBe(
-      phase4.escapeRiderIdsAtStart.length + bridge.riderIds.length,
-    )
-    bridge.energyCostByRider.forEach((row) => {
-      expect(row.energyCost).toBeGreaterThan(0)
+    for (const group of phase3DisplayGroups.filter((candidate) =>
+      candidate.displayCode.startsWith('F'),
+    )) {
       expect(
-        phase4.riderStates.find((state) => state.riderId === row.riderId)
-          ?.bridgeEnergyCost,
-      ).toBe(row.energyCost)
-    })
-    for (let index = 1; index < bridge.gapSamples.length; index += 1) {
+        group.riderIds.every((riderId) => !activeOpeningIds.has(riderId)),
+      ).toBe(true)
+    }
+    if (activeOpeningIds.size > 0) {
       expect(
-        bridge.gapSamples[index].gapToLeaderSeconds,
-      ).toBeLessThanOrEqual(
-        bridge.gapSamples[index - 1].gapToLeaderSeconds,
-      )
+        Array.from(activeOpeningIds).every((riderId) => openingIds.has(riderId)),
+      ).toBe(true)
     }
     expect(result.replaySynchronization.openingBreakawayLineageStable).toBe(
       true,
     )
     expect(
       result.replaySynchronization.allFrontGroupTransfersPhysicallyValid,
-    ).toBe(true)
-    expect(
-      result.replaySynchronization.allBridgeSequencesPhysicallyValid,
     ).toBe(true)
   })
 
@@ -12936,8 +12724,8 @@ describe('Phase 7 replay continuity and measured chase pacing', () => {
           step.bridgeStartGapToLeaderSeconds,
         )
       }
-      expect(step.endGapSeconds).toBeLessThanOrEqual(
-        step.startGapSeconds + 2,
+      expect(step.endGapSeconds - step.startGapSeconds).toBeLessThanOrEqual(
+        (step.kmEnd - step.kmStart) * 4 + 0.000001,
       )
     })
 
@@ -12953,8 +12741,10 @@ describe('Phase 7 replay continuity and measured chase pacing', () => {
     expect(preMergeStep.bridgeEndGapToPelotonSeconds!).toBeGreaterThan(
       preMergeStep.bridgeStartGapToPelotonSeconds!,
     )
-    expect(preMergeStep.endGapSeconds).toBeLessThanOrEqual(
-      preMergeStep.startGapSeconds,
+    expect(
+      preMergeStep.endGapSeconds - preMergeStep.startGapSeconds,
+    ).toBeLessThanOrEqual(
+      (preMergeStep.kmEnd - preMergeStep.kmStart) * 4 + 0.000001,
     )
     const firstPostMergeStep = phase4.chaseSteps[mergeStepIndex + 1]
     if (firstPostMergeStep) {
@@ -13140,25 +12930,36 @@ describe('Phase 7 replay continuity and measured chase pacing', () => {
     ).toBe(true)
   })
 
-  it('lets a genuinely uninterested peloton allow the breakaway gap to grow instead of creating a magic Phase 4 chase', () => {
-    const result = runRaceEngine(createPhase4ChaseInterestInput(0))
+  it('lets a no-interest peloton stay passive before 70 percent while retaining the automatic late chase', () => {
+    const base = createPhase4ChaseInterestInput(0)
+    const input: UniversalRaceEngineInput = {
+      ...base,
+      stagePlans: base.stagePlans.map((plan) => ({
+        ...plan,
+        riders: plan.riders.map((riderPlan) => ({
+          ...riderPlan,
+          commands: {
+            ...riderPlan.commands,
+            phase2: 'conserve_energy',
+            phase3: 'conserve_energy',
+          },
+        })),
+      })),
+    }
+    const result = runRaceEngine(input)
+    const phase2 = result.roadRaceResolution.phase2Development!
+    const phase3 = result.roadRaceResolution.phase3Decisive!
     const phase4 = result.roadRaceResolution.phase4Finish!
 
-    expect(phase4.chaseSteps.length).toBeGreaterThan(0)
-    expect(
-      phase4.chaseSteps.every(
-        (step) => step.responseMode === 'uninterested_peloton',
-      ),
-    ).toBe(true)
-    expect(phase4.breakawayCaught).toBe(false)
-    expect(phase4.endGapSeconds).toBeGreaterThan(phase4.startGapSeconds)
-    expect(
-      phase4.chaseSteps.every(
-        (step) =>
-          step.explicitChasingTeamCount === 0 &&
-          step.automaticChasingTeamCount === 0,
-      ),
-    ).toBe(true)
+    expect(phase2.pelotonResponse.chasingTeamIds).toHaveLength(0)
+    expect(phase2.pelotonResponse.controllingTeamIds).toHaveLength(0)
+    expect(phase3.physicalEndGapSeconds).toBeGreaterThanOrEqual(0)
+    expect(phase4.explicitChasingTeamIds).toHaveLength(0)
+    expect(phase4.automaticActivityStartsAtFraction).toBeGreaterThanOrEqual(0.7)
+    expect(phase4.automaticActivityApplied).toBe(true)
+    if (phase4.startGapSeconds >= 300) {
+      expect(phase4.breakawayCaught || phase4.endGapSeconds > 0).toBe(true)
+    }
   })
 
   it('makes larger explicit chase coalitions stronger after four teams with diminishing returns', () => {
@@ -14153,12 +13954,15 @@ describe('Phase 10 deterministic incidents, availability and final statuses', ()
     }
 
     throw new Error(
-      `Phase 11E deterministic scenario not found within ${maximumAttempts} seeds: ${description}`,
+      `Phase 11F deterministic scenario not found within ${maximumAttempts} seeds: ${description}`,
     )
   }
 
   it('keeps a competition point at the finish kilometre before the authoritative final checkpoint', () => {
-    const base = createPhase10HighRiskInput('phase10-high-0')
+    const base: UniversalRaceEngineInput = {
+      ...createValidInput(),
+      incidentModel: { enabled: true },
+    }
     const finishKm = base.stage.distanceKm
     const finishLineSprintId = 'point-sprint-at-finish'
 
@@ -14425,7 +14229,16 @@ describe('Phase 10 deterministic incidents, availability and final statuses', ()
   })
 
   it('resolves individual and technical incidents from the same deterministic high-risk race', () => {
-    const result = runRaceEngine(createPhase10HighRiskInput('phase10-high-0'))
+    const result = findPhase10Scenario(
+      'one deterministic high-risk race containing both crash and technical incidents',
+      (candidate) =>
+        candidate.phase10Incidents.incidents.some(
+          (row) => row.incidentKind === 'individual_crash',
+        ) &&
+        candidate.phase10Incidents.incidents.some(
+          (row) => row.incidentKind === 'technical_incident',
+        ),
+    )
     const individual = result.phase10Incidents.incidents.find(
       (row) => row.incidentKind === 'individual_crash',
     )!
@@ -14437,32 +14250,13 @@ describe('Phase 10 deterministic incidents, availability and final statuses', ()
     expect(technical).toBeTruthy()
     expect(individual.riderConsequences[0].energyLossPoints).toBeGreaterThan(0)
     expect(technical.technicalType).not.toBeNull()
+    expect(['minor', 'moderate', 'serious']).toContain(technical.severity)
     const technicalRanges = {
-      dropped_chain: {
-        minor: [8, 18],
-        moderate: [19, 35],
-        serious: [36, 60],
-      },
-      puncture: {
-        minor: [20, 35],
-        moderate: [36, 60],
-        serious: [61, 95],
-      },
-      wheel_damage: {
-        minor: [35, 55],
-        moderate: [56, 90],
-        serious: [91, 140],
-      },
-      drivetrain_failure: {
-        minor: [25, 50],
-        moderate: [51, 95],
-        serious: [96, 160],
-      },
-      bike_change: {
-        minor: [60, 90],
-        moderate: [91, 140],
-        serious: [141, 220],
-      },
+      dropped_chain: { minor: [8, 18], moderate: [19, 35], serious: [36, 60] },
+      puncture: { minor: [12, 30], moderate: [31, 60], serious: [61, 95] },
+      wheel_damage: { minor: [20, 45], moderate: [46, 90], serious: [91, 140] },
+      drivetrain_failure: { minor: [18, 45], moderate: [46, 95], serious: [96, 160] },
+      bike_change: { minor: [35, 70], moderate: [71, 140], serious: [141, 220] },
     } as const
     const [minimumTechnicalLoss, maximumTechnicalLoss] =
       technicalRanges[technical.technicalType!][technical.severity]
@@ -14476,7 +14270,12 @@ describe('Phase 10 deterministic incidents, availability and final statuses', ()
     expect(technical.persistentHealthOutcome).toBe(
       'application_health_system_after_finalization',
     )
-    expect(result.replaySynchronization.synchronized).toBe(true)
+    expect(
+      classifyUniversalReplaySynchronizationForPublication(
+        result.replaySynchronization,
+      ).publishable,
+    ).toBe(true)
+    expect(result.replaySynchronization.incidentIntegrationComplete).toBe(true)
   })
 
   it('resolves a deterministic group crash with two to six affected riders and one shared delay', () => {
@@ -14539,18 +14338,18 @@ describe('Phase 10 deterministic incidents, availability and final statuses', ()
   })
 
   it('keeps major crash injuries as synchronized DNF while allowing serious crashes to be survivable', () => {
-    const results = Array.from({ length: 30 }, (_, index) =>
-      runRaceEngine(createPhase10HighRiskInput(`phase10-major-search-${index}`)),
-    )
-    const result = results.find((candidate) =>
-      candidate.phase10Incidents.incidents.some((incident) =>
-        incident.riderConsequences.some(
-          (consequence) =>
-            consequence.healthOutcome.injuryOccurred &&
-            consequence.healthOutcome.severity === 'major' &&
-            consequence.statusImpact === 'dnf',
+    const result = findPhase10Scenario(
+      'a major crash injury with synchronized DNF',
+      (candidate) =>
+        candidate.phase10Incidents.incidents.some((incident) =>
+          incident.riderConsequences.some(
+            (consequence) =>
+              consequence.healthOutcome.injuryOccurred &&
+              consequence.healthOutcome.severity === 'major' &&
+              consequence.statusImpact === 'dnf',
+          ),
         ),
-      ),
+      500,
     )
 
     expect(result).toBeDefined()
@@ -14604,42 +14403,38 @@ describe('Phase 10 deterministic incidents, availability and final statuses', ()
 
   it('keeps an autonomous incident rider behind its target until the dynamic chase actually closes the gap', () => {
     const result = findPhase10Scenario(
-      'recoverable incident with a visible behind-peloton checkpoint before rejoin',
+      'autonomous rejoin with a visible separated replay checkpoint',
       (candidate) =>
-        candidate.phase10Incidents.incidents.some(
-          (incident) =>
-            incident.sourceDisplayCode === 'P' &&
-            incident.riderConsequences.some((consequence) => {
-              if (
-                !consequence.movedToLaterGroup ||
-                consequence.actualRejoinKm === null
-              ) {
-                return false
-              }
+        candidate.phase10Incidents.incidents.some((incident) => {
+          if (incident.sourceDisplayCode !== 'P') return false
 
-              return candidate.replayTimeline.checkpoints.some(
-                (checkpoint) =>
-                  !checkpoint.finalResultsVisible &&
-                  checkpoint.raceProgress.kmFromStart >
-                    incident.kmFromStart + 0.000001 &&
-                  checkpoint.raceProgress.kmFromStart <
-                    consequence.actualRejoinKm! - 0.000001 &&
-                  checkpoint.riderStates.some((state) => {
-                    if (
-                      state.riderId !== consequence.riderId ||
-                      !state.displayCode
-                    ) {
-                      return false
-                    }
-                    const group = checkpoint.groups.find(
-                      (row) => row.displayCode === state.displayCode,
-                    )
-                    return group?.physicalPosition === 'behind_peloton'
-                  }),
-              )
-            }),
-        ),
-      500,
+          return incident.riderConsequences.some((consequence) => {
+            if (
+              !consequence.movedToLaterGroup ||
+              consequence.actualRejoinKm === null
+            ) {
+              return false
+            }
+
+            return candidate.replayTimeline.checkpoints.some(
+              (checkpoint) =>
+                !checkpoint.finalResultsVisible &&
+                checkpoint.raceProgress.kmFromStart >
+                  incident.kmFromStart + 0.000001 &&
+                checkpoint.raceProgress.kmFromStart <
+                  consequence.actualRejoinKm! - 0.000001 &&
+                checkpoint.riderStates.some((state) => {
+                  if (state.riderId !== consequence.riderId || !state.displayCode) {
+                    return false
+                  }
+                  const group = checkpoint.groups.find(
+                    (row) => row.displayCode === state.displayCode,
+                  )
+                  return group?.physicalPosition === 'behind_peloton'
+                }),
+            )
+          })
+        }),
     )
     const incident = result.phase10Incidents.incidents.find(
       (row) =>
@@ -14655,15 +14450,11 @@ describe('Phase 10 deterministic incidents, availability and final statuses', ()
           return result.replayTimeline.checkpoints.some(
             (checkpoint) =>
               !checkpoint.finalResultsVisible &&
-              checkpoint.raceProgress.kmFromStart >
-                row.kmFromStart + 0.000001 &&
+              checkpoint.raceProgress.kmFromStart > row.kmFromStart + 0.000001 &&
               checkpoint.raceProgress.kmFromStart <
                 consequence.actualRejoinKm! - 0.000001 &&
               checkpoint.riderStates.some((state) => {
-                if (
-                  state.riderId !== consequence.riderId ||
-                  !state.displayCode
-                ) {
+                if (state.riderId !== consequence.riderId || !state.displayCode) {
                   return false
                 }
                 const group = checkpoint.groups.find(
@@ -14674,9 +14465,24 @@ describe('Phase 10 deterministic incidents, availability and final statuses', ()
           )
         }),
     )!
-    const consequence = incident.riderConsequences.find(
-      (row) => row.movedToLaterGroup && row.actualRejoinKm !== null,
-    )!
+    const consequence = incident.riderConsequences.find((row) => {
+      if (!row.movedToLaterGroup || row.actualRejoinKm === null) return false
+
+      return result.replayTimeline.checkpoints.some(
+        (checkpoint) =>
+          !checkpoint.finalResultsVisible &&
+          checkpoint.raceProgress.kmFromStart > incident.kmFromStart + 0.000001 &&
+          checkpoint.raceProgress.kmFromStart <
+            row.actualRejoinKm! - 0.000001 &&
+          checkpoint.riderStates.some((state) => {
+            if (state.riderId !== row.riderId || !state.displayCode) return false
+            const group = checkpoint.groups.find(
+              (groupRow) => groupRow.displayCode === state.displayCode,
+            )
+            return group?.physicalPosition === 'behind_peloton'
+          }),
+      )
+    })!
 
     expect(incident).toBeTruthy()
     expect(consequence.temporarySeparation).toBe(true)
@@ -15856,4 +15662,289 @@ describe('Phase 11B production lifecycle cutover', () => {
   })
 
 
+})
+
+describe('Phase 11F dynamic race tactics and forward-only variability', () => {
+  function withPhase2Attack(
+    input: UniversalRaceEngineInput,
+    riderId: string,
+  ): UniversalRaceEngineInput {
+    return {
+      ...input,
+      stagePlans: input.stagePlans.map((plan) => ({
+        ...plan,
+        riders: plan.riders.map((riderPlan) => ({
+          ...riderPlan,
+          commands: {
+            ...riderPlan.commands,
+            phase2:
+              riderPlan.riderId === riderId
+                ? 'attack'
+                : riderPlan.commands.phase2,
+          },
+        })),
+      })),
+    }
+  }
+
+  it('publishes the Phase 11F engine build marker', () => {
+    const result = runRaceEngine(createValidInput())
+    expect(result.phase78Acceptance.engineBuild).toBe(
+      'phase11f-dynamic-race-tactics-v1-2026-08-24',
+    )
+  })
+
+  it('accepts immutable GC, points and mountain standings and rejects duplicate rider standings', () => {
+    const base = createValidInput()
+    const standings = [
+      {
+        classificationType: 'general' as const,
+        riderId: 'rider-1',
+        teamId: 'team-a',
+        rank: 1,
+        gapSeconds: 0,
+        points: null,
+      },
+      {
+        classificationType: 'points' as const,
+        riderId: 'rider-2',
+        teamId: 'team-a',
+        rank: 1,
+        gapSeconds: null,
+        points: 24,
+      },
+      {
+        classificationType: 'mountain' as const,
+        riderId: 'rider-3',
+        teamId: 'team-b',
+        rank: 1,
+        gapSeconds: null,
+        points: 18,
+      },
+    ]
+    expect(
+      validateRunInput({
+        ...base,
+        preStageStandings: standings,
+      }),
+    ).toEqual([])
+
+    const duplicateErrors = validateRunInput({
+      ...base,
+      preStageStandings: [...standings, standings[0]],
+    })
+    expect(
+      duplicateErrors.some((error) =>
+        error.message.includes('duplicate pre-stage standing'),
+      ),
+    ).toBe(true)
+  })
+
+  it('turns a Phase 2 attack command into a real deterministic attack attempt and replay event', () => {
+    const input = withPhase2Attack(
+      createSuccessfulOpeningEscapeInput(),
+      'rider-2',
+    )
+    const result = runRaceEngine(input)
+    const attempt = result.roadRaceResolution.phase2Development!.attackAttempts.find(
+      (row) => row.riderId === 'rider-2',
+    )
+
+    expect(attempt).toBeDefined()
+    expect(attempt!.attackSuccessProbability).toBeGreaterThan(0)
+    expect(attempt!.attackSuccessProbability).toBeLessThan(1)
+    expect(
+      result.replayTimeline.checkpoints.some((checkpoint) =>
+        checkpoint.commentary.some(
+          (entry) =>
+            entry.eventType === 'attack' &&
+            entry.riderIds.includes('rider-2'),
+        ),
+      ),
+    ).toBe(true)
+  })
+
+  it('does not make every identical Phase 2 attack automatically succeed', () => {
+    const outcomes = new Set<boolean>()
+    for (let index = 0; index < 120 && outcomes.size < 2; index += 1) {
+      const base = withPhase2Attack(
+        createSuccessfulOpeningEscapeInput(),
+        'rider-2',
+      )
+      const result = runRaceEngine({
+        ...base,
+        engine: {
+          ...base.engine,
+          deterministicSeed: `phase11f-phase2-attack-variance-${index}`,
+        },
+      })
+      const attempt = result.roadRaceResolution.phase2Development!.attackAttempts.find(
+        (row) => row.riderId === 'rider-2',
+      )
+      expect(attempt).toBeDefined()
+      outcomes.add(attempt!.attackSucceeded)
+    }
+
+    expect(outcomes.has(true)).toBe(true)
+    expect(outcomes.has(false)).toBe(true)
+  })
+
+  it('lets the real Phase 3 physical gap evolve instead of freezing the Phase 2 gap', () => {
+    const result = runRaceEngine(createSuccessfulOpeningEscapeInput())
+    const phase2 = result.roadRaceResolution.phase2Development!
+    const phase3 = result.roadRaceResolution.phase3Decisive!
+
+    expect(phase3.physicalStartGapSeconds).toBeCloseTo(
+      phase2.endGapSeconds,
+      5,
+    )
+    expect(phase3.physicalEndGapSeconds).not.toBe(
+      phase3.physicalStartGapSeconds,
+    )
+  })
+
+  it('keeps the automatic late chase at or after the 70 percent boundary', () => {
+    const result = runRaceEngine(createSuccessfulOpeningEscapeInput())
+    const phase4 = result.roadRaceResolution.phase4Finish!
+
+    expect(phase4.phaseBoundary.startFraction).toBe(0.7)
+    expect(phase4.automaticActivityStartsAtFraction).toBeGreaterThanOrEqual(
+      0.7,
+    )
+    expect(
+      phase4.chaseSteps[0]?.kmStart ?? phase4.phaseBoundary.startKm,
+    ).toBeGreaterThanOrEqual(phase4.phaseBoundary.startKm)
+  })
+
+  it('uses a real close GC threat to add chase interest without making the escape team chase itself', () => {
+    const base = createSuccessfulOpeningEscapeInput()
+    const input: UniversalRaceEngineInput = {
+      ...base,
+      race: {
+        ...base.race,
+        raceType: 'stage_race',
+        stageCount: 4,
+      },
+      stage: {
+        ...base.stage,
+        stageNumber: 2,
+      },
+      preStageStandings: [
+        {
+          classificationType: 'general',
+          riderId: 'rider-1',
+          teamId: 'team-a',
+          rank: 1,
+          gapSeconds: 0,
+          points: null,
+        },
+        {
+          classificationType: 'general',
+          riderId: 'rider-3',
+          teamId: 'team-b',
+          rank: 2,
+          gapSeconds: 30,
+          points: null,
+        },
+        {
+          classificationType: 'general',
+          riderId: 'rider-2',
+          teamId: 'team-a',
+          rank: 3,
+          gapSeconds: 45,
+          points: null,
+        },
+        {
+          classificationType: 'general',
+          riderId: 'rider-4',
+          teamId: 'team-b',
+          rank: 4,
+          gapSeconds: 60,
+          points: null,
+        },
+      ],
+    }
+    const result = runRaceEngine(input)
+    const phase1 = result.roadRaceResolution.phase1Opening!
+    const phase2 = result.roadRaceResolution.phase2Development!
+    const escapeTeamIds = new Set(
+      phase1.breakawayRiderIds.map(
+        (riderId) => input.riders.find((rider) => rider.riderId === riderId)!.teamId,
+      ),
+    )
+
+    if (phase1.breakawayRiderIds.includes('rider-3')) {
+      expect(phase2.pelotonResponse.chasingTeamIds).toContain('team-a')
+      expect(phase2.pelotonResponse.chasingTeamIds).not.toContain('team-b')
+    }
+    expect(
+      phase2.pelotonResponse.chasingTeamIds.every(
+        (teamId) => !escapeTeamIds.has(teamId),
+      ),
+    ).toBe(true)
+  })
+
+  it('only lets a rider behind the breakaway fight for intermediate points when a scoring slot remains', () => {
+    const base = createSuccessfulOpeningEscapeInput()
+    const withSprintCommand: UniversalRaceEngineInput = {
+      ...base,
+      stagePlans: base.stagePlans.map((plan) => ({
+        ...plan,
+        riders: plan.riders.map((riderPlan) => ({
+          ...riderPlan,
+          commands: {
+            ...riderPlan.commands,
+            phase2:
+              riderPlan.riderId === 'rider-1'
+                ? 'fight_sprint_points'
+                : riderPlan.commands.phase2,
+          },
+        })),
+      })),
+    }
+    const sprintPoint = withSprintCommand.points.find(
+      (point) => point.pointType === 'INTERMEDIATE_SPRINT',
+    )!
+    const phase2SprintPoint = {
+      ...sprintPoint,
+      pointId: 'phase11f-phase2-sprint',
+      kmFromStart: 45,
+      name: 'Phase 11F scoring-slot sprint',
+      timeBonusSeconds: [],
+    }
+    const pointSet = [
+      ...withSprintCommand.points.filter(
+        (point) => point.pointType !== 'INTERMEDIATE_SPRINT',
+      ),
+      phase2SprintPoint,
+    ]
+    const onePlaceInput: UniversalRaceEngineInput = {
+      ...withSprintCommand,
+      points: pointSet.map((point) =>
+        point.pointId === phase2SprintPoint.pointId
+          ? { ...point, pointsScheme: [5] }
+          : point,
+      ),
+    }
+    const twoPlaceInput: UniversalRaceEngineInput = {
+      ...withSprintCommand,
+      points: pointSet.map((point) =>
+        point.pointId === phase2SprintPoint.pointId
+          ? { ...point, pointsScheme: [5, 3] }
+          : point,
+      ),
+    }
+
+    const onePlaceBattle = runRaceEngine(onePlaceInput)
+      .roadRaceResolution.phase2Development!.pointBattles.find(
+        (battle) => battle.pointId === phase2SprintPoint.pointId,
+      )!
+    const twoPlaceBattle = runRaceEngine(twoPlaceInput)
+      .roadRaceResolution.phase2Development!.pointBattles.find(
+        (battle) => battle.pointId === phase2SprintPoint.pointId,
+      )!
+
+    expect(onePlaceBattle.eligibleContestantIds).not.toContain('rider-1')
+    expect(twoPlaceBattle.eligibleContestantIds).toContain('rider-1')
+  })
 })

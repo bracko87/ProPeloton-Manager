@@ -186,7 +186,7 @@ type CalendarGridCell =
       day: MonthDayItem
     }
 
-const GAME_MONTH_LENGTH = 30
+// Calendar month lengths follow the canonical stored game date (Gregorian YYYY-MM-DD).
 
 const GAME_MONTH_NAMES = [
   'January',
@@ -271,6 +271,15 @@ const FILTER_OPTIONS: Array<{ key: keyof SeasonCalendarFilters; label: string }>
 ]
 
 const BASE_GAME_SEASON_YEAR = 2000
+
+function getCanonicalYearForSeason(seasonNumber: number): number {
+  return BASE_GAME_SEASON_YEAR + Math.max(1, seasonNumber) - 1
+}
+
+function getDaysInGameMonth(seasonNumber: number, monthNumber: number): number {
+  const year = getCanonicalYearForSeason(seasonNumber)
+  return new Date(year, monthNumber, 0).getDate()
+}
 
 function parseDateString(value: string): Date {
   const [year, month, day] = value.split('-').map(Number)
@@ -389,9 +398,9 @@ function isCalendarRaceStageWeatherCanceled(
   return getCalendarStageForDate(race, canonicalDateString, stagesByRaceId)?.weather_cancelled === true
 }
 
-function getMonthStartFromGameDate(currentGameDate: string, currentDayNumber: number): Date {
+function getMonthStartFromGameDate(currentGameDate: string, _currentDayNumber: number): Date {
   const current = parseDateString(currentGameDate)
-  return addDays(current, -(currentDayNumber - 1))
+  return new Date(current.getFullYear(), current.getMonth(), 1)
 }
 
 function getGameMonthName(monthNumber: number): string {
@@ -471,10 +480,10 @@ function getCalendarDeepLinkParams(search: string): {
 }
 
 function getRaceCalendarSortOrdinal(parts: DerivedGameDateParts): number {
-  return (
-    (parts.seasonNumber - 1) * 12 * GAME_MONTH_LENGTH +
-    (parts.monthNumber - 1) * GAME_MONTH_LENGTH +
-    (parts.dayNumber - 1)
+  const year = getCanonicalYearForSeason(parts.seasonNumber)
+
+  return Math.floor(
+    Date.UTC(year, parts.monthNumber - 1, parts.dayNumber) / 86400000
   )
 }
 
@@ -810,26 +819,11 @@ function getRaceRouteSummary(
 
 function getGameDatePartsFromCanonical(
   canonicalDate: string,
-  currentMonthStart: Date,
-  currentSeasonNumber: number,
-  currentMonthNumber: number
+  _currentMonthStart: Date,
+  _currentSeasonNumber: number,
+  _currentMonthNumber: number
 ): DerivedGameDateParts {
-  const target = parseDateString(canonicalDate)
-  const diff = differenceInDays(target, currentMonthStart)
-
-  const monthOffset = Math.floor(diff / GAME_MONTH_LENGTH)
-  const absoluteMonthIndex =
-    (currentSeasonNumber - 1) * 12 + (currentMonthNumber - 1) + monthOffset
-
-  const seasonNumber = Math.floor(absoluteMonthIndex / 12) + 1
-  const monthNumber = ((absoluteMonthIndex % 12) + 12) % 12 + 1
-  const dayNumber = diff - monthOffset * GAME_MONTH_LENGTH + 1
-
-  return {
-    seasonNumber,
-    monthNumber,
-    dayNumber
-  }
+  return getGameDatePartsFromStoredRaceDate(canonicalDate)
 }
 
 function isDateWithinRange(date: Date, startDate: string, endDate: string): boolean {
@@ -1497,14 +1491,20 @@ export default function CalendarPage(): JSX.Element {
 
   const displayedMonthStart = useMemo(() => {
     if (!currentMonthStart || !gameDateParts) return null
-    const monthOffset = resolvedDisplayedSeasonMonth - gameDateParts.month_number
-    return addDays(currentMonthStart, monthOffset * GAME_MONTH_LENGTH)
+
+    const year = getCanonicalYearForSeason(gameDateParts.season_number)
+    return new Date(year, resolvedDisplayedSeasonMonth - 1, 1)
   }, [currentMonthStart, gameDateParts, resolvedDisplayedSeasonMonth])
 
   const monthDays = useMemo(() => {
     if (!displayedMonthStart || !currentMonthStart || !gameDateParts) return []
 
-    return Array.from({ length: GAME_MONTH_LENGTH }, (_, index) => {
+    const daysInMonth = getDaysInGameMonth(
+      gameDateParts.season_number,
+      resolvedDisplayedSeasonMonth
+    )
+
+    return Array.from({ length: daysInMonth }, (_, index) => {
       const canonicalDate = addDays(displayedMonthStart, index)
       const canonicalDateString = toDateString(canonicalDate)
       const gameParts = getGameDatePartsFromCanonical(
@@ -1521,7 +1521,12 @@ export default function CalendarPage(): JSX.Element {
         gameParts
       }
     })
-  }, [displayedMonthStart, currentMonthStart, gameDateParts])
+  }, [
+    displayedMonthStart,
+    currentMonthStart,
+    gameDateParts,
+    resolvedDisplayedSeasonMonth,
+  ])
 
   const seasonRaceEntries = useMemo(() => {
     if (!gameDateParts) return []

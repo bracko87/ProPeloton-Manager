@@ -23,6 +23,7 @@ import {
   type TerrainType,
   type UniversalPreparationInput,
   type UniversalPreStageLeadersInput,
+  type UniversalPreStageStandingInput,
   type UniversalRaceEngineInput,
 } from './runRaceEngine.ts'
 
@@ -85,6 +86,7 @@ export interface ProductionUniversalRaceSources {
   readonly phaseCommandRows: readonly ProductionStagePhaseCommandRow[]
   readonly lockedPlanRows: readonly ProductionLockedStagePlanRow[]
   readonly preStageLeaders?: unknown
+  readonly preStageStandings?: unknown
   readonly phase9Payload?: ProductionPhase9Payload | null
   readonly deterministicSeed: string
 }
@@ -408,6 +410,62 @@ function normalizePreStageLeaders(value: unknown): UniversalPreStageLeadersInput
   return result as UniversalPreStageLeadersInput
 }
 
+function normalizePreStageStandings(
+  value: unknown,
+  acceptedRiderIds: ReadonlySet<string>,
+  acceptedTeamIds: ReadonlySet<string>,
+): UniversalPreStageStandingInput[] {
+  const allowedClassifications = new Set(['general', 'points', 'mountain'])
+  const seen = new Set<string>()
+  return array(value)
+    .map((row): UniversalPreStageStandingInput | null => {
+      const classificationType = text(
+        row.classification_type ?? row.classificationType,
+      )?.toLowerCase()
+      const riderId = text(row.rider_id ?? row.riderId)
+      const teamId = text(row.team_id ?? row.teamId)
+      const rank = integerValue(row.rank, 0)
+      if (
+        !classificationType ||
+        !allowedClassifications.has(classificationType) ||
+        !riderId ||
+        !teamId ||
+        rank <= 0 ||
+        (acceptedRiderIds.size > 0 && !acceptedRiderIds.has(riderId)) ||
+        (acceptedTeamIds.size > 0 && !acceptedTeamIds.has(teamId))
+      ) {
+        return null
+      }
+      const key = `${classificationType}:${riderId}`
+      if (seen.has(key)) return null
+      seen.add(key)
+      const gapSeconds = optionalNumber(row.gap_seconds ?? row.gapSeconds)
+      const points = optionalNumber(row.points)
+      return {
+        classificationType:
+          classificationType as UniversalPreStageStandingInput['classificationType'],
+        riderId,
+        teamId,
+        rank,
+        gapSeconds:
+          classificationType === 'general' && gapSeconds !== null
+            ? Math.max(0, gapSeconds)
+            : null,
+        points:
+          classificationType !== 'general' && points !== null
+            ? Math.max(0, points)
+            : null,
+      }
+    })
+    .filter((row): row is UniversalPreStageStandingInput => row !== null)
+    .sort(
+      (left, right) =>
+        left.classificationType.localeCompare(right.classificationType) ||
+        left.rank - right.rank ||
+        left.riderId.localeCompare(right.riderId),
+    )
+}
+
 function teamIdFromParticipant(row: Row): string | null {
   return text(row.team_id ?? row.club_id ?? row.participating_club_id)
 }
@@ -583,5 +641,10 @@ export function buildProductionUniversalRaceEngineInput(
     preparation: phase9Preparation(sources.phase9Payload),
     incidentModel: { enabled: true },
     preStageLeaders: normalizePreStageLeaders(sources.preStageLeaders),
+    preStageStandings: normalizePreStageStandings(
+      sources.preStageStandings,
+      acceptedRiderIds,
+      acceptedTeamIds,
+    ),
   }
 }

@@ -31,6 +31,9 @@
  * - BACKEND FLOW: Frontend uploads logo, then calls public.create_club(...) only.
  * - SAFETY: Keeps best-effort logo cleanup for failed creation flow before club creation succeeds.
  * - RPC FIX: Uses rpcCreatedClubId for the Supabase return value, then assigns into mutable createdClubId.
+ * - CUSTOM LOGO: Optional local upload (PNG/JPEG/BMP, max 2 MB, max 250x250 px) or external image URL.
+ * - CUSTOM LOGO PREVIEW: Selected custom logo replaces the generated badge in Team Preview immediately.
+ * - CUSTOM LOGO STORAGE: Uploaded files use club-logos; URL logos are saved directly through p_logo_path.
  */
 
 import React, { useEffect, useRef, useState } from 'react'
@@ -192,6 +195,61 @@ const GENERIC_TEAM_KITS = [
   'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/AI%20Teams%20Kits/genkit61.png',
   'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/AI%20Teams%20Kits/genkit62.png',
 ]
+
+const MAX_CUSTOM_LOGO_BYTES = 2 * 1024 * 1024
+const MAX_CUSTOM_LOGO_DIMENSION = 250
+const ALLOWED_CUSTOM_LOGO_TYPES = new Set([
+  'image/png',
+  'image/jpeg',
+  'image/bmp',
+  'image/x-ms-bmp',
+])
+
+type CustomLogoSource = 'generated' | 'file' | 'url'
+
+function getFileExtension(file: File): string {
+  const fromName = file.name.split('.').pop()?.trim().toLowerCase()
+
+  if (fromName === 'png' || fromName === 'jpg' || fromName === 'jpeg' || fromName === 'bmp') {
+    return fromName === 'jpeg' ? 'jpg' : fromName
+  }
+
+  if (file.type === 'image/png') return 'png'
+  if (file.type === 'image/jpeg') return 'jpg'
+  if (file.type === 'image/bmp' || file.type === 'image/x-ms-bmp') return 'bmp'
+
+  return 'png'
+}
+
+function getImageDimensionsFromSource(src: string): Promise<{ width: number; height: number }> {
+  return new Promise((resolve, reject) => {
+    const image = new Image()
+
+    image.onload = () => {
+      resolve({
+        width: image.naturalWidth,
+        height: image.naturalHeight,
+      })
+    }
+
+    image.onerror = () => {
+      reject(new Error('The logo image could not be loaded.'))
+    }
+
+    image.src = src
+  })
+}
+
+function getImageDimensionsFromFile(file: File): Promise<{ width: number; height: number }> {
+  return new Promise((resolve, reject) => {
+    const objectUrl = URL.createObjectURL(file)
+
+    getImageDimensionsFromSource(objectUrl)
+      .then(resolve)
+      .catch(reject)
+      .finally(() => URL.revokeObjectURL(objectUrl))
+  })
+}
 
 
 /**
@@ -751,6 +809,16 @@ export default function CreateClubPage(): JSX.Element {
   const [error, setError] = useState<string | null>(null)
   const [flagImageError, setFlagImageError] = useState(false)
 
+  const [customLogoSource, setCustomLogoSource] =
+    useState<CustomLogoSource>('generated')
+  const [customLogoFile, setCustomLogoFile] = useState<File | null>(null)
+  const [customLogoPreviewUrl, setCustomLogoPreviewUrl] = useState<string | null>(null)
+  const [customLogoUrlInput, setCustomLogoUrlInput] = useState('')
+  const [appliedCustomLogoUrl, setAppliedCustomLogoUrl] = useState<string | null>(null)
+  const [customLogoError, setCustomLogoError] = useState<string | null>(null)
+  const [applyingLogoUrl, setApplyingLogoUrl] = useState(false)
+  const customLogoInputRef = useRef<HTMLInputElement | null>(null)
+
   // Only customization left: interior pattern (in Team Preview panel)
   const [badgePattern, setBadgePattern] = useState<BadgePattern>('horizontal-band')
   const [selectedKitUrl, setSelectedKitUrl] = useState<string | null>(null)
@@ -764,6 +832,140 @@ export default function CreateClubPage(): JSX.Element {
 
   function updateField(key: keyof typeof form, value: string): void {
     setForm(prev => ({ ...prev, [key]: value }))
+  }
+
+  function clearCustomLogoPreviewObjectUrl(): void {
+    if (customLogoPreviewUrl?.startsWith('blob:')) {
+      URL.revokeObjectURL(customLogoPreviewUrl)
+    }
+  }
+
+  function useGeneratedBadge(): void {
+    clearCustomLogoPreviewObjectUrl()
+    setCustomLogoSource('generated')
+    setCustomLogoFile(null)
+    setCustomLogoPreviewUrl(null)
+    setAppliedCustomLogoUrl(null)
+    setCustomLogoUrlInput('')
+    setCustomLogoError(null)
+
+    if (customLogoInputRef.current) {
+      customLogoInputRef.current.value = ''
+    }
+  }
+
+  async function handleCustomLogoFile(file: File | null): Promise<void> {
+    if (!file) return
+
+    setCustomLogoError(null)
+
+    const normalizedType = file.type.toLowerCase()
+    const extension = file.name.split('.').pop()?.toLowerCase()
+
+    const supportedExtension =
+      extension === 'png' ||
+      extension === 'jpg' ||
+      extension === 'jpeg' ||
+      extension === 'bmp'
+
+    if (!ALLOWED_CUSTOM_LOGO_TYPES.has(normalizedType) && !supportedExtension) {
+      setCustomLogoError('Logo must be a PNG, JPEG/JPG, or BMP image.')
+      if (customLogoInputRef.current) customLogoInputRef.current.value = ''
+      return
+    }
+
+    if (file.size > MAX_CUSTOM_LOGO_BYTES) {
+      setCustomLogoError('Logo file must be 2 MB or smaller.')
+      if (customLogoInputRef.current) customLogoInputRef.current.value = ''
+      return
+    }
+
+    try {
+      const dimensions = await getImageDimensionsFromFile(file)
+
+      if (
+        dimensions.width > MAX_CUSTOM_LOGO_DIMENSION ||
+        dimensions.height > MAX_CUSTOM_LOGO_DIMENSION
+      ) {
+        setCustomLogoError(
+          `Logo dimensions must not exceed ${MAX_CUSTOM_LOGO_DIMENSION} × ${MAX_CUSTOM_LOGO_DIMENSION} pixels.`
+        )
+        if (customLogoInputRef.current) customLogoInputRef.current.value = ''
+        return
+      }
+
+      clearCustomLogoPreviewObjectUrl()
+
+      const previewUrl = URL.createObjectURL(file)
+      setCustomLogoFile(file)
+      setCustomLogoPreviewUrl(previewUrl)
+      setCustomLogoSource('file')
+      setAppliedCustomLogoUrl(null)
+      setCustomLogoUrlInput('')
+    } catch (logoError) {
+      setCustomLogoError(
+        logoError instanceof Error ? logoError.message : 'Could not validate the logo image.'
+      )
+      if (customLogoInputRef.current) customLogoInputRef.current.value = ''
+    }
+  }
+
+  async function applyCustomLogoUrl(): Promise<void> {
+    const rawUrl = customLogoUrlInput.trim()
+    setCustomLogoError(null)
+
+    if (!rawUrl) {
+      setCustomLogoError('Paste a logo URL first.')
+      return
+    }
+
+    let parsedUrl: URL
+
+    try {
+      parsedUrl = new URL(rawUrl)
+    } catch {
+      setCustomLogoError('Please enter a valid logo URL.')
+      return
+    }
+
+    if (parsedUrl.protocol !== 'https:' && parsedUrl.protocol !== 'http:') {
+      setCustomLogoError('Logo URL must start with http:// or https://.')
+      return
+    }
+
+    setApplyingLogoUrl(true)
+
+    try {
+      const dimensions = await getImageDimensionsFromSource(parsedUrl.toString())
+
+      if (
+        dimensions.width > MAX_CUSTOM_LOGO_DIMENSION ||
+        dimensions.height > MAX_CUSTOM_LOGO_DIMENSION
+      ) {
+        setCustomLogoError(
+          `Logo dimensions must not exceed ${MAX_CUSTOM_LOGO_DIMENSION} × ${MAX_CUSTOM_LOGO_DIMENSION} pixels.`
+        )
+        return
+      }
+
+      clearCustomLogoPreviewObjectUrl()
+      setCustomLogoFile(null)
+      setCustomLogoPreviewUrl(parsedUrl.toString())
+      setAppliedCustomLogoUrl(parsedUrl.toString())
+      setCustomLogoSource('url')
+
+      if (customLogoInputRef.current) {
+        customLogoInputRef.current.value = ''
+      }
+    } catch (logoError) {
+      setCustomLogoError(
+        logoError instanceof Error
+          ? logoError.message
+          : 'Could not load the logo from this URL.'
+      )
+    } finally {
+      setApplyingLogoUrl(false)
+    }
   }
 
   async function cleanupFailedLogoUpload(logoPath: string | null): Promise<void> {
@@ -795,6 +997,14 @@ export default function CreateClubPage(): JSX.Element {
   useEffect(() => {
     setFlagImageError(false)
   }, [form.countryCode])
+
+  useEffect(() => {
+    return () => {
+      if (customLogoPreviewUrl?.startsWith('blob:')) {
+        URL.revokeObjectURL(customLogoPreviewUrl)
+      }
+    }
+  }, [customLogoPreviewUrl])
 
   useEffect(() => {
     let mounted = true
@@ -865,33 +1075,64 @@ export default function CreateClubPage(): JSX.Element {
     let createdClubId: string | null = null
 
     try {
-      const svg = buildBadgeSvg(
-        badgeShape,
-        badgePattern,
-        overlayMode,
-        badgeSymbol,
-        badgeLetter,
-        form.primary,
-        form.secondary,
-      )
-
-      const pngBlob = await rasterizeBadgeSvgToPng(svg)
-
       const safeName = slugify(form.name) || 'team'
-      uploadedLogoPath = `${user.id}/${Date.now()}-${safeName}-badge.png`
+      let logoPathForClub: string
 
-      const { error: uploadError } = await supabase.storage.from('club-logos').upload(uploadedLogoPath, pngBlob, {
-        contentType: 'image/png',
-        upsert: false,
-      })
+      if (customLogoSource === 'file' && customLogoFile) {
+        const extension = getFileExtension(customLogoFile)
+        uploadedLogoPath = `${user.id}/${Date.now()}-${safeName}-custom-logo.${extension}`
 
-      if (uploadError) {
-        const message = /bucket not found/i.test(uploadError.message ?? '')
-          ? 'Storage bucket "club-logos" was not found. Please create it in Supabase Storage first.'
-          : uploadError.message || 'Failed to save team badge'
+        const { error: uploadError } = await supabase.storage
+          .from('club-logos')
+          .upload(uploadedLogoPath, customLogoFile, {
+            contentType: customLogoFile.type || undefined,
+            upsert: false,
+          })
 
-        setError(message)
-        return
+        if (uploadError) {
+          const message = /bucket not found/i.test(uploadError.message ?? '')
+            ? 'Storage bucket "club-logos" was not found. Please create it in Supabase Storage first.'
+            : uploadError.message || 'Failed to upload team logo'
+
+          setError(message)
+          return
+        }
+
+        logoPathForClub = uploadedLogoPath
+      } else if (customLogoSource === 'url' && appliedCustomLogoUrl) {
+        logoPathForClub = appliedCustomLogoUrl
+      } else {
+        const svg = buildBadgeSvg(
+          badgeShape,
+          badgePattern,
+          overlayMode,
+          badgeSymbol,
+          badgeLetter,
+          form.primary,
+          form.secondary,
+        )
+
+        const pngBlob = await rasterizeBadgeSvgToPng(svg)
+
+        uploadedLogoPath = `${user.id}/${Date.now()}-${safeName}-badge.png`
+
+        const { error: uploadError } = await supabase.storage
+          .from('club-logos')
+          .upload(uploadedLogoPath, pngBlob, {
+            contentType: 'image/png',
+            upsert: false,
+          })
+
+        if (uploadError) {
+          const message = /bucket not found/i.test(uploadError.message ?? '')
+            ? 'Storage bucket "club-logos" was not found. Please create it in Supabase Storage first.'
+            : uploadError.message || 'Failed to save team badge'
+
+          setError(message)
+          return
+        }
+
+        logoPathForClub = uploadedLogoPath
       }
 
       const { data: rpcCreatedClubId, error: rpcError } = await supabase.rpc('create_club', {
@@ -899,7 +1140,7 @@ export default function CreateClubPage(): JSX.Element {
         p_country_code: form.countryCode,
         p_primary_color: form.primary,
         p_secondary_color: form.secondary,
-        p_logo_path: uploadedLogoPath,
+        p_logo_path: logoPathForClub,
         p_motto: form.motto.trim() || null,
       })
 
@@ -1101,14 +1342,22 @@ export default function CreateClubPage(): JSX.Element {
                 <h3 className="text-2xl font-bold text-gray-900">Team Preview</h3>
                 <p className="text-sm text-gray-600 mt-2">Interior layout and colors update live.</p>
 
-                <div className="mt-6">
-                  <BadgePreview
-                    shape={badgeShape}
-                    pattern={badgePattern}
-                    primary={form.primary}
-                    secondary={form.secondary}
-                    size="large"
-                  />
+                <div className="mt-6 flex h-56 w-56 items-center justify-center">
+                  {customLogoSource !== 'generated' && customLogoPreviewUrl ? (
+                    <img
+                      src={customLogoPreviewUrl}
+                      alt="Custom team logo preview"
+                      className="max-h-56 max-w-56 object-contain"
+                    />
+                  ) : (
+                    <BadgePreview
+                      shape={badgeShape}
+                      pattern={badgePattern}
+                      primary={form.primary}
+                      secondary={form.secondary}
+                      size="large"
+                    />
+                  )}
                 </div>
 
                 <div className="mt-4 text-lg font-semibold text-gray-900">{form.name || 'My Team'}</div>
@@ -1122,10 +1371,17 @@ export default function CreateClubPage(): JSX.Element {
 
 
                 {/* Consolidated Interior Style selector into the Team Preview area */}
-                <div className="mt-8 w-full rounded-xl border border-emerald-200 bg-emerald-50/40 p-4 text-left">
+                <div
+                  className={[
+                    'mt-8 w-full rounded-xl border border-emerald-200 bg-emerald-50/40 p-4 text-left',
+                    customLogoSource !== 'generated' ? 'opacity-50' : '',
+                  ].join(' ')}
+                >
                   <div className="text-sm font-semibold text-gray-900">Interior Style</div>
                   <div className="mt-1 text-xs text-gray-500">
-                    Choose how the primary and secondary colors are divided.
+                    {customLogoSource === 'generated'
+                      ? 'Choose how the primary and secondary colors are divided.'
+                      : 'Interior Style applies only to the generated team badge.'}
                   </div>
 
                   <div className="mt-3 grid grid-cols-4 gap-2">
@@ -1134,6 +1390,7 @@ export default function CreateClubPage(): JSX.Element {
                         key={pattern}
                         type="button"
                         onClick={() => setBadgePattern(pattern)}
+                        disabled={customLogoSource !== 'generated' || submitting}
                         className={`rounded-lg border p-2 flex flex-col items-center justify-center transition ${
                           badgePattern === pattern
                             ? 'border-blue-500 bg-blue-50'
@@ -1154,7 +1411,96 @@ export default function CreateClubPage(): JSX.Element {
                   </div>
                 </div>
 
-                <div className="mt-6 flex w-full justify-end gap-3">
+                <div className="mt-6 w-full rounded-xl border border-gray-200 bg-white p-4 text-left">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <div className="text-sm font-semibold text-gray-900">Team Logo</div>
+                      <div className="mt-1 text-xs text-gray-500">
+                        Optional. Upload a logo or use an image URL. If none is selected, the generated badge above will be used.
+                      </div>
+                    </div>
+
+                    {customLogoSource !== 'generated' ? (
+                      <button
+                        type="button"
+                        onClick={useGeneratedBadge}
+                        disabled={submitting}
+                        className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        Use generated badge
+                      </button>
+                    ) : null}
+                  </div>
+
+                  <div className="mt-4">
+                    <input
+                      ref={customLogoInputRef}
+                      type="file"
+                      accept=".png,.jpg,.jpeg,.bmp,image/png,image/jpeg,image/bmp,image/x-ms-bmp"
+                      onChange={event => {
+                        void handleCustomLogoFile(event.target.files?.[0] ?? null)
+                      }}
+                      disabled={submitting}
+                      className="block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 file:mr-3 file:rounded-md file:border-0 file:bg-slate-900 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-white hover:file:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+                    />
+                    <p className="mt-1 text-xs text-gray-500">
+                      PNG, JPEG/JPG or BMP · maximum 2 MB · maximum 250 × 250 px.
+                    </p>
+                  </div>
+
+                  <div className="my-4 flex items-center gap-3">
+                    <div className="h-px flex-1 bg-gray-200" />
+                    <span className="text-[11px] font-medium uppercase tracking-wide text-gray-400">or use URL</span>
+                    <div className="h-px flex-1 bg-gray-200" />
+                  </div>
+
+                  <div className="flex gap-2">
+                    <input
+                      type="url"
+                      value={customLogoUrlInput}
+                      onChange={event => setCustomLogoUrlInput(event.target.value)}
+                      onKeyDown={event => {
+                        if (event.key === 'Enter') {
+                          event.preventDefault()
+                          void applyCustomLogoUrl()
+                        }
+                      }}
+                      placeholder="https://example.com/team-logo.png"
+                      disabled={submitting || applyingLogoUrl}
+                      className="min-w-0 flex-1 rounded-md border border-gray-300 px-3 py-2 text-sm"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        void applyCustomLogoUrl()
+                      }}
+                      disabled={submitting || applyingLogoUrl || !customLogoUrlInput.trim()}
+                      className="rounded-md border border-slate-300 bg-slate-50 px-4 py-2 text-sm font-medium text-slate-800 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {applyingLogoUrl ? 'Applying...' : 'Apply'}
+                    </button>
+                  </div>
+
+                  {customLogoError ? (
+                    <div className="mt-3 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs font-medium text-red-700">
+                      {customLogoError}
+                    </div>
+                  ) : null}
+
+                  {customLogoSource === 'file' && customLogoFile ? (
+                    <div className="mt-3 text-xs font-medium text-emerald-700">
+                      Custom uploaded logo selected: {customLogoFile.name}
+                    </div>
+                  ) : null}
+
+                  {customLogoSource === 'url' && appliedCustomLogoUrl ? (
+                    <div className="mt-3 truncate text-xs font-medium text-emerald-700">
+                      Custom URL logo applied.
+                    </div>
+                  ) : null}
+                </div>
+
+                <div className="mt-4 flex w-full justify-end gap-3">
                   <button
                     type="button"
                     onClick={() => navigate('/')}

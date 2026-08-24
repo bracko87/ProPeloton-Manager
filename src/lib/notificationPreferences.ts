@@ -218,10 +218,16 @@ export function resolveAdvisorNotificationCategory(
 
 export function canReceiveAdvisorNotification(
   item: unknown,
-  settings: AdvisorNotificationSettings = readAdvisorNotificationPreferences()
+  _settings: AdvisorNotificationSettings = readAdvisorNotificationPreferences()
 ): boolean {
-  const category = resolveAdvisorNotificationCategory(item)
-  return category ? settings[category] !== false : true
+  // Advisor category preferences now control FUTURE delivery server-side by
+  // bulk-writing exact report-code mute states. Existing notifications remain
+  // visible by design, including cards used to selectively unmute one subtype
+  // while its broader Preferences category remains OFF.
+  //
+  // Therefore the frontend must not hide already-delivered advisor
+  // notifications merely because the grouped category checkbox is OFF.
+  return true
 }
 
 export const NOTIFICATION_PREFERENCE_GROUP_ORDER = [

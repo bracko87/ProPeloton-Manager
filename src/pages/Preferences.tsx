@@ -153,6 +153,12 @@ export default function PreferencesPage(): JSX.Element {
   const [advisorNotifications, setAdvisorNotifications] = useState<AdvisorNotificationSettings>(() => readAdvisorNotificationPreferences())
   const [staffAdvisoryOverview, setStaffAdvisoryOverview] = useState<any[]>([])
   const [isLoadingStaffAdvisoryOverview, setIsLoadingStaffAdvisoryOverview] = useState(true)
+  const [isLoadingAdvisorNotificationCategories, setIsLoadingAdvisorNotificationCategories] =
+    useState(true)
+  const [savingAdvisorNotificationCategory, setSavingAdvisorNotificationCategory] =
+    useState<AdvisorNotificationCategoryKey | null>(null)
+  const [advisorNotificationCategoryError, setAdvisorNotificationCategoryError] =
+    useState<string | null>(null)
 
   const [developingTeamStatus, setDevelopingTeamStatus] = useState<DevelopingTeamStatus | null>(null)
   const [isLoadingDevelopingTeamStatus, setIsLoadingDevelopingTeamStatus] = useState(true)
@@ -225,6 +231,97 @@ export default function PreferencesPage(): JSX.Element {
     return () => { cancelled = true }
   }, [])
 
+  useEffect(() => {
+    let cancelled = false
+
+    async function loadAdvisorNotificationCategories(): Promise<void> {
+      setIsLoadingAdvisorNotificationCategories(true)
+
+      try {
+        const localSettings = readAdvisorNotificationPreferences()
+
+        const { data, error } = await supabase.rpc(
+          'get_my_staff_advisory_notification_categories_v1'
+        )
+
+        if (error) throw error
+
+        const rows = Array.isArray(data) ? data : []
+        const nextSettings: AdvisorNotificationSettings = {
+          ...localSettings,
+        }
+
+        for (const row of rows as Array<Record<string, unknown>>) {
+          const categoryCode = String(row.category_code ?? '') as AdvisorNotificationCategoryKey
+
+          if (!(categoryCode in ADVISOR_NOTIFICATION_CATEGORY_DEFINITIONS)) {
+            continue
+          }
+
+          const hasPersistedServerState = Boolean(row.updated_at)
+
+          if (hasPersistedServerState) {
+            nextSettings[categoryCode] = row.is_enabled !== false
+            continue
+          }
+
+          // One-time migration from the previous localStorage-only grouped
+          // preference model. This preserves an existing OFF checkbox and,
+          // through the RPC, bulk-mutes every exact subtype in that group.
+          const localEnabled = localSettings[categoryCode] !== false
+
+          if (localEnabled) {
+            // Preserve any exact subtype mutes the user may already have made
+            // from notification cards. Initializing an ON category must not
+            // silently clear those exceptions.
+            const { error: initializeError } = await supabase.rpc(
+              'initialize_my_staff_advisory_notification_category_v1',
+              {
+                p_category_code: categoryCode,
+                p_enabled: true,
+              }
+            )
+
+            if (initializeError) throw initializeError
+          } else {
+            // An existing OFF category from the previous localStorage model
+            // must immediately become a real bulk mute on the server.
+            const { error: migrateError } = await supabase.rpc(
+              'set_my_staff_advisory_notification_category_v1',
+              {
+                p_category_code: categoryCode,
+                p_enabled: false,
+              }
+            )
+
+            if (migrateError) throw migrateError
+          }
+
+          nextSettings[categoryCode] = localEnabled
+        }
+
+        if (!cancelled) {
+          setAdvisorNotifications(nextSettings)
+        }
+      } catch (error) {
+        console.error(
+          'Failed to load Staff Advisory notification category preferences:',
+          error
+        )
+      } finally {
+        if (!cancelled) {
+          setIsLoadingAdvisorNotificationCategories(false)
+        }
+      }
+    }
+
+    void loadAdvisorNotificationCategories()
+
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
   useEffect(() => { writeAdvisorNotificationPreferences(advisorNotifications) }, [advisorNotifications])
 
   useEffect(() => {
@@ -255,11 +352,66 @@ export default function PreferencesPage(): JSX.Element {
     setNotifications(prev => ({ ...prev, [key]: !prev[key] }))
   }
 
-  const toggleAdvisorNotificationCategory = (key: AdvisorNotificationCategoryKey): void => {
+  const toggleAdvisorNotificationCategory = async (
+    key: AdvisorNotificationCategoryKey
+  ): Promise<void> => {
     const definition = ADVISOR_NOTIFICATION_CATEGORY_DEFINITIONS[key]
-    const active = staffAdvisoryOverview.some(row => row.role_type === definition.requiredRole && row.advisory_status === 'active')
-    if (!active) return
-    setAdvisorNotifications(prev => ({ ...prev, [key]: !prev[key] }))
+    const active = staffAdvisoryOverview.some(
+      row =>
+        row.role_type === definition.requiredRole &&
+        row.advisory_status === 'active'
+    )
+
+    if (!active || savingAdvisorNotificationCategory) return
+
+    const previousEnabled = advisorNotifications[key] !== false
+    const nextEnabled = !previousEnabled
+
+    setAdvisorNotificationCategoryError(null)
+    setSavingAdvisorNotificationCategory(key)
+
+    setAdvisorNotifications(prev => ({
+      ...prev,
+      [key]: nextEnabled,
+    }))
+
+    try {
+      const { error } = await supabase.rpc(
+        'set_my_staff_advisory_notification_category_v1',
+        {
+          p_category_code: key,
+          p_enabled: nextEnabled,
+        }
+      )
+
+      if (error) throw error
+
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(
+          new CustomEvent('staff-advisory-notification-mutes-updated', {
+            detail: {
+              source: 'preferences-category',
+              categoryCode: key,
+              enabled: nextEnabled,
+            },
+          })
+        )
+      }
+    } catch (error) {
+      setAdvisorNotifications(prev => ({
+        ...prev,
+        [key]: previousEnabled,
+      }))
+      setAdvisorNotificationCategoryError(
+        'Could not save the Staff Advisor notification setting. Please try again.'
+      )
+      console.error(
+        `Failed to update Staff Advisory notification category ${key}:`,
+        error
+      )
+    } finally {
+      setSavingAdvisorNotificationCategory(null)
+    }
   }
 
   const handleRestartTeam = (): void => {
@@ -542,13 +694,41 @@ export default function PreferencesPage(): JSX.Element {
 
               <div className="mt-6 border-t border-gray-200 pt-5">
                 <h4 className="text-sm font-semibold text-gray-900">Staff Advisor Notifications</h4>
-                <p className="mt-1 text-xs text-gray-500">Paid advisor notifications grouped by topic. Each category controls all paid advisory notifications in that topic and unlocks only while the required Staff Advisor is active.</p>
+                <p className="mt-1 text-xs text-gray-500">
+                  Paid advisor notifications grouped by topic. Switching a category off mutes every notification type in that topic. Individual notification types can then be unmuted from their notification card without changing this category checkbox.
+                </p>
+
+                {advisorNotificationCategoryError ? (
+                  <div className="mt-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+                    {advisorNotificationCategoryError}
+                  </div>
+                ) : null}
                 <div className="mt-3 overflow-hidden rounded-xl border border-gray-200 bg-gray-50/60">
                   <div className="divide-y divide-gray-200 px-4">
                     {ADVISOR_NOTIFICATION_CATEGORY_ORDER.map(key => {
                       const definition = ADVISOR_NOTIFICATION_CATEGORY_DEFINITIONS[key]
                       const active = staffAdvisoryOverview.some(row => row.role_type === definition.requiredRole && row.advisory_status === 'active')
-                      return <ToggleRow key={key} title={definition.label} description={active ? definition.description : `${definition.description} Activate the required Staff Advisor to control this notification.`} checked={advisorNotifications[key] !== false} disabled={!active || isLoadingStaffAdvisoryOverview} onToggle={() => toggleAdvisorNotificationCategory(key)} />
+                      return (
+                        <ToggleRow
+                          key={key}
+                          title={definition.label}
+                          description={
+                            active
+                              ? definition.description
+                              : `${definition.description} Activate the required Staff Advisor to control this notification.`
+                          }
+                          checked={advisorNotifications[key] !== false}
+                          disabled={
+                            !active ||
+                            isLoadingStaffAdvisoryOverview ||
+                            isLoadingAdvisorNotificationCategories ||
+                            savingAdvisorNotificationCategory === key
+                          }
+                          onToggle={() => {
+                            void toggleAdvisorNotificationCategory(key)
+                          }}
+                        />
+                      )
                     })}
                   </div>
                 </div>
