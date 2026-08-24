@@ -1,0 +1,28 @@
+{
+  "weekdays": {
+    "Sunday": "Nedelja",
+    "Monday": "Ponedeljak",
+    "Tuesday": "Utorak",
+    "Wednesday": "Sreda",
+    "Thursday": "Četvrtak",
+    "Friday": "Petak",
+    "Saturday": "Subota"
+  },
+  "months": {
+    "January": "januar",
+    "February": "februar",
+    "March": "mart",
+    "April": "april",
+    "May": "maj",
+    "June": "jun",
+    "July": "jul",
+    "August": "avgust",
+    "September": "septembar",
+    "October": "oktobar",
+    "November": "novembar",
+    "December": "decembar"
+  },
+  "date": "{{day}}. {{month}}",
+  "gameTimeWithWeekday": "{{season}} {{seasonNumber}} · {{weekday}} · {{date}} · {{time}}",
+  "gameTimeWithoutWeekday": "{{season}} {{seasonNumber}} · {{date}} · {{time}}"
+}
