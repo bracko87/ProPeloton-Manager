@@ -6,12 +6,14 @@ import enNavigation from './locales/en/navigation.json'
 import enHome from './locales/en/home.json'
 import enAuth from './locales/en/auth.json'
 import enProfile from './locales/en/profile.json'
+import enCalendar from './locales/en/calendar.json'
 
 import srCommon from './locales/sr-Latn/common.json'
 import srNavigation from './locales/sr-Latn/navigation.json'
 import srHome from './locales/sr-Latn/home.json'
 import srAuth from './locales/sr-Latn/auth.json'
 import srProfile from './locales/sr-Latn/profile.json'
+import srCalendar from './locales/sr-Latn/calendar.json'
 
 import {
   DEFAULT_LANGUAGE,
@@ -29,6 +31,7 @@ const resources = {
     home: enHome,
     auth: enAuth,
     profile: enProfile,
+    calendar: enCalendar,
   },
   'sr-Latn': {
     common: srCommon,
@@ -36,6 +39,7 @@ const resources = {
     home: srHome,
     auth: srAuth,
     profile: srProfile,
+    calendar: srCalendar,
   },
 } as const
 
@@ -49,7 +53,7 @@ void i18n
     fallbackLng: DEFAULT_LANGUAGE,
     supportedLngs: ['en', 'sr-Latn'],
     defaultNS: 'common',
-    ns: ['common', 'navigation', 'home', 'auth', 'profile'],
+    ns: ['common', 'navigation', 'home', 'auth', 'profile', 'calendar'],
     interpolation: {
       escapeValue: false,
     },
