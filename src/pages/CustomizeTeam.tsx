@@ -33,6 +33,12 @@
  * UPDATE (sponsor naming-rights lock):
  * - Reads club_branding_lock_status_v1 for UI lock state.
  * - Persists club branding through update_club_branding_v1 instead of direct clubs update.
+ *
+ * UPDATE (coin affordability UX):
+ * - Shows current coin balance and current logo-change cost before the user acts.
+ * - Disables logo upload / URL / remove / apply controls when the balance is insufficient.
+ * - Shows exactly how many more coins are needed and links to Pro Packages.
+ * - Backend pricing remains authoritative and unchanged.
  */
 
 import React, { useEffect, useId, useMemo, useRef, useState } from 'react'
@@ -1306,6 +1312,21 @@ export default function CustomizeTeamPage(): JSX.Element {
       return
     }
 
+    const logoCost = customizationAccess?.logo_change_cost ?? 0
+    const coinBalance = customizationAccess?.coin_balance ?? 0
+
+    if (logoCost > 0 && coinBalance < logoCost) {
+      const missingCoins = logoCost - coinBalance
+      const message =
+        `Not enough coins to change the team logo. ` +
+        `This change costs ${logoCost} coins, your current balance is ${coinBalance}, ` +
+        `and you need ${missingCoins} more coin${missingCoins === 1 ? '' : 's'}.`
+
+      setError(message)
+      showTopNotice('error', message)
+      return
+    }
+
     const typedLogoUrl = logoUrlInput.trim()
 
     if (pendingLogoUrl || (!pendingLogoFile && typedLogoUrl)) {
@@ -1339,7 +1360,11 @@ export default function CustomizeTeamPage(): JSX.Element {
       setLogoPreview(null)
       setLogoUrlInput(updatedClub.logo_path ?? '')
       setLogoVersion(Date.now())
-      showSuccess('Logo applied.')
+      showSuccess(
+        currentLogoChangeCost > 0
+          ? `Logo applied for ${currentLogoChangeCost} coins.`
+          : 'Logo applied. This season’s free logo change was used.',
+      )
       return
     }
 
@@ -1380,7 +1405,11 @@ export default function CustomizeTeamPage(): JSX.Element {
       setLogoPreview(null)
       setLogoUrlInput('')
       setLogoVersion(Date.now())
-      showSuccess('Logo applied.')
+      showSuccess(
+        currentLogoChangeCost > 0
+          ? `Logo applied for ${currentLogoChangeCost} coins.`
+          : 'Logo applied. This season’s free logo change was used.',
+      )
     } catch (err) {
       setSaving(false)
       setError(err instanceof Error ? err.message : 'Failed to apply uploaded logo.')
@@ -1394,6 +1423,21 @@ export default function CustomizeTeamPage(): JSX.Element {
   async function handleRemoveLogo(): Promise<void> {
     if (!mainClubId) {
       setError('Club not found.')
+      return
+    }
+
+    const logoCost = customizationAccess?.logo_change_cost ?? 0
+    const coinBalance = customizationAccess?.coin_balance ?? 0
+
+    if (logoCost > 0 && coinBalance < logoCost) {
+      const missingCoins = logoCost - coinBalance
+      const message =
+        `Not enough coins to change the team logo. ` +
+        `Restoring the generated badge also counts as a logo change and costs ${logoCost} coins. ` +
+        `Your current balance is ${coinBalance}; you need ${missingCoins} more coin${missingCoins === 1 ? '' : 's'}.`
+
+      setError(message)
+      showTopNotice('error', message)
       return
     }
 
@@ -1424,6 +1468,15 @@ export default function CustomizeTeamPage(): JSX.Element {
   const identityLockedBySponsor = brandingLock?.locked_by_sponsor === true
   const canEditTeamName = brandingLock?.can_edit_name !== false
   const canEditTeamColors = brandingLock?.can_edit_colors !== false
+
+  const currentCoinBalance = customizationAccess?.coin_balance ?? 0
+  const currentLogoChangeCost = customizationAccess?.logo_change_cost ?? 0
+  const hasEnoughCoinsForLogo =
+    currentLogoChangeCost <= 0 || currentCoinBalance >= currentLogoChangeCost
+  const missingLogoCoins = Math.max(
+    0,
+    currentLogoChangeCost - currentCoinBalance,
+  )
 
   return (
     <div className="w-full">
@@ -1614,6 +1667,92 @@ export default function CustomizeTeamPage(): JSX.Element {
                 </div>
 
                 <div className="flex-1 space-y-3">
+                  <div
+                    className={[
+                      'rounded-xl border px-4 py-3',
+                      !hasEnoughCoinsForLogo
+                        ? 'border-red-300 bg-red-50'
+                        : currentLogoChangeCost > 0
+                          ? 'border-amber-300 bg-amber-50'
+                          : 'border-emerald-300 bg-emerald-50',
+                    ].join(' ')}
+                  >
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div>
+                        <div className="text-sm font-semibold text-slate-900">
+                          Logo change
+                        </div>
+                        <div className="mt-1 text-xs text-slate-600">
+                          One logo change per game season is free. Further changes in the same season cost 10 coins each.
+                        </div>
+                      </div>
+
+                      <div className="text-right">
+                        <div className="text-xs font-medium uppercase tracking-wide text-slate-500">
+                          Current balance
+                        </div>
+                        <div
+                          className={[
+                            'mt-0.5 text-lg font-bold',
+                            !hasEnoughCoinsForLogo ? 'text-red-700' : 'text-slate-950',
+                          ].join(' ')}
+                        >
+                          {currentCoinBalance} coins
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                      <div className="rounded-lg border border-white/70 bg-white/70 px-3 py-2">
+                        <div className="text-[11px] font-medium uppercase tracking-wide text-slate-500">
+                          This logo change
+                        </div>
+                        <div className="mt-0.5 text-sm font-bold text-slate-950">
+                          {currentLogoChangeCost > 0
+                            ? `${currentLogoChangeCost} coins`
+                            : 'Free'}
+                        </div>
+                      </div>
+
+                      <div className="rounded-lg border border-white/70 bg-white/70 px-3 py-2">
+                        <div className="text-[11px] font-medium uppercase tracking-wide text-slate-500">
+                          Status
+                        </div>
+                        <div
+                          className={[
+                            'mt-0.5 text-sm font-bold',
+                            !hasEnoughCoinsForLogo
+                              ? 'text-red-700'
+                              : 'text-emerald-700',
+                          ].join(' ')}
+                        >
+                          {!hasEnoughCoinsForLogo
+                            ? `Need ${missingLogoCoins} more coin${missingLogoCoins === 1 ? '' : 's'}`
+                            : currentLogoChangeCost > 0
+                              ? 'Enough coins'
+                              : 'Free change available'}
+                        </div>
+                      </div>
+                    </div>
+
+                    {!hasEnoughCoinsForLogo ? (
+                      <div className="mt-3 flex flex-col gap-2 rounded-lg border border-red-200 bg-white px-3 py-3 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="text-xs font-medium text-red-800">
+                          You cannot apply or remove the logo until you have at least {currentLogoChangeCost} coins.
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            window.location.href = '/dashboard/pro-packages'
+                          }}
+                          className="shrink-0 rounded-md border border-red-300 bg-red-100 px-3 py-1.5 text-xs font-semibold text-red-800 transition hover:bg-red-200"
+                        >
+                          Get more coins
+                        </button>
+                      </div>
+                    ) : null}
+                  </div>
+
                   <div className="flex flex-col sm:flex-row sm:items-center gap-3">
                     <label className="inline-flex items-center justify-center px-4 py-2 rounded-md border border-gray-300 bg-white cursor-pointer hover:bg-gray-50">
                       <span className="text-sm font-medium">Upload logo image</span>
@@ -1622,6 +1761,7 @@ export default function CustomizeTeamPage(): JSX.Element {
                         accept=".png,.jpg,.jpeg,.webp,image/png,image/jpeg,image/webp"
                         className="hidden"
                         onChange={handleLogoUpload}
+                        disabled={saving || !hasEnoughCoinsForLogo}
                       />
                     </label>
 
@@ -1644,7 +1784,13 @@ export default function CustomizeTeamPage(): JSX.Element {
                         }
                       }}
                       placeholder="Paste logo image URL, then click Apply logo"
-                      className="w-full border border-gray-300 px-3 py-2 rounded-md text-sm"
+                      disabled={saving || !hasEnoughCoinsForLogo}
+                      className={[
+                        'w-full border border-gray-300 px-3 py-2 rounded-md text-sm',
+                        saving || !hasEnoughCoinsForLogo
+                          ? 'bg-gray-100 text-gray-500 cursor-not-allowed'
+                          : 'bg-white',
+                      ].join(' ')}
                     />
                     <div className="mt-1 text-xs text-slate-500">
                       URL logos are saved when you click Apply logo. One logo change per season is free; each later change costs 10 coins.
@@ -1657,7 +1803,13 @@ export default function CustomizeTeamPage(): JSX.Element {
                       onClick={() => {
                         void handleRemoveLogo()
                       }}
-                      className="h-10 px-4 rounded-md border border-gray-300 bg-white text-slate-900 text-sm font-medium hover:bg-gray-50"
+                      disabled={saving || !hasEnoughCoinsForLogo}
+                      className={[
+                        'h-10 px-4 rounded-md border text-sm font-medium',
+                        saving || !hasEnoughCoinsForLogo
+                          ? 'border-gray-300 bg-gray-100 text-gray-400 cursor-not-allowed'
+                          : 'border-gray-300 bg-white text-slate-900 hover:bg-gray-50',
+                      ].join(' ')}
                     >
                       Remove Logo
                     </button>
@@ -1667,13 +1819,21 @@ export default function CustomizeTeamPage(): JSX.Element {
                       onClick={() => {
                         void handleApplyLogo()
                       }}
-                      className="h-10 px-4 rounded-md border border-slate-900 bg-slate-900 text-white text-sm font-medium hover:bg-slate-800"
+                      disabled={saving || !hasEnoughCoinsForLogo}
+                      className={[
+                        'h-10 px-4 rounded-md border text-sm font-medium',
+                        saving || !hasEnoughCoinsForLogo
+                          ? 'border-gray-300 bg-gray-300 text-gray-500 cursor-not-allowed'
+                          : 'border-slate-900 bg-slate-900 text-white hover:bg-slate-800',
+                      ].join(' ')}
                     >
                       {saving
-                      ? 'Applying...'
-                      : customizationAccess?.logo_change_cost
-                        ? `Apply logo · ${customizationAccess.logo_change_cost} coins`
-                        : 'Apply logo · Free'}
+                        ? 'Applying...'
+                        : !hasEnoughCoinsForLogo
+                          ? `Need ${missingLogoCoins} more coin${missingLogoCoins === 1 ? '' : 's'}`
+                          : currentLogoChangeCost > 0
+                            ? `Apply logo · ${currentLogoChangeCost} coins`
+                            : 'Apply logo · Free'}
                     </button>
                   </div>
                 </div>

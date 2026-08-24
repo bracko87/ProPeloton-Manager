@@ -581,8 +581,6 @@ const TERRAIN_LABELS: Record<string, string> = {
   cobbled: 'Cobbled',
 }
 
-const DEFAULT_CURRENT_CLUB_ID = '49caba57-9a5e-4820-b4bf-06cfc684e8b2'
-
 const DEFAULT_TEAM_JERSEY_URL =
   'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/AI%20Teams%20Kits/Genkit34.png'
 const DEFAULT_TEAM_LOGO_URL =
@@ -635,8 +633,9 @@ type ViewerTeamIdSource =
   | Array<string | null | undefined>
   | Set<string>
 
-function getViewerTeamId(currentClubId?: string | null): string {
-  return currentClubId ?? DEFAULT_CURRENT_CLUB_ID
+function getViewerTeamId(currentClubId?: string | null): string | null {
+  const normalizedClubId = currentClubId?.trim()
+  return normalizedClubId || null
 }
 
 function normalizeViewerTeamIds(
@@ -662,7 +661,7 @@ function getViewerTeamIds(
 ): string[] {
   return Array.from(
     normalizeViewerTeamIds([
-      currentClubId ?? DEFAULT_CURRENT_CLUB_ID,
+      currentClubId,
       ...(viewerClubFamilyIds ?? []),
     ])
   )
@@ -9014,40 +9013,124 @@ function StageProfileChart({
       : safeDistanceKm * replayProgressFraction
   const progressTrailGradientId = `stage-progress-trail-gradient-${chartInstanceId}`
   const progressAreaGradientId = `stage-progress-area-gradient-${chartInstanceId}`
+  const progressTrailClipId = `stage-progress-trail-clip-${chartInstanceId}`
   const profileAboveMaskId = `stage-profile-above-mask-${chartInstanceId}`
 
-  const getProfileElevationAtKm = (km: number): number => {
-    const coordinates = [...parsed.coordinates].sort(
-      (left, right) => left.km - right.km
+  /*
+   * IMPORTANT:
+   * The stage profile itself is a cubic Bezier path. The replay progress must
+   * therefore use that exact same geometry. A linear elevation interpolation
+   * can sit above or below the visible road between stored profile points.
+   *
+   * This helper solves the Bezier segment at the exact chart X for the requested
+   * kilometre, so current-position markers always terminate on the black road.
+   */
+  const profileCoordinates = [...parsed.coordinates].sort(
+    (left, right) => left.km - right.km
+  )
+
+  const cubicValue = (
+    start: number,
+    control1: number,
+    control2: number,
+    end: number,
+    t: number
+  ): number => {
+    const inverse = 1 - t
+    return (
+      inverse * inverse * inverse * start +
+      3 * inverse * inverse * t * control1 +
+      3 * inverse * t * t * control2 +
+      t * t * t * end
     )
-
-    if (coordinates.length === 0) return parsed.minElevation
-    if (km <= coordinates[0].km) return coordinates[0].elevation_m
-
-    for (let index = 1; index < coordinates.length; index += 1) {
-      const previous = coordinates[index - 1]
-      const next = coordinates[index]
-
-      if (km > next.km) continue
-
-      const distance = Math.max(0.001, next.km - previous.km)
-      const fraction = Math.max(0, Math.min(1, (km - previous.km) / distance))
-
-      return (
-        previous.elevation_m +
-        (next.elevation_m - previous.elevation_m) * fraction
-      )
-    }
-
-    return coordinates[coordinates.length - 1].elevation_m
   }
 
-  const replayProgressX =
-    replayProgressKm === null ? null : xForKm(replayProgressKm)
-  const replayProgressY =
-    replayProgressKm === null
-      ? null
-      : yForElevation(getProfileElevationAtKm(replayProgressKm))
+  const getProfilePointAtKm = (
+    km: number
+  ): { x: number; y: number; km: number; elevation_m: number } => {
+    const targetKm = Math.max(minKm, Math.min(maxKm, Number(km)))
+    const targetX = xForKm(targetKm)
+
+    if (profileCoordinates.length === 0) {
+      return {
+        x: targetX,
+        y: yForElevation(parsed.minElevation),
+        km: targetKm,
+        elevation_m: parsed.minElevation,
+      }
+    }
+
+    if (targetKm <= profileCoordinates[0].km) {
+      return { ...profileCoordinates[0], x: targetX, km: targetKm }
+    }
+
+    const lastCoordinate = profileCoordinates[profileCoordinates.length - 1]
+    if (targetKm >= lastCoordinate.km) {
+      return { ...lastCoordinate, x: targetX, km: targetKm }
+    }
+
+    for (let index = 1; index < profileCoordinates.length; index += 1) {
+      const previous = profileCoordinates[index - 1]
+      const next = profileCoordinates[index]
+
+      if (targetKm > next.km) continue
+
+      const controlX = (previous.x + next.x) / 2
+
+      /*
+       * x(t) is monotonic for this profile curve, so a small binary search gives
+       * the exact point on the same Bezier segment that the black line uses.
+       */
+      let low = 0
+      let high = 1
+
+      for (let iteration = 0; iteration < 28; iteration += 1) {
+        const middle = (low + high) / 2
+        const middleX = cubicValue(
+          previous.x,
+          controlX,
+          controlX,
+          next.x,
+          middle
+        )
+
+        if (middleX < targetX) {
+          low = middle
+        } else {
+          high = middle
+        }
+      }
+
+      const t = (low + high) / 2
+      const y = cubicValue(
+        previous.y,
+        previous.y,
+        next.y,
+        next.y,
+        t
+      )
+      const elevationSpan = Math.max(parsed.maxElevation - parsed.minElevation, 1)
+      const elevation_m =
+        parsed.minElevation +
+        ((padding.top + innerHeight - y) / Math.max(innerHeight, 1)) *
+          elevationSpan
+
+      return {
+        x: targetX,
+        y,
+        km: targetKm,
+        elevation_m,
+      }
+    }
+
+    return { ...lastCoordinate, x: targetX, km: targetKm }
+  }
+
+  const replayProgressPoint =
+    replayProgressKm === null ? null : getProfilePointAtKm(replayProgressKm)
+  const replayProgressX = replayProgressPoint?.x ?? null
+  const replayProgressY = replayProgressPoint?.y ?? null
+
   const activeReplayEntityMarkers = replayEntityMarkers
     .map((marker) => {
       const progressFraction = Math.max(
@@ -9055,14 +9138,17 @@ function StageProfileChart({
         Math.min(1, Number(marker.progressPercent) / 100)
       )
       const km = safeDistanceKm * progressFraction
+      const profilePoint = getProfilePointAtKm(km)
+
       return {
         ...marker,
         km,
-        x: xForKm(km),
-        y: yForElevation(getProfileElevationAtKm(km)),
+        x: profilePoint.x,
+        y: profilePoint.y,
       }
     })
     .filter((marker) => marker.progressPercent > 0 && marker.progressPercent < 100)
+
   const activeAuxiliaryMarkers = auxiliaryMarkers
     .map((marker) => ({
       ...marker,
@@ -9070,76 +9156,6 @@ function StageProfileChart({
       color: marker.color ?? '#16a34a',
     }))
     .filter((marker) => marker.km > 0 && marker.km < safeDistanceKm)
-
-  const progressTrailPath = (() => {
-    if (replayProgressKm === null || replayProgressKm <= 0) return ''
-
-    const sourceCoordinates = [...parsed.coordinates].sort(
-      (left, right) => left.km - right.km
-    )
-    const trailCoordinates = sourceCoordinates.filter(
-      (point) => point.km < replayProgressKm - 0.000001
-    )
-
-    trailCoordinates.push({
-      x: xForKm(replayProgressKm),
-      y: yForElevation(getProfileElevationAtKm(replayProgressKm)),
-      km: replayProgressKm,
-      elevation_m: getProfileElevationAtKm(replayProgressKm),
-    })
-
-    if (trailCoordinates.length === 0) return ''
-
-    return trailCoordinates.reduce((path, point, index) => {
-      if (index === 0) return `M ${point.x} ${point.y}`
-
-      const previous = trailCoordinates[index - 1]
-      const controlX = (previous.x + point.x) / 2
-
-      return `${path} C ${controlX} ${previous.y}, ${controlX} ${point.y}, ${point.x} ${point.y}`
-    }, '')
-  })()
-
-  const progressCompletedAreaPath = (() => {
-    if (
-      replayProgressKm === null ||
-      replayProgressKm <= 0 ||
-      replayProgressX === null ||
-      replayProgressY === null
-    ) {
-      return ''
-    }
-
-    const sourceCoordinates = [...parsed.coordinates].sort(
-      (left, right) => left.km - right.km
-    )
-    const completedTerrainCoordinates = sourceCoordinates.filter(
-      (point) => point.km < replayProgressKm - 0.000001
-    )
-
-    completedTerrainCoordinates.push({
-      x: replayProgressX,
-      y: replayProgressY,
-      km: replayProgressKm,
-      elevation_m: getProfileElevationAtKm(replayProgressKm),
-    })
-
-    if (completedTerrainCoordinates.length === 0) return ''
-
-    const terrainReturnPath = [...completedTerrainCoordinates]
-      .reverse()
-      .map((point) => `L ${point.x} ${point.y}`)
-      .join(' ')
-
-    return [
-      `M ${padding.left} ${padding.top}`,
-      `L ${replayProgressX} ${padding.top}`,
-      `L ${replayProgressX} ${replayProgressY}`,
-      terrainReturnPath,
-      `L ${padding.left} ${padding.top}`,
-      'Z',
-    ].join(' ')
-  })()
 
   return (
     <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
@@ -9152,6 +9168,17 @@ function StageProfileChart({
         </defs>
         {replayProgressX !== null ? (
           <defs>
+            <clipPath
+              id={progressTrailClipId}
+              clipPathUnits="userSpaceOnUse"
+            >
+              <rect
+                x={padding.left}
+                y="0"
+                width={Math.max(0, replayProgressX - padding.left)}
+                height={height}
+              />
+            </clipPath>
             <linearGradient
               id={progressTrailGradientId}
               gradientUnits="userSpaceOnUse"
@@ -9206,10 +9233,14 @@ function StageProfileChart({
           )
         })}
 
-        {progressCompletedAreaPath ? (
-          <path
-            d={progressCompletedAreaPath}
+        {replayProgressX !== null && replayProgressX > padding.left ? (
+          <rect
+            x={padding.left}
+            y={padding.top}
+            width={Math.max(0, replayProgressX - padding.left)}
+            height={innerHeight}
             fill={`url(#${progressAreaGradientId})`}
+            mask={`url(#${profileAboveMaskId})`}
             pointerEvents="none"
           />
         ) : null}
@@ -9219,14 +9250,15 @@ function StageProfileChart({
 
         {replayProgressX !== null && replayProgressY !== null ? (
           <g aria-label={`Replay progress ${Math.round(replayProgressPercent ?? 0)} percent`}>
-            {progressTrailPath ? (
+            {replayProgressKm !== null && replayProgressKm > 0 ? (
               <path
-                d={progressTrailPath}
+                d={parsed.linePath}
                 fill="none"
                 stroke={`url(#${progressTrailGradientId})`}
                 strokeWidth={compact ? 3.25 : 4}
                 strokeLinecap="round"
                 strokeLinejoin="round"
+                clipPath={`url(#${progressTrailClipId})`}
               />
             ) : null}
             <line
@@ -16368,7 +16400,7 @@ const RACE_ENTRY_RULES_DETAIL_SELECT = `
 
 export default function RaceDetailPage({
   raceIdOverride = null,
-  currentClubId = DEFAULT_CURRENT_CLUB_ID,
+  currentClubId = null,
   onBack,
   onOpenTeamProfile,
   onOpenRiderProfile,
@@ -16382,7 +16414,11 @@ export default function RaceDetailPage({
   const [searchParams, setSearchParams] = useSearchParams()
   const routeRaceId = useRaceIdFromRoute()
   const raceId = raceIdOverride ?? routeRaceId
-  const resolvedViewerClubId = currentClubId ?? DEFAULT_CURRENT_CLUB_ID
+  const explicitViewerClubId = getViewerTeamId(currentClubId)
+  const [authenticatedViewerClubId, setAuthenticatedViewerClubId] = useState<string | null>(
+    explicitViewerClubId
+  )
+  const resolvedViewerClubId = explicitViewerClubId ?? authenticatedViewerClubId
 
   function getRaceDetailReturnState(): RaceDetailReturnState | null {
     return location.state as RaceDetailReturnState | null
@@ -16646,9 +16682,9 @@ export default function RaceDetailPage({
   const [currentMonthNumber, setCurrentMonthNumber] = useState<number>(1)
   const [currentDayNumber, setCurrentDayNumber] = useState<number>(1)
   const [participantTeams, setParticipantTeams] = useState<RaceParticipantTeam[]>([])
-  const [viewerClubFamilyIds, setViewerClubFamilyIds] = useState<string[]>([
-    resolvedViewerClubId,
-  ])
+  const [viewerClubFamilyIds, setViewerClubFamilyIds] = useState<string[]>(
+    getViewerTeamIds(resolvedViewerClubId)
+  )
   const [participantsLoading, setParticipantsLoading] = useState(false)
   const [participantsError, setParticipantsError] = useState<string | null>(null)
   const [applicationActionLoading, setApplicationActionLoading] = useState<
@@ -16804,10 +16840,60 @@ export default function RaceDetailPage({
   useEffect(() => {
     let cancelled = false
 
+    if (explicitViewerClubId) {
+      setAuthenticatedViewerClubId(explicitViewerClubId)
+      return () => {
+        cancelled = true
+      }
+    }
+
+    // Never fall back to a fixed/test club while the authenticated viewer is resolving.
+    setAuthenticatedViewerClubId(null)
+    setViewerClubFamilyIds([])
+
+    async function loadAuthenticatedViewerClubId() {
+      let resolvedClubId: string | null = null
+
+      const primaryClubRes = await raceDetailReadRpc('get_my_primary_club_id')
+
+      if (cancelled) return
+
+      if (!primaryClubRes.error && typeof primaryClubRes.data === 'string') {
+        resolvedClubId = getViewerTeamId(primaryClubRes.data)
+      } else {
+        const fallbackClubRes = await raceDetailReadRpc('get_my_club_id')
+
+        if (cancelled) return
+
+        if (!fallbackClubRes.error && typeof fallbackClubRes.data === 'string') {
+          resolvedClubId = getViewerTeamId(fallbackClubRes.data)
+        } else if (primaryClubRes.error || fallbackClubRes.error) {
+          console.warn(
+            'Could not resolve the authenticated viewer club:',
+            primaryClubRes.error?.message ?? fallbackClubRes.error?.message ?? 'Unknown error'
+          )
+        }
+      }
+
+      setAuthenticatedViewerClubId(
+        resolvedClubId && isUuid(resolvedClubId) ? resolvedClubId : null
+      )
+    }
+
+    void loadAuthenticatedViewerClubId()
+
+    return () => {
+      cancelled = true
+    }
+  }, [explicitViewerClubId])
+
+  useEffect(() => {
+    let cancelled = false
+
     async function loadViewerClubFamily() {
       const fallbackIds = getViewerTeamIds(resolvedViewerClubId)
 
-      if (!isUuid(resolvedViewerClubId)) {
+      if (!resolvedViewerClubId || !isUuid(resolvedViewerClubId)) {
         setViewerClubFamilyIds(fallbackIds)
         return
       }
