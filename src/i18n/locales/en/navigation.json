@@ -19,6 +19,12 @@
   "help": "Help",
   "signIn": "Sign In",
   "signOut": "Sign Out",
+  "logout": "Logout",
+  "customizeTeam": "Customize Team",
+  "forum": "Forum",
+  "contactUs": "Contact Us",
+  "proPackages": "Pro Packages",
+  "inviteFriends": "Invite Friends",
   "subtitle": "Multiplayer cycling management",
   "descriptions": {
     "overview": "Club snapshot and updates",
@@ -32,5 +38,28 @@
     "finance": "Budget, income and costs",
     "transfers": "Buy, sell and negotiate",
     "statistics": "Performance and analytics"
+  },
+  "header": {
+    "toggleSidebar": "Toggle sidebar",
+    "teamName": "Team Name:",
+    "namingRights": "Naming rights",
+    "premiumAccountMember": "Premium account member",
+    "freeAccountMember": "Free account member. View Premium",
+    "premiumAccount": "Premium account",
+    "freeAccount": "Free account — view Premium",
+    "account": "Account",
+    "premium": "Premium",
+    "free": "Free",
+    "coin": "Coin",
+    "coins": "Coins",
+    "notifications": "Notifications",
+    "openProfileMenu": "Open profile menu",
+    "menu": "Menu",
+    "profileMenu": "Profile menu",
+    "team": "Team:",
+    "originalClub": "Original club:",
+    "clubCountry": "Club country",
+    "manager": "Manager",
+    "ranking": "{{position}} in {{competition}} Ranking"
   }
 }
