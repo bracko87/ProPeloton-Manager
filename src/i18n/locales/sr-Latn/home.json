@@ -81,6 +81,7 @@
     "previous": "Prethodni snimci",
     "next": "Sledeći snimci",
     "close": "Zatvori snimak",
+    "openPage": "Otvori stranu snimaka {{page}}",
     "page": "Strana {{current}} od {{total}}"
   },
   "reviews": {
