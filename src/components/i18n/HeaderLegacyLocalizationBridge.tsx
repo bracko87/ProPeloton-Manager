@@ -138,23 +138,25 @@ export default function HeaderLegacyLocalizationBridge(): null {
 
       if (membershipButton) {
         let state = membershipState.get(membershipButton)
+        const aria = membershipButton.getAttribute('aria-label') ?? ''
+        const text = normalizeText(membershipButton.textContent ?? '')
 
-        if (!state) {
-          const aria = membershipButton.getAttribute('aria-label') ?? ''
-          const text = normalizeText(membershipButton.textContent ?? '')
-
+        // The membership button initially renders a loading/default state and can
+        // later resolve to Premium. Always trust the resolved visible state when
+        // it is available instead of permanently caching the initial fallback.
+        if (text === 'Premium' || text === t('header.premium')) {
+          state = 'premium'
+        } else if (text === 'Free' || text === t('header.free')) {
+          state = 'free'
+        } else if (!state) {
           if (/premium/i.test(aria) && !/free/i.test(aria)) {
             state = 'premium'
           } else if (/free/i.test(aria)) {
             state = 'free'
-          } else if (text === 'Premium') {
-            state = 'premium'
-          } else if (text === 'Free') {
-            state = 'free'
           }
-
-          if (state) membershipState.set(membershipButton, state)
         }
+
+        if (state) membershipState.set(membershipButton, state)
 
         if (state === 'premium') {
           membershipButton.setAttribute('aria-label', t('header.premiumAccountMember'))
