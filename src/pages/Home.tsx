@@ -463,7 +463,10 @@ export default function HomePage(): JSX.Element {
       }
 
       if (!data) {
-        navigate('/create-club', { replace: true })
+        setClubError(
+          'New club creation is temporarily disabled while ProPeloton Manager is still in development. Existing managers can continue to sign in.',
+        )
+        setCheckingClub(false)
       } else {
         navigate('/dashboard/overview', { replace: true })
       }
@@ -581,11 +584,185 @@ export default function HomePage(): JSX.Element {
     )
   }
 
+  useEffect(() => {
+    const root = document.getElementById('public-homepage')
+
+    if (!root) return
+
+    const lockedRouteParts = [
+      '/register',
+      '/signup',
+      '/sign-up',
+      '/create-club',
+      '/create-team',
+      '/new-club',
+      '/new-team',
+    ]
+
+    const lockedLabels = [
+      'start playing',
+      'play now',
+      'register',
+      'register now',
+      'sign up',
+      'sign up now',
+      'create club',
+      'create a club',
+      'create your club',
+      'create team',
+      'create a team',
+      'create your team',
+      'new club',
+      'new team',
+      'get started',
+      'get started now',
+      'build your club',
+      'build your team',
+      'start your club',
+      'start your team',
+      'join the game',
+      'join now',
+      'become a manager',
+    ]
+
+    const normalizeText = (value: string): string =>
+      value.replace(/\s+/g, ' ').trim().toLowerCase()
+
+    const isLockedAction = (element: Element): boolean => {
+      if (element.getAttribute('data-registration-locked') === 'true') {
+        return true
+      }
+
+      const label = normalizeText(element.textContent || '')
+      const href =
+        element instanceof HTMLAnchorElement
+          ? normalizeText(element.getAttribute('href') || '')
+          : ''
+
+      const routeIsLocked = lockedRouteParts.some(route => href.includes(route))
+      const labelIsLocked = lockedLabels.some(lockedLabel => {
+        return (
+          label === lockedLabel ||
+          label.startsWith(`${lockedLabel} `) ||
+          label.endsWith(` ${lockedLabel}`)
+        )
+      })
+
+      return routeIsLocked || labelIsLocked
+    }
+
+    const lockAction = (element: Element): void => {
+      if (!isLockedAction(element)) return
+
+      element.setAttribute('data-registration-locked', 'true')
+      element.setAttribute('aria-disabled', 'true')
+      element.setAttribute(
+        'title',
+        'Temporarily unavailable while ProPeloton Manager is still in development',
+      )
+
+      if (element instanceof HTMLAnchorElement) {
+        const href = element.getAttribute('href')
+
+        if (href && !element.getAttribute('data-locked-href')) {
+          element.setAttribute('data-locked-href', href)
+        }
+
+        // Removing href makes React Router/normal browser navigation impossible.
+        element.removeAttribute('href')
+        element.tabIndex = -1
+      }
+
+      if (element instanceof HTMLButtonElement) {
+        // Native disabled state prevents mouse, keyboard and form activation.
+        element.disabled = true
+      }
+    }
+
+    const disableRegistrationActions = (): void => {
+      root.querySelectorAll('a, button, [role=\"button\"]').forEach(lockAction)
+    }
+
+    const blockLockedAction = (event: Event): void => {
+      const target = event.target
+
+      if (!(target instanceof Element)) return
+
+      const actionElement = target.closest('a, button, [role=\"button\"]')
+
+      if (!actionElement || !isLockedAction(actionElement)) return
+
+      event.preventDefault()
+      event.stopPropagation()
+
+      if (typeof event.stopImmediatePropagation === 'function') {
+        event.stopImmediatePropagation()
+      }
+    }
+
+    const blockLockedKeyboardAction = (event: KeyboardEvent): void => {
+      if (event.key !== 'Enter' && event.key !== ' ') return
+      blockLockedAction(event)
+    }
+
+    disableRegistrationActions()
+
+    // Native capture listeners run before child click handlers. This blocks even
+    // buttons inside Hero/CTA that navigate programmatically instead of by href.
+    root.addEventListener('pointerdown', blockLockedAction, true)
+    root.addEventListener('click', blockLockedAction, true)
+    root.addEventListener('keydown', blockLockedKeyboardAction, true)
+
+    const observer = new MutationObserver(() => {
+      disableRegistrationActions()
+    })
+
+    observer.observe(root, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ['href'],
+    })
+
+    return () => {
+      observer.disconnect()
+      root.removeEventListener('pointerdown', blockLockedAction, true)
+      root.removeEventListener('click', blockLockedAction, true)
+      root.removeEventListener('keydown', blockLockedKeyboardAction, true)
+    }
+  }, [])
+
   const activeReview = reviews[activeReviewIndex]
   const activeRating = normalizeRating(activeReview?.rating)
 
   return (
-    <div className="min-h-screen bg-[#081224] text-white">
+    <div
+      id="public-homepage"
+      className="home-registration-locked min-h-screen bg-[#081224] text-white"
+    >
+      <style>{`
+        .home-registration-locked [data-registration-locked='true'] {
+          cursor: not-allowed !important;
+          opacity: 0.42 !important;
+          filter: grayscale(1) !important;
+          background-color: #475569 !important;
+          border-color: #64748b !important;
+          color: #cbd5e1 !important;
+          box-shadow: none !important;
+          text-decoration: none !important;
+          transform: none !important;
+        }
+
+        .home-registration-locked [data-registration-locked='true']:hover,
+        .home-registration-locked [data-registration-locked='true']:focus,
+        .home-registration-locked [data-registration-locked='true']:active {
+          background-color: #475569 !important;
+          border-color: #64748b !important;
+          color: #cbd5e1 !important;
+          box-shadow: none !important;
+          transform: none !important;
+        }
+      `}</style>
       <header className="border-b border-white/15">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-2">
           <div className="flex items-center gap-4">
@@ -604,12 +781,16 @@ export default function HomePage(): JSX.Element {
               Sign In
             </a>
 
-            <a
-              href="#/register"
-              className="rounded-md bg-yellow-400 px-4 py-2 text-sm font-bold text-black hover:bg-yellow-300"
+            <button
+              type="button"
+              disabled
+              aria-disabled="true"
+              title="Temporarily unavailable while the game is in development"
+              data-registration-locked="true"
+              className="cursor-not-allowed rounded-md bg-slate-600 px-4 py-2 text-sm font-bold text-slate-300"
             >
               Start Playing
-            </a>
+            </button>
           </nav>
         </div>
       </header>
@@ -1114,9 +1295,13 @@ export default function HomePage(): JSX.Element {
                 Sign In
               </a>
 
-              <a href="#/register" className="text-sm text-white/70 hover:text-yellow-400">
+              <span
+                aria-disabled="true"
+                title="Temporarily unavailable while the game is in development"
+                className="cursor-not-allowed text-sm text-white/35"
+              >
                 Start Playing
-              </a>
+              </span>
             </div>
           </nav>
 

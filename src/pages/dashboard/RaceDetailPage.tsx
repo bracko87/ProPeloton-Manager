@@ -1,5 +1,15 @@
 'use client'
 
+/*
+ * TEAM LOGO CONSISTENCY FIX:
+ * - public.clubs.logo_path is authoritative for current team branding.
+ * - logo_path is resolved before all legacy/default logo URL fields.
+ * - Bare logo_path values are resolved through the club-logos bucket.
+ * - Race-team-entry ids are resolved to real club ids before loading branding.
+ * - Current club logos override race-entry logo snapshots/default logos.
+ * - Historical/default snapshots remain fallback only when no current logo exists.
+ */
+
 // Phase 9 remains engine-owned: this page consumes the completed deterministic
 // result, exposes its verification report, and never recalculates modifiers.
 import React, { useEffect, useId, useMemo, useRef, useState } from 'react'
@@ -4527,12 +4537,83 @@ function normalizeTeamLogoUrl(value?: string | null): string | null {
 function getTeamLogoUrlFromRecord(record: Record<string, unknown>): string | null {
   for (const key of TEAM_LOGO_FIELD_KEYS) {
     const rawLogoValue = getLogoStringFromUnknown(record[key])
-    const logoUrl = normalizeTeamLogoUrl(rawLogoValue)
+    if (!rawLogoValue) continue
 
-    if (logoUrl) return logoUrl
+    const logoUrl = normalizeTeamLogoUrl(rawLogoValue)
+    if (!logoUrl) continue
+
+    // A normal clubs.logo_path from Create Club / Customize Team is usually
+    // a bare storage path (for example generated/base-<clubId>.png or
+    // <clubId>/<file>.png). Treat those as objects in club-logos instead of
+    // passing the raw path directly to <img src>.
+    const isAbsoluteOrEmbedded =
+      /^(https?:\/\/|data:image\/|blob:|\/\/)/i.test(rawLogoValue)
+
+    const hasExplicitStorageBucket =
+      TEAM_LOGO_STORAGE_BUCKETS.some((bucket) =>
+        rawLogoValue.replace(/^public\//i, '').replace(/^\/+/, '').startsWith(`${bucket}/`)
+      )
+
+    const isPublicStorageUrl =
+      /\/storage\/v1\/object\/public\//i.test(rawLogoValue)
+
+    if (!isAbsoluteOrEmbedded && !hasExplicitStorageBucket && !isPublicStorageUrl) {
+      return getPublicStorageLogoUrl('club-logos', rawLogoValue)
+    }
+
+    return logoUrl
   }
 
   return null
+}
+
+function getCurrentClubLogoUrlFromRecord(
+  record: Record<string, unknown>
+): string | null {
+  // public.clubs.logo_path is the canonical CURRENT team logo.
+  // Do not allow older/default logo_url/image_url fields to win before it.
+  const rawLogoPath = getLogoStringFromUnknown(
+    record.logo_path ?? record.logoPath
+  )
+
+  if (rawLogoPath) {
+    if (/^(https?:\/\/|data:image\/|blob:|\/\/)/i.test(rawLogoPath)) {
+      return normalizeTeamLogoUrl(rawLogoPath)
+    }
+
+    const publicStorageMatch = rawLogoPath.match(
+      /\/storage\/v1\/object\/public\/([^/?#]+)\/([^?#]+)/i
+    )
+
+    if (publicStorageMatch) {
+      return getPublicStorageLogoUrl(
+        decodeURIComponent(publicStorageMatch[1]),
+        decodeURIComponent(publicStorageMatch[2])
+      )
+    }
+
+    const cleanValue = rawLogoPath
+      .replace(/^public\//i, '')
+      .replace(/^\/+/, '')
+
+    const [possibleBucket, ...pathParts] = cleanValue.split('/')
+
+    if (
+      possibleBucket &&
+      pathParts.length > 0 &&
+      TEAM_LOGO_STORAGE_BUCKETS.includes(possibleBucket)
+    ) {
+      return getPublicStorageLogoUrl(
+        possibleBucket,
+        pathParts.join('/')
+      )
+    }
+
+    return getPublicStorageLogoUrl('club-logos', cleanValue)
+  }
+
+  // Legacy/default fields are only fallback when no current logo_path exists.
+  return getTeamLogoUrlFromRecord(record)
 }
 
 function normalizeTeamJerseyColor(
@@ -4630,9 +4711,10 @@ function getRaceParticipantTeamLogoUrl(
   row: RaceParticipantTeamViewRow,
   club: Record<string, unknown>
 ): string | null {
+  // Current public.clubs.logo_path wins. Race snapshots are fallback only.
   return (
-    getTeamLogoUrlFromRecord(row as unknown as Record<string, unknown>) ??
-    getTeamLogoUrlFromRecord(club)
+    getCurrentClubLogoUrlFromRecord(club) ??
+    getTeamLogoUrlFromRecord(row as unknown as Record<string, unknown>)
   )
 }
 
@@ -5103,15 +5185,153 @@ function mergeParticipantTeamLogoUrls(
   })
 }
 
+function applyCurrentClubLogosAsSourceOfTruth(
+  teams: RaceParticipantTeam[],
+  clubRows: Record<string, unknown>[]
+): RaceParticipantTeam[] {
+  if (clubRows.length === 0) return teams
+
+  const clubRecordById = new Map<string, Record<string, unknown>>()
+
+  clubRows.forEach((clubRecord) => {
+    getLogoRecordLookupIds(clubRecord).forEach((lookupId) => {
+      clubRecordById.set(lookupId, clubRecord)
+    })
+  })
+
+  return teams.map((team) => {
+    const preferredClubIds = [
+      team.participating_club_id,
+      team.club_id,
+      team.parent_club_id,
+      team.owner_club_id,
+      ...getParticipantTeamAssetLookupIds(team),
+    ]
+      .map((value) => value?.trim())
+      .filter((value): value is string => Boolean(value))
+
+    const currentClubLogoUrl =
+      Array.from(new Set(preferredClubIds))
+        .map((lookupId) => clubRecordById.get(lookupId))
+        .filter(
+          (record): record is Record<string, unknown> =>
+            Boolean(record)
+        )
+        .map((record) => getCurrentClubLogoUrlFromRecord(record))
+        .find((value): value is string => Boolean(value)) ?? null
+
+    if (!currentClubLogoUrl || currentClubLogoUrl === team.logo_url_snapshot) {
+      return team
+    }
+
+    return {
+      ...team,
+      logo_url_snapshot: currentClubLogoUrl,
+    }
+  })
+}
+
 async function loadParticipantTeamLogos(
   teams: RaceParticipantTeam[],
   raceId?: string | null
 ): Promise<RaceParticipantTeam[]> {
-  const teamIds = getUniqueParticipantTeamIds(teams)
-
-  if (teamIds.length === 0) return teams
-
   let teamsWithLogos = teams
+
+  /*
+   * race_participant_teams_v1 can expose a race-team-entry id in fields that
+   * look like a team id. public.clubs, however, must be queried with the real
+   * club id. Resolve that relationship first from race_team_entries.
+   */
+  let raceEntryRows: Record<string, unknown>[] = []
+
+  if (raceId) {
+    const { data: raceEntryIdentityData, error: raceEntryIdentityError } = await supabase
+      .from('race_team_entries')
+      .select('*')
+      .eq('race_id', raceId)
+
+    if (raceEntryIdentityError) {
+      console.warn(
+        'Could not resolve race participant club ids from race entries:',
+        raceEntryIdentityError.message
+      )
+    } else {
+      raceEntryRows = (raceEntryIdentityData ?? []).map((row) => getRecord(row))
+
+      const raceEntryById = new Map<string, Record<string, unknown>>()
+
+      raceEntryRows.forEach((entryRecord) => {
+        const entryId = getStringField(entryRecord, ['id', 'race_team_entry_id'])
+        if (entryId) raceEntryById.set(entryId, entryRecord)
+      })
+
+      teamsWithLogos = teamsWithLogos.map((team) => {
+        const candidateEntryIds = [
+          team.race_team_entry_id,
+          team.id,
+          team.team_id,
+        ]
+          .map((value) => value?.trim())
+          .filter((value): value is string => Boolean(value))
+
+        const entryRecord =
+          candidateEntryIds
+            .map((entryId) => raceEntryById.get(entryId))
+            .find(
+              (record): record is Record<string, unknown> =>
+                Boolean(record)
+            ) ?? null
+
+        if (!entryRecord) return team
+
+        const actualParticipatingClubId =
+          getStringField(entryRecord, [
+            'participating_club_id',
+            'club_id',
+            'team_id',
+          ]) ?? null
+
+        const actualOwnerClubId =
+          getStringField(entryRecord, [
+            'owner_club_id',
+            'parent_club_id',
+            'club_id',
+          ]) ??
+          actualParticipatingClubId
+
+        if (!actualParticipatingClubId && !actualOwnerClubId) {
+          return team
+        }
+
+        return {
+          ...team,
+          club_id:
+            actualParticipatingClubId ??
+            team.club_id,
+          participating_club_id:
+            actualParticipatingClubId ??
+            team.participating_club_id,
+          owner_club_id:
+            actualOwnerClubId ??
+            team.owner_club_id,
+          parent_club_id:
+            team.parent_club_id ??
+            (
+              actualOwnerClubId &&
+              actualParticipatingClubId &&
+              actualOwnerClubId !== actualParticipatingClubId
+                ? actualOwnerClubId
+                : null
+            ),
+        }
+      })
+    }
+  }
+
+  const teamIds = getUniqueParticipantTeamIds(teamsWithLogos)
+
+  if (teamIds.length === 0) return teamsWithLogos
+
   let clubRows: Record<string, unknown>[] = []
 
   const { data: clubData, error: clubError } = await supabase
@@ -5123,25 +5343,30 @@ async function loadParticipantTeamLogos(
     console.warn('Could not load participant club logos:', clubError.message)
   } else {
     clubRows = (clubData ?? []).map((row) => getRecord(row))
-    teamsWithLogos = mergeParticipantTeamLogoUrls(teamsWithLogos, clubRows)
+
+    const canonicalClubLogoRows = clubRows.map((clubRecord) => ({
+      ...clubRecord,
+      custom_logo_url:
+        getCurrentClubLogoUrlFromRecord(clubRecord) ??
+        getStringField(clubRecord, ['custom_logo_url']) ??
+        null,
+    }))
+
+    teamsWithLogos = mergeParticipantTeamLogoUrls(
+      teamsWithLogos,
+      canonicalClubLogoRows
+    )
   }
 
   /*
    * Race-entry snapshots remain a useful historical fallback, but current
    * live kit sources below are allowed to override them.
    */
-  if (raceId) {
-    const { data: entryData, error: entryError } = await supabase
-      .from('race_team_entries')
-      .select('*')
-      .eq('race_id', raceId)
-      .in('club_id', teamIds)
-
-    if (entryError) {
-      console.warn('Could not load race entry team logos:', entryError.message)
-    } else {
-      teamsWithLogos = mergeParticipantTeamLogoUrls(teamsWithLogos, entryData)
-    }
+  if (raceEntryRows.length > 0) {
+    teamsWithLogos = mergeParticipantTeamLogoUrls(
+      teamsWithLogos,
+      raceEntryRows
+    )
   }
 
   /*
@@ -5201,6 +5426,14 @@ async function loadParticipantTeamLogos(
       enrichedTeamKitRows
     )
   }
+
+  // Some later asset sources contain historical/default logo snapshots.
+  // Re-apply public.clubs branding last so a current custom logo can never be
+  // replaced by the generic race snapshot/default image.
+  teamsWithLogos = applyCurrentClubLogosAsSourceOfTruth(
+    teamsWithLogos,
+    clubRows
+  )
 
   return teamsWithLogos
 }

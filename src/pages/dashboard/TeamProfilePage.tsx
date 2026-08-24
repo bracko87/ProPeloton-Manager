@@ -1,4 +1,12 @@
 /**
+ * TEAM LOGO CONSISTENCY FIX:
+ * - public.clubs.logo_path is authoritative.
+ * - Refreshes the current logo directly from public.clubs.
+ * - Resolves club-logos storage paths before rendering.
+ * - External URL logos continue to work unchanged.
+ */
+
+/**
  * TeamProfilePage.tsx
  * Full-page view for a club / team public profile inside the dashboard.
  *
@@ -478,6 +486,44 @@ function getKitPreviewSrc(kitConfig: unknown): string | null {
   return null
 }
 
+function resolveClubLogoDisplayUrl(logoPath?: string | null): string | null {
+  const value = typeof logoPath === 'string' ? logoPath.trim() : ''
+  if (!value) return null
+
+  if (
+    value.startsWith('http://') ||
+    value.startsWith('https://') ||
+    value.startsWith('data:') ||
+    value.startsWith('blob:')
+  ) {
+    return value
+  }
+
+  if (value.startsWith('//')) {
+    return `https:${value}`
+  }
+
+  const publicStorageMatch = value.match(
+    /\/storage\/v1\/object\/public\/([^/?#]+)\/([^?#]+)/i
+  )
+
+  if (publicStorageMatch) {
+    const bucket = decodeURIComponent(publicStorageMatch[1])
+    const path = decodeURIComponent(publicStorageMatch[2])
+    const { data } = supabase.storage.from(bucket).getPublicUrl(path)
+    return data?.publicUrl ?? null
+  }
+
+  const cleanValue = value
+    .replace(/^public\//i, '')
+    .replace(/^\/+/, '')
+
+  // Create Club / Customize Team persist normal uploaded/generated logos
+  // as paths inside the club-logos bucket.
+  const { data } = supabase.storage.from('club-logos').getPublicUrl(cleanValue)
+  return data?.publicUrl ?? null
+}
+
 /**
  * TeamLogo
  * Displays the team logo with a clean fallback if the image is missing or fails.
@@ -493,12 +539,16 @@ function TeamLogo({
 }): JSX.Element {
   const [imageFailed, setImageFailed] = useState(false)
 
+  const resolvedSrc = useMemo(
+    () => resolveClubLogoDisplayUrl(src),
+    [src]
+  )
+
   useEffect(() => {
     setImageFailed(false)
-  }, [src])
+  }, [resolvedSrc])
 
-  const hasValidSrc = typeof src === 'string' && src.trim().length > 0
-  const showFallback = !hasValidSrc || imageFailed
+  const showFallback = !resolvedSrc || imageFailed
 
   return (
     <div
@@ -508,7 +558,7 @@ function TeamLogo({
         <span className="text-center text-[10px] text-slate-400">No logo</span>
       ) : (
         <img
-          src={src ?? undefined}
+          src={resolvedSrc}
           alt={`${teamName} logo`}
           className="h-full w-full object-contain"
           loading="lazy"
@@ -1099,7 +1149,29 @@ export default function TeamProfilePage(): JSX.Element {
           throw queryError
         }
 
-        const profileRow = data as ClubProfileRecord
+        let profileRow = data as ClubProfileRecord
+
+        // public.clubs.logo_path is the current source of truth for branding.
+        // The profile view can contain an older/null snapshot, so refresh the
+        // logo directly before rendering the page.
+        const { data: currentClubBranding, error: currentClubBrandingError } = await supabase
+          .from('clubs')
+          .select('logo_path')
+          .eq('id', profileRow.club_id)
+          .maybeSingle()
+
+        if (currentClubBrandingError) {
+          console.warn(
+            'Could not refresh current club logo for team profile:',
+            currentClubBrandingError.message
+          )
+        } else if (currentClubBranding) {
+          profileRow = {
+            ...profileRow,
+            logo_path: currentClubBranding.logo_path ?? null,
+          }
+        }
+
         setProfile(profileRow)
 
         const publicInactivity = await loadPublicClubInactivityStatus(profileRow.club_id)
