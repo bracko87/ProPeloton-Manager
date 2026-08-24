@@ -1,7 +1,8 @@
 {
   "header": {
     "signIn": "Prijava",
-    "startPlaying": "Počni da igraš"
+    "startPlaying": "Počni da igraš",
+    "registrationUnavailable": "Privremeno nedostupno dok je igra još u razvoju"
   },
   "beta": {
     "badge": "Beta verzija",
@@ -9,10 +10,116 @@
     "body": "Igra se još uvek testira i unapređuje. Ako želite da postanete test igrač i pomognete nam da testiramo ProPeloton Manager, prvo nas kontaktirajte na našem Discord serveru. Tamo ćemo vam dati sledeće korake.",
     "discord": "Kontaktirajte nas na Discord-u",
     "continue": "Nastavi na sajt",
+    "close": "Zatvori",
     "closeLabel": "Zatvori beta obaveštenje"
+  },
+  "hero": {
+    "seasonalMultiplayer": "Sezonski multiplayer",
+    "titleLine1": "Izgradi svoju biciklističku ostavštinu.",
+    "titleLine2": "Upravljaj timom.",
+    "titleLine3": "Ovladaj sezonom.",
+    "description": "ProPeloton Manager je online igra upravljanja biciklističkim timom u kojoj kreiraš svoj klub, razvijaš vozače, planiraš kalendar trka, pregovaraš o transferima i takmičiš se protiv pravih menadžera u sezonskom biciklističkom svetu.",
+    "gameTime": "Vreme u igri",
+    "multiplayer": "Multiplayer",
+    "liveManagerLeagues": "Lige sa pravim menadžerima",
+    "progression": "Napredak",
+    "progressionValue": "Turniri, rang-liste i nagrade",
+    "imageAlt": "Biciklisti na usponu",
+    "loadingGameTime": "Učitavanje vremena u igri...",
+    "season": "Sezona"
+  },
+  "raceSchedule": {
+    "title": "Raspored trka",
+    "subtitle": "Juče, danas i sutra u svetu ProPeloton Manager-a.",
+    "loading": "Učitavanje trka...",
+    "yesterday": "Jučerašnje trke",
+    "today": "Današnje trke",
+    "tomorrow": "Sutrašnje trke",
+    "emptyYesterday": "Juče nije bilo zakazanih etapa.",
+    "emptyToday": "Danas nema zakazanih etapa.",
+    "emptyTomorrow": "Sutra nema zakazanih etapa.",
+    "flagAlt": "Zastava: {{country}}"
   },
   "stats": {
     "title": "Brza statistika",
-    "subtitle": "Pregled sveta ProPeloton Manager-a uživo."
+    "subtitle": "Pregled sveta ProPeloton Manager-a uživo.",
+    "activeManagers": "Aktivni menadžeri",
+    "teams": "Timovi",
+    "races": "Trke",
+    "stages": "Etape"
+  },
+  "guide": {
+    "title": "Kako funkcioniše ProPeloton Manager",
+    "subtitle": "Izgradi klub iza vozača i donosi odluke koje oblikuju svaku sezonu.",
+    "whatTitle": "Šta je ProPeloton Manager?",
+    "whatText": "ProPeloton Manager je online igra upravljanja biciklističkim timom u kojoj kreiraš i razvijaš svoj biciklistički klub. Umesto da direktno kontrolišeš vozača, upravljaš timom iza trke: vozačima, treninzima, planovima trke, osobljem, opremom, finansijama, sponzorima, transferima i dugoročnim napretkom na rang-listi.",
+    "howTitle": "Kako se igra?",
+    "howText": "Menadžeri formiraju sastav, proučavaju kalendar trka, prijavljuju se za odgovarajuće trke, pripremaju planove trke, biraju vozače, dodeljuju uloge, upravljaju zalihama i prate rezultate. Dobre odluke zavise od sposobnosti vozača, umora, morala, profila trke, vremena, budžeta i ciljeva sezone.",
+    "preparationTitle": "Zašto je priprema važna?",
+    "preparationText": "Jak vozač sam po sebi nije dovoljan. Priprema trke povezuje vozače, osoblje, vozila, opremu, zalihe i taktiku. Planiranje unapred pomaže timu da bude spreman za sprintove, uspone, hronometre, etapne trke i teške vremenske uslove."
+  },
+  "screenshots": {
+    "title": "Snimci iz igre",
+    "subtitle": "Pogled na upravljanje timom, pripremu trke, taktiku i biciklistički svet ProPeloton Manager-a.",
+    "previous": "Prethodni snimci",
+    "next": "Sledeći snimci",
+    "close": "Zatvori snimak",
+    "page": "Strana {{current}} od {{total}}"
+  },
+  "reviews": {
+    "title": "Ocene igrača",
+    "subtitle": "Utisci menadžera koji testiraju ProPeloton Manager.",
+    "loading": "Učitavanje ocena...",
+    "unavailable": "Ocene su trenutno nedostupne.",
+    "recently": "Nedavno",
+    "previous": "Prethodna ocena",
+    "next": "Sledeća ocena",
+    "leaveReview": "Ostavi ocenu",
+    "yourName": "Vaše ime",
+    "yourEmail": "Vaš email",
+    "rating": "Ocena",
+    "review": "Komentar",
+    "submit": "Pošalji ocenu",
+    "submitting": "Slanje...",
+    "nameRequired": "Unesite svoje ime.",
+    "nameMin": "Unesite najmanje 2 karaktera.",
+    "emailRequired": "Unesite svoj email.",
+    "emailInvalid": "Unesite važeću email adresu.",
+    "ratingInvalid": "Izaberite ocenu od 1 do 5.",
+    "messageRequired": "Napišite svoj komentar.",
+    "messageMin": "Napišite najmanje 20 karaktera.",
+    "messageMax": "Komentar mora imati manje od 1200 karaktera.",
+    "submitFailed": "Ocena nije mogla biti poslata.",
+    "submitSuccess": "Hvala. Vaša ocena je poslata i biće prikazana nakon odobrenja."
+  },
+  "cta": {
+    "badge": "Pridruži se takmičenju",
+    "title": "Spreman da izgradiš svoju dinastiju?",
+    "body": "Kreiraj klub, dovedi vozače i takmiči se u sezonskim ligama.",
+    "createClub": "Kreiraj klub",
+    "signIn": "Prijava"
+  },
+  "footer": {
+    "game": "Igra",
+    "legal": "Pravne informacije",
+    "community": "Zajednica",
+    "about": "O igri",
+    "howToPlay": "Kako igrati",
+    "gameGuide": "Vodič kroz igru",
+    "contact": "Kontakt",
+    "privacyPolicy": "Politika privatnosti",
+    "terms": "Uslovi korišćenja",
+    "facebook": "Facebook",
+    "discord": "Discord",
+    "email": "Email"
+  },
+  "status": {
+    "preparingAccount": "Priprema vašeg menadžerskog naloga...",
+    "loadingGameTime": "Učitavanje vremena u igri...",
+    "gameTimeUnavailable": "Vreme u igri trenutno nije dostupno",
+    "homepageDataUnavailable": "Podaci sa početne strane trenutno nisu dostupni.",
+    "homepageDataUnexpected": "Podaci sa početne strane vraćeni su u neočekivanom formatu.",
+    "clubStatusError": "Prijavljeni ste, ali nismo uspeli da učitamo status vašeg kluba. Osvežite stranicu ili pokušajte ponovo.",
+    "clubCreationDisabled": "Kreiranje novih klubova je privremeno onemogućeno dok je ProPeloton Manager još u razvoju. Postojeći menadžeri mogu i dalje da se prijave."
   }
 }
