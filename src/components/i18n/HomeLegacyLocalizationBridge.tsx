@@ -221,6 +221,7 @@ const attributeKeys: Array<{
 const nodeKey = new WeakMap<Node, string>()
 const dynamicReviewPosition = new WeakMap<Node, { current: string; total: string }>()
 const attributeKey = new WeakMap<Element, Map<string, string>>()
+const screenshotPage = new WeakMap<Element, string>()
 
 function normalizeText(value: string): string {
   return value.replace(/\s+/g, ' ').trim()
@@ -312,15 +313,25 @@ export default function HomeLegacyLocalizationBridge(): JSX.Element | null {
           })
         })
 
-        // Screenshot pagination labels are generated dynamically.
-        root.querySelectorAll('[aria-label^="Open screenshot page "]').forEach(element => {
-          const label = element.getAttribute('aria-label') ?? ''
-          const match = label.match(/^Open screenshot page\s+(\d+)$/)
-          if (!match) return
-          element.setAttribute(
-            'aria-label',
-            t('screenshots.page', { current: match[1], total: match[1] }),
-          )
+        // Screenshot page controls use dynamically generated aria-labels. Tag the
+        // page number once so the label can switch in both directions afterwards.
+        root.querySelectorAll('button[aria-label]').forEach(element => {
+          let page = screenshotPage.get(element)
+          if (!page) {
+            const label = element.getAttribute('aria-label') ?? ''
+            const match = label.match(/^Open screenshot page\s+(\d+)$/)
+            if (match) {
+              page = match[1]
+              screenshotPage.set(element, page)
+            }
+          }
+
+          if (page) {
+            const translated = t('screenshots.openPage', { page })
+            if (element.getAttribute('aria-label') !== translated) {
+              element.setAttribute('aria-label', translated)
+            }
+          }
         })
       } finally {
         applying = false
