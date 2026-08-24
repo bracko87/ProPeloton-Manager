@@ -4,12 +4,14 @@ import './i18n'
 import App from './App'
 import LanguagePreferenceSync from './components/i18n/LanguagePreferenceSync'
 import LanguageSelectorHost from './components/i18n/LanguageSelectorHost'
+import HomeLegacyLocalizationBridge from './components/i18n/HomeLegacyLocalizationBridge'
 
 const root = createRoot(document.getElementById('app')!)
 root.render(
   <>
     <LanguagePreferenceSync />
     <LanguageSelectorHost />
+    <HomeLegacyLocalizationBridge />
     <App />
   </>,
 )
