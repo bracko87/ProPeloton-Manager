@@ -1,0 +1,18 @@
+{
+  "header": {
+    "signIn": "Sign In",
+    "startPlaying": "Start Playing"
+  },
+  "beta": {
+    "badge": "Beta version",
+    "title": "ProPeloton Manager is currently in beta testing.",
+    "body": "The game is still being tested and improved. If you would like to become a test player and help us test ProPeloton Manager, please contact us first in our Discord server. We will provide the next steps there.",
+    "discord": "Contact us on Discord",
+    "continue": "Continue to website",
+    "closeLabel": "Close beta notice"
+  },
+  "stats": {
+    "title": "Quick Stats",
+    "subtitle": "Live snapshot of the ProPeloton world."
+  }
+}
