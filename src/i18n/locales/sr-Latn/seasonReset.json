@@ -1,0 +1,80 @@
+{
+  "page": {
+    "title": "Pregled prelaska u novu sezonu",
+    "description": "Pregledajte promocije i ispadanja pre primene prelaska u novu sezonu.",
+    "loading": "Učitavanje pregleda prelaska u novu sezonu...",
+    "failed": "Pregled prelaska u novu sezonu nije mogao da se učita."
+  },
+  "table": {
+    "team": "Tim",
+    "country": "Država",
+    "division": "Divizija",
+    "points": "Bodovi",
+    "from": "Iz",
+    "to": "U",
+    "reason": "Razlog",
+    "removed": "UKLONJEN",
+    "countryFlag": "Zastava: {{country}}"
+  },
+  "summary": {
+    "title": "Sažetak",
+    "subtitle": "Izračunata pomeranja na osnovu trenutnog poretka.",
+    "promotedWorld": "Promovisani u World",
+    "relegatedWorld": "Ispali iz World",
+    "promotedProWest": "Promovisani u Pro West",
+    "promotedProEast": "Promovisani u Pro East",
+    "relegatedPro": "Ispali iz Pro",
+    "promotedAmateur": "Promovisani iz Amateur",
+    "relegatedTier3": "Ispali iz trećeg nivoa",
+    "inactiveRemoved": "Uklonjeni neaktivni"
+  },
+  "sections": {
+    "worldDirect": "Promovisani u World — direktno",
+    "worldPlayoff": "Promovisani u World — plej-of",
+    "worldRelegated": "Ispali iz World",
+    "proWestDirect": "Promovisani u Pro West — direktno",
+    "proWestPlayoff": "Promovisani u Pro West — plej-of",
+    "proEastDirect": "Promovisani u Pro East — direktno",
+    "proEastPlayoff": "Promovisani u Pro East — plej-of",
+    "proWestRelegated": "Ispali iz Pro West",
+    "proEastRelegated": "Ispali iz Pro East",
+    "inactive": "Uklonjeni neaktivni klubovi",
+    "amateurEurope": "Promovisani iz Amateur u Continental Europe",
+    "amateurAmerica": "Promovisani iz Amateur u Continental America",
+    "amateurAsia": "Promovisani iz Amateur u Continental Asia",
+    "amateurAfrica": "Promovisani iz Amateur u Continental Africa",
+    "amateurOceania": "Promovisani iz Amateur u Continental Oceania",
+    "relegatedDynamic": "Ispali iz {{division}}",
+    "all": "Sva pomeranja",
+    "allSubtitle": "Kompletna lista promocija, ispadanja i uklanjanja."
+  },
+  "empty": {
+    "noMovements": "Nema izračunatih sezonskih pomeranja.",
+    "worldDirect": "Nema direktnih promocija u World.",
+    "worldPlayoff": "Nema promocija u World kroz plej-of.",
+    "worldRelegated": "Nijedan tim nije ispao iz World.",
+    "proWestDirect": "Nema direktnih promocija u Pro West.",
+    "proWestPlayoff": "Nema promocija u Pro West kroz plej-of.",
+    "proEastDirect": "Nema direktnih promocija u Pro East.",
+    "proEastPlayoff": "Nema promocija u Pro East kroz plej-of.",
+    "proWestRelegated": "Nijedan tim nije ispao iz Pro West.",
+    "proEastRelegated": "Nijedan tim nije ispao iz Pro East.",
+    "inactive": "Nema uklonjenih neaktivnih klubova.",
+    "europe": "Nema promocija u Continental Europe.",
+    "america": "Nema promocija u Continental America.",
+    "asia": "Nema promocija u Continental Asia.",
+    "africa": "Nema promocija u Continental Africa.",
+    "oceania": "Nema promocija u Continental Oceania.",
+    "relegatedDynamic": "Nijedan tim nije ispao iz {{division}}."
+  },
+  "divisions": {
+    "world": "World",
+    "proWest": "Pro West",
+    "proEast": "Pro East",
+    "continentalEurope": "Continental Europe",
+    "continentalAmerica": "Continental America",
+    "continentalAsia": "Continental Asia",
+    "continentalAfrica": "Continental Africa",
+    "continentalOceania": "Continental Oceania"
+  }
+}
