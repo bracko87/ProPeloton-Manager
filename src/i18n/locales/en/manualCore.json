@@ -1,0 +1,258 @@
+{
+  "ui": {
+    "manual": "Manual",
+    "title": "ProPeloton Manager Manual",
+    "intro": "This expanded manual is a deep player reference for ProPeloton Manager. It covers account pages, coins, referrals, club identity, dashboard navigation, notifications, riders, staff, training, camps, equipment, infrastructure, calendar, race detail, race preparation, replay, rankings, statistics, transfers, scouting, finance, sponsors, taxes, policies, liquidation and FAQ topics. Sections are closed by default, so open only the topic you need.",
+    "sections": "{{count}} sections",
+    "section": "1 section",
+    "categories": "{{count}} categories",
+    "closedDefault": "All sections closed by default",
+    "backHelp": "Back to Help",
+    "print": "Print / Save as PDF",
+    "discord": "Ask on Discord",
+    "startHere": "Start here",
+    "startHereBody": "New managers should first read Quick Start, Game Time, Overview, Squad, Training, Race Preparation and Finance. Experienced managers can use search for specific topics like sponsor naming rights, race supplies, playoffs, tax audits, emergency rescues or developing-team movement windows.",
+    "search": "Search manual",
+    "searchPlaceholder": "Search coins, sponsors, race preparation, tax, equipment...",
+    "category": "Category",
+    "allCategories": "All categories",
+    "openVisible": "Open visible",
+    "closeAll": "Close all",
+    "showing": "Showing {{count}}.",
+    "noneTitle": "No manual sections found",
+    "noneBody": "Try a different search term or switch category back to all.",
+    "open": "Open",
+    "close": "Close",
+    "summary": "Summary",
+    "detailExplanation": "Detailed explanation",
+    "rule": "Rule {{number}}",
+    "practicalTips": "Practical tips",
+    "maintenanceTitle": "Manual maintenance note",
+    "maintenanceBody": "This manual is a deep first version based on the current pages and systems. Exact values that are loaded from the database, such as live coin package prices, some policy option costs, camp quotes, sponsor offer values and infrastructure costs, should always be trusted from the live page if the backend config changes.",
+    "contact": "Contact Us"
+  },
+  "categories": {
+    "gettingStarted": "Getting Started",
+    "coinsAccount": "Coins and Account",
+    "clubIdentity": "Club Identity",
+    "dashboard": "Dashboard",
+    "riders": "Riders",
+    "training": "Training",
+    "equipment": "Equipment",
+    "infrastructure": "Infrastructure",
+    "calendarRaces": "Calendar and Races",
+    "racePreparation": "Race Preparation",
+    "rankingsStatistics": "Rankings and Statistics",
+    "transfers": "Transfers",
+    "transfersScouting": "Transfers and Scouting",
+    "finance": "Finance",
+    "supportAccount": "Support and Account",
+    "faq": "FAQ"
+  },
+  "sections": {
+    "quickStart": {
+      "title": "Quick Start for New Managers",
+      "subtitle": "The best first steps after creating your club.",
+      "overview": "ProPeloton Manager is a full cycling club management game. You are not only choosing riders for races. You are managing money, staff, equipment, infrastructure, sponsors, training, race applications, race preparation and long-term rankings.",
+      "facts": ["Start here", "Overview, Squad, Training, Calendar, Race Preparation, Finance", "Main early danger", "Spending too much before understanding salaries and recurring costs"],
+      "details": ["Start on Overview. This page shows alerts, club condition, finances, sponsors, upcoming races, news, today’s races and quick actions. If something important needs attention, Overview should usually point you toward it.", "Open Squad and learn your riders before buying anyone. Check role, age, country, overall, potential, fatigue, morale, salary, contract and skills. A rider with high overall is not automatically the best rider for every race.", "Open Training and set reasonable training. Hard training can help development but can also create fatigue. A tired team will often perform worse even when the riders look strong on paper.", "Open Calendar to understand the season. Apply for races that fit your team, but do not overload your riders. A small team can lose performance quickly if the same riders race too often.", "Open Race Preparation when your team is accepted for a race. Accepted entry is not enough. You still need a Race Plan and then Stage Plans before the race.", "Open Finance before transfers, equipment, infrastructure or training camps. Cash is needed for salaries, staff, tax, equipment, race support, training camps, policies and transfers."],
+      "tips": ["Use Overview as your daily checklist.", "Prepare races early. Do not wait until the final game day.", "Do not spend all starting money on transfers before checking wages and recurring costs."],
+      "links": ["Open Overview", "Open Squad", "Open Finance"]
+    },
+    "gameTime": {
+      "title": "Game Time and Deadlines",
+      "subtitle": "How in-game time works compared with real life.",
+      "overview": "Game time controls race deadlines, training camps, market expiry, finance periods, tax periods and season flow. The footer shows the authoritative live game time from the backend.",
+      "facts": ["Time scale", "1 in-game day = 12 real-life hours", "Conversion", "2 in-game days = 1 real-life day", "Displayed in", "Dashboard footer and many game-date labels"],
+      "details": ["One in-game day equals 12 real-life hours. This means two in-game days equal one real-life day.", "If a rider submission deadline is two in-game days away, you have around one real-life day. If it is one in-game day away, you have around 12 real-life hours.", "Game dates are used for race applications, rider submission deadlines, stage plan locks, training camps, transfer expiry, finance transactions and tax periods.", "Real technical timestamps are not the same thing as game time. Some backend rows have created_at for sorting or pagination, but the player-facing date should use stored game-date metadata when available.", "Always prepare before the last moment. Missing deadlines can block race plans or leave stage plans incomplete."],
+      "tips": ["Check the footer game time before important actions.", "Use Calendar and Race Preparation together."]
+    },
+    "coins": {
+      "title": "Coins, Coin Packages and Referral Rewards",
+      "subtitle": "The difference between account coins and club cash.",
+      "overview": "Coins are account currency. Club cash is the team economy. Do not confuse coins with in-game cash used for salaries, transfers, equipment and infrastructure.",
+      "facts": ["Current play cost constant", "2 coins per day in the current Pro Packages page", "Package source", "coin_packages database table", "Checkout", "create-coin-checkout Edge Function", "Invite reward", "40 coins when a referred friend creates a club and buys their first coin package"],
+      "details": ["The Pro Packages page loads active coin packages from the database. This means exact package sizes and prices are database-driven and should be trusted from the live shop page.", "The page calculates price per coin and can highlight the best value package. Package labels such as Starter boost or Most popular are based on coin amount.", "Purchase history is loaded from user_coin_ledger where reason is purchase. Stripe session details are intentionally not displayed to users.", "Invite Friends creates a referral link. A referral is completed when the referred user creates a club and buys their first coin package. The current reward text says 40 coins.", "Coins are attached to the user/account. If a club is liquidated, the user account and coins remain active; only that club is closed."],
+      "tips": ["Use Pro Packages for exact live prices.", "Use Invite Friends to share your referral link."],
+      "links": ["Coin Packages", "Invite Friends"]
+    },
+    "clubIdentity": {
+      "title": "Club Branding, Logo and Jersey",
+      "subtitle": "Team name, colors, logo, jersey and sponsor naming-rights locks.",
+      "overview": "Your club identity includes name, colors, logo and jersey. It is managed through Customize Team, but sponsor naming-rights deals can temporarily lock or change parts of the public display.",
+      "facts": ["Logo formats", "JPG, PNG, WEBP", "Logo max size", "0.5 MB", "Jersey formats", "JPG, PNG, WEBP", "Jersey max size", "1 MB and 512 × 512 px or smaller", "Logo storage", "Uploaded logos are converted to PNG and stored in club-logos"],
+      "details": ["Customize Team persists branding through backend functions, not only local UI state. This is important because sponsor naming-rights can lock the name or affect the display name.", "Logo uploads are validated for type and file size, converted to PNG in-browser and stored in the club-logos bucket.", "Removing a logo restores a generated base logo instead of leaving the club without a logo. The base logo uses the team colors.", "The jersey system stores a home kit in team_kits. It can use generic pool jerseys, generic fallback, image URLs or uploaded images depending on the selected mode.", "A naming-rights sponsor usually pays more, but temporarily changes the displayed team name during the season. The original name returns at the beginning of the next season."],
+      "tips": ["Use clear logos that still work at small sizes.", "Do not accept naming rights only for money; understand the identity effect."],
+      "links": ["Customize Team"]
+    },
+    "overview": {
+      "title": "Overview Page",
+      "subtitle": "Your daily control room.",
+      "overview": "Overview combines the most important information from the whole club into one dashboard: alerts, KPIs, operations, squad pulse, schedule, race world, finance, emergency debt, news, quick actions and main sponsor.",
+      "facts": ["Main purpose", "Daily checklist and quick navigation", "Important finance data", "Balance, operating income/expense, sponsor income, policy cost, trip forecast and debt health", "Squad Pulse", "Fitness, morale, readiness, form, available riders, injured/sick/not fully fit riders and expiring contracts"],
+      "details": ["Alerts show what needs attention. If an alert has a link, it usually opens the page where the problem can be fixed.", "KPIs give quick numbers, while Operations show active systems such as finance, training, infrastructure, medical, sponsor or inbox events.", "Squad Pulse helps you understand whether the team is ready. High fatigue, injuries, sickness or many expiring contracts should be handled quickly.", "Race world panels show upcoming schedule, today’s races and news. They help you follow the game world even when your team is not racing.", "Finance panels help you avoid dangerous spending. Emergency Debt Health is especially important if rescues were used or liquidation risk exists.", "The Main Sponsor panel can show sponsor identity and link into the sponsor dashboard."],
+      "tips": ["Open Overview first every login.", "If Overview shows financial risk, check Finance before spending."],
+      "links": ["Open Overview"]
+    },
+    "notificationsInbox": {
+      "title": "Notifications and Inbox",
+      "subtitle": "System alerts, unread/read pages and conversations.",
+      "overview": "Notifications are game/admin alerts. Inbox is for direct or admin conversations. Together they help users avoid missed deadlines and communicate with other managers or admins.",
+      "facts": ["Notification tabs", "Unread and Read", "Notification tools", "Search, category filter, pagination, action links", "Inbox thread types", "Direct and admin direct"],
+      "details": ["Notifications can be searched by title, message, type, source, preference group or creation time.", "Categories are resolved from preference group, source or type code. This helps separate finance, race, sponsor, transfer and system messages.", "Notification preferences can control which notification types the user receives.", "Inbox lists conversations, unread counts, last message preview and whether the conversation can be replied to.", "Opening a conversation loads messages and marks it as read. Sending a message uses inbox RPCs."],
+      "tips": ["Check unread notifications before race deadlines.", "Use Inbox for conversations, Notifications for system/game alerts."],
+      "links": ["Notifications", "Inbox", "Preferences"]
+    },
+    "squadRiders": {
+      "title": "Squad, First Team and Rider List Views",
+      "subtitle": "How to understand your roster.",
+      "overview": "Squad is where you manage and inspect your First Team riders. It includes different views for general roster data, finances, skills and form/development.",
+      "facts": ["First Squad max in UI", "18 riders", "List views", "General, Financial, Skills, Form & Development", "Common rider data", "Country, role, age, overall, fatigue, status, market value, salary, contract, skills, morale and potential"],
+      "details": ["General View gives the fastest overview of your roster. Use it for everyday checks.", "Financial View shows salary, market value and contract information. Use it before renewing, releasing or selling riders.", "Skills View shows specialist attributes. Use it before race selection because a climber, sprinter and time-trial rider need different skills.", "Form & Development shows readiness data such as fatigue, morale, potential and availability.", "The squad dashboard can also show wins, podiums, top 10s, best GC, last race rows, next race selection and race-type snapshots."],
+      "tips": ["Do not judge riders only by overall.", "Check contracts before the end of the season.", "Open rider profiles for deeper decisions."],
+      "links": ["Open Squad"]
+    },
+    "riderProfileSkills": {
+      "title": "Rider Profile, Skills, Fitness and Race Sharpness",
+      "subtitle": "Why rider quality is more than overall.",
+      "overview": "Rider profiles show identity, attributes, contract, training, comparison and history. A rider’s real race value depends on skill mix, fitness, morale, fatigue, health and race sharpness.",
+      "facts": ["Own rider tabs", "Overview, Contract, Training, Compare, History", "Core attributes", "Overall, potential, sprint, climbing, time trial, endurance, flat, recovery, resistance, race IQ, teamwork", "Availability statuses", "Fit, not fully fit, injured, sick"],
+      "details": ["Overall is a broad summary. It is useful, but exact attributes decide race role. Sprint matters in bunch finishes. Climbing matters on mountains. Time Trial matters in TT stages. Recovery is important in stage races.", "Fatigue represents tiredness and accumulated stress. High fatigue can make strong riders underperform or become risky to select.", "Morale affects confidence and can influence performance. Low morale should not be ignored.", "Race sharpness measures racing rhythm. Too little racing can reduce sharpness, but too much racing creates overload risk.", "Rider comparison shows two riders side by side with attributes such as sprint, climbing, time trial, endurance, flat, recovery, resistance, race IQ and teamwork.", "External rider profiles can hide exact information unless scouted. Scouting reports improve precision."],
+      "tips": ["For sprints, check sprint, flat, endurance and teamwork.", "For mountains, check climbing, endurance, resistance and recovery.", "Use compare before transfer decisions."]
+    },
+    "developingTeam": {
+      "title": "Developing Team",
+      "subtitle": "U23/development structure, purchase and movement windows.",
+      "overview": "The Developing Team is a second team connected to the main club. It is used for young or secondary riders and has its own roster limit and movement-window rules.",
+      "facts": ["Developing Team max in UI", "8 riders", "Purchase location", "Preferences page", "Movement rule", "Riders can move only when the movement window is open", "Age warning", "Riders aged 24+ require attention"],
+      "details": ["Preferences loads Developing Team status from the backend. It shows real days played, game days played, coin balance, coin cost, requirement status, movement-window state and whether purchase is allowed.", "After purchase, the app pins the active club back to the main club so the dashboard does not accidentally switch to the developing club.", "Developing Team riders can be moved to the First Squad only if the movement window is open and the First Squad has space.", "If a Developing Team rider is 24 or older, the UI can show an action warning. If the movement window is open, action is required now; otherwise the rider must move next window."],
+      "tips": ["Use Developing Team for future talent.", "Keep a First Squad slot open if you plan to promote a rider."],
+      "links": ["Preferences", "Squad"]
+    },
+    "staff": {
+      "title": "Staff, Staff Roles and Staff Courses",
+      "subtitle": "How staff support your club.",
+      "overview": "Staff improve training, recovery, scouting, mechanics, race support and operations. Staff roles have capacity limits that are often connected to infrastructure.",
+      "facts": ["Roles", "Head Coach, Trainer, U23 Head Coach, Team Doctor, Physio, Nutritionist, Mechanic, Sport Director, Scout / Analyst", "Staff stats", "Expertise, experience, potential, leadership, efficiency, loyalty", "Courses", "Can improve staff attributes over game days and cost cash"],
+      "details": ["Head Coach and Trainers support regular training, training camps and rider development.", "Team Doctor, Physio and Nutritionist support health, recovery, fatigue and medical handling.", "Mechanic supports equipment maintenance and technical systems.", "Sport Director supports race preparation, tactics and stage-plan suggestions.", "Scout / Analyst supports scouting reports and market knowledge.", "Staff courses can be active or recently completed, with duration days, cost and attribute gains.", "Staff contract extensions can include current salary, requested salary, minimum acceptable salary, interest score, willingness and decision reasons."],
+      "tips": ["Hire staff based on club weakness.", "Upgrade infrastructure if staff capacity is blocked."],
+      "links": ["Staff Market", "Infrastructure"]
+    },
+    "training": {
+      "title": "Regular Training and Training Camps",
+      "subtitle": "Improve riders without destroying freshness.",
+      "overview": "Training controls rider development and fatigue. Regular training is ongoing. Training camps are stronger, more expensive blocks with location, weather, riders and staff.",
+      "facts": ["Training tabs", "Regular and Camps", "Regular intensities", "Recovery, light, normal, hard", "Camp types", "General, sprint, climbing, flat, time trial", "Camp plan intensities", "Day off, light, normal, hard"],
+      "details": ["Regular training can use team defaults and individual rider plans. Focus areas include general, recovery, sprint, climbing, flat, time trial, endurance, resistance, race IQ and teamwork.", "Hard training can create more gains but also more fatigue and risk. Recovery training is useful after hard races or stage races.", "Training camps include location, region, camp type, terrain profile, altitude, stars, cost index, quality multiplier, recovery comfort, preferred weeks, risky weeks and closed weeks.", "Camp quotes can include travel, accommodation, camp fee, logistics, total cost, per-rider cost, weather state, training modifier, missed-day chance and warnings.", "Current camp pages show participants, staff, weather, staff boost summaries, daily reports and training plans for upcoming camp days."],
+      "tips": ["Do not train everyone hard all the time.", "Match training to race calendar and rider role.", "Check camp cost before booking."],
+      "links": ["Open Training"]
+    },
+    "equipment": {
+      "title": "Equipment, Setups, Inventory and Market",
+      "subtitle": "Durable race gear and performance bonuses.",
+      "overview": "Equipment controls race setups, owned gear, market purchases, maintenance and technical sponsor support. Good equipment can improve terrain performance and reduce fatigue.",
+      "facts": ["Equipment tabs", "Overview, Inventory, Market, Race Supplies", "Durable categories", "Frame, wheelset, tires, groupset, helmet, shoes", "Bonus types", "Flat, hilly, mountain, cobble, time trial, sprint, fatigue reduction", "Quality labels", "Basic, Good, Super"],
+      "details": ["Overview shows readiness, category summaries, default setup, setup presets, race supplies and technical sponsor support.", "Default Race Setup is used when no specific setup is chosen. Setup presets allow specialized setups for sprint, mountain, time trial or cobbled races.", "Inventory shows active owned equipment. Sold and discarded items are hidden from active inventory.", "Equipment statuses include ready, assigned, in maintenance and worn. Ready and worn items can usually be repaired/sold/discarded, while assigned items are restricted.", "Repair is generally available when condition is 90% or lower and the item can run actions.", "Market shows items with category, quality, terrain role, bonuses, sponsor discounts and buy action. Technical sponsor discounts can reduce purchase cost."],
+      "tips": ["Create setups for different race types.", "Repair important equipment before key races.", "Check sponsor discounts before buying."],
+      "links": ["Open Equipment"]
+    },
+    "raceSupplies": {
+      "title": "Race Supplies",
+      "subtitle": "Consumables and durable stage-plan supplies.",
+      "overview": "Race Supplies are used by Race Preparation and Stage Plans. Some supplies are consumed every stage, while jerseys and rain jackets are durable reusable items with stage-use limits.",
+      "facts": ["Consumables", "Bidons / Water Bottles, Energy Gels, Nutrition Packs", "Durable supplies", "Race Jersey Complete, Rain Jackets", "Race Jersey Complete", "Mandatory; 10 stage uses per unit", "Rain Jackets", "Optional weather item; 25 stage uses per unit"],
+      "details": ["Bidons use 1–4 per rider in stage setup. They are one-use consumables and support hydration and fatigue control. Below minimum can increase fatigue risk.", "Energy Gels use 0–4 per rider. They support stamina and final effort efficiency. There is no extra benefit after four gels per rider.", "Nutrition Packs use 0–2 per rider. They support stamina stability and post-stage recovery. Long stages without nutrition can increase fatigue pressure.", "Race Jersey Complete is mandatory in Stage Plans. Missing jersey kits can block stage setup.", "Rain Jackets are optional but valuable in wet/cold weather. Worn-out durable supplies are no longer usable.", "Stage races consume supplies quickly because quantities are used per rider per stage."],
+      "tips": ["Buy supplies before deadlines.", "Check stock before stage races.", "Use rain jackets for bad-weather stages."],
+      "links": ["Race Supplies"]
+    },
+    "infrastructure": {
+      "title": "Infrastructure Facilities and Assets",
+      "subtitle": "Long-term club buildings, staff capacity and support vehicles.",
+      "overview": "Infrastructure is your long-term development system. Facilities unlock staff capacity and improve training, health, scouting and mechanics. Assets provide vehicles and support resources for races and operations.",
+      "facts": ["Facilities", "Club House, Training Center, Medical Center, Youth Academy, Mechanics Workshop, Scouting Office", "Facility max levels", "Club House 5, Training Center 5, Medical Center 5, Youth Academy 2, Mechanics Workshop 4, Scouting Office 4", "Assets", "Team Cars, Team Bus, Equipment Van, Mobile Workshop, Medical Van"],
+      "details": ["Club House is the main administrative headquarters. It supports organization and future management systems.", "Training Center improves coaching effectiveness, training quality, development support and overload-risk management.", "Medical Center supports Team Doctors, Physios and Nutritionists and improves injury prevention/recovery support.", "Youth Academy supports future riders and U23 development and can unlock U23 Head Coach systems.", "Mechanics Workshop improves repairs, technical support and mechanic capacity.", "Scouting Office improves scouting report quality cap, scouting capacity and market intelligence.", "Infrastructure jobs cost cash and take game days. Active jobs show duration, completion date, paid cost and construction slots.", "Jobs and assets can have cancellation, repair or sale quotes. Quotes show refund/cost/value and whether the action is allowed.", "Assets have condition and status. Assigned or locked assets cannot be repaired or sold until free."],
+      "tips": ["Upgrade based on your bottleneck.", "Do not start too many expensive jobs at once.", "Keep race assets repaired."],
+      "links": ["Open Infrastructure"]
+    },
+    "calendarRaceDetail": {
+      "title": "Calendar, Race Applications and Race Detail",
+      "subtitle": "Find races, apply, inspect profiles and follow results.",
+      "overview": "Calendar shows the season and race opportunities. Race Detail shows the full profile, stages, participants, results, classifications and replay information for a race.",
+      "facts": ["Calendar views", "Season and Races", "Season filters", "Races, Training Camps, Events, Holidays", "Race statuses", "Not open, open, closed, race active, race finished, cancelled", "Classifications", "General, points, mountain, young, team"],
+      "details": ["Season Calendar shows a day-by-day view of races, camps, events and holidays.", "Race Calendar shows race cards with category, country, city, date, race type, team limits, accepted teams and application status.", "Race applications depend on open/close dates. If applications are closed, your team cannot apply anymore.", "Race Detail shows entry rules such as team limits, rider limits, application deadline, team list announcement, rider submission deadline and prize fund.", "Stage details can include route, distance, terrain, finish type, summit finish, terrain percentages, elevation gain, profile image, weather, sprints and KOM points.", "After a race starts, Race Detail can show live state, replay frames, commentary, standings, results and classifications."],
+      "tips": ["Apply to races that fit your team.", "Inspect stage profiles before race preparation.", "Check weather close to race day."],
+      "links": ["Open Calendar"]
+    },
+    "racePreparation": {
+      "title": "Race Preparation and Stage Plans",
+      "subtitle": "Accepted races, Race Plan, Stage Plans and readiness.",
+      "overview": "Race Preparation turns an accepted race into a real plan. It is one of the most important pages in the game because the race engine depends on rider selection, staff, assets, equipment, supplies and stage tactics.",
+      "facts": ["Tabs", "Accepted Races, Race Plan, Stage Plans", "Race staff", "Sport Director, Team Doctor, Physio, Mechanic", "Race assets", "Team Bus, Equipment Van, Mobile Workshop, Medical Van, Team Car 1–3", "Stage readiness tones", "Green, yellow, orange, red, gray"],
+      "details": ["Accepted Races shows races where your team was accepted and what preparation status each race has.", "Race Plan selects riders, staff, assets, equipment setup and race supplies. Rider limits must match race rules.", "Blocked riders or assets may already be assigned to overlapping events. This prevents impossible schedules.", "Quote preview shows costs and support bonuses from staff, assets, equipment and policies.", "After Race Plan is submitted, Stage Plans open. Stage Plans set rider roles, team tactics, individual tactics, equipment and supplies for each stage.", "Stage plan readiness tracks saved plans, usable plans, missing plans, empty plans, missing supplies, tactical completeness and recommended action.", "Sport Director suggestions can help with equipment, team tactics, individual tactics and supplies, but they are guidance, not guaranteed perfect plans."],
+      "tips": ["Prepare before deadlines.", "Use different plans for different stage types.", "Do not ignore supplies and weather."],
+      "links": ["Open Race Preparation"]
+    },
+    "teamRanking": {
+      "title": "Team Ranking, Tiers, Divisions and Playoffs",
+      "subtitle": "Promotion, relegation and standings structure.",
+      "overview": "Team Ranking shows your place in the cycling world. Teams earn international points from race results. Final standings can decide promotion, playoffs and relegation.",
+      "facts": ["Tiers", "WorldTeam, ProTeam, Continental, Amateur", "Pro divisions", "ProTeam West, ProTeam East", "Continental divisions", "Europe, America, Asia, Africa, Oceania", "Amateur divisions", "North America, South America, Western Europe, Central Europe, Southern & Balkan Europe, Northern & Eastern Europe, West & North Africa, Central & South Africa, West & Central Asia, South Asia, East & Southeast Asia, Oceania"],
+      "details": ["WorldTeam is the top standing. The UI shows bottom five relegated.", "ProTeam West and ProTeam East each show winner promoted directly, 2nd–4th enter World playoff and bottom five relegated.", "Continental Europe and America feed Pro West playoff. Continental Asia, Africa and Oceania feed Pro East playoff.", "Continental Europe and Asia show bottom six relegated. Continental America and Africa show bottom five relegated. Continental Oceania shows bottom three relegated.", "Amateur Oceania shows top three promoted directly. European Amateur divisions show winner promoted directly and 2nd–3rd enter promotion playoff. Other Amateur divisions show winner promoted directly and 2nd–4th enter promotion playoff.", "Inactive managers can stay visible in standings/results. The UI can show an Inactive manager badge for inactive and season-end-removal-pending teams."],
+      "tips": ["Use ranking as your long-term target.", "Consistent points can be better than one lucky result."],
+      "links": ["Open Team Ranking"]
+    },
+    "statisticsTeamProfile": {
+      "title": "Statistics and Team Profiles",
+      "subtitle": "Compare teams, riders and public club information.",
+      "overview": "Statistics helps identify strong teams and riders. Team Profiles show public information about user and AI clubs.",
+      "facts": ["Statistics tabs", "Teams and Riders", "Team sub-tabs", "Current and History", "Rider sub-tabs", "Rankings and Breakdown", "Rider metrics", "Overall season points, sprint points, climbing points"],
+      "details": ["Team Current shows active/current team performance by tier, division and points.", "Team History shows previous winners and snapshots once multiple seasons exist.", "Rider Rankings show best riders by points and can include role, country, age, club, market value, salary, fatigue and availability.", "Rider Breakdown helps find specialists, such as sprinters or climbers.", "Team Profile shows logo, country, tier, division, sponsors, kit preview, public roster, points summary and recent races.", "Team Profile can include a report button for moderation when needed."],
+      "tips": ["Use Statistics before buying riders.", "Use Team Profiles to study rivals."],
+      "links": ["Open Statistics", "Open Team Ranking"]
+    },
+    "transfersScouting": {
+      "title": "Transfers, Free Agents, Negotiations and Scouting",
+      "subtitle": "How to sign riders and understand the market.",
+      "overview": "Transfers is where you improve the roster through transfer-listed riders, free agents, scouting reports and staff hiring.",
+      "facts": ["Transfer tabs", "Riders and Staff", "Rider sub-tabs", "Transfer List and Free Agents", "Negotiation statuses", "Draft, open, pending, accepted, rejected, expired, declined, completed, countered", "Contract years in transfer negotiation UI", "1–5 years", "Scouting filters", "All, New, Reviewed"],
+      "details": ["Transfer-listed riders belong to another team. You first make a transfer offer to the selling club. If accepted, you negotiate the rider contract.", "Free agents do not have a selling club. You negotiate directly with the rider.", "Negotiation previews can show acceptance percent, acceptance band, predicted outcome, salary score, duration score, bonus score, fee score, tier score and hard-block reasons.", "Repeated poor offers can use attempts and may lead to rejection, countering, expiry or closure.", "Scouting reduces uncertainty. External rider profiles can hide exact data until a scout report exists.", "Scout reports show rider, scout, completion date, overall, potential, strengths, notes and New/Reviewed status."],
+      "tips": ["Scout expensive riders before bidding.", "Check salary and duration, not only transfer price.", "Do not buy riders who do not fit your race calendar."],
+      "links": ["Open Transfers", "Open Scouting"]
+    },
+    "finance": {
+      "title": "Finance Overview, Transactions and Taxes",
+      "subtitle": "Balance, operating cashflow, statement rows and monthly tax audits.",
+      "overview": "Finance shows the long-term safety of your club. Strong riders do not matter if the club cannot pay salaries, taxes, policies, equipment or mandatory obligations.",
+      "facts": ["Finance tabs", "Overview, Sponsors, Transactions, Tax, Team Policies & Operations", "Cashflow grouping", "Daily, weekly, monthly", "Recent transactions", "Last 30 game days", "Archive transactions", "Older rows grouped by in-game month, previous 6 game months", "Tax audit statuses", "OK, adjusted, refunded"],
+      "details": ["Finance Overview separates real operating income/expenses from debt movement. Emergency loan disbursement is not operating income. Emergency loan principal repayment is not operating expense. Emergency loan interest is operating expense.", "Transactions show the ledger. Use them to explain every balance movement: salaries, sponsor payments, tax, infrastructure, assets, equipment, training camps, bonuses and prize money.", "Visible transaction dates should come from in-game date metadata, not real created_at timestamps.", "Tax shows taxable income, expected tax, already withheld, adjustment amount and audit history. Tax rows include withholding, monthly adjustment and monthly refund.", "If the club earns large sponsor or prize income, check the Tax tab for withholding and monthly audit results."],
+      "tips": ["Open Finance before big spending.", "Use Transactions when balance changes unexpectedly.", "Do not treat emergency loan money as profit."],
+      "links": ["Open Finance"]
+    },
+    "sponsorsPolicies": {
+      "title": "Sponsors, Technical Sponsors and Team Policies",
+      "subtitle": "Guaranteed money, objectives, discounts, naming rights and operating standards.",
+      "overview": "Sponsors bring income and objectives. Team policies define travel, accommodation, housing, nutrition, recovery and bonuses. Both can improve the club but both can also create obligations or costs.",
+      "facts": ["Sponsor kinds", "Main, secondary, technical", "Main sponsor objectives", "Race start, win, podium, top 5, top 10, GC top 10/top 5, stage top 5, stage win, classification visibility", "Policy operations", "Flights, accommodation, ground transport, logistics, staff travel accommodation", "Team policies", "Housing, nutrition, recovery, staff equipment, rider bonus, staff bonus"],
+      "details": ["Main sponsors are the most visible. They can provide guaranteed money, bonus pools and objectives.", "Secondary sponsors provide additional support through slots and are shown without logos/country in the current UI.", "Technical sponsors can provide cash support, equipment support budget and category equipment discounts.", "Sponsor objectives can be scheduled, checked, achieved, missed or paid. They can link to target races or calendar views.", "Standard sponsor contracts give money without changing the team name. Naming-rights contracts usually pay more but temporarily change the team display name during the season.", "Team Policies and Operations affect recurring and trip costs. Better travel, housing, nutrition or recovery policies can help the club but increase spending.", "Policy estimates show weekly and monthly totals, last month actual costs and upcoming trip forecasts."],
+      "tips": ["Check sponsor objectives before accepting offers.", "Technical sponsors are valuable if buying equipment.", "Do not upgrade policies if the club cannot afford recurring costs."],
+      "links": ["Sponsors", "Team Policies"]
+    },
+    "emergencyLiquidation": {
+      "title": "Emergency Rescues, Debt and Club Liquidation",
+      "subtitle": "What happens when a club cannot pay mandatory obligations.",
+      "overview": "The game has a rescue and liquidation system. Emergency rescue protects a club temporarily, but repeated failure to cover obligations can close the club.",
+      "facts": ["Lifetime rescues", "3", "Liquidation condition shown in UI", "All 3 rescues used, then another mandatory obligation cannot be covered", "After liquidation", "The club can no longer perform game actions", "Coins/account", "User account and coins remain active"],
+      "details": ["If a club is liquidated, the dashboard is replaced by a Club Liquidated screen.", "The screen explains rescue count, liquidation reason and closure time when available.", "Create new club clears stored club IDs and sends the user to club creation.", "Restart team is currently a placeholder/notice. The future version would reset the liquidated club in the same competition with a fresh squad, no staff and zero points.", "Emergency debt appears in Overview and Finance. Principal and interest should be read separately."],
+      "tips": ["Avoid risky spending after rescues are used.", "Watch mandatory costs such as salaries, taxes and policies."]
+    },
+    "supportAccount": {
+      "title": "Profile, Preferences, Contact, Forum and Bug Reports",
+      "subtitle": "Account settings, notification settings and support channels.",
+      "overview": "Account and support pages help users manage profile data, notification preferences, developing-team purchase, invite links, Discord support and bug reports.",
+      "facts": ["Profile username rule", "3–24 characters, spaces become underscores, only letters/numbers/underscore", "Birthday rule", "Saved once during registration and read-only later", "Shutdown confirmation", "Type DELETE exactly", "Contact Us", "Current form is UI-only and shows a thank-you message", "Forum", "Community discussions move to Discord"],
+      "details": ["My Profile edits user profile data such as username, email, first name, last name, city and country. It is separate from club branding.", "Preferences stores notification settings and includes Developing Team purchase/status and Danger Zone actions.", "Shutdown Team requires a valid session token and exact DELETE confirmation.", "Contact Us currently shows a form and thank-you message, but backend submission still needs to be connected for production.", "Forum is a Discord notice page. Community discussions, questions and manual help should go to Discord.", "Bug report buttons should include current page/path context. Good reports include page name, team, rider, race, screenshots and reproduction steps."],
+      "tips": ["Use Contact Us for support details.", "Use Discord for community help.", "Never post sensitive account/payment data publicly."],
+      "links": ["My Profile", "Preferences", "Contact Us", "Forum"]
+    }
+  }
+}
