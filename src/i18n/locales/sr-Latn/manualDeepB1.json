@@ -1,0 +1,148 @@
+{
+  "sections": {
+    "equipmentCategoryDeep": {
+      "title": "Kategorije opreme i bonusi",
+      "subtitle": "Šest kategorija trajne opreme.",
+      "overview": "Trajna oprema uključuje ramove, setove točkova, gume, grupe, kacige i cipele.",
+      "facts": ["Kategorije", "Ram, set točkova, gume, grupa, kaciga, cipele", "Bonusi", "Ravničarski, brdovito, planina, kocka, hronometar, sprint, smanjenje umora"],
+      "details": ["Ramovi često određuju osnovni identitet setup-a.", "Setovi točkova i gume veoma zavise od rute.", "Grupe, kacige i cipele mogu dodati važne bonuse podrške.", "Specijalistička oprema može imati i negativne kompromise.", "Oznake kvaliteta uključuju Osnovno, Dobro i Odlično."],
+      "tips": ["Uskladite opremu sa tipom etape."]
+    },
+    "equipmentCapsDeep": {
+      "title": "Ponderi i ograničenja opreme",
+      "subtitle": "Zašto su bonusi opreme kontrolisani.",
+      "overview": "Oprema pomaže, ali ograničeni bonusi štite značaj sposobnosti vozača i balans igre.",
+      "facts": ["Poznata ograničenja", "Bonus opreme na etapi oko 4%, timska podrška oko 5%, ukupna podrška oko 8%, smanjenje umora oko 10%"],
+      "details": ["Komplet od šest stavki sa +4% ne postaje +24%.", "Bonusi se ponderišu prema kategoriji opreme.", "Bonusi podrške imaju ograničenja.", "Smanjenje umora takođe ima ograničenje.", "Specijalistička oprema i dalje može biti veoma vredna u tesnim trkama."],
+      "tips": ["Koristite opremu da podrži strategiju, a ne da zameni kvalitet vozača."]
+    },
+    "equipmentInventoryDeep": {
+      "title": "Inventar i održavanje",
+      "subtitle": "Stanje, statusi i odluke o popravci.",
+      "overview": "Inventar prikazuje aktivnu opremu u vlasništvu, a održavanje se fokusira na stavke kojima je potrebna pažnja.",
+      "facts": ["Statusi", "Spremno, dodeljeno, na održavanju, istrošeno", "Prag održavanja", "Stanje <= 90%"],
+      "details": ["Prodate i odbačene stavke su sakrivene iz aktivnog inventara.", "Spremne i istrošene stavke obično mogu izvršavati akcije ako pravila dozvoljavaju.", "Dodeljene stavke su zaključane jer su u upotrebi.", "Ponude za popravku prikazuju cenu i dozvolu.", "Stanje treba popraviti pre važnih trka."],
+      "tips": ["Popravljajte na vreme; ne čekajte da sva oprema bude istrošena."]
+    },
+    "raceSuppliesDeep": {
+      "title": "Detalji zaliha za trke",
+      "subtitle": "Bidoni, gelovi, ishrana, dresovi i kišne jakne.",
+      "overview": "Zalihe za trke troše se ili koriste kroz Stage Plans i mogu uticati na umor, izdržljivost, spremnost i podršku po vremenskim uslovima.",
+      "facts": ["Potrošno", "Bidoni, energetski gelovi, paketi ishrane", "Trajno", "Komplet trkačkog dresa, kišne jakne"],
+      "details": ["Bidoni: 1–4 po vozaču; podrška hidrataciji i kontroli umora.", "Gelovi: 0–4 po vozaču; podrška izdržljivosti i završnom naporu.", "Ishrana: 0–2 po vozaču; podrška izdržljivosti i oporavku.", "Trkački dresovi: obavezna trajna oprema; 10 korišćenja na etapama po jedinici.", "Kišne jakne: opciona trajna oprema za vremenske uslove; 25 korišćenja na etapama po jedinici."],
+      "tips": ["Etapne trke brzo troše zalihe."]
+    },
+    "technicalSponsorDeep": {
+      "title": "Podrška tehničkog sponzora za opremu",
+      "subtitle": "Popusti i budžeti podrške.",
+      "overview": "Tehnički sponzori mogu smanjiti cenu opreme i obezbediti budžete za podršku opremi.",
+      "facts": ["Pogodnosti", "Novčana podrška, budžet za opremu, iskorišćen/preostali budžet, popusti po kategorijama"],
+      "details": ["Pregled Opreme može prikazati aktivnu podršku tehničkog sponzora.", "Kupovine na tržištu mogu imati popuste po kategorijama.", "Preostali budžet pomaže u planiranju vremena kupovine.", "Popusti se mogu razlikovati po kategoriji.", "Tehnički sponzori su posebno korisni pre većih unapređenja opreme."],
+      "tips": ["Kupujte skupu opremu dok je korisna sponzorska podrška aktivna."]
+    },
+    "facilitiesOverviewDeep": {
+      "title": "Pregled objekata",
+      "subtitle": "Zgrade i kapacitet osoblja.",
+      "overview": "Objekti poboljšavaju sisteme treninga, medicine, skautinga, mehanike, razvoja mladih i administracije kluba.",
+      "facts": ["Objekti", "Sedište kluba, Trening centar, Medicinski centar, Akademija mladih, Mehaničarska radionica, Skauting kancelarija"],
+      "details": ["Sedište kluba podržava administraciju i buduće upravljanje.", "Trening centar podržava trenerski rad i razvoj.", "Medicinski centar podržava doktore, fizioterapeute, nutricioniste i oporavak.", "Akademija mladih podržava U23/razvoj mladih.", "Mehaničarska radionica podržava opremu i popravke.", "Skauting kancelarija podržava skauting izveštaje i tržišne informacije."],
+      "tips": ["Birajte nadogradnje prema trenutnom uskom grlu kluba."]
+    },
+    "facilityJobsDeep": {
+      "title": "Infrastrukturni projekti",
+      "subtitle": "Izgradnja, isporuke, slotovi i povraćaj novca.",
+      "overview": "Infrastrukturni projekti su nadogradnje objekata ili isporuke vozila koje su u toku, sa novčanom cenom i trajanjem u danima igre.",
+      "facts": ["Tipovi projekata", "Nadogradnja objekta, isporuka vozila", "Statusi", "Na čekanju, završeno, otkazano, neuspešno"],
+      "details": ["Aktivni projekti prikazuju plaćenu cenu, trajanje u igri i datum završetka.", "Slotovi za izgradnju ograničavaju koliko projekata može istovremeno biti aktivno.", "Ponude za otkazivanje prikazuju iznos povraćaja, procenat povraćaja, trošak otkazivanja i razlog.", "Odmah otkazan projekat može vratiti više novca nego kasno otkazivanje.", "Završeni projekti nadograđuju objekte ili isporučuju vozila."],
+      "tips": ["Ne pokrećite previše skupih projekata kada je novac pod pritiskom."]
+    },
+    "assetsDeep": {
+      "title": "Pregled vozila i prateće opreme",
+      "subtitle": "Timski automobili, autobusi i pomoćni kombiji.",
+      "overview": "Vozila su resursi podrške sa nivoima, stanjem, statusom dodeljenosti i vrednostima podrške.",
+      "facts": ["Vozila", "Timski automobili, Timski autobus, Kombi za opremu, Mobilna radionica, Medicinski kombi"],
+      "details": ["Timski automobili podržavaju konvoj na trci i mogu se birati kao Timski automobil 1–3.", "Timski autobus prevozi vozače i osoblje.", "Kombi za opremu prevozi bicikle i opremu.", "Mobilna radionica podržava popravke i tehničke operacije.", "Medicinski kombi podržava medicinske i logističke potrebe.", "Dodeljena ili zaključana vozila ne mogu se popravljati ili prodavati."],
+      "tips": ["Održavajte važna vozila pre trka."]
+    },
+    "seasonCalendarDeep": {
+      "title": "Detalji Kalendara sezone",
+      "subtitle": "Planiranje dnevnih aktivnosti tima.",
+      "overview": "Kalendar sezone prikazuje dnevne aktivnosti kluba i širu sezonu.",
+      "facts": ["Filteri", "Trke, Trening kampovi, Događaji, Praznici", "Dužina meseca igre", "30 dana u trenutnoj UI mreži"],
+      "details": ["Koristite ga da vidite dane trka, kampove i događaje.", "Filteri smanjuju gužvu u prikazu.", "Kalendar pomaže da izbegnete preklapanje vozača i osoblja.", "Datume trening kampova treba proveriti ovde.", "Važni meseci trka mogu se planirati unapred."],
+      "tips": ["Koristite Kalendar sezone pre rezervacije kampova."]
+    },
+    "raceCalendarDeep": {
+      "title": "Detalji Kalendara trka",
+      "subtitle": "Kartice trka i statusi prijava.",
+      "overview": "Kalendar trka prikazuje sve trke i stanje njihovih prijava.",
+      "facts": ["Vrednosti statusa", "not_open, open, closed, race_active, race_finished, cancelled"],
+      "details": ["Kartice trka mogu prikazivati kategoriju, zemlju, grad domaćina, tip, datum početka/kraja i ograničenje timova.", "Prijava je moguća samo dok je status otvoren.", "Broj prihvaćenih timova pokazuje koliko je trka popunjena.", "Ciljevi sponzora mogu biti vezani za određene trke ili kategorije.", "Otvori trku šalje korisnika na stranicu Detalji trke."],
+      "tips": ["Prijavite se samo kada trka odgovara vašem timu."]
+    },
+    "raceDetailDeep": {
+      "title": "Stranica Detalji trke",
+      "subtitle": "Profil trke, etape, učesnici, rezultati i replay.",
+      "overview": "Detalji trke su centralno mesto za kompletnu trku.",
+      "facts": ["Info kartice", "Učesnici, Rezultati", "Klasifikacije", "Generalna, bodovi, planinska, mladi, timska"],
+      "details": ["Pregled trke uključuje datume, zemlju, kategoriju, tip trke i status.", "Pravila prijave prikazuju rokove, ograničenja timova, ograničenja vozača i nagradni fond.", "Etape prikazuju rutu, teren, distancu, vreme, sprintove i uspone.", "Učesnici prikazuju snapshot timova i vozača.", "Rezultati i klasifikacije postaju dostupni u skladu sa stanjem trke.", "Replay može prikazati live ili istorijske frame-ove ako pristup dozvoljava."],
+      "tips": ["Pregledajte detalje trke pre pripreme tima."]
+    },
+    "stageTerrainPoints": {
+      "title": "Teren etape i bodovi",
+      "subtitle": "Ravničarski, brdovito, planina, TT, kocka, sprintovi i KOM.",
+      "overview": "Definicije terena i bodova pomažu korisniku da izabere vozače, taktike i opremu.",
+      "facts": ["Teren", "Ravničarski, brdovito, planina, individualni hronometar, timski hronometar, prolog, kocka", "Tipovi tačaka", "START, INTERMEDIATE_SPRINT, KOM, BONUS_SPRINT, FINISH"],
+      "details": ["Ravničarske etape često odgovaraju sprinterima i lead-out vozačima.", "Brdovite etape odgovaraju svestranim vozačima i napadačima.", "Planinske etape odgovaraju penjačima i GC liderima.", "TT/prolog etape odgovaraju hronometrašima i TT opremi.", "Etape sa kockom favorizuju otpornost i specijalističku opremu.", "KOM i sprint bodovi važni su za sekundarne klasifikacije."],
+      "tips": ["Teren etape treba da određuje uloge u Stage Plan-u."]
+    },
+    "replayResultsDeep": {
+      "title": "Replay, rezultati i komentar",
+      "subtitle": "Kako razumeti šta se dogodilo tokom etape.",
+      "overview": "Replay i komentar objašnjavaju dinamiku trke izvan same konačne tabele rezultata.",
+      "facts": ["Brzine replay-a", "1x, 2x, 4x, 8x", "Ograničenje frame-ova", "Do 50000 redova učitano u trenutnom kodu"],
+      "details": ["Replay frame-ovi prikazuju grupe, razmake, vozače, timove, brzinu i kilometarske oznake.", "Live stanje kontroliše da li su rezultati vidljivi i da li je brzina replay-a zaključana.", "Redovi stanja mogu prikazati oznake lidera i poziciju grupe.", "Događaji komentara/izveštaja opisuju napade, sprintove, uspone, incidente i odlučujuće trenutke.", "Rezultati prikazuju plasman na etapi, vreme, zaostatak, bodove, bonus/kaznene sekunde i status."],
+      "tips": ["Koristite replay da analizirate taktiku i učinak vozača."]
+    },
+    "racePlanDeep": {
+      "title": "Detalji Race Plan-a",
+      "subtitle": "Vozači, osoblje, vozila, oprema i zalihe.",
+      "overview": "Race Plan je plan na nivou trke koji se šalje pre Stage Plans.",
+      "facts": ["Glavni delovi", "Vozači, osoblje, vozila, equipment setup, zalihe i ponuda"],
+      "details": ["Broj vozača mora odgovarati minimalnim/maksimalnim pravilima trke.", "Blokirani vozači ne mogu biti izabrani za događaje koji se preklapaju.", "Osoblje i vozila takođe mogu biti blokirani drugim zaduženjima.", "Equipment setup treba da odgovara terenu trke.", "Zalihe treba da budu dovoljne za sve etape.", "Pregled ponude treba proveriti pre slanja."],
+      "tips": ["Nikada ne šaljite plan bez čitanja troška i blokiranih resursa."]
+    },
+    "stagePlanDeep": {
+      "title": "Detalji Stage Plan-a",
+      "subtitle": "Uloge i taktike po etapi.",
+      "overview": "Stage Plans govore race engine-u šta svaki vozač treba da radi na svakoj etapi.",
+      "facts": ["Komponente", "Uloge, timske taktike, individualne taktike, oprema, zalihe"],
+      "details": ["Ravničarska sprint etapa zahteva drugačije uloge od planinske etape.", "TT i TTT etape zahtevaju pacing i specijalističku opremu.", "Zalihe se dodeljuju po etapi i mogu biti potrošne ili koristiti trajni kapacitet.", "Provere spremnosti pokazuju da li je Stage Plan upotrebljiv.", "Sačuvani, ali prazni planovi nisu isto što i kompletni planovi."],
+      "tips": ["Proverite svaku etapu u etapnoj trci."]
+    },
+    "stageRolesDeep": {
+      "title": "Uloge na etapi i primena",
+      "subtitle": "Izbor lidera, sprintera, pomagača i specijalista.",
+      "overview": "Uloge na etapi treba da odgovaraju veštinama vozača i ciljevima etape.",
+      "facts": ["Uloge", "Lider, sprinter, lead-out, sprint train, penjač, mountain domestique, pomagač, Breakaway, chaser, rouleur, protected, free"],
+      "details": ["Team Leader/GC je za vozače koji se štite zbog ukupnog plasmana.", "Sprinteru su potrebni sprint atribut i lead-out podrška.", "Lead-out/Sprint Train pomaže sprinteru u ravničarskim završnicama.", "Climber/Mountain Domestique služi za kontrolu planinskih etapa.", "Breakaway uloge su rizične, ali mogu juriti pobedu na etapi ili vidljivost.", "Rouleur-i i pomagači podržavaju jurnjavu, tempo i zaštitu."],
+      "tips": ["Nemojte svakog vozača postaviti za lidera."]
+    },
+    "stageReadinessDeep": {
+      "title": "Sistem spremnosti Stage Plan-a",
+      "subtitle": "Zelena/žuta/narandžasta/crvena/siva provera planova.",
+      "overview": "Spremnost pokazuje da li su Stage Plans dovoljno kompletni za engine.",
+      "facts": ["Brojevi", "Sačuvano, upotrebljivo, nedostaje, nepotpuno, prazno, bez zaliha", "Nivoi", "Zeleno, žuto, narandžasto, crveno, sivo"],
+      "details": ["Nedostajuće planove treba kreirati.", "Prazne planove treba popuniti ulogama/taktikama/zalihama.", "Planovi bez zaliha mogu biti rizični ili nepotpuni.", "Preporučena akcija objašnjava šta treba popraviti.", "Svi obavezni Stage Plans treba da budu sačuvani pre dana trke."],
+      "tips": ["Popravite crvenu/narandžastu spremnost pre roka."]
+    },
+    "sportDirectorDeep": {
+      "title": "Predlozi Sportskog direktora",
+      "subtitle": "Pomoćni predlozi za Stage Plans.",
+      "overview": "Predlozi Sportskog direktora mogu pomoći menadžerima da naprave planove, ali ne treba da zamene procenu menadžera.",
+      "facts": ["Područja predloga", "Oprema, tim, individualno, zalihe"],
+      "details": ["Odgovor predloga može uključivati tip etape, ime etape, podatke predloga i objašnjenje.", "Predlozi mogu biti ograničeni kvalitetom osoblja ili backend logikom.", "Korisnici treba da porede predloge sa stvarnim veštinama vozača i ciljevima tima.", "Vreme i zalihe i dalje treba proveravati ručno.", "Dobri menadžeri prilagođavaju predloge umesto da ih slepo primenjuju."],
+      "tips": ["Koristite predloge kao alat za učenje."]
+    }
+  }
+}
