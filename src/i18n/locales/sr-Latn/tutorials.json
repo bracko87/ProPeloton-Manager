@@ -1,0 +1,111 @@
+{
+  "common": {
+    "startTutorial": "Pokreni vodič",
+    "noThanks": "Ne, hvala",
+    "next": "Dalje",
+    "finishForNow": "Završi za sada",
+    "closeTutorial": "Zatvori vodič"
+  },
+  "overview": {
+    "welcome": {
+      "title": "Dobrodošli u ProPeloton Manager",
+      "body": "Dobrodošli u igru. Ovaj vodič može vam pomoći da korak po korak razumete glavne stranice i najvažnije sisteme.\n\nVodič možete pokrenuti sada ili ga preskočiti i kasnije koristiti priručnik igre.",
+      "primary": "Pokreni vodič",
+      "secondary": "Ne, hvala"
+    },
+    "welcomeGame": {
+      "title": "Dobrodošli u ProPeloton Manager",
+      "body": "Dobrodošli u ProPeloton Manager.\n\nSada ste menadžer sopstvenog biciklističkog tima. Vaš posao je da gradite klub, vodite računa o vozačima, pripremate trke, upravljate novcem, unapređujete tim i vodite klub kroz sezonu.",
+      "primary": "Dalje"
+    },
+    "gameType": {
+      "title": "Kakva je ovo igra?",
+      "body": "Ovo je igra upravljanja biciklističkim timom.\n\nTokom trke ne upravljate direktno biciklom. Umesto toga donosite važne menadžerske odluke pre i tokom sezone: koje vozače zadržati, kako ih trenirati, na koje trke se prijaviti, koju opremu koristiti, koje osoblje zaposliti i kako trošiti novac.",
+      "primary": "Dalje"
+    },
+    "simpleOrDeep": {
+      "title": "Igrajte jednostavno ili idite u dubinu",
+      "body": "Ne morate odmah razumeti sve.\n\nNa početku možete igrati jednostavno: pratite upozorenja, proveravajte ekipu, prijavljujte se na trke, pripremajte tim i pratite rezultate.\n\nKasnije, ako želite više dubine, možete koristiti napredne sisteme kao što su umor vozača, moral, race sharpness, ciljevi sponzora, bonusi opreme, trening kampovi, skauting, pregovori o transferima, porezi, infrastruktura i promocija ili ispadanje.",
+      "primary": "Dalje"
+    },
+    "purpose": {
+      "title": "Šta će ovaj vodič uraditi",
+      "body": "Ovaj vodič će vas jednu po jednu provesti kroz glavne stranice igre.\n\nSaznaćete čemu svaka stranica služi, koja dugmad su važna i šta bi novi menadžer trebalo da proverava.\n\nVodič neće odjednom objašnjavati svaki sitan detalj. Za detaljnija objašnjenja kasnije uvek možete koristiti kompletan priručnik igre.",
+      "primary": "Dalje"
+    },
+    "startOverview": {
+      "title": "Počnimo sa stranicom Pregled",
+      "body": "Počećemo sa stranicom Pregled.\n\nTo je vaša glavna menadžerska kontrolna tabla. Najbrže vam pokazuje stanje tima: trenutna upozorenja, vesti, finansije, trke, poruke sponzora, stanje vozača i napredak sezone.\n\nNakon ovog uvoda objasniću stranicu Pregled korak po korak.",
+      "primary": "Pokreni vodič za Pregled"
+    },
+    "dashboard": {
+      "title": "Vaša menadžerska kontrolna tabla",
+      "body": "Ovo je stranica Pregled — glavna kontrolna tabla vašeg tima.\n\nPosmatrajte je kao svakodnevni kontrolni centar. Kada se prijavite, ovo je obično prvo mesto koje treba proveriti.\n\nOvde možete brzo videti najvažnije informacije o klubu, uključujući stanje tima, trenutna upozorenja, finansije, trke, stanje vozača i napredak sezone.",
+      "primary": "Dalje"
+    },
+    "staffBriefing": {
+      "title": "Centar za izveštaje osoblja",
+      "body": "Ovaj panel prikazuje vaše pomoćno osoblje i uloge savetnika.\n\nOvde možete videti važne članove tima kao što su glavni trener, sportski direktor, doktor tima, glavni mehaničar i druge pomoćne uloge kada su dostupne.\n\nOvi savetnici vam pomažu da efikasnije upravljate važnim delovima kluba, kao što su planiranje trke, zdravlje vozača, priprema i podrška oko opreme.\n\nNeke funkcije savetnika, alati osoblja ili opcije povezane sa automatizacijom mogu zahtevati Premium nalog ili kupovinu novčićima da biste ih koristili u potpunosti.",
+      "primary": "Dalje"
+    },
+    "newsBoard": {
+      "title": "Tabla vesti",
+      "body": "Tabla vesti prikazuje važne vesti tima i sveta.\n\nNeke vesti se odnose na vaš tim, na primer ponude sponzora, rođendane ili novosti tima. Druge vesti mogu se odnositi na širi svet trka, poput rezultata ili važnih biciklističkih događaja.\n\nKlikom na red sa vesti možete prikazati više informacija kada dodatni detalji postoje.",
+      "primary": "Dalje"
+    },
+    "nextRace": {
+      "title": "Sledeća trka tima",
+      "body": "Panel Sledeća trka tima pomaže vam da vidite šta uskoro očekuje vaš tim.\n\nOvo je važno jer prihvaćene trke često i dalje zahtevaju pripremu. Pre rokova ćete možda morati da izaberete vozače, osoblje, vozila i druga sredstva, opremu, zalihe i taktiku za etape.\n\nAko ovaj panel prikazuje predstojeću trku, trebalo bi rano da proverite Pripremu trke.",
+      "primary": "Dalje"
+    },
+    "lastRace": {
+      "title": "Poslednja trka tima",
+      "body": "Panel Poslednja trka tima prikazuje poslednju završenu trku vašeg tima kada je dostupna.\n\nKoristite ga da brzo pregledate učinak tima. Rezultati vam mogu pomoći da odlučite da li vozačima treba odmor, da li je taktika dobro funkcionisala ili je potrebno promeniti ekipu pre sledećeg događaja.",
+      "primary": "Dalje"
+    },
+    "sponsor": {
+      "title": "Glavni sponzor",
+      "body": "Panel Glavni sponzor prikazuje informacije o vašem glavnom sponzoru kada imate aktivan ugovor.\n\nSponzori su važni jer mogu donositi novac, bonuse, ciljeve i ponekad uticati na brendiranje. Neki ugovori su jednostavni, dok sponzori sa naming-rights pravima mogu privremeno promeniti ime vašeg tima tokom sezone.",
+      "primary": "Dalje"
+    },
+    "progress": {
+      "title": "Zdravlje tima i napredak sezone",
+      "body": "Ostatak stranice Pregled pomaže vam da pratite stanje i napredak tima.\n\nOvde možete pratiti stanje vozača, finansijsko zdravlje, aktivnosti sponzora, aktivnosti na trkama, aktivne operacije, podatke pregleda sezone i opšti napredak kroz sezonu.\n\nNeki napredni delovi kontrolne table, sažeci ili dodatni prikazi podataka mogu zahtevati Premium nalog ili kupovinu novčićima. Ako je panel zaključan, i dalje možete normalno igrati, ali Premium ili novčići mogu olakšati igru i dati detaljniji pregled kluba.\n\nKako klub raste, ova stranica postaje sve korisnija jer pomaže da povežete kratkoročne zadatke, poput pripreme sledeće trke, sa dugoročnim ciljevima kao što su izgradnja jače ekipe i poboljšanje plasmana.",
+      "primary": "Nastavi na Ekipu",
+      "secondary": "Završi za sada"
+    }
+  },
+  "menu": {
+    "welcome": {
+      "title": "Treba vam pomoć sa Menijem?",
+      "body": "Pokazaćemo vam gde se u gornjem desnom uglu nalaze glavni meni, obaveštenja i novčići.",
+      "primary": "Pokreni vodič",
+      "secondary": "Ne, hvala"
+    },
+    "main": {
+      "title": "Glavni meni",
+      "body": "Ovo je glavno dugme Meni u gornjem desnom uglu.\n\nU meniju možete pronaći Poruke za internu komunikaciju, podešavanja profila, teme i prilagođavanje izgleda, linkove ka forumu ili Discord-u, podešavanja igre, pomoć kroz priručnik i često postavljana pitanja, Kontakt, Pro pakete i napredak programa Pozovi prijatelje.\n\nKoristite ovaj meni kada su vam potrebna podešavanja naloga, pomoć, podrška, preference ili dodatne opcije igre.",
+      "primary": "Dalje"
+    },
+    "notifications": {
+      "title": "Obaveštenja",
+      "body": "Ova ikonica zvona otvara obaveštenja u igri.\n\nObaveštenja vas informišu o važnim događajima kao što su rokovi za trke, podsetnici za pripremu, novosti sponzora, finansije, transferi i druge akcije u igri koje zahtevaju vašu pažnju.\n\nKoja obaveštenja želite da primate možete podesiti kroz opciju Podešavanja u Meniju.",
+      "primary": "Dalje"
+    },
+    "coins": {
+      "title": "Novčići",
+      "body": "Ovde vidite trenutno stanje novčića.\n\nNovčići se koriste za određene funkcije igre, otključavanja i dodatne praktične opcije u ProPeloton Manager-u.\n\nStanje možete proveriti ovde u bilo kom trenutku, a dodatne novčiće možete kupiti kroz Meni → Pro paketi.\n\nMalo novčića neće suspendovati vaš nalog. Možete nastaviti da igrate, ali neke opcione funkcije ili akcije slične Premium funkcijama možda neće biti dostupne dok ne dodate još novčića.",
+      "primary": "Dalje"
+    },
+    "premium": {
+      "title": "Premium nalog",
+      "body": "Ovo je deo za vaš Premium pristup.\n\nPremium nalog može učiniti igru lakšom i udobnijom tako što daje pristup dodatnim funkcijama, naprednijim prikazima i korisnim alatima.\n\nPremium takođe može pomoći da otključate više mogućnosti kompletnog menadžerskog iskustva.\n\nKupovinom Premium-a ili Pro paketa direktno podržavate naš tim i pomažete nam da nastavimo da razvijamo ProPeloton Manager brže i kvalitetnije.",
+      "primary": "Dalje"
+    },
+    "finished": {
+      "title": "Vodič je završen",
+      "body": "Uspešno ste završili osnovni ProPeloton Manager vodič.\n\nAko kasnije budete imali pitanja, uvek možete pogledati priručnik u igri, pročitati često postavljana pitanja, kontaktirati nas ili se pridružiti našoj Discord zajednici.\n\nSrećno sa vašim timom!",
+      "primary": "Završi vodič"
+    }
+  }
+}
