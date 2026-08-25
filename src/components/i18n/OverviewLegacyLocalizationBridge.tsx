@@ -178,7 +178,8 @@ const staticTextKeys = new Map<string, string>([
   ['No upcoming events', 'races.noUpcoming'],
   [
     'There are no accepted races, camps, deadlines, or infrastructure milestones in the current overview window.',
-    'races.noUpcomingSubtitle'],
+    'races.noUpcomingSubtitle',
+  ],
   ['This Day Races', 'races.todayTitle'],
   ['Races happening on the current game day.', 'races.todayCurrent'],
   ['No races on this date', 'races.noToday'],
@@ -554,7 +555,7 @@ export default function OverviewLegacyLocalizationBridge(): null {
     if (!isOverview) return
 
     console.info('[Overview i18n diagnostic]', {
-      route: hashPath,
+      route: getCurrentHashPath(),
       language: i18n.language,
       translation: t('staffBriefing.title'),
       mainFound: Boolean(document.querySelector('main')),
@@ -592,7 +593,7 @@ export default function OverviewLegacyLocalizationBridge(): null {
       observer.disconnect()
       i18n.off('languageChanged', handleLanguageChanged)
     }
-  }, [hashPath, i18n, isOverview, t])
+  }, [i18n, isOverview, t])
 
   return null
 }
