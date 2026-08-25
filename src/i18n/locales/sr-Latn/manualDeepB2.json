@@ -1,0 +1,124 @@
+{
+  "sections": {
+    "rankingTiersDeep": {
+      "title": "Nivoi takmičenja",
+      "subtitle": "WorldTeam, ProTeam, Continental i Amateur.",
+      "overview": "Rangiranje timova organizovano je kao piramida takmičenja sa promocijom, plej-ofom i ispadanjem.",
+      "facts": ["Nivoi", "WorldTeam, ProTeam, Continental, Amateur"],
+      "details": ["WorldTeam je najviši nivo.", "ProTeam je podeljen na West i East.", "Continental je podeljen na Europe, America, Asia, Africa i Oceania.", "Amateur je podeljen na veliki broj regionalnih divizija.", "Bodovi određuju pozicije i posledice na kraju sezone."],
+      "tips": ["Prvo pratite sopstvenu diviziju."]
+    },
+    "promotionRelegationDeep": {
+      "title": "Promocija, plej-of i ispadanje",
+      "subtitle": "Kako se prikazuju promene na kraju sezone.",
+      "overview": "Oznake na tabeli objašnjavaju koje pozicije donose promociju, plej-of ili ispadanje.",
+      "facts": ["WorldTeam", "Poslednjih 5 ispada", "ProTeam", "Pobednik se promoviše, 2–4. mesto ide u World playoff, poslednjih 5 ispada"],
+      "details": ["Continental Europe/America vode u Pro West playoff.", "Continental Asia/Africa/Oceania vode u Pro East playoff.", "Različite Continental divizije imaju različite granice ispadanja.", "Amateur Oceania direktno promoviše prva tri tima.", "Evropske Amateur divizije direktno promovišu pobednika, a 2–3. mesto ide u plej-of.", "Ostale Amateur divizije direktno promovišu pobednika, a 2–4. mesto ide u plej-of."],
+      "tips": ["Pročitajte oznaku za izabranu diviziju."]
+    },
+    "statisticsDeep": {
+      "title": "Detaljni vodič za Statistiku",
+      "subtitle": "Timovi, vozači, filteri i istorija.",
+      "overview": "Statistika pomaže u poređenju performansi i analizi sveta igre.",
+      "facts": ["Glavne kartice", "Timovi i Vozači", "Metrike vozača", "Ukupni, sprint i penjački sezonski bodovi"],
+      "details": ["Team Current poredi aktuelne tabele i bodove.", "Team History čuva prethodne pobednike i snapshot-e.", "Rider Rankings prikazuje najbolje vozače.", "Rider Breakdown pomaže da pronađete specijaliste.", "Filteri uključuju sezonu, tip tima, status, nivo, diviziju, zemlju i pretragu.", "Otvaranje vozača koristi profil sopstvenog ili eksternog vozača u zavisnosti od vlasništva."],
+      "tips": ["Koristite Statistiku pre Transfera."]
+    },
+    "transferListDeep": {
+      "title": "Vozači na Transfer listi",
+      "subtitle": "Kupovina od drugog kluba.",
+      "overview": "Vozači na transfer listi zahtevaju ponudu između klubova pre pregovora o ugovoru sa vozačem.",
+      "facts": ["Podaci listinga", "Prodavac, tražena cena, plata, tržišna vrednost, istek, dostupnost"],
+      "details": ["Prodajni klub može prihvatiti ili odbiti ponude.", "Tražene cene mogu automatski biti ograničene pravilima sistema.", "Ako je ponuda prihvaćena, počinje odvojen pregovor sa vozačem.", "Skauting može uticati na količinu tačnih informacija koje su vidljive.", "Listing ističe prema datumu igre."],
+      "tips": ["Proverite platu pre velike transfer ponude."]
+    },
+    "freeAgentsDeep": {
+      "title": "Slobodni vozači",
+      "subtitle": "Potpisivanje vozača bez kluba.",
+      "overview": "Slobodni vozači ne zahtevaju ponudu prodajnom klubu, ali pregovori o ugovoru su i dalje važni.",
+      "facts": ["Pregovori", "Plata, trajanje, signing bonus, agent fee i uklapanje u nivo"],
+      "details": ["Slobodni vozači mogu biti jeftiniji jer nema transfer naknade.", "I dalje mogu zahtevati visoku platu ili bonuse.", "Pregled ponude pomaže u proceni prihvatanja.", "Hard block razlozi mogu potpuno sprečiti dogovor.", "Pregovori mogu isteći ili završiti kontra-ponudom/odbijanjem."],
+      "tips": ["Nulta transfer naknada ne znači da je vozač jeftin."]
+    },
+    "transferNegotiationDeep": {
+      "title": "Izgled pregovora",
+      "subtitle": "Procenat prihvatanja, ocene i razlozi odbijanja.",
+      "overview": "Pregled pregovora pomaže korisnicima da razumeju zašto ponuda može uspeti ili propasti.",
+      "facts": ["Ocene", "Plata, trajanje, bonus, naknada, nivo i ukupna ocena", "Statusi", "Otvoreno, na čekanju, prihvaćeno, odbijeno, isteklo, odbijeno, završeno, kontra-ponuda"],
+      "details": ["Procenat prihvatanja je samo procena, a ne garancija.", "Glavni razlog pokazuje šta nije u redu sa ponudom.", "Ocena nivoa može biti važna ako vozač želi viši nivo takmičenja.", "Broj pokušaja ograničava ponovljene ponude.", "Locked-until sprečava trenutno ponavljanje pregovora."],
+      "tips": ["Poboljšajte ono na šta se vozač žali, a ne nasumična polja."]
+    },
+    "scoutingDeep": {
+      "title": "Skauting izveštaji",
+      "subtitle": "Smanjivanje rizika od skrivenih informacija.",
+      "overview": "Skauting izveštaji pomažu korisnicima da izbegnu loše transfer odluke povećavanjem znanja o eksternim vozačima.",
+      "facts": ["Filteri", "Sve, Novo, Pregledano", "Polja izveštaja", "Vozač, skaut, datum, overall, potencijal, prednosti, beleške"],
+      "details": ["Izveštaji koriste stvarne UUID-eve vozača kako bi linkovi profila radili.", "Nove izveštaje treba pregledati pre slanja ponude.", "Overall i potencijal mogu biti oznake umesto tačnih vrednosti.", "Prednosti pokazuju u čemu je vozač dobar.", "Beleške daju skauting kontekst."],
+      "tips": ["Skautirajte pre skupih potpisa."]
+    },
+    "staffMarketDeep": {
+      "title": "Tržište osoblja",
+      "subtitle": "Angažovanje slobodnog osoblja.",
+      "overview": "Kartica Osoblje prikazuje dostupno osoblje i poštuje kapacitet uloga.",
+      "facts": ["Uloge", "Glavni trener, trener, U23 trener, doktor, fizioterapeut, nutricionista, mehaničar, sportski direktor, skaut/analitičar", "Sortiranje", "Plata, veštine, ime, zemlja"],
+      "details": ["Kandidati prikazuju ekspertizu, iskustvo, potencijal, liderstvo, efikasnost, lojalnost i platu.", "Ograničenje uloge može blokirati angažovanje.", "Skauting kancelarija može uticati na kvalitet izveštaja o kandidatima.", "Nedeljna plata dugoročno utiče na Finansije.", "Osoblje treba angažovati sa jasnom svrhom."],
+      "tips": ["Ne angažujte osoblje ako su kapacitet ili budžet ograničeni."]
+    },
+    "financeHealthDeep": {
+      "title": "Finansijsko zdravlje",
+      "subtitle": "Kako proceniti finansijsku sigurnost.",
+      "overview": "Finansijsko zdravlje govori o održivosti, a ne samo o trenutnom stanju računa.",
+      "facts": ["Operativni prikaz", "Prihod, rashod i neto po danu/nedelji/mesecu", "Odvajanje duga", "Isplata kredita i glavnica odvojeni su od operativnog cashflow-a"],
+      "details": ["Visoko trenutno stanje može i dalje biti nesigurno ako su stalni rashodi previsoki.", "Plate, politike, osoblje, porezi i otplate kredita mogu stvoriti budući pritisak.", "Sponzorski prihod može stizati mesečno ili prema vremenu ugovora.", "Nagrade sa trka zavise od performansi i ne treba ih unapred računati kao siguran prihod.", "Koristite trendove cashflow-a da razumete da li se klub finansijski poboljšava ili pogoršava."],
+      "tips": ["Proverite Finansije pre svake veće odluke o potrošnji."]
+    },
+    "transactionsDeep": {
+      "title": "Transakcije",
+      "subtitle": "Finansijski ledger i arhiva.",
+      "overview": "Transakcije su mesto za tačnu proveru zašto se novac promenio.",
+      "facts": ["Skorašnje", "Poslednjih 30 dana igre", "Arhiva", "Prethodnih 6 meseci igre", "Veličina stranice", "20"],
+      "details": ["Vidljivi datumi koriste metadata datuma igre.", "created_at je samo tehnički fallback.", "Poznati tipovi transakcija imaju čitljive oznake.", "Nepoznati tipovi transakcija automatski se pretvaraju u čitljiviji oblik.", "Arhiva grupiše starije redove po mesecu igre."],
+      "tips": ["Koristite Transakcije kada vas promena stanja iznenadi."]
+    },
+    "taxDeep": {
+      "title": "Poreske kontrole",
+      "subtitle": "Zadržavanje, mesečna korekcija i refund.",
+      "overview": "Porez prati oporezivi prihod i rezultate mesečne kontrole.",
+      "facts": ["Tipovi", "tax_withholding, tax_monthly_adjustment, tax_monthly_refund", "Statusi", "OK, korigovano, refundirano"],
+      "details": ["Očekivani porez se računa iz oporezivog bruto prihoda i poreske stope.", "Već zadržani porez predstavlja porez koji je već naplaćen.", "Iznos korekcije je ono što treba dodatno naplatiti ili vratiti.", "Mesečna kontrola poredi očekivani porez sa onim što je plaćeno.", "Porez može postati opasan nakon velikih prihoda."],
+      "tips": ["Ostavite dovoljno novca za poreske korekcije."]
+    },
+    "sponsorsDeep": {
+      "title": "Detaljni vodič za Sponzore",
+      "subtitle": "Glavni, sekundarni i tehnički sponzori.",
+      "overview": "Sponzori donose garantovani novac, bonus fondove i ciljeve. Tehnički sponzori mogu pomoći i oko opreme.",
+      "facts": ["Vrste", "Glavni, sekundarni, tehnički", "Novac", "Garantovani iznos, bonus fond, mesečni iznos", "Tehnički", "Procenat popusta i paket podrške"],
+      "details": ["Glavni sponzori su najvidljiviji.", "Sekundarni sponzori popunjavaju slotove i daju dodatnu podršku.", "Tehnički sponzori podržavaju kupovinu opreme.", "Sponzorske ponude mogu isteći.", "Proration znači da ugovor za deo sezone možda neće isplatiti vrednost pune sezone."],
+      "tips": ["Poredite garantovani novac, ciljeve i uticaj na brendiranje."]
+    },
+    "sponsorObjectivesDeep": {
+      "title": "Ciljevi sponzora",
+      "subtitle": "Zadaci, provera i isplate.",
+      "overview": "Ciljevi nagrađuju klub kada se ostvare sponzorski zadaci.",
+      "facts": ["Rezultati", "Start trke, pobeda, podijum, top 5, top 10, GC top 5/top 10, top 5/pobeda etape, vidljivost u klasifikaciji"],
+      "details": ["Ciljevi mogu biti vezani za tačne trke, zemlje ili kategorije.", "Napredak prikazuje cilj i trenutnu vrednost.", "Status može biti zakazano, provereno, ostvareno, promašeno ili isplaćeno.", "Razlog neuspeha objašnjava promašene ciljeve.", "ID transakcije isplate pojavljuje se nakon plaćanja."],
+      "tips": ["Planirajte ciljeve sponzora kada birate trke."]
+    },
+    "teamPoliciesDeep": {
+      "title": "Politike tima i operacije",
+      "subtitle": "Stalni i putni standardi kluba.",
+      "overview": "Politike poboljšavaju komfor/podršku, ali mogu povećati nedeljne, mesečne i putne troškove.",
+      "facts": ["Operacije", "Letovi, smeštaj, kopneni transport, logistika, smeštaj osoblja na putovanju", "Politike", "Stanovanje, ishrana, oporavak, oprema osoblja, bonus vozača, bonus osoblja"],
+      "details": ["Letovi, hotel i kopneni transport utiču na putovanja.", "Stanovanje, ishrana i oporavak podržavaju stalne operacije.", "Oprema osoblja može se primenjivati pri angažovanju osoblja.", "Bonus planovi mogu stvoriti sezonske troškove ili troškove zasnovane na rezultatima.", "Prognoze prikazuju troškove predstojećih putovanja.", "Stvarni trošak prethodnog meseca pomaže u kontroli potrošnje."],
+      "tips": ["Smanjite nivo politika ako su finansije u opasnosti."]
+    },
+    "liquidationDeep": {
+      "title": "Likvidacija i ponovno pokretanje",
+      "subtitle": "Šta se dešava kada klub ostane bez zaštite hitnih spasavanja.",
+      "overview": "Likvidacija blokira igranje tim klubom nakon što su iskorišćena sva spasavanja i nova obavezna obaveza ne može biti plaćena.",
+      "facts": ["Limit spasavanja", "3 doživotna hitna spasavanja", "Novčići naloga", "Ostaju aktivni", "Ponovno pokretanje", "Aktivna opcija za reset likvidiranog kluba uz čuvanje identiteta i mesta u takmičenju"],
+      "details": ["Likvidirani klub više ne može izvršavati akcije.", "Korisnik može kreirati novi klub na dostupnom slobodnom mestu.", "Ponovno pokretanje tima resetuje sportsko i gameplay stanje, ali zadržava identitet kluba i mesto u takmičenju.", "Trenutni vozači postaju slobodni igrači, osoblje i napredak se resetuju, a klub dobija novi početni sastav i nula bodova.", "Razlog likvidacije i timestamp mogu biti prikazani."],
+      "tips": ["Objasnite da je likvidacija na nivou kluba, a ne brisanje korisničkog naloga."]
+    }
+  }
+}
