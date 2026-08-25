@@ -5,6 +5,7 @@
 
 import React from 'react'
 import { NavLink, useNavigate, useLocation } from 'react-router'
+import { useTranslation } from 'react-i18next'
 import {
   Home,
   Users,
@@ -15,7 +16,7 @@ import {
   BarChart2,
   DollarSign,
   LogOut,
-  ClipboardCheck
+  ClipboardCheck,
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import BugReportButton from '../dashboard/BugReportButton'
@@ -26,8 +27,8 @@ interface SidebarProps {
 
 interface NavItem {
   to: string
-  label: string
-  description: string
+  labelKey: string
+  descriptionKey: string
   icon: React.ComponentType<{ size?: number; className?: string }>
   aliases?: string[]
 }
@@ -38,103 +39,99 @@ const GAME_LOGO_URL =
 const navItems: NavItem[] = [
   {
     to: '/dashboard/overview',
-    label: 'Overview',
-    description: 'Club snapshot and updates',
-    icon: Home
+    labelKey: 'overview',
+    descriptionKey: 'descriptions.overview',
+    icon: Home,
   },
   {
     to: '/dashboard/squad',
-    label: 'Squad',
-    description: 'Manage riders and roster',
-    icon: Users
+    labelKey: 'squad',
+    descriptionKey: 'descriptions.squad',
+    icon: Users,
   },
   {
     to: '/dashboard/calendar',
-    label: 'Calendar',
-    description: 'Upcoming races and events',
-    icon: Calendar
+    labelKey: 'calendar',
+    descriptionKey: 'descriptions.calendar',
+    icon: Calendar,
   },
   {
     to: '/dashboard/race-preparation',
     aliases: ['/dashboard/team-schedule'],
-    label: 'Race Preparation',
-    description: 'Startlist, logistics and stage plans',
-    icon: ClipboardCheck
+    labelKey: 'racePreparation',
+    descriptionKey: 'descriptions.racePreparation',
+    icon: ClipboardCheck,
   },
   {
     to: '/dashboard/team-ranking',
-    label: 'Team Ranking',
-    description: 'Rankings and standings',
-    icon: BarChart2
+    labelKey: 'teamRanking',
+    descriptionKey: 'descriptions.teamRanking',
+    icon: BarChart2,
   },
   {
     to: '/dashboard/training',
-    label: 'Training',
-    description: 'Rider training and sessions',
-    icon: List
+    labelKey: 'training',
+    descriptionKey: 'descriptions.training',
+    icon: List,
   },
   {
     to: '/dashboard/equipment',
-    label: 'Equipment',
-    description: 'Bikes, wheels and gear',
-    icon: Grid
+    labelKey: 'equipment',
+    descriptionKey: 'descriptions.equipment',
+    icon: Grid,
   },
   {
     to: '/dashboard/infrastructure',
-    label: 'Infrastructure',
-    description: 'Facilities and development',
-    icon: Grid
+    labelKey: 'infrastructure',
+    descriptionKey: 'descriptions.infrastructure',
+    icon: Grid,
   },
   {
     to: '/dashboard/finance',
-    label: 'Finance',
-    description: 'Budget, income and costs',
-    icon: DollarSign
+    labelKey: 'finance',
+    descriptionKey: 'descriptions.finance',
+    icon: DollarSign,
   },
   {
     to: '/dashboard/transfers',
-    label: 'Transfers',
-    description: 'Buy, sell and negotiate',
-    icon: ShoppingCart
+    labelKey: 'transfers',
+    descriptionKey: 'descriptions.transfers',
+    icon: ShoppingCart,
   },
   {
     to: '/dashboard/statistics',
-    label: 'Statistics',
-    description: 'Performance and analytics',
-    icon: BarChart2
-  }
+    labelKey: 'statistics',
+    descriptionKey: 'descriptions.statistics',
+    icon: BarChart2,
+  },
 ]
 
 function isPathActive(pathname: string, item: NavItem): boolean {
   const paths = [item.to, ...(item.aliases ?? [])]
-
-  return paths.some(
-    path => pathname === path || pathname.startsWith(`${path}/`)
-  )
+  return paths.some(path => pathname === path || pathname.startsWith(`${path}/`))
 }
 
-/**
- * Sidebar
- * Black sidebar with yellow active state and larger menu text.
- */
 export default function Sidebar({
-  collapsed = false
-}: SidebarProps) {
+  collapsed = false,
+}: SidebarProps): JSX.Element {
+  const { t } = useTranslation('navigation')
   const navigate = useNavigate()
   const location = useLocation()
 
   const currentNavItem = navItems.find(item =>
-    isPathActive(location.pathname, item)
+    isPathActive(location.pathname, item),
   )
 
-  const currentPageLabel = currentNavItem?.label ?? location.pathname
+  const currentPageLabel = currentNavItem
+    ? t(currentNavItem.labelKey)
+    : location.pathname
 
-  const signOut = async () => {
+  const signOut = async (): Promise<void> => {
     await supabase.auth.signOut()
     navigate('/')
   }
 
-  const linkClass = (isActive: boolean) =>
+  const linkClass = (isActive: boolean): string =>
     [
       'rounded-md transition-colors w-full',
       collapsed
@@ -142,7 +139,7 @@ export default function Sidebar({
         : 'flex items-start gap-3 px-3 py-3',
       isActive
         ? 'bg-yellow-400/20 text-yellow-400'
-        : 'text-white/90 hover:bg-white/5'
+        : 'text-white/90 hover:bg-white/5',
     ].join(' ')
 
   return (
@@ -172,7 +169,7 @@ export default function Sidebar({
                   ProPeloton Manager
                 </div>
                 <div className="text-xs text-white/60">
-                  Multiplayer cycling management
+                  {t('subtitle')}
                 </div>
               </div>
             )}
@@ -195,10 +192,10 @@ export default function Sidebar({
                 {!collapsed && (
                   <div className="min-w-0">
                     <div className="text-base font-semibold leading-tight">
-                      {item.label}
+                      {t(item.labelKey)}
                     </div>
                     <div className="text-xs text-white/55 mt-1 leading-tight">
-                      {item.description}
+                      {t(item.descriptionKey)}
                     </div>
                   </div>
                 )}
@@ -209,8 +206,10 @@ export default function Sidebar({
 
         <div className="mt-auto p-4 border-t border-white/5 space-y-3">
           <button
-            onClick={signOut}
-            aria-label="Sign out"
+            onClick={() => {
+              void signOut()
+            }}
+            aria-label={t('signOut')}
             className={`w-full rounded-md font-semibold transition-colors ${
               collapsed
                 ? 'flex items-center justify-center px-3 py-3 bg-yellow-400 text-black hover:bg-yellow-300'
@@ -218,7 +217,7 @@ export default function Sidebar({
             }`}
           >
             <LogOut size={16} />
-            {!collapsed && <span>Sign Out</span>}
+            {!collapsed && <span>{t('signOut')}</span>}
           </button>
 
           <BugReportButton
