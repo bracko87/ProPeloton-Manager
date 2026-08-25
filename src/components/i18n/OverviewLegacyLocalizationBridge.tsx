@@ -554,22 +554,16 @@ export default function OverviewLegacyLocalizationBridge(): null {
   useEffect(() => {
     if (!isOverview) return
 
-    console.info('[Overview i18n diagnostic]', {
-      route: getCurrentHashPath(),
-      language: i18n.language,
-      translation: t('staffBriefing.title'),
-      mainFound: Boolean(document.querySelector('main')),
-    })
-
     let applying = false
+    let observer: MutationObserver | null = null
+    let frameId: number | null = null
+    let root: Element | null = null
 
     const applyTranslations = (): void => {
-      if (applying) return
+      if (applying || !root) return
       applying = true
 
       try {
-        const root = document.querySelector('main')
-        if (!root) return
         translateTextNodes(root, t)
         translateAttributes(root, t)
       } finally {
@@ -577,20 +571,34 @@ export default function OverviewLegacyLocalizationBridge(): null {
       }
     }
 
-    applyTranslations()
+    const attachWhenReady = (): void => {
+      root = document.querySelector('main')
 
-    const observer = new MutationObserver(applyTranslations)
-    observer.observe(document.body, {
-      childList: true,
-      subtree: true,
-      characterData: true,
-    })
+      if (!root) {
+        frameId = window.requestAnimationFrame(attachWhenReady)
+        return
+      }
+
+      applyTranslations()
+
+      observer = new MutationObserver(applyTranslations)
+      observer.observe(root, {
+        childList: true,
+        subtree: true,
+        characterData: true,
+      })
+    }
+
+    attachWhenReady()
 
     const handleLanguageChanged = (): void => applyTranslations()
     i18n.on('languageChanged', handleLanguageChanged)
 
     return () => {
-      observer.disconnect()
+      if (frameId !== null) {
+        window.cancelAnimationFrame(frameId)
+      }
+      observer?.disconnect()
       i18n.off('languageChanged', handleLanguageChanged)
     }
   }, [i18n, isOverview, t])
