@@ -4,6 +4,7 @@ import './i18n'
 import App from './App'
 import LanguagePreferenceSync from './components/i18n/LanguagePreferenceSync'
 import LanguageSelectorHost from './components/i18n/LanguageSelectorHost'
+import AppShellLegacyLocalizationBridge from './components/i18n/AppShellLegacyLocalizationBridge'
 import HomeLegacyLocalizationBridge from './components/i18n/HomeLegacyLocalizationBridge'
 import PreferencesLegacyLocalizationBridge from './components/i18n/PreferencesLegacyLocalizationBridge'
 import PreferencesDynamicLocalizationBridge from './components/i18n/PreferencesDynamicLocalizationBridge'
@@ -43,6 +44,7 @@ root.render(
   <>
     <LanguagePreferenceSync />
     <LanguageSelectorHost />
+    <AppShellLegacyLocalizationBridge />
     <HomeLegacyLocalizationBridge />
     <PreferencesLegacyLocalizationBridge />
     <PreferencesDynamicLocalizationBridge />
