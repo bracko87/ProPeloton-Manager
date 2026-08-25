@@ -11,6 +11,7 @@ import enPreferences from './locales/en/preferences.json'
 import enPreferencesDynamic from './locales/en/preferencesDynamic.json'
 import enOverview from './locales/en/overview.json'
 import enTutorials from './locales/en/tutorials.json'
+import enSquad from './locales/en/squad.json'
 
 import srCommon from './locales/sr-Latn/common.json'
 import srNavigation from './locales/sr-Latn/navigation.json'
@@ -22,6 +23,7 @@ import srPreferences from './locales/sr-Latn/preferences.json'
 import srPreferencesDynamic from './locales/sr-Latn/preferencesDynamic.json'
 import srOverview from './locales/sr-Latn/overview.json'
 import srTutorials from './locales/sr-Latn/tutorials.json'
+import srSquad from './locales/sr-Latn/squad.json'
 
 import {
   DEFAULT_LANGUAGE,
@@ -44,6 +46,7 @@ const resources = {
     preferencesDynamic: enPreferencesDynamic,
     overview: enOverview,
     tutorials: enTutorials,
+    squad: enSquad,
   },
   'sr-Latn': {
     common: srCommon,
@@ -56,6 +59,7 @@ const resources = {
     preferencesDynamic: srPreferencesDynamic,
     overview: srOverview,
     tutorials: srTutorials,
+    squad: srSquad,
   },
 } as const
 
@@ -80,6 +84,7 @@ void i18n
       'preferencesDynamic',
       'overview',
       'tutorials',
+      'squad',
     ],
     interpolation: {
       escapeValue: false,
