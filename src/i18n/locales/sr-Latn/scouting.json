@@ -1,0 +1,58 @@
+{
+  "page": {
+    "back": "← Nazad",
+    "title": "Pregled skautinga",
+    "subtitle": "Svi završeni skautski izveštaji na jednom mestu. Filtrirajte po statusu i otvorite direktno profil vozača.",
+    "loading": "Učitavanje skautskih izveštaja...",
+    "empty": "Još nema skautskih izveštaja koji odgovaraju ovom filteru.",
+    "loadFailed": "Skautski izveštaji nisu mogli da se učitaju.",
+    "reviewFailed": "Izveštaj nije mogao da bude označen kao pregledan."
+  },
+  "filters": {
+    "all": "Sve",
+    "new": "Novo",
+    "reviewed": "Pregledano"
+  },
+  "report": {
+    "unknownRider": "Nepoznat vozač",
+    "scout": "Skaut",
+    "scoutName": "Skaut: {{name}}",
+    "completed": "Završeno: {{date}}",
+    "overall": "Ukupna ocena",
+    "potential": "Potencijal",
+    "keyStrengths": "Glavne prednosti",
+    "more": "(+još)",
+    "notes": "Beleške:",
+    "openProfile": "Otvori profil vozača"
+  },
+  "potential": {
+    "veryLow": "Veoma nizak",
+    "low": "Nizak",
+    "medium": "Srednji",
+    "high": "Visok",
+    "elite": "Elite"
+  },
+  "skills": {
+    "sprint": "Sprint",
+    "climbing": "Brdo",
+    "timeTrial": "Hronometar",
+    "endurance": "Izdržljivost",
+    "flat": "Ravno",
+    "recovery": "Oporavak",
+    "resistance": "Otpornost",
+    "raceIq": "Trkački IQ",
+    "teamwork": "Timski rad",
+    "morale": "Moral"
+  },
+  "table": {
+    "riderScout": "Vozač i skaut",
+    "overallPotential": "Ukupna ocena / Potencijal",
+    "strengthsNotes": "Glavne prednosti i beleške",
+    "action": "Akcija"
+  },
+  "pagination": {
+    "previous": "Prethodna",
+    "next": "Sledeća",
+    "page": "Stranica {{page}} od {{total}}"
+  }
+}
