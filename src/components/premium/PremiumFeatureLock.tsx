@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { useTranslation } from 'react-i18next'
 
 export type PremiumFeatureLockProps = {
   title: string
@@ -16,7 +17,7 @@ export type PremiumFeatureGateProps = PremiumFeatureLockProps & {
   children: ReactNode
 }
 
-export function openPremiumPage() {
+export function openPremiumPage(): void {
   window.location.hash = '#/dashboard/pro'
 }
 
@@ -24,7 +25,9 @@ export function PremiumFeatureLock({
   title,
   description,
   className = '',
-}: PremiumFeatureLockProps) {
+}: PremiumFeatureLockProps): JSX.Element {
+  const { t } = useTranslation('navigation')
+
   return (
     <div
       className={[
@@ -39,7 +42,7 @@ export function PremiumFeatureLock({
           <div className="flex flex-wrap items-center gap-2">
             <span className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-amber-700">
               <span aria-hidden="true">🔒</span>
-              Premium
+              {t('header.premium')}
             </span>
 
             <h3 className="text-sm font-semibold text-slate-800">{title}</h3>
@@ -55,7 +58,7 @@ export function PremiumFeatureLock({
           onClick={openPremiumPage}
           className="shrink-0 self-start rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-sm transition hover:border-slate-400 hover:bg-slate-50 sm:self-auto"
         >
-          Unlock with Premium
+          {t('premiumFeature.unlock')}
         </button>
       </div>
     </div>
@@ -64,7 +67,7 @@ export function PremiumFeatureLock({
 
 export function PremiumFeatureLoading({
   className = '',
-}: PremiumFeatureLoadingProps) {
+}: PremiumFeatureLoadingProps): JSX.Element {
   return (
     <div
       className={[
@@ -93,7 +96,7 @@ export function PremiumFeatureGate({
   description,
   className = '',
   children,
-}: PremiumFeatureGateProps) {
+}: PremiumFeatureGateProps): JSX.Element {
   if (loading) {
     return <PremiumFeatureLoading className={className} />
   }
