@@ -112,5 +112,8 @@
     "imageRequired": "Snimak ekrana mora biti slika.",
     "imageTooLarge": "Snimak ekrana mora biti manji od {{size}} MB.",
     "sendFailed": "Slanje prijave greške nije uspelo."
+  },
+  "premiumFeature": {
+    "unlock": "Otključaj uz Premium"
   }
 }
