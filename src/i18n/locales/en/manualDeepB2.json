@@ -1,0 +1,124 @@
+{
+  "sections": {
+    "rankingTiersDeep": {
+      "title": "Competition Tiers",
+      "subtitle": "WorldTeam, ProTeam, Continental and Amateur.",
+      "overview": "Team ranking is organized into a competition pyramid with promotion, playoffs and relegation.",
+      "facts": ["Tiers", "WorldTeam, ProTeam, Continental, Amateur"],
+      "details": ["WorldTeam is the top level.", "ProTeam is split into West and East.", "Continental is split into Europe, America, Asia, Africa and Oceania.", "Amateur is split into many regional divisions.", "Points decide positions and season-end consequences."],
+      "tips": ["Track your own division first."]
+    },
+    "promotionRelegationDeep": {
+      "title": "Promotion, Playoffs and Relegation",
+      "subtitle": "How season-end movement is shown.",
+      "overview": "Standing labels explain which positions promote, enter playoffs or relegate.",
+      "facts": ["WorldTeam", "Bottom 5 relegated", "ProTeam", "Winner promoted, 2nd–4th World playoff, bottom 5 relegated"],
+      "details": ["Continental Europe/America feed Pro West playoff.", "Continental Asia/Africa/Oceania feed Pro East playoff.", "Different Continental divisions have different relegation cutoffs.", "Amateur Oceania promotes top three directly.", "European Amateur divisions use winner direct and 2nd–3rd playoff.", "Other Amateur divisions use winner direct and 2nd–4th playoff."],
+      "tips": ["Read the label for the selected division."]
+    },
+    "statisticsDeep": {
+      "title": "Statistics Deep Guide",
+      "subtitle": "Teams, riders, filters and history.",
+      "overview": "Statistics helps compare performance and scout the game world.",
+      "facts": ["Main tabs", "Teams and Riders", "Rider metrics", "Overall, sprint and climbing season points"],
+      "details": ["Team Current compares current standings and points.", "Team History stores past winners and snapshots.", "Rider Rankings show top performers.", "Rider Breakdown helps find specialists.", "Filters include season, team type, status, tier, division, country and search.", "Opening a rider uses own or external profile route depending on ownership."],
+      "tips": ["Use Statistics before Transfers."]
+    },
+    "transferListDeep": {
+      "title": "Transfer List Riders",
+      "subtitle": "Buying from another club.",
+      "overview": "Transfer-listed riders require a club-to-club offer before rider contract negotiation.",
+      "facts": ["Listing data", "Seller, asking price, salary, market value, expiry, availability"],
+      "details": ["The selling club can accept/reject offers.", "Asking prices can be automatically clamped.", "If accepted, a separate rider negotiation starts.", "Scouting can affect how much exact information is visible.", "Listings expire by game date."],
+      "tips": ["Check salary before making a big transfer offer."]
+    },
+    "freeAgentsDeep": {
+      "title": "Free Agents",
+      "subtitle": "Signing unattached riders.",
+      "overview": "Free agents do not require a selling club offer, but contract negotiation still matters.",
+      "facts": ["Negotiation", "Salary, duration, signing bonus, agent fee and tier fit"],
+      "details": ["Free agents can be cheaper because there is no transfer fee.", "They may still demand high salary or bonuses.", "Offer preview helps estimate acceptance.", "Hard blocks can prevent a deal.", "Negotiations can expire or be countered/rejected."],
+      "tips": ["Zero transfer fee does not mean a cheap rider."]
+    },
+    "transferNegotiationDeep": {
+      "title": "Negotiation Outlook",
+      "subtitle": "Acceptance percent, scores and rejection reasons.",
+      "overview": "Negotiation previews help users understand why an offer may succeed or fail.",
+      "facts": ["Scores", "Salary, duration, bonus, fee, tier and total score", "Statuses", "Open, pending, accepted, rejected, expired, declined, completed, countered"],
+      "details": ["Acceptance percent is only a preview, not a guarantee.", "Primary reason tells what is wrong with the offer.", "Tier score can matter if a rider wants a higher competition level.", "Attempt counts limit repeated offers.", "Locked-until prevents immediate repeat negotiations."],
+      "tips": ["Improve the reason the rider complains about, not random fields."]
+    },
+    "scoutingDeep": {
+      "title": "Scouting Reports",
+      "subtitle": "Reducing hidden information risk.",
+      "overview": "Scouting reports help users avoid bad transfer decisions by improving knowledge of external riders.",
+      "facts": ["Filters", "All, New, Reviewed", "Report fields", "Rider, scout, date, overall, potential, strengths, notes"],
+      "details": ["Reports use real rider UUIDs so profile links work.", "New reports should be reviewed before bidding.", "Overall and potential may be labels rather than exact values.", "Strengths identify what the rider is good at.", "Notes provide scouting context."],
+      "tips": ["Scout before expensive signings."]
+    },
+    "staffMarketDeep": {
+      "title": "Staff Market",
+      "subtitle": "Hiring free-agent staff.",
+      "overview": "The Staff tab lists available staff and respects role capacity.",
+      "facts": ["Roles", "Head coach, trainer, U23 coach, doctor, physio, nutritionist, mechanic, sport director, scout/analyst", "Sort", "Salary, skills, name, country"],
+      "details": ["Candidates show expertise, experience, potential, leadership, efficiency, loyalty and salary.", "Role limits can block hiring.", "Scouting Office can affect report quality for candidates.", "Weekly salary affects Finance long term.", "Staff should be hired for a clear purpose."],
+      "tips": ["Do not hire staff if capacity or budget is tight."]
+    },
+    "financeHealthDeep": {
+      "title": "Finance Health",
+      "subtitle": "How to read financial safety.",
+      "overview": "Finance health is about sustainability, not just current balance.",
+      "facts": ["Operating view", "Income, expense and net by day/week/month", "Debt separation", "Loan disbursement and principal are separated from operating cashflow"],
+      "details": ["A high balance can still be unsafe if recurring expenses are too high.", "Salaries, policies, staff, taxes and loan repayments can create future pressure.", "Sponsor income may arrive monthly or by contract timing.", "Race rewards are performance-dependent and should not be assumed.", "Use cashflow trends to understand whether the club is improving or declining."],
+      "tips": ["Check Finance before every major spending decision."]
+    },
+    "transactionsDeep": {
+      "title": "Transactions",
+      "subtitle": "Financial ledger and archive.",
+      "overview": "Transactions is the place to audit exactly why money moved.",
+      "facts": ["Recent", "Last 30 game days", "Archive", "Previous 6 game months", "Page size", "20"],
+      "details": ["Visible dates use game-date metadata.", "created_at is only a technical fallback.", "Known transaction types have readable labels.", "Unknown transaction types are prettified automatically.", "Archive groups old rows by in-game month."],
+      "tips": ["Use Transactions when balance surprises you."]
+    },
+    "taxDeep": {
+      "title": "Tax Audits",
+      "subtitle": "Withholding, monthly adjustment and refund.",
+      "overview": "Tax tracks taxable income and monthly audit outcomes.",
+      "facts": ["Types", "tax_withholding, tax_monthly_adjustment, tax_monthly_refund", "Statuses", "OK, adjusted, refunded"],
+      "details": ["Expected tax is calculated from taxable gross income and tax rate.", "Already withheld is tax already taken.", "Adjustment amount is what must be charged or refunded.", "Monthly audit compares expected tax against what was paid.", "Tax can become dangerous after large income events."],
+      "tips": ["Keep cash available for tax adjustments."]
+    },
+    "sponsorsDeep": {
+      "title": "Sponsors Deep Guide",
+      "subtitle": "Main, secondary and technical sponsors.",
+      "overview": "Sponsors bring guaranteed money, bonus pools and objectives. Technical sponsors can also help equipment.",
+      "facts": ["Kinds", "Main, secondary, technical", "Money", "Guaranteed amount, bonus pool, monthly amount", "Technical", "Discount percentage and support package"],
+      "details": ["Main sponsors are the most visible.", "Secondary sponsors fill slots and add support.", "Technical sponsors support equipment purchases.", "Sponsor offers can expire.", "Proration means a partial-season contract may not pay full-season values."],
+      "tips": ["Compare guaranteed money, objectives and branding impact."]
+    },
+    "sponsorObjectivesDeep": {
+      "title": "Sponsor Objectives",
+      "subtitle": "Targets, checking and payouts.",
+      "overview": "Objectives reward the club when sponsor targets are achieved.",
+      "facts": ["Results", "Race start, win, podium, top 5, top 10, GC top 5/top 10, stage top 5/win, classification visibility"],
+      "details": ["Objectives can target exact races, countries or categories.", "Progress shows target and current value.", "Status can be scheduled, checked, achieved, missed or paid.", "Failed reason explains missed objectives.", "Payout transaction id appears after payment."],
+      "tips": ["Plan sponsor objectives when choosing races."]
+    },
+    "teamPoliciesDeep": {
+      "title": "Team Policies and Operations",
+      "subtitle": "Recurring and trip-related club standards.",
+      "overview": "Policies improve comfort/support but can increase weekly, monthly and trip costs.",
+      "facts": ["Operations", "Flights, accommodation, ground transport, logistics, staff travel accommodation", "Policies", "Housing, nutrition, recovery, staff equipment, rider bonus, staff bonus"],
+      "details": ["Flights, hotel and ground transport affect trips.", "Housing, nutrition and recovery support recurring operations.", "Staff equipment can apply when hiring staff.", "Bonus plans can create seasonal or result-based cost.", "Forecasts show upcoming trip costs.", "Last month actual cost helps audit spending."],
+      "tips": ["Reduce policy level if finances are dangerous."]
+    },
+    "liquidationDeep": {
+      "title": "Liquidation and Restart Notice",
+      "subtitle": "What happens when the club runs out of rescue protection.",
+      "overview": "Liquidation blocks gameplay for that club after rescue limits are exhausted and another mandatory obligation fails.",
+      "facts": ["Rescue limit", "3 lifetime emergency rescues", "Account coins", "Remain active", "Restart", "Future/not active notice in current UI"],
+      "details": ["The liquidated club can no longer perform actions.", "The user can create a new club in an available free spot.", "Restart team currently only explains future reset behavior.", "Future restart would release old riders, remove staff and reset points/progress.", "Liquidation reason and timestamp can be shown."],
+      "tips": ["Explain that liquidation is club-level, not account deletion."]
+    }
+  }
+}
