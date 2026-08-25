@@ -1,0 +1,46 @@
+{
+  "sections": {
+    "applicationBlocked": {
+      "title": "FAQ: Why can’t I apply to a race?",
+      "subtitle": "Common application blockers.",
+      "overview": "A race application can be blocked by the race status, deadlines, capacity or eligibility.",
+      "details": ["Applications may not be open yet.", "Applications may already be closed.", "The race may be active, finished or cancelled.", "The race may be full.", "Your team may not match entry requirements.", "You may already have an application/entry."],
+      "tips": ["Open Race Detail and check entry rules."]
+    },
+    "acceptedNotReady": {
+      "title": "FAQ: Why am I accepted but not ready?",
+      "subtitle": "Accepted entry is not a complete race plan.",
+      "overview": "Accepted means your team has a place; ready means riders, staff, assets, equipment, supplies and stage plans are usable.",
+      "details": ["Race Plan still needs to be submitted.", "Stage Plans may still be missing.", "Supplies may be missing.", "Readiness may show problems.", "Deadlines may lock changes if missed."],
+      "tips": ["Open Race Preparation after every accepted race."]
+    },
+    "riderUnderperformed": {
+      "title": "FAQ: Why did my rider underperform?",
+      "subtitle": "Performance has many causes.",
+      "overview": "A strong rider can perform badly if the role, stage, condition, tactics or support were wrong.",
+      "details": ["Check if the rider skills matched the terrain.", "Check fatigue and availability.", "Check morale and race sharpness.", "Check stage role and tactics.", "Check equipment and supplies.", "Check weather and incidents.", "Check staff/assets support."],
+      "tips": ["Use replay and commentary to learn."]
+    },
+    "money": {
+      "title": "FAQ: Where did my money go?",
+      "subtitle": "How to investigate balance changes.",
+      "overview": "Finance Transactions is the source for balance movements.",
+      "details": ["Open Finance → Transactions.", "Review salaries, tax, sponsor payments, transfers, equipment, infrastructure, camps and policies.", "Open Tax for monthly audit.", "Open Team Policies for recurring cost.", "Remember that loans are debt, not income."],
+      "tips": ["Transactions is the first page for finance questions."]
+    },
+    "equipment": {
+      "title": "FAQ: Why is my equipment bonus small?",
+      "subtitle": "Bonus caps and trade-offs.",
+      "overview": "Equipment is weighted and capped so it supports but does not replace rider quality.",
+      "details": ["Bonuses are weighted by category.", "Stage bonus is capped.", "Team/non-rider support is capped.", "Fatigue reduction is capped.", "Specialist gear can have negative trade-offs."],
+      "tips": ["Use the right setup for the right stage."]
+    },
+    "staffHiring": {
+      "title": "FAQ: Why can’t I hire staff?",
+      "subtitle": "Common hiring blockers.",
+      "overview": "Staff hiring depends on role capacity, availability and money.",
+      "details": ["Check open slots for the role.", "Upgrade infrastructure if capacity is full.", "Check candidate availability.", "Check weekly salary and balance.", "Check whether the role is unlocked by facilities."],
+      "tips": ["Capacity problems usually point to Infrastructure."]
+    }
+  }
+}
