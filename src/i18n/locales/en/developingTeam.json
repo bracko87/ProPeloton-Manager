@@ -1,0 +1,41 @@
+{
+  "page": {
+    "title": "Squad",
+    "subtitle": "Manage your Developing Team roster and movement windows.",
+    "loading": "Loading Developing Team…",
+    "loadFailed": "Could not load Developing Team",
+    "riders": "Riders",
+    "currentCompetition": "Current Competition",
+    "loadingCompetition": "Loading competition…",
+    "competitionUnavailable": "Competition unavailable",
+    "noRiders": "No riders found for the Developing Team yet."
+  },
+  "movement": {
+    "firstSquadUnavailable": "First Squad is unavailable.",
+    "windowClosed": "Movement window is closed.",
+    "windowClosedNext": "Movement window is closed. Next window: {{window}}.",
+    "windowClosedNextNoPeriod": "Movement window closed. Next window: {{window}}",
+    "windowOpen": "Movement window open now: {{window}}",
+    "currentWindow": "Current window",
+    "unknown": "Unknown",
+    "firstSquadFull": "First Squad is full ({{count}}/{{max}}).",
+    "moveToFirstSquad": "Move to First Squad",
+    "movedToFirstSquad": "Rider moved to the First Squad.",
+    "couldNotMove": "Could not move rider to the First Squad.",
+    "actionRequiredNow": "Action required now",
+    "mustMoveNextWindow": "Must move next window"
+  },
+  "healthReport": {
+    "subtitle": "Current injured, sick, and recovering developing team riders",
+    "lockedTitle": "Developing Team Health Report",
+    "lockedDescription": "See squad-wide injury, illness and recovery information for your development riders in one consolidated report."
+  },
+  "season": {
+    "resultsLockedTitle": "Developing Team Results This Season",
+    "resultsLockedDescription": "View monthly development-team performance trends across the current season.",
+    "podiumsLockedTitle": "Developing Team Podiums & Placings",
+    "podiumsLockedDescription": "Analyse wins, podiums and finishing-position distribution for your development squad.",
+    "raceTypeLockedTitle": "Developing Team Race Type Snapshot",
+    "raceTypeLockedDescription": "Compare development-team results across classics, mountain days, stage finishes and time trials."
+  }
+}
