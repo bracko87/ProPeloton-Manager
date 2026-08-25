@@ -1,0 +1,58 @@
+{
+  "page": {
+    "back": "← Back",
+    "title": "Scouting Overview",
+    "subtitle": "All completed scout reports in one place. Filter by status and jump directly to the rider profile.",
+    "loading": "Loading scout reports...",
+    "empty": "No scout reports match this filter yet.",
+    "loadFailed": "Failed to load scout reports.",
+    "reviewFailed": "Failed to mark report as reviewed."
+  },
+  "filters": {
+    "all": "All",
+    "new": "New",
+    "reviewed": "Reviewed"
+  },
+  "report": {
+    "unknownRider": "Unknown rider",
+    "scout": "Scout",
+    "scoutName": "Scout: {{name}}",
+    "completed": "Completed: {{date}}",
+    "overall": "Overall",
+    "potential": "Potential",
+    "keyStrengths": "Key strengths",
+    "more": "(+more)",
+    "notes": "Notes:",
+    "openProfile": "Open rider profile"
+  },
+  "potential": {
+    "veryLow": "Very Low",
+    "low": "Low",
+    "medium": "Medium",
+    "high": "High",
+    "elite": "Elite"
+  },
+  "skills": {
+    "sprint": "Sprint",
+    "climbing": "Climbing",
+    "timeTrial": "Time trial",
+    "endurance": "Endurance",
+    "flat": "Flat",
+    "recovery": "Recovery",
+    "resistance": "Resistance",
+    "raceIq": "Race IQ",
+    "teamwork": "Teamwork",
+    "morale": "Morale"
+  },
+  "table": {
+    "riderScout": "Rider & scout",
+    "overallPotential": "Overall / Potential",
+    "strengthsNotes": "Key strengths & notes",
+    "action": "Action"
+  },
+  "pagination": {
+    "previous": "Previous",
+    "next": "Next",
+    "page": "Page {{page}} of {{total}}"
+  }
+}
