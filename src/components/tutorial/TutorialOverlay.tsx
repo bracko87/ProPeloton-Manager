@@ -1,6 +1,7 @@
 // src/components/tutorial/TutorialOverlay.tsx
 import React from 'react'
 import { createPortal } from 'react-dom'
+import { useTranslation } from 'react-i18next'
 
 type TutorialOverlayProps = {
   open: boolean
@@ -30,7 +31,9 @@ export default function TutorialOverlay({
   onClose,
   primaryDisabled = false,
   compact = false,
-}: TutorialOverlayProps) {
+}: TutorialOverlayProps): JSX.Element | null {
+  const { t } = useTranslation('tutorials')
+
   if (!open) return null
 
   if (variant === 'invite') {
@@ -116,7 +119,7 @@ export default function TutorialOverlay({
                 type="button"
                 onClick={onClose}
                 className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-white/25 text-lg font-normal text-white hover:bg-white/10"
-                aria-label="Close tutorial"
+                aria-label={t('common.closeTutorial')}
               >
                 ×
               </button>
