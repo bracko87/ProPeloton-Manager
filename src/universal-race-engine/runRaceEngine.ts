@@ -59,7 +59,7 @@ export const PPM_UNIVERSAL_RACE_ENGINE_KEY =
   'ppm_universal_race_v1' as const
 export const PPM_UNIVERSAL_RACE_ENGINE_VERSION = 1 as const
 export const UNIVERSAL_RACE_ENGINE_DEBUG_BUILD =
-  'phase11f-dynamic-race-tactics-v1-2026-08-24' as const
+  'phase11f-dynamic-race-tactics-v2-2026-08-25' as const
 
 export const RACE_TYPES = ['one_day', 'stage_race'] as const
 export type RaceType = (typeof RACE_TYPES)[number]
@@ -8537,6 +8537,100 @@ function calculateOpeningAttackOutcome(
   }
 }
 
+/**
+ * Phase 11F v2 later-race attack calibration.
+ *
+ * Phase 2/3 attacks remain deterministic and skill/energy weighted, but a
+ * credible multi-rider attack wave should not resolve as 100% covered every
+ * time. When at least three physically credible attempts exist in the same
+ * phase, preserve all natural successes and guarantee a small deterministic
+ * lower band of roughly 20-30% successful moves by promoting only the closest
+ * failed near-misses. The promoted riders still have to spend the attack
+ * energy and become physical front/bridge candidates; success never means an
+ * automatic bridge to the existing breakaway or an automatic stage win.
+ */
+function calibrateLaterAttackWave(
+  attempts: readonly UniversalRoadDecisiveAttackAttempt[],
+  phaseNumber: 2 | 3,
+  promotedPositionScoreBonus: (
+    attempt: UniversalRoadDecisiveAttackAttempt,
+  ) => number,
+): UniversalRoadDecisiveAttackAttempt[] {
+  const credibleAttempts = attempts.filter(
+    (attempt) =>
+      attempt.attackEnergyCost > 0 &&
+      attempt.energyBeforeAttempt >= 25 &&
+      attempt.attackIntentScore >= 40 &&
+      attempt.attackSuccessProbability >= 0.18,
+  )
+
+  if (credibleAttempts.length < 3) return [...attempts]
+
+  const minimumSuccessCount = Math.ceil(credibleAttempts.length * 0.2)
+  const naturalSuccessCount = credibleAttempts.filter(
+    (attempt) => attempt.attackSucceeded,
+  ).length
+  const requiredPromotions = Math.max(
+    0,
+    minimumSuccessCount - naturalSuccessCount,
+  )
+
+  if (requiredPromotions === 0) return [...attempts]
+
+  const promotedRiderIds = new Set(
+    credibleAttempts
+      .filter((attempt) => !attempt.attackSucceeded)
+      .slice()
+      .sort(
+        (left, right) =>
+          left.deterministicOutcomeRoll -
+            left.attackSuccessProbability -
+            (right.deterministicOutcomeRoll -
+              right.attackSuccessProbability) ||
+          right.attackIntentScore - left.attackIntentScore ||
+          right.attackExecutionSkillScore -
+            left.attackExecutionSkillScore ||
+          left.riderId.localeCompare(right.riderId),
+      )
+      .slice(0, requiredPromotions)
+      .map((attempt) => attempt.riderId),
+  )
+
+  return attempts.map((attempt) => {
+    if (!promotedRiderIds.has(attempt.riderId)) return attempt
+
+    /*
+     * Keep the published probability/roll pair internally consistent. The
+     * calibrated roll is deterministic and only applies to the selected
+     * near-miss inside this phase-wide attack wave.
+     */
+    const calibratedRoll = deterministicRound(
+      Math.min(
+        attempt.deterministicOutcomeRoll,
+        Math.max(
+          0,
+          attempt.attackSuccessProbability -
+            (phaseNumber === 2 ? 0.006 : 0.004),
+        ),
+      ),
+      12,
+    )
+
+    return {
+      ...attempt,
+      deterministicOutcomeRoll: calibratedRoll,
+      attackSucceeded: true,
+      positionScoreBonus: deterministicRound(
+        Math.max(
+          attempt.positionScoreBonus,
+          promotedPositionScoreBonus(attempt),
+        ),
+        6,
+      ),
+    }
+  })
+}
+
 function getOpeningSeparationBand(
   physicallyValidAttempt: boolean,
   attackSucceeded: boolean,
@@ -9683,7 +9777,7 @@ export function resolveRoadPhase2Development(
   }
 
   const phase2AttackEnergyCostByRiderId = new Map<string, number>()
-  const phase2AttackAttempts: UniversalRoadDecisiveAttackAttempt[] =
+  const rawPhase2AttackAttempts: UniversalRoadDecisiveAttackAttempt[] =
     selectedPhase2AttackRows.map(({ row }, index) => {
       const rider = ridersById.get(row.riderId)!
       const readiness = readinessByRiderId.get(row.riderId)!
@@ -9782,6 +9876,12 @@ export function resolveRoadPhase2Development(
         modelVersion: 'production_attack_outcome_v2',
       }
     })
+  const phase2AttackAttempts = calibrateLaterAttackWave(
+    rawPhase2AttackAttempts,
+    2,
+    (attempt) =>
+      4 + attempt.attackExecutionSkillScore * 0.03,
+  )
   const successfulPhase2AttackRiderIds = phase2AttackAttempts
     .filter((attempt) => attempt.attackSucceeded)
     .map((attempt) => attempt.riderId)
@@ -10701,7 +10801,7 @@ export function resolveRoadPhase3Decisive(
 
   const attackEnergyCostByRiderId = new Map<string, number>()
   const attackPositionBonusByRiderId = new Map<string, number>()
-  const attackAttempts: UniversalRoadDecisiveAttackAttempt[] = selectedAttackRows.map(
+  const rawAttackAttempts: UniversalRoadDecisiveAttackAttempt[] = selectedAttackRows.map(
     (row, index) => {
       const rider = ridersById.get(row.riderId)!
       const phase = row.phases.find((entry) => entry.phaseNumber === 3)!
@@ -10785,6 +10885,20 @@ export function resolveRoadPhase3Decisive(
       }
     },
   )
+  const attackAttempts = calibrateLaterAttackWave(
+    rawAttackAttempts,
+    3,
+    (attempt) =>
+      6 +
+      attempt.attackExecutionSkillScore * 0.04 +
+      decisiveTerrain.selectionSeverity * 4,
+  )
+  attackAttempts.forEach((attempt) => {
+    attackPositionBonusByRiderId.set(
+      attempt.riderId,
+      attempt.positionScoreBonus,
+    )
+  })
 
   const successfulAttackRiderIds = attackAttempts
     .filter((attempt) => attempt.attackSucceeded)
@@ -13660,7 +13774,61 @@ function getIntermediatePointRacePosition(
   }
 
   if (phaseNumber === 3) {
-    const state = roadRaceResolution.phase3Decisive?.riderStates.find(
+    const phase2 = roadRaceResolution.phase2Development
+    const phase3 = roadRaceResolution.phase3Decisive
+
+    if (phase2 && phase3) {
+      const startingEscapeRiderIds =
+        phase2.breakawayRiderIdsAtEnd.length > 0
+          ? phase2.breakawayRiderIdsAtEnd
+          : phase2.secondaryFrontRiderIdsAtEnd
+      const latestGapSample = phase3.physicalGapTrajectory
+        .filter(
+          (sample) =>
+            sample.kmFromStart <= pointKm + 0.000001,
+        )
+        .slice()
+        .sort(
+          (left, right) =>
+            right.kmFromStart - left.kmFromStart,
+        )[0]
+      const physicalGapAtPoint =
+        latestGapSample?.gapSeconds ??
+        phase3.physicalStartGapSeconds
+      const startingEscapeStillAhead =
+        startingEscapeRiderIds.length > 0 &&
+        physicalGapAtPoint >
+          PHASE5_GROUP_MERGE_TOLERANCE_SECONDS
+
+      /*
+       * Phase 11F v2: physical road order at the exact point always wins.
+       * Do not use the rider's end-of-Phase-3 performance group to decide who
+       * crossed an earlier sprint/KOM line. If the opening escape is still
+       * physically ahead at this kilometre, every rider in that escape crosses
+       * before the peloton even when only one of them has an explicit points
+       * command.
+       */
+      if (
+        startingEscapeStillAhead &&
+        startingEscapeRiderIds.includes(riderId)
+      ) {
+        return 'front_escape'
+      }
+
+      const successfulLaterAttack = phase3.attackAttempts.find(
+        (attempt) =>
+          attempt.riderId === riderId &&
+          attempt.attackSucceeded &&
+          attempt.attemptKm <= pointKm + 0.000001,
+      )
+      if (successfulLaterAttack) {
+        return startingEscapeStillAhead
+          ? 'front_group'
+          : 'front_escape'
+      }
+    }
+
+    const state = phase3?.riderStates.find(
       (row) => row.riderId === riderId,
     )
     switch (state?.finalGroupCode) {
@@ -20193,6 +20361,21 @@ function buildUniversalReplayTimeline(
     rawPelotonGap(rawPhase3Groups, phase4.startGapSeconds),
     40,
   )
+  phase3.physicalGapTrajectory.forEach((sample) => {
+    if (
+      sample.kmFromStart <=
+        phase3.phaseBoundary.startKm + 0.000001 ||
+      sample.kmFromStart >=
+        phase3.phaseBoundary.endKm - 0.000001
+    ) {
+      return
+    }
+    addGapAnchor(
+      sample.kmFromStart,
+      sample.gapSeconds,
+      44,
+    )
+  })
   addGapAnchor(
     phase3.phaseBoundary.endKm,
     rawPelotonGap(rawPhase3Groups, phase4.startGapSeconds),
@@ -20255,10 +20438,41 @@ function buildUniversalReplayTimeline(
       1,
     )
     const easedFraction = fraction * fraction * (3 - 2 * fraction)
+    const baseGapSeconds =
+      previous.gapSeconds +
+      (next.gapSeconds - previous.gapSeconds) * easedFraction
+
+    /*
+     * Phase 11F v2 replay-only gap breathing.
+     *
+     * Exact authoritative gap anchors remain untouched. Between anchors the
+     * replay adds a smooth deterministic +/- few-second oscillation so a
+     * physically stable race situation does not look frozen at exactly the
+     * same rounded value (for example 1:17 at several consecutive events).
+     * This is interpolation of one stored engine result, not a second race
+     * calculation, and it is forced to zero at both surrounding anchors.
+     */
+    const anchorSpanKm = Math.max(0, next.km - previous.km)
+    const breathingEligible =
+      anchorSpanKm >= 1.5 &&
+      baseGapSeconds > PHASE5_GROUP_MERGE_TOLERANCE_SECONDS + 5
+    const breathingEnvelope = Math.sin(Math.PI * fraction)
+    const breathingPhase =
+      calculateDeterministicUnitRoll(
+        `${input.engine.deterministicSeed}|${input.stage.stageId}|replay-gap-breathing|${previous.km}|${next.km}`,
+      ) *
+      Math.PI *
+      2
+    const breathingAmplitudeSeconds = breathingEligible
+      ? clamp(baseGapSeconds * 0.025, 1.25, 3.25)
+      : 0
+    const breathingSeconds =
+      breathingAmplitudeSeconds *
+      breathingEnvelope *
+      Math.sin(Math.PI * 4 * fraction + breathingPhase)
 
     return deterministicRound(
-      previous.gapSeconds +
-        (next.gapSeconds - previous.gapSeconds) * easedFraction,
+      Math.max(0, baseGapSeconds + breathingSeconds),
       6,
     )
   }
@@ -21274,7 +21488,7 @@ function buildUniversalReplayTimeline(
         ),
         eventType: 'attack',
         title: 'Attack is covered',
-        description: `${attempt.riderId} attacks on ${attempt.effectiveTerrainType} terrain, but cannot create a lasting gap.`,
+        description: `${riderById.get(attempt.riderId)?.snapshot.displayName ?? attempt.riderId} attacks on ${attempt.effectiveTerrainType} terrain, but cannot create a lasting gap.`,
         riderIds: [attempt.riderId],
         teamIds: [attempt.teamId],
       })
@@ -21303,7 +21517,10 @@ function buildUniversalReplayTimeline(
         ),
         eventType: 'attack',
         title: 'A decisive attack is launched',
-        description: `${attempt.riderId} attacks on ${attempt.effectiveTerrainType} terrain.`,
+        description:
+          phase2.breakawayRiderIdsAtEnd.length > 0
+            ? `${riderById.get(attempt.riderId)?.snapshot.displayName ?? attempt.riderId} attacks on ${attempt.effectiveTerrainType} terrain and starts bridging toward the breakaway.`
+            : `${riderById.get(attempt.riderId)?.snapshot.displayName ?? attempt.riderId} attacks on ${attempt.effectiveTerrainType} terrain and opens a new front move.`,
         riderIds: [attempt.riderId],
         teamIds: [attempt.teamId],
       })

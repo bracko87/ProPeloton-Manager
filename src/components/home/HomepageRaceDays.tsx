@@ -1,6 +1,5 @@
 import React from 'react'
 import { Link } from 'react-router'
-import { useTranslation } from 'react-i18next'
 
 export type HomepageRaceDayItem = {
   id: string
@@ -49,7 +48,6 @@ function getFlagUrl(countryCode?: string | null): string | null {
 }
 
 function RaceRow({ item }: { item: HomepageRaceDayItem }): JSX.Element {
-  const { t } = useTranslation('home')
   const href = normalizeRaceHref(item.href)
   const flagUrl = getFlagUrl(item.countryCode)
   const dateLabel = item.dateLabel || item.timeLabel
@@ -65,7 +63,7 @@ function RaceRow({ item }: { item: HomepageRaceDayItem }): JSX.Element {
           {flagUrl && (
             <img
               src={flagUrl}
-              alt={t('raceSchedule.flagAlt', { country: item.countryCode ?? '' })}
+              alt={`${item.countryCode ?? ''} flag`}
               className="h-4 w-6 shrink-0 rounded-[2px] object-cover shadow-sm"
               loading="lazy"
             />
@@ -130,23 +128,21 @@ export default function HomepageRaceDays({
   data,
   loading = false,
 }: HomepageRaceDaysProps): JSX.Element {
-  const { t } = useTranslation('home')
-
   const groups: RaceGroup[] = [
     {
-      title: t('raceSchedule.yesterday'),
+      title: 'Yesterday Races',
       items: data?.yesterdayRaces ?? [],
-      emptyText: t('raceSchedule.emptyYesterday'),
+      emptyText: 'No stages were scheduled yesterday.',
     },
     {
-      title: t('raceSchedule.today'),
+      title: 'Today Races',
       items: data?.todayRaces ?? [],
-      emptyText: t('raceSchedule.emptyToday'),
+      emptyText: 'No stages are scheduled today.',
     },
     {
-      title: t('raceSchedule.tomorrow'),
+      title: 'Tomorrow Races',
       items: data?.tomorrowRaces ?? [],
-      emptyText: t('raceSchedule.emptyTomorrow'),
+      emptyText: 'No stages are scheduled tomorrow.',
     },
   ]
 
@@ -166,16 +162,16 @@ export default function HomepageRaceDays({
       <div className="relative z-10 mx-auto max-w-7xl px-6">
         <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h3 className="text-2xl font-bold text-slate-950">{t('raceSchedule.title')}</h3>
+            <h3 className="text-2xl font-bold text-slate-950">Race Schedule</h3>
 
             <p className="mt-1 text-sm text-slate-600">
-              {t('raceSchedule.subtitle')}
+              Yesterday, today and tomorrow in the ProPeloton world.
             </p>
           </div>
 
           {loading && (
             <div className="text-sm font-medium text-slate-500">
-              {t('raceSchedule.loading')}
+              Loading races...
             </div>
           )}
         </div>

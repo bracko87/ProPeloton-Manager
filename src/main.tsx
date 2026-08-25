@@ -12,8 +12,16 @@ import OverviewLegacyLocalizationBridge from './components/i18n/OverviewLegacyLo
 import TutorialLegacyLocalizationBridge from './components/i18n/TutorialLegacyLocalizationBridge'
 import SquadLegacyLocalizationBridge from './components/i18n/SquadLegacyLocalizationBridge'
 import SquadTutorialLocalizationBridge from './components/i18n/SquadTutorialLocalizationBridge'
+import DevelopingTeamLegacyLocalizationBridge from './components/i18n/DevelopingTeamLegacyLocalizationBridge'
+import StaffLegacyLocalizationBridge from './components/i18n/StaffLegacyLocalizationBridge'
+import TrainingLegacyLocalizationBridge from './components/i18n/TrainingLegacyLocalizationBridge'
+import EquipmentLegacyLocalizationBridge from './components/i18n/EquipmentLegacyLocalizationBridge'
+import InfrastructureLegacyLocalizationBridge from './components/i18n/InfrastructureLegacyLocalizationBridge'
+import CalendarLegacyLocalizationBridge from './components/i18n/CalendarLegacyLocalizationBridge'
+import RaceDetailLegacyLocalizationBridge from './components/i18n/RaceDetailLegacyLocalizationBridge'
 
 const root = createRoot(document.getElementById('app')!)
+
 root.render(
   <>
     <LanguagePreferenceSync />
@@ -26,6 +34,13 @@ root.render(
     <TutorialLegacyLocalizationBridge />
     <SquadLegacyLocalizationBridge />
     <SquadTutorialLocalizationBridge />
+    <DevelopingTeamLegacyLocalizationBridge />
+    <StaffLegacyLocalizationBridge />
+    <TrainingLegacyLocalizationBridge />
+    <EquipmentLegacyLocalizationBridge />
+    <InfrastructureLegacyLocalizationBridge />
+    <CalendarLegacyLocalizationBridge />
+    <RaceDetailLegacyLocalizationBridge />
     <App />
   </>,
 )

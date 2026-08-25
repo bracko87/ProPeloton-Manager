@@ -21,6 +21,11 @@
  * - Header loads and displays the current club's ranking position summary
  *   inline with the country row.
  *
+ * UPDATE: Competition identity hardening
+ * - Competition/ranking data is always loaded for the authoritative clubId
+ *   supplied by MainLayout, never from a cached/localStorage club id.
+ * - Stale async competition responses are ignored when the active club changes.
+ *
  * UPDATE: Notifications navigation refactor
  * - Bell button navigates to /dashboard/notifications instead of opening
  *   the old in-header modal.
@@ -335,6 +340,8 @@ export default function Header({
     useState(true)
 
   const liveClubIdRef = useRef<string | undefined>(clubId)
+  const authoritativeClubIdRef = useRef<string | undefined>(clubId)
+  const competitionRequestVersionRef = useRef(0)
   const currentUserIdRef = useRef<string | undefined>(undefined)
   const profileMenuRef = useRef<HTMLDivElement>(null)
 
@@ -432,9 +439,13 @@ export default function Header({
     }
   }, [applyClubUpdatePayload])
 
-  // Keep liveClubId in sync with prop.
+  // Keep liveClubId in sync with the authoritative MainLayout prop.
   useEffect(() => {
+    authoritativeClubIdRef.current = clubId
     setLiveClubId(clubId)
+
+    // Never keep showing the previous club's competition while a new club loads.
+    setTeamCompetitionSummary(null)
   }, [clubId])
 
   // Track latest club + user ids for payload filtering.
@@ -692,11 +703,21 @@ export default function Header({
 
   /**
    * loadTeamCompetitionSummary
-   * Fetch and cache the club's current competition + rank summary.
+   * Fetch and cache the authoritative main club's current competition + rank.
+   *
+   * IMPORTANT:
+   * - Use the clubId prop from MainLayout, not liveClubId. liveClubId can be
+   *   hydrated from localStorage while the layout is still loading and may
+   *   temporarily refer to a previous/stale club.
+   * - Ignore older async responses so a slower request for a previous club
+   *   can never overwrite the current club's competition label.
    */
   const loadTeamCompetitionSummary = useCallback(
     async () => {
-      if (!liveClubId) {
+      const requestedClubId = clubId
+      const requestVersion = ++competitionRequestVersionRef.current
+
+      if (!requestedClubId) {
         setTeamCompetitionSummary(null)
         return
       }
@@ -704,9 +725,17 @@ export default function Header({
       const { data, error } = await supabase.rpc(
         'get_club_ranking_summary',
         {
-          p_club_id: liveClubId,
+          p_club_id: requestedClubId,
         },
       )
+
+      const isStaleResponse =
+        requestVersion !== competitionRequestVersionRef.current ||
+        authoritativeClubIdRef.current !== requestedClubId
+
+      if (isStaleResponse) {
+        return
+      }
 
       if (error) {
         // eslint-disable-next-line no-console
@@ -725,16 +754,28 @@ export default function Header({
         return
       }
 
+      const competitionLabel = String(
+        row.competition_label ?? '',
+      ).trim()
+      const rankPosition = Number(
+        row.rank_position ?? 0,
+      )
+
+      if (
+        !competitionLabel ||
+        !Number.isFinite(rankPosition) ||
+        rankPosition <= 0
+      ) {
+        setTeamCompetitionSummary(null)
+        return
+      }
+
       setTeamCompetitionSummary({
-        competition_label: String(
-          row.competition_label ?? '',
-        ),
-        rank_position: Number(
-          row.rank_position ?? 0,
-        ),
+        competition_label: competitionLabel,
+        rank_position: rankPosition,
       })
     },
-    [liveClubId],
+    [clubId],
   )
 
   /**
@@ -864,10 +905,11 @@ export default function Header({
     void loadClubDisplayIdentity()
   }, [loadClubDisplayIdentity, identityRefreshKey])
 
-  // Load competition summary when club id changes.
+  // Load competition summary for the authoritative club and refresh after
+  // accepted main-club updates (for example season/division changes).
   useEffect(() => {
     void loadTeamCompetitionSummary()
-  }, [loadTeamCompetitionSummary])
+  }, [loadTeamCompetitionSummary, identityRefreshKey])
 
   // Load and periodically refresh Premium membership state.
   useEffect(() => {

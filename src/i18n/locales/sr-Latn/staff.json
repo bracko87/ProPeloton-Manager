@@ -1,0 +1,246 @@
+{
+  "page": {
+    "title": "Osoblje tima",
+    "subtitle": "Upravljajte različitim ulogama osoblja kroz posebne kartice i liste za svaku ulogu.",
+    "loading": "Učitavanje osoblja...",
+    "explainPositions": "Objasni sve pozicije osoblja"
+  },
+  "summary": {
+    "weeklyWages": "Nedeljne plate osoblja",
+    "weeklyWagesSubtext": "Trenutni ukupni trošak plata",
+    "openSlots": "Slobodna mesta za osoblje",
+    "openSlotsSubtext": "Trenutno slobodna mesta u svim ulogama osoblja",
+    "totalCapacity": "Ukupan kapacitet osoblja",
+    "totalCapacitySubtext": "Aktuelna ograničenja uloga iz sistema",
+    "warnings": "Upozorenja",
+    "warningsSubtext": "Nivo objekata može ograničiti neke bonuse"
+  },
+  "rolesSection": {
+    "title": "Uloge osoblja",
+    "subtitle": "Izaberite ulogu da vidite dodeljeno osoblje, trenutno ograničenje i pregled doprinosa uloge.",
+    "staffList": "{{role}} — lista osoblja",
+    "assigned": "{{count}}/{{limit}} dodeljeno ovoj ulozi.",
+    "assignedCompact": "Dodeljeno {{count}}/{{limit}}",
+    "noAssigned": "Nema dodeljenih: {{role}}",
+    "usage": "Trenutno korišćenje uloge: {{count}}/{{limit}}. Dovedite osoblje sa tržišta osoblja da popunite ovu ulogu.",
+    "findStaff": "Pronađi osoblje"
+  },
+  "roles": {
+    "headCoach": {
+      "label": "Glavni trener",
+      "subtitle": "Vodi treniranje, planiranje treninga i dugoročni razvoj vozača."
+    },
+    "trainer": {
+      "label": "Trener",
+      "subtitle": "Poboljšava svakodnevni trening i podržava planove glavnog trenera."
+    },
+    "teamDoctor": {
+      "label": "Doktor tima",
+      "subtitle": "Vodi medicinski oporavak, dijagnostiku i prevenciju povreda."
+    },
+    "physio": {
+      "label": "Fizioterapeut",
+      "subtitle": "Fokusira se na rehabilitaciju, brzinu oporavka i povratak u punu spremnost."
+    },
+    "nutritionist": {
+      "label": "Nutricionista",
+      "subtitle": "Podržava oporavak, stabilnost forme i rad medicinskog osoblja."
+    },
+    "mechanic": {
+      "label": "Mehaničar",
+      "subtitle": "Podešavanje bicikala, efikasnost održavanja i mehanička pouzdanost tokom trke."
+    },
+    "sportDirector": {
+      "label": "Sportski direktor",
+      "subtitle": "Planirane taktike trke, moral, timski rad i podrška domestique vozača."
+    },
+    "scoutAnalyst": {
+      "label": "Skaut / Analitičar",
+      "subtitle": "Kvalitet skautinga, pregled potencijalnih vozača i informacije za transfere."
+    },
+    "u23HeadCoach": {
+      "label": "Glavni trener U23",
+      "subtitle": "Planirani trening Razvojnog tima i taktička podrška na U23 trkama."
+    }
+  },
+  "impactAreas": {
+    "regularTraining": "Redovni trening",
+    "trainingCamps": "Trening kampovi",
+    "riderDevelopment": "Razvoj vozača",
+    "dailyTraining": "Dnevni trening",
+    "trainingQuality": "Kvalitet treninga",
+    "recoverySpeed": "Brzina oporavka",
+    "injuryPrevention": "Prevencija povreda",
+    "medicalCaseHandling": "Vođenje medicinskih slučajeva",
+    "returnToFitness": "Povratak u formu",
+    "fatigueRecovery": "Oporavak od umora",
+    "recoverySupport": "Podrška oporavku",
+    "fitnessConsistency": "Stabilnost forme",
+    "racePreparation": "Priprema trke",
+    "equipmentSetup": "Podešavanje opreme",
+    "maintenanceEfficiency": "Efikasnost održavanja",
+    "mechanicalReliability": "Mehanička pouzdanost",
+    "raceTactics": "Taktika trke",
+    "teamMorale": "Moral tima",
+    "domestiqueSupport": "Podrška domestique vozača",
+    "scoutingAccuracy": "Preciznost skautinga",
+    "prospectDiscovery": "Pronalaženje talenata",
+    "transferIntelligence": "Transfer informacije",
+    "u23Training": "U23 trening",
+    "youthDevelopment": "Razvoj mladih",
+    "u23RaceTactics": "U23 taktika trke"
+  },
+  "common": {
+    "close": "Zatvori",
+    "cancel": "Otkaži",
+    "unknown": "Nepoznato",
+    "age": "Godine",
+    "ageUnknown": "Godine nisu poznate",
+    "ageYears": "{{age}} godina",
+    "born": "Rođen: {{date}}",
+    "scope": "Tim: {{scope}}",
+    "firstTeam": "prvi tim",
+    "u23": "U23",
+    "all": "svi",
+    "weeklyWage": "Nedeljna plata",
+    "contract": "Ugovor",
+    "currentAssignment": "Trenutno zaduženje",
+    "activeEffects": "Aktivni efekti",
+    "staffAttributes": "Atributi osoblja",
+    "focus": "Fokus: {{value}}",
+    "duration": "Trajanje: {{count}} dana",
+    "cost": "Cena: {{value}}",
+    "completed": "Završeno: {{date}}"
+  },
+  "premium": {
+    "analysisTitle": "Premium analiza osoblja",
+    "analysisDescription": "Pogledajte zajednički uticaj osoblja, prosečne profile veština i rezultate završenih kurseva.",
+    "detailDescription": "Pogledajte izračunati kvalitet trenerskog rada, ograničenja infrastrukture, poređenja osoblja i preporučene pravce razvoja.",
+    "loading": "Učitavanje Premium pristupa"
+  },
+  "analysis": {
+    "averageSkillProfile": "Prosečan profil veština",
+    "averageSkillProfileSubtitle": "Prosečne vrednosti osoblja trenutno dodeljenog ovoj grupi uticaja.",
+    "noStaff": "Još nema osoblja dodeljenog ovoj grupi uticaja, pa nema aktivnog profila veština za prikaz.",
+    "whereRoleHelps": "Gde ova uloga pomaže",
+    "whereRoleHelpsSubtitle": "Glavni sistemi igre na koje ova uloga utiče.",
+    "recentCourseResults": "Nedavni rezultati kurseva",
+    "recentCourseResultsSubtitle": "Završeni kursevi razvoja osoblja i primenjena poboljšanja atributa."
+  },
+  "quality": {
+    "facility": "Facility",
+    "scoutingQuality": "Scouting Quality",
+    "scoutAbility": "Scout Ability",
+    "currentReportQuality": "Current Report Quality",
+    "reportTime": "Report Time",
+    "scoutingOffice": "Scouting Office",
+    "coachingQuality": "Coaching Quality",
+    "coachAbility": "Coach Ability",
+    "trainingQuality": "Training Quality",
+    "developmentSupport": "Development Support",
+    "trainerAbility": "Trainer Ability",
+    "sessionQuality": "Session Quality",
+    "loadManagement": "Load Management",
+    "medicalQuality": "Medical Quality",
+    "medicalAbility": "Medical Ability",
+    "injuryPrevention": "Injury Prevention",
+    "returnToFitness": "Return-to-Fitness",
+    "recoveryQuality": "Recovery Quality",
+    "recoveryAbility": "Recovery Ability",
+    "rehabilitationQuality": "Rehabilitation Quality",
+    "recoverySpeed": "Recovery Speed",
+    "nutritionQuality": "Nutrition Quality",
+    "nutritionAbility": "Nutrition Ability",
+    "recoverySupport": "Recovery Support",
+    "consistencySupport": "Consistency Support",
+    "technicalQuality": "Technical Quality",
+    "technicalAbility": "Technical Ability",
+    "bikeSetupQuality": "Bike Setup Quality",
+    "reliabilitySupport": "Reliability Support",
+    "tacticalQuality": "Tactical Quality",
+    "directorAbility": "Director Ability",
+    "racePlanQuality": "Race Plan Quality",
+    "teamControl": "Team Control",
+    "raceEngineRole": "Race Engine Role",
+    "prepared": "Prepared",
+    "youthCoachingQuality": "Youth Coaching Quality",
+    "youthCoachAbility": "Youth Coach Ability",
+    "talentDevelopment": "Talent Development",
+    "raceReadiness": "Race Readiness"
+  },
+  "detail": {
+    "currentCourse": "Trenutni kurs",
+    "courseInProgress": "Kurs u toku: {{course}}. Završetak: {{date}}.",
+    "courseCannotCancel": "Kurs se ne može otkazati nakon što je započet. Bonusi ove uloge su pauzirani do završetka.",
+    "lastCourseGains": "Poboljšanja poslednjeg kursa",
+    "extendContract": "Produži ugovor",
+    "courseInProgressButton": "Kurs je u toku",
+    "sendOnCourse": "Pošalji na kurs",
+    "release": "Otpusti",
+    "scoutingReports": "Skauting izveštaji"
+  },
+  "release": {
+    "title": "Otpusti člana osoblja",
+    "subtitle": "Potvrdite ovu odluku pre nastavka.",
+    "aboutToRelease": "Spremate se da otpustite {{name}}",
+    "role": "Uloga: {{role}}",
+    "weeklyWage": "Nedeljna plata: {{value}}",
+    "age": "Godine: {{value}}",
+    "compensation": "Naknada za otpuštanje (6 nedelja): {{value}}",
+    "warning": "Član osoblja će odmah biti uklonjen iz tima. Bonusi ovog mesta prestaće dok ne angažujete zamenu.",
+    "payment": "Klub će platiti jednokratnu naknadu za otpuštanje u visini šest nedeljnih plata.",
+    "releasing": "Otpuštanje...",
+    "confirm": "Potvrdi otpuštanje"
+  },
+  "contract": {
+    "title": "Produži ugovor",
+    "subtitle": "Pregovarajte o novom ugovoru za {{name}}.",
+    "currentSalary": "Trenutna plata",
+    "currentContract": "Trenutni ugovor",
+    "extensionLength": "Dužina produženja",
+    "oneSeason": "1 sezona",
+    "twoSeasons": "2 sezone",
+    "loadingQuote": "Učitavanje ponude ugovora...",
+    "requestedSalary": "Tražena plata",
+    "raiseRequest": "Traženo povećanje: {{value}}%",
+    "minimumAcceptable": "Minimalno prihvatljivo",
+    "newContractTarget": "Novi cilj ugovora",
+    "staffInterest": "Interesovanje člana osoblja",
+    "interestUnknown": "Interesovanje nije poznato",
+    "chanceRenew": "Šansa za produženje",
+    "chanceUnknown": "Šansa nije poznata",
+    "veryLikely": "Vrlo verovatno prihvata",
+    "possible": "Moguće, ali može tražiti više",
+    "unlikely": "Malo verovatno sa ovom platom",
+    "veryUnlikely": "Vrlo malo verovatno",
+    "noQuote": "Ponuda nije dostupna.",
+    "salaryOffer": "Vaša ponuda plate",
+    "salaryPlaceholder": "Unesite nedeljnu platu",
+    "submitting": "Slanje...",
+    "submit": "Pošalji ponudu",
+    "extended": "Ugovor člana osoblja je uspešno produžen.",
+    "discussionCompleted": "Pregovori o ugovoru su završeni."
+  },
+  "course": {
+    "title": "Kurs za osoblje",
+    "subtitle": "Planirajte razvojni rad za {{name}}.",
+    "liveStart": "Pokretanje kursa",
+    "liveStartText": "Pokretanjem kursa kreira se stvarni zapis kursa za osoblje. Poboljšanja atributa primenjuju se kada backend proces završi kurs. Kurs se ne može otkazati nakon rezervacije. Bonusi ove uloge su pauzirani dok kurs ne bude završen.",
+    "staffAge": "Godine člana osoblja",
+    "start": "Pokreni kurs",
+    "starting": "Pokretanje...",
+    "none": "Za ovu ulogu još nisu podešene opcije kurseva. Time se sprečava pokretanje pogrešnog kursa dok odgovarajući backend kodovi ne budu dodati.",
+    "back": "Nazad na osoblje"
+  },
+  "information": {
+    "title": "Objašnjenje pozicija osoblja",
+    "subtitle": "Odgovornosti, važni atributi i trenutna povezanost sa sistemima igre za svaku ulogu osoblja.",
+    "close": "Zatvori informacije o pozicijama osoblja",
+    "importantAttributes": "Važni atributi",
+    "gameplayConnection": "Povezanost sa igrom",
+    "live": "Aktivno",
+    "coreLive": "Osnovni sistem aktivan",
+    "trainingLive": "Trening aktivan",
+    "plannedConnection": "Planirana integracija"
+  }
+}

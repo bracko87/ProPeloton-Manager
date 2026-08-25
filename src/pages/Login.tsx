@@ -11,7 +11,6 @@
  */
 
 import React, { useEffect, useState } from 'react'
-import { useTranslation } from 'react-i18next'
 import { Link, useLocation, useNavigate } from 'react-router'
 import { supabase } from '../lib/supabase'
 
@@ -26,7 +25,6 @@ type LoginLocationState = {
 export default function LoginPage(): JSX.Element {
   const navigate = useNavigate()
   const location = useLocation()
-  const { t } = useTranslation('auth')
 
   const [form, setForm] = useState({ email: '', password: '' })
   const [error, setError] = useState<string | null>(null)
@@ -37,9 +35,9 @@ export default function LoginPage(): JSX.Element {
     const state = location.state as LoginLocationState
 
     if (state?.passwordResetSuccess) {
-      setInfo(t('info.passwordResetSuccess'))
+      setInfo('Password updated successfully. Please sign in with your new password.')
     }
-  }, [location.state, t])
+  }, [location.state])
 
   /**
    * handleChange
@@ -70,7 +68,7 @@ export default function LoginPage(): JSX.Element {
     const password = form.password
 
     if (!email || !password) {
-      setError(t('errors.missingCredentials'))
+      setError('Please provide both email and password')
       return
     }
 
@@ -83,14 +81,14 @@ export default function LoginPage(): JSX.Element {
       })
 
       if (signInError) {
-        const msg = (signInError as any).message ?? t('errors.signInFailed')
+        const msg = (signInError as any).message ?? 'Sign-in failed'
         setError(msg)
         return
       }
 
       // If no session is returned, likely email not confirmed.
       if (!data?.session) {
-        setInfo(t('info.accountUnconfirmed'))
+        setInfo('Account exists but is not confirmed. Please check your email.')
         return
       }
 
@@ -98,7 +96,9 @@ export default function LoginPage(): JSX.Element {
       const { data: clubData, error: rpcError } = await supabase.rpc('get_my_club_id')
 
       if (rpcError) {
-        setError(t('errors.clubStatus'))
+        setError(
+          'You are signed in, but we could not check your club status. Please try again in a moment.',
+        )
         return
       }
 
@@ -108,7 +108,7 @@ export default function LoginPage(): JSX.Element {
         navigate('/dashboard/overview')
       }
     } catch (err: any) {
-      setError(err?.message ?? t('errors.signInFailed'))
+      setError(err?.message ?? 'Sign-in failed')
     } finally {
       setLoading(false)
     }
@@ -120,7 +120,7 @@ export default function LoginPage(): JSX.Element {
       <div className="absolute inset-0 z-0 pointer-events-none" aria-hidden="true">
         <img
           src="https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/New%20image%20sign%20up.png"
-          alt=""
+          alt="background"
           className="object-cover w-full h-full"
           style={
             {
@@ -153,17 +153,17 @@ export default function LoginPage(): JSX.Element {
       <div className="relative z-10 max-w-md w-full bg-white rounded-lg shadow-xl overflow-hidden">
         <div className="p-8">
           <h2 className="text-2xl font-bold text-gray-900">
-            {t('signInTitle')}
+            Sign in to ProPeloton Manager
           </h2>
 
           <p className="mt-2 text-sm text-gray-600">
-            {t('signInSubtitle')}
+            Enter your credentials to continue.
           </p>
 
           <form onSubmit={handleSubmit} className="mt-6 grid grid-cols-1 gap-4">
             <div>
               <label htmlFor="email" className="text-sm font-medium text-gray-700">
-                {t('email')}
+                Email
               </label>
 
               <input
@@ -184,14 +184,14 @@ export default function LoginPage(): JSX.Element {
                   htmlFor="password"
                   className="text-sm font-medium text-gray-700"
                 >
-                  {t('password')}
+                  Password
                 </label>
 
                 <Link
                   to="/forgot-password"
                   className="text-xs font-medium text-gray-600 hover:text-gray-900"
                 >
-                  {t('forgotPassword')}
+                  Forgot password?
                 </Link>
               </div>
 
@@ -216,21 +216,21 @@ export default function LoginPage(): JSX.Element {
                 className="bg-yellow-400 px-6 py-2 rounded-md font-semibold disabled:opacity-70"
                 disabled={loading}
               >
-                {loading ? t('signingIn') : t('signIn')}
+                {loading ? 'Signing in...' : 'Sign In'}
               </button>
 
               <Link
                 to="/register"
                 className="text-sm text-gray-600 hover:text-gray-900"
               >
-                {t('createAccount')}
+                Create account
               </Link>
 
               <Link
                 to="/"
                 className="ml-auto text-sm text-gray-600 hover:text-gray-900"
               >
-                {t('home')}
+                Home
               </Link>
             </div>
           </form>

@@ -218,22 +218,39 @@ function buildPointRows(
     teamNameSnapshot: teamName(input, entry.teamId),
   }))
 
-  const finishPoint = input.points.find((point) => point.pointType === 'FINISH' || point.isFinishPoint)
-  const phase4Finish = result.roadRaceResolution.phase4Finish
-  if (finishPoint && phase4Finish) {
-    phase4Finish.finish.rankings.forEach((entry) => {
-      if (entry.pointsAwarded <= 0 && entry.bonusSecondsAwarded <= 0) return
-      rows.push({
-        pointId: finishPoint.pointId,
-        riderId: entry.riderId,
-        teamId: entry.teamId,
-        rank: entry.rank,
-        pointsAwarded: entry.pointsAwarded,
-        bonusSecondsAwarded: entry.bonusSecondsAwarded,
-        riderNameSnapshot: riderName(input, entry.riderId),
-        teamNameSnapshot: teamName(input, entry.teamId),
+  const finishPoint = input.points.find(
+    (point) => point.pointType === 'FINISH' || point.isFinishPoint,
+  )
+  if (finishPoint) {
+    /*
+     * Phase 11F v2 publication rule:
+     *
+     * Finish-point awards must come from the exact authoritative final
+     * classification. Do not publish from the Phase-4 sprint-contender ranking,
+     * because that ranking is only an internal finish-model input and can differ
+     * from the finalized official order after physical groups, incidents and
+     * official timing are applied.
+     */
+    result.finishResolution.classification
+      .filter((entry) => entry.status === 'finished')
+      .forEach((entry) => {
+        const pointsAwarded =
+          finishPoint.pointsScheme[entry.rank - 1] ?? 0
+        const bonusSecondsAwarded =
+          finishPoint.timeBonusSeconds[entry.rank - 1] ?? 0
+        if (pointsAwarded <= 0 && bonusSecondsAwarded <= 0) return
+
+        rows.push({
+          pointId: finishPoint.pointId,
+          riderId: entry.riderId,
+          teamId: entry.teamId,
+          rank: entry.rank,
+          pointsAwarded,
+          bonusSecondsAwarded,
+          riderNameSnapshot: riderName(input, entry.riderId),
+          teamNameSnapshot: teamName(input, entry.teamId),
+        })
       })
-    })
   }
 
   return rows.sort((a, b) => {

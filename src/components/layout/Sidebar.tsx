@@ -5,7 +5,6 @@
 
 import React from 'react'
 import { NavLink, useNavigate, useLocation } from 'react-router'
-import { useTranslation } from 'react-i18next'
 import {
   Home,
   Users,
@@ -27,8 +26,8 @@ interface SidebarProps {
 
 interface NavItem {
   to: string
-  labelKey: string
-  descriptionKey: string
+  label: string
+  description: string
   icon: React.ComponentType<{ size?: number; className?: string }>
   aliases?: string[]
 }
@@ -39,69 +38,69 @@ const GAME_LOGO_URL =
 const navItems: NavItem[] = [
   {
     to: '/dashboard/overview',
-    labelKey: 'overview',
-    descriptionKey: 'descriptions.overview',
+    label: 'Overview',
+    description: 'Club snapshot and updates',
     icon: Home
   },
   {
     to: '/dashboard/squad',
-    labelKey: 'squad',
-    descriptionKey: 'descriptions.squad',
+    label: 'Squad',
+    description: 'Manage riders and roster',
     icon: Users
   },
   {
     to: '/dashboard/calendar',
-    labelKey: 'calendar',
-    descriptionKey: 'descriptions.calendar',
+    label: 'Calendar',
+    description: 'Upcoming races and events',
     icon: Calendar
   },
   {
     to: '/dashboard/race-preparation',
     aliases: ['/dashboard/team-schedule'],
-    labelKey: 'racePreparation',
-    descriptionKey: 'descriptions.racePreparation',
+    label: 'Race Preparation',
+    description: 'Startlist, logistics and stage plans',
     icon: ClipboardCheck
   },
   {
     to: '/dashboard/team-ranking',
-    labelKey: 'teamRanking',
-    descriptionKey: 'descriptions.teamRanking',
+    label: 'Team Ranking',
+    description: 'Rankings and standings',
     icon: BarChart2
   },
   {
     to: '/dashboard/training',
-    labelKey: 'training',
-    descriptionKey: 'descriptions.training',
+    label: 'Training',
+    description: 'Rider training and sessions',
     icon: List
   },
   {
     to: '/dashboard/equipment',
-    labelKey: 'equipment',
-    descriptionKey: 'descriptions.equipment',
+    label: 'Equipment',
+    description: 'Bikes, wheels and gear',
     icon: Grid
   },
   {
     to: '/dashboard/infrastructure',
-    labelKey: 'infrastructure',
-    descriptionKey: 'descriptions.infrastructure',
+    label: 'Infrastructure',
+    description: 'Facilities and development',
     icon: Grid
   },
   {
     to: '/dashboard/finance',
-    labelKey: 'finance',
-    descriptionKey: 'descriptions.finance',
+    label: 'Finance',
+    description: 'Budget, income and costs',
     icon: DollarSign
   },
   {
     to: '/dashboard/transfers',
-    labelKey: 'transfers',
-    descriptionKey: 'descriptions.transfers',
+    label: 'Transfers',
+    description: 'Buy, sell and negotiate',
     icon: ShoppingCart
   },
   {
     to: '/dashboard/statistics',
-    labelKey: 'statistics',
-    descriptionKey: 'descriptions.statistics',
+    label: 'Statistics',
+    description: 'Performance and analytics',
     icon: BarChart2
   }
 ]
@@ -121,7 +120,6 @@ function isPathActive(pathname: string, item: NavItem): boolean {
 export default function Sidebar({
   collapsed = false
 }: SidebarProps) {
-  const { t } = useTranslation('navigation')
   const navigate = useNavigate()
   const location = useLocation()
 
@@ -129,9 +127,7 @@ export default function Sidebar({
     isPathActive(location.pathname, item)
   )
 
-  const currentPageLabel = currentNavItem
-    ? t(currentNavItem.labelKey)
-    : location.pathname
+  const currentPageLabel = currentNavItem?.label ?? location.pathname
 
   const signOut = async () => {
     await supabase.auth.signOut()
@@ -176,7 +172,7 @@ export default function Sidebar({
                   ProPeloton Manager
                 </div>
                 <div className="text-xs text-white/60">
-                  {t('subtitle')}
+                  Multiplayer cycling management
                 </div>
               </div>
             )}
@@ -199,10 +195,10 @@ export default function Sidebar({
                 {!collapsed && (
                   <div className="min-w-0">
                     <div className="text-base font-semibold leading-tight">
-                      {t(item.labelKey)}
+                      {item.label}
                     </div>
                     <div className="text-xs text-white/55 mt-1 leading-tight">
-                      {t(item.descriptionKey)}
+                      {item.description}
                     </div>
                   </div>
                 )}
@@ -214,7 +210,7 @@ export default function Sidebar({
         <div className="mt-auto p-4 border-t border-white/5 space-y-3">
           <button
             onClick={signOut}
-            aria-label={t('signOut')}
+            aria-label="Sign out"
             className={`w-full rounded-md font-semibold transition-colors ${
               collapsed
                 ? 'flex items-center justify-center px-3 py-3 bg-yellow-400 text-black hover:bg-yellow-300'
@@ -222,7 +218,7 @@ export default function Sidebar({
             }`}
           >
             <LogOut size={16} />
-            {!collapsed && <span>{t('signOut')}</span>}
+            {!collapsed && <span>Sign Out</span>}
           </button>
 
           <BugReportButton

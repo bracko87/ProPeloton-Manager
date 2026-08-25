@@ -12,8 +12,6 @@
 import React from 'react'
 import { Link } from 'react-router'
 import { Award } from 'lucide-react'
-import { useTranslation } from 'react-i18next'
-import type { TFunction } from 'i18next'
 
 type HeroProps = {
   gameTimeLabel: string
@@ -25,98 +23,14 @@ const HERO_IMAGE_URL =
 const HERO_BACKGROUND_URL =
   'https://pub-cdn.sider.ai/u/U0KAH9N4VLX/web-coder/69a48114fd11fbc8fc7d68f5/resource/ea527ef7-6896-413d-9d69-df332b440fd0.jpg'
 
-const WEEKDAY_NAMES = [
-  'Sunday',
-  'Monday',
-  'Tuesday',
-  'Wednesday',
-  'Thursday',
-  'Friday',
-  'Saturday',
-]
+function formatGameTimeLabel(label: string): string {
+  if (!label) return 'Loading game time...'
 
-const MONTH_NAMES = [
-  'January',
-  'February',
-  'March',
-  'April',
-  'May',
-  'June',
-  'July',
-  'August',
-  'September',
-  'October',
-  'November',
-  'December',
-]
-
-function formatGameTimeLabel(label: string, t: TFunction): string {
-  if (!label || label === 'Loading game time...') {
-    return t('hero.loadingGameTime')
-  }
-
-  if (label === 'Game time unavailable') {
-    return t('status.gameTimeUnavailable')
-  }
-
-  const parts = label
-    .split('·')
-    .map(part => part.trim())
-    .filter(Boolean)
-
-  const seasonMatch = parts[0]?.match(/^(?:Season\s+|S)(\d+)$/i)
-
-  if (!seasonMatch) {
-    return label.replace(/^S(\d+)\s*·/, `${t('hero.season')} $1 ·`)
-  }
-
-  const seasonNumber = seasonMatch[1]
-  const possibleWeekday = parts[1] ?? ''
-  const hasWeekday = WEEKDAY_NAMES.includes(possibleWeekday)
-  const weekday = hasWeekday
-    ? t(`calendar:weekdays.${possibleWeekday}`)
-    : null
-  const datePart = hasWeekday ? parts[2] : parts[1]
-  const time = hasWeekday ? parts[3] : parts[2]
-
-  const dateMatch = datePart?.match(/^([A-Za-z]+)\s+(\d{1,2})$/)
-  const englishMonth = dateMatch?.[1] ?? ''
-  const day = dateMatch?.[2] ?? ''
-
-  if (!dateMatch || !MONTH_NAMES.includes(englishMonth) || !time) {
-    return label.replace(
-      /^(?:Season\s+|S)(\d+)/i,
-      `${t('hero.season')} $1`,
-    )
-  }
-
-  const month = t(`calendar:months.${englishMonth}`)
-  const localizedDate = t('calendar:date', {
-    month,
-    day,
-  })
-
-  if (weekday) {
-    return t('calendar:gameTimeWithWeekday', {
-      season: t('hero.season'),
-      seasonNumber,
-      weekday,
-      date: localizedDate,
-      time,
-    })
-  }
-
-  return t('calendar:gameTimeWithoutWeekday', {
-    season: t('hero.season'),
-    seasonNumber,
-    date: localizedDate,
-    time,
-  })
+  return label.replace(/^S(\d+)\s*·/, 'Season $1 ·')
 }
 
 export default function Hero({ gameTimeLabel }: HeroProps): JSX.Element {
-  const { t } = useTranslation(['home', 'calendar'])
-  const displayGameTime = formatGameTimeLabel(gameTimeLabel, t)
+  const displayGameTime = formatGameTimeLabel(gameTimeLabel)
 
   return (
     <section className="relative w-full overflow-hidden border-b border-white/15 bg-[#0a1730] py-16 lg:py-20">
@@ -141,19 +55,21 @@ export default function Hero({ gameTimeLabel }: HeroProps): JSX.Element {
         <div>
           <div className="mb-5 flex items-center gap-3 text-yellow-400">
             <Award size={18} />
-            <span className="font-semibold">{t('hero.seasonalMultiplayer')}</span>
+            <span className="font-semibold">Seasonal Multiplayer</span>
           </div>
 
           <h1 className="max-w-3xl text-4xl font-bold leading-[1.12] tracking-tight text-white sm:text-5xl lg:text-[52px]">
-            {t('hero.titleLine1')}
+            Build your cycling legacy.
             <br />
-            {t('hero.titleLine2')}
+            Manage the team.
             <br />
-            {t('hero.titleLine3')}
+            Master the season.
           </h1>
 
           <p className="mt-6 max-w-2xl text-lg leading-8 text-yellow-100/85">
-            {t('hero.description')}
+            ProPeloton Manager is an online cycling management game where you create
+            your club, develop riders, plan race calendars, negotiate transfers and
+            compete against real managers in a season-based cycling world.
           </p>
 
           <div className="mt-8 flex flex-wrap items-center gap-4">
@@ -161,36 +77,36 @@ export default function Hero({ gameTimeLabel }: HeroProps): JSX.Element {
               to="/register"
               className="rounded-md bg-yellow-400 px-6 py-3 font-bold text-black shadow hover:bg-yellow-300 hover:shadow-lg"
             >
-              {t('header.startPlaying')}
+              Start Playing
             </Link>
 
             <Link
               to="/login"
               className="rounded-md border border-white/20 px-6 py-3 font-semibold text-white/90 hover:border-yellow-400 hover:bg-white/5 hover:text-yellow-400"
             >
-              {t('header.signIn')}
+              Sign In
             </Link>
           </div>
 
           <div className="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-3">
             <div className="rounded-lg border border-yellow-400/35 bg-yellow-400/10 p-4 shadow-lg shadow-yellow-950/20">
               <div className="text-xs font-semibold uppercase tracking-wide text-yellow-300">
-                {t('hero.gameTime')}
+                Game Time
               </div>
               <div className="mt-1 text-sm font-bold text-white">{displayGameTime}</div>
             </div>
 
             <div className="rounded-lg border border-white/10 bg-white/5 p-4">
-              <div className="text-xs text-white/70">{t('hero.multiplayer')}</div>
+              <div className="text-xs text-white/70">Multiplayer</div>
               <div className="mt-1 text-sm font-semibold text-white/95">
-                {t('hero.liveManagerLeagues')}
+                Live manager leagues
               </div>
             </div>
 
             <div className="rounded-lg border border-white/10 bg-white/5 p-4">
-              <div className="text-xs text-white/70">{t('hero.progression')}</div>
+              <div className="text-xs text-white/70">Progression</div>
               <div className="mt-1 text-sm font-semibold text-white/95">
-                {t('hero.progressionValue')}
+                Tournaments, rankings & rewards
               </div>
             </div>
           </div>
@@ -200,7 +116,7 @@ export default function Hero({ gameTimeLabel }: HeroProps): JSX.Element {
           <div className="w-full max-w-[560px] overflow-hidden rounded-2xl border border-white/10 bg-white/5 shadow-2xl">
             <img
               src={HERO_IMAGE_URL}
-              alt={t('hero.imageAlt')}
+              alt="Cyclists climbing a mountain"
               className="h-[360px] w-full object-cover sm:h-[430px]"
             />
           </div>

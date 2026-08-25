@@ -1,0 +1,246 @@
+{
+  "page": {
+    "title": "Team Staff",
+    "subtitle": "Manage multiple staff roles through dedicated role tabs and per-role staff lists.",
+    "loading": "Loading staff...",
+    "explainPositions": "Explain all staff positions"
+  },
+  "summary": {
+    "weeklyWages": "Weekly Staff Wages",
+    "weeklyWagesSubtext": "Current total payroll",
+    "openSlots": "Open Staff Slots",
+    "openSlotsSubtext": "Live open slots across all staff roles",
+    "totalCapacity": "Total Staff Capacity",
+    "totalCapacitySubtext": "Live backend role limits",
+    "warnings": "Warnings",
+    "warningsSubtext": "Facility level can cap some bonuses"
+  },
+  "rolesSection": {
+    "title": "Staff Roles",
+    "subtitle": "Select a role to see assigned staff, live role limit and role contribution summary.",
+    "staffList": "{{role}} Staff List",
+    "assigned": "{{count}}/{{limit}} assigned for this role.",
+    "assignedCompact": "Assigned {{count}}/{{limit}}",
+    "noAssigned": "No {{role}} assigned",
+    "usage": "Current role usage: {{count}}/{{limit}}. Sign staff from the staff market to fill this role.",
+    "findStaff": "Find Staff"
+  },
+  "roles": {
+    "headCoach": {
+      "label": "Head Coach",
+      "subtitle": "Leads coaching, training planning and long-term rider development."
+    },
+    "trainer": {
+      "label": "Trainer",
+      "subtitle": "Improves daily training output and supports head coach plans."
+    },
+    "teamDoctor": {
+      "label": "Team Doctor",
+      "subtitle": "Leads medical recovery, diagnosis and injury prevention."
+    },
+    "physio": {
+      "label": "Physio",
+      "subtitle": "Focuses on rehabilitation, recovery speed and return-to-fitness."
+    },
+    "nutritionist": {
+      "label": "Nutritionist",
+      "subtitle": "Supports recovery, fitness consistency and medical staff output."
+    },
+    "mechanic": {
+      "label": "Mechanic",
+      "subtitle": "Bike setup, maintenance efficiency and race-day mechanical reliability."
+    },
+    "sportDirector": {
+      "label": "Sport Director",
+      "subtitle": "Planned race tactics, morale, teamwork and domestique support."
+    },
+    "scoutAnalyst": {
+      "label": "Scout / Analyst",
+      "subtitle": "Scouting quality, prospect visibility and transfer intelligence."
+    },
+    "u23HeadCoach": {
+      "label": "U23 Head Coach",
+      "subtitle": "Planned developing-team training and U23 race tactical support."
+    }
+  },
+  "impactAreas": {
+    "regularTraining": "Regular training",
+    "trainingCamps": "Training camps",
+    "riderDevelopment": "Rider development",
+    "dailyTraining": "Daily training",
+    "trainingQuality": "Training quality",
+    "recoverySpeed": "Recovery speed",
+    "injuryPrevention": "Injury prevention",
+    "medicalCaseHandling": "Medical case handling",
+    "returnToFitness": "Return to fitness",
+    "fatigueRecovery": "Fatigue recovery",
+    "recoverySupport": "Recovery support",
+    "fitnessConsistency": "Fitness consistency",
+    "racePreparation": "Race preparation",
+    "equipmentSetup": "Equipment setup",
+    "maintenanceEfficiency": "Maintenance efficiency",
+    "mechanicalReliability": "Mechanical reliability",
+    "raceTactics": "Race tactics",
+    "teamMorale": "Team morale",
+    "domestiqueSupport": "Domestique support",
+    "scoutingAccuracy": "Scouting accuracy",
+    "prospectDiscovery": "Prospect discovery",
+    "transferIntelligence": "Transfer intelligence",
+    "u23Training": "U23 training",
+    "youthDevelopment": "Youth development",
+    "u23RaceTactics": "U23 race tactics"
+  },
+  "common": {
+    "close": "Close",
+    "cancel": "Cancel",
+    "unknown": "Unknown",
+    "age": "Age",
+    "ageUnknown": "Age unknown",
+    "ageYears": "{{age}} years old",
+    "born": "Born: {{date}}",
+    "scope": "Scope: {{scope}}",
+    "firstTeam": "first team",
+    "u23": "U23",
+    "all": "all",
+    "weeklyWage": "Weekly Wage",
+    "contract": "Contract",
+    "currentAssignment": "Current Assignment",
+    "activeEffects": "Active Effects",
+    "staffAttributes": "Staff Attributes",
+    "focus": "Focus: {{value}}",
+    "duration": "Duration: {{count}} days",
+    "cost": "Cost: {{value}}",
+    "completed": "Completed: {{date}}"
+  },
+  "premium": {
+    "analysisTitle": "Premium staff analysis",
+    "analysisDescription": "View combined staff impact, average skill profiles, and completed course results.",
+    "detailDescription": "See calculated coaching quality, infrastructure limits, staff comparisons, and recommended development paths.",
+    "loading": "Loading Premium access"
+  },
+  "analysis": {
+    "averageSkillProfile": "Average Skill Profile",
+    "averageSkillProfileSubtitle": "Average values across staff currently assigned to this impact group.",
+    "noStaff": "No staff assigned to this impact group yet, so there is no active skill profile to summarize.",
+    "whereRoleHelps": "Where This Role Helps",
+    "whereRoleHelpsSubtitle": "Main game systems influenced by this role.",
+    "recentCourseResults": "Recent Course Results",
+    "recentCourseResultsSubtitle": "Completed staff development courses and applied stat gains."
+  },
+  "quality": {
+    "facility": "Facility",
+    "scoutingQuality": "Scouting Quality",
+    "scoutAbility": "Scout Ability",
+    "currentReportQuality": "Current Report Quality",
+    "reportTime": "Report Time",
+    "scoutingOffice": "Scouting Office",
+    "coachingQuality": "Coaching Quality",
+    "coachAbility": "Coach Ability",
+    "trainingQuality": "Training Quality",
+    "developmentSupport": "Development Support",
+    "trainerAbility": "Trainer Ability",
+    "sessionQuality": "Session Quality",
+    "loadManagement": "Load Management",
+    "medicalQuality": "Medical Quality",
+    "medicalAbility": "Medical Ability",
+    "injuryPrevention": "Injury Prevention",
+    "returnToFitness": "Return-to-Fitness",
+    "recoveryQuality": "Recovery Quality",
+    "recoveryAbility": "Recovery Ability",
+    "rehabilitationQuality": "Rehabilitation Quality",
+    "recoverySpeed": "Recovery Speed",
+    "nutritionQuality": "Nutrition Quality",
+    "nutritionAbility": "Nutrition Ability",
+    "recoverySupport": "Recovery Support",
+    "consistencySupport": "Consistency Support",
+    "technicalQuality": "Technical Quality",
+    "technicalAbility": "Technical Ability",
+    "bikeSetupQuality": "Bike Setup Quality",
+    "reliabilitySupport": "Reliability Support",
+    "tacticalQuality": "Tactical Quality",
+    "directorAbility": "Director Ability",
+    "racePlanQuality": "Race Plan Quality",
+    "teamControl": "Team Control",
+    "raceEngineRole": "Race Engine Role",
+    "prepared": "Prepared",
+    "youthCoachingQuality": "Youth Coaching Quality",
+    "youthCoachAbility": "Youth Coach Ability",
+    "talentDevelopment": "Talent Development",
+    "raceReadiness": "Race Readiness"
+  },
+  "detail": {
+    "currentCourse": "Current Course",
+    "courseInProgress": "Course in progress: {{course}}. Completion: {{date}}.",
+    "courseCannotCancel": "This course cannot be canceled once booked. Staff bonuses from this role are paused until completion.",
+    "lastCourseGains": "Last Course Gains",
+    "extendContract": "Extend Contract",
+    "courseInProgressButton": "Course In Progress",
+    "sendOnCourse": "Send on Course",
+    "release": "Release",
+    "scoutingReports": "Scouting Reports"
+  },
+  "release": {
+    "title": "Release Staff",
+    "subtitle": "Confirm this staff decision before continuing.",
+    "aboutToRelease": "You are about to release {{name}}",
+    "role": "Role: {{role}}",
+    "weeklyWage": "Weekly wage: {{value}}",
+    "age": "Age: {{value}}",
+    "compensation": "Release compensation (6 weeks): {{value}}",
+    "warning": "This will remove the staff member from the squad immediately. Staff bonuses from this slot will stop until you sign a replacement.",
+    "payment": "The club will pay a one-time release compensation equal to 6 weeks of salary.",
+    "releasing": "Releasing...",
+    "confirm": "Confirm Release"
+  },
+  "contract": {
+    "title": "Extend Contract",
+    "subtitle": "Negotiate a new staff deal for {{name}}.",
+    "currentSalary": "Current Salary",
+    "currentContract": "Current Contract",
+    "extensionLength": "Extension Length",
+    "oneSeason": "1 Season",
+    "twoSeasons": "2 Seasons",
+    "loadingQuote": "Loading contract quote...",
+    "requestedSalary": "Requested Salary",
+    "raiseRequest": "Raise request: {{value}}%",
+    "minimumAcceptable": "Minimum Acceptable",
+    "newContractTarget": "New Contract Target",
+    "staffInterest": "Staff Interest",
+    "interestUnknown": "Interest unknown",
+    "chanceRenew": "Chance to renew",
+    "chanceUnknown": "Chance unknown",
+    "veryLikely": "Very likely to accept",
+    "possible": "Possible, but may ask for more",
+    "unlikely": "Unlikely at this salary",
+    "veryUnlikely": "Very unlikely",
+    "noQuote": "No quote available.",
+    "salaryOffer": "Your Salary Offer",
+    "salaryPlaceholder": "Enter weekly salary",
+    "submitting": "Submitting...",
+    "submit": "Submit Offer",
+    "extended": "Staff contract extended successfully.",
+    "discussionCompleted": "Contract discussion completed."
+  },
+  "course": {
+    "title": "Staff Course",
+    "subtitle": "Plan development work for {{name}}.",
+    "liveStart": "Live course start",
+    "liveStartText": "Starting a course creates a real staff course entry. Stat gains apply when the backend completion processor finishes the course. Courses cannot be canceled once booked. Staff bonuses from this role are paused until the course is completed.",
+    "staffAge": "Staff Age",
+    "start": "Start Course",
+    "starting": "Starting...",
+    "none": "No course options are configured for this staff role yet. This prevents the wrong course type from being started until backend course codes are added for this role.",
+    "back": "Back to Staff"
+  },
+  "information": {
+    "title": "Staff Positions Explained",
+    "subtitle": "Responsibilities, important attributes and current gameplay connection for every staff role.",
+    "close": "Close staff positions information",
+    "importantAttributes": "Important attributes",
+    "gameplayConnection": "Gameplay connection",
+    "live": "Live",
+    "coreLive": "Core live",
+    "trainingLive": "Training live",
+    "plannedConnection": "Planned connection"
+  }
+}

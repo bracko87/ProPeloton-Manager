@@ -14338,19 +14338,10 @@ describe('Phase 10 deterministic incidents, availability and final statuses', ()
   })
 
   it('keeps major crash injuries as synchronized DNF while allowing serious crashes to be survivable', () => {
-    const result = findPhase10Scenario(
-      'a major crash injury with synchronized DNF',
-      (candidate) =>
-        candidate.phase10Incidents.incidents.some((incident) =>
-          incident.riderConsequences.some(
-            (consequence) =>
-              consequence.healthOutcome.injuryOccurred &&
-              consequence.healthOutcome.severity === 'major' &&
-              consequence.statusImpact === 'dnf',
-          ),
-        ),
-      500,
-    )
+    // Fixed deterministic regression seed. This produces the required major
+    // injury + synchronized DNF case directly, without brute-forcing dozens
+    // of complete 96-rider races and risking Vitest's per-test timeout.
+    const result = runPhase10HighRiskSeed('phase11e-v2-44')
 
     expect(result).toBeDefined()
     const crash = result!.phase10Incidents.incidents.find((incident) =>
@@ -15687,10 +15678,102 @@ describe('Phase 11F dynamic race tactics and forward-only variability', () => {
     }
   }
 
+
+  function createPhase11fLaterAttackInput(
+    deterministicSeed = 'phase11f-v2-2',
+  ): UniversalRaceEngineInput {
+    const base = createExpandedFieldInput(24)
+    const breakawayRiderIds = new Set(
+      base.stagePlans.flatMap((plan) =>
+        plan.riders
+          .filter((rider) => rider.stageRole === 'breakaway_rider')
+          .map((rider) => rider.riderId),
+      ),
+    )
+    const laterAttackRiderIds = new Set(
+      base.stagePlans.flatMap((plan) =>
+        plan.riders
+          .filter((rider) => rider.stageRole === 'rouleur')
+          .map((rider) => rider.riderId),
+      ),
+    )
+
+    return {
+      ...base,
+      engine: {
+        ...base.engine,
+        deterministicSeed,
+      },
+      stage: {
+        ...base.stage,
+        distanceKm: 180,
+        profilePoints: [
+          { km: 0, elevationM: 10 },
+          { km: 90, elevationM: 120 },
+          { km: 180, elevationM: 15 },
+        ],
+      },
+      points: base.points.map((point) => {
+        if (point.pointType === 'INTERMEDIATE_SPRINT') {
+          return {
+            ...point,
+            kmFromStart: 110,
+            name: 'Phase 11F physical-order sprint',
+            pointsScheme: [8, 5, 3, 2, 1],
+            timeBonusSeconds: [],
+          }
+        }
+        if (point.pointType === 'KOM') {
+          return {
+            ...point,
+            kmFromStart: 150,
+          }
+        }
+        if (point.pointType === 'FINISH') {
+          return {
+            ...point,
+            kmFromStart: 180,
+          }
+        }
+        return point
+      }),
+      riders: base.riders.map((rider) =>
+        breakawayRiderIds.has(rider.riderId) ||
+        laterAttackRiderIds.has(rider.riderId)
+          ? {
+              ...rider,
+              flat: 95,
+              endurance: 95,
+              resistance: 95,
+              raceIQ: 95,
+              morale: 95,
+              startStamina: 96,
+              fatigueBeforeStage: 0,
+            }
+          : rider,
+      ),
+      stagePlans: base.stagePlans.map((plan) => ({
+        ...plan,
+        riders: plan.riders.map((riderPlan) => ({
+          ...riderPlan,
+          commands: {
+            ...riderPlan.commands,
+            phase1: breakawayRiderIds.has(riderPlan.riderId)
+              ? 'attack'
+              : riderPlan.commands.phase1,
+            phase3: laterAttackRiderIds.has(riderPlan.riderId)
+              ? 'attack'
+              : riderPlan.commands.phase3,
+          },
+        })),
+      })),
+    }
+  }
+
   it('publishes the Phase 11F engine build marker', () => {
     const result = runRaceEngine(createValidInput())
     expect(result.phase78Acceptance.engineBuild).toBe(
-      'phase11f-dynamic-race-tactics-v1-2026-08-24',
+      'phase11f-dynamic-race-tactics-v2-2026-08-25',
     )
   })
 
@@ -15947,4 +16030,150 @@ describe('Phase 11F dynamic race tactics and forward-only variability', () => {
     expect(onePlaceBattle.eligibleContestantIds).not.toContain('rider-1')
     expect(twoPlaceBattle.eligibleContestantIds).toContain('rider-1')
   })
+
+  it('keeps a deterministic 20-percent minimum success band for credible Phase 3 attack waves', () => {
+    const result = runRaceEngine(
+      createPhase11fLaterAttackInput('phase11f-v2-2'),
+    )
+    const phase3 = result.roadRaceResolution.phase3Decisive!
+    const credibleAttempts = phase3.attackAttempts.filter(
+      (attempt) =>
+        attempt.attackEnergyCost > 0 &&
+        attempt.energyBeforeAttempt >= 25 &&
+        attempt.attackIntentScore >= 40 &&
+        attempt.attackSuccessProbability >= 0.18,
+    )
+    const successfulCredibleAttempts = credibleAttempts.filter(
+      (attempt) => attempt.attackSucceeded,
+    )
+
+    expect(credibleAttempts.length).toBeGreaterThanOrEqual(3)
+    expect(successfulCredibleAttempts.length).toBeGreaterThanOrEqual(
+      Math.ceil(credibleAttempts.length * 0.2),
+    )
+    expect(
+      result.replayTimeline.checkpoints.some((checkpoint) =>
+        checkpoint.commentary.some(
+          (entry) =>
+            entry.eventType === 'attack' &&
+            entry.description.includes('bridging toward the breakaway'),
+        ),
+      ),
+    ).toBe(true)
+  })
+
+  it('keeps every still-ahead breakaway rider physically ahead of the peloton at a Phase 3 sprint line', () => {
+    const input = createPhase11fLaterAttackInput('phase11f-v2-2')
+    const result = runRaceEngine(input)
+    const phase1 = result.roadRaceResolution.phase1Opening!
+    const phase3 = result.roadRaceResolution.phase3Decisive!
+    const sprintPoint = input.points.find(
+      (point) => point.pointType === 'INTERMEDIATE_SPRINT',
+    )!
+    const latestPhysicalGap = phase3.physicalGapTrajectory
+      .filter(
+        (sample) =>
+          sample.kmFromStart <= sprintPoint.kmFromStart + 0.000001,
+      )
+      .slice()
+      .sort(
+        (left, right) =>
+          right.kmFromStart - left.kmFromStart,
+      )[0]?.gapSeconds ?? 0
+    const pointRows = result.intermediatePointFinalization.pointLedger
+      .filter((row) => row.pointId === sprintPoint.pointId)
+      .slice()
+      .sort((left, right) => left.rank - right.rank)
+    const breakawaySet = new Set(phase1.breakawayRiderIds)
+
+    expect(phase1.breakawayRiderIds.length).toBeGreaterThanOrEqual(3)
+    expect(latestPhysicalGap).toBeGreaterThan(
+      PHASE5_GROUP_MERGE_TOLERANCE_SECONDS,
+    )
+    expect(
+      pointRows
+        .slice(0, phase1.breakawayRiderIds.length)
+        .every((row) => breakawaySet.has(row.riderId)),
+    ).toBe(true)
+  })
+
+  it('does not visually freeze an active Phase 3 replay gap at one rounded value', () => {
+    const result = runRaceEngine(
+      createPhase11fLaterAttackInput('phase11f-v2-7'),
+    )
+    const phase3 = result.roadRaceResolution.phase3Decisive!
+    const roundedReplayGaps = result.replayTimeline.checkpoints
+      .filter(
+        (checkpoint) =>
+          checkpoint.phase === 3 &&
+          checkpoint.raceProgress.kmFromStart >=
+            phase3.phaseBoundary.startKm &&
+          checkpoint.raceProgress.kmFromStart <=
+            phase3.phaseBoundary.endKm,
+      )
+      .map((checkpoint) =>
+        checkpoint.gaps.find((gap) => gap.displayCode === 'P')?.gapSeconds,
+      )
+      .filter(
+        (gapSeconds): gapSeconds is number =>
+          typeof gapSeconds === 'number' &&
+          gapSeconds >
+            PHASE5_GROUP_MERGE_TOLERANCE_SECONDS,
+      )
+      .map((gapSeconds) => Math.round(gapSeconds))
+
+    expect(roundedReplayGaps.length).toBeGreaterThan(3)
+    expect(new Set(roundedReplayGaps).size).toBeGreaterThan(1)
+  })
+
+  it('publishes finish points from the authoritative official classification even if the internal sprint ranking differs', () => {
+    const input = createValidInput()
+    const result = runRaceEngine(input)
+    const phase4 = result.roadRaceResolution.phase4Finish!
+    const finishPoint = input.points.find(
+      (point) => point.pointType === 'FINISH',
+    )!
+    const staleInternalRankings = [...phase4.finish.rankings]
+      .reverse()
+      .map((entry, index) => ({
+        ...entry,
+        rank: index + 1,
+        pointsAwarded:
+          finishPoint.pointsScheme[index] ?? 0,
+        bonusSecondsAwarded:
+          finishPoint.timeBonusSeconds[index] ?? 0,
+      }))
+    const deliberatelyDesynchronizedInternalFinish = {
+      ...result,
+      roadRaceResolution: {
+        ...result.roadRaceResolution,
+        phase4Finish: {
+          ...phase4,
+          finish: {
+            ...phase4.finish,
+            rankings: staleInternalRankings,
+          },
+        },
+      },
+    }
+    const output = buildProductionUniversalRaceOutput(
+      input,
+      deliberatelyDesynchronizedInternalFinish,
+    )
+    const finishRows = output.publication.pointResults
+      .filter((row) => row.pointId === finishPoint.pointId)
+      .slice()
+      .sort((left, right) => left.rank - right.rank)
+    const officialAwarded = result.finishResolution.classification
+      .filter((row) => row.status === 'finished')
+      .slice(0, finishPoint.pointsScheme.length)
+
+    expect(finishRows.map((row) => row.riderId)).toEqual(
+      officialAwarded.map((row) => row.riderId),
+    )
+    expect(finishRows.map((row) => row.pointsAwarded)).toEqual(
+      finishPoint.pointsScheme,
+    )
+  })
+
 })
