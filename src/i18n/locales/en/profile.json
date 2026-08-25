@@ -3,5 +3,11 @@
     "title": "Preferences",
     "languageSectionTitle": "Language",
     "languageSectionDescription": "Choose the language used across ProPeloton Manager."
+  },
+  "dropdown": {
+    "guest": "Guest",
+    "club": "Club",
+    "menu": "Profile menu",
+    "signedInAs": "Signed in as"
   }
 }
