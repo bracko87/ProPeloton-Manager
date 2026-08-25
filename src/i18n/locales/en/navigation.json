@@ -61,5 +61,19 @@
     "clubCountry": "Club country",
     "manager": "Manager",
     "ranking": "{{positionOrdinal}} in {{competition}} Ranking"
+  },
+  "footer": {
+    "season": "Season",
+    "loadingGameTime": "Loading game time...",
+    "gameTimeUnavailable": "Game time unavailable",
+    "description": "ProPeloton Manager is an online cycling management game currently in active development.",
+    "navigation": "Footer navigation",
+    "about": "About",
+    "howToPlay": "How to Play",
+    "privacyPolicy": "Privacy Policy",
+    "terms": "Terms",
+    "support": "Support",
+    "contact": "Contact",
+    "dashboard": "Dashboard"
   }
 }
