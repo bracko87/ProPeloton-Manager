@@ -537,7 +537,11 @@ export default function OverviewLegacyLocalizationBridge(): null {
   const [hashPath, setHashPath] = useState(getCurrentHashPath)
 
   const isOverview = useMemo(
-    () => hashPath === '/dashboard/overview' || hashPath.startsWith('/dashboard/overview?'),
+    () =>
+      hashPath === '/dashboard' ||
+      hashPath === '/dashboard/' ||
+      hashPath === '/dashboard/overview' ||
+      hashPath.startsWith('/dashboard/overview?'),
     [hashPath],
   )
 
