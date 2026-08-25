@@ -24,6 +24,7 @@ import TeamRankingLegacyLocalizationBridge from './components/i18n/TeamRankingLe
 import StatisticsLegacyLocalizationBridge from './components/i18n/StatisticsLegacyLocalizationBridge'
 import TransfersLegacyLocalizationBridge from './components/i18n/TransfersLegacyLocalizationBridge'
 import FinanceLegacyLocalizationBridge from './components/i18n/FinanceLegacyLocalizationBridge'
+import NotificationsLegacyLocalizationBridge from './components/i18n/NotificationsLegacyLocalizationBridge'
 
 const root = createRoot(document.getElementById('app')!)
 
@@ -51,6 +52,7 @@ root.render(
     <StatisticsLegacyLocalizationBridge />
     <TransfersLegacyLocalizationBridge />
     <FinanceLegacyLocalizationBridge />
+    <NotificationsLegacyLocalizationBridge />
     <App />
   </>,
 )
