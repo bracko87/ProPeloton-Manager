@@ -1,15 +1,11 @@
 /**
  * Footer.tsx
  * Global footer showing authoritative live game time and important public links.
- *
- * UPDATE: Public information links
- * - Adds always-visible public links:
- *   About, How to Play, Privacy Policy, Terms, Support, Contact
- * - Keeps dashboard/support links available.
  */
 
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router'
+import { useTranslation } from 'react-i18next'
 import { supabase } from '../../lib/supabase'
 
 interface GameTimeRow {
@@ -54,7 +50,7 @@ const WEEKDAY_NAMES = [
 function getWeekdayName(
   seasonNumber: number,
   monthName: string,
-  dayNumber: number
+  dayNumber: number,
 ): string | null {
   const monthIndex = MONTH_INDEX_BY_NAME[monthName]
 
@@ -78,25 +74,12 @@ function formatTime(hour24: number, minute2: number): string {
   return `${hour}:${minute}`
 }
 
-function formatGameTime(row: GameTimeRow): string {
-  const seasonText = `Season ${row.season_number}`
-  const weekdayText = getWeekdayName(
-    row.season_number,
-    row.month_name,
-    row.day_number
-  )
-  const dateText = `${row.month_name} ${row.day_number}`
-  const timeText = formatTime(row.hour_24, row.minute_2)
-
-  return weekdayText
-    ? `${seasonText} - ${weekdayText} - ${dateText} - ${timeText}`
-    : `${seasonText} - ${dateText} - ${timeText}`
-}
-
 export default function Footer({
   refreshIntervalMs = 30000,
 }: GameTimeProps): JSX.Element {
-  const [gameTimeText, setGameTimeText] = useState('Loading game time...')
+  const { t } = useTranslation(['navigation', 'calendar'])
+  const [gameTime, setGameTime] = useState<GameTimeRow | null>(null)
+  const [gameTimeUnavailable, setGameTimeUnavailable] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -107,21 +90,18 @@ export default function Footer({
       if (cancelled) return
 
       if (error) {
-        setGameTimeText(prev =>
-          prev === 'Loading game time...' ? 'Game time unavailable' : prev
-        )
+        setGameTimeUnavailable(true)
         return
       }
 
       const rows = data as GameTimeRow[] | null
-      const nextRow = rows?.[0]
+      const nextRow = rows?.[0] ?? null
 
       if (nextRow) {
-        setGameTimeText(formatGameTime(nextRow))
+        setGameTime(nextRow)
+        setGameTimeUnavailable(false)
       } else {
-        setGameTimeText(prev =>
-          prev === 'Loading game time...' ? 'Game time unavailable' : prev
-        )
+        setGameTimeUnavailable(true)
       }
     }
 
@@ -137,67 +117,89 @@ export default function Footer({
     }
   }, [refreshIntervalMs])
 
+  const gameTimeText = useMemo(() => {
+    if (!gameTime) {
+      return gameTimeUnavailable
+        ? t('navigation:footer.gameTimeUnavailable')
+        : t('navigation:footer.loadingGameTime')
+    }
+
+    const weekdayName = getWeekdayName(
+      gameTime.season_number,
+      gameTime.month_name,
+      gameTime.day_number,
+    )
+
+    const localizedMonth = t(
+      `calendar:months.${gameTime.month_name}`,
+      { defaultValue: gameTime.month_name },
+    )
+
+    const localizedDate = t('calendar:date', {
+      month: localizedMonth,
+      day: gameTime.day_number,
+    })
+
+    const time = formatTime(gameTime.hour_24, gameTime.minute_2)
+    const season = t('navigation:footer.season')
+
+    if (weekdayName) {
+      const localizedWeekday = t(
+        `calendar:weekdays.${weekdayName}`,
+        { defaultValue: weekdayName },
+      )
+
+      return t('calendar:gameTimeWithWeekday', {
+        season,
+        seasonNumber: gameTime.season_number,
+        weekday: localizedWeekday,
+        date: localizedDate,
+        time,
+      })
+    }
+
+    return t('calendar:gameTimeWithoutWeekday', {
+      season,
+      seasonNumber: gameTime.season_number,
+      date: localizedDate,
+      time,
+    })
+  }, [gameTime, gameTimeUnavailable, t])
+
   return (
     <footer className="border-t border-yellow-500 bg-yellow-400 px-6 py-4">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div>
           <div className="text-sm font-semibold text-black">{gameTimeText}</div>
           <div className="mt-1 text-xs text-black/70">
-            ProPeloton Manager is an online cycling management game currently in active development.
+            {t('navigation:footer.description')}
           </div>
         </div>
 
         <nav
-          aria-label="Footer navigation"
+          aria-label={t('navigation:footer.navigation')}
           className="flex flex-wrap items-center gap-x-4 gap-y-2"
         >
-          <Link
-            to="/about"
-            className="text-sm font-semibold text-black hover:opacity-80"
-          >
-            About
+          <Link to="/about" className="text-sm font-semibold text-black hover:opacity-80">
+            {t('navigation:footer.about')}
           </Link>
-
-          <Link
-            to="/how-to-play"
-            className="text-sm font-semibold text-black hover:opacity-80"
-          >
-            How to Play
+          <Link to="/how-to-play" className="text-sm font-semibold text-black hover:opacity-80">
+            {t('navigation:footer.howToPlay')}
           </Link>
-
-          <Link
-            to="/privacy-policy"
-            className="text-sm font-semibold text-black hover:opacity-80"
-          >
-            Privacy Policy
+          <Link to="/privacy-policy" className="text-sm font-semibold text-black hover:opacity-80">
+            {t('navigation:footer.privacyPolicy')}
           </Link>
-
-          <Link
-            to="/terms"
-            className="text-sm font-semibold text-black hover:opacity-80"
-          >
-            Terms
+          <Link to="/terms" className="text-sm font-semibold text-black hover:opacity-80">
+            {t('navigation:footer.terms')}
           </Link>
-
-          <Link
-            to="/support"
-            className="text-sm font-semibold text-black hover:opacity-80"
-          >
-            Support
+          <Link to="/support" className="text-sm font-semibold text-black hover:opacity-80">
+            {t('navigation:footer.support')}
           </Link>
-
-          <Link
-            to="/contact"
-            className="text-sm font-semibold text-black hover:opacity-80"
-          >
-            Contact
+          <Link to="/contact" className="text-sm font-semibold text-black hover:opacity-80">
+            {t('navigation:footer.contact')}
           </Link>
-
-          <Link
-            to="/dashboard/overview"
-            className="text-sm font-semibold text-black hover:opacity-80"
-          >
-            Dashboard
+          <Link to="/dashboard/overview" className="text-sm font-semibold text-black hover:opacity-80">
+            {t('navigation:footer.dashboard')}
           </Link>
         </nav>
       </div>
