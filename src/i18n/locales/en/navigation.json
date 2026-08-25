@@ -112,5 +112,8 @@
     "imageRequired": "Screenshot must be an image file.",
     "imageTooLarge": "Screenshot must be smaller than {{size}} MB.",
     "sendFailed": "Failed to send bug report."
+  },
+  "premiumFeature": {
+    "unlock": "Unlock with Premium"
   }
 }
