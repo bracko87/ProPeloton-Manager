@@ -31,6 +31,7 @@ import RiderProfileLegacyLocalizationBridge from './components/i18n/RiderProfile
 import AuthAccountLegacyLocalizationBridge from './components/i18n/AuthAccountLegacyLocalizationBridge'
 import CreateClubLegacyLocalizationBridge from './components/i18n/CreateClubLegacyLocalizationBridge'
 import AccountPagesLegacyLocalizationBridge from './components/i18n/AccountPagesLegacyLocalizationBridge'
+import PublicInfoLegacyLocalizationBridge from './components/i18n/PublicInfoLegacyLocalizationBridge'
 
 const root = createRoot(document.getElementById('app')!)
 
@@ -65,6 +66,7 @@ root.render(
     <AuthAccountLegacyLocalizationBridge />
     <CreateClubLegacyLocalizationBridge />
     <AccountPagesLegacyLocalizationBridge />
+    <PublicInfoLegacyLocalizationBridge />
     <App />
   </>,
 )
