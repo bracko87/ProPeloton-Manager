@@ -1,0 +1,56 @@
+{
+  "common": {
+    "back": "Back",
+    "close": "Close",
+    "unknown": "Unknown",
+    "unknownRider": "Unknown rider",
+    "rider": "Rider",
+    "noImage": "No image",
+    "age": "Age {{age}}",
+    "club": "Club:",
+    "noClub": "No club",
+    "marketValue": "Market value:",
+    "salary": "Salary:",
+    "availability": "Availability:",
+    "contractSeason": "Contract season:",
+    "seasonPoints": "Season Points",
+    "sprintPoints": "Sprint Points",
+    "climbingPoints": "Climbing Points",
+    "markScouted": "Mark as Scouted",
+    "unmarkScouted": "Unmark Scouted",
+    "showHistory": "Show History",
+    "hideHistory": "Hide History",
+    "openTeam": "Open Team",
+    "historyPlaceholder": "Rider history panel placeholder."
+  },
+  "skills": {
+    "ovr": "OVR",
+    "pot": "POT",
+    "sprint": "Sprint",
+    "climbing": "Climbing",
+    "tt": "TT",
+    "endurance": "Endurance",
+    "flat": "Flat",
+    "recovery": "Recovery",
+    "resistance": "Resistance",
+    "raceIq": "Race IQ",
+    "teamwork": "Teamwork",
+    "morale": "Morale"
+  },
+  "availability": {
+    "fit": "Fit",
+    "notFullyFit": "Not fully fit",
+    "injured": "Injured",
+    "sick": "Sick"
+  },
+  "roles": {
+    "sprinter": "Sprinter",
+    "climber": "Climber",
+    "timeTrialist": "Time trialist",
+    "gc": "GC rider",
+    "puncheur": "Puncheur",
+    "rouleur": "Rouleur",
+    "domestique": "Domestique",
+    "allRounder": "All-rounder"
+  }
+}
