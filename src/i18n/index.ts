@@ -9,6 +9,7 @@ import enProfile from './locales/en/profile.json'
 import enCalendar from './locales/en/calendar.json'
 import enPreferences from './locales/en/preferences.json'
 import enPreferencesDynamic from './locales/en/preferencesDynamic.json'
+import enOverview from './locales/en/overview.json'
 
 import srCommon from './locales/sr-Latn/common.json'
 import srNavigation from './locales/sr-Latn/navigation.json'
@@ -18,6 +19,7 @@ import srProfile from './locales/sr-Latn/profile.json'
 import srCalendar from './locales/sr-Latn/calendar.json'
 import srPreferences from './locales/sr-Latn/preferences.json'
 import srPreferencesDynamic from './locales/sr-Latn/preferencesDynamic.json'
+import srOverview from './locales/sr-Latn/overview.json'
 
 import {
   DEFAULT_LANGUAGE,
@@ -38,6 +40,7 @@ const resources = {
     calendar: enCalendar,
     preferences: enPreferences,
     preferencesDynamic: enPreferencesDynamic,
+    overview: enOverview,
   },
   'sr-Latn': {
     common: srCommon,
@@ -48,6 +51,7 @@ const resources = {
     calendar: srCalendar,
     preferences: srPreferences,
     preferencesDynamic: srPreferencesDynamic,
+    overview: srOverview,
   },
 } as const
 
@@ -70,6 +74,7 @@ void i18n
       'calendar',
       'preferences',
       'preferencesDynamic',
+      'overview',
     ],
     interpolation: {
       escapeValue: false,
