@@ -9,6 +9,7 @@ import PreferencesLegacyLocalizationBridge from './components/i18n/PreferencesLe
 import PreferencesDynamicLocalizationBridge from './components/i18n/PreferencesDynamicLocalizationBridge'
 import HeaderLegacyLocalizationBridge from './components/i18n/HeaderLegacyLocalizationBridge'
 import OverviewLegacyLocalizationBridge from './components/i18n/OverviewLegacyLocalizationBridge'
+import TutorialLegacyLocalizationBridge from './components/i18n/TutorialLegacyLocalizationBridge'
 
 const root = createRoot(document.getElementById('app')!)
 root.render(
@@ -20,6 +21,7 @@ root.render(
     <PreferencesDynamicLocalizationBridge />
     <HeaderLegacyLocalizationBridge />
     <OverviewLegacyLocalizationBridge />
+    <TutorialLegacyLocalizationBridge />
     <App />
   </>,
 )
