@@ -12,6 +12,7 @@
  */
 
 import React from "react";
+import { useTranslation } from "react-i18next";
 import TutorialOverlay from "../../components/tutorial/TutorialOverlay";
 import TutorialTargetFrame from "../../components/tutorial/TutorialTargetFrame";
 import { supabase } from "../../lib/supabase";
@@ -3830,6 +3831,7 @@ function StaffBriefingCentre({
   coinBalanceLoading: boolean;
   refreshing: boolean;
 }) {
+  const { t } = useTranslation("overview");
   const [overviewRows, setOverviewRows] = React.useState<StaffAdvisoryOverviewRow[]>([]);
   const [staffLoading, setStaffLoading] = React.useState(true);
   const [staffError, setStaffError] = React.useState<string | null>(null);
@@ -4102,13 +4104,21 @@ function StaffBriefingCentre({
     }
   }
 
+  const staffBriefingRoleLabels: Record<StaffBriefingRole["roleType"], string> = {
+    head_coach: t("staffBriefing.roles.headCoach"),
+    sport_director: t("staffBriefing.roles.sportsDirector"),
+    team_doctor: t("staffBriefing.roles.teamDoctor"),
+    mechanic: t("staffBriefing.roles.chiefMechanic"),
+    scout_analyst: t("staffBriefing.roles.scout"),
+  };
+
   return (
     <Card className="border-slate-200/80 bg-white p-4 shadow-sm">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0">
           <div className="relative flex items-center gap-2">
             <h2 className="text-xl font-semibold tracking-tight text-slate-950">
-              Staff Briefing Centre
+              {t("staffBriefing.title")}
             </h2>
 
             <button
@@ -4187,35 +4197,35 @@ function StaffBriefingCentre({
 
                   <div className="mt-3 space-y-2">
                     <div className="rounded-xl border border-slate-200 px-3 py-2.5">
-                      <div className="text-[11px] font-semibold text-slate-900">Head Coach</div>
+                      <div className="text-[11px] font-semibold text-slate-900">{t("staffBriefing.roles.headCoach")}</div>
                       <div className="mt-1 text-[10px] leading-5 text-slate-600">
                         Weekly training and readiness review: workload trends, repeated fatigue, morale/readiness patterns, development trends, and riders who may need closer management.
                       </div>
                     </div>
 
                     <div className="rounded-xl border border-slate-200 px-3 py-2.5">
-                      <div className="text-[11px] font-semibold text-slate-900">Sports Director</div>
+                      <div className="text-[11px] font-semibold text-slate-900">{t("staffBriefing.roles.sportsDirector")}</div>
                       <div className="mt-1 text-[10px] leading-5 text-slate-600">
                         Weekly race-program review: calendar congestion, rider-selection load, preparation risks, overlapping commitments, and areas of the race programme worth reviewing.
                       </div>
                     </div>
 
                     <div className="rounded-xl border border-slate-200 px-3 py-2.5">
-                      <div className="text-[11px] font-semibold text-slate-900">Team Doctor</div>
+                      <div className="text-[11px] font-semibold text-slate-900">{t("staffBriefing.roles.teamDoctor")}</div>
                       <div className="mt-1 text-[10px] leading-5 text-slate-600">
                         Health and recovery analysis, at most once per real-life day: squad availability, repeated injury/sickness patterns, recovery trends, and health situations worth monitoring.
                       </div>
                     </div>
 
                     <div className="rounded-xl border border-slate-200 px-3 py-2.5">
-                      <div className="text-[11px] font-semibold text-slate-900">Chief Mechanic</div>
+                      <div className="text-[11px] font-semibold text-slate-900">{t("staffBriefing.roles.chiefMechanic")}</div>
                       <div className="mt-1 text-[10px] leading-5 text-slate-600">
                         Weekly equipment review: condition and maintenance trends, recurring equipment issues, workload on the workshop, and race-supply usage worth reviewing.
                       </div>
                     </div>
 
                     <div className="rounded-xl border border-slate-200 px-3 py-2.5">
-                      <div className="text-[11px] font-semibold text-slate-900">Scout</div>
+                      <div className="text-[11px] font-semibold text-slate-900">{t("staffBriefing.roles.scout")}</div>
                       <div className="mt-1 text-[10px] leading-5 text-slate-600">
                         Weekly recruitment review using already-known scouting information: completed report summary, recruitment gaps, known prospects worth revisiting, and suggestions for where to scout next.
                       </div>
@@ -4235,7 +4245,7 @@ function StaffBriefingCentre({
             ) : null}
           </div>
           <p className="mt-1 text-xs leading-5 text-slate-500">
-            Assign staff as optional advisors for additional analysis and reports.
+            {t("staffBriefing.subtitle")}
           </p>
         </div>
 
@@ -4244,7 +4254,7 @@ function StaffBriefingCentre({
             href="#/dashboard/inbox"
             className="inline-flex h-8 items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 text-[11px] font-semibold text-slate-700 transition hover:bg-slate-50"
           >
-            Inbox
+            {t("staffBriefing.inbox")}
             <span className="inline-flex min-w-[20px] items-center justify-center rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-700">
               {inboxUnread}
             </span>
@@ -4253,7 +4263,7 @@ function StaffBriefingCentre({
             href="#/dashboard/notifications"
             className="inline-flex h-8 items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 text-[11px] font-semibold text-slate-700 transition hover:bg-slate-50"
           >
-            Notifications
+            {t("staffBriefing.notifications")}
             <span className="inline-flex min-w-[20px] items-center justify-center rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-700">
               {notificationsUnread}
             </span>
@@ -4262,7 +4272,7 @@ function StaffBriefingCentre({
             href="#/dashboard/staff"
             className="inline-flex h-8 items-center rounded-full bg-slate-950 px-3.5 text-[11px] font-semibold text-white transition hover:bg-slate-800"
           >
-            Manage staff
+            {t("staffBriefing.manageStaff")}
           </a>
         </div>
       </div>
@@ -4317,7 +4327,7 @@ function StaffBriefingCentre({
                       status === "no_staff" ? "text-slate-500" : "text-slate-950"
                     }`}
                   >
-                    {role.label}
+                    {staffBriefingRoleLabels[role.roleType]}
                   </div>
 
                   {hasAdvisor ? (
@@ -4340,7 +4350,7 @@ function StaffBriefingCentre({
                     </div>
                   ) : (
                     <div className="mt-2 text-[12px] font-medium text-slate-800">
-                      {status === "unassigned" ? "No advisor assigned" : "No staff available"}
+                      {status === "unassigned" ? "No advisor assigned" : t("staffBriefing.noStaff")}
                     </div>
                   )}
                 </div>
@@ -4349,8 +4359,8 @@ function StaffBriefingCentre({
                   hasAdvisorNotifications ? (
                     <a
                       href={`#/dashboard/notifications?advisor_staff_id=${encodeURIComponent(row?.advisor_staff_id ?? "")}&advisor_role=${encodeURIComponent(role.roleType)}&mode=advisor`}
-                      title={`Show advisor notifications from ${row?.advisor_staff_name ?? role.label}`}
-                      aria-label={`Show advisor notifications from ${row?.advisor_staff_name ?? role.label}`}
+                      title={`Show advisor notifications from ${row?.advisor_staff_name ?? staffBriefingRoleLabels[role.roleType]}`}
+                      aria-label={`Show advisor notifications from ${row?.advisor_staff_name ?? staffBriefingRoleLabels[role.roleType]}`}
                       className="inline-flex h-7 min-w-[30px] items-center justify-center rounded-lg bg-red-500 px-2 text-[11px] font-semibold text-white transition hover:bg-red-600"
                     >
                       {advisorNotificationCount}
@@ -4376,10 +4386,12 @@ function StaffBriefingCentre({
               ) : status === "no_staff" ? (
                 <>
                   <div className="mt-3 text-[11px] leading-4.5 text-slate-500">
-                    Hire an eligible {role.label.toLowerCase()} on the Staff page before assigning an advisor.
+                    {t("staffBriefing.hireRole", {
+                      role: staffBriefingRoleLabels[role.roleType].toLowerCase(),
+                    })}
                   </div>
                   <div className="mt-auto pt-3 text-[11px] font-medium text-slate-400">
-                    Advisory unavailable
+                    {t("staffBriefing.advisoryUnavailable")}
                   </div>
                 </>
               ) : status === "unassigned" ? (
@@ -4395,7 +4407,7 @@ function StaffBriefingCentre({
                     onClick={() => void openAssignAdvisor(role)}
                     className="mt-auto inline-flex h-8 self-start items-center rounded-lg bg-slate-950 px-3 text-[11px] font-semibold text-white transition hover:bg-slate-800"
                   >
-                    Assign advisor
+                    {t("staffBriefing.assignAdvisor")}
                   </button>
                 </>
               ) : hasAdvisor ? (
@@ -4403,7 +4415,7 @@ function StaffBriefingCentre({
                   <div className="mt-3 rounded-xl bg-slate-50 px-3 py-2.5">
                     <div className="flex items-center justify-between gap-3">
                       <span className="text-[11px] font-medium text-slate-500">
-                        Advisor rating
+                        {t("staffBriefing.advisorRating")}
                       </span>
                       <span className="text-lg font-semibold tabular-nums text-slate-950">
                         {Math.round(
@@ -4423,10 +4435,12 @@ function StaffBriefingCentre({
                           status === "active" ? "text-emerald-700" : "text-amber-700"
                         }
                       >
-                        {status === "active" ? "Advisory active" : "Advisory expired"}
+                        {status === "active"
+                          ? t("staffBriefing.active")
+                          : t("staffBriefing.expired")}
                       </div>
                       <div className="text-slate-500">
-                        {status === "active" ? "Until" : "Expired"}{" "}
+                        {status === "active" ? t("staffBriefing.until") : "Expired"}{" "}
                         {formatAdvisoryDate(row?.advisory_expires_at ?? null)}
                       </div>
                     </div>
@@ -4438,7 +4452,7 @@ function StaffBriefingCentre({
                       }
                       className="inline-flex h-8 shrink-0 items-center rounded-lg border border-slate-300 bg-white px-3 text-[11px] font-semibold text-slate-700 transition hover:bg-slate-50"
                     >
-                      Renew
+                      {t("staffBriefing.renew")}
                     </button>
                   </div>
                 </>
@@ -4454,10 +4468,12 @@ function StaffBriefingCentre({
             <div className="flex items-start justify-between gap-4">
               <div>
                 <div className="text-xl font-semibold tracking-tight text-slate-950">
-                  {quote?.is_renewal ? "Renew advisor" : "Assign advisor"}
+                  {quote?.is_renewal
+                    ? t("staffBriefing.renewAdvisor")
+                    : t("staffBriefing.assignAdvisor")}
                 </div>
                 <div className="mt-1 text-sm text-slate-500">
-                  {assignRole.label}
+                  {staffBriefingRoleLabels[assignRole.roleType]}
                 </div>
               </div>
 
@@ -5973,6 +5989,7 @@ function NewsCommandCenter({
   news: NewsItem[];
   currentGameDateLabel: string;
 }) {
+  const { t } = useTranslation("overview");
   const [expandedId, setExpandedId] = React.useState<string | null>(null);
 
   const teamNewsItems = buildTeamNewsItems(alerts, feed, currentGameDateLabel);
@@ -5989,8 +6006,8 @@ function NewsCommandCenter({
       <div className="border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white px-5 py-4">
         <div className="flex items-start justify-between gap-3">
           <SectionTitle
-            title="News Board"
-            subtitle="Latest team and world news. Click a row to expand it."
+            title={t("news.boardTitle")}
+            subtitle={t("news.boardSubtitle")}
           />
           <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-600">
             {combinedItems.length}/7
@@ -6026,7 +6043,9 @@ function NewsCommandCenter({
                                 : "bg-emerald-50 text-emerald-600",
                             )}
                           >
-                            {item.sourceLabel}
+                            {item.sourceLabel === "World"
+                              ? t("news.world")
+                              : t("news.team")}
                           </span>
                         ) : null}
                       </div>
@@ -6048,7 +6067,9 @@ function NewsCommandCenter({
                                 : "bg-emerald-50 text-emerald-700",
                             )}
                           >
-                            {item.sourceLabel} news
+                            {item.sourceLabel === "World"
+                              ? t("news.world")
+                              : t("news.team")} news
                           </span>
 
                           {item.href && item.linkLabel ? (
@@ -6103,11 +6124,13 @@ function LastTeamRaceCard({
   race: OverviewLastTeamRace | null;
   loading: boolean;
 }) {
+  const { t } = useTranslation("overview");
+
   return (
     <Card className="p-5">
       <SectionTitle
-        title="Last Team Race"
-        subtitle="Latest finished full race involving your first team or developing team."
+        title={t("races.lastTitle")}
+        subtitle={t("races.lastSubtitle")}
       />
 
       {loading && !race?.raceName ? (
@@ -6146,11 +6169,13 @@ function NextTeamRaceCard({
   race: OverviewNextTeamRace | null;
   loading: boolean;
 }) {
+  const { t } = useTranslation("overview");
+
   return (
     <Card className="p-5">
       <SectionTitle
-        title="Next Team Race"
-        subtitle="Next submitted race that has not started yet."
+        title={t("races.nextTitle")}
+        subtitle={t("races.nextSubtitle")}
       />
 
       {loading && !race?.raceName ? (
@@ -6171,8 +6196,7 @@ function NextTeamRaceCard({
         />
       ) : (
         <div className="mt-5 rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 py-6 text-sm text-slate-500">
-          No upcoming submitted race found for the first team or developing team
-          yet.
+          {t("races.noNext")}
         </div>
       )}
     </Card>
@@ -6899,6 +6923,7 @@ function DashboardSkeleton() {
  * Top-level dashboard overview page component.
  */
 export default function OverviewPage() {
+  const { t } = useTranslation("overview");
   const [data, setData] = React.useState<DashboardOverviewData | null>(null);
   const [raceHub, setRaceHub] = React.useState<OverviewTeamRaceHub>({
     lastTeamRace: null,
@@ -7923,8 +7948,8 @@ export default function OverviewPage() {
             <div data-tutorial-target="overview-main-sponsor">
               <Card className="p-5">
                 <SectionTitle
-                  title="Main Sponsor"
-                  subtitle="Primary sponsor branding and active partnership."
+                  title={t("sponsor.title")}
+                  subtitle={t("sponsor.subtitle")}
                 />
                 <div className="mt-5">
                   <MainSponsorPanel sponsor={data.mainSponsor} />
