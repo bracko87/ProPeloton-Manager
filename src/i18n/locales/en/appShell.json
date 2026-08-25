@@ -1,0 +1,78 @@
+{
+  "guards": {
+    "loading": "Loading...",
+    "somethingWentWrong": "Something went wrong",
+    "checkingSession": "Checking your session...",
+    "clubLoadFailed": "Unable to load your club at the moment. Please try again shortly.",
+    "loadingClub": "Loading your club...",
+    "redirectingSignup": "Redirecting you to sign up..."
+  },
+  "access": {
+    "checkingClub": "Checking club status...",
+    "noActiveClub": "No active club was found for this account.",
+    "checkFailed": "Could not check club access status.",
+    "cannotPlay": "This club cannot be played right now.",
+    "couldNotCheck": "Could not check club access"
+  },
+  "restartWelcome": {
+    "close": "Close restart welcome",
+    "title": "Welcome back to your restarted team",
+    "subtitle": "Your club has been given a fresh start.",
+    "body1": "Your team is active again with a new starter squad, starter equipment, starter finances, and 0 season points.",
+    "body2": "Your club name, logo, jersey, country, and competition slot have been preserved. The old riders were released as free agents, and the club is ready for a new beginning.",
+    "goodLuck": "Good luck this time. Build carefully, manage the budget, and bring your club back stronger.",
+    "continue": "Continue to dashboard"
+  },
+  "liquidation": {
+    "label": "Club Liquidated",
+    "title": "{{club}} has been liquidated",
+    "yourClub": "Your club",
+    "description": "This club used all 3 lifetime emergency rescues and then failed to cover another mandatory obligation. No further emergency loans are available, and this team can no longer perform game actions.",
+    "rescuesUsed": "Rescues used:",
+    "reason": "Reason:",
+    "closedAt": "Closed at:",
+    "accountNotice": "Your user account and coins are still active. Only this club is closed. You can create a completely new club in the next available free spot, or restart this team in the same competition slot with a fresh squad, no staff, and 0 points.",
+    "identityTitle": "Restart Team keeps your club identity.",
+    "identityBody": "Your club ID, owner account, team name, logo, jersey, country, and tier/division slot stay the same. Current riders are released to the free-agent market, all season points are reset to 0, and the club receives a new starter squad based on its current competition tier.",
+    "createNew": "Create new club",
+    "restart": "Restart team"
+  },
+  "restartModal": {
+    "confirmExact": "You must type RESTART exactly to confirm this action.",
+    "failed": "Failed to restart team.",
+    "unexpected": "Failed to restart team due to an unexpected error.",
+    "close": "Close restart team confirmation",
+    "title": "Confirm Team Restart",
+    "subtitle": "This will reset your club back to a fresh starter state.",
+    "intro": "Restart Team keeps your club identity and competition slot, but it resets the sporting and gameplay state of the team.",
+    "keep": "You will keep",
+    "keepAccount": "User account and coins",
+    "keepClubId": "Club ID",
+    "keepName": "Club name",
+    "keepLogo": "Logo and badge",
+    "keepJersey": "Jersey",
+    "keepCountry": "Country",
+    "keepCompetition": "Current tier/division/competition slot",
+    "lose": "You will lose/reset",
+    "losePoints": "All current season points",
+    "loseRanking": "Current ranking/standings position",
+    "loseRiders": "Current riders, who become free agents",
+    "loseStaff": "Staff",
+    "loseSponsors": "Sponsors and naming-rights sponsor",
+    "loseEquipment": "Equipment progress, assets, and supplies",
+    "loseInfrastructure": "Infrastructure upgrades",
+    "loseGameplay": "Training, scouting, transfer, and race-preparation state",
+    "loseNotifications": "Notifications and visible history",
+    "loseLiquidation": "Liquidation/insolvency status",
+    "after": "After restart, your team receives a new starter squad based on its current competition tier, starter equipment, starter infrastructure, and zero season points.",
+    "typeConfirm": "Type RESTART to confirm",
+    "cancel": "Cancel",
+    "restarting": "Restarting...",
+    "restart": "Restart Team"
+  },
+  "inactivity": {
+    "title": "You will be logged out soon",
+    "body": "Your game has been inactive for almost 30 minutes. You will be logged out automatically in approximately one minute.",
+    "stay": "Stay logged in"
+  }
+}
