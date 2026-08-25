@@ -1,0 +1,78 @@
+{
+  "guards": {
+    "loading": "Učitavanje...",
+    "somethingWentWrong": "Došlo je do greške",
+    "checkingSession": "Provera vaše sesije...",
+    "clubLoadFailed": "Trenutno nije moguće učitati vaš klub. Pokušajte ponovo uskoro.",
+    "loadingClub": "Učitavanje vašeg kluba...",
+    "redirectingSignup": "Preusmeravanje na registraciju..."
+  },
+  "access": {
+    "checkingClub": "Provera statusa kluba...",
+    "noActiveClub": "Za ovaj nalog nije pronađen aktivan klub.",
+    "checkFailed": "Status pristupa klubu nije mogao da se proveri.",
+    "cannotPlay": "Ovim klubom trenutno nije moguće igrati.",
+    "couldNotCheck": "Pristup klubu nije mogao da se proveri"
+  },
+  "restartWelcome": {
+    "close": "Zatvori poruku nakon ponovnog pokretanja",
+    "title": "Dobro došli nazad u ponovo pokrenuti tim",
+    "subtitle": "Vaš klub je dobio novi početak.",
+    "body1": "Vaš tim je ponovo aktivan sa novim početnim sastavom, početnom opremom, početnim finansijama i 0 bodova u sezoni.",
+    "body2": "Ime kluba, logo, dres, zemlja i mesto u takmičenju su sačuvani. Stari vozači su postali slobodni igrači, a klub je spreman za novi početak.",
+    "goodLuck": "Srećno ovog puta. Gradite pažljivo, upravljajte budžetom i vratite svoj klub još jači.",
+    "continue": "Nastavi na kontrolnu tablu"
+  },
+  "liquidation": {
+    "label": "Klub je likvidiran",
+    "title": "{{club}} je likvidiran",
+    "yourClub": "Vaš klub",
+    "description": "Ovaj klub je iskoristio sva 3 doživotna hitna spasavanja, a zatim nije mogao da pokrije novu obaveznu obavezu. Dodatni hitni krediti više nisu dostupni i ovaj tim više ne može da izvršava akcije u igri.",
+    "rescuesUsed": "Iskorišćena spasavanja:",
+    "reason": "Razlog:",
+    "closedAt": "Zatvoreno:",
+    "accountNotice": "Vaš korisnički nalog i novčići su i dalje aktivni. Zatvoren je samo ovaj klub. Možete kreirati potpuno novi klub na sledećem dostupnom slobodnom mestu ili ponovo pokrenuti ovaj tim u istom takmičenju sa novim sastavom, bez osoblja i sa 0 bodova.",
+    "identityTitle": "Ponovno pokretanje tima čuva identitet vašeg kluba.",
+    "identityBody": "ID kluba, vlasnički nalog, ime tima, logo, dres, zemlja i mesto u nivou/diviziji ostaju isti. Trenutni vozači postaju slobodni igrači, svi bodovi u sezoni se resetuju na 0, a klub dobija novi početni sastav prema svom trenutnom nivou takmičenja.",
+    "createNew": "Kreiraj novi klub",
+    "restart": "Ponovo pokreni tim"
+  },
+  "restartModal": {
+    "confirmExact": "Morate tačno uneti RESTART da biste potvrdili ovu akciju.",
+    "failed": "Ponovno pokretanje tima nije uspelo.",
+    "unexpected": "Ponovno pokretanje tima nije uspelo zbog neočekivane greške.",
+    "close": "Zatvori potvrdu ponovnog pokretanja tima",
+    "title": "Potvrda ponovnog pokretanja tima",
+    "subtitle": "Ovo će vratiti vaš klub u novo početno stanje.",
+    "intro": "Ponovno pokretanje tima čuva identitet kluba i mesto u takmičenju, ali resetuje sportsko i igračko stanje tima.",
+    "keep": "Zadržavate",
+    "keepAccount": "Korisnički nalog i novčiće",
+    "keepClubId": "ID kluba",
+    "keepName": "Ime kluba",
+    "keepLogo": "Logo i grb",
+    "keepJersey": "Dres",
+    "keepCountry": "Zemlju",
+    "keepCompetition": "Trenutni nivo/diviziju/mesto u takmičenju",
+    "lose": "Gubite / resetujete",
+    "losePoints": "Sve bodove iz trenutne sezone",
+    "loseRanking": "Trenutnu poziciju na rang-listi/tabeli",
+    "loseRiders": "Trenutne vozače, koji postaju slobodni igrači",
+    "loseStaff": "Osoblje",
+    "loseSponsors": "Sponzore i sponzora sa naming rights ugovorom",
+    "loseEquipment": "Napredak opreme, vozila i zalihe",
+    "loseInfrastructure": "Nadogradnje infrastrukture",
+    "loseGameplay": "Stanje treninga, skautinga, transfera i pripreme trke",
+    "loseNotifications": "Obaveštenja i vidljivu istoriju",
+    "loseLiquidation": "Status likvidacije/nesolventnosti",
+    "after": "Nakon ponovnog pokretanja, vaš tim dobija novi početni sastav prema trenutnom nivou takmičenja, početnu opremu, početnu infrastrukturu i nula bodova u sezoni.",
+    "typeConfirm": "Unesite RESTART za potvrdu",
+    "cancel": "Otkaži",
+    "restarting": "Ponovno pokretanje...",
+    "restart": "Ponovo pokreni tim"
+  },
+  "inactivity": {
+    "title": "Uskoro ćete biti odjavljeni",
+    "body": "Igra je neaktivna skoro 30 minuta. Bićete automatski odjavljeni za približno jedan minut.",
+    "stay": "Ostani prijavljen"
+  }
+}
