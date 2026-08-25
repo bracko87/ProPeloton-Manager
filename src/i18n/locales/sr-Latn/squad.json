@@ -133,5 +133,19 @@
   },
   "transfer": {
     "listed": "Vozač je na transfer listi"
+  },
+  "months": {
+    "Jan": "Jan",
+    "Feb": "Feb",
+    "Mar": "Mar",
+    "Apr": "Apr",
+    "May": "Maj",
+    "Jun": "Jun",
+    "Jul": "Jul",
+    "Aug": "Avg",
+    "Sep": "Sep",
+    "Oct": "Okt",
+    "Nov": "Nov",
+    "Dec": "Dec"
   }
 }
