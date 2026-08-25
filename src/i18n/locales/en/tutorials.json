@@ -1,0 +1,111 @@
+{
+  "common": {
+    "startTutorial": "Start tutorial",
+    "noThanks": "No thanks",
+    "next": "Next",
+    "finishForNow": "Finish for now",
+    "closeTutorial": "Close tutorial"
+  },
+  "overview": {
+    "welcome": {
+      "title": "Welcome to ProPeloton Manager",
+      "body": "Welcome to the game. This tutorial can help you understand the main pages and the most important systems step by step.\n\nYou can start the tutorial now, or skip it and use the game manual later.",
+      "primary": "Start tutorial",
+      "secondary": "No thanks"
+    },
+    "welcomeGame": {
+      "title": "Welcome to ProPeloton Manager",
+      "body": "Welcome to ProPeloton Manager.\n\nYou are now the manager of your own cycling team. Your job is to build the club, take care of your riders, prepare races, manage money, improve the team, and guide your club through the season.",
+      "primary": "Next"
+    },
+    "gameType": {
+      "title": "What Kind of Game Is This?",
+      "body": "This is a cycling management game.\n\nYou are not controlling the bike directly during the race. Instead, you make the important manager decisions before and during the season: which riders to keep, how to train them, which races to enter, what equipment to use, which staff to hire, and how to spend your money.",
+      "primary": "Next"
+    },
+    "simpleOrDeep": {
+      "title": "Play Simple or Go Deep",
+      "body": "You do not need to understand everything immediately.\n\nAt the beginning, you can play in a simple way: follow alerts, check your squad, enter races, prepare your team, and watch results.\n\nLater, if you want more depth, you can use advanced systems like rider fatigue, morale, race sharpness, sponsor objectives, equipment bonuses, training camps, scouting, transfer negotiations, taxes, infrastructure, and promotion or relegation.",
+      "primary": "Next"
+    },
+    "purpose": {
+      "title": "What This Tutorial Will Do",
+      "body": "This tutorial will guide you through the main pages of the game one by one.\n\nYou will learn what each page is for, which buttons are important, and what you should check as a new manager.\n\nThe tutorial will not explain every small detail at once. For deeper explanations, you can always use the full game manual later.",
+      "primary": "Next"
+    },
+    "startOverview": {
+      "title": "Let’s Start With the Overview Page",
+      "body": "We will start with the Overview page.\n\nThis is your main manager dashboard. It gives you the fastest picture of your team: current alerts, news, finances, races, sponsor messages, rider condition, and season progress.\n\nAfter this introduction, I will explain the Overview page step by step.",
+      "primary": "Start Overview tutorial"
+    },
+    "dashboard": {
+      "title": "Your Manager Dashboard",
+      "body": "This is your Overview page — the main dashboard for your team.\n\nThink of this page as your daily control room. When you log in, this is usually the first place you should check.\n\nHere you can quickly see the most important information about your club, including team status, current alerts, finances, races, rider condition, and season progress.",
+      "primary": "Next"
+    },
+    "staffBriefing": {
+      "title": "Staff Briefing Centre",
+      "body": "This panel shows your support staff and assistant roles.\n\nHere you can see important team helpers such as the Head Coach, Sports Director, Team Doctor, Chief Mechanic, and other assistant roles when available.\n\nThese assistants help you manage important parts of your club more efficiently, such as race planning, rider health, preparation, and equipment support.\n\nSome assistant functions, staff tools, or automation-related features may require a Premium account or coin purchase to use fully.",
+      "primary": "Next"
+    },
+    "newsBoard": {
+      "title": "News Board",
+      "body": "The News Board shows important team and world news.\n\nSome news is about your own team, such as sponsor offers, birthdays, or team updates. Other news can be about the wider race world, such as race results or important cycling events.\n\nClicking a news row can reveal more information when extra details are available.",
+      "primary": "Next"
+    },
+    "nextRace": {
+      "title": "Next Team Race",
+      "body": "The Next Team Race panel helps you see what is coming soon for your team.\n\nThis is important because accepted races often still need preparation. You may need to select riders, staff, assets, equipment, supplies, and stage tactics before the deadlines.\n\nIf this panel shows an upcoming race, you should check Race Preparation early.",
+      "primary": "Next"
+    },
+    "lastRace": {
+      "title": "Last Team Race",
+      "body": "The Last Team Race panel shows your most recent finished race when available.\n\nUse this to quickly review how your team performed. Results can help you decide if riders need rest, if tactics worked well, or if your squad needs changes before the next event.",
+      "primary": "Next"
+    },
+    "sponsor": {
+      "title": "Main Sponsor",
+      "body": "The Main Sponsor panel shows your primary sponsor information when you have an active main sponsor.\n\nSponsors are important because they can provide money, bonuses, objectives, and sometimes branding effects. Some sponsor contracts are simple, while naming-rights sponsors can temporarily change your team name during the season.",
+      "primary": "Next"
+    },
+    "progress": {
+      "title": "Team Health and Season Progress",
+      "body": "The rest of the Overview page helps you follow your team’s condition and progress.\n\nHere you can monitor rider condition, finance health, sponsor activity, race activity, active operations, season snapshot data, and general season progress.\n\nSome advanced dashboard sections, summaries, or additional data views may require a Premium account or coin purchase to unlock. If a panel is locked, you can still play normally, but Premium or coins can make the game easier and give you a deeper view of your club.\n\nAs your club grows, this page becomes more useful because it helps you connect short-term actions, like preparing the next race, with long-term goals such as building a stronger squad and improving your ranking.",
+      "primary": "Continue to Squad",
+      "secondary": "Finish for now"
+    }
+  },
+  "menu": {
+    "welcome": {
+      "title": "Need help with the Menu?",
+      "body": "We can show you where to find the main menu, notifications, and coins in the top-right corner.",
+      "primary": "Start tutorial",
+      "secondary": "No thanks"
+    },
+    "main": {
+      "title": "Main Menu",
+      "body": "This is the main Menu button in the top-right corner.\n\nInside the menu, you can find Inbox for internal messages, profile settings, themes and customization settings, forum or Discord links, game preferences, help with the in-game manual and frequently asked questions, Contact Us, Pro Packages, and Invite Friends referral progress.\n\nUse this menu whenever you need account settings, help, support, preferences, or extra game options.",
+      "primary": "Next"
+    },
+    "notifications": {
+      "title": "Notifications",
+      "body": "This bell icon opens your in-game notifications.\n\nNotifications tell you about important events such as race deadlines, preparation reminders, sponsor updates, finances, transfers, and other game actions that need your attention.\n\nYou can manage which notifications you want to receive from the Preferences option inside the Menu.",
+      "primary": "Next"
+    },
+    "coins": {
+      "title": "Coins",
+      "body": "This shows your current coin balance.\n\nCoins are used for selected game features, unlocks, and convenience options inside ProPeloton Manager.\n\nYou can check your balance here at any time and purchase more through Menu → Pro Packages.\n\nRunning low on coins does not suspend your account. You can continue playing, but some optional features or premium-style actions may not be available until you add more coins.",
+      "primary": "Next"
+    },
+    "premium": {
+      "title": "Premium Account",
+      "body": "This is your Premium access area.\n\nA Premium account can make the game easier and more comfortable by giving access to extra features, more advanced views, and useful convenience tools.\n\nPremium can also help you unlock more of the game’s full management experience.\n\nBy purchasing Premium or Pro Packages, you also directly support our team and help us continue developing ProPeloton Manager faster and better.",
+      "primary": "Next"
+    },
+    "finished": {
+      "title": "Tutorial Completed",
+      "body": "You have successfully finished the basic ProPeloton Manager tutorial.\n\nIf you have questions later, you can always check the in-game manual, read the frequently asked questions, contact us, or join our Discord community.\n\nGood luck with your team!",
+      "primary": "Finish tutorial"
+    }
+  }
+}
