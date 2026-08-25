@@ -39,6 +39,7 @@ import HelpLegacyLocalizationBridge from './components/i18n/HelpLegacyLocalizati
 import SeasonResetLegacyLocalizationBridge from './components/i18n/SeasonResetLegacyLocalizationBridge'
 import CustomizeTeamLegacyLocalizationBridge from './components/i18n/CustomizeTeamLegacyLocalizationBridge'
 import ProPackagesLegacyLocalizationBridge from './components/i18n/ProPackagesLegacyLocalizationBridge'
+import ManualLegacyLocalizationBridge from './components/i18n/ManualLegacyLocalizationBridge'
 
 const root = createRoot(document.getElementById('app')!)
 
@@ -81,6 +82,7 @@ root.render(
     <SeasonResetLegacyLocalizationBridge />
     <CustomizeTeamLegacyLocalizationBridge />
     <ProPackagesLegacyLocalizationBridge />
+    <ManualLegacyLocalizationBridge />
     <App />
   </>,
 )
