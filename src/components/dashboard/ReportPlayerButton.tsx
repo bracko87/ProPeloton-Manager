@@ -7,6 +7,7 @@
  */
 
 import React, { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { AlertTriangle, X } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 
@@ -28,10 +29,7 @@ export type ReportPlayerButtonProps = {
  * ReportPlayerButton
  *
  * Button that opens a modal to report a player or team. Submits the report to
- * the `player_reports` table (create this table in your DB with appropriate
- * columns) and provides small inline success/error states.
- *
- * @param props - Component props described by ReportPlayerButtonProps
+ * the `player_reports` table and provides inline success/error states.
  */
 export default function ReportPlayerButton({
   reportedUserId,
@@ -42,6 +40,7 @@ export default function ReportPlayerButton({
   currentPath,
   reporterClubId = null,
 }: ReportPlayerButtonProps): JSX.Element {
+  const { t } = useTranslation('navigation')
   const [open, setOpen] = useState(false)
   const [reason, setReason] = useState<'abuse' | 'cheating' | 'spam' | 'other'>('abuse')
   const [severity, setSeverity] = useState<'low' | 'medium' | 'high'>('medium')
@@ -92,9 +91,10 @@ export default function ReportPlayerButton({
           setAlreadyReported((data ?? []).length > 0)
         }
       } catch (err) {
+        console.error('Failed to check existing player report:', err)
         if (!cancelled) {
           setAlreadyReported(false)
-          setError(err instanceof Error ? err.message : 'Failed to check existing report.')
+          setError(t('playerReport.checkFailed'))
         }
       } finally {
         if (!cancelled) {
@@ -108,7 +108,7 @@ export default function ReportPlayerButton({
     return () => {
       cancelled = true
     }
-  }, [reportedUserId])
+  }, [reportedUserId, t])
 
   function createReportId(): string {
     if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
@@ -128,12 +128,12 @@ export default function ReportPlayerButton({
     }
 
     if (!evidenceFile.type.startsWith('image/')) {
-      throw new Error('Please upload an image file.')
+      throw new Error(t('playerReport.imageRequired'))
     }
 
     const maxFileSize = 5 * 1024 * 1024
     if (evidenceFile.size > maxFileSize) {
-      throw new Error('Screenshot must be 5 MB or smaller.')
+      throw new Error(t('playerReport.imageTooLarge', { size: 5 }))
     }
 
     const fileName = `${Date.now()}-${sanitizeFileName(evidenceFile.name)}`
@@ -155,12 +155,12 @@ export default function ReportPlayerButton({
 
   async function submitReport(): Promise<void> {
     if (alreadyReported) {
-      setError('This user is already reported and pending review.')
+      setError(t('playerReport.alreadyPending'))
       return
     }
 
     if (!description.trim()) {
-      setError('Please describe the issue.')
+      setError(t('playerReport.describeRequired'))
       return
     }
 
@@ -174,7 +174,7 @@ export default function ReportPlayerButton({
       } = await supabase.auth.getUser()
 
       if (userError || !user?.id) {
-        setError('You must be logged in to send a report.')
+        setError(t('playerReport.loginRequired'))
         return
       }
 
@@ -228,7 +228,11 @@ export default function ReportPlayerButton({
       window.setTimeout(() => setSuccess(false), 2500)
     } catch (err) {
       console.error('Failed to send player report:', err)
-      setError(err instanceof Error ? err.message : 'Failed to send report.')
+      setError(
+        err instanceof Error && err.message
+          ? err.message
+          : t('playerReport.sendFailed'),
+      )
     } finally {
       setSubmitting(false)
     }
@@ -243,8 +247,8 @@ export default function ReportPlayerButton({
           onClick={() => setOpen(true)}
           title={
             alreadyReported
-              ? 'This user is already reported and pending review.'
-              : 'Report player'
+              ? t('playerReport.alreadyPending')
+              : t('playerReport.reportPlayer')
           }
           className={`inline-flex items-center gap-2 rounded-md border px-4 py-2 text-sm font-medium transition ${
             alreadyReported || checkingExisting
@@ -255,21 +259,25 @@ export default function ReportPlayerButton({
           <AlertTriangle className="h-4 w-4" />
           <span>
             {checkingExisting
-              ? 'Checking...'
+              ? t('playerReport.checking')
               : alreadyReported
-                ? 'Already Reported'
-                : 'Report Player'}
+                ? t('playerReport.alreadyReported')
+                : t('playerReport.reportPlayer')}
           </span>
         </button>
 
         {alreadyReported ? (
           <span className="mt-1 text-xs text-slate-500">
-            This user is already reported and pending review.
+            {t('playerReport.alreadyPending')}
           </span>
         ) : null}
       </div>
 
-      {success && <div className="text-xs text-green-400">Report sent. Thank you.</div>}
+      {success && (
+        <div className="text-xs text-green-400">
+          {t('playerReport.sent')}
+        </div>
+      )}
 
       {error && !open && <div className="text-xs text-red-400">{error}</div>}
 
@@ -278,9 +286,11 @@ export default function ReportPlayerButton({
           <div className="max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-xl border border-white/10 bg-[#11161d] text-white shadow-2xl">
             <div className="flex items-center justify-between border-b border-white/10 px-5 py-4">
               <div>
-                <div className="text-lg font-semibold">Report player or team</div>
+                <div className="text-lg font-semibold">
+                  {t('playerReport.title')}
+                </div>
                 <div className="text-sm text-white/60">
-                  Provide details to help our moderation team.
+                  {t('playerReport.subtitle')}
                 </div>
               </div>
 
@@ -288,7 +298,7 @@ export default function ReportPlayerButton({
                 type="button"
                 onClick={() => setOpen(false)}
                 className="rounded-md p-2 text-white/70 hover:bg-white/10 hover:text-white"
-                aria-label="Close"
+                aria-label={t('playerReport.close')}
               >
                 <X size={18} />
               </button>
@@ -297,21 +307,24 @@ export default function ReportPlayerButton({
             <div className="space-y-4 px-5 py-4">
               <div className="rounded-lg border border-white/10 bg-black/20 p-3 text-sm">
                 <div>
-                  <span className="text-white/50">Reported:</span>{' '}
+                  <span className="text-white/50">{t('playerReport.reported')}</span>{' '}
                   <span className="font-medium">{reportedDisplayName}</span>
                 </div>
                 <div className="mt-1 break-all text-white/70">
-                  {reportedClubName} — {reportedClubId ?? 'No club'}
+                  {reportedClubName} — {reportedClubId ?? t('playerReport.noClub')}
                 </div>
                 <div className="mt-2 text-xs text-white/50">
-                  Page: <span className="font-medium">{currentPageLabel}</span>
+                  {t('playerReport.page')}{' '}
+                  <span className="font-medium">{currentPageLabel}</span>
                 </div>
                 <div className="mt-1 break-all text-xs text-white/70">{currentPath}</div>
               </div>
 
               <div className="grid gap-4 md:grid-cols-2">
                 <div>
-                  <label className="mb-2 block text-sm font-medium">Reason</label>
+                  <label className="mb-2 block text-sm font-medium">
+                    {t('playerReport.reason')}
+                  </label>
                   <select
                     value={reason}
                     onChange={(e) =>
@@ -319,40 +332,46 @@ export default function ReportPlayerButton({
                     }
                     className="w-full rounded-md border border-white/10 bg-[#0b0f14] px-3 py-2 text-sm outline-none focus:border-red-400"
                   >
-                    <option value="abuse">Abuse / Harassment</option>
-                    <option value="cheating">Cheating / Exploits</option>
-                    <option value="spam">Spam / Advertising</option>
-                    <option value="other">Other</option>
+                    <option value="abuse">{t('playerReport.abuse')}</option>
+                    <option value="cheating">{t('playerReport.cheating')}</option>
+                    <option value="spam">{t('playerReport.spam')}</option>
+                    <option value="other">{t('playerReport.other')}</option>
                   </select>
                 </div>
 
                 <div>
-                  <label className="mb-2 block text-sm font-medium">Severity</label>
+                  <label className="mb-2 block text-sm font-medium">
+                    {t('playerReport.severity')}
+                  </label>
                   <select
                     value={severity}
                     onChange={(e) => setSeverity(e.target.value as 'low' | 'medium' | 'high')}
                     className="w-full rounded-md border border-white/10 bg-[#0b0f14] px-3 py-2 text-sm outline-none focus:border-red-400"
                   >
-                    <option value="low">Low</option>
-                    <option value="medium">Medium</option>
-                    <option value="high">High</option>
+                    <option value="low">{t('playerReport.low')}</option>
+                    <option value="medium">{t('playerReport.medium')}</option>
+                    <option value="high">{t('playerReport.high')}</option>
                   </select>
                 </div>
               </div>
 
               <div>
-                <label className="mb-2 block text-sm font-medium">Details</label>
+                <label className="mb-2 block text-sm font-medium">
+                  {t('playerReport.details')}
+                </label>
                 <textarea
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   rows={6}
-                  placeholder="Describe the incident, when it happened and any relevant context..."
+                  placeholder={t('playerReport.detailsPlaceholder')}
                   className="w-full rounded-md border border-white/10 bg-[#0b0f14] px-3 py-2 text-sm outline-none focus:border-red-400"
                 />
               </div>
 
               <div>
-                <label className="mb-2 block text-sm font-medium">Proof screenshot</label>
+                <label className="mb-2 block text-sm font-medium">
+                  {t('playerReport.proofScreenshot')}
+                </label>
 
                 <div className="rounded-md border border-white/10 bg-[#0b0f14] p-3">
                   <input
@@ -366,7 +385,7 @@ export default function ReportPlayerButton({
                   />
 
                   <div className="mt-2 text-xs text-white/50">
-                    Upload one image as proof. Max 5 MB.
+                    {t('playerReport.proofHelp', { size: 5 })}
                   </div>
 
                   {evidenceFile ? (
@@ -381,7 +400,7 @@ export default function ReportPlayerButton({
                         onClick={() => setEvidenceFile(null)}
                         className="mt-3 rounded-md border border-white/10 px-3 py-1.5 text-sm text-white/80 transition-colors hover:bg-white/5"
                       >
-                        Remove image
+                        {t('playerReport.removeImage')}
                       </button>
                     </div>
                   ) : null}
@@ -397,7 +416,7 @@ export default function ReportPlayerButton({
                 onClick={() => setOpen(false)}
                 className="rounded-md border border-white/10 px-4 py-2 text-sm text-white/80 transition-colors hover:bg-white/5"
               >
-                Cancel
+                {t('playerReport.cancel')}
               </button>
 
               <button
@@ -406,7 +425,7 @@ export default function ReportPlayerButton({
                 disabled={submitting || alreadyReported}
                 className="rounded-md bg-red-500 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-red-400 disabled:cursor-not-allowed disabled:opacity-70"
               >
-                {submitting ? 'Sending...' : 'Send report'}
+                {submitting ? t('playerReport.sending') : t('playerReport.send')}
               </button>
             </div>
           </div>
