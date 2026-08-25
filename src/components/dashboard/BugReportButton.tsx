@@ -8,6 +8,7 @@
 
 import React, { useState } from 'react'
 import { Bug, X, ImagePlus } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { supabase } from '../../lib/supabase'
 
 interface BugReportButtonProps {
@@ -38,7 +39,8 @@ export default function BugReportButton({
   collapsed = false,
   currentPageLabel,
   currentPath,
-}: BugReportButtonProps) {
+}: BugReportButtonProps): JSX.Element {
+  const { t } = useTranslation('navigation')
   const [open, setOpen] = useState(false)
   const [bugType, setBugType] = useState<BugType>('ui')
   const [severity, setSeverity] = useState<Severity>('medium')
@@ -71,11 +73,13 @@ export default function BugReportButton({
     const maxBytes = MAX_SCREENSHOT_SIZE_MB * 1024 * 1024
 
     if (!isImage) {
-      throw new Error('Screenshot must be an image file.')
+      throw new Error(t('bugReport.imageRequired'))
     }
 
     if (screenshotFile.size > maxBytes) {
-      throw new Error(`Screenshot must be smaller than ${MAX_SCREENSHOT_SIZE_MB} MB.`)
+      throw new Error(
+        t('bugReport.imageTooLarge', { size: MAX_SCREENSHOT_SIZE_MB }),
+      )
     }
 
     const safeName = sanitizeFileName(screenshotFile.name)
@@ -105,7 +109,7 @@ export default function BugReportButton({
 
   async function submitReport(): Promise<void> {
     if (!description.trim()) {
-      setError('Please describe the issue.')
+      setError(t('bugReport.describeRequired'))
       return
     }
 
@@ -120,7 +124,7 @@ export default function BugReportButton({
       const reportId = createReportId()
       const { screenshotPath, screenshotUrl } = await uploadScreenshot(
         user?.id ?? null,
-        reportId
+        reportId,
       )
 
       const payload = {
@@ -160,7 +164,7 @@ export default function BugReportButton({
 
       window.setTimeout(() => setSuccess(false), 2500)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to send bug report.')
+      setError(err instanceof Error ? err.message : t('bugReport.sendFailed'))
     } finally {
       setSubmitting(false)
     }
@@ -174,6 +178,7 @@ export default function BugReportButton({
           setError(null)
           setOpen(true)
         }}
+        aria-label={t('bugReport.button')}
         className={`w-full rounded-md border border-white/10 bg-white/5 text-white transition-colors hover:bg-white/10 ${
           collapsed
             ? 'flex items-center justify-center px-3 py-3'
@@ -184,16 +189,18 @@ export default function BugReportButton({
 
         {!collapsed && (
           <div className="min-w-0 text-left">
-            <div className="text-sm font-semibold leading-tight">Report bug</div>
+            <div className="text-sm font-semibold leading-tight">
+              {t('bugReport.button')}
+            </div>
             <div className="mt-1 text-xs text-white/60 leading-tight">
-              Current page: {currentPageLabel}
+              {t('bugReport.currentPage', { page: currentPageLabel })}
             </div>
           </div>
         )}
       </button>
 
       {!collapsed && success && (
-        <div className="text-xs text-green-400">Bug report sent. Thank you.</div>
+        <div className="text-xs text-green-400">{t('bugReport.sent')}</div>
       )}
 
       {!collapsed && error && !open && (
@@ -205,17 +212,15 @@ export default function BugReportButton({
           <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-xl border border-white/10 bg-[#11161d] text-white shadow-2xl">
             <div className="flex items-center justify-between border-b border-white/10 px-5 py-4">
               <div>
-                <div className="text-lg font-semibold">Report a bug</div>
-                <div className="text-sm text-white/60">
-                  Help us fix issues faster.
-                </div>
+                <div className="text-lg font-semibold">{t('bugReport.title')}</div>
+                <div className="text-sm text-white/60">{t('bugReport.subtitle')}</div>
               </div>
 
               <button
                 type="button"
                 onClick={() => setOpen(false)}
                 className="rounded-md p-2 text-white/70 hover:bg-white/10 hover:text-white"
-                aria-label="Close"
+                aria-label={t('bugReport.close')}
               >
                 <X size={18} />
               </button>
@@ -224,7 +229,7 @@ export default function BugReportButton({
             <div className="space-y-4 px-5 py-4">
               <div className="rounded-lg border border-white/10 bg-black/20 p-3 text-sm">
                 <div>
-                  <span className="text-white/50">Page:</span>{' '}
+                  <span className="text-white/50">{t('bugReport.page')}</span>{' '}
                   <span className="font-medium">{currentPageLabel}</span>
                 </div>
                 <div className="mt-1 break-all text-white/70">{currentPath}</div>
@@ -232,95 +237,87 @@ export default function BugReportButton({
 
               <div className="grid gap-4 md:grid-cols-2">
                 <div>
-                  <label className="mb-2 block text-sm font-medium">Bug type</label>
+                  <label className="mb-2 block text-sm font-medium">{t('bugReport.bugType')}</label>
                   <select
                     value={bugType}
                     onChange={e => setBugType(e.target.value as BugType)}
                     className="w-full rounded-md border border-white/10 bg-[#0b0f14] px-3 py-2 text-sm outline-none focus:border-yellow-400"
                   >
-                    <option value="ui">UI / Layout</option>
-                    <option value="gameplay">Gameplay / Logic</option>
-                    <option value="performance">Performance</option>
-                    <option value="data">Data / Numbers</option>
-                    <option value="other">Other</option>
+                    <option value="ui">{t('bugReport.uiLayout')}</option>
+                    <option value="gameplay">{t('bugReport.gameplayLogic')}</option>
+                    <option value="performance">{t('bugReport.performance')}</option>
+                    <option value="data">{t('bugReport.dataNumbers')}</option>
+                    <option value="other">{t('bugReport.other')}</option>
                   </select>
                 </div>
 
                 <div>
-                  <label className="mb-2 block text-sm font-medium">Severity</label>
+                  <label className="mb-2 block text-sm font-medium">{t('bugReport.severity')}</label>
                   <select
                     value={severity}
                     onChange={e => setSeverity(e.target.value as Severity)}
                     className="w-full rounded-md border border-white/10 bg-[#0b0f14] px-3 py-2 text-sm outline-none focus:border-yellow-400"
                   >
-                    <option value="low">Low</option>
-                    <option value="medium">Medium</option>
-                    <option value="high">High</option>
+                    <option value="low">{t('bugReport.low')}</option>
+                    <option value="medium">{t('bugReport.medium')}</option>
+                    <option value="high">{t('bugReport.high')}</option>
                   </select>
                 </div>
               </div>
 
               <div>
-                <label className="mb-2 block text-sm font-medium">What happened?</label>
+                <label className="mb-2 block text-sm font-medium">{t('bugReport.whatHappened')}</label>
                 <textarea
                   value={description}
                   onChange={e => setDescription(e.target.value)}
                   rows={5}
-                  placeholder="Describe the issue clearly..."
+                  placeholder={t('bugReport.descriptionPlaceholder')}
                   className="w-full rounded-md border border-white/10 bg-[#0b0f14] px-3 py-2 text-sm outline-none focus:border-yellow-400"
                 />
               </div>
 
               <div>
-                <label className="mb-2 block text-sm font-medium">
-                  Expected result
-                </label>
+                <label className="mb-2 block text-sm font-medium">{t('bugReport.expectedResult')}</label>
                 <textarea
                   value={expectedResult}
                   onChange={e => setExpectedResult(e.target.value)}
                   rows={3}
-                  placeholder="What should have happened?"
+                  placeholder={t('bugReport.expectedPlaceholder')}
                   className="w-full rounded-md border border-white/10 bg-[#0b0f14] px-3 py-2 text-sm outline-none focus:border-yellow-400"
                 />
               </div>
 
               <div>
-                <label className="mb-2 block text-sm font-medium">Actual result</label>
+                <label className="mb-2 block text-sm font-medium">{t('bugReport.actualResult')}</label>
                 <textarea
                   value={actualResult}
                   onChange={e => setActualResult(e.target.value)}
                   rows={3}
-                  placeholder="What happened instead?"
+                  placeholder={t('bugReport.actualPlaceholder')}
                   className="w-full rounded-md border border-white/10 bg-[#0b0f14] px-3 py-2 text-sm outline-none focus:border-yellow-400"
                 />
               </div>
 
               <div>
-                <label className="mb-2 block text-sm font-medium">
-                  Steps to reproduce
-                </label>
+                <label className="mb-2 block text-sm font-medium">{t('bugReport.steps')}</label>
                 <textarea
                   value={stepsToReproduce}
                   onChange={e => setStepsToReproduce(e.target.value)}
                   rows={4}
-                  placeholder="1. Go to...
-2. Click...
-3. See problem..."
+                  placeholder={t('bugReport.stepsPlaceholder')}
                   className="w-full rounded-md border border-white/10 bg-[#0b0f14] px-3 py-2 text-sm outline-none focus:border-yellow-400"
                 />
               </div>
 
               <div>
-                <label className="mb-2 block text-sm font-medium">
-                  Screenshot (optional)
-                </label>
+                <label className="mb-2 block text-sm font-medium">{t('bugReport.screenshot')}</label>
 
                 <label className="flex cursor-pointer items-center gap-3 rounded-md border border-dashed border-white/15 bg-[#0b0f14] px-3 py-3 text-sm text-white/80 hover:border-yellow-400/60">
                   <ImagePlus size={16} className="text-yellow-400" />
                   <span className="truncate">
                     {screenshotFile
                       ? screenshotFile.name
-                      : `Choose image file (max ${MAX_SCREENSHOT_SIZE_MB} MB)`}
+                      : t('bugReport.chooseImage', { size: MAX_SCREENSHOT_SIZE_MB })}
                   </span>
                   <input
                     type="file"
@@ -339,7 +336,7 @@ export default function BugReportButton({
                     onClick={() => setScreenshotFile(null)}
                     className="mt-2 text-xs text-white/60 hover:text-white"
                   >
-                    Remove screenshot
+                    {t('bugReport.removeScreenshot')}
                   </button>
                 )}
               </div>
@@ -353,16 +350,18 @@ export default function BugReportButton({
                 onClick={() => setOpen(false)}
                 className="rounded-md border border-white/10 px-4 py-2 text-sm text-white/80 transition-colors hover:bg-white/5"
               >
-                Cancel
+                {t('bugReport.cancel')}
               </button>
 
               <button
                 type="button"
-                onClick={submitReport}
+                onClick={() => {
+                  void submitReport()
+                }}
                 disabled={submitting}
                 className="rounded-md bg-yellow-400 px-4 py-2 text-sm font-semibold text-black transition-colors hover:bg-yellow-300 disabled:cursor-not-allowed disabled:opacity-70"
               >
-                {submitting ? 'Sending...' : 'Send report'}
+                {submitting ? t('bugReport.sending') : t('bugReport.send')}
               </button>
             </div>
           </div>
