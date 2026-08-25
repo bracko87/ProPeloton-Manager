@@ -1,0 +1,148 @@
+{
+  "sections": {
+    "equipmentCategoryDeep": {
+      "title": "Equipment Categories and Bonuses",
+      "subtitle": "The six durable equipment categories.",
+      "overview": "Durable equipment includes frames, wheelsets, tires, groupsets, helmets and shoes.",
+      "facts": ["Categories", "Frame, wheelset, tires, groupset, helmet, shoes", "Bonuses", "Flat, hilly, mountain, cobble, time trial, sprint, fatigue reduction"],
+      "details": ["Frames often define the broad setup identity.", "Wheelsets and tires are very route-sensitive.", "Groupsets, helmets and shoes can add important support bonuses.", "Specialist items can include negative trade-offs.", "Quality labels include Basic, Good and Super."],
+      "tips": ["Match equipment to stage type."]
+    },
+    "equipmentCapsDeep": {
+      "title": "Equipment Weights and Caps",
+      "subtitle": "Why equipment bonuses are controlled.",
+      "overview": "Equipment helps, but capped bonuses protect rider ability and game balance.",
+      "facts": ["Known caps", "Equipment stage around 4%, team support around 5%, total support around 8%, fatigue reduction around 10%"],
+      "details": ["A full set of +4% items does not become +24%.", "Bonuses are weighted by equipment category.", "Support bonuses have caps.", "Fatigue reduction also has a cap.", "Specialist gear is still valuable in close races."],
+      "tips": ["Use gear to support strategy, not replace rider quality."]
+    },
+    "equipmentInventoryDeep": {
+      "title": "Inventory and Maintenance",
+      "subtitle": "Condition, statuses and repair decisions.",
+      "overview": "Inventory shows active owned equipment and maintenance focuses on items needing attention.",
+      "facts": ["Statuses", "Ready, assigned, in maintenance, worn", "Maintenance threshold", "Condition <= 90%"],
+      "details": ["Sold and discarded items are hidden from active inventory.", "Ready and worn items can usually run actions if rules allow.", "Assigned items are locked because they are in use.", "Repair quotes show cost and permission.", "Condition should be fixed before important races."],
+      "tips": ["Repair early; do not wait until all gear is worn."]
+    },
+    "raceSuppliesDeep": {
+      "title": "Race Supplies Details",
+      "subtitle": "Bidons, gels, nutrition, jerseys and rain jackets.",
+      "overview": "Race supplies are consumed or used during stage plans and can affect fatigue, stamina, readiness and weather support.",
+      "facts": ["Consumables", "Bidons, energy gels, nutrition packs", "Durables", "Race Jersey Complete, rain jackets"],
+      "details": ["Bidons: 1–4 per rider; hydration and fatigue control.", "Gels: 0–4 per rider; stamina and final effort support.", "Nutrition: 0–2 per rider; endurance and recovery support.", "Race jerseys: mandatory durable kit; 10 stage uses per unit.", "Rain jackets: optional durable weather item; 25 stage uses per unit."],
+      "tips": ["Stage races consume supplies quickly."]
+    },
+    "technicalSponsorDeep": {
+      "title": "Technical Sponsor Support in Equipment",
+      "subtitle": "Discounts and support budgets.",
+      "overview": "Technical sponsors can reduce equipment costs and provide equipment support budgets.",
+      "facts": ["Benefits", "Cash support, equipment support budget, used/remaining budget, category discounts"],
+      "details": ["Equipment Overview can show active technical sponsor support.", "Market purchases can quote category discounts.", "Remaining budget helps plan purchase timing.", "Discounts can differ by category.", "Technical sponsors are especially useful before major gear upgrades."],
+      "tips": ["Buy expensive gear while useful support is active."]
+    },
+    "facilitiesOverviewDeep": {
+      "title": "Facilities Overview",
+      "subtitle": "Buildings and staff capacity.",
+      "overview": "Facilities improve training, medical, scouting, mechanics, youth and club administration systems.",
+      "facts": ["Facilities", "Club House, Training Center, Medical Center, Youth Academy, Mechanics Workshop, Scouting Office"],
+      "details": ["Club House supports administration and future management.", "Training Center supports coaching and development.", "Medical Center supports doctors, physios, nutritionists and recovery.", "Youth Academy supports U23/youth development.", "Mechanics Workshop supports equipment/repairs.", "Scouting Office supports scouting reports and market intelligence."],
+      "tips": ["Choose upgrades based on your current bottleneck."]
+    },
+    "facilityJobsDeep": {
+      "title": "Infrastructure Jobs",
+      "subtitle": "Builds, deliveries, slots and refunds.",
+      "overview": "Infrastructure jobs are pending facility upgrades or asset deliveries with cash cost and game-day duration.",
+      "facts": ["Job types", "Facility upgrade, asset delivery", "Statuses", "Pending, completed, cancelled, failed"],
+      "details": ["Active jobs show paid cost, game duration and completion date.", "Facility construction slots limit how many builds can happen at once.", "Cancellation quotes show refund cash, refund percent, cancellation cost and reason.", "Immediate cancellation can refund more than late cancellation.", "Completed jobs update facilities or deliver assets."],
+      "tips": ["Do not start too many expensive jobs during cash pressure."]
+    },
+    "assetsDeep": {
+      "title": "Assets Overview",
+      "subtitle": "Team cars, buses and support vans.",
+      "overview": "Assets are vehicles/support resources with levels, condition, assignment status and support values.",
+      "facts": ["Assets", "Team Cars, Team Bus, Equipment Van, Mobile Workshop, Medical Van"],
+      "details": ["Team Cars support race convoy and can be selected as Team Car 1–3.", "Team Bus transports riders and staff.", "Equipment Van carries bikes and gear.", "Mobile Workshop supports repairs and technical operations.", "Medical Van supports medical/logistics needs.", "Assigned or locked assets cannot be repaired or sold."],
+      "tips": ["Keep important assets repaired before races."]
+    },
+    "seasonCalendarDeep": {
+      "title": "Season Calendar Details",
+      "subtitle": "Daily team activity planning.",
+      "overview": "Season Calendar shows the club’s daily activity and the wider season.",
+      "facts": ["Filters", "Races, Training Camps, Events, Holidays", "Game month length", "30 days in current UI grid"],
+      "details": ["Use it to see race days, camps and events.", "Filters reduce clutter.", "Calendar helps avoid overbooking riders and staff.", "Training camp dates should be checked here.", "Important race months can be planned in advance."],
+      "tips": ["Use Season Calendar before booking camps."]
+    },
+    "raceCalendarDeep": {
+      "title": "Race Calendar Details",
+      "subtitle": "Race cards and application statuses.",
+      "overview": "Race Calendar lists all races and their application state.",
+      "facts": ["Status values", "not_open, open, closed, race_active, race_finished, cancelled"],
+      "details": ["Race cards can show category, country, host city, type, start/end date and team limits.", "Applications are possible only while status is open.", "Accepted teams count shows how full the race is.", "Sponsor objectives can target specific races or categories.", "Open Race sends users to the Race Detail page."],
+      "tips": ["Apply only when the race suits your team."]
+    },
+    "raceDetailDeep": {
+      "title": "Race Detail Page",
+      "subtitle": "Race profile, stages, participants, results and replay.",
+      "overview": "Race Detail is the full race hub.",
+      "facts": ["Info tabs", "Participants, Results", "Classifications", "General, points, mountain, young, team"],
+      "details": ["Race overview includes dates, country, category, race type and status.", "Entry rules show deadlines, team limits, rider limits and prize fund.", "Stages show route, terrain, distance, weather, sprints and climbs.", "Participants show team and rider snapshots.", "Results and classifications become available according to race state.", "Replay can show live or historical frames if access allows."],
+      "tips": ["Review race detail before preparing a team."]
+    },
+    "stageTerrainPoints": {
+      "title": "Stage Terrain and Points",
+      "subtitle": "Flat, hilly, mountain, TT, cobbled, sprints and KOM.",
+      "overview": "Stage terrain and point definitions help users decide riders, tactics and equipment.",
+      "facts": ["Terrain", "Flat, hilly, mountain, individual time trial, team time trial, prologue, cobbled", "Point types", "START, INTERMEDIATE_SPRINT, KOM, BONUS_SPRINT, FINISH"],
+      "details": ["Flat stages often favor sprinters and lead-outs.", "Hilly stages favor versatile riders and attackers.", "Mountain stages favor climbers and GC leaders.", "TT/prologue stages favor time-trialists and TT equipment.", "Cobbled stages favor resistance and specialist equipment.", "KOM and sprint points matter for secondary classifications."],
+      "tips": ["Stage terrain should drive Stage Plan roles."]
+    },
+    "replayResultsDeep": {
+      "title": "Replay, Results and Commentary",
+      "subtitle": "How to understand what happened in a stage.",
+      "overview": "Replay and commentary explain race dynamics beyond the final result table.",
+      "facts": ["Replay speeds", "1x, 2x, 4x, 8x", "Frame limit", "Up to 50000 rows loaded in current code"],
+      "details": ["Replay frames show groups, gaps, riders, teams, speed and kilometer markers.", "Live state controls whether results are visible and whether replay speed is locked.", "Standing rows can show leader badges and group position.", "Commentary/report events describe attacks, sprints, climbs, incidents and decisive moments.", "Results show stage rank, time, gap, points, bonus/penalty seconds and status."],
+      "tips": ["Use replay to diagnose tactics and rider performance."]
+    },
+    "racePlanDeep": {
+      "title": "Race Plan Details",
+      "subtitle": "Riders, staff, assets, equipment and supplies.",
+      "overview": "Race Plan is the race-level plan submitted before Stage Plans.",
+      "facts": ["Main pieces", "Riders, staff, assets, equipment setup, supplies and quote"],
+      "details": ["Riders must match race min/max rules.", "Blocked riders cannot be selected for overlapping events.", "Staff and assets can also be blocked by assignments.", "Equipment setup should match race terrain.", "Supplies should be sufficient for all stages.", "Quote preview should be checked before submit."],
+      "tips": ["Never submit a plan without reading cost and blocked resources."]
+    },
+    "stagePlanDeep": {
+      "title": "Stage Plan Details",
+      "subtitle": "Per-stage roles and tactics.",
+      "overview": "Stage Plans tell the race engine what each rider should do on each stage.",
+      "facts": ["Components", "Roles, team tactics, individual tactics, equipment, supplies"],
+      "details": ["A flat sprint stage needs different roles than a mountain stage.", "TT and TTT stages need pacing and specialist equipment.", "Supplies are assigned per stage and can be consumed or use durable capacity.", "Readiness checks indicate whether a stage plan is usable.", "Saved but empty plans are not the same as complete plans."],
+      "tips": ["Check every stage in a stage race."]
+    },
+    "stageRolesDeep": {
+      "title": "Stage Roles and Use Cases",
+      "subtitle": "Choosing leaders, sprinters, helpers and specialists.",
+      "overview": "Stage roles should match rider skills and stage goals.",
+      "facts": ["Roles", "Leader, sprinter, lead-out, sprint train, climber, mountain domestique, helper, breakaway, chaser, rouleur, protected, free"],
+      "details": ["Team Leader/GC is for riders protected for overall time.", "Sprinter needs sprint skill and lead-out support.", "Lead-out/Sprint Train helps the sprinter in flat finishes.", "Climber/Mountain Domestique is for mountain control.", "Breakaway roles are risky but can chase stage wins or visibility.", "Rouleurs and helpers support chasing, pacing and protection."],
+      "tips": ["Do not make every rider a leader."]
+    },
+    "stageReadinessDeep": {
+      "title": "Stage Readiness System",
+      "subtitle": "Green/yellow/orange/red/gray plan checks.",
+      "overview": "Readiness tells users whether stage plans are complete enough for the engine.",
+      "facts": ["Counts", "Saved, usable, missing, incomplete, empty, without supplies", "Tones", "Green, yellow, orange, red, gray"],
+      "details": ["Missing plans should be created.", "Empty plans should be filled with roles/tactics/supplies.", "Plans without supplies may be risky or incomplete.", "Recommended action explains what to fix.", "All required stage plans should be saved before race day."],
+      "tips": ["Fix red/orange readiness before the deadline."]
+    },
+    "sportDirectorDeep": {
+      "title": "Sport Director Suggestions",
+      "subtitle": "Assistant suggestions for stage plans.",
+      "overview": "Sport Director suggestions can help managers build plans but should not replace judgement.",
+      "facts": ["Suggestion areas", "Equipment, team, individual, supplies"],
+      "details": ["The suggestion response can include stage kind, stage name, suggestion data and explanation.", "Suggestions can be limited by staff quality or backend logic.", "Users should compare suggestions with actual rider skills and team goals.", "Weather and supplies should still be checked manually.", "Good managers adjust suggestions instead of applying blindly."],
+      "tips": ["Use suggestions as a learning tool."]
+    }
+  }
+}
