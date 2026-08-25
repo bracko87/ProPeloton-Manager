@@ -1,0 +1,255 @@
+{
+  "sections": {
+    "publicHomeBeta": {
+      "title": "Public Home and Beta Notice",
+      "subtitle": "What players see before login and why the beta notice matters.",
+      "overview": "The public home page is the entry point before the dashboard. It can route authenticated users to create-club or dashboard and shows live public game information.",
+      "facts": ["Live snapshot", "Game time, active managers, total teams, races and stages", "Beta warning", "Game systems, UI, balancing and data may still change"],
+      "details": ["If the user is signed in and has no club, the app routes to club creation.", "If the user is signed in and already has a club, the app routes to the dashboard overview.", "The beta notice tells testers that the game is online for testing but not final.", "Homepage race-day widgets can show yesterday, today and tomorrow races."],
+      "tips": ["Keep player expectations clear during beta."]
+    },
+    "sidebarFooterLayout": {
+      "title": "Sidebar, Footer and Dashboard Lock",
+      "subtitle": "How the main layout helps users move around the game.",
+      "overview": "The left sidebar is the main in-game navigation, while the footer shows authoritative live game time. Some dashboard states can lock interaction.",
+      "facts": ["Sidebar pages", "Overview, Squad, Calendar, Race Preparation, Team Ranking, Training, Equipment, Infrastructure, Finance, Transfers, Statistics", "Footer", "Shows Season, weekday, date and time"],
+      "details": ["The sidebar descriptions tell users what each page does.", "The footer game time should be treated as the source of truth for deadlines.", "Dashboard Locked means the player cannot make changes at that time.", "Sign Out and Bug Report live in the lower sidebar area."],
+      "tips": ["When a user is confused about deadlines, first tell them to check footer game time."]
+    },
+    "profileSettings": {
+      "title": "My Profile",
+      "subtitle": "User profile data, username, email and password.",
+      "overview": "My Profile edits the user account profile. It is separate from the team name, team logo and jersey.",
+      "facts": ["Username rule", "3–24 characters; letters, numbers and underscores", "Birthday rule", "Saved once during registration and read-only later"],
+      "details": ["The username is normalized by trimming spaces, changing spaces to underscores and removing unsupported characters.", "Email changes use the auth system and may require confirmation.", "First name, last name, city and country are optional profile fields.", "Password can be changed from the profile page with confirmation.", "Birthday is displayed but not saved again from My Profile."],
+      "tips": ["Tell users that profile display name and club name are different."],
+      "links": ["My Profile"]
+    },
+    "preferencesNotifications": {
+      "title": "Preferences and Notification Settings",
+      "subtitle": "Where players control notifications and special team/account options.",
+      "overview": "Preferences stores notification controls, Developing Team purchase/status and danger zone actions.",
+      "facts": ["Notification storage", "Local preference settings", "Developing team RPCs", "get_developing_team_status and purchase_developing_team", "Shutdown confirm", "User must type DELETE"],
+      "details": ["Notification toggles decide which notification groups the player wants to receive.", "Developing Team status shows requirements, coin cost, balance and movement-window information.", "After Developing Team purchase, the active club context is pinned back to the main club.", "Shutdown Team uses a backend Edge Function and requires the active session token.", "Restart Team is currently a placeholder/action notice and should not be described as fully active."],
+      "tips": ["Use Preferences when users complain about too many notifications."],
+      "links": ["Preferences"]
+    },
+    "inviteFriends": {
+      "title": "Invite Friends",
+      "subtitle": "Referral link, referral states and coin reward.",
+      "overview": "Invite Friends creates a referral link and shows referral activity. The reward is granted when a friend completes the required steps.",
+      "facts": ["Referral URL", "/#/referral/:code", "Reward", "40 coins", "Statuses", "Pending, completed, rejected"],
+      "details": ["The page loads the current club referral code from the clubs table.", "The referral link uses the current website origin plus the referral route.", "Pending means a friend created a club but has not bought the first coin package yet.", "Completed means the first coin purchase happened and the reward was granted.", "User and club identifiers are masked for privacy."],
+      "tips": ["Use Invite Friends to grow the community."],
+      "links": ["Invite Friends"]
+    },
+    "proPackagesDeep": {
+      "title": "Coin Packages Shop",
+      "subtitle": "Package prices, checkout and purchase history.",
+      "overview": "Coin Packages loads live packages from the database, shows balance and starts checkout through an Edge Function.",
+      "facts": ["Package source", "coin_packages", "Balance source", "get_my_coin_status", "Checkout", "create-coin-checkout", "Purchase history", "user_coin_ledger reason='purchase'"],
+      "details": ["Exact prices are database-driven and should not be hardcoded in the manual.", "The shop calculates price per coin and can highlight best value.", "Package taglines are generated from coin amount, such as Starter boost or Best for long-term play.", "Purchase history intentionally does not show Stripe session technical information.", "Coins are account currency, not club cash."],
+      "tips": ["For current prices, trust the live Coin Packages page."],
+      "links": ["Coin Packages"]
+    },
+    "contactForumSupport": {
+      "title": "Contact Us, Forum and Discord",
+      "subtitle": "Where players ask questions or report problems.",
+      "overview": "Contact Us, Forum and Discord are support/community entry points. Current Contact Us is UI-only; Forum points users to Discord.",
+      "facts": ["Contact Us", "UI-only form in current code", "Forum", "Discord notice page", "Discord use", "Community, help, manuals and questions"],
+      "details": ["Contact Us has name, email and message fields and shows a thank-you message after submit.", "Forum explains there will not be an in-game forum on that page.", "Discord is the community place for questions and manual help.", "Bug reports should include page, expected behavior, actual behavior and screenshots."],
+      "tips": ["Do not promise Contact Us backend delivery until it is wired."],
+      "links": ["Contact Us", "Forum"]
+    },
+    "clubCreationRoute": {
+      "title": "Club Creation and First Club Check",
+      "subtitle": "How authenticated users are routed into the game.",
+      "overview": "After login, the app checks whether the user has a club. Users without a club go to Create Club; users with a club go to Overview.",
+      "facts": ["No club", "Route to /create-club", "Has club", "Route to /dashboard/overview"],
+      "details": ["The public homepage calls get_my_club_id to choose the next route.", "Club creation is separate from profile creation.", "Starting money and exact starting resources should come from backend config, not guessed manual text.", "After club creation, dashboard pages normally resolve the main club automatically."],
+      "tips": ["Do not invent starting cash unless backend config is provided."]
+    },
+    "customizeTeamDeep": {
+      "title": "Customize Team",
+      "subtitle": "Branding, team colors, logo, base logo and jersey.",
+      "overview": "Customize Team manages club name, primary/secondary colors, logo and home jersey configuration.",
+      "facts": ["Logo types", "JPG, PNG, WEBP", "Logo max", "0.5 MB", "Jersey max", "1 MB and 512 × 512 px", "Logo bucket", "club-logos"],
+      "details": ["Uploaded logos are converted to PNG in-browser before storage.", "Removing a logo restores a generated shield-style base logo instead of leaving no logo.", "Team colors are validated as hex colors.", "Jersey config is stored in team_kits with name home.", "A jersey can be generic, from a generic pool, a remote image URL or an uploaded image."],
+      "tips": ["Use small clean logos because they appear in tiny UI areas."],
+      "links": ["Customize Team"]
+    },
+    "brandingLocks": {
+      "title": "Branding Locks from Naming Rights",
+      "subtitle": "Why users may not be able to edit a team name or logo.",
+      "overview": "Sponsor naming-rights can temporarily lock branding fields and change the displayed club name.",
+      "facts": ["Lock status source", "club_branding_lock_status_v1", "Possible fields", "Name, colors and logo", "Display names", "Original, season and full display name"],
+      "details": ["Customize Team reads the branding lock before allowing edits.", "locked_by_sponsor means the club identity is controlled by a sponsor deal.", "Standard sponsors normally do not rename the team.", "Naming-rights sponsors usually pay more but affect public identity.", "Display-name helpers should be used in rankings/profiles when sponsor names matter."],
+      "tips": ["Warn players before they sign naming-rights deals."]
+    },
+    "teamProfileDeep": {
+      "title": "Team Profile",
+      "subtitle": "Public club page with identity, sponsors, roster and points.",
+      "overview": "Team Profile lets users inspect another club or their own club from rankings, races and statistics.",
+      "facts": ["Route", "/dashboard/teams/:clubId", "Shows", "Logo, country, tier, division, sponsors, kit, roster, points and recent races"],
+      "details": ["The page shows whether the club is user or AI controlled.", "It can show active sponsor count, monthly sponsor totals and main sponsor logo.", "It can show kit preview from team_kits or AI kit preview rows.", "It can show public roster and recent race results.", "It includes a report player/team button for moderation."],
+      "tips": ["Use Team Profile to study rivals before important races."]
+    },
+    "overviewDeep": {
+      "title": "Overview Deep Guide",
+      "subtitle": "All major blocks on the manager dashboard.",
+      "overview": "Overview is the daily control room combining alerts, KPIs, squad pulse, finance, debt, race world, operations, news and sponsor data.",
+      "facts": ["Core blocks", "Alerts, KPIs, operations, squad pulse, schedule, news, finance, emergency debt", "Main use", "Daily checklist"],
+      "details": ["Alerts show what needs attention first.", "KPIs summarize club state in compact cards.", "Operations cards show active systems like training, infrastructure, medical, sponsor, inbox, finance or system events.", "Squad Pulse summarizes fitness, morale, readiness, availability and contract risk.", "Finance Health shows balance, operating income/expense, sponsor income, policy cost and trip forecast.", "Emergency Debt Health shows rescue count, outstanding principal, next repayment and liquidation risk.", "Race world panels show today’s races, upcoming races and news."],
+      "tips": ["If Overview shows financial danger, open Finance before doing anything else."],
+      "links": ["Overview"]
+    },
+    "overviewRaceWorld": {
+      "title": "Overview Race World",
+      "subtitle": "Today’s races, upcoming schedule and world news.",
+      "overview": "The Overview page includes world-facing data so users can follow the cycling world even when their own team is not racing.",
+      "facts": ["Day race data", "Title, subtitle, time label, country and link", "News data", "Title, subtitle, time, details and related links"],
+      "details": ["Today’s races help users see what is happening now.", "Upcoming schedule helps plan near-future attention.", "World news makes the game world feel active.", "Related links can open races or other game pages.", "Use expanded text/detail fields when users need more context."],
+      "tips": ["Use Overview for awareness, then open detailed pages for decisions."]
+    },
+    "notificationCenterDeep": {
+      "title": "Notification Center",
+      "subtitle": "Unread/read notification management with search and categories.",
+      "overview": "The full notification center helps users handle game/admin notifications without losing important deadlines.",
+      "facts": ["Tabs", "Unread and Read", "Tools", "Search, category filter, pagination, action buttons", "Local fetch size", "Up to 500 per tab in current page"],
+      "details": ["Notifications can be searched by title, message, type, source, preference group and created time.", "Category is derived from preference group, source or type code.", "Templates can add image, intro text, details, extra text and actions.", "Actions can link directly to race preparation, finance, infrastructure, transfers, rider profiles or races.", "Preferences can prevent some notification types from showing."],
+      "tips": ["Read notifications before race deadlines."],
+      "links": ["Notifications"]
+    },
+    "notificationExamples": {
+      "title": "Important Notification Examples",
+      "subtitle": "Events users should not ignore.",
+      "overview": "Notifications can represent important state changes across race preparation, finance, infrastructure, transfers, developing team and sponsors.",
+      "facts": ["Examples", "Race plan reminders, stage plan reminders, developing window, emergency loan, facility complete, rider release, sponsor objective"],
+      "details": ["Race preparation notifications warn when plans or stage plans need action.", "Developing-team window notifications tell users when movement is possible.", "Infrastructure completion notifications tell users that a facility/asset is ready.", "Emergency loan notifications mean the club could not cover a mandatory cost.", "Rider release notifications link to rider profile or free-agent market.", "Sponsor objective notifications can link to calendar or target race."],
+      "tips": ["Treat finance/deadline notifications as high priority."]
+    },
+    "inboxDeep": {
+      "title": "Inbox",
+      "subtitle": "Direct and admin conversations.",
+      "overview": "Inbox is for conversations, unlike notifications which are system/game alerts.",
+      "facts": ["Conversation types", "Direct and admin direct", "Read logic", "Opening a thread marks it read", "Compose target", "Can be initialized from sessionStorage"],
+      "details": ["The thread list shows display name, subject, preview, last message time and unread count.", "Search filters threads by name, subject and preview.", "Messages are loaded by conversation id and then marked read.", "If the user opens compose to an existing direct contact, the existing conversation is reused.", "Some conversations cannot be replied to depending on can_reply."],
+      "tips": ["Use Inbox for conversations, Notifications for game events."],
+      "links": ["Inbox"]
+    },
+    "topMenu": {
+      "title": "Top Menu",
+      "subtitle": "Account, coins, notifications and utility pages.",
+      "overview": "The top-right menu contains account and support pages that are not all visible in the left sidebar.",
+      "facts": ["Typical items", "Inbox, profile, customize team, preferences, help, contact, coin packages, invite friends, logout"],
+      "details": ["Users can reach profile settings and password tools from the menu.", "Coin Packages and Invite Friends are account/coin tools.", "Preferences controls notification settings and developing-team purchase.", "Help and Manual should link to this page.", "Logout ends the current session."],
+      "tips": ["Make Help/Manual easy to find from the menu."]
+    },
+    "firstSquadDeep": {
+      "title": "First Squad",
+      "subtitle": "Main rider roster and list views.",
+      "overview": "First Squad is where users inspect their main roster, financial information, skills and form.",
+      "facts": ["First squad max in UI", "18 riders", "Views", "General, financial, skills, form"],
+      "details": ["General view is best for quick everyday roster checks.", "Financial view shows salary, market value and contracts.", "Skills view helps compare sprint, climbing, time trial, flat, endurance, recovery, resistance, race IQ, teamwork and morale.", "Form view helps judge fatigue, morale, availability and potential.", "Season dashboard widgets can show wins, podiums, top 10s, best GC, last race and next selection."],
+      "tips": ["Do not buy riders before understanding current squad."],
+      "links": ["Squad"]
+    },
+    "riderSkillsDeep": {
+      "title": "Rider Skills Explained",
+      "subtitle": "What every skill is useful for.",
+      "overview": "Overall is a useful shortcut, but specific rider attributes decide the correct race role and tactical use.",
+      "facts": ["Skills", "Sprint, climbing, time trial, endurance, flat, recovery, resistance, race IQ, teamwork, morale"],
+      "details": ["Sprint matters in bunch finishes and sprint trains.", "Climbing matters on mountain stages and summit finishes.", "Time trial matters in TT, prologue and TTT contexts.", "Endurance keeps riders strong through long stages.", "Flat helps on rolling/flat roads, chasing and positioning.", "Recovery matters across stage races.", "Resistance helps in hard weather, high pace and difficult terrain.", "Race IQ affects tactical decisions and positioning.", "Teamwork helps domestiques, lead-outs and chasing.", "Morale affects confidence and can influence performance."],
+      "tips": ["Match rider skills to role and stage type."]
+    },
+    "riderProfileDeep": {
+      "title": "Rider Profile Tabs",
+      "subtitle": "Overview, contract, training, compare and history.",
+      "overview": "Rider Profile is the deep page for individual rider decisions.",
+      "facts": ["Tabs", "Overview, Contract, Training, Compare, History", "Skill view", "Basic or modern"],
+      "details": ["Overview shows rider identity, status and core condition.", "Contract shows salary, renewal and release-related information.", "Training shows plans/history when available.", "Compare lets users compare riders without leaving the page.", "History shows career seasons and recent race data.", "Transfer-listed state is visible and can block release."],
+      "tips": ["Open profiles before renewing, selling or building race plans."]
+    },
+    "fitnessHealthDeep": {
+      "title": "Fitness, Fatigue and Health",
+      "subtitle": "Why a strong rider can be a poor choice today.",
+      "overview": "Performance depends on more than attributes. Fatigue, sickness, injury, not-fully-fit status and morale can all change race value.",
+      "facts": ["Availability", "Fit, not fully fit, injured, sick", "Condition", "Fatigue, morale, health case, recovery"],
+      "details": ["Fit riders are normally safe if not blocked by schedule.", "Not fully fit riders can be risky and may need medical support.", "Injured or sick riders should usually not race or train hard.", "High fatigue can reduce performance and increase risk.", "Morale should be monitored because low morale can hurt output.", "Medical staff and Medical Center investment improve recovery support."],
+      "tips": ["A tired star can perform worse than a fresh helper."]
+    },
+    "raceSharpnessDeep": {
+      "title": "Race Sharpness",
+      "subtitle": "Racing rhythm and overload risk.",
+      "overview": "Race sharpness helps show whether a rider has enough recent racing rhythm or is overloaded by too many race days.",
+      "facts": ["Tracked", "Last race date, race days last 14/30, total race days, overload warning"],
+      "details": ["Too little racing can reduce sharpness.", "Too much racing can create overload penalty.", "Sharpness should be read together with fatigue and health.", "Race Preparation can show sharpness during selection.", "Sharpness is especially useful when building a race calendar."],
+      "tips": ["Use smaller races to prepare riders for bigger goals."]
+    },
+    "contractsRenewalsRelease": {
+      "title": "Contracts, Renewals and Release",
+      "subtitle": "Financial decisions around riders.",
+      "overview": "Contracts affect wages, expiry, release cost, renewal timing and transfer-list status.",
+      "facts": ["Release preview", "Remaining weeks, salary, release cost and balance after release", "Block", "Release blocked while transfer listed"],
+      "details": ["A rider with a high salary can become a financial problem.", "Expiring contracts should be reviewed before the end of season.", "Releasing a rider can cost remaining salary/compensation.", "The preview shows whether the club can afford release.", "Transfer-listed riders cannot be released while the listing is active."],
+      "tips": ["Check contracts before making transfers."]
+    },
+    "developingTeamDeep": {
+      "title": "Developing Team",
+      "subtitle": "U23/development roster, purchase and movement windows.",
+      "overview": "Developing Team is a second connected team for young/development riders.",
+      "facts": ["Max in UI", "8 riders", "Purchase", "Preferences", "Movement", "Only during movement windows", "Age warning", "24+ riders require attention"],
+      "details": ["The status panel shows real days played, game days played, coin balance, coin cost and purchase permission.", "After purchase, the app must keep active club context on the main club.", "Movement window labels explain when riders can move.", "Older developing riders can trigger warnings.", "Developing-team riders may still be treated as user-family riders in race result displays."],
+      "tips": ["Use it to develop talent, not as unlimited roster storage."],
+      "links": ["Preferences"]
+    },
+    "staffRolesDeep": {
+      "title": "Staff Roles",
+      "subtitle": "What staff do for the club.",
+      "overview": "Staff affect training, recovery, scouting, equipment and race planning.",
+      "facts": ["Roles", "Head Coach, Trainer, U23 Head Coach, Doctor, Physio, Nutritionist, Mechanic, Sport Director, Scout/Analyst"],
+      "details": ["Head Coach supports training and development.", "Trainer improves daily training quality.", "U23 Head Coach supports developing riders.", "Team Doctor, Physio and Nutritionist support health and recovery.", "Mechanic supports equipment and technical systems.", "Sport Director supports race tactics and planning.", "Scout/Analyst supports market intelligence and reports."],
+      "tips": ["Hire staff based on weakness, not just because they are available."]
+    },
+    "staffCapacityDeep": {
+      "title": "Staff Capacity",
+      "subtitle": "Why hiring can be blocked.",
+      "overview": "Staff roles have limits. Infrastructure often determines how many staff members of each role the club can employ.",
+      "facts": ["Capacity fields", "Limit count, active count, open slots, can hire"],
+      "details": ["If open slots is 0, hiring is blocked for that role.", "Infrastructure upgrades can unlock additional staff capacity.", "Staff can also be unavailable due to courses or assignments.", "A higher staff limit does not mean the club can afford the salary.", "Capacity warnings should guide users to Infrastructure when relevant."],
+      "tips": ["Check both open slots and salary before hiring."]
+    },
+    "staffCoursesDeep": {
+      "title": "Staff Courses",
+      "subtitle": "Improving staff over game days.",
+      "overview": "Staff courses cost cash and take game days, but can improve staff attributes.",
+      "facts": ["Gains", "Expertise, experience, potential, leadership, efficiency, loyalty"],
+      "details": ["Active courses show start date, completion date, duration and cost.", "Recent completed courses show attribute gains.", "Staff on courses may be unavailable for some tasks.", "Courses are best for staff the club plans to keep.", "Course spending should be delayed if finances are dangerous."],
+      "tips": ["Train important staff, not temporary hires."]
+    },
+    "regularTrainingDeep": {
+      "title": "Regular Training Details",
+      "subtitle": "Team defaults and individual plans.",
+      "overview": "Regular training is the everyday development system for riders.",
+      "facts": ["Intensities", "Recovery, light, normal, hard", "Focuses", "General, recovery, sprint, climbing, flat, time trial, endurance, resistance, race IQ, teamwork"],
+      "details": ["Team defaults control the normal plan for a team scope.", "Individual rider plans can override defaults.", "Hard training increases development pressure but can create fatigue.", "Recovery training helps reduce fatigue and protect riders.", "Focus should match rider role and future race goals."],
+      "tips": ["Do not use hard training permanently."]
+    },
+    "trainingCampsDeep": {
+      "title": "Training Camps",
+      "subtitle": "Location, type, weather, staff and cost.",
+      "overview": "Training camps are stronger development blocks with higher planning requirements and cost.",
+      "facts": ["Camp types", "General, sprint, climbing, flat, time trial", "Regions", "Europe, North America, South America, Asia, Africa, Oceania, Middle East"],
+      "details": ["Camps include stars, quality multiplier, recovery comfort, cost index and weather note.", "Preferred, risky and closed weeks affect calendar suitability.", "Quotes include travel, accommodation, camp fee, logistics and total cost.", "Validation can block injured riders or unavailable staff.", "Staff boosts can improve development, recovery, organization and risk reduction."],
+      "tips": ["Book camps only after checking Finance."]
+    },
+    "currentCampDeep": {
+      "title": "Current Camp Page",
+      "subtitle": "Daily camp planning and reports.",
+      "overview": "The current camp page shows active camp progress, weather, staff boosts, reports and next-day planning.",
+      "facts": ["States", "Booked notice, prestart, active, post, hidden", "Plan options", "Day off, light, normal, hard"],
+      "details": ["Future camps show the full interface only close to start.", "Weather forecast helps users adjust intensity.", "Daily reports show completed/missed sessions and fatigue changes.", "Staff boost summary explains what staff are contributing.", "The next three camp days can be planned by team or individual intensity."],
+      "tips": ["Use day off when camp fatigue becomes too high."]
+    }
+  }
+}
