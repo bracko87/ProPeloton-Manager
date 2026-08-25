@@ -1,0 +1,80 @@
+{
+  "page": {
+    "title": "Season Reset Preview",
+    "description": "Review promotion and relegation movements before applying the season rollover.",
+    "loading": "Loading season reset preview...",
+    "failed": "Failed to preview season reset."
+  },
+  "table": {
+    "team": "Team",
+    "country": "Country",
+    "division": "Division",
+    "points": "Points",
+    "from": "From",
+    "to": "To",
+    "reason": "Reason",
+    "removed": "REMOVED",
+    "countryFlag": "{{country}} flag"
+  },
+  "summary": {
+    "title": "Summary",
+    "subtitle": "Calculated movements for the current standings.",
+    "promotedWorld": "Promoted to World",
+    "relegatedWorld": "Relegated from World",
+    "promotedProWest": "Promoted to Pro West",
+    "promotedProEast": "Promoted to Pro East",
+    "relegatedPro": "Relegated from Pro",
+    "promotedAmateur": "Promoted from Amateur",
+    "relegatedTier3": "Relegated from Tier 3",
+    "inactiveRemoved": "Inactive removed"
+  },
+  "sections": {
+    "worldDirect": "Promoted to World — Direct",
+    "worldPlayoff": "Promoted to World — Playoff",
+    "worldRelegated": "Relegated from World",
+    "proWestDirect": "Promoted to Pro West — Direct",
+    "proWestPlayoff": "Promoted to Pro West — Playoff",
+    "proEastDirect": "Promoted to Pro East — Direct",
+    "proEastPlayoff": "Promoted to Pro East — Playoff",
+    "proWestRelegated": "Relegated from Pro West",
+    "proEastRelegated": "Relegated from Pro East",
+    "inactive": "Inactive Clubs Removed",
+    "amateurEurope": "Promoted from Amateur to Continental Europe",
+    "amateurAmerica": "Promoted from Amateur to Continental America",
+    "amateurAsia": "Promoted from Amateur to Continental Asia",
+    "amateurAfrica": "Promoted from Amateur to Continental Africa",
+    "amateurOceania": "Promoted from Amateur to Continental Oceania",
+    "relegatedDynamic": "Relegated from {{division}}",
+    "all": "All Movements",
+    "allSubtitle": "Full list of promotions, relegations and removals."
+  },
+  "empty": {
+    "noMovements": "No season movements calculated.",
+    "worldDirect": "No direct promotions to World.",
+    "worldPlayoff": "No playoff promotions to World.",
+    "worldRelegated": "No teams relegated from World.",
+    "proWestDirect": "No direct promotions to Pro West.",
+    "proWestPlayoff": "No playoff promotions to Pro West.",
+    "proEastDirect": "No direct promotions to Pro East.",
+    "proEastPlayoff": "No playoff promotions to Pro East.",
+    "proWestRelegated": "No teams relegated from Pro West.",
+    "proEastRelegated": "No teams relegated from Pro East.",
+    "inactive": "No inactive clubs removed.",
+    "europe": "No promotions to Continental Europe.",
+    "america": "No promotions to Continental America.",
+    "asia": "No promotions to Continental Asia.",
+    "africa": "No promotions to Continental Africa.",
+    "oceania": "No promotions to Continental Oceania.",
+    "relegatedDynamic": "No teams relegated from {{division}}."
+  },
+  "divisions": {
+    "world": "World",
+    "proWest": "Pro West",
+    "proEast": "Pro East",
+    "continentalEurope": "Continental Europe",
+    "continentalAmerica": "Continental America",
+    "continentalAsia": "Continental Asia",
+    "continentalAfrica": "Continental Africa",
+    "continentalOceania": "Continental Oceania"
+  }
+}
