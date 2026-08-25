@@ -75,6 +75,35 @@
       "secondary": "Završi za sada"
     }
   },
+  "squad": {
+    "welcome": {
+      "title": "Treba vam pomoć sa Ekipom?",
+      "body": "Možemo vam pokazati kratak uvod u stranicu Ekipe, gde upravljate vozačima, Razvojnim timom, periodima za premeštanje i osobljem.",
+      "primary": "Pokreni vodič",
+      "secondary": "Ne, hvala"
+    },
+    "riders": {
+      "title": "Vaši vozači",
+      "body": "Ovo je stranica Ekipe — glavno mesto gde su prikazani vozači vašeg tima.\n\nU opštem prikazu možete videti važne informacije o vozaču kao što su godine, država, uloga, ukupni nivo, stanje, tržišna vrednost, plata, detalji ugovora i međunarodni bodovi.\n\nKoristite ovu stranicu kad god želite da razumete trenutnu snagu i strukturu svog tima.",
+      "primary": "Dalje"
+    },
+    "details": {
+      "title": "Prikazi i profili vozača",
+      "body": "Stranica Ekipe nudi više načina za pregled vozača.\n\nMožete proveriti finansijske informacije, veštine, formu, razvoj, zdravlje i dostupnost. Veštine se vremenom mogu poboljšavati, pa vam ova stranica pomaže da pratite razvoj svakog vozača.\n\nKlikom na dugme Prikaz možete otvoriti kompletan profil vozača sa detaljnijim informacijama.\n\nNeki napredni alati za vozače, dodatne kontrolne table ili praktične funkcije mogu zahtevati Premium nalog ili kupovinu novčićima.",
+      "primary": "Dalje"
+    },
+    "developing": {
+      "title": "Razvojni tim i period za premeštanje",
+      "body": "Razvojni tim je vaš drugi tim. Može se koristiti za mlade vozače koji još nisu spremni za prvi tim, ali i dalje mogu da se takmiče u dodeljenim takmičenjima.\n\nRazvojni tim prvo mora biti otključan. Više informacija možete pronaći u Podešavanjima.\n\nVozači se između Prvog i Razvojnog tima mogu premeštati samo tokom perioda za premeštanje. Ovi periodi se otvaraju četiri puta godišnje, a stranica Ekipe pokazuje kada je dostupan sledeći period.\n\nNeki dodatni alati za upravljanje, prošireni prikazi ili praktične funkcije povezane sa ovim delom mogu zahtevati Premium nalog ili kupovinu novčićima.",
+      "primary": "Dalje"
+    },
+    "staff": {
+      "title": "Osoblje i sledeća stranica",
+      "body": "Dugme Osoblje prikazuje članove osoblja koji rade za vaš klub i trenutna ograničenja vaše postavke osoblja.\n\nČlanovi osoblja imaju sopstvene veštine i mogu se slati na kurseve. Ograničenja broja osoblja takođe se mogu povećati unapređenjem infrastrukture.\n\nNakon Ekipe, sledeća preporučena stranica je Trening, gde možete podesiti redovan trening i planirati trening kampove za vozače.",
+      "primary": "Nastavi na Trening",
+      "secondary": "Završi za sada"
+    }
+  },
   "menu": {
     "welcome": {
       "title": "Treba vam pomoć sa Menijem?",
