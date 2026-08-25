@@ -61,5 +61,19 @@
     "clubCountry": "Država kluba",
     "manager": "Menadžer",
     "ranking": "{{positionNumber}}. mesto u {{competition}}"
+  },
+  "footer": {
+    "season": "Sezona",
+    "loadingGameTime": "Učitavanje vremena igre...",
+    "gameTimeUnavailable": "Vreme igre trenutno nije dostupno",
+    "description": "ProPeloton Manager je onlajn biciklistička menadžerska igra koja je trenutno u aktivnom razvoju.",
+    "navigation": "Navigacija u podnožju",
+    "about": "O igri",
+    "howToPlay": "Kako igrati",
+    "privacyPolicy": "Politika privatnosti",
+    "terms": "Uslovi korišćenja",
+    "support": "Podrška",
+    "contact": "Kontakt",
+    "dashboard": "Kontrolna tabla"
   }
 }
