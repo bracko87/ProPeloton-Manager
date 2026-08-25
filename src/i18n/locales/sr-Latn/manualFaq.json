@@ -1,0 +1,46 @@
+{
+  "sections": {
+    "applicationBlocked": {
+      "title": "FAQ: Zašto ne mogu da se prijavim na trku?",
+      "subtitle": "Najčešće blokade prijave.",
+      "overview": "Prijava na trku može biti blokirana statusom trke, rokovima, kapacitetom ili pravilima podobnosti.",
+      "details": ["Prijave možda još nisu otvorene.", "Prijave su možda već zatvorene.", "Trka može biti aktivna, završena ili otkazana.", "Trka može biti popunjena.", "Vaš tim možda ne ispunjava uslove za učešće.", "Možda već imate prijavu/ulazak na trku."],
+      "tips": ["Otvorite Detalje trke i proverite pravila prijave."]
+    },
+    "acceptedNotReady": {
+      "title": "FAQ: Zašto sam prihvaćen, ali nisam spreman?",
+      "subtitle": "Prihvaćeno mesto nije isto što i kompletan plan trke.",
+      "overview": "Prihvaćeno znači da vaš tim ima mesto; spremno znači da su vozači, osoblje, vozila, oprema, zalihe i Stage Plans upotrebljivi.",
+      "details": ["Race Plan još mora biti poslat.", "Stage Plans možda još nedostaju.", "Zalihe možda nedostaju.", "Spremnost može pokazivati probleme.", "Propušteni rokovi mogu zaključati izmene."],
+      "tips": ["Otvorite Race Preparation nakon svake prihvaćene trke."]
+    },
+    "riderUnderperformed": {
+      "title": "FAQ: Zašto je moj vozač podbacio?",
+      "subtitle": "Performanse imaju mnogo uzroka.",
+      "overview": "Jak vozač može voziti loše ako su uloga, etapa, stanje, taktika ili podrška bili pogrešni.",
+      "details": ["Proverite da li su veštine vozača odgovarale terenu.", "Proverite umor i dostupnost.", "Proverite moral i Race Sharpness.", "Proverite ulogu i taktiku na etapi.", "Proverite opremu i zalihe.", "Proverite vreme i incidente.", "Proverite podršku osoblja/vozila."],
+      "tips": ["Koristite replay i komentar za učenje."]
+    },
+    "money": {
+      "title": "FAQ: Gde je nestao moj novac?",
+      "subtitle": "Kako istražiti promene stanja.",
+      "overview": "Finansije → Transakcije su glavni izvor za objašnjenje kretanja novca.",
+      "details": ["Otvorite Finansije → Transakcije.", "Pregledajte plate, porez, sponzorske uplate, transfere, opremu, infrastrukturu, kampove i politike.", "Otvorite Porez za mesečnu kontrolu.", "Otvorite Politike tima za stalne troškove.", "Zapamtite da su krediti dug, a ne prihod."],
+      "tips": ["Transakcije su prva stranica za finansijska pitanja."]
+    },
+    "equipment": {
+      "title": "FAQ: Zašto je bonus moje opreme mali?",
+      "subtitle": "Ograničenja bonusa i kompromisi.",
+      "overview": "Oprema koristi ponderisanje i ograničenja kako bi pomagala, ali ne zamenila kvalitet vozača.",
+      "details": ["Bonusi se ponderišu prema kategoriji.", "Bonus na etapi je ograničen.", "Timska/podrška van vozača je ograničena.", "Smanjenje umora je ograničeno.", "Specijalistička oprema može imati negativne kompromise."],
+      "tips": ["Koristite pravi setup za pravu etapu."]
+    },
+    "staffHiring": {
+      "title": "FAQ: Zašto ne mogu da angažujem osoblje?",
+      "subtitle": "Najčešće blokade angažovanja.",
+      "overview": "Angažovanje osoblja zavisi od kapaciteta uloge, dostupnosti i novca.",
+      "details": ["Proverite slobodna mesta za ulogu.", "Nadogradite infrastrukturu ako je kapacitet pun.", "Proverite dostupnost kandidata.", "Proverite nedeljnu platu i stanje računa.", "Proverite da li je uloga otključana odgovarajućim objektom."],
+      "tips": ["Problemi sa kapacitetom obično vode na Infrastrukturu."]
+    }
+  }
+}
