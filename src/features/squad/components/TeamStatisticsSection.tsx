@@ -1,4 +1,5 @@
 import React from 'react'
+import { useTranslation } from 'react-i18next'
 
 type TeamSubTab = 'current' | 'history'
 type TeamTypeFilter = 'all' | 'user' | 'ai'
@@ -62,8 +63,10 @@ function getCountryFlagUrl(countryCode: string) {
 
 function CountryFlagBadge({
   countryCode,
+  unknownCountryLabel,
 }: {
   countryCode: string | null | undefined
+  unknownCountryLabel: string
 }) {
   const safeCode = safeCountryCode(countryCode)
 
@@ -71,8 +74,8 @@ function CountryFlagBadge({
     return (
       <span
         className="inline-block h-4 w-6 shrink-0 rounded-sm border border-slate-200 bg-slate-100"
-        title="Unknown country"
-        aria-label="Unknown country"
+        title={unknownCountryLabel}
+        aria-label={unknownCountryLabel}
       />
     )
   }
@@ -207,7 +210,15 @@ function TeamNameButton({
   )
 }
 
-function TypeBadge({ isAi }: { isAi: boolean }) {
+function TypeBadge({
+  isAi,
+  userLabel,
+  aiLabel,
+}: {
+  isAi: boolean
+  userLabel: string
+  aiLabel: string
+}) {
   return (
     <span
       className={cx(
@@ -215,12 +226,20 @@ function TypeBadge({ isAi }: { isAi: boolean }) {
         isAi ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800'
       )}
     >
-      {isAi ? 'AI' : 'User'}
+      {isAi ? aiLabel : userLabel}
     </span>
   )
 }
 
-function StatusBadge({ isActive }: { isActive: boolean }) {
+function StatusBadge({
+  isActive,
+  activeLabel,
+  inactiveLabel,
+}: {
+  isActive: boolean
+  activeLabel: string
+  inactiveLabel: string
+}) {
   return (
     <span
       className={cx(
@@ -228,7 +247,7 @@ function StatusBadge({ isActive }: { isActive: boolean }) {
         isActive ? 'bg-sky-100 text-sky-800' : 'bg-rose-100 text-rose-800'
       )}
     >
-      {isActive ? 'Active' : 'Inactive'}
+      {isActive ? activeLabel : inactiveLabel}
     </span>
   )
 }
@@ -265,11 +284,17 @@ function Pagination({
   totalItems,
   pageSize,
   onPageChange,
+  previousLabel,
+  nextLabel,
+  showingLabel,
 }: {
   currentPage: number
   totalItems: number
   pageSize: number
   onPageChange: (page: number) => void
+  previousLabel: string
+  nextLabel: string
+  showingLabel: (start: number, end: number, total: number) => string
 }) {
   const totalPages = Math.ceil(totalItems / pageSize)
 
@@ -281,7 +306,7 @@ function Pagination({
   return (
     <div className="mt-4 flex items-center justify-between gap-3">
       <div className="text-sm text-slate-500">
-        Showing {start}-{end} of {totalItems}
+        {showingLabel(start, end, totalItems)}
       </div>
 
       <div className="flex items-center gap-2">
@@ -296,7 +321,7 @@ function Pagination({
               : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
           )}
         >
-          Previous
+          {previousLabel}
         </button>
 
         <div className="text-sm font-medium text-slate-700">
@@ -314,7 +339,7 @@ function Pagination({
               : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
           )}
         >
-          Next
+          {nextLabel}
         </button>
       </div>
     </div>
@@ -425,12 +450,14 @@ export default function TeamStatisticsSection({
   getDivisionLabel,
   getCountryName,
 }: Props) {
+  const { t } = useTranslation('statistics')
+
   return (
     <div className="space-y-6">
       <TextSubTabs
         items={[
-          { key: 'current', label: 'Current' },
-          { key: 'history', label: 'History' },
+          { key: 'current', label: t('common.current') },
+          { key: 'history', label: t('common.history') },
         ]}
         activeKey={teamSubTab}
         onChange={key => setTeamSubTab(key as TeamSubTab)}
@@ -442,7 +469,7 @@ export default function TeamStatisticsSection({
             <input
               value={search}
               onChange={e => setSearch(e.target.value)}
-              placeholder="Search teams..."
+              placeholder={t('filters.searchTeams')}
               className="rounded-xl border border-slate-300 px-3 py-2 text-sm"
             />
 
@@ -451,9 +478,9 @@ export default function TeamStatisticsSection({
               onChange={e => setTeamTypeFilter(e.target.value as TeamTypeFilter)}
               className="rounded-xl border border-slate-300 px-3 py-2 text-sm"
             >
-              <option value="all">All team types</option>
-              <option value="user">User teams</option>
-              <option value="ai">AI teams</option>
+              <option value="all">{t('filters.allTeamTypes')}</option>
+              <option value="user">{t('filters.userTeams')}</option>
+              <option value="ai">{t('filters.aiTeams')}</option>
             </select>
 
             <select
@@ -461,9 +488,9 @@ export default function TeamStatisticsSection({
               onChange={e => setStatusFilter(e.target.value as StatusFilter)}
               className="rounded-xl border border-slate-300 px-3 py-2 text-sm"
             >
-              <option value="all">All status</option>
-              <option value="active">Active only</option>
-              <option value="inactive">Inactive only</option>
+              <option value="all">{t('filters.allStatus')}</option>
+              <option value="active">{t('filters.activeOnly')}</option>
+              <option value="inactive">{t('filters.inactiveOnly')}</option>
             </select>
 
             <select
@@ -471,7 +498,7 @@ export default function TeamStatisticsSection({
               onChange={e => setTierFilter(e.target.value)}
               className="rounded-xl border border-slate-300 px-3 py-2 text-sm"
             >
-              <option value="all">All tiers</option>
+              <option value="all">{t('filters.allTiers')}</option>
               {availableTiers.map(tier => (
                 <option key={tier} value={tier}>
                   {formatCompetitionLabel(tier)}
@@ -484,7 +511,7 @@ export default function TeamStatisticsSection({
               onChange={e => setDivisionFilter(e.target.value)}
               className="rounded-xl border border-slate-300 px-3 py-2 text-sm"
             >
-              <option value="all">All divisions</option>
+              <option value="all">{t('filters.allDivisions')}</option>
               {availableDivisions.map(division => (
                 <option key={division} value={division}>
                   {formatCompetitionLabel(division)}
@@ -497,7 +524,7 @@ export default function TeamStatisticsSection({
               onChange={e => setCountryFilter(e.target.value)}
               className="rounded-xl border border-slate-300 px-3 py-2 text-sm"
             >
-              <option value="all">All countries</option>
+              <option value="all">{t('filters.allCountries')}</option>
               {availableTeamCountries.map(country => (
                 <option key={country} value={country}>
                   {getCountryName(country, countryNameByCode)}
@@ -512,7 +539,7 @@ export default function TeamStatisticsSection({
             <input
               value={search}
               onChange={e => setSearch(e.target.value)}
-              placeholder="Search teams..."
+              placeholder={t('filters.searchTeams')}
               className="rounded-xl border border-slate-300 px-3 py-2 text-sm"
             />
 
@@ -521,7 +548,7 @@ export default function TeamStatisticsSection({
               onChange={e => setSeasonFilter(e.target.value)}
               className="rounded-xl border border-slate-300 px-3 py-2 text-sm"
             >
-              <option value="all">All seasons</option>
+              <option value="all">{t('filters.allSeasons')}</option>
               {availableSeasons.map(season => (
                 <option key={season} value={season}>
                   Season {season}
@@ -534,7 +561,7 @@ export default function TeamStatisticsSection({
               onChange={e => setTierFilter(e.target.value)}
               className="rounded-xl border border-slate-300 px-3 py-2 text-sm"
             >
-              <option value="all">All tiers</option>
+              <option value="all">{t('filters.allTiers')}</option>
               {availableTiers.map(tier => (
                 <option key={tier} value={tier}>
                   {formatCompetitionLabel(tier)}
@@ -547,7 +574,7 @@ export default function TeamStatisticsSection({
               onChange={e => setDivisionFilter(e.target.value)}
               className="rounded-xl border border-slate-300 px-3 py-2 text-sm"
             >
-              <option value="all">All divisions</option>
+              <option value="all">{t('filters.allDivisions')}</option>
               {availableDivisions.map(division => (
                 <option key={division} value={division}>
                   {formatCompetitionLabel(division)}
@@ -560,7 +587,7 @@ export default function TeamStatisticsSection({
               onChange={e => setCountryFilter(e.target.value)}
               className="rounded-xl border border-slate-300 px-3 py-2 text-sm"
             >
-              <option value="all">All countries</option>
+              <option value="all">{t('filters.allCountries')}</option>
               {availableHistoryCountries.map(country => (
                 <option key={country} value={country}>
                   {getCountryName(country, countryNameByCode)}
@@ -582,11 +609,17 @@ export default function TeamStatisticsSection({
       ) : teamSubTab === 'current' ? (
         <>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-            <KpiCard label="Teams in filter" value={filteredTeamCurrent.length} />
-            <KpiCard label="User teams" value={filteredTeamCurrent.filter(row => !row.is_ai).length} />
-            <KpiCard label="AI teams" value={filteredTeamCurrent.filter(row => row.is_ai).length} />
+            <KpiCard label={t('teams.teamsInFilter')} value={filteredTeamCurrent.length} />
             <KpiCard
-              label="Current leader"
+              label={t('teams.userTeams')}
+              value={filteredTeamCurrent.filter(row => !row.is_ai).length}
+            />
+            <KpiCard
+              label={t('teams.aiTeams')}
+              value={filteredTeamCurrent.filter(row => row.is_ai).length}
+            />
+            <KpiCard
+              label={t('teams.currentLeader')}
               valueClassName="mt-3 text-lg font-semibold leading-tight text-slate-900 sm:text-xl"
               value={
                 topCurrentTeam ? (
@@ -604,11 +637,14 @@ export default function TeamStatisticsSection({
           </div>
 
           <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
-            <SectionCard title="Current leaderboard" subtitle="Best teams by international points in the selected filter.">
+            <SectionCard
+              title={t('teams.currentLeaderboard')}
+              subtitle={t('teams.currentLeaderboardSubtitle')}
+            >
               {filteredTeamCurrent.length === 0 ? (
                 <EmptyState
-                  title="No teams found"
-                  description="Try changing the filters or search term."
+                  title={t('teams.noTeamsFound')}
+                  description={t('teams.tryFilters')}
                 />
               ) : (
                 <div className="overflow-x-auto">
@@ -618,7 +654,7 @@ export default function TeamStatisticsSection({
                         <th className="pb-3 pr-3">#</th>
                         <th className="pb-3 pr-3">Team</th>
                         <th className="pb-3 pr-3">Country</th>
-                        <th className="pb-3 pr-3">Tier / Division</th>
+                        <th className="pb-3 pr-3">{t('teams.tierDivision')}</th>
                         <th className="pb-3 text-right">International points</th>
                       </tr>
                     </thead>
@@ -634,7 +670,10 @@ export default function TeamStatisticsSection({
                           </td>
 
                           <td className="py-3 pr-3">
-                            <CountryFlagBadge countryCode={row.country_code} />
+                            <CountryFlagBadge
+                              countryCode={row.country_code}
+                              unknownCountryLabel={t('common.unknownCountry')}
+                            />
                           </td>
 
                           <td className="py-3 pr-3 text-slate-600">
@@ -653,13 +692,13 @@ export default function TeamStatisticsSection({
             </SectionCard>
 
             <SectionCard
-              title="Country spread"
-              subtitle="How many teams appear per country in the current filter."
+              title={t('teams.countrySpread')}
+              subtitle={t('teams.countrySpreadSubtitle')}
             >
               {teamsByCountry.length === 0 ? (
                 <EmptyState
-                  title="No country spread yet"
-                  description="Country distribution will appear once current team data is available."
+                  title={t('teams.noCountrySpread')}
+                  description={t('teams.countrySpreadEmpty')}
                 />
               ) : (
                 <MiniBarList items={teamsByCountry} />
@@ -668,13 +707,13 @@ export default function TeamStatisticsSection({
           </div>
 
           <SectionCard
-            title="All current teams"
-            subtitle="Full current standings dataset for the selected filters."
+            title={t('teams.allCurrent')}
+            subtitle={t('teams.allCurrentSubtitle')}
           >
             {filteredTeamCurrent.length === 0 ? (
               <EmptyState
-                title="No current teams"
-                description="No teams match the selected filters."
+                title={t('teams.noCurrent')}
+                description={t('teams.noCurrentDescription')}
               />
             ) : (
               <>
@@ -701,7 +740,10 @@ export default function TeamStatisticsSection({
                           </td>
 
                           <td className="py-3 pr-3">
-                            <CountryFlagBadge countryCode={row.country_code} />
+                            <CountryFlagBadge
+                              countryCode={row.country_code}
+                              unknownCountryLabel={t('common.unknownCountry')}
+                            />
                           </td>
 
                           <td className="py-3 pr-3 text-slate-600">
@@ -709,11 +751,21 @@ export default function TeamStatisticsSection({
                           </td>
 
                           <td className="py-3 pr-3 text-slate-600">{getDivisionLabel(row)}</td>
+
                           <td className="py-3 pr-3">
-                            <TypeBadge isAi={row.is_ai} />
+                            <TypeBadge
+                              isAi={row.is_ai}
+                              userLabel={t('common.user')}
+                              aiLabel={t('common.ai')}
+                            />
                           </td>
+
                           <td className="py-3 pr-3">
-                            <StatusBadge isActive={row.is_active} />
+                            <StatusBadge
+                              isActive={row.is_active}
+                              activeLabel={t('common.active')}
+                              inactiveLabel={t('common.inactive')}
+                            />
                           </td>
 
                           <td className="py-3 text-right font-semibold text-slate-900">
@@ -730,6 +782,11 @@ export default function TeamStatisticsSection({
                   totalItems={filteredTeamCurrent.length}
                   pageSize={pageSize}
                   onPageChange={setTeamCurrentPage}
+                  previousLabel={t('common.previous')}
+                  nextLabel={t('common.next')}
+                  showingLabel={(start, end, total) =>
+                    t('common.showing', { start, end, total })
+                  }
                 />
               </>
             )}
@@ -738,14 +795,24 @@ export default function TeamStatisticsSection({
       ) : (
         <>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-            <KpiCard label="Seasons recorded" value={availableSeasons.length} />
-            <KpiCard label="Past winner rows" value={filteredWinners.length} />
             <KpiCard
-              label="Most titles"
-              value={teamTitles[0] ? `${teamTitles[0].club_name} (${teamTitles[0].titles})` : '—'}
+              label={t('teams.seasonsRecorded')}
+              value={availableSeasons.length}
             />
             <KpiCard
-              label="Latest winner"
+              label={t('teams.pastWinnerRows')}
+              value={filteredWinners.length}
+            />
+            <KpiCard
+              label={t('teams.mostTitles')}
+              value={
+                teamTitles[0]
+                  ? `${teamTitles[0].club_name} (${teamTitles[0].titles})`
+                  : '—'
+              }
+            />
+            <KpiCard
+              label={t('teams.latestWinner')}
               valueClassName="mt-3 text-lg font-semibold leading-tight text-slate-900 sm:text-xl"
               value={
                 latestWinner ? (
@@ -759,16 +826,23 @@ export default function TeamStatisticsSection({
                   '—'
                 )
               }
-              hint={latestWinner ? `Season ${latestWinner.season_number}` : 'No winners recorded yet'}
+              hint={
+                latestWinner
+                  ? `Season ${latestWinner.season_number}`
+                  : t('teams.noWinnersRecorded')
+              }
             />
           </div>
 
           <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
-            <SectionCard title="Past winners" subtitle="Historical champions for completed seasons.">
+            <SectionCard
+              title={t('teams.pastWinners')}
+              subtitle={t('teams.pastWinnersSubtitle')}
+            >
               {filteredWinners.length === 0 ? (
                 <EmptyState
-                  title="No past winners yet"
-                  description="This is expected if you are still early in the game lifecycle or have not filled history yet."
+                  title={t('teams.noPastWinners')}
+                  description={t('teams.noPastWinnersDescription')}
                 />
               ) : (
                 <div className="overflow-x-auto">
@@ -785,7 +859,9 @@ export default function TeamStatisticsSection({
                     <tbody>
                       {filteredWinners.map(row => (
                         <tr key={row.id} className="border-b border-slate-100">
-                          <td className="py-3 pr-3 font-medium text-slate-900">{row.season_number}</td>
+                          <td className="py-3 pr-3 font-medium text-slate-900">
+                            {row.season_number}
+                          </td>
 
                           <td className="py-3 pr-3">
                             <TeamNameButton onClick={() => openTeamProfile(row.club_id)}>
@@ -794,7 +870,10 @@ export default function TeamStatisticsSection({
                           </td>
 
                           <td className="py-3 pr-3">
-                            <CountryFlagBadge countryCode={row.country_code} />
+                            <CountryFlagBadge
+                              countryCode={row.country_code}
+                              unknownCountryLabel={t('common.unknownCountry')}
+                            />
                           </td>
 
                           <td className="py-3 pr-3 text-slate-600">
@@ -813,18 +892,21 @@ export default function TeamStatisticsSection({
             </SectionCard>
 
             <SectionCard
-              title="Titles leaderboard"
-              subtitle="Teams with the most recorded championships."
+              title={t('teams.titlesLeaderboard')}
+              subtitle={t('teams.titlesLeaderboardSubtitle')}
             >
               {teamTitles.length === 0 ? (
                 <EmptyState
-                  title="No title leaderboard yet"
-                  description="Once past winners are stored, this block will become one of the best parts of the page."
+                  title={t('teams.noTitles')}
+                  description={t('teams.noTitlesDescription')}
                 />
               ) : (
                 <MiniBarList
                   items={teamTitles.map(item => ({
-                    label: `${item.club_name} (${getCountryName(item.country_code, countryNameByCode)})`,
+                    label: `${item.club_name} (${getCountryName(
+                      item.country_code,
+                      countryNameByCode
+                    )})`,
                     value: item.titles,
                   }))}
                 />
@@ -833,13 +915,13 @@ export default function TeamStatisticsSection({
           </div>
 
           <SectionCard
-            title="Historical finishes"
-            subtitle="Season-by-season finishing positions across divisions."
+            title={t('teams.historicalFinishes')}
+            subtitle={t('teams.historicalFinishesSubtitle')}
           >
             {filteredSnapshots.length === 0 ? (
               <EmptyState
-                title="No season history yet"
-                description="Your game is currently in Season 1, so there are no completed historical seasons to show yet."
+                title={t('teams.noHistory')}
+                description={t('teams.noHistoryDescription')}
               />
             ) : (
               <>
@@ -860,8 +942,13 @@ export default function TeamStatisticsSection({
                     <tbody>
                       {paginatedTeamHistory.map(row => (
                         <tr key={row.id} className="border-b border-slate-100">
-                          <td className="py-3 pr-3 font-medium text-slate-900">{row.season_number}</td>
-                          <td className="py-3 pr-3 font-semibold text-slate-900">{row.final_position}</td>
+                          <td className="py-3 pr-3 font-medium text-slate-900">
+                            {row.season_number}
+                          </td>
+
+                          <td className="py-3 pr-3 font-semibold text-slate-900">
+                            {row.final_position}
+                          </td>
 
                           <td className="py-3 pr-3">
                             <TeamNameButton onClick={() => openTeamProfile(row.club_id)}>
@@ -870,7 +957,10 @@ export default function TeamStatisticsSection({
                           </td>
 
                           <td className="py-3 pr-3">
-                            <CountryFlagBadge countryCode={row.country_code} />
+                            <CountryFlagBadge
+                              countryCode={row.country_code}
+                              unknownCountryLabel={t('common.unknownCountry')}
+                            />
                           </td>
 
                           <td className="py-3 pr-3 text-slate-600">
@@ -878,11 +968,19 @@ export default function TeamStatisticsSection({
                           </td>
 
                           <td className="py-3 pr-3">
-                            <TypeBadge isAi={row.is_ai} />
+                            <TypeBadge
+                              isAi={row.is_ai}
+                              userLabel={t('common.user')}
+                              aiLabel={t('common.ai')}
+                            />
                           </td>
 
                           <td className="py-3 pr-3">
-                            <StatusBadge isActive={row.is_active} />
+                            <StatusBadge
+                              isActive={row.is_active}
+                              activeLabel={t('common.active')}
+                              inactiveLabel={t('common.inactive')}
+                            />
                           </td>
 
                           <td className="py-3 text-right font-semibold text-slate-900">
@@ -899,6 +997,11 @@ export default function TeamStatisticsSection({
                   totalItems={filteredSnapshots.length}
                   pageSize={pageSize}
                   onPageChange={setTeamHistoryPage}
+                  previousLabel={t('common.previous')}
+                  nextLabel={t('common.next')}
+                  showingLabel={(start, end, total) =>
+                    t('common.showing', { start, end, total })
+                  }
                 />
               </>
             )}
