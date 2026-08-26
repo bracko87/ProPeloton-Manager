@@ -1,4 +1,5 @@
 import React from 'react'
+import { useTranslation } from 'react-i18next'
 
 type RiderSubTab = 'rankings' | 'breakdown'
 type TeamTypeFilter = 'all' | 'user' | 'ai'
@@ -172,10 +173,12 @@ function CountryFlag({
   code,
   countryNameByCode,
   getCountryName,
+  unknownCountryLabel,
 }: {
   code: string | null
   countryNameByCode: Map<string, string>
   getCountryName: (code: string | null, countryNameByCode: Map<string, string>) => string
+  unknownCountryLabel: string
 }) {
   const safeCode = safeCountryCode(code)
 
@@ -183,8 +186,8 @@ function CountryFlag({
     return (
       <span
         className="inline-block h-4 w-6 shrink-0 rounded-sm border border-slate-200 bg-slate-100"
-        title="Unknown country"
-        aria-label="Unknown country"
+        title={unknownCountryLabel}
+        aria-label={unknownCountryLabel}
       />
     )
   }
@@ -235,11 +238,17 @@ function Pagination({
   totalItems,
   pageSize,
   onPageChange,
+  showingLabel,
+  previousLabel,
+  nextLabel,
 }: {
   currentPage: number
   totalItems: number
   pageSize: number
   onPageChange: (page: number) => void
+  showingLabel: (start: number, end: number, total: number) => string
+  previousLabel: string
+  nextLabel: string
 }) {
   const totalPages = Math.ceil(totalItems / pageSize)
 
@@ -251,7 +260,7 @@ function Pagination({
   return (
     <div className="mt-4 flex items-center justify-between gap-3">
       <div className="text-sm text-slate-500">
-        Showing {start}-{end} of {totalItems}
+        {showingLabel(start, end, totalItems)}
       </div>
 
       <div className="flex items-center gap-2">
@@ -266,7 +275,7 @@ function Pagination({
               : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
           )}
         >
-          Previous
+          {previousLabel}
         </button>
 
         <div className="text-sm font-medium text-slate-700">
@@ -284,7 +293,7 @@ function Pagination({
               : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
           )}
         >
-          Next
+          {nextLabel}
         </button>
       </div>
     </div>
@@ -388,12 +397,42 @@ export default function RiderStatisticsSection({
   getDisplayedRiderCountryCode,
   moneyFormatter,
 }: Props) {
+  const { t } = useTranslation('statistics')
+
+  const formatRiderRoleLabel = (role: string) => {
+    const normalizedRole = role.trim().toLowerCase().replace(/[\s_-]+/g, '')
+
+    switch (normalizedRole) {
+      case 'sprinter':
+        return t('roles.sprinter')
+      case 'climber':
+        return t('roles.climber')
+      case 'allrounder':
+        return t('roles.allRounder')
+      case 'timetrialist':
+        return t('roles.timeTrialist')
+      case 'domestique':
+        return t('roles.domestique')
+      case 'rouleur':
+        return t('roles.rouleur')
+      case 'puncheur':
+        return t('roles.puncheur')
+      default:
+        return formatCompetitionLabel(role)
+    }
+  }
+
+  const translatedRiderRoles = riderRoles.map(item => ({
+    ...item,
+    label: formatRiderRoleLabel(item.label),
+  }))
+
   return (
     <div className="space-y-6">
       <TextSubTabs
         items={[
-          { key: 'rankings', label: 'Rankings' },
-          { key: 'breakdown', label: 'Breakdown' },
+          { key: 'rankings', label: t('common.rankings') },
+          { key: 'breakdown', label: t('common.breakdown') },
         ]}
         activeKey={riderSubTab}
         onChange={key => setRiderSubTab(key as RiderSubTab)}
@@ -404,7 +443,7 @@ export default function RiderStatisticsSection({
           <input
             value={search}
             onChange={e => setSearch(e.target.value)}
-            placeholder="Search riders or teams..."
+            placeholder={t('filters.searchRidersTeams')}
             className="rounded-xl border border-slate-300 px-3 py-2 text-sm"
           />
 
@@ -413,9 +452,9 @@ export default function RiderStatisticsSection({
             onChange={e => setTeamTypeFilter(e.target.value as TeamTypeFilter)}
             className="rounded-xl border border-slate-300 px-3 py-2 text-sm"
           >
-            <option value="all">All team types</option>
-            <option value="user">User teams</option>
-            <option value="ai">AI teams</option>
+            <option value="all">{t('filters.allTeamTypes')}</option>
+            <option value="user">{t('filters.userTeams')}</option>
+            <option value="ai">{t('filters.aiTeams')}</option>
           </select>
 
           <select
@@ -423,9 +462,9 @@ export default function RiderStatisticsSection({
             onChange={e => setStatusFilter(e.target.value as StatusFilter)}
             className="rounded-xl border border-slate-300 px-3 py-2 text-sm"
           >
-            <option value="all">All status</option>
-            <option value="active">Fit only</option>
-            <option value="inactive">Unavailable only</option>
+            <option value="all">{t('filters.allStatus')}</option>
+            <option value="active">{t('filters.fitOnly')}</option>
+            <option value="inactive">{t('filters.unavailableOnly')}</option>
           </select>
 
           <select
@@ -433,7 +472,7 @@ export default function RiderStatisticsSection({
             onChange={e => setTierFilter(e.target.value)}
             className="rounded-xl border border-slate-300 px-3 py-2 text-sm"
           >
-            <option value="all">All tiers</option>
+            <option value="all">{t('filters.allTiers')}</option>
             {availableTiers.map(tier => (
               <option key={tier} value={tier}>
                 {formatCompetitionLabel(tier)}
@@ -446,9 +485,9 @@ export default function RiderStatisticsSection({
             onChange={e => setRiderMetric(e.target.value as RiderMetric)}
             className="rounded-xl border border-slate-300 px-3 py-2 text-sm"
           >
-            <option value="season_points_overall">Sort: International points</option>
-            <option value="season_points_sprint">Sort: Stage finish points</option>
-            <option value="season_points_climbing">Sort: GC / one-day points</option>
+            <option value="season_points_overall">{t('filters.sortInternational')}</option>
+            <option value="season_points_sprint">{t('filters.sortStageFinish')}</option>
+            <option value="season_points_climbing">{t('filters.sortGcOneDay')}</option>
           </select>
 
           <select
@@ -456,7 +495,7 @@ export default function RiderStatisticsSection({
             onChange={e => setCountryFilter(e.target.value)}
             className="rounded-xl border border-slate-300 px-3 py-2 text-sm"
           >
-            <option value="all">All countries</option>
+            <option value="all">{t('filters.allCountries')}</option>
             {availableRiderCountries.map(country => (
               <option key={country} value={country}>
                 {getCountryName(country, countryNameByCode)}
@@ -478,7 +517,7 @@ export default function RiderStatisticsSection({
         <>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
             <KpiCard
-              label="Most international points"
+              label={t('riders.mostInternational')}
               value={
                 topOverallPointsRider ? (
                   <RiderNameButton onClick={() => openRiderProfile(topOverallPointsRider)}>
@@ -491,7 +530,7 @@ export default function RiderStatisticsSection({
             />
 
             <KpiCard
-              label="Most podiums"
+              label={t('riders.mostPodiums')}
               value={
                 topPodiumsRider ? (
                   <RiderNameButton onClick={() => openRiderProfile(topPodiumsRider)}>
@@ -504,7 +543,7 @@ export default function RiderStatisticsSection({
             />
 
             <KpiCard
-              label="Most jerseys"
+              label={t('riders.mostJerseys')}
               value={
                 topJerseysRider ? (
                   <RiderNameButton onClick={() => openRiderProfile(topJerseysRider)}>
@@ -516,16 +555,16 @@ export default function RiderStatisticsSection({
               }
             />
 
-            <KpiCard label="Riders in filter" value={filteredRiders.length} />
+            <KpiCard label={t('riders.ridersInFilter')} value={filteredRiders.length} />
           </div>
 
           <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
             <SectionCard
-              title="Top riders"
+              title={t('riders.topRiders')}
               subtitle={`Sorted by ${formatRiderMetricLabel(riderMetric).toLowerCase()} points.`}
             >
               {filteredRiders.length === 0 ? (
-                <EmptyState title="No riders found" description="Try changing the rider filters." />
+                <EmptyState title={t('riders.noRidersFound')} description={t('riders.tryRiderFilters')} />
               ) : (
                 <div className="overflow-x-auto">
                   <table className="min-w-full text-sm">
@@ -555,11 +594,12 @@ export default function RiderStatisticsSection({
                               code={getDisplayedRiderCountryCode(row)}
                               countryNameByCode={countryNameByCode}
                               getCountryName={getCountryName}
+                              unknownCountryLabel={t('common.unknownCountry')}
                             />
                           </td>
 
                           <td className="py-3 pr-3 text-slate-600">
-                            {formatCompetitionLabel(row.role)}
+                            {formatRiderRoleLabel(row.role)}
                           </td>
 
                           <td className="py-3 pr-3 text-slate-600">
@@ -586,23 +626,23 @@ export default function RiderStatisticsSection({
             </SectionCard>
 
             <SectionCard
-              title="Role distribution"
-              subtitle="How riders are spread across roles in the selected filter."
+              title={t('riders.roleDistribution')}
+              subtitle={t('riders.roleDistributionSubtitle')}
             >
               {riderRoles.length === 0 ? (
                 <EmptyState
-                  title="No role data"
-                  description="Role breakdown appears once rider data is available."
+                  title={t('riders.noRoleData')}
+                  description={t('riders.noRoleDescription')}
                 />
               ) : (
-                <MiniBarList items={riderRoles} />
+                <MiniBarList items={translatedRiderRoles} />
               )}
             </SectionCard>
           </div>
 
           <SectionCard
-            title="Top 50 riders"
-            subtitle="Best available riders in the current filter."
+            title={t('riders.top50')}
+            subtitle={t('riders.top50Subtitle')}
             right={
               <select
                 value={riderTableMetric}
@@ -617,8 +657,8 @@ export default function RiderStatisticsSection({
           >
             {topRiderTableRows.length === 0 ? (
               <EmptyState
-                title="No riders available"
-                description="No riders match the selected filters."
+                title={t('riders.noRidersAvailable')}
+                description={t('riders.noRidersDescription')}
               />
             ) : (
               <>
@@ -650,11 +690,12 @@ export default function RiderStatisticsSection({
                               code={getDisplayedRiderCountryCode(row)}
                               countryNameByCode={countryNameByCode}
                               getCountryName={getCountryName}
+                              unknownCountryLabel={t('common.unknownCountry')}
                             />
                           </td>
 
                           <td className="py-3 pr-3 text-slate-600">
-                            {formatCompetitionLabel(row.role)}
+                            {formatRiderRoleLabel(row.role)}
                           </td>
 
                           <td className="py-3 pr-3 text-slate-600">
@@ -683,6 +724,9 @@ export default function RiderStatisticsSection({
                   totalItems={topRiderTableRows.length}
                   pageSize={pageSize}
                   onPageChange={setRidersPage}
+                  showingLabel={(start, end, total) => t('common.showing', { start, end, total })}
+                  previousLabel={t('common.previous')}
+                  nextLabel={t('common.next')}
                 />
               </>
             )}
@@ -692,7 +736,7 @@ export default function RiderStatisticsSection({
         <>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
             <KpiCard
-              label="Average overall"
+              label={t('riders.averageOverall')}
               value={
                 filteredRiders.length
                   ? (
@@ -704,7 +748,7 @@ export default function RiderStatisticsSection({
             />
 
             <KpiCard
-              label="Average fatigue"
+              label={t('riders.averageFatigue')}
               value={
                 filteredRiders.length
                   ? (
@@ -716,12 +760,12 @@ export default function RiderStatisticsSection({
             />
 
             <KpiCard
-              label="Total market value"
+              label={t('riders.totalMarketValue')}
               value={moneyFormatter.format(filteredRiders.reduce((sum, row) => sum + (row.market_value ?? 0), 0))}
             />
 
             <KpiCard
-              label="Average salary"
+              label={t('riders.averageSalary')}
               value={
                 filteredRiders.length
                   ? moneyFormatter.format(
@@ -737,13 +781,13 @@ export default function RiderStatisticsSection({
 
           <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
             <SectionCard
-              title="Age distribution"
-              subtitle="Quick way to see how balanced the rider pool is."
+              title={t('riders.ageDistribution')}
+              subtitle={t('riders.ageDistributionSubtitle')}
             >
               {riderAgeBuckets.every(item => item.value === 0) ? (
                 <EmptyState
-                  title="No age breakdown"
-                  description="Age buckets will appear once riders are loaded."
+                  title={t('riders.noAgeBreakdown')}
+                  description={t('riders.noAgeDescription')}
                 />
               ) : (
                 <MiniBarList items={riderAgeBuckets} />
@@ -751,13 +795,13 @@ export default function RiderStatisticsSection({
             </SectionCard>
 
             <SectionCard
-              title="Top value / salary riders"
-              subtitle="Useful when you later want contract and transfer-related stats here."
+              title={t('riders.topValueSalary')}
+              subtitle={t('riders.topValueSalarySubtitle')}
             >
               {filteredRiders.length === 0 ? (
                 <EmptyState
-                  title="No rider finance data"
-                  description="This area can later become value, wages, and contract expiry summaries."
+                  title={t('riders.noFinanceData')}
+                  description={t('riders.noFinanceDescription')}
                 />
               ) : (
                 <div className="space-y-3">
