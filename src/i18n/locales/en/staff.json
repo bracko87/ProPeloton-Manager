@@ -112,6 +112,38 @@
     "cost": "Cost: {{value}}",
     "completed": "Completed: {{date}}"
   },
+  "assignment": {
+    "notAssigned": "Currently not assigned",
+    "expiresToday": "Expires today",
+    "oneDayLeft": "1 day left",
+    "daysLeft": "{{count}} days left",
+    "openProfile": "Open Staff Profile"
+  },
+  "attributes": {
+    "training": "Training",
+    "recoveryPlanning": "Recovery Planning",
+    "youthDevelopment": "Youth Development",
+    "experience": "Experience",
+    "leadership": "Leadership",
+    "loyalty": "Loyalty",
+    "dailyTraining": "Daily Training",
+    "trainingEfficiency": "Training Efficiency",
+    "potentialGrowth": "Potential Growth",
+    "recovery": "Recovery",
+    "prevention": "Prevention",
+    "diagnosis": "Diagnosis",
+    "rehabilitation": "Rehabilitation",
+    "recoverySpeed": "Recovery Speed",
+    "nutrition": "Nutrition",
+    "consistency": "Consistency",
+    "bikeSetup": "Bike Setup",
+    "reliability": "Reliability",
+    "racePlanning": "Race Planning",
+    "teamControl": "Team Control",
+    "evaluation": "Evaluation",
+    "network": "Network",
+    "accuracy": "Accuracy"
+  },
   "premium": {
     "analysisTitle": "Premium staff analysis",
     "analysisDescription": "View combined staff impact, average skill profiles, and completed course results.",
