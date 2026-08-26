@@ -354,11 +354,18 @@ function sponsorObjectiveTitleSuffix(objective: SponsorObjectiveUiRow): string {
   return title
 }
 
-function getCountryName(countryCode: string | null | undefined): string {
+function getCountryName(
+  countryCode: string | null | undefined,
+  resolvedLanguage: string | undefined
+): string {
   if (!countryCode) return 'Unknown country'
 
+  const displayLocale = resolvedLanguage?.startsWith('sr')
+    ? 'sr-Latn-RS'
+    : resolvedLanguage || 'en'
+
   try {
-    const displayNames = new Intl.DisplayNames(['en'], { type: 'region' })
+    const displayNames = new Intl.DisplayNames([displayLocale], { type: 'region' })
     return displayNames.of(countryCode.toUpperCase()) ?? countryCode.toUpperCase()
   } catch {
     return countryCode.toUpperCase()
@@ -614,9 +621,10 @@ function CountryFlagLabel({
   imageWidth?: number
   className?: string
 }): JSX.Element {
+  const { i18n } = useTranslation('finance')
   const [failed, setFailed] = React.useState(false)
   const src = getLocalFlagUrl(countryCode)
-  const countryName = getCountryName(countryCode)
+  const countryName = getCountryName(countryCode, i18n.resolvedLanguage)
 
   return (
     <div className={`flex items-center gap-2 text-sm text-gray-600 ${className}`}>
@@ -644,9 +652,10 @@ function CountryFlagOnly({
   imageWidth?: number
   className?: string
 }): JSX.Element | null {
+  const { i18n } = useTranslation('finance')
   const [failed, setFailed] = React.useState(false)
   const src = getLocalFlagUrl(countryCode)
-  const countryName = getCountryName(countryCode)
+  const countryName = getCountryName(countryCode, i18n.resolvedLanguage)
 
   if (!src || failed) return null
 
@@ -1011,7 +1020,7 @@ function OfferModal({
                             )}
 
                             <div className="flex flex-wrap gap-2 mt-3">
-                              <StatusPill label={`Season ${offer.season_number}`} tone="blue" />
+                              <StatusPill label={`${t('common.season')} ${offer.season_number}`} tone="blue" />
                               <StatusPill
                                 label={t('sponsors.factor', { value: toNumber(offer.proration_factor).toFixed(2) })}
                               />
@@ -1423,12 +1432,15 @@ function MainSponsorHero({
               )}
 
               <div className="flex flex-wrap gap-2 mt-4">
-                <StatusPill label="Signed" tone="green" />
+                <StatusPill
+                  label={sponsor.status === 'signed' ? t('common.signed') : sponsor.status}
+                  tone="green"
+                />
                 <StatusPill
                   label={signedMainDealLabel}
                   tone={signedMainDealType === 'naming_rights' ? 'yellow' : 'blue'}
                 />
-                <StatusPill label={`Season ${sponsor.season_number}`} tone="blue" />
+                <StatusPill label={`${t('common.season')} ${sponsor.season_number}`} tone="blue" />
               </div>
             </div>
 
@@ -1568,7 +1580,14 @@ function SecondarySponsorPanel({
               <div key={slot} className="rounded-xl border p-4 bg-white">
                 <div className="flex items-center justify-between gap-2">
                   <div className="font-medium text-gray-900">{t('sponsors.slot', { slot })}</div>
-                  {sponsor ? <StatusPill label="Signed" tone="green" /> : <StatusPill label="Empty" />}
+                  {sponsor ? (
+                    <StatusPill
+                      label={sponsor.status === 'signed' ? t('common.signed') : sponsor.status}
+                      tone="green"
+                    />
+                  ) : (
+                    <StatusPill label="Empty" />
+                  )}
                 </div>
 
                 {sponsor ? (
@@ -1666,7 +1685,10 @@ function TechnicalSponsorPanel({
                   )}
 
                   <div className="flex flex-wrap gap-2 mt-4">
-                    <StatusPill label="Signed" tone="green" />
+                    <StatusPill
+                      label={sponsor.status === 'signed' ? t('common.signed') : sponsor.status}
+                      tone="green"
+                    />
                     {discountEntries.length > 0 ? (
                       discountEntries.map(([category, discount]) => (
                         <StatusPill
@@ -2191,7 +2213,7 @@ export function SponsorsTab({
                   <div>
                     <div className="text-gray-500">{t('sponsors.mainSponsor')}</div>
                     <div className="font-semibold mt-2">
-                      {dashboard.needs_main_sponsor ? 'Needed' : 'Signed'}
+                      {dashboard.needs_main_sponsor ? 'Needed' : t('common.signed')}
                     </div>
                   </div>
                   <div
@@ -2231,7 +2253,7 @@ export function SponsorsTab({
                   <div>
                     <div className="text-gray-500">{t('sponsors.technicalSponsor')}</div>
                     <div className="font-semibold mt-2">
-                      {dashboard.needs_technical_sponsor ? 'Needed' : 'Signed'}
+                      {dashboard.needs_technical_sponsor ? 'Needed' : t('common.signed')}
                     </div>
                   </div>
                   <div
