@@ -22,6 +22,8 @@
  */
 
 import React, { useEffect, useMemo, useState } from 'react'
+import type { TFunction } from 'i18next'
+import { useTranslation } from 'react-i18next'
 import { Link, useLocation, useNavigate, useParams } from 'react-router'
 import ReportPlayerButton from '../../components/dashboard/ReportPlayerButton'
 import { normalizeGameDateValue } from '../../features/squad/utils/dates'
@@ -163,36 +165,37 @@ type TeamKitConfig = {
 }
 
 /**
- * Map of known competition tier/division codes to human-readable labels.
+ * Map of known competition tier/division codes to stable translation keys.
+ * Backend competition codes stay unchanged; only the displayed label is translated.
  */
-const COMPETITION_LABELS: Record<string, string> = {
-  worldteam: 'WorldTeam',
-  proteam: 'ProTeam',
-  continental: 'Continental',
-  amateur: 'Amateur',
-  WORLDTEAM: 'WorldTeam',
-  PROTEAM: 'ProTeam',
-  CONTINENTAL: 'Continental',
-  AMATEUR: 'Amateur',
-  PRO_WEST: 'ProTeam West',
-  PRO_EAST: 'ProTeam East',
-  CONTINENTAL_EUROPE: 'Continental Europe',
-  CONTINENTAL_AMERICA: 'Continental America',
-  CONTINENTAL_ASIA: 'Continental Asia',
-  CONTINENTAL_AFRICA: 'Continental Africa',
-  CONTINENTAL_OCEANIA: 'Continental Oceania',
-  NORTH_AMERICA: 'North America',
-  SOUTH_AMERICA: 'South America',
-  WESTERN_EUROPE: 'Western Europe',
-  CENTRAL_EUROPE: 'Central Europe',
-  SOUTHERN_BALKAN_EUROPE: 'Southern & Balkan Europe',
-  NORTHERN_EASTERN_EUROPE: 'Northern & Eastern Europe',
-  WEST_NORTH_AFRICA: 'West & North Africa',
-  CENTRAL_SOUTH_AFRICA: 'Central & South Africa',
-  WEST_CENTRAL_ASIA: 'West & Central Asia',
-  SOUTH_ASIA: 'South Asia',
-  EAST_SOUTHEAST_ASIA: 'East & Southeast Asia',
-  OCEANIA: 'Oceania',
+const COMPETITION_LABEL_KEYS: Record<string, string> = {
+  worldteam: 'competition.worldTeam',
+  proteam: 'competition.proTeam',
+  continental: 'competition.continental',
+  amateur: 'competition.amateur',
+  WORLDTEAM: 'competition.worldTeam',
+  PROTEAM: 'competition.proTeam',
+  CONTINENTAL: 'competition.continental',
+  AMATEUR: 'competition.amateur',
+  PRO_WEST: 'competition.proWest',
+  PRO_EAST: 'competition.proEast',
+  CONTINENTAL_EUROPE: 'competition.continentalEurope',
+  CONTINENTAL_AMERICA: 'competition.continentalAmerica',
+  CONTINENTAL_ASIA: 'competition.continentalAsia',
+  CONTINENTAL_AFRICA: 'competition.continentalAfrica',
+  CONTINENTAL_OCEANIA: 'competition.continentalOceania',
+  NORTH_AMERICA: 'competition.northAmerica',
+  SOUTH_AMERICA: 'competition.southAmerica',
+  WESTERN_EUROPE: 'competition.westernEurope',
+  CENTRAL_EUROPE: 'competition.centralEurope',
+  SOUTHERN_BALKAN_EUROPE: 'competition.southernBalkanEurope',
+  NORTHERN_EASTERN_EUROPE: 'competition.northernEasternEurope',
+  WEST_NORTH_AFRICA: 'competition.westNorthAfrica',
+  CENTRAL_SOUTH_AFRICA: 'competition.centralSouthAfrica',
+  WEST_CENTRAL_ASIA: 'competition.westCentralAsia',
+  SOUTH_ASIA: 'competition.southAsia',
+  EAST_SOUTHEAST_ASIA: 'competition.eastSoutheastAsia',
+  OCEANIA: 'competition.oceania',
 }
 
 /**
@@ -211,10 +214,17 @@ function toTitleCase(value: string): string {
  * formatCompetitionLabel
  * Normalizes competition/tier labels from codes into human-readable form.
  */
-function formatCompetitionLabel(value: string | null | undefined): string {
+function formatCompetitionLabel(
+  value: string | null | undefined,
+  t: TFunction<'club'>,
+): string {
   if (!value) return '—'
-  if (COMPETITION_LABELS[value]) return COMPETITION_LABELS[value]
-  if (COMPETITION_LABELS[value.toLowerCase()]) return COMPETITION_LABELS[value.toLowerCase()]
+
+  const translationKey =
+    COMPETITION_LABEL_KEYS[value] ?? COMPETITION_LABEL_KEYS[value.toLowerCase()]
+
+  if (translationKey) return t(translationKey)
+
   return toTitleCase(value.replace(/_/g, ' '))
 }
 
@@ -280,26 +290,26 @@ function normalizeRecentRaceString(value: unknown): string | null {
   return trimmed ? trimmed : null
 }
 
-function formatRecentRaceDate(value?: string | null): string {
+function formatRecentRaceDate(value: string | null | undefined, locale?: string): string {
   if (!value) return '—'
 
   const date = new Date(`${value}T00:00:00`)
   if (Number.isNaN(date.getTime())) return value
 
-  return date.toLocaleDateString(undefined, {
+  return date.toLocaleDateString(locale, {
     month: 'short',
     day: 'numeric',
   })
 }
 
-function formatRecentRaceDateRange(race: TeamRecentRaceRow): string {
+function formatRecentRaceDateRange(race: TeamRecentRaceRow, locale?: string): string {
   const start = race.race_start_date ?? race.race_date
   const end = race.race_end_date ?? race.race_date ?? start
 
   if (!start && !end) return '—'
 
-  const startLabel = formatRecentRaceDate(start)
-  const endLabel = formatRecentRaceDate(end)
+  const startLabel = formatRecentRaceDate(start, locale)
+  const endLabel = formatRecentRaceDate(end, locale)
 
   if (!start || !end || start === end) return startLabel
 
@@ -312,20 +322,20 @@ function formatRecentRaceDateRange(race: TeamRecentRaceRow): string {
     startDate.getFullYear() === endDate.getFullYear() &&
     startDate.getMonth() === endDate.getMonth()
   ) {
-    const month = startDate.toLocaleDateString(undefined, { month: 'short' })
+    const month = startDate.toLocaleDateString(locale, { month: 'short' })
     return `${month} ${startDate.getDate()}–${endDate.getDate()}`
   }
 
   return `${startLabel}–${endLabel}`
 }
 
-function getRecentRaceSubtitle(race: TeamRecentRaceRow): string {
+function getRecentRaceSubtitle(race: TeamRecentRaceRow, t: TFunction<'club'>): string {
   const parts: string[] = []
 
   if (race.stage_count && race.stage_count > 1) {
-    parts.push(`${race.stage_count} stages`)
+    parts.push(t('teamProfile.stages', { count: race.stage_count }))
   } else if (race.stage_count === 1) {
-    parts.push('1 stage')
+    parts.push(t('teamProfile.oneStage'))
   }
 
   if (race.route_label) {
@@ -333,11 +343,11 @@ function getRecentRaceSubtitle(race: TeamRecentRaceRow): string {
   }
 
   if (race.result_source === 'team_classification') {
-    parts.push('team classification')
+    parts.push(t('teamProfile.teamClassification'))
   } else if (race.result_source === 'best_rider_final_gc') {
-    parts.push('best rider GC')
+    parts.push(t('teamProfile.bestRiderGc'))
   } else if (race.result_source === 'best_stage_finish') {
-    parts.push('best stage finish')
+    parts.push(t('teamProfile.bestStageFinish'))
   }
 
   return parts.join(' · ')
@@ -347,11 +357,11 @@ function formatTeamPosition(value?: number | null): string {
   return value === null || value === undefined ? '—' : String(value)
 }
 
-function buildRaceReturnState(currentPath: string) {
+function buildRaceReturnState(currentPath: string, backLabel: string) {
   return {
     from: currentPath,
     returnTo: currentPath,
-    returnLabel: '← Back',
+    returnLabel: backLabel,
     scrollX: typeof window !== 'undefined' ? window.scrollX : 0,
     scrollY: typeof window !== 'undefined' ? window.scrollY : 0,
   }
@@ -386,7 +396,7 @@ function getAgeYearsAtDate(
   return age
 }
 
-function formatRole(value: string | null | undefined): string {
+function formatRole(value: string | null | undefined, t: TFunction<'club'>): string {
   if (!value) return '—'
 
   const normalized = value.trim().toLowerCase()
@@ -401,7 +411,7 @@ function formatRole(value: string | null | undefined): string {
     case 'all_rounder':
       return 'All-rounder'
     default:
-      return formatCompetitionLabel(value)
+      return formatCompetitionLabel(value, t)
   }
 }
 
@@ -409,31 +419,22 @@ function formatRole(value: string | null | undefined): string {
  * getClubTierLabel
  * Returns a user-friendly label for a club tier code.
  */
-function getClubTierLabel(clubTier: string | null): string {
+function getClubTierLabel(clubTier: string | null, t: TFunction<'club'>): string {
   if (!clubTier) return '-'
-
-  switch (clubTier) {
-    case 'worldteam':
-      return 'WorldTeam'
-    case 'proteam':
-      return 'ProTeam'
-    case 'continental':
-      return 'Continental'
-    case 'amateur':
-      return 'Amateur'
-    default:
-      return formatCompetitionLabel(clubTier)
-  }
+  return formatCompetitionLabel(clubTier, t)
 }
 
 /**
  * getDivisionLabelFromProfile
  * Derives the division label from the profile's tier2/tier3/amateur division fields.
  */
-function getDivisionLabelFromProfile(profile: ClubProfileRecord): string {
-  if (profile.tier2_division) return formatCompetitionLabel(profile.tier2_division)
-  if (profile.tier3_division) return formatCompetitionLabel(profile.tier3_division)
-  if (profile.amateur_division) return formatCompetitionLabel(profile.amateur_division)
+function getDivisionLabelFromProfile(
+  profile: ClubProfileRecord,
+  t: TFunction<'club'>,
+): string {
+  if (profile.tier2_division) return formatCompetitionLabel(profile.tier2_division, t)
+  if (profile.tier3_division) return formatCompetitionLabel(profile.tier3_division, t)
+  if (profile.amateur_division) return formatCompetitionLabel(profile.amateur_division, t)
   return '-'
 }
 
@@ -579,6 +580,22 @@ function safeCountryCode(countryCode: string | null | undefined): string | null 
   if (!code || !/^[a-z]{2}$/.test(code)) return null
 
   return code
+}
+
+
+function getLocalizedCountryName(
+  countryCode: string | null | undefined,
+  fallbackName: string | null | undefined,
+  displayNames: Intl.DisplayNames | null,
+): string {
+  const safeCode = safeCountryCode(countryCode)
+
+  if (safeCode && displayNames) {
+    const localizedName = displayNames.of(safeCode.toUpperCase())
+    if (localizedName) return localizedName
+  }
+
+  return fallbackName ?? safeCode?.toUpperCase() ?? '—'
 }
 
 /**
@@ -746,6 +763,7 @@ function TeamJerseyPreview({
   primaryColor,
   secondaryColor,
   aiKitPreviewUrl,
+  t,
 }: {
   clubName: string
   kitName: string | null
@@ -753,6 +771,7 @@ function TeamJerseyPreview({
   primaryColor: string | null
   secondaryColor: string | null
   aiKitPreviewUrl?: string | null
+  t: TFunction<'club'>
 }): JSX.Element {
   const [imageFailed, setImageFailed] = useState(false)
 
@@ -775,8 +794,8 @@ function TeamJerseyPreview({
     <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <h3 className="text-base font-semibold text-slate-900">Team jersey</h3>
-          <p className="mt-1 text-sm text-slate-500">Public kit preview for this team.</p>
+          <h3 className="text-base font-semibold text-slate-900">{t('teamProfile.jersey')}</h3>
+          <p className="mt-1 text-sm text-slate-500">{t('teamProfile.jerseyDescription')}</p>
         </div>
 
         {kitName ? (
@@ -826,20 +845,22 @@ function TeamJerseyPreview({
 function TeamRosterTable({
   riders,
   currentGameDate,
+  t,
 }: {
   riders: TeamRosterRow[]
   currentGameDate: string | null
+  t: TFunction<'club'>
 }): JSX.Element {
   return (
     <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
       <div>
-        <h2 className="text-sm font-semibold text-slate-900">Team roster</h2>
-        <p className="mt-1 text-sm text-slate-500">Current riders registered to this team.</p>
+        <h2 className="text-sm font-semibold text-slate-900">{t('teamProfile.roster')}</h2>
+        <p className="mt-1 text-sm text-slate-500">{t('teamProfile.rosterDescription')}</p>
       </div>
 
       {riders.length === 0 ? (
         <div className="mt-5 rounded-xl border border-slate-200 bg-white px-4 py-8 text-center text-sm text-slate-500">
-          No riders found for this team.
+          {t('teamProfile.noRiders')}
         </div>
       ) : (
         <div className="mt-5 overflow-hidden rounded-xl border border-slate-200 bg-white">
@@ -847,16 +868,16 @@ function TeamRosterTable({
             <thead className="bg-slate-50">
               <tr>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
-                  Rider
+                  {t('teamProfile.rider')}
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
-                  Country
+                  {t('teamProfile.country')}
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
-                  Role
+                  {t('teamProfile.role')}
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
-                  Age
+                  {t('teamProfile.age')}
                 </th>
               </tr>
             </thead>
@@ -884,7 +905,7 @@ function TeamRosterTable({
                       )}
                     </td>
 
-                    <td className="px-4 py-3 text-slate-700">{formatRole(rider.role)}</td>
+                    <td className="px-4 py-3 text-slate-700">{formatRole(rider.role, t)}</td>
 
                     <td className="px-4 py-3 text-slate-700">{age ?? '—'}</td>
                   </tr>
@@ -902,14 +923,18 @@ function LastFiveRacesPanel({
   races,
   currentPath,
   loading,
+  locale,
+  t,
 }: {
   races: TeamRecentRaceRow[]
   currentPath: string
   loading: boolean
+  locale: string
+  t: TFunction<'club'>
 }): JSX.Element {
   return (
     <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-      <h2 className="text-sm font-semibold text-slate-900">Last 5 races</h2>
+      <h2 className="text-sm font-semibold text-slate-900">{t('teamProfile.lastFiveRaces')}</h2>
       <p className="mt-1 text-sm text-slate-500">
         Finished races only · exact squad participation only
       </p>
@@ -917,7 +942,7 @@ function LastFiveRacesPanel({
       <div className="mt-4 space-y-2">
         {loading ? (
           <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-500">
-            Loading recent races…
+            {t('teamProfile.loadingRaces')}
           </div>
         ) : races.length === 0 ? (
           <div className="rounded-lg border border-dashed border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-500">
@@ -925,7 +950,7 @@ function LastFiveRacesPanel({
           </div>
         ) : (
           races.map((race) => {
-            const subtitle = getRecentRaceSubtitle(race)
+            const subtitle = getRecentRaceSubtitle(race, t)
             const raceTitle = subtitle ? `${race.race_name} · ${subtitle}` : race.race_name
 
             return (
@@ -935,7 +960,7 @@ function LastFiveRacesPanel({
                 title={raceTitle}
               >
                 <div className="w-[56px] shrink-0 whitespace-nowrap text-xs font-semibold text-slate-900">
-                  {formatRecentRaceDateRange(race)}
+                  {formatRecentRaceDateRange(race, locale)}
                 </div>
 
                 <div className="h-7 w-px shrink-0 bg-emerald-400" />
@@ -945,7 +970,7 @@ function LastFiveRacesPanel({
 
                   <Link
                     to={`/dashboard/races/${race.race_id}`}
-                    state={buildRaceReturnState(currentPath)}
+                    state={buildRaceReturnState(currentPath, t('common.back'))}
                     title={raceTitle}
                     className="min-w-0 flex-1 truncate font-semibold text-slate-900 hover:text-yellow-600 hover:underline"
                   >
@@ -961,14 +986,14 @@ function LastFiveRacesPanel({
 
                 <div className="ml-auto flex shrink-0 items-center divide-x divide-slate-300 border-l border-slate-300 pl-3 text-[10px] uppercase tracking-[0.14em] text-slate-500">
                   <div className="pr-3">
-                    Team position:{' '}
+                    {t('teamProfile.teamPosition')}:{' '}
                     <span className="tracking-normal text-slate-900">
                       {formatTeamPosition(race.team_position)}
                     </span>
                   </div>
 
                   <div className="pl-3">
-                    UCI points:{' '}
+                    {t('teamProfile.uciPoints')}:{' '}
                     <span className="tracking-normal text-slate-900">
                       {formatNumberValue(race.uci_points)}
                     </span>
@@ -985,8 +1010,10 @@ function LastFiveRacesPanel({
 
 function PublicInactivityProfileNotice({
   inactivity,
+  t,
 }: {
   inactivity: ClubPublicInactivityUi | null
+  t: TFunction<'club'>
 }): JSX.Element | null {
   if (!inactivity?.status) return null
 
@@ -996,7 +1023,7 @@ function PublicInactivityProfileNotice({
         <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <div className="text-sm font-semibold text-slate-900">
-              Inactive manager
+              {t('teamProfile.inactiveManager')}
             </div>
             <p className="mt-1 text-sm text-slate-600">
               This team remains visible until the end of the season. If the manager does not return,
@@ -1005,7 +1032,7 @@ function PublicInactivityProfileNotice({
           </div>
 
           <span className="mt-2 inline-flex w-fit rounded-full border border-slate-300 bg-white px-3 py-1 text-xs font-semibold uppercase tracking-wide text-slate-600 sm:mt-0">
-            Season-end review
+            {t('teamProfile.seasonEndReview')}
           </span>
         </div>
       </div>
@@ -1017,7 +1044,7 @@ function PublicInactivityProfileNotice({
       <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <div className="text-sm font-semibold text-slate-900">
-            Inactive manager
+            {t('teamProfile.inactiveManager')}
           </div>
           <p className="mt-1 text-sm text-slate-600">
             This team is currently inactive, but it remains in standings, race history, results,
@@ -1026,7 +1053,7 @@ function PublicInactivityProfileNotice({
         </div>
 
         <span className="mt-2 inline-flex w-fit rounded-full border border-slate-300 bg-white px-3 py-1 text-xs font-semibold uppercase tracking-wide text-slate-600 sm:mt-0">
-          Inactive
+          {t('teamProfile.inactive')}
         </span>
       </div>
     </div>
@@ -1038,6 +1065,7 @@ function PublicInactivityProfileNotice({
  * Top-level page component that renders a club profile by :clubId route param.
  */
 export default function TeamProfilePage(): JSX.Element {
+  const { t, i18n } = useTranslation('club')
   const navigate = useNavigate()
   const location = useLocation()
   const { clubId } = useParams<{ clubId: string }>()
@@ -1056,6 +1084,18 @@ export default function TeamProfilePage(): JSX.Element {
   const [currentGameDate, setCurrentGameDate] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+
+  const displayLocale = i18n.resolvedLanguage?.startsWith('sr')
+    ? 'sr-Latn-RS'
+    : i18n.resolvedLanguage || 'en'
+
+  const regionDisplayNames = useMemo(() => {
+    try {
+      return new Intl.DisplayNames([displayLocale], { type: 'region' })
+    } catch {
+      return null
+    }
+  }, [displayLocale])
 
   useEffect(() => {
     let cancelled = false
@@ -1372,7 +1412,7 @@ export default function TeamProfilePage(): JSX.Element {
     navigate(-1)
   }
 
-  const backButtonLabel = '← Back'
+  const backButtonLabel = t('common.back')
 
   const sponsorPanel = profile ? (
     <SponsorsPanel
@@ -1389,6 +1429,7 @@ export default function TeamProfilePage(): JSX.Element {
       primaryColor={profile.primary_color}
       secondaryColor={profile.secondary_color}
       aiKitPreviewUrl={aiKitPreviewUrl}
+      t={t}
     />
   ) : null
 
@@ -1448,16 +1489,16 @@ export default function TeamProfilePage(): JSX.Element {
                       </div>
 
                       <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-slate-600">
-                        <span className="font-medium">{getClubTierLabel(profile.club_tier)}</span>
+                        <span className="font-medium">{getClubTierLabel(profile.club_tier, t)}</span>
                         {profile.world_tier ? <span>· World tier {profile.world_tier}</span> : null}
                         <span>·</span>
-                        <span>{getDivisionLabelFromProfile(profile)}</span>
+                        <span>{getDivisionLabelFromProfile(profile, t)}</span>
                       </div>
 
                       <div className="mt-3">
                         <div className="flex flex-wrap items-center gap-2">
                           <span className="inline-flex items-center rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-700 shadow-sm">
-                            {profile.is_ai ? 'AI-controlled team' : 'Player-controlled team'}
+                            {profile.is_ai ? t('teamProfile.aiControlled') : t('teamProfile.playerControlled')}
                           </span>
                         </div>
 
@@ -1512,20 +1553,20 @@ export default function TeamProfilePage(): JSX.Element {
                   <div className="mt-6 border-t border-slate-200/80 pt-5">
                     <div className="grid grid-cols-6 divide-x divide-slate-200">
                       <ProfileHeaderStat
-                        label="Country"
-                        value={profile.country_name ?? profile.country_code ?? '—'}
+                        label={t('teamProfile.country')}
+                        value={getLocalizedCountryName(profile.country_code, profile.country_name, regionDisplayNames)}
                       />
-                      <ProfileHeaderStat label="Owner" value={ownerLabel} />
+                      <ProfileHeaderStat label={t('teamProfile.owner')} value={ownerLabel} />
                       <ProfileHeaderStat
-                        label="Riders"
+                        label={t('teamProfile.riders')}
                         value={profile.rider_count !== null ? formatNumberValue(profile.rider_count) : '—'}
                       />
                       <ProfileHeaderStat
-                        label="Reputation"
+                        label={t('teamProfile.reputation')}
                         value={profile.reputation !== null ? formatNumberValue(profile.reputation) : '—'}
                       />
                       <ProfileHeaderStat
-                        label="International rank"
+                        label={t('teamProfile.internationalRank')}
                         value={
                           internationalPointsSummary?.international_rank !== null &&
                           internationalPointsSummary?.international_rank !== undefined
@@ -1536,7 +1577,7 @@ export default function TeamProfilePage(): JSX.Element {
                         }
                       />
                       <ProfileHeaderStat
-                        label="International points"
+                        label={t('teamProfile.internationalPoints')}
                         value={
                           internationalPointsSummary?.international_points !== null &&
                           internationalPointsSummary?.international_points !== undefined
@@ -1551,11 +1592,11 @@ export default function TeamProfilePage(): JSX.Element {
                 </div>
               </section>
 
-              <PublicInactivityProfileNotice inactivity={publicInactivityStatus} />
+              <PublicInactivityProfileNotice inactivity={publicInactivityStatus} t={t} />
 
               {/* Public roster + AI/user ordered right column */}
               <section className="grid gap-4 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1.1fr)]">
-                <TeamRosterTable riders={rosterRows} currentGameDate={currentGameDate} />
+                <TeamRosterTable riders={rosterRows} currentGameDate={currentGameDate} t={t} />
 
                 <div className="space-y-4">
                   {profile.is_ai ? (
@@ -1574,6 +1615,8 @@ export default function TeamProfilePage(): JSX.Element {
                     races={lastFiveRaces}
                     currentPath={currentPath}
                     loading={lastFiveRacesLoading}
+                    locale={displayLocale}
+                    t={t}
                   />
                 </div>
               </section>
