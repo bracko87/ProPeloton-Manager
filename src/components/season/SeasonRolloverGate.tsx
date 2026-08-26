@@ -276,10 +276,6 @@ export default function SeasonRolloverGate({
     return <SeasonRolloverLoadingScreen label={t('rollover.checkingStatus')} />
   }
 
-  if (statusError && !status) {
-    return <SeasonRolloverStatusError checking={checking} onRetry={() => void loadStatus()} />
-  }
-
   if (status?.active) {
     return (
       <SeasonRolloverScreen
@@ -288,6 +284,10 @@ export default function SeasonRolloverGate({
         onRetry={() => void loadStatus()}
       />
     )
+  }
+
+  if (statusError) {
+    return <SeasonRolloverStatusError checking={checking} onRetry={() => void loadStatus()} />
   }
 
   return <>{children}</>
