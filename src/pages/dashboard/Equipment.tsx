@@ -11,6 +11,7 @@
 
 import React, { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router'
+import { useTranslation } from 'react-i18next'
 import { supabase } from '@/lib/supabase'
 import TutorialOverlay from '../../components/tutorial/TutorialOverlay'
 import {
@@ -198,11 +199,14 @@ function getEquipmentTabForTutorialStepKey(
  * tabs
  * Equipment dashboard tab configuration.
  */
-const tabs: Array<{ key: EquipmentTabKey; label: string }> = [
-  { key: 'overview', label: 'Overview' },
-  { key: 'inventory', label: 'Inventory' },
-  { key: 'market', label: 'Market' },
-  { key: 'race-supplies', label: 'Race Supplies' },
+const tabs: Array<{
+  key: EquipmentTabKey
+  labelKey: 'page.overview' | 'page.inventory' | 'page.market' | 'page.raceSupplies'
+}> = [
+  { key: 'overview', labelKey: 'page.overview' },
+  { key: 'inventory', labelKey: 'page.inventory' },
+  { key: 'market', labelKey: 'page.market' },
+  { key: 'race-supplies', labelKey: 'page.raceSupplies' },
 ]
 
 /**
@@ -236,6 +240,7 @@ function TabButton({
  * Entry point for the Equipment dashboard inside the club dashboard shell.
  */
 export default function EquipmentPage(): JSX.Element {
+  const { t } = useTranslation('equipment')
   const [activeTab, setActiveTab] = useState<EquipmentTabKey>(() =>
     getEquipmentTabFromUrl()
   )
@@ -545,7 +550,7 @@ export default function EquipmentPage(): JSX.Element {
     return (
       <div className="w-full p-4">
         <div className="rounded-lg bg-white p-6 shadow-sm text-sm text-gray-600">
-          Loading equipment...
+          {t('page.loading')}
         </div>
       </div>
     )
@@ -555,7 +560,7 @@ export default function EquipmentPage(): JSX.Element {
     return (
       <div className="w-full p-4">
         <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
-          {clubError ?? 'Unable to load Equipment page.'}
+          {clubError ?? t('page.unable')}
         </div>
       </div>
     )
@@ -564,9 +569,9 @@ export default function EquipmentPage(): JSX.Element {
   return (
     <div className="w-full">
       <div className="mb-4">
-        <h2 className="text-xl font-semibold">Equipment</h2>
+        <h2 className="text-xl font-semibold">{t('page.title')}</h2>
         <div className="mt-1 text-sm text-gray-500">
-          Manage team equipment, default setup, inventory actions, market purchases, and race supplies.
+          {t('page.subtitle')}
         </div>
       </div>
 
@@ -577,7 +582,7 @@ export default function EquipmentPage(): JSX.Element {
             active={activeTab === tab.key}
             onClick={() => handleTabChange(tab.key)}
           >
-            {tab.label}
+            {t(tab.labelKey)}
           </TabButton>
         ))}
       </div>
@@ -606,7 +611,7 @@ export default function EquipmentPage(): JSX.Element {
           body={equipmentTutorialSteps[tutorialStepIndex].body}
           stepLabel={`${tutorialStepIndex + 1}/${equipmentTutorialSteps.length}`}
           primaryAction={
-            equipmentTutorialSteps[tutorialStepIndex].primaryAction ?? 'Next'
+            equipmentTutorialSteps[tutorialStepIndex].primaryAction ?? t('common.next')
           }
           secondaryAction={
             tutorialStepIndex === equipmentTutorialSteps.length - 1
