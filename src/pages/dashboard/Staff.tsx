@@ -650,7 +650,7 @@ function TopNav({
       <div>
         <h2 className="mb-2 text-xl font-semibold">{t('squad:nav.staff')}</h2>
         <div className="text-sm text-gray-500">
-          Coaches, doctors, scouts and contracts management.
+          {t('page.subtitle')}
         </div>
       </div>
 
