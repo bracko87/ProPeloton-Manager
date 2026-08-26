@@ -14,6 +14,7 @@
 
 import React, { useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router'
+import { useTranslation } from 'react-i18next'
 import TutorialOverlay from '../../components/tutorial/TutorialOverlay'
 import {
   financeTutorialSteps,
@@ -299,6 +300,7 @@ function getFinanceTabForTutorialStepKey(stepKey?: string | null): TabKey {
 }
 
 export default function FinancePage(): JSX.Element {
+  const { t } = useTranslation('finance')
   const [tab, setTab] = useState<TabKey>('overview')
   const location = useLocation()
   const navigate = useNavigate()
@@ -512,7 +514,7 @@ export default function FinancePage(): JSX.Element {
     } catch (e: any) {
       resetLoadedState()
       setLoading(false)
-      setError(e?.message ?? 'Failed to load finance data.')
+      setError(e?.message ?? t('page.loadFailed'))
     }
   }
 
@@ -591,9 +593,9 @@ export default function FinancePage(): JSX.Element {
     <div className="w-full">
       <div className="flex items-start justify-between gap-4 mb-4">
         <div>
-          <h2 className="text-xl font-semibold">Finance</h2>
+          <h2 className="text-xl font-semibold">{t('page.title')}</h2>
           <div className="text-sm text-gray-500 mt-1">
-            Overview of income, expenses and transactions.
+            {t('page.subtitle')}
           </div>
         </div>
 
@@ -604,37 +606,41 @@ export default function FinancePage(): JSX.Element {
             className="px-3 py-2 rounded bg-white shadow text-sm hover:bg-gray-100 disabled:opacity-60 disabled:cursor-not-allowed"
             disabled={loading}
           >
-            Refresh
+            {t('page.refresh')}
           </button>
         </div>
       </div>
 
       <div className="mb-5 inline-flex rounded-lg bg-white border border-gray-100 p-1 shadow-sm flex-wrap">
         <TabButton active={tab === 'overview'} onClick={() => setTab('overview')}>
-          Overview
+          {t('tabs.overview')}
         </TabButton>
         <TabButton active={tab === 'sponsors'} onClick={() => setTab('sponsors')}>
-          Sponsors
+          {t('tabs.sponsors')}
         </TabButton>
         <TabButton active={tab === 'transactions'} onClick={() => setTab('transactions')}>
-          Transactions
+          {t('tabs.transactions')}
         </TabButton>
         <TabButton active={tab === 'tax'} onClick={() => setTab('tax')}>
-          Tax
+          {t('tabs.tax')}
         </TabButton>
         <TabButton
           active={tab === 'teamPoliciesOperations'}
           onClick={() => setTab('teamPoliciesOperations')}
         >
-          Team Policies &amp; Operations
+          {t('tabs.policies')}
         </TabButton>
       </div>
 
-      {loading && <div className="bg-white p-4 rounded shadow text-sm text-gray-600">Loading…</div>}
+      {loading && (
+        <div className="bg-white p-4 rounded shadow text-sm text-gray-600">
+          {t('page.loading')}
+        </div>
+      )}
 
       {!loading && error && (
         <div className="bg-white p-4 rounded shadow">
-          <div className="text-sm font-semibold text-red-600">Error</div>
+          <div className="text-sm font-semibold text-red-600">{t('page.error')}</div>
           <div className="text-sm text-gray-700 mt-1">{error}</div>
         </div>
       )}
@@ -642,7 +648,7 @@ export default function FinancePage(): JSX.Element {
       {!loading && !error && (
         <div>
           {tab === 'overview' && (
-            <ErrorBoundary title="Overview tab error">
+            <ErrorBoundary title={t('page.overviewTabError')}>
               <OverviewTab
                 summary={summary}
                 cashflowDaily={cashflowDaily}
@@ -653,43 +659,43 @@ export default function FinancePage(): JSX.Element {
           )}
 
           {tab === 'sponsors' && (
-            <ErrorBoundary title="Sponsors tab error">
+            <ErrorBoundary title={t('page.sponsorsTabError')}>
               {clubId ? (
                 <SponsorsTab clubId={clubId} />
               ) : (
                 <div className="bg-white p-4 rounded shadow text-sm text-gray-600">
-                  Create or join a main club to see sponsors.
+                  {t('page.noSponsorClub')}
                 </div>
               )}
             </ErrorBoundary>
           )}
 
           {tab === 'transactions' && (
-            <ErrorBoundary title="Transactions tab error">
+            <ErrorBoundary title={t('page.transactionsTabError')}>
               {clubId ? (
                 <TransactionsTab clubId={clubId} />
               ) : (
                 <div className="bg-white p-4 rounded shadow text-sm text-gray-600">
-                  Create or join a main club to see transactions.
+                  {t('page.noTransactionClub')}
                 </div>
               )}
             </ErrorBoundary>
           )}
 
           {tab === 'tax' && (
-            <ErrorBoundary title="Tax tab error">
+            <ErrorBoundary title={t('page.taxTabError')}>
               {clubId ? (
                 <TaxTab clubId={clubId} currency={currency} />
               ) : (
                 <div className="bg-white p-4 rounded shadow text-sm text-gray-600">
-                  Create or join a main club to see tax data.
+                  {t('page.noTaxClub')}
                 </div>
               )}
             </ErrorBoundary>
           )}
 
           {tab === 'teamPoliciesOperations' && (
-            <ErrorBoundary title="Team Policies & Operations tab error">
+            <ErrorBoundary title={t('page.policiesTabError')}>
               <TeamPoliciesOperationsTab />
             </ErrorBoundary>
           )}
