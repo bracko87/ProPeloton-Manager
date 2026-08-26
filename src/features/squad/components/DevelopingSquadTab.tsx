@@ -159,18 +159,18 @@ const STATUS_TRANSLATION_KEYS: Record<string, string> = {
 }
 
 const MONTH_TRANSLATION_KEYS: Record<string, string> = {
-  Jan: 'months.jan',
-  Feb: 'months.feb',
-  Mar: 'months.mar',
-  Apr: 'months.apr',
-  May: 'months.may',
-  Jun: 'months.jun',
-  Jul: 'months.jul',
-  Aug: 'months.aug',
-  Sep: 'months.sep',
-  Oct: 'months.oct',
-  Nov: 'months.nov',
-  Dec: 'months.dec',
+  Jan: 'months.Jan',
+  Feb: 'months.Feb',
+  Mar: 'months.Mar',
+  Apr: 'months.Apr',
+  May: 'months.May',
+  Jun: 'months.Jun',
+  Jul: 'months.Jul',
+  Aug: 'months.Aug',
+  Sep: 'months.Sep',
+  Oct: 'months.Oct',
+  Nov: 'months.Nov',
+  Dec: 'months.Dec',
 }
 
 const PODIUM_CHART_TRANSLATION_KEYS: Record<string, string> = {
@@ -178,14 +178,14 @@ const PODIUM_CHART_TRANSLATION_KEYS: Record<string, string> = {
   '2nd': 'season.second',
   '3rd': 'season.third',
   Top10: 'season.top10',
-  Top20: 'season.top20',
+  Top20: 'season.top20Chart',
 }
 
 const RACE_TYPE_TRANSLATION_KEYS: Record<string, string> = {
-  'One-day classics': 'races.oneDayClassics',
-  'Stage finishes': 'races.stageFinishes',
-  'Mountain days': 'races.mountainDays',
-  'Time trials': 'races.timeTrials',
+  'One-day classics': 'season.oneDayClassics',
+  'Stage finishes': 'season.stageFinishes',
+  'Mountain days': 'season.mountainDays',
+  'Time trials': 'season.timeTrials',
 }
 
 type DevelopingSquadListViewPickerProps = {
@@ -1352,13 +1352,13 @@ export default function DevelopingSquadTab({
         <div className="mb-4">
           <div className="text-base font-semibold text-gray-800">{t('healthReport.title', { ns: 'squad' })}</div>
           <div className="mt-1 text-sm text-gray-500">
-            {t('healthReport.subtitle', { ns: 'squad' })}
+            {t('healthReport.subtitle', { ns: 'developingTeam' })}
           </div>
         </div>
 
         {healthOverviewDisplayRows.length === 0 ? (
           <div className="rounded-xl border border-gray-100 bg-gray-50 px-4 py-3 text-sm text-gray-600">
-            {t('healthReport.empty', { ns: 'squad' })}
+            {t('healthReport.none', { ns: 'squad' })}
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -1443,7 +1443,7 @@ export default function DevelopingSquadTab({
                 value={`${squadDisplayData.summary.podiums}`}
               />
               <CompactValueTile
-                label={t('season.top10Results', { ns: 'squad' })}
+                label={t('season.top10', { ns: 'squad' })}
                 value={`${squadDisplayData.summary.top10s}`}
               />
               <CompactValueTile
@@ -1520,7 +1520,7 @@ export default function DevelopingSquadTab({
                   stageLabel={visibleNextRaceSelection?.stageLabel}
                   routeLabel={visibleNextRaceSelection?.routeLabel}
                   stageCount={visibleNextRaceSelection?.stageCount}
-                  emptyLabel={t('races.noNextSubmittedPlan', { ns: 'squad' })}
+                  emptyLabel={t('races.noNext', { ns: 'squad' })}
                 />
               </div>
 
@@ -1551,7 +1551,7 @@ export default function DevelopingSquadTab({
                 </div>
               ) : (
                 <div className="rounded-xl border border-gray-100 bg-gray-50 px-4 py-6 text-sm text-gray-600">
-                  {t('races.noNextSubmittedPlan', { ns: 'squad' })}
+                  {t('races.noNext', { ns: 'squad' })}
                 </div>
               )}
             </div>
@@ -1563,7 +1563,7 @@ export default function DevelopingSquadTab({
             ) : isPremium ? (
               <div className="rounded-lg bg-white p-4 shadow xl:col-span-2">
                 <div className="text-base font-semibold text-gray-800">
-                  {t('season.resultsTitle', { ns: 'squad' })}
+                  {t('season.teamResults', { ns: 'squad' })}
                 </div>
                 <div className="mt-4">
                   <LineChart data={squadDisplayData.seasonTrend} />
@@ -1582,7 +1582,7 @@ export default function DevelopingSquadTab({
             ) : isPremium ? (
               <div className="rounded-lg bg-white p-4 shadow">
                 <div className="text-base font-semibold text-gray-800">
-                  {t('season.podiumsTitle', { ns: 'squad' })}
+                  {t('season.podiumsPlacings', { ns: 'squad' })}
                 </div>
                 <div className="mt-4">
                   <VerticalBarChart data={squadDisplayData.podiumChart} />
@@ -1600,7 +1600,7 @@ export default function DevelopingSquadTab({
             ) : isPremium ? (
               <div className="rounded-lg bg-white p-4 shadow xl:col-span-3">
                 <div className="text-base font-semibold text-gray-800">
-                  {t('season.raceTypeTitle', { ns: 'squad' })}
+                  {t('season.raceType', { ns: 'squad' })}
                 </div>
                 <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
                   {(squadDisplayData.raceTypeSnapshot ?? []).map((item) => {
