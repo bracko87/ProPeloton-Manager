@@ -92,7 +92,21 @@
     "listed": "Listed",
     "visibleUntil": "Visible until",
     "timeLeft": "Time left",
-    "riderPublished": "Rider is currently published on the transfer market."
+    "riderPublished": "Rider is currently published on the transfer market.",
+    "activeOffer": "Active Offer",
+    "own": "Own",
+    "overallShort": "OVR",
+    "potentialShort": "POT",
+    "offerActive": "Offer Active"
+  },
+  "transferHelp": {
+    "title": "How Transfer Offers Work",
+    "sendOffer": "You first send a transfer fee offer to the seller club. The seller club decides whether your club is allowed to negotiate with the rider.",
+    "belowAsking": "If your offer is <strong>below the asking price</strong>, the seller club must manually accept or reject it.",
+    "atOrAboveAsking": "If your offer is <strong>equal to or above the asking price</strong>, club terms are accepted automatically.",
+    "afterAcceptance": "After seller acceptance, or automatic acceptance, you will receive a notification with a link to start contract talks with the rider.",
+    "riderNegotiation": "During rider negotiation, the rider can accept your terms, ask for better salary, ask for a different contract length, or reject the move completely. Rejection reasons should be visible in notifications and negotiation details.",
+    "rejectedExpired": "If the seller club rejects your offer, or does not answer before expiry, you will receive a notification that the offer was rejected or expired."
   },
   "activity": {
     "title": "Transfer Activity",
