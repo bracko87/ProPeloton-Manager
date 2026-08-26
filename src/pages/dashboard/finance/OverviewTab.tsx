@@ -12,6 +12,7 @@
  */
 
 import React, { useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Donut } from './charts'
 
 type Granularity = 'daily' | 'weekly' | 'monthly'
@@ -391,6 +392,7 @@ function AxisBarChart({
   barColor: string
   yTickCount?: number
 }): JSX.Element {
+  const { t } = useTranslation('finance')
   const W = 640
   const H = 220
   const padL = 56
@@ -468,7 +470,7 @@ function AxisBarChart({
         })}
       </svg>
 
-      <div className="text-xs text-gray-500 -mt-2">Hover a bar to see details.</div>
+      <div className="text-xs text-gray-500 -mt-2">{t('overview.hoverBar')}</div>
     </div>
   )
 }
@@ -490,6 +492,7 @@ function AxisLineChart({
   strokeColor: string
   yTickCount?: number
 }): JSX.Element {
+  const { t } = useTranslation('finance')
   const W = 960
   const H = 240
   const padL = 56
@@ -574,7 +577,7 @@ function AxisLineChart({
         })}
       </svg>
 
-      <div className="text-xs text-gray-500 -mt-2">Hover a dot to see details.</div>
+      <div className="text-xs text-gray-500 -mt-2">{t('overview.hoverDot')}</div>
     </div>
   )
 }
@@ -589,7 +592,7 @@ function DonutBreakdown({
   items,
   currency,
   palette,
-  emptyLabel = 'No data',
+  emptyLabel,
 }: {
   title: string
   subtitle?: string
@@ -598,6 +601,7 @@ function DonutBreakdown({
   palette: string[]
   emptyLabel?: string
 }): JSX.Element {
+  const { t } = useTranslation('finance')
   const cleaned = useMemo(() => normalizeBreakdown(items, 5), [items])
   const total = useMemo(() => cleaned.reduce((s, x) => s + x.value, 0), [cleaned])
 
@@ -652,18 +656,18 @@ function DonutBreakdown({
           <div className="absolute inset-0 flex items-center justify-center text-center px-3">
             {total > 0 ? (
               <div>
-                <div className="text-xs text-gray-500">Total</div>
+                <div className="text-xs text-gray-500">{t('common.total')}</div>
                 <div className="font-semibold">{formatMoney(total, currency)}</div>
               </div>
             ) : (
-              <div className="text-sm text-gray-500">{emptyLabel}</div>
+              <div className="text-sm text-gray-500">{emptyLabel ?? t('common.noData')}</div>
             )}
           </div>
         </div>
 
         <div className="min-w-0">
           {cleaned.length === 0 ? (
-            <div className="text-sm text-gray-500">No items to show.</div>
+            <div className="text-sm text-gray-500">{t('common.noItems')}</div>
           ) : (
             <div className="space-y-2">
               {cleaned.map((seg, i) => (
@@ -707,15 +711,16 @@ export function OverviewTab({
   topExpenseBreakdown?: BreakdownItem[]
   transactions?: Transaction[]
 }): JSX.Element {
+  const { t } = useTranslation('finance')
   const [granularity, setGranularity] = useState<Granularity>('monthly')
 
   const hasTransactions = Boolean(transactions && transactions.length > 0)
 
   const periodLabel = useMemo(() => {
-    if (granularity === 'daily') return 'Today'
-    if (granularity === 'weekly') return 'This week'
-    return 'This month'
-  }, [granularity])
+    if (granularity === 'daily') return t('overview.today')
+    if (granularity === 'weekly') return t('overview.thisWeek')
+    return t('overview.thisMonth')
+  }, [granularity, t])
 
   const rawDailyPoints = useMemo(
     () =>
@@ -1033,28 +1038,28 @@ export function OverviewTab({
     <div className="space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full">
         <div className="bg-white p-4 rounded shadow">
-          <div className="text-sm text-gray-500">Current Balance</div>
+          <div className="text-sm text-gray-500">{t('overview.currentBalance')}</div>
           <div className="text-2xl font-bold mt-2">{formatMoney(currentBalance, currency)}</div>
           <div className="text-xs text-gray-500 mt-1">
-            {summary?.updated_at ? `Updated: ${formatDateTime(summary.updated_at)}` : ''}
+            {summary?.updated_at ? t('overview.updated', { date: formatDateTime(summary.updated_at) }) : ''}
           </div>
         </div>
 
         <div className="bg-white p-4 rounded shadow">
-          <div className="text-sm text-gray-500">Income ({periodTotals.label})</div>
+          <div className="text-sm text-gray-500">{t('overview.incomePeriod', { period: periodTotals.label })}</div>
           <div className="text-2xl font-bold mt-2">{formatMoney(periodTotals.income, currency)}</div>
           <div className="text-xs text-gray-500 mt-1">
-            Sponsors / month: {formatMoney(sponsorMonthly, currency)}
+            {t('overview.sponsorsMonth', { amount: formatMoney(sponsorMonthly, currency) })}
           </div>
         </div>
 
         <div className="bg-white p-4 rounded shadow">
-          <div className="text-sm text-gray-500">Expenses ({periodTotals.label})</div>
+          <div className="text-sm text-gray-500">{t('overview.expensesPeriod', { period: periodTotals.label })}</div>
           <div className="text-2xl font-bold mt-2">
             {formatMoney(periodTotals.expenses, currency)}
           </div>
           <div className="text-xs text-gray-500 mt-1">
-            Net operating: {formatMoney(periodTotals.net, currency)}
+            {t('overview.netOperatingValue', { amount: formatMoney(periodTotals.net, currency) })}
           </div>
         </div>
       </div>
@@ -1100,8 +1105,8 @@ export function OverviewTab({
       <div className="bg-white p-4 rounded shadow">
         <div className="flex items-center justify-between gap-3 flex-wrap">
           <div>
-            <div className="font-semibold">Breakdown</div>
-            <div className="text-sm text-gray-500">Choose aggregation for graphs.</div>
+            <div className="font-semibold">{t('overview.breakdown')}</div>
+            <div className="text-sm text-gray-500">{t('overview.chooseAggregation')}</div>
           </div>
 
           <div className="flex gap-2">
@@ -1112,7 +1117,7 @@ export function OverviewTab({
               onClick={() => setGranularity('daily')}
               type="button"
             >
-              Daily
+              {t('overview.daily')}
             </button>
 
             <button
@@ -1122,7 +1127,7 @@ export function OverviewTab({
               onClick={() => setGranularity('weekly')}
               type="button"
             >
-              Weekly
+              {t('overview.weekly')}
             </button>
 
             <button
@@ -1132,7 +1137,7 @@ export function OverviewTab({
               onClick={() => setGranularity('monthly')}
               type="button"
             >
-              Monthly
+              {t('overview.monthly')}
             </button>
           </div>
         </div>
@@ -1141,20 +1146,20 @@ export function OverviewTab({
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-stretch">
         <div className="bg-white p-5 rounded shadow h-full">
           <DonutBreakdown
-            title="Top 5 incomes"
-            subtitle={`Top income sources (${periodTotals.label})`}
+            title={t('overview.top5Income')}
+            subtitle={t('overview.topIncomeSources', { period: periodTotals.label })}
             items={topIncomeItems}
             currency={currency}
             palette={incomePalette}
-            emptyLabel="No income yet"
+            emptyLabel={t('overview.noIncome')}
           />
         </div>
 
         <div className="bg-white p-5 rounded shadow h-full">
           <div className="flex items-center justify-between gap-3 flex-wrap">
             <div>
-              <div className="font-semibold">Income vs Expenses ({periodTotals.label})</div>
-              <div className="text-sm text-gray-500">Operating view of the selected period.</div>
+              <div className="font-semibold">{t('overview.incomeVsExpenses', { period: periodTotals.label })}</div>
+              <div className="text-sm text-gray-500">{t('overview.operatingView')}</div>
             </div>
           </div>
 
@@ -1165,12 +1170,12 @@ export function OverviewTab({
 
         <div className="bg-white p-5 rounded shadow h-full">
           <DonutBreakdown
-            title="Top 5 costs"
-            subtitle={`Top expense items (${periodTotals.label})`}
+            title={t('overview.top5Costs')}
+            subtitle={t('overview.topExpenseItems', { period: periodTotals.label })}
             items={topExpenseItems}
             currency={currency}
             palette={expensePalette}
-            emptyLabel="No expenses yet"
+            emptyLabel={t('overview.noExpenses')}
           />
         </div>
       </div>
@@ -1178,13 +1183,13 @@ export function OverviewTab({
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <div className="bg-white p-4 rounded shadow">
           <div className="flex items-center justify-between">
-            <div className="font-semibold">Income</div>
-            <div className="text-xs text-gray-500">last {grouped.length} periods</div>
+            <div className="font-semibold">{t('overview.income')}</div>
+            <div className="text-xs text-gray-500">{t('overview.lastPeriods', { count: grouped.length })}</div>
           </div>
 
           <div className="mt-3">
             <AxisBarChart
-              title="Income"
+              title={t('overview.income')}
               points={grouped.map(p => ({ label: p.label, value: p.income }))}
               currency={currency}
               barColor="#16a34a"
@@ -1194,13 +1199,13 @@ export function OverviewTab({
 
         <div className="bg-white p-4 rounded shadow">
           <div className="flex items-center justify-between">
-            <div className="font-semibold">Expenses</div>
-            <div className="text-xs text-gray-500">last {grouped.length} periods</div>
+            <div className="font-semibold">{t('overview.expenses')}</div>
+            <div className="text-xs text-gray-500">{t('overview.lastPeriods', { count: grouped.length })}</div>
           </div>
 
           <div className="mt-3">
             <AxisBarChart
-              title="Expenses"
+              title={t('overview.expenses')}
               points={grouped.map(p => ({ label: p.label, value: p.expenses }))}
               currency={currency}
               barColor="#dc2626"
@@ -1210,13 +1215,13 @@ export function OverviewTab({
 
         <div className="bg-white p-4 rounded shadow lg:col-span-2">
           <div className="flex items-center justify-between">
-            <div className="font-semibold">Net Operating</div>
-            <div className="text-xs text-gray-500">income - operating expenses</div>
+            <div className="font-semibold">{t('overview.netOperating')}</div>
+            <div className="text-xs text-gray-500">{t('overview.netFormula')}</div>
           </div>
 
           <div className="mt-3">
             <AxisLineChart
-              title="Net operating trend"
+              title={t('overview.netTrend')}
               points={grouped.map(p => ({ label: p.label, value: p.net }))}
               currency={currency}
               strokeColor="#2563eb"
