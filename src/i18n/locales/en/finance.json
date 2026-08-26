@@ -111,7 +111,43 @@
     "infrastructureAssetRepair": "Infrastructure Asset Repair",
     "infrastructureAssetSale": "Infrastructure Asset Sale",
     "infrastructureJobRefund": "Infrastructure Job Refund",
-    "teamPolicyHousingCost": "Team Policy Housing Cost"
+    "teamPolicyHousingCost": "Team Policy Housing Cost",
+    "racePrize": "Race Prize",
+    "freeAgentSigningCostPaid": "Free Agent Signing Cost Paid"
+  },
+  "financeCategories": {
+    "income": "Income",
+    "expense": "Expense"
+  },
+  "policyCostTypes": {
+    "none": "None",
+    "oneTime": "One Time",
+    "weekly": "Weekly",
+    "monthly": "Monthly",
+    "perTrip": "Per Trip",
+    "perRiderWeekly": "Per Rider / Week",
+    "perStaffWeekly": "Per Staff / Week",
+    "seasonal": "Seasonal",
+    "perResult": "Per Result"
+  },
+  "policyNotifications": {
+    "none": "None",
+    "info": "Info",
+    "summary": "Summary",
+    "monthlySummary": "Monthly Summary",
+    "reminder": "Reminder",
+    "warning": "Warning"
+  },
+  "policyEffects": {
+    "travelMorale": "+{{value}} travel morale",
+    "morale": "+{{value}} morale",
+    "staffMorale": "+{{value}} staff morale",
+    "recovery": "+{{value}} recovery",
+    "travelFatigue": "{{value}} travel fatigue",
+    "fatigueLater": "-{{value}} fatigue later",
+    "logistics": "+{{value}} logistics",
+    "staffEfficiency": "+{{value}} staff efficiency",
+    "contractHappiness": "+{{value}} contract happiness"
   },
   "overview": {
     "today": "Today",
@@ -407,6 +443,7 @@
     "applyChangesDescription": "This applies all changed policy fields at once. Changes are only saved after you click Apply.",
     "applyChanges": "Apply Changes",
     "noChanges": "No Changes to Apply",
+    "noChangesToApply": "No Changes to Apply",
     "requiresPremium": "{{item}}: this option requires Premium."
   },
   "tutorial": {
