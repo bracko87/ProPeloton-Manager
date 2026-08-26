@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useLocation, useNavigate } from 'react-router'
 import TutorialOverlay from '../../components/tutorial/TutorialOverlay'
 import {
@@ -846,26 +847,26 @@ function getMarketScoutMeta(params: {
   }
 }
 
-function roleLabel(role: StaffRole) {
+function roleLabel(role: StaffRole, t: (key: string) => string) {
   switch (role) {
     case 'head_coach':
-      return 'Head Coach'
+      return t('staffRoles.headCoach')
     case 'trainer':
-      return 'Trainer'
+      return t('staffRoles.trainer')
     case 'u23_head_coach':
-      return 'U23 Head Coach'
+      return t('staffRoles.u23HeadCoach')
     case 'team_doctor':
-      return 'Team Doctor'
+      return t('staffRoles.teamDoctor')
     case 'physio':
-      return 'Physio'
+      return t('staffRoles.physio')
     case 'nutritionist':
-      return 'Nutritionist'
+      return t('staffRoles.nutritionist')
     case 'mechanic':
-      return 'Mechanic'
+      return t('staffRoles.mechanic')
     case 'sport_director':
-      return 'Sport Director'
+      return t('staffRoles.sportDirector')
     case 'scout_analyst':
-      return 'Scout / Analyst'
+      return t('staffRoles.scoutAnalyst')
     default:
       return role
   }
@@ -1219,6 +1220,7 @@ function getTransfersTabForTutorialStepKey(
 }
 
 export default function TransfersPage() {
+  const { t } = useTranslation('transfers')
   const navigate = useNavigate()
   const location = useLocation()
 
@@ -2686,7 +2688,7 @@ export default function TransfersPage() {
 
     if (limitInfo && (!limitInfo.can_hire || limitInfo.open_slots <= 0)) {
       showToast(
-        `${roleLabel(selectedCandidate.role_type)} is full (${limitInfo.active_count}/${limitInfo.limit_count}). Replace flow should be used later.`,
+        `${roleLabel(selectedCandidate.role_type, t)} is full (${limitInfo.active_count}/${limitInfo.limit_count}). Replace flow should be used later.`,
         'info'
       )
       return
@@ -2711,7 +2713,7 @@ export default function TransfersPage() {
           : 'until the end of the next season'
 
       showToast(
-        `${selectedCandidate.staff_name} has been hired as ${roleLabel(selectedCandidate.role_type)} ${contractText}.`,
+        `${selectedCandidate.staff_name} has been hired as ${roleLabel(selectedCandidate.role_type, t)} ${contractText}.`,
         'success'
       )
     } catch (err) {
@@ -3115,15 +3117,15 @@ export default function TransfersPage() {
       <div className="w-full">
         <div className="mb-5 flex items-start justify-between gap-4">
           <div>
-            <h2 className="text-xl font-semibold text-gray-900">Transfers</h2>
+            <h2 className="text-xl font-semibold text-gray-900">{t('page.title')}</h2>
             <p className="mt-1 text-sm text-gray-500">
-              Riders and staff market, shortlist and negotiations.
+              {t('page.subtitle')}
             </p>
           </div>
         </div>
 
         <div className="rounded-lg border border-gray-100 bg-white p-6 text-sm text-gray-500 shadow">
-          Loading transfers...
+          {t('page.loading')}
         </div>
       </div>
     )
@@ -3134,9 +3136,9 @@ export default function TransfersPage() {
       <div className="w-full">
         <div className="mb-5 flex items-start justify-between gap-4">
           <div>
-            <h2 className="text-xl font-semibold text-gray-900">Transfers</h2>
+            <h2 className="text-xl font-semibold text-gray-900">{t('page.title')}</h2>
             <p className="mt-1 text-sm text-gray-500">
-              Riders and staff market, shortlist and negotiations.
+              {t('page.subtitle')}
             </p>
           </div>
         </div>
@@ -3152,9 +3154,9 @@ export default function TransfersPage() {
     <div className="w-full">
       <div className="mb-5 flex items-start justify-between gap-4">
         <div>
-          <h2 className="text-xl font-semibold text-gray-900">Transfers</h2>
+          <h2 className="text-xl font-semibold text-gray-900">{t('page.title')}</h2>
           <p className="mt-1 text-sm text-gray-500">
-            Riders and staff market, shortlist and negotiations.
+            {t('page.subtitle')}
           </p>
 
           {activeTab === 'riders' ? (
@@ -3165,7 +3167,7 @@ export default function TransfersPage() {
               <div className="flex items-center gap-8">
                 <UnderlineSubTabButton
                   active={riderMarketSubTab === 'transfer_list'}
-                  label="Transfer List"
+                  label={t('page.transferList')}
                   onClick={() => {
                     setRiderMarketSubTab('transfer_list')
                     updateTransfersQuery({
@@ -3177,7 +3179,7 @@ export default function TransfersPage() {
                 />
                 <UnderlineSubTabButton
                   active={riderMarketSubTab === 'free_agents'}
-                  label="Free Agents"
+                  label={t('page.freeAgents')}
                   onClick={() => {
                     setRiderMarketSubTab('free_agents')
                     updateTransfersQuery({
@@ -3187,7 +3189,7 @@ export default function TransfersPage() {
                 />
                 <UnderlineSubTabButton
                   active={riderMarketSubTab === 'shortlist'}
-                  label="Shortlist"
+                  label={t('page.shortlist')}
                   onClick={() => {
                     setRiderMarketSubTab('shortlist')
                     updateTransfersQuery({
@@ -3203,12 +3205,12 @@ export default function TransfersPage() {
         <div className="inline-flex rounded-lg border border-gray-100 bg-white p-1 shadow-sm">
           <SegmentedTabButton
             active={activeTab === 'riders'}
-            label="Riders"
+            label={t('page.riders')}
             onClick={() => setActiveTab('riders')}
           />
           <SegmentedTabButton
             active={activeTab === 'staff'}
-            label="Staff"
+            label={t('page.staff')}
             onClick={() => setActiveTab('staff')}
           />
         </div>
@@ -3554,7 +3556,7 @@ export default function TransfersPage() {
                 }}
                 className="rounded-md border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
               >
-                Cancel
+                {t('common.cancel')}
               </button>
 
               <button
@@ -3610,7 +3612,7 @@ export default function TransfersPage() {
                 {formatTransferAmount(sellerReviewOffer.offered_price)}
               </div>
               <div>
-                <span className="font-semibold text-gray-900">Status:</span>{' '}
+                <span className="font-semibold text-gray-900">{t('common.status')}:</span>{' '}
                 {sellerReviewOffer.status}
               </div>
             </div>
@@ -3627,7 +3629,7 @@ export default function TransfersPage() {
                 onClick={closeSellerOfferReview}
                 className="rounded-md border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
               >
-                Close
+                {t('common.close')}
               </button>
 
               {sellerReviewOfferIsOpen ? (
@@ -3700,7 +3702,7 @@ export default function TransfersPage() {
           body={transfersTutorialSteps[tutorialStepIndex].body}
           stepLabel={`${tutorialStepIndex + 1}/${transfersTutorialSteps.length}`}
           primaryAction={
-            transfersTutorialSteps[tutorialStepIndex].primaryAction ?? 'Next'
+            transfersTutorialSteps[tutorialStepIndex].primaryAction ?? t('common.next')
           }
           secondaryAction={
             tutorialStepIndex === transfersTutorialSteps.length - 1
