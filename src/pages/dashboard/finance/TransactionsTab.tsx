@@ -20,6 +20,7 @@
  */
 
 import React, { useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { supabase } from './supabase'
 import {
   addGameDays,
@@ -182,46 +183,39 @@ function formatMoney(n: number, currency: CurrencyCode = 'USD'): string {
 }
 
 /**
- * transactionTypeLabelMap
- * Human-readable labels for known backend finance transaction types.
+ * transactionTypeLabelKeyMap
+ * Translation keys for known backend finance transaction types.
+ *
+ * Important:
+ * - The backend transaction type code itself is never changed.
+ * - Unknown/future transaction types continue through the existing prettifying fallback.
  */
-const transactionTypeLabelMap: Record<string, string> = {
-  sponsor_contract_payment: 'Sponsor Contract Payment',
-  tax_withholding: 'Tax Withholding',
+const transactionTypeLabelKeyMap = {
+  sponsor_contract_payment: 'transactionLabels.sponsorContractPayment',
+  tax_withholding: 'transactionLabels.taxWithholding',
 
-  rider_salary_payday: 'Rider Salary Payday',
-  staff_salary_payday: 'Staff Salary Payday',
+  rider_salary_payday: 'transactionLabels.riderSalaryPayday',
+  staff_salary_payday: 'transactionLabels.staffSalaryPayday',
 
-  new_club_bonus: 'New Club Bonus',
+  new_club_bonus: 'transactionLabels.newClubBonus',
 
-  staff_course_fee: 'Staff Course Fee',
-  staff_release_cost: 'Staff Release Cost',
+  staff_course_fee: 'transactionLabels.staffCourseFee',
+  staff_release_cost: 'transactionLabels.staffReleaseCost',
 
-  free_agent_signing_cost_paid: 'Free Agent Signing Cost',
+  infrastructure_facility_start: 'transactionLabels.infrastructureFacilityStart',
+  infrastructure_asset_start: 'transactionLabels.infrastructureAssetStart',
+  infrastructure_asset_repair: 'transactionLabels.infrastructureAssetRepair',
+  infrastructure_asset_sale: 'transactionLabels.infrastructureAssetSale',
+  infrastructure_job_refund: 'transactionLabels.infrastructureJobRefund',
 
-  infrastructure_facility_start: 'Infrastructure Facility Start',
-  infrastructure_asset_start: 'Infrastructure Asset Start',
-  infrastructure_asset_repair: 'Infrastructure Asset Repair',
-  infrastructure_asset_sale: 'Infrastructure Asset Sale',
-  infrastructure_job_refund: 'Infrastructure Job Refund',
-
-  team_policy_housing_cost: 'Team Policy Housing Cost',
-}
+  team_policy_housing_cost: 'transactionLabels.teamPolicyHousingCost',
+} as const
 
 /**
- * formatTransactionType
- * Convert backend transaction types into readable labels.
- *
- * Known types use explicit labels.
- * Future unknown underscore-based types are automatically prettified.
+ * prettifyTransactionType
+ * Preserve the existing fallback for unknown/future backend transaction types.
  */
-function formatTransactionType(type: string | null | undefined): string {
-  if (!type) return 'Transaction'
-
-  const mapped = transactionTypeLabelMap[type]
-
-  if (mapped) return mapped
-
+function prettifyTransactionType(type: string): string {
   return type
     .replace(/_/g, ' ')
     .replace(/\s+/g, ' ')
@@ -317,19 +311,21 @@ function TransactionsTable({
   currency: CurrencyCode
   emptyMessage: string
 }): JSX.Element {
+  const { t } = useTranslation('finance')
+
   return (
     <div className="overflow-x-auto">
       <table className="w-full table-auto text-sm">
         <thead className="bg-gray-50 text-gray-600">
           <tr>
-            <th className="text-left p-3 whitespace-nowrap">Game Date</th>
-            <th className="text-left p-3">Type</th>
-            <th className="text-left p-3 whitespace-nowrap">Amount</th>
+            <th className="text-left p-3 whitespace-nowrap">{t('transactions.gameDate')}</th>
+            <th className="text-left p-3">{t('transactions.type')}</th>
+            <th className="text-left p-3 whitespace-nowrap">{t('transactions.amount')}</th>
             <th
               className="p-3 pr-4 text-right whitespace-nowrap"
               style={{ width: '1%' }}
             >
-              Transaction
+              {t('transactions.transaction')}
             </th>
           </tr>
         </thead>
@@ -355,7 +351,17 @@ function TransactionsTable({
 
                   <td className="p-3 font-medium text-gray-800 whitespace-nowrap">
                     <span title={r.type || undefined}>
-                      {formatTransactionType(r.type)}
+                      {!r.type
+                        ? t('transactions.transaction')
+                        : transactionTypeLabelKeyMap[
+                            r.type as keyof typeof transactionTypeLabelKeyMap
+                          ]
+                          ? t(
+                              transactionTypeLabelKeyMap[
+                                r.type as keyof typeof transactionTypeLabelKeyMap
+                              ],
+                            )
+                          : prettifyTransactionType(r.type)}
                     </span>
                   </td>
 
@@ -390,6 +396,7 @@ export function TransactionsTab({
   clubId: string
   currency?: CurrencyCode
 }): JSX.Element {
+  const { t } = useTranslation('finance')
   const [loading, setLoading] = useState(true)
   const [rows, setRows] = useState<StatementRow[]>([])
   const [viewMode, setViewMode] = useState<ViewMode>('recent')
@@ -583,10 +590,9 @@ export function TransactionsTab({
       <div className="p-4 border-b">
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div>
-            <h4 className="font-semibold">Transactions</h4>
+            <h4 className="font-semibold">{t('transactions.title')}</h4>
             <div className="text-sm text-gray-500 mt-1">
-              Recent view shows the last 30 game days. Archive keeps the previous 6 game months
-              grouped by month.
+              {t('transactions.description')}
             </div>
           </div>
 
@@ -601,7 +607,7 @@ export function TransactionsTab({
                   : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50',
               ].join(' ')}
             >
-              Transactions
+              {t('transactions.title')}
             </button>
 
             <button
@@ -614,7 +620,7 @@ export function TransactionsTab({
                   : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50',
               ].join(' ')}
             >
-              Archive
+              {t('transactions.archive')}
             </button>
           </div>
         </div>
@@ -627,14 +633,16 @@ export function TransactionsTab({
           <TransactionsTable
             rows={visibleRecentRows}
             currency={currency}
-            emptyMessage="No transactions found in the last 30 game days."
+            emptyMessage={t('transactions.noRecent')}
           />
 
           <div className="p-3 border-t bg-gray-50 flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center">
             <div className="text-xs text-gray-600">
-              Showing {recentRows.length === 0 ? 0 : (safeRecentPage - 1) * PAGE_SIZE + 1}-
-              {Math.min(safeRecentPage * PAGE_SIZE, recentRows.length)} of {recentRows.length}{' '}
-              recent transactions.
+              {t('transactions.showRecent', {
+                start: recentRows.length === 0 ? 0 : (safeRecentPage - 1) * PAGE_SIZE + 1,
+                end: Math.min(safeRecentPage * PAGE_SIZE, recentRows.length),
+                total: recentRows.length,
+              })}
             </div>
 
             <div className="flex items-center gap-2">
@@ -647,11 +655,14 @@ export function TransactionsTab({
                   safeRecentPage <= 1 ? 'bg-gray-200 text-gray-500' : 'bg-white hover:bg-gray-100',
                 ].join(' ')}
               >
-                Previous
+                {t('common.previous')}
               </button>
 
               <div className="text-xs text-gray-600 min-w-[72px] text-center">
-                Page {safeRecentPage} / {recentTotalPages}
+                {t('transactions.page', {
+                  page: safeRecentPage,
+                  total: recentTotalPages,
+                })}
               </div>
 
               <button
@@ -665,7 +676,7 @@ export function TransactionsTab({
                     : 'bg-white hover:bg-gray-100',
                 ].join(' ')}
               >
-                Next
+                {t('common.next')}
               </button>
             </div>
           </div>
@@ -674,7 +685,7 @@ export function TransactionsTab({
         <div className="divide-y">
           {archiveGroups.length === 0 ? (
             <div className="p-4 text-sm text-gray-600">
-              No archived transactions found in the previous 6 game months.
+              {t('transactions.noArchive')}
             </div>
           ) : (
             archiveGroups.map((group) => {
@@ -687,21 +698,29 @@ export function TransactionsTab({
                   <div className="px-4 py-3 bg-gray-50 border-b">
                     <div className="font-semibold text-gray-800">{group.label}</div>
                     <div className="text-xs text-gray-500 mt-1">
-                      {group.rows.length} archived transaction{group.rows.length === 1 ? '' : 's'}
+                      {t(
+                        group.rows.length === 1
+                          ? 'transactions.archiveCount'
+                          : 'transactions.archiveCountPlural',
+                        { count: group.rows.length },
+                      )}
                     </div>
                   </div>
 
                   <TransactionsTable
                     rows={monthRows}
                     currency={currency}
-                    emptyMessage={`No transactions in ${group.label}.`}
+                    emptyMessage={t('transactions.noMonth', { month: group.label })}
                   />
 
                   <div className="p-3 bg-gray-50 flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center">
                     <div className="text-xs text-gray-600">
-                      Showing {group.rows.length === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1}-
-                      {Math.min(currentPage * PAGE_SIZE, group.rows.length)} of {group.rows.length}{' '}
-                      items in {group.label}.
+                      {t('transactions.showMonth', {
+                        start: group.rows.length === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1,
+                        end: Math.min(currentPage * PAGE_SIZE, group.rows.length),
+                        total: group.rows.length,
+                        month: group.label,
+                      })}
                     </div>
 
                     <div className="flex items-center gap-2">
@@ -721,11 +740,14 @@ export function TransactionsTab({
                             : 'bg-white hover:bg-gray-100',
                         ].join(' ')}
                       >
-                        Previous
+                        {t('common.previous')}
                       </button>
 
                       <div className="text-xs text-gray-600 min-w-[72px] text-center">
-                        Page {currentPage} / {totalPages}
+                        {t('transactions.page', {
+                          page: currentPage,
+                          total: totalPages,
+                        })}
                       </div>
 
                       <button
@@ -744,7 +766,7 @@ export function TransactionsTab({
                             : 'bg-white hover:bg-gray-100',
                         ].join(' ')}
                       >
-                        Next
+                        {t('common.next')}
                       </button>
                     </div>
                   </div>
