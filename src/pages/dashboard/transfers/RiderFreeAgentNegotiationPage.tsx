@@ -19,6 +19,8 @@ import React, {
   type FormEvent,
 } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router'
+import { useTranslation } from 'react-i18next'
+import type { TFunction } from 'i18next'
 import { supabase } from '../../../lib/supabase'
 import {
   formatWeeklySalary,
@@ -220,12 +222,15 @@ function looksLikeUuid(value?: string | null): boolean {
  * buildPreferredRiderName
  * Builds a best-effort rider display name from name fields / fallback id.
  */
-function buildPreferredRiderName(params: {
-  firstName?: string | null
-  lastName?: string | null
-  displayName?: string | null
-  fallbackId?: string | null
-}): string {
+function buildPreferredRiderName(
+  params: {
+    firstName?: string | null
+    lastName?: string | null
+    displayName?: string | null
+    fallbackId?: string | null
+  },
+  unknownRiderLabel: string
+): string {
   const combined = [params.firstName?.trim(), params.lastName?.trim()]
     .filter((part): part is string => Boolean(part))
     .join(' ')
@@ -241,7 +246,7 @@ function buildPreferredRiderName(params: {
     return params.fallbackId
   }
 
-  return 'Unknown rider'
+  return unknownRiderLabel
 }
 
 /**
@@ -313,11 +318,14 @@ function getInitials(name: string): string {
  * formatDateTime
  * Formats a date/time string in a user-friendly way.
  */
-function formatDateTime(value?: string | null): string {
+function formatDateTime(
+  value?: string | null,
+  locale?: string
+): string {
   if (!value) return '—'
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return value
-  return date.toLocaleString()
+  return date.toLocaleString(locale)
 }
 
 /**
@@ -386,24 +394,27 @@ function normalizeOfferPreview(data: unknown): OfferPreviewState | null {
   }
 }
 
-function getOfferOutlookLabel(preview: OfferPreviewState | null): string {
-  if (!preview) return 'No preview'
+function getOfferOutlookLabel(
+  preview: OfferPreviewState | null,
+  t: TFunction
+): string {
+  if (!preview) return t('negotiation.noPreview')
 
-  if (preview.hardBlock) return 'Extremely difficult'
+  if (preview.hardBlock) return t('negotiation.outlookExtremelyDifficult')
 
   switch (preview.acceptanceBand) {
     case 'very_high':
-      return 'Very high chance'
+      return t('negotiation.outlookVeryHigh')
     case 'high':
-      return 'High chance'
+      return t('negotiation.outlookHigh')
     case 'moderate':
-      return 'Moderate chance'
+      return t('negotiation.outlookModerate')
     case 'low':
-      return 'Low chance'
+      return t('negotiation.outlookLow')
     case 'very_low':
-      return 'Very low chance'
+      return t('negotiation.outlookVeryLow')
     default:
-      return 'Unclear'
+      return t('negotiation.outlookUnclear')
   }
 }
 
@@ -421,53 +432,56 @@ function getOfferOutlookTone(preview: OfferPreviewState | null): string {
  * getStatusBadgeProps
  * Maps negotiation status to display label and colors.
  */
-function getStatusBadgeProps(status: NegotiationStatus): StatusBadgeDescriptor {
+function getStatusBadgeProps(
+  status: NegotiationStatus,
+  t: TFunction
+): StatusBadgeDescriptor {
   const value = String(status || '').toLowerCase()
 
   if (value === 'draft') {
     return {
-      label: 'Draft',
+      label: t('negotiation.draft'),
       className: 'bg-violet-50 text-violet-800 border-violet-200',
     }
   }
 
   if (value === 'open') {
     return {
-      label: 'Open',
+      label: t('negotiation.open'),
       className: 'bg-emerald-50 text-emerald-800 border-emerald-200',
     }
   }
 
   if (value === 'pending' || value === 'countered') {
     return {
-      label: 'Pending',
+      label: t('negotiation.pending'),
       className: 'bg-amber-50 text-amber-800 border-amber-200',
     }
   }
 
   if (value === 'accepted' || value === 'completed') {
     return {
-      label: 'Accepted',
+      label: t('negotiation.accepted'),
       className: 'bg-blue-50 text-blue-800 border-blue-200',
     }
   }
 
   if (value === 'declined' || value === 'rejected') {
     return {
-      label: 'Declined',
+      label: t('negotiation.declined'),
       className: 'bg-rose-50 text-rose-800 border-rose-200',
     }
   }
 
   if (value === 'expired') {
     return {
-      label: 'Expired',
+      label: t('negotiation.expired'),
       className: 'bg-slate-100 text-slate-700 border-slate-300',
     }
   }
 
   return {
-    label: 'Unknown',
+    label: t('negotiation.unknown'),
     className: 'bg-slate-100 text-slate-700 border-slate-300',
   }
 }
@@ -476,28 +490,31 @@ function getStatusBadgeProps(status: NegotiationStatus): StatusBadgeDescriptor {
  * formatNegotiationReason
  * Human-readable mapping for backend rejection/counter reasons.
  */
-function formatNegotiationReason(reason?: string | null): string {
+function formatNegotiationReason(
+  reason: string | null | undefined,
+  t: TFunction
+): string {
   const value = String(reason || '').toLowerCase()
 
   switch (value) {
     case 'salary_or_duration_not_competitive':
-      return 'Salary or contract duration not competitive enough.'
+      return t('negotiation.reasonSalaryDuration')
     case 'negotiation_expired':
-      return 'Negotiation expired before agreement was reached.'
+      return t('negotiation.reasonExpired')
     case 'salary_too_low':
-      return 'Salary too low.'
+      return t('negotiation.reasonSalaryLow')
     case 'contract_too_short':
-      return 'Contract too short.'
+      return t('negotiation.reasonContractShort')
     case 'contract_too_long':
-      return 'Contract too long.'
+      return t('negotiation.reasonContractLong')
     case 'club_tier_too_low':
-      return 'Club tier too low.'
+      return t('negotiation.reasonTierLow')
     case 'not_interested':
-      return 'Rider not interested.'
+      return t('negotiation.reasonNotInterested')
     case 'competitive_level_mismatch':
-      return 'Competitive level mismatch.'
+      return t('negotiation.reasonLevelMismatch')
     default:
-      return reason || 'No visible rejection reason at this time.'
+      return reason || t('negotiation.reasonNone')
   }
 }
 
@@ -571,9 +588,10 @@ function getRpcStringFromData(data: unknown, keys: string[]): string | null {
  */
 function getNegotiationCountdownLabel(
   expiresOnGameDate: string | null | undefined,
-  gameState: GameStateRow | null
+  gameState: GameStateRow | null,
+  t: TFunction
 ): string {
-  if (!expiresOnGameDate) return 'No expiry'
+  if (!expiresOnGameDate) return t('common.noExpiry')
 
   const currentGameDate = getCurrentGameDateFromState(gameState)
   if (!currentGameDate) {
@@ -583,7 +601,7 @@ function getNegotiationCountdownLabel(
   const expiryDate = new Date(`${expiresOnGameDate}T23:59:59Z`)
   const diffMs = expiryDate.getTime() - currentGameDate.getTime()
 
-  if (diffMs <= 0) return 'Expired'
+  if (diffMs <= 0) return t('negotiation.expired')
 
   const totalSeconds = Math.floor(diffMs / 1000)
   const days = Math.floor(totalSeconds / 86400)
@@ -592,6 +610,21 @@ function getNegotiationCountdownLabel(
   const seconds = totalSeconds % 60
 
   return `${days}d ${hours}h ${minutes}m ${seconds}s`
+}
+
+function isNegotiationExpired(
+  expiresOnGameDate: string | null | undefined,
+  gameState: GameStateRow | null
+): boolean {
+  if (!expiresOnGameDate) return false
+
+  const currentGameDate = getCurrentGameDateFromState(gameState)
+  if (!currentGameDate) return false
+
+  const expiryDate = new Date(`${expiresOnGameDate}T23:59:59Z`)
+  if (Number.isNaN(expiryDate.getTime())) return false
+
+  return expiryDate.getTime() <= currentGameDate.getTime()
 }
 
 /**
@@ -624,7 +657,7 @@ function CountryFlag({
     <span className={wrapperClassName} title={countryName}>
       <img
         src={src}
-        alt={`${countryName} flag`}
+        alt={countryName}
         className="h-full w-full object-cover"
         loading="lazy"
         onError={() => setHasError(true)}
@@ -670,9 +703,12 @@ function RiderPortrait({
  * Page component for a single free-agent contract negotiation or draft.
  */
 export default function RiderFreeAgentNegotiationPage(): JSX.Element {
+  const { t, i18n } = useTranslation('transfers')
   const navigate = useNavigate()
   const location = useLocation()
   const params = useParams<{ negotiationId?: string }>()
+
+  const displayLocale = i18n.resolvedLanguage || i18n.language || undefined
 
   const searchParams = useMemo(
     () => new URLSearchParams(location.search),
@@ -942,7 +978,7 @@ export default function RiderFreeAgentNegotiationPage(): JSX.Element {
         setAgentFeeInput(String(initialAgentFee))
       } catch (e: any) {
         if (!mounted) return
-        setLoadError(e?.message ?? 'Failed to load free-agent negotiation page.')
+        setLoadError(e?.message ?? t('negotiation.loadFailed'))
         setContextRow(null)
         setDraftFreeAgent(null)
         setDraftRiderProfile(null)
@@ -1014,17 +1050,21 @@ export default function RiderFreeAgentNegotiationPage(): JSX.Element {
 
   const effectiveRiderName = useMemo(
     () =>
-      buildPreferredRiderName({
-        firstName: effectiveRiderProfile?.firstName,
-        lastName: effectiveRiderProfile?.lastName,
-        displayName: effectiveRiderProfile?.displayName,
-        fallbackId: effectiveRiderProfile?.id ?? null,
-      }),
+      buildPreferredRiderName(
+        {
+          firstName: effectiveRiderProfile?.firstName,
+          lastName: effectiveRiderProfile?.lastName,
+          displayName: effectiveRiderProfile?.displayName,
+          fallbackId: effectiveRiderProfile?.id ?? null,
+        },
+        t('common.unknownRider')
+      ),
     [
       effectiveRiderProfile?.firstName,
       effectiveRiderProfile?.lastName,
       effectiveRiderProfile?.displayName,
       effectiveRiderProfile?.id,
+      t,
     ]
   )
 
@@ -1050,17 +1090,17 @@ export default function RiderFreeAgentNegotiationPage(): JSX.Element {
     parsedSigningBonusPreview + parsedAgentFeePreview
 
   const statusBadge = useMemo(
-    () => getStatusBadgeProps(effectiveStatus),
-    [effectiveStatus]
+    () => getStatusBadgeProps(effectiveStatus, t),
+    [effectiveStatus, t]
   )
 
   const clubName = !isDraftMode
-    ? contextRow?.club_name?.trim() || 'Your club'
-    : 'Your club'
+    ? contextRow?.club_name?.trim() || t('common.unknownClub')
+    : t('common.unknownClub')
 
   const expiryLabel = useMemo(
-    () => getNegotiationCountdownLabel(effectiveExpiresOnGameDate, gameState),
-    [effectiveExpiresOnGameDate, gameState]
+    () => getNegotiationCountdownLabel(effectiveExpiresOnGameDate, gameState, t),
+    [effectiveExpiresOnGameDate, gameState, t]
   )
 
   const currentGameDate = useMemo(
@@ -1092,7 +1132,12 @@ export default function RiderFreeAgentNegotiationPage(): JSX.Element {
     return ts > Date.now()
   }, [isDraftMode, contextRow?.locked_until])
 
-  const isDraftExpired = isDraftMode && expiryLabel === 'Expired'
+  const isDraftExpired = useMemo(
+    () =>
+      isDraftMode &&
+      isNegotiationExpired(effectiveExpiresOnGameDate, gameState),
+    [isDraftMode, effectiveExpiresOnGameDate, gameState]
+  )
 
   const canSubmit = !submitting && !isTerminal && !isLocked && !isDraftExpired
 
@@ -1192,43 +1237,45 @@ export default function RiderFreeAgentNegotiationPage(): JSX.Element {
     const parsedAgentFee = normalizeMoneyInput(agentFeeInput)
 
     if (!parsedSalary || parsedSalary <= 0) {
-      setSubmitError('Please enter a valid weekly salary.')
+      setSubmitError(t('negotiation.validSalary'))
       return
     }
 
     if (!Number.isFinite(parsedDuration) || parsedDuration <= 0) {
-      setSubmitError('Please enter a valid contract duration.')
+      setSubmitError(t('negotiation.validDuration'))
       return
     }
 
     if (parsedSigningBonus == null || parsedSigningBonus < minimumSigningBonus) {
       setSubmitError(
-        `Signing bonus cannot be below the minimum of ${formatMoney(minimumSigningBonus)}.`
+        t('negotiation.signingMinimum', {
+          amount: formatMoney(minimumSigningBonus),
+        })
       )
       return
     }
 
     if (parsedAgentFee == null || parsedAgentFee < minimumAgentFee) {
       setSubmitError(
-        `Agent fee cannot be below the minimum of ${formatMoney(minimumAgentFee)}.`
+        t('negotiation.agentMinimum', {
+          amount: formatMoney(minimumAgentFee),
+        })
       )
       return
     }
 
     if (isTerminal) {
-      setSubmitError('This negotiation is already closed.')
+      setSubmitError(t('negotiation.alreadyClosed'))
       return
     }
 
     if (isLocked) {
-      setSubmitError('This negotiation is temporarily locked.')
+      setSubmitError(t('negotiation.lockedError'))
       return
     }
 
     if (isDraftExpired) {
-      setSubmitError(
-        'This free-agent opportunity has already expired and can no longer be started.'
-      )
+      setSubmitError(t('negotiation.freeAgentExpired'))
       return
     }
 
@@ -1304,7 +1351,7 @@ export default function RiderFreeAgentNegotiationPage(): JSX.Element {
       ])
       const rpcMessage =
         getRpcString(row, ['message', 'result_message', 'outcome_message']) ??
-        'Terms submitted successfully.'
+        t('negotiation.termsSubmitted')
 
       let feedback: SubmitFeedback = {
         kind: 'warning',
@@ -1340,7 +1387,7 @@ export default function RiderFreeAgentNegotiationPage(): JSX.Element {
 
       await refreshExistingNegotiation(workingNegotiationId)
     } catch (e: any) {
-      setSubmitError(e?.message ?? 'Failed to submit offer.')
+      setSubmitError(e?.message ?? t('negotiation.submitOfferFailed'))
     } finally {
       setSubmitting(false)
     }
@@ -1354,7 +1401,7 @@ export default function RiderFreeAgentNegotiationPage(): JSX.Element {
     return (
       <div className="rounded-lg bg-white p-4 shadow">
         <div className="text-sm text-slate-600">
-          {isDraftMode ? 'Loading draft negotiation...' : 'Loading free-agent negotiation...'}
+          {isDraftMode ? t('negotiation.loadingDraft') : t('negotiation.loadingFreeAgent')}
         </div>
       </div>
     )
@@ -1368,12 +1415,12 @@ export default function RiderFreeAgentNegotiationPage(): JSX.Element {
           onClick={() => navigate(returnTo)}
           className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
         >
-          ← Back
+          {t('negotiation.back')}
         </button>
 
         <div className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-4">
           <div className="text-sm font-medium text-rose-700">
-            Could not load negotiation
+            {t('negotiation.loadFailed')}
           </div>
           <div className="mt-1 text-sm text-rose-600">{loadError}</div>
         </div>
@@ -1389,12 +1436,12 @@ export default function RiderFreeAgentNegotiationPage(): JSX.Element {
           onClick={() => navigate(returnTo)}
           className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
         >
-          ← Back
+          {t('negotiation.back')}
         </button>
 
         <div className="rounded-lg bg-white p-4 shadow">
           <div className="text-sm text-slate-600">
-            {isDraftMode ? 'Draft negotiation not found.' : 'Negotiation not found.'}
+            {isDraftMode ? t('negotiation.draftNotFound') : t('negotiation.notFound')}
           </div>
         </div>
       </div>
@@ -1409,12 +1456,12 @@ export default function RiderFreeAgentNegotiationPage(): JSX.Element {
           onClick={() => navigate(returnTo)}
           className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
         >
-          ← Back
+          {t('negotiation.back')}
         </button>
 
         <div className="flex items-center gap-2">
           <span className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
-            Status
+            {t('negotiation.status')}
           </span>
           <span
             className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold ${statusBadge.className}`}
@@ -1446,26 +1493,24 @@ export default function RiderFreeAgentNegotiationPage(): JSX.Element {
 
       {isLocked ? (
         <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-4 text-sm text-amber-900">
-          <div className="font-semibold">Negotiation is temporarily locked.</div>
+          <div className="font-semibold">{t('negotiation.temporaryLockTitle')}</div>
 
           <div className="mt-1">
-            The rider was not satisfied with your latest offer and has paused the
-            negotiation until{' '}
+            {t('negotiation.lockExplanation')}{' '}
             <span className="font-semibold">
-              {formatDateTime(contextRow?.locked_until)}
+              {formatDateTime(contextRow?.locked_until, displayLocale)}
             </span>.
           </div>
 
           <div className="mt-2 text-xs text-amber-800">
-            Improve the weekly salary, contract length, signing bonus and/or agent fee
-            before trying again.
+            {t('negotiation.improveOffer')}
           </div>
         </div>
       ) : null}
 
       {isDraftExpired ? (
         <div className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
-          This free-agent opportunity has already expired and can no longer be started.
+          {t('negotiation.freeAgentExpired')}
         </div>
       ) : null}
 
@@ -1473,10 +1518,10 @@ export default function RiderFreeAgentNegotiationPage(): JSX.Element {
         <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
           {String(effectiveStatus).toLowerCase() === 'completed' ||
           String(effectiveStatus).toLowerCase() === 'accepted'
-            ? 'This contract has been completed.'
+            ? t('negotiation.contractCompleted')
             : String(effectiveStatus).toLowerCase() === 'expired'
-            ? 'This negotiation expired before agreement was reached.'
-            : 'This negotiation is closed and can no longer be updated.'}
+            ? t('negotiation.expiredBeforeAgreement')
+            : t('negotiation.closed')}
         </div>
       ) : null}
 
@@ -1484,21 +1529,23 @@ export default function RiderFreeAgentNegotiationPage(): JSX.Element {
         <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
           <div className="min-w-0">
             <div className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-950/75">
-              {isDraftMode ? 'Free Agent Negotiation Draft' : 'Free Agent Negotiation'}
+              {isDraftMode ? t('negotiation.freeAgentDraftTitle') : t('negotiation.freeAgentTitle')}
             </div>
             <h1 className="mt-1 truncate text-2xl font-semibold tracking-tight text-slate-950">
               {effectiveRiderName}
             </h1>
             <div className="mt-2 text-sm text-slate-900/80">
-              Contract discussion between <span className="font-semibold">{clubName}</span> and
-              free agent <span className="font-semibold">{effectiveRiderName}</span>.
+              {t('negotiation.freeAgentBetween', {
+                club: clubName,
+                rider: effectiveRiderName,
+              })}
             </div>
           </div>
 
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div className="rounded-lg bg-white/60 px-4 py-3 text-right">
               <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-900/70">
-                Preferred Weekly Salary
+                {t('negotiation.preferredWeeklySalary')}
               </div>
               <div className="mt-1 text-lg font-semibold text-slate-950">
                 {formatWeeklySalary(
@@ -1512,7 +1559,7 @@ export default function RiderFreeAgentNegotiationPage(): JSX.Element {
 
             <div className="rounded-lg bg-white/60 px-4 py-3 text-right">
               <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-900/70">
-                Expires
+                {t('negotiation.expires')}
               </div>
               <div className="mt-1 text-sm font-semibold text-slate-950">{expiryLabel}</div>
             </div>
@@ -1523,7 +1570,7 @@ export default function RiderFreeAgentNegotiationPage(): JSX.Element {
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-[320px_minmax(0,1fr)]">
         <div className="space-y-4">
           <div className="rounded-lg bg-white p-4 shadow">
-            <h2 className="text-sm font-semibold text-slate-900">Rider</h2>
+            <h2 className="text-sm font-semibold text-slate-900">{t('negotiation.rider')}</h2>
 
             <div className="mt-3 flex items-start gap-3">
               <div className="h-20 w-20 shrink-0 overflow-hidden rounded-lg bg-slate-100">
@@ -1548,7 +1595,7 @@ export default function RiderFreeAgentNegotiationPage(): JSX.Element {
 
                   {riderAge != null ? (
                     <span className="rounded-full bg-slate-50 px-2 py-0.5 font-medium">
-                      Age {riderAge}
+                      {t('common.ageValue', { age: riderAge })}
                     </span>
                   ) : null}
 
@@ -1563,39 +1610,42 @@ export default function RiderFreeAgentNegotiationPage(): JSX.Element {
           </div>
 
           <div className="rounded-lg bg-white p-4 shadow">
-            <h2 className="text-sm font-semibold text-slate-900">Negotiation Context</h2>
+            <h2 className="text-sm font-semibold text-slate-900">{t('negotiation.negotiationContext')}</h2>
 
             <div className="mt-3 space-y-2 text-sm text-slate-700">
               <div className="flex items-center justify-between gap-3">
-                <span className="text-slate-500">Club</span>
+                <span className="text-slate-500">{t('negotiation.club')}</span>
                 <span className="font-medium">{clubName}</span>
               </div>
 
               <div className="flex items-center justify-between gap-3">
-                <span className="text-slate-500">Preferred minimum salary</span>
+                <span className="text-slate-500">{t('negotiation.preferredMinimumSalary')}</span>
                 <span className="font-medium">
                   {formatWeeklySalary(effectiveMinAcceptableSalaryWeekly)}
                 </span>
               </div>
 
               <div className="flex items-center justify-between gap-3">
-                <span className="text-slate-500">Average transfer value</span>
+                <span className="text-slate-500">{t('negotiation.averageTransferValue')}</span>
                 <span className="font-medium">{formatMoney(riderMarketValue)}</span>
               </div>
 
               <div className="flex items-center justify-between gap-3">
-                <span className="text-slate-500">Preferred contract</span>
+                <span className="text-slate-500">{t('negotiation.preferredContract')}</span>
                 <span className="font-medium">
                   {effectivePreferredDurationSeasons
-                    ? `${effectivePreferredDurationSeasons} season${
-                        effectivePreferredDurationSeasons === 1 ? '' : 's'
-                      }`
+                    ? t(
+                        effectivePreferredDurationSeasons === 1
+                          ? 'common.season'
+                          : 'common.seasons',
+                        { count: effectivePreferredDurationSeasons }
+                      )
                     : '—'}
                 </span>
               </div>
 
               <div className="flex items-center justify-between gap-3">
-                <span className="text-slate-500">Attempts</span>
+                <span className="text-slate-500">{t('negotiation.attempts')}</span>
                 <span className="font-medium">
                   {isDraftMode ? 0 : contextRow?.attempt_count ?? 0}
                   {!isDraftMode && contextRow?.max_attempts
@@ -1609,18 +1659,18 @@ export default function RiderFreeAgentNegotiationPage(): JSX.Element {
 
         <div className="space-y-4">
           <form onSubmit={handleSubmitOffer} className="rounded-lg bg-white p-4 shadow">
-            <h2 className="text-sm font-semibold text-slate-900">Offer Terms</h2>
+            <h2 className="text-sm font-semibold text-slate-900">{t('negotiation.offerTerms')}</h2>
 
             {isDraftMode ? (
               <div className="mt-3 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-700">
-                Negotiation will begin only after you submit this offer.
+                {t('negotiation.draftInfo')}
               </div>
             ) : null}
 
             <div className="mt-3 grid grid-cols-1 gap-4 md:grid-cols-2">
               <div>
                 <label className="mb-1 block text-xs font-medium uppercase tracking-[0.14em] text-slate-500">
-                  Weekly Salary Offer
+                  {t('negotiation.weeklySalaryOffer')}
                 </label>
                 <input
                   type="text"
@@ -1628,10 +1678,10 @@ export default function RiderFreeAgentNegotiationPage(): JSX.Element {
                   onChange={(event) => setSalaryInput(event.target.value)}
                   disabled={!canSubmit}
                   className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-yellow-400 focus:ring-0 disabled:cursor-not-allowed disabled:bg-slate-100"
-                  placeholder="e.g. 75000"
+                  placeholder="75000"
                 />
                 <p className="mt-1 text-xs text-slate-500">
-                  Current:{' '}
+                  {t('negotiation.current')}{' '}
                   <span className="font-medium">
                     {formatWeeklySalary(currentShownSalary)}
                   </span>
@@ -1640,7 +1690,7 @@ export default function RiderFreeAgentNegotiationPage(): JSX.Element {
 
               <div>
                 <label className="mb-1 block text-xs font-medium uppercase tracking-[0.14em] text-slate-500">
-                  Contract Length (seasons)
+                  {t('negotiation.contractLength')}
                 </label>
                 <input
                   type="number"
@@ -1653,12 +1703,15 @@ export default function RiderFreeAgentNegotiationPage(): JSX.Element {
                   className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-yellow-400 focus:ring-0 disabled:cursor-not-allowed disabled:bg-slate-100"
                 />
                 <p className="mt-1 text-xs text-slate-500">
-                  Current:{' '}
+                  {t('negotiation.current')}{' '}
                   <span className="font-medium">
                     {currentShownDuration
-                      ? `${currentShownDuration} season${
-                          currentShownDuration === 1 ? '' : 's'
-                        }`
+                      ? t(
+                          currentShownDuration === 1
+                            ? 'common.season'
+                            : 'common.seasons',
+                          { count: currentShownDuration }
+                        )
                       : '—'}
                   </span>
                 </p>
@@ -1668,7 +1721,7 @@ export default function RiderFreeAgentNegotiationPage(): JSX.Element {
             <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
               <div>
                 <label className="mb-1 block text-xs font-medium uppercase tracking-[0.14em] text-slate-500">
-                  Signing Bonus
+                  {t('negotiation.signingBonus')}
                 </label>
                 <input
                   type="text"
@@ -1676,17 +1729,17 @@ export default function RiderFreeAgentNegotiationPage(): JSX.Element {
                   onChange={(event) => setSigningBonusInput(event.target.value)}
                   disabled={!canSubmit}
                   className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-yellow-400 focus:ring-0 disabled:cursor-not-allowed disabled:bg-slate-100"
-                  placeholder="e.g. 20000"
+                  placeholder="20000"
                 />
                 <p className="mt-1 text-xs text-slate-500">
-                  Minimum:{' '}
+                  {t('negotiation.minimum')}{' '}
                   <span className="font-medium">{formatMoney(minimumSigningBonus)}</span>
                 </p>
               </div>
 
               <div>
                 <label className="mb-1 block text-xs font-medium uppercase tracking-[0.14em] text-slate-500">
-                  Agent Fee
+                  {t('negotiation.agentFee')}
                 </label>
                 <input
                   type="text"
@@ -1694,30 +1747,30 @@ export default function RiderFreeAgentNegotiationPage(): JSX.Element {
                   onChange={(event) => setAgentFeeInput(event.target.value)}
                   disabled={!canSubmit}
                   className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-yellow-400 focus:ring-0 disabled:cursor-not-allowed disabled:bg-slate-100"
-                  placeholder="e.g. 30000"
+                  placeholder="30000"
                 />
                 <p className="mt-1 text-xs text-slate-500">
-                  Minimum:{' '}
+                  {t('negotiation.minimum')}{' '}
                   <span className="font-medium">{formatMoney(minimumAgentFee)}</span>
                 </p>
               </div>
             </div>
 
             <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
-              <div className="font-semibold text-slate-900">Financial Summary</div>
+              <div className="font-semibold text-slate-900">{t('negotiation.financialSummary')}</div>
 
               <div className="mt-2 flex items-center justify-between gap-3">
-                <span>Signing bonus</span>
+                <span>{t('negotiation.signingBonusLower')}</span>
                 <span className="font-medium">{formatMoney(parsedSigningBonusPreview)}</span>
               </div>
 
               <div className="mt-1 flex items-center justify-between gap-3">
-                <span>Agent fee</span>
+                <span>{t('negotiation.agentFeeLower')}</span>
                 <span className="font-medium">{formatMoney(parsedAgentFeePreview)}</span>
               </div>
 
               <div className="mt-2 flex items-center justify-between gap-3 border-t border-slate-200 pt-2">
-                <span className="font-semibold text-slate-900">Total up-front cost</span>
+                <span className="font-semibold text-slate-900">{t('negotiation.totalUpfront')}</span>
                 <span className="font-semibold text-slate-900">
                   {formatMoney(estimatedUpfrontCost)}
                 </span>
@@ -1727,23 +1780,24 @@ export default function RiderFreeAgentNegotiationPage(): JSX.Element {
             <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <div className="font-semibold text-slate-900">Offer Outlook</div>
+                  <div className="font-semibold text-slate-900">{t('negotiation.offerOutlook')}</div>
                   <div className="mt-1 text-sm text-slate-600">
-                    {offerPreview?.summaryText ||
-                      'Adjust the package to preview the rider response.'}
+                    {offerPreview?.summaryText || t('negotiation.adjustPreview')}
                   </div>
                 </div>
 
                 <div className="shrink-0 text-right">
                   <div className="text-sm font-semibold text-slate-900">
-                    {getOfferOutlookLabel(offerPreview)}
+                    {getOfferOutlookLabel(offerPreview, t)}
                   </div>
                   <div className="text-xs text-slate-500">
                     {offerPreview
-                      ? `${offerPreview.acceptancePercent}% preview`
+                      ? t('negotiation.previewPercent', {
+                          percent: offerPreview.acceptancePercent,
+                        })
                       : previewLoading
-                      ? 'Loading...'
-                      : 'No preview'}
+                      ? t('negotiation.loading')
+                      : t('negotiation.noPreview')}
                   </div>
                 </div>
               </div>
@@ -1782,38 +1836,38 @@ export default function RiderFreeAgentNegotiationPage(): JSX.Element {
                 disabled={!canSubmit}
                 className="inline-flex items-center justify-center rounded-lg bg-yellow-400 px-4 py-2 text-sm font-semibold text-slate-950 shadow-sm transition hover:bg-yellow-500 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {submitting ? 'Submitting...' : 'Submit Offer'}
+                {submitting ? t('negotiation.submitting') : t('offerModal.submit')}
               </button>
             </div>
           </form>
 
           <div className="rounded-lg bg-white p-4 shadow">
-            <h2 className="text-sm font-semibold text-slate-900">Rider Response</h2>
+            <h2 className="text-sm font-semibold text-slate-900">{t('negotiation.riderResponse')}</h2>
 
             <div className="mt-3 space-y-3 text-sm text-slate-700">
               <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
                 <div className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
-                  Latest Visible Reason
+                  {t('negotiation.latestReason')}
                 </div>
                 <div className="mt-1">
                   {isDraftMode
-                    ? 'No rider response yet. The negotiation becomes real only after you submit the first offer.'
-                    : formatNegotiationReason(contextRow?.closed_reason)}
+                    ? t('negotiation.reasonNone')
+                    : formatNegotiationReason(contextRow?.closed_reason, t)}
                 </div>
               </div>
 
               <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
                 <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
-                  <div className="font-semibold text-slate-700">Created</div>
+                  <div className="font-semibold text-slate-700">{t('negotiation.created')}</div>
                   <div className="mt-0.5">
-                    {isDraftMode ? 'Not created yet' : formatDateTime(contextRow?.created_at)}
+                    {isDraftMode ? '—' : formatDateTime(contextRow?.created_at, displayLocale)}
                   </div>
                 </div>
 
                 <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
-                  <div className="font-semibold text-slate-700">Last Updated</div>
+                  <div className="font-semibold text-slate-700">{t('negotiation.lastUpdated')}</div>
                   <div className="mt-0.5">
-                    {isDraftMode ? 'No updates yet' : formatDateTime(contextRow?.updated_at)}
+                    {isDraftMode ? '—' : formatDateTime(contextRow?.updated_at, displayLocale)}
                   </div>
                 </div>
               </div>
