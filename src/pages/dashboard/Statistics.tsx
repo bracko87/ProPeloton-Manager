@@ -114,79 +114,12 @@ type CountryRow = {
   name: string
 }
 
-type RiderBaseLookupRow = {
-  id: string
-  display_name: string | null
-  country_code: string | null
-  birth_date: string | null
-  image_url: string | null
-  role?: string | null
-  overall?: number | null
-  potential?: number | null
-  sprint?: number | null
-  climbing?: number | null
-  time_trial?: number | null
-  endurance?: number | null
-  flat?: number | null
-  recovery?: number | null
-  resistance?: number | null
-  race_iq?: number | null
-  teamwork?: number | null
-  morale?: number | null
-  market_value?: number | null
-  salary?: number | null
-  contract_expires_season?: number | null
-  availability_status?: string | null
-  fatigue?: number | null
-}
-
-type ClubRosterMini = {
-  id: string
-  rider_id: string
-  club_id: string
-}
-
-type ClubMini = {
-  id: string
-  name: string
-  club_tier: string | null
-  is_ai: boolean | null
-  is_active: boolean | null
-  country_code: string | null
-}
 
 
-type TeamInternationalPointsRow = {
-  season_year: number | null
-  team_id: string
-  international_points: number | string | null
-  international_rank: number | string | null
-}
 
-type RiderInternationalPointsRow = {
-  season_year: number | null
-  rider_id: string
-  international_points: number | string | null
-  stage_finish_points: number | string | null
-  leader_day_points: number | string | null
-  final_gc_points: number | string | null
-  oneday_finish_points: number | string | null
-  international_rank: number | string | null
-}
 
-type RiderSeasonOverviewRow = {
-  season_year: number | null
-  rider_id: string
-  points: number | string | null
-  podiums: number | string | null
-  jerseys: number | string | null
-  stage_wins: number | string | null
-  final_jerseys: number | string | null
-  oneday_finish_points: number | string | null
-  stage_finish_points: number | string | null
-  leader_day_points: number | string | null
-  final_gc_points: number | string | null
-}
+
+
 
 const PAGE_SIZE = 20
 const RIDER_TOP_LIMIT = 50
@@ -537,15 +470,42 @@ export default function StatisticsPage() {
   const [tutorialMode, setTutorialMode] = useState<'closed' | 'invite' | 'steps'>('closed')
   const [tutorialStepIndex, setTutorialStepIndex] = useState(0)
 
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const [sharedLoading, setSharedLoading] = useState(true)
   const [currentSeasonNumber, setCurrentSeasonNumber] = useState<number>(1)
+  const [currentGameDate, setCurrentGameDate] = useState<string | null>(null)
 
   const [teamRows, setTeamRows] = useState<TeamCurrentRow[]>([])
   const [winnerRows, setWinnerRows] = useState<TeamWinnerRow[]>([])
   const [snapshotRows, setSnapshotRows] = useState<TeamSnapshotRow[]>([])
   const [riderRows, setRiderRows] = useState<RiderStatsRow[]>([])
   const [countries, setCountries] = useState<CountryRow[]>([])
+
+  const [teamCurrentLoaded, setTeamCurrentLoaded] = useState(false)
+  const [teamHistoryLoaded, setTeamHistoryLoaded] = useState(false)
+  const [ridersLoaded, setRidersLoaded] = useState(false)
+
+  const [teamCurrentLoading, setTeamCurrentLoading] = useState(false)
+  const [teamHistoryLoading, setTeamHistoryLoading] = useState(false)
+  const [ridersLoading, setRidersLoading] = useState(false)
+
+  const [teamCurrentError, setTeamCurrentError] = useState<string | null>(null)
+  const [teamHistoryError, setTeamHistoryError] = useState<string | null>(null)
+  const [ridersError, setRidersError] = useState<string | null>(null)
+
+  const loading =
+    sharedLoading ||
+    (mainTab === 'teams'
+      ? teamSubTab === 'current'
+        ? teamCurrentLoading
+        : teamHistoryLoading
+      : ridersLoading)
+
+  const error =
+    mainTab === 'teams'
+      ? teamSubTab === 'current'
+        ? teamCurrentError
+        : teamHistoryError
+      : ridersError
 
   const [myClubIds, setMyClubIds] = useState<string[]>([])
 
@@ -886,312 +846,345 @@ export default function StatisticsPage() {
   }, [])
 
   useEffect(() => {
-    async function loadAll() {
-      try {
-        setLoading(true)
-        setError(null)
+    let cancelled = false
 
-        const [
-          teamRankingsRes,
-          winnersRes,
-          snapshotsRes,
-          ridersRes,
-          riderBaseRes,
-          clubRosterRes,
-          clubsRes,
-          countriesRes,
-          currentSeasonRes,
-          currentGameDateRes,
-          teamInternationalPointsRes,
-          riderInternationalPointsRes,
-        ] = await Promise.all([
-          supabase.from('team_rankings_view').select('*'),
-          supabase.from('team_ranking_past_winners').select('*'),
-          supabase.from('team_ranking_season_snapshots').select('*'),
-          supabase.from('rider_statistics_page_international_v1').select('*').eq('season_year', 2000),
-          supabase
-            .from('riders')
-            .select('id, display_name, country_code, birth_date, image_url, role, overall, potential, sprint, climbing, time_trial, endurance, flat, recovery, resistance, race_iq, teamwork, morale, market_value, salary, contract_expires_season, availability_status, fatigue'),
-          supabase.from('club_riders').select('id, rider_id, club_id'),
-          supabase.from('clubs').select('id, name, club_tier, is_ai, is_active, country_code'),
+    async function loadSharedStatisticsContext() {
+      setSharedLoading(true)
+
+      try {
+        const [countriesRes, currentSeasonRes, currentGameDateRes] = await Promise.all([
           supabase.from('countries').select('code, name'),
           supabase.rpc('get_current_season_number'),
           supabase.rpc('get_current_game_date'),
-          supabase.from('team_international_points_by_season_v1').select('*'),
-          supabase.from('rider_international_points_by_season_v1').select('*'),
         ])
 
-        const firstError =
-          teamRankingsRes.error ||
-          winnersRes.error ||
-          snapshotsRes.error ||
-          ridersRes.error ||
-          clubRosterRes.error ||
-          clubsRes.error ||
-          teamInternationalPointsRes.error ||
-          riderInternationalPointsRes.error
+        if (cancelled) return
 
-        if (firstError) throw firstError
+        if (countriesRes.error) {
+          console.warn('Failed to load countries for statistics page:', countriesRes.error.message)
+          setCountries([])
+        } else {
+          setCountries((countriesRes.data ?? []) as CountryRow[])
+        }
 
-        const rawTeams = (teamRankingsRes.data ?? []) as TeamCurrentRow[]
-        const winners = (winnersRes.data ?? []) as TeamWinnerRow[]
-        const snapshots = (snapshotsRes.data ?? []) as TeamSnapshotRow[]
-        const riders = (ridersRes.data ?? []) as Record<string, unknown>[]
-        const riderBaseRows = riderBaseRes.error
-          ? []
-          : ((riderBaseRes.data ?? []) as RiderBaseLookupRow[])
-        const clubRoster = (clubRosterRes.data ?? []) as ClubRosterMini[]
-        const clubs = (clubsRes.data ?? []) as ClubMini[]
-        const countryRows = countriesRes.error ? [] : ((countriesRes.data ?? []) as CountryRow[])
         const currentSeason =
           currentSeasonRes.error ||
           currentSeasonRes.data === null ||
           currentSeasonRes.data === undefined
             ? 1
             : Number(currentSeasonRes.data)
+
+        if (currentSeasonRes.error) {
+          console.warn(
+            'Failed to load current season for statistics page:',
+            currentSeasonRes.error.message
+          )
+        }
+
         const normalizedGameDate = currentGameDateRes.error
           ? null
           : normalizeGameDateValue(currentGameDateRes.data)
-        const targetSeasonYear = getSeasonYearFromGameDate(normalizedGameDate)
 
-        const teamInternationalRows =
-          (teamInternationalPointsRes.data ?? []) as TeamInternationalPointsRow[]
-        const riderInternationalRows =
-          (riderInternationalPointsRes.data ?? []) as RiderInternationalPointsRow[]
-        const riderOverviewRows = (ridersRes.data ?? []) as RiderSeasonOverviewRow[]
+        if (currentGameDateRes.error) {
+          console.warn(
+            'Failed to load current game date for statistics page:',
+            currentGameDateRes.error.message
+          )
+        }
 
-        const displayNameByClubId = await loadClubDisplayNameMap([
-          ...rawTeams.map(team => team.id),
-          ...winners.map(row => row.club_id),
-          ...snapshots.map(row => row.club_id),
-          ...clubs.map(club => club.id),
-          ...riders.map(riderRaw => resolveStringValue(riderRaw, ['club_id'])),
-        ])
-
-        const winnersWithDisplayNames = winners.map(row => ({
-          ...row,
-          club_name: getClubDisplayNameFromMap(
-            displayNameByClubId,
-            row.club_id,
-            row.club_name
-          ),
-        }))
-
-        const snapshotsWithDisplayNames = snapshots.map(row => ({
-          ...row,
-          club_name: getClubDisplayNameFromMap(
-            displayNameByClubId,
-            row.club_id,
-            row.club_name
-          ),
-        }))
-
-        const clubsWithDisplayNames = clubs.map(club => ({
-          ...club,
-          name: getClubDisplayNameFromMap(displayNameByClubId, club.id, club.name),
-        }))
-
-        const teamInternationalById = new Map(
-          teamInternationalRows
-            .filter(row => row.season_year === targetSeasonYear)
-            .map(row => [row.team_id, row])
+        setCurrentSeasonNumber(
+          Number.isFinite(currentSeason) && currentSeason > 0 ? currentSeason : 1
         )
-
-        const riderInternationalById = new Map(
-          riderInternationalRows
-            .filter(row => row.season_year === targetSeasonYear)
-            .map(row => [row.rider_id, row])
-        )
-
-        const riderOverviewById = new Map(
-          riderOverviewRows
-            .filter(row => row.season_year === targetSeasonYear)
-            .map(row => [row.rider_id, row])
-        )
-
-        const teams = rawTeams.map(team => {
-          const internationalRow = teamInternationalById.get(team.id)
-          return {
-            ...team,
-            name: getClubDisplayNameFromMap(displayNameByClubId, team.id, team.name),
-            season_points: normalizeNumberLike(internationalRow?.international_points, 0),
-          }
-        })
-
-        const riderBaseById = new Map(riderBaseRows.map(rider => [rider.id, rider]))
-        const clubById = new Map(clubsWithDisplayNames.map(club => [club.id, club]))
-        const rosterByRosterId = new Map(clubRoster.map(row => [row.id, row]))
-        const rosterByRiderId = new Map(clubRoster.map(row => [row.rider_id, row.club_id]))
-        const teamCountryByClubId = new Map(teams.map(team => [team.id, team.country_code]))
-
-        const mergedRiders: RiderStatsRow[] = riders.map(riderRaw => {
-          const rawStatsId =
-            resolveStringValue(riderRaw, ['id']) ??
-            (riderRaw['id'] !== undefined && riderRaw['id'] !== null
-              ? String(riderRaw['id'])
-              : null)
-
-          const rawRealRiderId =
-            resolveStringValue(riderRaw, ['rider_id', 'riders_id', 'player_id', 'person_id']) ??
-            (riderRaw['rider_id'] !== undefined && riderRaw['rider_id'] !== null
-              ? String(riderRaw['rider_id'])
-              : null)
-
-          const rawRosterId =
-            resolveStringValue(riderRaw, ['club_rider_id', 'club_riders_id', 'roster_id']) ??
-            rawStatsId
-
-          const rosterMatch = rawRosterId ? rosterByRosterId.get(rawRosterId) : undefined
-
-          const candidateRiderIds = [rawRealRiderId, rosterMatch?.rider_id, rawStatsId].filter(
-            (value): value is string => typeof value === 'string' && value.trim() !== ''
-          )
-
-          const riderId =
-            candidateRiderIds.find(candidateId => riderBaseById.has(candidateId)) ??
-            candidateRiderIds[0] ??
-            ''
-
-          if (!riderId) {
-            console.warn('Unresolved statistics rider row:', {
-              availableKeys: Object.keys(riderRaw),
-              rawStatsId,
-              rawRealRiderId,
-              rawRosterId,
-              riderRaw,
-            })
-          }
-
-          const baseRider = riderId ? riderBaseById.get(riderId) : undefined
-
-          const displayName =
-            resolveStringValue(riderRaw, ['display_name', 'name']) ??
-            baseRider?.display_name ??
-            'Unknown rider'
-
-          const rawCountryCode =
-            resolveStringValue(riderRaw, ['country_code', 'nationality_code', 'country']) ?? null
-
-          const rawBirthDate =
-            resolveStringValue(riderRaw, ['birth_date', 'dob', 'date_of_birth']) ?? null
-
-          const clubId =
-            resolveStringValue(riderRaw, ['club_id']) ??
-            rosterMatch?.club_id ??
-            (riderId ? rosterByRiderId.get(riderId) ?? null : null)
-
-          const club = clubId ? clubById.get(clubId) : undefined
-
-          const finalRiderCountryCode = rawCountryCode ?? baseRider?.country_code ?? null
-
-          const clubCountryCode =
-            resolveStringValue(riderRaw, ['club_country_code', 'team_country_code']) ??
-            (clubId ? teamCountryByClubId.get(clubId) ?? club?.country_code ?? null : null)
-
-          const finalBirthDate = rawBirthDate ?? baseRider?.birth_date ?? null
-
-          const resolvedImageUrl =
-            resolveStringValue(riderRaw, ['image_url']) ?? baseRider?.image_url ?? null
-
-          const resolvedAgeYears =
-            getAgeYearsAtDate(finalBirthDate, normalizedGameDate) ??
-            resolveNumberValue(riderRaw, ['age_years', 'age', 'rider_age'])
-
-          const clubIsAiRaw = riderRaw.club_is_ai
-          const clubIsActiveRaw = riderRaw.club_is_active
-          const riderInternationalRow = riderId ? riderInternationalById.get(riderId) : undefined
-          const riderOverviewRow = riderId ? riderOverviewById.get(riderId) : undefined
-          const internationalPoints = normalizeNumberLike(
-            riderOverviewRow?.points ??
-              riderInternationalRow?.international_points ??
-              resolveNumberValue(riderRaw, ['points', 'season_points_overall', 'international_points']),
-            0
-          )
-          const stageFinishPoints = normalizeNumberLike(
-            riderOverviewRow?.stage_finish_points ??
-              riderInternationalRow?.stage_finish_points ??
-              resolveNumberValue(riderRaw, ['stage_finish_points', 'season_points_sprint']),
-            0
-          )
-          const gcOneDayPoints = riderOverviewRow
-            ? normalizeNumberLike(riderOverviewRow.final_gc_points, 0) +
-              normalizeNumberLike(riderOverviewRow.oneday_finish_points, 0) +
-              normalizeNumberLike(riderOverviewRow.leader_day_points, 0)
-            : riderInternationalRow
-              ? normalizeNumberLike(riderInternationalRow.final_gc_points, 0) +
-                normalizeNumberLike(riderInternationalRow.oneday_finish_points, 0) +
-                normalizeNumberLike(riderInternationalRow.leader_day_points, 0)
-              : normalizeNumberLike(resolveNumberValue(riderRaw, ['season_points_climbing']), 0)
-          const stageWins = normalizeNumberLike(
-            riderOverviewRow?.stage_wins ?? riderOverviewRow?.podiums ?? resolveNumberValue(riderRaw, ['stage_wins', 'podiums']),
-            0
-          )
-          const finalJerseys = normalizeNumberLike(
-            riderOverviewRow?.final_jerseys ?? riderOverviewRow?.jerseys ?? resolveNumberValue(riderRaw, ['final_jerseys', 'jerseys']),
-            0
-          )
-
-          return {
-            id: riderId,
-            display_name: displayName,
-            country_code: finalRiderCountryCode,
-            club_country_code: clubCountryCode,
-            role: resolveStringValue(riderRaw, ['role']) ?? baseRider?.role ?? '',
-            overall: resolveNumberValue(riderRaw, ['overall']) ?? baseRider?.overall ?? null,
-            potential: resolveNumberValue(riderRaw, ['potential']) ?? baseRider?.potential ?? null,
-            sprint: resolveNumberValue(riderRaw, ['sprint']) ?? baseRider?.sprint ?? null,
-            climbing: resolveNumberValue(riderRaw, ['climbing']) ?? baseRider?.climbing ?? null,
-            time_trial: resolveNumberValue(riderRaw, ['time_trial']) ?? baseRider?.time_trial ?? null,
-            endurance: resolveNumberValue(riderRaw, ['endurance']) ?? baseRider?.endurance ?? null,
-            flat: resolveNumberValue(riderRaw, ['flat']) ?? baseRider?.flat ?? null,
-            recovery: resolveNumberValue(riderRaw, ['recovery']) ?? baseRider?.recovery ?? null,
-            resistance: resolveNumberValue(riderRaw, ['resistance']) ?? baseRider?.resistance ?? null,
-            race_iq: resolveNumberValue(riderRaw, ['race_iq']) ?? baseRider?.race_iq ?? null,
-            teamwork: resolveNumberValue(riderRaw, ['teamwork']) ?? baseRider?.teamwork ?? null,
-            morale: resolveNumberValue(riderRaw, ['morale']) ?? baseRider?.morale ?? null,
-            birth_date: finalBirthDate,
-            market_value: resolveNumberValue(riderRaw, ['market_value']) ?? baseRider?.market_value ?? null,
-            salary: resolveNumberValue(riderRaw, ['salary']) ?? baseRider?.salary ?? null,
-            contract_expires_season: resolveNumberValue(riderRaw, ['contract_expires_season']) ?? baseRider?.contract_expires_season ?? null,
-            availability_status: resolveStringValue(riderRaw, ['availability_status']) ?? baseRider?.availability_status ?? 'fit',
-            fatigue: resolveNumberValue(riderRaw, ['fatigue']) ?? baseRider?.fatigue ?? null,
-            image_url: resolvedImageUrl,
-            club_id: clubId,
-            club_name: getClubDisplayNameFromMap(
-              displayNameByClubId,
-              clubId,
-              resolveStringValue(riderRaw, ['club_name']) ?? club?.name ?? null
-            ),
-            club_tier: resolveStringValue(riderRaw, ['club_tier']) ?? club?.club_tier ?? null,
-            club_is_ai: typeof clubIsAiRaw === 'boolean' ? clubIsAiRaw : (club?.is_ai ?? null),
-            club_is_active:
-              typeof clubIsActiveRaw === 'boolean' ? clubIsActiveRaw : (club?.is_active ?? null),
-            age_years: resolvedAgeYears ?? null,
-            season_points_overall: internationalPoints,
-            season_points_sprint: stageFinishPoints,
-            season_points_climbing: gcOneDayPoints,
-            podiums: stageWins,
-            jerseys: finalJerseys,
-            stage_wins: stageWins,
-            final_jerseys: finalJerseys,
-          }
-        })
-
-        setCurrentSeasonNumber(Number.isFinite(currentSeason) && currentSeason > 0 ? currentSeason : 1)
-        setTeamRows(teams)
-        setWinnerRows(winnersWithDisplayNames)
-        setSnapshotRows(snapshotsWithDisplayNames)
-        setRiderRows(mergedRiders)
-        setCountries(countryRows)
-      } catch (err: any) {
-        setError(err?.message ?? 'Failed to load statistics.')
+        setCurrentGameDate(normalizedGameDate)
+      } catch (err) {
+        console.error('Failed to load shared statistics context:', err)
       } finally {
-        setLoading(false)
+        if (!cancelled) setSharedLoading(false)
       }
     }
 
-    void loadAll()
+    void loadSharedStatisticsContext()
+
+    return () => {
+      cancelled = true
+    }
   }, [])
+
+  useEffect(() => {
+    if (mainTab !== 'teams' || teamSubTab !== 'current' || teamCurrentLoaded) return
+
+    let cancelled = false
+
+    async function loadCurrentTeams() {
+      setTeamCurrentLoading(true)
+      setTeamCurrentError(null)
+
+      try {
+        const { data, error: queryError } = await supabase
+          .from('team_rankings_view')
+          .select('*')
+
+        if (queryError) throw queryError
+
+        const rawTeams = (data ?? []) as TeamCurrentRow[]
+        const displayNameByClubId = await loadClubDisplayNameMap(
+          rawTeams.map(team => team.id)
+        )
+
+        if (cancelled) return
+
+        setTeamRows(
+          rawTeams.map(team => ({
+            ...team,
+            name: getClubDisplayNameFromMap(displayNameByClubId, team.id, team.name),
+            season_points: normalizeNumberLike(team.season_points, 0),
+          }))
+        )
+        setTeamCurrentLoaded(true)
+      } catch (err: any) {
+        if (!cancelled) {
+          setTeamCurrentError(err?.message ?? 'Failed to load current team statistics.')
+        }
+      } finally {
+        if (!cancelled) setTeamCurrentLoading(false)
+      }
+    }
+
+    void loadCurrentTeams()
+
+    return () => {
+      cancelled = true
+    }
+  }, [mainTab, teamSubTab, teamCurrentLoaded])
+
+  useEffect(() => {
+    if (mainTab !== 'teams' || teamSubTab !== 'history' || teamHistoryLoaded) return
+
+    let cancelled = false
+
+    async function loadTeamHistory() {
+      setTeamHistoryLoading(true)
+      setTeamHistoryError(null)
+
+      try {
+        const [winnersRes, snapshotsRes] = await Promise.all([
+          supabase.from('team_ranking_past_winners').select('*'),
+          supabase.from('team_ranking_season_snapshots').select('*'),
+        ])
+
+        const firstError = winnersRes.error || snapshotsRes.error
+        if (firstError) throw firstError
+
+        const winners = (winnersRes.data ?? []) as TeamWinnerRow[]
+        const snapshots = (snapshotsRes.data ?? []) as TeamSnapshotRow[]
+        const displayNameByClubId = await loadClubDisplayNameMap([
+          ...winners.map(row => row.club_id),
+          ...snapshots.map(row => row.club_id),
+        ])
+
+        if (cancelled) return
+
+        setWinnerRows(
+          winners.map(row => ({
+            ...row,
+            club_name: getClubDisplayNameFromMap(
+              displayNameByClubId,
+              row.club_id,
+              row.club_name
+            ),
+          }))
+        )
+
+        setSnapshotRows(
+          snapshots.map(row => ({
+            ...row,
+            club_name: getClubDisplayNameFromMap(
+              displayNameByClubId,
+              row.club_id,
+              row.club_name
+            ),
+          }))
+        )
+
+        setTeamHistoryLoaded(true)
+      } catch (err: any) {
+        if (!cancelled) {
+          setTeamHistoryError(err?.message ?? 'Failed to load team history statistics.')
+        }
+      } finally {
+        if (!cancelled) setTeamHistoryLoading(false)
+      }
+    }
+
+    void loadTeamHistory()
+
+    return () => {
+      cancelled = true
+    }
+  }, [mainTab, teamSubTab, teamHistoryLoaded])
+
+  useEffect(() => {
+    if (mainTab !== 'riders' || sharedLoading || ridersLoaded) return
+
+    let cancelled = false
+
+    async function loadRiders() {
+      setRidersLoading(true)
+      setRidersError(null)
+
+      try {
+        const targetSeasonYear =
+          currentGameDate !== null
+            ? getSeasonYearFromGameDate(currentGameDate)
+            : 1999 + currentSeasonNumber
+
+        const { data, error: queryError } = await supabase
+          .from('rider_statistics_page_international_v1')
+          .select('*')
+          .eq('season_year', targetSeasonYear)
+
+        if (queryError) throw queryError
+
+        const riders = (data ?? []) as Record<string, unknown>[]
+        const displayNameByClubId = await loadClubDisplayNameMap(
+          riders.map(riderRaw => resolveStringValue(riderRaw, ['club_id']))
+        )
+
+        if (cancelled) return
+
+        const mergedRiders: RiderStatsRow[] = riders
+          .map(riderRaw => {
+            const riderId =
+              resolveStringValue(riderRaw, ['rider_id', 'id', 'riders_id', 'player_id', 'person_id']) ??
+              ''
+
+            if (!riderId) {
+              console.warn('Unresolved statistics rider row:', {
+                availableKeys: Object.keys(riderRaw),
+                riderRaw,
+              })
+              return null
+            }
+
+            const clubId = resolveStringValue(riderRaw, ['club_id'])
+            const birthDate =
+              resolveStringValue(riderRaw, ['birth_date', 'dob', 'date_of_birth']) ?? null
+            const clubIsAiRaw = riderRaw.club_is_ai
+            const clubIsActiveRaw = riderRaw.club_is_active
+
+            const seasonPointsOverall = normalizeNumberLike(
+              resolveNumberValue(riderRaw, [
+                'season_points_overall',
+                'international_points',
+                'points',
+              ]),
+              0
+            )
+
+            const seasonPointsSprint = normalizeNumberLike(
+              resolveNumberValue(riderRaw, ['season_points_sprint', 'stage_finish_points']),
+              0
+            )
+
+            const seasonPointsClimbingRaw = resolveNumberValue(riderRaw, [
+              'season_points_climbing',
+            ])
+
+            const seasonPointsClimbing =
+              seasonPointsClimbingRaw !== null
+                ? normalizeNumberLike(seasonPointsClimbingRaw, 0)
+                : normalizeNumberLike(resolveNumberValue(riderRaw, ['final_gc_points']), 0) +
+                  normalizeNumberLike(resolveNumberValue(riderRaw, ['oneday_finish_points']), 0) +
+                  normalizeNumberLike(resolveNumberValue(riderRaw, ['leader_day_points']), 0)
+
+            const stageWins = normalizeNumberLike(
+              resolveNumberValue(riderRaw, ['stage_wins', 'podiums']),
+              0
+            )
+
+            const finalJerseys = normalizeNumberLike(
+              resolveNumberValue(riderRaw, ['final_jerseys', 'jerseys']),
+              0
+            )
+
+            return {
+              id: riderId,
+              display_name:
+                resolveStringValue(riderRaw, ['display_name', 'name']) ?? 'Unknown rider',
+              country_code:
+                resolveStringValue(riderRaw, ['country_code', 'nationality_code', 'country']) ??
+                null,
+              club_country_code:
+                resolveStringValue(riderRaw, ['club_country_code', 'team_country_code']) ?? null,
+              role: resolveStringValue(riderRaw, ['role']) ?? '',
+              overall: resolveNumberValue(riderRaw, ['overall']),
+              potential: resolveNumberValue(riderRaw, ['potential']),
+              sprint: resolveNumberValue(riderRaw, ['sprint']),
+              climbing: resolveNumberValue(riderRaw, ['climbing']),
+              time_trial: resolveNumberValue(riderRaw, ['time_trial']),
+              endurance: resolveNumberValue(riderRaw, ['endurance']),
+              flat: resolveNumberValue(riderRaw, ['flat']),
+              recovery: resolveNumberValue(riderRaw, ['recovery']),
+              resistance: resolveNumberValue(riderRaw, ['resistance']),
+              race_iq: resolveNumberValue(riderRaw, ['race_iq']),
+              teamwork: resolveNumberValue(riderRaw, ['teamwork']),
+              morale: resolveNumberValue(riderRaw, ['morale']),
+              birth_date: birthDate,
+              market_value: resolveNumberValue(riderRaw, ['market_value']),
+              salary: resolveNumberValue(riderRaw, ['salary']),
+              contract_expires_season: resolveNumberValue(riderRaw, [
+                'contract_expires_season',
+              ]),
+              availability_status:
+                resolveStringValue(riderRaw, ['availability_status']) ?? 'fit',
+              fatigue: resolveNumberValue(riderRaw, ['fatigue']),
+              image_url: resolveStringValue(riderRaw, ['image_url']),
+              club_id: clubId,
+              club_name: getClubDisplayNameFromMap(
+                displayNameByClubId,
+                clubId,
+                resolveStringValue(riderRaw, ['club_name'])
+              ),
+              club_tier: resolveStringValue(riderRaw, ['club_tier']),
+              club_is_ai: typeof clubIsAiRaw === 'boolean' ? clubIsAiRaw : null,
+              club_is_active:
+                typeof clubIsActiveRaw === 'boolean' ? clubIsActiveRaw : null,
+              age_years: getAgeYearsAtDate(birthDate, currentGameDate),
+              season_points_overall: seasonPointsOverall,
+              season_points_sprint: seasonPointsSprint,
+              season_points_climbing: seasonPointsClimbing,
+              podiums: stageWins,
+              jerseys: finalJerseys,
+              stage_wins: stageWins,
+              final_jerseys: finalJerseys,
+            } satisfies RiderStatsRow
+          })
+          .filter(row => row !== null) as RiderStatsRow[]
+
+        setRiderRows(mergedRiders)
+        setRidersLoaded(true)
+      } catch (err: any) {
+        if (!cancelled) {
+          setRidersError(err?.message ?? 'Failed to load rider statistics.')
+        }
+      } finally {
+        if (!cancelled) setRidersLoading(false)
+      }
+    }
+
+    void loadRiders()
+
+    return () => {
+      cancelled = true
+    }
+  }, [
+    mainTab,
+    sharedLoading,
+    ridersLoaded,
+    currentGameDate,
+    currentSeasonNumber,
+  ])
+
 
   const countryNameByCode = useMemo(() => {
     return new Map(countries.map(country => [country.code, country.name]))
@@ -1248,11 +1241,12 @@ export default function StatisticsPage() {
 
   const availableTiers = useMemo(() => {
     const teamTiers = teamRows.map(row => row.club_tier)
+    const historyTiers = historicalSnapshotRows.map(row => row.club_tier)
     const riderTiers = riderRows.map(row => row.club_tier).filter(Boolean) as string[]
-    return Array.from(new Set([...teamTiers, ...riderTiers])).sort((a, b) =>
+    return Array.from(new Set([...teamTiers, ...historyTiers, ...riderTiers])).sort((a, b) =>
       formatCompetitionLabel(a).localeCompare(formatCompetitionLabel(b))
     )
-  }, [teamRows, riderRows])
+  }, [teamRows, historicalSnapshotRows, riderRows])
 
   const availableDivisions = useMemo(() => {
     const currentDivisions = teamRows.map(row => getDivisionValue(row))
