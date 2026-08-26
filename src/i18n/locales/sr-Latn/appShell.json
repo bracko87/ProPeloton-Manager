@@ -70,6 +70,33 @@
     "restarting": "Ponovno pokretanje...",
     "restart": "Ponovo pokreni tim"
   },
+  "rollover": {
+    "eyebrow": "Prelazak sezone",
+    "title": "Sezona {{season}} se priprema",
+    "body": "Prelazak između sezona je trenutno u toku. Podaci vašeg kluba i igre su bezbedni dok se nova sezona završno priprema.",
+    "targetSeason": "Priprema se Sezona {{season}}",
+    "currentPhase": "Trenutna faza",
+    "gameClock": "Vreme u igri",
+    "frozenAtMidnight": "Pauzirano na 1. januar · 00:00",
+    "noAction": "Nije potrebna nikakva akcija. Igranje je privremeno zaključano dok se obrađuju promocije i ispadanja, ugovori, sponzori, nagrade, rang-liste, kalendar i završne provere.",
+    "autoCheck": "Ova stranica automatski proverava stanje prelaska svakih 20 sekundi i vraća vas u igru čim proces bude završen.",
+    "delayedTitle": "Prelazak traje duže nego što je očekivano",
+    "delayedBody": "Igra će ostati bezbedno pauzirana dok sve obavezne provere ne prođu. Podaci kluba neće biti preskočeni niti delimično pušteni.",
+    "checkingStatus": "Provera stanja prelaska sezone...",
+    "statusCheckFailedTitle": "Status sezone trenutno nije dostupan",
+    "statusCheckFailedBody": "Trenutno ne možemo bezbedno da potvrdimo da li je igranje dostupno. Stranica će automatski nastaviti da pokušava.",
+    "checking": "Provera...",
+    "checkAgain": "Proveri ponovo",
+    "homepage": "Idi na početnu stranicu",
+    "phases": {
+      "starting": "Pokretanje prelaska sezone",
+      "sourceFrozen": "Konačne rang-liste su zamrznute",
+      "coreValidated": "Takmičenja i ugovori su obrađeni",
+      "rewardsApplied": "Sezonske nagrade su primenjene",
+      "communicationDone": "Obaveštenja su pripremljena",
+      "finalizing": "Završna provera i nastavak igre"
+    }
+  },
   "inactivity": {
     "title": "Uskoro ćete biti odjavljeni",
     "body": "Igra je neaktivna skoro 30 minuta. Bićete automatski odjavljeni za približno jedan minut.",
