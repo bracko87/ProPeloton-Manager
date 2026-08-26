@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { supabase } from '../../../lib/supabase'
 
 type SavedSearch = {
@@ -34,11 +35,6 @@ function normalizeOne<T>(data: unknown): T | null {
   return row && typeof row === 'object' ? (row as T) : null
 }
 
-function getStatusText(access: AccessPayload | null): string {
-  if (!access) return 'Checking access'
-  return access.is_premium ? 'Premium active' : 'Premium feature'
-}
-
 export default function TransferIntelligencePanel({
   clubId,
   marketType,
@@ -60,6 +56,7 @@ export default function TransferIntelligencePanel({
   onApplySavedSearch: (criteria: Record<string, unknown>) => void
   saveRequestToken: number
 }): JSX.Element {
+  const { t } = useTranslation('transfers')
   const [expanded, setExpanded] = useState(false)
   const [access, setAccess] = useState<AccessPayload | null>(null)
   const [savedSearches, setSavedSearches] = useState<SavedSearch[]>([])
@@ -100,7 +97,7 @@ export default function TransferIntelligencePanel({
       setError(
         caught instanceof Error
           ? caught.message
-          : 'Failed to load Transfer Intelligence.',
+          : t('intelligence.loadFailed'),
       )
     })
 
@@ -123,22 +120,22 @@ export default function TransferIntelligencePanel({
 
     if (!access?.is_premium) {
       setExpanded(true)
-      setError('Saved searches are available only with Premium.')
+      setError(t('intelligence.premiumOnly'))
       return
     }
 
     setSearchName('')
     setShowSaveSearchModal(true)
-  }, [saveRequestToken, access?.is_premium])
+  }, [saveRequestToken, access?.is_premium, t])
 
   async function saveSearch(): Promise<void> {
     if (!access?.is_premium) {
-      setError('Saved searches are available only with Premium.')
+      setError(t('intelligence.premiumOnly'))
       return
     }
 
     if (!searchName.trim()) {
-      setError('Enter a saved-search name.')
+      setError(t('intelligence.enterName'))
       return
     }
 
@@ -160,7 +157,7 @@ export default function TransferIntelligencePanel({
           .find(slot => !savedSearches.some(row => row.slot_number === slot))
 
       if (!nextSlot) {
-        throw new Error(`Saved-search limit reached (${access.saved_search_limit}).`)
+        throw new Error(t('intelligence.limitReached', { limit: access.saved_search_limit }))
       }
 
       const { error: rpcError } = await supabase.rpc(
@@ -178,10 +175,10 @@ export default function TransferIntelligencePanel({
       if (rpcError) throw rpcError
       setSearchName('')
       setShowSaveSearchModal(false)
-      setMessage(`Search saved in slot ${nextSlot}.`)
+      setMessage(t('intelligence.savedSlot', { slot: nextSlot }))
       await load()
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : 'Failed to save search.')
+      setError(caught instanceof Error ? caught.message : t('intelligence.saveFailed'))
     } finally {
       setBusyKey(null)
     }
@@ -203,10 +200,10 @@ export default function TransferIntelligencePanel({
 
       if (rpcError) throw rpcError
       window.dispatchEvent(new CustomEvent('coin-balance-changed'))
-      setMessage(`Saved-search slot ${slotNumber} unlocked permanently.`)
+      setMessage(t('intelligence.slotUnlocked', { slot: slotNumber }))
       await load()
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : 'Failed to unlock slot.')
+      setError(caught instanceof Error ? caught.message : t('intelligence.unlockFailed'))
     } finally {
       setBusyKey(null)
     }
@@ -222,10 +219,10 @@ export default function TransferIntelligencePanel({
         { p_saved_search_id: searchId },
       )
       if (rpcError) throw rpcError
-      setMessage('Saved search deleted.')
+      setMessage(t('intelligence.deleted'))
       await load()
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : 'Failed to delete search.')
+      setError(caught instanceof Error ? caught.message : t('intelligence.deleteFailed'))
     } finally {
       setBusyKey(null)
     }
@@ -239,13 +236,14 @@ export default function TransferIntelligencePanel({
           <div>
             <div className="flex items-center gap-2">
               <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-slate-600">
-                Transfer Intelligence
+                {t('intelligence.title')}
               </span>
-              <span className="text-xs text-slate-500">Premium feature</span>
+              <span className="text-xs text-slate-500">
+                {!access ? t('intelligence.checking') : t('intelligence.premiumFeature')}
+              </span>
             </div>
             <p className="mt-2 text-sm text-slate-600">
-              Save real market filters and receive automatic matching alerts.
-              The rider shortlist is managed from its own Transfers tab.
+              {t('intelligence.lockedDescription')}
             </p>
           </div>
 
@@ -258,7 +256,7 @@ export default function TransferIntelligencePanel({
             }}
             className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50"
           >
-            Unlock with Premium
+            {t('common.unlockPremium')}
           </button>
         </div>
 
@@ -282,18 +280,19 @@ export default function TransferIntelligencePanel({
           <div>
             <div className="flex flex-wrap items-center gap-2">
               <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-slate-600">
-                Transfer Intelligence
+                {t('intelligence.title')}
               </span>
-              <span className="text-xs text-slate-500">{getStatusText(access)}</span>
+              <span className="text-xs text-slate-500">
+                {t('intelligence.premiumActive')}
+              </span>
             </div>
             <div className="mt-2 text-sm text-slate-600">
-              Saved searches and automatic market alerts. Save a search from
-              the real market filters below.
+              {t('intelligence.description')}
             </div>
           </div>
 
           <span className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-600">
-            {expanded ? 'Hide' : 'Open'}
+            {expanded ? t('common.hide') : t('common.open')}
           </span>
         </button>
 
@@ -315,9 +314,9 @@ export default function TransferIntelligencePanel({
               <section>
                 <div className="flex items-center justify-between gap-3">
                   <div>
-                    <h3 className="font-semibold text-slate-900">Saved searches</h3>
+                    <h3 className="font-semibold text-slate-900">{t('intelligence.savedSearches')}</h3>
                     <p className="mt-1 text-xs text-slate-500">
-                      Premium: up to {access.saved_search_limit} saved searches
+                      {t('intelligence.premiumLimit', { limit: access.saved_search_limit })}
                     </p>
                   </div>
                   <div className="text-xs text-slate-500">
@@ -331,11 +330,11 @@ export default function TransferIntelligencePanel({
                     const searchText =
                       typeof criteria.search === 'string' && criteria.search.trim()
                         ? criteria.search
-                        : 'Any rider'
+                        : t('intelligence.anyRider')
                     const roleText =
                       typeof criteria.role === 'string' && criteria.role !== 'all'
                         ? criteria.role
-                        : 'All roles'
+                        : t('common.allRolesLower')
 
                     return (
                       <div
@@ -348,11 +347,17 @@ export default function TransferIntelligencePanel({
                               {search.search_name}
                             </div>
                             <div className="mt-1 text-xs leading-5 text-slate-500">
-                              Search: {searchText} · Role: {roleText} ·{' '}
-                              {criteria.only_active !== false
-                                ? 'Active only'
-                                : 'All statuses'}
-                              {criteria.hide_own !== false ? ' · Hide own listings' : ''}
+                              {t('intelligence.searchLine', {
+                                search: searchText,
+                                role: roleText,
+                                status:
+                                  criteria.only_active !== false
+                                    ? t('common.activeOnly')
+                                    : t('common.allStatuses'),
+                              })}
+                              {criteria.hide_own !== false
+                                ? ` ${t('intelligence.hideOwnSuffix')}`
+                                : ''}
                             </div>
                           </div>
                           <div className="flex shrink-0 gap-2">
@@ -361,7 +366,7 @@ export default function TransferIntelligencePanel({
                               onClick={() => onApplySavedSearch(search.criteria_json)}
                               className="rounded border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100"
                             >
-                              Apply
+                              {t('intelligence.apply')}
                             </button>
                             <button
                               type="button"
@@ -369,7 +374,7 @@ export default function TransferIntelligencePanel({
                               disabled={busyKey === `delete-search:${search.id}`}
                               className="rounded border border-rose-200 bg-rose-50 px-2.5 py-1.5 text-xs font-semibold text-rose-700 hover:bg-rose-100 disabled:opacity-50"
                             >
-                              Delete
+                              {t('intelligence.delete')}
                             </button>
                           </div>
                         </div>
@@ -379,7 +384,7 @@ export default function TransferIntelligencePanel({
 
                   {savedSearches.length === 0 ? (
                     <div className="rounded-lg border border-dashed border-slate-200 bg-slate-50 p-4 text-sm text-slate-500">
-                      Set the real filters below, then click “Save this search”.
+                      {t('intelligence.noSaved')}
                     </div>
                   ) : null}
                 </div>
@@ -389,16 +394,15 @@ export default function TransferIntelligencePanel({
             </div>
 
             <section>
-              <h3 className="font-semibold text-slate-900">Market alerts</h3>
+              <h3 className="font-semibold text-slate-900">{t('intelligence.marketAlerts')}</h3>
               <p className="mt-1 text-xs text-slate-500">
-                Every saved search is checked automatically for new matching
-                transfer listings and price changes.
+                {t('intelligence.alertsDescription')}
               </p>
 
               <div className="mt-3 space-y-2">
                 {alerts.length === 0 ? (
                   <div className="rounded-lg border border-dashed border-slate-200 bg-slate-50 p-4 text-sm text-slate-500">
-                    No market alerts yet.
+                    {t('intelligence.noAlerts')}
                   </div>
                 ) : (
                   alerts.map(alert => (
@@ -428,10 +432,10 @@ export default function TransferIntelligencePanel({
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4">
           <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-5 shadow-xl">
             <h3 className="text-lg font-semibold text-slate-900">
-              Save current market filters
+              {t('intelligence.saveTitle')}
             </h3>
             <p className="mt-2 text-sm text-slate-600">
-              The current search, role, sort and checkbox settings will be saved.
+              {t('intelligence.saveDescription')}
             </p>
 
             <input
@@ -440,7 +444,7 @@ export default function TransferIntelligencePanel({
               maxLength={50}
               value={searchName}
               onChange={event => setSearchName(event.target.value)}
-              placeholder="Saved-search name"
+              placeholder={t('intelligence.savePlaceholder')}
               className="mt-4 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
             />
 
@@ -450,7 +454,7 @@ export default function TransferIntelligencePanel({
                 onClick={() => setShowSaveSearchModal(false)}
                 className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
               >
-                Cancel
+                {t('common.cancel')}
               </button>
               <button
                 type="button"
@@ -458,7 +462,7 @@ export default function TransferIntelligencePanel({
                 disabled={busyKey === 'save-search'}
                 className="rounded-lg bg-yellow-400 px-3 py-2 text-sm font-semibold text-black hover:bg-yellow-300 disabled:opacity-50"
               >
-                Save search
+                {t('intelligence.saveButton')}
               </button>
             </div>
           </div>
