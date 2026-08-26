@@ -18,6 +18,7 @@
  */
 
 import React, { useEffect, useMemo, useState } from 'react'
+import type { TFunction } from 'i18next'
 import { useTranslation } from 'react-i18next'
 import { supabase } from './supabase'
 
@@ -64,6 +65,27 @@ type PolicySection = {
 }
 
 type PolicyState = Record<string, string>
+
+const POLICY_COST_TYPE_KEYS: Record<CostType, string> = {
+  none: 'policyCostTypes.none',
+  one_time: 'policyCostTypes.oneTime',
+  weekly: 'policyCostTypes.weekly',
+  monthly: 'policyCostTypes.monthly',
+  per_trip: 'policyCostTypes.perTrip',
+  per_rider_weekly: 'policyCostTypes.perRiderWeekly',
+  per_staff_weekly: 'policyCostTypes.perStaffWeekly',
+  seasonal: 'policyCostTypes.seasonal',
+  per_result: 'policyCostTypes.perResult',
+}
+
+const POLICY_NOTIFICATION_KEYS: Record<NotificationType, string> = {
+  none: 'policyNotifications.none',
+  info: 'policyNotifications.info',
+  summary: 'policyNotifications.summary',
+  monthly_summary: 'policyNotifications.monthlySummary',
+  reminder: 'policyNotifications.reminder',
+  warning: 'policyNotifications.warning',
+}
 
 type PremiumStatusRow = {
   is_premium?: boolean | null
@@ -347,7 +369,10 @@ function getBadgeClass(value: string): string {
   }
 }
 
-function getEffectText(effectJson: Record<string, unknown> | null): string | null {
+function getEffectText(
+  effectJson: Record<string, unknown> | null,
+  t: TFunction<'finance'>
+): string | null {
   if (!effectJson) return null
 
   const parts: string[] = []
@@ -362,15 +387,33 @@ function getEffectText(effectJson: Record<string, unknown> | null): string | nul
   const fatigueReduction = Number(effectJson.fatigue_reduction_bonus ?? 0)
   const staffMorale = Number(effectJson.staff_morale_delta ?? 0)
 
-  if (travelMorale > 0) parts.push(`+${travelMorale} travel morale`)
-  if (morale > 0) parts.push(`+${morale} morale`)
-  if (staffMorale > 0) parts.push(`+${staffMorale} staff morale`)
-  if (recovery > 0) parts.push(`+${recovery} recovery`)
-  if (fatigue < 0) parts.push(`${fatigue} travel fatigue`)
-  if (fatigueReduction > 0) parts.push(`-${fatigueReduction} fatigue later`)
-  if (logistics > 0) parts.push(`+${logistics} logistics`)
-  if (staffEfficiency > 0) parts.push(`+${staffEfficiency} staff efficiency`)
-  if (contractHappiness > 0) parts.push(`+${contractHappiness} contract happiness`)
+  if (travelMorale > 0) {
+    parts.push(t('policyEffects.travelMorale', { value: travelMorale }))
+  }
+  if (morale > 0) {
+    parts.push(t('policyEffects.morale', { value: morale }))
+  }
+  if (staffMorale > 0) {
+    parts.push(t('policyEffects.staffMorale', { value: staffMorale }))
+  }
+  if (recovery > 0) {
+    parts.push(t('policyEffects.recovery', { value: recovery }))
+  }
+  if (fatigue < 0) {
+    parts.push(t('policyEffects.travelFatigue', { value: fatigue }))
+  }
+  if (fatigueReduction > 0) {
+    parts.push(t('policyEffects.fatigueLater', { value: fatigueReduction }))
+  }
+  if (logistics > 0) {
+    parts.push(t('policyEffects.logistics', { value: logistics }))
+  }
+  if (staffEfficiency > 0) {
+    parts.push(t('policyEffects.staffEfficiency', { value: staffEfficiency }))
+  }
+  if (contractHappiness > 0) {
+    parts.push(t('policyEffects.contractHappiness', { value: contractHappiness }))
+  }
 
   return parts.length > 0 ? parts.join(', ') : null
 }
@@ -386,7 +429,7 @@ function adjustOptionForUi(itemKey: string, option: PolicyOption): PolicyOption 
   return option
 }
 
-function buildSections(catalog: CatalogRow[]): PolicySection[] {
+function buildSections(catalog: CatalogRow[], t: TFunction<'finance'>): PolicySection[] {
   const grouped = new Map<string, CatalogRow[]>()
 
   for (const row of catalog) {
@@ -407,7 +450,7 @@ function buildSections(catalog: CatalogRow[]): PolicySection[] {
         adjustOptionForUi(item.key, {
           value: row.option_code,
           label: row.label,
-          effect: getEffectText(row.effect_json),
+          effect: getEffectText(row.effect_json, t),
           costType: row.cost_type,
           notificationType: row.notification_type,
           baseCost: Number(row.base_cost ?? 0),
@@ -508,7 +551,7 @@ function SelectedOptionCard({
               selectedOption.costType
             )}`}
           >
-            {titleCaseValue(selectedOption.costType)}
+            {t(POLICY_COST_TYPE_KEYS[selectedOption.costType])}
           </span>
         </div>
       </div>
@@ -542,7 +585,7 @@ function SelectedOptionCard({
               selectedOption.notificationType
             )}`}
           >
-            {titleCaseValue(selectedOption.notificationType)}
+            {t(POLICY_NOTIFICATION_KEYS[selectedOption.notificationType])}
           </span>
         </div>
       </div>
@@ -612,7 +655,7 @@ export function TeamPoliciesOperationsTab(): JSX.Element {
 
       const catalogRows = (catalogRes.data ?? []) as CatalogRow[]
       const policyRow = policyRes.data as ClubPolicyRow
-      const builtSections = buildSections(catalogRows)
+      const builtSections = buildSections(catalogRows, t)
 
       setSections(builtSections)
 
@@ -877,7 +920,7 @@ export function TeamPoliciesOperationsTab(): JSX.Element {
               disabled={saving || !hasUnsavedChanges}
               className="rounded border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              Reset
+              {t('common.reset')}
             </button>
 
             <button
@@ -1225,7 +1268,7 @@ export function TeamPoliciesOperationsTab(): JSX.Element {
               disabled={saving || !hasUnsavedChanges}
               className="rounded border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              Reset
+              {t('common.reset')}
             </button>
 
             <button
@@ -1238,7 +1281,7 @@ export function TeamPoliciesOperationsTab(): JSX.Element {
                 ? t('policies.applying')
                 : hasUnsavedChanges
                   ? t('policies.applyChanges')
-                  : 'No Changes to Apply'}
+                  : t('policies.noChangesToApply')}
             </button>
           </div>
         </div>
