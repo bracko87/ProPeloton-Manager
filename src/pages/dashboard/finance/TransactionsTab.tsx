@@ -7,6 +7,7 @@
  * - Recent view shows only the last 30 game days of transactions.
  * - Archive view shows older transactions grouped by in-game month.
  * - Archive keeps only the previous 6 game months.
+ * - Transactions dated after the current in-game clock are hidden.
  * - Pagination is handled in the frontend with 20 items per page.
  * - Real-life created_at is used only as the RPC pagination cursor.
  * - Real-life created_at is also used as a hidden sorting fallback for old rows without game_date.
@@ -195,6 +196,8 @@ const transactionTypeLabelMap: Record<string, string> = {
 
   staff_course_fee: 'Staff Course Fee',
   staff_release_cost: 'Staff Release Cost',
+
+  free_agent_signing_cost_paid: 'Free Agent Signing Cost',
 
   infrastructure_facility_start: 'Infrastructure Facility Start',
   infrastructure_asset_start: 'Infrastructure Asset Start',
@@ -476,7 +479,21 @@ export function TransactionsTab({
       }
     }
 
-    const normalizedRows = sortRowsByGameDateDesc(dedupeRows(collected))
+    const currentGameDateValue = loadedCurrentGameDate
+      ? getGameDateValue(loadedCurrentGameDate)
+      : 0
+
+    const normalizedRows = sortRowsByGameDateDesc(dedupeRows(collected)).filter((row) => {
+      const rowGameDateValue = getStatementGameDateValue(row)
+
+      // Keep legacy rows that do not have stored game-date metadata.
+      // If the current game date could not be resolved, do not hide valid ledger rows.
+      if (rowGameDateValue <= 0 || currentGameDateValue <= 0) return true
+
+      // A rewind/test reset can leave immutable ledger rows from a future season/date.
+      // They must not appear in the current Recent/Archive views until the game reaches them again.
+      return rowGameDateValue <= currentGameDateValue
+    })
 
     setRows(normalizedRows)
     setRecentPage(1)
