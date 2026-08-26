@@ -963,11 +963,14 @@ export default function StaffFreeAgentPage({
 
                     <div className="shrink-0 text-right">
                       <div className="text-sm font-semibold text-gray-700">
-                        {formatCurrency(candidate.salary_weekly)}/week
+                        {formatCurrency(candidate.salary_weekly)}{t('common.weekly')}
                       </div>
 
                       <div className="mt-1 text-xs text-gray-500">
-                        {currentCount}/{limitCount} assigned
+                        {t('staffMarket.assigned', {
+                          current: currentCount,
+                          limit: limitCount,
+                        })}
                       </div>
                     </div>
                   </div>
@@ -990,18 +993,26 @@ export default function StaffFreeAgentPage({
                     </div>
                   ) : limitCount <= 0 ? (
                     <div className="mt-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
-                      This role is currently unavailable for this club.
+                      {t('staffMarket.roleUnavailable')}
                     </div>
                   ) : !canHire && roleAtCapacity ? (
                     <div className="mt-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
-                      Role at capacity ({currentCount}/{limitCount}).
-                      {assignedRows.length > 0
-                        ? ` Assigned: ${getAssignedStaffSummary(assignedRows)}.`
-                        : ''}
+                      {t('staffMarket.roleCapacity', {
+                        current: currentCount,
+                        limit: limitCount,
+                      })}
+                      {assignedRows.length > 0 ? (
+                        <>
+                          {' '}
+                          {t('staffMarket.assignedNames', {
+                            names: getAssignedStaffSummary(assignedRows),
+                          })}
+                        </>
+                      ) : null}
                     </div>
                   ) : !canHire ? (
                     <div className="mt-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
-                      This role cannot currently be hired for this club.
+                      {t('staffMarket.cannotHire')}
                     </div>
                   ) : assignedRows.length > 0 ? (
                     <div className="mt-3 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-700">
@@ -1039,11 +1050,14 @@ export default function StaffFreeAgentPage({
                     : 'border border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
                 }`}
               >
-                Previous
+                {t('common.previous')}
               </button>
 
               <div className="px-2 text-sm text-gray-600">
-                Page {currentPage} / {totalPages}
+                {t('common.page', {
+                  page: currentPage,
+                  pages: totalPages,
+                })}
               </div>
 
               <button
@@ -1056,7 +1070,7 @@ export default function StaffFreeAgentPage({
                     : 'border border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
                 }`}
               >
-                Next
+                {t('common.next')}
               </button>
             </div>
           ) : null}
@@ -1124,7 +1138,10 @@ export default function StaffFreeAgentPage({
                 <div className="text-xs text-gray-500">{t('staffMarket.roleCapacityTitle')}</div>
 
                 <div className="mt-1 text-sm font-semibold text-gray-900">
-                  {selectedRoleAssigned}/{selectedRoleLimitCount} assigned
+                  {t('staffMarket.assigned', {
+                    current: selectedRoleAssigned,
+                    limit: selectedRoleLimitCount,
+                  })}
                 </div>
 
                 <div className="mt-1 text-xs text-gray-500">
@@ -1137,7 +1154,7 @@ export default function StaffFreeAgentPage({
 
                 <div className="mt-1 text-xs text-gray-500">
                   {selectedRoleLimitCount <= 0
-                    ? 'This role is currently unavailable for this club.'
+                    ? t('staffMarket.roleUnavailable')
                     : t('staffMarket.openSlots', { slots: selectedRoleOpenSlots })}
                 </div>
               </div>
@@ -1251,8 +1268,13 @@ export default function StaffFreeAgentPage({
 
                   <div className="mt-1 text-xs text-slate-500">
                     {row.current_count > 0
-                      ? `${row.current_count} assigned • ${row.open_slots} open slot(s)`
-                      : `No staff assigned • ${row.open_slots} open slot(s)`}
+                      ? t('staffMarket.assignedOpen', {
+                          current: row.current_count,
+                          slots: row.open_slots,
+                        })
+                      : t('staffMarket.noStaffOpen', {
+                          slots: row.open_slots,
+                        })}
                   </div>
                 </div>
 
