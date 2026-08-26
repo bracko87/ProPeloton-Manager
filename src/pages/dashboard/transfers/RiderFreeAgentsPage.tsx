@@ -451,13 +451,13 @@ function MarketListRow({
               }`}
             >
               <span className={`font-semibold ${isExpired ? 'text-red-900' : 'text-blue-900'}`}>
-                Time left:
+                {t('transferList.timeLeft')}:
               </span>{' '}
               <span>{countdown}</span>
             </div>
 
             <div className="rounded-md bg-gray-50 px-3 py-2 text-xs text-gray-700">
-              <span className="font-semibold text-gray-900">Salary:</span>{' '}
+              <span className="font-semibold text-gray-900">{t('common.salary')}:</span>{' '}
               <span>{formatCurrency(item.amount_value)}/week</span>
             </div>
 
@@ -470,7 +470,7 @@ function MarketListRow({
             />
 
             <MarketActionButton
-              label="Contract Negotiate"
+              label={t('freeAgents.openNegotiation')}
               onClick={onQuickAction}
               disabled={isExpired}
             />
@@ -877,9 +877,9 @@ export default function RiderFreeAgentsPage({
 
       <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
         <div>
-          <h3 className="text-lg font-semibold text-gray-900">Free Agent Negotiations</h3>
+          <h3 className="text-lg font-semibold text-gray-900">{t('freeAgents.negotiations')}</h3>
           <p className="mt-1 text-sm text-gray-500">
-            All current and recently updated free-agent negotiations from the last 24 hours.
+            {t('freeAgents.negotiationsSubtitle')}
           </p>
         </div>
 
@@ -1001,16 +1001,17 @@ export default function RiderFreeAgentsPage({
 
         <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="text-xs text-gray-500">
-            Showing{' '}
-            {paginatedFreeAgentActivityItems.length === 0
-              ? 0
-              : (activityPage - 1) * FREE_AGENT_ACTIVITY_ITEMS_PER_PAGE + 1}
-            -
-            {Math.min(
-              activityPage * FREE_AGENT_ACTIVITY_ITEMS_PER_PAGE,
-              freeAgentActivityItems.length
-            )}{' '}
-            of {freeAgentActivityItems.length} negotiation items
+            {t('freeAgents.showingNegotiations', {
+              start:
+                paginatedFreeAgentActivityItems.length === 0
+                  ? 0
+                  : (activityPage - 1) * FREE_AGENT_ACTIVITY_ITEMS_PER_PAGE + 1,
+              end: Math.min(
+                activityPage * FREE_AGENT_ACTIVITY_ITEMS_PER_PAGE,
+                freeAgentActivityItems.length
+              ),
+              total: freeAgentActivityItems.length,
+            })}
           </div>
 
           {freeAgentActivityItems.length > FREE_AGENT_ACTIVITY_ITEMS_PER_PAGE ? (
