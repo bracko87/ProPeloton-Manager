@@ -369,18 +369,18 @@ const STATUS_TRANSLATION_KEYS: Record<string, string> = {
 }
 
 const MONTH_TRANSLATION_KEYS: Record<string, string> = {
-  Jan: 'months.jan',
-  Feb: 'months.feb',
-  Mar: 'months.mar',
-  Apr: 'months.apr',
-  May: 'months.may',
-  Jun: 'months.jun',
-  Jul: 'months.jul',
-  Aug: 'months.aug',
-  Sep: 'months.sep',
-  Oct: 'months.oct',
-  Nov: 'months.nov',
-  Dec: 'months.dec',
+  Jan: 'months.Jan',
+  Feb: 'months.Feb',
+  Mar: 'months.Mar',
+  Apr: 'months.Apr',
+  May: 'months.May',
+  Jun: 'months.Jun',
+  Jul: 'months.Jul',
+  Aug: 'months.Aug',
+  Sep: 'months.Sep',
+  Oct: 'months.Oct',
+  Nov: 'months.Nov',
+  Dec: 'months.Dec',
 }
 
 const PODIUM_CHART_TRANSLATION_KEYS: Record<string, string> = {
@@ -388,14 +388,14 @@ const PODIUM_CHART_TRANSLATION_KEYS: Record<string, string> = {
   '2nd': 'season.second',
   '3rd': 'season.third',
   Top10: 'season.top10',
-  Top20: 'season.top20',
+  Top20: 'season.top20Chart',
 }
 
 const RACE_TYPE_TRANSLATION_KEYS: Record<string, string> = {
-  'One-day classics': 'races.oneDayClassics',
-  'Stage finishes': 'races.stageFinishes',
-  'Mountain days': 'races.mountainDays',
-  'Time trials': 'races.timeTrials',
+  'One-day classics': 'season.oneDayClassics',
+  'Stage finishes': 'season.stageFinishes',
+  'Mountain days': 'season.mountainDays',
+  'Time trials': 'season.timeTrials',
 }
 
 function getBestRiderSkillValue(rider: {
@@ -1443,7 +1443,7 @@ export default function FirstSquadTab({
 
               {healthOverviewDisplayRows.length === 0 ? (
                 <div className="rounded-xl border border-gray-100 bg-gray-50 px-4 py-3 text-sm text-gray-600">
-                  {t('healthReport.empty')}
+                  {t('healthReport.none')}
                 </div>
               ) : (
                 <div className="overflow-x-auto">
@@ -1532,7 +1532,7 @@ export default function FirstSquadTab({
                 value={`${squadDisplayData.summary.podiums}`}
               />
               <CompactValueTile
-                label={t('season.top10Results')}
+                label={t('season.top10')}
                 value={`${squadDisplayData.summary.top10s}`}
               />
               <CompactValueTile
@@ -1609,7 +1609,7 @@ export default function FirstSquadTab({
                   stageLabel={visibleNextRaceSelection?.stageLabel}
                   routeLabel={visibleNextRaceSelection?.routeLabel}
                   stageCount={visibleNextRaceSelection?.stageCount}
-                  emptyLabel={t('races.noNextSubmittedPlan')}
+                  emptyLabel={t('races.noNext')}
                 />
               </div>
 
@@ -1640,7 +1640,7 @@ export default function FirstSquadTab({
                 </div>
               ) : (
                 <div className="rounded-xl border border-gray-100 bg-gray-50 px-4 py-6 text-sm text-gray-600">
-                  {t('races.noNextSubmittedPlan')}
+                  {t('races.noNext')}
                 </div>
               )}
             </div>
@@ -1652,7 +1652,7 @@ export default function FirstSquadTab({
             ) : isPremium ? (
               <div className="rounded-lg bg-white p-4 shadow xl:col-span-2">
                 <div className="text-base font-semibold text-gray-800">
-                  {t('season.resultsTitle')}
+                  {t('season.teamResults')}
                 </div>
                 <div className="mt-4">
                   <LineChart data={squadDisplayData.seasonTrend} />
@@ -1661,7 +1661,7 @@ export default function FirstSquadTab({
             ) : (
               <PremiumLock
                 className="xl:col-span-2"
-                title={t('season.resultsTitle')}
+                title={t('season.teamResults')}
                 description={t('season.resultsDescription')}
               />
             )}
@@ -1670,14 +1670,14 @@ export default function FirstSquadTab({
               <PremiumSectionLoading />
             ) : isPremium ? (
               <div className="rounded-lg bg-white p-4 shadow">
-                <div className="text-base font-semibold text-gray-800">{t('season.podiumsTitle')}</div>
+                <div className="text-base font-semibold text-gray-800">{t('season.podiumsPlacings')}</div>
                 <div className="mt-4">
                   <VerticalBarChart data={squadDisplayData.podiumChart} />
                 </div>
               </div>
             ) : (
               <PremiumLock
-                title={t('season.podiumsTitle')}
+                title={t('season.podiumsPlacings')}
                 description={t('season.podiumsDescription')}
               />
             )}
@@ -1686,7 +1686,7 @@ export default function FirstSquadTab({
               <PremiumSectionLoading className="xl:col-span-3" />
             ) : isPremium ? (
               <div className="rounded-lg bg-white p-4 shadow xl:col-span-3">
-                <div className="text-base font-semibold text-gray-800">{t('season.raceTypeTitle')}</div>
+                <div className="text-base font-semibold text-gray-800">{t('season.raceType')}</div>
                 <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
                   {(squadDisplayData.raceTypeSnapshot ?? []).map((item) => (
                     <HorizontalMetricBar
@@ -1705,7 +1705,7 @@ export default function FirstSquadTab({
             ) : (
               <PremiumLock
                 className="xl:col-span-3"
-                title={t('season.raceTypeTitle')}
+                title={t('season.raceType')}
                 description={t('season.raceTypeDescription')}
               />
             )}
