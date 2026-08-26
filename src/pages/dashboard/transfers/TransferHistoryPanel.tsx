@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 const TRANSFER_HISTORY_ITEMS_PER_PAGE = 5
 
@@ -35,12 +36,6 @@ function formatCurrency(value: number | null | undefined): string {
   return `$${Math.round(Number(value)).toLocaleString('en-US')}`
 }
 
-function getHistoryAmountLabel(row: TransferHistoryRow): string {
-  if (row.movement_type === 'release') return 'Released'
-  if (row.movement_type === 'free_agent') return 'Free Transfer'
-  return formatCurrency(row.amount)
-}
-
 function formatHistoryGameDate(value: string | null | undefined): string {
   if (!value) return '—'
 
@@ -63,12 +58,6 @@ function formatHistoryGameDate(value: string | null | undefined): string {
   return `Season ${seasonNumber} - ${weekday} - ${monthDay}`
 }
 
-function getMovementLabel(value: string): string {
-  if (value === 'free_agent') return 'Free Agent'
-  if (value === 'release') return 'Free Agent Market'
-  return 'Transfer'
-}
-
 function HistoryColumn({
   title,
   direction,
@@ -86,6 +75,7 @@ function HistoryColumn({
   onOpenExternalRiderProfile: (riderId: string) => void
   onOpenClubProfile: (clubId: string) => void
 }) {
+  const { t } = useTranslation()
   const [page, setPage] = useState(1)
 
   const sortedRows = useMemo(() => {
@@ -133,6 +123,14 @@ function HistoryColumn({
     )
   }, [sortedRows, page])
 
+  const showingStart =
+    (page - 1) * TRANSFER_HISTORY_ITEMS_PER_PAGE + 1
+
+  const showingEnd = Math.min(
+    page * TRANSFER_HISTORY_ITEMS_PER_PAGE,
+    sortedRows.length
+  )
+
   const cardClassName =
     direction === 'arrival'
       ? 'flex items-center justify-between gap-3 rounded-lg border border-green-100 bg-green-50/60 px-4 py-3'
@@ -148,7 +146,19 @@ function HistoryColumn({
             const isOwned =
               row.rider_id != null && currentClubRiderIds.has(row.rider_id)
 
-            const movementLabel = getMovementLabel(row.movement_type)
+            const movementLabel =
+              row.movement_type === 'free_agent'
+                ? t('history.freeAgent')
+                : row.movement_type === 'release'
+                  ? t('history.freeAgentMarket')
+                  : t('history.transfer')
+
+            const amountLabel =
+              row.movement_type === 'release'
+                ? t('history.released')
+                : row.movement_type === 'free_agent'
+                  ? t('history.freeTransfer')
+                  : formatCurrency(row.amount)
 
             const counterpartyName =
               row.direction === 'arrival'
@@ -160,7 +170,9 @@ function HistoryColumn({
               !isFreeAgentMarketPlaceholder(counterpartyName)
 
             const counterpartyPrefix =
-              row.direction === 'arrival' ? 'From' : 'To'
+              row.direction === 'arrival'
+                ? t('history.from')
+                : t('history.to')
 
             return (
               <div key={row.id} className={cardClassName}>
@@ -169,6 +181,7 @@ function HistoryColumn({
                     type="button"
                     onClick={() => {
                       if (!row.rider_id) return
+
                       if (isOwned) {
                         onOpenOwnedRiderProfile(row.rider_id)
                       } else {
@@ -177,7 +190,7 @@ function HistoryColumn({
                     }}
                     className="truncate text-left text-base font-semibold text-gray-900 hover:underline"
                   >
-                    {row.rider_name || 'Unknown rider'}
+                    {row.rider_name || t('common.unknownRider')}
                   </button>
 
                   <div className="mt-1 text-sm text-gray-600">
@@ -190,14 +203,16 @@ function HistoryColumn({
                           row.from_club_id ? (
                             <button
                               type="button"
-                              onClick={() => onOpenClubProfile(row.from_club_id)}
+                              onClick={() =>
+                                onOpenClubProfile(row.from_club_id)
+                              }
                               className="font-medium text-gray-700 hover:underline"
                             >
-                              {counterpartyName || 'Unknown club'}
+                              {counterpartyName || t('common.unknownClub')}
                             </button>
                           ) : (
                             <span className="font-medium text-gray-700">
-                              {counterpartyName || 'Unknown club'}
+                              {counterpartyName || t('common.unknownClub')}
                             </span>
                           )
                         ) : row.to_club_id ? (
@@ -206,11 +221,11 @@ function HistoryColumn({
                             onClick={() => onOpenClubProfile(row.to_club_id)}
                             className="font-medium text-gray-700 hover:underline"
                           >
-                            {counterpartyName || 'Unknown club'}
+                            {counterpartyName || t('common.unknownClub')}
                           </button>
                         ) : (
                           <span className="font-medium text-gray-700">
-                            {counterpartyName || 'Unknown club'}
+                            {counterpartyName || t('common.unknownClub')}
                           </span>
                         )}
                       </>
@@ -220,8 +235,9 @@ function HistoryColumn({
 
                 <div className="text-right">
                   <div className="text-sm font-semibold text-gray-900">
-                    {getHistoryAmountLabel(row)}
+                    {amountLabel}
                   </div>
+
                   <div className="mt-1 text-xs text-gray-500">
                     {formatHistoryGameDate(row.game_date)}
                   </div>
@@ -231,7 +247,7 @@ function HistoryColumn({
           })
         ) : (
           <div className="rounded-lg border border-dashed border-gray-200 bg-gray-50 px-4 py-6 text-sm text-gray-500">
-            No history yet.
+            {t('history.noHistory')}
           </div>
         )}
       </div>
@@ -239,9 +255,11 @@ function HistoryColumn({
       {sortedRows.length > 0 ? (
         <div className="mt-4 flex items-center justify-between gap-3">
           <div className="text-xs text-gray-500">
-            Showing {(page - 1) * TRANSFER_HISTORY_ITEMS_PER_PAGE + 1}-
-            {Math.min(page * TRANSFER_HISTORY_ITEMS_PER_PAGE, sortedRows.length)} of{' '}
-            {sortedRows.length}
+            {t('history.showing', {
+              start: showingStart,
+              end: showingEnd,
+              total: sortedRows.length,
+            })}
           </div>
 
           <div className="flex items-center gap-2">
@@ -251,7 +269,7 @@ function HistoryColumn({
               disabled={page <= 1}
               className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              First
+              {t('common.first')}
             </button>
 
             <button
@@ -260,20 +278,25 @@ function HistoryColumn({
               disabled={page <= 1}
               className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              Previous
+              {t('common.previous')}
             </button>
 
             <div className="text-sm text-gray-600">
-              Page {page} / {totalPages}
+              {t('common.page', {
+                page,
+                pages: totalPages,
+              })}
             </div>
 
             <button
               type="button"
-              onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
+              onClick={() =>
+                setPage((prev) => Math.min(totalPages, prev + 1))
+              }
               disabled={page >= totalPages}
               className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              Next
+              {t('common.next')}
             </button>
 
             <button
@@ -282,7 +305,7 @@ function HistoryColumn({
               disabled={page >= totalPages}
               className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              Last
+              {t('common.last')}
             </button>
           </div>
         </div>
@@ -304,6 +327,8 @@ export default function TransferHistoryPanel({
   onOpenExternalRiderProfile?: (riderId: string) => void
   onOpenClubProfile?: (clubId: string) => void
 }): JSX.Element {
+  const { t } = useTranslation()
+
   const safeHistory = Array.isArray(transferHistory) ? transferHistory : []
 
   const arrivals = useMemo(
@@ -318,11 +343,13 @@ export default function TransferHistoryPanel({
 
   return (
     <div className="rounded-lg border border-gray-100 bg-white p-4 shadow">
-      <h4 className="font-semibold text-gray-900">Transfer History</h4>
+      <h4 className="font-semibold text-gray-900">
+        {t('history.title')}
+      </h4>
 
       <div className="mt-3 grid grid-cols-1 gap-4 xl:grid-cols-2">
         <HistoryColumn
-          title="Arrivals"
+          title={t('history.arrivals')}
           direction="arrival"
           rows={arrivals}
           currentClubRiderIds={currentClubRiderIds}
@@ -332,7 +359,7 @@ export default function TransferHistoryPanel({
         />
 
         <HistoryColumn
-          title="Departures"
+          title={t('history.departures')}
           direction="departure"
           rows={departures}
           currentClubRiderIds={currentClubRiderIds}
