@@ -321,6 +321,26 @@ export function TaxTab({
     }
   }
 
+  function getTransactionTypeLabel(row: StatementRowV2): string {
+    if (row.type === 'tax_withholding') {
+      return t('transactionLabels.taxWithholding')
+    }
+
+    return row.type_name || row.type
+  }
+
+  function getFinanceCategoryLabel(category: string): string {
+    if (category === 'income') {
+      return t('financeCategories.income')
+    }
+
+    if (category === 'expense') {
+      return t('financeCategories.expense')
+    }
+
+    return category
+  }
+
   useEffect(() => {
     let cancelled = false
 
@@ -677,10 +697,10 @@ export function TaxTab({
               <thead>
                 <tr className="border-b text-left text-gray-500">
                   <th className="py-2 pr-4 w-[20%]">{t('tax.gameTime')}</th>
-                  <th className="py-2 pr-4 w-[20%]">Type</th>
+                  <th className="py-2 pr-4 w-[20%]">{t('common.type')}</th>
                   <th className="py-2 pr-4 w-[20%]">{t('tax.category')}</th>
                   <th className="py-2 pr-4 w-[20%]">{t('tax.reference')}</th>
-                  <th className="py-2 w-[20%] text-right">Amount</th>
+                  <th className="py-2 w-[20%] text-right">{t('common.amount')}</th>
                 </tr>
               </thead>
 
@@ -696,10 +716,12 @@ export function TaxTab({
                       <td className="py-2 pr-4">{getInGameTimeLabel(row)}</td>
 
                       <td className="py-2 pr-4">
-                        {row.type_name || row.type}
+                        {getTransactionTypeLabel(row)}
                       </td>
 
-                      <td className="py-2 pr-4">{row.category || '—'}</td>
+                      <td className="py-2 pr-4">
+                        {row.category ? getFinanceCategoryLabel(row.category) : '—'}
+                      </td>
 
                       <td className="py-2 pr-4">
                         <span className="font-mono text-xs text-gray-600">
