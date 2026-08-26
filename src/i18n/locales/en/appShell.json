@@ -70,6 +70,33 @@
     "restarting": "Restarting...",
     "restart": "Restart Team"
   },
+  "rollover": {
+    "eyebrow": "Season rollover",
+    "title": "Season {{season}} is being prepared",
+    "body": "The season rollover is currently in progress. Your club and game data are safe while the new season is finalized.",
+    "targetSeason": "Preparing Season {{season}}",
+    "currentPhase": "Current phase",
+    "gameClock": "Game clock",
+    "frozenAtMidnight": "Paused at January 1 · 00:00",
+    "noAction": "No action is required. Gameplay is temporarily locked while promotion and relegation, contracts, sponsors, rewards, rankings, the calendar, and final validation are processed.",
+    "autoCheck": "This page checks the rollover automatically every 20 seconds and returns you to the game when it is complete.",
+    "delayedTitle": "The rollover is taking longer than expected",
+    "delayedBody": "The game will remain safely frozen until every required validation passes. Your club data is not being skipped or partially released.",
+    "checkingStatus": "Checking season rollover status...",
+    "statusCheckFailedTitle": "Season status is temporarily unavailable",
+    "statusCheckFailedBody": "We cannot safely confirm whether gameplay is available right now. The page will keep retrying automatically.",
+    "checking": "Checking...",
+    "checkAgain": "Check again",
+    "homepage": "Go to homepage",
+    "phases": {
+      "starting": "Starting season rollover",
+      "sourceFrozen": "Final standings frozen",
+      "coreValidated": "Competition and contracts processed",
+      "rewardsApplied": "Season rewards applied",
+      "communicationDone": "Notifications prepared",
+      "finalizing": "Final validation and resume"
+    }
+  },
   "inactivity": {
     "title": "You will be logged out soon",
     "body": "Your game has been inactive for almost 30 minutes. You will be logged out automatically in approximately one minute.",
