@@ -209,6 +209,9 @@ const transactionTypeLabelKeyMap = {
   infrastructure_job_refund: 'transactionLabels.infrastructureJobRefund',
 
   team_policy_housing_cost: 'transactionLabels.teamPolicyHousingCost',
+
+  race_prize: 'transactionLabels.racePrize',
+  free_agent_signing_cost_paid: 'transactionLabels.freeAgentSigningCostPaid',
 } as const
 
 /**
