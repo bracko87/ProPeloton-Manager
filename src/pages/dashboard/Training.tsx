@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useEffect, useMemo, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Link, useNavigate, useSearchParams } from 'react-router'
 import { supabase } from '../../lib/supabase'
 import TutorialOverlay from '../../components/tutorial/TutorialOverlay'
@@ -231,20 +232,19 @@ type CurrentCampBooking = {
   notes?: Record<string, unknown> | null
 }
 
-const CAMP_TYPE_LABELS: Record<CampType, string> = {
-  general: 'General',
-  sprint: 'Sprint',
-  climbing: 'Climbing',
-  flat: 'Flat',
-  time_trial: 'Time Trial'
+const CAMP_TYPE_TRANSLATION_KEYS: Record<CampType, string> = {
+  general: 'campTypes.general',
+  sprint: 'campTypes.sprint',
+  climbing: 'campTypes.climbing',
+  flat: 'campTypes.flat',
+  time_trial: 'campTypes.timeTrial'
 }
 
-const WEATHER_LABELS: Record<WeatherState, string> = {
+const WEATHER_LABELS: Record<Exclude<WeatherState, 'unavailable'>, string> = {
   ideal: 'Ideal',
   good: 'Good',
   mixed: 'Mixed',
-  poor: 'Poor',
-  unavailable: 'Unavailable'
+  poor: 'Poor'
 }
 
 const WEATHER_BADGE_STYLES: Record<WeatherState, string> = {
@@ -262,6 +262,13 @@ const AVAILABILITY_BADGE_STYLES: Record<AvailabilityStatus, string> = {
   sick: 'bg-purple-100 text-purple-700'
 }
 
+const AVAILABILITY_TRANSLATION_KEYS: Record<AvailabilityStatus, string> = {
+  fit: 'availability.fit',
+  not_fully_fit: 'availability.notFullyFit',
+  injured: 'availability.injured',
+  sick: 'availability.sick'
+}
+
 const DURATION_OPTIONS = [7, 10, 14] as const
 
 const REGION_OPTIONS: RegionFilter[] = [
@@ -275,6 +282,16 @@ const REGION_OPTIONS: RegionFilter[] = [
   'Middle East'
 ]
 
+const REGION_TRANSLATION_KEYS: Record<string, string> = {
+  Europe: 'regions.europe',
+  'North America': 'regions.northAmerica',
+  'South America': 'regions.southAmerica',
+  Asia: 'regions.asia',
+  Africa: 'regions.africa',
+  Oceania: 'regions.oceania',
+  'Middle East': 'regions.middleEast'
+}
+
 const CAMP_TYPE_OPTIONS: Array<'all' | CampType> = [
   'all',
   'general',
@@ -285,28 +302,37 @@ const CAMP_TYPE_OPTIONS: Array<'all' | CampType> = [
 ]
 
 const REGULAR_TRAINING_FOCUS_OPTIONS = [
-  { value: 'general', label: 'General' },
-  { value: 'recovery', label: 'Recovery' },
-  { value: 'sprint', label: 'Sprint' },
-  { value: 'climbing', label: 'Climbing' },
-  { value: 'flat', label: 'Flat' },
-  { value: 'time_trial', label: 'Time Trial' },
-  { value: 'endurance', label: 'Endurance' },
-  { value: 'resistance', label: 'Resistance' },
-  { value: 'race_iq', label: 'Race IQ' },
-  { value: 'teamwork', label: 'Teamwork' },
-  { value: 'day_off', label: 'Day Off' }
+  { value: 'general', translationKey: 'focus.general' },
+  { value: 'recovery', translationKey: 'focus.recovery' },
+  { value: 'sprint', translationKey: 'focus.sprint' },
+  { value: 'climbing', translationKey: 'focus.climbing' },
+  { value: 'flat', translationKey: 'focus.flat' },
+  { value: 'time_trial', translationKey: 'focus.timeTrial' },
+  { value: 'endurance', translationKey: 'focus.endurance' },
+  { value: 'resistance', translationKey: 'focus.resistance' },
+  { value: 'race_iq', translationKey: 'focus.raceIq' },
+  { value: 'teamwork', translationKey: 'focus.teamwork' },
+  { value: 'day_off', translationKey: 'focus.dayOff' }
 ] as const
+
+const TRAINING_FOCUS_TRANSLATION_KEYS: Record<string, string> = Object.fromEntries(
+  REGULAR_TRAINING_FOCUS_OPTIONS.map(option => [option.value, option.translationKey])
+)
 
 const REGULAR_TRAINING_INTENSITY_OPTIONS: Array<{
   value: RegularTrainingIntensity
-  label: string
+  translationKey: string
 }> = [
-  { value: 'recovery', label: 'Recovery' },
-  { value: 'light', label: 'Light' },
-  { value: 'normal', label: 'Normal' },
-  { value: 'hard', label: 'Hard' }
+  { value: 'recovery', translationKey: 'intensity.recovery' },
+  { value: 'light', translationKey: 'intensity.light' },
+  { value: 'normal', translationKey: 'intensity.normal' },
+  { value: 'hard', translationKey: 'intensity.hard' }
 ]
+
+const TRAINING_INTENSITY_TRANSLATION_KEYS: Record<RegularTrainingIntensity, string> =
+  Object.fromEntries(
+    REGULAR_TRAINING_INTENSITY_OPTIONS.map(option => [option.value, option.translationKey])
+  ) as Record<RegularTrainingIntensity, string>
 
 const WEEKDAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 const CAMPS_PER_PAGE = 8
@@ -378,11 +404,6 @@ function titleCaseFromSnake(value: string | null | undefined): string {
 
 function formatCampTypeLabel(value: string | null | undefined): string {
   if (!value) return 'Training Camp'
-
-  if (value in CAMP_TYPE_LABELS) {
-    return CAMP_TYPE_LABELS[value as CampType]
-  }
-
   return titleCaseFromSnake(value)
 }
 
@@ -407,13 +428,21 @@ function formatSeasonLabel(dateValue: string | null | undefined): string {
   }
 }
 
-function formatTrainingFocusLabel(value: string | null | undefined): string {
-  if (value === 'day_off') return 'Day Off'
-  return titleCaseFromSnake(value)
+function formatTrainingFocusLabel(
+  value: string | null | undefined,
+  translate: (key: string) => string
+): string {
+  if (!value) return ''
+
+  const translationKey = TRAINING_FOCUS_TRANSLATION_KEYS[value]
+  return translationKey ? translate(translationKey) : titleCaseFromSnake(value)
 }
 
-function formatTrainingIntensityLabel(value: RegularTrainingIntensity): string {
-  return value.charAt(0).toUpperCase() + value.slice(1)
+function formatTrainingIntensityLabel(
+  value: RegularTrainingIntensity,
+  translate: (key: string) => string
+): string {
+  return translate(TRAINING_INTENSITY_TRANSLATION_KEYS[value])
 }
 
 function isDayOffFocus(focusCode: string | null | undefined): boolean {
@@ -442,16 +471,18 @@ function normalizeTrainingIntensityForSave(
 
 function formatEffectiveRegularTrainingLabel(
   focusCode: string | null | undefined,
-  intensity: string | null | undefined
+  intensity: string | null | undefined,
+  translate: (key: string) => string
 ): string {
-  if (!focusCode) return 'No plan'
+  if (!focusCode) return translate('regular.noPlan')
 
   if (isDayOffFocus(focusCode)) {
-    return 'Day Off'
+    return translate('focus.dayOff')
   }
 
-  return `${formatTrainingFocusLabel(focusCode)} · ${formatTrainingIntensityLabel(
-    normalizeTrainingIntensityForSave(focusCode, intensity)
+  return `${formatTrainingFocusLabel(focusCode, translate)} · ${formatTrainingIntensityLabel(
+    normalizeTrainingIntensityForSave(focusCode, intensity),
+    translate
   )}`
 }
 
@@ -901,6 +932,7 @@ function CampDatePicker({
   currentSeasonNumber,
   bookings
 }: CampDatePickerProps): JSX.Element {
+  const { t } = useTranslation('training')
   const baseDateValue =
     normalizeIsoDateValue(value) ||
     normalizeIsoDateValue(minDate) ||
@@ -1072,7 +1104,7 @@ function CampDatePicker({
 
             <div className="flex items-center gap-2">
               <span className="inline-block h-3 w-3 rounded-full bg-red-100 ring-1 ring-red-200" />
-              <span>Unavailable</span>
+              <span>{t('common.unavailable')}</span>
             </div>
 
             <div className="flex items-center gap-2">
@@ -1105,6 +1137,7 @@ function isClubLevelActiveCampOnlyError(message: string): boolean {
 }
 
 export default function TrainingPage(): JSX.Element {
+  const { t } = useTranslation('training')
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const focusedRiderId = searchParams.get('riderId')
@@ -2729,16 +2762,16 @@ export default function TrainingPage(): JSX.Element {
   }
 
   if (loading) {
-    return <div className="w-full text-sm text-gray-600">Loading training page…</div>
+    return <div className="w-full text-sm text-gray-600">{t('page.loading')}</div>
   }
 
   return (
     <div className="w-full space-y-6">
       <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
         <div>
-          <h2 className="text-2xl font-semibold text-gray-900">Training</h2>
+          <h2 className="text-2xl font-semibold text-gray-900">{t('page.title')}</h2>
           <p className="mt-1 text-sm text-gray-600">
-            Plan regular training manually or delegate a rolling three-day plan to your Head Coach.
+            {t('page.subtitle')}
           </p>
         </div>
 
@@ -2753,7 +2786,7 @@ export default function TrainingPage(): JSX.Element {
                   : 'text-gray-500 hover:text-gray-700'
               }`}
             >
-              Regular Training
+              {t('page.regularTab')}
             </button>
 
             <button
@@ -2765,7 +2798,7 @@ export default function TrainingPage(): JSX.Element {
                   : 'text-gray-500 hover:text-gray-700'
               }`}
             >
-              Training Camps
+              {t('page.campsTab')}
             </button>
           </div>
         </div>
@@ -2773,7 +2806,7 @@ export default function TrainingPage(): JSX.Element {
 
       {focusedRiderId ? (
         <div className="rounded-lg bg-white p-4 shadow">
-          <div className="text-sm font-semibold text-slate-900">Focused Rider Training</div>
+          <div className="text-sm font-semibold text-slate-900">{t('page.focusedRider')}</div>
           <div className="mt-1 text-sm text-slate-600">
             Opened from rider profile for rider id: {focusedRiderId}
             {focusedRider ? ` · ${getFullRiderName(focusedRider)}` : ''}
@@ -2810,7 +2843,7 @@ export default function TrainingPage(): JSX.Element {
             <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
               <div>
                 <h3 className="text-lg font-semibold text-gray-900">
-                  Current / Planned Training Camp
+                  {t('camps.currentTitle')}
                 </h3>
 
                 <p className="mt-1 text-sm text-gray-700">
@@ -2838,7 +2871,7 @@ export default function TrainingPage(): JSX.Element {
                   }
                   className={openCurrentCampButtonClass}
                 >
-                  Open Current Camp
+                  {t('camps.openCurrent')}
                 </button>
 
                 <button
@@ -2847,7 +2880,7 @@ export default function TrainingPage(): JSX.Element {
                   disabled={isCancellingCamp}
                   className={cancelCampButtonClass}
                 >
-                  {isCancellingCamp ? 'Cancelling…' : 'Cancel Camp'}
+                  {isCancellingCamp ? 'Cancelling…' : t('camps.cancelCamp')}
                 </button>
               </div>
             </div>
@@ -2907,7 +2940,7 @@ export default function TrainingPage(): JSX.Element {
       ) : (
         <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
           <h3 className="text-lg font-semibold text-gray-900">
-            Current / Planned Training Camp
+            {t('camps.currentTitle')}
           </h3>
           <p className="mt-2 text-sm text-gray-600">
             No planned or active training camp yet. Pick a camp, choose riders, staff, and book it.
@@ -2919,7 +2952,7 @@ export default function TrainingPage(): JSX.Element {
         <div className="space-y-6">
           {premiumStatusLoading ? (
             <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-              <div className="text-sm text-slate-500">Checking Premium access…</div>
+              <div className="text-sm text-slate-500">{t('regular.checkingPremium')}</div>
             </div>
           ) : isPremium ? (
             <HeadCoachTrainingPanel
@@ -2936,10 +2969,10 @@ export default function TrainingPage(): JSX.Element {
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
                     <h3 className="text-lg font-semibold text-slate-900">
-                      Head Coach Training Automation
+                      {t('regular.automationTitle')}
                     </h3>
                     <span className="rounded-full border border-yellow-300 bg-yellow-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-yellow-800">
-                      Premium
+                      {t('common.premium')}
                     </span>
                     <span aria-hidden="true" className="text-sm text-slate-500">
                       🔒
@@ -2954,7 +2987,7 @@ export default function TrainingPage(): JSX.Element {
                   to="/dashboard/premium"
                   className="inline-flex shrink-0 items-center justify-center rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-800 transition hover:border-yellow-400 hover:bg-yellow-50"
                 >
-                  Unlock with Premium
+                  {t('regular.unlockPremium')}
                 </Link>
               </div>
             </div>
@@ -2963,7 +2996,7 @@ export default function TrainingPage(): JSX.Element {
           <div className="grid gap-4 md:grid-cols-5">
             <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
               <div className="text-xs font-medium uppercase tracking-wide text-gray-500">
-                Riders in scope
+                {t('regular.ridersInScope')}
               </div>
               <div className="mt-2 text-2xl font-semibold text-gray-900">
                 {regularTrainingSummary.totalRiders}
@@ -2972,7 +3005,7 @@ export default function TrainingPage(): JSX.Element {
 
             <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
               <div className="text-xs font-medium uppercase tracking-wide text-gray-500">
-                Rider overrides
+                {t('regular.riderOverridesCount')}
               </div>
               <div className="mt-2 text-2xl font-semibold text-gray-900">
                 {regularTrainingSummary.overrideCount}
@@ -2981,7 +3014,7 @@ export default function TrainingPage(): JSX.Element {
 
             <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
               <div className="text-xs font-medium uppercase tracking-wide text-gray-500">
-                Using team defaults
+                {t('regular.usingDefaults')}
               </div>
               <div className="mt-2 text-2xl font-semibold text-gray-900">
                 {regularTrainingSummary.defaultOnlyCount}
@@ -2990,7 +3023,7 @@ export default function TrainingPage(): JSX.Element {
 
             <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
               <div className="text-xs font-medium uppercase tracking-wide text-gray-500">
-                Head Coach managed
+                {t('regular.headCoachManaged')}
               </div>
               <div className="mt-2 text-2xl font-semibold text-gray-900">
                 {regularTrainingSummary.headCoachManagedCount}
@@ -2999,7 +3032,7 @@ export default function TrainingPage(): JSX.Element {
 
             <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
               <div className="text-xs font-medium uppercase tracking-wide text-gray-500">
-                Health-blocked
+                {t('regular.healthBlocked')}
               </div>
               <div className="mt-2 text-2xl font-semibold text-gray-900">
                 {regularTrainingSummary.blockedRiders}
@@ -3014,7 +3047,7 @@ export default function TrainingPage(): JSX.Element {
               }`}
             >
               <div>
-                <h3 className="text-lg font-semibold text-gray-900">Team Defaults</h3>
+                <h3 className="text-lg font-semibold text-gray-900">{t('regular.teamDefaults')}</h3>
                 <p className="mt-1 text-sm text-gray-600">
                   These defaults apply when Head Coach automation is disabled and a rider has no persistent override.
                 </p>
@@ -3028,7 +3061,7 @@ export default function TrainingPage(): JSX.Element {
                   aria-expanded={isTeamDefaultsExpanded}
                   aria-controls="team-defaults-content"
                 >
-                  {isTeamDefaultsExpanded ? 'Collapse' : 'Expand'}
+                  {isTeamDefaultsExpanded ? t('common.collapse') : t('common.expand')}
                 </button>
 
                 <button
@@ -3038,7 +3071,7 @@ export default function TrainingPage(): JSX.Element {
                   }
                   className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
                 >
-                  Refresh Training Config
+                  {t('regular.refreshConfig')}
                 </button>
               </div>
             </div>
@@ -3059,7 +3092,7 @@ export default function TrainingPage(): JSX.Element {
                     <div className="mb-4 flex items-start justify-between gap-3">
                       <div>
                         <div className="text-base font-semibold text-gray-900">
-                          {team.team_label}
+                          {team.team_label === 'U23' ? t('common.u23') : t('common.firstTeam')}
                         </div>
                         <div className="text-sm text-gray-500">
                           {team.club_name} · Riders: {ridersInTeam}
@@ -3078,7 +3111,7 @@ export default function TrainingPage(): JSX.Element {
                               : 'bg-amber-100 text-amber-700'
                           }`}
                         >
-                          {hasSavedDefault ? 'Saved default' : 'Draft only'}
+                          {hasSavedDefault ? t('regular.savedDefault') : t('regular.draftOnly')}
                         </span>
                       </div>
                     </div>
@@ -3086,7 +3119,7 @@ export default function TrainingPage(): JSX.Element {
                     <div className="grid gap-3 md:grid-cols-2">
                       <label className="block">
                         <span className="mb-1 block text-sm font-medium text-gray-700">
-                          Focus
+                          {t('regular.focus')}
                         </span>
                         <select
                           value={row.focus_code}
@@ -3102,7 +3135,7 @@ export default function TrainingPage(): JSX.Element {
                         >
                           {REGULAR_TRAINING_FOCUS_OPTIONS.map(option => (
                             <option key={option.value} value={option.value}>
-                              {option.label}
+                              {t(option.translationKey)}
                             </option>
                           ))}
                         </select>
@@ -3110,7 +3143,7 @@ export default function TrainingPage(): JSX.Element {
 
                       <div>
                         <span className="mb-1 block text-sm font-medium text-gray-700">
-                          Intensity
+                          {t('regular.intensity')}
                         </span>
 
                         <select
@@ -3125,7 +3158,7 @@ export default function TrainingPage(): JSX.Element {
                         >
                           {REGULAR_TRAINING_INTENSITY_OPTIONS.map(option => (
                             <option key={option.value} value={option.value}>
-                              {option.label}
+                              {t(option.translationKey)}
                             </option>
                           ))}
                         </select>
@@ -3148,7 +3181,7 @@ export default function TrainingPage(): JSX.Element {
                           })
                         }
                       />
-                      Auto-apply when rider is free
+                      {t('regular.autoApply')}
                     </label>
 
                     <div className="mt-4">
@@ -3160,7 +3193,7 @@ export default function TrainingPage(): JSX.Element {
                       >
                         {regularSavingDefaultClubId === team.club_id
                           ? 'Saving Default…'
-                          : 'Save Team Default'}
+                          : t('regular.saveTeamDefault')}
                       </button>
                     </div>
                   </div>
@@ -3178,7 +3211,7 @@ export default function TrainingPage(): JSX.Element {
 
           <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
             <div className="mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">Rider Overrides</h3>
+              <h3 className="text-lg font-semibold text-gray-900">{t('regular.riderOverrides')}</h3>
               <p className="mt-1 text-sm text-gray-600">
                 {isPremium
                   ? "Head Coach assignments appear here as today's effective training. Editing a coach-managed rider creates a one-day override; the coach resumes next game day."
@@ -3224,24 +3257,24 @@ export default function TrainingPage(): JSX.Element {
 
                           {isFocusedRider ? (
                             <span className="rounded-full bg-blue-100 px-2 py-0.5 text-[11px] font-medium text-blue-700">
-                              Focused rider
+                              {t('regular.focusedRider')}
                             </span>
                           ) : null}
 
                           {rider.team_label === 'U23' ? (
                             <span className="rounded-full bg-indigo-100 px-2 py-0.5 text-[11px] font-medium text-indigo-700">
-                              U23
+                              {t('common.u23')}
                             </span>
                           ) : (
                             <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-medium text-gray-700">
-                              First Team
+                              {t('common.firstTeam')}
                             </span>
                           )}
 
                           <span
                             className={`rounded-full px-2.5 py-1 text-xs font-medium ${AVAILABILITY_BADGE_STYLES[rider.availability_status]}`}
                           >
-                            {rider.availability_status.replaceAll('_', ' ')}
+                            {t(AVAILABILITY_TRANSLATION_KEYS[rider.availability_status])}
                           </span>
 
                           <span className="rounded-full bg-gray-100 px-2.5 py-1 text-xs text-gray-700">
@@ -3250,23 +3283,23 @@ export default function TrainingPage(): JSX.Element {
 
                           {effective.source === 'head_coach' ? (
                             <span className="rounded-full bg-yellow-100 px-2.5 py-1 text-xs font-medium text-yellow-800">
-                              Head Coach
+                              {t('regular.headCoach')}
                             </span>
                           ) : effective.source === 'manual_today' ? (
                             <span className="rounded-full bg-blue-100 px-2.5 py-1 text-xs font-medium text-blue-700">
-                              Manual today
+                              {t('regular.manualToday')}
                             </span>
                           ) : effective.source === 'override' ? (
                             <span className="rounded-full bg-blue-100 px-2.5 py-1 text-xs font-medium text-blue-700">
-                              Persistent override
+                              {t('regular.persistentOverride')}
                             </span>
                           ) : effective.source === 'default' ? (
                             <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-medium text-emerald-700">
-                              Team default
+                              {t('regular.teamDefault')}
                             </span>
                           ) : (
                             <span className="rounded-full bg-amber-100 px-2.5 py-1 text-xs font-medium text-amber-700">
-                              No plan
+                              {t('regular.noPlan')}
                             </span>
                           )}
                         </div>
@@ -3280,7 +3313,8 @@ export default function TrainingPage(): JSX.Element {
                           <span className="font-medium">
                             {formatEffectiveRegularTrainingLabel(
                               effective.focus_code,
-                              effective.intensity
+                              effective.intensity,
+                              t
                             )}
                           </span>
                           <div className="mt-1 text-xs text-gray-500">
@@ -3298,7 +3332,7 @@ export default function TrainingPage(): JSX.Element {
                       <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-1">
                         <label className="block">
                           <span className="mb-1 block text-sm font-medium text-gray-700">
-                            Focus
+                            {t('regular.focus')}
                           </span>
                           <select
                             value={draft.focus_code}
@@ -3314,7 +3348,7 @@ export default function TrainingPage(): JSX.Element {
                           >
                             {REGULAR_TRAINING_FOCUS_OPTIONS.map(option => (
                               <option key={option.value} value={option.value}>
-                                {option.label}
+                                {t(option.translationKey)}
                               </option>
                             ))}
                           </select>
@@ -3322,7 +3356,7 @@ export default function TrainingPage(): JSX.Element {
 
                         <div>
                           <span className="mb-1 block text-sm font-medium text-gray-700">
-                            Intensity
+                            {t('regular.intensity')}
                           </span>
 
                           <select
@@ -3337,7 +3371,7 @@ export default function TrainingPage(): JSX.Element {
                           >
                             {REGULAR_TRAINING_INTENSITY_OPTIONS.map(option => (
                               <option key={option.value} value={option.value}>
-                                {option.label}
+                                {t(option.translationKey)}
                               </option>
                             ))}
                           </select>
@@ -3359,7 +3393,7 @@ export default function TrainingPage(): JSX.Element {
                           className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-300"
                         >
                           {regularSavingRiderId === rider.rider_id
-                            ? 'Saving…'
+                            ? t('common.saving')
                             : coachEnabled
                               ? hasTodayOverride
                                 ? 'Save Today Override'
@@ -3407,7 +3441,7 @@ export default function TrainingPage(): JSX.Element {
             <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
               <div className="grid gap-4 md:grid-cols-3 xl:grid-cols-[1fr_1fr_1.5fr]">
                 <label className="block">
-                  <span className="mb-1 block text-sm font-medium text-gray-700">Region</span>
+                  <span className="mb-1 block text-sm font-medium text-gray-700">{t('camps.region')}</span>
                   <select
                     value={regionFilter}
                     onChange={event => setRegionFilter(event.target.value as RegionFilter)}
@@ -3415,14 +3449,14 @@ export default function TrainingPage(): JSX.Element {
                   >
                     {REGION_OPTIONS.map(region => (
                       <option key={region} value={region}>
-                        {region === 'all' ? 'All regions' : region}
+                        {region === 'all' ? t('camps.allRegions') : t(REGION_TRANSLATION_KEYS[region] ?? region)}
                       </option>
                     ))}
                   </select>
                 </label>
 
                 <label className="block">
-                  <span className="mb-1 block text-sm font-medium text-gray-700">Camp type</span>
+                  <span className="mb-1 block text-sm font-medium text-gray-700">{t('camps.campType')}</span>
                   <select
                     value={campTypeFilter}
                     onChange={event => setCampTypeFilter(event.target.value as 'all' | CampType)}
@@ -3430,7 +3464,7 @@ export default function TrainingPage(): JSX.Element {
                   >
                     {CAMP_TYPE_OPTIONS.map(type => (
                       <option key={type} value={type}>
-                        {type === 'all' ? 'All types' : CAMP_TYPE_LABELS[type]}
+                        {type === 'all' ? t('camps.allTypes') : t(CAMP_TYPE_TRANSLATION_KEYS[type])}
                       </option>
                     ))}
                   </select>
@@ -3459,7 +3493,7 @@ export default function TrainingPage(): JSX.Element {
 
             <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
               <div className="mb-4 flex items-center justify-between">
-                <h3 className="text-lg font-semibold text-gray-900">Available Camps</h3>
+                <h3 className="text-lg font-semibold text-gray-900">{t('camps.availableCamps')}</h3>
                 <span className="text-xs text-gray-500">
                   {filteredCamps.length} offers · Page {currentPage}/{totalPages}
                 </span>
@@ -3489,7 +3523,7 @@ export default function TrainingPage(): JSX.Element {
                             />
                           ) : (
                             <div className="flex h-full items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200 text-sm text-slate-500">
-                              No image yet
+                              {t('camps.noImage')}
                             </div>
                           )}
                         </div>
@@ -3500,7 +3534,7 @@ export default function TrainingPage(): JSX.Element {
                               <h4 className="text-base font-semibold text-gray-900">{camp.name}</h4>
                               <p className="text-sm text-gray-500">
                                 {camp.city_name}, {camp.country_code} ·{' '}
-                                {CAMP_TYPE_LABELS[camp.camp_type]}
+                                {t(CAMP_TYPE_TRANSLATION_KEYS[camp.camp_type])}
                               </p>
                             </div>
                             <span className="text-sm font-medium text-amber-600">
@@ -3511,7 +3545,7 @@ export default function TrainingPage(): JSX.Element {
                           <p className="mt-3 text-sm text-gray-600">{camp.short_description}</p>
 
                           <div className="mt-3 text-sm font-medium text-gray-900">
-                            From{' '}
+                            {t('camps.from')}{' '}
                             {formatCurrency(
                               estimatePerRiderCost(
                                 camp,
@@ -3525,7 +3559,7 @@ export default function TrainingPage(): JSX.Element {
 
                           <div className="mt-3 flex flex-wrap gap-2 text-xs">
                             <span className="rounded-full bg-blue-50 px-2.5 py-1 text-blue-700">
-                              Best for: {camp.best_for_text || CAMP_TYPE_LABELS[camp.camp_type]}
+                              {t('camps.bestFor')} {camp.best_for_text || t(CAMP_TYPE_TRANSLATION_KEYS[camp.camp_type])}
                             </span>
                             <span className="rounded-full bg-gray-100 px-2.5 py-1 text-gray-700">
                               {camp.metadata?.budget_tier ?? 'standard'}
@@ -3549,7 +3583,7 @@ export default function TrainingPage(): JSX.Element {
                     disabled={currentPage === 1}
                     className="rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
                   >
-                    Previous
+                    {t('common.previous')}
                   </button>
 
                   <div className="flex items-center gap-2">
@@ -3575,7 +3609,7 @@ export default function TrainingPage(): JSX.Element {
                     disabled={currentPage === totalPages}
                     className="rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
                   >
-                    Next
+                    {t('common.next')}
                   </button>
                 </div>
               ) : null}
@@ -3605,13 +3639,13 @@ export default function TrainingPage(): JSX.Element {
                       <h3 className="text-xl font-semibold text-gray-900">{selectedCamp.name}</h3>
                       <p className="text-sm text-gray-500">
                         {selectedCamp.city_name}, {selectedCamp.country_code} ·{' '}
-                        {selectedCamp.region_name}
+                        {t(REGION_TRANSLATION_KEYS[selectedCamp.region_name] ?? selectedCamp.region_name)}
                       </p>
                     </div>
                     <div className="text-right text-sm text-amber-600">
                       <div className="font-medium">{renderStars(selectedCamp.stars)}</div>
                       <div className="text-xs text-gray-500">
-                        {CAMP_TYPE_LABELS[selectedCamp.camp_type]}
+                        {t(CAMP_TYPE_TRANSLATION_KEYS[selectedCamp.camp_type])}
                       </div>
                     </div>
                   </div>
@@ -3621,13 +3655,13 @@ export default function TrainingPage(): JSX.Element {
                   <div className="grid gap-3 md:grid-cols-2">
                     <div className="rounded-lg bg-gray-50 p-3">
                       <div className="text-xs font-medium uppercase tracking-wide text-gray-500">
-                        Best for
+                        {t('camps.bestFor')}
                       </div>
                       <div className="mt-1 text-sm text-gray-700">{selectedCamp.best_for_text}</div>
                     </div>
                     <div className="rounded-lg bg-gray-50 p-3">
                       <div className="text-xs font-medium uppercase tracking-wide text-gray-500">
-                        Weather note
+                        {t('camps.weatherNote')}
                       </div>
                       <div className="mt-1 text-sm text-gray-700">{selectedCamp.weather_note}</div>
                     </div>
@@ -3636,7 +3670,7 @@ export default function TrainingPage(): JSX.Element {
                   <div className="grid gap-3 md:grid-cols-2">
                     <div>
                       <span className="mb-1 block text-sm font-medium text-gray-700">
-                        Start date
+                        {t('camps.startDate')}
                       </span>
                       <CampDatePicker
                         value={startDate}
@@ -3667,7 +3701,7 @@ export default function TrainingPage(): JSX.Element {
 
                     <label className="block">
                       <span className="mb-1 block text-sm font-medium text-gray-700">
-                        Duration
+                        {t('camps.duration')}
                       </span>
                       <select
                         value={days}
@@ -3724,8 +3758,8 @@ export default function TrainingPage(): JSX.Element {
 
             <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
               <div className="mb-3 flex items-center justify-between">
-                <h3 className="text-lg font-semibold text-gray-900">Rider Selection</h3>
-                <span className="text-xs text-gray-500">Minimum 5 riders</span>
+                <h3 className="text-lg font-semibold text-gray-900">{t('camps.riderSelection')}</h3>
+                <span className="text-xs text-gray-500">{t('camps.minimumRiders')}</span>
               </div>
 
               <div className="max-h-80 space-y-2 overflow-y-auto">
@@ -3756,11 +3790,11 @@ export default function TrainingPage(): JSX.Element {
 
                             {rider.team_label === 'U23' ? (
                               <span className="rounded-full bg-indigo-100 px-2 py-0.5 text-[11px] font-medium text-indigo-700">
-                                U23
+                                {t('common.u23')}
                               </span>
                             ) : (
                               <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-medium text-gray-700">
-                                First Team
+                                {t('common.firstTeam')}
                               </span>
                             )}
                           </div>
@@ -3786,7 +3820,7 @@ export default function TrainingPage(): JSX.Element {
                       <span
                         className={`rounded-full px-2.5 py-1 text-xs font-medium ${AVAILABILITY_BADGE_STYLES[rider.availability_status]}`}
                       >
-                        {rider.availability_status.replaceAll('_', ' ')}
+                        {t(AVAILABILITY_TRANSLATION_KEYS[rider.availability_status])}
                       </span>
                     </label>
                   )
@@ -3804,14 +3838,14 @@ export default function TrainingPage(): JSX.Element {
             <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
               <div className="mb-3 flex items-center justify-between">
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900">Staff Selection</h3>
+                  <h3 className="text-lg font-semibold text-gray-900">{t('camps.staffSelection')}</h3>
                   <p className="mt-1 text-sm text-gray-600">
                     Optional. Staff add camp boosts, but each selected staff member is charged like one rider.
                   </p>
                 </div>
 
                 <span className="text-xs text-gray-500">
-                  Selected: {selectedStaffIds.length}
+                  {t('common.selected')}: {selectedStaffIds.length}
                 </span>
               </div>
 
@@ -3890,7 +3924,7 @@ export default function TrainingPage(): JSX.Element {
                                 : 'bg-green-100 text-green-700'
                           }`}
                         >
-                          {isDisabled ? 'Unavailable' : isSelected ? 'Selected' : 'Available'}
+                          {isDisabled ? t('common.unavailable') : isSelected ? t('common.selected') : t('common.available')}
                         </span>
                       </label>
                     )
@@ -3912,7 +3946,7 @@ export default function TrainingPage(): JSX.Element {
                   <span
                     className={`rounded-full px-2.5 py-1 text-xs font-medium ${WEATHER_BADGE_STYLES[quote.weather_state]}`}
                   >
-                    {WEATHER_LABELS[quote.weather_state]}
+                    {quote.weather_state === 'unavailable' ? t('common.unavailable') : WEATHER_LABELS[quote.weather_state]}
                   </span>
                 ) : null}
               </div>
@@ -4011,7 +4045,7 @@ export default function TrainingPage(): JSX.Element {
                     disabled={!canSubmitBooking}
                     className="w-full rounded-lg bg-blue-600 px-4 py-3 text-sm font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-300"
                   >
-                    {bookingLoading ? 'Booking Training Camp…' : 'Book Training Camp'}
+                    {bookingLoading ? t('camps.bookingCamp') : t('camps.bookCamp')}
                   </button>
                 </div>
               ) : (
@@ -4131,7 +4165,7 @@ export default function TrainingPage(): JSX.Element {
                 onClick={() => setShowAssignedRidersModal(false)}
                 className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50"
               >
-                Close
+                {t('common.close')}
               </button>
             </div>
 
@@ -4154,11 +4188,11 @@ export default function TrainingPage(): JSX.Element {
 
                         {rider.team_label === 'U23' ? (
                           <span className="rounded-full bg-indigo-100 px-2 py-0.5 text-[11px] font-medium text-indigo-700">
-                            U23
+                            {t('common.u23')}
                           </span>
                         ) : (
                           <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-medium text-gray-700">
-                            First Team
+                            {t('common.firstTeam')}
                           </span>
                         )}
                       </div>
@@ -4174,7 +4208,7 @@ export default function TrainingPage(): JSX.Element {
                         AVAILABILITY_BADGE_STYLES[rider.availability_status]
                       }`}
                     >
-                      {rider.availability_status.replaceAll('_', ' ')}
+                      {t(AVAILABILITY_TRANSLATION_KEYS[rider.availability_status])}
                     </span>
                   </div>
                 ))
@@ -4206,7 +4240,7 @@ export default function TrainingPage(): JSX.Element {
           body={trainingTutorialSteps[tutorialStepIndex].body}
           stepLabel={`${tutorialStepIndex + 1}/${trainingTutorialSteps.length}`}
           primaryAction={
-            trainingTutorialSteps[tutorialStepIndex].primaryAction ?? 'Next'
+            trainingTutorialSteps[tutorialStepIndex].primaryAction ?? t('common.next')
           }
           secondaryAction={
             tutorialStepIndex === trainingTutorialSteps.length - 1
