@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import {
   openPremiumPage,
@@ -128,12 +129,64 @@ export type SquadDisplayData = {
   raceTypeSnapshot?: SquadDisplayRaceTypeRow[]
 }
 
-const SQUAD_LIST_VIEW_OPTIONS: Array<{ value: SquadListView; label: string }> = [
-  { value: 'general', label: 'General View' },
-  { value: 'financial', label: 'Financial View' },
-  { value: 'skills', label: 'Skills View' },
-  { value: 'form', label: 'Form & Development' },
+const SQUAD_LIST_VIEW_OPTIONS: Array<{ value: SquadListView; labelKey: string }> = [
+  { value: 'general', labelKey: 'roster.generalView' },
+  { value: 'financial', labelKey: 'roster.financialView' },
+  { value: 'skills', labelKey: 'roster.skillsView' },
+  { value: 'form', labelKey: 'roster.formDevelopment' },
 ]
+
+const STATUS_TRANSLATION_KEYS: Record<string, string> = {
+  Fit: 'status.fit',
+  Injured: 'status.injured',
+  Sick: 'status.sick',
+  'Not fully fit': 'status.notFullyFit',
+  Fresh: 'status.fresh',
+  Normal: 'status.normal',
+  Tired: 'status.tired',
+  'Very Tired': 'status.veryTired',
+  Exhausted: 'status.exhausted',
+  Bad: 'status.bad',
+  Low: 'status.low',
+  Okay: 'status.okay',
+  Good: 'status.good',
+  Great: 'status.great',
+  Limited: 'status.limited',
+  Average: 'status.average',
+  Promising: 'status.promising',
+  High: 'status.high',
+  Elite: 'status.elite',
+}
+
+const MONTH_TRANSLATION_KEYS: Record<string, string> = {
+  Jan: 'months.jan',
+  Feb: 'months.feb',
+  Mar: 'months.mar',
+  Apr: 'months.apr',
+  May: 'months.may',
+  Jun: 'months.jun',
+  Jul: 'months.jul',
+  Aug: 'months.aug',
+  Sep: 'months.sep',
+  Oct: 'months.oct',
+  Nov: 'months.nov',
+  Dec: 'months.dec',
+}
+
+const PODIUM_CHART_TRANSLATION_KEYS: Record<string, string> = {
+  Wins: 'season.wins',
+  '2nd': 'season.second',
+  '3rd': 'season.third',
+  Top10: 'season.top10',
+  Top20: 'season.top20',
+}
+
+const RACE_TYPE_TRANSLATION_KEYS: Record<string, string> = {
+  'One-day classics': 'races.oneDayClassics',
+  'Stage finishes': 'races.stageFinishes',
+  'Mountain days': 'races.mountainDays',
+  'Time trials': 'races.timeTrials',
+}
 
 type DevelopingSquadListViewPickerProps = {
   value: SquadListView
@@ -148,6 +201,7 @@ function DevelopingSquadListViewPicker({
   isPremiumLoading,
   onChange,
 }: DevelopingSquadListViewPickerProps) {
+  const { t } = useTranslation(['squad', 'developingTeam'])
   const [open, setOpen] = useState(false)
   const pickerRef = useRef<HTMLDivElement>(null)
 
@@ -190,7 +244,11 @@ function DevelopingSquadListViewPicker({
         onClick={() => setOpen((current) => !current)}
         className="flex min-w-[210px] items-center justify-between gap-3 rounded-lg border border-gray-300 bg-white px-3 py-2 text-left text-sm text-gray-800 outline-none transition hover:border-gray-400 focus:border-yellow-400 disabled:cursor-wait disabled:bg-gray-50 disabled:text-gray-500"
       >
-        <span>{isPremiumLoading ? 'Checking Premium access…' : selectedOption.label}</span>
+        <span>
+          {isPremiumLoading
+            ? t('roster.checkingPremium', { ns: 'squad' })
+            : t(selectedOption.labelKey, { ns: 'squad' })}
+        </span>
         <span aria-hidden="true" className="text-xs text-gray-400">
           {open ? '▲' : '▼'}
         </span>
@@ -214,7 +272,7 @@ function DevelopingSquadListViewPicker({
                   aria-selected={isSelected}
                   aria-disabled={isLocked}
                   disabled={isLocked}
-                  title={isLocked ? 'Only for Premium users' : undefined}
+                  title={isLocked ? t('roster.onlyPremium', { ns: 'squad' }) : undefined}
                   onClick={() => {
                     onChange(option.value)
                     setOpen(false)
@@ -227,10 +285,10 @@ function DevelopingSquadListViewPicker({
                         : 'text-slate-700 hover:bg-slate-50'
                   }`}
                 >
-                  <span>{option.label}</span>
+                  <span>{t(option.labelKey, { ns: 'squad' })}</span>
 
                   {isLocked ? (
-                    <span aria-label="Premium only" className="text-xs text-slate-400">
+                    <span aria-label={t('roster.premiumOnly', { ns: 'squad' })} className="text-xs text-slate-400">
                       🔒
                     </span>
                   ) : isSelected ? (
@@ -245,7 +303,7 @@ function DevelopingSquadListViewPicker({
                     role="tooltip"
                     className="pointer-events-none absolute right-[calc(100%+8px)] top-1/2 z-40 hidden -translate-y-1/2 whitespace-nowrap rounded-md bg-slate-900 px-2.5 py-1.5 text-[11px] font-medium text-white shadow-lg group-hover:block group-focus-within:block"
                   >
-                    Only for Premium users
+                    {t('roster.onlyPremium', { ns: 'squad' })}
                   </div>
                 ) : null}
               </div>
@@ -399,14 +457,19 @@ function RiderStatusBadge({
   className?: string
   compact?: boolean
 }) {
+  const { t } = useTranslation(['squad', 'developingTeam'])
   const ui = getRiderStatusUi(status)
+  const statusTranslationKey = STATUS_TRANSLATION_KEYS[ui.label]
+  const statusLabel = statusTranslationKey
+    ? t(statusTranslationKey, { ns: 'squad' })
+    : ui.label
 
   return (
     <span
       className={`inline-flex items-center whitespace-nowrap rounded-full border font-medium ${
         compact ? 'gap-1.5 px-2.5 py-1 text-xs' : 'gap-2 px-3 py-1 text-sm'
       } ${className}`}
-      title={`Status: ${ui.label}`}
+      title={`${t('columns.status', { ns: 'squad' })}: ${statusLabel}`}
       style={{
         color: ui.color,
         backgroundColor: ui.bgColor,
@@ -423,7 +486,7 @@ function RiderStatusBadge({
       >
         {ui.icon}
       </span>
-      <span>{ui.label}</span>
+      <span>{statusLabel}</span>
     </span>
   )
 }
@@ -492,6 +555,7 @@ function CompactValueTile({
 }
 
 function LineChart({ data }: { data: ChartPoint[] }) {
+  const { t } = useTranslation(['squad', 'developingTeam'])
   const width = 760
   const height = 240
   const padLeft = 34
@@ -556,7 +620,9 @@ function LineChart({ data }: { data: ChartPoint[] }) {
               fontSize="10"
               fill="#6b7280"
             >
-              {point.label}
+              {MONTH_TRANSLATION_KEYS[point.label]
+                ? t(MONTH_TRANSLATION_KEYS[point.label], { ns: 'squad' })
+                : point.label}
             </text>
           </g>
         ))}
@@ -566,6 +632,7 @@ function LineChart({ data }: { data: ChartPoint[] }) {
 }
 
 function VerticalBarChart({ data }: { data: ChartPoint[] }) {
+  const { t } = useTranslation(['squad', 'developingTeam'])
   const width = 420
   const height = 240
   const padTop = 18
@@ -621,7 +688,9 @@ function VerticalBarChart({ data }: { data: ChartPoint[] }) {
                 fontSize="10"
                 fill="#6b7280"
               >
-                {item.label}
+                {PODIUM_CHART_TRANSLATION_KEYS[item.label]
+                  ? t(PODIUM_CHART_TRANSLATION_KEYS[item.label], { ns: 'squad' })
+                  : item.label}
               </text>
             </g>
           )
@@ -779,7 +848,7 @@ function RacePreviewStrip({
   stageLabel,
   routeLabel,
   stageCount,
-  emptyLabel = 'No race found yet',
+  emptyLabel,
 }: {
   raceName?: string | null
   raceCountryCode?: string | null
@@ -790,17 +859,22 @@ function RacePreviewStrip({
   stageCount?: number | null
   emptyLabel?: string
 }) {
+  const { t } = useTranslation(['squad', 'developingTeam'])
+  const resolvedEmptyLabel = emptyLabel ?? t('races.noRaceFound', { ns: 'squad' })
+
   if (!raceName) {
     return (
       <div className="mt-2 rounded-lg border border-dashed border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-500">
-        {emptyLabel}
+        {resolvedEmptyLabel}
       </div>
     )
   }
 
   const details = [
     stageLabel,
-    stageCount && stageCount > 1 ? `${stageCount} stages` : null,
+    stageCount && stageCount > 1
+      ? t('races.stages', { ns: 'squad', count: stageCount })
+      : null,
     routeLabel,
   ].filter((value): value is string => Boolean(value))
 
@@ -875,6 +949,7 @@ export default function DevelopingSquadTab({
   squadDisplayData,
   movingRiderId,
 }: DevelopingSquadTabProps) {
+  const { t } = useTranslation(['squad', 'developingTeam'])
   const activeListView: SquadListView =
     isPremium && !isPremiumLoading ? listView : 'general'
 
@@ -912,8 +987,12 @@ export default function DevelopingSquadTab({
           ? 10
           : 10
 
-  const currentViewLabel =
-    SQUAD_LIST_VIEW_OPTIONS.find((option) => option.value === activeListView)?.label ?? 'General View'
+  const currentViewOption = SQUAD_LIST_VIEW_OPTIONS.find(
+    (option) => option.value === activeListView
+  )
+  const currentViewLabel = currentViewOption
+    ? t(currentViewOption.labelKey, { ns: 'squad' })
+    : t('roster.generalView', { ns: 'squad' })
 
   const visibleLastTeamRace = getVisibleLastTeamRace(squadDisplayData.lastTeamRace)
   const visibleNextRaceSelection = getVisibleNextRaceSelection(
@@ -926,9 +1005,9 @@ export default function DevelopingSquadTab({
       <div className="w-full rounded-lg bg-white p-4 shadow">
         <div className="mb-3 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div>
-            <div className="text-base font-semibold text-gray-800">Developing Team</div>
+            <div className="text-base font-semibold text-gray-800">{t('page.title', { ns: 'developingTeam' })}</div>
             <div className="mt-1 text-sm text-gray-500">
-              {currentViewLabel} · Riders{' '}
+              {currentViewLabel} · {t('roster.riders', { ns: 'squad' })}{' '}
               <span className="font-medium text-gray-700">
                 {riders.length}/{squadMax}
               </span>
@@ -942,7 +1021,7 @@ export default function DevelopingSquadTab({
                   id="developing-team-list-view-label"
                   className="text-sm font-medium text-gray-600"
                 >
-                  View
+                  {t('roster.view', { ns: 'squad' })}
                 </span>
 
                 <DevelopingSquadListViewPicker
@@ -956,13 +1035,13 @@ export default function DevelopingSquadTab({
               {!isPremiumLoading && !isPremium ? (
                 <div className="flex items-center gap-1.5 text-[11px] text-slate-500">
                   <span aria-hidden="true">🔒</span>
-                  <span>Advanced squad views require Premium.</span>
+                  <span>{t('roster.advancedPremium', { ns: 'squad' })}</span>
                   <button
                     type="button"
                     onClick={openPremiumPage}
                     className="font-semibold text-slate-700 underline decoration-slate-300 underline-offset-2 hover:text-slate-950"
                   >
-                    View Premium
+                    {t('roster.viewPremium', { ns: 'squad' })}
                   </button>
                 </div>
               ) : null}
@@ -975,27 +1054,27 @@ export default function DevelopingSquadTab({
             <thead>
               <tr className="text-left text-gray-600">
                 <th className={`p-2 ${activeListView === 'skills' ? 'w-[42px]' : ''}`}>#</th>
-                <th className={`p-2 ${activeListView === 'skills' ? 'w-[190px]' : ''}`}>Name</th>
-                <th className={`p-2 ${activeListView === 'skills' ? 'w-[110px]' : ''}`}>Country</th>
-                <th className={`p-2 ${activeListView === 'skills' ? 'w-[130px]' : ''}`}>Role</th>
+                <th className={`p-2 ${activeListView === 'skills' ? 'w-[190px]' : ''}`}>{t('columns.name', { ns: 'squad' })}</th>
+                <th className={`p-2 ${activeListView === 'skills' ? 'w-[110px]' : ''}`}>{t('columns.country', { ns: 'squad' })}</th>
+                <th className={`p-2 ${activeListView === 'skills' ? 'w-[130px]' : ''}`}>{t('columns.role', { ns: 'squad' })}</th>
                 <th className={`p-2 ${activeListView === 'skills' ? 'w-[122px]' : 'w-[130px]'}`}>
-                  Activity
+                  {t('columns.activity', { ns: 'squad' })}
                 </th>
 
                 {activeListView === 'general' && (
                   <>
-                    <th className="p-2">Age</th>
-                    <th className="p-2">Overall</th>
-                    <th className="p-2 w-[160px]">Status</th>
-                    <th className="p-2 w-[90px] text-center">Move</th>
+                    <th className="p-2">{t('columns.age', { ns: 'squad' })}</th>
+                    <th className="p-2">{t('columns.overall', { ns: 'squad' })}</th>
+                    <th className="p-2 w-[160px]">{t('columns.status', { ns: 'squad' })}</th>
+                    <th className="p-2 w-[90px] text-center">{t('columns.move', { ns: 'squad' })}</th>
                   </>
                 )}
 
                 {activeListView === 'financial' && (
                   <>
-                    <th className="p-2">Value</th>
-                    <th className="p-2">Wage</th>
-                    <th className="p-2">Contract Expires</th>
+                    <th className="p-2">{t('columns.value', { ns: 'squad' })}</th>
+                    <th className="p-2">{t('columns.wage', { ns: 'squad' })}</th>
+                    <th className="p-2">{t('columns.contractExpires', { ns: 'squad' })}</th>
                   </>
                 )}
 
@@ -1012,17 +1091,17 @@ export default function DevelopingSquadTab({
 
                 {activeListView === 'form' && (
                   <>
-                    <th className="p-2">Potential</th>
-                    <th className="p-2">Morale</th>
-                    <th className="p-2">Fatigue</th>
-                    <th className="p-2">Health</th>
+                    <th className="p-2">{t('columns.potential', { ns: 'squad' })}</th>
+                    <th className="p-2">{t('columns.morale', { ns: 'squad' })}</th>
+                    <th className="p-2">{t('columns.fatigue', { ns: 'squad' })}</th>
+                    <th className="p-2">{t('columns.health', { ns: 'squad' })}</th>
                   </>
                 )}
 
                 <th
                   className={`p-2 text-right ${activeListView === 'skills' ? 'w-[72px]' : 'w-[90px]'}`}
                 >
-                  View
+                  {t('roster.view', { ns: 'squad' })}
                 </th>
               </tr>
             </thead>
@@ -1191,7 +1270,14 @@ export default function DevelopingSquadTab({
                           {r.potential == null ? (
                             <span className="text-gray-400">—</span>
                           ) : (
-                            <InlineStatusText label={potentialUi.label} color={potentialUi.color} />
+                            <InlineStatusText
+                              label={
+                                STATUS_TRANSLATION_KEYS[potentialUi.label]
+                                  ? t(STATUS_TRANSLATION_KEYS[potentialUi.label], { ns: 'squad' })
+                                  : potentialUi.label
+                              }
+                              color={potentialUi.color}
+                            />
                           )}
                         </td>
 
@@ -1199,16 +1285,37 @@ export default function DevelopingSquadTab({
                           {r.morale == null ? (
                             <span className="text-gray-400">—</span>
                           ) : (
-                            <InlineStatusText label={moraleUi.label} color={moraleUi.color} />
+                            <InlineStatusText
+                              label={
+                                STATUS_TRANSLATION_KEYS[moraleUi.label]
+                                  ? t(STATUS_TRANSLATION_KEYS[moraleUi.label], { ns: 'squad' })
+                                  : moraleUi.label
+                              }
+                              color={moraleUi.color}
+                            />
                           )}
                         </td>
 
                         <td className="p-2">
-                          <InlineStatusText label={fatigueUi.label} color={fatigueUi.color} />
+                          <InlineStatusText
+                            label={
+                              STATUS_TRANSLATION_KEYS[fatigueUi.label]
+                                ? t(STATUS_TRANSLATION_KEYS[fatigueUi.label], { ns: 'squad' })
+                                : fatigueUi.label
+                            }
+                            color={fatigueUi.color}
+                          />
                         </td>
 
                         <td className="p-2">
-                          <InlineStatusText label={healthUi.label} color={healthUi.color} />
+                          <InlineStatusText
+                            label={
+                              STATUS_TRANSLATION_KEYS[healthUi.label]
+                                ? t(STATUS_TRANSLATION_KEYS[healthUi.label], { ns: 'squad' })
+                                : healthUi.label
+                            }
+                            color={healthUi.color}
+                          />
                         </td>
                       </>
                     )}
@@ -1219,7 +1326,7 @@ export default function DevelopingSquadTab({
                         onClick={() => onOpenRiderProfile(r.id)}
                         className="text-sm font-medium text-yellow-600 hover:text-yellow-700"
                       >
-                        View
+                        {t('roster.view', { ns: 'squad' })}
                       </button>
                     </td>
                   </tr>
@@ -1229,7 +1336,7 @@ export default function DevelopingSquadTab({
               {riders.length === 0 && (
                 <tr className="border-t">
                   <td className="p-2 text-gray-500" colSpan={squadTableColSpan}>
-                    No riders found for the Developing Team yet.
+                    {t('roster.noRiders', { ns: 'squad' })}
                   </td>
                 </tr>
               )}
@@ -1243,28 +1350,28 @@ export default function DevelopingSquadTab({
       ) : isPremium ? (
       <div className="mt-6 rounded-lg bg-white p-4 shadow">
         <div className="mb-4">
-          <div className="text-base font-semibold text-gray-800">Health Report</div>
+          <div className="text-base font-semibold text-gray-800">{t('healthReport.title', { ns: 'squad' })}</div>
           <div className="mt-1 text-sm text-gray-500">
-            Current injured, sick, and recovering developing team riders
+            {t('healthReport.subtitle', { ns: 'squad' })}
           </div>
         </div>
 
         {healthOverviewDisplayRows.length === 0 ? (
           <div className="rounded-xl border border-gray-100 bg-gray-50 px-4 py-3 text-sm text-gray-600">
-            No active health concerns in the squad right now.
+            {t('healthReport.empty', { ns: 'squad' })}
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-gray-200 text-left text-gray-500">
-                  <th className="py-2 pr-4">Rider</th>
-                  <th className="py-2 pr-4">Status</th>
-                  <th className="py-2 pr-4">Case</th>
-                  <th className="py-2 pr-4">Stage</th>
-                  <th className="py-2 pr-4">Severity</th>
-                  <th className="py-2 pr-4">Fatigue</th>
-                  <th className="py-2">Expected Recovery</th>
+                  <th className="py-2 pr-4">{t('columns.rider', { ns: 'squad' })}</th>
+                  <th className="py-2 pr-4">{t('columns.status', { ns: 'squad' })}</th>
+                  <th className="py-2 pr-4">{t('columns.case', { ns: 'squad' })}</th>
+                  <th className="py-2 pr-4">{t('columns.stage', { ns: 'squad' })}</th>
+                  <th className="py-2 pr-4">{t('columns.severity', { ns: 'squad' })}</th>
+                  <th className="py-2 pr-4">{t('columns.fatigue', { ns: 'squad' })}</th>
+                  <th className="py-2">{t('columns.expectedRecovery', { ns: 'squad' })}</th>
                 </tr>
               </thead>
               <tbody>
@@ -1318,8 +1425,8 @@ export default function DevelopingSquadTab({
       ) : (
         <PremiumFeatureLock
           className="mt-6"
-          title="Developing Team Health Report"
-          description="See squad-wide injury, illness and recovery information for your development riders in one consolidated report."
+          title={t('healthReport.lockedTitle', { ns: 'developingTeam' })}
+          description={t('healthReport.lockedDescription', { ns: 'developingTeam' })}
         />
       )}
 
@@ -1327,26 +1434,35 @@ export default function DevelopingSquadTab({
             <PremiumFeatureLoading className="mt-6" />
           ) : isPremium ? (
             <div className="mt-6 grid grid-cols-2 gap-3 md:grid-cols-4">
-              <CompactValueTile label="Season Wins" value={`${squadDisplayData.summary.wins}`} />
-              <CompactValueTile label="Season Podiums" value={`${squadDisplayData.summary.podiums}`} />
-              <CompactValueTile label="Top 10 Results" value={`${squadDisplayData.summary.top10s}`} />
               <CompactValueTile
-                label="Best GC"
+                label={t('season.wins', { ns: 'squad' })}
+                value={`${squadDisplayData.summary.wins}`}
+              />
+              <CompactValueTile
+                label={t('season.podiums', { ns: 'squad' })}
+                value={`${squadDisplayData.summary.podiums}`}
+              />
+              <CompactValueTile
+                label={t('season.top10Results', { ns: 'squad' })}
+                value={`${squadDisplayData.summary.top10s}`}
+              />
+              <CompactValueTile
+                label={t('season.bestGc', { ns: 'squad' })}
                 value={formatBestGcValue(squadDisplayData.summary.bestGC)}
               />
             </div>
           ) : (
             <PremiumFeatureLock
               className="mt-6"
-              title="Season performance summary"
-              description="Unlock season wins, podiums, Top 10 results and best general-classification performance."
+              title={t('season.summaryLockedTitle', { ns: 'squad' })}
+              description={t('season.summaryLockedDescription', { ns: 'squad' })}
             />
           )}
 
           <div className="mt-6 grid grid-cols-1 gap-4 xl:grid-cols-2">
             <div className="rounded-lg bg-white p-4 shadow">
               <div className="mb-4">
-                <div className="text-base font-semibold text-gray-800">Last Team Race</div>
+                <div className="text-base font-semibold text-gray-800">{t('races.lastTeamRace', { ns: 'squad' })}</div>
                 <RacePreviewStrip
                   raceName={visibleLastTeamRace?.raceName}
                   raceCountryCode={visibleLastTeamRace?.raceCountryCode}
@@ -1355,7 +1471,7 @@ export default function DevelopingSquadTab({
                   stageLabel={visibleLastTeamRace?.stageLabel}
                   routeLabel={visibleLastTeamRace?.routeLabel}
                   stageCount={visibleLastTeamRace?.stageCount}
-                  emptyLabel="No finished full-race classification found for this squad yet."
+                  emptyLabel={t('races.noFinishedClassification', { ns: 'squad' })}
                 />
               </div>
 
@@ -1364,10 +1480,10 @@ export default function DevelopingSquadTab({
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="border-b border-gray-200 text-left text-gray-500">
-                        <th className="py-2 pr-4">Rider</th>
-                        <th className="py-2 pr-4">Role</th>
-                        <th className="py-2 pr-4">Result</th>
-                        <th className="py-2 text-right">Int. pts</th>
+                        <th className="py-2 pr-4">{t('columns.rider', { ns: 'squad' })}</th>
+                        <th className="py-2 pr-4">{t('columns.role', { ns: 'squad' })}</th>
+                        <th className="py-2 pr-4">{t('columns.result', { ns: 'squad' })}</th>
+                        <th className="py-2 text-right">{t('columns.internationalPoints', { ns: 'squad' })}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -1388,14 +1504,14 @@ export default function DevelopingSquadTab({
                 </div>
               ) : (
                 <div className="rounded-xl border border-gray-100 bg-gray-50 px-4 py-6 text-sm text-gray-600">
-                  No finished full-race classification found for this squad yet.
+                  {t('races.noFinishedClassification', { ns: 'squad' })}
                 </div>
               )}
             </div>
 
             <div className="rounded-lg bg-white p-4 shadow">
               <div className="mb-4">
-                <div className="text-base font-semibold text-gray-800">Next Team Race</div>
+                <div className="text-base font-semibold text-gray-800">{t('races.nextTeamRace', { ns: 'squad' })}</div>
                 <RacePreviewStrip
                   raceName={visibleNextRaceSelection?.raceName}
                   raceCountryCode={visibleNextRaceSelection?.raceCountryCode}
@@ -1404,7 +1520,7 @@ export default function DevelopingSquadTab({
                   stageLabel={visibleNextRaceSelection?.stageLabel}
                   routeLabel={visibleNextRaceSelection?.routeLabel}
                   stageCount={visibleNextRaceSelection?.stageCount}
-                  emptyLabel="No next not-started submitted race plan found for this squad yet."
+                  emptyLabel={t('races.noNextSubmittedPlan', { ns: 'squad' })}
                 />
               </div>
 
@@ -1413,9 +1529,9 @@ export default function DevelopingSquadTab({
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="border-b border-gray-200 text-left text-gray-500">
-                        <th className="py-2 pr-4">Rider</th>
-                        <th className="py-2 pr-4">Role</th>
-                        <th className="py-2 text-right">Sharpness</th>
+                        <th className="py-2 pr-4">{t('columns.rider', { ns: 'squad' })}</th>
+                        <th className="py-2 pr-4">{t('columns.role', { ns: 'squad' })}</th>
+                        <th className="py-2 text-right">{t('columns.sharpness', { ns: 'squad' })}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -1435,7 +1551,7 @@ export default function DevelopingSquadTab({
                 </div>
               ) : (
                 <div className="rounded-xl border border-gray-100 bg-gray-50 px-4 py-6 text-sm text-gray-600">
-                  No next not-started submitted race plan found for this squad yet.
+                  {t('races.noNextSubmittedPlan', { ns: 'squad' })}
                 </div>
               )}
             </div>
@@ -1447,7 +1563,7 @@ export default function DevelopingSquadTab({
             ) : isPremium ? (
               <div className="rounded-lg bg-white p-4 shadow xl:col-span-2">
                 <div className="text-base font-semibold text-gray-800">
-                  Team Results This Season
+                  {t('season.resultsTitle', { ns: 'squad' })}
                 </div>
                 <div className="mt-4">
                   <LineChart data={squadDisplayData.seasonTrend} />
@@ -1456,8 +1572,8 @@ export default function DevelopingSquadTab({
             ) : (
               <PremiumFeatureLock
                 className="xl:col-span-2"
-                title="Developing Team Results This Season"
-                description="View monthly development-team performance trends across the current season."
+                title={t('season.resultsLockedTitle', { ns: 'developingTeam' })}
+                description={t('season.resultsLockedDescription', { ns: 'developingTeam' })}
               />
             )}
 
@@ -1466,7 +1582,7 @@ export default function DevelopingSquadTab({
             ) : isPremium ? (
               <div className="rounded-lg bg-white p-4 shadow">
                 <div className="text-base font-semibold text-gray-800">
-                  Podiums & Placings
+                  {t('season.podiumsTitle', { ns: 'squad' })}
                 </div>
                 <div className="mt-4">
                   <VerticalBarChart data={squadDisplayData.podiumChart} />
@@ -1474,8 +1590,8 @@ export default function DevelopingSquadTab({
               </div>
             ) : (
               <PremiumFeatureLock
-                title="Developing Team Podiums & Placings"
-                description="Analyse wins, podiums and finishing-position distribution for your development squad."
+                title={t('season.podiumsLockedTitle', { ns: 'developingTeam' })}
+                description={t('season.podiumsLockedDescription', { ns: 'developingTeam' })}
               />
             )}
 
@@ -1484,24 +1600,32 @@ export default function DevelopingSquadTab({
             ) : isPremium ? (
               <div className="rounded-lg bg-white p-4 shadow xl:col-span-3">
                 <div className="text-base font-semibold text-gray-800">
-                  Race Type Snapshot
+                  {t('season.raceTypeTitle', { ns: 'squad' })}
                 </div>
                 <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
-                  {(squadDisplayData.raceTypeSnapshot ?? []).map((item) => (
-                    <HorizontalMetricBar
-                      key={item.label}
-                      label={item.label}
-                      value={item.value}
-                      max={getRaceTypeSnapshotMax(squadDisplayData.raceTypeSnapshot ?? [])}
-                    />
-                  ))}
+                  {(squadDisplayData.raceTypeSnapshot ?? []).map((item) => {
+                    const raceTypeKey = RACE_TYPE_TRANSLATION_KEYS[item.label]
+
+                    return (
+                      <HorizontalMetricBar
+                        key={item.label}
+                        label={
+                          raceTypeKey
+                            ? t(raceTypeKey, { ns: 'squad' })
+                            : item.label
+                        }
+                        value={item.value}
+                        max={getRaceTypeSnapshotMax(squadDisplayData.raceTypeSnapshot ?? [])}
+                      />
+                    )
+                  })}
                 </div>
               </div>
             ) : (
               <PremiumFeatureLock
                 className="xl:col-span-3"
-                title="Developing Team Race Type Snapshot"
-                description="Compare development-team results across classics, mountain days, stage finishes and time trials."
+                title={t('season.raceTypeLockedTitle', { ns: 'developingTeam' })}
+                description={t('season.raceTypeLockedDescription', { ns: 'developingTeam' })}
               />
             )}
           </div>
