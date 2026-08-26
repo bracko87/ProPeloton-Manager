@@ -156,6 +156,7 @@ const facilityTranslationKeysByName = {
 const assetTranslationKeysByName = {
   'Team Cars': 'assets.teamCars',
   'Team Car': 'assets.teamCar',
+  'Team Car Fleet': 'assets.teamCarFleet',
   'Team Bus': 'assets.teamBus',
   'Equipment Van': 'assets.equipmentVan',
   'Mobile Workshop': 'assets.mobileWorkshop',
