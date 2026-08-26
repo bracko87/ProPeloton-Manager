@@ -80,21 +80,19 @@ type StandingRow = {
   seasonEndTransitionPending: boolean
 }
 
-type TeamRankingTieBreakerRow = {
+type OrderedTeamStandingRow = {
   season_year?: number | string | null
   team_id?: string | null
-  club_id?: string | null
+  ranking_position?: number | string | null
+  international_points?: number | string | null
   completed_race_count?: number | string | null
-  race_count?: number | string | null
-  races_done_count?: number | string | null
-  total_races_done?: number | string | null
-  team_race_count?: number | string | null
   race_reputation_value?: number | string | null
-  team_race_reputation_value?: number | string | null
-  race_reputation?: number | string | null
 }
 
-type TeamRankingTieBreakerUi = {
+type OrderedTeamStandingUi = {
+  seasonYear: number | null
+  rankingPosition: number | null
+  internationalPoints: number
   completedRaceCount: number
   raceReputationValue: number
 }
@@ -136,13 +134,6 @@ type MyOwnedClubRecord = {
   tier2_division: Tier2Division | null
   tier3_division: Tier3Division | null
   amateur_division: AmateurDivision | null
-}
-
-type TeamInternationalPointsRow = {
-  season_year: number | null
-  team_id: string
-  international_points: number | string | null
-  international_rank?: number | string | null
 }
 
 type ClubDisplayNameLookupRow = {
@@ -356,163 +347,45 @@ function formatTieBreakerNumber(value: number): string {
   })
 }
 
-async function loadCurrentTeamRankingSeasonYear(): Promise<number | null> {
+async function loadOrderedTeamStandingsByTeamId(): Promise<Map<string, OrderedTeamStandingUi>> {
   try {
-    const { data, error } = await supabase.rpc('team_ranking_get_current_season_year_v1')
+    const { data, error } = await supabase.rpc('team_ranking_get_ordered_standings_v1')
 
     if (error) {
-      console.warn('Could not resolve current team ranking season year:', error.message)
-      return null
-    }
-
-    const seasonYear = normalizeTieBreakerValue(data)
-    return seasonYear > 0 ? seasonYear : null
-  } catch (error) {
-    console.warn('Current team ranking season year lookup failed:', error)
-    return null
-  }
-}
-
-async function loadTeamRankingTieBreakersByTeamId(
-  seasonYear?: number | null,
-): Promise<Map<string, TeamRankingTieBreakerUi>> {
-  let query = supabase
-    .from('team_ranking_tiebreakers_by_season_v1')
-    .select(
-      'season_year, team_id, club_id, completed_race_count, race_count, races_done_count, total_races_done, team_race_count, race_reputation_value, team_race_reputation_value, race_reputation',
-    )
-
-  if (seasonYear) {
-    query = query.eq('season_year', seasonYear)
-  }
-
-  let { data, error } = await query
-
-  if (error && seasonYear) {
-    console.warn(
-      'Could not load filtered team ranking tie-breakers. Retrying without season filter:',
-      error.message,
-    )
-
-    const retry = await supabase
-      .from('team_ranking_tiebreakers_by_season_v1')
-      .select(
-        'season_year, team_id, club_id, completed_race_count, race_count, races_done_count, total_races_done, team_race_count, race_reputation_value, team_race_reputation_value, race_reputation',
+      console.warn(
+        'Could not load canonical team standings. Falling back to team ranking records:',
+        error.message,
       )
-
-    data = retry.data
-    error = retry.error
-  }
-
-  if (error) {
-    console.warn(
-      'Could not load team ranking tie-breakers. Falling back to team records:',
-      error.message,
-    )
-    return new Map()
-  }
-
-  const rows = (data ?? []) as TeamRankingTieBreakerRow[]
-  const latestSeasonYear =
-    seasonYear ??
-    rows.reduce<number | null>((latest, row) => {
-      const rowSeasonYear = normalizeTieBreakerValue(row.season_year)
-      if (rowSeasonYear <= 0) return latest
-      return latest === null || rowSeasonYear > latest ? rowSeasonYear : latest
-    }, null)
-
-  const map = new Map<string, TeamRankingTieBreakerUi>()
-
-  for (const row of rows) {
-    const teamId = (row.team_id ?? row.club_id ?? '').trim()
-
-    if (!teamId) continue
-
-    if (
-      latestSeasonYear !== null &&
-      normalizeTieBreakerValue(row.season_year) !== latestSeasonYear
-    ) {
-      continue
+      return new Map()
     }
 
-    map.set(teamId, {
-      completedRaceCount: normalizeTieBreakerValue(
-        row.completed_race_count ??
-          row.race_count ??
-          row.races_done_count ??
-          row.total_races_done ??
-          row.team_race_count,
-      ),
-      raceReputationValue: normalizeTieBreakerValue(
-        row.race_reputation_value ??
-          row.team_race_reputation_value ??
-          row.race_reputation,
-      ),
-    })
-  }
+    const map = new Map<string, OrderedTeamStandingUi>()
 
-  return map
-}
+    for (const row of (data ?? []) as OrderedTeamStandingRow[]) {
+      const teamId = row.team_id?.trim()
 
-async function loadTeamInternationalPointsByTeamId(
-  seasonYear?: number | null,
-): Promise<Map<string, number>> {
-  let query = supabase
-    .from('team_international_points_by_season_v1')
-    .select('season_year, team_id, international_points, international_rank')
+      if (!teamId) continue
 
-  if (seasonYear) {
-    query = query.eq('season_year', seasonYear)
-  }
+      const seasonYear = normalizeTieBreakerValue(row.season_year)
+      const rankingPosition = normalizeTieBreakerValue(row.ranking_position)
 
-  let { data, error } = await query
+      map.set(teamId, {
+        seasonYear: seasonYear > 0 ? seasonYear : null,
+        rankingPosition: rankingPosition > 0 ? rankingPosition : null,
+        internationalPoints: normalizePointsValue(row.international_points),
+        completedRaceCount: normalizeTieBreakerValue(row.completed_race_count),
+        raceReputationValue: normalizeTieBreakerValue(row.race_reputation_value),
+      })
+    }
 
-  if (error && seasonYear) {
+    return map
+  } catch (error) {
     console.warn(
-      'Could not load filtered team international points. Retrying without season filter:',
-      error.message,
+      'Canonical team standings lookup failed. Falling back to team ranking records:',
+      error,
     )
-
-    const retry = await supabase
-      .from('team_international_points_by_season_v1')
-      .select('season_year, team_id, international_points, international_rank')
-
-    data = retry.data
-    error = retry.error
-  }
-
-  if (error) {
-    console.error('Failed to load team international points:', error)
     return new Map()
   }
-
-  const rows = (data ?? []) as TeamInternationalPointsRow[]
-  const latestSeasonYear =
-    seasonYear ??
-    rows.reduce<number | null>((latest, row) => {
-      const rowSeasonYear =
-        typeof row.season_year === 'number'
-          ? row.season_year
-          : normalizeTieBreakerValue(row.season_year)
-      if (rowSeasonYear <= 0) return latest
-      return latest === null || rowSeasonYear > latest ? rowSeasonYear : latest
-    }, null)
-
-  const map = new Map<string, number>()
-
-  rows.forEach((row) => {
-    if (!row.team_id) return
-
-    const rowSeasonYear =
-      typeof row.season_year === 'number'
-        ? row.season_year
-        : normalizeTieBreakerValue(row.season_year)
-
-    if (latestSeasonYear !== null && rowSeasonYear !== latestSeasonYear) return
-    map.set(row.team_id, normalizePointsValue(row.international_points))
-  })
-
-  return map
 }
 
 const TIER_OPTIONS: TierOption[] = [
@@ -1386,7 +1259,6 @@ export default function TeamRankingPage(): JSX.Element {
 
     async function hydrateRankingMetadata(
       baseTeams: TeamRankingRecord[],
-      seasonYear: number | null,
     ): Promise<void> {
       try {
         const teamIds = baseTeams.map((team) => team.id)
@@ -1394,12 +1266,10 @@ export default function TeamRankingPage(): JSX.Element {
         const [
           displayNameByClubId,
           currentLogoPathByClubId,
-          tieBreakersByTeamId,
           publicInactivityByClubId,
         ] = await Promise.all([
           loadClubDisplayNameMap(teamIds),
           loadClubLogoPathMap(teamIds),
-          loadTeamRankingTieBreakersByTeamId(seasonYear),
           loadPublicClubInactivityMap(teamIds),
         ])
 
@@ -1408,25 +1278,14 @@ export default function TeamRankingPage(): JSX.Element {
         setInactivityByClubId(publicInactivityByClubId)
 
         setTeams((currentTeams) =>
-          currentTeams.map((team) => {
-            const originalTeam = baseTeams.find((baseTeam) => baseTeam.id === team.id)
-            const tieBreakers = tieBreakersByTeamId.get(team.id)
-
-            return {
-              ...team,
-              name: displayNameByClubId.get(team.id) ?? team.name,
-              logoPath:
-                currentLogoPathByClubId.has(team.id)
-                  ? currentLogoPathByClubId.get(team.id) ?? null
-                  : team.logoPath ?? null,
-              completedRaceCount:
-                tieBreakers?.completedRaceCount ??
-                getCompletedRaceCountFromTeam(originalTeam ?? team),
-              raceReputationValue:
-                tieBreakers?.raceReputationValue ??
-                getRaceReputationValueFromTeam(originalTeam ?? team),
-            }
-          }),
+          currentTeams.map((team) => ({
+            ...team,
+            name: displayNameByClubId.get(team.id) ?? team.name,
+            logoPath:
+              currentLogoPathByClubId.has(team.id)
+                ? currentLogoPathByClubId.get(team.id) ?? null
+                : team.logoPath ?? null,
+          })),
         )
       } catch (error) {
         console.warn('Could not hydrate team ranking metadata:', error)
@@ -1440,33 +1299,44 @@ export default function TeamRankingPage(): JSX.Element {
         const [
           { data: authData },
           teamsResult,
-          currentSeasonYear,
-          internationalPointsByTeamId,
+          orderedStandingsByTeamId,
         ] = await Promise.all([
           supabase.auth.getUser(),
           getTeamRankingTeams(),
-          loadCurrentTeamRankingSeasonYear(),
-          loadTeamInternationalPointsByTeamId(),
+          loadOrderedTeamStandingsByTeamId(),
         ])
 
         if (!mounted) return
 
         const userId = authData.user?.id ?? null
 
-        const teamsWithInternationalPoints = teamsResult.map((team) => ({
-          ...team,
-          seasonPoints: internationalPointsByTeamId.get(team.id) ?? 0,
-          completedRaceCount: getCompletedRaceCountFromTeam(team),
-          raceReputationValue: getRaceReputationValueFromTeam(team),
-        }))
+        const teamsWithCanonicalStandings = teamsResult.map((team) => {
+          const canonicalStanding = orderedStandingsByTeamId.get(team.id)
 
-        // First paint: show the actual standings as soon as the core ranking data is ready.
-        // Display names, inactivity badges and exact season-end tie-breakers hydrate below.
-        setTeams(teamsWithInternationalPoints)
+          return {
+            ...team,
+            // The ordered-standings RPC is the authoritative source used by
+            // promotion/relegation. If it is temporarily unavailable, preserve
+            // the already-loaded team_rankings_view points instead of zeroing them.
+            seasonPoints:
+              canonicalStanding?.internationalPoints ?? team.seasonPoints,
+            completedRaceCount:
+              canonicalStanding?.completedRaceCount ??
+              getCompletedRaceCountFromTeam(team),
+            raceReputationValue:
+              canonicalStanding?.raceReputationValue ??
+              getRaceReputationValueFromTeam(team),
+          }
+        })
+
+        // First paint uses the same canonical points and season-end tie-breakers
+        // that promotion/relegation uses. Display names, logos and inactivity
+        // badges hydrate separately without overwriting ranking statistics.
+        setTeams(teamsWithCanonicalStandings)
         setLoading(false)
 
         void hydrateMyClubContext(userId)
-        void hydrateRankingMetadata(teamsResult, currentSeasonYear)
+        void hydrateRankingMetadata(teamsResult)
       } catch (error) {
         console.error('Failed to load team ranking page:', error)
 
