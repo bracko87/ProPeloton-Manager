@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import { useTranslation } from 'react-i18next'
+import { Trans, useTranslation } from 'react-i18next'
 import TransferHistoryPanel from './TransferHistoryPanel'
 import RiderShortlistButton from './RiderShortlistButton'
 
@@ -620,22 +620,22 @@ function MarketListRow({
 
             {item.is_user_active ? (
               <span className="rounded-full bg-yellow-300 px-2 py-0.5 text-[11px] font-bold uppercase text-black">
-                Active Offer
+                {t('transferList.activeOffer')}
               </span>
             ) : null}
 
             {item.is_own_item ? (
               <span className="rounded-full bg-blue-100 px-2 py-0.5 text-[11px] font-semibold text-blue-700">
-                Own
+                {t('transferList.own')}
               </span>
             ) : null}
           </div>
 
           <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2">
             <InfoPair label={`${t('common.role')}:`} value={item.role || '—'} />
-            <InfoPair label="OVR:" value={item.overall_label ?? '—'} />
+            <InfoPair label={`${t('transferList.overallShort')}:`} value={item.overall_label ?? '—'} />
             {item.is_scouted ? (
-              <InfoPair label="POT:" value={item.potential_label ?? '—'} />
+              <InfoPair label={`${t('transferList.potentialShort')}:`} value={item.potential_label ?? '—'} />
             ) : null}
             <InfoPair label={`${t('common.age')}:`} value={item.age_years ?? '—'} />
             <InfoPair label={`${t('activity.seller')}:`} value={stripLabelPrefix(item.seller_label)} />
@@ -671,7 +671,11 @@ function MarketListRow({
             ) : null}
 
             <MarketActionButton
-              label={item.is_user_active ? 'Offer Active' : t('transferList.makeOffer')}
+              label={
+                item.is_user_active
+                  ? t('transferList.offerActive')
+                  : t('transferList.makeOffer')
+              }
               onClick={onQuickAction}
               disabled={item.is_own_item || listingExpired || item.is_user_active}
             />
@@ -1717,40 +1721,36 @@ export default function RiderTransferListPage(props: RiderTransferListPageProps)
       />
 
       <div className="rounded-lg border border-blue-100 bg-blue-50 p-4 shadow">
-        <h4 className="font-semibold text-gray-900">How Transfer Offers Work</h4>
+        <h4 className="font-semibold text-gray-900">{t('transferHelp.title')}</h4>
 
         <div className="mt-3 space-y-3 text-sm text-gray-700">
+          <p>{t('transferHelp.sendOffer')}</p>
+
           <p>
-            You first send a transfer fee offer to the seller club. The seller club decides whether
-            your club is allowed to negotiate with the rider.
+            <Trans
+              t={t}
+              i18nKey="transferHelp.belowAsking"
+              components={{
+                strong: <span className="font-semibold text-gray-900" />,
+              }}
+            />
           </p>
 
           <p>
-            If your offer is <span className="font-semibold text-gray-900">below the asking price</span>,
-            the seller club must manually accept or reject it.
+            <Trans
+              t={t}
+              i18nKey="transferHelp.atOrAboveAsking"
+              components={{
+                strong: <span className="font-semibold text-gray-900" />,
+              }}
+            />
           </p>
 
-          <p>
-            If your offer is{' '}
-            <span className="font-semibold text-gray-900">equal to or above the asking price</span>,
-            club terms are accepted automatically.
-          </p>
+          <p>{t('transferHelp.afterAcceptance')}</p>
 
-          <p>
-            After seller acceptance, or automatic acceptance, you will receive a notification with a
-            link to start contract talks with the rider.
-          </p>
+          <p>{t('transferHelp.riderNegotiation')}</p>
 
-          <p>
-            During rider negotiation, the rider can accept your terms, ask for better salary, ask
-            for a different contract length, or reject the move completely. Rejection reasons should
-            be visible in notifications and negotiation details.
-          </p>
-
-          <p>
-            If the seller club rejects your offer, or does not answer before expiry, you will
-            receive a notification that the offer was rejected or expired.
-          </p>
+          <p>{t('transferHelp.rejectedExpired')}</p>
         </div>
       </div>
     </div>
