@@ -46,7 +46,10 @@ The UI must not infer rollover state from `game_state.is_paused` alone. Use this
 
 ## Behavior
 
-- Poll every 20 seconds.
+- Load the status once when the dashboard gate mounts.
+- During normal season play, poll every 5 minutes.
+- Switch to 20-second polling on Dec 31, while a transition is armed, at Jan 1 00:00, or while rollover is active.
+- Retry every 20 seconds after a status error.
 - Also recheck on browser focus and when the tab becomes visible.
 - Before midnight, even if S1→S2 is armed, `active` is false and normal dashboard remains available.
 - When `active` becomes true, replace the whole dashboard layout with the rollover screen. No sidebar or gameplay navigation should remain visible.
