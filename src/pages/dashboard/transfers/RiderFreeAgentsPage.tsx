@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import TransferHistoryPanel, { type TransferHistoryRow } from './TransferHistoryPanel'
 import RiderShortlistButton from './RiderShortlistButton'
 
@@ -176,9 +177,12 @@ function getCountryFlagUrl(countryCode: string) {
   return `https://flagcdn.com/w40/${countryCode.toLowerCase()}.png`
 }
 
-function getCountryName(countryCode: string | null | undefined) {
+function getCountryName(
+  countryCode: string | null | undefined,
+  unknownCountryLabel: string
+) {
   const safeCode = safeCountryCode(countryCode)
-  if (!safeCode) return 'Unknown country'
+  if (!safeCode) return unknownCountryLabel
 
   const code = safeCode.toUpperCase()
 
@@ -196,9 +200,11 @@ function getCountryName(countryCode: string | null | undefined) {
 
 function getGameCountdownLabel(
   expiresOnGameDate: string | null | undefined,
-  gameState: GameStateRow | null
+  gameState: GameStateRow | null,
+  noExpiryLabel: string,
+  expiredLabel: string
 ) {
-  if (!expiresOnGameDate || !gameState) return 'No expiry'
+  if (!expiresOnGameDate || !gameState) return noExpiryLabel
 
   const currentGameDate = new Date(
     Date.UTC(
@@ -214,7 +220,7 @@ function getGameCountdownLabel(
   const expiryDate = new Date(`${expiresOnGameDate}T23:59:59Z`)
   const diffMs = expiryDate.getTime() - currentGameDate.getTime()
 
-  if (diffMs <= 0) return 'Expired'
+  if (diffMs <= 0) return expiredLabel
 
   const totalSeconds = Math.floor(diffMs / 1000)
   const days = Math.floor(totalSeconds / 86400)
@@ -225,12 +231,15 @@ function getGameCountdownLabel(
   return `${days}d ${hours}h ${minutes}m ${seconds}s`
 }
 
-function getPreferredRiderName(value: {
-  full_name?: string | null
-  display_name?: string | null
-  rider_id?: string | null
-}) {
-  return value.full_name?.trim() || value.display_name?.trim() || value.rider_id || 'Unknown rider'
+function getPreferredRiderName(
+  value: {
+    full_name?: string | null
+    display_name?: string | null
+    rider_id?: string | null
+  },
+  unknownRiderLabel: string
+) {
+  return value.full_name?.trim() || value.display_name?.trim() || value.rider_id || unknownRiderLabel
 }
 
 function normalizeStatus(value: string | null | undefined) {
@@ -350,9 +359,16 @@ function MarketListRow({
   onOpenRiderProfile: () => void
   clubId: string
 }) {
-  const riderName = getPreferredRiderName(item.raw)
-  const countdown = getGameCountdownLabel(item.expires_on_game_date, gameState)
-  const isExpired = countdown === 'Expired'
+  const { t } = useTranslation('transfers')
+  const riderName = getPreferredRiderName(item.raw, t('common.unknownRider'))
+  const expiredLabel = t('common.expired')
+  const countdown = getGameCountdownLabel(
+    item.expires_on_game_date,
+    gameState,
+    t('common.noExpiry'),
+    expiredLabel
+  )
+  const isExpired = countdown === expiredLabel
   const flagCode = safeCountryCode(item.country_code)
 
   return (
@@ -384,7 +400,7 @@ function MarketListRow({
             {flagCode ? (
               <img
                 src={getCountryFlagUrl(flagCode)}
-                alt={getCountryName(item.country_code)}
+                alt={getCountryName(item.country_code, t('common.unknownCountry'))}
                 className="h-4 w-6 shrink-0 rounded-sm border border-gray-200 object-cover"
               />
             ) : (
@@ -405,25 +421,25 @@ function MarketListRow({
 
             {item.is_scouted ? (
               <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">
-                Scouted
+                {t('common.scouted')}
               </span>
             ) : null}
 
             {item.is_user_active ? (
               <span className="rounded-full bg-yellow-300 px-2 py-0.5 text-[11px] font-bold uppercase text-black">
-                Active Negotiation
+                {t('freeAgents.negotiationActive')}
               </span>
             ) : null}
           </div>
 
           <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2">
-            <InfoPair label="Role:" value={item.role || '—'} />
+            <InfoPair label={`${t('common.role')}:`} value={item.role || '—'} />
             <InfoPair label="OVR:" value={item.overall_label ?? '—'} />
             {item.is_scouted ? (
               <InfoPair label="POT:" value={item.potential_label ?? '—'} />
             ) : null}
-            <InfoPair label="Age:" value={item.age_years ?? '—'} />
-            <InfoPair label="Type:" value="Free Agent" />
+            <InfoPair label={`${t('common.age')}:`} value={item.age_years ?? '—'} />
+            <InfoPair label="Type:" value={t('history.freeAgent')} />
           </div>
         </div>
 
@@ -548,6 +564,8 @@ export default function RiderFreeAgentsPage({
   onOpenExternalRiderProfile = () => {},
   onOpenClubProfile = () => {},
 }: RiderFreeAgentsPageProps) {
+  const { t } = useTranslation('transfers')
+
   const safeMarketRows = Array.isArray(paginatedUnifiedMarketRows)
     ? paginatedUnifiedMarketRows
     : []
@@ -589,23 +607,24 @@ export default function RiderFreeAgentsPage({
         negotiation.display_name?.trim() ||
         negotiation.rider?.display_name?.trim() ||
         negotiation.rider_id ||
-        'Unknown rider'
+        t('common.unknownRider')
 
       const status = normalizeStatus(negotiation.status)
 
       let tone: 'active' | 'positive' | 'negative' = 'active'
-      let statusLabel = 'Negotiation active'
+      let statusLabel = t('freeAgents.negotiationActive')
       let secondaryLine = 'Contract talks are in progress.'
 
       if (status === 'accepted' || status === 'completed') {
         tone = 'positive'
-        statusLabel = 'Completed'
-        secondaryLine = 'Free-agent signing completed successfully.'
+        statusLabel = t('freeAgents.completed')
+        secondaryLine = t('freeAgents.signingCompleted')
       } else if (status === 'declined' || status === 'rejected' || status === 'expired') {
         tone = 'negative'
-        statusLabel = status === 'expired' ? 'Expired' : 'Declined'
+        statusLabel =
+          status === 'expired' ? t('freeAgents.expired') : t('freeAgents.declined')
         secondaryLine =
-          negotiation.closed_reason?.trim() || 'Negotiation ended without agreement.'
+          negotiation.closed_reason?.trim() || t('freeAgents.endedNoAgreement')
       }
 
       items.push({
@@ -615,7 +634,7 @@ export default function RiderFreeAgentsPage({
         riderName,
         tone,
         statusLabel,
-        primaryLine: `Free agent negotiation • ${riderName}`,
+        primaryLine: t('freeAgents.negotiationLine', { rider: riderName }),
         secondaryLine,
         sortTime:
           new Date(
@@ -625,26 +644,31 @@ export default function RiderFreeAgentsPage({
           ).getTime() || 0,
         detailChips: [
           {
-            label: 'Min salary',
+            label: t('freeAgents.minSalary'),
             value: `${formatCurrency(negotiation.min_acceptable_salary_weekly)}/week`,
             emphasized: true,
           },
           {
-            label: 'Latest offer',
+            label: t('freeAgents.latestOffer'),
             value: `${formatCurrency(
               negotiation.offer_salary_weekly ?? negotiation.expected_salary_weekly
             )}/week`,
             emphasized: true,
           },
           {
-            label: 'Duration',
+            label: t('freeAgents.duration'),
             value: `${negotiation.offer_duration_seasons ?? negotiation.preferred_duration_seasons} season(s)`,
           },
           ...(negotiation.expires_on_game_date
             ? [
                 {
-                  label: 'Expires',
-                  value: getGameCountdownLabel(negotiation.expires_on_game_date, gameState),
+                  label: t('freeAgents.expires'),
+                  value: getGameCountdownLabel(
+                    negotiation.expires_on_game_date,
+                    gameState,
+                    t('common.noExpiry'),
+                    t('common.expired')
+                  ),
                   emphasized: true,
                 },
               ]
@@ -656,7 +680,7 @@ export default function RiderFreeAgentsPage({
     }
 
     return items.sort((a, b) => b.sortTime - a.sortTime)
-  }, [safeNegotiations, gameState])
+  }, [safeNegotiations, gameState, t])
 
   const [activityPage, setActivityPage] = useState(1)
 
@@ -685,37 +709,36 @@ export default function RiderFreeAgentsPage({
       <div className="rounded-lg border border-gray-100 bg-white p-4 shadow">
         <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
           <div>
-            <h4 className="font-semibold text-gray-900">Free Agents</h4>
+            <h4 className="font-semibold text-gray-900">{t('freeAgents.title')}</h4>
             <div className="mt-1 text-sm text-gray-500">
-              Full-width free-agent market. Active user negotiations stay pinned on top and
-              highlighted.
+              {t('freeAgents.subtitle')}
             </div>
           </div>
 
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-6">
             <div className="xl:col-span-2">
               <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-gray-500">
-                Search
+                {t('common.search')}
               </label>
               <input
                 type="text"
                 value={marketSearch}
                 onChange={(e) => setMarketSearch(e.target.value)}
-                placeholder="Search rider, role..."
+                placeholder={t('freeAgents.searchPlaceholder')}
                 className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700"
               />
             </div>
 
             <div>
               <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-gray-500">
-                Role
+                {t('common.role')}
               </label>
               <select
                 value={marketRoleFilter}
                 onChange={(e) => setMarketRoleFilter(e.target.value)}
                 className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700"
               >
-                <option value="all">All Roles</option>
+                <option value="all">{t('common.allRoles')}</option>
                 {safeRoleOptions.map((role) => (
                   <option key={role} value={role}>
                     {role}
@@ -726,24 +749,24 @@ export default function RiderFreeAgentsPage({
 
             <div>
               <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-gray-500">
-                Sort
+                {t('common.sort')}
               </label>
               <select
                 value={marketSort}
                 onChange={(e) => setMarketSort(e.target.value as RiderMarketSort)}
                 className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700"
               >
-                <option value="active">Active First</option>
-                <option value="scouted">Scouted First</option>
-                <option value="expires">Expires Soonest</option>
-                <option value="overall_desc">Overall High-Low</option>
-                <option value="overall_asc">Overall Low-High</option>
-                <option value="price_desc">Salary High-Low</option>
-                <option value="price_asc">Salary Low-High</option>
-                <option value="name_asc">Name A-Z</option>
-                <option value="name_desc">Name Z-A</option>
-                <option value="age_asc">Age Low-High</option>
-                <option value="age_desc">Age High-Low</option>
+                <option value="active">{t('sort.activeFirst')}</option>
+                <option value="scouted">{t('sort.scoutedFirst')}</option>
+                <option value="expires">{t('sort.expiresSoonest')}</option>
+                <option value="overall_desc">{t('sort.overallHighLow')}</option>
+                <option value="overall_asc">{t('sort.overallLowHigh')}</option>
+                <option value="price_desc">{t('sort.salaryHighLow')}</option>
+                <option value="price_asc">{t('sort.salaryLowHigh')}</option>
+                <option value="name_asc">{t('sort.nameAZ')}</option>
+                <option value="name_desc">{t('sort.nameZA')}</option>
+                <option value="age_asc">{t('sort.ageLowHigh')}</option>
+                <option value="age_desc">{t('sort.ageHighLow')}</option>
               </select>
             </div>
 
@@ -755,7 +778,7 @@ export default function RiderFreeAgentsPage({
                   onChange={(e) => setMarketOnlyActive(e.target.checked)}
                   className="rounded border-gray-300"
                 />
-                Only my active
+                {t('common.onlyMyActive')}
               </label>
 
               <div className="h-6" />
@@ -766,7 +789,7 @@ export default function RiderFreeAgentsPage({
                 onClick={onSaveCurrentSearch}
                 className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
               >
-                Save this search
+                {t('common.saveSearch')}
               </button>
             </div>
           </div>
@@ -775,11 +798,11 @@ export default function RiderFreeAgentsPage({
         <div className="mt-4 space-y-3">
           {riderLoading ? (
             <div className="rounded-lg border border-gray-100 bg-gray-50 p-4 text-sm text-gray-500">
-              Loading free agents...
+              {t('freeAgents.loading')}
             </div>
           ) : safeMarketRows.length === 0 ? (
             <div className="rounded-lg border border-gray-100 bg-gray-50 p-4 text-sm text-gray-500">
-              No riders found for the current filters.
+              {t('freeAgents.empty')}
             </div>
           ) : (
             safeMarketRows.map((item) => (
@@ -799,7 +822,11 @@ export default function RiderFreeAgentsPage({
 
         <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="text-xs text-gray-500">
-            Showing {marketPageStart}-{marketPageEnd} of {totalMarketRows} riders • 30 per page
+            {t('freeAgents.showing', {
+              start: marketPageStart,
+              end: marketPageEnd,
+              total: totalMarketRows,
+            })}
           </div>
 
           {totalMarketRows > 30 ? (
@@ -810,7 +837,7 @@ export default function RiderFreeAgentsPage({
                 disabled={marketPage <= 1}
                 className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                First
+                {t('common.first')}
               </button>
 
               <button
@@ -819,11 +846,11 @@ export default function RiderFreeAgentsPage({
                 disabled={marketPage <= 1}
                 className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                Previous
+                {t('common.previous')}
               </button>
 
               <div className="text-sm text-gray-600">
-                Page {marketPage} / {marketTotalPages}
+                {t('common.page', { page: marketPage, pages: marketTotalPages })}
               </div>
 
               <button
@@ -832,7 +859,7 @@ export default function RiderFreeAgentsPage({
                 disabled={marketPage >= marketTotalPages}
                 className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                Next
+                {t('common.next')}
               </button>
 
               <button
@@ -841,7 +868,7 @@ export default function RiderFreeAgentsPage({
                 disabled={marketPage >= marketTotalPages}
                 className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                Last
+                {t('common.last')}
               </button>
             </div>
           ) : null}
@@ -884,15 +911,15 @@ export default function RiderFreeAgentsPage({
 
               const statusLabel =
                 uiStatus === 'open'
-                  ? 'Negotiation active'
+                  ? t('freeAgents.negotiationActive')
                   : uiStatus === 'rejected' || uiStatus === 'declined'
-                    ? 'Declined'
+                    ? t('freeAgents.declined')
                     : uiStatus === 'withdrawn'
                       ? 'Withdrawn'
                       : uiStatus === 'accepted' || uiStatus === 'completed'
-                        ? 'Completed'
+                        ? t('freeAgents.completed')
                         : uiStatus === 'expired'
-                          ? 'Expired'
+                          ? t('freeAgents.expired')
                           : 'Negotiation'
 
               return (
@@ -941,7 +968,7 @@ export default function RiderFreeAgentsPage({
                           onClick={() => handleOpenActivityRider(item.riderId)}
                           className={`${negotiationActionButtonClassName} border border-slate-300 bg-white text-slate-700 hover:bg-slate-50`}
                         >
-                          Open rider
+                          {t('freeAgents.openRider')}
                         </button>
                       ) : null}
 
@@ -951,7 +978,7 @@ export default function RiderFreeAgentsPage({
                           onClick={() => onCancelNegotiation(item.id)}
                           className={`${negotiationActionButtonClassName} border border-red-200 bg-red-50 text-red-700 hover:bg-red-100`}
                         >
-                          Cancel negotiation
+                          {t('freeAgents.cancelNegotiation')}
                         </button>
                       ) : null}
 
@@ -961,7 +988,7 @@ export default function RiderFreeAgentsPage({
                           onClick={() => onOpenNegotiation(item.id)}
                           className={`${negotiationActionButtonClassName} bg-yellow-400 text-black hover:bg-yellow-300`}
                         >
-                          Open negotiation
+                          {t('freeAgents.openNegotiation')}
                         </button>
                       ) : null}
                     </div>
@@ -998,11 +1025,11 @@ export default function RiderFreeAgentsPage({
                     : 'border border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
                 }`}
               >
-                Previous
+                {t('common.previous')}
               </button>
 
               <div className="px-2 text-sm text-gray-600">
-                Page {activityPage} / {activityTotalPages}
+                {t('common.page', { page: activityPage, pages: activityTotalPages })}
               </div>
 
               <button
@@ -1017,7 +1044,7 @@ export default function RiderFreeAgentsPage({
                     : 'border border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
                 }`}
               >
-                Next
+                {t('common.next')}
               </button>
             </div>
           ) : null}
