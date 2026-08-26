@@ -2943,7 +2943,7 @@ export default function TrainingPage(): JSX.Element {
             {t('camps.currentTitle')}
           </h3>
           <p className="mt-2 text-sm text-gray-600">
-            No planned or active training camp yet. Pick a camp, choose riders, staff, and book it.
+            {t('camps.noneCurrent')}
           </p>
         </div>
       )}
@@ -3049,7 +3049,7 @@ export default function TrainingPage(): JSX.Element {
               <div>
                 <h3 className="text-lg font-semibold text-gray-900">{t('regular.teamDefaults')}</h3>
                 <p className="mt-1 text-sm text-gray-600">
-                  These defaults apply when Head Coach automation is disabled and a rider has no persistent override.
+                  {t('regular.teamDefaultsDescription')}
                 </p>
               </div>
 
@@ -3205,7 +3205,7 @@ export default function TrainingPage(): JSX.Element {
 
           {isPremium && regularTrainingSummary.headCoachManagedCount > 0 ? (
             <div className="rounded-xl border border-yellow-200 bg-yellow-50 px-4 py-3 text-sm text-yellow-800 shadow-sm">
-              Saving changes for a Head Coach-managed rider applies only to the current game day. Head Coach control resumes automatically on the next game day.
+              {t('regular.headCoachNotice')}
             </div>
           ) : null}
 
@@ -3214,7 +3214,7 @@ export default function TrainingPage(): JSX.Element {
               <h3 className="text-lg font-semibold text-gray-900">{t('regular.riderOverrides')}</h3>
               <p className="mt-1 text-sm text-gray-600">
                 {isPremium
-                  ? "Head Coach assignments appear here as today's effective training. Editing a coach-managed rider creates a one-day override; the coach resumes next game day."
+                  ? t('regular.riderOverridesPremium')
                   : 'Set individual training here. Manual rider controls and Team Defaults remain fully available without Premium.'}
               </p>
             </div>
@@ -3278,7 +3278,7 @@ export default function TrainingPage(): JSX.Element {
                           </span>
 
                           <span className="rounded-full bg-gray-100 px-2.5 py-1 text-xs text-gray-700">
-                            Fatigue {rider.fatigue ?? 0}
+                            {t('common.fatigue', { value: rider.fatigue ?? 0 })}
                           </span>
 
                           {effective.source === 'head_coach' ? (
@@ -3309,7 +3309,7 @@ export default function TrainingPage(): JSX.Element {
                         </div>
 
                         <div className="mt-3 rounded-lg bg-gray-50 px-3 py-2 text-sm text-gray-700">
-                          Effective today:{' '}
+                          {t('regular.effectiveToday')}{' '}
                           <span className="font-medium">
                             {formatEffectiveRegularTrainingLabel(
                               effective.focus_code,
@@ -3319,11 +3319,11 @@ export default function TrainingPage(): JSX.Element {
                           </span>
                           <div className="mt-1 text-xs text-gray-500">
                             {effective.source === 'head_coach'
-                              ? 'Selected automatically by the Head Coach.'
+                              ? t('regular.selectedByCoach')
                               : effective.source === 'manual_today'
-                                ? 'One-day override. Head Coach resumes next game day.'
+                                ? t('regular.oneDayOverride')
                                 : effective.auto_when_free
-                                  ? 'Auto when free.'
+                                  ? t('regular.autoWhenFree')
                                   : 'Manual only.'}
                           </div>
                         </div>
@@ -3397,7 +3397,7 @@ export default function TrainingPage(): JSX.Element {
                             : coachEnabled
                               ? hasTodayOverride
                                 ? 'Save Today Override'
-                                : 'Override Today'
+                                : t('regular.overrideToday')
                               : hasPersistentOverride
                                 ? 'Save Override'
                                 : 'Create Override'}
@@ -3413,7 +3413,7 @@ export default function TrainingPage(): JSX.Element {
                           className="rounded-lg border border-red-300 bg-white px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
                         >
                           {coachEnabled
-                            ? 'Clear Today Override'
+                            ? t('regular.clearTodayOverride')
                             : 'Clear Override'}
                         </button>
 
@@ -3422,7 +3422,7 @@ export default function TrainingPage(): JSX.Element {
                             to={`/dashboard/my-riders/${rider.rider_id}?tab=analysis#training-and-skill-development`}
                             className="inline-flex items-center justify-center rounded-lg border border-slate-300 bg-white px-4 py-2 text-center text-sm font-semibold text-slate-800 transition hover:border-yellow-400 hover:bg-yellow-50"
                           >
-                            Training Development
+                            {t('regular.trainingDevelopment')}
                           </Link>
                         ) : null}
                       </div>
