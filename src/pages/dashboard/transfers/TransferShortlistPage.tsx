@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router'
 import { supabase } from '../../../lib/supabase'
 import RiderShortlistButton from './RiderShortlistButton'
@@ -65,6 +66,7 @@ export default function TransferShortlistPage({
   onOpenFreeAgentNegotiation: (freeAgentId: string, riderId: string) => void
 }): JSX.Element {
   const navigate = useNavigate()
+  const { t } = useTranslation('transfers')
   const [access, setAccess] = useState<ShortlistAccess | null>(null)
   const [rows, setRows] = useState<ShortlistRider[]>([])
   const [loading, setLoading] = useState(true)
@@ -146,15 +148,13 @@ export default function TransferShortlistPage({
       <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
         <div className="max-w-2xl">
           <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-slate-600">
-            Premium
+            {t('common.premium')}
           </span>
           <h2 className="mt-3 text-xl font-semibold text-slate-900">
-            Rider Shortlist
+            {t('shortlist.title')}
           </h2>
           <p className="mt-2 text-sm leading-6 text-slate-600">
-            Premium members can track riders from transfer listings, free
-            agents, scouting and external profiles. Two new additions per
-            real-life day are included; later additions cost 1 coin each.
+            {t('shortlist.premiumDescription')}
           </p>
           <button
             type="button"
@@ -165,7 +165,7 @@ export default function TransferShortlistPage({
             }}
             className="mt-4 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50"
           >
-            Unlock with Premium
+            {t('common.unlockPremium')}
           </button>
         </div>
       </div>
@@ -177,25 +177,26 @@ export default function TransferShortlistPage({
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <h2 className="text-lg font-semibold text-slate-900">
-            Rider Shortlist
+            {t('shortlist.title')}
           </h2>
           <p className="mt-1 text-sm text-slate-600">
-            All tracked riders in one place, including riders who are no longer
-            available on the market.
+            {t('shortlist.description')}
           </p>
         </div>
 
         <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-600">
           <div>
-            Active: <strong>{access?.active_shortlist_count ?? rows.length}</strong>/
+            {t('shortlist.active')}{' '}
+            <strong>{access?.active_shortlist_count ?? rows.length}</strong>/
             {access?.active_shortlist_limit ?? 50}
           </div>
           <div className="mt-1">
-            Free additions left today:{' '}
+            {t('shortlist.freeLeft')}{' '}
             <strong>{access?.free_additions_left_today ?? 0}</strong>/2
           </div>
           <div className="mt-1">
-            Later additions: <strong>1 coin each</strong>
+            {t('shortlist.later')}{' '}
+            <strong>{t('shortlist.oneCoinEach')}</strong>
           </div>
         </div>
       </div>
@@ -211,7 +212,7 @@ export default function TransferShortlistPage({
           type="search"
           value={search}
           onChange={event => setSearch(event.target.value)}
-          placeholder="Search shortlisted riders…"
+          placeholder={t('shortlist.searchPlaceholder')}
           className="rounded-lg border border-slate-300 px-3 py-2 text-sm"
         />
         <select
@@ -227,25 +228,31 @@ export default function TransferShortlistPage({
           }
           className="rounded-lg border border-slate-300 px-3 py-2 text-sm"
         >
-          <option value="all">All availability</option>
-          <option value="transfer_list">Transfer listed</option>
-          <option value="free_agent">Free agents</option>
-          <option value="not_available">Not currently available</option>
+          <option value="all">{t('shortlist.allAvailability')}</option>
+          <option value="transfer_list">{t('shortlist.transferListed')}</option>
+          <option value="free_agent">{t('shortlist.freeAgents')}</option>
+          <option value="not_available">{t('shortlist.notAvailable')}</option>
         </select>
       </div>
 
       <div className="mt-5 space-y-3">
         {loading ? (
           <div className="rounded-lg border border-dashed border-slate-200 bg-slate-50 px-4 py-8 text-center text-sm text-slate-500">
-            Loading shortlist…
+            {t('shortlist.loading')}
           </div>
         ) : filteredRows.length === 0 ? (
           <div className="rounded-lg border border-dashed border-slate-200 bg-slate-50 px-4 py-8 text-center text-sm text-slate-500">
-            No shortlisted riders match these filters.
+            {t('shortlist.empty')}
           </div>
         ) : (
           filteredRows.map(row => {
             const flagUrl = getFlagUrl(row.country_code)
+            const availabilityLabel =
+              row.availability_type === 'transfer_list'
+                ? t('shortlist.transferListed')
+                : row.availability_type === 'free_agent'
+                  ? t('shortlist.freeAgent')
+                  : t('shortlist.notAvailable')
 
             return (
               <div
@@ -273,33 +280,41 @@ export default function TransferShortlistPage({
                       </button>
                       {row.is_scouted ? (
                         <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">
-                          Scouted
+                          {t('common.scouted')}
                         </span>
                       ) : null}
                     </div>
 
                     <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-600">
                       <span>
-                        <strong className="text-slate-900">Role:</strong>{' '}
+                        <strong className="text-slate-900">
+                          {t('shortlist.role')}
+                        </strong>{' '}
                         {row.role ?? '—'}
                       </span>
                       <span>
-                        <strong className="text-slate-900">OVR:</strong>{' '}
+                        <strong className="text-slate-900">
+                          {t('shortlist.ovr')}
+                        </strong>{' '}
                         {row.overall_label ?? '—'}
                       </span>
                       <span>
-                        <strong className="text-slate-900">Age:</strong>{' '}
+                        <strong className="text-slate-900">
+                          {t('shortlist.age')}
+                        </strong>{' '}
                         {row.age_years ?? '—'}
                       </span>
                       <span>
-                        <strong className="text-slate-900">Team:</strong>{' '}
-                        {row.current_club_name ?? 'Free Agent'}
+                        <strong className="text-slate-900">
+                          {t('shortlist.team')}
+                        </strong>{' '}
+                        {row.current_club_name ?? t('shortlist.freeAgent')}
                       </span>
                     </div>
 
                     {row.notes ? (
                       <div className="mt-2 text-xs text-slate-500">
-                        Note: {row.notes}
+                        {t('shortlist.note', { note: row.notes })}
                       </div>
                     ) : null}
                   </div>
@@ -315,16 +330,20 @@ export default function TransferShortlistPage({
                             : 'bg-slate-100 text-slate-600',
                       ].join(' ')}
                     >
-                      {row.availability_label}
+                      {availabilityLabel}
                     </span>
 
                     {row.availability_type === 'transfer_list' ? (
                       <span className="rounded-md border border-green-300 bg-green-50 px-3 py-2 text-xs font-semibold text-slate-900">
-                        Transfer: {formatMoney(row.transfer_price)}
+                        {t('shortlist.transferPrice', {
+                          price: formatMoney(row.transfer_price),
+                        })}
                       </span>
                     ) : row.availability_type === 'free_agent' ? (
                       <span className="rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-semibold text-slate-900">
-                        Salary: {formatMoney(row.expected_salary_weekly)}/week
+                        {t('shortlist.salary', {
+                          salary: formatMoney(row.expected_salary_weekly),
+                        })}
                       </span>
                     ) : null}
 
@@ -335,7 +354,7 @@ export default function TransferShortlistPage({
                       }
                       className="rounded-md border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
                     >
-                      Open Profile
+                      {t('shortlist.openProfile')}
                     </button>
 
                     {row.availability_type === 'transfer_list' && row.listing_id ? (
@@ -346,7 +365,7 @@ export default function TransferShortlistPage({
                         }
                         className="rounded-md bg-yellow-400 px-3 py-2 text-xs font-semibold text-black hover:bg-yellow-300"
                       >
-                        Make Offer
+                        {t('shortlist.makeOffer')}
                       </button>
                     ) : row.availability_type === 'free_agent' && row.source_id ? (
                       <button
@@ -356,7 +375,7 @@ export default function TransferShortlistPage({
                         }
                         className="rounded-md bg-yellow-400 px-3 py-2 text-xs font-semibold text-black hover:bg-yellow-300"
                       >
-                        Start Negotiation
+                        {t('shortlist.startNegotiation')}
                       </button>
                     ) : null}
 
