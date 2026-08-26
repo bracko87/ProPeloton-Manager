@@ -8,6 +8,7 @@
 import React from 'react'
 import { Outlet } from 'react-router'
 import MainLayout from '../../components/layout/MainLayout'
+import SeasonRolloverGate from '../../components/season/SeasonRolloverGate'
 import RestartTeamModal from '../../components/team/RestartTeamModal'
 import { supabase } from '../../lib/supabase'
 import { getMyClubContext } from '../../lib/clubContext'
@@ -342,12 +343,14 @@ export default function ClubDashboard(): JSX.Element {
   }
 
   return (
-    <MainLayout>
-      {content}
+    <SeasonRolloverGate>
+      <MainLayout>
+        {content}
 
-      {showRestartWelcome && (
-        <RestartWelcomeModal onClose={() => setShowRestartWelcome(false)} />
-      )}
-    </MainLayout>
+        {showRestartWelcome && (
+          <RestartWelcomeModal onClose={() => setShowRestartWelcome(false)} />
+        )}
+      </MainLayout>
+    </SeasonRolloverGate>
   )
 }
