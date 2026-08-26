@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { supabase } from '../../../lib/supabase'
 
 type ShortlistStatus = {
@@ -30,11 +31,17 @@ export default function RiderShortlistButton({
   clubId: string
   riderId: string
   riderName: string
-  sourceType: 'transfer_list' | 'free_agent' | 'external_profile' | 'scouting'
+  sourceType:
+    | 'transfer_list'
+    | 'free_agent'
+    | 'external_profile'
+    | 'scouting'
   sourceId?: string | null
   compact?: boolean
   onChanged?: (shortlisted: boolean) => void
 }): JSX.Element {
+  const { t } = useTranslation('transfer')
+
   const [status, setStatus] = useState<ShortlistStatus | null>(null)
   const [loading, setLoading] = useState(true)
   const [actionLoading, setActionLoading] = useState(false)
@@ -103,7 +110,9 @@ export default function RiderShortlistButton({
             p_rider_id: riderId,
           },
         )
+
         if (rpcError) throw rpcError
+
         onChanged?.(false)
       } else {
         const { data, error: rpcError } = await supabase.rpc(
@@ -116,6 +125,7 @@ export default function RiderShortlistButton({
             p_source_id: sourceId ?? null,
           },
         )
+
         if (rpcError) throw rpcError
 
         const result = normalizeOne<{
@@ -136,7 +146,7 @@ export default function RiderShortlistButton({
       setError(
         caught instanceof Error
           ? caught.message
-          : 'Failed to update the shortlist.',
+          : t('shortlist.updateFailed'),
       )
     } finally {
       setActionLoading(false)
@@ -149,12 +159,12 @@ export default function RiderShortlistButton({
       : Number(status?.next_addition_coin_cost ?? 1)
 
   const label = !status?.is_premium
-    ? '☆ Shortlist 🔒'
+    ? t('shortlist.lockedLabel')
     : status.is_shortlisted
-      ? '★ Shortlisted'
+      ? t('shortlist.shortlistedLabel')
       : nextCost > 0
-        ? `☆ Shortlist · ${nextCost} coin`
-        : '☆ Shortlist'
+        ? t('shortlist.shortlistCoin', { coins: nextCost })
+        : t('shortlist.shortlistLabel')
 
   return (
     <div className={compact ? 'relative inline-flex' : 'relative flex'}>
@@ -167,12 +177,14 @@ export default function RiderShortlistButton({
         disabled={loading || actionLoading}
         title={
           !status?.is_premium
-            ? 'Available with Premium'
+            ? t('shortlist.availablePremium')
             : status.is_shortlisted
-              ? 'Remove from shortlist'
+              ? t('shortlist.remove')
               : nextCost > 0
-                ? `Your two free additions are used. This addition costs ${nextCost} coin.`
-                : `${status.free_additions_left_today} free shortlist addition(s) left today.`
+                ? t('shortlist.coinCostHelp', { coins: nextCost })
+                : t('shortlist.freeHelp', {
+                    count: status.free_additions_left_today,
+                  })
         }
         className={[
           compact
@@ -184,7 +196,7 @@ export default function RiderShortlistButton({
             : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-50',
         ].join(' ')}
       >
-        {actionLoading ? 'Updating…' : label}
+        {actionLoading ? t('common.updating') : label}
       </button>
 
       {error ? (
