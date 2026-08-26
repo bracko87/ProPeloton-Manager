@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import type {
   ChartPoint,
@@ -237,9 +238,13 @@ function getVisibleNextRaceSelection<T extends {
 }
 
 
-function getRaceSummarySubtitle(raceName?: string | null, stageLabel?: string | null): string {
+function getRaceSummarySubtitle(
+  raceName: string | null | undefined,
+  stageLabel: string | null | undefined,
+  emptyLabel: string
+): string {
   const parts = [raceName, stageLabel].filter((value): value is string => Boolean(value))
-  return parts.length > 0 ? parts.join(' · ') : 'No race found yet'
+  return parts.length > 0 ? parts.join(' · ') : emptyLabel
 }
 
 function getRaceTypeSnapshotMax(rows: SquadDisplayRaceTypeRow[]): number {
@@ -255,11 +260,13 @@ function RaceSummaryHeader({
   raceName?: string | null
   stageLabel?: string | null
 }) {
+  const { t } = useTranslation('squad')
+
   return (
     <div className="mb-4">
       <div className="text-base font-semibold text-gray-800">{title}</div>
       <div className="mt-1 text-sm text-gray-500">
-        {getRaceSummarySubtitle(raceName, stageLabel)}
+        {getRaceSummarySubtitle(raceName, stageLabel, t('races.noRaceFound'))}
       </div>
     </div>
   )
@@ -273,7 +280,7 @@ function RacePreviewStrip({
   stageLabel,
   routeLabel,
   stageCount,
-  emptyLabel = 'No race found yet',
+  emptyLabel,
 }: {
   raceName?: string | null
   raceCountryCode?: string | null
@@ -284,17 +291,20 @@ function RacePreviewStrip({
   stageCount?: number | null
   emptyLabel?: string
 }) {
+  const { t } = useTranslation('squad')
+  const resolvedEmptyLabel = emptyLabel ?? t('races.noRaceFound')
+
   if (!raceName) {
     return (
       <div className="mt-2 rounded-lg border border-dashed border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-500">
-        {emptyLabel}
+        {resolvedEmptyLabel}
       </div>
     )
   }
 
   const details = [
     stageLabel,
-    stageCount && stageCount > 1 ? `${stageCount} stages` : null,
+    stageCount && stageCount > 1 ? t('races.stages', { count: stageCount }) : null,
     routeLabel,
   ].filter((value): value is string => Boolean(value))
 
@@ -329,12 +339,64 @@ function RacePreviewStrip({
   )
 }
 
-const SQUAD_LIST_VIEW_OPTIONS: Array<{ value: SquadListView; label: string }> = [
-  { value: 'general', label: 'General View' },
-  { value: 'financial', label: 'Financial View' },
-  { value: 'skills', label: 'Skills View' },
-  { value: 'form', label: 'Form & Development' },
+const SQUAD_LIST_VIEW_OPTIONS: Array<{ value: SquadListView; labelKey: string }> = [
+  { value: 'general', labelKey: 'roster.generalView' },
+  { value: 'financial', labelKey: 'roster.financialView' },
+  { value: 'skills', labelKey: 'roster.skillsView' },
+  { value: 'form', labelKey: 'roster.formDevelopment' },
 ]
+
+const STATUS_TRANSLATION_KEYS: Record<string, string> = {
+  Fit: 'status.fit',
+  Injured: 'status.injured',
+  Sick: 'status.sick',
+  'Not fully fit': 'status.notFullyFit',
+  Fresh: 'status.fresh',
+  Normal: 'status.normal',
+  Tired: 'status.tired',
+  'Very Tired': 'status.veryTired',
+  Exhausted: 'status.exhausted',
+  Bad: 'status.bad',
+  Low: 'status.low',
+  Okay: 'status.okay',
+  Good: 'status.good',
+  Great: 'status.great',
+  Limited: 'status.limited',
+  Average: 'status.average',
+  Promising: 'status.promising',
+  High: 'status.high',
+  Elite: 'status.elite',
+}
+
+const MONTH_TRANSLATION_KEYS: Record<string, string> = {
+  Jan: 'months.jan',
+  Feb: 'months.feb',
+  Mar: 'months.mar',
+  Apr: 'months.apr',
+  May: 'months.may',
+  Jun: 'months.jun',
+  Jul: 'months.jul',
+  Aug: 'months.aug',
+  Sep: 'months.sep',
+  Oct: 'months.oct',
+  Nov: 'months.nov',
+  Dec: 'months.dec',
+}
+
+const PODIUM_CHART_TRANSLATION_KEYS: Record<string, string> = {
+  Wins: 'season.wins',
+  '2nd': 'season.second',
+  '3rd': 'season.third',
+  Top10: 'season.top10',
+  Top20: 'season.top20',
+}
+
+const RACE_TYPE_TRANSLATION_KEYS: Record<string, string> = {
+  'One-day classics': 'races.oneDayClassics',
+  'Stage finishes': 'races.stageFinishes',
+  'Mountain days': 'races.mountainDays',
+  'Time trials': 'races.timeTrials',
+}
 
 function getBestRiderSkillValue(rider: {
   sprint?: number | null
@@ -422,14 +484,17 @@ function RiderStatusBadge({
   className?: string
   compact?: boolean
 }) {
+  const { t } = useTranslation('squad')
   const ui = getRiderStatusUi(status)
+  const statusTranslationKey = STATUS_TRANSLATION_KEYS[ui.label]
+  const statusLabel = statusTranslationKey ? t(statusTranslationKey) : ui.label
 
   return (
     <span
       className={`inline-flex items-center whitespace-nowrap rounded-full border font-medium ${
         compact ? 'gap-1.5 px-2.5 py-1 text-xs' : 'gap-2 px-3 py-1 text-sm'
       } ${className}`}
-      title={`Status: ${ui.label}`}
+      title={`${t('columns.status')}: ${statusLabel}`}
       style={{
         color: ui.color,
         backgroundColor: ui.bgColor,
@@ -446,7 +511,7 @@ function RiderStatusBadge({
       >
         {ui.icon}
       </span>
-      <span>{ui.label}</span>
+      <span>{statusLabel}</span>
     </span>
   )
 }
@@ -515,6 +580,7 @@ function CompactValueTile({
 }
 
 function LineChart({ data }: { data: ChartPoint[] }) {
+  const { t } = useTranslation('squad')
   const width = 760
   const height = 240
   const padLeft = 34
@@ -579,7 +645,9 @@ function LineChart({ data }: { data: ChartPoint[] }) {
               fontSize="10"
               fill="#6b7280"
             >
-              {point.label}
+              {MONTH_TRANSLATION_KEYS[point.label]
+                ? t(MONTH_TRANSLATION_KEYS[point.label])
+                : point.label}
             </text>
           </g>
         ))}
@@ -589,6 +657,7 @@ function LineChart({ data }: { data: ChartPoint[] }) {
 }
 
 function VerticalBarChart({ data }: { data: ChartPoint[] }) {
+  const { t } = useTranslation('squad')
   const width = 420
   const height = 240
   const padTop = 18
@@ -644,7 +713,9 @@ function VerticalBarChart({ data }: { data: ChartPoint[] }) {
                 fontSize="10"
                 fill="#6b7280"
               >
-                {item.label}
+                {PODIUM_CHART_TRANSLATION_KEYS[item.label]
+                  ? t(PODIUM_CHART_TRANSLATION_KEYS[item.label])
+                  : item.label}
               </text>
             </g>
           )
@@ -693,6 +764,8 @@ function PremiumLock({
   description,
   className = '',
 }: PremiumLockProps) {
+  const { t } = useTranslation('squad')
+
   return (
     <div
       className={[
@@ -707,7 +780,7 @@ function PremiumLock({
           <div className="flex flex-wrap items-center gap-2">
             <span className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-amber-700">
               <span aria-hidden="true">🔒</span>
-              Premium
+              {t('premium.label')}
             </span>
             <h3 className="text-sm font-semibold text-slate-800">{title}</h3>
           </div>
@@ -720,7 +793,7 @@ function PremiumLock({
           onClick={openPremiumPage}
           className="shrink-0 self-start rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-sm transition hover:border-slate-400 hover:bg-slate-50 sm:self-auto"
         >
-          Unlock with Premium
+          {t('premium.unlock')}
         </button>
       </div>
     </div>
@@ -761,6 +834,7 @@ function SquadListViewPicker({
   isPremiumLoading,
   onChange,
 }: SquadListViewPickerProps) {
+  const { t } = useTranslation('squad')
   const [open, setOpen] = useState(false)
   const pickerRef = useRef<HTMLDivElement>(null)
 
@@ -803,7 +877,9 @@ function SquadListViewPicker({
         onClick={() => setOpen((current) => !current)}
         className="flex min-w-[210px] items-center justify-between gap-3 rounded-lg border border-gray-300 bg-white px-3 py-2 text-left text-sm text-gray-800 outline-none transition hover:border-gray-400 focus:border-yellow-400 disabled:cursor-wait disabled:bg-gray-50 disabled:text-gray-500"
       >
-        <span>{isPremiumLoading ? 'Checking Premium access…' : selectedOption.label}</span>
+        <span>
+          {isPremiumLoading ? t('roster.checkingPremium') : t(selectedOption.labelKey)}
+        </span>
         <span aria-hidden="true" className="text-xs text-gray-400">
           {open ? '▲' : '▼'}
         </span>
@@ -827,7 +903,7 @@ function SquadListViewPicker({
                   aria-selected={isSelected}
                   aria-disabled={isLocked}
                   disabled={isLocked}
-                  title={isLocked ? 'Only for Premium users' : undefined}
+                  title={isLocked ? t('roster.onlyPremium') : undefined}
                   onClick={() => {
                     onChange(option.value)
                     setOpen(false)
@@ -840,9 +916,9 @@ function SquadListViewPicker({
                         : 'text-slate-700 hover:bg-slate-50'
                   }`}
                 >
-                  <span>{option.label}</span>
+                  <span>{t(option.labelKey)}</span>
                   {isLocked ? (
-                    <span aria-label="Premium only" className="text-xs text-slate-400">
+                    <span aria-label={t('roster.premiumOnly')} className="text-xs text-slate-400">
                       🔒
                     </span>
                   ) : isSelected ? (
@@ -857,7 +933,7 @@ function SquadListViewPicker({
                     role="tooltip"
                     className="pointer-events-none absolute right-[calc(100%+8px)] top-1/2 z-40 hidden -translate-y-1/2 whitespace-nowrap rounded-md bg-slate-900 px-2.5 py-1.5 text-[11px] font-medium text-white shadow-lg group-hover:block group-focus-within:block"
                   >
-                    Only for Premium users
+                    {t('roster.onlyPremium')}
                   </div>
                 ) : null}
               </div>
@@ -912,6 +988,7 @@ export default function FirstSquadTab({
   healthOverviewDisplayRows,
   squadDisplayData,
 }: FirstSquadTabProps) {
+  const { t } = useTranslation('squad')
   const activeListView: SquadListView =
     isPremium && !isPremiumLoading ? listView : 'general'
 
@@ -949,9 +1026,10 @@ export default function FirstSquadTab({
           ? 10
           : 10
 
-  const currentViewLabel =
-    SQUAD_LIST_VIEW_OPTIONS.find((option) => option.value === activeListView)?.label ??
-    'General View'
+  const currentViewOption =
+    SQUAD_LIST_VIEW_OPTIONS.find((option) => option.value === activeListView) ??
+    SQUAD_LIST_VIEW_OPTIONS[0]
+  const currentViewLabel = t(currentViewOption.labelKey)
 
   const visibleLastTeamRace = getVisibleLastTeamRace(squadDisplayData.lastTeamRace)
   const visibleNextRaceSelection = getVisibleNextRaceSelection(
@@ -962,28 +1040,27 @@ export default function FirstSquadTab({
   return (
     <>
       <div className="mb-4 flex items-center justify-between border-b border-gray-200 pb-3">
-        <div className="text-base font-semibold text-gray-800">First Squad</div>
+        <div className="text-base font-semibold text-gray-800">{t('roster.firstSquad')}</div>
         <div className="text-sm text-gray-500">
-          Riders: <span className="font-medium text-gray-700">{riders.length}/{squadMax}</span>
+          {t('roster.riders')}: <span className="font-medium text-gray-700">{riders.length}/{squadMax}</span>
         </div>
       </div>
 
       {riders.length >= squadMax && (
         <div className="mb-4 rounded-lg bg-yellow-50 p-3 text-sm text-yellow-800">
-          Squad is full ({squadMax} riders). Transfers, signings and promotions must respect the
-          squad cap.
+          {t('roster.squadFull', { max: squadMax })}
         </div>
       )}
 
       {loading && (
         <div className="w-full rounded-lg bg-white p-4 text-sm text-gray-600 shadow">
-          Loading squad…
+          {t('roster.loading')}
         </div>
       )}
 
       {!loading && error && (
         <div className="w-full rounded-lg bg-white p-4 shadow">
-          <div className="text-sm font-medium text-red-600">Could not load squad</div>
+          <div className="text-sm font-medium text-red-600">{t('roster.loadFailed')}</div>
           <div className="mt-1 text-sm text-gray-600">{error}</div>
         </div>
       )}
@@ -1011,9 +1088,9 @@ export default function FirstSquadTab({
           <div data-tutorial-target="squad-riders-table" className="w-full rounded-lg bg-white p-4 shadow">
             <div className="mb-3 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
               <div>
-                <div className="text-base font-semibold text-gray-800">First Squad</div>
+                <div className="text-base font-semibold text-gray-800">{t('roster.firstSquad')}</div>
                 <div className="mt-1 text-sm text-gray-500">
-                  {currentViewLabel} · Riders{' '}
+                  {currentViewLabel} · {t('roster.riders')}{' '}
                   <span className="font-medium text-gray-700">
                     {riders.length}/{squadMax}
                   </span>
@@ -1026,7 +1103,7 @@ export default function FirstSquadTab({
                     id="squad-list-view-label"
                     className="text-sm font-medium text-gray-600"
                   >
-                    View
+                    {t('roster.view')}
                   </span>
                   <SquadListViewPicker
                     value={activeListView}
@@ -1039,13 +1116,13 @@ export default function FirstSquadTab({
                 {!isPremiumLoading && !isPremium ? (
                   <div className="flex items-center gap-1.5 text-[11px] text-slate-500">
                     <span aria-hidden="true">🔒</span>
-                    <span>Advanced squad views require Premium.</span>
+                    <span>{t('roster.advancedPremium')}</span>
                     <button
                       type="button"
                       onClick={openPremiumPage}
                       className="font-semibold text-slate-700 underline decoration-slate-300 underline-offset-2 hover:text-slate-950"
                     >
-                      View Premium
+                      {t('roster.viewPremium')}
                     </button>
                   </div>
                 ) : null}
@@ -1057,27 +1134,27 @@ export default function FirstSquadTab({
                 <thead>
                   <tr className="text-left text-gray-600">
                     <th className={`p-2 ${activeListView === 'skills' ? 'w-[42px]' : ''}`}>#</th>
-                    <th className={`p-2 ${activeListView === 'skills' ? 'w-[190px]' : ''}`}>Name</th>
-                    <th className={`p-2 ${activeListView === 'skills' ? 'w-[110px]' : ''}`}>Country</th>
-                    <th className={`p-2 ${activeListView === 'skills' ? 'w-[130px]' : ''}`}>Role</th>
+                    <th className={`p-2 ${activeListView === 'skills' ? 'w-[190px]' : ''}`}>{t('columns.name')}</th>
+                    <th className={`p-2 ${activeListView === 'skills' ? 'w-[110px]' : ''}`}>{t('columns.country')}</th>
+                    <th className={`p-2 ${activeListView === 'skills' ? 'w-[130px]' : ''}`}>{t('columns.role')}</th>
                     <th className={`p-2 ${activeListView === 'skills' ? 'w-[122px]' : 'w-[130px]'}`}>
-                      Activity
+                      {t('columns.activity')}
                     </th>
 
                     {activeListView === 'general' && (
                       <>
-                        <th className="p-2">Age</th>
-                        <th className="p-2">Overall</th>
-                        <th className="p-2 w-[160px]">Status</th>
-                        <th className="p-2 w-[90px] text-center">Move</th>
+                        <th className="p-2">{t('columns.age')}</th>
+                        <th className="p-2">{t('columns.overall')}</th>
+                        <th className="p-2 w-[160px]">{t('columns.status')}</th>
+                        <th className="p-2 w-[90px] text-center">{t('columns.move')}</th>
                       </>
                     )}
 
                     {activeListView === 'financial' && (
                       <>
-                        <th className="p-2">Value</th>
-                        <th className="p-2">Wage</th>
-                        <th className="p-2">Contract Expires</th>
+                        <th className="p-2">{t('columns.value')}</th>
+                        <th className="p-2">{t('columns.wage')}</th>
+                        <th className="p-2">{t('columns.contractExpires')}</th>
                       </>
                     )}
 
@@ -1094,17 +1171,17 @@ export default function FirstSquadTab({
 
                     {activeListView === 'form' && (
                       <>
-                        <th className="p-2">Potential</th>
-                        <th className="p-2">Morale</th>
-                        <th className="p-2">Fatigue</th>
-                        <th className="p-2">Health</th>
+                        <th className="p-2">{t('columns.potential')}</th>
+                        <th className="p-2">{t('columns.morale')}</th>
+                        <th className="p-2">{t('columns.fatigue')}</th>
+                        <th className="p-2">{t('columns.health')}</th>
                       </>
                     )}
 
                     <th
                       className={`p-2 text-right ${activeListView === 'skills' ? 'w-[72px]' : 'w-[90px]'}`}
                     >
-                      View
+                      {t('roster.view')}
                     </th>
                   </tr>
                 </thead>
@@ -1159,7 +1236,7 @@ export default function FirstSquadTab({
                             <span>{r.name}</span>
                             {r.isTransferListed ? (
                               <span
-                                title="Rider is on the transfer list"
+                                title={t('transfer.onList')}
                                 className="inline-flex h-5 min-w-[20px] items-center justify-center rounded-full border border-emerald-200 bg-emerald-50 px-1.5 text-xs font-bold text-emerald-700"
                               >
                                 $
@@ -1275,7 +1352,14 @@ export default function FirstSquadTab({
                               {r.potential == null ? (
                                 <span className="text-gray-400">—</span>
                               ) : (
-                                <InlineStatusText label={potentialUi.label} color={potentialUi.color} />
+                                <InlineStatusText
+                                  label={
+                                    STATUS_TRANSLATION_KEYS[potentialUi.label]
+                                      ? t(STATUS_TRANSLATION_KEYS[potentialUi.label])
+                                      : potentialUi.label
+                                  }
+                                  color={potentialUi.color}
+                                />
                               )}
                             </td>
 
@@ -1283,16 +1367,37 @@ export default function FirstSquadTab({
                               {r.morale == null ? (
                                 <span className="text-gray-400">—</span>
                               ) : (
-                                <InlineStatusText label={moraleUi.label} color={moraleUi.color} />
+                                <InlineStatusText
+                                  label={
+                                    STATUS_TRANSLATION_KEYS[moraleUi.label]
+                                      ? t(STATUS_TRANSLATION_KEYS[moraleUi.label])
+                                      : moraleUi.label
+                                  }
+                                  color={moraleUi.color}
+                                />
                               )}
                             </td>
 
                             <td className="p-2">
-                              <InlineStatusText label={fatigueUi.label} color={fatigueUi.color} />
+                              <InlineStatusText
+                                label={
+                                  STATUS_TRANSLATION_KEYS[fatigueUi.label]
+                                    ? t(STATUS_TRANSLATION_KEYS[fatigueUi.label])
+                                    : fatigueUi.label
+                                }
+                                color={fatigueUi.color}
+                              />
                             </td>
 
                             <td className="p-2">
-                              <InlineStatusText label={healthUi.label} color={healthUi.color} />
+                              <InlineStatusText
+                                label={
+                                  STATUS_TRANSLATION_KEYS[healthUi.label]
+                                    ? t(STATUS_TRANSLATION_KEYS[healthUi.label])
+                                    : healthUi.label
+                                }
+                                color={healthUi.color}
+                              />
                             </td>
                           </>
                         )}
@@ -1306,7 +1411,7 @@ export default function FirstSquadTab({
                             onClick={() => onOpenRiderProfile(r.id)}
                             className="text-sm font-medium text-yellow-600 hover:text-yellow-700"
                           >
-                            View
+                            {t('roster.view')}
                           </button>
                         </td>
                       </tr>
@@ -1316,7 +1421,7 @@ export default function FirstSquadTab({
                   {riders.length === 0 && (
                     <tr className="border-t">
                       <td className="p-2 text-gray-500" colSpan={squadTableColSpan}>
-                        No riders found for this club yet.
+                        {t('roster.noRiders')}
                       </td>
                     </tr>
                   )}
@@ -1330,28 +1435,28 @@ export default function FirstSquadTab({
           ) : isPremium ? (
             <div className="mt-6 rounded-lg bg-white p-4 shadow">
               <div className="mb-4">
-                <div className="text-base font-semibold text-gray-800">Health Report</div>
+                <div className="text-base font-semibold text-gray-800">{t('healthReport.title')}</div>
                 <div className="mt-1 text-sm text-gray-500">
-                  Current injured, sick, and recovering first squad riders
+                  {t('healthReport.subtitle')}
                 </div>
               </div>
 
               {healthOverviewDisplayRows.length === 0 ? (
                 <div className="rounded-xl border border-gray-100 bg-gray-50 px-4 py-3 text-sm text-gray-600">
-                  No active health concerns in the squad right now.
+                  {t('healthReport.empty')}
                 </div>
               ) : (
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="border-b border-gray-200 text-left text-gray-500">
-                        <th className="py-2 pr-4">Rider</th>
-                        <th className="py-2 pr-4">Status</th>
-                        <th className="py-2 pr-4">Case</th>
-                        <th className="py-2 pr-4">Stage</th>
-                        <th className="py-2 pr-4">Severity</th>
-                        <th className="py-2 pr-4">Fatigue</th>
-                        <th className="py-2">Expected Recovery</th>
+                        <th className="py-2 pr-4">{t('columns.rider')}</th>
+                        <th className="py-2 pr-4">{t('columns.status')}</th>
+                        <th className="py-2 pr-4">{t('columns.case')}</th>
+                        <th className="py-2 pr-4">{t('columns.stage')}</th>
+                        <th className="py-2 pr-4">{t('columns.severity')}</th>
+                        <th className="py-2 pr-4">{t('columns.fatigue')}</th>
+                        <th className="py-2">{t('columns.expectedRecovery')}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -1412,8 +1517,8 @@ export default function FirstSquadTab({
           ) : (
             <PremiumLock
               className="mt-6"
-              title="Squad Health Report"
-              description="See squad-wide injury, illness and recovery information in one consolidated report."
+              title={t('healthReport.lockedTitle')}
+              description={t('healthReport.lockedDescription')}
             />
           )}
 
@@ -1421,32 +1526,32 @@ export default function FirstSquadTab({
             <PremiumSectionLoading className="mt-6" />
           ) : isPremium ? (
             <div className="mt-6 grid grid-cols-2 gap-3 md:grid-cols-4">
-              <CompactValueTile label="Season Wins" value={`${squadDisplayData.summary.wins}`} />
+              <CompactValueTile label={t('season.wins')} value={`${squadDisplayData.summary.wins}`} />
               <CompactValueTile
-                label="Season Podiums"
+                label={t('season.podiums')}
                 value={`${squadDisplayData.summary.podiums}`}
               />
               <CompactValueTile
-                label="Top 10 Results"
+                label={t('season.top10Results')}
                 value={`${squadDisplayData.summary.top10s}`}
               />
               <CompactValueTile
-                label="Best GC"
+                label={t('season.bestGc')}
                 value={formatBestGcValue(squadDisplayData.summary.bestGC)}
               />
             </div>
           ) : (
             <PremiumLock
               className="mt-6"
-              title="Season performance summary"
-              description="Unlock season wins, podiums, Top 10 results and best general-classification performance."
+              title={t('season.summaryLockedTitle')}
+              description={t('season.summaryLockedDescription')}
             />
           )}
 
           <div className="mt-6 grid grid-cols-1 gap-4 xl:grid-cols-2">
             <div className="rounded-lg bg-white p-4 shadow">
               <div className="mb-4">
-                <div className="text-base font-semibold text-gray-800">Last Team Race</div>
+                <div className="text-base font-semibold text-gray-800">{t('races.lastTeamRace')}</div>
                 <RacePreviewStrip
                   raceName={visibleLastTeamRace?.raceName}
                   raceCountryCode={visibleLastTeamRace?.raceCountryCode}
@@ -1455,7 +1560,7 @@ export default function FirstSquadTab({
                   stageLabel={visibleLastTeamRace?.stageLabel}
                   routeLabel={visibleLastTeamRace?.routeLabel}
                   stageCount={visibleLastTeamRace?.stageCount}
-                  emptyLabel="No finished full-race classification found for this squad yet."
+                  emptyLabel={t('races.noFinishedClassification')}
                 />
               </div>
 
@@ -1464,10 +1569,10 @@ export default function FirstSquadTab({
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="border-b border-gray-200 text-left text-gray-500">
-                        <th className="py-2 pr-4">Rider</th>
-                        <th className="py-2 pr-4">Role</th>
-                        <th className="py-2 pr-4">Result</th>
-                        <th className="py-2 text-right">Int. pts</th>
+                        <th className="py-2 pr-4">{t('columns.rider')}</th>
+                        <th className="py-2 pr-4">{t('columns.role')}</th>
+                        <th className="py-2 pr-4">{t('columns.result')}</th>
+                        <th className="py-2 text-right">{t('columns.internationalPoints')}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -1488,14 +1593,14 @@ export default function FirstSquadTab({
                 </div>
               ) : (
                 <div className="rounded-xl border border-gray-100 bg-gray-50 px-4 py-6 text-sm text-gray-600">
-                  No finished full-race classification found for this squad yet.
+                  {t('races.noFinishedClassification')}
                 </div>
               )}
             </div>
 
             <div className="rounded-lg bg-white p-4 shadow">
               <div className="mb-4">
-                <div className="text-base font-semibold text-gray-800">Next Team Race</div>
+                <div className="text-base font-semibold text-gray-800">{t('races.nextTeamRace')}</div>
                 <RacePreviewStrip
                   raceName={visibleNextRaceSelection?.raceName}
                   raceCountryCode={visibleNextRaceSelection?.raceCountryCode}
@@ -1504,7 +1609,7 @@ export default function FirstSquadTab({
                   stageLabel={visibleNextRaceSelection?.stageLabel}
                   routeLabel={visibleNextRaceSelection?.routeLabel}
                   stageCount={visibleNextRaceSelection?.stageCount}
-                  emptyLabel="No next not-started submitted race plan found for this squad yet."
+                  emptyLabel={t('races.noNextSubmittedPlan')}
                 />
               </div>
 
@@ -1513,9 +1618,9 @@ export default function FirstSquadTab({
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="border-b border-gray-200 text-left text-gray-500">
-                        <th className="py-2 pr-4">Rider</th>
-                        <th className="py-2 pr-4">Role</th>
-                        <th className="py-2 text-right">Sharpness</th>
+                        <th className="py-2 pr-4">{t('columns.rider')}</th>
+                        <th className="py-2 pr-4">{t('columns.role')}</th>
+                        <th className="py-2 text-right">{t('columns.sharpness')}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -1535,7 +1640,7 @@ export default function FirstSquadTab({
                 </div>
               ) : (
                 <div className="rounded-xl border border-gray-100 bg-gray-50 px-4 py-6 text-sm text-gray-600">
-                  No next not-started submitted race plan found for this squad yet.
+                  {t('races.noNextSubmittedPlan')}
                 </div>
               )}
             </div>
@@ -1547,7 +1652,7 @@ export default function FirstSquadTab({
             ) : isPremium ? (
               <div className="rounded-lg bg-white p-4 shadow xl:col-span-2">
                 <div className="text-base font-semibold text-gray-800">
-                  Team Results This Season
+                  {t('season.resultsTitle')}
                 </div>
                 <div className="mt-4">
                   <LineChart data={squadDisplayData.seasonTrend} />
@@ -1556,8 +1661,8 @@ export default function FirstSquadTab({
             ) : (
               <PremiumLock
                 className="xl:col-span-2"
-                title="Team Results This Season"
-                description="View monthly team-performance trends across the current season."
+                title={t('season.resultsTitle')}
+                description={t('season.resultsDescription')}
               />
             )}
 
@@ -1565,15 +1670,15 @@ export default function FirstSquadTab({
               <PremiumSectionLoading />
             ) : isPremium ? (
               <div className="rounded-lg bg-white p-4 shadow">
-                <div className="text-base font-semibold text-gray-800">Podiums &amp; Placings</div>
+                <div className="text-base font-semibold text-gray-800">{t('season.podiumsTitle')}</div>
                 <div className="mt-4">
                   <VerticalBarChart data={squadDisplayData.podiumChart} />
                 </div>
               </div>
             ) : (
               <PremiumLock
-                title="Podiums & Placings"
-                description="Analyse wins, podiums and finishing-position distribution."
+                title={t('season.podiumsTitle')}
+                description={t('season.podiumsDescription')}
               />
             )}
 
@@ -1581,12 +1686,16 @@ export default function FirstSquadTab({
               <PremiumSectionLoading className="xl:col-span-3" />
             ) : isPremium ? (
               <div className="rounded-lg bg-white p-4 shadow xl:col-span-3">
-                <div className="text-base font-semibold text-gray-800">Race Type Snapshot</div>
+                <div className="text-base font-semibold text-gray-800">{t('season.raceTypeTitle')}</div>
                 <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
                   {(squadDisplayData.raceTypeSnapshot ?? []).map((item) => (
                     <HorizontalMetricBar
                       key={item.label}
-                      label={item.label}
+                      label={
+                        RACE_TYPE_TRANSLATION_KEYS[item.label]
+                          ? t(RACE_TYPE_TRANSLATION_KEYS[item.label])
+                          : item.label
+                      }
                       value={item.value}
                       max={getRaceTypeSnapshotMax(squadDisplayData.raceTypeSnapshot ?? [])}
                     />
@@ -1596,8 +1705,8 @@ export default function FirstSquadTab({
             ) : (
               <PremiumLock
                 className="xl:col-span-3"
-                title="Race Type Snapshot"
-                description="Compare your results across classics, mountain days, stage finishes and time trials."
+                title={t('season.raceTypeTitle')}
+                description={t('season.raceTypeDescription')}
               />
             )}
           </div>
