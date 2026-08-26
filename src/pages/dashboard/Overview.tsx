@@ -5145,6 +5145,7 @@ function EmergencyDebtCard({
   debt: EmergencyDebtHealth;
   debtMovements: TransactionSummaryItem[];
 }) {
+  const { t } = useTranslation("overview");
   const visibleDebtMovements = buildDebtMovementsFromEmergencyDebt(
     debt,
     debtMovements,
@@ -5153,28 +5154,28 @@ function EmergencyDebtCard({
   return (
     <Card className="p-5">
       <SectionTitle
-        title="Emergency Debt"
-        subtitle="Emergency loans, principal balance, repayment pressure, and liquidation risk."
+        title={t("finance.emergencyDebt")}
+        subtitle={t("finance.emergencyDebtSubtitle")}
       />
 
       <div className="mt-5 space-y-3">
         <SmallStat
-          label="Rescues used"
+          label={t("finance.rescuesUsed")}
           value={`${debt.rescuesUsed} / ${debt.rescueLimit}`}
           valueClassName={
             debt.rescuesUsed >= debt.rescueLimit ? "text-red-600" : ""
           }
         />
         <SmallStat
-          label="Outstanding principal"
+          label={t("finance.outstandingPrincipal")}
           value={formatCurrency(debt.outstandingPrincipal)}
           valueClassName={
             debt.outstandingPrincipal > 0 ? "text-red-600" : "text-emerald-600"
           }
         />
-        <SmallStat label="Next repayment" value={formatNextRepayment(debt)} />
+        <SmallStat label={t("finance.nextRepayment")} value={formatNextRepayment(debt)} />
         <SmallStat
-          label="Liquidation risk"
+          label={t("finance.liquidationRisk")}
           value={debt.liquidationRisk}
           valueClassName={getRiskTextClass(debt.liquidationRisk)}
         />
@@ -5182,7 +5183,7 @@ function EmergencyDebtCard({
 
       <div className="mt-5 rounded-xl border border-slate-200 bg-white p-4">
         <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-          Debt Movement
+          {t("finance.debtMovement")}
         </div>
 
         {visibleDebtMovements.length > 0 ? (
@@ -5193,7 +5194,7 @@ function EmergencyDebtCard({
           </div>
         ) : (
           <div className="mt-3 rounded-xl border border-dashed border-slate-200 bg-slate-50 px-3 py-3 text-sm text-slate-500">
-            No emergency loan movement found.
+            {t("finance.noDebtMovement")}
           </div>
         )}
       </div>
@@ -6095,7 +6096,9 @@ function NewsCommandCenter({
                     </div>
 
                     <div className="shrink-0 whitespace-nowrap rounded-md border border-sky-200 bg-sky-50 px-2 py-1 text-xs font-semibold text-sky-700">
-                      {item.timeLabel}
+                      {item.timeLabel === "Today"
+                        ? t("races.today")
+                        : item.timeLabel}
                     </div>
                   </div>
                 </button>
@@ -6208,11 +6211,13 @@ function NextTeamRaceCard({
  * Shows the next five schedule items in compact race-strip style.
  */
 function UpcomingRaceScheduleCard({ schedule }: { schedule: ScheduleItem[] }) {
+  const { t } = useTranslation("overview");
+
   return (
     <Card className="p-5">
       <SectionTitle
-        title="Upcoming Schedule"
-        subtitle="Next five accepted races, race deadlines, and club milestones."
+        title={t("races.upcomingTitle")}
+        subtitle={t("races.upcomingSubtitle")}
       />
 
       {schedule.length > 0 ? (
@@ -6230,8 +6235,8 @@ function UpcomingRaceScheduleCard({ schedule }: { schedule: ScheduleItem[] }) {
         </div>
       ) : (
         <SectionEmptyState
-          title="No upcoming events"
-          description="There are no accepted races, camps, deadlines, or infrastructure milestones in the current overview window."
+          title={t("races.noUpcoming")}
+          description={t("races.noUpcomingSubtitle")}
         />
       )}
     </Card>
@@ -6249,14 +6254,16 @@ function TodayRaceCard({
   dateLabel: string;
   races: DayRaceItem[];
 }) {
+  const { t } = useTranslation("overview");
+
   return (
     <Card className="p-5">
       <SectionTitle
-        title="This Day Races"
+        title={t("races.todayTitle")}
         subtitle={
           dateLabel
-            ? `Races happening on ${dateLabel}.`
-            : "Races happening on the current game day."
+            ? t("races.todayWithDate", { date: dateLabel })
+            : t("races.todayCurrent")
         }
       />
 
@@ -6265,7 +6272,11 @@ function TodayRaceCard({
           {races.map((item) => (
             <CompactRaceStrip
               key={item.id}
-              dateLabel={item.timeLabel || dateLabel}
+              dateLabel={
+                (item.timeLabel || dateLabel) === "Today"
+                  ? t("races.today")
+                  : item.timeLabel || dateLabel
+              }
               countryCode={item.countryCode}
               title={item.title}
               details={item.subtitle}
@@ -6276,8 +6287,8 @@ function TodayRaceCard({
       ) : (
         <div className="mt-5">
           <EmptyState
-            title="No races on this date"
-            subtitle="There are no race events scheduled for the current game day."
+            title={t("races.noToday")}
+            subtitle={t("races.noTodaySubtitle")}
           />
         </div>
       )}
@@ -6290,25 +6301,26 @@ function TodayRaceCard({
  * Right-rail version of squad pulse: fitness focus plus one-row status values.
  */
 function CompactSquadPulseCard({ pulse }: { pulse: SquadPulse }) {
+  const { t } = useTranslation("overview");
   const rowItems = [
-    ["Form", pulse.form],
-    ["Available", pulse.availableRiders],
-    ["Injured", pulse.injured],
-    ["Sick", pulse.sick],
-    ["Not fully fit", pulse.notFullyFit],
-    ["Contracts", pulse.expiringContracts],
+    [t("squad.form"), pulse.form],
+    [t("squad.available"), pulse.availableRiders],
+    [t("squad.injured"), pulse.injured],
+    [t("squad.sick"), pulse.sick],
+    [t("squad.notFullyFit"), pulse.notFullyFit],
+    [t("squad.contracts"), pulse.expiringContracts],
   ] as Array<[string, React.ReactNode]>;
 
   return (
     <Card className="p-5">
       <SectionTitle
-        title="Squad Pulse"
-        subtitle="Fitness and immediate squad status."
+        title={t("squad.title")}
+        subtitle={t("squad.compactSubtitle")}
       />
 
       <div className="mt-4">
         <ProgressMetric
-          label="Fitness"
+          label={t("squad.fitness")}
           value={pulse.fitness}
           colorClass="bg-blue-500"
         />
@@ -6356,7 +6368,7 @@ function normalizeExternalCyclingNews(value: unknown): ExternalCyclingNewsItem[]
         title,
         sourceName: asString(
           row.source_name ?? row.sourceName ?? row.source,
-          "Cycling news",
+          "",
         ),
         articleUrl,
         publishedAt: asString(
@@ -6470,8 +6482,8 @@ async function loadClubHonours(
   }
 }
 
-function formatExternalNewsDate(value: string): string {
-  if (!value) return "Latest";
+function formatExternalNewsDate(value: string, latestLabel: string): string {
+  if (!value) return latestLabel;
 
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
@@ -6489,11 +6501,13 @@ function CyclingWorldNewsCard({
   items: ExternalCyclingNewsItem[];
   loading: boolean;
 }) {
+  const { t } = useTranslation("overview");
+
   return (
     <Card className="p-5">
       <SectionTitle
-        title="Cycling World News"
-        subtitle="Latest professional cycling headlines from approved external sources."
+        title={t("news.cyclingWorldTitle")}
+        subtitle={t("news.cyclingWorldSubtitle")}
       />
 
       {loading ? (
@@ -6516,14 +6530,14 @@ function CyclingWorldNewsCard({
               className="grid grid-cols-[72px_minmax(0,1fr)] items-center gap-3 rounded-xl border border-slate-200 bg-slate-50/70 px-3 py-2.5 transition hover:border-slate-300 hover:bg-white"
             >
               <div className="text-xs font-semibold text-slate-600">
-                {formatExternalNewsDate(item.publishedAt)}
+                {formatExternalNewsDate(item.publishedAt, t("news.latest"))}
               </div>
               <div className="min-w-0">
                 <div className="line-clamp-1 text-sm font-bold text-slate-950">
                   {item.title}
                 </div>
                 <div className="mt-0.5 flex items-center gap-1 text-xs text-slate-500">
-                  <span>{item.sourceName}</span>
+                  <span>{item.sourceName || t("news.cyclingNews")}</span>
                   <span aria-hidden="true">↗</span>
                 </div>
               </div>
@@ -6532,8 +6546,7 @@ function CyclingWorldNewsCard({
         </div>
       ) : (
         <div className="mt-4 rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 py-6 text-sm text-slate-500">
-          No external cycling headlines are available yet. The card will fill
-          automatically after the news importer and RPC are installed.
+          {t("news.noExternal")}
         </div>
       )}
     </Card>
@@ -6547,19 +6560,21 @@ function ClubHonoursCard({
   items: ClubHonourItem[];
   loading: boolean;
 }) {
+  const { t } = useTranslation("overview");
+
   return (
     <Card className="p-5">
       <div className="flex items-start justify-between gap-3">
         <SectionTitle
-          title="Club Honours"
-          subtitle="The five greatest results achieved in club history."
+          title={t("honours.title")}
+          subtitle={t("honours.subtitle")}
         />
         <a
           href="#/dashboard/statistics/club-history"
           className="shrink-0 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-bold text-slate-700 transition hover:border-slate-300 hover:bg-white"
           aria-label="Open the complete club history"
         >
-          View all
+          {t("honours.viewAll")}
         </a>
       </div>
 
@@ -6577,7 +6592,11 @@ function ClubHonoursCard({
           {items.map((item) => (
             <CompactRaceStrip
               key={item.id}
-              dateLabel={item.dateLabel || item.seasonLabel}
+              dateLabel={
+                item.dateLabel === "History" && item.seasonLabel === "History"
+                  ? t("honours.history")
+                  : item.dateLabel || item.seasonLabel
+              }
               countryCode={item.raceCountryCode}
               title={item.raceName}
               category={item.raceCategory}
@@ -6604,11 +6623,13 @@ function CompactOperationsCard({
 }: {
   operations: OperationItem[];
 }) {
+  const { t } = useTranslation("overview");
+
   return (
     <Card className="p-5">
       <SectionTitle
-        title="Active Operations"
-        subtitle="Current jobs and running processes."
+        title={t("operations.title")}
+        subtitle={t("operations.subtitle")}
       />
 
       {operations.length > 0 ? (
@@ -6639,7 +6660,7 @@ function CompactOperationsCard({
         </div>
       ) : (
         <div className="mt-4 text-sm text-slate-500">
-          Nothing happening at the moment.
+          {t("operations.nothing")}
         </div>
       )}
     </Card>
@@ -6647,51 +6668,52 @@ function CompactOperationsCard({
 }
 
 function SeasonSnapshotCard({ stats }: { stats: OverviewSeasonSnapshot }) {
+  const { t } = useTranslation("overview");
   const items = [
     {
-      label: "Races this season",
+      label: t("seasonSnapshot.races"),
       value: stats.races,
       cardClass: "border-sky-100 bg-sky-50/70",
       valueClass: "text-sky-700",
     },
     {
-      label: "Stages raced",
+      label: t("seasonSnapshot.stages"),
       value: stats.stages,
       cardClass: "border-indigo-100 bg-indigo-50/70",
       valueClass: "text-indigo-700",
     },
     {
-      label: "International points",
+      label: t("seasonSnapshot.internationalPoints"),
       value: stats.internationalPoints,
       cardClass: "border-emerald-100 bg-emerald-50/70",
       valueClass: "text-emerald-700",
     },
     {
-      label: "Wins",
+      label: t("seasonSnapshot.wins"),
       value: stats.wins,
       cardClass: "border-amber-100 bg-amber-50/70",
       valueClass: "text-amber-700",
     },
     {
-      label: "Podiums",
+      label: t("seasonSnapshot.podiums"),
       value: stats.podiums,
       cardClass: "border-fuchsia-100 bg-fuchsia-50/70",
       valueClass: "text-fuchsia-700",
     },
     {
-      label: "Top 10 results",
+      label: t("seasonSnapshot.top10"),
       value: stats.top10s,
       cardClass: "border-violet-100 bg-violet-50/70",
       valueClass: "text-violet-700",
     },
     {
-      label: "Jerseys",
+      label: t("seasonSnapshot.jerseys"),
       value: stats.jerseys,
       cardClass: "border-rose-100 bg-rose-50/70",
       valueClass: "text-rose-700",
     },
     {
-      label: "Best GC",
+      label: t("seasonSnapshot.bestGc"),
       value: stats.bestGc ? `${stats.bestGc}.` : "—",
       cardClass: "border-cyan-100 bg-cyan-50/70",
       valueClass: "text-cyan-700",
@@ -6702,10 +6724,10 @@ function SeasonSnapshotCard({ stats }: { stats: OverviewSeasonSnapshot }) {
     <Card className="p-5">
       <div>
         <h3 className="text-base font-normal text-slate-900">
-          Season Snapshot
+          {t("seasonSnapshot.title")}
         </h3>
         <p className="mt-1 text-sm font-normal text-slate-500">
-          Current season results, points, podiums, jerseys, and race volume.
+          {t("seasonSnapshot.subtitle")}
         </p>
       </div>
 
@@ -6736,24 +6758,25 @@ type FinancePeriodKey = "weekly" | "monthly" | "season";
 function getFinancePeriodValues(
   finance: FinanceHealth,
   period: FinancePeriodKey,
+  label: string,
 ) {
   switch (period) {
     case "weekly":
       return {
-        label: "Weekly",
+        label,
         income: finance.weeklyOperatingIncome,
         expenses: finance.weeklyOperatingExpense,
       };
     case "season":
       return {
-        label: "Season",
+        label,
         income: finance.seasonOperatingIncome,
         expenses: finance.seasonOperatingExpense,
       };
     case "monthly":
     default:
       return {
-        label: "Monthly",
+        label,
         income: finance.monthlyOperatingIncome,
         expenses: finance.monthlyOperatingExpense,
       };
@@ -6765,9 +6788,16 @@ function getFinancePeriodValues(
  * Replaces the emergency debt card with a simple income/expense pie style view.
  */
 function IncomeExpenseCard({ finance }: { finance: FinanceHealth }) {
+  const { t } = useTranslation("overview");
   const [period, setPeriod] = React.useState<FinancePeriodKey>("monthly");
 
-  const periodConfig = getFinancePeriodValues(finance, period);
+  const periodLabel =
+    period === "weekly"
+      ? t("finance.weekly")
+      : period === "season"
+        ? t("finance.season")
+        : t("finance.monthly");
+  const periodConfig = getFinancePeriodValues(finance, period, periodLabel);
 
   const income = Math.max(0, periodConfig.income);
   const expenses = Math.abs(periodConfig.expenses);
@@ -6781,11 +6811,10 @@ function IncomeExpenseCard({ finance }: { finance: FinanceHealth }) {
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <h3 className="text-lg font-semibold text-slate-950">
-            Income & Expenses
+            {t("finance.incomeExpensesTitle")}
           </h3>
           <p className="mt-1 text-sm leading-6 text-slate-500">
-            {periodConfig.label} operating balance from real in-game finance
-            transactions.
+            {t("finance.operatingBalance", { period: periodConfig.label })}
           </p>
         </div>
 
@@ -6803,10 +6832,10 @@ function IncomeExpenseCard({ finance }: { finance: FinanceHealth }) {
               )}
             >
               {option === "weekly"
-                ? "Week"
+                ? t("finance.week")
                 : option === "monthly"
-                  ? "Month"
-                  : "Season"}
+                  ? t("finance.month")
+                  : t("finance.season")}
             </button>
           ))}
         </div>
@@ -6823,7 +6852,7 @@ function IncomeExpenseCard({ finance }: { finance: FinanceHealth }) {
             <div className="flex h-20 w-20 items-center justify-center rounded-full bg-white text-center shadow-inner">
               <div>
                 <div className="text-[10px] font-medium uppercase text-slate-500">
-                  Net
+                  {t("finance.net")}
                 </div>
                 <div
                   className={cn(
@@ -6840,17 +6869,17 @@ function IncomeExpenseCard({ finance }: { finance: FinanceHealth }) {
 
         <div className="min-w-0 flex-1 space-y-2">
           <SmallStat
-            label={`Income ${incomePct}%`}
+            label={t("finance.incomePercent", { percent: incomePct })}
             value={formatCurrency(income)}
             valueClassName="text-emerald-600"
           />
           <SmallStat
-            label={`Expenses ${expensePct}%`}
+            label={t("finance.expensesPercent", { percent: expensePct })}
             value={formatCurrency(expenses)}
             valueClassName="text-red-600"
           />
           <SmallStat
-            label="Final balance"
+            label={t("finance.finalBalance")}
             value={formatSignedCurrency(net)}
             valueClassName={net >= 0 ? "text-emerald-600" : "text-red-600"}
           />
@@ -6865,13 +6894,15 @@ function IncomeExpenseCard({ finance }: { finance: FinanceHealth }) {
  * Moved lower on the page so it no longer dominates the top of the overview.
  */
 function KpiSection({ items }: { items: KpiItem[] }) {
+  const { t } = useTranslation("overview");
+
   if (items.length === 0) return null;
 
   return (
     <Card className="p-5">
       <SectionTitle
-        title="Club Snapshot"
-        subtitle="Finance, points, roster, morale, and ranking metrics."
+        title={t("clubSnapshot.title")}
+        subtitle={t("clubSnapshot.subtitle")}
       />
       <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {items.map((item) => (
@@ -7844,29 +7875,29 @@ export default function OverviewPage() {
             <PremiumFeatureGate
               isPremium={isPremium}
               loading={premiumStatusLoading}
-              title="Squad Pulse"
+              title={t("squad.title")}
               description="See squad readiness, fitness, morale, health, availability, and contract pressure in one place."
             >
             <Card className="p-5">
               <SectionTitle
-                title="Squad Pulse"
-                subtitle="Readiness, morale, health, and contract pressure."
+                title={t("squad.title")}
+                subtitle={t("squad.subtitle")}
               />
 
               <div className="mt-5 grid grid-cols-1 gap-6 lg:grid-cols-2">
                 <div className="space-y-5">
                   <ProgressMetric
-                    label="Fitness"
+                    label={t("squad.fitness")}
                     value={visibleSquadPulse.fitness}
                     colorClass="bg-blue-500"
                   />
                   <ProgressMetric
-                    label="Morale"
+                    label={t("squad.morale")}
                     value={visibleSquadPulse.morale}
                     colorClass="bg-emerald-500"
                   />
                   <ProgressMetric
-                    label="Readiness"
+                    label={t("squad.readiness")}
                     value={visibleSquadPulse.readiness}
                     colorClass="bg-violet-500"
                   />
@@ -7874,37 +7905,37 @@ export default function OverviewPage() {
 
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   <SmallStat
-                    label="Form"
+                    label={t("squad.form")}
                     value={visibleSquadPulse.form}
                     valueClassName="text-emerald-600"
                   />
                   <SmallStat
-                    label="Available Riders"
+                    label={t("squad.availableRiders")}
                     value={visibleSquadPulse.availableRiders}
                   />
                   <SmallStat
-                    label="Injured"
+                    label={t("squad.injured")}
                     value={visibleSquadPulse.injured}
                     valueClassName={
                       visibleSquadPulse.injured > 0 ? "text-red-600" : ""
                     }
                   />
                   <SmallStat
-                    label="Sick"
+                    label={t("squad.sick")}
                     value={visibleSquadPulse.sick}
                     valueClassName={
                       visibleSquadPulse.sick > 0 ? "text-red-600" : ""
                     }
                   />
                   <SmallStat
-                    label="Not Fully Fit"
+                    label={t("squad.notFullyFit")}
                     value={visibleSquadPulse.notFullyFit}
                     valueClassName={
                       visibleSquadPulse.notFullyFit > 0 ? "text-yellow-600" : ""
                     }
                   />
                   <SmallStat
-                    label="Expiring Contracts"
+                    label={t("squad.expiringContracts")}
                     value={visibleSquadPulse.expiringContracts}
                     valueClassName={
                       visibleSquadPulse.expiringContracts > 0
@@ -7960,22 +7991,22 @@ export default function OverviewPage() {
             <PremiumFeatureGate
               isPremium={isPremium}
               loading={premiumStatusLoading}
-              title="Finance Health"
+              title={t("finance.healthTitle")}
               description="Unlock cash position, recurring cost pressure, weekly net performance, sponsor income, and forecasted spending insights."
             >
               <Card className="p-5">
                 <SectionTitle
-                  title="Finance Health"
-                  subtitle="Cash position, recurring cost pressure, and next forecasted spend."
+                  title={t("finance.healthTitle")}
+                  subtitle={t("finance.healthSubtitle")}
                 />
 
                 <div className="mt-5 space-y-3">
                   <SmallStat
-                    label="Balance"
+                    label={t("finance.balance")}
                     value={formatCurrency(data.finance.balance)}
                   />
                   <SmallStat
-                    label="Weekly Net"
+                    label={t("finance.weeklyNet")}
                     value={formatSignedCurrency(data.finance.weeklyNet)}
                     valueClassName={
                       data.finance.weeklyNet >= 0
@@ -7984,22 +8015,22 @@ export default function OverviewPage() {
                     }
                   />
                   <SmallStat
-                    label="Sponsor Income"
+                    label={t("finance.sponsorIncome")}
                     value={formatCurrency(data.finance.sponsorIncome)}
                   />
                   <SmallStat
-                    label="Recurring Policy Cost"
+                    label={t("finance.recurringPolicyCost")}
                     value={formatCurrency(data.finance.recurringPolicyCost)}
                   />
                   <SmallStat
-                    label="Next Trip Forecast"
+                    label={t("finance.nextTripForecast")}
                     value={formatCurrency(data.finance.nextTripForecast)}
                   />
                 </div>
 
                 <div className="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-4">
                   <div className="text-xs uppercase tracking-wide text-slate-500">
-                    Latest Major Transaction
+                    {t("finance.latestMajorTransaction")}
                   </div>
                   <div className="mt-2 text-sm font-semibold text-slate-900">
                     {data.finance.latestTransactionLabel}
@@ -8021,7 +8052,7 @@ export default function OverviewPage() {
             <PremiumFeatureGate
               isPremium={isPremium}
               loading={premiumStatusLoading}
-              title="Income & Expenses"
+              title={t("finance.incomeExpensesTitle")}
               description="Unlock weekly, monthly, and season operating charts with a clear income, expense, and net-balance summary."
             >
               <IncomeExpenseCard finance={data.finance} />
@@ -8030,7 +8061,7 @@ export default function OverviewPage() {
             <PremiumFeatureGate
               isPremium={isPremium}
               loading={premiumStatusLoading}
-              title="Active Operations"
+              title={t("operations.title")}
               description="Unlock a live overview of current jobs, running processes, operational statuses, and active club workflows."
             >
               <CompactOperationsCard operations={data.operations} />
@@ -8039,7 +8070,7 @@ export default function OverviewPage() {
             <PremiumFeatureGate
               isPremium={isPremium}
               loading={premiumStatusLoading}
-              title="Club Honours"
+              title={t("honours.title")}
               description="Unlock a convenient historical summary of the five greatest results achieved in club history."
             >
               <ClubHonoursCard
@@ -8053,7 +8084,7 @@ export default function OverviewPage() {
         <PremiumFeatureGate
           isPremium={isPremium}
           loading={premiumStatusLoading}
-          title="Season Snapshot"
+          title={t("seasonSnapshot.title")}
           description="Unlock current-season race volume, international points, wins, podiums, Top 10 results, jerseys, and best general-classification performance."
         >
           <SeasonSnapshotCard stats={seasonSnapshot} />
