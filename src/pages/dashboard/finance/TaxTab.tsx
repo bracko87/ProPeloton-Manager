@@ -8,6 +8,7 @@
  */
 
 import React, { useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { supabase } from './supabase'
 import {
   formatGameDate,
@@ -240,6 +241,7 @@ function TablePagination({
   onPageChange: (page: number) => void
   itemLabel: string
 }): JSX.Element {
+  const { t } = useTranslation('finance')
   const safePage = clampPage(page, totalPages)
   const firstVisible = totalItems === 0 ? 0 : (safePage - 1) * pageSize + 1
   const lastVisible = Math.min(safePage * pageSize, totalItems)
@@ -262,7 +264,7 @@ function TablePagination({
               : 'bg-white hover:bg-gray-100',
           ].join(' ')}
         >
-          Previous
+          {t('common.previous')}
         </button>
 
         <div className="text-xs text-gray-600 min-w-[72px] text-center">
@@ -280,7 +282,7 @@ function TablePagination({
               : 'bg-white hover:bg-gray-100',
           ].join(' ')}
         >
-          Next
+          {t('common.next')}
         </button>
       </div>
     </div>
@@ -294,6 +296,7 @@ export function TaxTab({
   clubId: string
   currency?: 'EUR' | 'USD'
 }): JSX.Element {
+  const { t } = useTranslation('finance')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [audits, setAudits] = useState<AuditRow[]>([])
@@ -304,6 +307,19 @@ export function TaxTab({
 
   const [taxStatementPage, setTaxStatementPage] = useState(1)
   const [auditPage, setAuditPage] = useState(1)
+
+  function getAuditStatusLabel(status: AuditRow['audit_status']): string {
+    switch (status) {
+      case 'ok':
+        return t('tax.ok')
+
+      case 'adjusted':
+        return t('tax.adjusted')
+
+      case 'refunded':
+        return t('tax.refunded')
+    }
+  }
 
   useEffect(() => {
     let cancelled = false
@@ -402,14 +418,15 @@ export function TaxTab({
     }
 
     if (currentTaxPosition) {
-      return `After ${
-        formatGameDateValue(currentTaxPosition.period_end) ??
-        currentTaxPosition.period_end
-      }`
+      return t('tax.afterDate', {
+        date:
+          formatGameDateValue(currentTaxPosition.period_end) ??
+          currentTaxPosition.period_end,
+      })
     }
 
     return latestAudit ? getNextGameMonthEndLabel(latestAudit.period_end) : '—'
-  }, [currentTaxPosition, latestAudit])
+  }, [currentTaxPosition, latestAudit, t])
 
   const summary = useMemo(() => {
     if (!currentTaxPosition) {
@@ -527,8 +544,8 @@ export function TaxTab({
   if (loading) {
     return (
       <div className="bg-white p-4 rounded shadow">
-        <h4 className="font-semibold">Tax</h4>
-        <div className="mt-2 text-sm text-gray-600">Loading tax data…</div>
+        <h4 className="font-semibold">{t('tax.title')}</h4>
+        <div className="mt-2 text-sm text-gray-600">{t('tax.loading')}</div>
       </div>
     )
   }
@@ -536,7 +553,7 @@ export function TaxTab({
   if (error) {
     return (
       <div className="bg-white p-4 rounded shadow">
-        <h4 className="font-semibold">Tax</h4>
+        <h4 className="font-semibold">{t('tax.title')}</h4>
         <div className="mt-2 text-sm text-red-600">{error}</div>
       </div>
     )
@@ -547,10 +564,10 @@ export function TaxTab({
       <div className="bg-white p-4 rounded shadow">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h4 className="font-semibold">Tax</h4>
+            <h4 className="font-semibold">{t('tax.title')}</h4>
 
             <div className="mt-1 text-sm text-gray-600">
-              Flat tax rate on taxable income:{' '}
+              {t('tax.flatRate')}{' '}
               <span className="font-medium">15%</span>
             </div>
           </div>
@@ -562,16 +579,18 @@ export function TaxTab({
                   latestAudit.audit_status
                 )}`}
               >
-                Latest audit: {latestAudit.audit_status}
+                {t('tax.latestAudit', {
+                  status: getAuditStatusLabel(latestAudit.audit_status),
+                })}
               </span>
             ) : (
               <span className="inline-flex items-center rounded bg-gray-100 px-2 py-1 text-xs font-medium text-gray-700">
-                No audits yet
+                {t('tax.noAudits')}
               </span>
             )}
 
             <span className="inline-flex items-center rounded bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700">
-              Next audit: {nextAuditLabel}
+              {t('tax.nextAudit', { date: nextAuditLabel })}
             </span>
           </div>
         </div>
@@ -579,7 +598,7 @@ export function TaxTab({
         <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
           <div className="rounded border p-3">
             <div className="text-xs uppercase tracking-wide text-gray-500">
-              Current taxable income
+              {t('tax.currentTaxable')}
             </div>
 
             <div className="mt-1 text-lg font-semibold">
@@ -589,7 +608,7 @@ export function TaxTab({
 
           <div className="rounded border p-3">
             <div className="text-xs uppercase tracking-wide text-gray-500">
-              Expected tax so far
+              {t('tax.expectedTax')}
             </div>
 
             <div className="mt-1 text-lg font-semibold">
@@ -599,7 +618,7 @@ export function TaxTab({
 
           <div className="rounded border p-3">
             <div className="text-xs uppercase tracking-wide text-gray-500">
-              Already withheld
+              {t('tax.alreadyWithheld')}
             </div>
 
             <div className="mt-1 text-lg font-semibold">
@@ -609,7 +628,7 @@ export function TaxTab({
 
           <div className="rounded border p-3">
             <div className="text-xs uppercase tracking-wide text-gray-500">
-              Estimated adjustment
+              {t('tax.estimatedAdjustment')}
             </div>
 
             <div
@@ -628,7 +647,7 @@ export function TaxTab({
 
         {currentTaxPosition ? (
           <div className="mt-4 text-sm text-gray-600">
-            Current tax period:{' '}
+            {t('tax.currentPeriod')}{' '}
             {formatGameDateRange(
               currentTaxPosition.period_start,
               currentTaxPosition.period_end
@@ -636,31 +655,31 @@ export function TaxTab({
           </div>
         ) : gameState ? (
           <div className="mt-4 text-sm text-gray-600">
-            Current tax period is loading…
+            {t('tax.periodLoading')}
           </div>
         ) : (
           <div className="mt-4 text-sm text-gray-600">
-            Current game period unavailable.
+            {t('tax.periodUnavailable')}
           </div>
         )}
       </div>
 
       <div className="bg-white p-4 rounded shadow">
-        <h5 className="font-medium">Tax statement</h5>
+        <h5 className="font-medium">{t('tax.statement')}</h5>
 
         {taxRows.length === 0 ? (
           <div className="mt-3 text-sm text-gray-600">
-            No tax statement rows found.
+            {t('tax.noStatement')}
           </div>
         ) : (
           <div className="mt-3 overflow-x-auto">
             <table className="w-full table-fixed text-sm">
               <thead>
                 <tr className="border-b text-left text-gray-500">
-                  <th className="py-2 pr-4 w-[20%]">Game Time</th>
+                  <th className="py-2 pr-4 w-[20%]">{t('tax.gameTime')}</th>
                   <th className="py-2 pr-4 w-[20%]">Type</th>
-                  <th className="py-2 pr-4 w-[20%]">Category</th>
-                  <th className="py-2 pr-4 w-[20%]">Reference</th>
+                  <th className="py-2 pr-4 w-[20%]">{t('tax.category')}</th>
+                  <th className="py-2 pr-4 w-[20%]">{t('tax.reference')}</th>
                   <th className="py-2 w-[20%] text-right">Amount</th>
                 </tr>
               </thead>
@@ -713,28 +732,28 @@ export function TaxTab({
             totalPages={taxStatementTotalPages}
             totalItems={taxRows.length}
             pageSize={TAX_PAGE_SIZE}
-            itemLabel="tax statement row(s)"
+            itemLabel={t('tax.statementRows')}
             onPageChange={setTaxStatementPage}
           />
         ) : null}
       </div>
 
       <div className="bg-white p-4 rounded shadow">
-        <h5 className="font-medium">Audit history</h5>
+        <h5 className="font-medium">{t('tax.auditHistory')}</h5>
 
         {audits.length === 0 ? (
-          <div className="mt-3 text-sm text-gray-600">No tax audits found.</div>
+          <div className="mt-3 text-sm text-gray-600">{t('tax.noAuditHistory')}</div>
         ) : (
           <div className="mt-3 overflow-x-auto">
             <table className="w-full table-fixed text-sm">
               <thead>
                 <tr className="border-b text-left text-gray-500">
-                  <th className="py-2 pr-4 w-[22%]">Game Period</th>
-                  <th className="py-2 pr-4 w-[12%]">Status</th>
-                  <th className="py-2 pr-4 w-[18%]">Taxable income</th>
-                  <th className="py-2 pr-4 w-[16%]">Expected tax</th>
-                  <th className="py-2 pr-4 w-[16%]">Withheld</th>
-                  <th className="py-2 w-[16%]">Adjustment</th>
+                  <th className="py-2 pr-4 w-[22%]">{t('tax.gamePeriod')}</th>
+                  <th className="py-2 pr-4 w-[12%]">{t('tax.status')}</th>
+                  <th className="py-2 pr-4 w-[18%]">{t('tax.taxableIncome')}</th>
+                  <th className="py-2 pr-4 w-[16%]">{t('tax.expectedTaxColumn')}</th>
+                  <th className="py-2 pr-4 w-[16%]">{t('tax.withheld')}</th>
+                  <th className="py-2 w-[16%]">{t('tax.adjustment')}</th>
                 </tr>
               </thead>
 
@@ -754,7 +773,7 @@ export function TaxTab({
                           audit.audit_status
                         )}`}
                       >
-                        {audit.audit_status}
+                        {getAuditStatusLabel(audit.audit_status)}
                       </span>
                     </td>
 
@@ -794,7 +813,7 @@ export function TaxTab({
             totalPages={auditTotalPages}
             totalItems={audits.length}
             pageSize={TAX_PAGE_SIZE}
-            itemLabel="audit row(s)"
+            itemLabel={t('tax.auditRows')}
             onPageChange={setAuditPage}
           />
         ) : null}
