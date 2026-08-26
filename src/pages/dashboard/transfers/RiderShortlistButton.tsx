@@ -40,7 +40,7 @@ export default function RiderShortlistButton({
   compact?: boolean
   onChanged?: (shortlisted: boolean) => void
 }): JSX.Element {
-  const { t } = useTranslation('transfer')
+  const { t } = useTranslation('transfers')
 
   const [status, setStatus] = useState<ShortlistStatus | null>(null)
   const [loading, setLoading] = useState(true)
