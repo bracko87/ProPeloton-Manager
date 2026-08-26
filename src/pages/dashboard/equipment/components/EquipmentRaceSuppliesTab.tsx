@@ -17,6 +17,8 @@
  */
 
 import React, { useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import type { TFunction } from 'i18next'
 import { getRaceSupplies, purchaseRaceSupplies } from '../equipmentApi'
 import type { RaceSupplyItem } from '../types'
 import {
@@ -49,17 +51,16 @@ type RaceSupplyUseType = 'consumable' | 'durable'
 
 type RaceSupplyRule = {
   key: RaceSupplyKey
-  displayName: string
-  shortLabel: string
+  displayNameKey: string
   useType: RaceSupplyUseType
   defaultPurchaseQuantity: number
   minPurchaseQuantity: number
   maxPurchaseQuantity: number
   stockLowThreshold: number
-  stageRule: string
-  durabilityRule: string
-  positiveEffects: string[]
-  negativeEffects: string[]
+  stageRuleKey: string
+  durabilityRuleKey: string
+  positiveEffectKeys: string[]
+  negativeEffectKeys: string[]
 }
 
 type DurableSupplySummary = {
@@ -76,107 +77,101 @@ type DurableSupplySummary = {
 const raceSupplyRules: Record<RaceSupplyKey, RaceSupplyRule> = {
   bidons_water_bottles: {
     key: 'bidons_water_bottles',
-    displayName: 'Bidons / Water Bottles',
-    shortLabel: 'Bidons',
+    displayNameKey: 'supplies.bidons',
     useType: 'consumable',
     defaultPurchaseQuantity: 50,
     minPurchaseQuantity: 1,
     maxPurchaseQuantity: 500,
     stockLowThreshold: 20,
-    stageRule: 'Team-level stage setup: 1–4 bidons per rider.',
-    durabilityRule: 'One-use consumable. Every bottle used in a stage is consumed.',
-    positiveEffects: [
-      'Hydration support: +0.2% stamina stability per bidon',
-      'Fatigue control: -0.2% stage fatigue per bidon',
+    stageRuleKey: 'supplies.bidonsStage',
+    durabilityRuleKey: 'supplies.bidonsDurability',
+    positiveEffectKeys: [
+      'supplies.bidonsPositive1',
+      'supplies.bidonsPositive2',
     ],
-    negativeEffects: [
-      'Below minimum: +1% fatigue risk',
-      'No extra benefit after 4 bidons per rider',
+    negativeEffectKeys: [
+      'supplies.bidonsNegative1',
+      'supplies.bidonsNegative2',
     ],
   },
 
   energy_gels: {
     key: 'energy_gels',
-    displayName: 'Energy Gels',
-    shortLabel: 'Gels',
+    displayNameKey: 'supplies.gels',
     useType: 'consumable',
     defaultPurchaseQuantity: 50,
     minPurchaseQuantity: 1,
     maxPurchaseQuantity: 500,
     stockLowThreshold: 20,
-    stageRule: 'Team-level stage setup: 0–4 gels per rider.',
-    durabilityRule: 'One-use consumable. Every gel used in a stage is consumed.',
-    positiveEffects: [
-      'Energy boost: +0.5% stamina per gel',
-      'Final effort support: +0.25% sprint/climb/attack efficiency per gel',
+    stageRuleKey: 'supplies.gelsStage',
+    durabilityRuleKey: 'supplies.gelsDurability',
+    positiveEffectKeys: [
+      'supplies.gelsPositive1',
+      'supplies.gelsPositive2',
     ],
-    negativeEffects: [
-      'No gels: -1% final-phase stamina support',
-      'No extra benefit after 4 gels per rider',
+    negativeEffectKeys: [
+      'supplies.gelsNegative1',
+      'supplies.gelsNegative2',
     ],
   },
 
   nutrition_packs: {
     key: 'nutrition_packs',
-    displayName: 'Nutrition Packs',
-    shortLabel: 'Nutrition',
+    displayNameKey: 'supplies.nutrition',
     useType: 'consumable',
     defaultPurchaseQuantity: 50,
     minPurchaseQuantity: 1,
     maxPurchaseQuantity: 300,
     stockLowThreshold: 20,
-    stageRule: 'Team-level stage setup: 0–2 nutrition packs per rider.',
-    durabilityRule: 'One-use consumable. Every pack used in a stage is consumed.',
-    positiveEffects: [
-      'Endurance support: +1% stamina stability per pack',
-      'Recovery support: +0.5% post-stage recovery per pack',
+    stageRuleKey: 'supplies.nutritionStage',
+    durabilityRuleKey: 'supplies.nutritionDurability',
+    positiveEffectKeys: [
+      'supplies.nutritionPositive1',
+      'supplies.nutritionPositive2',
     ],
-    negativeEffects: [
-      'No nutrition on long stages: +1% fatigue pressure',
-      'No extra benefit after 2 packs per rider',
+    negativeEffectKeys: [
+      'supplies.nutritionNegative1',
+      'supplies.nutritionNegative2',
     ],
   },
 
   race_jersey_complete: {
     key: 'race_jersey_complete',
-    displayName: 'Race Jersey Complete',
-    shortLabel: 'Race Jersey',
+    displayNameKey: 'supplies.jersey',
     useType: 'durable',
     defaultPurchaseQuantity: 10,
     minPurchaseQuantity: 1,
     maxPurchaseQuantity: 50,
     stockLowThreshold: 6,
-    stageRule: 'Mandatory in Stage Plans. One race jersey kit is required per selected rider.',
-    durabilityRule: 'Durable reusable kit. Each kit has 10 stage uses before it becomes worn out.',
-    positiveEffects: [
-      'Race readiness: +0.5% setup readiness',
-      'Comfort support: +0.25% fatigue control',
+    stageRuleKey: 'supplies.jerseyStage',
+    durabilityRuleKey: 'supplies.jerseyDurability',
+    positiveEffectKeys: [
+      'supplies.jerseyPositive1',
+      'supplies.jerseyPositive2',
     ],
-    negativeEffects: [
-      'Missing jersey kit: blocks stage setup',
-      'Worn-out kits are no longer usable',
+    negativeEffectKeys: [
+      'supplies.jerseyNegative1',
+      'supplies.jerseyNegative2',
     ],
   },
 
   rain_jackets: {
     key: 'rain_jackets',
-    displayName: 'Rain Jackets',
-    shortLabel: 'Rain Jacket',
+    displayNameKey: 'supplies.rainJackets',
     useType: 'durable',
     defaultPurchaseQuantity: 10,
     minPurchaseQuantity: 1,
     maxPurchaseQuantity: 50,
     stockLowThreshold: 6,
-    stageRule: 'Optional in Stage Plans: None or All riders.',
-    durabilityRule:
-      'Durable reusable item. Each jacket has 25 stage uses. One use is counted whenever the jacket is assigned/used for a stage.',
-    positiveEffects: [
-      'Bad-weather protection: sickness risk ×0.50 in rain/cold/bad weather',
-      'Cold/rain fatigue support: -0.5% fatigue pressure',
+    stageRuleKey: 'supplies.rainStage',
+    durabilityRuleKey: 'supplies.rainDurability',
+    positiveEffectKeys: [
+      'supplies.rainPositive1',
+      'supplies.rainPositive2',
     ],
-    negativeEffects: [
-      'Efficiency penalty: -1% rider speed/efficiency when used',
-      'Uses 1 jacket durability use every assigned stage',
+    negativeEffectKeys: [
+      'supplies.rainNegative1',
+      'supplies.rainNegative2',
     ],
   },
 }
@@ -203,6 +198,11 @@ function getOptionalNumber(...values: unknown[]): number | null {
 
 function getRaceSupplyRule(supplyKey: string): RaceSupplyRule | null {
   return raceSupplyRules[supplyKey as RaceSupplyKey] ?? null
+}
+
+function getRaceSupplyDisplayName(item: RaceSupplyItem, t: TFunction): string {
+  const rule = getRaceSupplyRule(item.supply_key)
+  return rule ? t(rule.displayNameKey) : item.display_name
 }
 
 function getRaceSupplyImageUrl(item: RaceSupplyItem): string | null {
@@ -421,6 +421,8 @@ function SupplyEffectsList({
 }
 
 function RaceSupplyInfoTooltip({ rule }: { rule: RaceSupplyRule }) {
+  const { t } = useTranslation('equipment')
+  const displayName = t(rule.displayNameKey)
   const [open, setOpen] = useState(false)
   const [pinned, setPinned] = useState(false)
   const [position, setPosition] = useState({ top: 0, left: 0 })
@@ -518,7 +520,7 @@ function RaceSupplyInfoTooltip({ rule }: { rule: RaceSupplyRule }) {
       <button
         ref={buttonRef}
         type="button"
-        aria-label={`${rule.displayName} stage plan rule`}
+        aria-label={t('supplies.ruleAria', { name: displayName })}
         onClick={handleToggleClick}
         className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-gray-200 bg-white text-xs font-bold text-gray-500 shadow-sm hover:bg-gray-50"
       >
@@ -532,7 +534,7 @@ function RaceSupplyInfoTooltip({ rule }: { rule: RaceSupplyRule }) {
         >
           <div className="mb-2 flex items-center justify-between gap-3">
             <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-400">
-              Stage Plan rule
+              {t('supplies.stagePlanRule')}
             </div>
 
             {pinned ? (
@@ -547,28 +549,28 @@ function RaceSupplyInfoTooltip({ rule }: { rule: RaceSupplyRule }) {
           </div>
 
           <div className="text-sm font-semibold text-gray-900">
-            {rule.displayName}
+            {displayName}
           </div>
 
-          <p className="mt-1 text-xs text-gray-500">{rule.stageRule}</p>
-          <p className="mt-1 text-xs text-gray-500">{rule.durabilityRule}</p>
+          <p className="mt-1 text-xs text-gray-500">{t(rule.stageRuleKey)}</p>
+          <p className="mt-1 text-xs text-gray-500">{t(rule.durabilityRuleKey)}</p>
 
           <div className="mt-3 grid gap-3 md:grid-cols-2">
             <SupplyEffectsList
-              title="Positive effects"
-              values={rule.positiveEffects}
+              title={t('supplies.positiveEffects')}
+              values={rule.positiveEffectKeys.map((key) => t(key))}
               tone="positive"
             />
 
             <SupplyEffectsList
-              title="Negative / limits"
-              values={rule.negativeEffects}
+              title={t('supplies.negativeLimits')}
+              values={rule.negativeEffectKeys.map((key) => t(key))}
               tone="negative"
             />
           </div>
 
           <div className="mt-3 rounded-lg bg-gray-50 px-3 py-2 text-[11px] text-gray-500">
-            Hover for 3 seconds or click the info button to pin this popup.
+            {t('supplies.pinHelp')}
           </div>
         </div>
       ) : null}
@@ -598,6 +600,7 @@ function DurableSupplyOverviewPanel({
 }: {
   items: RaceSupplyItem[]
 }) {
+  const { t } = useTranslation('equipment')
   const durableItems = items.filter((item) => {
     const rule = getRaceSupplyRule(item.supply_key)
     return rule?.useType === 'durable'
@@ -610,17 +613,15 @@ function DurableSupplyOverviewPanel({
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h4 className="text-base font-semibold text-gray-900">
-            Durable reusable supply condition
+            {t('supplies.durablePanel')}
           </h4>
           <p className="mt-1 text-xs text-gray-500">
-            Race Jersey Complete and Rain Jackets are reusable units. This panel
-            keeps their counts and remaining stage-use durability visible in one
-            place.
+            {t('supplies.durablePanelDescription')}
           </p>
         </div>
 
         <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
-          reusable units
+          {t('supplies.reusableUnits')}
         </span>
       </div>
 
@@ -639,15 +640,15 @@ function DurableSupplyOverviewPanel({
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="min-w-0">
                   <div className="text-sm font-semibold text-blue-950">
-                    {item.display_name}
+                    {getRaceSupplyDisplayName(item, t)}
                   </div>
                   <div className="mt-1 max-w-[34rem] text-xs leading-5 text-blue-800">
-                    {rule.durabilityRule}
+                    {t(rule.durabilityRuleKey)}
                   </div>
                 </div>
 
                 <span className="rounded-full bg-white px-2 py-0.5 text-xs font-semibold text-blue-700 shadow-sm">
-                  {formatUses(stats.maxStageUses)} uses / unit
+                  {t('supplies.usesPerUnit', { uses: formatUses(stats.maxStageUses) })}
                 </span>
               </div>
 
@@ -655,7 +656,7 @@ function DurableSupplyOverviewPanel({
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div>
                     <div className="text-xs font-semibold uppercase tracking-wide text-blue-500">
-                      Overall condition
+                      {t('supplies.overallCondition')}
                     </div>
                     <div className="mt-0.5 text-xl font-bold text-blue-950">
                       {formatPercent(stats.conditionPercent)}
@@ -664,16 +665,19 @@ function DurableSupplyOverviewPanel({
 
                   <div className="text-right text-xs text-blue-700">
                     <div>
-                      Used:{' '}
-                      <span className="font-semibold">
-                        {formatPercent(stats.usedPercent)} ({formatUses(stats.usedStageUses)} / {formatUses(stats.totalStageCapacity)})
-                      </span>
+                      {t('supplies.usedMetric', {
+                        percent: formatPercent(stats.usedPercent),
+                        used: formatUses(stats.usedStageUses),
+                        total: formatUses(stats.totalStageCapacity),
+                        capacity: formatUses(stats.totalStageCapacity),
+                      })}
                     </div>
                     <div>
-                      Left:{' '}
-                      <span className="font-semibold">
-                        {formatPercent(stats.remainingPercent)} ({formatUses(stats.remainingStageUses)} uses)
-                      </span>
+                      {t('supplies.leftMetric', {
+                        percent: formatPercent(stats.remainingPercent),
+                        left: formatUses(stats.remainingStageUses),
+                        uses: formatUses(stats.remainingStageUses),
+                      })}
                     </div>
                   </div>
                 </div>
@@ -686,42 +690,42 @@ function DurableSupplyOverviewPanel({
                 </div>
 
                 <div className="mt-1 flex justify-between text-[11px] text-blue-500">
-                  <span>used</span>
-                  <span>full capacity</span>
+                  <span>{t('supplies.used')}</span>
+                  <span>{t('supplies.fullCapacity')}</span>
                 </div>
               </div>
 
               <div className="mt-2 grid grid-cols-2 gap-2 md:grid-cols-4">
                 <DurableMetric
-                  label="Available now"
+                  label={t('supplies.availableNow')}
                   value={formatUses(stats.availableUnits)}
                 />
                 <DurableMetric
-                  label="Purchased units"
+                  label={t('supplies.purchasedUnits')}
                   value={formatUses(stats.purchasedUnits)}
                 />
                 <DurableMetric
-                  label="Usable units"
+                  label={t('supplies.usableUnits')}
                   value={formatUses(stats.usableUnits)}
                 />
                 <DurableMetric
-                  label="Worn out"
+                  label={t('supplies.wornOut')}
                   value={formatUses(stats.wornOutUnits)}
                 />
                 <DurableMetric
-                  label="Discarded"
+                  label={t('supplies.discarded')}
                   value={formatUses(stats.discardedUnits)}
                 />
                 <DurableMetric
-                  label="Capacity left"
+                  label={t('supplies.capacityLeft')}
                   value={formatPercent(stats.remainingPercent)}
                 />
                 <DurableMetric
-                  label="Capacity used"
+                  label={t('supplies.capacityUsed')}
                   value={formatPercent(stats.usedPercent)}
                 />
                 <DurableMetric
-                  label="Per-unit range"
+                  label={t('supplies.perUnitRange')}
                   value={
                     stats.minUsesRemaining === null || stats.maxUsesRemaining === null
                       ? '—'
@@ -741,6 +745,7 @@ export default function EquipmentRaceSuppliesTab({
   clubId,
   equipmentAccess,
 }: EquipmentRaceSuppliesTabProps): JSX.Element {
+  const { t } = useTranslation('equipment')
   const [items, setItems] = useState<RaceSupplyItem[]>([])
   const [quantities, setQuantities] = useState<Record<string, number>>({})
   const [loading, setLoading] = useState(true)
@@ -810,7 +815,7 @@ export default function EquipmentRaceSuppliesTab({
         })
       }
 
-      setMessage('Automatic restocking rules saved. Normal club-cash prices always apply.')
+      setMessage(t('supplies.rulesSaved'))
       autoRestockRanRef.current = false
     } catch (caughtError) {
       setError(
@@ -834,7 +839,7 @@ export default function EquipmentRaceSuppliesTab({
     })
 
     if (purchases.length === 0) {
-      setMessage('Automatic restocking checked: no enabled supply is below its threshold.')
+      setMessage(t('supplies.restockNone'))
       return
     }
 
@@ -852,7 +857,9 @@ export default function EquipmentRaceSuppliesTab({
       }
 
       setMessage(
-        `Automatic restocking completed for ${purchases.length} supply item${purchases.length === 1 ? '' : 's'}.`,
+        purchases.length === 1
+          ? t('supplies.restockCompletedOne', { count: 1 })
+          : t('supplies.restockCompleted', { count: purchases.length }),
       )
       await loadSupplies()
     } catch (caughtError) {
@@ -917,8 +924,10 @@ export default function EquipmentRaceSuppliesTab({
   }, [loading, items, autoRestockRules, equipmentAccess?.is_premium])
 
   async function handleBuy(item: RaceSupplyItem): Promise<void> {
+    const displayName = getRaceSupplyDisplayName(item, t)
+
     if (!item.catalog_item_id) {
-      setError(`No catalog item found for ${item.display_name}`)
+      setError(`No catalog item found for ${displayName}`)
       return
     }
 
@@ -926,7 +935,7 @@ export default function EquipmentRaceSuppliesTab({
     const requestedQuantity = quantities[item.supply_key] ?? 0
 
     if (requestedQuantity <= 0) {
-      setError(`Enter how many ${item.display_name} you want to buy.`)
+      setError(`Enter how many ${displayName} you want to buy.`)
       return
     }
 
@@ -934,17 +943,16 @@ export default function EquipmentRaceSuppliesTab({
       requestedQuantity,
       rule ?? {
         key: item.supply_key as RaceSupplyKey,
-        displayName: item.display_name,
-        shortLabel: item.display_name,
         useType: 'consumable',
         defaultPurchaseQuantity: 1,
         minPurchaseQuantity: 1,
         maxPurchaseQuantity: 999,
         stockLowThreshold: 20,
-        stageRule: '',
-        durabilityRule: '',
-        positiveEffects: [],
-        negativeEffects: [],
+        displayNameKey: 'supplies.generic',
+        stageRuleKey: 'supplies.generic',
+        durabilityRuleKey: 'supplies.generic',
+        positiveEffectKeys: [],
+        negativeEffectKeys: [],
       },
     )
 
@@ -960,7 +968,7 @@ export default function EquipmentRaceSuppliesTab({
         idempotencyKey: makeIdempotencyKey('race_supplies_purchase'),
       })
 
-      setMessage(`${quantity}x ${item.display_name} purchased.`)
+      setMessage(`${quantity}x ${displayName} purchased.`)
       await loadSupplies()
     } catch (err) {
       setError(
@@ -976,11 +984,9 @@ export default function EquipmentRaceSuppliesTab({
   return (
     <div className="space-y-4">
       <div className="rounded-lg bg-white p-4 shadow-sm">
-        <h3 className="font-semibold text-gray-900">Race Supplies</h3>
+        <h3 className="font-semibold text-gray-900">{t('supplies.title')}</h3>
         <p className="mt-1 text-xs text-gray-500">
-          Race supplies used by Race Preparation and Stage Plans. Consumables are
-          used once; Race Jersey Complete and Rain Jackets are durable reusable
-          supplies with stage-use limits.
+          {t('supplies.description')}
         </p>
       </div>
 
@@ -990,23 +996,23 @@ export default function EquipmentRaceSuppliesTab({
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="font-semibold text-slate-900">Automatic Restocking</h3>
-                <span className="rounded-full border border-yellow-300 bg-yellow-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-yellow-800">Premium</span>
+                <h3 className="font-semibold text-slate-900">{t('supplies.automaticRestocking')}</h3>
+                <span className="rounded-full border border-yellow-300 bg-yellow-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-yellow-800">{t('common.premium')}</span>
               </div>
               <p className="mt-1 text-xs text-slate-500">
-                When this page checks stock, enabled rules buy the normal catalog quantity with club cash. No discount or extra stock is granted.
+                {t('supplies.restockDescription')}
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
               <button type="button" onClick={() => setAutoRestockExpanded(value => !value)} className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
-                {autoRestockExpanded ? 'Hide rules' : 'Manage rules'}
+                {autoRestockExpanded ? t('supplies.hideRules') : t('supplies.manageRules')}
               </button>
               <button type="button" onClick={() => void runAutomaticRestock()} disabled={autoRestockLoading} className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50">
-                Run now
+                {t('supplies.runNow')}
               </button>
               {autoRestockExpanded ? (
                 <button type="button" onClick={() => void handleSaveAutoRestockRules()} disabled={autoRestockLoading} className="rounded-md bg-slate-900 px-3 py-2 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-50">
-                  {autoRestockLoading ? 'Working…' : 'Save rules'}
+                  {autoRestockLoading ? t('supplies.working') : t('supplies.saveRules')}
                 </button>
               ) : null}
             </div>
@@ -1014,9 +1020,22 @@ export default function EquipmentRaceSuppliesTab({
 
           {!autoRestockExpanded ? (
             <div className="mt-3 flex flex-wrap gap-2 text-xs text-slate-500">
-              <span>{autoRestockRules.filter(rule => rule.enabled).length} enabled rule{autoRestockRules.filter(rule => rule.enabled).length === 1 ? '' : 's'}</span>
+              <span>
+                {autoRestockRules.filter(rule => rule.enabled).length === 1
+                  ? t('supplies.enabledRule', { count: 1 })
+                  : t('supplies.enabledRules', {
+                      count: autoRestockRules.filter(rule => rule.enabled).length,
+                    })}
+              </span>
               <span aria-hidden="true">·</span>
-              <span>{sortedItems.filter(item => { const rule = getAutoRestockRule(item.supply_key); return rule.enabled && Number(item.quantity_available ?? 0) < rule.minimum_stock }).length} currently below threshold</span>
+              <span>
+                {t('supplies.belowThresholdCount', {
+                  count: sortedItems.filter(item => {
+                    const rule = getAutoRestockRule(item.supply_key)
+                    return rule.enabled && Number(item.quantity_available ?? 0) < rule.minimum_stock
+                  }).length,
+                })}
+              </span>
             </div>
           ) : null}
 
@@ -1028,13 +1047,13 @@ export default function EquipmentRaceSuppliesTab({
                 <div key={item.supply_key} className="rounded-lg border border-slate-200 bg-slate-50 p-3">
                   <label className="flex items-center gap-2 text-sm font-semibold text-slate-900">
                     <input type="checkbox" checked={rule.enabled} onChange={event => updateAutoRestockRule(item.supply_key, { enabled: event.target.checked })} className="h-4 w-4 rounded border-slate-300 text-yellow-500 focus:ring-yellow-400" />
-                    {item.display_name}
+                    {getRaceSupplyDisplayName(item, t)}
                   </label>
                   <div className="mt-3 grid grid-cols-2 gap-2">
-                    <label className="text-xs text-slate-600">Below<input type="number" min={0} value={rule.minimum_stock} onChange={event => updateAutoRestockRule(item.supply_key, { minimum_stock: Math.max(0, Number(event.target.value)) })} className="mt-1 w-full rounded border border-slate-300 bg-white px-2 py-1.5 text-sm text-slate-900" /></label>
-                    <label className="text-xs text-slate-600">Buy<input type="number" min={1} value={rule.order_quantity} onChange={event => updateAutoRestockRule(item.supply_key, { order_quantity: Math.max(1, Number(event.target.value)) })} className="mt-1 w-full rounded border border-slate-300 bg-white px-2 py-1.5 text-sm text-slate-900" /></label>
+                    <label className="text-xs text-slate-600">{t('supplies.below')}<input type="number" min={0} value={rule.minimum_stock} onChange={event => updateAutoRestockRule(item.supply_key, { minimum_stock: Math.max(0, Number(event.target.value)) })} className="mt-1 w-full rounded border border-slate-300 bg-white px-2 py-1.5 text-sm text-slate-900" /></label>
+                    <label className="text-xs text-slate-600">{t('supplies.buy')}<input type="number" min={1} value={rule.order_quantity} onChange={event => updateAutoRestockRule(item.supply_key, { order_quantity: Math.max(1, Number(event.target.value)) })} className="mt-1 w-full rounded border border-slate-300 bg-white px-2 py-1.5 text-sm text-slate-900" /></label>
                   </div>
-                  <div className="mt-2 text-xs text-slate-500">Current stock: {Number(item.quantity_available ?? 0).toLocaleString()}</div>
+                  <div className="mt-2 text-xs text-slate-500">{t('supplies.currentStock', { count: Number(item.quantity_available ?? 0).toLocaleString() })}</div>
                 </div>
               )
             })}
@@ -1045,10 +1064,10 @@ export default function EquipmentRaceSuppliesTab({
         <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <div className="flex items-center gap-2"><h3 className="font-semibold text-slate-900">Automatic Restocking</h3><span className="rounded-full border border-yellow-300 bg-yellow-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-yellow-800">Premium</span><span aria-hidden="true" className="text-slate-400">🔒</span></div>
-              <p className="mt-1 text-sm text-slate-600">Set stock thresholds and normal club-cash order quantities for race supplies.</p>
+              <div className="flex items-center gap-2"><h3 className="font-semibold text-slate-900">{t('supplies.automaticRestocking')}</h3><span className="rounded-full border border-yellow-300 bg-yellow-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-yellow-800">{t('common.premium')}</span><span aria-hidden="true" className="text-slate-400">🔒</span></div>
+              <p className="mt-1 text-sm text-slate-600">{t('supplies.restockLocked')}</p>
             </div>
-            <a href="/dashboard/premium" className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">Unlock with Premium</a>
+            <a href="/dashboard/premium" className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">{t('common.unlockPremium')}</a>
           </div>
         </div>
       )}
@@ -1067,12 +1086,11 @@ export default function EquipmentRaceSuppliesTab({
 
       {loading ? (
         <div className="rounded-lg bg-white p-4 text-sm text-gray-500 shadow-sm">
-          Loading race supplies...
+          {t('supplies.loading')}
         </div>
       ) : sortedItems.length === 0 ? (
         <div className="rounded-lg bg-white p-4 text-sm text-gray-500 shadow-sm">
-          No race supplies found. Expected supplies are Bidons / Water Bottles,
-          Energy Gels, Nutrition Packs, Race Jersey Complete and Rain Jackets.
+          {t('supplies.noneFound')}
         </div>
       ) : (
         <div className="relative grid gap-5 xl:grid-cols-2">
@@ -1089,6 +1107,7 @@ export default function EquipmentRaceSuppliesTab({
             const imageUrl = getRaceSupplyImageUrl(item)
             const isDurable = rule?.useType === 'durable'
             const purchaseQuantity = quantities[item.supply_key] ?? 0
+            const displayName = getRaceSupplyDisplayName(item, t)
 
             return (
               <div
@@ -1101,7 +1120,7 @@ export default function EquipmentRaceSuppliesTab({
                       {imageUrl ? (
                         <img
                           src={imageUrl}
-                          alt={item.display_name}
+                          alt={displayName}
                           className="h-full w-full object-cover"
                           onError={(event) => {
                             event.currentTarget.style.display = 'none'
@@ -1122,7 +1141,7 @@ export default function EquipmentRaceSuppliesTab({
                           imageUrl ? 'hidden' : 'flex',
                         ].join(' ')}
                       >
-                        {getRaceSupplyInitials(item.display_name)}
+                        {getRaceSupplyInitials(displayName)}
                       </div>
                     </div>
                   </div>
@@ -1131,12 +1150,12 @@ export default function EquipmentRaceSuppliesTab({
                     <div className="flex items-start justify-between gap-3">
                       <div>
                         <h4 className="text-base font-semibold text-gray-900">
-                          {item.display_name}
+                          {getRaceSupplyDisplayName(item, t)}
                         </h4>
                         <p className="mt-1 text-xs text-gray-500">
                           {item.brand_name
-                            ? `Brand: ${item.brand_name}`
-                            : 'Generic supply'}
+                            ? t('supplies.brand', { brand: item.brand_name })
+                            : t('supplies.generic')}
                         </p>
 
                         {rule ? (
@@ -1149,18 +1168,18 @@ export default function EquipmentRaceSuppliesTab({
                                   : 'bg-emerald-100 text-emerald-700',
                               ].join(' ')}
                             >
-                              {isDurable ? 'Durable reusable' : 'Consumable'}
+                              {isDurable ? t('supplies.durableReusable') : t('supplies.consumable')}
                             </span>
 
                             {rule.key === 'race_jersey_complete' ? (
                               <span className="rounded-full bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-700">
-                                Mandatory for stages
+                                {t('supplies.mandatoryStages')}
                               </span>
                             ) : null}
 
                             {rule.key === 'rain_jackets' ? (
                               <span className="rounded-full bg-sky-100 px-2 py-0.5 text-xs font-semibold text-sky-700">
-                                Weather protection
+                                {t('supplies.weatherProtection')}
                               </span>
                             ) : null}
                           </div>
@@ -1184,7 +1203,7 @@ export default function EquipmentRaceSuppliesTab({
                     <div className="mt-5 grid grid-cols-4 gap-3 text-sm">
                       <div>
                         <div className="text-[11px] font-semibold uppercase tracking-wide text-emerald-600">
-                          In stock now
+                          {t('supplies.inStock')}
                         </div>
                         <div className="mt-1 text-lg font-bold text-gray-900">
                           {item.quantity_available}
@@ -1216,7 +1235,7 @@ export default function EquipmentRaceSuppliesTab({
 
                     <div className="mt-auto pt-5">
                       <div className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-gray-400">
-                        New order quantity
+                        {t('supplies.newOrder')}
                       </div>
                       <div className="flex gap-2">
                       <input
@@ -1236,17 +1255,16 @@ export default function EquipmentRaceSuppliesTab({
                                   Number(rawValue),
                                   rule ?? {
                                     key: item.supply_key as RaceSupplyKey,
-                                    displayName: item.display_name,
-                                    shortLabel: item.display_name,
                                     useType: 'consumable',
                                     defaultPurchaseQuantity: 1,
                                     minPurchaseQuantity: 1,
                                     maxPurchaseQuantity: 999,
                                     stockLowThreshold: 20,
-                                    stageRule: '',
-                                    durabilityRule: '',
-                                    positiveEffects: [],
-                                    negativeEffects: [],
+                                    displayNameKey: 'supplies.generic',
+                                    stageRuleKey: 'supplies.generic',
+                                    durabilityRuleKey: 'supplies.generic',
+                                    positiveEffectKeys: [],
+                                    negativeEffectKeys: [],
                                   },
                                 ),
                           }))
@@ -1261,10 +1279,10 @@ export default function EquipmentRaceSuppliesTab({
                         className="flex-1 rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
                       >
                         {actionLoadingKey === item.supply_key
-                          ? 'Buying...'
+                          ? t('supplies.buying')
                           : isDurable
-                            ? 'Buy Units'
-                            : 'Buy'}
+                            ? t('supplies.buyUnits')
+                            : t('supplies.buy')}
                       </button>
                       </div>
                     </div>
