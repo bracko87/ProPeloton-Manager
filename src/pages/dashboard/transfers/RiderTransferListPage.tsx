@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import TransferHistoryPanel from './TransferHistoryPanel'
 import RiderShortlistButton from './RiderShortlistButton'
 
@@ -190,7 +191,7 @@ function formatMoney(value: number | null | undefined) {
   return `$${Math.round(Number(value)).toLocaleString('en-US')}`
 }
 
-function safeText(value: string | null | undefined, fallback = 'Unknown') {
+function safeText(value: string | null | undefined, fallback: string) {
   const trimmed = value?.trim()
   return trimmed ? trimmed : fallback
 }
@@ -205,7 +206,7 @@ function readRecord(value: unknown): Record<string, any> {
   return value && typeof value === 'object' ? (value as Record<string, any>) : {}
 }
 
-function resolveBuyerClubName(item: any): string {
+function resolveBuyerClubName(item: any, unknownClubLabel: string): string {
   const payload = readRecord(item?.payload_json)
   const metadata = readRecord(item?.metadata)
   const notesJson = readRecord(item?.notes_json)
@@ -219,13 +220,14 @@ function resolveBuyerClubName(item: any): string {
     readText(metadata?.buyerClubName) ??
     readText(notesJson?.buyer_club_name) ??
     readText(notesJson?.buyerClubName) ??
-    'Unknown club'
+    unknownClubLabel
   )
 }
 
 function getOutgoingBuyerClubInfo(
   item: any,
-  clubNameMap: Record<string, string>
+  clubNameMap: Record<string, string>,
+  unknownClubLabel: string
 ) {
   const metadata = readRecord(item?.metadata)
   const notesJson = readRecord(item?.notes_json)
@@ -250,7 +252,7 @@ function getOutgoingBuyerClubInfo(
 
   return {
     clubId,
-    clubName: clubName ?? 'Unknown club',
+    clubName: clubName ?? unknownClubLabel,
   }
 }
 
@@ -359,12 +361,15 @@ function getCountryFlagUrl(countryCode: string) {
   return `https://flagcdn.com/w40/${countryCode.toLowerCase()}.png`
 }
 
-function getCountryName(countryCode: string | null | undefined) {
+function getCountryName(
+  countryCode: string | null | undefined,
+  displayLocale: string
+) {
   const code = safeCountryCode(countryCode).toUpperCase()
 
   try {
     if (typeof Intl !== 'undefined' && typeof Intl.DisplayNames !== 'undefined') {
-      const regionNames = new Intl.DisplayNames(['en'], { type: 'region' })
+      const regionNames = new Intl.DisplayNames([displayLocale], { type: 'region' })
       return regionNames.of(code) || code
     }
   } catch {
@@ -377,21 +382,25 @@ function getCountryName(countryCode: string | null | undefined) {
 function getGameCountdownLabel(
   expiresOnGameDate: string | null | undefined,
   gameState: GameStateRow | null,
+  noExpiryLabel: string,
+  expiredLabel: string,
   fallbackLabel?: string | null
 ) {
-  if (!expiresOnGameDate) return 'No expiry'
+  if (!expiresOnGameDate) return noExpiryLabel
 
   const currentGameDate = getCurrentGameDateFromState(gameState)
 
   if (!currentGameDate) {
     const safeFallback = fallbackLabel?.trim()
-    return safeFallback && safeFallback.length > 0 ? safeFallback : 'No expiry'
+    if (safeFallback === 'Expired') return expiredLabel
+    if (safeFallback === 'No expiry') return noExpiryLabel
+    return safeFallback && safeFallback.length > 0 ? safeFallback : noExpiryLabel
   }
 
   const expiryDate = new Date(`${expiresOnGameDate}T23:59:59Z`)
   const diffMs = expiryDate.getTime() - currentGameDate.getTime()
 
-  if (diffMs <= 0) return 'Expired'
+  if (diffMs <= 0) return expiredLabel
 
   const totalSeconds = Math.floor(diffMs / 1000)
   const days = Math.floor(totalSeconds / 86400)
@@ -415,20 +424,23 @@ function looksLikeUuid(value: string | null | undefined) {
   )
 }
 
-function getPreferredRiderName(value: {
-  full_name?: string | null
-  display_name?: string | null
-  rider_id?: string | null
-}) {
+function getPreferredRiderName(
+  value: {
+    full_name?: string | null
+    display_name?: string | null
+    rider_id?: string | null
+  },
+  unknownRiderLabel: string
+) {
   if (value.full_name?.trim()) return value.full_name.trim()
   if (value.display_name?.trim() && !looksLikeUuid(value.display_name)) {
     return value.display_name.trim()
   }
   if (value.rider_id && !looksLikeUuid(value.rider_id)) return value.rider_id
-  return 'Unknown rider'
+  return unknownRiderLabel
 }
 
-function resolveActivityRiderName(item: any) {
+function resolveActivityRiderName(item: any, unknownRiderLabel: string) {
   const payload = readRecord(item?.payload_json)
   const metadata = readRecord(item?.metadata)
   const notesJson = readRecord(item?.notes_json)
@@ -444,7 +456,7 @@ function resolveActivityRiderName(item: any) {
     readText(notesJson?.rider_name) ??
     readText(notesJson?.display_name) ??
     (item?.rider_id && !looksLikeUuid(item.rider_id) ? item.rider_id : null) ??
-    'Unknown rider'
+    unknownRiderLabel
   )
 }
 
@@ -547,19 +559,35 @@ function MarketListRow({
   onQuickAction: () => void
   clubId: string
 }) {
-  const riderName = getPreferredRiderName({
-    full_name: item.raw.full_name,
-    display_name: item.display_name || item.raw.display_name,
-    rider_id: item.rider_id,
-  })
+  const { t, i18n } = useTranslation('transfers')
+
+  const displayLocale =
+    i18n.resolvedLanguage?.startsWith('sr')
+      ? 'sr-Latn-RS'
+      : i18n.resolvedLanguage || 'en'
+
+  const unknownRiderLabel = t('common.unknownRider')
+  const noExpiryLabel = t('common.noExpiry')
+  const expiredLabel = t('common.expired')
+
+  const riderName = getPreferredRiderName(
+    {
+      full_name: item.raw.full_name,
+      display_name: item.display_name || item.raw.display_name,
+      rider_id: item.rider_id,
+    },
+    unknownRiderLabel
+  )
 
   const countdown = getGameCountdownLabel(
     item.expires_on_game_date,
     gameState,
+    noExpiryLabel,
+    expiredLabel,
     item.raw.time_left_label
   )
 
-  const listingExpired = countdown === 'Expired'
+  const listingExpired = countdown === expiredLabel
 
   return (
     <button
@@ -578,7 +606,7 @@ function MarketListRow({
           <div className="flex flex-wrap items-center gap-2">
             <img
               src={getCountryFlagUrl(safeCountryCode(item.country_code))}
-              alt={getCountryName(item.country_code)}
+              alt={getCountryName(item.country_code, displayLocale)}
               className="h-4 w-6 shrink-0 rounded-sm border border-gray-200 object-cover"
             />
 
@@ -586,7 +614,7 @@ function MarketListRow({
 
             {item.is_scouted ? (
               <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">
-                Scouted
+                {t('common.scouted')}
               </span>
             ) : null}
 
@@ -604,13 +632,13 @@ function MarketListRow({
           </div>
 
           <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2">
-            <InfoPair label="Role:" value={item.role || '—'} />
+            <InfoPair label={`${t('common.role')}:`} value={item.role || '—'} />
             <InfoPair label="OVR:" value={item.overall_label ?? '—'} />
             {item.is_scouted ? (
               <InfoPair label="POT:" value={item.potential_label ?? '—'} />
             ) : null}
-            <InfoPair label="Age:" value={item.age_years ?? '—'} />
-            <InfoPair label="Seller:" value={stripLabelPrefix(item.seller_label)} />
+            <InfoPair label={`${t('common.age')}:`} value={item.age_years ?? '—'} />
+            <InfoPair label={`${t('activity.seller')}:`} value={stripLabelPrefix(item.seller_label)} />
           </div>
         </div>
 
@@ -622,13 +650,13 @@ function MarketListRow({
               }`}
             >
               <span className={`font-semibold ${listingExpired ? 'text-red-900' : 'text-blue-900'}`}>
-                Time left:
+                {t('transferList.timeLeft')}:
               </span>{' '}
               <span>{countdown}</span>
             </div>
 
             <div className="rounded-md border border-green-300 bg-green-50 px-3 py-2 text-xs">
-              <span className="font-bold text-black">Transfer:</span>{' '}
+              <span className="font-bold text-black">{t('history.transfer')}:</span>{' '}
               <span className="font-bold text-black">{formatTransferAmount(item.amount_value)}</span>
             </div>
 
@@ -643,7 +671,7 @@ function MarketListRow({
             ) : null}
 
             <MarketActionButton
-              label={item.is_user_active ? 'Offer Active' : 'Make Offer'}
+              label={item.is_user_active ? 'Offer Active' : t('transferList.makeOffer')}
               onClick={onQuickAction}
               disabled={item.is_own_item || listingExpired || item.is_user_active}
             />
@@ -707,6 +735,8 @@ type RiderTransferListPageProps = {
 }
 
 export default function RiderTransferListPage(props: RiderTransferListPageProps) {
+  const { t } = useTranslation('transfers')
+
   const {
     clubId,
     riderLoading,
@@ -752,6 +782,11 @@ export default function RiderTransferListPage(props: RiderTransferListPageProps)
     onWithdrawNegotiation,
   } = props
 
+  const unknownRiderLabel = t('common.unknownRider')
+  const unknownClubLabel = t('common.unknownClub')
+  const noExpiryLabel = t('common.noExpiry')
+  const expiredLabel = t('common.expired')
+
   const safeActiveTransferListings = Array.isArray(myActiveTransferListings)
     ? myActiveTransferListings
     : []
@@ -771,10 +806,10 @@ export default function RiderTransferListPage(props: RiderTransferListPageProps)
 
     for (const offer of mySentOffers || []) {
       const status = normalizeStatus(offer.status)
-      const riderName = resolveActivityRiderName(offer)
+      const riderName = resolveActivityRiderName(offer, unknownRiderLabel)
       const sellerName = safeText(
         offer.seller_club_name || clubNameMap[offer.seller_club_id],
-        'Unknown club'
+        unknownClubLabel
       )
 
       const linkedNegotiation = buyerNegotiationByOfferId.get(offer.id)
@@ -788,8 +823,8 @@ export default function RiderTransferListPage(props: RiderTransferListPageProps)
       if (status === 'completed') continue
 
       let tone: ActivityTone = 'active'
-      let statusLabel = 'Offer submitted'
-      let secondaryLine = 'Your club is waiting for the seller club response.'
+      let statusLabel = t('activity.offerSubmitted')
+      let secondaryLine = t('activity.waitingSeller')
       let actionLabel: string | undefined
       let actionDisabled = true
       let actionKind: TransferActivityItem['actionKind'] = undefined
@@ -802,42 +837,44 @@ export default function RiderTransferListPage(props: RiderTransferListPageProps)
 
       if (status === 'open') {
         tone = 'active'
-        statusLabel = 'Offer submitted'
-        secondaryLine = 'Your club is waiting for the seller club response.'
-        actionLabel = 'Cancel offer'
+        statusLabel = t('activity.offerSubmitted')
+        secondaryLine = t('activity.waitingSeller')
+        actionLabel = t('activity.cancelOffer')
         actionDisabled = false
         actionKind = 'withdraw_offer'
         withdrawOfferId = offer.id
       } else if (status === 'club_accepted' || status === 'accepted') {
         tone = linkedNegotiationIsActive ? 'active' : 'positive'
-        statusLabel = 'Offer accepted'
-        secondaryLine = `${sellerName} accepted your club terms. You can start rider contract negotiation.`
-        actionLabel = 'Start negotiation'
+        statusLabel = t('activity.offerAccepted')
+        secondaryLine = t('activity.sellerAccepted', { seller: sellerName })
+        actionLabel = t('activity.startNegotiation')
         actionDisabled = !linkedNegotiation || !linkedNegotiationIsActive
         actionKind = 'open_negotiation'
         negotiationIdToOpen = linkedNegotiation?.id ?? null
 
         cancelNegotiationId = linkedNegotiation?.id ?? null
-        cancelNegotiationLabel = 'Cancel transfer'
+        cancelNegotiationLabel = t('activity.cancelTransfer')
         cancelNegotiationDisabled = !linkedNegotiation || !linkedNegotiationIsActive
       } else if (status === 'rejected') {
         tone = 'negative'
-        statusLabel = 'Rejected'
-        secondaryLine = `${sellerName} rejected your offer.`
+        statusLabel = t('activity.rejected')
+        secondaryLine = t('activity.sellerRejected', { seller: sellerName })
       } else if (status === 'rider_declined') {
         tone = 'negative'
-        statusLabel = 'Rider refused contract'
-        secondaryLine = `${riderName} refused the contract terms.`
+        statusLabel = t('activity.riderRefused')
+        secondaryLine = t('activity.riderRefusedText', { rider: riderName })
       } else if (status === 'expired') {
         tone = 'negative'
-        statusLabel = 'Expired'
+        statusLabel = expiredLabel
         secondaryLine = offer.auto_block_reason
-          ? `Transfer process expired (${offer.auto_block_reason.replace(/_/g, ' ')}).`
-          : 'Transfer process expired.'
+          ? t('activity.processExpiredReason', {
+              reason: offer.auto_block_reason.replace(/_/g, ' '),
+            })
+          : t('activity.processExpired')
       } else if (status === 'withdrawn' || status === 'cancelled') {
         tone = 'negative'
-        statusLabel = 'Cancelled'
-        secondaryLine = 'This offer is no longer active.'
+        statusLabel = t('activity.cancelled')
+        secondaryLine = t('activity.offerInactive')
       }
 
       items.push({
@@ -848,7 +885,7 @@ export default function RiderTransferListPage(props: RiderTransferListPageProps)
         riderName,
         riderIsOwnedByUser: false,
         statusLabel,
-        primaryLine: `Incoming transfer • ${riderName}`,
+        primaryLine: t('activity.incomingTransfer', { rider: riderName }),
         secondaryLine,
         actionLabel,
         actionDisabled,
@@ -862,21 +899,23 @@ export default function RiderTransferListPage(props: RiderTransferListPageProps)
         sortTime: parseSortTime(linkedNegotiation?.updated_at || offer.updated_at || offer.created_at),
         detailChips: [
           {
-            label: 'Seller',
+            label: t('activity.seller'),
             value: sellerName,
           },
           {
-            label: 'Offer value',
+            label: t('activity.offerValue'),
             value: formatMoney(offer.offered_price),
             emphasized: true,
           },
           ...((linkedNegotiation?.expires_on_game_date || offer.expires_on_game_date)
             ? [
                 {
-                  label: 'Expires',
+                  label: t('activity.expires'),
                   value: getGameCountdownLabel(
                     linkedNegotiation?.expires_on_game_date ?? offer.expires_on_game_date,
-                    gameState
+                    gameState,
+                    noExpiryLabel,
+                    expiredLabel
                   ),
                   emphasized: true,
                 } satisfies TransferActivityChip,
@@ -890,32 +929,34 @@ export default function RiderTransferListPage(props: RiderTransferListPageProps)
       if (historyRow.direction !== 'arrival') continue
       if (!isRecentCompletedHistoryInGameTime(historyRow.game_date, gameState)) continue
 
+      const riderName = safeText(historyRow.rider_name, unknownRiderLabel)
+
       items.push({
         id: `incoming-history-${historyRow.id}`,
         mode: 'incoming',
         tone: 'positive',
         riderId: historyRow.rider_id,
-        riderName: safeText(historyRow.rider_name, 'Unknown rider'),
+        riderName,
         riderIsOwnedByUser: false,
-        statusLabel: 'Completed',
-        primaryLine: `Incoming transfer • ${safeText(historyRow.rider_name, 'Unknown rider')}`,
-        secondaryLine: `Rider transfer completed successfully.`,
+        statusLabel: t('activity.completed'),
+        primaryLine: t('activity.incomingTransfer', { rider: riderName }),
+        secondaryLine: t('activity.transferCompleted'),
         clubIdToOpen: historyRow.from_club_id,
         sortTime: parseSortTime(historyRow.game_date),
         detailChips: [
           {
-            label: 'From',
-            value: safeText(historyRow.from_club_name, 'Unknown club'),
+            label: t('activity.from'),
+            value: safeText(historyRow.from_club_name, unknownClubLabel),
           },
           {
-            label: 'Fee',
+            label: t('activity.fee'),
             value: formatMoney(historyRow.amount),
             emphasized: true,
           },
           ...(historyRow.game_date
             ? [
                 {
-                  label: 'Completed',
+                  label: t('activity.completed'),
                   value: historyRow.game_date,
                 } satisfies TransferActivityChip,
               ]
@@ -932,11 +973,16 @@ export default function RiderTransferListPage(props: RiderTransferListPageProps)
     clubNameMap,
     gameState,
     buyerNegotiationByOfferId,
+    unknownRiderLabel,
+    unknownClubLabel,
+    noExpiryLabel,
+    expiredLabel,
+    t,
   ])
 
   const outgoingListingActivityItems = useMemo(() => {
     return safeActiveTransferListings.map((listing) => {
-      const riderName = resolveActivityRiderName(listing)
+      const riderName = resolveActivityRiderName(listing, unknownRiderLabel)
 
       return {
         id: `listing-${listing.listing_id}`,
@@ -945,77 +991,94 @@ export default function RiderTransferListPage(props: RiderTransferListPageProps)
         riderName,
         riderIsOwnedByUser: true,
         tone: 'active' as const,
-        statusLabel: 'Listed',
-        primaryLine: `Outgoing transfer • ${riderName}`,
-        secondaryLine: 'Rider is currently published on the transfer market.',
+        statusLabel: t('transferList.listed'),
+        primaryLine: t('activity.outgoingTransfer', { rider: riderName }),
+        secondaryLine: t('transferList.riderPublished'),
         sortTime:
           tryParseDate(listing.listed_on_game_date)?.getTime() ??
           tryParseDate(listing.created_at)?.getTime() ??
           0,
         detailChips: [
           {
-            label: 'Asking price',
+            label: t('transferList.askingPrice'),
             value: formatTransferAmount(listing.asking_price),
             emphasized: true,
           },
           {
-            label: 'Visible until',
+            label: t('transferList.visibleUntil'),
             value: listing.expires_on_game_date || '—',
           },
           {
-            label: 'Time left',
-            value: getGameCountdownLabel(listing.expires_on_game_date, gameState),
+            label: t('transferList.timeLeft'),
+            value: getGameCountdownLabel(
+              listing.expires_on_game_date,
+              gameState,
+              noExpiryLabel,
+              expiredLabel
+            ),
             emphasized: true,
           },
         ],
       } satisfies TransferActivityItem
     })
-  }, [safeActiveTransferListings, gameState])
+  }, [
+    safeActiveTransferListings,
+    gameState,
+    unknownRiderLabel,
+    noExpiryLabel,
+    expiredLabel,
+    t,
+  ])
 
   const outgoingOfferActivityItems = useMemo(() => {
     const items: TransferActivityItem[] = []
 
     for (const offer of myReceivedOffers || []) {
       const status = normalizeStatus(offer.status)
-      const riderName = resolveActivityRiderName(offer)
-      const buyerClub = getOutgoingBuyerClubInfo(offer, clubNameMap)
+      const riderName = resolveActivityRiderName(offer, unknownRiderLabel)
+      const buyerClub = getOutgoingBuyerClubInfo(offer, clubNameMap, unknownClubLabel)
 
       if (sellerNegotiationOfferIds.has(offer.id)) {
         continue
       }
 
       let tone: ActivityTone = 'active'
-      let statusLabel = 'Offer received'
-      let secondaryLine = 'A buyer club has submitted a transfer offer for your rider.'
+      let statusLabel = t('activity.offerReceived')
+      let secondaryLine = t('activity.buyerSubmitted')
       let actionLabel: string | undefined
       let actionDisabled = true
       let actionKind: TransferActivityItem['actionKind'] = undefined
 
       if (status === 'open') {
         tone = 'active'
-        statusLabel = 'Offer received'
-        secondaryLine = 'A buyer club has submitted a transfer offer for your rider.'
-        actionLabel = 'Check offer'
+        statusLabel = t('activity.offerReceived')
+        secondaryLine = t('activity.buyerSubmitted')
+        actionLabel = t('activity.checkOffer')
         actionDisabled = false
         actionKind = 'review_offer'
       } else if (status === 'rejected') {
         tone = 'negative'
-        statusLabel = 'Rejected by you'
-        secondaryLine = `You rejected ${buyerClub.clubName}'s offer for ${riderName}.`
+        statusLabel = t('activity.rejectedByYou')
+        secondaryLine = t('activity.youRejected', {
+          buyer: buyerClub.clubName,
+          rider: riderName,
+        })
       } else if (status === 'expired') {
         tone = 'negative'
-        statusLabel = 'Expired'
+        statusLabel = expiredLabel
         secondaryLine = offer.auto_block_reason
-          ? `Offer expired (${offer.auto_block_reason.replace(/_/g, ' ')}).`
-          : 'Offer expired before completion.'
+          ? t('activity.offerExpiredReason', {
+              reason: offer.auto_block_reason.replace(/_/g, ' '),
+            })
+          : t('activity.offerExpired')
       } else if (status === 'withdrawn' || status === 'cancelled') {
         tone = 'negative'
-        statusLabel = 'Withdrawn'
-        secondaryLine = `${buyerClub.clubName} cancelled this offer.`
+        statusLabel = t('activity.withdrawn')
+        secondaryLine = t('activity.buyerCancelled', { buyer: buyerClub.clubName })
       } else {
         tone = 'active'
         statusLabel = status.replace(/_/g, ' ')
-        secondaryLine = 'A buyer club has submitted a transfer offer for your rider.'
+        secondaryLine = t('activity.buyerSubmitted')
       }
 
       items.push({
@@ -1026,7 +1089,7 @@ export default function RiderTransferListPage(props: RiderTransferListPageProps)
         riderName,
         riderIsOwnedByUser: true,
         statusLabel,
-        primaryLine: `Outgoing transfer • ${riderName}`,
+        primaryLine: t('activity.outgoingTransfer', { rider: riderName }),
         secondaryLine,
         actionLabel,
         actionDisabled,
@@ -1041,15 +1104,20 @@ export default function RiderTransferListPage(props: RiderTransferListPageProps)
         sortTime: parseSortTime(offer.updated_at || offer.created_at),
         detailChips: [
           {
-            label: 'Offer value',
+            label: t('activity.offerValue'),
             value: formatMoney(offer.offered_price),
             emphasized: true,
           },
           ...(offer.expires_on_game_date
             ? [
                 {
-                  label: 'Expires',
-                  value: getGameCountdownLabel(offer.expires_on_game_date, gameState),
+                  label: t('activity.expires'),
+                  value: getGameCountdownLabel(
+                    offer.expires_on_game_date,
+                    gameState,
+                    noExpiryLabel,
+                    expiredLabel
+                  ),
                   emphasized: true,
                 } satisfies TransferActivityChip,
               ]
@@ -1064,6 +1132,11 @@ export default function RiderTransferListPage(props: RiderTransferListPageProps)
     sellerNegotiationOfferIds,
     clubNameMap,
     gameState,
+    unknownRiderLabel,
+    unknownClubLabel,
+    noExpiryLabel,
+    expiredLabel,
+    t,
   ])
 
   const outgoingNegotiationActivityItems = useMemo(() => {
@@ -1076,33 +1149,38 @@ export default function RiderTransferListPage(props: RiderTransferListPageProps)
         continue
       }
 
-      const riderName = resolveActivityRiderName(negotiation)
-      const buyerClub = getOutgoingBuyerClubInfo(negotiation, clubNameMap)
+      const riderName = resolveActivityRiderName(negotiation, unknownRiderLabel)
+      const buyerClub = getOutgoingBuyerClubInfo(
+        negotiation,
+        clubNameMap,
+        unknownClubLabel
+      )
       const latestSalary = formatMoney(
         negotiation.offer_salary_weekly ?? negotiation.expected_salary_weekly
       )
-      const latestDuration = `${
-        negotiation.offer_duration_seasons ?? negotiation.preferred_duration_seasons
-      } season(s)`
+      const latestDuration = t('common.seasonGeneric', {
+        count:
+          negotiation.offer_duration_seasons ?? negotiation.preferred_duration_seasons,
+      })
 
       let tone: ActivityTone = 'active'
-      let statusLabel = 'Negotiation active'
-      let secondaryLine = 'Contract talks are in progress.'
+      let statusLabel = t('activity.negotiationActive')
+      let secondaryLine = t('activity.contractTalks')
 
       if (status === 'open') {
         tone = 'active'
-        statusLabel = 'Negotiation active'
-        secondaryLine = 'Contract talks are in progress.'
+        statusLabel = t('activity.negotiationActive')
+        secondaryLine = t('activity.contractTalks')
       } else if (status === 'declined') {
         tone = 'negative'
-        statusLabel = 'Rider refused contract'
+        statusLabel = t('activity.riderRefused')
         secondaryLine = negotiation.closed_reason
-          ? `Closed reason: ${negotiation.closed_reason.replace(/_/g, ' ')}`
-          : 'The rider refused the proposed contract.'
+          ? negotiation.closed_reason.replace(/_/g, ' ')
+          : t('activity.riderRefusedText', { rider: riderName })
       } else if (status === 'expired') {
         tone = 'negative'
-        statusLabel = 'Negotiation expired'
-        secondaryLine = 'The negotiation expired before agreement.'
+        statusLabel = expiredLabel
+        secondaryLine = t('negotiation.expiredBeforeAgreement')
       }
 
       items.push({
@@ -1113,7 +1191,7 @@ export default function RiderTransferListPage(props: RiderTransferListPageProps)
         riderName,
         riderIsOwnedByUser: true,
         statusLabel,
-        primaryLine: `Outgoing transfer • ${riderName}`,
+        primaryLine: t('activity.outgoingTransfer', { rider: riderName }),
         secondaryLine,
         negotiationIdToOpen: negotiation.id,
         buyerClubId: buyerClub.clubId,
@@ -1125,19 +1203,24 @@ export default function RiderTransferListPage(props: RiderTransferListPageProps)
         sortTime: parseSortTime(negotiation.updated_at || negotiation.opened_on_game_date),
         detailChips: [
           {
-            label: 'Latest contract',
-            value: `${latestSalary}/week`,
+            label: t('activity.latestSalary'),
+            value: `${latestSalary}${t('common.weekly')}`,
             emphasized: true,
           },
           {
-            label: 'Duration',
+            label: t('activity.duration'),
             value: latestDuration,
           },
           ...(negotiation.expires_on_game_date
             ? [
                 {
-                  label: 'Expires',
-                  value: getGameCountdownLabel(negotiation.expires_on_game_date, gameState),
+                  label: t('activity.expires'),
+                  value: getGameCountdownLabel(
+                    negotiation.expires_on_game_date,
+                    gameState,
+                    noExpiryLabel,
+                    expiredLabel
+                  ),
                   emphasized: true,
                 } satisfies TransferActivityChip,
               ]
@@ -1150,18 +1233,20 @@ export default function RiderTransferListPage(props: RiderTransferListPageProps)
       if (historyRow.direction !== 'departure') continue
       if (!isRecentCompletedHistoryInGameTime(historyRow.game_date, gameState)) continue
 
+      const riderName = safeText(historyRow.rider_name, unknownRiderLabel)
+
       items.push({
         id: `outgoing-history-${historyRow.id}`,
         mode: 'outgoing',
         tone: 'positive',
         riderId: historyRow.rider_id,
-        riderName: safeText(historyRow.rider_name, 'Unknown rider'),
+        riderName,
         riderIsOwnedByUser: true,
-        statusLabel: 'Completed',
-        primaryLine: `Outgoing transfer • ${safeText(historyRow.rider_name, 'Unknown rider')}`,
-        secondaryLine: `Rider transfer completed successfully.`,
+        statusLabel: t('activity.completed'),
+        primaryLine: t('activity.outgoingTransfer', { rider: riderName }),
+        secondaryLine: t('activity.transferCompleted'),
         buyerClubId: historyRow.to_club_id,
-        buyerClubName: safeText(historyRow.to_club_name, 'Unknown club'),
+        buyerClubName: safeText(historyRow.to_club_name, unknownClubLabel),
         buyer_club_name: historyRow.to_club_name,
         metadata: null,
         notes_json: null,
@@ -1169,14 +1254,14 @@ export default function RiderTransferListPage(props: RiderTransferListPageProps)
         sortTime: parseSortTime(historyRow.game_date),
         detailChips: [
           {
-            label: 'Fee',
+            label: t('activity.fee'),
             value: formatMoney(historyRow.amount),
             emphasized: true,
           },
           ...(historyRow.game_date
             ? [
                 {
-                  label: 'Completed',
+                  label: t('activity.completed'),
                   value: historyRow.game_date,
                 } satisfies TransferActivityChip,
               ]
@@ -1191,6 +1276,11 @@ export default function RiderTransferListPage(props: RiderTransferListPageProps)
     transferHistory,
     clubNameMap,
     gameState,
+    unknownRiderLabel,
+    unknownClubLabel,
+    noExpiryLabel,
+    expiredLabel,
+    t,
   ])
 
   const outgoingActivityItems = useMemo(() => {
@@ -1236,36 +1326,36 @@ export default function RiderTransferListPage(props: RiderTransferListPageProps)
       <div className="rounded-lg border border-gray-100 bg-white p-4 shadow">
         <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
           <div>
-            <h4 className="font-semibold text-gray-900">Transfer List Riders</h4>
+            <h4 className="font-semibold text-gray-900">{t('transferList.title')}</h4>
             <div className="mt-1 text-sm text-gray-500">
-              Full-width transfer market. Active user offers stay pinned on top and highlighted.
+              {t('transferList.subtitle')}
             </div>
           </div>
 
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-6">
             <div className="xl:col-span-2">
               <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-gray-500">
-                Search
+                {t('common.search')}
               </label>
               <input
                 type="text"
                 value={marketSearch}
                 onChange={(e) => setMarketSearch(e.target.value)}
-                placeholder="Search rider, role, seller..."
+                placeholder={t('transferList.searchPlaceholder')}
                 className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700"
               />
             </div>
 
             <div>
               <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-gray-500">
-                Role
+                {t('common.role')}
               </label>
               <select
                 value={marketRoleFilter}
                 onChange={(e) => setMarketRoleFilter(e.target.value)}
                 className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700"
               >
-                <option value="all">All Roles</option>
+                <option value="all">{t('common.allRoles')}</option>
                 {riderRoleOptions.map((role) => (
                   <option key={role} value={role}>
                     {role}
@@ -1276,24 +1366,24 @@ export default function RiderTransferListPage(props: RiderTransferListPageProps)
 
             <div>
               <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-gray-500">
-                Sort
+                {t('common.sort')}
               </label>
               <select
                 value={marketSort}
                 onChange={(e) => setMarketSort(e.target.value as RiderMarketSort)}
                 className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700"
               >
-                <option value="active">Active First</option>
-                <option value="scouted">Scouted First</option>
-                <option value="expires">Expiry</option>
-                <option value="overall_desc">OVR High-Low</option>
-                <option value="overall_asc">OVR Low-High</option>
-                <option value="price_desc">Price High-Low</option>
-                <option value="price_asc">Price Low-High</option>
-                <option value="name_asc">Name A-Z</option>
-                <option value="name_desc">Name Z-A</option>
-                <option value="age_asc">Age Low-High</option>
-                <option value="age_desc">Age High-Low</option>
+                <option value="active">{t('sort.activeFirst')}</option>
+                <option value="scouted">{t('sort.scoutedFirst')}</option>
+                <option value="expires">{t('sort.expiresSoonest')}</option>
+                <option value="overall_desc">{t('sort.overallHighLow')}</option>
+                <option value="overall_asc">{t('sort.overallLowHigh')}</option>
+                <option value="price_desc">{t('sort.priceHighLow')}</option>
+                <option value="price_asc">{t('sort.priceLowHigh')}</option>
+                <option value="name_asc">{t('sort.nameAZ')}</option>
+                <option value="name_desc">{t('sort.nameZA')}</option>
+                <option value="age_asc">{t('sort.ageLowHigh')}</option>
+                <option value="age_desc">{t('sort.ageHighLow')}</option>
               </select>
             </div>
 
@@ -1305,7 +1395,7 @@ export default function RiderTransferListPage(props: RiderTransferListPageProps)
                   onChange={(e) => setMarketOnlyActive(e.target.checked)}
                   className="rounded border-gray-300"
                 />
-                Only my active
+                {t('common.onlyMyActive')}
               </label>
 
               <label className="flex items-center gap-2 text-sm text-gray-700">
@@ -1315,7 +1405,7 @@ export default function RiderTransferListPage(props: RiderTransferListPageProps)
                   onChange={(e) => setMarketHideOwn(e.target.checked)}
                   className="rounded border-gray-300"
                 />
-                Hide own listings
+                {t('common.hideOwn')}
               </label>
             </div>
 
@@ -1325,7 +1415,7 @@ export default function RiderTransferListPage(props: RiderTransferListPageProps)
                 onClick={onSaveCurrentSearch}
                 className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
               >
-                Save this search
+                {t('common.saveSearch')}
               </button>
             </div>
           </div>
@@ -1334,11 +1424,11 @@ export default function RiderTransferListPage(props: RiderTransferListPageProps)
         <div className="mt-4 space-y-3">
           {riderLoading ? (
             <div className="rounded-lg border border-gray-100 bg-gray-50 p-4 text-sm text-gray-500">
-              Loading rider market...
+              {t('transferList.loading')}
             </div>
           ) : paginatedUnifiedMarketRows.length === 0 ? (
             <div className="rounded-lg border border-gray-100 bg-gray-50 p-4 text-sm text-gray-500">
-              No riders found for the current filters.
+              {t('transferList.empty')}
             </div>
           ) : (
             paginatedUnifiedMarketRows.map((item) => (
@@ -1357,7 +1447,11 @@ export default function RiderTransferListPage(props: RiderTransferListPageProps)
 
         <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="text-xs text-gray-500">
-            Showing {marketPageStart}-{marketPageEnd} of {totalMarketRows} riders • 30 per page
+            {t('transferList.showing', {
+              start: marketPageStart,
+              end: marketPageEnd,
+              total: totalMarketRows,
+            })}
           </div>
 
           {totalMarketRows > 30 ? (
@@ -1372,11 +1466,11 @@ export default function RiderTransferListPage(props: RiderTransferListPageProps)
                     : 'border border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
                 }`}
               >
-                Previous
+                {t('common.previous')}
               </button>
 
               <div className="px-2 text-sm text-gray-600">
-                Page {marketPage} / {marketTotalPages}
+                {t('common.page', { page: marketPage, pages: marketTotalPages })}
               </div>
 
               <button
@@ -1389,7 +1483,7 @@ export default function RiderTransferListPage(props: RiderTransferListPageProps)
                     : 'border border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
                 }`}
               >
-                Next
+                {t('common.next')}
               </button>
             </div>
           ) : null}
@@ -1399,23 +1493,23 @@ export default function RiderTransferListPage(props: RiderTransferListPageProps)
       <div className="mt-6 rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div>
-            <h3 className="text-lg font-semibold text-gray-900">Transfer Activity</h3>
+            <h3 className="text-lg font-semibold text-gray-900">{t('activity.title')}</h3>
             <p className="mt-1 text-sm text-gray-500">
-              All current and completed transfer activity for your club.
+              {t('activity.subtitle')}
             </p>
           </div>
 
           <div className="flex items-center gap-2">
             <label className="text-xs font-medium uppercase tracking-wide text-gray-500">
-              View
+              {t('activity.view')}
             </label>
             <select
               value={activityMode}
               onChange={(e) => setActivityMode(e.target.value as ActivityFilterMode)}
               className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700"
             >
-              <option value="incoming">Incoming</option>
-              <option value="outgoing">Outgoing</option>
+              <option value="incoming">{t('activity.incoming')}</option>
+              <option value="outgoing">{t('activity.outgoing')}</option>
             </select>
           </div>
         </div>
@@ -1423,7 +1517,7 @@ export default function RiderTransferListPage(props: RiderTransferListPageProps)
         <div className="mt-4 space-y-3">
           {paginatedTransferActivityItems.length === 0 ? (
             <div className="rounded-lg border border-dashed border-gray-200 bg-gray-50 px-4 py-5 text-sm text-gray-500">
-              No transfer activity in this view yet.
+              {t('activity.empty')}
             </div>
           ) : (
             paginatedTransferActivityItems.map((item) => (
@@ -1464,7 +1558,9 @@ export default function RiderTransferListPage(props: RiderTransferListPageProps)
 
                     {item.mode === 'outgoing' ? (
                       <div className="mt-1 text-sm text-gray-700">
-                        Buyer: {resolveBuyerClubName(item)}
+                        {t('activity.buyer', {
+                          buyer: resolveBuyerClubName(item, unknownClubLabel),
+                        })}
                       </div>
                     ) : null}
 
@@ -1473,7 +1569,9 @@ export default function RiderTransferListPage(props: RiderTransferListPageProps)
                       <div className="mt-3 flex flex-wrap items-center gap-2">
                         {item.mode === 'outgoing' ? (
                           <span className="rounded-md border border-slate-300 bg-white px-3 py-1 text-sm text-slate-700">
-                            Buyer: {resolveBuyerClubName(item)}
+                            {t('activity.buyer', {
+                              buyer: resolveBuyerClubName(item, unknownClubLabel),
+                            })}
                           </span>
                         ) : null}
 
@@ -1500,7 +1598,7 @@ export default function RiderTransferListPage(props: RiderTransferListPageProps)
                         }
                         className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50"
                       >
-                        Open rider
+                        {t('activity.openRider')}
                       </button>
                     ) : null}
 
@@ -1560,13 +1658,17 @@ export default function RiderTransferListPage(props: RiderTransferListPageProps)
 
         <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="text-xs text-gray-500">
-            Showing{' '}
-            {paginatedTransferActivityItems.length === 0
-              ? 0
-              : (activityPage - 1) * ACTIVITY_ITEMS_PER_PAGE + 1}
-            -
-            {Math.min(activityPage * ACTIVITY_ITEMS_PER_PAGE, visibleTransferActivityItems.length)} of{' '}
-            {visibleTransferActivityItems.length} activity items
+            {t('activity.showing', {
+              start:
+                paginatedTransferActivityItems.length === 0
+                  ? 0
+                  : (activityPage - 1) * ACTIVITY_ITEMS_PER_PAGE + 1,
+              end: Math.min(
+                activityPage * ACTIVITY_ITEMS_PER_PAGE,
+                visibleTransferActivityItems.length
+              ),
+              total: visibleTransferActivityItems.length,
+            })}
           </div>
 
           {visibleTransferActivityItems.length > ACTIVITY_ITEMS_PER_PAGE ? (
@@ -1581,11 +1683,11 @@ export default function RiderTransferListPage(props: RiderTransferListPageProps)
                     : 'border border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
                 }`}
               >
-                Previous
+                {t('common.previous')}
               </button>
 
               <div className="px-2 text-sm text-gray-600">
-                Page {activityPage} / {activityTotalPages}
+                {t('common.page', { page: activityPage, pages: activityTotalPages })}
               </div>
 
               <button
@@ -1598,7 +1700,7 @@ export default function RiderTransferListPage(props: RiderTransferListPageProps)
                     : 'border border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
                 }`}
               >
-                Next
+                {t('common.next')}
               </button>
             </div>
           ) : null}
