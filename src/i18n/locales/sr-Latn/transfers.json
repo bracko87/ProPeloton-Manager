@@ -92,7 +92,21 @@
     "listed": "Na listi",
     "visibleUntil": "Vidljivo do",
     "timeLeft": "Preostalo vreme",
-    "riderPublished": "Vozač je trenutno objavljen na transfer tržištu."
+    "riderPublished": "Vozač je trenutno objavljen na transfer tržištu.",
+    "activeOffer": "Aktivna ponuda",
+    "own": "Vaš",
+    "overallShort": "OVR",
+    "potentialShort": "POT",
+    "offerActive": "Ponuda aktivna"
+  },
+  "transferHelp": {
+    "title": "Kako funkcionišu transfer ponude",
+    "sendOffer": "Prvo šaljete ponudu za obeštećenje klubu prodavcu. Klub prodavac odlučuje da li vaš klub može da pregovara sa vozačem.",
+    "belowAsking": "Ako je vaša ponuda <strong>niža od tražene cene</strong>, klub prodavac mora ručno da je prihvati ili odbije.",
+    "atOrAboveAsking": "Ako je vaša ponuda <strong>jednaka ili viša od tražene cene</strong>, uslovi između klubova se automatski prihvataju.",
+    "afterAcceptance": "Nakon što prodavac prihvati ponudu, ili nakon automatskog prihvatanja, dobićete obaveštenje sa linkom za početak pregovora o ugovoru sa vozačem.",
+    "riderNegotiation": "Tokom pregovora sa vozačem, vozač može da prihvati vaše uslove, zatraži veću platu, zatraži drugačiju dužinu ugovora ili potpuno odbije transfer. Razlozi odbijanja treba da budu vidljivi u obaveštenjima i detaljima pregovora.",
+    "rejectedExpired": "Ako klub prodavac odbije vašu ponudu ili ne odgovori pre isteka roka, dobićete obaveštenje da je ponuda odbijena ili istekla."
   },
   "activity": {
     "title": "Transfer aktivnosti",
