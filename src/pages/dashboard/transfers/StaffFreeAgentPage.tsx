@@ -1,4 +1,6 @@
 import React from 'react'
+import type { TFunction } from 'i18next'
+import { useTranslation } from 'react-i18next'
 
 type StaffRole =
   | 'head_coach'
@@ -67,21 +69,24 @@ type StaffQualityBox = {
   note?: string | null
 }
 
-const STAFF_ROLE_FILTERS: Array<{ value: 'all' | StaffRole; label: string }> = [
-  { value: 'all', label: 'All roles' },
-  { value: 'head_coach', label: 'Head Coach' },
-  { value: 'trainer', label: 'Trainer' },
-  { value: 'u23_head_coach', label: 'U23 Head Coach' },
-  { value: 'team_doctor', label: 'Team Doctor' },
-  { value: 'physio', label: 'Physio' },
-  { value: 'nutritionist', label: 'Nutritionist' },
-  { value: 'mechanic', label: 'Mechanic' },
-  { value: 'sport_director', label: 'Sport Director' },
-  { value: 'scout_analyst', label: 'Scout / Analyst' },
+const STAFF_ROLE_FILTERS: Array<{
+  value: 'all' | StaffRole
+  labelKey: string
+}> = [
+  { value: 'all', labelKey: 'staffRoles.all' },
+  { value: 'head_coach', labelKey: 'staffRoles.headCoach' },
+  { value: 'trainer', labelKey: 'staffRoles.trainer' },
+  { value: 'u23_head_coach', labelKey: 'staffRoles.u23HeadCoach' },
+  { value: 'team_doctor', labelKey: 'staffRoles.teamDoctor' },
+  { value: 'physio', labelKey: 'staffRoles.physio' },
+  { value: 'nutritionist', labelKey: 'staffRoles.nutritionist' },
+  { value: 'mechanic', labelKey: 'staffRoles.mechanic' },
+  { value: 'sport_director', labelKey: 'staffRoles.sportDirector' },
+  { value: 'scout_analyst', labelKey: 'staffRoles.scoutAnalyst' },
 ]
 
 const STAFF_ROLES = STAFF_ROLE_FILTERS.filter(
-  (role): role is { value: StaffRole; label: string } => role.value !== 'all'
+  (role): role is { value: StaffRole; labelKey: string } => role.value !== 'all'
 )
 
 function normalizeStaffRole(value: unknown): StaffRole | null {
@@ -140,8 +145,10 @@ function getStaffAge(
   return age
 }
 
-function formatStaffAge(ageYears: number | null) {
-  return ageYears === null ? 'Age unknown' : `${ageYears} years old`
+function formatStaffAge(ageYears: number | null, t: TFunction) {
+  return ageYears === null
+    ? t('common.ageUnknown')
+    : t('common.yearsOld', { age: ageYears })
 }
 
 function normalizeRoleCapacity(
@@ -177,12 +184,18 @@ function getCountryFlagUrl(countryCode: string) {
   return `https://flagcdn.com/w40/${countryCode.toLowerCase()}.png`
 }
 
-function getCountryName(countryCode: string | null | undefined) {
+function getCountryName(
+  countryCode: string | null | undefined,
+  resolvedLanguage: string | undefined
+) {
   const code = safeCountryCode(countryCode).toUpperCase()
+  const displayLocale = resolvedLanguage?.startsWith('sr')
+    ? 'sr-Latn-RS'
+    : resolvedLanguage || 'en'
 
   try {
     if (typeof Intl !== 'undefined' && typeof Intl.DisplayNames !== 'undefined') {
-      const regionNames = new Intl.DisplayNames(['en'], { type: 'region' })
+      const regionNames = new Intl.DisplayNames([displayLocale], { type: 'region' })
       return regionNames.of(code) || code
     }
   } catch {
@@ -192,22 +205,23 @@ function getCountryName(countryCode: string | null | undefined) {
   return code
 }
 
-function roleLabel(role: StaffRole) {
-  return STAFF_ROLES.find((item) => item.value === role)?.label ?? role
+function roleLabel(role: StaffRole, t: TFunction) {
+  const roleItem = STAFF_ROLES.find((item) => item.value === role)
+  return roleItem ? t(roleItem.labelKey) : role
 }
 
-function formatScoutTier(tier: string): string {
+function formatScoutTier(tier: string, t: TFunction): string {
   switch (tier) {
     case 'elite':
-      return 'Elite'
+      return t('staffQuality.elite')
     case 'strong':
-      return 'Strong'
+      return t('staffQuality.strong')
     case 'solid':
-      return 'Solid'
+      return t('staffQuality.solid')
     case 'basic':
-      return 'Basic'
+      return t('staffQuality.basic')
     default:
-      return 'Unknown'
+      return tier || '—'
   }
 }
 
@@ -228,11 +242,11 @@ function weightedScore(parts: Array<[number, number]>) {
   return Math.round(score * 10) / 10
 }
 
-function qualityTierFromScore(score: number) {
-  if (score >= 85) return 'Elite'
-  if (score >= 70) return 'Strong'
-  if (score >= 55) return 'Solid'
-  return 'Basic'
+function qualityTierFromScore(score: number, t: TFunction) {
+  if (score >= 85) return t('staffQuality.elite')
+  if (score >= 70) return t('staffQuality.strong')
+  if (score >= 55) return t('staffQuality.solid')
+  return t('staffQuality.basic')
 }
 
 function calculateScoutCandidateQuality(
@@ -308,7 +322,8 @@ function calculateScoutCandidateQuality(
 
 function buildStaffQualityBox(
   candidate: StaffCandidateRow,
-  scoutingLevel: number
+  scoutingLevel: number,
+  t: TFunction
 ): StaffQualityBox {
   const expertise = Number(candidate.expertise ?? 0)
   const experience = Number(candidate.experience ?? 0)
@@ -322,28 +337,28 @@ function buildStaffQualityBox(
 
     if (!scoutQuality) {
       return {
-        title: 'Scouting Quality',
+        title: t('staffQuality.scoutingQuality'),
         rows: [
-          { label: 'Scout Ability', value: 'Unknown' },
-          { label: 'Current Report Quality', value: 'Unknown' },
-          { label: 'Report Time', value: 'Unknown' },
+          { label: t('staffQuality.scoutAbility'), value: '—' },
+          { label: t('staffQuality.currentReportQuality'), value: '—' },
+          { label: t('staffQuality.reportTime'), value: '—' },
         ],
       }
     }
 
     return {
-      title: 'Scouting Quality',
+      title: t('staffQuality.scoutingQuality'),
       rows: [
         {
-          label: 'Scout Ability',
-          value: formatScoutTier(scoutQuality.scoutAbilityTier),
+          label: t('staffQuality.scoutAbility'),
+          value: formatScoutTier(scoutQuality.scoutAbilityTier, t),
         },
         {
-          label: 'Current Report Quality',
-          value: formatScoutTier(scoutQuality.currentReportTier),
+          label: t('staffQuality.currentReportQuality'),
+          value: formatScoutTier(scoutQuality.currentReportTier, t),
         },
         {
-          label: 'Report Time',
+          label: t('staffQuality.reportTime'),
           value: `${scoutQuality.durationHours}h`,
         },
       ],
@@ -374,11 +389,11 @@ function buildStaffQualityBox(
     ])
 
     return {
-      title: 'Coaching Quality',
+      title: t('staffQuality.coachingQuality'),
       rows: [
-        { label: 'Coach Ability', value: qualityTierFromScore(coachAbility) },
-        { label: 'Training Quality', value: qualityTierFromScore(trainingQuality) },
-        { label: 'Development Support', value: qualityTierFromScore(developmentSupport) },
+        { label: t('staffQuality.coachAbility'), value: qualityTierFromScore(coachAbility, t) },
+        { label: t('staffQuality.trainingQuality'), value: qualityTierFromScore(trainingQuality, t) },
+        { label: t('staffQuality.developmentSupport'), value: qualityTierFromScore(developmentSupport, t) },
       ],
     }
   }
@@ -404,11 +419,11 @@ function buildStaffQualityBox(
     ])
 
     return {
-      title: 'Training Quality',
+      title: t('staffQuality.trainingQuality'),
       rows: [
-        { label: 'Training Ability', value: qualityTierFromScore(trainingAbility) },
-        { label: 'Session Quality', value: qualityTierFromScore(sessionQuality) },
-        { label: 'Load Management', value: qualityTierFromScore(loadManagement) },
+        { label: t('staffQuality.trainerAbility'), value: qualityTierFromScore(trainingAbility, t) },
+        { label: t('staffQuality.sessionQuality'), value: qualityTierFromScore(sessionQuality, t) },
+        { label: t('staffQuality.loadManagement'), value: qualityTierFromScore(loadManagement, t) },
       ],
     }
   }
@@ -434,11 +449,11 @@ function buildStaffQualityBox(
     ])
 
     return {
-      title: 'Medical Quality',
+      title: t('staffQuality.medicalQuality'),
       rows: [
-        { label: 'Medical Ability', value: qualityTierFromScore(medicalAbility) },
-        { label: 'Injury Prevention', value: qualityTierFromScore(injuryPrevention) },
-        { label: 'Return-to-Fitness', value: qualityTierFromScore(returnToFitness) },
+        { label: t('staffQuality.medicalAbility'), value: qualityTierFromScore(medicalAbility, t) },
+        { label: t('staffQuality.injuryPrevention'), value: qualityTierFromScore(injuryPrevention, t) },
+        { label: t('staffQuality.returnToFitness'), value: qualityTierFromScore(returnToFitness, t) },
       ],
     }
   }
@@ -463,11 +478,11 @@ function buildStaffQualityBox(
     ])
 
     return {
-      title: 'Recovery Quality',
+      title: t('staffQuality.recoveryQuality'),
       rows: [
-        { label: 'Recovery Ability', value: qualityTierFromScore(recoveryAbility) },
-        { label: 'Rehabilitation Quality', value: qualityTierFromScore(rehabilitationQuality) },
-        { label: 'Recovery Speed', value: qualityTierFromScore(recoverySpeed) },
+        { label: t('staffQuality.recoveryAbility'), value: qualityTierFromScore(recoveryAbility, t) },
+        { label: t('staffQuality.rehabilitationQuality'), value: qualityTierFromScore(rehabilitationQuality, t) },
+        { label: t('staffQuality.recoverySpeed'), value: qualityTierFromScore(recoverySpeed, t) },
       ],
     }
   }
@@ -492,11 +507,11 @@ function buildStaffQualityBox(
     ])
 
     return {
-      title: 'Nutrition Quality',
+      title: t('staffQuality.nutritionQuality'),
       rows: [
-        { label: 'Nutrition Ability', value: qualityTierFromScore(nutritionAbility) },
-        { label: 'Recovery Support', value: qualityTierFromScore(recoverySupport) },
-        { label: 'Consistency Support', value: qualityTierFromScore(consistencySupport) },
+        { label: t('staffQuality.nutritionAbility'), value: qualityTierFromScore(nutritionAbility, t) },
+        { label: t('staffQuality.recoverySupport'), value: qualityTierFromScore(recoverySupport, t) },
+        { label: t('staffQuality.consistencySupport'), value: qualityTierFromScore(consistencySupport, t) },
       ],
     }
   }
@@ -521,11 +536,11 @@ function buildStaffQualityBox(
     ])
 
     return {
-      title: 'Technical Quality',
+      title: t('staffQuality.technicalQuality'),
       rows: [
-        { label: 'Technical Ability', value: qualityTierFromScore(technicalAbility) },
-        { label: 'Bike Setup Quality', value: qualityTierFromScore(bikeSetupQuality) },
-        { label: 'Reliability Support', value: qualityTierFromScore(reliabilitySupport) },
+        { label: t('staffQuality.technicalAbility'), value: qualityTierFromScore(technicalAbility, t) },
+        { label: t('staffQuality.bikeSetupQuality'), value: qualityTierFromScore(bikeSetupQuality, t) },
+        { label: t('staffQuality.reliabilitySupport'), value: qualityTierFromScore(reliabilitySupport, t) },
       ],
     }
   }
@@ -551,11 +566,11 @@ function buildStaffQualityBox(
     ])
 
     return {
-      title: 'Tactical Quality',
+      title: t('staffQuality.tacticalQuality'),
       rows: [
-        { label: 'Director Ability', value: qualityTierFromScore(directorAbility) },
-        { label: 'Race Plan Quality', value: qualityTierFromScore(racePlanQuality) },
-        { label: 'Motivation Support', value: qualityTierFromScore(motivationSupport) },
+        { label: t('staffQuality.directorAbility'), value: qualityTierFromScore(directorAbility, t) },
+        { label: t('staffQuality.racePlanQuality'), value: qualityTierFromScore(racePlanQuality, t) },
+        { label: t('staffQuality.motivationSupport'), value: qualityTierFromScore(motivationSupport, t) },
       ],
     }
   }
@@ -580,11 +595,11 @@ function buildStaffQualityBox(
   ])
 
   return {
-    title: 'Youth Coaching Quality',
+    title: t('staffQuality.youthQuality'),
     rows: [
-      { label: 'Youth Coach Ability', value: qualityTierFromScore(youthCoachAbility) },
-      { label: 'Talent Development', value: qualityTierFromScore(talentDevelopment) },
-      { label: 'Race Readiness', value: qualityTierFromScore(raceReadiness) },
+      { label: t('staffQuality.youthCoachAbility'), value: qualityTierFromScore(youthCoachAbility, t) },
+      { label: t('staffQuality.talentDevelopment'), value: qualityTierFromScore(talentDevelopment, t) },
+      { label: t('staffQuality.raceReadiness'), value: qualityTierFromScore(raceReadiness, t) },
     ],
   }
 }
@@ -758,6 +773,7 @@ export default function StaffFreeAgentPage({
   scoutingLevel = 0,
   currentGameDate,
 }: StaffFreeAgentPageProps) {
+  const { t, i18n } = useTranslation('transfers')
   const roleLimitMap = new Map(roleLimits.map((row) => [row.role_type, row] as const))
 
   const staffRoleCapacity = STAFF_ROLES.map((role) => {
@@ -773,7 +789,7 @@ export default function StaffFreeAgentPage({
 
     return {
       role_type: role.value,
-      role_label: role.label,
+      role_label: t(role.labelKey),
       current_count: currentCount,
       limit_count: limitCount,
       open_slots: openSlots,
@@ -790,7 +806,7 @@ export default function StaffFreeAgentPage({
     : null
 
   const selectedCandidateQualityBox = selectedCandidate
-    ? buildStaffQualityBox(selectedCandidate, scoutingLevel)
+    ? buildStaffQualityBox(selectedCandidate, scoutingLevel, t)
     : null
 
   const selectedRoleLimit = selectedCandidateRole
@@ -816,18 +832,17 @@ export default function StaffFreeAgentPage({
       <div className="rounded-lg border border-gray-100 bg-white p-4 shadow">
         <div className="flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
           <div>
-            <h4 className="font-semibold text-gray-900">Available Staff</h4>
+            <h4 className="font-semibold text-gray-900">{t('staffMarket.title')}</h4>
 
             <div className="mt-1 text-sm text-gray-500">
-              Browse available staff candidates and hire directly into available staff
-              slots.
+              {t('staffMarket.subtitle')}
             </div>
           </div>
 
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             <div>
               <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-gray-500">
-                Role Filter
+                {t('staffMarket.roleFilter')}
               </label>
 
               <select
@@ -837,7 +852,7 @@ export default function StaffFreeAgentPage({
               >
                 {STAFF_ROLE_FILTERS.map((role) => (
                   <option key={role.value} value={role.value}>
-                    {role.label}
+                    {t(role.labelKey)}
                   </option>
                 ))}
               </select>
@@ -845,7 +860,7 @@ export default function StaffFreeAgentPage({
 
             <div>
               <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-gray-500">
-                Sort By
+                {t('staffMarket.sortBy')}
               </label>
 
               <select
@@ -880,7 +895,7 @@ export default function StaffFreeAgentPage({
         <div className="mt-4 space-y-3">
           {paginatedCandidates.length === 0 ? (
             <div className="rounded-lg border border-gray-100 bg-gray-50 p-4 text-sm text-gray-500">
-              No available staff candidates found.
+              {t('staffMarket.noCandidates')}
             </div>
           ) : (
             paginatedCandidates.map((candidate) => {
@@ -923,7 +938,7 @@ export default function StaffFreeAgentPage({
                       <div className="flex items-center gap-2">
                         <img
                           src={getCountryFlagUrl(safeCountryCode(candidate.country_code))}
-                          alt={getCountryName(candidate.country_code)}
+                          alt={getCountryName(candidate.country_code, i18n.resolvedLanguage)}
                           className="h-4 w-6 shrink-0 rounded-sm border border-gray-200 object-cover"
                         />
 
@@ -934,14 +949,14 @@ export default function StaffFreeAgentPage({
 
                       <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-gray-500">
                         <span>
-                          {roleLabel(candidate.role_type)}
+                          {roleLabel(candidate.role_type, t)}
                           {candidate.specialization
                             ? ` • ${candidate.specialization}`
                             : ''}
                         </span>
 
                         <span className="rounded-full border border-green-200 bg-green-50 px-2 py-0.5 text-[11px] font-medium text-green-700">
-                          {formatStaffAge(candidateAge)}
+                          {formatStaffAge(candidateAge, t)}
                         </span>
                       </div>
                     </div>
@@ -990,12 +1005,15 @@ export default function StaffFreeAgentPage({
                     </div>
                   ) : assignedRows.length > 0 ? (
                     <div className="mt-3 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-700">
-                      Currently assigned: {getAssignedStaffSummary(assignedRows)}. Open
-                      slots left: {openSlots}.
+                      {t('staffMarket.currentStaff', {
+                        names: getAssignedStaffSummary(assignedRows),
+                      })}{' '}
+                      {t('staffMarket.openSlots', { slots: openSlots })}
                     </div>
                   ) : (
                     <div className="mt-3 rounded-lg border border-green-200 bg-green-50 px-3 py-2 text-xs text-green-700">
-                      No one assigned yet. Open slots left: {openSlots}.
+                      {t('staffMarket.noCurrentStaff')}{' '}
+                      {t('staffMarket.openSlots', { slots: openSlots })}
                     </div>
                   )}
                 </button>
@@ -1047,18 +1065,18 @@ export default function StaffFreeAgentPage({
 
       <div className="space-y-4">
         <div className="rounded-lg border border-gray-100 bg-white p-4 shadow">
-          <h4 className="font-semibold text-gray-900">Candidate Details</h4>
+          <h4 className="font-semibold text-gray-900">{t('staffMarket.candidateDetails')}</h4>
 
           {!selectedCandidate ? (
             <div className="mt-3 text-sm text-gray-500">
-              Select a staff candidate to view details.
+              {t('staffMarket.selectCandidate')}
             </div>
           ) : (
             <>
               <div className="mt-3 flex items-center gap-3">
                 <img
                   src={getCountryFlagUrl(safeCountryCode(selectedCandidate.country_code))}
-                  alt={getCountryName(selectedCandidate.country_code)}
+                  alt={getCountryName(selectedCandidate.country_code, i18n.resolvedLanguage)}
                   className="h-5 w-7 rounded-sm border border-gray-200 object-cover"
                 />
 
@@ -1068,7 +1086,7 @@ export default function StaffFreeAgentPage({
                   </div>
 
                   <div className="text-sm text-gray-500">
-                    {roleLabel(selectedCandidate.role_type)}
+                    {roleLabel(selectedCandidate.role_type, t)}
                     {selectedCandidate.specialization
                       ? ` • ${selectedCandidate.specialization}`
                       : ''}
@@ -1078,7 +1096,7 @@ export default function StaffFreeAgentPage({
 
               <div className="mt-4 grid grid-cols-2 gap-3">
                 <div className="rounded-lg bg-gray-50 p-3">
-                  <div className="text-xs text-gray-500">Weekly Wage Demand</div>
+                  <div className="text-xs text-gray-500">{t('staffMarket.weeklyWage')}</div>
 
                   <div className="mt-1 text-sm font-semibold text-gray-900">
                     {formatCurrency(selectedCandidate.salary_weekly)}
@@ -1086,7 +1104,7 @@ export default function StaffFreeAgentPage({
                 </div>
 
                 <div className="rounded-lg bg-gray-50 p-3">
-                  <div className="text-xs text-gray-500">Availability</div>
+                  <div className="text-xs text-gray-500">{t('staffMarket.availability')}</div>
 
                   <div className="mt-1 text-sm font-semibold text-gray-900">
                     {selectedCandidate.is_available ? 'Available' : 'Unavailable'}
@@ -1094,16 +1112,16 @@ export default function StaffFreeAgentPage({
                 </div>
 
                 <div className="rounded-lg bg-gray-50 p-3">
-                  <div className="text-xs text-gray-500">Age</div>
+                  <div className="text-xs text-gray-500">{t('staffMarket.age')}</div>
 
                   <div className="mt-1 text-sm font-semibold text-gray-900">
-                    {formatStaffAge(selectedCandidateAge)}
+                    {formatStaffAge(selectedCandidateAge, t)}
                   </div>
                 </div>
               </div>
 
               <div className="mt-4 rounded-lg border border-gray-100 bg-gray-50 p-3">
-                <div className="text-xs text-gray-500">Role Capacity</div>
+                <div className="text-xs text-gray-500">{t('staffMarket.roleCapacityTitle')}</div>
 
                 <div className="mt-1 text-sm font-semibold text-gray-900">
                   {selectedRoleAssigned}/{selectedRoleLimitCount} assigned
@@ -1111,20 +1129,22 @@ export default function StaffFreeAgentPage({
 
                 <div className="mt-1 text-xs text-gray-500">
                   {selectedRoleAssignedRows.length > 0
-                    ? `Current staff: ${getAssignedStaffSummary(selectedRoleAssignedRows)}`
-                    : 'No staff currently assigned to this role'}
+                    ? t('staffMarket.currentStaff', {
+                        names: getAssignedStaffSummary(selectedRoleAssignedRows),
+                      })
+                    : t('staffMarket.noCurrentStaff')}
                 </div>
 
                 <div className="mt-1 text-xs text-gray-500">
                   {selectedRoleLimitCount <= 0
                     ? 'This role is currently unavailable for this club.'
-                    : `Open slots left: ${selectedRoleOpenSlots}`}
+                    : t('staffMarket.openSlots', { slots: selectedRoleOpenSlots })}
                 </div>
               </div>
 
               <div className="mt-4">
                 <div className="text-sm font-semibold text-gray-900">
-                  Staff Attributes
+                  {t('staffMarket.attributes')}
                 </div>
 
                 <div className="mt-3 space-y-2">
@@ -1152,7 +1172,7 @@ export default function StaffFreeAgentPage({
               ) : null}
 
               <div className="mt-4 rounded-lg border border-gray-100 bg-gray-50 p-3">
-                <div className="text-xs text-gray-500">Contract Term</div>
+                <div className="text-xs text-gray-500">{t('staffMarket.contractTerm')}</div>
 
                 <div className="mt-3 inline-flex rounded-lg border border-gray-200 bg-white p-1 shadow-sm">
                   <button
@@ -1165,7 +1185,7 @@ export default function StaffFreeAgentPage({
                         : 'text-gray-600 hover:bg-gray-100'
                     }`}
                   >
-                    End of current season
+                    {t('staffMarket.currentSeason')}
                   </button>
 
                   <button
@@ -1178,13 +1198,12 @@ export default function StaffFreeAgentPage({
                         : 'text-gray-600 hover:bg-gray-100'
                     }`}
                   >
-                    End of next season
+                    {t('staffMarket.nextSeason')}
                   </button>
                 </div>
 
                 <div className="mt-2 text-xs text-gray-500">
-                  Staff contracts always end on season end, not after a fixed number of
-                  days.
+                  {t('staffMarket.contractHelp')}
                 </div>
               </div>
 
@@ -1209,7 +1228,7 @@ export default function StaffFreeAgentPage({
                       : 'bg-yellow-400 text-black hover:bg-yellow-300'
                   }`}
                 >
-                  {hireLoading ? 'Hiring...' : 'Hire Staff'}
+                  {hireLoading ? t('staffMarket.hiring') : t('staffMarket.hire')}
                 </button>
               </div>
             </>
@@ -1217,7 +1236,7 @@ export default function StaffFreeAgentPage({
         </div>
 
         <div className="rounded-2xl border bg-white p-4 shadow-sm">
-          <h3 className="text-lg font-semibold text-slate-900">Current Staff Roles</h3>
+          <h3 className="text-lg font-semibold text-slate-900">{t('staffMarket.currentRoles')}</h3>
 
           <div className="mt-4 space-y-3">
             {staffRoleCapacity.map((row) => (
