@@ -111,7 +111,43 @@
     "infrastructureAssetRepair": "Popravka infrastrukturne opreme",
     "infrastructureAssetSale": "Prodaja infrastrukturne opreme",
     "infrastructureJobRefund": "Povraćaj za infrastrukturni posao",
-    "teamPolicyHousingCost": "Trošak smeštaja po politici tima"
+    "teamPolicyHousingCost": "Trošak smeštaja po politici tima",
+    "racePrize": "Nagrada trke",
+    "freeAgentSigningCostPaid": "Plaćen trošak potpisa slobodnog vozača"
+  },
+  "financeCategories": {
+    "income": "Prihod",
+    "expense": "Rashod"
+  },
+  "policyCostTypes": {
+    "none": "Nema",
+    "oneTime": "Jednokratno",
+    "weekly": "Nedeljno",
+    "monthly": "Mesečno",
+    "perTrip": "Po putovanju",
+    "perRiderWeekly": "Po vozaču / nedeljno",
+    "perStaffWeekly": "Po članu osoblja / nedeljno",
+    "seasonal": "Sezonski",
+    "perResult": "Po rezultatu"
+  },
+  "policyNotifications": {
+    "none": "Nema",
+    "info": "Informacija",
+    "summary": "Sažetak",
+    "monthlySummary": "Mesečni sažetak",
+    "reminder": "Podsetnik",
+    "warning": "Upozorenje"
+  },
+  "policyEffects": {
+    "travelMorale": "+{{value}} moral tokom putovanja",
+    "morale": "+{{value}} moral",
+    "staffMorale": "+{{value}} moral osoblja",
+    "recovery": "+{{value}} oporavak",
+    "travelFatigue": "{{value}} umor od putovanja",
+    "fatigueLater": "-{{value}} kasniji umor",
+    "logistics": "+{{value}} logistika",
+    "staffEfficiency": "+{{value}} efikasnost osoblja",
+    "contractHappiness": "+{{value}} zadovoljstvo ugovorom"
   },
   "overview": {
     "today": "Danas",
@@ -407,6 +443,7 @@
     "applyChangesDescription": "Ovim se odjednom primenjuju sva promenjena polja politika. Izmene se čuvaju tek nakon što kliknete Primeni.",
     "applyChanges": "Primeni izmene",
     "noChanges": "Nema izmena za primenu",
+    "noChangesToApply": "Nema izmena za primenu",
     "requiresPremium": "{{item}}: ova opcija zahteva Premium."
   },
   "tutorial": {
