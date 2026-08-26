@@ -9,6 +9,8 @@
  */
 
 import React, { useEffect, useMemo, useState } from 'react'
+import type { TFunction } from 'i18next'
+import { useTranslation } from 'react-i18next'
 import {
   discardEquipmentItem,
   getEquipmentInventory,
@@ -74,21 +76,89 @@ type EquipmentInventoryGroup = {
 
 const PAGE_SIZE = 200
 
-const activeStatusOptions: Array<{ value: EquipmentStatus; label: string }> = [
-  { value: 'ready', label: equipmentStatusLabels.ready },
-  { value: 'assigned', label: equipmentStatusLabels.assigned },
-  { value: 'in_maintenance', label: equipmentStatusLabels.in_maintenance },
-  { value: 'worn', label: equipmentStatusLabels.worn },
+const activeStatusOptions: EquipmentStatus[] = [
+  'ready',
+  'assigned',
+  'in_maintenance',
+  'worn',
 ]
 
-const terrainRoleOptions: Array<{ value: EquipmentTerrainRole; label: string }> = [
-  { value: 'all_round', label: 'All-round' },
-  { value: 'endurance_cobble', label: 'Endurance / Cobble' },
-  { value: 'climbing', label: 'Climbing' },
-  { value: 'aero_flat', label: 'Aero / Flat' },
-  { value: 'time_trial', label: 'Time Trial' },
-  { value: 'general', label: 'General' },
+type EquipmentStatusTranslationKey =
+  | 'status.ready'
+  | 'status.assigned'
+  | 'status.inMaintenance'
+  | 'status.worn'
+  | 'status.sold'
+  | 'status.discarded'
+
+const equipmentStatusTranslationKeys: Partial<
+  Record<EquipmentStatus, EquipmentStatusTranslationKey>
+> = {
+  ready: 'status.ready',
+  assigned: 'status.assigned',
+  in_maintenance: 'status.inMaintenance',
+  worn: 'status.worn',
+  sold: 'status.sold',
+  discarded: 'status.discarded',
+}
+
+const terrainRoleOptions: EquipmentTerrainRole[] = [
+  'all_round',
+  'endurance_cobble',
+  'climbing',
+  'aero_flat',
+  'time_trial',
+  'general',
 ]
+
+type EquipmentTerrainTranslationKey =
+  | 'terrain.allRound'
+  | 'terrain.enduranceCobble'
+  | 'terrain.climbing'
+  | 'terrain.aeroFlat'
+  | 'terrain.timeTrial'
+  | 'terrain.general'
+
+const terrainRoleTranslationKeys: Record<
+  EquipmentTerrainRole,
+  EquipmentTerrainTranslationKey
+> = {
+  all_round: 'terrain.allRound',
+  endurance_cobble: 'terrain.enduranceCobble',
+  climbing: 'terrain.climbing',
+  aero_flat: 'terrain.aeroFlat',
+  time_trial: 'terrain.timeTrial',
+  general: 'terrain.general',
+}
+
+type EquipmentEffectTranslationKey =
+  | 'effects.flatBonus'
+  | 'effects.hillyBonus'
+  | 'effects.mountainBonus'
+  | 'effects.cobbleBonus'
+  | 'effects.timeTrialBonus'
+  | 'effects.sprintBonus'
+  | 'effects.fatigueReduction'
+
+const effectTranslationKeys: Partial<
+  Record<string, EquipmentEffectTranslationKey>
+> = {
+  flat_bonus_pct: 'effects.flatBonus',
+  hilly_bonus_pct: 'effects.hillyBonus',
+  mountain_bonus_pct: 'effects.mountainBonus',
+  cobble_bonus_pct: 'effects.cobbleBonus',
+  time_trial_bonus_pct: 'effects.timeTrialBonus',
+  sprint_bonus_pct: 'effects.sprintBonus',
+  fatigue_reduction_pct: 'effects.fatigueReduction',
+}
+
+function getEquipmentStatusDisplayLabel(
+  status: EquipmentStatus,
+  t: TFunction<'equipment'>
+): string {
+  const translationKey = equipmentStatusTranslationKeys[status]
+  return translationKey ? t(translationKey) : equipmentStatusLabels[status] ?? status
+}
 
 function getInventoryItemMetadata(
   item: EquipmentInventoryItem
@@ -170,12 +240,14 @@ function canRepair(item: EquipmentInventoryItem): boolean {
   return canRunAction(item) && Number(item.condition_percent ?? 100) <= 90
 }
 
-function getQualityLabel(score: number | string | null | undefined): string {
+function getQualityTranslationKey(
+  score: number | string | null | undefined
+): 'quality.super' | 'quality.good' | 'quality.basic' {
   const value = Number(score ?? 0)
 
-  if (value >= 75) return 'Super'
-  if (value >= 60) return 'Good'
-  return 'Basic'
+  if (value >= 75) return 'quality.super'
+  if (value >= 60) return 'quality.good'
+  return 'quality.basic'
 }
 
 function getQualityBadgeClass(score: number | string | null | undefined): string {
@@ -186,11 +258,9 @@ function getQualityBadgeClass(score: number | string | null | undefined): string
   return 'bg-gray-100 text-gray-700 border-gray-200'
 }
 
-function formatEffectLabel(key: string): string {
-  return key
-    .replace(/_pct$/i, '')
-    .replace(/_/g, ' ')
-    .replace(/\b\w/g, char => char.toUpperCase())
+function formatEffectLabel(key: string, t: TFunction<'equipment'>): string {
+  const translationKey = effectTranslationKeys[key]
+  return translationKey ? t(translationKey) : key
 }
 
 function formatEffectValue(value: unknown): string {
@@ -206,13 +276,16 @@ function formatEffectValue(value: unknown): string {
   return String(value)
 }
 
-function getShortBonuses(item: EquipmentInventoryItem): Array<{ label: string; value: string }> {
+function getShortBonuses(
+  item: EquipmentInventoryItem,
+  t: TFunction<'equipment'>
+): Array<{ label: string; value: string }> {
   const effects = item.effects ?? {}
 
   return Object.entries(effects)
     .slice(0, 3)
     .map(([key, value]) => ({
-      label: formatEffectLabel(key),
+      label: formatEffectLabel(key, t),
       value: formatEffectValue(value),
     }))
 }
@@ -243,7 +316,10 @@ function getTotalCurrentValue(items: EquipmentInventoryItem[]): number {
   return items.reduce((sum, item) => sum + Number(item.current_value_cash ?? 0), 0)
 }
 
-function buildInventoryGroups(items: EquipmentInventoryItem[]): EquipmentInventoryGroup[] {
+function buildInventoryGroups(
+  items: EquipmentInventoryItem[],
+  t: TFunction<'equipment'>
+): EquipmentInventoryGroup[] {
   const groups = new Map<string, EquipmentInventoryGroup>()
 
   for (const item of items) {
@@ -270,7 +346,7 @@ function buildInventoryGroups(items: EquipmentInventoryItem[]): EquipmentInvento
       averageCondition: Number(item.condition_percent ?? 0),
       totalValue: Number(item.current_value_cash ?? 0),
       qualityScore: item.quality_score,
-      bonuses: getShortBonuses(item),
+      bonuses: getShortBonuses(item, t),
     })
   }
 
@@ -281,6 +357,7 @@ export default function EquipmentInventoryTab({
   clubId,
   equipmentAccess,
 }: EquipmentInventoryTabProps): JSX.Element {
+  const { t } = useTranslation('equipment')
   const [items, setItems] = useState<EquipmentInventoryItem[]>([])
   const [totalCount, setTotalCount] = useState(0)
   const [search, setSearch] = useState('')
@@ -360,8 +437,8 @@ export default function EquipmentInventoryTab({
   )
 
   const groupedItems = useMemo(
-    () => buildInventoryGroups(filteredItems),
-    [filteredItems]
+    () => buildInventoryGroups(filteredItems, t),
+    [filteredItems, t]
   )
 
   function toggleGroup(groupKey: string): void {
@@ -444,7 +521,7 @@ export default function EquipmentInventoryTab({
           idempotencyKey: makeIdempotencyKey('equipment_maintenance'),
         })
 
-        setMessage(`${modal.item.display_name} repair started.`)
+        setMessage(t('inventory.repairStarted', { name: modal.item.display_name }))
       }
 
       if (modal.mode === 'sell') {
@@ -454,7 +531,7 @@ export default function EquipmentInventoryTab({
           idempotencyKey: makeIdempotencyKey('equipment_sale'),
         })
 
-        setMessage(`${modal.item.display_name} sold.`)
+        setMessage(t('inventory.sold', { name: modal.item.display_name }))
       }
 
       if (modal.mode === 'discard') {
@@ -463,7 +540,7 @@ export default function EquipmentInventoryTab({
           inventoryItemId: modal.item.id,
         })
 
-        setMessage(`${modal.item.display_name} discarded.`)
+        setMessage(t('inventory.discarded', { name: modal.item.display_name }))
       }
 
       closeModal()
@@ -482,17 +559,23 @@ export default function EquipmentInventoryTab({
   function getModalTitle(): string {
     if (!modal) return ''
 
-    if (modal.mode === 'repair') return 'Confirm Repair'
-    if (modal.mode === 'sell') return 'Confirm Sale'
-    return 'Confirm Discard'
+    if (modal.mode === 'repair') return t('inventory.confirmRepair')
+    if (modal.mode === 'sell') return t('inventory.confirmSale')
+    return t('inventory.confirmDiscard')
   }
 
   function getModalConfirmLabel(): string {
-    if (!modal) return 'Confirm'
+    if (!modal) return t('common.confirm')
 
-    if (modal.mode === 'repair') return actionLoading ? 'Starting repair...' : 'Confirm Repair'
-    if (modal.mode === 'sell') return actionLoading ? 'Selling...' : 'Confirm Sale'
-    return actionLoading ? 'Discarding...' : 'Confirm Discard'
+    if (modal.mode === 'repair') {
+      return actionLoading ? t('inventory.startingRepair') : t('inventory.confirmRepair')
+    }
+
+    if (modal.mode === 'sell') {
+      return actionLoading ? t('inventory.selling') : t('inventory.confirmSale')
+    }
+
+    return actionLoading ? t('inventory.discarding') : t('inventory.confirmDiscard')
   }
 
   function getModalConfirmClass(): string {
@@ -570,7 +653,7 @@ export default function EquipmentInventoryTab({
   }
 
   function renderInventoryItemRow(item: EquipmentInventoryItem): JSX.Element {
-    const bonuses = getShortBonuses(item)
+    const bonuses = getShortBonuses(item, t)
     const itemCanRunAction = canRunAction(item)
     const itemCanRepair = canRepair(item)
 
@@ -587,12 +670,12 @@ export default function EquipmentInventoryTab({
           <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-gray-500">
             <span>
               {equipmentCategoryLabels[item.equipment_category]} ·{' '}
-              {item.brand_name ?? 'Generic brand'}
+              {item.brand_name ?? t('common.genericBrand')}
             </span>
 
             {item.used_in_default_setup ? (
               <span className="rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5 font-medium text-blue-700">
-                Default setup
+                {t('inventory.defaultSetup')}
               </span>
             ) : null}
           </div>
@@ -600,14 +683,14 @@ export default function EquipmentInventoryTab({
 
         <div className="flex flex-col justify-center gap-1 xl:border-l xl:border-gray-100 xl:pl-4">
           <div className="flex items-center gap-2 text-xs">
-            <span className="text-gray-400">Quality</span>
+            <span className="text-gray-400">{t('common.quality')}</span>
             <span
               className={[
                 'rounded-full border px-2 py-0.5 font-medium',
                 getQualityBadgeClass(item.quality_score),
               ].join(' ')}
             >
-              ★ {getQualityLabel(item.quality_score)}
+              ★ {t(getQualityTranslationKey(item.quality_score))}
             </span>
           </div>
 
@@ -617,20 +700,20 @@ export default function EquipmentInventoryTab({
               getStatusBadgeClass(item.status),
             ].join(' ')}
           >
-            {equipmentStatusLabels[item.status]}
+            {getEquipmentStatusDisplayLabel(item.status, t)}
           </span>
         </div>
 
         <div className="flex flex-col justify-center gap-1 text-sm xl:border-l xl:border-gray-100 xl:pl-4">
           <div>
-            <span className="text-gray-500">Condition</span>{' '}
+            <span className="text-gray-500">{t('common.condition')}</span>{' '}
             <span className="font-medium text-gray-900">
               {formatCondition(item.condition_percent)}
             </span>
           </div>
 
           <div>
-            <span className="text-gray-500">Value</span>{' '}
+            <span className="text-gray-500">{t('common.value')}</span>{' '}
             <span className="font-medium text-gray-900">
               {formatMoney(item.current_value_cash)}
             </span>
@@ -648,7 +731,7 @@ export default function EquipmentInventoryTab({
               </span>
             ))
           ) : (
-            <span className="text-gray-400">No direct bonuses yet</span>
+            <span className="text-gray-400">{t('inventory.noBonuses')}</span>
           )}
         </div>
 
@@ -659,10 +742,10 @@ export default function EquipmentInventoryTab({
               onClick={() => void openActionModal('repair', item)}
               className="text-xs font-medium text-yellow-600 hover:text-yellow-700"
             >
-              Repair
+              {t('inventory.repair')}
             </button>
           ) : (
-            <span className="text-xs text-gray-400">No repair needed</span>
+            <span className="text-xs text-gray-400">{t('inventory.noRepair')}</span>
           )}
 
           <button
@@ -671,7 +754,7 @@ export default function EquipmentInventoryTab({
             onClick={() => void openActionModal('sell', item)}
             className="text-xs font-medium text-green-600 hover:text-green-700 disabled:text-gray-300"
           >
-            Sell
+            {t('inventory.sell')}
           </button>
 
           <button
@@ -680,7 +763,7 @@ export default function EquipmentInventoryTab({
             onClick={() => void openActionModal('discard', item)}
             className="text-xs font-medium text-red-600 hover:text-red-700 disabled:text-gray-300"
           >
-            Discard
+            {t('inventory.discard')}
           </button>
         </div>
       </div>
@@ -700,7 +783,7 @@ export default function EquipmentInventoryTab({
                 void loadInventory()
               }
             }}
-            placeholder="Search equipment..."
+            placeholder={t('inventory.searchPlaceholder')}
             className="rounded border border-gray-200 px-3 py-2 text-sm"
           />
 
@@ -727,10 +810,10 @@ export default function EquipmentInventoryTab({
             }}
             className="rounded border border-gray-200 px-3 py-2 text-sm"
           >
-            <option value="">Active statuses</option>
-            {activeStatusOptions.map(option => (
-              <option key={option.value} value={option.value}>
-                {option.label}
+            <option value="">{t('inventory.activeStatuses')}</option>
+            {activeStatusOptions.map(statusValue => (
+              <option key={statusValue} value={statusValue}>
+                {getEquipmentStatusDisplayLabel(statusValue, t)}
               </option>
             ))}
           </select>
@@ -743,10 +826,10 @@ export default function EquipmentInventoryTab({
             }}
             className="rounded border border-gray-200 px-3 py-2 text-sm"
           >
-            <option value="">All equipment roles</option>
-            {terrainRoleOptions.map(option => (
-              <option key={option.value} value={option.value}>
-                {option.label}
+            <option value="">{t('terrain.allRoles')}</option>
+            {terrainRoleOptions.map(role => (
+              <option key={role} value={role}>
+                {t(terrainRoleTranslationKeys[role])}
               </option>
             ))}
           </select>
@@ -756,12 +839,12 @@ export default function EquipmentInventoryTab({
             onChange={event => setSort(event.target.value)}
             className="rounded border border-gray-200 px-3 py-2 text-sm"
           >
-            <option value="condition_asc">Condition: low first</option>
-            <option value="condition_desc">Condition: high first</option>
-            <option value="price_desc">Value: high first</option>
-            <option value="price_asc">Value: low first</option>
-            <option value="quality_desc">Quality: high first</option>
-            <option value="quality_asc">Quality: low first</option>
+            <option value="condition_asc">{t('inventory.conditionLow')}</option>
+            <option value="condition_desc">{t('inventory.conditionHigh')}</option>
+            <option value="price_desc">{t('inventory.valueHigh')}</option>
+            <option value="price_asc">{t('inventory.valueLow')}</option>
+            <option value="quality_desc">{t('inventory.qualityHigh')}</option>
+            <option value="quality_asc">{t('inventory.qualityLow')}</option>
           </select>
         </div>
 
@@ -773,7 +856,7 @@ export default function EquipmentInventoryTab({
           }}
           className="mt-3 rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
         >
-          Search
+          {t('common.search')}
         </button>
       </div>
 
@@ -782,11 +865,11 @@ export default function EquipmentInventoryTab({
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="font-semibold text-slate-900">Maintenance Planner</h3>
-                <span className="rounded-full border border-yellow-300 bg-yellow-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-yellow-800">Premium</span>
+                <h3 className="font-semibold text-slate-900">{t('inventory.maintenancePlanner')}</h3>
+                <span className="rounded-full border border-yellow-300 bg-yellow-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-yellow-800">{t('common.premium')}</span>
               </div>
               <p className="mt-1 text-xs text-slate-500">
-                Save a reminder threshold and start eligible repairs together. Every repair keeps its normal cash cost and duration.
+                {t('inventory.plannerDescription')}
               </p>
             </div>
 
@@ -797,20 +880,31 @@ export default function EquipmentInventoryTab({
               className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {bulkRepairLoading
-                ? 'Starting repairs…'
-                : `Repair ${premiumRepairCandidates.length} below threshold`}
+                ? t('inventory.startingRepairs')
+                : t('inventory.repairBelow', { count: premiumRepairCandidates.length })}
             </button>
           </div>
 
           <div className="mt-3 rounded-md bg-slate-50 px-3 py-2 text-xs text-slate-600">
             {premiumRepairCandidates.length > 0
-              ? `${premiumRepairCandidates.length} loaded item${premiumRepairCandidates.length === 1 ? '' : 's'} can be repaired at or below ${maintenanceThreshold}%.`
-              : `No loaded ${equipmentCategoryLabels[category].toLowerCase()} can currently be repaired at or below ${maintenanceThreshold}%.`}
+              ? premiumRepairCandidates.length === 1
+                ? t('inventory.repairCandidate', {
+                    count: premiumRepairCandidates.length,
+                    threshold: maintenanceThreshold,
+                  })
+                : t('inventory.repairCandidates', {
+                    count: premiumRepairCandidates.length,
+                    threshold: maintenanceThreshold,
+                  })
+              : t('inventory.noRepairCandidates', {
+                  category: equipmentCategoryLabels[category].toLowerCase(),
+                  threshold: maintenanceThreshold,
+                })}
           </div>
 
           <div className="mt-4 flex flex-wrap items-center gap-3">
             <label className="text-sm text-slate-700">
-              Reminder at or below
+              {t('inventory.reminderAt')}
               <select
                 value={maintenanceThreshold}
                 onChange={event => setMaintenanceThreshold(Number(event.target.value))}
@@ -826,7 +920,7 @@ export default function EquipmentInventoryTab({
               onClick={() => void handleSaveMaintenanceReminder()}
               className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
             >
-              Save reminder
+              {t('inventory.saveReminder')}
             </button>
           </div>
         </div>
@@ -835,16 +929,16 @@ export default function EquipmentInventoryTab({
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="font-semibold text-slate-900">Maintenance Planner</h3>
-                <span className="rounded-full border border-yellow-300 bg-yellow-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-yellow-800">Premium</span>
+                <h3 className="font-semibold text-slate-900">{t('inventory.maintenancePlanner')}</h3>
+                <span className="rounded-full border border-yellow-300 bg-yellow-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-yellow-800">{t('common.premium')}</span>
                 <span aria-hidden="true" className="text-slate-400">🔒</span>
               </div>
               <p className="mt-1 text-sm text-slate-600">
-                Set condition reminders and start multiple normal repair jobs together.
+                {t('inventory.plannerLocked')}
               </p>
             </div>
             <a href="/dashboard/premium" className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
-              Unlock with Premium
+              {t('common.unlockPremium')}
             </a>
           </div>
         </div>
@@ -864,23 +958,28 @@ export default function EquipmentInventoryTab({
 
       <div className="rounded-lg bg-white shadow-sm">
         <div className="border-b border-gray-100 p-4">
-          <h3 className="font-semibold text-gray-900">Owned Equipment</h3>
+          <h3 className="font-semibold text-gray-900">{t('inventory.ownedEquipment')}</h3>
           <p className="text-xs text-gray-500">
-            Showing {filteredItems.length} active{' '}
-            {equipmentCategoryLabels[category].toLowerCase()} item
-            {filteredItems.length === 1 ? '' : 's'}
             {terrainRole
-              ? ` for ${terrainRoleOptions.find(option => option.value === terrainRole)?.label ?? terrainRole}`
-              : ''}
-            .
+              ? t('inventory.showingRole', {
+                  count: filteredItems.length,
+                  category: equipmentCategoryLabels[category].toLowerCase(),
+                  role: t(terrainRoleTranslationKeys[terrainRole]),
+                })
+              : t('inventory.showing', {
+                  count: filteredItems.length,
+                  category: equipmentCategoryLabels[category].toLowerCase(),
+                })}
           </p>
         </div>
 
         {loading ? (
-          <div className="p-4 text-sm text-gray-500">Loading inventory...</div>
+          <div className="p-4 text-sm text-gray-500">{t('inventory.loading')}</div>
         ) : filteredItems.length === 0 ? (
           <div className="p-4 text-sm text-gray-500">
-            No active {equipmentCategoryLabels[category].toLowerCase()} found.
+            {t('inventory.noneFound', {
+              category: equipmentCategoryLabels[category].toLowerCase(),
+            })}
           </div>
         ) : (
           <div className="divide-y divide-gray-100">
@@ -905,38 +1004,38 @@ export default function EquipmentInventoryTab({
                       </div>
 
                       <div className="mt-1 text-xs text-gray-500">
-                        {equipmentCategoryLabels[group.category]} · {group.brandName ?? 'Generic brand'}
+                        {equipmentCategoryLabels[group.category]} · {group.brandName ?? t('common.genericBrand')}
                       </div>
                     </div>
 
                     <div className="flex flex-col justify-center gap-1 xl:border-l xl:border-gray-200 xl:pl-4">
                       <div className="flex items-center gap-2 text-xs">
-                        <span className="text-gray-400">Quality</span>
+                        <span className="text-gray-400">{t('common.quality')}</span>
                         <span
                           className={[
                             'rounded-full border px-2 py-0.5 font-medium',
                             getQualityBadgeClass(group.qualityScore),
                           ].join(' ')}
                         >
-                          ★ {getQualityLabel(group.qualityScore)}
+                          ★ {t(getQualityTranslationKey(group.qualityScore))}
                         </span>
                       </div>
 
                       <span className="inline-block w-fit rounded-full bg-green-50 px-2 py-0.5 text-xs font-medium text-green-700">
-                        Ready {group.readyCount}/{group.totalCount}
+                        {t('status.ready')} {group.readyCount}/{group.totalCount}
                       </span>
                     </div>
 
                     <div className="flex flex-col justify-center gap-1 text-sm xl:border-l xl:border-gray-200 xl:pl-4">
                       <div>
-                        <span className="text-gray-500">Avg. condition</span>{' '}
+                        <span className="text-gray-500">{t('inventory.averageCondition')}</span>{' '}
                         <span className="font-semibold text-gray-900">
                           {formatCondition(group.averageCondition)}
                         </span>
                       </div>
 
                       <div>
-                        <span className="text-gray-500">Total value</span>{' '}
+                        <span className="text-gray-500">{t('inventory.totalValue')}</span>{' '}
                         <span className="font-medium text-gray-900">
                           {formatMoney(group.totalValue)}
                         </span>
@@ -954,13 +1053,13 @@ export default function EquipmentInventoryTab({
                           </span>
                         ))
                       ) : (
-                        <span className="text-gray-400">No direct bonuses yet</span>
+                        <span className="text-gray-400">{t('inventory.noBonuses')}</span>
                       )}
                     </div>
 
                     <div className="flex items-center justify-between gap-3 text-xs xl:border-l xl:border-gray-200 xl:pl-4">
                       <div className="text-gray-500">
-                        {isExpanded ? 'Hide item list' : 'Show item list'}
+                        {isExpanded ? t('inventory.hideItems') : t('inventory.showItems')}
                       </div>
 
                       <span className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-blue-200 bg-white text-sm font-bold text-blue-700 shadow-sm">
@@ -987,7 +1086,7 @@ export default function EquipmentInventoryTab({
             onClick={() => setPage(current => Math.max(0, current - 1))}
             className="rounded border border-gray-200 px-3 py-1 text-sm disabled:opacity-40"
           >
-            Previous
+            {t('common.previous')}
           </button>
 
           <div className="text-sm text-gray-500">
@@ -1000,7 +1099,7 @@ export default function EquipmentInventoryTab({
             onClick={() => setPage(current => current + 1)}
             className="rounded border border-gray-200 px-3 py-1 text-sm disabled:opacity-40"
           >
-            Next
+            {t('common.next')}
           </button>
         </div>
       </div>
@@ -1017,6 +1116,8 @@ export default function EquipmentInventoryTab({
               <button
                 type="button"
                 onClick={closeModal}
+                aria-label={t('common.close')}
+                title={t('common.close')}
                 className="rounded px-2 py-1 text-sm text-gray-400 hover:bg-gray-100 hover:text-gray-700"
               >
                 ✕
@@ -1026,23 +1127,23 @@ export default function EquipmentInventoryTab({
             <div className="mt-4 rounded-lg bg-gray-50 p-4 text-sm">
               {modal.mode === 'repair' ? (
                 quoteLoading ? (
-                  <div className="text-gray-500">Loading repair cost...</div>
+                  <div className="text-gray-500">{t('inventory.loadingRepair')}</div>
                 ) : repairQuote ? (
                   <div className="space-y-2">
                     <div className="flex justify-between">
-                      <span className="text-gray-500">Current condition</span>
+                      <span className="text-gray-500">{t('inventory.currentCondition')}</span>
                       <span className="font-medium">
                         {formatCondition(repairQuote.condition_percent)}
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-500">After repair</span>
+                      <span className="text-gray-500">{t('inventory.afterRepair')}</span>
                       <span className="font-medium">
                         {formatCondition(repairQuote.condition_after)}
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-500">Repair cost</span>
+                      <span className="text-gray-500">{t('inventory.repairCost')}</span>
                       <span className="font-semibold text-gray-900">
                         {formatMoney(repairQuote.maintenance_cost_cash)}
                       </span>
@@ -1050,46 +1151,51 @@ export default function EquipmentInventoryTab({
                     <div className="flex justify-between">
                       <span className="text-gray-500">Duration</span>
                       <span className="font-medium">
-                        {repairQuote.duration_game_days} game day
-                        {repairQuote.duration_game_days === 1 ? '' : 's'}
+                        {repairQuote.duration_game_days === 1
+                          ? t('inventory.gameDay', {
+                              count: repairQuote.duration_game_days,
+                            })
+                          : t('inventory.gameDays', {
+                              count: repairQuote.duration_game_days,
+                            })}
                       </span>
                     </div>
                   </div>
                 ) : (
-                  <div className="text-red-600">Repair quote could not be loaded.</div>
+                  <div className="text-red-600">{t('inventory.repairQuoteFailed')}</div>
                 )
               ) : null}
 
               {modal.mode === 'sell' ? (
                 quoteLoading ? (
-                  <div className="text-gray-500">Loading sale value...</div>
+                  <div className="text-gray-500">{t('inventory.loadingSale')}</div>
                 ) : saleQuote ? (
                   <div className="space-y-2">
                     <div className="flex justify-between">
-                      <span className="text-gray-500">Condition</span>
+                      <span className="text-gray-500">{t('common.condition')}</span>
                       <span className="font-medium">
                         {formatCondition(saleQuote.condition_percent)}
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-500">Sale income</span>
+                      <span className="text-gray-500">{t('inventory.saleIncome')}</span>
                       <span className="font-semibold text-green-700">
                         {formatMoney(saleQuote.sale_value_cash)}
                       </span>
                     </div>
                   </div>
                 ) : (
-                  <div className="text-red-600">Sale quote could not be loaded.</div>
+                  <div className="text-red-600">{t('inventory.saleQuoteFailed')}</div>
                 )
               ) : null}
 
               {modal.mode === 'discard' ? (
                 <div className="space-y-2">
                   <p className="text-gray-700">
-                    Discard this item permanently? This gives no money back.
+                    {t('inventory.discardWarning')}
                   </p>
                   <p className="text-xs text-red-600">
-                    This action cannot be undone.
+                    {t('inventory.cannotUndo')}
                   </p>
                 </div>
               ) : null}
@@ -1102,7 +1208,7 @@ export default function EquipmentInventoryTab({
                 disabled={actionLoading}
                 className="rounded border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
               >
-                Cancel
+                {t('common.cancel')}
               </button>
 
               <button
