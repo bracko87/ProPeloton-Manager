@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { getEquipmentMarket } from '../equipmentApi'
 
 type EquipmentCategory =
@@ -33,16 +34,40 @@ type PreviewDetails = EquipmentPreviewOption & {
   base_price_cash?: number | string | null
 }
 
+type EquipmentEffectTranslationKey =
+  | 'effects.flatBonus'
+  | 'effects.hillyBonus'
+  | 'effects.mountainBonus'
+  | 'effects.cobbleBonus'
+  | 'effects.timeTrialBonus'
+  | 'effects.sprintBonus'
+  | 'effects.fatigueReduction'
+
+type EquipmentQualityTranslationKey =
+  | 'quality.super'
+  | 'quality.good'
+  | 'quality.basic'
+
+type EquipmentTerrainTranslationKey =
+  | 'terrain.allRound'
+  | 'terrain.enduranceCobble'
+  | 'terrain.climbing'
+  | 'terrain.aeroFlat'
+  | 'terrain.timeTrial'
+  | 'terrain.general'
+
 const previewCache = new Map<string, PreviewDetails | null>()
 
-const effectLabels: Record<string, string> = {
-  flat_bonus_pct: 'Flat',
-  hilly_bonus_pct: 'Hilly',
-  mountain_bonus_pct: 'Mountain',
-  cobble_bonus_pct: 'Cobble',
-  time_trial_bonus_pct: 'Time Trial',
-  sprint_bonus_pct: 'Sprint',
-  fatigue_reduction_pct: 'Fatigue',
+const effectTranslationKeys: Partial<
+  Record<string, EquipmentEffectTranslationKey>
+> = {
+  flat_bonus_pct: 'effects.flatBonus',
+  hilly_bonus_pct: 'effects.hillyBonus',
+  mountain_bonus_pct: 'effects.mountainBonus',
+  cobble_bonus_pct: 'effects.cobbleBonus',
+  time_trial_bonus_pct: 'effects.timeTrialBonus',
+  sprint_bonus_pct: 'effects.sprintBonus',
+  fatigue_reduction_pct: 'effects.fatigueReduction',
 }
 
 const effectOrder = [
@@ -54,6 +79,29 @@ const effectOrder = [
   'sprint_bonus_pct',
   'fatigue_reduction_pct',
 ]
+
+const qualityTranslationKeys: Record<string, EquipmentQualityTranslationKey> = {
+  super: 'quality.super',
+  good: 'quality.good',
+  basic: 'quality.basic',
+}
+
+const terrainTranslationKeys: Record<string, EquipmentTerrainTranslationKey> = {
+  all_round: 'terrain.allRound',
+  'all-round': 'terrain.allRound',
+  'all round': 'terrain.allRound',
+  'endurance / cobble': 'terrain.enduranceCobble',
+  'endurance/cobble': 'terrain.enduranceCobble',
+  endurance_cobble: 'terrain.enduranceCobble',
+  climbing: 'terrain.climbing',
+  'aero / flat': 'terrain.aeroFlat',
+  'aero/flat': 'terrain.aeroFlat',
+  aero_flat: 'terrain.aeroFlat',
+  'time trial': 'terrain.timeTrial',
+  'time-trial': 'terrain.timeTrial',
+  time_trial: 'terrain.timeTrial',
+  general: 'terrain.general',
+}
 
 function toNumber(value: unknown): number {
   const parsed = Number(value)
@@ -91,7 +139,8 @@ function getImageUrl(option: EquipmentPreviewOption): string | null {
 
 function getEffects(option: EquipmentPreviewOption): Array<{
   key: string
-  label: string
+  translationKey: EquipmentEffectTranslationKey | null
+  fallbackLabel: string
   value: number
 }> {
   const metadataEffects =
@@ -109,7 +158,8 @@ function getEffects(option: EquipmentPreviewOption): Array<{
   return [...new Set(keys)]
     .map(key => ({
       key,
-      label: effectLabels[key] ?? key.replace(/_/g, ' '),
+      translationKey: effectTranslationKeys[key] ?? null,
+      fallbackLabel: key,
       value: toNumber(effects[key]),
     }))
     .filter(effect => effect.value !== 0)
@@ -122,6 +172,20 @@ function formatEffect(value: number): string {
     : rounded.toFixed(2).replace(/0+$/, '').replace(/\.$/, '')
 
   return `${rounded > 0 ? '+' : ''}${text}%`
+}
+
+function getQualityTranslationKey(
+  value: string | null | undefined,
+): EquipmentQualityTranslationKey | null {
+  if (!value) return null
+  return qualityTranslationKeys[value.trim().toLowerCase()] ?? null
+}
+
+function getTerrainTranslationKey(
+  value: string | null | undefined,
+): EquipmentTerrainTranslationKey | null {
+  if (!value) return null
+  return terrainTranslationKeys[value.trim().toLowerCase()] ?? null
 }
 
 function mergeDetails(
@@ -151,12 +215,13 @@ function mergeDetails(
       option.terrain_role,
     image_url:
       (marketItem.image_url as string | null | undefined) ??
-      getMetadataString(marketMetadata,
+      getMetadataString(
+        marketMetadata,
         'image_url',
         'imageUrl',
         'image_path',
         'catalog_image_url',
-        'preview_image_url'
+        'preview_image_url',
       ) ??
       option.image_url,
     effects:
@@ -179,6 +244,7 @@ export default function EquipmentOptionPreviewPopover({
   children,
   disabled = false,
 }: EquipmentOptionPreviewPopoverProps): JSX.Element {
+  const { t } = useTranslation('equipment')
   const [open, setOpen] = useState(false)
   const [pinned, setPinned] = useState(false)
   const [details, setDetails] = useState<PreviewDetails | null>(option)
@@ -212,7 +278,12 @@ export default function EquipmentOptionPreviewPopover({
     const cacheKey = `${clubId}:${option.catalog_item_id}`
 
     if (previewCache.has(cacheKey)) {
-      setDetails(mergeDetails(option, previewCache.get(cacheKey) as Record<string, unknown> | null))
+      setDetails(
+        mergeDetails(
+          option,
+          previewCache.get(cacheKey) as Record<string, unknown> | null,
+        ),
+      )
       return
     }
 
@@ -227,19 +298,17 @@ export default function EquipmentOptionPreviewPopover({
       })
       const items = Array.isArray(response?.items) ? response.items : []
       const match =
-        items.find(
-          item => {
-            const candidate = item as {
-              id?: unknown
-              catalog_item_id?: unknown
-            }
+        items.find(item => {
+          const candidate = item as {
+            id?: unknown
+            catalog_item_id?: unknown
+          }
 
-            return (
-              String(candidate.id ?? '') === option.catalog_item_id ||
-              String(candidate.catalog_item_id ?? '') === option.catalog_item_id
-            )
-          },
-        ) ?? null
+          return (
+            String(candidate.id ?? '') === option.catalog_item_id ||
+            String(candidate.catalog_item_id ?? '') === option.catalog_item_id
+          )
+        }) ?? null
 
       previewCache.set(cacheKey, match as PreviewDetails | null)
       setDetails(mergeDetails(option, match as Record<string, unknown> | null))
@@ -303,11 +372,17 @@ export default function EquipmentOptionPreviewPopover({
   const name =
     currentDetails?.display_name?.trim() ||
     currentDetails?.label?.trim() ||
-    'Equipment'
+    t('preview.equipment')
+
+  const qualityLabel = currentDetails?.quality_label?.trim() || null
+  const qualityTranslationKey = getQualityTranslationKey(qualityLabel)
+  const terrainLabel = currentDetails?.terrain_role?.trim() || null
+  const terrainTranslationKey = getTerrainTranslationKey(terrainLabel)
+
   const subtitle = [
     currentDetails?.brand_name,
-    currentDetails?.quality_label,
-    currentDetails?.terrain_role,
+    qualityTranslationKey ? t(qualityTranslationKey) : qualityLabel,
+    terrainTranslationKey ? t(terrainTranslationKey) : terrainLabel,
   ]
     .filter(Boolean)
     .join(' · ')
@@ -324,24 +399,30 @@ export default function EquipmentOptionPreviewPopover({
       {open && option ? (
         <div
           role="dialog"
-          aria-label={`${name} preview`}
+          aria-label={t('preview.aria', { name })}
           className="absolute right-0 top-full z-50 mt-2 w-[min(340px,calc(100vw-24px))] overflow-hidden rounded-lg border border-slate-200 bg-white shadow-xl"
           onMouseEnter={() => {
-            if (closeTimerRef.current !== null) window.clearTimeout(closeTimerRef.current)
+            if (closeTimerRef.current !== null) {
+              window.clearTimeout(closeTimerRef.current)
+            }
           }}
           onMouseLeave={beginClose}
         >
           <div className="flex items-start justify-between gap-2 border-b border-slate-100 px-3 py-2">
             <div className="min-w-0">
-              <div className="truncate text-sm font-semibold text-slate-900">{name}</div>
+              <div className="truncate text-sm font-semibold text-slate-900">
+                {name}
+              </div>
               {subtitle ? (
-                <div className="mt-0.5 truncate text-[11px] text-slate-500">{subtitle}</div>
+                <div className="mt-0.5 truncate text-[11px] text-slate-500">
+                  {subtitle}
+                </div>
               ) : null}
             </div>
             <button
               type="button"
               onClick={close}
-              aria-label="Close equipment preview"
+              aria-label={t('preview.close')}
               className="rounded px-1.5 py-0.5 text-xs text-slate-400 hover:bg-slate-100 hover:text-slate-700"
             >
               ×
@@ -350,12 +431,12 @@ export default function EquipmentOptionPreviewPopover({
 
           <div className="flex h-44 items-center justify-center bg-white p-2">
             {loadingDetails ? (
-              <div className="text-xs text-slate-400">Loading equipment preview…</div>
+              <div className="text-xs text-slate-400">{t('preview.loading')}</div>
             ) : imageUrl ? (
               <img src={imageUrl} alt={name} className="h-full w-full object-contain" />
             ) : (
               <div className="flex h-full w-full items-center justify-center rounded border border-dashed border-slate-200 bg-slate-50 px-4 text-center text-xs text-slate-400">
-                No equipment image is connected to this catalog item.
+                {t('preview.noImage')}
               </div>
             )}
           </div>
@@ -373,12 +454,17 @@ export default function EquipmentOptionPreviewPopover({
                         : 'border-red-200 bg-red-50 text-red-700',
                     ].join(' ')}
                   >
-                    {effect.label} {formatEffect(effect.value)}
+                    {effect.translationKey
+                      ? t(effect.translationKey)
+                      : effect.fallbackLabel}{' '}
+                    {formatEffect(effect.value)}
                   </span>
                 ))}
               </div>
             ) : (
-              <div className="text-[11px] text-slate-400">No equipment bonuses.</div>
+              <div className="text-[11px] text-slate-400">
+                {t('preview.noBonuses')}
+              </div>
             )}
           </div>
         </div>
