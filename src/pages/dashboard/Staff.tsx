@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { useLocation } from 'react-router'
 import { useTranslation } from 'react-i18next'
+import type { TFunction } from 'i18next'
 import { supabase } from '../../lib/supabase'
 import PremiumFeatureLock from '../../components/premium/PremiumFeatureLock'
 
@@ -350,6 +351,32 @@ const QUALITY_TRANSLATION_KEYS = {
   'Youth Coach Ability': 'quality.youthCoachAbility',
   'Talent Development': 'quality.talentDevelopment',
   'Race Readiness': 'quality.raceReadiness',
+} as const
+
+const ATTRIBUTE_TRANSLATION_KEYS = {
+  Training: 'attributes.training',
+  'Recovery Planning': 'attributes.recoveryPlanning',
+  'Youth Development': 'attributes.youthDevelopment',
+  Experience: 'attributes.experience',
+  Leadership: 'attributes.leadership',
+  Loyalty: 'attributes.loyalty',
+  'Daily Training': 'attributes.dailyTraining',
+  'Training Efficiency': 'attributes.trainingEfficiency',
+  'Potential Growth': 'attributes.potentialGrowth',
+  Recovery: 'attributes.recovery',
+  Prevention: 'attributes.prevention',
+  Diagnosis: 'attributes.diagnosis',
+  Rehabilitation: 'attributes.rehabilitation',
+  'Recovery Speed': 'attributes.recoverySpeed',
+  'Nutrition Planning': 'attributes.nutrition',
+  Consistency: 'attributes.consistency',
+  Setup: 'attributes.bikeSetup',
+  Reliability: 'attributes.reliability',
+  Tactics: 'attributes.racePlanning',
+  Organization: 'attributes.teamControl',
+  Evaluation: 'attributes.evaluation',
+  Network: 'attributes.network',
+  Accuracy: 'attributes.accuracy',
 } as const
 
 
@@ -862,7 +889,11 @@ function getDaysRemaining(dateValue: string | null | undefined, currentGameDate:
   return Math.floor(diffMs / (1000 * 60 * 60 * 24))
 }
 
-function formatContractUi(dateValue: string | null, currentGameDate: string | null) {
+function formatContractUi(
+  dateValue: string | null,
+  currentGameDate: string | null,
+  t: TFunction
+) {
   if (!dateValue) {
     return {
       primary: 'No contract date',
@@ -879,11 +910,11 @@ function formatContractUi(dateValue: string | null, currentGameDate: string | nu
     if (daysRemaining < 0) {
       secondary = 'Expired'
     } else if (daysRemaining === 0) {
-      secondary = 'Expires today'
+      secondary = t('assignment.expiresToday')
     } else if (daysRemaining === 1) {
-      secondary = '1 day left'
+      secondary = t('assignment.oneDayLeft')
     } else {
-      secondary = `${daysRemaining} days left`
+      secondary = t('assignment.daysLeft', { count: daysRemaining })
     }
   }
 
@@ -2530,9 +2561,10 @@ function mapStaffMember(
   row: ClubStaffRow,
   currentGameDate: string | null,
   activeCourseByStaffId: Map<string, StaffActiveCourse>,
-  infrastructure: ClubInfrastructureRow | null
+  infrastructure: ClubInfrastructureRow | null,
+  t: TFunction
 ): StaffListMember {
-  const contractUi = formatContractUi(row.contract_expires_at, currentGameDate)
+  const contractUi = formatContractUi(row.contract_expires_at, currentGameDate, t)
   const roleMeta = getRoleMeta(row.role_type)
   const lastCourseInfo = getLastCourseInfo(row)
   const activeCourse = activeCourseByStaffId.get(row.id) ?? null
@@ -2886,12 +2918,12 @@ function RoleTabButton({
   )
 }
 
-function getStaffAssignmentLabel(staff: StaffListMember) {
+function getStaffAssignmentLabel(staff: StaffListMember, t: TFunction) {
   const rawLabel = staff.currentAssignmentLabel?.trim()
 
-  if (!rawLabel) {
+  if (!rawLabel || rawLabel.toLowerCase().includes('currently not assigned')) {
     return {
-      text: 'Currently not assigned',
+      text: t('assignment.notAssigned'),
       isActive: false,
     }
   }
@@ -2917,8 +2949,12 @@ function StaffListRow({
 }) {
   const { t } = useTranslation('staff')
   const translateStatLabel = (label: string) => {
-    const key = QUALITY_TRANSLATION_KEYS[label as keyof typeof QUALITY_TRANSLATION_KEYS]
-    return key ? t(key) : label
+    const attributeKey =
+      ATTRIBUTE_TRANSLATION_KEYS[label as keyof typeof ATTRIBUTE_TRANSLATION_KEYS]
+    if (attributeKey) return t(attributeKey)
+
+    const qualityKey = QUALITY_TRANSLATION_KEYS[label as keyof typeof QUALITY_TRANSLATION_KEYS]
+    return qualityKey ? t(qualityKey) : label
   }
   const scopeLabel =
     staff.teamScope === 'first_team'
@@ -2967,7 +3003,7 @@ function StaffListRow({
           ) : null}
 
           {(() => {
-            const assignment = getStaffAssignmentLabel(staff)
+            const assignment = getStaffAssignmentLabel(staff, t)
 
             return (
               <div
@@ -3002,7 +3038,7 @@ function StaffListRow({
             onClick={() => onOpen(staff)}
             className="w-full rounded-lg bg-yellow-400 px-4 py-2 text-sm font-medium text-black transition hover:bg-yellow-300 xl:w-60"
           >
-            Open Staff Profile
+            {t('assignment.openProfile')}
           </button>
         </div>
       </div>
@@ -3033,8 +3069,12 @@ function RoleContributionPanel({
 }) {
   const { t } = useTranslation('staff')
   const translateStatLabel = (label: string) => {
-    const key = QUALITY_TRANSLATION_KEYS[label as keyof typeof QUALITY_TRANSLATION_KEYS]
-    return key ? t(key) : label
+    const attributeKey =
+      ATTRIBUTE_TRANSLATION_KEYS[label as keyof typeof ATTRIBUTE_TRANSLATION_KEYS]
+    if (attributeKey) return t(attributeKey)
+
+    const qualityKey = QUALITY_TRANSLATION_KEYS[label as keyof typeof QUALITY_TRANSLATION_KEYS]
+    return qualityKey ? t(qualityKey) : label
   }
   const roleMeta = getRoleMeta(role)
   const roleKeys = ROLE_TRANSLATION_KEYS[role]
@@ -3196,8 +3236,12 @@ function StaffDetailModal({
   if (!staff) return null
 
   const translateStatLabel = (label: string) => {
-    const key = QUALITY_TRANSLATION_KEYS[label as keyof typeof QUALITY_TRANSLATION_KEYS]
-    return key ? t(key) : label
+    const attributeKey =
+      ATTRIBUTE_TRANSLATION_KEYS[label as keyof typeof ATTRIBUTE_TRANSLATION_KEYS]
+    if (attributeKey) return t(attributeKey)
+
+    const qualityKey = QUALITY_TRANSLATION_KEYS[label as keyof typeof QUALITY_TRANSLATION_KEYS]
+    return qualityKey ? t(qualityKey) : label
   }
 
   const scopeLabel =
@@ -3286,7 +3330,7 @@ function StaffDetailModal({
               </div>
 
               {(() => {
-                const assignment = getStaffAssignmentLabel(staff)
+                const assignment = getStaffAssignmentLabel(staff, t)
 
                 return (
                   <div
@@ -3573,7 +3617,8 @@ function ExtendContractModal({
 
   const targetContractUi = formatContractUi(
     quote?.target_contract_expires_at ?? null,
-    currentGameDate
+    currentGameDate,
+    t
   )
 
   const offeredSalary = Number(salaryInput)
@@ -4373,8 +4418,10 @@ export default function StaffPage() {
 
   const staffMembers = useMemo(
     () =>
-      staffRows.map((row) => mapStaffMember(row, currentGameDate, activeCourseByStaffId, infrastructure)),
-    [staffRows, currentGameDate, activeCourseByStaffId, infrastructure]
+      staffRows.map((row) =>
+        mapStaffMember(row, currentGameDate, activeCourseByStaffId, infrastructure, t)
+      ),
+    [staffRows, currentGameDate, activeCourseByStaffId, infrastructure, t]
   )
 
   const membersByRole = useMemo(() => {
@@ -4539,7 +4586,8 @@ export default function StaffPage() {
           row,
           refreshedPage.currentGameDate,
           refreshedActiveCourseByStaffId,
-          refreshedPage.infrastructure
+          refreshedPage.infrastructure,
+          t
         )
       )
 
@@ -4644,7 +4692,8 @@ export default function StaffPage() {
           row,
           refreshedPage.currentGameDate,
           refreshedActiveCourseMap,
-          refreshedPage.infrastructure
+          refreshedPage.infrastructure,
+          t
         )
       )
 
