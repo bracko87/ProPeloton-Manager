@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useLocation, useNavigate } from 'react-router'
 import { supabase } from '../../lib/supabase'
 import RiderProfilePage from '../../features/squad/components/RiderProfilePage'
@@ -365,10 +366,11 @@ async function fetchCompetitionSummaryFromRankingTables(
   const positionIndex = rankedRows.findIndex((club) => club.id === clubId)
   if (positionIndex < 0) return null
 
+  const competitionName = formatCompetitionName(target.club_tier, divisionKey)
+  if (!competitionName) return null
+
   return {
-    name:
-      formatCompetitionName(target.club_tier, divisionKey) ??
-      'Competition unavailable',
+    name: competitionName,
     place: positionIndex + 1,
     totalTeams: rankedRows.length,
   }
@@ -854,72 +856,78 @@ function TopNav({
   isDevelopingTeamUnlocked: boolean
   isDevelopingTeamStatusResolved: boolean
 }) {
+  const { t } = useTranslation(['developingTeam', 'squad', 'navigation'])
   const location = useLocation()
+  const navigate = useNavigate()
   const isActive = (path: string) => location.pathname === path
 
   return (
     <div className="mb-4 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
       <div>
-        <h2 className="mb-2 text-xl font-semibold">Squad</h2>
+        <h2 className="mb-2 text-xl font-semibold">{t('page.title')}</h2>
         <div className="text-sm text-gray-500">
-          Manage your Developing Team roster and movement windows.
+          {t('page.subtitle')}
         </div>
       </div>
 
       <div className="inline-flex rounded-lg border border-gray-100 bg-white p-1 shadow-sm">
-        <a
-          href="#/dashboard/squad"
+        <button
+          type="button"
+          onClick={() => navigate('/dashboard/squad')}
           className={`rounded-md px-4 py-2 text-sm font-medium transition ${
             isActive('/dashboard/squad')
               ? 'bg-yellow-400 text-black'
               : 'text-gray-600 hover:bg-gray-100'
           }`}
         >
-          First Squad
-        </a>
+          {t('squad:nav.firstSquad')}
+        </button>
 
         {isDevelopingTeamUnlocked ? (
-          <a
-            href="#/dashboard/developing-team"
+          <button
+            type="button"
+            onClick={() => navigate('/dashboard/developing-team')}
             className={`rounded-md px-4 py-2 text-sm font-medium transition ${
               isActive('/dashboard/developing-team')
                 ? 'bg-yellow-400 text-black'
                 : 'text-gray-600 hover:bg-gray-100'
             }`}
           >
-            Developing Team
-          </a>
+            {t('squad:nav.developingTeam')}
+          </button>
         ) : isDevelopingTeamStatusResolved ? (
           <span
             className="inline-flex cursor-not-allowed items-center gap-2 rounded-md px-4 py-2 text-sm font-medium text-gray-400"
             title="Unlock Developing Team in Preferences first."
             aria-disabled="true"
           >
-            <span>Developing Team</span>
+            <span>{t('squad:nav.developingTeam')}</span>
             <span aria-hidden="true">🔒</span>
           </span>
         ) : (
           <span className="inline-flex items-center rounded-md px-4 py-2 text-sm font-medium text-gray-500">
-            Developing Team
+            {t('squad:nav.developingTeam')}
           </span>
         )}
 
-        <a
-          href="#/dashboard/staff"
+        <button
+          type="button"
+          onClick={() => navigate('/dashboard/staff')}
           className={`rounded-md px-4 py-2 text-sm font-medium transition ${
             isActive('/dashboard/staff')
               ? 'bg-yellow-400 text-black'
               : 'text-gray-600 hover:bg-gray-100'
           }`}
         >
-          Staff
-        </a>
+          {t('squad:nav.staff')}
+        </button>
       </div>
     </div>
   )
 }
 
 export default function DevelopingTeamPage() {
+  const { t } = useTranslation(['developingTeam', 'squad', 'navigation'])
   const [rows, setRows] = useState<DevelopingRosterRow[]>([])
   const [healthOverviewRows, setHealthOverviewRows] = useState<ClubHealthOverviewRow[]>([])
   const [loading, setLoading] = useState(true)
@@ -1466,19 +1474,23 @@ export default function DevelopingTeamPage() {
     if (movingRiderId) return
 
     if (!developingTeamStatus?.main_club_id) {
-      setMoveActionMessage('First Squad is unavailable.')
+      setMoveActionMessage(t('movement.firstSquadUnavailable'))
       return
     }
 
     if (!developingTeamStatus.movement_window_open) {
-      setMoveActionMessage(
-        `Movement window is closed. Next window: ${developingTeamStatus.next_window_label ?? 'Unknown'}.`
-      )
+      const window = developingTeamStatus.next_window_label ?? t('movement.unknown')
+      setMoveActionMessage(t('movement.windowClosedNext', { window }))
       return
     }
 
     if (firstSquadRiderCount >= FIRST_SQUAD_MAX) {
-      setMoveActionMessage(`First Squad is full (${FIRST_SQUAD_MAX}/${FIRST_SQUAD_MAX}).`)
+      setMoveActionMessage(
+        t('movement.firstSquadFull', {
+          count: firstSquadRiderCount,
+          max: FIRST_SQUAD_MAX,
+        })
+      )
       return
     }
 
@@ -1493,11 +1505,11 @@ export default function DevelopingTeamPage() {
 
       if (moveError) throw moveError
 
-      setMoveActionMessage('Rider moved to the First Squad.')
+      setMoveActionMessage(t('movement.movedToFirstSquad'))
       await loadDevelopingTeamPageData()
     } catch (e: any) {
       console.error('move_rider_between_main_and_developing failed:', e)
-      setMoveActionMessage(e?.message ?? 'Could not move rider to the First Squad.')
+      setMoveActionMessage(e?.message ?? t('movement.couldNotMove'))
     } finally {
       setMovingRiderId(null)
     }
@@ -1515,16 +1527,30 @@ export default function DevelopingTeamPage() {
 
   const movementWindowSummary = developingTeamStatus
     ? developingTeamStatus.movement_window_open
-      ? `Movement window open now: ${developingTeamStatus.current_window_label ?? 'Current window'}`
+      ? t('movement.windowOpen', {
+          window:
+            developingTeamStatus.current_window_label ??
+            t('movement.currentWindow'),
+        })
       : developingTeamStatus.next_window_label
-        ? `Movement window closed. Next window: ${developingTeamStatus.next_window_label}`
+        ? t('movement.windowClosedNextNoPeriod', {
+            window: developingTeamStatus.next_window_label,
+          })
         : null
     : null
 
-  const currentCompetitionName =
+  const rawCompetitionName =
     competitionSummary?.name ??
     developingTeamStatus?.current_competition_name ??
-    (competitionLoading ? 'Loading competition…' : 'Competition unavailable')
+    null
+
+  const currentCompetitionName =
+    rawCompetitionName &&
+    rawCompetitionName.toLowerCase() !== 'competition unavailable'
+      ? rawCompetitionName
+      : competitionLoading
+        ? t('page.loadingCompetition')
+        : t('page.competitionUnavailable')
 
   if (!loading && !error && developingTeamStatus && !hasDevelopingTeam) {
     return null
@@ -1561,13 +1587,13 @@ export default function DevelopingTeamPage() {
 
       {loading && (
         <div className="rounded-lg bg-white p-4 text-sm text-gray-600 shadow">
-          Loading Developing Team…
+          {t('page.loading')}
         </div>
       )}
 
       {!loading && error && (
         <div className="rounded-lg bg-white p-4 shadow">
-          <div className="text-sm font-medium text-red-600">Could not load Developing Team</div>
+          <div className="text-sm font-medium text-red-600">{t('page.loadFailed')}</div>
           <div className="mt-1 text-sm text-gray-600">{error}</div>
         </div>
       )}
@@ -1594,10 +1620,10 @@ export default function DevelopingTeamPage() {
 
           <div className="mb-4 flex items-center justify-between border-b border-gray-200 pb-3">
             <div className="text-base font-semibold text-gray-800">
-              {developingTeamStatus?.developing_club_name ?? 'Developing Team'}
+              {developingTeamStatus?.developing_club_name ?? t('squad:nav.developingTeam')}
             </div>
             <div className="text-sm text-gray-500">
-              Riders:{' '}
+              {t('page.riders')}:{' '}
               <span className="font-medium text-gray-700">
                 {riders.length}/{DEVELOPING_TEAM_MAX}
               </span>
@@ -1607,7 +1633,7 @@ export default function DevelopingTeamPage() {
           <div className="mb-4 rounded-lg border border-slate-200 bg-white px-4 py-3 shadow-sm">
             <div>
               <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">
-                Current Competition
+                {t('page.currentCompetition')}
               </div>
               <div className="mt-1 text-base font-semibold text-slate-900">
                 {currentCompetitionName}
