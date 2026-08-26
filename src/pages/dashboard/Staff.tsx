@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { useLocation } from 'react-router'
+import { useTranslation } from 'react-i18next'
 import { supabase } from '../../lib/supabase'
 import PremiumFeatureLock from '../../components/premium/PremiumFeatureLock'
 
@@ -268,6 +269,88 @@ const ROLE_TABS: RoleTabMeta[] = [
     impactAreas: ['U23 training', 'Youth development', 'U23 race tactics'],
   },
 ]
+
+const ROLE_TRANSLATION_KEYS = {
+  head_coach: { label: 'roles.headCoach.label', subtitle: 'roles.headCoach.subtitle' },
+  trainer: { label: 'roles.trainer.label', subtitle: 'roles.trainer.subtitle' },
+  team_doctor: { label: 'roles.teamDoctor.label', subtitle: 'roles.teamDoctor.subtitle' },
+  physio: { label: 'roles.physio.label', subtitle: 'roles.physio.subtitle' },
+  nutritionist: { label: 'roles.nutritionist.label', subtitle: 'roles.nutritionist.subtitle' },
+  mechanic: { label: 'roles.mechanic.label', subtitle: 'roles.mechanic.subtitle' },
+  sport_director: { label: 'roles.sportDirector.label', subtitle: 'roles.sportDirector.subtitle' },
+  scout_analyst: { label: 'roles.scoutAnalyst.label', subtitle: 'roles.scoutAnalyst.subtitle' },
+  u23_head_coach: { label: 'roles.u23HeadCoach.label', subtitle: 'roles.u23HeadCoach.subtitle' },
+} as const satisfies Record<StaffRole, { label: string; subtitle: string }>
+
+const IMPACT_AREA_TRANSLATION_KEYS = {
+  'Regular training': 'impactAreas.regularTraining',
+  'Training camps': 'impactAreas.trainingCamps',
+  'Rider development': 'impactAreas.riderDevelopment',
+  'Daily training': 'impactAreas.dailyTraining',
+  'Training quality': 'impactAreas.trainingQuality',
+  'Recovery speed': 'impactAreas.recoverySpeed',
+  'Injury prevention': 'impactAreas.injuryPrevention',
+  'Medical case handling': 'impactAreas.medicalCaseHandling',
+  'Return to fitness': 'impactAreas.returnToFitness',
+  'Fatigue recovery': 'impactAreas.fatigueRecovery',
+  'Recovery support': 'impactAreas.recoverySupport',
+  'Fitness consistency': 'impactAreas.fitnessConsistency',
+  'Race preparation': 'impactAreas.racePreparation',
+  'Equipment setup': 'impactAreas.equipmentSetup',
+  'Maintenance efficiency': 'impactAreas.maintenanceEfficiency',
+  'Mechanical reliability': 'impactAreas.mechanicalReliability',
+  'Race tactics': 'impactAreas.raceTactics',
+  'Team morale': 'impactAreas.teamMorale',
+  'Domestique support': 'impactAreas.domestiqueSupport',
+  'Scouting accuracy': 'impactAreas.scoutingAccuracy',
+  'Prospect discovery': 'impactAreas.prospectDiscovery',
+  'Transfer intelligence': 'impactAreas.transferIntelligence',
+  'U23 training': 'impactAreas.u23Training',
+  'Youth development': 'impactAreas.youthDevelopment',
+  'U23 race tactics': 'impactAreas.u23RaceTactics',
+} as const
+
+const QUALITY_TRANSLATION_KEYS = {
+  Facility: 'quality.facility',
+  'Scouting Quality': 'quality.scoutingQuality',
+  'Scout Ability': 'quality.scoutAbility',
+  'Current Report Quality': 'quality.currentReportQuality',
+  'Report Time': 'quality.reportTime',
+  'Scouting Office': 'quality.scoutingOffice',
+  'Coaching Quality': 'quality.coachingQuality',
+  'Coach Ability': 'quality.coachAbility',
+  'Training Quality': 'quality.trainingQuality',
+  'Development Support': 'quality.developmentSupport',
+  'Trainer Ability': 'quality.trainerAbility',
+  'Session Quality': 'quality.sessionQuality',
+  'Load Management': 'quality.loadManagement',
+  'Medical Quality': 'quality.medicalQuality',
+  'Medical Ability': 'quality.medicalAbility',
+  'Injury Prevention': 'quality.injuryPrevention',
+  'Return-to-Fitness': 'quality.returnToFitness',
+  'Recovery Quality': 'quality.recoveryQuality',
+  'Recovery Ability': 'quality.recoveryAbility',
+  'Rehabilitation Quality': 'quality.rehabilitationQuality',
+  'Recovery Speed': 'quality.recoverySpeed',
+  'Nutrition Quality': 'quality.nutritionQuality',
+  'Nutrition Ability': 'quality.nutritionAbility',
+  'Recovery Support': 'quality.recoverySupport',
+  'Consistency Support': 'quality.consistencySupport',
+  'Technical Quality': 'quality.technicalQuality',
+  'Technical Ability': 'quality.technicalAbility',
+  'Bike Setup Quality': 'quality.bikeSetupQuality',
+  'Reliability Support': 'quality.reliabilitySupport',
+  'Tactical Quality': 'quality.tacticalQuality',
+  'Director Ability': 'quality.directorAbility',
+  'Race Plan Quality': 'quality.racePlanQuality',
+  'Team Control': 'quality.teamControl',
+  'Race Engine Role': 'quality.raceEngineRole',
+  Prepared: 'quality.prepared',
+  'Youth Coaching Quality': 'quality.youthCoachingQuality',
+  'Youth Coach Ability': 'quality.youthCoachAbility',
+  'Talent Development': 'quality.talentDevelopment',
+  'Race Readiness': 'quality.raceReadiness',
+} as const
 
 
 type StaffRoleInformation = {
@@ -558,13 +641,14 @@ function TopNav({
   hasDevelopingTeam: boolean
   developingTeamStatusResolved: boolean
 }) {
+  const { t } = useTranslation(['staff', 'squad'])
   const location = useLocation()
   const isActive = (path: string) => location.pathname === path
 
   return (
     <div className="mb-4 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
       <div>
-        <h2 className="mb-2 text-xl font-semibold">Staff</h2>
+        <h2 className="mb-2 text-xl font-semibold">{t('squad:nav.staff')}</h2>
         <div className="text-sm text-gray-500">
           Coaches, doctors, scouts and contracts management.
         </div>
@@ -579,7 +663,7 @@ function TopNav({
               : 'text-gray-600 hover:bg-gray-100'
           }`}
         >
-          First Squad
+          {t('squad:nav.firstSquad')}
         </a>
 
         {hasDevelopingTeam ? (
@@ -591,7 +675,7 @@ function TopNav({
                 : 'text-gray-600 hover:bg-gray-100'
             }`}
           >
-            Developing Team
+            {t('squad:nav.developingTeam')}
           </a>
         ) : developingTeamStatusResolved ? (
           <span
@@ -599,12 +683,12 @@ function TopNav({
             title="Unlock Developing Team in Preferences first."
             aria-disabled="true"
           >
-            <span>Developing Team</span>
+            <span>{t('squad:nav.developingTeam')}</span>
             <span aria-hidden="true">🔒</span>
           </span>
         ) : (
           <span className="inline-flex items-center rounded-md px-4 py-2 text-sm font-medium text-gray-500">
-            Developing Team
+            {t('squad:nav.developingTeam')}
           </span>
         )}
 
@@ -616,7 +700,7 @@ function TopNav({
               : 'text-gray-600 hover:bg-gray-100'
           }`}
         >
-          Staff
+          {t('squad:nav.staff')}
         </a>
       </div>
     </div>
@@ -1181,10 +1265,12 @@ function buildCourseOptions(role: StaffRole): CourseOption[] {
 }
 
 function PremiumFeatureLoading() {
+  const { t } = useTranslation('staff')
+
   return (
     <div
       className="animate-pulse rounded-xl border border-slate-200 bg-white px-4 py-5 shadow-sm"
-      aria-label="Loading Premium access"
+      aria-label={t('premium.loading')}
     >
       <div className="flex items-center justify-between gap-4">
         <div className="min-w-0 flex-1">
@@ -2150,15 +2236,23 @@ function StaffQualityPanel({
 }: {
   data: StaffQualityPanelData
 }) {
+  const { t } = useTranslation('staff')
+  const translateQualityText = (value: string) => {
+    const key = QUALITY_TRANSLATION_KEYS[value as keyof typeof QUALITY_TRANSLATION_KEYS]
+    if (key) return t(key)
+    if (value === 'Unknown') return t('common.unknown')
+    return value
+  }
+
   return (
     <div className="mt-4">
-      <div className="text-sm font-semibold text-gray-900">{data.title}</div>
+      <div className="text-sm font-semibold text-gray-900">{translateQualityText(data.title)}</div>
 
       <div className="mt-3 space-y-2">
         {data.rows.map((row) => (
           <div key={row.label} className="rounded-lg bg-gray-50 px-3 py-2">
-            <div className="text-xs text-gray-500">{row.label}</div>
-            <div className="mt-1 text-sm font-semibold text-gray-900">{row.value}</div>
+            <div className="text-xs text-gray-500">{translateQualityText(row.label)}</div>
+            <div className="mt-1 text-sm font-semibold text-gray-900">{translateQualityText(row.value)}</div>
           </div>
         ))}
       </div>
@@ -2177,6 +2271,12 @@ function StaffQualityExplanationPanel({
 }: {
   data: StaffQualityExplanationData
 }) {
+  const { t } = useTranslation('staff')
+  const translateQualityText = (value: string) => {
+    const key = QUALITY_TRANSLATION_KEYS[value as keyof typeof QUALITY_TRANSLATION_KEYS]
+    return key ? t(key) : value
+  }
+
   return (
     <div className="mt-4 rounded-xl border border-blue-100 bg-blue-50 p-4 text-sm text-blue-900">
       <div className="font-semibold">{data.title}</div>
@@ -2186,7 +2286,7 @@ function StaffQualityExplanationPanel({
       <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
         {data.boxes.map((box) => (
           <div key={box.label} className="rounded-lg bg-white px-3 py-2">
-            <div className="text-xs text-blue-700">{box.label}</div>
+            <div className="text-xs text-blue-700">{translateQualityText(box.label)}</div>
             <div className="mt-1 font-medium">{box.value}</div>
           </div>
         ))}
@@ -2754,7 +2854,9 @@ function RoleTabButton({
   limit: number
   onClick: () => void
 }) {
+  const { t } = useTranslation('staff')
   const meta = getRoleMeta(role)
+  const roleKeys = ROLE_TRANSLATION_KEYS[role]
 
   return (
     <button
@@ -2768,8 +2870,8 @@ function RoleTabButton({
     >
       <div className="flex items-start justify-between gap-3">
         <div>
-          <div className="text-sm font-semibold text-gray-900">{meta.label}</div>
-          <div className="mt-1 text-xs text-gray-500">{meta.subtitle}</div>
+          <div className="text-sm font-semibold text-gray-900">{t(roleKeys.label)}</div>
+          <div className="mt-1 text-xs text-gray-500">{t(roleKeys.subtitle)}</div>
         </div>
 
         <span
@@ -2813,6 +2915,18 @@ function StaffListRow({
   staff: StaffListMember
   onOpen: (staff: StaffListMember) => void
 }) {
+  const { t } = useTranslation('staff')
+  const translateStatLabel = (label: string) => {
+    const key = QUALITY_TRANSLATION_KEYS[label as keyof typeof QUALITY_TRANSLATION_KEYS]
+    return key ? t(key) : label
+  }
+  const scopeLabel =
+    staff.teamScope === 'first_team'
+      ? t('common.firstTeam')
+      : staff.teamScope === 'u23'
+        ? t('common.u23')
+        : t('common.all')
+
   return (
     <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
       <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
@@ -2827,10 +2941,10 @@ function StaffListRow({
               <div className="truncate text-sm font-semibold text-gray-900">{staff.name}</div>
               <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-gray-500">
                 <span>
-                  {staff.specialization} • Scope: {staff.teamScope.replace('_', ' ')}
+                  {staff.specialization} • {t('common.scope', { scope: scopeLabel })}
                 </span>
                 <span className="rounded-full border border-green-200 bg-green-50 px-2 py-0.5 text-[11px] font-medium text-green-700">
-                  {formatStaffAge(staff.ageYears)}
+                  {staff.ageYears === null ? t('common.ageUnknown') : t('common.ageYears', { age: staff.ageYears })}
                 </span>
               </div>
             </div>
@@ -2839,7 +2953,7 @@ function StaffListRow({
           <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
             {staff.stats.map((stat) => (
               <div key={stat.label} className="rounded-lg bg-gray-50 px-3 py-2">
-                <div className="text-[11px] text-gray-500">{stat.label}</div>
+                <div className="text-[11px] text-gray-500">{translateStatLabel(stat.label)}</div>
                 <div className="mt-1 text-sm font-semibold text-gray-900">{stat.value}</div>
               </div>
             ))}
@@ -2847,7 +2961,7 @@ function StaffListRow({
 
           {staff.activeCourse ? (
             <div className="mt-3 rounded-lg border border-blue-100 bg-blue-50 px-3 py-2">
-              <div className="text-xs font-medium text-blue-900">On Course</div>
+              <div className="text-xs font-medium text-blue-900">{t('detail.courseInProgressButton')}</div>
               <div className="mt-1 text-xs text-blue-800">{staff.activeCourse.title}</div>
             </div>
           ) : null}
@@ -2863,7 +2977,7 @@ function StaffListRow({
                     : 'border border-gray-100 bg-gray-50 text-gray-500'
                 }`}
               >
-                <span className="font-medium">Current assignment:</span> {assignment.text}
+                <span className="font-medium">{t('common.currentAssignment')}:</span> {assignment.text}
               </div>
             )
           })()}
@@ -2872,11 +2986,11 @@ function StaffListRow({
 
         <div className="flex w-full flex-col gap-3 xl:w-64 xl:items-end">
           <div className="w-full rounded-lg bg-gray-50 px-3 py-3 xl:w-60">
-            <div className="text-[11px] text-gray-500">Weekly Wage</div>
+            <div className="text-[11px] text-gray-500">{t('common.weeklyWage')}</div>
             <div className="mt-1 text-sm font-semibold text-gray-900">
               {formatCurrency(staff.salaryWeekly)}
             </div>
-            <div className="mt-2 text-[11px] text-gray-500">Contract</div>
+            <div className="mt-2 text-[11px] text-gray-500">{t('common.contract')}</div>
             <div className="mt-1 text-xs font-medium text-gray-700">{staff.contractPrimaryLabel}</div>
             {staff.contractSecondaryLabel ? (
               <div className="mt-1 text-[11px] text-gray-500">{staff.contractSecondaryLabel}</div>
@@ -2917,7 +3031,13 @@ function RoleContributionPanel({
   isPremium: boolean
   isPremiumLoading: boolean
 }) {
+  const { t } = useTranslation('staff')
+  const translateStatLabel = (label: string) => {
+    const key = QUALITY_TRANSLATION_KEYS[label as keyof typeof QUALITY_TRANSLATION_KEYS]
+    return key ? t(key) : label
+  }
   const roleMeta = getRoleMeta(role)
+  const roleKeys = ROLE_TRANSLATION_KEYS[role]
   const facilityWarning = getRoleInfrastructureWarning(role, infrastructure)
   const averageStats = buildAverageStats(members)
   const isCoachingGroup = isCoachingRole(role)
@@ -2937,11 +3057,11 @@ function RoleContributionPanel({
       <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
         <div>
           <div className="text-base font-semibold text-gray-900">{getImpactPanelTitle(role)}</div>
-          <div className="mt-1 text-sm text-gray-500">{roleMeta.subtitle}</div>
+          <div className="mt-1 text-sm text-gray-500">{t(roleKeys.subtitle)}</div>
         </div>
 
         <div className="rounded-full bg-white px-3 py-1.5 text-xs font-medium text-gray-700 shadow-sm">
-          Assigned {members.length}/{roleLimit}
+          {t('rolesSection.assignedCompact', { count: members.length, limit: roleLimit })}
         </div>
       </div>
 
@@ -2952,7 +3072,7 @@ function RoleContributionPanel({
           subtext={members.length < roleLimit ? 'Open slot available' : 'Current basic cap reached'}
         />
         <SummaryCard
-          label="Weekly Wages"
+          label={t('summary.weeklyWages')}
           value={formatCurrency(weeklyWages)}
           subtext="For this impact group"
         />
@@ -2962,7 +3082,7 @@ function RoleContributionPanel({
           subtext="Bonuses are partially paused while staff study"
         />
         <SummaryCard
-          label="Open Slots"
+          label={t('summary.openSlots')}
           value={String(Math.max(roleLimit - members.length, 0))}
           subtext="Use Transfers → Staff to fill vacancies"
         />
@@ -2998,8 +3118,8 @@ function RoleContributionPanel({
 
             <div>
               <SectionTitle
-                title="Average Skill Profile"
-                subtitle="Average values across staff currently assigned to this impact group."
+                title={t('analysis.averageSkillProfile')}
+                subtitle={t('analysis.averageSkillProfileSubtitle')}
               />
               {averageStats.length > 0 ? (
                 <div className="grid grid-cols-2 gap-3">
@@ -3008,7 +3128,7 @@ function RoleContributionPanel({
                       key={stat.label}
                       className="rounded-lg border border-gray-100 bg-white px-4 py-3"
                     >
-                      <div className="text-xs text-gray-500">{stat.label}</div>
+                      <div className="text-xs text-gray-500">{translateStatLabel(stat.label)}</div>
                       <div className="mt-1 text-sm font-semibold text-gray-900">
                         {stat.value}
                       </div>
@@ -3017,23 +3137,23 @@ function RoleContributionPanel({
                 </div>
               ) : (
                 <div className="rounded-xl border border-dashed border-gray-200 bg-white px-4 py-5 text-sm text-gray-500">
-                  No staff assigned to this impact group yet, so there is no active skill profile to summarize.
+                  {t('analysis.noStaff')}
                 </div>
               )}
             </div>
           </div>
         ) : (
           <PremiumFeatureLock
-            title="Premium staff analysis"
-            description="View combined staff impact, average skill profiles, and completed course results."
+            title={t('premium.analysisTitle')}
+            description={t('premium.analysisDescription')}
           />
         )}
       </div>
 
       <div className="mt-5">
         <SectionTitle
-          title="Where This Role Helps"
-          subtitle="Main game systems influenced by this role."
+          title={t('analysis.whereRoleHelps')}
+          subtitle={t('analysis.whereRoleHelpsSubtitle')}
         />
         <div className="flex flex-wrap gap-2">
           {roleMeta.impactAreas.map((area) => (
@@ -3041,7 +3161,9 @@ function RoleContributionPanel({
               key={area}
               className="rounded-full border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700"
             >
-              {area}
+              {IMPACT_AREA_TRANSLATION_KEYS[area as keyof typeof IMPACT_AREA_TRANSLATION_KEYS]
+                ? t(IMPACT_AREA_TRANSLATION_KEYS[area as keyof typeof IMPACT_AREA_TRANSLATION_KEYS])
+                : area}
             </span>
           ))}
         </div>
@@ -3069,7 +3191,21 @@ function StaffDetailModal({
   onRequestExtend: (staff: StaffListMember) => void
   onRequestCourse: (staff: StaffListMember) => void
 }) {
+  const { t } = useTranslation('staff')
+
   if (!staff) return null
+
+  const translateStatLabel = (label: string) => {
+    const key = QUALITY_TRANSLATION_KEYS[label as keyof typeof QUALITY_TRANSLATION_KEYS]
+    return key ? t(key) : label
+  }
+
+  const scopeLabel =
+    staff.teamScope === 'first_team'
+      ? t('common.firstTeam')
+      : staff.teamScope === 'u23'
+        ? t('common.u23')
+        : t('common.all')
 
   const qualityPanel = buildStaffQualityPanel(staff, infrastructure)
   const qualityExplanation = buildStaffQualityExplanation(staff.role, infrastructure)
@@ -3079,7 +3215,7 @@ function StaffDetailModal({
       <div className="max-h-[94vh] w-full max-w-6xl overflow-y-auto rounded-2xl bg-white shadow-2xl">
         <div className="flex items-start justify-between border-b border-gray-100 p-5">
           <div>
-            <div className="text-lg font-semibold text-gray-900">{staff.roleLabel}</div>
+            <div className="text-lg font-semibold text-gray-900">{t(ROLE_TRANSLATION_KEYS[staff.role].label)}</div>
             <div className="mt-1 text-sm text-gray-500">{staff.specialization}</div>
           </div>
 
@@ -3088,7 +3224,7 @@ function StaffDetailModal({
             onClick={onClose}
             className="rounded-lg px-3 py-1.5 text-sm text-gray-500 hover:bg-gray-100"
           >
-            Close
+            {t('common.close')}
           </button>
         </div>
 
@@ -3104,9 +3240,9 @@ function StaffDetailModal({
                 <div>
                   <div className="font-semibold text-gray-900">{staff.name}</div>
                   <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-gray-500">
-                    <span>Scope: {staff.teamScope.replace('_', ' ')}</span>
+                    <span>{t('common.scope', { scope: scopeLabel })}</span>
                     <span className="rounded-full border border-green-200 bg-green-50 px-2.5 py-1 text-xs font-medium text-green-700">
-                      {formatStaffAge(staff.ageYears)}
+                      {staff.ageYears === null ? t('common.ageUnknown') : t('common.ageYears', { age: staff.ageYears })}
                     </span>
                   </div>
                 </div>
@@ -3114,14 +3250,14 @@ function StaffDetailModal({
 
               <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
                 <div className="rounded-lg bg-gray-50 p-3">
-                  <div className="text-xs text-gray-500">Weekly Wage</div>
+                  <div className="text-xs text-gray-500">{t('common.weeklyWage')}</div>
                   <div className="mt-1 text-sm font-semibold text-gray-900">
                     {formatCurrency(staff.salaryWeekly)}
                   </div>
                 </div>
 
                 <div className="rounded-lg bg-gray-50 p-3">
-                  <div className="text-xs text-gray-500">Contract</div>
+                  <div className="text-xs text-gray-500">{t('common.contract')}</div>
                   <div className="mt-1 text-sm font-semibold text-gray-900">
                     {staff.contractPrimaryLabel}
                   </div>
@@ -3131,16 +3267,18 @@ function StaffDetailModal({
                 </div>
 
                 <div className="rounded-lg border border-green-100 bg-green-50 p-3">
-                  <div className="text-xs text-green-700">Age</div>
+                  <div className="text-xs text-green-700">{t('common.age')}</div>
                   <div className="mt-1 text-sm font-semibold text-green-900">
-                    {staff.ageYears ?? 'Age unknown'}
+                    {staff.ageYears ?? t('common.ageUnknown')}
                   </div>
                   {staff.birthDate ? (
                     <div className="mt-1 text-xs text-green-700">
-                      Born: {parseIsoDateUtc(staff.birthDate)?.toLocaleDateString('en-GB', {
-                        day: '2-digit',
-                        month: 'short',
-                        timeZone: 'UTC',
+                      {t('common.born', {
+                        date: parseIsoDateUtc(staff.birthDate)?.toLocaleDateString('en-GB', {
+                          day: '2-digit',
+                          month: 'short',
+                          timeZone: 'UTC',
+                        }),
                       })}
                     </div>
                   ) : null}
@@ -3158,13 +3296,15 @@ function StaffDetailModal({
                         : 'border-gray-100 bg-gray-50 text-gray-600'
                     }`}
                   >
-                    <div className="text-sm font-semibold">Current Assignment</div>
+                    <div className="text-sm font-semibold">{t('common.currentAssignment')}</div>
                     <div className="mt-2 text-sm">{assignment.text}</div>
 
                     {staff.activeCourse ? (
                       <div className="mt-2 text-xs">
-                        Course in progress: {staff.activeCourse.title}. Completion:{' '}
-                        {formatGameDateShort(staff.activeCourse.completesOnGameDate)}.
+                        {t('detail.courseInProgress', {
+                          course: staff.activeCourse.title,
+                          date: formatGameDateShort(staff.activeCourse.completesOnGameDate),
+                        })}
                       </div>
                     ) : null}
                   </div>
@@ -3173,22 +3313,21 @@ function StaffDetailModal({
 
               {staff.activeCourse ? (
                 <div className="mt-4 rounded-xl border border-blue-100 bg-blue-50 p-4">
-                  <div className="text-sm font-semibold text-blue-900">Current Course</div>
+                  <div className="text-sm font-semibold text-blue-900">{t('detail.currentCourse')}</div>
                   <div className="mt-2 text-sm text-blue-800">{staff.activeCourse.title}</div>
                   <div className="mt-2 space-y-1 text-xs text-blue-700">
-                    <div>Focus: {staff.activeCourse.focusLabel}</div>
-                    <div>Duration: {staff.activeCourse.durationDays} days</div>
+                    <div>{t('common.focus', { value: staff.activeCourse.focusLabel })}</div>
+                    <div>{t('common.duration', { count: staff.activeCourse.durationDays })}</div>
                     <div>Completion: {formatGameDateShort(staff.activeCourse.completesOnGameDate)}</div>
                   </div>
                   <div className="mt-2 text-xs text-blue-700">
-                    This course cannot be canceled once booked. Staff bonuses from this role are
-                    paused until completion.
+                    {t('detail.courseCannotCancel')}
                   </div>
                 </div>
               ) : null}
 
               <div className="mt-4">
-                <div className="text-sm font-semibold text-gray-900">Active Effects</div>
+                <div className="text-sm font-semibold text-gray-900">{t('common.activeEffects')}</div>
                 <div className="mt-2 space-y-2">
                   {staff.effects.map((effect) => (
                     <div
@@ -3215,14 +3354,14 @@ function StaffDetailModal({
             </div>
 
             <div className="rounded-xl border border-gray-100 p-4">
-              <div className="text-sm font-semibold text-gray-900">Staff Attributes</div>
+              <div className="text-sm font-semibold text-gray-900">{t('common.staffAttributes')}</div>
               <div className="mt-3 space-y-2">
                 {staff.stats.map((stat) => (
                   <div
                     key={stat.label}
                     className="flex items-center justify-between rounded-lg bg-gray-50 px-3 py-2"
                   >
-                    <span className="text-sm text-gray-600">{stat.label}</span>
+                    <span className="text-sm text-gray-600">{translateStatLabel(stat.label)}</span>
                     <span className="text-sm font-semibold text-gray-900">{stat.value}</span>
                   </div>
                 ))}
@@ -3235,15 +3374,15 @@ function StaffDetailModal({
                   <StaffQualityPanel data={qualityPanel} />
                 ) : (
                   <PremiumFeatureLock
-                    title="Premium staff analysis"
-                    description="See calculated coaching quality, infrastructure limits, staff comparisons, and recommended development paths."
+                    title={t('premium.analysisTitle')}
+                    description={t('premium.detailDescription')}
                   />
                 )}
               </div>
 
               {staff.lastCourseGains.length > 0 ? (
                 <div className="mt-4 rounded-xl border border-green-100 bg-green-50 p-4">
-                  <div className="text-sm font-semibold text-green-900">Last Course Gains</div>
+                  <div className="text-sm font-semibold text-green-900">{t('detail.lastCourseGains')}</div>
                   {staff.lastCourseTitle ? (
                     <div className="mt-1 text-sm text-green-800">{staff.lastCourseTitle}</div>
                   ) : null}
@@ -3270,7 +3409,7 @@ function StaffDetailModal({
                 onClick={() => onRequestExtend(staff)}
                 className="rounded-lg bg-yellow-400 px-4 py-2 text-sm font-medium text-black hover:bg-yellow-300"
               >
-                Extend Contract
+                {t('detail.extendContract')}
               </button>
 
               <button
@@ -3283,7 +3422,7 @@ function StaffDetailModal({
                     : 'border border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
                 }`}
               >
-                {staff.activeCourse ? 'Course In Progress' : 'Send on Course'}
+                {staff.activeCourse ? t('detail.courseInProgressButton') : t('detail.sendOnCourse')}
               </button>
 
               <button
@@ -3291,7 +3430,7 @@ function StaffDetailModal({
                 onClick={() => onRequestRelease(staff)}
                 className="rounded-lg border border-red-200 bg-white px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50"
               >
-                Release
+                {t('detail.release')}
               </button>
             </div>
 
@@ -3300,7 +3439,7 @@ function StaffDetailModal({
                 href="#/dashboard/scouting"
                 className="rounded-lg bg-yellow-400 px-4 py-2 text-sm font-medium text-black hover:bg-yellow-300"
               >
-                Scouting Reports
+                {t('detail.scoutingReports')}
               </a>
             ) : null}
           </div>
@@ -3321,6 +3460,8 @@ function ReleaseConfirmModal({
   onCancel: () => void
   onConfirm: () => void
 }) {
+  const { t } = useTranslation('staff')
+
   if (!staff) return null
 
   const releaseCost = getStaffReleaseCost(staff.salaryWeekly)
@@ -3329,36 +3470,37 @@ function ReleaseConfirmModal({
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/35 px-4 backdrop-blur-sm">
       <div className="w-full max-w-md rounded-2xl bg-white shadow-2xl">
         <div className="border-b border-gray-100 px-5 py-4">
-          <div className="text-lg font-semibold text-gray-900">Release Staff</div>
+          <div className="text-lg font-semibold text-gray-900">{t('release.title')}</div>
           <div className="mt-1 text-sm text-gray-500">
-            Confirm this staff decision before continuing.
+            {t('release.subtitle')}
           </div>
         </div>
 
         <div className="px-5 py-5">
           <div className="rounded-xl border border-red-100 bg-red-50 p-4">
             <div className="text-sm font-medium text-red-800">
-              You are about to release <span className="font-semibold">{staff.name}</span>
+              {t('release.aboutToRelease', { name: staff.name })}
             </div>
-            <div className="mt-1 text-sm text-red-700">Role: {staff.roleLabel}</div>
+            <div className="mt-1 text-sm text-red-700">{t('release.role', { role: t(ROLE_TRANSLATION_KEYS[staff.role].label) })}</div>
             <div className="mt-1 text-sm text-red-700">
-              Weekly wage: {formatCurrency(staff.salaryWeekly)}
+              {t('release.weeklyWage', { value: formatCurrency(staff.salaryWeekly) })}
             </div>
             <div className="mt-1 text-sm text-red-700">
-              Age: {formatStaffAge(staff.ageYears)}
+              {t('release.age', {
+                value: staff.ageYears === null ? t('common.ageUnknown') : t('common.ageYears', { age: staff.ageYears }),
+              })}
             </div>
             <div className="mt-1 text-sm font-semibold text-red-800">
-              Release compensation (6 weeks): {formatCurrency(releaseCost)}
+              {t('release.compensation', { value: formatCurrency(releaseCost) })}
             </div>
           </div>
 
           <div className="mt-4 text-sm text-gray-600">
-            This will remove the staff member from the squad immediately. Staff bonuses from this
-            slot will stop until you sign a replacement.
+            {t('release.warning')}
           </div>
 
           <div className="mt-2 text-sm text-gray-600">
-            The club will pay a one-time release compensation equal to 6 weeks of salary.
+            {t('release.payment')}
           </div>
 
           <div className="mt-6 flex items-center justify-end gap-3">
@@ -3372,7 +3514,7 @@ function ReleaseConfirmModal({
                   : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
               }`}
             >
-              Cancel
+              {t('common.cancel')}
             </button>
 
             <button
@@ -3385,7 +3527,7 @@ function ReleaseConfirmModal({
                   : 'bg-red-600 text-white hover:bg-red-500'
               }`}
             >
-              {loading ? 'Releasing...' : 'Confirm Release'}
+              {loading ? t('release.releasing') : t('release.confirm')}
             </button>
           </div>
         </div>
@@ -3425,6 +3567,8 @@ function ExtendContractModal({
   onCancel: () => void
   onConfirm: () => void
 }) {
+  const { t } = useTranslation('staff')
+
   if (!staff) return null
 
   const targetContractUi = formatContractUi(
@@ -3458,36 +3602,36 @@ function ExtendContractModal({
 
   const offerChanceLabel =
     offerChance == null
-      ? 'Chance unknown'
+      ? t('contract.chanceUnknown')
       : offerChance >= 80
-        ? 'Very likely to accept'
+        ? t('contract.veryLikely')
         : offerChance >= 60
-          ? 'Possible, but may ask for more'
+          ? t('contract.possible')
           : offerChance >= 40
-            ? 'Unlikely at this salary'
-            : 'Very unlikely'
+            ? t('contract.unlikely')
+            : t('contract.veryUnlikely')
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/35 px-4 backdrop-blur-sm">
       <div className="max-h-[94vh] w-full max-w-3xl overflow-y-auto rounded-2xl bg-white shadow-2xl">
         <div className="border-b border-gray-100 px-5 py-4">
-          <div className="text-lg font-semibold text-gray-900">Extend Contract</div>
+          <div className="text-lg font-semibold text-gray-900">{t('detail.extendContract')}</div>
           <div className="mt-1 text-sm text-gray-500">
-            Negotiate a new staff deal for {staff.name}.
+            {t('contract.subtitle', { name: staff.name })}
           </div>
         </div>
 
         <div className="px-5 py-5">
           <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
             <div className="rounded-xl border border-gray-100 bg-gray-50 p-4">
-              <div className="text-xs text-gray-500">Current Salary</div>
+              <div className="text-xs text-gray-500">{t('contract.currentSalary')}</div>
               <div className="mt-1 text-lg font-semibold text-gray-900">
                 {formatCurrency(staff.salaryWeekly)}/week
               </div>
             </div>
 
             <div className="rounded-xl border border-gray-100 bg-gray-50 p-4">
-              <div className="text-xs text-gray-500">Current Contract</div>
+              <div className="text-xs text-gray-500">{t('contract.currentContract')}</div>
               <div className="mt-1 text-sm font-semibold text-gray-900">{staff.contractPrimaryLabel}</div>
               {staff.contractSecondaryLabel ? (
                 <div className="mt-1 text-xs text-gray-500">{staff.contractSecondaryLabel}</div>
@@ -3495,15 +3639,15 @@ function ExtendContractModal({
             </div>
 
             <div className="rounded-xl border border-green-100 bg-green-50 p-4">
-              <div className="text-xs text-green-700">Age</div>
+              <div className="text-xs text-green-700">{t('common.age')}</div>
               <div className="mt-1 text-sm font-semibold text-green-900">
-                {formatStaffAge(staff.ageYears)}
+                {staff.ageYears === null ? t('common.ageUnknown') : t('common.ageYears', { age: staff.ageYears })}
               </div>
             </div>
           </div>
 
           <div className="mt-5">
-            <div className="text-sm font-semibold text-gray-900">Extension Length</div>
+            <div className="text-sm font-semibold text-gray-900">{t('contract.extensionLength')}</div>
             <div className="mt-3 inline-flex rounded-lg border border-gray-100 bg-white p-1 shadow-sm">
               <button
                 type="button"
@@ -3515,7 +3659,7 @@ function ExtendContractModal({
                     : 'text-gray-600 hover:bg-gray-100'
                 }`}
               >
-                1 Season
+                {t('contract.oneSeason')}
               </button>
 
               <button
@@ -3528,35 +3672,35 @@ function ExtendContractModal({
                     : 'text-gray-600 hover:bg-gray-100'
                 }`}
               >
-                2 Seasons
+                {t('contract.twoSeasons')}
               </button>
             </div>
           </div>
 
           <div className="mt-5 rounded-xl border border-gray-100 bg-gray-50 p-4">
             {loading ? (
-              <div className="text-sm text-gray-500">Loading contract quote...</div>
+              <div className="text-sm text-gray-500">{t('contract.loadingQuote')}</div>
             ) : quote ? (
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <div>
-                  <div className="text-xs text-gray-500">Requested Salary</div>
+                  <div className="text-xs text-gray-500">{t('contract.requestedSalary')}</div>
                   <div className="mt-1 text-sm font-semibold text-gray-900">
                     {formatCurrency(quote.requested_salary_weekly)}/week
                   </div>
                   <div className="mt-1 text-xs text-gray-500">
-                    Raise request: {quote.requested_raise_percent}%
+                    {t('contract.raiseRequest', { value: quote.requested_raise_percent })}
                   </div>
                 </div>
 
                 <div>
-                  <div className="text-xs text-gray-500">Minimum Acceptable</div>
+                  <div className="text-xs text-gray-500">{t('contract.minimumAcceptable')}</div>
                   <div className="mt-1 text-sm font-semibold text-gray-900">
                     {formatCurrency(quote.minimum_acceptable_salary_weekly)}/week
                   </div>
                 </div>
 
                 <div className="md:col-span-2">
-                  <div className="text-xs text-gray-500">New Contract Target</div>
+                  <div className="text-xs text-gray-500">{t('contract.newContractTarget')}</div>
                   <div className="mt-1 text-sm font-semibold text-gray-900">
                     {targetContractUi.primary}
                   </div>
@@ -3567,18 +3711,18 @@ function ExtendContractModal({
 
                 <div className="md:col-span-2 rounded-lg border border-blue-100 bg-blue-50 px-3 py-3">
                   <div className="text-xs font-semibold uppercase tracking-wide text-blue-700">
-                    Staff Interest
+                    {t('contract.staffInterest')}
                   </div>
 
                   <div className="mt-1 text-sm font-semibold text-blue-900">
-                    {quote.interest_level || 'Interest unknown'}
+                    {quote.interest_level || t('contract.interestUnknown')}
                     {quote.interest_score != null ? ` (${quote.interest_score}/100)` : ''}
                   </div>
 
                   {offerChance != null ? (
                     <div className="mt-3">
                       <div className="mb-1 flex items-center justify-between text-xs text-blue-800">
-                        <span>Chance to renew</span>
+                        <span>{t('contract.chanceRenew')}</span>
                         <span>{offerChance}%</span>
                       </div>
 
@@ -3613,7 +3757,7 @@ function ExtendContractModal({
                 </div>
               </div>
             ) : (
-              <div className="text-sm text-gray-500">No quote available.</div>
+              <div className="text-sm text-gray-500">{t('contract.noQuote')}</div>
             )}
           </div>
 
@@ -3632,7 +3776,7 @@ function ExtendContractModal({
           ) : null}
 
           <div className="mt-5">
-            <label className="block text-sm font-semibold text-gray-900">Your Salary Offer</label>
+            <label className="block text-sm font-semibold text-gray-900">{t('contract.salaryOffer')}</label>
             <div className="mt-2 flex items-center rounded-lg border border-gray-200 bg-white px-3 py-2">
               <span className="mr-2 text-sm text-gray-500">$</span>
               <input
@@ -3642,7 +3786,7 @@ function ExtendContractModal({
                 onChange={(e) => setSalaryInput(e.target.value)}
                 disabled={loading || submitting}
                 className="w-full bg-transparent text-sm text-gray-900 outline-none"
-                placeholder="Enter weekly salary"
+                placeholder={t('contract.salaryPlaceholder')}
               />
             </div>
           </div>
@@ -3664,7 +3808,7 @@ function ExtendContractModal({
                   : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
               }`}
             >
-              Cancel
+              {t('common.cancel')}
             </button>
 
             <button
@@ -3677,7 +3821,7 @@ function ExtendContractModal({
                   : 'bg-yellow-400 text-black hover:bg-yellow-300'
               }`}
             >
-              {submitting ? 'Submitting...' : 'Submit Offer'}
+              {submitting ? t('contract.submitting') : t('contract.submit')}
             </button>
           </div>
         </div>
@@ -3699,6 +3843,8 @@ function StaffCourseModal({
   onCancel: () => void
   onStartCourse: (courseCode: string) => void
 }) {
+  const { t } = useTranslation('staff')
+
   if (!staff) return null
 
   const courseOptions = buildCourseOptions(staff.role)
@@ -3707,26 +3853,24 @@ function StaffCourseModal({
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/35 px-4 backdrop-blur-sm">
       <div className="max-h-[94vh] w-full max-w-5xl overflow-y-auto rounded-2xl bg-white shadow-2xl">
         <div className="border-b border-gray-100 px-5 py-4">
-          <div className="text-lg font-semibold text-gray-900">Staff Course</div>
+          <div className="text-lg font-semibold text-gray-900">{t('course.title')}</div>
           <div className="mt-1 text-sm text-gray-500">
-            Plan development work for {staff.name}.
+            {t('course.subtitle', { name: staff.name })}
           </div>
         </div>
 
         <div className="px-5 py-5">
           <div className="rounded-xl border border-blue-100 bg-blue-50 p-4">
-            <div className="text-sm font-medium text-blue-900">Live course start</div>
+            <div className="text-sm font-medium text-blue-900">{t('course.liveStart')}</div>
             <div className="mt-1 text-sm text-blue-800">
-              Starting a course creates a real staff course entry. Stat gains apply when the
-              backend completion processor finishes the course. Courses cannot be canceled once
-              booked. Staff bonuses from this role are paused until the course is completed.
+              {t('course.liveStartText')}
             </div>
           </div>
 
           <div className="mt-4 rounded-xl border border-green-100 bg-green-50 p-4">
-            <div className="text-sm font-semibold text-green-900">Staff Age</div>
+            <div className="text-sm font-semibold text-green-900">{t('course.staffAge')}</div>
             <div className="mt-1 text-sm text-green-800">
-              {staff.name}: {formatStaffAge(staff.ageYears)}
+              {staff.name}: {staff.ageYears === null ? t('common.ageUnknown') : t('common.ageYears', { age: staff.ageYears })}
             </div>
           </div>
 
@@ -3744,9 +3888,9 @@ function StaffCourseModal({
                   <div className="mt-2 text-sm text-gray-600">{option.description}</div>
 
                   <div className="mt-4 space-y-1 text-xs text-gray-500">
-                    <div>Focus: {option.focusLabel}</div>
-                    <div>Duration: {option.durationDays} days</div>
-                    <div>Cost: {formatCurrency(option.costCash)}</div>
+                    <div>{t('common.focus', { value: option.focusLabel })}</div>
+                    <div>{t('common.duration', { count: option.durationDays })}</div>
+                    <div>{t('common.cost', { value: formatCurrency(option.costCash) })}</div>
                   </div>
 
                   <button
@@ -3759,15 +3903,14 @@ function StaffCourseModal({
                         : 'bg-yellow-400 text-black hover:bg-yellow-300'
                     }`}
                   >
-                    {startingCourseCode === option.code ? 'Starting...' : 'Start Course'}
+                    {startingCourseCode === option.code ? t('course.starting') : t('course.start')}
                   </button>
                 </div>
               ))}
             </div>
           ) : (
             <div className="mt-5 rounded-xl border border-dashed border-gray-200 bg-gray-50 p-5 text-sm text-gray-500">
-              No course options are configured for this staff role yet. This prevents the wrong
-              course type from being started until backend course codes are added for this role.
+              {t('course.none')}
             </div>
           )}
 
@@ -3782,7 +3925,7 @@ function StaffCourseModal({
                   : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
               }`}
             >
-              Back to Staff
+              {t('course.back')}
             </button>
           </div>
         </div>
@@ -3803,6 +3946,8 @@ function StaffRolesInformationModal({
   membersByRole: Record<StaffRole, StaffListMember[]>
   onClose: () => void
 }) {
+  const { t } = useTranslation('staff')
+
   if (!open) return null
 
   return (
@@ -3819,10 +3964,10 @@ function StaffRolesInformationModal({
               id="staff-roles-information-title"
               className="text-lg font-semibold text-gray-900"
             >
-              Staff Positions Explained
+              {t('information.title')}
             </h3>
             <p className="mt-1 text-sm text-gray-500">
-              Responsibilities, important attributes and current gameplay connection for every staff role.
+              {t('information.subtitle')}
             </p>
           </div>
 
@@ -3830,7 +3975,7 @@ function StaffRolesInformationModal({
             type="button"
             onClick={onClose}
             className="flex h-9 w-9 items-center justify-center rounded-lg border border-gray-300 bg-white text-lg text-gray-600 hover:bg-gray-50"
-            aria-label="Close staff positions information"
+            aria-label={t('information.close')}
           >
             ×
           </button>
@@ -3850,7 +3995,7 @@ function StaffRolesInformationModal({
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
                     <h4 className="text-base font-semibold text-gray-900">
-                      {roleMeta.label}
+                      {t(ROLE_TRANSLATION_KEYS[roleMeta.role].label)}
                     </h4>
                     <p className="mt-1 text-sm text-gray-600">
                       {information.purpose}
@@ -3861,10 +4006,18 @@ function StaffRolesInformationModal({
                     <span
                       className={`rounded-full px-2.5 py-1 text-xs font-medium ${information.statusClassName}`}
                     >
-                      {information.statusLabel}
+                      {information.statusLabel === 'Live'
+                        ? t('information.live')
+                        : information.statusLabel === 'Core live'
+                          ? t('information.coreLive')
+                          : information.statusLabel === 'Training live'
+                            ? t('information.trainingLive')
+                            : information.statusLabel === 'Planned connection'
+                              ? t('information.plannedConnection')
+                              : information.statusLabel}
                     </span>
                     <span className="rounded-full bg-white px-2.5 py-1 text-xs text-gray-600">
-                      Assigned {assigned}/{limit}
+                      {t('rolesSection.assignedCompact', { count: assigned, limit })}
                     </span>
                   </div>
                 </div>
@@ -3875,7 +4028,7 @@ function StaffRolesInformationModal({
 
                 <div className="mt-4">
                   <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-                    Important attributes
+                    {t('information.importantAttributes')}
                   </div>
                   <ul className="mt-2 space-y-1.5 text-sm text-gray-700">
                     {information.attributes.map(item => (
@@ -3889,7 +4042,7 @@ function StaffRolesInformationModal({
 
                 <div className="mt-4">
                   <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-                    Gameplay connection
+                    {t('information.gameplayConnection')}
                   </div>
                   <ul className="mt-2 space-y-1.5 text-sm text-gray-700">
                     {information.gameplay.map(item => (
@@ -3910,6 +4063,7 @@ function StaffRolesInformationModal({
 }
 
 export default function StaffPage() {
+  const { t } = useTranslation('staff')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [clubName, setClubName] = useState<string | null>(null)
@@ -4413,11 +4567,11 @@ export default function StaffPage() {
           setExtendResultMessage(result.decision_message || `${result.staff_name} rejected the offer.`)
         } else {
           setExtendResultTone('warning')
-          setExtendResultMessage(result.decision_message || 'Contract discussion completed.')
+          setExtendResultMessage(result.decision_message || t('contract.discussionCompleted'))
         }
       } else {
         setExtendResultTone('success')
-        setExtendResultMessage('Staff contract extended successfully.')
+        setExtendResultMessage(t('contract.extended'))
       }
     } catch (err) {
       const rawMessage = getErrorMessage(err, 'Failed to extend staff contract.')
@@ -4547,7 +4701,7 @@ export default function StaffPage() {
           developingTeamStatusResolved={developingTeamStatusResolved}
         />
         <div className="rounded-lg bg-white p-6 shadow">
-          <div className="text-sm text-gray-500">Loading staff...</div>
+          <div className="text-sm text-gray-500">{t('page.loading')}</div>
         </div>
       </div>
     )
@@ -4577,9 +4731,9 @@ export default function StaffPage() {
       <div className="rounded-lg bg-white p-6 shadow">
         <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
           <div>
-            <div className="text-base font-semibold text-gray-800">Team Staff</div>
+            <div className="text-base font-semibold text-gray-800">{t('page.title')}</div>
             <div className="mt-1 text-sm text-gray-500">
-              Manage multiple staff roles through dedicated role tabs and per-role staff lists.
+              {t('page.subtitle')}
             </div>
             {clubName ? <div className="mt-1 text-xs text-gray-400">{clubName}</div> : null}
           </div>
@@ -4588,8 +4742,8 @@ export default function StaffPage() {
             type="button"
             onClick={() => setShowRoleInformation(true)}
             className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-gray-300 bg-white text-sm font-semibold text-gray-700 hover:bg-gray-50"
-            aria-label="Explain all staff positions"
-            title="Explain all staff positions"
+            aria-label={t('page.explainPositions')}
+            title={t('page.explainPositions')}
           >
             i
           </button>
@@ -4603,31 +4757,31 @@ export default function StaffPage() {
 
         <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
           <SummaryCard
-            label="Weekly Staff Wages"
+            label={t('summary.weeklyWages')}
             value={formatCurrency(weeklyWages)}
-            subtext="Current total payroll"
+            subtext={t('summary.weeklyWagesSubtext')}
           />
           <SummaryCard
-            label="Open Staff Slots"
+            label={t('summary.openSlots')}
             value={String(openStaffSlots)}
-            subtext="Live open slots across all staff roles"
+            subtext={t('summary.openSlotsSubtext')}
           />
           <SummaryCard
-            label="Total Staff Capacity"
+            label={t('summary.totalCapacity')}
             value={`${staffMembers.length}/${totalStaffLimit}`}
-            subtext="Live backend role limits"
+            subtext={t('summary.totalCapacitySubtext')}
           />
           <SummaryCard
-            label="Warnings"
+            label={t('summary.warnings')}
             value={String(warningsCount)}
-            subtext="Facility level can cap some bonuses"
+            subtext={t('summary.warningsSubtext')}
           />
         </div>
 
         <div className="mt-8">
           <SectionTitle
-            title="Staff Roles"
-            subtitle="Select a role to see assigned staff, live role limit and role contribution summary."
+            title={t('rolesSection.title')}
+            subtitle={t('rolesSection.subtitle')}
           />
           <div className="grid grid-cols-1 gap-3 lg:grid-cols-2 xl:grid-cols-5">
             {ROLE_TABS.map((roleMeta) => (
@@ -4645,8 +4799,8 @@ export default function StaffPage() {
 
         <div className="mt-8">
           <SectionTitle
-            title={`${selectedRoleMeta.label} Staff List`}
-            subtitle={`${selectedRoleMembers.length}/${selectedRoleLimit} assigned for this role.`}
+            title={t('rolesSection.staffList', { role: t(ROLE_TRANSLATION_KEYS[selectedRole].label) })}
+            subtitle={t('rolesSection.assigned', { count: selectedRoleMembers.length, limit: selectedRoleLimit })}
           />
 
           {selectedRoleWarning ? (
@@ -4663,17 +4817,21 @@ export default function StaffPage() {
             </div>
           ) : (
             <div className="rounded-2xl border border-dashed border-gray-200 bg-gray-50 p-6">
-              <div className="text-sm font-semibold text-gray-900">No {selectedRoleMeta.label} assigned</div>
+              <div className="text-sm font-semibold text-gray-900">
+                {t('rolesSection.noAssigned', { role: t(ROLE_TRANSLATION_KEYS[selectedRole].label) })}
+              </div>
               <div className="mt-2 text-sm text-gray-500">
-                Current role usage: {selectedRoleMembers.length}/{selectedRoleLimit}. Sign staff from the
-                staff market to fill this role.
+                {t('rolesSection.usage', {
+                  count: selectedRoleMembers.length,
+                  limit: selectedRoleLimit,
+                })}
               </div>
               <div className="mt-4">
                 <a
                   href="#/dashboard/transfers?tab=staff"
                   className="inline-flex rounded-lg bg-yellow-400 px-4 py-2 text-sm font-medium text-black hover:bg-yellow-300"
                 >
-                  Find Staff
+                  {t('rolesSection.findStaff')}
                 </a>
               </div>
             </div>
@@ -4701,8 +4859,8 @@ export default function StaffPage() {
             recentCourseResultsToShow.length > 0 ? (
               <>
                 <SectionTitle
-                  title="Recent Course Results"
-                  subtitle="Completed staff development courses and applied stat gains."
+                  title={t('analysis.recentCourseResults')}
+                  subtitle={t('analysis.recentCourseResultsSubtitle')}
                 />
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
                   {recentCourseResultsToShow.map((result) => {
@@ -4718,10 +4876,10 @@ export default function StaffPage() {
                         </div>
                         <div className="mt-1 text-sm text-green-800">{result.staff_name}</div>
                         <div className="mt-1 text-xs text-green-700">
-                          Focus: {result.focus_label}
+                          {t('common.focus', { value: result.focus_label })}
                         </div>
                         <div className="mt-1 text-xs text-green-700">
-                          Completed: {formatGameDateShort(result.completed_game_date)}
+                          {t('common.completed', { date: formatGameDateShort(result.completed_game_date) })}
                         </div>
 
                         <div className="mt-3 flex flex-wrap gap-2">
@@ -4742,8 +4900,8 @@ export default function StaffPage() {
             ) : null
           ) : (
             <PremiumFeatureLock
-              title="Recent Course Results"
-              description="View completed staff development courses and applied stat gains."
+              title={t('analysis.recentCourseResults')}
+              description={t('analysis.recentCourseResultsSubtitle')}
             />
           )}
         </div>
