@@ -7,6 +7,7 @@
  */
 
 import React, { useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import EquipmentSetupPresetsBox from './EquipmentSetupPresetsBox'
 import EquipmentOptionPreviewPopover from './EquipmentOptionPreviewPopover'
 import {
@@ -78,17 +79,17 @@ function formatMoney(value: unknown): string {
   }).format(toNumber(value))
 }
 
-function formatEquipmentCategoryLabel(category: string): string {
-  const labels: Record<string, string> = {
-    frame: 'Frames',
-    wheelset: 'Wheelsets',
-    tires: 'Tires',
-    groupset: 'Groupsets',
-    helmet: 'Helmets',
-    shoes: 'Shoes',
+function getEquipmentCategoryTranslationKey(category: string): string | null {
+  const keys: Record<string, string> = {
+    frame: 'categories.frames',
+    wheelset: 'categories.wheelsets',
+    tires: 'categories.tires',
+    groupset: 'categories.groupsets',
+    helmet: 'categories.helmets',
+    shoes: 'categories.shoes',
   }
 
-  return labels[category] ?? category
+  return keys[category] ?? null
 }
 
 function getSponsorInitials(name: string): string {
@@ -150,34 +151,12 @@ function makeInitialSelection(
   return empty
 }
 
-function getDefaultSetupOptionLabel(option: {
-  display_name: string
-  available_count: number
-  owned_count: number
-}): string {
-  return `${option.display_name} (${option.available_count}/${option.owned_count})`
-}
-
-function getCategoryHelper(category: EquipmentDefaultSetupCategoryOption): string {
-  const selected =
-    category.options.find(
-      option =>
-        option.catalog_item_id === category.selected_catalog_item_id ||
-        option.catalog_item_id === category.recommended_catalog_item_id
-    ) ?? null
-
-  if (!selected) {
-    return `No owned ${category.label.toLowerCase()} type available.`
-  }
-
-  return `${selected.available_count}/${selected.owned_count} available/owned`
-}
-
 export default function EquipmentOverviewTab({
   clubId,
   equipmentAccess,
   onAccessChanged,
 }: EquipmentOverviewTabProps): JSX.Element {
+  const { t } = useTranslation('equipment')
   const [dashboard, setDashboard] = useState<EquipmentDashboard | null>(null)
   const [technicalSupport, setTechnicalSupport] =
     useState<ActiveTechnicalSponsorSupport | null>(null)
@@ -196,6 +175,58 @@ export default function EquipmentOverviewTab({
   const [savingSetup, setSavingSetup] = useState(false)
   const [setupMessage, setSetupMessage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+
+  function formatEquipmentCategoryLabel(category: string, fallback?: string): string {
+    const key = getEquipmentCategoryTranslationKey(category)
+    return key ? t(key) : (fallback ?? category)
+  }
+
+  function getDefaultSetupOptionLabel(option: {
+    display_name: string
+    available_count: number
+    owned_count: number
+  }): string {
+    return `${option.display_name} (${t('overview.availableOwned', {
+      available: option.available_count,
+      owned: option.owned_count,
+    })})`
+  }
+
+  function getCategoryHelper(category: EquipmentDefaultSetupCategoryOption): string {
+    const selected =
+      category.options.find(
+        option =>
+          option.catalog_item_id === category.selected_catalog_item_id ||
+          option.catalog_item_id === category.recommended_catalog_item_id
+      ) ?? null
+
+    const categoryLabel = formatEquipmentCategoryLabel(
+      category.equipment_category,
+      category.label
+    )
+
+    if (!selected) {
+      return t('overview.noOwnedType', { category: categoryLabel })
+    }
+
+    return t('overview.availableOwned', {
+      available: selected.available_count,
+      owned: selected.owned_count,
+    })
+  }
+
+  function formatStockStatus(status: string): string {
+    switch (status.toLowerCase()) {
+      case 'ok':
+        return t('status.ok')
+      case 'low':
+        return t('status.low')
+      case 'empty':
+        return t('status.empty')
+      default:
+        return status
+    }
+  }
 
   async function loadDashboard(): Promise<void> {
     setLoading(true)
@@ -241,7 +272,7 @@ export default function EquipmentOverviewTab({
 
       setSetupOptions(updatedOptions as EquipmentDefaultSetupOptionsResponse)
       setSelection(makeInitialSelection(updatedOptions as EquipmentDefaultSetupOptionsResponse))
-      setSetupMessage('Default Race Setup saved.')
+      setSetupMessage(t('overview.defaultSaved'))
       await loadDashboard()
     } catch (err) {
       setError(
@@ -264,13 +295,13 @@ export default function EquipmentOverviewTab({
   )
 
   if (loading) {
-    return <div className="rounded-lg bg-white p-6 shadow-sm">Loading overview...</div>
+    return <div className="rounded-lg bg-white p-6 shadow-sm">{t('overview.loading')}</div>
   }
 
   if (error || !dashboard) {
     return (
       <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
-        {error ?? 'Unable to load equipment dashboard.'}
+        {error ?? t('overview.unable')}
       </div>
     )
   }
@@ -313,36 +344,41 @@ export default function EquipmentOverviewTab({
     <div className="space-y-4">
       <div className="grid gap-4 md:grid-cols-4">
         <StatCard
-          label="Overall readiness"
+          label={t('overview.overallReadiness')}
           value={formatPercent(dashboard.overall.overall_readiness_pct)}
-          helper={`${dashboard.overall.ready_items}/${dashboard.overall.total_items} ready`}
+          helper={t('overview.readyHelper', {
+            ready: dashboard.overall.ready_items,
+            total: dashboard.overall.total_items,
+          })}
         />
         <StatCard
-          label="Average condition"
+          label={t('overview.averageCondition')}
           value={formatCondition(dashboard.overall.avg_condition)}
         />
         <StatCard
-          label="Maintenance needed"
+          label={t('overview.maintenanceNeeded')}
           value={dashboard.overall.maintenance_needed}
-          helper={`${dashboard.overall.critical_items} critical`}
+          helper={t('overview.critical', { count: dashboard.overall.critical_items })}
         />
         <StatCard
-          label="Mechanics Workshop"
-          value={`Lv ${dashboard.support_effects.mechanics_workshop_level ?? 0}`}
-          helper="Affects maintenance later"
+          label={t('overview.mechanicsWorkshop')}
+          value={t('overview.level', {
+            level: dashboard.support_effects.mechanics_workshop_level ?? 0,
+          })}
+          helper={t('overview.maintenanceLater')}
         />
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
         <div className="rounded-lg bg-white p-4 shadow-sm">
           <div className="mb-3 flex items-center justify-between">
-            <h3 className="font-semibold text-gray-900">Inventory Summary</h3>
+            <h3 className="font-semibold text-gray-900">{t('overview.inventorySummary')}</h3>
             <button
               type="button"
               onClick={() => void loadDashboard()}
               className="text-xs font-medium text-blue-600 hover:text-blue-800"
             >
-              Refresh
+              {t('common.refresh')}
             </button>
           </div>
 
@@ -353,14 +389,18 @@ export default function EquipmentOverviewTab({
                 className="flex items-center justify-between rounded border border-gray-100 p-3"
               >
                 <div>
-                  <div className="font-medium text-gray-800">{category.label}</div>
+                  <div className="font-medium text-gray-800">
+                    {formatEquipmentCategoryLabel(category.equipment_category, category.label)}
+                  </div>
                   <div className="text-xs text-gray-500">
-                    Avg condition: {formatCondition(category.avg_condition)}
+                    {t('overview.avgCondition', {
+                      value: formatCondition(category.avg_condition),
+                    })}
                   </div>
                 </div>
                 <div className="text-right text-sm text-gray-600">
-                  <div>{category.owned_count} owned</div>
-                  <div>{category.ready_count} ready</div>
+                  <div>{t('overview.owned', { count: category.owned_count })}</div>
+                  <div>{t('overview.ready', { count: category.ready_count })}</div>
                 </div>
               </div>
             ))}
@@ -369,10 +409,9 @@ export default function EquipmentOverviewTab({
 
         <div className="flex min-h-[460px] flex-col rounded-lg bg-white p-4 shadow-sm">
           <div>
-            <h3 className="font-semibold text-gray-900">Default Race Setup</h3>
+            <h3 className="font-semibold text-gray-900">{t('overview.defaultSetup')}</h3>
             <p className="mt-1 text-xs text-gray-500">
-              Choose preferred equipment types. The race engine can later pick any available unit
-              of the selected type, and fall back to the next available type if needed.
+              {t('overview.defaultSetupDescription')}
             </p>
           </div>
 
@@ -392,7 +431,10 @@ export default function EquipmentOverviewTab({
                   className="grid gap-2 rounded border border-gray-100 p-2 md:grid-cols-[110px_1fr]"
                 >
                   <div className="flex items-center text-sm text-gray-500">
-                    {category.label}
+                    {formatEquipmentCategoryLabel(
+                      category.equipment_category,
+                      category.label
+                    )}
                   </div>
 
                   <div>
@@ -418,7 +460,14 @@ export default function EquipmentOverviewTab({
                         className="w-full rounded border border-gray-200 px-3 py-2 text-sm disabled:bg-gray-50 disabled:text-gray-400"
                       >
                         {category.options.length === 0 ? (
-                          <option value="">No owned {category.label.toLowerCase()}</option>
+                          <option value="">
+                            {t('overview.noOwned', {
+                              category: formatEquipmentCategoryLabel(
+                                category.equipment_category,
+                                category.label
+                              ),
+                            })}
+                          </option>
                         ) : (
                           category.options.map(option => (
                             <option
@@ -448,7 +497,7 @@ export default function EquipmentOverviewTab({
               disabled={savingSetup}
               className="rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
             >
-              {savingSetup ? 'Saving...' : 'Save Default Setup'}
+              {savingSetup ? 'Saving...' : t('overview.saveDefault')}
             </button>
           </div>
         </div>
@@ -456,7 +505,7 @@ export default function EquipmentOverviewTab({
 
       <div className="grid gap-4 lg:grid-cols-2">
         <div className="rounded-lg bg-white p-4 shadow-sm">
-          <h3 className="font-semibold text-gray-900">Race Supplies</h3>
+          <h3 className="font-semibold text-gray-900">{t('overview.raceSupplies')}</h3>
           <div className="mt-3 space-y-2">
             {dashboard.race_supplies_summary.map(supply => (
               <div
@@ -466,7 +515,10 @@ export default function EquipmentOverviewTab({
                 <div>
                   <div className="font-medium text-gray-800">{supply.display_name}</div>
                   <div className="text-xs text-gray-500">
-                    Purchased {supply.total_purchased} · Used {supply.total_used}
+                    {t('overview.purchasedUsed', {
+                      purchased: supply.total_purchased,
+                      used: supply.total_used,
+                    })}
                   </div>
                 </div>
                 <div className="text-right">
@@ -477,7 +529,7 @@ export default function EquipmentOverviewTab({
                       getStockBadgeClass(supply.stock_status),
                     ].join(' ')}
                   >
-                    {supply.stock_status}
+                    {formatStockStatus(supply.stock_status)}
                   </span>
                 </div>
               </div>
@@ -490,7 +542,7 @@ export default function EquipmentOverviewTab({
             <div className="flex items-start justify-between gap-4">
               <div>
                 <div className="text-xs font-medium uppercase tracking-wide text-gray-400">
-                  Technical Sponsor
+                  {t('overview.technicalSponsor')}
                 </div>
 
                 {technicalSponsorName ? (
@@ -499,7 +551,7 @@ export default function EquipmentOverviewTab({
                   </h3>
                 ) : (
                   <h3 className="mt-1 text-base font-semibold text-gray-500">
-                    No active technical sponsor.
+                    {t('overview.noTechnicalSponsor')}
                   </h3>
                 )}
               </div>
@@ -507,7 +559,7 @@ export default function EquipmentOverviewTab({
               {technicalSponsorLogoUrl ? (
                 <img
                   src={technicalSponsorLogoUrl}
-                  alt={`${technicalSponsorName ?? 'Technical sponsor'} logo`}
+                  alt={`${technicalSponsorName ?? t('overview.technicalSponsor')} logo`}
                   className="h-12 w-24 rounded object-contain"
                 />
               ) : technicalSponsorName ? (
@@ -521,25 +573,25 @@ export default function EquipmentOverviewTab({
               <>
                 <div className="mt-4 grid gap-3 sm:grid-cols-3">
                   <div className="rounded border border-gray-100 bg-gray-50 p-3">
-                    <div className="text-xs text-gray-400">Cash paid</div>
+                    <div className="text-xs text-gray-400">{t('overview.cashPaid')}</div>
                     <div className="mt-1 font-semibold text-gray-900">
                       {hasTechnicalSupport
                         ? formatMoney(technicalSupport?.cash_support_cash)
-                        : 'Not created'}
+                        : t('overview.notCreated')}
                     </div>
                   </div>
 
                   <div className="rounded border border-gray-100 bg-gray-50 p-3">
-                    <div className="text-xs text-gray-400">Equipment support</div>
+                    <div className="text-xs text-gray-400">{t('overview.equipmentSupport')}</div>
                     <div className="mt-1 font-semibold text-gray-900">
                       {hasTechnicalSupport
                         ? `${formatMoney(equipmentSupportUsed)} / ${formatMoney(equipmentSupportBudget)}`
-                        : 'Not created'}
+                        : t('overview.notCreated')}
                     </div>
                   </div>
 
                   <div className="rounded border border-gray-100 bg-gray-50 p-3">
-                    <div className="text-xs text-gray-400">Remaining</div>
+                    <div className="text-xs text-gray-400">{t('overview.remaining')}</div>
                     <div className="mt-1 font-semibold text-gray-900">
                       {hasTechnicalSupport ? formatMoney(equipmentSupportRemaining) : '—'}
                     </div>
@@ -556,13 +608,13 @@ export default function EquipmentOverviewTab({
                         />
                       </div>
                       <p className="mt-1 text-xs text-gray-400">
-                        {equipmentSupportUsedPct.toFixed(1)}% of equipment support used
+                        {t('overview.supportUsed', { value: equipmentSupportUsedPct.toFixed(1) })}
                       </p>
                     </div>
 
                     <div className="mt-4">
                       <p className="text-xs font-medium uppercase tracking-wide text-gray-400">
-                        Discounts
+                        {t('overview.discounts')}
                       </p>
 
                       {discountEntries.length > 0 ? (
@@ -579,20 +631,18 @@ export default function EquipmentOverviewTab({
                         </div>
                       ) : (
                         <p className="mt-2 text-xs text-gray-500">
-                          No category discounts configured.
+                          {t('overview.noDiscounts')}
                         </p>
                       )}
                     </div>
 
                     <div className="mt-4 rounded border border-amber-100 bg-amber-50 px-3 py-2 text-xs text-amber-800">
-                      Equipment support is not cash. It can only be used for sponsor-branded
-                      equipment discounts and unused support expires at season end.
+                      {t('overview.supportNotice')}
                     </div>
                   </>
                 ) : (
                   <div className="mt-4 rounded border border-yellow-200 bg-yellow-50 px-3 py-2 text-xs text-yellow-800">
-                    This sponsor is signed, but the technical equipment support row is not
-                    created yet. Refresh after the sponsor benefit backfill/signing patch.
+                    {t('overview.supportMissing')}
                   </div>
                 )}
 
@@ -604,7 +654,7 @@ export default function EquipmentOverviewTab({
               </>
             ) : (
               <div className="mt-3 rounded border border-gray-100 p-3 text-sm text-gray-500">
-                No active technical sponsor.
+                {t('overview.noTechnicalSponsor')}
               </div>
             )}
           </div>
@@ -616,24 +666,24 @@ export default function EquipmentOverviewTab({
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="font-semibold text-slate-900">Equipment Intelligence</h3>
+                <h3 className="font-semibold text-slate-900">{t('overview.intelligence')}</h3>
                 <span className="rounded-full border border-yellow-300 bg-yellow-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-yellow-800">
-                  Premium
+                  {t('common.premium')}
                 </span>
               </div>
               <p className="mt-1 text-xs text-slate-500">
-                Planning support based on the equipment already owned by your club. No hidden performance bonus is added.
+                {t('overview.intelligenceDescription')}
               </p>
             </div>
           </div>
 
           <div className="mt-4 grid gap-3 md:grid-cols-3">
             <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
-              <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Readiness watch</div>
+              <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">{t('overview.readinessWatch')}</div>
               <div className="mt-1 text-lg font-semibold text-slate-900">
                 {dashboard.overall.critical_items > 0
                   ? `${dashboard.overall.critical_items} critical item${dashboard.overall.critical_items === 1 ? '' : 's'}`
-                  : 'No critical items'}
+                  : t('overview.noCritical')}
               </div>
               <div className="mt-1 text-xs text-slate-600">
                 {dashboard.overall.maintenance_needed} item{dashboard.overall.maintenance_needed === 1 ? '' : 's'} currently need maintenance.
@@ -641,14 +691,16 @@ export default function EquipmentOverviewTab({
             </div>
 
             <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
-              <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Lowest condition category</div>
+              <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">{t('overview.lowestCondition')}</div>
               {(() => {
                 const lowest = [...dashboard.category_summary].sort(
                   (a, b) => Number(a.avg_condition ?? 0) - Number(b.avg_condition ?? 0),
                 )[0]
                 return (
                   <>
-                    <div className="mt-1 text-lg font-semibold text-slate-900">{lowest?.label ?? '—'}</div>
+                    <div className="mt-1 text-lg font-semibold text-slate-900">{lowest
+                        ? formatEquipmentCategoryLabel(lowest.equipment_category, lowest.label)
+                        : '—'}</div>
                     <div className="mt-1 text-xs text-slate-600">
                       {lowest ? `Average condition ${formatCondition(lowest.avg_condition)}.` : 'No inventory data available.'}
                     </div>
@@ -658,14 +710,16 @@ export default function EquipmentOverviewTab({
             </div>
 
             <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
-              <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Setup capacity hint</div>
+              <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">{t('overview.capacityHint')}</div>
               {(() => {
                 const limiting = [...dashboard.category_summary].sort(
                   (a, b) => Number(a.ready_count ?? 0) - Number(b.ready_count ?? 0),
                 )[0]
                 return (
                   <>
-                    <div className="mt-1 text-lg font-semibold text-slate-900">{limiting?.label ?? '—'}</div>
+                    <div className="mt-1 text-lg font-semibold text-slate-900">{limiting
+                        ? formatEquipmentCategoryLabel(limiting.equipment_category, limiting.label)
+                        : '—'}</div>
                     <div className="mt-1 text-xs text-slate-600">
                       {limiting ? `${limiting.ready_count} ready unit${limiting.ready_count === 1 ? '' : 's'}; this may limit complete rider setups.` : 'No inventory data available.'}
                     </div>
@@ -680,16 +734,16 @@ export default function EquipmentOverviewTab({
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="font-semibold text-slate-900">Equipment Intelligence</h3>
-                <span className="rounded-full border border-yellow-300 bg-yellow-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-yellow-800">Premium</span>
+                <h3 className="font-semibold text-slate-900">{t('overview.intelligence')}</h3>
+                <span className="rounded-full border border-yellow-300 bg-yellow-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-yellow-800">{t('common.premium')}</span>
                 <span aria-hidden="true" className="text-slate-400">🔒</span>
               </div>
               <p className="mt-1 text-sm text-slate-600">
-                See maintenance priorities, limiting setup categories and compact equipment planning insights.
+                {t('overview.intelligenceDescription')}
               </p>
             </div>
             <a href="/dashboard/premium" className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
-              Unlock with Premium
+              {t('common.unlockPremium')}
             </a>
           </div>
         </div>
