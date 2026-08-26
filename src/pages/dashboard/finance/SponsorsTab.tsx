@@ -11,10 +11,13 @@
  */
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import type { TFunction } from 'i18next'
+import { useTranslation } from 'react-i18next'
 import { useLocation, useNavigate } from 'react-router'
 import { supabase } from './supabase'
 
 type SponsorKind = 'main' | 'secondary' | 'technical'
+type FinanceT = TFunction<'finance'>
 
 type SignedSponsor = {
   id: string
@@ -225,59 +228,85 @@ function sponsorObjectiveBadgeClass(variant: string): string {
   }
 }
 
-function sponsorObjectiveRequiredResultLabel(value: string): string {
+function sponsorObjectiveRequiredResultLabel(value: string, t: FinanceT): string {
   switch (value) {
     case 'race_podium':
-      return 'Race podium'
+      return t('sponsors.racePodium')
     case 'race_win':
-      return 'Race win'
+      return t('sponsors.raceWin')
     case 'race_top_5':
-      return 'Race top 5'
+      return t('sponsors.raceTop5')
     case 'race_top_10':
-      return 'Race top 10'
+      return t('sponsors.raceTop10')
     case 'gc_top_10':
-      return 'General classification top 10'
+      return t('sponsors.gcTop10')
     case 'gc_top_5':
-      return 'General classification top 5'
+      return t('sponsors.gcTop5')
     case 'stage_top_5':
-      return 'Stage top 5'
+      return t('sponsors.stageTop5')
     case 'stage_win':
-      return 'Stage win'
+      return t('sponsors.stageWin')
     case 'race_start':
-      return 'Race start'
+      return t('sponsors.raceStart')
     case 'classification_visibility':
-      return 'Points or mountain jersey visibility'
+      return t('sponsors.classificationVisibility')
     default:
-      return value
-        ? value
-            .replace(/_/g, ' ')
-            .replace(/\w/g, (letter) => letter.toUpperCase())
-        : 'Objective'
+      return value || t('sponsors.objective')
   }
 }
 
-function sponsorObjectiveDisplayLabel(objective: SponsorObjectiveUiRow): string {
+type SponsorObjectiveDisplayStatus = 'paid' | 'achieved' | 'missed' | 'checked' | 'scheduled'
+
+function sponsorObjectiveDisplayStatus(
+  objective: SponsorObjectiveUiRow
+): SponsorObjectiveDisplayStatus | null {
   const normalizedResult = String(objective.objective_result_state || '').toLowerCase()
   const normalizedCheck = String(objective.check_state || '').toLowerCase()
-  const normalizedStatus = String(objective.display_status_label || objective.objective_status || '').toLowerCase()
+  const normalizedStatus = String(
+    objective.display_status_label || objective.objective_status || ''
+  ).toLowerCase()
   const payoutStatus = String(objective.payout_status || '').toLowerCase()
 
-  if (payoutStatus === 'paid' || normalizedResult === 'paid') return 'Paid'
-  if (['completed', 'complete', 'achieved', 'success'].includes(normalizedResult)) return 'Achieved'
-  if (['failed', 'missed', 'not_met'].includes(normalizedResult)) return 'Missed'
-  if (['checked'].includes(normalizedCheck) && normalizedResult === 'pending') return 'Checked'
-  if (['scheduled', 'pending', 'active'].includes(normalizedCheck) || normalizedStatus.includes('scheduled')) return 'Scheduled'
-  if (normalizedStatus.includes('failed') || normalizedStatus.includes('missed')) return 'Missed'
-  if (normalizedStatus.includes('completed') || normalizedStatus.includes('achieved')) return 'Achieved'
+  if (payoutStatus === 'paid' || normalizedResult === 'paid') return 'paid'
+  if (['completed', 'complete', 'achieved', 'success'].includes(normalizedResult)) return 'achieved'
+  if (['failed', 'missed', 'not_met'].includes(normalizedResult)) return 'missed'
+  if (normalizedCheck === 'checked' && normalizedResult === 'pending') return 'checked'
+  if (
+    ['scheduled', 'pending', 'active'].includes(normalizedCheck) ||
+    normalizedStatus.includes('scheduled')
+  ) {
+    return 'scheduled'
+  }
+  if (normalizedStatus.includes('failed') || normalizedStatus.includes('missed')) return 'missed'
+  if (normalizedStatus.includes('completed') || normalizedStatus.includes('achieved')) return 'achieved'
 
-  return objective.display_status_label || 'Scheduled'
+  return null
+}
+
+function sponsorObjectiveDisplayLabel(objective: SponsorObjectiveUiRow, t: FinanceT): string {
+  const status = sponsorObjectiveDisplayStatus(objective)
+
+  switch (status) {
+    case 'paid':
+      return t('sponsors.paid')
+    case 'achieved':
+      return t('sponsors.achieved')
+    case 'missed':
+      return t('sponsors.missed')
+    case 'checked':
+      return t('sponsors.checked')
+    case 'scheduled':
+      return t('sponsors.scheduled')
+    default:
+      return objective.display_status_label || t('sponsors.scheduled')
+  }
 }
 
 function sponsorObjectiveDisplayVariant(objective: SponsorObjectiveUiRow): string {
-  const label = sponsorObjectiveDisplayLabel(objective).toLowerCase()
-  if (label === 'paid' || label === 'achieved') return 'success'
-  if (label === 'missed' || label === 'failed') return 'danger'
-  if (label === 'checked') return 'info'
+  const status = sponsorObjectiveDisplayStatus(objective)
+  if (status === 'paid' || status === 'achieved') return 'success'
+  if (status === 'missed') return 'danger'
+  if (status === 'checked') return 'info'
   return objective.display_status_variant || 'info'
 }
 
@@ -515,11 +544,12 @@ function getMainSponsorDealType(
 }
 
 function getMainSponsorDealLabel(
-  metadata: Record<string, unknown> | null | undefined
+  metadata: Record<string, unknown> | null | undefined,
+  t: FinanceT
 ): string {
   return getMainSponsorDealType(metadata) === 'naming_rights'
-    ? 'Naming-rights deal'
-    : 'Standard main sponsor'
+    ? t('sponsors.namingRights')
+    : t('sponsors.standardMainDeal')
 }
 
 function getMainSponsorDealPillClass(
@@ -638,18 +668,21 @@ function CountryFlagOnly({
   )
 }
 
-function formatContractCoverage(seasonNumber: number | null | undefined): string {
-  return `Until end of Season ${seasonNumber ?? 1}`
+function formatContractCoverage(
+  seasonNumber: number | null | undefined,
+  t: FinanceT
+): string {
+  return t('sponsors.coverageSeason', { season: seasonNumber ?? 1 })
 }
 
-function formatEquipmentCategoryLabel(category: string): string {
+function formatEquipmentCategoryLabel(category: string, t: FinanceT): string {
   const labels: Record<string, string> = {
-    frame: 'Frames',
-    wheelset: 'Wheelsets',
-    tires: 'Tires',
-    groupset: 'Groupsets',
-    helmet: 'Helmets',
-    shoes: 'Shoes',
+    frame: t('sponsors.frames'),
+    wheelset: t('sponsors.wheelsets'),
+    tires: t('sponsors.tires'),
+    groupset: t('sponsors.groupsets'),
+    helmet: t('sponsors.helmets'),
+    shoes: t('sponsors.shoes'),
   }
 
   return labels[category] ?? category
@@ -684,14 +717,14 @@ async function calculateTechnicalSponsorBenefitPackagesBatch(
   return (data ?? {}) as Record<string, TechnicalSponsorBenefitPackage>
 }
 
-function sponsorKindLabel(kind: SponsorKind): string {
+function sponsorKindLabel(kind: SponsorKind, t: FinanceT): string {
   switch (kind) {
     case 'main':
-      return 'Main Sponsor'
+      return t('sponsors.mainSponsor')
     case 'secondary':
-      return 'Secondary Sponsor'
+      return t('sponsors.secondarySponsor')
     case 'technical':
-      return 'Technical Sponsor'
+      return t('sponsors.technicalSponsor')
     default:
       return kind
   }
@@ -866,6 +899,7 @@ function OfferModal({
   onClose: () => void
   onSign: (offerId: string) => Promise<void>
 }): JSX.Element | null {
+  const { t } = useTranslation('finance')
   if (!open || !kind) return null
 
   return (
@@ -875,9 +909,11 @@ function OfferModal({
         <div className="w-[min(98vw,1720px)] mx-auto bg-white rounded-2xl shadow-2xl border overflow-hidden">
           <div className="flex items-center justify-between gap-4 px-6 py-4 border-b bg-gray-50">
             <div>
-              <div className="text-lg font-semibold">{sponsorKindLabel(kind)} Offers</div>
+              <div className="text-lg font-semibold">
+                {t('sponsors.offersTitle', { kind: sponsorKindLabel(kind, t) })}
+              </div>
               <div className="text-sm text-gray-500 mt-1">
-                Review the available offers and sign the one that fits your team.
+                {t('sponsors.offersDescription')}
               </div>
             </div>
 
@@ -893,7 +929,7 @@ function OfferModal({
           <div className="p-6">
             {offers.length === 0 ? (
               <div className="text-sm text-gray-600">
-                No offers available for this sponsor category.
+                {t('sponsors.noOffers')}
               </div>
             ) : (
               <div className="space-y-4">
@@ -922,7 +958,7 @@ function OfferModal({
                   const technicalDiscounts =
                     technicalPackage?.category_discounts_json ?? {}
 
-                  const mainSponsorDealLabel = getMainSponsorDealLabel(offer.metadata)
+                  const mainSponsorDealLabel = getMainSponsorDealLabel(offer.metadata, t)
                   const mainSponsorDealType = getMainSponsorDealType(offer.metadata)
                   const teamNamePreview = getMainSponsorTeamNamePreview(offer)
                   const teamNameHistoryPreview = getMainSponsorHistoryNamePreview(offer)
@@ -953,7 +989,7 @@ function OfferModal({
                               )}
 
                               <span className="rounded-full border border-gray-200 bg-gray-50 px-2 py-1 text-xs font-semibold text-gray-700">
-                                {sponsorKindLabel(offer.sponsor_kind)}
+                                {sponsorKindLabel(offer.sponsor_kind, t)}
                               </span>
 
                               {offer.sponsor_kind === 'main' && (
@@ -977,7 +1013,7 @@ function OfferModal({
                             <div className="flex flex-wrap gap-2 mt-3">
                               <StatusPill label={`Season ${offer.season_number}`} tone="blue" />
                               <StatusPill
-                                label={`Factor ${toNumber(offer.proration_factor).toFixed(2)}`}
+                                label={t('sponsors.factor', { value: toNumber(offer.proration_factor).toFixed(2) })}
                               />
                             </div>
                           </div>
@@ -989,7 +1025,7 @@ function OfferModal({
                           disabled={signingOfferId === offer.id}
                           className="px-4 py-2 rounded-md bg-gray-900 text-white text-sm hover:bg-black disabled:opacity-60"
                         >
-                          {signingOfferId === offer.id ? 'Signing…' : 'Sign offer'}
+                          {signingOfferId === offer.id ? t('sponsors.signing') : t('sponsors.signOffer')}
                         </button>
                       </div>
 
@@ -997,38 +1033,38 @@ function OfferModal({
                         <>
                           <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mt-5">
                             <StatCard
-                              label="Total value"
+                              label={t('sponsors.totalValue')}
                               value={formatMoney(
                                 toNumber(technicalPackage.contract_value_cash),
                                 currency
                               )}
                             />
                             <StatCard
-                              label="Cash paid now"
+                              label={t('sponsors.cashPaidNow')}
                               value={formatMoney(
                                 toNumber(technicalPackage.cash_support_cash),
                                 currency
                               )}
                             />
                             <StatCard
-                              label="Equipment fund"
+                              label={t('sponsors.equipmentFund')}
                               value={formatMoney(
                                 toNumber(technicalPackage.equipment_support_budget_cash),
                                 currency
                               )}
                             />
                             <StatCard
-                              label="Contract Coverage"
-                              value={formatContractCoverage(offer.season_number)}
+                              label={t('sponsors.contractCoverage')}
+                              value={formatContractCoverage(offer.season_number, t)}
                             />
                           </div>
 
                           <div className="mt-4 rounded-lg bg-green-50 border border-green-100 p-4 text-sm text-green-900">
-                            <div className="font-medium">Technical sponsor package</div>
+                            <div className="font-medium">{t('sponsors.technicalPackage')}</div>
 
                             <div className="mt-3">
                               <div className="text-xs uppercase tracking-wide text-green-700 font-semibold">
-                                Discounts
+                                {t('sponsors.discounts')}
                               </div>
 
                               <div className="mt-2 flex flex-wrap gap-2">
@@ -1038,7 +1074,7 @@ function OfferModal({
                                       key={category}
                                       className="rounded-full bg-white px-2.5 py-1 text-xs font-medium text-green-700 ring-1 ring-green-200"
                                     >
-                                      {formatEquipmentCategoryLabel(category)}:{' '}
+                                      {formatEquipmentCategoryLabel(category, t)}:{' '}
                                       {toNumber(value).toFixed(0)}%
                                     </span>
                                   )
@@ -1047,22 +1083,24 @@ function OfferModal({
                             </div>
 
                             <div className="mt-3 text-xs text-green-800">
-                              Equipment support is not cash. It can only be used for
-                              sponsor-branded equipment discounts. There is no fixed unit cap;
-                              the remaining equipment fund is the limit.
+                              {t('sponsors.equipmentSupportNotCashLong')}
                             </div>
                           </div>
 
                           <div className="mt-3 rounded-lg bg-amber-50 border border-amber-100 p-3 text-xs text-amber-800">
-                            Unused equipment support expires at the end of the season.
+                            {t('sponsors.unusedSupportExpires')}
                           </div>
                         </>
                       ) : (
                         <>
                           <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mt-5">
-                            <StatCard label="Guaranteed" value={formatMoney(guaranteed, currency)} />
+                            <StatCard label={t('sponsors.guaranteed')} value={formatMoney(guaranteed, currency)} />
                             <StatCard
-                              label={offer.sponsor_kind === 'main' ? 'Bonus pool' : 'Monthly equivalent'}
+                              label={
+                                offer.sponsor_kind === 'main'
+                                  ? t('sponsors.bonusPool')
+                                  : t('sponsors.monthlyEquivalent')
+                              }
                               value={
                                 offer.sponsor_kind === 'main'
                                   ? formatMoney(bonus, currency)
@@ -1070,34 +1108,34 @@ function OfferModal({
                               }
                             />
                             <StatCard
-                              label="Contract Coverage"
-                              value={formatContractCoverage(offer.season_number)}
+                              label={t('sponsors.contractCoverage')}
+                              value={formatContractCoverage(offer.season_number, t)}
                             />
                             <StatCard
                               label={
                                 offer.sponsor_kind === 'technical'
-                                  ? 'Discount'
+                                  ? t('sponsors.discount')
                                   : offer.sponsor_kind === 'main'
-                                    ? 'Deal type'
-                                    : 'Details'
+                                    ? t('sponsors.dealType')
+                                    : t('sponsors.details')
                               }
                               value={
                                 offer.sponsor_kind === 'technical'
                                   ? discount !== null
                                     ? `${discount.toFixed(2)}%`
-                                    : 'Calculating package'
+                                    : t('sponsors.calculatingPackage')
                                   : offer.sponsor_kind === 'secondary'
-                                    ? 'Supporting sponsor'
+                                    ? t('sponsors.supportingSponsor')
                                     : mainSponsorDealType === 'naming_rights'
-                                      ? 'Naming rights'
-                                      : 'Standard'
+                                      ? t('sponsors.namingRights')
+                                      : t('sponsors.standard')
                               }
                             />
                           </div>
 
                           {offer.sponsor_kind === 'technical' && (
                             <div className="mt-4 rounded-lg bg-gray-50 border p-4 text-sm text-gray-700">
-                              Calculating technical sponsor cash/equipment support package…
+                              {t('sponsors.calculatingPackage')}
                             </div>
                           )}
                         </>
@@ -1106,7 +1144,7 @@ function OfferModal({
                       {offer.sponsor_kind === 'main' && (
                         <div className="mt-4 rounded-lg bg-white border border-gray-200 p-4 text-sm text-blue-900">
                           <div className="flex flex-wrap items-center gap-2">
-                            <div className="font-medium">Main sponsor package</div>
+                            <div className="font-medium">{t('sponsors.mainPackage')}</div>
                             <span
                               className={[
                                 'rounded-full border px-2 py-0.5 text-xs font-semibold',
@@ -1118,25 +1156,25 @@ function OfferModal({
                           </div>
 
                           <div className="mt-2 text-sm leading-6 text-blue-900">
-                            This offer pays guaranteed money immediately when signed. The bonus pool is only paid later if your team completes sponsor objectives such as market starts, wins, podiums, top-5 results, or GC targets.
+                            {t('sponsors.mainPackageDescription')}
                           </div>
 
                           <div className="mt-3 grid grid-cols-1 gap-2 md:grid-cols-2">
                             <div className="rounded-lg border border-blue-100 bg-white/70 px-3 py-2">
                               <div className="text-xs font-semibold uppercase tracking-wide text-blue-700">
-                                Guaranteed money
+                                {t('sponsors.guaranteedMoney')}
                               </div>
                               <div className="mt-1 font-semibold">
-                                {formatMoney(guaranteed, currency)} paid when signed
+                                {t('sponsors.paidWhenSigned', { amount: formatMoney(guaranteed, currency) })}
                               </div>
                             </div>
 
                             <div className="rounded-lg border border-blue-100 bg-white/70 px-3 py-2">
                               <div className="text-xs font-semibold uppercase tracking-wide text-blue-700">
-                                Bonus pool
+                                {t('sponsors.bonusPool')}
                               </div>
                               <div className="mt-1 font-semibold">
-                                {formatMoney(bonus, currency)} available through objectives
+                                {t('sponsors.availableObjectives', { amount: formatMoney(bonus, currency) })}
                               </div>
                             </div>
                           </div>
@@ -1144,22 +1182,22 @@ function OfferModal({
                           {teamNamePreview && (
                             <div className="mt-3 rounded-lg border border-purple-200 bg-purple-50 px-3 py-2 text-purple-900">
                               <div className="text-xs font-semibold uppercase tracking-wide text-purple-700">
-                                Naming-rights team identity
+                                {t('sponsors.namingIdentity')}
                               </div>
                               <div className="mt-1 text-lg font-semibold">{teamNamePreview}</div>
                               <div className="mt-1 text-xs text-purple-800">
-                                During the sponsor season, the team is shown with this name. The original club name is kept for history only.
+                                {t('sponsors.namingIdentityDescription')}
                               </div>
                               {teamNameHistoryPreview && teamNameHistoryPreview !== teamNamePreview ? (
                                 <div className="mt-2 rounded-md bg-white/70 px-2 py-1 text-xs text-purple-800">
-                                  History label after the deal: {teamNameHistoryPreview}
+                                  {t('sponsors.historyLabel', { name: teamNameHistoryPreview })}
                                 </div>
                               ) : null}
                             </div>
                           )}
 
                           <div className="mt-4">
-                            <div className="font-medium mb-2">Expected bonus objectives</div>
+                            <div className="font-medium mb-2">{t('sponsors.expectedObjectives')}</div>
                             <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
                               {objectiveExplanations.slice(0, 6).map((objective, index) => (
                                 <div
@@ -1188,7 +1226,7 @@ function OfferModal({
 
                       {offer.sponsor_kind === 'secondary' && (
                         <div className="mt-4 rounded-lg bg-gray-50 border p-4 text-sm text-gray-700">
-                          Secondary sponsors have no objectives in v1 and simply add more seasonal income.
+                          {t('sponsors.secondaryNoObjectives')}
                         </div>
                       )}
                     </div>
@@ -1216,20 +1254,21 @@ function SponsorObjectiveCards({
   onOpenRace: (objective: SponsorObjectiveUiRow) => void
   onShowInCalendar: (objective: SponsorObjectiveUiRow) => void
 }): JSX.Element {
+  const { t } = useTranslation('finance')
   return (
     <div className="rounded-xl border border-gray-200 bg-white p-4">
       <div className="mb-3 flex items-center justify-between gap-3">
         <div>
-          <h3 className="text-base font-semibold text-gray-900">Main sponsor objectives</h3>
+          <h3 className="text-base font-semibold text-gray-900">{t('sponsors.objectives')}</h3>
           <p className="text-sm text-gray-500">
-            Rewards, progress, required result, and bonus payout state.
+            {t('sponsors.objectivesDescription')}
           </p>
         </div>
       </div>
 
       {loading ? (
         <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-600">
-          Loading sponsor objectives...
+          {t('sponsors.loadingObjectives')}
         </div>
       ) : error ? (
         <div className="rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-700">
@@ -1237,7 +1276,7 @@ function SponsorObjectiveCards({
         </div>
       ) : objectives.length === 0 ? (
         <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-600">
-          No main sponsor objectives yet.
+          {t('sponsors.noObjectives')}
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-3 xl:grid-cols-3">
@@ -1268,7 +1307,7 @@ function SponsorObjectiveCards({
                           onClick={() => onShowInCalendar(objective)}
                           className="mt-1 inline-flex text-[11px] font-semibold text-gray-500 hover:text-gray-900 hover:underline"
                         >
-                          Show in calendar
+                          {t('sponsors.showCalendar')}
                         </button>
                       ) : null}
                     </>
@@ -1285,29 +1324,29 @@ function SponsorObjectiveCards({
                     sponsorObjectiveBadgeClass(sponsorObjectiveDisplayVariant(objective)),
                   ].join(' ')}
                 >
-                  {sponsorObjectiveDisplayLabel(objective)}
+                  {sponsorObjectiveDisplayLabel(objective, t)}
                 </div>
               </div>
 
               <div className="space-y-2 text-sm">
                 <div className="flex items-center justify-between gap-3">
-                  <span className="text-gray-500">Reward</span>
+                  <span className="text-gray-500">{t('sponsors.reward')}</span>
                   <span className="font-semibold text-gray-900">
                     {formatMoney(toNumber(objective.reward_amount))}
                   </span>
                 </div>
 
                 <div className="flex items-center justify-between gap-3">
-                  <span className="text-gray-500">Progress</span>
+                  <span className="text-gray-500">{t('sponsors.progress')}</span>
                   <span className="font-semibold text-gray-900">
                     {objective.progress_text}
                   </span>
                 </div>
 
                 <div className="flex items-center justify-between gap-3">
-                  <span className="text-gray-500">Required result</span>
+                  <span className="text-gray-500">{t('sponsors.requiredResult')}</span>
                   <span className="font-semibold text-gray-900">
-                    {sponsorObjectiveRequiredResultLabel(objective.required_result)}
+                    {sponsorObjectiveRequiredResultLabel(objective.required_result, t)}
                   </span>
                 </div>
 
@@ -1331,6 +1370,7 @@ function MainSponsorHero({
   onOpenOffers: () => void
   currency: 'USD' | 'EUR'
 }): JSX.Element {
+  const { t } = useTranslation('finance')
   const resolvedLogoUrl = sponsor
     ? getSponsorLogoUrl(sponsor.sponsor_kind, sponsor.logo_url, sponsor.metadata)
     : null
@@ -1338,11 +1378,15 @@ function MainSponsorHero({
   const description = sponsor ? getSponsorDescription(sponsor.metadata) : null
   const signedMainDealType = sponsor ? getMainSponsorDealType(sponsor.metadata) : 'standard'
   const signedMainDealLabel =
-    signedMainDealType === 'naming_rights' ? 'Naming rights' : 'Standard main deal'
+    signedMainDealType === 'naming_rights'
+      ? t('sponsors.namingRights')
+      : t('sponsors.standardMainDeal')
   const activeSeasonTeamName = sponsor
     ? getMetadataValue(sponsor.metadata, 'season_display_name') ??
       getMetadataValue(sponsor.metadata, 'naming_rights_display_name') ??
-      (signedMainDealType === 'naming_rights' ? `${sponsor.name} Team` : 'Club name unchanged')
+      (signedMainDealType === 'naming_rights'
+        ? `${sponsor.name} Team`
+        : t('sponsors.clubNameUnchanged'))
     : null
   const historyDisplayName = sponsor
     ? getMetadataValue(sponsor.metadata, 'full_display_name') ??
@@ -1353,13 +1397,13 @@ function MainSponsorHero({
     <div className="bg-white rounded-xl shadow border overflow-hidden">
       <div className="flex items-center justify-between gap-4 px-5 py-4 border-b bg-gray-50">
         <div>
-          <div className="font-semibold text-lg">Main Sponsor</div>
+          <div className="font-semibold text-lg">{t('sponsors.mainSponsor')}</div>
           <div className="text-sm text-gray-500 mt-1">
-            Your primary seasonal partner and biggest sponsorship income.
+            {t('sponsors.mainDescription')}
           </div>
         </div>
 
-        <ActionButton label="View Offers" disabled={!canOpenOffers} onClick={onOpenOffers} />
+        <ActionButton label={t('sponsors.viewOffers')} disabled={!canOpenOffers} onClick={onOpenOffers} />
       </div>
 
       <div className="p-5">
@@ -1392,45 +1436,48 @@ function MainSponsorHero({
               <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
                 <div>
                   <div className="text-sm font-semibold uppercase tracking-wide text-yellow-800">
-                    Main Sponsor Contract Summary
+                    {t('sponsors.contractSummary')}
                   </div>
                   <div className="mt-1 text-xs text-yellow-900/80">
-                    These fields belong to the active signed main sponsor and will change when a new main sponsor is signed in another season.
+                    {t('sponsors.contractSummaryDescription')}
                   </div>
                 </div>
 
                 <span className="inline-flex w-fit rounded-full border border-yellow-300 bg-white px-2.5 py-1 text-xs font-semibold text-yellow-800">
-                  Active signed contract
+                  {t('sponsors.activeContract')}
                 </span>
               </div>
 
               <div className="grid grid-cols-1 gap-3 mt-4 md:grid-cols-2 xl:grid-cols-5">
                 <StatCard
-                  label="Guaranteed Payment"
+                  label={t('sponsors.guaranteedPayment')}
                   value={formatMoney(toNumber(sponsor.guaranteed_amount), currency)}
                 />
                 <StatCard
-                  label="Bonus Pool"
+                  label={t('sponsors.bonusPoolTitle')}
                   value={formatMoney(toNumber(sponsor.bonus_pool_amount), currency)}
                 />
                 <StatCard
-                  label="Contract Coverage"
-                  value={formatContractCoverage(sponsor.season_number)}
+                  label={t('sponsors.contractCoverage')}
+                  value={formatContractCoverage(sponsor.season_number, t)}
                 />
                 <StatCard
-                  label="Deal Type"
+                  label={t('sponsors.dealTypeTitle')}
                   value={signedMainDealLabel}
                 />
                 <StatCard
-                  label={signedMainDealType === 'naming_rights' ? 'Season Team Name' : 'Team Identity'}
-                  value={activeSeasonTeamName ?? 'Club name unchanged'}
+                  label={
+                    signedMainDealType === 'naming_rights'
+                      ? t('sponsors.seasonTeamName')
+                      : t('sponsors.teamIdentity')
+                  }
+                  value={activeSeasonTeamName ?? t('sponsors.clubNameUnchanged')}
                 />
               </div>
 
               {historyDisplayName && signedMainDealType === 'naming_rights' ? (
                 <div className="mt-3 rounded-lg border border-purple-200 bg-white px-3 py-2 text-xs text-purple-900">
-                  <span className="font-semibold">History label after the deal:</span>{' '}
-                  {historyDisplayName}
+                  {t('sponsors.historyLabel', { name: historyDisplayName })}
                 </div>
               ) : null}
             </div>
@@ -1460,9 +1507,9 @@ function MainSponsorHero({
           </div>
         ) : (
           <div className="h-full flex flex-col justify-center rounded-xl border border-dashed p-6 bg-gray-50">
-            <div className="text-lg font-semibold text-gray-900">No Main Sponsor Signed</div>
+            <div className="text-lg font-semibold text-gray-900">{t('sponsors.noMain')}</div>
             <div className="text-sm text-gray-600 mt-2">
-              Choose one main sponsor to secure your biggest seasonal sponsorship deal.
+              {t('sponsors.noMainDescription')}
             </div>
           </div>
         )}
@@ -1486,26 +1533,27 @@ function SecondarySponsorPanel({
   onOpenOffers: () => void
   currency: 'USD' | 'EUR'
 }): JSX.Element {
+  const { t } = useTranslation('finance')
   const progress = totalSlots > 0 ? (usedSlots / totalSlots) * 100 : 0
 
   return (
     <div className="bg-white rounded-xl shadow border overflow-hidden">
       <div className="flex items-center justify-between gap-4 px-5 py-4 border-b bg-gray-50">
         <div>
-          <div className="font-semibold text-lg">Secondary Sponsors</div>
+          <div className="font-semibold text-lg">{t('sponsors.secondarySponsors')}</div>
           <div className="text-sm text-gray-500 mt-1">
-            Up to three supporting sponsor deals per season.
+            {t('sponsors.secondaryDescription')}
           </div>
         </div>
 
-        <ActionButton label="View Offers" disabled={!canOpenOffers} onClick={onOpenOffers} />
+        <ActionButton label={t('sponsors.viewOffers')} disabled={!canOpenOffers} onClick={onOpenOffers} />
       </div>
 
       <div className="p-5">
         <div className="rounded-xl border bg-gray-50 p-4">
           <div className="flex items-center justify-between gap-3">
-            <div className="text-sm font-medium text-gray-700">Slot Usage</div>
-            <StatusPill label={`${usedSlots}/${totalSlots} filled`} tone={usedSlots > 0 ? 'blue' : 'gray'} />
+            <div className="text-sm font-medium text-gray-700">{t('sponsors.slotUsage')}</div>
+            <StatusPill label={t('sponsors.slotsFilled', { used: usedSlots, total: totalSlots })} tone={usedSlots > 0 ? 'blue' : 'gray'} />
           </div>
           <div className="mt-3">
             <ProgressBar value={progress} tone="blue" />
@@ -1519,7 +1567,7 @@ function SecondarySponsorPanel({
             return (
               <div key={slot} className="rounded-xl border p-4 bg-white">
                 <div className="flex items-center justify-between gap-2">
-                  <div className="font-medium text-gray-900">Slot {slot}</div>
+                  <div className="font-medium text-gray-900">{t('sponsors.slot', { slot })}</div>
                   {sponsor ? <StatusPill label="Signed" tone="green" /> : <StatusPill label="Empty" />}
                 </div>
 
@@ -1531,18 +1579,18 @@ function SecondarySponsorPanel({
 
                     <div className="grid grid-cols-1 gap-3 mt-4">
                       <StatCard
-                        label="Guaranteed"
+                        label={t('sponsors.guaranteed')}
                         value={formatMoney(toNumber(sponsor.guaranteed_amount), currency)}
                       />
                       <StatCard
-                        label="Contract Coverage"
-                        value={formatContractCoverage(sponsor.season_number)}
+                        label={t('sponsors.contractCoverage')}
+                        value={formatContractCoverage(sponsor.season_number, t)}
                       />
                     </div>
                   </div>
                 ) : (
                   <div className="mt-4 rounded-lg border border-dashed bg-gray-50 p-4 text-sm text-gray-600">
-                    No sponsor assigned to this slot yet.
+                    {t('sponsors.noSlotSponsor')}
                   </div>
                 )}
               </div>
@@ -1567,6 +1615,7 @@ function TechnicalSponsorPanel({
   onOpenOffers: () => void
   currency: 'USD' | 'EUR'
 }): JSX.Element {
+  const { t } = useTranslation('finance')
   const resolvedLogoUrl = sponsor
     ? getSponsorLogoUrl(sponsor.sponsor_kind, sponsor.logo_url, sponsor.metadata)
     : null
@@ -1589,13 +1638,13 @@ function TechnicalSponsorPanel({
     <div className="bg-white rounded-xl shadow border overflow-hidden">
       <div className="flex items-center justify-between gap-4 px-5 py-4 border-b bg-gray-50">
         <div>
-          <div className="font-semibold text-lg">Technical Sponsor</div>
+          <div className="font-semibold text-lg">{t('sponsors.technicalSponsor')}</div>
           <div className="text-sm text-gray-500 mt-1">
-            Equipment partner providing cash support and sponsor-branded equipment discounts.
+            {t('sponsors.technicalDescription')}
           </div>
         </div>
 
-        <ActionButton label="View Offers" disabled={!canOpenOffers} onClick={onOpenOffers} />
+        <ActionButton label={t('sponsors.viewOffers')} disabled={!canOpenOffers} onClick={onOpenOffers} />
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-5">
@@ -1622,12 +1671,12 @@ function TechnicalSponsorPanel({
                       discountEntries.map(([category, discount]) => (
                         <StatusPill
                           key={category}
-                          label={`${formatEquipmentCategoryLabel(category)} ${toNumber(discount).toFixed(0)}%`}
+                          label={`${formatEquipmentCategoryLabel(category, t)} ${toNumber(discount).toFixed(0)}%`}
                           tone="blue"
                         />
                       ))
                     ) : (
-                      <StatusPill label="No active equipment fund" tone="yellow" />
+                      <StatusPill label={t('sponsors.noActiveFund')} tone="yellow" />
                     )}
                   </div>
                 </div>
@@ -1635,7 +1684,7 @@ function TechnicalSponsorPanel({
 
               <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mt-5">
                 <StatCard
-                  label="Cash support"
+                  label={t('sponsors.cashSupport')}
                   value={
                     support
                       ? formatMoney(toNumber(support.cash_support_cash), currency)
@@ -1643,15 +1692,15 @@ function TechnicalSponsorPanel({
                   }
                 />
                 <StatCard
-                  label="Equipment fund"
+                  label={t('sponsors.equipmentFund')}
                   value={
                     support
                       ? `${formatMoney(usedSupport, currency)} / ${formatMoney(totalSupport, currency)}`
-                      : 'Not created'
+                      : t('sponsors.notCreated')
                   }
                 />
                 <StatCard
-                  label="Remaining"
+                  label={t('sponsors.remaining')}
                   value={
                     support
                       ? formatMoney(remainingSupport, currency)
@@ -1659,8 +1708,8 @@ function TechnicalSponsorPanel({
                   }
                 />
                 <StatCard
-                  label="Contract Coverage"
-                  value={formatContractCoverage(sponsor.season_number)}
+                  label={t('sponsors.contractCoverage')}
+                  value={formatContractCoverage(sponsor.season_number, t)}
                 />
               </div>
 
@@ -1668,53 +1717,52 @@ function TechnicalSponsorPanel({
                 <div className="mt-5">
                   <ProgressBar value={usedPct} tone="green" />
                   <div className="mt-2 text-xs text-gray-500">
-                    {usedPct.toFixed(1)}% of equipment support used.
+                    {t('sponsors.supportUsed', { percent: usedPct.toFixed(1) })}
                   </div>
                 </div>
               )}
 
               {support && (
                 <div className="mt-4 rounded-lg bg-amber-50 border border-amber-100 p-3 text-xs text-amber-800">
-                  Equipment support is not cash. It can only be used for sponsor-branded
-                  equipment discounts. Unused support expires at season end.
+                  {t('sponsors.equipmentSupportNotCash')}
                 </div>
               )}
             </div>
           ) : (
             <div className="rounded-xl border border-dashed p-6 bg-gray-50">
-              <div className="text-lg font-semibold text-gray-900">No Technical Sponsor Signed</div>
+              <div className="text-lg font-semibold text-gray-900">{t('sponsors.noTechnical')}</div>
               <div className="text-sm text-gray-600 mt-2">
-                Sign a technical sponsor to unlock sponsor-branded equipment discounts.
+                {t('sponsors.noTechnicalDescription')}
               </div>
             </div>
           )}
         </div>
 
         <div className="xl:col-span-2 border-t xl:border-t-0 xl:border-l bg-gray-50/70 p-5">
-          <div className="font-semibold">Support Status</div>
+          <div className="font-semibold">{t('sponsors.supportStatus')}</div>
           <div className="text-sm text-gray-500 mt-1">
-            Technical sponsor support is split into cash and a seasonal equipment discount fund.
+            {t('sponsors.supportStatusDescription')}
           </div>
 
           <div className="space-y-3 mt-4">
             <div className="rounded-xl border bg-white p-4">
               <div className="flex items-center justify-between gap-3">
                 <div>
-                  <div className="font-medium">Cash Support</div>
+                  <div className="font-medium">{t('sponsors.cashSupportTitle')}</div>
                   <div className="text-sm text-gray-600 mt-1">
-                    Paid immediately when the technical sponsor is signed.
+                    {t('sponsors.cashSupportDescription')}
                   </div>
                 </div>
-                <StatusPill label={sponsor ? 'Paid' : 'Locked'} tone={sponsor ? 'green' : 'gray'} />
+                <StatusPill label={sponsor ? t('sponsors.paid') : 'Locked'} tone={sponsor ? 'green' : 'gray'} />
               </div>
             </div>
 
             <div className="rounded-xl border bg-white p-4">
               <div className="flex items-center justify-between gap-3">
                 <div>
-                  <div className="font-medium">Equipment Support Fund</div>
+                  <div className="font-medium">{t('sponsors.equipmentSupportFund')}</div>
                   <div className="text-sm text-gray-600 mt-1">
-                    Used automatically when buying matching sponsor-branded equipment.
+                    {t('sponsors.equipmentSupportFundDescription')}
                   </div>
                 </div>
                 <StatusPill label={support ? 'Active' : 'Missing'} tone={support ? 'green' : 'yellow'} />
@@ -1724,7 +1772,7 @@ function TechnicalSponsorPanel({
                 <div className="mt-4">
                   <ProgressBar value={usedPct} tone="green" />
                   <div className="mt-2 text-xs text-gray-500">
-                    Remaining: {formatMoney(remainingSupport, currency)}
+                    {t('sponsors.remainingAmount', { amount: formatMoney(remainingSupport, currency) })}
                   </div>
                 </div>
               )}
@@ -1732,14 +1780,14 @@ function TechnicalSponsorPanel({
 
             {support && discountEntries.length > 0 && (
               <div className="rounded-xl border bg-white p-4">
-                <div className="font-medium">Discounts</div>
+                <div className="font-medium">{t('sponsors.discounts')}</div>
                 <div className="mt-3 flex flex-wrap gap-2">
                   {discountEntries.map(([category, discount]) => (
                     <span
                       key={category}
                       className="rounded-full bg-green-50 px-2.5 py-1 text-xs font-medium text-green-700 ring-1 ring-green-200"
                     >
-                      {formatEquipmentCategoryLabel(category)}: {toNumber(discount).toFixed(0)}%
+                      {formatEquipmentCategoryLabel(category, t)}: {toNumber(discount).toFixed(0)}%
                     </span>
                   ))}
                 </div>
@@ -1759,6 +1807,7 @@ export function SponsorsTab({
   clubId: string
   currency?: 'USD' | 'EUR'
 }): JSX.Element {
+  const { t } = useTranslation('finance')
   const [loading, setLoading] = useState(true)
   const [generating, setGenerating] = useState(false)
   const [dashboard, setDashboard] = useState<SponsorDashboard | null>(null)
@@ -2077,14 +2126,14 @@ export function SponsorsTab({
 
     if (row) {
       if (row.signed_kind === 'main') {
-        setBanner(`Main sponsor signed. ${row.created_objectives} objective(s) created and targets prepared.`)
+        setBanner(t('sponsors.mainSignedBanner', { count: row.created_objectives }))
       } else if (row.signed_kind === 'secondary') {
-        setBanner(`Secondary sponsor signed into slot ${row.assigned_slot_no ?? '—'}.`)
+        setBanner(t('sponsors.secondarySignedBanner', { slot: row.assigned_slot_no ?? '—' }))
       } else {
-        setBanner('Technical sponsor signed successfully.')
+        setBanner(t('sponsors.technicalSignedBanner'))
       }
     } else {
-      setBanner('Sponsor contract signed successfully.')
+      setBanner(t('sponsors.contractSignedBanner'))
     }
 
     setOffersModalKind(null)
@@ -2106,7 +2155,9 @@ export function SponsorsTab({
       />
 
       {loading && (
-        <div className="bg-white p-4 rounded shadow text-sm text-gray-600">Loading sponsor dashboard…</div>
+        <div className="bg-white p-4 rounded shadow text-sm text-gray-600">
+          {t('sponsors.loadingDashboard')}
+        </div>
       )}
 
       {!loading && error && (
@@ -2126,16 +2177,19 @@ export function SponsorsTab({
       {!loading && !error && dashboard && (
         <>
           <div className="bg-white p-4 rounded shadow">
-            <div className="font-semibold">Sponsor Status</div>
+            <div className="font-semibold">{t('sponsors.sponsorStatus')}</div>
             <div className="text-sm text-gray-500 mt-1">
-              Season {dashboard.season_number} · Game month {dashboard.game_month}
+              {t('sponsors.seasonMonth', {
+                season: dashboard.season_number,
+                month: dashboard.game_month,
+              })}
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-4 text-sm">
               <div className="rounded-xl bg-gray-50 border p-4">
                 <div className="flex items-center justify-between gap-3">
                   <div>
-                    <div className="text-gray-500">Main sponsor</div>
+                    <div className="text-gray-500">{t('sponsors.mainSponsor')}</div>
                     <div className="font-semibold mt-2">
                       {dashboard.needs_main_sponsor ? 'Needed' : 'Signed'}
                     </div>
@@ -2147,7 +2201,11 @@ export function SponsorsTab({
                         ? 'border-amber-200 bg-amber-50 text-amber-700'
                         : 'border-green-200 bg-green-50 text-green-700',
                     ].join(' ')}
-                    aria-label={dashboard.needs_main_sponsor ? 'Main sponsor needed' : 'Main sponsor signed'}
+                    aria-label={
+                      dashboard.needs_main_sponsor
+                        ? t('sponsors.mainNeededAria')
+                        : t('sponsors.mainSignedAria')
+                    }
                   >
                     {dashboard.needs_main_sponsor ? '!' : '✓'}
                   </div>
@@ -2157,7 +2215,7 @@ export function SponsorsTab({
               <div className="rounded-xl bg-gray-50 border p-4">
                 <div className="flex items-center justify-between gap-3">
                   <div>
-                    <div className="text-gray-500">Secondary sponsors</div>
+                    <div className="text-gray-500">{t('sponsors.secondarySponsors')}</div>
                     <div className="font-semibold mt-2">
                       {dashboard.secondary_slots_used}/{dashboard.secondary_slots_total}
                     </div>
@@ -2171,7 +2229,7 @@ export function SponsorsTab({
               <div className="rounded-xl bg-gray-50 border p-4">
                 <div className="flex items-center justify-between gap-3">
                   <div>
-                    <div className="text-gray-500">Technical sponsor</div>
+                    <div className="text-gray-500">{t('sponsors.technicalSponsor')}</div>
                     <div className="font-semibold mt-2">
                       {dashboard.needs_technical_sponsor ? 'Needed' : 'Signed'}
                     </div>
@@ -2183,7 +2241,11 @@ export function SponsorsTab({
                         ? 'border-amber-200 bg-amber-50 text-amber-700'
                         : 'border-green-200 bg-green-50 text-green-700',
                     ].join(' ')}
-                    aria-label={dashboard.needs_technical_sponsor ? 'Technical sponsor needed' : 'Technical sponsor signed'}
+                    aria-label={
+                      dashboard.needs_technical_sponsor
+                        ? t('sponsors.technicalNeededAria')
+                        : t('sponsors.technicalSignedAria')
+                    }
                   >
                     {dashboard.needs_technical_sponsor ? '!' : '✓'}
                   </div>
@@ -2234,14 +2296,14 @@ export function SponsorsTab({
             <div className="bg-white p-4 rounded shadow">
               <div className="font-semibold">Sponsors</div>
               <div className="text-sm text-gray-600 mt-2">
-                No sponsors or offers are available right now.
+                {t('sponsors.noSponsors')}
               </div>
             </div>
           )}
 
           {generating && (
             <div className="bg-white p-4 rounded shadow text-sm text-gray-600">
-              Generating sponsor offers…
+              {t('sponsors.generating')}
             </div>
           )}
         </>
