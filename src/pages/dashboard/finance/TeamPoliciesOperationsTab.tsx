@@ -18,6 +18,7 @@
  */
 
 import React, { useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { supabase } from './supabase'
 
 type CostType =
@@ -42,7 +43,7 @@ type NotificationType =
 type PolicyOption = {
   value: string
   label: string
-  effect: string
+  effect: string | null
   costType: CostType
   notificationType: NotificationType
   baseCost: number
@@ -51,14 +52,14 @@ type PolicyOption = {
 type PolicyItem = {
   key: string
   dbKey: string
-  title: string
-  description: string
+  titleKey: string
+  descriptionKey: string
   options: PolicyOption[]
 }
 
 type PolicySection = {
-  title: string
-  description: string
+  titleKey: string
+  descriptionKey: string
   items: PolicyItem[]
 }
 
@@ -189,99 +190,90 @@ type PolicyEstimateRow = {
 }
 
 const POLICY_STRUCTURE: Array<{
-  title: string
-  description: string
+  titleKey: string
+  descriptionKey: string
   items: Array<{
     key: string
     dbKey: keyof ClubPolicyRow
-    title: string
-    description: string
+    titleKey: string
+    descriptionKey: string
   }>
 }> = [
   {
-    title: 'Operations',
-    description:
-      'Travel and logistics standards used for camps, race trips and team movement.',
+    titleKey: 'policies.operations',
+    descriptionKey: 'policies.operationsDescription',
     items: [
       {
         key: 'flightClass',
         dbKey: 'flight_class',
-        title: 'Flights',
-        description:
-          'Per person travel policy used when riders and staff fly to races, tours and camps.',
+        titleKey: 'policies.flights',
+        descriptionKey: 'policies.flightsDescription',
       },
       {
         key: 'hotelLevel',
         dbKey: 'hotel_level',
-        title: 'Accommodation',
-        description:
-          'Travel accommodation standard used when the team attends races, tours and camps.',
+        titleKey: 'policies.accommodationPolicy',
+        descriptionKey: 'policies.accommodationDescription',
       },
       {
         key: 'groundTransport',
         dbKey: 'ground_transport',
-        title: 'Ground Transport',
-        description:
-          'Trip transport standard for riders, staff and support movement.',
+        titleKey: 'policies.groundTransport',
+        descriptionKey: 'policies.groundTransportDescription',
       },
       {
         key: 'logisticsSupportLevel',
         dbKey: 'logistics_support_level',
-        title: 'Logistics Support',
-        description:
-          'Extra travel and event logistics support charged when the trip begins.',
+        titleKey: 'policies.logisticsSupport',
+        descriptionKey: 'policies.logisticsSupportDescription',
       },
       {
         key: 'staffAccommodationLevel',
         dbKey: 'staff_accommodation_level',
-        title: 'Staff Travel Accommodation',
-        description:
-          'Per staff travel accommodation standard used when staff join races, tours and camps.',
+        titleKey: 'policies.staffAccommodation',
+        descriptionKey: 'policies.staffAccommodationDescription',
       },
     ],
   },
   {
-    title: 'Team Policies',
-    description:
-      'Longer-term support packages and internal club standards for riders and staff.',
+    titleKey: 'policies.teamPolicies',
+    descriptionKey: 'policies.teamPoliciesDescription',
     items: [
       {
         key: 'riderHousingSupport',
         dbKey: 'rider_housing_support',
-        title: 'Housing Support',
-        description: 'Shared housing support policy for active riders and staff.',
+        titleKey: 'policies.housingSupport',
+        descriptionKey: 'policies.housingSupportDescription',
       },
       {
         key: 'nutritionSupportLevel',
         dbKey: 'nutrition_support_level',
-        title: 'Nutrition Support',
-        description: 'Weekly nutrition and fueling support for the whole team.',
+        titleKey: 'policies.nutritionSupport',
+        descriptionKey: 'policies.nutritionSupportDescription',
       },
       {
         key: 'recoverySupportLevel',
         dbKey: 'recovery_support_level',
-        title: 'Recovery Support',
-        description:
-          'Weekly massage, therapy and recovery support for the whole team.',
+        titleKey: 'policies.recoverySupport',
+        descriptionKey: 'policies.recoverySupportDescription',
       },
       {
         key: 'staffEquipmentLevel',
         dbKey: 'staff_equipment_level',
-        title: 'Staff Equipment Package',
-        description:
-          'Minimum equipment package applied once when a new staff member is hired.',
+        titleKey: 'policies.staffEquipmentPackage',
+        descriptionKey: 'policies.staffEquipmentDescription',
       },
       {
         key: 'riderBonusPlan',
         dbKey: 'rider_bonus_plan',
-        title: 'Rider Bonus Plan',
-        description: 'Seasonal bonus pool for riders.',
+        titleKey: 'policies.riderBonusPlan',
+        descriptionKey: 'policies.riderBonusDescription',
       },
       {
         key: 'staffBonusPlan',
         dbKey: 'staff_bonus_plan',
-        title: 'Staff Bonus Plan',
-        description: 'Seasonal bonus pool for employed staff.',
+        titleKey: 'policies.staffBonusPlan',
+        descriptionKey: 'policies.staffBonusDescription',
       },
     ],
   },
@@ -355,8 +347,8 @@ function getBadgeClass(value: string): string {
   }
 }
 
-function getEffectText(effectJson: Record<string, unknown> | null): string {
-  if (!effectJson) return 'No bonus.'
+function getEffectText(effectJson: Record<string, unknown> | null): string | null {
+  if (!effectJson) return null
 
   const parts: string[] = []
 
@@ -380,7 +372,7 @@ function getEffectText(effectJson: Record<string, unknown> | null): string {
   if (staffEfficiency > 0) parts.push(`+${staffEfficiency} staff efficiency`)
   if (contractHappiness > 0) parts.push(`+${contractHappiness} contract happiness`)
 
-  return parts.length > 0 ? parts.join(', ') : 'No bonus.'
+  return parts.length > 0 ? parts.join(', ') : null
 }
 
 function adjustOptionForUi(itemKey: string, option: PolicyOption): PolicyOption {
@@ -404,8 +396,8 @@ function buildSections(catalog: CatalogRow[]): PolicySection[] {
   }
 
   return POLICY_STRUCTURE.map(section => ({
-    title: section.title,
-    description: section.description,
+    titleKey: section.titleKey,
+    descriptionKey: section.descriptionKey,
     items: section.items.map(item => {
       const rows = [...(grouped.get(item.dbKey) ?? [])].sort(
         (a, b) => a.sort_order - b.sort_order
@@ -429,8 +421,8 @@ function buildSections(catalog: CatalogRow[]): PolicySection[] {
       return {
         key: item.key,
         dbKey: item.dbKey,
-        title: item.title,
-        description: item.description,
+        titleKey: item.titleKey,
+        descriptionKey: item.descriptionKey,
         options,
       }
     }),
@@ -445,7 +437,7 @@ function isTripSensitiveCostType(costType: CostType): boolean {
   return costType === 'per_trip'
 }
 
-function getChargeTimingText(item: PolicyItem, option: PolicyOption): string | null {
+function getChargeTimingKey(item: PolicyItem, option: PolicyOption): string | null {
   if (
     item.key === 'flightClass' ||
     item.key === 'hotelLevel' ||
@@ -453,11 +445,11 @@ function getChargeTimingText(item: PolicyItem, option: PolicyOption): string | n
     item.key === 'logisticsSupportLevel' ||
     item.key === 'staffAccommodationLevel'
   ) {
-    return 'Charged automatically on day 1 of the event.'
+    return 'policies.chargedEventDay'
   }
 
   if (item.key === 'staffEquipmentLevel') {
-    return 'Charged one time when a staff member is hired.'
+    return 'policies.chargedStaffHire'
   }
 
   if (
@@ -465,19 +457,19 @@ function getChargeTimingText(item: PolicyItem, option: PolicyOption): string | n
     item.key === 'recoverySupportLevel' ||
     item.key === 'riderHousingSupport'
   ) {
-    return 'Charged automatically once per in-game week.'
+    return 'policies.chargedWeekly'
   }
 
   if (item.key === 'riderBonusPlan' || item.key === 'staffBonusPlan') {
-    return 'Charged once per season when bonus payouts are processed.'
+    return 'policies.chargedSeason'
   }
 
   if (option.costType === 'weekly') {
-    return 'Charged automatically once per in-game week.'
+    return 'policies.chargedWeekly'
   }
 
   if (option.costType === 'one_time') {
-    return 'Charged one time when triggered by the related system.'
+    return 'policies.chargedTrigger'
   }
 
   return null
@@ -490,22 +482,25 @@ function SelectedOptionCard({
   item: PolicyItem
   selectedValue: string
 }): JSX.Element {
+  const { t } = useTranslation('finance')
   const selectedOption = getSelectedOption(item, selectedValue)
   const isTripSensitive = isTripSensitiveCostType(selectedOption.costType)
-  const chargeTimingText = getChargeTimingText(item, selectedOption)
+  const chargeTimingKey = getChargeTimingKey(item, selectedOption)
 
   return (
     <div className="mt-3 grid gap-2 md:grid-cols-4">
       <div className="rounded bg-gray-50 p-3">
         <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-          Effect
+          {t('policies.effect')}
         </div>
-        <div className="mt-1 text-sm text-gray-700">{selectedOption.effect}</div>
+        <div className="mt-1 text-sm text-gray-700">
+          {selectedOption.effect ?? t('policies.noBonus')}
+        </div>
       </div>
 
       <div className="rounded bg-gray-50 p-3">
         <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-          Cost Type
+          {t('policies.costType')}
         </div>
         <div className="mt-2">
           <span
@@ -520,7 +515,7 @@ function SelectedOptionCard({
 
       <div className="rounded bg-gray-50 p-3">
         <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-          {isTripSensitive ? 'Base Policy Cost' : 'Estimated Cost'}
+          {isTripSensitive ? t('policies.basePolicyCost') : t('policies.estimatedCost')}
         </div>
         <div className="mt-1 text-sm font-semibold text-gray-900">
           {selectedOption.baseCost > 0
@@ -529,17 +524,17 @@ function SelectedOptionCard({
         </div>
         {isTripSensitive && (
           <div className="mt-1 text-xs text-gray-500">
-            Final trip cost depends on destination, duration and headcount.
+            {t('policies.finalTripCost')}
           </div>
         )}
-        {!isTripSensitive && chargeTimingText && (
-          <div className="mt-1 text-xs text-gray-500">{chargeTimingText}</div>
+        {!isTripSensitive && chargeTimingKey && (
+          <div className="mt-1 text-xs text-gray-500">{t(chargeTimingKey)}</div>
         )}
       </div>
 
       <div className="rounded bg-gray-50 p-3">
         <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-          Notification
+          {t('policies.notification')}
         </div>
         <div className="mt-2">
           <span
@@ -556,6 +551,7 @@ function SelectedOptionCard({
 }
 
 export function TeamPoliciesOperationsTab(): JSX.Element {
+  const { t } = useTranslation('finance')
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [isPremium, setIsPremium] = useState(false)
@@ -581,7 +577,7 @@ export function TeamPoliciesOperationsTab(): JSX.Element {
 
       const resolvedClubId = clubIdRes.data as string | null
       if (!resolvedClubId) {
-        throw new Error('No main club found.')
+        throw new Error(t('policies.noMainClub'))
       }
 
       setClubId(resolvedClubId)
@@ -699,7 +695,7 @@ export function TeamPoliciesOperationsTab(): JSX.Element {
         setTripForecasts([])
       }
     } catch (e: any) {
-      setError(e?.message ?? 'Failed to load team policies.')
+      setError(e?.message ?? t('policies.loadFailed'))
     } finally {
       setLoading(false)
     }
@@ -789,7 +785,7 @@ export function TeamPoliciesOperationsTab(): JSX.Element {
           )
           return selectedIndex > 0
         })
-        .map(item => item.title)
+        .map(item => t(item.titleKey))
 
       if (premiumSelections.length > 0) {
         setError(
@@ -824,10 +820,10 @@ export function TeamPoliciesOperationsTab(): JSX.Element {
 
       if (res.error) throw res.error
 
-      setSaveMessage('Team policies applied.')
+      setSaveMessage(t('policies.saved'))
       await loadPage()
     } catch (e: any) {
-      setError(e?.message ?? 'Failed to save team policies.')
+      setError(e?.message ?? t('policies.saveFailed'))
     } finally {
       setSaving(false)
     }
@@ -836,7 +832,7 @@ export function TeamPoliciesOperationsTab(): JSX.Element {
   if (loading) {
     return (
       <div className="rounded bg-white p-4 shadow text-sm text-gray-600">
-        Loading team policies…
+        {t('policies.loading')}
       </div>
     )
   }
@@ -855,12 +851,10 @@ export function TeamPoliciesOperationsTab(): JSX.Element {
       <div className="rounded bg-white p-4 shadow">
         <div>
           <h4 className="font-semibold text-gray-900">
-            Team Policies &amp; Operations
+            {t('policies.title')}
           </h4>
           <p className="mt-1 text-sm text-gray-600">
-            Set club-wide travel standards, support packages and bonus plans.
-            These choices create estimated recurring and trip-based costs, plus
-            small effects on morale, recovery, fatigue and logistics.
+            {t('policies.subtitle')}
           </p>
         </div>
 
@@ -874,7 +868,7 @@ export function TeamPoliciesOperationsTab(): JSX.Element {
 
           <div className="flex flex-wrap items-center gap-2 lg:justify-end">
             <div className="rounded border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700">
-              Active policies: <span className="font-semibold">{selectedCount}</span>
+              {t('policies.activePolicies')} <span className="font-semibold">{selectedCount}</span>
             </div>
 
             <button
@@ -892,7 +886,7 @@ export function TeamPoliciesOperationsTab(): JSX.Element {
               disabled={saving || !hasUnsavedChanges}
               className="rounded border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {saving ? 'Applying…' : 'Apply'}
+              {saving ? t('policies.applying') : 'Apply'}
             </button>
           </div>
         </div>
@@ -904,13 +898,11 @@ export function TeamPoliciesOperationsTab(): JSX.Element {
             Premium
           </span>
           <span className="text-sm font-medium text-slate-800">
-            Advanced policy levels
+            {t('policies.advancedLevels')}
           </span>
         </div>
         <p className="mt-2 text-sm leading-6 text-slate-600">
-          Free players can use the first option in every dropdown. All later
-          options are available with Premium and remain visible below with a
-          lock label.
+          {t('policies.premiumDescription')}
         </p>
         {!isPremium ? (
           <button
@@ -930,49 +922,49 @@ export function TeamPoliciesOperationsTab(): JSX.Element {
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-4">
         <div className="rounded bg-white p-4 shadow">
           <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-            Typical Trip Base
+            {t('policies.typicalTripBase')}
           </div>
           <div className="mt-2 text-xl font-semibold text-gray-900">
             {formatMoney(summary.perTrip)}
           </div>
           <div className="mt-1 text-xs text-gray-500">
-            Base policy rates used later in race and training camp trip calculations.
+            {t('policies.tripBaseDescription')}
           </div>
         </div>
 
         <div className="rounded bg-white p-4 shadow">
           <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-            Estimated Weekly
+            {t('policies.estimatedWeekly')}
           </div>
           <div className="mt-2 text-xl font-semibold text-gray-900">
             {formatMoney(summary.weekly)}
           </div>
           <div className="mt-1 text-xs text-gray-500">
-            Weekly recurring cost based on active riders, active staff and current team policy levels.
+            {t('policies.weeklyDescription')}
           </div>
         </div>
 
         <div className="rounded bg-white p-4 shadow">
           <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-            Estimated Monthly Recurring
+            {t('policies.estimatedMonthly')}
           </div>
           <div className="mt-2 text-xl font-semibold text-gray-900">
             {formatMoney(summary.monthlyRecurring)}
           </div>
           <div className="mt-1 text-xs text-gray-500">
-            Based on the real weekly estimator for your current team size.
+            {t('policies.monthlyDescription')}
           </div>
         </div>
 
         <div className="rounded bg-white p-4 shadow">
           <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-            Last Month Actual Cost
+            {t('policies.lastMonth')}
           </div>
           <div className="mt-2 text-xl font-semibold text-gray-900">
             {lastMonthActualCost === null ? '—' : formatMoney(lastMonthActualCost)}
           </div>
           <div className="mt-1 text-xs text-gray-500">
-            Real ledger total from policy-generated finance transactions.
+            {t('policies.lastMonthDescription')}
           </div>
         </div>
       </div>
@@ -980,7 +972,7 @@ export function TeamPoliciesOperationsTab(): JSX.Element {
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-5">
         <div className="rounded bg-white p-4 shadow">
           <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-            Active Riders
+            {t('policies.activeRiders')}
           </div>
           <div className="mt-2 text-xl font-semibold text-gray-900">
             {policyEstimate ? policyEstimate.active_rider_count : '—'}
@@ -989,7 +981,7 @@ export function TeamPoliciesOperationsTab(): JSX.Element {
 
         <div className="rounded bg-white p-4 shadow">
           <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-            Active Staff
+            {t('policies.activeStaff')}
           </div>
           <div className="mt-2 text-xl font-semibold text-gray-900">
             {policyEstimate ? policyEstimate.active_staff_count : '—'}
@@ -998,7 +990,7 @@ export function TeamPoliciesOperationsTab(): JSX.Element {
 
         <div className="rounded bg-white p-4 shadow">
           <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-            Housing Weekly
+            {t('policies.housingWeekly')}
           </div>
           <div className="mt-2 text-xl font-semibold text-gray-900">
             {policyEstimate
@@ -1009,7 +1001,7 @@ export function TeamPoliciesOperationsTab(): JSX.Element {
 
         <div className="rounded bg-white p-4 shadow">
           <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-            Staff Equipment
+            {t('policies.staffEquipment')}
           </div>
           <div className="mt-2 text-xl font-semibold text-gray-900">
             {policyEstimate
@@ -1017,22 +1009,22 @@ export function TeamPoliciesOperationsTab(): JSX.Element {
               : '—'}
           </div>
           <div className="mt-1 text-xs text-gray-500">
-            One-time per hired staff member.
+            {t('policies.oneTimeStaff')}
           </div>
         </div>
 
         <div className="rounded bg-white p-4 shadow">
           <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-            Seasonal Bonus Pools
+            {t('policies.seasonalBonusPools')}
           </div>
           <div className="mt-2 text-sm font-semibold text-gray-900">
-            Riders:{' '}
+            {t('policies.riders')}{' '}
             {policyEstimate
               ? formatMoney(toNumber(policyEstimate.rider_bonus_seasonal_cost))
               : '—'}
           </div>
           <div className="mt-1 text-sm font-semibold text-gray-900">
-            Staff:{' '}
+            {t('policies.staff')}{' '}
             {policyEstimate
               ? formatMoney(toNumber(policyEstimate.staff_bonus_seasonal_cost))
               : '—'}
@@ -1041,24 +1033,22 @@ export function TeamPoliciesOperationsTab(): JSX.Element {
       </div>
 
       <div className="rounded border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-900">
-        Trip-related policy costs shown here are base policy rates. Final race and
-        training camp travel totals are calculated later from destination, trip
-        duration, rider count, staff count and active policy level.
+        {t('policies.tripInfo')}
       </div>
 
       <div className="rounded bg-white p-4 shadow">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <div className="font-semibold text-gray-900">Upcoming Trip Forecasts</div>
+            <div className="font-semibold text-gray-900">{t('policies.upcomingTrips')}</div>
             <div className="mt-1 text-sm text-gray-500">
-              Estimated future trip costs from races, camps and other travel events.
+              {t('policies.upcomingTripsDescription')}
             </div>
           </div>
         </div>
 
         <div className="mt-4 space-y-3">
           {tripForecasts.length === 0 ? (
-            <div className="text-sm text-gray-500">No upcoming trip forecasts yet.</div>
+            <div className="text-sm text-gray-500">{t('policies.noTrips')}</div>
           ) : (
             tripForecasts.map(row => (
               <div key={row.id} className="rounded border border-gray-200 p-3">
@@ -1072,12 +1062,13 @@ export function TeamPoliciesOperationsTab(): JSX.Element {
                       {formatShortDate(row.start_date)} – {formatShortDate(row.end_date)}
                     </div>
                     <div className="mt-1 text-xs text-gray-500">
-                      Riders: {row.rider_count} · Staff: {row.staff_count}
+                      {t('policies.riderCount', { count: row.rider_count })} ·{' '}
+                      {t('policies.staffCount', { count: row.staff_count })}
                     </div>
                   </div>
 
                   <div className="text-left lg:text-right">
-                    <div className="text-sm text-gray-500">Forecast total</div>
+                    <div className="text-sm text-gray-500">{t('policies.forecastTotal')}</div>
                     <div className="text-lg font-semibold text-gray-900">
                       {formatMoney(toNumber(row.total_cost))}
                     </div>
@@ -1087,7 +1078,7 @@ export function TeamPoliciesOperationsTab(): JSX.Element {
                 <div className="mt-3 grid gap-2 md:grid-cols-4">
                   <div className="rounded bg-gray-50 p-2">
                     <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">
-                      Travel
+                      {t('policies.travel')}
                     </div>
                     <div className="mt-1 text-sm font-medium text-gray-900">
                       {formatMoney(toNumber(row.travel_cost_total))}
@@ -1096,7 +1087,7 @@ export function TeamPoliciesOperationsTab(): JSX.Element {
 
                   <div className="rounded bg-gray-50 p-2">
                     <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">
-                      Accommodation
+                      {t('policies.accommodation')}
                     </div>
                     <div className="mt-1 text-sm font-medium text-gray-900">
                       {formatMoney(toNumber(row.accommodation_cost_total))}
@@ -1105,7 +1096,7 @@ export function TeamPoliciesOperationsTab(): JSX.Element {
 
                   <div className="rounded bg-gray-50 p-2">
                     <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">
-                      Logistics
+                      {t('policies.logistics')}
                     </div>
                     <div className="mt-1 text-sm font-medium text-gray-900">
                       {formatMoney(toNumber(row.logistics_cost_total))}
@@ -1114,7 +1105,7 @@ export function TeamPoliciesOperationsTab(): JSX.Element {
 
                   <div className="rounded bg-gray-50 p-2">
                     <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">
-                      Staff Stay
+                      {t('policies.staffStay')}
                     </div>
                     <div className="mt-1 text-sm font-medium text-gray-900">
                       {formatMoney(toNumber(row.staff_accommodation_cost_total))}
@@ -1128,10 +1119,10 @@ export function TeamPoliciesOperationsTab(): JSX.Element {
       </div>
 
       {sections.map(section => (
-        <div key={section.title} className="rounded bg-white p-4 shadow">
+        <div key={section.titleKey} className="rounded bg-white p-4 shadow">
           <div>
-            <h5 className="font-semibold text-gray-900">{section.title}</h5>
-            <p className="mt-1 text-sm text-gray-600">{section.description}</p>
+            <h5 className="font-semibold text-gray-900">{t(section.titleKey)}</h5>
+            <p className="mt-1 text-sm text-gray-600">{t(section.descriptionKey)}</p>
           </div>
 
           <div className="mt-4 space-y-4">
@@ -1142,9 +1133,9 @@ export function TeamPoliciesOperationsTab(): JSX.Element {
                 <div key={item.key} className="rounded border border-gray-200 p-4">
                   <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                     <div className="max-w-2xl">
-                      <div className="font-medium text-gray-900">{item.title}</div>
+                      <div className="font-medium text-gray-900">{t(item.titleKey)}</div>
                       <div className="mt-1 text-sm text-gray-600">
-                        {item.description}
+                        {t(item.descriptionKey)}
                       </div>
                     </div>
 
@@ -1153,7 +1144,7 @@ export function TeamPoliciesOperationsTab(): JSX.Element {
                         htmlFor={item.key}
                         className="mb-1 block text-xs font-semibold uppercase tracking-wide text-gray-500"
                       >
-                        Selected Option
+                        {t('policies.selectedOption')}
                       </label>
                       <select
                         id={item.key}
@@ -1168,7 +1159,7 @@ export function TeamPoliciesOperationsTab(): JSX.Element {
                           if (!isPremium && nextIndex > 0) {
                             setSaveMessage(null)
                             setError(
-                              `${item.title}: this option requires Premium.`
+                              `${t(item.titleKey)}: this option requires Premium.`
                             )
                             return
                           }
@@ -1188,8 +1179,8 @@ export function TeamPoliciesOperationsTab(): JSX.Element {
                               {option.label}
                               {!isPremium
                                 ? isPremiumOption
-                                  ? ' — Premium 🔒'
-                                  : ' — Free'
+                                  ? t('policies.premiumLock')
+                                  : t('policies.freeOption')
                                 : ''}
                             </option>
                           )
@@ -1198,7 +1189,7 @@ export function TeamPoliciesOperationsTab(): JSX.Element {
 
                       {!isPremium ? (
                         <div className="mt-1 text-xs text-slate-500">
-                          Only the first option is available without Premium.
+                          {t('policies.firstOptionOnly')}
                         </div>
                       ) : null}
                     </div>
@@ -1215,9 +1206,9 @@ export function TeamPoliciesOperationsTab(): JSX.Element {
       <div className="rounded bg-white p-4 shadow">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <div className="font-semibold text-gray-900">Apply Team Policy Changes</div>
+            <div className="font-semibold text-gray-900">{t('policies.applyChangesTitle')}</div>
             <div className="mt-1 text-sm text-gray-600">
-              This applies all changed policy fields at once. Changes are only saved after you click Apply.
+              {t('policies.applyChangesDescription')}
             </div>
             <div className="mt-2 min-h-[20px]">
               {saveMessage && (
@@ -1243,7 +1234,11 @@ export function TeamPoliciesOperationsTab(): JSX.Element {
               disabled={saving || !hasUnsavedChanges}
               className="rounded bg-yellow-400 px-6 py-2 text-sm font-semibold text-black hover:bg-yellow-300 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {saving ? 'Applying…' : hasUnsavedChanges ? 'Apply Changes' : 'No Changes to Apply'}
+              {saving
+                ? t('policies.applying')
+                : hasUnsavedChanges
+                  ? t('policies.applyChanges')
+                  : 'No Changes to Apply'}
             </button>
           </div>
         </div>
