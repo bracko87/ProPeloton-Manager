@@ -8,11 +8,9 @@
  */
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router'
+import { useTranslation } from 'react-i18next'
 import TutorialOverlay from '../../components/tutorial/TutorialOverlay'
-import {
-  teamRankingTutorialSteps,
-  teamRankingWelcomeTutorial,
-} from '../../lib/tutorials'
+import { teamRankingTutorialSteps } from '../../lib/tutorials'
 import {
   getTutorialProgress,
   saveTutorialProgress,
@@ -21,7 +19,6 @@ import {
   AmateurDivision,
   AMATEUR_DIVISIONS,
   CompetitionDivision,
-  DIVISION_LABELS,
   TeamRankingRecord,
   TEAM_TIERS,
   Tier2Division,
@@ -42,12 +39,12 @@ type StandingType = 'WORLD' | 'TIER2' | 'TIER3' | 'AMATEUR'
 
 type StandingOption = {
   key: string
-  label: string
+  divisionLabelKey: string
   type: StandingType
   division: CompetitionDivision
-  promotionLabel?: string
-  playoffLabel?: string
-  relegationLabel?: string
+  promotionKey?: string
+  playoffKey?: string
+  relegationKey?: string
 }
 
 type PublicInactivityStatus = 'inactive' | 'season_end_removal_pending'
@@ -99,12 +96,12 @@ type OrderedTeamStandingUi = {
 
 type TierOption = {
   value: TeamRankingRecord['tier']
-  label: string
+  labelKey: string
 }
 
 type DivisionSelectOption = {
   value: CompetitionDivision
-  label: string
+  labelKey: string
 }
 
 type TeamLogoProps = {
@@ -389,11 +386,34 @@ async function loadOrderedTeamStandingsByTeamId(): Promise<Map<string, OrderedTe
 }
 
 const TIER_OPTIONS: TierOption[] = [
-  { value: TEAM_TIERS.WORLD, label: 'WorldTeam' },
-  { value: TEAM_TIERS.PRO, label: 'ProTeam' },
-  { value: TEAM_TIERS.CONTINENTAL, label: 'Continental' },
-  { value: TEAM_TIERS.AMATEUR, label: 'Amateur' },
+  { value: TEAM_TIERS.WORLD, labelKey: 'tiers.world' },
+  { value: TEAM_TIERS.PRO, labelKey: 'tiers.pro' },
+  { value: TEAM_TIERS.CONTINENTAL, labelKey: 'tiers.continental' },
+  { value: TEAM_TIERS.AMATEUR, labelKey: 'tiers.amateur' },
 ]
+
+const DIVISION_TRANSLATION_KEYS: Record<CompetitionDivision, string> = {
+  WORLD: 'divisions.world',
+  PRO_WEST: 'divisions.proWest',
+  PRO_EAST: 'divisions.proEast',
+  CONTINENTAL_EUROPE: 'divisions.continentalEurope',
+  CONTINENTAL_AMERICA: 'divisions.continentalAmerica',
+  CONTINENTAL_ASIA: 'divisions.continentalAsia',
+  CONTINENTAL_AFRICA: 'divisions.continentalAfrica',
+  CONTINENTAL_OCEANIA: 'divisions.continentalOceania',
+  NORTH_AMERICA: 'divisions.northAmerica',
+  SOUTH_AMERICA: 'divisions.southAmerica',
+  WESTERN_EUROPE: 'divisions.westernEurope',
+  CENTRAL_EUROPE: 'divisions.centralEurope',
+  SOUTHERN_BALKAN_EUROPE: 'divisions.southernBalkanEurope',
+  NORTHERN_EASTERN_EUROPE: 'divisions.northernEasternEurope',
+  WEST_NORTH_AFRICA: 'divisions.westNorthAfrica',
+  CENTRAL_SOUTH_AFRICA: 'divisions.centralSouthAfrica',
+  WEST_CENTRAL_ASIA: 'divisions.westCentralAsia',
+  SOUTH_ASIA: 'divisions.southAsia',
+  EAST_SOUTHEAST_ASIA: 'divisions.eastSoutheastAsia',
+  OCEANIA: 'divisions.oceania',
+}
 
 function getDefaultDivisionForTier(
   tier: TeamRankingRecord['tier'],
@@ -467,18 +487,28 @@ function getCountryFlagUrl(countryCode: string): string {
   return `https://flagcdn.com/w40/${countryCode.toLowerCase()}.png`
 }
 
-function getCountryName(countryCode?: string | null): string {
+function getDisplayLocale(resolvedLanguage?: string): string {
+  return resolvedLanguage?.startsWith('sr')
+    ? 'sr-Latn-RS'
+    : resolvedLanguage || 'en'
+}
+
+function getCountryName(
+  countryCode: string | null | undefined,
+  displayLocale: string,
+  unknownCountryLabel: string,
+): string {
   const safeCode = safeCountryCode(countryCode)
 
   if (!safeCode) {
-    return 'Unknown country'
+    return unknownCountryLabel
   }
 
   const code = safeCode.toUpperCase()
 
   try {
     if (typeof Intl !== 'undefined' && typeof Intl.DisplayNames !== 'undefined') {
-      const regionNames = new Intl.DisplayNames(['en'], { type: 'region' })
+      const regionNames = new Intl.DisplayNames([displayLocale], { type: 'region' })
       return regionNames.of(code) || code
     }
   } catch {
@@ -489,8 +519,14 @@ function getCountryName(countryCode?: string | null): string {
 }
 
 function CountryFlag({ countryCode, className = '' }: CountryFlagProps): JSX.Element {
+  const { t, i18n } = useTranslation('teamRanking')
+  const displayLocale = getDisplayLocale(i18n.resolvedLanguage)
   const safeCode = safeCountryCode(countryCode)
-  const countryName = getCountryName(countryCode)
+  const countryName = getCountryName(
+    countryCode,
+    displayLocale,
+    t('table.unknownCountry'),
+  )
   const [imageFailed, setImageFailed] = useState(false)
 
   useEffect(() => {
@@ -534,6 +570,7 @@ function CountryFlag({ countryCode, className = '' }: CountryFlagProps): JSX.Ele
 }
 
 function TeamLogo({ src, teamName, className = 'h-8 w-8' }: TeamLogoProps): JSX.Element {
+  const { t } = useTranslation('teamRanking')
   const [imageFailed, setImageFailed] = useState(false)
 
   const resolvedSrc = useMemo(
@@ -552,11 +589,11 @@ function TeamLogo({ src, teamName, className = 'h-8 w-8' }: TeamLogoProps): JSX.
       className={`flex shrink-0 ${className} items-center justify-center overflow-hidden rounded border border-slate-200 bg-white p-1`}
     >
       {showFallback ? (
-        <span className="text-[10px] text-slate-400">No logo</span>
+        <span className="text-[10px] text-slate-400">{t('table.noLogo')}</span>
       ) : (
         <img
           src={resolvedSrc}
-          alt={`${teamName} logo`}
+          alt={t('table.logoAlt', { team: teamName })}
           className="h-full w-full object-contain"
           loading="lazy"
           onError={() => setImageFailed(true)}
@@ -577,23 +614,23 @@ function isEuropeanAmateurDivision(division: CompetitionDivision): boolean {
 
 function getAmateurStandingDetails(
   division: CompetitionDivision,
-): Pick<StandingOption, 'promotionLabel' | 'playoffLabel'> {
+): Pick<StandingOption, 'promotionKey' | 'playoffKey'> {
   if (division === 'OCEANIA') {
     return {
-      promotionLabel: 'Top 3 promoted directly',
+      promotionKey: 'zones.top3Promoted',
     }
   }
 
   if (isEuropeanAmateurDivision(division)) {
     return {
-      promotionLabel: 'Winner promoted directly',
-      playoffLabel: '2nd-3rd enter promotion playoff',
+      promotionKey: 'zones.winnerPromoted',
+      playoffKey: 'zones.secondThirdPlayoff',
     }
   }
 
   return {
-    promotionLabel: 'Winner promoted directly',
-    playoffLabel: '2nd-4th enter promotion playoff',
+    promotionKey: 'zones.winnerPromoted',
+    playoffKey: 'zones.secondFourthPlayoff',
   }
 }
 
@@ -606,10 +643,10 @@ function getStandingOption(
   if (tier === TEAM_TIERS.WORLD) {
     return {
       key: 'world',
-      label: DIVISION_LABELS.WORLD,
+      divisionLabelKey: DIVISION_TRANSLATION_KEYS.WORLD,
       type: 'WORLD',
       division: 'WORLD',
-      relegationLabel: 'Bottom 5 relegated',
+      relegationKey: 'zones.bottom5',
     }
   }
 
@@ -617,24 +654,24 @@ function getStandingOption(
     if (resolvedDivision === 'PRO_WEST') {
       return {
         key: 'pro-west',
-        label: DIVISION_LABELS.PRO_WEST,
+        divisionLabelKey: DIVISION_TRANSLATION_KEYS.PRO_WEST,
         type: 'TIER2',
         division: 'PRO_WEST',
-        promotionLabel: 'Winner promoted directly',
-        playoffLabel: '2nd-4th enter World playoff',
-        relegationLabel: 'Bottom 5 relegated',
+        promotionKey: 'zones.winnerPromoted',
+        playoffKey: 'zones.worldPlayoff',
+        relegationKey: 'zones.bottom5',
       }
     }
 
     if (resolvedDivision === 'PRO_EAST') {
       return {
         key: 'pro-east',
-        label: DIVISION_LABELS.PRO_EAST,
+        divisionLabelKey: DIVISION_TRANSLATION_KEYS.PRO_EAST,
         type: 'TIER2',
         division: 'PRO_EAST',
-        promotionLabel: 'Winner promoted directly',
-        playoffLabel: '2nd-4th enter World playoff',
-        relegationLabel: 'Bottom 5 relegated',
+        promotionKey: 'zones.winnerPromoted',
+        playoffKey: 'zones.worldPlayoff',
+        relegationKey: 'zones.bottom5',
       }
     }
 
@@ -645,48 +682,48 @@ function getStandingOption(
     const standingMap: Record<Tier3Division, StandingOption> = {
       CONTINENTAL_EUROPE: {
         key: 'cont-europe',
-        label: DIVISION_LABELS.CONTINENTAL_EUROPE,
+        divisionLabelKey: DIVISION_TRANSLATION_KEYS.CONTINENTAL_EUROPE,
         type: 'TIER3',
         division: 'CONTINENTAL_EUROPE',
-        promotionLabel: 'Winner promoted directly',
-        playoffLabel: '2nd-4th enter Pro West playoff',
-        relegationLabel: 'Bottom 6 relegated',
+        promotionKey: 'zones.winnerPromoted',
+        playoffKey: 'zones.proWestPlayoff',
+        relegationKey: 'zones.bottom6',
       },
       CONTINENTAL_AMERICA: {
         key: 'cont-america',
-        label: DIVISION_LABELS.CONTINENTAL_AMERICA,
+        divisionLabelKey: DIVISION_TRANSLATION_KEYS.CONTINENTAL_AMERICA,
         type: 'TIER3',
         division: 'CONTINENTAL_AMERICA',
-        promotionLabel: 'Winner promoted directly',
-        playoffLabel: '2nd-4th enter Pro West playoff',
-        relegationLabel: 'Bottom 5 relegated',
+        promotionKey: 'zones.winnerPromoted',
+        playoffKey: 'zones.proWestPlayoff',
+        relegationKey: 'zones.bottom5',
       },
       CONTINENTAL_ASIA: {
         key: 'cont-asia',
-        label: DIVISION_LABELS.CONTINENTAL_ASIA,
+        divisionLabelKey: DIVISION_TRANSLATION_KEYS.CONTINENTAL_ASIA,
         type: 'TIER3',
         division: 'CONTINENTAL_ASIA',
-        promotionLabel: 'Winner promoted directly',
-        playoffLabel: '2nd-4th enter Pro East playoff',
-        relegationLabel: 'Bottom 6 relegated',
+        promotionKey: 'zones.winnerPromoted',
+        playoffKey: 'zones.proEastPlayoff',
+        relegationKey: 'zones.bottom6',
       },
       CONTINENTAL_AFRICA: {
         key: 'cont-africa',
-        label: DIVISION_LABELS.CONTINENTAL_AFRICA,
+        divisionLabelKey: DIVISION_TRANSLATION_KEYS.CONTINENTAL_AFRICA,
         type: 'TIER3',
         division: 'CONTINENTAL_AFRICA',
-        promotionLabel: 'Winner promoted directly',
-        playoffLabel: '2nd-4th enter Pro East playoff',
-        relegationLabel: 'Bottom 5 relegated',
+        promotionKey: 'zones.winnerPromoted',
+        playoffKey: 'zones.proEastPlayoff',
+        relegationKey: 'zones.bottom5',
       },
       CONTINENTAL_OCEANIA: {
         key: 'cont-oceania',
-        label: DIVISION_LABELS.CONTINENTAL_OCEANIA,
+        divisionLabelKey: DIVISION_TRANSLATION_KEYS.CONTINENTAL_OCEANIA,
         type: 'TIER3',
         division: 'CONTINENTAL_OCEANIA',
-        promotionLabel: 'Winner promoted directly',
-        playoffLabel: '2nd-4th enter Pro East playoff',
-        relegationLabel: 'Bottom 3 relegated',
+        promotionKey: 'zones.winnerPromoted',
+        playoffKey: 'zones.proEastPlayoff',
+        relegationKey: 'zones.bottom3',
       },
     }
 
@@ -704,11 +741,11 @@ function getStandingOption(
 
     return {
       key: `amateur-${resolvedDivision}`,
-      label: `Amateur: ${DIVISION_LABELS[resolvedDivision as AmateurDivision]}`,
+      divisionLabelKey: DIVISION_TRANSLATION_KEYS[resolvedDivision],
       type: 'AMATEUR',
       division: resolvedDivision,
-      promotionLabel: amateurDetails.promotionLabel,
-      playoffLabel: amateurDetails.playoffLabel,
+      promotionKey: amateurDetails.promotionKey,
+      playoffKey: amateurDetails.playoffKey,
     }
   }
 
@@ -723,51 +760,39 @@ function getDivisionOptions(tier: TeamRankingRecord['tier']): DivisionSelectOpti
   if (tier === TEAM_TIERS.PRO) {
     return Object.values(TIER2_DIVISIONS).map((division) => ({
       value: division,
-      label: DIVISION_LABELS[division],
+      labelKey: DIVISION_TRANSLATION_KEYS[division],
     }))
   }
 
   if (tier === TEAM_TIERS.CONTINENTAL) {
     return Object.values(TIER3_DIVISIONS).map((division) => ({
       value: division,
-      label: DIVISION_LABELS[division],
+      labelKey: DIVISION_TRANSLATION_KEYS[division],
     }))
   }
 
   return Object.values(AMATEUR_DIVISIONS).map((division) => ({
     value: division,
-    label: DIVISION_LABELS[division],
+    labelKey: DIVISION_TRANSLATION_KEYS[division],
   }))
 }
 
-function getPublicInactivityLabel(row: StandingRow): string | null {
-  if (row.publicInactivityStatus === 'inactive') {
-    return 'Inactive manager'
-  }
-
-  if (row.publicInactivityStatus === 'season_end_removal_pending') {
-    return 'Inactive manager'
-  }
-
-  return null
-}
-
 function PublicInactivityBadge({ row }: { row: StandingRow }): JSX.Element | null {
-  const label = getPublicInactivityLabel(row)
+  const { t } = useTranslation('teamRanking')
 
-  if (!label) return null
+  if (!row.publicInactivityStatus) return null
 
   const title =
     row.publicInactivityStatus === 'season_end_removal_pending'
-      ? 'This manager is inactive. The team remains visible until season end.'
-      : 'This manager is inactive. The team remains in standings and results.'
+      ? t('inactivity.seasonEndPending')
+      : t('inactivity.standingResults')
 
   return (
     <span
       title={title}
       className="inline-flex shrink-0 items-center rounded-full border border-slate-300 bg-slate-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-600"
     >
-      {label}
+      {t('inactivity.label')}
     </span>
   )
 }
@@ -988,9 +1013,10 @@ function PastWinnersModal({
   division: CompetitionDivision | null
   standingLabel: string | null
 }): JSX.Element | null {
+  const { t } = useTranslation('teamRanking')
   const [winners, setWinners] = useState<PastWinnerRecord[]>([])
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [hasError, setHasError] = useState(false)
 
   useEffect(() => {
     if (!isOpen) return
@@ -1013,7 +1039,7 @@ function PastWinnersModal({
     async function loadPastWinners(): Promise<void> {
       try {
         setLoading(true)
-        setError(null)
+        setHasError(false)
         setWinners([])
 
         const { data, error: queryError } = await supabase.rpc(
@@ -1031,7 +1057,7 @@ function PastWinnersModal({
       } catch (err) {
         console.error('Failed to load past winners:', err)
         if (!cancelled) {
-          setError('Failed to load past winners.')
+          setHasError(true)
         }
       } finally {
         if (!cancelled) {
@@ -1062,11 +1088,11 @@ function PastWinnersModal({
       >
         <div className="sticky top-0 z-10 flex items-start justify-between border-b border-slate-200 bg-white px-6 py-4">
           <div>
-            <h3 className="text-xl font-semibold text-slate-900">Past winners</h3>
+            <h3 className="text-xl font-semibold text-slate-900">{t('pastWinners.title')}</h3>
             <p className="mt-1 text-sm text-slate-600">
               {standingLabel
-                ? `${standingLabel} champions from previous seasons.`
-                : 'Previous season champions.'}
+                ? t('pastWinners.champions', { standing: standingLabel })
+                : t('pastWinners.previousChampions')}
             </p>
           </div>
 
@@ -1075,46 +1101,50 @@ function PastWinnersModal({
             onClick={onClose}
             className="rounded-md border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
           >
-            Close
+            {t('pastWinners.close')}
           </button>
         </div>
 
         <div className="px-6 py-6">
           {loading ? (
-            <div className="py-10 text-center text-sm text-slate-500">Loading past winners...</div>
-          ) : null}
-
-          {!loading && error ? (
-            <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-              {error}
+            <div className="py-10 text-center text-sm text-slate-500">
+              {t('pastWinners.loading')}
             </div>
           ) : null}
 
-          {!loading && !error && winners.length === 0 ? (
+          {!loading && hasError ? (
+            <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+              {t('pastWinners.loadFailed')}
+            </div>
+          ) : null}
+
+          {!loading && !hasError && winners.length === 0 ? (
             <div className="rounded-xl border border-slate-200 bg-slate-50 px-6 py-10 text-center">
-              <div className="text-base font-semibold text-slate-900">No past winners yet</div>
+              <div className="text-base font-semibold text-slate-900">
+                {t('pastWinners.noneTitle')}
+              </div>
               <div className="mt-2 text-sm text-slate-600">
-                Season 1 is still in progress, so there are no previous champions to show.
+                {t('pastWinners.noneDescription')}
               </div>
             </div>
           ) : null}
 
-          {!loading && !error && winners.length > 0 ? (
+          {!loading && !hasError && winners.length > 0 ? (
             <div className="overflow-hidden rounded-xl border border-slate-200">
               <table className="min-w-full">
                 <thead className="bg-slate-50">
                   <tr className="text-left">
                     <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-600">
-                      Season
+                      {t('pastWinners.season')}
                     </th>
                     <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-600">
-                      Team
+                      {t('pastWinners.team')}
                     </th>
                     <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-600">
-                      Country
+                      {t('pastWinners.country')}
                     </th>
                     <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-600">
-                      International points
+                      {t('pastWinners.internationalPoints')}
                     </th>
                   </tr>
                 </thead>
@@ -1126,7 +1156,7 @@ function PastWinnersModal({
                       className="border-t border-slate-200"
                     >
                       <td className="px-4 py-3 text-sm font-medium text-slate-900">
-                        Season {winner.season_number}
+                        {t('pastWinners.seasonNumber', { season: winner.season_number })}
                       </td>
 
                       <td className="px-4 py-3 text-sm text-slate-900">
@@ -1158,6 +1188,11 @@ function PastWinnersModal({
 export default function TeamRankingPage(): JSX.Element {
   const navigate = useNavigate()
   const location = useLocation()
+  const { t, i18n } = useTranslation('teamRanking')
+  const displayLocale =
+    i18n.resolvedLanguage?.startsWith('sr')
+      ? 'sr-Latn-RS'
+      : i18n.resolvedLanguage || 'en'
   const initialSelection = useMemo(
     () => getTeamRankingSelectionFromSearch(location.search),
     // Only use the current URL for the first render.
@@ -1412,6 +1447,53 @@ export default function TeamRankingPage(): JSX.Element {
     [selectedTier, selectedDivision],
   )
 
+  const selectedStandingLabel = useMemo(() => {
+    if (!selectedStanding) return null
+
+    const divisionLabel = t(selectedStanding.divisionLabelKey)
+
+    return selectedStanding.type === 'AMATEUR'
+      ? t('divisions.amateurStanding', { division: divisionLabel })
+      : divisionLabel
+  }, [selectedStanding, t])
+
+  const selectedPromotionLabel = selectedStanding?.promotionKey
+    ? t(selectedStanding.promotionKey)
+    : null
+  const selectedPlayoffLabel = selectedStanding?.playoffKey
+    ? t(selectedStanding.playoffKey)
+    : null
+  const selectedRelegationLabel = selectedStanding?.relegationKey
+    ? t(selectedStanding.relegationKey)
+    : null
+
+  const localizedTutorialStep = useMemo(() => {
+    const fallbackStep = teamRankingTutorialSteps[tutorialStepIndex]
+
+    if (!fallbackStep) return null
+
+    if (tutorialStepIndex === 0) {
+      return {
+        ...fallbackStep,
+        title: t('tutorial.competitionsTitle'),
+        body: t('tutorial.competitionsBody'),
+        primaryAction: t('tutorial.next'),
+      }
+    }
+
+    if (tutorialStepIndex === teamRankingTutorialSteps.length - 1) {
+      return {
+        ...fallbackStep,
+        title: t('tutorial.pointsTitle'),
+        body: t('tutorial.pointsBody'),
+        primaryAction: t('tutorial.continueStatistics'),
+        secondaryAction: t('tutorial.finish'),
+      }
+    }
+
+    return fallbackStep
+  }, [tutorialStepIndex, t])
+
   const selectedRows = useMemo(() => {
     if (!selectedStanding) {
       return []
@@ -1490,7 +1572,7 @@ export default function TeamRankingPage(): JSX.Element {
     navigate(`/dashboard/teams/${clubId}`, {
       state: {
         returnTo,
-        returnLabel: '← Back',
+        returnLabel: t('common.back'),
         returnScrollX: typeof window !== 'undefined' ? window.scrollX : 0,
         returnScrollY: typeof window !== 'undefined' ? window.scrollY : 0,
         teamRankingTier: selectedTier,
@@ -1563,9 +1645,9 @@ export default function TeamRankingPage(): JSX.Element {
 
   return (
     <div className="w-full">
-      <h2 className="text-xl font-semibold">Team Ranking</h2>
+      <h2 className="text-xl font-semibold">{t('page.title')}</h2>
       <p className="mt-1 text-sm text-slate-600">
-        View current standings, compare divisions, and track promotion or relegation zones.
+        {t('page.subtitle')}
       </p>
 
       <div className="mt-4 rounded bg-white p-4 shadow">
@@ -1573,7 +1655,7 @@ export default function TeamRankingPage(): JSX.Element {
           <div className="grid w-full gap-4 md:grid-cols-2 lg:max-w-2xl">
             <div>
               <label htmlFor="tier-select" className="mb-2 block text-sm font-medium text-slate-700">
-                Select tier
+                {t('page.selectTier')}
               </label>
               <select
                 id="tier-select"
@@ -1583,7 +1665,7 @@ export default function TeamRankingPage(): JSX.Element {
               >
                 {TIER_OPTIONS.map((option) => (
                   <option key={option.value} value={option.value}>
-                    {option.label}
+                    {t(option.labelKey)}
                   </option>
                 ))}
               </select>
@@ -1594,7 +1676,7 @@ export default function TeamRankingPage(): JSX.Element {
                 htmlFor="division-select"
                 className="mb-2 block text-sm font-medium text-slate-700"
               >
-                Select division
+                {t('page.selectDivision')}
               </label>
               <select
                 id="division-select"
@@ -1608,12 +1690,12 @@ export default function TeamRankingPage(): JSX.Element {
                 className="w-full rounded border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
               >
                 {selectedTier === TEAM_TIERS.WORLD ? (
-                  <option value="">No division selection needed</option>
+                  <option value="">{t('page.noDivisionNeeded')}</option>
                 ) : null}
 
                 {divisionOptions.map((option) => (
                   <option key={option.value} value={option.value}>
-                    {option.label}
+                    {t(option.labelKey)}
                   </option>
                 ))}
               </select>
@@ -1621,19 +1703,19 @@ export default function TeamRankingPage(): JSX.Element {
           </div>
 
           <div className="flex flex-wrap gap-2">
-            {selectedStanding?.promotionLabel ? (
+            {selectedPromotionLabel ? (
               <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-medium text-green-800">
-                {selectedStanding.promotionLabel}
+                {selectedPromotionLabel}
               </span>
             ) : null}
-            {selectedStanding?.playoffLabel ? (
+            {selectedPlayoffLabel ? (
               <span className="rounded-full bg-sky-100 px-3 py-1 text-xs font-medium text-sky-800">
-                {selectedStanding.playoffLabel}
+                {selectedPlayoffLabel}
               </span>
             ) : null}
-            {selectedStanding?.relegationLabel ? (
+            {selectedRelegationLabel ? (
               <span className="rounded-full bg-red-100 px-3 py-1 text-xs font-medium text-red-800">
-                {selectedStanding.relegationLabel}
+                {selectedRelegationLabel}
               </span>
             ) : null}
           </div>
@@ -1645,12 +1727,12 @@ export default function TeamRankingPage(): JSX.Element {
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div>
               <h3 className="text-lg font-semibold text-slate-900">
-                {selectedStanding?.label ?? 'Select a tier and division'}
+                {selectedStandingLabel ?? t('page.selectTierDivision')}
               </h3>
               <p className="mt-1 text-sm text-slate-600">
                 {selectedStanding
-                  ? 'Current season standings based on international points. Ties are ordered by races completed, team race reputation, then team name A-Z.'
-                  : 'Choose a tier and division to view the standings.'}
+                  ? t('page.standingsDescription')
+                  : t('page.chooseStanding')}
               </p>
             </div>
 
@@ -1660,7 +1742,7 @@ export default function TeamRankingPage(): JSX.Element {
                 onClick={() => setIsPastWinnersOpen(true)}
                 className="self-start text-sm font-medium text-yellow-700 underline decoration-yellow-500 underline-offset-4 hover:text-yellow-800"
               >
-                Past winners
+                {t('pastWinners.title')}
               </button>
             ) : null}
           </div>
@@ -1671,22 +1753,22 @@ export default function TeamRankingPage(): JSX.Element {
             <thead className="bg-slate-50">
               <tr className="text-left">
                 <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-600">
-                  Pos
+                  {t('table.position')}
                 </th>
                 <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-600">
-                  Team
+                  {t('table.team')}
                 </th>
                 <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-600">
-                  Country
+                  {t('table.country')}
                 </th>
                 <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-600">
-                  Races
+                  {t('table.races')}
                 </th>
                 <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-600">
-                  Race Rep.
+                  {t('table.raceReputation')}
                 </th>
                 <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-600">
-                  Points
+                  {t('table.points')}
                 </th>
               </tr>
             </thead>
@@ -1695,7 +1777,7 @@ export default function TeamRankingPage(): JSX.Element {
               {loading ? (
                 <tr>
                   <td colSpan={6} className="px-4 py-6 text-center text-sm text-slate-500">
-                    Loading standings...
+                    {t('page.loading')}
                   </td>
                 </tr>
               ) : null}
@@ -1737,13 +1819,13 @@ export default function TeamRankingPage(): JSX.Element {
 
                             {!row.isActive && !row.publicInactivityStatus ? (
                               <span className="rounded-full bg-slate-200 px-2 py-0.5 text-[11px] font-semibold text-slate-700">
-                                Inactive
+                                {t('table.inactive')}
                               </span>
                             ) : null}
 
                             {isMyTeam ? (
                               <span className="rounded-full bg-yellow-100 px-2 py-1 text-xs font-medium text-yellow-800">
-                                Your team
+                                {t('table.yourTeam')}
                               </span>
                             ) : null}
                           </div>
@@ -1756,20 +1838,20 @@ export default function TeamRankingPage(): JSX.Element {
 
                       <td
                         className="px-4 py-3 text-right text-sm text-slate-700"
-                        title="Season-end tie-breaker 1: teams with more completed races are placed higher when points are tied."
+                        title={t('table.tieBreaker1')}
                       >
                         {formatTieBreakerNumber(row.completedRaceCount)}
                       </td>
 
                       <td
                         className="px-4 py-3 text-right text-sm text-slate-700"
-                        title="Season-end tie-breaker 2: if points and completed races are tied, team race reputation decides."
+                        title={t('table.tieBreaker2')}
                       >
                         {formatTieBreakerNumber(row.raceReputationValue)}
                       </td>
 
                       <td className="px-4 py-3 text-right text-sm font-semibold text-slate-900">
-                        {row.points.toLocaleString()}
+                        {row.points.toLocaleString(displayLocale)}
                       </td>
                     </tr>
                   )
@@ -1778,7 +1860,7 @@ export default function TeamRankingPage(): JSX.Element {
               {!loading && !selectedStanding ? (
                 <tr>
                   <td colSpan={6} className="px-4 py-6 text-center text-sm text-slate-500">
-                    Select a tier and division to view standings.
+                    {t('page.selectStanding')}
                   </td>
                 </tr>
               ) : null}
@@ -1786,7 +1868,7 @@ export default function TeamRankingPage(): JSX.Element {
               {!loading && selectedStanding && selectedRows.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="px-4 py-6 text-center text-sm text-slate-500">
-                    No teams available for this standing yet.
+                    {t('page.noTeams')}
                   </td>
                 </tr>
               ) : null}
@@ -1797,26 +1879,26 @@ export default function TeamRankingPage(): JSX.Element {
         <div className="flex flex-wrap gap-4 border-t border-slate-200 px-4 py-3 text-xs text-slate-600">
           <div className="flex items-center gap-2">
             <span className="h-3 w-3 rounded border border-green-300 bg-green-100" />
-            <span>Direct promotion</span>
+            <span>{t('zones.directPromotion')}</span>
           </div>
           <div className="flex items-center gap-2">
             <span className="h-3 w-3 rounded border border-blue-300 bg-blue-100" />
-            <span>Playoff places</span>
+            <span>{t('zones.playoffPlaces')}</span>
           </div>
           <div className="flex items-center gap-2">
             <span className="h-3 w-3 rounded border border-red-300 bg-red-100" />
-            <span>Relegation places</span>
+            <span>{t('zones.relegationPlaces')}</span>
           </div>
           <div className="flex items-center gap-2">
             <span className="h-3 w-3 rounded border border-yellow-300 bg-yellow-100" />
-            <span>Your team</span>
+            <span>{t('zones.yourTeam')}</span>
           </div>
           <div className="flex items-center gap-2">
             <span className="h-3 w-3 rounded border border-slate-300 bg-slate-100" />
-            <span>Inactive team</span>
+            <span>{t('zones.inactiveTeam')}</span>
           </div>
           <div className="text-slate-500">
-            Tie-breakers: points → races completed → race reputation → A-Z.
+            {t('table.tieBreakers')}
           </div>
         </div>
       </div>
@@ -1825,10 +1907,10 @@ export default function TeamRankingPage(): JSX.Element {
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <h3 className="text-lg font-semibold text-slate-900">
-              Season-end rules, playoffs and tie-breakers
+              {t('rules.title')}
             </h3>
             <div className="mt-1 text-sm text-slate-600">
-              Final ranking, promotion, playoff and relegation rules.
+              {t('rules.subtitle')}
             </div>
           </div>
 
@@ -1838,7 +1920,7 @@ export default function TeamRankingPage(): JSX.Element {
             className="inline-flex shrink-0 items-center justify-center rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-yellow-400"
             aria-expanded={seasonRulesExpanded}
           >
-            {seasonRulesExpanded ? 'Hide rules' : 'Show rules'}
+            {seasonRulesExpanded ? t('rules.hide') : t('rules.show')}
             <span className="ml-2" aria-hidden="true">
               {seasonRulesExpanded ? '▲' : '▼'}
             </span>
@@ -1848,52 +1930,46 @@ export default function TeamRankingPage(): JSX.Element {
         {seasonRulesExpanded ? (
           <>
             <div className="mt-4 text-sm text-slate-600">
-              These rules are used when the season closes and the game decides final ranking,
-              promotion places, playoff places and relegation places.
+              {t('rules.intro')}
             </div>
 
             <div className="mt-4 grid gap-4 lg:grid-cols-3">
               <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
                 <div className="text-sm font-semibold text-slate-900">
-                  Final ranking order
+                  {t('rules.rankingTitle')}
                 </div>
                 <ol className="mt-2 list-decimal space-y-1 pl-5 text-sm text-slate-700">
-                  <li>International points, highest first.</li>
-                  <li>If points are equal: completed races, highest first.</li>
-                  <li>If still equal: team race reputation, highest first.</li>
-                  <li>If still equal: team name alphabetically A-Z.</li>
+                  <li>{t('rules.ranking1')}</li>
+                  <li>{t('rules.ranking2')}</li>
+                  <li>{t('rules.ranking3')}</li>
+                  <li>{t('rules.ranking4')}</li>
                 </ol>
                 <div className="mt-3 text-xs text-slate-500">
-                  This also solves zero-point teams: teams with more completed races stay
-                  above teams with fewer completed races.
+                  {t('rules.zeroPoints')}
                 </div>
               </div>
 
               <div className="rounded-lg border border-green-200 bg-green-50 p-4">
                 <div className="text-sm font-semibold text-green-900">
-                  Direct promotion
+                  {t('rules.directTitle')}
                 </div>
                 <div className="mt-2 text-sm text-green-800">
-                  Green rows are automatic promotion places. These teams move up directly
-                  at the season transition if the backend season-end job confirms the same
-                  final order.
+                  {t('rules.directText')}
                 </div>
                 <div className="mt-3 text-xs text-green-700">
-                  Current view: {selectedStanding?.promotionLabel ?? 'No direct promotion places.'}
+                  {t('rules.currentView', { value: selectedPromotionLabel ?? t('rules.noDirect') })}
                 </div>
               </div>
 
               <div className="rounded-lg border border-sky-200 bg-sky-50 p-4">
                 <div className="text-sm font-semibold text-sky-900">
-                  Promotion playoffs
+                  {t('rules.playoffTitle')}
                 </div>
                 <div className="mt-2 text-sm text-sky-800">
-                  Blue rows are playoff places. These teams are not promoted directly.
-                  They enter a season-end playoff against other qualified teams, and the
-                  playoff result decides the remaining promotion places.
+                  {t('rules.playoffText')}
                 </div>
                 <div className="mt-3 text-xs text-sky-700">
-                  Current view: {selectedStanding?.playoffLabel ?? 'No playoff places.'}
+                  {t('rules.currentView', { value: selectedPlayoffLabel ?? t('rules.noPlayoff') })}
                 </div>
               </div>
             </div>
@@ -1901,38 +1977,25 @@ export default function TeamRankingPage(): JSX.Element {
             <div className="mt-4 grid gap-4 lg:grid-cols-2">
               <div className="rounded-lg border border-red-200 bg-red-50 p-4">
                 <div className="text-sm font-semibold text-red-900">
-                  Relegation
+                  {t('rules.relegationTitle')}
                 </div>
                 <div className="mt-2 text-sm text-red-800">
-                  Red rows are relegation places. At the end of the season, teams in
-                  these positions move down to the lower tier or lower division according
-                  to the league structure.
+                  {t('rules.relegationText')}
                 </div>
                 <div className="mt-3 text-xs text-red-700">
-                  Current view: {selectedStanding?.relegationLabel ?? 'No relegation places.'}
+                  {t('rules.currentView', { value: selectedRelegationLabel ?? t('rules.noRelegation') })}
                 </div>
               </div>
 
               <div className="rounded-lg border border-slate-200 bg-white p-4">
                 <div className="text-sm font-semibold text-slate-900">
-                  Division guide
+                  {t('rules.divisionGuide')}
                 </div>
                 <ul className="mt-2 space-y-1 text-sm text-slate-700">
-                  <li>
-                    <span className="font-medium">WorldTeam:</span> bottom 5 are relegated.
-                  </li>
-                  <li>
-                    <span className="font-medium">ProTeam West/East:</span> winner promoted directly,
-                    2nd-4th enter World playoff, bottom 5 are relegated.
-                  </li>
-                  <li>
-                    <span className="font-medium">Continental divisions:</span> winner promoted directly,
-                    2nd-4th enter Pro playoff, relegation count depends on the division.
-                  </li>
-                  <li>
-                    <span className="font-medium">Amateur divisions:</span> promotion and playoff
-                    places depend on the region. Oceania promotes the top 3 directly.
-                  </li>
+                  <li>{t('rules.worldGuide')}</li>
+                  <li>{t('rules.proGuide')}</li>
+                  <li>{t('rules.continentalGuide')}</li>
+                  <li>{t('rules.amateurGuide')}</li>
                 </ul>
               </div>
             </div>
@@ -1944,17 +2007,17 @@ export default function TeamRankingPage(): JSX.Element {
         isOpen={isPastWinnersOpen}
         onClose={() => setIsPastWinnersOpen(false)}
         division={selectedStanding?.division ?? null}
-        standingLabel={selectedStanding?.label ?? null}
+        standingLabel={selectedStandingLabel}
       />
 
       {!tutorialLoading && tutorialMode === 'invite' ? (
         <TutorialOverlay
           open
           variant="invite"
-          title={teamRankingWelcomeTutorial.title}
-          body={teamRankingWelcomeTutorial.body}
-          primaryAction={teamRankingWelcomeTutorial.primaryAction}
-          secondaryAction={teamRankingWelcomeTutorial.secondaryAction}
+          title={t('tutorial.welcomeTitle')}
+          body={t('tutorial.welcomeBody')}
+          primaryAction={t('tutorial.start')}
+          secondaryAction={t('tutorial.noThanks')}
           onPrimary={handleStartTeamRankingTutorial}
           onSecondary={handleSkipTeamRankingTutorial}
           onClose={handleCloseTeamRankingTutorial}
@@ -1965,16 +2028,16 @@ export default function TeamRankingPage(): JSX.Element {
         <TutorialOverlay
           open
           variant="panel"
-          title={teamRankingTutorialSteps[tutorialStepIndex].title}
-          body={teamRankingTutorialSteps[tutorialStepIndex].body}
+          title={localizedTutorialStep?.title ?? teamRankingTutorialSteps[tutorialStepIndex].title}
+          body={localizedTutorialStep?.body ?? teamRankingTutorialSteps[tutorialStepIndex].body}
           stepLabel={`${tutorialStepIndex + 1}/${teamRankingTutorialSteps.length}`}
           primaryAction={
-            teamRankingTutorialSteps[tutorialStepIndex].primaryAction ?? 'Next'
+            localizedTutorialStep?.primaryAction ?? t('tutorial.next')
           }
           secondaryAction={
             tutorialStepIndex === teamRankingTutorialSteps.length - 1
-              ? teamRankingTutorialSteps[tutorialStepIndex].secondaryAction
-              : 'Skip tutorial'
+              ? localizedTutorialStep?.secondaryAction ?? t('tutorial.finish')
+              : t('tutorial.skip')
           }
           onPrimary={handleNextTeamRankingTutorialStep}
           onSecondary={
