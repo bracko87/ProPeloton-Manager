@@ -2,6 +2,7 @@ import i18n from 'i18next'
 import { initReactI18next } from 'react-i18next'
 
 import enCommon from './locales/en/common.json'
+import enAppShell from './locales/en/appShell.json'
 import enNavigation from './locales/en/navigation.json'
 import enHome from './locales/en/home.json'
 import enAuth from './locales/en/auth.json'
@@ -14,6 +15,7 @@ import enTutorials from './locales/en/tutorials.json'
 import enSquad from './locales/en/squad.json'
 
 import srCommon from './locales/sr-Latn/common.json'
+import srAppShell from './locales/sr-Latn/appShell.json'
 import srNavigation from './locales/sr-Latn/navigation.json'
 import srHome from './locales/sr-Latn/home.json'
 import srAuth from './locales/sr-Latn/auth.json'
@@ -37,6 +39,7 @@ import {
 const resources = {
   en: {
     common: enCommon,
+    appShell: enAppShell,
     navigation: enNavigation,
     home: enHome,
     auth: enAuth,
@@ -50,6 +53,7 @@ const resources = {
   },
   'sr-Latn': {
     common: srCommon,
+    appShell: srAppShell,
     navigation: srNavigation,
     home: srHome,
     auth: srAuth,
@@ -75,6 +79,7 @@ void i18n
     defaultNS: 'common',
     ns: [
       'common',
+      'appShell',
       'navigation',
       'home',
       'auth',
