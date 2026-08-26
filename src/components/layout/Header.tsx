@@ -46,6 +46,7 @@ import React, {
   useRef,
   useState,
 } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   Bell,
   Crown,
@@ -77,7 +78,7 @@ interface HeaderProps {
  * Shape for profile menu entries.
  */
 type MenuItem = {
-  label: string
+  labelKey: string
   path?: string
   action?: 'logout'
 }
@@ -162,16 +163,16 @@ const LOGO_BUCKET = 'club-logos'
 const MAIN_CLUB_STORAGE_KEY = 'ppm-main-club'
 
 const profileMenuItems: MenuItem[] = [
-  { label: 'Inbox', path: '/dashboard/inbox' },
-  { label: 'My Profile', path: '/dashboard/my-profile' },
-  { label: 'Customize Team', path: '/dashboard/customize-team' },
-  { label: 'Forum', path: '/dashboard/forum' },
-  { label: 'Preferences', path: '/dashboard/preferences' },
-  { label: 'Help', path: '/dashboard/help' },
-  { label: 'Contact Us', path: '/dashboard/contact-us' },
-  { label: 'Pro Packages', path: '/dashboard/pro' },
-  { label: 'Invite Friends', path: '/dashboard/invite-friends' },
-  { label: 'Logout', action: 'logout' },
+  { labelKey: 'inbox', path: '/dashboard/inbox' },
+  { labelKey: 'myProfile', path: '/dashboard/my-profile' },
+  { labelKey: 'customizeTeam', path: '/dashboard/customize-team' },
+  { labelKey: 'forum', path: '/dashboard/forum' },
+  { labelKey: 'preferences', path: '/dashboard/preferences' },
+  { labelKey: 'help', path: '/dashboard/help' },
+  { labelKey: 'contactUs', path: '/dashboard/contact-us' },
+  { labelKey: 'proPackages', path: '/dashboard/pro' },
+  { labelKey: 'inviteFriends', path: '/dashboard/invite-friends' },
+  { labelKey: 'logout', action: 'logout' },
 ]
 
 /**
@@ -299,6 +300,7 @@ export default function Header({
   onLogout,
   coinBalance = 0,
 }: HeaderProps) {
+  const { t } = useTranslation('navigation')
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false)
   const [unreadCount, setUnreadCount] = useState(0)
   const [inboxUnreadCount, setInboxUnreadCount] = useState(0)
@@ -312,7 +314,7 @@ export default function Header({
   const [
     liveClubCountryName,
     setLiveClubCountryName,
-  ] = useState(clubCountryName || 'Club country')
+  ] = useState(clubCountryName || t('header.clubCountry'))
   const [
     liveClubCountryCode,
     setLiveClubCountryCode,
@@ -486,9 +488,9 @@ export default function Header({
 
   useEffect(() => {
     setLiveClubCountryName(
-      clubCountryName || 'Club country',
+      clubCountryName || t('header.clubCountry'),
     )
-  }, [clubCountryName])
+  }, [clubCountryName, t])
 
   useEffect(() => {
     setLiveClubCountryCode(clubCountryCode)
@@ -562,7 +564,7 @@ export default function Header({
   const displayCountry =
     liveClubCountryName ||
     clubCountryName ||
-    'Club country'
+    t('header.clubCountry')
   const effectiveCountryCode =
     liveClubCountryCode || clubCountryCode
   const effectiveLogoUrl = resolveClubLogoUrl(
@@ -570,7 +572,7 @@ export default function Header({
     logoCacheKey,
   )
 
-  const displayUserName = userName || 'Manager'
+  const displayUserName = userName || t('header.manager')
   const flagUrl = getFlagImageUrl(effectiveCountryCode)
   const fallbackLetter = getFallbackLetter(displayName)
 
@@ -1027,7 +1029,7 @@ export default function Header({
         <button
           onClick={onToggle}
           className="text-black p-2 rounded-md hover:bg-black/10"
-          aria-label="Toggle sidebar"
+          aria-label={t('header.toggleSidebar')}
           type="button"
         >
           ☰
@@ -1053,14 +1055,14 @@ export default function Header({
               }
             >
               <span className="font-normal">
-                Team Name:{' '}
+                {t('header.teamName')}{' '}
               </span>
               <span className="font-bold">
                 {displayName}
               </span>
               {isNamingRightsDisplay ? (
                 <span className="ml-2 rounded-full border border-black/20 bg-white/35 px-2 py-0.5 align-middle text-[11px] font-semibold text-black/80">
-                  Naming rights
+                  {t('header.namingRights')}
                 </span>
               ) : null}
             </div>
@@ -1083,14 +1085,16 @@ export default function Header({
                     -
                   </span>
                   <span>
-                    {formatOrdinal(
-                      teamCompetitionSummary.rank_position,
-                    )}{' '}
-                    in{' '}
-                    {
-                      teamCompetitionSummary.competition_label
-                    }{' '}
-                    Ranking
+                    {t('header.ranking', {
+                      positionOrdinal: formatOrdinal(
+                        teamCompetitionSummary.rank_position,
+                      ),
+                      positionNumber: String(
+                        teamCompetitionSummary.rank_position,
+                      ),
+                      competition:
+                        teamCompetitionSummary.competition_label,
+                    })}
                   </span>
                 </>
               ) : null}
@@ -1113,24 +1117,24 @@ export default function Header({
           }`}
           aria-label={
             isPremium
-              ? 'Premium account member'
-              : 'Free account member. View Premium'
+              ? t('header.premiumAccountMember')
+              : t('header.freeAccountMember')
           }
           title={
             isPremium
-              ? 'Premium account'
-              : 'Free account — view Premium'
+              ? t('header.premiumAccount')
+              : t('header.freeAccount')
           }
         >
           {isPremiumStatusLoading ? (
-            <span>Account</span>
+            <span>{t('header.account')}</span>
           ) : isPremium ? (
             <>
               <Crown size={15} aria-hidden="true" />
-              <span>Premium</span>
+              <span>{t('header.premium')}</span>
             </>
           ) : (
-            <span>Free</span>
+            <span>{t('header.free')}</span>
           )}
         </button>
 
@@ -1139,13 +1143,15 @@ export default function Header({
           className="rounded-md border border-black/35 bg-yellow-300/70 px-3 py-1.5 text-sm font-semibold text-black min-w-[130px] text-center"
         >
           ◎ {coinBalance.toLocaleString()}{' '}
-          {coinBalance === 1 ? 'Coin' : 'Coins'}
+          {coinBalance === 1
+            ? t('header.coin')
+            : t('header.coins')}
         </div>
 
         <button
           data-tutorial-target="header-notifications"
           className="relative text-black hover:opacity-80 p-2 rounded-md hover:bg-black/10"
-          aria-label="Notifications"
+          aria-label={t('header.notifications')}
           onClick={() => {
             handleNavigate('/dashboard/notifications')
           }}
@@ -1170,7 +1176,7 @@ export default function Header({
             onClick={() => {
               setIsProfileMenuOpen(prev => !prev)
             }}
-            aria-label="Open profile menu"
+            aria-label={t('header.openProfileMenu')}
             aria-haspopup="menu"
             aria-expanded={isProfileMenuOpen}
             className="flex items-center gap-2 rounded-md px-3 py-2 hover:bg-black/10"
@@ -1180,14 +1186,14 @@ export default function Header({
               className="text-black"
             />
             <span className="text-sm font-medium text-black">
-              Menu
+              {t('header.menu')}
             </span>
           </button>
 
           {isProfileMenuOpen ? (
             <div
               role="menu"
-              aria-label="Profile menu"
+              aria-label={t('header.profileMenu')}
               className="absolute right-0 mt-2 w-64 overflow-hidden rounded-xl border border-black/10 bg-white shadow-xl z-50"
             >
               <div className="px-4 py-3 border-b border-gray-200 bg-gray-50">
@@ -1195,13 +1201,13 @@ export default function Header({
                   {displayUserName}
                 </div>
                 <div className="text-xs text-black/70">
-                  Team: {displayName}
+                  {t('header.team')} {displayName}
                   {isNamingRightsDisplay ? (
                     <span
                       className="block truncate"
                       title={fullDisplayName}
                     >
-                      Original club:{' '}
+                      {t('header.originalClub')}{' '}
                       {originalClubName}
                     </span>
                   ) : null}
@@ -1217,7 +1223,7 @@ export default function Header({
                   if (item.action === 'logout') {
                     return (
                       <button
-                        key={item.label}
+                        key={item.labelKey}
                         type="button"
                         role="menuitem"
                         onClick={() => {
@@ -1225,14 +1231,14 @@ export default function Header({
                         }}
                         className="w-full px-4 py-2.5 text-left text-sm text-red-600 hover:bg-red-50"
                       >
-                        {item.label}
+                        {t(item.labelKey)}
                       </button>
                     )
                   }
 
                   return (
                     <button
-                      key={item.label}
+                      key={item.labelKey}
                       type="button"
                       role="menuitem"
                       onClick={() =>
@@ -1242,7 +1248,7 @@ export default function Header({
                       className="w-full px-4 py-2.5 text-left text-sm text-black hover:bg-gray-100"
                     >
                       <span className="inline-flex items-center">
-                        {item.label}
+                        {t(item.labelKey)}
 
                         {isInboxItem &&
                         inboxUnreadCount > 0 ? (
