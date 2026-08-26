@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { supabase } from '../../lib/supabase'
 
 type TeamLabel = 'First Team' | 'U23'
@@ -241,16 +242,18 @@ function InformationModal({
 }: {
   onClose: () => void
 }): JSX.Element {
+  const { t } = useTranslation('training')
+
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/45 p-4">
       <div className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-2xl bg-white shadow-2xl">
         <div className="sticky top-0 flex items-center justify-between border-b border-slate-200 bg-white px-6 py-4">
           <div>
             <h3 className="text-lg font-semibold text-slate-900">
-              Head Coach Training Management
+              {t('coach.infoTitle')}
             </h3>
             <p className="mt-1 text-sm text-slate-500">
-              Automatic regular training without an extra planning screen
+              {t('coach.infoSubtitle')}
             </p>
           </div>
 
@@ -258,7 +261,7 @@ function InformationModal({
             type="button"
             onClick={onClose}
             className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-lg text-slate-600 hover:bg-slate-50"
-            aria-label="Close Head Coach information"
+            aria-label={t('coach.closeInfo')}
           >
             ×
           </button>
@@ -267,83 +270,66 @@ function InformationModal({
         <div className="space-y-5 px-6 py-5 text-sm text-slate-700">
           <section>
             <h4 className="font-semibold text-slate-900">
-              What happens when automation is enabled
+              {t('coach.enabledTitle')}
             </h4>
             <p className="mt-1">
-              The Head Coach privately prepares a rolling plan for Today,
-              Tomorrow and Day +2. The separate forecast table is intentionally
-              not shown to managers. Today&apos;s selected focus and intensity
-              appear in the normal Rider Overrides section and in the rider
-              profile training area.
+              {t('coach.enabledText')}
             </p>
           </section>
 
           <section>
             <h4 className="font-semibold text-slate-900">
-              Normal manager workflow
+              {t('coach.workflowTitle')}
             </h4>
             <p className="mt-1">
-              Continue using the existing Rider Overrides controls or the rider
-              profile. When Head Coach automation is active, saving a rider
-              change creates an override for the current game day only. The
-              coach automatically resumes control on the next game day.
+              {t('coach.workflowText')}
             </p>
           </section>
 
           <section>
             <h4 className="font-semibold text-slate-900">
-              Rolling recalculation
+              {t('coach.rollingTitle')}
             </h4>
             <p className="mt-1">
-              After every game day, Tomorrow becomes Today and a new Day +2 is
-              added. The plan is recalculated after fatigue, health, morale,
-              races, training camps and staff availability are updated.
+              {t('coach.rollingText')}
             </p>
           </section>
 
           <section>
             <h4 className="font-semibold text-slate-900">
-              Decision quality
+              {t('coach.qualityTitle')}
             </h4>
             <div className="mt-2 grid gap-2 sm:grid-cols-2">
               <div className="rounded-lg bg-slate-50 p-3">
-                <span className="font-medium">Training</span> controls focus
-                selection and session precision.
+                {t('coach.trainingQuality')}
               </div>
               <div className="rounded-lg bg-slate-50 p-3">
-                <span className="font-medium">Recovery Planning</span> controls
-                fatigue-aware intensity and rest decisions.
+                {t('coach.recoveryQuality')}
               </div>
               <div className="rounded-lg bg-slate-50 p-3">
-                <span className="font-medium">Youth Development</span> improves
-                planning for riders aged 23 or younger.
+                {t('coach.youthQuality')}
               </div>
               <div className="rounded-lg bg-slate-50 p-3">
-                <span className="font-medium">Experience and Leadership</span>{' '}
-                improve role awareness, consistency and calendar planning.
+                {t('coach.experienceQuality')}
               </div>
             </div>
           </section>
 
           <section>
             <h4 className="font-semibold text-slate-900">
-              Priority and safety rules
+              {t('coach.safetyTitle')}
             </h4>
             <p className="mt-1">
-              Races, active camps, existing daily activity, injuries, sickness
-              and training-blocking medical cases take priority. A coach on a
-              course or another assignment may have reduced or zero
-              availability.
+              {t('coach.safetyText')}
             </p>
           </section>
 
           <section>
             <h4 className="font-semibold text-slate-900">
-              When automation is disabled
+              {t('coach.disabledTitle')}
             </h4>
             <p className="mt-1">
-              The existing Team Defaults and persistent Rider Overrides control
-              regular training exactly as before.
+              {t('coach.disabledText')}
             </p>
           </section>
         </div>
@@ -360,6 +346,7 @@ export default function HeadCoachTrainingPanel({
   onError,
   onAutomationStateChange
 }: HeadCoachTrainingPanelProps): JSX.Element {
+  const { t } = useTranslation('training')
   const [dashboards, setDashboards] = useState<
     Record<string, CoachDashboard | null>
   >({})
@@ -594,24 +581,23 @@ export default function HeadCoachTrainingPanel({
           <div>
             <div className="flex items-center gap-2">
               <h3 className="text-lg font-semibold text-slate-900">
-                Head Coach Management
+                {t('coach.title')}
               </h3>
 
               <span className="rounded-full bg-yellow-100 px-2.5 py-1 text-xs font-medium text-yellow-800">
-                Rolling 3 days
+                {t('coach.rolling')}
               </span>
             </div>
 
             <p className="mt-1 max-w-3xl text-sm text-slate-600">
-              Enable automatic planning. Today&apos;s Head Coach decision is
-              shown in Rider Overrides below; the future forecast remains
-              internal.
+              {t('coach.description')}
             </p>
 
             {currentGameDate ? (
               <p className="mt-1 text-xs text-slate-500">
-                Current game date:{' '}
-                {formatGameDate(currentGameDate)}
+                {t('coach.currentDate', {
+                  date: formatGameDate(currentGameDate)
+                })}
               </p>
             ) : null}
           </div>
@@ -626,7 +612,7 @@ export default function HeadCoachTrainingPanel({
               aria-expanded={isExpanded}
               aria-controls="head-coach-management-content"
             >
-              {isExpanded ? 'Collapse' : 'Expand'}
+              {isExpanded ? t('common.collapse') : t('common.expand')}
             </button>
 
             <button
@@ -635,15 +621,15 @@ export default function HeadCoachTrainingPanel({
               disabled={loading || busyClubId != null}
               className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {loading ? 'Loading…' : 'Refresh'}
+              {loading ? t('common.loading') : t('common.refresh')}
             </button>
 
             <button
               type="button"
               onClick={() => setShowInformation(true)}
               className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-300 bg-white text-sm font-semibold text-slate-700 hover:bg-slate-50"
-              aria-label="Head Coach management information"
-              title="How Head Coach management works"
+              aria-label={t('coach.information')}
+              title={t('coach.howWorks')}
             >
               i
             </button>
@@ -685,7 +671,9 @@ export default function HeadCoachTrainingPanel({
                     <div>
                       <div className="flex flex-wrap items-center gap-2">
                         <h4 className="text-base font-semibold text-slate-900">
-                          {team.team_label}
+                          {team.team_label === 'U23'
+                            ? t('common.u23')
+                            : t('common.firstTeam')}
                         </h4>
 
                         <span
@@ -696,13 +684,13 @@ export default function HeadCoachTrainingPanel({
                           }`}
                         >
                           {enabled
-                            ? 'Coach active'
-                            : 'Manual fallback'}
+                            ? t('coach.coachActive')
+                            : t('coach.manualFallback')}
                         </span>
                       </div>
 
                       <p className="mt-1 text-sm text-slate-600">
-                        {team.club_name} · Riders {ridersInTeam}
+                        {team.club_name} · {t('coach.riders', { count: ridersInTeam })}
                       </p>
 
                       {selectedCoach ? (
@@ -714,17 +702,15 @@ export default function HeadCoachTrainingPanel({
                             ? ` · ${selectedCoach.specialization}`
                             : ''}
                           {' · '}
-                          Training {selectedCoach.expertise} · Recovery{' '}
-                          {selectedCoach.efficiency} · Youth{' '}
-                          {selectedCoach.potential}
+                          {t('coach.trainingStat', { value: selectedCoach.expertise })}{' · '}
+                          {t('coach.recoveryStat', { value: selectedCoach.efficiency })}{' · '}
+                          {t('coach.youthStat', { value: selectedCoach.potential })}
                         </div>
                       ) : (
                         <div className="mt-2 text-xs text-amber-700">
-                          No eligible{' '}
                           {team.team_label === 'U23'
-                            ? 'U23 Head Coach'
-                            : 'Head Coach'}{' '}
-                          is currently available.
+                            ? t('coach.noEligibleU23Coach')
+                            : t('coach.noEligibleHeadCoach')}
                         </div>
                       )}
 
@@ -738,7 +724,7 @@ export default function HeadCoachTrainingPanel({
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
                       <label className="block min-w-[250px]">
                         <span className="mb-1 block text-xs font-medium uppercase tracking-wide text-slate-500">
-                          Manager
+                          {t('coach.manager')}
                         </span>
 
                         <select
@@ -759,7 +745,7 @@ export default function HeadCoachTrainingPanel({
                         >
                           {eligibleCoaches.length === 0 ? (
                             <option value="">
-                              No eligible coach
+                              {t('coach.noEligibleCoach')}
                             </option>
                           ) : null}
 
@@ -793,10 +779,10 @@ export default function HeadCoachTrainingPanel({
                         }`}
                       >
                         {busyClubId === team.club_id
-                          ? 'Saving…'
+                          ? t('coach.saving')
                           : enabled
-                            ? 'Disable'
-                            : 'Enable'}
+                            ? t('coach.disable')
+                            : t('coach.enable')}
                       </button>
                     </div>
                   </div>
