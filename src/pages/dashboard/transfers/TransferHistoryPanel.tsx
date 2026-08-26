@@ -31,12 +31,34 @@ function isFreeAgentMarketPlaceholder(value: string | null | undefined) {
   )
 }
 
-function formatCurrency(value: number | null | undefined): string {
-  if (value == null || Number.isNaN(value)) return '—'
-  return `$${Math.round(Number(value)).toLocaleString('en-US')}`
+function resolveDisplayLocale(language: string | undefined): string {
+  if (!language) return 'en'
+
+  if (language.toLowerCase().startsWith('sr')) {
+    return 'sr-Latn-RS'
+  }
+
+  return language
 }
 
-function formatHistoryGameDate(value: string | null | undefined): string {
+function formatCurrency(
+  value: number | null | undefined,
+  locale: string
+): string {
+  if (value == null || Number.isNaN(value)) return '—'
+
+  return new Intl.NumberFormat(locale, {
+    style: 'currency',
+    currency: 'USD',
+    maximumFractionDigits: 0,
+  }).format(Math.round(Number(value)))
+}
+
+function formatHistoryGameDate(
+  value: string | null | undefined,
+  locale: string,
+  seasonLabel: string
+): string {
   if (!value) return '—'
 
   const parsed = new Date(`${value}T00:00:00Z`)
@@ -44,18 +66,18 @@ function formatHistoryGameDate(value: string | null | undefined): string {
 
   const seasonNumber = Math.max(1, parsed.getUTCFullYear() - 1999)
 
-  const weekday = parsed.toLocaleDateString('en-US', {
+  const weekday = new Intl.DateTimeFormat(locale, {
     weekday: 'long',
     timeZone: 'UTC',
-  })
+  }).format(parsed)
 
-  const monthDay = parsed.toLocaleDateString('en-US', {
+  const monthDay = new Intl.DateTimeFormat(locale, {
     month: 'long',
     day: 'numeric',
     timeZone: 'UTC',
-  })
+  }).format(parsed)
 
-  return `Season ${seasonNumber} - ${weekday} - ${monthDay}`
+  return `${seasonLabel} ${seasonNumber} - ${weekday} - ${monthDay}`
 }
 
 function HistoryColumn({
@@ -75,8 +97,12 @@ function HistoryColumn({
   onOpenExternalRiderProfile: (riderId: string) => void
   onOpenClubProfile: (clubId: string) => void
 }) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation('transfers')
   const [page, setPage] = useState(1)
+
+  const displayLocale = resolveDisplayLocale(
+    i18n.resolvedLanguage || i18n.language
+  )
 
   const sortedRows = useMemo(() => {
     const safeRows = Array.isArray(rows) ? [...rows] : []
@@ -117,6 +143,7 @@ function HistoryColumn({
 
   const paginatedRows = useMemo(() => {
     const startIndex = (page - 1) * TRANSFER_HISTORY_ITEMS_PER_PAGE
+
     return sortedRows.slice(
       startIndex,
       startIndex + TRANSFER_HISTORY_ITEMS_PER_PAGE
@@ -158,7 +185,7 @@ function HistoryColumn({
                 ? t('history.released')
                 : row.movement_type === 'free_agent'
                   ? t('history.freeTransfer')
-                  : formatCurrency(row.amount)
+                  : formatCurrency(row.amount, displayLocale)
 
             const counterpartyName =
               row.direction === 'arrival'
@@ -218,7 +245,9 @@ function HistoryColumn({
                         ) : row.to_club_id ? (
                           <button
                             type="button"
-                            onClick={() => onOpenClubProfile(row.to_club_id)}
+                            onClick={() =>
+                              onOpenClubProfile(row.to_club_id)
+                            }
                             className="font-medium text-gray-700 hover:underline"
                           >
                             {counterpartyName || t('common.unknownClub')}
@@ -239,7 +268,11 @@ function HistoryColumn({
                   </div>
 
                   <div className="mt-1 text-xs text-gray-500">
-                    {formatHistoryGameDate(row.game_date)}
+                    {formatHistoryGameDate(
+                      row.game_date,
+                      displayLocale,
+                      t('common.season')
+                    )}
                   </div>
                 </div>
               </div>
@@ -327,7 +360,11 @@ export default function TransferHistoryPanel({
   onOpenExternalRiderProfile?: (riderId: string) => void
   onOpenClubProfile?: (clubId: string) => void
 }): JSX.Element {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation('transfers')
+
+  // Keep this component subscribed to language changes as well.
+  // The HistoryColumn components use the same namespace and locale.
+  void i18n.resolvedLanguage
 
   const safeHistory = Array.isArray(transferHistory) ? transferHistory : []
 
