@@ -27,7 +27,19 @@ type SeasonRolloverGateProps = {
   children: React.ReactNode
 }
 
-const POLL_INTERVAL_MS = 20_000
+const FAST_POLL_INTERVAL_MS = 20_000
+const NORMAL_POLL_INTERVAL_MS = 5 * 60_000
+
+function getPollInterval(status: SeasonRolloverStatus): number {
+  const isSeasonEndWindow = status.game?.month === 12 && status.game?.day === 31
+  const isNewSeasonMidnight =
+    status.game?.month === 1 && status.game?.day === 1 && status.game?.hour === 0
+  const transitionIsArmed = status.source_season !== null && status.target_season !== null
+
+  return status.active || transitionIsArmed || isSeasonEndWindow || isNewSeasonMidnight
+    ? FAST_POLL_INTERVAL_MS
+    : NORMAL_POLL_INTERVAL_MS
+}
 
 function phaseTranslationKey(phase: string | null): string {
   switch (phase) {
@@ -237,10 +249,6 @@ export default function SeasonRolloverGate({
   React.useEffect(() => {
     void loadStatus()
 
-    const intervalId = window.setInterval(() => {
-      void loadStatus()
-    }, POLL_INTERVAL_MS)
-
     const handleFocus = () => {
       void loadStatus()
     }
@@ -255,11 +263,28 @@ export default function SeasonRolloverGate({
     document.addEventListener('visibilitychange', handleVisibilityChange)
 
     return () => {
-      window.clearInterval(intervalId)
       window.removeEventListener('focus', handleFocus)
       document.removeEventListener('visibilitychange', handleVisibilityChange)
     }
   }, [loadStatus])
+
+  React.useEffect(() => {
+    const delay = statusError
+      ? FAST_POLL_INTERVAL_MS
+      : status
+        ? getPollInterval(status)
+        : null
+
+    if (delay === null) return
+
+    const timeoutId = window.setTimeout(() => {
+      void loadStatus()
+    }, delay)
+
+    return () => {
+      window.clearTimeout(timeoutId)
+    }
+  }, [loadStatus, status, statusError])
 
   React.useEffect(() => {
     const isActive = Boolean(status?.active)
