@@ -7,6 +7,7 @@
  */
 
 import React, { useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   getEquipmentMarket,
   purchaseEquipmentItem,
@@ -50,29 +51,41 @@ type EquipmentTerrainRole =
 
 type EquipmentEffectEntry = {
   key: string
-  label: string
+  labelKey: string | null
   value: number
 }
 
 const PAGE_SIZE = 200
 
-const terrainRoleOptions: Array<{ value: EquipmentTerrainRole; label: string }> = [
-  { value: 'all_round', label: 'All-round' },
-  { value: 'endurance_cobble', label: 'Endurance / Cobble' },
-  { value: 'climbing', label: 'Climbing' },
-  { value: 'aero_flat', label: 'Aero / Flat' },
-  { value: 'time_trial', label: 'Time Trial' },
-  { value: 'general', label: 'General' },
+const terrainRoleOptions: Array<{
+  value: EquipmentTerrainRole
+  labelKey: string
+}> = [
+  { value: 'all_round', labelKey: 'terrain.allRound' },
+  { value: 'endurance_cobble', labelKey: 'terrain.enduranceCobble' },
+  { value: 'climbing', labelKey: 'terrain.climbing' },
+  { value: 'aero_flat', labelKey: 'terrain.aeroFlat' },
+  { value: 'time_trial', labelKey: 'terrain.timeTrial' },
+  { value: 'general', labelKey: 'terrain.general' },
 ]
 
-const effectLabels: Record<string, string> = {
-  flat_bonus_pct: 'Flat Bonus',
-  hilly_bonus_pct: 'Hilly Bonus',
-  mountain_bonus_pct: 'Mountain Bonus',
-  cobble_bonus_pct: 'Cobble Bonus',
-  time_trial_bonus_pct: 'Time Trial Bonus',
-  sprint_bonus_pct: 'Sprint Bonus',
-  fatigue_reduction_pct: 'Fatigue Reduction',
+const effectLabelKeys: Record<string, string> = {
+  flat_bonus_pct: 'effects.flatBonus',
+  hilly_bonus_pct: 'effects.hillyBonus',
+  mountain_bonus_pct: 'effects.mountainBonus',
+  cobble_bonus_pct: 'effects.cobbleBonus',
+  time_trial_bonus_pct: 'effects.timeTrialBonus',
+  sprint_bonus_pct: 'effects.sprintBonus',
+  fatigue_reduction_pct: 'effects.fatigueReduction',
+}
+
+const terrainRoleLabelKeys: Record<EquipmentTerrainRole, string> = {
+  all_round: 'terrain.allRound',
+  endurance_cobble: 'terrain.enduranceCobble',
+  climbing: 'terrain.climbing',
+  aero_flat: 'terrain.aeroFlat',
+  time_trial: 'terrain.timeTrial',
+  general: 'terrain.general',
 }
 
 function getMetadataString(
@@ -133,12 +146,14 @@ function EquipmentImagePreviewModal({
   preview: MarketImagePreview
   onClose: () => void
 }): JSX.Element {
+  const { t } = useTranslation('equipment')
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
       role="dialog"
       aria-modal="true"
-      aria-label={`${preview.title} image preview`}
+      aria-label={t('market.imagePreview', { name: preview.title })}
       onClick={onClose}
     >
       <div
@@ -158,7 +173,7 @@ function EquipmentImagePreviewModal({
             onClick={onClose}
             className="rounded-md px-3 py-1 text-sm font-medium text-gray-500 hover:bg-gray-100 hover:text-gray-900"
           >
-            Close
+            {t('market.close')}
           </button>
         </div>
 
@@ -189,6 +204,7 @@ function EquipmentPurchaseModal({
   onClose: () => void
   onConfirm: () => void
 }): JSX.Element {
+  const { t } = useTranslation('equipment')
   const [purchaseQuote, setPurchaseQuote] =
     useState<SponsorDiscountQuote | null>(null)
 
@@ -243,7 +259,7 @@ function EquipmentPurchaseModal({
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
       role="dialog"
       aria-modal="true"
-      aria-label={`Buy ${item.display_name}`}
+      aria-label={t('market.buyEquipment')}
       onClick={onClose}
     >
       <div
@@ -252,17 +268,17 @@ function EquipmentPurchaseModal({
       >
         <div className="border-b border-gray-100 px-5 py-4">
           <h3 className="text-lg font-semibold text-gray-900">
-            Buy equipment
+            {t('market.buyEquipment')}
           </h3>
           <p className="mt-1 text-sm text-gray-500">
-            Choose quantity and confirm purchase.
+            {t('market.buyDescription')}
           </p>
         </div>
 
         <div className="space-y-4 p-5">
           <div className="rounded-lg border border-gray-100 bg-gray-50 p-4">
             <div className="text-xs font-medium uppercase tracking-wide text-gray-400">
-              {item.brand_name ?? 'Generic brand'}
+              {item.brand_name ?? t('common.genericBrand')}
             </div>
 
             <div className="mt-1 text-base font-semibold text-gray-900">
@@ -271,14 +287,14 @@ function EquipmentPurchaseModal({
 
             <div className="mt-3 grid grid-cols-2 gap-3 text-sm">
               <div>
-                <div className="text-xs text-gray-400">Unit price</div>
+                <div className="text-xs text-gray-400">{t('common.unitPrice')}</div>
                 <div className="font-semibold text-gray-900">
                   {formatMoney(unitPriceCash)}
                 </div>
               </div>
 
               <div>
-                <div className="text-xs text-gray-400">Total cost</div>
+                <div className="text-xs text-gray-400">{t('common.totalCost')}</div>
                 <div className="font-semibold text-gray-900">
                   {formatMoney(popupClubPays)}
                 </div>
@@ -287,7 +303,7 @@ function EquipmentPurchaseModal({
           </div>
 
           <label className="block">
-            <span className="text-sm font-medium text-gray-700">Quantity</span>
+            <span className="text-sm font-medium text-gray-700">{t('common.quantity')}</span>
             <input
               type="number"
               min={1}
@@ -303,35 +319,35 @@ function EquipmentPurchaseModal({
           {purchaseQuote?.has_discount ? (
             <div className="rounded-lg border border-green-100 bg-green-50 p-3 text-sm text-green-800">
               <div className="flex justify-between">
-                <span>Base cost</span>
+                <span>{t('market.baseCost')}</span>
                 <span>{formatMoney(popupBaseCost)}</span>
               </div>
 
-              <div className="mt-1 flex justify-between">
-                <span>Sponsor pays</span>
-                <span>-{formatMoney(popupDiscountCash)}</span>
+              <div className="mt-1">
+                {t('market.sponsorPays', {
+                  amount: `-${formatMoney(popupDiscountCash)}`,
+                })}
               </div>
 
               <div className="mt-1 flex justify-between font-semibold">
-                <span>You pay</span>
+                <span>{t('market.youPay')}</span>
                 <span>{formatMoney(popupClubPays)}</span>
               </div>
 
               <div className="mt-2 text-xs">
-                Remaining support after purchase:{' '}
-                {formatMoney(
-                  Number(
-                    purchaseQuote.equipment_support_remaining_after_purchase_cash ?? 0
-                  )
-                )}
+                {t('market.remainingSupport', {
+                  amount: formatMoney(
+                    Number(
+                      purchaseQuote.equipment_support_remaining_after_purchase_cash ?? 0
+                    )
+                  ),
+                })}
               </div>
             </div>
           ) : null}
 
           <div className="rounded border border-blue-100 bg-blue-50 px-3 py-2 text-xs text-blue-800">
-            After confirmation, the purchase is sent to the Edge Function. The
-            database should reduce club funds, create the finance transaction,
-            and add the purchased items to the equipment inventory.
+            {t('market.purchaseInfo')}
           </div>
         </div>
 
@@ -342,7 +358,7 @@ function EquipmentPurchaseModal({
             disabled={isSubmitting}
             className="rounded border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
           >
-            Cancel
+            {t('common.cancel')}
           </button>
 
           <button
@@ -352,8 +368,8 @@ function EquipmentPurchaseModal({
             className="rounded bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-blue-300"
           >
             {isSubmitting
-              ? 'Purchasing...'
-              : `Purchase for ${formatMoney(popupClubPays)}`}
+              ? t('market.purchasing')
+              : t('market.purchaseFor', { amount: formatMoney(popupClubPays) })}
           </button>
         </div>
       </div>
@@ -373,6 +389,21 @@ function getQualityLabel(item: EquipmentMarketItem): string {
   if (value >= 75) return 'Super'
   if (value >= 60) return 'Good'
   return 'Basic'
+}
+
+function getQualityTranslationKey(item: EquipmentMarketItem): string | null {
+  const metadataLabel = getMetadataString(item.metadata, 'quality_label')?.toLowerCase()
+
+  if (metadataLabel === 'super') return 'quality.super'
+  if (metadataLabel === 'good') return 'quality.good'
+  if (metadataLabel === 'basic') return 'quality.basic'
+  if (metadataLabel) return null
+
+  const value = Number(item.quality_score ?? 0)
+
+  if (value >= 75) return 'quality.super'
+  if (value >= 60) return 'quality.good'
+  return 'quality.basic'
 }
 
 function getQualityBadgeClass(item: EquipmentMarketItem): string {
@@ -402,20 +433,6 @@ function getTerrainRole(item: EquipmentMarketItem): EquipmentTerrainRole {
   return 'general'
 }
 
-function getTerrainRoleLabel(item: EquipmentMarketItem): string {
-  const role =
-    getMetadataString(item.metadata, 'terrain_role') ??
-    getMetadataString(item.metadata, 'market_role')
-
-  if (role === 'aero_flat') return 'Aero / Flat'
-  if (role === 'climbing') return 'Climbing'
-  if (role === 'time_trial') return 'Time Trial'
-  if (role === 'endurance_cobble') return 'Endurance / Cobble'
-  if (role === 'all_round') return 'All-round'
-
-  return 'General'
-}
-
 function getTerrainBadgeClass(item: EquipmentMarketItem): string {
   const role =
     getMetadataString(item.metadata, 'terrain_role') ??
@@ -438,7 +455,7 @@ function getEffectEntries(
 
       return {
         key,
-        label: effectLabels[key] ?? key,
+        labelKey: effectLabelKeys[key] ?? null,
         value,
       }
     })
@@ -446,7 +463,7 @@ function getEffectEntries(
     .sort((a, b) => {
       if (a.value >= 0 && b.value < 0) return -1
       if (a.value < 0 && b.value >= 0) return 1
-      return a.label.localeCompare(b.label)
+      return (a.labelKey ?? a.key).localeCompare(b.labelKey ?? b.key)
     })
 }
 
@@ -468,67 +485,60 @@ function getEffectBadgeClass(value: number): string {
 }
 
 function EquipmentMarketRulesBox(): JSX.Element {
+  const { t } = useTranslation('equipment')
+
   return (
     <div className="rounded-lg border border-blue-100 bg-blue-50 p-4 text-sm text-blue-900">
-      <h3 className="font-semibold text-blue-950">Equipment bonus rules</h3>
+      <h3 className="font-semibold text-blue-950">{t('market.rules.title')}</h3>
 
       <div className="mt-3 grid gap-4 lg:grid-cols-2">
         <div>
-          <p className="font-medium">How bonuses are calculated</p>
+          <p className="font-medium">{t('market.rules.calculation')}</p>
           <p className="mt-1 text-blue-800">
-            Item bonuses are not added directly together. A full setup uses a weighted
-            calculation so equipment gives a realistic support advantage without replacing
-            rider skill.
+            {t('market.rules.calculationText')}
           </p>
 
           <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-blue-800">
-            <span>Frame</span>
+            <span>{t('market.rules.frame')}</span>
             <span className="font-medium">25%</span>
-            <span>Wheelset</span>
+            <span>{t('market.rules.wheelset')}</span>
             <span className="font-medium">25%</span>
-            <span>Tires</span>
+            <span>{t('market.rules.tires')}</span>
             <span className="font-medium">20%</span>
-            <span>Groupset</span>
+            <span>{t('market.rules.groupset')}</span>
             <span className="font-medium">15%</span>
-            <span>Shoes</span>
+            <span>{t('market.rules.shoes')}</span>
             <span className="font-medium">10%</span>
-            <span>Helmet</span>
+            <span>{t('market.rules.helmet')}</span>
             <span className="font-medium">5%</span>
           </div>
         </div>
 
         <div>
-          <p className="font-medium">Balance caps</p>
+          <p className="font-medium">{t('market.rules.balanceCaps')}</p>
           <p className="mt-1 text-blue-800">
-            Even if every selected item has a strong bonus, the equipment setup bonus is
-            capped. This prevents a weak rider with perfect equipment from becoming better
-            than a much stronger rider.
+            {t('market.rules.balanceText')}
           </p>
 
           <div className="mt-3 space-y-1 text-xs text-blue-800">
             <div>
-              <span className="font-medium">Equipment stage bonus cap:</span> 4%
+              <span className="font-medium">{t('market.rules.stageCap')}</span> 4%
             </div>
             <div>
-              <span className="font-medium">Team support cap:</span> 5%
+              <span className="font-medium">{t('market.rules.teamCap')}</span> 5%
             </div>
             <div>
-              <span className="font-medium">Total non-rider support cap:</span> 8%
+              <span className="font-medium">{t('market.rules.totalCap')}</span> 8%
             </div>
             <div>
-              <span className="font-medium">Fatigue reduction cap:</span> 10%
+              <span className="font-medium">{t('market.rules.fatigueCap')}</span> 10%
             </div>
           </div>
         </div>
       </div>
 
       <div className="mt-4 rounded border border-blue-200 bg-white/60 p-3 text-xs text-blue-800">
-        Example: if all six equipment items have <span className="font-medium">Flat +4%</span>,
-        the setup does not become +24%. It is weighted by category and capped around +4%.
-        Specialist equipment can include trade-offs, shown in red. For example, a pure climbing
-        item may give <span className="font-medium">Mountain +4%</span> but
-        <span className="font-medium"> Flat -1%</span> and
-        <span className="font-medium"> Sprint -2%</span>.
+        {t('market.rules.example')}
       </div>
     </div>
   )
@@ -538,6 +548,7 @@ export default function EquipmentMarketTab({
   clubId,
   equipmentAccess,
 }: EquipmentMarketTabProps): JSX.Element {
+  const { t } = useTranslation('equipment')
   const [items, setItems] = useState<EquipmentMarketItem[]>([])
   const [totalCount, setTotalCount] = useState(0)
   const [search, setSearch] = useState('')
@@ -617,11 +628,11 @@ export default function EquipmentMarketTab({
 
   const categoryOptions = useMemo(
     () =>
-      Object.entries(equipmentCategoryLabels).map(([key, label]) => ({
+      Object.keys(equipmentCategoryLabels).map(key => ({
         value: key as EquipmentCategory,
-        label,
+        label: t(`categories.${key}`),
       })),
-    []
+    [t]
   )
 
 
@@ -682,7 +693,10 @@ export default function EquipmentMarketTab({
       })
 
       setMessage(
-        `Purchase completed: ${quantity} × ${item.display_name} added to inventory.`
+        t('market.purchaseCompleted', {
+          quantity,
+          name: item.display_name,
+        })
       )
       setPurchaseDraft(null)
       await loadMarket()
@@ -710,7 +724,7 @@ export default function EquipmentMarketTab({
                 void loadMarket()
               }
             }}
-            placeholder="Search market..."
+            placeholder={t('market.searchPlaceholder')}
             className="rounded border border-gray-200 px-3 py-2 text-sm"
           />
 
@@ -737,10 +751,10 @@ export default function EquipmentMarketTab({
             }}
             className="rounded border border-gray-200 px-3 py-2 text-sm"
           >
-            <option value="">All equipment roles</option>
+            <option value="">{t('terrain.allRoles')}</option>
             {terrainRoleOptions.map(option => (
               <option key={option.value} value={option.value}>
-                {option.label}
+                {t(option.labelKey)}
               </option>
             ))}
           </select>
@@ -753,11 +767,11 @@ export default function EquipmentMarketTab({
             }}
             className="rounded border border-gray-200 px-3 py-2 text-sm"
           >
-            <option value="price_asc">Price: low first</option>
-            <option value="price_desc">Price: high first</option>
-            <option value="quality_desc">Quality: high first</option>
-            <option value="quality_asc">Quality: low first</option>
-            <option value="category_asc">Category</option>
+            <option value="price_asc">{t('market.priceLow')}</option>
+            <option value="price_desc">{t('market.priceHigh')}</option>
+            <option value="quality_desc">{t('market.qualityHigh')}</option>
+            <option value="quality_asc">{t('market.qualityLow')}</option>
+            <option value="category_asc">{t('market.category')}</option>
           </select>
 
         </div>
@@ -770,7 +784,7 @@ export default function EquipmentMarketTab({
           }}
           className="mt-3 rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
         >
-          Search
+          {t('common.search')}
         </button>
       </div>
 
@@ -780,27 +794,27 @@ export default function EquipmentMarketTab({
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="font-semibold text-slate-900">Market Comparison</h3>
-                <span className="rounded-full border border-yellow-300 bg-yellow-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-yellow-800">Premium</span>
+                <h3 className="font-semibold text-slate-900">{t('market.comparison')}</h3>
+                <span className="rounded-full border border-yellow-300 bg-yellow-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-yellow-800">{t('common.premium')}</span>
                 {comparisonItems.length > 0 ? (
-                  <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">{comparisonItems.length}/3 selected</span>
+                  <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">{t('market.selectedCount', { count: comparisonItems.length })}</span>
                 ) : null}
               </div>
-              <p className="mt-1 text-xs text-slate-500">Select up to three items and compare price, role and positive or negative effects. Purchases keep the normal club-cash price.</p>
+              <p className="mt-1 text-xs text-slate-500">{t('market.comparisonDescription')}</p>
             </div>
             <div className="flex items-center gap-2">
               {comparisonIds.length > 0 ? (
-                <button type="button" onClick={() => setComparisonIds([])} className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50">Clear</button>
+                <button type="button" onClick={() => setComparisonIds([])} className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50">{t('market.clear')}</button>
               ) : null}
               <button type="button" onClick={() => setComparisonExpanded(value => !value)} className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
-                {comparisonExpanded ? 'Hide comparison' : 'Show comparison'}
+                {comparisonExpanded ? t('market.hideComparison') : t('market.showComparison')}
               </button>
             </div>
           </div>
 
           {comparisonExpanded ? (
             comparisonItems.length === 0 ? (
-              <div className="mt-4 rounded-lg border border-dashed border-slate-300 bg-slate-50 px-4 py-6 text-center text-sm text-slate-500">Use the Compare control above a Buy button. Your selected items will appear here.</div>
+              <div className="mt-4 rounded-lg border border-dashed border-slate-300 bg-slate-50 px-4 py-6 text-center text-sm text-slate-500">{t('market.comparisonEmpty')}</div>
             ) : (
               <div className="mt-4 grid gap-3 lg:grid-cols-3">
                 {comparisonItems.map(item => {
@@ -811,22 +825,22 @@ export default function EquipmentMarketTab({
                   const isLowestPrice = getEffectivePriceCash(item) === lowestPrice
                   return (
                     <div key={item.id} className="relative rounded-xl border border-slate-200 bg-slate-50 p-4">
-                      <button type="button" onClick={() => toggleComparison(item.id)} className="absolute right-3 top-3 text-lg leading-none text-slate-400 hover:text-slate-700" aria-label={`Remove ${item.display_name} from comparison`}>×</button>
+                      <button type="button" onClick={() => toggleComparison(item.id)} className="absolute right-3 top-3 text-lg leading-none text-slate-400 hover:text-slate-700" aria-label={t('market.removeComparison', { name: item.display_name })}>×</button>
                       <div className="pr-7">
-                        <div className="text-xs font-medium uppercase tracking-wide text-slate-400">{item.brand_name ?? 'Generic brand'}</div>
+                        <div className="text-xs font-medium uppercase tracking-wide text-slate-400">{item.brand_name ?? t('common.genericBrand')}</div>
                         <div className="mt-1 font-semibold text-slate-900">{item.display_name}</div>
                       </div>
                       <div className="mt-3 flex flex-wrap gap-2">
-                        {isLowestPrice ? <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-700">Lowest price</span> : null}
-                        <span className="rounded-full bg-white px-2 py-0.5 text-xs font-medium text-slate-700">{getQualityLabel(item)}</span>
-                        <span className="rounded-full bg-white px-2 py-0.5 text-xs font-medium text-slate-700">{getTerrainRoleLabel(item)}</span>
+                        {isLowestPrice ? <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-700">{t('market.lowestPrice')}</span> : null}
+                        <span className="rounded-full bg-white px-2 py-0.5 text-xs font-medium text-slate-700">{getQualityTranslationKey(item) ? t(getQualityTranslationKey(item)!) : getQualityLabel(item)}</span>
+                        <span className="rounded-full bg-white px-2 py-0.5 text-xs font-medium text-slate-700">{t(terrainRoleLabelKeys[getTerrainRole(item)])}</span>
                       </div>
                       <div className="mt-4 text-2xl font-semibold text-slate-900">{formatMoney(getEffectivePriceCash(item))}</div>
                       <div className="mt-4 space-y-2">
-                        <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Advantages ({positiveEffects.length})</div>
-                        <div className="flex flex-wrap gap-1.5">{positiveEffects.length ? positiveEffects.map(effect => <span key={effect.key} className="rounded-full border border-green-100 bg-green-50 px-2 py-0.5 text-xs text-green-700">{effect.label} {formatEffectValue(effect.value)}</span>) : <span className="text-xs text-slate-400">None</span>}</div>
-                        <div className="pt-1 text-xs font-semibold uppercase tracking-wide text-slate-500">Trade-offs ({negativeEffects.length})</div>
-                        <div className="flex flex-wrap gap-1.5">{negativeEffects.length ? negativeEffects.map(effect => <span key={effect.key} className="rounded-full border border-red-100 bg-red-50 px-2 py-0.5 text-xs text-red-700">{effect.label} {formatEffectValue(effect.value)}</span>) : <span className="text-xs text-slate-400">None</span>}</div>
+                        <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">{t('market.advantages', { count: positiveEffects.length })}</div>
+                        <div className="flex flex-wrap gap-1.5">{positiveEffects.length ? positiveEffects.map(effect => <span key={effect.key} className="rounded-full border border-green-100 bg-green-50 px-2 py-0.5 text-xs text-green-700">{effect.labelKey ? t(effect.labelKey) : effect.key} {formatEffectValue(effect.value)}</span>) : <span className="text-xs text-slate-400">{t('market.none')}</span>}</div>
+                        <div className="pt-1 text-xs font-semibold uppercase tracking-wide text-slate-500">{t('market.tradeoffs', { count: negativeEffects.length })}</div>
+                        <div className="flex flex-wrap gap-1.5">{negativeEffects.length ? negativeEffects.map(effect => <span key={effect.key} className="rounded-full border border-red-100 bg-red-50 px-2 py-0.5 text-xs text-red-700">{effect.labelKey ? t(effect.labelKey) : effect.key} {formatEffectValue(effect.value)}</span>) : <span className="text-xs text-slate-400">{t('market.none')}</span>}</div>
                       </div>
                     </div>
                   )
@@ -840,13 +854,13 @@ export default function EquipmentMarketTab({
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="font-semibold text-slate-900">Market Comparison</h3>
-                <span className="rounded-full border border-yellow-300 bg-yellow-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-yellow-800">Premium</span>
+                <h3 className="font-semibold text-slate-900">{t('market.comparison')}</h3>
+                <span className="rounded-full border border-yellow-300 bg-yellow-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-yellow-800">{t('common.premium')}</span>
                 <span aria-hidden="true" className="text-slate-400">🔒</span>
               </div>
-              <p className="mt-1 text-sm text-slate-600">Compare up to three items by price, quality, role and bonuses.</p>
+              <p className="mt-1 text-sm text-slate-600">{t('market.comparisonLocked')}</p>
             </div>
-            <a href="/dashboard/premium" className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">Unlock with Premium</a>
+            <a href="/dashboard/premium" className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">{t('common.unlockPremium')}</a>
           </div>
         </div>
       )}
@@ -865,22 +879,28 @@ export default function EquipmentMarketTab({
 
       <div className="rounded-lg bg-white shadow-sm">
         <div className="border-b border-gray-100 p-4">
-          <h3 className="font-semibold text-gray-900">Equipment Market</h3>
+          <h3 className="font-semibold text-gray-900">{t('market.title')}</h3>
           <p className="text-xs text-gray-500">
-            Showing {filteredItems.length} of {filteredTotalCount}{' '}
-            {equipmentCategoryLabels[category].toLowerCase()}
             {terrainRole
-              ? ` for ${terrainRoleOptions.find(option => option.value === terrainRole)?.label ?? terrainRole}`
-              : ''}
-            .
+              ? t('market.showingRole', {
+                  shown: filteredItems.length,
+                  total: filteredTotalCount,
+                  category: t(`categories.${category}`),
+                  role: t(terrainRoleLabelKeys[terrainRole]),
+                })
+              : t('market.showing', {
+                  shown: filteredItems.length,
+                  total: filteredTotalCount,
+                  category: t(`categories.${category}`),
+                })}
           </p>
         </div>
 
         {loading ? (
-          <div className="p-4 text-sm text-gray-500">Loading market...</div>
+          <div className="p-4 text-sm text-gray-500">{t('market.loading')}</div>
         ) : filteredItems.length === 0 ? (
           <div className="p-4 text-sm text-gray-500">
-            No market items found for {equipmentCategoryLabels[category].toLowerCase()}.
+            {t('market.noneFound', { category: t(`categories.${category}`) })}
           </div>
         ) : (
           <div className="space-y-4 p-4">
@@ -920,11 +940,11 @@ export default function EquipmentMarketTab({
                           setImagePreview({
                             imageUrl,
                             title: item.display_name,
-                            subtitle: item.brand_name ?? 'Equipment item',
+                            subtitle: item.brand_name ?? t('common.equipmentItem'),
                           })
                         }
                         className="flex h-full w-full items-center justify-center"
-                        aria-label={`Open larger image for ${item.display_name}`}
+                        aria-label={t('market.openImage', { name: item.display_name })}
                       >
                         <img
                           src={imageUrl}
@@ -942,7 +962,7 @@ export default function EquipmentMarketTab({
 
                   <div className="min-w-0">
                     <div className="text-xs font-medium uppercase tracking-wide text-gray-400">
-                      {item.brand_name ?? 'Generic brand'}
+                      {item.brand_name ?? t('common.genericBrand')}
                     </div>
 
                     <h4 className="mt-1 truncate text-lg font-semibold text-gray-900">
@@ -956,7 +976,7 @@ export default function EquipmentMarketTab({
                           getQualityBadgeClass(item),
                         ].join(' ')}
                       >
-                        ★ {getQualityLabel(item)}
+                        ★ {getQualityTranslationKey(item) ? t(getQualityTranslationKey(item)!) : getQualityLabel(item)}
                       </span>
 
                       <span
@@ -965,17 +985,17 @@ export default function EquipmentMarketTab({
                           getTerrainBadgeClass(item),
                         ].join(' ')}
                       >
-                        {getTerrainRoleLabel(item)}
+                        {t(terrainRoleLabelKeys[getTerrainRole(item)])}
                       </span>
 
                       <span className="rounded-full border border-gray-200 bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600">
-                        Tier {item.tier}
+                        {t('common.tier', { tier: item.tier })}
                       </span>
                     </div>
 
                     <div className="mt-4">
                       <div className="text-xs font-medium uppercase tracking-wide text-gray-400">
-                        Bonuses
+                        {t('market.bonuses')}
                       </div>
 
                       {effectEntries.length > 0 ? (
@@ -988,13 +1008,13 @@ export default function EquipmentMarketTab({
                                 getEffectBadgeClass(effect.value),
                               ].join(' ')}
                             >
-                              {effect.label} {formatEffectValue(effect.value)}
+                              {effect.labelKey ? t(effect.labelKey) : effect.key} {formatEffectValue(effect.value)}
                             </span>
                           ))}
                         </div>
                       ) : (
                         <div className="mt-2 text-xs text-gray-400">
-                          No direct bonuses listed.
+                          {t('market.noBonuses')}
                         </div>
                       )}
                     </div>
@@ -1003,7 +1023,7 @@ export default function EquipmentMarketTab({
                   <div className="ml-auto flex min-w-[190px] flex-col items-end justify-between gap-3 self-stretch">
                     {hasSponsorDiscount ? (
                       <div className="w-full rounded-lg border border-green-200 bg-green-50 p-3 text-right">
-                        <div className="text-xs text-gray-400">Sponsor price</div>
+                        <div className="text-xs text-gray-400">{t('market.sponsorPrice')}</div>
 
                         <div className="mt-1 text-sm text-gray-400 line-through">
                           {formatMoney(basePriceCash)}
@@ -1014,20 +1034,20 @@ export default function EquipmentMarketTab({
                         </div>
 
                         <div className="mt-2 text-xs text-green-700">
-                          Save {formatMoney(discountCash)} ({discountPct.toFixed(0)}%)
+                          {t('market.saveAmount', { amount: formatMoney(discountCash), percent: discountPct.toFixed(0) })}
                         </div>
 
                         <div className="mt-1 text-xs text-green-700">
-                          Sponsor pays {formatMoney(discountCash)}
+                          {t('market.sponsorPays', { amount: formatMoney(discountCash) })}
                         </div>
 
                         <div className="mt-1 text-xs text-gray-500">
-                          Remaining fund: {formatMoney(remainingAfterPurchase)}
+                          {t('market.remainingFund', { amount: formatMoney(remainingAfterPurchase) })}
                         </div>
                       </div>
                     ) : (
                       <div className="text-right">
-                        <div className="text-xs text-gray-400">Club price</div>
+                        <div className="text-xs text-gray-400">{t('market.clubPrice')}</div>
                         <div className="text-xl font-semibold text-gray-900">
                           {formatMoney(clubPaysCash)}
                         </div>
@@ -1048,7 +1068,7 @@ export default function EquipmentMarketTab({
                             onChange={() => toggleComparison(item.id)}
                             className="h-4 w-4 rounded border-slate-300 text-yellow-500 focus:ring-yellow-400"
                           />
-                          {comparisonIds.includes(item.id) ? 'Selected' : 'Compare'}
+                          {comparisonIds.includes(item.id) ? t('common.selected') : t('market.compare')}
                         </label>
                       ) : null}
                     </div>
@@ -1059,7 +1079,7 @@ export default function EquipmentMarketTab({
                       onClick={() => openPurchaseModal(item)}
                       className="inline-flex h-10 items-center justify-center rounded-md bg-blue-600 px-5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
                     >
-                      {actionLoadingId === item.id ? 'Purchasing...' : 'Buy'}
+                      {actionLoadingId === item.id ? t('market.purchasing') : t('market.buy')}
                     </button>
                   </div>
                 </div>
@@ -1075,11 +1095,11 @@ export default function EquipmentMarketTab({
             onClick={() => setPage(current => Math.max(0, current - 1))}
             className="rounded border border-gray-200 px-3 py-1 text-sm disabled:opacity-40"
           >
-            Previous
+            {t('common.previous')}
           </button>
 
           <div className="text-sm text-gray-500">
-            Page {page + 1} / {totalPages}
+            {t('common.pageCount', { page: page + 1, pages: totalPages })}
           </div>
 
           <button
@@ -1088,7 +1108,7 @@ export default function EquipmentMarketTab({
             onClick={() => setPage(current => current + 1)}
             className="rounded border border-gray-200 px-3 py-1 text-sm disabled:opacity-40"
           >
-            Next
+            {t('common.next')}
           </button>
         </div>
       </div>
