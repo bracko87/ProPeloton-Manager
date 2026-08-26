@@ -11,6 +11,7 @@
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router'
+import { useTranslation } from 'react-i18next'
 import { supabase } from '../../lib/supabase'
 import TutorialOverlay from '../../components/tutorial/TutorialOverlay'
 import TutorialTargetFrame from '../../components/tutorial/TutorialTargetFrame'
@@ -388,6 +389,7 @@ async function fetchSquadSeasonDashboardData(
 }
 
 export default function SquadPage() {
+  const { t } = useTranslation(['squad', 'navigation'])
   const location = useLocation()
   const navigate = useNavigate()
 
@@ -935,13 +937,17 @@ export default function SquadPage() {
     if (movingRiderId) return
 
     if (!developingTeamStatus?.is_purchased || !developingTeamStatus.developing_club_id) {
-      setMoveActionMessage('Unlock Developing Team in Preferences first.')
+      setMoveActionMessage(t('nav.unlockDeveloping'))
       return
     }
 
     if (!developingTeamStatus.movement_window_open) {
       setMoveActionMessage(
-        `Movement window is closed. Next window: ${developingTeamStatus.next_window_label ?? 'Unknown'}.`
+        t('movement.windowClosedNext', {
+          window:
+            developingTeamStatus.next_window_label ??
+            t('movement.unknown'),
+        })
       )
       return
     }
@@ -957,11 +963,13 @@ export default function SquadPage() {
 
       if (moveError) throw moveError
 
-      setMoveActionMessage('Rider moved to the Developing Team.')
+      setMoveActionMessage(t('movement.movedToDeveloping'))
       await loadSquadPageData()
     } catch (e: any) {
       console.error('move_rider_between_main_and_developing failed:', e)
-      setMoveActionMessage(e?.message ?? 'Could not move rider to the Developing Team.')
+      setMoveActionMessage(
+        e?.message ?? t('movement.couldNotMove')
+      )
     } finally {
       setMovingRiderId(null)
     }
@@ -985,9 +993,15 @@ export default function SquadPage() {
 
   const movementWindowSummary = developingTeamStatus
     ? developingTeamStatus.movement_window_open
-      ? `Movement window open now: ${developingTeamStatus.current_window_label ?? 'Current window'}`
+      ? t('movement.windowOpen', {
+          window:
+            developingTeamStatus.current_window_label ??
+            t('movement.currentWindow'),
+        })
       : developingTeamStatus.next_window_label
-        ? `Movement window closed. Next window: ${developingTeamStatus.next_window_label}`
+        ? t('movement.windowClosedNextNoPeriod', {
+            window: developingTeamStatus.next_window_label,
+          })
         : ''
     : ''
 
@@ -995,62 +1009,65 @@ export default function SquadPage() {
     <div className="w-full">
       <div className="mb-4 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div>
-          <h2 className="mb-2 text-xl font-semibold">Squad</h2>
+          <h2 className="mb-2 text-xl font-semibold">{t('squad', { ns: 'navigation' })}</h2>
           <div className="text-sm text-gray-500">
             Manage your first-team squad and view season insights.
           </div>
         </div>
 
         <div className="inline-flex rounded-lg border border-gray-100 bg-white p-1 shadow-sm">
-          <a
-            href="#/dashboard/squad"
+          <button
+            type="button"
+            onClick={() => navigate('/dashboard/squad')}
             className={`rounded-md px-4 py-2 text-sm font-medium transition ${
               isActive('/dashboard/squad')
                 ? 'bg-yellow-400 text-black'
                 : 'text-gray-600 hover:bg-gray-100'
             }`}
           >
-            First Squad
-          </a>
+            {t('nav.firstSquad')}
+          </button>
 
           {hasDevelopingTeam ? (
-            <a
-              href="#/dashboard/developing-team"
+            <button
+              type="button"
+              onClick={() => navigate('/dashboard/developing-team')}
               className={`rounded-md px-4 py-2 text-sm font-medium transition ${
                 isActive('/dashboard/developing-team')
                   ? 'bg-yellow-400 text-black'
                   : 'text-gray-600 hover:bg-gray-100'
               }`}
             >
-              Developing Team
-            </a>
+              {t('nav.developingTeam')}
+            </button>
           ) : (
             <span
               className="inline-flex cursor-not-allowed select-none items-center gap-2 rounded-md bg-gray-50 px-4 py-2 text-sm font-medium text-gray-400 opacity-80"
               title={
                 developingTeamStatusError
-                  ? 'Developing Team is currently unavailable.'
-                  : 'Unlock Developing Team in Preferences first.'
+                  ? t('nav.developingUnavailable')
+                  : t('nav.unlockDeveloping')
               }
               aria-disabled="true"
               role="link"
               tabIndex={-1}
             >
-              <span>Developing Team</span>
+              <span>{t('nav.developingTeam')}</span>
               <span aria-hidden="true">🔒</span>
             </span>
           )}
 
-          <a
-            href="#/dashboard/staff"
+          <button
+            type="button"
+            onClick={() => navigate('/dashboard/staff')}
             className={`rounded-md px-4 py-2 text-sm font-medium transition ${
               isActive('/dashboard/staff')
                 ? 'bg-yellow-400 text-black'
                 : 'text-gray-600 hover:bg-gray-100'
             }`}
           >
-            Staff
-          </a>
+            {t('nav.staff')}
+          </button>
         </div>
       </div>
 
