@@ -1,5 +1,6 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router'
+import { useTranslation } from 'react-i18next'
 import TutorialOverlay from '../../components/tutorial/TutorialOverlay'
 import {
   statisticsTutorialSteps,
@@ -198,52 +199,59 @@ function normalizeStoredPage(value: unknown, fallback: number) {
   return fallback
 }
 
-const moneyFormatter = new Intl.NumberFormat('en-US', {
-  style: 'currency',
-  currency: 'USD',
-  maximumFractionDigits: 0,
-})
+const COMPETITION_LABEL_KEYS = {
+  worldteam: 'competition.worldTeam',
+  proteam: 'competition.proTeam',
+  continental: 'competition.continental',
+  amateur: 'competition.amateur',
+  tt: 'competition.tt',
+  TT: 'competition.tt',
+  time_trial: 'competition.tt',
+  TIME_TRIAL: 'competition.tt',
+  'time-trial': 'competition.tt',
+  WORLDTEAM: 'competition.worldTeam',
+  PROTEAM: 'competition.proTeam',
+  CONTINENTAL: 'competition.continental',
+  AMATEUR: 'competition.amateur',
+  PRO_WEST: 'competition.proWest',
+  PRO_EAST: 'competition.proEast',
+  CONTINENTAL_EUROPE: 'competition.continentalEurope',
+  CONTINENTAL_AMERICA: 'competition.continentalAmerica',
+  CONTINENTAL_ASIA: 'competition.continentalAsia',
+  CONTINENTAL_AFRICA: 'competition.continentalAfrica',
+  CONTINENTAL_OCEANIA: 'competition.continentalOceania',
+  NORTH_AMERICA: 'competition.northAmerica',
+  SOUTH_AMERICA: 'competition.southAmerica',
+  WESTERN_EUROPE: 'competition.westernEurope',
+  CENTRAL_EUROPE: 'competition.centralEurope',
+  SOUTHERN_BALKAN_EUROPE: 'competition.southernBalkanEurope',
+  NORTHERN_EASTERN_EUROPE: 'competition.northernEasternEurope',
+  WEST_NORTH_AFRICA: 'competition.westNorthAfrica',
+  CENTRAL_SOUTH_AFRICA: 'competition.centralSouthAfrica',
+  WEST_CENTRAL_ASIA: 'competition.westCentralAsia',
+  SOUTH_ASIA: 'competition.southAsia',
+  EAST_SOUTHEAST_ASIA: 'competition.eastSoutheastAsia',
+  OCEANIA: 'competition.oceania',
+} as const
 
-const COMPETITION_LABELS: Record<string, string> = {
-  worldteam: 'WorldTeam',
-  proteam: 'ProTeam',
-  continental: 'Continental',
-  amateur: 'Amateur',
-  tt: 'TT',
-  TT: 'TT',
-  time_trial: 'TT',
-  TIME_TRIAL: 'TT',
-  'time-trial': 'TT',
-  WORLDTEAM: 'WorldTeam',
-  PROTEAM: 'ProTeam',
-  CONTINENTAL: 'Continental',
-  AMATEUR: 'Amateur',
-  PRO_WEST: 'ProTeam West',
-  PRO_EAST: 'ProTeam East',
-  CONTINENTAL_EUROPE: 'Continental Europe',
-  CONTINENTAL_AMERICA: 'Continental America',
-  CONTINENTAL_ASIA: 'Continental Asia',
-  CONTINENTAL_AFRICA: 'Continental Africa',
-  CONTINENTAL_OCEANIA: 'Continental Oceania',
-  NORTH_AMERICA: 'North America',
-  SOUTH_AMERICA: 'South America',
-  WESTERN_EUROPE: 'Western Europe',
-  CENTRAL_EUROPE: 'Central Europe',
-  SOUTHERN_BALKAN_EUROPE: 'Southern & Balkan Europe',
-  NORTHERN_EASTERN_EUROPE: 'Northern & Eastern Europe',
-  WEST_NORTH_AFRICA: 'West & North Africa',
-  CENTRAL_SOUTH_AFRICA: 'Central & South Africa',
-  WEST_CENTRAL_ASIA: 'West & Central Asia',
-  SOUTH_ASIA: 'South Asia',
-  EAST_SOUTHEAST_ASIA: 'East & Southeast Asia',
-  OCEANIA: 'Oceania',
-}
+type CompetitionLabelCode = keyof typeof COMPETITION_LABEL_KEYS
 
-const RIDER_METRIC_LABELS: Record<RiderMetric, string> = {
-  season_points_overall: 'International',
-  season_points_sprint: 'Stage finish',
-  season_points_climbing: 'GC / one-day',
-}
+type RiderMetricLabelVariant = 'label' | 'points'
+
+const RIDER_METRIC_LABEL_KEYS = {
+  season_points_overall: {
+    label: 'metrics.international',
+    points: 'metrics.internationalPoints',
+  },
+  season_points_sprint: {
+    label: 'metrics.stageFinish',
+    points: 'metrics.stageFinishPoints',
+  },
+  season_points_climbing: {
+    label: 'metrics.gcOneDay',
+    points: 'metrics.gcOneDayPoints',
+  },
+} as const satisfies Record<RiderMetric, Record<RiderMetricLabelVariant, string>>
 
 function cx(...parts: Array<string | false | null | undefined>) {
   return parts.filter(Boolean).join(' ')
@@ -257,23 +265,8 @@ function toTitleCase(value: string) {
     .join(' ')
 }
 
-function formatCompetitionLabel(value: string | null | undefined) {
-  if (!value) return '—'
-  if (COMPETITION_LABELS[value]) return COMPETITION_LABELS[value]
-  if (COMPETITION_LABELS[value.toLowerCase()]) return COMPETITION_LABELS[value.toLowerCase()]
-  return toTitleCase(value.replace(/_/g, ' '))
-}
-
-function formatRiderMetricLabel(metric: RiderMetric) {
-  return RIDER_METRIC_LABELS[metric]
-}
-
 function getDivisionValue(team: TeamCurrentRow | TeamSnapshotRow) {
   return team.tier2_division || team.tier3_division || team.amateur_division || team.club_tier
-}
-
-function getDivisionLabel(team: TeamCurrentRow | TeamSnapshotRow) {
-  return formatCompetitionLabel(getDivisionValue(team))
 }
 
 function getAgeYearsAtDate(birthDate: string | null, referenceDate: string | null) {
@@ -451,6 +444,54 @@ function getStatisticsTabForTutorialStepKey(
 
 export default function StatisticsPage() {
   const navigate = useNavigate()
+  const { t, i18n } = useTranslation('statistics')
+
+  const formatCompetitionLabel = useCallback(
+    (value: string | null | undefined) => {
+      if (!value) return '—'
+
+      const translationKey =
+        COMPETITION_LABEL_KEYS[value as CompetitionLabelCode] ??
+        COMPETITION_LABEL_KEYS[value.toLowerCase() as CompetitionLabelCode] ??
+        COMPETITION_LABEL_KEYS[value.toUpperCase() as CompetitionLabelCode]
+
+      return translationKey ? t(translationKey) : toTitleCase(value.replace(/_/g, ' '))
+    },
+    [t]
+  )
+
+  const formatRiderMetricLabel = useCallback(
+    (metric: RiderMetric, variant: RiderMetricLabelVariant = 'label') =>
+      t(RIDER_METRIC_LABEL_KEYS[metric][variant]),
+    [t]
+  )
+
+  const getDivisionLabel = useCallback(
+    (team: TeamCurrentRow | TeamSnapshotRow) =>
+      formatCompetitionLabel(getDivisionValue(team)),
+    [formatCompetitionLabel]
+  )
+
+  const displayLocale = useMemo(() => {
+    const resolvedLanguage = i18n.resolvedLanguage
+
+    if (resolvedLanguage?.startsWith('sr')) return 'sr-Latn-RS'
+    if (resolvedLanguage?.startsWith('en')) return 'en-US'
+    if (resolvedLanguage?.startsWith('de')) return 'de-DE'
+
+    return resolvedLanguage || 'en-US'
+  }, [i18n.resolvedLanguage])
+
+  const moneyFormatter = useMemo(
+    () =>
+      new Intl.NumberFormat(displayLocale, {
+        style: 'currency',
+        currency: 'USD',
+        maximumFractionDigits: 0,
+      }),
+    [displayLocale]
+  )
+
   const storedStatisticsState = useMemo(() => readStoredStatisticsPageState(), [])
   const storedMainTab = storedStatisticsState?.mainTab
   const storedTeamSubTab = storedStatisticsState?.teamSubTab
@@ -943,7 +984,7 @@ export default function StatisticsPage() {
         setTeamCurrentLoaded(true)
       } catch (err: any) {
         if (!cancelled) {
-          setTeamCurrentError(err?.message ?? 'Failed to load current team statistics.')
+          setTeamCurrentError(err?.message ?? t('page.loadFailed'))
         }
       } finally {
         if (!cancelled) setTeamCurrentLoading(false)
@@ -955,7 +996,7 @@ export default function StatisticsPage() {
     return () => {
       cancelled = true
     }
-  }, [mainTab, teamSubTab, teamCurrentLoaded])
+  }, [mainTab, teamSubTab, teamCurrentLoaded, t])
 
   useEffect(() => {
     if (mainTab !== 'teams' || teamSubTab !== 'history' || teamHistoryLoaded) return
@@ -1009,7 +1050,7 @@ export default function StatisticsPage() {
         setTeamHistoryLoaded(true)
       } catch (err: any) {
         if (!cancelled) {
-          setTeamHistoryError(err?.message ?? 'Failed to load team history statistics.')
+          setTeamHistoryError(err?.message ?? t('page.loadFailed'))
         }
       } finally {
         if (!cancelled) setTeamHistoryLoading(false)
@@ -1021,7 +1062,7 @@ export default function StatisticsPage() {
     return () => {
       cancelled = true
     }
-  }, [mainTab, teamSubTab, teamHistoryLoaded])
+  }, [mainTab, teamSubTab, teamHistoryLoaded, t])
 
   useEffect(() => {
     if (mainTab !== 'riders' || sharedLoading || ridersLoaded) return
@@ -1165,7 +1206,7 @@ export default function StatisticsPage() {
         setRidersLoaded(true)
       } catch (err: any) {
         if (!cancelled) {
-          setRidersError(err?.message ?? 'Failed to load rider statistics.')
+          setRidersError(err?.message ?? t('page.loadFailed'))
         }
       } finally {
         if (!cancelled) setRidersLoading(false)
@@ -1183,6 +1224,7 @@ export default function StatisticsPage() {
     ridersLoaded,
     currentGameDate,
     currentSeasonNumber,
+    t,
   ])
 
 
@@ -1246,7 +1288,7 @@ export default function StatisticsPage() {
     return Array.from(new Set([...teamTiers, ...historyTiers, ...riderTiers])).sort((a, b) =>
       formatCompetitionLabel(a).localeCompare(formatCompetitionLabel(b))
     )
-  }, [teamRows, historicalSnapshotRows, riderRows])
+  }, [teamRows, historicalSnapshotRows, riderRows, formatCompetitionLabel])
 
   const availableDivisions = useMemo(() => {
     const currentDivisions = teamRows.map(row => getDivisionValue(row))
@@ -1254,7 +1296,7 @@ export default function StatisticsPage() {
     return Array.from(
       new Set([...currentDivisions, ...historyDivisions].filter(Boolean) as string[])
     ).sort((a, b) => formatCompetitionLabel(a).localeCompare(formatCompetitionLabel(b)))
-  }, [teamRows, historicalSnapshotRows])
+  }, [teamRows, historicalSnapshotRows, formatCompetitionLabel])
 
   const filteredTeamCurrent = useMemo(() => {
     let rows = [...teamRows]
@@ -1412,7 +1454,7 @@ export default function StatisticsPage() {
       .map(([label, value]) => ({ label, value }))
       .sort((a, b) => b.value - a.value)
       .slice(0, 8)
-  }, [filteredRiders])
+  }, [filteredRiders, formatCompetitionLabel])
 
   const riderAgeBuckets = useMemo(() => {
     const buckets = [
@@ -1480,18 +1522,15 @@ export default function StatisticsPage() {
     <div className="w-full space-y-6">
       <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
         <div>
-          <h2 className="text-2xl font-semibold text-slate-900">Statistics</h2>
-          <p className="mt-1 text-sm text-slate-600">
-            Team and rider statistics across your cycling world. Rider rankings here are global,
-            so they compare the best riders from all teams in the game.
-          </p>
+          <h2 className="text-2xl font-semibold text-slate-900">{t('page.title')}</h2>
+          <p className="mt-1 text-sm text-slate-600">{t('page.subtitle')}</p>
         </div>
 
         <div className="shrink-0 self-start md:self-start">
           <StatsTabGroup
             items={[
-              { key: 'teams', label: 'Teams' },
-              { key: 'riders', label: 'Riders' },
+              { key: 'teams', label: t('page.teams') },
+              { key: 'riders', label: t('page.riders') },
             ]}
             activeKey={mainTab}
             onChange={key => setMainTab(key as MainTab)}
