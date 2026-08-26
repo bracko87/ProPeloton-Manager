@@ -41,6 +41,7 @@
  */
 
 import React, { useEffect, useMemo, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router'
 import { supabase } from '@/lib/supabase'
 import TutorialOverlay from '../../components/tutorial/TutorialOverlay'
@@ -118,6 +119,48 @@ type DeliverableAssetKey =
   | 'equipment_van'
   | 'mobile_workshop'
   | 'medical_van'
+
+const facilityTranslationKeysByName = {
+  'Club House': {
+    name: 'facilityNames.clubHouse',
+    short: 'facilityDescriptions.clubHouseShort',
+    long: 'facilityDescriptions.clubHouseLong',
+  },
+  'Training Center': {
+    name: 'facilityNames.trainingCenter',
+    short: 'facilityDescriptions.trainingCenterShort',
+    long: 'facilityDescriptions.trainingCenterLong',
+  },
+  'Medical Center': {
+    name: 'facilityNames.medicalCenter',
+    short: 'facilityDescriptions.medicalCenterShort',
+    long: 'facilityDescriptions.medicalCenterLong',
+  },
+  'Youth Academy': {
+    name: 'facilityNames.youthAcademy',
+    short: 'facilityDescriptions.youthAcademyShort',
+    long: 'facilityDescriptions.youthAcademyLong',
+  },
+  'Mechanics Workshop': {
+    name: 'facilityNames.mechanicsWorkshop',
+    short: 'facilityDescriptions.mechanicsWorkshopShort',
+    long: 'facilityDescriptions.mechanicsWorkshopLong',
+  },
+  'Scouting Office': {
+    name: 'facilityNames.scoutingOffice',
+    short: 'facilityDescriptions.scoutingOfficeShort',
+    long: 'facilityDescriptions.scoutingOfficeLong',
+  },
+} as const
+
+const assetTranslationKeysByName = {
+  'Team Cars': 'assets.teamCars',
+  'Team Car': 'assets.teamCar',
+  'Team Bus': 'assets.teamBus',
+  'Equipment Van': 'assets.equipmentVan',
+  'Mobile Workshop': 'assets.mobileWorkshop',
+  'Medical Van': 'assets.medicalVan',
+} as const
 
 function getInfrastructureTabFromUrl(): TabKey {
   if (typeof window === 'undefined') return 'facilities'
@@ -217,6 +260,7 @@ function AssetActionConfirmModal({
   onClose: () => void
   onConfirm: () => void
 }) {
+  const { t } = useTranslation('infrastructure')
   const isRepair = modal.action === 'repair'
   const repairQuote = modal.repairQuote
   const saleQuote = modal.saleQuote
@@ -229,7 +273,7 @@ function AssetActionConfirmModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <button
         type="button"
-        aria-label="Close asset action modal"
+        aria-label={t('assetModal.closeAria')}
         onClick={onClose}
         className="absolute inset-0 bg-black/40 backdrop-blur-sm"
       />
@@ -238,7 +282,7 @@ function AssetActionConfirmModal({
         <div className="p-5 border-b border-gray-100 flex items-start justify-between gap-4">
           <div>
             <div className="text-xs uppercase tracking-wide text-gray-400">
-              {isRepair ? 'Repair Asset' : 'Sell Asset'}
+              {isRepair ? t('assetModal.repairAsset') : t('assetModal.sellAsset')}
             </div>
 
             <h3 className="text-xl font-semibold text-gray-900 mt-1">
@@ -246,7 +290,10 @@ function AssetActionConfirmModal({
             </h3>
 
             <p className="text-sm text-gray-500 mt-1">
-              Level {modal.target.assetLevel} · {modal.target.assetName}
+              {t('assetModal.levelAsset', {
+                level: modal.target.assetLevel,
+                asset: modal.target.assetName,
+              })}
             </p>
           </div>
 
@@ -255,14 +302,14 @@ function AssetActionConfirmModal({
             onClick={onClose}
             className="rounded-full border border-gray-200 bg-white px-3 py-1 text-sm text-gray-600 hover:bg-gray-50"
           >
-            Close
+            {t('common.close')}
           </button>
         </div>
 
         <div className="p-5">
           {modal.loading && (
             <div className="rounded-lg border border-gray-100 bg-gray-50 p-4 text-sm text-gray-600">
-              Calculating quote...
+              {t('assetModal.calculating')}
             </div>
           )}
 
@@ -276,26 +323,26 @@ function AssetActionConfirmModal({
             <div className="space-y-4">
               <div className="rounded-lg border border-gray-100 bg-gray-50 p-4">
                 <div className="text-sm font-semibold text-gray-900">
-                  Repair quote
+                  {t('assetModal.repairQuote')}
                 </div>
 
                 <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">
                   <div>
-                    <div className="text-xs text-gray-400">Current condition</div>
+                    <div className="text-xs text-gray-400">{t('assetModal.currentCondition')}</div>
                     <div className="font-semibold text-gray-900">
                       {toNumber(repairQuote.condition_percent, 0).toFixed(0)}%
                     </div>
                   </div>
 
                   <div>
-                    <div className="text-xs text-gray-400">Repair cost</div>
+                    <div className="text-xs text-gray-400">{t('assetModal.repairCost')}</div>
                     <div className="font-semibold text-gray-900">
                       {formatCash(repairQuote.repair_cost_cash)}
                     </div>
                   </div>
 
                   <div>
-                    <div className="text-xs text-gray-400">Repair time</div>
+                    <div className="text-xs text-gray-400">{t('assetModal.repairTime')}</div>
                     <div className="font-semibold text-gray-900">
                       {formatGameDays(repairQuote.duration_game_days)}
                     </div>
@@ -313,26 +360,26 @@ function AssetActionConfirmModal({
             <div className="space-y-4">
               <div className="rounded-lg border border-gray-100 bg-gray-50 p-4">
                 <div className="text-sm font-semibold text-gray-900">
-                  Sale quote
+                  {t('assetModal.saleQuote')}
                 </div>
 
                 <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">
                   <div>
-                    <div className="text-xs text-gray-400">Purchase cost</div>
+                    <div className="text-xs text-gray-400">{t('assetModal.purchaseCost')}</div>
                     <div className="font-semibold text-gray-900">
                       {formatCash(saleQuote.purchase_cost_cash)}
                     </div>
                   </div>
 
                   <div>
-                    <div className="text-xs text-gray-400">Condition</div>
+                    <div className="text-xs text-gray-400">{t('common.condition')}</div>
                     <div className="font-semibold text-gray-900">
                       {toNumber(saleQuote.condition_percent, 0).toFixed(0)}%
                     </div>
                   </div>
 
                   <div>
-                    <div className="text-xs text-gray-400">Money received</div>
+                    <div className="text-xs text-gray-400">{t('assetModal.moneyReceived')}</div>
                     <div className="font-semibold text-green-700">
                       {formatCash(saleQuote.sale_value_cash)}
                     </div>
@@ -345,7 +392,7 @@ function AssetActionConfirmModal({
               </div>
 
               <div className="rounded-lg border border-red-100 bg-red-50 p-3 text-xs text-red-700">
-                Selling removes this asset from the garage and returns the sale value to club cash.
+                {t('assetModal.sellingNotice')}
               </div>
             </div>
           )}
@@ -357,7 +404,7 @@ function AssetActionConfirmModal({
             onClick={onClose}
             className="px-4 py-2 rounded-md text-sm font-medium border border-gray-200 bg-white text-gray-700 hover:bg-gray-50"
           >
-            Cancel
+            {t('common.cancel')}
           </button>
 
           <button
@@ -374,11 +421,11 @@ function AssetActionConfirmModal({
           >
             {isProcessing
               ? isRepair
-                ? 'Starting repair...'
-                : 'Selling...'
+                ? t('assetModal.startingRepair')
+                : t('assetModal.selling')
               : isRepair
-                ? 'Confirm repair'
-                : 'Confirm sale'}
+                ? t('assetModal.confirmRepair')
+                : t('assetModal.confirmSale')}
           </button>
         </div>
       </div>
@@ -400,6 +447,7 @@ function getInfrastructureTabForTutorialStepKey(
 }
 
 export default function InfrastructurePage({ clubId }: { clubId?: string }) {
+  const { t } = useTranslation('infrastructure')
   const navigate = useNavigate()
 
   const [tutorialLoading, setTutorialLoading] = useState(true)
@@ -1465,12 +1513,23 @@ export default function InfrastructurePage({ clubId }: { clubId?: string }) {
   const activeJobs = useMemo<ActiveJobView[]>(() => {
     return pendingJobs.map(job => {
       if (job.job_type === 'facility_upgrade') {
-        const facilityName = facilityNameMap[job.target_key as FacilityKey] ?? job.target_key
+        const rawFacilityName = facilityNameMap[job.target_key as FacilityKey] ?? job.target_key
+        const facilityTranslation =
+          rawFacilityName in facilityTranslationKeysByName
+            ? facilityTranslationKeysByName[
+                rawFacilityName as keyof typeof facilityTranslationKeysByName
+              ]
+            : null
+        const facilityName = facilityTranslation
+          ? t(facilityTranslation.name)
+          : rawFacilityName
 
         return {
           id: job.id,
           name: facilityName,
-          summary: `Upgrading to Level ${job.facility_target_level ?? '?'}`,
+          summary: t('facilities.upgradingTo', {
+            level: job.facility_target_level ?? '?',
+          }),
           completeAt: job.complete_at,
           completeGameDate: job.complete_game_date,
           durationGameDays: job.duration_game_days,
@@ -1484,15 +1543,15 @@ export default function InfrastructurePage({ clubId }: { clubId?: string }) {
 
       const assetName =
         job.target_key === 'team_car'
-          ? metadataAssetName ?? `Team Car Lv ${job.asset_level ?? '?'}`
+          ? metadataAssetName ?? `${t('assets.teamCar')} ${t('common.level')} ${job.asset_level ?? '?'}`
           : job.target_key === 'team_bus'
-            ? metadataAssetName ?? `Team Bus Lv ${job.asset_level ?? '?'}`
+            ? metadataAssetName ?? `${t('assets.teamBus')} ${t('common.level')} ${job.asset_level ?? '?'}`
             : job.target_key === 'equipment_van'
-              ? metadataAssetName ?? `Equipment Van Lv ${job.asset_level ?? '?'}`
+              ? metadataAssetName ?? `${t('assets.equipmentVan')} ${t('common.level')} ${job.asset_level ?? '?'}`
               : job.target_key === 'mobile_workshop'
-                ? metadataAssetName ?? `Mobile Workshop Lv ${job.asset_level ?? '?'}`
+                ? metadataAssetName ?? `${t('assets.mobileWorkshop')} ${t('common.level')} ${job.asset_level ?? '?'}`
                 : job.target_key === 'medical_van'
-                  ? metadataAssetName ?? `Medical Van Lv ${job.asset_level ?? '?'}`
+                  ? metadataAssetName ?? `${t('assets.medicalVan')} ${t('common.level')} ${job.asset_level ?? '?'}`
                   : assetNameMap[job.target_key as AssetKey] ?? job.target_key
 
       return {
@@ -1500,16 +1559,16 @@ export default function InfrastructurePage({ clubId }: { clubId?: string }) {
         name: assetName,
         summary:
           job.target_key === 'team_car'
-            ? `Delivery x${job.asset_quantity ?? 1} · Level ${job.asset_level ?? '?'}`
+            ? `${t('common.delivery')} x${job.asset_quantity ?? 1} · ${t('common.level')} ${job.asset_level ?? '?'}`
             : job.target_key === 'team_bus'
-              ? `Delivery x${job.asset_quantity ?? 1} · Level ${job.asset_level ?? '?'}`
+              ? `${t('common.delivery')} x${job.asset_quantity ?? 1} · ${t('common.level')} ${job.asset_level ?? '?'}`
               : job.target_key === 'equipment_van'
-                ? `Delivery x${job.asset_quantity ?? 1} · Level ${job.asset_level ?? '?'}`
+                ? `${t('common.delivery')} x${job.asset_quantity ?? 1} · ${t('common.level')} ${job.asset_level ?? '?'}`
                 : job.target_key === 'mobile_workshop'
-                  ? `Delivery x${job.asset_quantity ?? 1} · Level ${job.asset_level ?? '?'}`
+                  ? `${t('common.delivery')} x${job.asset_quantity ?? 1} · ${t('common.level')} ${job.asset_level ?? '?'}`
                   : job.target_key === 'medical_van'
-                    ? `Delivery x${job.asset_quantity ?? 1} · Level ${job.asset_level ?? '?'}`
-                    : `Delivery x${job.asset_quantity ?? 1}`,
+                    ? `${t('common.delivery')} x${job.asset_quantity ?? 1} · ${t('common.level')} ${job.asset_level ?? '?'}`
+                    : `${t('common.delivery')} x${job.asset_quantity ?? 1}`,
         completeAt: job.complete_at,
         completeGameDate: job.complete_game_date,
         durationGameDays: job.duration_game_days,
@@ -1517,7 +1576,7 @@ export default function InfrastructurePage({ clubId }: { clubId?: string }) {
         type: job.job_type,
       }
     })
-  }, [pendingJobs])
+  }, [pendingJobs, t])
 
   const facilities = useMemo<InfrastructureItem[]>(() => {
     if (!infrastructure) return []
@@ -1536,40 +1595,55 @@ export default function InfrastructurePage({ clubId }: { clubId?: string }) {
           ? facilityConfigsByKeyLevel.get(`${item.id}:${nextLevel}`) ?? null
           : null
 
+      const facilityTranslation =
+        item.name in facilityTranslationKeysByName
+          ? facilityTranslationKeysByName[
+              item.name as keyof typeof facilityTranslationKeysByName
+            ]
+          : null
+
       return {
         type: 'facility',
         id: item.id,
-        name: item.name,
-        description: item.description,
-        longDescription: item.longDescription,
+        name: facilityTranslation ? t(facilityTranslation.name) : item.name,
+        description: facilityTranslation ? t(facilityTranslation.short) : item.description,
+        longDescription: facilityTranslation ? t(facilityTranslation.long) : item.longDescription,
         imageUrl: facilityImageUrls[item.id] ?? null,
         currentValue: level,
         maxValue: maxLevel,
         owned: level > 0,
         canAct: !pendingJob && !isMaxed && !!nextConfig && hasFacilitySlot,
         actionLabel: pendingJob
-          ? 'In Progress'
+          ? t('common.inProgress')
           : isMaxed
-            ? 'Max Level'
+            ? t('common.maxLevel')
             : !hasFacilitySlot
-              ? 'Slots Full'
+              ? t('common.slotsFull')
               : nextConfig
                 ? level > 0
-                  ? 'Upgrade'
-                  : 'Build'
-                : 'Config Missing',
-        badgeLabel: pendingJob ? 'In Progress' : level > 0 ? 'Built' : 'Not Built',
-        valueLabel: `Current level: ${level} / ${maxLevel}`,
+                  ? t('common.upgrade')
+                  : t('common.build')
+                : t('common.configMissing'),
+        badgeLabel: pendingJob
+          ? t('common.inProgress')
+          : level > 0
+            ? t('common.built')
+            : t('common.notBuilt'),
+        valueLabel: t('facilities.currentLevel', { level, max: maxLevel }),
         pendingJob,
         pendingSummary: pendingJob
-          ? `Queued upgrade to Level ${pendingJob.facility_target_level ?? level + 1}`
+          ? t('facilities.queuedUpgrade', {
+              level: pendingJob.facility_target_level ?? level + 1,
+            })
           : null,
         previewCostCash: nextConfig?.cost_cash ?? null,
         previewDurationGameDays: nextConfig?.duration_game_days ?? null,
         previewCompleteGameDate: nextConfig
           ? addGameDays(currentGameDate, nextConfig.duration_game_days)
           : null,
-        nextValueLabel: !pendingJob && !isMaxed ? `Next level: ${nextLevel}` : null,
+        nextValueLabel: !pendingJob && !isMaxed
+          ? t('facilities.nextLevelValue', { level: nextLevel })
+          : null,
         unlockSummary: nextConfig?.unlock_summary ?? null,
         effectSummary: nextConfig?.effect_summary ?? null,
         impactKind: item.impactKind,
@@ -1591,6 +1665,7 @@ export default function InfrastructurePage({ clubId }: { clubId?: string }) {
     coachingEffect,
     medicalEffect,
     facilityJobCapacity,
+    t,
   ])
 
   const assets = useMemo<InfrastructureItem[]>(() => {
@@ -1600,17 +1675,22 @@ export default function InfrastructurePage({ clubId }: { clubId?: string }) {
       const quantity = item.getValue(infrastructure)
       const pendingJob = pendingAssetJobsByKey.get(item.id) ?? null
 
+      const assetTranslationKey =
+        item.name in assetTranslationKeysByName
+          ? assetTranslationKeysByName[item.name as keyof typeof assetTranslationKeysByName]
+          : null
+
       return {
         type: 'asset',
         id: item.id,
-        name: item.name,
+        name: assetTranslationKey ? t(assetTranslationKey) : item.name,
         description: item.description,
         imageUrl: null,
         currentValue: quantity,
         owned: quantity > 0,
         canAct: false,
         actionLabel: 'Coming Later',
-        badgeLabel: pendingJob ? 'Delivering' : quantity > 0 ? 'Owned' : 'Planned',
+        badgeLabel: pendingJob ? 'Delivering' : quantity > 0 ? t('common.owned') : 'Planned',
         valueLabel: `Qty ${quantity}`,
         pendingJob,
         pendingSummary: pendingJob ? `Queued delivery x${pendingJob.asset_quantity ?? 1}` : null,
@@ -1620,7 +1700,7 @@ export default function InfrastructurePage({ clubId }: { clubId?: string }) {
         nextValueLabel: 'Assets will be balanced after facility infrastructure is complete.',
       }
     })
-  }, [infrastructure, pendingAssetJobsByKey])
+  }, [infrastructure, pendingAssetJobsByKey, t])
 
   const selectedItem = useMemo(() => {
     if (!selectedItemKey) return null
@@ -2055,7 +2135,7 @@ export default function InfrastructurePage({ clubId }: { clubId?: string }) {
   async function handleTeamCarAcquire(assetLevel: number) {
     await handleAssetAcquire({
       assetKey: 'team_car',
-      assetLabel: 'Team Car',
+      assetLabel: t('assets.teamCar'),
       assetLevel,
     })
   }
@@ -2063,7 +2143,7 @@ export default function InfrastructurePage({ clubId }: { clubId?: string }) {
   async function handleTeamBusAcquire(assetLevel: number) {
     await handleAssetAcquire({
       assetKey: 'team_bus',
-      assetLabel: 'Team Bus',
+      assetLabel: t('assets.teamBus'),
       assetLevel,
     })
   }
@@ -2071,7 +2151,7 @@ export default function InfrastructurePage({ clubId }: { clubId?: string }) {
   async function handleEquipmentVanAcquire(assetLevel: number) {
     await handleAssetAcquire({
       assetKey: 'equipment_van',
-      assetLabel: 'Equipment Van',
+      assetLabel: t('assets.equipmentVan'),
       assetLevel,
     })
   }
@@ -2079,7 +2159,7 @@ export default function InfrastructurePage({ clubId }: { clubId?: string }) {
   async function handleMobileWorkshopAcquire(assetLevel: number) {
     await handleAssetAcquire({
       assetKey: 'mobile_workshop',
-      assetLabel: 'Mobile Workshop',
+      assetLabel: t('assets.mobileWorkshop'),
       assetLevel,
     })
   }
@@ -2087,7 +2167,7 @@ export default function InfrastructurePage({ clubId }: { clubId?: string }) {
   async function handleMedicalVanAcquire(assetLevel: number) {
     await handleAssetAcquire({
       assetKey: 'medical_van',
-      assetLabel: 'Medical Van',
+      assetLabel: t('assets.medicalVan'),
       assetLevel,
     })
   }
@@ -2164,7 +2244,7 @@ export default function InfrastructurePage({ clubId }: { clubId?: string }) {
     return (
       <div className="w-full">
         <div className="bg-white rounded-lg p-6 shadow border border-gray-100 text-sm text-gray-500">
-          Loading infrastructure...
+          {t('page.loading')}
         </div>
       </div>
     )
@@ -2184,7 +2264,7 @@ export default function InfrastructurePage({ clubId }: { clubId?: string }) {
     return (
       <div className="w-full">
         <div className="bg-white rounded-lg p-6 shadow border border-gray-100 text-sm text-gray-500">
-          No infrastructure data found.
+          {t('page.noData')}
         </div>
       </div>
     )
@@ -2194,15 +2274,14 @@ export default function InfrastructurePage({ clubId }: { clubId?: string }) {
     <div className="w-full">
       <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h2 className="text-xl font-semibold text-gray-900">Infrastructure</h2>
+          <h2 className="text-xl font-semibold text-gray-900">{t('page.title')}</h2>
           <p className="text-sm text-gray-500 mt-1">
-            Buildings now use realistic game-time construction. Infrastructure controls staff capacity,
-            staff-effect caps, scouting limits, and future equipment systems.
+            {t('page.description')}
           </p>
 
           {currentGameDate && (
             <p className="text-xs text-gray-400 mt-1">
-              Current game date: {formatGameDate(currentGameDate)}
+              {t('page.currentGameDate')} {formatGameDate(currentGameDate)}
             </p>
           )}
         </div>
@@ -2214,7 +2293,7 @@ export default function InfrastructurePage({ clubId }: { clubId?: string }) {
             disabled={refreshing}
             className="px-4 py-2 rounded-lg bg-white border border-gray-100 shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-60"
           >
-            {refreshing ? 'Refreshing...' : 'Refresh'}
+            {refreshing ? t('page.refreshing') : t('page.refresh')}
           </button>
 
           <div className="inline-flex rounded-lg bg-white border border-gray-100 p-1 shadow-sm">
@@ -2227,7 +2306,7 @@ export default function InfrastructurePage({ clubId }: { clubId?: string }) {
                   : 'text-gray-600 hover:bg-gray-100'
               }`}
             >
-              Facilities
+              {t('page.facilities')}
             </button>
 
             <button
@@ -2239,7 +2318,7 @@ export default function InfrastructurePage({ clubId }: { clubId?: string }) {
                   : 'text-gray-600 hover:bg-gray-100'
               }`}
             >
-              Assets
+              {t('page.assets')}
             </button>
           </div>
         </div>
