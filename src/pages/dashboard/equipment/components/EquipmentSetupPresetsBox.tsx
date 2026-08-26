@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import EquipmentOptionPreviewPopover from './EquipmentOptionPreviewPopover'
 import {
   calculateEquipmentCatalogSetupBonusPreview,
@@ -79,10 +80,9 @@ type SetupPreset = {
 type SetupCapacity = {
   maxAssignments: number | null
   limitingItemLabel: string | null
-  limitingCategoryLabel: string | null
+  limitingCategory: EquipmentCategory | null
   itemCaps: Array<{
     category: EquipmentCategory
-    categoryLabel: string
     label: string
     available: number
     owned: number
@@ -103,14 +103,13 @@ type SetupDraft = {
 
 const equipmentCategories: Array<{
   key: EquipmentCategory
-  label: string
 }> = [
-  { key: 'frame', label: 'Frame' },
-  { key: 'wheelset', label: 'Wheelset' },
-  { key: 'tires', label: 'Tires' },
-  { key: 'groupset', label: 'Groupset' },
-  { key: 'helmet', label: 'Helmet' },
-  { key: 'shoes', label: 'Shoes' },
+  { key: 'frame' },
+  { key: 'wheelset' },
+  { key: 'tires' },
+  { key: 'groupset' },
+  { key: 'helmet' },
+  { key: 'shoes' },
 ]
 
 const bonusLabels: Record<string, string> = {
@@ -233,7 +232,6 @@ function getSetupCapacity(
     return [
       {
         category: category.key,
-        categoryLabel: category.label,
         label: option.display_name?.trim() || option.label,
         available: toNumber(option.available_count),
         owned: toNumber(option.owned_count),
@@ -245,7 +243,7 @@ function getSetupCapacity(
     return {
       maxAssignments: null,
       limitingItemLabel: null,
-      limitingCategoryLabel: null,
+      limitingCategory: null,
       itemCaps,
     }
   }
@@ -257,17 +255,9 @@ function getSetupCapacity(
   return {
     maxAssignments,
     limitingItemLabel: limitingItem.label,
-    limitingCategoryLabel: limitingItem.categoryLabel,
+    limitingCategory: limitingItem.category,
     itemCaps,
   }
-}
-
-function formatSetupCapacityLabel(capacity: SetupCapacity): string {
-  if (capacity.maxAssignments === null) {
-    return 'Incomplete setup'
-  }
-
-  return `Available setups: ${capacity.maxAssignments}/${capacity.maxAssignments}`
 }
 
 function getSetupCapacityBadgeClass(capacity: SetupCapacity): string {
@@ -286,18 +276,6 @@ function getSetupCapacityBadgeClass(capacity: SetupCapacity): string {
   return 'bg-emerald-100 text-emerald-700'
 }
 
-function getSetupCapacityHelper(capacity: SetupCapacity): string {
-  if (capacity.maxAssignments === null) {
-    return 'Select all six equipment categories to calculate setup availability.'
-  }
-
-  if (!capacity.limitingItemLabel) {
-    return 'Capacity is based on the lowest available selected equipment type.'
-  }
-
-  return `Limited by ${capacity.limitingCategoryLabel}: ${capacity.limitingItemLabel}.`
-}
-
 function makeDraftFromPreset(preset: SetupPreset): SetupDraft {
   return {
     setup_slot: preset.setup_slot,
@@ -309,10 +287,10 @@ function makeDraftFromPreset(preset: SetupPreset): SetupDraft {
   }
 }
 
-function getMissingDraftCategories(draft: SetupDraft): string[] {
+function getMissingDraftCategories(draft: SetupDraft): EquipmentCategory[] {
   return equipmentCategories
     .filter(category => !draft.selected_catalog_item_ids[category.key])
-    .map(category => category.label)
+    .map(category => category.key)
 }
 
 function isDraftComplete(draft: SetupDraft): boolean {
@@ -326,16 +304,17 @@ function PresetBonusLine({
   preview: BonusPreview | null | undefined
   loading: boolean
 }): JSX.Element {
+  const { t } = useTranslation('equipment')
   const entries = getBonusEntries(preview?.weighted_bonuses)
 
   if (loading) {
-    return <div className="text-xs text-gray-400">Calculating bonuses…</div>
+    return <div className="text-xs text-gray-400">{t('presets.calculating')}</div>
   }
 
   if (entries.length === 0) {
     return (
       <div className="text-xs text-gray-400">
-        No weighted setup bonuses yet.
+        {t('presets.noWeighted')}
       </div>
     )
   }
@@ -368,6 +347,7 @@ export default function EquipmentSetupPresetsBox({
   onAccessChanged?: (access: EquipmentPremiumAccess) => void
   onSaved?: () => void
 }): JSX.Element {
+  const { t } = useTranslation('equipment')
   const [data, setData] = useState<SetupPresetsResponse | null>(null)
   const [drafts, setDrafts] = useState<Record<number, SetupDraft>>({})
   const [draftPreviews, setDraftPreviews] = useState<Record<number, BonusPreview>>({})
@@ -382,6 +362,36 @@ export default function EquipmentSetupPresetsBox({
 
   const presets = useMemo(() => data?.presets ?? [], [data?.presets])
   const options = useMemo(() => data?.options ?? [], [data?.options])
+
+  function getCategoryLabel(category: EquipmentCategory): string {
+    return t(`categories.${category}`)
+  }
+
+  function formatSetupCapacityLabel(capacity: SetupCapacity): string {
+    if (capacity.maxAssignments === null) {
+      return t('presets.incomplete')
+    }
+
+    return t('presets.availableSetups', {
+      available: capacity.maxAssignments,
+      total: capacity.maxAssignments,
+    })
+  }
+
+  function getSetupCapacityHelper(capacity: SetupCapacity): string {
+    if (capacity.maxAssignments === null) {
+      return t('presets.selectSix')
+    }
+
+    if (!capacity.limitingItemLabel || !capacity.limitingCategory) {
+      return t('presets.capacityLowest')
+    }
+
+    return t('presets.limitedBy', {
+      category: getCategoryLabel(capacity.limitingCategory),
+      item: capacity.limitingItemLabel,
+    })
+  }
 
   function setPreviewLoading(slot: number, value: boolean): void {
     setPreviewLoadingSlots(previous => {
@@ -507,7 +517,7 @@ export default function EquipmentSetupPresetsBox({
     try {
       const nextAccess = await unlockEquipmentSetupSlot(clubId, slot)
       onAccessChanged?.(nextAccess)
-      setSavedMessage(`Setup slot ${slot} unlocked permanently.`)
+      setSavedMessage(t('presets.slotUnlocked', { slot }))
       window.dispatchEvent(new CustomEvent('coin-balance-changed'))
     } catch (caughtError) {
       setError(
@@ -522,7 +532,7 @@ export default function EquipmentSetupPresetsBox({
 
   async function saveDraft(draft: SetupDraft): Promise<void> {
     if (!isDraftComplete(draft)) {
-      setError('Please select all six equipment types before saving this setup.')
+      setError(t('presets.selectAllBeforeSave'))
       return
     }
 
@@ -543,7 +553,11 @@ export default function EquipmentSetupPresetsBox({
         shoesCatalogItemId: draft.selected_catalog_item_ids.shoes || null,
       })
 
-      setSavedMessage(`${draft.setup_name || `Setup ${draft.setup_slot}`} saved.`)
+      setSavedMessage(
+        t('presets.saved', {
+          name: draft.setup_name || `Setup ${draft.setup_slot}`,
+        }),
+      )
       await loadPresets()
       onSaved?.()
     } catch (caughtError) {
@@ -566,8 +580,8 @@ export default function EquipmentSetupPresetsBox({
   if (loading) {
     return (
       <section className="rounded-lg bg-white p-4 shadow-sm">
-        <h3 className="text-lg font-semibold">Race Setup Configurations</h3>
-        <p className="mt-1 text-sm text-gray-500">Loading setup presets…</p>
+        <h3 className="text-lg font-semibold">{t('presets.title')}</h3>
+        <p className="mt-1 text-sm text-gray-500">{t('presets.loading')}</p>
       </section>
     )
   }
@@ -576,10 +590,9 @@ export default function EquipmentSetupPresetsBox({
     <section className="rounded-lg bg-white p-4 shadow-sm">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h3 className="text-lg font-semibold">Race Setup Configurations</h3>
+          <h3 className="text-lg font-semibold">{t('presets.title')}</h3>
           <p className="mt-1 text-sm text-gray-500">
-            Save up to four preferred equipment type setups. The setup capacity
-            shows how many riders can use that exact configuration in one stage.
+            {t('presets.description')}
           </p>
         </div>
 
@@ -611,7 +624,7 @@ export default function EquipmentSetupPresetsBox({
           const isSaving = savingSlot === preset.setup_slot
           const isPreviewLoading = previewLoadingSlots.has(preset.setup_slot)
           const capacity = getSetupCapacity(draft, options)
-          const missingCategories = getMissingDraftCategories(draft)
+          const missingCategories = getMissingDraftCategories(draft).map(getCategoryLabel)
           const canSave = isDraftComplete(draft)
           const isUnlocked = isSlotUnlocked(preset.setup_slot)
 
@@ -630,14 +643,14 @@ export default function EquipmentSetupPresetsBox({
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
-                      <h4 className="font-semibold text-slate-900">Additional setup slot</h4>
+                      <h4 className="font-semibold text-slate-900">{t('presets.additionalSlot')}</h4>
                       <span className="rounded-full border border-yellow-300 bg-yellow-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-yellow-800">
                         Premium
                       </span>
                       <span aria-hidden="true" className="text-slate-400">🔒</span>
                     </div>
                     <p className="mt-1 text-sm text-slate-600">
-                      Save another preferred equipment configuration for faster Stage Plan preparation.
+                      {t('presets.additionalDescription')}
                     </p>
                   </div>
                 </div>
@@ -655,13 +668,14 @@ export default function EquipmentSetupPresetsBox({
                     disabled={isUnlocking || Number(equipmentAccess?.coin_balance ?? 0) < 10}
                     className="inline-flex items-center justify-center rounded-md border border-yellow-400 bg-yellow-50 px-3 py-2 text-sm font-semibold text-yellow-900 hover:bg-yellow-100 disabled:cursor-not-allowed disabled:opacity-50"
                   >
-                    {isUnlocking ? 'Unlocking…' : 'Unlock permanently · 10 coins'}
+                    {isUnlocking ? t('presets.unlocking') : t('presets.unlockPermanently')}
                   </button>
                 </div>
 
                 <p className="mt-2 text-xs text-slate-500">
-                  Current balance: {Number(equipmentAccess?.coin_balance ?? 0).toLocaleString()} coins.
-                  Purchased slots remain available after Premium ends.
+                  {t('presets.balance', {
+                    coins: Number(equipmentAccess?.coin_balance ?? 0).toLocaleString(),
+                  })}
                 </p>
               </div>
             )
@@ -711,7 +725,7 @@ export default function EquipmentSetupPresetsBox({
                   return (
                     <label key={category.key} className="block">
                       <span className="text-xs font-medium uppercase text-gray-400">
-                        {category.label}
+                        {getCategoryLabel(category.key)}
                       </span>
 
                       <div className="mt-1">
@@ -739,8 +753,12 @@ export default function EquipmentSetupPresetsBox({
                           >
                             <option value="">
                               {categoryOptions.length === 0
-                                ? `No owned ${category.label.toLowerCase()}`
-                                : `No ${category.label.toLowerCase()} selected`}
+                                ? t('presets.noOwned', {
+                                    category: getCategoryLabel(category.key),
+                                  })
+                                : t('presets.noneSelected', {
+                                    category: getCategoryLabel(category.key),
+                                  })}
                             </option>
 
                             {categoryOptions.map(option => (
@@ -761,7 +779,7 @@ export default function EquipmentSetupPresetsBox({
 
               <div className="mt-4 rounded border border-gray-100 bg-white p-3">
                 <div className="mb-2 text-xs font-medium uppercase text-gray-400">
-                  Weighted bonus preview
+                  {t('presets.weightedPreview')}
                 </div>
 
                 <PresetBonusLine
@@ -770,15 +788,17 @@ export default function EquipmentSetupPresetsBox({
                 />
 
                 <p className="mt-2 text-xs text-gray-400">
-                  Calculated only from selected equipment types owned by your club.
+                  {t('presets.previewInfo')}
                 </p>
               </div>
 
               <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
                 <div className="text-xs text-gray-400">
                   {canSave
-                    ? 'Setup is complete and can be saved.'
-                    : `Missing: ${missingCategories.join(', ')}`}
+                    ? t('presets.complete')
+                    : t('presets.missing', {
+                        categories: missingCategories.join(', '),
+                      })}
                 </div>
 
                 <button
@@ -787,7 +807,7 @@ export default function EquipmentSetupPresetsBox({
                   disabled={isSaving || !canSave}
                   className="rounded bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-blue-300"
                 >
-                  {isSaving ? 'Saving…' : 'Save Setup'}
+                  {isSaving ? 'Saving…' : t('presets.save')}
                 </button>
               </div>
             </div>
