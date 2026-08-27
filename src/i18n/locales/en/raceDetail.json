@@ -170,8 +170,6 @@
     "noneConfirmed": "No accepted teams have been confirmed yet. Accepted teams will appear here once the official startlist is published.",
 
     "teamRiderCount": "{{teams}} teams · {{riders}} assigned riders",
-    "teamsFragment": "teams ·",
-    "assignedRidersFragment": "assigned riders",
     "assignedRiders": "{{count}} assigned riders",
 
     "teamLogo": "Team logo",
