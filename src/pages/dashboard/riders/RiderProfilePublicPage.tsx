@@ -10,6 +10,7 @@
  */
 
 import React, { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useNavigate, useParams } from 'react-router'
 import RiderProfileModal from '../../../components/riders/RiderProfileModal'
 import { supabase } from '../../../lib/supabase'
@@ -83,6 +84,7 @@ function normalizeString(value: unknown): string | null {
 }
 
 export default function RiderProfilePublicPage() {
+  const { t } = useTranslation('riderProfile')
   const { riderId } = useParams<{ riderId: string }>()
   const navigate = useNavigate()
 
@@ -97,7 +99,7 @@ export default function RiderProfilePublicPage() {
 
     async function loadRiderProfile() {
       if (!riderId) {
-        setError('Missing rider id.')
+        setError(t('wrapper.missingId'))
         setLoading(false)
         return
       }
@@ -114,7 +116,7 @@ export default function RiderProfilePublicPage() {
           .maybeSingle()
 
         if (riderError) throw riderError
-        if (!data) throw new Error('Rider profile not found.')
+        if (!data) throw new Error(t('wrapper.notFound'))
 
         const row = data as Record<string, unknown>
 
@@ -124,7 +126,7 @@ export default function RiderProfilePublicPage() {
             normalizeString(row.display_name) ??
             normalizeString(row.rider_name) ??
             normalizeString(row.rider_name_snapshot) ??
-            'Unknown rider',
+            t('common.unknownRider'),
           country_code: normalizeString(row.country_code),
           role: normalizeString(row.role) ?? '',
           overall: normalizeNullableNumber(row.overall),
@@ -170,7 +172,7 @@ export default function RiderProfilePublicPage() {
         setRider(riderRow)
       } catch (e: any) {
         if (!mounted) return
-        setError(e?.message ?? 'Failed to load rider profile.')
+        setError(e?.message ?? t('wrapper.loadFailed'))
       } finally {
         if (mounted) setLoading(false)
       }
@@ -181,10 +183,10 @@ export default function RiderProfilePublicPage() {
     return () => {
       mounted = false
     }
-  }, [riderId])
+  }, [riderId, t])
 
   if (loading) {
-    return <div className="p-6 text-sm text-slate-600">Loading rider profile…</div>
+    return <div className="p-6 text-sm text-slate-600">{t('wrapper.loading')}</div>
   }
 
   if (error || !rider) {
@@ -195,11 +197,11 @@ export default function RiderProfilePublicPage() {
           onClick={() => navigate(-1)}
           className="rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"
         >
-          ← Back
+          {t('common.back')}
         </button>
 
         <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
-          {error ?? 'Rider profile not found.'}
+          {error ?? t('wrapper.notFound')}
         </div>
       </div>
     )
@@ -217,7 +219,7 @@ export default function RiderProfilePublicPage() {
       setShowRiderHistory={setShowRiderHistory}
       countryNameByCode={new Map<string, string>()}
       variant="page"
-      backButtonLabel="← Back"
+      backButtonLabel={t('common.back')}
     />
   )
 }
