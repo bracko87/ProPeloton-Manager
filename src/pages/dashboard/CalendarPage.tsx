@@ -2049,7 +2049,8 @@ export default function CalendarPage(): JSX.Element {
                       gameDateParts.season_number,
                       gameDateParts.month_number,
                       gameDateParts.day_number,
-                      currentGameDate
+                      currentGameDate,
+                      t
                     )}
                   </div>
 
@@ -2280,14 +2281,16 @@ export default function CalendarPage(): JSX.Element {
                               booking.start_date,
                               currentMonthStart,
                               gameDateParts.season_number,
-                              gameDateParts.month_number
+                              gameDateParts.month_number,
+                              t
                             )}{' '}
                             →{' '}
                             {formatGameDateFromCanonical(
                               booking.end_date,
                               currentMonthStart,
                               gameDateParts.season_number,
-                              gameDateParts.month_number
+                              gameDateParts.month_number,
+                              t
                             )}
                           </div>
                         ) : null}
