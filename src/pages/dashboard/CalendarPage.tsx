@@ -2,6 +2,8 @@
 
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router'
+import { useTranslation } from 'react-i18next'
+import type { TFunction } from 'i18next'
 import { supabase } from '../../lib/supabase'
 import TutorialOverlay from '../../components/tutorial/TutorialOverlay'
 import {
@@ -188,7 +190,7 @@ type CalendarGridCell =
 
 // Calendar month lengths follow the canonical stored game date (Gregorian YYYY-MM-DD).
 
-const GAME_MONTH_NAMES = [
+const GAME_MONTH_KEYS = [
   'January',
   'February',
   'March',
@@ -200,10 +202,10 @@ const GAME_MONTH_NAMES = [
   'September',
   'October',
   'November',
-  'December'
-]
+  'December',
+] as const
 
-const GAME_MONTH_SHORT_NAMES = [
+const GAME_MONTH_SHORT_KEYS = [
   'Jan',
   'Feb',
   'Mar',
@@ -216,17 +218,19 @@ const GAME_MONTH_SHORT_NAMES = [
   'Oct',
   'Nov',
   'Dec',
-]
+] as const
 
-const WEEKDAY_NAMES_MONDAY_FIRST = [
+const WEEKDAY_KEYS_MONDAY_FIRST = [
   'Monday',
   'Tuesday',
   'Wednesday',
   'Thursday',
   'Friday',
   'Saturday',
-  'Sunday'
-]
+  'Sunday',
+] as const
+
+type CalendarT = TFunction<'calendarPage'>
 
 const STATUS_BADGE_STYLES: Record<string, string> = {
   planned: 'bg-blue-100 text-blue-700',
@@ -249,25 +253,38 @@ const WEATHER_LABELS: Array<{
     | 'p_snow'
     | 'p_thunderstorm'
   >
-  label: string
+  translationKey:
+    | 'weather.clear'
+    | 'weather.partlyCloudy'
+    | 'weather.overcast'
+    | 'weather.foggy'
+    | 'weather.drizzle'
+    | 'weather.rain'
+    | 'weather.heavyRain'
+    | 'weather.sleet'
+    | 'weather.snow'
+    | 'weather.thunderstorm'
 }> = [
-  { key: 'p_clear', label: 'Clear' },
-  { key: 'p_partly_cloudy', label: 'Partly Cloudy' },
-  { key: 'p_overcast', label: 'Overcast' },
-  { key: 'p_foggy', label: 'Foggy' },
-  { key: 'p_drizzle', label: 'Drizzle' },
-  { key: 'p_rain', label: 'Rain' },
-  { key: 'p_heavy_rain', label: 'Heavy Rain' },
-  { key: 'p_sleet', label: 'Sleet' },
-  { key: 'p_snow', label: 'Snow' },
-  { key: 'p_thunderstorm', label: 'Thunderstorm' }
+  { key: 'p_clear', translationKey: 'weather.clear' },
+  { key: 'p_partly_cloudy', translationKey: 'weather.partlyCloudy' },
+  { key: 'p_overcast', translationKey: 'weather.overcast' },
+  { key: 'p_foggy', translationKey: 'weather.foggy' },
+  { key: 'p_drizzle', translationKey: 'weather.drizzle' },
+  { key: 'p_rain', translationKey: 'weather.rain' },
+  { key: 'p_heavy_rain', translationKey: 'weather.heavyRain' },
+  { key: 'p_sleet', translationKey: 'weather.sleet' },
+  { key: 'p_snow', translationKey: 'weather.snow' },
+  { key: 'p_thunderstorm', translationKey: 'weather.thunderstorm' },
 ]
 
-const FILTER_OPTIONS: Array<{ key: keyof SeasonCalendarFilters; label: string }> = [
-  { key: 'races', label: 'Races' },
-  { key: 'trainingCamps', label: 'Training Camps' },
-  { key: 'events', label: 'Events' },
-  { key: 'holidays', label: 'Holidays' }
+const FILTER_OPTIONS: Array<{
+  key: keyof SeasonCalendarFilters
+  translationKey: 'filters.races' | 'filters.trainingCamps' | 'filters.events' | 'filters.holidays'
+}> = [
+  { key: 'races', translationKey: 'filters.races' },
+  { key: 'trainingCamps', translationKey: 'filters.trainingCamps' },
+  { key: 'events', translationKey: 'filters.events' },
+  { key: 'holidays', translationKey: 'filters.holidays' },
 ]
 
 const BASE_GAME_SEASON_YEAR = 2000
@@ -315,11 +332,14 @@ function differenceInDays(a: Date, b: Date): number {
   return Math.round((left - right) / 86400000)
 }
 
-function formatCurrency(value: number | null | undefined): string {
-  return new Intl.NumberFormat('en-US', {
+function formatCurrency(
+  value: number | null | undefined,
+  locale?: string
+): string {
+  return new Intl.NumberFormat(locale || undefined, {
     style: 'currency',
     currency: 'USD',
-    maximumFractionDigits: 0
+    maximumFractionDigits: 0,
   }).format(Number(value ?? 0))
 }
 
@@ -370,14 +390,17 @@ function getRaceWeatherCancellationDisplayStatus(race: RaceCalendarItem): RaceAp
   return null
 }
 
-function getWeatherCancellationReasonLabel(reason?: string | null): string {
+function getWeatherCancellationReasonLabel(
+  reason: string | null | undefined,
+  t: CalendarT
+): string {
   switch (reason) {
     case 'snow':
-      return 'Snow'
+      return t('weather.snow')
     case 'temperature_below_5c':
-      return 'Average temperature below 5°C'
+      return t('weather.temperatureBelow5')
     default:
-      return titleCaseFromSnake(reason ?? 'weather_cancelled')
+      return reason?.trim() ? titleCaseFromSnake(reason) : 'weather_cancelled'
   }
 }
 
@@ -403,12 +426,19 @@ function getMonthStartFromGameDate(currentGameDate: string, _currentDayNumber: n
   return new Date(current.getFullYear(), current.getMonth(), 1)
 }
 
-function getGameMonthName(monthNumber: number): string {
-  return GAME_MONTH_NAMES[monthNumber - 1] ?? `Month ${monthNumber}`
+function getGameMonthName(monthNumber: number, t: CalendarT): string {
+  const monthKey = GAME_MONTH_KEYS[monthNumber - 1]
+  return monthKey ? t(`dates.months.${monthKey}`) : `Month ${monthNumber}`
 }
 
-function getGameMonthShortName(monthNumber: number): string {
-  return GAME_MONTH_SHORT_NAMES[monthNumber - 1] ?? `M${monthNumber}`
+function getGameMonthDateName(monthNumber: number, t: CalendarT): string {
+  const monthKey = GAME_MONTH_KEYS[monthNumber - 1]
+  return monthKey ? t(`dates.monthsDate.${monthKey}`) : `Month ${monthNumber}`
+}
+
+function getGameMonthShortName(monthNumber: number, t: CalendarT): string {
+  const monthKey = GAME_MONTH_SHORT_KEYS[monthNumber - 1]
+  return monthKey ? t(`dates.shortMonths.${monthKey}`) : `M${monthNumber}`
 }
 
 function clampGameMonth(value: number | null | undefined): number | null {
@@ -426,15 +456,19 @@ function clampGameMonth(value: number | null | undefined): number | null {
 function formatCompactGameDateDisplay(
   seasonNumber: number,
   monthNumber: number,
-  dayNumber: number
+  dayNumber: number,
+  t: CalendarT
 ): string {
-  return `S${seasonNumber} · ${getGameMonthShortName(monthNumber)} ${String(dayNumber).padStart(
+  return `S${seasonNumber} · ${getGameMonthShortName(monthNumber, t)} ${String(dayNumber).padStart(
     2,
     '0'
   )}`
 }
 
-function formatCalendarDateBadge(race: RaceCalendarEntryWithGameDates): {
+function formatCalendarDateBadge(
+  race: RaceCalendarEntryWithGameDates,
+  t: CalendarT
+): {
   start: string
   end: string | null
 } {
@@ -442,11 +476,13 @@ function formatCalendarDateBadge(race: RaceCalendarEntryWithGameDates): {
   const end = race.endGameDate
 
   const startLabel = `${String(start.dayNumber).padStart(2, '0')} ${getGameMonthShortName(
-    start.monthNumber
+    start.monthNumber,
+    t
   )}`
 
   const endLabel = `${String(end.dayNumber).padStart(2, '0')} ${getGameMonthShortName(
-    end.monthNumber
+    end.monthNumber,
+    t
   )}`
 
   const sameDay =
@@ -456,7 +492,7 @@ function formatCalendarDateBadge(race: RaceCalendarEntryWithGameDates): {
 
   return {
     start: startLabel,
-    end: sameDay ? null : endLabel
+    end: sameDay ? null : endLabel,
   }
 }
 
@@ -487,8 +523,9 @@ function getRaceCalendarSortOrdinal(parts: DerivedGameDateParts): number {
   )
 }
 
-function getWeekdayName(date: Date): string {
-  return new Intl.DateTimeFormat('en-US', { weekday: 'long' }).format(date)
+function getWeekdayName(date: Date, t: CalendarT): string {
+  const weekdayKey = WEEKDAY_KEYS_MONDAY_FIRST[getWeekdayIndexMondayFirst(date)]
+  return weekdayKey ? t(`dates.weekdays.${weekdayKey}`) : ''
 }
 
 function getWeekdayIndexMondayFirst(date: Date): number {
@@ -496,25 +533,34 @@ function getWeekdayIndexMondayFirst(date: Date): number {
   return jsDay === 0 ? 6 : jsDay - 1
 }
 
-function formatGameMonthLabel(seasonNumber: number, monthNumber: number): string {
-  return `Season ${seasonNumber} - ${getGameMonthName(monthNumber)}`
+function formatGameMonthLabel(
+  seasonNumber: number,
+  monthNumber: number,
+  t: CalendarT
+): string {
+  return `${t('season.season')} ${seasonNumber} - ${getGameMonthName(monthNumber, t)}`
 }
 
 function formatGameDateDisplay(
   seasonNumber: number,
   monthNumber: number,
   dayNumber: number,
-  canonicalDate: string
+  canonicalDate: string,
+  t: CalendarT
 ): string {
-  const weekdayName = getWeekdayName(parseDateString(canonicalDate))
-  return `Season ${seasonNumber} - ${weekdayName} - ${getGameMonthName(monthNumber)} ${dayNumber}`
+  const weekdayName = getWeekdayName(parseDateString(canonicalDate), t)
+  return `${t('season.season')} ${seasonNumber} - ${weekdayName} - ${getGameMonthDateName(
+    monthNumber,
+    t
+  )} ${dayNumber}`
 }
 
 function formatGameDateFromCanonical(
   canonicalDate: string,
   currentMonthStart: Date,
   currentSeasonNumber: number,
-  currentMonthNumber: number
+  currentMonthNumber: number,
+  t: CalendarT
 ): string {
   const parts = getGameDatePartsFromCanonical(
     canonicalDate,
@@ -523,14 +569,21 @@ function formatGameDateFromCanonical(
     currentMonthNumber
   )
 
-  return formatGameDateDisplay(parts.seasonNumber, parts.monthNumber, parts.dayNumber, canonicalDate)
+  return formatGameDateDisplay(
+    parts.seasonNumber,
+    parts.monthNumber,
+    parts.dayNumber,
+    canonicalDate,
+    t
+  )
 }
 
 function formatRaceGameRange(
   start: RaceCalendarEntryWithGameDates['startGameDate'],
   end: RaceCalendarEntryWithGameDates['endGameDate'],
   startDate: string,
-  endDate: string
+  endDate: string,
+  t: CalendarT
 ): string {
   const sameDay =
     start.seasonNumber === end.seasonNumber &&
@@ -538,25 +591,43 @@ function formatRaceGameRange(
     start.dayNumber === end.dayNumber
 
   if (sameDay) {
-    return formatGameDateDisplay(start.seasonNumber, start.monthNumber, start.dayNumber, startDate)
+    return formatGameDateDisplay(
+      start.seasonNumber,
+      start.monthNumber,
+      start.dayNumber,
+      startDate,
+      t
+    )
   }
 
   return `${formatGameDateDisplay(
     start.seasonNumber,
     start.monthNumber,
     start.dayNumber,
-    startDate
-  )} → ${formatGameDateDisplay(end.seasonNumber, end.monthNumber, end.dayNumber, endDate)}`
+    startDate,
+    t
+  )} → ${formatGameDateDisplay(
+    end.seasonNumber,
+    end.monthNumber,
+    end.dayNumber,
+    endDate,
+    t
+  )}`
 }
 
-function formatCalendarCellDate(monthNumber: number, dayNumber: number): string {
-  return `${getGameMonthName(monthNumber)} ${dayNumber}`
+function formatCalendarCellDate(
+  monthNumber: number,
+  dayNumber: number,
+  t: CalendarT
+): string {
+  return `${getGameMonthDateName(monthNumber, t)} ${dayNumber}`
 }
 
 function formatRaceBadgeLabel(
   race: RaceCalendarItem,
   canonicalDateString: string,
-  stagesByRaceId: Record<string, RaceStageCalendarRow[]>
+  stagesByRaceId: Record<string, RaceStageCalendarRow[]>,
+  t: CalendarT
 ): string {
   const stages = stagesByRaceId[race.id] ?? []
   const matchingStage = stages.find(stage => stage.stage_date === canonicalDateString)
@@ -564,7 +635,8 @@ function formatRaceBadgeLabel(
   if (matchingStage?.stage_number != null) {
     const weatherSuffix = matchingStage.weather_cancelled
       ? ` · Canceled (${getWeatherCancellationReasonLabel(
-          matchingStage.weather_cancellation_reason ?? null
+          matchingStage.weather_cancellation_reason ?? null,
+          t
         )})`
       : ''
 
@@ -841,21 +913,21 @@ function getISOWeek(date: Date): number {
   return Math.ceil((utcDate.getTime() - yearStart.getTime() + 86400000) / 604800000)
 }
 
-function getDominantWeatherLabel(weather: WeatherNormals | null): string {
-  if (!weather) return 'No weather data'
+function getDominantWeatherLabel(weather: WeatherNormals | null, t: CalendarT): string {
+  if (!weather) return t('weather.noData')
 
-  let bestLabel = 'Mixed Conditions'
+  let bestTranslationKey: (typeof WEATHER_LABELS)[number]['translationKey'] = 'weather.clear'
   let bestScore = -1
 
   for (const item of WEATHER_LABELS) {
     const score = Number(weather[item.key] ?? 0)
     if (score > bestScore) {
       bestScore = score
-      bestLabel = item.label
+      bestTranslationKey = item.translationKey
     }
   }
 
-  return bestLabel
+  return t(bestTranslationKey)
 }
 
 function formatWeatherNumber(value: number | null | undefined, digits = 0): string {
@@ -894,6 +966,7 @@ function chunkValues<T>(values: T[], chunkSize = 150): T[][] {
 }
 
 export default function CalendarPage(): JSX.Element {
+  const { t, i18n } = useTranslation('calendarPage')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -1911,7 +1984,7 @@ export default function CalendarPage(): JSX.Element {
   }
 
   if (loading) {
-    return <div className="w-full text-sm text-gray-600">Loading calendar…</div>
+    return <div className="w-full text-sm text-gray-600">{t('page.loading')}</div>
   }
 
 
@@ -1919,9 +1992,9 @@ export default function CalendarPage(): JSX.Element {
     <div className="w-full">
       <div className="mb-5 flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
         <div className="min-w-0 flex-1">
-          <h2 className="text-xl font-semibold text-gray-900">Calendar</h2>
+          <h2 className="text-xl font-semibold text-gray-900">{t('page.title')}</h2>
           <p className="mt-1 text-sm text-gray-500">
-            Season overview, race schedule, and team-country weather for the current in-game date.
+            {t('page.subtitle')}
           </p>
 
           {error ? (
@@ -1961,13 +2034,13 @@ export default function CalendarPage(): JSX.Element {
           <div className="w-full xl:max-w-[380px]">
             <div className="rounded-lg border border-sky-200 bg-sky-50 px-4 py-3">
               <div className="text-xs font-semibold uppercase tracking-wide text-sky-700">
-                Team Country Weather
+                {t('weather.teamCountry')}
               </div>
 
               {teamWeather && gameDateParts && currentGameDate ? (
                 <div className="mt-2 space-y-1.5">
                   <div className="text-sm font-medium text-gray-900">
-                    Today:{' '}
+                    {t('weather.today')}:{' '}
                     {formatGameDateDisplay(
                       gameDateParts.season_number,
                       gameDateParts.month_number,
@@ -1978,7 +2051,7 @@ export default function CalendarPage(): JSX.Element {
 
                   <div className="text-sm font-semibold text-gray-900">
                     {formatWeatherNumber(teamWeather.avg_temp_c)}°C ·{' '}
-                    {getDominantWeatherLabel(teamWeather)}
+                    {getDominantWeatherLabel(teamWeather, t)}
                   </div>
 
                   <div className="text-xs text-gray-600">
@@ -1990,7 +2063,7 @@ export default function CalendarPage(): JSX.Element {
                 </div>
               ) : (
                 <div className="mt-2 text-sm text-gray-600">
-                  No team-country weather data available yet.
+                  {t('weather.noData')}
                 </div>
               )}
             </div>
@@ -2005,8 +2078,8 @@ export default function CalendarPage(): JSX.Element {
               <div>
                 <h4 className="font-semibold text-gray-900">
                   {gameDateParts
-                    ? formatGameMonthLabel(gameDateParts.season_number, resolvedDisplayedSeasonMonth)
-                    : 'Current Month'}
+                    ? formatGameMonthLabel(gameDateParts.season_number, resolvedDisplayedSeasonMonth, t)
+                    : t('season.currentMonth')}
                 </h4>
                 <p className="text-sm text-gray-500">
                   {currentGameDate && gameDateParts
@@ -2014,9 +2087,10 @@ export default function CalendarPage(): JSX.Element {
                         gameDateParts.season_number,
                         gameDateParts.month_number,
                         gameDateParts.day_number,
-                        currentGameDate
+                        currentGameDate,
+                        t
                       )}`
-                    : 'Game date unavailable'}
+                    : t('season.gameDateUnavailable')}
                 </p>
               </div>
 
@@ -2032,11 +2106,11 @@ export default function CalendarPage(): JSX.Element {
                         : 'text-gray-700 hover:bg-gray-100'
                     }`}
                   >
-                    ← Previous
+                    ← {t('season.previous')}
                   </button>
 
                   <div className="min-w-[140px] px-3 text-center text-sm font-semibold text-gray-800">
-                    {getGameMonthName(resolvedDisplayedSeasonMonth)}
+                    {getGameMonthName(resolvedDisplayedSeasonMonth, t)}
                   </div>
 
                   <button
@@ -2068,7 +2142,7 @@ export default function CalendarPage(): JSX.Element {
                           onChange={() => toggleSeasonFilter(option.key)}
                           className="h-4 w-4 rounded border-gray-300 text-yellow-400 focus:ring-yellow-400"
                         />
-                        <span>{option.label}</span>
+                        <span>{t(option.translationKey)}</span>
                       </label>
                     ))}
                   </div>
@@ -2123,7 +2197,7 @@ export default function CalendarPage(): JSX.Element {
                     }`}
                   >
                     <div className="text-[11px] font-medium leading-4 text-gray-700">
-                      {formatCalendarCellDate(day.gameParts.monthNumber, day.gameParts.dayNumber)}
+                      {formatCalendarCellDate(day.gameParts.monthNumber, day.gameParts.dayNumber, t)}
                     </div>
 
                     <div className="mt-2 space-y-1">
@@ -2151,7 +2225,7 @@ export default function CalendarPage(): JSX.Element {
                             onClick={() => openRaceDetail(race.id)}
                             className="text-left hover:underline"
                           >
-                            {formatRaceBadgeLabel(race, day.canonicalDateString, raceStagesByRaceId)}
+                            {formatRaceBadgeLabel(race, day.canonicalDateString, raceStagesByRaceId, t)}
                           </button>
                         </div>
                         )
@@ -2229,7 +2303,7 @@ export default function CalendarPage(): JSX.Element {
                         </span>
 
                         <span className="rounded-full bg-gray-100 px-2.5 py-1 text-xs text-gray-700">
-                          {formatCurrency(booking.total_cost)}
+                          {formatCurrency(booking.total_cost, i18n.resolvedLanguage ?? i18n.language)}
                         </span>
                       </div>
                     </li>
@@ -2278,7 +2352,7 @@ export default function CalendarPage(): JSX.Element {
                           : 'text-gray-600 hover:bg-gray-100'
                       }`}
                     >
-                      {getGameMonthName(monthNumber)}
+                      {getGameMonthName(monthNumber, t)}
                     </button>
                   )
                 })}
@@ -2494,7 +2568,7 @@ export default function CalendarPage(): JSX.Element {
 
                       <div className="text-xs text-gray-500">
                         Showing {filteredActiveMonthRaces.length} of {activeMonthRaces.length} races in{' '}
-                        {getGameMonthName(resolvedActiveRaceMonth)}
+                        {getGameMonthName(resolvedActiveRaceMonth, t)}
                       </div>
                     </div>
                   </div>
@@ -2533,14 +2607,15 @@ export default function CalendarPage(): JSX.Element {
               <div className="rounded-md border border-gray-200 p-4 text-sm text-gray-500">
                 {isPremium && activePremiumFilterCount > 0
                   ? `No races match the selected Premium filters for ${getGameMonthName(
-                      resolvedActiveRaceMonth
+                      resolvedActiveRaceMonth,
+                      t
                     )}.`
-                  : `No races scheduled for ${getGameMonthName(resolvedActiveRaceMonth)}.`}
+                  : `No races scheduled for ${getGameMonthName(resolvedActiveRaceMonth, t)}.`}
               </div>
             ) : (
               <ul className="space-y-3">
                 {filteredActiveMonthRaces.map((race) => {
-                  const dateBadge = formatCalendarDateBadge(race)
+                  const dateBadge = formatCalendarDateBadge(race, t)
                   const effectiveRaceStatus = getEffectiveRaceCalendarStatus(race)
                   const sponsorTargetsForRace = sponsorObjectiveTargetsByRaceId[race.id] ?? []
                   const hasSponsorObjectiveTarget = sponsorTargetsForRace.length > 0
