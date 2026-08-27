@@ -9,6 +9,7 @@ const enResource = {
   ...enRaceDetail,
   bridge: {
     raceDate: 'Race date: {{date}}',
+    stageDate: 'S{{season}} · {{weekday}} · {{month}} {{day}} · {{time}}',
     leadersTitle: 'Leaders / Winners',
     average: 'Average',
     minMax: 'Min / max',
@@ -22,6 +23,7 @@ const srResource = {
   ...srRaceDetail,
   bridge: {
     raceDate: 'Datum trke: {{date}}',
+    stageDate: 'S{{season}} · {{weekday}} · {{month}} {{day}} · {{time}}',
     leadersTitle: 'Lideri / pobednici',
     average: 'Prosek',
     minMax: 'Min / maks',
@@ -29,6 +31,45 @@ const srResource = {
     cancellationInfo:
       'Otkazivanje se određuje automatski 24 sata u igri pre početka etape, na osnovu generisanih vremenskih uslova. Sneg ili prosečna temperatura ispod 5°C otkazuju etapu.',
   },
+}
+
+const SHORT_WEEKDAYS: Record<string, string> = {
+  Mon: 'Pon',
+  Tue: 'Uto',
+  Wed: 'Sre',
+  Thu: 'Čet',
+  Fri: 'Pet',
+  Sat: 'Sub',
+  Sun: 'Ned',
+}
+
+const SHORT_MONTHS: Record<string, string> = {
+  Jan: 'Jan',
+  Feb: 'Feb',
+  Mar: 'Mar',
+  Apr: 'Apr',
+  May: 'Maj',
+  Jun: 'Jun',
+  Jul: 'Jul',
+  Aug: 'Avg',
+  Sep: 'Sep',
+  Oct: 'Okt',
+  Nov: 'Nov',
+  Dec: 'Dec',
+}
+
+function localizeDateFragment(value: string): string {
+  let result = value
+
+  Object.entries(SHORT_WEEKDAYS).forEach(([source, translated]) => {
+    result = result.replace(new RegExp(`\\b${source}\\b`, 'g'), translated)
+  })
+
+  Object.entries(SHORT_MONTHS).forEach(([source, translated]) => {
+    result = result.replace(new RegExp(`\\b${source}\\b`, 'g'), translated)
+  })
+
+  return result
 }
 
 const options: LegacyLocalizationBridgeOptions = {
@@ -49,6 +90,7 @@ const options: LegacyLocalizationBridgeOptions = {
     'GC time bonuses:': 'stage.gcTimeBonuses',
     'Stage weather': 'weather.title',
     'Leaders / Winners': 'bridge.leadersTitle',
+    'LEADERS / WINNERS': 'bridge.leadersTitle',
     'Average': 'bridge.average',
     'Min / max': 'bridge.minMax',
     'Sunny Windy': 'bridge.sunnyWindy',
@@ -65,6 +107,21 @@ const options: LegacyLocalizationBridgeOptions = {
     'Show': 'participants.show',
     'No accepted teams have been confirmed yet. Accepted teams will appear here once the official startlist is published.':
       'participants.noneConfirmed',
+  },
+  transformParams: (key, params, _t) => {
+    if (params.weekday && SHORT_WEEKDAYS[params.weekday]) {
+      params.weekday = SHORT_WEEKDAYS[params.weekday]
+    }
+
+    if (params.month && SHORT_MONTHS[params.month]) {
+      params.month = SHORT_MONTHS[params.month]
+    }
+
+    if (params.date) {
+      params.date = localizeDateFragment(params.date)
+    }
+
+    return params
   },
 }
 
