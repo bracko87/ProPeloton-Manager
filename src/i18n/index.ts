@@ -8,6 +8,10 @@ import enHome from './locales/en/home.json'
 import enAuth from './locales/en/auth.json'
 import enProfile from './locales/en/profile.json'
 import enCalendar from './locales/en/calendar.json'
+import enCalendarPage from './locales/en/calendarPage.json'
+import enRacePreparation from './locales/en/racePreparation.json'
+import enRaceDetail from './locales/en/raceDetail.json'
+import enNotifications from './locales/en/notifications.json'
 import enPreferences from './locales/en/preferences.json'
 import enPreferencesDynamic from './locales/en/preferencesDynamic.json'
 import enOverview from './locales/en/overview.json'
@@ -21,6 +25,10 @@ import srHome from './locales/sr-Latn/home.json'
 import srAuth from './locales/sr-Latn/auth.json'
 import srProfile from './locales/sr-Latn/profile.json'
 import srCalendar from './locales/sr-Latn/calendar.json'
+import srCalendarPage from './locales/sr-Latn/calendarPage.json'
+import srRacePreparation from './locales/sr-Latn/racePreparation.json'
+import srRaceDetail from './locales/sr-Latn/raceDetail.json'
+import srNotifications from './locales/sr-Latn/notifications.json'
 import srPreferences from './locales/sr-Latn/preferences.json'
 import srPreferencesDynamic from './locales/sr-Latn/preferencesDynamic.json'
 import srOverview from './locales/sr-Latn/overview.json'
@@ -45,6 +53,10 @@ const resources = {
     auth: enAuth,
     profile: enProfile,
     calendar: enCalendar,
+    calendarPage: enCalendarPage,
+    racePreparation: enRacePreparation,
+    raceDetail: enRaceDetail,
+    notifications: enNotifications,
     preferences: enPreferences,
     preferencesDynamic: enPreferencesDynamic,
     overview: enOverview,
@@ -59,6 +71,10 @@ const resources = {
     auth: srAuth,
     profile: srProfile,
     calendar: srCalendar,
+    calendarPage: srCalendarPage,
+    racePreparation: srRacePreparation,
+    raceDetail: srRaceDetail,
+    notifications: srNotifications,
     preferences: srPreferences,
     preferencesDynamic: srPreferencesDynamic,
     overview: srOverview,
@@ -85,6 +101,10 @@ void i18n
       'auth',
       'profile',
       'calendar',
+      'calendarPage',
+      'racePreparation',
+      'raceDetail',
+      'notifications',
       'preferences',
       'preferencesDynamic',
       'overview',
