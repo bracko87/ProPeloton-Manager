@@ -23,14 +23,15 @@ jobs:
           pages = [
               Path('src/pages/dashboard/Staff.tsx'),
               Path('src/pages/dashboard/Training.tsx'),
-              Path('src/pages/dashboard/Infrastructure.tsx'),
+              Path('src/pages/dashboard/infrastructure/AssetsSection.tsx'),
               Path('src/pages/dashboard/Statistics.tsx'),
+              Path('src/features/squad/components/TeamStatisticsSection.tsx'),
+              Path('src/features/squad/components/RiderStatisticsSection.tsx'),
               Path('src/pages/dashboard/RaceDetailPage.tsx'),
           ]
 
           direct_text = re.compile(r'>\s*([A-Za-z][^<{}`]*?[A-Za-z0-9.!?…])\s*<')
           prop_text = re.compile(r'\b(?:title|description|placeholder|label|aria-label)="([A-Za-z][^"]*[A-Za-z0-9.!?…])"')
-          quoted_visible = re.compile(r"(?<![A-Za-z0-9_])['\"]([A-Z][A-Za-z][^'\"\n]{3,100})['\"]")
 
           print('=== LOCALIZATION SWEEP ===')
           for page in pages:
@@ -46,28 +47,23 @@ jobs:
                           value = m.group(1).strip()
                           if value:
                               hits.append((n, value))
-              seen=set()
-              unique=[]
+              seen=set(); unique=[]
               for hit in hits:
                   if hit not in seen:
                       seen.add(hit); unique.append(hit)
               print(f'DIRECT_VISIBLE_CANDIDATES {len(unique)}')
-              for n,value in unique[:250]:
+              for n,value in unique[:400]:
                   print(f'L{n}: {value}')
 
-          # Target phrases seen in screenshots, including strings embedded in arrays/helpers.
-          phrases = [
-              'Scouting Staff Impact','Combined Team Impact','Current combined impact from active staff in this group.',
-              'Current basic cap reached','For this impact group','Bonuses are partially paused while staff study','Use Transfers → Staff to fill vacancies',
-              'How Scout Quality Works','Scout Ability levels','Report Quality levels','Scout Ability thresholds','Better Scouting Office unlocks higher report quality.',
-              'Check the camp dates before booking','No eligible camp staff found.','No staff selected.','Best for:','Earliest start:',
-              'Team Cars','Team Car Fleet','Acquire Team Car','Garage support vs actual race assignment','Garage slots','Mechanical response','Feeding support','Tactical comms','Potential tier',
-              'Leaders / Winners','Average','Min / max','Application strength','Full stage standing','Full race standing','No stage points available','Current stage totals','Loading stage profile…','Stage points'
-          ]
-          print('\n=== TARGET PHRASES ===')
-          for page in pages:
-              source=page.read_text(encoding='utf-8')
-              for phrase in phrases:
-                  if phrase in source:
-                      print(f'{page}:{phrase}')
+          staff = Path('src/pages/dashboard/Staff.tsx').read_text(encoding='utf-8')
+          print('\n=== STAFF COURSE OPTIONS ===')
+          # Print every course object in the builder, one field per line, so translation keys can mirror the source.
+          for m in re.finditer(r"code:\s*'([^']+)'\s*,\s*title:\s*'([^']+)'\s*,\s*description:\s*'([^']+)'[\s\S]{0,180}?focusLabel:\s*'([^']+)'", staff):
+              print('COURSE|' + '|'.join(m.groups()))
+
+          print('\n=== STAFF EFFECT STRINGS ===')
+          for needle in ['scouting accuracy','prospect visibility','Future: transfer intelligence','combined scouting accuracy','combined prospect visibility','broader transfer and youth intelligence','Scouting Office Lv']:
+              for n,line in enumerate(staff.splitlines(),1):
+                  if needle in line:
+                      print(f'L{n}: {line.strip()}')
           PY
