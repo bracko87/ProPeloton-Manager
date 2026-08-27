@@ -45,6 +45,24 @@ const WEEKDAYS = new Set([
   'Sunday',
 ])
 
+const enResource = {
+  ...enCalendarPage,
+  bridge: {
+    nextArrow: 'Next →',
+    todayPrefix: 'Today:',
+    weatherSummary: 'Min {{min}}° · Max {{max}}° · Wind {{wind}} km/h · Rain {{rain}} mm',
+  },
+}
+
+const srResource = {
+  ...srCalendarPage,
+  bridge: {
+    nextArrow: 'Sledeći →',
+    todayPrefix: 'Danas:',
+    weatherSummary: 'Min {{min}}° · Maks {{max}}° · Vetar {{wind}} km/h · Padavine {{rain}} mm',
+  },
+}
+
 function month(
   value: string,
   t: (key: string) => string,
@@ -89,8 +107,8 @@ function weekday(
 
 const options: LegacyLocalizationBridgeOptions = {
   namespace: 'calendarPage',
-  enResource: enCalendarPage,
-  srResource: srCalendarPage,
+  enResource,
+  srResource,
   routeMatch: path => {
     const clean = path.split('?')[0]
 
@@ -105,6 +123,8 @@ const options: LegacyLocalizationBridgeOptions = {
     'Race Calendar': 'page.raceCalendar',
     'Previous': 'season.previous',
     'Next': 'season.next',
+    'Next →': 'bridge.nextArrow',
+    'Today:': 'bridge.todayPrefix',
     'Upcoming Training Camps': 'season.upcomingCamps',
     'No planned or active training camps yet.': 'season.noCamps',
     'Training Camps': 'season.trainingCamps',
@@ -116,19 +136,47 @@ const options: LegacyLocalizationBridgeOptions = {
     'Wind': 'weather.wind',
     'Rain': 'weather.rain',
     'Race filters': 'filters.title',
+    'Premium': 'filters.premium',
     'Filter this month by country, category, format, status, and sponsor goals.': 'filters.description',
+    'Checking Premium…': 'filters.checkingPremium',
+    'Checking Premium...': 'filters.checkingPremium',
     'Open filters': 'filters.open',
     'Hide filters': 'filters.hide',
+    'Premium Filters 🔒': 'filters.premiumFilters',
+    'Country': 'filters.country',
+    'All countries': 'filters.allCountries',
+    'Category': 'filters.category',
+    'All categories': 'filters.allCategories',
+    'Race format': 'filters.raceFormat',
+    'All formats': 'filters.allFormats',
+    'My race status': 'filters.myRaceStatus',
+    'All races': 'filters.allRaces',
+    'Not entered': 'filters.notEntered',
+    'Application status': 'filters.applicationStatus',
+    'All statuses': 'filters.allStatuses',
+    'Open for applications': 'filters.openForApplications',
+    'Sponsor-goal races only': 'filters.sponsorOnly',
+    'Premium race filters': 'filters.premiumTitle',
+    'Filter races by country, category, race format, application status, and sponsor objectives.': 'filters.premiumDescription',
+    'Unlock with Premium': 'filters.unlockPremium',
     'Open Race': 'races.openRace',
     'Open for Applications': 'races.openApplications',
     'Applications not open': 'races.applicationsNotOpen',
     'Applications closed': 'races.applicationsClosed',
+    'Applied': 'races.applied',
+    'Accepted': 'races.accepted',
+    'Declined': 'races.declined',
+    'Withdrawn': 'races.withdrawn',
+    'Missed startlist': 'races.missedStartlist',
     'Race active': 'races.raceActive',
     'Race finished': 'races.raceFinished',
     'Race canceled': 'races.raceCanceled',
+    'Race cancelled': 'races.raceCanceled',
     'Partly canceled': 'races.partlyCanceled',
     'One Day': 'races.oneDay',
     'Stage Race': 'races.stageRace',
+    'Sponsor objective target': 'races.sponsorObjectiveTarget',
+    '★ Sponsor goal': 'races.sponsorGoal',
     'Route details coming soon': 'route.detailsSoon',
     'Unknown country': 'route.unknownCountry',
   },
