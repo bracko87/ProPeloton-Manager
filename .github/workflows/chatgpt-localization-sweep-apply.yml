@@ -38,12 +38,8 @@ jobs:
           fi
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add src/pages/dashboard/Staff.tsx \
-                  src/features/squad/components/RiderStatisticsSection.tsx \
-                  src/features/squad/components/TeamStatisticsSection.tsx \
-                  src/pages/dashboard/RaceDetailPage.tsx \
-                  src/i18n/locales/en/staff.json src/i18n/locales/sr-Latn/staff.json \
-                  src/i18n/locales/en/statistics.json src/i18n/locales/sr-Latn/statistics.json \
-                  src/i18n/locales/en/raceDetail.json src/i18n/locales/sr-Latn/raceDetail.json
-          git commit -m 'Localize staff statistics and race detail leftovers'
+          git add src/pages/dashboard/Training.tsx \
+                  src/pages/dashboard/infrastructure/AssetsSection.tsx \
+                  src/i18n/locales/en/training.json src/i18n/locales/sr-Latn/training.json
+          git commit -m 'Localize training camps and infrastructure assets'
           git push origin HEAD:main
