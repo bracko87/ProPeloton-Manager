@@ -1,0 +1,528 @@
+name: Staff Advisory role entitlement UI patch
+
+on:
+  push:
+    branches:
+      - chatgpt/staff-advisory-role-entitlement-ui
+    paths:
+      - '.github/workflows/chatgpt-staff-advisory-role-entitlement-ui.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: chatgpt/staff-advisory-role-entitlement-ui
+          fetch-depth: 0
+
+      - name: Patch Staff Advisory role entitlement UI
+        shell: bash
+        run: |
+          python <<'PY'
+          from pathlib import Path
+          import json
+
+          overview_path = Path('src/pages/dashboard/Overview.tsx')
+          source = overview_path.read_text(encoding='utf-8')
+
+          def replace_once(old: str, new: str, label: str):
+              global source
+              count = source.count(old)
+              if count != 1:
+                  raise SystemExit(f'{label}: expected exactly 1 match, found {count}')
+              source = source.replace(old, new, 1)
+
+          replace_once(
+              '  advisory_status: "no_staff" | "unassigned" | "active" | "expired";\n',
+              '  advisory_status: "no_staff" | "unassigned" | "active" | "paused" | "resumed" | "expired";\n',
+              'status union',
+          )
+
+          quote_type = '''type StaffAdvisoryQuoteRow = {
+            staff_id: string;
+            staff_name: string;
+            role_type: string;
+            coin_price: number;
+            duration_real_days: number;
+            current_expires_at: string | null;
+            proposed_expires_at: string;
+            is_renewal: boolean;
+            automatic_renewal: boolean;
+          };
+          '''
+          renewal_type = quote_type + '''
+          type StaffAdvisoryRoleRenewalQuoteRow = {
+            role_type: StaffBriefingRole["roleType"];
+            coin_price: number;
+            duration_real_days: number;
+            entitlement_state: "active" | "paused";
+            remaining_paid_seconds: number;
+            current_expires_at: string | null;
+            proposed_expires_at: string;
+            automatic_renewal: boolean;
+          };
+          '''
+          replace_once(quote_type, renewal_type, 'renewal quote type')
+
+          replace_once(
+              '  const [activationLoading, setActivationLoading] = React.useState(false);\n  const [assignError, setAssignError] = React.useState<string | null>(null);\n',
+              '  const [activationLoading, setActivationLoading] = React.useState(false);\n  const [assignError, setAssignError] = React.useState<string | null>(null);\n  const [pausedRenewalRole, setPausedRenewalRole] = React.useState<StaffBriefingRole | null>(null);\n  const [pausedRenewalQuote, setPausedRenewalQuote] = React.useState<StaffAdvisoryRoleRenewalQuoteRow | null>(null);\n  const [pausedRenewalQuoteLoading, setPausedRenewalQuoteLoading] = React.useState(false);\n  const [pausedRenewalLoading, setPausedRenewalLoading] = React.useState(false);\n  const [pausedRenewalError, setPausedRenewalError] = React.useState<string | null>(null);\n',
+              'paused renewal state',
+          )
+
+          format_block = '''  const formatAdvisoryDate = React.useCallback((value: string | null) => {
+            if (!value) return "—";
+            const date = new Date(value);
+            if (Number.isNaN(date.getTime())) return value;
+
+            return new Intl.DateTimeFormat(undefined, {
+              day: "2-digit",
+              month: "short",
+              year: "numeric",
+            }).format(date);
+          }, []);
+          '''
+          format_replacement = format_block + '''
+          const getAdvisoryDaysRemaining = React.useCallback((value: string | null) => {
+            if (!value) return 0;
+            const timestamp = Date.parse(value);
+            if (!Number.isFinite(timestamp)) return 0;
+            return Math.max(0, Math.ceil((timestamp - Date.now()) / 86_400_000));
+          }, []);
+          '''
+          replace_once(format_block, format_replacement, 'days remaining helper')
+
+          handler_anchor = '''  const staffBriefingRoleLabels: Record<StaffBriefingRole["roleType"], string> = {
+          '''
+          handlers = '''  async function openPausedRoleRenewal(role: StaffBriefingRole) {
+            if (!clubId) return;
+
+            setPausedRenewalRole(role);
+            setPausedRenewalQuote(null);
+            setPausedRenewalError(null);
+            setPausedRenewalQuoteLoading(true);
+
+            try {
+              const { data, error } = await supabase.rpc(
+                "staff_advisory_get_role_renewal_quote_v1",
+                {
+                  p_club_id: clubId,
+                  p_role_type: role.roleType,
+                },
+              );
+
+              if (error) throw error;
+
+              setPausedRenewalQuote(
+                asArray<StaffAdvisoryRoleRenewalQuoteRow>(data)[0] ?? null,
+              );
+            } catch (err) {
+              console.warn("Could not load paused Staff Advisory renewal quote:", err);
+              setPausedRenewalError(
+                err instanceof Error
+                  ? err.message
+                  : t("staffBriefing.couldNotLoadRenewalQuote"),
+              );
+            } finally {
+              setPausedRenewalQuoteLoading(false);
+            }
+          }
+
+          async function confirmPausedRoleRenewal() {
+            if (!clubId || !pausedRenewalRole || !pausedRenewalQuote) return;
+
+            if ((coinBalance ?? 0) < pausedRenewalQuote.coin_price) {
+              setPausedRenewalError(
+                t("staffBriefing.notEnoughCoins", {
+                  required: pausedRenewalQuote.coin_price,
+                  balance: coinBalance ?? 0,
+                }),
+              );
+              return;
+            }
+
+            setPausedRenewalLoading(true);
+            setPausedRenewalError(null);
+
+            try {
+              const idempotencyKey =
+                typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
+                  ? crypto.randomUUID()
+                  : `staff-advisory-role-renewal-${pausedRenewalRole.roleType}-${Date.now()}`;
+
+              const { error } = await supabase.rpc(
+                "staff_advisory_renew_my_role_v1",
+                {
+                  p_club_id: clubId,
+                  p_role_type: pausedRenewalRole.roleType,
+                  p_idempotency_key: idempotencyKey,
+                },
+              );
+
+              if (error) throw error;
+
+              setPausedRenewalRole(null);
+              setPausedRenewalQuote(null);
+              await loadOverview();
+            } catch (err) {
+              console.warn("Could not renew paused Staff Advisory entitlement:", err);
+              setPausedRenewalError(
+                err instanceof Error
+                  ? err.message
+                  : t("staffBriefing.couldNotRenewPaused"),
+              );
+            } finally {
+              setPausedRenewalLoading(false);
+            }
+          }
+
+          ''' + handler_anchor
+          replace_once(handler_anchor, handlers, 'paused renewal handlers')
+
+          old_status_logic = '''          const status = row?.advisory_status ?? "no_staff";
+                    const hasAdvisor =
+                      Boolean(row?.advisor_staff_id) &&
+                      (status === "active" || status === "expired");
+          '''
+          new_status_logic = '''          const status = row?.advisory_status ?? "no_staff";
+                    const hasAdvisor =
+                      Boolean(row?.advisor_staff_id) &&
+                      (status === "active" || status === "resumed" || status === "expired");
+                    const isRunningAdvisory = status === "active" || status === "resumed";
+                    const remainingDays = getAdvisoryDaysRemaining(
+                      row?.advisory_expires_at ?? null,
+                    );
+          '''
+          replace_once(old_status_logic, new_status_logic, 'status card logic')
+
+          replace_once(
+              '''                status === "no_staff"
+                            ? "border-slate-200 bg-slate-50 text-slate-400"
+                            : "border-slate-200 bg-white hover:border-slate-300"
+              ''',
+              '''                status === "paused"
+                            ? "border-amber-200 bg-amber-50/40"
+                            : status === "no_staff"
+                              ? "border-slate-200 bg-slate-50 text-slate-400"
+                              : "border-slate-200 bg-white hover:border-slate-300"
+              ''',
+              'paused card style',
+          )
+
+          replace_once(
+              '''                      {status === "unassigned" ? "No advisor assigned" : t("staffBriefing.noStaff")}
+              ''',
+              '''                      {status === "paused"
+                                ? t("staffBriefing.roleVacant")
+                                : status === "unassigned"
+                                  ? t("staffBriefing.noAdvisor")
+                                  : t("staffBriefing.noStaff")}
+              ''',
+              'paused header label',
+          )
+
+          body_anchor = '''              ) : status === "no_staff" ? (
+          '''
+          paused_branch = '''              ) : status === "paused" ? (
+                        <>
+                          <div className="mt-3 text-[11px] leading-4.5 text-slate-600">
+                            {t("staffBriefing.pausedVacant")}
+                          </div>
+
+                          <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5">
+                            <div className="text-[11px] font-semibold text-amber-800">
+                              {t("staffBriefing.paused")}
+                            </div>
+                            <div className="mt-1 text-sm font-semibold tabular-nums text-slate-950">
+                              {t("staffBriefing.paidDaysRemaining", { count: remainingDays })}
+                            </div>
+                          </div>
+
+                          <div className="mt-auto flex flex-wrap items-center gap-2 pt-3">
+                            <a
+                              href="#/dashboard/staff"
+                              className="inline-flex h-8 items-center rounded-lg border border-slate-300 bg-white px-3 text-[11px] font-semibold text-slate-700 transition hover:bg-slate-50"
+                            >
+                              {t("staffBriefing.manageStaff")}
+                            </a>
+                            <button
+                              type="button"
+                              onClick={() => void openPausedRoleRenewal(role)}
+                              className="inline-flex h-8 items-center rounded-lg bg-slate-950 px-3 text-[11px] font-semibold text-white transition hover:bg-slate-800"
+                            >
+                              {t("staffBriefing.extendPaidTime")}
+                            </button>
+                          </div>
+                        </>
+                      ) : status === "no_staff" ? (
+          '''
+          replace_once(body_anchor, paused_branch, 'paused card body')
+
+          old_running_status = '''                    <div className="text-[10px] font-medium leading-4">
+                                <div
+                                  className={
+                                    status === "active" ? "text-emerald-700" : "text-amber-700"
+                                  }
+                                >
+                                  {status === "active"
+                                    ? t("staffBriefing.active")
+                                    : t("staffBriefing.expired")}
+                                </div>
+                                <div className="text-slate-500">
+                                  {status === "active" ? t("staffBriefing.until") : "Expired"}{" "}
+                                  {formatAdvisoryDate(row?.advisory_expires_at ?? null)}
+                                </div>
+                              </div>
+          '''
+          new_running_status = '''                    <div className="text-[10px] font-medium leading-4">
+                                <div
+                                  className={
+                                    isRunningAdvisory ? "text-emerald-700" : "text-amber-700"
+                                  }
+                                >
+                                  {status === "resumed"
+                                    ? t("staffBriefing.resumed")
+                                    : status === "active"
+                                      ? t("staffBriefing.active")
+                                      : t("staffBriefing.expired")}
+                                </div>
+                                <div className="text-slate-500">
+                                  {isRunningAdvisory
+                                    ? t("staffBriefing.daysRemaining", { count: remainingDays })
+                                    : `${t("staffBriefing.expiredAt")} ${formatAdvisoryDate(row?.advisory_expires_at ?? null)}`}
+                                </div>
+                                {status === "resumed" ? (
+                                  <div className="mt-1 max-w-[150px] text-[9px] leading-3 text-emerald-700">
+                                    {t("staffBriefing.resumedForReplacement")}
+                                  </div>
+                                ) : null}
+                              </div>
+          '''
+          replace_once(old_running_status, new_running_status, 'active/resumed status display')
+
+          card_end = '''      {assignRole ? (
+                <div className="fixed inset-0 z-[80] flex items-center justify-center bg-slate-950/50 p-4">
+          '''
+          if card_end not in source:
+              raise SystemExit('assign modal anchor missing')
+
+          close_anchor = '''      ) : null}
+              </Card>
+            );
+          }
+          '''
+          paused_modal = '''      ) : null}
+
+                {pausedRenewalRole ? (
+                  <div className="fixed inset-0 z-[85] flex items-center justify-center bg-slate-950/50 p-4">
+                    <div className="w-full max-w-lg rounded-2xl bg-white p-5 shadow-2xl">
+                      <div className="flex items-start justify-between gap-4">
+                        <div>
+                          <div className="text-xl font-semibold tracking-tight text-slate-950">
+                            {t("staffBriefing.renewPausedAdvisor")}
+                          </div>
+                          <div className="mt-1 text-sm text-slate-500">
+                            {staffBriefingRoleLabels[pausedRenewalRole.roleType]}
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (pausedRenewalLoading) return;
+                            setPausedRenewalRole(null);
+                            setPausedRenewalQuote(null);
+                            setPausedRenewalError(null);
+                          }}
+                          className="inline-flex h-8 items-center rounded-lg border border-slate-200 bg-white px-3 text-[11px] font-semibold text-slate-600 transition hover:bg-slate-50"
+                        >
+                          {t("staffBriefing.close")}
+                        </button>
+                      </div>
+
+                      <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-3 py-3 text-sm leading-5 text-amber-900">
+                        {pausedRenewalQuote
+                          ? t("staffBriefing.pausedRenewIntro", {
+                              days: pausedRenewalQuote.duration_real_days,
+                              coins: pausedRenewalQuote.coin_price,
+                            })
+                          : t("staffBriefing.pausedRenewIntroGeneric")}
+                      </div>
+
+                      {pausedRenewalQuoteLoading ? (
+                        <div className="mt-4 text-sm text-slate-500">
+                          {t("staffBriefing.loadingQuote")}
+                        </div>
+                      ) : pausedRenewalQuote ? (
+                        <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-3">
+                          <div className="space-y-2">
+                            {[
+                              [t("staffBriefing.price"), t("staffBriefing.coins", { count: pausedRenewalQuote.coin_price })],
+                              [
+                                t("staffBriefing.remainingPaidTime"),
+                                t("staffBriefing.paidDaysRemaining", {
+                                  count: Math.max(0, Math.ceil(Number(pausedRenewalQuote.remaining_paid_seconds) / 86_400)),
+                                }),
+                              ],
+                              [t("staffBriefing.duration"), t("staffBriefing.realLifeDays", { count: pausedRenewalQuote.duration_real_days })],
+                              [
+                                t("staffBriefing.paidTimeAfterRenewal"),
+                                t("staffBriefing.paidDaysRemaining", {
+                                  count: Math.max(
+                                    0,
+                                    Math.ceil(
+                                      (Number(pausedRenewalQuote.remaining_paid_seconds) +
+                                        pausedRenewalQuote.duration_real_days * 86_400) /
+                                        86_400,
+                                    ),
+                                  ),
+                                }),
+                              ],
+                              [t("staffBriefing.automaticRenewal"), t("staffBriefing.no")],
+                              [t("staffBriefing.coinBalance"), coinBalanceLoading ? "…" : String(coinBalance ?? 0)],
+                            ].map(([label, value]) => (
+                              <div
+                                key={label}
+                                className="flex items-center justify-between gap-4 rounded-xl bg-white px-3 py-2"
+                              >
+                                <span className="text-sm text-slate-500">{label}</span>
+                                <span className="text-right text-sm font-semibold text-slate-950">{value}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ) : null}
+
+                      {pausedRenewalError ? (
+                        <div className="mt-4 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-medium text-red-700">
+                          {pausedRenewalError}
+                        </div>
+                      ) : null}
+
+                      <div className="mt-5 flex justify-end gap-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (pausedRenewalLoading) return;
+                            setPausedRenewalRole(null);
+                            setPausedRenewalQuote(null);
+                            setPausedRenewalError(null);
+                          }}
+                          className="inline-flex h-9 items-center rounded-lg border border-slate-300 bg-white px-4 text-[12px] font-semibold text-slate-700 transition hover:bg-slate-50"
+                        >
+                          {t("staffBriefing.cancel")}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => void confirmPausedRoleRenewal()}
+                          disabled={
+                            pausedRenewalLoading ||
+                            pausedRenewalQuoteLoading ||
+                            !pausedRenewalQuote ||
+                            (coinBalance ?? 0) <
+                              (pausedRenewalQuote?.coin_price ?? Number.POSITIVE_INFINITY)
+                          }
+                          className="inline-flex h-9 items-center rounded-lg bg-slate-950 px-4 text-[12px] font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-40"
+                        >
+                          {pausedRenewalLoading
+                            ? t("staffBriefing.renewing")
+                            : pausedRenewalQuote
+                              ? t("staffBriefing.confirmPausedRenewal", {
+                                  days: pausedRenewalQuote.duration_real_days,
+                                  coins: pausedRenewalQuote.coin_price,
+                                })
+                              : t("staffBriefing.renew")}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ) : null}
+              </Card>
+            );
+          }
+          '''
+          replace_once(close_anchor, paused_modal, 'paused renewal modal')
+
+          overview_path.write_text(source, encoding='utf-8')
+
+          translations = {
+              Path('src/i18n/locales/en/overview.json'): {
+                  'paused': 'Advisory paused',
+                  'resumed': 'Advisory resumed',
+                  'roleVacant': 'Role vacant',
+                  'daysRemaining': '{{count}} days remaining',
+                  'paidDaysRemaining': '{{count}} paid days remaining',
+                  'pausedVacant': 'This role is vacant. Your paid advisory time is preserved and is not counting down.',
+                  'resumedForReplacement': 'Unused paid advisory time resumed automatically for this replacement.',
+                  'extendPaidTime': 'Extend paid time',
+                  'renewPausedAdvisor': 'Extend paused advisory',
+                  'remainingPaidTime': 'Remaining paid time',
+                  'paidTimeAfterRenewal': 'Paid time after renewal',
+                  'pausedRenewIntro': 'Your existing paid time is preserved. This optional renewal adds {{days}} real-life days for {{coins}} coins. Hiring a replacement does not require another purchase.',
+                  'pausedRenewIntroGeneric': 'Your existing paid time is preserved while this role is vacant. Hiring a replacement resumes it automatically and does not cost coins. Extending the entitlement is an optional paid action.',
+                  'renewing': 'Renewing…',
+                  'confirmPausedRenewal': 'Add {{days}} days for {{coins}} coins',
+                  'couldNotLoadRenewalQuote': 'Could not load the advisory renewal quote.',
+                  'couldNotRenewPaused': 'Could not renew the paused Staff Advisory entitlement.',
+              },
+              Path('src/i18n/locales/sr-Latn/overview.json'): {
+                  'paused': 'Advisory je pauziran',
+                  'resumed': 'Advisory je nastavljen',
+                  'roleVacant': 'Uloga je upražnjena',
+                  'daysRemaining': 'Preostalo je {{count}} dana',
+                  'paidDaysRemaining': 'Preostalo je {{count}} plaćenih dana',
+                  'pausedVacant': 'Ova uloga je upražnjena. Plaćeno Advisory vreme je sačuvano i ne odbrojava se.',
+                  'resumedForReplacement': 'Neiskorišćeno plaćeno Advisory vreme je automatski nastavljeno za novog zaposlenog.',
+                  'extendPaidTime': 'Produži plaćeno vreme',
+                  'renewPausedAdvisor': 'Produži pauzirani Advisory',
+                  'remainingPaidTime': 'Preostalo plaćeno vreme',
+                  'paidTimeAfterRenewal': 'Plaćeno vreme nakon obnove',
+                  'pausedRenewIntro': 'Postojeće plaćeno vreme ostaje sačuvano. Ova opciona obnova dodaje {{days}} dana u stvarnom vremenu za {{coins}} novčića. Zapošljavanje zamene ne zahteva novu kupovinu.',
+                  'pausedRenewIntroGeneric': 'Postojeće plaćeno vreme ostaje sačuvano dok je uloga upražnjena. Zapošljavanje zamene ga automatski nastavlja i ne košta novčiće. Produženje prava je opciona plaćena radnja.',
+                  'renewing': 'Obnavljanje…',
+                  'confirmPausedRenewal': 'Dodaj {{days}} dana za {{coins}} novčića',
+                  'couldNotLoadRenewalQuote': 'Ponuda za obnovu Advisory usluge nije mogla da se učita.',
+                  'couldNotRenewPaused': 'Pauzirani Staff Advisory nije mogao da se obnovi.',
+              },
+          }
+
+          for path, additions in translations.items():
+              data = json.loads(path.read_text(encoding='utf-8'))
+              staff = data.get('staffBriefing')
+              if not isinstance(staff, dict):
+                  raise SystemExit(f'{path}: staffBriefing object missing')
+              for key, value in additions.items():
+                  staff[key] = value
+              path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+
+          print('Staff Advisory UI/i18n patch applied successfully.')
+          PY
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Production build
+        run: npm run build
+
+      - name: Verify intended changes
+        shell: bash
+        run: |
+          git diff --check
+          grep -q 'advisory_status: "no_staff" | "unassigned" | "active" | "paused" | "resumed" | "expired"' src/pages/dashboard/Overview.tsx
+          grep -q 'staff_advisory_get_role_renewal_quote_v1' src/pages/dashboard/Overview.tsx
+          grep -q 'staff_advisory_renew_my_role_v1' src/pages/dashboard/Overview.tsx
+          grep -q 'staffBriefing.paidDaysRemaining' src/pages/dashboard/Overview.tsx
+          git diff -- src/pages/dashboard/Overview.tsx src/i18n/locales/en/overview.json src/i18n/locales/sr-Latn/overview.json
+
+      - name: Commit patch and remove one-shot workflow
+        shell: bash
+        run: |
+          git config user.name 'ChatGPT'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git rm .github/workflows/chatgpt-staff-advisory-role-entitlement-ui.yml
+          git add src/pages/dashboard/Overview.tsx src/i18n/locales/en/overview.json src/i18n/locales/sr-Latn/overview.json
+          git commit -m 'Preserve Staff Advisory time across staff changes'
+          git push origin HEAD:chatgpt/staff-advisory-role-entitlement-ui
