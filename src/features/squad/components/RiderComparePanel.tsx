@@ -14,6 +14,7 @@
  */
 
 import React, { useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { supabase } from '../../../lib/supabase'
 import { getAgeFromBirthDate } from '../utils/dates'
 import { getRiderImageUrl } from '../utils/rider-ui'
@@ -70,19 +71,19 @@ interface RiderComparePanelProps {
 
 const SKILL_KEYS: Array<{
   key: keyof RiderSummary
-  label: string
+  labelKey: string
 }> = [
-  { key: 'overall', label: 'Overall' },
-  { key: 'potential', label: 'Potential' },
-  { key: 'sprint', label: 'Sprint' },
-  { key: 'climbing', label: 'Climbing' },
-  { key: 'time_trial', label: 'Time Trial' },
-  { key: 'endurance', label: 'Endurance' },
-  { key: 'flat', label: 'Flat' },
-  { key: 'recovery', label: 'Recovery' },
-  { key: 'resistance', label: 'Resistance' },
-  { key: 'race_iq', label: 'Race IQ' },
-  { key: 'teamwork', label: 'Teamwork' },
+  { key: 'overall', labelKey: 'common.overall' },
+  { key: 'potential', labelKey: 'common.potential' },
+  { key: 'sprint', labelKey: 'skills.sprint' },
+  { key: 'climbing', labelKey: 'skills.climbing' },
+  { key: 'time_trial', labelKey: 'skills.timeTrial' },
+  { key: 'endurance', labelKey: 'skills.endurance' },
+  { key: 'flat', labelKey: 'skills.flat' },
+  { key: 'recovery', labelKey: 'skills.recovery' },
+  { key: 'resistance', labelKey: 'skills.resistance' },
+  { key: 'race_iq', labelKey: 'skills.raceIq' },
+  { key: 'teamwork', labelKey: 'skills.teamwork' },
 ]
 
 function displayNum(v?: number | null): string {
@@ -137,8 +138,12 @@ function getBarWidthPercent(value: number | null, maxAbsDiff: number): number {
   return Math.max(18, Math.round((Math.abs(value) / maxAbsDiff) * 100))
 }
 
-function buildOptionLabel(displayName: string | null | undefined, teamLabel?: string | null): string {
-  const base = displayName?.trim() || 'Unknown'
+function buildOptionLabel(
+  displayName: string | null | undefined,
+  teamLabel: string | null | undefined,
+  unknownLabel: string,
+): string {
+  const base = displayName?.trim() || unknownLabel
   return teamLabel ? `${base} · ${teamLabel}` : base
 }
 
@@ -156,18 +161,22 @@ function getCountryFlagUrl(countryCode: string): string {
   return `https://flagcdn.com/w40/${countryCode.toLowerCase()}.png`
 }
 
-function getCountryName(countryCode?: string | null): string {
+function getCountryName(
+  countryCode: string | null | undefined,
+  locale: string,
+  unknownCountryLabel: string,
+): string {
   const safeCode = safeCountryCode(countryCode)
 
   if (!safeCode) {
-    return 'Unknown country'
+    return unknownCountryLabel
   }
 
   const code = safeCode.toUpperCase()
 
   try {
     if (typeof Intl !== 'undefined' && typeof Intl.DisplayNames !== 'undefined') {
-      const regionNames = new Intl.DisplayNames(['en'], { type: 'region' })
+      const regionNames = new Intl.DisplayNames([locale || 'en'], { type: 'region' })
       return regionNames.of(code) || code
     }
   } catch {
@@ -184,8 +193,13 @@ function CountryFlag({
   countryCode?: string | null
   className?: string
 }) {
+  const { t, i18n } = useTranslation('riderProfile')
   const safeCode = safeCountryCode(countryCode)
-  const countryName = getCountryName(countryCode)
+  const countryName = getCountryName(
+    countryCode,
+    i18n.resolvedLanguage || i18n.language || 'en',
+    t('common.unknownCountry'),
+  )
   const [hasError, setHasError] = useState(false)
 
   useEffect(() => {
@@ -233,6 +247,7 @@ export default function RiderComparePanel({
   clubId,
   initialRightRiderId = null,
 }: RiderComparePanelProps): JSX.Element {
+  const { t } = useTranslation('riderProfile')
   const [leftRider, setLeftRider] = useState<RiderSummary | null>(null)
   const [rightRider, setRightRider] = useState<RiderSummary | null>(null)
   const [options, setOptions] = useState<RiderOption[]>([])
@@ -407,8 +422,9 @@ export default function RiderComparePanel({
           .map((row: any) => ({
             id: String(row.rider_id ?? ''),
             label: buildOptionLabel(
-              row.display_name ?? 'Unknown',
-              familyScope.teamLabelsByClubId.get(String(row.club_id ?? '')) ?? null
+              row.display_name,
+              familyScope.teamLabelsByClubId.get(String(row.club_id ?? '')) ?? null,
+              t('common.unknown'),
             ),
           }))
           .filter((row) => row.id && row.id !== excludeId) ?? []
@@ -416,7 +432,7 @@ export default function RiderComparePanel({
       setOptions(nextOptions)
     } catch (e: any) {
       setOptions([])
-      setError(e?.message ?? 'Could not load roster options.')
+      setError(e?.message ?? t('compare.loadOptionsFailed'))
     } finally {
       setLoadingOptions(false)
     }
@@ -457,7 +473,7 @@ export default function RiderComparePanel({
         if (cancelled) return
         setLeftRider(null)
         setOptions([])
-        setError(e?.message ?? 'Could not load left rider.')
+        setError(e?.message ?? t('compare.loadLeftFailed'))
       } finally {
         if (cancelled) return
         setLoadingLeft(false)
@@ -469,7 +485,7 @@ export default function RiderComparePanel({
     return () => {
       cancelled = true
     }
-  }, [leftRiderId, clubId, initialRightRiderId])
+  }, [leftRiderId, clubId, initialRightRiderId, t])
 
   useEffect(() => {
     let cancelled = false
@@ -491,7 +507,7 @@ export default function RiderComparePanel({
       } catch (e: any) {
         if (cancelled) return
         setRightRider(null)
-        setError(e?.message ?? 'Could not load comparison rider.')
+        setError(e?.message ?? t('compare.loadRightFailed'))
       } finally {
         if (cancelled) return
         setLoadingRight(false)
@@ -503,19 +519,19 @@ export default function RiderComparePanel({
     return () => {
       cancelled = true
     }
-  }, [selectedRightId])
+  }, [selectedRightId, t])
 
   const emptyState = !leftRiderId ? (
     <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-6 text-sm text-slate-600">
-      No left rider selected.
+      {t('compare.missingLeft')}
     </div>
   ) : loadingLeft ? (
     <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-6 text-sm text-slate-600">
-      Loading rider…
+      {t('compare.loading')}
     </div>
   ) : !leftRider ? (
     <div className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-6 text-sm text-rose-700">
-      Left rider not found.
+      {t('wrapper.riderNotFound')}
     </div>
   ) : null
 
@@ -531,7 +547,7 @@ export default function RiderComparePanel({
 
       return {
         key: String(entry.key),
-        label: entry.label,
+        label: t(entry.labelKey),
         leftVal,
         rightVal,
         leftDiff,
@@ -539,7 +555,7 @@ export default function RiderComparePanel({
         classes,
       }
     })
-  }, [leftRider, rightRider])
+  }, [leftRider, rightRider, t])
 
   const maxAbsDiff = useMemo(() => {
     const values = comparisonRows
@@ -575,7 +591,7 @@ export default function RiderComparePanel({
             {getRiderLabel(rider)}
           </div>
           <div className="mt-0.5 flex items-center gap-1.5 text-xs text-slate-500">
-            <span>Age {age ?? '—'}</span>
+            <span>{t('common.age')} {age ?? '—'}</span>
             <span>·</span>
             <CountryFlag countryCode={rider?.country_code} />
             <span>{displayedCountryCode}</span>
@@ -616,7 +632,7 @@ export default function RiderComparePanel({
         <div
           className={`inline-flex h-7 items-center rounded-full px-2 text-xs font-bold ${barClass}`}
           style={{ width: `${widthPercent}%` }}
-          title={`Difference ${formatSignedDiff(value)}`}
+          title={t('compare.difference', { value: formatSignedDiff(value) })}
         >
           <span className={align === 'left' ? 'ml-auto' : 'mr-auto'}>
             {formatSignedDiff(value)}
@@ -641,13 +657,13 @@ export default function RiderComparePanel({
           <div className="mb-4 flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
             <div className="flex items-center gap-4">
               <RiderCard rider={leftRider} />
-              <div className="text-sm text-slate-500">vs</div>
+              <div className="text-sm text-slate-500">{t('compare.vs')}</div>
               <RiderCard rider={rightRider} />
             </div>
 
             <div className="w-full xl:w-80">
               <label className="mb-1 block text-sm font-medium text-slate-700">
-                Compare against
+                {t('compare.compareAgainst')}
               </label>
 
               <div className="flex gap-2">
@@ -657,7 +673,7 @@ export default function RiderComparePanel({
                   className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-yellow-400"
                   disabled={loadingOptions}
                 >
-                  <option value="">-- Select rider --</option>
+                  <option value="">{t('compare.selectRider')}</option>
                   {options.map((opt) => (
                     <option key={opt.id} value={opt.id}>
                       {opt.label}
@@ -673,13 +689,13 @@ export default function RiderComparePanel({
                   }}
                   className="rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-600 hover:bg-slate-50"
                 >
-                  Clear
+                  {t('common.clear')}
                 </button>
               </div>
 
               {loadingOptions ? (
                 <div className="mt-2 text-xs text-slate-500">
-                  Loading First Team and Developing riders…
+                  {t('compare.loadingOptions')}
                 </div>
               ) : null}
             </div>
@@ -688,11 +704,11 @@ export default function RiderComparePanel({
           <div className="overflow-x-auto">
             <div className="min-w-[980px] overflow-hidden rounded-lg border border-slate-100">
               <div className="grid grid-cols-[96px_minmax(180px,1fr)_180px_minmax(180px,1fr)_96px] gap-4 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700">
-                <div className="text-left">Left</div>
-                <div className="text-center">Diff</div>
-                <div className="text-center">Attribute</div>
-                <div className="text-center">Diff</div>
-                <div className="text-right">Right</div>
+                <div className="text-left">{t('compare.left')}</div>
+                <div className="text-center">{t('compare.diff')}</div>
+                <div className="text-center">{t('compare.attribute')}</div>
+                <div className="text-center">{t('compare.diff')}</div>
+                <div className="text-right">{t('compare.right')}</div>
               </div>
 
               <div className="divide-y divide-slate-100 bg-white px-4 py-3 text-sm">
@@ -714,7 +730,7 @@ export default function RiderComparePanel({
                     <DiffBar value={row.rightDiff} align="right" />
 
                     <div className={`text-right text-base font-semibold ${row.classes.rightClass}`}>
-                      {loadingRight ? 'Loading…' : displayNum(row.rightVal)}
+                      {loadingRight ? t('compare.loading') : displayNum(row.rightVal)}
                     </div>
                   </div>
                 ))}
@@ -723,8 +739,7 @@ export default function RiderComparePanel({
           </div>
 
           <div className="mt-3 text-xs text-slate-500">
-            Values are shown on the outside, attributes are centered, and mirrored bars show the
-            difference for each rider. Green means higher, red means lower.
+            {t('compare.explanation')}
           </div>
         </>
       ) : null}
