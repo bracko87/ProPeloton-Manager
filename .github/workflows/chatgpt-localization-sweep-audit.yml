@@ -1,0 +1,73 @@
+name: Localization sweep audit
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/chatgpt-localization-sweep-audit.yml'
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Scan visible English candidates
+        shell: bash
+        run: |
+          python <<'PY'
+          from pathlib import Path
+          import re
+
+          pages = [
+              Path('src/pages/dashboard/Staff.tsx'),
+              Path('src/pages/dashboard/Training.tsx'),
+              Path('src/pages/dashboard/Infrastructure.tsx'),
+              Path('src/pages/dashboard/Statistics.tsx'),
+              Path('src/pages/dashboard/RaceDetailPage.tsx'),
+          ]
+
+          direct_text = re.compile(r'>\s*([A-Za-z][^<{}`]*?[A-Za-z0-9.!?…])\s*<')
+          prop_text = re.compile(r'\b(?:title|description|placeholder|label|aria-label)="([A-Za-z][^"]*[A-Za-z0-9.!?…])"')
+          quoted_visible = re.compile(r"(?<![A-Za-z0-9_])['\"]([A-Z][A-Za-z][^'\"\n]{3,100})['\"]")
+
+          print('=== LOCALIZATION SWEEP ===')
+          for page in pages:
+              source = page.read_text(encoding='utf-8')
+              print(f'\nPAGE {page}')
+              hits = []
+              for n, line in enumerate(source.splitlines(), 1):
+                  stripped = line.lstrip()
+                  if stripped.startswith('//') or stripped.startswith('*') or stripped.startswith('import '):
+                      continue
+                  for rx in (direct_text, prop_text):
+                      for m in rx.finditer(line):
+                          value = m.group(1).strip()
+                          if value:
+                              hits.append((n, value))
+              seen=set()
+              unique=[]
+              for hit in hits:
+                  if hit not in seen:
+                      seen.add(hit); unique.append(hit)
+              print(f'DIRECT_VISIBLE_CANDIDATES {len(unique)}')
+              for n,value in unique[:250]:
+                  print(f'L{n}: {value}')
+
+          # Target phrases seen in screenshots, including strings embedded in arrays/helpers.
+          phrases = [
+              'Scouting Staff Impact','Combined Team Impact','Current combined impact from active staff in this group.',
+              'Current basic cap reached','For this impact group','Bonuses are partially paused while staff study','Use Transfers → Staff to fill vacancies',
+              'How Scout Quality Works','Scout Ability levels','Report Quality levels','Scout Ability thresholds','Better Scouting Office unlocks higher report quality.',
+              'Check the camp dates before booking','No eligible camp staff found.','No staff selected.','Best for:','Earliest start:',
+              'Team Cars','Team Car Fleet','Acquire Team Car','Garage support vs actual race assignment','Garage slots','Mechanical response','Feeding support','Tactical comms','Potential tier',
+              'Leaders / Winners','Average','Min / max','Application strength','Full stage standing','Full race standing','No stage points available','Current stage totals','Loading stage profile…','Stage points'
+          ]
+          print('\n=== TARGET PHRASES ===')
+          for page in pages:
+              source=page.read_text(encoding='utf-8')
+              for phrase in phrases:
+                  if phrase in source:
+                      print(f'{page}:{phrase}')
+          PY
