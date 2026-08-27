@@ -19,6 +19,7 @@
  */
 
 import React, { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { supabase } from "../../lib/supabase";
 
 type ClubInfo = {
@@ -79,7 +80,6 @@ function countryCodeToFlagEmoji(countryCode?: string | null): string {
     .join("");
 }
 
-
 function safeCountryCode(countryCode?: string | null): string {
   const code = (countryCode ?? "").trim().toLowerCase();
   return /^[a-z]{2}$/.test(code) ? code : "";
@@ -96,6 +96,7 @@ function CountryFlag({
   countryCode?: string | null;
   className?: string;
 }) {
+  const { t } = useTranslation("club");
   const safeCode = safeCountryCode(countryCode);
   const [hasError, setHasError] = React.useState(false);
 
@@ -121,8 +122,8 @@ function CountryFlag({
     return (
       <span
         className={placeholderClassName}
-        title="Unknown country"
-        aria-label="Unknown country"
+        title={t("common.unknownCountry")}
+        aria-label={t("common.unknownCountry")}
       />
     );
   }
@@ -196,12 +197,12 @@ function normalizeHonours(value: unknown): ClubHonourRow[] {
   });
 }
 
-function formatFullDate(value: string): string {
+function formatFullDate(value: string, locale: string): string {
   if (!value) return "—";
   const date = new Date(`${value}T00:00:00`);
   if (Number.isNaN(date.getTime())) return value;
 
-  return new Intl.DateTimeFormat("en", {
+  return new Intl.DateTimeFormat(locale, {
     month: "short",
     day: "2-digit",
     year: "numeric",
@@ -228,7 +229,7 @@ function StatCard({
   );
 }
 
-function HonourRow({ item }: { item: ClubHonourRow }) {
+function HonourRow({ item, locale }: { item: ClubHonourRow; locale: string }) {
   const details = `${item.achievementLabel}${
     item.riderName ? ` · ${item.riderName}` : ""
   }`;
@@ -236,7 +237,7 @@ function HonourRow({ item }: { item: ClubHonourRow }) {
   const content = (
     <div className="mt-2 flex min-w-0 items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm shadow-sm transition hover:bg-white">
       <div className="w-[68px] shrink-0 whitespace-nowrap text-xs font-semibold text-slate-900">
-        {item.dateLabel || formatFullDate(item.resultDate)}
+        {item.dateLabel || formatFullDate(item.resultDate, locale)}
       </div>
 
       <div className="h-7 w-px shrink-0 bg-emerald-400" />
@@ -270,6 +271,7 @@ function HonourRow({ item }: { item: ClubHonourRow }) {
 }
 
 export default function ClubHistoryPage() {
+  const { t, i18n } = useTranslation("club");
   const [club, setClub] = useState<ClubInfo | null>(null);
   const [honours, setHonours] = useState<ClubHonourRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -297,7 +299,7 @@ export default function ClubHistoryPage() {
         if (clubIdError) throw clubIdError;
 
         const clubId = asString(clubIdData, "");
-        if (!clubId) throw new Error("No club could be resolved.");
+        if (!clubId) throw new Error(t("history.noClub"));
 
         const { data: resolvedClubData, error: resolvedClubError } =
           await supabase
@@ -340,7 +342,7 @@ export default function ClubHistoryPage() {
 
         setClub({
           id: asString(clubRow.id, historyClubId),
-          name: asString(clubRow.name, "Club"),
+          name: asString(clubRow.name, t("common.club")),
           countryCode: asString(clubRow.country_code, ""),
           logoPath: asString(clubRow.logo_path, "") || null,
           createdGameDate: asString(clubRow.created_game_date, "") || null,
@@ -354,7 +356,7 @@ export default function ClubHistoryPage() {
           setError(
             err instanceof Error
               ? err.message
-              : "Club history could not be loaded.",
+              : t("history.loadFailed"),
           );
         }
       } finally {
@@ -367,7 +369,7 @@ export default function ClubHistoryPage() {
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [t]);
 
   const seasons = useMemo(
     () =>
@@ -493,7 +495,7 @@ export default function ClubHistoryPage() {
     return (
       <div className="p-6">
         <div className="rounded-2xl border border-red-200 bg-red-50 p-5 text-sm text-red-700">
-          <div className="font-bold">Club history could not be loaded</div>
+          <div className="font-bold">{t("history.errorTitle")}</div>
           <div className="mt-1">{error}</div>
         </div>
       </div>
@@ -508,10 +510,10 @@ export default function ClubHistoryPage() {
         <a
           href="#/dashboard/overview"
           className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50"
-          aria-label="Back to Overview"
+          aria-label={t("history.backAria")}
         >
           <span aria-hidden="true">←</span>
-          Back
+          {t("common.backShort")}
         </a>
       </div>
 
@@ -532,10 +534,10 @@ export default function ClubHistoryPage() {
 
             <div>
               <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-                Club History
+                {t("history.title")}
               </div>
               <h1 className="mt-1 text-2xl font-bold text-slate-950">
-                {club?.name ?? "Club"}
+                {club?.name ?? t("common.club")}
               </h1>
               <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-sm text-slate-500">
                 {clubFlag ? (
@@ -545,35 +547,48 @@ export default function ClubHistoryPage() {
                 ) : null}
                 {club?.clubTier ? <span>{club.clubTier}</span> : null}
                 {club?.createdGameDate ? (
-                  <span>Founded {formatFullDate(club.createdGameDate)}</span>
+                  <span>
+                    {t("history.founded", {
+                      date: formatFullDate(club.createdGameDate, i18n.language),
+                    })}
+                  </span>
                 ) : null}
               </div>
             </div>
           </div>
-
         </div>
       </section>
 
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
-          label="Total honours"
+          label={t("history.totalHonours")}
           value={honours.length}
-          hint="Persisted top-10 one-day and stage results"
+          hint={t("history.totalHonoursHint")}
         />
-        <StatCard label="Victories" value={wins} hint="Race and stage wins" />
-        <StatCard label="Podiums" value={podiums} hint="First, second or third" />
         <StatCard
-          label="Win breakdown"
+          label={t("history.victories")}
+          value={wins}
+          hint={t("history.victoriesHint")}
+        />
+        <StatCard
+          label={t("history.podiums")}
+          value={podiums}
+          hint={t("history.podiumsHint")}
+        />
+        <StatCard
+          label={t("history.winBreakdown")}
           value={`${oneDayWins} / ${stageWins}`}
-          hint="One-day wins / stage wins"
+          hint={t("history.winBreakdownHint")}
         />
       </section>
 
       <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
         <div>
-          <h2 className="text-lg font-bold text-slate-950">Results archive</h2>
+          <h2 className="text-lg font-bold text-slate-950">
+            {t("history.archive")}
+          </h2>
           <p className="mt-1 text-sm text-slate-500">
-            All currently supported club honours, grouped by season.
+            {t("history.archiveDescription")}
           </p>
         </div>
 
@@ -584,7 +599,7 @@ export default function ClubHistoryPage() {
               setSearch(event.target.value);
               setCurrentPage(1);
             }}
-            placeholder="Search race or rider"
+            placeholder={t("history.search")}
             className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none transition focus:border-slate-400"
           />
 
@@ -596,7 +611,7 @@ export default function ClubHistoryPage() {
             }}
             className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none"
           >
-            <option value="all">All seasons</option>
+            <option value="all">{t("history.allSeasons")}</option>
             {seasons.map((season) => (
               <option key={season} value={season}>
                 {season}
@@ -612,9 +627,9 @@ export default function ClubHistoryPage() {
             }}
             className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none"
           >
-            <option value="all">All result types</option>
-            <option value="one_day_result">One-day results</option>
-            <option value="stage_result">Stage results</option>
+            <option value="all">{t("history.allResultTypes")}</option>
+            <option value="one_day_result">{t("history.oneDayResults")}</option>
+            <option value="stage_result">{t("history.stageResults")}</option>
           </select>
 
           <select
@@ -625,10 +640,10 @@ export default function ClubHistoryPage() {
             }}
             className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none"
           >
-            <option value="all">All top-10 results</option>
-            <option value="wins">Victories only</option>
-            <option value="podiums">Podiums only</option>
-            <option value="top10">Top 10</option>
+            <option value="all">{t("history.allTop10")}</option>
+            <option value="wins">{t("history.victoriesOnly")}</option>
+            <option value="podiums">{t("history.podiumsOnly")}</option>
+            <option value="top10">{t("history.top10")}</option>
           </select>
         </div>
 
@@ -639,20 +654,26 @@ export default function ClubHistoryPage() {
                 <div className="mb-2 flex items-center justify-between">
                   <h3 className="font-bold text-slate-900">{season}</h3>
                   <span className="text-xs text-slate-500">
-                    {rows.length} result{rows.length === 1 ? "" : "s"}
+                    {rows.length === 1
+                      ? t("history.result", { count: rows.length })
+                      : t("history.resultsCount", { count: rows.length })}
                   </span>
                 </div>
 
                 <div className="space-y-2">
                   {rows.map((item) => (
-                    <HonourRow key={item.id} item={item} />
+                    <HonourRow
+                      key={item.id}
+                      item={item}
+                      locale={i18n.language}
+                    />
                   ))}
                 </div>
               </div>
             ))
           ) : (
             <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 py-10 text-center text-sm text-slate-500">
-              No club honours match the selected filters.
+              {t("history.empty")}
             </div>
           )}
         </div>
@@ -660,7 +681,7 @@ export default function ClubHistoryPage() {
         {filteredHonours.length > 0 ? (
           <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-4">
             <div className="text-sm text-slate-500">
-              Showing{" "}
+              {t("common.showing")}{" "}
               <span className="font-semibold text-slate-700">
                 {(currentPage - 1) * RESULTS_PER_PAGE + 1}
               </span>
@@ -671,11 +692,11 @@ export default function ClubHistoryPage() {
                   filteredHonours.length,
                 )}
               </span>{" "}
-              of{" "}
+              {t("common.of")}{" "}
               <span className="font-semibold text-slate-700">
                 {filteredHonours.length}
               </span>{" "}
-              results
+              {t("common.results")}
             </div>
 
             <div className="flex items-center gap-2">
@@ -687,11 +708,11 @@ export default function ClubHistoryPage() {
                 disabled={currentPage === 1}
                 className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
               >
-                Previous
+                {t("common.previous")}
               </button>
 
               <span className="min-w-[90px] text-center text-sm font-semibold text-slate-700">
-                Page {currentPage} of {totalPages}
+                {t("history.page", { page: currentPage, total: totalPages })}
               </span>
 
               <button
@@ -702,7 +723,7 @@ export default function ClubHistoryPage() {
                 disabled={currentPage === totalPages}
                 className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
               >
-                Next
+                {t("common.next")}
               </button>
             </div>
           </div>
@@ -710,8 +731,7 @@ export default function ClubHistoryPage() {
       </section>
 
       <section className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
-        Final GC, points, mountain and youth-classification honours will be
-        added after their authoritative persisted result source is confirmed.
+        {t("history.deferred")}
       </section>
     </div>
   );
