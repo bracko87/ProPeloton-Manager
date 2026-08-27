@@ -14,6 +14,7 @@
  */
 
 import React, { useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useAuth } from '../context/AuthProvider'
 import { supabase } from '../lib/supabase'
 
@@ -45,22 +46,6 @@ type ProfileForm = {
   country: string
 }
 
-const MONTH_NAMES = [
-  '',
-  'January',
-  'February',
-  'March',
-  'April',
-  'May',
-  'June',
-  'July',
-  'August',
-  'September',
-  'October',
-  'November',
-  'December',
-]
-
 function normalizeUsername(input: string): string {
   const trimmed = input.trim()
   const cleaned = trimmed
@@ -76,15 +61,26 @@ function buildFallbackUsername(email: string): string {
   return normalizeUsername(base) || `user_${Math.random().toString(36).slice(2, 8)}`
 }
 
-function formatBirthday(profile: ProfileRow | null): string {
+function formatBirthday(
+  profile: ProfileRow | null,
+  locale: string,
+  notSetLabel: string,
+): string {
   if (!profile?.birthday_month || !profile?.birthday_day) {
-    return 'Not set'
+    return notSetLabel
   }
 
-  const monthName = MONTH_NAMES[profile.birthday_month] || `Month ${profile.birthday_month}`
-  const yearPart = profile.birthday_year ? ` ${profile.birthday_year}` : ''
+  const displayYear = profile.birthday_year ?? 2000
+  const date = new Date(
+    Date.UTC(displayYear, profile.birthday_month - 1, profile.birthday_day),
+  )
 
-  return `${monthName} ${profile.birthday_day}${yearPart}`
+  return new Intl.DateTimeFormat(
+    locale,
+    profile.birthday_year
+      ? { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' }
+      : { day: 'numeric', month: 'long', timeZone: 'UTC' },
+  ).format(date)
 }
 
 /**
@@ -96,6 +92,7 @@ function getPasswordResetRedirectUrl(): string {
 }
 
 export default function MyProfilePage(): JSX.Element {
+  const { t, i18n } = useTranslation('accountPages')
   const { user } = useAuth()
 
   const [loading, setLoading] = useState(true)
@@ -116,7 +113,12 @@ export default function MyProfilePage(): JSX.Element {
   const [successMessage, setSuccessMessage] = useState('')
   const [errorMessage, setErrorMessage] = useState('')
 
-  const birthdayLabel = useMemo(() => formatBirthday(profile), [profile])
+  const locale = i18n.resolvedLanguage ?? i18n.language
+
+  const birthdayLabel = useMemo(
+    () => formatBirthday(profile, locale, t('profile.notSet')),
+    [locale, profile, t],
+  )
 
   const accountEmail = useMemo(() => {
     return (user?.email || profile?.email || form.email || '').trim()
@@ -220,13 +222,13 @@ export default function MyProfilePage(): JSX.Element {
       const currentEmail = user.email || profile?.email || ''
 
       if (!nextEmail) {
-        throw new Error('Email is required.')
+        throw new Error(t('profile.emailRequired'))
       }
 
       const normalizedUsername = normalizeUsername(form.username)
 
       if (normalizedUsername.length < 3 || normalizedUsername.length > 24) {
-        throw new Error('Display Name must be between 3 and 24 characters.')
+        throw new Error(t('profile.displayNameLength'))
       }
 
       if (nextEmail !== currentEmail) {
@@ -286,11 +288,11 @@ export default function MyProfilePage(): JSX.Element {
 
       setSuccessMessage(
         nextEmail !== currentEmail
-          ? 'Profile saved. If email confirmation is enabled, please confirm your new email address.'
-          : 'Profile saved successfully.',
+          ? t('profile.savedEmail')
+          : t('profile.saved'),
       )
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to save profile.'
+      const message = err instanceof Error ? err.message : t('profile.saveFailed')
       setErrorMessage(message)
     } finally {
       setSavingProfile(false)
@@ -306,7 +308,7 @@ export default function MyProfilePage(): JSX.Element {
 
     try {
       if (!accountEmail) {
-        throw new Error('No account email was found for password reset.')
+        throw new Error(t('profile.resetEmailMissing'))
       }
 
       const { error } = await supabase.auth.resetPasswordForEmail(accountEmail, {
@@ -317,16 +319,12 @@ export default function MyProfilePage(): JSX.Element {
         throw error
       }
 
-      setSuccessMessage(
-        `Password reset email sent to ${accountEmail}. Please check your inbox and spam folder, then follow the link to choose a new password.`,
-      )
+      setSuccessMessage(t('profile.resetSent', { email: accountEmail }))
     } catch (err) {
       // eslint-disable-next-line no-console
       console.error('Profile password reset request error:', err)
 
-      setErrorMessage(
-        'We could not send the password reset email. Please try again in a moment.',
-      )
+      setErrorMessage(t('profile.resetFailed'))
     } finally {
       setSendingPasswordReset(false)
     }
@@ -335,7 +333,7 @@ export default function MyProfilePage(): JSX.Element {
   if (loading) {
     return (
       <div className="w-full h-full min-h-[calc(100vh-7rem)] flex items-center justify-center">
-        <div className="text-sm text-gray-600">Loading profile...</div>
+        <div className="text-sm text-gray-600">{t('profile.loading')}</div>
       </div>
     )
   }
@@ -343,7 +341,7 @@ export default function MyProfilePage(): JSX.Element {
   return (
     <div className="w-full h-full min-h-[calc(100vh-7rem)] flex flex-col">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl font-semibold">My Profile</h2>
+        <h2 className="text-xl font-semibold">{t('profile.title')}</h2>
       </div>
 
       <div className="bg-white rounded shadow border border-gray-200 flex-1 overflow-y-auto p-6">
@@ -365,90 +363,89 @@ export default function MyProfilePage(): JSX.Element {
 
         <form onSubmit={handleSaveProfile} className="space-y-6">
           <div className="border border-gray-200 rounded p-4">
-            <h3 className="text-base font-semibold mb-4">Profile Details</h3>
+            <h3 className="text-base font-semibold mb-4">{t('profile.details')}</h3>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <label className="block">
-                <div className="text-sm font-medium mb-1">Display Name</div>
+                <div className="text-sm font-medium mb-1">{t('profile.displayName')}</div>
                 <input
                   value={form.username}
                   onChange={e => updateForm('username', e.target.value)}
                   onBlur={() => updateForm('username', normalizeUsername(form.username))}
                   className="w-full border border-gray-300 px-3 py-2 rounded"
-                  placeholder="Display name"
+                  placeholder={t('profile.displayNamePlaceholder')}
                   autoComplete="nickname"
                 />
                 <div className="text-xs text-gray-500 mt-1">
-                  3–24 chars. Letters/numbers/underscore only. Spaces become underscores.
+                  {t('profile.displayNameHelp')}
                 </div>
               </label>
 
               <label className="block">
-                <div className="text-sm font-medium mb-1">Email</div>
+                <div className="text-sm font-medium mb-1">{t('profile.email')}</div>
                 <input
                   type="email"
                   value={form.email}
                   onChange={e => updateForm('email', e.target.value)}
                   className="w-full border border-gray-300 px-3 py-2 rounded"
-                  placeholder="Email address"
+                  placeholder={t('profile.emailPlaceholder')}
                   autoComplete="email"
                 />
                 <div className="text-xs text-gray-500 mt-1">
-                  If you change your email, you may need to confirm the new address.
+                  {t('profile.emailHelp')}
                 </div>
               </label>
 
               <label className="block">
-                <div className="text-sm font-medium mb-1">First Name</div>
+                <div className="text-sm font-medium mb-1">{t('profile.firstName')}</div>
                 <input
                   value={form.firstName}
                   onChange={e => updateForm('firstName', e.target.value)}
                   className="w-full border border-gray-300 px-3 py-2 rounded"
-                  placeholder="First name"
+                  placeholder={t('profile.firstNamePlaceholder')}
                   autoComplete="given-name"
                 />
               </label>
 
               <label className="block">
-                <div className="text-sm font-medium mb-1">Last Name</div>
+                <div className="text-sm font-medium mb-1">{t('profile.lastName')}</div>
                 <input
                   value={form.lastName}
                   onChange={e => updateForm('lastName', e.target.value)}
                   className="w-full border border-gray-300 px-3 py-2 rounded"
-                  placeholder="Last name"
+                  placeholder={t('profile.lastNamePlaceholder')}
                   autoComplete="family-name"
                 />
               </label>
 
               <div className="block">
-                <div className="text-sm font-medium mb-1">Birthday</div>
+                <div className="text-sm font-medium mb-1">{t('profile.birthday')}</div>
                 <div className="w-full rounded border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-800">
                   {birthdayLabel}
                 </div>
                 <div className="mt-1 text-xs text-gray-500">
-                  Birthday rewards are configured during registration and cannot be changed later.
-                  You receive 10 coins on your birthday.
+                  {t('profile.birthdayHelp')}
                 </div>
               </div>
 
               <label className="block">
-                <div className="text-sm font-medium mb-1">City</div>
+                <div className="text-sm font-medium mb-1">{t('profile.city')}</div>
                 <input
                   value={form.city}
                   onChange={e => updateForm('city', e.target.value)}
                   className="w-full border border-gray-300 px-3 py-2 rounded"
-                  placeholder="City"
+                  placeholder={t('profile.city')}
                   autoComplete="address-level2"
                 />
               </label>
 
               <label className="block md:col-span-2">
-                <div className="text-sm font-medium mb-1">Country</div>
+                <div className="text-sm font-medium mb-1">{t('profile.country')}</div>
                 <input
                   value={form.country}
                   onChange={e => updateForm('country', e.target.value)}
                   className="w-full border border-gray-300 px-3 py-2 rounded"
-                  placeholder="Country"
+                  placeholder={t('profile.country')}
                   autoComplete="country-name"
                 />
               </label>
@@ -460,7 +457,7 @@ export default function MyProfilePage(): JSX.Element {
                 disabled={savingProfile || !isDirty}
                 className="inline-flex items-center rounded bg-yellow-500 px-4 py-2 text-sm font-medium text-black disabled:opacity-50"
               >
-                {savingProfile ? 'Saving...' : 'Save Profile'}
+                {savingProfile ? t('profile.saving') : t('profile.save')}
               </button>
             </div>
           </div>
@@ -468,15 +465,14 @@ export default function MyProfilePage(): JSX.Element {
 
         <form onSubmit={handleSendPasswordReset} className="mt-6 space-y-6">
           <div className="border border-gray-200 rounded p-4">
-            <h3 className="text-base font-semibold mb-2">Change Password</h3>
+            <h3 className="text-base font-semibold mb-2">{t('profile.changePassword')}</h3>
 
             <p className="text-sm text-gray-600">
-              For security, password changes are completed by email verification. We will send a
-              password reset link to your current account email.
+              {t('profile.passwordDescription')}
             </p>
 
             <div className="mt-4 rounded border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-800">
-              {accountEmail || 'No account email found'}
+              {accountEmail || t('profile.noEmail')}
             </div>
 
             <div className="pt-4">
@@ -485,13 +481,12 @@ export default function MyProfilePage(): JSX.Element {
                 disabled={sendingPasswordReset || !accountEmail}
                 className="inline-flex items-center rounded bg-gray-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
               >
-                {sendingPasswordReset ? 'Sending email...' : 'Send Password Change Email'}
+                {sendingPasswordReset ? t('profile.sendingEmail') : t('profile.sendPasswordEmail')}
               </button>
             </div>
 
             <div className="mt-3 text-xs text-gray-500">
-              After opening the email link, you will be able to choose a new password on the reset
-              password page.
+              {t('profile.passwordHelp')}
             </div>
           </div>
         </form>
