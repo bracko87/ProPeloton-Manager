@@ -108,6 +108,12 @@
     "no": "Ne",
     "coins": "{{count}} novčića"
   },
+  "time": {
+    "justNow": "Upravo sada",
+    "minutesAgo": "pre {{count}} min",
+    "hoursAgo": "pre {{count}} h",
+    "daysAgo": "pre {{count}} d"
+  },
   "headCoach": {
     "recommendations": "Preporuke glavnog trenera",
     "skill": "Veština",
