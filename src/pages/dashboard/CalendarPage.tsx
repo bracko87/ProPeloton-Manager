@@ -1808,9 +1808,13 @@ export default function CalendarPage(): JSX.Element {
     premiumRaceFilters,
     sponsorObjectiveTargetsByRaceId,
   ])
-  const weekdayHeaders = useMemo(() => {
-    return WEEKDAY_NAMES_MONDAY_FIRST
-  }, [])
+  const weekdayHeaders = useMemo(
+    () =>
+      WEEKDAY_KEYS_MONDAY_FIRST.map((weekdayKey) =>
+        t(`dates.weekdays.${weekdayKey}`)
+      ),
+    [t, i18n.language]
+  )
 
   const calendarGridCells = useMemo<CalendarGridCell[]>(() => {
     if (monthDays.length === 0) return []
