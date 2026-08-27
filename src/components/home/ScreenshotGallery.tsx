@@ -4,203 +4,71 @@
  */
 
 import React, { useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 type ScreenshotItem = {
   src: string
-  alt: string
+  index: number
 }
 
-const SCREENSHOTS: ScreenshotItem[] = [
-  {
-    src: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Overview%201.jpg',
-    alt: 'ProPeloton Manager screenshot 1',
-  },
-  {
-    src: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Overview%202.jpg',
-    alt: 'ProPeloton Manager screenshot 2',
-  },
-  {
-    src: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Assets%20Page.jpg',
-    alt: 'ProPeloton Manager screenshot 3',
-  },
-  {
-    src: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Infrastracture%20page%202.jpg',
-    alt: 'ProPeloton Manager screenshot 4',
-  },
-  {
-    src: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Infrastracture%20page%203.jpg',
-    alt: 'ProPeloton Manager screenshot 5',
-  },
-  {
-    src: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Infrastracture%20Page.jpg',
-    alt: 'ProPeloton Manager screenshot 6',
-  },
-  {
-    src: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Calendar%201.jpg',
-    alt: 'ProPeloton Manager screenshot 7',
-  },
-  {
-    src: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Calendar%202.jpg',
-    alt: 'ProPeloton Manager screenshot 8',
-  },
-  {
-    src: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/calendar%203.jpg',
-    alt: 'ProPeloton Manager screenshot 9',
-  },
-  {
-    src: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Equipment%20Page%201.jpg',
-    alt: 'ProPeloton Manager screenshot 10',
-  },
-  {
-    src: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Equipment%20Page%202.jpg',
-    alt: 'ProPeloton Manager screenshot 11',
-  },
-  {
-    src: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Equipment%20Page%203.jpg',
-    alt: 'ProPeloton Manager screenshot 12',
-  },
-  {
-    src: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Equipment%20Page%204.jpg',
-    alt: 'ProPeloton Manager screenshot 13',
-  },
-  {
-    src: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Equipment%20Page%205.jpg',
-    alt: 'ProPeloton Manager screenshot 14',
-  },
-  {
-    src: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Equipment%20Page%206.jpg',
-    alt: 'ProPeloton Manager screenshot 15',
-  },
-  {
-    src: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Equipment%20Page%207.jpg',
-    alt: 'ProPeloton Manager screenshot 16',
-  },
-  {
-    src: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Equipment%20Page%208.jpg',
-    alt: 'ProPeloton Manager screenshot 17',
-  },
-  {
-    src: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Finance%20Page%201.jpg',
-    alt: 'ProPeloton Manager screenshot 18',
-  },
-  {
-    src: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Finance%20Page%202.jpg',
-    alt: 'ProPeloton Manager screenshot 19',
-  },
-  {
-    src: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Finance%20Page%203.jpg',
-    alt: 'ProPeloton Manager screenshot 20',
-  },
-  {
-    src: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Finance%20Page%204.jpg',
-    alt: 'ProPeloton Manager screenshot 21',
-  },
-  {
-    src: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Finance%20Page%205.jpg',
-    alt: 'ProPeloton Manager screenshot 22',
-  },
-  {
-    src: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Finance%20page%206.jpg',
-    alt: 'ProPeloton Manager screenshot 22',
-  },
-    {
-    src: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Race%20detail%201.jpg',
-    alt: 'ProPeloton Manager screenshot 23',
-  },
-  {
-    src: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Race%20Detail%202.jpg',
-    alt: 'ProPeloton Manager screenshot 24',
-  },
-  {
-    src: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Race%20Detais%203.jpg',
-    alt: 'ProPeloton Manager screenshot 25',
-  },
-  {
-    src: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Race%20preparatiomn%203.jpg',
-    alt: 'ProPeloton Manager screenshot 26',
-  },
-  {
-    src: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Race%20preparation%201.jpg',
-    alt: 'ProPeloton Manager screenshot 27',
-  },
-  {
-    src: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Race%20preparation%202.jpg',
-    alt: 'ProPeloton Manager screenshot 28',
-  },
-  {
-    src: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Race%20preparation%204.jpg',
-    alt: 'ProPeloton Manager screenshot 29',
-  },
-  {
-    src: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Race%20Preparation%205.jpg',
-    alt: 'ProPeloton Manager screenshot 30',
-  },
-  {
-    src: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Rider%20profile%201.jpg',
-    alt: 'ProPeloton Manager screenshot 31',
-  },
-  {
-    src: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Rider%20Profile%202.jpg',
-    alt: 'ProPeloton Manager screenshot 32',
-  },
-  {
-    src: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Rider%20profile%203.jpg',
-    alt: 'ProPeloton Manager screenshot 33',
-  },
-  {
-    src: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Rider%20Profile%204.jpg',
-    alt: 'ProPeloton Manager screenshot 34',
-  },
-  {
-    src: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Rider%20profile%205.jpg',
-    alt: 'ProPeloton Manager screenshot 35',
-  },
-  {
-    src: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Squad%20Page%202.jpg',
-    alt: 'ProPeloton Manager screenshot 36',
-  },
-  {
-    src: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Squad%20Page.jpg',
-    alt: 'ProPeloton Manager screenshot 37',
-  },
-  {
-    src: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Statistic%20Page%201.jpg',
-    alt: 'ProPeloton Manager screenshot 38',
-  },
-  {
-    src: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Statistic%20Page%202.jpg',
-    alt: 'ProPeloton Manager screenshot 39',
-  },
-  {
-    src: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Team%20ranking%20Page%201.jpg',
-    alt: 'ProPeloton Manager screenshot 40',
-  },
-  {
-    src: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Team%20Ranking%20Page%202.jpg',
-    alt: 'ProPeloton Manager screenshot 41',
-  },
-  {
-    src: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Team%20Ranking%20Page%203.jpg',
-    alt: 'ProPeloton Manager screenshot 42',
-  },
-  {
-    src: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Transfer%20Page%201.jpg',
-    alt: 'ProPeloton Manager screenshot 43',
-  },
-  {
-    src: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Transfer%20Page%202.jpg',
-    alt: 'ProPeloton Manager screenshot 44',
-  },
-  {
-    src: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Transfer%20page%203.jpg',
-    alt: 'ProPeloton Manager screenshot 45',
-  },
+const SCREENSHOT_URLS = [
+  'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Overview%201.jpg',
+  'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Overview%202.jpg',
+  'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Assets%20Page.jpg',
+  'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Infrastracture%20page%202.jpg',
+  'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Infrastracture%20page%203.jpg',
+  'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Infrastracture%20Page.jpg',
+  'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Calendar%201.jpg',
+  'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Calendar%202.jpg',
+  'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/calendar%203.jpg',
+  'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Equipment%20Page%201.jpg',
+  'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Equipment%20Page%202.jpg',
+  'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Equipment%20Page%203.jpg',
+  'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Equipment%20Page%204.jpg',
+  'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Equipment%20Page%205.jpg',
+  'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Equipment%20Page%206.jpg',
+  'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Equipment%20Page%207.jpg',
+  'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Equipment%20Page%208.jpg',
+  'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Finance%20Page%201.jpg',
+  'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Finance%20Page%202.jpg',
+  'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Finance%20Page%203.jpg',
+  'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Finance%20Page%204.jpg',
+  'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Finance%20Page%205.jpg',
+  'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Finance%20page%206.jpg',
+  'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Race%20detail%201.jpg',
+  'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Race%20Detail%202.jpg',
+  'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Race%20Detais%203.jpg',
+  'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Race%20preparatiomn%203.jpg',
+  'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Race%20preparation%201.jpg',
+  'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Race%20preparation%202.jpg',
+  'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Race%20preparation%204.jpg',
+  'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Race%20Preparation%205.jpg',
+  'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Rider%20profile%201.jpg',
+  'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Rider%20Profile%202.jpg',
+  'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Rider%20profile%203.jpg',
+  'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Rider%20Profile%204.jpg',
+  'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Rider%20profile%205.jpg',
+  'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Squad%20Page%202.jpg',
+  'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Squad%20Page.jpg',
+  'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Statistic%20Page%201.jpg',
+  'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Statistic%20Page%202.jpg',
+  'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Team%20ranking%20Page%201.jpg',
+  'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Team%20Ranking%20Page%202.jpg',
+  'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Team%20Ranking%20Page%203.jpg',
+  'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Transfer%20Page%201.jpg',
+  'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Transfer%20Page%202.jpg',
+  'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Transfer%20page%203.jpg',
 ]
 
+const SCREENSHOTS: ScreenshotItem[] = SCREENSHOT_URLS.map((src, index) => ({
+  src,
+  index: index + 1,
+}))
 
 const PAGE_SIZE = 6
 
 export default function ScreenshotGallery(): JSX.Element {
+  const { t } = useTranslation('home')
   const [page, setPage] = useState(0)
   const [selectedScreenshot, setSelectedScreenshot] = useState<ScreenshotItem | null>(null)
 
@@ -210,6 +78,10 @@ export default function ScreenshotGallery(): JSX.Element {
     const start = page * PAGE_SIZE
     return SCREENSHOTS.slice(start, start + PAGE_SIZE)
   }, [page])
+
+  function screenshotAlt(item: ScreenshotItem): string {
+    return `${t('screenshots.title')} ${item.index}`
+  }
 
   function goPrevious() {
     setPage((currentPage) => {
@@ -251,11 +123,10 @@ export default function ScreenshotGallery(): JSX.Element {
       <div className="relative z-10 mx-auto max-w-7xl px-6">
         <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h3 className="text-2xl font-semibold text-white">In-game Screenshots</h3>
+            <h3 className="text-2xl font-semibold text-white">{t('screenshots.title')}</h3>
 
             <p className="mt-2 max-w-2xl text-sm text-white/70">
-              A look inside team management, race preparation, tactics and the cycling
-              world of ProPeloton Manager.
+              {t('screenshots.subtitle')}
             </p>
           </div>
 
@@ -265,7 +136,7 @@ export default function ScreenshotGallery(): JSX.Element {
                 type="button"
                 onClick={goPrevious}
                 className="flex h-10 w-10 items-center justify-center rounded-full border border-white/15 bg-white/5 text-white hover:border-yellow-400 hover:text-yellow-400"
-                aria-label="Previous screenshots"
+                aria-label={t('screenshots.previous')}
               >
                 <svg
                   className="h-5 w-5"
@@ -282,7 +153,7 @@ export default function ScreenshotGallery(): JSX.Element {
                 type="button"
                 onClick={goNext}
                 className="flex h-10 w-10 items-center justify-center rounded-full border border-white/15 bg-white/5 text-white hover:border-yellow-400 hover:text-yellow-400"
-                aria-label="Next screenshots"
+                aria-label={t('screenshots.next')}
               >
                 <svg
                   className="h-5 w-5"
@@ -308,7 +179,7 @@ export default function ScreenshotGallery(): JSX.Element {
             >
               <img
                 src={img.src}
-                alt={img.alt}
+                alt={screenshotAlt(img)}
                 className="h-56 w-full object-cover transition-transform duration-300 hover:scale-105"
                 loading="lazy"
               />
@@ -329,7 +200,7 @@ export default function ScreenshotGallery(): JSX.Element {
                     ? 'w-8 bg-yellow-400'
                     : 'w-2.5 bg-white/30 hover:bg-white/60',
                 ].join(' ')}
-                aria-label={`Open screenshot page ${index + 1}`}
+                aria-label={t('screenshots.openPage', { page: index + 1 })}
               />
             ))}
           </div>
@@ -347,7 +218,7 @@ export default function ScreenshotGallery(): JSX.Element {
             type="button"
             onClick={closePopup}
             className="absolute right-5 top-5 z-20 flex h-11 w-11 items-center justify-center rounded-full border border-white/25 bg-black/70 text-xl font-bold text-white shadow-lg hover:border-yellow-400 hover:text-yellow-400"
-            aria-label="Close screenshot"
+            aria-label={t('screenshots.close')}
           >
             ✕
           </button>
@@ -358,7 +229,7 @@ export default function ScreenshotGallery(): JSX.Element {
           >
             <img
               src={selectedScreenshot.src}
-              alt={selectedScreenshot.alt}
+              alt={screenshotAlt(selectedScreenshot)}
               className="max-h-[96vh] max-w-[98vw] object-contain"
             />
           </div>
