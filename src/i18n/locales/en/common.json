@@ -12,7 +12,8 @@
     "close": "Close",
     "continue": "Continue",
     "confirm": "Confirm",
-    "back": "Back"
+    "back": "Back",
+    "skipTutorial": "Skip tutorial"
   },
   "status": {
     "loading": "Loading...",
