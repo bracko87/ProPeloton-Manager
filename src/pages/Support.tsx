@@ -5,33 +5,20 @@
 
 import React from 'react'
 import { Link } from 'react-router'
+import { useTranslation } from 'react-i18next'
 
 const CONTACT_EMAIL = 'contact@propelotonmanager.com'
 
-const supportTopics = [
-  {
-    title: 'Account and login help',
-    text:
-      'Use support if you cannot sign in, cannot access your club, have trouble with password reset, or believe your account data is not loading correctly.',
-  },
-  {
-    title: 'Bug reports',
-    text:
-      'Report bugs with clear steps. Include the page name, expected behavior, actual behavior, team name, rider name, race name, and screenshots when possible.',
-  },
-  {
-    title: 'Payments and coins',
-    text:
-      'For coin package, Stripe checkout, rewarded-ad, or balance questions, include your account email and the approximate time of the issue.',
-  },
-  {
-    title: 'Gameplay questions',
-    text:
-      'Ask about race preparation, stage plans, transfers, sponsors, finances, rankings, training, fatigue, or any system that is unclear.',
-  },
-]
-
 export default function SupportPage(): JSX.Element {
+  const { t } = useTranslation('publicInfo')
+
+  const supportTopics = [
+    { title: t('support.accountTitle'), text: t('support.accountText') },
+    { title: t('support.bugsTitle'), text: t('support.bugsText') },
+    { title: t('support.paymentsTitle'), text: t('support.paymentsText') },
+    { title: t('support.gameplayTitle'), text: t('support.gameplayText') },
+  ]
+
   return (
     <main className="min-h-screen bg-slate-50 text-slate-900">
       <section className="bg-slate-950 px-6 py-14 text-white">
@@ -40,21 +27,19 @@ export default function SupportPage(): JSX.Element {
             to="/"
             className="inline-flex items-center rounded-lg border border-white/20 px-4 py-2 text-sm font-semibold text-white/85 hover:bg-white/10 hover:text-white"
           >
-            ← Back to Home
+            {t('common.backHome')}
           </Link>
 
           <p className="mt-8 text-sm font-semibold uppercase tracking-[0.25em] text-yellow-300">
-            Support
+            {t('support.eyebrow')}
           </p>
 
           <h1 className="mt-4 text-4xl font-bold tracking-tight md:text-5xl">
-            Help for players and visitors.
+            {t('support.title')}
           </h1>
 
           <p className="mt-5 max-w-3xl text-lg leading-relaxed text-slate-200">
-            This page explains how to contact ProPeloton Manager support, what details
-            to include in a report, and where to go for account, gameplay, payment,
-            coin, or technical questions.
+            {t('support.intro')}
           </p>
 
           <div className="mt-8 flex flex-wrap gap-3">
@@ -62,14 +47,14 @@ export default function SupportPage(): JSX.Element {
               to="/contact"
               className="rounded-lg bg-yellow-400 px-5 py-3 text-sm font-bold text-black hover:bg-yellow-300"
             >
-              Send Support Message
+              {t('support.send')}
             </Link>
 
             <Link
               to="/privacy-policy"
               className="rounded-lg border border-white/30 px-5 py-3 text-sm font-bold text-white hover:bg-white/10"
             >
-              Privacy Policy
+              {t('common.privacyPolicy')}
             </Link>
           </div>
         </div>
@@ -77,12 +62,10 @@ export default function SupportPage(): JSX.Element {
 
       <section className="mx-auto max-w-5xl px-6 py-12">
         <div className="mb-8 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-          <h2 className="text-2xl font-bold">Contact support</h2>
+          <h2 className="text-2xl font-bold">{t('support.contactTitle')}</h2>
 
           <p className="mt-3 leading-relaxed text-slate-700">
-            The fastest way to contact support is through the contact form. It sends
-            your message directly to ProPeloton Manager support without opening your
-            email app.
+            {t('support.contactText')}
           </p>
 
           <div className="mt-5 flex flex-wrap gap-3">
@@ -90,14 +73,14 @@ export default function SupportPage(): JSX.Element {
               to="/contact"
               className="rounded-lg bg-slate-900 px-5 py-3 text-sm font-bold text-white hover:bg-slate-800"
             >
-              Open Contact Form
+              {t('support.openForm')}
             </Link>
 
             <a
               href={`mailto:${CONTACT_EMAIL}`}
               className="rounded-lg border border-slate-300 px-5 py-3 text-sm font-bold text-slate-900 hover:bg-slate-50"
             >
-              Manual Email Fallback
+              {t('support.manualEmail')}
             </a>
           </div>
         </div>
@@ -115,21 +98,17 @@ export default function SupportPage(): JSX.Element {
         </div>
 
         <section className="mt-10 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-          <h2 className="text-2xl font-bold">How to get faster help</h2>
+          <h2 className="text-2xl font-bold">{t('support.fasterTitle')}</h2>
 
           <p className="mt-4 leading-relaxed text-slate-700">
-            A good support request should explain the problem clearly. For bugs, tell
-            us what you clicked, what page you were on, what you expected, and what
-            actually happened. For account or coin issues, include your account email
-            and the approximate date/time of the problem.
+            {t('support.fasterText')}
           </p>
 
           <div className="mt-5 rounded-xl border border-yellow-200 bg-yellow-50 p-5">
-            <h3 className="font-bold">Do not send sensitive information</h3>
+            <h3 className="font-bold">{t('support.sensitiveTitle')}</h3>
 
             <p className="mt-2 text-sm leading-relaxed text-slate-700">
-              Never send your password, full payment card information, or private
-              authentication codes. Support does not need those details.
+              {t('support.sensitiveText')}
             </p>
           </div>
 
@@ -138,14 +117,14 @@ export default function SupportPage(): JSX.Element {
               to="/contact"
               className="rounded-lg bg-slate-900 px-5 py-3 text-sm font-bold text-white hover:bg-slate-800"
             >
-              Open Contact Page
+              {t('support.openContact')}
             </Link>
 
             <Link
               to="/privacy-policy"
               className="rounded-lg border border-slate-300 px-5 py-3 text-sm font-bold text-slate-900 hover:bg-slate-50"
             >
-              Privacy Policy
+              {t('common.privacyPolicy')}
             </Link>
           </div>
         </section>
