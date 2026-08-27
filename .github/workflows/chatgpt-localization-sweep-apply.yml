@@ -21,7 +21,10 @@ jobs:
           fetch-depth: 0
 
       - name: Apply localization codemod
-        run: python .github/scripts/chatgpt_localization_sweep.py
+        shell: bash
+        run: |
+          sed -i 's/export default function AssetsSection/export function AssetsSection/' .github/scripts/chatgpt_localization_sweep.py
+          python .github/scripts/chatgpt_localization_sweep.py
 
       - name: Install dependencies
         run: npm ci
@@ -32,7 +35,7 @@ jobs:
       - name: Commit localization changes
         shell: bash
         run: |
-          if git diff --quiet; then
+          if git diff --quiet -- src/pages/dashboard/Training.tsx src/pages/dashboard/infrastructure/AssetsSection.tsx src/i18n/locales/en/training.json src/i18n/locales/sr-Latn/training.json; then
             echo 'No localization changes produced.'
             exit 1
           fi
