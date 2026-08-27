@@ -7,6 +7,7 @@
 
 import React from 'react'
 import { Outlet } from 'react-router'
+import { useTranslation } from 'react-i18next'
 import MainLayout from '../../components/layout/MainLayout'
 import SeasonRolloverGate from '../../components/season/SeasonRolloverGate'
 import RestartTeamModal from '../../components/team/RestartTeamModal'
@@ -56,6 +57,8 @@ function RestartWelcomeModal({
 }: {
   onClose: () => void
 }): JSX.Element {
+  const { t } = useTranslation('club')
+
   return (
     <div
       className="fixed inset-0 z-[100] flex items-center justify-center p-4"
@@ -65,7 +68,7 @@ function RestartWelcomeModal({
     >
       <button
         type="button"
-        aria-label="Close restart welcome"
+        aria-label={t('dashboardAccess.restartWelcomeCloseAria')}
         className="absolute inset-0 bg-black/40 backdrop-blur-[2px]"
         onClick={onClose}
       />
@@ -79,29 +82,21 @@ function RestartWelcomeModal({
             id="restart-welcome-title"
             className="text-lg font-semibold text-emerald-800"
           >
-            Welcome back to your restarted team
+            {t('dashboardAccess.welcomeTitle')}
           </h3>
 
           <p className="mt-1 text-sm text-emerald-700">
-            Your club has been given a fresh start.
+            {t('dashboardAccess.welcomeSubtitle')}
           </p>
         </div>
 
         <div className="px-6 py-5 text-sm leading-6 text-gray-700">
-          <p>
-            Your team is active again with a new starter squad, starter
-            equipment, starter finances, and 0 season points.
-          </p>
+          <p>{t('dashboardAccess.welcomeBodyOne')}</p>
 
-          <p className="mt-3">
-            Your club name, logo, jersey, country, and competition slot have
-            been preserved. The old riders were released as free agents, and the
-            club is ready for a new beginning.
-          </p>
+          <p className="mt-3">{t('dashboardAccess.welcomeBodyTwo')}</p>
 
           <div className="mt-4 rounded-lg border border-yellow-200 bg-yellow-50 p-4 text-yellow-900">
-            Good luck this time. Build carefully, manage the budget, and bring
-            your club back stronger.
+            {t('dashboardAccess.welcomeGoodLuck')}
           </div>
         </div>
 
@@ -111,7 +106,7 @@ function RestartWelcomeModal({
             onClick={onClose}
             className="rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700"
           >
-            Continue to dashboard
+            {t('dashboardAccess.continueDashboard')}
           </button>
         </div>
       </div>
@@ -124,6 +119,7 @@ function ClubLiquidatedScreen({
 }: {
   status: ClubAccessStatus
 }): JSX.Element {
+  const { t } = useTranslation('club')
   const [isRestartModalOpen, setIsRestartModalOpen] = React.useState(false)
 
   return (
@@ -131,56 +127,51 @@ function ClubLiquidatedScreen({
       <div className="w-full p-6">
         <div className="mx-auto max-w-3xl rounded-xl border border-red-200 bg-white p-6 shadow-sm">
           <div className="text-sm font-semibold uppercase tracking-wide text-red-600">
-            Club Liquidated
+            {t('dashboardAccess.liquidatedLabel')}
           </div>
 
           <h1 className="mt-2 text-2xl font-bold text-gray-900">
-            {status.club_name ?? 'Your club'} has been liquidated
+            {t('dashboardAccess.liquidatedTitle', {
+              club: status.club_name ?? t('dashboardAccess.yourClub'),
+            })}
           </h1>
 
           <p className="mt-3 text-sm leading-6 text-gray-600">
-            This club used all 3 lifetime emergency rescues and then failed to
-            cover another mandatory obligation. No further emergency loans are
-            available, and this team can no longer perform game actions.
+            {t('dashboardAccess.liquidatedDescription')}
           </p>
 
           <div className="mt-4 rounded-lg bg-red-50 p-4 text-sm text-red-800">
             <div>
-              <strong>Rescues used:</strong>{' '}
+              <strong>{t('dashboardAccess.rescuesUsed')}</strong>{' '}
               {status.emergency_rescue_count ?? 3} / 3
             </div>
 
             {status.liquidation_reason && (
               <div className="mt-1">
-                <strong>Reason:</strong> {status.liquidation_reason}
+                <strong>{t('dashboardAccess.reason')}</strong>{' '}
+                {status.liquidation_reason}
               </div>
             )}
 
             {status.liquidated_at && (
               <div className="mt-1">
-                <strong>Closed at:</strong> {status.liquidated_at}
+                <strong>{t('dashboardAccess.closedAt')}</strong>{' '}
+                {status.liquidated_at}
               </div>
             )}
           </div>
 
           <div className="mt-6 rounded-lg border border-yellow-200 bg-yellow-50 p-4 text-sm leading-6 text-yellow-900">
-            Your user account and coins are still active. Only this club is
-            closed. You can create a completely new club in the next available
-            free spot, or restart this team in the same competition slot with a
-            fresh squad, no staff, and 0 points.
+            {t('dashboardAccess.liquidatedAccountNote')}
           </div>
 
           <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-900">
             <div className="font-semibold">
-              Restart Team keeps your club identity.
+              {t('dashboardAccess.restartKeepsIdentity')}
             </div>
 
             <div className="mt-1">
-              Your club ID, owner account, team name, logo, jersey, country, and
-              tier/division slot stay the same. Current riders are released to
-              the free-agent market, all season points are reset to 0, and the
-              club receives a new starter squad based on its current competition
-              tier.
+              {t('dashboardAccess.restartKeepsIdentityDescription')}
             </div>
           </div>
 
@@ -193,7 +184,7 @@ function ClubLiquidatedScreen({
               }}
               className="rounded-md bg-yellow-400 px-4 py-2 text-sm font-semibold text-black hover:bg-yellow-300"
             >
-              Create new club
+              {t('dashboardAccess.createNewClub')}
             </button>
 
             <button
@@ -201,7 +192,7 @@ function ClubLiquidatedScreen({
               onClick={() => setIsRestartModalOpen(true)}
               className="rounded-md border border-red-200 bg-red-50 px-4 py-2 text-sm font-semibold text-red-700 hover:bg-red-100"
             >
-              Restart team
+              {t('dashboardAccess.restartTeam')}
             </button>
           </div>
         </div>
@@ -221,11 +212,13 @@ function ClubAccessFailedScreen({
 }: {
   message: string
 }): JSX.Element {
+  const { t } = useTranslation('club')
+
   return (
     <div className="w-full p-6">
       <div className="mx-auto max-w-3xl rounded-xl border border-red-200 bg-white p-6 shadow-sm">
         <div className="text-sm font-semibold text-red-600">
-          Could not check club access
+          {t('dashboardAccess.accessCheckFailed')}
         </div>
 
         <p className="mt-2 text-sm text-gray-600">{message}</p>
@@ -239,6 +232,7 @@ function ClubAccessFailedScreen({
  * Wraps child dashboard routes inside MainLayout and blocks liquidated clubs.
  */
 export default function ClubDashboard(): JSX.Element {
+  const { t } = useTranslation('club')
   const [accessStatus, setAccessStatus] =
     React.useState<ClubAccessStatus | null>(null)
 
@@ -274,7 +268,7 @@ export default function ClubDashboard(): JSX.Element {
             ok: false,
             code: 'NO_CLUB',
             can_play: false,
-            message: 'No active club was found for this account.',
+            message: t('dashboardAccess.noActiveClub'),
           })
 
           return
@@ -301,7 +295,7 @@ export default function ClubDashboard(): JSX.Element {
           message:
             err instanceof Error
               ? err.message
-              : 'Could not check club access status.',
+              : t('dashboardAccess.accessStatusFailed'),
         })
       } finally {
         if (alive) {
@@ -315,7 +309,7 @@ export default function ClubDashboard(): JSX.Element {
     return () => {
       alive = false
     }
-  }, [])
+  }, [t])
 
   let content: React.ReactNode
 
@@ -323,7 +317,7 @@ export default function ClubDashboard(): JSX.Element {
     content = (
       <div className="w-full p-6">
         <div className="rounded-lg border border-gray-100 bg-white p-6 text-sm text-gray-500 shadow-sm">
-          Checking club status...
+          {t('dashboardAccess.checkingStatus')}
         </div>
       </div>
     )
@@ -335,7 +329,7 @@ export default function ClubDashboard(): JSX.Element {
   } else if (accessStatus?.can_play === false) {
     content = (
       <ClubAccessFailedScreen
-        message={accessStatus.message ?? 'This club cannot be played right now.'}
+        message={accessStatus.message ?? t('dashboardAccess.cannotPlay')}
       />
     )
   } else {
