@@ -1,4 +1,4 @@
-name: One-shot Race Detail localization v2
+name: Localization audit
 
 on:
   push:
@@ -7,156 +7,115 @@ on:
     paths:
       - '.github/workflows/chatgpt-race-detail-localization-v2.yml'
 
-permissions:
-  contents: write
-
 jobs:
-  localize:
+  audit:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           ref: main
-          fetch-depth: 0
 
-      - name: Apply direct react-i18next cleanup
+      - name: Audit localization resources and direct UI text
         shell: bash
         run: |
           python <<'PY'
           from pathlib import Path
+          import json
           import re
 
-          path = Path('src/pages/dashboard/RaceDetailPage.tsx')
-          text = path.read_text(encoding='utf-8')
+          def flatten(value, prefix=''):
+              out = set()
+              if isinstance(value, dict):
+                  for key, child in value.items():
+                      next_prefix = f'{prefix}.{key}' if prefix else key
+                      out |= flatten(child, next_prefix)
+              else:
+                  out.add(prefix)
+              return out
 
-          def r(old: str, new: str) -> None:
-              global text
-              count = text.count(old)
-              if not count:
-                  print(f'skip: {old[:90]!r}')
-                  return
-              text = text.replace(old, new)
-              print(f'replaced {count}: {old[:90]!r}')
+          en_path = Path('src/i18n/locales/en/raceDetail.json')
+          sr_path = Path('src/i18n/locales/sr-Latn/raceDetail.json')
+          en = json.loads(en_path.read_text(encoding='utf-8'))
+          sr = json.loads(sr_path.read_text(encoding='utf-8'))
+          en_keys = flatten(en)
+          sr_keys = flatten(sr)
+          missing_sr = sorted(en_keys - sr_keys)
+          extra_sr = sorted(sr_keys - en_keys)
 
-          def rx(pattern: str, new: str) -> None:
-              global text
-              text, count = re.subn(pattern, new, text, flags=re.MULTILINE)
-              print(f'regex replaced {count}: {pattern[:90]!r}')
+          print('=== RACE DETAIL RESOURCE PARITY ===')
+          print(f'EN leaf keys: {len(en_keys)}')
+          print(f'SR leaf keys: {len(sr_keys)}')
+          print(f'Missing in SR: {len(missing_sr)}')
+          for key in missing_sr:
+              print(f'  MISSING_SR {key}')
+          print(f'Extra in SR: {len(extra_sr)}')
+          for key in extra_sr:
+              print(f'  EXTRA_SR {key}')
 
-          r('This is only a warning before the lock point. The final cancellation decision is made automatically 24 in-game hours before stage start.', "{t('stage.weatherCancellationExplanation')}")
-          r("function TerrainBars({ stage }: { stage: RaceStage }) {\n  const rows = [\n    ['Flat', stage.flat_pct],\n    ['Hilly', stage.hilly_pct],\n    ['Mountain', stage.mountain_pct],\n    ['Cobbled', stage.cobbled_pct],\n  ] as const", "function TerrainBars({ stage }: { stage: RaceStage }) {\n  const { t } = useTranslation('raceDetail')\n  const rows = [\n    [t('stage.flat'), stage.flat_pct],\n    [t('stage.hilly'), stage.hilly_pct],\n    [t('stage.mountain'), stage.mountain_pct],\n    [t('stage.cobbled'), stage.cobbled_pct],\n  ] as const")
-          r("{t('stage.profile')} data is not available yet.", "{t('stage.profileUnavailable')}")
+          known_old_race_detail = [
+              'Loading rewards…',
+              'No reward data available.',
+              'Select which race reward table to view.',
+              'Compact race commentary and final road groups.',
+              'Loading race report…',
+              'No race report available for this stage yet.',
+              'No road group data available yet.',
+              'Calculated from rider skills, this season results, race profile and assigned role.',
+              'Loading accepted teams and riders...',
+              'No accepted teams have been confirmed yet.',
+              'Loading your application estimate…',
+              'Waiting for team selection',
+              'Current tour standings',
+              'Prize money and international points',
+              'Live race',
+              'Replay unavailable',
+              'Checking replay…',
+              'Loading application preview…',
+              'Review your application preview before submitting.',
+              'Race profile tutorial',
+              'Skip tutorial',
+          ]
 
-          r('>Loading rewards…</div>', ">{t('rewards.loading')}</div>")
-          r('>No reward data available.</div>', ">{t('rewards.noData')}</div>")
-          r('          Select which race reward table to view.', "          {t('rewards.select')}")
-          r('>Team</th>', ">{t('results.team')}</th>")
-          r('>Rider</th>', ">{t('results.rider')}</th>")
-          r('>Prize</th>', ">{t('rewards.prize')}</th>")
-          r('>Points</th>', ">{t('rewards.points')}</th>")
+          pages = [
+              Path('src/features/squad/components/ExternalRiderProfilePage.tsx'),
+              Path('src/features/squad/components/RiderProfilePage.tsx'),
+              Path('src/pages/dashboard/RaceDetailPage.tsx'),
+          ]
 
-          r('            Compact race commentary and final road groups.', "            {t('report.description')}")
-          r('          Loading race report…', "          {t('report.loading')}")
-          r('          No race report available for this stage yet.', "          {t('report.none')}")
-          r('              <div>Km</div>', "              <div>{t('report.km')}</div>")
-          r('              <div>Commentary</div>', "              <div>{t('report.commentary')}</div>")
-          r('                Road groups', "                {t('report.roadGroups')}")
-          r('                Final race situation from the replay engine.', "                {t('report.roadGroupsDescription')}")
-          r('                No road group data available yet.', "                {t('report.noGroups')}")
-          r(": 'Riders —'}", ": t('report.ridersUnknown')}")
+          direct_text_re = re.compile(r'>\s*([A-Za-z][^<{}`]*?[A-Za-z0-9.!?…])\s*<')
+          prop_re = re.compile(r'\b(?:title|description|placeholder|label|aria-label)="([A-Za-z][^"]*[A-Za-z0-9.!?…])"')
 
-          r('              Calculated from rider skills, this season results, race profile and assigned role.', "              {t('participants.favoritesDescription')}")
-          r("favorite.rider_name?.trim() || 'Unknown rider'", "favorite.rider_name?.trim() || t('participants.unknownRider')")
-          r("favorite.team_name?.trim() || 'Team'", "favorite.team_name?.trim() || t('participants.teamFallback')")
-          r("startNumber ? `#${startNumber}` : 'No #'", "startNumber ? `#${startNumber}` : t('participants.noNumber')")
-          r('        Loading accepted teams and riders...', "        {t('participants.loading')}")
-          r('        Could not load participants: {error}', "        {t('participants.loadError', { error })}")
-          rx(r'No accepted teams have been confirmed yet\. Accepted teams will appear here once\s+the official startlist is published\.', "{t('participants.noneConfirmed')}")
-          r('        {displayTeams.length} teams · {assignedRiderTotal} assigned riders', "        {t('participants.teamRiderCount', { teams: displayTeams.length, riders: assignedRiderTotal })}")
-          r('                        {assignedRidersCount} assigned riders', "                        {t('participants.assignedRiders', { count: assignedRidersCount })}")
-          r('{rider.age_snapshot ? <span>{rider.age_snapshot} yrs</span> : null}', "{rider.age_snapshot ? <span>{t('participants.age', { age: rider.age_snapshot })}</span> : null}")
-          r("                          : 'No riders assigned yet.'}", "                          : t('participants.noRiders')}")
+          print('=== DIRECT UI ENGLISH SCAN ===')
+          for page in pages:
+              source = page.read_text(encoding='utf-8')
+              print(f'PAGE {page}')
+              if page.name == 'RaceDetailPage.tsx':
+                  old_hits = [phrase for phrase in known_old_race_detail if phrase in source]
+                  print(f'  targeted old RaceDetail phrases remaining: {len(old_hits)}')
+                  for phrase in old_hits:
+                      print(f'    OLD {phrase}')
 
-          r('        Loading your application estimate…', "        {t('application.pendingLoading')}")
-          r('        Your application is submitted. The detailed acceptance estimate could not be loaded: {error}', "        {t('application.pendingEstimateError', { error })}")
-          r('        Your application is submitted. Official participants will appear here once the team list is published.', "        {t('application.pendingNoQuote')}")
-          r('            Application submitted', "            {t('status.applicationSubmitted')}")
-          r('            Waiting for team selection', "            {t('application.waitingSelection')}")
-          rx(r'Official participants are not confirmed yet\. Accepted teams and riders will replace this\s+estimate once the team list is published\.', "{t('application.waitingDescription')}")
-          r('>Estimated chance</div>', ">{t('application.estimatedChance')}</div>")
-          r("quote.chance_label ?? 'Application estimate'", "quote.chance_label ?? t('application.applicationEstimate')")
-          r('>Already accepted</div>', ">{t('application.alreadyAcceptedCount')}</div>")
-          r('>Target / max teams</div>', ">{t('application.targetMaxTeams')}</div>")
+              candidates = []
+              for line_number, line in enumerate(source.splitlines(), 1):
+                  if line.lstrip().startswith('//') or line.lstrip().startswith('*'):
+                      continue
+                  for match in direct_text_re.finditer(line):
+                      candidates.append((line_number, match.group(1).strip()))
+                  for match in prop_re.finditer(line):
+                      candidates.append((line_number, match.group(1).strip()))
 
-          r("{t('results.team')}s & riders", "{t('participants.teamsRiders')}")
-          r('                    Current tour standings', "                    {t('results.currentStandings')}")
-          r('<option value="stage_general">Stage result</option>', "<option value=\"stage_general\">{t('results.stageResult')}</option>")
-          r('            title="Prize money and international points"', "            title={t('rewards.title')}")
-          r('            description="Prize money, team points, and rider points generated by the race engine."', "            description={t('rewards.description')}")
+              seen = set()
+              unique = []
+              for item in candidates:
+                  if item in seen:
+                      continue
+                  seen.add(item)
+                  unique.append(item)
+              print(f'  direct JSX/visible-prop English candidates: {len(unique)}')
+              for line_number, value in unique[:120]:
+                  print(f'    L{line_number}: {value}')
 
-          r('`Replay unlocked for ${nextAccess?.coin_cost ?? 2} coins.`', "t('replay.unlocked', { coins: nextAccess?.coin_cost ?? 2 })")
-          r("          : 'Failed to unlock this race replay.'", "          : t('replay.unlockFailed')")
-          r("? 'This stage was canceled. No replay is available.'", "? t('replay.stageCanceledDescription')")
-          r("? 'Replay will be available at the scheduled stage time.'", "? t('replay.notOpen')")
-          r("? 'Replay is not available yet.'", "? t('replay.notAvailable')")
-          r("? 'Replay is temporarily unavailable.'", "? t('replay.temporaryUnavailable')")
-          r("? `Replay is available for ${race?.name ?? 'this race'}.`", "? t('replay.availableForRace', { race: race?.name ?? '—' })")
-          r(": `Replay is available. Teams that did not participate can unlock it for ${coinAccess?.coin_cost ?? 2} coins.`", ": t('replay.unlockDescription', { coins: coinAccess?.coin_cost ?? 2 })")
-          r('        Live race', "        {t('replay.liveRace')}")
-          r("? 'Stage canceled'", "? t('replay.stageCanceled')")
-          r("? 'Replay available'", "? t('replay.available')")
-          r(": 'Replay unavailable'}", ": t('replay.unavailable')}")
-          r('          Replay available at the scheduled stage time: {replayAvailability.replayOpensGameAt}', "          {t('replay.availableAt', { date: replayAvailability.replayOpensGameAt })}")
-          r("? 'Unlocking replay…'", "? t('replay.unlocking')")
-          r(": `Unlock replay · ${coinAccess?.coin_cost ?? 2} coins`", ": t('replay.unlockReplay', { coins: coinAccess?.coin_cost ?? 2 })")
-          r("            Coin balance: {Number(coinAccess?.coin_balance ?? 0).toLocaleString('en-US')}", "            {t('replay.coinBalance', { balance: Number(coinAccess?.coin_balance ?? 0).toLocaleString() })}")
-          r("? 'Replay unavailable'", "? t('replay.unavailable')")
-          r("? 'Checking replay…'", "? t('replay.checking')")
-          r("? `Unlock for ${coinAccess?.coin_cost ?? 2} coins`", "? t('replay.unlockFor', { coins: coinAccess?.coin_cost ?? 2 })")
-          r('            Rankings and cumulative awards appear when each point is reached.', "            {t('replay.stagePointsDescription')}")
-
-          r("    if (!quote) return 'Loading application preview…'", "    if (!quote) return t('application.loadingPreview')")
-          r("      return 'Your team is already accepted for this race.'", "      return t('application.alreadyAccepted')")
-          r("      return 'Your team already has an application submitted for this race.'", "      return t('application.alreadyApplied')")
-          r("      return quote.message ?? 'You cannot apply for this race right now.'", "      return quote.message ?? t('application.cannotApply')")
-          r("    return 'Review your application preview before submitting.'", "    return t('application.review')")
-          r("      returnLabel: '← Back',", "      returnLabel: t('page.back'),")
-          r('          {humanizeCode(stage.terrain_type)} · {formatKm(stage.distance_km)}', "          {TERRAIN_TRANSLATION_KEYS[stage.terrain_type]\n            ? t(TERRAIN_TRANSLATION_KEYS[stage.terrain_type])\n            : humanizeCode(stage.terrain_type)} · {formatKm(stage.distance_km)}")
-
-          r('>Applied teams</div>', ">{t('application.appliedTeams')}</div>")
-          r('>Accepted teams</div>', ">{t('application.acceptedTeams')}</div>")
-          r('>Target teams</div>', ">{t('application.targetTeams')}</div>")
-          r('>Max teams</div>', ">{t('application.maxTeams')}</div>")
-          r('>Riders required</div>', ">{t('application.ridersRequired')}</div>")
-          r('>Team list announcement</div>', ">{t('application.teamListAnnouncement')}</div>")
-          r('>Rider deadline</div>', ">{t('application.riderDeadline')}</div>")
-          r('                Not now', "                {t('application.notNow')}")
-
-          r('title={raceDetailTutorialSteps[tutorialStepIndex].title}', "title={t(tutorialStepIndex === 0 ? 'tutorial.profileTitle' : 'tutorial.stagesTitle')}")
-          r('body={raceDetailTutorialSteps[tutorialStepIndex].body}', "body={t(tutorialStepIndex === 0 ? 'tutorial.profileBody' : 'tutorial.stagesBody')}")
-          rx(r'stepLabel=\{`Race profile tutorial \$\{tutorialStepIndex \+ 1\} of \$\{\s*raceDetailTutorialSteps\.length\s*\}`\}', "stepLabel={t('tutorial.step', { current: tutorialStepIndex + 1, total: raceDetailTutorialSteps.length })}")
-          rx(r"raceDetailTutorialSteps\[tutorialStepIndex\]\.primaryAction \?\? 'Next'", "tutorialStepIndex === raceDetailTutorialSteps.length - 1 ? t('tutorial.continuePreparation') : t('tutorial.next')")
-          rx(r"tutorialStepIndex === raceDetailTutorialSteps\.length - 1\s*\? raceDetailTutorialSteps\[tutorialStepIndex\]\.secondaryAction\s*: 'Skip tutorial'", "tutorialStepIndex === raceDetailTutorialSteps.length - 1\n              ? t('tutorial.finish')\n              : t('tutorial.skip')")
-
-          path.write_text(text, encoding='utf-8')
+          if missing_sr:
+              raise SystemExit('Serbian raceDetail resource is missing English keys.')
           PY
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Production build
-        run: npm run build
-
-      - name: Commit localized Race Detail page
-        shell: bash
-        run: |
-          if git diff --quiet -- src/pages/dashboard/RaceDetailPage.tsx; then
-            echo 'No Race Detail changes produced.'
-            exit 1
-          fi
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add src/pages/dashboard/RaceDetailPage.tsx
-          git commit -m 'Finish direct Race Detail localization pass'
-          git push origin HEAD:main
