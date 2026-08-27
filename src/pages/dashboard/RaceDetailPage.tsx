@@ -13,6 +13,7 @@
 // Phase 9 remains engine-owned: this page consumes the completed deterministic
 // result, exposes its verification report, and never recalculates modifiers.
 import React, { useEffect, useId, useMemo, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   Link,
   useLocation,
@@ -571,14 +572,14 @@ type RaceStageResultsOverride = {
   readonly leaderSnapshot?: Readonly<Record<string, unknown>>
 }
 
-const TERRAIN_LABELS: Record<string, string> = {
-  flat: 'Flat',
-  hilly: 'Hilly',
-  mountain: 'Mountain',
-  individual_time_trial: 'Individual time trial',
-  team_time_trial: 'Team time trial',
-  prologue: 'Prologue',
-  cobbled: 'Cobbled',
+const TERRAIN_TRANSLATION_KEYS: Record<string, string> = {
+  flat: 'stage.flat',
+  hilly: 'stage.hilly',
+  mountain: 'stage.mountain',
+  individual_time_trial: 'stage.individualTimeTrial',
+  team_time_trial: 'stage.teamTimeTrial',
+  prologue: 'stage.prologue',
+  cobbled: 'stage.cobbled',
 }
 
 const DEFAULT_TEAM_JERSEY_URL =
@@ -714,6 +715,7 @@ function CollapsibleRaceSection({
   children: React.ReactNode
 }) {
   const [open, setOpen] = useState(defaultOpen)
+  const { t } = useTranslation('raceDetail')
 
   return (
     <section className="rounded-3xl border border-slate-200 bg-white shadow-sm">
@@ -733,7 +735,7 @@ function CollapsibleRaceSection({
         </div>
 
         <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-600">
-          {open ? 'Hide' : 'Show'}
+          {open ? t('participants.hide') : t('participants.show')}
         </span>
       </button>
 
@@ -1785,6 +1787,7 @@ function WeatherCancellationNotice({
   race?: Race | null
   compact?: boolean
 }) {
+  const { t } = useTranslation('raceDetail')
   const raceStatus = getRaceWeatherCancellationStatus(race)
   const shouldRender =
     isStageWeatherCanceled(stage) ||
@@ -1815,6 +1818,7 @@ function WeatherCancellationNotice({
 }
 
 function StageWeatherRiskNotice({ stage }: { stage: RaceStage }) {
+  const { t } = useTranslation('raceDetail')
   if (isStageWeatherCanceled(stage)) return null
 
   const riskReason = getStageWeatherCancellationRiskReason(stage)
@@ -1823,7 +1827,7 @@ function StageWeatherRiskNotice({ stage }: { stage: RaceStage }) {
   return (
     <div className="mt-4 rounded-2xl border border-orange-200 bg-orange-50 px-4 py-3 text-sm text-orange-800">
       <div className="font-semibold">
-        Weather cancellation likely: {getWeatherCancellationReasonLabel(riskReason)}
+        {t('stage.weatherCancellationReason', { reason: getWeatherCancellationReasonLabel(riskReason) })}
       </div>
       <div className="mt-1 leading-6">
         This is only a warning before the lock point. The final cancellation decision is made automatically 24 in-game hours before stage start.
@@ -2116,7 +2120,7 @@ function formatStageRoute(stage: RaceStage): string {
 }
 
 function getStageProfileLabel(stage: RaceStage): string {
-  return TERRAIN_LABELS[stage.terrain_type] ?? humanizeCode(stage.terrain_type)
+  return humanizeCode(stage.terrain_type)
 }
 
 type StageProfilePoint = {
@@ -2423,6 +2427,7 @@ function isPrologueOrIndividualTimeTrialStage(
 
 
 function WeatherCard({ stage }: { stage: RaceStage }) {
+  const { t } = useTranslation('raceDetail')
   const weather = stage.weather_snapshot ?? {}
   const condition = String(weather.condition ?? '')
 
@@ -2455,7 +2460,7 @@ function WeatherCard({ stage }: { stage: RaceStage }) {
       <div className={isStageWeatherCanceled(stage) ? 'mt-4 flex items-start justify-between gap-4' : 'flex items-start justify-between gap-4'}>
         <div>
           <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-            Stage weather
+            {t('weather.title')}
           </div>
 
           <div className="mt-3 text-xl font-semibold text-slate-950">
@@ -2542,17 +2547,18 @@ function TerrainSplitCard({
 }: {
   terrainSplit: RaceTerrainSplit
 }) {
+  const { t } = useTranslation('raceDetail')
   const terrainRows = [
-    { label: 'Flat', value: terrainSplit.flat ?? 0 },
-    { label: 'Hilly', value: terrainSplit.hilly ?? 0 },
-    { label: 'Mountain', value: terrainSplit.mountain ?? 0 },
-    { label: 'Cobbled', value: terrainSplit.cobbled ?? 0 },
+    { label: t('stage.flat'), value: terrainSplit.flat ?? 0 },
+    { label: t('stage.hilly'), value: terrainSplit.hilly ?? 0 },
+    { label: t('stage.mountain'), value: terrainSplit.mountain ?? 0 },
+    { label: t('stage.cobbled'), value: terrainSplit.cobbled ?? 0 },
   ]
 
   return (
     <div className="w-full rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
       <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-        Terrain split
+        {t('stage.terrainSplit')}
       </div>
 
       <div className="mt-4 space-y-3">
@@ -2588,6 +2594,7 @@ function StageWeatherCard({
   stage: RaceStage
   currentGameDate: string | null
 }) {
+  const { t } = useTranslation('raceDetail')
   if (shouldShowStageWeather(stage.stage_date, currentGameDate)) {
     return <WeatherCard stage={stage} />
   }
@@ -2595,11 +2602,11 @@ function StageWeatherCard({
   return (
     <div className="w-full rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
       <div className="text-sm font-semibold uppercase tracking-wide text-slate-500">
-        Stage weather
+        {t('weather.title')}
       </div>
 
       <div className="mt-4 text-sm text-slate-600">
-        Weather forecast becomes visible 7 days before this stage.
+        {t('weather.forecastLater')}
       </div>
     </div>
   )
@@ -3494,6 +3501,7 @@ function RaceEntryHeaderSummary({
   entry?: RaceRewardsEntryOverview | null
   acceptedTeamsCount?: number | null
 }) {
+  const { t } = useTranslation('raceDetail')
   const acceptedTeams = acceptedTeamsCount ?? race?.accepted_teams ?? entry?.accepted_teams ?? 0
   const maxTeams = race?.max_teams ?? entry?.max_teams ?? '—'
   const minRidersPerTeam = race?.min_riders_per_team ?? entry?.min_riders_per_team ?? '—'
@@ -3502,22 +3510,22 @@ function RaceEntryHeaderSummary({
 
   const topRowItems = [
     {
-      label: 'Teams',
-      value: `${acceptedTeams} accepted · max ${maxTeams}`,
+      label: t('summary.teams'),
+      value: t('summary.acceptedMax', { accepted: acceptedTeams, max: maxTeams }),
     },
     {
-      label: 'Riders min/max',
+      label: t('summary.ridersMinMax'),
       value: `${minRidersPerTeam}–${maxRidersPerTeam}`,
     },
     {
-      label: 'Prize fund',
+      label: t('summary.prizeFund'),
       value: formatCash(prizeFundCash),
     },
   ]
 
   const bottomRowItems = [
     {
-      label: 'Applications open',
+      label: t('summary.applicationsOpen'),
       value: formatSeasonChipDate(
         race?.applications_open_season_number ?? entry?.applications_open_season_number,
         race?.applications_open_month_number ?? entry?.applications_open_month_number,
@@ -3529,7 +3537,7 @@ function RaceEntryHeaderSummary({
       ),
     },
     {
-      label: 'Applications close',
+      label: t('summary.applicationsClose'),
       value: formatSeasonChipDate(
         race?.applications_close_season_number ?? entry?.applications_close_season_number,
         race?.applications_close_month_number ?? entry?.applications_close_month_number,
@@ -3541,7 +3549,7 @@ function RaceEntryHeaderSummary({
       ),
     },
     {
-      label: 'Team list announcement',
+      label: t('summary.teamListAnnouncement'),
       value: formatGameDateFromParts(
         race?.team_list_announcement_season_number ??
           entry?.team_list_announcement_season_number,
@@ -3551,7 +3559,7 @@ function RaceEntryHeaderSummary({
       ),
     },
     {
-      label: 'Rider submission deadline',
+      label: t('summary.riderSubmissionDeadline'),
       value: formatGameDateFromParts(
         race?.rider_submission_deadline_season_number ??
           entry?.rider_submission_deadline_season_number,
@@ -3703,6 +3711,7 @@ function RaceRewardsTotalsPanel({
   raceId: string
   viewerTeamId?: string | null
 }) {
+  const { t } = useTranslation('raceDetail')
   const [payload, setPayload] = useState<RaceRewardsTotalsPayload | null>(null)
   const [loading, setLoading] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
@@ -3766,9 +3775,9 @@ function RaceRewardsTotalsPanel({
           onChange={(event) => setView(event.target.value as RaceRewardTotalsView)}
           className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm"
         >
-          <option value="prize_team">Prize money by team</option>
-          <option value="ranking_team">International points by team</option>
-          <option value="ranking_rider">International points by rider</option>
+          <option value="prize_team">{t('rewards.prizeByTeam')}</option>
+          <option value="ranking_team">{t('rewards.pointsByTeam')}</option>
+          <option value="ranking_rider">{t('rewards.pointsByRider')}</option>
         </select>
       </div>
 
@@ -4049,6 +4058,7 @@ function RaceStageReportCard({
   selectedStageId: string | null
   selectedStageName: string | null
 }) {
+  const { t } = useTranslation('raceDetail')
   const [events, setEvents] = useState<RaceStageReportEvent[]>([])
   const [loading, setLoading] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
@@ -4098,11 +4108,11 @@ function RaceStageReportCard({
       <div className="mb-5 flex flex-wrap items-start justify-between gap-4">
         <div>
           <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-            Race report
+            {t('report.title')}
           </div>
 
           <h3 className="mt-1 text-lg font-semibold text-slate-950">
-            {selectedStageName ?? 'Stage report'}
+            {selectedStageName ?? t('report.stageReport')}
           </h3>
 
           <p className="mt-1 text-sm text-slate-500">
@@ -4114,7 +4124,7 @@ function RaceStageReportCard({
           type="button"
           className="rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100"
         >
-          Watch replay
+          {t('report.watchReplay')}
         </button>
       </div>
 
@@ -4240,7 +4250,7 @@ function RaceStageReportCard({
                     </div>
 
                     <div className="mt-1 text-xs opacity-80">
-                      {group.size !== null ? `${group.size} riders` : 'Riders —'}
+                      {group.size !== null ? `${t('report.riders', { count: group.size })}` : 'Riders —'}
                     </div>
                   </div>
                 ))}
@@ -5965,6 +5975,7 @@ function RaceFavoritesBox({
   displayStartNumberByRiderId: Map<string, number>
   onOpenRiderProfile: (riderId: string) => void
 }) {
+  const { t } = useTranslation('raceDetail')
   if (loading) {
     return (
       <section className="mb-4 rounded-2xl border border-sky-100 bg-sky-50/70 p-4 shadow-sm">
@@ -5996,7 +6007,7 @@ function RaceFavoritesBox({
         <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <div className="text-sm font-semibold text-sky-950">
-              Top 5 race favorites
+              {t('participants.topFavorites')}
             </div>
             <div className="text-xs text-sky-700">
               Calculated from rider skills, this season results, race profile and assigned role.
@@ -6077,6 +6088,7 @@ function RaceParticipantsGrid({
   onOpenTeamProfile: (teamId: string) => void
   onOpenRiderProfile: (riderId: string) => void
 }) {
+  const { t } = useTranslation('raceDetail')
   if (loading) {
     return (
       <div className="rounded-2xl bg-slate-50 p-5 text-sm text-slate-600">
@@ -6164,14 +6176,14 @@ function RaceParticipantsGrid({
                 <div className="grid border-b border-slate-100 bg-slate-50/60 md:grid-rows-[180px_1fr] md:border-b-0 md:border-r">
                   <div className="flex min-h-[180px] flex-col items-center justify-center border-b border-slate-100 p-4">
                     <div className="mb-3 text-center text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">
-                      Team logo
+                      {t('participants.teamLogo')}
                     </div>
                     <TeamLogo team={team} className="h-32 w-32" />
                   </div>
 
                   <div className="flex min-h-[250px] flex-col items-center justify-center p-4">
                     <div className="mb-3 text-center text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">
-                      Team jersey
+                      {t('participants.teamJersey')}
                     </div>
                     <TeamJerseyImage team={team} className="h-48 w-40" />
                   </div>
@@ -6181,7 +6193,7 @@ function RaceParticipantsGrid({
                   <div className="mb-3 flex items-center justify-between gap-3">
                     <div>
                       <div className="text-sm font-semibold text-slate-900">
-                        Riders participating in this race
+                        {t('participants.participatingRiders')}
                       </div>
                       <div className="mt-0.5 text-xs text-slate-500">
                         {assignedRidersCount} assigned riders
@@ -6229,7 +6241,7 @@ function RaceParticipantsGrid({
                     ) : (
                       <div className="rounded-xl bg-slate-50 px-3 py-2 text-sm text-slate-500">
                         {assignedRidersCount > 0
-                          ? `${assignedRidersCount} riders assigned. Rider details are not available yet.`
+                          ? t('participants.riderDetailsUnavailable', { count: assignedRidersCount })
                           : 'No riders assigned yet.'}
                       </div>
                     )}
@@ -6270,6 +6282,7 @@ function ApplicationPendingInfoCard({
   loading: boolean
   error: string | null
 }) {
+  const { t } = useTranslation('raceDetail')
   if (loading) {
     return (
       <div className="rounded-2xl border border-sky-100 bg-sky-50 p-5 text-sm text-sky-800">
@@ -6507,6 +6520,7 @@ function RaceResultsHub({
   stageResultsOverride?: RaceStageResultsOverride | null
   engineTestModeLabel?: string | null
 }) {
+  const { t } = useTranslation('raceDetail')
   const [activeTab, setActiveTab] = useState<RaceInfoTab>(restoreRaceInformationTab ?? 'participants')
   const raceInformationSectionRef = useRef<HTMLElement | null>(null)
   const [classificationView, setClassificationView] =
@@ -7161,20 +7175,20 @@ function RaceResultsHub({
         value: ClassificationView
         label: string
       }> = [
-        { value: 'general', label: 'General classification' },
+        { value: 'general', label: t('results.general') },
       ]
 
       if (availableClassificationTypes.has('points')) {
         options.push({
           value: 'points',
-          label: 'Points classification',
+          label: t('results.points'),
         })
       }
 
       options.push(
-        { value: 'mountain', label: 'Mountain classification' },
-        { value: 'young', label: 'Young rider classification' },
-        { value: 'team', label: 'Team classification' }
+        { value: 'mountain', label: t('results.mountain') },
+        { value: 'young', label: t('results.young') },
+        { value: 'team', label: t('results.teamClassification') }
       )
 
       return options
@@ -7262,11 +7276,11 @@ function RaceResultsHub({
       >
         <div>
           <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-            Race information
+            {t('participants.raceInformation')}
           </div>
 
           <div className="mt-1 text-lg font-semibold text-slate-950">
-            Participants and results
+            {t('participants.participantsResults')}
           </div>
         </div>
 
@@ -7288,7 +7302,7 @@ function RaceResultsHub({
                   : 'text-slate-500',
               ].join(' ')}
             >
-              Teams & riders
+              {t('results.team')}s & riders
             </button>
 
             <button
@@ -7301,13 +7315,13 @@ function RaceResultsHub({
                   : 'text-slate-500',
               ].join(' ')}
             >
-              Results
+              {t('participants.results')}
             </button>
           </div>
 
           {raceAwaitingSimulation ? (
         <div className="mt-5 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
-          Race active. Teams and riders are locked. Results will appear here after the race simulation engine runs.
+          {t('participants.activeLocked')}
         </div>
       ) : null}
 
@@ -7345,7 +7359,7 @@ function RaceResultsHub({
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <div className="font-semibold text-slate-950">
-                    Race classifications
+                    {t('results.classifications')}
                   </div>
                   <div className="mt-0.5 text-xs text-slate-500">
                     Current tour standings
@@ -7415,7 +7429,9 @@ function RaceResultsHub({
 
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div className="font-semibold text-slate-950">
-                  Stage results{selectedStage ? ` – Stage ${selectedStage.stage_number}` : ''}
+                  {selectedStage
+                    ? t('results.stageResultsNumber', { stage: selectedStage.stage_number })
+                    : t('results.stageResults')}
                 </div>
 
                 <div className="flex gap-2">
@@ -7440,10 +7456,10 @@ function RaceResultsHub({
                   >
                     <option value="stage_general">Stage result</option>
                     {selectedStageAllowsSprintPointView ? (
-                      <option value="stage_sprint">Sprint points</option>
+                      <option value="stage_sprint">{t('results.sprintPoints')}</option>
                     ) : null}
                     {!selectedStageIsTimeTrialLike ? (
-                      <option value="stage_mountain">Mountain points</option>
+                      <option value="stage_mountain">{t('results.mountainPoints')}</option>
                     ) : null}
                   </select>
                 </div>
@@ -7499,7 +7515,7 @@ function RaceResultsHub({
           </div>
 
           <CollapsibleRaceSection
-            eyebrow="Race rewards"
+            eyebrow={t('rewards.eyebrow')}
             title="Prize money and international points"
             description="Prize money, team points, and rider points generated by the race engine."
             defaultOpen={false}
@@ -7551,7 +7567,7 @@ function RaceResultsHub({
                 onClick={() => setFullStandingModal(null)}
                 className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50"
               >
-                Close
+                {t('application.close')}
               </button>
             </div>
 
@@ -8576,6 +8592,7 @@ function StagePointCard({
   bonuses: JsonValue | undefined
   variant: 'sprint' | 'mountain'
 }) {
+  const { t } = useTranslation('raceDetail')
   const isSprint = variant === 'sprint'
 
   return (
@@ -8621,10 +8638,11 @@ type KOMStagePoint = StageProfileDetailItem & {
 }
 
 function SprintCard({ sprint }: { sprint: SprintStagePoint }) {
+  const { t } = useTranslation('raceDetail')
   return (
     <StagePointCard
       variant="sprint"
-      title={`Sprint ${formatProfileDetailValue(sprint['number'])}`}
+      title={t('stage.sprintNumber', { number: formatProfileDetailValue(sprint['number']) })}
       subtitle={`km ${formatProfileDetailValue(sprint['km'])}`}
       points={sprint['points_scheme']}
       bonuses={sprint['time_bonus_seconds']}
@@ -8720,6 +8738,7 @@ function StageFinishPointCard({
   allowDefaultFinishPoints?: boolean
   defaultFinishPointsScheme?: JsonValue[]
 }) {
+  const { t } = useTranslation('raceDetail')
   const configuredFinishBonuses = finishPoint?.time_bonus_seconds
   const finishPointBonuses = suppressTimeBonuses
     ? []
@@ -8758,7 +8777,7 @@ function StageFinishPointCard({
 
         <div className="min-w-[260px] text-right text-slate-600">
           <div>
-            <span className="font-medium text-slate-500">Mountain classification: </span>
+            <span className="font-medium text-slate-500">{t('stage.mountainClassification')} </span>
             {formatPointsSchemeLabel(finishClimb?.['points_scheme'])}
           </div>
 
@@ -8783,7 +8802,7 @@ function StageFinishPointCard({
       <div className="min-w-[260px] text-right text-slate-600">
         {hasConfiguredPointValues(finishPoints) ? (
           <div>
-            <span className="font-medium text-slate-500">Points classification finish: </span>
+            <span className="font-medium text-slate-500">{t('stage.pointsClassificationFinish')} </span>
             {formatPointsSchemeLabel(finishPoints)}
           </div>
         ) : null}
@@ -8930,12 +8949,13 @@ function StageProfileChart({
   compact?: boolean
   roadReplayCompactUi?: boolean
 }) {
+  const { t } = useTranslation('raceDetail')
   const chartInstanceId = useId().replace(/:/g, '')
 
   if (!points.length || !distanceKm) {
     return (
       <div className="rounded-2xl bg-slate-50 px-4 py-8 text-sm text-slate-500">
-        Stage profile chart is not available yet.
+        {t('stage.profileChartUnavailable')}
       </div>
     )
   }
@@ -8964,7 +8984,7 @@ function StageProfileChart({
   if (!pathPayload) {
     return (
       <div className="rounded-2xl bg-slate-50 px-4 py-8 text-sm text-slate-500">
-        Stage profile chart is not available yet.
+        {t('stage.profileChartUnavailable')}
       </div>
     )
   }
@@ -9567,6 +9587,7 @@ function StageReplayAccessCard({
   replayAccessLoading?: boolean
   onOpenReplay: (stage: RaceStage) => void
 }) {
+  const { t } = useTranslation('raceDetail')
   // Kept in the public component contract because the page already passes it;
   // replay timing itself is authoritative backend state, never a browser date guess.
   void currentGameDate
@@ -9819,7 +9840,7 @@ function StageReplayAccessCard({
                 replayAvailability.status === 'error'
               ? 'Replay unavailable'
               : canWatch
-                ? 'Watch replay'
+                ? t('replay.watch')
                 : !hasReplayAccess
                   ? `Unlock for ${coinAccess?.coin_cost ?? 2} coins`
                   : 'Replay unavailable'}
@@ -10605,6 +10626,7 @@ function SimpleReplayStagePointsPanel({
   stagePoints: RaceStagePoint[]
   currentKm: number
 }) {
+  const { t } = useTranslation('raceDetail')
   const pointOptions = useMemo(() => {
     const options = stagePoints
       .filter((point) => String(point.point_type ?? '').toUpperCase() !== 'START')
@@ -10747,7 +10769,7 @@ function SimpleReplayStagePointsPanel({
       <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
         <div>
           <div className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
-            Stage points
+            {t('replay.stagePoints')}
           </div>
           <div className="mt-1 text-sm text-slate-500">
             Rankings and cumulative awards appear when each point is reached.
@@ -13051,6 +13073,7 @@ function UniversalRaceReplayPage({
   onClose: () => void
   onShadowPreview?: (preview: RaceStageResultsOverride) => void
 }) {
+  const { t } = useTranslation('raceDetail')
   const [profile, setProfile] = useState<StageProfileDetailPayload | null>(null)
   const [inputSource, setInputSource] = useState<UniversalReplayInputSource>(
     'production_authoritative_pending'
@@ -13644,7 +13667,7 @@ function UniversalRaceReplayPage({
               id: teamId,
               label:
                 teamInputById.get(teamId)?.snapshot.teamName?.trim() || teamId,
-              secondaryLabel: `${riders.length} riders`,
+              secondaryLabel: `${t('report.riders', { count: riders.length })}`,
               riderIds: riders.map((rider) => rider.riderId).sort(),
               strength: Number(teamStrengthById.get(teamId) ?? 0),
               favouriteRank: null,
@@ -14868,7 +14891,7 @@ function UniversalRaceReplayPage({
         <div className="grid grid-cols-1 gap-4 border-b border-slate-200 px-5 py-3 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-start">
           <div className="min-w-0">
             <div className="text-xs font-semibold uppercase tracking-[0.18em] text-red-700">
-              Race replay
+              {t('replay.title')}
             </div>
 
             <div className="mt-1 flex min-w-0 items-center gap-2">
@@ -14899,7 +14922,7 @@ function UniversalRaceReplayPage({
           <div className="flex shrink-0 flex-wrap items-start justify-start gap-3 xl:justify-self-end">
             <div className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm sm:w-auto sm:min-w-[205px]">
               <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
-                Stage weather
+                {t('weather.title')}
               </div>
 
               <div className="mt-2 grid grid-cols-3 gap-4">
@@ -14914,7 +14937,7 @@ function UniversalRaceReplayPage({
 
                 <div>
                   <div className="text-[10px] uppercase tracking-wide text-slate-400">
-                    Wind
+                    {t('weather.wind')}
                   </div>
                   <div className="mt-0.5 whitespace-nowrap text-xs font-semibold text-slate-800">
                     {replayWeather.wind}
@@ -14923,7 +14946,7 @@ function UniversalRaceReplayPage({
 
                 <div>
                   <div className="text-[10px] uppercase tracking-wide text-slate-400">
-                    Rain
+                    {t('weather.rain')}
                   </div>
                   <div className="mt-0.5 whitespace-nowrap text-xs font-semibold text-slate-800">
                     {replayWeather.rain}
@@ -14937,7 +14960,7 @@ function UniversalRaceReplayPage({
         <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-auto p-4 sm:p-5">
           <div className="rounded-2xl border border-violet-300 bg-violet-50 px-4 py-2.5 text-sm text-violet-950">
             <span className="font-semibold">
-              Race replay
+              {t('replay.title')}
             </span>
             <span className="ml-2 text-xs text-violet-800">
               {isIndividualTimeTrialReplay
@@ -15489,7 +15512,7 @@ function UniversalRaceReplayPage({
               <section className="shrink-0 rounded-3xl border border-slate-200 bg-slate-50 p-4 shadow-sm">
                 <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
                   <div className="text-sm font-semibold text-slate-950">
-                    Stage profile replay
+                    {t('replay.profile')}
                   </div>
 
                   <div className="flex flex-wrap items-center gap-2">
@@ -15550,7 +15573,7 @@ function UniversalRaceReplayPage({
                           : 'rounded-full border border-slate-200 bg-white px-2.5 py-1.5 text-[10px] font-semibold text-slate-600 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40'
                       }
                     >
-                      Restart
+                      {t('replay.restart')}
                     </button>
 
                     <div
@@ -15645,7 +15668,7 @@ function UniversalRaceReplayPage({
               <section className="grid min-h-[430px] gap-4 xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
                 <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white">
                   <div className="border-b border-slate-200 bg-slate-50 px-4 py-3 text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
-                    Live commentary
+                    {t('replay.liveCommentary')}
                   </div>
 
                   <div className="max-h-[430px] divide-y divide-slate-100 overflow-auto">
@@ -15828,7 +15851,7 @@ function UniversalRaceReplayPage({
                                 </div>
                                 <div className="mt-0.5 text-[10px] text-slate-400">
                                   {unit.state === 'waiting'
-                                    ? `Starts in ${formatRaceClock(unit.countdownSeconds)}`
+                                    ? t('replay.startsIn', { time: formatRaceClock(unit.countdownSeconds) })
                                     : unit.state === 'finished'
                                       ? 'Finished'
                                       : `${formatKm(distanceKm)} · ${Math.round(
@@ -16019,6 +16042,7 @@ function SimpleRaceReplayPage(props: {
   onClose: () => void
   onShadowPreview?: (preview: RaceStageResultsOverride) => void
 }) {
+  const { t } = useTranslation('raceDetail')
   return <UniversalRaceReplayPage {...props} />
 }
 
@@ -16046,6 +16070,7 @@ function RaceStageProfilePanel({
   hideLiveResults: boolean
   onOpenReplay: (stage: RaceStage) => void
 }) {
+  const { t } = useTranslation('raceDetail')
   const [profile, setProfile] = useState<StageProfileDetailPayload | null>(null)
   const [loading, setLoading] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
@@ -16108,10 +16133,10 @@ function RaceStageProfilePanel({
     return (
       <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
         <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-          Stage profile
+          {t('stage.profile')}
         </div>
         <div className="mt-4 rounded-2xl bg-slate-50 px-4 py-8 text-sm text-slate-500">
-          Stage profile data is not available yet.
+          {t('stage.profile')} data is not available yet.
         </div>
       </div>
     )
@@ -16227,7 +16252,7 @@ function RaceStageProfilePanel({
     <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
       <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
         <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-          Stage profile
+          {t('stage.profile')}
         </div>
 
         <div className="mt-4">
@@ -16409,6 +16434,8 @@ export default function RaceDetailPage({
   stageResultsOverride = null,
   engineTestModeLabel = null,
 }: RaceDetailPageProps) {
+  const { t, i18n } = useTranslation('raceDetail')
+  void i18n
   const navigate = useNavigate()
   const location = useLocation()
   const [searchParams, setSearchParams] = useSearchParams()
@@ -16713,7 +16740,7 @@ export default function RaceDetailPage({
   const effectiveEngineTestModeLabel =
     engineTestModeLabel ??
     (universalShadowResultsPreview
-      ? 'Race replay'
+      ? t('replay.title')
       : null)
 
   const replayStageIdFromUrl =
@@ -17904,7 +17931,7 @@ export default function RaceDetailPage({
         </div>
 
         <div className="mt-1 truncate text-base font-semibold">
-          {`Stage ${stage.stage_number}`}
+          {t('stage.stageNumber', { stage: stage.stage_number })}
         </div>
 
         <div className="mt-1 truncate text-xs opacity-80">
@@ -17917,11 +17944,11 @@ export default function RaceDetailPage({
 
         {weatherCanceled ? (
           <div className="mt-2 inline-flex rounded-full bg-red-100 px-2 py-1 text-[11px] font-semibold text-red-800 ring-1 ring-red-200">
-            Canceled · {getStageWeatherCancellationReasonLabel(stage)}
+            {t('stage.canceledReason', { reason: getStageWeatherCancellationReasonLabel(stage) })}
           </div>
         ) : cancellationRiskReason ? (
           <div className="mt-2 inline-flex rounded-full bg-orange-100 px-2 py-1 text-[11px] font-semibold text-orange-800">
-            Weather cancellation likely
+            {t('stage.weatherCancellationLikely')}
           </div>
         ) : null}
       </button>
@@ -17932,7 +17959,7 @@ export default function RaceDetailPage({
     return (
       <div className="p-6">
         <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-          Loading race detail…
+          {t('page.loading')}
         </div>
       </div>
     )
@@ -17947,12 +17974,12 @@ export default function RaceDetailPage({
             onClick={handleBackToPreviousPage}
             className="text-sm font-medium text-slate-600 hover:text-slate-900"
           >
-            ← Back
+            {t('page.back')}
           </button>
         </div>
 
         <div className="mt-4 rounded-2xl border border-red-200 bg-red-50 p-6 text-red-900">
-          {error ?? 'Race not found.'}
+          {error ?? t('page.notFound')}
         </div>
       </div>
     )
@@ -17979,7 +18006,7 @@ export default function RaceDetailPage({
             <div className="flex items-start justify-between gap-4">
               <div>
                 <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                  Race application preview
+                  {t('application.preview')}
                 </div>
 
                 <h2 className="mt-2 text-2xl font-bold tracking-tight text-slate-950">
@@ -18001,13 +18028,13 @@ export default function RaceDetailPage({
                 disabled={applicationActionInProgress}
                 className="rounded-full border border-slate-200 bg-white px-3 py-1 text-sm font-semibold text-slate-600 hover:bg-slate-50 disabled:cursor-not-allowed disabled:text-slate-400"
               >
-                Close
+                {t('application.close')}
               </button>
             </div>
 
             {applicationQuoteLoading ? (
               <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-5 text-sm font-medium text-slate-600">
-                Loading application preview…
+                {t('application.loadingPreview')}
               </div>
             ) : null}
 
@@ -18021,7 +18048,7 @@ export default function RaceDetailPage({
               <div className="mt-6 grid gap-4 lg:grid-cols-[1fr_1fr]">
                 <div className="rounded-2xl border border-slate-200 bg-white p-4">
                   <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                    Acceptance estimate
+                    {t('application.acceptanceEstimate')}
                   </div>
 
                   <div className="mt-3 flex items-end justify-between gap-3">
@@ -18030,12 +18057,12 @@ export default function RaceDetailPage({
                         {formatApplicationChance(applicationQuote.estimated_acceptance_chance_pct)}
                       </div>
                       <div className="mt-1 text-sm font-semibold text-slate-700">
-                        {applicationQuote.chance_label ?? 'Estimated chance'}
+                        {applicationQuote.chance_label ?? t('application.estimatedChance')}
                       </div>
                     </div>
 
                     <div className="text-right text-xs text-slate-500">
-                      {applicationQuote.competition_pressure_label ?? 'Competition pressure'}
+                      {applicationQuote.competition_pressure_label ?? t('application.competitionPressure')}
                     </div>
                   </div>
 
@@ -18052,13 +18079,13 @@ export default function RaceDetailPage({
 
                   <p className="mt-3 text-xs leading-5 text-slate-500">
                     {applicationQuote.chance_summary ??
-                      'This is an estimate. Final acceptance is decided when applications close.'}
+                      t('application.estimateExplanation')}
                   </p>
                 </div>
 
                 <div className="rounded-2xl border border-slate-200 bg-white p-4">
                   <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                    Team prestige / commitment
+                    {t('application.prestigeCommitment')}
                   </div>
 
                   <div className="mt-3 flex items-end justify-between gap-3">
@@ -18067,12 +18094,12 @@ export default function RaceDetailPage({
                         {formatApplicationNumber(applicationQuote.commitment_score)}
                       </div>
                       <div className="mt-1 text-sm font-semibold text-slate-700">
-                        Application strength
+                        {t('application.applicationStrength')}
                       </div>
                     </div>
 
                     <div className="text-right text-xs text-slate-500">
-                      Score preview: {formatApplicationNumber(applicationQuote.acceptance_score_preview)}
+                      {t('application.scorePreview', { score: formatApplicationNumber(applicationQuote.acceptance_score_preview) })}
                     </div>
                   </div>
 
@@ -18086,7 +18113,7 @@ export default function RaceDetailPage({
                   </div>
 
                   <p className="mt-3 text-xs leading-5 text-slate-500">
-                    Default score is 50. Completing races improves this; missing startlists reduces it.
+                    {t('application.scoreExplanation')}
                   </p>
                 </div>
 
@@ -18179,7 +18206,7 @@ export default function RaceDetailPage({
                     : 'border-yellow-200 bg-yellow-50 text-slate-950 hover:bg-yellow-100'
                 }`}
               >
-                {applicationActionLoading === 'apply' ? 'Submitting…' : 'Submit application'}
+                {applicationActionLoading === 'apply' ? t('application.submitting') : t('application.submit')}
               </button>
             </div>
           </div>
@@ -18193,7 +18220,7 @@ export default function RaceDetailPage({
             onClick={handleBackToPreviousPage}
             className="text-sm font-medium text-slate-600 hover:text-slate-900"
           >
-            ← Back
+            {t('page.back')}
           </button>
         </div>
 
@@ -18206,7 +18233,9 @@ export default function RaceDetailPage({
               </span>
 
               <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
-                {race.is_stage_race ? `${race.stage_count} stages` : 'One-day race'}
+                {race.is_stage_race
+                  ? t(race.stage_count === 1 ? 'page.stageCountOne' : 'page.stageCount', { count: race.stage_count })
+                  : t('page.oneDayRace')}
               </span>
 
               <span
@@ -18214,7 +18243,15 @@ export default function RaceDetailPage({
                   raceDetailStatus
                 )}`}
               >
-                {raceDetailStatus}
+                {raceDetailStatus === 'Race active'
+                  ? t('status.raceActive')
+                  : raceDetailStatus === 'Race finished'
+                    ? t('status.raceFinished')
+                    : raceDetailStatus === 'Race canceled'
+                      ? t('status.raceCanceled')
+                      : raceDetailStatus === 'Applications closed'
+                        ? t('status.applicationsClosed')
+                        : raceDetailStatus}
               </span>
             </div>
 
@@ -18253,7 +18290,13 @@ export default function RaceDetailPage({
 
             {raceLifecycleNotice ? (
               <div className="mt-5 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800">
-                {raceLifecycleNotice}
+                {raceLifecycleNotice === 'Race active. The startlist is locked and this race is awaiting race simulation.'
+                  ? t('status.activeNotice')
+                  : raceLifecycleNotice === 'Race finished. Applications and rider submissions are closed.'
+                    ? t('status.finishedNotice')
+                    : raceLifecycleNotice === 'Race cancelled. Applications and rider submissions are closed.'
+                      ? t('status.cancelledNotice')
+                      : raceLifecycleNotice}
               </div>
             ) : null}
 
@@ -18278,7 +18321,7 @@ export default function RaceDetailPage({
             <div className="mt-5 flex flex-wrap gap-2">
               {startlistLocked ? (
                 <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-600">
-                  Startlist locked
+                  {t('summary.startlistLocked')}
                 </span>
               ) : (
                 <>
@@ -18293,7 +18336,7 @@ export default function RaceDetailPage({
                           : 'border-yellow-200 bg-yellow-50 text-slate-900 hover:bg-yellow-100'
                       }`}
                     >
-                      {applicationActionLoading === 'apply' ? 'Applying…' : 'Apply for race'}
+                      {applicationActionLoading === 'apply' ? t('summary.applying') : t('summary.apply')}
                     </button>
                   ) : null}
 
@@ -18307,7 +18350,7 @@ export default function RaceDetailPage({
                         : 'cursor-not-allowed border-slate-200 bg-white text-slate-400'
                     }`}
                   >
-                    {applicationActionLoading === 'cancel' ? 'Cancelling…' : 'Cancel application'}
+                    {applicationActionLoading === 'cancel' ? t('summary.cancelling') : t('summary.cancelApplication')}
                   </button>
                 </>
               )}
@@ -18323,7 +18366,7 @@ export default function RaceDetailPage({
               />
             ) : (
               <div className="text-center text-sm text-slate-500">
-                Tour logo not available yet
+                {t('page.tourLogoUnavailable')}
               </div>
             )}
           </div>
@@ -18333,7 +18376,7 @@ export default function RaceDetailPage({
       <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
         <div className="mb-3 flex items-center justify-between gap-3">
           <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-            Stages
+            {t('page.stages')}
           </div>
 
           {stages.length > 5 ? (
@@ -18420,7 +18463,7 @@ export default function RaceDetailPage({
         </div>
       ) : (
         <div className="rounded-2xl border border-slate-200 bg-white p-6 text-slate-500 shadow-sm">
-          No stages found for this race.
+          {t('page.noStages')}
         </div>
       )}
 
