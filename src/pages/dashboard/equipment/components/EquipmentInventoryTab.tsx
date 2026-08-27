@@ -27,7 +27,6 @@ import type {
   QuoteSaleResponse,
 } from '../types'
 import {
-  equipmentCategoryLabels,
   equipmentStatusLabels,
   formatCondition,
   formatMoney,
@@ -58,7 +57,6 @@ type ActionModalState = {
   mode: ActionMode
   item: EquipmentInventoryItem
 }
-
 
 type EquipmentInventoryGroup = {
   key: string
@@ -100,6 +98,15 @@ const equipmentStatusTranslationKeys: Partial<
   worn: 'status.worn',
   sold: 'status.sold',
   discarded: 'status.discarded',
+}
+
+const equipmentCategoryTranslationKeys: Record<EquipmentCategory, string> = {
+  frame: 'categories.frame',
+  wheelset: 'categories.wheelset',
+  tires: 'categories.tires',
+  groupset: 'categories.groupset',
+  helmet: 'categories.helmet',
+  shoes: 'categories.shoes',
 }
 
 const terrainRoleOptions: EquipmentTerrainRole[] = [
@@ -158,6 +165,13 @@ function getEquipmentStatusDisplayLabel(
 ): string {
   const translationKey = equipmentStatusTranslationKeys[status]
   return translationKey ? t(translationKey) : equipmentStatusLabels[status] ?? status
+}
+
+function getEquipmentCategoryDisplayLabel(
+  category: EquipmentCategory,
+  t: TFunction<'equipment'>,
+): string {
+  return t(equipmentCategoryTranslationKeys[category])
 }
 
 function getInventoryItemMetadata(
@@ -290,7 +304,6 @@ function getShortBonuses(
     }))
 }
 
-
 function getEquipmentGroupKey(item: EquipmentInventoryItem): string {
   return [
     item.equipment_category,
@@ -402,7 +415,7 @@ export default function EquipmentInventoryTab({
       setItems(activeItems)
       setTotalCount(activeItems.length)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load inventory')
+      setError(err instanceof Error ? err.message : t('page.unable'))
     } finally {
       setLoading(false)
     }
@@ -420,13 +433,12 @@ export default function EquipmentInventoryTab({
 
   const categoryOptions = useMemo(
     () =>
-      Object.entries(equipmentCategoryLabels).map(([key, label]) => ({
-        value: key as EquipmentCategory,
-        label,
+      (Object.keys(equipmentCategoryTranslationKeys) as EquipmentCategory[]).map(key => ({
+        value: key,
+        label: getEquipmentCategoryDisplayLabel(key, t),
       })),
-    []
+    [t]
   )
-
 
   const filteredItems = useMemo(
     () =>
@@ -473,7 +485,7 @@ export default function EquipmentInventoryTab({
 
         setRepairQuote(quote)
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to quote repair cost')
+        setError(err instanceof Error ? err.message : t('inventory.repairQuoteFailed'))
       } finally {
         setQuoteLoading(false)
       }
@@ -490,7 +502,7 @@ export default function EquipmentInventoryTab({
 
         setSaleQuote(quote)
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to quote sale value')
+        setError(err instanceof Error ? err.message : t('inventory.saleQuoteFailed'))
       } finally {
         setQuoteLoading(false)
       }
@@ -546,11 +558,7 @@ export default function EquipmentInventoryTab({
       closeModal()
       await loadInventory()
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : 'Action failed. Edge Function may not be deployed yet.'
-      )
+      setError(err instanceof Error ? err.message : t('page.unable'))
     } finally {
       setActionLoading(false)
     }
@@ -586,8 +594,6 @@ export default function EquipmentInventoryTab({
     return 'bg-red-600 hover:bg-red-700'
   }
 
-
-
   useEffect(() => {
     setMaintenanceThreshold(Number(equipmentAccess?.maintenance_reminder_threshold ?? 80))
   }, [equipmentAccess?.maintenance_reminder_threshold])
@@ -611,13 +617,9 @@ export default function EquipmentInventoryTab({
         clubId,
         threshold: maintenanceThreshold,
       })
-      setMessage(`Maintenance reminder saved at ${maintenanceThreshold}% condition.`)
+      setMessage(t('inventory.reminderSaved', { threshold: maintenanceThreshold }))
     } catch (caughtError) {
-      setError(
-        caughtError instanceof Error
-          ? caughtError.message
-          : 'Failed to save maintenance reminder.',
-      )
+      setError(caughtError instanceof Error ? caughtError.message : t('page.unable'))
     }
   }
 
@@ -638,15 +640,16 @@ export default function EquipmentInventoryTab({
       }
 
       setMessage(
-        `${premiumRepairCandidates.length} repair job${premiumRepairCandidates.length === 1 ? '' : 's'} started. Normal cash costs and repair durations still apply.`,
+        t(
+          premiumRepairCandidates.length === 1
+            ? 'inventory.bulkRepairStartedOne'
+            : 'inventory.bulkRepairStarted',
+          { count: premiumRepairCandidates.length },
+        ),
       )
       await loadInventory()
     } catch (caughtError) {
-      setError(
-        caughtError instanceof Error
-          ? caughtError.message
-          : 'Bulk maintenance failed.',
-      )
+      setError(caughtError instanceof Error ? caughtError.message : t('page.unable'))
     } finally {
       setBulkRepairLoading(false)
     }
@@ -669,7 +672,7 @@ export default function EquipmentInventoryTab({
 
           <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-gray-500">
             <span>
-              {equipmentCategoryLabels[item.equipment_category]} ·{' '}
+              {getEquipmentCategoryDisplayLabel(item.equipment_category, t)} ·{' '}
               {item.brand_name ?? t('common.genericBrand')}
             </span>
 
@@ -897,7 +900,7 @@ export default function EquipmentInventoryTab({
                     threshold: maintenanceThreshold,
                   })
               : t('inventory.noRepairCandidates', {
-                  category: equipmentCategoryLabels[category].toLowerCase(),
+                  category: getEquipmentCategoryDisplayLabel(category, t),
                   threshold: maintenanceThreshold,
                 })}
           </div>
@@ -963,12 +966,12 @@ export default function EquipmentInventoryTab({
             {terrainRole
               ? t('inventory.showingRole', {
                   count: filteredItems.length,
-                  category: equipmentCategoryLabels[category].toLowerCase(),
+                  category: getEquipmentCategoryDisplayLabel(category, t),
                   role: t(terrainRoleTranslationKeys[terrainRole]),
                 })
               : t('inventory.showing', {
                   count: filteredItems.length,
-                  category: equipmentCategoryLabels[category].toLowerCase(),
+                  category: getEquipmentCategoryDisplayLabel(category, t),
                 })}
           </p>
         </div>
@@ -978,7 +981,7 @@ export default function EquipmentInventoryTab({
         ) : filteredItems.length === 0 ? (
           <div className="p-4 text-sm text-gray-500">
             {t('inventory.noneFound', {
-              category: equipmentCategoryLabels[category].toLowerCase(),
+              category: getEquipmentCategoryDisplayLabel(category, t),
             })}
           </div>
         ) : (
@@ -999,12 +1002,12 @@ export default function EquipmentInventoryTab({
                           {group.displayName}
                         </div>
                         <span className="shrink-0 rounded-full bg-white px-2 py-0.5 text-[11px] font-medium text-slate-500 ring-1 ring-slate-200">
-                          {group.totalCount} item{group.totalCount === 1 ? '' : 's'}
+                          {t(group.totalCount === 1 ? 'common.item' : 'common.items', { count: group.totalCount })}
                         </span>
                       </div>
 
                       <div className="mt-1 text-xs text-gray-500">
-                        {equipmentCategoryLabels[group.category]} · {group.brandName ?? t('common.genericBrand')}
+                        {getEquipmentCategoryDisplayLabel(group.category, t)} · {group.brandName ?? t('common.genericBrand')}
                       </div>
                     </div>
 
@@ -1022,7 +1025,7 @@ export default function EquipmentInventoryTab({
                       </div>
 
                       <span className="inline-block w-fit rounded-full bg-green-50 px-2 py-0.5 text-xs font-medium text-green-700">
-                        {t('status.ready')} {group.readyCount}/{group.totalCount}
+                        {t('common.readyCount', { ready: group.readyCount, total: group.totalCount })}
                       </span>
                     </div>
 
@@ -1090,7 +1093,7 @@ export default function EquipmentInventoryTab({
           </button>
 
           <div className="text-sm text-gray-500">
-            Page {page + 1} / {totalPages}
+            {t('common.pageCount', { page: page + 1, pages: totalPages })}
           </div>
 
           <button
@@ -1149,7 +1152,7 @@ export default function EquipmentInventoryTab({
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-500">Duration</span>
+                      <span className="text-gray-500">{t('common.duration')}</span>
                       <span className="font-medium">
                         {repairQuote.duration_game_days === 1
                           ? t('inventory.gameDay', {
