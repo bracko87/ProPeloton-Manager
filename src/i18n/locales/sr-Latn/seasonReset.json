@@ -67,14 +67,39 @@
     "oceania": "Nema promocija u Continental Oceania.",
     "relegatedDynamic": "Nijedan tim nije ispao iz {{division}}."
   },
+  "tiers": {
+    "world": "World",
+    "pro": "Pro",
+    "continental": "Continental",
+    "amateur": "Amateur"
+  },
+  "reasons": {
+    "promoted": "Promovisan",
+    "relegated": "Ispao",
+    "directPromotion": "Direktna promocija",
+    "playoffPromotion": "Promocija kroz plej-of",
+    "inactiveRemoved": "Uklonjen zbog neaktivnosti"
+  },
   "divisions": {
     "world": "World",
     "proWest": "Pro West",
     "proEast": "Pro East",
-    "continentalEurope": "Continental Europe",
-    "continentalAmerica": "Continental America",
-    "continentalAsia": "Continental Asia",
-    "continentalAfrica": "Continental Africa",
-    "continentalOceania": "Continental Oceania"
+    "continentalEurope": "Continental Evropa",
+    "continentalAmerica": "Continental Amerika",
+    "continentalAsia": "Continental Azija",
+    "continentalAfrica": "Continental Afrika",
+    "continentalOceania": "Continental Okeanija",
+    "northAmerica": "Severna Amerika",
+    "southAmerica": "Južna Amerika",
+    "westernEurope": "Zapadna Evropa",
+    "centralEurope": "Centralna Evropa",
+    "southernBalkanEurope": "Južna i Balkanska Evropa",
+    "northernEasternEurope": "Severna i Istočna Evropa",
+    "westNorthAfrica": "Zapadna i Severna Afrika",
+    "centralSouthAfrica": "Centralna i Južna Afrika",
+    "westCentralAsia": "Zapadna i Centralna Azija",
+    "southAsia": "Južna Azija",
+    "eastSoutheastAsia": "Istočna i Jugoistočna Azija",
+    "oceania": "Okeanija"
   }
 }
