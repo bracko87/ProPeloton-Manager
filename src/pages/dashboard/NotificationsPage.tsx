@@ -20,6 +20,7 @@
  */
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router'
 import { supabase } from '@/lib/supabase'
 import {
@@ -320,17 +321,46 @@ function getNotificationCategoryValue(item: NotificationItem): string {
   return 'other'
 }
 
-function getNotificationCategoryLabel(item: NotificationItem): string {
+function getNotificationCategoryLabel(
+  item: NotificationItem,
+  t: (key: string) => string
+): string {
+  const stableCategoryKeys: Record<string, string> = {
+    game: 'categories.game',
+    admin: 'categories.admin',
+    system: 'categories.system',
+    staffadvisory: 'categories.staffAdvisory',
+    race: 'categories.race',
+    races: 'categories.races',
+    finance: 'categories.finance',
+    transfers: 'categories.transfers',
+    training: 'categories.training',
+    equipment: 'categories.equipment',
+    infrastructure: 'categories.infrastructure',
+    sponsors: 'categories.sponsors',
+    staff: 'categories.staff',
+    squad: 'categories.squad',
+    health: 'categories.health',
+    scouting: 'categories.scouting',
+    other: 'categories.other',
+  }
+
+  const localize = (raw: string): string => {
+    const normalized = raw.replace(/[_-]+/g, '').replace(/\s+/g, '').toLowerCase()
+    const key = stableCategoryKeys[normalized]
+    return key ? t(key) : formatCategoryLabel(raw)
+  }
+
   const preferenceGroup = String((item.preference_group as any) ?? '').trim()
-  if (preferenceGroup) return formatCategoryLabel(preferenceGroup)
+  if (preferenceGroup) return localize(preferenceGroup)
 
   const source = String(item.source ?? '').trim()
-  if (source) return formatCategoryLabel(source)
+  if (source) return localize(source)
 
   const typeCode = String(item.type_code ?? '').trim()
-  if (typeCode) return formatCategoryLabel(typeCode)
+  if (typeCode) return localize(typeCode)
 
-  return 'Other'
+  return t('categories.other')
 }
 
 function matchesSearch(item: NotificationItem, query: string): boolean {
@@ -803,6 +833,24 @@ function renderAdvisorRiderIdentity(options: {
 
 export default function NotificationsPage(): JSX.Element {
   const navigate = useNavigate()
+  const { t, i18n } = useTranslation('notifications')
+  const translateDetailActionLabel = useCallback(
+    (labelValue: unknown): string => {
+      const label = String(labelValue ?? '').trim()
+      const keyByLabel: Record<string, string> = {
+        Open: 'details.open',
+        'Open rider': 'details.openRider',
+        'Open squad': 'details.openSquad',
+        Races: 'details.races',
+        Race: 'details.race',
+        'Race Preparation': 'details.racePreparation',
+        'Mark as read': 'details.markRead',
+      }
+      const key = keyByLabel[label]
+      return key ? t(key) : label
+    },
+    [t]
+  )
   const [advisorFilter, setAdvisorFilter] = useState<AdvisorNotificationFilter | null>(() =>
     readAdvisorNotificationFilterFromHash()
   )
@@ -904,7 +952,7 @@ export default function NotificationsPage(): JSX.Element {
           return next
         })
         setAdvisorMuteError(
-          `Could not ${nextMuted ? 'mute' : 'unmute'} this notification type. Please try again.`
+          t(nextMuted ? 'mute.errorMute' : 'mute.errorUnmute')
         )
         // eslint-disable-next-line no-console
         console.error(
@@ -928,7 +976,7 @@ export default function NotificationsPage(): JSX.Element {
 
       setAdvisorMuteBusyCode(null)
     },
-    [advisorMuteBusyCode, mutedAdvisorReportCodes]
+    [advisorMuteBusyCode, mutedAdvisorReportCodes, t]
   )
 
   const renderAdvisorMuteButton = useCallback(
@@ -951,8 +999,8 @@ export default function NotificationsPage(): JSX.Element {
           disabled={isBusy}
           title={
             isMuted
-              ? 'Resume future notifications of this exact Staff Advisory report type.'
-              : 'Stop future notifications of this exact Staff Advisory report type. Other advisor notifications are not affected.'
+              ? t('mute.unmuteTitle')
+              : t('mute.muteTitle')
           }
           className={
             isMuted
@@ -961,10 +1009,10 @@ export default function NotificationsPage(): JSX.Element {
           }
         >
           {isBusy
-            ? 'Saving…'
+            ? t('mute.saving')
             : isMuted
-              ? 'Unmute this type'
-              : 'Mute this type'}
+              ? t('mute.unmute')
+              : t('mute.mute')}
         </button>
       )
     },
@@ -972,6 +1020,7 @@ export default function NotificationsPage(): JSX.Element {
       advisorMuteBusyCode,
       handleToggleAdvisorReportMute,
       mutedAdvisorReportCodes,
+      t,
     ]
   )
 
@@ -1425,13 +1474,34 @@ export default function NotificationsPage(): JSX.Element {
       .replace(/_/g, ' ')
       .trim()
 
-    return {
-      name: advisorName || 'Assigned advisor',
-      role: advisorRole
-        ? advisorRole.replace(/\b\w/g, letter => letter.toUpperCase())
-        : 'Staff Advisor',
+    const roleKeyByCode: Record<string, string> = {
+      assigned_advisor: 'roles.assignedAdvisor',
+      assignedadvisor: 'roles.assignedAdvisor',
+      staff_advisor: 'roles.staffAdvisor',
+      staffadvisor: 'roles.staffAdvisor',
+      head_coach: 'roles.headCoach',
+      headcoach: 'roles.headCoach',
+      sports_director: 'roles.sportsDirector',
+      sportsdirector: 'roles.sportsDirector',
+      team_doctor: 'roles.teamDoctor',
+      teamdoctor: 'roles.teamDoctor',
+      chief_mechanic: 'roles.chiefMechanic',
+      chiefmechanic: 'roles.chiefMechanic',
+      scout: 'roles.scout',
     }
-  }, [advisorFilter, readItems, unreadItems])
+    const normalizedRole = advisorRole.toLowerCase().replace(/\s+/g, '_')
+    const compactRole = normalizedRole.replace(/_/g, '')
+    const roleKey = roleKeyByCode[normalizedRole] ?? roleKeyByCode[compactRole]
+
+    return {
+      name: advisorName || t('roles.assignedAdvisor'),
+      role: roleKey
+        ? t(roleKey)
+        : advisorRole
+          ? advisorRole.replace(/\b\w/g, letter => letter.toUpperCase())
+          : t('roles.staffAdvisor'),
+    }
+  }, [advisorFilter, readItems, t, unreadItems])
   const isActiveTabLoading = activeTab === 'unread' ? isLoadingUnread : isLoadingRead
 
   const categoryOptions = useMemo<CategoryOption[]>(() => {
@@ -1439,14 +1509,14 @@ export default function NotificationsPage(): JSX.Element {
 
     for (const item of allActiveItems) {
       const value = getNotificationCategoryValue(item)
-      const label = getNotificationCategoryLabel(item)
+      const label = getNotificationCategoryLabel(item, t)
       map.set(value, label)
     }
 
     return Array.from(map.entries())
       .map(([value, label]) => ({ value, label }))
-      .sort((a, b) => a.label.localeCompare(b.label))
-  }, [allActiveItems])
+      .sort((a, b) => a.label.localeCompare(b.label, i18n.language))
+  }, [allActiveItems, i18n.language, t])
 
   const filteredItems = useMemo(() => {
     return allActiveItems.filter(item => {
@@ -1487,12 +1557,12 @@ export default function NotificationsPage(): JSX.Element {
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <h1 className="text-2xl font-semibold text-slate-900">
-              {advisorFilter ? 'Advisor notifications' : 'Notifications'}
+              {advisorFilter ? t('page.advisorTitle') : t('page.title')}
             </h1>
             <p className="mt-1 text-sm text-slate-600">
               {advisorFilter && advisorDisplay
-                ? `${advisorDisplay.name} · ${advisorDisplay.role}. Only reports from this advisor are shown.`
-                : 'Game events, admin messages, and system updates for your club.'}
+                ? t('page.advisorSubtitle', { name: advisorDisplay.name, role: advisorDisplay.role })
+                : t('page.subtitle')}
             </p>
           </div>
 
@@ -1502,7 +1572,7 @@ export default function NotificationsPage(): JSX.Element {
               onClick={() => navigate('/dashboard/preferences')}
               className="inline-flex h-9 items-center rounded-lg border border-slate-300 bg-white px-3 text-xs font-medium text-slate-700 hover:bg-slate-50"
             >
-              Notification preferences
+              {t('page.preferences')}
             </button>
 
             {advisorFilter ? (
@@ -1511,7 +1581,7 @@ export default function NotificationsPage(): JSX.Element {
                 onClick={() => navigate('/dashboard/notifications')}
                 className="inline-flex h-9 items-center rounded-lg border border-slate-300 bg-white px-3 text-xs font-medium text-slate-700 hover:bg-slate-50"
               >
-                Show all notifications
+                {t('page.showAll')}
               </button>
             ) : null}
           </div>
@@ -1532,7 +1602,7 @@ export default function NotificationsPage(): JSX.Element {
                       : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                   }`}
                 >
-                  Unread
+                  {t('tabs.unread')}
                   {unreadCount > 0 ? (
                     <span className="ml-2 inline-flex min-w-[18px] items-center justify-center rounded-full bg-white/15 px-1 text-[10px]">
                       {unreadCount > 99 ? '99+' : unreadCount}
@@ -1551,7 +1621,7 @@ export default function NotificationsPage(): JSX.Element {
                       : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                   }`}
                 >
-                  Read
+                  {t('tabs.read')}
                 </button>
 
                 {unreadCount > 0 && (
@@ -1563,7 +1633,7 @@ export default function NotificationsPage(): JSX.Element {
                     disabled={isMarkingAllRead}
                     className="rounded-md px-3 py-1.5 text-xs font-medium text-slate-900 hover:bg-slate-100 disabled:opacity-60"
                   >
-                    {isMarkingAllRead ? 'Marking…' : 'Mark all as read'}
+                    {isMarkingAllRead ? t('tabs.marking') : t('tabs.markAll')}
                   </button>
                 )}
               </div>
@@ -1576,7 +1646,7 @@ export default function NotificationsPage(): JSX.Element {
                     setSearchQuery(event.target.value)
                     resetActivePage()
                   }}
-                  placeholder="Search notifications..."
+                  placeholder={t('filters.search')}
                   className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-slate-500 sm:w-72"
                 />
                 {!advisorFilter ? (
@@ -1589,7 +1659,7 @@ export default function NotificationsPage(): JSX.Element {
                   }}
                   className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-slate-500 sm:w-56"
                 >
-                  <option value="all">All categories</option>
+                  <option value="all">{t('filters.allCategories')}</option>
                   {categoryOptions.map(option => (
                     <option key={option.value} value={option.value}>
                       {option.label}
@@ -1608,33 +1678,37 @@ export default function NotificationsPage(): JSX.Element {
                     }}
                     className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100"
                   >
-                    Clear
+                    {t('filters.clear')}
                   </button>
                 )}
               </div>
             </div>
 
             <div className="mt-3 text-xs text-slate-500">
-              Showing {visibleItems.length === 0 ? 0 : startIndex + 1}
-              {' - '}
-              {Math.min(endIndex, totalItems)} of {totalItems} {activeTab} {advisorFilter ? 'advisor reports' : 'notifications'}.
+              {t('summary.showing', {
+                start: visibleItems.length === 0 ? 0 : startIndex + 1,
+                end: Math.min(endIndex, totalItems),
+                total: totalItems,
+                state: t(activeTab === 'unread' ? 'summary.unread' : 'summary.read'),
+                kind: t(advisorFilter ? 'summary.advisorReports' : 'summary.notifications'),
+              })}
             </div>
           </div>
 
           <div className="max-h-[70vh] overflow-y-auto">
             {isActiveTabLoading ? (
-              <div className="px-4 py-10 text-sm text-slate-500">Loading notifications…</div>
+              <div className="px-4 py-10 text-sm text-slate-500">{t('empty.loading')}</div>
             ) : visibleItems.length === 0 ? (
               <div className="px-4 py-10 text-sm text-slate-500">
                 {searchQuery || (!advisorFilter && categoryFilter !== 'all')
-                  ? 'No notifications match your search or filter.'
+                  ? t('empty.noMatch')
                   : advisorFilter
                     ? activeTab === 'unread'
-                      ? 'This advisor has no unread reports.'
-                      : 'No read reports from this advisor yet.'
+                      ? t('empty.advisorUnread')
+                      : t('empty.advisorRead')
                     : activeTab === 'unread'
-                      ? 'You have no unread notifications.'
-                      : 'No read notifications yet.'}
+                      ? t('empty.unread')
+                      : t('empty.read')}
               </div>
             ) : (
               <>
@@ -1700,9 +1774,9 @@ export default function NotificationsPage(): JSX.Element {
                           <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-slate-500">
                             {advisorFilter ? (
                               <>
-                                <span>Staff Advisory</span>
+                                <span>{t('details.staffAdvisory')}</span>
                                 <span>•</span>
-                                <span>{isExpanded ? 'Hide report' : 'Show report'}</span>
+                                <span>{isExpanded ? t('details.hideReport') : t('details.showReport')}</span>
                               </>
                             ) : (
                               <>
@@ -1710,9 +1784,9 @@ export default function NotificationsPage(): JSX.Element {
                                 <span>•</span>
                                 <span>{item.type_code}</span>
                                 <span>•</span>
-                                <span>{getNotificationCategoryLabel(item)}</span>
+                                <span>{getNotificationCategoryLabel(item, t)}</span>
                                 <span>•</span>
-                                <span>{isExpanded ? 'Hide details' : 'Show details'}</span>
+                                <span>{isExpanded ? t('details.hideDetails') : t('details.showDetails')}</span>
                               </>
                             )}
                           </div>
@@ -1789,14 +1863,14 @@ export default function NotificationsPage(): JSX.Element {
                             isRiderSkillChange
                               ? [
                                   ['Rider', skillRiderName],
-                                  ['Skill', skillLabel],
-                                  ['Previous value', skillOldValue],
-                                  ['New value', skillNewValue],
+                                  [t('headCoach.skill'), skillLabel],
+                                  [t('headCoach.previousValue'), skillOldValue],
+                                  [t('headCoach.newValue'), skillNewValue],
                                   ['Change', Number(skillDelta ?? 0) > 0 ? `+${formatAdvisorValue(skillDelta)}` : formatAdvisorValue(skillDelta)],
                                 ]
                               : [
                                   ['Squad riders', snapshot.squad_riders],
-                                  ['High fatigue', snapshot.high_fatigue ?? snapshot.affected_riders],
+                                  [t('headCoach.highFatigue'), snapshot.high_fatigue ?? snapshot.affected_riders],
                                   ['Elevated fatigue', snapshot.elevated_fatigue],
                                   ['Not fully fit', snapshot.not_fully_fit],
                                   ['Unavailable', snapshot.unavailable],
@@ -1827,8 +1901,8 @@ export default function NotificationsPage(): JSX.Element {
                                     <div className="mt-1 text-xs text-slate-500">
                                       {advisorPayload.staff?.name ??
                                         advisorPayload.advisor_staff_name ??
-                                        'Head Coach'}{' '}
-                                      · Head Coach
+                                        t('roles.headCoach')}{' '}
+                                      · {t('roles.headCoach')}
                                     </div>
                                   </div>
                                   <div className="text-xs text-slate-500">
@@ -1967,7 +2041,7 @@ export default function NotificationsPage(): JSX.Element {
                                           : 'rounded-md border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-900 hover:bg-slate-100'
                                       }
                                     >
-                                      {action.label ?? 'Open'}
+                                      {translateDetailActionLabel(action.label || t('details.open'))}
                                     </button>
                                   ))}
                                 </div>
@@ -2070,7 +2144,7 @@ export default function NotificationsPage(): JSX.Element {
 
                           const sportSummaryEntries = [
                             ['Race', (sportData as Record<string, unknown>).current_focus_race_name ?? (sportData as Record<string, unknown>).current_focus_race ?? (sportData as Record<string, unknown>).active_race_name ?? (sportData as Record<string, unknown>).race_name ?? (sportData as Record<string, unknown>).next_race_name],
-                            ['Race timing', (sportData as Record<string, unknown>).current_focus_race_timing ?? (sportData as Record<string, unknown>).race_urgency ?? (sportData as Record<string, unknown>).urgency],
+                            [t('sportDirector.raceTiming'), (sportData as Record<string, unknown>).current_focus_race_timing ?? (sportData as Record<string, unknown>).race_urgency ?? (sportData as Record<string, unknown>).urgency],
                             ['Race start', formatAdvisorGameDateTime((sportData as Record<string, unknown>).current_focus_race_start_date ?? (sportData as Record<string, unknown>).race_start_date ?? (sportData as Record<string, unknown>).start_date)],
                             ['Race end', formatAdvisorGameDateTime((sportData as Record<string, unknown>).current_focus_race_end_date ?? (sportData as Record<string, unknown>).race_end_date ?? (sportData as Record<string, unknown>).end_date)],
                             ['Race location', (sportData as Record<string, unknown>).race_location ?? (sportData as Record<string, unknown>).location_name ?? (sportData as Record<string, unknown>).country_name ?? (sportData as Record<string, unknown>).country_code],
@@ -2083,7 +2157,7 @@ export default function NotificationsPage(): JSX.Element {
                             ['Programme', (sportData as Record<string, unknown>).programme_status],
                             ['Future races · 30 days', (sportData as Record<string, unknown>).future_accepted_races_next_30_game_days ?? (sportData as Record<string, unknown>).accepted_races_next_30_game_days],
                             ['Management priorities', (sportData as Record<string, unknown>).management_priority_count ?? managementPriorities.length],
-                            ['Missing stage plans', (sportData as Record<string, unknown>).actionable_missing_stage_plans ?? (sportData as Record<string, unknown>).missing_stage_plans],
+                            [t('sportDirector.missingStagePlans'), (sportData as Record<string, unknown>).actionable_missing_stage_plans ?? (sportData as Record<string, unknown>).missing_stage_plans],
                             ['Incomplete stage plans', (sportData as Record<string, unknown>).actionable_problem_stage_plans ?? (sportData as Record<string, unknown>).problem_stage_plans],
                             ['Programme gap', (sportData as Record<string, unknown>).programme_gap_days],
                             ['Next accepted race', (sportData as Record<string, unknown>).next_future_race ?? (sportData as Record<string, unknown>).next_future_race_name],
@@ -2101,8 +2175,8 @@ export default function NotificationsPage(): JSX.Element {
                                     <div className="mt-1 text-xs text-slate-500">
                                       {advisorPayload.staff?.name ??
                                         advisorPayload.advisor_staff_name ??
-                                        'Sports Director'}{' '}
-                                      · Sports Director
+                                        t('roles.sportsDirector')}{' '}
+                                      · {t('roles.sportsDirector')}
                                     </div>
                                   </div>
                                   <div className="text-xs text-slate-500">
@@ -2258,7 +2332,7 @@ export default function NotificationsPage(): JSX.Element {
                                   {(advisorActions.length > 0
                                     ? advisorActions.map((action, index) => ({
                                         key: `${action.label ?? 'action'}-${index}`,
-                                        label: action.label ?? 'Open',
+                                        label: translateDetailActionLabel(action.label || t('details.open')),
                                         index,
                                         onClick: () => {
                                           const target = resolveSportDirectorActionTarget(
@@ -2270,7 +2344,7 @@ export default function NotificationsPage(): JSX.Element {
                                       }))
                                     : templateActions.map(action => ({
                                         key: action.key,
-                                        label: action.label,
+                                        label: translateDetailActionLabel(action.label),
                                         index: action.variant === 'primary' ? 0 : 1,
                                         onClick: () => {
                                           if (
@@ -2299,7 +2373,7 @@ export default function NotificationsPage(): JSX.Element {
                                           : 'rounded-md border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-900 hover:bg-slate-100'
                                       }
                                     >
-                                      {action.label}
+                                      {translateDetailActionLabel(action.label)}
                                     </button>
                                   ))}
                                 </div>
@@ -2350,8 +2424,8 @@ export default function NotificationsPage(): JSX.Element {
 
                           const doctorSummaryEntries = [
                             ['Rider', (doctorData as Record<string, unknown>).rider_name],
-                            ['Medical case', (doctorData as Record<string, unknown>).case_label ?? (doctorData as Record<string, unknown>).case_code ?? (doctorData as Record<string, unknown>).case_type],
-                            ['Severity', (doctorData as Record<string, unknown>).severity],
+                            [t('doctor.medicalCase'), (doctorData as Record<string, unknown>).case_label ?? (doctorData as Record<string, unknown>).case_code ?? (doctorData as Record<string, unknown>).case_type],
+                            [t('doctor.severity'), (doctorData as Record<string, unknown>).severity],
                             ['Body part', (doctorData as Record<string, unknown>).body_part],
                             ['Injured riders', (doctorData as Record<string, unknown>).injured_riders],
                             ['Sick riders', (doctorData as Record<string, unknown>).sick_riders],
@@ -2362,7 +2436,7 @@ export default function NotificationsPage(): JSX.Element {
                             ['Medical staff reduction', (doctorData as Record<string, unknown>).medical_staff_reduction_pct],
                             ['Medical Center reduction', (doctorData as Record<string, unknown>).infrastructure_reduction_pct],
                             ['Total recovery reduction', (doctorData as Record<string, unknown>).total_reduction_pct ?? (doctorData as Record<string, unknown>).max_recovery_reduction_pct],
-                            ['Expected return', formatAdvisorGameDateTime((doctorData as Record<string, unknown>).expected_full_recovery_on ?? (doctorData as Record<string, unknown>).unavailable_until)],
+                            [t('doctor.expectedReturn'), formatAdvisorGameDateTime((doctorData as Record<string, unknown>).expected_full_recovery_on ?? (doctorData as Record<string, unknown>).unavailable_until)],
                           ].filter(([, value]) => value !== undefined && value !== null && value !== '')
 
                           return (
@@ -2376,8 +2450,8 @@ export default function NotificationsPage(): JSX.Element {
                                     <div className="mt-1 text-xs text-slate-500">
                                       {advisorPayload.staff?.name ??
                                         advisorPayload.advisor_staff_name ??
-                                        'Team Doctor'}{' '}
-                                      · Team Doctor
+                                        t('roles.teamDoctor')}{' '}
+                                      · {t('roles.teamDoctor')}
                                     </div>
                                   </div>
                                   <div className="text-xs text-slate-500">
@@ -2545,7 +2619,7 @@ export default function NotificationsPage(): JSX.Element {
                                   {(advisorActions.length > 0
                                     ? advisorActions.map((action, index) => ({
                                         key: `${action.label ?? 'action'}-${index}`,
-                                        label: action.label ?? 'Open',
+                                        label: translateDetailActionLabel(action.label || t('details.open')),
                                         index,
                                         onClick: () => {
                                           const label = String(action.label ?? '').trim().toLowerCase()
@@ -2564,7 +2638,7 @@ export default function NotificationsPage(): JSX.Element {
                                       }))
                                     : templateActions.map(action => ({
                                         key: action.key,
-                                        label: action.label,
+                                        label: translateDetailActionLabel(action.label),
                                         index: action.variant === 'primary' ? 0 : 1,
                                         onClick: () => {
                                           void handleTemplateAction(item, action)
@@ -2580,7 +2654,7 @@ export default function NotificationsPage(): JSX.Element {
                                           : 'rounded-md border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-900 hover:bg-slate-100'
                                       }
                                     >
-                                      {action.label}
+                                      {translateDetailActionLabel(action.label)}
                                     </button>
                                   ))}
                                 </div>
@@ -2619,9 +2693,9 @@ export default function NotificationsPage(): JSX.Element {
                             : []
 
                           const mechanicSummaryEntries: Array<[string, unknown, string?]> = [
-                            ['Equipment items', mechanicData.total_items],
+                            [t('mechanic.equipmentItems'), mechanicData.total_items],
                             ['Ready items', mechanicData.ready_items],
-                            ['Average condition', mechanicData.average_condition_percent, '%'],
+                            [t('mechanic.averageCondition'), mechanicData.average_condition_percent, '%'],
                             ['Needs attention', mechanicData.maintenance_needed ?? mechanicData.equipment_needing_attention_count],
                             ['Critical items', mechanicData.critical_items],
                             ['Pending maintenance', mechanicData.pending_maintenance_jobs],
@@ -2636,7 +2710,7 @@ export default function NotificationsPage(): JSX.Element {
                                   <div>
                                     <div className="text-sm font-semibold text-slate-900">{item.title}</div>
                                     <div className="mt-1 text-xs text-slate-500">
-                                      {advisorPayload.staff?.name ?? advisorPayload.advisor_staff_name ?? 'Chief Mechanic'} · Chief Mechanic
+                                      {advisorPayload.staff?.name ?? advisorPayload.advisor_staff_name ?? t('roles.chiefMechanic')} · {t('roles.chiefMechanic')}
                                     </div>
                                   </div>
                                   <div className="text-xs text-slate-500">
@@ -2756,17 +2830,17 @@ export default function NotificationsPage(): JSX.Element {
                                   {renderAdvisorMuteButton(advisorPayload)}
                                   {(advisorActions.length > 0 ? advisorActions.map((action, index) => ({
                                     key: `${action.label ?? 'action'}-${index}`,
-                                    label: action.label ?? 'Open',
+                                    label: translateDetailActionLabel(action.label || t('details.open')),
                                     index,
                                     onClick: () => { const target = String(action.target ?? '').trim(); if (target) navigate(target) },
                                   })) : templateActions.map(action => ({
                                     key: action.key,
-                                    label: action.label,
+                                    label: translateDetailActionLabel(action.label),
                                     index: action.variant === 'primary' ? 0 : 1,
                                     onClick: () => { void handleTemplateAction(item, action) },
                                   }))).map(action => (
                                     <button key={action.key} type="button" onClick={action.onClick} className={action.index === 0 ? 'rounded-md bg-slate-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-slate-800' : 'rounded-md border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-900 hover:bg-slate-100'}>
-                                      {action.label}
+                                      {translateDetailActionLabel(action.label)}
                                     </button>
                                   ))}
                                 </div>
@@ -2802,10 +2876,10 @@ export default function NotificationsPage(): JSX.Element {
                             ? [
                                 ['Rider', getAdvisorRiderDisplayName(scoutData.rider_name as unknown, scoutData as Record<string, unknown>)],
                                 ['Country', scoutData.rider_country_code ?? scoutData.country_code],
-                                ['Overall', scoutData.overall_exact ?? scoutData.overall_label],
-                                ['Potential', scoutData.potential_label],
+                                [t('scout.overall'), scoutData.overall_exact ?? scoutData.overall_label],
+                                [t('scout.potential'), scoutData.potential_label],
                                 ['Potential score', scoutData.potential_exact],
-                                ['Precision', scoutData.precision_score],
+                                [t('scout.precision'), scoutData.precision_score],
                                 ['Precision tier', scoutData.precision_tier],
                                 ['Review status', scoutData.review_status],
                               ].filter(([, value]) => value !== undefined && value !== null && value !== '')
@@ -2831,8 +2905,8 @@ export default function NotificationsPage(): JSX.Element {
                                     <div className="mt-1 text-xs text-slate-500">
                                       {advisorPayload.staff?.name ??
                                         advisorPayload.advisor_staff_name ??
-                                        'Scout'}{' '}
-                                      · Scout
+                                        t('roles.scout')}{' '}
+                                      · {t('roles.scout')}
                                     </div>
                                   </div>
 
@@ -3131,7 +3205,7 @@ export default function NotificationsPage(): JSX.Element {
                                   {(advisorActions.length > 0
                                     ? advisorActions.map((action, index) => ({
                                         key: `${action.label ?? 'action'}-${index}`,
-                                        label: action.label ?? 'Open',
+                                        label: translateDetailActionLabel(action.label || t('details.open')),
                                         index:
                                           isPriorityProspect || index > 0
                                             ? index + 1
@@ -3143,7 +3217,7 @@ export default function NotificationsPage(): JSX.Element {
                                       }))
                                     : templateActions.map(action => ({
                                         key: action.key,
-                                        label: action.label,
+                                        label: translateDetailActionLabel(action.label),
                                         index:
                                           action.variant === 'primary' &&
                                           !isPriorityProspect
@@ -3163,7 +3237,7 @@ export default function NotificationsPage(): JSX.Element {
                                           : 'rounded-md border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-900 hover:bg-slate-100'
                                       }
                                     >
-                                      {action.label}
+                                      {translateDetailActionLabel(action.label)}
                                     </button>
                                   ))}
                                 </div>
@@ -3260,7 +3334,7 @@ export default function NotificationsPage(): JSX.Element {
                                         : 'rounded-md border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-900 hover:bg-slate-100'
                                     }
                                   >
-                                    {action.label}
+                                    {translateDetailActionLabel(action.label)}
                                   </button>
                                 ))}
                               </div>
@@ -3278,7 +3352,7 @@ export default function NotificationsPage(): JSX.Element {
 
           <div className="flex flex-col gap-3 border-t border-slate-200 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="text-xs text-slate-500">
-              Page {safeActivePage} / {totalPages}
+              {t('summary.page', { page: safeActivePage, totalPages })}
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
@@ -3304,7 +3378,7 @@ export default function NotificationsPage(): JSX.Element {
                 disabled={!canGoPrevious}
                 className="rounded-md border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-900 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                First
+                {t('details.first')}
               </button>
 
               <button
@@ -3329,7 +3403,7 @@ export default function NotificationsPage(): JSX.Element {
                 disabled={!canGoPrevious}
                 className="rounded-md border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-900 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                Previous
+                {t('details.previous')}
               </button>
 
               <button
@@ -3354,7 +3428,7 @@ export default function NotificationsPage(): JSX.Element {
                 disabled={!canGoNext}
                 className="rounded-md border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-900 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                Next
+                {t('details.next')}
               </button>
 
               <button
@@ -3379,7 +3453,7 @@ export default function NotificationsPage(): JSX.Element {
                 disabled={!canGoNext}
                 className="rounded-md border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-900 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                Last
+                {t('details.last')}
               </button>
             </div>
           </div>
