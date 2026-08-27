@@ -9,6 +9,13 @@
  *   across Squad.tsx and DevelopingTeam.tsx.
  */
 
+import i18n from '../../../i18n'
+
+function getActiveFormattingLocale(): string {
+  const language = i18n.resolvedLanguage ?? i18n.language ?? 'en'
+  return language.startsWith('sr') ? 'sr-Latn-RS' : 'en-US'
+}
+
 /**
  * getCountryName
  * Return a localized country display name from a 2-letter code.
@@ -16,10 +23,10 @@
 export function getCountryName(countryCode?: string) {
   const code = countryCode?.trim().toUpperCase()
 
-  if (!code) return 'Unknown'
+  if (!code) return i18n.t('riderProfile:common.unknown')
 
   try {
-    return new Intl.DisplayNames(['en'], { type: 'region' }).of(code) ?? code
+    return new Intl.DisplayNames([getActiveFormattingLocale()], { type: 'region' }).of(code) ?? code
   } catch {
     return code
   }
@@ -43,16 +50,16 @@ export function getFlagImageUrl(countryCode?: string) {
  */
 export function formatMoney(n?: number | null) {
   if (n == null) return '—'
-  return `$${new Intl.NumberFormat('de-DE').format(n)}`
+  return `$${new Intl.NumberFormat(getActiveFormattingLocale()).format(n)}`
 }
 
 /**
  * formatWeeklySalary
- * Format weekly salary values like $12,000/week.
+ * Format weekly salary values using the selected UI locale.
  */
 export function formatWeeklySalary(n?: number | null) {
   if (n == null) return '—'
-  return `${formatMoney(n)}/week`
+  return `${formatMoney(n)}${i18n.t('riderProfile:common.week')}`
 }
 
 /**
@@ -71,11 +78,11 @@ export function getSeasonWage(weeklySalary?: number | null) {
 export function formatSalary(value?: number | null) {
   if (value === null || value === undefined) return '—'
 
-  const amount = new Intl.NumberFormat('de-DE', {
+  const amount = new Intl.NumberFormat(getActiveFormattingLocale(), {
     maximumFractionDigits: 0,
   }).format(value)
 
-  return `$${amount}/week`
+  return `$${amount}${i18n.t('riderProfile:common.week')}`
 }
 
 /**
@@ -85,7 +92,7 @@ export function formatSalary(value?: number | null) {
 export function formatPlainMoney(value?: number | null) {
   if (value === null || value === undefined) return '—'
 
-  return new Intl.NumberFormat('de-DE', {
+  return new Intl.NumberFormat(getActiveFormattingLocale(), {
     maximumFractionDigits: 0,
   }).format(value)
 }
