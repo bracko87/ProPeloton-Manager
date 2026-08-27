@@ -2,13 +2,15 @@
   "page": {
     "title": "Calendar",
     "description": "Season overview, race schedule, and team-country weather for the current in-game date.",
+    "subtitle": "Season overview, race schedule, and team-country weather for the current in-game date.",
     "loading": "Loading calendar…",
     "seasonCalendar": "Season Calendar",
     "raceCalendar": "Race Calendar"
   },
   "weather": {
     "title": "Team Country Weather",
-    "today": "Today:",
+    "teamCountry": "Team Country Weather",
+    "today": "Today",
     "min": "Min",
     "max": "Max",
     "wind": "Wind",
@@ -29,10 +31,11 @@
     "temperatureBelow5": "Average temperature below 5°C"
   },
   "season": {
+    "season": "Season",
     "currentMonth": "Current Month",
     "gameDateUnavailable": "Game date unavailable",
-    "previous": "← Previous",
-    "next": "Next →",
+    "previous": "Previous",
+    "next": "Next",
     "races": "Races",
     "trainingCamps": "Training Camps",
     "events": "Events",
@@ -77,6 +80,10 @@
     "stageRace": "Stage Race"
   },
   "filters": {
+    "races": "Races",
+    "trainingCamps": "Training Camps",
+    "events": "Events",
+    "holidays": "Holidays",
     "title": "Race filters",
     "premium": "Premium",
     "description": "Filter this month by country, category, format, status, and sponsor goals.",
