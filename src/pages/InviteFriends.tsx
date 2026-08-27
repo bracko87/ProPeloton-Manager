@@ -12,6 +12,7 @@
  */
 
 import React, { useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useAuth } from '../context/AuthProvider'
 import { supabase } from '../lib/supabase'
 
@@ -27,11 +28,14 @@ type ReferralActivity = {
   completed_at: string | null
 }
 
-function formatDateTime(value: string | null | undefined): string {
+function formatDateTime(
+  value: string | null | undefined,
+  locale: string,
+): string {
   if (!value) return '—'
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return '—'
-  return date.toLocaleString()
+  return date.toLocaleString(locale)
 }
 
 function maskIdentifier(
@@ -60,20 +64,37 @@ function statusClasses(status: ReferralActivityStatus): string {
   }
 }
 
-function statusDescription(status: ReferralActivityStatus): string {
+function statusLabelKey(
+  status: ReferralActivityStatus,
+): 'invite.pending' | 'invite.completed' | 'invite.rejected' {
   switch (status) {
     case 'pending':
-      return 'Friend created a club. Waiting for first coin purchase.'
+      return 'invite.pending'
     case 'completed':
-      return 'Friend bought their first coin package. Reward granted: 40 coins.'
+      return 'invite.completed'
     case 'rejected':
-      return 'This referral could not be completed.'
-    default:
-      return ''
+      return 'invite.rejected'
+  }
+}
+
+function statusDescriptionKey(
+  status: ReferralActivityStatus,
+):
+  | 'invite.pendingDescription'
+  | 'invite.completedDescription'
+  | 'invite.rejectedDescription' {
+  switch (status) {
+    case 'pending':
+      return 'invite.pendingDescription'
+    case 'completed':
+      return 'invite.completedDescription'
+    case 'rejected':
+      return 'invite.rejectedDescription'
   }
 }
 
 export default function InviteFriendsPage(): JSX.Element {
+  const { t, i18n } = useTranslation('accountPages')
   const { user, loading } = useAuth()
 
   const [clubId, setClubId] = useState<string | null>(null)
@@ -87,6 +108,8 @@ export default function InviteFriendsPage(): JSX.Element {
   const [activityLoading, setActivityLoading] = useState(false)
   const [activityError, setActivityError] = useState('')
 
+  const locale = i18n.resolvedLanguage ?? i18n.language
+
   // Load club id + referral_code
   useEffect(() => {
     let isMounted = true
@@ -96,7 +119,7 @@ export default function InviteFriendsPage(): JSX.Element {
         if (loading) return
 
         if (!user?.id) {
-          throw new Error('You must be signed in to view your invite link.')
+          throw new Error(t('invite.signIn'))
         }
 
         setIsLoading(true)
@@ -109,11 +132,11 @@ export default function InviteFriendsPage(): JSX.Element {
           .single()
 
         if (error) {
-          throw new Error('Failed to load referral code.')
+          throw new Error(t('invite.loadCodeFailed'))
         }
 
         if (!data?.referral_code) {
-          throw new Error('Referral code is missing.')
+          throw new Error(t('invite.missingCode'))
         }
 
         if (!isMounted) return
@@ -124,7 +147,7 @@ export default function InviteFriendsPage(): JSX.Element {
         if (!isMounted) return
         setClubId(null)
         setReferralCode('')
-        setLoadError('Unable to load your invite link right now.')
+        setLoadError(t('invite.loadLinkFailed'))
       } finally {
         if (!isMounted) return
         setIsLoading(false)
@@ -136,7 +159,7 @@ export default function InviteFriendsPage(): JSX.Element {
     return () => {
       isMounted = false
     }
-  }, [loading, user?.id])
+  }, [loading, t, user?.id])
 
   // Load referral activity for this club
   useEffect(() => {
@@ -164,7 +187,7 @@ export default function InviteFriendsPage(): JSX.Element {
 
       if (error) {
         setActivity([])
-        setActivityError('Unable to load referral activity right now.')
+        setActivityError(t('invite.loadActivityFailed'))
         setActivityLoading(false)
         return
       }
@@ -178,7 +201,7 @@ export default function InviteFriendsPage(): JSX.Element {
     return () => {
       isMounted = false
     }
-  }, [clubId])
+  }, [clubId, t])
 
   const referral = useMemo(() => {
     if (!referralCode) return ''
@@ -192,7 +215,7 @@ export default function InviteFriendsPage(): JSX.Element {
     try {
       await navigator.clipboard.writeText(referral)
       setCopied(true)
-      setMessage('Invite link copied.')
+      setMessage(t('invite.copySuccess'))
 
       window.setTimeout(() => {
         setCopied(false)
@@ -200,7 +223,7 @@ export default function InviteFriendsPage(): JSX.Element {
       }, 2000)
     } catch {
       setCopied(false)
-      setMessage('Unable to copy link. Please copy it manually.')
+      setMessage(t('invite.copyFailed'))
     }
   }
 
@@ -210,8 +233,8 @@ export default function InviteFriendsPage(): JSX.Element {
     try {
       if (navigator.share) {
         await navigator.share({
-          title: 'Join me in the game',
-          text: 'Use my invite link to join the game:',
+          title: t('invite.shareTitle'),
+          text: t('invite.shareText'),
           url: referral
         })
         setMessage('')
@@ -219,37 +242,37 @@ export default function InviteFriendsPage(): JSX.Element {
       }
 
       await handleCopy()
-      setMessage('Sharing is not supported here, so the link was copied instead.')
+      setMessage(t('invite.shareFallback'))
     } catch {
       // Ignore cancelled share dialog
     }
   }
 
-  const inputValue = isLoading ? 'Loading invite link...' : referral
+  const inputValue = isLoading ? t('invite.loadingLink') : referral
 
   return (
     <div className="w-full h-full min-h-[calc(100vh-10rem)] text-gray-900">
       <div className="flex h-full flex-col gap-6">
         <div>
-          <h2 className="text-xl font-semibold">Invite Friends</h2>
+          <h2 className="text-xl font-semibold">{t('invite.title')}</h2>
           <p className="mt-1 text-sm text-gray-500">
-            Invite friends and earn 40 coins when they create a club and buy their first coin package.
+            {t('invite.subtitle')}
           </p>
         </div>
 
         <section className="w-full rounded-lg border border-gray-100 bg-white p-5 shadow-sm">
           <div className="flex flex-col gap-6">
             <div className="flex-1">
-              <h3 className="text-base font-semibold">Your invite link</h3>
+              <h3 className="text-base font-semibold">{t('invite.linkTitle')}</h3>
               <p className="mt-1 text-xs text-gray-500">
-                Share this link with a friend. When they create a club and make their first coin purchase, you receive 40 coins.
+                {t('invite.linkDescription')}
               </p>
 
               <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center">
                 <input
                   readOnly
                   value={inputValue}
-                  aria-label="Referral link"
+                  aria-label={t('invite.referralAria')}
                   className="h-11 w-full flex-1 rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-yellow-400"
                 />
 
@@ -259,7 +282,7 @@ export default function InviteFriendsPage(): JSX.Element {
                   disabled={isLoading || !referral}
                   className="h-11 rounded-md bg-yellow-400 px-5 text-sm font-semibold text-black transition hover:bg-yellow-300 disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  {copied ? 'Copied!' : 'Copy'}
+                  {copied ? t('invite.copied') : t('invite.copy')}
                 </button>
 
                 <button
@@ -268,7 +291,7 @@ export default function InviteFriendsPage(): JSX.Element {
                   disabled={isLoading || !referral}
                   className="h-11 rounded-md border border-gray-300 bg-white px-5 text-sm font-semibold text-gray-800 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  Share
+                  {t('invite.share')}
                 </button>
               </div>
 
@@ -288,9 +311,9 @@ export default function InviteFriendsPage(): JSX.Element {
         </section>
 
         <section className="w-full rounded-lg border border-gray-100 bg-white p-5 shadow-sm">
-          <h3 className="text-base font-semibold">Referral activity</h3>
+          <h3 className="text-base font-semibold">{t('invite.activityTitle')}</h3>
           <p className="mt-1 text-xs text-gray-500">
-            Pending = your friend created a club but has not bought coins yet. Completed = your friend bought their first coin package and your 40-coin reward was granted.
+            {t('invite.activityDescription')}
           </p>
 
           {activityError ? (
@@ -301,11 +324,11 @@ export default function InviteFriendsPage(): JSX.Element {
 
           {activityLoading ? (
             <div className="mt-4 flex h-48 items-center justify-center rounded-md border border-dashed border-gray-200 bg-gray-50 text-sm text-gray-400">
-              Loading referral activity...
+              {t('invite.loadingActivity')}
             </div>
           ) : activity.length === 0 ? (
             <div className="mt-4 flex h-48 items-center justify-center rounded-md border border-dashed border-gray-200 bg-gray-50 text-sm text-gray-400">
-              No referral activity yet. Share your invite link to start earning 40-coin rewards.
+              {t('invite.noActivity')}
             </div>
           ) : (
             <div className="mt-4 space-y-3">
@@ -320,42 +343,42 @@ export default function InviteFriendsPage(): JSX.Element {
                         item.status
                       )}`}
                     >
-                      {item.status}
+                      {t(statusLabelKey(item.status))}
                     </span>
                     <span className="text-xs text-gray-500">
-                      Code: {item.referral_code_used}
+                      {t('invite.code', { code: item.referral_code_used })}
                     </span>
                   </div>
 
                   <p className="mt-2 text-sm text-gray-600">
-                    {statusDescription(item.status)}
+                    {t(statusDescriptionKey(item.status))}
                   </p>
 
                   <dl className="mt-2 grid gap-2 text-sm text-gray-700 md:grid-cols-2">
                     <div>
-                      <dt className="font-medium text-gray-600">Referred user</dt>
+                      <dt className="font-medium text-gray-600">{t('invite.referredUser')}</dt>
                       <dd className="text-xs break-all">
                         {maskIdentifier(item.referred_user_id)}
                       </dd>
                     </div>
 
                     <div>
-                      <dt className="font-medium text-gray-600">Referred club</dt>
+                      <dt className="font-medium text-gray-600">{t('invite.referredClub')}</dt>
                       <dd className="text-xs break-all">
                         {item.referred_club_id
                           ? maskIdentifier(item.referred_club_id)
-                          : 'Not linked yet'}
+                          : t('invite.notLinked')}
                       </dd>
                     </div>
 
                     <div>
-                      <dt className="font-medium text-gray-600">Created</dt>
-                      <dd>{formatDateTime(item.created_at)}</dd>
+                      <dt className="font-medium text-gray-600">{t('invite.created')}</dt>
+                      <dd>{formatDateTime(item.created_at, locale)}</dd>
                     </div>
 
                     <div>
-                      <dt className="font-medium text-gray-600">Completed</dt>
-                      <dd>{formatDateTime(item.completed_at)}</dd>
+                      <dt className="font-medium text-gray-600">{t('invite.completedLabel')}</dt>
+                      <dd>{formatDateTime(item.completed_at, locale)}</dd>
                     </div>
                   </dl>
                 </article>
@@ -365,11 +388,11 @@ export default function InviteFriendsPage(): JSX.Element {
         </section>
 
         <section className="w-full rounded-lg border border-gray-100 bg-gray-50 p-5 shadow-sm">
-          <h3 className="text-base font-semibold">How it works</h3>
+          <h3 className="text-base font-semibold">{t('invite.how')}</h3>
           <ol className="mt-3 list-decimal space-y-2 pl-5 text-sm text-gray-600">
-            <li>Copy or share your personal invite link.</li>
-            <li>Your friend opens the link, signs up, and creates a club.</li>
-            <li>When your friend buys their first coin package, you receive 40 coins.</li>
+            <li>{t('invite.step1')}</li>
+            <li>{t('invite.step2')}</li>
+            <li>{t('invite.step3')}</li>
           </ol>
         </section>
       </div>
