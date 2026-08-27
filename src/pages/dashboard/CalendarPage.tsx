@@ -6,10 +6,7 @@ import { useTranslation } from 'react-i18next'
 import type { TFunction } from 'i18next'
 import { supabase } from '../../lib/supabase'
 import TutorialOverlay from '../../components/tutorial/TutorialOverlay'
-import {
-  calendarTutorialSteps,
-  calendarWelcomeTutorial,
-} from '../../lib/tutorials'
+import { calendarTutorialSteps } from '../../lib/tutorials'
 import {
   getTutorialProgress,
   saveTutorialProgress,
@@ -344,13 +341,12 @@ function formatCurrency(
 }
 
 function titleCaseFromSnake(value: string | null | undefined): string {
-  if (!value) return 'Training Camp'
+  if (!value) return ''
   return value
     .split('_')
     .map(part => part.charAt(0).toUpperCase() + part.slice(1))
     .join(' ')
 }
-
 
 function asRecord(value: unknown): JsonRecord {
   return value && typeof value === 'object' && !Array.isArray(value)
@@ -380,13 +376,7 @@ function isRacePartlyWeatherCanceled(race: RaceCalendarItem): boolean {
 }
 
 function getRaceWeatherCancellationDisplayStatus(race: RaceCalendarItem): RaceApplicationStatus | null {
-  /*
-   * Only a fully weather-cancelled race should replace the main race status.
-   * If one or more stages are cancelled but the race continues, keep the normal
-   * race status and show cancellation only on the affected stage/date.
-   */
   if (isRaceAllStagesWeatherCanceled(race)) return 'race_cancelled'
-
   return null
 }
 
@@ -400,7 +390,7 @@ function getWeatherCancellationReasonLabel(
     case 'temperature_below_5c':
       return t('weather.temperatureBelow5')
     default:
-      return reason?.trim() ? titleCaseFromSnake(reason) : 'weather_cancelled'
+      return reason?.trim() ? titleCaseFromSnake(reason) : t('races.raceCanceled')
   }
 }
 
@@ -428,17 +418,17 @@ function getMonthStartFromGameDate(currentGameDate: string, _currentDayNumber: n
 
 function getGameMonthName(monthNumber: number, t: CalendarT): string {
   const monthKey = GAME_MONTH_KEYS[monthNumber - 1]
-  return monthKey ? t(`dates.months.${monthKey}`) : `Month ${monthNumber}`
+  return monthKey ? t(`dates.months.${monthKey}`) : String(monthNumber)
 }
 
 function getGameMonthDateName(monthNumber: number, t: CalendarT): string {
   const monthKey = GAME_MONTH_KEYS[monthNumber - 1]
-  return monthKey ? t(`dates.monthsDate.${monthKey}`) : `Month ${monthNumber}`
+  return monthKey ? t(`dates.monthsDate.${monthKey}`) : String(monthNumber)
 }
 
 function getGameMonthShortName(monthNumber: number, t: CalendarT): string {
   const monthKey = GAME_MONTH_SHORT_KEYS[monthNumber - 1]
-  return monthKey ? t(`dates.shortMonths.${monthKey}`) : `M${monthNumber}`
+  return monthKey ? t(`dates.shortMonths.${monthKey}`) : String(monthNumber)
 }
 
 function clampGameMonth(value: number | null | undefined): number | null {
@@ -459,10 +449,11 @@ function formatCompactGameDateDisplay(
   dayNumber: number,
   t: CalendarT
 ): string {
-  return `S${seasonNumber} · ${getGameMonthShortName(monthNumber, t)} ${String(dayNumber).padStart(
-    2,
-    '0'
-  )}`
+  return t('dates.compact', {
+    season: seasonNumber,
+    month: getGameMonthShortName(monthNumber, t),
+    day: String(dayNumber).padStart(2, '0'),
+  })
 }
 
 function formatCalendarDateBadge(
@@ -475,15 +466,15 @@ function formatCalendarDateBadge(
   const start = race.startGameDate
   const end = race.endGameDate
 
-  const startLabel = `${String(start.dayNumber).padStart(2, '0')} ${getGameMonthShortName(
-    start.monthNumber,
-    t
-  )}`
+  const startLabel = t('dates.dateBadge', {
+    day: String(start.dayNumber).padStart(2, '0'),
+    month: getGameMonthShortName(start.monthNumber, t),
+  })
 
-  const endLabel = `${String(end.dayNumber).padStart(2, '0')} ${getGameMonthShortName(
-    end.monthNumber,
-    t
-  )}`
+  const endLabel = t('dates.dateBadge', {
+    day: String(end.dayNumber).padStart(2, '0'),
+    month: getGameMonthShortName(end.monthNumber, t),
+  })
 
   const sameDay =
     start.seasonNumber === end.seasonNumber &&
@@ -538,7 +529,10 @@ function formatGameMonthLabel(
   monthNumber: number,
   t: CalendarT
 ): string {
-  return `${t('season.season')} ${seasonNumber} - ${getGameMonthName(monthNumber, t)}`
+  return t('dates.seasonMonth', {
+    season: seasonNumber,
+    month: getGameMonthName(monthNumber, t),
+  })
 }
 
 function formatGameDateDisplay(
@@ -549,10 +543,12 @@ function formatGameDateDisplay(
   t: CalendarT
 ): string {
   const weekdayName = getWeekdayName(parseDateString(canonicalDate), t)
-  return `${t('season.season')} ${seasonNumber} - ${weekdayName} - ${getGameMonthDateName(
-    monthNumber,
-    t
-  )} ${dayNumber}`
+  return t('dates.gameDate', {
+    season: seasonNumber,
+    weekday: weekdayName,
+    month: getGameMonthDateName(monthNumber, t),
+    day: dayNumber,
+  })
 }
 
 function formatGameDateFromCanonical(
@@ -620,7 +616,10 @@ function formatCalendarCellDate(
   dayNumber: number,
   t: CalendarT
 ): string {
-  return `${getGameMonthDateName(monthNumber, t)} ${dayNumber}`
+  return t('dates.calendarCell', {
+    month: getGameMonthDateName(monthNumber, t),
+    day: dayNumber,
+  })
 }
 
 function formatRaceBadgeLabel(
@@ -633,14 +632,21 @@ function formatRaceBadgeLabel(
   const matchingStage = stages.find(stage => stage.stage_date === canonicalDateString)
 
   if (matchingStage?.stage_number != null) {
-    const weatherSuffix = matchingStage.weather_cancelled
-      ? ` · Canceled (${getWeatherCancellationReasonLabel(
+    if (matchingStage.weather_cancelled) {
+      return t('races.stageBadgeCanceled', {
+        race: race.name,
+        stage: matchingStage.stage_number,
+        reason: getWeatherCancellationReasonLabel(
           matchingStage.weather_cancellation_reason ?? null,
           t
-        )})`
-      : ''
+        ),
+      })
+    }
 
-    return `${race.name} · Stage ${matchingStage.stage_number}${weatherSuffix}`
+    return t('races.stageBadge', {
+      race: race.name,
+      stage: matchingStage.stage_number,
+    })
   }
 
   const raceStart = race.start_date ? parseDateString(race.start_date) : null
@@ -659,7 +665,10 @@ function formatRaceBadgeLabel(
     Math.min(Math.max(1, stageCount), fallbackStageNumber)
   )
 
-  return `${race.name} · Stage ${safeStageNumber}`
+  return t('races.stageBadge', {
+    race: race.name,
+    stage: safeStageNumber,
+  })
 }
 
 function normalizeCountryCode(code: string | null | undefined): string | null {
@@ -673,13 +682,17 @@ function normalizeCountryCode(code: string | null | undefined): string | null {
   return normalized
 }
 
-function getCountryDisplayName(code: string | null | undefined): string {
+function getCountryDisplayName(
+  code: string | null | undefined,
+  locale: string,
+  unknownCountryLabel: string
+): string {
   const normalized = normalizeCountryCode(code)
 
-  if (!normalized) return 'Unknown country'
+  if (!normalized) return unknownCountryLabel
 
   try {
-    const regionNames = new Intl.DisplayNames(['en'], { type: 'region' })
+    const regionNames = new Intl.DisplayNames([locale || 'en'], { type: 'region' })
     return regionNames.of(normalized) ?? normalized
   } catch {
     return normalized
@@ -694,7 +707,13 @@ function getFlagImageUrl(code: string | null | undefined): string | null {
   return `https://flagcdn.com/w40/${normalized.toLowerCase()}.png`
 }
 
-function CountryFlag({ code }: { code: string | null | undefined }) {
+function CountryFlag({
+  code,
+  unknownCountryLabel,
+}: {
+  code: string | null | undefined
+  unknownCountryLabel: string
+}) {
   const flagUrl = getFlagImageUrl(code)
   const normalized = normalizeCountryCode(code)
   const [hasError, setHasError] = useState(false)
@@ -707,8 +726,8 @@ function CountryFlag({ code }: { code: string | null | undefined }) {
     return (
       <span
         className="inline-block h-4 w-6 shrink-0 rounded-sm border border-gray-200 bg-gray-100 align-middle"
-        title={normalized ?? 'Unknown country'}
-        aria-label={normalized ?? 'Unknown country'}
+        title={normalized ?? unknownCountryLabel}
+        aria-label={normalized ?? unknownCountryLabel}
       />
     )
   }
@@ -725,9 +744,12 @@ function CountryFlag({ code }: { code: string | null | undefined }) {
   )
 }
 
-function getRaceTypeLabel(raceType: string | null | undefined): string {
-  if (raceType === 'one_day') return 'One Day'
-  if (raceType === 'stage_race') return 'Stage Race'
+function getRaceTypeLabel(
+  raceType: string | null | undefined,
+  t: CalendarT
+): string {
+  if (raceType === 'one_day') return t('races.oneDay')
+  if (raceType === 'stage_race') return t('races.stageRace')
   return titleCaseFromSnake(raceType)
 }
 
@@ -768,36 +790,38 @@ function getRaceApplicationBadgeClass(status?: string | null): string {
   }
 }
 
-function getRaceApplicationBadgeLabel(status?: string | null): string {
+function getRaceApplicationBadgeLabel(
+  status: string | null | undefined,
+  t: CalendarT
+): string {
   switch (status?.toLowerCase()) {
     case 'not_open':
-      return 'Applications not open'
+      return t('races.applicationsNotOpen')
     case 'open':
-      return 'Open for Applications'
+      return t('races.openApplications')
     case 'closed':
-      return 'Applications closed'
+      return t('races.applicationsClosed')
     case 'applied':
-      return 'Applied'
+      return t('races.applied')
     case 'accepted':
-      return 'Accepted'
+      return t('races.accepted')
     case 'declined':
-      return 'Declined'
+      return t('races.declined')
     case 'withdrawn':
-      return 'Withdrawn'
+      return t('races.withdrawn')
     case 'missed_startlist':
-      return 'Missed startlist'
+      return t('races.missedStartlist')
     case 'race_active':
-      return 'Race active'
+      return t('races.raceActive')
     case 'race_finished':
-      return 'Race finished'
+      return t('races.raceFinished')
     case 'race_cancelled':
-      return 'Race canceled'
-    case 'partly_cancelled':
-      return 'Partly canceled'
     case 'cancelled':
-      return 'Race canceled'
+      return t('races.raceCanceled')
+    case 'partly_cancelled':
+      return t('races.partlyCanceled')
     default:
-      return 'Applications closed'
+      return t('races.applicationsClosed')
   }
 }
 
@@ -854,13 +878,11 @@ function cleanRouteCity(value: string | null | undefined): string | null {
 }
 
 function getRaceRouteSummary(
-  race: RaceCalendarItem
+  race: RaceCalendarItem,
+  t: CalendarT
 ): string {
-  const startCity =
-    cleanRouteCity(race.first_start_city)
-
-  const finishCity =
-    cleanRouteCity(race.final_finish_city)
+  const startCity = cleanRouteCity(race.first_start_city)
+  const finishCity = cleanRouteCity(race.final_finish_city)
 
   const stageCount = Number(
     race.actual_stage_count ??
@@ -869,13 +891,17 @@ function getRaceRouteSummary(
   )
 
   if (startCity && finishCity) {
-    const stageSuffix =
-      race.race_type === 'stage_race' &&
-      stageCount > 1
-        ? ` · ${stageCount} stages`
-        : ''
+    const route = `${startCity} → ${finishCity}`
 
-    return `${startCity} → ${finishCity}${stageSuffix}`
+    if (race.race_type === 'stage_race' && stageCount > 1) {
+      return t('route.stages', { route, count: stageCount })
+    }
+
+    if (race.race_type === 'stage_race' && stageCount === 1) {
+      return t('route.stageOne', { route, count: stageCount })
+    }
+
+    return route
   }
 
   if (race.description?.trim()) {
@@ -883,10 +909,10 @@ function getRaceRouteSummary(
   }
 
   if (race.host_city?.trim()) {
-    return `Host area: ${race.host_city.trim()}`
+    return t('route.hostArea', { city: race.host_city.trim() })
   }
 
-  return 'Route details coming soon'
+  return t('route.detailsSoon')
 }
 
 function getGameDatePartsFromCanonical(
@@ -993,7 +1019,6 @@ export default function CalendarPage(): JSX.Element {
   >([])
 
   const [teamWeather, setTeamWeather] = useState<WeatherNormals | null>(null)
-
   const [raceCalendarNotice, setRaceCalendarNotice] = useState<string | null>(null)
 
   const [tutorialLoading, setTutorialLoading] = useState(true)
@@ -1007,7 +1032,6 @@ export default function CalendarPage(): JSX.Element {
     events: false,
     holidays: false
   })
-
 
   const [isPremium, setIsPremium] = useState(false)
   const [premiumStatusLoading, setPremiumStatusLoading] = useState(true)
@@ -1077,7 +1101,7 @@ export default function CalendarPage(): JSX.Element {
         }
 
         if (!resolvedClubId) {
-          throw new Error('No club was found for the logged-in user.')
+          throw new Error(t('errors.noClub'))
         }
 
         const [gameDateRes, gameDatePartsRes, bookingsRes] = await Promise.all([
@@ -1171,17 +1195,6 @@ export default function CalendarPage(): JSX.Element {
           let raceMetadataByRaceId: Record<string, JsonRecord | null> = {}
 
           if (raceIds.length > 0) {
-            /*
-             * IMPORTANT:
-             * Do not send the complete race calendar ID list through one
-             * PostgREST .in(...) filter. The race database is now large enough
-             * that this can exceed practical request limits and silently remove
-             * all team-entry statuses from the Season Calendar.
-             *
-             * The user's own race entries are already scoped by club_id, so
-             * load those directly without any race-ID filter. Optional
-             * race-wide data is loaded in bounded chunks.
-             */
             const userEntriesRes = await supabase
               .from('race_team_entries')
               .select('race_id, club_id, status')
@@ -1196,9 +1209,7 @@ export default function CalendarPage(): JSX.Element {
               ])
 
             if (userEntriesRes.error) {
-              throw new Error(
-                `Failed to load your race entries: ${userEntriesRes.error.message}`
-              )
+              throw new Error(userEntriesRes.error.message)
             }
 
             userEntriesByRaceId = ((userEntriesRes.data ?? []) as RaceTeamEntry[]).reduce<
@@ -1277,7 +1288,7 @@ export default function CalendarPage(): JSX.Element {
             return {
               ...row,
               id: raceId,
-              name: toNullableString(row.name) ?? 'Unnamed race',
+              name: toNullableString(row.name) ?? '',
               start_date: toNullableString(row.start_date) ?? '',
               end_date: toNullableString(row.end_date),
               category: toNullableString(row.category),
@@ -1301,7 +1312,6 @@ export default function CalendarPage(): JSX.Element {
                 toNullableString(row.existing_application_status) ?? userEntry?.status ?? null
             } as RaceCalendarItem
           })
-
 
           if (raceIds.length > 0) {
             const stageResponses = await Promise.all(
@@ -1350,7 +1360,7 @@ export default function CalendarPage(): JSX.Element {
             })
           }
         } catch {
-          resolvedRaceNotice = 'Race Calendar is ready, but the race source is not available yet.'
+          resolvedRaceNotice = t('errors.raceSource')
         }
 
         try {
@@ -1371,11 +1381,11 @@ export default function CalendarPage(): JSX.Element {
 
                 return {
                   objective_id: toNullableString(row.objective_id) ?? `${targetRaceId}-sponsor-objective`,
-                  sponsor_name: toNullableString(row.sponsor_name) ?? 'Sponsor',
-                  objective_title: toNullableString(row.objective_title) ?? 'Sponsor objective',
+                  sponsor_name: toNullableString(row.sponsor_name) ?? '',
+                  objective_title: toNullableString(row.objective_title) ?? '',
                   target_race_id: targetRaceId,
                   required_result: toNullableString(row.required_result) ?? 'objective',
-                  display_status_label: toNullableString(row.display_status_label) ?? 'Scheduled',
+                  display_status_label: toNullableString(row.display_status_label) ?? '',
                   objective_result_state: toNullableString(row.objective_result_state) ?? 'pending',
                   payout_status: toNullableString(row.payout_status) ?? 'unpaid',
                   target_check_game_date: toNullableString(row.target_check_game_date),
@@ -1400,7 +1410,7 @@ export default function CalendarPage(): JSX.Element {
         setRaceCalendarNotice(resolvedRaceNotice)
       } catch (err) {
         if (!cancelled) {
-          const message = err instanceof Error ? err.message : 'Failed to load calendar.'
+          const message = err instanceof Error ? err.message : t('errors.loadFailed')
           setError(message)
         }
       } finally {
@@ -1413,7 +1423,7 @@ export default function CalendarPage(): JSX.Element {
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [t])
 
   useEffect(() => {
     if (!gameDateParts) return
@@ -1548,7 +1558,6 @@ export default function CalendarPage(): JSX.Element {
     }
   }, [])
 
-
   const resolvedActiveRaceMonth = useMemo(() => {
     return activeRaceMonth ?? gameDateParts?.month_number ?? 1
   }, [activeRaceMonth, gameDateParts])
@@ -1645,6 +1654,8 @@ export default function CalendarPage(): JSX.Element {
       })
   }, [seasonRaceEntries, resolvedActiveRaceMonth])
 
+  const locale = i18n.resolvedLanguage ?? i18n.language
+  const unknownCountryLabel = t('route.unknownCountry')
 
   const premiumCountryOptions = useMemo(() => {
     return Array.from(
@@ -1654,9 +1665,12 @@ export default function CalendarPage(): JSX.Element {
           .filter((code): code is string => Boolean(code))
       )
     ).sort((a, b) =>
-      getCountryDisplayName(a).localeCompare(getCountryDisplayName(b))
+      getCountryDisplayName(a, locale, unknownCountryLabel).localeCompare(
+        getCountryDisplayName(b, locale, unknownCountryLabel),
+        locale
+      )
     )
-  }, [activeMonthRaces])
+  }, [activeMonthRaces, locale, unknownCountryLabel])
 
   useEffect(() => {
     if (
@@ -1710,8 +1724,6 @@ export default function CalendarPage(): JSX.Element {
     ].filter(Boolean).length
   }, [isPremium, premiumRaceFilters])
 
-
-
   useEffect(() => {
     if (loading) return
 
@@ -1750,7 +1762,6 @@ export default function CalendarPage(): JSX.Element {
       {}
     )
   }, [sponsorObjectiveTargets])
-
 
   const filteredActiveMonthRaces = useMemo(() => {
     if (!isPremium) return activeMonthRaces
@@ -1808,6 +1819,7 @@ export default function CalendarPage(): JSX.Element {
     premiumRaceFilters,
     sponsorObjectiveTargetsByRaceId,
   ])
+
   const weekdayHeaders = useMemo(
     () =>
       WEEKDAY_KEYS_MONDAY_FIRST.map((weekdayKey) =>
@@ -1946,7 +1958,7 @@ export default function CalendarPage(): JSX.Element {
     const raceId = getFirstAvailableRaceId()
 
     if (!raceId) {
-      setTutorialMessage('No race is available to open yet.')
+      setTutorialMessage(t('races.noRaceTutorial'))
       await saveTutorialProgress('calendar', 'completed', currentStep?.key ?? null)
       setTutorialMode('closed')
       return
@@ -1987,10 +1999,23 @@ export default function CalendarPage(): JSX.Element {
     setTutorialMode('closed')
   }
 
+  const currentTutorialStep = calendarTutorialSteps[tutorialStepIndex]
+  const currentTutorialText = (() => {
+    switch (currentTutorialStep?.key) {
+      case 'calendar-season':
+        return { title: t('tutorial.seasonTitle'), body: t('tutorial.seasonBody') }
+      case 'calendar-races':
+        return { title: t('tutorial.racesTitle'), body: t('tutorial.racesBody') }
+      case 'calendar-open-race':
+        return { title: t('tutorial.openRaceTitle'), body: t('tutorial.openRaceBody') }
+      default:
+        return { title: t('tutorial.seasonTitle'), body: t('tutorial.seasonBody') }
+    }
+  })()
+
   if (loading) {
     return <div className="w-full text-sm text-gray-600">{t('page.loading')}</div>
   }
-
 
   return (
     <div className="w-full">
@@ -2017,7 +2042,7 @@ export default function CalendarPage(): JSX.Element {
                   : 'text-gray-600 hover:bg-gray-100'
               }`}
             >
-              Season Calendar
+              {t('page.seasonCalendar')}
             </button>
 
             <button
@@ -2029,7 +2054,7 @@ export default function CalendarPage(): JSX.Element {
                   : 'text-gray-600 hover:bg-gray-100'
               }`}
             >
-              Race Calendar
+              {t('page.raceCalendar')}
             </button>
           </div>
         </div>
@@ -2060,10 +2085,10 @@ export default function CalendarPage(): JSX.Element {
                   </div>
 
                   <div className="text-xs text-gray-600">
-                    Min {formatWeatherNumber(teamWeather.avg_min_temp_c)}° · Max{' '}
-                    {formatWeatherNumber(teamWeather.avg_max_temp_c)}° · Wind{' '}
-                    {formatWeatherNumber(teamWeather.avg_wind_kmh)} km/h · Rain{' '}
-                    {formatWeatherNumber(teamWeather.avg_precip_mm, 1)} mm
+                    {t('weather.min')} {formatWeatherNumber(teamWeather.avg_min_temp_c)}° ·{' '}
+                    {t('weather.max')} {formatWeatherNumber(teamWeather.avg_max_temp_c)}° ·{' '}
+                    {t('weather.wind')} {formatWeatherNumber(teamWeather.avg_wind_kmh)} km/h ·{' '}
+                    {t('weather.rain')} {formatWeatherNumber(teamWeather.avg_precip_mm, 1)} mm
                   </div>
                 </div>
               ) : (
@@ -2088,7 +2113,7 @@ export default function CalendarPage(): JSX.Element {
                 </h4>
                 <p className="text-sm text-gray-500">
                   {currentGameDate && gameDateParts
-                    ? `Today: ${formatGameDateDisplay(
+                    ? `${t('weather.today')}: ${formatGameDateDisplay(
                         gameDateParts.season_number,
                         gameDateParts.month_number,
                         gameDateParts.day_number,
@@ -2128,7 +2153,7 @@ export default function CalendarPage(): JSX.Element {
                         : 'text-gray-700 hover:bg-gray-100'
                     }`}
                   >
-                    Next →
+                    {t('season.next')} →
                   </button>
                 </div>
               </div>
@@ -2154,8 +2179,9 @@ export default function CalendarPage(): JSX.Element {
                 </div>
 
                 <div className="text-sm text-gray-500">
-                  {bookings.length} planned / active training camp
-                  {bookings.length === 1 ? '' : 's'}
+                  {bookings.length === 1
+                    ? t('season.plannedActiveCamp', { count: bookings.length })
+                    : t('season.plannedActiveCamps', { count: bookings.length })}
                 </div>
               </div>
             </div>
@@ -2215,24 +2241,24 @@ export default function CalendarPage(): JSX.Element {
                         const raceAllWeatherCanceled = isRaceAllStagesWeatherCanceled(race)
 
                         return (
-                        <div
-                          key={`${race.id}-${day.canonicalDateString}-race`}
-                          data-race-id={race.id}
-                          className={[
-                            'rounded-md px-2 py-1 text-[11px] font-medium',
-                            stageWeatherCanceled || raceAllWeatherCanceled
-                              ? 'bg-red-100 text-red-800 ring-1 ring-red-200'
-                              : 'bg-blue-100 text-blue-700',
-                          ].join(' ')}
-                        >
-                          <button
-                            type="button"
-                            onClick={() => openRaceDetail(race.id)}
-                            className="text-left hover:underline"
+                          <div
+                            key={`${race.id}-${day.canonicalDateString}-race`}
+                            data-race-id={race.id}
+                            className={[
+                              'rounded-md px-2 py-1 text-[11px] font-medium',
+                              stageWeatherCanceled || raceAllWeatherCanceled
+                                ? 'bg-red-100 text-red-800 ring-1 ring-red-200'
+                                : 'bg-blue-100 text-blue-700',
+                            ].join(' ')}
                           >
-                            {formatRaceBadgeLabel(race, day.canonicalDateString, raceStagesByRaceId, t)}
-                          </button>
-                        </div>
+                            <button
+                              type="button"
+                              onClick={() => openRaceDetail(race.id)}
+                              className="text-left hover:underline"
+                            >
+                              {formatRaceBadgeLabel(race, day.canonicalDateString, raceStagesByRaceId, t)}
+                            </button>
+                          </div>
                         )
                       })}
 
@@ -2245,8 +2271,8 @@ export default function CalendarPage(): JSX.Element {
                               : 'bg-blue-100 text-blue-700'
                           }`}
                         >
-                          {booking.city_snapshot ?? 'Camp'} ·{' '}
-                          {titleCaseFromSnake(booking.camp_type_snapshot)}
+                          {booking.city_snapshot ?? t('season.camp')} ·{' '}
+                          {titleCaseFromSnake(booking.camp_type_snapshot) || t('season.trainingCamp')}
                         </div>
                       ))}
                     </div>
@@ -2256,11 +2282,11 @@ export default function CalendarPage(): JSX.Element {
             </div>
 
             <div className="mt-6">
-              <h4 className="font-semibold text-gray-900">Upcoming Training Camps</h4>
+              <h4 className="font-semibold text-gray-900">{t('season.upcomingCamps')}</h4>
 
               {bookings.length === 0 ? (
                 <div className="mt-3 rounded-md border border-gray-200 p-4 text-sm text-gray-500">
-                  No planned or active training camps yet.
+                  {t('season.noCamps')}
                 </div>
               ) : (
                 <ul className="mt-3 space-y-2 text-sm text-gray-600">
@@ -2271,8 +2297,8 @@ export default function CalendarPage(): JSX.Element {
                     >
                       <div>
                         <div className="font-medium text-gray-900">
-                          {booking.city_snapshot ?? 'Training Camp'} ·{' '}
-                          {titleCaseFromSnake(booking.camp_type_snapshot)}
+                          {booking.city_snapshot ?? t('season.trainingCamp')} ·{' '}
+                          {titleCaseFromSnake(booking.camp_type_snapshot) || t('season.trainingCamp')}
                         </div>
 
                         {currentMonthStart && gameDateParts ? (
@@ -2302,15 +2328,15 @@ export default function CalendarPage(): JSX.Element {
                             STATUS_BADGE_STYLES[booking.status] ?? 'bg-gray-100 text-gray-700'
                           }`}
                         >
-                          {booking.status}
+                          {t(`season.${booking.status}`)}
                         </span>
 
                         <span className="rounded-full bg-gray-100 px-2.5 py-1 text-xs text-gray-700">
-                          Riders: {booking.participants_count ?? 0}
+                          {t('season.riders')} {booking.participants_count ?? 0}
                         </span>
 
                         <span className="rounded-full bg-gray-100 px-2.5 py-1 text-xs text-gray-700">
-                          {formatCurrency(booking.total_cost, i18n.resolvedLanguage ?? i18n.language)}
+                          {formatCurrency(booking.total_cost, locale)}
                         </span>
                       </div>
                     </li>
@@ -2325,17 +2351,18 @@ export default function CalendarPage(): JSX.Element {
               <div>
                 <h4 className="font-semibold text-gray-900">
                   {gameDateParts
-                    ? `Season ${gameDateParts.season_number} Race Calendar`
-                    : 'Race Calendar'}
+                    ? t('races.seasonRaceCalendar', { season: gameDateParts.season_number })
+                    : t('page.raceCalendar')}
                 </h4>
                 <p className="text-sm text-gray-500">
-                  Each month has its own tab with all scheduled races.
+                  {t('races.description')}
                 </p>
               </div>
 
               <div className="text-sm text-gray-500">
-                {seasonRaceEntries.length} race{seasonRaceEntries.length === 1 ? '' : 's'} in this
-                season
+                {seasonRaceEntries.length === 1
+                  ? t('races.raceCountOne', { count: seasonRaceEntries.length })
+                  : t('races.raceCount', { count: seasonRaceEntries.length })}
               </div>
             </div>
 
@@ -2370,18 +2397,18 @@ export default function CalendarPage(): JSX.Element {
               <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5">
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="text-sm font-semibold text-gray-900">Race filters</span>
+                    <span className="text-sm font-semibold text-gray-900">{t('filters.title')}</span>
                     <span className="rounded-full border border-yellow-300 bg-yellow-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-yellow-800">
-                      Premium
+                      {t('filters.premium')}
                     </span>
                     {isPremium && activePremiumFilterCount > 0 ? (
                       <span className="text-xs text-gray-500">
-                        {activePremiumFilterCount} active
+                        {t('filters.activeCount', { count: activePremiumFilterCount })}
                       </span>
                     ) : null}
                   </div>
                   <p className="mt-0.5 text-xs text-gray-500">
-                    Filter this month by country, category, format, status, and sponsor goals.
+                    {t('filters.description')}
                   </p>
                 </div>
 
@@ -2392,7 +2419,7 @@ export default function CalendarPage(): JSX.Element {
                       onClick={clearPremiumRaceFilters}
                       className="rounded-md px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-white hover:text-gray-900"
                     >
-                      Clear
+                      {t('filters.clear')}
                     </button>
                   ) : null}
 
@@ -2404,12 +2431,12 @@ export default function CalendarPage(): JSX.Element {
                     aria-expanded={premiumFiltersOpen}
                   >
                     {premiumStatusLoading
-                      ? 'Checking Premium…'
+                      ? t('filters.checkingPremium')
                       : isPremium
                         ? premiumFiltersOpen
-                          ? 'Hide filters'
-                          : 'Open filters'
-                        : 'Premium Filters 🔒'}
+                          ? t('filters.hide')
+                          : t('filters.open')
+                        : t('filters.premiumFilters')}
                   </button>
                 </div>
               </div>
@@ -2422,7 +2449,7 @@ export default function CalendarPage(): JSX.Element {
                         ref={countryFilterMenuRef}
                         className="relative text-xs font-medium text-gray-600"
                       >
-                        <div>Country</div>
+                        <div>{t('filters.country')}</div>
                         <button
                           type="button"
                           onClick={() => setCountryFilterMenuOpen(current => !current)}
@@ -2434,12 +2461,19 @@ export default function CalendarPage(): JSX.Element {
                             {premiumRaceFilters.countryCode === 'all' ? (
                               <span className="inline-block h-4 w-6 shrink-0 rounded-sm border border-gray-200 bg-gray-100" />
                             ) : (
-                              <CountryFlag code={premiumRaceFilters.countryCode} />
+                              <CountryFlag
+                                code={premiumRaceFilters.countryCode}
+                                unknownCountryLabel={unknownCountryLabel}
+                              />
                             )}
                             <span className="truncate">
                               {premiumRaceFilters.countryCode === 'all'
-                                ? 'All countries'
-                                : getCountryDisplayName(premiumRaceFilters.countryCode)}
+                                ? t('filters.allCountries')
+                                : getCountryDisplayName(
+                                    premiumRaceFilters.countryCode,
+                                    locale,
+                                    unknownCountryLabel
+                                  )}
                             </span>
                           </span>
                           <span aria-hidden="true" className="shrink-0 text-gray-400">⌄</span>
@@ -2465,7 +2499,7 @@ export default function CalendarPage(): JSX.Element {
                               }`}
                             >
                               <span className="inline-block h-4 w-6 shrink-0 rounded-sm border border-gray-200 bg-gray-100" />
-                              <span>All countries</span>
+                              <span>{t('filters.allCountries')}</span>
                             </button>
 
                             {premiumCountryOptions.map(code => (
@@ -2484,8 +2518,8 @@ export default function CalendarPage(): JSX.Element {
                                     : 'text-gray-700'
                                 }`}
                               >
-                                <CountryFlag code={code} />
-                                <span>{getCountryDisplayName(code)}</span>
+                                <CountryFlag code={code} unknownCountryLabel={unknownCountryLabel} />
+                                <span>{getCountryDisplayName(code, locale, unknownCountryLabel)}</span>
                               </button>
                             ))}
                           </div>
@@ -2493,13 +2527,13 @@ export default function CalendarPage(): JSX.Element {
                       </div>
 
                       <label className="text-xs font-medium text-gray-600">
-                        Category
+                        {t('filters.category')}
                         <select
                           value={premiumRaceFilters.category}
                           onChange={event => updatePremiumRaceFilter('category', event.target.value)}
                           className="mt-1 w-full rounded-md border border-gray-200 bg-white px-2.5 py-2 text-sm text-gray-800 focus:border-yellow-400 focus:outline-none focus:ring-1 focus:ring-yellow-400"
                         >
-                          <option value="all">All categories</option>
+                          <option value="all">{t('filters.allCategories')}</option>
                           {premiumCategoryOptions.map(category => (
                             <option key={category} value={category}>
                               {category}
@@ -2509,20 +2543,20 @@ export default function CalendarPage(): JSX.Element {
                       </label>
 
                       <label className="text-xs font-medium text-gray-600">
-                        Race format
+                        {t('filters.raceFormat')}
                         <select
                           value={premiumRaceFilters.raceType}
                           onChange={event => updatePremiumRaceFilter('raceType', event.target.value)}
                           className="mt-1 w-full rounded-md border border-gray-200 bg-white px-2.5 py-2 text-sm text-gray-800 focus:border-yellow-400 focus:outline-none focus:ring-1 focus:ring-yellow-400"
                         >
-                          <option value="all">All formats</option>
-                          <option value="one_day">One Day</option>
-                          <option value="stage_race">Stage Race</option>
+                          <option value="all">{t('filters.allFormats')}</option>
+                          <option value="one_day">{t('races.oneDay')}</option>
+                          <option value="stage_race">{t('races.stageRace')}</option>
                         </select>
                       </label>
 
                       <label className="text-xs font-medium text-gray-600">
-                        My race status
+                        {t('filters.myRaceStatus')}
                         <select
                           value={premiumRaceFilters.myRaceStatus}
                           onChange={event =>
@@ -2530,18 +2564,18 @@ export default function CalendarPage(): JSX.Element {
                           }
                           className="mt-1 w-full rounded-md border border-gray-200 bg-white px-2.5 py-2 text-sm text-gray-800 focus:border-yellow-400 focus:outline-none focus:ring-1 focus:ring-yellow-400"
                         >
-                          <option value="all">All races</option>
-                          <option value="not_entered">Not entered</option>
-                          <option value="applied">Applied</option>
-                          <option value="accepted">Accepted</option>
-                          <option value="declined">Declined</option>
-                          <option value="withdrawn">Withdrawn</option>
-                          <option value="missed_startlist">Missed start list</option>
+                          <option value="all">{t('filters.allRaces')}</option>
+                          <option value="not_entered">{t('filters.notEntered')}</option>
+                          <option value="applied">{t('races.applied')}</option>
+                          <option value="accepted">{t('races.accepted')}</option>
+                          <option value="declined">{t('races.declined')}</option>
+                          <option value="withdrawn">{t('races.withdrawn')}</option>
+                          <option value="missed_startlist">{t('races.missedStartlist')}</option>
                         </select>
                       </label>
 
                       <label className="text-xs font-medium text-gray-600">
-                        Application status
+                        {t('filters.applicationStatus')}
                         <select
                           value={premiumRaceFilters.applicationStatus}
                           onChange={event =>
@@ -2549,13 +2583,13 @@ export default function CalendarPage(): JSX.Element {
                           }
                           className="mt-1 w-full rounded-md border border-gray-200 bg-white px-2.5 py-2 text-sm text-gray-800 focus:border-yellow-400 focus:outline-none focus:ring-1 focus:ring-yellow-400"
                         >
-                          <option value="all">All statuses</option>
-                          <option value="open">Open for applications</option>
-                          <option value="not_open">Applications not open</option>
-                          <option value="closed">Applications closed</option>
-                          <option value="race_active">Race active</option>
-                          <option value="race_finished">Race finished</option>
-                          <option value="race_cancelled">Race cancelled</option>
+                          <option value="all">{t('filters.allStatuses')}</option>
+                          <option value="open">{t('filters.openForApplications')}</option>
+                          <option value="not_open">{t('races.applicationsNotOpen')}</option>
+                          <option value="closed">{t('races.applicationsClosed')}</option>
+                          <option value="race_active">{t('races.raceActive')}</option>
+                          <option value="race_finished">{t('races.raceFinished')}</option>
+                          <option value="race_cancelled">{t('races.raceCanceled')}</option>
                         </select>
                       </label>
                     </div>
@@ -2570,12 +2604,15 @@ export default function CalendarPage(): JSX.Element {
                           }
                           className="h-4 w-4 rounded border-gray-300 text-yellow-400 focus:ring-yellow-400"
                         />
-                        Sponsor-goal races only
+                        {t('filters.sponsorOnly')}
                       </label>
 
                       <div className="text-xs text-gray-500">
-                        Showing {filteredActiveMonthRaces.length} of {activeMonthRaces.length} races in{' '}
-                        {getGameMonthName(resolvedActiveRaceMonth, t)}
+                        {t('filters.showing', {
+                          shown: filteredActiveMonthRaces.length,
+                          total: activeMonthRaces.length,
+                          month: getGameMonthName(resolvedActiveRaceMonth, t),
+                        })}
                       </div>
                     </div>
                   </div>
@@ -2585,11 +2622,11 @@ export default function CalendarPage(): JSX.Element {
                       <div className="flex items-center gap-2">
                         <span aria-hidden="true">🔒</span>
                         <span className="text-sm font-semibold text-gray-900">
-                          Premium race filters
+                          {t('filters.premiumTitle')}
                         </span>
                       </div>
                       <p className="mt-1 text-xs text-gray-500">
-                        Filter races by country, category, race format, application status, and sponsor objectives.
+                        {t('filters.premiumDescription')}
                       </p>
                     </div>
 
@@ -2597,7 +2634,7 @@ export default function CalendarPage(): JSX.Element {
                       to="/dashboard/premium"
                       className="shrink-0 rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-gray-800 transition hover:border-yellow-400 hover:bg-yellow-50"
                     >
-                      Unlock with Premium
+                      {t('filters.unlockPremium')}
                     </Link>
                   </div>
                 )
@@ -2613,11 +2650,12 @@ export default function CalendarPage(): JSX.Element {
             {filteredActiveMonthRaces.length === 0 ? (
               <div className="rounded-md border border-gray-200 p-4 text-sm text-gray-500">
                 {isPremium && activePremiumFilterCount > 0
-                  ? `No races match the selected Premium filters for ${getGameMonthName(
-                      resolvedActiveRaceMonth,
-                      t
-                    )}.`
-                  : `No races scheduled for ${getGameMonthName(resolvedActiveRaceMonth, t)}.`}
+                  ? t('filters.noMatch', {
+                      month: getGameMonthName(resolvedActiveRaceMonth, t),
+                    })
+                  : t('filters.noScheduled', {
+                      month: getGameMonthName(resolvedActiveRaceMonth, t),
+                    })}
               </div>
             ) : (
               <ul className="space-y-3">
@@ -2659,14 +2697,14 @@ export default function CalendarPage(): JSX.Element {
                               className="text-left hover:underline"
                             >
                               <span className="mr-2 inline-flex align-middle">
-                                <CountryFlag code={race.country_code} />
+                                <CountryFlag code={race.country_code} unknownCountryLabel={unknownCountryLabel} />
                               </span>
                               {race.name}
                             </button>
                           </div>
 
                           <div className="mt-1 text-xs text-gray-500">
-                            {getRaceRouteSummary(race)}
+                            {getRaceRouteSummary(race, t)}
                           </div>
                         </div>
                       </div>
@@ -2679,9 +2717,9 @@ export default function CalendarPage(): JSX.Element {
                                 ? 'bg-yellow-300 text-yellow-950 ring-2 ring-yellow-400'
                                 : 'bg-yellow-100 text-yellow-800'
                             }`}
-                            title={sponsorTargetTitle || 'Sponsor objective target'}
+                            title={sponsorTargetTitle || t('races.sponsorObjectiveTarget')}
                           >
-                            ★ Sponsor goal
+                            {t('races.sponsorGoal')}
                           </span>
                         ) : null}
 
@@ -2690,7 +2728,7 @@ export default function CalendarPage(): JSX.Element {
                             effectiveRaceStatus
                           )}`}
                         >
-                          {getRaceApplicationBadgeLabel(effectiveRaceStatus)}
+                          {getRaceApplicationBadgeLabel(effectiveRaceStatus, t)}
                         </span>
 
                         {race.category ? (
@@ -2705,7 +2743,7 @@ export default function CalendarPage(): JSX.Element {
                               race.race_type
                             )}`}
                           >
-                            {getRaceTypeLabel(race.race_type)}
+                            {getRaceTypeLabel(race.race_type, t)}
                           </span>
                         ) : null}
 
@@ -2714,7 +2752,7 @@ export default function CalendarPage(): JSX.Element {
                           state={getCalendarReturnState(race.id)}
                           className="rounded-full bg-gray-900 px-2.5 py-1 text-xs font-semibold text-white hover:bg-gray-700"
                         >
-                          Open Race
+                          {t('races.openRace')}
                         </Link>
                       </div>
                     </li>
@@ -2736,10 +2774,10 @@ export default function CalendarPage(): JSX.Element {
         <TutorialOverlay
           open
           variant="invite"
-          title={calendarWelcomeTutorial.title}
-          body={calendarWelcomeTutorial.body}
-          primaryAction={calendarWelcomeTutorial.primaryAction}
-          secondaryAction={calendarWelcomeTutorial.secondaryAction}
+          title={t('tutorial.welcomeTitle')}
+          body={t('tutorial.welcomeBody')}
+          primaryAction={t('tutorial.start')}
+          secondaryAction={t('tutorial.noThanks')}
           onPrimary={handleStartCalendarTutorial}
           onSecondary={handleSkipCalendarTutorial}
           onClose={handleCloseCalendarTutorial}
@@ -2750,16 +2788,18 @@ export default function CalendarPage(): JSX.Element {
         <TutorialOverlay
           open
           variant="panel"
-          title={calendarTutorialSteps[tutorialStepIndex].title}
-          body={calendarTutorialSteps[tutorialStepIndex].body}
+          title={currentTutorialText.title}
+          body={currentTutorialText.body}
           stepLabel={`${tutorialStepIndex + 1}/${calendarTutorialSteps.length}`}
           primaryAction={
-            calendarTutorialSteps[tutorialStepIndex].primaryAction ?? 'Next'
+            tutorialStepIndex === calendarTutorialSteps.length - 1
+              ? t('tutorial.openRace')
+              : t('tutorial.next')
           }
           secondaryAction={
             tutorialStepIndex === calendarTutorialSteps.length - 1
-              ? calendarTutorialSteps[tutorialStepIndex].secondaryAction
-              : 'Skip tutorial'
+              ? t('tutorial.finish')
+              : t('tutorial.skip')
           }
           onPrimary={handleNextCalendarTutorialStep}
           onSecondary={
