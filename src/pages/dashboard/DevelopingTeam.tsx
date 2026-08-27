@@ -17,7 +17,7 @@ import {
   normalizeGameDateValue,
 } from '../../features/squad/utils/dates'
 
-const DEVELOPING_TEAM_MAX = 8
+const DEVELOPING_TEAM_MAX = 10
 const FIRST_SQUAD_MAX = 18
 
 type SquadListView = 'general' | 'financial' | 'skills' | 'form'
