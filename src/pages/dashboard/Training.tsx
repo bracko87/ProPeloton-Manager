@@ -1094,12 +1094,12 @@ function CampDatePicker({
           <div className="mt-4 grid grid-cols-2 gap-2 text-xs text-gray-600">
             <div className="flex items-center gap-2">
               <span className="inline-block h-3 w-3 rounded-full bg-green-100 ring-1 ring-green-200" />
-              <span>Best period</span>
+              <span>{t('weather.bestPeriod')}</span>
             </div>
 
             <div className="flex items-center gap-2">
               <span className="inline-block h-3 w-3 rounded-full bg-amber-100 ring-1 ring-amber-200" />
-              <span>Risky period</span>
+              <span>{t('weather.riskyPeriod')}</span>
             </div>
 
             <div className="flex items-center gap-2">
@@ -1109,12 +1109,12 @@ function CampDatePicker({
 
             <div className="flex items-center gap-2">
               <span className="inline-block h-3 w-3 rounded-full bg-gray-100 ring-1 ring-gray-200" />
-              <span>Normal</span>
+              <span>{t('weather.normalPeriod')}</span>
             </div>
 
             <div className="flex items-center gap-2">
               <span className="inline-block h-3 w-3 rounded-full bg-white ring-2 ring-blue-200" />
-              <span>Existing camp booking</span>
+              <span>{t('weather.existingBooking')}</span>
             </div>
           </div>
         </div>
@@ -1137,7 +1137,8 @@ function isClubLevelActiveCampOnlyError(message: string): boolean {
 }
 
 export default function TrainingPage(): JSX.Element {
-  const { t } = useTranslation('training')
+  const { t, i18n } = useTranslation('training')
+  const isSerbianUi = (i18n.resolvedLanguage ?? i18n.language ?? 'en').startsWith('sr')
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const focusedRiderId = searchParams.get('riderId')
@@ -3542,7 +3543,7 @@ export default function TrainingPage(): JSX.Element {
                             </span>
                           </div>
 
-                          <p className="mt-3 text-sm text-gray-600">{camp.short_description}</p>
+                          <p className="mt-3 text-sm text-gray-600">{isSerbianUi ? t('camps.genericShort', { city: camp.city_name, type: t(CAMP_TYPE_TRANSLATION_KEYS[camp.camp_type]).toLowerCase() }) : camp.short_description}</p>
 
                           <div className="mt-3 text-sm font-medium text-gray-900">
                             {t('camps.from')}{' '}
@@ -3554,18 +3555,18 @@ export default function TrainingPage(): JSX.Element {
                                 Math.max(selectedRiderIds.length, 5)
                               )
                             )}{' '}
-                            / rider
+                            / {t('camps.perRider')}
                           </div>
 
                           <div className="mt-3 flex flex-wrap gap-2 text-xs">
                             <span className="rounded-full bg-blue-50 px-2.5 py-1 text-blue-700">
-                              {t('camps.bestFor')} {camp.best_for_text || t(CAMP_TYPE_TRANSLATION_KEYS[camp.camp_type])}
+                              {t('camps.bestFor')} {isSerbianUi ? t('camps.genericBestFor', { type: t(CAMP_TYPE_TRANSLATION_KEYS[camp.camp_type]).toLowerCase() }) : (camp.best_for_text || t(CAMP_TYPE_TRANSLATION_KEYS[camp.camp_type]))}
                             </span>
                             <span className="rounded-full bg-gray-100 px-2.5 py-1 text-gray-700">
-                              {camp.metadata?.budget_tier ?? 'standard'}
+                              {t(`campTags.${camp.metadata?.budget_tier ?? 'standard'}`, { defaultValue: camp.metadata?.budget_tier ?? 'standard' })}
                             </span>
                             <span className="rounded-full bg-gray-100 px-2.5 py-1 text-gray-700">
-                              {camp.terrain_profile}
+                              {t(`campTags.${camp.terrain_profile}`, { defaultValue: camp.terrain_profile })}
                             </span>
                           </div>
                         </div>
@@ -3627,7 +3628,7 @@ export default function TrainingPage(): JSX.Element {
                   />
                 ) : (
                   <div className="flex h-full items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200 text-sm text-slate-500">
-                    Camp image placeholder
+                    {t('camps.imagePlaceholder')}
                   </div>
                 )}
               </div>
@@ -3650,20 +3651,20 @@ export default function TrainingPage(): JSX.Element {
                     </div>
                   </div>
 
-                  <p className="text-sm text-gray-700">{selectedCamp.long_description}</p>
+                  <p className="text-sm text-gray-700">{isSerbianUi ? t('camps.genericLong', { city: selectedCamp.city_name, type: t(CAMP_TYPE_TRANSLATION_KEYS[selectedCamp.camp_type]).toLowerCase() }) : selectedCamp.long_description}</p>
 
                   <div className="grid gap-3 md:grid-cols-2">
                     <div className="rounded-lg bg-gray-50 p-3">
                       <div className="text-xs font-medium uppercase tracking-wide text-gray-500">
                         {t('camps.bestFor')}
                       </div>
-                      <div className="mt-1 text-sm text-gray-700">{selectedCamp.best_for_text}</div>
+                      <div className="mt-1 text-sm text-gray-700">{isSerbianUi ? t('camps.genericBestFor', { type: t(CAMP_TYPE_TRANSLATION_KEYS[selectedCamp.camp_type]).toLowerCase() }) : selectedCamp.best_for_text}</div>
                     </div>
                     <div className="rounded-lg bg-gray-50 p-3">
                       <div className="text-xs font-medium uppercase tracking-wide text-gray-500">
                         {t('camps.weatherNote')}
                       </div>
-                      <div className="mt-1 text-sm text-gray-700">{selectedCamp.weather_note}</div>
+                      <div className="mt-1 text-sm text-gray-700">{isSerbianUi ? t('camps.genericWeatherNote') : selectedCamp.weather_note}</div>
                     </div>
                   </div>
 
@@ -3689,12 +3690,12 @@ export default function TrainingPage(): JSX.Element {
                       ) : null}
                       {minimumBookableCampStartDate ? (
                         <div className="mt-1 text-xs text-gray-500">
-                          Earliest start: {formatGameDateLabel(minimumBookableCampStartDate)}
+                          {t('camps.earliestStart', { date: formatGameDateLabel(minimumBookableCampStartDate) })}
                         </div>
                       ) : null}
                       {currentGameDateParts?.season_number != null ? (
                         <div className="mt-1 text-xs text-gray-500">
-                          Season {currentGameDateParts.season_number}
+                          {t('camps.seasonLabel', { season: currentGameDateParts.season_number })}
                         </div>
                       ) : null}
                     </div>
@@ -3710,7 +3711,7 @@ export default function TrainingPage(): JSX.Element {
                       >
                         {DURATION_OPTIONS.map(option => (
                           <option key={option} value={option}>
-                            {option} days
+                            {t('camps.daysCount', { count: option })}
                           </option>
                         ))}
                       </select>
@@ -3722,15 +3723,15 @@ export default function TrainingPage(): JSX.Element {
                       <span className="mt-0.5">⚠️</span>
 
                       <div>
-                        <div className="font-medium">Check the camp dates before booking</div>
+                        <div className="font-medium">{t('camps.checkDates')}</div>
 
                         <div className="mt-1">
-                          {TRAINING_CAMP_REFUND_NOTICE}
+                          {t('camps.refundNotice')}
                         </div>
 
                         {startDate && selectedRangeEndValue ? (
                           <div className="mt-2 text-xs text-amber-700">
-                            Selected period:{' '}
+                            {t('camps.selectedPeriodLabel')}:{' '}
                             <span className="font-medium">
                               {formatCampDateRange(startDate, selectedRangeEndValue)}
                             </span>
@@ -3742,16 +3743,16 @@ export default function TrainingPage(): JSX.Element {
 
                   {isSelectedStartDateInPast ? (
                     <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-                      Training camp cannot start today or in the past.
+                      {t('camps.cannotStartPast')}
                       {minimumBookableCampStartDate
-                        ? ` Earliest start is ${formatGameDateLabel(minimumBookableCampStartDate)}.`
+                        ? ` ${t('camps.earliestStartSentence', { date: formatGameDateLabel(minimumBookableCampStartDate) })}`
                         : ''}
                     </div>
                   ) : null}
                 </div>
               ) : (
                 <div className="p-5 text-sm text-gray-500">
-                  No camp matches the current filters.
+                  {t('camps.noMatches')}
                 </div>
               )}
             </div>
@@ -3806,13 +3807,13 @@ export default function TrainingPage(): JSX.Element {
 
                           {overlapBlocked ? (
                             <div className="text-[11px] text-red-600">
-                              Unavailable for this date range: already in an overlapping camp.
+                              {t('camps.overlapRider')}
                             </div>
                           ) : null}
 
                           {['injured', 'sick'].includes(rider.availability_status) ? (
                             <div className="text-[11px] text-amber-600">
-                              Can attend camp, but will not train until recovered.
+                              {t('camps.injuredCanAttend')}
                             </div>
                           ) : null}
                         </div>
@@ -3829,8 +3830,7 @@ export default function TrainingPage(): JSX.Element {
 
               {overlapBlockedRiderMap.size > 0 ? (
                 <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
-                  Some riders are unavailable for the selected date range because they are already
-                  assigned to an overlapping training camp.
+                  {t('camps.overlapWarning')}
                 </div>
               ) : null}
             </div>
@@ -3840,7 +3840,7 @@ export default function TrainingPage(): JSX.Element {
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900">{t('camps.staffSelection')}</h3>
                   <p className="mt-1 text-sm text-gray-600">
-                    Optional. Staff add camp boosts, but each selected staff member is charged like one rider.
+                    {t('camps.staffSelectionDescription')}
                   </p>
                 </div>
 
@@ -3851,11 +3851,11 @@ export default function TrainingPage(): JSX.Element {
 
               {staffLoading ? (
                 <div className="rounded-lg border border-gray-200 p-4 text-sm text-gray-500">
-                  Loading available staff…
+                  {t('camps.loadingStaff')}
                 </div>
               ) : availableStaff.length === 0 ? (
                 <div className="rounded-lg border border-gray-200 p-4 text-sm text-gray-500">
-                  No eligible camp staff found. You can still book the camp without staff, but riders will not receive staff boosts.
+                  {t('camps.noEligibleStaff')}
                 </div>
               ) : (
                 <div className="max-h-80 space-y-2 overflow-y-auto">
@@ -3882,7 +3882,7 @@ export default function TrainingPage(): JSX.Element {
                           <div>
                             <div className="flex flex-wrap items-center gap-2">
                               <div className="text-sm font-medium text-gray-900">
-                                {member.staff_name || 'Unknown staff'}
+                                {member.staff_name || t('camps.unknownStaff')}
                               </div>
 
                               <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-medium text-gray-700">
@@ -3891,7 +3891,7 @@ export default function TrainingPage(): JSX.Element {
 
                               {member.team_scope ? (
                                 <span className="rounded-full bg-indigo-50 px-2 py-0.5 text-[11px] font-medium text-indigo-700">
-                                  Scope: {member.team_scope.replaceAll('_', ' ')}
+                                  {t('camps.scope', { value: member.team_scope.replaceAll('_', ' ') })}
                                 </span>
                               ) : null}
                             </div>
@@ -3941,7 +3941,7 @@ export default function TrainingPage(): JSX.Element {
 
             <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
               <div className="mb-3 flex items-center justify-between">
-                <h3 className="text-lg font-semibold text-gray-900">Quote & Booking</h3>
+                <h3 className="text-lg font-semibold text-gray-900">{t('camps.quoteTitle')}</h3>
                 {quote?.weather_state ? (
                   <span
                     className={`rounded-full px-2.5 py-1 text-xs font-medium ${WEATHER_BADGE_STYLES[quote.weather_state]}`}
@@ -3952,7 +3952,7 @@ export default function TrainingPage(): JSX.Element {
               </div>
 
               {quoteLoading ? (
-                <div className="text-sm text-gray-600">Calculating quote…</div>
+                <div className="text-sm text-gray-600">{t('camps.calculatingQuote')}</div>
               ) : quote ? (
                 <div className="space-y-4">
                   <div className="grid gap-3 md:grid-cols-2">
@@ -3967,35 +3967,35 @@ export default function TrainingPage(): JSX.Element {
                     </div>
 
                     <div className="rounded-lg bg-gray-50 p-3 text-sm text-gray-700">
-                      <div className="font-medium">Charged participants</div>
+                      <div className="font-medium">{t('camps.chargedParticipants')}</div>
                       <div>{quote.charged_participants_count ?? quote.participants_count}</div>
                     </div>
 
                     <div className="rounded-lg bg-gray-50 p-3 text-sm text-gray-700">
-                      <div className="font-medium">Per person</div>
+                      <div className="font-medium">{t('camps.perPerson')}</div>
                       <div>{formatCurrency(quote.per_rider_total)}</div>
                     </div>
 
                     <div className="rounded-lg bg-gray-50 p-3 text-sm text-gray-700">
-                      <div className="font-medium">Travel total</div>
+                      <div className="font-medium">{t('camps.travelTotal')}</div>
                       <div>{formatCurrency(quote.travel_total)}</div>
                     </div>
                     <div className="rounded-lg bg-gray-50 p-3 text-sm text-gray-700">
-                      <div className="font-medium">Accommodation</div>
+                      <div className="font-medium">{t('camps.accommodation')}</div>
                       <div>{formatCurrency(quote.accommodation_total)}</div>
                     </div>
                     <div className="rounded-lg bg-gray-50 p-3 text-sm text-gray-700">
-                      <div className="font-medium">Camp fee</div>
+                      <div className="font-medium">{t('camps.campFee')}</div>
                       <div>{formatCurrency(quote.camp_fee_total)}</div>
                     </div>
                     <div className="rounded-lg bg-gray-50 p-3 text-sm text-gray-700">
-                      <div className="font-medium">Logistics</div>
+                      <div className="font-medium">{t('camps.logistics')}</div>
                       <div>{formatCurrency(quote.logistics_total)}</div>
                     </div>
                   </div>
 
                   <div className="rounded-lg border border-gray-200 px-4 py-3">
-                    <div className="text-sm text-gray-500">Total camp cost</div>
+                    <div className="text-sm text-gray-500">{t('camps.totalCampCost')}</div>
                     <div className="text-2xl font-semibold text-gray-900">
                       {formatCurrency(quote.total_cost)}
                     </div>
@@ -4003,11 +4003,11 @@ export default function TrainingPage(): JSX.Element {
 
                   {isSelectedStartDateInPast ? (
                     <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-                      <div className="font-medium">Booking blocked</div>
+                      <div className="font-medium">{t('camps.bookingBlocked')}</div>
                       <div className="mt-1">
-                        Training camp cannot start today or in the past.
+                        {t('camps.cannotStartPast')}
                         {minimumBookableCampStartDate
-                          ? ` Earliest start is ${formatGameDateLabel(minimumBookableCampStartDate)}.`
+                          ? ` ${t('camps.earliestStartSentence', { date: formatGameDateLabel(minimumBookableCampStartDate) })}`
                           : ''}
                       </div>
                     </div>
@@ -4015,7 +4015,7 @@ export default function TrainingPage(): JSX.Element {
 
                   {filteredValidationErrors.length > 0 ? (
                     <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-                      <div className="font-medium">Booking blocked</div>
+                      <div className="font-medium">{t('camps.bookingBlocked')}</div>
                       <ul className="mt-2 list-disc space-y-1 pl-5">
                         {filteredValidationErrors.map(message => (
                           <li key={message}>{message}</li>
@@ -4027,7 +4027,7 @@ export default function TrainingPage(): JSX.Element {
                   {toArray(validation?.validation_warnings).length > 0 ||
                   toArray(quote.warnings).length > 0 ? (
                     <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
-                      <div className="font-medium">Warnings</div>
+                      <div className="font-medium">{t('camps.warnings')}</div>
                       <ul className="mt-2 list-disc space-y-1 pl-5">
                         {toArray(validation?.validation_warnings).map(message => (
                           <li key={`validation-${message}`}>{message}</li>
@@ -4080,7 +4080,7 @@ export default function TrainingPage(): JSX.Element {
                 }}
                 disabled={isCancellingCamp}
                 className="rounded-full p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-700 disabled:cursor-not-allowed disabled:opacity-60"
-                aria-label="Close cancel training camp modal"
+                aria-label={t('camps.closeCancel')}
               >
                 ×
               </button>
@@ -4115,7 +4115,7 @@ export default function TrainingPage(): JSX.Element {
               </div>
 
               <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-                <div className="font-medium">Important</div>
+                <div className="font-medium">{t('camps.important')}</div>
                 <div className="mt-1">
                   This action will cancel the current training camp booking. Depending on your game rules, refund handling may be partial or unavailable.
                 </div>
@@ -4159,7 +4159,7 @@ export default function TrainingPage(): JSX.Element {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
           <div className="w-full max-w-2xl rounded-2xl bg-white p-6 shadow-xl">
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-gray-900">Assigned Riders</h3>
+              <h3 className="text-lg font-semibold text-gray-900">{t('camps.assignedRiders')}</h3>
               <button
                 type="button"
                 onClick={() => setShowAssignedRidersModal(false)}

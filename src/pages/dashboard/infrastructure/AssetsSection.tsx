@@ -19,6 +19,7 @@
  */
 
 import React, { createContext, useContext, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import type {
   AssetSubTabKey,
   InfrastructureAssetActionTarget,
@@ -580,6 +581,8 @@ function AssetAcquireModal({
   onAcquire: (assetLevel: number) => void
   onClose: () => void
 }): JSX.Element {
+  const { t } = useTranslation('infrastructure')
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 py-6"
@@ -592,8 +595,8 @@ function AssetAcquireModal({
         <div className="px-5 py-4 border-b border-gray-100 flex items-start justify-between gap-4">
           <div>
             <div className="text-xs uppercase tracking-wide text-gray-400">{assetLabel}</div>
-            <h3 className="mt-1 text-lg font-semibold text-gray-900">{title}</h3>
-            <p className="mt-1 text-sm text-gray-500">{description}</p>
+            <h3 className="mt-1 text-lg font-semibold text-gray-900">{t(assetCopy.title)}</h3>
+            <p className="mt-1 text-sm text-gray-500">{t(assetCopy.description)}</p>
           </div>
 
           <button
@@ -608,14 +611,13 @@ function AssetAcquireModal({
         <div className="p-5">
           {isFull && (
             <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
-              Garage capacity is full. Cancel a pending delivery, sell an available asset, or wait
-              for future capacity upgrades before starting another delivery.
+              {t('assets.garageFullDescription')}
             </div>
           )}
 
           {configRows.length === 0 && (
             <div className="rounded-lg border border-dashed border-gray-200 bg-gray-50 p-4 text-sm text-gray-500">
-              No acquisition tiers are configured for this asset type yet.
+              {t('assets.noTiers')}
             </div>
           )}
 
@@ -640,7 +642,7 @@ function AssetAcquireModal({
                           {config.asset_name}
                         </div>
                         <div className="mt-1 text-xs text-gray-500">
-                          Level {config.asset_level} · Support{' '}
+                          {t('common.level')} {config.asset_level} · {t('common.support')}{' '}
                           {formatAssetPercent(config.support_value)}
                         </div>
 
@@ -653,26 +655,26 @@ function AssetAcquireModal({
 
                       <div className="grid grid-cols-2 gap-3 text-xs text-gray-700 md:min-w-[260px]">
                         <div>
-                          <div className="text-gray-400">Cost</div>
+                          <div className="text-gray-400">{t('common.cost')}</div>
                           <div className="mt-0.5 font-semibold text-gray-900">
                             {formatCash(config.cost_cash)}
                           </div>
                         </div>
 
                         <div>
-                          <div className="text-gray-400">Delivery</div>
+                          <div className="text-gray-400">{t('common.delivery')}</div>
                           <div className="mt-0.5 font-semibold text-gray-900">
                             {formatGameDays(config.delivery_game_days)}
                           </div>
                         </div>
 
                         <div>
-                          <div className="text-gray-400">Owned</div>
+                          <div className="text-gray-400">{t('common.owned')}</div>
                           <div className="mt-0.5 font-semibold text-gray-900">{ownedCount}</div>
                         </div>
 
                         <div>
-                          <div className="text-gray-400">Pending</div>
+                          <div className="text-gray-400">{t('common.pending')}</div>
                           <div className="mt-0.5 font-semibold text-gray-900">
                             {pendingForLevel}
                           </div>
@@ -691,10 +693,10 @@ function AssetAcquireModal({
                           }`}
                         >
                           {isProcessing
-                            ? 'Starting...'
+                            ? t('common.starting')
                             : isFull
-                              ? 'Garage full'
-                              : 'Start delivery'}
+                              ? t('common.garageFull')
+                              : t('assets.startDelivery')}
                         </button>
                       </div>
                     </div>
@@ -738,6 +740,7 @@ function TeamCarGaragePanel({
   onOpenAssetSell: (target: InfrastructureAssetActionTarget) => void
   onRenameTeamCar: (carId: string, displayName: string) => Promise<void>
 }): JSX.Element {
+  const { t } = useTranslation('infrastructure')
   const [isAcquireModalOpen, setIsAcquireModalOpen] = useState(false)
   const [editingCarId, setEditingCarId] = useState<string | null>(null)
   const [renameDraft, setRenameDraft] = useState('')
@@ -793,30 +796,30 @@ function TeamCarGaragePanel({
   const bonusCards = useMemo<BonusCard[]>(
     () => [
       {
-        title: 'Mechanical response',
+        title: t('assets.mechanicalResponse'),
         value: bestOwnedSupport,
         description:
-          'Best owned car support value available for race-day service and technical response.',
+          t('assets.mechanicalResponseDescription'),
       },
       {
-        title: 'Feeding support',
+        title: t('assets.feedingSupport'),
         value: summary
           ? formatAssetPercent(summary.race_fatigue_reduction_pct)
           : 'N/A',
         description:
-          'Garage-level race fatigue reduction from the current Team Car fleet summary.',
+          t('assets.feedingSupportDescription'),
       },
       {
-        title: 'Tactical comms',
+        title: t('assets.tacticalComms'),
         value: summary?.support_tier || 'N/A',
         description:
-          'Highest current support tier available from owned Team Cars and their condition.',
+          t('assets.tacticalCommsDescription'),
       },
       {
-        title: 'Potential tier',
+        title: t('common.potentialTier'),
         value: potentialTier,
         description:
-          'Highest configured Team Car tier that can be acquired through the garage system.',
+          t('assets.teamCarPotential'),
       },
     ],
     [bestOwnedSupport, potentialTier, summary],
@@ -827,12 +830,10 @@ function TeamCarGaragePanel({
       <div className="rounded-xl bg-white border border-gray-100 shadow-sm p-4">
         <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
           <div className="max-w-3xl">
-            <div className="text-xs uppercase tracking-wide text-gray-400">Team Cars</div>
-            <h3 className="text-lg font-semibold text-gray-900 mt-1">Team Car Fleet</h3>
+            <div className="text-xs uppercase tracking-wide text-gray-400">{t('assets.teamCars')}</div>
+            <h3 className="text-lg font-semibold text-gray-900 mt-1">{t('assets.teamCarFleet')}</h3>
             <p className="text-sm text-gray-500 mt-1 leading-6">
-              Team Cars provide race support, tactical communication, feeding coverage, and fatigue
-              reduction on race days. Manage the garage by slot, start new deliveries, repair worn
-              cars, or sell available cars.
+              {t('assets.teamCarDescription')}
             </p>
           </div>
 
@@ -846,36 +847,34 @@ function TeamCarGaragePanel({
                 : 'bg-yellow-400 text-black hover:bg-yellow-300'
             }`}
           >
-            {isFull ? 'Garage full' : 'Acquire Team Car'}
+            {isFull ? t('common.garageFull') : 'Acquire Team Car'}
           </button>
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3 mt-4">
           <SummaryMetric
-            label="Garage size"
+            label={t('common.garageSize')}
             value={`${totalCars + pendingQuantity} / ${effectiveSlots}`}
             helper={
               slotAccess
-                ? `Free ${slotAccess.free_slots} · Premium ${slotAccess.premium_slots} · Max ${absoluteMaxSlots}`
+                ? t('assets.freePremiumMax', { free: slotAccess.free_slots, premium: slotAccess.premium_slots, max: absoluteMaxSlots })
                 : `Owned ${totalCars} · Pending ${pendingQuantity}`
             }
           />
-          <SummaryMetric label="Available" value={counts.available} />
-          <SummaryMetric label="Assigned" value={counts.assigned} />
-          <SummaryMetric label="In repair" value={counts.inRepair} />
-          <SummaryMetric label="Best support" value={summary?.support_tier || 'N/A'} />
-          <SummaryMetric label="Potential tier" value={potentialTier} />
+          <SummaryMetric label={t('common.available')} value={counts.available} />
+          <SummaryMetric label={t('common.assigned')} value={counts.assigned} />
+          <SummaryMetric label={t('common.inRepair')} value={counts.inRepair} />
+          <SummaryMetric label={t('common.bestSupport')} value={summary?.support_tier || 'N/A'} />
+          <SummaryMetric label={t('common.potentialTier')} value={potentialTier} />
         </div>
       </div>
 
       <div className="rounded-xl border border-blue-100 bg-blue-50 p-4">
         <div className="text-sm font-semibold text-blue-900">
-          Garage support vs actual race assignment
+          {t('assets.garageSupportTitle')}
         </div>
         <p className="mt-1 text-xs leading-5 text-blue-800">
-          The garage shows what your club owns and what is being delivered. Actual race bonuses
-          should still come from the cars assigned to a specific event. A strong garage increases
-          your available options, but only assigned and eligible cars should affect a race result.
+          {t('assets.teamCarAssignment')}
         </p>
       </div>
 
@@ -884,15 +883,14 @@ function TeamCarGaragePanel({
       <div className="rounded-xl bg-white border border-gray-100 shadow-sm p-4">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-4">
           <div>
-            <div className="text-sm font-semibold text-gray-900">Garage slots</div>
+            <div className="text-sm font-semibold text-gray-900">{t('common.garageSlots')}</div>
             <div className="text-xs text-gray-500 mt-0.5">
-              Owned cars appear first, pending deliveries fill the next empty slots, and open slots
-              remain available for future acquisitions.
+              {t('assets.garageSlotsTeamCar')}
             </div>
           </div>
 
           <div className="text-xs text-gray-500">
-            {effectiveSlots} active of {absoluteMaxSlots} maximum slots
+            {t('assets.activeMaximum', { active: effectiveSlots, max: absoluteMaxSlots })}
           </div>
         </div>
 
@@ -911,7 +909,7 @@ function TeamCarGaragePanel({
                     <div className="min-w-0 lg:w-[300px] lg:shrink-0">
                       <div className="flex flex-wrap items-center gap-2">
                         <div className="text-sm font-semibold text-gray-900">
-                          Slot #{slot.slotNumber}
+                          {t('assets.slot', { slot: slot.slotNumber })}
                         </div>
 
                         <span
@@ -1046,7 +1044,7 @@ function TeamCarGaragePanel({
 
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs text-gray-700 lg:flex-1 lg:max-w-3xl">
                       <div>
-                        <div className="text-gray-400">Condition</div>
+                        <div className="text-gray-400">{t('common.condition')}</div>
                         <div className="mt-0.5 font-semibold text-gray-900">
                           {formatAssetPercent(car.condition_percent)}
                         </div>
@@ -1056,21 +1054,21 @@ function TeamCarGaragePanel({
                       </div>
 
                       <div>
-                        <div className="text-gray-400">Support</div>
+                        <div className="text-gray-400">{t('common.support')}</div>
                         <div className="mt-0.5 font-semibold text-gray-900">
                           {formatAssetPercent(car.effective_support_value)}
                         </div>
                       </div>
 
                       <div>
-                        <div className="text-gray-400">Acquired</div>
+                        <div className="text-gray-400">{t('common.acquired')}</div>
                         <div className="mt-0.5 font-semibold text-gray-900">
                           {formatGameDate(car.acquired_game_date)}
                         </div>
                       </div>
 
                       <div className="min-w-0">
-                        <div className="text-xs text-gray-400">Current status</div>
+                        <div className="text-xs text-gray-400">{t('common.currentStatus')}</div>
                         <div
                           className="mt-0.5 max-w-[250px] truncate whitespace-nowrap text-sm font-semibold text-gray-900"
                           title={getAssetCurrentStatusLabel(car)}
@@ -1153,10 +1151,10 @@ function TeamCarGaragePanel({
                     <div>
                       <div className="flex flex-wrap items-center gap-2">
                         <div className="text-sm font-semibold text-amber-950">
-                          Slot #{slot.slotNumber}
+                          {t('assets.slot', { slot: slot.slotNumber })}
                         </div>
                         <span className="inline-flex items-center rounded-full border border-amber-300 bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-900">
-                          Pending delivery
+                          {t('common.pendingDelivery')}
                         </span>
                       </div>
 
@@ -1164,34 +1162,34 @@ function TeamCarGaragePanel({
                         Team Car Lv {slot.job.asset_level ?? '?'}
                       </div>
                       <div className="mt-1 text-xs text-amber-800">
-                        Delivery item {slot.copyIndex} of {slot.quantity}
+                        {t('assets.deliveryItem', { current: slot.copyIndex, total: slot.quantity })}
                       </div>
                     </div>
 
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs text-amber-900 lg:flex-1 lg:max-w-3xl">
                       <div>
-                        <div className="text-amber-700">Duration</div>
+                        <div className="text-amber-700">{t('common.duration')}</div>
                         <div className="mt-0.5 font-semibold">
                           {formatGameDays(slot.job.duration_game_days)}
                         </div>
                       </div>
 
                       <div>
-                        <div className="text-amber-700">Completes</div>
+                        <div className="text-amber-700">{t('common.completes')}</div>
                         <div className="mt-0.5 font-semibold">
                           {formatGameDate(slot.job.complete_game_date)}
                         </div>
                       </div>
 
                       <div>
-                        <div className="text-amber-700">Cost paid</div>
+                        <div className="text-amber-700">{t('common.costPaid')}</div>
                         <div className="mt-0.5 font-semibold">
                           {formatCash(slot.job.cost_cash)}
                         </div>
                       </div>
 
                       <div>
-                        <div className="text-amber-700">Quantity</div>
+                        <div className="text-amber-700">{t('common.quantity')}</div>
                         <div className="mt-0.5 font-semibold">x{slot.quantity}</div>
                       </div>
                     </div>
@@ -1235,7 +1233,7 @@ function TeamCarGaragePanel({
                     <div>
                       <div className="flex flex-wrap items-center gap-2">
                         <div className="text-sm font-semibold text-slate-800">
-                          Slot #{slot.slotNumber}
+                          {t('assets.slot', { slot: slot.slotNumber })}
                         </div>
 
                         {isPremiumCapacity ? (
@@ -1317,7 +1315,7 @@ function TeamCarGaragePanel({
                         : 'bg-yellow-400 text-black hover:bg-yellow-300'
                     }`}
                   >
-                    {isFull ? 'Garage full' : 'Acquire'}
+                    {isFull ? t('common.garageFull') : 'Acquire'}
                   </button>
                 </div>
               </div>
@@ -1328,9 +1326,9 @@ function TeamCarGaragePanel({
 
       {isAcquireModalOpen && (
         <AssetAcquireModal
-          title="Acquire Team Car"
-          description="Choose a Team Car tier. The delivery will enter the garage queue and complete after the configured game-time duration."
-          assetLabel="Team Cars"
+          title={t('assets.acquireTeamCar')}
+          description={t('assets.teamCarAcquireDescription')}
+          assetLabel={t('assets.teamCars')}
           configRows={configRows}
           ownedByLevel={ownedByLevel}
           pendingJobsByLevel={pendingJobsByLevel}
@@ -1410,6 +1408,14 @@ function GenericAssetGaragePanel<T extends GenericAssetRosterRow>({
   onOpenAssetSell: (target: InfrastructureAssetActionTarget) => void
   onRenameAsset: (assetKey: AssetGarageKey, assetId: string, displayName: string) => Promise<void>
 }): JSX.Element {
+  const { t } = useTranslation('infrastructure')
+  const assetCopy = {
+    team_car: { singular: 'assets.teamCar', plural: 'assets.teamCars', title: 'assets.teamCarFleet', description: 'assets.teamCarDescription', acquire: 'assets.acquireTeamCar', acquireDescription: 'assets.teamCarAcquireDescription', empty: 'assets.emptyTeamCar', assignment: 'assets.teamCarAssignment' },
+    team_bus: { singular: 'assets.teamBus', plural: 'assets.teamBus', title: 'assets.teamBusGarage', description: 'assets.teamBusDescription', acquire: 'assets.acquireTeamBus', acquireDescription: 'assets.teamBusAcquireDescription', empty: 'assets.emptyTeamBus', assignment: 'assets.teamBusAssignment' },
+    equipment_van: { singular: 'assets.equipmentVan', plural: 'assets.equipmentVans', title: 'assets.equipmentVanGarage', description: 'assets.equipmentVanDescription', acquire: 'assets.acquireEquipmentVan', acquireDescription: 'assets.equipmentVanAcquireDescription', empty: 'assets.emptyEquipmentVan', assignment: 'assets.equipmentVanAssignment' },
+    mobile_workshop: { singular: 'assets.mobileWorkshop', plural: 'assets.mobileWorkshops', title: 'assets.mobileWorkshopGarage', description: 'assets.mobileWorkshopDescription', acquire: 'assets.acquireMobileWorkshop', acquireDescription: 'assets.mobileWorkshopAcquireDescription', empty: 'assets.emptyMobileWorkshop', assignment: 'assets.mobileWorkshopAssignment' },
+    medical_van: { singular: 'assets.medicalVan', plural: 'assets.medicalVans', title: 'assets.medicalVanGarage', description: 'assets.medicalVanDescription', acquire: 'assets.acquireMedicalVan', acquireDescription: 'assets.medicalVanAcquireDescription', empty: 'assets.emptyMedicalVan', assignment: 'assets.medicalVanAssignment' },
+  }[assetKey]
   const [isAcquireModalOpen, setIsAcquireModalOpen] = useState(false)
   const [editingAssetId, setEditingAssetId] = useState<string | null>(null)
   const [renameDraft, setRenameDraft] = useState('')
@@ -1493,7 +1499,7 @@ function GenericAssetGaragePanel<T extends GenericAssetRosterRow>({
         description: bonusCopy.supportTierDescription,
       },
       {
-        title: 'Potential tier',
+        title: t('common.potentialTier'),
         value: potentialTier,
         description: bonusCopy.potentialTierDescription,
       },
@@ -1506,9 +1512,9 @@ function GenericAssetGaragePanel<T extends GenericAssetRosterRow>({
       <div className="rounded-xl bg-white border border-gray-100 shadow-sm p-4">
         <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
           <div className="max-w-3xl">
-            <div className="text-xs uppercase tracking-wide text-gray-400">{assetLabelPlural}</div>
-            <h3 className="text-lg font-semibold text-gray-900 mt-1">{title}</h3>
-            <p className="text-sm text-gray-500 mt-1 leading-6">{description}</p>
+            <div className="text-xs uppercase tracking-wide text-gray-400">{t(assetCopy.plural)}</div>
+            <h3 className="text-lg font-semibold text-gray-900 mt-1">{t(assetCopy.title)}</h3>
+            <p className="text-sm text-gray-500 mt-1 leading-6">{t(assetCopy.description)}</p>
           </div>
 
           <button
@@ -1521,35 +1527,35 @@ function GenericAssetGaragePanel<T extends GenericAssetRosterRow>({
                 : 'bg-yellow-400 text-black hover:bg-yellow-300'
             }`}
           >
-            {isFull ? 'Garage full' : acquireButtonLabel}
+            {isFull ? t('common.garageFull') : acquireButtonLabel}
           </button>
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3 mt-4">
           <SummaryMetric
-            label="Garage size"
+            label={t('common.garageSize')}
             value={
               `${totalAssets + pendingQuantity} / ${effectiveSlots}`
             }
             helper={
               slotAccess
-                ? `Free ${slotAccess.free_slots} · Premium ${slotAccess.premium_slots} · Max ${absoluteMaxSlots}`
-                : `Owned ${totalAssets} · Pending ${pendingQuantity}`
+                ? t('assets.freePremiumMax', { free: slotAccess.free_slots, premium: slotAccess.premium_slots, max: absoluteMaxSlots })
+                : t('assets.ownedPending', { owned: totalAssets, pending: pendingQuantity })
             }
           />
-          <SummaryMetric label="Available" value={counts.available} />
-          <SummaryMetric label="Assigned" value={counts.assigned} />
-          <SummaryMetric label="In repair" value={counts.inRepair} />
-          <SummaryMetric label="Best support" value={supportTier} />
-          <SummaryMetric label="Potential tier" value={potentialTier} />
+          <SummaryMetric label={t('common.available')} value={counts.available} />
+          <SummaryMetric label={t('common.assigned')} value={counts.assigned} />
+          <SummaryMetric label={t('common.inRepair')} value={counts.inRepair} />
+          <SummaryMetric label={t('common.bestSupport')} value={supportTier} />
+          <SummaryMetric label={t('common.potentialTier')} value={potentialTier} />
         </div>
       </div>
 
       <div className="rounded-xl border border-blue-100 bg-blue-50 p-4">
         <div className="text-sm font-semibold text-blue-900">
-          Garage support vs actual race assignment
+          {t('assets.garageSupportTitle')}
         </div>
-        <p className="mt-1 text-xs leading-5 text-blue-800">{assignmentNotice}</p>
+        <p className="mt-1 text-xs leading-5 text-blue-800">{t(assetCopy.assignment)}</p>
       </div>
 
       <BonusCards cards={bonusCards} />
@@ -1557,15 +1563,14 @@ function GenericAssetGaragePanel<T extends GenericAssetRosterRow>({
       <div className="rounded-xl bg-white border border-gray-100 shadow-sm p-4">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-4">
           <div>
-            <div className="text-sm font-semibold text-gray-900">Garage slots</div>
+            <div className="text-sm font-semibold text-gray-900">{t('common.garageSlots')}</div>
             <div className="text-xs text-gray-500 mt-0.5">
-              Owned assets appear first, pending deliveries fill the next empty slots, and open
-              slots remain available for future acquisitions.
+              {t('assets.garageSlotsGeneric')}
             </div>
           </div>
 
           <div className="text-xs text-gray-500">
-            {garageSlots.length} slot{garageSlots.length === 1 ? '' : 's'}
+            {t(garageSlots.length === 1 ? 'assets.slotOne' : 'assets.slots', { count: garageSlots.length })}
           </div>
         </div>
 
@@ -1589,7 +1594,7 @@ function GenericAssetGaragePanel<T extends GenericAssetRosterRow>({
                     <div className="min-w-0 lg:w-[300px] lg:shrink-0">
                       <div className="flex flex-wrap items-center gap-2">
                         <div className="text-sm font-semibold text-gray-900">
-                          Slot #{slot.slotNumber}
+                          {t('assets.slot', { slot: slot.slotNumber })}
                         </div>
                         <span
                           className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-semibold ${getStatusBadgeClass(
@@ -1722,7 +1727,7 @@ function GenericAssetGaragePanel<T extends GenericAssetRosterRow>({
 
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs text-gray-700 lg:flex-1 lg:max-w-3xl">
                       <div>
-                        <div className="text-gray-400">Condition</div>
+                        <div className="text-gray-400">{t('common.condition')}</div>
                         <div className="mt-0.5 font-semibold text-gray-900">
                           {formatAssetPercent(row.condition_percent)}
                         </div>
@@ -1732,21 +1737,21 @@ function GenericAssetGaragePanel<T extends GenericAssetRosterRow>({
                       </div>
 
                       <div>
-                        <div className="text-gray-400">Support</div>
+                        <div className="text-gray-400">{t('common.support')}</div>
                         <div className="mt-0.5 font-semibold text-gray-900">
                           {formatAssetPercent(row.effective_support_value)}
                         </div>
                       </div>
 
                       <div>
-                        <div className="text-gray-400">Acquired</div>
+                        <div className="text-gray-400">{t('common.acquired')}</div>
                         <div className="mt-0.5 font-semibold text-gray-900">
                           {formatMaybeGameDate(row.acquired_game_date)}
                         </div>
                       </div>
 
                       <div>
-                        <div className="text-xs text-gray-400">Current status</div>
+                        <div className="text-xs text-gray-400">{t('common.currentStatus')}</div>
                         <div className="text-sm font-semibold text-gray-900">
                           {getAssetCurrentStatusLabel(row)}
                         </div>
@@ -1822,10 +1827,10 @@ function GenericAssetGaragePanel<T extends GenericAssetRosterRow>({
                     <div>
                       <div className="flex flex-wrap items-center gap-2">
                         <div className="text-sm font-semibold text-amber-950">
-                          Slot #{slot.slotNumber}
+                          {t('assets.slot', { slot: slot.slotNumber })}
                         </div>
                         <span className="inline-flex items-center rounded-full border border-amber-300 bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-900">
-                          Pending delivery
+                          {t('common.pendingDelivery')}
                         </span>
                       </div>
 
@@ -1833,34 +1838,34 @@ function GenericAssetGaragePanel<T extends GenericAssetRosterRow>({
                         {pendingDeliveryTitlePrefix} Lv {slot.job.asset_level ?? '?'}
                       </div>
                       <div className="mt-1 text-xs text-amber-800">
-                        Delivery item {slot.copyIndex} of {slot.quantity}
+                        {t('assets.deliveryItem', { current: slot.copyIndex, total: slot.quantity })}
                       </div>
                     </div>
 
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs text-amber-900 lg:flex-1 lg:max-w-3xl">
                       <div>
-                        <div className="text-amber-700">Duration</div>
+                        <div className="text-amber-700">{t('common.duration')}</div>
                         <div className="mt-0.5 font-semibold">
                           {formatGameDays(slot.job.duration_game_days)}
                         </div>
                       </div>
 
                       <div>
-                        <div className="text-amber-700">Completes</div>
+                        <div className="text-amber-700">{t('common.completes')}</div>
                         <div className="mt-0.5 font-semibold">
                           {formatGameDate(slot.job.complete_game_date)}
                         </div>
                       </div>
 
                       <div>
-                        <div className="text-amber-700">Cost paid</div>
+                        <div className="text-amber-700">{t('common.costPaid')}</div>
                         <div className="mt-0.5 font-semibold">
                           {formatCash(slot.job.cost_cash)}
                         </div>
                       </div>
 
                       <div>
-                        <div className="text-amber-700">Quantity</div>
+                        <div className="text-amber-700">{t('common.quantity')}</div>
                         <div className="mt-0.5 font-semibold">x{slot.quantity}</div>
                       </div>
                     </div>
@@ -1904,7 +1909,7 @@ function GenericAssetGaragePanel<T extends GenericAssetRosterRow>({
                     <div>
                       <div className="flex flex-wrap items-center gap-2">
                         <div className="text-sm font-semibold text-slate-800">
-                          Slot #{slot.slotNumber}
+                          {t('assets.slot', { slot: slot.slotNumber })}
                         </div>
                         {isPremiumCapacity ? (
                           <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-slate-600">
@@ -1968,7 +1973,7 @@ function GenericAssetGaragePanel<T extends GenericAssetRosterRow>({
                     <div className="text-sm font-semibold text-gray-700">
                       Slot #{slot.slotNumber}
                     </div>
-                    <div className="mt-1 text-xs text-gray-500">{emptySlotDescription}</div>
+                    <div className="mt-1 text-xs text-gray-500">{t(assetCopy.empty)}</div>
                   </div>
 
                   <button
@@ -1981,7 +1986,7 @@ function GenericAssetGaragePanel<T extends GenericAssetRosterRow>({
                         : 'bg-yellow-400 text-black hover:bg-yellow-300'
                     }`}
                   >
-                    {isFull ? 'Garage full' : 'Acquire'}
+                    {isFull ? t('common.garageFull') : 'Acquire'}
                   </button>
                 </div>
               </div>
@@ -1992,9 +1997,9 @@ function GenericAssetGaragePanel<T extends GenericAssetRosterRow>({
 
       {isAcquireModalOpen && (
         <AssetAcquireModal
-          title={acquireModalTitle}
-          description={acquireModalDescription}
-          assetLabel={assetLabelPlural}
+          title={t(assetCopy.acquire)}
+          description={t(assetCopy.acquireDescription)}
+          assetLabel={t(assetCopy.plural)}
           configRows={configRows}
           ownedByLevel={ownedByLevel}
           pendingJobsByLevel={pendingJobsByLevel}
@@ -2470,6 +2475,8 @@ export function AssetsSection({
    */
   onStartAssetRepair?: StartAssetRepairHandler
 }): JSX.Element {
+  const { t } = useTranslation('infrastructure')
+
   return (
     <AssetSlotAccessContext.Provider
       value={{
@@ -2492,7 +2499,7 @@ export function AssetsSection({
                   : 'text-gray-600 hover:bg-gray-100'
               }`}
             >
-              {tab.label}
+              {t(tab.key === 'team_cars' ? 'assets.teamCars' : tab.key === 'team_bus' ? 'assets.teamBus' : tab.key === 'equipment_van' ? 'assets.equipmentVan' : tab.key === 'mobile_workshop' ? 'assets.mobileWorkshop' : 'assets.medicalVan')}
             </button>
           ))}
         </div>

@@ -182,7 +182,7 @@
     "noImage": "No image yet",
     "imagePlaceholder": "Camp image placeholder",
     "from": "From",
-    "perRider": "/ rider",
+    "perRider": "rider",
     "bestFor": "Best for:",
     "weatherNote": "Weather note",
     "startDate": "Start date",
@@ -218,7 +218,27 @@
     "keepCamp": "Keep Camp",
     "confirmCancel": "Yes, Cancel Camp",
     "assignedRiders": "Assigned Riders",
-    "noAssignedRiders": "No assigned riders found."
+    "noAssignedRiders": "No assigned riders found.",
+    "selectedPeriodLabel": "Selected period",
+    "quoteTitle": "Quote & Booking",
+    "calculatingQuote": "Calculating quote…",
+    "chargedParticipants": "Charged participants",
+    "perPerson": "Per person",
+    "travelTotal": "Travel total",
+    "accommodation": "Accommodation",
+    "campFee": "Camp fee",
+    "logistics": "Logistics",
+    "totalCampCost": "Total camp cost",
+    "bookingBlocked": "Booking blocked",
+    "warnings": "Warnings",
+    "genericShort": "{{city}} offers a focused {{type}} training environment for rider preparation.",
+    "genericLong": "This camp in {{city}} provides structured conditions for {{type}} training, team preparation, and rider development.",
+    "genericBestFor": "Riders and teams focused on {{type}} preparation.",
+    "genericWeatherNote": "Check the forecast and seasonal conditions carefully before booking.",
+    "unknownStaff": "Unknown staff",
+    "scope": "Scope: {{value}}",
+    "seasonLabel": "Season {{season}}",
+    "daysCount": "{{count}} days"
   },
   "regions": {
     "europe": "Europe",
@@ -337,5 +357,18 @@
     "continueEquipment": "Continue to Equipment",
     "finish": "Finish for now",
     "skip": "Skip tutorial"
+  },
+  "campTags": {
+    "standard": "standard",
+    "budget": "budget",
+    "premium": "premium",
+    "elite": "elite",
+    "flat": "flat",
+    "mountain": "mountain",
+    "rolling": "rolling",
+    "altitude": "altitude",
+    "coastal": "coastal",
+    "mixed": "mixed",
+    "tt_friendly": "TT friendly"
   }
 }
