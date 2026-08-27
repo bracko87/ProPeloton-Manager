@@ -41,7 +41,6 @@ const options: LegacyLocalizationBridgeOptions = {
   },
   aliases: {
     'Loading race detail...': 'page.loading',
-    'Race date': 'bridge.raceDate',
     'Replay unavailable': 'replay.unavailable',
     'Replay is not available yet.': 'replay.notAvailable',
     'Stage points': 'stage.points',
