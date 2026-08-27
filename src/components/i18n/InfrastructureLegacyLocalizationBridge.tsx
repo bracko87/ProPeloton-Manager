@@ -5,6 +5,28 @@ import {
   type LegacyLocalizationBridgeOptions,
 } from './createLegacyLocalizationBridge'
 
+const enResource = {
+  ...enInfrastructure,
+  bridge: {
+    none: 'None',
+    excellent: 'Excellent',
+    basicClubCar: 'Basic Club Car',
+    professionalTeamCar: 'Professional Team Car',
+    coinBalanceLine: 'Current coin balance: {{balance}}',
+  },
+}
+
+const srResource = {
+  ...srInfrastructure,
+  bridge: {
+    none: 'Nema',
+    excellent: 'Odlično',
+    basicClubCar: 'Osnovni klupski automobil',
+    professionalTeamCar: 'Profesionalni timski automobil',
+    coinBalanceLine: 'Trenutno stanje Coins: {{balance}}',
+  },
+}
+
 const ASSET_KEYS: Record<string, string> = {
   'Team Car': 'infrastructure:assets.teamCar',
   'Team Bus': 'infrastructure:assets.teamBus',
@@ -32,8 +54,8 @@ const FACILITY_KIND_KEYS: Record<string, string> = {
 
 const options: LegacyLocalizationBridgeOptions = {
   namespace: 'infrastructure',
-  enResource: enInfrastructure,
-  srResource: srInfrastructure,
+  enResource,
+  srResource,
   routeMatch: path => {
     const clean = path.split('?')[0]
 
@@ -65,7 +87,9 @@ const options: LegacyLocalizationBridgeOptions = {
     'Acquire Equipment Van': 'assets.acquireEquipmentVan',
     'Acquire Mobile Workshop': 'assets.acquireMobileWorkshop',
     'Acquire Medical Van': 'assets.acquireMedicalVan',
+    'Team Cars provide race support, tactical communication, feeding coverage, and fatigue reduction on race days. Manage the garage by slot, start new deliveries, repair worn cars, or sell available cars.': 'assets.teamCarDescription',
     'Garage support vs actual race assignment': 'assets.garageSupportTitle',
+    'The garage shows what your club owns and what is being delivered. Actual race bonuses should still come from the cars assigned to a specific event. A strong garage increases your available options, but only assigned and eligible cars should affect a race result.': 'assets.teamCarAssignment',
     'Garage slots': 'common.garageSlots',
     'Garage size': 'common.garageSize',
     'Available': 'common.available',
@@ -79,9 +103,18 @@ const options: LegacyLocalizationBridgeOptions = {
     'Current status': 'common.currentStatus',
     'Repair': 'common.repair',
     'Sell': 'common.sell',
+    'Acquire': 'common.acquire',
+    'None': 'bridge.none',
+    'Excellent': 'bridge.excellent',
+    'Basic Club Car': 'bridge.basicClubCar',
+    'Professional Team Car': 'bridge.professionalTeamCar',
     'Mechanical response': 'assets.mechanicalResponse',
+    'Best owned car support value available for race-day service and technical response.': 'assets.mechanicalResponseDescription',
     'Feeding support': 'assets.feedingSupport',
+    'Garage-level race fatigue reduction from the current Team Car fleet summary.': 'assets.feedingSupportDescription',
     'Tactical comms': 'assets.tacticalComms',
+    'Highest current support tier available from owned Team Cars and their condition.': 'assets.tacticalCommsDescription',
+    'Highest configured Team Car tier that can be acquired through the garage system.': 'assets.teamCarPotential',
     'Travel comfort': 'assets.travelComfort',
     'Rider recovery': 'assets.riderRecovery',
     'Tour fatigue cover': 'assets.tourFatigueCover',
@@ -94,6 +127,9 @@ const options: LegacyLocalizationBridgeOptions = {
     'Medical response': 'assets.medicalResponse',
     'Health coverage': 'assets.healthCoverage',
     'Medical cover': 'assets.medicalCover',
+    'Owned cars appear first, pending deliveries fill the next empty slots, and open slots remain available for future acquisitions.': 'assets.garageSlotsTeamCar',
+    'Empty Team Car slot available for a new delivery.': 'assets.emptyTeamCar',
+    'Additional permanent Team Car garage capacity.': 'assets.additionalTeamCarCapacity',
 
     'Close infrastructure details': 'facilities.detailsTitle',
     'Starting repair...': 'assetModal.startingRepair',
