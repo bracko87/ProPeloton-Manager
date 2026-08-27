@@ -3198,7 +3198,7 @@ export default function RacePreparationPage(): JSX.Element {
     return (
       <div className="p-6">
         <div className="rounded-2xl border bg-white p-6 shadow-sm">
-          Loading Race Preparation...
+          {t("page.loading")}
         </div>
       </div>
     );
@@ -3222,27 +3222,23 @@ export default function RacePreparationPage(): JSX.Element {
   return (
     <div className="space-y-6 p-6">
       <header className="space-y-2">
-        <h1 className="text-2xl font-bold text-slate-900">Race Preparation</h1>
-        <p className="text-sm text-slate-600">
-          Accepted races are listed first. Race Plan handles whole-race
-          startlist, travel, staff, assets and costs. Stage Plans handle
-          stage-by-stage tactics after the race plan is submitted.
-        </p>
+        <h1 className="text-2xl font-bold text-slate-900">{t("page.title")}</h1>
+        <p className="text-sm text-slate-600">{t("page.subtitle")}</p>
       </header>
 
       <div className="inline-flex rounded-xl border bg-white p-1 shadow-sm">
         <TabButton
-          label="Accepted Races"
+          label={t("tabs.accepted")}
           active={activeTab === "acceptedRaces"}
           onClick={() => setActiveTab("acceptedRaces")}
         />
         <TabButton
-          label="Race Plan"
+          label={t("tabs.racePlan")}
           active={activeTab === "racePackage"}
           onClick={() => setActiveTab("racePackage")}
         />
         <TabButton
-          label="Stage Plans"
+          label={t("tabs.stagePlans")}
           active={activeTab === "stagePlans"}
           disabled={!stagePlansOpen}
           onClick={() => setActiveTab("stagePlans")}
@@ -3275,7 +3271,7 @@ export default function RacePreparationPage(): JSX.Element {
       {activeTab === "racePackage" && (
         <>
           {!target?.has_target ? (
-            <EmptyCard message="No accepted race selected." />
+            <EmptyCard message={t("page.noAcceptedSelected")} />
           ) : (
             <>
               <RaceHeaderCard
@@ -3303,49 +3299,42 @@ export default function RacePreparationPage(): JSX.Element {
 
               {isPackageTooEarly && !selectedRaceAllWeatherCanceled && (
                 <div className="rounded-xl border border-orange-300 bg-orange-50 px-4 py-3 text-sm font-medium text-orange-800">
-                  Race Plan is not open yet. It opens on{" "}
-                  {formatFullGameDate(target.setup_window_opens_on)}.
+                  {t("racePlan.notOpen", {
+                    date: formatFullGameDate(target.setup_window_opens_on),
+                  })}
                 </div>
               )}
 
               {isPackageDeadlinePassed && !selectedRaceAllWeatherCanceled && (
                 <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
-                  Rider submission deadline has passed. This Race Plan can no
-                  longer be edited.
+                  {t("racePlan.deadlinePassed")}
                 </div>
               )}
 
               <section className="grid gap-6 xl:grid-cols-[1.4fr_0.8fr]">
                 <div className="space-y-6">
                   <RacePackageCard
-                    title="1. Riders"
+                    title={t("racePlan.ridersTitle")}
                     action={
                       <InfoTooltip
-                        label="Rider freshness help"
+                        label={t("racePlan.riderFreshnessHelp")}
                         panelWidthClass="w-[30rem]"
                       >
                         <div className="text-sm font-semibold text-slate-900">
-                          Freshness, sharpness and fatigue
+                          {t("racePlan.freshnessTitle")}
                         </div>
                         <p className="mt-2">
-                          Race sharpness shows whether a rider has enough recent
-                          racing rhythm. Higher sharpness helps a rider start
-                          sharper and perform more reliably.
+                          {t("racePlan.sharpnessHelp")}
                         </p>
                         <p className="mt-2">
-                          Fatigue is still the main limiter. A rider with good
-                          race sharpness but very high fatigue will not start
-                          the race fully fresh.
+                          {t("racePlan.fatigueHelp")}
                         </p>
                         <p className="mt-2">
-                          The race-start red freshness bar combines fatigue and
-                          race sharpness. It is capped between 50 and 100 so no
-                          selected rider starts a race unrealistically empty.
+                          {t("racePlan.freshnessBarHelp")}
                         </p>
                         {packageSubmitted ? (
                           <p className="mt-2 font-semibold text-slate-800">
-                            Because this Race Plan is already submitted, only
-                            riders selected for this race are shown here.
+                            {t("racePlan.submittedRidersOnly")}
                           </p>
                         ) : null}
                       </InfoTooltip>
@@ -3358,42 +3347,41 @@ export default function RacePreparationPage(): JSX.Element {
                           : "text-slate-600"
                       }`}
                     >
-                      Selected riders: {cleanSelectedRiderIds.length} ·
-                      Required: {minRiders || "—"}–{maxRiders || "—"}
+                      {t("racePlan.selectedRequired", {
+                        selected: cleanSelectedRiderIds.length,
+                        min: minRiders || "—",
+                        max: maxRiders || "—",
+                      })}
                       {selectedSquadOption
                         ? ` · ${selectedSquadOption.name}`
                         : ""}
                       {riderSelectionTooMany && (
                         <div className="mt-1 font-medium">
-                          Remove {selectedRiderCount - maxRiders} rider
-                          {selectedRiderCount - maxRiders === 1 ? "" : "s"}{" "}
-                          before saving.
+                          {selectedRiderCount - maxRiders === 1
+                            ? t("racePlan.removeOneBeforeSaving", { count: selectedRiderCount - maxRiders })
+                            : t("racePlan.removeBeforeSaving", { count: selectedRiderCount - maxRiders })}
                         </div>
                       )}
                       {riderSelectionTooFew && (
                         <div className="mt-1 font-medium">
-                          Select at least {minRiders} riders before submitting.
+                          {t("racePlan.selectAtLeast", { count: minRiders })}
                         </div>
                       )}
                     </div>
 
                     {blockedRiderIds.size > 0 ? (
                       <div className="mt-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
-                        {blockedRiderIds.size} rider
-                        {blockedRiderIds.size === 1 ? "" : "s"} unavailable
-                        because they are already assigned to an overlapping
-                        race.
+                        {blockedRiderIds.size === 1
+                          ? t("racePlan.blockedRider", { count: blockedRiderIds.size })
+                          : t("racePlan.blockedRiders", { count: blockedRiderIds.size })}
                       </div>
                     ) : null}
 
                     {medicallyUnavailableRiderIds.size > 0 ? (
                       <div className="mt-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-medium text-red-800">
-                        {medicallyUnavailableRiderIds.size} rider
                         {medicallyUnavailableRiderIds.size === 1
-                          ? ""
-                          : "s"}{" "}
-                        medically unavailable and cannot be selected for this
-                        Race Plan.
+                          ? t("racePlan.medicalRider", { count: medicallyUnavailableRiderIds.size })
+                          : t("racePlan.medicalRiders", { count: medicallyUnavailableRiderIds.size })}
                       </div>
                     ) : null}
 
@@ -3431,61 +3419,51 @@ export default function RacePreparationPage(): JSX.Element {
                   </RacePackageCard>
 
                   <RacePackageCard
-                    title="2. Race Staff"
+                    title={t("racePlan.raceStaffTitle")}
                     action={
                       <InfoTooltip
-                        label="Race staff help"
+                        label={t("racePlan.raceStaffHelp")}
                         panelWidthClass="w-[30rem]"
                       >
                         <div className="text-sm font-semibold text-slate-900">
-                          Tactical planner and support staff
+                          {t("racePlan.plannerSupportTitle")}
                         </div>
                         <p className="mt-2">
-                          First Team races use a Sport Director. For a
-                          Developing Team race, choose exactly one tactical
-                          planner: Sport Director or U23 Head Coach.
+                          {t("racePlan.firstTeamPlannerHelp")}
                         </p>
                         <p className="mt-2">
-                          A U23 Head Coach automatically prepares the first
-                          eligible Stage Plan after submission and continues
-                          stage by stage. These Stage Plans are view-only.
-                          Switch back to Sport Director to edit them manually.
+                          {t("racePlan.u23PlannerHelp")}
                         </p>
                         <p className="mt-2">
-                          Team Doctor, Physio and Mechanic remain independent
-                          support-staff choices.
+                          {t("racePlan.supportStaffHelp")}
                         </p>
                         <p className="mt-2 font-semibold text-slate-800">
-                          Without a Team Doctor, medical fitness warnings are
-                          not created.
+                          {t("racePlan.doctorWarning")}
                         </p>
                       </InfoTooltip>
                     }
                   >
                     <div className="mb-3 text-sm text-slate-600">
                       {isDevelopingTeamSelected
-                        ? "Choose one tactical planner for the Developing Team. Team Doctor, Physio and Mechanic remain separate."
-                        : "First Team races use a Sport Director. Team Doctor, Physio and Mechanic remain optional support staff."}
+                        ? t("racePlan.developingPlannerIntro")
+                        : t("racePlan.firstTeamPlannerIntro")}
                     </div>
 
                     {blockedStaffIds.size > 0 ? (
                       <div className="mb-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
-                        {blockedStaffIds.size} staff member
-                        {blockedStaffIds.size === 1 ? "" : "s"} unavailable
-                        because they are already assigned to an overlapping
-                        race.
+                        {blockedStaffIds.size === 1
+                          ? t("racePlan.blockedStaffOne", { count: blockedStaffIds.size })
+                          : t("racePlan.blockedStaff", { count: blockedStaffIds.size })}
                       </div>
                     ) : null}
 
                     {isDevelopingTeamSelected ? (
                       <div className="mb-5 rounded-2xl border border-slate-200 bg-slate-50 p-4">
                         <div className="text-sm font-semibold text-slate-900">
-                          Tactical Planner
+                          {t("racePlan.tacticalPlanner")}
                         </div>
                         <div className="mt-1 text-xs leading-5 text-slate-600">
-                          Choose either manual Sport Director planning or
-                          automatic U23 Head Coach planning. Both cannot be
-                          active together.
+                          {t("racePlan.tacticalPlannerHelp")}
                         </div>
 
                         <div className="mt-3 grid gap-3 sm:grid-cols-2">
@@ -3507,8 +3485,7 @@ export default function RacePreparationPage(): JSX.Element {
                               {t(tacticalPlannerRoleLabelKeys.sport_director)}
                             </div>
                             <div className="mt-1 text-xs leading-5 text-slate-600">
-                              You manage Stage Plans manually and may ask the
-                              Sport Director for suggestions.
+                              {t("racePlan.sportDirectorPlanHelp")}
                             </div>
                           </button>
 
@@ -3530,9 +3507,7 @@ export default function RacePreparationPage(): JSX.Element {
                               {t(tacticalPlannerRoleLabelKeys.u23_head_coach)}
                             </div>
                             <div className="mt-1 text-xs leading-5 text-slate-600">
-                              The coach automatically prepares Stage Plans.
-                              Plans remain view-only until you switch back to a
-                              Sport Director.
+                              {t("racePlan.u23PlanHelp")}
                             </div>
                           </button>
                         </div>
@@ -3553,9 +3528,7 @@ export default function RacePreparationPage(): JSX.Element {
                               }
                               className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm disabled:opacity-60"
                             >
-                              <option value="">
-                                No Sport Director selected
-                              </option>
+                              <option value="">{t("racePlan.noSportDirector")}</option>
                               {(selectableData?.staff ?? [])
                                 .filter(
                                   (staff) =>
@@ -3596,9 +3569,7 @@ export default function RacePreparationPage(): JSX.Element {
                                 }
                                 className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm disabled:opacity-60"
                               >
-                                <option value="">
-                                  No U23 Head Coach selected
-                                </option>
+                                <option value="">{t("racePlan.noU23HeadCoach")}</option>
                                 {(selectableData?.staff ?? [])
                                   .filter(
                                     (staff) =>
@@ -3663,10 +3634,10 @@ export default function RacePreparationPage(): JSX.Element {
 
                             <div className="mt-3 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs leading-5 text-emerald-800">
                               {packageSubmitted && u23AutomationEnabled
-                                ? "U23 automation is active. The coach manages eligible stages automatically."
+                                ? t("racePlan.u23AutomationActive")
                                 : selectedU23HeadCoach
-                                  ? `${selectedU23HeadCoach.staff_name} will take control when the Race Plan is submitted.`
-                                  : "Select the U23 Head Coach who should manage this race."}
+                                  ? t("racePlan.u23TakeControl", { coach: selectedU23HeadCoach.staff_name })
+                                  : t("racePlan.selectU23Coach")}
                             </div>
                           </div>
                         )}
@@ -3696,7 +3667,7 @@ export default function RacePreparationPage(): JSX.Element {
                               }
                               className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm disabled:opacity-60"
                             >
-                              <option value="">No {t(labelKey)} selected</option>
+                              <option value="">{t("racePlan.noRoleSelected", { role: t(labelKey) })}</option>
                               {staffOptionsForRole.map((staff) => {
                                 const blockedReason =
                                   formatBlockedResourceReason(
@@ -3721,13 +3692,12 @@ export default function RacePreparationPage(): JSX.Element {
                     </div>
                   </RacePackageCard>
 
-                  <RacePackageCard title="3. Race Assets">
+                  <RacePackageCard title={t("racePlan.assetsTitle")}>
                     {blockedAssetIds.size > 0 ? (
                       <div className="mb-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
-                        {blockedAssetIds.size} asset
-                        {blockedAssetIds.size === 1 ? "" : "s"} unavailable
-                        because they are already assigned to an overlapping
-                        race.
+                        {blockedAssetIds.size === 1
+                          ? t("racePlan.blockedAsset", { count: blockedAssetIds.size })
+                          : t("racePlan.blockedAssets", { count: blockedAssetIds.size })}
                       </div>
                     ) : null}
 
@@ -3755,7 +3725,7 @@ export default function RacePreparationPage(): JSX.Element {
                               }
                               className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm disabled:opacity-60"
                             >
-                              <option value="">No asset selected</option>
+                              <option value="">{t("racePlan.noAsset")}</option>
                               {assetOptions.map((asset) => {
                                 const blockedReason =
                                   formatBlockedResourceReason(
@@ -3778,15 +3748,13 @@ export default function RacePreparationPage(): JSX.Element {
                                       selectedInAnotherSlot
                                     }
                                   >
-                                    {asset.display_name} · Lv{" "}
-                                    {asset.asset_level ?? 1} ·{" "}
-                                    {Number(
-                                      asset.condition_percent ?? 0,
-                                    ).toFixed(0)}
-                                    % condition
+                                    {asset.display_name} · {t("racePlan.assetOption", {
+                                      level: asset.asset_level ?? 1,
+                                      condition: Number(asset.condition_percent ?? 0).toFixed(0),
+                                    })}
                                     {blockedReason ? ` — ${blockedReason}` : ""}
                                     {!blockedReason && selectedInAnotherSlot
-                                      ? " — already selected in another slot"
+                                      ? ` — ${t("racePlan.alreadySelectedSlot")}`
                                       : ""}
                                   </option>
                                 );
@@ -3800,28 +3768,26 @@ export default function RacePreparationPage(): JSX.Element {
                 </div>
 
                 <aside className="space-y-6">
-                  <RacePackageCard title="Cost Preview">
+                  <RacePackageCard title={t("racePlan.costPreview")}>
                     <div className="space-y-2 text-sm">
-                      <CostLine label="Travel tickets" value={travelTickets} />
-                      <CostLine label="Accommodation" value={accommodation} />
+                      <CostLine label={t("racePlan.travelTickets")} value={travelTickets} />
+                      <CostLine label={t("racePlan.accommodation")} value={accommodation} />
                       <CostLine
-                        label="Asset transport"
+                        label={t("racePlan.assetTransport")}
                         value={assetTransport}
                       />
                       <CostLine
-                        label="Team logistics & operations"
+                        label={t("racePlan.logistics")}
                         value={logistics}
                       />
                       <div className="border-t pt-3">
-                        <CostLine label="Total" value={total} strong />
+                        <CostLine label={t("racePlan.total")} value={total} strong />
                       </div>
                     </div>
 
                     <div className="mt-4 rounded-xl bg-slate-50 p-3 text-xs text-slate-600">
-                      This is a preview only. Saving the Race Plan does not
-                      charge money or lock assets. Payment and locks happen only
-                      after confirmed submission or the rider deadline.
-                      {quoteRefreshing ? <span> Updating preview…</span> : null}
+                      {t("racePlan.costPreviewHelp")}
+                      {quoteRefreshing ? <span> {t("racePlan.updatingPreview")}</span> : null}
                     </div>
 
                     <div className="mt-5 flex flex-col gap-2">
@@ -3835,7 +3801,7 @@ export default function RacePreparationPage(): JSX.Element {
                         onClick={handleQuote}
                         className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
                       >
-                        Refresh Quote
+                        {t("racePlan.refreshQuote")}
                       </button>
 
                       <button
@@ -3844,7 +3810,7 @@ export default function RacePreparationPage(): JSX.Element {
                         onClick={handleSaveDraft}
                         className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
                       >
-                        Save Race Plan
+                        {t("racePlan.save")}
                       </button>
 
                       <button
@@ -3855,12 +3821,12 @@ export default function RacePreparationPage(): JSX.Element {
                         onClick={requestSubmitRacePlan}
                         className="rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
                       >
-                        Submit Race Plan
+                        {t("racePlan.submit")}
                       </button>
                     </div>
                   </RacePackageCard>
 
-                  <RacePackageCard title="Validation">
+                  <RacePackageCard title={t("racePlan.validation")}>
                     {quote?.errors?.length ? (
                       <div className="space-y-2">
                         {quote.errors.map((error) => (
@@ -3874,7 +3840,7 @@ export default function RacePreparationPage(): JSX.Element {
                       </div>
                     ) : (
                       <div className="text-sm text-slate-600">
-                        Refresh quote to check validation.
+                        {t("racePlan.refreshValidation")}
                       </div>
                     )}
 
@@ -3926,14 +3892,11 @@ export default function RacePreparationPage(): JSX.Element {
         <div className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-950/60 p-4">
           <div className="w-full max-w-lg rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl">
             <h2 className="text-lg font-bold text-slate-900">
-              Change competing squad?
+              {t("dialog.changeSquadTitle")}
             </h2>
 
             <p className="mt-3 text-sm leading-6 text-slate-600">
-              Changing to <strong>{pendingSquadOption.name}</strong> will remove
-              the currently selected riders and reset the tactical planner.
-              Support staff, assets, supplies and equipment settings will remain
-              unchanged.
+              {t("dialog.changeSquadBody", { squad: pendingSquadOption.name })}
             </p>
 
             <div className="mt-6 flex flex-wrap justify-end gap-3">
@@ -3943,7 +3906,7 @@ export default function RacePreparationPage(): JSX.Element {
                 onClick={() => setPendingParticipatingClubId(null)}
                 className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
               >
-                Cancel
+                {t("dialog.cancel")}
               </button>
 
               <button
@@ -3954,7 +3917,7 @@ export default function RacePreparationPage(): JSX.Element {
                 }
                 className="rounded-xl bg-yellow-400 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-yellow-300 disabled:opacity-50"
               >
-                Change squad
+                {t("dialog.changeSquad")}
               </button>
             </div>
           </div>
@@ -3965,23 +3928,19 @@ export default function RacePreparationPage(): JSX.Element {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 px-4">
           <div className="w-full max-w-xl rounded-2xl bg-white p-6 shadow-xl">
             <h2 className="text-lg font-semibold text-slate-950">
-              Submit Race Plan now?
+              {t("dialog.submitTitle")}
             </h2>
 
             <p className="mt-3 text-sm leading-6 text-slate-600">
-              The rider deadline is{" "}
-              <strong>
-                {formatGameDate(target?.rider_submission_deadline_on)}
-              </strong>
-              . If you submit the Race Plan now, riders, race staff and race
-              assets will be locked for this race. Stage Plans will open
-              immediately after submission.
+              {t("dialog.riderDeadlineIs")} {" "}
+              <strong>{formatGameDate(target?.rider_submission_deadline_on)}</strong>
+              {t("dialog.submitTail")}
             </p>
 
             {hasSubmitPlanWarnings ? (
               <div className="mt-4 rounded-xl border-2 border-red-300 bg-red-50 p-4">
                 <div className="text-base font-bold text-red-800">
-                  Warning: this Race Plan is not fully assigned.
+                  {t("dialog.warning")}
                 </div>
 
                 <ul className="mt-3 list-disc space-y-2 pl-5 text-sm font-semibold text-red-700">
@@ -3991,8 +3950,7 @@ export default function RacePreparationPage(): JSX.Element {
                 </ul>
 
                 <p className="mt-3 text-sm font-medium text-red-700">
-                  If you continue, the Race Plan will be submitted exactly like
-                  this and missing riders, staff or assets will stay empty.
+                  {t("dialog.warningBody")}
                 </p>
               </div>
             ) : null}
@@ -4003,7 +3961,7 @@ export default function RacePreparationPage(): JSX.Element {
                 onClick={() => setShowSubmitConfirm(false)}
                 className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
               >
-                Cancel
+                {t("dialog.cancel")}
               </button>
 
               <button
@@ -4015,8 +3973,8 @@ export default function RacePreparationPage(): JSX.Element {
                 className="rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700"
               >
                 {hasSubmitPlanWarnings
-                  ? "Yes, Submit Anyway"
-                  : "Yes, Submit Race Plan"}
+                  ? t("dialog.submitAnyway")
+                  : t("dialog.submitYes")}
               </button>
             </div>
           </div>
