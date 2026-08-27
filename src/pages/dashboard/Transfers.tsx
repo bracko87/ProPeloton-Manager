@@ -1579,10 +1579,17 @@ export default function TransfersPage() {
 
   useEffect(() => {
     const params = new URLSearchParams(location.search)
+    const tab = params.get('tab')
     const activity = params.get('activity')
     const offerId = params.get('offerId')
     const makeOfferListingId = params.get('makeOfferListingId')
     const riderSubTabParam = params.get('riderSubTab')
+
+    if (tab === 'staff') {
+      setActiveTab('staff')
+    } else if (tab === 'riders') {
+      setActiveTab('riders')
+    }
 
     if (isValidRiderMarketSubTab(riderSubTabParam)) {
       setActiveTab('riders')
@@ -1608,7 +1615,7 @@ export default function TransfersPage() {
       setActiveTab('riders')
       setRiderMarketSubTab('transfer_list')
     }
-  }, [location.search])
+  }, [location.search, tutorialLoading])
 
   async function loadStaffData(clubIdValue: string, mounted = true) {
     const [candidateRows, clubStaffResult, nextStaffRoleLimits] = await Promise.all([
