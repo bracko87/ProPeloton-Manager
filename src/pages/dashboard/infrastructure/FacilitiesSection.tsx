@@ -10,6 +10,7 @@
  */
 
 import React from 'react'
+import { useTranslation } from 'react-i18next'
 import type {
   ActiveJobView,
   FacilityJobCapacityRow,
@@ -24,11 +25,6 @@ import {
   toNumber,
 } from './infrastructureHelpers'
 
-/**
- * ActiveJobsPanel
- * Minimal full-width panel showing currently active infrastructure jobs
- * with optional cancellation quotes and actions.
- */
 function ActiveJobsPanel({
   jobs,
   nowMs,
@@ -44,26 +40,29 @@ function ActiveJobsPanel({
   processingKey: string | null
   onCancelJob: (jobId: string) => void
 }): JSX.Element {
+  const { t } = useTranslation('infrastructure')
+
   if (jobs.length === 0) {
     return (
       <div className="mb-5 rounded-xl bg-white border border-gray-100 shadow-sm p-4">
         <div className="flex items-center justify-between gap-3">
           <div>
-            <div className="text-sm text-gray-500">Active Jobs</div>
+            <div className="text-sm text-gray-500">{t('facilities.activeJobs')}</div>
             <div className="text-base font-semibold text-gray-900 mt-1">
-              No facility construction jobs in progress
+              {t('facilities.noJobs')}
             </div>
 
             {facilityCapacity && (
               <div className="text-xs text-gray-500 mt-1">
-                Facility construction slots: {facilityCapacity.active_facility_jobs} /{' '}
-                {facilityCapacity.max_active_facility_jobs} active ·{' '}
-                {facilityCapacity.open_facility_job_slots} open
+                {t('facilities.constructionSlots')}{' '}
+                {facilityCapacity.active_facility_jobs} /{' '}
+                {facilityCapacity.max_active_facility_jobs} {t('facilities.active')} ·{' '}
+                {facilityCapacity.open_facility_job_slots} {t('facilities.open')}
               </div>
             )}
           </div>
 
-          <div className="text-sm text-gray-400">All clear</div>
+          <div className="text-sm text-gray-400">{t('common.allClear')}</div>
         </div>
       </div>
     )
@@ -73,16 +72,19 @@ function ActiveJobsPanel({
     <div className="mb-5 rounded-xl bg-white border border-gray-100 shadow-sm p-4">
       <div className="flex items-center justify-between gap-3 mb-4">
         <div>
-          <div className="text-sm text-gray-500">Active Jobs</div>
+          <div className="text-sm text-gray-500">{t('facilities.activeJobs')}</div>
           <div className="text-base font-semibold text-gray-900 mt-1">
-            {jobs.length} infrastructure {jobs.length === 1 ? 'job' : 'jobs'} in progress
+            {jobs.length === 1
+              ? t('facilities.jobInProgress', { count: jobs.length })
+              : t('facilities.jobsInProgress', { count: jobs.length })}
           </div>
 
           {facilityCapacity && (
             <div className="text-xs text-gray-500 mt-1">
-              Facility construction slots: {facilityCapacity.active_facility_jobs} /{' '}
-              {facilityCapacity.max_active_facility_jobs} active ·{' '}
-              {facilityCapacity.open_facility_job_slots} open
+              {t('facilities.constructionSlots')}{' '}
+              {facilityCapacity.active_facility_jobs} /{' '}
+              {facilityCapacity.max_active_facility_jobs} {t('facilities.active')} ·{' '}
+              {facilityCapacity.open_facility_job_slots} {t('facilities.open')}
             </div>
           )}
         </div>
@@ -102,19 +104,19 @@ function ActiveJobsPanel({
                 </div>
 
                 <span className="text-xs px-2 py-1 rounded-full bg-yellow-100 text-yellow-800 font-medium">
-                  {job.type === 'facility_upgrade' ? 'Upgrade' : 'Delivery'}
+                  {job.type === 'facility_upgrade' ? t('common.upgrade') : t('common.delivery')}
                 </span>
               </div>
 
               <div className="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs text-yellow-800">
-                <span>Game duration: {formatGameDays(job.durationGameDays)}</span>
-                <span>Completes: {formatGameDate(job.completeGameDate)}</span>
-                <span>Paid: {formatCash(job.costCash)}</span>
+                <span>{t('facilities.gameDuration')} {formatGameDays(job.durationGameDays)}</span>
+                <span>{t('common.completes')}: {formatGameDate(job.completeGameDate)}</span>
+                <span>{t('facilities.paid')} {formatCash(job.costCash)}</span>
               </div>
 
               {!job.completeGameDate && (
                 <div className="mt-2 text-xs text-yellow-700">
-                  Real-time remaining: {formatTimeRemaining(job.completeAt, nowMs)}
+                  {t('facilities.realTimeRemaining')} {formatTimeRemaining(job.completeAt, nowMs)}
                 </div>
               )}
 
@@ -122,19 +124,19 @@ function ActiveJobsPanel({
                 <div className="mt-3 rounded-lg border border-yellow-200 bg-white/70 p-3">
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs text-yellow-900">
                     <div>
-                      <span className="block text-yellow-700">Refund now</span>
+                      <span className="block text-yellow-700">{t('facilities.refundNow')}</span>
                       <span className="font-semibold">{formatCash(quote.refund_cash)}</span>
                     </div>
 
                     <div>
-                      <span className="block text-yellow-700">Refund percent</span>
+                      <span className="block text-yellow-700">{t('facilities.refundPercent')}</span>
                       <span className="font-semibold">
                         {toNumber(quote.refund_percent, 0).toFixed(2)}%
                       </span>
                     </div>
 
                     <div>
-                      <span className="block text-yellow-700">Cancellation cost</span>
+                      <span className="block text-yellow-700">{t('facilities.cancellationCost')}</span>
                       <span className="font-semibold">
                         {formatCash(quote.cancellation_cost_cash)}
                       </span>
@@ -156,7 +158,7 @@ function ActiveJobsPanel({
                       : 'bg-red-100 text-red-700 hover:bg-red-200'
                   }`}
                 >
-                  {isCancelling ? 'Cancelling...' : 'Cancel Job'}
+                  {isCancelling ? t('facilities.cancelling') : t('facilities.cancelJob')}
                 </button>
               </div>
             </div>
@@ -167,10 +169,6 @@ function ActiveJobsPanel({
   )
 }
 
-/**
- * FacilityDetailsModal
- * Full-screen modal with detailed information and upgrade preview for a facility.
- */
 function FacilityDetailsModal({
   item,
   isProcessing,
@@ -184,6 +182,7 @@ function FacilityDetailsModal({
   onAction: (item: InfrastructureItem) => void
   nowMs: number
 }): JSX.Element {
+  const { t } = useTranslation('infrastructure')
   const isDisabled = isProcessing || !item.canAct
 
   const buttonClasses = isDisabled
@@ -194,7 +193,7 @@ function FacilityDetailsModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <button
         type="button"
-        aria-label="Close infrastructure details"
+        aria-label={t('common.close')}
         onClick={onClose}
         className="absolute inset-0 bg-black/40 backdrop-blur-sm"
       />
@@ -203,7 +202,7 @@ function FacilityDetailsModal({
         <div className="p-5 border-b border-gray-100 flex items-start justify-between gap-4">
           <div>
             <div className="text-xs uppercase tracking-wide text-gray-400">
-              Infrastructure Details
+              {t('facilities.detailsTitle')}
             </div>
             <h3 className="text-xl font-semibold text-gray-900 mt-1">{item.name}</h3>
             <p className="text-sm text-gray-500 mt-1">{item.description}</p>
@@ -218,7 +217,7 @@ function FacilityDetailsModal({
             onClick={onClose}
             className="rounded-full border border-gray-200 bg-white px-3 py-1 text-sm text-gray-600 hover:bg-gray-50"
           >
-            Close
+            {t('common.close')}
           </button>
         </div>
 
@@ -230,9 +229,9 @@ function FacilityDetailsModal({
               ) : (
                 <div className="flex h-full w-full items-center justify-center text-center p-4">
                   <div>
-                    <div className="text-sm font-semibold text-gray-600">Image placeholder</div>
+                    <div className="text-sm font-semibold text-gray-600">{t('facilities.imagePlaceholder')}</div>
                     <div className="text-xs text-gray-400 mt-1">
-                      Add {item.name} image here later.
+                      {t('facilities.addImageLater', { name: item.name })}
                     </div>
                   </div>
                 </div>
@@ -240,10 +239,10 @@ function FacilityDetailsModal({
             </div>
 
             <div className="mt-4 rounded-xl border border-gray-100 bg-gray-50 p-4">
-              <div className="text-sm text-gray-500">Current status</div>
+              <div className="text-sm text-gray-500">{t('facilities.currentStatus')}</div>
               <div className="text-lg font-semibold text-gray-900 mt-1">{item.valueLabel}</div>
               <div className="mt-2 text-xs text-gray-500">
-                Status: <span className="font-medium text-gray-700">{item.badgeLabel}</span>
+                {t('facilities.status')} <span className="font-medium text-gray-700">{item.badgeLabel}</span>
               </div>
             </div>
           </div>
@@ -252,7 +251,7 @@ function FacilityDetailsModal({
             {item.impactLines && item.impactLines.length > 0 && (
               <div className="rounded-xl border border-blue-100 bg-blue-50 p-4">
                 <div className="text-sm font-semibold text-blue-900">
-                  Current connected impact
+                  {t('facilities.currentImpact')}
                 </div>
                 <div className="mt-2 space-y-1">
                   {item.impactLines.map((line, index) => (
@@ -269,39 +268,39 @@ function FacilityDetailsModal({
 
             {!item.pendingJob && item.nextValueLabel && (
               <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
-                <div className="text-sm font-semibold text-gray-900">Next level</div>
+                <div className="text-sm font-semibold text-gray-900">{t('facilities.nextLevel')}</div>
 
                 <div className="mt-2 text-sm text-gray-700">{item.nextValueLabel}</div>
 
                 {item.unlockSummary && (
                   <div className="mt-3 text-sm text-gray-700">
-                    <span className="font-semibold">Unlock:</span> {item.unlockSummary}
+                    <span className="font-semibold">{t('facilities.unlock')}</span> {item.unlockSummary}
                   </div>
                 )}
 
                 {item.effectSummary && (
                   <div className="mt-2 text-sm text-gray-700">
-                    <span className="font-semibold">Effect:</span> {item.effectSummary}
+                    <span className="font-semibold">{t('facilities.effect')}</span> {item.effectSummary}
                   </div>
                 )}
 
                 <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div className="rounded-lg bg-gray-50 border border-gray-100 p-3">
-                    <div className="text-xs text-gray-400">Cost</div>
+                    <div className="text-xs text-gray-400">{t('common.cost')}</div>
                     <div className="text-sm font-semibold text-gray-900 mt-1">
                       {formatCash(item.previewCostCash)}
                     </div>
                   </div>
 
                   <div className="rounded-lg bg-gray-50 border border-gray-100 p-3">
-                    <div className="text-xs text-gray-400">Construction time</div>
+                    <div className="text-xs text-gray-400">{t('facilities.constructionTime')}</div>
                     <div className="text-sm font-semibold text-gray-900 mt-1">
                       {formatGameDays(item.previewDurationGameDays)}
                     </div>
                   </div>
 
                   <div className="rounded-lg bg-gray-50 border border-gray-100 p-3">
-                    <div className="text-xs text-gray-400">Estimated completion</div>
+                    <div className="text-xs text-gray-400">{t('facilities.estimatedCompletion')}</div>
                     <div className="text-sm font-semibold text-gray-900 mt-1">
                       {formatGameDate(item.previewCompleteGameDate)}
                     </div>
@@ -312,26 +311,26 @@ function FacilityDetailsModal({
 
             {item.pendingJob && (
               <div className="rounded-xl border border-yellow-200 bg-yellow-50 p-4">
-                <div className="text-sm font-semibold text-yellow-900">Job in progress</div>
+                <div className="text-sm font-semibold text-yellow-900">{t('facilities.jobProgress')}</div>
                 <div className="mt-2 text-sm text-yellow-800">{item.pendingSummary}</div>
 
                 <div className="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm text-yellow-800">
                   <div>
-                    <span className="block text-yellow-700">Duration</span>
+                    <span className="block text-yellow-700">{t('common.duration')}</span>
                     <span className="font-semibold">
                       {formatGameDays(item.pendingJob.duration_game_days)}
                     </span>
                   </div>
 
                   <div>
-                    <span className="block text-yellow-700">Completes</span>
+                    <span className="block text-yellow-700">{t('common.completes')}</span>
                     <span className="font-semibold">
                       {formatGameDate(item.pendingJob.complete_game_date)}
                     </span>
                   </div>
 
                   <div>
-                    <span className="block text-yellow-700">Cost paid</span>
+                    <span className="block text-yellow-700">{t('common.costPaid')}</span>
                     <span className="font-semibold">
                       {formatCash(item.pendingJob.cost_cash)}
                     </span>
@@ -340,7 +339,7 @@ function FacilityDetailsModal({
 
                 {!item.pendingJob.complete_game_date && (
                   <div className="mt-2 text-xs text-yellow-700">
-                    Real-time fallback remaining:{' '}
+                    {t('facilities.fallbackRemaining')}{' '}
                     {formatTimeRemaining(item.pendingJob.complete_at, nowMs)}
                   </div>
                 )}
@@ -352,10 +351,10 @@ function FacilityDetailsModal({
         <div className="p-5 border-t border-gray-100 flex items-center justify-between gap-3">
           <div className="text-xs text-gray-400">
             {item.pendingJob
-              ? 'This facility is locked while construction is in progress.'
+              ? t('facilities.lockedDuringConstruction')
               : item.canAct
-                ? 'Construction cost is charged immediately when the job starts.'
-                : 'No upgrade is currently available.'}
+                ? t('facilities.costCharged')
+                : t('facilities.noUpgrade')}
           </div>
 
           <div className="flex items-center gap-2">
@@ -364,7 +363,7 @@ function FacilityDetailsModal({
               onClick={onClose}
               className="px-4 py-2 rounded-md text-sm font-medium border border-gray-200 bg-white text-gray-700 hover:bg-gray-50"
             >
-              Cancel
+              {t('common.cancel')}
             </button>
 
             <button
@@ -373,7 +372,7 @@ function FacilityDetailsModal({
               disabled={isDisabled}
               className={`px-4 py-2 rounded-md text-sm font-medium transition ${buttonClasses}`}
             >
-              {isProcessing ? 'Starting...' : item.actionLabel}
+              {isProcessing ? t('common.starting') : item.actionLabel}
             </button>
           </div>
         </div>
@@ -382,10 +381,6 @@ function FacilityDetailsModal({
   )
 }
 
-/**
- * InfrastructureCard
- * Compact facility card used in the grid for the Facilities tab.
- */
 function InfrastructureCard({
   item,
   isProcessing,
@@ -399,6 +394,7 @@ function InfrastructureCard({
   onDetails: (item: InfrastructureItem) => void
   nowMs: number
 }): JSX.Element {
+  const { t } = useTranslation('infrastructure')
   const badgeClasses = item.pendingJob
     ? 'bg-yellow-100 text-yellow-700'
     : item.owned
@@ -438,21 +434,21 @@ function InfrastructureCard({
 
           <div className="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs text-gray-600">
             <div>
-              <span className="block text-gray-400">Cost</span>
+              <span className="block text-gray-400">{t('common.cost')}</span>
               <span className="font-medium text-gray-800">
                 {formatCash(item.previewCostCash)}
               </span>
             </div>
 
             <div>
-              <span className="block text-gray-400">Construction time</span>
+              <span className="block text-gray-400">{t('facilities.constructionTime')}</span>
               <span className="font-medium text-gray-800">
                 {formatGameDays(item.previewDurationGameDays)}
               </span>
             </div>
 
             <div>
-              <span className="block text-gray-400">Estimated completion</span>
+              <span className="block text-gray-400">{t('facilities.estimatedCompletion')}</span>
               <span className="font-medium text-gray-800">
                 {formatGameDate(item.previewCompleteGameDate)}
               </span>
@@ -466,15 +462,15 @@ function InfrastructureCard({
           <div className="text-sm font-medium text-yellow-800">{item.pendingSummary}</div>
 
           <div className="text-xs text-yellow-700 mt-1">
-            Game duration: {formatGameDays(item.pendingJob.duration_game_days)}
+            {t('facilities.gameDuration')} {formatGameDays(item.pendingJob.duration_game_days)}
           </div>
 
           <div className="text-xs text-yellow-700 mt-1">
-            Completes: {formatGameDate(item.pendingJob.complete_game_date)}
+            {t('common.completes')}: {formatGameDate(item.pendingJob.complete_game_date)}
           </div>
 
           <div className="text-xs text-yellow-700 mt-1">
-            Cost paid: {formatCash(item.pendingJob.cost_cash)}
+            {t('common.costPaid')}: {formatCash(item.pendingJob.cost_cash)}
           </div>
         </div>
       )}
@@ -485,7 +481,7 @@ function InfrastructureCard({
           onClick={() => onDetails(item)}
           className="px-4 py-2 rounded-md text-sm font-medium border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 transition"
         >
-          Details
+          {t('common.details')}
         </button>
 
         <button
@@ -494,17 +490,13 @@ function InfrastructureCard({
           disabled={isDisabled}
           className={`px-4 py-2 rounded-md text-sm font-medium transition ${buttonClasses}`}
         >
-          {isProcessing ? 'Starting...' : item.actionLabel}
+          {isProcessing ? t('common.starting') : item.actionLabel}
         </button>
       </div>
     </div>
   )
 }
 
-/**
- * FacilitiesSection
- * Wrapper that renders active jobs, facility cards, and the facility details modal.
- */
 export function FacilitiesSection({
   activeJobs,
   nowMs,
