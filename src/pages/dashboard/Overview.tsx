@@ -319,7 +319,7 @@ type StaffAdvisoryOverviewRow = {
   advisor_leadership: number | null;
   advisor_efficiency: number | null;
   advisor_loyalty: number | null;
-  advisory_status: "no_staff" | "unassigned" | "active" | "expired";
+  advisory_status: "no_staff" | "unassigned" | "active" | "paused" | "resumed" | "expired";
   advisory_expires_at: string | null;
   advisor_notification_count?: number | null;
 };
@@ -333,6 +333,17 @@ type StaffAdvisoryQuoteRow = {
   current_expires_at: string | null;
   proposed_expires_at: string;
   is_renewal: boolean;
+  automatic_renewal: boolean;
+};
+
+type StaffAdvisoryRoleRenewalQuoteRow = {
+  role_type: StaffBriefingRole["roleType"];
+  coin_price: number;
+  duration_real_days: number;
+  entitlement_state: "active" | "paused";
+  remaining_paid_seconds: number;
+  current_expires_at: string | null;
+  proposed_expires_at: string;
   automatic_renewal: boolean;
 };
 
@@ -3844,6 +3855,11 @@ function StaffBriefingCentre({
   const [quoteLoading, setQuoteLoading] = React.useState(false);
   const [activationLoading, setActivationLoading] = React.useState(false);
   const [assignError, setAssignError] = React.useState<string | null>(null);
+  const [pausedRenewalRole, setPausedRenewalRole] = React.useState<StaffBriefingRole | null>(null);
+  const [pausedRenewalQuote, setPausedRenewalQuote] = React.useState<StaffAdvisoryRoleRenewalQuoteRow | null>(null);
+  const [pausedRenewalQuoteLoading, setPausedRenewalQuoteLoading] = React.useState(false);
+  const [pausedRenewalLoading, setPausedRenewalLoading] = React.useState(false);
+  const [pausedRenewalError, setPausedRenewalError] = React.useState<string | null>(null);
   const [advisoryInfoOpen, setAdvisoryInfoOpen] = React.useState(false);
   const advisoryInfoHoverTimer = React.useRef<number | null>(null);
 
@@ -3884,6 +3900,13 @@ function StaffBriefingCentre({
       year: "numeric",
     }).format(date);
   }, []);
+
+const getAdvisoryDaysRemaining = React.useCallback((value: string | null) => {
+  if (!value) return 0;
+  const timestamp = Date.parse(value);
+  if (!Number.isFinite(timestamp)) return 0;
+  return Math.max(0, Math.ceil((timestamp - Date.now()) / 86_400_000));
+}, []);
 
   const loadOverview = React.useCallback(async () => {
     if (!clubId) {
@@ -4104,6 +4127,88 @@ function StaffBriefingCentre({
     }
   }
 
+  async function openPausedRoleRenewal(role: StaffBriefingRole) {
+  if (!clubId) return;
+
+  setPausedRenewalRole(role);
+  setPausedRenewalQuote(null);
+  setPausedRenewalError(null);
+  setPausedRenewalQuoteLoading(true);
+
+  try {
+    const { data, error } = await supabase.rpc(
+      "staff_advisory_get_role_renewal_quote_v1",
+      {
+        p_club_id: clubId,
+        p_role_type: role.roleType,
+      },
+    );
+
+    if (error) throw error;
+
+    setPausedRenewalQuote(
+      asArray<StaffAdvisoryRoleRenewalQuoteRow>(data)[0] ?? null,
+    );
+  } catch (err) {
+    console.warn("Could not load paused Staff Advisory renewal quote:", err);
+    setPausedRenewalError(
+      err instanceof Error
+        ? err.message
+        : t("staffBriefing.couldNotLoadRenewalQuote"),
+    );
+  } finally {
+    setPausedRenewalQuoteLoading(false);
+  }
+}
+
+async function confirmPausedRoleRenewal() {
+  if (!clubId || !pausedRenewalRole || !pausedRenewalQuote) return;
+
+  if ((coinBalance ?? 0) < pausedRenewalQuote.coin_price) {
+    setPausedRenewalError(
+      t("staffBriefing.notEnoughCoins", {
+        required: pausedRenewalQuote.coin_price,
+        balance: coinBalance ?? 0,
+      }),
+    );
+    return;
+  }
+
+  setPausedRenewalLoading(true);
+  setPausedRenewalError(null);
+
+  try {
+    const idempotencyKey =
+      typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
+        ? crypto.randomUUID()
+        : `staff-advisory-role-renewal-${pausedRenewalRole.roleType}-${Date.now()}`;
+
+    const { error } = await supabase.rpc(
+      "staff_advisory_renew_my_role_v1",
+      {
+        p_club_id: clubId,
+        p_role_type: pausedRenewalRole.roleType,
+        p_idempotency_key: idempotencyKey,
+      },
+    );
+
+    if (error) throw error;
+
+    setPausedRenewalRole(null);
+    setPausedRenewalQuote(null);
+    await loadOverview();
+  } catch (err) {
+    console.warn("Could not renew paused Staff Advisory entitlement:", err);
+    setPausedRenewalError(
+      err instanceof Error
+        ? err.message
+        : t("staffBriefing.couldNotRenewPaused"),
+    );
+  } finally {
+    setPausedRenewalLoading(false);
+  }
+}
+
   const staffBriefingRoleLabels: Record<StaffBriefingRole["roleType"], string> = {
     head_coach: t("staffBriefing.roles.headCoach"),
     sport_director: t("staffBriefing.roles.sportsDirector"),
@@ -4289,7 +4394,11 @@ function StaffBriefingCentre({
           const status = row?.advisory_status ?? "no_staff";
           const hasAdvisor =
             Boolean(row?.advisor_staff_id) &&
-            (status === "active" || status === "expired");
+            (status === "active" || status === "resumed" || status === "expired");
+          const isRunningAdvisory = status === "active" || status === "resumed";
+          const remainingDays = getAdvisoryDaysRemaining(
+            row?.advisory_expires_at ?? null,
+          );
 
           const advisorStatMap: Record<StaffBriefingSkillKey, number> = {
             expertise: Number(row?.advisor_expertise ?? 0),
@@ -4315,9 +4424,11 @@ function StaffBriefingCentre({
             <div
               key={role.key}
               className={`flex min-h-[180px] flex-col rounded-2xl border p-3.5 shadow-sm transition ${
-                status === "no_staff"
-                  ? "border-slate-200 bg-slate-50 text-slate-400"
-                  : "border-slate-200 bg-white hover:border-slate-300"
+                status === "paused"
+                  ? "border-amber-200 bg-amber-50/40"
+                  : status === "no_staff"
+                    ? "border-slate-200 bg-slate-50 text-slate-400"
+                    : "border-slate-200 bg-white hover:border-slate-300"
               }`}
             >
               <div className="flex items-start justify-between gap-3">
@@ -4350,7 +4461,11 @@ function StaffBriefingCentre({
                     </div>
                   ) : (
                     <div className="mt-2 text-[12px] font-medium text-slate-800">
-                      {status === "unassigned" ? "No advisor assigned" : t("staffBriefing.noStaff")}
+                      {status === "paused"
+                      ? t("staffBriefing.roleVacant")
+                      : status === "unassigned"
+                        ? t("staffBriefing.noAdvisor")
+                        : t("staffBriefing.noStaff")}
                     </div>
                   )}
                 </div>
@@ -4383,7 +4498,38 @@ function StaffBriefingCentre({
                   <div className="h-4 w-full animate-pulse rounded-full bg-slate-100" />
                   <div className="h-4 w-5/6 animate-pulse rounded-full bg-slate-100" />
                 </div>
-              ) : status === "no_staff" ? (
+              ) : status === "paused" ? (
+              <>
+                <div className="mt-3 text-[11px] leading-4.5 text-slate-600">
+                  {t("staffBriefing.pausedVacant")}
+                </div>
+
+                <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5">
+                  <div className="text-[11px] font-semibold text-amber-800">
+                    {t("staffBriefing.paused")}
+                  </div>
+                  <div className="mt-1 text-sm font-semibold tabular-nums text-slate-950">
+                    {t("staffBriefing.paidDaysRemaining", { count: remainingDays })}
+                  </div>
+                </div>
+
+                <div className="mt-auto flex flex-wrap items-center gap-2 pt-3">
+                  <a
+                    href="#/dashboard/staff"
+                    className="inline-flex h-8 items-center rounded-lg border border-slate-300 bg-white px-3 text-[11px] font-semibold text-slate-700 transition hover:bg-slate-50"
+                  >
+                    {t("staffBriefing.manageStaff")}
+                  </a>
+                  <button
+                    type="button"
+                    onClick={() => void openPausedRoleRenewal(role)}
+                    className="inline-flex h-8 items-center rounded-lg bg-slate-950 px-3 text-[11px] font-semibold text-white transition hover:bg-slate-800"
+                  >
+                    {t("staffBriefing.extendPaidTime")}
+                  </button>
+                </div>
+              </>
+            ) : status === "no_staff" ? (
                 <>
                   <div className="mt-3 text-[11px] leading-4.5 text-slate-500">
                     {t("staffBriefing.hireRole", {
@@ -4432,17 +4578,25 @@ function StaffBriefingCentre({
                     <div className="text-[10px] font-medium leading-4">
                       <div
                         className={
-                          status === "active" ? "text-emerald-700" : "text-amber-700"
+                          isRunningAdvisory ? "text-emerald-700" : "text-amber-700"
                         }
                       >
-                        {status === "active"
-                          ? t("staffBriefing.active")
-                          : t("staffBriefing.expired")}
+                        {status === "resumed"
+                          ? t("staffBriefing.resumed")
+                          : status === "active"
+                            ? t("staffBriefing.active")
+                            : t("staffBriefing.expired")}
                       </div>
                       <div className="text-slate-500">
-                        {status === "active" ? t("staffBriefing.until") : "Expired"}{" "}
-                        {formatAdvisoryDate(row?.advisory_expires_at ?? null)}
+                        {isRunningAdvisory
+                          ? t("staffBriefing.daysRemaining", { count: remainingDays })
+                          : `${t("staffBriefing.expiredAt")} ${formatAdvisoryDate(row?.advisory_expires_at ?? null)}`}
                       </div>
+                      {status === "resumed" ? (
+                        <div className="mt-1 max-w-[150px] text-[9px] leading-3 text-emerald-700">
+                          {t("staffBriefing.resumedForReplacement")}
+                        </div>
+                      ) : null}
                     </div>
 
                     <button
@@ -4581,6 +4735,130 @@ function StaffBriefingCentre({
                     : quote
                       ? `Assign for ${quote.coin_price} coins`
                       : "Confirm"}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {pausedRenewalRole ? (
+        <div className="fixed inset-0 z-[85] flex items-center justify-center bg-slate-950/50 p-4">
+          <div className="w-full max-w-lg rounded-2xl bg-white p-5 shadow-2xl">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <div className="text-xl font-semibold tracking-tight text-slate-950">
+                  {t("staffBriefing.renewPausedAdvisor")}
+                </div>
+                <div className="mt-1 text-sm text-slate-500">
+                  {staffBriefingRoleLabels[pausedRenewalRole.roleType]}
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  if (pausedRenewalLoading) return;
+                  setPausedRenewalRole(null);
+                  setPausedRenewalQuote(null);
+                  setPausedRenewalError(null);
+                }}
+                className="inline-flex h-8 items-center rounded-lg border border-slate-200 bg-white px-3 text-[11px] font-semibold text-slate-600 transition hover:bg-slate-50"
+              >
+                {t("staffBriefing.close")}
+              </button>
+            </div>
+
+            <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-3 py-3 text-sm leading-5 text-amber-900">
+              {pausedRenewalQuote
+                ? t("staffBriefing.pausedRenewIntro", {
+                    days: pausedRenewalQuote.duration_real_days,
+                    coins: pausedRenewalQuote.coin_price,
+                  })
+                : t("staffBriefing.pausedRenewIntroGeneric")}
+            </div>
+
+            {pausedRenewalQuoteLoading ? (
+              <div className="mt-4 text-sm text-slate-500">
+                {t("staffBriefing.loadingQuote")}
+              </div>
+            ) : pausedRenewalQuote ? (
+              <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-3">
+                <div className="space-y-2">
+                  {[
+                    [t("staffBriefing.price"), t("staffBriefing.coins", { count: pausedRenewalQuote.coin_price })],
+                    [
+                      t("staffBriefing.remainingPaidTime"),
+                      t("staffBriefing.paidDaysRemaining", {
+                        count: Math.max(0, Math.ceil(Number(pausedRenewalQuote.remaining_paid_seconds) / 86_400)),
+                      }),
+                    ],
+                    [t("staffBriefing.duration"), t("staffBriefing.realLifeDays", { count: pausedRenewalQuote.duration_real_days })],
+                    [
+                      t("staffBriefing.paidTimeAfterRenewal"),
+                      t("staffBriefing.paidDaysRemaining", {
+                        count: Math.max(
+                          0,
+                          Math.ceil(
+                            (Number(pausedRenewalQuote.remaining_paid_seconds) +
+                              pausedRenewalQuote.duration_real_days * 86_400) /
+                              86_400,
+                          ),
+                        ),
+                      }),
+                    ],
+                    [t("staffBriefing.automaticRenewal"), t("staffBriefing.no")],
+                    [t("staffBriefing.coinBalance"), coinBalanceLoading ? "…" : String(coinBalance ?? 0)],
+                  ].map(([label, value]) => (
+                    <div
+                      key={label}
+                      className="flex items-center justify-between gap-4 rounded-xl bg-white px-3 py-2"
+                    >
+                      <span className="text-sm text-slate-500">{label}</span>
+                      <span className="text-right text-sm font-semibold text-slate-950">{value}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+
+            {pausedRenewalError ? (
+              <div className="mt-4 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-medium text-red-700">
+                {pausedRenewalError}
+              </div>
+            ) : null}
+
+            <div className="mt-5 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  if (pausedRenewalLoading) return;
+                  setPausedRenewalRole(null);
+                  setPausedRenewalQuote(null);
+                  setPausedRenewalError(null);
+                }}
+                className="inline-flex h-9 items-center rounded-lg border border-slate-300 bg-white px-4 text-[12px] font-semibold text-slate-700 transition hover:bg-slate-50"
+              >
+                {t("staffBriefing.cancel")}
+              </button>
+              <button
+                type="button"
+                onClick={() => void confirmPausedRoleRenewal()}
+                disabled={
+                  pausedRenewalLoading ||
+                  pausedRenewalQuoteLoading ||
+                  !pausedRenewalQuote ||
+                  (coinBalance ?? 0) <
+                    (pausedRenewalQuote?.coin_price ?? Number.POSITIVE_INFINITY)
+                }
+                className="inline-flex h-9 items-center rounded-lg bg-slate-950 px-4 text-[12px] font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                {pausedRenewalLoading
+                  ? t("staffBriefing.renewing")
+                  : pausedRenewalQuote
+                    ? t("staffBriefing.confirmPausedRenewal", {
+                        days: pausedRenewalQuote.duration_real_days,
+                        coins: pausedRenewalQuote.coin_price,
+                      })
+                    : t("staffBriefing.renew")}
               </button>
             </div>
           </div>

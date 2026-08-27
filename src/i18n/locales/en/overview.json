@@ -119,7 +119,24 @@
       "teamDoctor": "Health and recovery analysis, at most once per real-life day: squad availability, repeated injury/sickness patterns, recovery trends, and health situations worth monitoring.",
       "chiefMechanic": "Weekly equipment review: condition and maintenance trends, recurring equipment issues, workload on the workshop, and race-supply usage worth reviewing.",
       "scout": "Weekly recruitment review using already-known scouting information: completed report summary, recruitment gaps, known prospects worth revisiting, and suggestions for where to scout next."
-    }
+    },
+    "paused": "Advisory paused",
+    "resumed": "Advisory resumed",
+    "roleVacant": "Role vacant",
+    "daysRemaining": "{{count}} days remaining",
+    "paidDaysRemaining": "{{count}} paid days remaining",
+    "pausedVacant": "This role is vacant. Your paid advisory time is preserved and is not counting down.",
+    "resumedForReplacement": "Unused paid advisory time resumed automatically for this replacement.",
+    "extendPaidTime": "Extend paid time",
+    "renewPausedAdvisor": "Extend paused advisory",
+    "remainingPaidTime": "Remaining paid time",
+    "paidTimeAfterRenewal": "Paid time after renewal",
+    "pausedRenewIntro": "Your existing paid time is preserved. This optional renewal adds {{days}} real-life days for {{coins}} coins. Hiring a replacement does not require another purchase.",
+    "pausedRenewIntroGeneric": "Your existing paid time is preserved while this role is vacant. Hiring a replacement resumes it automatically and does not cost coins. Extending the entitlement is an optional paid action.",
+    "renewing": "Renewing…",
+    "confirmPausedRenewal": "Add {{days}} days for {{coins}} coins",
+    "couldNotLoadRenewalQuote": "Could not load the advisory renewal quote.",
+    "couldNotRenewPaused": "Could not renew the paused Staff Advisory entitlement."
   },
   "premium": {
     "label": "Premium",
