@@ -15,6 +15,7 @@
 
 import React, { useState } from 'react'
 import { Link, useLocation } from 'react-router'
+import { useTranslation } from 'react-i18next'
 import { supabase } from '../lib/supabase'
 
 const CONTACT_EMAIL = 'contact@propelotonmanager.com'
@@ -41,6 +42,7 @@ function getContactSource(): string {
 
 export default function ContactUsPage(): JSX.Element {
   const location = useLocation()
+  const { t } = useTranslation('publicInfo')
   const isDashboardContact = location.pathname.startsWith('/dashboard')
 
   const [name, setName] = useState('')
@@ -49,30 +51,25 @@ export default function ContactUsPage(): JSX.Element {
   const [status, setStatus] = useState<SubmitStatus>('idle')
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [errors, setErrors] = useState<FormErrors>({})
-
-  /**
-   * Honeypot anti-spam field.
-   * This is hidden from normal users.
-   */
   const [website, setWebsite] = useState('')
 
   function validateForm(): boolean {
     const nextErrors: FormErrors = {}
 
     if (!name.trim()) {
-      nextErrors.name = 'Please enter your name.'
+      nextErrors.name = t('contactPage.nameRequired')
     }
 
     if (!email.trim()) {
-      nextErrors.email = 'Please enter your email address.'
+      nextErrors.email = t('contactPage.emailRequired')
     } else if (!isProbablyValidEmail(email)) {
-      nextErrors.email = 'Please enter a valid email address.'
+      nextErrors.email = t('contactPage.emailInvalid')
     }
 
     if (!message.trim()) {
-      nextErrors.message = 'Please write a message.'
+      nextErrors.message = t('contactPage.messageRequired')
     } else if (message.trim().length < 10) {
-      nextErrors.message = 'Please write a little more detail.'
+      nextErrors.message = t('contactPage.messageDetail')
     }
 
     setErrors(nextErrors)
@@ -108,10 +105,7 @@ export default function ContactUsPage(): JSX.Element {
     if (error) {
       console.error('Contact form Edge Function error:', error)
 
-      setSubmitError(
-        error.message ||
-          'Could not connect to the contact service. Please try again or email us manually.',
-      )
+      setSubmitError(error.message || t('contactPage.connectFailed'))
       setStatus('error')
       return
     }
@@ -120,7 +114,7 @@ export default function ContactUsPage(): JSX.Element {
       setSubmitError(
         typeof data?.error === 'string'
           ? data.error
-          : 'Could not send your message. Please try again.',
+          : t('contactPage.sendFailed'),
       )
       setStatus('error')
       return
@@ -153,21 +147,19 @@ export default function ContactUsPage(): JSX.Element {
               to="/"
               className="inline-flex items-center rounded-lg border border-white/20 px-4 py-2 text-sm font-semibold text-white/85 hover:bg-white/10 hover:text-white"
             >
-              ← Back to Home
+              {t('common.backHome')}
             </Link>
 
             <p className="mt-8 text-sm font-semibold uppercase tracking-[0.25em] text-yellow-300">
-              Contact ProPeloton Manager
+              {t('contactPage.eyebrow')}
             </p>
 
             <h1 className="mt-4 text-4xl font-bold tracking-tight md:text-5xl">
-              Need help or want to report a problem?
+              {t('contactPage.title')}
             </h1>
 
             <p className="mt-5 max-w-3xl text-lg leading-relaxed text-slate-200">
-              Use this page for support requests, bug reports, account questions,
-              gameplay feedback, privacy questions, and general contact about
-              ProPeloton Manager.
+              {t('contactPage.publicIntro')}
             </p>
           </div>
         </section>
@@ -176,16 +168,15 @@ export default function ContactUsPage(): JSX.Element {
       {isDashboardContact && (
         <section className="mx-auto max-w-5xl px-6 pt-6">
           <p className="text-sm font-semibold uppercase tracking-[0.22em] text-yellow-700">
-            Contact ProPeloton Manager
+            {t('contactPage.eyebrow')}
           </p>
 
           <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-950">
-            Need help or want to report a problem?
+            {t('contactPage.title')}
           </h1>
 
           <p className="mt-3 max-w-3xl text-sm leading-relaxed text-slate-600">
-            Send support requests, bug reports, account questions, gameplay feedback,
-            privacy questions, or general contact messages directly to support.
+            {t('contactPage.dashboardIntro')}
           </p>
         </section>
       )}
@@ -199,10 +190,10 @@ export default function ContactUsPage(): JSX.Element {
       >
         <aside className="space-y-4">
           <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-            <h2 className="text-lg font-bold">Support email</h2>
+            <h2 className="text-lg font-bold">{t('contactPage.supportEmail')}</h2>
 
             <p className="mt-3 text-sm leading-relaxed text-slate-700">
-              You can also contact us directly at:
+              {t('contactPage.supportEmailText')}
             </p>
 
             <a
@@ -214,43 +205,39 @@ export default function ContactUsPage(): JSX.Element {
           </article>
 
           <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-            <h2 className="text-lg font-bold">Good bug reports include</h2>
+            <h2 className="text-lg font-bold">{t('contactPage.bugTitle')}</h2>
 
             <ul className="mt-3 list-disc space-y-2 pl-5 text-sm leading-relaxed text-slate-700">
-              <li>The page where the issue happened.</li>
-              <li>Your team name, race name, or rider name if relevant.</li>
-              <li>What you expected to happen.</li>
-              <li>What actually happened.</li>
-              <li>Screenshots or copied error messages if available.</li>
+              <li>{t('contactPage.bug1')}</li>
+              <li>{t('contactPage.bug2')}</li>
+              <li>{t('contactPage.bug3')}</li>
+              <li>{t('contactPage.bug4')}</li>
+              <li>{t('contactPage.bug5')}</li>
             </ul>
           </article>
 
           <article className="rounded-2xl border border-yellow-200 bg-yellow-50 p-5 shadow-sm">
-            <h2 className="text-lg font-bold">Privacy and account questions</h2>
+            <h2 className="text-lg font-bold">{t('contactPage.privacyTitle')}</h2>
 
             <p className="mt-3 text-sm leading-relaxed text-slate-700">
-              For privacy, account, payment, or rewarded-ad questions, include the
-              email address connected to your game account. Do not send passwords or
-              payment card details.
+              {t('contactPage.privacyText')}
             </p>
           </article>
         </aside>
 
         <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-          <h2 className="text-2xl font-bold">Send a message</h2>
+          <h2 className="text-2xl font-bold">{t('contactPage.formTitle')}</h2>
 
           <p className="mt-3 text-sm leading-relaxed text-slate-700">
-            Fill out the form below. Your message will be sent directly to ProPeloton
-            Manager support. Your email app will not open.
+            {t('contactPage.formText')}
           </p>
 
           {status === 'success' ? (
             <div className="mt-6 rounded-xl border border-green-200 bg-green-50 p-5 text-green-900">
-              <div className="font-bold">Thank you, your message has been sent.</div>
+              <div className="font-bold">{t('contactPage.successTitle')}</div>
 
               <p className="mt-2 text-sm leading-relaxed">
-                We received your support request. If a reply is needed, we will answer
-                using the email address you provided.
+                {t('contactPage.successText')}
               </p>
 
               <button
@@ -261,13 +248,13 @@ export default function ContactUsPage(): JSX.Element {
                 }}
                 className="mt-4 inline-flex rounded-lg bg-green-700 px-4 py-2 text-sm font-bold text-white hover:bg-green-800"
               >
-                Send another message
+                {t('contactPage.another')}
               </button>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="mt-6 space-y-4">
               <label className="hidden">
-                Website
+                {t('contactPage.website')}
                 <input
                   value={website}
                   onChange={event => setWebsite(event.target.value)}
@@ -277,7 +264,7 @@ export default function ContactUsPage(): JSX.Element {
               </label>
 
               <label className="block">
-                <span className="text-sm font-semibold text-slate-800">Name</span>
+                <span className="text-sm font-semibold text-slate-800">{t('contactPage.name')}</span>
                 <input
                   value={name}
                   onChange={event => {
@@ -285,7 +272,7 @@ export default function ContactUsPage(): JSX.Element {
                     clearFieldError('name')
                   }}
                   className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 focus:border-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-200"
-                  placeholder="Your name"
+                  placeholder={t('contactPage.namePlaceholder')}
                   disabled={status === 'sending'}
                 />
                 {errors.name && (
@@ -294,7 +281,7 @@ export default function ContactUsPage(): JSX.Element {
               </label>
 
               <label className="block">
-                <span className="text-sm font-semibold text-slate-800">Email</span>
+                <span className="text-sm font-semibold text-slate-800">{t('contactPage.email')}</span>
                 <input
                   type="email"
                   value={email}
@@ -303,7 +290,7 @@ export default function ContactUsPage(): JSX.Element {
                     clearFieldError('email')
                   }}
                   className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 focus:border-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-200"
-                  placeholder="you@example.com"
+                  placeholder={t('contactPage.emailPlaceholder')}
                   disabled={status === 'sending'}
                 />
                 {errors.email && (
@@ -312,7 +299,7 @@ export default function ContactUsPage(): JSX.Element {
               </label>
 
               <label className="block">
-                <span className="text-sm font-semibold text-slate-800">Message</span>
+                <span className="text-sm font-semibold text-slate-800">{t('contactPage.message')}</span>
                 <textarea
                   value={message}
                   onChange={event => {
@@ -320,7 +307,7 @@ export default function ContactUsPage(): JSX.Element {
                     clearFieldError('message')
                   }}
                   className="mt-1 min-h-[180px] w-full rounded-lg border border-slate-300 px-3 py-2 focus:border-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-200"
-                  placeholder="Write your message..."
+                  placeholder={t('contactPage.messagePlaceholder')}
                   disabled={status === 'sending'}
                 />
                 {errors.message && (
@@ -339,7 +326,7 @@ export default function ContactUsPage(): JSX.Element {
                 disabled={status === 'sending'}
                 className="rounded-lg bg-yellow-400 px-5 py-3 text-sm font-bold text-black hover:bg-yellow-300 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {status === 'sending' ? 'Sending...' : 'Send message'}
+                {status === 'sending' ? t('contactPage.sending') : t('contactPage.send')}
               </button>
             </form>
           )}
