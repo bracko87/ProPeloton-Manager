@@ -14543,6 +14543,507 @@ STAGE_PLAN_MISSING_AT_LOCK: {
   ],
 },
 
+
+  STAFF_CONTRACT_EXPIRED: {
+    defaultTitle: 'Staff contract expired',
+    defaultMessage:
+      'A staff contract has expired. Review your staffing situation and decide whether a replacement is needed.',
+
+    imageSrc:
+      'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Event%20images/Staff%20contract%20expired.png',
+
+    getImageSrc: (item) =>
+      getImageSrcFromItem(item) ||
+      'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Event%20images/Staff%20contract%20expired.png',
+
+    enrich: (item) => {
+      const payload = getPayload(item)
+
+      const staffName =
+        pickFirstString(payload, [
+          'staff_name',
+          'employee_name',
+          'person_name',
+          'full_name',
+          'name',
+        ]) || null
+
+      const role =
+        formatLabel(
+          pickFirstString(payload, [
+            'staff_role',
+            'role',
+            'role_code',
+            'staff_type',
+          ])
+        ) || null
+
+      return {
+        ...item,
+        title: staffName
+          ? `Staff contract expired: ${staffName}`
+          : item.title || 'Staff contract expired',
+        message:
+          item.message ||
+          (staffName && role
+            ? `${staffName}'s contract as ${role} has expired. The staff member is no longer under contract with your club.`
+            : staffName
+              ? `${staffName}'s contract has expired. The staff member is no longer under contract with your club.`
+              : 'A staff contract has expired. The staff member is no longer under contract with your club.'),
+      }
+    },
+
+    getIntroText: (item) => {
+      const payload = getPayload(item)
+
+      const staffName =
+        pickFirstString(payload, [
+          'staff_name',
+          'employee_name',
+          'person_name',
+          'full_name',
+          'name',
+        ]) || null
+
+      const role =
+        formatLabel(
+          pickFirstString(payload, [
+            'staff_role',
+            'role',
+            'role_code',
+            'staff_type',
+          ])
+        ) || null
+
+      if (staffName && role) {
+        return `${staffName}'s contract as ${role} has now expired. The staff member has left your contracted staff structure, so review the vacancy and decide whether the role should be filled again.`
+      }
+
+      if (staffName) {
+        return `${staffName}'s contract has now expired. Review your staff structure and decide whether a replacement is required.`
+      }
+
+      return (
+        buildIntroFromMessage(item) ||
+        'A staff contract has expired. Review your staff structure and decide whether a replacement is required.'
+      )
+    },
+
+    getDetailRows: (item) => {
+      const payload = getPayload(item)
+
+      const contractLength =
+        pickFirstNumber(payload, [
+          'contract_length_seasons',
+          'contract_seasons',
+          'duration_seasons',
+        ])
+
+      return compactRows([
+        detailRow(
+          'Staff member',
+          pickFirstString(payload, [
+            'staff_name',
+            'employee_name',
+            'person_name',
+            'full_name',
+            'name',
+          ])
+        ),
+        detailRow(
+          'Role',
+          formatLabel(
+            pickFirstString(payload, [
+              'staff_role',
+              'role',
+              'role_code',
+              'staff_type',
+            ])
+          )
+        ),
+        detailRow(
+          'Club',
+          pickFirstString(payload, [
+            'club_name',
+            'team_name',
+          ])
+        ),
+        detailRow(
+          'Contract length',
+          contractLength !== null
+            ? `${contractLength} season${contractLength === 1 ? '' : 's'}`
+            : null
+        ),
+        detailRow(
+          'Expired on',
+          formatContractSeasonLabel(
+            pickFirstString(payload, [
+              'expired_on_game_date',
+              'contract_end_game_date',
+              'contract_end_date',
+              'end_game_date',
+              'game_date',
+            ])
+          )
+        ),
+        detailRow(
+          'Status',
+          formatLabel(
+            pickFirstString(payload, [
+              'status',
+              'contract_status',
+              'staff_status',
+            ])
+          ) || 'Contract expired'
+        ),
+      ])
+    },
+
+    getExtraText: () =>
+      'The expired contract is no longer active. Open the Staff page to review your current structure, or use the Staff Market to search for a replacement.',
+
+    actions: [
+      {
+        key: 'open-staff-page',
+        label: 'Staff page',
+        variant: 'primary',
+        kind: 'navigate',
+        getHref: (item) => getActionHrefFromItem(item) || '/dashboard/staff',
+        show: () => true,
+      },
+      {
+        key: 'open-staff-market',
+        label: 'Staff market',
+        variant: 'secondary',
+        kind: 'navigate',
+        getHref: () => '/dashboard/transfers?tab=staff',
+        show: () => true,
+      },
+      MARK_READ_ACTION,
+    ],
+  },
+
+  RIDER_CONTRACT_EXPIRED: {
+    defaultTitle: 'Rider contract expired',
+    defaultMessage:
+      'A rider contract has expired. Review your squad and plan the next roster move.',
+
+    imageSrc:
+      'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Event%20images/Rider%20contract%20expired.png',
+
+    getImageSrc: (item) =>
+      getImageSrcFromItem(item) ||
+      'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Event%20images/Rider%20contract%20expired.png',
+
+    enrich: (item) => {
+      const payload = getPayload(item)
+      const riderName = getPreferredRiderName(item)
+
+      const role =
+        formatLabel(
+          pickFirstString(payload, [
+            'rider_role',
+            'role',
+            'team_role',
+          ])
+        ) || null
+
+      return {
+        ...item,
+        title: riderName
+          ? `Rider contract expired: ${riderName}`
+          : item.title || 'Rider contract expired',
+        message:
+          item.message ||
+          (riderName && role
+            ? `${riderName}'s contract as ${role} has expired. The rider is no longer contracted to your club.`
+            : riderName
+              ? `${riderName}'s contract has expired. The rider is no longer contracted to your club.`
+              : 'A rider contract has expired. The rider is no longer contracted to your club.'),
+      }
+    },
+
+    getIntroText: (item) => {
+      const payload = getPayload(item)
+      const riderName = getPreferredRiderName(item)
+
+      const destination =
+        pickFirstString(payload, [
+          'new_status',
+          'destination_status',
+          'rider_status',
+        ]) || null
+
+      if (riderName && destination) {
+        return `${riderName}'s contract has expired and the rider is now ${formatLabel(destination)}. Review your squad depth and decide whether you need a replacement.`
+      }
+
+      if (riderName) {
+        return `${riderName}'s contract has now expired. The rider is no longer under contract with your club, so review your squad and plan the next roster move.`
+      }
+
+      return (
+        buildIntroFromMessage(item) ||
+        'A rider contract has expired. Review your squad and plan the next roster move.'
+      )
+    },
+
+    getDetailRows: (item) => {
+      const payload = getPayload(item)
+
+      const weeklySalary =
+        pickFirstNumber(payload, [
+          'salary_weekly',
+          'weekly_salary',
+          'contract_salary_weekly',
+        ])
+
+      const contractLength =
+        pickFirstNumber(payload, [
+          'contract_length_seasons',
+          'contract_seasons',
+          'duration_seasons',
+        ])
+
+      return compactRows([
+        detailRow('Rider', getPreferredRiderName(item)),
+        detailRow(
+          'Role',
+          formatLabel(
+            pickFirstString(payload, [
+              'rider_role',
+              'role',
+              'team_role',
+            ])
+          )
+        ),
+        detailRow(
+          'Club',
+          pickFirstString(payload, [
+            'club_name',
+            'team_name',
+          ])
+        ),
+        detailRow(
+          'Previous weekly salary',
+          weeklySalary !== null
+            ? `${formatCurrencyLabel(weeklySalary, '$')}/week`
+            : null
+        ),
+        detailRow(
+          'Contract length',
+          contractLength !== null
+            ? `${contractLength} season${contractLength === 1 ? '' : 's'}`
+            : null
+        ),
+        detailRow(
+          'Expired on',
+          formatContractSeasonLabel(
+            pickFirstString(payload, [
+              'expired_on_game_date',
+              'contract_end_game_date',
+              'contract_end_date',
+              'end_game_date',
+              'game_date',
+            ])
+          )
+        ),
+        detailRow(
+          'New status',
+          formatLabel(
+            pickFirstString(payload, [
+              'new_status',
+              'destination_status',
+              'rider_status',
+              'status',
+            ])
+          ) || 'Contract expired'
+        ),
+      ])
+    },
+
+    getExtraText: () =>
+      'The rider is no longer part of your active contracted squad. Review your current roster and use the transfer or free-agent market if you need a replacement.',
+
+    actions: [
+      {
+        key: 'open-squad',
+        label: 'Open squad',
+        variant: 'primary',
+        kind: 'navigate',
+        getHref: () => '/dashboard/squad',
+        show: () => true,
+      },
+      {
+        key: 'open-transfers',
+        label: 'Transfer market',
+        variant: 'secondary',
+        kind: 'navigate',
+        getHref: () => '/dashboard/transfers',
+        show: () => true,
+      },
+      MARK_READ_ACTION,
+    ],
+  },
+
+  NEW_SEASON_STARTED: {
+    defaultTitle: 'New season started',
+    defaultMessage:
+      'A new season has begun. Your club is ready for the next year of competition.',
+
+    imageSrc:
+      'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Event%20images/new%20season%20started.png',
+
+    getImageSrc: (item) =>
+      getImageSrcFromItem(item) ||
+      'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Event%20images/new%20season%20started.png',
+
+    enrich: (item) => {
+      const payload = getPayload(item)
+
+      const seasonNumber = pickFirstNumber(payload, [
+        'season_number',
+        'season',
+        'new_season_number',
+        'current_season',
+      ])
+
+      const clubName =
+        pickFirstString(payload, [
+          'club_name',
+          'team_name',
+        ]) || null
+
+      return {
+        ...item,
+        title:
+          seasonNumber !== null
+            ? `Season ${seasonNumber} has started`
+            : item.title || 'New season started',
+        message:
+          item.message ||
+          (clubName && seasonNumber !== null
+            ? `A new chapter begins for ${clubName}. Season ${seasonNumber} is now underway.`
+            : seasonNumber !== null
+              ? `Season ${seasonNumber} is now underway. Review your club and prepare for the year ahead.`
+              : 'A new season is now underway. Review your club and prepare for the year ahead.'),
+      }
+    },
+
+    getIntroText: (item) => {
+      const payload = getPayload(item)
+
+      const seasonNumber = pickFirstNumber(payload, [
+        'season_number',
+        'season',
+        'new_season_number',
+        'current_season',
+      ])
+
+      const clubName =
+        pickFirstString(payload, [
+          'club_name',
+          'team_name',
+        ]) || 'Your club'
+
+      if (seasonNumber !== null) {
+        return `Welcome to Season ${seasonNumber}! ${clubName} begins a fresh campaign with new objectives, a new race calendar and another opportunity to build toward long-term success.`
+      }
+
+      return (
+        buildIntroFromMessage(item) ||
+        `A new season has started. ${clubName} begins a fresh campaign with new objectives, a new race calendar and another opportunity to build toward long-term success.`
+      )
+    },
+
+    getDetailRows: (item) => {
+      const payload = getPayload(item)
+
+      const seasonNumber = pickFirstNumber(payload, [
+        'season_number',
+        'season',
+        'new_season_number',
+        'current_season',
+      ])
+
+      return compactRows([
+        detailRow(
+          'Season',
+          seasonNumber !== null ? `Season ${seasonNumber}` : null
+        ),
+        detailRow(
+          'Club',
+          pickFirstString(payload, [
+            'club_name',
+            'team_name',
+          ])
+        ),
+        detailRow(
+          'Season start',
+          formatContractSeasonLabel(
+            pickFirstString(payload, [
+              'season_start_game_date',
+              'started_on_game_date',
+              'start_game_date',
+              'game_date',
+            ])
+          )
+        ),
+        detailRow(
+          'Status',
+          formatLabel(
+            pickFirstString(payload, [
+              'season_status',
+              'status',
+            ])
+          ) || 'Season active'
+        ),
+      ])
+    },
+
+    getExtraText: (item) => {
+      const payload = getPayload(item)
+      const seasonNumber = pickFirstNumber(payload, [
+        'season_number',
+        'season',
+        'new_season_number',
+        'current_season',
+      ])
+
+      return seasonNumber !== null
+        ? `Season ${seasonNumber} is officially underway. Review your squad, staff, finances, sponsors and calendar before the first major decisions of the new campaign.`
+        : 'The new season is officially underway. Review your squad, staff, finances, sponsors and calendar before the first major decisions of the new campaign.'
+    },
+
+    actions: [
+      {
+        key: 'open-overview',
+        label: 'Season overview',
+        variant: 'primary',
+        kind: 'navigate',
+        getHref: () => '/dashboard/overview',
+        show: () => true,
+      },
+      {
+        key: 'open-calendar',
+        label: 'Season calendar',
+        variant: 'secondary',
+        kind: 'navigate',
+        getHref: () => '/dashboard/calendar',
+        show: () => true,
+      },
+      {
+        key: 'open-club',
+        label: 'Review club',
+        variant: 'secondary',
+        kind: 'navigate',
+        getHref: () => '/dashboard',
+        show: () => true,
+      },
+      MARK_READ_ACTION,
+    ],
+  },
+
   COMPETITION_REWARD_GRANTED: {
     defaultTitle: 'Competition reward granted',
     defaultMessage:
