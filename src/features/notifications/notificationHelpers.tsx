@@ -1,4 +1,5 @@
 import React from 'react'
+import type { TFunction } from 'i18next'
 
 /**
  * NotificationItem
@@ -25,28 +26,44 @@ export type NotificationItem = {
  * formatNotificationTime
  * Human-readable relative time for notification timestamps.
  */
-export function formatNotificationTime(dateString?: string | null): string {
+export function formatNotificationTime(
+  dateString: string | null | undefined,
+  options?: {
+    t?: TFunction
+    locale?: string
+  }
+): string {
   if (!dateString) return ''
 
   const date = new Date(dateString)
   const diffMs = date.getTime() - Date.now()
   const diffMinutes = Math.round(diffMs / 60000)
   const absMinutes = Math.abs(diffMinutes)
+  const t = options?.t
 
-  if (absMinutes < 1) return 'Just now'
-  if (absMinutes < 60) return `${absMinutes}m ago`
+  if (absMinutes < 1) {
+    return t ? t('time.justNow') : 'Just now'
+  }
+
+  if (absMinutes < 60) {
+    return t ? t('time.minutesAgo', { count: absMinutes }) : `${absMinutes}m ago`
+  }
 
   const diffHours = Math.round(diffMinutes / 60)
   const absHours = Math.abs(diffHours)
 
-  if (absHours < 24) return `${absHours}h ago`
+  if (absHours < 24) {
+    return t ? t('time.hoursAgo', { count: absHours }) : `${absHours}h ago`
+  }
 
   const diffDays = Math.round(diffHours / 24)
   const absDays = Math.abs(diffDays)
 
-  if (absDays < 7) return `${absDays}d ago`
+  if (absDays < 7) {
+    return t ? t('time.daysAgo', { count: absDays }) : `${absDays}d ago`
+  }
 
-  return date.toLocaleDateString()
+  return date.toLocaleDateString(options?.locale)
 }
 
 /**
