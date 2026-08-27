@@ -2,13 +2,15 @@
   "page": {
     "title": "Kalendar",
     "description": "Pregled sezone, raspored trka i vremenski uslovi zemlje vašeg tima za trenutni datum u igri.",
+    "subtitle": "Pregled sezone, raspored trka i vremenski uslovi zemlje vašeg tima za trenutni datum u igri.",
     "loading": "Učitavanje kalendara…",
     "seasonCalendar": "Kalendar sezone",
     "raceCalendar": "Kalendar trka"
   },
   "weather": {
     "title": "Vreme u zemlji tima",
-    "today": "Danas:",
+    "teamCountry": "Vreme u zemlji tima",
+    "today": "Danas",
     "min": "Min",
     "max": "Maks",
     "wind": "Vetar",
@@ -29,10 +31,11 @@
     "temperatureBelow5": "Prosečna temperatura ispod 5°C"
   },
   "season": {
+    "season": "Sezona",
     "currentMonth": "Trenutni mesec",
     "gameDateUnavailable": "Datum igre nije dostupan",
-    "previous": "← Prethodni",
-    "next": "Sledeći →",
+    "previous": "Prethodni",
+    "next": "Sledeći",
     "races": "Trke",
     "trainingCamps": "Trening kampovi",
     "events": "Događaji",
@@ -77,6 +80,10 @@
     "stageRace": "Etapna trka"
   },
   "filters": {
+    "races": "Trke",
+    "trainingCamps": "Trening kampovi",
+    "events": "Događaji",
+    "holidays": "Praznici",
     "title": "Filteri trka",
     "premium": "Premium",
     "description": "Filtrirajte trke ovog meseca prema zemlji, kategoriji, formatu, statusu i ciljevima sponzora.",
