@@ -90,7 +90,7 @@
     "stageFinishPoints": "Stage finish points",
     "gcOneDayPoints": "GC / one-day points",
     "pointsTemplate": "{{metric}} points",
-    "sortedBy": "Sorted by {{metric}} points."
+    "sortedBy": "Sorted by: {{metric}}."
   },
   "teams": {
     "teamsInFilter": "Teams in filter",
@@ -164,7 +164,10 @@
     "timeTrialist": "Time Trialist",
     "domestique": "Domestique",
     "rouleur": "Rouleur",
-    "puncheur": "Puncheur"
+    "puncheur": "Puncheur",
+    "leader": "Leader",
+    "breakaway": "Breakaway",
+    "tt": "TT"
   },
   "tutorial": {
     "welcomeTitle": "Need help with Statistics?",

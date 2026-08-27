@@ -10,7 +10,6 @@
     "stageCount": "{{count}} stages",
     "stageCountOne": "{{count}} stage"
   },
-
   "summary": {
     "teams": "Teams",
     "acceptedMax": "{{accepted}} accepted · max {{max}}",
@@ -26,7 +25,6 @@
     "cancelApplication": "Cancel application",
     "cancelling": "Cancelling…"
   },
-
   "status": {
     "applicationsNotOpen": "Applications not open",
     "openApplications": "Open for Applications",
@@ -43,7 +41,6 @@
     "finishedNotice": "Race finished. Applications and rider submissions are closed.",
     "cancelledNotice": "Race cancelled. Applications and rider submissions are closed."
   },
-
   "application": {
     "preview": "Race application preview",
     "close": "Close",
@@ -52,17 +49,14 @@
     "alreadyApplied": "Your team already has an application submitted for this race.",
     "cannotApply": "You cannot apply for this race right now.",
     "review": "Review your application preview before submitting.",
-
     "acceptanceEstimate": "Acceptance estimate",
     "estimatedChance": "Estimated chance",
     "competitionPressure": "Competition pressure",
     "estimateExplanation": "This is an estimate. Final acceptance is decided when applications close.",
-
     "prestigeCommitment": "Team prestige / commitment",
     "applicationStrength": "Application strength",
     "scorePreview": "Score preview: {{score}}",
     "scoreExplanation": "Default score is 50. Completing races improves this; missing startlists reduces it.",
-
     "appliedTeams": "Applied teams",
     "acceptedTeams": "Accepted teams",
     "targetTeams": "Target teams",
@@ -70,11 +64,9 @@
     "ridersRequired": "Riders required",
     "teamListAnnouncement": "Team list announcement",
     "riderDeadline": "Rider deadline",
-
     "notNow": "Not now",
     "submitting": "Submitting…",
     "submit": "Submit application",
-
     "pendingLoading": "Loading your application estimate…",
     "pendingEstimateError": "Your application is submitted. The detailed acceptance estimate could not be loaded: {{error}}",
     "pendingNoQuote": "Your application is submitted. Official participants will appear here once the team list is published.",
@@ -84,7 +76,6 @@
     "alreadyAcceptedCount": "Already accepted",
     "targetMaxTeams": "Target / max teams"
   },
-
   "stage": {
     "stage": "Stage",
     "stageNumber": "Stage {{stage}}",
@@ -93,19 +84,16 @@
     "weatherCancellationLikely": "Weather cancellation likely",
     "weatherCancellationReason": "Weather cancellation likely: {{reason}}",
     "weatherCancellationExplanation": "This is only a warning before the lock point. The final cancellation decision is made automatically 24 in-game hours before stage start.",
-
     "profile": "Stage profile",
     "loadingProfile": "Loading stage profile…",
     "profileUnavailable": "Stage profile data is not available yet.",
     "profileChartUnavailable": "Stage profile chart is not available yet.",
     "routeTbd": "Route TBD",
-
     "distance": "Distance",
     "terrain": "Terrain",
     "profileLabel": "Profile",
     "elevation": "Elevation",
     "terrainSplit": "Terrain split",
-
     "flat": "Flat",
     "hilly": "Hilly",
     "mountain": "Mountain",
@@ -114,7 +102,6 @@
     "individualTimeTrial": "Individual Time Trial",
     "teamTimeTrial": "Team Time Trial",
     "prologue": "Prologue",
-
     "points": "Stage points",
     "noPoints": "No stage points configured for this stage.",
     "pointsLabel": "Points:",
@@ -126,7 +113,6 @@
     "finishSprint": "🏁 Finish sprint",
     "pointsClassificationFinish": "Points classification finish:"
   },
-
   "weather": {
     "title": "Stage weather",
     "forecastLater": "Weather forecast becomes visible 7 days before this stage.",
@@ -142,9 +128,11 @@
     "sleet": "Sleet",
     "snow": "Snow",
     "thunderstorm": "Thunderstorm",
-    "temperatureBelow5": "Average temperature below 5°C"
+    "temperatureBelow5": "Average temperature below 5°C",
+    "average": "Average",
+    "minMax": "Min / max",
+    "notGenerated": "Weather is not generated for this stage yet."
   },
-
   "participants": {
     "raceInformation": "Race information",
     "participantsResults": "Participants and results",
@@ -152,26 +140,20 @@
     "show": "Show",
     "teamsRiders": "Teams & riders",
     "results": "Results",
-
     "activeLocked": "Race active. Teams and riders are locked. Results will appear here after the race simulation engine runs.",
-
     "calculatingFavorites": "Calculating race favorites...",
     "favoritesCalculation": "Based on rider skills, selected race role and this season results.",
     "favoritesUnavailable": "Top 5 favorites are not available yet: {{error}}",
     "topFavorites": "Top 5 race favorites",
     "favoritesDescription": "Calculated from rider skills, this season results, race profile and assigned role.",
-
     "unknownRider": "Unknown rider",
     "teamFallback": "Team",
     "noNumber": "No #",
-
     "loading": "Loading accepted teams and riders...",
     "loadError": "Could not load participants: {{error}}",
     "noneConfirmed": "No accepted teams have been confirmed yet. Accepted teams will appear here once the official startlist is published.",
-
     "teamRiderCount": "{{teams}} teams · {{riders}} assigned riders",
     "assignedRiders": "{{count}} assigned riders",
-
     "teamLogo": "Team logo",
     "teamJersey": "Team jersey",
     "participatingRiders": "Riders participating in this race",
@@ -179,7 +161,6 @@
     "riderDetailsUnavailable": "{{count}} riders assigned. Rider details are not available yet.",
     "noRiders": "No riders assigned yet."
   },
-
   "results": {
     "classifications": "Race classifications",
     "currentStandings": "Current tour standings",
@@ -190,10 +171,8 @@
     "teamClassification": "Team classification",
     "noClassification": "No classification data available for this view.",
     "allWeatherCanceled": "All stages were cancelled due to weather. No race classifications were generated.",
-
     "loadingClassifications": "Loading race classifications…",
     "classificationsError": "Could not load race classifications: {{error}}",
-
     "fullRaceStanding": "Full race standing",
     "stageResults": "Stage results",
     "stageResultsNumber": "Stage results – Stage {{stage}}",
@@ -206,7 +185,6 @@
     "noSprintPoints": "No sprint point data available for this stage.",
     "noMountainPoints": "No mountain point data available for this stage.",
     "fullStageStanding": "Full stage standing",
-
     "country": "Country",
     "rider": "Rider",
     "team": "Team",
@@ -219,7 +197,6 @@
     "leader": "Leader",
     "winner": "Winner"
   },
-
   "rewards": {
     "eyebrow": "Race rewards",
     "title": "Prize money and international points",
@@ -231,9 +208,10 @@
     "pointsByTeam": "International points by team",
     "pointsByRider": "International points by rider",
     "prize": "Prize",
-    "points": "Points"
+    "points": "Points",
+    "shadowTitle": "Shadow rewards are not persisted",
+    "shadowDescription": "Preview-only rewards are not saved. Official prize-money and international-ranking awards remain production-only."
   },
-
   "report": {
     "title": "Race report",
     "stageReport": "Stage report",
@@ -248,7 +226,6 @@
     "noGroups": "No road group data available yet.",
     "riders": "{{count}} riders",
     "ridersUnknown": "Riders —",
-
     "tactical": "Tactical",
     "start": "Start",
     "neutral": "Neutral",
@@ -267,13 +244,11 @@
     "phase": "Phase {{phase}}",
     "teamPlan": "Team plan: {{plan}}"
   },
-
   "replay": {
     "liveRace": "Live race",
     "stageCanceled": "Stage canceled",
     "available": "Replay available",
     "unavailable": "Replay unavailable",
-
     "stageCanceledDescription": "This stage was canceled. No replay is available.",
     "notOpen": "Replay will be available at the scheduled stage time.",
     "notAvailable": "Replay is not available yet.",
@@ -281,7 +256,6 @@
     "availableForRace": "Replay is available for {{race}}.",
     "unlockDescription": "Replay is available. Teams that did not participate can unlock it for {{coins}} coins.",
     "availableAt": "Replay available at the scheduled stage time: {{date}}",
-
     "unlocking": "Unlocking replay…",
     "unlockReplay": "Unlock replay · {{coins}} coins",
     "coinBalance": "Coin balance: {{balance}}",
@@ -290,12 +264,10 @@
     "checking": "Checking replay…",
     "watch": "Watch replay",
     "unlockFor": "Unlock for {{coins}} coins",
-
     "title": "Race replay",
     "ridersStart": "Riders start one by one, from the lowest-ranked favourite to the strongest favourite",
     "teamsStart": "Teams start one by one, from the lowest-ranked team to the strongest team",
     "roadDescription": "Follow the groups, gaps, attacks and points as the stage unfolds",
-
     "profile": "Stage profile replay",
     "play": "Play",
     "pause": "Pause",
@@ -303,30 +275,25 @@
     "restart": "Restart",
     "liveCommentary": "Live commentary",
     "pressPlay": "Press Play to start live commentary.",
-
     "finalRiders": "Final stage result · riders",
     "timeTrialRiders": "Time trial · riders",
     "timeTrialTeams": "Time trial · teams",
     "stageStandingRiders": "Stage standing · riders",
-
     "start": "Start",
     "status": "Status",
     "riderTeam": "Rider / team",
     "energy": "Energy",
     "time": "Time",
     "gap": "Gap",
-
     "onCourse": "On course",
     "waiting": "Waiting",
     "finished": "Finished",
     "timeCheck": "Time check",
     "compressedStarts": "Compressed replay starts · {{seconds}}s apart",
     "timeCheckWaiting": "The live time check activates once the first rider reaches halfway.",
-
     "startsIn": "Starts in {{time}}",
     "finish": "Finish",
     "beforeCheck": "Before check",
-
     "position": "Pos.",
     "group": "Group",
     "rider": "Rider",
@@ -334,10 +301,8 @@
     "generalClassification": "General classification",
     "winner": "Winner",
     "leader": "Leader",
-
     "loadingEngine": "Loading universal engine inputs…",
     "engineUnavailable": "Universal engine calculation is not available for this stage.",
-
     "stagePoints": "Stage points",
     "stagePointsDescription": "Rankings and cumulative awards appear when each point is reached.",
     "noStagePoints": "No stage points available",
@@ -348,22 +313,20 @@
     "noAwards": "No sprint, KOM, or bonus awards have been revealed yet.",
     "total": "Total"
   },
-
   "leaders": {
     "general": "General leader",
     "sprinter": "Best sprinter",
     "climber": "Best climber",
     "young": "Best young rider",
-    "team": "Best team"
+    "team": "Best team",
+    "title": "Leaders / Winners",
+    "updating": "Updating…"
   },
-
   "tutorial": {
     "profileTitle": "Race Profile",
     "profileBody": "This is the Race Profile page.\n\nHere you can see the most important race information: how many teams can participate, the prize fund, when applications close, when participating teams are announced, and how many riders each team can bring.\n\nFor stage races, you can also see how many stages are included.",
-
     "stagesTitle": "Stages, Results and Replay",
     "stagesBody": "The race profile also shows detailed stage information.\n\nYou can review stage profiles, route maps, terrain split, stage weather, sprint points, mountain points, and other stage details. Weather is only published close to the race, so it may appear later.\n\nFurther down, Race Information shows participating teams and riders before the race, and results after the race. If your team participates and the race is active or finished, you can use Watch Race or Watch Replay to follow the action on the map.",
-
     "step": "Race profile tutorial {{current}} of {{total}}",
     "next": "Next",
     "continuePreparation": "Continue to Race Preparation",

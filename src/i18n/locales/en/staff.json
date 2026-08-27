@@ -274,5 +274,186 @@
     "coreLive": "Core live",
     "trainingLive": "Training live",
     "plannedConnection": "Planned connection"
+  },
+  "impactI18n": {
+    "assigned": "Assigned",
+    "openSlotAvailable": "Open slot available",
+    "currentBasicCapReached": "Current basic cap reached",
+    "forGroup": "For this impact group",
+    "activeCourses": "Active Courses",
+    "coursesPaused": "Bonuses are partially paused while staff study",
+    "fillVacancies": "Use Transfers → Staff to fill vacancies",
+    "combinedTitle": "Combined Team Impact",
+    "combinedMedical": "Combined medical support from Team Doctor, Physio and Nutritionist.",
+    "combinedCoach": "Backend-applied coaching effect from {{name}}.",
+    "combinedCurrent": "Current combined impact from active staff in this group.",
+    "coachingTitle": "Coaching Staff Combined Impact",
+    "medicalTitle": "Medical Staff Combined Impact",
+    "mechanicTitle": "Mechanic Staff Impact",
+    "directorTitle": "Sport Director Staff Impact",
+    "u23Title": "U23 Coaching Staff Impact",
+    "scoutingTitle": "Scouting Staff Impact"
+  },
+  "scoutingExplainer": {
+    "title": "How Scout Quality Works",
+    "body": "Scout attributes create the scout’s true ability. The Scouting Office can cap the final report quality, so a strong scout may still produce basic reports until the office is upgraded.",
+    "abilityLevels": "Scout Ability levels",
+    "reportLevels": "Report Quality levels",
+    "levelScale": "Basic → Solid → Strong → Elite",
+    "thresholds": "Scout Ability thresholds",
+    "thresholdValues": "Basic: below 55 · Solid: 55–69 · Strong: 70–84 · Elite: 85+",
+    "upgrade": "Better Scouting Office unlocks higher report quality. Current level: Lv {{level}}.",
+    "upgradeNoLevel": "Better Scouting Office unlocks higher report quality.",
+    "limited": "Limited by Scouting Office Lv {{level}}.",
+    "basicWithScore": "Basic ({{score}})",
+    "solidWithScore": "Solid ({{score}})",
+    "strongWithScore": "Strong ({{score}})",
+    "eliteWithScore": "Elite ({{score}})"
+  },
+  "effectText": {
+    "scoutingAccuracy": "+{{value}}% scouting accuracy",
+    "prospectVisibility": "+{{value}}% prospect visibility",
+    "combinedScoutingAccuracy": "+{{value}}% combined scouting accuracy",
+    "combinedProspectVisibility": "+{{value}}% combined prospect visibility",
+    "futureTransferYouth": "Future: transfer intelligence and youth reports",
+    "futureBroaderTransferYouth": "Future: broader transfer and youth intelligence",
+    "scoutingOfficeCap": "Scouting Office Lv {{level}} caps part of scout and analyst bonuses."
+  },
+  "courseOptions": {
+    "coach_elite_methodology": {
+      "title": "Elite Methodology Course",
+      "description": "Improves training structure and overall rider progression quality.",
+      "focus": "Training + Development"
+    },
+    "coach_recovery_planning": {
+      "title": "Recovery Planning Seminar",
+      "description": "Focus on load balancing, fatigue prevention and micro-cycle planning.",
+      "focus": "Recovery Planning"
+    },
+    "coach_youth_programme": {
+      "title": "Youth Development Programme",
+      "description": "Specialised course for improving work with young and developing riders.",
+      "focus": "Youth Development"
+    },
+    "trainer_daily_training_methods": {
+      "title": "Daily Training Methods",
+      "description": "Improves day-to-day training delivery, session structure and rider training consistency.",
+      "focus": "Daily Training + Efficiency"
+    },
+    "trainer_load_management": {
+      "title": "Load Management Workshop",
+      "description": "Focuses on balancing training load, reducing overload risk and supporting better recovery between sessions.",
+      "focus": "Efficiency + Experience"
+    },
+    "trainer_potential_growth": {
+      "title": "Potential Growth Programme",
+      "description": "Specialised trainer course for improving long-term rider development and potential growth support.",
+      "focus": "Potential Growth + Daily Training"
+    },
+    "doctor_sports_medicine": {
+      "title": "Sports Medicine Course",
+      "description": "Improves diagnosis quality and athlete-specific treatment decisions.",
+      "focus": "Diagnosis + Recovery"
+    },
+    "doctor_prevention_lab": {
+      "title": "Injury Prevention Lab",
+      "description": "Focuses on risk screening and preventive protocols.",
+      "focus": "Prevention"
+    },
+    "doctor_rehab_acceleration": {
+      "title": "Rehab Acceleration Programme",
+      "description": "Advanced rehab planning for shorter return timelines.",
+      "focus": "Recovery Speed"
+    },
+    "physio_rehab_methods": {
+      "title": "Rehabilitation Methods",
+      "description": "Improves rehab planning, recovery speed and return-to-fitness support.",
+      "focus": "Rehabilitation + Recovery Speed"
+    },
+    "physio_load_recovery": {
+      "title": "Load Recovery Workshop",
+      "description": "Focuses on reducing fatigue impact and improving post-training recovery.",
+      "focus": "Recovery Speed + Experience"
+    },
+    "physio_injury_return": {
+      "title": "Return-to-Fitness Programme",
+      "description": "Specialised programme for helping riders recover from injuries more efficiently.",
+      "focus": "Rehabilitation + Experience"
+    },
+    "nutritionist_race_nutrition": {
+      "title": "Race Nutrition Planning",
+      "description": "Improves race nutrition plans, rider consistency and recovery support.",
+      "focus": "Nutrition Plan + Consistency"
+    },
+    "nutritionist_recovery_diet": {
+      "title": "Recovery Diet Workshop",
+      "description": "Focuses on nutrition routines that support daily fatigue recovery.",
+      "focus": "Recovery Support + Nutrition"
+    },
+    "nutritionist_endurance_fueling": {
+      "title": "Endurance Fueling Programme",
+      "description": "Advanced nutrition planning for long-term rider endurance and training quality.",
+      "focus": "Nutrition + Long-Term Support"
+    },
+    "mechanic_tt_setup": {
+      "title": "Time Trial Setup Course",
+      "description": "Advanced aerodynamic fitting and TT position optimisation.",
+      "focus": "Setup"
+    },
+    "mechanic_reliability": {
+      "title": "Reliability Workshop",
+      "description": "Improves equipment consistency and race-day reliability.",
+      "focus": "Reliability"
+    },
+    "mechanic_weather_adaptation": {
+      "title": "Weather Adaptation Training",
+      "description": "Focuses on technical support in wet and mixed conditions.",
+      "focus": "Conditions Support"
+    },
+    "director_tactics": {
+      "title": "Race Tactics Seminar",
+      "description": "Improves tactical calls, pacing plans and race management decisions.",
+      "focus": "Tactics"
+    },
+    "director_leadership": {
+      "title": "Leadership Intensive",
+      "description": "Strengthens motivation, leadership and intra-team communication.",
+      "focus": "Leadership"
+    },
+    "director_stage_strategy": {
+      "title": "Stage Strategy Programme",
+      "description": "Specialized tactical planning for stage races and GC support.",
+      "focus": "Stage Strategy"
+    },
+    "u23_youth_development_methods": {
+      "title": "Youth Development Methods",
+      "description": "Improves youth training structure, development planning and long-term rider growth.",
+      "focus": "Youth Development + Youth Training"
+    },
+    "u23_talent_pathway_programme": {
+      "title": "Talent Pathway Programme",
+      "description": "Focuses on identifying development paths and improving potential growth support.",
+      "focus": "Potential Growth + Experience"
+    },
+    "u23_race_readiness_course": {
+      "title": "U23 Race Readiness Course",
+      "description": "Prepares young riders for race-day structure, discipline and tactical development.",
+      "focus": "Youth Training + Leadership"
+    },
+    "scout_evaluation": {
+      "title": "Evaluation Accuracy Course",
+      "description": "Improves rider assessment and report quality.",
+      "focus": "Evaluation"
+    },
+    "scout_networking": {
+      "title": "Scouting Network Camp",
+      "description": "Builds connections and improves talent identification coverage.",
+      "focus": "Network"
+    },
+    "scout_data_analysis": {
+      "title": "Performance Data Analysis",
+      "description": "Improves analytical review of riders and race preparation reports.",
+      "focus": "Accuracy + Analysis"
+    }
   }
 }

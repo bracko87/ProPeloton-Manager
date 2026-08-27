@@ -417,6 +417,13 @@ export default function RiderStatisticsSection({
         return t('roles.rouleur')
       case 'puncheur':
         return t('roles.puncheur')
+      case 'leader':
+        return t('roles.leader')
+      case 'breakaway':
+        return t('roles.breakaway')
+      case 'tt':
+      case 'timetrial':
+        return t('roles.tt')
       default:
         return formatCompetitionLabel(role)
     }
@@ -506,11 +513,11 @@ export default function RiderStatisticsSection({
       </div>
 
       {loading ? (
-        <SectionCard title="Loading statistics">
-          <div className="text-sm text-slate-500">Fetching data...</div>
+        <SectionCard title={t('page.loading')}>
+          <div className="text-sm text-slate-500">{t('page.fetching')}</div>
         </SectionCard>
       ) : error ? (
-        <SectionCard title="Statistics error">
+        <SectionCard title={t('page.error')}>
           <div className="text-sm text-rose-600">{error}</div>
         </SectionCard>
       ) : riderSubTab === 'rankings' ? (
@@ -561,7 +568,7 @@ export default function RiderStatisticsSection({
           <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
             <SectionCard
               title={t('riders.topRiders')}
-              subtitle={`Sorted by ${formatRiderMetricLabel(riderMetric).toLowerCase()} points.`}
+              subtitle={t('metrics.sortedBy', { metric: formatRiderMetricLabel(riderMetric) })}
             >
               {filteredRiders.length === 0 ? (
                 <EmptyState title={t('riders.noRidersFound')} description={t('riders.tryRiderFilters')} />
@@ -570,11 +577,11 @@ export default function RiderStatisticsSection({
                   <table className="min-w-full text-sm">
                     <thead>
                       <tr className="border-b border-slate-200 text-left text-slate-500">
-                        <th className="pb-3 pr-3">Rider</th>
-                        <th className="pb-3 pr-3">Country</th>
-                        <th className="pb-3 pr-3">Role</th>
-                        <th className="pb-3 pr-3">Team</th>
-                        <th className="pb-3 pr-3">Age</th>
+                        <th className="pb-3 pr-3">{t('common.rider')}</th>
+                        <th className="pb-3 pr-3">{t('common.country')}</th>
+                        <th className="pb-3 pr-3">{t('common.role')}</th>
+                        <th className="pb-3 pr-3">{t('common.team')}</th>
+                        <th className="pb-3 pr-3">{t('common.age')}</th>
                         <th className="pb-3 text-right">
                           {formatRiderMetricLabel(riderMetric)} points
                         </th>
@@ -666,11 +673,11 @@ export default function RiderStatisticsSection({
                   <table className="min-w-full text-sm">
                     <thead>
                       <tr className="border-b border-slate-200 text-left text-slate-500">
-                        <th className="pb-3 pr-3">Rider</th>
-                        <th className="pb-3 pr-3">Country</th>
-                        <th className="pb-3 pr-3">Role</th>
-                        <th className="pb-3 pr-3">Team</th>
-                        <th className="pb-3 pr-3">Age</th>
+                        <th className="pb-3 pr-3">{t('common.rider')}</th>
+                        <th className="pb-3 pr-3">{t('common.country')}</th>
+                        <th className="pb-3 pr-3">{t('common.role')}</th>
+                        <th className="pb-3 pr-3">{t('common.team')}</th>
+                        <th className="pb-3 pr-3">{t('common.age')}</th>
                         <th className="pb-3 text-right">
                           {formatRiderMetricLabel(riderTableMetric)} points
                         </th>

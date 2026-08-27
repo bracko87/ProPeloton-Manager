@@ -274,5 +274,186 @@
     "coreLive": "Osnovni sistem aktivan",
     "trainingLive": "Trening aktivan",
     "plannedConnection": "Planirana integracija"
+  },
+  "impactI18n": {
+    "assigned": "Dodeljeno",
+    "openSlotAvailable": "Slobodno mesto je dostupno",
+    "currentBasicCapReached": "Dostignut je osnovni limit",
+    "forGroup": "Za ovu grupu uticaja",
+    "activeCourses": "Aktivni kursevi",
+    "coursesPaused": "Bonusi su delimično pauzirani dok se osoblje usavršava",
+    "fillVacancies": "Koristite Transferi → Osoblje da popunite slobodna mesta",
+    "combinedTitle": "Zajednički uticaj tima",
+    "combinedMedical": "Zajednička medicinska podrška doktora tima, fizioterapeuta i nutricioniste.",
+    "combinedCoach": "Trenerski efekat koji sistem primenjuje preko člana osoblja {{name}}.",
+    "combinedCurrent": "Trenutni zajednički uticaj aktivnog osoblja u ovoj grupi.",
+    "coachingTitle": "Zajednički uticaj trenerskog osoblja",
+    "medicalTitle": "Zajednički uticaj medicinskog osoblja",
+    "mechanicTitle": "Uticaj mehaničarskog osoblja",
+    "directorTitle": "Uticaj sportskih direktora",
+    "u23Title": "Uticaj U23 trenerskog osoblja",
+    "scoutingTitle": "Uticaj skauting osoblja"
+  },
+  "scoutingExplainer": {
+    "title": "Kako funkcioniše kvalitet skautinga",
+    "body": "Atributi skauta određuju njegovu stvarnu sposobnost. Nivo Skauting kancelarije može ograničiti konačni kvalitet izveštaja, pa i veoma dobar skaut može praviti samo osnovne izveštaje dok se kancelarija ne unapredi.",
+    "abilityLevels": "Nivoi sposobnosti skauta",
+    "reportLevels": "Nivoi kvaliteta izveštaja",
+    "levelScale": "Osnovno → Solidno → Jako → Elitno",
+    "thresholds": "Pragovi sposobnosti skauta",
+    "thresholdValues": "Osnovno: ispod 55 · Solidno: 55–69 · Jako: 70–84 · Elitno: 85+",
+    "upgrade": "Bolja Skauting kancelarija otključava viši kvalitet izveštaja. Trenutni nivo: Lv {{level}}.",
+    "upgradeNoLevel": "Bolja Skauting kancelarija otključava viši kvalitet izveštaja.",
+    "limited": "Ograničeno nivoom Skauting kancelarije Lv {{level}}.",
+    "basicWithScore": "Osnovno ({{score}})",
+    "solidWithScore": "Solidno ({{score}})",
+    "strongWithScore": "Jako ({{score}})",
+    "eliteWithScore": "Elitno ({{score}})"
+  },
+  "effectText": {
+    "scoutingAccuracy": "+{{value}}% preciznosti skautinga",
+    "prospectVisibility": "+{{value}}% vidljivosti potencijalnih vozača",
+    "combinedScoutingAccuracy": "+{{value}}% zajedničke preciznosti skautinga",
+    "combinedProspectVisibility": "+{{value}}% zajedničke vidljivosti potencijalnih vozača",
+    "futureTransferYouth": "U budućnosti: informacije o transferima i izveštaji o mladim vozačima",
+    "futureBroaderTransferYouth": "U budućnosti: šire informacije o transferima i mladim vozačima",
+    "scoutingOfficeCap": "Skauting kancelarija Lv {{level}} ograničava deo bonusa skauta i analitičara."
+  },
+  "courseOptions": {
+    "coach_elite_methodology": {
+      "title": "Kurs elitne metodologije",
+      "description": "Poboljšava strukturu treninga i ukupni kvalitet napretka vozača.",
+      "focus": "Trening + razvoj"
+    },
+    "coach_recovery_planning": {
+      "title": "Seminar planiranja oporavka",
+      "description": "Fokus na balansiranju opterećenja, sprečavanju umora i planiranju mikro-ciklusa.",
+      "focus": "Planiranje oporavka"
+    },
+    "coach_youth_programme": {
+      "title": "Program razvoja mladih",
+      "description": "Specijalizovan kurs za bolji rad sa mladim vozačima i vozačima u razvoju.",
+      "focus": "Razvoj mladih"
+    },
+    "trainer_daily_training_methods": {
+      "title": "Metode svakodnevnog treninga",
+      "description": "Poboljšava svakodnevno sprovođenje treninga, strukturu sesija i doslednost rada sa vozačima.",
+      "focus": "Dnevni trening + efikasnost"
+    },
+    "trainer_load_management": {
+      "title": "Radionica upravljanja opterećenjem",
+      "description": "Fokusira se na balansiranje opterećenja, smanjenje rizika od preopterećenja i bolji oporavak između sesija.",
+      "focus": "Efikasnost + iskustvo"
+    },
+    "trainer_potential_growth": {
+      "title": "Program razvoja potencijala",
+      "description": "Specijalizovan kurs za dugoročni razvoj vozača i bolju podršku rastu potencijala.",
+      "focus": "Razvoj potencijala + dnevni trening"
+    },
+    "doctor_sports_medicine": {
+      "title": "Kurs sportske medicine",
+      "description": "Poboljšava kvalitet dijagnoze i odluke o tretmanu prilagođene sportistima.",
+      "focus": "Dijagnoza + oporavak"
+    },
+    "doctor_prevention_lab": {
+      "title": "Laboratorija prevencije povreda",
+      "description": "Fokusira se na procenu rizika i preventivne protokole.",
+      "focus": "Prevencija"
+    },
+    "doctor_rehab_acceleration": {
+      "title": "Program ubrzane rehabilitacije",
+      "description": "Napredno planiranje rehabilitacije za brži povratak vozača.",
+      "focus": "Brzina oporavka"
+    },
+    "physio_rehab_methods": {
+      "title": "Metode rehabilitacije",
+      "description": "Poboljšava planiranje rehabilitacije, brzinu oporavka i povratak pune spremnosti.",
+      "focus": "Rehabilitacija + brzina oporavka"
+    },
+    "physio_load_recovery": {
+      "title": "Radionica oporavka od opterećenja",
+      "description": "Fokusira se na smanjenje uticaja umora i bolji oporavak posle treninga.",
+      "focus": "Brzina oporavka + iskustvo"
+    },
+    "physio_injury_return": {
+      "title": "Program povratka u punu spremnost",
+      "description": "Specijalizovan program za efikasniji oporavak vozača od povreda.",
+      "focus": "Rehabilitacija + iskustvo"
+    },
+    "nutritionist_race_nutrition": {
+      "title": "Planiranje ishrane za trku",
+      "description": "Poboljšava plan ishrane na trci, stabilnost vozača i podršku oporavku.",
+      "focus": "Plan ishrane + doslednost"
+    },
+    "nutritionist_recovery_diet": {
+      "title": "Radionica ishrane za oporavak",
+      "description": "Fokusira se na režime ishrane koji podržavaju svakodnevni oporavak od umora.",
+      "focus": "Podrška oporavku + ishrana"
+    },
+    "nutritionist_endurance_fueling": {
+      "title": "Program ishrane za izdržljivost",
+      "description": "Napredno planiranje ishrane za dugoročnu izdržljivost vozača i kvalitet treninga.",
+      "focus": "Ishrana + dugoročna podrška"
+    },
+    "mechanic_tt_setup": {
+      "title": "Kurs podešavanja za hronometar",
+      "description": "Napredno aerodinamičko podešavanje i optimizacija TT pozicije.",
+      "focus": "Podešavanje"
+    },
+    "mechanic_reliability": {
+      "title": "Radionica pouzdanosti",
+      "description": "Poboljšava stabilnost opreme i pouzdanost na dan trke.",
+      "focus": "Pouzdanost"
+    },
+    "mechanic_weather_adaptation": {
+      "title": "Trening prilagođavanja vremenu",
+      "description": "Fokusira se na tehničku podršku u mokrim i promenljivim uslovima.",
+      "focus": "Podrška u uslovima"
+    },
+    "director_tactics": {
+      "title": "Seminar taktike trke",
+      "description": "Poboljšava taktičke odluke, planiranje tempa i upravljanje trkom.",
+      "focus": "Taktika"
+    },
+    "director_leadership": {
+      "title": "Intenzivni kurs liderstva",
+      "description": "Jača motivaciju, liderstvo i komunikaciju unutar tima.",
+      "focus": "Liderstvo"
+    },
+    "director_stage_strategy": {
+      "title": "Program strategije etapa",
+      "description": "Specijalizovano taktičko planiranje za etapne trke i podršku generalnom plasmanu.",
+      "focus": "Strategija etapa"
+    },
+    "u23_youth_development_methods": {
+      "title": "Metode razvoja mladih",
+      "description": "Poboljšava strukturu treninga mladih, planiranje razvoja i dugoročni napredak vozača.",
+      "focus": "Razvoj mladih + trening mladih"
+    },
+    "u23_talent_pathway_programme": {
+      "title": "Program razvoja talenata",
+      "description": "Fokusira se na prepoznavanje razvojnih puteva i bolju podršku rastu potencijala.",
+      "focus": "Razvoj potencijala + iskustvo"
+    },
+    "u23_race_readiness_course": {
+      "title": "U23 kurs pripreme za trku",
+      "description": "Priprema mlade vozače za strukturu dana trke, disciplinu i taktički razvoj.",
+      "focus": "Trening mladih + liderstvo"
+    },
+    "scout_evaluation": {
+      "title": "Kurs preciznosti procene",
+      "description": "Poboljšava procenu vozača i kvalitet izveštaja.",
+      "focus": "Procena"
+    },
+    "scout_networking": {
+      "title": "Kamp razvoja skauting mreže",
+      "description": "Gradi kontakte i poboljšava pokrivenost pri pronalaženju talenata.",
+      "focus": "Mreža"
+    },
+    "scout_data_analysis": {
+      "title": "Analiza podataka o učinku",
+      "description": "Poboljšava analitički pregled vozača i izveštaja za pripremu trke.",
+      "focus": "Preciznost + analiza"
+    }
   }
 }

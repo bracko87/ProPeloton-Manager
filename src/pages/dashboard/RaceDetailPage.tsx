@@ -2475,28 +2475,28 @@ function WeatherCard({ stage }: { stage: RaceStage }) {
 
       <div className="mt-5 grid grid-cols-[1fr_1.25fr_1fr_1fr] gap-x-5 text-xs">
         <div className="min-w-0">
-          <div className="text-slate-500">Average</div>
+          <div className="text-slate-500">{t('weather.average')}</div>
           <div className="mt-1 whitespace-nowrap text-[13px] font-semibold text-slate-950">
             {avgTempLabel}
           </div>
         </div>
 
         <div className="min-w-0">
-          <div className="text-slate-500">Min / max</div>
+          <div className="text-slate-500">{t('weather.minMax')}</div>
           <div className="mt-1 whitespace-nowrap text-[12px] font-semibold text-slate-950">
             {minMaxTempLabel}
           </div>
         </div>
 
         <div className="min-w-0">
-          <div className="text-slate-500">Wind</div>
+          <div className="text-slate-500">{t('weather.wind')}</div>
           <div className="mt-1 whitespace-nowrap text-[13px] font-semibold text-slate-950">
             {windKmhLabel}
           </div>
         </div>
 
         <div className="min-w-0">
-          <div className="text-slate-500">Rain</div>
+          <div className="text-slate-500">{t('weather.rain')}</div>
           <div className="mt-1 whitespace-nowrap text-[13px] font-semibold text-slate-950">
             {rainMmLabel}
           </div>
@@ -3140,6 +3140,7 @@ function RaceLeadersCard({
   race: Race
   classificationResultsStageId?: string | null
 }) {
+  const { t } = useTranslation('raceDetail')
   const [snapshot, setSnapshot] = useState<Record<string, unknown>>(() =>
     getLeaderSnapshot(race)
   )
@@ -3182,22 +3183,22 @@ function RaceLeadersCard({
   }, [race, race.id, classificationResultsStageId])
 
   const rows = [
-    { key: 'general', label: 'General leader' },
-    { key: 'sprinter', label: 'Best sprinter' },
-    { key: 'mountain', label: 'Best climber' },
-    { key: 'young', label: 'Best young rider' },
-    { key: 'team', label: 'Best team' },
+    { key: 'general', label: t('leaders.general') },
+    { key: 'sprinter', label: t('leaders.sprinter') },
+    { key: 'mountain', label: t('leaders.climber') },
+    { key: 'young', label: t('leaders.young') },
+    { key: 'team', label: t('leaders.team') },
   ]
 
   return (
     <div className="w-full rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
       <div className="flex items-center justify-between gap-3">
         <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-          Leaders / Winners
+          {t('leaders.title')}
         </div>
 
         {loading ? (
-          <div className="text-xs text-slate-400">Updating…</div>
+          <div className="text-xs text-slate-400">{t('leaders.updating')}</div>
         ) : null}
       </div>
 
@@ -6363,7 +6364,7 @@ function ApplicationPendingInfoCard({
         </div>
 
         <div className="rounded-2xl bg-white px-4 py-3 shadow-sm ring-1 ring-sky-100">
-          <div className="text-xs text-slate-500">Application strength</div>
+          <div className="text-xs text-slate-500">{t('application.applicationStrength')}</div>
           <div className="mt-1 font-bold text-slate-950">
             {formatPendingApplicationNumber(quote.commitment_score)}
           </div>
@@ -7507,7 +7508,7 @@ function RaceResultsHub({
                   disabled={fullStageStandingRows.length === 0}
                   className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40"
                 >
-                  Full stage standing
+                  {t('results.fullStageStanding')}
                 </button>
               </div>
             </div>
@@ -7521,9 +7522,9 @@ function RaceResultsHub({
           >
             {engineTestModeLabel ? (
               <div className="mb-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-                <div className="font-semibold">Shadow rewards are not persisted</div>
+                <div className="font-semibold">{t('rewards.shadowTitle')}</div>
                 <div className="mt-1 text-xs leading-5 text-amber-800">
-                  Stage results, sprint/KOM points, finish bonuses, and stage classifications below use the in-memory universal result. Official prize-money and international-ranking award rules remain production-only and are not invented by this read-only preview.
+                  {t('rewards.shadowDescription')}
                 </div>
               </div>
             ) : null}
@@ -7542,7 +7543,7 @@ function RaceResultsHub({
           className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-950/35 backdrop-blur-sm p-4"
           role="dialog"
           aria-modal="true"
-          aria-label={fullStandingModal === 'race' ? 'Full race standing' : 'Full stage standing'}
+          aria-label={fullStandingModal === 'race' ? t('results.fullRaceStanding') : t('results.fullStageStanding')}
           onMouseDown={(event) => {
             if (event.currentTarget === event.target) setFullStandingModal(null)
           }}
@@ -7558,7 +7559,7 @@ function RaceResultsHub({
                       : 'Stage'}
                 </div>
                 <h3 className="mt-1 text-xl font-bold text-slate-950">
-                  {fullStandingModal === 'race' ? 'Full race standing' : 'Full stage standing'}
+                  {fullStandingModal === 'race' ? t('results.fullRaceStanding') : t('results.fullStageStanding')}
                 </h3>
               </div>
               <button
@@ -7576,11 +7577,11 @@ function RaceResultsHub({
                   <thead className="sticky top-0 bg-slate-100 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
                     <tr>
                       <th className="px-3 py-3">#</th>
-                      <th className="px-3 py-3">Country</th>
+                      <th className="px-3 py-3">{t('results.country')}</th>
                       <th className="px-3 py-3">{t('results.rider')}</th>
                       <th className="px-3 py-3">{t('results.team')}</th>
-                      <th className="px-3 py-3 text-right">Time</th>
-                      <th className="px-3 py-3 text-right">Gap</th>
+                      <th className="px-3 py-3 text-right">{t('results.time')}</th>
+                      <th className="px-3 py-3 text-right">{t('results.gap')}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -7659,12 +7660,12 @@ function RaceResultsHub({
                   <thead className="sticky top-0 bg-slate-100 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
                     <tr>
                       <th className="px-3 py-3">#</th>
-                      <th className="px-3 py-3">Country</th>
+                      <th className="px-3 py-3">{t('results.country')}</th>
                       <th className="px-3 py-3">{t('results.rider')}</th>
                       <th className="px-3 py-3">{t('results.team')}</th>
-                      <th className="px-3 py-3 text-right">Time</th>
-                      <th className="px-3 py-3 text-right">Gap</th>
-                      <th className="px-3 py-3">Status</th>
+                      <th className="px-3 py-3 text-right">{t('results.time')}</th>
+                      <th className="px-3 py-3 text-right">{t('results.gap')}</th>
+                      <th className="px-3 py-3">{t('results.status')}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -7875,13 +7876,13 @@ function RaceClassificationTable({
         <thead>
           <tr className="border-b border-slate-200 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
             <th className="px-3 py-3">#</th>
-            <th className="px-3 py-3">{view === 'team' ? 'Team' : 'Rider'}</th>
+            <th className="px-3 py-3">{view === 'team' ? t('results.team') : t('results.rider')}</th>
             <th className="px-3 py-3">{t('results.team')}</th>
             <th className="px-3 py-3 text-right">
-              {isPointsView ? 'Points' : 'Time'}
+              {isPointsView ? t('results.pointsColumn') : t('results.time')}
             </th>
             {!isPointsView ? (
-              <th className="px-3 py-3 text-right">Gap</th>
+              <th className="px-3 py-3 text-right">{t('results.gap')}</th>
             ) : null}
           </tr>
         </thead>
@@ -8068,7 +8069,7 @@ function StageResultsTable({
             <th className="px-3 py-3">#</th>
             <th className="px-3 py-3">{t('results.rider')}</th>
             <th className="px-3 py-3">{t('results.team')}</th>
-            <th className="px-3 py-3 text-right">Time</th>
+            <th className="px-3 py-3 text-right">{t('results.time')}</th>
           </tr>
         </thead>
 
@@ -8218,9 +8219,9 @@ function StagePointResultsTable({
             <th className="px-3 py-3">#</th>
             <th className="px-3 py-3">{t('results.rider')}</th>
             <th className="px-3 py-3">{t('results.team')}</th>
-            <th className="px-3 py-3 text-right">Pts</th>
+            <th className="px-3 py-3 text-right">{t('results.pts')}</th>
             {showBonus ? (
-              <th className="px-3 py-3 text-right">Bonus</th>
+              <th className="px-3 py-3 text-right">{t('results.bonus')}</th>
             ) : null}
           </tr>
         </thead>
@@ -10782,7 +10783,7 @@ function SimpleReplayStagePointsPanel({
           disabled={pointOptions.length === 0}
         >
           {pointOptions.length === 0 ? (
-            <option>No stage points available</option>
+            <option>{t('replay.noStagePoints')}</option>
           ) : (
             pointOptions.map((point) => (
               <option
@@ -10799,15 +10800,15 @@ function SimpleReplayStagePointsPanel({
 
       {pointOptions.length === 0 ? (
         <div className="rounded-2xl bg-slate-50 p-4 text-sm text-slate-500">
-          This stage has no sprint, KOM, or finish point definitions.
+          {t('replay.noStageDefinitions')}
         </div>
       ) : !selectedPoint?.reached ? (
         <div className="rounded-2xl bg-slate-50 p-4 text-sm text-slate-500">
-          This point has not been reached yet.
+          {t('replay.pointNotReached')}
         </div>
       ) : rows.length === 0 ? (
         <div className="rounded-2xl bg-amber-50 px-4 py-4 text-sm text-amber-800">
-          This point was reached without an awarded result.
+          {t('replay.pointNoAward')}
         </div>
       ) : (
         <div className="overflow-hidden rounded-2xl border border-slate-200">
@@ -10818,7 +10819,7 @@ function SimpleReplayStagePointsPanel({
                 <th className="px-3 py-2 text-left">{t('results.rider')}</th>
                 <th className="px-3 py-2 text-left">{t('results.team')}</th>
                 <th className="px-3 py-2 text-right">{t('rewards.points')}</th>
-                <th className="px-3 py-2 text-right">Bonus</th>
+                <th className="px-3 py-2 text-right">{t('results.bonus')}</th>
               </tr>
             </thead>
             <tbody>
@@ -10841,12 +10842,12 @@ function SimpleReplayStagePointsPanel({
 
       <div className="mt-4 border-t border-slate-100 pt-4">
         <div className="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
-          Current stage totals
+          {t('replay.currentStageTotals')}
         </div>
 
         {cumulativeRows.length === 0 ? (
           <div className="rounded-2xl bg-slate-50 px-4 py-3 text-sm text-slate-500">
-            No sprint, KOM, or bonus awards have been revealed yet.
+            {t('replay.noAwards')}
           </div>
         ) : (
           <div className="overflow-hidden rounded-2xl border border-slate-200">
@@ -10855,10 +10856,10 @@ function SimpleReplayStagePointsPanel({
                 <tr>
                   <th className="px-3 py-2 text-left">{t('results.rider')}</th>
                   <th className="px-3 py-2 text-left">{t('results.team')}</th>
-                  <th className="px-3 py-2 text-right">Sprint</th>
-                  <th className="px-3 py-2 text-right">KOM</th>
-                  <th className="px-3 py-2 text-right">Bonus</th>
-                  <th className="px-3 py-2 text-right">Total</th>
+                  <th className="px-3 py-2 text-right">{t('report.sprint')}</th>
+                  <th className="px-3 py-2 text-right">{t('report.kom')}</th>
+                  <th className="px-3 py-2 text-right">{t('results.bonus')}</th>
+                  <th className="px-3 py-2 text-right">{t('replay.total')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -16115,7 +16116,7 @@ function RaceStageProfilePanel({
   if (loading) {
     return (
       <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-        <div className="text-sm text-slate-500">Loading stage profile…</div>
+        <div className="text-sm text-slate-500">{t('stage.loadingProfile')}</div>
       </div>
     )
   }
@@ -16258,9 +16259,9 @@ function RaceStageProfilePanel({
           <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
             <div className="min-w-0 flex-1">
               <h3 className="text-xl font-semibold text-slate-950">
-                {profile.stage_title ?? `Stage ${profile.stage_number}`}
+                {profile.stage_title ?? t('stage.stageNumber', { stage: profile.stage_number })}
               </h3>
-              <p className="mt-1 text-sm text-slate-600">{profile.route_label ?? 'Route TBD'}</p>
+              <p className="mt-1 text-sm text-slate-600">{profile.route_label ?? t('stage.routeTbd')}</p>
               {profile.stage_summary ? (
                 <p className="mt-3 text-sm leading-6 text-slate-600">
                   {profile.stage_summary}
@@ -16270,28 +16271,28 @@ function RaceStageProfilePanel({
 
             <div className="grid min-w-[280px] grid-cols-2 gap-x-8 gap-y-3 xl:pt-1">
               <div>
-                <div className="text-xs text-slate-500">Distance</div>
+                <div className="text-xs text-slate-500">{t('stage.distance')}</div>
                 <div className="mt-1 font-semibold text-slate-950">
                   {formatKm(profile.distance_km)}
                 </div>
               </div>
 
               <div>
-                <div className="text-xs text-slate-500">Terrain</div>
+                <div className="text-xs text-slate-500">{t('stage.terrain')}</div>
                 <div className="mt-1 font-semibold text-slate-950">
                   {profile.terrain_type ? humanizeCode(profile.terrain_type) : '—'}
                 </div>
               </div>
 
               <div>
-                <div className="text-xs text-slate-500">Profile</div>
+                <div className="text-xs text-slate-500">{t('stage.profileLabel')}</div>
                 <div className="mt-1 font-semibold text-slate-950">
                   {profile.profile_type ? humanizeCode(profile.profile_type) : '—'}
                 </div>
               </div>
 
               <div>
-                <div className="text-xs text-slate-500">Elevation</div>
+                <div className="text-xs text-slate-500">{t('stage.elevation')}</div>
                 <div className="mt-1 font-semibold text-slate-950">
                   {formatMeters(profile.elevation_gain_m)}
                 </div>
@@ -16319,7 +16320,7 @@ function RaceStageProfilePanel({
         {stagePoints.length > 0 || shouldShowFinishCard || !isTimeTrialProfileStage ? (
           <div className="mt-6">
             <section>
-              <h3 className="text-lg font-semibold text-slate-900">Stage points</h3>
+              <h3 className="text-lg font-semibold text-slate-900">{t('stage.points')}</h3>
 
               <div className="mt-4 space-y-3">
                 {stagePoints.map((point) => {
@@ -16344,7 +16345,7 @@ function RaceStageProfilePanel({
 
                 {stagePoints.length === 0 && !shouldShowFinishCard ? (
                   <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-500">
-                    No stage points configured for this stage.
+                    {t('stage.noPoints')}
                   </div>
                 ) : null}
               </div>

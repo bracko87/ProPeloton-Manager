@@ -1314,6 +1314,67 @@ function PremiumFeatureLoading() {
   )
 }
 
+
+function translateStaffEffect(effect: string, t: TFunction): string {
+  let match = effect.match(/^\+(\d+)% scouting accuracy$/)
+  if (match) return t('effectText.scoutingAccuracy', { value: match[1] })
+
+  match = effect.match(/^\+(\d+)% prospect visibility$/)
+  if (match) return t('effectText.prospectVisibility', { value: match[1] })
+
+  match = effect.match(/^\+(\d+)% combined scouting accuracy$/)
+  if (match) return t('effectText.combinedScoutingAccuracy', { value: match[1] })
+
+  match = effect.match(/^\+(\d+)% combined prospect visibility$/)
+  if (match) return t('effectText.combinedProspectVisibility', { value: match[1] })
+
+  if (effect === 'Future: transfer intelligence and youth reports') {
+    return t('effectText.futureTransferYouth')
+  }
+  if (effect === 'Future: broader transfer and youth intelligence') {
+    return t('effectText.futureBroaderTransferYouth')
+  }
+
+  match = effect.match(/^Scouting Office Lv (\d+) caps part of scout and analyst bonuses\.$/)
+  if (match) return t('effectText.scoutingOfficeCap', { level: match[1] })
+
+  return effect
+}
+
+function translateScoutExplanationText(value: string, t: TFunction): string {
+  const exact: Record<string, string> = {
+    'How Scout Quality Works': 'scoutingExplainer.title',
+    'Scout attributes create the scout’s true ability. The Scouting Office can cap the final report quality, so a strong scout may still produce basic reports until the office is upgraded.': 'scoutingExplainer.body',
+    'Scout Ability levels': 'scoutingExplainer.abilityLevels',
+    'Report Quality levels': 'scoutingExplainer.reportLevels',
+    'Basic → Solid → Strong → Elite': 'scoutingExplainer.levelScale',
+    'Scout Ability thresholds': 'scoutingExplainer.thresholds',
+    'Basic: below 55 · Solid: 55–69 · Strong: 70–84 · Elite: 85+': 'scoutingExplainer.thresholdValues',
+    'Better Scouting Office unlocks higher report quality.': 'scoutingExplainer.upgradeNoLevel',
+  }
+
+  if (exact[value]) return t(exact[value])
+
+  let match = value.match(/^Better Scouting Office unlocks higher report quality\. Current level: Lv (\d+)\.$/)
+  if (match) return t('scoutingExplainer.upgrade', { level: match[1] })
+
+  match = value.match(/^Limited by Scouting Office Lv (\d+)\.$/)
+  if (match) return t('scoutingExplainer.limited', { level: match[1] })
+
+  match = value.match(/^(Basic|Solid|Strong|Elite) \(([^)]+)\)$/)
+  if (match) {
+    const keyByTier: Record<string, string> = {
+      Basic: 'scoutingExplainer.basicWithScore',
+      Solid: 'scoutingExplainer.solidWithScore',
+      Strong: 'scoutingExplainer.strongWithScore',
+      Elite: 'scoutingExplainer.eliteWithScore',
+    }
+    return t(keyByTier[match[1]], { score: match[2] })
+  }
+
+  return value
+}
+
 function SummaryCard({
   label,
   value,
@@ -2283,14 +2344,14 @@ function StaffQualityPanel({
         {data.rows.map((row) => (
           <div key={row.label} className="rounded-lg bg-gray-50 px-3 py-2">
             <div className="text-xs text-gray-500">{translateQualityText(row.label)}</div>
-            <div className="mt-1 text-sm font-semibold text-gray-900">{translateQualityText(row.value)}</div>
+            <div className="mt-1 text-sm font-semibold text-gray-900">{translateScoutExplanationText(translateQualityText(row.value), t)}</div>
           </div>
         ))}
       </div>
 
       {data.warning ? (
         <div className="mt-3 rounded-lg border border-yellow-200 bg-yellow-50 px-3 py-2 text-xs text-yellow-800">
-          {data.warning}
+          {translateScoutExplanationText(data.warning, t)}
         </div>
       ) : null}
     </div>
@@ -2310,31 +2371,31 @@ function StaffQualityExplanationPanel({
 
   return (
     <div className="mt-4 rounded-xl border border-blue-100 bg-blue-50 p-4 text-sm text-blue-900">
-      <div className="font-semibold">{data.title}</div>
+      <div className="font-semibold">{translateScoutExplanationText(data.title, t)}</div>
 
-      <div className="mt-2 text-blue-800">{data.body}</div>
+      <div className="mt-2 text-blue-800">{translateScoutExplanationText(data.body, t)}</div>
 
       <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
         {data.boxes.map((box) => (
           <div key={box.label} className="rounded-lg bg-white px-3 py-2">
-            <div className="text-xs text-blue-700">{translateQualityText(box.label)}</div>
-            <div className="mt-1 font-medium">{box.value}</div>
+            <div className="text-xs text-blue-700">{translateScoutExplanationText(translateQualityText(box.label), t)}</div>
+            <div className="mt-1 font-medium">{translateScoutExplanationText(box.value, t)}</div>
           </div>
         ))}
       </div>
 
       {data.thresholdLabel && data.thresholdValue ? (
         <div className="mt-2 rounded-lg bg-white px-3 py-2">
-          <div className="text-xs text-blue-700">{data.thresholdLabel}</div>
+          <div className="text-xs text-blue-700">{translateScoutExplanationText(data.thresholdLabel, t)}</div>
           <div className="mt-1 text-xs font-medium text-blue-950">
-            {data.thresholdValue}
+            {translateScoutExplanationText(data.thresholdValue, t)}
           </div>
         </div>
       ) : null}
 
       {data.warning ? (
         <div className="mt-3 rounded-lg border border-yellow-200 bg-yellow-50 px-3 py-2 text-xs text-yellow-800">
-          {data.warning}
+          {translateScoutExplanationText(data.warning, t)}
         </div>
       ) : null}
     </div>
@@ -3096,7 +3157,7 @@ function RoleContributionPanel({
     <div className="rounded-2xl border border-gray-100 bg-gray-50 p-5">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
         <div>
-          <div className="text-base font-semibold text-gray-900">{getImpactPanelTitle(role)}</div>
+          <div className="text-base font-semibold text-gray-900">{t(role === 'head_coach' || role === 'trainer' ? 'impactI18n.coachingTitle' : role === 'team_doctor' || role === 'physio' || role === 'nutritionist' ? 'impactI18n.medicalTitle' : role === 'mechanic' ? 'impactI18n.mechanicTitle' : role === 'sport_director' ? 'impactI18n.directorTitle' : role === 'u23_head_coach' ? 'impactI18n.u23Title' : 'impactI18n.scoutingTitle')}</div>
           <div className="mt-1 text-sm text-gray-500">{t(roleKeys.subtitle)}</div>
         </div>
 
@@ -3107,24 +3168,24 @@ function RoleContributionPanel({
 
       <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
         <SummaryCard
-          label="Assigned"
+          label={t('impactI18n.assigned')}
           value={`${members.length}/${roleLimit}`}
-          subtext={members.length < roleLimit ? 'Open slot available' : 'Current basic cap reached'}
+          subtext={members.length < roleLimit ? t('impactI18n.openSlotAvailable') : t('impactI18n.currentBasicCapReached')}
         />
         <SummaryCard
           label={t('summary.weeklyWages')}
           value={formatCurrency(weeklyWages)}
-          subtext="For this impact group"
+          subtext={t('impactI18n.forGroup')}
         />
         <SummaryCard
-          label="Active Courses"
+          label={t('impactI18n.activeCourses')}
           value={String(activeCourses)}
-          subtext="Bonuses are partially paused while staff study"
+          subtext={t('impactI18n.coursesPaused')}
         />
         <SummaryCard
           label={t('summary.openSlots')}
           value={String(Math.max(roleLimit - members.length, 0))}
-          subtext="Use Transfers → Staff to fill vacancies"
+          subtext={t('impactI18n.fillVacancies')}
         />
       </div>
 
@@ -3135,13 +3196,13 @@ function RoleContributionPanel({
           <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1.1fr_1fr]">
             <div>
               <SectionTitle
-                title="Combined Team Impact"
+                title={t('impactI18n.combinedTitle')}
                 subtitle={
                   isMedicalGroup
-                    ? 'Combined medical support from Team Doctor, Physio and Nutritionist.'
+                    ? t('impactI18n.combinedMedical')
                     : isCoachingGroup && activeHeadCoachEffect
-                      ? `Backend-applied coaching effect from ${activeHeadCoachEffect.staff_name}.`
-                      : 'Current combined impact from active staff in this group.'
+                      ? t('impactI18n.combinedCoach', { name: activeHeadCoachEffect.staff_name })
+                      : t('impactI18n.combinedCurrent')
                 }
               />
               <div className="space-y-2">
@@ -3150,7 +3211,7 @@ function RoleContributionPanel({
                     key={effect}
                     className="rounded-lg border border-gray-100 bg-white px-4 py-3 text-sm text-gray-700"
                   >
-                    {effect}
+                    {translateStaffEffect(effect, t)}
                   </div>
                 ))}
               </div>
@@ -3378,7 +3439,7 @@ function StaffDetailModal({
                       key={effect}
                       className="rounded-lg border border-gray-100 bg-gray-50 px-3 py-2 text-sm text-gray-700"
                     >
-                      {effect}
+                      {translateStaffEffect(effect, t)}
                     </div>
                   ))}
                 </div>
@@ -3892,7 +3953,12 @@ function StaffCourseModal({
 
   if (!staff) return null
 
-  const courseOptions = buildCourseOptions(staff.role)
+  const courseOptions = buildCourseOptions(staff.role).map((course) => ({
+    ...course,
+    title: t(`courseOptions.${course.code}.title`, { defaultValue: course.title }),
+    description: t(`courseOptions.${course.code}.description`, { defaultValue: course.description }),
+    focusLabel: t(`courseOptions.${course.code}.focus`, { defaultValue: course.focusLabel }),
+  }))
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/35 px-4 backdrop-blur-sm">

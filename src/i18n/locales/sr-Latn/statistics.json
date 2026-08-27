@@ -17,12 +17,12 @@
     "team": "Tim",
     "rider": "Vozač",
     "country": "Zemlja",
-    "tier": "Rang",
+    "tier": "Nivo",
     "division": "Divizija",
     "type": "Tip",
     "status": "Status",
     "season": "Sezona",
-    "position": "Poz",
+    "position": "Poz.",
     "role": "Uloga",
     "age": "Godine",
     "internationalPoints": "Međunarodni bodovi",
@@ -90,7 +90,7 @@
     "stageFinishPoints": "Bodovi na cilju etape",
     "gcOneDayPoints": "GC / jednodnevni bodovi",
     "pointsTemplate": "{{metric}} bodovi",
-    "sortedBy": "Sortirano prema: {{metric}} bodovi."
+    "sortedBy": "Sortirano prema: {{metric}}."
   },
   "teams": {
     "teamsInFilter": "Timovi u filteru",
@@ -160,11 +160,14 @@
   "roles": {
     "sprinter": "Sprinter",
     "climber": "Brdaš",
-    "allRounder": "All-rounder",
+    "allRounder": "Univerzalac",
     "timeTrialist": "Hronometraš",
-    "domestique": "Domestique",
+    "domestique": "Pomoćni vozač",
     "rouleur": "Rouleur",
-    "puncheur": "Puncheur"
+    "puncheur": "Puncheur",
+    "leader": "Lider",
+    "breakaway": "Begunac",
+    "tt": "Hronometraš"
   },
   "tutorial": {
     "welcomeTitle": "Potrebna vam je pomoć sa Statistikom?",

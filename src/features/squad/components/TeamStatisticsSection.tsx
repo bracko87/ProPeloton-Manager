@@ -599,11 +599,11 @@ export default function TeamStatisticsSection({
       )}
 
       {loading ? (
-        <SectionCard title="Loading statistics">
-          <div className="text-sm text-slate-500">Fetching data...</div>
+        <SectionCard title={t('page.loading')}>
+          <div className="text-sm text-slate-500">{t('page.fetching')}</div>
         </SectionCard>
       ) : error ? (
-        <SectionCard title="Statistics error">
+        <SectionCard title={t('page.error')}>
           <div className="text-sm text-rose-600">{error}</div>
         </SectionCard>
       ) : teamSubTab === 'current' ? (
@@ -652,10 +652,10 @@ export default function TeamStatisticsSection({
                     <thead>
                       <tr className="border-b border-slate-200 text-left text-slate-500">
                         <th className="pb-3 pr-3">#</th>
-                        <th className="pb-3 pr-3">Team</th>
-                        <th className="pb-3 pr-3">Country</th>
+                        <th className="pb-3 pr-3">{t('common.team')}</th>
+                        <th className="pb-3 pr-3">{t('common.country')}</th>
                         <th className="pb-3 pr-3">{t('teams.tierDivision')}</th>
-                        <th className="pb-3 text-right">International points</th>
+                        <th className="pb-3 text-right">{t('common.internationalPoints')}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -721,13 +721,13 @@ export default function TeamStatisticsSection({
                   <table className="min-w-full text-sm">
                     <thead>
                       <tr className="border-b border-slate-200 text-left text-slate-500">
-                        <th className="pb-3 pr-3">Team</th>
-                        <th className="pb-3 pr-3">Country</th>
-                        <th className="pb-3 pr-3">Tier</th>
-                        <th className="pb-3 pr-3">Division</th>
-                        <th className="pb-3 pr-3">Type</th>
-                        <th className="pb-3 pr-3">Status</th>
-                        <th className="pb-3 text-right">International points</th>
+                        <th className="pb-3 pr-3">{t('common.team')}</th>
+                        <th className="pb-3 pr-3">{t('common.country')}</th>
+                        <th className="pb-3 pr-3">{t('common.tier')}</th>
+                        <th className="pb-3 pr-3">{t('common.division')}</th>
+                        <th className="pb-3 pr-3">{t('common.type')}</th>
+                        <th className="pb-3 pr-3">{t('common.status')}</th>
+                        <th className="pb-3 text-right">{t('common.internationalPoints')}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -849,11 +849,11 @@ export default function TeamStatisticsSection({
                   <table className="min-w-full text-sm">
                     <thead>
                       <tr className="border-b border-slate-200 text-left text-slate-500">
-                        <th className="pb-3 pr-3">Season</th>
-                        <th className="pb-3 pr-3">Team</th>
-                        <th className="pb-3 pr-3">Country</th>
-                        <th className="pb-3 pr-3">Division</th>
-                        <th className="pb-3 text-right">International points</th>
+                        <th className="pb-3 pr-3">{t('common.season')}</th>
+                        <th className="pb-3 pr-3">{t('common.team')}</th>
+                        <th className="pb-3 pr-3">{t('common.country')}</th>
+                        <th className="pb-3 pr-3">{t('common.division')}</th>
+                        <th className="pb-3 text-right">{t('common.internationalPoints')}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -929,14 +929,14 @@ export default function TeamStatisticsSection({
                   <table className="min-w-full text-sm">
                     <thead>
                       <tr className="border-b border-slate-200 text-left text-slate-500">
-                        <th className="pb-3 pr-3">Season</th>
-                        <th className="pb-3 pr-3">Pos</th>
-                        <th className="pb-3 pr-3">Team</th>
-                        <th className="pb-3 pr-3">Country</th>
-                        <th className="pb-3 pr-3">Division</th>
-                        <th className="pb-3 pr-3">Type</th>
-                        <th className="pb-3 pr-3">Status</th>
-                        <th className="pb-3 text-right">International points</th>
+                        <th className="pb-3 pr-3">{t('common.season')}</th>
+                        <th className="pb-3 pr-3">{t('common.position')}</th>
+                        <th className="pb-3 pr-3">{t('common.team')}</th>
+                        <th className="pb-3 pr-3">{t('common.country')}</th>
+                        <th className="pb-3 pr-3">{t('common.division')}</th>
+                        <th className="pb-3 pr-3">{t('common.type')}</th>
+                        <th className="pb-3 pr-3">{t('common.status')}</th>
+                        <th className="pb-3 text-right">{t('common.internationalPoints')}</th>
                       </tr>
                     </thead>
                     <tbody>
