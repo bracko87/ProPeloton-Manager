@@ -93,7 +93,7 @@ export default function ForgotPasswordPage(): JSX.Element {
       {/* Background image */}
       <div className="absolute inset-0 z-0 pointer-events-none" aria-hidden="true">
         <img
-          src="https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/ChatGPT%20Image%20Mar%201,%202026,%2008_31_42%20PM.png"
+          src="https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/New%20image%20sign%20up.png"
           alt=""
           className="object-cover w-full h-full"
           style={
