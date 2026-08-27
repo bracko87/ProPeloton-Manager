@@ -119,7 +119,24 @@
       "teamDoctor": "Analiza zdravlja i oporavka, najviše jednom dnevno u stvarnom vremenu: dostupnost ekipe, ponavljajući obrasci povreda i bolesti, trendovi oporavka i zdravstvene situacije koje treba pratiti.",
       "chiefMechanic": "Nedeljni pregled opreme: stanje i trendovi održavanja, ponavljajući problemi sa opremom, opterećenje radionice i potrošnja zaliha za trke koju treba pregledati.",
       "scout": "Nedeljni pregled regrutovanja koristeći već poznate skauting informacije: sažetak završenih izveštaja, praznine u regrutovanju, poznati potencijalni vozači koje treba ponovo razmotriti i predlozi gde dalje skautirati."
-    }
+    },
+    "paused": "Advisory je pauziran",
+    "resumed": "Advisory je nastavljen",
+    "roleVacant": "Uloga je upražnjena",
+    "daysRemaining": "Preostalo je {{count}} dana",
+    "paidDaysRemaining": "Preostalo je {{count}} plaćenih dana",
+    "pausedVacant": "Ova uloga je upražnjena. Plaćeno Advisory vreme je sačuvano i ne odbrojava se.",
+    "resumedForReplacement": "Neiskorišćeno plaćeno Advisory vreme je automatski nastavljeno za novog zaposlenog.",
+    "extendPaidTime": "Produži plaćeno vreme",
+    "renewPausedAdvisor": "Produži pauzirani Advisory",
+    "remainingPaidTime": "Preostalo plaćeno vreme",
+    "paidTimeAfterRenewal": "Plaćeno vreme nakon obnove",
+    "pausedRenewIntro": "Postojeće plaćeno vreme ostaje sačuvano. Ova opciona obnova dodaje {{days}} dana u stvarnom vremenu za {{coins}} novčića. Zapošljavanje zamene ne zahteva novu kupovinu.",
+    "pausedRenewIntroGeneric": "Postojeće plaćeno vreme ostaje sačuvano dok je uloga upražnjena. Zapošljavanje zamene ga automatski nastavlja i ne košta novčiće. Produženje prava je opciona plaćena radnja.",
+    "renewing": "Obnavljanje…",
+    "confirmPausedRenewal": "Dodaj {{days}} dana za {{coins}} novčića",
+    "couldNotLoadRenewalQuote": "Ponuda za obnovu Advisory usluge nije mogla da se učita.",
+    "couldNotRenewPaused": "Pauzirani Staff Advisory nije mogao da se obnovi."
   },
   "premium": {
     "label": "Premium",
