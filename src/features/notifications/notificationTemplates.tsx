@@ -14542,6 +14542,426 @@ STAGE_PLAN_MISSING_AT_LOCK: {
     MARK_READ_ACTION,
   ],
 },
+
+  COMPETITION_REWARD_GRANTED: {
+    defaultTitle: 'Competition reward granted',
+    defaultMessage:
+      'Your club has earned a competition reward. The prize has been credited to your club.',
+
+    imageSrc:
+      'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Event%20images/competation%20reward.png',
+
+    getImageSrc: (item) =>
+      getImageSrcFromItem(item) ||
+      'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Event%20images/competation%20reward.png',
+
+    enrich: (item) => {
+      const payload = getPayload(item)
+
+      const titleText = readString(item.title) || ''
+      const messageText = readString(item.message) || ''
+
+      const clubName =
+        pickFirstString(payload, [
+          'club_name',
+          'team_name',
+          'recipient_club_name',
+          'rewarded_club_name',
+        ]) ||
+        messageText.match(/^Your club\s+(.+?)\s+earned\b/i)?.[1]?.trim() ||
+        null
+
+      const competitionName =
+        pickFirstString(payload, [
+          'competition_name',
+          'competition_title',
+          'competition',
+          'competition_code',
+          'category_name',
+          'category',
+        ]) ||
+        titleText.match(/\bin\s+(.+)$/i)?.[1]?.trim() ||
+        null
+
+      const position =
+        pickFirstNumber(payload, [
+          'position',
+          'place',
+          'rank',
+          'competition_position',
+          'final_position',
+        ]) ??
+        (() => {
+          const match = titleText.match(
+            /(?:reward:\s*)?(\d+)(?:st|nd|rd|th)?\s+place\b/i
+          )
+          return match ? Number(match[1]) : null
+        })()
+
+      const seasonNumber =
+        pickFirstNumber(payload, [
+          'season_number',
+          'season',
+          'season_no',
+          'competition_season',
+        ]) ??
+        (() => {
+          const match = messageText.match(/\bseason\s+(\d+)\b/i)
+          return match ? Number(match[1]) : null
+        })()
+
+      const cashReward =
+        pickFirstNumber(payload, [
+          'cash_reward',
+          'reward_cash',
+          'cash_amount',
+          'money_reward',
+          'reward_amount',
+          'prize_money',
+          'money',
+        ]) ??
+        (() => {
+          const match = messageText.match(/\$([\d,.]+)/)
+          if (!match) return null
+          const parsed = Number(match[1].replace(/,/g, ''))
+          return Number.isFinite(parsed) ? parsed : null
+        })()
+
+      const coinsReward =
+        pickFirstNumber(payload, [
+          'coins_reward',
+          'coin_reward',
+          'reward_coins',
+          'coins_awarded',
+          'coins_amount',
+          'coin_amount',
+          'coins',
+        ]) ??
+        (() => {
+          const match = messageText.match(/\b([\d,.]+)\s+coins?\b/i)
+          if (!match) return null
+          const parsed = Number(match[1].replace(/,/g, ''))
+          return Number.isFinite(parsed) ? parsed : null
+        })()
+
+      const positionLabel = formatOrdinal(position)
+
+      const title =
+        positionLabel && competitionName
+          ? `Competition reward: ${positionLabel} place in ${competitionName}`
+          : competitionName
+            ? `Competition reward: ${competitionName}`
+            : item.title || 'Competition reward granted'
+
+      const rewardParts = [
+        cashReward !== null ? formatCurrencyLabel(cashReward, '$') : null,
+        coinsReward !== null
+          ? `${formatCurrency(coinsReward)} coin${coinsReward === 1 ? '' : 's'}`
+          : null,
+      ].filter(Boolean)
+
+      const achievementParts = [
+        clubName || 'Your club',
+        positionLabel ? `finished ${positionLabel}` : 'earned a reward',
+        competitionName ? `in ${competitionName}` : null,
+        seasonNumber !== null ? `for Season ${seasonNumber}` : null,
+      ].filter(Boolean)
+
+      return {
+        ...item,
+        title,
+        message:
+          rewardParts.length > 0
+            ? `${achievementParts.join(' ')}. Reward: ${rewardParts.join(' and ')}.`
+            : item.message ||
+              `${achievementParts.join(' ')}. Your competition reward has been granted.`,
+      }
+    },
+
+    getIntroText: (item) => {
+      const payload = getPayload(item)
+      const titleText = readString(item.title) || ''
+      const messageText = readString(item.message) || ''
+
+      const clubName =
+        pickFirstString(payload, [
+          'club_name',
+          'team_name',
+          'recipient_club_name',
+          'rewarded_club_name',
+        ]) ||
+        messageText.match(/^Your club\s+(.+?)\s+earned\b/i)?.[1]?.trim() ||
+        null
+
+      const competitionName =
+        pickFirstString(payload, [
+          'competition_name',
+          'competition_title',
+          'competition',
+          'competition_code',
+          'category_name',
+          'category',
+        ]) ||
+        titleText.match(/\bin\s+(.+)$/i)?.[1]?.trim() ||
+        null
+
+      const position =
+        pickFirstNumber(payload, [
+          'position',
+          'place',
+          'rank',
+          'competition_position',
+          'final_position',
+        ]) ??
+        (() => {
+          const match = titleText.match(
+            /(?:reward:\s*)?(\d+)(?:st|nd|rd|th)?\s+place\b/i
+          )
+          return match ? Number(match[1]) : null
+        })()
+
+      const seasonNumber =
+        pickFirstNumber(payload, [
+          'season_number',
+          'season',
+          'season_no',
+          'competition_season',
+        ]) ??
+        (() => {
+          const match = messageText.match(/\bseason\s+(\d+)\b/i)
+          return match ? Number(match[1]) : null
+        })()
+
+      const positionLabel = formatOrdinal(position)
+      const subject = clubName || 'Your club'
+
+      if (positionLabel && competitionName && seasonNumber !== null) {
+        return `Congratulations! ${subject} finished ${positionLabel} in the ${competitionName} competition for Season ${seasonNumber}. The achievement has been officially rewarded and the prize has already been credited to your club.`
+      }
+
+      if (positionLabel && competitionName) {
+        return `Congratulations! ${subject} finished ${positionLabel} in the ${competitionName} competition. The achievement has been officially rewarded and the prize has already been credited to your club.`
+      }
+
+      if (competitionName) {
+        return `Congratulations! ${subject} earned a reward in the ${competitionName} competition. The prize has already been credited to your club.`
+      }
+
+      return (
+        buildIntroFromMessage(item) ||
+        'Congratulations! Your club earned a competition reward. The prize has already been credited to your club.'
+      )
+    },
+
+    getDetailRows: (item) => {
+      const payload = getPayload(item)
+      const titleText = readString(item.title) || ''
+      const messageText = readString(item.message) || ''
+
+      const clubName =
+        pickFirstString(payload, [
+          'club_name',
+          'team_name',
+          'recipient_club_name',
+          'rewarded_club_name',
+        ]) ||
+        messageText.match(/^Your club\s+(.+?)\s+earned\b/i)?.[1]?.trim() ||
+        null
+
+      const competitionName =
+        pickFirstString(payload, [
+          'competition_name',
+          'competition_title',
+          'competition',
+          'competition_code',
+          'category_name',
+          'category',
+        ]) ||
+        titleText.match(/\bin\s+(.+)$/i)?.[1]?.trim() ||
+        null
+
+      const position =
+        pickFirstNumber(payload, [
+          'position',
+          'place',
+          'rank',
+          'competition_position',
+          'final_position',
+        ]) ??
+        (() => {
+          const match = titleText.match(
+            /(?:reward:\s*)?(\d+)(?:st|nd|rd|th)?\s+place\b/i
+          )
+          return match ? Number(match[1]) : null
+        })()
+
+      const seasonNumber =
+        pickFirstNumber(payload, [
+          'season_number',
+          'season',
+          'season_no',
+          'competition_season',
+        ]) ??
+        (() => {
+          const match = messageText.match(/\bseason\s+(\d+)\b/i)
+          return match ? Number(match[1]) : null
+        })()
+
+      const cashReward =
+        pickFirstNumber(payload, [
+          'cash_reward',
+          'reward_cash',
+          'cash_amount',
+          'money_reward',
+          'reward_amount',
+          'prize_money',
+          'money',
+        ]) ??
+        (() => {
+          const match = messageText.match(/\$([\d,.]+)/)
+          if (!match) return null
+          const parsed = Number(match[1].replace(/,/g, ''))
+          return Number.isFinite(parsed) ? parsed : null
+        })()
+
+      const coinsReward =
+        pickFirstNumber(payload, [
+          'coins_reward',
+          'coin_reward',
+          'reward_coins',
+          'coins_awarded',
+          'coins_amount',
+          'coin_amount',
+          'coins',
+        ]) ??
+        (() => {
+          const match = messageText.match(/\b([\d,.]+)\s+coins?\b/i)
+          if (!match) return null
+          const parsed = Number(match[1].replace(/,/g, ''))
+          return Number.isFinite(parsed) ? parsed : null
+        })()
+
+      return compactRows([
+        detailRow('Club', clubName),
+        detailRow('Competition', competitionName),
+        detailRow(
+          'Final position',
+          position !== null ? `${formatOrdinal(position)} place` : null
+        ),
+        detailRow(
+          'Season',
+          seasonNumber !== null ? `Season ${seasonNumber}` : null
+        ),
+        detailRow(
+          'Prize money',
+          formatCurrencyLabel(cashReward, '$')
+        ),
+        detailRow(
+          'Coins',
+          coinsReward !== null
+            ? `${formatCurrency(coinsReward)} coin${coinsReward === 1 ? '' : 's'}`
+            : null
+        ),
+        detailRow(
+          'Reward status',
+          formatLabel(
+            pickFirstString(payload, [
+              'reward_status',
+              'status',
+              'grant_status',
+            ])
+          ) || 'Granted'
+        ),
+      ])
+    },
+
+    getExtraText: (item) => {
+      const payload = getPayload(item)
+
+      const cashReward = pickFirstNumber(payload, [
+        'cash_reward',
+        'reward_cash',
+        'cash_amount',
+        'money_reward',
+        'reward_amount',
+        'prize_money',
+        'money',
+      ])
+
+      const coinsReward = pickFirstNumber(payload, [
+        'coins_reward',
+        'coin_reward',
+        'reward_coins',
+        'coins_awarded',
+        'coins_amount',
+        'coin_amount',
+        'coins',
+      ])
+
+      if (cashReward !== null && coinsReward !== null) {
+        return 'The prize money has been added directly to your club finances, while the coins have been credited to your club balance. A fantastic result for the club — keep building on this success in the new season!'
+      }
+
+      if (cashReward !== null) {
+        return 'The prize money has been added directly to your club finances. A fantastic result for the club — keep building on this success in the new season!'
+      }
+
+      if (coinsReward !== null) {
+        return 'The coins have been credited to your club balance. A fantastic result for the club — keep building on this success in the new season!'
+      }
+
+      return 'Your competition reward has already been credited. A fantastic result for the club — keep building on this success in the new season!'
+    },
+
+    actions: [
+      {
+        key: 'view-competition',
+        label: 'View competition',
+        variant: 'primary',
+        kind: 'navigate',
+        getHref: (item) => {
+          const payload = getPayload(item)
+
+          return (
+            pickFirstString(payload, [
+              'competition_path',
+              'competition_url',
+              'competition_page_path',
+              'standings_path',
+              'competition_standings_path',
+              'rewards_path',
+            ]) ||
+            getActionHrefFromItem(item)
+          )
+        },
+        show: (item) => {
+          const payload = getPayload(item)
+
+          return Boolean(
+            pickFirstString(payload, [
+              'competition_path',
+              'competition_url',
+              'competition_page_path',
+              'standings_path',
+              'competition_standings_path',
+              'rewards_path',
+            ]) ||
+              getActionHrefFromItem(item)
+          )
+        },
+      },
+      {
+        key: 'open-club-finances',
+        label: 'Club finances',
+        variant: 'secondary',
+        kind: 'navigate',
+        getHref: () => '/dashboard/finance',
+        show: () => true,
+      },
+      MARK_READ_ACTION,
+    ],
+  },
+
 }
 
 /* -------------------------------------------------------------------------- */
