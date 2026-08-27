@@ -12,7 +12,8 @@
     "close": "Zatvori",
     "continue": "Nastavi",
     "confirm": "Potvrdi",
-    "back": "Nazad"
+    "back": "Nazad",
+    "skipTutorial": "Preskoči tutorijal"
   },
   "status": {
     "loading": "Učitavanje...",
