@@ -15,6 +15,7 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router'
 import { useTranslation } from 'react-i18next'
+import type { TFunction } from 'i18next'
 import TutorialOverlay from '../../components/tutorial/TutorialOverlay'
 import {
   financeTutorialSteps,
@@ -68,6 +69,8 @@ type RestartSafeSummary = {
   restart_boundary?: string | null
   source?: string
 }
+
+type FinanceT = TFunction<'finance'>
 
 function toNumber(value: unknown): number {
   if (typeof value === 'number') {
@@ -154,54 +157,54 @@ function toTitleCase(raw: string): string {
     .join(' ')
 }
 
-function formatTransactionFullLabel(raw: string): string {
+function formatTransactionFullLabel(raw: string, t: FinanceT): string {
   const cleaned = stripTrailingCode(raw).replace(/[_-]+/g, ' ').toLowerCase().trim()
 
-  if (!cleaned) return 'Transaction'
+  if (!cleaned) return t('common.transaction')
 
-  if (cleaned.includes('competition reward cash')) return 'Competition Reward'
-  if (cleaned.includes('competition reward')) return 'Competition Reward'
-  if (cleaned.includes('race reward cash')) return 'Race Reward'
-  if (cleaned.includes('race reward')) return 'Race Reward'
+  if (cleaned.includes('competition reward cash')) return t('transactionLabels.competitionReward')
+  if (cleaned.includes('competition reward')) return t('transactionLabels.competitionReward')
+  if (cleaned.includes('race reward cash')) return t('transactionLabels.raceReward')
+  if (cleaned.includes('race reward')) return t('transactionLabels.raceReward')
 
-  if (cleaned.includes('sponsor contract payment')) return 'Sponsor Contract'
-  if (cleaned.includes('sponsor contract')) return 'Sponsor Contract'
-  if (cleaned.includes('sponsor payment')) return 'Sponsor Payment'
-  if (cleaned.includes('sponsor')) return 'Sponsor'
+  if (cleaned.includes('sponsor contract payment')) return t('transactionLabels.sponsorContract')
+  if (cleaned.includes('sponsor contract')) return t('transactionLabels.sponsorContract')
+  if (cleaned.includes('sponsor payment')) return t('transactionLabels.sponsorPayment')
+  if (cleaned.includes('sponsor')) return t('transactionLabels.sponsor')
 
-  if (cleaned.includes('new club bonus')) return 'New Club Bonus'
-  if (cleaned.includes('signing bonus')) return 'Signing Bonus'
-  if (cleaned.includes('bonus')) return 'Bonus'
+  if (cleaned.includes('new club bonus')) return t('transactionLabels.newClubBonus')
+  if (cleaned.includes('signing bonus')) return t('transactionLabels.signingBonus')
+  if (cleaned.includes('bonus')) return t('transactionLabels.bonus')
 
-  if (cleaned.includes('tax withholding')) return 'Tax Withholding'
-  if (cleaned.includes('tax payment')) return 'Tax Payment'
-  if (cleaned.includes('tax')) return 'Tax'
+  if (cleaned.includes('tax withholding')) return t('transactionLabels.taxWithholding')
+  if (cleaned.includes('tax payment')) return t('transactionLabels.taxPayment')
+  if (cleaned.includes('tax')) return t('transactionLabels.tax')
 
-  if (cleaned.includes('rider salary payday')) return 'Rider Salary'
-  if (cleaned.includes('rider salary')) return 'Rider Salary'
-  if (cleaned.includes('staff salary')) return 'Staff Salary'
-  if (cleaned.includes('salary')) return 'Salary'
+  if (cleaned.includes('rider salary payday')) return t('transactionLabels.riderSalary')
+  if (cleaned.includes('rider salary')) return t('transactionLabels.riderSalary')
+  if (cleaned.includes('staff salary')) return t('transactionLabels.staffSalary')
+  if (cleaned.includes('salary')) return t('transactionLabels.salary')
 
-  if (cleaned.includes('training camp refund')) return 'Training Camp Refund'
-  if (cleaned.includes('training camp booking')) return 'Training Camp Booking'
-  if (cleaned.includes('training camp')) return 'Training Camp'
-  if (cleaned.includes('training')) return 'Training'
+  if (cleaned.includes('training camp refund')) return t('transactionLabels.trainingCampRefund')
+  if (cleaned.includes('training camp booking')) return t('transactionLabels.trainingCampBooking')
+  if (cleaned.includes('training camp')) return t('transactionLabels.trainingCamp')
+  if (cleaned.includes('training')) return t('transactionLabels.training')
 
-  if (cleaned.includes('infrastructure facility start')) return 'Infrastructure Upgrade'
-  if (cleaned.includes('infrastructure asset delivery')) return 'Infrastructure Delivery'
-  if (cleaned.includes('infrastructure facility')) return 'Infrastructure Upgrade'
-  if (cleaned.includes('infrastructure')) return 'Infrastructure'
+  if (cleaned.includes('infrastructure facility start')) return t('transactionLabels.infrastructureUpgrade')
+  if (cleaned.includes('infrastructure asset delivery')) return t('transactionLabels.infrastructureDelivery')
+  if (cleaned.includes('infrastructure facility')) return t('transactionLabels.infrastructureUpgrade')
+  if (cleaned.includes('infrastructure')) return t('transactionLabels.infrastructure')
 
-  if (cleaned.includes('equipment purchase')) return 'Equipment Purchase'
-  if (cleaned.includes('equipment')) return 'Equipment'
+  if (cleaned.includes('equipment purchase')) return t('transactionLabels.equipmentPurchase')
+  if (cleaned.includes('equipment')) return t('transactionLabels.equipment')
 
-  if (cleaned.includes('medical')) return 'Medical'
-  if (cleaned.includes('staff')) return 'Staff'
-  if (cleaned.includes('transfer fee')) return 'Transfer Fee'
-  if (cleaned.includes('transfer')) return 'Transfer'
-  if (cleaned.includes('travel')) return 'Travel'
-  if (cleaned.includes('hotel')) return 'Hotel'
-  if (cleaned.includes('transport')) return 'Transport'
+  if (cleaned.includes('medical')) return t('transactionLabels.medical')
+  if (cleaned.includes('staff')) return t('transactionLabels.staff')
+  if (cleaned.includes('transfer fee')) return t('transactionLabels.transferFee')
+  if (cleaned.includes('transfer')) return t('transactionLabels.transfer')
+  if (cleaned.includes('travel')) return t('transactionLabels.travel')
+  if (cleaned.includes('hotel')) return t('transactionLabels.hotel')
+  if (cleaned.includes('transport')) return t('transactionLabels.transport')
 
   const genericWords = new Set([
     'payment',
@@ -301,6 +304,7 @@ function getFinanceTabForTutorialStepKey(stepKey?: string | null): TabKey {
 
 export default function FinancePage(): JSX.Element {
   const { t } = useTranslation('finance')
+  const { t: tCommon } = useTranslation('common')
   const [tab, setTab] = useState<TabKey>('overview')
   const location = useLocation()
   const navigate = useNavigate()
@@ -391,10 +395,10 @@ export default function FinancePage(): JSX.Element {
         created_at: row.created_at,
         date: row.created_at,
         type: row.type,
-        name: formatTransactionFullLabel(getTransactionLabel(row)),
+        name: formatTransactionFullLabel(getTransactionLabel(row), t),
         amount: toNumber(row.net_amount),
       })),
-    [statement],
+    [statement, t],
   )
 
   function resetLoadedState(): void {
@@ -724,12 +728,12 @@ export default function FinancePage(): JSX.Element {
           body={financeTutorialSteps[tutorialStepIndex].body}
           stepLabel={`${tutorialStepIndex + 1}/${financeTutorialSteps.length}`}
           primaryAction={
-            financeTutorialSteps[tutorialStepIndex].primaryAction ?? 'Next'
+            financeTutorialSteps[tutorialStepIndex].primaryAction ?? t('common.next')
           }
           secondaryAction={
             tutorialStepIndex === financeTutorialSteps.length - 1
               ? financeTutorialSteps[tutorialStepIndex].secondaryAction
-              : 'Skip tutorial'
+              : tCommon('actions.skipTutorial')
           }
           onPrimary={handleNextFinanceTutorialStep}
           onSecondary={
