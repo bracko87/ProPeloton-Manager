@@ -12,6 +12,7 @@
  */
 
 import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { createPortal } from "react-dom";
 import { useNavigate, useSearchParams } from "react-router";
 import TutorialOverlay from "../../components/tutorial/TutorialOverlay";
@@ -182,14 +183,14 @@ type SportDirectorSuggestionResponse = {
 type SportDirectorSuggestionSection =
   "equipment" | "team" | "individual" | "supplies";
 
-const assetLabels: Record<RacePrepAssetKey, string> = {
-  team_bus: "Team Bus",
-  equipment_van: "Equipment Van",
-  mobile_workshop: "Mobile Workshop",
-  medical_van: "Medical Van",
-  team_car_1: "Team Car 1",
-  team_car_2: "Team Car 2",
-  team_car_3: "Team Car 3",
+const assetLabelKeys: Record<RacePrepAssetKey, string> = {
+  team_bus: "assets.teamBus",
+  equipment_van: "assets.equipmentVan",
+  mobile_workshop: "assets.mobileWorkshop",
+  medical_van: "assets.medicalVan",
+  team_car_1: "assets.teamCar1",
+  team_car_2: "assets.teamCar2",
+  team_car_3: "assets.teamCar3",
 };
 
 const stagePlanReadinessToneClasses: Record<StagePlanUiTone, string> = {
@@ -244,20 +245,28 @@ function isAssetSelectedInAnotherSlot(
   });
 }
 
-const staffRoleLabels: Record<string, string> = {
-  sport_director: "Sport Director",
-  team_doctor: "Team Doctor",
-  physio: "Physio",
-  mechanic: "Mechanic",
+const staffRoleLabelKeys: Record<string, string> = {
+  sport_director: "roles.sportDirector",
+  team_doctor: "roles.teamDoctor",
+  physio: "roles.physio",
+  mechanic: "roles.mechanic",
 };
 
-const supportStaffRoleLabels: Record<string, string> = {
-  team_doctor: "Team Doctor",
-  physio: "Physio",
-  mechanic: "Mechanic",
+const supportStaffRoleLabelKeys: Record<string, string> = {
+  team_doctor: "roles.teamDoctor",
+  physio: "roles.physio",
+  mechanic: "roles.mechanic",
 };
 
-const raceAssetKeys = Object.keys(assetLabels) as RacePrepAssetKey[];
+const tacticalPlannerRoleLabelKeys: Record<
+  "sport_director" | "u23_head_coach",
+  string
+> = {
+  sport_director: "roles.sportDirector",
+  u23_head_coach: "roles.u23HeadCoach",
+};
+
+const raceAssetKeys = Object.keys(assetLabelKeys) as RacePrepAssetKey[];
 
 const monthLabels = [
   "Jan",
@@ -335,15 +344,15 @@ function normalizeNumericValue(value: unknown, fallback = 0): number {
   return fallback;
 }
 
-function getPlannerQualityTierLabel(value: unknown): string {
+function getPlannerQualityTierKey(value: unknown): string {
   const score = normalizeNumericValue(value, 0);
 
-  if (score >= 85) return "Elite";
-  if (score >= 70) return "Strong";
-  if (score >= 55) return "Solid";
-  if (score > 0) return "Basic";
+  if (score >= 85) return "common.elite";
+  if (score >= 70) return "common.strong";
+  if (score >= 55) return "common.solid";
+  if (score > 0) return "common.basic";
 
-  return "Planning quality pending";
+  return "common.planningPending";
 }
 
 async function fetchRiderRaceSharpnessForClub(
@@ -658,7 +667,7 @@ function formatFullStageDateTime(stage: JsonRecord) {
   return timeLabel ? `${dateLabel} · ${timeLabel}` : dateLabel;
 }
 
-function formatCompactStageDateTime(stage: JsonRecord) {
+function formatCompactStageDateTime(stage: JsonRecord, locale?: string) {
   const parts = parseDateParts(stage.stage_date);
   const timeLabel = getStageStartTime(stage);
 
@@ -666,7 +675,7 @@ function formatCompactStageDateTime(stage: JsonRecord) {
 
   const date = new Date(Date.UTC(parts.year, parts.month - 1, parts.day));
 
-  const weekday = date.toLocaleDateString(undefined, {
+  const weekday = date.toLocaleDateString(locale, {
     weekday: "short",
     timeZone: "UTC",
   });
@@ -1563,6 +1572,8 @@ function getAcceptedRacePreparationState(
 }
 
 export default function RacePreparationPage(): JSX.Element {
+  const { t, i18n } = useTranslation("racePreparation");
+  const locale = i18n.resolvedLanguage || i18n.language;
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 
@@ -2231,13 +2242,13 @@ export default function RacePreparationPage(): JSX.Element {
   const canSubmitRacePlan =
     canEdit && riderSelectionValid && !u23PlannerChoiceIncomplete;
 
-  const selectedSupportStaffCount = Object.keys(supportStaffRoleLabels).filter(
+  const selectedSupportStaffCount = Object.keys(supportStaffRoleLabelKeys).filter(
     (roleType) => Boolean(selectedStaffByRole[roleType]),
   ).length;
 
   const selectedPlannerCount = tacticalPlannerSelectionValid ? 1 : 0;
   const selectedStaffCount = selectedSupportStaffCount + selectedPlannerCount;
-  const maxStaffSlots = Object.keys(staffRoleLabels).length;
+  const maxStaffSlots = Object.keys(staffRoleLabelKeys).length;
   const selectedAssetCount =
     Object.values(cleanSelectedAssets).filter(Boolean).length;
   const maxAssetSlots = raceAssetKeys.length;
@@ -3493,7 +3504,7 @@ export default function RacePreparationPage(): JSX.Element {
                             ].join(" ")}
                           >
                             <div className="font-semibold text-slate-900">
-                              Sport Director
+                              {t(tacticalPlannerRoleLabelKeys.sport_director)}
                             </div>
                             <div className="mt-1 text-xs leading-5 text-slate-600">
                               You manage Stage Plans manually and may ask the
@@ -3516,7 +3527,7 @@ export default function RacePreparationPage(): JSX.Element {
                             ].join(" ")}
                           >
                             <div className="font-semibold text-slate-900">
-                              U23 Head Coach
+                              {t(tacticalPlannerRoleLabelKeys.u23_head_coach)}
                             </div>
                             <div className="mt-1 text-xs leading-5 text-slate-600">
                               The coach automatically prepares Stage Plans.
@@ -3529,7 +3540,7 @@ export default function RacePreparationPage(): JSX.Element {
                         {effectiveTacticalPlannerChoice === "sport_director" ? (
                           <label className="mt-4 block">
                             <span className="text-sm font-medium text-slate-700">
-                              Sport Director
+                              {t(tacticalPlannerRoleLabelKeys.sport_director)}
                             </span>
                             <select
                               disabled={!canEdit}
@@ -3575,7 +3586,7 @@ export default function RacePreparationPage(): JSX.Element {
                           <div className="mt-4">
                             <label className="block">
                               <span className="text-sm font-medium text-slate-700">
-                                U23 Head Coach
+                                {t(tacticalPlannerRoleLabelKeys.u23_head_coach)}
                               </span>
                               <select
                                 disabled={!canEdit}
@@ -3665,9 +3676,9 @@ export default function RacePreparationPage(): JSX.Element {
                     <div className="grid gap-4 md:grid-cols-2">
                       {Object.entries(
                         isDevelopingTeamSelected
-                          ? supportStaffRoleLabels
-                          : staffRoleLabels,
-                      ).map(([roleType, label]) => {
+                          ? supportStaffRoleLabelKeys
+                          : staffRoleLabelKeys,
+                      ).map(([roleType, labelKey]) => {
                         const staffOptionsForRole = (
                           selectableData?.staff ?? []
                         ).filter((staff) => staff.role_type === roleType);
@@ -3675,7 +3686,7 @@ export default function RacePreparationPage(): JSX.Element {
                         return (
                           <label key={roleType} className="block">
                             <span className="text-sm font-medium text-slate-700">
-                              {label}
+                              {t(labelKey)}
                             </span>
                             <select
                               disabled={!canEdit}
@@ -3685,7 +3696,7 @@ export default function RacePreparationPage(): JSX.Element {
                               }
                               className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm disabled:opacity-60"
                             >
-                              <option value="">No {label} selected</option>
+                              <option value="">No {t(labelKey)} selected</option>
                               {staffOptionsForRole.map((staff) => {
                                 const blockedReason =
                                   formatBlockedResourceReason(
@@ -3731,7 +3742,7 @@ export default function RacePreparationPage(): JSX.Element {
                         return (
                           <label key={assetKey} className="block">
                             <span className="text-sm font-medium text-slate-700">
-                              {assetLabels[assetKey]}
+                              {t(assetLabelKeys[assetKey])}
                             </span>
                             <select
                               disabled={!canEdit}
@@ -7022,7 +7033,7 @@ function StagePlansTab({
   );
   const selectedStageQualityScore =
     selectedStageManagement.decision_quality_score;
-  const selectedStageQualityTier = getPlannerQualityTierLabel(
+  const selectedStageQualityTierKey = getPlannerQualityTierKey(
     selectedStageQualityScore,
   );
   const selectedStageBasedOnStageId = String(
@@ -7909,7 +7920,7 @@ function StagePlansTab({
               selectedStageQualityScore !== undefined &&
               selectedStageQualityScore !== null ? (
                 <span className="rounded-full border border-emerald-300 bg-white/70 px-2.5 py-1">
-                  {selectedStageQualityTier} ·{" "}
+                  {t(selectedStageQualityTierKey)} ·{" "}
                   {Math.round(
                     normalizeNumericValue(selectedStageQualityScore, 0),
                   )}
@@ -9140,7 +9151,7 @@ function StageCardsScroller({
         ].join(" ")}
       >
         <div className="text-sm font-medium text-slate-500">
-          {formatCompactStageDateTime(stage)}
+          {formatCompactStageDateTime(stage, locale)}
         </div>
 
         <div className="mt-1 flex items-center justify-between gap-2">
