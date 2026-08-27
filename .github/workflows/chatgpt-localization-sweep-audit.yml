@@ -2,7 +2,8 @@ name: Localization sweep audit
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
     paths:
       - '.github/workflows/chatgpt-localization-sweep-audit.yml'
 
@@ -13,57 +14,116 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: main
-      - name: Scan visible English candidates
+
+      - name: Verify resource parity and screenshot leaks
         shell: bash
         run: |
           python <<'PY'
           from pathlib import Path
+          import json
           import re
 
-          pages = [
-              Path('src/pages/dashboard/Staff.tsx'),
-              Path('src/pages/dashboard/Training.tsx'),
-              Path('src/pages/dashboard/infrastructure/AssetsSection.tsx'),
-              Path('src/pages/dashboard/Statistics.tsx'),
-              Path('src/features/squad/components/TeamStatisticsSection.tsx'),
-              Path('src/features/squad/components/RiderStatisticsSection.tsx'),
-              Path('src/pages/dashboard/RaceDetailPage.tsx'),
+          def flatten(value, prefix=''):
+              out = set()
+              if isinstance(value, dict):
+                  for key, child in value.items():
+                      p = f'{prefix}.{key}' if prefix else key
+                      out |= flatten(child, p)
+              else:
+                  out.add(prefix)
+              return out
+
+          pairs = [
+              ('staff', 'src/i18n/locales/en/staff.json', 'src/i18n/locales/sr-Latn/staff.json'),
+              ('training', 'src/i18n/locales/en/training.json', 'src/i18n/locales/sr-Latn/training.json'),
+              ('statistics', 'src/i18n/locales/en/statistics.json', 'src/i18n/locales/sr-Latn/statistics.json'),
+              ('raceDetail', 'src/i18n/locales/en/raceDetail.json', 'src/i18n/locales/sr-Latn/raceDetail.json'),
+              ('infrastructure', 'src/i18n/locales/en/infrastructure.json', 'src/i18n/locales/sr-Latn/infrastructure.json'),
           ]
 
-          direct_text = re.compile(r'>\s*([A-Za-z][^<{}`]*?[A-Za-z0-9.!?…])\s*<')
-          prop_text = re.compile(r'\b(?:title|description|placeholder|label|aria-label)="([A-Za-z][^"]*[A-Za-z0-9.!?…])"')
+          failures = []
+          print('=== RESOURCE PARITY ===')
+          for name, en_path, sr_path in pairs:
+              en = json.loads(Path(en_path).read_text(encoding='utf-8'))
+              sr = json.loads(Path(sr_path).read_text(encoding='utf-8'))
+              en_keys = flatten(en)
+              sr_keys = flatten(sr)
+              missing = sorted(en_keys - sr_keys)
+              print(f'{name}: EN={len(en_keys)} SR={len(sr_keys)} missing_sr={len(missing)} extra_sr={len(sr_keys-en_keys)}')
+              for key in missing[:50]:
+                  print(f'  MISSING {key}')
+              if missing:
+                  failures.append(f'{name} missing {len(missing)} Serbian keys')
 
-          print('=== LOCALIZATION SWEEP ===')
-          for page in pages:
-              source = page.read_text(encoding='utf-8')
-              print(f'\nPAGE {page}')
-              hits = []
-              for n, line in enumerate(source.splitlines(), 1):
-                  stripped = line.lstrip()
-                  if stripped.startswith('//') or stripped.startswith('*') or stripped.startswith('import '):
-                      continue
-                  for rx in (direct_text, prop_text):
-                      for m in rx.finditer(line):
-                          value = m.group(1).strip()
-                          if value:
-                              hits.append((n, value))
-              seen=set(); unique=[]
+          targets = {
+              'src/pages/dashboard/Staff.tsx': [
+                  '>Assigned<', '>Active Courses<', 'title="Combined Team Impact"',
+                  'Scouting Staff Impact', 'How Scout Quality Works',
+              ],
+              'src/pages/dashboard/Training.tsx': [
+                  '>Best period<', '>Risky period<', '>Existing camp booking<',
+                  '>Quote & Booking<', '>Calculating quote…<', '>Charged participants<',
+                  '>Travel total<', '>Accommodation<', '>Camp fee<', '>Total camp cost<',
+                  'Check the camp dates before booking', 'No eligible camp staff found.',
+                  'No staff selected. The camp can still be booked',
+              ],
+              'src/pages/dashboard/infrastructure/AssetsSection.tsx': [
+                  '>Team Cars<', '>Team Car Fleet<', '>Garage slots<',
+                  '>Condition<', '>Support<', '>Acquired<', '>Current status<',
+                  '>Duration<', '>Completes<', '>Cost paid<', '>Quantity<',
+              ],
+              'src/features/squad/components/RiderStatisticsSection.tsx': [
+                  '>Country</th>', '>Role</th>', '>International points</th>',
+              ],
+              'src/features/squad/components/TeamStatisticsSection.tsx': [
+                  '>Country</th>', '>Tier</th>', '>Division</th>', '>International points</th>',
+              ],
+              'src/pages/dashboard/RaceDetailPage.tsx': [
+                  '>Average</div>', '>Min / max</div>', '>Country</th>', '>Time</th>',
+                  '>Gap</th>', '>Status</th>', '>Pts</th>', '>Bonus</th>',
+                  '<option>No stage points available</option>', '>Loading stage profile…</div>',
+                  '>Distance</div>', '>Terrain</div>', '>Profile</div>', '>Elevation</div>',
+                  '>Stage points</h3>', '>Application strength</div>',
+                  '>Shadow rewards are not persisted</div>',
+              ],
+          }
+
+          print('\n=== SCREENSHOT-TARGET LEAKS ===')
+          for path, phrases in targets.items():
+              source = Path(path).read_text(encoding='utf-8')
+              hits = [phrase for phrase in phrases if phrase in source]
+              print(f'{path}: {len(hits)} targeted leak(s)')
               for hit in hits:
-                  if hit not in seen:
-                      seen.add(hit); unique.append(hit)
-              print(f'DIRECT_VISIBLE_CANDIDATES {len(unique)}')
-              for n,value in unique[:400]:
-                  print(f'L{n}: {value}')
+                  print(f'  LEAK {hit}')
+              if hits:
+                  failures.append(f'{path}: {len(hits)} targeted English leaks')
 
-          staff = Path('src/pages/dashboard/Staff.tsx').read_text(encoding='utf-8')
-          print('\n=== STAFF COURSE OPTIONS ===')
-          # Print every course object in the builder, one field per line, so translation keys can mirror the source.
-          for m in re.finditer(r"code:\s*'([^']+)'\s*,\s*title:\s*'([^']+)'\s*,\s*description:\s*'([^']+)'[\s\S]{0,180}?focusLabel:\s*'([^']+)'", staff):
-              print('COURSE|' + '|'.join(m.groups()))
+          sr_stats = json.loads(Path('src/i18n/locales/sr-Latn/statistics.json').read_text(encoding='utf-8'))
+          country = sr_stats.get('common', {}).get('country')
+          print(f'\nStatistics country label: {country!r}')
+          if country != 'Zemlja':
+              failures.append(f'Statistics country label is {country!r}, expected Zemlja')
 
-          print('\n=== STAFF EFFECT STRINGS ===')
-          for needle in ['scouting accuracy','prospect visibility','Future: transfer intelligence','combined scouting accuracy','combined prospect visibility','broader transfer and youth intelligence','Scouting Office Lv']:
-              for n,line in enumerate(staff.splitlines(),1):
-                  if needle in line:
-                      print(f'L{n}: {line.strip()}')
+          # Informational scan: direct visible English candidates still worth reviewing.
+          direct = re.compile(r'>\s*([A-Za-z][^<{}`]*?[A-Za-z0-9.!?…])\s*<')
+          pages = list(targets)
+          print('\n=== REMAINING DIRECT JSX CANDIDATES (informational) ===')
+          for path in pages:
+              values = []
+              for n, line in enumerate(Path(path).read_text(encoding='utf-8').splitlines(), 1):
+                  if line.lstrip().startswith('//') or line.lstrip().startswith('*'):
+                      continue
+                  for match in direct.finditer(line):
+                      values.append((n, match.group(1).strip()))
+              print(f'{path}: {len(values)}')
+              for n, value in values[:100]:
+                  print(f'  L{n}: {value}')
+
+          if failures:
+              print('\nFAILURES:')
+              for failure in failures:
+                  print(' - ' + failure)
+              raise SystemExit(1)
+
+          print('\nLocalization sweep verification passed.')
           PY
