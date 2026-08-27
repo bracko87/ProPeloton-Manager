@@ -20,6 +20,7 @@ import EquipmentLegacyLocalizationBridge from './components/i18n/EquipmentLegacy
 import InfrastructureLegacyLocalizationBridge from './components/i18n/InfrastructureLegacyLocalizationBridge'
 import CalendarLegacyLocalizationBridge from './components/i18n/CalendarLegacyLocalizationBridge'
 import RaceDetailLegacyLocalizationBridge from './components/i18n/RaceDetailLegacyLocalizationBridge'
+import RaceDetailResourceLocalizationBridge from './components/i18n/RaceDetailResourceLocalizationBridge'
 import RacePreparationLegacyLocalizationBridge from './components/i18n/RacePreparationLegacyLocalizationBridge'
 import TeamRankingLegacyLocalizationBridge from './components/i18n/TeamRankingLegacyLocalizationBridge'
 import StatisticsLegacyLocalizationBridge from './components/i18n/StatisticsLegacyLocalizationBridge'
@@ -61,6 +62,7 @@ root.render(
     <InfrastructureLegacyLocalizationBridge />
     <CalendarLegacyLocalizationBridge />
     <RaceDetailLegacyLocalizationBridge />
+    <RaceDetailResourceLocalizationBridge />
     <RacePreparationLegacyLocalizationBridge />
     <TeamRankingLegacyLocalizationBridge />
     <StatisticsLegacyLocalizationBridge />
