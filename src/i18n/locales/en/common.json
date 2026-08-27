@@ -18,5 +18,15 @@
   "status": {
     "loading": "Loading...",
     "error": "Something went wrong"
+  },
+  "forum": {
+    "title": "Forum",
+    "movingTitle": "Community discussions are moving to Discord",
+    "movingText": "We will not have an in-game forum on this page. All game conversations, manuals, questions, and community discussions will be available in our Discord channel.",
+    "joinHint": "Join our Discord server using the button below.",
+    "community": "Discord Community",
+    "joinTitle": "Join our Discord server",
+    "joinText": "Chat with other players, ask questions, get manual help, and stay up to date with the latest community updates.",
+    "join": "Join Discord"
   }
 }
