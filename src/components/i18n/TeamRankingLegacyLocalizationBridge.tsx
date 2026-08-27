@@ -72,10 +72,21 @@ const options: LegacyLocalizationBridgeOptions = {
     )
   },
   aliases: {
+    'Team Ranking': 'page.title',
+    'Select tier': 'page.selectTier',
+    'Select division': 'page.selectDivision',
     'Loading standings…': 'page.loading',
     'Loading standings...': 'page.loading',
     'Loading past winners…': 'pastWinners.loading',
     'Loading past winners...': 'pastWinners.loading',
+    'Pos': 'table.position',
+    'Team': 'table.team',
+    'Country': 'table.country',
+    'Races': 'table.races',
+    'Race Rep.': 'table.raceReputation',
+    'Points': 'table.points',
+    'Inactive': 'table.inactive',
+    'Your team': 'table.yourTeam',
   },
   transformParams: (key, params, t) => {
     if (params.standing) {
