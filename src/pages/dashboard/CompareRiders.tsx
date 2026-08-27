@@ -7,6 +7,7 @@
 
 import React from 'react'
 import { useLocation } from 'react-router'
+import { useTranslation } from 'react-i18next'
 import RiderComparePanel from '../../features/squad/components/RiderComparePanel'
 
 /**
@@ -19,6 +20,7 @@ import RiderComparePanel from '../../features/squad/components/RiderComparePanel
  * @returns JSX.Element
  */
 export default function CompareRidersPage(): JSX.Element {
+  const { t } = useTranslation('riderProfile')
   const location = useLocation()
   const params = new URLSearchParams(location.search)
 
@@ -28,7 +30,7 @@ export default function CompareRidersPage(): JSX.Element {
   if (!leftRiderId) {
     return (
       <div className="w-full rounded-lg bg-white p-6 shadow">
-        Missing left rider id.
+        {t('compare.missingLeft')}
       </div>
     )
   }
