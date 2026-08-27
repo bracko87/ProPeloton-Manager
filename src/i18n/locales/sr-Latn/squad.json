@@ -1,4 +1,12 @@
 {
+  "page": {
+    "subtitle": "Upravljajte vozačima prvog tima i pratite učinak kroz sezonu."
+  },
+  "common": {
+    "unknownRider": "Nepoznati vozač",
+    "notAuthenticated": "Niste prijavljeni.",
+    "noClub": "Klub za ovog korisnika nije pronađen."
+  },
   "nav": {
     "firstSquad": "Prvi tim",
     "developingTeam": "Razvojni tim",
