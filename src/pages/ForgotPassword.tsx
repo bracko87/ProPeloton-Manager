@@ -11,6 +11,7 @@
 
 import React, { FormEvent, useState } from 'react'
 import { Link } from 'react-router'
+import { useTranslation } from 'react-i18next'
 import { supabase } from '../lib/supabase'
 
 function isProbablyValidEmail(value: string): boolean {
@@ -30,6 +31,7 @@ function getPasswordResetRedirectUrl(): string {
  * Renders a secure password reset request form.
  */
 export default function ForgotPasswordPage(): JSX.Element {
+  const { t } = useTranslation('auth')
   const [email, setEmail] = useState('')
   const [status, setStatus] = useState<'idle' | 'submitting' | 'sent' | 'error'>('idle')
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
@@ -44,13 +46,13 @@ export default function ForgotPasswordPage(): JSX.Element {
     const nextEmail = email.trim()
 
     if (!nextEmail) {
-      setErrorMessage('Please enter your email address.')
+      setErrorMessage(t('forgot.emailRequired'))
       setStatus('error')
       return
     }
 
     if (!isProbablyValidEmail(nextEmail)) {
-      setErrorMessage('Please enter a valid email address.')
+      setErrorMessage(t('forgot.validEmail'))
       setStatus('error')
       return
     }
@@ -79,7 +81,7 @@ export default function ForgotPasswordPage(): JSX.Element {
       // eslint-disable-next-line no-console
       console.error('Password reset network error:', err)
 
-      setErrorMessage('We could not reach the server. Please check your connection and try again.')
+      setErrorMessage(t('forgot.networkError'))
       setStatus('error')
     }
   }
@@ -92,7 +94,7 @@ export default function ForgotPasswordPage(): JSX.Element {
       <div className="absolute inset-0 z-0 pointer-events-none" aria-hidden="true">
         <img
           src="https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/ChatGPT%20Image%20Mar%201,%202026,%2008_31_42%20PM.png"
-          alt="background"
+          alt=""
           className="object-cover w-full h-full"
           style={
             {
@@ -122,15 +124,15 @@ export default function ForgotPasswordPage(): JSX.Element {
 
       <div className="relative z-10 max-w-md w-full bg-white rounded-lg shadow-xl overflow-hidden">
         <div className="p-8">
-          <h1 className="text-2xl font-bold text-gray-900">Forgot your password?</h1>
+          <h1 className="text-2xl font-bold text-gray-900">{t('forgot.title')}</h1>
           <p className="mt-2 text-sm text-gray-600">
-            Enter your account email and we will send instructions to reset your password.
+            {t('forgot.subtitle')}
           </p>
 
           <form onSubmit={handleSubmit} className="mt-6 grid grid-cols-1 gap-4" noValidate>
             <div>
               <label htmlFor="email" className="text-sm font-medium text-gray-700">
-                Email
+                {t('email')}
               </label>
               <input
                 id="email"
@@ -146,7 +148,7 @@ export default function ForgotPasswordPage(): JSX.Element {
                 className="mt-1 block w-full border rounded-md px-3 py-2 disabled:bg-gray-100"
                 type="email"
                 autoComplete="email"
-                placeholder="you@example.com"
+                placeholder={t('register.emailPlaceholder')}
                 disabled={isSubmitting}
               />
             </div>
@@ -157,8 +159,7 @@ export default function ForgotPasswordPage(): JSX.Element {
                 role="status"
                 aria-live="polite"
               >
-                If an account exists for this email, we have sent password reset instructions.
-                Please check your inbox and spam folder.
+                {t('forgot.sent')}
               </div>
             )}
 
@@ -177,16 +178,16 @@ export default function ForgotPasswordPage(): JSX.Element {
               className="bg-yellow-400 px-6 py-2 rounded-md font-semibold disabled:opacity-70"
               disabled={isSubmitting}
             >
-              {isSubmitting ? 'Sending reset link...' : 'Send reset link'}
+              {isSubmitting ? t('forgot.sending') : t('forgot.send')}
             </button>
 
             <div className="flex items-center justify-between text-sm">
               <Link to="/login" className="text-gray-600 hover:text-gray-900">
-                Back to sign in
+                {t('forgot.backToSignIn')}
               </Link>
 
               <Link to="/" className="text-gray-600 hover:text-gray-900">
-                Home
+                {t('home')}
               </Link>
             </div>
           </form>
