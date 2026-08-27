@@ -1,4 +1,12 @@
 {
+  "page": {
+    "subtitle": "Manage your first-team squad and view season insights."
+  },
+  "common": {
+    "unknownRider": "Unknown Rider",
+    "notAuthenticated": "Not authenticated.",
+    "noClub": "No club found for this user."
+  },
   "nav": {
     "firstSquad": "First Squad",
     "developingTeam": "Developing Team",
