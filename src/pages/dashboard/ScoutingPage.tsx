@@ -24,16 +24,7 @@ import { useTranslation } from 'react-i18next'
 import { supabase } from '../../lib/supabase'
 import { formatGameDate, resolveGameDate } from './finance/gameDate'
 
-/**
- * ScoutingReportStatus
- * Status of a scouting report from the club staff perspective.
- */
 type ScoutingReportStatus = 'new' | 'reviewed'
-
-/**
- * RiderProfileScope
- * Indicates which rider profile route should be used for "Open rider profile".
- */
 type RiderProfileScope = 'own' | 'external' | 'public'
 
 type PotentialTranslationKey =
@@ -69,10 +60,6 @@ interface ScoutingStrength {
   fallback: string
 }
 
-/**
- * ScoutingReport
- * Core data structure for a single scouting report row.
- */
 interface ScoutingReport {
   id: string
   riderId: string
@@ -88,16 +75,8 @@ interface ScoutingReport {
   profileScope: RiderProfileScope
 }
 
-/**
- * FilterKey
- * Available filter tabs on the page.
- */
 type FilterKey = 'all' | 'new' | 'reviewed'
 
-/**
- * FILTERS
- * Stable translation-key definitions for the available filters.
- */
 const FILTERS: {
   key: FilterKey
   labelKey: FilterTranslationKey
@@ -122,18 +101,10 @@ const SKILL_LABEL_KEYS: Partial<Record<string, SkillTranslationKey>> = {
 
 const REPORTS_PER_PAGE = 10
 
-/**
- * cn
- * Simple conditional class name joiner.
- */
 function cn(...values: Array<string | false | null | undefined>): string {
   return values.filter(Boolean).join(' ')
 }
 
-/**
- * getStatusLabel
- * Maps the internal status to a stable translation key.
- */
 function getStatusLabel(status: ScoutingReportStatus): FilterTranslationKey {
   switch (status) {
     case 'new':
@@ -143,10 +114,6 @@ function getStatusLabel(status: ScoutingReportStatus): FilterTranslationKey {
   }
 }
 
-/**
- * getStatusToneClasses
- * Returns Tailwind classes for a status pill based on the status.
- */
 function getStatusToneClasses(status: ScoutingReportStatus): string {
   switch (status) {
     case 'new':
@@ -158,10 +125,6 @@ function getStatusToneClasses(status: ScoutingReportStatus): string {
   }
 }
 
-/**
- * getRiderProfileHref
- * Returns a dashboard URL for the rider profile based on the report scope.
- */
 function getRiderProfileHref(report: ScoutingReport): string {
   if (report.profileScope === 'own') {
     return `#/dashboard/my-riders/${encodeURIComponent(report.riderId)}`
@@ -174,10 +137,6 @@ function getRiderProfileHref(report: ScoutingReport): string {
   return `#/dashboard/riders/${encodeURIComponent(report.riderId)}`
 }
 
-/**
- * formatReportDate
- * Uses the shared game date helper to format the completed date.
- */
 function formatReportDate(report: ScoutingReport): string {
   if (!report.completedAt) return '—'
 
@@ -185,10 +144,6 @@ function formatReportDate(report: ScoutingReport): string {
   return formatGameDate(gameParts, true)
 }
 
-/**
- * normalizeNotes
- * Ensures notes are always render-safe text.
- */
 function normalizeNotes(value: unknown): string | null {
   if (!value) return null
   if (typeof value === 'string') return value
@@ -207,13 +162,6 @@ function getRangeLabel(value: any): string {
   return String(value?.label ?? value ?? '—')
 }
 
-/**
- * getPotentialText
- * Converts the numeric potential score into a stable translation key.
- *
- * Translation happens during render so a language change does not require
- * changing or rebuilding the stored scout-report data.
- */
 function getPotentialText(value: any): PotentialTranslationKey | null {
   const exact = Number(value?.exact ?? value)
 
@@ -226,13 +174,6 @@ function getPotentialText(value: any): PotentialTranslationKey | null {
   return 'potential.elite'
 }
 
-/**
- * buildStrengthsFromAttributes
- * Builds the strongest three attributes while keeping translation keys stable.
- *
- * Recognised attributes use scouting.skills.* translation keys.
- * Unknown backend attribute names are preserved as raw fallback text.
- */
 function buildStrengthsFromAttributes(
   reportJson: any,
 ): ScoutingStrength[] {
@@ -253,10 +194,6 @@ function buildStrengthsFromAttributes(
     }))
 }
 
-/**
- * StatusPill
- * Small rounded pill indicating report status (New / Reviewed).
- */
 function StatusPill({
   status,
 }: {
@@ -276,10 +213,6 @@ function StatusPill({
   )
 }
 
-/**
- * ScoreBadge
- * Compact badge for overall / potential values.
- */
 function ScoreBadge({
   label,
   value,
@@ -307,10 +240,6 @@ function ScoreBadge({
   )
 }
 
-/**
- * FilterBar
- * Row of filter buttons (All / New / Reviewed).
- */
 function FilterBar({
   active,
   counts,
@@ -352,10 +281,6 @@ function FilterBar({
   )
 }
 
-/**
- * ReportRow
- * Single row representation of a scouting report.
- */
 function ReportRow({
   report,
   onOpenProfile,
@@ -365,11 +290,8 @@ function ReportRow({
 }): JSX.Element {
   const { t } = useTranslation('scouting')
 
-  const riderName =
-    report.riderName || t('report.unknownRider')
-
-  const scoutName =
-    report.scoutName || t('report.scout')
+  const riderName = report.riderName || t('report.unknownRider')
+  const scoutName = report.scoutName || t('report.scout')
 
   const strengthsPreview = report.strengths
     .slice(0, 3)
@@ -381,11 +303,7 @@ function ReportRow({
     .join(' · ')
 
   const hasMoreStrengths = report.strengths.length > 3
-
-  const potentialText =
-    report.potential
-      ? t(report.potential)
-      : '—'
+  const potentialText = report.potential ? t(report.potential) : '—'
 
   const notesPreview =
     report.notes && report.notes.length > 140
@@ -394,47 +312,29 @@ function ReportRow({
 
   return (
     <div className="grid grid-cols-1 gap-3 rounded-xl border border-gray-100 bg-white px-4 py-3 text-sm md:grid-cols-[minmax(0,2.2fr)_minmax(0,1.5fr)_minmax(0,1.4fr)_auto] md:items-center">
-      {/* Rider / Scout / Status */}
       <div className="min-w-0 space-y-1">
         <div className="flex items-center gap-2">
-          <div className="truncate font-semibold text-gray-900">
-            {riderName}
-          </div>
-
+          <div className="truncate font-semibold text-gray-900">{riderName}</div>
           <StatusPill status={report.status} />
         </div>
 
         <div className="text-xs text-gray-500">
-          {t('report.scoutName', {
-            name: scoutName,
-          })}
+          {t('report.scoutName', { name: scoutName })}
         </div>
 
         <div className="text-xs text-gray-400">
-          {t('report.completed', {
-            date: formatReportDate(report),
-          })}
+          {t('report.completed', { date: formatReportDate(report) })}
         </div>
       </div>
 
-      {/* Scores */}
       <div className="space-y-2 md:space-y-1">
-        <ScoreBadge
-          label={t('report.overall')}
-          value={report.overall}
-          tone="blue"
-        />
+        <ScoreBadge label={t('report.overall')} value={report.overall} tone="blue" />
 
         <div className="md:ml-0">
-          <ScoreBadge
-            label={t('report.potential')}
-            value={potentialText}
-            tone="violet"
-          />
+          <ScoreBadge label={t('report.potential')} value={potentialText} tone="violet" />
         </div>
       </div>
 
-      {/* Strengths & Notes */}
       <div className="min-w-0 space-y-1">
         <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">
           {t('report.keyStrengths')}
@@ -453,13 +353,10 @@ function ReportRow({
 
         <div className="text-xs text-gray-500">
           {t('report.notes')}{' '}
-          <span className="font-normal text-gray-700">
-            {notesPreview}
-          </span>
+          <span className="font-normal text-gray-700">{notesPreview}</span>
         </div>
       </div>
 
-      {/* Action */}
       <div className="flex justify-start md:justify-end">
         <button
           type="button"
@@ -473,26 +370,15 @@ function ReportRow({
   )
 }
 
-/**
- * ScoutingPage
- * Top-level page component listing scout reports with filters.
- */
 export default function ScoutingPage(): JSX.Element {
   const navigate = useNavigate()
   const { t } = useTranslation('scouting')
 
-  const [activeFilter, setActiveFilter] =
-    useState<FilterKey>('all')
-
+  const [activeFilter, setActiveFilter] = useState<FilterKey>('all')
   const [page, setPage] = useState(1)
-
-  const [reports, setReports] =
-    useState<ScoutingReport[]>([])
-
+  const [reports, setReports] = useState<ScoutingReport[]>([])
   const [loading, setLoading] = useState(true)
-
-  const [error, setError] =
-    useState<ScoutingErrorKey | null>(null)
+  const [error, setError] = useState<ScoutingErrorKey | null>(null)
 
   useEffect(() => {
     async function loadReports() {
@@ -511,155 +397,91 @@ export default function ScoutingPage(): JSX.Element {
             review_status,
             report_json
           `)
-          .order('created_at', {
-            ascending: false,
-          })
+          .order('created_at', { ascending: false })
 
         if (error) throw error
 
         const rows = data || []
 
         const riderIds = Array.from(
-          new Set(
-            rows
-              .map((row: any) => row.rider_id)
-              .filter(Boolean),
-          ),
+          new Set(rows.map((row: any) => row.rider_id).filter(Boolean)),
         )
 
         const scoutIds = Array.from(
-          new Set(
-            rows
-              .map((row: any) => row.scout_staff_id)
-              .filter(Boolean),
-          ),
+          new Set(rows.map((row: any) => row.scout_staff_id).filter(Boolean)),
         )
 
-        const [
-          { data: ridersData },
-          { data: staffData },
-        ] = await Promise.all([
+        const [{ data: ridersData }, { data: staffData }] = await Promise.all([
           riderIds.length > 0
             ? supabase
                 .from('riders')
-                .select(
-                  'id, first_name, last_name, display_name, country_code',
-                )
+                .select('id, first_name, last_name, display_name, country_code')
                 .in('id', riderIds)
-            : Promise.resolve({
-                data: [],
-              }),
+            : Promise.resolve({ data: [] }),
 
           scoutIds.length > 0
             ? supabase
                 .from('club_staff')
                 .select('id, staff_name')
                 .in('id', scoutIds)
-            : Promise.resolve({
-                data: [],
-              }),
+            : Promise.resolve({ data: [] }),
         ])
 
         const riderMap = new Map(
-          (ridersData || []).map(
-            (rider: any) => [
-              rider.id,
-              rider,
-            ],
-          ),
+          (ridersData || []).map((rider: any) => [rider.id, rider]),
         )
 
         const staffMap = new Map(
-          (staffData || []).map(
-            (staff: any) => [
-              staff.id,
-              staff,
-            ],
-          ),
+          (staffData || []).map((staff: any) => [staff.id, staff]),
         )
 
-        const mapped = rows.map(
-          (row: any): ScoutingReport => {
-            const rider = riderMap.get(
-              row.rider_id,
-            )
+        const mapped = rows.map((row: any): ScoutingReport => {
+          const rider = riderMap.get(row.rider_id)
+          const scout = staffMap.get(row.scout_staff_id)
+          const reportJson = row.report_json || {}
 
-            const scout = staffMap.get(
-              row.scout_staff_id,
-            )
+          const riderName =
+            reportJson?.rider?.name ||
+            reportJson?.rider_name ||
+            reportJson?.display_name ||
+            reportJson?.rider?.display_name ||
+            [reportJson?.rider?.first_name, reportJson?.rider?.last_name]
+              .filter(Boolean)
+              .join(' ') ||
+            rider?.display_name ||
+            [rider?.first_name, rider?.last_name]
+              .filter(Boolean)
+              .join(' ') ||
+            null
 
-            const reportJson =
-              row.report_json || {}
+          const strengths = buildStrengthsFromAttributes(reportJson)
 
-            const riderName =
-              reportJson?.rider?.name ||
-              reportJson?.rider_name ||
-              reportJson?.display_name ||
-              reportJson?.rider
-                ?.display_name ||
-              [
-                reportJson?.rider
-                  ?.first_name,
-                reportJson?.rider
-                  ?.last_name,
-              ]
-                .filter(Boolean)
-                .join(' ') ||
-              rider?.display_name ||
-              [
-                rider?.first_name,
-                rider?.last_name,
-              ]
-                .filter(Boolean)
-                .join(' ') ||
-              null
+          const notes = normalizeNotes(
+            reportJson?.notes ||
+              reportJson?.summary_text ||
+              reportJson?.scout_notes ||
+              reportJson?.description ||
+              null,
+          )
 
-            const strengths =
-              buildStrengthsFromAttributes(
-                reportJson,
-              )
+          const overall = getRangeLabel(reportJson?.overall)
+          const potential = getPotentialText(reportJson?.potential)
 
-            const notes = normalizeNotes(
-              reportJson?.notes ||
-                reportJson?.summary_text ||
-                reportJson?.scout_notes ||
-                reportJson?.description ||
-                null,
-            )
-
-            const overall = getRangeLabel(
-              reportJson?.overall,
-            )
-
-            const potential =
-              getPotentialText(
-                reportJson?.potential,
-              )
-
-            return {
-              id: row.id,
-              riderId: row.rider_id,
-              riderName,
-              riderCountryCode:
-                rider?.country_code ?? null,
-              scoutName:
-                scout?.staff_name || null,
-              completedAt:
-                row.scouted_on_game_date ||
-                row.created_at,
-              overall,
-              potential,
-              strengths,
-              notes,
-              status:
-                row.review_status ===
-                'reviewed'
-                  ? 'reviewed'
-                  : 'new',
-              profileScope: 'external',
-            }
-          },
-        )
+          return {
+            id: row.id,
+            riderId: row.rider_id,
+            riderName,
+            riderCountryCode: rider?.country_code ?? null,
+            scoutName: scout?.staff_name || null,
+            completedAt: row.scouted_on_game_date || row.created_at,
+            overall,
+            potential,
+            strengths,
+            notes,
+            status: row.review_status === 'reviewed' ? 'reviewed' : 'new',
+            profileScope: 'external',
+          }
+        })
 
         setReports(mapped)
       } catch {
@@ -673,43 +495,27 @@ export default function ScoutingPage(): JSX.Element {
     void loadReports()
   }, [])
 
-  async function markReportReviewed(
-    reportId: string,
-  ): Promise<void> {
+  async function markReportReviewed(reportId: string): Promise<void> {
     setReports((current) =>
       current.map((report) =>
-        report.id === reportId
-          ? {
-              ...report,
-              status: 'reviewed',
-            }
-          : report,
+        report.id === reportId ? { ...report, status: 'reviewed' } : report,
       ),
     )
 
     const { error } = await supabase
       .from('rider_scout_reports')
-      .update({
-        review_status: 'reviewed',
-      })
+      .update({ review_status: 'reviewed' })
       .eq('id', reportId)
 
-    if (error) {
-      throw error
-    }
+    if (error) throw error
   }
 
-  async function handleOpenProfile(
-    report: ScoutingReport,
-  ): Promise<void> {
-    const href =
-      getRiderProfileHref(report)
+  async function handleOpenProfile(report: ScoutingReport): Promise<void> {
+    const href = getRiderProfileHref(report)
 
     if (report.status !== 'reviewed') {
       try {
-        await markReportReviewed(
-          report.id,
-        )
+        await markReportReviewed(report.id)
       } catch {
         setError('page.reviewFailed')
       }
@@ -719,49 +525,25 @@ export default function ScoutingPage(): JSX.Element {
   }
 
   const filteredReports = useMemo(() => {
-    if (activeFilter === 'all') {
-      return reports
-    }
-
-    return reports.filter(
-      (report) =>
-        report.status === activeFilter,
-    )
+    if (activeFilter === 'all') return reports
+    return reports.filter((report) => report.status === activeFilter)
   }, [activeFilter, reports])
 
   const totalPages = Math.max(
     1,
-    Math.ceil(
-      filteredReports.length /
-        REPORTS_PER_PAGE,
-    ),
+    Math.ceil(filteredReports.length / REPORTS_PER_PAGE),
   )
 
-  const paginatedReports =
-    useMemo(() => {
-      const start =
-        (page - 1) *
-        REPORTS_PER_PAGE
+  const paginatedReports = useMemo(() => {
+    const start = (page - 1) * REPORTS_PER_PAGE
+    return filteredReports.slice(start, start + REPORTS_PER_PAGE)
+  }, [filteredReports, page])
 
-      return filteredReports.slice(
-        start,
-        start + REPORTS_PER_PAGE,
-      )
-    }, [filteredReports, page])
-
-  const counts: Partial<
-    Record<FilterKey, number>
-  > = useMemo(
+  const counts: Partial<Record<FilterKey, number>> = useMemo(
     () => ({
       all: reports.length,
-      new: reports.filter(
-        (report) =>
-          report.status === 'new',
-      ).length,
-      reviewed: reports.filter(
-        (report) =>
-          report.status === 'reviewed',
-      ).length,
+      new: reports.filter((report) => report.status === 'new').length,
+      reviewed: reports.filter((report) => report.status === 'reviewed').length,
     }),
     [reports],
   )
@@ -780,23 +562,13 @@ export default function ScoutingPage(): JSX.Element {
         {t('page.back')}
       </button>
 
-      {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-lg font-semibold text-gray-900">
-            {t('page.title')}
-          </h1>
-
-          <p className="mt-1 text-sm text-gray-600">
-            {t('page.subtitle')}
-          </p>
+          <h1 className="text-lg font-semibold text-gray-900">{t('page.title')}</h1>
+          <p className="mt-1 text-sm text-gray-600">{t('page.subtitle')}</p>
         </div>
 
-        <FilterBar
-          active={activeFilter}
-          counts={counts}
-          onChange={setActiveFilter}
-        />
+        <FilterBar active={activeFilter} counts={counts} onChange={setActiveFilter} />
       </div>
 
       {error ? (
@@ -805,99 +577,51 @@ export default function ScoutingPage(): JSX.Element {
         </div>
       ) : null}
 
-      {/* Table / list */}
       <div className="rounded-2xl border border-gray-100 bg-gray-50 p-4">
         {loading ? (
           <div className="rounded-xl border border-gray-200 bg-white px-4 py-6 text-center text-sm text-gray-600">
             {t('page.loading')}
           </div>
-        ) : filteredReports.length ===
-          0 ? (
+        ) : filteredReports.length === 0 ? (
           <div className="rounded-xl border border-dashed border-gray-200 bg-white px-4 py-6 text-center text-sm text-gray-600">
             {t('page.empty')}
           </div>
         ) : (
           <div className="space-y-2">
-            {/* Header row for larger screens */}
             <div className="hidden items-center justify-between rounded-xl border border-transparent px-4 py-1 text-xs font-medium uppercase tracking-wide text-gray-500 md:grid md:grid-cols-[minmax(0,2.2fr)_minmax(0,1.5fr)_minmax(0,1.4fr)_auto]">
-              <div>
-                Rider &amp; scout
-              </div>
-
-              <div>
-                {t('report.overall')} /{' '}
-                {t('report.potential')}
-              </div>
-
-              <div>
-                {t('report.keyStrengths')} &amp;{' '}
-                {t('report.notes')}
-              </div>
-
-              <div className="text-right">
-                {t('report.openProfile')}
-              </div>
+              <div>{t('table.riderScout')}</div>
+              <div>{t('table.overallPotential')}</div>
+              <div>{t('table.strengthsNotes')}</div>
+              <div className="text-right">{t('table.action')}</div>
             </div>
 
-            {paginatedReports.map(
-              (report) => (
-                <ReportRow
-                  key={report.id}
-                  report={report}
-                  onOpenProfile={
-                    handleOpenProfile
-                  }
-                />
-              ),
-            )}
+            {paginatedReports.map((report) => (
+              <ReportRow
+                key={report.id}
+                report={report}
+                onOpenProfile={handleOpenProfile}
+              />
+            ))}
 
-            {filteredReports.length >
-            REPORTS_PER_PAGE ? (
+            {filteredReports.length > REPORTS_PER_PAGE ? (
               <div className="flex items-center justify-between pt-3">
                 <button
                   type="button"
                   disabled={page <= 1}
-                  onClick={() =>
-                    setPage(
-                      (current) =>
-                        Math.max(
-                          1,
-                          current - 1,
-                        ),
-                    )
-                  }
+                  onClick={() => setPage((current) => Math.max(1, current - 1))}
                   className="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  {t(
-                    'pagination.previous',
-                  )}
+                  {t('pagination.previous')}
                 </button>
 
                 <div className="text-xs text-gray-500">
-                  {t(
-                    'pagination.page',
-                    {
-                      page,
-                      total:
-                        totalPages,
-                    },
-                  )}
+                  {t('pagination.page', { page, total: totalPages })}
                 </div>
 
                 <button
                   type="button"
-                  disabled={
-                    page >= totalPages
-                  }
-                  onClick={() =>
-                    setPage(
-                      (current) =>
-                        Math.min(
-                          totalPages,
-                          current + 1,
-                        ),
-                    )
-                  }
+                  disabled={page >= totalPages}
+                  onClick={() => setPage((current) => Math.min(totalPages, current + 1))}
                   className="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {t('pagination.next')}
