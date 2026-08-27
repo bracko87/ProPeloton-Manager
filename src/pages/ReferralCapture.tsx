@@ -10,10 +10,12 @@
  */
 
 import React, { useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useNavigate, useParams } from 'react-router'
 import { normalizeReferralCode, setPendingReferralCode } from '../lib/referrals'
 
 export default function ReferralCapturePage(): JSX.Element {
+  const { t } = useTranslation('auth')
   const navigate = useNavigate()
   const { code } = useParams<{ code: string }>()
 
@@ -29,7 +31,7 @@ export default function ReferralCapturePage(): JSX.Element {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-950 text-slate-100">
-      <p className="text-sm text-slate-300">Redirecting you to sign up...</p>
+      <p className="text-sm text-slate-300">{t('register.pleaseWait')}</p>
     </div>
   )
 }
