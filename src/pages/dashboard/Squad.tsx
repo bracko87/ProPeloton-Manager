@@ -15,10 +15,7 @@ import { useTranslation } from 'react-i18next'
 import { supabase } from '../../lib/supabase'
 import TutorialOverlay from '../../components/tutorial/TutorialOverlay'
 import TutorialTargetFrame from '../../components/tutorial/TutorialTargetFrame'
-import {
-  squadTutorialSteps,
-  squadWelcomeTutorial,
-} from '../../lib/tutorials'
+import { squadTutorialSteps } from '../../lib/tutorials'
 import {
   getTutorialProgress,
   saveTutorialProgress,
@@ -68,7 +65,7 @@ function buildRiderFullName(
   fallback?: string | null
 ) {
   const fullName = [firstName?.trim(), lastName?.trim()].filter(Boolean).join(' ').trim()
-  return fullName || fallback || 'Unknown Rider'
+  return fullName || fallback || ''
 }
 
 function getSeasonYearFromGameDate(value: string | null): number {
@@ -307,7 +304,7 @@ function normalizeSquadSeasonDashboardData(value: unknown): SquadSeasonDashboard
 
             return {
               riderId: String(item.riderId ?? ''),
-              riderName: String(item.riderName ?? 'Unknown rider'),
+              riderName: String(item.riderName ?? ''),
               role: typeof item.role === 'string' ? item.role : null,
               resultLabel: String(item.resultLabel ?? '—'),
               position:
@@ -355,7 +352,7 @@ function normalizeSquadSeasonDashboardData(value: unknown): SquadSeasonDashboard
 
             return {
               riderId: String(item.riderId ?? ''),
-              riderName: String(item.riderName ?? 'Unknown rider'),
+              riderName: String(item.riderName ?? ''),
               role: typeof item.role === 'string' ? item.role : null,
               raceName: typeof item.raceName === 'string' ? item.raceName : null,
               stageLabel: typeof item.stageLabel === 'string' ? item.stageLabel : null,
@@ -388,8 +385,16 @@ async function fetchSquadSeasonDashboardData(
   return normalizeSquadSeasonDashboardData(data)
 }
 
+const squadTutorialTranslationKeyByStep: Record<string, string> = {
+  'squad-riders': 'squad.riders',
+  'squad-rider-details': 'squad.details',
+  'squad-developing-team': 'squad.developing',
+  'squad-staff': 'squad.staff',
+}
+
 export default function SquadPage() {
-  const { t } = useTranslation(['squad', 'navigation'])
+  const { t } = useTranslation(['squad', 'navigation', 'common'])
+  const { t: tTutorial } = useTranslation('tutorials')
   const location = useLocation()
   const navigate = useNavigate()
 
@@ -423,7 +428,9 @@ export default function SquadPage() {
       rows.map((r, idx) => ({
         rowNo: idx + 1,
         id: r.rider_id,
-        name: buildRiderFullName(r.first_name, r.last_name, r.full_name ?? r.display_name),
+        name:
+          buildRiderFullName(r.first_name, r.last_name, r.full_name ?? r.display_name) ||
+          t('common.unknownRider'),
         countryCode: r.country_code,
         role: r.assigned_role,
         age: getAgeFromBirthDate(r.birth_date ?? null, gameDate ?? null) ?? r.age_years,
@@ -446,7 +453,7 @@ export default function SquadPage() {
         internationalPoints: r.international_points ?? 0,
         isTransferListed: transferListedRiderIds.has(r.rider_id),
       })),
-    [rows, gameDate, transferListedRiderIds]
+    [rows, gameDate, transferListedRiderIds, t]
   )
 
   const riderNameById = useMemo(
@@ -454,22 +461,81 @@ export default function SquadPage() {
       new Map(
         rows.map((row) => [
           row.rider_id,
-          buildRiderFullName(row.first_name, row.last_name, row.full_name ?? row.display_name),
+          buildRiderFullName(row.first_name, row.last_name, row.full_name ?? row.display_name) ||
+            t('common.unknownRider'),
         ])
       ),
-    [rows]
+    [rows, t]
   )
 
   const healthOverviewDisplayRows = useMemo(
     () =>
       healthOverviewRows.map((row) => ({
         ...row,
-        full_name: riderNameById.get(row.rider_id) ?? row.display_name,
+        full_name:
+          riderNameById.get(row.rider_id) ??
+          row.display_name ??
+          t('common.unknownRider'),
       })),
-    [healthOverviewRows, riderNameById]
+    [healthOverviewRows, riderNameById, t]
   )
 
-  const squadDisplayData = useMemo(() => squadSeasonDashboardData, [squadSeasonDashboardData])
+  const squadDisplayData = useMemo(() => {
+    const chartLabelKeys: Record<string, string> = {
+      Wins: 'season.winsChart',
+      '2nd': 'season.second',
+      '3rd': 'season.third',
+      Top10: 'season.top10Chart',
+      Top20: 'season.top20Chart',
+      'One-day classics': 'season.oneDayClassics',
+      'Stage finishes': 'season.stageFinishes',
+      'Mountain days': 'season.mountainDays',
+      'Time trials': 'season.timeTrials',
+    }
+
+    const localizeChartLabel = (label: string): string => {
+      if (
+        ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'].includes(
+          label
+        )
+      ) {
+        return t(`months.${label}`)
+      }
+
+      const translationKey = chartLabelKeys[label]
+      return translationKey ? t(translationKey) : label
+    }
+
+    return {
+      ...squadSeasonDashboardData,
+      seasonTrend: squadSeasonDashboardData.seasonTrend.map((point) => ({
+        ...point,
+        label: localizeChartLabel(point.label),
+      })),
+      podiumChart: squadSeasonDashboardData.podiumChart.map((point) => ({
+        ...point,
+        label: localizeChartLabel(point.label),
+      })),
+      raceTypeSnapshot: squadSeasonDashboardData.raceTypeSnapshot.map((point) => ({
+        ...point,
+        label: localizeChartLabel(point.label),
+      })),
+      lastTeamRace: {
+        ...squadSeasonDashboardData.lastTeamRace,
+        rows: squadSeasonDashboardData.lastTeamRace.rows.map((row) => ({
+          ...row,
+          riderName: row.riderName || t('common.unknownRider'),
+        })),
+      },
+      nextRaceSelection: {
+        ...squadSeasonDashboardData.nextRaceSelection,
+        rows: squadSeasonDashboardData.nextRaceSelection.rows.map((row) => ({
+          ...row,
+          riderName: row.riderName || t('common.unknownRider'),
+        })),
+      },
+    }
+  }, [squadSeasonDashboardData, t])
 
   const loadSquadPageData = useCallback(async () => {
     setLoading(true)
@@ -497,7 +563,6 @@ export default function SquadPage() {
 
       const hasPremiumAccess =
         !premiumStatusErr && getPremiumAccessFromResult(premiumStatusData)
-
       setIsPremium(hasPremiumAccess)
       setIsPremiumLoading(false)
 
@@ -509,7 +574,7 @@ export default function SquadPage() {
       }
 
       const userId = authData.user?.id
-      if (!userId) throw new Error('Not authenticated.')
+      if (!userId) throw new Error(t('common.notAuthenticated'))
 
       const normalizedGameDate = normalizeGameDateValue(currentGameDate)
       const seasonYear = getSeasonYearFromGameDate(normalizedGameDate)
@@ -594,7 +659,7 @@ export default function SquadPage() {
       const { data: club, error: clubErr } = await clubPromise
 
       if (clubErr) throw clubErr
-      if (!club?.id) throw new Error('No club found for this user.')
+      if (!club?.id) throw new Error(t('common.noClub'))
 
       const { data: roster, error: rosterErr } = await supabase
         .from('club_roster')
@@ -789,10 +854,10 @@ export default function SquadPage() {
       setIsPremiumLoading(false)
       setHealthOverviewRows([])
       setSquadSeasonDashboardData(createEmptySquadSeasonDashboardData())
-      setError(e?.message ?? 'Failed to load squad.')
+      setError(e?.message ?? t('roster.loadFailed'))
       setLoading(false)
     }
-  }, [])
+  }, [t])
 
   useEffect(() => {
     void loadSquadPageData()
@@ -1005,13 +1070,18 @@ export default function SquadPage() {
         : ''
     : ''
 
+  const currentTutorialStep = squadTutorialSteps[tutorialStepIndex]
+  const currentTutorialTranslationKey =
+    squadTutorialTranslationKeyByStep[currentTutorialStep?.key ?? ''] ?? 'squad.riders'
+  const isLastTutorialStep = tutorialStepIndex === squadTutorialSteps.length - 1
+
   return (
     <div className="w-full">
       <div className="mb-4 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div>
           <h2 className="mb-2 text-xl font-semibold">{t('squad', { ns: 'navigation' })}</h2>
           <div className="text-sm text-gray-500">
-            Manage your first-team squad and view season insights.
+            {t('page.subtitle')}
           </div>
         </div>
 
@@ -1097,10 +1167,10 @@ export default function SquadPage() {
         <TutorialOverlay
           open
           variant="invite"
-          title={squadWelcomeTutorial.title}
-          body={squadWelcomeTutorial.body}
-          primaryAction={squadWelcomeTutorial.primaryAction}
-          secondaryAction={squadWelcomeTutorial.secondaryAction}
+          title={tTutorial('squad.welcome.title')}
+          body={tTutorial('squad.welcome.body')}
+          primaryAction={tTutorial('squad.welcome.primary')}
+          secondaryAction={tTutorial('squad.welcome.secondary')}
           onPrimary={handleStartSquadTutorial}
           onSecondary={handleSkipSquadTutorial}
           onClose={handleCloseSquadTutorial}
@@ -1110,31 +1180,29 @@ export default function SquadPage() {
       {!tutorialLoading && tutorialMode === 'steps' ? (
         <>
           <TutorialTargetFrame
-            target={squadTutorialSteps[tutorialStepIndex].target ?? null}
+            target={currentTutorialStep.target ?? null}
           />
 
           <TutorialOverlay
             open
             variant="panel"
-            title={squadTutorialSteps[tutorialStepIndex].title}
-            body={squadTutorialSteps[tutorialStepIndex].body}
+            title={tTutorial(`${currentTutorialTranslationKey}.title`)}
+            body={tTutorial(`${currentTutorialTranslationKey}.body`)}
             stepLabel={`${tutorialStepIndex + 1}/${squadTutorialSteps.length}`}
-            primaryAction={
-              squadTutorialSteps[tutorialStepIndex].primaryAction ?? 'Next'
-            }
+            primaryAction={tTutorial(`${currentTutorialTranslationKey}.primary`)}
             secondaryAction={
-              tutorialStepIndex === squadTutorialSteps.length - 1
-                ? squadTutorialSteps[tutorialStepIndex].secondaryAction
-                : 'Skip tutorial'
+              isLastTutorialStep
+                ? tTutorial(`${currentTutorialTranslationKey}.secondary`)
+                : t('actions.skipTutorial', { ns: 'common' })
             }
             onPrimary={handleNextSquadTutorialStep}
             onSecondary={
-              tutorialStepIndex === squadTutorialSteps.length - 1
+              isLastTutorialStep
                 ? handleFinishSquadTutorialForNow
                 : handleSkipSquadTutorial
             }
             onClose={handleCloseSquadTutorial}
-            compact={squadTutorialSteps[tutorialStepIndex].compact}
+            compact={currentTutorialStep.compact}
           />
         </>
       ) : null}
