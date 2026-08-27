@@ -37,6 +37,7 @@
  */
 
 import React, { useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthProvider'
@@ -117,19 +118,19 @@ const patternOptions: BadgePattern[] = [
   'quartered',
 ]
 
-const patternLabels: Record<BadgePattern, string> = {
-  solid: 'Solid',
-  'horizontal-band': 'Band',
-  'double-horizontal': 'Double Band',
-  'vertical-split': 'Vertical Split',
-  'horizontal-split': 'Horizontal Split',
-  'diagonal-sash': 'Diagonal Sash',
-  'diagonal-split': 'Diagonal Split',
-  'stripes-vertical': 'Vertical Stripes',
-  'stripes-horizontal': 'Horizontal Stripes',
-  chevron: 'Chevron',
-  'center-band': 'Center Stripe',
-  quartered: 'Quartered',
+const patternLabelKeys: Record<BadgePattern, string> = {
+  solid: 'patterns.solid',
+  'horizontal-band': 'patterns.band',
+  'double-horizontal': 'patterns.doubleBand',
+  'vertical-split': 'patterns.verticalSplit',
+  'horizontal-split': 'patterns.horizontalSplit',
+  'diagonal-sash': 'patterns.diagonalSash',
+  'diagonal-split': 'patterns.diagonalSplit',
+  'stripes-vertical': 'patterns.verticalStripes',
+  'stripes-horizontal': 'patterns.horizontalStripes',
+  chevron: 'patterns.chevron',
+  'center-band': 'patterns.centerStripe',
+  quartered: 'patterns.quartered',
 }
 
 const GENERIC_TEAM_KITS = [
@@ -249,7 +250,6 @@ function getImageDimensionsFromFile(file: File): Promise<{ width: number; height
       .finally(() => URL.revokeObjectURL(objectUrl))
   })
 }
-
 
 /**
  * rasterizeBadgeSvgToPng
@@ -690,7 +690,6 @@ function BadgePreview({
   )
 }
 
-
 type GenericKitSelectorProps = {
   selectedKitUrl: string | null
   onSelect: (url: string) => void
@@ -712,12 +711,14 @@ function GenericKitSelector({
   onScrollRight,
   disabled = false,
 }: GenericKitSelectorProps): JSX.Element {
+  const { t } = useTranslation('createClub')
+
   return (
     <div className="w-full min-w-0 max-w-full space-y-5 overflow-hidden rounded-xl border border-emerald-200 bg-emerald-50/40 p-6 min-h-[360px]">
       <div>
-        <label className="block text-sm font-medium text-gray-700">Team Jersey</label>
+        <label className="block text-sm font-medium text-gray-700">{t('jersey.title')}</label>
         <p className="mt-1 text-xs text-gray-500">
-          Choose one jersey to unlock team creation. You can change it later in Customize Team.
+          {t('jersey.description')}
         </p>
       </div>
 
@@ -727,7 +728,7 @@ function GenericKitSelector({
           onClick={onScrollLeft}
           disabled={disabled}
           className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full border border-gray-300 bg-white text-4xl font-bold text-gray-700 shadow-sm transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
-          aria-label="Scroll kits left"
+          aria-label={t('jersey.scrollLeft')}
         >
           ‹
         </button>
@@ -752,12 +753,12 @@ function GenericKitSelector({
                     : 'border-gray-200 hover:border-emerald-300 hover:shadow-md',
                   disabled ? 'cursor-not-allowed opacity-60' : '',
                 ].join(' ')}
-                aria-label={`Select generic kit ${index + 1}`}
+                aria-label={t('jersey.select', { index: index + 1 })}
                 aria-pressed={isSelected}
               >
                 <img
                   src={kitUrl}
-                  alt={`Generic team kit ${index + 1}`}
+                  alt={t('jersey.alt', { index: index + 1 })}
                   className="h-full w-full object-contain"
                   draggable={false}
                 />
@@ -771,7 +772,7 @@ function GenericKitSelector({
           onClick={onScrollRight}
           disabled={disabled}
           className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full border border-gray-300 bg-white text-4xl font-bold text-gray-700 shadow-sm transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
-          aria-label="Scroll kits right"
+          aria-label={t('jersey.scrollRight')}
         >
           ›
         </button>
@@ -779,7 +780,7 @@ function GenericKitSelector({
 
       {!selectedKitUrl ? (
         <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-800">
-          Jersey selection is required before you can create your team.
+          {t('jersey.required')}
         </div>
       ) : null}
     </div>
@@ -791,6 +792,7 @@ function GenericKitSelector({
  * Team creation form with backend RPC integration.
  */
 export default function CreateClubPage(): JSX.Element {
+  const { t } = useTranslation('createClub')
   const navigate = useNavigate()
   const { user } = useAuth()
 
@@ -870,13 +872,13 @@ export default function CreateClubPage(): JSX.Element {
       extension === 'bmp'
 
     if (!ALLOWED_CUSTOM_LOGO_TYPES.has(normalizedType) && !supportedExtension) {
-      setCustomLogoError('Logo must be a PNG, JPEG/JPG, or BMP image.')
+      setCustomLogoError(t('errors.invalidType'))
       if (customLogoInputRef.current) customLogoInputRef.current.value = ''
       return
     }
 
     if (file.size > MAX_CUSTOM_LOGO_BYTES) {
-      setCustomLogoError('Logo file must be 2 MB or smaller.')
+      setCustomLogoError(t('errors.tooLarge'))
       if (customLogoInputRef.current) customLogoInputRef.current.value = ''
       return
     }
@@ -897,7 +899,7 @@ export default function CreateClubPage(): JSX.Element {
     setCustomLogoError(null)
 
     if (!rawUrl) {
-      setCustomLogoError('Paste a logo URL first.')
+      setCustomLogoError(t('errors.pasteUrl'))
       return
     }
 
@@ -906,12 +908,12 @@ export default function CreateClubPage(): JSX.Element {
     try {
       parsedUrl = new URL(rawUrl)
     } catch {
-      setCustomLogoError('Please enter a valid logo URL.')
+      setCustomLogoError(t('errors.invalidUrl'))
       return
     }
 
     if (parsedUrl.protocol !== 'https:' && parsedUrl.protocol !== 'http:') {
-      setCustomLogoError('Logo URL must start with http:// or https://.')
+      setCustomLogoError(t('errors.httpUrl'))
       return
     }
 
@@ -931,12 +933,8 @@ export default function CreateClubPage(): JSX.Element {
       if (customLogoInputRef.current) {
         customLogoInputRef.current.value = ''
       }
-    } catch (logoError) {
-      setCustomLogoError(
-        logoError instanceof Error
-          ? logoError.message
-          : 'Could not load the logo from this URL.'
-      )
+    } catch {
+      setCustomLogoError(t('errors.loadUrl'))
     } finally {
       setApplyingLogoUrl(false)
     }
@@ -995,7 +993,7 @@ export default function CreateClubPage(): JSX.Element {
       if (!mounted) return
 
       if (countriesError) {
-        setError('Failed to load countries')
+        setError(t('errors.countries'))
         setCountries([])
       } else {
         const options = (data ?? []) as CountryOption[]
@@ -1015,29 +1013,29 @@ export default function CreateClubPage(): JSX.Element {
     return () => {
       mounted = false
     }
-  }, [])
+  }, [t])
 
   async function handleSubmit(e: React.FormEvent): Promise<void> {
     e.preventDefault()
     setError(null)
 
     if (!form.name.trim()) {
-      setError('Team name is required')
+      setError(t('errors.nameRequired'))
       return
     }
 
     if (!form.countryCode) {
-      setError('Team country is required')
+      setError(t('errors.countryRequired'))
       return
     }
 
     if (!selectedKitUrl) {
-      setError('Please choose a team jersey before creating your team.')
+      setError(t('errors.jerseyRequired'))
       return
     }
 
     if (!user) {
-      setError('You must be signed in to create a team.')
+      setError(t('errors.signIn'))
       return
     }
 
@@ -1065,8 +1063,8 @@ export default function CreateClubPage(): JSX.Element {
 
         if (uploadError) {
           const message = /bucket not found/i.test(uploadError.message ?? '')
-            ? 'Storage bucket "club-logos" was not found. Please create it in Supabase Storage first.'
-            : uploadError.message || 'Failed to upload team logo'
+            ? t('errors.bucketMissing')
+            : uploadError.message || t('errors.uploadLogo')
 
           setError(message)
           return
@@ -1099,8 +1097,8 @@ export default function CreateClubPage(): JSX.Element {
 
         if (uploadError) {
           const message = /bucket not found/i.test(uploadError.message ?? '')
-            ? 'Storage bucket "club-logos" was not found. Please create it in Supabase Storage first.'
-            : uploadError.message || 'Failed to save team badge'
+            ? t('errors.bucketMissing')
+            : uploadError.message || t('errors.saveBadge')
 
           setError(message)
           return
@@ -1123,7 +1121,7 @@ export default function CreateClubPage(): JSX.Element {
           await supabase.storage.from('club-logos').remove([uploadedLogoPath])
         }
 
-        setError(rpcError?.message ?? 'Failed to create team')
+        setError(rpcError?.message ?? t('errors.create'))
         return
       }
 
@@ -1154,7 +1152,7 @@ export default function CreateClubPage(): JSX.Element {
       if (!createdClubId) {
         await cleanupFailedLogoUpload(uploadedLogoPath)
       }
-      setError(err?.message ?? 'An unexpected error occurred')
+      setError(err?.message ?? t('errors.unexpected'))
     } finally {
       setSubmitting(false)
     }
@@ -1198,31 +1196,31 @@ export default function CreateClubPage(): JSX.Element {
         <div className="rounded-xl border-2 border-emerald-400 bg-white/95 overflow-hidden">
           <div className="grid min-w-0 grid-cols-1 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)]">
             <div className="min-w-0 p-8 lg:p-10 flex flex-col h-full">
-              <h2 className="text-2xl font-bold text-gray-900">Create Your Team</h2>
-              <p className="text-sm text-gray-600 mt-2">Design your team identity and enter the ProPeloton world.</p>
+              <h2 className="text-2xl font-bold text-gray-900">{t('page.title')}</h2>
+              <p className="text-sm text-gray-600 mt-2">{t('page.subtitle')}</p>
 
               <form id="create-club-form" onSubmit={handleSubmit} className="mt-8 flex flex-col flex-1">
                 <div className="space-y-5">
                   <div>
-                    <label className="text-sm font-medium text-gray-700">Team Name</label>
+                    <label className="text-sm font-medium text-gray-700">{t('page.teamName')}</label>
                     <input
                       value={form.name}
                       onChange={e => updateField('name', e.target.value)}
                       className="mt-1 block w-full border rounded-md px-3 py-2"
-                      placeholder="e.g. Horizon Racing"
+                      placeholder={t('page.teamNamePlaceholder')}
                       required
                       disabled={submitting}
                     />
                   </div>
 
                   <div>
-                    <label className="text-sm font-medium text-gray-700">Team Country</label>
+                    <label className="text-sm font-medium text-gray-700">{t('page.teamCountry')}</label>
                     <div className="mt-1 flex items-center gap-3">
                       <div className="w-7 h-5 rounded-md border border-gray-300 bg-white overflow-hidden flex items-center justify-center shrink-0">
                         {!flagImageError && flagUrl ? (
                           <img
                             src={flagUrl}
-                            alt={selectedCountry ? `${selectedCountry.name} flag` : 'Country flag'}
+                            alt={t('page.countryFlag')}
                             className="w-full h-full object-cover"
                             onError={() => setFlagImageError(true)}
                           />
@@ -1238,7 +1236,7 @@ export default function CreateClubPage(): JSX.Element {
                         disabled={loadingCountries || submitting}
                       >
                         {countries.length === 0 ? (
-                          <option value="">No countries available</option>
+                          <option value="">{t('page.noCountries')}</option>
                         ) : (
                           countries.map(c => (
                             <option key={c.code} value={c.code}>
@@ -1249,12 +1247,12 @@ export default function CreateClubPage(): JSX.Element {
                       </select>
                     </div>
 
-                    {loadingCountries ? <div className="text-xs text-gray-500 mt-1">Loading countries...</div> : null}
+                    {loadingCountries ? <div className="text-xs text-gray-500 mt-1">{t('page.loadingCountries')}</div> : null}
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
                     <div className="flex items-center gap-3">
-                      <label className="min-w-[88px] text-sm font-medium text-gray-700">Primary Color</label>
+                      <label className="min-w-[88px] text-sm font-medium text-gray-700">{t('page.primaryColor')}</label>
                       <input
                         type="color"
                         value={form.primary}
@@ -1265,7 +1263,7 @@ export default function CreateClubPage(): JSX.Element {
                     </div>
 
                     <div className="flex items-center gap-3">
-                      <label className="min-w-[106px] text-sm font-medium text-gray-700">Secondary Color</label>
+                      <label className="min-w-[106px] text-sm font-medium text-gray-700">{t('page.secondaryColor')}</label>
                       <input
                         type="color"
                         value={form.secondary}
@@ -1277,12 +1275,12 @@ export default function CreateClubPage(): JSX.Element {
                   </div>
 
                   <div>
-                    <label className="text-sm font-medium text-gray-700">Team Motto (optional)</label>
+                    <label className="text-sm font-medium text-gray-700">{t('page.motto')}</label>
                     <input
                       value={form.motto}
                       onChange={e => updateField('motto', e.target.value)}
                       className="mt-1 block w-full border rounded-md px-3 py-2"
-                      placeholder="e.g. Ride as one"
+                      placeholder={t('page.mottoPlaceholder')}
                       disabled={submitting}
                     />
                   </div>
@@ -1312,14 +1310,14 @@ export default function CreateClubPage(): JSX.Element {
 
             <div className="min-w-0 border-t lg:border-t-0 lg:border-l border-gray-200 bg-gradient-to-b from-slate-50 to-white p-8 lg:p-10 h-full">
               <div className="flex flex-col items-center justify-start text-center">
-                <h3 className="text-2xl font-bold text-gray-900">Team Preview</h3>
-                <p className="text-sm text-gray-600 mt-2">Interior layout and colors update live.</p>
+                <h3 className="text-2xl font-bold text-gray-900">{t('preview.title')}</h3>
+                <p className="text-sm text-gray-600 mt-2">{t('preview.description')}</p>
 
                 <div className="mt-6 flex h-56 w-56 items-center justify-center overflow-hidden">
                   {customLogoSource !== 'generated' && customLogoPreviewUrl ? (
                     <img
                       src={customLogoPreviewUrl}
-                      alt="Custom team logo preview"
+                      alt={t('preview.customLogoAlt')}
                       className="object-contain transition-all duration-150"
                       style={{
                         width: `${Math.round(180 * (customLogoScale / 100))}px`,
@@ -1338,7 +1336,7 @@ export default function CreateClubPage(): JSX.Element {
                 </div>
 
                 <div className="mt-4 text-lg font-semibold text-gray-900">
-                  {form.name || 'My Team'}
+                  {form.name || t('preview.defaultTeam')}
                 </div>
 
                 {customLogoSource !== 'generated' && customLogoPreviewUrl ? (
@@ -1348,7 +1346,7 @@ export default function CreateClubPage(): JSX.Element {
                         htmlFor="custom-logo-scale"
                         className="text-xs font-semibold text-gray-700"
                       >
-                        Logo size
+                        {t('preview.logoSize')}
                       </label>
                       <span className="text-xs font-medium text-gray-500">
                         {customLogoScale}%
@@ -1370,12 +1368,11 @@ export default function CreateClubPage(): JSX.Element {
                     />
 
                     <div className="mt-1 flex justify-between text-[11px] text-gray-400">
-                      <span>Smaller</span>
-                      <span>Larger</span>
+                      <span>{t('preview.smaller')}</span>
+                      <span>{t('preview.larger')}</span>
                     </div>
                   </div>
                 ) : null}
-
 
                 {/* Consolidated Interior Style selector into the Team Preview area */}
                 <div
@@ -1384,46 +1381,50 @@ export default function CreateClubPage(): JSX.Element {
                     customLogoSource !== 'generated' ? 'opacity-50' : '',
                   ].join(' ')}
                 >
-                  <div className="text-sm font-semibold text-gray-900">Interior Style</div>
+                  <div className="text-sm font-semibold text-gray-900">{t('patterns.title')}</div>
                   <div className="mt-1 text-xs text-gray-500">
                     {customLogoSource === 'generated'
-                      ? 'Choose how the primary and secondary colors are divided.'
-                      : 'Interior Style applies only to the generated team badge.'}
+                      ? t('patterns.description')
+                      : t('patterns.customDescription')}
                   </div>
 
                   <div className="mt-3 grid grid-cols-4 gap-2">
-                    {patternOptions.map(pattern => (
-                      <button
-                        key={pattern}
-                        type="button"
-                        onClick={() => setBadgePattern(pattern)}
-                        disabled={customLogoSource !== 'generated' || submitting}
-                        className={`rounded-lg border p-2 flex flex-col items-center justify-center transition ${
-                          badgePattern === pattern
-                            ? 'border-blue-500 bg-blue-50'
-                            : 'border-gray-200 bg-white hover:border-gray-300'
-                        }`}
-                        aria-label={`Select ${patternLabels[pattern]} pattern`}
-                        title={patternLabels[pattern]}
-                      >
-                        <BadgePreview
-                          shape={badgeShape}
-                          pattern={pattern}
-                          primary={form.primary}
-                          secondary={form.secondary}
-                          size="small"
-                        />
-                      </button>
-                    ))}
+                    {patternOptions.map(pattern => {
+                      const patternLabel = t(patternLabelKeys[pattern])
+
+                      return (
+                        <button
+                          key={pattern}
+                          type="button"
+                          onClick={() => setBadgePattern(pattern)}
+                          disabled={customLogoSource !== 'generated' || submitting}
+                          className={`rounded-lg border p-2 flex flex-col items-center justify-center transition ${
+                            badgePattern === pattern
+                              ? 'border-blue-500 bg-blue-50'
+                              : 'border-gray-200 bg-white hover:border-gray-300'
+                          }`}
+                          aria-label={t('patterns.select', { pattern: patternLabel })}
+                          title={patternLabel}
+                        >
+                          <BadgePreview
+                            shape={badgeShape}
+                            pattern={pattern}
+                            primary={form.primary}
+                            secondary={form.secondary}
+                            size="small"
+                          />
+                        </button>
+                      )
+                    })}
                   </div>
                 </div>
 
                 <div className="mt-6 w-full rounded-xl border border-gray-200 bg-white p-4 text-left">
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>
-                      <div className="text-sm font-semibold text-gray-900">Team Logo</div>
+                      <div className="text-sm font-semibold text-gray-900">{t('logo.title')}</div>
                       <div className="mt-1 text-xs text-gray-500">
-                        Optional. Upload a logo or use an image URL. If none is selected, the generated badge above will be used.
+                        {t('logo.description')}
                       </div>
                     </div>
 
@@ -1434,7 +1435,7 @@ export default function CreateClubPage(): JSX.Element {
                         disabled={submitting}
                         className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
                       >
-                        Use generated badge
+                        {t('logo.useGenerated')}
                       </button>
                     ) : null}
                   </div>
@@ -1451,13 +1452,13 @@ export default function CreateClubPage(): JSX.Element {
                       className="block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 file:mr-3 file:rounded-md file:border-0 file:bg-slate-900 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-white hover:file:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
                     />
                     <p className="mt-1 text-xs text-gray-500">
-                      PNG, JPEG/JPG or BMP · maximum 2 MB.
+                      {t('logo.fileHelp')}
                     </p>
                   </div>
 
                   <div className="my-4 flex items-center gap-3">
                     <div className="h-px flex-1 bg-gray-200" />
-                    <span className="text-[11px] font-medium uppercase tracking-wide text-gray-400">or use URL</span>
+                    <span className="text-[11px] font-medium uppercase tracking-wide text-gray-400">{t('logo.orUrl')}</span>
                     <div className="h-px flex-1 bg-gray-200" />
                   </div>
 
@@ -1472,7 +1473,7 @@ export default function CreateClubPage(): JSX.Element {
                           void applyCustomLogoUrl()
                         }
                       }}
-                      placeholder="https://example.com/team-logo.png"
+                      placeholder={t('logo.urlPlaceholder')}
                       disabled={submitting || applyingLogoUrl}
                       className="min-w-0 flex-1 rounded-md border border-gray-300 px-3 py-2 text-sm"
                     />
@@ -1484,7 +1485,7 @@ export default function CreateClubPage(): JSX.Element {
                       disabled={submitting || applyingLogoUrl || !customLogoUrlInput.trim()}
                       className="rounded-md border border-slate-300 bg-slate-50 px-4 py-2 text-sm font-medium text-slate-800 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
                     >
-                      {applyingLogoUrl ? 'Applying...' : 'Apply'}
+                      {applyingLogoUrl ? t('logo.applying') : t('logo.apply')}
                     </button>
                   </div>
 
@@ -1496,13 +1497,13 @@ export default function CreateClubPage(): JSX.Element {
 
                   {customLogoSource === 'file' && customLogoFile ? (
                     <div className="mt-3 text-xs font-medium text-emerald-700">
-                      Custom uploaded logo selected: {customLogoFile.name}
+                      {t('logo.uploaded', { name: customLogoFile.name })}
                     </div>
                   ) : null}
 
                   {customLogoSource === 'url' && appliedCustomLogoUrl ? (
                     <div className="mt-3 truncate text-xs font-medium text-emerald-700">
-                      Custom URL logo applied.
+                      {t('logo.urlApplied')}
                     </div>
                   ) : null}
                 </div>
@@ -1514,7 +1515,7 @@ export default function CreateClubPage(): JSX.Element {
                     className="rounded-md border border-gray-300 bg-white px-4 py-2 font-medium text-gray-700 shadow-sm transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
                     disabled={submitting}
                   >
-                    Cancel
+                    {t('page.cancel')}
                   </button>
 
                   <button
@@ -1522,9 +1523,9 @@ export default function CreateClubPage(): JSX.Element {
                     form="create-club-form"
                     className="rounded-md bg-yellow-400 px-6 py-2 font-semibold text-gray-950 shadow-sm transition hover:bg-yellow-300 disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-500 disabled:shadow-none"
                     disabled={!canCreateTeam}
-                    title={!selectedKitUrl ? 'Choose one team jersey first' : undefined}
+                    title={!selectedKitUrl ? t('page.chooseJerseyFirst') : undefined}
                   >
-                    {submitting ? 'Creating...' : 'Create Team'}
+                    {submitting ? t('page.creating') : t('page.createTeam')}
                   </button>
                 </div>
               </div>
