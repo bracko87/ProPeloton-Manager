@@ -16,6 +16,7 @@
 
 import React, { FormEvent, useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router'
+import { useTranslation } from 'react-i18next'
 import { supabase } from '../lib/supabase'
 
 type AuthUrlParams = {
@@ -34,14 +35,6 @@ function readAuthParamsFromUrl(): AuthUrlParams {
   let type = searchParams.get('type')
 
   const rawHash = window.location.hash || ''
-
-  /**
-   * Supports:
-   * - #/reset-password?code=...
-   * - #/reset-password?access_token=...&refresh_token=...
-   * - #access_token=...&refresh_token=...&type=recovery
-   * - #/reset-password#access_token=...&refresh_token=...
-   */
   const hashCandidates: string[] = []
 
   if (rawHash.startsWith('#')) {
@@ -88,6 +81,7 @@ function cleanResetPasswordUrl(): void {
  */
 export default function ResetPasswordPage(): JSX.Element {
   const navigate = useNavigate()
+  const { t } = useTranslation('auth')
 
   const [initializing, setInitializing] = useState(true)
   const [sessionReady, setSessionReady] = useState(false)
@@ -145,9 +139,7 @@ export default function ResetPasswordPage(): JSX.Element {
 
         setSessionReady(false)
         setStatus('error')
-        setErrorMessage(
-          'We could not verify this reset link. It may be invalid or expired. Please request a new password reset email.',
-        )
+        setErrorMessage(t('reset.invalidLink'))
       } finally {
         if (mounted) {
           setInitializing(false)
@@ -169,7 +161,7 @@ export default function ResetPasswordPage(): JSX.Element {
       mounted = false
       subscription.unsubscribe()
     }
-  }, [])
+  }, [t])
 
   /**
    * handleSubmit
@@ -179,19 +171,19 @@ export default function ResetPasswordPage(): JSX.Element {
     event.preventDefault()
 
     if (!password || !confirmPassword) {
-      setErrorMessage('Please fill in both password fields.')
+      setErrorMessage(t('reset.bothRequired'))
       setStatus('error')
       return
     }
 
     if (password.length < 8) {
-      setErrorMessage('Your new password must be at least 8 characters long.')
+      setErrorMessage(t('reset.minLength'))
       setStatus('error')
       return
     }
 
     if (password !== confirmPassword) {
-      setErrorMessage('The password confirmation does not match.')
+      setErrorMessage(t('reset.mismatch'))
       setStatus('error')
       return
     }
@@ -207,7 +199,7 @@ export default function ResetPasswordPage(): JSX.Element {
       }
 
       if (!sessionData.session && !sessionReady) {
-        throw new Error('Missing recovery session.')
+        throw new Error(t('reset.missingSession'))
       }
 
       const { error } = await supabase.auth.updateUser({
@@ -222,10 +214,6 @@ export default function ResetPasswordPage(): JSX.Element {
       setPassword('')
       setConfirmPassword('')
 
-      /**
-       * After a recovery flow, sign out so the user signs in normally
-       * with the new password.
-       */
       await supabase.auth.signOut()
 
       navigate('/login', {
@@ -238,9 +226,7 @@ export default function ResetPasswordPage(): JSX.Element {
       // eslint-disable-next-line no-console
       console.error('Password update error:', err)
 
-      setErrorMessage(
-        'We could not update your password. Your reset link may be invalid or expired. Please request a new reset email and try again.',
-      )
+      setErrorMessage(t('reset.updateFailed'))
       setStatus('error')
     }
   }
@@ -249,11 +235,10 @@ export default function ResetPasswordPage(): JSX.Element {
 
   return (
     <div className="relative isolate min-h-screen bg-[#081224] flex items-center justify-center p-6 overflow-hidden">
-      {/* Background image */}
       <div className="absolute inset-0 z-0 pointer-events-none" aria-hidden="true">
         <img
           src="https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/ChatGPT%20Image%20Mar%201,%202026,%2008_31_42%20PM.png"
-          alt="background"
+          alt=""
           className="object-cover w-full h-full"
           style={
             {
@@ -283,28 +268,27 @@ export default function ResetPasswordPage(): JSX.Element {
 
       <div className="relative z-10 max-w-md w-full bg-white rounded-lg shadow-xl overflow-hidden">
         <div className="p-8">
-          <h1 className="text-2xl font-bold text-gray-900">Set a new password</h1>
+          <h1 className="text-2xl font-bold text-gray-900">{t('reset.title')}</h1>
           <p className="mt-2 text-sm text-gray-600">
-            Choose a strong password you do not use anywhere else.
+            {t('reset.subtitle')}
           </p>
 
           {initializing && (
             <div className="mt-5 rounded border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-700">
-              Verifying your reset link...
+              {t('reset.verifying')}
             </div>
           )}
 
           {!initializing && !sessionReady && (
             <div className="mt-5 rounded border border-yellow-200 bg-yellow-50 px-4 py-3 text-sm text-yellow-800">
-              Your reset session is not active. Please open this page from the latest password
-              reset email. If the link expired, request a new reset email.
+              {t('reset.inactiveSession')}
             </div>
           )}
 
           <form onSubmit={handleSubmit} className="mt-6 grid grid-cols-1 gap-4" noValidate>
             <div>
               <label htmlFor="password" className="text-sm font-medium text-gray-700">
-                New password
+                {t('reset.newPassword')}
               </label>
               <input
                 id="password"
@@ -315,16 +299,16 @@ export default function ResetPasswordPage(): JSX.Element {
                 type="password"
                 autoComplete="new-password"
                 disabled={isSubmitting || initializing}
-                placeholder="Enter a new password"
+                placeholder={t('reset.newPasswordPlaceholder')}
               />
               <p className="mt-1 text-xs text-gray-500">
-                At least 8 characters. Use a mix of letters, numbers, and symbols.
+                {t('reset.passwordHelp')}
               </p>
             </div>
 
             <div>
               <label htmlFor="confirmPassword" className="text-sm font-medium text-gray-700">
-                Confirm new password
+                {t('reset.confirmPassword')}
               </label>
               <input
                 id="confirmPassword"
@@ -335,7 +319,7 @@ export default function ResetPasswordPage(): JSX.Element {
                 type="password"
                 autoComplete="new-password"
                 disabled={isSubmitting || initializing}
-                placeholder="Repeat the new password"
+                placeholder={t('reset.confirmPlaceholder')}
               />
             </div>
 
@@ -354,16 +338,16 @@ export default function ResetPasswordPage(): JSX.Element {
               className="bg-yellow-400 px-6 py-2 rounded-md font-semibold disabled:opacity-70"
               disabled={isSubmitting || initializing}
             >
-              {isSubmitting ? 'Updating password...' : 'Update password'}
+              {isSubmitting ? t('reset.updating') : t('reset.update')}
             </button>
 
             <div className="flex items-center justify-between text-sm">
               <Link to="/forgot-password" className="text-gray-600 hover:text-gray-900">
-                Request a new reset link
+                {t('reset.requestNew')}
               </Link>
 
               <Link to="/login" className="text-gray-600 hover:text-gray-900">
-                Back to sign in
+                {t('reset.backToSignIn')}
               </Link>
             </div>
           </form>
