@@ -71,8 +71,8 @@ function toNumber(value: unknown): number {
   return Number.isFinite(numberValue) ? numberValue : 0
 }
 
-function formatMoney(value: unknown): string {
-  return new Intl.NumberFormat('en-US', {
+function formatMoney(value: unknown, locale: string): string {
+  return new Intl.NumberFormat(locale, {
     style: 'currency',
     currency: 'USD',
     maximumFractionDigits: 0,
@@ -156,7 +156,10 @@ export default function EquipmentOverviewTab({
   equipmentAccess,
   onAccessChanged,
 }: EquipmentOverviewTabProps): JSX.Element {
-  const { t } = useTranslation('equipment')
+  const { t, i18n } = useTranslation('equipment')
+  const displayLocale = i18n.resolvedLanguage?.startsWith('sr')
+    ? 'sr-Latn-RS'
+    : i18n.resolvedLanguage || 'en-US'
   const [dashboard, setDashboard] = useState<EquipmentDashboard | null>(null)
   const [technicalSupport, setTechnicalSupport] =
     useState<ActiveTechnicalSponsorSupport | null>(null)
@@ -248,7 +251,7 @@ export default function EquipmentOverviewTab({
       )
       setSelection(makeInitialSelection(setupOptionsData))
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load dashboard')
+      setError(err instanceof Error ? err.message : t('overview.unable'))
     } finally {
       setLoading(false)
     }
@@ -275,11 +278,7 @@ export default function EquipmentOverviewTab({
       setSetupMessage(t('overview.defaultSaved'))
       await loadDashboard()
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : 'Failed to save Default Race Setup. Edge Function may not be deployed yet.'
-      )
+      setError(err instanceof Error ? err.message : t('overview.unable'))
     } finally {
       setSavingSetup(false)
     }
@@ -497,7 +496,7 @@ export default function EquipmentOverviewTab({
               disabled={savingSetup}
               className="rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
             >
-              {savingSetup ? 'Saving...' : t('overview.saveDefault')}
+              {savingSetup ? t('common.saving') : t('overview.saveDefault')}
             </button>
           </div>
         </div>
@@ -559,7 +558,9 @@ export default function EquipmentOverviewTab({
               {technicalSponsorLogoUrl ? (
                 <img
                   src={technicalSponsorLogoUrl}
-                  alt={`${technicalSponsorName ?? t('overview.technicalSponsor')} logo`}
+                  alt={t('overview.technicalSponsorLogo', {
+                    name: technicalSponsorName ?? t('overview.technicalSponsor'),
+                  })}
                   className="h-12 w-24 rounded object-contain"
                 />
               ) : technicalSponsorName ? (
@@ -576,7 +577,7 @@ export default function EquipmentOverviewTab({
                     <div className="text-xs text-gray-400">{t('overview.cashPaid')}</div>
                     <div className="mt-1 font-semibold text-gray-900">
                       {hasTechnicalSupport
-                        ? formatMoney(technicalSupport?.cash_support_cash)
+                        ? formatMoney(technicalSupport?.cash_support_cash, displayLocale)
                         : t('overview.notCreated')}
                     </div>
                   </div>
@@ -585,7 +586,7 @@ export default function EquipmentOverviewTab({
                     <div className="text-xs text-gray-400">{t('overview.equipmentSupport')}</div>
                     <div className="mt-1 font-semibold text-gray-900">
                       {hasTechnicalSupport
-                        ? `${formatMoney(equipmentSupportUsed)} / ${formatMoney(equipmentSupportBudget)}`
+                        ? `${formatMoney(equipmentSupportUsed, displayLocale)} / ${formatMoney(equipmentSupportBudget, displayLocale)}`
                         : t('overview.notCreated')}
                     </div>
                   </div>
@@ -593,7 +594,9 @@ export default function EquipmentOverviewTab({
                   <div className="rounded border border-gray-100 bg-gray-50 p-3">
                     <div className="text-xs text-gray-400">{t('overview.remaining')}</div>
                     <div className="mt-1 font-semibold text-gray-900">
-                      {hasTechnicalSupport ? formatMoney(equipmentSupportRemaining) : '—'}
+                      {hasTechnicalSupport
+                        ? formatMoney(equipmentSupportRemaining, displayLocale)
+                        : '—'}
                     </div>
                   </div>
                 </div>
@@ -682,11 +685,21 @@ export default function EquipmentOverviewTab({
               <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">{t('overview.readinessWatch')}</div>
               <div className="mt-1 text-lg font-semibold text-slate-900">
                 {dashboard.overall.critical_items > 0
-                  ? `${dashboard.overall.critical_items} critical item${dashboard.overall.critical_items === 1 ? '' : 's'}`
+                  ? t(
+                      dashboard.overall.critical_items === 1
+                        ? 'overview.criticalItem'
+                        : 'overview.criticalItems',
+                      { count: dashboard.overall.critical_items },
+                    )
                   : t('overview.noCritical')}
               </div>
               <div className="mt-1 text-xs text-slate-600">
-                {dashboard.overall.maintenance_needed} item{dashboard.overall.maintenance_needed === 1 ? '' : 's'} currently need maintenance.
+                {t(
+                  dashboard.overall.maintenance_needed === 1
+                    ? 'overview.maintenanceItem'
+                    : 'overview.maintenanceItems',
+                  { count: dashboard.overall.maintenance_needed },
+                )}
               </div>
             </div>
 
@@ -702,7 +715,11 @@ export default function EquipmentOverviewTab({
                         ? formatEquipmentCategoryLabel(lowest.equipment_category, lowest.label)
                         : '—'}</div>
                     <div className="mt-1 text-xs text-slate-600">
-                      {lowest ? `Average condition ${formatCondition(lowest.avg_condition)}.` : 'No inventory data available.'}
+                      {lowest
+                        ? t('overview.averageConditionValue', {
+                            value: formatCondition(lowest.avg_condition),
+                          })
+                        : t('overview.noInventoryData')}
                     </div>
                   </>
                 )
@@ -721,7 +738,14 @@ export default function EquipmentOverviewTab({
                         ? formatEquipmentCategoryLabel(limiting.equipment_category, limiting.label)
                         : '—'}</div>
                     <div className="mt-1 text-xs text-slate-600">
-                      {limiting ? `${limiting.ready_count} ready unit${limiting.ready_count === 1 ? '' : 's'}; this may limit complete rider setups.` : 'No inventory data available.'}
+                      {limiting
+                        ? t(
+                            limiting.ready_count === 1
+                              ? 'overview.readyUnit'
+                              : 'overview.readyUnits',
+                            { count: limiting.ready_count },
+                          )
+                        : t('overview.noInventoryData')}
                     </div>
                   </>
                 )
