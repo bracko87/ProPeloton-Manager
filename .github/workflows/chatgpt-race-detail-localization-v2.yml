@@ -25,6 +25,7 @@ jobs:
         run: |
           python <<'PY'
           from pathlib import Path
+          import re
 
           path = Path('src/pages/dashboard/RaceDetailPage.tsx')
           text = path.read_text(encoding='utf-8')
@@ -38,18 +39,15 @@ jobs:
               text = text.replace(old, new)
               print(f'replaced {count}: {old[:90]!r}')
 
-          # Weather and terrain presentation.
-          r(
-              'This is only a warning before the lock point. The final cancellation decision is made automatically 24 in-game hours before stage start.',
-              "{t('stage.weatherCancellationExplanation')}"
-          )
-          r(
-              "function TerrainBars({ stage }: { stage: RaceStage }) {\n  const rows = [\n    ['Flat', stage.flat_pct],\n    ['Hilly', stage.hilly_pct],\n    ['Mountain', stage.mountain_pct],\n    ['Cobbled', stage.cobbled_pct],\n  ] as const",
-              "function TerrainBars({ stage }: { stage: RaceStage }) {\n  const { t } = useTranslation('raceDetail')\n  const rows = [\n    [t('stage.flat'), stage.flat_pct],\n    [t('stage.hilly'), stage.hilly_pct],\n    [t('stage.mountain'), stage.mountain_pct],\n    [t('stage.cobbled'), stage.cobbled_pct],\n  ] as const"
-          )
+          def rx(pattern: str, new: str) -> None:
+              global text
+              text, count = re.subn(pattern, new, text, flags=re.MULTILINE)
+              print(f'regex replaced {count}: {pattern[:90]!r}')
+
+          r('This is only a warning before the lock point. The final cancellation decision is made automatically 24 in-game hours before stage start.', "{t('stage.weatherCancellationExplanation')}")
+          r("function TerrainBars({ stage }: { stage: RaceStage }) {\n  const rows = [\n    ['Flat', stage.flat_pct],\n    ['Hilly', stage.hilly_pct],\n    ['Mountain', stage.mountain_pct],\n    ['Cobbled', stage.cobbled_pct],\n  ] as const", "function TerrainBars({ stage }: { stage: RaceStage }) {\n  const { t } = useTranslation('raceDetail')\n  const rows = [\n    [t('stage.flat'), stage.flat_pct],\n    [t('stage.hilly'), stage.hilly_pct],\n    [t('stage.mountain'), stage.mountain_pct],\n    [t('stage.cobbled'), stage.cobbled_pct],\n  ] as const")
           r("{t('stage.profile')} data is not available yet.", "{t('stage.profileUnavailable')}")
 
-          # Rewards totals.
           r('>Loading rewards…</div>', ">{t('rewards.loading')}</div>")
           r('>No reward data available.</div>', ">{t('rewards.noData')}</div>")
           r('          Select which race reward table to view.', "          {t('rewards.select')}")
@@ -58,7 +56,6 @@ jobs:
           r('>Prize</th>', ">{t('rewards.prize')}</th>")
           r('>Points</th>', ">{t('rewards.points')}</th>")
 
-          # Race report.
           r('            Compact race commentary and final road groups.', "            {t('report.description')}")
           r('          Loading race report…', "          {t('report.loading')}")
           r('          No race report available for this stage yet.', "          {t('report.none')}")
@@ -69,41 +66,35 @@ jobs:
           r('                No road group data available yet.', "                {t('report.noGroups')}")
           r(": 'Riders —'}", ": t('report.ridersUnknown')}")
 
-          # Favorites and participant list.
           r('              Calculated from rider skills, this season results, race profile and assigned role.', "              {t('participants.favoritesDescription')}")
           r("favorite.rider_name?.trim() || 'Unknown rider'", "favorite.rider_name?.trim() || t('participants.unknownRider')")
           r("favorite.team_name?.trim() || 'Team'", "favorite.team_name?.trim() || t('participants.teamFallback')")
           r("startNumber ? `#${startNumber}` : 'No #'", "startNumber ? `#${startNumber}` : t('participants.noNumber')")
           r('        Loading accepted teams and riders...', "        {t('participants.loading')}")
           r('        Could not load participants: {error}', "        {t('participants.loadError', { error })}")
-          r('''        No accepted teams have been confirmed yet. Accepted teams will appear here once
-        the official startlist is published.''', "        {t('participants.noneConfirmed')}")
+          rx(r'No accepted teams have been confirmed yet\. Accepted teams will appear here once\s+the official startlist is published\.', "{t('participants.noneConfirmed')}")
           r('        {displayTeams.length} teams · {assignedRiderTotal} assigned riders', "        {t('participants.teamRiderCount', { teams: displayTeams.length, riders: assignedRiderTotal })}")
           r('                        {assignedRidersCount} assigned riders', "                        {t('participants.assignedRiders', { count: assignedRidersCount })}")
           r('{rider.age_snapshot ? <span>{rider.age_snapshot} yrs</span> : null}', "{rider.age_snapshot ? <span>{t('participants.age', { age: rider.age_snapshot })}</span> : null}")
           r("                          : 'No riders assigned yet.'}", "                          : t('participants.noRiders')}")
 
-          # Pending application estimate.
           r('        Loading your application estimate…', "        {t('application.pendingLoading')}")
           r('        Your application is submitted. The detailed acceptance estimate could not be loaded: {error}', "        {t('application.pendingEstimateError', { error })}")
           r('        Your application is submitted. Official participants will appear here once the team list is published.', "        {t('application.pendingNoQuote')}")
           r('            Application submitted', "            {t('status.applicationSubmitted')}")
           r('            Waiting for team selection', "            {t('application.waitingSelection')}")
-          r('''            Official participants are not confirmed yet. Accepted teams and riders will replace this
-            estimate once the team list is published.''', "            {t('application.waitingDescription')}")
+          rx(r'Official participants are not confirmed yet\. Accepted teams and riders will replace this\s+estimate once the team list is published\.', "{t('application.waitingDescription')}")
           r('>Estimated chance</div>', ">{t('application.estimatedChance')}</div>")
           r("quote.chance_label ?? 'Application estimate'", "quote.chance_label ?? t('application.applicationEstimate')")
           r('>Already accepted</div>', ">{t('application.alreadyAcceptedCount')}</div>")
           r('>Target / max teams</div>', ">{t('application.targetMaxTeams')}</div>")
 
-          # Race information/results hub.
           r("{t('results.team')}s & riders", "{t('participants.teamsRiders')}")
           r('                    Current tour standings', "                    {t('results.currentStandings')}")
           r('<option value="stage_general">Stage result</option>', "<option value=\"stage_general\">{t('results.stageResult')}</option>")
           r('            title="Prize money and international points"', "            title={t('rewards.title')}")
           r('            description="Prize money, team points, and rider points generated by the race engine."', "            description={t('rewards.description')}")
 
-          # Replay access card.
           r('`Replay unlocked for ${nextAccess?.coin_cost ?? 2} coins.`', "t('replay.unlocked', { coins: nextAccess?.coin_cost ?? 2 })")
           r("          : 'Failed to unlock this race replay.'", "          : t('replay.unlockFailed')")
           r("? 'This stage was canceled. No replay is available.'", "? t('replay.stageCanceledDescription')")
@@ -125,7 +116,6 @@ jobs:
           r("? `Unlock for ${coinAccess?.coin_cost ?? 2} coins`", "? t('replay.unlockFor', { coins: coinAccess?.coin_cost ?? 2 })")
           r('            Rankings and cumulative awards appear when each point is reached.', "            {t('replay.stagePointsDescription')}")
 
-          # Main application preview helper and stage chip.
           r("    if (!quote) return 'Loading application preview…'", "    if (!quote) return t('application.loadingPreview')")
           r("      return 'Your team is already accepted for this race.'", "      return t('application.alreadyAccepted')")
           r("      return 'Your team already has an application submitted for this race.'", "      return t('application.alreadyApplied')")
@@ -134,7 +124,6 @@ jobs:
           r("      returnLabel: '← Back',", "      returnLabel: t('page.back'),")
           r('          {humanizeCode(stage.terrain_type)} · {formatKm(stage.distance_km)}', "          {TERRAIN_TRANSLATION_KEYS[stage.terrain_type]\n            ? t(TERRAIN_TRANSLATION_KEYS[stage.terrain_type])\n            : humanizeCode(stage.terrain_type)} · {formatKm(stage.distance_km)}")
 
-          # Application dialog labels already represented in the resource.
           r('>Applied teams</div>', ">{t('application.appliedTeams')}</div>")
           r('>Accepted teams</div>', ">{t('application.acceptedTeams')}</div>")
           r('>Target teams</div>', ">{t('application.targetTeams')}</div>")
@@ -144,14 +133,11 @@ jobs:
           r('>Rider deadline</div>', ">{t('application.riderDeadline')}</div>")
           r('                Not now', "                {t('application.notNow')}")
 
-          # Tutorial overlay: text comes from raceDetail namespace; progression still uses existing definitions.
           r('title={raceDetailTutorialSteps[tutorialStepIndex].title}', "title={t(tutorialStepIndex === 0 ? 'tutorial.profileTitle' : 'tutorial.stagesTitle')}")
           r('body={raceDetailTutorialSteps[tutorialStepIndex].body}', "body={t(tutorialStepIndex === 0 ? 'tutorial.profileBody' : 'tutorial.stagesBody')}")
-          r('''stepLabel={`Race profile tutorial ${tutorialStepIndex + 1} of ${
-            raceDetailTutorialSteps.length
-          }`}''', "stepLabel={t('tutorial.step', { current: tutorialStepIndex + 1, total: raceDetailTutorialSteps.length })}")
-          r("raceDetailTutorialSteps[tutorialStepIndex].primaryAction ?? 'Next'", "tutorialStepIndex === raceDetailTutorialSteps.length - 1 ? t('tutorial.continuePreparation') : t('tutorial.next')")
-          r("tutorialStepIndex === raceDetailTutorialSteps.length - 1\n              ? raceDetailTutorialSteps[tutorialStepIndex].secondaryAction\n              : 'Skip tutorial'", "tutorialStepIndex === raceDetailTutorialSteps.length - 1\n              ? t('tutorial.finish')\n              : t('tutorial.skip')")
+          rx(r'stepLabel=\{`Race profile tutorial \$\{tutorialStepIndex \+ 1\} of \$\{\s*raceDetailTutorialSteps\.length\s*\}`\}', "stepLabel={t('tutorial.step', { current: tutorialStepIndex + 1, total: raceDetailTutorialSteps.length })}")
+          rx(r"raceDetailTutorialSteps\[tutorialStepIndex\]\.primaryAction \?\? 'Next'", "tutorialStepIndex === raceDetailTutorialSteps.length - 1 ? t('tutorial.continuePreparation') : t('tutorial.next')")
+          rx(r"tutorialStepIndex === raceDetailTutorialSteps\.length - 1\s*\? raceDetailTutorialSteps\[tutorialStepIndex\]\.secondaryAction\s*: 'Skip tutorial'", "tutorialStepIndex === raceDetailTutorialSteps.length - 1\n              ? t('tutorial.finish')\n              : t('tutorial.skip')")
 
           path.write_text(text, encoding='utf-8')
           PY
