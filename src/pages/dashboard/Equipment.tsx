@@ -241,6 +241,7 @@ function TabButton({
  */
 export default function EquipmentPage(): JSX.Element {
   const { t } = useTranslation('equipment')
+  const { t: tCommon } = useTranslation('common')
   const [activeTab, setActiveTab] = useState<EquipmentTabKey>(() =>
     getEquipmentTabFromUrl()
   )
@@ -298,7 +299,7 @@ export default function EquipmentPage(): JSX.Element {
           await supabase.auth.getUser()
 
         if (authError) throw authError
-        if (!authData.user) throw new Error('Not authenticated')
+        if (!authData.user) throw new Error(t('page.unable'))
 
         let primaryClubId: string | null = null
 
@@ -334,14 +335,14 @@ export default function EquipmentPage(): JSX.Element {
           .maybeSingle()
 
         if (fallbackError) throw fallbackError
-        if (!fallbackClub) throw new Error('No main club found for this user')
+        if (!fallbackClub) throw new Error(t('page.unable'))
 
         if (!cancelled) {
           setClub({ id: fallbackClub.id, name: fallbackClub.name })
         }
       } catch (error) {
         if (!cancelled) {
-          setClubError(error instanceof Error ? error.message : 'Failed to load club')
+          setClubError(error instanceof Error ? error.message : t('page.unable'))
         }
       } finally {
         if (!cancelled) {
@@ -355,7 +356,7 @@ export default function EquipmentPage(): JSX.Element {
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [t])
 
 
   useEffect(() => {
@@ -616,7 +617,7 @@ export default function EquipmentPage(): JSX.Element {
           secondaryAction={
             tutorialStepIndex === equipmentTutorialSteps.length - 1
               ? equipmentTutorialSteps[tutorialStepIndex].secondaryAction
-              : 'Skip tutorial'
+              : tCommon('actions.skipTutorial')
           }
           onPrimary={handleNextEquipmentTutorialStep}
           onSecondary={
