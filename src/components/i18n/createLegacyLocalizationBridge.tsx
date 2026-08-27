@@ -184,25 +184,24 @@ export function createLegacyLocalizationBridge(
     transformParams,
   } = options
 
-  if (!i18n.hasResourceBundle('en', namespace)) {
-    i18n.addResourceBundle(
-      'en',
-      namespace,
-      enResource,
-      true,
-      true,
-    )
-  }
+  // Always merge the route-specific resource. Central registration may already
+  // have created the namespace, while some bridges intentionally extend it with
+  // small helper-only keys used for legacy dynamic UI.
+  i18n.addResourceBundle(
+    'en',
+    namespace,
+    enResource,
+    true,
+    true,
+  )
 
-  if (!i18n.hasResourceBundle('sr-Latn', namespace)) {
-    i18n.addResourceBundle(
-      'sr-Latn',
-      namespace,
-      srResource,
-      true,
-      true,
-    )
-  }
+  i18n.addResourceBundle(
+    'sr-Latn',
+    namespace,
+    srResource,
+    true,
+    true,
+  )
 
   const exactMap = new Map<string, string>()
   const templates: TemplateDefinition[] = []
