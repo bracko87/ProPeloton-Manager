@@ -24,10 +24,24 @@ const options: LegacyLocalizationBridgeOptions = {
     return clean === '/dashboard/statistics' || clean.startsWith('/dashboard/statistics/')
   },
   aliases: {
+    'Statistics': 'page.title',
+    'Teams': 'page.teams',
+    'Riders': 'page.riders',
     'Fetching data…': 'page.fetching',
     'Fetching data...': 'page.fetching',
     'Loading statistics…': 'page.loading',
     'Loading statistics...': 'page.loading',
+    'Current': 'common.current',
+    'History': 'common.history',
+    'Rankings': 'common.rankings',
+    'Breakdown': 'common.breakdown',
+    'User teams': 'filters.userTeams',
+    'AI teams': 'filters.aiTeams',
+    'All tiers': 'filters.allTiers',
+    'All divisions': 'filters.allDivisions',
+    'All countries': 'filters.allCountries',
+    'Previous': 'common.previous',
+    'Next': 'common.next',
   },
   transformParams: (key, params, t) => {
     if (params.metric && METRIC_KEYS[params.metric]) {
