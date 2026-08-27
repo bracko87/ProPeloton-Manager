@@ -15,6 +15,7 @@
  */
 
 import React, { useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Link, useNavigate } from 'react-router'
 import { supabase } from '../lib/supabase'
 
@@ -34,19 +35,19 @@ type RegisterForm = {
 }
 
 const MONTH_OPTIONS = [
-  { value: '1', label: 'January' },
-  { value: '2', label: 'February' },
-  { value: '3', label: 'March' },
-  { value: '4', label: 'April' },
-  { value: '5', label: 'May' },
-  { value: '6', label: 'June' },
-  { value: '7', label: 'July' },
-  { value: '8', label: 'August' },
-  { value: '9', label: 'September' },
-  { value: '10', label: 'October' },
-  { value: '11', label: 'November' },
-  { value: '12', label: 'December' },
-]
+  { value: '1', labelKey: 'months.january' },
+  { value: '2', labelKey: 'months.february' },
+  { value: '3', labelKey: 'months.march' },
+  { value: '4', labelKey: 'months.april' },
+  { value: '5', labelKey: 'months.may' },
+  { value: '6', labelKey: 'months.june' },
+  { value: '7', labelKey: 'months.july' },
+  { value: '8', labelKey: 'months.august' },
+  { value: '9', labelKey: 'months.september' },
+  { value: '10', labelKey: 'months.october' },
+  { value: '11', labelKey: 'months.november' },
+  { value: '12', labelKey: 'months.december' },
+] as const
 
 function getDaysInMonth(month: number, year: number | null): number {
   if (month === 2) {
@@ -82,6 +83,7 @@ function isProbablyValidEmail(value: string): boolean {
  * Registration form connected to Supabase Auth.
  */
 export default function RegisterPage(): JSX.Element {
+  const { t } = useTranslation('auth')
   const navigate = useNavigate()
 
   const [form, setForm] = useState<RegisterForm>({
@@ -162,9 +164,7 @@ export default function RegisterPage(): JSX.Element {
 
       if (error) {
         if (options.blockOnError) {
-          setMessage(
-            'We could not verify if this email address is already in use. Please try again.',
-          )
+          setMessage(t('register.verifyEmailFailed'))
           setMessageType('error')
           return true
         }
@@ -175,8 +175,7 @@ export default function RegisterPage(): JSX.Element {
       if (data === true) {
         setErrors(prev => ({
           ...prev,
-          email:
-            'This email address is already in use. Please sign in or use another email.',
+          email: t('register.emailInUse'),
         }))
 
         return true
@@ -197,7 +196,7 @@ export default function RegisterPage(): JSX.Element {
     if (!email) {
       setErrors(prev => ({
         ...prev,
-        email: 'Enter your email address first',
+        email: t('register.enterEmailFirst'),
       }))
       return
     }
@@ -205,7 +204,7 @@ export default function RegisterPage(): JSX.Element {
     if (!isProbablyValidEmail(email)) {
       setErrors(prev => ({
         ...prev,
-        email: 'Enter a valid email address',
+        email: t('register.validEmail'),
       }))
       return
     }
@@ -229,22 +228,16 @@ export default function RegisterPage(): JSX.Element {
       })
 
       if (error) {
-        const msg = error.message ?? 'Could not resend activation email'
+        const msg = error.message ?? t('register.activationFailed')
 
-        if (
-          /already confirmed|email.*confirmed|user.*confirmed/i.test(msg)
-        ) {
-          setMessage(
-            'This email address is already confirmed. Please sign in and continue to team creation.',
-          )
+        if (/already confirmed|email.*confirmed|user.*confirmed/i.test(msg)) {
+          setMessage(t('register.alreadyConfirmed'))
           setMessageType('info')
           return
         }
 
         if (/rate limit|too many requests|security purposes/i.test(msg)) {
-          setMessage(
-            'Please wait a moment before requesting another activation email.',
-          )
+          setMessage(t('register.rateLimit'))
           setMessageType('info')
           return
         }
@@ -254,12 +247,10 @@ export default function RegisterPage(): JSX.Element {
         return
       }
 
-      setMessage(
-        'A new activation email has been sent. Open the latest email and use the activation link to continue.',
-      )
+      setMessage(t('register.activationSent'))
       setMessageType('success')
     } catch (err: any) {
-      setMessage(err?.message ?? 'Could not resend activation email')
+      setMessage(err?.message ?? t('register.activationFailed'))
       setMessageType('error')
     } finally {
       setResendingActivation(false)
@@ -281,35 +272,35 @@ export default function RegisterPage(): JSX.Element {
     const birthdayYear = parseOptionalYear(form.birthdayYear)
     const currentYear = new Date().getFullYear()
 
-    if (!username) nextErrors.username = 'Username required'
+    if (!username) nextErrors.username = t('register.usernameRequired')
 
     if (!email) {
-      nextErrors.email = 'Email required'
+      nextErrors.email = t('register.emailRequired')
     } else if (!isProbablyValidEmail(email)) {
-      nextErrors.email = 'Enter a valid email address'
+      nextErrors.email = t('register.validEmail')
     }
 
     if (!form.password || form.password.length < 8) {
-      nextErrors.password = 'Password must be 8+ chars'
+      nextErrors.password = t('register.passwordLength')
     }
 
     if (!form.confirmPassword) {
-      nextErrors.confirmPassword = 'Please confirm your password'
+      nextErrors.confirmPassword = t('register.confirmRequired')
     } else if (form.password !== form.confirmPassword) {
-      nextErrors.confirmPassword = 'Passwords do not match'
+      nextErrors.confirmPassword = t('register.passwordMismatch')
     }
 
     if (!birthdayMonth || birthdayMonth < 1 || birthdayMonth > 12) {
-      nextErrors.birthdayMonth = 'Birthday month is required'
+      nextErrors.birthdayMonth = t('register.birthdayMonthRequired')
     }
 
     if (!birthdayDay) {
-      nextErrors.birthdayDay = 'Birthday day is required'
+      nextErrors.birthdayDay = t('register.birthdayDayRequired')
     }
 
     if (form.birthdayYear.trim()) {
       if (!birthdayYear || birthdayYear < 1900 || birthdayYear > currentYear) {
-        nextErrors.birthdayYear = 'Enter a valid year or leave it empty'
+        nextErrors.birthdayYear = t('register.validYear')
       }
     }
 
@@ -317,7 +308,7 @@ export default function RegisterPage(): JSX.Element {
       const maxDay = getDaysInMonth(birthdayMonth, birthdayYear)
 
       if (birthdayDay < 1 || birthdayDay > maxDay) {
-        nextErrors.birthdayDay = 'Birthday day is not valid for this month'
+        nextErrors.birthdayDay = t('register.invalidBirthdayDay')
       }
     }
 
@@ -348,17 +339,17 @@ export default function RegisterPage(): JSX.Element {
       })
 
       if (error) {
-        const msg = (error as any).message ?? 'Signup failed'
+        const msg = (error as any).message ?? t('register.signupFailed')
 
         if (/already registered|duplicate|exists/i.test(msg)) {
           setErrors(prev => ({
             ...prev,
-            email: 'Email is already registered',
+            email: t('register.emailAlreadyRegistered'),
           }))
         } else if (/username/i.test(msg)) {
           setErrors(prev => ({
             ...prev,
-            username: 'Username is already taken',
+            username: t('register.usernameTaken'),
           }))
         } else {
           setMessage(msg)
@@ -369,9 +360,7 @@ export default function RegisterPage(): JSX.Element {
       }
 
       if (!data?.session) {
-        setMessage(
-          'Account created. Please confirm your email before signing in. If the activation email does not arrive, use "Resend activation email" below.',
-        )
+        setMessage(t('register.accountCreatedConfirm'))
         setMessageType('success')
         return
       }
@@ -380,9 +369,7 @@ export default function RegisterPage(): JSX.Element {
         await supabase.rpc('get_my_club_id')
 
       if (rpcError) {
-        setMessage(
-          'Your account was created and you are signed in, but we could not check your club status. Please try again shortly.',
-        )
+        setMessage(t('register.clubStatusFailed'))
         setMessageType('info')
         return
       }
@@ -393,7 +380,7 @@ export default function RegisterPage(): JSX.Element {
         navigate('/dashboard/overview')
       }
     } catch (err: any) {
-      setMessage(err?.message ?? 'Signup failed')
+      setMessage(err?.message ?? t('register.signupFailed'))
       setMessageType('error')
     } finally {
       setLoading(false)
@@ -441,24 +428,24 @@ export default function RegisterPage(): JSX.Element {
       <div className="relative z-10 max-w-2xl w-full bg-white rounded-lg shadow-xl overflow-hidden">
         <div className="p-8">
           <h2 className="text-2xl font-bold text-gray-900">
-            Create your Manager Account
+            {t('register.title')}
           </h2>
 
           <p className="mt-2 text-sm text-gray-600">
-            Join the multiplayer world of ProPeloton Manager.
+            {t('register.subtitle')}
           </p>
 
           <form onSubmit={handleSubmit} className="mt-6 grid grid-cols-1 gap-4">
             <div>
               <label className="text-sm font-medium text-gray-700">
-                Username
+                {t('register.username')}
               </label>
               <input
                 name="username"
                 value={form.username}
                 onChange={handleChange}
                 className="mt-1 block w-full border rounded-md px-3 py-2"
-                placeholder="Manager handle"
+                placeholder={t('register.managerHandle')}
                 disabled={loading}
               />
 
@@ -471,7 +458,7 @@ export default function RegisterPage(): JSX.Element {
 
             <div>
               <label className="text-sm font-medium text-gray-700">
-                Email address
+                {t('register.emailAddress')}
               </label>
               <input
                 name="email"
@@ -481,7 +468,7 @@ export default function RegisterPage(): JSX.Element {
                   if (!loading) void checkEmailAlreadyRegistered(form.email)
                 }}
                 className="mt-1 block w-full border rounded-md px-3 py-2"
-                placeholder="you@example.com"
+                placeholder={t('register.emailPlaceholder')}
                 type="email"
                 disabled={loading}
               />
@@ -492,7 +479,7 @@ export default function RegisterPage(): JSX.Element {
 
               {checkingEmail && !errors.email && (
                 <div className="text-sm text-gray-500 mt-1">
-                  Checking email availability...
+                  {t('register.checkingEmail')}
                 </div>
               )}
 
@@ -511,12 +498,12 @@ export default function RegisterPage(): JSX.Element {
                   className="text-sm font-medium text-blue-700 hover:text-blue-900 disabled:cursor-not-allowed disabled:text-gray-400"
                 >
                   {resendingActivation
-                    ? 'Resending activation email...'
-                    : 'Resend activation email'}
+                    ? t('register.resendingActivation')
+                    : t('register.resendActivation')}
                 </button>
 
                 <span className="text-xs text-gray-500">
-                  Use this if you already registered but did not receive or lost the activation email.
+                  {t('register.resendHelp')}
                 </span>
               </div>
             </div>
@@ -524,14 +511,14 @@ export default function RegisterPage(): JSX.Element {
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div>
                 <label className="text-sm font-medium text-gray-700">
-                  Password
+                  {t('register.password')}
                 </label>
                 <input
                   name="password"
                   value={form.password}
                   onChange={handleChange}
                   className="mt-1 block w-full border rounded-md px-3 py-2"
-                  placeholder="Choose a strong password"
+                  placeholder={t('register.strongPassword')}
                   type="password"
                   disabled={loading}
                 />
@@ -545,14 +532,14 @@ export default function RegisterPage(): JSX.Element {
 
               <div>
                 <label className="text-sm font-medium text-gray-700">
-                  Confirm password
+                  {t('register.confirmPassword')}
                 </label>
                 <input
                   name="confirmPassword"
                   value={form.confirmPassword}
                   onChange={handleChange}
                   className="mt-1 block w-full border rounded-md px-3 py-2"
-                  placeholder="Repeat password"
+                  placeholder={t('register.repeatPassword')}
                   type="password"
                   disabled={loading}
                 />
@@ -567,20 +554,17 @@ export default function RegisterPage(): JSX.Element {
 
             <div className="rounded-md border border-yellow-200 bg-yellow-50 p-4">
               <div className="text-sm font-semibold text-gray-900">
-                Birthday
+                {t('register.birthday')}
               </div>
 
               <p className="mt-1 text-xs leading-5 text-gray-700">
-                Your birthday is used for birthday rewards. We will send you
-                birthday congratulations and add 10 coins to your account.
-                Birthday can only be entered once during registration and cannot
-                be changed later in the game.
+                {t('register.birthdayHelp')}
               </p>
 
               <div className="mt-3 grid grid-cols-1 gap-4 md:grid-cols-3">
                 <div>
                   <label className="text-sm font-medium text-gray-700">
-                    Month
+                    {t('register.month')}
                   </label>
                   <select
                     name="birthdayMonth"
@@ -589,10 +573,10 @@ export default function RegisterPage(): JSX.Element {
                     className="mt-1 block w-full border rounded-md px-3 py-2 bg-white"
                     disabled={loading}
                   >
-                    <option value="">Select month</option>
+                    <option value="">{t('register.selectMonth')}</option>
                     {MONTH_OPTIONS.map(month => (
                       <option key={month.value} value={month.value}>
-                        {month.label}
+                        {t(month.labelKey)}
                       </option>
                     ))}
                   </select>
@@ -606,7 +590,7 @@ export default function RegisterPage(): JSX.Element {
 
                 <div>
                   <label className="text-sm font-medium text-gray-700">
-                    Day
+                    {t('register.day')}
                   </label>
                   <select
                     name="birthdayDay"
@@ -615,7 +599,7 @@ export default function RegisterPage(): JSX.Element {
                     className="mt-1 block w-full border rounded-md px-3 py-2 bg-white"
                     disabled={loading || !form.birthdayMonth}
                   >
-                    <option value="">Select day</option>
+                    <option value="">{t('register.selectDay')}</option>
                     {birthdayDayOptions.map(day => (
                       <option key={day} value={day}>
                         {day}
@@ -632,7 +616,7 @@ export default function RegisterPage(): JSX.Element {
 
                 <div>
                   <label className="text-sm font-medium text-gray-700">
-                    Year optional
+                    {t('register.yearOptional')}
                   </label>
                   <input
                     name="birthdayYear"
@@ -669,20 +653,20 @@ export default function RegisterPage(): JSX.Element {
                 disabled={loading || checkingEmail || resendingActivation}
               >
                 {loading
-                  ? 'Creating...'
+                  ? t('register.creating')
                   : checkingEmail
-                    ? 'Checking...'
+                    ? t('register.checking')
                     : resendingActivation
-                      ? 'Please wait...'
-                      : 'Create Account'}
+                      ? t('register.pleaseWait')
+                      : t('register.createAccount')}
               </button>
 
               <Link to="/login" className="text-sm text-gray-600 hover:text-gray-900">
-                Already have an account? Sign in
+                {t('register.alreadyHave')}
               </Link>
 
               <Link to="/" className="text-sm text-gray-600 hover:text-gray-900 ml-auto">
-                Home
+                {t('home')}
               </Link>
             </div>
           </form>
