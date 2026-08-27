@@ -969,6 +969,11 @@ function OfferModal({
 
                   const mainSponsorDealLabel = getMainSponsorDealLabel(offer.metadata, t)
                   const mainSponsorDealType = getMainSponsorDealType(offer.metadata)
+                  const namingRightsPremium = toNumber(offer.metadata?.naming_rights_uplift_pct)
+                  const displayedMainSponsorDealLabel =
+                    mainSponsorDealType === 'naming_rights' && namingRightsPremium > 0
+                      ? `${mainSponsorDealLabel} (+${namingRightsPremium.toFixed(0)}%)`
+                      : mainSponsorDealLabel
                   const teamNamePreview = getMainSponsorTeamNamePreview(offer)
                   const teamNameHistoryPreview = getMainSponsorHistoryNamePreview(offer)
 
@@ -1008,7 +1013,7 @@ function OfferModal({
                                     getMainSponsorDealPillClass(offer.metadata),
                                   ].join(' ')}
                                 >
-                                  {mainSponsorDealLabel}
+                                  {displayedMainSponsorDealLabel}
                                 </span>
                               )}
                             </div>
@@ -1136,7 +1141,7 @@ function OfferModal({
                                   : offer.sponsor_kind === 'secondary'
                                     ? t('sponsors.supportingSponsor')
                                     : mainSponsorDealType === 'naming_rights'
-                                      ? t('sponsors.namingRights')
+                                      ? displayedMainSponsorDealLabel
                                       : t('sponsors.standard')
                               }
                             />
@@ -1160,7 +1165,7 @@ function OfferModal({
                                 getMainSponsorDealPillClass(offer.metadata),
                               ].join(' ')}
                             >
-                              {mainSponsorDealLabel}
+                              {displayedMainSponsorDealLabel}
                             </span>
                           </div>
 
@@ -1205,31 +1210,39 @@ function OfferModal({
                             </div>
                           )}
 
-                          <div className="mt-4">
-                            <div className="font-medium mb-2">{t('sponsors.expectedObjectives')}</div>
-                            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-                              {objectiveExplanations.slice(0, 6).map((objective, index) => (
-                                <div
-                                  key={`${offer.id}-objective-${index}`}
-                                  className="rounded-lg border border-blue-100 bg-white/75 px-3 py-3"
-                                >
-                                  <div className="flex items-start justify-between gap-3">
-                                    <div className="text-sm font-semibold text-blue-950">
-                                      {objective.title}
-                                    </div>
-                                    {objective.rewardLabel ? (
-                                      <div className="shrink-0 rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5 text-xs font-semibold text-blue-800">
-                                        {objective.rewardLabel}
+                          <details className="group mt-4 rounded-lg border border-blue-100 bg-blue-50/30">
+                            <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-3 py-3 font-medium text-blue-950 marker:content-none">
+                              <span>{t('sponsors.expectedObjectives')}</span>
+                              <span className="flex items-center gap-2 text-xs font-semibold text-blue-700">
+                                <span>{objectiveExplanations.length} · {formatMoney(bonus, currency)}</span>
+                                <span className="transition-transform group-open:rotate-180" aria-hidden="true">⌄</span>
+                              </span>
+                            </summary>
+                            <div className="border-t border-blue-100 p-3">
+                              <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                                {objectiveExplanations.slice(0, 6).map((objective, index) => (
+                                  <div
+                                    key={`${offer.id}-objective-${index}`}
+                                    className="rounded-lg border border-blue-100 bg-white/75 px-3 py-3"
+                                  >
+                                    <div className="flex items-start justify-between gap-3">
+                                      <div className="text-sm font-semibold text-blue-950">
+                                        {objective.title}
                                       </div>
-                                    ) : null}
+                                      {objective.rewardLabel ? (
+                                        <div className="shrink-0 rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5 text-xs font-semibold text-blue-800">
+                                          {objective.rewardLabel}
+                                        </div>
+                                      ) : null}
+                                    </div>
+                                    <div className="mt-1 text-xs leading-5 text-blue-800">
+                                      {objective.description}
+                                    </div>
                                   </div>
-                                  <div className="mt-1 text-xs leading-5 text-blue-800">
-                                    {objective.description}
-                                  </div>
-                                </div>
-                              ))}
+                                ))}
+                              </div>
                             </div>
-                          </div>
+                          </details>
                         </div>
                       )}
 
