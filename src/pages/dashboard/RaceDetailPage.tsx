@@ -1830,7 +1830,7 @@ function StageWeatherRiskNotice({ stage }: { stage: RaceStage }) {
         {t('stage.weatherCancellationReason', { reason: getWeatherCancellationReasonLabel(riskReason) })}
       </div>
       <div className="mt-1 leading-6">
-        This is only a warning before the lock point. The final cancellation decision is made automatically 24 in-game hours before stage start.
+        {t('stage.weatherCancellationExplanation')}
       </div>
     </div>
   )
@@ -2512,11 +2512,12 @@ function WeatherCard({ stage }: { stage: RaceStage }) {
   )
 }
 function TerrainBars({ stage }: { stage: RaceStage }) {
+  const { t } = useTranslation('raceDetail')
   const rows = [
-    ['Flat', stage.flat_pct],
-    ['Hilly', stage.hilly_pct],
-    ['Mountain', stage.mountain_pct],
-    ['Cobbled', stage.cobbled_pct],
+    [t('stage.flat'), stage.flat_pct],
+    [t('stage.hilly'), stage.hilly_pct],
+    [t('stage.mountain'), stage.mountain_pct],
+    [t('stage.cobbled'), stage.cobbled_pct],
   ] as const
 
   return (
@@ -3749,7 +3750,7 @@ function RaceRewardsTotalsPanel({
   }, [raceId, viewerTeamId])
 
   if (loading) {
-    return <div className="text-sm text-slate-500">Loading rewards…</div>
+    return <div className="text-sm text-slate-500">{t('rewards.loading')}</div>
   }
 
   if (errorMessage) {
@@ -3757,7 +3758,7 @@ function RaceRewardsTotalsPanel({
   }
 
   if (!payload) {
-    return <div className="text-sm text-slate-500">No reward data available.</div>
+    return <div className="text-sm text-slate-500">{t('rewards.noData')}</div>
   }
 
   const rowClass = (row: ViewerTeamComparableRow) =>
@@ -3767,7 +3768,7 @@ function RaceRewardsTotalsPanel({
     <div>
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div className="text-sm text-slate-500">
-          Select which race reward table to view.
+          {t('rewards.select')}
         </div>
 
         <select
@@ -3787,8 +3788,8 @@ function RaceRewardsTotalsPanel({
             <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
               <tr>
                 <th className="px-4 py-3 text-left">#</th>
-                <th className="px-4 py-3 text-left">Team</th>
-                <th className="px-4 py-3 text-right">Prize</th>
+                <th className="px-4 py-3 text-left">{t('results.team')}</th>
+                <th className="px-4 py-3 text-right">{t('rewards.prize')}</th>
               </tr>
             </thead>
             <tbody>
@@ -3808,8 +3809,8 @@ function RaceRewardsTotalsPanel({
             <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
               <tr>
                 <th className="px-4 py-3 text-left">#</th>
-                <th className="px-4 py-3 text-left">Team</th>
-                <th className="px-4 py-3 text-right">Points</th>
+                <th className="px-4 py-3 text-left">{t('results.team')}</th>
+                <th className="px-4 py-3 text-right">{t('rewards.points')}</th>
               </tr>
             </thead>
             <tbody>
@@ -3829,9 +3830,9 @@ function RaceRewardsTotalsPanel({
             <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
               <tr>
                 <th className="px-4 py-3 text-left">#</th>
-                <th className="px-4 py-3 text-left">Rider</th>
-                <th className="px-4 py-3 text-left">Team</th>
-                <th className="px-4 py-3 text-right">Points</th>
+                <th className="px-4 py-3 text-left">{t('results.rider')}</th>
+                <th className="px-4 py-3 text-left">{t('results.team')}</th>
+                <th className="px-4 py-3 text-right">{t('rewards.points')}</th>
               </tr>
             </thead>
             <tbody>
@@ -4116,7 +4117,7 @@ function RaceStageReportCard({
           </h3>
 
           <p className="mt-1 text-sm text-slate-500">
-            Compact race commentary and final road groups.
+            {t('report.description')}
           </p>
         </div>
 
@@ -4130,7 +4131,7 @@ function RaceStageReportCard({
 
       {loading ? (
         <div className="rounded-2xl bg-slate-50 px-4 py-6 text-sm text-slate-500">
-          Loading race report…
+          {t('report.loading')}
         </div>
       ) : errorMessage ? (
         <div className="rounded-2xl bg-rose-50 px-4 py-6 text-sm text-rose-700">
@@ -4138,15 +4139,15 @@ function RaceStageReportCard({
         </div>
       ) : events.length === 0 ? (
         <div className="rounded-2xl bg-slate-50 px-4 py-6 text-sm text-slate-500">
-          No race report available for this stage yet.
+          {t('report.none')}
         </div>
       ) : (
         <div className="grid gap-5 xl:grid-cols-[minmax(0,1.7fr)_minmax(280px,0.8fr)]">
           <div className="overflow-hidden rounded-2xl border border-slate-200">
             <div className="grid grid-cols-[72px_28px_minmax(0,1fr)] border-b border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
-              <div>Km</div>
+              <div>{t('report.km')}</div>
               <div />
-              <div>Commentary</div>
+              <div>{t('report.commentary')}</div>
             </div>
 
             <div className="divide-y divide-slate-100">
@@ -4215,16 +4216,16 @@ function RaceStageReportCard({
           <aside className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
             <div className="mb-3">
               <div className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
-                Road groups
+                {t('report.roadGroups')}
               </div>
               <div className="mt-1 text-sm text-slate-500">
-                Final race situation from the replay engine.
+                {t('report.roadGroupsDescription')}
               </div>
             </div>
 
             {groups.length === 0 ? (
               <div className="rounded-2xl border border-slate-200 bg-white px-3 py-4 text-sm text-slate-500">
-                No road group data available yet.
+                {t('report.noGroups')}
               </div>
             ) : (
               <div className="space-y-2">
@@ -4250,7 +4251,7 @@ function RaceStageReportCard({
                     </div>
 
                     <div className="mt-1 text-xs opacity-80">
-                      {group.size !== null ? `${t('report.riders', { count: group.size })}` : 'Riders —'}
+                      {group.size !== null ? `${t('report.riders', { count: group.size })}` : t('report.ridersUnknown')}
                     </div>
                   </div>
                 ))}
@@ -6010,7 +6011,7 @@ function RaceFavoritesBox({
               {t('participants.topFavorites')}
             </div>
             <div className="text-xs text-sky-700">
-              Calculated from rider skills, this season results, race profile and assigned role.
+              {t('participants.favoritesDescription')}
             </div>
           </div>
 
@@ -6024,8 +6025,8 @@ function RaceFavoritesBox({
             (favorite.rider_id
               ? displayStartNumberByRiderId.get(favorite.rider_id) ?? null
               : null) ?? asNumber(favorite.start_number)
-          const riderName = favorite.rider_name?.trim() || 'Unknown rider'
-          const teamName = favorite.team_name?.trim() || 'Team'
+          const riderName = favorite.rider_name?.trim() || t('participants.unknownRider')
+          const teamName = favorite.team_name?.trim() || t('participants.teamFallback')
           const roleLabel = formatRiderRole(favorite.role_snapshot)
 
           return (
@@ -6043,7 +6044,7 @@ function RaceFavoritesBox({
                 </span>
 
                 <span className="rounded-full bg-slate-100 px-2 py-1 text-[10px] font-semibold text-slate-600">
-                  {startNumber ? `#${startNumber}` : 'No #'}
+                  {startNumber ? `#${startNumber}` : t('participants.noNumber')}
                 </span>
               </div>
 
@@ -6092,7 +6093,7 @@ function RaceParticipantsGrid({
   if (loading) {
     return (
       <div className="rounded-2xl bg-slate-50 p-5 text-sm text-slate-600">
-        Loading accepted teams and riders...
+        {t('participants.loading')}
       </div>
     )
   }
@@ -6100,7 +6101,7 @@ function RaceParticipantsGrid({
   if (error) {
     return (
       <div className="rounded-2xl border border-red-200 bg-red-50 p-5 text-sm text-red-700">
-        Could not load participants: {error}
+        {t('participants.loadError', { error })}
       </div>
     )
   }
@@ -6108,8 +6109,7 @@ function RaceParticipantsGrid({
   if (teams.length === 0) {
     return (
       <div className="rounded-2xl bg-slate-50 p-5 text-sm text-slate-600">
-        No accepted teams have been confirmed yet. Accepted teams will appear here once
-        the official startlist is published.
+        {t('participants.noneConfirmed')}
       </div>
     )
   }
@@ -6141,7 +6141,7 @@ function RaceParticipantsGrid({
       />
 
       <div className="mb-4 text-sm font-semibold text-slate-700">
-        {displayTeams.length} teams · {assignedRiderTotal} assigned riders
+        {t('participants.teamRiderCount', { teams: displayTeams.length, riders: assignedRiderTotal })}
       </div>
 
       <div className="grid gap-5 xl:grid-cols-2">
@@ -6196,7 +6196,7 @@ function RaceParticipantsGrid({
                         {t('participants.participatingRiders')}
                       </div>
                       <div className="mt-0.5 text-xs text-slate-500">
-                        {assignedRidersCount} assigned riders
+                        {t('participants.assignedRiders', { count: assignedRidersCount })}
                       </div>
                     </div>
                   </div>
@@ -6225,7 +6225,7 @@ function RaceParticipantsGrid({
                                 code={rider.country_code_snapshot ?? countryCode}
                               />
 
-                              {rider.age_snapshot ? <span>{rider.age_snapshot} yrs</span> : null}
+                              {rider.age_snapshot ? <span>{t('participants.age', { age: rider.age_snapshot })}</span> : null}
 
                               <span>{formatRiderRole(rider.role_snapshot)}</span>
                             </div>
@@ -6242,7 +6242,7 @@ function RaceParticipantsGrid({
                       <div className="rounded-xl bg-slate-50 px-3 py-2 text-sm text-slate-500">
                         {assignedRidersCount > 0
                           ? t('participants.riderDetailsUnavailable', { count: assignedRidersCount })
-                          : 'No riders assigned yet.'}
+                          : t('participants.noRiders')}
                       </div>
                     )}
                   </div>
@@ -6286,7 +6286,7 @@ function ApplicationPendingInfoCard({
   if (loading) {
     return (
       <div className="rounded-2xl border border-sky-100 bg-sky-50 p-5 text-sm text-sky-800">
-        Loading your application estimate…
+        {t('application.pendingLoading')}
       </div>
     )
   }
@@ -6294,7 +6294,7 @@ function ApplicationPendingInfoCard({
   if (error) {
     return (
       <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5 text-sm text-amber-800">
-        Your application is submitted. The detailed acceptance estimate could not be loaded: {error}
+        {t('application.pendingEstimateError', { error })}
       </div>
     )
   }
@@ -6302,7 +6302,7 @@ function ApplicationPendingInfoCard({
   if (!quote) {
     return (
       <div className="rounded-2xl border border-sky-100 bg-sky-50 p-5 text-sm text-sky-800">
-        Your application is submitted. Official participants will appear here once the team list is published.
+        {t('application.pendingNoQuote')}
       </div>
     )
   }
@@ -6312,24 +6312,23 @@ function ApplicationPendingInfoCard({
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <div className="text-xs font-semibold uppercase tracking-wide text-sky-700">
-            Application submitted
+            {t('status.applicationSubmitted')}
           </div>
           <div className="mt-1 text-sm font-semibold text-slate-950">
-            Waiting for team selection
+            {t('application.waitingSelection')}
           </div>
           <p className="mt-2 max-w-2xl leading-6 text-slate-600">
-            Official participants are not confirmed yet. Accepted teams and riders will replace this
-            estimate once the team list is published.
+            {t('application.waitingDescription')}
           </p>
         </div>
 
         <div className="rounded-2xl bg-white px-4 py-3 text-right shadow-sm ring-1 ring-sky-100">
-          <div className="text-xs font-semibold text-slate-500">Estimated chance</div>
+          <div className="text-xs font-semibold text-slate-500">{t('application.estimatedChance')}</div>
           <div className="mt-1 text-2xl font-bold text-slate-950">
             {formatPendingApplicationChance(quote.estimated_acceptance_chance_pct)}
           </div>
           <div className="mt-1 text-xs font-semibold text-sky-700">
-            {quote.chance_label ?? 'Application estimate'}
+            {quote.chance_label ?? t('application.applicationEstimate')}
           </div>
         </div>
       </div>
@@ -6343,21 +6342,21 @@ function ApplicationPendingInfoCard({
 
       <div className="mt-4 grid gap-3 md:grid-cols-4">
         <div className="rounded-2xl bg-white px-4 py-3 shadow-sm ring-1 ring-sky-100">
-          <div className="text-xs text-slate-500">Applied teams</div>
+          <div className="text-xs text-slate-500">{t('application.appliedTeams')}</div>
           <div className="mt-1 font-bold text-slate-950">
             {formatPendingApplicationNumber(quote.applied_teams ?? quote.submitted_application_teams)}
           </div>
         </div>
 
         <div className="rounded-2xl bg-white px-4 py-3 shadow-sm ring-1 ring-sky-100">
-          <div className="text-xs text-slate-500">Already accepted</div>
+          <div className="text-xs text-slate-500">{t('application.alreadyAcceptedCount')}</div>
           <div className="mt-1 font-bold text-slate-950">
             {formatPendingApplicationNumber(quote.accepted_teams)}
           </div>
         </div>
 
         <div className="rounded-2xl bg-white px-4 py-3 shadow-sm ring-1 ring-sky-100">
-          <div className="text-xs text-slate-500">Target / max teams</div>
+          <div className="text-xs text-slate-500">{t('application.targetMaxTeams')}</div>
           <div className="mt-1 font-bold text-slate-950">
             {formatPendingApplicationNumber(quote.target_teams)} / {formatPendingApplicationNumber(quote.max_teams)}
           </div>
@@ -7302,7 +7301,7 @@ function RaceResultsHub({
                   : 'text-slate-500',
               ].join(' ')}
             >
-              {t('results.team')}s & riders
+              {t('participants.teamsRiders')}
             </button>
 
             <button
@@ -7362,7 +7361,7 @@ function RaceResultsHub({
                     {t('results.classifications')}
                   </div>
                   <div className="mt-0.5 text-xs text-slate-500">
-                    Current tour standings
+                    {t('results.currentStandings')}
                   </div>
                 </div>
 
@@ -7454,7 +7453,7 @@ function RaceResultsHub({
                     }
                     className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm"
                   >
-                    <option value="stage_general">Stage result</option>
+                    <option value="stage_general">{t('results.stageResult')}</option>
                     {selectedStageAllowsSprintPointView ? (
                       <option value="stage_sprint">{t('results.sprintPoints')}</option>
                     ) : null}
@@ -7516,8 +7515,8 @@ function RaceResultsHub({
 
           <CollapsibleRaceSection
             eyebrow={t('rewards.eyebrow')}
-            title="Prize money and international points"
-            description="Prize money, team points, and rider points generated by the race engine."
+            title={t('rewards.title')}
+            description={t('rewards.description')}
             defaultOpen={false}
           >
             {engineTestModeLabel ? (
@@ -7578,8 +7577,8 @@ function RaceResultsHub({
                     <tr>
                       <th className="px-3 py-3">#</th>
                       <th className="px-3 py-3">Country</th>
-                      <th className="px-3 py-3">Rider</th>
-                      <th className="px-3 py-3">Team</th>
+                      <th className="px-3 py-3">{t('results.rider')}</th>
+                      <th className="px-3 py-3">{t('results.team')}</th>
                       <th className="px-3 py-3 text-right">Time</th>
                       <th className="px-3 py-3 text-right">Gap</th>
                     </tr>
@@ -7661,8 +7660,8 @@ function RaceResultsHub({
                     <tr>
                       <th className="px-3 py-3">#</th>
                       <th className="px-3 py-3">Country</th>
-                      <th className="px-3 py-3">Rider</th>
-                      <th className="px-3 py-3">Team</th>
+                      <th className="px-3 py-3">{t('results.rider')}</th>
+                      <th className="px-3 py-3">{t('results.team')}</th>
                       <th className="px-3 py-3 text-right">Time</th>
                       <th className="px-3 py-3 text-right">Gap</th>
                       <th className="px-3 py-3">Status</th>
@@ -7877,7 +7876,7 @@ function RaceClassificationTable({
           <tr className="border-b border-slate-200 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
             <th className="px-3 py-3">#</th>
             <th className="px-3 py-3">{view === 'team' ? 'Team' : 'Rider'}</th>
-            <th className="px-3 py-3">Team</th>
+            <th className="px-3 py-3">{t('results.team')}</th>
             <th className="px-3 py-3 text-right">
               {isPointsView ? 'Points' : 'Time'}
             </th>
@@ -8067,8 +8066,8 @@ function StageResultsTable({
         <thead>
           <tr className="border-b border-slate-200 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
             <th className="px-3 py-3">#</th>
-            <th className="px-3 py-3">Rider</th>
-            <th className="px-3 py-3">Team</th>
+            <th className="px-3 py-3">{t('results.rider')}</th>
+            <th className="px-3 py-3">{t('results.team')}</th>
             <th className="px-3 py-3 text-right">Time</th>
           </tr>
         </thead>
@@ -8217,8 +8216,8 @@ function StagePointResultsTable({
         <thead>
           <tr className="border-b border-slate-200 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
             <th className="px-3 py-3">#</th>
-            <th className="px-3 py-3">Rider</th>
-            <th className="px-3 py-3">Team</th>
+            <th className="px-3 py-3">{t('results.rider')}</th>
+            <th className="px-3 py-3">{t('results.team')}</th>
             <th className="px-3 py-3 text-right">Pts</th>
             {showBonus ? (
               <th className="px-3 py-3 text-right">Bonus</th>
@@ -9712,7 +9711,7 @@ function StageReplayAccessCard({
       const nextAccess = normalizeRaceReplayCoinAccess(data)
       setCoinAccess(nextAccess)
       setCoinPurchaseMessage(
-        `Replay unlocked for ${nextAccess?.coin_cost ?? 2} coins.`
+        t('replay.unlocked', { coins: nextAccess?.coin_cost ?? 2 })
       )
 
       window.dispatchEvent(new CustomEvent('coin-balance-changed'))
@@ -9720,7 +9719,7 @@ function StageReplayAccessCard({
       setCoinPurchaseError(
         caught instanceof Error
           ? caught.message
-          : 'Failed to unlock this race replay.'
+          : t('replay.unlockFailed')
       )
     } finally {
       setCoinPurchaseLoading(false)
@@ -9736,31 +9735,31 @@ function StageReplayAccessCard({
     coinAccessLoading
 
   const replayStatusText = stageWeatherCanceled
-    ? 'This stage was canceled. No replay is available.'
+    ? t('replay.stageCanceledDescription')
     : replayAvailability.status === 'not_open'
-      ? 'Replay will be available at the scheduled stage time.'
+      ? t('replay.notOpen')
       : replayAvailability.status === 'not_available'
-        ? 'Replay is not available yet.'
+        ? t('replay.notAvailable')
         : replayAvailability.status === 'error'
-          ? 'Replay is temporarily unavailable.'
+          ? t('replay.temporaryUnavailable')
           : userParticipated
-            ? `Replay is available for ${race?.name ?? 'this race'}.`
+            ? t('replay.availableForRace', { race: race?.name ?? '—' })
             : hasCoinReplayUnlock
-              ? `Replay is available for ${race?.name ?? 'this race'}.`
-              : `Replay is available. Teams that did not participate can unlock it for ${coinAccess?.coin_cost ?? 2} coins.`
+              ? t('replay.availableForRace', { race: race?.name ?? '—' })
+              : t('replay.unlockDescription', { coins: coinAccess?.coin_cost ?? 2 })
 
   return (
     <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
       <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-        Live race
+        {t('replay.liveRace')}
       </div>
 
       <h3 className="mt-2 text-lg font-semibold text-slate-950">
         {stageWeatherCanceled
-          ? 'Stage canceled'
+          ? t('replay.stageCanceled')
           : replayAvailable
-            ? 'Replay available'
-            : 'Replay unavailable'}
+            ? t('replay.available')
+            : t('replay.unavailable')}
       </h3>
 
       <p className="mt-2 text-sm leading-5 text-slate-500">
@@ -9770,7 +9769,7 @@ function StageReplayAccessCard({
       {replayAvailability.replayOpensGameAt &&
       replayAvailability.status !== 'available' ? (
         <div className="mt-3 text-xs font-medium text-slate-500">
-          Replay available at the scheduled stage time: {replayAvailability.replayOpensGameAt}
+          {t('replay.availableAt', { date: replayAvailability.replayOpensGameAt })}
         </div>
       ) : null}
 
@@ -9797,12 +9796,12 @@ function StageReplayAccessCard({
             className="w-full rounded-2xl border border-yellow-300 bg-yellow-50 px-4 py-3 text-sm font-semibold text-yellow-950 transition hover:bg-yellow-100 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {coinPurchaseLoading
-              ? 'Unlocking replay…'
-              : `Unlock replay · ${coinAccess?.coin_cost ?? 2} coins`}
+              ? t('replay.unlocking')
+              : t('replay.unlockReplay', { coins: coinAccess?.coin_cost ?? 2 })}
           </button>
 
           <div className="text-center text-xs text-slate-500">
-            Coin balance: {Number(coinAccess?.coin_balance ?? 0).toLocaleString('en-US')}
+            {t('replay.coinBalance', { balance: Number(coinAccess?.coin_balance ?? 0).toLocaleString() })}
           </div>
 
           {coinPurchaseError ? (
@@ -9832,18 +9831,18 @@ function StageReplayAccessCard({
         }`}
       >
         {stageWeatherCanceled
-          ? 'Replay unavailable'
+          ? t('replay.unavailable')
           : checkingReplayAccess
-            ? 'Checking replay…'
+            ? t('replay.checking')
             : replayAvailability.status === 'not_open' ||
                 replayAvailability.status === 'not_available' ||
                 replayAvailability.status === 'error'
-              ? 'Replay unavailable'
+              ? t('replay.unavailable')
               : canWatch
                 ? t('replay.watch')
                 : !hasReplayAccess
-                  ? `Unlock for ${coinAccess?.coin_cost ?? 2} coins`
-                  : 'Replay unavailable'}
+                  ? t('replay.unlockFor', { coins: coinAccess?.coin_cost ?? 2 })
+                  : t('replay.unavailable')}
       </button>
     </div>
   )
@@ -10772,7 +10771,7 @@ function SimpleReplayStagePointsPanel({
             {t('replay.stagePoints')}
           </div>
           <div className="mt-1 text-sm text-slate-500">
-            Rankings and cumulative awards appear when each point is reached.
+            {t('replay.stagePointsDescription')}
           </div>
         </div>
 
@@ -10816,9 +10815,9 @@ function SimpleReplayStagePointsPanel({
             <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
               <tr>
                 <th className="px-3 py-2 text-left">#</th>
-                <th className="px-3 py-2 text-left">Rider</th>
-                <th className="px-3 py-2 text-left">Team</th>
-                <th className="px-3 py-2 text-right">Points</th>
+                <th className="px-3 py-2 text-left">{t('results.rider')}</th>
+                <th className="px-3 py-2 text-left">{t('results.team')}</th>
+                <th className="px-3 py-2 text-right">{t('rewards.points')}</th>
                 <th className="px-3 py-2 text-right">Bonus</th>
               </tr>
             </thead>
@@ -10854,8 +10853,8 @@ function SimpleReplayStagePointsPanel({
             <table className="w-full text-sm">
               <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
                 <tr>
-                  <th className="px-3 py-2 text-left">Rider</th>
-                  <th className="px-3 py-2 text-left">Team</th>
+                  <th className="px-3 py-2 text-left">{t('results.rider')}</th>
+                  <th className="px-3 py-2 text-left">{t('results.team')}</th>
                   <th className="px-3 py-2 text-right">Sprint</th>
                   <th className="px-3 py-2 text-right">KOM</th>
                   <th className="px-3 py-2 text-right">Bonus</th>
@@ -16136,7 +16135,7 @@ function RaceStageProfilePanel({
           {t('stage.profile')}
         </div>
         <div className="mt-4 rounded-2xl bg-slate-50 px-4 py-8 text-sm text-slate-500">
-          {t('stage.profile')} data is not available yet.
+          {t('stage.profileUnavailable')}
         </div>
       </div>
     )
@@ -17618,21 +17617,21 @@ export default function RaceDetailPage({
   }
 
   function getApplicationPreviewStatusText(quote: RaceApplicationQuote | null): string {
-    if (!quote) return 'Loading application preview…'
+    if (!quote) return t('application.loadingPreview')
 
     if (quote.existing_application_status === 'accepted') {
-      return 'Your team is already accepted for this race.'
+      return t('application.alreadyAccepted')
     }
 
     if (quote.existing_application_status === 'applied') {
-      return 'Your team already has an application submitted for this race.'
+      return t('application.alreadyApplied')
     }
 
     if (quote.can_apply === false) {
-      return quote.message ?? 'You cannot apply for this race right now.'
+      return quote.message ?? t('application.cannotApply')
     }
 
-    return 'Review your application preview before submitting.'
+    return t('application.review')
   }
 
   async function loadRaceApplicationQuote(): Promise<void> {
@@ -17836,7 +17835,7 @@ export default function RaceDetailPage({
     return {
       from: 'race_detail',
       returnTo,
-      returnLabel: '← Back',
+      returnLabel: t('page.back'),
       returnRaceId: raceId ?? undefined,
       returnScrollX: typeof window !== 'undefined' ? window.scrollX : 0,
       returnScrollY: typeof window !== 'undefined' ? window.scrollY : 0,
@@ -17939,7 +17938,9 @@ export default function RaceDetailPage({
         </div>
 
         <div className="mt-1 text-xs opacity-75">
-          {humanizeCode(stage.terrain_type)} · {formatKm(stage.distance_km)}
+          {TERRAIN_TRANSLATION_KEYS[stage.terrain_type]
+            ? t(TERRAIN_TRANSLATION_KEYS[stage.terrain_type])
+            : humanizeCode(stage.terrain_type)} · {formatKm(stage.distance_km)}
         </div>
 
         {weatherCanceled ? (
@@ -18120,28 +18121,28 @@ export default function RaceDetailPage({
                 <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 lg:col-span-2">
                   <div className="grid gap-3 text-sm md:grid-cols-4">
                     <div>
-                      <div className="text-xs text-slate-500">Applied teams</div>
+                      <div className="text-xs text-slate-500">{t('application.appliedTeams')}</div>
                       <div className="mt-1 font-bold text-slate-950">
                         {formatApplicationNumber(applicationQuote.submitted_application_teams)}
                       </div>
                     </div>
 
                     <div>
-                      <div className="text-xs text-slate-500">Accepted teams</div>
+                      <div className="text-xs text-slate-500">{t('application.acceptedTeams')}</div>
                       <div className="mt-1 font-bold text-slate-950">
                         {formatApplicationNumber(applicationQuote.accepted_teams)}
                       </div>
                     </div>
 
                     <div>
-                      <div className="text-xs text-slate-500">Target teams</div>
+                      <div className="text-xs text-slate-500">{t('application.targetTeams')}</div>
                       <div className="mt-1 font-bold text-slate-950">
                         {formatApplicationNumber(applicationQuote.target_teams)}
                       </div>
                     </div>
 
                     <div>
-                      <div className="text-xs text-slate-500">Max teams</div>
+                      <div className="text-xs text-slate-500">{t('application.maxTeams')}</div>
                       <div className="mt-1 font-bold text-slate-950">
                         {formatApplicationNumber(applicationQuote.max_teams)}
                       </div>
@@ -18150,21 +18151,21 @@ export default function RaceDetailPage({
 
                   <div className="mt-4 grid gap-3 text-sm md:grid-cols-3">
                     <div className="rounded-xl bg-white px-3 py-2">
-                      <div className="text-xs text-slate-500">Riders required</div>
+                      <div className="text-xs text-slate-500">{t('application.ridersRequired')}</div>
                       <div className="mt-1 font-semibold text-slate-950">
                         {formatApplicationNumber(applicationQuote.min_riders_per_team)}–{formatApplicationNumber(applicationQuote.max_riders_per_team)}
                       </div>
                     </div>
 
                     <div className="rounded-xl bg-white px-3 py-2">
-                      <div className="text-xs text-slate-500">Team list announcement</div>
+                      <div className="text-xs text-slate-500">{t('application.teamListAnnouncement')}</div>
                       <div className="mt-1 font-semibold text-slate-950">
                         {applicationQuote.team_list_announcement_label ?? '—'}
                       </div>
                     </div>
 
                     <div className="rounded-xl bg-white px-3 py-2">
-                      <div className="text-xs text-slate-500">Rider deadline</div>
+                      <div className="text-xs text-slate-500">{t('application.riderDeadline')}</div>
                       <div className="mt-1 font-semibold text-slate-950">
                         {applicationQuote.rider_submission_deadline_label ?? '—'}
                       </div>
@@ -18185,7 +18186,7 @@ export default function RaceDetailPage({
                 disabled={applicationActionInProgress}
                 className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:text-slate-400"
               >
-                Not now
+                {t('application.notNow')}
               </button>
 
               <button
@@ -18471,18 +18472,16 @@ export default function RaceDetailPage({
         <TutorialOverlay
           open
           variant="panel"
-          title={raceDetailTutorialSteps[tutorialStepIndex].title}
-          body={raceDetailTutorialSteps[tutorialStepIndex].body}
-          stepLabel={`Race profile tutorial ${tutorialStepIndex + 1} of ${
-            raceDetailTutorialSteps.length
-          }`}
+          title={t(tutorialStepIndex === 0 ? 'tutorial.profileTitle' : 'tutorial.stagesTitle')}
+          body={t(tutorialStepIndex === 0 ? 'tutorial.profileBody' : 'tutorial.stagesBody')}
+          stepLabel={t('tutorial.step', { current: tutorialStepIndex + 1, total: raceDetailTutorialSteps.length })}
           primaryAction={
-            raceDetailTutorialSteps[tutorialStepIndex].primaryAction ?? 'Next'
+            tutorialStepIndex === raceDetailTutorialSteps.length - 1 ? t('tutorial.continuePreparation') : t('tutorial.next')
           }
           secondaryAction={
             tutorialStepIndex === raceDetailTutorialSteps.length - 1
-              ? raceDetailTutorialSteps[tutorialStepIndex].secondaryAction
-              : 'Skip tutorial'
+              ? t('tutorial.finish')
+              : t('tutorial.skip')
           }
           onPrimary={handleNextRaceDetailTutorialStep}
           onSecondary={
