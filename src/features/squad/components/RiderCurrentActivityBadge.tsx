@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import { supabase } from '../../../lib/supabase'
 import { formatShortGameDate } from '../utils/dates'
@@ -7,9 +8,8 @@ export type RiderCurrentActivityKind = 'race' | 'training_camp' | 'free'
 
 export type RiderCurrentActivity = {
   kind: RiderCurrentActivityKind
-  label: 'Race' | 'Training camp' | 'Free'
   name?: string | null
-  stageLabel?: string | null
+  stageNumber?: number | null
   locationLabel?: string | null
   endDate?: string | null
 }
@@ -69,7 +69,6 @@ type TrainingCampBookingRow = {
 
 const FREE_ACTIVITY: RiderCurrentActivity = {
   kind: 'free',
-  label: 'Free',
 }
 
 const NON_CONTINUING_RACE_STATUSES = new Set([
@@ -182,8 +181,7 @@ async function loadTrainingCampActivities(
 
     result[commitment.rider_id] = {
       kind: 'training_camp',
-      label: 'Training camp',
-      name: booking?.camp_name?.trim() || 'Training camp',
+      name: booking?.camp_name?.trim() || null,
       locationLabel: formatCampLocation(booking),
       endDate: booking?.end_date ?? commitment.end_date,
     }
@@ -314,16 +312,14 @@ async function loadRaceActivities(
     }
 
     const todayStage = todayStageByRaceId.get(race.id)
-    const stageLabel =
-      race.is_stage_race && todayStage?.stage_number
-        ? `Stage ${todayStage.stage_number}`
-        : null
 
     result[participant.rider_id] = {
       kind: 'race',
-      label: 'Race',
       name: race.name,
-      stageLabel,
+      stageNumber:
+        race.is_stage_race && todayStage?.stage_number
+          ? todayStage.stage_number
+          : null,
       endDate: race.end_date,
     }
   }
@@ -335,6 +331,7 @@ export function useRiderCurrentActivities(
   riderIds: string[],
   gameDate: string | null,
 ): CurrentActivityState {
+  const { t } = useTranslation('squad')
   const riderKey = useMemo(
     () =>
       Array.from(new Set(riderIds.filter(Boolean)))
@@ -385,13 +382,13 @@ export function useRiderCurrentActivities(
         ...freeByRiderId,
       }
 
-      const errors: string[] = []
+      let hasError = false
 
       if (campResult.status === 'fulfilled') {
         Object.assign(nextActivities, campResult.value)
       } else {
         console.warn('Failed to load rider training-camp activity:', campResult.reason)
-        errors.push('training camp activity')
+        hasError = true
       }
 
       /*
@@ -402,23 +399,20 @@ export function useRiderCurrentActivities(
         Object.assign(nextActivities, raceResult.value)
       } else {
         console.warn('Failed to load rider race activity:', raceResult.reason)
-        errors.push('race activity')
+        hasError = true
       }
 
       setState({
         activitiesByRiderId: nextActivities,
         loading: false,
-        error:
-          errors.length > 0
-            ? `Could not load ${errors.join(' and ')}.`
-            : null,
+        error: hasError ? t('roster.loadFailed') : null,
       })
     })()
 
     return () => {
       cancelled = true
     }
-  }, [riderKey, gameDate])
+  }, [riderKey, gameDate, t])
 
   return state
 }
@@ -432,6 +426,8 @@ export function RiderCurrentActivityBadge({
   loading?: boolean
   error?: string | null
 }) {
+  const { t } = useTranslation('squad')
+
   if (loading) {
     return (
       <span className="inline-flex min-w-[76px] items-center justify-center rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-medium text-slate-400">
@@ -441,6 +437,12 @@ export function RiderCurrentActivityBadge({
   }
 
   const resolved = activity ?? FREE_ACTIVITY
+  const activityLabel =
+    resolved.kind === 'race'
+      ? t('activity.race')
+      : resolved.kind === 'training_camp'
+        ? t('activity.trainingCamp')
+        : t('activity.free')
 
   /*
    * If one source failed, never pretend an unresolved "Free" rider is
@@ -476,15 +478,19 @@ export function RiderCurrentActivityBadge({
             dotClassName: 'bg-slate-400',
           }
 
+  const stageLabel = resolved.stageNumber
+    ? t('activity.stage', { number: resolved.stageNumber })
+    : null
+
   const tooltipParts =
     resolved.kind === 'free'
       ? []
       : [
-          resolved.name || resolved.label,
-          resolved.stageLabel,
+          resolved.name || activityLabel,
+          stageLabel,
           resolved.locationLabel,
           resolved.endDate
-            ? `Until ${formatShortGameDate(resolved.endDate)}`
+            ? t('activity.until', { date: formatShortGameDate(resolved.endDate) })
             : null,
         ].filter((value): value is string => Boolean(value))
 
@@ -499,7 +505,7 @@ export function RiderCurrentActivityBadge({
         aria-hidden="true"
         className={`h-1.5 w-1.5 shrink-0 rounded-full ${ui.dotClassName}`}
       />
-      <span>{resolved.label}</span>
+      <span>{activityLabel}</span>
     </span>
   )
 }
