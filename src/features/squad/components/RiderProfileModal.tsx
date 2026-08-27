@@ -24,7 +24,7 @@ export default function RiderProfileModal({
   gameDate,
   currentTeamType = 'first',
   variant = 'modal',
-  backButtonLabel: _backButtonLabel = 'Back',
+  backButtonLabel: _backButtonLabel,
 }: RiderProfileModalProps) {
   const shouldRender = variant === 'page' ? !!riderId : open && !!riderId
 
