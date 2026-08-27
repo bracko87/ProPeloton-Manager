@@ -7,6 +7,7 @@
  */
 
 import React from 'react'
+import { useTranslation } from 'react-i18next'
 // KEEP THE SAME WORKING IMPORT PATH YOU ALREADY USE:
 import { supabase } from '@/lib/supabase'
 
@@ -38,7 +39,7 @@ type ComposeTarget = {
   clubName?: string
 }
 
-function formatDateTime(value?: string | null): string {
+function formatDateTime(value: string | null | undefined, locale: string): string {
   if (!value) return ''
 
   const d = new Date(value)
@@ -47,7 +48,7 @@ function formatDateTime(value?: string | null): string {
     return ''
   }
 
-  return new Intl.DateTimeFormat(undefined, {
+  return new Intl.DateTimeFormat(locale, {
     month: 'short',
     day: 'numeric',
     hour: '2-digit',
@@ -66,6 +67,9 @@ function getInitials(name: string): string {
 }
 
 export default function InboxPage(): JSX.Element {
+  const { t, i18n } = useTranslation('accountPages')
+  const locale = i18n.resolvedLanguage ?? i18n.language
+
   const [currentUserId, setCurrentUserId] = React.useState<string | null>(null)
   const [authChecked, setAuthChecked] = React.useState(false)
 
@@ -83,7 +87,7 @@ export default function InboxPage(): JSX.Element {
   const [error, setError] = React.useState<string | null>(null)
 
   const activeThread = React.useMemo(
-    () => threads.find(t => t.conversation_id === activeThreadId) ?? null,
+    () => threads.find(thread => thread.conversation_id === activeThreadId) ?? null,
     [threads, activeThreadId]
   )
 
@@ -134,7 +138,7 @@ export default function InboxPage(): JSX.Element {
       setThreads(nextThreads)
 
       setActiveThreadId(current => {
-        if (current && nextThreads.some(t => t.conversation_id === current)) {
+        if (current && nextThreads.some(thread => thread.conversation_id === current)) {
           return current
         }
 
@@ -147,14 +151,14 @@ export default function InboxPage(): JSX.Element {
 
       return nextThreads
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load conversations.')
+      setError(err instanceof Error ? err.message : t('inbox.loadConversationsFailed'))
       setThreads([])
       setActiveThreadId(null)
       return []
     } finally {
       setLoadingThreads(false)
     }
-  }, [composeTarget])
+  }, [composeTarget, t])
 
   const loadMessages = React.useCallback(async (conversationId: string) => {
     setLoadingMessages(true)
@@ -185,12 +189,12 @@ export default function InboxPage(): JSX.Element {
         )
       )
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load messages.')
+      setError(err instanceof Error ? err.message : t('inbox.loadMessagesFailed'))
       setMessages([])
     } finally {
       setLoadingMessages(false)
     }
-  }, [])
+  }, [t])
 
   React.useEffect(() => {
     const raw = sessionStorage.getItem('inbox_compose_target')
@@ -220,7 +224,7 @@ export default function InboxPage(): JSX.Element {
 
         if (userError || !user) {
           setCurrentUserId(null)
-          setError('You must be signed in to view your inbox.')
+          setError(t('inbox.signInRequired'))
           setLoadingThreads(false)
           setAuthChecked(true)
           return
@@ -232,7 +236,7 @@ export default function InboxPage(): JSX.Element {
       } catch (err) {
         if (!mounted) return
         setCurrentUserId(null)
-        setError(err instanceof Error ? err.message : 'Failed to initialize inbox.')
+        setError(err instanceof Error ? err.message : t('inbox.initializeFailed'))
         setLoadingThreads(false)
         setAuthChecked(true)
       }
@@ -241,7 +245,7 @@ export default function InboxPage(): JSX.Element {
     return () => {
       mounted = false
     }
-  }, [loadThreads])
+  }, [loadThreads, t])
 
   React.useEffect(() => {
     if (!composeTarget) {
@@ -355,23 +359,23 @@ export default function InboxPage(): JSX.Element {
         setActiveThreadId(createdThread.conversation_id)
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to send message.')
+      setError(err instanceof Error ? err.message : t('inbox.sendFailed'))
     } finally {
       setSending(false)
     }
   }
 
   const composerPlaceholder = composeTarget
-    ? `Write a message to ${composeTarget.displayName}...`
-    : 'Write a message...'
+    ? t('inbox.writeTo', { name: composeTarget.displayName })
+    : t('inbox.write')
 
   return (
     <div className="w-full">
       <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-slate-900">Inbox</h1>
+          <h1 className="text-2xl font-semibold text-slate-900">{t('inbox.title')}</h1>
           <p className="mt-1 text-sm text-slate-500">
-            Private conversations and admin inbox messages.
+            {t('inbox.subtitle')}
           </p>
         </div>
 
@@ -380,28 +384,28 @@ export default function InboxPage(): JSX.Element {
           onClick={() => void handleRefresh()}
           className="inline-flex items-center rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50"
         >
-          Refresh
+          {t('inbox.refresh')}
         </button>
       </div>
 
       <div className="mb-4 grid gap-3 md:grid-cols-3">
         <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
           <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
-            Unread messages
+            {t('inbox.unreadMessages')}
           </div>
           <div className="mt-1 text-sm font-medium text-slate-900">{unreadMessagesCount}</div>
         </div>
 
         <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
           <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
-            Conversations
+            {t('inbox.conversations')}
           </div>
           <div className="mt-1 text-sm font-medium text-slate-900">{threads.length}</div>
         </div>
 
         <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
           <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
-            Read conversations
+            {t('inbox.readConversations')}
           </div>
           <div className="mt-1 text-sm font-medium text-slate-900">{readConversationsCount}</div>
         </div>
@@ -421,21 +425,21 @@ export default function InboxPage(): JSX.Element {
                 type="text"
                 value={search}
                 onChange={e => setSearch(e.target.value)}
-                placeholder="Search conversations..."
+                placeholder={t('inbox.search')}
                 className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 outline-none placeholder:text-slate-400 focus:border-slate-400"
               />
             </div>
 
             <div className="max-h-[calc(100vh-260px)] overflow-y-auto">
               {loadingThreads ? (
-                <div className="p-5 text-sm text-slate-500">Loading conversations...</div>
+                <div className="p-5 text-sm text-slate-500">{t('inbox.loadingConversations')}</div>
               ) : filteredThreads.length === 0 ? (
                 <div className="p-5 text-sm text-slate-500">
                   {!currentUserId
-                    ? 'No authenticated user in this page.'
+                    ? t('inbox.noAuth')
                     : search.trim()
-                    ? 'No conversations found.'
-                    : 'No conversations for this account yet.'}
+                      ? t('inbox.noFound')
+                      : t('inbox.noAccount')}
                 </div>
               ) : (
                 filteredThreads.map(thread => {
@@ -468,7 +472,7 @@ export default function InboxPage(): JSX.Element {
                               {thread.display_name}
                             </div>
                             <div className="shrink-0 text-[11px] text-slate-400">
-                              {formatDateTime(thread.last_message_at)}
+                              {formatDateTime(thread.last_message_at, locale)}
                             </div>
                           </div>
 
@@ -479,7 +483,7 @@ export default function InboxPage(): JSX.Element {
                           ) : null}
 
                           <div className="mt-1 truncate text-sm text-slate-500">
-                            {thread.last_message_preview ?? 'No messages yet'}
+                            {thread.last_message_preview ?? t('inbox.noMessagesYet')}
                           </div>
                         </div>
 
@@ -501,12 +505,12 @@ export default function InboxPage(): JSX.Element {
               <div className="flex flex-1 items-center justify-center p-8 text-center">
                 <div>
                   <div className="text-base font-medium text-slate-900">
-                    No conversation selected
+                    {t('inbox.noneSelected')}
                   </div>
                   <div className="mt-1 text-sm text-slate-500">
                     {threads.length > 0
-                      ? 'Choose a thread from the left sidebar.'
-                      : 'Once a thread is visible on the left, open it here.'}
+                      ? t('inbox.chooseThread')
+                      : t('inbox.openHere')}
                   </div>
                 </div>
               </div>
@@ -535,14 +539,14 @@ export default function InboxPage(): JSX.Element {
                           <div className="text-xs text-slate-500">
                             {activeThread.subject ||
                               (activeThread.can_reply
-                                ? 'Direct conversation'
-                                : 'Admin message thread')}
+                                ? t('inbox.directConversation')
+                                : t('inbox.adminThread'))}
                           </div>
                         </div>
                       </div>
 
                       <div className="text-xs text-slate-400">
-                        {activeThread.can_reply ? 'Replies enabled' : 'Read only'}
+                        {activeThread.can_reply ? t('inbox.repliesEnabled') : t('inbox.readOnly')}
                       </div>
                     </>
                   ) : composeTarget ? (
@@ -558,13 +562,13 @@ export default function InboxPage(): JSX.Element {
                           </div>
                           <div className="text-xs text-slate-500">
                             {composeTarget.clubName
-                              ? `New direct conversation • Team: ${composeTarget.clubName}`
-                              : 'New direct conversation'}
+                              ? t('inbox.newDirectTeam', { team: composeTarget.clubName })
+                              : t('inbox.newDirect')}
                           </div>
                         </div>
                       </div>
 
-                      <div className="text-xs text-slate-400">New conversation</div>
+                      <div className="text-xs text-slate-400">{t('inbox.newConversation')}</div>
                     </>
                   ) : null}
                 </header>
@@ -572,20 +576,22 @@ export default function InboxPage(): JSX.Element {
                 <div className="flex-1 space-y-4 overflow-y-auto bg-white px-5 py-5">
                   {composeTarget && !activeThread ? (
                     <div className="rounded-2xl border border-dashed border-slate-300 p-6">
-                      <div className="text-sm font-medium text-slate-900">New conversation</div>
+                      <div className="text-sm font-medium text-slate-900">{t('inbox.newConversation')}</div>
                       <div className="mt-1 text-sm text-slate-500">
-                        Your first message will start a direct conversation with{' '}
+                        {t('inbox.firstMessage')}{' '}
                         <span className="font-medium text-slate-700">
                           {composeTarget.displayName}
                         </span>
-                        {composeTarget.clubName ? ` from ${composeTarget.clubName}.` : '.'}
+                        {composeTarget.clubName
+                          ? ` ${t('inbox.fromTeam', { team: composeTarget.clubName })}`
+                          : '.'}
                       </div>
                     </div>
                   ) : loadingMessages ? (
-                    <div className="text-sm text-slate-500">Loading messages...</div>
+                    <div className="text-sm text-slate-500">{t('inbox.loadingMessages')}</div>
                   ) : messages.length === 0 ? (
                     <div className="rounded-2xl border border-dashed border-slate-300 p-6 text-sm text-slate-500">
-                      No messages yet.
+                      {t('inbox.noMessages')}
                     </div>
                   ) : (
                     messages.map(message => {
@@ -606,8 +612,8 @@ export default function InboxPage(): JSX.Element {
                               isMine
                                 ? 'bg-slate-900 text-white'
                                 : isAdmin
-                                ? 'border border-amber-200 bg-amber-50 text-slate-900'
-                                : 'border border-slate-200 bg-slate-50 text-slate-900'
+                                  ? 'border border-amber-200 bg-amber-50 text-slate-900'
+                                  : 'border border-slate-200 bg-slate-50 text-slate-900'
                             }`}
                           >
                             {!isMine ? (
@@ -625,7 +631,7 @@ export default function InboxPage(): JSX.Element {
                                 isMine ? 'text-slate-300' : 'text-slate-400'
                               }`}
                             >
-                              {formatDateTime(message.created_at)}
+                              {formatDateTime(message.created_at, locale)}
                             </div>
                           </div>
                         </div>
@@ -653,12 +659,12 @@ export default function InboxPage(): JSX.Element {
                           disabled={!draft.trim() || sending}
                           className="rounded-2xl bg-slate-900 px-5 py-3 text-sm font-medium text-white transition disabled:cursor-not-allowed disabled:opacity-50"
                         >
-                          {sending ? 'Sending...' : 'Send'}
+                          {sending ? t('inbox.sending') : t('inbox.send')}
                         </button>
                       </div>
                     ) : (
                       <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-                        This is an admin message thread. Replies are currently disabled.
+                        {t('inbox.adminNoReplies')}
                       </div>
                     )
                   ) : composeTarget ? (
@@ -675,7 +681,7 @@ export default function InboxPage(): JSX.Element {
                         disabled={!draft.trim() || sending}
                         className="rounded-2xl bg-slate-900 px-5 py-3 text-sm font-medium text-white transition disabled:cursor-not-allowed disabled:opacity-50"
                       >
-                        {sending ? 'Sending...' : 'Send'}
+                        {sending ? t('inbox.sending') : t('inbox.send')}
                       </button>
                     </div>
                   ) : null}
