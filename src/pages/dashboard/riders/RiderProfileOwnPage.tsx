@@ -5,12 +5,14 @@
  */
 
 import React, { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useNavigate, useParams } from 'react-router'
 import RiderProfilePage from '../../../features/squad/components/RiderProfilePage'
 import { normalizeGameDateValue } from '../../../features/squad/utils/dates'
 import { supabase } from '../../../lib/supabase'
 
 export default function RiderProfileOwnPage() {
+  const { t } = useTranslation('riderProfile')
   const { riderId } = useParams<{ riderId: string }>()
   const navigate = useNavigate()
   const [gameDate, setGameDate] = useState<string | null>(null)
@@ -41,11 +43,11 @@ export default function RiderProfileOwnPage() {
           onClick={() => navigate(-1)}
           className="rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"
         >
-          ← Back
+          {t('common.back')}
         </button>
 
         <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
-          Missing rider id.
+          {t('wrapper.missingId')}
         </div>
       </div>
     )
