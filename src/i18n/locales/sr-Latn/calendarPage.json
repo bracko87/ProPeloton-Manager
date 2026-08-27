@@ -125,7 +125,7 @@
     "gameDate": "Sezona {{season}} - {{weekday}} - {{day}}. {{month}}",
     "compact": "S{{season}} · {{month}} {{day}}",
     "dateBadge": "{{day}} {{month}}",
-    "calendarCell": "{{day}}. {{month}}",
+    "calendarCell": "{{month}} {{day}}",
     "months": {
       "January": "Januar",
       "February": "Februar",
@@ -141,18 +141,18 @@
       "December": "Decembar"
     },
     "monthsDate": {
-      "January": "januar",
-      "February": "februar",
-      "March": "mart",
-      "April": "april",
-      "May": "maj",
-      "June": "jun",
-      "July": "jul",
-      "August": "avgust",
-      "September": "septembar",
-      "October": "oktobar",
-      "November": "novembar",
-      "December": "decembar"
+      "January": "Januar",
+      "February": "Februar",
+      "March": "Mart",
+      "April": "April",
+      "May": "Maj",
+      "June": "Jun",
+      "July": "Jul",
+      "August": "Avgust",
+      "September": "Septembar",
+      "October": "Oktobar",
+      "November": "Novembar",
+      "December": "Decembar"
     },
     "shortMonths": {
       "Jan": "Jan",
