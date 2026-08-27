@@ -138,26 +138,37 @@ function getCurrentRoute(): string {
 }
 
 function getTranslationRoots(): Element[] {
-  const roots: Element[] = []
+  const roots = new Set<Element>()
 
   const main = document.querySelector('main')
+  const app = document.getElementById('app')
 
   if (main) {
-    roots.push(main)
-  } else {
-    const app = document.getElementById('app')
-    if (app) roots.push(app)
+    roots.add(main)
+  } else if (app) {
+    roots.add(app)
   }
 
+  // Many dialogs, menus and popovers are rendered through portals outside <main>.
+  // Include those surfaces so route localization also covers modal/overlay UI.
   document
     .querySelectorAll(
-      '[data-tutorial-overlay-panel="true"]',
+      [
+        '[data-tutorial-overlay-panel="true"]',
+        '[role="dialog"]',
+        '[role="menu"]',
+        '[data-radix-popper-content-wrapper]',
+      ].join(','),
     )
     .forEach(element => {
-      roots.push(element)
+      roots.add(element)
     })
 
-  return roots
+  return Array.from(roots)
+}
+
+function looksLikeTranslationKey(value: string): boolean {
+  return /^[A-Za-z0-9_-]+(?:\.[A-Za-z0-9_-]+)+$/.test(value)
 }
 
 export function createLegacyLocalizationBridge(
@@ -208,7 +219,9 @@ export function createLegacyLocalizationBridge(
 
       if (template) {
         templates.push(template)
-      } else if (normalized) {
+      } else if (normalized && !exactMap.has(normalized)) {
+        // Preserve the first matching key rather than letting later duplicate
+        // English values (often tutorial/help copies) overwrite the primary UI key.
         exactMap.set(normalized, fullKey)
       }
     },
@@ -250,6 +263,20 @@ export function createLegacyLocalizationBridge(
           ? resolved
           : `${namespace}:${resolved}`,
       }
+    }
+
+    // If a component accidentally renders an i18n key literally (for example
+    // "history.title" or "common.next"), resolve it instead of showing the key.
+    if (looksLikeTranslationKey(normalized)) {
+      const namespacedKey = `${namespace}:${normalized}`
+
+      if (i18n.exists(namespacedKey)) {
+        return { key: namespacedKey }
+      }
+    }
+
+    if (normalized.includes(':') && i18n.exists(normalized)) {
+      return { key: normalized }
     }
 
     const exact = exactMap.get(normalized)
