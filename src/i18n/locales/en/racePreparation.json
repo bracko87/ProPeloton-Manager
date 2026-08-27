@@ -25,7 +25,8 @@
     "stageRace": "Stage Race",
     "oneDay": "One Day",
     "weatherCanceled": "Weather Canceled",
-    "partlyCanceled": "Partly Canceled"
+    "partlyCanceled": "Partly Canceled",
+    "racePlanSubmitted": "Race Plan Submitted"
   },
   "accepted": {
     "title": "Accepted Races",
@@ -33,7 +34,10 @@
     "missedStartlist": "Your team missed the startlist and is not participating",
     "openRacePlan": "Open Race Plan",
     "openStagePlans": "Open Stage Plans",
-    "stagePlansAfterSubmit": "Stage Plans open after the Race Plan is submitted"
+    "stagePlansAfterSubmit": "Stage Plans open after the Race Plan is submitted",
+    "routePending": "Route details pending",
+    "routeStages": "{{route}} · {{count}} stages",
+    "routeOneDay": "{{route}} · One Day Race"
   },
   "header": {
     "openRacePage": "Open Race Page",
@@ -51,7 +55,13 @@
     "loadingProfile": "Loading stage profile…",
     "profileLoadFailed": "Stage profile could not be loaded.",
     "profileUnavailable": "Stage profile data is not available yet.",
-    "distancePending": "Distance pending"
+    "distancePending": "Distance pending",
+    "selectedRace": "Selected race",
+    "unnamedRace": "Unnamed race",
+    "raceDates": "Race dates",
+    "class": "Class",
+    "riders": "Riders",
+    "missedStartlist": "Your team missed the rider startlist and is not participating in this race."
   },
   "racePlan": {
     "notOpen": "Race Plan is not open yet. It opens on {{date}}.",
@@ -306,7 +316,8 @@
     "next": "Next",
     "skipTutorial": "Skip tutorial",
     "finishNow": "Finish for now",
-    "close": "Close"
+    "close": "Close",
+    "unknownCountry": "Unknown country"
   },
   "dates": {
     "shortMonths": {
@@ -323,5 +334,18 @@
       "Nov": "Nov",
       "Dec": "Dec"
     }
+  },
+  "weatherCancellation": {
+    "snow": "Snow",
+    "temperatureBelow5": "Average temperature below 5°C",
+    "unsafe": "Unsafe weather",
+    "stageCanceledTitle": "Stage canceled due to weather",
+    "raceCanceledTitle": "Race canceled due to weather",
+    "partlyCanceledTitle": "Race partly canceled by weather",
+    "stageCanceledBody": "This stage was canceled by the race engine ({{reason}}). Stage Plans are locked because no result, points, prize money, fatigue or replay will be generated for this stage.",
+    "raceCanceledBody": "This race was canceled due to weather. Race preparation is no longer needed for this race.",
+    "partlyCanceledBody": "At least one stage in this race was canceled due to weather. Remaining uncanceled stages can continue normally.",
+    "likelyTitle": "Weather cancellation likely: {{reason}}",
+    "likelyBody": "Current forecast is below the safety threshold. Final decision 24 in-game hours before start."
   }
 }

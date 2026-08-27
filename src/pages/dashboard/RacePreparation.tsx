@@ -13,6 +13,7 @@
 
 import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import type { TFunction } from "i18next";
 import { createPortal } from "react-dom";
 import { useNavigate, useSearchParams } from "react-router";
 import TutorialOverlay from "../../components/tutorial/TutorialOverlay";
@@ -109,6 +110,8 @@ const EMPTY_CURRENT_RACE_CLASSIFICATION_SNAPSHOT: CurrentRaceClassificationSnaps
   afterStageNumber: null,
   byRiderId: new Map(),
 };
+
+type RacePreparationT = TFunction<"racePreparation">;
 
 type StagePlanUiTone = "green" | "yellow" | "orange" | "red" | "gray";
 
@@ -817,6 +820,7 @@ function getFlagImageUrl(code?: string | null): string | null {
 }
 
 function CountryFlag({ code }: { code?: string | null }) {
+  const { t } = useTranslation("racePreparation");
   const flagUrl = getFlagImageUrl(code);
   const normalized = normalizeCountryCode(code);
   const [hasError, setHasError] = useState(false);
@@ -829,8 +833,8 @@ function CountryFlag({ code }: { code?: string | null }) {
     return (
       <span
         className="inline-block h-4 w-6 shrink-0 rounded-sm border border-slate-200 bg-slate-100 align-middle"
-        title={normalized ?? "Unknown country"}
-        aria-label={normalized ?? "Unknown country"}
+        title={normalized ?? t("common.unknownCountry")}
+        aria-label={normalized ?? t("common.unknownCountry")}
       />
     );
   }
@@ -971,7 +975,11 @@ function getTopRiderSkills(rider: JsonRecord): {
   return rows.sort((a, b) => b.value - a.value).slice(0, 6);
 }
 
-function getRaceRouteLine(race: unknown, stageCount?: number): string {
+function getRaceRouteLine(
+  race: unknown,
+  stageCount: number | undefined,
+  t: RacePreparationT,
+): string {
   const record = asRecord(race);
 
   const startCity = String(
@@ -994,15 +1002,15 @@ function getRaceRouteLine(race: unknown, stageCount?: number): string {
   const route =
     startCity && finishCity && startCity !== finishCity
       ? `${startCity} → ${finishCity}`
-      : startCity || finishCity || "Route details pending";
+      : startCity || finishCity || t("accepted.routePending");
 
   const stages = Number(stageCount ?? record.stage_count ?? 0);
 
   if (stages > 1) {
-    return `${route} · ${stages} stages`;
+    return t("accepted.routeStages", { route, count: stages });
   }
 
-  return `${route} · One Day Race`;
+  return t("accepted.routeOneDay", { route });
 }
 
 function getWeatherCancellationStatusFromRace(race: unknown): string | null {
@@ -1047,15 +1055,16 @@ function isPreparationStageWeatherCanceled(stage: unknown): boolean {
 }
 
 function getPreparationWeatherCancellationReasonLabel(
-  reason?: unknown,
+  reason: unknown,
+  t: RacePreparationT,
 ): string {
   switch (String(reason ?? "")) {
     case "snow":
-      return "Snow";
+      return t("weatherCancellation.snow");
     case "temperature_below_5c":
-      return "Average temperature below 5°C";
+      return t("weatherCancellation.temperatureBelow5");
     default:
-      return reason ? titleFromSnake(String(reason)) : "Unsafe weather";
+      return reason ? titleFromSnake(String(reason)) : t("weatherCancellation.unsafe");
   }
 }
 
@@ -1116,6 +1125,7 @@ function WeatherCancellationPreparationNotice({
   race?: unknown;
   stage?: unknown;
 }) {
+  const { t } = useTranslation("racePreparation");
   const raceStatus = getWeatherCancellationStatusFromRace(race);
   const stageCanceled = isPreparationStageWeatherCanceled(stage);
   const shouldRender =
@@ -1126,20 +1136,21 @@ function WeatherCancellationPreparationNotice({
   if (!shouldRender) return null;
 
   const title = stageCanceled
-    ? "Stage canceled due to weather"
+    ? t("weatherCancellation.stageCanceledTitle")
     : raceStatus === "all_stages_weather_cancelled"
-      ? "Race canceled due to weather"
-      : "Race partly canceled by weather";
+      ? t("weatherCancellation.raceCanceledTitle")
+      : t("weatherCancellation.partlyCanceledTitle");
 
   const reason = getPreparationWeatherCancellationReasonLabel(
     getPreparationStageWeatherCancellationReason(stage),
+    t,
   );
 
   const body = stageCanceled
-    ? `This stage was canceled by the race engine (${reason}). Stage Plans are locked because no result, points, prize money, fatigue or replay will be generated for this stage.`
+    ? t("weatherCancellation.stageCanceledBody", { reason })
     : raceStatus === "all_stages_weather_cancelled"
-      ? "This race was canceled due to weather. Race preparation is no longer needed for this race."
-      : "At least one stage in this race was canceled due to weather. Remaining uncanceled stages can continue normally.";
+      ? t("weatherCancellation.raceCanceledBody")
+      : t("weatherCancellation.partlyCanceledBody");
 
   return (
     <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900">
@@ -1154,6 +1165,7 @@ function WeatherCancellationRiskPreparationNotice({
 }: {
   stage: unknown;
 }) {
+  const { t } = useTranslation("racePreparation");
   if (isPreparationStageWeatherCanceled(stage)) return null;
 
   const riskReason = getPreparationStageWeatherRiskReason(stage);
@@ -1162,12 +1174,12 @@ function WeatherCancellationRiskPreparationNotice({
   return (
     <div className="mt-3 rounded-xl border border-orange-200 bg-orange-50 px-3 py-2 text-xs leading-5 text-orange-800">
       <div className="font-semibold">
-        Weather cancellation likely:{" "}
-        {getPreparationWeatherCancellationReasonLabel(riskReason)}
+        {t("weatherCancellation.likelyTitle", {
+          reason: getPreparationWeatherCancellationReasonLabel(riskReason, t),
+        })}
       </div>
       <div>
-        Current forecast is below the safety threshold. Final decision 24
-        in-game hours before start.
+        {t("weatherCancellation.likelyBody")}
       </div>
     </div>
   );
@@ -1569,6 +1581,79 @@ function getAcceptedRacePreparationState(
     racePlanEnabled: false,
     stagePlansEnabled: false,
   };
+}
+
+function getAcceptedRacePreparationStatusKey(label: string): string | null {
+  switch (label) {
+    case "Race canceled":
+      return "status.raceCanceled";
+    case "Not Participating":
+      return "status.notParticipating";
+    case "Race Finished":
+      return "status.raceFinished";
+    case "Race Active":
+      return "status.raceActive";
+    case "Stage Plans Open":
+      return "status.stagePlansOpen";
+    case "All Set":
+      return "status.allSet";
+    case "Rider Deadline Reached":
+      return "status.riderDeadlineReached";
+    case "Race Plan Open":
+      return "status.racePlanOpen";
+    case "Race Plan Not Open":
+      return "status.racePlanNotOpen";
+    case "Scheduled":
+      return "status.scheduled";
+    default:
+      return null;
+  }
+}
+
+function getRacePlanStatusKey(status?: string): string {
+  switch (status) {
+    case "weather_cancelled":
+    case "cancelled":
+      return "status.raceCanceled";
+    case "completed":
+    case "archived":
+      return "status.raceFinished";
+    case "missed_startlist":
+      return "status.notParticipating";
+    case "draft":
+    case "race_plan_open":
+      return "status.racePlanOpen";
+    case "submitted":
+      return "status.racePlanSubmitted";
+    case "locked":
+    case "sent_to_engine":
+      return "status.raceActive";
+    case "deadline_reached":
+      return "status.riderDeadlineReached";
+    case "not_created":
+    default:
+      return "status.racePlanNotOpen";
+  }
+}
+
+function getStageHeaderProfileTranslationKey(label: string): string {
+  switch (label) {
+    case "Team Time Trial":
+      return "stagePlans.teamTimeTrial";
+    case "Time Trial":
+      return "stagePlans.timeTrial";
+    case "Mountain":
+      return "stagePlans.mountain";
+    case "Hilly":
+      return "stagePlans.hilly";
+    case "Cobbles":
+      return "stagePlans.cobbles";
+    case "Sprint":
+      return "stagePlans.sprint";
+    case "Flat":
+    default:
+      return "stagePlans.flat";
+  }
 }
 
 export default function RacePreparationPage(): JSX.Element {
@@ -4046,17 +4131,18 @@ function AcceptedRacesTab({
   onPrepareRace: (raceId: UUID) => void;
   onOpenStages: (raceId: UUID) => void;
 }) {
+  const { t } = useTranslation("racePreparation");
+
   if (acceptedRaces.length === 0) {
-    return <EmptyCard message="No accepted races found for this club." />;
+    return <EmptyCard message={t("page.noAcceptedFound")} />;
   }
 
   return (
     <section className="rounded-2xl border bg-white p-5 shadow-sm">
       <div className="mb-4">
-        <h2 className="text-lg font-semibold text-slate-900">Accepted Races</h2>
+        <h2 className="text-lg font-semibold text-slate-900">{t("accepted.title")}</h2>
         <p className="mt-1 text-sm text-slate-600">
-          Confirmed participations. The status shows what can be done now for
-          Race Plan and Stage Plans.
+          {t("accepted.description")}
         </p>
       </div>
 
@@ -4085,20 +4171,20 @@ function AcceptedRacesTab({
                 "—",
             ) || "—";
 
-          const raceTypeLabel = row.stage_count > 1 ? "Stage Race" : "One Day";
+          const raceTypeLabel = row.stage_count > 1 ? t("status.stageRace") : t("status.oneDay");
 
           const startParts = parseDateParts(race.start_date);
           const endParts = parseDateParts(race.end_date);
 
           const startDay = startParts
             ? `${String(startParts.day).padStart(2, "0")} ${
-                monthLabels[startParts.month - 1]
+                t(`dates.shortMonths.${monthLabels[startParts.month - 1]}`)
               }`
             : "—";
 
           const endDay = endParts
             ? `${String(endParts.day).padStart(2, "0")} ${
-                monthLabels[endParts.month - 1]
+                t(`dates.shortMonths.${monthLabels[endParts.month - 1]}`)
               }`
             : "—";
 
@@ -4152,9 +4238,11 @@ function AcceptedRacesTab({
                               : "bg-slate-100 text-slate-700"
                         }`}
                       >
-                        {getWeatherCancellationDisplayStatusForPreparation(
-                          race,
-                        ) ?? titleFromSnake(raceWeatherStatus)}
+                        {raceAllWeatherCanceled
+                          ? t("status.raceCanceled")
+                          : racePartlyWeatherCanceled
+                            ? t("status.partlyCanceled")
+                            : titleFromSnake(raceWeatherStatus)}
                       </span>
                     ) : null}
 
@@ -4170,7 +4258,7 @@ function AcceptedRacesTab({
                   </div>
 
                   <div className="mt-1 truncate text-xs text-slate-500">
-                    {getRaceRouteLine(race, row.stage_count)}
+                    {getRaceRouteLine(race, row.stage_count, t)}
                   </div>
                 </button>
 
@@ -4178,17 +4266,19 @@ function AcceptedRacesTab({
                   {isMissedStartlist ? (
                     <span className="inline-flex items-center gap-2 whitespace-nowrap rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-800">
                       <span className="whitespace-nowrap">
-                        Your team missed the startlist and is not participating
+                        {t("accepted.missedStartlist")}
                       </span>
                       <span className="shrink-0 rounded-full bg-red-100 px-2.5 py-0.5">
-                        Not Participating
+                        {t("status.notParticipating")}
                       </span>
                     </span>
                   ) : (
                     <span
                       className={`rounded-full px-3 py-1 text-xs font-semibold ${prepState.className}`}
                     >
-                      {prepState.label}
+                      {getAcceptedRacePreparationStatusKey(prepState.label)
+                        ? t(getAcceptedRacePreparationStatusKey(prepState.label)!)
+                        : prepState.label}
                     </span>
                   )}
 
@@ -4198,9 +4288,9 @@ function AcceptedRacesTab({
                       disabled={actionLoading}
                       onClick={() => onPrepareRace(row.race_id)}
                       className="rounded-full bg-yellow-400 px-3 py-1 text-xs font-semibold text-slate-950 hover:bg-yellow-300 disabled:opacity-50"
-                      title="Open Race Plan"
+                      title={t("accepted.openRacePlan")}
                     >
-                      Race Plan
+                      {t("tabs.racePlan")}
                     </button>
                   ) : (
                     <button
@@ -4214,11 +4304,11 @@ function AcceptedRacesTab({
                       }`}
                       title={
                         prepState.stagePlansEnabled
-                          ? "Open Stage Plans"
-                          : "Stage Plans open after the Race Plan is submitted"
+                          ? t("accepted.openStagePlans")
+                          : t("accepted.stagePlansAfterSubmit")
                       }
                     >
-                      Stage Plans
+                      {t("tabs.stagePlans")}
                     </button>
                   )}
                 </div>
@@ -4323,13 +4413,14 @@ function StageHeaderMiniProfile({
   stage: JsonRecord;
   profileOverride: JsonRecord;
 }) {
+  const { t } = useTranslation("racePreparation");
   const profile = profileOverride;
   const points = normalizeProfilePoints(profile, stage);
 
   if (points.length < 2) {
     return (
       <div className="flex h-56 items-center justify-center rounded-xl border border-dashed border-slate-300 bg-slate-50 text-sm font-semibold text-slate-500">
-        Stage profile points are missing.
+        {t("header.profileMissing")}
       </div>
     );
   }
@@ -4401,7 +4492,7 @@ function StageHeaderMiniProfile({
         viewBox={`0 0 ${width} ${height}`}
         className="h-56 w-full"
         role="img"
-        aria-label="Stage profile preview"
+        aria-label={t("header.stageProfilePreview")}
       >
         <rect width={width} height={height} fill="#ffffff" />
 
@@ -4478,12 +4569,13 @@ function RaceHeaderStageChip({
   profileLoading: boolean;
   profileError: string | null;
 }) {
+  const { t } = useTranslation("racePreparation");
   const [hovered, setHovered] = useState(false);
 
   const stageNumber = String(stage.stage_number ?? index + 1);
   const kind = getStageHeaderProfileKind(stage);
-  const title = `Stage ${stageNumber}: ${getStageProfileLabel(stage)} · ${
-    getStageDistance(stage) || "Distance pending"
+  const title = `${t("stagePlans.stage", { stage: stageNumber })}: ${getStageProfileLabel(stage)} · ${
+    getStageDistance(stage) || t("header.distancePending")
   }`;
   const hasProfileChart = profile
     ? normalizeProfilePoints(profile, stage).length >= 2
@@ -4511,31 +4603,31 @@ function RaceHeaderStageChip({
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
               <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-                Stage {stageNumber}
+                {t("stagePlans.stage", { stage: stageNumber })}
               </div>
               <div className="mt-0.5 truncate text-sm font-semibold text-slate-950">
                 {getStageDisplayName(stage, stageNumber)}
               </div>
             </div>
             <span className="shrink-0 rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[10px] font-bold text-slate-700">
-              {kind.label}
+              {t(getStageHeaderProfileTranslationKey(kind.label))}
             </span>
           </div>
 
           <div className="mt-2 text-xs text-slate-600">
             <div className="truncate">
-              <span className="font-semibold text-slate-700">Route:</span>{" "}
+              <span className="font-semibold text-slate-700">{t("header.route")}</span>{" "}
               {getStageRoute(stage)}
             </div>
             <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1">
               <span>
-                <span className="font-semibold text-slate-700">Profile:</span>{" "}
+                <span className="font-semibold text-slate-700">{t("header.profile")}</span>{" "}
                 {profile?.profile_type
                   ? titleFromSnake(String(profile.profile_type))
                   : getStageProfileLabel(stage)}
               </span>
               <span>
-                <span className="font-semibold text-slate-700">Distance:</span>{" "}
+                <span className="font-semibold text-slate-700">{t("header.distance")}</span>{" "}
                 {profile?.distance_km
                   ? `${Number(profile.distance_km).toFixed(
                       Number(profile.distance_km) % 1 === 0 ? 0 : 1,
@@ -4548,15 +4640,15 @@ function RaceHeaderStageChip({
           <div className="mt-3">
             {profileLoading && !hasProfileChart ? (
               <div className="flex h-56 items-center justify-center rounded-xl border border-dashed border-slate-300 bg-slate-50 text-sm font-semibold text-slate-500">
-                Loading stage profile…
+                {t("header.loadingProfile")}
               </div>
             ) : hasProfileChart && profile ? (
               <StageHeaderMiniProfile stage={stage} profileOverride={profile} />
             ) : (
               <div className="flex h-56 items-center justify-center rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 text-center text-sm font-semibold text-slate-500">
                 {profileError
-                  ? "Stage profile could not be loaded."
-                  : "Stage profile data is not available yet."}
+                  ? t("header.profileLoadFailed")
+                  : t("header.profileUnavailable")}
               </div>
             )}
           </div>
@@ -4573,6 +4665,7 @@ function RaceHeaderStageStrip({
   stages: JsonRecord[];
   fallbackStageCount: number;
 }) {
+  const { t } = useTranslation("racePreparation");
   const visibleStages = stages.length > 0 ? stages : [];
   const fallbackCount = Math.max(0, Number(fallbackStageCount) || 0);
   const stageIds = useMemo(
@@ -4631,7 +4724,7 @@ function RaceHeaderStageStrip({
               error:
                 error instanceof Error
                   ? error.message
-                  : "Failed to load stage profile.",
+                  : t("header.profileLoadFailed"),
             },
           }));
         });
@@ -4648,7 +4741,7 @@ function RaceHeaderStageStrip({
     return (
       <div className="flex w-full items-center justify-end gap-2 overflow-visible text-xs">
         <span className="shrink-0 font-semibold uppercase tracking-wide text-slate-500">
-          Stages:
+          {t("header.stages")}:
         </span>
         <span className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-300 bg-white text-xs font-bold text-slate-800 shadow-sm">
           {fallbackCount}
@@ -4660,7 +4753,7 @@ function RaceHeaderStageStrip({
   return (
     <div className="flex w-full items-center justify-end gap-2 overflow-visible text-xs">
       <span className="shrink-0 font-semibold uppercase tracking-wide text-slate-500">
-        Stages:
+        {t("header.stages")}:
       </span>
 
       <div className="flex min-w-0 flex-nowrap items-center gap-1.5 overflow-visible">
@@ -4719,6 +4812,7 @@ function RaceHeaderCard({
   onParticipatingClubChange: (clubId: UUID) => void;
   onOpenRacePreview: (raceId: UUID) => void;
 }) {
+  const { t } = useTranslation("racePreparation");
   const raceId = getText(race, "id");
 
   const firstSquadOption =
@@ -4743,27 +4837,27 @@ function RaceHeaderCard({
       <div className="grid gap-4 lg:grid-cols-[minmax(280px,auto)_1fr_auto] lg:items-start">
         <div className="min-w-0">
           <div className="text-xs uppercase tracking-wide text-slate-500">
-            Selected race
+            {t("header.selectedRace")}
           </div>
 
           <div className="mt-1 flex items-center gap-2">
             <CountryFlag code={getText(race, "country_code")} />
             <h2 className="truncate text-xl font-semibold text-slate-900">
-              {getText(race, "name") || "Unnamed race"}
+              {getText(race, "name") || t("header.unnamedRace")}
             </h2>
           </div>
 
           <div className="mt-3 flex flex-wrap items-center gap-2">
             <InfoChip
-              label="Race dates"
+              label={t("header.raceDates")}
               value={formatGameDateRange(
                 getText(race, "start_date"),
                 getText(race, "end_date"),
               )}
             />
-            <InfoChip label="Class" value={raceClassCode || "—"} />
+            <InfoChip label={t("header.class")} value={raceClassCode || "—"} />
             <InfoChip
-              label="Riders"
+              label={t("header.riders")}
               value={`${minRiders || "—"}–${maxRiders || "—"}`}
             />
             {raceId && (
@@ -4772,7 +4866,7 @@ function RaceHeaderCard({
                 onClick={() => onOpenRacePreview(raceId)}
                 className="inline-flex h-[38px] items-center rounded-xl border border-blue-100 bg-blue-50 px-3 text-sm font-semibold text-blue-700 hover:bg-blue-100"
               >
-                Open Race Page
+                {t("header.openRacePage")}
               </button>
             )}
           </div>
@@ -4782,11 +4876,10 @@ function RaceHeaderCard({
           {raceStatus === "missed_startlist" ? (
             <div className="flex w-full max-w-3xl items-center justify-between gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-800">
               <span className="min-w-0 truncate">
-                Your team missed the rider startlist and is not participating in
-                this race.
+                {t("header.missedStartlist")}
               </span>
               <span className="shrink-0 rounded-full bg-red-100 px-3 py-1 text-xs font-bold text-red-800 ring-1 ring-red-200">
-                Not Participating
+                {t("status.notParticipating")}
               </span>
             </div>
           ) : (
@@ -4795,14 +4888,14 @@ function RaceHeaderCard({
                 raceStatus,
               )}`}
             >
-              {getRacePlanStatusLabel(raceStatus)}
+              {t(getRacePlanStatusKey(raceStatus))}
             </span>
           )}
         </div>
 
         <div className="flex flex-col items-end gap-2 text-right">
           <InfoChip
-            label="Current game date"
+            label={t("header.currentGameDate")}
             value={formatFullGameDate(currentGameDate)}
             alignRight
           />
@@ -4818,11 +4911,10 @@ function RaceHeaderCard({
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                Competing squad
+                {t("header.competingSquad")}
               </div>
               <div className="mt-1 text-sm text-slate-600">
-                Rider selection comes from this squad. Staff, assets, equipment,
-                supplies and finance remain shared by the club.
+                {t("header.competingSquadHelp")}
               </div>
             </div>
 
@@ -4861,11 +4953,11 @@ function RaceHeaderCard({
 
       <div className="mt-5 grid gap-3 md:grid-cols-3">
         <InfoBox
-          label="Race Plan opens"
+          label={t("header.racePlanOpens")}
           value={formatFullGameDate(packageOpensOn)}
         />
         <InfoBox
-          label="Rider deadline"
+          label={t("header.riderDeadline")}
           value={formatFullGameDate(riderDeadlineOn)}
         />
         <InfoBox label="Stages" value={String(stageCount)} />

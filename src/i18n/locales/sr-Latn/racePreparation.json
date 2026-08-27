@@ -25,7 +25,8 @@
     "stageRace": "Etapna trka",
     "oneDay": "Jednodnevna trka",
     "weatherCanceled": "Otkazano zbog vremena",
-    "partlyCanceled": "Delimično otkazano"
+    "partlyCanceled": "Delimično otkazano",
+    "racePlanSubmitted": "Race Plan je poslat"
   },
   "accepted": {
     "title": "Prihvaćene trke",
@@ -33,7 +34,10 @@
     "missedStartlist": "Vaš tim je propustio Startlist i ne učestvuje",
     "openRacePlan": "Otvori Race Plan",
     "openStagePlans": "Otvori Stage Plans",
-    "stagePlansAfterSubmit": "Stage Plans se otvaraju nakon slanja Race Plan-a"
+    "stagePlansAfterSubmit": "Stage Plans se otvaraju nakon slanja Race Plan-a",
+    "routePending": "Detalji rute još nisu dostupni",
+    "routeStages": "{{route}} · {{count}} etapa",
+    "routeOneDay": "{{route}} · Jednodnevna trka"
   },
   "header": {
     "openRacePage": "Otvori stranicu trke",
@@ -51,7 +55,13 @@
     "loadingProfile": "Učitavanje profila etape…",
     "profileLoadFailed": "Profil etape nije mogao biti učitan.",
     "profileUnavailable": "Podaci o profilu etape još nisu dostupni.",
-    "distancePending": "Dužina još nije dostupna"
+    "distancePending": "Dužina još nije dostupna",
+    "selectedRace": "Izabrana trka",
+    "unnamedRace": "Neimenovana trka",
+    "raceDates": "Datumi trke",
+    "class": "Klasa",
+    "riders": "Vozači",
+    "missedStartlist": "Vaš tim je propustio Startlist vozača i ne učestvuje u ovoj trci."
   },
   "racePlan": {
     "notOpen": "Race Plan još nije otvoren. Otvara se {{date}}.",
@@ -306,7 +316,8 @@
     "next": "Sledeće",
     "skipTutorial": "Preskoči tutorijal",
     "finishNow": "Završi za sada",
-    "close": "Zatvori"
+    "close": "Zatvori",
+    "unknownCountry": "Nepoznata zemlja"
   },
   "dates": {
     "shortMonths": {
@@ -323,5 +334,18 @@
       "Nov": "Nov",
       "Dec": "Dec"
     }
+  },
+  "weatherCancellation": {
+    "snow": "Sneg",
+    "temperatureBelow5": "Prosečna temperatura ispod 5°C",
+    "unsafe": "Nebezbedni vremenski uslovi",
+    "stageCanceledTitle": "Etapa je otkazana zbog vremena",
+    "raceCanceledTitle": "Trka je otkazana zbog vremena",
+    "partlyCanceledTitle": "Trka je delimično otkazana zbog vremena",
+    "stageCanceledBody": "Race Engine je otkazao ovu etapu ({{reason}}). Stage Plans su zaključani jer za ovu etapu neće biti rezultata, bodova, nagradnog fonda, umora niti replay-a.",
+    "raceCanceledBody": "Ova trka je otkazana zbog vremena. Priprema trke više nije potrebna.",
+    "partlyCanceledBody": "Najmanje jedna etapa ove trke otkazana je zbog vremena. Preostale neotkazane etape mogu se normalno nastaviti.",
+    "likelyTitle": "Moguće otkazivanje zbog vremena: {{reason}}",
+    "likelyBody": "Trenutna prognoza je ispod bezbednosnog praga. Konačna odluka se donosi 24 sata u igri pre starta."
   }
 }
