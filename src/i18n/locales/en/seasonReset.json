@@ -67,6 +67,19 @@
     "oceania": "No promotions to Continental Oceania.",
     "relegatedDynamic": "No teams relegated from {{division}}."
   },
+  "tiers": {
+    "world": "World",
+    "pro": "Pro",
+    "continental": "Continental",
+    "amateur": "Amateur"
+  },
+  "reasons": {
+    "promoted": "Promoted",
+    "relegated": "Relegated",
+    "directPromotion": "Direct promotion",
+    "playoffPromotion": "Playoff promotion",
+    "inactiveRemoved": "Inactive removed"
+  },
   "divisions": {
     "world": "World",
     "proWest": "Pro West",
@@ -75,6 +88,18 @@
     "continentalAmerica": "Continental America",
     "continentalAsia": "Continental Asia",
     "continentalAfrica": "Continental Africa",
-    "continentalOceania": "Continental Oceania"
+    "continentalOceania": "Continental Oceania",
+    "northAmerica": "North America",
+    "southAmerica": "South America",
+    "westernEurope": "Western Europe",
+    "centralEurope": "Central Europe",
+    "southernBalkanEurope": "Southern & Balkan Europe",
+    "northernEasternEurope": "Northern & Eastern Europe",
+    "westNorthAfrica": "West & North Africa",
+    "centralSouthAfrica": "Central & South Africa",
+    "westCentralAsia": "West & Central Asia",
+    "southAsia": "South Asia",
+    "eastSoutheastAsia": "East & Southeast Asia",
+    "oceania": "Oceania"
   }
 }
