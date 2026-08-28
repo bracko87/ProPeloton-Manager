@@ -321,6 +321,7 @@ type StaffAdvisoryOverviewRow = {
   advisor_loyalty: number | null;
   advisory_status: "no_staff" | "unassigned" | "active" | "paused" | "resumed" | "expired";
   advisory_expires_at: string | null;
+  remaining_game_seconds: number;
   advisor_notification_count?: number | null;
 };
 
@@ -329,7 +330,7 @@ type StaffAdvisoryQuoteRow = {
   staff_name: string;
   role_type: string;
   coin_price: number;
-  duration_real_days: number;
+  duration_game_months: number;
   current_expires_at: string | null;
   proposed_expires_at: string;
   is_renewal: boolean;
@@ -339,9 +340,10 @@ type StaffAdvisoryQuoteRow = {
 type StaffAdvisoryRoleRenewalQuoteRow = {
   role_type: StaffBriefingRole["roleType"];
   coin_price: number;
-  duration_real_days: number;
+  duration_game_months: number;
   entitlement_state: "active" | "paused";
-  remaining_paid_seconds: number;
+  remaining_paid_game_seconds: number;
+  proposed_remaining_paid_game_seconds: number;
   current_expires_at: string | null;
   proposed_expires_at: string;
   automatic_renewal: boolean;
@@ -3889,24 +3891,32 @@ function StaffBriefingCentre({
     };
   }, []);
 
-  const formatAdvisoryDate = React.useCallback((value: string | null) => {
-    if (!value) return "—";
-    const date = new Date(value);
-    if (Number.isNaN(date.getTime())) return value;
+const formatAdvisoryGameDate = React.useCallback((value: string | null) => {
+  if (!value) return "—";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
 
-    return new Intl.DateTimeFormat(undefined, {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-    }).format(date);
-  }, []);
+  const monthKeys = [
+    "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+  ] as const;
+  const monthKey = monthKeys[date.getUTCMonth()] ?? "Jan";
+  const season = date.getUTCFullYear() - 1999;
 
-const getAdvisoryDaysRemaining = React.useCallback((value: string | null) => {
-  if (!value) return 0;
-  const timestamp = Date.parse(value);
-  if (!Number.isFinite(timestamp)) return 0;
-  return Math.max(0, Math.ceil((timestamp - Date.now()) / 86_400_000));
-}, []);
+  if (season < 1) return value;
+
+  return t("staffBriefing.gameDate", {
+    season,
+    day: date.getUTCDate(),
+    month: t(`months.${monthKey}`),
+  });
+}, [t]);
+
+const getAdvisoryGameDaysRemaining = React.useCallback(
+  (seconds: number | null | undefined) =>
+    Math.max(0, Math.ceil(Number(seconds ?? 0) / 86_400)),
+  [],
+);
 
   const loadOverview = React.useCallback(async () => {
     if (!clubId) {
@@ -3920,7 +3930,7 @@ const getAdvisoryDaysRemaining = React.useCallback((value: string | null) => {
 
     try {
       const { data, error } = await supabase.rpc(
-        "staff_advisory_get_overview_v1",
+        "staff_advisory_get_overview_v2",
         { p_club_id: clubId },
       );
 
@@ -4007,7 +4017,7 @@ const getAdvisoryDaysRemaining = React.useCallback((value: string | null) => {
     setAssignError(null);
 
     try {
-      const { data, error } = await supabase.rpc("staff_advisory_quote_v1", {
+      const { data, error } = await supabase.rpc("staff_advisory_quote_v2", {
         p_club_id: clubId,
         p_staff_id: staffId,
       });
@@ -4137,7 +4147,7 @@ const getAdvisoryDaysRemaining = React.useCallback((value: string | null) => {
 
   try {
     const { data, error } = await supabase.rpc(
-      "staff_advisory_get_role_renewal_quote_v1",
+      "staff_advisory_get_role_renewal_quote_v2",
       {
         p_club_id: clubId,
         p_role_type: role.roleType,
@@ -4266,10 +4276,10 @@ async function confirmPausedRoleRenewal() {
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <div className="text-sm font-semibold text-slate-950">
-                      What do I get with an advisor?
+                      {t("staffBriefing.infoTitle")}
                     </div>
                     <p className="mt-1 text-[11px] leading-5 text-slate-500">
-                      Hiring staff and buying Staff Advisory are separate. Your employees continue their normal jobs without Staff Advisory. The 5-coin option adds proactive analysis and role-specific reports for 30 real-life days.
+                      {t("staffBriefing.infoIntro")}
                     </p>
                   </div>
                   <button
@@ -4284,19 +4294,19 @@ async function confirmPausedRoleRenewal() {
                 <div className="mt-3 max-h-[360px] overflow-y-auto pr-1">
                   <div className="rounded-xl bg-slate-50 p-3">
                     <div className="text-[11px] font-semibold text-slate-900">
-                      Without Staff Advisory
+                      {t("staffBriefing.withoutTitle")}
                     </div>
                     <p className="mt-1 text-[10px] leading-5 text-slate-600">
-                      You still receive all normal gameplay notifications and essential warnings: race and stage-plan deadlines, injuries and sickness, rider/staff contract expiry, race-supply shortages, sponsor and finance warnings, scouting-task completion, transfers, and other normal game events. Hired staff also continue performing their normal gameplay jobs.
+                      {t("staffBriefing.withoutText")}
                     </p>
                   </div>
 
                   <div className="mt-3 rounded-xl border border-slate-200 p-3">
                     <div className="text-[11px] font-semibold text-slate-900">
-                      With Staff Advisory — 5 coins / 30 real-life days
+                      {t("staffBriefing.withTitle")}
                     </div>
                     <p className="mt-1 text-[10px] leading-5 text-slate-600">
-                      The selected employee becomes your advisor for that role. Advisor access adds proactive analytical reports and advisor-only notifications. These reports interpret information you already have; they do not reveal hidden attributes, change race calculations, improve rider stats, or replace Free warnings.
+                      {t("staffBriefing.withText")}
                     </p>
                   </div>
 
@@ -4339,10 +4349,10 @@ async function confirmPausedRoleRenewal() {
 
                   <div className="mt-3 rounded-xl bg-amber-50 p-3">
                     <div className="text-[11px] font-semibold text-amber-900">
-                      What Staff Advisory never locks
+                      {t("staffBriefing.neverLocksTitle")}
                     </div>
                     <p className="mt-1 text-[10px] leading-5 text-amber-800">
-                      Essential warnings and normal game results remain available without Staff Advisory. Advisory is additional interpretation and planning support only.
+                      {t("staffBriefing.neverLocksText")}
                     </p>
                   </div>
                 </div>
@@ -4396,8 +4406,8 @@ async function confirmPausedRoleRenewal() {
             Boolean(row?.advisor_staff_id) &&
             (status === "active" || status === "resumed" || status === "expired");
           const isRunningAdvisory = status === "active" || status === "resumed";
-          const remainingDays = getAdvisoryDaysRemaining(
-            row?.advisory_expires_at ?? null,
+          const remainingDays = getAdvisoryGameDaysRemaining(
+            row?.remaining_game_seconds,
           );
 
           const advisorStatMap: Record<StaffBriefingSkillKey, number> = {
@@ -4590,7 +4600,7 @@ async function confirmPausedRoleRenewal() {
                       <div className="text-slate-500">
                         {isRunningAdvisory
                           ? t("staffBriefing.daysRemaining", { count: remainingDays })
-                          : `${t("staffBriefing.expiredAt")} ${formatAdvisoryDate(row?.advisory_expires_at ?? null)}`}
+                          : `${t("staffBriefing.expiredAt")} ${formatAdvisoryGameDate(row?.advisory_expires_at ?? null)}`}
                       </div>
                       {status === "resumed" ? (
                         <div className="mt-1 max-w-[150px] text-[9px] leading-3 text-emerald-700">
@@ -4678,8 +4688,8 @@ async function confirmPausedRoleRenewal() {
                 <div className="space-y-2">
                   {[
                     ["Price", `${quote.coin_price} coins`],
-                    ["Duration", `${quote.duration_real_days} real-life days`],
-                    ["New expiry", formatAdvisoryDate(quote.proposed_expires_at)],
+                    ["Duration", t("staffBriefing.gameMonths", { count: quote.duration_game_months })],
+                    ["New expiry", formatAdvisoryGameDate(quote.proposed_expires_at)],
                     ["Automatic renewal", "No"],
                     ["Coin balance", coinBalanceLoading ? "…" : String(coinBalance ?? 0)],
                   ].map(([label, value]) => (
@@ -4770,7 +4780,7 @@ async function confirmPausedRoleRenewal() {
             <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-3 py-3 text-sm leading-5 text-amber-900">
               {pausedRenewalQuote
                 ? t("staffBriefing.pausedRenewIntro", {
-                    days: pausedRenewalQuote.duration_real_days,
+                    months: pausedRenewalQuote.duration_game_months,
                     coins: pausedRenewalQuote.coin_price,
                   })
                 : t("staffBriefing.pausedRenewIntroGeneric")}
@@ -4788,18 +4798,17 @@ async function confirmPausedRoleRenewal() {
                     [
                       t("staffBriefing.remainingPaidTime"),
                       t("staffBriefing.paidDaysRemaining", {
-                        count: Math.max(0, Math.ceil(Number(pausedRenewalQuote.remaining_paid_seconds) / 86_400)),
+                        count: Math.max(0, Math.ceil(Number(pausedRenewalQuote.remaining_paid_game_seconds) / 86_400)),
                       }),
                     ],
-                    [t("staffBriefing.duration"), t("staffBriefing.realLifeDays", { count: pausedRenewalQuote.duration_real_days })],
+                    [t("staffBriefing.duration"), t("staffBriefing.gameMonths", { count: pausedRenewalQuote.duration_game_months })],
                     [
                       t("staffBriefing.paidTimeAfterRenewal"),
                       t("staffBriefing.paidDaysRemaining", {
                         count: Math.max(
                           0,
                           Math.ceil(
-                            (Number(pausedRenewalQuote.remaining_paid_seconds) +
-                              pausedRenewalQuote.duration_real_days * 86_400) /
+                            Number(pausedRenewalQuote.proposed_remaining_paid_game_seconds) /
                               86_400,
                           ),
                         ),
@@ -4855,7 +4864,7 @@ async function confirmPausedRoleRenewal() {
                   ? t("staffBriefing.renewing")
                   : pausedRenewalQuote
                     ? t("staffBriefing.confirmPausedRenewal", {
-                        days: pausedRenewalQuote.duration_real_days,
+                        months: pausedRenewalQuote.duration_game_months,
                         coins: pausedRenewalQuote.coin_price,
                       })
                     : t("staffBriefing.renew")}
