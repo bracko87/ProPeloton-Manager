@@ -24,14 +24,19 @@ jobs:
         run: |
           python - <<'PY'
           from pathlib import Path
+          import re
 
           path = Path('src/pages/MyProfile.tsx')
           text = path.read_text(encoding='utf-8')
 
-          active_old = '''              <span className="text-xl leading-none" aria-hidden="true">
-                {activeLanguageDefinition.flag}
-              </span>'''
-          active_new = '''              <img
+          active_pattern = re.compile(
+              r'<span className="text-xl leading-none" aria-hidden="true">\s*\{activeLanguageDefinition\.flag\}\s*</span>'
+          )
+          option_pattern = re.compile(
+              r'<span className="text-xl leading-none" aria-hidden="true">\s*\{language\.flag\}\s*</span>'
+          )
+
+          active_new = '''<img
                 src={activeLanguageDefinition.code === 'sr-Latn'
                   ? 'https://flagcdn.com/w40/rs.png'
                   : 'https://flagcdn.com/w40/gb.png'}
@@ -39,11 +44,7 @@ jobs:
                 aria-hidden="true"
                 className="h-4 w-6 shrink-0 rounded-[2px] object-cover"
               />'''
-
-          option_old = '''                      <span className="text-xl leading-none" aria-hidden="true">
-                        {language.flag}
-                      </span>'''
-          option_new = '''                      <img
+          option_new = '''<img
                         src={language.code === 'sr-Latn'
                           ? 'https://flagcdn.com/w40/rs.png'
                           : 'https://flagcdn.com/w40/gb.png'}
@@ -52,11 +53,10 @@ jobs:
                         className="h-4 w-6 shrink-0 rounded-[2px] object-cover"
                       />'''
 
-          if active_old not in text or option_old not in text:
-              raise SystemExit('Current MyProfile flag-rendering anchors were not found')
-
-          text = text.replace(active_old, active_new, 1)
-          text = text.replace(option_old, option_new, 1)
+          text, active_count = active_pattern.subn(active_new, text, count=1)
+          text, option_count = option_pattern.subn(option_new, text, count=1)
+          if active_count != 1 or option_count != 1:
+              raise SystemExit(f'Flag rendering replacement failed: active={active_count}, option={option_count}')
           path.write_text(text, encoding='utf-8')
 
           script_path = Path('.github/scripts/chatgpt_settings_pages_localization_20260828.py')
