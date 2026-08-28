@@ -51,7 +51,7 @@ jobs:
               ("        encoded = self.tokenizer(\n            values,\n", "        encoded = self.tokenizer(\n            [f'>>srp_Cyrl<< {value}' for value in values],\n"),
               ('                candidate = self.memory[source]\n', '                candidate = postprocess(self.memory[source])\n'),
               ("    for bad_word in ('jahač', 'rasni svet', 'zxq', 'zik'):\n", "    for bad_word in ('jahač', 'rasni svet', 'zxq'):\n"),
-              ("    value = re.sub(r' {2,}', ' ', value)\n", "    value = re.sub(r'\\bJahač', 'Vozač', value)\n    value = re.sub(r'\\bjahač', 'vozač', value)\n    value = re.sub(r' {2,}', ' ', value)\n"),
+              ("    value = re.sub(r' {2,}', ' ', value)\n", "    value = re.sub(r'\\bJahač', 'Vozač', value)\n    value = re.sub(r'\\bjahač', 'vozač', value)\n    value = re.sub(r'\\bInbox\\b', 'Sanduče', value)\n    value = re.sub(r'\\bFooter\\b', 'Podnožje', value)\n    value = value.replace('Customize Team', 'Prilagodi tim')\n    value = re.sub(r'\\bsponsor naming rights\\b', 'prava sponzora na ime', value, flags=re.IGNORECASE)\n    value = re.sub(r'\\bdisplay name\\b', 'prikazano ime', value, flags=re.IGNORECASE)\n    value = re.sub(r'\\brace engine\\b', 'Race Engine', value, flags=re.IGNORECASE)\n    value = re.sub(r'\\brostera\\b', 'sastava', value, flags=re.IGNORECASE)\n    value = re.sub(r'\\broster\\b', 'sastav', value, flags=re.IGNORECASE)\n    value = re.sub(r'\\bPrašanja\\b', 'Česta pitanja', value)\n    value = re.sub(r'\\bprašanja\\b', 'pitanja', value)\n    value = re.sub(r'\\bfinancij', 'finansij', value, flags=re.IGNORECASE)\n    value = re.sub(r'\\bzahtijeva\\b', 'zahteva', value, flags=re.IGNORECASE)\n    value = re.sub(r'\\bzahtjeva\\b', 'zahteva', value, flags=re.IGNORECASE)\n    value = re.sub(r'\\bvrijednost\\b', 'vrednost', value, flags=re.IGNORECASE)\n    value = re.sub(r'\\bvanjski\\b', 'spoljašnji', value, flags=re.IGNORECASE)\n    value = re.sub(r'\\bvanjske\\b', 'spoljašnje', value, flags=re.IGNORECASE)\n    value = value.replace('nivo objekta je prenisko', 'nivo objekta je prenizak')\n    value = value.replace('upotrebljenu/maksimalnog kapaciteta', 'iskorišćeni/maksimalni kapacitet')\n    value = value.replace('Unajmljivanje osoblja', 'Zapošljavanje osoblja')\n    value = value.replace('unajmljivanje osoblja', 'zapošljavanje osoblja')\n    value = re.sub(r' {2,}', ' ', value)\n"),
           ]
           for old, new in replacements:
               if old not in text:
@@ -114,13 +114,15 @@ jobs:
           assert len(sr['sections']) == 92
           assert set(en['sections']) == set(sr['sections'])
           text = json.dumps(sr, ensure_ascii=False)
+          en_text = json.dumps(en, ensure_ascii=False)
           lowered = text.lower()
           for marker in ['ZXQ','QXml','�','Ã','Â','æ','è','ð','jahač','rasni svet']:
               assert marker.lower() not in lowered, marker
           assert not re.search(r'\bZIK\d*\b', text), 'ZIK placeholder remained'
           assert not re.search(r'[\u0400-\u04ff]', text), 'Cyrillic remained in sr-Latn manual'
           for term in ['Race Plan','Stage Plans','Startlist','Race Engine','Coins']:
-              assert term in text, term
+              if term in en_text:
+                  assert term in text, f'Missing preserved game term: {term}'
           print('Manual quality validation passed for 92 sections.')
           PY
 
