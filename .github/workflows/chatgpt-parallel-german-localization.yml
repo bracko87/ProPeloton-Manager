@@ -8,6 +8,7 @@ on:
     paths:
       - '.github/scripts/localize_de_batch_20260828.py'
       - '.github/scripts/audit_de_locales_20260828.py'
+      - '.github/scripts/staff_course_options_de_20260828.py'
       - '.github/workflows/chatgpt-parallel-german-localization.yml'
 
 permissions:
@@ -58,7 +59,7 @@ jobs:
       - name: Prepare NLLB translator
         run: python .github/scripts/prepare_de_translation_quality_20260828.py
 
-      - name: Translate and validate batch
+      - name: Translate and precheck batch
         env:
           DE_TRANSLATION_FILES: ${{ matrix.group.files }}
           HF_HUB_DISABLE_XET: '1'
@@ -110,6 +111,14 @@ jobs:
           echo "Merged German files: $count"
           test "$count" -eq 31
           cp /tmp/de-merged/*.json src/i18n/locales/de/
+
+      - name: Save merged German review candidate
+        uses: actions/upload-artifact@v4
+        with:
+          name: de-review-candidate
+          path: /tmp/de-merged/*.json
+          if-no-files-found: error
+          retention-days: 1
 
       - name: Strict German semantic audit
         run: python .github/scripts/audit_de_locales_20260828.py
