@@ -1,0 +1,78 @@
+name: Localize full manual Serbian Latin 2026-08-28
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/chatgpt-localize-full-manual-sr-latn-20260828.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  localize:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install translation dependencies
+        env:
+          PIP_DISABLE_PIP_VERSION_CHECK: '1'
+        run: |
+          python -m pip install --quiet json5 sentencepiece sacremoses 'transformers==4.53.0'
+          python -m pip install --quiet torch --index-url https://download.pytorch.org/whl/cpu
+
+      - name: Generate manual English and Serbian resources
+        env:
+          HF_HUB_DISABLE_XET: '1'
+          TOKENIZERS_PARALLELISM: 'false'
+        run: python .github/scripts/localize_full_manual_sr_latn_20260828.py
+
+      - name: Install app dependencies
+        run: npm ci
+
+      - name: Production build
+        run: npm run build
+
+      - name: Verify complete manual localization
+        run: |
+          test -f src/i18n/locales/en/manual.json
+          test -f src/i18n/locales/sr-Latn/manual.json
+          grep -q "useTranslation('manual')" src/pages/dashboard/Manual.tsx
+          grep -q "manual: srManual" src/i18n/index.ts
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          en = json.loads(Path('src/i18n/locales/en/manual.json').read_text())
+          sr = json.loads(Path('src/i18n/locales/sr-Latn/manual.json').read_text())
+          assert len(en['sections']) == 92, len(en['sections'])
+          assert len(sr['sections']) == 92, len(sr['sections'])
+          assert set(en['sections']) == set(sr['sections'])
+          assert sr['ui']['title'] == 'ProPeloton Manager priručnik'
+          print('Verified 92 localized manual sections.')
+          PY
+
+      - name: Commit localized manual
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/pages/dashboard/Manual.tsx src/i18n/index.ts src/i18n/locales/en/manual.json src/i18n/locales/sr-Latn/manual.json
+          if git diff --cached --quiet; then
+            echo 'No product changes to commit.'
+            exit 0
+          fi
+          git commit -m 'Localize full game manual in Serbian Latin'
+          git push origin main
