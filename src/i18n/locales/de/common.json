@@ -2,7 +2,7 @@
   "language": {
     "label": "Sprache",
     "applicationLanguage": "Anwendungssprache",
-    "description": "Wählen Sie die Sprache, die Sie verwenden ProPeloton Manager.",
+    "description": "Wählen Sie die Sprache, die in ProPeloton Manager verwendet wird.",
     "english": "Englisch",
     "serbian": "Serbisch"
   },
@@ -17,16 +17,16 @@
   },
   "status": {
     "loading": "Wird geladen...",
-    "error": "Etwas ist schief gelaufen."
+    "error": "Etwas ist schiefgelaufen"
   },
   "forum": {
     "title": "Forum",
-    "movingTitle": "Die Gemeinschaft wird sich auf die Discord",
-    "movingText": "Wir werden kein In-Game-Forum auf dieser Seite haben. Alle Spielgespräche, Handbücher, Fragen und Community-Diskussionen werden in unserem Discord kanal.",
-    "joinHint": "Begleiten Sie unsere Discord Server mit dem Button unten.",
-    "community": "Discord Gemeinschaft",
-    "joinTitle": "Begleiten Sie unsere Discord Server",
-    "joinText": "Chatten Sie mit anderen Spielern, stellen Sie Fragen, erhalten Sie manuelle Hilfe und bleiben Sie auf dem Laufenden mit den neuesten Community-Updates.",
-    "join": "Mitmachen Discord"
+    "movingTitle": "Community-Diskussionen wechseln zu Discord",
+    "movingText": "Auf dieser Seite wird es kein Forum im Spiel geben. Alle Gespräche über das Spiel, Handbücher, Fragen und Community-Diskussionen finden Sie in unserem Discord-Kanal.",
+    "joinHint": "Treten Sie unserem Discord-Server über die Schaltfläche unten bei.",
+    "community": "Discord-Community",
+    "joinTitle": "Unserem Discord-Server beitreten",
+    "joinText": "Chatten Sie mit anderen Spielern, stellen Sie Fragen, erhalten Sie Hilfe zum Handbuch und bleiben Sie über die neuesten Community-Neuigkeiten auf dem Laufenden.",
+    "join": "Discord beitreten"
   }
 }
