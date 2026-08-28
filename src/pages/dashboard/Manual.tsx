@@ -14,6 +14,7 @@
  */
 
 import React, { useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router'
 
 type ManualLink = {
@@ -2592,6 +2593,94 @@ const manualSections: ManualSection[] = [
 
 const manualCategories = Array.from(new Set(manualSections.map(section => section.category)))
 
+
+function manualCategoryKey(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+}
+
+function localizeManualSection(section: ManualSection, t: any): ManualSection {
+  const base = `sections.${section.id}`
+  return {
+    ...section,
+    category: t(`${base}.category`, { defaultValue: section.category }),
+    title: t(`${base}.title`, { defaultValue: section.title }),
+    subtitle: t(`${base}.subtitle`, { defaultValue: section.subtitle }),
+    overview: t(`${base}.overview`, { defaultValue: section.overview }),
+    facts: section.facts?.map((fact, index) => ({
+      label: t(`${base}.facts.${index}.label`, { defaultValue: fact.label }),
+      value: t(`${base}.facts.${index}.value`, { defaultValue: fact.value }),
+    })),
+    details: section.details.map((detail, index) =>
+      t(`${base}.details.${index}`, { defaultValue: detail }),
+    ),
+    tips: section.tips?.map((tip, index) =>
+      t(`${base}.tips.${index}`, { defaultValue: tip }),
+    ),
+    relatedLinks: section.relatedLinks?.map((link, index) => ({
+      ...link,
+      label: t(`${base}.relatedLinks.${index}`, { defaultValue: link.label }),
+    })),
+  }
+}
+
+const manualSectionById = new Map(manualSections.map(section => [section.id, section]))
+
+function getLocalizedSectionGuideParagraphs(
+  section: ManualSection,
+  sourceCategory: string,
+  t: any,
+): string[] {
+  const facts = section.facts ?? []
+  const factText = facts.map(fact => `${fact.label}: ${fact.value}`).join('; ')
+  const key = manualCategoryKey(sourceCategory)
+  const intro = t(`guide.categoryIntro.${key}`, { title: section.title })
+  const factParagraph = factText
+    ? t('guide.factParagraph', { factText })
+    : t('guide.noFactParagraph')
+  const mistakeKey = [
+    'equipment',
+    'finance',
+    'calendar-and-races',
+    'race-preparation',
+    'transfers',
+    'transfers-and-scouting',
+    'training',
+    'infrastructure',
+  ].includes(key) ? key : 'default'
+  return [intro, factParagraph, t(`guide.commonMistake.${mistakeKey}`)]
+}
+
+function getLocalizedExpandedDetailExplanation(
+  section: ManualSection,
+  sourceDetail: string,
+  t: any,
+): string {
+  const d = sourceDetail.toLowerCase()
+  let key = 'default'
+
+  if (d.includes('sold') || d.includes('discarded')) key = 'soldDiscarded'
+  else if (d.includes('ready') && d.includes('worn')) key = 'readyWorn'
+  else if (d.includes('assigned')) key = 'assigned'
+  else if (d.includes('repair quote') || d.includes('quote')) key = 'quote'
+  else if (d.includes('condition')) key = 'condition'
+  else if (d.includes('bidons') || d.includes('gels') || d.includes('nutrition')) key = 'nutrition'
+  else if (d.includes('jersey') || d.includes('rain jackets') || d.includes('rain jacket')) key = 'durableSupplies'
+  else if (d.includes('sponsor') || d.includes('objectives')) key = 'sponsor'
+  else if (d.includes('tax')) key = 'tax'
+  else if (d.includes('deadline') || d.includes('window')) key = 'deadline'
+  else if (d.includes('training') || d.includes('fatigue')) key = 'training'
+  else if (d.includes('scout') || d.includes('scouting')) key = 'scouting'
+  else if (d.includes('cash') || d.includes('cost') || d.includes('salary') || d.includes('balance')) key = 'finance'
+  else if (d.includes('role') || d.includes('skills') || d.includes('overall')) key = 'roleSkills'
+  else if (d.includes('replay') || d.includes('results') || d.includes('classification')) key = 'results'
+
+  return t(`guide.detail.${key}`, { title: section.title })
+}
+
+
 function normalizeText(value: string): string {
   return value.trim().toLowerCase()
 }
@@ -2734,19 +2823,19 @@ function getExpandedDetailExplanation(section: ManualSection, detail: string): s
 }
 
 export default function ManualPage(): JSX.Element {
+  const { t, i18n } = useTranslation('manual')
   const [query, setQuery] = useState('')
   const [category, setCategory] = useState('all')
   const [openSectionIds, setOpenSectionIds] = useState<Set<string>>(() => new Set())
 
   const filteredSections = useMemo(() => {
-    return manualSections.filter(section => {
-      const matchesCategory = category === 'all' || section.category === category
-      const matchesQuery = sectionMatchesQuery(section, query)
-      return matchesCategory && matchesQuery
-    })
-  }, [category, query])
+    return manualSections
+      .filter(section => category === 'all' || section.category === category)
+      .map(section => localizeManualSection(section, t))
+      .filter(section => sectionMatchesQuery(section, query))
+  }, [category, query, t, i18n.language])
 
-  const visibleCountLabel = filteredSections.length === 1 ? '1 section' : `${filteredSections.length} sections`
+  const visibleCountLabel = t('ui.visibleCount', { count: filteredSections.length })
 
   function toggleSection(sectionId: string): void {
     setOpenSectionIds(current => {
@@ -2784,30 +2873,25 @@ export default function ManualPage(): JSX.Element {
   return (
     <div className="w-full space-y-6">
       <section className="rounded-xl border border-slate-200 bg-gradient-to-r from-slate-950 to-slate-800 p-6 text-white shadow-sm">
-        <p className="text-xs uppercase tracking-[0.2em] text-yellow-300">Manual</p>
+        <p className="text-xs uppercase tracking-[0.2em] text-yellow-300">{t('ui.eyebrow')}</p>
 
         <h1 className="mt-2 text-2xl font-semibold md:text-3xl">
-          ProPeloton Manager Manual
+          {t('ui.title')}
         </h1>
 
         <p className="mt-3 max-w-5xl text-sm leading-relaxed text-slate-100 md:text-base">
-          This expanded manual is a deep player reference for ProPeloton Manager. It covers
-          account pages, coins, referrals, club identity, dashboard navigation, notifications,
-          riders, staff, training, camps, equipment, infrastructure, calendar, race detail,
-          race preparation, replay, rankings, statistics, transfers, scouting, finance,
-          sponsors, taxes, policies, liquidation and FAQ topics. Sections are closed by
-          default, so open only the topic you need.
+          {t('ui.description')}
         </p>
 
         <div className="mt-4 flex flex-wrap gap-2 text-xs text-slate-200">
           <span className="rounded-full border border-white/20 bg-white/10 px-3 py-1">
-            {manualSections.length} sections
+            {t('ui.sectionCount', { count: manualSections.length })}
           </span>
           <span className="rounded-full border border-white/20 bg-white/10 px-3 py-1">
-            {manualCategories.length} categories
+            {t('ui.categoryCount', { count: manualCategories.length })}
           </span>
           <span className="rounded-full border border-white/20 bg-white/10 px-3 py-1">
-            All sections closed by default
+            {t('ui.closedByDefault')}
           </span>
         </div>
 
@@ -2816,7 +2900,7 @@ export default function ManualPage(): JSX.Element {
             to="/dashboard/help"
             className="rounded-md bg-white px-4 py-2 font-medium text-slate-900 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-white"
           >
-            Back to Help
+            {t('ui.backToHelp')}
           </Link>
 
           <button
@@ -2824,7 +2908,7 @@ export default function ManualPage(): JSX.Element {
             onClick={handlePrint}
             className="rounded-md border border-white/50 px-4 py-2 font-medium text-white hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-white"
           >
-            Print / Save as PDF
+            {t('ui.printPdf')}
           </button>
 
           <a
@@ -2833,45 +2917,41 @@ export default function ManualPage(): JSX.Element {
             rel="noreferrer"
             className="rounded-md border border-white/50 px-4 py-2 font-medium text-white hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-white"
           >
-            Ask on Discord
+            {t('ui.askDiscord')}
           </a>
         </div>
       </section>
 
       <section className="rounded-xl border border-yellow-200 bg-yellow-50 p-5 shadow-sm">
-        <h2 className="text-lg font-semibold text-slate-900">Start here</h2>
+        <h2 className="text-lg font-semibold text-slate-900">{t('ui.startHereTitle')}</h2>
         <p className="mt-2 text-sm leading-relaxed text-slate-700">
-          New managers should first read <strong>Quick Start</strong>, <strong>Game Time</strong>,{' '}
-          <strong>Overview</strong>, <strong>Squad</strong>, <strong>Training</strong>,{' '}
-          <strong>Race Preparation</strong> and <strong>Finance</strong>. Experienced managers can use
-          search for specific topics like sponsor naming rights, race supplies, playoffs,
-          tax audits, emergency rescues or developing-team movement windows.
+          {t('ui.startHereDescription')}
         </p>
       </section>
 
       <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
         <div className="grid gap-3 lg:grid-cols-[1.3fr_0.7fr_auto] lg:items-end">
           <label className="block">
-            <span className="text-sm font-medium text-slate-700">Search manual</span>
+            <span className="text-sm font-medium text-slate-700">{t('ui.searchLabel')}</span>
             <input
               value={query}
               onChange={event => setQuery(event.target.value)}
-              placeholder="Search coins, sponsors, race preparation, tax, equipment..."
+              placeholder={t('ui.searchPlaceholder')}
               className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-yellow-400 focus:outline-none focus:ring-2 focus:ring-yellow-200"
             />
           </label>
 
           <label className="block">
-            <span className="text-sm font-medium text-slate-700">Category</span>
+            <span className="text-sm font-medium text-slate-700">{t('ui.categoryLabel')}</span>
             <select
               value={category}
               onChange={event => setCategory(event.target.value)}
               className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-yellow-400 focus:outline-none focus:ring-2 focus:ring-yellow-200"
             >
-              <option value="all">All categories</option>
+              <option value="all">{t('ui.allCategories')}</option>
               {manualCategories.map(categoryName => (
                 <option key={categoryName} value={categoryName}>
-                  {categoryName}
+                  {t(`categories.${manualCategoryKey(categoryName)}`, { defaultValue: categoryName })}
                 </option>
               ))}
             </select>
@@ -2883,7 +2963,7 @@ export default function ManualPage(): JSX.Element {
               onClick={openVisibleSections}
               className="rounded-md bg-slate-900 px-3 py-2 text-sm font-medium text-white hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-yellow-400"
             >
-              Open visible
+              {t('ui.openVisible')}
             </button>
 
             <button
@@ -2891,20 +2971,20 @@ export default function ManualPage(): JSX.Element {
               onClick={closeAllSections}
               className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-yellow-400"
             >
-              Close all
+              {t('ui.closeAll')}
             </button>
           </div>
         </div>
 
-        <div className="mt-3 text-sm text-slate-500">Showing {visibleCountLabel}.</div>
+        <div className="mt-3 text-sm text-slate-500">{visibleCountLabel}</div>
       </section>
 
       <section className="space-y-3">
         {filteredSections.length === 0 ? (
           <div className="rounded-xl border border-dashed border-slate-300 bg-white p-8 text-center shadow-sm">
-            <h2 className="text-base font-semibold text-slate-900">No manual sections found</h2>
+            <h2 className="text-base font-semibold text-slate-900">{t('ui.noSectionsTitle')}</h2>
             <p className="mt-2 text-sm text-slate-500">
-              Try a different search term or switch category back to all.
+              {t('ui.noSectionsDescription')}
             </p>
           </div>
         ) : (
@@ -2935,14 +3015,14 @@ export default function ManualPage(): JSX.Element {
                   </span>
 
                   <span className="shrink-0 rounded-full border border-slate-300 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-600">
-                    {isOpen ? 'Close' : 'Open'}
+                    {isOpen ? t('ui.close') : t('ui.open')}
                   </span>
                 </button>
 
                 {isOpen ? (
                   <div className="border-t border-slate-100 px-5 py-5">
                     <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-                      <h3 className="text-sm font-semibold text-slate-900">Summary</h3>
+                      <h3 className="text-sm font-semibold text-slate-900">{t('ui.summary')}</h3>
                       <p className="mt-2 text-sm leading-relaxed text-slate-700">
                         {section.overview}
                       </p>
@@ -2967,9 +3047,13 @@ export default function ManualPage(): JSX.Element {
                     ) : null}
 
                     <div className="mt-5 rounded-xl border border-blue-100 bg-blue-50 p-4">
-                      <h3 className="text-sm font-semibold text-slate-900">Detailed explanation</h3>
+                      <h3 className="text-sm font-semibold text-slate-900">{t('ui.detailedExplanation')}</h3>
                       <div className="mt-3 space-y-3 text-sm leading-7 text-slate-700">
-                        {getSectionGuideParagraphs(section).map(paragraph => (
+                        {getLocalizedSectionGuideParagraphs(
+                          section,
+                          manualSectionById.get(section.id)?.category ?? section.category,
+                          t,
+                        ).map(paragraph => (
                           <p key={paragraph}>{paragraph}</p>
                         ))}
                       </div>
@@ -2982,11 +3066,15 @@ export default function ManualPage(): JSX.Element {
                           className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
                         >
                           <div className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-                            Rule {index + 1}
+                            {t('ui.rule', { count: index + 1 })}
                           </div>
                           <p className="mt-2 font-semibold text-slate-900">{paragraph}</p>
                           <p className="mt-2 text-slate-700">
-                            {getExpandedDetailExplanation(section, paragraph)}
+                            {getLocalizedExpandedDetailExplanation(
+                              section,
+                              manualSectionById.get(section.id)?.details[index] ?? paragraph,
+                              t,
+                            )}
                           </p>
                         </div>
                       ))}
@@ -2994,7 +3082,7 @@ export default function ManualPage(): JSX.Element {
 
                     {section.tips && section.tips.length > 0 ? (
                       <div className="mt-5 rounded-xl border border-yellow-200 bg-yellow-50 p-4">
-                        <h3 className="text-sm font-semibold text-slate-900">Practical tips</h3>
+                        <h3 className="text-sm font-semibold text-slate-900">{t('ui.practicalTips')}</h3>
                         <ul className="mt-2 list-disc space-y-1 pl-5 text-sm leading-relaxed text-slate-700">
                           {section.tips.map(tip => (
                             <li key={tip}>{tip}</li>
@@ -3025,12 +3113,9 @@ export default function ManualPage(): JSX.Element {
       </section>
 
       <section className="rounded-xl border border-slate-200 bg-slate-900 p-5 text-white shadow-sm">
-        <h2 className="text-lg font-semibold">Manual maintenance note</h2>
+        <h2 className="text-lg font-semibold">{t('ui.maintenanceTitle')}</h2>
         <p className="mt-2 max-w-5xl text-sm leading-relaxed text-slate-200">
-          This manual is a deep first version based on the current pages and systems.
-          Exact values that are loaded from the database, such as live coin package prices,
-          some policy option costs, camp quotes, sponsor offer values and infrastructure costs,
-          should always be trusted from the live page if the backend config changes.
+          {t('ui.maintenanceDescription')}
         </p>
 
         <div className="mt-4 flex flex-wrap gap-3 text-sm">
@@ -3038,7 +3123,7 @@ export default function ManualPage(): JSX.Element {
             to="/dashboard/contact-us"
             className="rounded-md bg-white px-4 py-2 font-medium text-slate-900 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-white"
           >
-            Contact Us
+            {t('ui.contactUs')}
           </Link>
 
           <a
@@ -3047,7 +3132,7 @@ export default function ManualPage(): JSX.Element {
             rel="noreferrer"
             className="rounded-md border border-white/50 px-4 py-2 font-medium text-white hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-white"
           >
-            Ask on Discord
+            {t('ui.askDiscord')}
           </a>
         </div>
       </section>

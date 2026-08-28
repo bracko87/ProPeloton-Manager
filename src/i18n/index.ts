@@ -14,6 +14,7 @@ import enDevelopingTeam from './locales/en/developingTeam.json'
 import enEquipment from './locales/en/equipment.json'
 import enFinance from './locales/en/finance.json'
 import enHelp from './locales/en/help.json'
+import enManual from './locales/en/manual.json'
 import enHome from './locales/en/home.json'
 import enInfrastructure from './locales/en/infrastructure.json'
 import enNavigation from './locales/en/navigation.json'
@@ -51,6 +52,7 @@ import srDevelopingTeam from './locales/sr-Latn/developingTeam.json'
 import srEquipment from './locales/sr-Latn/equipment.json'
 import srFinance from './locales/sr-Latn/finance.json'
 import srHelp from './locales/sr-Latn/help.json'
+import srManual from './locales/sr-Latn/manual.json'
 import srHome from './locales/sr-Latn/home.json'
 import srInfrastructure from './locales/sr-Latn/infrastructure.json'
 import srNavigation from './locales/sr-Latn/navigation.json'
@@ -99,6 +101,7 @@ const resources = {
     equipment: enEquipment,
     finance: enFinance,
     help: enHelp,
+    manual: enManual,
     home: enHome,
     infrastructure: enInfrastructure,
     navigation: enNavigation,
@@ -137,6 +140,7 @@ const resources = {
     equipment: srEquipment,
     finance: srFinance,
     help: srHelp,
+    manual: srManual,
     home: srHome,
     infrastructure: srInfrastructure,
     navigation: srNavigation,
@@ -187,6 +191,7 @@ void i18n
       'equipment',
       'finance',
       'help',
+      'manual',
       'home',
       'infrastructure',
       'navigation',
