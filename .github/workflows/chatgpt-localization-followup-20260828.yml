@@ -9,7 +9,7 @@ on:
 permissions:
   contents: write
 
-# Retry marker: assertions and generic asset modal fixed.
+# Retry marker: modal assertion is now scoped to AssetAcquireModal.
 jobs:
   apply:
     runs-on: ubuntu-latest
