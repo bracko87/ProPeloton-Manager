@@ -4,7 +4,8 @@
     "noThanks": "No thanks",
     "next": "Next",
     "finishForNow": "Finish for now",
-    "closeTutorial": "Close tutorial"
+    "closeTutorial": "Close tutorial",
+    "continue": "Continue"
   },
   "overview": {
     "welcome": {
@@ -12,6 +13,11 @@
       "body": "Welcome to the game. This tutorial can help you understand the main pages and the most important systems step by step.\n\nYou can start the tutorial now, or skip it and use the game manual later.",
       "primary": "Start tutorial",
       "secondary": "No thanks"
+    },
+    "skipped": {
+      "title": "No problem!",
+      "body": "You can always find help later through the Help section, the game manual, or our Discord community.\n\nGood luck and enjoy your first season!",
+      "primary": "Continue"
     },
     "welcomeGame": {
       "title": "Welcome to ProPeloton Manager",
@@ -101,6 +107,240 @@
       "title": "Staff and Next Page",
       "body": "The Staff button shows the staff members working for your club and the current limits of your staff setup.\n\nStaff members have their own skills and can be sent on courses. Staff limits can also be improved by upgrading your infrastructure.\n\nAfter Squad, the next recommended page is Training, where you can set regular training and plan training camps for your riders.",
       "primary": "Continue to Training",
+      "secondary": "Finish for now"
+    }
+  },
+  "training": {
+    "welcome": {
+      "title": "Need help with Training?",
+      "body": "We can show you how regular training and training camps work, and how they affect rider development, fatigue, and race preparation.",
+      "primary": "Start tutorial",
+      "secondary": "No thanks"
+    },
+    "regular": {
+      "title": "Regular Training",
+      "body": "This is the Training page.\n\nIn Regular Training, you can control what your riders train when they are not assigned to another activity such as a race or training camp.\n\nYou can set team default training for the First Team and Developing Team, and you can also adjust training for individual riders. Each rider can train a specific focus such as sprint, climbing, flat, time trial, endurance, resistance, race IQ, teamwork, or recovery.\n\nTraining intensity matters. Harder training can improve riders faster, but it can also make them more tired before upcoming races. You can also choose Day Off when a rider needs rest and fatigue recovery.",
+      "primary": "Next"
+    },
+    "camps": {
+      "title": "Training Camps",
+      "body": "Training Camps are special blocks of training where you send selected riders away for several days.\n\nA training camp can give stronger skill development than regular daily training, but it costs much more. You choose the camp type, location, dates, duration, riders, and available staff.\n\nStaff can improve the effect of the camp or help protect riders better, depending on their skills and availability. Before booking, you can review the cost, weather risk, selected riders, selected staff, and validation warnings.\n\nAfter Training, the next recommended page is Equipment.",
+      "primary": "Continue to Equipment",
+      "secondary": "Finish for now"
+    }
+  },
+  "equipment": {
+    "welcome": {
+      "title": "Need help with Equipment?",
+      "body": "We can show you how Equipment works, including race setups, inventory, market purchases, and race supplies.",
+      "primary": "Start tutorial",
+      "secondary": "No thanks"
+    },
+    "overview": {
+      "title": "Equipment Overview",
+      "body": "This is the Equipment page.\n\nThe Overview tab gives you a summary of your team equipment and your race setup configurations.\n\nThe Default Race Setup is the setup used when you do not choose a specific setup for a race. Below that, you can create different race setup configurations that can later be selected in Race Preparation.\n\nEach setup can bring different bonuses to your riders, depending on the equipment inside it and how many usable items are available.",
+      "primary": "Next"
+    },
+    "inventory": {
+      "title": "Inventory",
+      "body": "The Inventory tab shows all equipment your team currently owns.\n\nHere you can see items such as bikes, wheels, tires, and other equipment you purchased. You can check quality, condition, value, bonuses, and availability.\n\nIf you no longer need some equipment, you can sell it from your inventory.",
+      "primary": "Next"
+    },
+    "market": {
+      "title": "Equipment Market",
+      "body": "The Market tab is where you buy new equipment.\n\nEach item has a price and can bring different bonuses. Better equipment can improve race performance, but it also costs more.\n\nWhen you purchase equipment, it is sent to your Inventory and can later be used in race setups.",
+      "primary": "Next"
+    },
+    "raceSupplies": {
+      "title": "Race Supplies",
+      "body": "The Race Supplies tab shows consumable supplies your team can use for races.\n\nSome supplies can be used only once, while others may be used multiple times. Supplies can help protect riders from difficult race conditions.\n\nWithout the right race supplies, riders may receive negative effects in very hot, cold, or demanding weather conditions.\n\nAfter Equipment, the next recommended page is Infrastructure.",
+      "primary": "Continue to Infrastructure",
+      "secondary": "Finish for now"
+    }
+  },
+  "facilities": {
+    "welcome": {
+      "title": "Need help with Infrastructure?",
+      "body": "We can show you how facilities and team assets work, including upgrades, staff limits, vehicles, bonuses, and construction projects.",
+      "primary": "Start tutorial",
+      "secondary": "No thanks"
+    },
+    "buildings": {
+      "title": "Facilities",
+      "body": "This is the Infrastructure page.\n\nThe Facilities tab shows the buildings your club can own and upgrade. Every team starts with a basic Level 1 Clubhouse.\n\nLater, you can build and upgrade important facilities such as the Training Center, Medical Center, Youth Academy, Mechanics Workshop, and Scouting Office.\n\nFacilities are important because they improve your club and can also define how many staff members you are allowed to have.",
+      "primary": "Next"
+    },
+    "projects": {
+      "title": "Builds, Upgrades and Refunds",
+      "body": "When you open the details for a facility, you can see what the next level costs, how long construction takes, and what bonuses or unlocks it will bring.\n\nYou can start a build or upgrade project when your club has enough money and available project capacity.\n\nYou can also cancel an infrastructure project. If you cancel immediately, you receive a full refund. If you cancel later, the refund can be smaller.",
+      "primary": "Next"
+    },
+    "assets": {
+      "title": "Team Assets",
+      "body": "The Assets tab shows vehicles and support assets your team can use.\n\nThis includes team cars, team buses, equipment vans, mobile workshops, and medical vans. These assets can support your team during races, travel, preparation, and training camps.\n\nEach asset can have different levels, costs, condition, bonuses, and limits. Open the details for each asset to understand what it brings and how it can help your team perform better.\n\nTo use this page fully, some advanced functions, management options, or extended tools may require a Premium account or coin purchase.",
+      "primary": "Continue to Calendar",
+      "secondary": "Finish for now"
+    }
+  },
+  "calendar": {
+    "welcome": {
+      "title": "Need help with the Calendar?",
+      "body": "We can show you how the Calendar works, including daily team activities, race months, sponsor race goals, and race profile pages.",
+      "primary": "Start tutorial",
+      "secondary": "No thanks"
+    },
+    "season": {
+      "title": "Season Calendar",
+      "body": "This is the Season Calendar.\n\nIt gives you an overview of your team’s daily activities. For each day, you can see what is happening with your club, including races, training camps, events, holidays, and other important activities.\n\nUse this view when you want to understand your team schedule day by day.",
+      "primary": "Next"
+    },
+    "races": {
+      "title": "Race Calendar",
+      "body": "This is the Race Calendar.\n\nHere you can see all races in the season. Races can be one-day races or multi-day stage races. Each race shows useful information such as date, race status, race category, race type, team limits, and application status.\n\nRaces are divided by month, so each month has its own list of available races.",
+      "primary": "Next"
+    },
+    "openRace": {
+      "title": "Open a Race Profile",
+      "body": "Some races may show a sponsor goal marker. This means the race is connected to a sponsor bonus objective, such as participating or achieving a specific result.\n\nUse the Open Race button when you want to see more details about a race or apply for it.\n\nNext, we will open one race profile so you can see what information is available there.",
+      "primary": "Open Race Profile",
+      "secondary": "Finish for now"
+    }
+  },
+  "raceDetail": {
+    "overview": {
+      "title": "Race Profile",
+      "body": "This is the Race Profile page.\n\nHere you can see the most important race information: how many teams can participate, the prize fund, when applications close, when participating teams are announced, and how many riders each team can bring.\n\nFor stage races, you can also see how many stages are included.",
+      "primary": "Next"
+    },
+    "stagesResults": {
+      "title": "Stages, Results and Replay",
+      "body": "The race profile also shows detailed stage information.\n\nYou can review stage profiles, route maps, terrain split, stage weather, sprint points, mountain points, and other stage details. Weather is only published close to the race, so it may appear later.\n\nFurther down, Race Information shows participating teams and riders before the race, and results after the race. If your team participates and the race is active or finished, you can use Watch Race or Watch Replay to follow the action on the map.",
+      "primary": "Continue to Race Preparation",
+      "secondary": "Finish for now"
+    }
+  },
+  "racePreparation": {
+    "welcome": {
+      "title": "Need help with Race Preparation?",
+      "body": "We can show you how Accepted Races, Race Plans, and Stage Plans work. This is one of the most important pages during the season.",
+      "primary": "Start tutorial",
+      "secondary": "No thanks"
+    },
+    "acceptedRaces": {
+      "title": "Accepted Races",
+      "body": "This is the Race Preparation page.\n\nThe Accepted Races tab shows races where your team has been accepted to participate.\n\nHere you can see the most important race information, but also your team’s preparation status. For example, you may see Race Plan Open, Stage Plans Open, Rider Deadline Reached, Race Active, Race Finished, or All Set.\n\nWhen your team is accepted to a race, you should come here to prepare your riders, staff, assets, equipment, supplies, and tactics. This is one of the pages you will visit most often during the season.",
+      "primary": "Next"
+    },
+    "racePlan": {
+      "title": "Race Plan",
+      "body": "The Race Plan tab is where you prepare your team for an accepted race.\n\nImportant: game time moves faster than real life. One in-game day is 12 hours in real-life time. This means two in-game days equal one real-life day. Keep this in mind when checking race plan windows, rider deadlines, and stage plan deadlines.\n\nWhen the Race Plan window is open, you can choose whether your First Team or Developing Team will race, if you have a Developing Team available.\n\nYou must also check the rider submission deadline. Until that date, you can choose the riders who will participate. The page shows the minimum and maximum number of riders allowed for the race.\n\nThe rider list shows who can be selected and who is blocked because they are already assigned to another overlapping race. You can also assign race staff and race assets if they are available.\n\nThe cost preview updates while you build the plan, so you can see how much the race will cost. On the right side, the bonus preview shows possible support bonuses from staff, assets, equipment, and team policies.",
+      "primary": "Next"
+    },
+    "stagePlans": {
+      "title": "Stage Plans",
+      "body": "The Stage Plans tab opens after the Race Plan has been submitted.\n\nHere you prepare the tactics for each stage. You can define rider roles, equipment, supplies, team tactics, and individual tactics for every stage.\n\nStage Plans are important because different stages need different plans. A flat sprint stage, mountain stage, time trial, or hilly stage may all require different riders, tactics, and support.\n\nAfter Race Preparation, the next recommended page is Team Ranking.",
+      "primary": "Continue to Team Ranking",
+      "secondary": "Finish for now"
+    }
+  },
+  "teamRanking": {
+    "welcome": {
+      "title": "Need help with Team Ranking?",
+      "body": "We can show you how team rankings, competition tiers, international points, promotion, and relegation work.",
+      "primary": "Start tutorial",
+      "secondary": "No thanks"
+    },
+    "competitions": {
+      "title": "Competitions and Tiers",
+      "body": "This is the Team Ranking page.\n\nHere you can see rankings for all competitions and tiers, including WorldTeam, ProTeam, Continental, and Amateur divisions.\n\nEach team has a place in its competition based on international points earned during the season. You can switch between tiers and divisions to see how teams are ranked across the whole cycling world.",
+      "primary": "Next"
+    },
+    "points": {
+      "title": "International Points and Season Movement",
+      "body": "Teams earn international points from races. Better results in bigger races usually bring more points.\n\nThese points decide the ranking position of each team inside its competition. At the end of the season, teams can be promoted to a higher tier or relegated to a lower tier depending on their final position.\n\nThis page is important because it shows where your team stands compared with other teams, and what you need to achieve to move up.\n\nAfter Team Ranking, the next recommended page is Statistics.",
+      "primary": "Continue to Statistics",
+      "secondary": "Finish for now"
+    }
+  },
+  "statistics": {
+    "welcome": {
+      "title": "Need help with Statistics?",
+      "body": "We can show you how team and rider statistics work, including current season rankings, historical results, rider points, podiums, and jerseys.",
+      "primary": "Start tutorial",
+      "secondary": "No thanks"
+    },
+    "teamsCurrent": {
+      "title": "Team Statistics",
+      "body": "This is the Statistics page.\n\nThe Teams section shows team statistics across all competitions in one place. In Current, you can see the current season and compare which teams are the most successful by points.\n\nYou can use filters to look at different tiers, divisions, countries, user teams, AI teams, active teams, and inactive teams. You can also open a team profile to see more details about that team.",
+      "primary": "Next"
+    },
+    "teamsHistory": {
+      "title": "Team History",
+      "body": "The History section shows previous seasons.\n\nHere you can review past winners, old season snapshots, historical positions, and how teams performed in earlier seasons.\n\nThis becomes more useful as your world progresses through multiple seasons.",
+      "primary": "Next"
+    },
+    "riders": {
+      "title": "Rider Statistics",
+      "body": "The Riders section shows the best riders in the cycling world.\n\nYou can compare riders by international points, stage finish points, general classification and one-day race points. You can also see riders with the most podiums and most jerseys.\n\nThis page helps you understand which riders are dominating the season and which riders may be interesting to follow, scout, or sign.\n\nAfter Statistics, the next recommended page is Transfers.",
+      "primary": "Continue to Transfers",
+      "secondary": "Finish for now"
+    }
+  },
+  "transfers": {
+    "welcome": {
+      "title": "Need help with Transfers?",
+      "body": "We can show you how rider transfers, free agents, scouting, contract negotiations, and staff hiring work.",
+      "primary": "Start tutorial",
+      "secondary": "No thanks"
+    },
+    "riderTransferList": {
+      "title": "Rider Transfer List",
+      "body": "This is the Transfers page.\n\nIn the Riders section, the Transfer List shows riders currently listed by other teams, including AI teams.\n\nBefore you scout a rider, some information may be hidden or less precise. Scouting gives you better information about the rider’s skills and potential.\n\nEach transfer listing shows how long the offer is valid and the starting price for negotiations. If you click Make Offer, you can offer money to the selling team. If the team accepts, you then negotiate the rider contract.",
+      "primary": "Next"
+    },
+    "riderFreeAgents": {
+      "title": "Free Agent Riders",
+      "body": "Free Agents are riders without a team.\n\nThe big difference is that there is no selling team between you and the rider. If you want a free agent, you go directly into contract negotiation.\n\nYou can negotiate salary, contract duration, and agent fee. The offer outlook helps you understand whether your offer looks strong, risky, or unlikely to succeed.",
+      "primary": "Next"
+    },
+    "staff": {
+      "title": "Staff Market",
+      "body": "The Staff tab shows available free-agent staff members.\n\nHere you can review staff skills, role, salary, specialization, and availability. Only free-agent staff can be hired.\n\nStaff limits are important. If your club has already reached the maximum number for a staff role, you cannot hire another staff member for that role until you increase the limit, usually through infrastructure upgrades.\n\nAfter Transfers, the next recommended page is Finance.",
+      "primary": "Continue to Finance",
+      "secondary": "Finish for now"
+    }
+  },
+  "finance": {
+    "welcome": {
+      "title": "Need help with Finance?",
+      "body": "We can show you how club finances work, including balance, sponsors, transactions, taxes, and team policies.",
+      "primary": "Start tutorial",
+      "secondary": "No thanks"
+    },
+    "overview": {
+      "title": "Finance Overview",
+      "body": "This is the Finance page.\n\nThe Overview tab shows the main financial situation of your club, including current balance, income, expenses, cashflow, and financial summaries.\n\nIf your team has emergency debt or financial problems, this is where you can quickly understand the current situation.",
+      "primary": "Next"
+    },
+    "sponsors": {
+      "title": "Sponsors",
+      "body": "The Sponsors tab shows the sponsors your team has already signed.\n\nSponsors can bring money to the club, but they may also have targets or bonus objectives. These targets explain what your team needs to achieve and how much money you can receive.\n\nSponsor contracts can be standard contracts or naming-rights contracts. A standard sponsor contract gives your club sponsor money without changing your team name.\n\nA naming-rights contract is usually worth more money, but the sponsor name becomes part of your team name during the season. At the beginning of the next season, your original team name returns.\n\nIf your team does not have a sponsor yet, you can use the sponsor offers area to look for new deals.",
+      "primary": "Next"
+    },
+    "transactions": {
+      "title": "Transactions",
+      "body": "The Transactions tab shows your club’s financial history.\n\nHere you can see income and expenses during the season, including prize money, sponsor payments, salaries, transfers, infrastructure costs, equipment purchases, training camps, tax withdrawals, and other financial movements.",
+      "primary": "Next"
+    },
+    "tax": {
+      "title": "Tax",
+      "body": "The Tax tab shows your club’s tax situation.\n\nTransactions can create tax obligations, and a tax audit happens once per month. This page helps you see how much tax has been calculated, what has already been paid, and what still needs to be paid.",
+      "primary": "Next"
+    },
+    "policies": {
+      "title": "Team Policies and Operations",
+      "body": "Team Policies and Operations control how your club is run.\n\nChanging policies can make your club more attractive to riders and staff, but it can also increase the cost of travel, race support, training camps, and daily operations.\n\nThis section helps you balance comfort, performance, attractiveness, and cost.\n\nAfter Finance, the next tutorial will explain the main Menu.",
+      "primary": "Continue to Menu",
       "secondary": "Finish for now"
     }
   },
