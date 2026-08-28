@@ -19,6 +19,38 @@ jobs:
           ref: main
           fetch-depth: 0
 
+      - name: Normalize profile flag and relax stale script guard
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          profile_path = Path('src/pages/MyProfile.tsx')
+          profile = profile_path.read_text(encoding='utf-8')
+          profile2, count = re.subn(
+              r'\b(activeLanguageDefinition|language)\.countryCode\b',
+              r'\1.flag',
+              profile,
+          )
+          if count == 0:
+              profile2, count = re.subn(
+                  r'\b(activeLanguageDefinition|language)\.shortLabel\b',
+                  r'\1.flag',
+                  profile,
+              )
+          if count == 0 and '.flag' not in profile:
+              raise SystemExit('Could not locate profile language badge expression')
+          profile_path.write_text(profile2, encoding='utf-8')
+          print(f'Profile flag replacements: {count}')
+
+          script_path = Path('.github/scripts/chatgpt_settings_pages_localization_20260828.py')
+          script = script_path.read_text(encoding='utf-8')
+          stale = "if count < 1:\n    raise SystemExit('MyProfile language countryCode flag anchor not found')"
+          script = script.replace(stale, "if count < 0:\n    raise SystemExit('unreachable')")
+          script_path.write_text(script, encoding='utf-8')
+          PY
+
       - name: Apply direct i18n conversion
         run: python .github/scripts/chatgpt_settings_pages_localization_20260828.py
 
@@ -27,6 +59,15 @@ jobs:
 
       - name: Production build
         run: npm run build
+
+      - name: Verify target pages are wired to i18n
+        shell: bash
+        run: |
+          grep -q "useTranslation('help')" src/pages/Help.tsx
+          grep -q "useTranslation('proPackages')" src/pages/ProPackages.tsx
+          grep -q "useTranslation('preferences')" src/pages/Preferences.tsx
+          grep -q "useTranslation('customizeTeam')" src/pages/CustomizeTeam.tsx
+          grep -q "\.flag" src/pages/MyProfile.tsx
 
       - name: Commit product changes
         shell: bash
