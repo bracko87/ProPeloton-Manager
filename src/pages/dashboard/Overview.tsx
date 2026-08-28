@@ -3999,7 +3999,7 @@ const getAdvisoryGameDaysRemaining = React.useCallback(
     } catch (err) {
       console.warn("Could not load eligible advisors:", err);
       setAssignError(
-        err instanceof Error ? err.message : "Could not load eligible staff.",
+        err instanceof Error ? err.message : t("staffBriefing.couldNotLoadStaff"),
       );
     } finally {
       setEligibleStaffLoading(false);
@@ -4028,7 +4028,7 @@ const getAdvisoryGameDaysRemaining = React.useCallback(
       setQuote(nextQuote);
     } catch (err) {
       setAssignError(
-        err instanceof Error ? err.message : "Could not load advisory quote.",
+        err instanceof Error ? err.message : t("staffBriefing.couldNotLoadQuote"),
       );
     } finally {
       setQuoteLoading(false);
@@ -4045,7 +4045,7 @@ const getAdvisoryGameDaysRemaining = React.useCallback(
 
     if ((coinBalance ?? 0) < quote.coin_price) {
       setAssignError(
-        `Not enough coins. ${quote.coin_price} coins are required and your current balance is ${coinBalance ?? 0}.`,
+        t("staffBriefing.notEnoughCoins", { required: quote.coin_price, balance: coinBalance ?? 0 }),
       );
       return;
     }
@@ -4072,7 +4072,7 @@ const getAdvisoryGameDaysRemaining = React.useCallback(
 
       if (error) {
         let detailedMessage =
-          error.message || "Staff Advisory activation failed.";
+          error.message || t("staffBriefing.activationFailed");
 
         try {
           const context = (error as { context?: Response }).context;
@@ -4130,7 +4130,7 @@ const getAdvisoryGameDaysRemaining = React.useCallback(
       await loadOverview();
     } catch (err) {
       setAssignError(
-        err instanceof Error ? err.message : "Could not activate Staff Advisory.",
+        err instanceof Error ? err.message : t("staffBriefing.couldNotActivate"),
       );
     } finally {
       setActivationLoading(false);
@@ -4238,7 +4238,7 @@ async function confirmPausedRoleRenewal() {
 
             <button
               type="button"
-              aria-label="What Staff Advisory provides"
+              aria-label={t("staffBriefing.whatProvidesAria")}
               aria-expanded={advisoryInfoOpen}
               onMouseEnter={openAdvisoryInfoAfterDelay}
               onMouseLeave={cancelAdvisoryInfoDelay}
@@ -4261,14 +4261,14 @@ async function confirmPausedRoleRenewal() {
             {refreshing || staffLoading ? (
               <span
                 className="inline-flex h-2 w-2 rounded-full bg-sky-500"
-                title="Refreshing"
+                title={t("staffBriefing.refreshing")}
               />
             ) : null}
 
             {advisoryInfoOpen ? (
               <div
                 role="dialog"
-                aria-label="Staff Advisory information"
+                aria-label={t("staffBriefing.infoAria")}
                 onMouseEnter={cancelAdvisoryInfoDelay}
                 onMouseLeave={() => setAdvisoryInfoOpen(false)}
                 className="absolute left-0 top-8 z-[70] w-[min(560px,calc(100vw-2rem))] rounded-2xl border border-slate-200 bg-white p-4 shadow-2xl"
@@ -4287,7 +4287,7 @@ async function confirmPausedRoleRenewal() {
                     onClick={() => setAdvisoryInfoOpen(false)}
                     className="inline-flex h-7 items-center rounded-lg border border-slate-200 px-2 text-[10px] font-semibold text-slate-600 hover:bg-slate-50"
                   >
-                    Close
+                    {t("staffBriefing.close")}
                   </button>
                 </div>
 
@@ -4314,35 +4314,35 @@ async function confirmPausedRoleRenewal() {
                     <div className="rounded-xl border border-slate-200 px-3 py-2.5">
                       <div className="text-[11px] font-semibold text-slate-900">{t("staffBriefing.roles.headCoach")}</div>
                       <div className="mt-1 text-[10px] leading-5 text-slate-600">
-                        Weekly training and readiness review: workload trends, repeated fatigue, morale/readiness patterns, development trends, and riders who may need closer management.
+                        {t("staffBriefing.roleInfo.headCoach")}
                       </div>
                     </div>
 
                     <div className="rounded-xl border border-slate-200 px-3 py-2.5">
                       <div className="text-[11px] font-semibold text-slate-900">{t("staffBriefing.roles.sportsDirector")}</div>
                       <div className="mt-1 text-[10px] leading-5 text-slate-600">
-                        Weekly race-program review: calendar congestion, rider-selection load, preparation risks, overlapping commitments, and areas of the race programme worth reviewing.
+                        {t("staffBriefing.roleInfo.sportsDirector")}
                       </div>
                     </div>
 
                     <div className="rounded-xl border border-slate-200 px-3 py-2.5">
                       <div className="text-[11px] font-semibold text-slate-900">{t("staffBriefing.roles.teamDoctor")}</div>
                       <div className="mt-1 text-[10px] leading-5 text-slate-600">
-                        Health and recovery analysis, at most once per real-life day: squad availability, repeated injury/sickness patterns, recovery trends, and health situations worth monitoring.
+                        {t("staffBriefing.roleInfo.teamDoctor")}
                       </div>
                     </div>
 
                     <div className="rounded-xl border border-slate-200 px-3 py-2.5">
                       <div className="text-[11px] font-semibold text-slate-900">{t("staffBriefing.roles.chiefMechanic")}</div>
                       <div className="mt-1 text-[10px] leading-5 text-slate-600">
-                        Weekly equipment review: condition and maintenance trends, recurring equipment issues, workload on the workshop, and race-supply usage worth reviewing.
+                        {t("staffBriefing.roleInfo.chiefMechanic")}
                       </div>
                     </div>
 
                     <div className="rounded-xl border border-slate-200 px-3 py-2.5">
                       <div className="text-[11px] font-semibold text-slate-900">{t("staffBriefing.roles.scout")}</div>
                       <div className="mt-1 text-[10px] leading-5 text-slate-600">
-                        Weekly recruitment review using already-known scouting information: completed report summary, recruitment gaps, known prospects worth revisiting, and suggestions for where to scout next.
+                        {t("staffBriefing.roleInfo.scout")}
                       </div>
                     </div>
                   </div>
@@ -4651,16 +4651,16 @@ async function confirmPausedRoleRenewal() {
                 }}
                 className="inline-flex h-8 items-center rounded-lg border border-slate-200 bg-white px-3 text-[11px] font-semibold text-slate-600 transition hover:bg-slate-50"
               >
-                Close
+                {t("staffBriefing.close")}
               </button>
             </div>
 
             {eligibleStaffLoading ? (
-              <div className="mt-4 text-sm text-slate-500">Loading eligible staff…</div>
+              <div className="mt-4 text-sm text-slate-500">{t("staffBriefing.loadingEligible")}</div>
             ) : eligibleStaff.length > 0 ? (
               <div className="mt-5">
                 <label className="text-sm font-medium text-slate-800">
-                  Staff member
+                  {t("staffBriefing.staffMember")}
                 </label>
                 <select
                   value={selectedStaffId}
@@ -4677,21 +4677,21 @@ async function confirmPausedRoleRenewal() {
               </div>
             ) : (
               <div className="mt-4 rounded-xl bg-slate-50 px-3 py-3 text-sm text-slate-500">
-                No eligible staff members are available for this role.
+                {t("staffBriefing.noEligible")}
               </div>
             )}
 
             {quoteLoading ? (
-              <div className="mt-4 text-sm text-slate-500">Loading quote…</div>
+              <div className="mt-4 text-sm text-slate-500">{t("staffBriefing.loadingQuote")}</div>
             ) : quote ? (
               <div className="mt-5 rounded-2xl border border-slate-200 bg-slate-50 p-3">
                 <div className="space-y-2">
                   {[
-                    ["Price", `${quote.coin_price} coins`],
-                    ["Duration", t("staffBriefing.gameMonths", { count: quote.duration_game_months })],
-                    ["New expiry", formatAdvisoryGameDate(quote.proposed_expires_at)],
-                    ["Automatic renewal", "No"],
-                    ["Coin balance", coinBalanceLoading ? "…" : String(coinBalance ?? 0)],
+                    [t("staffBriefing.price"), t("staffBriefing.coins", { count: quote.coin_price })],
+                    [t("staffBriefing.duration"), t("staffBriefing.gameMonths", { count: quote.duration_game_months })],
+                    [t("staffBriefing.newExpiry"), formatAdvisoryGameDate(quote.proposed_expires_at)],
+                    [t("staffBriefing.automaticRenewal"), t("staffBriefing.no")],
+                    [t("staffBriefing.coinBalance"), coinBalanceLoading ? "…" : String(coinBalance ?? 0)],
                   ].map(([label, value]) => (
                     <div
                       key={label}
@@ -4724,7 +4724,7 @@ async function confirmPausedRoleRenewal() {
                 }}
                 className="inline-flex h-9 items-center rounded-lg border border-slate-300 bg-white px-4 text-[12px] font-semibold text-slate-700 transition hover:bg-slate-50"
               >
-                Cancel
+                {t("staffBriefing.cancel")}
               </button>
               <button
                 type="button"
@@ -4739,12 +4739,12 @@ async function confirmPausedRoleRenewal() {
                 className="inline-flex h-9 items-center rounded-lg bg-slate-950 px-4 text-[12px] font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 {activationLoading
-                  ? "Activating…"
+                  ? t("staffBriefing.activating")
                   : quote?.is_renewal
-                    ? `Renew for ${quote.coin_price} coins`
+                    ? t("staffBriefing.renewForCoins", { count: quote.coin_price })
                     : quote
-                      ? `Assign for ${quote.coin_price} coins`
-                      : "Confirm"}
+                      ? t("staffBriefing.assignForCoins", { count: quote.coin_price })
+                      : t("staffBriefing.assign")}
               </button>
             </div>
           </div>
@@ -6006,6 +6006,42 @@ function buildWorldNewsExpandedText(item: NewsItem) {
   return `${subtitle} This is a world-peloton update generated from in-game race, rider, team, or competition data. It should link only to the related in-game page.`;
 }
 
+function localizeOverviewTeamFeedCopy(
+  title: string,
+  subtitle: string,
+  t: (key: string, options?: Record<string, unknown>) => string,
+): { title: string; subtitle: string } {
+  const cleanTitle = (title ?? "").trim();
+  const cleanSubtitle = (subtitle ?? "").trim();
+
+  const sponsorOffersMatch = /^Sponsor offers ready for season\s+(\d+)$/i.exec(cleanTitle);
+  if (sponsorOffersMatch) {
+    return {
+      title: t("news.sponsorOffersReady", { season: sponsorOffersMatch[1] }),
+      subtitle: t("news.sponsorOffersReadyBody"),
+    };
+  }
+
+  const staffHiredMatch = /^Staff hired:\s*(.+)$/i.exec(cleanTitle);
+  if (staffHiredMatch) {
+    const name = staffHiredMatch[1].trim();
+    const roleMatch = /has joined your club as\s+(.+?)(?:\.|$)/i.exec(cleanSubtitle);
+    const rawRole = roleMatch?.[1]?.trim() ?? "";
+    const role = /^scout analyst$/i.test(rawRole)
+      ? t("news.staffRoleScoutAnalyst")
+      : rawRole;
+
+    return {
+      title: t("news.staffHired", { name }),
+      subtitle: role
+        ? t("news.staffHiredBody", { name, role })
+        : t("news.staffHiredBodyGeneric", { name }),
+    };
+  }
+
+  return { title: cleanTitle, subtitle: cleanSubtitle };
+}
+
 /**
  * buildTeamNewsItems
  * Team news = attention items + existing activity feed.
@@ -6014,6 +6050,7 @@ function buildTeamNewsItems(
   alerts: AlertItem[],
   feed: FeedItem[],
   currentGameDateLabel: string,
+  t: (key: string, options?: Record<string, unknown>) => string,
 ): OverviewNewsListItem[] {
   const alertItems: OverviewNewsListItem[] = alerts.map((alert) => {
     const href = normalizeDashboardHref(alert.href);
@@ -6021,32 +6058,30 @@ function buildTeamNewsItems(
     return {
       id: `alert:${alert.id}`,
       title: alert.label,
-      subtitle: "Action may be required from your team management dashboard.",
+      subtitle: t("news.actionMayBeRequired"),
       timeLabel: getOverviewCurrentGameDateTimeLabel(currentGameDateLabel),
       href,
       level: alert.level,
       sourceLabel: "Team",
-      expandedText: buildTeamNewsExpandedText(
-        alert.label,
-        "Action may be required from your team management dashboard.",
-      ),
-      linkLabel: getNewsLinkLabel(href, "Team"),
+      expandedText: t("news.actionMayBeRequired"),
+      linkLabel: t("news.openRelatedPage"),
     };
   });
 
   const feedItems: OverviewNewsListItem[] = feed.map((item) => {
     const href = normalizeDashboardHref(item.href);
+    const localizedCopy = localizeOverviewTeamFeedCopy(item.title, item.subtitle, t);
 
     return {
       id: `feed:${item.id}`,
-      title: item.title,
-      subtitle: buildWorldNewsSubtitle(item),
+      title: localizedCopy.title,
+      subtitle: localizedCopy.subtitle,
       timeLabel: getOverviewGameTimeLabel(item.timeLabel, currentGameDateLabel),
       href,
       level: item.level,
       sourceLabel: "Team",
-      expandedText: buildTeamNewsExpandedText(item.title, item.subtitle),
-      linkLabel: getNewsLinkLabel(href, "Team"),
+      expandedText: localizedCopy.subtitle,
+      linkLabel: t("news.openRelatedPage"),
     };
   });
 
@@ -6280,7 +6315,7 @@ function NewsCommandCenter({
   const { t } = useTranslation("overview");
   const [expandedId, setExpandedId] = React.useState<string | null>(null);
 
-  const teamNewsItems = buildTeamNewsItems(alerts, feed, currentGameDateLabel);
+  const teamNewsItems = buildTeamNewsItems(alerts, feed, currentGameDateLabel, t);
   const worldNewsItems = buildWorldNewsItems(news, currentGameDateLabel);
   const combinedItems = buildSortedDedupedNewsBoardItems(
     teamNewsItems,
@@ -6356,8 +6391,8 @@ function NewsCommandCenter({
                             )}
                           >
                             {item.sourceLabel === "World"
-                              ? t("news.world")
-                              : t("news.team")} news
+                              ? t("news.worldNews")
+                              : t("news.teamNews")}
                           </span>
 
                           {item.href && item.linkLabel ? (
@@ -6394,8 +6429,8 @@ function NewsCommandCenter({
           </div>
         ) : (
           <EmptyState
-            title="No news yet"
-            subtitle="Team updates, race results, ranking headlines, and world peloton news will appear here."
+            title={t("news.noNews")}
+            subtitle={t("news.noNewsSubtitle")}
           />
         )}
       </div>

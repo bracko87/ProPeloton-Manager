@@ -157,7 +157,15 @@
     "cyclingWorldSubtitle": "Latest professional cycling headlines from approved external sources.",
     "cyclingNews": "Cycling news",
     "latest": "Latest",
-    "noExternal": "No external cycling headlines are available yet. The card will fill automatically after the news importer and RPC are installed."
+    "noExternal": "No external cycling headlines are available yet. The card will fill automatically after the news importer and RPC are installed.",
+    "actionMayBeRequired": "Action may be required from your team management dashboard.",
+    "openRelatedPage": "Open related page",
+    "sponsorOffersReady": "Sponsor offers ready for season {{season}}",
+    "sponsorOffersReadyBody": "New sponsor offers are available for your team. Choose your sponsors for the current season.",
+    "staffHired": "Staff hired: {{name}}",
+    "staffHiredBody": "{{name}} has joined your club as {{role}}.",
+    "staffHiredBodyGeneric": "{{name}} has joined your club. Open the related page to review the update.",
+    "staffRoleScoutAnalyst": "Scout Analyst"
   },
   "races": {
     "lastTitle": "Last Team Race",

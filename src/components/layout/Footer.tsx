@@ -130,10 +130,13 @@ export default function Footer({
       gameTime.day_number,
     )
 
-    const localizedMonth = t(
+    const localizedMonthRaw = t(
       `calendar:months.${gameTime.month_name}`,
       { defaultValue: gameTime.month_name },
     )
+    const localizedMonth = localizedMonthRaw
+      ? `${localizedMonthRaw.charAt(0).toLocaleUpperCase()}${localizedMonthRaw.slice(1)}`
+      : localizedMonthRaw
 
     const localizedDate = t('calendar:date', {
       month: localizedMonth,

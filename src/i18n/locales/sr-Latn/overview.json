@@ -157,7 +157,15 @@
     "cyclingWorldSubtitle": "Najnoviji naslovi iz profesionalnog biciklizma iz odobrenih spoljnih izvora.",
     "cyclingNews": "Biciklističke vesti",
     "latest": "Najnovije",
-    "noExternal": "Još nema dostupnih spoljnih biciklističkih vesti. Kartica će se automatski popuniti nakon instalacije uvoznika vesti i RPC funkcije."
+    "noExternal": "Još nema dostupnih spoljnih biciklističkih vesti. Kartica će se automatski popuniti nakon instalacije uvoznika vesti i RPC funkcije.",
+    "actionMayBeRequired": "Možda je potrebna akcija na kontrolnoj tabli vašeg tima.",
+    "openRelatedPage": "Otvori povezanu stranicu",
+    "sponsorOffersReady": "Ponude sponzora spremne za sezonu {{season}}",
+    "sponsorOffersReadyBody": "Nove ponude sponzora su dostupne vašem timu. Izaberite sponzore za trenutnu sezonu.",
+    "staffHired": "Angažovan član osoblja: {{name}}",
+    "staffHiredBody": "{{name}} se pridružio vašem klubu kao {{role}}.",
+    "staffHiredBodyGeneric": "{{name}} se pridružio vašem klubu. Otvorite povezanu stranicu da pregledate ažuriranje.",
+    "staffRoleScoutAnalyst": "Skaut analitičar"
   },
   "races": {
     "lastTitle": "Poslednja trka tima",

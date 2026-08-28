@@ -541,12 +541,9 @@ export default function MyProfilePage(): JSX.Element {
               aria-expanded={languageMenuOpen}
               className="flex w-full items-center gap-3 rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-left text-sm shadow-sm transition hover:border-yellow-400 focus:border-yellow-400 focus:outline-none focus:ring-2 focus:ring-yellow-200 disabled:cursor-wait disabled:opacity-70"
             >
-              <img
-                src={`/flags/${activeLanguageDefinition.countryCode.toLowerCase()}.svg`}
-                alt=""
-                className="h-[18px] w-6 shrink-0 rounded-[2px] border border-gray-200 object-cover"
-                aria-hidden="true"
-              />
+              <span className="text-xl leading-none" aria-hidden="true">
+                {activeLanguageDefinition.flag}
+              </span>
               <span className="font-semibold text-gray-900">
                 {activeLanguageDefinition.label}
               </span>
@@ -588,12 +585,9 @@ export default function MyProfilePage(): JSX.Element {
                           : 'text-gray-800 hover:bg-gray-50',
                       ].join(' ')}
                     >
-                      <img
-                        src={`/flags/${language.countryCode.toLowerCase()}.svg`}
-                        alt=""
-                        className="h-[18px] w-6 shrink-0 rounded-[2px] border border-gray-200 object-cover"
-                        aria-hidden="true"
-                      />
+                      <span className="text-xl leading-none" aria-hidden="true">
+                        {language.flag}
+                      </span>
                       <span className="font-medium">{language.label}</span>
                       {active ? (
                         <span className="ml-auto text-xs font-medium text-green-700">
