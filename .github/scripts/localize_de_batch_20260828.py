@@ -6,6 +6,8 @@ import re
 from pathlib import Path
 from typing import Any
 
+from staff_course_options_de_20260828 import COURSE_OPTIONS
+
 ROOT = Path(__file__).resolve().parents[2]
 MODULE_PATH = ROOT / '.github/scripts/localize_full_de_20260828.py'
 
@@ -68,17 +70,33 @@ def main() -> None:
             raise SystemExit(f'Refusing to overwrite polished German file: {name}')
         sources[name] = module.load_json(en_path)
 
-    translator = module.Translator()
-    chunks: list[str] = []
-    for data in sources.values():
-        for value in module.iter_strings(data):
-            if value in module.EXACT_OVERRIDES:
-                continue
-            for protected, chunk in module.split_protected(value):
-                if not protected:
-                    chunks.append(chunk)
+    # Staff is special: its page/core dialogs were already manually polished.
+    # Only courseOptions remained unreviewed, so preserve the current German file
+    # and replace that deep section with deliberate human-reviewed German text.
+    normal_sources = {name: data for name, data in sources.items() if name != 'staff.json'}
+    translated_by_name: dict[str, Any] = {}
 
-    translator.translate_chunks(chunks)
+    if normal_sources:
+        translator = module.Translator()
+        chunks: list[str] = []
+        for data in normal_sources.values():
+            for value in module.iter_strings(data):
+                if value in module.EXACT_OVERRIDES:
+                    continue
+                for protected, chunk in module.split_protected(value):
+                    if not protected:
+                        chunks.append(chunk)
+        translator.translate_chunks(chunks)
+        for name, source in normal_sources.items():
+            translated_by_name[name] = module.translate_value(source, translator)
+
+    if 'staff.json' in sources:
+        source = sources['staff.json']
+        current = module.load_json(module.DE_DIR / 'staff.json')
+        if list(source.get('courseOptions', {})) != list(COURSE_OPTIONS):
+            raise SystemExit('Reviewed Staff courseOptions no longer mirror English keys/order')
+        current['courseOptions'] = COURSE_OPTIONS
+        translated_by_name['staff.json'] = current
 
     bad_patterns = [
         r'\bJahreszeiten?\b',
@@ -102,7 +120,7 @@ def main() -> None:
 
     module.DE_DIR.mkdir(parents=True, exist_ok=True)
     for name, source in sources.items():
-        translated = module.translate_value(source, translator)
+        translated = translated_by_name[name]
         validate_shape(source, translated, name)
         for path, src, dst in iter_pairs(source, translated, name):
             if cyrillic.search(dst):
