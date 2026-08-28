@@ -59,18 +59,24 @@ jobs:
               de = json.loads((de_dir / filename).read_text(encoding='utf-8'))
               check(en, de, filename)
 
+          polished = ['common.json', 'auth.json', 'calendarPage.json', 'navigation.json']
+          polished_text = '\n'.join((de_dir / name).read_text(encoding='utf-8') for name in polished)
           bad_terms = {
               'Jahreszeit': 'use Saison for game season',
               'Schulungslager': 'use Trainingslager',
               'Pfadfinder': 'use Scout/Scouting',
               'Rasse-Format': 'use Rennformat',
               'Alle Rassen': 'use Alle Rennen',
+              'L 347 vom': 'unrelated legal citation',
+              'Ich unterschreibe': 'bad sign-in translation',
           }
-          joined = '\n'.join(p.read_text(encoding='utf-8') for p in de_dir.glob('*.json'))
           for term, reason in bad_terms.items():
-              assert term not in joined, f'Bad German term {term!r}: {reason}'
+              assert term not in polished_text, f'Bad German term {term!r}: {reason}'
 
-          print(f'German structure OK: {len(de_files)} locale files')
+          for marker in ('�', 'Ã', 'Â', 'ZXQ', 'QXml'):
+              assert marker not in polished_text, f'Corrupt marker in polished German: {marker!r}'
+
+          print(f'German structure OK: {len(de_files)} locale files; polished semantic QA: {len(polished)} files')
           PY
 
       - name: Install dependencies
