@@ -177,7 +177,9 @@
     "windowStart": "Window start",
     "windowEnd": "Window end",
     "improved": "{{rider}} improved {{skill}} from {{old}} to {{new}} ({{delta}}).",
-    "decreased": "{{rider}} {{skill}} decreased from {{old}} to {{new}} ({{delta}})."
+    "decreased": "{{rider}} {{skill}} decreased from {{old}} to {{new}} ({{delta}}).",
+    "ridersAttention": "Riders needing attention",
+    "fatigue": "Fatigue"
   },
   "sportDirector": {
     "raceTiming": "Race timing",
@@ -451,5 +453,23 @@
     "CLASSIFICATION": "Classification",
     "INVITATION": "Invitation",
     "INVITED": "Invited"
+  },
+  "reportVariants": {
+    "rider_skill_change": "Rider skill change",
+    "weekly_training_readiness": "Weekly training readiness",
+    "training_readiness": "Training readiness",
+    "race_programme_gap": "Race programme gap",
+    "programme_continuity": "Programme continuity",
+    "long_programme_break": "Long programme break",
+    "programme_empty": "Programme empty",
+    "race_preparation_missing": "Race preparation missing",
+    "race_preparation_ready": "Race preparation ready",
+    "startlist_deadline_alert": "Startlist deadline alert",
+    "stage_plans_missing": "Stage plans missing",
+    "stage_plans_incomplete": "Stage plans incomplete",
+    "priority_prospect": "Priority prospect",
+    "medical_treatment": "Medical treatment",
+    "equipment_workshop_review": "Equipment & workshop review",
+    "recruitment_review": "Recruitment review"
   }
 }

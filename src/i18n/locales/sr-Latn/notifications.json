@@ -177,7 +177,9 @@
     "windowStart": "Početak perioda",
     "windowEnd": "Kraj perioda",
     "improved": "{{rider}} je poboljšao {{skill}} sa {{old}} na {{new}} ({{delta}}).",
-    "decreased": "Kod vozača {{rider}} veština {{skill}} je smanjena sa {{old}} na {{new}} ({{delta}})."
+    "decreased": "Kod vozača {{rider}} veština {{skill}} je smanjena sa {{old}} na {{new}} ({{delta}}).",
+    "ridersAttention": "Vozači kojima je potrebna pažnja",
+    "fatigue": "Umor"
   },
   "sportDirector": {
     "raceTiming": "Termin trke",
@@ -451,5 +453,23 @@
     "CLASSIFICATION": "Klasifikacija",
     "INVITATION": "Poziv",
     "INVITED": "Pozvan"
+  },
+  "reportVariants": {
+    "rider_skill_change": "Promena veštine vozača",
+    "weekly_training_readiness": "Nedeljna spremnost za trening",
+    "training_readiness": "Spremnost za trening",
+    "race_programme_gap": "Praznina u programu trka",
+    "programme_continuity": "Kontinuitet programa",
+    "long_programme_break": "Duga pauza u programu",
+    "programme_empty": "Program je prazan",
+    "race_preparation_missing": "Nedostaje priprema trke",
+    "race_preparation_ready": "Priprema trke je spremna",
+    "startlist_deadline_alert": "Upozorenje za rok startne liste",
+    "stage_plans_missing": "Nedostaju planovi etapa",
+    "stage_plans_incomplete": "Planovi etapa su nepotpuni",
+    "priority_prospect": "Prioritetni talenat",
+    "medical_treatment": "Medicinski tretman",
+    "equipment_workshop_review": "Pregled opreme i radionice",
+    "recruitment_review": "Pregled regrutacije"
   }
 }

@@ -1870,7 +1870,7 @@ export default function NotificationsPage(): JSX.Element {
                               headCoachPayloadRecord.rider_full_name ??
                                 headCoachPayloadRecord.rider_name ??
                                 ''
-                            ).trim() || 'Rider'
+                            ).trim() || t('common.rider')
                           const skillLabel = String(
                             headCoachPayloadRecord.skill_label ??
                               headCoachPayloadRecord.skill_name ??
@@ -1893,43 +1893,48 @@ export default function NotificationsPage(): JSX.Element {
                             skillOldValue !== null &&
                             skillNewValue !== undefined &&
                             skillNewValue !== null
-                              ? `${skillRiderName} ${
+                              ? t(
                                   Number(skillDelta ?? 0) < 0
-                                    ? `${skillLabel} decreased`
-                                    : `improved ${skillLabel}`
-                                } from ${formatAdvisorValue(skillOldValue)} to ${formatAdvisorValue(skillNewValue)} (${
-                                  Number(skillDelta ?? 0) > 0 ? '+' : ''
-                                }${formatAdvisorValue(skillDelta)}).`
+                                    ? 'headCoach.decreased'
+                                    : 'headCoach.improved',
+                                  {
+                                    rider: skillRiderName,
+                                    skill: skillLabel,
+                                    old: formatAdvisorValue(skillOldValue),
+                                    new: formatAdvisorValue(skillNewValue),
+                                    delta: `${Number(skillDelta ?? 0) > 0 ? '+' : ''}${formatAdvisorValue(skillDelta)}`,
+                                  }
+                                )
                               : null
 
                           const snapshotEntries = (
                             isRiderSkillChange
                               ? [
-                                  ['Rider', skillRiderName],
+                                  [t('common.rider'), skillRiderName],
                                   [t('headCoach.skill'), skillLabel],
                                   [t('headCoach.previousValue'), skillOldValue],
                                   [t('headCoach.newValue'), skillNewValue],
-                                  ['Change', Number(skillDelta ?? 0) > 0 ? `+${formatAdvisorValue(skillDelta)}` : formatAdvisorValue(skillDelta)],
+                                  [t('headCoach.change'), Number(skillDelta ?? 0) > 0 ? `+${formatAdvisorValue(skillDelta)}` : formatAdvisorValue(skillDelta)],
                                 ]
                               : [
-                                  ['Squad riders', snapshot.squad_riders],
+                                  [t('headCoach.squadRiders'), snapshot.squad_riders],
                                   [t('headCoach.highFatigue'), snapshot.high_fatigue ?? snapshot.affected_riders],
-                                  ['Elevated fatigue', snapshot.elevated_fatigue],
-                                  ['Not fully fit', snapshot.not_fully_fit],
-                                  ['Unavailable', snapshot.unavailable],
+                                  [t('headCoach.elevatedFatigue'), snapshot.elevated_fatigue],
+                                  [t('headCoach.notFullyFit'), snapshot.not_fully_fit],
+                                  [t('headCoach.unavailable'), snapshot.unavailable],
                                   [
-                                    'Planned sessions · next 3 game days',
+                                    t('headCoach.plannedSessions'),
                                     snapshot.planned_training_sessions_next_3_game_days ??
                                       snapshot.planned_sessions,
                                   ],
                                   [
-                                    'Manual overrides · next 3 game days',
+                                    t('headCoach.manualOverrides'),
                                     snapshot.manual_training_overrides_next_3_game_days ??
                                       snapshot.manual_overrides,
                                   ],
-                                  ['Highest fatigue', snapshot.highest_fatigue],
-                                  ['Window start', formatAdvisorGameDateTime(snapshot.window_start)],
-                                  ['Window end', formatAdvisorGameDateTime(snapshot.window_end)],
+                                  [t('headCoach.highestFatigue'), snapshot.highest_fatigue],
+                                  [t('headCoach.windowStart'), formatAdvisorGameDateTime(snapshot.window_start)],
+                                  [t('headCoach.windowEnd'), formatAdvisorGameDateTime(snapshot.window_end)],
                                 ]
                           ).filter(([, value]) => value !== undefined && value !== null && value !== '')
 
@@ -1980,7 +1985,7 @@ export default function NotificationsPage(): JSX.Element {
                                               {label}
                                             </div>
                                             <div className="mt-1 text-lg font-semibold text-slate-900">
-                                              {label === 'Rider' && isRiderSkillChange
+                                              {label === t('common.rider') && isRiderSkillChange
                                                 ? renderAdvisorRiderIdentity({
                                                     value,
                                                     source: headCoachPayloadRecord,
@@ -1997,14 +2002,14 @@ export default function NotificationsPage(): JSX.Element {
                                     {attentionRiders.length > 0 ? (
                                       <div className="mt-5">
                                         <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                                          Riders needing attention
+                                          {t('headCoach.ridersAttention')}
                                         </div>
                                         <div className="mt-2 overflow-hidden rounded-lg border border-slate-200 bg-white">
                                           <div className="grid grid-cols-[minmax(0,1fr)_90px_150px_minmax(160px,1fr)] gap-3 border-b border-slate-200 bg-slate-50 px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-                                            <span>Rider</span>
-                                            <span>Fatigue</span>
-                                            <span>Availability</span>
-                                            <span>Reason</span>
+                                            <span>{t('common.rider')}</span>
+                                            <span>{t('headCoach.fatigue')}</span>
+                                            <span>{t('common.availability')}</span>
+                                            <span>{t('common.reason')}</span>
                                           </div>
                                           {attentionRiders.map((rider, index) => (
                                             <div
@@ -2037,7 +2042,7 @@ export default function NotificationsPage(): JSX.Element {
                                     {recommendations.length > 0 ? (
                                       <div className="mt-5">
                                         <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                                          Head Coach recommendations
+                                          {t('headCoach.recommendations')}
                                         </div>
                                         <ul className="mt-2 space-y-2">
                                           {recommendations.map((recommendation, index) => (
@@ -2186,25 +2191,25 @@ export default function NotificationsPage(): JSX.Element {
                           }
 
                           const sportSummaryEntries = [
-                            ['Race', (sportData as Record<string, unknown>).current_focus_race_name ?? (sportData as Record<string, unknown>).current_focus_race ?? (sportData as Record<string, unknown>).active_race_name ?? (sportData as Record<string, unknown>).race_name ?? (sportData as Record<string, unknown>).next_race_name],
+                            [t('details.race'), (sportData as Record<string, unknown>).current_focus_race_name ?? (sportData as Record<string, unknown>).current_focus_race ?? (sportData as Record<string, unknown>).active_race_name ?? (sportData as Record<string, unknown>).race_name ?? (sportData as Record<string, unknown>).next_race_name],
                             [t('sportDirector.raceTiming'), (sportData as Record<string, unknown>).current_focus_race_timing ?? (sportData as Record<string, unknown>).race_urgency ?? (sportData as Record<string, unknown>).urgency],
-                            ['Race start', formatAdvisorGameDateTime((sportData as Record<string, unknown>).current_focus_race_start_date ?? (sportData as Record<string, unknown>).race_start_date ?? (sportData as Record<string, unknown>).start_date)],
-                            ['Race end', formatAdvisorGameDateTime((sportData as Record<string, unknown>).current_focus_race_end_date ?? (sportData as Record<string, unknown>).race_end_date ?? (sportData as Record<string, unknown>).end_date)],
-                            ['Race location', (sportData as Record<string, unknown>).race_location ?? (sportData as Record<string, unknown>).location_name ?? (sportData as Record<string, unknown>).country_name ?? (sportData as Record<string, unknown>).country_code],
-                            ['Preparation', (sportData as Record<string, unknown>).race_preparation_status ?? (sportData as Record<string, unknown>).preparation_status],
-                            ['Startlist', (sportData as Record<string, unknown>).startlist_status],
-                            ['Deadline', formatAdvisorGameDateTime((sportData as Record<string, unknown>).rider_submission_deadline_on ?? (sportData as Record<string, unknown>).submission_deadline ?? (sportData as Record<string, unknown>).deadline)],
-                            ['Stage', (sportData as Record<string, unknown>).stage_number],
-                            ['Stage date', formatAdvisorGameDateTime((sportData as Record<string, unknown>).stage_date)],
-                            ['Stage start', (sportData as Record<string, unknown>).stage_start_time_label ?? (sportData as Record<string, unknown>).start_time_label],
-                            ['Programme', (sportData as Record<string, unknown>).programme_status],
-                            ['Future races · 30 days', (sportData as Record<string, unknown>).future_accepted_races_next_30_game_days ?? (sportData as Record<string, unknown>).accepted_races_next_30_game_days],
-                            ['Management priorities', (sportData as Record<string, unknown>).management_priority_count ?? managementPriorities.length],
+                            [t('sportDirector.raceStart'), formatAdvisorGameDateTime((sportData as Record<string, unknown>).current_focus_race_start_date ?? (sportData as Record<string, unknown>).race_start_date ?? (sportData as Record<string, unknown>).start_date)],
+                            [t('sportDirector.raceEnd'), formatAdvisorGameDateTime((sportData as Record<string, unknown>).current_focus_race_end_date ?? (sportData as Record<string, unknown>).race_end_date ?? (sportData as Record<string, unknown>).end_date)],
+                            [t('sportDirector.raceLocation'), (sportData as Record<string, unknown>).race_location ?? (sportData as Record<string, unknown>).location_name ?? (sportData as Record<string, unknown>).country_name ?? (sportData as Record<string, unknown>).country_code],
+                            [t('sportDirector.preparation'), (sportData as Record<string, unknown>).race_preparation_status ?? (sportData as Record<string, unknown>).preparation_status],
+                            [t('sportDirector.startlist'), (sportData as Record<string, unknown>).startlist_status],
+                            [t('sportDirector.deadline'), formatAdvisorGameDateTime((sportData as Record<string, unknown>).rider_submission_deadline_on ?? (sportData as Record<string, unknown>).submission_deadline ?? (sportData as Record<string, unknown>).deadline)],
+                            [t('common.stage'), (sportData as Record<string, unknown>).stage_number],
+                            [t('sportDirector.stageDate'), formatAdvisorGameDateTime((sportData as Record<string, unknown>).stage_date)],
+                            [t('sportDirector.stageStart'), (sportData as Record<string, unknown>).stage_start_time_label ?? (sportData as Record<string, unknown>).start_time_label],
+                            [t('sportDirector.programme'), (sportData as Record<string, unknown>).programme_status],
+                            [t('sportDirector.futureRaces'), (sportData as Record<string, unknown>).future_accepted_races_next_30_game_days ?? (sportData as Record<string, unknown>).accepted_races_next_30_game_days],
+                            [t('sportDirector.managementPriorities'), (sportData as Record<string, unknown>).management_priority_count ?? managementPriorities.length],
                             [t('sportDirector.missingStagePlans'), (sportData as Record<string, unknown>).actionable_missing_stage_plans ?? (sportData as Record<string, unknown>).missing_stage_plans],
-                            ['Incomplete stage plans', (sportData as Record<string, unknown>).actionable_problem_stage_plans ?? (sportData as Record<string, unknown>).problem_stage_plans],
-                            ['Programme gap', (sportData as Record<string, unknown>).programme_gap_days],
-                            ['Next accepted race', (sportData as Record<string, unknown>).next_future_race ?? (sportData as Record<string, unknown>).next_future_race_name],
-                            ['Next race date', formatAdvisorGameDateTime((sportData as Record<string, unknown>).next_future_race_start_date)],
+                            [t('sportDirector.incompleteStagePlans'), (sportData as Record<string, unknown>).actionable_problem_stage_plans ?? (sportData as Record<string, unknown>).problem_stage_plans],
+                            [t('sportDirector.programmeGap'), (sportData as Record<string, unknown>).programme_gap_days],
+                            [t('sportDirector.nextAcceptedRace'), (sportData as Record<string, unknown>).next_future_race ?? (sportData as Record<string, unknown>).next_future_race_name],
+                            [t('sportDirector.nextRaceDate'), formatAdvisorGameDateTime((sportData as Record<string, unknown>).next_future_race_start_date)],
                           ].filter(([, value]) => value !== undefined && value !== null && value !== '')
 
                           return (
@@ -2254,7 +2259,7 @@ export default function NotificationsPage(): JSX.Element {
                                               {label}
                                             </div>
                                             <div className="mt-1 text-lg font-semibold text-slate-900">
-                                              {label === 'Rider' ? renderAdvisorRiderIdentity({
+                                              {label === t('common.rider') ? renderAdvisorRiderIdentity({
                                                 value,
                                                 source: sportData as Record<string, unknown>,
                                                 navigate,
@@ -2269,13 +2274,13 @@ export default function NotificationsPage(): JSX.Element {
                                     {managementPriorities.length > 0 ? (
                                       <div className="mt-5">
                                         <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                                          Management priorities
+                                          {t('sportDirector.managementPriorities')}
                                         </div>
                                         <div className="mt-2 overflow-hidden rounded-lg border border-slate-200 bg-white">
                                           <div className="grid grid-cols-[minmax(0,180px)_minmax(0,1fr)_80px] gap-3 border-b border-slate-200 bg-slate-50 px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-                                            <span>Priority</span>
-                                            <span>Detail</span>
-                                            <span>Rank</span>
+                                            <span>{t('common.priority')}</span>
+                                            <span>{t('common.detail')}</span>
+                                            <span>{t('common.rank')}</span>
                                           </div>
                                           {managementPriorities.map((priority, index) => (
                                             <div
@@ -2300,15 +2305,15 @@ export default function NotificationsPage(): JSX.Element {
                                     {missingStages.length > 0 ? (
                                       <div className="mt-5">
                                         <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                                          Missing or incomplete stage plans
+                                          {t('sportDirector.missingPlans')}
                                         </div>
                                         <div className="mt-2 overflow-hidden rounded-lg border border-slate-200 bg-white">
                                           <div className="grid grid-cols-[90px_120px_90px_100px_minmax(0,1fr)] gap-3 border-b border-slate-200 bg-slate-50 px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-                                            <span>Stage</span>
-                                            <span>Date</span>
-                                            <span>Start</span>
-                                            <span>Urgency</span>
-                                            <span>Status</span>
+                                            <span>{t('common.stage')}</span>
+                                            <span>{t('common.date')}</span>
+                                            <span>{t('common.start')}</span>
+                                            <span>{t('sportDirector.urgency')}</span>
+                                            <span>{t('common.status')}</span>
                                           </div>
                                           {missingStages.map((stage, index) => (
                                             <div
@@ -2316,7 +2321,7 @@ export default function NotificationsPage(): JSX.Element {
                                               className="grid grid-cols-[90px_120px_90px_100px_minmax(0,1fr)] gap-3 border-b border-slate-100 px-3 py-2.5 text-sm last:border-b-0"
                                             >
                                               <span className="font-medium text-slate-900">
-                                                Stage {formatAdvisorValue(stage.stage_number)}
+                                                {t('common.stageValue', { stage: formatAdvisorValue(stage.stage_number) })}
                                               </span>
                                               <span className="text-slate-700">
                                                 {formatAdvisorGameDateTime(stage.stage_date)}
@@ -2339,7 +2344,7 @@ export default function NotificationsPage(): JSX.Element {
                                     {recommendations.length > 0 ? (
                                       <div className="mt-5">
                                         <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                                          Sports Director recommendations
+                                          {t('sportDirector.recommendations')}
                                         </div>
                                         <ul className="mt-2 space-y-2">
                                           {recommendations.map((recommendation, index) => (
@@ -2466,19 +2471,19 @@ export default function NotificationsPage(): JSX.Element {
                             : '/dashboard/squad'
 
                           const doctorSummaryEntries = [
-                            ['Rider', (doctorData as Record<string, unknown>).rider_name],
+                            [t('common.rider'), (doctorData as Record<string, unknown>).rider_name],
                             [t('doctor.medicalCase'), (doctorData as Record<string, unknown>).case_label ?? (doctorData as Record<string, unknown>).case_code ?? (doctorData as Record<string, unknown>).case_type],
                             [t('doctor.severity'), (doctorData as Record<string, unknown>).severity],
-                            ['Body part', (doctorData as Record<string, unknown>).body_part],
-                            ['Injured riders', (doctorData as Record<string, unknown>).injured_riders],
-                            ['Sick riders', (doctorData as Record<string, unknown>).sick_riders],
-                            ['Active medical cases', (doctorData as Record<string, unknown>).active_health_cases ?? (doctorData as Record<string, unknown>).active_or_recovering_health_cases],
-                            ['Base recovery days', (doctorData as Record<string, unknown>).total_selected_base_recovery_days ?? (doctorData as Record<string, unknown>).selected_base_days],
-                            ['Adjusted recovery days', (doctorData as Record<string, unknown>).total_adjusted_recovery_days ?? (doctorData as Record<string, unknown>).final_recovery_days],
-                            ['Full days saved', (doctorData as Record<string, unknown>).total_recovery_days_saved ?? (doctorData as Record<string, unknown>).recovery_days_saved],
-                            ['Medical staff reduction', (doctorData as Record<string, unknown>).medical_staff_reduction_pct],
-                            ['Medical Center reduction', (doctorData as Record<string, unknown>).infrastructure_reduction_pct],
-                            ['Total recovery reduction', (doctorData as Record<string, unknown>).total_reduction_pct ?? (doctorData as Record<string, unknown>).max_recovery_reduction_pct],
+                            [t('doctor.bodyPart'), (doctorData as Record<string, unknown>).body_part],
+                            [t('doctor.injuredRiders'), (doctorData as Record<string, unknown>).injured_riders],
+                            [t('doctor.sickRiders'), (doctorData as Record<string, unknown>).sick_riders],
+                            [t('doctor.activeCases'), (doctorData as Record<string, unknown>).active_health_cases ?? (doctorData as Record<string, unknown>).active_or_recovering_health_cases],
+                            [t('doctor.baseRecoveryDays'), (doctorData as Record<string, unknown>).total_selected_base_recovery_days ?? (doctorData as Record<string, unknown>).selected_base_days],
+                            [t('doctor.adjustedRecoveryDays'), (doctorData as Record<string, unknown>).total_adjusted_recovery_days ?? (doctorData as Record<string, unknown>).final_recovery_days],
+                            [t('doctor.fullDaysSaved'), (doctorData as Record<string, unknown>).total_recovery_days_saved ?? (doctorData as Record<string, unknown>).recovery_days_saved],
+                            [t('doctor.staffReduction'), (doctorData as Record<string, unknown>).medical_staff_reduction_pct],
+                            [t('doctor.centerReduction'), (doctorData as Record<string, unknown>).infrastructure_reduction_pct],
+                            [t('doctor.totalReduction'), (doctorData as Record<string, unknown>).total_reduction_pct ?? (doctorData as Record<string, unknown>).max_recovery_reduction_pct],
                             [t('doctor.expectedReturn'), formatAdvisorGameDateTime((doctorData as Record<string, unknown>).expected_full_recovery_on ?? (doctorData as Record<string, unknown>).unavailable_until)],
                           ].filter(([, value]) => value !== undefined && value !== null && value !== '')
 
@@ -2546,19 +2551,19 @@ export default function NotificationsPage(): JSX.Element {
                                     {displayedHealthCases.length > 0 ? (
                                       <div className="mt-5">
                                         <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                                          Medical cases
+                                          {t('doctor.cases')}
                                         </div>
                                         <div className="mt-2 overflow-hidden rounded-lg border border-slate-200 bg-white">
                                           <div className="grid min-w-[1040px] grid-cols-[minmax(150px,1fr)_150px_100px_100px_90px_90px_110px_110px_130px] gap-3 border-b border-slate-200 bg-slate-50 px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-                                            <span>Rider</span>
-                                            <span>Medical case</span>
-                                            <span>Severity</span>
-                                            <span>Body part</span>
-                                            <span>Base</span>
-                                            <span>Adjusted</span>
-                                            <span>Staff effect</span>
-                                            <span>Facility effect</span>
-                                            <span>Expected return</span>
+                                            <span>{t('common.rider')}</span>
+                                            <span>{t('doctor.medicalCase')}</span>
+                                            <span>{t('doctor.severity')}</span>
+                                            <span>{t('doctor.bodyPart')}</span>
+                                            <span>{t('doctor.base')}</span>
+                                            <span>{t('doctor.adjusted')}</span>
+                                            <span>{t('doctor.staffEffect')}</span>
+                                            <span>{t('doctor.facilityEffect')}</span>
+                                            <span>{t('doctor.expectedReturn')}</span>
                                           </div>
                                           {displayedHealthCases.map((healthCase, index) => (
                                             <div
@@ -2626,7 +2631,7 @@ export default function NotificationsPage(): JSX.Element {
                                     {recommendations.length > 0 ? (
                                       <div className="mt-5">
                                         <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                                          Team Doctor recommendations
+                                          {t('doctor.recommendations')}
                                         </div>
                                         <ul className="mt-2 space-y-2">
                                           {recommendations.map((recommendation, index) => (
@@ -2737,13 +2742,13 @@ export default function NotificationsPage(): JSX.Element {
 
                           const mechanicSummaryEntries: Array<[string, unknown, string?]> = [
                             [t('mechanic.equipmentItems'), mechanicData.total_items],
-                            ['Ready items', mechanicData.ready_items],
+                            [t('mechanic.readyItems'), mechanicData.ready_items],
                             [t('mechanic.averageCondition'), mechanicData.average_condition_percent, '%'],
-                            ['Needs attention', mechanicData.maintenance_needed ?? mechanicData.equipment_needing_attention_count],
-                            ['Critical items', mechanicData.critical_items],
-                            ['Pending maintenance', mechanicData.pending_maintenance_jobs],
-                            ['Empty supply types', mechanicData.empty_supply_types],
-                            ['Low supply types', mechanicData.low_supply_types],
+                            [t('mechanic.needsAttention'), mechanicData.maintenance_needed ?? mechanicData.equipment_needing_attention_count],
+                            [t('mechanic.criticalItems'), mechanicData.critical_items],
+                            [t('mechanic.pendingMaintenance'), mechanicData.pending_maintenance_jobs],
+                            [t('mechanic.emptySupplies'), mechanicData.empty_supply_types],
+                            [t('mechanic.lowSupplies'), mechanicData.low_supply_types],
                           ].filter(([, value]) => value !== undefined && value !== null && value !== '')
 
                           return (
@@ -2757,7 +2762,7 @@ export default function NotificationsPage(): JSX.Element {
                                     </div>
                                   </div>
                                   <div className="text-xs text-slate-500">
-                                    {formatAdvisorDisplayText(advisorPayload.report_variant)}
+                                    {t(`reportVariants.${String(advisorPayload.report_variant ?? '')}`, { defaultValue: formatAdvisorDisplayText(advisorPayload.report_variant) })}
                                   </div>
                                 </div>
                               </div>
@@ -2784,11 +2789,11 @@ export default function NotificationsPage(): JSX.Element {
 
                                     {equipmentNeedingAttention.length > 0 ? (
                                       <div className="mt-5">
-                                        <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Equipment needing attention</div>
+                                        <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">{t('mechanic.attentionTitle')}</div>
                                         <div className="mt-2 overflow-x-auto rounded-lg border border-slate-200 bg-white">
                                           <div className="min-w-[860px]">
                                             <div className="grid grid-cols-[minmax(180px,1fr)_130px_110px_120px_110px_120px] gap-3 border-b border-slate-200 bg-slate-50 px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-                                              <span>Equipment</span><span>Category</span><span>Condition</span><span>Status</span><span>Priority</span><span>Last used</span>
+                                              <span>{t('mechanic.equipment')}</span><span>{t('mechanic.category')}</span><span>{t('mechanic.condition')}</span><span>{t('common.status')}</span><span>{t('common.priority')}</span><span>{t('mechanic.lastUsed')}</span>
                                             </div>
                                             {equipmentNeedingAttention.map((equipment, index) => (
                                               <div key={`${String(equipment.equipment_id ?? index)}-${index}`} className="grid grid-cols-[minmax(180px,1fr)_130px_110px_120px_110px_120px] gap-3 border-b border-slate-100 px-3 py-2.5 text-sm last:border-b-0">
@@ -2807,10 +2812,10 @@ export default function NotificationsPage(): JSX.Element {
 
                                     {equipmentCategories.length > 0 ? (
                                       <div className="mt-5">
-                                        <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Equipment categories</div>
+                                        <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">{t('mechanic.equipmentCategories')}</div>
                                         <div className="mt-2 overflow-hidden rounded-lg border border-slate-200 bg-white">
                                           <div className="grid grid-cols-[minmax(0,1fr)_100px_100px_110px_120px] gap-3 border-b border-slate-200 bg-slate-50 px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-                                            <span>Category</span><span>Owned</span><span>Ready</span><span>Attention</span><span>Avg. condition</span>
+                                            <span>{t('mechanic.category')}</span><span>{t('mechanic.owned')}</span><span>{t('mechanic.ready')}</span><span>{t('mechanic.attention')}</span><span>{t('mechanic.avgCondition')}</span>
                                           </div>
                                           {equipmentCategories.map((category, index) => (
                                             <div key={`${String(category.equipment_category ?? index)}-${index}`} className="grid grid-cols-[minmax(0,1fr)_100px_100px_110px_120px] gap-3 border-b border-slate-100 px-3 py-2.5 text-sm last:border-b-0">
@@ -2827,10 +2832,10 @@ export default function NotificationsPage(): JSX.Element {
 
                                     {raceSupplies.length > 0 ? (
                                       <div className="mt-5">
-                                        <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Race supplies</div>
+                                        <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">{t('mechanic.raceSupplies')}</div>
                                         <div className="mt-2 overflow-hidden rounded-lg border border-slate-200 bg-white">
                                           <div className="grid grid-cols-[minmax(0,1fr)_100px_100px_100px_120px] gap-3 border-b border-slate-200 bg-slate-50 px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-                                            <span>Supply</span><span>Available</span><span>Threshold</span><span>Status</span><span>Last used</span>
+                                            <span>{t('mechanic.supply')}</span><span>{t('mechanic.available')}</span><span>{t('mechanic.threshold')}</span><span>{t('common.status')}</span><span>{t('mechanic.lastUsed')}</span>
                                           </div>
                                           {raceSupplies.map((supply, index) => (
                                             <div key={`${String(supply.supply_key ?? index)}-${index}`} className="grid grid-cols-[minmax(0,1fr)_100px_100px_100px_120px] gap-3 border-b border-slate-100 px-3 py-2.5 text-sm last:border-b-0">
@@ -2847,7 +2852,7 @@ export default function NotificationsPage(): JSX.Element {
 
                                     {recommendations.length > 0 ? (
                                       <div className="mt-5">
-                                        <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Chief Mechanic recommendations</div>
+                                        <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">{t('mechanic.recommendations')}</div>
                                         <ul className="mt-2 space-y-2">
                                           {recommendations.map((recommendation, index) => (
                                             <li key={`${String(recommendation)}-${index}`} className="flex gap-2 text-sm leading-6 text-slate-700">
@@ -2917,20 +2922,20 @@ export default function NotificationsPage(): JSX.Element {
 
                           const scoutSummaryEntries: Array<[string, unknown]> = isPriorityProspect
                             ? [
-                                ['Rider', getAdvisorRiderDisplayName(scoutData.rider_name as unknown, scoutData as Record<string, unknown>)],
-                                ['Country', scoutData.rider_country_code ?? scoutData.country_code],
+                                [t('common.rider'), getAdvisorRiderDisplayName(scoutData.rider_name as unknown, scoutData as Record<string, unknown>)],
+                                [t('common.country'), scoutData.rider_country_code ?? scoutData.country_code],
                                 [t('scout.overall'), scoutData.overall_exact ?? scoutData.overall_label],
                                 [t('scout.potential'), scoutData.potential_label],
-                                ['Potential score', scoutData.potential_exact],
+                                [t('scout.potentialScore'), scoutData.potential_exact],
                                 [t('scout.precision'), scoutData.precision_score],
-                                ['Precision tier', scoutData.precision_tier],
-                                ['Review status', scoutData.review_status],
+                                [t('scout.precisionTier'), scoutData.precision_tier],
+                                [t('scout.reviewStatus'), scoutData.review_status],
                               ].filter(([, value]) => value !== undefined && value !== null && value !== '')
                             : [
-                                ['Completed reports', scoutData.completed_reports],
-                                ['Reports · last 7 real days', scoutData.reports_last_7_real_days],
-                                ['High / Elite prospects', scoutData.high_or_elite_potential_reports],
-                                ['Active assignments', scoutData.active_scouting_tasks],
+                                [t('scout.completedReports'), scoutData.completed_reports],
+                                [t('scout.reports7Days'), scoutData.reports_last_7_real_days],
+                                [t('scout.highElite'), scoutData.high_or_elite_potential_reports],
+                                [t('scout.activeAssignments'), scoutData.active_scouting_tasks],
                               ].filter(([, value]) => value !== undefined && value !== null && value !== '')
 
                           const priorityStrengths = Array.isArray(scoutData.strengths)
@@ -2954,9 +2959,9 @@ export default function NotificationsPage(): JSX.Element {
                                   </div>
 
                                   <div className="text-xs text-slate-500">
-                                    {formatAdvisorDisplayText(
-                                      advisorPayload.report_variant
-                                    )}
+                                    {t(`reportVariants.${String(advisorPayload.report_variant ?? '')}`, {
+                                      defaultValue: formatAdvisorDisplayText(advisorPayload.report_variant),
+                                    })}
                                   </div>
                                 </div>
                               </div>
@@ -2985,15 +2990,15 @@ export default function NotificationsPage(): JSX.Element {
                                               {label}
                                             </div>
                                             <div className="mt-1 text-lg font-semibold text-slate-900">
-                                              {label === 'Rider' ? renderAdvisorRiderIdentity({
+                                              {label === t('common.rider') ? renderAdvisorRiderIdentity({
                                                 value,
                                                 source: scoutData as Record<string, unknown>,
                                                 navigate,
                                                 defaultScope: 'external',
-                                              }) : label === 'Country' && getAdvisorCountryFlagUrl(value) ? (
+                                              }) : label === t('common.country') && getAdvisorCountryFlagUrl(value) ? (
                                                 <img
                                                   src={getAdvisorCountryFlagUrl(value) ?? undefined}
-                                                  alt={String(value ?? 'Country')}
+                                                  alt={String(value ?? t('common.country'))}
                                                   title={String(value ?? '')}
                                                   className="h-[18px] w-6 rounded-[2px] object-cover ring-1 ring-slate-200"
                                                   loading="lazy"
@@ -3010,7 +3015,7 @@ export default function NotificationsPage(): JSX.Element {
                                     {isPriorityProspect && priorityStrengths.length > 0 ? (
                                       <div className="mt-5">
                                         <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                                          Reported strengths
+                                          {t('scout.reportedStrengths')}
                                         </div>
                                         <div className="mt-2 flex flex-wrap gap-2">
                                           {priorityStrengths.map((strength, index) => (
@@ -3028,7 +3033,7 @@ export default function NotificationsPage(): JSX.Element {
                                     {isPriorityProspect && scoutData.notes ? (
                                       <div className="mt-5">
                                         <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                                          Scout notes
+                                          {t('scout.notes')}
                                         </div>
                                         <div className="mt-2 rounded-lg border border-slate-200 bg-white px-3 py-3 text-sm leading-6 text-slate-700">
                                           {String(scoutData.notes)}
@@ -3039,20 +3044,20 @@ export default function NotificationsPage(): JSX.Element {
                                     {!isPriorityProspect && recentReports.length > 0 ? (
                                       <div className="mt-5">
                                         <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                                          Recent scouting intelligence
+                                          {t('scout.recentIntelligence')}
                                         </div>
 
                                         <div className="mt-2 overflow-x-auto rounded-lg border border-slate-200 bg-white">
                                           <div className="min-w-[1040px]">
                                             <div className="grid grid-cols-[minmax(130px,1fr)_80px_90px_110px_100px_100px_140px_minmax(180px,1fr)] gap-3 border-b border-slate-200 bg-slate-50 px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-                                              <span>Rider</span>
-                                              <span>Country</span>
-                                              <span>Overall</span>
-                                              <span>Potential</span>
-                                              <span>Precision</span>
-                                              <span>Status</span>
-                                              <span>Completed</span>
-                                              <span>Strengths</span>
+                                              <span>{t('common.rider')}</span>
+                                              <span>{t('common.country')}</span>
+                                              <span>{t('scout.overall')}</span>
+                                              <span>{t('scout.potential')}</span>
+                                              <span>{t('scout.precision')}</span>
+                                              <span>{t('common.status')}</span>
+                                              <span>{t('scout.completed')}</span>
+                                              <span>{t('scout.strengths')}</span>
                                             </div>
 
                                             {recentReports.map((report, index) => {
@@ -3142,18 +3147,18 @@ export default function NotificationsPage(): JSX.Element {
                                     {!isPriorityProspect && activeTasks.length > 0 ? (
                                       <div className="mt-5">
                                         <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                                          Active scouting assignments
+                                          {t('scout.activeScouting')}
                                         </div>
 
                                         <div className="mt-2 overflow-x-auto rounded-lg border border-slate-200 bg-white">
                                           <div className="min-w-[780px]">
                                             <div className="grid grid-cols-[minmax(140px,1fr)_90px_110px_100px_140px_100px] gap-3 border-b border-slate-200 bg-slate-50 px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-                                              <span>Rider</span>
-                                              <span>Country</span>
-                                              <span>Status</span>
-                                              <span>Precision</span>
-                                              <span>Completes</span>
-                                              <span>Paid</span>
+                                              <span>{t('common.rider')}</span>
+                                              <span>{t('common.country')}</span>
+                                              <span>{t('common.status')}</span>
+                                              <span>{t('scout.precision')}</span>
+                                              <span>{t('scout.completes')}</span>
+                                              <span>{t('scout.paid')}</span>
                                             </div>
 
                                             {activeTasks.map((task, index) => (
@@ -3187,8 +3192,8 @@ export default function NotificationsPage(): JSX.Element {
                                                 <span>{formatAdvisorGameDateTime(task.completes_at_game_ts)}</span>
                                                 <span>
                                                   {task.is_paid === true
-                                                    ? `Yes${task.coin_cost ? ` · ${formatAdvisorValue(task.coin_cost)} coins` : ''}`
-                                                    : 'No'}
+                                                    ? `${t('common.yes')}${task.coin_cost ? ` · ${t('common.coins', { count: Number(task.coin_cost) })}` : ''}`
+                                                    : t('common.no')}
                                                 </span>
                                               </div>
                                             ))}
@@ -3200,7 +3205,7 @@ export default function NotificationsPage(): JSX.Element {
                                     {recommendations.length > 0 ? (
                                       <div className="mt-5">
                                         <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                                          Scout recommendations
+                                          {t('scout.recommendations')}
                                         </div>
                                         <ul className="mt-2 space-y-2">
                                           {recommendations.map((recommendation, index) => (
@@ -3241,7 +3246,7 @@ export default function NotificationsPage(): JSX.Element {
                                       }
                                       className="rounded-md bg-slate-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-slate-800"
                                     >
-                                      Open rider
+                                      {t('details.openRider')}
                                     </button>
                                   ) : null}
 
