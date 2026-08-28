@@ -6050,7 +6050,6 @@ function buildTeamNewsItems(
   alerts: AlertItem[],
   feed: FeedItem[],
   currentGameDateLabel: string,
-  t: (key: string, options?: Record<string, unknown>) => string,
 ): OverviewNewsListItem[] {
   const alertItems: OverviewNewsListItem[] = alerts.map((alert) => {
     const href = normalizeDashboardHref(alert.href);
@@ -6058,30 +6057,32 @@ function buildTeamNewsItems(
     return {
       id: `alert:${alert.id}`,
       title: alert.label,
-      subtitle: t("news.actionMayBeRequired"),
+      subtitle: "Action may be required from your team management dashboard.",
       timeLabel: getOverviewCurrentGameDateTimeLabel(currentGameDateLabel),
       href,
       level: alert.level,
       sourceLabel: "Team",
-      expandedText: t("news.actionMayBeRequired"),
-      linkLabel: t("news.openRelatedPage"),
+      expandedText: buildTeamNewsExpandedText(
+        alert.label,
+        "Action may be required from your team management dashboard.",
+      ),
+      linkLabel: getNewsLinkLabel(href, "Team"),
     };
   });
 
   const feedItems: OverviewNewsListItem[] = feed.map((item) => {
     const href = normalizeDashboardHref(item.href);
-    const localizedCopy = localizeOverviewTeamFeedCopy(item.title, item.subtitle, t);
 
     return {
       id: `feed:${item.id}`,
-      title: localizedCopy.title,
-      subtitle: localizedCopy.subtitle,
+      title: item.title,
+      subtitle: buildWorldNewsSubtitle(item),
       timeLabel: getOverviewGameTimeLabel(item.timeLabel, currentGameDateLabel),
       href,
       level: item.level,
       sourceLabel: "Team",
-      expandedText: localizedCopy.subtitle,
-      linkLabel: t("news.openRelatedPage"),
+      expandedText: buildTeamNewsExpandedText(item.title, item.subtitle),
+      linkLabel: getNewsLinkLabel(href, "Team"),
     };
   });
 
@@ -6315,7 +6316,7 @@ function NewsCommandCenter({
   const { t } = useTranslation("overview");
   const [expandedId, setExpandedId] = React.useState<string | null>(null);
 
-  const teamNewsItems = buildTeamNewsItems(alerts, feed, currentGameDateLabel, t);
+  const teamNewsItems = buildTeamNewsItems(alerts, feed, currentGameDateLabel);
   const worldNewsItems = buildWorldNewsItems(news, currentGameDateLabel);
   const combinedItems = buildSortedDedupedNewsBoardItems(
     teamNewsItems,
@@ -6323,6 +6324,30 @@ function NewsCommandCenter({
     currentGameDateLabel,
     7,
   );
+
+  const displayItems = combinedItems.map((item) => {
+    if (item.sourceLabel !== "Team") return item;
+
+    const localizedCopy = localizeOverviewTeamFeedCopy(item.title, item.subtitle, t);
+    const copyChanged =
+      localizedCopy.title !== item.title || localizedCopy.subtitle !== item.subtitle;
+    const isGenericAttention =
+      item.subtitle === "Action may be required from your team management dashboard.";
+
+    return {
+      ...item,
+      title: localizedCopy.title,
+      subtitle: isGenericAttention
+        ? t("news.actionMayBeRequired")
+        : localizedCopy.subtitle,
+      expandedText: copyChanged
+        ? localizedCopy.subtitle
+        : isGenericAttention
+          ? t("news.actionMayBeRequired")
+          : item.expandedText,
+      linkLabel: item.href ? t("news.openRelatedPage") : item.linkLabel,
+    };
+  });
 
   return (
     <Card className="overflow-hidden">
@@ -6333,15 +6358,15 @@ function NewsCommandCenter({
             subtitle={t("news.boardSubtitle")}
           />
           <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-600">
-            {combinedItems.length}/7
+            {displayItems.length}/7
           </span>
         </div>
       </div>
 
       <div className="p-5">
-        {combinedItems.length > 0 ? (
+        {displayItems.length > 0 ? (
           <div className="divide-y divide-slate-100">
-            {combinedItems.map((item) => {
+            {displayItems.map((item) => {
               const isExpanded = expandedId === item.id;
 
               return (
