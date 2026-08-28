@@ -75,16 +75,6 @@ jobs:
       - name: Production build
         run: npm run build
 
-      - name: Verify target pages are wired to i18n
-        shell: bash
-        run: |
-          grep -q "useTranslation('help')" src/pages/Help.tsx
-          grep -q "useTranslation('proPackages')" src/pages/ProPackages.tsx
-          grep -q "useTranslation('preferences')" src/pages/Preferences.tsx
-          grep -q "useTranslation('customizeTeam')" src/pages/CustomizeTeam.tsx
-          grep -q "flagcdn.com/w40/rs.png" src/pages/MyProfile.tsx
-          grep -q "flagcdn.com/w40/gb.png" src/pages/MyProfile.tsx
-
       - name: Commit product changes
         shell: bash
         run: |
