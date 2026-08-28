@@ -39,7 +39,18 @@ jobs:
         env:
           HF_HUB_DISABLE_XET: '1'
           TOKENIZERS_PARALLELISM: 'false'
-        run: python .github/scripts/localize_full_manual_sr_latn_20260828.py
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('.github/scripts/localize_full_manual_sr_latn_20260828.py')
+          text = path.read_text(encoding='utf-8')
+          old = "    array_start = source.index('[', start)"
+          new = "    array_start = source.index('= [', start) + 2"
+          if old not in text:
+              raise SystemExit('manual array extractor anchor not found')
+          path.write_text(text.replace(old, new, 1), encoding='utf-8')
+          PY
+          python .github/scripts/localize_full_manual_sr_latn_20260828.py
 
       - name: Install app dependencies
         run: npm ci
