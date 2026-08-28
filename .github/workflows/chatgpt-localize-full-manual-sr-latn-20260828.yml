@@ -35,10 +35,7 @@ jobs:
           python -m pip install --quiet sentencepiece protobuf 'transformers==4.53.0'
           python -m pip install --quiet torch --index-url https://download.pytorch.org/whl/cpu
 
-      - name: Retranslate all 92 manual sections
-        env:
-          HF_HUB_DISABLE_XET: '1'
-          TOKENIZERS_PARALLELISM: 'false'
+      - name: Prepare Serbian Latin translator
         run: |
           python - <<'PY'
           from pathlib import Path
@@ -46,118 +43,121 @@ jobs:
           path = Path('.github/scripts/localize_full_manual_sr_latn_20260828.py')
           text = path.read_text(encoding='utf-8')
 
-          replacements = [
+          for old, new in [
               ("TARGET_LANG = 'srp_Cyrl'", "TARGET_LANG = 'hrv_Latn'"),
               ('BATCH_SIZE = 12', 'BATCH_SIZE = 24'),
               ('num_beams=3', 'num_beams=1'),
-          ]
-          for old, new in replacements:
+          ]:
               if old not in text:
                   raise SystemExit(f'Missing translator anchor: {old}')
               text = text.replace(old, new, 1)
 
           post_anchor = "]\n\n\ndef load_json"
-          post_extra = """    (r'\\btakođer\\b', 'takođe'),
-              (r'\\bTakođer\\b', 'Takođe'),
-              (r'\\bsustav\\b', 'sistem'),
-              (r'\\bSustav\\b', 'Sistem'),
-              (r'\\bsustavi\\b', 'sistemi'),
-              (r'\\bSustavi\\b', 'Sistemi'),
-              (r'\\bizvješće\\b', 'izveštaj'),
-              (r'\\bIzvješće\\b', 'Izveštaj'),
-              (r'\\bizvješća\\b', 'izveštaji'),
-              (r'\\bIzvješća\\b', 'Izveštaji'),
-              (r'\\brazina\\b', 'nivo'),
-              (r'\\bRazina\\b', 'Nivo'),
-              (r'\\brazine\\b', 'nivoi'),
-              (r'\\bRazine\\b', 'Nivoi'),
-              (r'\\bsljedeći\\b', 'sledeći'),
-              (r'\\bSljedeći\\b', 'Sledeći'),
-              (r'\\bsljedeća\\b', 'sledeća'),
-              (r'\\bSljedeća\\b', 'Sledeća'),
-              (r'\\bsljedeće\\b', 'sledeće'),
-              (r'\\bSljedeće\\b', 'Sledeće'),
-              (r'\\btrenutačno\\b', 'trenutno'),
-              (r'\\bTrenutačno\\b', 'Trenutno'),
-              (r'\\btočka\\b', 'tačka'),
-              (r'\\bTočka\\b', 'Tačka'),
-              (r'\\btočke\\b', 'tačke'),
-              (r'\\bTočke\\b', 'Tačke'),
-              (r'\\bodjeljak\\b', 'odeljak'),
-              (r'\\bOdjeljak\\b', 'Odeljak'),
-              (r'\\bodjeljci\\b', 'odeljci'),
-              (r'\\bOdjeljci\\b', 'Odeljci'),
-              (r'\\bsmještaj\\b', 'smeštaj'),
-              (r'\\bSmještaj\\b', 'Smeštaj'),
-              (r'\\bizbornik\\b', 'meni'),
-              (r'\\bIzbornik\\b', 'Meni'),
-              (r'\\bpovijest\\b', 'istorija'),
-              (r'\\bPovijest\\b', 'Istorija'),
-              (r'\\btjedan\\b', 'nedelja'),
-              (r'\\bTjedan\\b', 'Nedelja'),
-              (r'\\btjedni\\b', 'nedeljni'),
-              (r'\\bTjedni\\b', 'Nedeljni'),
-              (r'\\bmjesec\\b', 'mesec'),
-              (r'\\bMjesec\\b', 'Mesec'),
-              (r'\\bmjesečni\\b', 'mesečni'),
-              (r'\\bMjesečni\\b', 'Mesečni'),
-              (r'\\bnatjecanje\\b', 'takmičenje'),
-              (r'\\bNatjecanje\\b', 'Takmičenje'),
-              (r'\\bnatjecanja\\b', 'takmičenja'),
-              (r'\\bNatjecanja\\b', 'Takmičenja'),
-              (r'\\busporedba\\b', 'poređenje'),
-              (r'\\bUsporedba\\b', 'Poređenje'),
+          extra_rules = [
+              "    (r'\\btakođer\\b', 'takođe'),",
+              "    (r'\\bTakođer\\b', 'Takođe'),",
+              "    (r'\\bsustav\\b', 'sistem'),",
+              "    (r'\\bSustav\\b', 'Sistem'),",
+              "    (r'\\bsustavi\\b', 'sistemi'),",
+              "    (r'\\bSustavi\\b', 'Sistemi'),",
+              "    (r'\\bizvješće\\b', 'izveštaj'),",
+              "    (r'\\bIzvješće\\b', 'Izveštaj'),",
+              "    (r'\\bizvješća\\b', 'izveštaji'),",
+              "    (r'\\bIzvješća\\b', 'Izveštaji'),",
+              "    (r'\\brazina\\b', 'nivo'),",
+              "    (r'\\bRazina\\b', 'Nivo'),",
+              "    (r'\\brazine\\b', 'nivoi'),",
+              "    (r'\\bRazine\\b', 'Nivoi'),",
+              "    (r'\\bsljedeći\\b', 'sledeći'),",
+              "    (r'\\bSljedeći\\b', 'Sledeći'),",
+              "    (r'\\bsljedeća\\b', 'sledeća'),",
+              "    (r'\\bSljedeća\\b', 'Sledeća'),",
+              "    (r'\\bsljedeće\\b', 'sledeće'),",
+              "    (r'\\bSljedeće\\b', 'Sledeće'),",
+              "    (r'\\btrenutačno\\b', 'trenutno'),",
+              "    (r'\\bTrenutačno\\b', 'Trenutno'),",
+              "    (r'\\btočka\\b', 'tačka'),",
+              "    (r'\\bTočka\\b', 'Tačka'),",
+              "    (r'\\btočke\\b', 'tačke'),",
+              "    (r'\\bTočke\\b', 'Tačke'),",
+              "    (r'\\bodjeljak\\b', 'odeljak'),",
+              "    (r'\\bOdjeljak\\b', 'Odeljak'),",
+              "    (r'\\bodjeljci\\b', 'odeljci'),",
+              "    (r'\\bOdjeljci\\b', 'Odeljci'),",
+              "    (r'\\bsmještaj\\b', 'smeštaj'),",
+              "    (r'\\bSmještaj\\b', 'Smeštaj'),",
+              "    (r'\\bizbornik\\b', 'meni'),",
+              "    (r'\\bIzbornik\\b', 'Meni'),",
+              "    (r'\\bpovijest\\b', 'istorija'),",
+              "    (r'\\bPovijest\\b', 'Istorija'),",
+              "    (r'\\btjedan\\b', 'nedelja'),",
+              "    (r'\\bTjedan\\b', 'Nedelja'),",
+              "    (r'\\btjedni\\b', 'nedeljni'),",
+              "    (r'\\bTjedni\\b', 'Nedeljni'),",
+              "    (r'\\bmjesec\\b', 'mesec'),",
+              "    (r'\\bMjesec\\b', 'Mesec'),",
+              "    (r'\\bmjesečni\\b', 'mesečni'),",
+              "    (r'\\bMjesečni\\b', 'Mesečni'),",
+              "    (r'\\bnatjecanje\\b', 'takmičenje'),",
+              "    (r'\\bNatjecanje\\b', 'Takmičenje'),",
+              "    (r'\\bnatjecanja\\b', 'takmičenja'),",
+              "    (r'\\bNatjecanja\\b', 'Takmičenja'),",
+              "    (r'\\busporedba\\b', 'poređenje'),",
+              "    (r'\\bUsporedba\\b', 'Poređenje'),",
           ]
-
-
-def load_json"""
           if post_anchor not in text:
               raise SystemExit('POST_REPLACEMENTS closing anchor not found')
-          text = text.replace(post_anchor, post_extra, 1)
+          text = text.replace(post_anchor, '\n'.join(extra_rules) + '\n]\n\n\ndef load_json', 1)
 
-          memory_anchor = "    memory = build_translation_memory()\n"
-          memory_replacement = """    memory = build_translation_memory()
-              memory.update({
-                  'Inbox': 'Sanduče',
-                  'Footer': 'Podnožje',
-                  'Referral URL': 'URL preporuke',
-                  'Forum': 'Forum',
-              })
-          """
+          memory_anchor = '    memory = build_translation_memory()\n'
+          memory_lines = [
+              '    memory = build_translation_memory()',
+              '    memory.update({',
+              "        'Inbox': 'Sanduče',",
+              "        'Footer': 'Podnožje',",
+              "        'Referral URL': 'URL preporuke',",
+              "        'Forum': 'Forum',",
+              '    })',
+              '',
+          ]
           if memory_anchor not in text:
               raise SystemExit('translation memory anchor not found')
-          text = text.replace(memory_anchor, memory_replacement, 1)
+          text = text.replace(memory_anchor, '\n'.join(memory_lines), 1)
 
-          validation_old = """    if len(english_fallbacks) > 3:
-                  problems.extend(f'English fallback: {item}' for item in english_fallbacks[:20])
-          """
-          validation_new = """    technical_fallback_markers = (
-                  'JPG, PNG, WEBP',
-                  'create-coin-checkout Edge Function',
-                  'WorldTeam, ProTeam, Continental, Amateur',
-                  'ProTeam West, ProTeam East',
-                  'Forum',
-                  'coin_packages',
-                  'get_my_coin_status',
-                  'create-coin-checkout',
-                  "user_coin_ledger reason='purchase'",
-                  'club-logos',
-                  'club_branding_lock_status_v1',
-              )
-              english_fallbacks = [
-                  item for item in english_fallbacks
-                  if not any(item.endswith(marker) for marker in technical_fallback_markers)
-              ]
-              if len(english_fallbacks) > 3:
-                  problems.extend(f'English fallback: {item}' for item in english_fallbacks[:20])
-          """
+          validation_old = "    if len(english_fallbacks) > 3:\n        problems.extend(f'English fallback: {item}' for item in english_fallbacks[:20])"
+          validation_lines = [
+              '    technical_fallback_markers = (',
+              "        'JPG, PNG, WEBP',",
+              "        'create-coin-checkout Edge Function',",
+              "        'WorldTeam, ProTeam, Continental, Amateur',",
+              "        'ProTeam West, ProTeam East',",
+              "        'Forum',",
+              "        'coin_packages',",
+              "        'get_my_coin_status',",
+              "        'create-coin-checkout',",
+              '        "user_coin_ledger reason=\'purchase\'",',
+              "        'club-logos',",
+              "        'club_branding_lock_status_v1',",
+              '    )',
+              '    english_fallbacks = [',
+              '        item for item in english_fallbacks',
+              '        if not any(item.endswith(marker) for marker in technical_fallback_markers)',
+              '    ]',
+              '    if len(english_fallbacks) > 3:',
+              "        problems.extend(f'English fallback: {item}' for item in english_fallbacks[:20])",
+          ]
           if validation_old not in text:
               raise SystemExit('English fallback validation anchor not found')
-          text = text.replace(validation_old, validation_new, 1)
+          text = text.replace(validation_old, '\n'.join(validation_lines), 1)
 
           path.write_text(text, encoding='utf-8')
           PY
-          python .github/scripts/localize_full_manual_sr_latn_20260828.py
+
+      - name: Retranslate all 92 manual sections
+        env:
+          HF_HUB_DISABLE_XET: '1'
+          TOKENIZERS_PARALLELISM: 'false'
+        run: python .github/scripts/localize_full_manual_sr_latn_20260828.py
 
       - name: Verify manual structure and quality
         run: |
@@ -180,7 +180,6 @@ def load_json"""
               assert marker.lower() not in text.lower(), marker
           assert not re.search(r'[\u0400-\u04ff]', text), 'Cyrillic remained in sr-Latn manual'
 
-          # Terms intentionally retained in English by the game vocabulary.
           for term in ['Race Plan', 'Stage Plans', 'Startlist', 'Race Engine', 'Coins']:
               assert term in text, f'Missing preserved game term: {term}'
 
