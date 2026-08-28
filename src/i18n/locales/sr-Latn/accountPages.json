@@ -72,7 +72,14 @@
     "saveFailed": "Profil nije mogao da se sačuva.",
     "resetEmailMissing": "Email naloga za resetovanje lozinke nije pronađen.",
     "resetSent": "Email za resetovanje lozinke poslat je na {{email}}. Proverite prijemno sanduče i spam folder, zatim pratite link da izaberete novu lozinku.",
-    "resetFailed": "Email za resetovanje lozinke nije mogao da se pošalje. Pokušajte ponovo za trenutak."
+    "resetFailed": "Email za resetovanje lozinke nije mogao da se pošalje. Pokušajte ponovo za trenutak.",
+    "languageTitle": "Jezik igre",
+    "languageDescription": "Izaberite jezik interfejsa igre i obaveštenja za ovaj nalog.",
+    "languageActive": "Aktivan",
+    "languageSaving": "Čuvanje jezika...",
+    "languageAccountHelp": "Ovo podešavanje se čuva na vašem nalogu i koristiće se na drugim uređajima i pri budućim prijavama.",
+    "languageSaved": "Jezik igre je promenjen na {{language}}.",
+    "languageSaveFailed": "Jezik igre nije mogao da se sačuva. Pokušajte ponovo."
   },
   "invite": {
     "title": "Pozovi prijatelje",

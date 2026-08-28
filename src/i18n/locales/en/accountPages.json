@@ -72,7 +72,14 @@
     "saveFailed": "Failed to save profile.",
     "resetEmailMissing": "No account email was found for password reset.",
     "resetSent": "Password reset email sent to {{email}}. Please check your inbox and spam folder, then follow the link to choose a new password.",
-    "resetFailed": "We could not send the password reset email. Please try again in a moment."
+    "resetFailed": "We could not send the password reset email. Please try again in a moment.",
+    "languageTitle": "Game language",
+    "languageDescription": "Choose the language used by the game interface and notifications for this account.",
+    "languageActive": "Active",
+    "languageSaving": "Saving language...",
+    "languageAccountHelp": "This preference is saved to your account and will be used on your other devices and future sign-ins.",
+    "languageSaved": "Game language changed to {{language}}.",
+    "languageSaveFailed": "The game language could not be saved. Please try again."
   },
   "invite": {
     "title": "Invite Friends",

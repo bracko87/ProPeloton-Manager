@@ -342,6 +342,27 @@ function getNotificationCategoryLabel(
     squad: 'categories.squad',
     health: 'categories.health',
     scouting: 'categories.scouting',
+    raceinvitations: 'categories.raceInvitations',
+    raceapplicationresults: 'categories.raceApplicationResults',
+    racepreparation: 'categories.racePreparation',
+    stageplanreminders: 'categories.stagePlanReminders',
+    raceweather: 'categories.raceWeather',
+    raceresults: 'categories.raceResults',
+    teamupdates: 'categories.teamUpdates',
+    staffcontracts: 'categories.staffContracts',
+    staffcourses: 'categories.staffCourses',
+    transferupdates: 'categories.transferUpdates',
+    trainingcamps: 'categories.trainingCamps',
+    scoutingreports: 'categories.scoutingReports',
+    retirementupdates: 'categories.retirementUpdates',
+    financealerts: 'categories.financeAlerts',
+    walletrewards: 'categories.walletRewards',
+    competitionrewards: 'categories.competitionRewards',
+    taxupdates: 'categories.taxUpdates',
+    racesupplies: 'categories.raceSupplies',
+    equipmentupdates: 'categories.equipmentUpdates',
+    infrastructureupdates: 'categories.infrastructureUpdates',
+    systemmessages: 'categories.systemMessages',
     other: 'categories.other',
   }
 
@@ -845,6 +866,28 @@ export default function NotificationsPage(): JSX.Element {
         Race: 'details.race',
         'Race Preparation': 'details.racePreparation',
         'Mark as read': 'details.markRead',
+        'Open staff': 'details.openStaff',
+        'Team page': 'details.teamPage',
+        'Open staff profile': 'details.openStaffProfile',
+        'Open staff page': 'details.openStaffPage',
+        'Open transfers': 'details.openTransfers',
+        'Open negotiation': 'details.openNegotiation',
+        'Review transfer': 'details.reviewTransfer',
+        'Check offer': 'details.checkOffer',
+        'Open free agents': 'details.openFreeAgents',
+        'Pro Packages': 'details.proPackages',
+        'Open sponsors': 'details.openSponsors',
+        'Race supplies': 'details.raceSupplies',
+        'Open stage': 'details.openStage',
+        'Open race': 'details.openRace',
+        'Open equipment': 'details.openEquipment',
+        'Open infrastructure': 'details.openInfrastructure',
+        'Open finance': 'details.openFinance',
+        'Open scouting': 'details.openScouting',
+        'Review sponsor offers': 'details.reviewSponsorOffers',
+        Sponsors: 'details.sponsors',
+        Team: 'details.team',
+        'View results': 'details.viewResults',
       }
       const key = keyByLabel[label]
       return key ? t(key) : label
@@ -1763,7 +1806,7 @@ export default function NotificationsPage(): JSX.Element {
                             </div>
 
                             <div className="shrink-0 text-xs text-slate-500">
-                              {formatNotificationTime(item.notification_created_at)}
+                              {formatNotificationTime(item.notification_created_at, { t, locale: i18n.resolvedLanguage ?? i18n.language })}
                             </div>
                           </div>
 
@@ -1780,7 +1823,7 @@ export default function NotificationsPage(): JSX.Element {
                               </>
                             ) : (
                               <>
-                                <span className="capitalize">{item.source}</span>
+                                <span>{item.source === 'game' ? t('categories.game') : item.source === 'admin' ? t('categories.admin') : item.source === 'system' ? t('categories.system') : item.source}</span>
                                 <span>•</span>
                                 <span>{item.type_code}</span>
                                 <span>•</span>
@@ -3352,7 +3395,7 @@ export default function NotificationsPage(): JSX.Element {
 
           <div className="flex flex-col gap-3 border-t border-slate-200 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="text-xs text-slate-500">
-              {t('summary.page', { page: safeActivePage, totalPages })}
+              {t('summary.page', { page: safeActivePage, total: totalPages })}
             </div>
 
             <div className="flex flex-wrap items-center gap-2">

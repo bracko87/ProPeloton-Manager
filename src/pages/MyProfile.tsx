@@ -17,6 +17,12 @@ import React, { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../context/AuthProvider'
 import { supabase } from '../lib/supabase'
+import { changeApplicationLanguage, getApplicationLanguage } from '../i18n'
+import {
+  SUPPORTED_LANGUAGES,
+  isSupportedLanguage,
+  type SupportedLanguage,
+} from '../i18n/languages'
 
 type ProfileRow = {
   id: string
@@ -26,6 +32,7 @@ type ProfileRow = {
   last_name: string | null
   city: string | null
   country: string | null
+  preferred_language: string | null
   birthday_month: number | null
   birthday_day: number | null
   birthday_year: number | null
@@ -98,6 +105,7 @@ export default function MyProfilePage(): JSX.Element {
   const [loading, setLoading] = useState(true)
   const [savingProfile, setSavingProfile] = useState(false)
   const [sendingPasswordReset, setSendingPasswordReset] = useState(false)
+  const [savingLanguage, setSavingLanguage] = useState(false)
 
   const [profile, setProfile] = useState<ProfileRow | null>(null)
 
@@ -114,6 +122,9 @@ export default function MyProfilePage(): JSX.Element {
   const [errorMessage, setErrorMessage] = useState('')
 
   const locale = i18n.resolvedLanguage ?? i18n.language
+  const currentLanguage: SupportedLanguage = isSupportedLanguage(locale)
+    ? locale
+    : getApplicationLanguage()
 
   const birthdayLabel = useMemo(
     () => formatBirthday(profile, locale, t('profile.notSet')),
@@ -167,6 +178,7 @@ export default function MyProfilePage(): JSX.Element {
           last_name,
           city,
           country,
+          preferred_language,
           birthday_month,
           birthday_day,
           birthday_year,
@@ -244,6 +256,9 @@ export default function MyProfilePage(): JSX.Element {
         last_name: form.lastName.trim() || null,
         city: form.city.trim() || null,
         country: form.country.trim() || null,
+        preferred_language: profile?.preferred_language && isSupportedLanguage(profile.preferred_language)
+          ? profile.preferred_language
+          : currentLanguage,
       }
 
       const { data: savedProfile, error: profileError } = await supabase
@@ -257,6 +272,7 @@ export default function MyProfilePage(): JSX.Element {
           last_name,
           city,
           country,
+          preferred_language,
           birthday_month,
           birthday_day,
           birthday_year,
@@ -296,6 +312,41 @@ export default function MyProfilePage(): JSX.Element {
       setErrorMessage(message)
     } finally {
       setSavingProfile(false)
+    }
+  }
+
+
+  async function handleLanguageChange(language: SupportedLanguage) {
+    if (!user?.id || savingLanguage || language === currentLanguage) return
+
+    setSavingLanguage(true)
+    setErrorMessage('')
+    setSuccessMessage('')
+
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ preferred_language: language })
+        .eq('id', user.id)
+
+      if (error) throw error
+
+      await changeApplicationLanguage(language)
+      setProfile(prev => prev ? { ...prev, preferred_language: language } : prev)
+
+      const languageDefinition = SUPPORTED_LANGUAGES.find(option => option.code === language)
+      setSuccessMessage(
+        i18n.t('profile.languageSaved', {
+          ns: 'accountPages',
+          language: languageDefinition?.label ?? language,
+        }),
+      )
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.error('Profile language update error:', err)
+      setErrorMessage(t('profile.languageSaveFailed'))
+    } finally {
+      setSavingLanguage(false)
     }
   }
 
@@ -462,6 +513,49 @@ export default function MyProfilePage(): JSX.Element {
             </div>
           </div>
         </form>
+
+
+        <div className="mt-6 border border-gray-200 rounded p-4">
+          <h3 className="text-base font-semibold">{t('profile.languageTitle')}</h3>
+          <p className="mt-1 text-sm text-gray-600">
+            {t('profile.languageDescription')}
+          </p>
+
+          <div className="mt-4 flex flex-wrap gap-3">
+            {SUPPORTED_LANGUAGES.map(language => {
+              const active = currentLanguage === language.code
+
+              return (
+                <button
+                  key={language.code}
+                  type="button"
+                  onClick={() => void handleLanguageChange(language.code)}
+                  disabled={savingLanguage || active}
+                  aria-pressed={active}
+                  className={[
+                    'inline-flex min-w-[150px] items-center gap-2 rounded-lg border px-4 py-3 text-sm font-semibold transition',
+                    active
+                      ? 'border-yellow-400 bg-yellow-50 text-gray-950 ring-1 ring-yellow-300'
+                      : 'border-gray-300 bg-white text-gray-800 hover:border-yellow-300 hover:bg-yellow-50',
+                    savingLanguage ? 'cursor-wait opacity-70' : '',
+                  ].join(' ')}
+                >
+                  <span className="text-xl" aria-hidden="true">{language.flag}</span>
+                  <span>{language.label}</span>
+                  {active ? (
+                    <span className="ml-auto text-xs font-medium text-green-700">
+                      {t('profile.languageActive')}
+                    </span>
+                  ) : null}
+                </button>
+              )
+            })}
+          </div>
+
+          <div className="mt-3 text-xs text-gray-500">
+            {savingLanguage ? t('profile.languageSaving') : t('profile.languageAccountHelp')}
+          </div>
+        </div>
 
         <form onSubmit={handleSendPasswordReset} className="mt-6 space-y-6">
           <div className="border border-gray-200 rounded p-4">

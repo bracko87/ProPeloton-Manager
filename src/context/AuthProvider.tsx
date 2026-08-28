@@ -11,6 +11,8 @@
 import React, { createContext, useContext, useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 import { supabase } from '../lib/supabase'
+import { changeApplicationLanguage, getApplicationLanguage } from '../i18n'
+import { isSupportedLanguage } from '../i18n/languages'
 
 /**
  * AuthContextValue
@@ -46,6 +48,31 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<any | null>(null)
   const [loading, setLoading] = useState<boolean>(true)
 
+  async function applyPreferredLanguage(userId: string | null | undefined) {
+    if (!userId) return
+
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('preferred_language')
+      .eq('id', userId)
+      .maybeSingle()
+
+    if (error) {
+      // Language preference is non-blocking for authentication.
+      // eslint-disable-next-line no-console
+      console.warn('Could not load preferred language:', error.message)
+      return
+    }
+
+    const preferredLanguage = data?.preferred_language
+    if (
+      isSupportedLanguage(preferredLanguage) &&
+      preferredLanguage !== getApplicationLanguage()
+    ) {
+      await changeApplicationLanguage(preferredLanguage)
+    }
+  }
+
   /**
    * refreshUser
    * Fetches the current logged-in user from Supabase and updates state.
@@ -53,6 +80,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   async function refreshUser() {
     const { data } = await supabase.auth.getUser()
     setUser(data.user ?? null)
+    await applyPreferredLanguage(data.user?.id)
   }
 
   useEffect(() => {
@@ -61,6 +89,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
       const { data } = await supabase.auth.getUser()
       if (!mounted) return
       setUser(data.user ?? null)
+      await applyPreferredLanguage(data.user?.id)
+      if (!mounted) return
       setLoading(false)
     })()
 
@@ -69,6 +99,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     } = supabase.auth.onAuthStateChange((_event, session) => {
       // session may be null when signed out, user inside session may be undefined
       setUser(session?.user ?? null)
+      void applyPreferredLanguage(session?.user?.id)
     })
 
     return () => {

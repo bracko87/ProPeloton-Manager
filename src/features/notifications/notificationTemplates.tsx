@@ -19,6 +19,14 @@
  */
 
 import type { NotificationItem } from './notificationHelpers'
+import {
+  localizeNotificationActionLabel,
+  localizeNotificationDetailLabel,
+  localizeNotificationExtraText,
+  localizeNotificationItem,
+  localizeNotificationNarrative,
+  localizeNotificationValue,
+} from './notificationLocalization'
 
 export type NotificationActionTemplate = {
   key: string
@@ -16124,15 +16132,16 @@ export function getNotificationTemplate(
  */
 export function applyNotificationTemplate(item: NotificationItem): NotificationItem {
   const template = getNotificationTemplate(item.type_code)
-  if (!template) return item
+  if (!template) return localizeNotificationItem(item)
 
   const enriched = template.enrich ? template.enrich(item) : item
-
-  return {
+  const normalized: NotificationItem = {
     ...enriched,
     title: enriched.title || template.defaultTitle || enriched.title,
     message: enriched.message || template.defaultMessage || enriched.message,
   }
+
+  return localizeNotificationItem(normalized)
 }
 
 /**
@@ -16155,26 +16164,34 @@ export function getNotificationImageSrc(item: NotificationItem): string | null {
 
 export function getNotificationIntroText(item: NotificationItem): string | null {
   const template = getNotificationTemplate(item.type_code)
-  return template?.getIntroText?.(item) || buildIntroFromMessage(item)
+  const raw = template?.getIntroText?.(item) || buildIntroFromMessage(item)
+  return localizeNotificationNarrative(raw, item)
 }
 
 export function getNotificationDetailRows(
   item: NotificationItem
 ): NotificationDetailRow[] {
   const template = getNotificationTemplate(item.type_code)
-  return template?.getDetailRows?.(item) || []
+  const rows = template?.getDetailRows?.(item) || []
+  return rows.map(row => ({
+    label: localizeNotificationDetailLabel(row.label),
+    value: localizeNotificationValue(row.value),
+  }))
 }
 
 export function getNotificationExtraText(item: NotificationItem): string | null {
   const template = getNotificationTemplate(item.type_code)
-  return template?.getExtraText?.(item) || null
+  return localizeNotificationExtraText(template?.getExtraText?.(item) || null, item)
 }
 
 export function getNotificationActions(
   item: NotificationItem
 ): NotificationActionTemplate[] {
   const template = getNotificationTemplate(item.type_code)
-  const actions = template?.actions || [GENERIC_OPEN_ACTION, MARK_READ_ACTION]
+  const actions = (template?.actions || [GENERIC_OPEN_ACTION, MARK_READ_ACTION]).map(action => ({
+    ...action,
+    label: localizeNotificationActionLabel(action.label),
+  }))
 
   return actions.filter((action) => {
     if (action.kind === 'navigate') {

@@ -1,5 +1,9 @@
 import React from 'react'
 import type { TFunction } from 'i18next'
+import {
+  isSerbianNotificationLocale,
+  localizeNotificationActionLabel,
+} from './notificationLocalization'
 
 /**
  * NotificationItem
@@ -199,7 +203,7 @@ function formatRaceResultEntry(
  * getNotificationActionLabel
  * Human-friendly labels for primary notification actions.
  */
-export function getNotificationActionLabel(item: NotificationItem): string {
+function getNotificationActionLabelRaw(item: NotificationItem): string {
   const payload = item.payload_json ?? {}
   const offerPath =
     typeof payload.offer_path === 'string' && payload.offer_path.trim()
@@ -227,6 +231,10 @@ export function getNotificationActionLabel(item: NotificationItem): string {
   if (item.type_code === 'RACE_WEATHER_CANCELLED') return 'Open race'
   if (item.type_code === 'RACE_RESULTS_SUMMARY') return 'Open race'
   return 'Open'
+}
+
+export function getNotificationActionLabel(item: NotificationItem): string {
+  return localizeNotificationActionLabel(getNotificationActionLabelRaw(item))
 }
 
 /**
@@ -429,6 +437,8 @@ export function getResolvedNotificationActionUrl(item: NotificationItem): string
 export function renderExpandedNotificationText(
   item: NotificationItem
 ): JSX.Element | null {
+  if (isSerbianNotificationLocale()) return null
+
   const payload = item.payload_json ?? {}
 
   if (item.type_code === 'SPONSOR_SELECTION_REQUIRED') {
