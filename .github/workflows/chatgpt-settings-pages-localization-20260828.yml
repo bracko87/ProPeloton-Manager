@@ -1,4 +1,4 @@
-name: Localize settings pages 2026-08-28
+name: Finish settings page localization audit 2026-08-28
 
 on:
   push:
@@ -19,55 +19,252 @@ jobs:
           ref: main
           fetch-depth: 0
 
-      - name: Replace flag emoji with real flag images
+      - name: Finish dynamic localization
         shell: bash
         run: |
           python - <<'PY'
           from pathlib import Path
-          import re
+          import json
 
-          path = Path('src/pages/MyProfile.tsx')
-          text = path.read_text(encoding='utf-8')
+          def load_json(path):
+              return json.loads(Path(path).read_text(encoding='utf-8'))
 
-          active_pattern = re.compile(
-              r'<span className="text-xl leading-none" aria-hidden="true">\s*\{activeLanguageDefinition\.flag\}\s*</span>'
-          )
-          option_pattern = re.compile(
-              r'<span className="text-xl leading-none" aria-hidden="true">\s*\{language\.flag\}\s*</span>'
-          )
+          def save_json(path, data):
+              Path(path).write_text(json.dumps(data, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
 
-          active_new = '''<img
-                src={activeLanguageDefinition.code === 'sr-Latn'
-                  ? 'https://flagcdn.com/w40/rs.png'
-                  : 'https://flagcdn.com/w40/gb.png'}
-                alt=""
-                aria-hidden="true"
-                className="h-4 w-6 shrink-0 rounded-[2px] object-cover"
-              />'''
-          option_new = '''<img
-                        src={language.code === 'sr-Latn'
-                          ? 'https://flagcdn.com/w40/rs.png'
-                          : 'https://flagcdn.com/w40/gb.png'}
-                        alt=""
-                        aria-hidden="true"
-                        className="h-4 w-6 shrink-0 rounded-[2px] object-cover"
-                      />'''
+          def replace(path, old, new, required=True):
+              p = Path(path)
+              text = p.read_text(encoding='utf-8')
+              count = text.count(old)
+              if required and count == 0:
+                  raise SystemExit(f'Missing replacement in {path}: {old[:140]!r}')
+              if count:
+                  p.write_text(text.replace(old, new), encoding='utf-8')
+              print(path, 'replaced', count, old[:80])
+              return count
 
-          text, active_count = active_pattern.subn(active_new, text, count=1)
-          text, option_count = option_pattern.subn(option_new, text, count=1)
-          if active_count != 1 or option_count != 1:
-              raise SystemExit(f'Flag rendering replacement failed: active={active_count}, option={option_count}')
-          path.write_text(text, encoding='utf-8')
+          # ------------------------------------------------------------------
+          # Resource additions for dynamic text not present in the first pass.
+          # ------------------------------------------------------------------
+          pref_en_path = 'src/i18n/locales/en/preferencesDynamic.json'
+          pref_sr_path = 'src/i18n/locales/sr-Latn/preferencesDynamic.json'
+          pref_en = load_json(pref_en_path)
+          pref_sr = load_json(pref_sr_path)
 
-          script_path = Path('.github/scripts/chatgpt_settings_pages_localization_20260828.py')
-          script = script_path.read_text(encoding='utf-8')
-          stale = "if count < 1:\n    raise SystemExit('MyProfile language countryCode flag anchor not found')"
-          script = script.replace(stale, "if count < 0:\n    raise SystemExit('unreachable')")
-          script_path.write_text(script, encoding='utf-8')
+          pref_en['service'] = {
+              'summary': 'Available to Free and Premium players. First activation costs {{activation}} coins. Each later season renewal or reactivation costs {{renewal}} coins. Premium membership does not waive these service costs.',
+              'eligibilityCosts': 'Eligibility: 30 real-life days or 60 in-game days. First activation: {{activation}} coins. Renewal and reactivation: {{renewal}} coins per season.',
+              'accessUntilSeason': 'Access remains available until the end of Season {{season}}.',
+              'season': 'Season {{season}}',
+              'endSeason': 'End of Season {{season}}',
+              'startSeason': 'Start of Season {{season}}',
+              'coins': '{{count}} coins',
+              'autoRenewHelp': 'When enabled, {{cost}} coins will be deducted at the beginning of the next season. If your balance is too low, renewal will fail and the Developing Team will become read-only.',
+              'activateSeason': 'Activate for Season {{season}}',
+              'existingTeam': 'Your existing Developing Team will be activated for this season.',
+              'newTeam': 'A Developing Team will be created and activated for this season.',
+              'activationAccess': 'Access lasts until the end of the current in-game season. Automatic renewal is enabled by default and can be switched off at any time.',
+              'needCoins': 'You need {{cost}} coins to activate Developing Team access. Current balance: {{balance}} coins.',
+              'team': 'Team: {{name}}',
+              'closeActivation': 'Close Developing Team activation confirmation',
+              'confirmActivate': 'Activate Developing Team for Season {{season}}?',
+              'confirmReactivate': 'Reactivate Developing Team for Season {{season}}?',
+              'deductCoins': '{{cost}} coins will be deducted from your wallet.',
+              'accessThisSeason': 'Access lasts until the end of this in-game season.',
+              'autoRenewModal': 'Automatic renewal will be enabled by default. You can switch it off at any time in Preferences or Premium & Billing.',
+              'actionActivate': 'Activate for {{cost}} Coins',
+              'actionReactivate': 'Reactivate for {{cost}} Coins',
+          }
+          pref_sr['service'] = {
+              'summary': 'Dostupno igračima sa besplatnim i Premium nalogom. Prva aktivacija košta {{activation}} Coins. Svaka naredna sezonska obnova ili reaktivacija košta {{renewal}} Coins. Premium članstvo ne ukida ove troškove usluge.',
+              'eligibilityCosts': 'Uslov: 30 dana u stvarnom vremenu ili 60 dana u igri. Prva aktivacija: {{activation}} Coins. Obnova i reaktivacija: {{renewal}} Coins po sezoni.',
+              'accessUntilSeason': 'Pristup ostaje dostupan do kraja sezone {{season}}.',
+              'season': 'Sezona {{season}}',
+              'endSeason': 'Kraj sezone {{season}}',
+              'startSeason': 'Početak sezone {{season}}',
+              'coins': '{{count}} Coins',
+              'autoRenewHelp': 'Kada je uključeno, {{cost}} Coins biće oduzeto na početku sledeće sezone. Ako je stanje prenisko, obnova neće uspeti i Razvojni tim će preći u režim samo za čitanje.',
+              'activateSeason': 'Aktiviraj za sezonu {{season}}',
+              'existingTeam': 'Vaš postojeći Razvojni tim biće aktiviran za ovu sezonu.',
+              'newTeam': 'Biće kreiran i aktiviran Razvojni tim za ovu sezonu.',
+              'activationAccess': 'Pristup traje do kraja trenutne sezone u igri. Automatska obnova je podrazumevano uključena i možete je isključiti u bilo kom trenutku.',
+              'needCoins': 'Potrebno vam je {{cost}} Coins za aktivaciju Razvojnog tima. Trenutno stanje: {{balance}} Coins.',
+              'team': 'Tim: {{name}}',
+              'closeActivation': 'Zatvori potvrdu aktivacije Razvojnog tima',
+              'confirmActivate': 'Aktivirati Razvojni tim za sezonu {{season}}?',
+              'confirmReactivate': 'Ponovo aktivirati Razvojni tim za sezonu {{season}}?',
+              'deductCoins': '{{cost}} Coins biće oduzeto iz vašeg novčanika.',
+              'accessThisSeason': 'Pristup traje do kraja ove sezone u igri.',
+              'autoRenewModal': 'Automatska obnova biće podrazumevano uključena. Možete je isključiti u bilo kom trenutku u Podešavanjima ili na stranici Premium i naplata.',
+              'actionActivate': 'Aktiviraj za {{cost}} Coins',
+              'actionReactivate': 'Ponovo aktiviraj za {{cost}} Coins',
+          }
+          save_json(pref_en_path, pref_en)
+          save_json(pref_sr_path, pref_sr)
+
+          pro_en_path = 'src/i18n/locales/en/proPackages.json'
+          pro_sr_path = 'src/i18n/locales/sr-Latn/proPackages.json'
+          pro_en = load_json(pro_en_path)
+          pro_sr = load_json(pro_sr_path)
+          pro_en['premium'].update({
+              'statusTrialing': 'Trialing',
+              'statusPastDue': 'Past due',
+              'statusUnpaid': 'Unpaid',
+              'statusIncomplete': 'Incomplete',
+              'statusPaused': 'Paused',
+          })
+          pro_sr['premium'].update({
+              'statusTrialing': 'Probni period',
+              'statusPastDue': 'Dospelo plaćanje',
+              'statusUnpaid': 'Neplaćeno',
+              'statusIncomplete': 'Nedovršeno',
+              'statusPaused': 'Pauzirano',
+          })
+          pro_en['history'].update({
+              'billingSubscriptionCycle': 'Subscription cycle',
+              'billingSubscriptionCreate': 'Subscription created',
+              'billingSubscriptionUpdate': 'Subscription updated',
+              'billingManual': 'Manual invoice',
+          })
+          pro_sr['history'].update({
+              'billingSubscriptionCycle': 'Ciklus pretplate',
+              'billingSubscriptionCreate': 'Kreirana pretplata',
+              'billingSubscriptionUpdate': 'Ažurirana pretplata',
+              'billingManual': 'Ručna faktura',
+          })
+          save_json(pro_en_path, pro_en)
+          save_json(pro_sr_path, pro_sr)
+
+          # ------------------------------------------------------------------
+          # Pro Packages: remove remaining hardcoded UI and localize dates.
+          # ------------------------------------------------------------------
+          p = 'src/pages/ProPackages.tsx'
+          replace(p, "return new Date(iso).toLocaleString(undefined, {", "return new Date(iso).toLocaleString(appI18n.resolvedLanguage ?? appI18n.language ?? 'en', {")
+          replace(p, "return new Date(iso).toLocaleDateString(undefined, {", "return new Date(iso).toLocaleDateString(appI18n.resolvedLanguage ?? appI18n.language ?? 'en', {")
+          replace(p, "    if (premiumStatus?.is_premium) return 'Active'\n\n    const stripeStatus = premiumStatus?.stripe_status\n    if (!stripeStatus || stripeStatus === 'free') return 'Free'\n\n    return titleFromSnake(stripeStatus)", "    if (premiumStatus?.is_premium) return t('premium.active')\n\n    const stripeStatus = premiumStatus?.stripe_status\n    if (!stripeStatus || stripeStatus === 'free') return t('premium.free')\n\n    const statusKeys: Record<string, string> = {\n      trialing: 'premium.statusTrialing',\n      past_due: 'premium.statusPastDue',\n      unpaid: 'premium.statusUnpaid',\n      incomplete: 'premium.statusIncomplete',\n      paused: 'premium.statusPaused',\n    }\n    return statusKeys[stripeStatus] ? t(statusKeys[stripeStatus]) : titleFromSnake(stripeStatus)")
+          replace(p, "  const developingTeamServiceStatusLabel =\n    developingTeamService?.access_status === 'active'\n      ? 'Active'\n      : developingTeamService?.access_status === 'expired'\n        ? 'Expired'\n        : 'Not activated'", "  const developingTeamServiceStatusLabel =\n    developingTeamService?.access_status === 'active'\n      ? t('services.active')\n      : developingTeamService?.access_status === 'expired'\n        ? t('services.expired')\n        : t('services.notActivated')")
+          replace(p, "        enabled\n          ? `Automatic renewal enabled. ${developingTeamRenewalCost} coins will be charged at the beginning of the next season.`\n          : t('services.autoDisabled'),", "        enabled\n          ? t('services.autoEnabled', { cost: developingTeamRenewalCost })\n          : t('services.autoDisabled'),")
+          replace(p, "          <h2 className=\"text-2xl font-extrabold text-black\">\n            Premium &amp; Billing\n          </h2>", "          <h2 className=\"text-2xl font-extrabold text-black\">\n            {t('page.title')}\n          </h2>")
+          replace(p, "                    : 'Active'}", "                    : t('premium.active')}")
+          replace(p, "                  Receive {premiumCoins} coins after every successful monthly payment.", "                  {t('premium.receive')} {premiumCoins} {t('premium.monthlyCoinsSuffix')}")
+          replace(p, "                    ? `Future renewal is canceled. Access remains available until ${formatDate(\n                        premiumStatus.access_until ||\n                          premiumStatus.current_period_end,\n                      )}.`\n                    : `The current paid period ends on ${formatDate(\n                        premiumStatus.current_period_end,\n                      )}.`}", "                    ? t('premium.futureCanceled', {\n                        date: formatDate(premiumStatus.access_until || premiumStatus.current_period_end),\n                      })\n                    : t('premium.periodEnds', {\n                        date: formatDate(premiumStatus.current_period_end),\n                      })}")
+          replace(p, "                    ? 'Redirecting…'", "                    ? t('premium.redirecting')")
+          replace(p, "                  {developingTeamActivationCost} activation / {developingTeamRenewalCost} renewal", "                  {t('comparison.activationRenewal', { activation: developingTeamActivationCost, renewal: developingTeamRenewalCost })}")
+          replace(p, "                      ≈ {eur(perCoin(item.priceEur, item.coins))} per coin", "                      ≈ {eur(perCoin(item.priceEur, item.coins))} {t('packages.perCoin')}")
+          replace(p, "                    {isBuying ? 'Redirecting…' : 'Buy now'}", "                    {isBuying ? t('packages.redirecting') : t('packages.buy')}")
+          replace(p, '            label="Plan"', "            label={t('membership.plan')}")
+          replace(p, "                : 'Free'", "                : t('premium.free')")
+          replace(p, '<MembershipItem label="Status" value={statusLabel} />', "<MembershipItem label={t('membership.status')} value={statusLabel} />")
+          replace(p, '            label="Started"', "            label={t('membership.started')}")
+          replace(p, '            label="Current period ends"', "            label={t('membership.periodEnds')}")
+          replace(p, '<MembershipItem label="Next renewal" value={nextRenewalLabel} />', "<MembershipItem label={t('membership.nextRenewal')} value={nextRenewalLabel} />")
+          replace(p, '<MembershipItem label="Monthly price" value={premiumPrice} />', "<MembershipItem label={t('membership.monthlyPrice')} value={premiumPrice} />")
+          replace(p, '            label="Monthly coin reward"\n            value={`${premiumCoins} coins`}', "            label={t('membership.monthlyCoinReward')}\n            value={t('common.coins', { count: premiumCoins })}")
+          replace(p, '            label="Cancel at period end"\n            value={premiumStatus?.cancel_at_period_end ? \'Yes\' : \'No\'}', "            label={t('membership.cancelAtEnd')}\n            value={premiumStatus?.cancel_at_period_end ? t('membership.yes') : t('membership.no')}")
+          replace(p, "                      <p>Reactivation price: {developingTeamRenewalCost} coins.</p>", "                      <p>{t('services.reactivationPrice', { cost: developingTeamRenewalCost })}</p>")
+          replace(p, "                        <p>First activation price: {developingTeamActivationCost} coins.</p>\n                        <p>Later renewal or reactivation: {developingTeamRenewalCost} coins per season.</p>", "                        <p>{t('services.firstActivationPrice', { cost: developingTeamActivationCost })}</p>\n                        <p>{t('services.laterPrice', { cost: developingTeamRenewalCost })}</p>")
+          replace(p, '                  label="Team created"\n                  value={developingTeamService.team_exists ? \'Yes\' : \'No\'}', "                  label={t('services.teamCreated')}\n                  value={developingTeamService.team_exists ? t('membership.yes') : t('membership.no')}")
+          replace(p, '                  label="Status"\n                  value="Active"', "                  label={t('membership.status')}\n                  value={t('services.active')}")
+          replace(p, '                  label="Current season"\n                  value={`Season ${developingTeamService.current_season}`}', "                  label={t('services.currentSeason')}\n                  value={t('services.season', { season: developingTeamService.current_season })}")
+          replace(p, "                  label=\"Access ends\"\n                  value={`End of Season ${\n                    developingTeamService.expires_after_season ??\n                    developingTeamService.active_season ??\n                    developingTeamService.current_season\n                  }`}", "                  label={t('services.accessEnds')}\n                  value={t('services.endSeason', {\n                    season: developingTeamService.expires_after_season ?? developingTeamService.active_season ?? developingTeamService.current_season,\n                  })}")
+          replace(p, '                  label="Renewal price"\n                  value={`${developingTeamRenewalCost} coins`}', "                  label={t('services.renewalPrice')}\n                  value={t('common.coins', { count: developingTeamRenewalCost })}")
+          replace(p, "                  label=\"Next renewal\"\n                  value={`Start of Season ${\n                    developingTeamService.next_renewal_season ??\n                    developingTeamService.current_season + 1\n                  }`}", "                  label={t('services.nextRenewal')}\n                  value={t('services.startSeason', {\n                    season: developingTeamService.next_renewal_season ?? developingTeamService.current_season + 1,\n                  })}")
+          replace(p, "                      When enabled, {developingTeamRenewalCost} coins will be deducted at the\n                      beginning of the next season. If the wallet balance is too low, renewal will\n                      fail and the Developing Team will become read-only.", "                      {t('services.autoRenewPrefix')} {developingTeamRenewalCost} {t('services.autoRenewSuffix')}")
+          replace(p, '                  label="Team created"\n                  value={developingTeamService.team_exists ? \'Yes\' : \'No\'}', "                  label={t('services.teamCreated')}\n                  value={developingTeamService.team_exists ? t('membership.yes') : t('membership.no')}", required=False)
+          replace(p, '                  label="Status"\n                  value="Expired"', "                  label={t('membership.status')}\n                  value={t('services.expired')}")
+          replace(p, '                  label="Reactivation price"\n                  value={`${developingTeamRenewalCost} coins`}', "                  label={t('services.reactivation')}\n                  value={t('common.coins', { count: developingTeamRenewalCost })}")
+          replace(p, '                  label="Team created"\n                  value={developingTeamService?.team_exists ? \'Yes\' : \'No\'}', "                  label={t('services.teamCreated')}\n                  value={developingTeamService?.team_exists ? t('membership.yes') : t('membership.no')}")
+          replace(p, '                  label="Status"\n                  value="Not activated"', "                  label={t('membership.status')}\n                  value={t('services.notActivated')}")
+          replace(p, '                  label="First activation"\n                  value={`${developingTeamActivationCost} coins`}', "                  label={t('services.firstActivation')}\n                  value={t('common.coins', { count: developingTeamActivationCost })}")
+          replace(p, '                  label="Later renewals"\n                  value={`${developingTeamRenewalCost} coins per season`}', "                  label={t('services.laterRenewals')}\n                  value={t('services.coinsPerSeason', { cost: developingTeamRenewalCost })}")
+          replace(p, '<HistoryEmpty message="No Premium invoices found." />', "<HistoryEmpty message={t('history.noPremiumInvoices')} />")
+          replace(p, '<HistoryEmpty message="No coin-package purchases found." />', "<HistoryEmpty message={t('history.noPurchases')} />")
+          replace(p, ": 'Coin package'}", ": t('history.coinPackage')}")
+          replace(p, '<HistoryEmpty message="No coin transactions found." />', "<HistoryEmpty message={t('history.noTransactions')} />")
+          replace(p, "                    Page {safeCoinHistoryPage} of {coinHistoryTotalPages}", "                    {t('history.page', { page: safeCoinHistoryPage, pages: coinHistoryTotalPages })}")
+          replace(p, "          {props.open ? 'Hide history' : 'Show history'}", "          {props.open\n            ? appI18n.t('history.hide', { ns: 'proPackages' })\n            : appI18n.t('history.show', { ns: 'proPackages' })}")
+          replace(p, "      {t('history.loading')}", "      {appI18n.t('history.loading', { ns: 'proPackages' })}")
+
+          # Localize known Stripe invoice billing reason labels.
+          replace(p, "function slicePage<T>(items: T[], page: number, pageSize: number): T[] {", "function billingReasonLabel(value: string | null | undefined): string {\n  const keyByReason: Record<string, string> = {\n    subscription_cycle: 'history.billingSubscriptionCycle',\n    subscription_create: 'history.billingSubscriptionCreate',\n    subscription_update: 'history.billingSubscriptionUpdate',\n    manual: 'history.billingManual',\n  }\n  const key = value ? keyByReason[value] : null\n  return key ? appI18n.t(key, { ns: 'proPackages' }) : titleFromSnake(value)\n}\n\nfunction slicePage<T>(items: T[], page: number, pageSize: number): T[] {")
+          replace(p, "                          {titleFromSnake(invoice.billing_reason)}", "                          {billingReasonLabel(invoice.billing_reason)}")
+          replace(p, "                              {titleFromSnake(transaction.reason)}", "                              {transaction.description}")
+
+          # ------------------------------------------------------------------
+          # Preferences: translate dynamic Developing Team states and modal.
+          # ------------------------------------------------------------------
+          p = 'src/pages/Preferences.tsx'
+          replace(p, "      setDevelopingTeamSuccessMessage(\n        normalized?.access_status === 'active'\n          ? `Developing Team activated for Season ${\n              normalized.active_season ?? normalized.current_season\n            }. Automatic renewal is ${normalized.auto_renew === false ? 'off' : 'on'}.`\n          : t('activation.activatedSuccessfully', { ns: 'preferencesDynamic' })\n      )", "      setDevelopingTeamSuccessMessage(\n        normalized?.access_status === 'active'\n          ? t('activation.activatedForSeason', {\n              ns: 'preferencesDynamic',\n              season: normalized.active_season ?? normalized.current_season,\n              renewal: t(normalized.auto_renew === false ? 'activation.off' : 'activation.on', { ns: 'preferencesDynamic' }),\n            })\n          : t('activation.activatedSuccessfully', { ns: 'preferencesDynamic' })\n      )")
+          replace(p, "  const movementWindowText = developingTeamStatus\n    ? developingTeamStatus.movement_window_open\n      ? `Movement window open now: ${developingTeamStatus.current_window_label ?? t('movement.currentWindow', { ns: 'preferencesDynamic' })}`\n      : `Movement window closed. Next window: ${developingTeamStatus.next_window_label ?? 'Unknown'}`\n    : t('movement.unavailable', { ns: 'preferencesDynamic' })", "  const movementWindowText = developingTeamStatus\n    ? developingTeamStatus.movement_window_open\n      ? t('movement.open', { ns: 'preferencesDynamic', label: developingTeamStatus.current_window_label ?? t('movement.currentWindow', { ns: 'preferencesDynamic' }) })\n      : t('movement.closed', { ns: 'preferencesDynamic', label: developingTeamStatus.next_window_label ?? t('movement.unknown', { ns: 'preferencesDynamic' }) })\n    : t('movement.unavailable', { ns: 'preferencesDynamic' })")
+          replace(p, "  const developingTeamActivationLabel = developingTeamIsExpired\n    ? `Reactivate for Season ${developingTeamTargetSeason} — ${renewalCoinCost} Coins`\n    : `Activate Developing Team — ${activationCoinCost} Coins`", "  const developingTeamActivationLabel = developingTeamIsExpired\n    ? t('activation.reactivateForSeason', { ns: 'preferencesDynamic', season: developingTeamTargetSeason, cost: renewalCoinCost })\n    : t('activation.activate', { ns: 'preferencesDynamic', cost: activationCoinCost })")
+          replace(p, "                  ? `${renewalCoinCost} coins per renewal`\n                  : `${activationCoinCost} coins to activate`}", "                  ? t('coins.perRenewal', { ns: 'preferencesDynamic', cost: renewalCoinCost })\n                  : t('coins.toActivate', { ns: 'preferencesDynamic', cost: activationCoinCost })}")
+          replace(p, "              Available to Free and Premium players. First activation costs {activationCoinCost}{' '}\n              coins. Each later season renewal or reactivation costs {renewalCoinCost} coins.\n              Premium membership does not waive these service costs.", "              {t('service.summary', { ns: 'preferencesDynamic', activation: activationCoinCost, renewal: renewalCoinCost })}")
+          replace(p, "                      {developingTeamIsExpired\n                        ? `Reactivation price: ${renewalCoinCost} coins`\n                        : developingTeamIsActive\n                          ? `Next renewal: ${renewalCoinCost} coins`\n                          : `First activation: ${activationCoinCost} coins`}", "                      {developingTeamIsExpired\n                        ? t('coins.reactivationPrice', { ns: 'preferencesDynamic', cost: renewalCoinCost })\n                        : developingTeamIsActive\n                          ? t('coins.nextRenewal', { ns: 'preferencesDynamic', cost: renewalCoinCost })\n                          : t('coins.firstActivation', { ns: 'preferencesDynamic', cost: activationCoinCost })}")
+          replace(p, "                  Eligibility: 30 real-life days or 60 in-game days. First activation:{' '}\n                  {activationCoinCost} coins. Renewal and reactivation: {renewalCoinCost} coins per\n                  season.", "                  {t('service.eligibilityCosts', { ns: 'preferencesDynamic', activation: activationCoinCost, renewal: renewalCoinCost })}")
+          replace(p, "                          Access remains available until the end of Season{' '}\n                          {developingTeamStatus?.expires_after_season ??\n                            developingTeamStatus?.active_season ??\n                            developingTeamStatus?.current_season}.", "                          {t('service.accessUntilSeason', {\n                            ns: 'preferencesDynamic',\n                            season: developingTeamStatus?.expires_after_season ?? developingTeamStatus?.active_season ?? developingTeamStatus?.current_season,\n                          })}")
+          replace(p, "                          Season {developingTeamStatus?.current_season ?? '—'}", "                          {t('service.season', { ns: 'preferencesDynamic', season: developingTeamStatus?.current_season ?? '—' })}")
+          replace(p, "                          End of Season{' '}\n                          {developingTeamStatus?.expires_after_season ??\n                            developingTeamStatus?.active_season ??\n                            '—'}", "                          {t('service.endSeason', { ns: 'preferencesDynamic', season: developingTeamStatus?.expires_after_season ?? developingTeamStatus?.active_season ?? '—' })}")
+          replace(p, "                          {renewalCoinCost} coins", "                          {t('service.coins', { ns: 'preferencesDynamic', count: renewalCoinCost })}")
+          replace(p, "                          Start of Season{' '}\n                          {developingTeamStatus?.next_renewal_season ??\n                            (developingTeamStatus?.current_season ?? 0) + 1}", "                          {t('service.startSeason', { ns: 'preferencesDynamic', season: developingTeamStatus?.next_renewal_season ?? (developingTeamStatus?.current_season ?? 0) + 1 })}")
+          replace(p, "                          When enabled, {renewalCoinCost} coins will be deducted at the beginning of\n                          the next season. If your balance is too low, renewal will fail and the\n                          Developing Team will become read-only.", "                          {t('service.autoRenewHelp', { ns: 'preferencesDynamic', cost: renewalCoinCost })}")
+          replace(p, "                      Activate for Season {developingTeamTargetSeason}", "                      {t('service.activateSeason', { ns: 'preferencesDynamic', season: developingTeamTargetSeason })}")
+          replace(p, "                      {developingTeamStatus?.team_exists\n                        ? 'Your existing Developing Team will be activated for this season.'\n                        : 'A Developing Team will be created and activated for this season.'}{' '}\n                      Access lasts until the end of the current in-game season. Automatic renewal is\n                      enabled by default and can be switched off at any time.", "                      {developingTeamStatus?.team_exists\n                        ? t('service.existingTeam', { ns: 'preferencesDynamic' })\n                        : t('service.newTeam', { ns: 'preferencesDynamic' })}{' '}\n                      {t('service.activationAccess', { ns: 'preferencesDynamic' })}")
+          replace(p, "                        You need {activationCoinCost} coins to activate Developing Team access. Current\n                        balance: {developingTeamStatus?.coin_balance ?? 0} coins.", "                        {t('service.needCoins', { ns: 'preferencesDynamic', cost: activationCoinCost, balance: developingTeamStatus?.coin_balance ?? 0 })}")
+          replace(p, "                          ? 'Activating...'", "                          ? t('developingTeam.activating', { ns: 'preferences' })")
+          replace(p, "                    Team: {developingTeamStatus.developing_club_name}", "                    {t('service.team', { ns: 'preferencesDynamic', name: developingTeamStatus.developing_club_name })}")
+          replace(p, '            aria-label="Close Developing Team activation confirmation"', "            aria-label={t('service.closeActivation', { ns: 'preferencesDynamic' })}")
+          replace(p, "                {developingTeamIsExpired ? 'Reactivate' : 'Activate'} Developing Team for Season{' '}\n                {developingTeamTargetSeason}?", "                {t(developingTeamIsExpired ? 'service.confirmReactivate' : 'service.confirmActivate', { ns: 'preferencesDynamic', season: developingTeamTargetSeason })}")
+          replace(p, "              <p>{developingTeamActionCost} coins will be deducted from your wallet.</p>\n              <p>Access lasts until the end of this in-game season.</p>\n              <p>Automatic renewal will be enabled by default. You can switch it off at any time in Preferences or Premium &amp; Billing.</p>", "              <p>{t('service.deductCoins', { ns: 'preferencesDynamic', cost: developingTeamActionCost })}</p>\n              <p>{t('service.accessThisSeason', { ns: 'preferencesDynamic' })}</p>\n              <p>{t('service.autoRenewModal', { ns: 'preferencesDynamic' })}</p>")
+          replace(p, "                  ? 'Activating...'\n                  : `${developingTeamIsExpired ? 'Reactivate' : 'Activate'} for ${developingTeamActionCost} Coins`}", "                  ? t('developingTeam.activating', { ns: 'preferences' })\n                  : t(developingTeamIsExpired ? 'service.actionReactivate' : 'service.actionActivate', { ns: 'preferencesDynamic', cost: developingTeamActionCost })}")
+          replace(p, "                  Type <span className=\"font-bold text-red-700\">DELETE</span> to confirm", "                  {t('dangerZone.typeDelete', { ns: 'preferences' })}")
+
+          # ------------------------------------------------------------------
+          # Customize Team: localize remaining dynamic prices/status messages.
+          # ------------------------------------------------------------------
+          p = 'src/pages/CustomizeTeam.tsx'
+          replace(p, "          setKitNotice(`Failed to load saved jersey: ${error.message}`)", "          setKitNotice(t('jersey.loadSavedWithError', { error: error.message }))")
+          replace(p, "        setKitNotice(`Failed to save jersey: ${error.message}`)", "        setKitNotice(t('jersey.saveFailedWithError', { error: error.message }))")
+          replace(p, "          ? `Jersey applied and saved for ${customizationAccess.jersey_change_cost} coins.`", "          ? t('jersey.savedPaid', { cost: customizationAccess.jersey_change_cost })")
+          replace(p, "          Current change: {customizationAccess?.jersey_change_cost ?? 0} coins", "          {t('jersey.currentCost', { cost: customizationAccess?.jersey_change_cost ?? 0 })}")
+          replace(p, "              ? 'Applying...'\n              : customizationAccess?.jersey_change_cost\n                ? `Apply jersey · ${customizationAccess.jersey_change_cost} coins`", "              ? t('jersey.applying')\n              : customizationAccess?.jersey_change_cost\n                ? t('jersey.applyPaid', { cost: customizationAccess.jersey_change_cost })")
+          replace(p, "      showTopNotice('success', `Team name changed to \"${updatedClub.name}\" for 30 coins.`)", "      showTopNotice('success', t('identity.nameChanged', { name: updatedClub.name }))")
+          replace(p, "      `Team colors changed to ${updatedClub.primary_color} and ${updatedClub.secondary_color}.`,", "      t('identity.colorsChanged', { primary: updatedClub.primary_color, secondary: updatedClub.secondary_color }),")
+          replace(p, "      const message =\n        `Not enough coins to change the team logo. ` +\n        `This change costs ${logoCost} coins, your current balance is ${coinBalance}, ` +\n        `and you need ${missingCoins} more coin${missingCoins === 1 ? '' : 's'}.`", "      const message = t(missingCoins === 1 ? 'logo.notEnoughOne' : 'logo.notEnough', {\n        cost: logoCost, balance: coinBalance, missing: missingCoins,\n      })")
+          replace(p, "          ? `Logo applied for ${currentLogoChangeCost} coins.`", "          ? t('logo.appliedPaid', { cost: currentLogoChangeCost })")
+          replace(p, "      const message =\n        `Not enough coins to change the team logo. ` +\n        `Restoring the generated badge also counts as a logo change and costs ${logoCost} coins. ` +\n        `Your current balance is ${coinBalance}; you need ${missingCoins} more coin${missingCoins === 1 ? '' : 's'}.`", "      const message = t(missingCoins === 1 ? 'logo.notEnoughRestoreOne' : 'logo.notEnoughRestore', {\n        cost: logoCost, balance: coinBalance, missing: missingCoins,\n      })")
+          replace(p, "                  Your team is racing this season as{' '}", "                  {t('identity.lockedPrefix')}{' '}")
+          replace(p, "                  {saving ? 'Applying...' : t('identity.applyName')}", "                  {saving ? t('page.saving') : t('identity.applyName')}")
+          replace(p, "                          {currentCoinBalance} coins", "                          {t('coins.coins', { count: currentCoinBalance })}")
+          replace(p, "                            ? `${currentLogoChangeCost} coins`\n                            : 'Free'", "                            ? t('coins.coins', { count: currentLogoChangeCost })\n                            : t('logo.free')")
+          replace(p, "                            ? `Need ${missingLogoCoins} more coin${missingLogoCoins === 1 ? '' : 's'}`\n                            : currentLogoChangeCost > 0\n                              ? 'Enough coins'", "                            ? t(missingLogoCoins === 1 ? 'logo.needOne' : 'logo.needMore', { count: missingLogoCoins })\n                            : currentLogoChangeCost > 0\n                              ? t('logo.enough')")
+          replace(p, "                          You cannot apply or remove the logo until you have at least {currentLogoChangeCost} coins.", "                          {t('logo.blocked', { cost: currentLogoChangeCost })}")
+          replace(p, "                        ? 'Applying...'\n                        : !hasEnoughCoinsForLogo\n                          ? `Need ${missingLogoCoins} more coin${missingLogoCoins === 1 ? '' : 's'}`\n                          : currentLogoChangeCost > 0\n                            ? `Apply logo · ${currentLogoChangeCost} coins`", "                        ? t('page.saving')\n                        : !hasEnoughCoinsForLogo\n                          ? t(missingLogoCoins === 1 ? 'logo.needOne' : 'logo.needMore', { count: missingLogoCoins })\n                          : currentLogoChangeCost > 0\n                            ? t('logo.applyPaid', { cost: currentLogoChangeCost })")
+
+          # These strings are user-visible and must no longer remain after this audit.
+          checks = {
+              'src/pages/ProPackages.tsx': [
+                  'Premium &amp; Billing', 'Receive {premiumCoins} coins', ' per coin', "'Buy now'",
+                  'No Premium invoices found.', 'No coin-package purchases found.', 'No coin transactions found.',
+                  "props.open ? 'Hide history' : 'Show history'",
+              ],
+              'src/pages/Preferences.tsx': [
+                  'Available to Free and Premium players.', 'Eligibility: 30 real-life days',
+                  'Activate for Season {developingTeamTargetSeason}', 'You need {activationCoinCost} coins',
+                  'Close Developing Team activation confirmation', 'coins will be deducted from your wallet',
+              ],
+              'src/pages/CustomizeTeam.tsx': [
+                  'Current change: {customizationAccess', 'Team name changed to', 'Team colors changed to',
+                  'You cannot apply or remove the logo until', "? 'Enough coins'", 'Apply jersey · ${',
+              ],
+          }
+          for path, needles in checks.items():
+              text = Path(path).read_text(encoding='utf-8')
+              remaining = [needle for needle in needles if needle in text]
+              if remaining:
+                  raise SystemExit(f'User-visible English audit failed in {path}: {remaining}')
+
+          print('Dynamic localization audit completed.')
           PY
-
-      - name: Apply direct i18n conversion
-        run: python .github/scripts/chatgpt_settings_pages_localization_20260828.py
 
       - name: Install dependencies
         run: npm ci
@@ -75,22 +272,24 @@ jobs:
       - name: Production build
         run: npm run build
 
-      - name: Commit product changes
+      - name: Commit audited localization
         shell: bash
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add \
-            src/pages/MyProfile.tsx \
-            src/pages/Help.tsx \
             src/pages/ProPackages.tsx \
             src/pages/Preferences.tsx \
-            src/pages/CustomizeTeam.tsx
+            src/pages/CustomizeTeam.tsx \
+            src/i18n/locales/en/preferencesDynamic.json \
+            src/i18n/locales/sr-Latn/preferencesDynamic.json \
+            src/i18n/locales/en/proPackages.json \
+            src/i18n/locales/sr-Latn/proPackages.json
 
           if git diff --cached --quiet; then
-            echo "No product changes to commit."
+            echo "No audit changes to commit."
             exit 0
           fi
 
-          git commit -m "Localize profile settings and support pages"
+          git commit -m "Finish settings page Serbian localization"
           git push origin main
