@@ -17,5 +17,14 @@ if old_output not in source:
 source = source.replace(old_anchor, new_anchor, 1)
 source = source.replace(old_output, new_output, 1)
 
+# The codemod inserts TypeScript regular expressions such as /\s+/g. Python's
+# re.sub replacement parser would otherwise interpret those backslashes. Use a
+# callable replacement so all replacement text is written literally.
+old_re_sub = "next_text, hits = re.subn(pattern, replacement, text, count=count, flags=re.MULTILINE)"
+new_re_sub = "next_text, hits = re.subn(pattern, lambda _match: replacement, text, count=count, flags=re.MULTILINE)"
+if old_re_sub not in source:
+    raise SystemExit('Could not patch literal-safe regex replacement helper')
+source = source.replace(old_re_sub, new_re_sub, 1)
+
 compiled = compile(source, str(script_path), 'exec')
 exec(compiled, {'__name__': '__main__', '__file__': str(script_path)})
