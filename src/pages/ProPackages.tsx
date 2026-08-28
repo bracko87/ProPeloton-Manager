@@ -11,6 +11,8 @@
  *   as separate history sections.
  */
 import React, { useEffect, useMemo, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import appI18n from '../i18n'
 import { supabase } from '../lib/supabase'
 
 type CoinStatusRow = {
@@ -214,28 +216,28 @@ function normalizeCoinCost(value: unknown, fallback: number): number {
 }
 
 const COMPARISON_ROWS = [
-  ['Create and manage a club', '✓', '✓'],
-  ['Play races', '✓', '✓'],
-  ['Basic management features', '✓', '✓'],
-  ['Account access without coins', '✓', '✓'],
-  ['Premium analysis and tools', '—', '✓'],
-  ['Monthly Premium coin reward', '—', '50'],
-  ['Buy additional coin packages', '✓', '✓'],
-  ['Use optional coin features', '✓', '✓'],
+  ['comparison.r1', '✓', '✓'],
+  ['comparison.r2', '✓', '✓'],
+  ['comparison.r3', '✓', '✓'],
+  ['comparison.r4', '✓', '✓'],
+  ['comparison.r5', '—', '✓'],
+  ['comparison.r6', '—', '50'],
+  ['comparison.r7', '✓', '✓'],
+  ['comparison.r8', '✓', '✓'],
 ] as const
 
 const PREMIUM_ADVANTAGES = [
-  '50 coins after every successful monthly Premium payment.',
-  'Advanced training automation and rider-development analysis.',
-  'Premium transfer tools: saved searches, automatic alerts, shortlist and negotiation analysis.',
-  'Additional equipment setup slots and expanded included garage capacity.',
-  'Access to advanced team-policy options and selected calendar filters.',
-  'Additional external-rider history, recent results and career-honours views.',
-  'Premium convenience features never improve race results, transfer acceptance or hidden rider skills.',
+  'advantages.a1',
+  'advantages.a2',
+  'advantages.a3',
+  'advantages.a4',
+  'advantages.a5',
+  'advantages.a6',
+  'advantages.a7',
 ] as const
 
 function eur(value: number) {
-  return new Intl.NumberFormat('de-DE', {
+  return new Intl.NumberFormat(appI18n.resolvedLanguage ?? appI18n.language ?? 'en', {
     style: 'currency',
     currency: 'EUR',
   }).format(value)
@@ -249,7 +251,7 @@ function moneyFromCents(
   const safeCents = Number(cents ?? 0)
 
   try {
-    return new Intl.NumberFormat('de-DE', {
+    return new Intl.NumberFormat(appI18n.resolvedLanguage ?? appI18n.language ?? 'en', {
       style: 'currency',
       currency: safeCurrency,
     }).format(safeCents / 100)
@@ -263,12 +265,12 @@ function perCoin(priceEur: number, coins: number) {
 }
 
 function taglineForCoins(coins: number) {
-  if (coins <= 70) return 'Starter boost'
-  if (coins <= 130) return 'Great for a new season'
-  if (coins <= 270) return 'Most balanced pick'
-  if (coins <= 390) return 'Most popular'
-  if (coins <= 570) return 'Serious manager mode'
-  return 'Best for long-term play'
+  if (coins <= 70) return 'packages.starter'
+  if (coins <= 130) return 'packages.newSeason'
+  if (coins <= 270) return 'packages.balanced'
+  if (coins <= 390) return 'packages.popular'
+  if (coins <= 570) return 'packages.manager'
+  return 'packages.longTerm'
 }
 
 function formatDateTime(iso: string | null | undefined) {
@@ -335,42 +337,42 @@ function describeCoinTransaction(reason: string, payload: any) {
 
   if (description) return description
   if (reason === 'purchase' && packageCode) {
-    return `Coin package purchase: ${packageCode}`
+    return appI18n.t('transactions.purchase', { ns: 'proPackages', code: packageCode })
   }
-  if (reason === 'daily_charge') return 'Historical daily gameplay charge'
-  if (reason === 'daily_gameplay_unlock') return 'Historical daily gameplay unlock'
-  if (reason === 'referral_reward') return 'Referral reward'
-  if (reason === 'admin_adjustment') return 'Admin adjustment'
-  if (reason === 'developing_team_purchase') return 'Developing Team purchase'
-  if (reason === 'developing_team_unlock') return 'Developing Team purchase'
-  if (reason === 'developing_team_legacy_creation') return 'Developing Team first activation'
+  if (reason === 'daily_charge') return appI18n.t('transactions.dailyCharge', { ns: 'proPackages' })
+  if (reason === 'daily_gameplay_unlock') return appI18n.t('transactions.dailyUnlock', { ns: 'proPackages' })
+  if (reason === 'referral_reward') return appI18n.t('transactions.referral', { ns: 'proPackages' })
+  if (reason === 'admin_adjustment') return appI18n.t('transactions.admin', { ns: 'proPackages' })
+  if (reason === 'developing_team_purchase') return appI18n.t('transactions.developingPurchase', { ns: 'proPackages' })
+  if (reason === 'developing_team_unlock') return appI18n.t('transactions.developingPurchase', { ns: 'proPackages' })
+  if (reason === 'developing_team_legacy_creation') return appI18n.t('transactions.developingLegacy', { ns: 'proPackages' })
 
   if (reason === 'developing_team_season_activation') {
     const season = Number(payload?.season)
 
     return Number.isFinite(season)
-      ? `Developing Team activation — Season ${season}`
-      : 'Developing Team seasonal activation'
+      ? appI18n.t('transactions.developingActivation', { ns: 'proPackages', season })
+      : appI18n.t('transactions.developingSeasonalActivation', { ns: 'proPackages' })
   }
 
   if (reason === 'developing_team_season_renewal') {
     const season = Number(payload?.season)
 
     return Number.isFinite(season)
-      ? `Developing Team renewal — Season ${season}`
-      : 'Developing Team seasonal renewal'
+      ? appI18n.t('transactions.developingRenewal', { ns: 'proPackages', season })
+      : appI18n.t('transactions.developingSeasonalRenewal', { ns: 'proPackages' })
   }
 
   if (reason === 'developing_team_season_reactivation') {
     const season = Number(payload?.season)
 
     return Number.isFinite(season)
-      ? `Developing Team reactivation — Season ${season}`
-      : 'Developing Team seasonal reactivation'
+      ? appI18n.t('transactions.developingReactivation', { ns: 'proPackages', season })
+      : appI18n.t('transactions.developingSeasonalReactivation', { ns: 'proPackages' })
   }
 
-  if (reason === 'scout_report_extra') return 'Extra scouting report'
-  if (reason === 'premium_monthly_grant') return 'Premium monthly coin grant'
+  if (reason === 'scout_report_extra') return appI18n.t('transactions.extraScout', { ns: 'proPackages' })
+  if (reason === 'premium_monthly_grant') return appI18n.t('transactions.premiumGrant', { ns: 'proPackages' })
 
   return titleFromSnake(reason)
 }
@@ -425,7 +427,7 @@ async function callAuthenticatedEdgeFunction(
 
   const token = sessionData.session?.access_token
   if (!token) {
-    throw new Error('Not authenticated. Please log in again.')
+    throw new Error(appI18n.t('common.notAuthenticated', { ns: 'proPackages' }))
   }
 
   const response = await fetch(
@@ -464,6 +466,7 @@ async function callAuthenticatedEdgeFunction(
 }
 
 export default function ProPackagesPage(): JSX.Element {
+  const { t, i18n } = useTranslation('proPackages')
   const stripeReturnHandledRef = useRef(false)
   const [balance, setBalance] = useState(0)
   const [loadingBalance, setLoadingBalance] = useState(true)
@@ -568,7 +571,7 @@ export default function ProPackagesPage(): JSX.Element {
 
   const statusLabel = useMemo(() => {
     if (premiumStatus?.is_premium && premiumStatus.cancel_at_period_end) {
-      return 'Active — cancellation scheduled'
+      return t('premium.activeCancellation')
     }
 
     if (premiumStatus?.is_premium) return 'Active'
@@ -581,7 +584,7 @@ export default function ProPackagesPage(): JSX.Element {
 
   const nextRenewalLabel = useMemo(() => {
     if (!premiumStatus?.is_premium) return '—'
-    if (premiumStatus.cancel_at_period_end) return 'No further renewal'
+    if (premiumStatus.cancel_at_period_end) return t('premium.noRenewal')
 
     return formatDate(
       premiumDetails?.current_period_end ||
@@ -733,7 +736,7 @@ export default function ProPackagesPage(): JSX.Element {
       setPremiumDetails(null)
       setPremiumError(
         loadError?.message ??
-          'Failed to load Premium membership details.',
+          t('premium.detailsFailed'),
       )
       return null
     } finally {
@@ -793,7 +796,7 @@ export default function ProPackagesPage(): JSX.Element {
       setDevelopingTeamService(null)
       setDevelopingTeamServiceError(
         error?.message ??
-          'Failed to load Developing Team service.',
+          t('services.loadFailed'),
       )
     } finally {
       setLoadingDevelopingTeamService(false)
@@ -828,7 +831,7 @@ export default function ProPackagesPage(): JSX.Element {
       setDevelopingTeamServiceNotice(
         enabled
           ? `Automatic renewal enabled. ${developingTeamRenewalCost} coins will be charged at the beginning of the next season.`
-          : 'Automatic renewal disabled. No Developing Team renewal charge will be made automatically.',
+          : t('services.autoDisabled'),
       )
 
       await Promise.all([
@@ -842,7 +845,7 @@ export default function ProPackagesPage(): JSX.Element {
       )
       setDevelopingTeamServiceActionError(
         updateError?.message ??
-          'Failed to update Developing Team automatic renewal.',
+          t('services.autoFailed'),
       )
     } finally {
       setUpdatingDevelopingTeamAutoRenew(false)
@@ -868,7 +871,7 @@ export default function ProPackagesPage(): JSX.Element {
       setPremiumInvoices([])
       setPremiumInvoicesError(
         loadError?.message ??
-          'Failed to load Premium invoice history.',
+          t('history.invoiceFailed'),
       )
     } finally {
       setLoadingPremiumInvoices(false)
@@ -911,7 +914,7 @@ export default function ProPackagesPage(): JSX.Element {
     } catch (loadError: any) {
       console.error('Failed to load purchase history:', loadError)
       setHistoryError(
-        loadError?.message ?? 'Failed to load purchase history.',
+        loadError?.message ?? t('history.purchaseFailed'),
       )
       setPurchases([])
     } finally {
@@ -961,7 +964,7 @@ export default function ProPackagesPage(): JSX.Element {
       )
       setCoinHistoryError(
         loadError?.message ??
-          'Failed to load coin transaction history.',
+          t('history.ledgerFailed'),
       )
       setCoinTransactions([])
     } finally {
@@ -1029,14 +1032,14 @@ export default function ProPackagesPage(): JSX.Element {
 
       if (!activeSession) {
         setPremiumError(
-          'Your payment return was received, but the login session could not be restored. Please sign in again; the completed Stripe payment remains recorded.',
+          t('premium.returnSessionFailed'),
         )
         return
       }
 
       if (premiumResult === 'cancel') {
         setPremiumNotice(
-          'Premium checkout was canceled. No payment was taken.',
+          t('premium.checkoutCanceled'),
         )
         cleanStripeReturnUrl()
         return
@@ -1044,8 +1047,8 @@ export default function ProPackagesPage(): JSX.Element {
 
       setPremiumNotice(
         premiumResult === 'success'
-          ? 'Payment completed. Confirming Premium access and the 50-coin grant…'
-          : 'Billing management completed. Refreshing your subscription status…',
+          ? t('premium.confirming')
+          : t('premium.refreshing'),
       )
 
       cleanStripeReturnUrl()
@@ -1070,14 +1073,14 @@ export default function ProPackagesPage(): JSX.Element {
           status?.is_premium
         ) {
           setPremiumNotice(
-            'Premium is active and your monthly coin reward has been added.',
+            t('premium.activated'),
           )
           return
         }
 
         if (premiumResult === 'portal_return' && status) {
           setPremiumNotice(
-            'Your billing and subscription status has been refreshed.',
+            t('premium.billingRefreshed'),
           )
           return
         }
@@ -1085,7 +1088,7 @@ export default function ProPackagesPage(): JSX.Element {
 
       if (premiumResult === 'success') {
         setPremiumNotice(
-          'Payment was completed, but Stripe confirmation is still processing. Use Refresh in a few moments; do not purchase again.',
+          t('premium.processing'),
         )
       }
     }
@@ -1136,7 +1139,7 @@ export default function ProPackagesPage(): JSX.Element {
       )
 
       if (!response.url) {
-        throw new Error('Premium Checkout URL missing')
+        throw new Error(t('premium.checkoutUrlMissing'))
       }
 
       window.sessionStorage.setItem(
@@ -1146,7 +1149,7 @@ export default function ProPackagesPage(): JSX.Element {
       window.location.assign(response.url)
     } catch (checkoutError: any) {
       setPremiumError(
-        checkoutError?.message ?? 'Premium checkout failed.',
+        checkoutError?.message ?? t('premium.checkoutFailed'),
       )
       setStartingPremiumCheckout(false)
     }
@@ -1164,14 +1167,14 @@ export default function ProPackagesPage(): JSX.Element {
       )
 
       if (!response.url) {
-        throw new Error('Stripe Customer Portal URL missing')
+        throw new Error(t('premium.portalUrlMissing'))
       }
 
       window.location.href = response.url
     } catch (portalError: any) {
       setPremiumError(
         portalError?.message ??
-          'Could not open subscription management.',
+          t('premium.portalFailed'),
       )
       setOpeningPremiumPortal(false)
     }
@@ -1187,11 +1190,11 @@ export default function ProPackagesPage(): JSX.Element {
         { package_code: code },
       )
 
-      if (!response.url) throw new Error('Checkout URL missing')
+      if (!response.url) throw new Error(t('packages.checkoutUrlMissing'))
 
       window.location.href = response.url
     } catch (checkoutError: any) {
-      setError(checkoutError?.message ?? 'Checkout failed.')
+      setError(checkoutError?.message ?? t('packages.checkoutFailed'))
       setBuyingCode(null)
     }
   }
@@ -1231,7 +1234,7 @@ export default function ProPackagesPage(): JSX.Element {
             Premium &amp; Billing
           </h2>
           <p className="mt-1 text-sm text-gray-600">
-            Normal gameplay is free. Premium membership and coin packages are optional.
+            {t('page.description')}
           </p>
         </div>
 
@@ -1241,7 +1244,7 @@ export default function ProPackagesPage(): JSX.Element {
             onClick={() => void refreshVisibleData()}
             className="rounded-xl border border-black/10 bg-white px-4 py-3 text-sm font-semibold text-black shadow-sm hover:bg-gray-50"
           >
-            Refresh
+            {t('page.refresh')}
           </button>
         </div>
       </div>
@@ -1265,7 +1268,7 @@ export default function ProPackagesPage(): JSX.Element {
             <div className="group absolute right-6 top-6 z-20 sm:right-8 sm:top-8">
               <button
                 type="button"
-                aria-label="Show all Premium advantages"
+                aria-label={t('premium.showAdvantages')}
                 className="flex h-9 w-9 items-center justify-center rounded-full border border-yellow-400 bg-yellow-50 text-sm font-extrabold text-black shadow-sm transition hover:bg-yellow-100 focus:outline-none focus:ring-2 focus:ring-yellow-400"
               >
                 i
@@ -1276,13 +1279,13 @@ export default function ProPackagesPage(): JSX.Element {
                 className="pointer-events-none invisible absolute right-0 top-11 z-[100] max-h-[min(70vh,520px)] w-[320px] translate-y-1 overflow-y-auto rounded-2xl border border-yellow-300 bg-white p-4 opacity-0 shadow-2xl transition duration-150 group-hover:pointer-events-auto group-hover:visible group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:visible group-focus-within:translate-y-0 group-focus-within:opacity-100 sm:w-[380px]"
               >
                 <div className="text-sm font-extrabold text-black">
-                  All Premium advantages
+                  {t('premium.allAdvantages')}
                 </div>
                 <ul className="mt-3 space-y-2 text-xs leading-5 text-gray-700">
                   {PREMIUM_ADVANTAGES.map((advantage) => (
                     <li key={advantage} className="flex gap-2">
                       <span className="font-bold text-green-700">✓</span>
-                      <span>{advantage}</span>
+                      <span>{t(advantage)}</span>
                     </li>
                   ))}
                 </ul>
@@ -1291,30 +1294,30 @@ export default function ProPackagesPage(): JSX.Element {
 
             <div className="flex flex-wrap items-center gap-2">
               <span className="rounded-full bg-yellow-400 px-3 py-1 text-xs font-extrabold text-black">
-                PREMIUM
+                {t('premium.label')}
               </span>
 
               {!loadingPremium && premiumStatus?.is_premium ? (
                 <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-bold text-green-800">
                   {premiumStatus.cancel_at_period_end
-                    ? 'Active — ending'
+                    ? t('premium.activeEnding')
                     : 'Active'}
                 </span>
               ) : (
                 <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-bold text-gray-700">
-                  Optional membership
+                  {t('premium.optional')}
                 </span>
               )}
             </div>
 
             <h3 className="mt-4 text-2xl font-extrabold text-black">
-              {premiumPlan?.name ?? 'ProPeloton Premium'}
+              {premiumPlan?.name ?? t('premium.defaultName')}
             </h3>
 
             <div className="mt-2 text-3xl font-extrabold text-black">
               {premiumPrice}
               <span className="ml-2 text-sm font-medium text-gray-500">
-                per real-life month
+                {t('premium.perMonth')}
               </span>
             </div>
 
@@ -1322,19 +1325,19 @@ export default function ProPackagesPage(): JSX.Element {
               <li className="flex gap-2">
                 <span className="font-bold text-green-700">✓</span>
                 <span>
-                  Advanced training, transfer, scouting and management tools.
+                  {t('premium.advancedTools')}
                 </span>
               </li>
               <li className="flex gap-2">
                 <span className="font-bold text-green-700">✓</span>
                 <span>
-                  Saved searches, market alerts, rider shortlist and deeper analysis.
+                  {t('premium.marketTools')}
                 </span>
               </li>
               <li className="flex gap-2">
                 <span className="font-bold text-green-700">✓</span>
                 <span>
-                  Extra equipment and infrastructure convenience capacity.
+                  {t('premium.capacity')}
                 </span>
               </li>
               <li className="flex gap-2">
@@ -1346,7 +1349,7 @@ export default function ProPackagesPage(): JSX.Element {
               <li className="flex gap-2">
                 <span className="font-bold text-green-700">✓</span>
                 <span>
-                  Cancel at any time; normal gameplay remains free.
+                  {t('premium.cancelAnytime')}
                 </span>
               </li>
             </ul>
@@ -1355,8 +1358,8 @@ export default function ProPackagesPage(): JSX.Element {
               <div className="mt-5 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-900">
                 <div className="font-bold">
                   {premiumStatus.cancel_at_period_end
-                    ? 'Premium remains active until the paid period ends.'
-                    : 'Premium is active.'}
+                    ? t('premium.activeUntilEnd')
+                    : t('premium.activeNow')}
                 </div>
                 <div className="mt-1">
                   {premiumStatus.cancel_at_period_end
@@ -1374,13 +1377,13 @@ export default function ProPackagesPage(): JSX.Element {
 
           <div className="flex flex-col justify-center border-t border-black/10 bg-yellow-50 p-6 sm:p-8 lg:border-l lg:border-t-0">
             <div className="text-sm font-semibold text-gray-700">
-              Premium membership
+              {t('premium.membership')}
             </div>
             <div className="mt-2 text-4xl font-extrabold text-black">
               {premiumPrice}
             </div>
             <div className="mt-1 text-sm text-gray-600">
-              per real-life month
+              {t('premium.perMonth')}
             </div>
 
             {showManageSubscription ? (
@@ -1391,8 +1394,8 @@ export default function ProPackagesPage(): JSX.Element {
                 className="mt-6 w-full rounded-xl bg-black px-4 py-3 text-sm font-extrabold text-white hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {openingPremiumPortal
-                  ? 'Opening billing portal…'
-                  : 'Manage subscription'}
+                  ? t('premium.openingPortal')
+                  : t('premium.manage')}
               </button>
             ) : (
               <button
@@ -1407,19 +1410,19 @@ export default function ProPackagesPage(): JSX.Element {
                 className="mt-6 w-full rounded-xl bg-yellow-400 px-4 py-3 text-sm font-extrabold text-black hover:bg-yellow-300 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {loadingPremium
-                  ? 'Loading Premium…'
+                  ? t('premium.loading')
                   : startingPremiumCheckout
                     ? 'Redirecting…'
                     : premiumCheckoutBlocked
-                      ? 'Subscription already exists'
-                      : 'Become Premium'}
+                      ? t('premium.alreadyExists')
+                      : t('premium.become')}
               </button>
             )}
 
             <div className="mt-3 text-xs text-gray-500">
               {showManageSubscription
-                ? 'Manage billing details, view Stripe invoices or cancel future renewal.'
-                : 'Secure recurring Stripe checkout. Premium is optional and normal gameplay remains free.'}
+                ? t('premium.manageHelp')
+                : t('premium.checkoutHelp')}
             </div>
           </div>
         </div>
@@ -1429,10 +1432,10 @@ export default function ProPackagesPage(): JSX.Element {
       <section className="mt-10">
         <div>
           <h3 className="text-xl font-extrabold text-black">
-            Free vs Premium
+            {t('comparison.title')}
           </h3>
           <p className="mt-1 text-sm text-gray-600">
-            Premium adds optional analysis and tools without removing access from Free players.
+            {t('comparison.description')}
           </p>
         </div>
 
@@ -1440,16 +1443,16 @@ export default function ProPackagesPage(): JSX.Element {
           <table className="w-full min-w-[640px] text-sm">
             <thead className="bg-gray-50 text-left text-gray-600">
               <tr>
-                <th className="px-5 py-4 font-semibold">Benefit</th>
-                <th className="px-5 py-4 text-center font-semibold">Free</th>
-                <th className="px-5 py-4 text-center font-semibold">Premium</th>
+                <th className="px-5 py-4 font-semibold">{t('comparison.benefit')}</th>
+                <th className="px-5 py-4 text-center font-semibold">{t('premium.free')}</th>
+                <th className="px-5 py-4 text-center font-semibold">{t('comparison.premium')}</th>
               </tr>
             </thead>
             <tbody>
               {COMPARISON_ROWS.map(([benefit, free, premium]) => (
-                <tr key={benefit} className="border-t border-black/5">
+                <tr key={t(benefit)} className="border-t border-black/5">
                   <td className="px-5 py-4 font-medium text-gray-900">
-                    {benefit}
+                    {t(benefit)}
                   </td>
                   <td className="px-5 py-4 text-center text-gray-700">
                     {free}
@@ -1462,7 +1465,7 @@ export default function ProPackagesPage(): JSX.Element {
 
               <tr className="border-t border-black/5">
                 <td className="px-5 py-4 font-medium text-gray-900">
-                  Developing Team service
+                  {t('comparison.developing')}
                 </td>
                 <td className="px-5 py-4 text-center text-gray-700">
                   {developingTeamActivationCost} activation / {developingTeamRenewalCost} renewal
@@ -1476,7 +1479,7 @@ export default function ProPackagesPage(): JSX.Element {
         </div>
 
         <p className="mt-2 text-xs text-gray-500">
-          Premium-only analysis and tools will be expanded during the page-by-page feature review.
+          {t('comparison.note')}
         </p>
       </section>
 
@@ -1484,10 +1487,10 @@ export default function ProPackagesPage(): JSX.Element {
       <section className="mt-10">
         <div>
           <h3 className="text-xl font-extrabold text-black">
-            Need additional coins?
+            {t('packages.title')}
           </h3>
           <p className="mt-1 max-w-4xl text-sm text-gray-600">
-            Free and Premium players can purchase additional coins for optional features and expansions. Buying coins does not activate Premium membership.
+            {t('packages.description')}
           </p>
         </div>
 
@@ -1499,7 +1502,7 @@ export default function ProPackagesPage(): JSX.Element {
 
         {loadingPackages ? (
           <div className="mt-6 rounded-xl border border-black/10 bg-white p-6 text-sm text-gray-600">
-            Loading packages…
+            {t('packages.loading')}
           </div>
         ) : (
           <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -1520,23 +1523,23 @@ export default function ProPackagesPage(): JSX.Element {
                   <div className="absolute right-4 top-4">
                     {isBestValue ? (
                       <span className="rounded-full bg-yellow-400 px-3 py-1 text-xs font-bold text-black">
-                        Best value
+                        {t('packages.bestValue')}
                       </span>
-                    ) : item.tagline === 'Most popular' ? (
+                    ) : item.tagline === 'packages.popular' ? (
                       <span className="rounded-full bg-black px-3 py-1 text-xs font-bold text-white">
-                        Most popular
+                        {t('packages.mostPopular')}
                       </span>
                     ) : null}
                   </div>
 
                   <div className="text-sm font-semibold text-gray-700">
-                    Coin Pack
+                    {t('packages.coinPack')}
                   </div>
                   <div className="mt-1 text-4xl font-bold text-black">
                     ◎ {item.coins.toLocaleString()}
                   </div>
                   <div className="mt-2 text-sm text-gray-600">
-                    {item.tagline}
+                    {item.tagline ? t(item.tagline) : ''}
                   </div>
 
                   <div className="mt-5">
@@ -1558,7 +1561,7 @@ export default function ProPackagesPage(): JSX.Element {
                   </button>
 
                   <div className="mt-3 text-xs text-gray-500">
-                    Secure Stripe checkout. This is a one-time coin purchase, not a Premium subscription.
+                    {t('packages.checkoutHelp')}
                   </div>
                 </div>
               )
@@ -1571,10 +1574,10 @@ export default function ProPackagesPage(): JSX.Element {
       <section className="mt-10">
         <div>
           <h3 className="text-xl font-extrabold text-black">
-            Current membership
+            {t('membership.title')}
           </h3>
           <p className="mt-1 text-sm text-gray-600">
-            Your current plan, billing period and renewal status.
+            {t('membership.description')}
           </p>
         </div>
 
@@ -1585,7 +1588,7 @@ export default function ProPackagesPage(): JSX.Element {
               premiumStatus?.is_premium || premiumDetails
                 ? premiumStatus?.plan_name ||
                   premiumPlan?.name ||
-                  'ProPeloton Premium'
+                  t('premium.defaultName')
                 : 'Free'
             }
           />
@@ -1615,7 +1618,7 @@ export default function ProPackagesPage(): JSX.Element {
 
         {showManageSubscription ? (
           <p className="mt-3 text-sm text-gray-600">
-            Use <span className="font-semibold">Manage subscription</span> above to cancel future renewal, update billing details or view Stripe-hosted invoices.
+            {t('membership.manageNotePrefix')} <span className="font-semibold">{t('premium.manage')}</span> {t('membership.manageNoteSuffix')}
           </p>
         ) : null}
       </section>
@@ -1624,25 +1627,24 @@ export default function ProPackagesPage(): JSX.Element {
       <section className="mt-10">
         <div>
           <h3 className="text-xl font-extrabold text-black">
-            Active coin services
+            {t('services.title')}
           </h3>
           <p className="mt-1 text-sm text-gray-600">
-            Manage optional club services purchased with coins. These services are available to Free
-            and Premium players.
+            {t('services.description')}
           </p>
         </div>
 
         {loadingDevelopingTeamService ? (
           <div className="mt-5 rounded-2xl border border-black/10 bg-white p-6 text-sm text-gray-600 shadow-sm">
-            Loading coin services...
+            {t('services.loading')}
           </div>
         ) : developingTeamServiceError ? (
           <div className="mt-5 rounded-2xl border border-amber-200 bg-amber-50 p-6 shadow-sm">
             <div className="text-sm font-semibold text-amber-900">
-              Developing Team service information is currently unavailable.
+              {t('services.unavailable')}
             </div>
             <p className="mt-1 text-sm text-amber-800">
-              The rest of Premium, billing and coin management remains available.
+              {t('services.unavailableHelp')}
             </p>
           </div>
         ) : (
@@ -1651,7 +1653,7 @@ export default function ProPackagesPage(): JSX.Element {
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
                   <h4 className="text-lg font-extrabold text-black">
-                    Developing Team
+                    {t('services.developing')}
                   </h4>
 
                   <span
@@ -1668,12 +1670,12 @@ export default function ProPackagesPage(): JSX.Element {
                 </div>
 
                 <p className="mt-2 text-sm text-gray-600">
-                  Build and manage a U23 development squad.
+                  {t('services.descriptionDeveloping')}
                 </p>
 
                 {developingTeamService?.access_status === 'expired' ? (
                   <p className="mt-3 text-sm text-amber-800">
-                    The team and all stored data remain available in read-only mode.
+                    {t('services.readOnly')}
                   </p>
                 ) : null}
 
@@ -1696,10 +1698,10 @@ export default function ProPackagesPage(): JSX.Element {
                 className="inline-flex shrink-0 items-center justify-center rounded-xl border border-black/10 bg-white px-4 py-3 text-sm font-semibold text-black shadow-sm transition hover:bg-gray-50"
               >
                 {developingTeamService?.access_status === 'expired'
-                  ? 'Reactivate in Preferences'
+                  ? t('services.reactivatePreferences')
                   : developingTeamService?.is_active
-                    ? 'Manage service'
-                    : 'Manage in Preferences'}
+                    ? t('services.manageService')
+                    : t('services.managePreferences')}
               </a>
             </div>
 
@@ -1754,7 +1756,7 @@ export default function ProPackagesPage(): JSX.Element {
                 <label className="mt-5 flex cursor-pointer items-start justify-between gap-4 rounded-xl border border-black/10 bg-gray-50 p-4">
                   <div>
                     <div className="text-sm font-semibold text-black">
-                      Automatically renew each season
+                      {t('services.autoRenew')}
                     </div>
                     <div className="mt-1 text-xs leading-5 text-gray-600">
                       When enabled, {developingTeamRenewalCost} coins will be deducted at the
@@ -1820,17 +1822,17 @@ export default function ProPackagesPage(): JSX.Element {
       <section className="mt-10">
         <div>
           <h3 className="text-xl font-extrabold text-black">
-            Billing and purchase history
+            {t('history.title')}
           </h3>
           <p className="mt-1 text-sm text-gray-600">
-            Premium invoices, coin-package purchases and wallet activity are kept separate.
+            {t('history.description')}
           </p>
         </div>
 
         <div className="mt-5 space-y-4">
           <HistoryCard
-            title="Premium invoices"
-            subtitle="Successful Premium payments and monthly coin grants"
+            title={t('history.premiumInvoices')}
+            subtitle={t('history.premiumInvoicesSubtitle')}
             open={premiumInvoicesOpen}
             onToggle={() => void handleTogglePremiumInvoices()}
           >
@@ -1845,11 +1847,11 @@ export default function ProPackagesPage(): JSX.Element {
                 <table className="w-full min-w-[760px] text-sm">
                   <thead className="bg-gray-50 text-left text-gray-600">
                     <tr>
-                      <th className="px-4 py-3 font-semibold">Paid</th>
-                      <th className="px-4 py-3 font-semibold">Service period</th>
-                      <th className="px-4 py-3 font-semibold">Amount</th>
-                      <th className="px-4 py-3 font-semibold">Coins granted</th>
-                      <th className="px-4 py-3 font-semibold">Type</th>
+                      <th className="px-4 py-3 font-semibold">{t('history.paid')}</th>
+                      <th className="px-4 py-3 font-semibold">{t('history.servicePeriod')}</th>
+                      <th className="px-4 py-3 font-semibold">{t('history.amount')}</th>
+                      <th className="px-4 py-3 font-semibold">{t('history.coinsGranted')}</th>
+                      <th className="px-4 py-3 font-semibold">{t('history.type')}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1886,8 +1888,8 @@ export default function ProPackagesPage(): JSX.Element {
           </HistoryCard>
 
           <HistoryCard
-            title="Coin-package purchases"
-            subtitle="One-time purchases of optional coin packages"
+            title={t('history.coinPurchases')}
+            subtitle={t('history.coinPurchasesSubtitle')}
             open={historyOpen}
             onToggle={() => void handleToggleHistory()}
           >
@@ -1902,10 +1904,10 @@ export default function ProPackagesPage(): JSX.Element {
                 <table className="w-full min-w-[620px] text-sm">
                   <thead className="bg-gray-50 text-left text-gray-600">
                     <tr>
-                      <th className="px-4 py-3 font-semibold">Date</th>
-                      <th className="px-4 py-3 font-semibold">Package</th>
-                      <th className="px-4 py-3 font-semibold">Coins</th>
-                      <th className="px-4 py-3 font-semibold">Price</th>
+                      <th className="px-4 py-3 font-semibold">{t('history.date')}</th>
+                      <th className="px-4 py-3 font-semibold">{t('history.package')}</th>
+                      <th className="px-4 py-3 font-semibold">{t('history.coins')}</th>
+                      <th className="px-4 py-3 font-semibold">{t('history.price')}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1939,8 +1941,8 @@ export default function ProPackagesPage(): JSX.Element {
           </HistoryCard>
 
           <HistoryCard
-            title="Coin ledger/history"
-            subtitle="All coin grants, purchases, rewards and optional-feature spending"
+            title={t('history.ledger')}
+            subtitle={t('history.ledgerSubtitle')}
             open={coinHistoryOpen}
             onToggle={() => void handleToggleCoinHistory()}
           >
@@ -1956,10 +1958,10 @@ export default function ProPackagesPage(): JSX.Element {
                   <table className="w-full min-w-[760px] text-sm">
                     <thead className="bg-gray-50 text-left text-gray-600">
                       <tr>
-                        <th className="px-4 py-3 font-semibold">Date</th>
-                        <th className="px-4 py-3 font-semibold">Type</th>
-                        <th className="px-4 py-3 font-semibold">Coins</th>
-                        <th className="px-4 py-3 font-semibold">Details</th>
+                        <th className="px-4 py-3 font-semibold">{t('history.date')}</th>
+                        <th className="px-4 py-3 font-semibold">{t('history.type')}</th>
+                        <th className="px-4 py-3 font-semibold">{t('history.coins')}</th>
+                        <th className="px-4 py-3 font-semibold">{t('history.details')}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -2012,7 +2014,7 @@ export default function ProPackagesPage(): JSX.Element {
                       disabled={safeCoinHistoryPage <= 1}
                       className="rounded-xl border border-black/10 bg-white px-4 py-2 text-sm font-semibold text-black hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
                     >
-                      Previous
+                      {t('history.previous')}
                     </button>
                     <button
                       type="button"
@@ -2029,7 +2031,7 @@ export default function ProPackagesPage(): JSX.Element {
                       }
                       className="rounded-xl border border-black/10 bg-white px-4 py-2 text-sm font-semibold text-black hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
                     >
-                      Next
+                      {t('history.next')}
                     </button>
                   </div>
                 </div>
@@ -2102,7 +2104,7 @@ function HistoryError(props: { message: string }): JSX.Element {
 function HistoryLoading(): JSX.Element {
   return (
     <div className="rounded-xl border border-black/10 bg-white p-4 text-sm text-gray-600">
-      Loading…
+      {t('history.loading')}
     </div>
   )
 }

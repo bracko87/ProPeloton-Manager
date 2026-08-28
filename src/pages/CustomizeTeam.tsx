@@ -42,6 +42,8 @@
  */
 
 import React, { useEffect, useId, useMemo, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import appI18n from '@/i18n'
 import { getMyClubContext } from '@/lib/clubContext'
 import { supabase } from '@/lib/supabase' // <-- adjust if your path differs
 
@@ -141,11 +143,11 @@ function validateLogoFile(file: File): string | null {
   const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp']
 
   if (!validTypes.includes(file.type)) {
-    return 'Only JPG, PNG, or WEBP images are allowed.'
+    return appI18n.t('logo.invalidType', { ns: 'customizeTeam' })
   }
 
   if (file.size > MAX_FILE_SIZE) {
-    return 'Image must be no larger than 2 MB.'
+    return appI18n.t('logo.tooLarge', { ns: 'customizeTeam' })
   }
 
   return null
@@ -168,7 +170,7 @@ function convertFileToPngBlob(file: File): Promise<Blob> {
 
         const context = canvas.getContext('2d')
         if (!context) {
-          reject(new Error('Failed to process logo image.'))
+          reject(new Error(appI18n.t('logo.processFailed', { ns: 'customizeTeam' })))
           return
         }
 
@@ -178,7 +180,7 @@ function convertFileToPngBlob(file: File): Promise<Blob> {
         canvas.toBlob(
           blob => {
             if (!blob) {
-              reject(new Error('Failed to convert logo to PNG.'))
+              reject(new Error(appI18n.t('logo.convertFailed', { ns: 'customizeTeam' })))
               return
             }
             resolve(blob)
@@ -188,11 +190,11 @@ function convertFileToPngBlob(file: File): Promise<Blob> {
         )
       }
 
-      image.onerror = () => reject(new Error('Failed to load logo image.'))
+      image.onerror = () => reject(new Error(appI18n.t('logo.loadFailed', { ns: 'customizeTeam' })))
       image.src = String(reader.result)
     }
 
-    reader.onerror = () => reject(new Error('Failed to read logo image.'))
+    reader.onerror = () => reject(new Error(appI18n.t('logo.readFailed', { ns: 'customizeTeam' })))
     reader.readAsDataURL(file)
   })
 }
@@ -201,11 +203,11 @@ function validateJerseyUploadFile(file: File): Promise<string | null> {
   const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp']
 
   if (!validTypes.includes(file.type)) {
-    return Promise.resolve('Only JPG, PNG, or WEBP images are allowed for jerseys.')
+    return Promise.resolve(appI18n.t('jersey.invalidType', { ns: 'customizeTeam' }))
   }
 
   if (file.size > MAX_JERSEY_FILE_SIZE) {
-    return Promise.resolve('Jersey image must be no larger than 2 MB.')
+    return Promise.resolve(appI18n.t('jersey.tooLarge', { ns: 'customizeTeam' }))
   }
 
   return new Promise(resolve => {
@@ -220,7 +222,7 @@ function validateJerseyUploadFile(file: File): Promise<string | null> {
       window.URL.revokeObjectURL(objectUrl)
 
       if (tooLarge) {
-        resolve('Uploaded jersey image must be 512 × 512 px or smaller.')
+        resolve(appI18n.t('jersey.dimensions', { ns: 'customizeTeam' }))
         return
       }
 
@@ -229,7 +231,7 @@ function validateJerseyUploadFile(file: File): Promise<string | null> {
 
     image.onerror = () => {
       window.URL.revokeObjectURL(objectUrl)
-      resolve('Failed to read jersey image.')
+      resolve(appI18n.t('jersey.readFailed', { ns: 'customizeTeam' }))
     }
 
     image.src = objectUrl
@@ -248,7 +250,7 @@ function validateRemoteJerseyImage(url: string): Promise<string | null> {
     }
 
     image.onerror = () => {
-      resolve('Could not load jersey image from URL.')
+      resolve(appI18n.t('jersey.remoteFailed', { ns: 'customizeTeam' }))
     }
 
     image.src = url
@@ -287,7 +289,7 @@ function rasterizeSvgToPngBlob(svg: string, size = 512): Promise<Blob> {
       const context = canvas.getContext('2d')
       if (!context) {
         URL.revokeObjectURL(objectUrl)
-        reject(new Error('Failed to render base logo image.'))
+        reject(new Error(appI18n.t('logo.baseRenderFailed', { ns: 'customizeTeam' })))
         return
       }
 
@@ -299,7 +301,7 @@ function rasterizeSvgToPngBlob(svg: string, size = 512): Promise<Blob> {
           URL.revokeObjectURL(objectUrl)
 
           if (!blob) {
-            reject(new Error('Failed to export base logo image.'))
+            reject(new Error(appI18n.t('logo.baseExportFailed', { ns: 'customizeTeam' })))
             return
           }
 
@@ -312,7 +314,7 @@ function rasterizeSvgToPngBlob(svg: string, size = 512): Promise<Blob> {
 
     image.onerror = () => {
       URL.revokeObjectURL(objectUrl)
-      reject(new Error('Failed to load base logo image.'))
+      reject(new Error(appI18n.t('logo.baseLoadFailed', { ns: 'customizeTeam' })))
     }
 
     image.src = objectUrl
@@ -334,7 +336,7 @@ async function upsertBaseTeamLogo(
   })
 
   if (error) {
-    throw new Error(error.message || 'Failed to refresh base team logo.')
+    throw new Error(error.message || appI18n.t('logo.baseRefreshFailed', { ns: 'customizeTeam' }))
   }
 
   return baseLogoPath
@@ -531,6 +533,7 @@ function KitDesigner({
   customizationAccess,
   onCustomizationChanged,
 }: KitDesignerProps): JSX.Element {
+  const { t } = useTranslation('customizeTeam')
   const [loaded, setLoaded] = useState(false)
   const [saving, setSaving] = useState(false)
   const [appliedKitConfig, setAppliedKitConfig] = useState<TeamKitConfig>(createGenericKitConfig())
@@ -595,7 +598,7 @@ function KitDesigner({
         setDraftKitConfig(fallback)
         setOriginalGenericKitUrl(null)
         setJerseyUrlInput('')
-        setKitNotice('Failed to load saved jersey.')
+        setKitNotice(t('jersey.loadSavedFailed'))
         setLoaded(true)
       }
     }
@@ -632,9 +635,9 @@ function KitDesigner({
       })
 
       setJerseyUrlInput('')
-      setKitNotice('New jersey image is ready. Click Apply jersey to save it.')
+      setKitNotice(t('jersey.ready'))
     } catch {
-      setKitNotice('Failed to preview jersey image.')
+      setKitNotice(t('jersey.previewFailed'))
     } finally {
       event.target.value = ''
     }
@@ -651,7 +654,7 @@ function KitDesigner({
       const parsed = new URL(trimmedUrl)
 
       if (!['http:', 'https:'].includes(parsed.protocol)) {
-        setKitNotice('Jersey image URL must start with http:// or https://')
+        setKitNotice(t('jersey.urlProtocol'))
         return false
       }
 
@@ -671,10 +674,10 @@ function KitDesigner({
         source: 'customize_team_url',
       })
 
-      setKitNotice('Jersey URL accepted. Click Apply jersey to save it.')
+      setKitNotice(t('jersey.urlAccepted'))
       return true
     } catch {
-      setKitNotice('Please provide a valid jersey image URL.')
+      setKitNotice(t('jersey.urlInvalid'))
       return false
     }
   }
@@ -685,8 +688,8 @@ function KitDesigner({
     setJerseyUrlInput('')
     setKitNotice(
       originalGenericKitUrl
-        ? 'Original team jersey restored in preview. Click Apply jersey to save it.'
-        : 'Default color-based jersey restored in preview. Click Apply jersey to save it.',
+        ? t('jersey.originalRestored')
+        : t('jersey.defaultRestored'),
     )
   }
 
@@ -751,11 +754,11 @@ function KitDesigner({
       setKitNotice(
         customizationAccess?.jersey_change_cost
           ? `Jersey applied and saved for ${customizationAccess.jersey_change_cost} coins.`
-          : 'Jersey applied and saved. This season’s free jersey change was used.',
+          : t('jersey.savedFree'),
       )
     } catch (err) {
       setSaving(false)
-      setKitNotice(err instanceof Error ? err.message : 'Failed to save jersey.')
+      setKitNotice(err instanceof Error ? err.message : t('jersey.saveFailed'))
     }
   }
 
@@ -767,9 +770,9 @@ function KitDesigner({
   return (
     <div className="space-y-5" data-team-id={teamId}>
       <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700">
-        <div className="font-semibold text-slate-900">Jersey change cost</div>
+        <div className="font-semibold text-slate-900">{t('jersey.costTitle')}</div>
         <div className="mt-1 text-xs text-slate-500">
-          One jersey change per season is free. Further changes in the same season cost 10 coins each.
+          {t('jersey.costHelp')}
         </div>
         <div className="mt-2 text-sm font-semibold text-slate-900">
           Current change: {customizationAccess?.jersey_change_cost ?? 0} coins
@@ -779,7 +782,7 @@ function KitDesigner({
       <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5 shadow-sm space-y-5">
         <div className="flex flex-col gap-3 lg:flex-row">
           <label className="inline-flex items-center justify-center rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-900 shadow-sm cursor-pointer hover:bg-slate-50">
-            <span>Upload new jersey</span>
+            <span>{t('jersey.upload')}</span>
             <input
               type="file"
               accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
@@ -800,7 +803,7 @@ function KitDesigner({
                 void handleJerseyUrlCommit()
               }
             }}
-            placeholder="Paste new jersey image URL and press Enter"
+            placeholder={t('jersey.urlPlaceholder')}
             className="flex-1 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-300"
           />
 
@@ -816,21 +819,21 @@ function KitDesigner({
               ? 'Applying...'
               : customizationAccess?.jersey_change_cost
                 ? `Apply jersey · ${customizationAccess.jersey_change_cost} coins`
-                : 'Apply jersey · Free'}
+                : t('jersey.applyFree')}
           </button>
         </div>
 
         <div className="rounded-2xl border border-slate-200 bg-white p-5">
           <div className="flex items-center justify-between gap-3 mb-4">
             <div>
-              <div className="text-sm font-semibold text-slate-900">Current jersey preview</div>
+              <div className="text-sm font-semibold text-slate-900">{t('jersey.previewTitle')}</div>
               <div className="mt-1 text-xs text-slate-500">
-                This is the jersey that will appear on team profile and race screens.
+                {t('jersey.previewText')}
               </div>
             </div>
             {loaded && hasUnsavedChanges ? (
               <div className="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-800">
-                Unsaved changes
+                {t('jersey.unsaved')}
               </div>
             ) : null}
           </div>
@@ -839,7 +842,7 @@ function KitDesigner({
             {previewSrc ? (
               <img
                 src={previewSrc}
-                alt="Current jersey"
+                alt={t('jersey.alt')}
                 className="max-h-full max-w-full rounded-md object-contain"
                 style={{
                   maxWidth: 560,
@@ -859,7 +862,7 @@ function KitDesigner({
         </div>
 
         <div className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-900">
-          URL images can be any size and are fitted inside the preview. Uploaded files must be JPG, PNG, or WEBP, max 2 MB and max 512 × 512 px.
+          {t('jersey.fileRules')}
         </div>
 
         {kitNotice ? (
@@ -873,6 +876,7 @@ function KitDesigner({
 }
 
 export default function CustomizeTeamPage(): JSX.Element {
+  const { t } = useTranslation('customizeTeam')
   const [mainClubId, setMainClubId] = useState<string | null>(null)
   const [ownerUserId, setOwnerUserId] = useState<string | null>(null)
   const [brandingLock, setBrandingLock] = useState<BrandingLockStatus | null>(null)
@@ -1053,7 +1057,7 @@ export default function CustomizeTeamPage(): JSX.Element {
         } = await supabase.auth.getUser()
 
         if (userError) throw userError
-        if (!user) throw new Error('You must be logged in to customize your club.')
+        if (!user) throw new Error(t('page.loginRequired'))
 
         if (!active) return
         setOwnerUserId(user.id)
@@ -1061,7 +1065,7 @@ export default function CustomizeTeamPage(): JSX.Element {
         const { mainClub } = await getMyClubContext()
 
         if (!mainClub?.id) {
-          throw new Error('Main club context not found.')
+          throw new Error(t('page.contextMissing'))
         }
 
         const { data: club, error: clubError } = await supabase
@@ -1081,7 +1085,7 @@ export default function CustomizeTeamPage(): JSX.Element {
         ])
         await broadcastClubUpdate()
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load club.')
+        setError(err instanceof Error ? err.message : t('page.loadFailed'))
       } finally {
         if (active) {
           setLoading(false)
@@ -1100,7 +1104,7 @@ export default function CustomizeTeamPage(): JSX.Element {
 
   async function persistClub(patch: PersistableClubPatch): Promise<ClubRow | null> {
     if (!ownerUserId || !mainClubId) {
-      const message = 'Main club is not resolved.'
+      const message = t('page.notResolved')
       setError(message)
       showTopNotice('error', message)
       return null
@@ -1143,7 +1147,7 @@ export default function CustomizeTeamPage(): JSX.Element {
     const updatedRow = Array.isArray(data) ? data[0] : data
 
     if (!updatedRow) {
-      const message = 'Main club update failed.'
+      const message = t('page.updateFailed')
       setError(message)
       showTopNotice('error', message)
       return null
@@ -1159,7 +1163,7 @@ export default function CustomizeTeamPage(): JSX.Element {
 
   async function handleApplyTeamName(): Promise<void> {
     if (brandingLock?.can_edit_name === false) {
-      const message = 'Team name is locked by a naming-rights sponsor.'
+      const message = t('identity.nameLocked')
       setError(message)
       showTopNotice('error', message)
       return
@@ -1168,14 +1172,14 @@ export default function CustomizeTeamPage(): JSX.Element {
     const cleanName = sanitizeTeamName(teamNameInput)
 
     if (cleanName.length < 3 || cleanName.length > 40) {
-      const message = 'Team name must be between 3 and 40 characters.'
+      const message = t('identity.nameInvalid')
       setError(message)
       showTopNotice('error', message)
       return
     }
 
     if (!mainClubId) {
-      setError('Club not found.')
+      setError(t('page.clubNotFound'))
       return
     }
 
@@ -1191,7 +1195,7 @@ export default function CustomizeTeamPage(): JSX.Element {
 
       const result = Array.isArray(data) ? data[0] : data
       const updatedClub = result?.club as ClubRow | undefined
-      if (!updatedClub) throw new Error('Team name update did not return the updated club.')
+      if (!updatedClub) throw new Error(t('identity.nameResultMissing'))
 
       syncClubState(updatedClub)
       await Promise.all([
@@ -1199,10 +1203,10 @@ export default function CustomizeTeamPage(): JSX.Element {
         loadCustomizationAccess(updatedClub.id),
         broadcastClubUpdate(),
       ])
-      showSuccess('Team name updated.')
+      showSuccess(t('identity.nameUpdated'))
       showTopNotice('success', `Team name changed to "${updatedClub.name}" for 30 coins.`)
     } catch (caught) {
-      const message = caught instanceof Error ? caught.message : 'Failed to change team name.'
+      const message = caught instanceof Error ? caught.message : t('identity.nameFailed')
       setError(message)
       showTopNotice('error', message)
     } finally {
@@ -1212,21 +1216,21 @@ export default function CustomizeTeamPage(): JSX.Element {
 
   async function handleApplyTeamColors(): Promise<void> {
     if (brandingLock?.can_edit_colors === false) {
-      const message = 'Team colors are locked by a naming-rights sponsor.'
+      const message = t('identity.colorsLocked')
       setError(message)
       showTopNotice('error', message)
       return
     }
 
     if (!isValidHexColor(primaryColor) || !isValidHexColor(secondaryColor)) {
-      const message = 'Please use valid HEX colors like #ff0000.'
+      const message = t('identity.hexInvalid')
       setError(message)
       showTopNotice('error', message)
       return
     }
 
     if (primaryColor.toLowerCase() === secondaryColor.toLowerCase()) {
-      const message = 'Primary and secondary colors must be different.'
+      const message = t('identity.colorsSame')
       setError(message)
       showTopNotice('error', message)
       return
@@ -1248,7 +1252,7 @@ export default function CustomizeTeamPage(): JSX.Element {
       }
     }
 
-    showSuccess('Team colors updated.')
+    showSuccess(t('identity.colorsUpdated'))
     showTopNotice(
       'success',
       `Team colors changed to ${updatedClub.primary_color} and ${updatedClub.secondary_color}.`,
@@ -1274,7 +1278,7 @@ export default function CustomizeTeamPage(): JSX.Element {
       setLogoPreview(previewUrl)
       setLogoUrlInput('')
     } catch {
-      setError('Failed to preview logo image.')
+      setError(t('logo.previewFailed'))
     } finally {
       event.target.value = ''
     }
@@ -1284,7 +1288,7 @@ export default function CustomizeTeamPage(): JSX.Element {
     const trimmedUrl = logoUrlInput.trim()
 
     if (!trimmedUrl) {
-      setError('Please enter an image URL first.')
+      setError(t('logo.urlFirst'))
       return
     }
 
@@ -1292,7 +1296,7 @@ export default function CustomizeTeamPage(): JSX.Element {
       const parsed = new URL(trimmedUrl)
 
       if (!['http:', 'https:'].includes(parsed.protocol)) {
-        setError('Logo URL must start with http:// or https://')
+        setError(t('logo.urlProtocol'))
         return
       }
 
@@ -1302,13 +1306,13 @@ export default function CustomizeTeamPage(): JSX.Element {
       setLogoPreview(trimmedUrl)
       setLogoVersion(Date.now())
     } catch {
-      setError('Please provide a valid image URL.')
+      setError(t('logo.urlInvalid'))
     }
   }
 
   async function handleApplyLogo(): Promise<void> {
     if (!mainClubId) {
-      setError('Club not found.')
+      setError(t('page.clubNotFound'))
       return
     }
 
@@ -1336,11 +1340,11 @@ export default function CustomizeTeamPage(): JSX.Element {
         const parsed = new URL(logoUrlToApply)
 
         if (!['http:', 'https:'].includes(parsed.protocol)) {
-          setError('Logo URL must start with http:// or https://')
+          setError(t('logo.urlProtocol'))
           return
         }
       } catch {
-        setError('Please provide a valid logo image URL.')
+        setError(t('logo.urlImageInvalid'))
         return
       }
 
@@ -1351,7 +1355,7 @@ export default function CustomizeTeamPage(): JSX.Element {
       if (rpcError) throw rpcError
       const result = Array.isArray(data) ? data[0] : data
       const updatedClub = result?.club as ClubRow | undefined
-      if (!updatedClub) throw new Error('Logo update did not return the updated club.')
+      if (!updatedClub) throw new Error(t('logo.resultMissing'))
       syncClubState(updatedClub)
       await loadCustomizationAccess(mainClubId)
 
@@ -1363,13 +1367,13 @@ export default function CustomizeTeamPage(): JSX.Element {
       showSuccess(
         currentLogoChangeCost > 0
           ? `Logo applied for ${currentLogoChangeCost} coins.`
-          : 'Logo applied. This season’s free logo change was used.',
+          : t('logo.appliedFree'),
       )
       return
     }
 
     if (!pendingLogoFile) {
-      setError('Please upload a logo image or paste a logo image URL first.')
+      setError(t('logo.chooseFirst'))
       return
     }
 
@@ -1396,7 +1400,7 @@ export default function CustomizeTeamPage(): JSX.Element {
       if (rpcError) throw rpcError
       const result = Array.isArray(data) ? data[0] : data
       const updatedClub = result?.club as ClubRow | undefined
-      if (!updatedClub) throw new Error('Logo update did not return the updated club.')
+      if (!updatedClub) throw new Error(t('logo.resultMissing'))
       syncClubState(updatedClub)
       await loadCustomizationAccess(mainClubId)
 
@@ -1408,11 +1412,11 @@ export default function CustomizeTeamPage(): JSX.Element {
       showSuccess(
         currentLogoChangeCost > 0
           ? `Logo applied for ${currentLogoChangeCost} coins.`
-          : 'Logo applied. This season’s free logo change was used.',
+          : t('logo.appliedFree'),
       )
     } catch (err) {
       setSaving(false)
-      setError(err instanceof Error ? err.message : 'Failed to apply uploaded logo.')
+      setError(err instanceof Error ? err.message : t('logo.applyUploadFailed'))
     }
   }
 
@@ -1422,7 +1426,7 @@ export default function CustomizeTeamPage(): JSX.Element {
    */
   async function handleRemoveLogo(): Promise<void> {
     if (!mainClubId) {
-      setError('Club not found.')
+      setError(t('page.clubNotFound'))
       return
     }
 
@@ -1450,7 +1454,7 @@ export default function CustomizeTeamPage(): JSX.Element {
       if (rpcError) throw rpcError
       const result = Array.isArray(data) ? data[0] : data
       const updatedClub = result?.club as ClubRow | undefined
-      if (!updatedClub) throw new Error('Logo reset did not return the updated club.')
+      if (!updatedClub) throw new Error(t('logo.resetResultMissing'))
       syncClubState(updatedClub)
       await loadCustomizationAccess(mainClubId)
 
@@ -1459,9 +1463,9 @@ export default function CustomizeTeamPage(): JSX.Element {
       setPendingLogoFile(null)
       setPendingLogoUrl(null)
       setLogoVersion(Date.now())
-      showSuccess('Custom logo removed. Base team logo restored.')
+      showSuccess(t('logo.removed'))
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to restore base logo.')
+      setError(err instanceof Error ? err.message : t('logo.restoreFailed'))
     }
   }
 
@@ -1480,36 +1484,36 @@ export default function CustomizeTeamPage(): JSX.Element {
 
   return (
     <div className="w-full">
-      <h2 className="text-xl font-semibold mb-4">Customize Team</h2>
+      <h2 className="text-xl font-semibold mb-4">{t('page.title')}</h2>
 
       {loading ? (
         <div className="rounded-lg bg-white p-6 shadow text-sm text-gray-600">
-          Loading club settings...
+          {t('page.loading')}
         </div>
       ) : (
         <div className="space-y-6 w-full">
           <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
             <div className="border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white px-6 py-5">
-              <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Team identity</div>
-              <h3 className="mt-1 text-lg font-bold text-slate-950">Name and colors</h3>
-              <p className="mt-1 text-sm text-slate-500">Update the public identity used across your team profile, race pages, and header.</p>
+              <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">{t('identity.eyebrow')}</div>
+              <h3 className="mt-1 text-lg font-bold text-slate-950">{t('identity.title')}</h3>
+              <p className="mt-1 text-sm text-slate-500">{t('identity.description')}</p>
             </div>
             <div className="space-y-6 p-6">
             {identityLockedBySponsor && (
               <div className="rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-                <div className="font-semibold">Team identity locked by naming-rights sponsor</div>
+                <div className="font-semibold">{t('identity.lockedTitle')}</div>
                 <div className="mt-1">
                   Your team is racing this season as{' '}
                   <span className="font-semibold">
                     {brandingLock?.full_display_name ?? brandingLock?.season_display_name}
                   </span>
-                  . Team name and colors are locked until the end of the season.
+                  {t('identity.lockedSuffix')}
                 </div>
               </div>
             )}
 
             <div>
-              <label className="block text-sm font-medium text-gray-800 mb-2">Team name</label>
+              <label className="block text-sm font-medium text-gray-800 mb-2">{t('identity.name')}</label>
               <div className="flex flex-col md:flex-row gap-3">
                 <input
                   value={teamNameInput}
@@ -1520,7 +1524,7 @@ export default function CustomizeTeamPage(): JSX.Element {
                     'w-full border border-gray-300 px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-slate-300',
                     !canEditTeamName ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : '',
                   ].join(' ')}
-                  placeholder="Enter team name"
+                  placeholder={t('identity.namePlaceholder')}
                 />
                 <button
                   type="button"
@@ -1535,7 +1539,7 @@ export default function CustomizeTeamPage(): JSX.Element {
                       : 'border-slate-900 bg-slate-900 text-white hover:bg-slate-800',
                   ].join(' ')}
                 >
-                  {saving ? 'Applying...' : 'Apply Name · 30 coins'}
+                  {saving ? 'Applying...' : t('identity.applyName')}
                 </button>
               </div>
 
@@ -1544,21 +1548,21 @@ export default function CustomizeTeamPage(): JSX.Element {
                   30
                 </div>
                 <div>
-                  <div className="text-sm font-semibold">Team name change costs 30 coins</div>
+                  <div className="text-sm font-semibold">{t('identity.nameCost')}</div>
                   <div className="mt-0.5 text-xs text-amber-800">
-                    Coins are charged only when a different valid team name is successfully applied.
+                    {t('identity.nameCostHelp')}
                   </div>
                 </div>
               </div>
 
-              <div className="mt-2 text-xs text-gray-500">3 to 40 characters</div>
+              <div className="mt-2 text-xs text-gray-500">{t('identity.nameLength')}</div>
             </div>
 
             <div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-800 mb-2">
-                    Primary color
+                    {t('identity.primary')}
                   </label>
                   <div className="flex items-center gap-3">
                     <input
@@ -1583,7 +1587,7 @@ export default function CustomizeTeamPage(): JSX.Element {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-800 mb-2">
-                    Secondary color
+                    {t('identity.secondary')}
                   </label>
                   <div className="flex items-center gap-3">
                     <input
@@ -1621,7 +1625,7 @@ export default function CustomizeTeamPage(): JSX.Element {
                       : 'border-slate-900 bg-slate-900 text-white hover:bg-slate-800',
                   ].join(' ')}
                 >
-                  Apply team colors
+                  {t('identity.applyColors')}
                 </button>
               </div>
 
@@ -1644,9 +1648,9 @@ export default function CustomizeTeamPage(): JSX.Element {
 
           <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
             <div className="border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white px-6 py-5">
-              <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Team logo</div>
-              <h3 className="mt-1 text-lg font-bold text-slate-950">Logo and badge</h3>
-              <p className="mt-1 text-sm text-slate-500">Upload a custom logo or restore the generated team badge.</p>
+              <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">{t('logo.eyebrow')}</div>
+              <h3 className="mt-1 text-lg font-bold text-slate-950">{t('logo.title')}</h3>
+              <p className="mt-1 text-sm text-slate-500">{t('logo.description')}</p>
             </div>
 
             <div className="p-6">
@@ -1654,7 +1658,7 @@ export default function CustomizeTeamPage(): JSX.Element {
               <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
                 <div className="flex w-full flex-col items-center justify-center rounded-2xl border border-slate-200 bg-white p-5 shadow-sm lg:w-72 lg:min-h-[280px]">
                   <div className="mb-3 text-center text-xs font-semibold uppercase tracking-wide text-slate-500">
-                    Current logo
+                    {t('logo.current')}
                   </div>
                   <div className="flex items-center justify-center">
                     <HeaderLogo
@@ -1680,16 +1684,16 @@ export default function CustomizeTeamPage(): JSX.Element {
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <div>
                         <div className="text-sm font-semibold text-slate-900">
-                          Logo change
+                          {t('logo.change')}
                         </div>
                         <div className="mt-1 text-xs text-slate-600">
-                          One logo change per game season is free. Further changes in the same season cost 10 coins each.
+                          {t('logo.changeHelp')}
                         </div>
                       </div>
 
                       <div className="text-right">
                         <div className="text-xs font-medium uppercase tracking-wide text-slate-500">
-                          Current balance
+                          {t('logo.balance')}
                         </div>
                         <div
                           className={[
@@ -1705,7 +1709,7 @@ export default function CustomizeTeamPage(): JSX.Element {
                     <div className="mt-3 grid gap-2 sm:grid-cols-2">
                       <div className="rounded-lg border border-white/70 bg-white/70 px-3 py-2">
                         <div className="text-[11px] font-medium uppercase tracking-wide text-slate-500">
-                          This logo change
+                          {t('logo.thisChange')}
                         </div>
                         <div className="mt-0.5 text-sm font-bold text-slate-950">
                           {currentLogoChangeCost > 0
@@ -1716,7 +1720,7 @@ export default function CustomizeTeamPage(): JSX.Element {
 
                       <div className="rounded-lg border border-white/70 bg-white/70 px-3 py-2">
                         <div className="text-[11px] font-medium uppercase tracking-wide text-slate-500">
-                          Status
+                          {t('logo.status')}
                         </div>
                         <div
                           className={[
@@ -1730,7 +1734,7 @@ export default function CustomizeTeamPage(): JSX.Element {
                             ? `Need ${missingLogoCoins} more coin${missingLogoCoins === 1 ? '' : 's'}`
                             : currentLogoChangeCost > 0
                               ? 'Enough coins'
-                              : 'Free change available'}
+                              : t('logo.freeAvailable')}
                         </div>
                       </div>
                     </div>
@@ -1747,7 +1751,7 @@ export default function CustomizeTeamPage(): JSX.Element {
                           }}
                           className="shrink-0 rounded-md border border-red-300 bg-red-100 px-3 py-1.5 text-xs font-semibold text-red-800 transition hover:bg-red-200"
                         >
-                          Get more coins
+                          {t('logo.getCoins')}
                         </button>
                       </div>
                     ) : null}
@@ -1755,7 +1759,7 @@ export default function CustomizeTeamPage(): JSX.Element {
 
                   <div className="flex flex-col sm:flex-row sm:items-center gap-3">
                     <label className="inline-flex items-center justify-center px-4 py-2 rounded-md border border-gray-300 bg-white cursor-pointer hover:bg-gray-50">
-                      <span className="text-sm font-medium">Upload logo image</span>
+                      <span className="text-sm font-medium">{t('logo.upload')}</span>
                       <input
                         type="file"
                         accept=".png,.jpg,.jpeg,.webp,image/png,image/jpeg,image/webp"
@@ -1766,7 +1770,7 @@ export default function CustomizeTeamPage(): JSX.Element {
                     </label>
 
                     <div className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-900">
-                      JPG, PNG, or WEBP. Uploaded logos are saved as PNG. Maximum file size: 2 MB
+                      {t('logo.fileHelp')}
                     </div>
                   </div>
 
@@ -1783,7 +1787,7 @@ export default function CustomizeTeamPage(): JSX.Element {
                           void handleApplyLogo()
                         }
                       }}
-                      placeholder="Paste logo image URL, then click Apply logo"
+                      placeholder={t('logo.urlPlaceholder')}
                       disabled={saving || !hasEnoughCoinsForLogo}
                       className={[
                         'w-full border border-gray-300 px-3 py-2 rounded-md text-sm',
@@ -1793,7 +1797,7 @@ export default function CustomizeTeamPage(): JSX.Element {
                       ].join(' ')}
                     />
                     <div className="mt-1 text-xs text-slate-500">
-                      URL logos are saved when you click Apply logo. One logo change per season is free; each later change costs 10 coins.
+                      {t('logo.urlHelp')}
                     </div>
                   </div>
 
@@ -1811,7 +1815,7 @@ export default function CustomizeTeamPage(): JSX.Element {
                           : 'border-gray-300 bg-white text-slate-900 hover:bg-gray-50',
                       ].join(' ')}
                     >
-                      Remove Logo
+                      {t('logo.remove')}
                     </button>
 
                     <button
@@ -1833,7 +1837,7 @@ export default function CustomizeTeamPage(): JSX.Element {
                           ? `Need ${missingLogoCoins} more coin${missingLogoCoins === 1 ? '' : 's'}`
                           : currentLogoChangeCost > 0
                             ? `Apply logo · ${currentLogoChangeCost} coins`
-                            : 'Apply logo · Free'}
+                            : t('logo.applyFree')}
                     </button>
                   </div>
                 </div>
@@ -1844,9 +1848,9 @@ export default function CustomizeTeamPage(): JSX.Element {
 
           <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
             <div className="border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white px-6 py-5">
-              <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Team jersey</div>
-              <h3 className="mt-1 text-lg font-bold text-slate-950">Jersey management</h3>
-              <p className="mt-1 text-sm text-slate-500">Upload or link a new jersey. One change per season is free; each later change costs 10 coins.</p>
+              <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">{t('jersey.eyebrow')}</div>
+              <h3 className="mt-1 text-lg font-bold text-slate-950">{t('jersey.title')}</h3>
+              <p className="mt-1 text-sm text-slate-500">{t('jersey.description')}</p>
             </div>
             <div className="p-6">
             {mainClubId ? (
@@ -1858,14 +1862,14 @@ export default function CustomizeTeamPage(): JSX.Element {
                 onCustomizationChanged={() => loadCustomizationAccess(mainClubId)}
               />
             ) : (
-              <div className="text-sm text-gray-600">Team not loaded yet.</div>
+              <div className="text-sm text-gray-600">{t('page.teamNotLoaded')}</div>
             )}
             </div>
           </div>
 
           {(error || success || saving) && (
             <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm space-y-2">
-              {saving && <div className="text-sm text-gray-600">Saving changes...</div>}
+              {saving && <div className="text-sm text-gray-600">{t('page.saving')}</div>}
               {success && <div className="text-sm text-green-600">{success}</div>}
               {error && <div className="text-sm text-red-600">{error}</div>}
             </div>

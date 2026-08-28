@@ -31,6 +31,7 @@
  */
 
 import React, { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import RestartTeamModal from '@/components/team/RestartTeamModal'
 import { supabase } from '@/lib/supabase'
 import { getMyClubContext } from '@/lib/clubContext'
@@ -147,6 +148,7 @@ function ToggleRow({ title, description, checked, onToggle, disabled = false }: 
 }
 
 export default function PreferencesPage(): JSX.Element {
+  const { t } = useTranslation(['preferences', 'preferencesDynamic'])
   const [notifications, setNotifications] = useState<NotificationSettings>(() =>
     readNotificationPreferences()
   )
@@ -195,7 +197,7 @@ export default function PreferencesPage(): JSX.Element {
       setDevelopingTeamStatus((normalized ?? null) as DevelopingTeamStatus | null)
     } catch (e: any) {
       console.error('loadDevelopingTeamStatus failed:', e)
-      setDevelopingTeamError(e?.message ?? 'Failed to load Developing Team status.')
+      setDevelopingTeamError(e?.message ?? t('errors.loadStatus', { ns: 'preferencesDynamic' }))
     } finally {
       setIsLoadingDevelopingTeamStatus(false)
     }
@@ -403,7 +405,7 @@ export default function PreferencesPage(): JSX.Element {
         [key]: previousEnabled,
       }))
       setAdvisorNotificationCategoryError(
-        'Could not save the Staff Advisor notification setting. Please try again.'
+        t('notifications.advisorSaveError', { ns: 'preferences' })
       )
       console.error(
         `Failed to update Staff Advisory notification category ${key}:`,
@@ -441,7 +443,7 @@ export default function PreferencesPage(): JSX.Element {
           ? `Developing Team activated for Season ${
               normalized.active_season ?? normalized.current_season
             }. Automatic renewal is ${normalized.auto_renew === false ? 'off' : 'on'}.`
-          : 'Developing Team activated successfully.'
+          : t('activation.activatedSuccessfully', { ns: 'preferencesDynamic' })
       )
 
       try {
@@ -480,7 +482,7 @@ export default function PreferencesPage(): JSX.Element {
       await loadDevelopingTeamStatus()
     } catch (error: any) {
       console.error('activate_developing_team_for_season_v1 failed:', error)
-      setDevelopingTeamError(error?.message ?? 'Failed to activate Developing Team.')
+      setDevelopingTeamError(error?.message ?? t('errors.activate', { ns: 'preferencesDynamic' }))
     } finally {
       setIsActivatingDevelopingTeam(false)
     }
@@ -509,14 +511,14 @@ export default function PreferencesPage(): JSX.Element {
 
       setDevelopingTeamSuccessMessage(
         enabled
-          ? 'Developing Team automatic renewal enabled.'
-          : 'Developing Team automatic renewal disabled.'
+          ? t('activation.renewalEnabled', { ns: 'preferencesDynamic' })
+          : t('activation.renewalDisabled', { ns: 'preferencesDynamic' })
       )
 
       await loadDevelopingTeamStatus()
     } catch (error: any) {
       console.error('set_developing_team_auto_renew_v1 failed:', error)
-      setDevelopingTeamError(error?.message ?? 'Failed to update automatic renewal.')
+      setDevelopingTeamError(error?.message ?? t('errors.renewal', { ns: 'preferencesDynamic' }))
     } finally {
       setIsUpdatingDevelopingTeamAutoRenew(false)
     }
@@ -552,7 +554,7 @@ export default function PreferencesPage(): JSX.Element {
     if (isShuttingDown) return
 
     if (shutdownConfirmText.trim() !== 'DELETE') {
-      setShutdownError('You must type DELETE exactly to confirm this action.')
+      setShutdownError(t('dangerZone.exactDeleteError', { ns: 'preferences' }))
       return
     }
 
@@ -564,7 +566,7 @@ export default function PreferencesPage(): JSX.Element {
       const accessToken = sessionData.session?.access_token
 
       if (sessionError || !accessToken) {
-        setShutdownError('Your session is missing. Please sign in again and retry.')
+        setShutdownError(t('dangerZone.missingSession', { ns: 'preferences' }))
         setIsShuttingDown(false)
         return
       }
@@ -577,7 +579,7 @@ export default function PreferencesPage(): JSX.Element {
 
       if (error) {
         console.error('shutdown-team failed:', error)
-        setShutdownError(error.message || 'Failed to shut down team.')
+        setShutdownError(error.message || t('dangerZone.shutdownFailed', { ns: 'preferences' }))
         setIsShuttingDown(false)
         return
       }
@@ -591,7 +593,7 @@ export default function PreferencesPage(): JSX.Element {
       window.location.assign('/')
     } catch (e) {
       console.error('shutdown-team unexpected error:', e)
-      setShutdownError('Failed to shut down team due to an unexpected error.')
+      setShutdownError(t('dangerZone.shutdownUnexpected', { ns: 'preferences' }))
       setIsShuttingDown(false)
     }
   }
@@ -616,9 +618,9 @@ export default function PreferencesPage(): JSX.Element {
 
   const movementWindowText = developingTeamStatus
     ? developingTeamStatus.movement_window_open
-      ? `Movement window open now: ${developingTeamStatus.current_window_label ?? 'Current window'}`
+      ? `Movement window open now: ${developingTeamStatus.current_window_label ?? t('movement.currentWindow', { ns: 'preferencesDynamic' })}`
       : `Movement window closed. Next window: ${developingTeamStatus.next_window_label ?? 'Unknown'}`
-    : 'Movement window unavailable.'
+    : t('movement.unavailable', { ns: 'preferencesDynamic' })
 
   const developingTeamAccessStatus = developingTeamStatus?.access_status ?? 'not_activated'
   const developingTeamIsActive = developingTeamStatus?.is_active === true
@@ -656,20 +658,20 @@ export default function PreferencesPage(): JSX.Element {
       <div className="w-full h-full min-h-[calc(100vh-10rem)] text-gray-900">
         <div className="flex h-full flex-col gap-6">
           <div>
-            <h2 className="text-xl font-semibold">Preferences</h2>
+            <h2 className="text-xl font-semibold">{t('page.title', { ns: 'preferences' })}</h2>
             <p className="mt-1 text-sm text-gray-500">
-              Real usable settings: in-game notification control and team danger-zone actions.
+              {t('page.description', { ns: 'preferences' })}
             </p>
           </div>
 
           <div>
             <section className="w-full rounded-lg border border-gray-100 bg-white p-5 shadow-sm">
-              <h3 className="text-base font-semibold">In-Game Notifications</h3>
-              <p className="mt-1 text-xs text-gray-500">Core game notifications and paid Staff Advisor notifications are controlled separately.</p>
+              <h3 className="text-base font-semibold">{t('notifications.title', { ns: 'preferences' })}</h3>
+              <p className="mt-1 text-xs text-gray-500">{t('notifications.description', { ns: 'preferences' })}</p>
 
               <div className="mt-5">
-                <h4 className="text-sm font-semibold text-gray-900">Core Notifications</h4>
-                <p className="mt-1 text-xs text-gray-500">Normal game notifications that remain available without a paid Staff Advisor.</p>
+                <h4 className="text-sm font-semibold text-gray-900">{t('notifications.coreTitle', { ns: 'preferences' })}</h4>
+                <p className="mt-1 text-xs text-gray-500">{t('notifications.coreDescription', { ns: 'preferences' })}</p>
                 <div className="mt-3 grid grid-cols-1 gap-4 xl:grid-cols-2">
                   {NOTIFICATION_PREFERENCE_SECTIONS.map(section => {
                     const sectionGroups = NOTIFICATION_PREFERENCE_GROUP_ORDER.filter(groupCode => NOTIFICATION_PREFERENCE_GROUPS[groupCode].section === section.code)
@@ -677,13 +679,13 @@ export default function PreferencesPage(): JSX.Element {
                     return (
                       <div key={section.code} className="overflow-hidden rounded-xl border border-gray-200 bg-gray-50/60">
                         <div className="flex items-start justify-between gap-4 border-b border-gray-200 bg-white px-4 py-3">
-                          <div><h5 className="text-sm font-semibold text-gray-900">{section.title}</h5><p className="mt-1 text-xs text-gray-500">{section.description}</p></div>
-                          <span className="shrink-0 rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-600">{enabledCount}/{sectionGroups.length} on</span>
+                          <div><h5 className="text-sm font-semibold text-gray-900">{t(`sections.${section.code}.title`)}</h5><p className="mt-1 text-xs text-gray-500">{t(`sections.${section.code}.description`)}</p></div>
+                          <span className="shrink-0 rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-600">{t('notifications.enabledCount', { enabled: enabledCount, total: sectionGroups.length })}</span>
                         </div>
                         <div className="divide-y divide-gray-200 px-4">
                           {sectionGroups.map(groupCode => {
                             const group = NOTIFICATION_PREFERENCE_GROUPS[groupCode]
-                            return <ToggleRow key={groupCode} title={group.label} description={group.description} checked={notifications[groupCode] !== false} onToggle={() => toggleNotification(groupCode)} />
+                            return <ToggleRow key={groupCode} title={t(`groups.${groupCode}.label`)} description={t(`groups.${groupCode}.description`)} checked={notifications[groupCode] !== false} onToggle={() => toggleNotification(groupCode)} />
                           })}
                         </div>
                       </div>
@@ -693,9 +695,9 @@ export default function PreferencesPage(): JSX.Element {
               </div>
 
               <div className="mt-6 border-t border-gray-200 pt-5">
-                <h4 className="text-sm font-semibold text-gray-900">Staff Advisor Notifications</h4>
+                <h4 className="text-sm font-semibold text-gray-900">{t('notifications.advisorTitle', { ns: 'preferences' })}</h4>
                 <p className="mt-1 text-xs text-gray-500">
-                  Paid advisor notifications grouped by topic. Switching a category off mutes every notification type in that topic. Individual notification types can then be unmuted from their notification card without changing this category checkbox.
+                  {t('notifications.advisorDescription', { ns: 'preferences' })}
                 </p>
 
                 {advisorNotificationCategoryError ? (
@@ -711,11 +713,11 @@ export default function PreferencesPage(): JSX.Element {
                       return (
                         <ToggleRow
                           key={key}
-                          title={definition.label}
+                          title={t(`advisorCategories.${key}.label`)}
                           description={
                             active
-                              ? definition.description
-                              : `${definition.description} Activate the required Staff Advisor to control this notification.`
+                              ? t(`advisorCategories.${key}.description`)
+                              : `${t(`advisorCategories.${key}.description`)} ${t('notifications.advisorInactiveSuffix')}`
                           }
                           checked={advisorNotifications[key] !== false}
                           disabled={
@@ -732,7 +734,7 @@ export default function PreferencesPage(): JSX.Element {
                     })}
                   </div>
                 </div>
-                <div className="mt-3 rounded-lg border border-blue-100 bg-blue-50 px-3 py-2 text-xs leading-5 text-blue-800">A Core notification and an Advisor notification may cover the same topic without being the same event. Example: Race Supplies Low remains Core, while Equipment & Workshop Review is paid analysis.</div>
+                <div className="mt-3 rounded-lg border border-blue-100 bg-blue-50 px-3 py-2 text-xs leading-5 text-blue-800">{t('notifications.coreAdvisorNote', { ns: 'preferences' })}</div>
               </div>
             </section>
           </div>
@@ -740,9 +742,9 @@ export default function PreferencesPage(): JSX.Element {
           <section className="w-full rounded-lg border border-gray-100 bg-white p-5 shadow-sm">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div>
-                <h3 className="text-base font-semibold">Developing Team</h3>
+                <h3 className="text-base font-semibold">{t('developingTeam.title', { ns: 'preferences' })}</h3>
                 <p className="mt-1 text-xs text-gray-500">
-                  Build and manage a U23 development squad with seasonal coin access.
+                  {t('developingTeam.description', { ns: 'preferences' })}
                 </p>
               </div>
 
@@ -760,28 +762,28 @@ export default function PreferencesPage(): JSX.Element {
             </p>
 
             {isLoadingDevelopingTeamStatus ? (
-              <div className="mt-4 text-sm text-gray-500">Loading Developing Team status...</div>
+              <div className="mt-4 text-sm text-gray-500">{t('developingTeam.loading', { ns: 'preferences' })}</div>
             ) : (
               <>
                 <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-3">
                   <div className="rounded-md border border-gray-200 p-3">
-                    <div className="text-xs text-gray-500">Real-life progress</div>
+                    <div className="text-xs text-gray-500">{t('developingTeam.realLifeProgress', { ns: 'preferences' })}</div>
                     <div className="mt-1 text-lg font-semibold text-gray-900">
                       {realDaysProgressLabel}
                     </div>
-                    <div className="mt-1 text-xs text-gray-500">Minimum 30 days required</div>
+                    <div className="mt-1 text-xs text-gray-500">{t('developingTeam.realLifeMinimum', { ns: 'preferences' })}</div>
                   </div>
 
                   <div className="rounded-md border border-gray-200 p-3">
-                    <div className="text-xs text-gray-500">In-game progress</div>
+                    <div className="text-xs text-gray-500">{t('developingTeam.gameProgress', { ns: 'preferences' })}</div>
                     <div className="mt-1 text-lg font-semibold text-gray-900">
                       {gameDaysProgressLabel}
                     </div>
-                    <div className="mt-1 text-xs text-gray-500">Minimum 60 days required</div>
+                    <div className="mt-1 text-xs text-gray-500">{t('developingTeam.gameMinimum', { ns: 'preferences' })}</div>
                   </div>
 
                   <div className="rounded-md border border-gray-200 p-3">
-                    <div className="text-xs text-gray-500">Coins</div>
+                    <div className="text-xs text-gray-500">{t('developingTeam.coins', { ns: 'preferences' })}</div>
                     <div className="mt-1 text-lg font-semibold text-gray-900">
                       {coinProgressLabel}
                     </div>
@@ -806,7 +808,7 @@ export default function PreferencesPage(): JSX.Element {
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                       <div>
                         <div className="text-sm font-semibold text-green-900">
-                          Developing Team active
+                          {t('developingTeam.active', { ns: 'preferences' })}
                         </div>
                         <div className="mt-1 text-sm text-green-800">
                           Access remains available until the end of Season{' '}
@@ -817,19 +819,19 @@ export default function PreferencesPage(): JSX.Element {
                       </div>
 
                       <span className="shrink-0 rounded-full border border-green-200 bg-white px-2.5 py-1 text-xs font-semibold text-green-700">
-                        Active
+                        {t('developingTeam.activeBadge', { ns: 'preferences' })}
                       </span>
                     </div>
 
                     <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
                       <div>
-                        <div className="text-xs text-green-700">Current season</div>
+                        <div className="text-xs text-green-700">{t('developingTeam.currentSeason', { ns: 'preferences' })}</div>
                         <div className="mt-1 text-sm font-semibold text-green-950">
                           Season {developingTeamStatus?.current_season ?? '—'}
                         </div>
                       </div>
                       <div>
-                        <div className="text-xs text-green-700">Access ends</div>
+                        <div className="text-xs text-green-700">{t('developingTeam.accessEnds', { ns: 'preferences' })}</div>
                         <div className="mt-1 text-sm font-semibold text-green-950">
                           End of Season{' '}
                           {developingTeamStatus?.expires_after_season ??
@@ -838,13 +840,13 @@ export default function PreferencesPage(): JSX.Element {
                         </div>
                       </div>
                       <div>
-                        <div className="text-xs text-green-700">Renewal price</div>
+                        <div className="text-xs text-green-700">{t('developingTeam.renewalPrice', { ns: 'preferences' })}</div>
                         <div className="mt-1 text-sm font-semibold text-green-950">
                           {renewalCoinCost} coins
                         </div>
                       </div>
                       <div>
-                        <div className="text-xs text-green-700">Next renewal</div>
+                        <div className="text-xs text-green-700">{t('developingTeam.nextRenewal', { ns: 'preferences' })}</div>
                         <div className="mt-1 text-sm font-semibold text-green-950">
                           Start of Season{' '}
                           {developingTeamStatus?.next_renewal_season ??
@@ -856,7 +858,7 @@ export default function PreferencesPage(): JSX.Element {
                     <label className="mt-5 flex cursor-pointer items-start justify-between gap-4 rounded-lg border border-green-200 bg-white p-4">
                       <div>
                         <div className="text-sm font-semibold text-gray-900">
-                          Automatically renew each season
+                          {t('developingTeam.autoRenew', { ns: 'preferences' })}
                         </div>
                         <div className="mt-1 text-xs leading-5 text-gray-600">
                           When enabled, {renewalCoinCost} coins will be deducted at the beginning of
@@ -882,11 +884,10 @@ export default function PreferencesPage(): JSX.Element {
                 ) : developingTeamIsExpired ? (
                   <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50/60 p-4">
                     <div className="text-sm font-semibold text-amber-900">
-                      Developing Team access expired
+                      {t('developingTeam.expired', { ns: 'preferences' })}
                     </div>
                     <p className="mt-2 text-sm leading-6 text-amber-800">
-                      Your team, riders, contracts, results and history remain stored. The Developing
-                      Team is currently read-only.
+                      {t('developingTeam.expiredDescription', { ns: 'preferences' })}
                     </p>
 
                     <div className="mt-4 flex flex-wrap items-center gap-3">
@@ -897,7 +898,7 @@ export default function PreferencesPage(): JSX.Element {
                         className="inline-flex items-center rounded-md bg-yellow-400 px-4 py-2 text-sm font-medium text-black transition-colors hover:bg-yellow-500 disabled:cursor-not-allowed disabled:opacity-60"
                       >
                         {isActivatingDevelopingTeam
-                          ? 'Reactivating...'
+                          ? t('developingTeam.reactivating', { ns: 'preferences' })
                           : developingTeamActivationLabel}
                       </button>
 
@@ -906,23 +907,23 @@ export default function PreferencesPage(): JSX.Element {
                           href="#/dashboard/pro"
                           className="text-sm font-semibold text-yellow-700 hover:text-yellow-800"
                         >
-                          Get coins
+                          {t('developingTeam.getCoins', { ns: 'preferences' })}
                         </a>
                       ) : null}
                     </div>
                   </div>
                 ) : !developingTeamIsEligible ? (
                   <div className="mt-4 rounded-xl border border-gray-200 bg-gray-50 p-4">
-                    <div className="text-sm font-semibold text-gray-900">Not yet eligible</div>
+                    <div className="text-sm font-semibold text-gray-900">{t('developingTeam.notEligible', { ns: 'preferences' })}</div>
                     <p className="mt-2 text-sm text-gray-600">
-                      Developing Team becomes available after 30 real-life days or 60 in-game days.
+                      {t('developingTeam.notEligibleDescription', { ns: 'preferences' })}
                     </p>
                     <button
                       type="button"
                       disabled
                       className="mt-4 inline-flex cursor-not-allowed items-center rounded-md border border-gray-200 bg-gray-100 px-4 py-2 text-sm font-medium text-gray-400"
                     >
-                      Not yet eligible
+                      {t('developingTeam.notEligible', { ns: 'preferences' })}
                     </button>
                   </div>
                 ) : (
@@ -962,7 +963,7 @@ export default function PreferencesPage(): JSX.Element {
                           href="#/dashboard/pro"
                           className="text-sm font-semibold text-yellow-700 hover:text-yellow-800"
                         >
-                          Get coins
+                          {t('developingTeam.getCoins', { ns: 'preferences' })}
                         </a>
                       ) : null}
                     </div>
@@ -976,14 +977,14 @@ export default function PreferencesPage(): JSX.Element {
                 ) : null}
 
                 <div className="mt-4 rounded-md border border-gray-200 bg-gray-50 p-4 text-sm text-gray-700">
-                  <div className="font-medium text-gray-900">Special rules</div>
+                  <div className="font-medium text-gray-900">{t('developingTeam.specialRules', { ns: 'preferences' })}</div>
                   <ul className="mt-2 list-disc space-y-1 pl-5">
-                    <li>The team name will be your main club name plus U23.</li>
-                    <li>This team can apply to races normally while seasonal access is active.</li>
-                    <li>This team cannot be promoted above Continental level.</li>
-                    <li>Maximum roster size: 8 riders.</li>
-                    <li>Only riders aged 23 or younger are eligible.</li>
-                    <li>Riders move between squads only during movement windows.</li>
+                    <li>{t('developingTeam.teamNameRule', { ns: 'preferences' })}</li>
+                    <li>{t('developingTeam.raceRule', { ns: 'preferences' })}</li>
+                    <li>{t('developingTeam.competitionRule', { ns: 'preferences' })}</li>
+                    <li>{t('developingTeam.rosterRule', { ns: 'preferences' })}</li>
+                    <li>{t('developingTeam.ageRule', { ns: 'preferences' })}</li>
+                    <li>{t('developingTeam.movementRule', { ns: 'preferences' })}</li>
                   </ul>
                 </div>
 
@@ -1012,27 +1013,25 @@ export default function PreferencesPage(): JSX.Element {
           <section className="rounded-lg border border-red-200 bg-red-50 p-5 shadow-sm">
             <div className="flex flex-col gap-2 lg:flex-row lg:items-start lg:justify-between">
               <div>
-                <h3 className="text-base font-semibold text-red-700">Danger Zone</h3>
+                <h3 className="text-base font-semibold text-red-700">{t('dangerZone.title', { ns: 'preferences' })}</h3>
                 <p className="mt-1 text-sm text-red-600">
-                  These are destructive actions and should stay separated from normal preferences.
+                  {t('dangerZone.description', { ns: 'preferences' })}
                 </p>
               </div>
 
               <div className="text-xs font-semibold uppercase tracking-wide text-red-600">
-                High-impact actions
+                {t('dangerZone.badge', { ns: 'preferences' })}
               </div>
             </div>
 
             <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
               <div className="rounded-md border border-amber-200 bg-white p-4">
-                <h4 className="text-sm font-semibold text-gray-900">Restart Team</h4>
+                <h4 className="text-sm font-semibold text-gray-900">{t('dangerZone.restartTitle', { ns: 'preferences' })}</h4>
                 <p className="mt-2 text-sm text-gray-600">
-                  Restart this club back to a fresh starter state while keeping the same club name,
-                  logo, jersey, country, and competition slot.
+                  {t('dangerZone.restartDescription', { ns: 'preferences' })}
                 </p>
                 <p className="mt-2 text-xs text-gray-500">
-                  Current riders become free agents, season points reset to 0, and the team receives
-                  a new starter squad based on its current tier.
+                  {t('dangerZone.restartDetail', { ns: 'preferences' })}
                 </p>
 
                 <button
@@ -1040,19 +1039,17 @@ export default function PreferencesPage(): JSX.Element {
                   onClick={handleRestartTeam}
                   className="mt-4 inline-flex items-center rounded-md bg-amber-500 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-amber-600 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2"
                 >
-                  Restart Team
+                  {t('dangerZone.restartTitle', { ns: 'preferences' })}
                 </button>
               </div>
 
               <div className="rounded-md border border-red-200 bg-white p-4">
-                <h4 className="text-sm font-semibold text-gray-900">Shut Down Team</h4>
+                <h4 className="text-sm font-semibold text-gray-900">{t('dangerZone.shutdownTitle', { ns: 'preferences' })}</h4>
                 <p className="mt-2 text-sm text-gray-600">
-                  Permanently delete this user team AND the authentication account. After successful
-                  deletion, you will be redirected to the homepage and may sign up again with the same
-                  email.
+                  {t('dangerZone.shutdownDescription', { ns: 'preferences' })}
                 </p>
                 <p className="mt-2 text-xs text-gray-500">
-                  This should delete only the current user’s team data, not other users or other teams.
+                  {t('dangerZone.shutdownDetail', { ns: 'preferences' })}
                 </p>
 
                 <button
@@ -1061,15 +1058,14 @@ export default function PreferencesPage(): JSX.Element {
                   disabled={isShuttingDown}
                   className="mt-4 inline-flex items-center rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-offset-2"
                 >
-                  {isShuttingDown ? 'Shutting down...' : 'Shut Down Team'}
+                  {isShuttingDown ? t('dangerZone.shuttingDown', { ns: 'preferences' }) : t('dangerZone.shutdownTitle', { ns: 'preferences' })}
                 </button>
               </div>
             </div>
           </section>
 
           <div className="text-xs text-gray-500">
-            The notification system should check these saved preferences before creating or showing each
-            notification type.
+            {t('dangerZone.systemNote', { ns: 'preferences' })}
           </div>
         </div>
       </div>
@@ -1118,7 +1114,7 @@ export default function PreferencesPage(): JSX.Element {
                 disabled={isActivatingDevelopingTeam}
                 className="inline-flex items-center justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                Cancel
+                {t('dangerZone.cancel', { ns: 'preferences' })}
               </button>
 
               <button
@@ -1147,7 +1143,7 @@ export default function PreferencesPage(): JSX.Element {
         >
           <button
             type="button"
-            aria-label="Close shutdown team confirmation"
+            aria-label={t('dangerZone.closeAria', { ns: 'preferences' })}
             className="absolute inset-0 bg-black/50 backdrop-blur-[2px]"
             onClick={closeShutdownModal}
           />
@@ -1160,10 +1156,10 @@ export default function PreferencesPage(): JSX.Element {
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <h3 id="shutdown-team-modal-title" className="text-lg font-semibold text-red-700">
-                    Confirm Team Shutdown
+                    {t('dangerZone.confirmTitle', { ns: 'preferences' })}
                   </h3>
                   <p className="mt-1 text-sm text-red-600">
-                    This action is permanent and cannot be undone.
+                    {t('dangerZone.confirmDescription', { ns: 'preferences' })}
                   </p>
                 </div>
 
@@ -1180,17 +1176,16 @@ export default function PreferencesPage(): JSX.Element {
 
             <div className="px-6 py-5">
               <div className="rounded-lg border border-red-100 bg-red-50/50 p-4">
-                <p className="text-sm text-gray-700">You are about to permanently delete:</p>
+                <p className="text-sm text-gray-700">{t('dangerZone.aboutToDelete', { ns: 'preferences' })}</p>
 
                 <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-gray-700">
-                  <li>Your current team</li>
-                  <li>Your team riders, equipment, and team-related game data</li>
-                  <li>Your authentication account for this email</li>
+                  <li>{t('dangerZone.deleteTeam', { ns: 'preferences' })}</li>
+                  <li>{t('dangerZone.deleteGameData', { ns: 'preferences' })}</li>
+                  <li>{t('dangerZone.deleteAccount', { ns: 'preferences' })}</li>
                 </ul>
 
                 <p className="mt-3 text-sm text-gray-700">
-                  After successful deletion, you will be signed out and redirected to the homepage. You
-                  may then register again with the same email address as a brand-new user.
+                  {t('dangerZone.afterDelete', { ns: 'preferences' })}
                 </p>
               </div>
 
@@ -1215,7 +1210,7 @@ export default function PreferencesPage(): JSX.Element {
                   disabled={isShuttingDown}
                   autoFocus
                   className="mt-2 w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 outline-none transition-colors focus:border-red-500 focus:ring-2 focus:ring-red-200 disabled:cursor-not-allowed disabled:bg-gray-100"
-                  placeholder="Type DELETE here"
+                  placeholder={t('dangerZone.placeholder', { ns: 'preferences' })}
                 />
               </div>
 
@@ -1233,7 +1228,7 @@ export default function PreferencesPage(): JSX.Element {
                 disabled={isShuttingDown}
                 className="inline-flex items-center justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                Cancel
+                {t('dangerZone.cancel', { ns: 'preferences' })}
               </button>
 
               <button
@@ -1244,7 +1239,7 @@ export default function PreferencesPage(): JSX.Element {
                 disabled={isShuttingDown}
                 className="inline-flex items-center justify-center rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {isShuttingDown ? 'Shutting down...' : 'Permanently Shut Down Team'}
+                {isShuttingDown ? t('dangerZone.shuttingDown', { ns: 'preferences' }) : t('dangerZone.permanentButton', { ns: 'preferences' })}
               </button>
             </div>
           </div>
