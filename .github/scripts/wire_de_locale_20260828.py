@@ -47,6 +47,20 @@ def wire_selector() -> None:
             "  'sr-Latn': 'rs',\n  de: 'de',\n",
             'German selector flag',
         )
+
+    preview_block = """
+    // German is exposed as a preview while its resource bundle is being completed.
+    // Until the generated `de` resources land, i18next falls back to English keys.
+    if (language === 'de') {
+      const supported = Array.isArray(i18n.options.supportedLngs)
+        ? i18n.options.supportedLngs
+        : []
+      if (!supported.includes('de')) {
+        i18n.options.supportedLngs = [...supported, 'de']
+      }
+    }
+"""
+    text = text.replace(preview_block, '')
     SELECTOR.write_text(text, encoding='utf-8')
 
 
@@ -115,6 +129,7 @@ def validate_wiring() -> None:
     checks = {
         'German language metadata': "code: 'de'" in languages and "locale: 'de-DE'" in languages,
         'German selector flag': "de: 'de'" in selector,
+        'German preview workaround removed': 'German is exposed as a preview' not in selector,
         'German date locale': "return 'de-DE'" in date_bridge,
         'German resources': "./locales/de/" in index and re.search(r"\n  de: \{", index) is not None,
         'German i18next support': "supportedLngs: ['en', 'sr-Latn', 'de']" in index,
