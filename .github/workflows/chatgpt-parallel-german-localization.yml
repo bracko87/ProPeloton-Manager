@@ -1,0 +1,134 @@
+name: Parallel German localization
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/scripts/localize_de_batch_20260828.py'
+      - '.github/scripts/audit_de_locales_20260828.py'
+      - '.github/workflows/chatgpt-parallel-german-localization.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  translate:
+    name: Translate German ${{ matrix.group.id }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        group:
+          - id: gameplay-a
+            files: 'finance.json transfers.json scouting.json notifications.json'
+          - id: gameplay-b
+            files: 'preferences.json preferencesDynamic.json riderProfile.json statistics.json teamRanking.json'
+          - id: staff-account
+            files: 'staff.json accountPages.json appShell.json profile.json'
+          - id: club-shared
+            files: 'club.json createClub.json customizeTeam.json proPackages.json publicInfo.json seasonReset.json sharedRiderModal.json calendar.json tutorials.json'
+          - id: manual-a
+            files: 'help.json manual.json manualCore.json'
+          - id: manual-b
+            files: 'manualDeepA.json manualDynamic.json'
+          - id: manual-c
+            files: 'manualDeepB1.json manualFaq.json'
+          - id: manual-d
+            files: 'manualDeepB2.json manualLegacyDynamic.json'
+
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install German translator
+        run: |
+          python -m pip install --quiet sentencepiece sacremoses protobuf 'transformers==4.53.0'
+          python -m pip install --quiet torch --index-url https://download.pytorch.org/whl/cpu
+
+      - name: Prepare NLLB translator
+        run: python .github/scripts/prepare_de_translation_quality_20260828.py
+
+      - name: Translate and validate batch
+        env:
+          DE_TRANSLATION_FILES: ${{ matrix.group.files }}
+          HF_HUB_DISABLE_XET: '1'
+          TOKENIZERS_PARALLELISM: 'false'
+        run: python .github/scripts/localize_de_batch_20260828.py
+
+      - name: Collect translated files
+        env:
+          DE_TRANSLATION_FILES: ${{ matrix.group.files }}
+        run: |
+          mkdir -p /tmp/de-batch
+          for file in $DE_TRANSLATION_FILES; do
+            cp "src/i18n/locales/de/$file" "/tmp/de-batch/$file"
+          done
+          echo "Batch files:"
+          ls -la /tmp/de-batch
+
+      - name: Upload German batch
+        uses: actions/upload-artifact@v4
+        with:
+          name: de-${{ matrix.group.id }}
+          path: /tmp/de-batch/*.json
+          if-no-files-found: error
+          retention-days: 1
+
+  merge-verify-build:
+    name: Merge, audit and build German
+    needs: translate
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout latest main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Download all German batches
+        uses: actions/download-artifact@v4
+        with:
+          pattern: de-*
+          path: /tmp/de-merged
+          merge-multiple: true
+
+      - name: Verify and install merged German resources
+        run: |
+          count=$(find /tmp/de-merged -maxdepth 1 -type f -name '*.json' | wc -l)
+          echo "Merged German files: $count"
+          test "$count" -eq 31
+          cp /tmp/de-merged/*.json src/i18n/locales/de/
+
+      - name: Strict German semantic audit
+        run: python .github/scripts/audit_de_locales_20260828.py
+
+      - name: Install app dependencies
+        run: npm ci
+
+      - name: Production build
+        run: npm run build
+
+      - name: Commit verified German localization
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/i18n/locales/de
+          if git diff --cached --quiet; then
+            echo 'No German locale changes to commit.'
+            exit 0
+          fi
+          git commit -m 'Polish remaining German localization'
+          git pull --rebase origin main
+          git push origin main
