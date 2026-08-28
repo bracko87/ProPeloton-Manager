@@ -59,7 +59,7 @@ jobs:
               de = json.loads((de_dir / filename).read_text(encoding='utf-8'))
               check(en, de, filename)
 
-          polished = ['common.json', 'auth.json', 'calendarPage.json', 'navigation.json']
+          polished = ['common.json', 'auth.json', 'calendarPage.json', 'navigation.json', 'home.json']
           polished_text = '\n'.join((de_dir / name).read_text(encoding='utf-8') for name in polished)
           bad_terms = {
               'Jahreszeit': 'use Saison for game season',
@@ -69,6 +69,7 @@ jobs:
               'Alle Rassen': 'use Alle Rennen',
               'L 347 vom': 'unrelated legal citation',
               'Ich unterschreibe': 'bad sign-in translation',
+              'Fahrrad-Vermächtnis': 'bad cycling marketing translation',
           }
           for term, reason in bad_terms.items():
               assert term not in polished_text, f'Bad German term {term!r}: {reason}'

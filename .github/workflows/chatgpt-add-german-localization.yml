@@ -17,7 +17,7 @@ permissions:
 jobs:
   localize-german:
     runs-on: ubuntu-24.04
-    timeout-minutes: 45
+    timeout-minutes: 60
 
     steps:
       - name: Checkout main
@@ -39,7 +39,7 @@ jobs:
       - name: Prepare German translation quality fixes
         run: python .github/scripts/prepare_de_translation_quality_20260828.py
 
-      - name: Translate every English locale into German
+      - name: Translate every unpolished English locale into German
         env:
           HF_HUB_DISABLE_XET: '1'
           TOKENIZERS_PARALLELISM: 'false'
@@ -118,5 +118,5 @@ jobs:
             echo 'No German localization changes to commit.'
             exit 0
           fi
-          git commit -m 'Add German localization as third game language'
+          git commit -m 'Improve remaining German localization'
           git push origin main
