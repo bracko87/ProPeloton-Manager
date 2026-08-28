@@ -51,6 +51,7 @@ jobs:
               ("        encoded = self.tokenizer(\n            values,\n", "        encoded = self.tokenizer(\n            [f'>>srp_Cyrl<< {value}' for value in values],\n"),
               ('                candidate = self.memory[source]\n', '                candidate = postprocess(self.memory[source])\n'),
               ("    for bad_word in ('jahač', 'rasni svet', 'zxq', 'zik'):\n", "    for bad_word in ('jahač', 'rasni svet', 'zxq'):\n"),
+              ("    value = re.sub(r' {2,}', ' ', value)\n", "    value = re.sub(r'\\bJahač', 'Vozač', value)\n    value = re.sub(r'\\bjahač', 'vozač', value)\n    value = re.sub(r' {2,}', ' ', value)\n"),
           ]
           for old, new in replacements:
               if old not in text:
