@@ -44,12 +44,13 @@ jobs:
           text = path.read_text(encoding='utf-8')
 
           replacements = [
-              ("MODEL_NAME = 'facebook/nllb-200-distilled-600M'", "MODEL_NAME = 'Helsinki-NLP/opus-mt-en-sr'"),
+              ("MODEL_NAME = 'facebook/nllb-200-distilled-600M'", "MODEL_NAME = 'Helsinki-NLP/opus-mt-en-sla'"),
               ('BATCH_SIZE = 12', 'BATCH_SIZE = 32'),
               ('self.tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME, src_lang=SRC_LANG)', 'self.tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)'),
               ('self.forced_bos_token_id = self.tokenizer.convert_tokens_to_ids(TARGET_LANG)', 'self.forced_bos_token_id = None'),
               ('                forced_bos_token_id=self.forced_bos_token_id,\n', ''),
               ('num_beams=3', 'num_beams=1'),
+              ("        encoded = self.tokenizer(\n            values,\n", "        encoded = self.tokenizer(\n            [f'>>srp_Latn<< {value}' for value in values],\n"),
           ]
           for old, new in replacements:
               if old not in text:
