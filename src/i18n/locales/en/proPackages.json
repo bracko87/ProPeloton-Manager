@@ -46,7 +46,12 @@
     "refreshing": "Billing management completed. Refreshing your subscription status…",
     "activated": "Premium is active and your monthly coin reward has been added.",
     "billingRefreshed": "Your billing and subscription status has been refreshed.",
-    "processing": "Payment was completed, but Stripe confirmation is still processing. Use Refresh in a few moments; do not purchase again."
+    "processing": "Payment was completed, but Stripe confirmation is still processing. Use Refresh in a few moments; do not purchase again.",
+    "statusTrialing": "Trialing",
+    "statusPastDue": "Past due",
+    "statusUnpaid": "Unpaid",
+    "statusIncomplete": "Incomplete",
+    "statusPaused": "Paused"
   },
   "advantages": {
     "a1": "50 coins after every successful monthly Premium payment.",
@@ -180,7 +185,11 @@
     "next": "Next",
     "invoiceFailed": "Failed to load Premium invoice history.",
     "purchaseFailed": "Failed to load purchase history.",
-    "ledgerFailed": "Failed to load coin transaction history."
+    "ledgerFailed": "Failed to load coin transaction history.",
+    "billingSubscriptionCycle": "Subscription cycle",
+    "billingSubscriptionCreate": "Subscription created",
+    "billingSubscriptionUpdate": "Subscription updated",
+    "billingManual": "Manual invoice"
   },
   "transactions": {
     "purchase": "Coin package purchase: {{code}}",

@@ -440,9 +440,11 @@ export default function PreferencesPage(): JSX.Element {
 
       setDevelopingTeamSuccessMessage(
         normalized?.access_status === 'active'
-          ? `Developing Team activated for Season ${
-              normalized.active_season ?? normalized.current_season
-            }. Automatic renewal is ${normalized.auto_renew === false ? 'off' : 'on'}.`
+          ? t('activation.activatedForSeason', {
+              ns: 'preferencesDynamic',
+              season: normalized.active_season ?? normalized.current_season,
+              renewal: t(normalized.auto_renew === false ? 'activation.off' : 'activation.on', { ns: 'preferencesDynamic' }),
+            })
           : t('activation.activatedSuccessfully', { ns: 'preferencesDynamic' })
       )
 
@@ -618,8 +620,8 @@ export default function PreferencesPage(): JSX.Element {
 
   const movementWindowText = developingTeamStatus
     ? developingTeamStatus.movement_window_open
-      ? `Movement window open now: ${developingTeamStatus.current_window_label ?? t('movement.currentWindow', { ns: 'preferencesDynamic' })}`
-      : `Movement window closed. Next window: ${developingTeamStatus.next_window_label ?? 'Unknown'}`
+      ? t('movement.open', { ns: 'preferencesDynamic', label: developingTeamStatus.current_window_label ?? t('movement.currentWindow', { ns: 'preferencesDynamic' }) })
+      : t('movement.closed', { ns: 'preferencesDynamic', label: developingTeamStatus.next_window_label ?? t('movement.unknown', { ns: 'preferencesDynamic' }) })
     : t('movement.unavailable', { ns: 'preferencesDynamic' })
 
   const developingTeamAccessStatus = developingTeamStatus?.access_status ?? 'not_activated'
@@ -639,8 +641,8 @@ export default function PreferencesPage(): JSX.Element {
     : '—'
 
   const developingTeamActivationLabel = developingTeamIsExpired
-    ? `Reactivate for Season ${developingTeamTargetSeason} — ${renewalCoinCost} Coins`
-    : `Activate Developing Team — ${activationCoinCost} Coins`
+    ? t('activation.reactivateForSeason', { ns: 'preferencesDynamic', season: developingTeamTargetSeason, cost: renewalCoinCost })
+    : t('activation.activate', { ns: 'preferencesDynamic', cost: activationCoinCost })
 
   const developingTeamCanSubmitActivation = Boolean(
     developingTeamStatus &&
@@ -750,15 +752,13 @@ export default function PreferencesPage(): JSX.Element {
 
               <div className="shrink-0 rounded-full border border-gray-200 bg-gray-50 px-3 py-1 text-xs font-semibold text-gray-600">
                 {developingTeamIsActive || developingTeamIsExpired
-                  ? `${renewalCoinCost} coins per renewal`
-                  : `${activationCoinCost} coins to activate`}
+                  ? t('coins.perRenewal', { ns: 'preferencesDynamic', cost: renewalCoinCost })
+                  : t('coins.toActivate', { ns: 'preferencesDynamic', cost: activationCoinCost })}
               </div>
             </div>
 
             <p className="mt-3 text-sm text-gray-600">
-              Available to Free and Premium players. First activation costs {activationCoinCost}{' '}
-              coins. Each later season renewal or reactivation costs {renewalCoinCost} coins.
-              Premium membership does not waive these service costs.
+              {t('service.summary', { ns: 'preferencesDynamic', activation: activationCoinCost, renewal: renewalCoinCost })}
             </p>
 
             {isLoadingDevelopingTeamStatus ? (
@@ -789,18 +789,16 @@ export default function PreferencesPage(): JSX.Element {
                     </div>
                     <div className="mt-1 text-xs text-gray-500">
                       {developingTeamIsExpired
-                        ? `Reactivation price: ${renewalCoinCost} coins`
+                        ? t('coins.reactivationPrice', { ns: 'preferencesDynamic', cost: renewalCoinCost })
                         : developingTeamIsActive
-                          ? `Next renewal: ${renewalCoinCost} coins`
-                          : `First activation: ${activationCoinCost} coins`}
+                          ? t('coins.nextRenewal', { ns: 'preferencesDynamic', cost: renewalCoinCost })
+                          : t('coins.firstActivation', { ns: 'preferencesDynamic', cost: activationCoinCost })}
                     </div>
                   </div>
                 </div>
 
                 <div className="mt-4 rounded-md border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
-                  Eligibility: 30 real-life days or 60 in-game days. First activation:{' '}
-                  {activationCoinCost} coins. Renewal and reactivation: {renewalCoinCost} coins per
-                  season.
+                  {t('service.eligibilityCosts', { ns: 'preferencesDynamic', activation: activationCoinCost, renewal: renewalCoinCost })}
                 </div>
 
                 {developingTeamIsActive ? (
@@ -811,10 +809,10 @@ export default function PreferencesPage(): JSX.Element {
                           {t('developingTeam.active', { ns: 'preferences' })}
                         </div>
                         <div className="mt-1 text-sm text-green-800">
-                          Access remains available until the end of Season{' '}
-                          {developingTeamStatus?.expires_after_season ??
-                            developingTeamStatus?.active_season ??
-                            developingTeamStatus?.current_season}.
+                          {t('service.accessUntilSeason', {
+                            ns: 'preferencesDynamic',
+                            season: developingTeamStatus?.expires_after_season ?? developingTeamStatus?.active_season ?? developingTeamStatus?.current_season,
+                          })}
                         </div>
                       </div>
 
@@ -827,30 +825,25 @@ export default function PreferencesPage(): JSX.Element {
                       <div>
                         <div className="text-xs text-green-700">{t('developingTeam.currentSeason', { ns: 'preferences' })}</div>
                         <div className="mt-1 text-sm font-semibold text-green-950">
-                          Season {developingTeamStatus?.current_season ?? '—'}
+                          {t('service.season', { ns: 'preferencesDynamic', season: developingTeamStatus?.current_season ?? '—' })}
                         </div>
                       </div>
                       <div>
                         <div className="text-xs text-green-700">{t('developingTeam.accessEnds', { ns: 'preferences' })}</div>
                         <div className="mt-1 text-sm font-semibold text-green-950">
-                          End of Season{' '}
-                          {developingTeamStatus?.expires_after_season ??
-                            developingTeamStatus?.active_season ??
-                            '—'}
+                          {t('service.endSeason', { ns: 'preferencesDynamic', season: developingTeamStatus?.expires_after_season ?? developingTeamStatus?.active_season ?? '—' })}
                         </div>
                       </div>
                       <div>
                         <div className="text-xs text-green-700">{t('developingTeam.renewalPrice', { ns: 'preferences' })}</div>
                         <div className="mt-1 text-sm font-semibold text-green-950">
-                          {renewalCoinCost} coins
+                          {t('service.coins', { ns: 'preferencesDynamic', count: renewalCoinCost })}
                         </div>
                       </div>
                       <div>
                         <div className="text-xs text-green-700">{t('developingTeam.nextRenewal', { ns: 'preferences' })}</div>
                         <div className="mt-1 text-sm font-semibold text-green-950">
-                          Start of Season{' '}
-                          {developingTeamStatus?.next_renewal_season ??
-                            (developingTeamStatus?.current_season ?? 0) + 1}
+                          {t('service.startSeason', { ns: 'preferencesDynamic', season: developingTeamStatus?.next_renewal_season ?? (developingTeamStatus?.current_season ?? 0) + 1 })}
                         </div>
                       </div>
                     </div>
@@ -861,9 +854,7 @@ export default function PreferencesPage(): JSX.Element {
                           {t('developingTeam.autoRenew', { ns: 'preferences' })}
                         </div>
                         <div className="mt-1 text-xs leading-5 text-gray-600">
-                          When enabled, {renewalCoinCost} coins will be deducted at the beginning of
-                          the next season. If your balance is too low, renewal will fail and the
-                          Developing Team will become read-only.
+                          {t('service.autoRenewHelp', { ns: 'preferencesDynamic', cost: renewalCoinCost })}
                         </div>
                       </div>
 
@@ -929,20 +920,18 @@ export default function PreferencesPage(): JSX.Element {
                 ) : (
                   <div className="mt-4 rounded-xl border border-yellow-200 bg-yellow-50/50 p-4">
                     <div className="text-sm font-semibold text-gray-900">
-                      Activate for Season {developingTeamTargetSeason}
+                      {t('service.activateSeason', { ns: 'preferencesDynamic', season: developingTeamTargetSeason })}
                     </div>
                     <p className="mt-2 text-sm text-gray-700">
                       {developingTeamStatus?.team_exists
-                        ? 'Your existing Developing Team will be activated for this season.'
-                        : 'A Developing Team will be created and activated for this season.'}{' '}
-                      Access lasts until the end of the current in-game season. Automatic renewal is
-                      enabled by default and can be switched off at any time.
+                        ? t('service.existingTeam', { ns: 'preferencesDynamic' })
+                        : t('service.newTeam', { ns: 'preferencesDynamic' })}{' '}
+                      {t('service.activationAccess', { ns: 'preferencesDynamic' })}
                     </p>
 
                     {!developingTeamHasEnoughCoins ? (
                       <div className="mt-3 rounded-lg border border-amber-200 bg-white px-3 py-2 text-sm text-amber-800">
-                        You need {activationCoinCost} coins to activate Developing Team access. Current
-                        balance: {developingTeamStatus?.coin_balance ?? 0} coins.
+                        {t('service.needCoins', { ns: 'preferencesDynamic', cost: activationCoinCost, balance: developingTeamStatus?.coin_balance ?? 0 })}
                       </div>
                     ) : null}
 
@@ -954,7 +943,7 @@ export default function PreferencesPage(): JSX.Element {
                         className="inline-flex items-center rounded-md bg-yellow-400 px-4 py-2 text-sm font-medium text-black transition-colors hover:bg-yellow-500 disabled:cursor-not-allowed disabled:opacity-60"
                       >
                         {isActivatingDevelopingTeam
-                          ? 'Activating...'
+                          ? t('developingTeam.activating', { ns: 'preferences' })
                           : developingTeamActivationLabel}
                       </button>
 
@@ -1003,7 +992,7 @@ export default function PreferencesPage(): JSX.Element {
                 {developingTeamStatus?.team_exists &&
                 developingTeamStatus.developing_club_name ? (
                   <div className="mt-4 text-xs text-gray-500">
-                    Team: {developingTeamStatus.developing_club_name}
+                    {t('service.team', { ns: 'preferencesDynamic', name: developingTeamStatus.developing_club_name })}
                   </div>
                 ) : null}
               </>
@@ -1085,7 +1074,7 @@ export default function PreferencesPage(): JSX.Element {
         >
           <button
             type="button"
-            aria-label="Close Developing Team activation confirmation"
+            aria-label={t('service.closeActivation', { ns: 'preferencesDynamic' })}
             className="absolute inset-0 bg-black/40"
             onClick={closeDevelopingTeamActivationModal}
           />
@@ -1096,15 +1085,14 @@ export default function PreferencesPage(): JSX.Element {
                 id="developing-team-activation-modal-title"
                 className="text-lg font-semibold text-gray-900"
               >
-                {developingTeamIsExpired ? 'Reactivate' : 'Activate'} Developing Team for Season{' '}
-                {developingTeamTargetSeason}?
+                {t(developingTeamIsExpired ? 'service.confirmReactivate' : 'service.confirmActivate', { ns: 'preferencesDynamic', season: developingTeamTargetSeason })}
               </h3>
             </div>
 
             <div className="space-y-3 px-6 py-5 text-sm leading-6 text-gray-700">
-              <p>{developingTeamActionCost} coins will be deducted from your wallet.</p>
-              <p>Access lasts until the end of this in-game season.</p>
-              <p>Automatic renewal will be enabled by default. You can switch it off at any time in Preferences or Premium &amp; Billing.</p>
+              <p>{t('service.deductCoins', { ns: 'preferencesDynamic', cost: developingTeamActionCost })}</p>
+              <p>{t('service.accessThisSeason', { ns: 'preferencesDynamic' })}</p>
+              <p>{t('service.autoRenewModal', { ns: 'preferencesDynamic' })}</p>
             </div>
 
             <div className="flex flex-col-reverse gap-3 border-t border-gray-100 bg-gray-50 px-6 py-4 sm:flex-row sm:justify-end">
@@ -1126,8 +1114,8 @@ export default function PreferencesPage(): JSX.Element {
                 className="inline-flex items-center justify-center rounded-md bg-yellow-400 px-4 py-2 text-sm font-semibold text-black hover:bg-yellow-500 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {isActivatingDevelopingTeam
-                  ? 'Activating...'
-                  : `${developingTeamIsExpired ? 'Reactivate' : 'Activate'} for ${developingTeamActionCost} Coins`}
+                  ? t('developingTeam.activating', { ns: 'preferences' })
+                  : t(developingTeamIsExpired ? 'service.actionReactivate' : 'service.actionActivate', { ns: 'preferencesDynamic', cost: developingTeamActionCost })}
               </button>
             </div>
           </div>
@@ -1194,7 +1182,7 @@ export default function PreferencesPage(): JSX.Element {
                   htmlFor="shutdown-confirm-input"
                   className="block text-sm font-medium text-gray-900"
                 >
-                  Type <span className="font-bold text-red-700">DELETE</span> to confirm
+                  {t('dangerZone.typeDelete', { ns: 'preferences' })}
                 </label>
 
                 <input

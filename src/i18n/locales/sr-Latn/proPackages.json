@@ -46,7 +46,12 @@
     "refreshing": "Upravljanje naplatom je završeno. Osvežavamo status pretplate…",
     "activated": "Premium je aktivan i mesečna nagrada u novčićima je dodata.",
     "billingRefreshed": "Status naplate i pretplate je osvežen.",
-    "processing": "Plaćanje je završeno, ali Stripe potvrda se još obrađuje. Koristite Osveži za nekoliko trenutaka; nemojte ponovo kupovati."
+    "processing": "Plaćanje je završeno, ali Stripe potvrda se još obrađuje. Koristite Osveži za nekoliko trenutaka; nemojte ponovo kupovati.",
+    "statusTrialing": "Probni period",
+    "statusPastDue": "Dospelo plaćanje",
+    "statusUnpaid": "Neplaćeno",
+    "statusIncomplete": "Nedovršeno",
+    "statusPaused": "Pauzirano"
   },
   "advantages": {
     "a1": "50 novčića nakon svake uspešne mesečne Premium uplate.",
@@ -180,7 +185,11 @@
     "next": "Sledeća",
     "invoiceFailed": "Istorija Premium faktura nije mogla da se učita.",
     "purchaseFailed": "Istorija kupovina nije mogla da se učita.",
-    "ledgerFailed": "Istorija transakcija novčića nije mogla da se učita."
+    "ledgerFailed": "Istorija transakcija novčića nije mogla da se učita.",
+    "billingSubscriptionCycle": "Ciklus pretplate",
+    "billingSubscriptionCreate": "Kreirana pretplata",
+    "billingSubscriptionUpdate": "Ažurirana pretplata",
+    "billingManual": "Ručna faktura"
   },
   "transactions": {
     "purchase": "Kupovina paketa novčića: {{code}}",

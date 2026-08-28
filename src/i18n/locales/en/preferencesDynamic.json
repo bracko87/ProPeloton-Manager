@@ -27,5 +27,29 @@
     "loadStatus": "Failed to load Developing Team status.",
     "activate": "Failed to activate Developing Team.",
     "renewal": "Failed to update automatic renewal."
+  },
+  "service": {
+    "summary": "Available to Free and Premium players. First activation costs {{activation}} coins. Each later season renewal or reactivation costs {{renewal}} coins. Premium membership does not waive these service costs.",
+    "eligibilityCosts": "Eligibility: 30 real-life days or 60 in-game days. First activation: {{activation}} coins. Renewal and reactivation: {{renewal}} coins per season.",
+    "accessUntilSeason": "Access remains available until the end of Season {{season}}.",
+    "season": "Season {{season}}",
+    "endSeason": "End of Season {{season}}",
+    "startSeason": "Start of Season {{season}}",
+    "coins": "{{count}} coins",
+    "autoRenewHelp": "When enabled, {{cost}} coins will be deducted at the beginning of the next season. If your balance is too low, renewal will fail and the Developing Team will become read-only.",
+    "activateSeason": "Activate for Season {{season}}",
+    "existingTeam": "Your existing Developing Team will be activated for this season.",
+    "newTeam": "A Developing Team will be created and activated for this season.",
+    "activationAccess": "Access lasts until the end of the current in-game season. Automatic renewal is enabled by default and can be switched off at any time.",
+    "needCoins": "You need {{cost}} coins to activate Developing Team access. Current balance: {{balance}} coins.",
+    "team": "Team: {{name}}",
+    "closeActivation": "Close Developing Team activation confirmation",
+    "confirmActivate": "Activate Developing Team for Season {{season}}?",
+    "confirmReactivate": "Reactivate Developing Team for Season {{season}}?",
+    "deductCoins": "{{cost}} coins will be deducted from your wallet.",
+    "accessThisSeason": "Access lasts until the end of this in-game season.",
+    "autoRenewModal": "Automatic renewal will be enabled by default. You can switch it off at any time in Preferences or Premium & Billing.",
+    "actionActivate": "Activate for {{cost}} Coins",
+    "actionReactivate": "Reactivate for {{cost}} Coins"
   }
 }

@@ -277,7 +277,7 @@ function formatDateTime(iso: string | null | undefined) {
   if (!iso) return '—'
 
   try {
-    return new Date(iso).toLocaleString(undefined, {
+    return new Date(iso).toLocaleString(appI18n.resolvedLanguage ?? appI18n.language ?? 'en', {
       year: 'numeric',
       month: 'short',
       day: '2-digit',
@@ -293,7 +293,7 @@ function formatDate(iso: string | null | undefined) {
   if (!iso) return '—'
 
   try {
-    return new Date(iso).toLocaleDateString(undefined, {
+    return new Date(iso).toLocaleDateString(appI18n.resolvedLanguage ?? appI18n.language ?? 'en', {
       year: 'numeric',
       month: 'long',
       day: '2-digit',
@@ -375,6 +375,17 @@ function describeCoinTransaction(reason: string, payload: any) {
   if (reason === 'premium_monthly_grant') return appI18n.t('transactions.premiumGrant', { ns: 'proPackages' })
 
   return titleFromSnake(reason)
+}
+
+function billingReasonLabel(value: string | null | undefined): string {
+  const keyByReason: Record<string, string> = {
+    subscription_cycle: 'history.billingSubscriptionCycle',
+    subscription_create: 'history.billingSubscriptionCreate',
+    subscription_update: 'history.billingSubscriptionUpdate',
+    manual: 'history.billingManual',
+  }
+  const key = value ? keyByReason[value] : null
+  return key ? appI18n.t(key, { ns: 'proPackages' }) : titleFromSnake(value)
 }
 
 function slicePage<T>(items: T[], page: number, pageSize: number): T[] {
@@ -574,12 +585,19 @@ export default function ProPackagesPage(): JSX.Element {
       return t('premium.activeCancellation')
     }
 
-    if (premiumStatus?.is_premium) return 'Active'
+    if (premiumStatus?.is_premium) return t('premium.active')
 
     const stripeStatus = premiumStatus?.stripe_status
-    if (!stripeStatus || stripeStatus === 'free') return 'Free'
+    if (!stripeStatus || stripeStatus === 'free') return t('premium.free')
 
-    return titleFromSnake(stripeStatus)
+    const statusKeys: Record<string, string> = {
+      trialing: 'premium.statusTrialing',
+      past_due: 'premium.statusPastDue',
+      unpaid: 'premium.statusUnpaid',
+      incomplete: 'premium.statusIncomplete',
+      paused: 'premium.statusPaused',
+    }
+    return statusKeys[stripeStatus] ? t(statusKeys[stripeStatus]) : titleFromSnake(stripeStatus)
   }, [premiumStatus])
 
   const nextRenewalLabel = useMemo(() => {
@@ -604,10 +622,10 @@ export default function ProPackagesPage(): JSX.Element {
 
   const developingTeamServiceStatusLabel =
     developingTeamService?.access_status === 'active'
-      ? 'Active'
+      ? t('services.active')
       : developingTeamService?.access_status === 'expired'
-        ? 'Expired'
-        : 'Not activated'
+        ? t('services.expired')
+        : t('services.notActivated')
 
   const bestValueCode = useMemo(() => {
     if (packages.length === 0) return null
@@ -830,7 +848,7 @@ export default function ProPackagesPage(): JSX.Element {
 
       setDevelopingTeamServiceNotice(
         enabled
-          ? `Automatic renewal enabled. ${developingTeamRenewalCost} coins will be charged at the beginning of the next season.`
+          ? t('services.autoEnabled', { cost: developingTeamRenewalCost })
           : t('services.autoDisabled'),
       )
 
@@ -1231,7 +1249,7 @@ export default function ProPackagesPage(): JSX.Element {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h2 className="text-2xl font-extrabold text-black">
-            Premium &amp; Billing
+            {t('page.title')}
           </h2>
           <p className="mt-1 text-sm text-gray-600">
             {t('page.description')}
@@ -1301,7 +1319,7 @@ export default function ProPackagesPage(): JSX.Element {
                 <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-bold text-green-800">
                   {premiumStatus.cancel_at_period_end
                     ? t('premium.activeEnding')
-                    : 'Active'}
+                    : t('premium.active')}
                 </span>
               ) : (
                 <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-bold text-gray-700">
@@ -1343,7 +1361,7 @@ export default function ProPackagesPage(): JSX.Element {
               <li className="flex gap-2">
                 <span className="font-bold text-green-700">✓</span>
                 <span>
-                  Receive {premiumCoins} coins after every successful monthly payment.
+                  {t('premium.receive')} {premiumCoins} {t('premium.monthlyCoinsSuffix')}
                 </span>
               </li>
               <li className="flex gap-2">
@@ -1363,13 +1381,12 @@ export default function ProPackagesPage(): JSX.Element {
                 </div>
                 <div className="mt-1">
                   {premiumStatus.cancel_at_period_end
-                    ? `Future renewal is canceled. Access remains available until ${formatDate(
-                        premiumStatus.access_until ||
-                          premiumStatus.current_period_end,
-                      )}.`
-                    : `The current paid period ends on ${formatDate(
-                        premiumStatus.current_period_end,
-                      )}.`}
+                    ? t('premium.futureCanceled', {
+                        date: formatDate(premiumStatus.access_until || premiumStatus.current_period_end),
+                      })
+                    : t('premium.periodEnds', {
+                        date: formatDate(premiumStatus.current_period_end),
+                      })}
                 </div>
               </div>
             ) : null}
@@ -1412,7 +1429,7 @@ export default function ProPackagesPage(): JSX.Element {
                 {loadingPremium
                   ? t('premium.loading')
                   : startingPremiumCheckout
-                    ? 'Redirecting…'
+                    ? t('premium.redirecting')
                     : premiumCheckoutBlocked
                       ? t('premium.alreadyExists')
                       : t('premium.become')}
@@ -1468,10 +1485,10 @@ export default function ProPackagesPage(): JSX.Element {
                   {t('comparison.developing')}
                 </td>
                 <td className="px-5 py-4 text-center text-gray-700">
-                  {developingTeamActivationCost} activation / {developingTeamRenewalCost} renewal
+                  {t('comparison.activationRenewal', { activation: developingTeamActivationCost, renewal: developingTeamRenewalCost })}
                 </td>
                 <td className="px-5 py-4 text-center font-bold text-gray-900">
-                  {developingTeamActivationCost} activation / {developingTeamRenewalCost} renewal
+                  {t('comparison.activationRenewal', { activation: developingTeamActivationCost, renewal: developingTeamRenewalCost })}
                 </td>
               </tr>
             </tbody>
@@ -1547,7 +1564,7 @@ export default function ProPackagesPage(): JSX.Element {
                       {eur(item.priceEur)}
                     </div>
                     <div className="mt-1 text-xs text-gray-500">
-                      ≈ {eur(perCoin(item.priceEur, item.coins))} per coin
+                      ≈ {eur(perCoin(item.priceEur, item.coins))} {t('packages.perCoin')}
                     </div>
                   </div>
 
@@ -1557,7 +1574,7 @@ export default function ProPackagesPage(): JSX.Element {
                     disabled={isBuying}
                     className="mt-5 w-full rounded-xl bg-yellow-400 px-4 py-3 text-sm font-extrabold text-black hover:bg-yellow-300 disabled:opacity-60"
                   >
-                    {isBuying ? 'Redirecting…' : 'Buy now'}
+                    {isBuying ? t('packages.redirecting') : t('packages.buy')}
                   </button>
 
                   <div className="mt-3 text-xs text-gray-500">
@@ -1583,36 +1600,36 @@ export default function ProPackagesPage(): JSX.Element {
 
         <div className="mt-5 grid grid-cols-1 gap-4 rounded-2xl border border-black/10 bg-white p-5 shadow-sm sm:grid-cols-2 xl:grid-cols-4">
           <MembershipItem
-            label="Plan"
+            label={t('membership.plan')}
             value={
               premiumStatus?.is_premium || premiumDetails
                 ? premiumStatus?.plan_name ||
                   premiumPlan?.name ||
                   t('premium.defaultName')
-                : 'Free'
+                : t('premium.free')
             }
           />
-          <MembershipItem label="Status" value={statusLabel} />
+          <MembershipItem label={t('membership.status')} value={statusLabel} />
           <MembershipItem
-            label="Started"
+            label={t('membership.started')}
             value={formatDate(premiumDetails?.created_at)}
           />
           <MembershipItem
-            label="Current period ends"
+            label={t('membership.periodEnds')}
             value={formatDate(
               premiumDetails?.current_period_end ||
                 premiumStatus?.current_period_end,
             )}
           />
-          <MembershipItem label="Next renewal" value={nextRenewalLabel} />
-          <MembershipItem label="Monthly price" value={premiumPrice} />
+          <MembershipItem label={t('membership.nextRenewal')} value={nextRenewalLabel} />
+          <MembershipItem label={t('membership.monthlyPrice')} value={premiumPrice} />
           <MembershipItem
-            label="Monthly coin reward"
-            value={`${premiumCoins} coins`}
+            label={t('membership.monthlyCoinReward')}
+            value={t('common.coins', { count: premiumCoins })}
           />
           <MembershipItem
-            label="Cancel at period end"
-            value={premiumStatus?.cancel_at_period_end ? 'Yes' : 'No'}
+            label={t('membership.cancelAtEnd')}
+            value={premiumStatus?.cancel_at_period_end ? t('membership.yes') : t('membership.no')}
           />
         </div>
 
@@ -1682,11 +1699,11 @@ export default function ProPackagesPage(): JSX.Element {
                 {!developingTeamService?.is_active ? (
                   <div className="mt-3 space-y-1 text-sm text-gray-600">
                     {developingTeamService?.access_status === 'expired' ? (
-                      <p>Reactivation price: {developingTeamRenewalCost} coins.</p>
+                      <p>{t('services.reactivationPrice', { cost: developingTeamRenewalCost })}</p>
                     ) : (
                       <>
-                        <p>First activation price: {developingTeamActivationCost} coins.</p>
-                        <p>Later renewal or reactivation: {developingTeamRenewalCost} coins per season.</p>
+                        <p>{t('services.firstActivationPrice', { cost: developingTeamActivationCost })}</p>
+                        <p>{t('services.laterPrice', { cost: developingTeamRenewalCost })}</p>
                       </>
                     )}
                   </div>
@@ -1721,35 +1738,32 @@ export default function ProPackagesPage(): JSX.Element {
               <div className="mt-5 border-t border-black/5 pt-5">
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-6">
                 <MembershipItem
-                  label="Team created"
-                  value={developingTeamService.team_exists ? 'Yes' : 'No'}
+                  label={t('services.teamCreated')}
+                  value={developingTeamService.team_exists ? t('membership.yes') : t('membership.no')}
                 />
                 <MembershipItem
-                  label="Status"
-                  value="Active"
+                  label={t('membership.status')}
+                  value={t('services.active')}
                 />
                 <MembershipItem
-                  label="Current season"
-                  value={`Season ${developingTeamService.current_season}`}
+                  label={t('services.currentSeason')}
+                  value={t('services.season', { season: developingTeamService.current_season })}
                 />
                 <MembershipItem
-                  label="Access ends"
-                  value={`End of Season ${
-                    developingTeamService.expires_after_season ??
-                    developingTeamService.active_season ??
-                    developingTeamService.current_season
-                  }`}
+                  label={t('services.accessEnds')}
+                  value={t('services.endSeason', {
+                    season: developingTeamService.expires_after_season ?? developingTeamService.active_season ?? developingTeamService.current_season,
+                  })}
                 />
                 <MembershipItem
-                  label="Renewal price"
-                  value={`${developingTeamRenewalCost} coins`}
+                  label={t('services.renewalPrice')}
+                  value={t('common.coins', { count: developingTeamRenewalCost })}
                 />
                 <MembershipItem
-                  label="Next renewal"
-                  value={`Start of Season ${
-                    developingTeamService.next_renewal_season ??
-                    developingTeamService.current_season + 1
-                  }`}
+                  label={t('services.nextRenewal')}
+                  value={t('services.startSeason', {
+                    season: developingTeamService.next_renewal_season ?? developingTeamService.current_season + 1,
+                  })}
                 />
                 </div>
 
@@ -1759,9 +1773,7 @@ export default function ProPackagesPage(): JSX.Element {
                       {t('services.autoRenew')}
                     </div>
                     <div className="mt-1 text-xs leading-5 text-gray-600">
-                      When enabled, {developingTeamRenewalCost} coins will be deducted at the
-                      beginning of the next season. If the wallet balance is too low, renewal will
-                      fail and the Developing Team will become read-only.
+                      {t('services.autoRenewPrefix')} {developingTeamRenewalCost} {t('services.autoRenewSuffix')}
                     </div>
                   </div>
 
@@ -1782,35 +1794,35 @@ export default function ProPackagesPage(): JSX.Element {
             ) : developingTeamService?.access_status === 'expired' ? (
               <div className="mt-5 grid grid-cols-1 gap-4 border-t border-black/5 pt-5 sm:grid-cols-3">
                 <MembershipItem
-                  label="Team created"
-                  value={developingTeamService.team_exists ? 'Yes' : 'No'}
+                  label={t('services.teamCreated')}
+                  value={developingTeamService.team_exists ? t('membership.yes') : t('membership.no')}
                 />
                 <MembershipItem
-                  label="Status"
-                  value="Expired"
+                  label={t('membership.status')}
+                  value={t('services.expired')}
                 />
                 <MembershipItem
-                  label="Reactivation price"
-                  value={`${developingTeamRenewalCost} coins`}
+                  label={t('services.reactivation')}
+                  value={t('common.coins', { count: developingTeamRenewalCost })}
                 />
               </div>
             ) : (
               <div className="mt-5 grid grid-cols-1 gap-4 border-t border-black/5 pt-5 sm:grid-cols-3">
                 <MembershipItem
-                  label="Team created"
-                  value={developingTeamService?.team_exists ? 'Yes' : 'No'}
+                  label={t('services.teamCreated')}
+                  value={developingTeamService?.team_exists ? t('membership.yes') : t('membership.no')}
                 />
                 <MembershipItem
-                  label="Status"
-                  value="Not activated"
+                  label={t('membership.status')}
+                  value={t('services.notActivated')}
                 />
                 <MembershipItem
-                  label="First activation"
-                  value={`${developingTeamActivationCost} coins`}
+                  label={t('services.firstActivation')}
+                  value={t('common.coins', { count: developingTeamActivationCost })}
                 />
                 <MembershipItem
-                  label="Later renewals"
-                  value={`${developingTeamRenewalCost} coins per season`}
+                  label={t('services.laterRenewals')}
+                  value={t('services.coinsPerSeason', { cost: developingTeamRenewalCost })}
                 />
               </div>
             )}
@@ -1841,7 +1853,7 @@ export default function ProPackagesPage(): JSX.Element {
             ) : loadingPremiumInvoices ? (
               <HistoryLoading />
             ) : premiumInvoices.length === 0 ? (
-              <HistoryEmpty message="No Premium invoices found." />
+              <HistoryEmpty message={t('history.noPremiumInvoices')} />
             ) : (
               <div className="overflow-x-auto rounded-xl border border-black/10">
                 <table className="w-full min-w-[760px] text-sm">
@@ -1877,7 +1889,7 @@ export default function ProPackagesPage(): JSX.Element {
                           +{Number(invoice.coins_granted).toLocaleString()}
                         </td>
                         <td className="px-4 py-3">
-                          {titleFromSnake(invoice.billing_reason)}
+                          {billingReasonLabel(invoice.billing_reason)}
                         </td>
                       </tr>
                     ))}
@@ -1898,7 +1910,7 @@ export default function ProPackagesPage(): JSX.Element {
             ) : loadingHistory ? (
               <HistoryLoading />
             ) : purchases.length === 0 ? (
-              <HistoryEmpty message="No coin-package purchases found." />
+              <HistoryEmpty message={t('history.noPurchases')} />
             ) : (
               <div className="overflow-x-auto rounded-xl border border-black/10">
                 <table className="w-full min-w-[620px] text-sm">
@@ -1922,7 +1934,7 @@ export default function ProPackagesPage(): JSX.Element {
                         <td className="px-4 py-3">
                           {purchase.packageCode
                             ? titleFromSnake(purchase.packageCode)
-                            : 'Coin package'}
+                            : t('history.coinPackage')}
                         </td>
                         <td className="px-4 py-3 whitespace-nowrap text-green-700">
                           +{purchase.coins.toLocaleString()}
@@ -1951,7 +1963,7 @@ export default function ProPackagesPage(): JSX.Element {
             ) : loadingCoinHistory ? (
               <HistoryLoading />
             ) : coinTransactions.length === 0 ? (
-              <HistoryEmpty message="No coin transactions found." />
+              <HistoryEmpty message={t('history.noTransactions')} />
             ) : (
               <>
                 <div className="overflow-x-auto rounded-xl border border-black/10">
@@ -1982,7 +1994,7 @@ export default function ProPackagesPage(): JSX.Element {
                               {formatDateTime(transaction.createdAt)}
                             </td>
                             <td className="px-4 py-3 whitespace-nowrap font-medium">
-                              {titleFromSnake(transaction.reason)}
+                              {transaction.description}
                             </td>
                             <td className={`px-4 py-3 whitespace-nowrap font-bold ${amountClass}`}>
                               {transaction.delta > 0 ? '+' : ''}
@@ -2000,7 +2012,7 @@ export default function ProPackagesPage(): JSX.Element {
 
                 <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div className="text-sm text-gray-600">
-                    Page {safeCoinHistoryPage} of {coinHistoryTotalPages}
+                    {t('history.page', { page: safeCoinHistoryPage, pages: coinHistoryTotalPages })}
                   </div>
 
                   <div className="flex gap-2">
@@ -2084,7 +2096,9 @@ function HistoryCard(props: {
           onClick={props.onToggle}
           className="h-10 min-w-[128px] rounded-xl bg-black px-4 py-2.5 text-sm font-bold text-white hover:opacity-90"
         >
-          {props.open ? 'Hide history' : 'Show history'}
+          {props.open
+            ? appI18n.t('history.hide', { ns: 'proPackages' })
+            : appI18n.t('history.show', { ns: 'proPackages' })}
         </button>
       </div>
 
@@ -2104,7 +2118,7 @@ function HistoryError(props: { message: string }): JSX.Element {
 function HistoryLoading(): JSX.Element {
   return (
     <div className="rounded-xl border border-black/10 bg-white p-4 text-sm text-gray-600">
-      {t('history.loading')}
+      {appI18n.t('history.loading', { ns: 'proPackages' })}
     </div>
   )
 }

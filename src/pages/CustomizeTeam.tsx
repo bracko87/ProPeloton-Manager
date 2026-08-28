@@ -565,7 +565,7 @@ function KitDesigner({
           setDraftKitConfig(fallback)
           setOriginalGenericKitUrl(null)
           setJerseyUrlInput('')
-          setKitNotice(`Failed to load saved jersey: ${error.message}`)
+          setKitNotice(t('jersey.loadSavedWithError', { error: error.message }))
           setLoaded(true)
           return
         }
@@ -738,7 +738,7 @@ function KitDesigner({
       setSaving(false)
 
       if (error) {
-        setKitNotice(`Failed to save jersey: ${error.message}`)
+        setKitNotice(t('jersey.saveFailedWithError', { error: error.message }))
         return
       }
 
@@ -753,7 +753,7 @@ function KitDesigner({
       await onCustomizationChanged()
       setKitNotice(
         customizationAccess?.jersey_change_cost
-          ? `Jersey applied and saved for ${customizationAccess.jersey_change_cost} coins.`
+          ? t('jersey.savedPaid', { cost: customizationAccess.jersey_change_cost })
           : t('jersey.savedFree'),
       )
     } catch (err) {
@@ -775,7 +775,7 @@ function KitDesigner({
           {t('jersey.costHelp')}
         </div>
         <div className="mt-2 text-sm font-semibold text-slate-900">
-          Current change: {customizationAccess?.jersey_change_cost ?? 0} coins
+          {t('jersey.currentCost', { cost: customizationAccess?.jersey_change_cost ?? 0 })}
         </div>
       </div>
 
@@ -816,9 +816,9 @@ function KitDesigner({
             className="rounded-lg border border-slate-900 bg-slate-900 px-5 py-2 text-sm font-semibold text-white shadow-sm hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {saving
-              ? 'Applying...'
+              ? t('jersey.applying')
               : customizationAccess?.jersey_change_cost
-                ? `Apply jersey · ${customizationAccess.jersey_change_cost} coins`
+                ? t('jersey.applyPaid', { cost: customizationAccess.jersey_change_cost })
                 : t('jersey.applyFree')}
           </button>
         </div>
@@ -1204,7 +1204,7 @@ export default function CustomizeTeamPage(): JSX.Element {
         broadcastClubUpdate(),
       ])
       showSuccess(t('identity.nameUpdated'))
-      showTopNotice('success', `Team name changed to "${updatedClub.name}" for 30 coins.`)
+      showTopNotice('success', t('identity.nameChanged', { name: updatedClub.name }))
     } catch (caught) {
       const message = caught instanceof Error ? caught.message : t('identity.nameFailed')
       setError(message)
@@ -1255,7 +1255,7 @@ export default function CustomizeTeamPage(): JSX.Element {
     showSuccess(t('identity.colorsUpdated'))
     showTopNotice(
       'success',
-      `Team colors changed to ${updatedClub.primary_color} and ${updatedClub.secondary_color}.`,
+      t('identity.colorsChanged', { primary: updatedClub.primary_color, secondary: updatedClub.secondary_color }),
     )
   }
 
@@ -1321,10 +1321,9 @@ export default function CustomizeTeamPage(): JSX.Element {
 
     if (logoCost > 0 && coinBalance < logoCost) {
       const missingCoins = logoCost - coinBalance
-      const message =
-        `Not enough coins to change the team logo. ` +
-        `This change costs ${logoCost} coins, your current balance is ${coinBalance}, ` +
-        `and you need ${missingCoins} more coin${missingCoins === 1 ? '' : 's'}.`
+      const message = t(missingCoins === 1 ? 'logo.notEnoughOne' : 'logo.notEnough', {
+        cost: logoCost, balance: coinBalance, missing: missingCoins,
+      })
 
       setError(message)
       showTopNotice('error', message)
@@ -1366,7 +1365,7 @@ export default function CustomizeTeamPage(): JSX.Element {
       setLogoVersion(Date.now())
       showSuccess(
         currentLogoChangeCost > 0
-          ? `Logo applied for ${currentLogoChangeCost} coins.`
+          ? t('logo.appliedPaid', { cost: currentLogoChangeCost })
           : t('logo.appliedFree'),
       )
       return
@@ -1411,7 +1410,7 @@ export default function CustomizeTeamPage(): JSX.Element {
       setLogoVersion(Date.now())
       showSuccess(
         currentLogoChangeCost > 0
-          ? `Logo applied for ${currentLogoChangeCost} coins.`
+          ? t('logo.appliedPaid', { cost: currentLogoChangeCost })
           : t('logo.appliedFree'),
       )
     } catch (err) {
@@ -1435,10 +1434,9 @@ export default function CustomizeTeamPage(): JSX.Element {
 
     if (logoCost > 0 && coinBalance < logoCost) {
       const missingCoins = logoCost - coinBalance
-      const message =
-        `Not enough coins to change the team logo. ` +
-        `Restoring the generated badge also counts as a logo change and costs ${logoCost} coins. ` +
-        `Your current balance is ${coinBalance}; you need ${missingCoins} more coin${missingCoins === 1 ? '' : 's'}.`
+      const message = t(missingCoins === 1 ? 'logo.notEnoughRestoreOne' : 'logo.notEnoughRestore', {
+        cost: logoCost, balance: coinBalance, missing: missingCoins,
+      })
 
       setError(message)
       showTopNotice('error', message)
@@ -1503,7 +1501,7 @@ export default function CustomizeTeamPage(): JSX.Element {
               <div className="rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
                 <div className="font-semibold">{t('identity.lockedTitle')}</div>
                 <div className="mt-1">
-                  Your team is racing this season as{' '}
+                  {t('identity.lockedPrefix')}{' '}
                   <span className="font-semibold">
                     {brandingLock?.full_display_name ?? brandingLock?.season_display_name}
                   </span>
@@ -1539,7 +1537,7 @@ export default function CustomizeTeamPage(): JSX.Element {
                       : 'border-slate-900 bg-slate-900 text-white hover:bg-slate-800',
                   ].join(' ')}
                 >
-                  {saving ? 'Applying...' : t('identity.applyName')}
+                  {saving ? t('page.saving') : t('identity.applyName')}
                 </button>
               </div>
 
@@ -1701,7 +1699,7 @@ export default function CustomizeTeamPage(): JSX.Element {
                             !hasEnoughCoinsForLogo ? 'text-red-700' : 'text-slate-950',
                           ].join(' ')}
                         >
-                          {currentCoinBalance} coins
+                          {t('coins.coins', { count: currentCoinBalance })}
                         </div>
                       </div>
                     </div>
@@ -1713,8 +1711,8 @@ export default function CustomizeTeamPage(): JSX.Element {
                         </div>
                         <div className="mt-0.5 text-sm font-bold text-slate-950">
                           {currentLogoChangeCost > 0
-                            ? `${currentLogoChangeCost} coins`
-                            : 'Free'}
+                            ? t('coins.coins', { count: currentLogoChangeCost })
+                            : t('logo.free')}
                         </div>
                       </div>
 
@@ -1731,9 +1729,9 @@ export default function CustomizeTeamPage(): JSX.Element {
                           ].join(' ')}
                         >
                           {!hasEnoughCoinsForLogo
-                            ? `Need ${missingLogoCoins} more coin${missingLogoCoins === 1 ? '' : 's'}`
+                            ? t(missingLogoCoins === 1 ? 'logo.needOne' : 'logo.needMore', { count: missingLogoCoins })
                             : currentLogoChangeCost > 0
-                              ? 'Enough coins'
+                              ? t('logo.enough')
                               : t('logo.freeAvailable')}
                         </div>
                       </div>
@@ -1742,7 +1740,7 @@ export default function CustomizeTeamPage(): JSX.Element {
                     {!hasEnoughCoinsForLogo ? (
                       <div className="mt-3 flex flex-col gap-2 rounded-lg border border-red-200 bg-white px-3 py-3 sm:flex-row sm:items-center sm:justify-between">
                         <div className="text-xs font-medium text-red-800">
-                          You cannot apply or remove the logo until you have at least {currentLogoChangeCost} coins.
+                          {t('logo.blocked', { cost: currentLogoChangeCost })}
                         </div>
                         <button
                           type="button"
@@ -1832,11 +1830,11 @@ export default function CustomizeTeamPage(): JSX.Element {
                       ].join(' ')}
                     >
                       {saving
-                        ? 'Applying...'
+                        ? t('page.saving')
                         : !hasEnoughCoinsForLogo
-                          ? `Need ${missingLogoCoins} more coin${missingLogoCoins === 1 ? '' : 's'}`
+                          ? t(missingLogoCoins === 1 ? 'logo.needOne' : 'logo.needMore', { count: missingLogoCoins })
                           : currentLogoChangeCost > 0
-                            ? `Apply logo · ${currentLogoChangeCost} coins`
+                            ? t('logo.applyPaid', { cost: currentLogoChangeCost })
                             : t('logo.applyFree')}
                     </button>
                   </div>
