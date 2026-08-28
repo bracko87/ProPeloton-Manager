@@ -69,6 +69,8 @@ jobs:
               'squad.json',
               'developingTeam.json',
               'racePreparation.json',
+              'raceDetail.json',
+              'training.json',
           ]
           polished_text = '\n'.join((de_dir / name).read_text(encoding='utf-8') for name in polished)
           bad_terms = {
