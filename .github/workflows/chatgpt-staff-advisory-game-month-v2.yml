@@ -1,0 +1,243 @@
+name: Staff Advisory in-game month UI cutover v2
+
+on:
+  push:
+    branches:
+      - chatgpt/staff-advisory-game-month
+    paths:
+      - '.github/workflows/chatgpt-staff-advisory-game-month-v2.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: chatgpt/staff-advisory-game-month
+          fetch-depth: 0
+
+      - name: Apply structural Staff Advisory game-month patch
+        shell: bash
+        run: |
+          python <<'PY'
+          from pathlib import Path
+          import json
+          import re
+          import textwrap
+
+          overview_path = Path('src/pages/dashboard/Overview.tsx')
+          source = overview_path.read_text(encoding='utf-8')
+
+          def replace_once(old: str, new: str, label: str):
+              global source
+              count = source.count(old)
+              if count != 1:
+                  raise SystemExit(f'{label}: expected 1 match, found {count}')
+              source = source.replace(old, new, 1)
+
+          # The two quote DTOs are the only Overview types using the obsolete field.
+          count = source.count('duration_real_days: number;')
+          if count != 2:
+              raise SystemExit(f'duration_real_days type fields: expected 2, found {count}')
+          source = source.replace('duration_real_days: number;', 'duration_game_months: number;')
+
+          replace_once(
+              '  remaining_paid_seconds: number;\n  current_expires_at: string | null;',
+              '  remaining_paid_game_seconds: number;\n  proposed_remaining_paid_game_seconds: number;\n  current_expires_at: string | null;',
+              'role renewal remaining fields',
+          )
+          replace_once(
+              '  advisory_expires_at: string | null;\n  advisor_notification_count?: number | null;',
+              '  advisory_expires_at: string | null;\n  remaining_game_seconds: number;\n  advisor_notification_count?: number | null;',
+              'overview remaining game seconds',
+          )
+
+          format_pattern = re.compile(
+              r'\n\s*const formatAdvisoryDate = React\.useCallback\(\(value: string \| null\) => \{.*?'
+              r'const getAdvisoryDaysRemaining = React\.useCallback\(\(value: string \| null\) => \{.*?\n\}, \[\]\);',
+              re.S,
+          )
+          format_replacement = textwrap.dedent(r'''
+
+            const formatAdvisoryGameDate = React.useCallback((value: string | null) => {
+              if (!value) return "—";
+              const date = new Date(value);
+              if (Number.isNaN(date.getTime())) return value;
+
+              const monthKeys = [
+                "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+                "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+              ] as const;
+              const monthKey = monthKeys[date.getUTCMonth()] ?? "Jan";
+              const season = date.getUTCFullYear() - 1999;
+
+              if (season < 1) return value;
+
+              return t("staffBriefing.gameDate", {
+                season,
+                day: date.getUTCDate(),
+                month: t(`months.${monthKey}`),
+              });
+            }, [t]);
+
+            const getAdvisoryGameDaysRemaining = React.useCallback(
+              (seconds: number | null | undefined) =>
+                Math.max(0, Math.ceil(Number(seconds ?? 0) / 86_400)),
+              [],
+            );''')
+          source, count = format_pattern.subn(format_replacement, source, count=1)
+          if count != 1:
+              raise SystemExit(f'game date/countdown helper replacement: expected 1, found {count}')
+
+          for old, new, label in [
+              ('"staff_advisory_get_overview_v1"', '"staff_advisory_get_overview_v2"', 'overview v2 rpc'),
+              ('"staff_advisory_quote_v1"', '"staff_advisory_quote_v2"', 'quote v2 rpc'),
+              ('"staff_advisory_get_role_renewal_quote_v1"', '"staff_advisory_get_role_renewal_quote_v2"', 'renewal quote v2 rpc'),
+          ]:
+              replace_once(old, new, label)
+
+          remaining_pattern = re.compile(
+              r'const remainingDays = getAdvisoryDaysRemaining\(\s*row\?\.advisory_expires_at \?\? null,\s*\);'
+          )
+          source, count = remaining_pattern.subn(
+              'const remainingDays = getAdvisoryGameDaysRemaining(\n            row?.remaining_game_seconds,\n          );',
+              source,
+              count=1,
+          )
+          if count != 1:
+              raise SystemExit(f'remaining game days call: expected 1, found {count}')
+
+          popover = {
+              'What do I get with an advisor?': '{t("staffBriefing.infoTitle")}',
+              'Hiring staff and buying Staff Advisory are separate. Your employees continue their normal jobs without Staff Advisory. The 5-coin option adds proactive analysis and role-specific reports for 30 real-life days.': '{t("staffBriefing.infoIntro")}',
+              'Without Staff Advisory': '{t("staffBriefing.withoutTitle")}',
+              'You still receive all normal gameplay notifications and essential warnings: race and stage-plan deadlines, injuries and sickness, rider/staff contract expiry, race-supply shortages, sponsor and finance warnings, scouting-task completion, transfers, and other normal game events. Hired staff also continue performing their normal gameplay jobs.': '{t("staffBriefing.withoutText")}',
+              'With Staff Advisory — 5 coins / 30 real-life days': '{t("staffBriefing.withTitle")}',
+              'The selected employee becomes your advisor for that role. Advisor access adds proactive analytical reports and advisor-only notifications. These reports interpret information you already have; they do not reveal hidden attributes, change race calculations, improve rider stats, or replace Free warnings.': '{t("staffBriefing.withText")}',
+              'What Staff Advisory never locks': '{t("staffBriefing.neverLocksTitle")}',
+              'Essential warnings and normal game results remain available without Staff Advisory. Advisory is additional interpretation and planning support only.': '{t("staffBriefing.neverLocksText")}',
+          }
+          for old, new in popover.items():
+              replace_once(old, new, f'popover text {old[:30]}')
+
+          source = source.replace('formatAdvisoryDate(', 'formatAdvisoryGameDate(')
+          source = source.replace('pausedRenewalQuote.remaining_paid_seconds', 'pausedRenewalQuote.remaining_paid_game_seconds')
+          source = source.replace('pausedRenewalQuote.duration_real_days', 'pausedRenewalQuote.duration_game_months')
+          source = source.replace('quote.duration_real_days', 'quote.duration_game_months')
+          source = source.replace('days: pausedRenewalQuote.duration_game_months', 'months: pausedRenewalQuote.duration_game_months')
+          source = source.replace('staffBriefing.realLifeDays', 'staffBriefing.gameMonths')
+
+          replace_once(
+              '`${quote.duration_game_months} real-life days`',
+              't("staffBriefing.gameMonths", { count: quote.duration_game_months })',
+              'activation duration value',
+          )
+
+          after_pattern = re.compile(
+              r'\(Number\(pausedRenewalQuote\.remaining_paid_game_seconds\) \+\s*'
+              r'pausedRenewalQuote\.duration_game_months \* 86_400\) /\s*86_400',
+              re.S,
+          )
+          source, count = after_pattern.subn(
+              'Number(pausedRenewalQuote.proposed_remaining_paid_game_seconds) /\n                              86_400',
+              source,
+              count=1,
+          )
+          if count != 1:
+              raise SystemExit(f'exact post-renewal game duration: expected 1, found {count}')
+
+          if 'duration_real_days' in source:
+              raise SystemExit('Overview.tsx still contains duration_real_days')
+          if 'remaining_paid_seconds' in source:
+              raise SystemExit('Overview.tsx still contains legacy remaining_paid_seconds')
+          if 'getAdvisoryDaysRemaining' in source or '(timestamp - Date.now())' in source:
+              raise SystemExit('Overview.tsx still contains real-clock advisory countdown logic')
+          if '30 real-life days' in source:
+              raise SystemExit('Overview.tsx still contains old 30-real-day entitlement copy')
+          for needle in [
+              'staff_advisory_get_overview_v2',
+              'staff_advisory_quote_v2',
+              'staff_advisory_get_role_renewal_quote_v2',
+              'duration_game_months',
+              'remaining_game_seconds',
+              'proposed_remaining_paid_game_seconds',
+          ]:
+              if needle not in source:
+                  raise SystemExit(f'Missing expected frontend token: {needle}')
+
+          overview_path.write_text(source, encoding='utf-8')
+
+          locales = {
+              'src/i18n/locales/en/overview.json': {
+                  'infoIntro': 'Hiring staff and buying Staff Advisory are separate. Your employees continue their normal jobs without Staff Advisory. The 5-coin option adds proactive analysis and role-specific reports for one in-game month.',
+                  'withTitle': 'With Staff Advisory — 5 coins / 1 in-game month',
+                  'daysRemaining': '{{count}} in-game days remaining',
+                  'paidDaysRemaining': '{{count}} paid in-game days remaining',
+                  'pausedVacant': 'This role is vacant. Your paid Staff Advisory time is preserved and the game clock does not reduce it while the role is vacant.',
+                  'resumedForReplacement': 'Unused paid in-game Staff Advisory time resumed automatically for this replacement.',
+                  'pausedRenewIntro': 'Your existing paid in-game time is preserved. This optional renewal adds {{months}} in-game month for {{coins}} coins. Hiring a replacement does not require another purchase.',
+                  'pausedRenewIntroGeneric': 'Your existing paid in-game time is preserved while this role is vacant. Hiring a replacement resumes it automatically and does not cost coins. Extending the entitlement is an optional paid action.',
+                  'confirmPausedRenewal': 'Add {{months}} in-game month for {{coins}} coins',
+                  'gameMonths': '{{count}} in-game month',
+                  'gameDate': 'Season {{season}} · {{day}} {{month}}',
+              },
+              'src/i18n/locales/sr-Latn/overview.json': {
+                  'infoIntro': 'Zapošljavanje osoblja i kupovina Staff Advisory usluge su odvojene stvari. Vaši zaposleni nastavljaju svoje normalne poslove i bez Staff Advisory usluge. Opcija od 5 novčića dodaje proaktivnu analizu i izveštaje specifične za ulogu tokom jednog meseca u igri.',
+                  'withTitle': 'Sa Staff Advisory uslugom — 5 novčića / 1 mesec u igri',
+                  'daysRemaining': 'Preostalo je {{count}} dana u igri',
+                  'paidDaysRemaining': 'Preostalo je {{count}} plaćenih dana u igri',
+                  'pausedVacant': 'Ova uloga je upražnjena. Plaćeno Staff Advisory vreme je sačuvano i sat igre ga ne umanjuje dok je uloga upražnjena.',
+                  'resumedForReplacement': 'Neiskorišćeno plaćeno Staff Advisory vreme u igri je automatski nastavljeno za novog zaposlenog.',
+                  'pausedRenewIntro': 'Postojeće plaćeno vreme u igri ostaje sačuvano. Ova opciona obnova dodaje {{months}} mesec u igri za {{coins}} novčića. Zapošljavanje zamene ne zahteva novu kupovinu.',
+                  'pausedRenewIntroGeneric': 'Postojeće plaćeno vreme u igri ostaje sačuvano dok je uloga upražnjena. Zapošljavanje zamene ga automatski nastavlja i ne košta novčiće. Produženje prava je opciona plaćena radnja.',
+                  'confirmPausedRenewal': 'Dodaj {{months}} mesec u igri za {{coins}} novčića',
+                  'gameMonths': '{{count}} mesec u igri',
+                  'gameDate': 'Sezona {{season}} · {{day}}. {{month}}',
+              },
+          }
+
+          for path_str, updates in locales.items():
+              path = Path(path_str)
+              data = json.loads(path.read_text(encoding='utf-8'))
+              briefing = data['staffBriefing']
+              briefing.update(updates)
+              briefing['realLifeDays'] = '{{count}} in-game days' if '/en/' in path_str else '{{count}} dana u igri'
+              path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+
+          print('Staff Advisory frontend game-month patch applied successfully.')
+          PY
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Production build
+        run: npm run build
+
+      - name: Verify game-month UI cutover
+        shell: bash
+        run: |
+          git diff --check
+          grep -q 'staff_advisory_get_overview_v2' src/pages/dashboard/Overview.tsx
+          grep -q 'staff_advisory_quote_v2' src/pages/dashboard/Overview.tsx
+          grep -q 'staff_advisory_get_role_renewal_quote_v2' src/pages/dashboard/Overview.tsx
+          grep -q 'duration_game_months' src/pages/dashboard/Overview.tsx
+          grep -q 'remaining_game_seconds' src/pages/dashboard/Overview.tsx
+          grep -q 'proposed_remaining_paid_game_seconds' src/pages/dashboard/Overview.tsx
+          grep -q '"withTitle": "With Staff Advisory — 5 coins / 1 in-game month"' src/i18n/locales/en/overview.json
+          grep -q '"withTitle": "Sa Staff Advisory uslugom — 5 novčića / 1 mesec u igri"' src/i18n/locales/sr-Latn/overview.json
+          ! grep -q '30 real-life days' src/pages/dashboard/Overview.tsx
+          ! grep -q 'duration_real_days' src/pages/dashboard/Overview.tsx
+
+      - name: Commit final frontend changes
+        shell: bash
+        run: |
+          git config user.name 'ChatGPT'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git rm .github/workflows/chatgpt-staff-advisory-game-month.yml
+          git rm .github/workflows/chatgpt-staff-advisory-game-month-v2.yml
+          git add src/pages/dashboard/Overview.tsx src/i18n/locales/en/overview.json src/i18n/locales/sr-Latn/overview.json
+          git commit -m 'Use in-game months for Staff Advisory access'
+          git push origin HEAD:chatgpt/staff-advisory-game-month
