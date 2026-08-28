@@ -19,30 +19,45 @@ jobs:
           ref: main
           fetch-depth: 0
 
-      - name: Normalize profile flag and relax stale script guard
+      - name: Replace flag emoji with real flag images
         shell: bash
         run: |
           python - <<'PY'
           from pathlib import Path
-          import re
 
-          profile_path = Path('src/pages/MyProfile.tsx')
-          profile = profile_path.read_text(encoding='utf-8')
-          profile2, count = re.subn(
-              r'\b(activeLanguageDefinition|language)\.countryCode\b',
-              r'\1.flag',
-              profile,
-          )
-          if count == 0:
-              profile2, count = re.subn(
-                  r'\b(activeLanguageDefinition|language)\.shortLabel\b',
-                  r'\1.flag',
-                  profile,
-              )
-          if count == 0 and '.flag' not in profile:
-              raise SystemExit('Could not locate profile language badge expression')
-          profile_path.write_text(profile2, encoding='utf-8')
-          print(f'Profile flag replacements: {count}')
+          path = Path('src/pages/MyProfile.tsx')
+          text = path.read_text(encoding='utf-8')
+
+          active_old = '''              <span className="text-xl leading-none" aria-hidden="true">
+                {activeLanguageDefinition.flag}
+              </span>'''
+          active_new = '''              <img
+                src={activeLanguageDefinition.code === 'sr-Latn'
+                  ? 'https://flagcdn.com/w40/rs.png'
+                  : 'https://flagcdn.com/w40/gb.png'}
+                alt=""
+                aria-hidden="true"
+                className="h-4 w-6 shrink-0 rounded-[2px] object-cover"
+              />'''
+
+          option_old = '''                      <span className="text-xl leading-none" aria-hidden="true">
+                        {language.flag}
+                      </span>'''
+          option_new = '''                      <img
+                        src={language.code === 'sr-Latn'
+                          ? 'https://flagcdn.com/w40/rs.png'
+                          : 'https://flagcdn.com/w40/gb.png'}
+                        alt=""
+                        aria-hidden="true"
+                        className="h-4 w-6 shrink-0 rounded-[2px] object-cover"
+                      />'''
+
+          if active_old not in text or option_old not in text:
+              raise SystemExit('Current MyProfile flag-rendering anchors were not found')
+
+          text = text.replace(active_old, active_new, 1)
+          text = text.replace(option_old, option_new, 1)
+          path.write_text(text, encoding='utf-8')
 
           script_path = Path('.github/scripts/chatgpt_settings_pages_localization_20260828.py')
           script = script_path.read_text(encoding='utf-8')
@@ -67,7 +82,8 @@ jobs:
           grep -q "useTranslation('proPackages')" src/pages/ProPackages.tsx
           grep -q "useTranslation('preferences')" src/pages/Preferences.tsx
           grep -q "useTranslation('customizeTeam')" src/pages/CustomizeTeam.tsx
-          grep -q "\.flag" src/pages/MyProfile.tsx
+          grep -q "flagcdn.com/w40/rs.png" src/pages/MyProfile.tsx
+          grep -q "flagcdn.com/w40/gb.png" src/pages/MyProfile.tsx
 
       - name: Commit product changes
         shell: bash
