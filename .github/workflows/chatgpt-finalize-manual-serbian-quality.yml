@@ -55,37 +55,39 @@ jobs:
                   raise SystemExit(f'Missing translator anchor: {old}')
               text = text.replace(old, new, 1)
 
-          # Explicit Serbian UI terminology for short labels that should not remain English.
           anchor = '    memory = build_translation_memory()\n'
-          injected = """    memory = build_translation_memory()
-    memory.update({
-        'Inbox': 'Sanduče',
-        'Footer': 'Podnožje',
-        'Referral URL': 'URL preporuke',
-        'Forum': 'Forum',
-    })
-"""
+          memory_lines = [
+              '    memory = build_translation_memory()',
+              '    memory.update({',
+              "        'Inbox': 'Sanduče',",
+              "        'Footer': 'Podnožje',",
+              "        'Referral URL': 'URL preporuke',",
+              "        'Forum': 'Forum',",
+              '    })',
+              '',
+          ]
           if anchor not in text:
               raise SystemExit('Missing translation memory anchor')
-          text = text.replace(anchor, injected, 1)
+          text = text.replace(anchor, '\n'.join(memory_lines), 1)
 
-          # Allow only identifiers/technical values that intentionally stay unchanged.
           old = "    if len(english_fallbacks) > 3:\n        problems.extend(f'English fallback: {item}' for item in english_fallbacks[:20])"
-          new = """    allowed_technical = (
-        'JPG, PNG, WEBP', 'create-coin-checkout Edge Function',
-        'WorldTeam, ProTeam, Continental, Amateur', 'ProTeam West, ProTeam East',
-        'Forum', 'coin_packages', 'get_my_coin_status', 'create-coin-checkout',
-        "user_coin_ledger reason='purchase'", 'club-logos', 'club_branding_lock_status_v1',
-    )
-    english_fallbacks = [
-        item for item in english_fallbacks
-        if not any(item.endswith(marker) for marker in allowed_technical)
-    ]
-    if len(english_fallbacks) > 3:
-        problems.extend(f'English fallback: {item}' for item in english_fallbacks[:20])"""
+          validation_lines = [
+              '    allowed_technical = (',
+              "        'JPG, PNG, WEBP', 'create-coin-checkout Edge Function',",
+              "        'WorldTeam, ProTeam, Continental, Amateur', 'ProTeam West, ProTeam East',",
+              "        'Forum', 'coin_packages', 'get_my_coin_status', 'create-coin-checkout',",
+              '        "user_coin_ledger reason=\'purchase\'", \'club-logos\', \'club_branding_lock_status_v1\',',
+              '    )',
+              '    english_fallbacks = [',
+              '        item for item in english_fallbacks',
+              '        if not any(item.endswith(marker) for marker in allowed_technical)',
+              '    ]',
+              '    if len(english_fallbacks) > 3:',
+              "        problems.extend(f'English fallback: {item}' for item in english_fallbacks[:20])",
+          ]
           if old not in text:
               raise SystemExit('Missing English fallback validation anchor')
-          text = text.replace(old, new, 1)
+          text = text.replace(old, '\n'.join(validation_lines), 1)
 
           path.write_text(text, encoding='utf-8')
           PY
@@ -126,5 +128,9 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add src/i18n/locales/sr-Latn/manual.json
+          if git diff --cached --quiet; then
+            echo 'No manual changes to commit.'
+            exit 0
+          fi
           git commit -m 'Finish Serbian Latin game manual translation'
           git push origin main
