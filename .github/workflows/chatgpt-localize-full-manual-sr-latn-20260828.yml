@@ -14,7 +14,7 @@ permissions:
 jobs:
   localize:
     runs-on: ubuntu-24.04
-    timeout-minutes: 90
+    timeout-minutes: 60
 
     steps:
       - name: Checkout main
@@ -32,10 +32,10 @@ jobs:
         env:
           PIP_DISABLE_PIP_VERSION_CHECK: '1'
         run: |
-          python -m pip install --quiet sentencepiece protobuf 'transformers==4.53.0'
+          python -m pip install --quiet sentencepiece sacremoses protobuf 'transformers==4.53.0'
           python -m pip install --quiet torch --index-url https://download.pytorch.org/whl/cpu
 
-      - name: Prepare Serbian Latin translator
+      - name: Prepare fast Serbian Latin translator
         run: |
           python - <<'PY'
           from pathlib import Path
@@ -43,11 +43,15 @@ jobs:
           path = Path('.github/scripts/localize_full_manual_sr_latn_20260828.py')
           text = path.read_text(encoding='utf-8')
 
-          for old, new in [
-              ("TARGET_LANG = 'srp_Cyrl'", "TARGET_LANG = 'hrv_Latn'"),
-              ('BATCH_SIZE = 12', 'BATCH_SIZE = 24'),
+          replacements = [
+              ("MODEL_NAME = 'facebook/nllb-200-distilled-600M'", "MODEL_NAME = 'Helsinki-NLP/opus-mt-en-sr'"),
+              ('BATCH_SIZE = 12', 'BATCH_SIZE = 32'),
+              ('self.tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME, src_lang=SRC_LANG)', 'self.tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)'),
+              ('self.forced_bos_token_id = self.tokenizer.convert_tokens_to_ids(TARGET_LANG)', 'self.forced_bos_token_id = None'),
+              ('                forced_bos_token_id=self.forced_bos_token_id,\n', ''),
               ('num_beams=3', 'num_beams=1'),
-          ]:
+          ]
+          for old, new in replacements:
               if old not in text:
                   raise SystemExit(f'Missing translator anchor: {old}')
               text = text.replace(old, new, 1)
