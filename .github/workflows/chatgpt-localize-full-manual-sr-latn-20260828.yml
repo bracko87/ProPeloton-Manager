@@ -1,4 +1,4 @@
-name: Localize full manual Serbian Latin 2026-08-28
+name: Finish Serbian Latin manual localization 2026-08-28
 
 on:
   push:
@@ -14,7 +14,7 @@ permissions:
 jobs:
   localize:
     runs-on: ubuntu-24.04
-    timeout-minutes: 45
+    timeout-minutes: 90
 
     steps:
       - name: Checkout main
@@ -32,34 +32,38 @@ jobs:
         env:
           PIP_DISABLE_PIP_VERSION_CHECK: '1'
         run: |
-          python -m pip install --quiet json5 sentencepiece sacremoses 'transformers==4.53.0'
+          python -m pip install --quiet sentencepiece protobuf 'transformers==4.53.0'
           python -m pip install --quiet torch --index-url https://download.pytorch.org/whl/cpu
 
-      - name: Generate manual English and Serbian resources
+      - name: Retranslate all 92 manual sections
         env:
           HF_HUB_DISABLE_XET: '1'
           TOKENIZERS_PARALLELISM: 'false'
+        run: python .github/scripts/localize_full_manual_sr_latn_20260828.py
+
+      - name: Verify manual structure and quality
         run: |
           python - <<'PY'
+          import json
+          import re
           from pathlib import Path
-          path = Path('.github/scripts/localize_full_manual_sr_latn_20260828.py')
-          text = path.read_text(encoding='utf-8')
 
-          extractor_old = "    array_start = source.index('[', start)"
-          extractor_new = "    array_start = source.index('= [', start) + 2"
-          if extractor_old not in text:
-              raise SystemExit('manual array extractor anchor not found')
-          text = text.replace(extractor_old, extractor_new, 1)
+          en = json.loads(Path('src/i18n/locales/en/manual.json').read_text(encoding='utf-8'))
+          sr = json.loads(Path('src/i18n/locales/sr-Latn/manual.json').read_text(encoding='utf-8'))
 
-          loop_old = "    for old, new in replacements:\n        source = replace_once(source, old, new, f'UI replacement: {old[:60]}')"
-          loop_new = "    for old, new in replacements:\n        count = source.count(old)\n        if count < 1:\n            raise SystemExit(f'UI replacement missing: {old[:60]}')\n        source = source.replace(old, new)"
-          if loop_old not in text:
-              raise SystemExit('manual UI replacement loop anchor not found')
-          text = text.replace(loop_old, loop_new, 1)
+          assert len(en['sections']) == 92
+          assert len(sr['sections']) == 92
+          assert set(en['sections']) == set(sr['sections'])
+          assert sr['ui']['title'] == 'ProPeloton Manager priručnik'
 
-          path.write_text(text, encoding='utf-8')
+          text = json.dumps(sr, ensure_ascii=False)
+          forbidden = ['ZXQ', 'ZIK', 'QXml', '�', 'Ã', 'Â', 'jahač', 'rasni svet']
+          for marker in forbidden:
+              assert marker.lower() not in text.lower(), marker
+          assert not re.search(r'[\u0400-\u04ff]', text), 'Cyrillic remained in sr-Latn manual'
+
+          print('Verified 92 Serbian Latin manual sections with no known corruption markers.')
           PY
-          python .github/scripts/localize_full_manual_sr_latn_20260828.py
 
       - name: Install app dependencies
         run: npm ci
@@ -67,32 +71,14 @@ jobs:
       - name: Production build
         run: npm run build
 
-      - name: Verify complete manual localization
-        run: |
-          test -f src/i18n/locales/en/manual.json
-          test -f src/i18n/locales/sr-Latn/manual.json
-          grep -q "useTranslation('manual')" src/pages/dashboard/Manual.tsx
-          grep -q "manual: srManual" src/i18n/index.ts
-          python - <<'PY'
-          import json
-          from pathlib import Path
-          en = json.loads(Path('src/i18n/locales/en/manual.json').read_text())
-          sr = json.loads(Path('src/i18n/locales/sr-Latn/manual.json').read_text())
-          assert len(en['sections']) == 92, len(en['sections'])
-          assert len(sr['sections']) == 92, len(sr['sections'])
-          assert set(en['sections']) == set(sr['sections'])
-          assert sr['ui']['title'] == 'ProPeloton Manager priručnik'
-          print('Verified 92 localized manual sections.')
-          PY
-
-      - name: Commit localized manual
+      - name: Commit finished Serbian manual
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add src/pages/dashboard/Manual.tsx src/i18n/index.ts src/i18n/locales/en/manual.json src/i18n/locales/sr-Latn/manual.json
+          git add src/i18n/locales/sr-Latn/manual.json
           if git diff --cached --quiet; then
-            echo 'No product changes to commit.'
+            echo 'No manual changes to commit.'
             exit 0
           fi
-          git commit -m 'Localize full game manual in Serbian Latin'
+          git commit -m 'Finish Serbian Latin game manual translation'
           git push origin main
