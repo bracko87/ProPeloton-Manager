@@ -1,0 +1,49 @@
+name: Localize settings pages 2026-08-28
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/chatgpt-settings-pages-localization-20260828.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  localize:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Apply direct i18n conversion
+        run: python .github/scripts/chatgpt_settings_pages_localization_20260828.py
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Production build
+        run: npm run build
+
+      - name: Commit product changes
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add \
+            src/pages/MyProfile.tsx \
+            src/pages/Help.tsx \
+            src/pages/ProPackages.tsx \
+            src/pages/Preferences.tsx \
+            src/pages/CustomizeTeam.tsx
+
+          if git diff --cached --quiet; then
+            echo "No product changes to commit."
+            exit 0
+          fi
+
+          git commit -m "Localize profile settings and support pages"
+          git push origin main
