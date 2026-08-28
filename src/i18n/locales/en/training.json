@@ -40,7 +40,8 @@
     "boost": "Boost: {{value}}",
     "days": "{{count}} days",
     "day": "Day {{day}}",
-    "allDays": "All days"
+    "allDays": "All days",
+    "wage": "Wage"
   },
   "focus": {
     "general": "General",
@@ -238,7 +239,11 @@
     "unknownStaff": "Unknown staff",
     "scope": "Scope: {{value}}",
     "seasonLabel": "Season {{season}}",
-    "daysCount": "{{count}} days"
+    "daysCount": "{{count}} days",
+    "ridersLabel": "Riders",
+    "staffLabel": "Staff",
+    "noStaffWarningAllowed": "No staff selected. This is allowed, but the camp will not receive staff boosts.",
+    "noStaffWarningRunning": "No staff selected. The camp will run without staff boosts."
   },
   "regions": {
     "europe": "Europe",

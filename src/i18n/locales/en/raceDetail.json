@@ -131,7 +131,21 @@
     "temperatureBelow5": "Average temperature below 5°C",
     "average": "Average",
     "minMax": "Min / max",
-    "notGenerated": "Weather is not generated for this stage yet."
+    "notGenerated": "Weather is not generated for this stage yet.",
+    "sunny": "Sunny",
+    "windy": "Windy",
+    "sunnyWindy": "Sunny and windy",
+    "unsafe": "Unsafe weather",
+    "stageAlreadyCanceled": "The stage has already been canceled by the race engine.",
+    "decisionUnavailable": "Weather is not generated yet, so no cancellation decision can be made.",
+    "decisionRule": "Cancellation is decided automatically 24 in-game hours before the stage start, using the generated stage weather. Snow or an average temperature below 5°C cancels the stage.",
+    "raceCanceledNoResult": "The race was canceled due to weather. No race result was generated.",
+    "raceHasCancellationMetadata": "This race has weather cancellation information.",
+    "stageCanceledDetails": "Stage {{stage}} was canceled due to weather ({{reason}}). No results, points, prize money, fatigue or replay were generated for this stage. The stage race continues with the next runnable stage.",
+    "oneDayCanceledDetails": "This one-day race was canceled due to weather ({{reason}}). No results, points, prize money, fatigue or replay were generated.",
+    "noticeStageCanceled": "Stage canceled due to weather",
+    "noticeRaceCanceled": "Race canceled due to weather",
+    "noticeRacePartlyCanceled": "Race partly canceled by weather"
   },
   "participants": {
     "raceInformation": "Race information",
@@ -333,5 +347,8 @@
     "finish": "Finish for now",
     "skip": "Skip tutorial",
     "close": "Close tutorial"
+  },
+  "dates": {
+    "compactSeason": "S{{season}}"
   }
 }

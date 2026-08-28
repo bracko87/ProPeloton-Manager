@@ -38,7 +38,7 @@
     "unlockPremium": "Otključaj uz Premium",
     "unlocking": "Otključavanje…",
     "garageFull": "Garaža je puna",
-    "acquire": "Nabavi",
+    "acquire": "Naruči",
     "potentialTier": "Najviši mogući nivo",
     "bestSupport": "Najbolja podrška",
     "garageSize": "Kapacitet garaže",
@@ -57,8 +57,11 @@
     "deliveryStatus": "Isporuka",
     "details": "Detalji",
     "allClear": "Sve je u redu",
-    "currentCoinBalance": "Trenutno stanje coins:",
-    "noValue": "N/A"
+    "currentCoinBalance": "Trenutno stanje novčića:",
+    "noValue": "N/A",
+    "none": "Nema",
+    "gameDay": "{{count}} dan igre",
+    "gameDays": "{{count}} dana igre"
   },
   "facilities": {
     "activeJobs": "Aktivni projekti",
@@ -153,11 +156,11 @@
     "equipmentVanDescription": "Kombiji za opremu podržavaju transport bicikala, rezervnih delova, opreme za trke i ukupnu logističku spremnost. Upravljajte garažom, isporukama, popravkama i prodajom.",
     "mobileWorkshopDescription": "Mobilne radionice omogućavaju tehničke popravke na licu mesta, bržu reakciju na probleme, podršku mehaničarima i servisiranje opreme.",
     "medicalVanDescription": "Medicinski kombiji omogućavaju medicinsku podršku tokom trka, pristup tretmanima, kontrolu povreda i zdravstvenu zaštitu vozača.",
-    "acquireTeamCar": "Nabavi timski automobil",
-    "acquireTeamBus": "Nabavi timski autobus",
-    "acquireEquipmentVan": "Nabavi kombi za opremu",
-    "acquireMobileWorkshop": "Nabavi mobilnu radionicu",
-    "acquireMedicalVan": "Nabavi medicinski kombi",
+    "acquireTeamCar": "Naruči timski automobil",
+    "acquireTeamBus": "Naruči timski autobus",
+    "acquireEquipmentVan": "Naruči kombi za opremu",
+    "acquireMobileWorkshop": "Naruči mobilnu radionicu",
+    "acquireMedicalVan": "Naruči medicinski kombi",
     "teamCarAcquireDescription": "Izaberite nivo timskog automobila. Isporuka ulazi u red garaže i završava se nakon podešenog vremena igre.",
     "teamBusAcquireDescription": "Izaberite nivo timskog autobusa. Isporuka ulazi u red garaže i završava se nakon podešenog vremena igre.",
     "equipmentVanAcquireDescription": "Izaberite nivo kombija za opremu. Isporuka ulazi u red garaže i završava se nakon podešenog vremena igre.",
@@ -165,7 +168,7 @@
     "medicalVanAcquireDescription": "Izaberite nivo medicinskog kombija. Isporuka ulazi u red garaže i završava se nakon podešenog vremena igre.",
     "garageFullDescription": "Kapacitet garaže je popunjen. Otkažite isporuku koja je na čekanju, prodajte dostupno vozilo ili sačekajte dodatni kapacitet pre pokretanja nove isporuke.",
     "noTiers": "Još nisu konfigurisani nivoi nabavke za ovaj tip vozila.",
-    "startDelivery": "Pokreni isporuku",
+    "startDelivery": "Naruči",
     "garageSupportTitle": "Podrška garaže i stvarna dodela za trku",
     "teamCarAssignment": "Garaža pokazuje šta klub poseduje i šta je trenutno u isporuci. Bonusi na trci treba da dolaze samo od automobila dodeljenih konkretnom događaju. Jača garaža daje više opcija, ali samo dodeljena i dostupna vozila treba da utiču na rezultat.",
     "teamBusAssignment": "Garaža pokazuje šta klub poseduje i šta je u isporuci. Bonusi treba da dolaze samo od autobusa dodeljenih konkretnom događaju ili turi.",
@@ -187,10 +190,10 @@
     "emptyEquipmentVan": "Slobodno mesto za novi kombi za opremu.",
     "emptyMobileWorkshop": "Slobodno mesto za novu mobilnu radionicu.",
     "emptyMedicalVan": "Slobodno mesto za novi medicinski kombi.",
-    "premiumSlotDescription": "Automatski dostupno dok je Premium aktivan ili trajno uz coins.",
+    "premiumSlotDescription": "Automatski dostupno dok je Premium aktivan ili trajno uz novčiće.",
     "additionalTeamCarCapacity": "Dodatni trajni kapacitet garaže za timske automobile.",
     "additionalCapacity": "Dodatni trajni kapacitet garaže.",
-    "unlockCoins": "Trajno otključaj · {{coins}} coins",
+    "unlockCoins": "Trajno otključaj · {{coins}} novčića",
     "condition100": "Ovo vozilo je već na 100% stanja.",
     "alreadyRepair": "Ovo vozilo je već na popravci.",
     "assignedLocked": "Ovo vozilo je trenutno dodeljeno i zaključano.",
@@ -241,7 +244,8 @@
     "serviceUnavailable": "Servis za isporuku vozila nije dostupan",
     "serviceUnavailableMessage": "Nije moguće kontaktirati servis za isporuku. Pokušajte ponovo.",
     "acquisitionBlocked": "Nabavka je blokirana",
-    "cannotAcquire": "Ovo vozilo trenutno nije moguće nabaviti."
+    "cannotAcquire": "Ovo vozilo trenutno nije moguće nabaviti.",
+    "renameFailed": "Preimenovanje nije uspelo: {{asset}}."
   },
   "assetModal": {
     "closeAria": "Zatvori prozor akcije vozila",
@@ -291,5 +295,211 @@
     "finish": "Završi za sada",
     "skip": "Preskoči tutorijal",
     "close": "Zatvori tutorijal"
+  },
+  "assetStatus": {
+    "available": "Dostupno",
+    "assigned": "Dodeljeno",
+    "inRepair": "Na popravci",
+    "sold": "Prodato"
+  },
+  "assetCondition": {
+    "excellent": "Odlično",
+    "good": "Dobro",
+    "fair": "Solidno",
+    "poor": "Loše",
+    "tracked": "Stanje se prati"
+  },
+  "supportTiers": {
+    "none": "Nema",
+    "basic": "Osnovno",
+    "solid": "Solidno",
+    "strong": "Snažno",
+    "elite": "Elitno"
+  },
+  "assetTiers": {
+    "team_car": {
+      "level1": {
+        "name": "Osnovni klupski automobil",
+        "effect": "Pruža osnovnu podršku na trci, mehaničku reakciju i podršku ishrani."
+      },
+      "level2": {
+        "name": "Pouzdani automobil za podršku",
+        "effect": "Poboljšava mehaničku reakciju, logistiku na dan trke i osnovnu zaštitu od umora."
+      },
+      "level3": {
+        "name": "Profesionalni timski automobil",
+        "effect": "Poboljšava podršku na trci, taktičku komunikaciju, ishranu i reakciju na incidente."
+      },
+      "level4": {
+        "name": "Elitni automobil za podršku",
+        "effect": "Pruža visoku mehaničku podršku, taktičku podršku, reakciju na padove/incidente i zaštitu od umora na trci."
+      },
+      "level5": {
+        "name": "Timski automobil svetske klase",
+        "effect": "Pruža maksimalan kvalitet podrške na trci, mehaničku reakciju, taktičku komunikaciju i podršku pri incidentima."
+      }
+    },
+    "team_bus": {
+      "level1": {
+        "name": "Osnovni timski autobus",
+        "effect": "Malo smanjuje umor na turama i ima manji efekat na jednodnevnim trkama."
+      },
+      "level2": {
+        "name": "Autobus za oporavak",
+        "effect": "Dobro smanjuje umor tokom etapnih trka i dugih putovanja."
+      },
+      "level3": {
+        "name": "Elitni autobus za ture",
+        "effect": "Najviše smanjuje umor na dugim turama, uz ograničen efekat na jednodnevnim trkama."
+      }
+    },
+    "equipment_van": {
+      "level1": {
+        "name": "Osnovni kombi za opremu",
+        "effect": "Malo poboljšava spremnost opreme pre etape i smanjuje gubitak vremena pri mehaničkim incidentima."
+      },
+      "level2": {
+        "name": "Servisni kombi za opremu",
+        "effect": "Srednje poboljšava reakciju sa rezervnim biciklom, spremnost pre etape i smanjuje trošenje opreme."
+      },
+      "level3": {
+        "name": "Profesionalni kombi za opremu",
+        "effect": "Snažno poboljšava reakciju sa rezervnim biciklom, podršku pri zameni točka i spremnost opreme na etapnim trkama."
+      }
+    },
+    "mobile_workshop": {
+      "level1": {
+        "name": "Mobilna radionica",
+        "effect": "Ubrzava popravke, smanjuje njihove troškove i podržava reakciju mehaničara tokom trka i tura."
+      },
+      "level2": {
+        "name": "Profesionalna mobilna radionica",
+        "effect": "Snažno ubrzava popravke, dodatno smanjuje troškove i poboljšava oporavak stanja opreme posle trke."
+      }
+    },
+    "medical_van": {
+      "level1": {
+        "name": "Osnovni medicinski kombi",
+        "effect": "Daje mali bonus medicinskoj reakciji, blago smanjuje rizik manjih povreda i pruža osnovnu podršku oporavku posle etape."
+      },
+      "level2": {
+        "name": "Medicinski kombi za oporavak",
+        "effect": "Daje srednji bonus medicinskoj reakciji, jače smanjuje rizik manjih povreda, podržava hidrataciju i poboljšava oporavak posle etapa."
+      },
+      "level3": {
+        "name": "Profesionalna medicinska jedinica",
+        "effect": "Daje snažan bonus medicinskoj reakciji, najbolje smanjenje rizika manjih povreda, podršku pri vrućini/hidrataciji i najjači oporavak posle etape."
+      }
+    }
+  },
+  "facilityUpgrades": {
+    "club_house": {
+      "level2": {
+        "unlock": "Otključava mesto za Sportskog direktora.",
+        "effect": "Poboljšava osnovu administracije kluba i priprema buduće sisteme sponzora i ugovora."
+      },
+      "level3": {
+        "unlock": "Poboljšava administraciju kluba, rad sa sponzorima i infrastrukturu ugovora.",
+        "effect": "Budući bonusi za sponzore, ugovore i organizaciju mogu rasti sa ovim nivoom."
+      },
+      "level4": {
+        "unlock": "Podržava veću profesionalnu organizaciju kluba.",
+        "effect": "Budući komercijalni sistemi i sistemi upravljanja osobljem mogu rasti sa ovim nivoom."
+      },
+      "level5": {
+        "unlock": "Elitno upravljanje klubom.",
+        "effect": "Maksimalna osnova sedišta kluba za buduće elitne bonuse sponzora, ugovora i organizacije."
+      }
+    },
+    "mechanics_workshop": {
+      "level1": {
+        "unlock": "Uklanja strogo ograničenje za mehaničare i otključava drugo mesto za Mehaničara.",
+        "effect": "Poboljšava osnovu tehničke podrške za buduće sisteme opreme i servisiranje na trkama."
+      },
+      "level2": {
+        "unlock": "Otključava treće mesto za Mehaničara i 10% brže popravke opreme.",
+        "effect": "Popravke opreme postaju brže kada sistem opreme primenjuje ovaj efekat."
+      },
+      "level3": {
+        "unlock": "Otključava četvrto mesto za Mehaničara i 20% brže i 20% jeftinije popravke opreme.",
+        "effect": "Popravke opreme postaju brže i jeftinije."
+      },
+      "level4": {
+        "unlock": "Otključava peto mesto za Mehaničara i 30% brže i 30% jeftinije popravke opreme.",
+        "effect": "Maksimalna podrška mehaničarske radionice za održavanje opreme."
+      }
+    },
+    "medical_center": {
+      "level1": {
+        "unlock": "Uklanja strogo medicinsko ograničenje Nivoa 0 i otključava drugo mesto za Fizioterapeuta.",
+        "effect": "Poboljšava efikasnost medicinskog osoblja u prevenciji povreda, trajanju oporavka i smanjenju minimalnog umora."
+      },
+      "level2": {
+        "unlock": "Otključava mesto za Nutricionistu i bonuse oporavka od povrede do 3%.",
+        "effect": "Omogućava doprinos Nutricioniste i poboljšava povratak u punu spremnost."
+      },
+      "level3": {
+        "unlock": "Otključava treće mesto za Fizioterapeuta i drugo mesto za Doktora tima.",
+        "effect": "Povećava medicinski kapacitet i omogućava snažnije kombinovane efekte zdravlja i oporavka."
+      },
+      "level4": {
+        "unlock": "Otključava četvrto mesto za Fizioterapeuta i bonuse oporavka od povrede do 5%.",
+        "effect": "Poboljšava brzinu oporavka i medicinsku dubinu za timove visokog nivoa."
+      },
+      "level5": {
+        "unlock": "Otključava peto mesto za Fizioterapeuta i bonuse oporavka od povrede do 8%.",
+        "effect": "Elitni medicinski centar sa maksimalnom podrškom oporavku i prevenciji."
+      }
+    },
+    "scouting_office": {
+      "level1": {
+        "unlock": "Osnovni skauting sistem i drugo mesto za Skauta / Analitičara.",
+        "effect": "Zadržava Osnovni maksimum kvaliteta izveštaja, ali povećava kapacitet skautinga."
+      },
+      "level2": {
+        "unlock": "Otključava treće mesto za Skauta / Analitičara i Solidni kvalitet izveštaja.",
+        "effect": "Podiže maksimalni kvalitet skautskog izveštaja na Solidno."
+      },
+      "level3": {
+        "unlock": "Otključava četvrto mesto za Skauta / Analitičara i Snažni kvalitet izveštaja.",
+        "effect": "Podiže maksimalni kvalitet skautskog izveštaja na Snažno."
+      },
+      "level4": {
+        "unlock": "Otključava peto mesto za Skauta / Analitičara i Elitni kvalitet izveštaja.",
+        "effect": "Podiže maksimalni kvalitet skautskog izveštaja na Elitno."
+      }
+    },
+    "training_center": {
+      "level1": {
+        "unlock": "Uklanja strogo ograničenje trenerskog efekta na Nivou 0.",
+        "effect": "Omogućava trenerskom osoblju da efikasnije doprinosi treningu, razvoju i kontroli rizika od preopterećenja."
+      },
+      "level2": {
+        "unlock": "Poboljšava doprinos trenera.",
+        "effect": "Podiže efektivni maksimum trenerskog efekta za trening i podršku razvoju."
+      },
+      "level3": {
+        "unlock": "Otključava drugo mesto za Trenera.",
+        "effect": "Omogućava dublji trenerski kadar i snažniji kombinovani uticaj na trening i razvoj."
+      },
+      "level4": {
+        "unlock": "Trening infrastruktura visokog nivoa.",
+        "effect": "Podiže maksimum trenerskog efekta za napredne klubove."
+      },
+      "level5": {
+        "unlock": "Elitni centar za trening i razvoj.",
+        "effect": "Maksimalni trenerski efekat za trening, razvoj vozača i smanjenje rizika od preopterećenja."
+      }
+    },
+    "youth_academy": {
+      "level1": {
+        "unlock": "Otključava mesto za U23 Glavnog trenera.",
+        "effect": "Omogućava posebnu trenersku podršku U23/razvojnom timu."
+      },
+      "level2": {
+        "unlock": "Bolja podrška razvoju mladih.",
+        "effect": "U23 vozači dobijaju 10% bonusa na trening i razvoj kada U23 sistem primenjuje ovaj efekat."
+      }
+    }
   }
 }

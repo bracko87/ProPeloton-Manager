@@ -131,7 +131,21 @@
     "temperatureBelow5": "Prosečna temperatura ispod 5°C",
     "average": "Prosek",
     "minMax": "Min / maks",
-    "notGenerated": "Vremenska prognoza za ovu etapu još nije generisana."
+    "notGenerated": "Vremenska prognoza za ovu etapu još nije generisana.",
+    "sunny": "Sunčano",
+    "windy": "Vetrovito",
+    "sunnyWindy": "Sunčano i vetrovito",
+    "unsafe": "Nebezbedni vremenski uslovi",
+    "stageAlreadyCanceled": "Etapa je već otkazana od strane Race Engine-a.",
+    "decisionUnavailable": "Vreme još nije generisano, pa odluka o otkazivanju još ne može biti doneta.",
+    "decisionRule": "O otkazivanju se automatski odlučuje 24 sata igre pre starta etape na osnovu generisanog vremena. Sneg ili prosečna temperatura ispod 5°C otkazuju etapu.",
+    "raceCanceledNoResult": "Trka je otkazana zbog vremenskih uslova. Rezultat trke nije generisan.",
+    "raceHasCancellationMetadata": "Za ovu trku postoje informacije o otkazivanju zbog vremenskih uslova.",
+    "stageCanceledDetails": "Etapa {{stage}} je otkazana zbog vremenskih uslova ({{reason}}). Za ovu etapu nisu generisani rezultati, bodovi, nagrade, umor ni repriza. Etapna trka se nastavlja sledećom etapom koja može biti održana.",
+    "oneDayCanceledDetails": "Ova jednodnevna trka je otkazana zbog vremenskih uslova ({{reason}}). Rezultati, bodovi, nagrade, umor i repriza nisu generisani.",
+    "noticeStageCanceled": "Etapa je otkazana zbog vremenskih uslova",
+    "noticeRaceCanceled": "Trka je otkazana zbog vremenskih uslova",
+    "noticeRacePartlyCanceled": "Trka je delimično otkazana zbog vremenskih uslova"
   },
   "participants": {
     "raceInformation": "Informacije o trci",
@@ -335,5 +349,8 @@
     "finish": "Završi za sada",
     "skip": "Preskoči tutorijal",
     "close": "Zatvori tutorijal"
+  },
+  "dates": {
+    "compactSeason": "Sezona {{season}}"
   }
 }

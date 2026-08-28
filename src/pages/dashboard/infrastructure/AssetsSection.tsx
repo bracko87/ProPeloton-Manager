@@ -20,6 +20,7 @@
 
 import React, { createContext, useContext, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import type { TFunction } from 'i18next'
 import type {
   AssetSubTabKey,
   InfrastructureAssetActionTarget,
@@ -165,28 +166,31 @@ function getAssetCurrentStatusLabel(row: {
   assignment_end_game_date?: string | null
   repair_complete_game_date?: string | null
   metadata?: Record<string, unknown> | null
-}): string {
+}, t: TFunction): string {
   if (row.status === 'in_repair') {
     const repairCompleteGameDate = getRepairCompleteGameDate(row)
 
     return repairCompleteGameDate
-      ? `In repair until ${formatGameDate(repairCompleteGameDate)}`
-      : 'In repair'
+      ? t('assets.inRepairUntil', { date: formatGameDate(repairCompleteGameDate) })
+      : t('common.inRepair')
   }
 
   if (row.status === 'assigned' || row.assignment_locked) {
-    const assignmentLabel = row.current_assignment_label ?? 'Assigned to event'
+    const assignmentLabel = row.current_assignment_label ?? t('assets.assignedEvent')
 
     return row.assignment_end_game_date
-      ? `In use: ${assignmentLabel} until ${formatGameDate(row.assignment_end_game_date)}`
-      : `In use: ${assignmentLabel}`
+      ? t('assets.inUseUntil', {
+          assignment: assignmentLabel,
+          date: formatGameDate(row.assignment_end_game_date),
+        })
+      : t('assets.inUse', { assignment: assignmentLabel })
   }
 
   if (row.status === 'available') {
-    return 'Available'
+    return t('common.available')
   }
 
-  return row.status.replace('_', ' ')
+  return row.status.replaceAll('_', ' ')
 }
 
 function canSendAssetToRepair(row: {
@@ -253,8 +257,16 @@ function normalizeAssetStatus(status: string | null | undefined): string {
     .replace(/\s+/g, '_')
 }
 
-function formatStatusLabel(status: string | null | undefined): string {
+function formatStatusLabel(
+  status: string | null | undefined,
+  t: TFunction,
+): string {
   const normalized = normalizeAssetStatus(status)
+
+  if (isAssignedOrLockedStatus(normalized)) return t('assetStatus.assigned')
+  if (isInRepairStatus(normalized)) return t('assetStatus.inRepair')
+  if (isSoldStatus(normalized)) return t('assetStatus.sold')
+  if (normalized === 'available') return t('assetStatus.available')
 
   return normalized
     .split('_')
@@ -284,12 +296,61 @@ function isSoldStatus(status: string | null | undefined): boolean {
 function getOwnedAssetLabel<T extends { asset_level: number; asset_name?: string | null }>(
   row: T,
   fallbackPrefix: string,
+  t: TFunction,
+  assetKey: AssetGarageKey,
 ): string {
   const assetName = row.asset_name?.trim()
-
-  return assetName && assetName.length > 0
+  const fallback = assetName && assetName.length > 0
     ? assetName
     : `${fallbackPrefix} Lv ${row.asset_level}`
+
+  return t(`assetTiers.${assetKey}.level${row.asset_level}.name`, {
+    defaultValue: fallback,
+  })
+}
+
+function getAssetTierEffect(
+  assetKey: AssetGarageKey,
+  level: number,
+  fallback: string | null | undefined,
+  t: TFunction,
+): string {
+  return t(`assetTiers.${assetKey}.level${level}.effect`, {
+    defaultValue: fallback ?? '',
+  })
+}
+
+function translateAssetConditionStatus(
+  value: string | null | undefined,
+  t: TFunction,
+): string {
+  const normalized = String(value ?? '').trim().toLowerCase().replace(/\s+/g, '_')
+  const key = normalized === 'excellent'
+    ? 'assetCondition.excellent'
+    : normalized === 'good'
+      ? 'assetCondition.good'
+      : normalized === 'fair'
+        ? 'assetCondition.fair'
+        : normalized === 'poor'
+          ? 'assetCondition.poor'
+          : 'assetCondition.tracked'
+
+  return t(key, { defaultValue: value || t('assetCondition.tracked') })
+}
+
+function translateSupportTier(
+  value: string | null | undefined,
+  t: TFunction,
+): string {
+  const normalized = String(value ?? '').trim().toLowerCase()
+  if (!normalized || normalized === 'none' || normalized === 'n/a') {
+    return normalized === 'n/a' ? 'N/A' : t('supportTiers.none')
+  }
+
+  const known = new Set(['basic', 'solid', 'strong', 'elite'])
+  return known.has(normalized)
+    ? t(`supportTiers.${normalized}`, { defaultValue: value ?? '' })
+    : value ?? 'N/A'
 }
 
 function getStatusBadgeClass(status: string | null | undefined): string {
@@ -557,6 +618,7 @@ function BonusCards({ cards }: { cards: BonusCard[] }): JSX.Element {
 }
 
 function AssetAcquireModal({
+  assetKey,
   title,
   description,
   assetLabel,
@@ -569,6 +631,7 @@ function AssetAcquireModal({
   onAcquire,
   onClose,
 }: {
+  assetKey: AssetGarageKey
   title: string
   description: string
   assetLabel: string
@@ -595,8 +658,8 @@ function AssetAcquireModal({
         <div className="px-5 py-4 border-b border-gray-100 flex items-start justify-between gap-4">
           <div>
             <div className="text-xs uppercase tracking-wide text-gray-400">{assetLabel}</div>
-            <h3 className="mt-1 text-lg font-semibold text-gray-900">{t(assetCopy.title)}</h3>
-            <p className="mt-1 text-sm text-gray-500">{t(assetCopy.description)}</p>
+            <h3 className="mt-1 text-lg font-semibold text-gray-900">{title}</h3>
+            <p className="mt-1 text-sm text-gray-500">{description}</p>
           </div>
 
           <button
@@ -604,7 +667,7 @@ function AssetAcquireModal({
             onClick={onClose}
             className="rounded-md border border-gray-200 px-3 py-1.5 text-xs font-semibold text-gray-600 hover:bg-gray-50"
           >
-            Close
+            {t('common.close')}
           </button>
         </div>
 
@@ -639,7 +702,7 @@ function AssetAcquireModal({
                     <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                       <div className="min-w-0">
                         <div className="text-sm font-semibold text-gray-900">
-                          {config.asset_name}
+                          {t(`assetTiers.${assetKey}.level${config.asset_level}.name`, { defaultValue: config.asset_name })}
                         </div>
                         <div className="mt-1 text-xs text-gray-500">
                           {t('common.level')} {config.asset_level} · {t('common.support')}{' '}
@@ -648,7 +711,7 @@ function AssetAcquireModal({
 
                         {config.effect_summary && (
                           <div className="mt-2 text-xs leading-5 text-gray-600">
-                            {config.effect_summary}
+                            {getAssetTierEffect(assetKey, config.asset_level, config.effect_summary, t)}
                           </div>
                         )}
                       </div>
@@ -811,7 +874,7 @@ function TeamCarGaragePanel({
       },
       {
         title: t('assets.tacticalComms'),
-        value: summary?.support_tier || 'N/A',
+        value: translateSupportTier(summary?.support_tier, t),
         description:
           t('assets.tacticalCommsDescription'),
       },
@@ -847,7 +910,7 @@ function TeamCarGaragePanel({
                 : 'bg-yellow-400 text-black hover:bg-yellow-300'
             }`}
           >
-            {isFull ? t('common.garageFull') : 'Acquire Team Car'}
+            {isFull ? t('common.garageFull') : t('assets.acquireTeamCar')}
           </button>
         </div>
 
@@ -858,13 +921,13 @@ function TeamCarGaragePanel({
             helper={
               slotAccess
                 ? t('assets.freePremiumMax', { free: slotAccess.free_slots, premium: slotAccess.premium_slots, max: absoluteMaxSlots })
-                : `Owned ${totalCars} · Pending ${pendingQuantity}`
+                : t('assets.ownedPending', { owned: totalCars, pending: pendingQuantity })
             }
           />
           <SummaryMetric label={t('common.available')} value={counts.available} />
           <SummaryMetric label={t('common.assigned')} value={counts.assigned} />
           <SummaryMetric label={t('common.inRepair')} value={counts.inRepair} />
-          <SummaryMetric label={t('common.bestSupport')} value={summary?.support_tier || 'N/A'} />
+          <SummaryMetric label={t('common.bestSupport')} value={translateSupportTier(summary?.support_tier, t)} />
           <SummaryMetric label={t('common.potentialTier')} value={potentialTier} />
         </div>
       </div>
@@ -898,7 +961,7 @@ function TeamCarGaragePanel({
           {garageSlots.map(slot => {
             if (slot.kind === 'owned') {
               const car = slot.row
-              const assetLabel = getOwnedAssetLabel(car, 'Team Car')
+              const assetLabel = getOwnedAssetLabel(car, t('assets.teamCar'), t, 'team_car')
 
               return (
                 <div
@@ -917,7 +980,7 @@ function TeamCarGaragePanel({
                             car.status,
                           )}`}
                         >
-                          {formatStatusLabel(car.status)}
+                          {formatStatusLabel(car.status, t)}
                         </span>
 
                         <span className="inline-flex rounded-md border border-green-300 bg-green-50 px-2 py-0.5 text-xs font-medium text-green-700">
@@ -948,7 +1011,7 @@ function TeamCarGaragePanel({
                                   const nextName = renameDraft.trim()
 
                                   if (!nextName) {
-                                    setRenameError('Enter a Team Car name.')
+                                    setRenameError(t('assets.enterName', { asset: t('assets.teamCar') }))
                                     return
                                   }
 
@@ -962,7 +1025,7 @@ function TeamCarGaragePanel({
                                       setRenameError(
                                         error instanceof Error
                                           ? error.message
-                                          : 'Failed to rename Team Car.',
+                                          : t('assets.renameFailed', { asset: t('assets.teamCar') }),
                                       )
                                     } finally {
                                       setRenameSavingCarId(null)
@@ -981,7 +1044,7 @@ function TeamCarGaragePanel({
                                 const nextName = renameDraft.trim()
 
                                 if (!nextName) {
-                                  setRenameError('Enter a Team Car name.')
+                                  setRenameError(t('assets.enterName', { asset: t('assets.teamCar') }))
                                   return
                                 }
 
@@ -995,7 +1058,7 @@ function TeamCarGaragePanel({
                                     setRenameError(
                                       error instanceof Error
                                         ? error.message
-                                        : 'Failed to rename Team Car.',
+                                        : t('assets.renameFailed', { asset: t('assets.teamCar') }),
                                     )
                                   } finally {
                                     setRenameSavingCarId(null)
@@ -1004,7 +1067,7 @@ function TeamCarGaragePanel({
                               }}
                               className="rounded-md bg-blue-600 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-60"
                             >
-                              {renameSavingCarId === car.car_id ? 'Saving…' : 'Save'}
+                              {renameSavingCarId === car.car_id ? t('common.saving') : t('common.save')}
                             </button>
 
                             <button
@@ -1015,7 +1078,7 @@ function TeamCarGaragePanel({
                               }}
                               className="rounded-md border border-gray-200 bg-white px-2.5 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50"
                             >
-                              Cancel
+                              {t('common.cancel')}
                             </button>
                           </div>
 
@@ -1032,7 +1095,7 @@ function TeamCarGaragePanel({
                             setRenameError(null)
                           }}
                           className="mt-2 inline-flex max-w-full items-center gap-1.5 text-left text-sm font-semibold text-gray-900 hover:text-blue-700"
-                          title="Rename Team Car"
+                          title={t('assets.renameTeamCar')}
                         >
                           <span className="truncate">{car.display_name}</span>
                           <span aria-hidden="true" className="shrink-0 text-xs text-gray-400">
@@ -1049,7 +1112,7 @@ function TeamCarGaragePanel({
                           {formatAssetPercent(car.condition_percent)}
                         </div>
                         <div className="mt-0.5 text-[11px] text-gray-500">
-                          {car.condition_status}
+                          {translateAssetConditionStatus(car.condition_status, t)}
                         </div>
                       </div>
 
@@ -1071,9 +1134,9 @@ function TeamCarGaragePanel({
                         <div className="text-xs text-gray-400">{t('common.currentStatus')}</div>
                         <div
                           className="mt-0.5 max-w-[250px] truncate whitespace-nowrap text-sm font-semibold text-gray-900"
-                          title={getAssetCurrentStatusLabel(car)}
+                          title={getAssetCurrentStatusLabel(car, t)}
                         >
-                          {getAssetCurrentStatusLabel(car)}
+                          {getAssetCurrentStatusLabel(car, t)}
                         </div>
                       </div>
                     </div>
@@ -1095,11 +1158,11 @@ function TeamCarGaragePanel({
                         disabled={!canSendAssetToRepair(car)}
                         title={
                           toNumber(car.condition_percent, 100) >= 100
-                            ? 'This asset is already at 100% condition.'
+                            ? t('assets.condition100')
                             : car.status === 'in_repair'
-                              ? 'This asset is already in repair.'
+                              ? t('assets.alreadyRepair')
                               : car.status === 'assigned' || car.assignment_locked
-                                ? 'This asset is currently assigned and locked.'
+                                ? t('assets.assignedLocked')
                                 : undefined
                         }
                         className={`px-3 py-2 rounded-md text-sm font-medium transition ${
@@ -1108,7 +1171,7 @@ function TeamCarGaragePanel({
                             : 'bg-gray-200 text-gray-500 cursor-not-allowed'
                         }`}
                       >
-                        Repair
+                        {t('common.repair')}
                       </button>
 
                       <button
@@ -1131,7 +1194,7 @@ function TeamCarGaragePanel({
                             : 'bg-gray-200 text-gray-500 cursor-not-allowed'
                         }`}
                       >
-                        Sell
+                        {t('common.sell')}
                       </button>
                     </div>
                   </div>
@@ -1159,7 +1222,7 @@ function TeamCarGaragePanel({
                       </div>
 
                       <div className="mt-1 text-sm font-semibold text-amber-950">
-                        Team Car Lv {slot.job.asset_level ?? '?'}
+                        {t('assets.teamCar')} · {t('common.level')} {slot.job.asset_level ?? '?'}
                       </div>
                       <div className="mt-1 text-xs text-amber-800">
                         {t('assets.deliveryItem', { current: slot.copyIndex, total: slot.quantity })}
@@ -1205,7 +1268,7 @@ function TeamCarGaragePanel({
                             : 'bg-red-100 text-red-700 hover:bg-red-200'
                         }`}
                       >
-                        {isCancelling ? 'Cancelling...' : 'Cancel delivery'}
+                        {isCancelling ? t('facilities.cancelling') : t('assets.cancelDelivery')}
                       </button>
                     </div>
                   </div>
@@ -1249,12 +1312,12 @@ function TeamCarGaragePanel({
 
                       <div className="mt-1 text-xs leading-5 text-slate-500">
                         {isPremiumCapacity
-                          ? 'Available automatically while Premium is active, or permanently with coins.'
-                          : 'Additional permanent Team Car garage capacity.'}
+                          ? t('assets.premiumSlotDescription')
+                          : t('assets.additionalTeamCarCapacity')}
                       </div>
 
                       <div className="mt-1 text-xs text-slate-400">
-                        Current coin balance:{' '}
+                        {t('common.currentCoinBalance')}{' '}
                         {Number(slotAccess?.coin_balance ?? 0).toLocaleString('en-US')}
                       </div>
                     </div>
@@ -1270,7 +1333,7 @@ function TeamCarGaragePanel({
                           }}
                           className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
                         >
-                          Unlock with Premium
+                          {t('common.unlockPremium')}
                         </button>
                       ) : null}
 
@@ -1281,8 +1344,8 @@ function TeamCarGaragePanel({
                         className="rounded-lg border border-yellow-300 bg-yellow-50 px-3 py-2 text-xs font-semibold text-yellow-900 hover:bg-yellow-100 disabled:cursor-not-allowed disabled:opacity-50"
                       >
                         {isUnlocking
-                          ? 'Unlocking…'
-                          : `Unlock permanently · ${Number(slotAccess?.coin_cost ?? 20)} coins`}
+                          ? t('common.unlocking')
+                          : t('assets.unlockCoins', { coins: Number(slotAccess?.coin_cost ?? 20) })}
                       </button>
                     </div>
                   </div>
@@ -1298,10 +1361,10 @@ function TeamCarGaragePanel({
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div>
                     <div className="text-sm font-semibold text-gray-700">
-                      Slot #{slot.slotNumber}
+                      {t('assets.slot', { slot: slot.slotNumber })}
                     </div>
                     <div className="mt-1 text-xs text-gray-500">
-                      Empty Team Car slot available for a new delivery.
+                      {t('assets.emptyTeamCar')}
                     </div>
                   </div>
 
@@ -1315,7 +1378,7 @@ function TeamCarGaragePanel({
                         : 'bg-yellow-400 text-black hover:bg-yellow-300'
                     }`}
                   >
-                    {isFull ? t('common.garageFull') : 'Acquire'}
+                    {isFull ? t('common.garageFull') : t('common.acquire')}
                   </button>
                 </div>
               </div>
@@ -1326,6 +1389,7 @@ function TeamCarGaragePanel({
 
       {isAcquireModalOpen && (
         <AssetAcquireModal
+          assetKey="team_car"
           title={t('assets.acquireTeamCar')}
           description={t('assets.teamCarAcquireDescription')}
           assetLabel={t('assets.teamCars')}
@@ -1467,7 +1531,7 @@ function GenericAssetGaragePanel<T extends GenericAssetRosterRow>({
   const counts = useMemo(() => getRosterCounts(rosterRows), [rosterRows])
   const potentialTier = useMemo(() => getPotentialTierLabel(configRows), [configRows])
   const bestOwnedSupport = useMemo(() => getBestOwnedSupport(rosterRows), [rosterRows])
-  const supportTier = getSummaryText(summary, ['support_tier'], 'N/A')
+  const supportTier = translateSupportTier(getSummaryText(summary, ['support_tier'], 'N/A'), t)
   const isFull = totalAssets + pendingQuantity >= effectiveSlots
 
   const garageSlots = useMemo(
@@ -1527,7 +1591,7 @@ function GenericAssetGaragePanel<T extends GenericAssetRosterRow>({
                 : 'bg-yellow-400 text-black hover:bg-yellow-300'
             }`}
           >
-            {isFull ? t('common.garageFull') : acquireButtonLabel}
+            {isFull ? t('common.garageFull') : t(assetCopy.acquire)}
           </button>
         </div>
 
@@ -1583,7 +1647,7 @@ function GenericAssetGaragePanel<T extends GenericAssetRosterRow>({
                 idKeys,
                 `${assetKey}_${slot.slotNumber}_${row.asset_level}`,
               )
-              const ownedAssetLabel = getOwnedAssetLabel(row, assetLabel)
+              const ownedAssetLabel = getOwnedAssetLabel(row, t(assetCopy.singular), t, assetKey)
 
               return (
                 <div
@@ -1601,7 +1665,7 @@ function GenericAssetGaragePanel<T extends GenericAssetRosterRow>({
                             row.status,
                           )}`}
                         >
-                          {formatStatusLabel(row.status)}
+                          {formatStatusLabel(row.status, t)}
                         </span>
                         <span className="inline-flex rounded-md border border-green-300 bg-green-50 px-2 py-0.5 text-xs font-medium text-green-700">
                           {ownedAssetLabel}
@@ -1698,7 +1762,7 @@ function GenericAssetGaragePanel<T extends GenericAssetRosterRow>({
                               }}
                               className="rounded-md border border-gray-200 bg-white px-2.5 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50"
                             >
-                              Cancel
+                              {t('common.cancel')}
                             </button>
                           </div>
 
@@ -1732,7 +1796,7 @@ function GenericAssetGaragePanel<T extends GenericAssetRosterRow>({
                           {formatAssetPercent(row.condition_percent)}
                         </div>
                         <div className="mt-0.5 text-[11px] text-gray-500">
-                          {row.condition_status || 'Condition tracked'}
+                          {translateAssetConditionStatus(row.condition_status, t)}
                         </div>
                       </div>
 
@@ -1753,7 +1817,7 @@ function GenericAssetGaragePanel<T extends GenericAssetRosterRow>({
                       <div>
                         <div className="text-xs text-gray-400">{t('common.currentStatus')}</div>
                         <div className="text-sm font-semibold text-gray-900">
-                          {getAssetCurrentStatusLabel(row)}
+                          {getAssetCurrentStatusLabel(row, t)}
                         </div>
                       </div>
                     </div>
@@ -1773,11 +1837,11 @@ function GenericAssetGaragePanel<T extends GenericAssetRosterRow>({
                         disabled={!canSendAssetToRepair(row)}
                         title={
                           toNumber(row.condition_percent, 100) >= 100
-                            ? 'This asset is already at 100% condition.'
+                            ? t('assets.condition100')
                             : row.status === 'in_repair'
-                              ? 'This asset is already in repair.'
+                              ? t('assets.alreadyRepair')
                               : row.status === 'assigned' || row.assignment_locked
-                                ? 'This asset is currently assigned and locked.'
+                                ? t('assets.assignedLocked')
                                 : undefined
                         }
                         className={`px-3 py-2 rounded-md text-sm font-medium transition ${
@@ -1786,7 +1850,7 @@ function GenericAssetGaragePanel<T extends GenericAssetRosterRow>({
                             : 'bg-gray-200 text-gray-500 cursor-not-allowed'
                         }`}
                       >
-                        Repair
+                        {t('common.repair')}
                       </button>
 
                       <button
@@ -1807,7 +1871,7 @@ function GenericAssetGaragePanel<T extends GenericAssetRosterRow>({
                             : 'bg-gray-200 text-gray-500 cursor-not-allowed'
                         }`}
                       >
-                        Sell
+                        {t('common.sell')}
                       </button>
                     </div>
                   </div>
@@ -1881,7 +1945,7 @@ function GenericAssetGaragePanel<T extends GenericAssetRosterRow>({
                             : 'bg-red-100 text-red-700 hover:bg-red-200'
                         }`}
                       >
-                        {isCancelling ? 'Cancelling...' : 'Cancel delivery'}
+                        {isCancelling ? t('facilities.cancelling') : t('assets.cancelDelivery')}
                       </button>
                     </div>
                   </div>
@@ -1923,8 +1987,8 @@ function GenericAssetGaragePanel<T extends GenericAssetRosterRow>({
 
                       <div className="mt-1 text-xs leading-5 text-slate-500">
                         {isPremiumCapacity
-                          ? 'Available automatically while Premium is active, or permanently with coins.'
-                          : 'Additional permanent garage capacity.'}
+                          ? t('assets.premiumSlotDescription')
+                          : t('assets.additionalCapacity')}
                       </div>
 
                       <div className="mt-1 text-xs text-slate-400">
@@ -1943,7 +2007,7 @@ function GenericAssetGaragePanel<T extends GenericAssetRosterRow>({
                           }}
                           className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
                         >
-                          Unlock with Premium
+                          {t('common.unlockPremium')}
                         </button>
                       ) : null}
 
@@ -1954,8 +2018,8 @@ function GenericAssetGaragePanel<T extends GenericAssetRosterRow>({
                         className="rounded-lg border border-yellow-300 bg-yellow-50 px-3 py-2 text-xs font-semibold text-yellow-900 hover:bg-yellow-100 disabled:cursor-not-allowed disabled:opacity-50"
                       >
                         {isUnlocking
-                          ? 'Unlocking…'
-                          : `Unlock permanently · ${Number(slotAccess?.coin_cost ?? 20)} coins`}
+                          ? t('common.unlocking')
+                          : t('assets.unlockCoins', { coins: Number(slotAccess?.coin_cost ?? 20) })}
                       </button>
                     </div>
                   </div>
@@ -1971,7 +2035,7 @@ function GenericAssetGaragePanel<T extends GenericAssetRosterRow>({
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div>
                     <div className="text-sm font-semibold text-gray-700">
-                      Slot #{slot.slotNumber}
+                      {t('assets.slot', { slot: slot.slotNumber })}
                     </div>
                     <div className="mt-1 text-xs text-gray-500">{t(assetCopy.empty)}</div>
                   </div>
@@ -1986,7 +2050,7 @@ function GenericAssetGaragePanel<T extends GenericAssetRosterRow>({
                         : 'bg-yellow-400 text-black hover:bg-yellow-300'
                     }`}
                   >
-                    {isFull ? t('common.garageFull') : 'Acquire'}
+                    {isFull ? t('common.garageFull') : t('common.acquire')}
                   </button>
                 </div>
               </div>
@@ -1997,6 +2061,7 @@ function GenericAssetGaragePanel<T extends GenericAssetRosterRow>({
 
       {isAcquireModalOpen && (
         <AssetAcquireModal
+          assetKey={assetKey}
           title={t(assetCopy.acquire)}
           description={t(assetCopy.acquireDescription)}
           assetLabel={t(assetCopy.plural)}

@@ -22,6 +22,7 @@ import {
   useSearchParams,
 } from 'react-router'
 import { supabase } from '../../lib/supabase'
+import i18n from '@/i18n'
 import {
   PPM_UNIVERSAL_RACE_ENGINE_KEY,
   PPM_UNIVERSAL_RACE_ENGINE_VERSION,
@@ -1391,8 +1392,21 @@ function formatGameDateDisplay(
   return `Season ${seasonNumber} - ${monthName} ${dayNumber}`
 }
 
+function getRaceDetailLocale(): string {
+  return String(i18n.resolvedLanguage || i18n.language || 'en').toLowerCase().startsWith('sr')
+    ? 'sr-Latn-RS'
+    : 'en-GB'
+}
+
 function getGameMonthShortName(monthNumber: number): string {
-  return GAME_MONTH_SHORT_NAMES[monthNumber - 1] ?? `M${monthNumber}`
+  if (monthNumber < 1 || monthNumber > 12) return `M${monthNumber}`
+
+  return new Intl.DateTimeFormat(getRaceDetailLocale(), {
+    month: 'short',
+    timeZone: 'UTC',
+  })
+    .format(new Date(Date.UTC(2000, monthNumber - 1, 1)))
+    .replace(/\.$/, '')
 }
 
 function formatCompactGameDateDisplay(
@@ -1404,7 +1418,9 @@ function formatCompactGameDateDisplay(
 }
 
 function getWeekdayShortName(date: Date): string {
-  return date.toLocaleDateString(undefined, { weekday: 'short' })
+  return date
+    .toLocaleDateString(getRaceDetailLocale(), { weekday: 'short' })
+    .replace(/\.$/, '')
 }
 
 const BASE_GAME_SEASON_YEAR = 2000
@@ -1693,11 +1709,11 @@ function isStageWeatherCanceled(stage?: RaceStage | null): boolean {
 function getWeatherCancellationReasonLabel(reason?: string | null): string {
   switch (reason) {
     case 'snow':
-      return 'Snow'
+      return i18n.t('weather.snow', { ns: 'raceDetail' })
     case 'temperature_below_5c':
-      return 'Average temperature below 5°C'
+      return i18n.t('weather.temperatureBelow5', { ns: 'raceDetail' })
     default:
-      return reason ? humanizeCode(reason) : 'Unsafe weather'
+      return reason ? humanizeCode(reason) : i18n.t('weather.unsafe', { ns: 'raceDetail' })
   }
 }
 
@@ -1750,32 +1766,39 @@ function getStageWeatherCancellationRiskReason(stage?: RaceStage | null): string
 
 function getStageWeatherDecisionText(stage?: RaceStage | null): string {
   if (isStageWeatherCanceled(stage)) {
-    return 'The stage has already been canceled by the race engine.'
+    return i18n.t('weather.stageAlreadyCanceled', { ns: 'raceDetail' })
   }
 
   if (!stage || !hasWeather(stage)) {
-    return 'Weather is not generated yet, so no cancellation decision can be made.'
+    return i18n.t('weather.decisionUnavailable', { ns: 'raceDetail' })
   }
 
-  return 'Cancellation is decided automatically 24 in-game hours before the stage start, using the generated stage weather. Snow or an average temperature below 5°C cancels the stage.'
+  return i18n.t('weather.decisionRule', { ns: 'raceDetail' })
 }
 
 function getWeatherCancellationNoticeText(stage?: RaceStage | null, race?: Race | null): string {
   if (!stage) {
     if (isRaceAllWeatherCanceled(race)) {
-      return 'The race was canceled due to weather. No race result was generated.'
+      return i18n.t('weather.raceCanceledNoResult', { ns: 'raceDetail' })
     }
 
-    return 'This race has weather cancellation metadata.'
+    return i18n.t('weather.raceHasCancellationMetadata', { ns: 'raceDetail' })
   }
 
   const reason = getStageWeatherCancellationReasonLabel(stage)
 
   if (race?.is_stage_race) {
-    return `Stage ${stage.stage_number} was canceled due to weather (${reason}). No results, points, prize money, fatigue or replay were generated for this stage. The stage race continues with the next runnable stage.`
+    return i18n.t('weather.stageCanceledDetails', {
+      ns: 'raceDetail',
+      stage: stage.stage_number,
+      reason,
+    })
   }
 
-  return `This one-day race was canceled due to weather (${reason}). No results, points, prize money, fatigue or replay were generated.`
+  return i18n.t('weather.oneDayCanceledDetails', {
+    ns: 'raceDetail',
+    reason,
+  })
 }
 
 function WeatherCancellationNotice({
@@ -1797,10 +1820,10 @@ function WeatherCancellationNotice({
   if (!shouldRender) return null
 
   const title = isStageWeatherCanceled(stage)
-    ? 'Stage canceled due to weather'
+    ? t('weather.noticeStageCanceled')
     : raceStatus === 'all_stages_weather_cancelled'
-      ? 'Race canceled due to weather'
-      : 'Race partly canceled by weather'
+      ? t('weather.noticeRaceCanceled')
+      : t('weather.noticeRacePartlyCanceled')
 
   return (
     <div
@@ -2044,7 +2067,12 @@ function getStageDateLabel(
   const monthLabel = getGameMonthShortName(parts.monthNumber)
   const dayLabel = String(parts.dayNumber).padStart(2, '0')
 
-  return `S${parts.seasonNumber} · ${weekdayLabel} · ${monthLabel} ${dayLabel}`
+  const seasonLabel = i18n.t('dates.compactSeason', {
+    ns: 'raceDetail',
+    season: parts.seasonNumber,
+  })
+
+  return `${seasonLabel} · ${weekdayLabel} · ${monthLabel} ${dayLabel}`
 }
 
 function formatTimeLabelFromParts(
@@ -2120,7 +2148,18 @@ function formatStageRoute(stage: RaceStage): string {
 }
 
 function getStageProfileLabel(stage: RaceStage): string {
-  return humanizeCode(stage.terrain_type)
+  const terrainKey = stage.terrain_type === 'individual_time_trial'
+    ? 'individualTimeTrial'
+    : stage.terrain_type === 'team_time_trial'
+      ? 'teamTimeTrial'
+      : stage.terrain_type === 'time_trial'
+        ? 'timeTrial'
+        : stage.terrain_type
+
+  return i18n.t(`stage.${terrainKey}`, {
+    ns: 'raceDetail',
+    defaultValue: humanizeCode(stage.terrain_type),
+  })
 }
 
 type StageProfilePoint = {
@@ -2448,8 +2487,7 @@ function WeatherCard({ stage }: { stage: RaceStage }) {
   if (!hasWeather(stage)) {
     return (
       <div className="w-full rounded-3xl border border-slate-200 bg-white p-6 text-sm text-slate-600 shadow-sm">
-        Weather is not generated for this stage yet. Add a host country code, then run
-        <span className="font-mono"> generate_race_stage_weather_v1(stage_id)</span>.
+        {t('weather.notGenerated')}
       </div>
     )
   }
@@ -2464,7 +2502,13 @@ function WeatherCard({ stage }: { stage: RaceStage }) {
           </div>
 
           <div className="mt-3 text-xl font-semibold text-slate-950">
-            {humanizeCode(condition)}
+            {condition === 'sunny_windy'
+              ? t('weather.sunnyWindy')
+              : condition === 'sunny'
+                ? t('weather.sunny')
+                : condition === 'windy'
+                  ? t('weather.windy')
+                  : t(`weather.${condition === 'partly_cloudy' ? 'partlyCloudy' : condition === 'heavy_rain' ? 'heavyRain' : condition}`, { defaultValue: humanizeCode(condition) })}
           </div>
         </div>
 
@@ -8610,13 +8654,13 @@ function StagePointCard({
 
       <div className="min-w-[220px] text-right text-slate-600">
         <div>
-          <span className="font-medium text-slate-500">Points: </span>
+          <span className="font-medium text-slate-500">{i18n.t('stage.pointsLabel', { ns: 'raceDetail' })} </span>
           {formatPointsSchemeLabel(points)}
         </div>
 
         {hasConfiguredPointValues(bonuses) ? (
           <div className="mt-1">
-            <span className="font-medium text-slate-500">Time bonuses: </span>
+            <span className="font-medium text-slate-500">{i18n.t('stage.timeBonuses', { ns: 'raceDetail' })} </span>
             {formatPointsSchemeLabel(bonuses)}
           </div>
         ) : null}
@@ -8783,7 +8827,7 @@ function StageFinishPointCard({
 
           {hasConfiguredPointValues(finishPointBonuses) ? (
             <div className="mt-1">
-              <span className="font-medium text-slate-500">GC time bonuses: </span>
+              <span className="font-medium text-slate-500">{i18n.t('stage.gcTimeBonuses', { ns: 'raceDetail' })} </span>
               {formatPointsSchemeLabel(finishPointBonuses)}
             </div>
           ) : null}
@@ -8809,7 +8853,7 @@ function StageFinishPointCard({
 
         {hasConfiguredPointValues(finishPointBonuses) ? (
           <div className="mt-1">
-            <span className="font-medium text-slate-500">GC time bonuses: </span>
+            <span className="font-medium text-slate-500">{i18n.t('stage.gcTimeBonuses', { ns: 'raceDetail' })} </span>
             {formatPointsSchemeLabel(finishPointBonuses)}
           </div>
         ) : null}

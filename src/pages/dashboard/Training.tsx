@@ -1139,6 +1139,23 @@ function isClubLevelActiveCampOnlyError(message: string): boolean {
 export default function TrainingPage(): JSX.Element {
   const { t, i18n } = useTranslation('training')
   const isSerbianUi = (i18n.resolvedLanguage ?? i18n.language ?? 'en').startsWith('sr')
+  const translateCampSystemMessage = (message: string): string => {
+    const normalized = message.trim()
+
+    if (normalized === 'No staff selected. This is allowed, but the camp will not receive staff boosts.') {
+      return t('camps.noStaffWarningAllowed')
+    }
+
+    if (normalized === 'No staff selected. The camp will run without staff boosts.') {
+      return t('camps.noStaffWarningRunning')
+    }
+
+    if (normalized === 'No staff selected. The camp can still be booked, but there will be no coach, doctor, mechanic, or director boost.') {
+      return t('camps.noStaffSelected')
+    }
+
+    return message
+  }
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const focusedRiderId = searchParams.get('riderId')
@@ -3897,13 +3914,13 @@ export default function TrainingPage(): JSX.Element {
                             </div>
 
                             <div className="text-xs text-gray-500">
-                              {member.club_name || 'Club'} · {member.specialization || 'General'} · OVR{' '}
-                              {member.overall ?? '-'} · Wage {formatCurrency(member.salary_weekly ?? 0)}
+                              {member.club_name || t('common.club')} · {member.specialization === 'General' ? t('common.general') : (member.specialization || t('common.general'))} · OVR{' '}
+                              {member.overall ?? '-'} · {t('common.wage')} {formatCurrency(member.salary_weekly ?? 0)}
                             </div>
 
                             {member.boost_label ? (
                               <div className="mt-1 text-[11px] text-green-700">
-                                Boost: {member.boost_label}
+                                {t('common.boost', { value: member.boost_label })}
                               </div>
                             ) : null}
 
@@ -3934,7 +3951,7 @@ export default function TrainingPage(): JSX.Element {
 
               {selectedStaffIds.length === 0 ? (
                 <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
-                  No staff selected. The camp can still be booked, but there will be no coach, doctor, mechanic, or director boost.
+                  {t('camps.noStaffSelected')}
                 </div>
               ) : null}
             </div>
@@ -3946,7 +3963,7 @@ export default function TrainingPage(): JSX.Element {
                   <span
                     className={`rounded-full px-2.5 py-1 text-xs font-medium ${WEATHER_BADGE_STYLES[quote.weather_state]}`}
                   >
-                    {quote.weather_state === 'unavailable' ? t('common.unavailable') : WEATHER_LABELS[quote.weather_state]}
+                    {t(`weather.${quote.weather_state}`, { defaultValue: WEATHER_LABELS[quote.weather_state] })}
                   </span>
                 ) : null}
               </div>
@@ -3957,12 +3974,12 @@ export default function TrainingPage(): JSX.Element {
                 <div className="space-y-4">
                   <div className="grid gap-3 md:grid-cols-2">
                     <div className="rounded-lg bg-gray-50 p-3 text-sm text-gray-700">
-                      <div className="font-medium">Riders</div>
+                      <div className="font-medium">{t('camps.ridersLabel')}</div>
                       <div>{quote.riders_count ?? quote.participants_count}</div>
                     </div>
 
                     <div className="rounded-lg bg-gray-50 p-3 text-sm text-gray-700">
-                      <div className="font-medium">Staff</div>
+                      <div className="font-medium">{t('camps.staffLabel')}</div>
                       <div>{quote.staff_count ?? selectedStaffIds.length}</div>
                     </div>
 
@@ -4018,7 +4035,7 @@ export default function TrainingPage(): JSX.Element {
                       <div className="font-medium">{t('camps.bookingBlocked')}</div>
                       <ul className="mt-2 list-disc space-y-1 pl-5">
                         {filteredValidationErrors.map(message => (
-                          <li key={message}>{message}</li>
+                          <li key={message}>{translateCampSystemMessage(message)}</li>
                         ))}
                       </ul>
                     </div>
@@ -4030,10 +4047,10 @@ export default function TrainingPage(): JSX.Element {
                       <div className="font-medium">{t('camps.warnings')}</div>
                       <ul className="mt-2 list-disc space-y-1 pl-5">
                         {toArray(validation?.validation_warnings).map(message => (
-                          <li key={`validation-${message}`}>{message}</li>
+                          <li key={`validation-${message}`}>{translateCampSystemMessage(message)}</li>
                         ))}
                         {toArray(quote.warnings).map(message => (
-                          <li key={`quote-${message}`}>{message}</li>
+                          <li key={`quote-${message}`}>{translateCampSystemMessage(message)}</li>
                         ))}
                       </ul>
                     </div>
@@ -4050,7 +4067,7 @@ export default function TrainingPage(): JSX.Element {
                 </div>
               ) : (
                 <div className="text-sm text-gray-600">
-                  Pick a camp, riders, and optional staff to see the quote.
+                  {t('camps.quotePrompt')}
                 </div>
               )}
             </div>
@@ -4064,10 +4081,10 @@ export default function TrainingPage(): JSX.Element {
             <div className="flex items-start justify-between gap-4 border-b border-gray-200 px-6 py-4">
               <div>
                 <h3 className="text-lg font-semibold text-gray-900">
-                  Cancel Training Camp
+                  {t('camps.cancelTitle')}
                 </h3>
                 <p className="mt-1 text-sm text-gray-500">
-                  Please confirm that you want to cancel this training camp.
+                  {t('camps.cancelSubtitle')}
                 </p>
               </div>
 
@@ -4089,7 +4106,7 @@ export default function TrainingPage(): JSX.Element {
             <div className="space-y-4 px-6 py-5">
               <div className="rounded-xl bg-gray-50 p-4">
                 <div className="text-xs font-medium uppercase tracking-wide text-gray-500">
-                  Camp
+                  {t('camps.camp')}
                 </div>
                 <div className="mt-1 text-sm font-semibold text-gray-900">
                   {cancelCampName}

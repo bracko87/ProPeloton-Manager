@@ -14,6 +14,8 @@
  * affecting database logic.
  */
 
+import i18n from '@/i18n'
+
 //////////////////////////
 // Numeric helpers
 //////////////////////////
@@ -181,21 +183,13 @@ export function formatGameDays(
     | null
     | undefined,
 ): string {
-  const days =
-    toNumber(
-      raw,
-      0,
-    )
+  const days = toNumber(raw, 0)
+  const key = days === 1 ? 'common.gameDay' : 'common.gameDays'
 
-  if (days === 1) {
-    return '1 game day'
-  }
-
-  if (days <= 0) {
-    return '0 game days'
-  }
-
-  return `${days} game days`
+  return i18n.t(key, {
+    ns: 'infrastructure',
+    count: days,
+  })
 }
 
 /**
@@ -516,42 +510,37 @@ export function buildFacilityImpactLines(
     medicalEffect,
   } = options
 
-  const lines:
-    string[] = []
+  const normalizedKind =
+    typeof kind === 'string' && kind.trim().length > 0
+      ? kind.trim().replace(/\s+/g, '_')
+      : 'club'
 
-  const kindLabel =
-    typeof kind ===
-      'string' &&
-    kind.trim().length > 0
-      ? kind.replace(
-          /_/g,
-          ' ',
-        )
-      : 'facility'
+  const kindLabel = i18n.t(`facilityTypes.${normalizedKind}`, {
+    ns: 'infrastructure',
+    defaultValue: normalizedKind.replace(/_/g, ' '),
+  })
 
-  lines.push(
-    `Level ${level} ${kindLabel} contributes to your club-wide infrastructure.`,
-  )
+  const lines: string[] = [
+    i18n.t('facilities.impactLevel', {
+      ns: 'infrastructure',
+      level,
+      kind: kindLabel,
+    }),
+  ]
 
-  if (
-    capacityByRole &&
-    capacityByRole.size > 0
-  ) {
-    lines.push(
-      'Staff capacity and effect caps scale with this facility level.',
-    )
+  if (capacityByRole && capacityByRole.size > 0) {
+    lines.push(i18n.t('facilities.staffCapacityImpact', { ns: 'infrastructure' }))
   }
 
-  if (coachingEffect) {
-    lines.push(
-      'Head coach training and development effects are applied based on this facility.',
-    )
+  // Apply only the effect that belongs to this facility. The old helper added
+  // medical/coaching text to unrelated buildings whenever the global effect
+  // context existed.
+  if (normalizedKind === 'coaching' && coachingEffect) {
+    lines.push(i18n.t('facilities.coachingImpact', { ns: 'infrastructure' }))
   }
 
-  if (medicalEffect) {
-    lines.push(
-      'Medical recovery and injury protection effects are applied based on this facility.',
-    )
+  if (normalizedKind === 'medical' && medicalEffect) {
+    lines.push(i18n.t('facilities.medicalImpact', { ns: 'infrastructure' }))
   }
 
   return lines

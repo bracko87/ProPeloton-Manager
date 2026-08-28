@@ -1645,8 +1645,16 @@ export default function InfrastructurePage({ clubId }: { clubId?: string }) {
         nextValueLabel: !pendingJob && !isMaxed
           ? t('facilities.nextLevelValue', { level: nextLevel })
           : null,
-        unlockSummary: nextConfig?.unlock_summary ?? null,
-        effectSummary: nextConfig?.effect_summary ?? null,
+        unlockSummary: nextConfig
+          ? t(`facilityUpgrades.${item.id}.level${nextLevel}.unlock`, {
+              defaultValue: nextConfig.unlock_summary ?? '',
+            })
+          : null,
+        effectSummary: nextConfig
+          ? t(`facilityUpgrades.${item.id}.level${nextLevel}.effect`, {
+              defaultValue: nextConfig.effect_summary ?? '',
+            })
+          : null,
         impactKind: item.impactKind,
         impactLines: buildFacilityImpactLines({
           kind: item.impactKind,

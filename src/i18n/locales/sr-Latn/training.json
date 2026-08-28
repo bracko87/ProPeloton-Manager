@@ -40,7 +40,8 @@
     "boost": "Bonus: {{value}}",
     "days": "{{count}} dana",
     "day": "Dan {{day}}",
-    "allDays": "Svi dani"
+    "allDays": "Svi dani",
+    "wage": "Plata"
   },
   "focus": {
     "general": "Opšti",
@@ -238,7 +239,11 @@
     "unknownStaff": "Nepoznati član osoblja",
     "scope": "Opseg: {{value}}",
     "seasonLabel": "Sezona {{season}}",
-    "daysCount": "{{count}} dana"
+    "daysCount": "{{count}} dana",
+    "ridersLabel": "Vozači",
+    "staffLabel": "Osoblje",
+    "noStaffWarningAllowed": "Nije izabrano osoblje. Ovo je dozvoljeno, ali kamp neće dobiti bonuse osoblja.",
+    "noStaffWarningRunning": "Nije izabrano osoblje. Kamp će biti održan bez bonusa osoblja."
   },
   "regions": {
     "europe": "Evropa",
